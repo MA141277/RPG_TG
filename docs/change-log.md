@@ -1,5 +1,13 @@
 ﻿# 变更记录
 
+## 2026-05-19
+
+- 粮铺算账小游戏：累计答错 3 次立即结束并进入结算，HUD 显示剩余可错次数。
+- 粮铺 UI：去掉顶部状态条；底部左对话框、右大立绘分开展示（无整体外框），左下角场景名称卡片。
+- 将粮铺原型按四层架构接入主项目：`content` 配置、`domain/grain-shop` 类型、`application/grain-shop` 流程、`ui/views/house/grain-shop-house-view` 视图。
+- 在库兰城新增房屋 `house.kulan.grain_shop`（粮铺）与掌柜角色 `char.kulan_grain_shopkeeper`。
+- 主循环：地图 → 库兰城 → 粮铺 → 买卖/调查/算账小游戏 → 属性变化 → 返回城市。
+
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
 ## 记录规则

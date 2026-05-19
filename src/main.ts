@@ -30,7 +30,20 @@ import {
 import { renderCharacterDetailView } from "./ui/views/character/character-detail-view";
 import { renderCardLibraryView } from "./ui/views/cards/card-library-view";
 import { renderCityView } from "./ui/views/city/city-view";
+import {
+  enterGrainShop,
+  handleGrainShopAction,
+  updateGrainShopTradeQuantity,
+  isGrainShopHouse,
+  leaveGrainShopSession,
+  tickAccountingMinigame,
+  type GrainShopHostState,
+} from "./application/grain-shop/grain-shop-interactions";
+import { startAccountingTimer, stopAccountingTimer } from "./application/grain-shop/accounting-timer";
+import { createGrainShopSnapshot } from "./application/grain-shop/grain-shop-snapshot";
+import type { GrainShopSessionUi } from "./application/grain-shop/grain-shop-session-ui";
 import { createHouseViewModel } from "./ui/views/house/house-view";
+import { renderGrainShopHouseView } from "./ui/views/house/grain-shop-house-view";
 import { createMapViewModel, renderMapView } from "./ui/views/map/map-view";
 import { renderValuableLibraryView } from "./ui/views/valuables/valuable-library-view";
 
@@ -78,6 +91,9 @@ const characterNameById = Object.fromEntries(
   prototypeCharacters.map((characterDefinition) => [characterDefinition.id, characterDefinition.name])
 );
 
+let characterDefinitions: CharacterDefinition[] = [...prototypeCharacters];
+let grainShopSessionUi: GrainShopSessionUi | null = null;
+
 let appState: AppState = {
   gameState: createInitialState({
     currentMapId: prototypeMap.id,
@@ -114,6 +130,22 @@ let appState: AppState = {
 };
 
 renderApp();
+
+appElement.addEventListener("input", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLInputElement)) {
+    return;
+  }
+
+  if (targetElement.dataset.grainShopField !== "trade-quantity") {
+    return;
+  }
+
+  const quantity = Math.max(1, parseInt(targetElement.value, 10) || 1);
+  const nextHost = updateGrainShopTradeQuantity(getGrainShopHostState(), quantity);
+  applyGrainShopHostState(nextHost);
+  renderApp();
+});
 
 appElement.addEventListener("click", (event) => {
   const targetElement = event.target;
@@ -238,8 +270,19 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const grainShopAction = targetElement.closest<HTMLElement>("[data-grain-shop-action]");
+  if (grainShopAction != null && grainShopSessionUi != null) {
+    const action = grainShopAction.dataset.grainShopAction;
+    if (action != null) {
+      dispatchGrainShopAction(action);
+    }
+    return;
+  }
+
   const leaveHouseButton = targetElement.closest<HTMLElement>("[data-action='leave-house']");
   if (leaveHouseButton != null) {
+    const nextHost = leaveGrainShopSession(getGrainShopHostState());
+    applyGrainShopHostState(nextHost);
     appState = {
       ...appState,
       gameState: {
@@ -281,6 +324,14 @@ appElement.addEventListener("click", (event) => {
         },
       },
     };
+
+    if (isGrainShopHouse(houseId)) {
+      applyGrainShopHostState(enterGrainShop(getGrainShopHostState(), playerCharacterId));
+    } else {
+      grainShopSessionUi = null;
+      stopAccountingTimer();
+    }
+
     renderApp();
     return;
   }
@@ -531,8 +582,8 @@ function renderApp() {
     (houseDefinition) => houseDefinition.id === appState.gameState.world.currentHouseId
   );
   const playerCharacter =
-    prototypeCharacters.find((characterDefinition) => characterDefinition.id === playerCharacterId) ??
-    prototypeCharacters[0]!;
+    characterDefinitions.find((characterDefinition) => characterDefinition.id === playerCharacterId) ??
+    characterDefinitions[0]!;
   const playerPanelModel = createGlobalPlayerPanelModel(playerCharacter, appState.gameState, null);
 
   let stageMarkup = "";
@@ -550,7 +601,20 @@ function renderApp() {
   } else if (currentView === "city") {
     stageMarkup = renderCityView(prototypeCity, prototypeHouses);
   } else if (currentView === "house" && activeHouse != null) {
-    const houseViewModel = createHouseViewModel(activeHouse, prototypeCharacters);
+    if (isGrainShopHouse(activeHouse.id) && grainShopSessionUi != null) {
+      const shopkeeper =
+        characterDefinitions.find(
+          (characterDefinition) =>
+            characterDefinition.id === activeHouse.defaultCharacterId
+        ) ?? null;
+      stageMarkup = renderGrainShopHouseView({
+        houseDefinition: activeHouse,
+        snapshot: createGrainShopSnapshot(appState.gameState, playerCharacter),
+        sessionUi: grainShopSessionUi,
+        npcName: shopkeeper?.name ?? "掌柜",
+      });
+    } else {
+    const houseViewModel = createHouseViewModel(activeHouse, characterDefinitions);
 
     stageMarkup = `
       <section class="view-house">
@@ -585,6 +649,7 @@ function renderApp() {
         </div>
       </section>
     `;
+    }
   }
 
   appRoot.innerHTML = `
@@ -628,6 +693,50 @@ function renderOverlay(playerCharacter: CharacterDefinition): string {
   }
 
   return "";
+}
+
+function getGrainShopHostState(): GrainShopHostState {
+  return {
+    gameState: appState.gameState,
+    characterDefinitions,
+    grainShopSessionUi,
+  };
+}
+
+function applyGrainShopHostState(nextHost: GrainShopHostState): void {
+  appState = {
+    ...appState,
+    gameState: nextHost.gameState,
+  };
+  characterDefinitions = nextHost.characterDefinitions;
+  grainShopSessionUi = nextHost.grainShopSessionUi;
+}
+
+function startGrainShopAccountingTimer(): void {
+  stopAccountingTimer();
+  startAccountingTimer(() => {
+    const nextHost = tickAccountingMinigame(getGrainShopHostState(), playerCharacterId);
+    applyGrainShopHostState(nextHost);
+    renderApp();
+  });
+}
+
+function dispatchGrainShopAction(action: string): void {
+  const nextHost = handleGrainShopAction(getGrainShopHostState(), action, playerCharacterId);
+  applyGrainShopHostState(nextHost);
+  renderApp();
+
+  if (action === "accounting") {
+    startGrainShopAccountingTimer();
+  }
+
+  if (
+    action === "close-result" ||
+    action === "close-alert" ||
+    action === "close-trade"
+  ) {
+    stopAccountingTimer();
+  }
 }
 
 function buildCharacterDetailOptions(

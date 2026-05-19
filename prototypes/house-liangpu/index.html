@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>粮铺 — 太阁立志传 Like 原型</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="house-page" id="house-page">
+    <header class="house-header">
+      <h1 class="house-title">粮铺</h1>
+      <p class="house-subtitle">陈记杂粮 · 南北通商</p>
+    </header>
+
+    <aside class="player-status" id="player-status" aria-label="玩家状态">
+      <div class="status-item"><span class="status-label">金钱</span><span class="status-value" data-field="money">—</span></div>
+      <div class="status-item"><span class="status-label">粮食</span><span class="status-value" data-field="food">—</span></div>
+      <div class="status-item"><span class="status-label">算术</span><span class="status-value" data-field="math">—</span></div>
+      <div class="status-item"><span class="status-label">与掌柜关系</span><span class="status-value" data-field="relationship">—</span></div>
+      <div class="status-item"><span class="status-label">时间</span><span class="status-value" data-field="time">—</span></div>
+    </aside>
+
+    <main class="house-main">
+      <section class="npc-section" aria-label="掌柜">
+        <div class="npc-avatar" aria-hidden="true">
+          <span class="npc-avatar-placeholder">像</span>
+        </div>
+        <div class="npc-info">
+          <h2 class="npc-name">掌柜</h2>
+          <p class="npc-line" id="npc-line">……</p>
+        </div>
+      </section>
+
+      <nav class="house-actions" aria-label="粮铺功能">
+        <button type="button" class="house-btn" id="btn-buy">买粮</button>
+        <button type="button" class="house-btn" id="btn-sell">卖粮</button>
+        <button type="button" class="house-btn" id="btn-investigate">调查市价</button>
+        <button type="button" class="house-btn house-btn--accent" id="btn-accounting">帮忙算账</button>
+        <button type="button" class="house-btn house-btn--leave" id="btn-leave">离开</button>
+      </nav>
+    </main>
+
+    <footer class="house-footer">
+      <p>验证循环：进入房屋 → NPC 交互 / 小游戏 → 属性变化</p>
+    </footer>
+  </div>
+
+  <div class="modal-overlay is-hidden" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-panel">
+      <h3 class="modal-title" id="modal-title">提示</h3>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-actions" id="modal-actions">
+        <button type="button" class="house-btn" id="modal-close">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay is-hidden" id="trade-overlay" role="dialog" aria-modal="true" aria-labelledby="trade-title">
+    <div class="modal-panel modal-panel--trade">
+      <h3 class="modal-title" id="trade-title">买粮</h3>
+      <p class="trade-price" id="trade-price">当前粮价：1石 = —文</p>
+      <label class="trade-label" for="trade-quantity">数量（石）</label>
+      <div class="trade-quantity-row">
+        <button type="button" class="qty-btn" id="qty-minus" aria-label="减少">−</button>
+        <input type="number" id="trade-quantity" class="trade-input" min="1" value="1" />
+        <button type="button" class="qty-btn" id="qty-plus" aria-label="增加">+</button>
+      </div>
+      <p class="trade-total" id="trade-total">合计：—文</p>
+      <div class="modal-actions modal-actions--split">
+        <button type="button" class="house-btn house-btn--ghost" id="trade-cancel">取消</button>
+        <button type="button" class="house-btn" id="trade-confirm">确认购买</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay is-hidden" id="game-overlay" role="dialog" aria-modal="true" aria-labelledby="game-title">
+    <div class="modal-panel modal-panel--game">
+      <header class="game-header">
+        <h3 class="modal-title" id="game-title">帮忙算账</h3>
+        <div class="game-hud">
+          <span>剩余 <strong id="game-timer">30</strong> 秒</span>
+          <span>得分 <strong id="game-score">0</strong></span>
+        </div>
+      </header>
+      <div class="ledger-card" id="ledger-card">
+        <p id="ledger-bought">购入：—石</p>
+        <p id="ledger-sold">卖出：—石</p>
+        <p id="ledger-stock">库存：—石</p>
+      </div>
+      <div class="game-actions">
+        <button type="button" class="house-btn" id="btn-ledger-correct">账对</button>
+        <button type="button" class="house-btn house-btn--ghost" id="btn-ledger-wrong">账错</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay is-hidden" id="result-overlay" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <div class="modal-panel">
+      <h3 class="modal-title" id="result-title">算账结算</h3>
+      <div class="modal-body" id="result-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="house-btn" id="result-close">收工</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/player.js"></script>
+  <script src="js/market.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/mini-game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
