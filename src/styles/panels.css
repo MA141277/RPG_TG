@@ -1,0 +1,15 @@
+.p-player-card,
+.p-mission-tracker {
+  padding: var(--space-4);
+  border: var(--border-panel);
+  border-radius: var(--radius-panel);
+  background: linear-gradient(180deg, rgb(254 244 221 / 94%), rgb(232 210 159 / 90%));
+  box-shadow: var(--shadow-panel);
+}
+
+.p-player-card-title,
+.p-mission-tracker-title {
+  margin: 0 0 var(--space-2);
+  color: var(--color-ink-strong);
+  font-family: var(--font-title);
+}

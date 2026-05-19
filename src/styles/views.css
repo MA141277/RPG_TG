@@ -1,0 +1,13 @@
+.view-map .l-stage {
+  background:
+    radial-gradient(circle at top right, rgb(255 246 213 / 55%), transparent 34%),
+    linear-gradient(180deg, rgb(129 159 121 / 84%), rgb(81 110 74 / 92%));
+}
+
+.view-city .l-stage,
+.view-house .l-stage,
+.view-scene .l-stage {
+  background:
+    linear-gradient(rgb(50 26 15 / 32%), rgb(50 26 15 / 32%)),
+    linear-gradient(180deg, rgb(227 208 164 / 94%), rgb(181 145 92 / 94%));
+}

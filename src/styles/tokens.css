@@ -1,0 +1,28 @@
+:root {
+  --color-ink-strong: #1a1814;
+  --color-ink: #2c2924;
+  --color-paper: #efe2c2;
+  --color-paper-deep: #ddc89a;
+  --color-accent: #9e2f24;
+  --color-accent-soft: #c56e47;
+  --color-border: #6a4c2a;
+  --color-shadow: rgb(28 17 9 / 24%);
+  --color-mask: rgb(11 8 5 / 48%);
+  --font-ui: "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-title: "STKaiti", "KaiTi", serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-panel: 10px;
+  --radius-button: 999px;
+  --shadow-panel: 0 12px 30px var(--color-shadow);
+  --border-panel: 1px solid rgb(106 76 42 / 72%);
+  --z-global-ui: 100;
+  --z-scene-overlay: 200;
+  --duration-fast: 160ms;
+  --duration-mid: 280ms;
+}

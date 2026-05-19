@@ -1,0 +1,39 @@
+.c-panel {
+  border: var(--border-panel);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+  background: linear-gradient(180deg, rgb(247 236 208 / 96%), rgb(226 201 149 / 92%));
+}
+
+.c-button {
+  border: 1px solid rgb(92 51 25 / 86%);
+  border-radius: var(--radius-button);
+  padding: 10px 18px;
+  color: var(--color-paper);
+  background: linear-gradient(180deg, #b34930, #7e2417);
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.c-dialog {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.c-choice-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.c-character-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}

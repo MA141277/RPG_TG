@@ -1,0 +1,35 @@
+import type { CharacterDefinition } from "../../../domain/character";
+import type { HouseDefinition } from "../../../domain/house";
+
+export type HouseViewModel = {
+  title: string;
+  defaultCharacterId: string | null;
+  characterSummaries: Array<{
+    id: string;
+    name: string;
+    title?: string;
+  }>;
+  backButtonLabel: string;
+};
+
+export function createHouseViewModel(
+  houseDefinition: HouseDefinition,
+  characterDefinitions: CharacterDefinition[]
+): HouseViewModel {
+  return {
+    title: houseDefinition.name,
+    defaultCharacterId: houseDefinition.defaultCharacterId,
+    characterSummaries: characterDefinitions
+      .filter((characterDefinition) =>
+        houseDefinition.characterIds.includes(characterDefinition.id)
+      )
+      .map((characterDefinition) => ({
+        id: characterDefinition.id,
+        name: characterDefinition.name,
+        ...(characterDefinition.title == null
+          ? {}
+          : { title: characterDefinition.title }),
+      })),
+    backButtonLabel: houseDefinition.backAction.label,
+  };
+}
