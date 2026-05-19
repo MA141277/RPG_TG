@@ -179,7 +179,7 @@ function renderDialogue(
       </div>
       <div class="c-grain-shop-dialogue__npc">
         <div class="c-grain-shop-portrait" aria-hidden="true">
-          <span class="c-grain-shop-portrait__placeholder">掌柜</span>
+          <span class="c-grain-shop-portrait__art"></span>
         </div>
         <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">${npcName}</p>
       </div>
@@ -197,7 +197,7 @@ function renderIdleNpcAvatar(npcName: string): string {
         aria-label="与${npcName}对话"
       >
         <div class="c-grain-shop-avatar" aria-hidden="true">
-          <span class="c-grain-shop-avatar__placeholder">掌柜</span>
+          <span class="c-grain-shop-avatar__art"></span>
         </div>
         <p class="c-grain-shop-avatar__name c-grain-shop-nameplate c-grain-shop-nameplate--small">${npcName}</p>
       </button>

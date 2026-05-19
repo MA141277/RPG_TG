@@ -1,17 +1,49 @@
 .view-house-grain-shop {
-  --grain-shop-panel-light: url("../../yuansu/1_016_small_blank_panel_1.0.png");
-  --grain-shop-panel-medium: url("../../yuansu/1_021_medium_blank_panel_1.0.png");
-  --grain-shop-panel-dark: url("../../yuansu/1_003_small_dark_panel_1.0.png");
-  --grain-shop-frame-large: url("../../yuansu/1_013_blank_large_frame_1.0.png");
-  --grain-shop-button-gold: url("../../yuansu/1_024_gold_bottom_button_1.0.png");
-  --grain-shop-button-large: url("../../yuansu/1_031_large_gold_button_1.0.png");
-  --grain-shop-nameplate: url("../../yuansu/1_010_red_nameplate_1.0.png");
+  --grain-shop-panel-light: url("../../sliced_ui_assets/1_016_small_blank_panel_1.0.png");
+  --grain-shop-panel-medium: url("../../sliced_ui_assets/1_021_medium_blank_panel_1.0.png");
+  --grain-shop-panel-dark: url("../../sliced_ui_assets/1_003_small_dark_panel_1.0.png");
+  --grain-shop-frame-large: url("../../sliced_ui_assets/1_013_blank_large_frame_1.0.png");
+  --grain-shop-button-gold: url("../../sliced_ui_assets/1_024_gold_bottom_button_1.0.png");
+  --grain-shop-button-large: url("../../sliced_ui_assets/1_031_large_gold_button_1.0.png");
+  --grain-shop-nameplate: url("../../sliced_ui_assets/1_010_red_nameplate_1.0.png");
+  --grain-shop-scene-bg: url("../../sliced_ui_assets/lianghang.png");
+  --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
+  --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
   min-height: calc(100vh - var(--space-5) * 2);
   color: #2f2319;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.view-house-grain-shop::before,
+.view-house-grain-shop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.view-house-grain-shop::before {
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgb(255 247 227 / 12%), rgb(73 49 27 / 8%)),
+    center / cover no-repeat var(--grain-shop-scene-bg);
+}
+
+.view-house-grain-shop::after {
+  z-index: 0;
+  background:
+    radial-gradient(circle at 82% 18%, rgb(255 255 255 / 28%), transparent 22%),
+    linear-gradient(180deg, rgb(86 60 31 / 12%) 0%, rgb(82 57 32 / 0%) 28%, rgb(54 34 20 / 18%) 64%, rgb(29 18 11 / 68%) 100%);
+}
+
+.view-house-grain-shop > * {
+  position: relative;
+  z-index: 1;
 }
 
 .c-grain-shop-skin-panel,
@@ -114,10 +146,11 @@
   width: min(100%, 226px);
   padding: 18px 16px 16px;
   border: 16px solid transparent;
-  border-image-source: url("../../yuansu/1_015_left_mission_panel_1.0.png");
+  border-image-source: url("../../sliced_ui_assets/1_015_left_mission_panel_1.0.png");
   border-image-slice: 34 fill;
   border-image-width: 16px;
   border-image-repeat: stretch;
+  box-shadow: 0 16px 30px rgb(0 0 0 / 18%);
   pointer-events: auto;
 }
 
@@ -132,11 +165,13 @@
   z-index: 2;
   align-self: end;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-5);
+  /* 参考 lianghangcankao：对话框与立绘紧贴成一组，靠右排列 */
+  grid-template-columns: minmax(0, min(46vw, 460px)) auto;
+  gap: 0;
+  justify-content: end;
   align-items: end;
   width: 100%;
-  padding: 0 var(--space-2) var(--space-3);
+  padding: 0 var(--space-2) var(--space-2);
   padding-left: clamp(150px, 18vw, 200px);
   /* 铺满网格用于排版，但不拦截中央功能按钮的点击 */
   pointer-events: none;
@@ -148,20 +183,20 @@
 }
 
 .c-grain-shop-dialogue__text {
-  min-height: 96px;
-  padding: calc(var(--space-4) - 2px) var(--space-5);
+  min-height: 88px;
+  padding: var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
   background: none;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 16%);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 14%);
 }
 
 .c-grain-shop-dialogue__line {
   margin: 0;
   line-height: 1.7;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
 }
 
 .c-grain-shop-dialogue__text--clickable {
@@ -185,32 +220,27 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 
 /* 对话时右侧大立绘 */
 .c-grain-shop-portrait {
-  display: grid;
-  place-items: center;
-  width: min(42vw, 280px);
-  min-height: min(52vh, 420px);
-  padding: 18px;
-  border: 20px solid transparent;
-  border-image-source: var(--grain-shop-frame-large);
-  border-image-slice: 28 fill;
-  border-image-width: 20px;
-  border-image-repeat: stretch;
-  background:
-    radial-gradient(circle at 50% 22%, rgb(255 255 255 / 24%), transparent 36%),
-    linear-gradient(180deg, rgb(217 204 173 / 96%), rgb(154 128 84 / 94%));
-  box-shadow: 0 10px 24px rgb(0 0 0 / 20%);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  width: min(36vw, 300px);
+  min-height: min(50vh, 420px);
+  padding: 0;
+  background: none;
+  box-shadow: none;
 }
 
-.c-grain-shop-portrait__placeholder {
-  color: rgb(73 53 32 / 62%);
-  font-family: var(--font-title);
-  font-size: 2rem;
+.c-grain-shop-portrait__art {
+  display: block;
+  flex: 1;
+  min-height: 100%;
+  background: center bottom / auto 100% no-repeat var(--grain-shop-shopkeeper-portrait);
 }
 
 .c-grain-shop-portrait__name {
@@ -220,25 +250,20 @@
 
 /* 关闭对话后左侧小头像（与大立绘区分） */
 .c-grain-shop-avatar {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
   width: 72px;
   height: 72px;
-  border: 12px solid transparent;
-  border-image-source: var(--grain-shop-frame-large);
-  border-image-slice: 28 fill;
-  border-image-width: 12px;
-  border-image-repeat: stretch;
-  background:
-    radial-gradient(circle at 50% 28%, rgb(255 255 255 / 28%), transparent 42%),
-    linear-gradient(180deg, rgb(214 198 166 / 96%), rgb(142 114 78 / 96%));
-  box-shadow: 0 4px 12px rgb(0 0 0 / 16%);
+  background: none;
+  box-shadow: none;
 }
 
-.c-grain-shop-avatar__placeholder {
-  color: rgb(73 53 32 / 62%);
-  font-family: var(--font-title);
-  font-size: 0.95rem;
+.c-grain-shop-avatar__art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: center / cover no-repeat var(--grain-shop-shopkeeper-avatar);
 }
 
 .c-grain-shop-avatar__name {
@@ -528,18 +553,21 @@
   }
 
   .c-grain-shop-dialogue {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0;
+    justify-content: end;
     padding-left: var(--space-3);
-    padding-bottom: calc(var(--space-4) + 96px);
+    padding-bottom: calc(var(--space-4) + 72px);
   }
 
-  .c-grain-shop-dialogue__npc {
-    justify-self: end;
+  .c-grain-shop-dialogue__text {
+    min-height: 76px;
+    padding: var(--space-3) var(--space-4);
   }
 
   .c-grain-shop-portrait {
-    width: min(56vw, 200px);
-    min-height: 280px;
+    width: min(42vw, 220px);
+    min-height: min(44vh, 300px);
   }
 
   .c-grain-shop-scene-card {

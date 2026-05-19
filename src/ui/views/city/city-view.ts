@@ -22,7 +22,6 @@ export function renderCityView(
 ): string {
   const cityTags = cityDefinition.tags.join(" / ");
   const statusSummary = `可访屋舍 ${houseDefinitions.length} 处`;
-  const missionCards = houseDefinitions.slice(0, 3);
 
   return `
     <section class="view-city view-city--kulan">
@@ -53,30 +52,12 @@ export function renderCityView(
         </header>
 
         <div class="c-kulan-city__body">
-          <aside class="c-kulan-city__missions" aria-label="城内事项">
-            <div class="c-kulan-city__missions-nameplate">
-              <span>谒见</span>
-            </div>
-            <div class="c-kulan-city__missions-list">
-              ${missionCards
-                .map(
-                  (houseDefinition) => `
-                    <article class="c-kulan-city__mission-card">
-                      <span class="c-kulan-city__mission-type">${houseDefinition.type}</span>
-                      <strong class="c-kulan-city__mission-name">${houseDefinition.name}</strong>
-                    </article>
-                  `
-                )
-                .join("")}
-            </div>
-            <button type="button" class="c-kulan-city__missions-action" data-action="leave-city">
-              返回地图
-            </button>
-          </aside>
-
           <div class="c-kulan-city__stage">
             <div class="c-kulan-city__guard" aria-hidden="true"></div>
             <div class="c-kulan-city__railing" aria-hidden="true"></div>
+            <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
+              返回地图
+            </button>
             <div class="c-kulan-city__house-deck" aria-label="城内地点">
               ${houseDefinitions
                 .map(
