@@ -9,9 +9,12 @@ export type ValuableItemDefinition = {
   category: ValuableItemCategory;
   price: number;
   ownedCount: number;
+  equippedCount?: number;
+  sortWeight?: number;
   kindText: string;
   itemImageId: string;
   description: string;
+  detailText?: string;
 };
 
 export type EquippedWeaponSet = {

@@ -10,6 +10,7 @@ export function enterCity(state: GameState, cityId: string): GameState {
     },
     ui: {
       ...state.ui,
+      overlayView: null,
       currentView: "city",
     },
   };

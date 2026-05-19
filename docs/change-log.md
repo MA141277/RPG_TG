@@ -1,4 +1,4 @@
-# 变更记录
+﻿# 变更记录
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
@@ -110,3 +110,36 @@
 - 原型层可以在不破坏规范的前提下使用 `block__element--modifier`
 - 左上角主角栏已按目标布局接入原型
 - 点击主角栏可进入全屏角色详情
+
+## 2026-05-19 Character Detail Layout
+
+### Changed
+- 重构 `character-detail-view.ts`，将人物详情页整理为头部信息、左侧立绘与简介、右侧属性/装备/技能的全屏布局
+- 调整 `prototype.css` 中的人物详情页样式，使其更接近目标原型，并补上关闭按钮样式
+- 更新 `main.ts` 与 `game-store-example.ts` 的初始化数据，补齐 `cards` / `valuables` 输入，为人物详情提供据点、上司、装备等展示文本
+- 修正 `create-initial-state.ts` 的类型输入方式，保证 lint 与 typecheck 正常运行
+
+### Impact
+- 人物详情页现在具备稳定的全屏展示结构，后续继续补按钮、贵重物、卡片时不需要再推翻页面骨架
+- 项目当前 `typecheck`、`build`、`lint` 可以作为后续扩展前的基础校验线
+
+## 2026-05-19 Inventory Overlay
+
+### Added
+- 新建卡库全屏视图：`src/ui/views/cards/card-library-view.ts`
+- 新建贵重物全屏视图：`src/ui/views/valuables/valuable-library-view.ts`
+- 新增卡库筛选状态、贵重物筛选/排序状态，以及武具装备槽位展示逻辑
+
+### Changed
+- `src/main.ts` 从独立的 `characterDetailOpen` 分支改为统一使用 `ui.overlayView` 驱动人物详情、卡库、贵重物三个浮层
+- `src/domain/global-ui.ts` 扩展了卡库和贵重物列表的筛选/排序 UI 状态
+- `src/domain/valuable-item.ts` 扩展了贵重物详情字段，为后续装备/业务逻辑保留余量
+- `src/application/state/create-initial-state.ts` 补齐库存相关默认状态
+- `src/application/navigation/enter-city.ts` 在进入城市时清理 overlay，避免地图浮层残留
+- `src/ui/views/character/character-detail-view.ts` 的“卡 / 贵重品”按钮改为真实跳转库存页
+- `src/styles/prototype.css` 新增统一的全屏藏品页布局样式
+
+### Impact
+- 角色详情、卡库、贵重物现在共用一套全屏浮层切换规则，后续新增日志页、任务页、背包页时可以直接复用
+- 贵重物列表已经具备筛选、排序、详情展示和单槽装备的基础交互，后续只需继续补业务规则
+- 全局主角栏到库存系统的用户路径已经打通，可直接在浏览器里验证交互

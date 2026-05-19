@@ -234,8 +234,8 @@ export function renderCharacterDetailView(
           </div>
 
           <div class="c-character-detail__actions">
-            <button class="c-button" type="button">贵重品</button>
-            <button class="c-button" type="button">卡</button>
+            <button class="c-button" type="button" data-action="open-valuables">贵重品</button>
+            <button class="c-button" type="button" data-action="open-cards">卡</button>
             <button class="c-button c-button--danger" type="button" data-action="close-character-detail">关闭</button>
           </div>
         </div>

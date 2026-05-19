@@ -1,4 +1,6 @@
+import type { CardInventory } from "../../domain/card";
 import type { GameState } from "../../domain/game-state";
+import type { ValuableItemInventory } from "../../domain/valuable-item";
 
 export type InitialStateInput = {
   currentMapId: string;
@@ -12,8 +14,8 @@ export type InitialStateInput = {
   pinnedCharacterId: string;
   reviewDateText: string;
   mainHouseMissionText: string;
-  cards: import("../../domain/card").CardInventory;
-  valuables: import("../../domain/valuable-item").ValuableItemInventory;
+  cards: CardInventory;
+  valuables: ValuableItemInventory;
   activeEventId?: string | null;
   activeSceneId?: string | null;
   currentView?: GameState["ui"]["currentView"];
@@ -49,6 +51,10 @@ export function createInitialState(input: InitialStateInput): GameState {
       reviewDateText: input.reviewDateText,
       mainHouseMissionText: input.mainHouseMissionText,
       overlayView: null,
+      cardLibraryFilter: "all",
+      valuableLibraryFilter: "all",
+      valuableLibrarySortKey: "name",
+      valuableLibrarySortDirection: "asc",
       currentView: input.currentView ?? "map",
     },
     missions: {

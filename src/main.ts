@@ -14,15 +14,25 @@ import {
   prototypeMap,
   prototypeValuables,
 } from "./content/prototype-world";
-import { createHouseViewModel } from "./ui/views/house/house-view";
+import type { CardDefinition } from "./domain/card";
+import type { CharacterDefinition } from "./domain/character";
+import type {
+  CardLibraryFilter,
+  ValuableLibraryFilter,
+  ValuableLibrarySortKey,
+} from "./domain/global-ui";
+import type { ValuableItemDefinition, ValuableItemId } from "./domain/valuable-item";
 import { renderConfirmModal } from "./ui/components/modal/confirm-modal";
-import { renderCityView } from "./ui/views/city/city-view";
-import { createMapViewModel, renderMapView } from "./ui/views/map/map-view";
 import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
 } from "./ui/panels/global-player-panel";
 import { renderCharacterDetailView } from "./ui/views/character/character-detail-view";
+import { renderCardLibraryView } from "./ui/views/cards/card-library-view";
+import { renderCityView } from "./ui/views/city/city-view";
+import { createHouseViewModel } from "./ui/views/house/house-view";
+import { createMapViewModel, renderMapView } from "./ui/views/map/map-view";
+import { renderValuableLibraryView } from "./ui/views/valuables/valuable-library-view";
 
 type AppModalState =
   | {
@@ -42,16 +52,18 @@ type AppState = {
   gameState: ReturnType<typeof createInitialState>;
   playerCoordinate: GridCoordinate;
   modalState: AppModalState;
-  characterDetailOpen: boolean;
 };
+
+type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
 
 const appElement = document.querySelector<HTMLElement>("#app");
 
 if (appElement == null) {
   throw new Error("Missing #app mount point.");
 }
-const appRoot: HTMLElement = appElement;
 
+const appRoot = appElement;
+const playerCharacterId = "char.player";
 const cityCoordinatesById: Record<string, GridCoordinate> = {
   [prototypeCity.id]: { x: 2, y: 2 },
 };
@@ -65,22 +77,19 @@ const houseNameById = Object.fromEntries(
 const characterNameById = Object.fromEntries(
   prototypeCharacters.map((characterDefinition) => [characterDefinition.id, characterDefinition.name])
 );
-const clanNameById: Record<string, string> = {
-  "clan.oda": "织田家",
-};
 
 let appState: AppState = {
   gameState: createInitialState({
     currentMapId: prototypeMap.id,
     currentCityId: prototypeCity.id,
     currentHouseId: null,
-    playerCharacterId: "char.player",
+    playerCharacterId,
     chapterId: "chapter.prototype",
     year: 1567,
     month: 1,
     day: 1,
-    pinnedCharacterId: "char.player",
-    reviewDateText: "剩余40天",
+    pinnedCharacterId: playerCharacterId,
+    reviewDateText: "距离评定 40 天",
     mainHouseMissionText: "前往评定会场",
     cards: {
       ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
@@ -102,7 +111,6 @@ let appState: AppState = {
   }),
   playerCoordinate: { x: 0, y: 0 },
   modalState: null,
-  characterDetailOpen: false,
 };
 
 renderApp();
@@ -110,26 +118,6 @@ renderApp();
 appElement.addEventListener("click", (event) => {
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
-    return;
-  }
-
-  const mapCell = targetElement.closest<HTMLElement>("[data-map-x][data-map-y]");
-  if (mapCell != null && appState.gameState.ui.currentView === "map") {
-    const xValue = Number(mapCell.dataset.mapX);
-    const yValue = Number(mapCell.dataset.mapY);
-    const cityId = mapCell.dataset.cityId || null;
-    const cityName = cityId === prototypeCity.id ? prototypeCity.name : null;
-
-    appState = {
-      ...appState,
-      modalState: {
-        type: "travel-confirm",
-        targetCoordinate: { x: xValue, y: yValue },
-        cityId,
-        cityName,
-      },
-    };
-    renderApp();
     return;
   }
 
@@ -151,23 +139,81 @@ appElement.addEventListener("click", (event) => {
     }
   }
 
-  const playerCardButton = targetElement.closest<HTMLElement>("[data-action='open-player-detail']");
-  if (playerCardButton != null) {
-    appState = {
-      ...appState,
-      characterDetailOpen: true,
-    };
-    renderApp();
+  const closeOverlayButton = targetElement.closest<HTMLElement>("[data-action='close-overlay'], [data-action='close-character-detail']");
+  if (closeOverlayButton != null) {
+    updateOverlayView(null);
     return;
   }
 
-  const closeDetailButton = targetElement.closest<HTMLElement>("[data-action='close-character-detail']");
-  if (closeDetailButton != null) {
-    appState = {
-      ...appState,
-      characterDetailOpen: false,
-    };
-    renderApp();
+  const playerCardButton = targetElement.closest<HTMLElement>("[data-action='open-player-detail']");
+  if (playerCardButton != null) {
+    updateOverlayView("detail");
+    return;
+  }
+
+  const openCardsButton = targetElement.closest<HTMLElement>("[data-action='open-cards']");
+  if (openCardsButton != null) {
+    updateOverlayView("cards");
+    return;
+  }
+
+  const openValuablesButton = targetElement.closest<HTMLElement>("[data-action='open-valuables']");
+  if (openValuablesButton != null) {
+    updateOverlayView("valuables");
+    return;
+  }
+
+  const cardFilterButton = targetElement.closest<HTMLElement>("[data-card-filter]");
+  if (cardFilterButton != null) {
+    const filter = cardFilterButton.dataset.cardFilter as CardLibraryFilter | undefined;
+    if (filter != null) {
+      setCardFilter(filter);
+    }
+    return;
+  }
+
+  const cardButton = targetElement.closest<HTMLElement>("[data-card-id]");
+  if (cardButton != null) {
+    const cardId = cardButton.dataset.cardId;
+    if (cardId != null) {
+      selectCard(cardId);
+    }
+    return;
+  }
+
+  const valuableFilterButton = targetElement.closest<HTMLElement>("[data-valuable-filter]");
+  if (valuableFilterButton != null) {
+    const filter = valuableFilterButton.dataset.valuableFilter as ValuableLibraryFilter | undefined;
+    if (filter != null) {
+      setValuableFilter(filter);
+    }
+    return;
+  }
+
+  const valuableSortButton = targetElement.closest<HTMLElement>("[data-valuable-sort]");
+  if (valuableSortButton != null) {
+    const sortKey = valuableSortButton.dataset.valuableSort as ValuableLibrarySortKey | undefined;
+    if (sortKey != null) {
+      setValuableSort(sortKey);
+    }
+    return;
+  }
+
+  const valuableButton = targetElement.closest<HTMLElement>("[data-valuable-id]");
+  if (valuableButton != null) {
+    const valuableId = valuableButton.dataset.valuableId;
+    if (valuableId != null) {
+      selectValuable(valuableId);
+    }
+    return;
+  }
+
+  const equipButton = targetElement.closest<HTMLElement>("[data-action='equip-valuable'][data-valuable-id]");
+  if (equipButton != null) {
+    const valuableId = equipButton.dataset.valuableId;
+    if (valuableId != null) {
+      equipValuable(valuableId);
+    }
     return;
   }
 
@@ -184,6 +230,7 @@ appElement.addEventListener("click", (event) => {
         ui: {
           ...appState.gameState.ui,
           currentView: "map",
+          overlayView: null,
         },
       },
     };
@@ -204,6 +251,7 @@ appElement.addEventListener("click", (event) => {
         ui: {
           ...appState.gameState.ui,
           currentView: "city",
+          overlayView: null,
         },
       },
     };
@@ -229,12 +277,214 @@ appElement.addEventListener("click", (event) => {
         ui: {
           ...appState.gameState.ui,
           currentView: "house",
+          overlayView: null,
         },
+      },
+    };
+    renderApp();
+    return;
+  }
+
+  const mapCell = targetElement.closest<HTMLElement>("[data-map-x][data-map-y]");
+  if (mapCell != null && appState.gameState.ui.currentView === "map") {
+    const xValue = Number(mapCell.dataset.mapX);
+    const yValue = Number(mapCell.dataset.mapY);
+    const cityId = mapCell.dataset.cityId || null;
+    const cityName = cityId == null ? null : cityNameById[cityId] ?? null;
+
+    appState = {
+      ...appState,
+      modalState: {
+        type: "travel-confirm",
+        targetCoordinate: { x: xValue, y: yValue },
+        cityId,
+        cityName,
       },
     };
     renderApp();
   }
 });
+
+function updateOverlayView(
+  overlayView: AppState["gameState"]["ui"]["overlayView"]
+) {
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView,
+      },
+    },
+  };
+  renderApp();
+}
+
+function setCardFilter(filter: CardLibraryFilter) {
+  const visibleCards = getVisibleCards(filter);
+  const selectedCardId =
+    visibleCards.find((cardDefinition) => cardDefinition.id === appState.gameState.cards.selectedCardId)?.id ??
+    visibleCards[0]?.id ??
+    null;
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      cards: {
+        ...appState.gameState.cards,
+        selectedCardId,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        cardLibraryFilter: filter,
+        overlayView: "cards",
+      },
+    },
+  };
+  renderApp();
+}
+
+function selectCard(cardId: string) {
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      cards: {
+        ...appState.gameState.cards,
+        selectedCardId: cardId,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: "cards",
+      },
+    },
+  };
+  renderApp();
+}
+
+function setValuableFilter(filter: ValuableLibraryFilter) {
+  const visibleItems = getVisibleValuables(filter);
+  const selectedItemId =
+    visibleItems.find((itemDefinition) => itemDefinition.id === appState.gameState.valuables.selectedItemId)?.id ??
+    visibleItems[0]?.id ??
+    null;
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      valuables: {
+        ...appState.gameState.valuables,
+        selectedItemId,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        valuableLibraryFilter: filter,
+        overlayView: "valuables",
+      },
+    },
+  };
+  renderApp();
+}
+
+function setValuableSort(sortKey: ValuableLibrarySortKey) {
+  const nextSortDirection =
+    appState.gameState.ui.valuableLibrarySortKey === sortKey &&
+    appState.gameState.ui.valuableLibrarySortDirection === "asc"
+      ? "desc"
+      : "asc";
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        valuableLibrarySortKey: sortKey,
+        valuableLibrarySortDirection: nextSortDirection,
+        overlayView: "valuables",
+      },
+    },
+  };
+  renderApp();
+}
+
+function selectValuable(valuableId: ValuableItemId) {
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      valuables: {
+        ...appState.gameState.valuables,
+        selectedItemId: valuableId,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: "valuables",
+      },
+    },
+  };
+  renderApp();
+}
+
+function equipValuable(valuableId: ValuableItemId) {
+  const selectedItem = appState.gameState.valuables.items.find(
+    (itemDefinition) => itemDefinition.id === valuableId
+  );
+  if (selectedItem == null) {
+    return;
+  }
+
+  const nextWeaponSet = { ...appState.gameState.valuables.equippedWeaponSet };
+  if (selectedItem.category === "weapon") {
+    nextWeaponSet.swordId = valuableId;
+  }
+
+  if (selectedItem.category === "armor") {
+    nextWeaponSet.armorId = valuableId;
+  }
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      valuables: {
+        ...appState.gameState.valuables,
+        selectedItemId: valuableId,
+        equippedWeaponSet: nextWeaponSet,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: "valuables",
+      },
+    },
+  };
+  renderApp();
+}
+
+function getVisibleCards(filter: CardLibraryFilter): CardDefinition[] {
+  const ownedIdSet = new Set(appState.gameState.cards.ownedCardIds);
+
+  return prototypeCards.filter((cardDefinition) => {
+    if (!ownedIdSet.has(cardDefinition.id)) {
+      return false;
+    }
+
+    return filter === "all" ? true : cardDefinition.category === filter;
+  });
+}
+
+function getVisibleValuables(filter: ValuableLibraryFilter): ValuableItemDefinition[] {
+  if (filter === "all") {
+    return appState.gameState.valuables.items;
+  }
+
+  return appState.gameState.valuables.items.filter(
+    (itemDefinition) => itemDefinition.category === "weapon" || itemDefinition.category === "armor"
+  );
+}
 
 function handleModalConfirm() {
   if (appState.modalState == null) {
@@ -281,7 +531,7 @@ function renderApp() {
     (houseDefinition) => houseDefinition.id === appState.gameState.world.currentHouseId
   );
   const playerCharacter =
-    prototypeCharacters.find((characterDefinition) => characterDefinition.id === "char.player") ??
+    prototypeCharacters.find((characterDefinition) => characterDefinition.id === playerCharacterId) ??
     prototypeCharacters[0]!;
   const playerPanelModel = createGlobalPlayerPanelModel(playerCharacter, appState.gameState, null);
 
@@ -337,30 +587,6 @@ function renderApp() {
     `;
   }
 
-  const detailMarkup = appState.characterDetailOpen
-    ? renderCharacterDetailView(playerCharacter, {
-        cityName: cityNameById[playerCharacter.cityId],
-        clanName: playerCharacter.clanId == null ? "无" : clanNameById[playerCharacter.clanId] ?? playerCharacter.clanId,
-        houseName: playerCharacter.houseId == null ? "无" : houseNameById[playerCharacter.houseId] ?? playerCharacter.houseId,
-        lordName:
-          playerCharacter.houseId == null
-            ? "无"
-            : characterNameById[
-                prototypeHouses.find((houseDefinition) => houseDefinition.id === playerCharacter.houseId)
-                  ?.defaultCharacterId ?? ""
-              ] ?? houseNameById[playerCharacter.houseId] ?? "无",
-        stipendText: `${playerCharacter.stats.gold}贯`,
-        schoolName: "无",
-        masterName: "无",
-        weaponName: "胁差",
-        armorName: "锁具足",
-        notoriety:
-          appState.gameState.runtime.variables.notoriety as number | undefined
-            ? Number(appState.gameState.runtime.variables.notoriety)
-            : 0,
-      })
-    : "";
-
   appRoot.innerHTML = `
     <div class="l-shell l-shell--prototype">
       <main class="l-stage">
@@ -372,9 +598,92 @@ function renderApp() {
         </div>
       </main>
       ${renderModal()}
-      ${detailMarkup}
+      ${renderOverlay(playerCharacter)}
     </div>
   `;
+}
+
+function renderOverlay(playerCharacter: CharacterDefinition): string {
+  const overlayView = appState.gameState.ui.overlayView;
+
+  if (overlayView === "detail") {
+    return renderCharacterDetailView(playerCharacter, buildCharacterDetailOptions(playerCharacter));
+  }
+
+  if (overlayView === "cards") {
+    return renderCardLibraryView({
+      cardDefinitions: prototypeCards,
+      inventory: appState.gameState.cards,
+      filter: appState.gameState.ui.cardLibraryFilter,
+    });
+  }
+
+  if (overlayView === "valuables") {
+    return renderValuableLibraryView({
+      inventory: appState.gameState.valuables,
+      filter: appState.gameState.ui.valuableLibraryFilter,
+      sortKey: appState.gameState.ui.valuableLibrarySortKey,
+      sortDirection: appState.gameState.ui.valuableLibrarySortDirection,
+    });
+  }
+
+  return "";
+}
+
+function buildCharacterDetailOptions(
+  playerCharacter: CharacterDefinition
+): CharacterDetailViewOptions {
+  const activeHouseDefinition =
+    playerCharacter.houseId == null
+      ? null
+      : prototypeHouses.find((houseDefinition) => houseDefinition.id === playerCharacter.houseId) ?? null;
+  const equippedWeapon = resolveEquippedItemName("weapon");
+  const equippedArmor = resolveEquippedItemName("armor");
+  const notorietyValue = appState.gameState.runtime.variables.notoriety;
+
+  const options: CharacterDetailViewOptions = {
+    notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
+    stipendText: `${playerCharacter.stats.gold} 贯`,
+    schoolName: "无",
+    masterName: "无",
+    weaponName: equippedWeapon ?? "无",
+    armorName: equippedArmor ?? "无",
+  };
+
+  const cityName = cityNameById[playerCharacter.cityId];
+  if (cityName != null) {
+    options.cityName = cityName;
+  }
+
+  options.clanName = playerCharacter.clanId ?? "无";
+  options.houseName =
+    playerCharacter.houseId == null ? "无" : houseNameById[playerCharacter.houseId] ?? playerCharacter.houseId;
+  options.lordName =
+    activeHouseDefinition?.defaultCharacterId == null
+      ? activeHouseDefinition == null
+        ? "无"
+        : houseNameById[activeHouseDefinition.id] ?? "无"
+      : characterNameById[activeHouseDefinition.defaultCharacterId] ??
+        houseNameById[activeHouseDefinition.id] ??
+        "无";
+
+  return options;
+}
+
+function resolveEquippedItemName(category: ValuableItemDefinition["category"]): string | null {
+  const equippedId =
+    category === "weapon"
+      ? appState.gameState.valuables.equippedWeaponSet.swordId
+      : appState.gameState.valuables.equippedWeaponSet.armorId;
+
+  if (equippedId == null) {
+    return null;
+  }
+
+  return (
+    appState.gameState.valuables.items.find((itemDefinition) => itemDefinition.id === equippedId)?.name ??
+    null
+  );
 }
 
 function renderModal(): string {
@@ -402,7 +711,7 @@ function renderModal(): string {
 
   return renderConfirmModal({
     title: `进入 ${appState.modalState.cityName}`,
-    body: "人物与城池坐标已重合，确认后展开城市结构。",
+    body: "人物与城市坐标已经重合，确认后展开城市结构。",
     confirmLabel: "进入城市",
     cancelLabel: "稍后",
     portraitLabel:

@@ -22,6 +22,8 @@ export function createGlobalPlayerPanelModel(
   state: GameState,
   activeMission: MissionDefinition | null
 ): GlobalPlayerPanelModel {
+  const notorietyValue = state.runtime.variables.notoriety;
+
   return {
     portraitLabel:
       playerCharacter.portraitVariants?.find(
@@ -29,12 +31,12 @@ export function createGlobalPlayerPanelModel(
       )?.label ?? "通常",
     name: playerCharacter.name,
     title: playerCharacter.title ?? "无职位",
-    occupation: playerCharacter.occupation ?? "无",
-    currentDateText: `${state.calendar.year}年 ${state.calendar.month}月${state.calendar.day}日`,
+    occupation: playerCharacter.occupation ?? "无职业",
+    currentDateText: `${state.calendar.year}年 ${state.calendar.month}月 ${state.calendar.day}日`,
     ageText: `${playerCharacter.age}岁`,
     stamina: playerCharacter.stamina,
     fame: playerCharacter.stats.fame,
-    notoriety: state.runtime.variables.notoriety as number | undefined ? Number(state.runtime.variables.notoriety) : 0,
+    notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
     reviewDateText: state.ui.reviewDateText,
     mainHouseMissionText: activeMission?.title ?? state.ui.mainHouseMissionText,
     biography: playerCharacter.biography ?? "暂无人物简介。",

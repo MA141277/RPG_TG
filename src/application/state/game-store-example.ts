@@ -1,12 +1,12 @@
-import { createGameStore } from "./game-store";
-import { createInitialState } from "./create-initial-state";
 import {
   getSampleChoiceOptions,
   sampleCharacters,
-  sampleEventsById,
   sampleEvent,
+  sampleEventsById,
   sampleScenesById,
 } from "../../content/sample-scenario";
+import { createInitialState } from "./create-initial-state";
+import { createGameStore } from "./game-store";
 
 export function runSampleSceneFlow() {
   const initialState = createInitialState({
@@ -21,6 +21,18 @@ export function runSampleSceneFlow() {
     pinnedCharacterId: "char.kinoshita_tokichiro",
     reviewDateText: "剩余40天",
     mainHouseMissionText: "前往评定会场",
+    cards: {
+      ownedCardIds: [],
+      selectedCardId: null,
+    },
+    valuables: {
+      items: [],
+      selectedItemId: null,
+      equippedWeaponSet: {
+        swordId: null,
+        armorId: null,
+      },
+    },
     activeEventId: sampleEvent.id,
     activeSceneId: sampleEvent.entrySceneId,
     currentView: "scene",
