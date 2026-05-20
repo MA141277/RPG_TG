@@ -60,6 +60,7 @@ export const prototypeHouses: HouseDefinition[] = [
     cityId: "city.kulan",
     name: "粮铺",
     type: "merchant",
+    moduleId: "grain-shop",
     characterIds: ["char.kulan_grain_shopkeeper"],
     defaultCharacterId: "char.kulan_grain_shopkeeper",
     backAction: {

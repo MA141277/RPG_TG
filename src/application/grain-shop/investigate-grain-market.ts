@@ -1,5 +1,6 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import { assertExists } from "../../shared/assert";
 import { getInvestigateDialogue, pickMarketRumor } from "./grain-market";
 import {
   advanceGrainShopTime,
@@ -20,12 +21,11 @@ export function investigateGrainMarket(
   characterDefinitions: CharacterDefinition[],
   playerCharacterId: string
 ): InvestigateGrainMarketResult {
-  const snapshot = createGrainShopSnapshot(
-    state,
-    characterDefinitions.find(
-      (characterDefinition) => characterDefinition.id === playerCharacterId
-    )!
+  const playerCharacter = characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
   );
+  assertExists(playerCharacter, `Player character not found for id "${playerCharacterId}".`);
+  const snapshot = createGrainShopSnapshot(state, playerCharacter);
 
   let nextState = mutateGrainShopRelationship(state, 1);
   nextState = advanceGrainShopTime(nextState);

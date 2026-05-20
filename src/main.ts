@@ -1,4 +1,12 @@
 import "./styles/app.css";
+import { getHouseModule } from "./application/house-modules/house-module-registry";
+import {
+  equipValuableItem,
+  getVisibleOwnedCards,
+  getVisibleValuables as getFilteredValuables,
+  resolveSelectedCardId,
+  resolveSelectedValuableId,
+} from "./application/inventory/inventory-selection";
 import { enterCity } from "./application/navigation/enter-city";
 import {
   travelToCoordinate,
@@ -16,12 +24,15 @@ import {
 } from "./content/prototype-world";
 import type { CardDefinition } from "./domain/card";
 import type { CharacterDefinition } from "./domain/character";
+import type { HouseDefinition } from "./domain/house";
+import type { HouseModuleRequest, HouseModuleTransitionResult } from "./domain/house-module";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
   ValuableLibrarySortKey,
 } from "./domain/global-ui";
 import type { ValuableItemDefinition, ValuableItemId } from "./domain/valuable-item";
+import { assertExists } from "./shared/assert";
 import { renderConfirmModal } from "./ui/components/modal/confirm-modal";
 import {
   createGlobalPlayerPanelModel,
@@ -30,18 +41,6 @@ import {
 import { renderCharacterDetailView } from "./ui/views/character/character-detail-view";
 import { renderCardLibraryView } from "./ui/views/cards/card-library-view";
 import { renderCityView } from "./ui/views/city/city-view";
-import {
-  enterGrainShop,
-  handleGrainShopAction,
-  updateGrainShopTradeQuantity,
-  isGrainShopHouse,
-  leaveGrainShopSession,
-  tickAccountingMinigame,
-  type GrainShopHostState,
-} from "./application/grain-shop/grain-shop-interactions";
-import { startAccountingTimer, stopAccountingTimer } from "./application/grain-shop/accounting-timer";
-import { createGrainShopSnapshot } from "./application/grain-shop/grain-shop-snapshot";
-import type { GrainShopSessionUi } from "./application/grain-shop/grain-shop-session-ui";
 import { createHouseViewModel } from "./ui/views/house/house-view";
 import { renderGrainShopHouseView } from "./ui/views/house/grain-shop-house-view";
 import { createMapViewModel, renderMapView } from "./ui/views/map/map-view";
@@ -63,11 +62,15 @@ type AppModalState =
 
 type AppState = {
   gameState: ReturnType<typeof createInitialState>;
+  characterDefinitions: CharacterDefinition[];
   playerCoordinate: GridCoordinate;
   modalState: AppModalState;
 };
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
+
+const GAME_VIEWPORT_WIDTH = 1600;
+const GAME_VIEWPORT_HEIGHT = 900;
 
 const appElement = document.querySelector<HTMLElement>("#app");
 
@@ -76,11 +79,18 @@ if (appElement == null) {
 }
 
 const appRoot = appElement;
+syncGameViewport();
+window.addEventListener("resize", syncGameViewport);
 const playerCharacterId = "char.player";
 const cityCoordinatesById: Record<string, GridCoordinate> = {
   [prototypeCity.id]: { x: 2, y: 2 },
 };
-const prototypeCityCoordinate = cityCoordinatesById[prototypeCity.id]!;
+const prototypeCityCoordinateCandidate = cityCoordinatesById[prototypeCity.id];
+assertExists(
+  prototypeCityCoordinateCandidate,
+  `Missing city coordinate for "${prototypeCity.id}".`
+);
+const prototypeCityCoordinate = prototypeCityCoordinateCandidate;
 const cityNameById = Object.fromEntries(
   [prototypeCity].map((cityDefinition) => [cityDefinition.id, cityDefinition.name])
 );
@@ -91,8 +101,7 @@ const characterNameById = Object.fromEntries(
   prototypeCharacters.map((characterDefinition) => [characterDefinition.id, characterDefinition.name])
 );
 
-let characterDefinitions: CharacterDefinition[] = [...prototypeCharacters];
-let grainShopSessionUi: GrainShopSessionUi | null = null;
+const intervalHandles: Record<string, number> = {};
 
 let appState: AppState = {
   gameState: createInitialState({
@@ -125,6 +134,7 @@ let appState: AppState = {
     },
     currentView: "map",
   }),
+  characterDefinitions: [...prototypeCharacters],
   playerCoordinate: { x: 0, y: 0 },
   modalState: null,
 };
@@ -137,14 +147,14 @@ appElement.addEventListener("input", (event) => {
     return;
   }
 
-  if (targetElement.dataset.grainShopField !== "trade-quantity") {
-    return;
+  const fieldId = targetElement.dataset.houseField;
+  if (fieldId != null) {
+    dispatchCurrentHouseRequest({
+      type: "field",
+      fieldId,
+      value: targetElement.value,
+    });
   }
-
-  const quantity = Math.max(1, parseInt(targetElement.value, 10) || 1);
-  const nextHost = updateGrainShopTradeQuantity(getGrainShopHostState(), quantity);
-  applyGrainShopHostState(nextHost);
-  renderApp();
 });
 
 appElement.addEventListener("click", (event) => {
@@ -251,6 +261,7 @@ appElement.addEventListener("click", (event) => {
 
   const leaveCityButton = targetElement.closest<HTMLElement>("[data-action='leave-city']");
   if (leaveCityButton != null) {
+    clearAllHouseIntervals();
     appState = {
       ...appState,
       gameState: {
@@ -263,6 +274,7 @@ appElement.addEventListener("click", (event) => {
           ...appState.gameState.ui,
           currentView: "map",
           overlayView: null,
+          houseSession: null,
         },
       },
     };
@@ -270,35 +282,21 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const grainShopAction = targetElement.closest<HTMLElement>("[data-grain-shop-action]");
-  if (grainShopAction != null && grainShopSessionUi != null) {
-    const action = grainShopAction.dataset.grainShopAction;
-    if (action != null) {
-      dispatchGrainShopAction(action);
+  const houseActionButton = targetElement.closest<HTMLElement>("[data-house-action]");
+  if (houseActionButton != null) {
+    const actionId = houseActionButton.dataset.houseAction;
+    if (actionId != null) {
+      dispatchCurrentHouseRequest({
+        type: "action",
+        actionId,
+      });
     }
     return;
   }
 
   const leaveHouseButton = targetElement.closest<HTMLElement>("[data-action='leave-house']");
   if (leaveHouseButton != null) {
-    const nextHost = leaveGrainShopSession(getGrainShopHostState());
-    applyGrainShopHostState(nextHost);
-    appState = {
-      ...appState,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "city",
-          overlayView: null,
-        },
-      },
-    };
-    renderApp();
+    leaveCurrentHouse();
     return;
   }
 
@@ -309,30 +307,7 @@ appElement.addEventListener("click", (event) => {
       return;
     }
 
-    appState = {
-      ...appState,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: houseId,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "house",
-          overlayView: null,
-        },
-      },
-    };
-
-    if (isGrainShopHouse(houseId)) {
-      applyGrainShopHostState(enterGrainShop(getGrainShopHostState(), playerCharacterId));
-    } else {
-      grainShopSessionUi = null;
-      stopAccountingTimer();
-    }
-
-    renderApp();
+    enterHouseById(houseId);
     return;
   }
 
@@ -356,9 +331,23 @@ appElement.addEventListener("click", (event) => {
   }
 });
 
-function updateOverlayView(
-  overlayView: AppState["gameState"]["ui"]["overlayView"]
-) {
+function getActiveHouseDefinition(): HouseDefinition | null {
+  return (
+    prototypeHouses.find(
+      (houseDefinition) => houseDefinition.id === appState.gameState.world.currentHouseId
+    ) ?? null
+  );
+}
+
+function getPlayerCharacter(): CharacterDefinition {
+  const playerCharacter = appState.characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
+  );
+  assertExists(playerCharacter, `Player character not found for id "${playerCharacterId}".`);
+  return playerCharacter;
+}
+
+function updateOverlayView(overlayView: AppState["gameState"]["ui"]["overlayView"]) {
   appState = {
     ...appState,
     gameState: {
@@ -374,10 +363,10 @@ function updateOverlayView(
 
 function setCardFilter(filter: CardLibraryFilter) {
   const visibleCards = getVisibleCards(filter);
-  const selectedCardId =
-    visibleCards.find((cardDefinition) => cardDefinition.id === appState.gameState.cards.selectedCardId)?.id ??
-    visibleCards[0]?.id ??
-    null;
+  const selectedCardId = resolveSelectedCardId(
+    visibleCards,
+    appState.gameState.cards.selectedCardId
+  );
 
   appState = {
     ...appState,
@@ -417,10 +406,10 @@ function selectCard(cardId: string) {
 
 function setValuableFilter(filter: ValuableLibraryFilter) {
   const visibleItems = getVisibleValuables(filter);
-  const selectedItemId =
-    visibleItems.find((itemDefinition) => itemDefinition.id === appState.gameState.valuables.selectedItemId)?.id ??
-    visibleItems[0]?.id ??
-    null;
+  const selectedItemId = resolveSelectedValuableId(
+    visibleItems,
+    appState.gameState.valuables.selectedItemId
+  );
 
   appState = {
     ...appState,
@@ -481,31 +470,11 @@ function selectValuable(valuableId: ValuableItemId) {
 }
 
 function equipValuable(valuableId: ValuableItemId) {
-  const selectedItem = appState.gameState.valuables.items.find(
-    (itemDefinition) => itemDefinition.id === valuableId
-  );
-  if (selectedItem == null) {
-    return;
-  }
-
-  const nextWeaponSet = { ...appState.gameState.valuables.equippedWeaponSet };
-  if (selectedItem.category === "weapon") {
-    nextWeaponSet.swordId = valuableId;
-  }
-
-  if (selectedItem.category === "armor") {
-    nextWeaponSet.armorId = valuableId;
-  }
-
   appState = {
     ...appState,
     gameState: {
       ...appState.gameState,
-      valuables: {
-        ...appState.gameState.valuables,
-        selectedItemId: valuableId,
-        equippedWeaponSet: nextWeaponSet,
-      },
+      valuables: equipValuableItem(appState.gameState.valuables, valuableId),
       ui: {
         ...appState.gameState.ui,
         overlayView: "valuables",
@@ -516,25 +485,179 @@ function equipValuable(valuableId: ValuableItemId) {
 }
 
 function getVisibleCards(filter: CardLibraryFilter): CardDefinition[] {
-  const ownedIdSet = new Set(appState.gameState.cards.ownedCardIds);
-
-  return prototypeCards.filter((cardDefinition) => {
-    if (!ownedIdSet.has(cardDefinition.id)) {
-      return false;
-    }
-
-    return filter === "all" ? true : cardDefinition.category === filter;
-  });
+  return getVisibleOwnedCards(prototypeCards, appState.gameState.cards, filter);
 }
 
 function getVisibleValuables(filter: ValuableLibraryFilter): ValuableItemDefinition[] {
-  if (filter === "all") {
-    return appState.gameState.valuables.items;
+  return getFilteredValuables(appState.gameState.valuables.items, filter);
+}
+
+function enterHouseById(houseId: string): void {
+  const houseDefinition = prototypeHouses.find(
+    (candidateHouse) => candidateHouse.id === houseId
+  );
+  assertExists(houseDefinition, `House not found for id "${houseId}".`);
+
+  clearAllHouseIntervals();
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      world: {
+        ...appState.gameState.world,
+        currentHouseId: houseId,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        currentView: "house",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+  };
+
+  const moduleId = houseDefinition.moduleId;
+  if (moduleId != null) {
+    const houseModule = getHouseModule(moduleId);
+    const result = houseModule.enter({
+      gameState: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+      houseDefinition,
+      playerCharacterId,
+    });
+    applyHouseModuleResult(houseDefinition, moduleId, result);
   }
 
-  return appState.gameState.valuables.items.filter(
-    (itemDefinition) => itemDefinition.category === "weapon" || itemDefinition.category === "armor"
-  );
+  renderApp();
+}
+
+function leaveCurrentHouse(): void {
+  const activeHouse = getActiveHouseDefinition();
+  if (activeHouse?.moduleId != null) {
+    const houseModule = getHouseModule(activeHouse.moduleId);
+    const result = houseModule.leave({
+      gameState: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+      houseDefinition: activeHouse,
+      playerCharacterId,
+      sessionState: appState.gameState.ui.houseSession?.state ?? null,
+    });
+    applyHouseModuleResult(activeHouse, activeHouse.moduleId, result);
+  } else {
+    clearAllHouseIntervals();
+  }
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      world: {
+        ...appState.gameState.world,
+        currentHouseId: null,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        currentView: "city",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+  };
+  renderApp();
+}
+
+function dispatchCurrentHouseRequest(request: HouseModuleRequest): void {
+  const activeHouse = getActiveHouseDefinition();
+  const moduleId = activeHouse?.moduleId;
+  if (activeHouse == null || moduleId == null) {
+    return;
+  }
+
+  const houseModule = getHouseModule(moduleId);
+  const result = houseModule.dispatch({
+    gameState: appState.gameState,
+    characterDefinitions: appState.characterDefinitions,
+    houseDefinition: activeHouse,
+    playerCharacterId,
+    sessionState: appState.gameState.ui.houseSession?.state ?? null,
+    request,
+  });
+  applyHouseModuleResult(activeHouse, moduleId, result);
+  renderApp();
+}
+
+function applyHouseModuleResult(
+  houseDefinition: HouseDefinition,
+  moduleId: NonNullable<HouseDefinition["moduleId"]>,
+  result: HouseModuleTransitionResult
+): void {
+  appState = {
+    ...appState,
+    gameState: {
+      ...result.gameState,
+      ui: {
+        ...result.gameState.ui,
+        houseSession:
+          result.sessionState == null
+            ? null
+            : {
+                moduleId,
+                state: result.sessionState,
+              },
+      },
+    },
+    characterDefinitions: result.characterDefinitions,
+  };
+
+  applyHouseSideEffects(houseDefinition, moduleId, result.sideEffects ?? []);
+}
+
+function applyHouseSideEffects(
+  houseDefinition: HouseDefinition,
+  moduleId: NonNullable<HouseDefinition["moduleId"]>,
+  sideEffects: Array<{
+    type: "start-interval" | "stop-interval";
+    intervalId: string;
+    everyMs?: number;
+    request?: HouseModuleRequest;
+  }>
+): void {
+  sideEffects.forEach((sideEffect) => {
+    if (sideEffect.type === "stop-interval") {
+      stopHouseInterval(sideEffect.intervalId);
+      return;
+    }
+
+    if (sideEffect.everyMs == null || sideEffect.request == null) {
+      return;
+    }
+
+    stopHouseInterval(sideEffect.intervalId);
+    intervalHandles[sideEffect.intervalId] = window.setInterval(() => {
+      const activeHouse = getActiveHouseDefinition();
+      if (activeHouse?.id !== houseDefinition.id || activeHouse.moduleId !== moduleId) {
+        stopHouseInterval(sideEffect.intervalId);
+        return;
+      }
+
+      dispatchCurrentHouseRequest(sideEffect.request!);
+    }, sideEffect.everyMs);
+  });
+}
+
+function stopHouseInterval(intervalId: string): void {
+  const handle = intervalHandles[intervalId];
+  if (handle != null) {
+    window.clearInterval(handle);
+    delete intervalHandles[intervalId];
+  }
+}
+
+function clearAllHouseIntervals(): void {
+  Object.keys(intervalHandles).forEach((intervalId) => {
+    stopHouseInterval(intervalId);
+  });
 }
 
 function handleModalConfirm() {
@@ -568,6 +691,7 @@ function handleModalConfirm() {
     return;
   }
 
+  clearAllHouseIntervals();
   appState = {
     ...appState,
     gameState: enterCity(appState.gameState, appState.modalState.cityId),
@@ -578,12 +702,8 @@ function handleModalConfirm() {
 
 function renderApp() {
   const currentView = appState.gameState.ui.currentView;
-  const activeHouse = prototypeHouses.find(
-    (houseDefinition) => houseDefinition.id === appState.gameState.world.currentHouseId
-  );
-  const playerCharacter =
-    characterDefinitions.find((characterDefinition) => characterDefinition.id === playerCharacterId) ??
-    characterDefinitions[0]!;
+  const activeHouse = getActiveHouseDefinition();
+  const playerCharacter = getPlayerCharacter();
   const playerPanelModel = createGlobalPlayerPanelModel(playerCharacter, appState.gameState, null);
 
   let stageMarkup = "";
@@ -601,60 +721,64 @@ function renderApp() {
   } else if (currentView === "city") {
     stageMarkup = renderCityView(prototypeCity, prototypeHouses);
   } else if (currentView === "house" && activeHouse != null) {
-    if (isGrainShopHouse(activeHouse.id) && grainShopSessionUi != null) {
-      const shopkeeper =
-        characterDefinitions.find(
-          (characterDefinition) =>
-            characterDefinition.id === activeHouse.defaultCharacterId
-        ) ?? null;
-      stageMarkup = renderGrainShopHouseView({
+    if (activeHouse.moduleId != null) {
+      const houseModule = getHouseModule(activeHouse.moduleId);
+      const houseViewModel = houseModule.selectViewModel({
+        gameState: appState.gameState,
+        characterDefinitions: appState.characterDefinitions,
         houseDefinition: activeHouse,
-        snapshot: createGrainShopSnapshot(appState.gameState, playerCharacter),
-        sessionUi: grainShopSessionUi,
-        npcName: shopkeeper?.name ?? "掌柜",
+        playerCharacterId,
+        sessionState: appState.gameState.ui.houseSession?.state ?? null,
       });
-    } else {
-    const houseViewModel = createHouseViewModel(activeHouse, characterDefinitions);
 
-    stageMarkup = `
-      <section class="view-house">
-        <div class="c-stage-header">
-          <div>
-            <p class="c-stage-header__eyebrow">屋敷</p>
-            <h1 class="c-stage-header__title">${houseViewModel.title}</h1>
+      if (houseViewModel.moduleId === "grain-shop") {
+        stageMarkup = renderGrainShopHouseView(houseViewModel);
+      }
+    } else {
+      const houseViewModel = createHouseViewModel(activeHouse, appState.characterDefinitions);
+
+      stageMarkup = `
+        <section class="view-house">
+          <div class="c-stage-header">
+            <div>
+              <p class="c-stage-header__eyebrow">屋敷</p>
+              <h1 class="c-stage-header__title">${houseViewModel.title}</h1>
+            </div>
+            <button class="c-button c-button--ghost" data-action="leave-house">${houseViewModel.backButtonLabel}</button>
           </div>
-          <button class="c-button c-button--ghost" data-action="leave-house">${houseViewModel.backButtonLabel}</button>
-        </div>
-        <div class="c-house-interior">
-          <div class="c-house-interior__hero c-panel">
-            <strong class="c-house-interior__hero-name">
-              ${houseViewModel.defaultCharacterId == null ? "无人接待" : "默认角色已展开"}
-            </strong>
-            <p class="c-house-interior__hero-text">
-              这里是 ${houseViewModel.title}。后续可以在这里接入角色功能、事件入口和小游戏。
-            </p>
+          <div class="c-house-interior">
+            <div class="c-house-interior__hero c-panel">
+              <strong class="c-house-interior__hero-name">
+                ${houseViewModel.defaultCharacterId == null ? "无人接待" : "默认角色已展开"}
+              </strong>
+              <p class="c-house-interior__hero-text">
+                这里是 ${houseViewModel.title}。后续可以在这里接入角色功能、事件入口和小游戏。
+              </p>
+            </div>
+            <div class="c-house-roster">
+              ${houseViewModel.characterSummaries
+                .map(
+                  (characterSummary) => `
+                    <article class="c-roster-card c-panel">
+                      <span class="c-roster-card__title">${characterSummary.title ?? "在场人物"}</span>
+                      <strong class="c-roster-card__name">${characterSummary.name}</strong>
+                    </article>
+                  `
+                )
+                .join("")}
+            </div>
           </div>
-          <div class="c-house-roster">
-            ${houseViewModel.characterSummaries
-              .map(
-                (characterSummary) => `
-                  <article class="c-roster-card c-panel">
-                    <span class="c-roster-card__title">${characterSummary.title ?? "在场人物"}</span>
-                    <strong class="c-roster-card__name">${characterSummary.name}</strong>
-                  </article>
-                `
-              )
-              .join("")}
-          </div>
-        </div>
-      </section>
-    `;
+        </section>
+      `;
     }
   }
 
   appRoot.innerHTML = `
-    <div class="l-shell l-shell--prototype">
-      <main class="l-stage">
+    <div class="l-viewport">
+      <div class="l-game-frame">
+        <div class="l-game-screen">
+        <div class="l-shell l-shell--prototype">
+          <main class="l-stage">
         ${stageMarkup}
         <div class="l-overlay-ui">
           <button class="u-click-layer" data-action="open-player-detail" aria-label="打开角色详情">
@@ -662,10 +786,24 @@ function renderApp() {
           </button>
         </div>
       </main>
-      ${renderModal()}
-      ${renderOverlay(playerCharacter)}
+          ${renderModal()}
+          ${renderOverlay(playerCharacter)}
+        </div>
+      </div>
+      </div>
     </div>
   `;
+}
+
+function syncGameViewport(): void {
+  const scale = Math.min(
+    window.innerWidth / GAME_VIEWPORT_WIDTH,
+    window.innerHeight / GAME_VIEWPORT_HEIGHT
+  );
+
+  appRoot.style.setProperty("--game-width", `${GAME_VIEWPORT_WIDTH}px`);
+  appRoot.style.setProperty("--game-height", `${GAME_VIEWPORT_HEIGHT}px`);
+  appRoot.style.setProperty("--game-scale", `${scale}`);
 }
 
 function renderOverlay(playerCharacter: CharacterDefinition): string {
@@ -695,50 +833,6 @@ function renderOverlay(playerCharacter: CharacterDefinition): string {
   return "";
 }
 
-function getGrainShopHostState(): GrainShopHostState {
-  return {
-    gameState: appState.gameState,
-    characterDefinitions,
-    grainShopSessionUi,
-  };
-}
-
-function applyGrainShopHostState(nextHost: GrainShopHostState): void {
-  appState = {
-    ...appState,
-    gameState: nextHost.gameState,
-  };
-  characterDefinitions = nextHost.characterDefinitions;
-  grainShopSessionUi = nextHost.grainShopSessionUi;
-}
-
-function startGrainShopAccountingTimer(): void {
-  stopAccountingTimer();
-  startAccountingTimer(() => {
-    const nextHost = tickAccountingMinigame(getGrainShopHostState(), playerCharacterId);
-    applyGrainShopHostState(nextHost);
-    renderApp();
-  });
-}
-
-function dispatchGrainShopAction(action: string): void {
-  const nextHost = handleGrainShopAction(getGrainShopHostState(), action, playerCharacterId);
-  applyGrainShopHostState(nextHost);
-  renderApp();
-
-  if (action === "accounting") {
-    startGrainShopAccountingTimer();
-  }
-
-  if (
-    action === "close-result" ||
-    action === "close-alert" ||
-    action === "close-trade"
-  ) {
-    stopAccountingTimer();
-  }
-}
-
 function buildCharacterDetailOptions(
   playerCharacter: CharacterDefinition
 ): CharacterDetailViewOptions {
@@ -752,7 +846,7 @@ function buildCharacterDetailOptions(
 
   const options: CharacterDetailViewOptions = {
     notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
-    stipendText: `${playerCharacter.stats.gold} 贯`,
+    stipendText: `${playerCharacter.stats.gold} 文`,
     schoolName: "无",
     masterName: "无",
     weaponName: equippedWeapon ?? "无",

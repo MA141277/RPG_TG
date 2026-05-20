@@ -9,11 +9,12 @@
   --grain-shop-scene-bg: url("../../sliced_ui_assets/lianghang.png");
   --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
   --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
+
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
-  min-height: calc(100vh - var(--space-5) * 2);
+  min-height: 100%;
   color: #2f2319;
   overflow: hidden;
   isolation: isolate;
@@ -165,6 +166,7 @@
   z-index: 2;
   align-self: end;
   display: grid;
+
   /* 参考 lianghangcankao：对话框与立绘紧贴成一组，靠右排列 */
   grid-template-columns: minmax(0, min(46vw, 460px)) auto;
   gap: 0;
@@ -173,6 +175,7 @@
   width: 100%;
   padding: 0 var(--space-2) var(--space-2);
   padding-left: clamp(150px, 18vw, 200px);
+
   /* 铺满网格用于排版，但不拦截中央功能按钮的点击 */
   pointer-events: none;
 }
@@ -528,7 +531,7 @@
   opacity: 0.8;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .c-grain-shop-npc-idle {
     left: var(--space-3);
   }
@@ -536,6 +539,7 @@
   .c-grain-shop-scene-card {
     left: var(--space-3);
     bottom: var(--space-3);
+    width: min(100%, 148px);
   }
 
   .c-grain-shop-avatar {
@@ -568,10 +572,6 @@
   .c-grain-shop-portrait {
     width: min(42vw, 220px);
     min-height: min(44vh, 300px);
-  }
-
-  .c-grain-shop-scene-card {
-    width: min(100%, 148px);
   }
 
   .c-grain-shop-actions {

@@ -1,6 +1,7 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import type { GrainShopTradeMode } from "../../domain/grain-shop";
+import { assertExists } from "../../shared/assert";
 import { getTradeTotal } from "./grain-market";
 import {
   advanceGrainShopTime,
@@ -23,12 +24,11 @@ export function executeGrainTrade(
   grainPrice: number
 ): GrainTradeResult {
   const total = getTradeTotal(grainPrice, quantity);
-  const snapshot = createGrainShopSnapshot(
-    state,
-    characterDefinitions.find(
-      (characterDefinition) => characterDefinition.id === playerCharacterId
-    )!
+  const playerCharacter = characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
   );
+  assertExists(playerCharacter, `Player character not found for id "${playerCharacterId}".`);
+  const snapshot = createGrainShopSnapshot(state, playerCharacter);
 
   if (mode === "buy") {
     if (snapshot.money < total) {

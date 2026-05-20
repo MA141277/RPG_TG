@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
+    "test": "npm run build:test && node --test tests/robustness.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint:ts": "eslint .",
     "lint:css": "stylelint \"src/styles/**/*.css\"",

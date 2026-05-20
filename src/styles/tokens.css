@@ -25,4 +25,7 @@
   --z-scene-overlay: 200;
   --duration-fast: 160ms;
   --duration-mid: 280ms;
+  --game-width: 1600px;
+  --game-height: 900px;
+  --game-scale: 1;
 }

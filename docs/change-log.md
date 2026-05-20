@@ -151,3 +151,67 @@
 - 角色详情、卡库、贵重物现在共用一套全屏浮层切换规则，后续新增日志页、任务页、背包页时可以直接复用
 - 贵重物列表已经具备筛选、排序、详情展示和单槽装备的基础交互，后续只需继续补业务规则
 - 全局主角栏到库存系统的用户路径已经打通，可直接在浏览器里验证交互
+
+## 2026-05-20 Special House Contract
+
+### Added
+- 新建仓库级代理约束文件：`AGENTS.md`
+- 新建特殊 `house` 接口规范：`docs/special-house-interface.md`
+
+### Changed
+- 将“新增 house 实例”明确设为一个强触发场景：任何代理在实现前都必须先展示并遵守特殊 house 接口合同
+- 把特殊 house 的硬约束从分散的分层原则，收紧为可执行的架构规则：禁止在 `main.ts` 写具体 house 分支、禁止在 `application` 返回 HTML、禁止用全局变量保存 house 会话态、禁止在进入 house 时重置玩家基础属性
+
+### Impact
+- 以后任何人或代理再提“开发一个新的 house 实例”，都会先看到接口规范，而不是直接开始写特例代码
+- 特殊 house 的接入方式从“约定俗成”升级为仓库级合同，便于多人协作和代码审查
+
+## 2026-05-20 Demo Follow-up Plan
+
+### Added
+- 新建 2026-05-25 开发计划文档：`docs/development-plan-2026-05-25.md`
+
+### Changed
+- 明确 demo 阶段暂不做大规模拆分，但将 2026-05-25 设为结构收口节点
+- 将后续工作聚焦为三项基础建设：特殊 `house` 接口、玩家运行态边界、存档结构
+
+### Impact
+- 后续开发从“继续堆 demo 功能”转为“先稳住接口，再扩功能”
+- 团队可以按同一时间表准备 5 月 25 日之后的架构收口工作
+
+## 2026-05-20 Grain Shop Refactor
+
+### Added
+- 新建特殊 house 共享领域契约：`src/domain/house-module.ts`
+- 新建特殊 house 注册表：`src/application/house-modules/house-module-registry.ts`
+- 新建粮行模块会话态与生命周期实现：`src/application/house-modules/grain-shop/*`
+
+### Changed
+- `src/domain/house.ts` 为 `HouseDefinition` 增加 `moduleId`，明确 house 的行为绑定不再依赖 `id` 字符串特判
+- `src/domain/global-ui.ts` 与 `src/application/state/create-initial-state.ts` 增加统一 `ui.houseSession`，替代入口层游离的 house 会话全局变量
+- `src/main.ts` 改为通用 `moduleId + registry` 分发，不再直接导入或分支处理粮行业务
+- `src/ui/views/house/grain-shop-house-view.ts` 改为消费结构化 `HouseModuleViewModel`，保留全局 UI 覆盖层，场景切换不再重绘全局组件容器
+- `src/application/grain-shop/init-grain-shop-session.ts` 停止在进入粮行时重置玩家金钱和算术
+- 删除旧的粮行专用入口控制与旧会话 UI 类型：`src/application/grain-shop/grain-shop-interactions.ts`、`src/application/grain-shop/accounting-timer.ts`、`src/application/grain-shop/grain-shop-session-ui.ts`、`src/ui/views/house/grain-shop-ui-state.ts`
+
+### Impact
+- 粮行成为第一个严格走仓库 house 合同的特殊 house，实现了统一状态传递、统一会话存放、统一副作用调度
+- 以后新增茶屋、道场、锻冶屋时可以直接按 `moduleId + registry + sessionState + viewModel` 方式接入
+- `main.ts` 从“原型特例堆叠”收口为稳定入口，后续继续扩 house 时冲突会小很多
+
+## 2026-05-20 Robustness Baseline
+
+### Added
+- 新建库存纯逻辑模块：`src/application/inventory/inventory-selection.ts`
+- 新建最小纯逻辑测试基线：`tests/robustness.test.mjs`
+- 新增测试构建配置与脚本：`tsconfig.test.json`、`npm test`
+
+### Changed
+- `src/domain/house-module.ts` 将 `houseSession` 从宽泛 `unknown` 收紧为按 `moduleId` 区分的联合类型
+- 粮行 house 模块、主入口与粮行纯逻辑中的关键查找从静默兜底改为显式断言失败
+- `eslint` 排除旧 `prototypes/**` 原型目录与 `.test-dist/**`，避免历史演示代码干扰主工程校验线
+
+### Impact
+- 后续 house 模块可以沿着 `moduleId -> sessionState` 的稳定契约扩展，不需要再在入口层做裸转型
+- 内容配置缺失会更早暴露，避免运行时静默落到错误角色或错误房屋
+- 项目现在具备最小可执行的纯逻辑回归线，可先守住粮行交易、算账结算、house session 和库存选择一致性

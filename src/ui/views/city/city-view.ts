@@ -20,7 +20,7 @@ export function renderCityView(
   cityDefinition: CityDefinition,
   houseDefinitions: HouseDefinition[]
 ): string {
-  const cityTags = cityDefinition.tags.join(" / ");
+  const cityTags = (cityDefinition.tags ?? []).join(" / ");
   const statusSummary = `可访屋舍 ${houseDefinitions.length} 处`;
 
   return `
@@ -53,8 +53,6 @@ export function renderCityView(
 
         <div class="c-kulan-city__body">
           <div class="c-kulan-city__stage">
-            <div class="c-kulan-city__guard" aria-hidden="true"></div>
-            <div class="c-kulan-city__railing" aria-hidden="true"></div>
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
               返回地图
             </button>

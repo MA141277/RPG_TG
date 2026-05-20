@@ -15,8 +15,7 @@ export type InitGrainShopSessionResult = {
 
 export function initGrainShopSession(
   state: GameState,
-  characterDefinitions: CharacterDefinition[],
-  playerCharacterId: string
+  characterDefinitions: CharacterDefinition[]
 ): InitGrainShopSessionResult {
   const nextVariables = { ...state.runtime.variables };
   const hasFood = typeof nextVariables[GRAIN_SHOP_VARIABLE_KEYS.food] === "number";
@@ -32,35 +31,6 @@ export function initGrainShopSession(
     );
   }
 
-  const nextCharacterDefinitions = characterDefinitions.map((characterDefinition) => {
-    if (characterDefinition.id !== playerCharacterId) {
-      return characterDefinition;
-    }
-
-    const baseSkills = characterDefinition.skills;
-    if (baseSkills == null) {
-      return {
-        ...characterDefinition,
-        stats: {
-          ...characterDefinition.stats,
-          gold: grainShopInitialValues.money,
-        },
-      };
-    }
-
-    return {
-      ...characterDefinition,
-      stats: {
-        ...characterDefinition.stats,
-        gold: grainShopInitialValues.money,
-      },
-      skills: {
-        ...baseSkills,
-        arithmetic: grainShopInitialValues.math,
-      },
-    };
-  });
-
   return {
     state: {
       ...state,
@@ -69,6 +39,6 @@ export function initGrainShopSession(
         variables: nextVariables,
       },
     },
-    characterDefinitions: nextCharacterDefinitions,
+    characterDefinitions,
   };
 }

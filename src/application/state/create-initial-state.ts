@@ -55,6 +55,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       valuableLibraryFilter: "all",
       valuableLibrarySortKey: "name",
       valuableLibrarySortDirection: "asc",
+      houseSession: null,
       currentView: input.currentView ?? "map",
     },
     missions: {
