@@ -3,6 +3,15 @@ const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../.test-dist/application/state/create-initial-state.js");
 const {
+  ensureShopMarketData,
+} = require("../.test-dist/application/markets/market-refresh-system.js");
+const {
+  calculateTradeGoodSelectionWeight,
+} = require("../.test-dist/application/markets/shop-inventory-generator.js");
+const {
+  generateGoodsPrice,
+} = require("../.test-dist/application/markets/price-generator.js");
+const {
   ensureCityNpcPoolsForCurrentDay,
   pickCityNpcActivityLocation,
 } = require("../.test-dist/application/city-npcs/refresh-city-npc-pools.js");
@@ -15,8 +24,12 @@ const {
   prototypeHouses,
   prototypeMap,
   prototypeCityNpcPools,
+  prototypeCity,
   prototypeValuables,
 } = require("../.test-dist/content/prototype-world.js");
+const {
+  globalGoodsPool,
+} = require("../.test-dist/content/markets/global-goods-pool.js");
 const { executeGrainTrade } = require("../.test-dist/application/grain-shop/grain-trade.js");
 const {
   grainShopHouseModule,
@@ -473,4 +486,96 @@ test("tea house debate resolves counters and timeout penalty", () => {
 test("tea house ai weights bias topic choice by personality", () => {
   assert.equal(pickTeaHouseAiTopic("精明", () => 0.2), "利");
   assert.equal(pickTeaHouseAiTopic("傲气", () => 0.5), "名");
+});
+
+test("global market system keeps specialty shops on their own goods pool", () => {
+  const state = createBaseState();
+  const result = ensureShopMarketData(
+    state,
+    prototypeCity,
+    "grain-shop",
+    [],
+    () => 0.1
+  );
+
+  assert.equal(result.marketData.inventory.length >= 4, true);
+  assert.equal(result.marketData.refreshAfterDay - result.marketData.lastRefreshedOnDay >= 3, true);
+  assert.equal(result.marketData.refreshAfterDay - result.marketData.lastRefreshedOnDay <= 7, true);
+
+  const goodsById = Object.fromEntries(
+    globalGoodsPool.map((goodDefinition) => [goodDefinition.id, goodDefinition])
+  );
+
+  result.marketData.inventory.forEach((entry) => {
+    assert.equal(goodsById[entry.goodsId].shopType, "grain-shop");
+  });
+});
+
+test("city demand and events influence market weights and prices", () => {
+  const silk = globalGoodsPool.find((goodDefinition) => goodDefinition.id === "silk");
+  const ironware = globalGoodsPool.find((goodDefinition) => goodDefinition.id === "ironware");
+
+  assert.ok(silk);
+  assert.ok(ironware);
+
+  const silkWeight = calculateTradeGoodSelectionWeight(prototypeCity, silk, []);
+  const ironWeight = calculateTradeGoodSelectionWeight(prototypeCity, ironware, []);
+  assert.equal(silkWeight > ironWeight, true);
+
+  const calmPrice = generateGoodsPrice(prototypeCity, ironware, [], () => 0.5);
+  const warPrice = generateGoodsPrice(
+    prototypeCity,
+    ironware,
+    [
+      {
+        id: "event.war",
+        name: "战争",
+        affectedCategories: ["军械", "马市"],
+        priceMultiplier: 1.5,
+      },
+    ],
+    () => 0.5
+  );
+
+  assert.equal(calmPrice.sellPrice < calmPrice.buyPrice, true);
+  assert.equal(warPrice.sellPrice < warPrice.buyPrice, true);
+  assert.equal(warPrice.buyPrice > calmPrice.buyPrice, true);
+});
+
+test("shop market data stays stable before refresh day and rerolls after expiry", () => {
+  const state = createBaseState();
+  const firstResult = ensureShopMarketData(
+    state,
+    prototypeCity,
+    "silk-shop",
+    [],
+    () => 0.2
+  );
+  const secondResult = ensureShopMarketData(
+    firstResult.state,
+    prototypeCity,
+    "silk-shop",
+    [],
+    () => 0.9
+  );
+
+  assert.equal(secondResult.didRefresh, false);
+  assert.deepEqual(secondResult.marketData, firstResult.marketData);
+
+  const expiredState = {
+    ...firstResult.state,
+    calendar: {
+      ...firstResult.state.calendar,
+      day: firstResult.marketData.refreshAfterDay + 1,
+    },
+  };
+  const refreshedResult = ensureShopMarketData(
+    expiredState,
+    prototypeCity,
+    "silk-shop",
+    [],
+    () => 0.9
+  );
+
+  assert.equal(refreshedResult.didRefresh, true);
 });

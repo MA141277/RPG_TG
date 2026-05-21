@@ -29,7 +29,10 @@ export const prototypeCity: CityDefinition = {
   ],
   neighbourCityIds: [],
   travelCost: 1,
-  tags: ["castle-town", "market"],
+  tags: ["大城", "商业", "江南"],
+  prosperity: 90,
+  danger: 20,
+  specialDemand: ["绸缎", "茶叶"],
 };
 
 export const prototypeHouses: HouseDefinition[] = [

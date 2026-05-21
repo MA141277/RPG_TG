@@ -17,18 +17,22 @@
 - 新建城市 NPC 每日刷新与 House 选择器骨架：`src/application/city-npcs/*`
 - 为库兰城补充城市共享 NPC 池样例，以及可承接流动 NPC 的茶馆模板
 - 新建茶馆特殊 house 模块：`domain/tea-house`、`domain/house-modules/tea-house-session`、`application/house-modules/tea-house/*`、`ui/views/house/tea-house-house-view`
+- 新建全局商品池与动态市场系统骨架：`content/markets/global-goods-pool.ts`、`domain/trade-good.ts`、`domain/market.ts`、`application/markets/*`
 
 ### Changed
 - `GameState.runtime` 新增 `cityNpcPools`，用于统一保存“按城市共享、按日期刷新”的 NPC 位置与好感度运行态
+- `GameState.runtime` 新增 `cityMarkets`，用于统一保存按城池、按商店类型刷新的商品库存与价格运行态
 - `HouseDefinition` 新增可选 `activityLocationId`，用于声明某个 House 对应的城市活动地点槽位，而不是各自维护独立 NPC 池
 - 普通 House 视图改为可叠加显示“固定驻场角色 + 当日流动城市 NPC”
 - `HouseModuleId` 扩展为支持 `tea-house`，库兰城茶馆改为通过统一 registry 接入，而不是普通 House 静态展示
 - 茶馆进入逻辑改为“固定老板 + 当日茶馆地点中至多 2 名城市流动 NPC”，并在模块内实现闲谈、请喝茶、打听消息、舌战四类交互
+- `CityDefinition` 扩展为包含 `tags`、`prosperity`、`danger`、`specialDemand`，为市场权重与价格生成提供统一输入
 
 ### Impact
 - 同一座城的流动 NPC 不再绑定到单个 House，而是通过城市共享池按日刷新，后续茶馆、酒馆、集市等地点都可复用同一模板
 - NPC 位置在同一天内保持稳定，只会在日期变化后重新刷新，能更自然地营造“城里的人在流动”的感觉
 - 茶馆现在成为第一个基于“城市共享 NPC 池 + 特殊 house 合同”实现的社交型屋舍，后续酒馆、道场、情报点可以沿同样模式扩展
+- 后续粮铺、药铺、绸缎铺、铁匠铺、马市都可以通过同一市场系统获取“按城池特性与事件动态变化”的商品池与价格，而不必各自维护独立随机逻辑
 
 ## 记录规则
 

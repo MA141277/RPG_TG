@@ -9,6 +9,8 @@ export * from "./global-ui";
 export * from "./house";
 export * from "./house-module";
 export * from "./map";
+export * from "./market";
 export * from "./mission";
 export * from "./tea-house";
+export * from "./trade-good";
 export * from "./valuable-item";

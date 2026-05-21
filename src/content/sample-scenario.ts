@@ -25,7 +25,10 @@ export const sampleCity: CityDefinition = {
   houseIds: ["house.gifu.castle"],
   neighbourCityIds: [],
   travelCost: 1,
-  tags: ["castle-town", "capital"],
+  tags: ["大城", "军事", "山城"],
+  prosperity: 75,
+  danger: 35,
+  specialDemand: ["军械"],
 };
 
 export const sampleHouse: HouseDefinition = {
