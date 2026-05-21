@@ -241,6 +241,17 @@ export const houseModuleRegistry: Record<HouseModuleId, HouseModuleDefinition> =
 };
 ```
 
+UI renderers should follow the same rule:
+
+```ts
+export const houseModuleViewRegistry: Record<
+  HouseModuleId,
+  (viewModel: HouseModuleViewModel) => string
+> = {
+  "grain-shop": renderGrainShopHouseView,
+};
+```
+
 The app should:
 
 1. read `currentHouseId`
@@ -248,6 +259,7 @@ The app should:
 3. read `moduleId`
 4. resolve registry entry
 5. call generic module lifecycle methods
+6. resolve the registered renderer for the returned view model
 
 ## View Model Contract
 

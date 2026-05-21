@@ -1,12 +1,15 @@
 import "./styles/app.css";
-import { getHouseModule } from "./application/house-modules/house-module-registry";
 import {
-  equipValuableItem,
-  getVisibleOwnedCards,
-  getVisibleValuables as getFilteredValuables,
-  resolveSelectedCardId,
-  resolveSelectedValuableId,
-} from "./application/inventory/inventory-selection";
+  equipValuable,
+  selectCard,
+  selectValuable,
+  setCardFilter,
+  setValuableFilter,
+  setValuableSort,
+  updateOverlayView,
+} from "./application/app-actions";
+import type { AppState } from "./application/app-shell";
+import { createHouseRuntime } from "./application/house/house-runtime";
 import { enterCity } from "./application/navigation/enter-city";
 import {
   travelToCoordinate,
@@ -22,52 +25,14 @@ import {
   prototypeMap,
   prototypeValuables,
 } from "./content/prototype-world";
-import type { CardDefinition } from "./domain/card";
-import type { CharacterDefinition } from "./domain/character";
-import type { HouseDefinition } from "./domain/house";
-import type { HouseModuleRequest, HouseModuleTransitionResult } from "./domain/house-module";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
   ValuableLibrarySortKey,
 } from "./domain/global-ui";
-import type { ValuableItemDefinition, ValuableItemId } from "./domain/valuable-item";
+import type { ValuableItemId } from "./domain/valuable-item";
 import { assertExists } from "./shared/assert";
-import { renderConfirmModal } from "./ui/components/modal/confirm-modal";
-import {
-  createGlobalPlayerPanelModel,
-  renderGlobalPlayerPanel,
-} from "./ui/panels/global-player-panel";
-import { renderCharacterDetailView } from "./ui/views/character/character-detail-view";
-import { renderCardLibraryView } from "./ui/views/cards/card-library-view";
-import { renderCityView } from "./ui/views/city/city-view";
-import { createHouseViewModel } from "./ui/views/house/house-view";
-import { renderGrainShopHouseView } from "./ui/views/house/grain-shop-house-view";
-import { createMapViewModel, renderMapView } from "./ui/views/map/map-view";
-import { renderValuableLibraryView } from "./ui/views/valuables/valuable-library-view";
-
-type AppModalState =
-  | {
-      type: "travel-confirm";
-      targetCoordinate: GridCoordinate;
-      cityId: string | null;
-      cityName: string | null;
-    }
-  | {
-      type: "enter-city-confirm";
-      cityId: string;
-      cityName: string;
-    }
-  | null;
-
-type AppState = {
-  gameState: ReturnType<typeof createInitialState>;
-  characterDefinitions: CharacterDefinition[];
-  playerCoordinate: GridCoordinate;
-  modalState: AppModalState;
-};
-
-type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
+import { renderApp as renderAppMarkup } from "./ui/app-render";
 
 const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;
@@ -79,8 +44,6 @@ if (appElement == null) {
 }
 
 const appRoot = appElement;
-syncGameViewport();
-window.addEventListener("resize", syncGameViewport);
 const playerCharacterId = "char.player";
 const cityCoordinatesById: Record<string, GridCoordinate> = {
   [prototypeCity.id]: { x: 2, y: 2 },
@@ -98,10 +61,11 @@ const houseNameById = Object.fromEntries(
   prototypeHouses.map((houseDefinition) => [houseDefinition.id, houseDefinition.name])
 );
 const characterNameById = Object.fromEntries(
-  prototypeCharacters.map((characterDefinition) => [characterDefinition.id, characterDefinition.name])
+  prototypeCharacters.map((characterDefinition) => [
+    characterDefinition.id,
+    characterDefinition.name,
+  ])
 );
-
-const intervalHandles: Record<string, number> = {};
 
 let appState: AppState = {
   gameState: createInitialState({
@@ -125,11 +89,13 @@ let appState: AppState = {
       selectedItemId: prototypeValuables[0]?.id ?? null,
       equippedWeaponSet: {
         swordId:
-          prototypeValuables.find((valuableDefinition) => valuableDefinition.category === "weapon")
-            ?.id ?? null,
+          prototypeValuables.find(
+            (valuableDefinition) => valuableDefinition.category === "weapon"
+          )?.id ?? null,
         armorId:
-          prototypeValuables.find((valuableDefinition) => valuableDefinition.category === "armor")
-            ?.id ?? null,
+          prototypeValuables.find(
+            (valuableDefinition) => valuableDefinition.category === "armor"
+          )?.id ?? null,
       },
     },
     currentView: "map",
@@ -139,6 +105,18 @@ let appState: AppState = {
   modalState: null,
 };
 
+const houseRuntime = createHouseRuntime({
+  getAppState: () => appState,
+  setAppState: (nextAppState) => {
+    appState = nextAppState;
+  },
+  renderApp,
+  houseDefinitions: prototypeHouses,
+  playerCharacterId,
+});
+
+syncGameViewport();
+window.addEventListener("resize", syncGameViewport);
 renderApp();
 
 appElement.addEventListener("input", (event) => {
@@ -149,7 +127,7 @@ appElement.addEventListener("input", (event) => {
 
   const fieldId = targetElement.dataset.houseField;
   if (fieldId != null) {
-    dispatchCurrentHouseRequest({
+    houseRuntime.dispatchCurrentHouseRequest({
       type: "field",
       fieldId,
       value: targetElement.value,
@@ -181,35 +159,48 @@ appElement.addEventListener("click", (event) => {
     }
   }
 
-  const closeOverlayButton = targetElement.closest<HTMLElement>("[data-action='close-overlay'], [data-action='close-character-detail']");
+  const closeOverlayButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-overlay'], [data-action='close-character-detail']"
+  );
   if (closeOverlayButton != null) {
-    updateOverlayView(null);
+    appState = updateOverlayView(appState, null);
+    renderApp();
     return;
   }
 
-  const playerCardButton = targetElement.closest<HTMLElement>("[data-action='open-player-detail']");
+  const playerCardButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-player-detail']"
+  );
   if (playerCardButton != null) {
-    updateOverlayView("detail");
+    appState = updateOverlayView(appState, "detail");
+    renderApp();
     return;
   }
 
   const openCardsButton = targetElement.closest<HTMLElement>("[data-action='open-cards']");
   if (openCardsButton != null) {
-    updateOverlayView("cards");
+    appState = updateOverlayView(appState, "cards");
+    renderApp();
     return;
   }
 
-  const openValuablesButton = targetElement.closest<HTMLElement>("[data-action='open-valuables']");
+  const openValuablesButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-valuables']"
+  );
   if (openValuablesButton != null) {
-    updateOverlayView("valuables");
+    appState = updateOverlayView(appState, "valuables");
+    renderApp();
     return;
   }
 
   const cardFilterButton = targetElement.closest<HTMLElement>("[data-card-filter]");
   if (cardFilterButton != null) {
-    const filter = cardFilterButton.dataset.cardFilter as CardLibraryFilter | undefined;
+    const filter = cardFilterButton.dataset.cardFilter as
+      | CardLibraryFilter
+      | undefined;
     if (filter != null) {
-      setCardFilter(filter);
+      appState = setCardFilter(appState, filter, prototypeCards);
+      renderApp();
     }
     return;
   }
@@ -218,50 +209,67 @@ appElement.addEventListener("click", (event) => {
   if (cardButton != null) {
     const cardId = cardButton.dataset.cardId;
     if (cardId != null) {
-      selectCard(cardId);
+      appState = selectCard(appState, cardId);
+      renderApp();
     }
     return;
   }
 
-  const valuableFilterButton = targetElement.closest<HTMLElement>("[data-valuable-filter]");
+  const valuableFilterButton = targetElement.closest<HTMLElement>(
+    "[data-valuable-filter]"
+  );
   if (valuableFilterButton != null) {
-    const filter = valuableFilterButton.dataset.valuableFilter as ValuableLibraryFilter | undefined;
+    const filter = valuableFilterButton.dataset.valuableFilter as
+      | ValuableLibraryFilter
+      | undefined;
     if (filter != null) {
-      setValuableFilter(filter);
+      appState = setValuableFilter(appState, filter);
+      renderApp();
     }
     return;
   }
 
-  const valuableSortButton = targetElement.closest<HTMLElement>("[data-valuable-sort]");
+  const valuableSortButton = targetElement.closest<HTMLElement>(
+    "[data-valuable-sort]"
+  );
   if (valuableSortButton != null) {
-    const sortKey = valuableSortButton.dataset.valuableSort as ValuableLibrarySortKey | undefined;
+    const sortKey = valuableSortButton.dataset.valuableSort as
+      | ValuableLibrarySortKey
+      | undefined;
     if (sortKey != null) {
-      setValuableSort(sortKey);
+      appState = setValuableSort(appState, sortKey);
+      renderApp();
     }
     return;
   }
 
   const valuableButton = targetElement.closest<HTMLElement>("[data-valuable-id]");
   if (valuableButton != null) {
-    const valuableId = valuableButton.dataset.valuableId;
+    const valuableId = targetElement
+      .closest<HTMLElement>("[data-valuable-id]")
+      ?.dataset.valuableId;
     if (valuableId != null) {
-      selectValuable(valuableId);
+      appState = selectValuable(appState, valuableId as ValuableItemId);
+      renderApp();
     }
     return;
   }
 
-  const equipButton = targetElement.closest<HTMLElement>("[data-action='equip-valuable'][data-valuable-id]");
+  const equipButton = targetElement.closest<HTMLElement>(
+    "[data-action='equip-valuable'][data-valuable-id]"
+  );
   if (equipButton != null) {
     const valuableId = equipButton.dataset.valuableId;
     if (valuableId != null) {
-      equipValuable(valuableId);
+      appState = equipValuable(appState, valuableId as ValuableItemId);
+      renderApp();
     }
     return;
   }
 
   const leaveCityButton = targetElement.closest<HTMLElement>("[data-action='leave-city']");
   if (leaveCityButton != null) {
-    clearAllHouseIntervals();
+    houseRuntime.clearAllHouseIntervals();
     appState = {
       ...appState,
       gameState: {
@@ -286,7 +294,7 @@ appElement.addEventListener("click", (event) => {
   if (houseActionButton != null) {
     const actionId = houseActionButton.dataset.houseAction;
     if (actionId != null) {
-      dispatchCurrentHouseRequest({
+      houseRuntime.dispatchCurrentHouseRequest({
         type: "action",
         actionId,
       });
@@ -296,18 +304,16 @@ appElement.addEventListener("click", (event) => {
 
   const leaveHouseButton = targetElement.closest<HTMLElement>("[data-action='leave-house']");
   if (leaveHouseButton != null) {
-    leaveCurrentHouse();
+    houseRuntime.leaveCurrentHouse();
     return;
   }
 
   const houseButton = targetElement.closest<HTMLElement>("[data-house-id]");
   if (houseButton != null) {
     const houseId = houseButton.dataset.houseId;
-    if (houseId == null) {
-      return;
+    if (houseId != null) {
+      houseRuntime.enterHouseById(houseId);
     }
-
-    enterHouseById(houseId);
     return;
   }
 
@@ -330,335 +336,6 @@ appElement.addEventListener("click", (event) => {
     renderApp();
   }
 });
-
-function getActiveHouseDefinition(): HouseDefinition | null {
-  return (
-    prototypeHouses.find(
-      (houseDefinition) => houseDefinition.id === appState.gameState.world.currentHouseId
-    ) ?? null
-  );
-}
-
-function getPlayerCharacter(): CharacterDefinition {
-  const playerCharacter = appState.characterDefinitions.find(
-    (characterDefinition) => characterDefinition.id === playerCharacterId
-  );
-  assertExists(playerCharacter, `Player character not found for id "${playerCharacterId}".`);
-  return playerCharacter;
-}
-
-function updateOverlayView(overlayView: AppState["gameState"]["ui"]["overlayView"]) {
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      ui: {
-        ...appState.gameState.ui,
-        overlayView,
-      },
-    },
-  };
-  renderApp();
-}
-
-function setCardFilter(filter: CardLibraryFilter) {
-  const visibleCards = getVisibleCards(filter);
-  const selectedCardId = resolveSelectedCardId(
-    visibleCards,
-    appState.gameState.cards.selectedCardId
-  );
-
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      cards: {
-        ...appState.gameState.cards,
-        selectedCardId,
-      },
-      ui: {
-        ...appState.gameState.ui,
-        cardLibraryFilter: filter,
-        overlayView: "cards",
-      },
-    },
-  };
-  renderApp();
-}
-
-function selectCard(cardId: string) {
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      cards: {
-        ...appState.gameState.cards,
-        selectedCardId: cardId,
-      },
-      ui: {
-        ...appState.gameState.ui,
-        overlayView: "cards",
-      },
-    },
-  };
-  renderApp();
-}
-
-function setValuableFilter(filter: ValuableLibraryFilter) {
-  const visibleItems = getVisibleValuables(filter);
-  const selectedItemId = resolveSelectedValuableId(
-    visibleItems,
-    appState.gameState.valuables.selectedItemId
-  );
-
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      valuables: {
-        ...appState.gameState.valuables,
-        selectedItemId,
-      },
-      ui: {
-        ...appState.gameState.ui,
-        valuableLibraryFilter: filter,
-        overlayView: "valuables",
-      },
-    },
-  };
-  renderApp();
-}
-
-function setValuableSort(sortKey: ValuableLibrarySortKey) {
-  const nextSortDirection =
-    appState.gameState.ui.valuableLibrarySortKey === sortKey &&
-    appState.gameState.ui.valuableLibrarySortDirection === "asc"
-      ? "desc"
-      : "asc";
-
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      ui: {
-        ...appState.gameState.ui,
-        valuableLibrarySortKey: sortKey,
-        valuableLibrarySortDirection: nextSortDirection,
-        overlayView: "valuables",
-      },
-    },
-  };
-  renderApp();
-}
-
-function selectValuable(valuableId: ValuableItemId) {
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      valuables: {
-        ...appState.gameState.valuables,
-        selectedItemId: valuableId,
-      },
-      ui: {
-        ...appState.gameState.ui,
-        overlayView: "valuables",
-      },
-    },
-  };
-  renderApp();
-}
-
-function equipValuable(valuableId: ValuableItemId) {
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      valuables: equipValuableItem(appState.gameState.valuables, valuableId),
-      ui: {
-        ...appState.gameState.ui,
-        overlayView: "valuables",
-      },
-    },
-  };
-  renderApp();
-}
-
-function getVisibleCards(filter: CardLibraryFilter): CardDefinition[] {
-  return getVisibleOwnedCards(prototypeCards, appState.gameState.cards, filter);
-}
-
-function getVisibleValuables(filter: ValuableLibraryFilter): ValuableItemDefinition[] {
-  return getFilteredValuables(appState.gameState.valuables.items, filter);
-}
-
-function enterHouseById(houseId: string): void {
-  const houseDefinition = prototypeHouses.find(
-    (candidateHouse) => candidateHouse.id === houseId
-  );
-  assertExists(houseDefinition, `House not found for id "${houseId}".`);
-
-  clearAllHouseIntervals();
-
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      world: {
-        ...appState.gameState.world,
-        currentHouseId: houseId,
-      },
-      ui: {
-        ...appState.gameState.ui,
-        currentView: "house",
-        overlayView: null,
-        houseSession: null,
-      },
-    },
-  };
-
-  const moduleId = houseDefinition.moduleId;
-  if (moduleId != null) {
-    const houseModule = getHouseModule(moduleId);
-    const result = houseModule.enter({
-      gameState: appState.gameState,
-      characterDefinitions: appState.characterDefinitions,
-      houseDefinition,
-      playerCharacterId,
-    });
-    applyHouseModuleResult(houseDefinition, moduleId, result);
-  }
-
-  renderApp();
-}
-
-function leaveCurrentHouse(): void {
-  const activeHouse = getActiveHouseDefinition();
-  if (activeHouse?.moduleId != null) {
-    const houseModule = getHouseModule(activeHouse.moduleId);
-    const result = houseModule.leave({
-      gameState: appState.gameState,
-      characterDefinitions: appState.characterDefinitions,
-      houseDefinition: activeHouse,
-      playerCharacterId,
-      sessionState: appState.gameState.ui.houseSession?.state ?? null,
-    });
-    applyHouseModuleResult(activeHouse, activeHouse.moduleId, result);
-  } else {
-    clearAllHouseIntervals();
-  }
-
-  appState = {
-    ...appState,
-    gameState: {
-      ...appState.gameState,
-      world: {
-        ...appState.gameState.world,
-        currentHouseId: null,
-      },
-      ui: {
-        ...appState.gameState.ui,
-        currentView: "city",
-        overlayView: null,
-        houseSession: null,
-      },
-    },
-  };
-  renderApp();
-}
-
-function dispatchCurrentHouseRequest(request: HouseModuleRequest): void {
-  const activeHouse = getActiveHouseDefinition();
-  const moduleId = activeHouse?.moduleId;
-  if (activeHouse == null || moduleId == null) {
-    return;
-  }
-
-  const houseModule = getHouseModule(moduleId);
-  const result = houseModule.dispatch({
-    gameState: appState.gameState,
-    characterDefinitions: appState.characterDefinitions,
-    houseDefinition: activeHouse,
-    playerCharacterId,
-    sessionState: appState.gameState.ui.houseSession?.state ?? null,
-    request,
-  });
-  applyHouseModuleResult(activeHouse, moduleId, result);
-  renderApp();
-}
-
-function applyHouseModuleResult(
-  houseDefinition: HouseDefinition,
-  moduleId: NonNullable<HouseDefinition["moduleId"]>,
-  result: HouseModuleTransitionResult
-): void {
-  appState = {
-    ...appState,
-    gameState: {
-      ...result.gameState,
-      ui: {
-        ...result.gameState.ui,
-        houseSession:
-          result.sessionState == null
-            ? null
-            : {
-                moduleId,
-                state: result.sessionState,
-              },
-      },
-    },
-    characterDefinitions: result.characterDefinitions,
-  };
-
-  applyHouseSideEffects(houseDefinition, moduleId, result.sideEffects ?? []);
-}
-
-function applyHouseSideEffects(
-  houseDefinition: HouseDefinition,
-  moduleId: NonNullable<HouseDefinition["moduleId"]>,
-  sideEffects: Array<{
-    type: "start-interval" | "stop-interval";
-    intervalId: string;
-    everyMs?: number;
-    request?: HouseModuleRequest;
-  }>
-): void {
-  sideEffects.forEach((sideEffect) => {
-    if (sideEffect.type === "stop-interval") {
-      stopHouseInterval(sideEffect.intervalId);
-      return;
-    }
-
-    if (sideEffect.everyMs == null || sideEffect.request == null) {
-      return;
-    }
-
-    stopHouseInterval(sideEffect.intervalId);
-    intervalHandles[sideEffect.intervalId] = window.setInterval(() => {
-      const activeHouse = getActiveHouseDefinition();
-      if (activeHouse?.id !== houseDefinition.id || activeHouse.moduleId !== moduleId) {
-        stopHouseInterval(sideEffect.intervalId);
-        return;
-      }
-
-      dispatchCurrentHouseRequest(sideEffect.request!);
-    }, sideEffect.everyMs);
-  });
-}
-
-function stopHouseInterval(intervalId: string): void {
-  const handle = intervalHandles[intervalId];
-  if (handle != null) {
-    window.clearInterval(handle);
-    delete intervalHandles[intervalId];
-  }
-}
-
-function clearAllHouseIntervals(): void {
-  Object.keys(intervalHandles).forEach((intervalId) => {
-    stopHouseInterval(intervalId);
-  });
-}
 
 function handleModalConfirm() {
   if (appState.modalState == null) {
@@ -691,7 +368,7 @@ function handleModalConfirm() {
     return;
   }
 
-  clearAllHouseIntervals();
+  houseRuntime.clearAllHouseIntervals();
   appState = {
     ...appState,
     gameState: enterCity(appState.gameState, appState.modalState.cityId),
@@ -701,98 +378,19 @@ function handleModalConfirm() {
 }
 
 function renderApp() {
-  const currentView = appState.gameState.ui.currentView;
-  const activeHouse = getActiveHouseDefinition();
-  const playerCharacter = getPlayerCharacter();
-  const playerPanelModel = createGlobalPlayerPanelModel(playerCharacter, appState.gameState, null);
-
-  let stageMarkup = "";
-
-  if (currentView === "map") {
-    const mapViewModel = createMapViewModel({
-      mapName: prototypeMap.name,
-      size: 5,
-      playerCoordinate: appState.playerCoordinate,
-      cityDefinitions: [prototypeCity],
-      cityCoordinatesById,
-    });
-
-    stageMarkup = renderMapView(mapViewModel);
-  } else if (currentView === "city") {
-    stageMarkup = renderCityView(prototypeCity, prototypeHouses);
-  } else if (currentView === "house" && activeHouse != null) {
-    if (activeHouse.moduleId != null) {
-      const houseModule = getHouseModule(activeHouse.moduleId);
-      const houseViewModel = houseModule.selectViewModel({
-        gameState: appState.gameState,
-        characterDefinitions: appState.characterDefinitions,
-        houseDefinition: activeHouse,
-        playerCharacterId,
-        sessionState: appState.gameState.ui.houseSession?.state ?? null,
-      });
-
-      if (houseViewModel.moduleId === "grain-shop") {
-        stageMarkup = renderGrainShopHouseView(houseViewModel);
-      }
-    } else {
-      const houseViewModel = createHouseViewModel(activeHouse, appState.characterDefinitions);
-
-      stageMarkup = `
-        <section class="view-house">
-          <div class="c-stage-header">
-            <div>
-              <p class="c-stage-header__eyebrow">屋敷</p>
-              <h1 class="c-stage-header__title">${houseViewModel.title}</h1>
-            </div>
-            <button class="c-button c-button--ghost" data-action="leave-house">${houseViewModel.backButtonLabel}</button>
-          </div>
-          <div class="c-house-interior">
-            <div class="c-house-interior__hero c-panel">
-              <strong class="c-house-interior__hero-name">
-                ${houseViewModel.defaultCharacterId == null ? "无人接待" : "默认角色已展开"}
-              </strong>
-              <p class="c-house-interior__hero-text">
-                这里是 ${houseViewModel.title}。后续可以在这里接入角色功能、事件入口和小游戏。
-              </p>
-            </div>
-            <div class="c-house-roster">
-              ${houseViewModel.characterSummaries
-                .map(
-                  (characterSummary) => `
-                    <article class="c-roster-card c-panel">
-                      <span class="c-roster-card__title">${characterSummary.title ?? "在场人物"}</span>
-                      <strong class="c-roster-card__name">${characterSummary.name}</strong>
-                    </article>
-                  `
-                )
-                .join("")}
-            </div>
-          </div>
-        </section>
-      `;
-    }
-  }
-
-  appRoot.innerHTML = `
-    <div class="l-viewport">
-      <div class="l-game-frame">
-        <div class="l-game-screen">
-        <div class="l-shell l-shell--prototype">
-          <main class="l-stage">
-        ${stageMarkup}
-        <div class="l-overlay-ui">
-          <button class="u-click-layer" data-action="open-player-detail" aria-label="打开角色详情">
-            ${renderGlobalPlayerPanel(playerPanelModel)}
-          </button>
-        </div>
-      </main>
-          ${renderModal()}
-          ${renderOverlay(playerCharacter)}
-        </div>
-      </div>
-      </div>
-    </div>
-  `;
+  appRoot.innerHTML = renderAppMarkup({
+    appState,
+    playerCharacterId,
+    mapDefinition: prototypeMap,
+    cityDefinition: prototypeCity,
+    houseDefinitions: prototypeHouses,
+    cardDefinitions: prototypeCards,
+    cityCoordinatesById,
+    cityNameById,
+    houseNameById,
+    characterNameById,
+    cityPortraits: prototypeCityPortraits,
+  });
 }
 
 function syncGameViewport(): void {
@@ -804,120 +402,4 @@ function syncGameViewport(): void {
   appRoot.style.setProperty("--game-width", `${GAME_VIEWPORT_WIDTH}px`);
   appRoot.style.setProperty("--game-height", `${GAME_VIEWPORT_HEIGHT}px`);
   appRoot.style.setProperty("--game-scale", `${scale}`);
-}
-
-function renderOverlay(playerCharacter: CharacterDefinition): string {
-  const overlayView = appState.gameState.ui.overlayView;
-
-  if (overlayView === "detail") {
-    return renderCharacterDetailView(playerCharacter, buildCharacterDetailOptions(playerCharacter));
-  }
-
-  if (overlayView === "cards") {
-    return renderCardLibraryView({
-      cardDefinitions: prototypeCards,
-      inventory: appState.gameState.cards,
-      filter: appState.gameState.ui.cardLibraryFilter,
-    });
-  }
-
-  if (overlayView === "valuables") {
-    return renderValuableLibraryView({
-      inventory: appState.gameState.valuables,
-      filter: appState.gameState.ui.valuableLibraryFilter,
-      sortKey: appState.gameState.ui.valuableLibrarySortKey,
-      sortDirection: appState.gameState.ui.valuableLibrarySortDirection,
-    });
-  }
-
-  return "";
-}
-
-function buildCharacterDetailOptions(
-  playerCharacter: CharacterDefinition
-): CharacterDetailViewOptions {
-  const activeHouseDefinition =
-    playerCharacter.houseId == null
-      ? null
-      : prototypeHouses.find((houseDefinition) => houseDefinition.id === playerCharacter.houseId) ?? null;
-  const equippedWeapon = resolveEquippedItemName("weapon");
-  const equippedArmor = resolveEquippedItemName("armor");
-  const notorietyValue = appState.gameState.runtime.variables.notoriety;
-
-  const options: CharacterDetailViewOptions = {
-    notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
-    stipendText: `${playerCharacter.stats.gold} 文`,
-    schoolName: "无",
-    masterName: "无",
-    weaponName: equippedWeapon ?? "无",
-    armorName: equippedArmor ?? "无",
-  };
-
-  const cityName = cityNameById[playerCharacter.cityId];
-  if (cityName != null) {
-    options.cityName = cityName;
-  }
-
-  options.clanName = playerCharacter.clanId ?? "无";
-  options.houseName =
-    playerCharacter.houseId == null ? "无" : houseNameById[playerCharacter.houseId] ?? playerCharacter.houseId;
-  options.lordName =
-    activeHouseDefinition?.defaultCharacterId == null
-      ? activeHouseDefinition == null
-        ? "无"
-        : houseNameById[activeHouseDefinition.id] ?? "无"
-      : characterNameById[activeHouseDefinition.defaultCharacterId] ??
-        houseNameById[activeHouseDefinition.id] ??
-        "无";
-
-  return options;
-}
-
-function resolveEquippedItemName(category: ValuableItemDefinition["category"]): string | null {
-  const equippedId =
-    category === "weapon"
-      ? appState.gameState.valuables.equippedWeaponSet.swordId
-      : appState.gameState.valuables.equippedWeaponSet.armorId;
-
-  if (equippedId == null) {
-    return null;
-  }
-
-  return (
-    appState.gameState.valuables.items.find((itemDefinition) => itemDefinition.id === equippedId)?.name ??
-    null
-  );
-}
-
-function renderModal(): string {
-  if (appState.modalState == null) {
-    return "";
-  }
-
-  if (appState.modalState.type === "travel-confirm") {
-    const title =
-      appState.modalState.cityName == null
-        ? `前往 (${appState.modalState.targetCoordinate.x}, ${appState.modalState.targetCoordinate.y})`
-        : `前往 ${appState.modalState.cityName}`;
-    const body =
-      appState.modalState.cityName == null
-        ? "确认移动到这个网格坐标。"
-        : `这将移动到 ${appState.modalState.cityName} 所在坐标。`;
-
-    return renderConfirmModal({
-      title,
-      body,
-      confirmLabel: "前往",
-      cancelLabel: "取消",
-    });
-  }
-
-  return renderConfirmModal({
-    title: `进入 ${appState.modalState.cityName}`,
-    body: "人物与城市坐标已经重合，确认后展开城市结构。",
-    confirmLabel: "进入城市",
-    cancelLabel: "稍后",
-    portraitLabel:
-      prototypeCityPortraits[appState.modalState.cityId] ?? appState.modalState.cityName,
-  });
 }

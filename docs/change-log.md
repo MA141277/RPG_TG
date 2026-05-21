@@ -215,3 +215,35 @@
 - 后续 house 模块可以沿着 `moduleId -> sessionState` 的稳定契约扩展，不需要再在入口层做裸转型
 - 内容配置缺失会更早暴露，避免运行时静默落到错误角色或错误房屋
 - 项目现在具备最小可执行的纯逻辑回归线，可先守住粮行交易、算账结算、house session 和库存选择一致性
+
+## 2026-05-20 Main Assembly Split
+
+### Added
+- 新建入口层共享状态类型：`src/application/app-shell.ts`
+- 新建 UI 状态动作模块：`src/application/app-actions.ts`
+- 新建特殊 house 运行时装配模块：`src/application/house/house-runtime.ts`
+- 新建页面拼装渲染模块：`src/ui/app-render.ts`
+
+### Changed
+- `src/main.ts` 从业务中心收口为装配层，只保留事件监听、初始化、modal confirm 和渲染调用
+- `enter/leave/dispatch/applySideEffects/interval` 相关逻辑迁入 `house-runtime`
+- 卡牌、贵重物与 overlay 的 UI 状态修改迁入 `app-actions`
+- stage / modal / overlay / character detail 相关渲染拼装迁入 `app-render`
+
+### Impact
+- 入口文件不再直接承担 house 生命周期、库存状态修改和大段 HTML 拼装
+- 后续继续做 house renderer 收口或增加 overlay 时，可以在独立模块内改动，降低 `main.ts` 冲突面
+- 第 1 次小重构已经为后续第 2 次 house 模块收口提供了更稳定的装配边界
+
+## 2026-05-20 House View Registry
+
+### Added
+- 新建特殊 house 视图注册表：`src/ui/views/house/house-module-view-registry.ts`
+
+### Changed
+- `src/ui/app-render.ts` 不再直接导入或分支处理粮行 renderer，改为通过 `moduleId -> renderer` 注册表渲染
+- `docs/special-house-interface.md` 明确要求特殊 house 的视图层也通过稳定 registry wiring 接入
+
+### Impact
+- 入口层和页面拼装层都不再需要知道具体房屋名，剩余的特殊 house 视图耦合被压缩到稳定 registry
+- 后续新增茶馆、武馆、当铺时，只需注册模块行为和视图，不必继续污染装配层
