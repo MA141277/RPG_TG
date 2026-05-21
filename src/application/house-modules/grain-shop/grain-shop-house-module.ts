@@ -41,9 +41,12 @@ function getPlayerCharacter(
 }
 
 function createTransitionResult(
-  input: Pick<HouseModuleDispatchInput, "gameState" | "characterDefinitions" | "sessionState">,
-  patch?: Partial<HouseModuleTransitionResult>
-): HouseModuleTransitionResult {
+  input: Pick<
+    HouseModuleDispatchInput<"grain-shop">,
+    "gameState" | "characterDefinitions" | "sessionState"
+  >,
+  patch?: Partial<HouseModuleTransitionResult<"grain-shop">>
+): HouseModuleTransitionResult<"grain-shop"> {
   return {
     gameState: patch?.gameState ?? input.gameState,
     characterDefinitions: patch?.characterDefinitions ?? input.characterDefinitions,
@@ -53,10 +56,13 @@ function createTransitionResult(
 }
 
 function withDialoguePhase(
-  input: Pick<HouseModuleDispatchInput, "gameState" | "characterDefinitions">,
+  input: Pick<
+    HouseModuleDispatchInput<"grain-shop">,
+    "gameState" | "characterDefinitions"
+  >,
   sessionState: GrainShopSessionState | null,
   dialoguePhase: GrainShopDialoguePhase
-): HouseModuleTransitionResult {
+): HouseModuleTransitionResult<"grain-shop"> {
   if (sessionState == null) {
     return {
       gameState: input.gameState,
@@ -76,11 +82,14 @@ function withDialoguePhase(
 }
 
 function withOverlay(
-  input: Pick<HouseModuleDispatchInput, "gameState" | "characterDefinitions">,
+  input: Pick<
+    HouseModuleDispatchInput<"grain-shop">,
+    "gameState" | "characterDefinitions"
+  >,
   sessionState: GrainShopSessionState | null,
   overlay: GrainShopSessionState["overlay"],
-  sideEffects?: HouseModuleTransitionResult["sideEffects"]
-): HouseModuleTransitionResult {
+  sideEffects?: HouseModuleTransitionResult<"grain-shop">["sideEffects"]
+): HouseModuleTransitionResult<"grain-shop"> {
   if (sessionState == null) {
     return {
       gameState: input.gameState,
@@ -102,10 +111,13 @@ function withOverlay(
 }
 
 function openTradeOverlay(
-  input: Pick<HouseModuleDispatchInput, "gameState" | "characterDefinitions">,
+  input: Pick<
+    HouseModuleDispatchInput<"grain-shop">,
+    "gameState" | "characterDefinitions"
+  >,
   sessionState: GrainShopSessionState | null,
   mode: "buy" | "sell"
-): HouseModuleTransitionResult {
+): HouseModuleTransitionResult<"grain-shop"> {
   const grainPrice = rollGrainPrice();
   const nextState = setGrainPrice(input.gameState, grainPrice);
 
@@ -126,10 +138,13 @@ function openTradeOverlay(
 }
 
 function updateTradeQuantity(
-  input: Pick<HouseModuleDispatchInput, "gameState" | "characterDefinitions">,
+  input: Pick<
+    HouseModuleDispatchInput<"grain-shop">,
+    "gameState" | "characterDefinitions"
+  >,
   sessionState: GrainShopSessionState | null,
   quantity: number
-): HouseModuleTransitionResult {
+): HouseModuleTransitionResult<"grain-shop"> {
   const overlay = sessionState?.overlay;
   if (overlay?.type !== "trade") {
     return {
@@ -148,9 +163,12 @@ function updateTradeQuantity(
 }
 
 function finalizeAccountingMinigame(
-  input: Pick<HouseModuleDispatchInput, "gameState" | "characterDefinitions" | "playerCharacterId">,
+  input: Pick<
+    HouseModuleDispatchInput<"grain-shop">,
+    "gameState" | "characterDefinitions" | "playerCharacterId"
+  >,
   sessionState: GrainShopSessionState | null
-): HouseModuleTransitionResult {
+): HouseModuleTransitionResult<"grain-shop"> {
   const overlay = sessionState?.overlay;
   if (overlay?.type !== "minigame") {
     return {
@@ -187,9 +205,9 @@ function finalizeAccountingMinigame(
 }
 
 function handleTick(
-  input: HouseModuleDispatchInput,
+  input: HouseModuleDispatchInput<"grain-shop">,
   sessionState: GrainShopSessionState | null
-): HouseModuleTransitionResult {
+): HouseModuleTransitionResult<"grain-shop"> {
   const overlay = sessionState?.overlay;
   if (input.request.type !== "tick" || input.request.tickId !== ACCOUNTING_INTERVAL_ID) {
     return createTransitionResult(input);
@@ -213,9 +231,9 @@ function handleTick(
 }
 
 function handleField(
-  input: HouseModuleDispatchInput,
+  input: HouseModuleDispatchInput<"grain-shop">,
   sessionState: GrainShopSessionState | null
-): HouseModuleTransitionResult {
+): HouseModuleTransitionResult<"grain-shop"> {
   if (input.request.type !== "field") {
     return createTransitionResult(input);
   }
@@ -238,9 +256,9 @@ function toAlertOverlay(title: string, paragraphs: string[], tone?: "info" | "su
 }
 
 function handleAction(
-  input: HouseModuleDispatchInput,
+  input: HouseModuleDispatchInput<"grain-shop">,
   sessionState: GrainShopSessionState | null
-): HouseModuleTransitionResult {
+): HouseModuleTransitionResult<"grain-shop"> {
   if (input.request.type !== "action") {
     return createTransitionResult(input);
   }

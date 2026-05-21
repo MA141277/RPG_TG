@@ -3,16 +3,27 @@ const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../.test-dist/application/state/create-initial-state.js");
 const {
+  ensureCityNpcPoolsForCurrentDay,
+  pickCityNpcActivityLocation,
+} = require("../.test-dist/application/city-npcs/refresh-city-npc-pools.js");
+const {
+  selectCityNpcSummariesForHouse,
+} = require("../.test-dist/application/city-npcs/select-city-npcs-for-house.js");
+const {
   prototypeCards,
   prototypeCharacters,
   prototypeHouses,
   prototypeMap,
+  prototypeCityNpcPools,
   prototypeValuables,
 } = require("../.test-dist/content/prototype-world.js");
 const { executeGrainTrade } = require("../.test-dist/application/grain-shop/grain-trade.js");
 const {
   grainShopHouseModule,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js");
+const {
+  teaHouseHouseModule,
+} = require("../.test-dist/application/house-modules/tea-house/tea-house-house-module.js");
 const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
@@ -27,13 +38,21 @@ const {
   accountingGradeRewards,
 } = require("../.test-dist/content/houses/grain-shop-content.js");
 const { GRAIN_SHOP_VARIABLE_KEYS } = require("../.test-dist/domain/grain-shop.js");
+const {
+  pickTeaHouseAiTopic,
+  resolveTeaHouseDebateRound,
+} = require("../.test-dist/application/tea-house/tea-house-debate.js");
 
 const playerCharacterId = "char.player";
 const grainShopHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "grain-shop"
 );
+const teaHouse = prototypeHouses.find(
+  (houseDefinition) => houseDefinition.moduleId === "tea-house"
+);
 
 assert.ok(grainShopHouse, "Expected prototype grain shop house to exist.");
+assert.ok(teaHouse, "Expected prototype tea house to exist.");
 
 function createBaseState() {
   return createInitialState({
@@ -262,4 +281,196 @@ test("inventory filtering and equip logic preserve valid selection", () => {
   assert.equal(equippedInventory.selectedItemId, prototypeValuables[0].id);
   assert.equal(equippedInventory.equippedWeaponSet.swordId, prototypeValuables[0].id);
   assert.equal(equippedInventory.equippedWeaponSet.armorId, null);
+});
+
+test("city npc daily refresh picks weighted locations and stays stable within the same day", () => {
+  const residentDefinition = prototypeCityNpcPools[0].residents[0];
+  assert.equal(
+    pickCityNpcActivityLocation(
+      {
+        ...residentDefinition,
+        activityWeight: { market: 60, tavern: 40 },
+      },
+      () => 0.1
+    ),
+    "market"
+  );
+  assert.equal(
+    pickCityNpcActivityLocation(
+      {
+        ...residentDefinition,
+        activityWeight: { market: 60, tavern: 40 },
+      },
+      () => 0.9
+    ),
+    "tavern"
+  );
+
+  const refreshedState = ensureCityNpcPoolsForCurrentDay(
+    createBaseState(),
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+  const stableState = ensureCityNpcPoolsForCurrentDay(
+    refreshedState,
+    prototypeCityNpcPools,
+    () => 0.9
+  );
+
+  assert.equal(stableState, refreshedState);
+  assert.equal(
+    refreshedState.runtime.cityNpcPools["city.kulan"].lastRefreshedOn,
+    "1567-01-01"
+  );
+});
+
+test("house city npc selector reads from shared city pool instead of fixed house ownership", () => {
+  const state = createBaseState();
+  const marketHouse = prototypeHouses.find(
+    (houseDefinition) => houseDefinition.id === "house.kulan.market"
+  );
+
+  assert.ok(marketHouse);
+
+  const stateWithNpcPool = {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      cityNpcPools: {
+        "city.kulan": {
+          cityId: "city.kulan",
+          lastRefreshedOn: "1567-01-01",
+          residents: {
+            "city-npc.kulan.merchant_zhou": {
+              npcId: "city-npc.kulan.merchant_zhou",
+              favorability: 0,
+              currentLocationId: "market",
+            },
+            "city-npc.kulan.scholar_he": {
+              npcId: "city-npc.kulan.scholar_he",
+              favorability: 0,
+              currentLocationId: "tea-house",
+            },
+          },
+        },
+      },
+    },
+  };
+
+  const summaries = selectCityNpcSummariesForHouse(
+    stateWithNpcPool,
+    marketHouse,
+    prototypeCityNpcPools
+  );
+
+  assert.deepEqual(summaries, [
+    {
+      id: "city-npc.kulan.merchant_zhou",
+      name: "周掌柜",
+      title: "盐商",
+    },
+  ]);
+});
+
+test("tea house enter samples up to two city guests plus fixed boss", () => {
+  const state = ensureCityNpcPoolsForCurrentDay(createBaseState(), prototypeCityNpcPools, () => 0.1);
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+
+  assert.ok(enterResult.sessionState);
+  assert.equal(enterResult.sessionState.guestNpcIds.length <= 2, true);
+  assert.equal(enterResult.sessionState.selectedActorId, "char.kulan_tea_boss");
+
+  const viewModel = teaHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+  });
+
+  assert.equal(viewModel.moduleId, "tea-house");
+  assert.equal(viewModel.dialogue?.speakerName, "柳四");
+});
+
+test("tea house follows greeting open idle rhythm like grain shop", () => {
+  const state = ensureCityNpcPoolsForCurrentDay(createBaseState(), prototypeCityNpcPools, () => 0.1);
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(enterResult.sessionState?.dialoguePhase, "greeting");
+
+  const openResult = teaHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "advance-greeting",
+    },
+  });
+
+  assert.equal(openResult.sessionState?.dialoguePhase, "open");
+
+  const idleResult = teaHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "dismiss-dialogue",
+    },
+  });
+
+  assert.equal(idleResult.sessionState?.dialoguePhase, "idle");
+
+  const idleViewModel = teaHouseHouseModule.selectViewModel({
+    gameState: idleResult.gameState,
+    characterDefinitions: idleResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: idleResult.sessionState,
+  });
+
+  assert.equal(idleViewModel.dialogue, null);
+  assert.equal(idleViewModel.standbyRoster.length > 0, true);
+  assert.equal(idleViewModel.actionContainer, null);
+});
+
+test("tea house debate resolves counters and timeout penalty", () => {
+  const roundResult = resolveTeaHouseDebateRound(
+    {
+      round: 1,
+      playerSpirit: 10,
+      npcSpirit: 10,
+      timeoutCount: 0,
+      consecutivePlayerWins: 1,
+    },
+    "义",
+    "利",
+    true
+  );
+
+  assert.equal(roundResult.winner, "player");
+  assert.equal(roundResult.nextState.playerSpirit, 9);
+  assert.equal(roundResult.nextState.npcSpirit, 7);
+  assert.equal(roundResult.nextState.timeoutCount, 1);
+  assert.equal(roundResult.nextState.consecutivePlayerWins, 2);
+});
+
+test("tea house ai weights bias topic choice by personality", () => {
+  assert.equal(pickTeaHouseAiTopic("精明", () => 0.2), "利");
+  assert.equal(pickTeaHouseAiTopic("傲气", () => 0.5), "名");
 });

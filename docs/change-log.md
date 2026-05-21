@@ -10,6 +10,26 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-05-21 City NPC Pool Template
+
+### Added
+- 新建城市级 NPC 池领域模型：`src/domain/city-npc.ts`
+- 新建城市 NPC 每日刷新与 House 选择器骨架：`src/application/city-npcs/*`
+- 为库兰城补充城市共享 NPC 池样例，以及可承接流动 NPC 的茶馆模板
+- 新建茶馆特殊 house 模块：`domain/tea-house`、`domain/house-modules/tea-house-session`、`application/house-modules/tea-house/*`、`ui/views/house/tea-house-house-view`
+
+### Changed
+- `GameState.runtime` 新增 `cityNpcPools`，用于统一保存“按城市共享、按日期刷新”的 NPC 位置与好感度运行态
+- `HouseDefinition` 新增可选 `activityLocationId`，用于声明某个 House 对应的城市活动地点槽位，而不是各自维护独立 NPC 池
+- 普通 House 视图改为可叠加显示“固定驻场角色 + 当日流动城市 NPC”
+- `HouseModuleId` 扩展为支持 `tea-house`，库兰城茶馆改为通过统一 registry 接入，而不是普通 House 静态展示
+- 茶馆进入逻辑改为“固定老板 + 当日茶馆地点中至多 2 名城市流动 NPC”，并在模块内实现闲谈、请喝茶、打听消息、舌战四类交互
+
+### Impact
+- 同一座城的流动 NPC 不再绑定到单个 House，而是通过城市共享池按日刷新，后续茶馆、酒馆、集市等地点都可复用同一模板
+- NPC 位置在同一天内保持稳定，只会在日期变化后重新刷新，能更自然地营造“城里的人在流动”的感觉
+- 茶馆现在成为第一个基于“城市共享 NPC 池 + 特殊 house 合同”实现的社交型屋舍，后续酒馆、道场、情报点可以沿同样模式扩展
+
 ## 记录规则
 
 以下改动必须记录：

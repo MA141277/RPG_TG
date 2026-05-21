@@ -2,8 +2,9 @@ import type { CharacterDefinition, CharacterId } from "./character";
 import type { GameState } from "./game-state";
 import type { HouseDefinition } from "./house";
 import type { GrainShopSessionState } from "./house-modules/grain-shop-session";
+import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 
-export type HouseModuleId = "grain-shop";
+export type HouseModuleId = "grain-shop" | "tea-house";
 
 export type HouseModuleRequest =
   | {
@@ -49,6 +50,7 @@ export type HouseStandbyActorViewModel = {
   name: string;
   title?: string;
   actionId?: string;
+  isSelected?: boolean;
 };
 
 export type HouseDialogueViewModel = {
@@ -115,6 +117,21 @@ export type HouseOverlayViewModel =
       rewardLines: string[];
       confirmActionId: string;
       confirmLabel: string;
+    }
+  | {
+      type: "debate";
+      title: string;
+      actorName: string;
+      round: number;
+      secondsLeft: number;
+      playerSpirit: number;
+      npcSpirit: number;
+      timeoutCount: number;
+      topicActionIds: Array<{
+        topic: string;
+        actionId: string;
+      }>;
+      lastRoundSummary: string[];
     };
 
 export type HouseModuleViewModel = {
@@ -132,6 +149,7 @@ export type HouseModuleViewModel = {
 
 export type HouseModuleSessionStateMap = {
   "grain-shop": GrainShopSessionState;
+  "tea-house": TeaHouseSessionState;
 };
 
 export type ActiveHouseModuleSession = {

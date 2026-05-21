@@ -14,22 +14,25 @@ export type HouseViewModel = {
 
 export function createHouseViewModel(
   houseDefinition: HouseDefinition,
-  characterDefinitions: CharacterDefinition[]
+  characterDefinitions: CharacterDefinition[],
+  cityNpcSummaries: HouseViewModel["characterSummaries"] = []
 ): HouseViewModel {
+  const fixedCharacterSummaries = characterDefinitions
+    .filter((characterDefinition) =>
+      houseDefinition.characterIds.includes(characterDefinition.id)
+    )
+    .map((characterDefinition) => ({
+      id: characterDefinition.id,
+      name: characterDefinition.name,
+      ...(characterDefinition.title == null
+        ? {}
+        : { title: characterDefinition.title }),
+    }));
+
   return {
     title: houseDefinition.name,
     defaultCharacterId: houseDefinition.defaultCharacterId,
-    characterSummaries: characterDefinitions
-      .filter((characterDefinition) =>
-        houseDefinition.characterIds.includes(characterDefinition.id)
-      )
-      .map((characterDefinition) => ({
-        id: characterDefinition.id,
-        name: characterDefinition.name,
-        ...(characterDefinition.title == null
-          ? {}
-          : { title: characterDefinition.title }),
-      })),
+    characterSummaries: [...fixedCharacterSummaries, ...cityNpcSummaries],
     backButtonLabel: houseDefinition.backAction.label,
   };
 }

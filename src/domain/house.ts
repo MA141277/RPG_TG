@@ -1,4 +1,5 @@
 import type { CharacterId } from "./character";
+import type { CityNpcActivityLocationId } from "./city-npc";
 import type { EventId } from "./event";
 import type { HouseModuleId } from "./house-module";
 
@@ -11,6 +12,7 @@ export type HouseDefinition = {
   type: "castle" | "merchant" | "inn" | "dojo" | "tea-house" | "residence" | "custom";
   characterIds: CharacterId[];
   defaultCharacterId: CharacterId | null;
+  activityLocationId?: CityNpcActivityLocationId | null;
   moduleId?: HouseModuleId | null;
   onEnterEventId?: EventId;
   onLeaveEventId?: EventId;

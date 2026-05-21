@@ -1,6 +1,7 @@
 import type { SceneId } from "./action";
 import type { CharacterId } from "./character";
 import type { CityId } from "./city";
+import type { CityNpcPoolRuntimeState } from "./city-npc";
 import type { EventId } from "./event";
 import type { HouseId } from "./house";
 import type { MapId } from "./map";
@@ -45,6 +46,7 @@ export type GameState = {
   runtime: {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
+    cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
     eventHistory: Record<
       EventId,
       {

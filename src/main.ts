@@ -1,4 +1,6 @@
 import "./styles/app.css";
+import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
+import { selectCityNpcSummariesForHouse } from "./application/city-npcs/select-city-npcs-for-house";
 import { getHouseModule } from "./application/house-modules/house-module-registry";
 import {
   equipValuableItem,
@@ -17,6 +19,7 @@ import {
   prototypeCards,
   prototypeCharacters,
   prototypeCity,
+  prototypeCityNpcPools,
   prototypeCityPortraits,
   prototypeHouses,
   prototypeMap,
@@ -25,7 +28,11 @@ import {
 import type { CardDefinition } from "./domain/card";
 import type { CharacterDefinition } from "./domain/character";
 import type { HouseDefinition } from "./domain/house";
-import type { HouseModuleRequest, HouseModuleTransitionResult } from "./domain/house-module";
+import type {
+  ActiveHouseModuleSession,
+  HouseModuleRequest,
+  HouseModuleTransitionResult,
+} from "./domain/house-module";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -43,6 +50,7 @@ import { renderCardLibraryView } from "./ui/views/cards/card-library-view";
 import { renderCityView } from "./ui/views/city/city-view";
 import { createHouseViewModel } from "./ui/views/house/house-view";
 import { renderGrainShopHouseView } from "./ui/views/house/grain-shop-house-view";
+import { renderTeaHouseHouseView } from "./ui/views/house/tea-house-house-view";
 import { createMapViewModel, renderMapView } from "./ui/views/map/map-view";
 import { renderValuableLibraryView } from "./ui/views/valuables/valuable-library-view";
 
@@ -104,36 +112,39 @@ const characterNameById = Object.fromEntries(
 const intervalHandles: Record<string, number> = {};
 
 let appState: AppState = {
-  gameState: createInitialState({
-    currentMapId: prototypeMap.id,
-    currentCityId: prototypeCity.id,
-    currentHouseId: null,
-    playerCharacterId,
-    chapterId: "chapter.prototype",
-    year: 1567,
-    month: 1,
-    day: 1,
-    pinnedCharacterId: playerCharacterId,
-    reviewDateText: "距离评定 40 天",
-    mainHouseMissionText: "前往评定会场",
-    cards: {
-      ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
-      selectedCardId: prototypeCards[0]?.id ?? null,
-    },
-    valuables: {
-      items: prototypeValuables,
-      selectedItemId: prototypeValuables[0]?.id ?? null,
-      equippedWeaponSet: {
-        swordId:
-          prototypeValuables.find((valuableDefinition) => valuableDefinition.category === "weapon")
-            ?.id ?? null,
-        armorId:
-          prototypeValuables.find((valuableDefinition) => valuableDefinition.category === "armor")
-            ?.id ?? null,
+  gameState: ensureCityNpcPoolsForCurrentDay(
+    createInitialState({
+      currentMapId: prototypeMap.id,
+      currentCityId: prototypeCity.id,
+      currentHouseId: null,
+      playerCharacterId,
+      chapterId: "chapter.prototype",
+      year: 1567,
+      month: 1,
+      day: 1,
+      pinnedCharacterId: playerCharacterId,
+      reviewDateText: "距离评定 40 天",
+      mainHouseMissionText: "前往评定会场",
+      cards: {
+        ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
+        selectedCardId: prototypeCards[0]?.id ?? null,
       },
-    },
-    currentView: "map",
-  }),
+      valuables: {
+        items: prototypeValuables,
+        selectedItemId: prototypeValuables[0]?.id ?? null,
+        equippedWeaponSet: {
+          swordId:
+            prototypeValuables.find((valuableDefinition) => valuableDefinition.category === "weapon")
+              ?.id ?? null,
+          armorId:
+            prototypeValuables.find((valuableDefinition) => valuableDefinition.category === "armor")
+              ?.id ?? null,
+        },
+      },
+      currentView: "map",
+    }),
+    prototypeCityNpcPools
+  ),
   characterDefinitions: [...prototypeCharacters],
   playerCoordinate: { x: 0, y: 0 },
   modalState: null,
@@ -587,24 +598,26 @@ function dispatchCurrentHouseRequest(request: HouseModuleRequest): void {
   renderApp();
 }
 
-function applyHouseModuleResult(
+function applyHouseModuleResult<ModuleId extends NonNullable<HouseDefinition["moduleId"]>>(
   houseDefinition: HouseDefinition,
-  moduleId: NonNullable<HouseDefinition["moduleId"]>,
-  result: HouseModuleTransitionResult
+  moduleId: ModuleId,
+  result: HouseModuleTransitionResult<ModuleId>
 ): void {
+  const nextHouseSession: ActiveHouseModuleSession =
+    result.sessionState == null
+      ? null
+      : ({
+          moduleId,
+          state: result.sessionState,
+        } as ActiveHouseModuleSession);
+
   appState = {
     ...appState,
     gameState: {
       ...result.gameState,
       ui: {
         ...result.gameState.ui,
-        houseSession:
-          result.sessionState == null
-            ? null
-            : {
-                moduleId,
-                state: result.sessionState,
-              },
+        houseSession: nextHouseSession,
       },
     },
     characterDefinitions: result.characterDefinitions,
@@ -701,6 +714,14 @@ function handleModalConfirm() {
 }
 
 function renderApp() {
+  appState = {
+    ...appState,
+    gameState: ensureCityNpcPoolsForCurrentDay(
+      appState.gameState,
+      prototypeCityNpcPools
+    ),
+  };
+
   const currentView = appState.gameState.ui.currentView;
   const activeHouse = getActiveHouseDefinition();
   const playerCharacter = getPlayerCharacter();
@@ -733,9 +754,20 @@ function renderApp() {
 
       if (houseViewModel.moduleId === "grain-shop") {
         stageMarkup = renderGrainShopHouseView(houseViewModel);
+      } else if (houseViewModel.moduleId === "tea-house") {
+        stageMarkup = renderTeaHouseHouseView(houseViewModel);
       }
     } else {
-      const houseViewModel = createHouseViewModel(activeHouse, appState.characterDefinitions);
+      const cityNpcSummaries = selectCityNpcSummariesForHouse(
+        appState.gameState,
+        activeHouse,
+        prototypeCityNpcPools
+      );
+      const houseViewModel = createHouseViewModel(
+        activeHouse,
+        appState.characterDefinitions,
+        cityNpcSummaries
+      );
 
       stageMarkup = `
         <section class="view-house">
