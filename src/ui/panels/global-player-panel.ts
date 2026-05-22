@@ -6,91 +6,92 @@ export type GlobalPlayerPanelModel = {
   portraitLabel: string;
   name: string;
   title: string;
-  occupation: string;
   currentDateText: string;
-  ageText: string;
+  locationText: string;
+  goldText: string;
   stamina: number;
+  staminaPercent: number;
   fame: number;
-  notoriety: number;
   reviewDateText: string;
   mainHouseMissionText: string;
-  biography: string;
 };
 
 export function createGlobalPlayerPanelModel(
   playerCharacter: CharacterDefinition,
   state: GameState,
-  activeMission: MissionDefinition | null
+  activeMission: MissionDefinition | null,
+  locationText: string
 ): GlobalPlayerPanelModel {
-  const notorietyValue = state.runtime.variables.notoriety;
-
   return {
     portraitLabel:
       playerCharacter.portraitVariants?.find(
         (variant) => variant.id === playerCharacter.portraitVariantId
       )?.label ?? "通常",
     name: playerCharacter.name,
-    title: playerCharacter.title ?? "无职位",
-    occupation: playerCharacter.occupation ?? "无职业",
-    currentDateText: `${state.calendar.year}年 ${state.calendar.month}月 ${state.calendar.day}日`,
-    ageText: `${playerCharacter.age}岁`,
+    title: playerCharacter.title ?? playerCharacter.occupation ?? "无官职",
+    currentDateText: `${state.calendar.year}年 ${state.calendar.month}月${state.calendar.day}日`,
+    locationText,
+    goldText: `${playerCharacter.stats.gold} 文`,
     stamina: playerCharacter.stamina,
+    staminaPercent: Math.max(0, Math.min(100, playerCharacter.stamina)) / 100,
     fame: playerCharacter.stats.fame,
-    notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
     reviewDateText: state.ui.reviewDateText,
-    mainHouseMissionText: activeMission?.title ?? state.ui.mainHouseMissionText,
-    biography: playerCharacter.biography ?? "暂无人物简介。",
+    mainHouseMissionText:
+      activeMission?.title ?? state.ui.mainHouseMissionText ?? "暂无任务",
   };
 }
 
 export function renderGlobalPlayerPanel(model: GlobalPlayerPanelModel): string {
   return `
-    <section class="p-global-player-card">
-      <div class="p-global-player-card__portrait">
-        <span class="p-global-player-card__portrait-label">${model.portraitLabel}</span>
-      </div>
-      <div class="p-global-player-card__body">
-        <div class="p-global-player-card__topline">
-          <strong class="p-global-player-card__name">${model.name}</strong>
-          <span class="p-global-player-card__title">${model.title}</span>
-        </div>
-        <div class="p-global-player-card__meta">
-          <span>${model.currentDateText}</span>
-          <span>${model.ageText}</span>
-          <span>${model.occupation}</span>
-        </div>
-        <div class="p-global-player-card__row">
-          <span>体力</span>
-          <div class="p-global-player-card__meter">
-            <span class="p-global-player-card__meter-fill" style="width: ${model.stamina}%"></span>
+    <section class="p-global-hud">
+      <button class="u-click-layer p-global-status-trigger" data-action="open-player-detail" aria-label="打开角色详情">
+        <div class="p-global-status-bar">
+          <div class="p-global-status-bar__portrait">
+            <div class="p-global-status-bar__portrait-frame">
+              <span class="p-global-status-bar__portrait-label">${model.portraitLabel}</span>
+            </div>
           </div>
-          <strong>${model.stamina}</strong>
-        </div>
-        <div class="p-global-player-card__row">
-          <span>名声</span>
-          <div class="p-global-player-card__meter">
-            <span class="p-global-player-card__meter-fill" style="width: ${Math.min(model.fame, 100)}%"></span>
+          <div class="p-global-status-bar__board">
+            <div class="p-global-status-bar__identity">
+              <strong class="p-global-status-bar__name">${model.name}</strong>
+              <span class="p-global-status-bar__title">${model.title}</span>
+              <span class="p-global-status-bar__date">${model.currentDateText}</span>
+            </div>
+            <div class="p-global-status-bar__gold">
+              <strong class="p-global-status-bar__gold-value">${model.goldText}</strong>
+            </div>
+            <div class="p-global-status-bar__location">
+              <span class="p-global-status-bar__location-icon">◉</span>
+              <strong class="p-global-status-bar__location-text">${model.locationText}</strong>
+            </div>
+            <div class="p-global-status-bar__stamina">
+              <span class="p-global-status-bar__stamina-label">体力 ${model.stamina}</span>
+              <div class="p-global-status-bar__meter">
+                <span
+                  class="p-global-status-bar__meter-fill"
+                  style="transform: scaleX(${model.staminaPercent})"
+                ></span>
+              </div>
+            </div>
+            <div class="p-global-status-bar__prestige">
+              <strong class="p-global-status-bar__prestige-value">${model.fame}</strong>
+            </div>
           </div>
-          <strong>${model.fame}</strong>
         </div>
-        <div class="p-global-player-card__row">
-          <span>恶名</span>
-          <div class="p-global-player-card__meter">
-            <span class="p-global-player-card__meter-fill p-global-player-card__meter-fill--dark" style="width: ${Math.min(model.notoriety, 100)}%"></span>
-          </div>
-          <strong>${model.notoriety}</strong>
+      </button>
+      <div class="p-global-task-panel">
+        <div class="p-global-task-panel__header"></div>
+        <div class="p-global-task-panel__items">
+          <section class="p-global-task-panel__item">
+            <span class="p-global-task-panel__label">距离评定</span>
+            <strong class="p-global-task-panel__value">${model.reviewDateText}</strong>
+          </section>
+          <section class="p-global-task-panel__item" title="${model.mainHouseMissionText}">
+            <span class="p-global-task-panel__label">当前任务</span>
+            <strong class="p-global-task-panel__value">${model.mainHouseMissionText}</strong>
+          </section>
         </div>
-        <p class="p-global-player-card__note">${model.biography}</p>
-      </div>
-    </section>
-    <section class="p-global-task-card">
-      <div class="p-global-task-card__block">
-        <span class="p-global-task-card__label">距离评定</span>
-        <strong class="p-global-task-card__value">${model.reviewDateText}</strong>
-      </div>
-      <div class="p-global-task-card__block">
-        <span class="p-global-task-card__label">主家任务</span>
-        <strong class="p-global-task-card__value">${model.mainHouseMissionText}</strong>
+        <div class="p-global-task-panel__footer"></div>
       </div>
     </section>
   `;

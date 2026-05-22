@@ -42,6 +42,6 @@
   position: absolute;
   top: var(--space-4);
   left: var(--space-4);
-  width: min(100%, 560px);
+  width: min(100% - 24px, 980px);
   z-index: var(--z-global-ui);
 }

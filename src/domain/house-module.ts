@@ -2,11 +2,13 @@ import type { CharacterDefinition, CharacterId } from "./character";
 import type { GameState } from "./game-state";
 import type { HouseDefinition } from "./house";
 import type { GrainShopSessionState } from "./house-modules/grain-shop-session";
+import type { KeepHouseSessionState } from "./house-modules/keep-house-session";
 import type { MarketHouseSessionState } from "./house-modules/market-house-session";
 import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
 
 export type HouseModuleId =
+  | "keep-house"
   | "grain-shop"
   | "market-house"
   | "tea-house"
@@ -176,6 +178,7 @@ export type HouseModuleViewModel = {
 };
 
 export type HouseModuleSessionStateMap = {
+  "keep-house": KeepHouseSessionState;
   "grain-shop": GrainShopSessionState;
   "market-house": MarketHouseSessionState;
   "tea-house": TeaHouseSessionState;

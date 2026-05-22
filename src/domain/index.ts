@@ -8,6 +8,7 @@ export * from "./game-state";
 export * from "./global-ui";
 export * from "./house";
 export * from "./house-module";
+export * from "./keep-house";
 export * from "./market";
 export * from "./map";
 export * from "./mission";

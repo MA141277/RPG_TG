@@ -4,120 +4,245 @@
     linear-gradient(180deg, rgb(22 31 38 / 100%), rgb(14 20 28 / 100%));
 }
 
-.p-global-player-card {
+.p-global-hud {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 2px solid rgb(58 86 82 / 88%);
-  border-radius: 4px;
-  background: linear-gradient(180deg, rgb(212 223 192 / 96%), rgb(174 190 151 / 96%));
-  color: #213026;
+  gap: 12px;
+  width: 962px;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+.p-global-status-bar {
+  --global-status-board: url("../../yuansu/1_002_top_status_bar_1.0.png");
+
+  display: grid;
+  grid-template-columns: 186px 764px;
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+  color: #f2e1b6;
   text-align: left;
 }
 
-.p-global-player-card__portrait {
+.p-global-status-bar__portrait {
   display: grid;
-  place-items: center;
-  min-height: 126px;
-  border: 2px solid rgb(89 112 95 / 72%);
-  border-radius: 2px;
-  background:
-    linear-gradient(180deg, rgb(189 210 204 / 100%), rgb(118 156 150 / 100%)),
-    #95b6b0;
 }
 
-.p-global-player-card__portrait-label {
-  color: #17312b;
-  font-size: 0.92rem;
-  font-weight: 700;
-}
-
-.p-global-player-card__body {
-  display: grid;
-  gap: 8px;
-}
-
-.p-global-player-card__topline {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  justify-content: space-between;
-}
-
-.p-global-player-card__name {
-  font-size: 1.22rem;
-}
-
-.p-global-player-card__title {
-  color: #475852;
-  font-size: 0.95rem;
-}
-
-.p-global-player-card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  color: #354741;
-  font-size: 0.86rem;
-}
-
-.p-global-player-card__row {
-  display: grid;
-  grid-template-columns: 38px minmax(0, 1fr) auto;
-  gap: var(--space-2);
-  align-items: center;
-  font-size: 0.88rem;
-}
-
-.p-global-player-card__meter {
+.p-global-status-bar__portrait-frame {
   position: relative;
-  height: 14px;
-  border: 1px solid rgb(62 76 68 / 72%);
-  border-radius: 2px;
-  background: rgb(136 155 144 / 44%);
+  display: grid;
+  place-items: end center;
+  width: 178px;
+  aspect-ratio: 259 / 312;
+  overflow: hidden;
+  padding-bottom: 20px;
+  background:
+    center 18px / cover no-repeat url("../../ui/user/20.png"),
+    rgb(237 228 208 / 96%);
+  filter: drop-shadow(0 8px 14px rgb(0 0 0 / 32%));
+}
+
+.p-global-status-bar__portrait-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid rgb(114 83 40 / 82%);
+  background: linear-gradient(180deg, rgb(233 214 174 / 92%), rgb(185 148 93 / 92%));
+  color: #322113;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.p-global-status-bar__board {
+  position: relative;
+  width: 764px;
+  min-height: 219px;
+  aspect-ratio: 764 / 219;
+  background: center / contain no-repeat var(--global-status-board);
+  filter: drop-shadow(0 8px 16px rgb(0 0 0 / 28%));
+}
+
+.p-global-status-bar__identity {
+  position: absolute;
+  left: 28px;
+  top: 16px;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 10px;
+  align-items: end;
+}
+
+.p-global-status-bar__name {
+  color: #f7e0aa;
+  font-family: var(--font-title);
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.p-global-status-bar__title,
+.p-global-status-bar__date,
+.p-global-status-bar__gold-label,
+.p-global-status-bar__stamina-label,
+.p-global-status-bar__prestige-label,
+.p-global-status-bar__tag-label {
+  color: rgb(224 198 140 / 86%);
+}
+
+.p-global-status-bar__title {
+  align-self: end;
+  font-size: 0.98rem;
+}
+
+.p-global-status-bar__date {
+  grid-column: 1 / -1;
+  font-size: 0.96rem;
+}
+
+.p-global-status-bar__gold {
+  position: absolute;
+  left: 302px;
+  top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 120px;
+}
+
+.p-global-status-bar__gold-value {
+  color: #f8edd5;
+  font-size: 1.18rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.p-global-status-bar__location {
+  position: absolute;
+  left: 28px;
+  top: 110px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  width: 222px;
+  min-height: 44px;
+}
+
+.p-global-status-bar__location-icon {
+  color: #3d2f1c;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.p-global-status-bar__location-text {
+  overflow: hidden;
+  color: #3b2915;
+  font-size: 1.16rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.p-global-status-bar__stamina {
+  position: absolute;
+  left: 348px;
+  top: 106px;
+  display: grid;
+  grid-template-columns: auto 112px;
+  gap: 8px;
+  align-items: center;
+  width: 232px;
+}
+
+.p-global-status-bar__stamina-label {
+  white-space: nowrap;
+  font-size: 0.92rem;
+}
+
+.p-global-status-bar__meter {
+  position: relative;
+  height: 16px;
+  border: 1px solid rgb(154 117 38 / 92%);
+  box-shadow:
+    inset 0 0 0 1px rgb(27 32 44 / 82%),
+    0 1px 0 rgb(255 236 178 / 18%);
+  background: linear-gradient(180deg, rgb(31 42 81 / 96%), rgb(16 26 52 / 96%));
   overflow: hidden;
 }
 
-.p-global-player-card__meter-fill {
+.p-global-status-bar__meter-fill {
   position: absolute;
-  inset: 0 auto 0 0;
-  background: linear-gradient(90deg, #ae77b6, #8a4e9e);
+  inset: 2px;
+  background:
+    linear-gradient(180deg, rgb(95 147 255 / 96%), rgb(35 80 188 / 96%)),
+    #2c61ca;
+  transform-origin: left center;
 }
 
-.p-global-player-card__meter-fill--dark {
-  background: linear-gradient(90deg, #7d7d7d, #3f3f3f);
-}
-
-.p-global-player-card__note {
-  margin: 0;
-  color: #3e4f48;
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-
-.p-global-task-card {
+.p-global-status-bar__prestige {
+  position: absolute;
+  right: 38px;
+  top: 72px;
   display: grid;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 2px solid rgb(58 86 82 / 88%);
-  border-radius: 4px;
-  background: linear-gradient(180deg, rgb(213 228 206 / 96%), rgb(174 195 168 / 96%));
+  place-items: center;
+  width: 110px;
+  color: #eecb84;
 }
 
-.p-global-task-card__block {
+.p-global-status-bar__prestige-value {
+  color: #f6d58a;
+  font-family: var(--font-title);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.p-global-task-panel {
+  --global-task-panel: url("../../yuansu/1_015_left_mission_panel_1.0.png");
+
   display: grid;
-  gap: 4px;
+  grid-template-rows: 66px auto 56px;
+  width: 248px;
+  min-height: 494px;
+  padding: 18px 18px 18px 22px;
+  background: center / 100% 100% no-repeat var(--global-task-panel);
+  filter: drop-shadow(0 10px 18px rgb(0 0 0 / 26%));
 }
 
-.p-global-task-card__label {
-  color: #46574f;
-  font-size: 0.84rem;
+.p-global-task-panel__items {
+  display: grid;
+  align-content: start;
+  gap: 26px;
+  padding: 12px 6px 0 2px;
 }
 
-.p-global-task-card__value {
-  color: #1d2b24;
-  font-size: 0.92rem;
+.p-global-task-panel__item {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  min-height: 74px;
+  padding: 6px 18px;
+  text-align: center;
+}
+
+.p-global-task-panel__label {
+  color: #402712;
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+
+.p-global-task-panel__value {
+  overflow: hidden;
+  max-width: 100%;
+  margin-top: 8px;
+  color: #9f3f1e;
+  font-size: 0.98rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .u-click-layer {
@@ -1517,7 +1642,57 @@
 
   .l-overlay-ui {
     right: var(--space-4);
-    width: auto;
+    width: min(100% - 24px, 720px);
+  }
+
+  .p-global-hud {
+    width: 100%;
+  }
+
+  .p-global-status-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .p-global-status-bar__portrait,
+  .p-global-task-panel {
+    display: none;
+  }
+
+  .p-global-status-bar__board {
+    width: 100%;
+    min-height: 170px;
+    aspect-ratio: auto;
+    background-size: 100% 100%;
+  }
+
+  .p-global-status-bar__identity {
+    left: 16px;
+    top: 14px;
+  }
+
+  .p-global-status-bar__gold {
+    left: auto;
+    right: 128px;
+    top: 16px;
+  }
+
+  .p-global-status-bar__location {
+    left: 18px;
+    top: 96px;
+    width: 190px;
+  }
+
+  .p-global-status-bar__stamina {
+    left: auto;
+    right: 112px;
+    top: 92px;
+    width: 210px;
+  }
+
+  .p-global-status-bar__prestige {
+    right: 26px;
+    top: 62px;
+    width: 92px;
   }
 
   .c-stage-header {

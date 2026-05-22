@@ -285,10 +285,14 @@ export function renderApp(input: AppRenderInput): string {
     input.appState,
     input.playerCharacterId
   );
+  const locationText =
+    input.cityNameById[input.appState.gameState.world.currentCityId] ??
+    input.cityDefinition.name;
   const playerPanelModel = createGlobalPlayerPanelModel(
     playerCharacter,
     input.appState.gameState,
-    null
+    null,
+    locationText
   );
   const stageMarkup = renderStage(input);
 
@@ -300,9 +304,7 @@ export function renderApp(input: AppRenderInput): string {
             <main class="l-stage">
               ${stageMarkup}
               <div class="l-overlay-ui">
-                <button class="u-click-layer" data-action="open-player-detail" aria-label="打开角色详情">
-                  ${renderGlobalPlayerPanel(playerPanelModel)}
-                </button>
+                ${renderGlobalPlayerPanel(playerPanelModel)}
               </div>
             </main>
             ${renderModal(input.appState.modalState, input.cityPortraits)}

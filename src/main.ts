@@ -33,6 +33,7 @@ import type {
   ValuableLibraryFilter,
   ValuableLibrarySortKey,
 } from "./domain/global-ui";
+import { KEEP_HOUSE_VARIABLE_KEYS } from "./domain/keep-house";
 import type { ValuableItemId } from "./domain/valuable-item";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
@@ -143,6 +144,19 @@ let appState: AppState = {
   playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
   modalState: null,
 };
+appState = {
+  ...appState,
+  gameState: {
+    ...appState.gameState,
+    runtime: {
+      ...appState.gameState.runtime,
+      variables: {
+        ...appState.gameState.runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+      },
+    },
+  },
+};
 let campaignMapDebugState: CampaignMapDebugState = {
   scale: 1,
   offsetX: 0,
@@ -158,7 +172,7 @@ let campaignMapDragState:
       didMove: boolean;
     }
   | null = null;
-let shouldSuppressNextMapClick = false;
+let shouldSuppressNextClickAfterMapDrag = false;
 
 const houseRuntime = createHouseRuntime({
   getAppState: () => appState,
@@ -271,6 +285,13 @@ appElement.addEventListener("pointerup", endCampaignMapDrag);
 appElement.addEventListener("pointercancel", endCampaignMapDrag);
 
 appElement.addEventListener("click", (event) => {
+  if (shouldSuppressNextClickAfterMapDrag) {
+    shouldSuppressNextClickAfterMapDrag = false;
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
     return;
@@ -474,11 +495,6 @@ appElement.addEventListener("click", (event) => {
 
   const mapCell = targetElement.closest<HTMLElement>("[data-map-x][data-map-y]");
   if (mapCell != null && appState.gameState.ui.currentView === "map") {
-    if (shouldSuppressNextMapClick) {
-      shouldSuppressNextMapClick = false;
-      return;
-    }
-
     const xValue = Number(mapCell.dataset.mapX);
     const yValue = Number(mapCell.dataset.mapY);
     const cityId = mapCell.dataset.cityId || null;
@@ -669,8 +685,11 @@ function endCampaignMapDrag(event: PointerEvent): void {
   const campaignMap = appRoot.querySelector<HTMLElement>(
     "[data-campaign-map-viewport]"
   );
+  if (campaignMap?.hasPointerCapture(event.pointerId) === true) {
+    campaignMap.releasePointerCapture(event.pointerId);
+  }
   campaignMap?.classList.remove("is-dragging");
-  shouldSuppressNextMapClick = campaignMapDragState.didMove;
+  shouldSuppressNextClickAfterMapDrag = campaignMapDragState.didMove;
   campaignMapDragState = null;
 }
 

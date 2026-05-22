@@ -303,3 +303,29 @@
 ### Impact
 - `house.kulan.market` now follows the repository special-house contract and no longer depends on plain house fallback behavior.
 - Market browsing is now attached through `moduleId + registry`, which keeps `src/main.ts` free of market-specific branches.
+
+## 2026-05-22 Keep House Meeting Flow
+
+### Added
+- Added `keep-house` as a special-house module for `house.kulan.keep`, including audience dialogue, review meeting flow, contribution ranking, strategy briefing, and task assignment.
+- Added Guo Zixing-aligned prototype generals so the keep meeting can render a left-side roster and review contribution board.
+- Added keep-house tests covering countdown-zero entry, meeting progression, and resetting the review countdown to `60` after task assignment.
+
+### Changed
+- Upgraded `house.kulan.keep` to use `moduleId: "keep-house"` instead of the generic static house path.
+- Updated the prototype debug scenario so the player already serves under Guo Zixing and the unified review countdown starts at `0`, which forces the meeting to trigger immediately when entering the keep.
+- Keep meeting task assignment now updates shared mission state, shared UI mission text, and unified runtime countdown data rather than using keep-specific globals.
+
+### Impact
+- The city lord house now follows the repository special-house contract and no longer depends on plain fallback house rendering.
+- Review timing, meeting contribution data, and assigned work all flow through unified game state plus `ui.houseSession`, keeping `src/main.ts` free of keep-specific business branches.
+
+## 2026-05-22 Global Status Bar Layout Refresh
+
+### Changed
+- Rebuilt the global player panel into a single top-left status board that uses `yuansu/1_002_top_status_bar_1.0.png` as its main frame instead of the earlier split card layout.
+- Corrected the panel data mapping so the board now shows current city, player gold, stamina, fame, review countdown, and current mission text from unified state instead of temporary placeholder fields.
+
+### Impact
+- The always-visible top-left HUD now matches the project reference composition more closely without introducing new entrypoint branches or house-specific UI wiring.
+- Global player summary data continues to flow through shared `GameState` and panel view-model wiring, keeping the renderer contract stable while updating presentation.

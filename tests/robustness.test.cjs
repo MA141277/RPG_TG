@@ -22,6 +22,9 @@ const {
   grainShopHouseModule,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js");
 const {
+  keepHouseHouseModule,
+} = require("../.test-dist/application/house-modules/keep-house/keep-house-house-module.js");
+const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
 const {
@@ -44,12 +47,16 @@ const {
   accountingGradeRewards,
 } = require("../.test-dist/content/houses/grain-shop-content.js");
 const { GRAIN_SHOP_VARIABLE_KEYS } = require("../.test-dist/domain/grain-shop.js");
+const { KEEP_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/keep-house.js");
 const {
   pickTeaHouseAiTopic,
   resolveTeaHouseDebateRound,
 } = require("../.test-dist/application/tea-house/tea-house-debate.js");
 
 const playerCharacterId = "char.player";
+const keepHouse = prototypeHouses.find(
+  (houseDefinition) => houseDefinition.moduleId === "keep-house"
+);
 const grainShopHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "grain-shop"
 );
@@ -63,6 +70,7 @@ const tavernHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "tavern"
 );
 
+assert.ok(keepHouse, "Expected prototype keep house to exist.");
 assert.ok(grainShopHouse, "Expected prototype grain shop house to exist.");
 assert.ok(marketHouse, "Expected prototype market house to exist.");
 assert.ok(teaHouse, "Expected prototype tea house to exist.");
@@ -201,6 +209,89 @@ test("house enter and leave keep session wiring and interval side effects consis
   assert.deepEqual(leaveResult.sideEffects, [
     { type: "stop-interval", intervalId: "grain-shop-accounting" },
   ]);
+});
+
+test("keep house starts review meeting at countdown zero and resets to 60 after assignment", () => {
+  const state = createBaseState();
+  const enterResult = keepHouseHouseModule.enter({
+    gameState: {
+      ...state,
+      runtime: {
+        ...state.runtime,
+        variables: {
+          ...state.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(enterResult.sessionState?.mode, "meeting");
+  assert.equal(enterResult.sessionState?.meetingStage, "intro");
+
+  const contributionResult = keepHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
+  assert.equal(contributionResult.sessionState?.overlay?.type, "alert");
+
+  const praiseResult = keepHouseHouseModule.dispatch({
+    gameState: contributionResult.gameState,
+    characterDefinitions: contributionResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: contributionResult.sessionState,
+    request: { type: "action", actionId: "close-alert" },
+  });
+  assert.equal(praiseResult.sessionState?.meetingStage, "praise");
+
+  const strategyResult = keepHouseHouseModule.dispatch({
+    gameState: praiseResult.gameState,
+    characterDefinitions: praiseResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: praiseResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+  assert.equal(strategyResult.sessionState?.meetingStage, "strategy");
+
+  const assignTaskResult = keepHouseHouseModule.dispatch({
+    gameState: strategyResult.gameState,
+    characterDefinitions: strategyResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: strategyResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+  assert.equal(assignTaskResult.sessionState?.meetingStage, "assign-task");
+
+  const assignedResult = keepHouseHouseModule.dispatch({
+    gameState: assignTaskResult.gameState,
+    characterDefinitions: assignTaskResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: assignTaskResult.sessionState,
+    request: { type: "action", actionId: "assign-keep-task:grain-procurement" },
+  });
+
+  assert.equal(
+    assignedResult.gameState.missions.activeMissionId,
+    "mission.keep.grain-procurement"
+  );
+  assert.equal(assignedResult.gameState.ui.mainHouseMissionText, "采办军粮");
+  assert.equal(
+    assignedResult.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    60
+  );
+  assert.equal(assignedResult.sessionState?.overlay?.type, "alert");
 });
 
 test("grain shop trade overlay reads buy and sell price from unified city market", () => {
