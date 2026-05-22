@@ -19,7 +19,7 @@ export const prototypeCity: CityDefinition = {
   id: "city.kulan",
   name: "顺天府",
   regionId: "region.frontier",
-  mapNodeId: "settlement.shuntian_province",
+  mapNodeId: "settlement.yingtian_province",
   houseIds: [
     "house.kulan.keep",
     "house.kulan.tea_house",

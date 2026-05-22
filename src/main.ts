@@ -60,17 +60,31 @@ if (appElement == null) {
 
 const appRoot = appElement;
 const playerCharacterId = "char.player";
-const cityCoordinatesById: Record<string, GridCoordinate> = {
-  [prototypeCity.id]: { x: 339, y: 362 },
-};
-const prototypeCityCoordinateCandidate = cityCoordinatesById[prototypeCity.id];
-assertExists(
-  prototypeCityCoordinateCandidate,
-  `Missing city coordinate for "${prototypeCity.id}".`
+const cityDefinitions = [prototypeCity];
+const mapNodeById = Object.fromEntries(
+  yuanmoCampaignMap.nodes
+    .filter((mapNode) => mapNode.id != null)
+    .map((mapNode) => [mapNode.id as string, mapNode])
 );
-const prototypeCityCoordinate = prototypeCityCoordinateCandidate;
+const cityCoordinatesById: Record<string, GridCoordinate> = Object.fromEntries(
+  cityDefinitions.map((cityDefinition) => {
+    assertExists(
+      cityDefinition.mapNodeId,
+      `Missing map node id for city "${cityDefinition.id}".`
+    );
+    const mapNode = mapNodeById[cityDefinition.mapNodeId];
+    assertExists(
+      mapNode,
+      `Missing campaign map node "${cityDefinition.mapNodeId}" for city "${cityDefinition.id}".`
+    );
+    return [cityDefinition.id, { x: mapNode.x, y: mapNode.y }];
+  })
+);
+const cityDefinitionById = Object.fromEntries(
+  cityDefinitions.map((cityDefinition) => [cityDefinition.id, cityDefinition])
+);
 const cityNameById = Object.fromEntries(
-  [prototypeCity].map((cityDefinition) => [
+  cityDefinitions.map((cityDefinition) => [
     cityDefinition.id,
     cityDefinition.name,
   ])
@@ -204,6 +218,11 @@ appElement.addEventListener("pointerdown", (event) => {
   }
 
   if (targetElement.closest(".c-campaign-map-debug") != null) {
+    return;
+  }
+
+   // City markers are clickable buttons; do not turn their press into a drag capture.
+  if (targetElement.closest("[data-map-node-id]") != null) {
     return;
   }
 
@@ -490,19 +509,19 @@ function handleModalConfirm() {
       appState.modalState.targetCoordinate
     );
 
-    const didReachCity =
-      appState.modalState.cityId === prototypeCity.id &&
-      nextCoordinate.x === prototypeCityCoordinate.x &&
-      nextCoordinate.y === prototypeCityCoordinate.y;
+    const reachedCityDefinition =
+      appState.modalState.cityId == null
+        ? null
+        : cityDefinitionById[appState.modalState.cityId] ?? null;
 
     appState = {
       ...appState,
       playerCoordinate: nextCoordinate,
-      modalState: didReachCity
+      modalState: reachedCityDefinition != null
         ? {
             type: "enter-city-confirm",
-            cityId: prototypeCity.id,
-            cityName: prototypeCity.name,
+            cityId: reachedCityDefinition.id,
+            cityName: reachedCityDefinition.name,
           }
         : null,
     };
