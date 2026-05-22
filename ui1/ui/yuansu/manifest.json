@@ -1,0 +1,1058 @@
+[
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_001_portrait_frame_1.0.png",
+    "label": "portrait_frame",
+    "version": "1.0",
+    "box": {
+      "x": 28,
+      "y": 27,
+      "width": 259,
+      "height": 312
+    },
+    "size": {
+      "width": 259,
+      "height": 312
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_002_top_status_bar_1.0.png",
+    "label": "top_status_bar",
+    "version": "1.0",
+    "box": {
+      "x": 299,
+      "y": 29,
+      "width": 739,
+      "height": 219
+    },
+    "size": {
+      "width": 739,
+      "height": 219
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_003_small_dark_panel_1.0.png",
+    "label": "small_dark_panel",
+    "version": "1.0",
+    "box": {
+      "x": 1138,
+      "y": 28,
+      "width": 147,
+      "height": 80
+    },
+    "size": {
+      "width": 147,
+      "height": 80
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_004_easel_icon_1.0.png",
+    "label": "easel_icon",
+    "version": "1.0",
+    "box": {
+      "x": 1289,
+      "y": 22,
+      "width": 62,
+      "height": 89
+    },
+    "size": {
+      "width": 62,
+      "height": 89
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_005_round_coin_1.0.png",
+    "label": "round_coin",
+    "version": "1.0",
+    "box": {
+      "x": 1052,
+      "y": 34,
+      "width": 66,
+      "height": 67
+    },
+    "size": {
+      "width": 66,
+      "height": 67
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_006_blue_bar_1.0.png",
+    "label": "blue_bar",
+    "version": "1.0",
+    "box": {
+      "x": 1352,
+      "y": 62,
+      "width": 126,
+      "height": 38
+    },
+    "size": {
+      "width": 126,
+      "height": 38
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_007_info_button_1.0.png",
+    "label": "info_button",
+    "version": "1.0",
+    "box": {
+      "x": 1117,
+      "y": 118,
+      "width": 170,
+      "height": 176
+    },
+    "size": {
+      "width": 170,
+      "height": 176
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_008_function_button_1.0.png",
+    "label": "function_button",
+    "version": "1.0",
+    "box": {
+      "x": 1318,
+      "y": 118,
+      "width": 164,
+      "height": 176
+    },
+    "size": {
+      "width": 164,
+      "height": 176
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_009_standing_guard_1.0.png",
+    "label": "standing_guard",
+    "version": "1.0",
+    "box": {
+      "x": 287,
+      "y": 297,
+      "width": 141,
+      "height": 430
+    },
+    "size": {
+      "width": 141,
+      "height": 430
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_010_red_nameplate_1.0.png",
+    "label": "red_nameplate",
+    "version": "1.0",
+    "box": {
+      "x": 430,
+      "y": 270,
+      "width": 252,
+      "height": 84
+    },
+    "size": {
+      "width": 252,
+      "height": 84
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_011_corner_frame_parts_1.0.png",
+    "label": "corner_frame_parts",
+    "version": "1.0",
+    "box": {
+      "x": 689,
+      "y": 284,
+      "width": 83,
+      "height": 96
+    },
+    "size": {
+      "width": 83,
+      "height": 96
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_012_corner_frame_parts_2.0.png",
+    "label": "corner_frame_parts",
+    "version": "2.0",
+    "box": {
+      "x": 720,
+      "y": 318,
+      "width": 92,
+      "height": 297
+    },
+    "size": {
+      "width": 92,
+      "height": 297
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_013_blank_large_frame_1.0.png",
+    "label": "blank_large_frame",
+    "version": "1.0",
+    "box": {
+      "x": 815,
+      "y": 319,
+      "width": 212,
+      "height": 301
+    },
+    "size": {
+      "width": 212,
+      "height": 301
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_014_gate_arch_1.0.png",
+    "label": "gate_arch",
+    "version": "1.0",
+    "box": {
+      "x": 1266,
+      "y": 315,
+      "width": 236,
+      "height": 330
+    },
+    "size": {
+      "width": 236,
+      "height": 330
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_015_left_mission_panel_1.0.png",
+    "label": "left_mission_panel",
+    "version": "1.0",
+    "box": {
+      "x": 27,
+      "y": 351,
+      "width": 252,
+      "height": 501
+    },
+    "size": {
+      "width": 252,
+      "height": 501
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_016_small_blank_panel_1.0.png",
+    "label": "small_blank_panel",
+    "version": "1.0",
+    "box": {
+      "x": 438,
+      "y": 355,
+      "width": 230,
+      "height": 72
+    },
+    "size": {
+      "width": 230,
+      "height": 72
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_017_wood_railing_1.0.png",
+    "label": "wood_railing",
+    "version": "1.0",
+    "box": {
+      "x": 1038,
+      "y": 344,
+      "width": 213,
+      "height": 143
+    },
+    "size": {
+      "width": 213,
+      "height": 143
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_018_corner_frame_parts_3.0.png",
+    "label": "corner_frame_parts",
+    "version": "3.0",
+    "box": {
+      "x": 737,
+      "y": 385,
+      "width": 20,
+      "height": 225
+    },
+    "size": {
+      "width": 20,
+      "height": 225
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_019_corner_frame_parts_4.0.png",
+    "label": "corner_frame_parts",
+    "version": "4.0",
+    "box": {
+      "x": 766,
+      "y": 380,
+      "width": 41,
+      "height": 236
+    },
+    "size": {
+      "width": 41,
+      "height": 236
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_020_small_blank_panel_2.0.png",
+    "label": "small_blank_panel",
+    "version": "2.0",
+    "box": {
+      "x": 439,
+      "y": 424,
+      "width": 229,
+      "height": 69
+    },
+    "size": {
+      "width": 229,
+      "height": 69
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_021_medium_blank_panel_1.0.png",
+    "label": "medium_blank_panel",
+    "version": "1.0",
+    "box": {
+      "x": 438,
+      "y": 493,
+      "width": 230,
+      "height": 73
+    },
+    "size": {
+      "width": 230,
+      "height": 73
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_022_wood_railing_2.0.png",
+    "label": "wood_railing",
+    "version": "2.0",
+    "box": {
+      "x": 1029,
+      "y": 499,
+      "width": 250,
+      "height": 127
+    },
+    "size": {
+      "width": 250,
+      "height": 127
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_023_corner_frame_parts_5.0.png",
+    "label": "corner_frame_parts",
+    "version": "5.0",
+    "box": {
+      "x": 689,
+      "y": 525,
+      "width": 172,
+      "height": 121
+    },
+    "size": {
+      "width": 172,
+      "height": 121
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_024_gold_bottom_button_1.0.png",
+    "label": "gold_bottom_button",
+    "version": "1.0",
+    "box": {
+      "x": 440,
+      "y": 575,
+      "width": 238,
+      "height": 65
+    },
+    "size": {
+      "width": 238,
+      "height": 65
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_025_card_zizhai_1.0.png",
+    "label": "card_zizhai",
+    "version": "1.0",
+    "box": {
+      "x": 418,
+      "y": 661,
+      "width": 179,
+      "height": 299
+    },
+    "size": {
+      "width": 179,
+      "height": 299
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_026_card_shuaifu_1.0.png",
+    "label": "card_shuaifu",
+    "version": "1.0",
+    "box": {
+      "x": 596,
+      "y": 661,
+      "width": 173,
+      "height": 299
+    },
+    "size": {
+      "width": 173,
+      "height": 299
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_027_card_bingzhangju_1.0.png",
+    "label": "card_bingzhangju",
+    "version": "1.0",
+    "box": {
+      "x": 766,
+      "y": 661,
+      "width": 168,
+      "height": 299
+    },
+    "size": {
+      "width": 168,
+      "height": 299
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_028_card_jianglingfu_1.0.png",
+    "label": "card_jianglingfu",
+    "version": "1.0",
+    "box": {
+      "x": 931,
+      "y": 661,
+      "width": 186,
+      "height": 299
+    },
+    "size": {
+      "width": 186,
+      "height": 299
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_029_card_lianghang_1.0.png",
+    "label": "card_lianghang",
+    "version": "1.0",
+    "box": {
+      "x": 1114,
+      "y": 661,
+      "width": 184,
+      "height": 298
+    },
+    "size": {
+      "width": 184,
+      "height": 298
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_030_card_jiusi_1.0.png",
+    "label": "card_jiusi",
+    "version": "1.0",
+    "box": {
+      "x": 1298,
+      "y": 661,
+      "width": 188,
+      "height": 298
+    },
+    "size": {
+      "width": 188,
+      "height": 298
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\1.png",
+    "file": "C:\\ui\\sliced\\1_031_large_gold_button_1.0.png",
+    "label": "large_gold_button",
+    "version": "1.0",
+    "box": {
+      "x": 47,
+      "y": 852,
+      "width": 295,
+      "height": 152
+    },
+    "size": {
+      "width": 295,
+      "height": 152
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_032_card_dangpu_1.0.png",
+    "label": "card_dangpu",
+    "version": "1.0",
+    "box": {
+      "x": 23,
+      "y": 70,
+      "width": 206,
+      "height": 411
+    },
+    "size": {
+      "width": 206,
+      "height": 411
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_033_card_huozhan_1.0.png",
+    "label": "card_huozhan",
+    "version": "1.0",
+    "box": {
+      "x": 238,
+      "y": 70,
+      "width": 206,
+      "height": 411
+    },
+    "size": {
+      "width": 206,
+      "height": 411
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_034_card_yicang_1.0.png",
+    "label": "card_yicang",
+    "version": "1.0",
+    "box": {
+      "x": 453,
+      "y": 70,
+      "width": 205,
+      "height": 410
+    },
+    "size": {
+      "width": 205,
+      "height": 410
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_035_card_shuyuan_1.0.png",
+    "label": "card_shuyuan",
+    "version": "1.0",
+    "box": {
+      "x": 668,
+      "y": 70,
+      "width": 202,
+      "height": 410
+    },
+    "size": {
+      "width": 202,
+      "height": 410
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_036_card_biaoju_1.0.png",
+    "label": "card_biaoju",
+    "version": "1.0",
+    "box": {
+      "x": 877,
+      "y": 70,
+      "width": 205,
+      "height": 410
+    },
+    "size": {
+      "width": 205,
+      "height": 410
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_037_card_wuguan_1.0.png",
+    "label": "card_wuguan",
+    "version": "1.0",
+    "box": {
+      "x": 1093,
+      "y": 70,
+      "width": 203,
+      "height": 411
+    },
+    "size": {
+      "width": 203,
+      "height": 411
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_038_card_gudongdian_1.0.png",
+    "label": "card_gudongdian",
+    "version": "1.0",
+    "box": {
+      "x": 1304,
+      "y": 70,
+      "width": 204,
+      "height": 411
+    },
+    "size": {
+      "width": 204,
+      "height": 411
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_039_card_qinfang_1.0.png",
+    "label": "card_qinfang",
+    "version": "1.0",
+    "box": {
+      "x": 23,
+      "y": 541,
+      "width": 202,
+      "height": 407
+    },
+    "size": {
+      "width": 202,
+      "height": 407
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_040_card_huichuntang_1.0.png",
+    "label": "card_huichuntang",
+    "version": "1.0",
+    "box": {
+      "x": 237,
+      "y": 541,
+      "width": 202,
+      "height": 406
+    },
+    "size": {
+      "width": 202,
+      "height": 406
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_041_card_tiejiangpu_1.0.png",
+    "label": "card_tiejiangpu",
+    "version": "1.0",
+    "box": {
+      "x": 452,
+      "y": 541,
+      "width": 202,
+      "height": 406
+    },
+    "size": {
+      "width": 202,
+      "height": 406
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_042_card_jinyiweizhihuishisi_1.0.png",
+    "label": "card_jinyiweizhihuishisi",
+    "version": "1.0",
+    "box": {
+      "x": 668,
+      "y": 541,
+      "width": 199,
+      "height": 406
+    },
+    "size": {
+      "width": 199,
+      "height": 406
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_043_card_mingjiaofentan_1.0.png",
+    "label": "card_mingjiaofentan",
+    "version": "1.0",
+    "box": {
+      "x": 879,
+      "y": 543,
+      "width": 198,
+      "height": 406
+    },
+    "size": {
+      "width": 198,
+      "height": 406
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_044_card_yuanchaoxingshengyamen_1.0.png",
+    "label": "card_yuanchaoxingshengyamen",
+    "version": "1.0",
+    "box": {
+      "x": 1093,
+      "y": 543,
+      "width": 198,
+      "height": 406
+    },
+    "size": {
+      "width": 198,
+      "height": 406
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\3.png",
+    "file": "C:\\ui\\sliced\\3_045_card_hanlinyuan_1.0.png",
+    "label": "card_hanlinyuan",
+    "version": "1.0",
+    "box": {
+      "x": 1303,
+      "y": 543,
+      "width": 203,
+      "height": 406
+    },
+    "size": {
+      "width": 203,
+      "height": 406
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_046_card_dangpu_2.0.png",
+    "label": "card_dangpu",
+    "version": "2.0",
+    "box": {
+      "x": 14,
+      "y": 76,
+      "width": 209,
+      "height": 428
+    },
+    "size": {
+      "width": 209,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_047_card_huozhan_2.0.png",
+    "label": "card_huozhan",
+    "version": "2.0",
+    "box": {
+      "x": 235,
+      "y": 76,
+      "width": 205,
+      "height": 428
+    },
+    "size": {
+      "width": 205,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_048_card_yicang_2.0.png",
+    "label": "card_yicang",
+    "version": "2.0",
+    "box": {
+      "x": 449,
+      "y": 76,
+      "width": 202,
+      "height": 429
+    },
+    "size": {
+      "width": 202,
+      "height": 429
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_049_card_shuyuan_2.0.png",
+    "label": "card_shuyuan",
+    "version": "2.0",
+    "box": {
+      "x": 668,
+      "y": 76,
+      "width": 201,
+      "height": 429
+    },
+    "size": {
+      "width": 201,
+      "height": 429
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_050_card_biaoju_2.0.png",
+    "label": "card_biaoju",
+    "version": "2.0",
+    "box": {
+      "x": 881,
+      "y": 76,
+      "width": 203,
+      "height": 429
+    },
+    "size": {
+      "width": 203,
+      "height": 429
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_051_card_wuguan_2.0.png",
+    "label": "card_wuguan",
+    "version": "2.0",
+    "box": {
+      "x": 1100,
+      "y": 76,
+      "width": 199,
+      "height": 429
+    },
+    "size": {
+      "width": 199,
+      "height": 429
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_052_card_gudongdian_2.0.png",
+    "label": "card_gudongdian",
+    "version": "2.0",
+    "box": {
+      "x": 1313,
+      "y": 76,
+      "width": 206,
+      "height": 429
+    },
+    "size": {
+      "width": 206,
+      "height": 429
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_053_card_qinfang_2.0.png",
+    "label": "card_qinfang",
+    "version": "2.0",
+    "box": {
+      "x": 15,
+      "y": 528,
+      "width": 207,
+      "height": 428
+    },
+    "size": {
+      "width": 207,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_054_card_huichuntang_2.0.png",
+    "label": "card_huichuntang",
+    "version": "2.0",
+    "box": {
+      "x": 235,
+      "y": 528,
+      "width": 205,
+      "height": 428
+    },
+    "size": {
+      "width": 205,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_055_card_tiejiangpu_2.0.png",
+    "label": "card_tiejiangpu",
+    "version": "2.0",
+    "box": {
+      "x": 450,
+      "y": 528,
+      "width": 201,
+      "height": 428
+    },
+    "size": {
+      "width": 201,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_056_card_jinyiweizhihuishisi_2.0.png",
+    "label": "card_jinyiweizhihuishisi",
+    "version": "2.0",
+    "box": {
+      "x": 667,
+      "y": 528,
+      "width": 203,
+      "height": 428
+    },
+    "size": {
+      "width": 203,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_057_card_mingjiaofentan_2.0.png",
+    "label": "card_mingjiaofentan",
+    "version": "2.0",
+    "box": {
+      "x": 883,
+      "y": 528,
+      "width": 202,
+      "height": 428
+    },
+    "size": {
+      "width": 202,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_058_card_yuanchaoxingshengyamen_2.0.png",
+    "label": "card_yuanchaoxingshengyamen",
+    "version": "2.0",
+    "box": {
+      "x": 1099,
+      "y": 528,
+      "width": 199,
+      "height": 428
+    },
+    "size": {
+      "width": 199,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\5.png",
+    "file": "C:\\ui\\sliced\\5_059_card_hanlinyuan_2.0.png",
+    "label": "card_hanlinyuan",
+    "version": "2.0",
+    "box": {
+      "x": 1313,
+      "y": 527,
+      "width": 203,
+      "height": 428
+    },
+    "size": {
+      "width": 203,
+      "height": 428
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\6.png",
+    "file": "C:\\ui\\sliced\\6_060_card_shuaifu_2.0.png",
+    "label": "card_shuaifu",
+    "version": "2.0",
+    "box": {
+      "x": 18,
+      "y": 300,
+      "width": 211,
+      "height": 437
+    },
+    "size": {
+      "width": 211,
+      "height": 437
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\6.png",
+    "file": "C:\\ui\\sliced\\6_061_card_fengtiandian_1.0.png",
+    "label": "card_fengtiandian",
+    "version": "1.0",
+    "box": {
+      "x": 235,
+      "y": 300,
+      "width": 211,
+      "height": 437
+    },
+    "size": {
+      "width": 211,
+      "height": 437
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\6.png",
+    "file": "C:\\ui\\sliced\\6_062_card_jianglingfu_2.0.png",
+    "label": "card_jianglingfu",
+    "version": "2.0",
+    "box": {
+      "x": 453,
+      "y": 300,
+      "width": 210,
+      "height": 437
+    },
+    "size": {
+      "width": 210,
+      "height": 437
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\6.png",
+    "file": "C:\\ui\\sliced\\6_063_card_zizhai_2.0.png",
+    "label": "card_zizhai",
+    "version": "2.0",
+    "box": {
+      "x": 668,
+      "y": 300,
+      "width": 209,
+      "height": 437
+    },
+    "size": {
+      "width": 209,
+      "height": 437
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\6.png",
+    "file": "C:\\ui\\sliced\\6_064_card_lianghang_2.0.png",
+    "label": "card_lianghang",
+    "version": "2.0",
+    "box": {
+      "x": 883,
+      "y": 300,
+      "width": 207,
+      "height": 437
+    },
+    "size": {
+      "width": 207,
+      "height": 437
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\6.png",
+    "file": "C:\\ui\\sliced\\6_065_card_bingzhangju_2.0.png",
+    "label": "card_bingzhangju",
+    "version": "2.0",
+    "box": {
+      "x": 1096,
+      "y": 300,
+      "width": 209,
+      "height": 437
+    },
+    "size": {
+      "width": 209,
+      "height": 437
+    }
+  },
+  {
+    "source": "C:\\ui\\p\\6.png",
+    "file": "C:\\ui\\sliced\\6_066_card_jiusi_2.0.png",
+    "label": "card_jiusi",
+    "version": "2.0",
+    "box": {
+      "x": 1311,
+      "y": 300,
+      "width": 208,
+      "height": 437
+    },
+    "size": {
+      "width": 208,
+      "height": 437
+    }
+  }
+]

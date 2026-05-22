@@ -24,7 +24,7 @@ export function renderMarketHouseView(viewModel: HouseModuleViewModel): string {
   const isIdle = viewModel.dialogue == null;
 
   return `
-    <section class="view-house-grain-shop view-house-tea-house" data-house-module="${viewModel.moduleId}">
+    <section class="view-house-grain-shop view-house-market" data-house-module="${viewModel.moduleId}">
       ${renderHouseActionContainer(viewModel)}
       ${renderHouseStandbyRoster(viewModel, {
         asideClassName: "c-grain-shop-npc-idle c-tea-house-npc-idle",

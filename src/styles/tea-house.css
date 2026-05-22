@@ -1,9 +1,19 @@
 .view-house-tea-house {
-  --grain-shop-scene-bg: url("../../sliced_ui_assets/lianghangcankao.png");
+  --grain-shop-scene-bg: url("../../ui1/ui/backgroung/chalou.png");
+  --grain-shop-shopkeeper-portrait: url("../../ui1/ui/npc/chaguan.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui1/ui/npc/chaguan(touxiang).png");
+}
 
-  /* 暂无茶馆专属立绘时，先复用粮铺资源，优先保证版式一致 */
-  --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
-  --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
+.view-house-tavern {
+  --grain-shop-scene-bg: url("../../ui/background/jiusi.png");
+  --grain-shop-shopkeeper-portrait: url("../../ui1/ui/npc/jiusilaoban.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui1/ui/npc/jiusilaoban(touxiang).png");
+}
+
+.view-house-market {
+  --grain-shop-scene-bg: url("../../ui/background/dangpu.png");
+  --grain-shop-shopkeeper-portrait: url("../../ui1/ui/npc/zhanggui.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui1/ui/npc/zhanggui (touxiang).png");
 }
 
 .view-house-tea-house::after {
