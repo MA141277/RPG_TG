@@ -68,6 +68,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       flags: {},
       variables: {},
       cityNpcPools: {},
+      cityMarkets: {},
       eventHistory: {},
     },
   };

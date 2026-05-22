@@ -22,6 +22,9 @@ const {
   grainShopHouseModule,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js");
 const {
+  marketHouseHouseModule,
+} = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
+const {
   teaHouseHouseModule,
 } = require("../.test-dist/application/house-modules/tea-house/tea-house-house-module.js");
 const {
@@ -53,11 +56,15 @@ const grainShopHouse = prototypeHouses.find(
 const teaHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "tea-house"
 );
+const marketHouse = prototypeHouses.find(
+  (houseDefinition) => houseDefinition.moduleId === "market-house"
+);
 const tavernHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "tavern"
 );
 
 assert.ok(grainShopHouse, "Expected prototype grain shop house to exist.");
+assert.ok(marketHouse, "Expected prototype market house to exist.");
 assert.ok(teaHouse, "Expected prototype tea house to exist.");
 assert.ok(tavernHouse, "Expected prototype tavern house to exist.");
 
@@ -173,6 +180,11 @@ test("house enter and leave keep session wiring and interval side effects consis
   });
 
   assert.equal(enterResult.sessionState?.dialoguePhase, "greeting");
+  assert.equal(enterResult.gameState.runtime.cityMarkets["city.kulan"] != null, true);
+  assert.equal(
+    enterResult.gameState.runtime.cityMarkets["city.kulan"].shops["grain-shop"] != null,
+    true
+  );
   assert.deepEqual(enterResult.sideEffects, [
     { type: "stop-interval", intervalId: "grain-shop-accounting" },
   ]);
@@ -189,6 +201,134 @@ test("house enter and leave keep session wiring and interval side effects consis
   assert.deepEqual(leaveResult.sideEffects, [
     { type: "stop-interval", intervalId: "grain-shop-accounting" },
   ]);
+});
+
+test("grain shop trade overlay reads buy and sell price from unified city market", () => {
+  const enterResult = grainShopHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+  });
+
+  const openBuy = grainShopHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "buy" },
+  });
+  const openSell = grainShopHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "sell" },
+  });
+
+  assert.equal(openBuy.sessionState?.overlay?.type, "trade");
+  assert.equal(openSell.sessionState?.overlay?.type, "trade");
+  if (openBuy.sessionState?.overlay?.type !== "trade") {
+    return;
+  }
+  if (openSell.sessionState?.overlay?.type !== "trade") {
+    return;
+  }
+
+  assert.equal(openBuy.sessionState.overlay.mode, "buy");
+  assert.equal(openSell.sessionState.overlay.mode, "sell");
+  assert.equal(
+    openBuy.sessionState.overlay.grainPrice >= openSell.sessionState.overlay.grainPrice,
+    true
+  );
+});
+
+test("market house enters through module registry and ensures unified city shop data", () => {
+  const state = ensureCityNpcPoolsForCurrentDay(createBaseState(), prototypeCityNpcPools, () => 0.1);
+  const enterResult = marketHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(enterResult.sessionState?.dialoguePhase, "greeting");
+  assert.equal(enterResult.gameState.runtime.cityMarkets["city.kulan"] != null, true);
+  assert.equal(
+    enterResult.gameState.runtime.cityMarkets["city.kulan"].shops["grain-shop"] != null,
+    true
+  );
+  assert.equal(
+    enterResult.gameState.runtime.cityMarkets["city.kulan"].shops["silk-shop"] != null,
+    true
+  );
+
+  const viewModel = marketHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+  });
+
+  assert.equal(viewModel.moduleId, "market-house");
+  assert.equal(viewModel.sceneTitle.length > 0, true);
+});
+
+test("market house can switch selected shop type and expose inventory in dialogue", () => {
+  const state = ensureCityNpcPoolsForCurrentDay(createBaseState(), prototypeCityNpcPools, () => 0.1);
+  const enterResult = marketHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+  });
+
+  const openResult = marketHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "advance-greeting",
+    },
+  });
+
+  assert.equal(openResult.sessionState?.dialoguePhase, "open");
+
+  const switchedResult = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "select-market-shop:silk-shop",
+    },
+  });
+
+  assert.equal(switchedResult.sessionState?.selectedShopType, "silk-shop");
+  assert.equal(switchedResult.sessionState?.dialogueLines[0].includes("绸"), true);
+
+  const overlayResult = marketHouseHouseModule.dispatch({
+    gameState: switchedResult.gameState,
+    characterDefinitions: switchedResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: switchedResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "inspect-shop",
+    },
+  });
+
+  assert.equal(overlayResult.sessionState?.overlay?.type, "alert");
+  assert.equal(overlayResult.sessionState?.overlay?.paragraphs.length > 0, true);
 });
 
 test("minigame tick settles into result overlay and applies grade reward", () => {

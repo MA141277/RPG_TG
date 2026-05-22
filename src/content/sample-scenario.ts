@@ -26,6 +26,9 @@ export const sampleCity: CityDefinition = {
   neighbourCityIds: [],
   travelCost: 1,
   tags: ["castle-town", "capital"],
+  prosperity: 75,
+  danger: 35,
+  specialDemand: [],
 };
 
 export const sampleHouse: HouseDefinition = {

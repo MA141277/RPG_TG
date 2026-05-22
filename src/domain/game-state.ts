@@ -4,6 +4,7 @@ import type { CityId } from "./city";
 import type { CityNpcPoolRuntimeState } from "./city-npc";
 import type { EventId } from "./event";
 import type { HouseId } from "./house";
+import type { CityMarketData } from "./market";
 import type { MapId } from "./map";
 import type { MissionId } from "./mission";
 import type { GlobalUIState } from "./global-ui";
@@ -47,6 +48,7 @@ export type GameState = {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
+    cityMarkets: Record<CityId, CityMarketData>;
     eventHistory: Record<
       EventId,
       {

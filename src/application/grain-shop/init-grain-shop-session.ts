@@ -1,12 +1,9 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
-import {
-  GRAIN_PRICE_MAX,
-  GRAIN_PRICE_MIN,
-  GRAIN_SHOP_VARIABLE_KEYS,
-} from "../../domain/grain-shop";
+import { GRAIN_SHOP_VARIABLE_KEYS } from "../../domain/grain-shop";
 import { grainShopInitialValues } from "../../content/houses/grain-shop-content";
-import { randomInt } from "../../shared/random";
+import { getQuotedGrainPrice } from "./grain-market";
+import { setGrainPrice } from "./grain-shop-mutations";
 
 export type InitGrainShopSessionResult = {
   state: GameState;
@@ -25,20 +22,20 @@ export function initGrainShopSession(
     nextVariables[GRAIN_SHOP_VARIABLE_KEYS.relationship] =
       grainShopInitialValues.relationship;
     nextVariables[GRAIN_SHOP_VARIABLE_KEYS.time] = grainShopInitialValues.time;
-    nextVariables[GRAIN_SHOP_VARIABLE_KEYS.grainPrice] = randomInt(
-      GRAIN_PRICE_MIN,
-      GRAIN_PRICE_MAX
-    );
   }
 
-  return {
-    state: {
-      ...state,
-      runtime: {
-        ...state.runtime,
-        variables: nextVariables,
-      },
+  const seededState = {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      variables: nextVariables,
     },
+  };
+  const quotedPrice = getQuotedGrainPrice(seededState);
+  const nextState = setGrainPrice(quotedPrice.state, quotedPrice.buyPrice);
+
+  return {
+    state: nextState,
     characterDefinitions,
   };
 }

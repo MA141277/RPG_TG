@@ -1,9 +1,11 @@
+import { selectCityNpcSummariesForHouse } from "../application/city-npcs/select-city-npcs-for-house";
 import { getHouseModule } from "../application/house-modules/house-module-registry";
 import type { AppState, AppModalState } from "../application/app-shell";
 import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
 import type { CardDefinition } from "../domain/card";
 import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
+import type { CityNpcPoolDefinition } from "../domain/city-npc";
 import type { HouseDefinition } from "../domain/house";
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
@@ -30,6 +32,7 @@ export type AppRenderInput = {
   cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
   cardDefinitions: CardDefinition[];
+  cityNpcPoolDefinitions: CityNpcPoolDefinition[];
   cityCoordinatesById: Record<string, GridCoordinate>;
   cityNameById: Record<string, string>;
   houseNameById: Record<string, string>;
@@ -231,7 +234,12 @@ function renderStage(input: AppRenderInput): string {
 
     const houseViewModel = createHouseViewModel(
       activeHouse,
-      input.appState.characterDefinitions
+      input.appState.characterDefinitions,
+      selectCityNpcSummariesForHouse(
+        input.appState.gameState,
+        activeHouse,
+        input.cityNpcPoolDefinitions
+      )
     );
 
     return `

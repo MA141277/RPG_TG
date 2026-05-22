@@ -5,9 +5,11 @@ import { getInvestigateDialogue, pickMarketRumor } from "./grain-market";
 import {
   advanceGrainShopTime,
   mutateGrainShopRelationship,
+  setGrainPrice,
   type GrainShopMutationResult,
 } from "./grain-shop-mutations";
 import { createGrainShopSnapshot } from "./grain-shop-snapshot";
+import { getQuotedGrainPrice } from "./grain-market";
 
 export type InvestigateGrainMarketResult = {
   mutation: GrainShopMutationResult;
@@ -21,13 +23,15 @@ export function investigateGrainMarket(
   characterDefinitions: CharacterDefinition[],
   playerCharacterId: string
 ): InvestigateGrainMarketResult {
+  const marketQuote = getQuotedGrainPrice(state);
   const playerCharacter = characterDefinitions.find(
     (characterDefinition) => characterDefinition.id === playerCharacterId
   );
   assertExists(playerCharacter, `Player character not found for id "${playerCharacterId}".`);
-  const snapshot = createGrainShopSnapshot(state, playerCharacter);
+  const syncedState = setGrainPrice(marketQuote.state, marketQuote.buyPrice);
+  const snapshot = createGrainShopSnapshot(syncedState, playerCharacter);
 
-  let nextState = mutateGrainShopRelationship(state, 1);
+  let nextState = mutateGrainShopRelationship(syncedState, 1);
   nextState = advanceGrainShopTime(nextState);
 
   return {

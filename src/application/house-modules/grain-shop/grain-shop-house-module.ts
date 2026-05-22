@@ -16,7 +16,7 @@ import { generateLedgerQuestion, getAccountingGradeReward, isLedgerAnswerCorrect
 import { applyAccountingReward } from "../../grain-shop/apply-accounting-reward";
 import { createGrainShopSnapshot } from "../../grain-shop/grain-shop-snapshot";
 import { executeGrainTrade } from "../../grain-shop/grain-trade";
-import { getTradeTotal, pickNpcDefaultLine, pickNpcGreeting, rollGrainPrice } from "../../grain-shop/grain-market";
+import { getQuotedGrainPrice, getTradeTotal, pickNpcDefaultLine, pickNpcGreeting } from "../../grain-shop/grain-market";
 import { investigateGrainMarket } from "../../grain-shop/investigate-grain-market";
 import { initGrainShopSession } from "../../grain-shop/init-grain-shop-session";
 import { setGrainPrice } from "../../grain-shop/grain-shop-mutations";
@@ -118,8 +118,9 @@ function openTradeOverlay(
   sessionState: GrainShopSessionState | null,
   mode: "buy" | "sell"
 ): HouseModuleTransitionResult<"grain-shop"> {
-  const grainPrice = rollGrainPrice();
-  const nextState = setGrainPrice(input.gameState, grainPrice);
+  const marketQuote = getQuotedGrainPrice(input.gameState);
+  const grainPrice = mode === "buy" ? marketQuote.buyPrice : marketQuote.sellPrice;
+  const nextState = setGrainPrice(marketQuote.state, marketQuote.buyPrice);
 
   return withOverlay(
     {

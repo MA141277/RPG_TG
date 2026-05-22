@@ -21,6 +21,7 @@ import {
   prototypeCards,
   prototypeCharacters,
   prototypeCity,
+  prototypeCities,
   prototypeCityNpcPools,
   prototypeCityPortraits,
   prototypeHouses,
@@ -60,7 +61,7 @@ if (appElement == null) {
 
 const appRoot = appElement;
 const playerCharacterId = "char.player";
-const cityDefinitions = [prototypeCity];
+const cityDefinitions = prototypeCities;
 const mapNodeById = Object.fromEntries(
   yuanmoCampaignMap.nodes
     .filter((mapNode) => mapNode.id != null)
@@ -554,6 +555,7 @@ function renderApp() {
     cityDefinition: prototypeCity,
     houseDefinitions: prototypeHouses,
     cardDefinitions: prototypeCards,
+    cityNpcPoolDefinitions: prototypeCityNpcPools,
     cityCoordinatesById,
     cityNameById,
     houseNameById,

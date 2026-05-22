@@ -7,3 +7,22 @@
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
 [2m10:43:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/yuanmo-map-regions.png[22m
+[2m11:12:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
+[2m11:12:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
+[2m11:12:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/prototype-world.ts[22m
+[2m11:13:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/grain-shop/grain-market.ts[22m
+[2m11:15:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/grain-shop/init-grain-shop-session.ts[22m
+[2m11:15:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/grain-shop/investigate-grain-market.ts[22m
+[2m11:15:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
+[2m11:15:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m11:16:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
+[2m11:17:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
+[2m11:20:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
+[2m11:20:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.test-dist/domain/action.js[22m
+[2m11:20:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
+[2m11:23:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/grain-shop/grain-market.ts[22m
+[2m11:23:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/grain-shop/grain-market.ts[22m
+[2m11:23:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
+[2m11:38:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/house-module-registry.ts[22m
+[2m11:38:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/house-module-view-registry.ts[22m
+[2m11:39:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/prototype-world.ts[22m

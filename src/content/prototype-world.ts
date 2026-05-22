@@ -29,8 +29,13 @@ export const prototypeCity: CityDefinition = {
   ],
   neighbourCityIds: [],
   travelCost: 1,
-  tags: ["castle-town", "market"],
+  tags: ["castle-town", "market", "commercial", "jiangnan", "large-city"],
+  prosperity: 90,
+  danger: 20,
+  specialDemand: ["silk", "tea", "luxury"],
 };
+
+export const prototypeCities: CityDefinition[] = [prototypeCity];
 
 export const prototypeHouses: HouseDefinition[] = [
   {
@@ -67,6 +72,7 @@ export const prototypeHouses: HouseDefinition[] = [
     characterIds: ["char.kulan_merchant"],
     defaultCharacterId: "char.kulan_merchant",
     activityLocationId: "market",
+    moduleId: "market-house",
     backAction: {
       label: "返回库兰城",
       targetView: "city",
