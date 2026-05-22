@@ -76,11 +76,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
 }
 
 export function renderTavernHouseView(viewModel: HouseModuleViewModel): string {
-  const showLeaveButton =
-    viewModel.overlay?.type !== "confirm" && viewModel.overlay?.type !== "gamble";
+  const isIdle = viewModel.dialogue == null;
 
   return `
-    <section class="view-house-grain-shop view-house-tea-house" data-house-module="${viewModel.moduleId}">
+    <section class="view-house-grain-shop view-house-tavern" data-house-module="${viewModel.moduleId}">
       ${renderHouseActionContainer(viewModel)}
       ${renderHouseStandbyRoster(viewModel, {
         asideClassName: "c-grain-shop-npc-idle c-tea-house-npc-idle",
@@ -92,7 +91,7 @@ export function renderTavernHouseView(viewModel: HouseModuleViewModel): string {
       ${renderHouseDialogue(viewModel, {
         footerClassName: "c-grain-shop-dialogue c-tea-house-dialogue",
       })}
-      ${showLeaveButton ? renderHouseLeaveButton(viewModel) : ""}
+      ${isIdle ? renderHouseLeaveButton(viewModel) : ""}
       ${renderHouseStatusCard(viewModel)}
       ${renderOverlay(viewModel.overlay)}
     </section>

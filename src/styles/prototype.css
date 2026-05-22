@@ -914,21 +914,25 @@
   filter: drop-shadow(0 6px 14px rgb(0 0 0 / 18%));
 }
 
-/* sliced_ui_assets 场所卡图打标：shuaifu / huozhan / lianghang / jiusi */
+/* house card 图打标：chaguan / shuaifu / dangpu / lianghang / jiusi */
+.c-kulan-house-card--tea-house .c-kulan-house-card__art {
+  background-image: url("../../ui1/ui/card/card_chaguan(1).png");
+}
+
 .c-kulan-house-card--keep .c-kulan-house-card__art {
-  background-image: url("../../sliced_ui_assets/6_060_card_shuaifu_2.0.png");
+  background-image: url("../../ui/card/6_060_card_shuaifu_2.0.png");
 }
 
 .c-kulan-house-card--market .c-kulan-house-card__art {
-  background-image: url("../../sliced_ui_assets/5_047_card_huozhan_2.0.png");
+  background-image: url("../../ui/card/5_046_card_dangpu_2.0.png");
 }
 
 .c-kulan-house-card--grain-shop .c-kulan-house-card__art {
-  background-image: url("../../sliced_ui_assets/6_064_card_lianghang_2.0.png");
+  background-image: url("../../ui/card/6_064_card_lianghang_2.0.png");
 }
 
 .c-kulan-house-card--inn .c-kulan-house-card__art {
-  background-image: url("../../sliced_ui_assets/6_066_card_jiusi_2.0.png");
+  background-image: url("../../ui/card/6_066_card_jiusi_2.0.png");
 }
 
 .c-kulan-house-card--fallback .c-kulan-house-card__art {

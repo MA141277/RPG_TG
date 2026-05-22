@@ -77,7 +77,7 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
 }
 
 export function renderTeaHouseHouseView(viewModel: HouseModuleViewModel): string {
-  const showLeaveButton = viewModel.overlay?.type !== "debate";
+  const isIdle = viewModel.dialogue == null;
 
   return `
     <section class="view-house-grain-shop view-house-tea-house" data-house-module="${viewModel.moduleId}">
@@ -92,7 +92,7 @@ export function renderTeaHouseHouseView(viewModel: HouseModuleViewModel): string
       ${renderHouseDialogue(viewModel, {
         footerClassName: "c-grain-shop-dialogue c-tea-house-dialogue",
       })}
-      ${showLeaveButton ? renderHouseLeaveButton(viewModel) : ""}
+      ${isIdle ? renderHouseLeaveButton(viewModel) : ""}
       ${renderHouseStatusCard(viewModel)}
       ${renderOverlay(viewModel.overlay)}
     </section>

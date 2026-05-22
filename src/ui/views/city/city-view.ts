@@ -3,6 +3,8 @@ import type { HouseDefinition } from "../../../domain/house";
 
 function getHouseArtworkClass(houseDefinition: HouseDefinition): string {
   switch (houseDefinition.id) {
+    case "house.kulan.tea_house":
+      return "c-kulan-house-card--tea-house";
     case "house.kulan.keep":
       return "c-kulan-house-card--keep";
     case "house.kulan.market":

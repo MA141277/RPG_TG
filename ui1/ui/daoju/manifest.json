@@ -1,0 +1,786 @@
+[
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\bumianjia_1.0.png",
+    "label": "bumianjia",
+    "version": "1.0",
+    "source": "C:\\zyz\\daoju\\bumianjia.png",
+    "box": {
+      "x": 4,
+      "y": 177,
+      "width": 278,
+      "height": 436
+    },
+    "size": {
+      "width": 276,
+      "height": 434
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\bumianjia_2.0.png",
+    "label": "bumianjia",
+    "version": "2.0",
+    "source": "C:\\zyz\\daoju\\bumianjia.png",
+    "box": {
+      "x": 286,
+      "y": 177,
+      "width": 278,
+      "height": 436
+    },
+    "size": {
+      "width": 276,
+      "height": 434
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\bumianjia_3.0.png",
+    "label": "bumianjia",
+    "version": "3.0",
+    "source": "C:\\zyz\\daoju\\bumianjia.png",
+    "box": {
+      "x": 563,
+      "y": 177,
+      "width": 278,
+      "height": 439
+    },
+    "size": {
+      "width": 276,
+      "height": 437
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\bumianjia_4.0.png",
+    "label": "bumianjia",
+    "version": "4.0",
+    "source": "C:\\zyz\\daoju\\bumianjia.png",
+    "box": {
+      "x": 843,
+      "y": 177,
+      "width": 278,
+      "height": 435
+    },
+    "size": {
+      "width": 276,
+      "height": 433
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\bumianjia_5.0.png",
+    "label": "bumianjia",
+    "version": "5.0",
+    "source": "C:\\zyz\\daoju\\bumianjia.png",
+    "box": {
+      "x": 1130,
+      "y": 177,
+      "width": 282,
+      "height": 439
+    },
+    "size": {
+      "width": 280,
+      "height": 437
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\bumianjia_6.0.png",
+    "label": "bumianjia",
+    "version": "6.0",
+    "source": "C:\\zyz\\daoju\\bumianjia.png",
+    "box": {
+      "x": 1423,
+      "y": 177,
+      "width": 282,
+      "height": 444
+    },
+    "size": {
+      "width": 280,
+      "height": 442
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\bumianjia_7.0.png",
+    "label": "bumianjia",
+    "version": "7.0",
+    "source": "C:\\zyz\\daoju\\bumianjia.png",
+    "box": {
+      "x": 1716,
+      "y": 177,
+      "width": 286,
+      "height": 445
+    },
+    "size": {
+      "width": 284,
+      "height": 443
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\changdao_1.0.png",
+    "label": "changdao",
+    "version": "1.0",
+    "source": "C:\\zyz\\daoju\\changdao.png",
+    "box": {
+      "x": 19,
+      "y": 120,
+      "width": 365,
+      "height": 724
+    },
+    "size": {
+      "width": 363,
+      "height": 722
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\changdao_2.0.png",
+    "label": "changdao",
+    "version": "2.0",
+    "source": "C:\\zyz\\daoju\\changdao.png",
+    "box": {
+      "x": 234,
+      "y": 111,
+      "width": 375,
+      "height": 731
+    },
+    "size": {
+      "width": 373,
+      "height": 729
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\changdao_3.0.png",
+    "label": "changdao",
+    "version": "3.0",
+    "source": "C:\\zyz\\daoju\\changdao.png",
+    "box": {
+      "x": 453,
+      "y": 109,
+      "width": 371,
+      "height": 733
+    },
+    "size": {
+      "width": 369,
+      "height": 731
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\changdao_4.0.png",
+    "label": "changdao",
+    "version": "4.0",
+    "source": "C:\\zyz\\daoju\\changdao.png",
+    "box": {
+      "x": 676,
+      "y": 83,
+      "width": 366,
+      "height": 758
+    },
+    "size": {
+      "width": 364,
+      "height": 756
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\changdao_5.0.png",
+    "label": "changdao",
+    "version": "5.0",
+    "source": "C:\\zyz\\daoju\\changdao.png",
+    "box": {
+      "x": 904,
+      "y": 57,
+      "width": 365,
+      "height": 787
+    },
+    "size": {
+      "width": 363,
+      "height": 785
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\changdao_6.0.png",
+    "label": "changdao",
+    "version": "6.0",
+    "source": "C:\\zyz\\daoju\\changdao.png",
+    "box": {
+      "x": 1126,
+      "y": 56,
+      "width": 374,
+      "height": 788
+    },
+    "size": {
+      "width": 372,
+      "height": 786
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\changdao_7.0.png",
+    "label": "changdao",
+    "version": "7.0",
+    "source": "C:\\zyz\\daoju\\changdao.png",
+    "box": {
+      "x": 1361,
+      "y": 33,
+      "width": 392,
+      "height": 815
+    },
+    "size": {
+      "width": 390,
+      "height": 813
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\jian_1.0.png",
+    "label": "jian",
+    "version": "1.0",
+    "source": "C:\\zyz\\daoju\\jian.png",
+    "box": {
+      "x": 51,
+      "y": 60,
+      "width": 371,
+      "height": 720
+    },
+    "size": {
+      "width": 369,
+      "height": 718
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\jian_2.0.png",
+    "label": "jian",
+    "version": "2.0",
+    "source": "C:\\zyz\\daoju\\jian.png",
+    "box": {
+      "x": 269,
+      "y": 60,
+      "width": 349,
+      "height": 723
+    },
+    "size": {
+      "width": 347,
+      "height": 721
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\jian_3.0.png",
+    "label": "jian",
+    "version": "3.0",
+    "source": "C:\\zyz\\daoju\\jian.png",
+    "box": {
+      "x": 485,
+      "y": 60,
+      "width": 333,
+      "height": 727
+    },
+    "size": {
+      "width": 331,
+      "height": 725
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\jian_4.0.png",
+    "label": "jian",
+    "version": "4.0",
+    "source": "C:\\zyz\\daoju\\jian.png",
+    "box": {
+      "x": 700,
+      "y": 60,
+      "width": 329,
+      "height": 727
+    },
+    "size": {
+      "width": 327,
+      "height": 725
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\jian_5.0.png",
+    "label": "jian",
+    "version": "5.0",
+    "source": "C:\\zyz\\daoju\\jian.png",
+    "box": {
+      "x": 922,
+      "y": 60,
+      "width": 328,
+      "height": 780
+    },
+    "size": {
+      "width": 326,
+      "height": 778
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\jian_6.0.png",
+    "label": "jian",
+    "version": "6.0",
+    "source": "C:\\zyz\\daoju\\jian.png",
+    "box": {
+      "x": 1151,
+      "y": 60,
+      "width": 324,
+      "height": 775
+    },
+    "size": {
+      "width": 322,
+      "height": 773
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\jian_7.0.png",
+    "label": "jian",
+    "version": "7.0",
+    "source": "C:\\zyz\\daoju\\jian.png",
+    "box": {
+      "x": 1385,
+      "y": 60,
+      "width": 322,
+      "height": 775
+    },
+    "size": {
+      "width": 320,
+      "height": 773
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyedao_1.0.png",
+    "label": "liuyedao",
+    "version": "1.0",
+    "source": "C:\\zyz\\daoju\\liuyedao.png",
+    "box": {
+      "x": 27,
+      "y": 65,
+      "width": 296,
+      "height": 725
+    },
+    "size": {
+      "width": 294,
+      "height": 723
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyedao_2.0.png",
+    "label": "liuyedao",
+    "version": "2.0",
+    "source": "C:\\zyz\\daoju\\liuyedao.png",
+    "box": {
+      "x": 264,
+      "y": 46,
+      "width": 306,
+      "height": 745
+    },
+    "size": {
+      "width": 304,
+      "height": 743
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyedao_3.0.png",
+    "label": "liuyedao",
+    "version": "3.0",
+    "source": "C:\\zyz\\daoju\\liuyedao.png",
+    "box": {
+      "x": 491,
+      "y": 33,
+      "width": 301,
+      "height": 760
+    },
+    "size": {
+      "width": 299,
+      "height": 758
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyedao_4.0.png",
+    "label": "liuyedao",
+    "version": "4.0",
+    "source": "C:\\zyz\\daoju\\liuyedao.png",
+    "box": {
+      "x": 723,
+      "y": 25,
+      "width": 297,
+      "height": 768
+    },
+    "size": {
+      "width": 295,
+      "height": 766
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyedao_5.0.png",
+    "label": "liuyedao",
+    "version": "5.0",
+    "source": "C:\\zyz\\daoju\\liuyedao.png",
+    "box": {
+      "x": 949,
+      "y": 25,
+      "width": 296,
+      "height": 774
+    },
+    "size": {
+      "width": 294,
+      "height": 772
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyedao_6.0.png",
+    "label": "liuyedao",
+    "version": "6.0",
+    "source": "C:\\zyz\\daoju\\liuyedao.png",
+    "box": {
+      "x": 1190,
+      "y": 33,
+      "width": 317,
+      "height": 793
+    },
+    "size": {
+      "width": 315,
+      "height": 791
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyedao_7.0.png",
+    "label": "liuyedao",
+    "version": "7.0",
+    "source": "C:\\zyz\\daoju\\liuyedao.png",
+    "box": {
+      "x": 1442,
+      "y": 37,
+      "width": 305,
+      "height": 782
+    },
+    "size": {
+      "width": 303,
+      "height": 780
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyejia_1.0.png",
+    "label": "liuyejia",
+    "version": "1.0",
+    "source": "C:\\zyz\\daoju\\liuyejia.png",
+    "box": {
+      "x": 12,
+      "y": 239,
+      "width": 266,
+      "height": 374
+    },
+    "size": {
+      "width": 264,
+      "height": 372
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyejia_2.0.png",
+    "label": "liuyejia",
+    "version": "2.0",
+    "source": "C:\\zyz\\daoju\\liuyejia.png",
+    "box": {
+      "x": 287,
+      "y": 229,
+      "width": 247,
+      "height": 387
+    },
+    "size": {
+      "width": 245,
+      "height": 385
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyejia_3.0.png",
+    "label": "liuyejia",
+    "version": "3.0",
+    "source": "C:\\zyz\\daoju\\liuyejia.png",
+    "box": {
+      "x": 552,
+      "y": 234,
+      "width": 257,
+      "height": 380
+    },
+    "size": {
+      "width": 255,
+      "height": 378
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyejia_4.0.png",
+    "label": "liuyejia",
+    "version": "4.0",
+    "source": "C:\\zyz\\daoju\\liuyejia.png",
+    "box": {
+      "x": 831,
+      "y": 221,
+      "width": 256,
+      "height": 399
+    },
+    "size": {
+      "width": 254,
+      "height": 397
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyejia_5.0.png",
+    "label": "liuyejia",
+    "version": "5.0",
+    "source": "C:\\zyz\\daoju\\liuyejia.png",
+    "box": {
+      "x": 1103,
+      "y": 221,
+      "width": 251,
+      "height": 401
+    },
+    "size": {
+      "width": 249,
+      "height": 399
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyejia_6.0.png",
+    "label": "liuyejia",
+    "version": "6.0",
+    "source": "C:\\zyz\\daoju\\liuyejia.png",
+    "box": {
+      "x": 1366,
+      "y": 213,
+      "width": 259,
+      "height": 411
+    },
+    "size": {
+      "width": 257,
+      "height": 409
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\liuyejia_7.0.png",
+    "label": "liuyejia",
+    "version": "7.0",
+    "source": "C:\\zyz\\daoju\\liuyejia.png",
+    "box": {
+      "x": 1636,
+      "y": 212,
+      "width": 272,
+      "height": 415
+    },
+    "size": {
+      "width": 270,
+      "height": 413
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\yanlingdao_1.0.png",
+    "label": "yanlingdao",
+    "version": "1.0",
+    "source": "C:\\zyz\\daoju\\yanlingdao.png",
+    "box": {
+      "x": 21,
+      "y": 114,
+      "width": 330,
+      "height": 637
+    },
+    "size": {
+      "width": 328,
+      "height": 635
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\yanlingdao_2.0.png",
+    "label": "yanlingdao",
+    "version": "2.0",
+    "source": "C:\\zyz\\daoju\\yanlingdao.png",
+    "box": {
+      "x": 270,
+      "y": 119,
+      "width": 330,
+      "height": 629
+    },
+    "size": {
+      "width": 328,
+      "height": 627
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\yanlingdao_3.0.png",
+    "label": "yanlingdao",
+    "version": "3.0",
+    "source": "C:\\zyz\\daoju\\yanlingdao.png",
+    "box": {
+      "x": 526,
+      "y": 108,
+      "width": 334,
+      "height": 641
+    },
+    "size": {
+      "width": 332,
+      "height": 639
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\yanlingdao_4.0.png",
+    "label": "yanlingdao",
+    "version": "4.0",
+    "source": "C:\\zyz\\daoju\\yanlingdao.png",
+    "box": {
+      "x": 804,
+      "y": 94,
+      "width": 343,
+      "height": 654
+    },
+    "size": {
+      "width": 341,
+      "height": 652
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\yanlingdao_5.0.png",
+    "label": "yanlingdao",
+    "version": "5.0",
+    "source": "C:\\zyz\\daoju\\yanlingdao.png",
+    "box": {
+      "x": 1064,
+      "y": 79,
+      "width": 347,
+      "height": 671
+    },
+    "size": {
+      "width": 345,
+      "height": 669
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\yanlingdao_6.0.png",
+    "label": "yanlingdao",
+    "version": "6.0",
+    "source": "C:\\zyz\\daoju\\yanlingdao.png",
+    "box": {
+      "x": 1323,
+      "y": 66,
+      "width": 347,
+      "height": 686
+    },
+    "size": {
+      "width": 345,
+      "height": 684
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\yanlingdao_7.0.png",
+    "label": "yanlingdao",
+    "version": "7.0",
+    "source": "C:\\zyz\\daoju\\yanlingdao.png",
+    "box": {
+      "x": 1603,
+      "y": 19,
+      "width": 361,
+      "height": 741
+    },
+    "size": {
+      "width": 359,
+      "height": 739
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\zhajia_1.0.png",
+    "label": "zhajia",
+    "version": "1.0",
+    "source": "C:\\zyz\\daoju\\zhajia.png",
+    "box": {
+      "x": 23,
+      "y": 204,
+      "width": 238,
+      "height": 424
+    },
+    "size": {
+      "width": 236,
+      "height": 422
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\zhajia_2.0.png",
+    "label": "zhajia",
+    "version": "2.0",
+    "source": "C:\\zyz\\daoju\\zhajia.png",
+    "box": {
+      "x": 282,
+      "y": 207,
+      "width": 247,
+      "height": 395
+    },
+    "size": {
+      "width": 245,
+      "height": 393
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\zhajia_3.0.png",
+    "label": "zhajia",
+    "version": "3.0",
+    "source": "C:\\zyz\\daoju\\zhajia.png",
+    "box": {
+      "x": 546,
+      "y": 203,
+      "width": 257,
+      "height": 415
+    },
+    "size": {
+      "width": 255,
+      "height": 413
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\zhajia_4.0.png",
+    "label": "zhajia",
+    "version": "4.0",
+    "source": "C:\\zyz\\daoju\\zhajia.png",
+    "box": {
+      "x": 808,
+      "y": 195,
+      "width": 262,
+      "height": 417
+    },
+    "size": {
+      "width": 260,
+      "height": 415
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\zhajia_5.0.png",
+    "label": "zhajia",
+    "version": "5.0",
+    "source": "C:\\zyz\\daoju\\zhajia.png",
+    "box": {
+      "x": 1071,
+      "y": 197,
+      "width": 269,
+      "height": 420
+    },
+    "size": {
+      "width": 267,
+      "height": 418
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\zhajia_6.0.png",
+    "label": "zhajia",
+    "version": "6.0",
+    "source": "C:\\zyz\\daoju\\zhajia.png",
+    "box": {
+      "x": 1342,
+      "y": 201,
+      "width": 268,
+      "height": 417
+    },
+    "size": {
+      "width": 266,
+      "height": 415
+    }
+  },
+  {
+    "file": "C:\\zyz\\daoju\\sliced\\zhajia_7.0.png",
+    "label": "zhajia",
+    "version": "7.0",
+    "source": "C:\\zyz\\daoju\\zhajia.png",
+    "box": {
+      "x": 1620,
+      "y": 200,
+      "width": 276,
+      "height": 424
+    },
+    "size": {
+      "width": 274,
+      "height": 422
+    }
+  }
+]
