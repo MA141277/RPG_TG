@@ -116,6 +116,43 @@ export type HouseOverlayViewModel =
       cancelLabel: string;
     }
   | {
+      type: "market-trade";
+      title: string;
+      mode: "buy" | "sell";
+      quantity: number;
+      quantityFieldId: string;
+      decrementActionId: string;
+      incrementActionId: string;
+      confirmActionId: string;
+      confirmLabel: string;
+      cancelActionId: string;
+      cancelLabel: string;
+      rows: Array<{
+        goodsId: string;
+        name: string;
+        categoryLabel: string;
+        currentPrice: number;
+        referencePrice: number;
+        unit: string;
+        quantityLabel: string;
+        priceTone: "low" | "high" | "neutral";
+        isSelected: boolean;
+      }>;
+      selectedSummary: {
+        goodsId: string;
+        name: string;
+        categoryLabel: string;
+        currentPrice: number;
+        referencePrice: number;
+        unit: string;
+        availableQuantity: number;
+        quantityLabel: string;
+        tradeTotal: number;
+        priceTone: "low" | "high" | "neutral";
+      } | null;
+      helperLines: string[];
+    }
+  | {
       type: "minigame";
       title: string;
       secondsLeft: number;

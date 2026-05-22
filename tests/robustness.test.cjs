@@ -274,10 +274,11 @@ test("market house enters through module registry and ensures unified city shop 
   });
 
   assert.equal(viewModel.moduleId, "market-house");
+  assert.equal(viewModel.sceneTitle, "货栈");
   assert.equal(viewModel.sceneTitle.length > 0, true);
 });
 
-test("market house can switch selected shop type and expose inventory in dialogue", () => {
+test("market house inventory excludes grain and horse goods", () => {
   const state = ensureCityNpcPoolsForCurrentDay(createBaseState(), prototypeCityNpcPools, () => 0.1);
   const enterResult = marketHouseHouseModule.enter({
     gameState: state,
@@ -298,9 +299,7 @@ test("market house can switch selected shop type and expose inventory in dialogu
     },
   });
 
-  assert.equal(openResult.sessionState?.dialoguePhase, "open");
-
-  const switchedResult = marketHouseHouseModule.dispatch({
+  const overlayResult = marketHouseHouseModule.dispatch({
     gameState: openResult.gameState,
     characterDefinitions: openResult.characterDefinitions,
     houseDefinition: marketHouse,
@@ -308,27 +307,170 @@ test("market house can switch selected shop type and expose inventory in dialogu
     sessionState: openResult.sessionState,
     request: {
       type: "action",
-      actionId: "select-market-shop:silk-shop",
+      actionId: "buy-goods",
     },
   });
 
-  assert.equal(switchedResult.sessionState?.selectedShopType, "silk-shop");
-  assert.equal(switchedResult.sessionState?.dialogueLines[0].includes("绸"), true);
-
-  const overlayResult = marketHouseHouseModule.dispatch({
-    gameState: switchedResult.gameState,
-    characterDefinitions: switchedResult.characterDefinitions,
+  const overlayViewModel = marketHouseHouseModule.selectViewModel({
+    gameState: overlayResult.gameState,
+    characterDefinitions: overlayResult.characterDefinitions,
     houseDefinition: marketHouse,
     playerCharacterId,
-    sessionState: switchedResult.sessionState,
+    sessionState: overlayResult.sessionState,
+  });
+
+  assert.equal(overlayViewModel.overlay?.type, "market-trade");
+  if (overlayViewModel.overlay?.type !== "market-trade") {
+    return;
+  }
+
+  assert.equal(
+    overlayViewModel.overlay.rows.some(
+      (row) => row.categoryLabel === "粮食" || row.categoryLabel === "马匹"
+    ),
+    false
+  );
+});
+
+test("market house follows greeting open idle rhythm with fixed boss and guest roster", () => {
+  const state = ensureCityNpcPoolsForCurrentDay(createBaseState(), prototypeCityNpcPools, () => 0.1);
+  const enterResult = marketHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(enterResult.sessionState?.selectedActorId, "shopkeeper_qian");
+  assert.equal(enterResult.sessionState?.guestActorIds.length >= 1, true);
+
+  const openResult = marketHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
     request: {
       type: "action",
-      actionId: "inspect-shop",
+      actionId: "advance-greeting",
     },
   });
 
-  assert.equal(overlayResult.sessionState?.overlay?.type, "alert");
-  assert.equal(overlayResult.sessionState?.overlay?.paragraphs.length > 0, true);
+  assert.equal(openResult.sessionState?.dialoguePhase, "open");
+  assert.equal(openResult.sessionState?.dialogueLines[0].includes("钱掌柜"), true);
+
+  const idleResult = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "dismiss-dialogue",
+    },
+  });
+
+  assert.equal(idleResult.sessionState?.dialoguePhase, "idle");
+
+  const idleViewModel = marketHouseHouseModule.selectViewModel({
+    gameState: idleResult.gameState,
+    characterDefinitions: idleResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: idleResult.sessionState,
+  });
+
+  assert.equal(idleViewModel.dialogue, null);
+  assert.equal(idleViewModel.standbyRoster.length >= 2, true);
+  assert.equal(idleViewModel.actionContainer, null);
+});
+
+test("market house can open trade overlay and execute buy flow", () => {
+  const state = ensureCityNpcPoolsForCurrentDay(createBaseState(), prototypeCityNpcPools, () => 0.1);
+  const wealthyCharacters = prototypeCharacters.map((characterDefinition) =>
+    characterDefinition.id !== playerCharacterId
+      ? characterDefinition
+      : {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold: 5000,
+          },
+        }
+  );
+  const enterResult = marketHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: wealthyCharacters,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+  });
+
+  const openResult = marketHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "advance-greeting",
+    },
+  });
+
+  const overlayResult = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "buy-goods",
+    },
+  });
+
+  assert.equal(overlayResult.sessionState?.overlay?.type, "market-trade");
+  if (overlayResult.sessionState?.overlay?.type !== "market-trade") {
+    return;
+  }
+
+  const goodsId = overlayResult.sessionState.overlay.selectedGoodsId;
+  assert.equal(typeof goodsId, "string");
+
+  const overlayViewModel = marketHouseHouseModule.selectViewModel({
+    gameState: overlayResult.gameState,
+    characterDefinitions: overlayResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: overlayResult.sessionState,
+  });
+
+  assert.equal(overlayViewModel.overlay?.type, "market-trade");
+  if (overlayViewModel.overlay?.type !== "market-trade") {
+    return;
+  }
+  assert.equal(overlayViewModel.overlay.rows.length > 0, true);
+
+  const buyResult = marketHouseHouseModule.dispatch({
+    gameState: overlayResult.gameState,
+    characterDefinitions: overlayResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: overlayResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-trade",
+    },
+  });
+
+  assert.equal(buyResult.sessionState?.overlay?.type, "alert");
+  const playerCharacter = getPlayerCharacter(buyResult.characterDefinitions);
+  assert.equal(playerCharacter.stats.gold < 5000, true);
+  assert.equal(
+    buyResult.gameState.runtime.variables[`var.trade_inventory.${goodsId}`] > 0,
+    true
+  );
 });
 
 test("minigame tick settles into result overlay and applies grade reward", () => {

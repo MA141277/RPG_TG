@@ -1,28 +1,53 @@
+import {
+  marketHouseBossOpenLines,
+  marketHouseFixedBoss,
+  marketHouseGeneralRumors,
+  marketHouseGreetingLines,
+  marketHouseGuestOpenLineBySpecialty,
+  marketHouseRandomNpcPool,
+  marketHouseRumorsByCategory,
+  marketHouseSmallTalkLines,
+  type MarketHouseActorContent,
+} from "../../../content/houses/market-house-content";
 import { globalGoodsPool } from "../../../content/markets/global-goods-pool";
-import { prototypeCities, prototypeCityNpcPools } from "../../../content/prototype-world";
+import { prototypeCities } from "../../../content/prototype-world";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CityDefinition } from "../../../domain/city";
 import type { HouseDefinition } from "../../../domain/house";
 import type {
+  HouseActionViewModel,
   HouseModuleDefinition,
   HouseModuleDispatchInput,
-  HouseActionViewModel,
   HouseModuleTransitionResult,
   HouseModuleViewModel,
   HouseOverlayViewModel,
 } from "../../../domain/house-module";
+import type { GameState } from "../../../domain/game-state";
 import type {
   MarketHouseSessionState,
 } from "../../../domain/house-modules/market-house-session";
-import type { ShopInventoryEntry } from "../../../domain/market";
-import type { MarketShopType, TradeGoodDefinition } from "../../../domain/trade-good";
-import { assertExists } from "../../../shared/assert";
-import { selectCityNpcSummariesForHouse } from "../../city-npcs/select-city-npcs-for-house";
-import { ensureShopMarketData, readShopMarketData } from "../../markets/market-refresh-system";
 import {
-  createInitialMarketHouseSessionState,
-  DEFAULT_MARKET_SHOP_TYPE,
-} from "./market-house-session-state";
+  getMarketHouseFavorabilityVariableKey,
+  getMarketHouseGuestActorIdsVariableKey,
+  getMarketHouseInventoryGoodsIdsVariableKey,
+  getMarketHouseLastRefreshDayVariableKey,
+  getMarketHouseRefreshAfterDayVariableKey,
+  getMarketHouseStockVariableKey,
+  getMarketHouseTimeVariableKey,
+  getTradeInventoryQuantityVariableKey,
+  type MarketHouseActionOutcome,
+  type MarketHouseTradeMode,
+} from "../../../domain/market-house";
+import type { ShopInventoryEntry } from "../../../domain/market";
+import type {
+  MarketShopType,
+  TradeGoodCategory,
+  TradeGoodDefinition,
+} from "../../../domain/trade-good";
+import { assertExists } from "../../../shared/assert";
+import { pickRandom, randomInt } from "../../../shared/random";
+import { ensureShopMarketData, readShopMarketData } from "../../markets/market-refresh-system";
+import { createInitialMarketHouseSessionState } from "./market-house-session-state";
 
 const AVAILABLE_MARKET_SHOPS: MarketShopType[] = [
   "grain-shop",
@@ -33,20 +58,40 @@ const AVAILABLE_MARKET_SHOPS: MarketShopType[] = [
   "general-store",
 ];
 
-const SHOP_ACTION_PREFIX = "select-market-shop:";
+const MARKET_HOUSE_SOURCE_SHOPS: MarketShopType[] = [
+  "medicine-shop",
+  "silk-shop",
+  "smithy",
+  "general-store",
+];
 
-type MarketHouseShopSnapshot = {
+const SELECT_ACTOR_ACTION_PREFIX = "select-market-actor:";
+const SELECT_TRADE_GOODS_ACTION_PREFIX = "select-market-goods:";
+const TRADE_QUANTITY_FIELD_ID = "market-house-trade-quantity";
+
+type MarketHouseActor = MarketHouseActorContent & {
+  favorability: number;
+};
+
+type MarketHouseGoodsSnapshot = {
   entry: ShopInventoryEntry;
   goodDefinition: TradeGoodDefinition;
+  stockQuantity: number;
+  ownedQuantity: number;
+  adjustedBuyPrice: number;
+  adjustedSellPrice: number;
 };
 
 type MarketHouseViewSnapshot = {
-  state: HouseModuleDispatchInput<"market-house">["gameState"];
+  state: GameState;
   cityDefinition: CityDefinition;
-  selectedShopType: MarketShopType;
-  marketEntries: MarketHouseShopSnapshot[];
-  selectedShopInventoryCount: number;
-  refreshedDayText: string;
+  actors: MarketHouseActor[];
+  selectedActor: MarketHouseActor | null;
+  bossFavorability: number;
+  displayedGoods: MarketHouseGoodsSnapshot[];
+  sellableGoods: MarketHouseGoodsSnapshot[];
+  refreshAfterDay: number;
+  totalOwnedGoods: number;
 };
 
 function getPlayerCharacter(
@@ -75,23 +120,46 @@ function getTradeGoodDefinition(goodsId: string): TradeGoodDefinition {
   return goodDefinition;
 }
 
-function getShopLabel(shopType: MarketShopType): string {
-  switch (shopType) {
-    case "grain-shop":
-      return "粮行";
-    case "medicine-shop":
-      return "药铺";
-    case "silk-shop":
-      return "绸货";
-    case "smithy":
-      return "铁匠铺";
-    case "horse-market":
-      return "马市";
-    case "general-store":
-      return "杂货摊";
+function getCategoryLabel(category: TradeGoodCategory): string {
+  switch (category) {
+    case "grain":
+      return "粮食";
+    case "medicine":
+      return "药材";
+    case "silk":
+      return "奢侈品";
+    case "arms":
+      return "军械";
+    case "horses":
+      return "马匹";
+    case "special":
+      return "奇货";
     default:
-      return shopType;
+      return category;
   }
+}
+
+function readNumericVariable(state: GameState, key: string, fallback: number): number {
+  const value = state.runtime.variables[key];
+  return typeof value === "number" ? value : fallback;
+}
+
+function readStringVariable(state: GameState, key: string, fallback = ""): string {
+  const value = state.runtime.variables[key];
+  return typeof value === "string" ? value : fallback;
+}
+
+function withVariable(state: GameState, key: string, value: number | string): GameState {
+  return {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      variables: {
+        ...state.runtime.variables,
+        [key]: value,
+      },
+    },
+  };
 }
 
 function createTransitionResult(
@@ -148,10 +216,33 @@ function createAlertOverlay(
   };
 }
 
-function ensureMarketShops(
-  gameState: HouseModuleDispatchInput<"market-house">["gameState"],
-  cityDefinition: CityDefinition
-): HouseModuleDispatchInput<"market-house">["gameState"] {
+function sampleWithoutReplacement<T>(items: readonly T[], count: number): T[] {
+  const pool = [...items];
+  const result: T[] = [];
+
+  while (pool.length > 0 && result.length < count) {
+    const index = randomInt(0, pool.length - 1);
+    const [pickedItem] = pool.splice(index, 1);
+    if (pickedItem != null) {
+      result.push(pickedItem);
+    }
+  }
+
+  return result;
+}
+
+function getCalendarDayNumber(state: GameState): number {
+  return state.calendar.year * 360 + (state.calendar.month - 1) * 30 + state.calendar.day;
+}
+
+function parseIdList(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function ensureMarketShops(gameState: GameState, cityDefinition: CityDefinition): GameState {
   let nextState = gameState;
 
   for (const shopType of AVAILABLE_MARKET_SHOPS) {
@@ -161,78 +252,638 @@ function ensureMarketShops(
   return nextState;
 }
 
-function getMarketHouseSnapshot(
-  gameState: HouseModuleDispatchInput<"market-house">["gameState"],
-  houseDefinition: HouseDefinition,
-  selectedShopType: MarketShopType
-): MarketHouseViewSnapshot {
-  const cityDefinition = getCityDefinition(houseDefinition.cityId);
-  const marketData = readShopMarketData(gameState, cityDefinition.id, selectedShopType);
-  assertExists(
-    marketData,
-    `Market data missing for city "${cityDefinition.id}" shop "${selectedShopType}".`
-  );
+function collectCityMarketEntries(
+  gameState: GameState,
+  cityDefinition: CityDefinition,
+  sourceShops: readonly MarketShopType[] = MARKET_HOUSE_SOURCE_SHOPS
+): Array<{ entry: ShopInventoryEntry; goodDefinition: TradeGoodDefinition }> {
+  return sourceShops.flatMap((shopType) => {
+    const marketData = readShopMarketData(gameState, cityDefinition.id, shopType);
+    if (marketData == null) {
+      return [];
+    }
 
-  return {
-    state: gameState,
-    cityDefinition,
-    selectedShopType,
-    marketEntries: marketData.inventory.map((entry) => ({
+    return marketData.inventory.map((entry) => ({
       entry,
       goodDefinition: getTradeGoodDefinition(entry.goodsId),
-    })),
-    selectedShopInventoryCount: marketData.inventory.length,
-    refreshedDayText: `${marketData.lastRefreshedOnDay} -> ${marketData.refreshAfterDay}`,
+    }));
+  });
+}
+
+function readActorFavorability(
+  state: GameState,
+  houseId: string,
+  actorId: string,
+  fallback: number
+): number {
+  return readNumericVariable(
+    state,
+    getMarketHouseFavorabilityVariableKey(houseId, actorId),
+    fallback
+  );
+}
+
+function createActors(state: GameState, houseId: string, guestActorIds: string[]): MarketHouseActor[] {
+  const actors: MarketHouseActor[] = [
+    {
+      ...marketHouseFixedBoss,
+      favorability: readActorFavorability(
+        state,
+        houseId,
+        marketHouseFixedBoss.id,
+        marketHouseFixedBoss.favorability
+      ),
+    },
+  ];
+
+  guestActorIds.forEach((guestActorId) => {
+    const actorDefinition = marketHouseRandomNpcPool.find((actor) => actor.id === guestActorId);
+    if (actorDefinition == null) {
+      return;
+    }
+
+    actors.push({
+      ...actorDefinition,
+      favorability: readActorFavorability(
+        state,
+        houseId,
+        actorDefinition.id,
+        actorDefinition.favorability
+      ),
+    });
+  });
+
+  return actors;
+}
+
+function getBuyPriceModifier(favorability: number): number {
+  return Math.max(0.88, Math.min(1.12, Number((1 - favorability * 0.005).toFixed(3))));
+}
+
+function getSellPriceModifier(favorability: number): number {
+  return Math.max(0.88, Math.min(1.08, Number((1 + favorability * 0.004).toFixed(3))));
+}
+
+function adjustBuyPrice(basePrice: number, favorability: number): number {
+  return Math.max(1, Math.round(basePrice * getBuyPriceModifier(favorability)));
+}
+
+function adjustSellPrice(baseSellPrice: number, adjustedBuyPrice: number, favorability: number): number {
+  return Math.max(
+    1,
+    Math.min(adjustedBuyPrice - 1, Math.round(baseSellPrice * getSellPriceModifier(favorability)))
+  );
+}
+
+function ensureMarketHouseRuntime(
+  gameState: GameState,
+  houseDefinition: HouseDefinition
+): {
+  state: GameState;
+  cityDefinition: CityDefinition;
+  guestActorIds: string[];
+  inventoryGoodsIds: string[];
+  refreshAfterDay: number;
+} {
+  const cityDefinition = getCityDefinition(houseDefinition.cityId);
+  let nextState = ensureMarketShops(gameState, cityDefinition);
+  const currentDay = getCalendarDayNumber(nextState);
+  const guestActorIdsKey = getMarketHouseGuestActorIdsVariableKey(houseDefinition.id);
+  const goodsIdsKey = getMarketHouseInventoryGoodsIdsVariableKey(houseDefinition.id);
+  const refreshAfterDayKey = getMarketHouseRefreshAfterDayVariableKey(houseDefinition.id);
+  const guestActorIds = parseIdList(readStringVariable(nextState, guestActorIdsKey));
+  const inventoryGoodsIds = parseIdList(readStringVariable(nextState, goodsIdsKey));
+  const refreshAfterDay = readNumericVariable(nextState, refreshAfterDayKey, -1);
+  const shouldRefresh =
+    guestActorIds.length === 0 ||
+    inventoryGoodsIds.length === 0 ||
+    currentDay >= refreshAfterDay;
+
+  if (!shouldRefresh) {
+    return {
+      state: nextState,
+      cityDefinition,
+      guestActorIds,
+      inventoryGoodsIds,
+      refreshAfterDay,
+    };
+  }
+
+  const cityEntries = collectCityMarketEntries(nextState, cityDefinition);
+  const selectedEntries = sampleWithoutReplacement(
+    cityEntries,
+    Math.min(randomInt(4, 8), cityEntries.length)
+  );
+  const nextGoodsIds = selectedEntries.map(({ goodDefinition }) => goodDefinition.id);
+  const nextGuestActorIds = sampleWithoutReplacement(
+    marketHouseRandomNpcPool.map((actor) => actor.id),
+    Math.min(randomInt(1, 2), marketHouseRandomNpcPool.length)
+  );
+  const nextRefreshAfterDay = currentDay + randomInt(3, 7);
+
+  nextState = withVariable(
+    nextState,
+    getMarketHouseLastRefreshDayVariableKey(houseDefinition.id),
+    currentDay
+  );
+  nextState = withVariable(nextState, refreshAfterDayKey, nextRefreshAfterDay);
+  nextState = withVariable(nextState, guestActorIdsKey, nextGuestActorIds.join(","));
+  nextState = withVariable(nextState, goodsIdsKey, nextGoodsIds.join(","));
+
+  nextGoodsIds.forEach((goodsId) => {
+    nextState = withVariable(
+      nextState,
+      getMarketHouseStockVariableKey(houseDefinition.id, goodsId),
+      randomInt(2, 8)
+    );
+  });
+
+  return {
+    state: nextState,
+    cityDefinition,
+    guestActorIds: nextGuestActorIds,
+    inventoryGoodsIds: nextGoodsIds,
+    refreshAfterDay: nextRefreshAfterDay,
   };
 }
 
-function createGreetingLines(cityDefinition: CityDefinition): string[] {
-  return [
-    `${cityDefinition.name}的市集今天照常开张。`,
-    "南来北往的货物都摆在眼前，你可以先看看哪一行最有利。 ",
-  ];
+function createGoodsSnapshots(
+  state: GameState,
+  houseDefinition: HouseDefinition,
+  cityDefinition: CityDefinition,
+  goodsIds: string[],
+  bossFavorability: number
+): MarketHouseGoodsSnapshot[] {
+  const cityEntries = collectCityMarketEntries(state, cityDefinition);
+
+  return goodsIds
+    .map((goodsId) => {
+      const matchedEntry = cityEntries.find(({ entry }) => entry.goodsId === goodsId);
+      if (matchedEntry == null) {
+        return null;
+      }
+
+      const adjustedBuyPrice = adjustBuyPrice(matchedEntry.entry.buyPrice, bossFavorability);
+
+      return {
+        entry: matchedEntry.entry,
+        goodDefinition: matchedEntry.goodDefinition,
+        stockQuantity: readNumericVariable(
+          state,
+          getMarketHouseStockVariableKey(houseDefinition.id, goodsId),
+          0
+        ),
+        ownedQuantity: readNumericVariable(state, getTradeInventoryQuantityVariableKey(goodsId), 0),
+        adjustedBuyPrice,
+        adjustedSellPrice: adjustSellPrice(
+          matchedEntry.entry.sellPrice,
+          adjustedBuyPrice,
+          bossFavorability
+        ),
+      };
+    })
+    .filter((snapshot): snapshot is MarketHouseGoodsSnapshot => snapshot != null);
 }
 
-function createOpenLines(snapshot: MarketHouseViewSnapshot): string[] {
-  const topRows = snapshot.marketEntries.slice(0, 4);
-  const rows =
-    topRows.length === 0
-      ? ["这一行暂时没有摆出新货。"]
-      : topRows.map(
-          ({ entry, goodDefinition }) =>
-            `${goodDefinition.name} ${entry.buyPrice}文/${goodDefinition.unit}，回收 ${entry.sellPrice}文`
-        );
+function createSellableGoodsSnapshots(
+  state: GameState,
+  houseDefinition: HouseDefinition,
+  cityDefinition: CityDefinition,
+  bossFavorability: number
+): MarketHouseGoodsSnapshot[] {
+  const cityEntries = collectCityMarketEntries(state, cityDefinition);
 
-  return [
-    `${getShopLabel(snapshot.selectedShopType)}当前货单如下：`,
-    ...rows,
-  ];
+  return cityEntries
+    .map(({ entry, goodDefinition }) => {
+      const ownedQuantity = readNumericVariable(
+        state,
+        getTradeInventoryQuantityVariableKey(entry.goodsId),
+        0
+      );
+      if (ownedQuantity <= 0) {
+        return null;
+      }
+
+      const adjustedBuyPrice = adjustBuyPrice(entry.buyPrice, bossFavorability);
+      return {
+        entry,
+        goodDefinition,
+        stockQuantity: readNumericVariable(
+          state,
+          getMarketHouseStockVariableKey(houseDefinition.id, entry.goodsId),
+          0
+        ),
+        ownedQuantity,
+        adjustedBuyPrice,
+        adjustedSellPrice: adjustSellPrice(entry.sellPrice, adjustedBuyPrice, bossFavorability),
+      };
+    })
+    .filter((snapshot): snapshot is MarketHouseGoodsSnapshot => snapshot != null);
 }
 
-function parseShopAction(actionId: string): MarketShopType | null {
-  if (!actionId.startsWith(SHOP_ACTION_PREFIX)) {
-    return null;
+function createViewSnapshot(
+  gameState: GameState,
+  houseDefinition: HouseDefinition,
+  sessionState: MarketHouseSessionState | null
+): MarketHouseViewSnapshot {
+  const runtime = ensureMarketHouseRuntime(gameState, houseDefinition);
+  const actors = createActors(runtime.state, houseDefinition.id, runtime.guestActorIds);
+  const bossFavorability = actors.find((actor) => actor.id === marketHouseFixedBoss.id)?.favorability ?? 0;
+  const displayedGoods = createGoodsSnapshots(
+    runtime.state,
+    houseDefinition,
+    runtime.cityDefinition,
+    runtime.inventoryGoodsIds,
+    bossFavorability
+  );
+  const sellableGoods = createSellableGoodsSnapshots(
+    runtime.state,
+    houseDefinition,
+    runtime.cityDefinition,
+    bossFavorability
+  );
+  const selectedActorId = sessionState?.selectedActorId ?? marketHouseFixedBoss.id;
+  const selectedActor =
+    actors.find((actor) => actor.id === selectedActorId) ??
+    actors.find((actor) => actor.id === marketHouseFixedBoss.id) ??
+    null;
+
+  return {
+    state: runtime.state,
+    cityDefinition: runtime.cityDefinition,
+    actors,
+    selectedActor,
+    bossFavorability,
+    displayedGoods,
+    sellableGoods,
+    refreshAfterDay: runtime.refreshAfterDay,
+    totalOwnedGoods: sellableGoods.reduce((sum, snapshot) => sum + snapshot.ownedQuantity, 0),
+  };
+}
+
+function getActorOpenLines(actor: MarketHouseActor): string[] {
+  if (actor.isFixedHost) {
+    return [...marketHouseBossOpenLines];
   }
 
-  const shopType = actionId.slice(SHOP_ACTION_PREFIX.length) as MarketShopType;
-  return AVAILABLE_MARKET_SHOPS.includes(shopType) ? shopType : null;
+  return [
+    marketHouseGuestOpenLineBySpecialty[actor.specialty] ??
+      `${actor.name}端起茶盏，像是在等你先挑话头。`,
+    `“我这一路专做${actor.specialty}买卖，消息多少知道一点。”`,
+  ];
+}
+
+function parseSelectedActorId(actionId: string): string | null {
+  return actionId.startsWith(SELECT_ACTOR_ACTION_PREFIX)
+    ? actionId.slice(SELECT_ACTOR_ACTION_PREFIX.length)
+    : null;
+}
+
+function parseSelectedGoodsId(actionId: string): string | null {
+  return actionId.startsWith(SELECT_TRADE_GOODS_ACTION_PREFIX)
+    ? actionId.slice(SELECT_TRADE_GOODS_ACTION_PREFIX.length)
+    : null;
+}
+
+function createTradeOverlay(
+  mode: MarketHouseTradeMode,
+  goodsSnapshots: MarketHouseGoodsSnapshot[],
+  selectedGoodsId: string | null
+): NonNullable<MarketHouseSessionState["overlay"]> {
+  const resolvedGoodsId =
+    goodsSnapshots.find((snapshot) => snapshot.goodDefinition.id === selectedGoodsId)?.goodDefinition.id ??
+    goodsSnapshots[0]?.goodDefinition.id ??
+    null;
+
+  return {
+    type: "market-trade",
+    mode,
+    selectedGoodsId: resolvedGoodsId,
+    quantity: 1,
+  };
+}
+
+function updateTradeOverlayQuantity(
+  input: Pick<HouseModuleDispatchInput<"market-house">, "gameState" | "characterDefinitions">,
+  sessionState: MarketHouseSessionState | null,
+  quantity: number
+): HouseModuleTransitionResult<"market-house"> {
+  const overlay = sessionState?.overlay;
+  if (overlay?.type !== "market-trade") {
+    return {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+      sessionState,
+    };
+  }
+
+  return withSessionState(input, sessionState, {
+    overlay: {
+      ...overlay,
+      quantity: Math.max(1, quantity),
+    },
+  });
+}
+
+function mutatePlayerGold(
+  state: GameState,
+  characterDefinitions: CharacterDefinition[],
+  playerCharacterId: string,
+  delta: number
+): {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+} {
+  return {
+    state,
+    characterDefinitions: characterDefinitions.map((characterDefinition) => {
+      if (characterDefinition.id !== playerCharacterId) {
+        return characterDefinition;
+      }
+
+      return {
+        ...characterDefinition,
+        stats: {
+          ...characterDefinition.stats,
+          gold: characterDefinition.stats.gold + delta,
+        },
+      };
+    }),
+  };
+}
+
+function mutateTradeInventory(state: GameState, goodsId: string, delta: number): GameState {
+  const nextQuantity = Math.max(
+    0,
+    readNumericVariable(state, getTradeInventoryQuantityVariableKey(goodsId), 0) + delta
+  );
+  return withVariable(state, getTradeInventoryQuantityVariableKey(goodsId), nextQuantity);
+}
+
+function mutateHouseStock(
+  state: GameState,
+  houseId: string,
+  goodsId: string,
+  delta: number
+): GameState {
+  const nextQuantity = Math.max(
+    0,
+    readNumericVariable(state, getMarketHouseStockVariableKey(houseId, goodsId), 0) + delta
+  );
+  return withVariable(state, getMarketHouseStockVariableKey(houseId, goodsId), nextQuantity);
+}
+
+function mutateActorFavorability(
+  state: GameState,
+  houseId: string,
+  actorId: string,
+  delta: number
+): GameState {
+  return withVariable(
+    state,
+    getMarketHouseFavorabilityVariableKey(houseId, actorId),
+    readNumericVariable(
+      state,
+      getMarketHouseFavorabilityVariableKey(houseId, actorId),
+      actorId === marketHouseFixedBoss.id ? marketHouseFixedBoss.favorability : 0
+    ) + delta
+  );
+}
+
+function increaseMarketHouseTime(state: GameState, houseId: string, delta: number): GameState {
+  return withVariable(
+    state,
+    getMarketHouseTimeVariableKey(houseId),
+    readNumericVariable(state, getMarketHouseTimeVariableKey(houseId), 1) + delta
+  );
+}
+
+function formatOutcomeSummary(outcome: MarketHouseActionOutcome, goodsPool = globalGoodsPool): string[] {
+  const summaryLines = [
+    `金钱 ${outcome.moneyChange >= 0 ? "+" : ""}${outcome.moneyChange}`,
+    `关系 ${outcome.relationshipChange >= 0 ? "+" : ""}${outcome.relationshipChange}`,
+    `时间 +${outcome.timeCost}`,
+  ];
+
+  if (outcome.inventoryChange.length > 0) {
+    summaryLines.push(
+      ...outcome.inventoryChange.map((change) => {
+        const goodsName =
+          goodsPool.find((goodsDefinition) => goodsDefinition.id === change.goodsId)?.name ??
+          change.goodsId;
+        return `${goodsName} ${change.quantity >= 0 ? "+" : ""}${change.quantity}`;
+      })
+    );
+  }
+
+  return summaryLines;
+}
+
+function applyActionOutcome(
+  input: Pick<
+    HouseModuleDispatchInput<"market-house">,
+    "gameState" | "characterDefinitions" | "playerCharacterId" | "houseDefinition"
+  >,
+  actor: MarketHouseActor,
+  outcome: MarketHouseActionOutcome
+): {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+} {
+  let nextState = input.gameState;
+  let nextCharacterDefinitions = input.characterDefinitions;
+
+  const goldMutation = mutatePlayerGold(
+    nextState,
+    nextCharacterDefinitions,
+    input.playerCharacterId,
+    outcome.moneyChange
+  );
+  nextState = goldMutation.state;
+  nextCharacterDefinitions = goldMutation.characterDefinitions;
+
+  outcome.inventoryChange.forEach((change) => {
+    nextState = mutateTradeInventory(nextState, change.goodsId, change.quantity);
+    if (change.quantity > 0) {
+      nextState = mutateHouseStock(nextState, input.houseDefinition.id, change.goodsId, -change.quantity);
+      return;
+    }
+
+    if (change.quantity < 0) {
+      nextState = mutateHouseStock(nextState, input.houseDefinition.id, change.goodsId, -change.quantity);
+    }
+  });
+
+  if (outcome.relationshipChange !== 0) {
+    nextState = mutateActorFavorability(
+      nextState,
+      input.houseDefinition.id,
+      actor.id,
+      outcome.relationshipChange
+    );
+  }
+
+  return {
+    state: increaseMarketHouseTime(nextState, input.houseDefinition.id, outcome.timeCost),
+    characterDefinitions: nextCharacterDefinitions,
+  };
+}
+
+function pickInvestigationMessage(
+  actor: MarketHouseActor,
+  cityDefinition: CityDefinition,
+  displayedGoods: MarketHouseGoodsSnapshot[]
+): string {
+  const focusGoods = displayedGoods[0]?.goodDefinition ?? null;
+  const rumorPool =
+    focusGoods == null
+      ? marketHouseGeneralRumors
+      : marketHouseRumorsByCategory[focusGoods.category] ?? marketHouseGeneralRumors;
+
+  const specialtyLine =
+    actor.specialty === "外地见闻"
+      ? "罗行商压低声音说，外地货最近走得比本地货快。"
+      : actor.specialty === "药材"
+        ? "孙药商提醒你，山路一断，药材价就容易往上跳。"
+        : actor.specialty === "书画"
+          ? "韩书商说，真正的高价，不在货本身，而在遇见识货的人。"
+          : actor.specialty === "丝绸"
+            ? "沈老板眯着眼笑，说富城最舍得为绸缎出价。"
+            : "钱掌柜只敲了敲账板，示意你多看差价。";
+
+  return [
+    `${cityDefinition.name}繁荣 ${cityDefinition.prosperity}，风险 ${cityDefinition.danger}。`,
+    `城中偏好：${cityDefinition.specialDemand.join(" / ") || "无"}`,
+    pickRandom(rumorPool),
+    specialtyLine,
+  ].join("\n");
+}
+
+function createPriceTone(price: number, referencePrice: number): "low" | "high" | "neutral" {
+  if (price < referencePrice) {
+    return "low";
+  }
+  if (price > referencePrice) {
+    return "high";
+  }
+  return "neutral";
 }
 
 function selectOverlayViewModel(
-  overlay: MarketHouseSessionState["overlay"]
+  overlay: MarketHouseSessionState["overlay"],
+  snapshot: MarketHouseViewSnapshot
 ): HouseOverlayViewModel | null {
   if (overlay == null) {
     return null;
   }
 
+  if (overlay.type === "alert") {
+    return {
+      type: "alert",
+      title: overlay.title,
+      paragraphs: overlay.paragraphs,
+      ...(overlay.tone == null ? {} : { tone: overlay.tone }),
+      confirmActionId: "close-alert",
+      confirmLabel: "知道了",
+    };
+  }
+
+  const rowsSource = overlay.mode === "buy" ? snapshot.displayedGoods : snapshot.sellableGoods;
+  const selectedSnapshot =
+    rowsSource.find((goodsSnapshot) => goodsSnapshot.goodDefinition.id === overlay.selectedGoodsId) ??
+    rowsSource[0] ??
+    null;
+  const currentPrice =
+    overlay.mode === "buy"
+      ? (selectedSnapshot?.adjustedBuyPrice ?? 0)
+      : (selectedSnapshot?.adjustedSellPrice ?? 0);
+  const availableQuantity =
+    overlay.mode === "buy"
+      ? (selectedSnapshot?.stockQuantity ?? 0)
+      : (selectedSnapshot?.ownedQuantity ?? 0);
+
   return {
-    type: "alert",
-    title: overlay.title,
-    paragraphs: overlay.paragraphs,
-    ...(overlay.tone == null ? {} : { tone: overlay.tone }),
-    confirmActionId: "close-alert",
-    confirmLabel: "知道了",
+    type: "market-trade",
+    title: overlay.mode === "buy" ? "买入商品" : "出售商品",
+    mode: overlay.mode,
+    quantity: overlay.quantity,
+    quantityFieldId: TRADE_QUANTITY_FIELD_ID,
+    decrementActionId: "trade-qty-minus",
+    incrementActionId: "trade-qty-plus",
+    confirmActionId: "confirm-trade",
+    confirmLabel: overlay.mode === "buy" ? "确认购买" : "确认出售",
+    cancelActionId: "close-trade",
+    cancelLabel: "取消",
+    rows: rowsSource.map((goodsSnapshot) => {
+      const currentModePrice =
+        overlay.mode === "buy"
+          ? goodsSnapshot.adjustedBuyPrice
+          : goodsSnapshot.adjustedSellPrice;
+      const quantityLabel =
+        overlay.mode === "buy"
+          ? `库存 ${goodsSnapshot.stockQuantity}${goodsSnapshot.goodDefinition.unit}`
+          : `持有 ${goodsSnapshot.ownedQuantity}${goodsSnapshot.goodDefinition.unit}`;
+
+      return {
+        goodsId: goodsSnapshot.goodDefinition.id,
+        name: goodsSnapshot.goodDefinition.name,
+        categoryLabel: getCategoryLabel(goodsSnapshot.goodDefinition.category),
+        currentPrice: currentModePrice,
+        referencePrice: goodsSnapshot.goodDefinition.basePrice,
+        unit: goodsSnapshot.goodDefinition.unit,
+        quantityLabel,
+        priceTone: createPriceTone(currentModePrice, goodsSnapshot.goodDefinition.basePrice),
+        isSelected: goodsSnapshot.goodDefinition.id === selectedSnapshot?.goodDefinition.id,
+      };
+    }),
+    selectedSummary:
+      selectedSnapshot == null
+        ? null
+        : {
+            goodsId: selectedSnapshot.goodDefinition.id,
+            name: selectedSnapshot.goodDefinition.name,
+            categoryLabel: getCategoryLabel(selectedSnapshot.goodDefinition.category),
+            currentPrice,
+            referencePrice: selectedSnapshot.goodDefinition.basePrice,
+            unit: selectedSnapshot.goodDefinition.unit,
+            availableQuantity,
+            quantityLabel:
+              overlay.mode === "buy"
+                ? `库存 ${availableQuantity}${selectedSnapshot.goodDefinition.unit}`
+                : `持有 ${availableQuantity}${selectedSnapshot.goodDefinition.unit}`,
+            tradeTotal: currentPrice * overlay.quantity,
+            priceTone: createPriceTone(currentPrice, selectedSnapshot.goodDefinition.basePrice),
+          },
+    helperLines:
+      overlay.mode === "buy"
+        ? [
+            "绿色代表低于参考均价，红色代表高于参考均价。",
+            "货栈买入价会随钱掌柜关系略有浮动。",
+          ]
+        : [
+            "出售按当前城市卖出价结算。",
+            "货栈始终保留买卖差价，无法原地无限刷钱。",
+          ],
   };
+}
+
+function handleField(
+  input: HouseModuleDispatchInput<"market-house">,
+  sessionState: MarketHouseSessionState | null
+): HouseModuleTransitionResult<"market-house"> {
+  if (input.request.type !== "field") {
+    return createTransitionResult(input);
+  }
+
+  if (input.request.fieldId !== TRADE_QUANTITY_FIELD_ID) {
+    return createTransitionResult(input);
+  }
+
+  return updateTradeOverlayQuantity(
+    input,
+    sessionState,
+    Math.max(1, parseInt(input.request.value, 10) || 1)
+  );
 }
 
 function handleAction(
@@ -243,55 +894,30 @@ function handleAction(
     return createTransitionResult(input);
   }
 
-  const cityDefinition = getCityDefinition(input.houseDefinition.cityId);
-  const stateWithMarkets = ensureMarketShops(input.gameState, cityDefinition);
-  const selectedShopType = sessionState?.selectedShopType ?? DEFAULT_MARKET_SHOP_TYPE;
+  const snapshot = createViewSnapshot(input.gameState, input.houseDefinition, sessionState);
+  const selectedActor = snapshot.selectedActor;
+  const currentOverlay = sessionState?.overlay;
 
   if (input.request.actionId === "advance-greeting") {
-    const snapshot = getMarketHouseSnapshot(
-      stateWithMarkets,
-      input.houseDefinition,
-      selectedShopType
+    return withSessionState(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        selectedActorId: marketHouseFixedBoss.id,
+        dialoguePhase: "open",
+        dialogueLines: [...marketHouseBossOpenLines],
+        overlay: null,
+      }
     );
-    return {
-      gameState: snapshot.state,
-      characterDefinitions: input.characterDefinitions,
-      sessionState:
-        sessionState == null
-          ? sessionState
-          : {
-              ...sessionState,
-              dialoguePhase: "open",
-              dialogueLines: createOpenLines(snapshot),
-            },
-    };
-  }
-
-  if (input.request.actionId === "open-market-dialogue") {
-    const snapshot = getMarketHouseSnapshot(
-      stateWithMarkets,
-      input.houseDefinition,
-      selectedShopType
-    );
-    return {
-      gameState: snapshot.state,
-      characterDefinitions: input.characterDefinitions,
-      sessionState:
-        sessionState == null
-          ? sessionState
-          : {
-              ...sessionState,
-              dialoguePhase: "open",
-              dialogueLines: createOpenLines(snapshot),
-              overlay: null,
-            },
-    };
   }
 
   if (input.request.actionId === "dismiss-dialogue") {
     return withSessionState(
       {
-        gameState: stateWithMarkets,
+        gameState: snapshot.state,
         characterDefinitions: input.characterDefinitions,
       },
       sessionState,
@@ -302,12 +928,7 @@ function handleAction(
     );
   }
 
-  if (input.request.actionId === "inspect-shop") {
-    const snapshot = getMarketHouseSnapshot(
-      stateWithMarkets,
-      input.houseDefinition,
-      selectedShopType
-    );
+  if (input.request.actionId === "close-alert" || input.request.actionId === "close-trade") {
     return withSessionState(
       {
         gameState: snapshot.state,
@@ -315,103 +936,366 @@ function handleAction(
       },
       sessionState,
       {
-        overlay: createAlertOverlay(
-          `${getShopLabel(snapshot.selectedShopType)}货单`,
-          snapshot.marketEntries.length === 0
-            ? ["这一行暂时没有可交易的货。"]
-            : snapshot.marketEntries.map(
-                ({ entry, goodDefinition }) =>
-                  `${goodDefinition.name}｜买入 ${entry.buyPrice}｜卖出 ${entry.sellPrice}｜基价 ${entry.rolledBasePrice}`
-              ),
-        ),
+        overlay: null,
       }
     );
   }
 
-  if (input.request.actionId === "market-rumor") {
-    const snapshot = getMarketHouseSnapshot(
-      stateWithMarkets,
-      input.houseDefinition,
-      selectedShopType
-    );
-    return withSessionState(
-      {
-        gameState: snapshot.state,
-        characterDefinitions: input.characterDefinitions,
-      },
-      sessionState,
-      {
-        overlay: createAlertOverlay(
-          "市面风向",
-          [
-            `${snapshot.cityDefinition.name}繁荣 ${snapshot.cityDefinition.prosperity}，治安压力 ${snapshot.cityDefinition.danger}。`,
-            `当前偏好：${snapshot.cityDefinition.specialDemand.join(" / ") || "无"}`,
-            `${getShopLabel(snapshot.selectedShopType)}现有货目 ${snapshot.selectedShopInventoryCount} 项。`,
-          ]
-        ),
-      }
-    );
-  }
-
-  if (input.request.actionId === "close-alert") {
-    return withSessionState(
-      {
-        gameState: stateWithMarkets,
-        characterDefinitions: input.characterDefinitions,
-      },
-      sessionState,
-      { overlay: null }
-    );
-  }
-
-  const nextShopType = parseShopAction(input.request.actionId);
-  if (nextShopType != null) {
-    const snapshot = getMarketHouseSnapshot(
-      stateWithMarkets,
-      input.houseDefinition,
-      nextShopType
-    );
-    return {
-      gameState: snapshot.state,
-      characterDefinitions: input.characterDefinitions,
-      sessionState:
-        sessionState == null
-          ? sessionState
-          : {
-              ...sessionState,
-              selectedShopType: nextShopType,
-              dialoguePhase: "open",
-              dialogueLines: createOpenLines(snapshot),
-              overlay: null,
-            },
-    };
-  }
-
-  return createTransitionResult(
-    {
-      gameState: stateWithMarkets,
-      characterDefinitions: input.characterDefinitions,
-      sessionState,
+  const selectedActorId = parseSelectedActorId(input.request.actionId);
+  if (selectedActorId != null) {
+    const actor = snapshot.actors.find((candidateActor) => candidateActor.id === selectedActorId);
+    if (actor == null) {
+      return createTransitionResult(input, { gameState: snapshot.state });
     }
-  );
+
+    return withSessionState(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        selectedActorId: actor.id,
+        dialoguePhase: "open",
+        dialogueLines: getActorOpenLines(actor),
+        overlay: null,
+      }
+    );
+  }
+
+  if (selectedActor == null) {
+    return createTransitionResult(input, { gameState: snapshot.state });
+  }
+
+  if (input.request.actionId === "small-talk") {
+    const outcome: MarketHouseActionOutcome = {
+      moneyChange: 0,
+      inventoryChange: [],
+      relationshipChange: 1,
+      timeCost: 1,
+      marketMessage: pickRandom(marketHouseSmallTalkLines),
+    };
+    const mutation = applyActionOutcome(input, selectedActor, outcome);
+
+    return withSessionState(
+      {
+        gameState: mutation.state,
+        characterDefinitions: mutation.characterDefinitions,
+      },
+      sessionState,
+      {
+        dialoguePhase: "open",
+        dialogueLines: [outcome.marketMessage],
+        overlay: createAlertOverlay("闲谈", [
+          outcome.marketMessage,
+          ...formatOutcomeSummary(outcome),
+        ], "success"),
+      }
+    );
+  }
+
+  if (input.request.actionId === "investigate-market") {
+    const outcome: MarketHouseActionOutcome = {
+      moneyChange: 0,
+      inventoryChange: [],
+      relationshipChange: 0,
+      timeCost: 1,
+      marketMessage: pickInvestigationMessage(
+        selectedActor,
+        snapshot.cityDefinition,
+        snapshot.displayedGoods
+      ),
+    };
+    const mutation = applyActionOutcome(input, selectedActor, outcome);
+
+    return withSessionState(
+      {
+        gameState: mutation.state,
+        characterDefinitions: mutation.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: createAlertOverlay("调查行情", outcome.marketMessage.split("\n"), "info"),
+      }
+    );
+  }
+
+  if (input.request.actionId === "buy-goods") {
+    if (!selectedActor.isFixedHost) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay("不能交易", ["这位商人只愿和你聊聊行情。"], "warning"),
+        }
+      );
+    }
+
+    const buyableGoods = snapshot.displayedGoods.filter((goodsSnapshot) => goodsSnapshot.stockQuantity > 0);
+    if (buyableGoods.length === 0) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay("暂无存货", ["货栈这一轮的货已经卖空了。"], "warning"),
+        }
+      );
+    }
+
+    return withSessionState(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: createTradeOverlay("buy", buyableGoods, currentOverlay?.type === "market-trade" ? currentOverlay.selectedGoodsId : null),
+      }
+    );
+  }
+
+  if (input.request.actionId === "sell-goods") {
+    if (!selectedActor.isFixedHost) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay("不能交易", ["这位商人不直接收货，只愿和你谈谈市面。"], "warning"),
+        }
+      );
+    }
+
+    if (snapshot.sellableGoods.length === 0) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay("无货可卖", ["你现在身上没有可在本城出手的货物。"], "warning"),
+        }
+      );
+    }
+
+    return withSessionState(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: createTradeOverlay("sell", snapshot.sellableGoods, currentOverlay?.type === "market-trade" ? currentOverlay.selectedGoodsId : null),
+      }
+    );
+  }
+
+  const selectedGoodsId = parseSelectedGoodsId(input.request.actionId);
+  if (selectedGoodsId != null && currentOverlay?.type === "market-trade") {
+    return withSessionState(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: {
+          ...currentOverlay,
+          selectedGoodsId,
+          quantity: 1,
+        },
+      }
+    );
+  }
+
+  if (input.request.actionId === "trade-qty-minus" && currentOverlay?.type === "market-trade") {
+    return updateTradeOverlayQuantity(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      currentOverlay.quantity - 1
+    );
+  }
+
+  if (input.request.actionId === "trade-qty-plus" && currentOverlay?.type === "market-trade") {
+    return updateTradeOverlayQuantity(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      currentOverlay.quantity + 1
+    );
+  }
+
+  if (input.request.actionId === "confirm-trade" && currentOverlay?.type === "market-trade") {
+    const goodsPool =
+      currentOverlay.mode === "buy" ? snapshot.displayedGoods : snapshot.sellableGoods;
+    const selectedGoods =
+      goodsPool.find(
+        (goodsSnapshot) => goodsSnapshot.goodDefinition.id === currentOverlay.selectedGoodsId
+      ) ?? null;
+
+    if (selectedGoods == null) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay("没有选中商品", ["请先选一件商品。"], "warning"),
+        }
+      );
+    }
+
+    const quantity = Math.max(1, currentOverlay.quantity);
+    const playerCharacter = getPlayerCharacter(input.characterDefinitions, input.playerCharacterId);
+
+    if (currentOverlay.mode === "buy") {
+      if (selectedGoods.stockQuantity < quantity) {
+        return withSessionState(
+          {
+            gameState: snapshot.state,
+            characterDefinitions: input.characterDefinitions,
+          },
+          sessionState,
+          {
+            overlay: createAlertOverlay("库存不足", ["库存不足。"], "warning"),
+          }
+        );
+      }
+
+      const totalPrice = selectedGoods.adjustedBuyPrice * quantity;
+      if (playerCharacter.stats.gold < totalPrice) {
+        return withSessionState(
+          {
+            gameState: snapshot.state,
+            characterDefinitions: input.characterDefinitions,
+          },
+          sessionState,
+          {
+            overlay: createAlertOverlay("银钱不足", ["银钱不足。"], "warning"),
+          }
+        );
+      }
+
+      const outcome: MarketHouseActionOutcome = {
+        moneyChange: -totalPrice,
+        inventoryChange: [
+          {
+            goodsId: selectedGoods.goodDefinition.id,
+            quantity,
+          },
+        ],
+        relationshipChange: 0,
+        timeCost: 1,
+        marketMessage: `你从货栈买入了 ${quantity}${selectedGoods.goodDefinition.unit}${selectedGoods.goodDefinition.name}。`,
+      };
+      const mutation = applyActionOutcome(input, selectedActor, outcome);
+
+      return withSessionState(
+        {
+          gameState: mutation.state,
+          characterDefinitions: mutation.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "成交",
+            [
+              outcome.marketMessage,
+              `花费 ${totalPrice} 文。`,
+              ...formatOutcomeSummary(outcome),
+            ],
+            "success"
+          ),
+        }
+      );
+    }
+
+    if (selectedGoods.ownedQuantity < quantity) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay("持货不足", ["你手里的货不够这么多。"], "warning"),
+        }
+      );
+    }
+
+    const totalPrice = selectedGoods.adjustedSellPrice * quantity;
+    const outcome: MarketHouseActionOutcome = {
+      moneyChange: totalPrice,
+      inventoryChange: [
+        {
+          goodsId: selectedGoods.goodDefinition.id,
+          quantity: -quantity,
+        },
+      ],
+      relationshipChange: 0,
+      timeCost: 1,
+      marketMessage: `你向钱掌柜卖出了 ${quantity}${selectedGoods.goodDefinition.unit}${selectedGoods.goodDefinition.name}。`,
+    };
+    const mutation = applyActionOutcome(input, selectedActor, outcome);
+
+    return withSessionState(
+      {
+        gameState: mutation.state,
+        characterDefinitions: mutation.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: createAlertOverlay(
+          "成交",
+          [
+            outcome.marketMessage,
+            `收入 ${totalPrice} 文。`,
+            ...formatOutcomeSummary(outcome),
+          ],
+          "success"
+        ),
+      }
+    );
+  }
+
+  return createTransitionResult(input, { gameState: snapshot.state });
 }
 
 export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
   moduleId: "market-house",
   enter(input) {
-    const cityDefinition = getCityDefinition(input.houseDefinition.cityId);
-    const nextState = ensureMarketShops(input.gameState, cityDefinition);
+    const runtime = ensureMarketHouseRuntime(input.gameState, input.houseDefinition);
 
     return {
-      gameState: nextState,
+      gameState: runtime.state,
       characterDefinitions: input.characterDefinitions,
       sessionState: createInitialMarketHouseSessionState(
-        DEFAULT_MARKET_SHOP_TYPE,
-        createGreetingLines(cityDefinition)
+        runtime.guestActorIds,
+        marketHouseFixedBoss.id,
+        [...marketHouseGreetingLines]
       ),
     };
   },
   dispatch(input) {
+    if (input.request.type === "field") {
+      return handleField(input, input.sessionState);
+    }
+
     return handleAction(input, input.sessionState);
   },
   leave(input) {
@@ -422,104 +1306,80 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
     };
   },
   selectViewModel(input): HouseModuleViewModel {
+    const runtime = ensureMarketHouseRuntime(input.gameState, input.houseDefinition);
     const sessionState =
       input.sessionState ??
-      createInitialMarketHouseSessionState(DEFAULT_MARKET_SHOP_TYPE, ["市集正在整理货架。"]);
-    const snapshot = getMarketHouseSnapshot(
-      input.gameState,
-      input.houseDefinition,
-      sessionState.selectedShopType
-    );
-    const playerCharacter = getPlayerCharacter(
-      input.characterDefinitions,
-      input.playerCharacterId
-    );
-    const houseNpcSummaries = selectCityNpcSummariesForHouse(
-      snapshot.state,
-      input.houseDefinition,
-      prototypeCityNpcPools
-    );
+      createInitialMarketHouseSessionState(
+        runtime.guestActorIds,
+        marketHouseFixedBoss.id,
+        [...marketHouseGreetingLines]
+      );
+    const snapshot = createViewSnapshot(runtime.state, input.houseDefinition, sessionState);
+    const playerCharacter = getPlayerCharacter(input.characterDefinitions, input.playerCharacterId);
     const isIdle = sessionState.dialoguePhase === "idle";
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
-    const defaultNpc =
-      input.houseDefinition.defaultCharacterId == null
-        ? null
-        : input.characterDefinitions.find(
-            (characterDefinition) =>
-              characterDefinition.id === input.houseDefinition.defaultCharacterId
-          ) ?? null;
-    const roster = [
-      ...(defaultNpc == null
-        ? []
-        : [
-            {
-              characterId: defaultNpc.id,
-              name: defaultNpc.name,
-              ...(defaultNpc.title == null ? {} : { title: defaultNpc.title }),
-              actionId: "open-market-dialogue",
-              isSelected: true,
-            },
-          ]),
-      ...houseNpcSummaries
-        .filter((npcSummary) => npcSummary.id !== defaultNpc?.id)
-        .map((npcSummary) => ({
-          characterId: npcSummary.id,
-          name: npcSummary.name,
-          ...(npcSummary.title == null ? {} : { title: npcSummary.title }),
-          actionId: "open-market-dialogue",
-        })),
-    ];
+    const selectedActor = snapshot.selectedActor;
 
     return {
       moduleId: "market-house",
       houseId: input.houseDefinition.id,
       sceneTitle: input.houseDefinition.name,
-      sceneSubtitle: "市集总览 / 城市商路",
-      standbyRoster: isIdle ? roster : [],
+      sceneSubtitle: "跑商 / 倒卖 / 交易",
+      standbyRoster:
+        !isIdle
+          ? []
+          : snapshot.actors.map((actor) => ({
+              characterId: actor.id,
+              name: actor.name,
+              title: actor.title,
+              actionId: `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
+              isSelected: actor.id === selectedActor?.id,
+            })),
       dialogue:
-        isIdle || defaultNpc == null
+        isIdle || selectedActor == null
           ? null
           : {
               mode: "character",
-              speakerName: defaultNpc.name,
-              characterId: defaultNpc.id,
+              speakerName: selectedActor.name,
+              characterId: selectedActor.id,
               position: "right",
               textLines: sessionState.dialogueLines,
               advanceActionId: isGreeting ? "advance-greeting" : null,
               advanceHintText: isGreeting ? "点击继续" : null,
             },
       actionContainer:
-        !isOpen
+        !isOpen || selectedActor == null
           ? null
           : {
-              title: `${snapshot.cityDefinition.name} / ${getShopLabel(snapshot.selectedShopType)}`,
+              title: `${selectedActor.name} / ${selectedActor.title}`,
               actions: [
-                ...AVAILABLE_MARKET_SHOPS.map<HouseActionViewModel>((shopType) => ({
-                  id: `${SHOP_ACTION_PREFIX}${shopType}`,
-                  label: getShopLabel(shopType),
-                  disabled: shopType === snapshot.selectedShopType,
-                })),
-                { id: "inspect-shop", label: "查看货单", tone: "accent" },
-                { id: "market-rumor", label: "看行情" },
+                ...(selectedActor.isFixedHost
+                  ? ([
+                      { id: "buy-goods", label: "买入商品" },
+                      { id: "sell-goods", label: "出售商品" },
+                    ] satisfies HouseActionViewModel[])
+                  : []),
+                { id: "investigate-market", label: "调查行情" },
+                { id: "small-talk", label: "闲谈", tone: "accent" },
                 { id: "dismiss-dialogue", label: "关闭" },
               ],
             },
       statusCard: {
-        eyebrow: "商路",
-        title: getShopLabel(snapshot.selectedShopType),
-        subtitle: `${snapshot.cityDefinition.name} / 下次刷新区间 ${snapshot.refreshedDayText}`,
+        eyebrow: "货栈",
+        title: snapshot.cityDefinition.name,
+        subtitle: `钱掌柜关系 ${snapshot.bossFavorability} / 下次刷新日 ${snapshot.refreshAfterDay}`,
         metrics: [
           { label: "金钱", value: `${playerCharacter.stats.gold} 文` },
-          { label: "货目", value: `${snapshot.selectedShopInventoryCount}` },
+          { label: "货单", value: `${snapshot.displayedGoods.length} 项` },
+          { label: "持货", value: `${snapshot.totalOwnedGoods}` },
           { label: "繁荣", value: `${snapshot.cityDefinition.prosperity}` },
-          { label: "风险", value: `${snapshot.cityDefinition.danger}` },
         ],
       },
-      overlay: selectOverlayViewModel(sessionState.overlay),
+      overlay: selectOverlayViewModel(sessionState.overlay, snapshot),
       leaveAction: {
         id: "leave-house",
-        label: "离开市集",
+        label: "离开货栈",
         ...(isIdle ? { tone: "accent" } : {}),
       },
     };

@@ -67,7 +67,7 @@ export const prototypeHouses: HouseDefinition[] = [
   {
     id: "house.kulan.market",
     cityId: "city.kulan",
-    name: "商馆",
+    name: "货栈",
     type: "merchant",
     characterIds: ["char.kulan_merchant"],
     defaultCharacterId: "char.kulan_merchant",
@@ -332,11 +332,11 @@ export const prototypeCharacters: CharacterDefinition[] = [
   },
   {
     id: "char.kulan_merchant",
-    name: "行商头目",
+    name: "钱掌柜",
     birthYear: 1530,
     deathYear: null,
     age: 37,
-    title: "商人",
+    title: "货栈老板",
     occupation: "商人",
     cityId: "city.kulan",
     houseId: "house.kulan.market",
@@ -351,7 +351,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
       gold: 900,
     },
     stamina: 72,
-    biography: "往来各地的行商头目，对库兰城物资流通十分熟悉。",
+    biography: "库兰城货栈的掌柜，最擅长盘算商路差价与各城货价起落。",
     availableFunctions: [],
     skills: {
       ashigaru: 1,
