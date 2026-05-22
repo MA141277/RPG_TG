@@ -1,0 +1,52 @@
+import type {
+  TeaHouseDebateSummary,
+  TeaHouseDebateWinner,
+  TeaHouseTopicCard,
+} from "../tea-house";
+
+export type TeaHouseAlertOverlayState = {
+  type: "alert";
+  title: string;
+  paragraphs: string[];
+  tone?: "info" | "success" | "warning";
+};
+
+export type TeaHouseDebateOverlayState = {
+  type: "debate";
+  actorId: string;
+  actorName: string;
+  round: number;
+  secondsLeft: number;
+  playerSpirit: number;
+  npcSpirit: number;
+  timeoutCount: number;
+  consecutivePlayerWins: number;
+  plannedNpcTopic: TeaHouseTopicCard;
+  lastPlayerTopic: TeaHouseTopicCard | null;
+  lastNpcTopic: TeaHouseTopicCard | null;
+  lastRoundWinner: TeaHouseDebateWinner | null;
+  lastRoundLines: string[];
+};
+
+export type TeaHouseResultOverlayState = {
+  type: "result";
+  title: string;
+  paragraphs: string[];
+  outcome: TeaHouseDebateSummary;
+};
+
+export type TeaHouseOverlayState =
+  | TeaHouseAlertOverlayState
+  | TeaHouseDebateOverlayState
+  | TeaHouseResultOverlayState
+  | null;
+
+export type TeaHouseDialoguePhase = "greeting" | "open" | "idle";
+
+export type TeaHouseSessionState = {
+  guestNpcIds: string[];
+  selectedActorId: string | null;
+  dialogueLines: string[];
+  dialoguePhase: TeaHouseDialoguePhase;
+  overlay: TeaHouseOverlayState;
+};

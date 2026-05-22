@@ -2,7 +2,10 @@ import { getHouseModule } from "../house-modules/house-module-registry";
 import type { AppState } from "../app-shell";
 import type { HouseDefinition } from "../../domain/house";
 import type {
+  ActiveHouseModuleSession,
+  HouseModuleId,
   HouseModuleRequest,
+  HouseModuleSessionState,
   HouseModuleTransitionResult,
 } from "../../domain/house-module";
 import { assertExists } from "../../shared/assert";
@@ -33,10 +36,14 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
 
   function applyHouseModuleResult(
     houseDefinition: HouseDefinition,
-    moduleId: NonNullable<HouseDefinition["moduleId"]>,
-    result: HouseModuleTransitionResult
+    moduleId: HouseModuleId,
+    result: HouseModuleTransitionResult<HouseModuleId>
   ): void {
     const appState = dependencies.getAppState();
+    const houseSession =
+      result.sessionState == null
+        ? null
+        : createActiveHouseSession(moduleId, result.sessionState);
 
     dependencies.setAppState({
       ...appState,
@@ -44,19 +51,23 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         ...result.gameState,
         ui: {
           ...result.gameState.ui,
-          houseSession:
-            result.sessionState == null
-              ? null
-              : {
-                  moduleId,
-                  state: result.sessionState,
-                },
+          houseSession,
         },
       },
       characterDefinitions: result.characterDefinitions,
     });
 
     applyHouseSideEffects(houseDefinition, moduleId, result.sideEffects ?? []);
+  }
+
+  function createActiveHouseSession<ModuleId extends HouseModuleId>(
+    moduleId: ModuleId,
+    sessionState: HouseModuleSessionState<ModuleId>
+  ): ActiveHouseModuleSession {
+    return {
+      moduleId,
+      state: sessionState,
+    } as ActiveHouseModuleSession;
   }
 
   function dispatchCurrentHouseRequest(request: HouseModuleRequest): void {
@@ -83,7 +94,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
 
   function applyHouseSideEffects(
     houseDefinition: HouseDefinition,
-    moduleId: NonNullable<HouseDefinition["moduleId"]>,
+    moduleId: HouseModuleId,
     sideEffects: Array<{
       type: "start-interval" | "stop-interval";
       intervalId: string;

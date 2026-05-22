@@ -62,6 +62,7 @@ type HouseDefinition = {
   type: HouseType;
   characterIds: CharacterId[];
   defaultCharacterId: CharacterId | null;
+  activityLocationId?: CityNpcActivityLocationId | null;
   moduleId?: HouseModuleId | null;
   backAction: {
     label: string;
@@ -73,6 +74,7 @@ type HouseDefinition = {
 Rules:
 
 - `type` is presentation/category metadata
+- `activityLocationId` is optional city-level roaming NPC slot metadata
 - `moduleId` is behavior binding
 - do not infer business behavior from `house.id` string matching in app entrypoints
 

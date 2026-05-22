@@ -202,8 +202,7 @@ function renderStage(input: AppRenderInput): string {
 
   if (currentView === "map") {
     const mapViewModel = createMapViewModel({
-      mapName: input.mapDefinition.name,
-      size: 5,
+      mapDefinition: input.mapDefinition,
       playerCoordinate: input.appState.playerCoordinate,
       cityDefinitions: [input.cityDefinition],
       cityCoordinatesById: input.cityCoordinatesById,

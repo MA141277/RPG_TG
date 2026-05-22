@@ -1,0 +1,62 @@
+.view-house-tea-house {
+  --grain-shop-scene-bg: url("../../sliced_ui_assets/lianghangcankao.png");
+
+  /* 暂无茶馆专属立绘时，先复用粮铺资源，优先保证版式一致 */
+  --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
+  --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
+}
+
+.view-house-tea-house::after {
+  background:
+    radial-gradient(circle at 76% 16%, rgb(255 255 255 / 16%), transparent 22%),
+    linear-gradient(180deg, rgb(74 53 31 / 8%) 0%, rgb(87 57 28 / 0%) 30%, rgb(44 29 20 / 18%) 66%, rgb(20 14 10 / 72%) 100%);
+}
+
+.c-tea-house-npc-idle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.c-tea-house-npc-idle .c-grain-shop-npc-idle__button.is-selected {
+  filter: brightness(1.04);
+  box-shadow: 0 10px 24px rgb(110 64 19 / 28%);
+}
+
+.c-tea-house-npc-idle__title {
+  font-size: 0.82rem;
+  color: #5d4126;
+}
+
+.c-tea-house-dialogue .c-grain-shop-dialogue__text {
+  min-height: 104px;
+}
+
+.c-tea-house-modal {
+  width: min(100%, 520px);
+}
+
+.c-tea-house-debate__summary {
+  text-align: left;
+}
+
+.c-tea-house-debate__summary p:last-child {
+  margin-bottom: 0;
+}
+
+.c-tea-house-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.c-tea-house-topic-grid__button {
+  min-height: 56px;
+  justify-content: center;
+}
+
+@media (width <= 640px) {
+  .c-tea-house-topic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

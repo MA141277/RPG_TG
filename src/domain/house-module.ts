@@ -2,8 +2,10 @@ import type { CharacterDefinition, CharacterId } from "./character";
 import type { GameState } from "./game-state";
 import type { HouseDefinition } from "./house";
 import type { GrainShopSessionState } from "./house-modules/grain-shop-session";
+import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
+import type { TavernSessionState } from "./house-modules/tavern-session";
 
-export type HouseModuleId = "grain-shop";
+export type HouseModuleId = "grain-shop" | "tea-house" | "tavern";
 
 export type HouseModuleRequest =
   | {
@@ -49,6 +51,7 @@ export type HouseStandbyActorViewModel = {
   name: string;
   title?: string;
   actionId?: string;
+  isSelected?: boolean;
 };
 
 export type HouseDialogueViewModel = {
@@ -83,6 +86,16 @@ export type HouseOverlayViewModel =
       confirmLabel: string;
     }
   | {
+      type: "confirm";
+      title: string;
+      paragraphs: string[];
+      confirmActionId: string;
+      confirmLabel: string;
+      cancelActionId: string;
+      cancelLabel: string;
+      tone?: "info" | "success" | "warning";
+    }
+  | {
       type: "trade";
       title: string;
       mode: "buy" | "sell";
@@ -115,6 +128,33 @@ export type HouseOverlayViewModel =
       rewardLines: string[];
       confirmActionId: string;
       confirmLabel: string;
+    }
+  | {
+      type: "debate";
+      title: string;
+      actorName: string;
+      round: number;
+      secondsLeft: number;
+      playerSpirit: number;
+      npcSpirit: number;
+      timeoutCount: number;
+      topicActionIds: Array<{
+        topic: string;
+        actionId: string;
+      }>;
+      lastRoundSummary: string[];
+    }
+  | {
+      type: "gamble";
+      title: string;
+      wager: number;
+      options: number[];
+      decrementActionId: string;
+      incrementActionId: string;
+      confirmActionId: string;
+      confirmLabel: string;
+      cancelActionId: string;
+      cancelLabel: string;
     };
 
 export type HouseModuleViewModel = {
@@ -132,6 +172,8 @@ export type HouseModuleViewModel = {
 
 export type HouseModuleSessionStateMap = {
   "grain-shop": GrainShopSessionState;
+  "tea-house": TeaHouseSessionState;
+  tavern: TavernSessionState;
 };
 
 export type ActiveHouseModuleSession = {

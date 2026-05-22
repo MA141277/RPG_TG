@@ -226,6 +226,368 @@
   bottom: 12px;
 }
 
+.c-campaign-map-shell {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.c-campaign-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  border: 2px solid rgb(199 184 138 / 64%);
+  border-radius: 4px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgb(48 59 55 / 100%), rgb(20 29 30 / 100%)),
+    #1c2626;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 246 206 / 24%),
+    0 18px 34px rgb(0 0 0 / 28%);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.c-campaign-map.is-dragging {
+  cursor: grabbing;
+}
+
+.c-campaign-map__transform {
+  position: absolute;
+  inset: 0;
+  transform: none;
+  transform-origin: center;
+}
+
+.c-campaign-map__terrain,
+.c-campaign-map__image,
+.c-campaign-map__regions {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: auto;
+}
+
+.c-campaign-map__terrain {
+  z-index: 1;
+  display: block;
+}
+
+.c-campaign-map__image--fallback {
+  z-index: 0;
+  transition: opacity 180ms ease;
+}
+
+.c-campaign-map__terrain.is-ready + .c-campaign-map__image--fallback {
+  opacity: 0;
+}
+
+.c-campaign-map__terrain.has-error {
+  display: none;
+}
+
+.c-campaign-map__regions {
+  z-index: 2;
+  mix-blend-mode: overlay;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.c-campaign-map-debug {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 20;
+  display: grid;
+  gap: 8px;
+  min-width: 238px;
+  padding: 10px;
+  border: 1px solid rgb(239 216 150 / 56%);
+  border-radius: 6px;
+  background: rgb(14 20 20 / 82%);
+  box-shadow: 0 10px 20px rgb(0 0 0 / 28%);
+  color: #f8edca;
+  cursor: default;
+}
+
+.c-campaign-map-debug__readout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  font-size: 0.72rem;
+}
+
+.c-campaign-map-debug__readout span {
+  display: grid;
+  gap: 2px;
+  color: rgb(226 232 217 / 72%);
+}
+
+.c-campaign-map-debug__readout strong {
+  color: #fff8df;
+  font-size: 0.82rem;
+}
+
+.c-campaign-map-debug__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.c-campaign-map-debug__actions button {
+  min-width: 34px;
+  border: 1px solid rgb(239 216 150 / 48%);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: #fff8df;
+  background: linear-gradient(180deg, rgb(86 72 42 / 92%), rgb(42 48 43 / 94%));
+  font: inherit;
+  cursor: pointer;
+}
+
+.c-campaign-map-debug__actions button:hover {
+  border-color: rgb(255 235 170 / 84%);
+  background: linear-gradient(180deg, rgb(112 88 42 / 96%), rgb(51 59 49 / 96%));
+}
+
+.c-campaign-marker {
+  position: absolute;
+  left: var(--terrain-point-left, var(--marker-left));
+  top: var(--terrain-point-top, auto);
+  bottom: var(--terrain-point-bottom, var(--marker-bottom));
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 12px max-content;
+  gap: 4px;
+  align-items: center;
+  max-width: calc(140px * var(--map-marker-inverse-scale, 1));
+  border: 0;
+  padding: 0;
+  color: #fff7df;
+  background: transparent;
+  font-size: 10px;
+  line-height: 1.1;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 82%),
+    0 0 6px rgb(0 0 0 / 70%);
+  transform:
+    translate(
+      calc(-6px + var(--terrain-point-offset-x, 0px)),
+      calc(6px + var(--terrain-point-offset-y, 0px))
+    )
+    scale(var(--terrain-point-perspective-scale, 1));
+  transform-origin: 6px 6px;
+  cursor: pointer;
+}
+
+.c-campaign-marker__dot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgb(255 248 218 / 88%);
+  border-radius: 50%;
+  background: #d9482c;
+  box-shadow:
+    0 0 0 2px rgb(0 0 0 / 38%),
+    0 0 10px rgb(238 207 119 / 36%);
+  transform: scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));
+  transform-origin: center;
+}
+
+.c-campaign-marker--fort .c-campaign-marker__dot {
+  border-radius: 2px;
+  background: #2f78b7;
+}
+
+.c-campaign-marker--landmark .c-campaign-marker__dot {
+  background: #e6b84a;
+}
+
+.c-campaign-marker__label {
+  overflow: hidden;
+  max-width: 128px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));
+  transform-origin: left center;
+}
+
+.c-campaign-marker--fort .c-campaign-marker__label,
+.c-campaign-marker--landmark .c-campaign-marker__label {
+  display: none;
+}
+
+.c-campaign-marker--fort:hover .c-campaign-marker__label,
+.c-campaign-marker--landmark:hover .c-campaign-marker__label {
+  display: inline;
+}
+
+.c-campaign-marker__summary {
+  position: absolute;
+  left: calc(16px * var(--map-marker-inverse-scale, 1));
+  bottom: calc(16px * var(--map-marker-inverse-scale, 1));
+  display: none;
+  gap: 5px;
+  width: max-content;
+  min-width: calc(180px * var(--map-marker-inverse-scale, 1));
+  max-width: min(
+    calc(360px * var(--map-marker-inverse-scale, 1)),
+    calc(72vw * var(--map-marker-inverse-scale, 1))
+  );
+  padding: 8px 10px;
+  border: 1px solid rgb(232 212 159 / 70%);
+  border-radius: 4px;
+  background: rgb(18 24 24 / 92%);
+  color: #f6ebcc;
+  line-height: 1.4;
+  text-shadow: none;
+  transform: scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));
+  transform-origin: left bottom;
+  z-index: 6;
+}
+
+.c-campaign-marker__summary strong {
+  display: block;
+  color: #fff8df;
+  font-size: 0.84rem;
+}
+
+.c-campaign-marker__summary span {
+  display: block;
+  color: rgb(246 235 204 / 84%);
+}
+
+.c-campaign-marker:hover {
+  z-index: 5;
+}
+
+.c-campaign-marker:hover .c-campaign-marker__dot {
+  transform: scale(calc(var(--map-marker-inverse-scale, 1) * 1.35 / var(--terrain-point-perspective-scale, 1)));
+}
+
+.c-campaign-marker:hover .c-campaign-marker__summary {
+  display: grid;
+}
+
+.c-campaign-player {
+  position: absolute;
+  left: var(--terrain-point-left, var(--player-left));
+  top: var(--terrain-point-top, auto);
+  bottom: var(--terrain-point-bottom, var(--player-bottom));
+  z-index: 7;
+  width: 16px;
+  height: 22px;
+  border: 2px solid #fff8df;
+  border-radius: 999px 999px 999px 0;
+  background: linear-gradient(180deg, #f0c24f, #b6281f);
+  box-shadow:
+    0 0 0 2px rgb(0 0 0 / 48%),
+    0 0 14px rgb(245 200 76 / 58%);
+  transform:
+    translate(
+      calc(-8px + var(--terrain-point-offset-x, 0px)),
+      calc(11px + var(--terrain-point-offset-y, 0px))
+    )
+    scale(var(--terrain-point-perspective-scale, 1))
+    rotate(-45deg);
+  transform-origin: 8px 11px;
+}
+
+.c-campaign-map-sidebar {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
+  padding: 12px;
+  border: 2px solid rgb(90 111 98 / 64%);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgb(24 38 36 / 92%), rgb(17 27 29 / 94%));
+  overflow: auto;
+}
+
+.c-map-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.c-map-stats div {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid rgb(155 179 153 / 24%);
+  border-radius: 4px;
+  background: rgb(222 238 205 / 8%);
+}
+
+.c-map-stats dt {
+  color: rgb(196 214 205 / 76%);
+  font-size: 0.74rem;
+}
+
+.c-map-stats dd {
+  margin: 0;
+  color: #f7f0d8;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.c-map-resource-summary {
+  margin: 0;
+  color: rgb(225 230 211 / 78%);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.c-map-layer-list {
+  display: grid;
+  gap: 8px;
+}
+
+.c-map-layer-card {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid rgb(155 179 153 / 20%);
+  border-radius: 4px;
+  background: rgb(246 239 211 / 8%);
+}
+
+.c-map-layer-card__image {
+  width: 72px;
+  aspect-ratio: 1.4;
+  object-fit: cover;
+  border: 1px solid rgb(230 216 171 / 32%);
+  background: #111;
+}
+
+.c-map-layer-card__copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.c-map-layer-card__copy strong {
+  overflow: hidden;
+  color: #f7f0d8;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c-map-layer-card__copy span {
+  color: rgb(208 219 211 / 70%);
+  font-size: 0.72rem;
+}
+
 .c-button--ghost {
   color: #f4f2ec;
   background: linear-gradient(180deg, rgb(68 93 111 / 92%), rgb(35 50 66 / 94%));

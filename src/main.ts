@@ -1,4 +1,5 @@
 import "./styles/app.css";
+import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
 import {
   equipValuable,
   selectCard,
@@ -20,11 +21,12 @@ import {
   prototypeCards,
   prototypeCharacters,
   prototypeCity,
+  prototypeCityNpcPools,
   prototypeCityPortraits,
   prototypeHouses,
-  prototypeMap,
   prototypeValuables,
 } from "./content/prototype-world";
+import { yuanmoCampaignMap } from "./content/yuanmo-campaign-map";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -33,9 +35,22 @@ import type {
 import type { ValuableItemId } from "./domain/valuable-item";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
+import {
+  setCampaignTerrainCamera,
+  syncCampaignTerrainWebGl,
+} from "./ui/views/map/campaign-terrain-webgl";
 
 const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;
+const MAP_DEBUG_MIN_SCALE = 0.5;
+const MAP_DEBUG_MAX_SCALE = 6;
+const MAP_DEBUG_SCALE_STEP = 0.2;
+
+type CampaignMapDebugState = {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+};
 
 const appElement = document.querySelector<HTMLElement>("#app");
 
@@ -46,7 +61,7 @@ if (appElement == null) {
 const appRoot = appElement;
 const playerCharacterId = "char.player";
 const cityCoordinatesById: Record<string, GridCoordinate> = {
-  [prototypeCity.id]: { x: 2, y: 2 },
+  [prototypeCity.id]: { x: 339, y: 362 },
 };
 const prototypeCityCoordinateCandidate = cityCoordinatesById[prototypeCity.id];
 assertExists(
@@ -55,10 +70,16 @@ assertExists(
 );
 const prototypeCityCoordinate = prototypeCityCoordinateCandidate;
 const cityNameById = Object.fromEntries(
-  [prototypeCity].map((cityDefinition) => [cityDefinition.id, cityDefinition.name])
+  [prototypeCity].map((cityDefinition) => [
+    cityDefinition.id,
+    cityDefinition.name,
+  ])
 );
 const houseNameById = Object.fromEntries(
-  prototypeHouses.map((houseDefinition) => [houseDefinition.id, houseDefinition.name])
+  prototypeHouses.map((houseDefinition) => [
+    houseDefinition.id,
+    houseDefinition.name,
+  ])
 );
 const characterNameById = Object.fromEntries(
   prototypeCharacters.map((characterDefinition) => [
@@ -68,42 +89,61 @@ const characterNameById = Object.fromEntries(
 );
 
 let appState: AppState = {
-  gameState: createInitialState({
-    currentMapId: prototypeMap.id,
-    currentCityId: prototypeCity.id,
-    currentHouseId: null,
-    playerCharacterId,
-    chapterId: "chapter.prototype",
-    year: 1567,
-    month: 1,
-    day: 1,
-    pinnedCharacterId: playerCharacterId,
-    reviewDateText: "距离评定 40 天",
-    mainHouseMissionText: "前往评定会场",
-    cards: {
-      ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
-      selectedCardId: prototypeCards[0]?.id ?? null,
-    },
-    valuables: {
-      items: prototypeValuables,
-      selectedItemId: prototypeValuables[0]?.id ?? null,
-      equippedWeaponSet: {
-        swordId:
-          prototypeValuables.find(
-            (valuableDefinition) => valuableDefinition.category === "weapon"
-          )?.id ?? null,
-        armorId:
-          prototypeValuables.find(
-            (valuableDefinition) => valuableDefinition.category === "armor"
-          )?.id ?? null,
+  gameState: ensureCityNpcPoolsForCurrentDay(
+    createInitialState({
+      currentMapId: yuanmoCampaignMap.id,
+      currentCityId: prototypeCity.id,
+      currentHouseId: null,
+      playerCharacterId,
+      chapterId: "chapter.prototype",
+      year: 1567,
+      month: 1,
+      day: 1,
+      pinnedCharacterId: playerCharacterId,
+      reviewDateText: "距离评定 40 天",
+      mainHouseMissionText: "前往评定会场",
+      cards: {
+        ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
+        selectedCardId: prototypeCards[0]?.id ?? null,
       },
-    },
-    currentView: "map",
-  }),
+      valuables: {
+        items: prototypeValuables,
+        selectedItemId: prototypeValuables[0]?.id ?? null,
+        equippedWeaponSet: {
+          swordId:
+            prototypeValuables.find(
+              (valuableDefinition) => valuableDefinition.category === "weapon"
+            )?.id ?? null,
+          armorId:
+            prototypeValuables.find(
+              (valuableDefinition) => valuableDefinition.category === "armor"
+            )?.id ?? null,
+        },
+      },
+      currentView: "map",
+    }),
+    prototypeCityNpcPools
+  ),
   characterDefinitions: [...prototypeCharacters],
-  playerCoordinate: { x: 0, y: 0 },
+  playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
   modalState: null,
 };
+let campaignMapDebugState: CampaignMapDebugState = {
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+};
+let campaignMapDragState:
+  | {
+      pointerId: number;
+      startClientX: number;
+      startClientY: number;
+      startOffsetX: number;
+      startOffsetY: number;
+      didMove: boolean;
+    }
+  | null = null;
+let shouldSuppressNextMapClick = false;
 
 const houseRuntime = createHouseRuntime({
   getAppState: () => appState,
@@ -134,6 +174,81 @@ appElement.addEventListener("input", (event) => {
     });
   }
 });
+
+appElement.addEventListener("wheel", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const campaignMap = targetElement.closest<HTMLElement>(
+    "[data-campaign-map-viewport]"
+  );
+  if (campaignMap == null) {
+    return;
+  }
+
+  event.preventDefault();
+  const direction = event.deltaY > 0 ? -1 : 1;
+  setCampaignMapDebugState({
+    ...campaignMapDebugState,
+    scale:
+      campaignMapDebugState.scale + direction * MAP_DEBUG_SCALE_STEP,
+  });
+});
+
+appElement.addEventListener("pointerdown", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  if (targetElement.closest(".c-campaign-map-debug") != null) {
+    return;
+  }
+
+  const campaignMap = targetElement.closest<HTMLElement>(
+    "[data-campaign-map-viewport]"
+  );
+  if (campaignMap == null) {
+    return;
+  }
+
+  campaignMapDragState = {
+    pointerId: event.pointerId,
+    startClientX: event.clientX,
+    startClientY: event.clientY,
+    startOffsetX: campaignMapDebugState.offsetX,
+    startOffsetY: campaignMapDebugState.offsetY,
+    didMove: false,
+  };
+  campaignMap.classList.add("is-dragging");
+  campaignMap.setPointerCapture(event.pointerId);
+});
+
+appElement.addEventListener("pointermove", (event) => {
+  if (
+    campaignMapDragState == null ||
+    campaignMapDragState.pointerId !== event.pointerId
+  ) {
+    return;
+  }
+
+  const deltaX = event.clientX - campaignMapDragState.startClientX;
+  const deltaY = event.clientY - campaignMapDragState.startClientY;
+  if (Math.abs(deltaX) + Math.abs(deltaY) > 3) {
+    campaignMapDragState.didMove = true;
+  }
+
+  setCampaignMapDebugState({
+    ...campaignMapDebugState,
+    offsetX: campaignMapDragState.startOffsetX + deltaX,
+    offsetY: campaignMapDragState.startOffsetY + deltaY,
+  });
+});
+
+appElement.addEventListener("pointerup", endCampaignMapDrag);
+appElement.addEventListener("pointercancel", endCampaignMapDrag);
 
 appElement.addEventListener("click", (event) => {
   const targetElement = event.target;
@@ -177,7 +292,9 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const openCardsButton = targetElement.closest<HTMLElement>("[data-action='open-cards']");
+  const openCardsButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-cards']"
+  );
   if (openCardsButton != null) {
     appState = updateOverlayView(appState, "cards");
     renderApp();
@@ -193,7 +310,9 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const cardFilterButton = targetElement.closest<HTMLElement>("[data-card-filter]");
+  const cardFilterButton = targetElement.closest<HTMLElement>(
+    "[data-card-filter]"
+  );
   if (cardFilterButton != null) {
     const filter = cardFilterButton.dataset.cardFilter as
       | CardLibraryFilter
@@ -243,7 +362,9 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const valuableButton = targetElement.closest<HTMLElement>("[data-valuable-id]");
+  const valuableButton = targetElement.closest<HTMLElement>(
+    "[data-valuable-id]"
+  );
   if (valuableButton != null) {
     const valuableId = targetElement
       .closest<HTMLElement>("[data-valuable-id]")
@@ -267,7 +388,9 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const leaveCityButton = targetElement.closest<HTMLElement>("[data-action='leave-city']");
+  const leaveCityButton = targetElement.closest<HTMLElement>(
+    "[data-action='leave-city']"
+  );
   if (leaveCityButton != null) {
     houseRuntime.clearAllHouseIntervals();
     appState = {
@@ -290,7 +413,9 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const houseActionButton = targetElement.closest<HTMLElement>("[data-house-action]");
+  const houseActionButton = targetElement.closest<HTMLElement>(
+    "[data-house-action]"
+  );
   if (houseActionButton != null) {
     const actionId = houseActionButton.dataset.houseAction;
     if (actionId != null) {
@@ -302,7 +427,9 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const leaveHouseButton = targetElement.closest<HTMLElement>("[data-action='leave-house']");
+  const leaveHouseButton = targetElement.closest<HTMLElement>(
+    "[data-action='leave-house']"
+  );
   if (leaveHouseButton != null) {
     houseRuntime.leaveCurrentHouse();
     return;
@@ -317,12 +444,27 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const mapDebugActionButton = targetElement.closest<HTMLElement>(
+    "[data-map-debug-action]"
+  );
+  if (mapDebugActionButton != null) {
+    handleCampaignMapDebugAction(mapDebugActionButton.dataset.mapDebugAction);
+    return;
+  }
+
   const mapCell = targetElement.closest<HTMLElement>("[data-map-x][data-map-y]");
   if (mapCell != null && appState.gameState.ui.currentView === "map") {
+    if (shouldSuppressNextMapClick) {
+      shouldSuppressNextMapClick = false;
+      return;
+    }
+
     const xValue = Number(mapCell.dataset.mapX);
     const yValue = Number(mapCell.dataset.mapY);
     const cityId = mapCell.dataset.cityId || null;
-    const cityName = cityId == null ? null : cityNameById[cityId] ?? null;
+    const mapNodeName = mapCell.dataset.mapNodeName || null;
+    const cityName =
+      mapNodeName ?? (cityId == null ? null : cityNameById[cityId] ?? null);
 
     appState = {
       ...appState,
@@ -378,10 +520,18 @@ function handleModalConfirm() {
 }
 
 function renderApp() {
+  appState = {
+    ...appState,
+    gameState: ensureCityNpcPoolsForCurrentDay(
+      appState.gameState,
+      prototypeCityNpcPools
+    ),
+  };
+
   appRoot.innerHTML = renderAppMarkup({
     appState,
     playerCharacterId,
-    mapDefinition: prototypeMap,
+    mapDefinition: yuanmoCampaignMap,
     cityDefinition: prototypeCity,
     houseDefinitions: prototypeHouses,
     cardDefinitions: prototypeCards,
@@ -391,6 +541,8 @@ function renderApp() {
     characterNameById,
     cityPortraits: prototypeCityPortraits,
   });
+  syncCampaignMapDebugView();
+  syncCampaignTerrainWebGl(appRoot);
 }
 
 function syncGameViewport(): void {
@@ -402,4 +554,105 @@ function syncGameViewport(): void {
   appRoot.style.setProperty("--game-width", `${GAME_VIEWPORT_WIDTH}px`);
   appRoot.style.setProperty("--game-height", `${GAME_VIEWPORT_HEIGHT}px`);
   appRoot.style.setProperty("--game-scale", `${scale}`);
+}
+
+function handleCampaignMapDebugAction(action: string | undefined): void {
+  if (action === "zoom-in") {
+    setCampaignMapDebugState({
+      ...campaignMapDebugState,
+      scale: campaignMapDebugState.scale + MAP_DEBUG_SCALE_STEP,
+    });
+    return;
+  }
+
+  if (action === "zoom-out") {
+    setCampaignMapDebugState({
+      ...campaignMapDebugState,
+      scale: campaignMapDebugState.scale - MAP_DEBUG_SCALE_STEP,
+    });
+    return;
+  }
+
+  if (action === "reset") {
+    setCampaignMapDebugState({ scale: 1, offsetX: 0, offsetY: 0 });
+  }
+}
+
+function setCampaignMapDebugState(nextState: CampaignMapDebugState): void {
+  campaignMapDebugState = {
+    scale: clamp(nextState.scale, MAP_DEBUG_MIN_SCALE, MAP_DEBUG_MAX_SCALE),
+    offsetX: Math.round(nextState.offsetX),
+    offsetY: Math.round(nextState.offsetY),
+  };
+  syncCampaignMapDebugView();
+}
+
+function syncCampaignMapDebugView(): void {
+  const transformElement = appRoot.querySelector<HTMLElement>(
+    "[data-campaign-map-transform]"
+  );
+  if (transformElement == null) {
+    return;
+  }
+
+  transformElement.style.setProperty(
+    "--map-debug-scale",
+    "1"
+  );
+  transformElement.style.setProperty(
+    "--map-marker-inverse-scale",
+    "1"
+  );
+  transformElement.style.setProperty(
+    "--map-debug-offset-x",
+    "0px"
+  );
+  transformElement.style.setProperty(
+    "--map-debug-offset-y",
+    "0px"
+  );
+  setCampaignTerrainCamera({
+    scale: campaignMapDebugState.scale,
+    offsetX: campaignMapDebugState.offsetX,
+    offsetY: campaignMapDebugState.offsetY,
+  });
+
+  const scaleElement = appRoot.querySelector<HTMLElement>(
+    "[data-campaign-map-scale]"
+  );
+  const offsetXElement = appRoot.querySelector<HTMLElement>(
+    "[data-campaign-map-offset-x]"
+  );
+  const offsetYElement = appRoot.querySelector<HTMLElement>(
+    "[data-campaign-map-offset-y]"
+  );
+  if (scaleElement != null) {
+    scaleElement.textContent = `${campaignMapDebugState.scale.toFixed(2)}x`;
+  }
+  if (offsetXElement != null) {
+    offsetXElement.textContent = `${campaignMapDebugState.offsetX}px`;
+  }
+  if (offsetYElement != null) {
+    offsetYElement.textContent = `${campaignMapDebugState.offsetY}px`;
+  }
+}
+
+function endCampaignMapDrag(event: PointerEvent): void {
+  if (
+    campaignMapDragState == null ||
+    campaignMapDragState.pointerId !== event.pointerId
+  ) {
+    return;
+  }
+
+  const campaignMap = appRoot.querySelector<HTMLElement>(
+    "[data-campaign-map-viewport]"
+  );
+  campaignMap?.classList.remove("is-dragging");
+  shouldSuppressNextMapClick = campaignMapDragState.didMove;
+  campaignMapDragState = null;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
