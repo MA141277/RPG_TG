@@ -4,6 +4,7 @@ import type { HouseDefinition } from "./house";
 import type { GrainShopSessionState } from "./house-modules/grain-shop-session";
 import type { KeepHouseSessionState } from "./house-modules/keep-house-session";
 import type { MarketHouseSessionState } from "./house-modules/market-house-session";
+import type { MedicineHouseSessionState } from "./house-modules/medicine-house-session";
 import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
 
@@ -11,6 +12,7 @@ export type HouseModuleId =
   | "keep-house"
   | "grain-shop"
   | "market-house"
+  | "medicine-house"
   | "tea-house"
   | "tavern";
 
@@ -199,6 +201,45 @@ export type HouseOverlayViewModel =
       confirmLabel: string;
       cancelActionId: string;
       cancelLabel: string;
+    }
+  | {
+      type: "medicine-buy";
+      title: string;
+      items: Array<{
+        id: string;
+        name: string;
+        price: number;
+        typeLabel: string;
+        actionId: string;
+        isSelected: boolean;
+        disabled?: boolean;
+      }>;
+      confirmActionId: string;
+      confirmLabel: string;
+      cancelActionId: string;
+      cancelLabel: string;
+    }
+  | {
+      type: "medicine-compounding";
+      title: string;
+      ailmentName: string;
+      coldRequired: number;
+      healRequired: number;
+      maxPoison: number;
+      secondsLeft: number;
+      selectionsLeft: number;
+      herbs: Array<{
+        id: string;
+        name: string;
+        cold: number;
+        heat: number;
+        poison: number;
+        heal: number;
+        actionId: string;
+      }>;
+      selectionSummary: string[];
+      finishActionId: string;
+      finishLabel: string;
     };
 
 export type HouseModuleViewModel = {
@@ -218,6 +259,7 @@ export type HouseModuleSessionStateMap = {
   "keep-house": KeepHouseSessionState;
   "grain-shop": GrainShopSessionState;
   "market-house": MarketHouseSessionState;
+  "medicine-house": MedicineHouseSessionState;
   "tea-house": TeaHouseSessionState;
   tavern: TavernSessionState;
 };

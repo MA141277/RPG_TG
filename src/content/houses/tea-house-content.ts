@@ -8,9 +8,11 @@ export const teaHouseBossProfile = {
   specialty: "情报",
   favorability: 0,
   dialoguePool: [
+    "最近城里不太安稳。",
+    "如今这世道，银子不好挣。",
+    "听说北边又在征兵。",
+    "官府最近查得严。",
     "客官要听热闹，还是要听真话？",
-    "茶馆门口风小，消息却从不小。",
-    "坐得越久，听见的事就越多。",
   ],
   intelPool: [
     "凤阳粮价上涨。",

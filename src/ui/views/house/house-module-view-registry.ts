@@ -3,6 +3,7 @@ import { renderGrainShopHouseView } from "./grain-shop-house-view";
 import { renderKeepHouseView } from "./keep-house-view";
 import { renderMarketHouseView } from "./market-house-view";
 import { renderTavernHouseView } from "./tavern-house-view";
+import { renderMedicineHouseHouseView } from "./medicine-house-house-view";
 import { renderTeaHouseHouseView } from "./tea-house-house-view";
 
 export type HouseModuleViewRenderer = (
@@ -16,6 +17,7 @@ export const houseModuleViewRegistry: Record<
   "keep-house": renderKeepHouseView,
   "grain-shop": renderGrainShopHouseView,
   "market-house": renderMarketHouseView,
+  "medicine-house": renderMedicineHouseHouseView,
   tavern: renderTavernHouseView,
   "tea-house": renderTeaHouseHouseView,
 };

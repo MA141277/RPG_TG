@@ -1,3 +1,14 @@
+## 2026-05-25 Medicine House Module
+
+### Added
+- 新建 `medicine-house` 特殊屋舍模块：陈郎中固定 NPC、闲谈/疗伤/买药/配药流程，以及配药限时小游戏。
+- 成药购买写入 `var.medicine_inventory.*`；疗伤通过 `player.fatigue` 预留状态接口恢复疲劳。
+- 应天府新增 `house.kulan.medicine_house` 与角色 `char.kulan_medicine_doctor`。
+
+### Changed
+- 茶馆闲谈台词池与客人对话补全；NPC 菜单「离开」与规格对齐。
+- 茶馆、药铺均沿用 `greeting -> open -> idle` 与粮铺一致的 house 交互节奏。
+
 ## 2026-05-22 Market House Trade Logic
 
 ### Added
