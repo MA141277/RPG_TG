@@ -19,40 +19,12 @@ function getHouseArtworkClass(houseDefinition: HouseDefinition): string {
 }
 
 export function renderCityView(
-  cityDefinition: CityDefinition,
+  _cityDefinition: CityDefinition,
   houseDefinitions: HouseDefinition[]
 ): string {
-  const cityTags = (cityDefinition.tags ?? []).join(" / ");
-  const statusSummary = `可访屋舍 ${houseDefinitions.length} 处`;
-
   return `
     <section class="view-city view-city--kulan">
       <div class="c-kulan-city">
-        <header class="c-kulan-city__top">
-          <div class="c-kulan-city__portrait-frame" aria-hidden="true"></div>
-          <div class="c-kulan-city__status">
-            <div class="c-kulan-city__status-copy">
-              <p class="c-kulan-city__eyebrow">城内</p>
-              <h1 class="c-kulan-city__title">${cityDefinition.name}</h1>
-              <p class="c-kulan-city__meta">${cityTags}</p>
-            </div>
-            <div class="c-kulan-city__status-metrics" aria-label="城市信息">
-              <p class="c-kulan-city__metric">
-                <span class="c-kulan-city__metric-label">总览</span>
-                <strong>${statusSummary}</strong>
-              </p>
-              <p class="c-kulan-city__metric">
-                <span class="c-kulan-city__metric-label">当前区域</span>
-                <strong>${cityDefinition.regionId}</strong>
-              </p>
-            </div>
-          </div>
-          <div class="c-kulan-city__menu">
-            <span class="c-kulan-city__menu-button c-kulan-city__menu-button--info" aria-hidden="true"></span>
-            <span class="c-kulan-city__menu-button c-kulan-city__menu-button--functions" aria-hidden="true"></span>
-          </div>
-        </header>
-
         <div class="c-kulan-city__body">
           <div class="c-kulan-city__stage">
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">

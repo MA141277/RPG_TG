@@ -28,6 +28,12 @@ Regenerate with:
 node tools\extract-yuanmo-npcs.mjs
 ```
 
+Current effective mod root:
+
+```text
+D:\RPG_TG\map\yuan mo feng yun lu\mods\yuanmofengyunlu
+```
+
 ## Current Extraction Coverage
 
 - Total characters: 361

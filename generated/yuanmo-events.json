@@ -1,0 +1,2559 @@
+[
+  {
+    "id": "sack_ai",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 6533,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PostBattle FactionIsLocal",
+          "startLine": 6513,
+          "endLine": 6536,
+          "section": "G5 战利品脚本",
+          "script": "monitor_event PostBattle FactionIsLocal\n\tand WonBattle\n\tand not I_ConflictType Naval\n\tand I_CompareCounter battle_no = 1\n\n\tif I_CompareCounter small_army = 1\n\tand RandomPercent > 25\n\t\tconsole_command add_money 50\n\tend_if\n\n\tif I_CompareCounter medium_army = 1\n\tand RandomPercent > 25\n\t\tconsole_command add_money 100\n\tend_if\n\n\tif I_CompareCounter large_army = 1\n\tand RandomPercent > 25\n\t\tconsole_command add_money 200\n\tend_if\n\n\t\thistoric_event sack_ai\n\n\tset_counter battle_no 0\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 6520,
+              "command": "add_money 50"
+            },
+            {
+              "line": 6525,
+              "command": "add_money 100"
+            },
+            {
+              "line": 6530,
+              "command": "add_money 200"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "sack_player",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 6553,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PostBattle FactionIsLocal",
+          "startLine": 6538,
+          "endLine": 6556,
+          "section": "G5 战利品脚本",
+          "script": "monitor_event PostBattle FactionIsLocal\n\tand not WonBattle\n\tand not I_ConflictType Naval\n\tand I_CompareCounter battle_no = 1\n\n\tif RandomPercent > 90\n\t\tconsole_command add_money -100\n\tend_if\n\n\tif RandomPercent > 55\n\t\tconsole_command add_money -100\n\tend_if\n\n\tconsole_command add_money -100\n\n\thistoric_event sack_player\n\n\tset_counter battle_no 0\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 6544,
+              "command": "add_money -100"
+            },
+            {
+              "line": 6548,
+              "command": "add_money -100"
+            },
+            {
+              "line": 6551,
+              "command": "add_money -100"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "DESCR",
+    "title": {
+      "key": "DESCR_TITLE",
+      "value": "开场历史背景简介",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "DESCR_BODY",
+      "value": "历史风云涤荡，天下纷纭不断。宋末，蒙古成吉思汗\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6570,
+        "args": "event/descr.bik",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 6568,
+          "endLine": 6574,
+          "section": "开局介绍",
+          "script": "        monitor_event FactionTurnStart FactionIsLocal\n\t\t\t\tand I_TurnNumber == 0\n       historic_event DESCR event/descr.bik\n        historic_event DESCRT\n       \n        terminate_monitor\n        end_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "DESCRT",
+    "title": {
+      "key": "DESCRT_TITLE",
+      "value": "元末风云录MOD1.04版本",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "DESCRT_BODY",
+      "value": "脚本介绍: \\n I  一年八回合脚本 \\n\\n II 后勤脚本 \\n 每个将领在野外会有相应后勤点数 \\n 一旦后勤不济,将领受到各种惩罚 \\n 可通过到其他地方打草谷或回城补充 \\n\\n III 官职脚本（待重做） \\n 大元、陈友定、金帐汗国、元魏王、 \\n 元河南王、朝鲜、日本以及红巾军各派 \\n 系的将领都有机会得到官职，通 \\n 过管理城市或者战功得到升职的 \\n 机会 \\n\\n IV 历史事件脚本 \\n 在游戏开局的前12回合，将会发 \\n 生一些历史事件以更真切的反映 \\n 元末的历史。 \\n\\n V 城市维护费脚本 \\n 每座城邑都需要一定的维护费， \\n 维护费随城邑数量增加，点击经 \\n 济按钮即可查看，某些派系在城 \\n 市数量比较少的情况下不需要维 \\n 护费，详见国家介绍 \\n\\n VI 外交脚本 \\n 对应史实诸派系在游戏开始的前半段 \\n 将会保持铁血同盟，同样大元 \\n 和亲元派系也会保持铁血同盟， \\n 朝鲜将在刚开局的阶段与大元结 \\n 盟 \\n\\n VII 固定营寨脚本 \\n 在地图上将会有一些固定营寨以 \\n 反映不能在地图上做出的城市， \\n 营寨包括当时的关卡和次要经济 \\n 中心，明朝的剩余府等，营寨可 \\n 以提供两个免维护名额，同时会 \\n 把守某些行军或贸易路线，另外 \\n 某些资源只有在得到了营寨以后 \\n 才能开发 \\n\\n VIII 游牧军团 \\n 帖木儿、金帐汗国、察合台、 \\n 、元魏王、元河南王、韩宋和马拉 \\n 塔势力最后一城被攻占后会触发 \\n 游牧状态。这些势力的残余势力 \\n 将会组成游牧军团，寻找复国的 \\n 机会。 \\n\\n IX 建筑收入/维护费 \\n 供养僧人、贵族、医生等专业人 \\n 员以及维持军事建筑的运转是需要 \\n 花费的。从现在开始，维护步兵营 \\n 骑兵营、远程兵营、军事学院、海 \\n 军学院、医院、学院、寺庙等建筑 \\n 需要支付额外的维护费；而建造市 \\n 场，道路等经济类设施，则有可能 \\n 获得额外的收入。",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6571,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 6568,
+          "endLine": 6574,
+          "section": "开局介绍",
+          "script": "        monitor_event FactionTurnStart FactionIsLocal\n\t\t\t\tand I_TurnNumber == 0\n       historic_event DESCR event/descr.bik\n        historic_event DESCRT\n       \n        terminate_monitor\n        end_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "DESMUGHAL",
+    "title": {
+      "key": "DESMUGHAL_TITLE",
+      "value": "国家介绍-德里苏丹国",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "DESMUGHAL_BODY",
+      "value": "尊敬的沙！请允许微臣为您介绍 \\n 帝国的现状以及他的特点 \\n\\n 我国地处南亚次大陆，较为封闭 \\n 的地理环境使得我们能够免于诸 \\n 多外敌的入侵，富饶的土地和物 \\n 产让我们有足够的理由成为霸主 \\n 但是地理环境也限制了我们扩张 \\n 的脚步，在统一南亚后，任何进 \\n 一步的发展都将极度依赖后勤和 \\n 运输 \\n\\n 国家特色 \\n\\n 南亚盛产棉花和宝石，德里苏丹 \\n 国可以在棉花和宝石的产地建设 \\n 纺织作坊和宝石加工作坊，纺织 \\n 作坊能够提供快乐加成，而宝石 \\n 加工作坊则能提供贸易和快乐加 \\n 成 \\n 作为细密画艺术的中心，德里苏丹 \\n 国可以修建画院以提高居民的 \\n 快乐 \\n\\n 未完待续。。。 \\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6578,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 6576,
+          "endLine": 6580,
+          "section": "开局介绍",
+          "script": "        monitor_event FactionTurnStart FactionIsLocal\n\tand I_LocalFaction egypt\n        historic_event DESMUGHAL\n        terminate_monitor\n        end_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "YIZHIYAN",
+    "title": {
+      "key": "YIZHIYAN_TITLE",
+      "value": "石人一只眼，挑动黄河天下反！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "YIZHIYAN_BODY",
+      "value": "元朝末期，蒙元统治残暴无道，使中华大地陷入\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6586,
+        "args": "event/yizhiyan.bik",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 6584,
+          "endLine": 6588,
+          "section": "开局介绍",
+          "script": "        monitor_event FactionTurnStart FactionIsLocal\n\t\t\t\tand I_TurnNumber == 1\n        historic_event YIZHIYAN event/yizhiyan.bik\n        terminate_monitor\n        end_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "lishizhengshi",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 6598,
+        "args": "true",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 6596,
+          "endLine": 6601,
+          "section": "是否开启正史演绎",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\n\n\thistoric_event lishizhengshi true\n\t\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "WUGUOGONG",
+    "title": {
+      "key": "WUGUOGONG_TITLE",
+      "value": "小明王封朱元璋为吴国公",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "WUGUOGONG_BODY",
+      "value": "\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6615,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 6611,
+          "endLine": 6618,
+          "section": "是否开启正史演绎",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_TurnNumber > 1\nand I_CompareCounter lishizhengshi = 1\n\n\thistoric_event WUGUOGONG\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "WUSHANGFA",
+    "title": {
+      "key": "WUSHANGFA_TITLE",
+      "value": "吴立盐茶法，铸大中通宝钱",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "WUSHANGFA_BODY",
+      "value": "\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6625,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 6621,
+          "endLine": 6628,
+          "section": "是否开启正史演绎",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_TurnNumber > 2\nand I_CompareCounter lishizhengshi = 1\n\n\thistoric_event WUSHANGFA\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "SONGJIANGXIANG",
+    "title": {
+      "key": "SONGJIANGXIANG_TITLE",
+      "value": "宋将李武、崔德降李思齐",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "SONGJIANGXIANG_BODY",
+      "value": "\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6635,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 6631,
+          "endLine": 6638,
+          "section": "是否开启正史演绎",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_TurnNumber > 3\nand I_CompareCounter lishizhengshi = 1\n\n\thistoric_event SONGJIANGXIANG\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "CHARACTERTYPE",
+    "title": {
+      "key": "CHARACTERTYPE_TITLE",
+      "value": "元末风云录技能系统介绍",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "CHARACTERTYPE_BODY",
+      "value": "1、民族系统：\\n 各个民族拥有各自的特色和加成\\n 2、天赋系统\\n 智力、经营、管理、军事、魅力五种天赋；\\n 分低级中级高级三个等级；\\n 极大的影响将来技能升级几率。\\n 3、性格系统\\n 将领性格也将影响到将领升级的偏向\\n 4、将领培养系统\\n 将领可以培养为三个类型：\\n 文官：偏向管理类；\\n 胥吏：偏向经营类；\\n 武官：偏向军事类；\\n 各种类型的将领在获得相同技能时将会获得不\\n 同的效果。\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6644,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 6642,
+          "endLine": 6647,
+          "section": "新trait介绍  手动选择线路脚本",
+          "script": "  monitor_event FactionTurnStart FactionIsLocal\n            and I_TurnNumber == 0\n  historic_event CHARACTERTYPE\n;  historic_event CHARACTERSELECT true\n  terminate_monitor\n  end_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_MALACCA",
+    "title": {
+      "key": "LOST_MALACCA_TITLE",
+      "value": "应天易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_MALACCA_BODY",
+      "value": "应天城作为都城的三百多年中，不断发展，商\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6696,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Yingtian",
+          "startLine": 6694,
+          "endLine": 6698,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Yingtian\n\n\thistoric_event LOST_MALACCA\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_LAHORE",
+    "title": {
+      "key": "LOST_LAHORE_TITLE",
+      "value": "濠州易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_LAHORE_BODY",
+      "value": "濠州，是朱元璋的老家凤阳。濠州是凤阳在\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6703,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Fenyang",
+          "startLine": 6701,
+          "endLine": 6705,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Fenyang\n\n\thistoric_event LOST_LAHORE\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_JIAYUGUAN",
+    "title": {
+      "key": "LOST_JIAYUGUAN_TITLE",
+      "value": "益都易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_JIAYUGUAN_BODY",
+      "value": "晋永嘉五年(311年)，前赵刺史曹嶷，在\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6710,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Qingzhou",
+          "startLine": 6708,
+          "endLine": 6712,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Qingzhou\n\n\thistoric_event LOST_JIAYUGUAN\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_MADRAS",
+    "title": {
+      "key": "LOST_MADRAS_TITLE",
+      "value": "江陵易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_MADRAS_BODY",
+      "value": "江陵，又名荆州城。位于湖北省中部偏南，地\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6717,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Jingzhou",
+          "startLine": 6715,
+          "endLine": 6719,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Jingzhou\n\n\thistoric_event LOST_MADRAS\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_LUANGPRABANG",
+    "title": {
+      "key": "LOST_LUANGPRABANG_TITLE",
+      "value": "长安易主！",
+      "source": "historic_events.txt"
+    },
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 6724,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Xian",
+          "startLine": 6722,
+          "endLine": 6726,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Xian\n\n\thistoric_event LOST_LUANGPRABANG\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_LASA",
+    "title": {
+      "key": "LOST_LASA_TITLE",
+      "value": "洛阳易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_LASA_BODY",
+      "value": "洛阳，古称斟鄩、西亳、洛邑、雒阳、洛京、\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6731,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Henan",
+          "startLine": 6729,
+          "endLine": 6733,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Henan\n\n\thistoric_event LOST_LASA\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_XIAN",
+    "title": {
+      "key": "LOST_XIAN_TITLE",
+      "value": "成都易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_XIAN_BODY",
+      "value": "成都位于四川盆地西部，成都平原腹地，境内\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6738,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Chendu",
+          "startLine": 6736,
+          "endLine": 6740,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Chendu\n\n\thistoric_event LOST_XIAN\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_CHENGDU",
+    "title": {
+      "key": "LOST_CHENGDU_TITLE",
+      "value": "大名府易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_CHENGDU_BODY",
+      "value": "邺城，古代著名都城。“邺”之名始于黄帝之\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6746,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Daming",
+          "startLine": 6744,
+          "endLine": 6748,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Daming\n\n\thistoric_event LOST_CHENGDU\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_YINGTIAN",
+    "title": {
+      "key": "LOST_YINGTIAN_TITLE",
+      "value": "大都易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_YINGTIAN_BODY",
+      "value": "大都，是元朝的首都，蒙古语称为Dayidu\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6753,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Shuntian",
+          "startLine": 6751,
+          "endLine": 6755,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Shuntian\n\n\thistoric_event LOST_YINGTIAN\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_KAIFENG",
+    "title": {
+      "key": "LOST_KAIFENG_TITLE",
+      "value": "大同易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_KAIFENG_BODY",
+      "value": "平城（今山西省大同市），北魏中期都城。北\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6760,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Datong",
+          "startLine": 6758,
+          "endLine": 6762,
+          "section": "名城陷落脚本开始",
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Datong\n\n\thistoric_event LOST_KAIFENG\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_SHUNTIAN",
+    "title": {
+      "key": "LOST_SHUNTIAN_TITLE",
+      "value": "哈拉和林易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_SHUNTIAN_BODY",
+      "value": "哈拉和林又称和林、和宁。是在草原深处\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6767,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Khuree",
+          "startLine": 6765,
+          "endLine": 6769,
+          "section": null,
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Khuree\n\n\thistoric_event LOST_SHUNTIAN\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_SHANHAIGUAN",
+    "title": {
+      "key": "LOST_SHANHAIGUAN_TITLE",
+      "value": "甘州易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_SHANHAIGUAN_BODY",
+      "value": "西魏废帝三年（554年），改西凉州\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6774,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Ganzhou",
+          "startLine": 6772,
+          "endLine": 6776,
+          "section": null,
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Ganzhou\n\n\thistoric_event LOST_SHANHAIGUAN\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_KYOTO",
+    "title": {
+      "key": "LOST_KYOTO_TITLE",
+      "value": "开封易主！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_KYOTO_BODY",
+      "value": "开封，简称“汴”，古称大梁、启\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6781,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Kaifeng",
+          "startLine": 6779,
+          "endLine": 6783,
+          "section": null,
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Kaifeng\n\n\thistoric_event LOST_KYOTO\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "LOST_HOBOKSAR",
+    "title": {
+      "key": "LOST_HOBOKSAR_TITLE",
+      "value": "太原陷落！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "LOST_HOBOKSAR_BODY",
+      "value": "太原，简称“并（bīng）”，别称并州，\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6789,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event GeneralCaptureSettlement SettlementName Taiyuan",
+          "startLine": 6787,
+          "endLine": 6791,
+          "section": null,
+          "script": "monitor_event GeneralCaptureSettlement SettlementName Taiyuan\n\n\thistoric_event LOST_HOBOKSAR\n\t\t\t\t\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGYC",
+    "title": {
+      "key": "MINGCHENGYC_TITLE",
+      "value": "名城开封",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGYC_BODY",
+      "value": "开封乃华北平原心腹之地，\\n\\n拥有此城时训练远程射手经验提高。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6801,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Kaifeng",
+          "startLine": 6798,
+          "endLine": 6807,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName Kaifeng\nand SettlementIsLocal\n\nhistoric_event MINGCHENGYC\n\nset_counter MINGCHENGYC 1\nset_event_counter MINGCHENGYC 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGLY",
+    "title": {
+      "key": "MINGCHENGLY_TITLE",
+      "value": "名城洛阳",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGLY_BODY",
+      "value": "洛阳位于河南省西部，亚欧大陆桥\\n\\n东段，横跨黄河中游两岸， \"居天下之中\"\\n\\n素有\"九州腹地\"之称，是华夏文明\\n\\n的重要发祥地 之一，因地处洛河之阳而得名\\n\\n拥有此名城时势力快乐值增加\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6814,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Henan",
+          "startLine": 6811,
+          "endLine": 6820,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName Henan\nand SettlementIsLocal\n\n\thistoric_event MINGCHENGLY\n\n        set_counter MINGCHENGLY 1\nset_event_counter MINGCHENGLY 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGHZ",
+    "title": {
+      "key": "MINGCHENGHZ_TITLE",
+      "value": "名城汉中",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGHZ_BODY",
+      "value": "汉中是汉高祖刘邦的发祥地，\\n\\n进攻关中后刘邦约法三章，很得民心。\\n\\n拥有此城时势力法律值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6828,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Hanzhong",
+          "startLine": 6824,
+          "endLine": 6834,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName Hanzhong\nand SettlementIsLocal\n\n\n\thistoric_event MINGCHENGHZ\n       \nset_counter MINGCHENGHZ 1\nset_event_counter MINGCHENGHZ 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGCA",
+    "title": {
+      "key": "MINGCHENGCA_TITLE",
+      "value": "名城长安",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGCA_BODY",
+      "value": "长安，意为“长治久安”，\\n\\n是许多朝代的都城。\\n\\n拥有此城时势力文化值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6841,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Xian",
+          "startLine": 6838,
+          "endLine": 6847,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName Xian\nand SettlementIsLocal\n\nhistoric_event MINGCHENGCA\n\nset_counter MINGCHENGCA 1\nset_event_counter MINGCHENGCA 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGHF",
+    "title": {
+      "key": "MINGCHENGHF_TITLE",
+      "value": "名城庐州",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGHF_BODY",
+      "value": "素有“淮右襟喉，江南唇齿”之称\\n\\n连通大多的富饶之地。\\n\\n拥有此城时势力贸易值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6854,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName LuZhou",
+          "startLine": 6851,
+          "endLine": 6860,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName LuZhou\nand SettlementIsLocal\n\nhistoric_event MINGCHENGHF\n\nset_counter MINGCHENGHF 1\nset_event_counter MINGCHENGHF 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGXY",
+    "title": {
+      "key": "MINGCHENGXY_TITLE",
+      "value": "名城襄阳",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGXY_BODY",
+      "value": "素有“兵家必争之地”的称号，\\n\\n襄阳经过长期偏安，非常注重农耕。\\n\\n拥有此城时势力农业值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6867,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName XiangYang",
+          "startLine": 6864,
+          "endLine": 6873,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName XiangYang\nand SettlementIsLocal\n\nhistoric_event MINGCHENGXY\n\nset_counter MINGCHENGXY 1\nset_event_counter MINGCHENGXY 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGKJ",
+    "title": {
+      "key": "MINGCHENGKJ_TITLE",
+      "value": "名城应天",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGKJ_BODY",
+      "value": "素有“江东腹地之称”的产粮要地\\n\\n航船技术较为发达。\\n\\n拥有此城时势力海贸值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6880,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Yingtian",
+          "startLine": 6877,
+          "endLine": 6886,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName Yingtian\nand SettlementIsLocal\n\nhistoric_event MINGCHENGKJ\n\nset_counter MINGCHENGKJ 1\nset_event_counter MINGCHENGKJ 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGWW",
+    "title": {
+      "key": "MINGCHENGWW_TITLE",
+      "value": "名城甘州",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGWW_BODY",
+      "value": "甘州，凉州中心，为各方争夺要地。\\n\\n在甘州能与西方各国通过贸易往来购买\\n\\n到上等的好马。\\n\\n拥有此城时训练骑兵经验值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6893,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Ganzhou",
+          "startLine": 6890,
+          "endLine": 6899,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName Ganzhou\nand SettlementIsLocal\n\nhistoric_event MINGCHENGWW\n\nset_counter MINGCHENGWW 1\nset_event_counter MINGCHENGWW 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGDH",
+    "title": {
+      "key": "MINGCHENGDH_TITLE",
+      "value": "名城别失八里",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGDH_BODY",
+      "value": "在别失八里能与西方各国通过贸易往来购买\\n\\n到上等的好马。\\n\\n拥有此城时训练骑兵经验值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6906,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Turpan",
+          "startLine": 6903,
+          "endLine": 6912,
+          "section": "名城系统脚本开始",
+          "script": "monitor_event SettlementTurnStart SettlementName Turpan\nand SettlementIsLocal\n\nhistoric_event MINGCHENGDH\n\nset_counter MINGCHENGDH 1\nset_event_counter MINGCHENGDH 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGWZ",
+    "title": {
+      "key": "MINGCHENGWZ_TITLE",
+      "value": "名城大名",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGWZ_BODY",
+      "value": "大名乃河北平原要冲之地。\\n\\n拥有此城时士气提高。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6921,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Daming",
+          "startLine": 6918,
+          "endLine": 6927,
+          "section": "大名府",
+          "script": "monitor_event SettlementTurnStart SettlementName Daming\nand SettlementIsLocal\n\nhistoric_event MINGCHENGWZ\n\nset_counter MINGCHENGWZ 1\nset_event_counter MINGCHENGWZ 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGTY",
+    "title": {
+      "key": "MINGCHENGTY_TITLE",
+      "value": "名城太原",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGTY_BODY",
+      "value": "太原为并州治所，历史名城。\\n\\n拥有此城时训练骑兵经验值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6935,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName TaiYuan",
+          "startLine": 6932,
+          "endLine": 6941,
+          "section": "太原",
+          "script": "monitor_event SettlementTurnStart SettlementName TaiYuan\nand SettlementIsLocal\n\nhistoric_event MINGCHENGTY\n\nset_counter MINGCHENGTY 1\nset_event_counter MINGCHENGTY 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGCD",
+    "title": {
+      "key": "MINGCHENGCD_TITLE",
+      "value": "名城成都",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGCD_BODY",
+      "value": "成都为巴蜀要冲，蜀中腹心，历史名城。\\n\\n成都平原沃野千里，非常注重农耕。\\n\\n拥有此城时势力农业值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6949,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName ChenDu",
+          "startLine": 6946,
+          "endLine": 6955,
+          "section": "成都",
+          "script": "monitor_event SettlementTurnStart SettlementName ChenDu\nand SettlementIsLocal\n\nhistoric_event MINGCHENGCD\n\nset_counter MINGCHENGCD 1\nset_event_counter MINGCHENGCD 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "MINGCHENGFY",
+    "title": {
+      "key": "MINGCHENGFY_TITLE",
+      "value": "名城大都",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "MINGCHENGFY_BODY",
+      "value": "大都，元朝都城。\\n\\n通过与草原贸易往来购买到上等的好马。\\n\\n拥有此城时训练骑兵经验值增加。\\n\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 6963,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event SettlementTurnStart SettlementName Shuntian",
+          "startLine": 6960,
+          "endLine": 6969,
+          "section": "大都",
+          "script": "monitor_event SettlementTurnStart SettlementName Shuntian\nand SettlementIsLocal\n\nhistoric_event MINGCHENGFY\n\nset_counter MINGCHENGFY 1\nset_event_counter MINGCHENGFY 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "jin_erede_event",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 29153,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnEnd FactionType scotland",
+          "startLine": 29145,
+          "endLine": 29155,
+          "section": "朱元璋灭陈友谅合并",
+          "script": "\tmonitor_event FactionTurnEnd FactionType scotland\n\t\tand not I_LocalFaction papal_states\n                and not I_LocalFaction scotland\n\t\tand I_NumberOfSettlements papal_states >= 5\n\t\tand I_SettlementOwner Yingtian = papal_states\n\t\tand I_TurnNumber >= 24\n\t\tgive_everything_to_faction scotland papal_states true\n\t\tconsole_command kill_faction scotland\n\t\thistoric_event jin_erede_event\n      \t\tterminate_monitor\n\tend_monitor",
+          "consoleCommands": [
+            {
+              "line": 29152,
+              "command": "kill_faction scotland"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "ZHENGFUHEBEI",
+    "title": {
+      "key": "ZHENGFUHEBEI_TITLE",
+      "value": "朱元璋灭张士诚",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "ZHENGFUHEBEI_BODY",
+      "value": "至正二十六年（1366年）五月，朱元璋\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 29169,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnEnd FactionType france",
+          "startLine": 29161,
+          "endLine": 29171,
+          "section": "蒙古定河北",
+          "script": "\tmonitor_event FactionTurnEnd FactionType france\n\t\tand not I_LocalFaction papal_states\n                and not I_LocalFaction venice\n\t\tand I_NumberOfSettlements papal_states >= 5\n\t\tand I_SettlementOwner Yingtian = papal_states\n\t\tand I_TurnNumber >= 48\n\t\tgive_everything_to_faction venice papal_states true\n\t\tconsole_command kill_faction venice\n\t\thistoric_event ZHENGFUHEBEI\n      \t\tterminate_monitor\n\tend_monitor",
+          "consoleCommands": [
+            {
+              "line": 29168,
+              "command": "kill_faction venice"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "longwanzhizhan",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 29663,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 29657,
+          "endLine": 29687,
+          "section": "===================== 历史剧情脚本 =========================",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_TurnNumber >= 2\nand not I_LocalFaction scotland\nand I_SettlementOwner Yingtian = papal_states\n\n\n\thistoric_event longwanzhizhan\n\t\n                                 spawn_army \n\t\t\tfaction scotland\n\t\t\tcharacter\trandom_name, named character, age 18, x 344, y 303\n\t\t\ttraits NATION10 1 , religion_B 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n\nunit\t\tJianghan_Guard\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_Heavy_cav\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_horsearcher\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_scout\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_scout\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_spear\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_spear\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_sword\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_sword\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_Gunner\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tJianghan_Gunner\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tJianghan_Light_Gunners\t\t\texp 1 armour 0 weapon_lvl 0\n\t\n\n                             end\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 1,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "anqingzhizhan",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 29697,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 29691,
+          "endLine": 29728,
+          "section": "===================== 历史剧情脚本 =========================",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_TurnNumber >= 4\nand not I_LocalFaction scotland\n\nif I_SettlementOwner Anqing = papal_states\n\n\thistoric_event anqingzhizhan\n\t\n                                 spawn_army \n\t\t\tfaction scotland\n\t\t\tcharacter\trandom_name, named character, age 18, x 327, y 297, label anqingzhizhan1\n\t\t\ttraits NATION10 1 , religion_B 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n\nunit\t\tJianghan_Guard\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_Heavy_cav\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_horsearcher\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_scout\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_scout\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_spear\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_spear\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_sword\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_sword\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_Gunner\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tJianghan_Gunner\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXJGS_Archers\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tXJGS_Archers\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tXGSS_Archers\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXGSS_Archers\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXGJD_Archers\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXGJD_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n\n                                            end\n        siege_settlement anqingzhizhan1, Anqing , attack\n\nend_if\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 1,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "yiduzhizhan",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 29740,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 29734,
+          "endLine": 29768,
+          "section": "===================== 历史剧情脚本 =========================",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_TurnNumber >= 3\nand I_LocalFaction portugal\n\nif I_SettlementOwner Qingzhou = portugal\n\n\thistoric_event yiduzhizhan\n\t\n                                 spawn_army \n\t\t\tfaction turks\n\t\t\tcharacter\trandom_name, named character, age 18, x 345, y 341, label yiduzhizhan1\n\t\t\ttraits NATION04 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n\n              unit\t\tmon_bodyguard\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_hoshuchi\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_hoshuchi\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_lubchiten\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_lubchiten\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tdayuan_qiangqi3\t\t\t\texp 3 armour 0 weapon_lvl 0\n                unit\t\tdayuan_qiangqi3\t\t\t\texp 3 armour 0 weapon_lvl 0\n               unit\t\tdayuan_qiangqi3\t\t\t\texp 3 armour 0 weapon_lvl 0\n                unit\t\tdayuan_qiangqi3\t\t\t\texp 3 armour 0 weapon_lvl 0\n                unit\t\thanrenxiangjun_infantry\t\t\texp 0 armour 3 weapon_lvl 0\n                 unit\t\tmon_han_blade\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrennu_xbow\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrengong_arch\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrengong_arch\t\t\t\texp 0 armour 0 weapon_lvl 0\n\n                                            end\n        siege_settlement yiduzhizhan1, Qingzhou , attack\n\nend_if\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 1,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "ANFENGZHIZHAN",
+    "title": {
+      "key": "ANFENGZHIZHAN_TITLE",
+      "value": "安丰之战！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "ANFENGZHIZHAN_BODY",
+      "value": "元顺帝统治末年政治败坏、税赋沉重，加上天灾\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 29828,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 29775,
+          "endLine": 29832,
+          "section": "===================== 历史剧情脚本 =========================",
+          "script": "monitor_event FactionTurnStart FactionIsLocal\n     and I_TurnNumber >= 7\n    and I_CompareCounter anfengzhizhan < 1\n    and I_SettlementOwner Tieling = portugal\n\n\t\tspawn_army \n\t\t\tfaction portugal\n\t\t\t\tcharacter\trandom_name, named character, age 26, x 327, y 312\n                unit\t\tChuang_chosen_cavalry\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tElite_wall_cavalry\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tElite_wall_cavalry\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tChuang_chosen_staff\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tChuang_chosen_staff\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tjinjun daodun\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tjinjun daodun\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tjinjun shengong\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tjinjun shengong\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\txiaodaohuisword\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\txiaodaohuisword\t\t\texp 0 armour 0 weapon_lvl 0\n\t\tend\n\t\tspawn_army \n\t\t\tfaction byzantium\n                character\trandom_name , named character, age 30, x 324, y 312\n                unit\t\tmon_bodyguard\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_hoshuchi\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_hoshuchi\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_lubchiten\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_lubchiten\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tdayuan_qiangqi3\t\t\t\texp 3 armour 0 weapon_lvl 0\n                unit\t\tdayuan_qiangqi3\t\t\t\texp 3 armour 0 weapon_lvl 0\n                unit\t\thanrenxiangjun_infantry\t\t\texp 0 armour 3 weapon_lvl 0\n                 unit\t\tmon_han_blade\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrennu_xbow\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrengong_arch\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrengong_arch\t\t\t\texp 0 armour 0 weapon_lvl 0\n                                 end\n \t\tspawn_army \n\t\t\tfaction turks\n                character\trandom_name , named character, age 30, x 324, y 311, label anfengzhizhan1\n                unit\t\tmon_bodyguard\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_hoshuchi\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmon_hoshuchi\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tdayuan_qiangqi3\t\t\t\texp 3 armour 0 weapon_lvl 0 \n                unit\t\thanrenxiangjun_infantry\t\t\texp 0 armour 3 weapon_lvl 0\n                 unit\t\tmon_han_blade\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrennu_xbow\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrengong_arch\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thanrengong_arch\t\t\t\texp 0 armour 0 weapon_lvl 0\n\t\t\n\t\tend\n\n\t\t siege_settlement anfengzhizhan1, Tieling , attack\n\n        historic_event ANFENGZHIZHAN\n        set_counter anfengzhizhan 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 3,
+          "setCounterCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "hongduzhizhan",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 29842,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 29836,
+          "endLine": 29873,
+          "section": "===================== 历史剧情脚本 =========================",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_TurnNumber >= 6\nand not I_LocalFaction scotland\n\nif I_SettlementOwner Nanchang = papal_states\n\n\thistoric_event hongduzhizhan\n\t\n                                 spawn_army \n\t\t\tfaction scotland\n\t\t\tcharacter\trandom_name, named character, age 18, x 324, y 282, label hongduzhizhan1\n\t\t\ttraits NATION10 1 , religion_B 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n\nunit\t\tJianghan_Guard\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_Heavy_cav\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_horsearcher\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_scout\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_scout\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_spear\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_spear\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_sword\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_sword\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_Gunner\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tJianghan_Gunner\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXJGS_Archers\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tXJGS_Archers\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tXGSS_Archers\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXGSS_Archers\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXGJD_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n\n\n                                            end\n        siege_settlement hongduzhizhan1, Nanchang , attack\n\nend_if\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 1,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "POYANGHUZHIZHAN",
+    "title": {
+      "key": "POYANGHUZHIZHAN_TITLE",
+      "value": "鄱阳湖之战！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "POYANGHUZHIZHAN_BODY",
+      "value": "鄱阳湖之战，是元朝末年朱元璋和陈友谅为\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 29879,
+        "args": "event/poyanghu.bik",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal slave",
+          "startLine": 29877,
+          "endLine": 29968,
+          "section": "鄱阳湖之战",
+          "script": "monitor_event FactionTurnStart FactionIsLocal slave\n        and I_TurnNumber = 9\n\t\thistoric_event POYANGHUZHIZHAN event/poyanghu.bik\n\t\t      \n                              spawn_army \n\n\t\t\t\tfaction scotland\n\t\t\tcharacter\trandom_name, named character, age 18, x 323, y 287\n\t\t\ttraits NATION10 1 , religion_B 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n\nunit\t\tJianghan_Guard\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_Heavy_cav\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_horsearcher\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_scout\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_scout\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_spear\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_spear\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_sword\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_heavy_sword\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJianghan_Gunner\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tJianghan_Gunner\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXJGS_Archers\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tXJGS_Archers\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tXGSS_Archers\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tXGSS_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n        end\n\t\tspawn_army \n\t\t\tfaction scotland\n\t\t\tcharacter\trandom_name, admiral, age 18, x 325, y 288\n            traits ARM_NAV 3\n\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\n\n                                            end\n\nspawn_army \n\t\t\tfaction scotland\n\t\t\tcharacter\trandom_name, admiral, age 18, x 326, y 288\n            traits ARM_NAV 3\n\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\n\n                                            end\n\n\t\tspawn_army\n\t\t\tfaction papal_states\n                character\trandom_name , named character, age 30, x 328, y 290\n                traits NATION10 1 , religion_B 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n                unit\t\tMing_bodyguard\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tQin_Standard_Cav\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tQin_Standard_Cav\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tHan_baqi_sword\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tCapital_archer\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tCapital_horcearcher\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tMing_Light_Spearmen\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Spearmen\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n                  unit\t\tMing_gongrongpao\t\t\texp 0 armour 0 weapon_lvl 0\n \tend\t\n\nspawn_army \n\t\t\tfaction papal_states\n\t\t\tcharacter\trandom_name, admiral, age 18, x 325, y 293\n        traits ARM_NAV 3\n\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\n\n                                            end\n\nspawn_army \n\t\t\tfaction papal_states\n\t\t\tcharacter\trandom_name, admiral, age 18, x 326, y 294\n        traits ARM_NAV 3\n\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tgrande carrack\t\t\t\texp 1 armour 0 weapon_lvl 0\n\n                                            end\n\nterminate_monitor\nend_monitor\t",
+          "consoleCommands": [],
+          "spawnArmyCount": 6,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "shuhanjianguo",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30006,
+        "args": "event/mingchengdi.bik",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType papal_states",
+          "startLine": 29975,
+          "endLine": 30015,
+          "section": "朱元璋称帝建国： papal_states",
+          "script": "monitor_event FactionTurnStart FactionType papal_states\nand I_LocalFaction papal_states\nand Treasury > 50000\nand I_SettlementOwner Yingtian = papal_states\nand I_SettlementOwner Yangzhou = papal_states\nand I_CompareCounter shujianguo = 0\nand I_NumberOfSettlements papal_states >= 15\n\n\nset_faction_banner\nfaction papal_states\nbanner sulu\nend_set_faction_banner\ngive_everything_to_faction sulu papal_states false\n\n\nconsole_command give_trait Ch-44C LieZhuan-YANWANG-01 1\n\n\t\t\tset_faction_standing papal_states portugal -5\n\t\tset_faction_standing turks papal_states -5\n\tconsole_command diplomatic_stance portugal papal_states war\n\tconsole_command diplomatic_stance hre papal_states war\n\tconsole_command diplomatic_stance france papal_states war\n                console_command diplomatic_stance sicily papal_states war\n\tconsole_command diplomatic_stance venice papal_states war\n\tconsole_command diplomatic_stance milan papal_states war\n\tadd_money papal_states, 40000\n\tadd_money papal_states, 40000\n\tadd_money papal_states, 20000\n\n\n\thistoric_event shuhanjianguo event/mingchengdi.bik \n        historic_event liubeichengdi\n\n\n       \tset_counter shujianguo 1\n\tset_event_counter shujianguo 1\t\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 29991,
+              "command": "give_trait Ch-44C LieZhuan-YANWANG-01 1"
+            },
+            {
+              "line": 29995,
+              "command": "diplomatic_stance portugal papal_states war"
+            },
+            {
+              "line": 29996,
+              "command": "diplomatic_stance hre papal_states war"
+            },
+            {
+              "line": 29997,
+              "command": "diplomatic_stance france papal_states war"
+            },
+            {
+              "line": 29998,
+              "command": "diplomatic_stance sicily papal_states war"
+            },
+            {
+              "line": 29999,
+              "command": "diplomatic_stance venice papal_states war"
+            },
+            {
+              "line": 30000,
+              "command": "diplomatic_stance milan papal_states war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      },
+      {
+        "line": 30047,
+        "args": "event/mingchengdi.bik",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType papal_states",
+          "startLine": 30017,
+          "endLine": 30051,
+          "section": "朱元璋称帝建国： papal_states",
+          "script": "monitor_event FactionTurnStart FactionType papal_states\nand not I_LocalFaction papal_states\nand I_CompareCounter shujianguo = 0\nand I_SettlementOwner Yingtian = papal_states\nand I_NumberOfSettlements papal_states >= 15     \n\nset_faction_banner\nfaction papal_states\nbanner sulu\nend_set_faction_banner\ngive_everything_to_faction sulu papal_states false\n\n\n\n\t\tset_faction_standing papal_states portugal -5\n\t\tset_faction_standing turks papal_states -5\n\tconsole_command diplomatic_stance portugal papal_states war\n\tconsole_command diplomatic_stance hre papal_states war\n\tconsole_command diplomatic_stance france papal_states war\n                console_command diplomatic_stance sicily papal_states war\n\tconsole_command diplomatic_stance venice papal_states war\n\tconsole_command diplomatic_stance milan papal_states war\n\tadd_money papal_states, 40000\n\tadd_money papal_states, 40000\n\tadd_money papal_states, 20000\n\n\n\tset_counter shujianguo 1\n\tset_event_counter shujianguo 1\n\n\thistoric_event shuhanjianguo event/mingchengdi.bik \n          historic_event liubeichengdi\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30033,
+              "command": "diplomatic_stance portugal papal_states war"
+            },
+            {
+              "line": 30034,
+              "command": "diplomatic_stance hre papal_states war"
+            },
+            {
+              "line": 30035,
+              "command": "diplomatic_stance france papal_states war"
+            },
+            {
+              "line": 30036,
+              "command": "diplomatic_stance sicily papal_states war"
+            },
+            {
+              "line": 30037,
+              "command": "diplomatic_stance venice papal_states war"
+            },
+            {
+              "line": 30038,
+              "command": "diplomatic_stance milan papal_states war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "liubeichengdi",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30007,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType papal_states",
+          "startLine": 29975,
+          "endLine": 30015,
+          "section": "朱元璋称帝建国： papal_states",
+          "script": "monitor_event FactionTurnStart FactionType papal_states\nand I_LocalFaction papal_states\nand Treasury > 50000\nand I_SettlementOwner Yingtian = papal_states\nand I_SettlementOwner Yangzhou = papal_states\nand I_CompareCounter shujianguo = 0\nand I_NumberOfSettlements papal_states >= 15\n\n\nset_faction_banner\nfaction papal_states\nbanner sulu\nend_set_faction_banner\ngive_everything_to_faction sulu papal_states false\n\n\nconsole_command give_trait Ch-44C LieZhuan-YANWANG-01 1\n\n\t\t\tset_faction_standing papal_states portugal -5\n\t\tset_faction_standing turks papal_states -5\n\tconsole_command diplomatic_stance portugal papal_states war\n\tconsole_command diplomatic_stance hre papal_states war\n\tconsole_command diplomatic_stance france papal_states war\n                console_command diplomatic_stance sicily papal_states war\n\tconsole_command diplomatic_stance venice papal_states war\n\tconsole_command diplomatic_stance milan papal_states war\n\tadd_money papal_states, 40000\n\tadd_money papal_states, 40000\n\tadd_money papal_states, 20000\n\n\n\thistoric_event shuhanjianguo event/mingchengdi.bik \n        historic_event liubeichengdi\n\n\n       \tset_counter shujianguo 1\n\tset_event_counter shujianguo 1\t\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 29991,
+              "command": "give_trait Ch-44C LieZhuan-YANWANG-01 1"
+            },
+            {
+              "line": 29995,
+              "command": "diplomatic_stance portugal papal_states war"
+            },
+            {
+              "line": 29996,
+              "command": "diplomatic_stance hre papal_states war"
+            },
+            {
+              "line": 29997,
+              "command": "diplomatic_stance france papal_states war"
+            },
+            {
+              "line": 29998,
+              "command": "diplomatic_stance sicily papal_states war"
+            },
+            {
+              "line": 29999,
+              "command": "diplomatic_stance venice papal_states war"
+            },
+            {
+              "line": 30000,
+              "command": "diplomatic_stance milan papal_states war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      },
+      {
+        "line": 30048,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType papal_states",
+          "startLine": 30017,
+          "endLine": 30051,
+          "section": "朱元璋称帝建国： papal_states",
+          "script": "monitor_event FactionTurnStart FactionType papal_states\nand not I_LocalFaction papal_states\nand I_CompareCounter shujianguo = 0\nand I_SettlementOwner Yingtian = papal_states\nand I_NumberOfSettlements papal_states >= 15     \n\nset_faction_banner\nfaction papal_states\nbanner sulu\nend_set_faction_banner\ngive_everything_to_faction sulu papal_states false\n\n\n\n\t\tset_faction_standing papal_states portugal -5\n\t\tset_faction_standing turks papal_states -5\n\tconsole_command diplomatic_stance portugal papal_states war\n\tconsole_command diplomatic_stance hre papal_states war\n\tconsole_command diplomatic_stance france papal_states war\n                console_command diplomatic_stance sicily papal_states war\n\tconsole_command diplomatic_stance venice papal_states war\n\tconsole_command diplomatic_stance milan papal_states war\n\tadd_money papal_states, 40000\n\tadd_money papal_states, 40000\n\tadd_money papal_states, 20000\n\n\n\tset_counter shujianguo 1\n\tset_event_counter shujianguo 1\n\n\thistoric_event shuhanjianguo event/mingchengdi.bik \n          historic_event liubeichengdi\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30033,
+              "command": "diplomatic_stance portugal papal_states war"
+            },
+            {
+              "line": 30034,
+              "command": "diplomatic_stance hre papal_states war"
+            },
+            {
+              "line": 30035,
+              "command": "diplomatic_stance france papal_states war"
+            },
+            {
+              "line": 30036,
+              "command": "diplomatic_stance sicily papal_states war"
+            },
+            {
+              "line": 30037,
+              "command": "diplomatic_stance venice papal_states war"
+            },
+            {
+              "line": 30038,
+              "command": "diplomatic_stance milan papal_states war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "shujianguo",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30062,
+        "args": "true",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event ButtonPressed ButtonPressed faction_ranking_button",
+          "startLine": 30055,
+          "endLine": 30065,
+          "section": "朱元璋称帝建国： papal_states",
+          "script": "monitor_event ButtonPressed ButtonPressed faction_ranking_button\nand I_LocalFaction papal_states\nand I_SettlementOwner Yingtian = papal_states\nand I_CompareCounter shujianguo = 0\nand I_NumberOfSettlements papal_states >= 2\n\n\n\thistoric_event shujianguo true\n\t\n\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "ZYZQW",
+    "title": {
+      "key": "ZYZQW_TITLE",
+      "value": "小明王诏令朱元璋北上勤王！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "ZYZQW_BODY",
+      "value": "至正十九年（宋龙凤五年，1359）八月，元军攻\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30078,
+        "args": "true",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 30074,
+          "endLine": 30082,
+          "section": "朱元璋称帝建国： papal_states",
+          "script": "monitor_event FactionTurnStart FactionIsLocal\nand I_TurnNumber >= 12\nand FactionType papal_states\n\nhistoric_event  ZYZQW true\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "CTFXBZ",
+    "title": {
+      "key": "CTFXBZ_TITLE",
+      "value": "朱元璋北上勤王！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "CTFXBZ_BODY",
+      "value": "小明王为天下义军的共同领袖，我军作为义军分\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30167,
+        "args": "true",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 30160,
+          "endLine": 30171,
+          "section": "朱元璋称帝建国： papal_states",
+          "script": "monitor_event FactionTurnStart FactionIsLocal\n    and I_LocalFaction papal_states\n    and I_EventCounter ZYZQW_accepted = 1\n    and I_EventCounter CTFXBZ_accepted < 1\n\n\n\n         historic_event  CTFXBZ true\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "beifa",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30197,
+        "args": "true",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 30185,
+          "endLine": 30201,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionIsLocal\nand I_TurnNumber >= 20\nand FactionType papal_states\n\n        and I_SettlementOwner Yingtian = papal_states \n        and I_SettlementOwner Wuchang = papal_states\n       and I_SettlementOwner Suzhou = papal_states\n       and I_SettlementOwner Yangzhou = papal_states\n       and I_NumberOfSettlements scotland = 0\n       and I_NumberOfSettlements venice = 0\n       and I_NumberOfSettlements papal_states >= 15\n\n      historic_event  beifa true\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "BEIFA",
+    "title": {
+      "key": "BEIFA_TITLE",
+      "value": "朱元璋北伐！",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "BEIFA_BODY",
+      "value": "元至正二十七年（1367年）四月，吴王朱元\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30279,
+        "args": "event/beifa.bik",
+        "monitor": {
+          "kind": "monitor_conditions",
+          "declaration": "monitor_conditions I_EventCounter beifa_accepted = 1",
+          "startLine": 30203,
+          "endLine": 30284,
+          "section": "朱元璋北伐",
+          "script": "monitor_conditions I_EventCounter beifa_accepted = 1\n\nconsole_command diplomatic_stance byzantium papal_states war\n  \t\t  spawn_army\n\t\t  \tfaction\t\tpapal_states\n\t\t\t\tcharacter\trandom_name, named character, age 26, x 331, y 316\ntraits NATION10 1 , religion_B 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n                unit\t\tMing_bodyguard\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tQin_Standard_Cav\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tQin_Standard_Cav\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tHan_baqi_sword\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tCapital_archer\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tCapital_horcearcher\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tMing_Light_Spearmen\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Spearmen\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n                  unit\t\tMing_gongrongpao\t\t\texp 0 armour 0 weapon_lvl 0\n        sieging\n\t\t  \n\t\t  \n\t\t   \t\t  spawn_army\n\t\t  \tfaction papal_states\n\t\t\t\tcharacter\trandom_name, named character, age 26, x 330, y 320\ntraits NATION10 1 , religion_B 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n                unit\t\tMing_bodyguard\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tQin_Standard_Cav\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tQin_Standard_Cav\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tHan_baqi_sword\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tmanchu_sibing\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tCapital_archer\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tCapital_horcearcher\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tMing_Light_Spearmen\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Spearmen\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n                 unit\t\tMing_Light_Archers\t\t\texp 0 armour 0 weapon_lvl 0\n                  unit\t\tMing_gongrongpao\t\t\texp 0 armour 0 weapon_lvl 0\n\t\t\t\tend\n\n         \n                                 spawn_army \n\t\t\tfaction papal_states\n\t\t\tcharacter\trandom_name, named character, age 18, x 320, y 327\n\t\t\ttraits NATION10 1 , religion_B 1 , TALENT_A 2 , TALENT_B 1 , TALENT_C 1 , TALENT_D 3 , TALENT_E 2 , CHARACTER_B 1 , CHARACTER_E 2 , CHARACTER_H 2 , CHA_TYPE 3 , GOODFARTHER 1 , ARM_B_SEIATT 2 , ARM_B_ROB 3 , ARM_B_CAV 3 , CHA_B_LOYA 8 , CHA_B_CHIA 6 , ARM_B_ATTACK 2\n\nunit\t\tMing_bodyguard\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJizhou_mounted_gunner\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tJizhou_mounted_gunner\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tCapital_horcearcher\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tCapital_horcearcher\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tZhongyuan_spearman\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tZhongyuan_spearman\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tZhongyuan_spearman\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tZhongyuan_archer\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tZhongyuan_archer\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tZhongyuan_archer\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tZhongyuan_archer\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tCapital_elite_infantry\t\t\t\texp 1 armour 0 weapon_lvl 0\nunit\t\tCapital_elite_infantry\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tCapital_archer\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tCapital_archer\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tCapital_archer\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tZhejiang_spearman\t\t\texp 0 armour 0 weapon_lvl 0\nunit\t\tZhejiang_spearman\t\texp 0 armour 0 weapon_lvl 0\t\n\n                                            end\n                  \n               console_command add_money papal_states, 40000\n\tconsole_command add_money papal_states, 40000\n\tconsole_command add_money papal_states, 20000\n \n                    historic_event BEIFA event/beifa.bik\n                    \n                  set_counter beifa 1\n\n\t\t\tterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30205,
+              "command": "diplomatic_stance byzantium papal_states war"
+            },
+            {
+              "line": 30275,
+              "command": "add_money papal_states, 40000"
+            },
+            {
+              "line": 30276,
+              "command": "add_money papal_states, 40000"
+            },
+            {
+              "line": 30277,
+              "command": "add_money papal_states, 20000"
+            }
+          ],
+          "spawnArmyCount": 3,
+          "setCounterCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "DAMINGJIE",
+    "title": {
+      "key": "DAMINGJIE_TITLE",
+      "value": "宋之天命",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "DAMINGJIE_BODY",
+      "value": "元顺帝统治末年政治败坏、税赋沉重，加上天灾\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30325,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 30320,
+          "endLine": 30328,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionIsLocal\nand I_TurnNumber == 0\nand FactionType portugal\n       \n       \n        historic_event DAMINGJIE\n       \n terminate_monitor\n        end_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "DAMINGJIE_SEC",
+    "title": {
+      "key": "DAMINGJIE_SEC_TITLE",
+      "value": "天佑韩宋-红巾军成功防御安丰",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "DAMINGJIE_SEC_BODY",
+      "value": "如今，经过红巾军将士们的浴血奋战，我们终于\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30334,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 30331,
+          "endLine": 30356,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionIsLocal\n    and I_TurnNumber = 11\n    and I_SettlementOwner Tieling = portugal\n    historic_event DAMINGJIE_SEC\n    console_command add_money portugal 20000\n    increment_kings_purse portugal 500\n\nspawn_army \nfaction portugal\ncharacter\trandom_name, named character, age 38, x 327, y 312, family\ntraits NATION13 1 , HIDETS 2 , HIDEMDZ 3 , HIDEQC 4 , TALENT_A 3 , TALENT_B 1 , TALENT_C 1 , TALENT_D 2 , TALENT_E 1 , CHARACTER_D 2 , CHARACTER_C 2 , CHARACTER_J 1\n                unit\t\tChuang_chosen_cavalry\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tElite_wall_cavalry\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tElite_wall_cavalry\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tChuang_chosen_staff\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tChuang_chosen_staff\t\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tjinjun daodun\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tjinjun daodun\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tjinjun shengong\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\tjinjun shengong\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\txiaodaohuisword\t\t\texp 0 armour 0 weapon_lvl 0\n               unit\t\txiaodaohuisword\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\txiaodaohuisword\t\t\texp 0 armour 0 weapon_lvl 0\n                unit\t\thongdengzhao1\t\t\texp 0 armour 0 weapon_lvl 0\nend \nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30335,
+              "command": "add_money portugal 20000"
+            }
+          ],
+          "spawnArmyCount": 1,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "DAMINGJIE_THI",
+    "title": {
+      "key": "DAMINGJIE_THI_TITLE",
+      "value": "宋之天命-安丰失守",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "DAMINGJIE_THI_BODY",
+      "value": "经历了多年干旱和瘟疫，中原军民士气低落\\n 宋都安丰又被敌寇占领\\n 天灾人祸之下宋之天命不在，中原将爆发瘟疫",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30362,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30359,
+          "endLine": 30364,
+          "section": "朱元璋北伐",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\n    and I_TurnNumber = 11\n    and not I_SettlementOwner Tieling = portugal\n    historic_event DAMINGJIE_THI\n\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "DAMINGJIE_FOU",
+    "title": {
+      "key": "DAMINGJIE_FOU_TITLE",
+      "value": "宋之天命-瘟疫爆发",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "DAMINGJIE_FOU_BODY",
+      "value": "安丰、濠州、汝宁爆发瘟疫\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30372,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30367,
+          "endLine": 30385,
+          "section": "朱元璋北伐",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\n    and I_TurnNumber = 12\n    and not I_SettlementOwner Tieling = portugal\n    and I_EventCounter DAMINGJIE_THI = 1\n    \n    historic_event DAMINGJIE_FOU\n  add_events \n  event\tplague\n  date 0\n\n;安丰\n  position\t326, 311\n;濠州\n  position\t332, 314\n;汝宁\n  position\t315, 316\n\n  end_add_events\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "songfuxing",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30401,
+        "args": "true factions { portugal, }",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType portugal",
+          "startLine": 30390,
+          "endLine": 30405,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionType portugal\nand I_LocalFaction portugal\nand I_CharacterExists M-02-0001-Xm \nand I_CharacterExists M-02-0003-Xm \nand I_SettlementOwner Fenyang = portugal\nand I_SettlementOwner Kaifeng = portugal\nand I_SettlementOwner Henan = portugal\nand I_SettlementOwner Tieling = portugal\nand I_EventCounter songfuxing_accepted < 1\nand I_NumberOfSettlements portugal >= 15\n\n\thistoric_event songfuxing true factions { portugal, }\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "dasongfuxing",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30437,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_conditions",
+          "declaration": "monitor_conditions I_EventCounter songfuxing_accepted = 1",
+          "startLine": 30407,
+          "endLine": 30440,
+          "section": "朱元璋北伐",
+          "script": "monitor_conditions I_EventCounter songfuxing_accepted = 1\nand I_LocalFaction portugal\n\nset_faction_banner\nfaction portugal\nbanner portugal\nend_set_faction_banner\n\n\nconsole_command give_trait M-02-0001-Xm LieZhuan-chuang-06-01\n\n\t\tset_faction_standing mongols portugal -5\n\t\tset_faction_standing spain portugal -5\n\t\tset_faction_standing hre portugal -5\n\tconsole_command diplomatic_stance scotland portugal war\n\tconsole_command diplomatic_stance hre portugal war\n\tconsole_command diplomatic_stance hungary portugal war\n\tconsole_command diplomatic_stance venice portugal war\n\tconsole_command diplomatic_stance byzantium portugal war\n\tconsole_command diplomatic_stance france portugal war\n\tconsole_command diplomatic_stance portugal papal_states war\n\tconsole_command diplomatic_stance england portugal war\n\tconsole_command diplomatic_stance saxons portugal war\n\tconsole_command diplomatic_stance mongols portugal war\n\tadd_money portugal, 40000\n\tadd_money portugal, 40000\n\tadd_money portugal, 20000\n\n\tset_event_counter songfuxing 1\n\n\thistoric_event dasongfuxing \n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30416,
+              "command": "give_trait M-02-0001-Xm LieZhuan-chuang-06-01"
+            },
+            {
+              "line": 30421,
+              "command": "diplomatic_stance scotland portugal war"
+            },
+            {
+              "line": 30422,
+              "command": "diplomatic_stance hre portugal war"
+            },
+            {
+              "line": 30423,
+              "command": "diplomatic_stance hungary portugal war"
+            },
+            {
+              "line": 30424,
+              "command": "diplomatic_stance venice portugal war"
+            },
+            {
+              "line": 30425,
+              "command": "diplomatic_stance byzantium portugal war"
+            },
+            {
+              "line": 30426,
+              "command": "diplomatic_stance france portugal war"
+            },
+            {
+              "line": 30427,
+              "command": "diplomatic_stance portugal papal_states war"
+            },
+            {
+              "line": 30428,
+              "command": "diplomatic_stance england portugal war"
+            },
+            {
+              "line": 30429,
+              "command": "diplomatic_stance saxons portugal war"
+            },
+            {
+              "line": 30430,
+              "command": "diplomatic_stance mongols portugal war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      },
+      {
+        "line": 30476,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType portugal",
+          "startLine": 30443,
+          "endLine": 30479,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionType portugal\nand not I_LocalFaction portugal\nand I_CompareCounter songfuxing = 0\nand I_NumberOfSettlements portugal >= 15\n\nset_faction_banner\nfaction portugal\nbanner portugal\nend_set_faction_banner\n\n\n\n\n\t\t\t\tset_faction_standing mongols portugal -5\n\t\tset_faction_standing spain portugal -5\n\t\tset_faction_standing hre portugal -5\n\tconsole_command diplomatic_stance scotland portugal war\n\tconsole_command diplomatic_stance hre portugal war\n\tconsole_command diplomatic_stance hungary portugal war\n\tconsole_command diplomatic_stance venice portugal war\n\tconsole_command diplomatic_stance byzantium portugal war\n\tconsole_command diplomatic_stance france portugal war\n\tconsole_command diplomatic_stance portugal papal_states war\n\tconsole_command diplomatic_stance england portugal war\n\tconsole_command diplomatic_stance saxons portugal war\n\tconsole_command diplomatic_stance mongols portugal war\n\tadd_money portugal, 40000\n\tadd_money portugal, 40000\n\tadd_money portugal, 20000\n\n\tset_counter songfuxing 1\n\tset_event_counter songfuxing 1\n\n\thistoric_event dasongfuxing \n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30459,
+              "command": "diplomatic_stance scotland portugal war"
+            },
+            {
+              "line": 30460,
+              "command": "diplomatic_stance hre portugal war"
+            },
+            {
+              "line": 30461,
+              "command": "diplomatic_stance hungary portugal war"
+            },
+            {
+              "line": 30462,
+              "command": "diplomatic_stance venice portugal war"
+            },
+            {
+              "line": 30463,
+              "command": "diplomatic_stance byzantium portugal war"
+            },
+            {
+              "line": 30464,
+              "command": "diplomatic_stance france portugal war"
+            },
+            {
+              "line": 30465,
+              "command": "diplomatic_stance portugal papal_states war"
+            },
+            {
+              "line": 30466,
+              "command": "diplomatic_stance england portugal war"
+            },
+            {
+              "line": 30467,
+              "command": "diplomatic_stance saxons portugal war"
+            },
+            {
+              "line": 30468,
+              "command": "diplomatic_stance mongols portugal war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "hanjianguo",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30493,
+        "args": "true factions { scotland, }",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType scotland",
+          "startLine": 30484,
+          "endLine": 30497,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionType scotland\nand I_LocalFaction scotland\nand I_CharacterExists J-1801-TaoQian \nand I_CharacterExists J-1910-LeiBo\nand I_EventCounter hanjianguo_accepted < 1\nand I_SettlementOwner Wuchang = scotland\nand I_SettlementOwner Yingtian = scotland\nand I_NumberOfSettlements scotland >= 10                                                              \n\n\thistoric_event hanjianguo true factions { scotland, }\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "dahanjianguo",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30525,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_conditions",
+          "declaration": "monitor_conditions I_EventCounter hanjianguo_accepted = 1",
+          "startLine": 30499,
+          "endLine": 30528,
+          "section": "朱元璋北伐",
+          "script": "monitor_conditions I_EventCounter hanjianguo_accepted = 1\nand I_LocalFaction scotland\n\nset_faction_banner\nfaction scotland\nbanner scotland\nend_set_faction_banner\n\n\n\nconsole_command give_trait J-1801-TaoQian LieZhuan-dechuan-03 1\n\n\t\tset_faction_standing mongols scotland -5\n\t\tset_faction_standing hre scotland -5\n\t\tset_faction_standing france scotland -5\n\tconsole_command diplomatic_stance hre scotland war\n\tconsole_command diplomatic_stance byzantium scotland war\n\tconsole_command diplomatic_stance france scotland war\n\tconsole_command diplomatic_stance mongols scotland war\n\tconsole_command diplomatic_stance venice scotland war\n\tadd_money scotland, 40000\n\tadd_money scotland, 40000\n\tadd_money scotland, 20000\n\n\tset_event_counter hanjianguo 1\n\n\thistoric_event dahanjianguo \n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30509,
+              "command": "give_trait J-1801-TaoQian LieZhuan-dechuan-03 1"
+            },
+            {
+              "line": 30514,
+              "command": "diplomatic_stance hre scotland war"
+            },
+            {
+              "line": 30515,
+              "command": "diplomatic_stance byzantium scotland war"
+            },
+            {
+              "line": 30516,
+              "command": "diplomatic_stance france scotland war"
+            },
+            {
+              "line": 30517,
+              "command": "diplomatic_stance mongols scotland war"
+            },
+            {
+              "line": 30518,
+              "command": "diplomatic_stance venice scotland war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      },
+      {
+        "line": 30562,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType scotland",
+          "startLine": 30531,
+          "endLine": 30565,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionType scotland\nand not I_LocalFaction scotland \nand I_CompareCounter hanjianguo = 0\nand I_SettlementOwner Wuchang = scotland\nand I_SettlementOwner Yingtian = scotland\nand I_NumberOfSettlements scotland >= 10\n\nset_faction_banner\nfaction scotland\nbanner scotland\nend_set_faction_banner\n\n\n\n\n\t\tset_faction_standing mongols scotland -5\n\t\tset_faction_standing hre scotland -5\n\t\tset_faction_standing france scotland -5\n\tconsole_command diplomatic_stance hre scotland war\n\tconsole_command diplomatic_stance byzantium scotland war\n\tconsole_command diplomatic_stance france scotland war\n\tconsole_command diplomatic_stance mongols scotland war\n\tconsole_command diplomatic_stance venice scotland war\n\tadd_money scotland, 40000\n\tadd_money scotland, 40000\n\tadd_money scotland, 20000\n\n\n\tset_counter hanjianguo 1\n\tset_event_counter hanjianguo 1\n\n\thistoric_event dahanjianguo \n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30549,
+              "command": "diplomatic_stance hre scotland war"
+            },
+            {
+              "line": 30550,
+              "command": "diplomatic_stance byzantium scotland war"
+            },
+            {
+              "line": 30551,
+              "command": "diplomatic_stance france scotland war"
+            },
+            {
+              "line": 30552,
+              "command": "diplomatic_stance mongols scotland war"
+            },
+            {
+              "line": 30553,
+              "command": "diplomatic_stance venice scotland war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "XIONGJUJIANGGNAN",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30577,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30570,
+          "endLine": 30586,
+          "section": "朱元璋北伐",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_LocalFaction venice\nand I_SettlementOwner Yingtian = venice\nand I_SettlementOwner Suzhou = venice\nand I_SettlementOwner Hangzhou = venice\nand I_NumberOfSettlements venice >= 12\n\n\t\thistoric_event XIONGJUJIANGGNAN\n                                add_money venice, 40000\n                                add_money venice, 40000\n                                add_money venice, 20000\n\n\tset_event_counter xiongjujiangnan 1\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      },
+      {
+        "line": 30679,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30672,
+          "endLine": 30688,
+          "section": "朱元璋北伐",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_LocalFaction milan\nand I_SettlementOwner Hangzhou = milan\nand I_SettlementOwner Yingtian= milan\nand I_SettlementOwner Suzhou= milan\nand I_NumberOfSettlements milan >= 30\n\n\t\thistoric_event XIONGJUJIANGGNAN\n                                add_money milan, 40000\n                                add_money milan, 40000\n                                add_money milan, 20000\n\n\tset_event_counter xiongjujiangnan 1\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "zhoujianguo",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30599,
+        "args": "true factions { venice, }",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType venice",
+          "startLine": 30591,
+          "endLine": 30603,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionType venice\nand I_LocalFaction venice\nand I_CharacterExists J-1201-LiuBiao\nand I_EventCounter zhoujianguo_accepted < 1\nand I_SettlementOwner Suzhou = venice\nand I_SettlementOwner Yingtian = venice\nand I_NumberOfSettlements venice >= 20                                                              \n\n\thistoric_event zhoujianguo true factions { venice, }\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "dazhoujianguo",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30631,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_conditions",
+          "declaration": "monitor_conditions I_EventCounter zhoujianguo_accepted = 1",
+          "startLine": 30605,
+          "endLine": 30634,
+          "section": "朱元璋北伐",
+          "script": "monitor_conditions I_EventCounter zhoujianguo_accepted = 1\nand I_LocalFaction venice\n\nset_faction_banner\nfaction venice\nbanner venice\nend_set_faction_banner\n\n\n\nconsole_command give_trait J-1801-TaoQian LieZhuan-fengchen-01 1\n\n\t\tset_faction_standing mongols venice -5\n\t\tset_faction_standing hre venice -5\n\t\tset_faction_standing france venice -5\n\tconsole_command diplomatic_stance hre venice war\n\tconsole_command diplomatic_stance byzantium venice war\n\tconsole_command diplomatic_stance france venice war\n\tconsole_command diplomatic_stance mongols venice war\n\tconsole_command diplomatic_stance papal_states venice war\n\tadd_money venice, 40000\n\tadd_money venice, 40000\n\tadd_money venice, 20000\n\n\tset_event_counter zhoujianguo 1\n\n\thistoric_event dazhoujianguo\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30615,
+              "command": "give_trait J-1801-TaoQian LieZhuan-fengchen-01 1"
+            },
+            {
+              "line": 30620,
+              "command": "diplomatic_stance hre venice war"
+            },
+            {
+              "line": 30621,
+              "command": "diplomatic_stance byzantium venice war"
+            },
+            {
+              "line": 30622,
+              "command": "diplomatic_stance france venice war"
+            },
+            {
+              "line": 30623,
+              "command": "diplomatic_stance mongols venice war"
+            },
+            {
+              "line": 30624,
+              "command": "diplomatic_stance papal_states venice war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      },
+      {
+        "line": 30666,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType venice",
+          "startLine": 30637,
+          "endLine": 30669,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionType venice\nand not I_LocalFaction venice \nand I_CompareCounter zhoujianguo = 0\nand I_SettlementOwner Wuchang = venice\nand I_SettlementOwner Yingtian = venice\nand I_NumberOfSettlements venice >= 10\n\nset_faction_banner\nfaction venice\nbanner venice\nend_set_faction_banner\n\n\t\t\n\t\tset_faction_standing mongols venice -5\n\t\tset_faction_standing hre venice -5\n\t\tset_faction_standing france venice -5\n\tconsole_command diplomatic_stance hre venice war\n\tconsole_command diplomatic_stance byzantium venice war\n\tconsole_command diplomatic_stance france venice war\n\tconsole_command diplomatic_stance mongols venice war\n\tconsole_command diplomatic_stance papal_states venice war\n\tadd_money venice, 40000\n\tadd_money venice, 40000\n\tadd_money venice, 20000\n\n\n\tset_counter zhoujianguo 1\n\tset_event_counter zhoujianguo 1\n\n\thistoric_event dazhoujianguo\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30653,
+              "command": "diplomatic_stance hre venice war"
+            },
+            {
+              "line": 30654,
+              "command": "diplomatic_stance byzantium venice war"
+            },
+            {
+              "line": 30655,
+              "command": "diplomatic_stance france venice war"
+            },
+            {
+              "line": 30656,
+              "command": "diplomatic_stance mongols venice war"
+            },
+            {
+              "line": 30657,
+              "command": "diplomatic_stance papal_states venice war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "XIONGJUXINAN",
+    "title": {
+      "key": "XIONGJUXINAN_TITLE",
+      "value": "雄踞西南",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "XIONGJUXINAN_BODY",
+      "value": "經過艱苦卓絕的戰鬥，我軍終於奪取西南的\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30700,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30693,
+          "endLine": 30709,
+          "section": "朱元璋北伐",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_LocalFaction sicily\nand I_SettlementOwner Chendu = sicily\nand I_SettlementOwner Chongqing = sicily\nand I_SettlementOwner Yunnan = sicily\nand I_NumberOfSettlements sicily >= 10\n\n\t\thistoric_event XIONGJUXINAN\n                                add_money sicily, 40000\n                                add_money sicily, 40000\n                                 add_money sicily, 20000\n\n\tset_event_counter xiongjuxinan 1\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      },
+      {
+        "line": 30719,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30712,
+          "endLine": 30728,
+          "section": "朱元璋北伐",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_LocalFaction saxons\nand I_SettlementOwner Chendu = saxons\nand I_SettlementOwner Chongqing = saxons\nand I_SettlementOwner Yunnan = saxons\nand I_NumberOfSettlements saxons >= 10\n\n\t\thistoric_event XIONGJUXINAN\n                                add_money saxons, 40000\n                                add_money saxons, 40000\n                                add_money saxons, 20000\n\n\tset_event_counter xiongjuxinan 1\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "CHAHANYUCI",
+    "title": {
+      "key": "CHAHANYUCI_TITLE",
+      "value": "察罕帖木儿遇刺身亡",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "CHAHANYUCI_BODY",
+      "value": "察罕帖木儿（Chaqan-temür，1328年—1362\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30735,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionIsLocal",
+          "startLine": 30731,
+          "endLine": 30740,
+          "section": "朱元璋北伐",
+          "script": "monitor_event FactionTurnStart FactionIsLocal\n        and I_TurnNumber = 9\n\t\tand I_NumberOfSettlements turks >= 1\n\n                                historic_event CHAHANYUCI\n\n\t\tconsole_command kill_character J-1301-KongRong\t\n\t\t\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30737,
+              "command": "kill_character J-1301-KongRong"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "WEIZHENXIBEI",
+    "title": {
+      "key": "WEIZHENXIBEI_TITLE",
+      "value": "威震西北",
+      "source": "historic_events.txt"
+    },
+    "body": {
+      "key": "WEIZHENXIBEI_BODY",
+      "value": "主公英明神武，如孫武再生，統領大軍舉擊\\n",
+      "source": "historic_events.txt"
+    },
+    "directText": null,
+    "calls": [
+      {
+        "line": 30753,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30745,
+          "endLine": 30759,
+          "section": "朱元璋北伐",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_LocalFaction hre\nand I_SettlementOwner Xian = hre\nand I_SettlementOwner Ganzhou = hre\nand I_SettlementOwner Gongchang = hre\nand I_SettlementOwner Ningxia = hre\nand I_NumberOfSettlements hre >= 10\n\n\t\thistoric_event WEIZHENXIBEI\n\n\tset_event_counter weizhenxibei 1\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      },
+      {
+        "line": 30772,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30764,
+          "endLine": 30778,
+          "section": "朱元璋北伐",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_LocalFaction france\nand I_SettlementOwner Xian = france\nand I_SettlementOwner Ganzhou = france\nand I_SettlementOwner Gongchang = france\nand I_SettlementOwner Ningxia = france\nand I_NumberOfSettlements france >= 10\n\n\t\thistoric_event WEIZHENXIBEI\n\n\tset_event_counter weizhenxibei 1\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "liwandayuan",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30789,
+        "args": "true",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30783,
+          "endLine": 30797,
+          "section": "王保保力挽大元",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\n\n\tif I_SettlementOwner Fenyang = turks\n\tand I_SettlementOwner Runing = turks\n                and I_SettlementOwner Tieling = turks\n\tand I_NumberOfSettlements portugal = 0\n\thistoric_event liwandayuan true\n                add_money turks 40000\n                add_money turks 40000\n\tadd_money turks 20000\n\tend_if\n\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "tiemuerchengba",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30806,
+        "args": "true factions { kazakh, }",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30801,
+          "endLine": 30819,
+          "section": "王保保力挽大元",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_TurnNumber >= 14\nand I_LocalFaction kazakh\nand I_CompareCounter tiemuerchengba = 0\n\n\thistoric_event tiemuerchengba true factions { kazakh, }\n\tset_faction_standing kazakh poland -5\n\tset_faction_standing mongols kazakh -5\n\tconsole_command diplomatic_stance poland kazakh war\n\tconsole_command diplomatic_stance mongols kazakh war\n\tadd_money kazakh, 40000\n\tadd_money kazakh, 40000\n\tadd_money kazakh, 20000\n\n\tset_counter tiemuerchengba 1\n\tset_event_counter tiemuerchengba 1\t\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30809,
+              "command": "diplomatic_stance poland kazakh war"
+            },
+            {
+              "line": 30810,
+              "command": "diplomatic_stance mongols kazakh war"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "tiemuerjianguo",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30831,
+        "args": "true factions { kazakh, }",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType kazakh",
+          "startLine": 30823,
+          "endLine": 30850,
+          "section": "王保保力挽大元",
+          "script": "monitor_event FactionTurnStart FactionType kazakh\nand I_TurnNumber >= 50\nand I_LocalFaction kazakh\nand I_SettlementOwner Kashgar = kazakh \nand I_SettlementOwner SeniorZhuz = kazakh\nand I_CompareCounter tiemuerjianguo = 0\nand I_NumberOfSettlements kazakh >= 8\n\n\thistoric_event tiemuerjianguo true factions { kazakh, }\n\nset_faction_banner\nfaction kazakh\nbanner uzbek\nend_set_faction_banner\ngive_everything_to_faction kazakh uzbek true\n\nset_religion kazakh heretic\nchange_population_religion kazakh heretic 85 catholic\n\n\tadd_money kazakh, 40000\n\tadd_money kazakh, 40000\n\tadd_money kazakh, 20000\n\n\tset_counter tiemuerjianguo 1\n\tset_event_counter tiemuerjianguo 1\t\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "dayuanfuxing",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30867,
+        "args": "true factions { byzantium, }",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnStart FactionType byzantium",
+          "startLine": 30854,
+          "endLine": 30870,
+          "section": "王保保力挽大元",
+          "script": "monitor_event FactionTurnStart FactionType byzantium\nand I_LocalFaction byzantium\nand I_NumberOfSettlements portugal < 1\nand I_SettlementOwner Shuntian = byzantium\nand I_SettlementOwner Kaifeng = byzantium\nand I_SettlementOwner Fenyang = byzantium\nand I_SettlementOwner Jinan = byzantium\nand I_SettlementOwner Taiyuan = byzantium\nand I_SettlementOwner Xian = byzantium\nand I_SettlementOwner Yingtian = byzantium\nand I_SettlementOwner Wuchang = byzantium\nand I_EventCounter dayuanfuxing_accepted < 1\nand I_NumberOfSettlements byzantium >= 30\n\thistoric_event dayuanfuxing true factions { byzantium, }\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      },
+      {
+        "line": 30888,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_conditions",
+          "declaration": "monitor_conditions I_EventCounter dayuanfuxing_accepted = 1",
+          "startLine": 30872,
+          "endLine": 30891,
+          "section": "王保保力挽大元",
+          "script": "monitor_conditions I_EventCounter dayuanfuxing_accepted = 1\nand I_LocalFaction byzantium \n\nset_faction_banner\nfaction byzantium\nbanner byzantium\nend_set_faction_banner\n\n\tgive_everything_to_faction portugal slave true\n\tconsole_command kill_faction portugal\n\tadd_money byzantium 40000\n\tadd_money byzantium 40000\n\tadd_money byzantium 20000\n\n\tset_counter dayuanfuxing 1\n\tset_event_counter dayuanfuxing 1\n\thistoric_event dayuanfuxing\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [
+            {
+              "line": 30881,
+              "command": "kill_faction portugal"
+            }
+          ],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "beiyuanjianli",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30902,
+        "args": "",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event FactionTurnEnd FactionType byzantium",
+          "startLine": 30896,
+          "endLine": 30918,
+          "section": "王保保力挽大元",
+          "script": "monitor_event FactionTurnEnd FactionType byzantium\nand not FactionIsLocal\nand I_IsFactionAIControlled byzantium\nand I_NumberOfSettlements byzantium >= 1\nand not I_SettlementOwner Shuntian = byzantium\n\n\thistoric_event beiyuanjianli\n\nset_faction_banner\nfaction byzantium\nbanner rus\nend_set_faction_banner\n\n\tgive_everything_to_faction rus byzantium true\n\tadd_money rus -40000\n\tadd_money rus -40000\n\tadd_money rus -20000\n\n\tset_counter beiyuanjianli 1\n\tset_event_counter beiyuanjianli 1\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "pingdingyunnan",
+    "title": null,
+    "body": null,
+    "directText": null,
+    "calls": [
+      {
+        "line": 30928,
+        "args": "factions { papal_states, }",
+        "monitor": {
+          "kind": "monitor_event",
+          "declaration": "monitor_event PreFactionTurnStart FactionIsLocal",
+          "startLine": 30922,
+          "endLine": 30931,
+          "section": "王保保力挽大元",
+          "script": "monitor_event PreFactionTurnStart FactionIsLocal\nand I_SettlementOwner Yunnan = papal_states\nand I_SettlementOwner Dali = papal_states\nand I_SettlementOwner Qujing = papal_states\n\n\tadd_money papal_states 2000\n\thistoric_event pingdingyunnan factions { papal_states, }\n\nterminate_monitor\nend_monitor",
+          "consoleCommands": [],
+          "spawnArmyCount": 0,
+          "setCounterCount": 0
+        }
+      }
+    ]
+  }
+]

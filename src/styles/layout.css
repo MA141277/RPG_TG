@@ -44,4 +44,5 @@
   left: var(--space-4);
   width: min(100% - 24px, 980px);
   z-index: var(--z-global-ui);
+  pointer-events: none;
 }

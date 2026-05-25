@@ -7,8 +7,6 @@ const modDataRoot = path.join(
   repositoryRoot,
   "map",
   "yuan mo feng yun lu",
-  "yuan mo feng yun lu",
-  "yuan mo feng yun lu",
   "mods",
   "yuanmofengyunlu",
   "data"
