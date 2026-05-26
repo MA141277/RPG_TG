@@ -6,6 +6,7 @@ export * from "./city-npc";
 export * from "./event";
 export * from "./game-state";
 export * from "./global-ui";
+export * from "./home-house";
 export * from "./house";
 export * from "./house-module";
 export * from "./keep-house";

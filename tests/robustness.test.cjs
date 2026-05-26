@@ -19,6 +19,9 @@ const {
 } = require("../.test-dist/content/prototype-world.js");
 const { executeGrainTrade } = require("../.test-dist/application/grain-shop/grain-trade.js");
 const {
+  homeHouseHouseModule,
+} = require("../.test-dist/application/house-modules/home-house/home-house-house-module.js");
+const {
   grainShopHouseModule,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js");
 const {
@@ -47,6 +50,7 @@ const {
   accountingGradeRewards,
 } = require("../.test-dist/content/houses/grain-shop-content.js");
 const { GRAIN_SHOP_VARIABLE_KEYS } = require("../.test-dist/domain/grain-shop.js");
+const { HOME_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/home-house.js");
 const { KEEP_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/keep-house.js");
 const {
   pickTeaHouseAiTopic,
@@ -56,6 +60,9 @@ const {
 const playerCharacterId = "char.player";
 const keepHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "keep-house"
+);
+const homeHouse = prototypeHouses.find(
+  (houseDefinition) => houseDefinition.moduleId === "home-house"
 );
 const grainShopHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "grain-shop"
@@ -70,6 +77,7 @@ const tavernHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "tavern"
 );
 
+assert.ok(homeHouse, "Expected prototype home house to exist.");
 assert.ok(keepHouse, "Expected prototype keep house to exist.");
 assert.ok(grainShopHouse, "Expected prototype grain shop house to exist.");
 assert.ok(marketHouse, "Expected prototype market house to exist.");
@@ -291,7 +299,117 @@ test("keep house starts review meeting at countdown zero and resets to 60 after 
     assignedResult.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
     60
   );
+  assert.equal(assignedResult.gameState.world.schedule.councilDate.day, 1);
+  assert.equal(assignedResult.gameState.world.schedule.councilDate.month, 3);
   assert.equal(assignedResult.sessionState?.overlay?.type, "alert");
+});
+
+test("home house rest-one-day advances date, restores hp and fatigue, and resets morning", () => {
+  const enterResult = homeHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: homeHouse,
+    playerCharacterId,
+  });
+
+  const preparedCharacters = enterResult.characterDefinitions.map((characterDefinition) =>
+    characterDefinition.id !== playerCharacterId
+      ? characterDefinition
+      : {
+          ...characterDefinition,
+          stamina: 40,
+        }
+  );
+  const preparedState = {
+    ...enterResult.gameState,
+    world: {
+      ...enterResult.gameState.world,
+      timeOfDay: "night",
+      schedule: {
+        councilDate: {
+          year: 1567,
+          month: 1,
+          day: 10,
+        },
+      },
+    },
+    runtime: {
+      ...enterResult.gameState.runtime,
+      variables: {
+        ...enterResult.gameState.runtime.variables,
+        [HOME_HOUSE_VARIABLE_KEYS.hp]: 50,
+        [HOME_HOUSE_VARIABLE_KEYS.maxHp]: 100,
+        [HOME_HOUSE_VARIABLE_KEYS.fatigue]: 40,
+        [HOME_HOUSE_VARIABLE_KEYS.maxFatigue]: 100,
+      },
+    },
+  };
+
+  const restResult = homeHouseHouseModule.dispatch({
+    gameState: preparedState,
+    characterDefinitions: preparedCharacters,
+    houseDefinition: homeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "rest-one-day",
+    },
+  });
+
+  const playerCharacter = getPlayerCharacter(restResult.characterDefinitions);
+  assert.equal(restResult.gameState.calendar.day, 2);
+  assert.equal(restResult.gameState.world.timeOfDay, "morning");
+  assert.equal(restResult.gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.hp] > 50, true);
+  assert.equal(restResult.gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.fatigue] > 40, true);
+  assert.equal(playerCharacter.stamina > 40, true);
+  assert.equal(restResult.sessionState?.overlay?.type, "alert");
+});
+
+test("home house rest-until-council stops at configured council date", () => {
+  const enterResult = homeHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: homeHouse,
+    playerCharacterId,
+  });
+  const preparedState = {
+    ...enterResult.gameState,
+    world: {
+      ...enterResult.gameState.world,
+      schedule: {
+        councilDate: {
+          year: 1567,
+          month: 1,
+          day: 3,
+        },
+      },
+    },
+  };
+
+  const restResult = homeHouseHouseModule.dispatch({
+    gameState: preparedState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: homeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "rest-until-council",
+    },
+  });
+
+  assert.equal(restResult.gameState.calendar.day, 3);
+  assert.equal(restResult.gameState.ui.reviewDateText, "今日评定");
+  assert.equal(restResult.sessionState?.overlay?.type, "alert");
+  if (restResult.sessionState?.overlay?.type !== "alert") {
+    return;
+  }
+
+  assert.equal(
+    restResult.sessionState.overlay.paragraphs.some((paragraph) => paragraph.includes("评定")),
+    true
+  );
 });
 
 test("grain shop trade overlay reads buy and sell price from unified city market", () => {

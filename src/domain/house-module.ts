@@ -1,6 +1,7 @@
 import type { CharacterDefinition, CharacterId } from "./character";
 import type { GameState } from "./game-state";
 import type { HouseDefinition } from "./house";
+import type { HomeHouseSessionState } from "./house-modules/home-house-session";
 import type { GrainShopSessionState } from "./house-modules/grain-shop-session";
 import type { KeepHouseSessionState } from "./house-modules/keep-house-session";
 import type { MarketHouseSessionState } from "./house-modules/market-house-session";
@@ -8,6 +9,7 @@ import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
 
 export type HouseModuleId =
+  | "home-house"
   | "keep-house"
   | "grain-shop"
   | "market-house"
@@ -101,6 +103,17 @@ export type HouseOverlayViewModel =
       cancelActionId: string;
       cancelLabel: string;
       tone?: "info" | "success" | "warning";
+    }
+  | {
+      type: "rest-days";
+      title: string;
+      paragraphs: string[];
+      dayCount: string;
+      quantityFieldId: string;
+      confirmActionId: string;
+      confirmLabel: string;
+      cancelActionId: string;
+      cancelLabel: string;
     }
   | {
       type: "trade";
@@ -215,6 +228,7 @@ export type HouseModuleViewModel = {
 };
 
 export type HouseModuleSessionStateMap = {
+  "home-house": HomeHouseSessionState;
   "keep-house": KeepHouseSessionState;
   "grain-shop": GrainShopSessionState;
   "market-house": MarketHouseSessionState;

@@ -1,4 +1,5 @@
 import type { HouseModuleId, HouseModuleViewModel } from "../../../domain/house-module";
+import { renderHomeHouseView } from "./home-house-view";
 import { renderGrainShopHouseView } from "./grain-shop-house-view";
 import { renderKeepHouseView } from "./keep-house-view";
 import { renderMarketHouseView } from "./market-house-view";
@@ -13,6 +14,7 @@ export const houseModuleViewRegistry: Record<
   HouseModuleId,
   HouseModuleViewRenderer
 > = {
+  "home-house": renderHomeHouseView,
   "keep-house": renderKeepHouseView,
   "grain-shop": renderGrainShopHouseView,
   "market-house": renderMarketHouseView,
