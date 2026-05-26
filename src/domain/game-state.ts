@@ -13,12 +13,22 @@ import type { ValuableItemInventory } from "./valuable-item";
 
 export type ViewName = "map" | "city" | "house" | "scene" | "minigame";
 export type SceneStatus = "idle" | "playing" | "waiting-choice";
+export type TimeOfDay = "morning" | "afternoon" | "night";
+export type CalendarDate = {
+  year: number;
+  month: number;
+  day: number;
+};
 
 export type GameState = {
   world: {
     currentMapId: MapId;
     currentCityId: CityId;
     currentHouseId: HouseId | null;
+    timeOfDay: TimeOfDay;
+    schedule: {
+      councilDate: CalendarDate;
+    };
   };
   player: {
     characterId: CharacterId;

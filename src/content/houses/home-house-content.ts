@@ -1,0 +1,22 @@
+export const homeHouseIntroLines = [
+  "推门回到自宅，屋里静静的，只剩下日常起居留下的生活气息。",
+  "忙完外头的事后，总算能在这里歇脚、收拾行装，再想下一步怎么走。",
+];
+
+export const homeHouseMainLines = [
+  "屋里一切安稳，正适合静养片刻。",
+  "若要继续外出，也该先把状态和行囊理顺。",
+];
+
+export const homeHouseRestMenuLines = [
+  "床榻已经整理停当。",
+  "这次打算在自宅里静养到什么时候？",
+];
+
+export const homeHouseRecoveryTuning = {
+  hpBase: 10,
+  hpRatio: 0.15,
+  fatigueBase: 12,
+  fatigueRatio: 0.18,
+  customRestMaxDays: 99,
+};

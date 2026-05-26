@@ -21,6 +21,7 @@ export const prototypeCity: CityDefinition = {
   regionId: "region.frontier",
   mapNodeId: "settlement.fenyang_province",
   houseIds: [
+    "home_001",
     "house.kulan.keep",
     "house.kulan.tea_house",
     "house.kulan.market",
@@ -38,6 +39,19 @@ export const prototypeCity: CityDefinition = {
 export const prototypeCities: CityDefinition[] = [prototypeCity];
 
 export const prototypeHouses: HouseDefinition[] = [
+  {
+    id: "home_001",
+    cityId: "city.kulan",
+    name: "自宅",
+    type: "residence",
+    moduleId: "home-house",
+    characterIds: [],
+    defaultCharacterId: null,
+    backAction: {
+      label: "返回濠州",
+      targetView: "city",
+    },
+  },
   {
     id: "house.kulan.keep",
     cityId: "city.kulan",
@@ -125,7 +139,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
     title: "亲兵",
     occupation: "军中跑腿",
     cityId: "city.kulan",
-    houseId: "house.kulan.keep",
+    houseId: "home_001",
     portraitId: "portrait.player",
     portraitVariants: [
       {

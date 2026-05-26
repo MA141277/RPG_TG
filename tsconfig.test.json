@@ -7,5 +7,20 @@
     "moduleResolution": "Node",
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*.ts"]
+  "include": [
+    "src/application/**/*.ts",
+    "src/domain/**/*.ts",
+    "src/shared/**/*.ts",
+    "src/content/prototype-world.ts",
+    "src/content/houses/**/*.ts",
+    "src/content/markets/**/*.ts"
+  ],
+  "exclude": [
+    "src/main.ts",
+    "src/terrain-webgl/**/*.ts",
+    "src/ui/**/*.ts",
+    "src/content/layout-editor-presets.ts",
+    "src/content/portrait-assets.ts",
+    "src/content/yuanmo-campaign-map.ts"
+  ]
 }

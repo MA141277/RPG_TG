@@ -6,6 +6,7 @@ Use it for:
 
 - grain shop
 - tea house
+- home house
 - dojo
 - forge
 - merchant sub-systems
@@ -213,7 +214,7 @@ type AlertOverlayModel = {
 Then `ui/views/*` converts that into markup.
 
 Shared overlay unions may grow when a special house needs a richer structured interaction
-(for example a module-specific trade picker), but the data must remain typed and UI-facing.
+(for example a module-specific trade picker or a rest-days input panel), but the data must remain typed and UI-facing.
 Do not fall back to raw HTML strings in `application`.
 
 ## Main Entry Rules

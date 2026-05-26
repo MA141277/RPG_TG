@@ -128,6 +128,7 @@ export function renderHouseDialogue(
   const clickable = viewModel.dialogue.advanceActionId != null;
   const footerClassName = options.footerClassName ?? "c-grain-shop-dialogue";
   const ariaLabel = options.ariaLabel ?? "对话";
+  const isNarration = viewModel.dialogue.mode === "narration";
 
   return `
     <footer class="${footerClassName}" aria-label="${ariaLabel}">
@@ -144,14 +145,20 @@ export function renderHouseDialogue(
             : `<p class="c-grain-shop-dialogue__hint">${viewModel.dialogue.advanceHintText}</p>`
         }
       </div>
-      <div class="c-grain-shop-dialogue__npc">
-        <div class="c-grain-shop-portrait" aria-hidden="true">
-          <span class="c-grain-shop-portrait__art"></span>
-        </div>
-        <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-          ${viewModel.dialogue.speakerName ?? ""}
-        </p>
-      </div>
+      ${
+        isNarration
+          ? ""
+          : `
+            <div class="c-grain-shop-dialogue__npc">
+              <div class="c-grain-shop-portrait" aria-hidden="true">
+                <span class="c-grain-shop-portrait__art"></span>
+              </div>
+              <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
+                ${viewModel.dialogue.speakerName ?? ""}
+              </p>
+            </div>
+          `
+      }
     </footer>
   `;
 }

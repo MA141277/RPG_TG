@@ -19,6 +19,8 @@ export type InitialStateInput = {
   activeEventId?: string | null;
   activeSceneId?: string | null;
   currentView?: GameState["ui"]["currentView"];
+  timeOfDay?: GameState["world"]["timeOfDay"];
+  councilDate?: GameState["world"]["schedule"]["councilDate"];
 };
 
 export function createInitialState(input: InitialStateInput): GameState {
@@ -27,6 +29,14 @@ export function createInitialState(input: InitialStateInput): GameState {
       currentMapId: input.currentMapId,
       currentCityId: input.currentCityId,
       currentHouseId: input.currentHouseId,
+      timeOfDay: input.timeOfDay ?? "morning",
+      schedule: {
+        councilDate: input.councilDate ?? {
+          year: input.year,
+          month: input.month,
+          day: input.day,
+        },
+      },
     },
     player: {
       characterId: input.playerCharacterId,

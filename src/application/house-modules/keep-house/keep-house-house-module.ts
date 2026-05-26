@@ -4,6 +4,7 @@ import {
   keepHouseTaskDefinitions,
 } from "../../../content/houses/keep-house-content";
 import type { CharacterDefinition } from "../../../domain/character";
+import type { CalendarDate, GameState } from "../../../domain/game-state";
 import type {
   HouseActionViewModel,
   HouseModuleDefinition,
@@ -58,7 +59,7 @@ function getLordCharacter(
 }
 
 function readNumericVariable(
-  state: HouseModuleDispatchInput["gameState"],
+  state: GameState,
   key: string,
   fallback: number
 ): number {
@@ -67,7 +68,7 @@ function readNumericVariable(
 }
 
 function readStringVariable(
-  state: HouseModuleDispatchInput["gameState"],
+  state: GameState,
   key: string,
   fallback: string
 ): string {
@@ -77,6 +78,29 @@ function readStringVariable(
 
 function formatReviewDateText(daysLeft: number): string {
   return `距离评定 ${daysLeft} 天`;
+}
+
+function getCurrentDate(state: GameState): CalendarDate {
+  return {
+    year: state.calendar.year,
+    month: state.calendar.month,
+    day: state.calendar.day,
+  };
+}
+
+function addDaysToDate(date: CalendarDate, days: number): CalendarDate {
+  const currentNumber = date.year * 360 + (date.month - 1) * 30 + date.day;
+  const nextNumber = currentNumber + days;
+  const nextYear = Math.floor((nextNumber - 1) / 360);
+  const dayOfYear = nextNumber - nextYear * 360;
+  const nextMonth = Math.floor((dayOfYear - 1) / 30) + 1;
+  const nextDay = ((dayOfYear - 1) % 30) + 1;
+
+  return {
+    year: nextYear,
+    month: nextMonth,
+    day: nextDay,
+  };
 }
 
 function getTaskTier(character: CharacterDefinition): KeepHouseTaskTier {
@@ -319,6 +343,13 @@ function assignTaskToPlayer(
 ): HouseModuleTransitionResult<"keep-house"> {
   const nextState = {
     ...input.gameState,
+    world: {
+      ...input.gameState.world,
+      schedule: {
+        ...input.gameState.world.schedule,
+        councilDate: addDaysToDate(getCurrentDate(input.gameState), 60),
+      },
+    },
     missions: {
       ...input.gameState.missions,
       activeMissionId: taskDefinition.missionId,
