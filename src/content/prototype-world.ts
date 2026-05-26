@@ -17,9 +17,9 @@ export const prototypeMap: MapDefinition = {
 
 export const prototypeCity: CityDefinition = {
   id: "city.kulan",
-  name: "应天府",
+  name: "濠州",
   regionId: "region.frontier",
-  mapNodeId: "settlement.yingtian_province",
+  mapNodeId: "settlement.fenyang_province",
   houseIds: [
     "house.kulan.keep",
     "house.kulan.tea_house",
@@ -53,7 +53,7 @@ export const prototypeHouses: HouseDefinition[] = [
     ],
     defaultCharacterId: "char.kulan_lord",
     backAction: {
-      label: "返回应天府",
+      label: "返回濠州",
       targetView: "city",
     },
   },
@@ -67,7 +67,7 @@ export const prototypeHouses: HouseDefinition[] = [
     activityLocationId: "tea-house",
     moduleId: "tea-house",
     backAction: {
-      label: "返回应天府",
+      label: "返回濠州",
       targetView: "city",
     },
   },
@@ -81,7 +81,7 @@ export const prototypeHouses: HouseDefinition[] = [
     activityLocationId: "market",
     moduleId: "market-house",
     backAction: {
-      label: "返回应天府",
+      label: "返回濠州",
       targetView: "city",
     },
   },
@@ -94,7 +94,7 @@ export const prototypeHouses: HouseDefinition[] = [
     characterIds: ["char.kulan_grain_shopkeeper"],
     defaultCharacterId: "char.kulan_grain_shopkeeper",
     backAction: {
-      label: "返回应天府",
+      label: "返回濠州",
       targetView: "city",
     },
   },
@@ -108,7 +108,7 @@ export const prototypeHouses: HouseDefinition[] = [
     defaultCharacterId: "char.kulan_innkeeper",
     activityLocationId: "tavern",
     backAction: {
-      label: "返回应天府",
+      label: "返回濠州",
       targetView: "city",
     },
   },
@@ -193,7 +193,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
       gold: 600,
     },
     stamina: 88,
-    biography: "郭子兴坐镇应天府，掌军政、定方略，也亲自主持每一轮评定。",
+    biography: "郭子兴坐镇濠州，掌军政、定方略，也亲自主持每一轮评定。",
     availableFunctions: [],
     skills: {
       ashigaru: 3,
@@ -407,7 +407,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
       gold: 180,
     },
     stamina: 78,
-    biography: "柳四经营着应天府的茶馆，擅长把零散传闻拼成线索。",
+    biography: "柳四经营着濠州的茶馆，擅长把零散传闻拼成线索。",
     availableFunctions: [],
     skills: {
       ashigaru: 0,
@@ -491,7 +491,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
       gold: 900,
     },
     stamina: 72,
-    biography: "应天府货栈的掌柜，最擅长盘算商路差价与各城货价起落。",
+    biography: "濠州货栈的掌柜，最擅长盘算商路差价与各城货价起落。",
     availableFunctions: [],
     skills: {
       ashigaru: 1,
@@ -633,7 +633,7 @@ export const prototypeCityNpcPools: CityNpcPoolDefinition[] = [
 ];
 
 export const prototypeCityPortraits: Record<string, string> = {
-  "city.kulan": "应天府",
+  "city.kulan": "濠州",
 };
 
 export const prototypeCards: CardDefinition[] = [

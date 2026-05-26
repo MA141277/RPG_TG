@@ -114,6 +114,7 @@ Action 脚本按顺序执行，单节点单职责：
 所有重要改动必须同步记录到：
 
 - [change-log.md](D:/RPG_TG/docs/change-log.md)
+- [ui-layout-alignment-workflow.md](D:/RPG_TG/docs/ui-layout-alignment-workflow.md)：当改动涉及 UI 布局对齐协作方式、复制参数格式或默认布局回写流程时，先对齐这份文档
 
 必须记录的改动：
 

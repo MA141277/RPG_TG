@@ -1,5 +1,6 @@
 import type { CityDefinition } from "../../../domain/city";
 import type { HouseDefinition } from "../../../domain/house";
+import cityBackgroundVideoUrl from "../../../../ui/background/city.mp4?url";
 
 function getHouseArtworkClass(houseDefinition: HouseDefinition): string {
   switch (houseDefinition.id) {
@@ -25,6 +26,16 @@ export function renderCityView(
   return `
     <section class="view-city view-city--kulan">
       <div class="c-kulan-city">
+        <video
+          class="c-kulan-city__background-video"
+          autoplay
+          muted
+          loop
+          playsinline
+          aria-hidden="true"
+        >
+          <source src="${cityBackgroundVideoUrl}" type="video/mp4" />
+        </video>
         <div class="c-kulan-city__body">
           <div class="c-kulan-city__stage">
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">

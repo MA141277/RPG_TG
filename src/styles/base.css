@@ -17,8 +17,8 @@ body {
   color: var(--color-ink);
   font-family: var(--font-ui);
   background:
-    linear-gradient(180deg, rgb(237 219 181 / 96%), rgb(192 161 109 / 94%)),
-    #d8bd8d;
+    linear-gradient(180deg, rgb(10 14 20 / 100%), rgb(4 7 12 / 100%)),
+    #000;
 }
 
 #app {

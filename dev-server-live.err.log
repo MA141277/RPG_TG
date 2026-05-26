@@ -1,0 +1,191 @@
+[2m16:14:10[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../yuansu/1_002_top_status_bar_1.0.png?url" from "src/content/layout-editor-presets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:11:27
+[33m  1  |  import * as __vite_glob_0_0 from "../../map/yuan mo feng yun lu/Config/Defaults/launcher_icon_minor_news.jpg";import ...
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+     |                              ^
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";
+  4  |  const defaultSlice = {[39m
+[2m16:14:10[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../yuansu/1_002_top_status_bar_1.0.png?url" from "src/content/layout-editor-presets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:11:27
+[33m  1  |  import * as __vite_glob_0_0 from "../../map/yuan mo feng yun lu/Config/Defaults/launcher_icon_minor_news.jpg";import ...
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+     |                              ^
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";
+  4  |  const defaultSlice = {[39m
+[2m16:14:13[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../yuansu/1_002_top_status_bar_1.0.png?url" from "src/content/layout-editor-presets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:11:27
+[33m  1  |  import * as __vite_glob_0_0 from "../../map/yuan mo feng yun lu/Config/Defaults/launcher_icon_minor_news.jpg";import ...
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+     |                              ^
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";
+  4  |  const defaultSlice = {[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 494)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m16:14:54[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../yuansu/1_015_left_mission_panel_1.0.png?url" from "src/content/layout-editor-presets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:12:25
+[33m  1  |  import * as __vite_glob_0_0 from "../../map/yuan mo feng yun lu/Config/Defaults/launcher_icon_minor_news.jpg";import ...
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";
+     |                            ^
+  4  |  const defaultSlice = {
+  5  |    top: 24,[39m
+[2m16:14:54[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../yuansu/1_015_left_mission_panel_1.0.png?url" from "src/content/layout-editor-presets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:12:25
+[33m  1  |  import * as __vite_glob_0_0 from "../../map/yuan mo feng yun lu/Config/Defaults/launcher_icon_minor_news.jpg";import ...
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";
+     |                            ^
+  4  |  const defaultSlice = {
+  5  |    top: 24,[39m
+[2m16:14:57[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../yuansu/material-202605261611-002.png" from "src/content/layout-editor-presets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:10:29
+[33m  1  |  ...nsu/_contact_sheet.jpg";import * as __vite_glob_0_487 from "../../yuansu/material-202605261611-002.png";import * a...
+     |                                                                 ^
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";[39m
+[2m16:14:57[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../yuansu/material-202605261611-002.png" from "src/content/layout-editor-presets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:10:29
+[33m  1  |  ...nsu/_contact_sheet.jpg";import * as __vite_glob_0_487 from "../../yuansu/material-202605261611-002.png";import * a...
+     |                                                                 ^
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 487)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+[2m16:14:57[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../yuansu/material-202605261611-002.png" from "src/content/layout-editor-presets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:10:29
+[33m  1  |  ...nsu/_contact_sheet.jpg";import * as __vite_glob_0_487 from "../../yuansu/material-202605261611-002.png";import * a...
+     |                                                                 ^
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";[39m
+[2m16:14:57[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../yuansu/material-202605261611-002.png" from "src/content/layout-editor-presets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:10:29
+[33m  1  |  ...nsu/_contact_sheet.jpg";import * as __vite_glob_0_487 from "../../yuansu/material-202605261611-002.png";import * a...
+     |                                                                 ^
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 487)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+[2m16:15:18[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../yuansu/1_016_small_blank_panel_1.0 (1).png" from "src/content/layout-editor-presets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:10:29
+[33m  1  |  ..._mission_panel_1.0.png";import * as __vite_glob_0_480 from "../../yuansu/1_016_small_blank_panel_1.0 (1).png";impo...
+     |                                                                 ^
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";[39m
+[2m16:15:18[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../yuansu/1_016_small_blank_panel_1.0 (1).png" from "src/content/layout-editor-presets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/content/layout-editor-presets.ts[39m:10:29
+[33m  1  |  ..._mission_panel_1.0.png";import * as __vite_glob_0_480 from "../../yuansu/1_016_small_blank_panel_1.0 (1).png";impo...
+     |                                                                 ^
+  2  |  import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
+  3  |  import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";[39m
+[2m19:03:15[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../content/portrait-assets" from "src/ui/panels/global-player-panel.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/ui/panels/global-player-panel.ts[39m:1:49
+[33m  1  |  import { resolveCharacterPortraitImageUrl } from "../../content/portrait-assets";
+     |                                                    ^
+  2  |  function getComponentRectStyle(component) {
+  3  |    return [[39m
+[2m19:03:15[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../content/portrait-assets" from "src/ui/panels/global-player-panel.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/ui/panels/global-player-panel.ts[39m:1:49
+[33m  1  |  import { resolveCharacterPortraitImageUrl } from "../../content/portrait-assets";
+     |                                                    ^
+  2  |  function getComponentRectStyle(component) {
+  3  |    return [[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m19:03:16[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../content/portrait-assets" from "src/ui/panels/global-player-panel.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/ui/panels/global-player-panel.ts[39m:1:49
+[33m  1  |  import { resolveCharacterPortraitImageUrl } from "../../content/portrait-assets";
+     |                                                    ^
+  2  |  function getComponentRectStyle(component) {
+  3  |    return [[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m19:05:07[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../content/portrait-assets" from "src/ui/panels/global-player-panel.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/ui/panels/global-player-panel.ts[39m:1:49
+[33m  1  |  import { resolveCharacterPortraitImageUrl } from "../../content/portrait-assets";
+     |                                                    ^
+  2  |  function getComponentRectStyle(component) {
+  3  |    return [[39m
+[2m19:05:07[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../content/portrait-assets" from "src/ui/panels/global-player-panel.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/ui/panels/global-player-panel.ts[39m:1:49
+[33m  1  |  import { resolveCharacterPortraitImageUrl } from "../../content/portrait-assets";
+     |                                                    ^
+  2  |  function getComponentRectStyle(component) {
+  3  |    return [[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m19:05:10[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../content/portrait-assets" from "src/ui/panels/global-player-panel.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/ui/panels/global-player-panel.ts[39m:1:49
+[33m  1  |  import { resolveCharacterPortraitImageUrl } from "../../content/portrait-assets";
+     |                                                    ^
+  2  |  function getComponentRectStyle(component) {
+  3  |    return [[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)

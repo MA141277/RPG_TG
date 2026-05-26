@@ -1,4 +1,5 @@
 import type { CharacterDefinition } from "../domain/character";
+import type { GlobalHudLayout, LayoutEditorState } from "../domain/ui-layout";
 import type { GridCoordinate } from "./navigation/travel-to-coordinate";
 import type { createInitialState } from "./state/create-initial-state";
 
@@ -21,4 +22,8 @@ export type AppState = {
   characterDefinitions: CharacterDefinition[];
   playerCoordinate: GridCoordinate;
   modalState: AppModalState;
+  uiLayouts: {
+    globalHud: GlobalHudLayout;
+  };
+  layoutEditor: LayoutEditorState;
 };

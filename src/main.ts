@@ -1,6 +1,19 @@
 import "./styles/app.css";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
 import {
+  selectLayoutEditorComponent,
+  selectLayoutEditorElement,
+  setLayoutEditorBackgroundAsset,
+  setLayoutEditorBackgroundAssetQuery,
+  setLayoutEditorBackgroundMode,
+  setLayoutEditorBackgroundSlice,
+  setLayoutEditorComponentRectField,
+  setLayoutEditorElementRectField,
+  toggleLayoutEditor,
+  updateLayoutEditorComponentPosition,
+  updateLayoutEditorElementPosition,
+} from "./application/layout-editor/layout-editor-actions";
+import {
   equipValuable,
   selectCard,
   selectValuable,
@@ -27,6 +40,10 @@ import {
   prototypeHouses,
   prototypeValuables,
 } from "./content/prototype-world";
+import {
+  createDefaultGlobalHudLayout,
+  globalHudBackgroundOptions,
+} from "./content/layout-editor-presets";
 import { yuanmoCampaignMap } from "./content/yuanmo-campaign-map";
 import type {
   CardLibraryFilter,
@@ -34,6 +51,11 @@ import type {
   ValuableLibrarySortKey,
 } from "./domain/global-ui";
 import { KEEP_HOUSE_VARIABLE_KEYS } from "./domain/keep-house";
+import type {
+  UiLayoutBackgroundMode,
+  UiLayoutComponent,
+  UiLayoutRect,
+} from "./domain/ui-layout";
 import type { ValuableItemId } from "./domain/valuable-item";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
@@ -45,7 +67,7 @@ import {
 const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;
 const MAP_DEBUG_MIN_SCALE = 0.5;
-const MAP_DEBUG_MAX_SCALE = 6;
+const MAP_DEBUG_MAX_SCALE = 40;
 const MAP_DEBUG_SCALE_STEP = 0.2;
 
 type CampaignMapDebugState = {
@@ -143,6 +165,16 @@ let appState: AppState = {
   characterDefinitions: [...prototypeCharacters],
   playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
   modalState: null,
+  uiLayouts: {
+    globalHud: createDefaultGlobalHudLayout(),
+  },
+  layoutEditor: {
+    isOpen: false,
+    selectedTargetId: "global-hud",
+    selectedComponentId: "status-board",
+    selectedElementId: null,
+    backgroundAssetQuery: "",
+  },
 };
 appState = {
   ...appState,
@@ -173,6 +205,16 @@ let campaignMapDragState:
     }
   | null = null;
 let shouldSuppressNextClickAfterMapDrag = false;
+let layoutEditorDragState:
+  | {
+      mode: "component" | "element";
+      componentId: string;
+      elementId: string | null;
+      pointerId: number;
+      startClientX: number;
+      startClientY: number;
+    }
+  | null = null;
 
 const houseRuntime = createHouseRuntime({
   getAppState: () => appState,
@@ -188,10 +230,122 @@ syncGameViewport();
 window.addEventListener("resize", syncGameViewport);
 renderApp();
 
+function getSelectedLayoutComponent(): UiLayoutComponent | null {
+  return (
+    appState.uiLayouts.globalHud.components.find(
+      (component) => component.id === appState.layoutEditor.selectedComponentId
+    ) ??
+    appState.uiLayouts.globalHud.components[0] ??
+    null
+  );
+}
+
+async function copyCurrentLayoutParams(): Promise<void> {
+  const payload = {
+    targetId: appState.layoutEditor.selectedTargetId,
+    selectedComponentId: appState.layoutEditor.selectedComponentId,
+    selectedElementId: appState.layoutEditor.selectedElementId,
+    layout: appState.uiLayouts.globalHud,
+  };
+  await navigator.clipboard.writeText(`${JSON.stringify(payload, null, 2)}\n`);
+}
+
 appElement.addEventListener("input", (event) => {
   const targetElement = event.target;
-  if (!(targetElement instanceof HTMLInputElement)) {
+  if (
+    !(
+      targetElement instanceof HTMLInputElement ||
+      targetElement instanceof HTMLSelectElement
+    )
+  ) {
     return;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-layout-background-asset-query")
+  ) {
+    appState = setLayoutEditorBackgroundAssetQuery(appState, targetElement.value);
+    renderApp();
+    return;
+  }
+
+  const componentId = targetElement.dataset.layoutComponentId;
+  if (componentId != null) {
+    if (
+      targetElement instanceof HTMLSelectElement &&
+      targetElement.hasAttribute("data-layout-background-asset")
+    ) {
+      const selectedAsset = globalHudBackgroundOptions.find(
+        (asset) => asset.id === targetElement.value
+      );
+      if (selectedAsset != null) {
+        appState = setLayoutEditorBackgroundAsset(
+          appState,
+          componentId,
+          selectedAsset
+        );
+        renderApp();
+      }
+      return;
+    }
+
+    if (
+      targetElement instanceof HTMLSelectElement &&
+      targetElement.hasAttribute("data-layout-background-mode")
+    ) {
+      appState = setLayoutEditorBackgroundMode(
+        appState,
+        componentId,
+        targetElement.value as UiLayoutBackgroundMode
+      );
+      renderApp();
+      return;
+    }
+
+    if (
+      targetElement instanceof HTMLInputElement &&
+      targetElement.dataset.layoutSliceEdge != null
+    ) {
+      appState = setLayoutEditorBackgroundSlice(
+        appState,
+        componentId,
+        targetElement.dataset.layoutSliceEdge as "top" | "right" | "bottom" | "left",
+        Number(targetElement.value)
+      );
+      renderApp();
+      return;
+    }
+
+    if (
+      targetElement instanceof HTMLInputElement &&
+      targetElement.dataset.layoutComponentField != null
+    ) {
+      appState = setLayoutEditorComponentRectField(
+        appState,
+        componentId,
+        targetElement.dataset.layoutComponentField as keyof UiLayoutRect,
+        Number(targetElement.value)
+      );
+      renderApp();
+      return;
+    }
+
+    if (
+      targetElement instanceof HTMLInputElement &&
+      targetElement.dataset.layoutElementField != null &&
+      targetElement.dataset.layoutElementId != null
+    ) {
+      appState = setLayoutEditorElementRectField(
+        appState,
+        componentId,
+        targetElement.dataset.layoutElementId,
+        targetElement.dataset.layoutElementField as keyof UiLayoutRect,
+        Number(targetElement.value)
+      );
+      renderApp();
+      return;
+    }
   }
 
   const fieldId = targetElement.dataset.houseField;
@@ -219,17 +373,54 @@ appElement.addEventListener("wheel", (event) => {
 
   event.preventDefault();
   const direction = event.deltaY > 0 ? -1 : 1;
-  setCampaignMapDebugState({
-    ...campaignMapDebugState,
-    scale:
-      campaignMapDebugState.scale + direction * MAP_DEBUG_SCALE_STEP,
-  });
+  zoomCampaignMapAtScreenCenter(
+    campaignMapDebugState.scale + direction * MAP_DEBUG_SCALE_STEP
+  );
 });
 
 appElement.addEventListener("pointerdown", (event) => {
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
     return;
+  }
+
+  const elementHandle = targetElement.closest<HTMLElement>(
+    "[data-layout-element-handle]"
+  );
+  if (elementHandle != null) {
+    const [componentId, elementId] =
+      elementHandle.dataset.layoutElementHandle?.split(":") ?? [];
+    if (componentId != null && elementId != null) {
+      layoutEditorDragState = {
+        mode: "element",
+        componentId,
+        elementId,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+      };
+      elementHandle.setPointerCapture(event.pointerId);
+      return;
+    }
+  }
+
+  const componentHandle = targetElement.closest<HTMLElement>(
+    "[data-layout-component-handle]"
+  );
+  if (componentHandle != null) {
+    const componentId = componentHandle.dataset.layoutComponentHandle;
+    if (componentId != null) {
+      layoutEditorDragState = {
+        mode: "component",
+        componentId,
+        elementId: null,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+      };
+      componentHandle.setPointerCapture(event.pointerId);
+      return;
+    }
   }
 
   if (targetElement.closest(".c-campaign-map-debug") != null) {
@@ -261,6 +452,39 @@ appElement.addEventListener("pointerdown", (event) => {
 });
 
 appElement.addEventListener("pointermove", (event) => {
+  if (
+    layoutEditorDragState != null &&
+    layoutEditorDragState.pointerId === event.pointerId
+  ) {
+    const deltaX = event.clientX - layoutEditorDragState.startClientX;
+    const deltaY = event.clientY - layoutEditorDragState.startClientY;
+    layoutEditorDragState = {
+      ...layoutEditorDragState,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+    };
+
+    if (layoutEditorDragState.mode === "component") {
+      appState = updateLayoutEditorComponentPosition(
+        appState,
+        layoutEditorDragState.componentId,
+        deltaX,
+        deltaY
+      );
+    } else if (layoutEditorDragState.elementId != null) {
+      appState = updateLayoutEditorElementPosition(
+        appState,
+        layoutEditorDragState.componentId,
+        layoutEditorDragState.elementId,
+        deltaX,
+        deltaY
+      );
+    }
+
+    renderApp();
+    return;
+  }
+
   if (
     campaignMapDragState == null ||
     campaignMapDragState.pointerId !== event.pointerId
@@ -426,6 +650,57 @@ appElement.addEventListener("click", (event) => {
       appState = equipValuable(appState, valuableId as ValuableItemId);
       renderApp();
     }
+    return;
+  }
+
+  const openLayoutEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-layout-editor']"
+  );
+  if (openLayoutEditorButton != null) {
+    appState = toggleLayoutEditor(appState, true);
+    renderApp();
+    return;
+  }
+
+  const closeLayoutEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-layout-editor']"
+  );
+  if (closeLayoutEditorButton != null) {
+    appState = toggleLayoutEditor(appState, false);
+    renderApp();
+    return;
+  }
+
+  const layoutComponentSelectButton = targetElement.closest<HTMLElement>(
+    "[data-layout-component-select]"
+  );
+  if (layoutComponentSelectButton != null) {
+    const componentId = layoutComponentSelectButton.dataset.layoutComponentSelect;
+    if (componentId != null) {
+      appState = selectLayoutEditorComponent(appState, componentId);
+      renderApp();
+    }
+    return;
+  }
+
+  const layoutElementSelectButton = targetElement.closest<HTMLElement>(
+    "[data-layout-element-select]"
+  );
+  if (layoutElementSelectButton != null) {
+    const value = layoutElementSelectButton.dataset.layoutElementSelect;
+    const [componentId, elementId] = value?.split(":") ?? [];
+    if (componentId != null && elementId != null) {
+      appState = selectLayoutEditorElement(appState, componentId, elementId);
+      renderApp();
+    }
+    return;
+  }
+
+  const copyLayoutParamsButton = targetElement.closest<HTMLElement>(
+    "[data-action='copy-layout-params']"
+  );
+  if (copyLayoutParamsButton != null) {
+    void copyCurrentLayoutParams();
     return;
   }
 
@@ -595,24 +870,38 @@ function syncGameViewport(): void {
 
 function handleCampaignMapDebugAction(action: string | undefined): void {
   if (action === "zoom-in") {
-    setCampaignMapDebugState({
-      ...campaignMapDebugState,
-      scale: campaignMapDebugState.scale + MAP_DEBUG_SCALE_STEP,
-    });
+    zoomCampaignMapAtScreenCenter(
+      campaignMapDebugState.scale + MAP_DEBUG_SCALE_STEP
+    );
     return;
   }
 
   if (action === "zoom-out") {
-    setCampaignMapDebugState({
-      ...campaignMapDebugState,
-      scale: campaignMapDebugState.scale - MAP_DEBUG_SCALE_STEP,
-    });
+    zoomCampaignMapAtScreenCenter(
+      campaignMapDebugState.scale - MAP_DEBUG_SCALE_STEP
+    );
     return;
   }
 
   if (action === "reset") {
     setCampaignMapDebugState({ scale: 1, offsetX: 0, offsetY: 0 });
   }
+}
+
+function zoomCampaignMapAtScreenCenter(nextScale: number): void {
+  const clampedScale = clamp(
+    nextScale,
+    MAP_DEBUG_MIN_SCALE,
+    MAP_DEBUG_MAX_SCALE
+  );
+  const currentScale = Math.max(campaignMapDebugState.scale, 0.0001);
+  const scaleRatio = clampedScale / currentScale;
+
+  setCampaignMapDebugState({
+    scale: clampedScale,
+    offsetX: campaignMapDebugState.offsetX * scaleRatio,
+    offsetY: campaignMapDebugState.offsetY * scaleRatio,
+  });
 }
 
 function setCampaignMapDebugState(nextState: CampaignMapDebugState): void {
@@ -675,6 +964,23 @@ function syncCampaignMapDebugView(): void {
 }
 
 function endCampaignMapDrag(event: PointerEvent): void {
+  if (
+    layoutEditorDragState != null &&
+    layoutEditorDragState.pointerId === event.pointerId
+  ) {
+    const handle =
+      appRoot.querySelector<HTMLElement>(
+        layoutEditorDragState.mode === "component"
+          ? `[data-layout-component-handle="${layoutEditorDragState.componentId}"]`
+          : `[data-layout-element-handle="${layoutEditorDragState.componentId}:${layoutEditorDragState.elementId}"]`
+      ) ?? null;
+    if (handle?.hasPointerCapture(event.pointerId) === true) {
+      handle.releasePointerCapture(event.pointerId);
+    }
+    layoutEditorDragState = null;
+    return;
+  }
+
   if (
     campaignMapDragState == null ||
     campaignMapDragState.pointerId !== event.pointerId

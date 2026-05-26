@@ -3,6 +3,128 @@
 > vite --host 127.0.0.1 --port 5173
 
 
-  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m820[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m859[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m14:44:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/tools/layout-editor-view.ts[22m
+[2m14:44:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m14:44:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m15:12:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/tools/layout-editor-view.ts[22m
+[2m15:12:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m15:16:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m15:20:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
+[2m15:20:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m15:21:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
+[2m15:21:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:13:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-001.png[22m
+[2m16:13:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-002.png[22m
+[2m16:13:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-003.png[22m
+[2m16:13:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-004.png[22m
+[2m16:13:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-005.png[22m
+[2m16:13:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-006.png[22m
+[2m16:13:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-007.png[22m
+[2m16:13:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/3.png[22m
+[2m16:13:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/5.png[22m
+[2m16:13:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/6.png[22m
+[2m16:13:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_022_wood_railing_2.0 - 副本.png[22m
+[2m16:13:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_022_wood_railing_2.0.png[22m
+[2m16:13:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (2).png[22m
+[2m16:13:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_031_large_gold_button_1.0.png[22m
+[2m16:14:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_031_large_gold_button_1.0.png[22m
+[2m16:14:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-004.png[22m
+[2m16:14:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (3).png[22m
+[2m16:14:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_002_top_status_bar_1.0.png[22m
+[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_002_top_status_bar_1.0.png[22m
+[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-001.png[22m
+[2m16:14:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (4).png[22m
+[2m16:14:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_015_left_mission_panel_1.0.png[22m
+[2m16:14:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_015_left_mission_panel_1.0.png[22m
+[2m16:14:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-002.png[22m
+[2m16:15:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0.png[22m
+[2m16:15:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0 (1).png[22m
+[2m16:15:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0 (2).png[22m
+[2m16:15:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-005.png[22m
+[2m16:15:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (5).png[22m
+[2m16:15:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0 (2).png[22m
+[2m16:15:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0 (2).png[22m
+[2m16:15:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (5).png[22m
+[2m16:15:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0 (1).png[22m
+[2m16:15:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0 (2).png[22m
+[2m16:15:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-005.png[22m
+[2m16:15:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0.png[22m
+[2m16:15:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (5).png[22m
+[2m16:15:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0.png[22m
+[2m16:15:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1_016_small_blank_panel_1.0.png[22m
+[2m16:15:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-005.png[22m
+[2m17:38:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/material-202605261611-003.png[22m
+[2m17:42:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/toukuang.png[22m
+[2m17:42:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m17:42:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (5).png[22m
+[2m17:42:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (2).png[22m
+[2m17:42:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (3).png[22m
+[2m17:42:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2myuansu/1 (4).png[22m
+[2m18:46:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m18:46:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m18:46:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m18:46:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:03:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
+[2m19:03:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:03:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
+[2m19:05:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
+[2m19:05:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/portrait-assets.ts[22m
+[2m19:18:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
+[2m19:18:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:20:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:20:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:26:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m19:26:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m19:31:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m19:31:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:31:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m19:32:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:34:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:35:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:38:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:38:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:38:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:38:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:39:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m19:41:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m20:06:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m20:12:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m20:14:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m20:41:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/user/20.png[22m
+[2m20:41:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/user/25.png[22m
+[2m20:41:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/user/26.png[22m
+[2m20:41:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/user/29.png[22m
+[2m20:41:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/user/34-39.png[22m
+[2m20:41:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/user/40.png[22m
+[2m20:42:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui1/ui/user/20.png[22m
+[2m20:42:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui1/ui/user/25.png[22m
+[2m20:42:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui1/ui/user/26.png[22m
+[2m20:42:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui1/ui/user/29.png[22m
+[2m20:42:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui1/ui/user/34-39.png[22m
+[2m20:42:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui1/ui/user/40.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_002_top_status_bar_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_003_small_dark_panel_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_004_easel_icon_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_005_round_coin_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_006_blue_bar_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_007_info_button_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_010_red_nameplate_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_013_blank_large_frame_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_008_function_button_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_015_left_mission_panel_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_016_small_blank_panel_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_020_small_blank_panel_2.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_019_corner_frame_parts_4.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_021_medium_blank_panel_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_022_wood_railing_2.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_024_gold_bottom_button_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/1_031_large_gold_button_1.0.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/3.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/5.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/6.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/参考图.png[22m
+[2m20:42:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/_contact_sheet.jpg[22m

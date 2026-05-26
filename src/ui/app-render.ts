@@ -22,6 +22,7 @@ import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
+import { renderLayoutEditor } from "./tools/layout-editor-view";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
 
@@ -304,11 +305,15 @@ export function renderApp(input: AppRenderInput): string {
             <main class="l-stage">
               ${stageMarkup}
               <div class="l-overlay-ui">
-                ${renderGlobalPlayerPanel(playerPanelModel)}
+                ${renderGlobalPlayerPanel(
+                  playerPanelModel,
+                  input.appState.uiLayouts.globalHud
+                )}
               </div>
             </main>
             ${renderModal(input.appState.modalState, input.cityPortraits)}
             ${renderOverlay(input, playerCharacter)}
+            ${renderLayoutEditor(input.appState)}
           </div>
         </div>
       </div>
