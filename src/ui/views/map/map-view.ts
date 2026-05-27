@@ -1,5 +1,9 @@
 import type { GridCoordinate } from "../../../application/navigation/travel-to-coordinate";
 import type { CityDefinition } from "../../../domain/city";
+import type {
+  HistoricalCharacterRecord,
+  HistoricalCityRoster,
+} from "../../../domain/historical-character";
 import type { MapDefinition, MapLayer, MapNode, MapStats } from "../../../domain/map";
 
 type CityMarker = {
@@ -17,6 +21,12 @@ type CampaignMarker = {
   y: number;
   kind: NonNullable<MapNode["kind"]>;
   summary: string;
+  historicalCharacters: {
+    primary: string[];
+    secondary: string[];
+    background: string[];
+    notes: string;
+  } | null;
 };
 
 export type MapViewModel = {
@@ -47,8 +57,19 @@ export function createMapViewModel(input: {
   playerCoordinate: GridCoordinate;
   cityDefinitions: CityDefinition[];
   cityCoordinatesById: Record<string, GridCoordinate>;
+  historicalCharacters?: HistoricalCharacterRecord[];
+  historicalCityRosters?: HistoricalCityRoster[];
 }): MapViewModel {
   const mode = input.mapDefinition.mode ?? "grid";
+  const historicalCharacterNameById = Object.fromEntries(
+    (input.historicalCharacters ?? []).map((characterRecord) => [
+      characterRecord.id,
+      characterRecord.displayName,
+    ])
+  );
+  const historicalRosterByCityNodeId = Object.fromEntries(
+    (input.historicalCityRosters ?? []).map((roster) => [roster.cityNodeId, roster])
+  );
   const cityIdByMapNodeId = Object.fromEntries(
     input.cityDefinitions
       .filter((cityDefinition) => cityDefinition.mapNodeId != null)
@@ -95,17 +116,36 @@ export function createMapViewModel(input: {
       input.mapDefinition.layers?.find((layer) => layer.id === "map_material_texture")
         ?.imageUrl ?? null,
     campaignMarkers: input.mapDefinition.nodes
-      .map((node, index) => ({
-        id: node.id ?? node.cityId ?? `map-node.${index}`,
-        cityId:
-          node.cityId ??
-          (node.id == null ? null : cityIdByMapNodeId[node.id] ?? null),
-        name: node.label ?? node.cityId ?? `Node ${index + 1}`,
-        x: node.x,
-        y: node.y,
-        kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
-        summary: node.summary ?? "",
-      }))
+      .map((node, index) => {
+        const nodeId = node.id ?? node.cityId ?? `map-node.${index}`;
+        const roster =
+          node.id == null ? null : historicalRosterByCityNodeId[node.id] ?? null;
+        const resolveCharacterNames = (characterIds: string[]) =>
+          characterIds.map(
+            (characterId) => historicalCharacterNameById[characterId] ?? characterId
+          );
+
+        return {
+          id: nodeId,
+          cityId:
+            node.cityId ??
+            (node.id == null ? null : cityIdByMapNodeId[node.id] ?? null),
+          name: node.label ?? node.cityId ?? `Node ${index + 1}`,
+          x: node.x,
+          y: node.y,
+          kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
+          summary: node.summary ?? "",
+          historicalCharacters:
+            roster == null
+              ? null
+              : {
+                  primary: resolveCharacterNames(roster.primaryCharacterIds),
+                  secondary: resolveCharacterNames(roster.secondaryCharacterIds),
+                  background: resolveCharacterNames(roster.backgroundCharacterIds),
+                  notes: roster.notes,
+                },
+        };
+      })
       .filter((marker) => marker.kind !== "landmark"),
     layers: input.mapDefinition.layers ?? [],
     stats: input.mapDefinition.stats ?? null,
@@ -166,12 +206,54 @@ function getMarkerClass(kind: CampaignMarker["kind"]): string {
 }
 
 function getMarkerDisplayName(name: string): string {
-  const markerIndex = Math.max(name.lastIndexOf("\u2605"), name.lastIndexOf("\u203b"));
+  const markerIndex = Math.max(
+    name.lastIndexOf("\u2605"),
+    name.lastIndexOf("\u203b"),
+    name.lastIndexOf("\u25cf")
+  );
   if (markerIndex >= 0) {
     return name.slice(markerIndex + 1).trim();
   }
 
   return name.replace(/^\u3010(.+)\u3011$/, "$1");
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderCharacterGroup(label: string, names: string[]): string {
+  if (names.length === 0) {
+    return "";
+  }
+
+  return `<span><b>${label}</b>${names.map(escapeHtml).join("、")}</span>`;
+}
+
+function renderHistoricalCharacters(
+  marker: CampaignMarker
+): string {
+  if (marker.historicalCharacters == null) {
+    return "";
+  }
+
+  const characterGroups = [
+    renderCharacterGroup("核心人物：", marker.historicalCharacters.primary),
+    renderCharacterGroup("相关人物：", marker.historicalCharacters.secondary),
+    renderCharacterGroup("背景人物：", marker.historicalCharacters.background),
+  ]
+    .filter((item) => item !== "")
+    .join("");
+  const notes =
+    marker.historicalCharacters.notes === ""
+      ? ""
+      : `<span><b>设定说明：</b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
+
+  return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
 }
 
 function renderCampaignMarkers(model: MapViewModel): string {
@@ -182,6 +264,8 @@ function renderCampaignMarkers(model: MapViewModel): string {
       const heightU = marker.x / model.coordinateSpace.width;
       const heightV = 1 - marker.y / model.coordinateSpace.height;
       const displayName = getMarkerDisplayName(marker.name);
+      const markerName = escapeHtml(marker.name);
+      const markerSummary = escapeHtml(marker.summary);
 
       return `
         <button
@@ -194,16 +278,16 @@ function renderCampaignMarkers(model: MapViewModel): string {
           data-map-y="${marker.y}"
           data-city-id="${marker.cityId ?? ""}"
           data-map-node-id="${marker.id}"
-          data-map-node-name="${marker.name}"
-          title="${marker.name} (${marker.x}, ${marker.y})"
+          data-map-node-name="${markerName}"
+          title="${markerName} (${marker.x}, ${marker.y})"
         >
           <span class="c-campaign-marker__dot"></span>
-          <span class="c-campaign-marker__label">${displayName}</span>
-          ${
-            marker.summary === ""
-              ? ""
-              : `<span class="c-campaign-marker__summary"><strong>${marker.name}</strong><span>${marker.summary}</span></span>`
-          }
+          <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
+          <span class="c-campaign-marker__summary">
+            <strong>${markerName}</strong>
+            ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
+            ${renderHistoricalCharacters(marker)}
+          </span>
         </button>
       `;
     })
@@ -246,7 +330,15 @@ export function renderCampaignStats(stats: MapStats | null): string {
   `;
 }
 
-function renderCampaignMap(model: MapViewModel): string {
+function renderCampaignMapVisualLayer(
+  model: MapViewModel,
+  options: {
+    transformClassName?: string;
+    transformDataAttribute?: string;
+    includeInteractivePoints: boolean;
+    ariaHidden?: boolean;
+  }
+): string {
   const terrainCanvasMarkup =
     model.primaryImageUrl == null ||
     model.heightmapImageUrl == null ||
@@ -270,10 +362,39 @@ function renderCampaignMap(model: MapViewModel): string {
     model.regionOverlayImageUrl == null
       ? ""
       : `<img class="c-campaign-map__regions" src="${model.regionOverlayImageUrl}" alt="">`;
-  const playerLeft = (model.playerCoordinate.x / model.coordinateSpace.width) * 100;
-  const playerBottom = (model.playerCoordinate.y / model.coordinateSpace.height) * 100;
   const playerHeightX = model.playerCoordinate.x / model.coordinateSpace.width;
   const playerHeightY = 1 - model.playerCoordinate.y / model.coordinateSpace.height;
+  const transformClassName = options.transformClassName ?? "c-campaign-map__transform";
+  const transformDataAttribute =
+    options.transformDataAttribute ?? 'data-campaign-map-transform="true"';
+  const ariaHiddenAttribute = options.ariaHidden === true ? ' aria-hidden="true"' : "";
+
+  return `
+    <div class="${transformClassName}" ${transformDataAttribute}${ariaHiddenAttribute}>
+      ${terrainCanvasMarkup}
+      ${imageMarkup}
+      ${regionOverlayMarkup}
+      ${
+        options.includeInteractivePoints
+          ? `
+            ${renderCampaignMarkers(model)}
+            <span
+              class="c-campaign-player"
+              data-terrain-projected-point="true"
+              data-map-height-u="${playerHeightX.toFixed(5)}"
+              data-map-height-v="${playerHeightY.toFixed(5)}"
+              title="Player (${model.playerCoordinate.x}, ${model.playerCoordinate.y})"
+            ></span>
+          `
+          : ""
+      }
+    </div>
+  `;
+}
+
+function renderCampaignMap(model: MapViewModel): string {
+  const playerLeft = (model.playerCoordinate.x / model.coordinateSpace.width) * 100;
+  const playerBottom = (model.playerCoordinate.y / model.coordinateSpace.height) * 100;
 
   return `
     <div class="c-campaign-map-shell">
@@ -286,19 +407,18 @@ function renderCampaignMap(model: MapViewModel): string {
           --player-bottom:${playerBottom.toFixed(3)}%;
         "
       >
-        <div class="c-campaign-map__transform" data-campaign-map-transform="true">
-          ${terrainCanvasMarkup}
-          ${imageMarkup}
-          ${regionOverlayMarkup}
-          ${renderCampaignMarkers(model)}
-          <span
-            class="c-campaign-player"
-            data-terrain-projected-point="true"
-            data-map-height-u="${playerHeightX.toFixed(5)}"
-            data-map-height-v="${playerHeightY.toFixed(5)}"
-            title="Player (${model.playerCoordinate.x}, ${model.playerCoordinate.y})"
-          ></span>
+        ${renderCampaignMapVisualLayer(model, {
+          includeInteractivePoints: true,
+        })}
+        <div class="c-campaign-map__tiltshift" aria-hidden="true">
+          ${renderCampaignMapVisualLayer(model, {
+            transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",
+            transformDataAttribute: 'data-campaign-map-transform-blur="true"',
+            includeInteractivePoints: false,
+            ariaHidden: true,
+          })}
         </div>
+        <div class="c-campaign-map__vignette" aria-hidden="true"></div>
         <div class="c-campaign-map-debug" aria-label="Campaign map debug controls">
           <div class="c-campaign-map-debug__readout">
             <span>Scale <strong data-campaign-map-scale>1.00x</strong></span>
