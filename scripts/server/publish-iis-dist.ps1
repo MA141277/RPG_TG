@@ -25,6 +25,7 @@ $webConfig = @'
       </files>
     </defaultDocument>
     <staticContent>
+      <remove fileExtension=".mjs" />
       <mimeMap fileExtension=".mjs" mimeType="text/javascript" />
     </staticContent>
   </system.webServer>
