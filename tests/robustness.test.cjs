@@ -1,4 +1,4 @@
-const test = require("node:test");
+﻿const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../.test-dist/application/state/create-initial-state.js");
@@ -34,8 +34,14 @@ const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
 const {
+  medicineHouseHouseModule,
+} = require("../.test-dist/application/house-modules/medicine-house/medicine-house-house-module.js");
+const {
   teaHouseHouseModule,
 } = require("../.test-dist/application/house-modules/tea-house/tea-house-house-module.js");
+const {
+  resolveCompoundingGrade,
+} = require("../.test-dist/application/medicine-house/compounding-minigame.js");
 const {
   tavernHouseModule,
 } = require("../.test-dist/application/house-modules/tavern/tavern-house-module.js");
@@ -62,6 +68,10 @@ const { GRAIN_SHOP_VARIABLE_KEYS } = require("../.test-dist/domain/grain-shop.js
 const { HOME_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/home-house.js");
 const { KEEP_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/keep-house.js");
 const {
+  getMedicineInventoryQuantityVariableKey,
+  getPlayerFatigueVariableKey,
+} = require("../.test-dist/domain/medicine-house.js");
+const {
   getLeaderResidenceRelationKey,
   LEADER_RESIDENCE_VARIABLE_KEYS,
 } = require("../.test-dist/domain/leader-residence.js");
@@ -86,6 +96,9 @@ const teaHouse = prototypeHouses.find(
 const marketHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "market-house"
 );
+const medicineHouse = prototypeHouses.find(
+  (houseDefinition) => houseDefinition.moduleId === "medicine-house"
+);
 const tavernHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "tavern"
 );
@@ -101,6 +114,7 @@ assert.ok(keepHouse, "Expected prototype keep house to exist.");
 assert.ok(grainShopHouse, "Expected prototype grain shop house to exist.");
 assert.ok(marketHouse, "Expected prototype market house to exist.");
 assert.ok(teaHouse, "Expected prototype tea house to exist.");
+assert.ok(medicineHouse, "Expected prototype medicine house to exist.");
 assert.ok(tavernHouse, "Expected prototype tavern house to exist.");
 assert.ok(
   leaderResidenceHouse,
@@ -1229,4 +1243,149 @@ test("tavern work flow completes one side offer and grants reward", () => {
   const playerCharacter = getPlayerCharacter(takeWork.characterDefinitions);
   assert.equal(playerCharacter.stats.gold, 200);
   assert.equal(takeWork.sessionState?.availableOffers.length, 2);
+});
+
+test("medicine house greeting flow opens actions after advance", () => {
+  const state = createBaseState();
+  const enterResult = medicineHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(enterResult.sessionState?.dialoguePhase, "greeting");
+
+  const openResult = medicineHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+
+  assert.equal(openResult.sessionState?.dialoguePhase, "open");
+  const viewModel = medicineHouseHouseModule.selectViewModel({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+  });
+
+  assert.equal(viewModel.actionContainer?.actions.length, 5);
+});
+
+test("medicine house heal and buy update fatigue inventory and gold", () => {
+  const state = createBaseState();
+  const richCharacters = prototypeCharacters.map((characterDefinition) =>
+    characterDefinition.id === playerCharacterId
+      ? {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold: 300,
+          },
+        }
+      : characterDefinition
+  );
+  const enterResult = medicineHouseHouseModule.enter({
+    gameState: {
+      ...state,
+      runtime: {
+        ...state.runtime,
+        variables: {
+          ...state.runtime.variables,
+          [getPlayerFatigueVariableKey()]: 40,
+        },
+      },
+    },
+    characterDefinitions: richCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+
+  const openResult = medicineHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: richCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+
+  const healResult = medicineHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: richCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "heal" },
+  });
+
+  assert.equal(healResult.gameState.runtime.variables[getPlayerFatigueVariableKey()], 10);
+
+  const playerAfterHeal = getPlayerCharacter(healResult.characterDefinitions);
+  assert.equal(playerAfterHeal.stats.gold, 250);
+
+  const afterAlert = medicineHouseHouseModule.dispatch({
+    gameState: healResult.gameState,
+    characterDefinitions: healResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: healResult.sessionState,
+    request: { type: "action", actionId: "close-alert" },
+  });
+
+  const buyOpen = medicineHouseHouseModule.dispatch({
+    gameState: afterAlert.gameState,
+    characterDefinitions: afterAlert.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: afterAlert.sessionState,
+    request: { type: "action", actionId: "open-buy" },
+  });
+
+  assert.equal(buyOpen.sessionState?.overlay?.type, "buy");
+
+  const buyResult = medicineHouseHouseModule.dispatch({
+    gameState: buyOpen.gameState,
+    characterDefinitions: buyOpen.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: buyOpen.sessionState,
+    request: { type: "action", actionId: "confirm-buy" },
+  });
+
+  assert.equal(
+    buyResult.gameState.runtime.variables[
+      getMedicineInventoryQuantityVariableKey("medicine_heal_001")
+    ],
+    1
+  );
+});
+
+test("medicine compounding grades targets by closeness", () => {
+  const perfect = resolveCompoundingGrade(
+    {
+      ailmentId: "wind_cold",
+      ailmentName: "风寒",
+      coldRequired: 2,
+      healRequired: 5,
+      maxPoison: 1,
+    },
+    [
+      { herbId: "herb_bo_he", amount: 1 },
+      { herbId: "herb_xing_ren", amount: 1 },
+      { herbId: "herb_dang_gui", amount: 1 },
+    ],
+    [
+      { id: "herb_bo_he", name: "薄荷", cold: 2, heat: 0, poison: 0, heal: 1 },
+      { id: "herb_xing_ren", name: "杏仁", cold: 1, heat: 0, poison: 0, heal: 2 },
+      { id: "herb_dang_gui", name: "当归", cold: 0, heat: 1, poison: 0, heal: 3 },
+    ]
+  );
+
+  assert.equal(perfect.grade, "S");
 });

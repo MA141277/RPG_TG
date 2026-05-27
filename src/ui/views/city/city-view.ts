@@ -10,6 +10,8 @@ function getHouseArtworkClass(houseDefinition: HouseDefinition): string {
   switch (houseDefinition.id) {
     case "home_001":
       return "c-kulan-house-card--home-house";
+    case "house.kulan.medicine_house":
+      return "c-kulan-house-card--medicine-house";
     case "house.kulan.tea_house":
       return "c-kulan-house-card--tea-house";
     case "house.kulan.keep":

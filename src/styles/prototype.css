@@ -1035,6 +1035,10 @@
   background-image: url("../../ui/card/6_063_card_zizhai_2.0.png");
 }
 
+.c-kulan-house-card--medicine-house .c-kulan-house-card__art {
+  background-image: url("../../ui/card/5_048_card_yicang_2.0.png");
+}
+
 /* house card 图打标：chaguan / shuaifu / dangpu / lianghang / jiusi */
 .c-kulan-house-card--tea-house .c-kulan-house-card__art {
   background-image: url("../../ui1/ui/card/card_chaguan(1).png");

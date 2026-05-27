@@ -927,7 +927,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
                 },
                 { id: "start-debate", label: "舌战", tone: "accent" },
                 { id: "inquire", label: "打听消息" },
-                { id: "dismiss-dialogue", label: "关闭" },
+                { id: "dismiss-dialogue", label: "离开" },
               ],
             },
       statusCard: {
