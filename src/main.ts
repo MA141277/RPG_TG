@@ -26,7 +26,10 @@ import {
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
-import { createHouseRuntime } from "./application/house/house-runtime";
+import {
+  createHouseRuntime,
+  type HouseRuntime,
+} from "./application/house/house-runtime";
 import { enterCity } from "./application/navigation/enter-city";
 import {
   travelToCoordinate,
@@ -54,6 +57,7 @@ import {
   zhuYuanzhangCityRosters,
   zhuYuanzhangEarlyCharacters,
 } from "./content/zhu-yuanzhang-early-characters";
+import type { CharacterDefinition } from "./domain/character";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -69,6 +73,7 @@ import type {
 import type { ValuableItemId } from "./domain/valuable-item";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
+import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
   setCampaignTerrainCamera,
   syncCampaignTerrainWebGl,
@@ -80,6 +85,8 @@ const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = 40;
 const MAP_DEBUG_SCALE_STEP = 0.2;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
+const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
+const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 1,
   offsetX: 0,
@@ -97,14 +104,31 @@ type CampaignMapDebugState = {
   offsetY: number;
 };
 
+type SaveDataResult = {
+  selectedCharacterId?: string | null;
+} | null;
+
+type BackgroundMusicMode = "opening" | "in-game";
+
 const appElement = document.querySelector<HTMLElement>("#app");
+const uiOverlayElement = document.querySelector<HTMLElement>("#ui-overlay");
 
 if (appElement == null) {
   throw new Error("Missing #app mount point.");
 }
 
+if (uiOverlayElement == null) {
+  throw new Error("Missing #ui-overlay mount point.");
+}
+
 const appRoot = appElement;
-const playerCharacterId = "char.player";
+const defaultPlayerCharacterId = "char.player";
+const selectableCharacterIds = [
+  "char.player",
+  "char.kulan_xu_da",
+  "char.kulan_tang_he",
+  "char.kulan_chang_yuchun",
+] as const;
 const cityDefinitions = prototypeCities;
 const mapNodeById = Object.fromEntries(
   yuanmoCampaignMap.nodes
@@ -146,71 +170,20 @@ const characterNameById = Object.fromEntries(
     characterDefinition.name,
   ])
 );
+const selectableCharacters = selectableCharacterIds.map((characterId) => {
+  const characterDefinition = prototypeCharacters.find(
+    (candidateCharacter) => candidateCharacter.id === characterId
+  );
+  assertExists(
+    characterDefinition,
+    `Selectable character not found for id "${characterId}".`
+  );
+  return characterDefinition;
+});
 
-let appState: AppState = {
-  gameState: ensureCityNpcPoolsForCurrentDay(
-    createInitialState({
-      currentMapId: yuanmoCampaignMap.id,
-      currentCityId: prototypeCity.id,
-      currentHouseId: null,
-      playerCharacterId,
-      chapterId: "chapter.prototype",
-      year: 1567,
-      month: 1,
-      day: 1,
-      pinnedCharacterId: playerCharacterId,
-      reviewDateText: "距离评定 40 天",
-      mainHouseMissionText: "前往评定会场",
-      cards: {
-        ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
-        selectedCardId: prototypeCards[0]?.id ?? null,
-      },
-      valuables: {
-        items: prototypeValuables,
-        selectedItemId: prototypeValuables[0]?.id ?? null,
-        equippedWeaponSet: {
-          swordId:
-            prototypeValuables.find(
-              (valuableDefinition) => valuableDefinition.category === "weapon"
-            )?.id ?? null,
-          armorId:
-            prototypeValuables.find(
-              (valuableDefinition) => valuableDefinition.category === "armor"
-            )?.id ?? null,
-        },
-      },
-      currentView: "map",
-    }),
-    prototypeCityNpcPools
-  ),
-  characterDefinitions: [...prototypeCharacters],
-  playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
-  modalState: null,
-  cityDirectoryState: null,
-  uiLayouts: {
-    globalHud: createDefaultGlobalHudLayout(),
-  },
-  layoutEditor: {
-    isOpen: false,
-    selectedTargetId: "global-hud",
-    selectedComponentId: "status-board",
-    selectedElementId: null,
-    backgroundAssetQuery: "",
-  },
-};
-appState = {
-  ...appState,
-  gameState: {
-    ...appState.gameState,
-    runtime: {
-      ...appState.gameState.runtime,
-      variables: {
-        ...appState.gameState.runtime.variables,
-        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-      },
-    },
-  },
-};
+let currentPlayerCharacterId = defaultPlayerCharacterId;
+
+let appState: AppState = createPrototypeAppState(currentPlayerCharacterId);
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -222,6 +195,7 @@ let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
 let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
+let activeBackgroundMusicMode: BackgroundMusicMode | null = null;
 let campaignMapDragState:
   | {
       pointerId: number;
@@ -244,19 +218,186 @@ let layoutEditorDragState:
     }
   | null = null;
 
-const houseRuntime = createHouseRuntime({
-  getAppState: () => appState,
-  setAppState: (nextAppState) => {
-    appState = nextAppState;
-  },
-  renderApp,
-  houseDefinitions: prototypeHouses,
-  playerCharacterId,
+let houseRuntime: HouseRuntime = createHouseRuntimeInstance();
+const backgroundMusicPlayer = createBackgroundMusicPlayer();
+const mainUiFlow = new MainUiFlow({
+  overlayRoot: uiOverlayElement,
+  characters: selectableCharacters,
+  onStartGame: startMainGame,
+  loadSaveData,
 });
 
 syncGameViewport();
 window.addEventListener("resize", syncGameViewport);
-renderApp();
+setGameVisibility(false);
+mainUiFlow.mount();
+mainUiFlow.showMainMenu();
+
+function createPrototypeAppState(playerCharacterId: string): AppState {
+  let nextAppState: AppState = {
+    gameState: ensureCityNpcPoolsForCurrentDay(
+      createInitialState({
+        currentMapId: yuanmoCampaignMap.id,
+        currentCityId: prototypeCity.id,
+        currentHouseId: null,
+        playerCharacterId,
+        chapterId: "chapter.prototype",
+        year: 1567,
+        month: 1,
+        day: 1,
+        pinnedCharacterId: playerCharacterId,
+        reviewDateText: "距离评定 40 天",
+        mainHouseMissionText: "前往评定会场",
+        cards: {
+          ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
+          selectedCardId: prototypeCards[0]?.id ?? null,
+        },
+        valuables: {
+          items: prototypeValuables,
+          selectedItemId: prototypeValuables[0]?.id ?? null,
+          equippedWeaponSet: {
+            swordId:
+              prototypeValuables.find(
+                (valuableDefinition) => valuableDefinition.category === "weapon"
+              )?.id ?? null,
+            armorId:
+              prototypeValuables.find(
+                (valuableDefinition) => valuableDefinition.category === "armor"
+              )?.id ?? null,
+          },
+        },
+        currentView: "map",
+      }),
+      prototypeCityNpcPools
+    ),
+    characterDefinitions: [...prototypeCharacters],
+    playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
+    modalState: null,
+    cityDirectoryState: null,
+    uiLayouts: {
+      globalHud: createDefaultGlobalHudLayout(),
+    },
+    layoutEditor: {
+      isOpen: false,
+      selectedTargetId: "global-hud",
+      selectedComponentId: "status-board",
+      selectedElementId: null,
+      backgroundAssetQuery: "",
+    },
+  };
+
+  nextAppState = {
+    ...nextAppState,
+    gameState: {
+      ...nextAppState.gameState,
+      runtime: {
+        ...nextAppState.gameState.runtime,
+        variables: {
+          ...nextAppState.gameState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+  };
+
+  return nextAppState;
+}
+
+function createHouseRuntimeInstance(): HouseRuntime {
+  return createHouseRuntime({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp,
+    houseDefinitions: prototypeHouses,
+    playerCharacterId: currentPlayerCharacterId,
+  });
+}
+
+function loadSaveData(): SaveDataResult {
+  // Placeholder for future save loading integration.
+  return null;
+}
+
+function startMainGame(selectedCharacter: CharacterDefinition): void {
+  resetMainGameRuntime();
+  currentPlayerCharacterId = selectedCharacter.id;
+  appState = createPrototypeAppState(currentPlayerCharacterId);
+  houseRuntime = createHouseRuntimeInstance();
+  setGameVisibility(true);
+  mainUiFlow.hide();
+  renderApp();
+}
+
+function setGameVisibility(isVisible: boolean): void {
+  appRoot.style.visibility = isVisible ? "visible" : "hidden";
+  appRoot.style.pointerEvents = isVisible ? "auto" : "none";
+  syncBackgroundMusic(isVisible ? "in-game" : "opening");
+}
+
+function resetMainGameRuntime(): void {
+  houseRuntime.clearAllHouseIntervals();
+
+  if (initialCampaignMapDebugAnimationFrame != null) {
+    window.cancelAnimationFrame(initialCampaignMapDebugAnimationFrame);
+  }
+
+  initialCampaignMapDebugAnimationFrame = null;
+  initialCampaignMapDebugAnimationStartTime = null;
+  hasAppliedInitialCampaignMapDebug = false;
+  hasStartedInitialCampaignMapDebugAnimation = false;
+  campaignMapDebugState = {
+    ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
+  };
+  campaignMapDebugHomeState = {
+    ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
+  };
+  campaignMapDragState = null;
+  shouldSuppressNextClickAfterMapDrag = false;
+  layoutEditorDragState = null;
+  hideMapIntroOverlay();
+}
+
+function createBackgroundMusicPlayer(): HTMLAudioElement {
+  const audio = new Audio();
+  audio.loop = true;
+  audio.preload = "auto";
+  audio.volume = 0.35;
+  return audio;
+}
+
+function syncBackgroundMusic(mode: BackgroundMusicMode): void {
+  const nextSourceUrl = mode === "opening" ? OPENING_BGM_URL : IN_GAME_BGM_URL;
+  if (activeBackgroundMusicMode !== mode) {
+    activeBackgroundMusicMode = mode;
+    backgroundMusicPlayer.pause();
+    backgroundMusicPlayer.src = nextSourceUrl;
+    backgroundMusicPlayer.currentTime = 0;
+    backgroundMusicPlayer.load();
+  }
+
+  void playBackgroundMusic();
+}
+
+async function playBackgroundMusic(): Promise<void> {
+  try {
+    await backgroundMusicPlayer.play();
+  } catch {
+    // Browser autoplay policy may defer playback until the next user gesture.
+  }
+}
+
+function resumeBackgroundMusicIfNeeded(): void {
+  if (backgroundMusicPlayer.paused) {
+    void playBackgroundMusic();
+  }
+}
+
+window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
+  passive: true,
+});
+window.addEventListener("keydown", resumeBackgroundMusicIfNeeded);
 
 function getSelectedLayoutComponent(): UiLayoutComponent | null {
   return (
@@ -977,7 +1118,7 @@ function renderApp() {
 
   appRoot.innerHTML = renderAppMarkup({
     appState,
-    playerCharacterId,
+    playerCharacterId: currentPlayerCharacterId,
     mapDefinition: yuanmoCampaignMap,
     cityDefinition: prototypeCity,
     houseDefinitions: prototypeHouses,

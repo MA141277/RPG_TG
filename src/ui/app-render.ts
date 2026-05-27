@@ -219,12 +219,6 @@ function renderStage(input: AppRenderInput): string {
       cityDefinitions: [input.cityDefinition],
       cityCoordinatesById: input.cityCoordinatesById,
     };
-    if (input.historicalCharacters != null) {
-      mapViewModelInput.historicalCharacters = input.historicalCharacters;
-    }
-    if (input.historicalCityRosters != null) {
-      mapViewModelInput.historicalCityRosters = input.historicalCityRosters;
-    }
     const mapViewModel = createMapViewModel(mapViewModelInput);
 
     return renderMapView(mapViewModel);

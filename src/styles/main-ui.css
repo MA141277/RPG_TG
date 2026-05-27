@@ -1,0 +1,658 @@
+.c-main-ui-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  overflow: hidden;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 160ms ease,
+    visibility 160ms ease;
+}
+
+.c-main-ui-overlay.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.c-main-ui-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.c-main-ui-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.c-main-ui-screen--main-menu {
+  background:
+    linear-gradient(180deg, rgb(248 244 232 / 26%), rgb(18 16 14 / 20%)),
+    url("../../yuansu/开局ui/background.png") center center / cover no-repeat;
+}
+
+.c-main-ui-main-menu {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.c-main-ui-main-menu::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 28%, rgb(255 248 236 / 28%), transparent 32%),
+    linear-gradient(90deg, rgb(246 238 222 / 26%), rgb(246 238 222 / 0%) 40%);
+  pointer-events: none;
+}
+
+.c-main-ui-main-menu__content {
+  position: absolute;
+  left: clamp(72px, 12vw, 170px);
+  top: 56%;
+  z-index: 1;
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  transform: translateY(-50%);
+}
+
+.c-main-ui-main-menu__subtitle {
+  margin: 0 0 8px;
+  color: rgb(92 67 38 / 92%);
+  font-size: 14px;
+  letter-spacing: 0.36em;
+  text-shadow: 0 1px 0 rgb(255 247 229 / 55%);
+}
+
+.c-main-ui-main-menu__actions {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+
+.c-main-ui-image-button {
+  position: relative;
+  border: 0;
+  padding: 0;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease,
+    opacity 140ms ease;
+}
+
+.c-main-ui-image-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  filter: brightness(1.03);
+}
+
+.c-main-ui-image-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  filter: grayscale(0.18);
+}
+
+.c-main-ui-image-button--start,
+.c-main-ui-image-button--continue {
+  width: clamp(112px, 10vw, 136px);
+  aspect-ratio: 1;
+}
+
+.c-main-ui-image-button--start {
+  background-image: url("../../yuansu/开局ui/start.png");
+}
+
+.c-main-ui-image-button--continue {
+  background-image: url("../../yuansu/开局ui/continue.png");
+}
+
+.c-main-ui-screen--character-select {
+  background:
+    linear-gradient(180deg, rgb(248 242 229 / 76%), rgb(233 223 202 / 88%)),
+    url("../../yuansu/人物选择ui/backgroung.png") center center / cover no-repeat;
+}
+
+.c-main-ui-character-layout {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 24px;
+  height: 100%;
+  padding: 34px 48px 42px;
+}
+
+.c-main-ui-character-layout__hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.c-main-ui-character-layout__hero-inner {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  color: rgb(40 27 17 / 92%);
+}
+
+.c-main-ui-character-layout__era {
+  margin: 0;
+  min-width: 30px;
+  padding: 8px 6px;
+  border-radius: 999px;
+  color: rgb(255 245 227 / 100%);
+  font-size: 14px;
+  line-height: 1;
+  writing-mode: vertical-rl;
+  background: linear-gradient(180deg, rgb(161 40 25 / 100%), rgb(120 22 14 / 100%));
+  box-shadow: 0 8px 24px rgb(120 37 22 / 18%);
+}
+
+.c-main-ui-character-layout__title {
+  margin: 0;
+  color: rgb(18 14 10 / 94%);
+  font-size: clamp(48px, 4vw, 66px);
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  writing-mode: vertical-rl;
+  text-shadow: 0 2px 0 rgb(255 250 239 / 40%);
+}
+
+.c-main-ui-character-layout__poem {
+  margin: 0;
+  color: rgb(105 80 51 / 88%);
+  font-size: 14px;
+  line-height: 1.9;
+  writing-mode: vertical-rl;
+}
+
+.c-main-ui-character-book {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  padding: 42px 34px 26px;
+  border: 1px solid rgb(137 106 61 / 24%);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgb(255 251 244 / 92%), rgb(245 236 219 / 94%)),
+    rgb(245 236 219 / 94%);
+  box-shadow:
+    0 24px 72px rgb(96 71 43 / 18%),
+    inset 0 0 0 1px rgb(255 255 255 / 46%);
+}
+
+.c-main-ui-character-book::before {
+  content: "";
+  position: absolute;
+  inset: 18px 22px;
+  border: 1px solid rgb(151 120 75 / 22%);
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+.c-main-ui-character-book__tabs {
+  position: absolute;
+  left: -20px;
+  top: 92px;
+  display: grid;
+  gap: 10px;
+}
+
+.c-main-ui-book-tab {
+  min-width: 72px;
+  padding: 14px 12px;
+  border: 1px solid rgb(135 107 66 / 30%);
+  border-radius: 14px 0 0 14px;
+  color: rgb(104 79 50 / 82%);
+  font-size: 13px;
+  text-align: center;
+  background: linear-gradient(180deg, rgb(238 226 200 / 96%), rgb(228 211 181 / 94%));
+  box-shadow: 0 10px 20px rgb(99 74 47 / 10%);
+}
+
+.c-main-ui-book-tab.is-active {
+  color: rgb(255 247 233 / 100%);
+  background: linear-gradient(180deg, rgb(84 111 102 / 100%), rgb(59 84 77 / 100%));
+}
+
+.c-main-ui-character-book__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.86fr);
+  gap: 28px;
+  height: calc(100% - 92px);
+}
+
+.c-main-ui-character-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px 16px;
+  align-content: start;
+}
+
+.c-main-ui-character-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: 132px auto;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid rgb(146 112 67 / 16%);
+  border-radius: 18px;
+  padding: 12px;
+  text-align: left;
+  color: rgb(47 32 20 / 92%);
+  background:
+    linear-gradient(180deg, rgb(255 252 244 / 90%), rgb(244 234 213 / 95%)),
+    rgb(244 234 213 / 95%);
+  box-shadow:
+    0 10px 24px rgb(100 74 43 / 8%),
+    inset 0 0 0 1px rgb(255 255 255 / 48%);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease;
+}
+
+.c-main-ui-character-card:hover {
+  transform: translateY(-2px);
+  border-color: rgb(165 90 60 / 36%);
+  box-shadow:
+    0 14px 28px rgb(114 71 38 / 12%),
+    inset 0 0 0 1px rgb(255 255 255 / 48%);
+}
+
+.c-main-ui-character-card.is-selected {
+  border-color: rgb(181 81 52 / 42%);
+  box-shadow:
+    0 18px 36px rgb(137 67 42 / 16%),
+    inset 0 0 0 1px rgb(213 118 76 / 24%);
+}
+
+.c-main-ui-character-card--placeholder {
+  pointer-events: none;
+  opacity: 0.64;
+}
+
+.c-main-ui-character-card__portrait {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgb(214 196 167 / 60%), rgb(232 223 207 / 92%)),
+    url("../../yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
+}
+
+.c-main-ui-character-card__avatar,
+.c-main-ui-character-card__avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.c-main-ui-character-card__avatar {
+  object-fit: cover;
+  filter: saturate(0.88) contrast(1.02);
+}
+
+.c-main-ui-character-card__avatar-placeholder {
+  display: grid;
+  place-items: center;
+  color: rgb(92 70 46 / 92%);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.c-main-ui-character-card__selected-seal {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 38px;
+  height: 62px;
+  background: url("../../yuansu/人物选择ui/下载 (10).png") center center / contain no-repeat;
+}
+
+.c-main-ui-character-card__body {
+  min-width: 0;
+}
+
+.c-main-ui-character-card__meta {
+  margin: 0;
+  color: rgb(138 101 60 / 92%);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.c-main-ui-character-card__name {
+  margin: 6px 0 0;
+  color: rgb(30 20 12 / 96%);
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.c-main-ui-character-card__bio {
+  display: -webkit-box;
+  margin: 8px 0 0;
+  overflow: hidden;
+  color: rgb(112 86 56 / 92%);
+  font-size: 12px;
+  line-height: 1.6;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.c-main-ui-character-card__placeholder-label,
+.c-main-ui-character-card__placeholder-index {
+  color: rgb(125 98 68 / 84%);
+  text-align: center;
+}
+
+.c-main-ui-character-card__placeholder-label {
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.c-main-ui-character-card__placeholder-index {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.c-main-ui-character-detail {
+  min-width: 0;
+}
+
+.c-main-ui-character-detail__paper {
+  position: relative;
+  height: 100%;
+  padding: 28px 24px 24px;
+  border: 1px solid rgb(145 111 65 / 20%);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgb(255 253 246 / 88%), rgb(247 239 224 / 96%)),
+    url("../../yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 46%),
+    0 16px 28px rgb(113 81 43 / 8%);
+}
+
+.c-main-ui-character-detail__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgb(152 118 76 / 22%);
+}
+
+.c-main-ui-character-detail__eyebrow {
+  margin: 0;
+  color: rgb(159 44 29 / 90%);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+
+.c-main-ui-character-detail__name {
+  margin: 8px 0 0;
+  color: rgb(32 22 13 / 96%);
+  font-size: 34px;
+}
+
+.c-main-ui-character-detail__subtitle {
+  margin: 8px 0 0;
+  color: rgb(123 93 61 / 92%);
+  font-size: 14px;
+}
+
+.c-main-ui-character-detail__badge {
+  flex: none;
+  min-width: 64px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  color: rgb(255 245 230 / 100%);
+  font-size: 12px;
+  text-align: center;
+  background: linear-gradient(180deg, rgb(163 51 35 / 100%), rgb(120 32 22 / 100%));
+}
+
+.c-main-ui-character-detail__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin: 20px 0 0;
+}
+
+.c-main-ui-character-detail__stat-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgb(155 122 76 / 20%);
+}
+
+.c-main-ui-character-detail__stat-row dt,
+.c-main-ui-character-detail__stat-row dd {
+  margin: 0;
+}
+
+.c-main-ui-character-detail__stat-row dt {
+  color: rgb(132 102 68 / 92%);
+  font-size: 13px;
+}
+
+.c-main-ui-character-detail__stat-row dd {
+  color: rgb(47 32 19 / 94%);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.c-main-ui-character-detail__section {
+  margin-top: 22px;
+}
+
+.c-main-ui-character-detail__section-title {
+  margin: 0;
+  color: rgb(85 62 36 / 94%);
+  font-size: 15px;
+}
+
+.c-main-ui-character-detail__bio {
+  margin: 12px 0 0;
+  color: rgb(89 68 42 / 92%);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.c-main-ui-character-detail__empty {
+  margin: 0;
+  color: rgb(108 82 53 / 88%);
+  font-size: 15px;
+}
+
+.c-main-ui-character-book__footer {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 120px 1fr 176px;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.c-main-ui-page-button {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  justify-self: start;
+  border: 0;
+  padding: 0;
+  color: rgb(0 0 0 / 0%);
+  background: transparent;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease;
+}
+
+.c-main-ui-page-button::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 2px solid rgb(205 184 139 / 100%);
+  background: linear-gradient(180deg, rgb(91 121 111 / 100%), rgb(55 82 76 / 100%));
+  box-shadow:
+    0 12px 24px rgb(81 77 57 / 20%),
+    inset 0 0 0 3px rgb(37 62 56 / 42%);
+  transform: rotate(45deg);
+}
+
+.c-main-ui-page-button span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: rgb(246 232 199 / 100%);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+}
+
+.c-main-ui-page-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+}
+
+.c-main-ui-book-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgb(126 98 66 / 92%);
+  font-size: 14px;
+}
+
+.c-main-ui-book-pagination__ornament {
+  width: 72px;
+  height: 12px;
+  background: url("../../yuansu/人物选择ui/下载 (15).png") center center / contain no-repeat;
+}
+
+.c-main-ui-image-button--choose {
+  justify-self: end;
+  width: 168px;
+  aspect-ratio: 1;
+  background-image: url("../../yuansu/人物选择ui/下载 (4).png");
+}
+
+@media (width <= 1100px) {
+  .c-main-ui-character-layout {
+    grid-template-columns: 108px minmax(0, 1fr);
+    padding: 24px;
+  }
+
+  .c-main-ui-character-book__content {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .c-main-ui-character-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .c-main-ui-character-detail__paper {
+    min-height: 360px;
+  }
+
+  .c-main-ui-character-book__footer {
+    grid-template-columns: 108px 1fr 150px;
+  }
+}
+
+@media (width <= 768px) {
+  .c-main-ui-main-menu__content {
+    left: 50%;
+    top: auto;
+    bottom: 56px;
+    justify-items: center;
+    width: calc(100% - 32px);
+    transform: translateX(-50%);
+  }
+
+  .c-main-ui-main-menu__actions {
+    gap: 14px;
+  }
+
+  .c-main-ui-image-button--start,
+  .c-main-ui-image-button--continue {
+    width: 96px;
+  }
+
+  .c-main-ui-character-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .c-main-ui-character-layout__hero {
+    display: none;
+  }
+
+  .c-main-ui-character-book {
+    padding: 22px 16px 18px;
+  }
+
+  .c-main-ui-character-book__tabs {
+    position: static;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .c-main-ui-book-tab {
+    min-width: 0;
+    flex: 1;
+    border-radius: 12px;
+  }
+
+  .c-main-ui-character-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .c-main-ui-character-card {
+    grid-template-rows: 116px auto;
+  }
+
+  .c-main-ui-character-detail__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .c-main-ui-character-book__footer {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .c-main-ui-page-button,
+  .c-main-ui-image-button--choose {
+    justify-self: center;
+  }
+
+  .c-main-ui-book-pagination {
+    order: 3;
+  }
+}
