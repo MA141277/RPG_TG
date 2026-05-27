@@ -1,12 +1,14 @@
 import type {
   CardDefinition,
   CharacterDefinition,
+  CityEntryDefinition,
   CityDefinition,
   CityNpcPoolDefinition,
   HouseDefinition,
   MapDefinition,
   ValuableItemDefinition,
 } from "../domain";
+import { zhuYuanzhangEarlyCharacters } from "./zhu-yuanzhang-early-characters";
 
 export const prototypeMap: MapDefinition = {
   id: "map.prototype_frontier",
@@ -21,6 +23,7 @@ export const prototypeCity: CityDefinition = {
   regionId: "region.frontier",
   mapNodeId: "settlement.fenyang_province",
   houseIds: [
+    "house.kulan.leader_residence",
     "home_001",
     "house.kulan.keep",
     "house.kulan.tea_house",
@@ -39,6 +42,19 @@ export const prototypeCity: CityDefinition = {
 export const prototypeCities: CityDefinition[] = [prototypeCity];
 
 export const prototypeHouses: HouseDefinition[] = [
+  {
+    id: "house.kulan.leader_residence",
+    cityId: "city.kulan",
+    name: "将领府邸",
+    type: "residence",
+    moduleId: "leader-residence",
+    characterIds: [],
+    defaultCharacterId: null,
+    backAction: {
+      label: "返回濠州",
+      targetView: "city",
+    },
+  },
   {
     id: "home_001",
     cityId: "city.kulan",
@@ -125,6 +141,17 @@ export const prototypeHouses: HouseDefinition[] = [
       label: "返回濠州",
       targetView: "city",
     },
+  },
+];
+
+export const prototypeCityEntries: CityEntryDefinition[] = [
+  {
+    id: "city-entry.kulan.leader-residence",
+    cityId: "city.kulan",
+    name: "将领府邸",
+    directoryType: "leader-residence",
+    targetHouseId: "house.kulan.leader_residence",
+    artworkId: "leader-residence",
   },
 ];
 
@@ -283,6 +310,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
     cityId: "city.kulan",
     houseId: "house.kulan.keep",
     portraitId: "portrait.kulan_xu_da",
+    affiliationLabel: "濠州军中",
     stats: {
       leadership: 81,
       martial: 76,
@@ -399,6 +427,102 @@ export const prototypeCharacters: CharacterDefinition[] = [
       tea: 0,
       medicine: 0,
     },
+  },
+  {
+    id: "char.kulan_liu_bowen",
+    name: "刘伯温",
+    birthYear: 1536,
+    deathYear: null,
+    age: 31,
+    clanId: "clan.guo",
+    title: "乡贤",
+    occupation: "谋士",
+    affiliationLabel: "濠州士人",
+    cityId: "city.kulan",
+    houseId: "house.kulan.leader_residence",
+    portraitId: "portrait.kulan_liu_bowen",
+    stats: {
+      leadership: 52,
+      martial: 20,
+      intelligence: 86,
+      politics: 81,
+      charm: 72,
+      fame: 28,
+      gold: 90,
+    },
+    stamina: 74,
+    biography: "通经史、善权谋，在濠州颇有声望，常为群雄筹画进退。",
+    isHistoricalFigure: true,
+    leaderResidenceEligible: true,
+    leaderResidenceStatus: "available",
+    availableFunctions: [],
+    skills: {
+      ashigaru: 0,
+      horse: 0,
+      teppo: 0,
+      navy: 0,
+      archery: 0,
+      martial: 1,
+      military: 4,
+      ninjutsu: 0,
+      construction: 2,
+      development: 3,
+      mining: 0,
+      arithmetic: 3,
+      etiquette: 3,
+      rhetoric: 4,
+      tea: 2,
+      medicine: 1,
+    },
+    teachableSkillKeys: ["military", "arithmetic", "rhetoric", "etiquette"],
+  },
+  {
+    id: "char.kulan_li_shanchang",
+    name: "李善长",
+    birthYear: 1526,
+    deathYear: null,
+    age: 41,
+    clanId: "clan.guo",
+    title: "乡贤",
+    occupation: "幕僚",
+    affiliationLabel: "濠州士人",
+    cityId: "city.kulan",
+    houseId: "house.kulan.leader_residence",
+    portraitId: "portrait.kulan_li_shanchang",
+    stats: {
+      leadership: 48,
+      martial: 18,
+      intelligence: 82,
+      politics: 84,
+      charm: 69,
+      fame: 25,
+      gold: 110,
+    },
+    stamina: 70,
+    biography: "精于文案与政务，善衡轻重，是城中名望颇高的乡贤人物。",
+    isHistoricalFigure: true,
+    leaderResidenceEligible: true,
+    leaderResidenceStatus: "available",
+    availableFunctions: [],
+    skills: {
+      ashigaru: 0,
+      horse: 0,
+      teppo: 0,
+      navy: 0,
+      archery: 0,
+      martial: 0,
+      military: 3,
+      ninjutsu: 0,
+      construction: 1,
+      development: 4,
+      mining: 0,
+      arithmetic: 3,
+      etiquette: 4,
+      rhetoric: 3,
+      tea: 2,
+      medicine: 0,
+    },
+    teachableSkillKeys: ["development", "etiquette", "arithmetic"],
   },
   {
     id: "char.kulan_tea_boss",
@@ -569,6 +693,78 @@ export const prototypeCharacters: CharacterDefinition[] = [
     },
   },
 ];
+
+const leaderResidenceCharacterOverrides: Record<
+  string,
+  Partial<CharacterDefinition>
+> = {
+  "char.kulan_xu_da": {
+    name: "徐达",
+    title: "前锋大将",
+    occupation: "武将",
+    affiliationLabel: "濠州军中",
+    biography: "作战沉稳，军中多以徐达为前锋，善于统兵推进。",
+    isHistoricalFigure: true,
+    leaderResidenceEligible: true,
+    leaderResidenceStatus: "available",
+    teachableSkillKeys: ["military", "horse", "martial"],
+  },
+  "char.kulan_tang_he": {
+    name: "汤和",
+    title: "宿将",
+    occupation: "武将",
+    affiliationLabel: "濠州军中",
+    biography: "资历深厚，善于整顿营伍与督军，是军中老成持重之将。",
+    isHistoricalFigure: true,
+    leaderResidenceEligible: true,
+    leaderResidenceStatus: "available",
+    teachableSkillKeys: ["military", "construction", "etiquette"],
+  },
+  "char.kulan_chang_yuchun": {
+    name: "常遇春",
+    title: "骁将",
+    occupation: "武将",
+    affiliationLabel: "濠州军中",
+    biography: "性急勇悍，最擅长冲阵夺旗，是军中锋锐人物。",
+    isHistoricalFigure: true,
+    leaderResidenceEligible: true,
+    leaderResidenceStatus: "available",
+    teachableSkillKeys: ["martial", "horse", "ashigaru"],
+  },
+  "char.kulan_liu_bowen": {
+    name: "刘伯温",
+    title: "乡贤",
+    occupation: "谋士",
+    affiliationLabel: "濠州士人",
+    biography: "通经史、善权谋，在濠州颇有声望，常为群雄筹画进退。",
+  },
+  "char.kulan_li_shanchang": {
+    name: "李善长",
+    title: "乡贤",
+    occupation: "幕僚",
+    affiliationLabel: "濠州士人",
+    biography: "精于文案与政务，善权轻重，是城中名望颇高的乡贤人物。",
+  },
+};
+
+for (const characterDefinition of prototypeCharacters) {
+  const override = leaderResidenceCharacterOverrides[characterDefinition.id];
+  if (override != null) {
+    Object.assign(characterDefinition, override);
+  }
+}
+
+export const prototypeHistoricalCharacterIdByCharacterId: Record<string, string> = {
+  "char.kulan_lord": "zyz.character.guo_zixing",
+  "char.kulan_tang_he": "zyz.character.tang_he",
+  "char.kulan_xu_da": "zyz.character.xu_da",
+  "char.kulan_chang_yuchun": "zyz.character.chang_yuchun",
+  "char.kulan_li_shanchang": "zyz.character.li_shanchang",
+  "char.kulan_liu_bowen": "zyz.character.liu_ji",
+};
+
+export const prototypeLeaderResidenceHistoricalCharacters =
+  zhuYuanzhangEarlyCharacters;
 
 export const prototypeCityNpcPools: CityNpcPoolDefinition[] = [
   {

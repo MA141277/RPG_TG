@@ -1,4 +1,5 @@
 import type { CharacterDefinition } from "../domain/character";
+import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type { GlobalHudLayout, LayoutEditorState } from "../domain/ui-layout";
 import type { GridCoordinate } from "./navigation/travel-to-coordinate";
 import type { createInitialState } from "./state/create-initial-state";
@@ -22,6 +23,14 @@ export type AppState = {
   characterDefinitions: CharacterDefinition[];
   playerCoordinate: GridCoordinate;
   modalState: AppModalState;
+  cityDirectoryState:
+    | {
+        type: CityEntryDirectoryType;
+        title: string;
+        targetHouseId: string;
+        options: CityEntryOption[];
+      }
+    | null;
   uiLayouts: {
     globalHud: GlobalHudLayout;
   };

@@ -1,5 +1,9 @@
 import type { CardDefinition } from "../domain/card";
 import type {
+  CityEntryDirectoryType,
+  CityEntryOption,
+} from "../domain/city-entry";
+import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
   ValuableLibrarySortKey,
@@ -27,6 +31,33 @@ export function updateOverlayView(
         overlayView,
       },
     },
+  };
+}
+
+export function openCityDirectory(
+  appState: AppState,
+  input: {
+    type: CityEntryDirectoryType;
+    title: string;
+    targetHouseId: string;
+    options: CityEntryOption[];
+  }
+): AppState {
+  return {
+    ...appState,
+    cityDirectoryState: {
+      type: input.type,
+      title: input.title,
+      targetHouseId: input.targetHouseId,
+      options: input.options,
+    },
+  };
+}
+
+export function closeCityDirectory(appState: AppState): AppState {
+  return {
+    ...appState,
+    cityDirectoryState: null,
   };
 }
 

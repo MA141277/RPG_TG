@@ -12,6 +12,9 @@ const {
 const {
   prototypeCards,
   prototypeCharacters,
+  prototypeCityEntries,
+  prototypeHistoricalCharacterIdByCharacterId,
+  prototypeLeaderResidenceHistoricalCharacters,
   prototypeHouses,
   prototypeMap,
   prototypeCityNpcPools,
@@ -37,6 +40,12 @@ const {
   tavernHouseModule,
 } = require("../.test-dist/application/house-modules/tavern/tavern-house-module.js");
 const {
+  leaderResidenceHouseModule,
+} = require("../.test-dist/application/house-modules/leader-residence/leader-residence-house-module.js");
+const {
+  selectLeaderResidenceOptions,
+} = require("../.test-dist/application/city-entries/select-leader-residence-options.js");
+const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
 const {
@@ -52,6 +61,10 @@ const {
 const { GRAIN_SHOP_VARIABLE_KEYS } = require("../.test-dist/domain/grain-shop.js");
 const { HOME_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/home-house.js");
 const { KEEP_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/keep-house.js");
+const {
+  getLeaderResidenceRelationKey,
+  LEADER_RESIDENCE_VARIABLE_KEYS,
+} = require("../.test-dist/domain/leader-residence.js");
 const {
   pickTeaHouseAiTopic,
   resolveTeaHouseDebateRound,
@@ -76,6 +89,12 @@ const marketHouse = prototypeHouses.find(
 const tavernHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "tavern"
 );
+const leaderResidenceHouse = prototypeHouses.find(
+  (houseDefinition) => houseDefinition.moduleId === "leader-residence"
+);
+const leaderResidenceEntry = prototypeCityEntries.find(
+  (entryDefinition) => entryDefinition.id === "city-entry.kulan.leader-residence"
+);
 
 assert.ok(homeHouse, "Expected prototype home house to exist.");
 assert.ok(keepHouse, "Expected prototype keep house to exist.");
@@ -83,6 +102,14 @@ assert.ok(grainShopHouse, "Expected prototype grain shop house to exist.");
 assert.ok(marketHouse, "Expected prototype market house to exist.");
 assert.ok(teaHouse, "Expected prototype tea house to exist.");
 assert.ok(tavernHouse, "Expected prototype tavern house to exist.");
+assert.ok(
+  leaderResidenceHouse,
+  "Expected prototype leader residence house to exist."
+);
+assert.ok(
+  leaderResidenceEntry,
+  "Expected prototype leader residence city entry to exist."
+);
 
 function createBaseState() {
   return createInitialState({
@@ -164,6 +191,134 @@ test("grain trade succeeds for a valid buy and advances runtime state", () => {
   assert.equal(playerCharacter.stats.gold, 20);
   assert.equal(result.mutation.state.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.food], 6);
   assert.equal(result.mutation.state.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.time], 2);
+});
+
+test("leader residence selector only lists eligible historical visitors in the city", () => {
+  const state = createBaseState();
+  const options = selectLeaderResidenceOptions(
+    state,
+    prototypeCharacters,
+    leaderResidenceEntry,
+    {
+      historicalCharacters: prototypeLeaderResidenceHistoricalCharacters,
+      historicalCharacterIdByCharacterId: prototypeHistoricalCharacterIdByCharacterId,
+    }
+  );
+
+  assert.equal(options.length > 0, true);
+  assert.equal(
+    options.every((option) => {
+      const historicalCharacterId =
+        prototypeHistoricalCharacterIdByCharacterId[option.characterId];
+      if (historicalCharacterId == null) {
+        return false;
+      }
+      const historicalCharacter = prototypeLeaderResidenceHistoricalCharacters.find(
+        (characterRecord) => characterRecord.id === historicalCharacterId
+      );
+      return historicalCharacter?.leaderResidenceProfile?.eligible === true;
+    }),
+    true
+  );
+  assert.equal(
+    options.some((option) => option.characterId === "char.kulan_lord"),
+    false
+  );
+  assert.equal(
+    options.some((option) => option.characterId === "char.kulan_tea_boss"),
+    false
+  );
+  assert.equal(
+    options.some((option) => option.characterId === "char.kulan_grain_shopkeeper"),
+    false
+  );
+  assert.equal(
+    options.some((option) => option.characterId === "char.kulan_merchant"),
+    false
+  );
+
+  const liuBowenOption = options.find(
+    (option) => option.characterId === "char.kulan_liu_bowen"
+  );
+  assert.ok(liuBowenOption);
+  assert.equal(liuBowenOption.tags.length > 0, true);
+});
+
+test("leader residence enter requires a selected character id in runtime variables", () => {
+  const state = createBaseState();
+
+  assert.throws(() => {
+    leaderResidenceHouseModule.enter({
+      gameState: state,
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: leaderResidenceHouse,
+      playerCharacterId,
+    });
+  }, /pending selected character id/i);
+});
+
+test("leader residence interaction flow updates relation and learning skill", () => {
+  const selectedCharacterId = "char.kulan_liu_bowen";
+  const relationKey = getLeaderResidenceRelationKey(selectedCharacterId);
+  const state = {
+    ...createBaseState(),
+    runtime: {
+      ...createBaseState().runtime,
+      variables: {
+        ...createBaseState().runtime.variables,
+        [LEADER_RESIDENCE_VARIABLE_KEYS.pendingCharacterId]: selectedCharacterId,
+      },
+    },
+  };
+  const playerBefore = getPlayerCharacter(prototypeCharacters);
+  const originalMilitarySkill = playerBefore.skills.military;
+
+  const enterResult = leaderResidenceHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: leaderResidenceHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(
+    enterResult.sessionState?.selectedCharacterId,
+    selectedCharacterId
+  );
+
+  const greetingResult = leaderResidenceHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: leaderResidenceHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "leader-residence:greeting" },
+  });
+  assert.equal(greetingResult.gameState.runtime.variables[relationKey], 1);
+
+  const giftResult = leaderResidenceHouseModule.dispatch({
+    gameState: greetingResult.gameState,
+    characterDefinitions: greetingResult.characterDefinitions,
+    houseDefinition: leaderResidenceHouse,
+    playerCharacterId,
+    sessionState: greetingResult.sessionState,
+    request: { type: "action", actionId: "leader-residence:gift" },
+  });
+  assert.equal(giftResult.gameState.runtime.variables[relationKey], 3);
+  assert.equal(giftResult.sessionState?.overlay?.type, "alert");
+
+  const learnResult = leaderResidenceHouseModule.dispatch({
+    gameState: giftResult.gameState,
+    characterDefinitions: giftResult.characterDefinitions,
+    houseDefinition: leaderResidenceHouse,
+    playerCharacterId,
+    sessionState: giftResult.sessionState,
+    request: { type: "action", actionId: "leader-residence:learn" },
+  });
+  const playerAfter = getPlayerCharacter(learnResult.characterDefinitions);
+
+  assert.equal(playerAfter.skills.military, originalMilitarySkill + 1);
+  assert.equal(learnResult.sessionState?.mode, "learning");
+  assert.equal(learnResult.sessionState?.overlay?.type, "alert");
 });
 
 test("grain trade fails when the player cannot afford the purchase", () => {

@@ -189,3 +189,230 @@
       at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
       at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
       at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m01:19:38[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+[2m01:19:38[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m01:20:44[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+[2m01:20:44[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m01:20:56[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+[2m01:20:56[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m01:22:19[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+[2m01:22:19[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+[2m01:22:40[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+[2m01:22:40[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m01:23:22[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+[2m01:23:22[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "./application/city-entries/select-leader-residence-options" from "src/main.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/main.ts[39m:28:45
+[33m  25 |    updateOverlayView
+  26 |  } from "./application/app-actions";
+  27 |  import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
+     |                                                ^
+  28 |  import { createHouseRuntime } from "./application/house/house-runtime";
+  29 |  import { enterCity } from "./application/navigation/enter-city";[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m02:42:01[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "isHistoricalFigure" in object literal[33m
+455 |      leaderResidenceEligible: true,
+456 |      leaderResidenceStatus: "available",
+457 |      isHistoricalFigure: true,
+    |      ^
+458 |      leaderResidenceEligible: true,
+459 |      leaderResidenceStatus: "available",
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/content/prototype-world.ts[39m
+[2m02:42:01[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "leaderResidenceEligible" in object literal[33m
+456 |      leaderResidenceStatus: "available",
+457 |      isHistoricalFigure: true,
+458 |      leaderResidenceEligible: true,
+    |      ^
+459 |      leaderResidenceStatus: "available",
+460 |      availableFunctions: [],
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/content/prototype-world.ts[39m
+[2m02:42:01[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "leaderResidenceStatus" in object literal[33m
+457 |      isHistoricalFigure: true,
+458 |      leaderResidenceEligible: true,
+459 |      leaderResidenceStatus: "available",
+    |      ^
+460 |      availableFunctions: [],
+461 |      skills: {
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/content/prototype-world.ts[39m
+[2m02:43:21[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "isHistoricalFigure" in object literal[33m
+455 |      leaderResidenceEligible: true,
+456 |      leaderResidenceStatus: "available",
+457 |      isHistoricalFigure: true,
+    |      ^
+458 |      leaderResidenceEligible: true,
+459 |      leaderResidenceStatus: "available",
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/content/prototype-world.ts[39m
+[2m02:43:21[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "leaderResidenceEligible" in object literal[33m
+456 |      leaderResidenceStatus: "available",
+457 |      isHistoricalFigure: true,
+458 |      leaderResidenceEligible: true,
+    |      ^
+459 |      leaderResidenceStatus: "available",
+460 |      availableFunctions: [],
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/content/prototype-world.ts[39m
+[2m02:43:21[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "leaderResidenceStatus" in object literal[33m
+457 |      isHistoricalFigure: true,
+458 |      leaderResidenceEligible: true,
+459 |      leaderResidenceStatus: "available",
+    |      ^
+460 |      availableFunctions: [],
+461 |      skills: {
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/content/prototype-world.ts[39m

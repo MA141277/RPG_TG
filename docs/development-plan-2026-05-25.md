@@ -1,5 +1,24 @@
 # 2026-05-25 开发计划
 
+## 说明
+
+这是一份 2026-05-25 阶段性收口计划，保留为历史记录，不作为当前最高优先级的接口契约来源。
+
+当前应优先遵守的现行规则文档是：
+
+- [special-house-interface.md](D:/RPG_TG/docs/special-house-interface.md)
+- [architecture.md](D:/RPG_TG/docs/architecture.md)
+- [collaboration.md](D:/RPG_TG/docs/collaboration.md)
+- [frontend-conventions.md](D:/RPG_TG/docs/frontend-conventions.md)
+
+其中本计划提到的若干目标已经落地，包括：
+
+- `HouseDefinition.moduleId`
+- `src/domain/house-module.ts`
+- `src/application/house-modules/house-module-registry.ts`
+- `src/ui/views/house/house-module-view-registry.ts`
+- `GameState.ui.houseSession`
+
 ## 前提
 
 本周仍处于 demo 阶段。

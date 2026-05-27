@@ -4,6 +4,7 @@ import type { HouseDefinition } from "./house";
 import type { HomeHouseSessionState } from "./house-modules/home-house-session";
 import type { GrainShopSessionState } from "./house-modules/grain-shop-session";
 import type { KeepHouseSessionState } from "./house-modules/keep-house-session";
+import type { LeaderResidenceSessionState } from "./house-modules/leader-residence-session";
 import type { MarketHouseSessionState } from "./house-modules/market-house-session";
 import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
@@ -11,6 +12,7 @@ import type { TavernSessionState } from "./house-modules/tavern-session";
 export type HouseModuleId =
   | "home-house"
   | "keep-house"
+  | "leader-residence"
   | "grain-shop"
   | "market-house"
   | "tea-house"
@@ -230,6 +232,7 @@ export type HouseModuleViewModel = {
 export type HouseModuleSessionStateMap = {
   "home-house": HomeHouseSessionState;
   "keep-house": KeepHouseSessionState;
+  "leader-residence": LeaderResidenceSessionState;
   "grain-shop": GrainShopSessionState;
   "market-house": MarketHouseSessionState;
   "tea-house": TeaHouseSessionState;

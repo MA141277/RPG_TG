@@ -14,7 +14,9 @@ import {
   updateLayoutEditorElementPosition,
 } from "./application/layout-editor/layout-editor-actions";
 import {
+  closeCityDirectory,
   equipValuable,
+  openCityDirectory,
   selectCard,
   selectValuable,
   setCardFilter,
@@ -23,6 +25,7 @@ import {
   updateOverlayView,
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
+import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import { createHouseRuntime } from "./application/house/house-runtime";
 import { enterCity } from "./application/navigation/enter-city";
 import {
@@ -33,8 +36,10 @@ import { createInitialState } from "./application/state/create-initial-state";
 import {
   prototypeCards,
   prototypeCharacters,
+  prototypeCityEntries,
   prototypeCity,
   prototypeCities,
+  prototypeHistoricalCharacterIdByCharacterId,
   prototypeCityNpcPools,
   prototypeCityPortraits,
   prototypeHouses,
@@ -45,12 +50,17 @@ import {
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
 import { yuanmoCampaignMap } from "./content/yuanmo-campaign-map";
+import {
+  zhuYuanzhangCityRosters,
+  zhuYuanzhangEarlyCharacters,
+} from "./content/zhu-yuanzhang-early-characters";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
   ValuableLibrarySortKey,
 } from "./domain/global-ui";
 import { KEEP_HOUSE_VARIABLE_KEYS } from "./domain/keep-house";
+import { LEADER_RESIDENCE_VARIABLE_KEYS } from "./domain/leader-residence";
 import type {
   UiLayoutBackgroundMode,
   UiLayoutComponent,
@@ -69,6 +79,17 @@ const GAME_VIEWPORT_HEIGHT = 900;
 const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = 40;
 const MAP_DEBUG_SCALE_STEP = 0.2;
+const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
+const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+};
+const TARGET_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
+  scale: 40,
+  offsetX: -5695,
+  offsetY: 5918,
+};
 
 type CampaignMapDebugState = {
   scale: number;
@@ -165,6 +186,7 @@ let appState: AppState = {
   characterDefinitions: [...prototypeCharacters],
   playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
   modalState: null,
+  cityDirectoryState: null,
   uiLayouts: {
     globalHud: createDefaultGlobalHudLayout(),
   },
@@ -190,10 +212,16 @@ appState = {
   },
 };
 let campaignMapDebugState: CampaignMapDebugState = {
-  scale: 1,
-  offsetX: 0,
-  offsetY: 0,
+  ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
+let campaignMapDebugHomeState: CampaignMapDebugState = {
+  ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
+};
+let hasAppliedInitialCampaignMapDebug = false;
+let hasStartedInitialCampaignMapDebugAnimation = false;
+let initialCampaignMapDebugAnimationFrame: number | null = null;
+let initialCampaignMapDebugAnimationStartTime: number | null = null;
+let activeMapIntroOverlay: HTMLElement | null = null;
 let campaignMapDragState:
   | {
       pointerId: number;
@@ -439,6 +467,10 @@ appElement.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  if (isInitialCampaignMapDebugAnimating()) {
+    return;
+  }
+
   campaignMapDragState = {
     pointerId: event.pointerId,
     startClientX: event.clientX,
@@ -662,6 +694,15 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const closeCityDirectoryButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-city-directory']"
+  );
+  if (closeCityDirectoryButton != null) {
+    appState = closeCityDirectory(appState);
+    renderApp();
+    return;
+  }
+
   const closeLayoutEditorButton = targetElement.closest<HTMLElement>(
     "[data-action='close-layout-editor']"
   );
@@ -711,6 +752,7 @@ appElement.addEventListener("click", (event) => {
     houseRuntime.clearAllHouseIntervals();
     appState = {
       ...appState,
+      cityDirectoryState: null,
       gameState: {
         ...appState.gameState,
         world: {
@@ -726,6 +768,62 @@ appElement.addEventListener("click", (event) => {
       },
     };
     renderApp();
+    return;
+  }
+
+  const cityEntryButton = targetElement.closest<HTMLElement>(
+    "[data-city-entry-id]"
+  );
+  if (cityEntryButton != null) {
+    const cityEntryId = cityEntryButton.dataset.cityEntryId;
+    const cityEntry = prototypeCityEntries.find(
+      (entryDefinition) => entryDefinition.id === cityEntryId
+    );
+    if (cityEntry?.directoryType === "leader-residence") {
+      appState = openCityDirectory(appState, {
+        type: cityEntry.directoryType,
+        title: cityEntry.name,
+        targetHouseId: cityEntry.targetHouseId,
+        options: selectLeaderResidenceOptions(
+          appState.gameState,
+          appState.characterDefinitions,
+          cityEntry,
+          {
+            historicalCharacters: zhuYuanzhangEarlyCharacters,
+            historicalCharacterIdByCharacterId:
+              prototypeHistoricalCharacterIdByCharacterId,
+          }
+        ),
+      });
+      renderApp();
+    }
+    return;
+  }
+
+  const cityDirectoryCharacterButton = targetElement.closest<HTMLElement>(
+    "[data-city-directory-character-id]"
+  );
+  if (cityDirectoryCharacterButton != null && appState.cityDirectoryState != null) {
+    const selectedCharacterId =
+      cityDirectoryCharacterButton.dataset.cityDirectoryCharacterId;
+    if (selectedCharacterId != null) {
+      const targetHouseId = appState.cityDirectoryState.targetHouseId;
+      appState = {
+        ...closeCityDirectory(appState),
+        gameState: {
+          ...appState.gameState,
+          runtime: {
+            ...appState.gameState.runtime,
+            variables: {
+              ...appState.gameState.runtime.variables,
+              [LEADER_RESIDENCE_VARIABLE_KEYS.pendingCharacterId]:
+                selectedCharacterId,
+            },
+          },
+        },
+      };
+      houseRuntime.enterHouseById(targetHouseId);
+    }
     return;
   }
 
@@ -830,6 +928,40 @@ function handleModalConfirm() {
   renderApp();
 }
 
+function captureCampaignTerrainCanvases(
+  root: ParentNode
+): HTMLCanvasElement[] | null {
+  const canvases = Array.from(
+    root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-terrain]")
+  );
+  return canvases.length === 0 ? null : canvases;
+}
+
+function restoreCampaignTerrainCanvases(
+  root: ParentNode,
+  preservedCanvases: HTMLCanvasElement[] | null
+): void {
+  if (preservedCanvases == null || preservedCanvases.length === 0) {
+    return;
+  }
+
+  const replacementCanvases = Array.from(
+    root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-terrain]")
+  );
+  if (replacementCanvases.length !== preservedCanvases.length) {
+    return;
+  }
+
+  replacementCanvases.forEach((replacementCanvas, index) => {
+    const preservedCanvas = preservedCanvases[index];
+    if (preservedCanvas == null) {
+      return;
+    }
+
+    replacementCanvas.replaceWith(preservedCanvas);
+  });
+}
+
 function renderApp() {
   appState = {
     ...appState,
@@ -838,6 +970,10 @@ function renderApp() {
       prototypeCityNpcPools
     ),
   };
+  const preservedTerrainCanvases =
+    appState.gameState.ui.currentView === "map"
+      ? captureCampaignTerrainCanvases(appRoot)
+      : null;
 
   appRoot.innerHTML = renderAppMarkup({
     appState,
@@ -845,6 +981,7 @@ function renderApp() {
     mapDefinition: yuanmoCampaignMap,
     cityDefinition: prototypeCity,
     houseDefinitions: prototypeHouses,
+    cityEntries: prototypeCityEntries,
     cardDefinitions: prototypeCards,
     cityNpcPoolDefinitions: prototypeCityNpcPools,
     cityCoordinatesById,
@@ -852,8 +989,13 @@ function renderApp() {
     houseNameById,
     characterNameById,
     cityPortraits: prototypeCityPortraits,
+    historicalCharacters: zhuYuanzhangEarlyCharacters,
+    historicalCityRosters: zhuYuanzhangCityRosters,
   });
+  restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
+  startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
+  syncMapIntroOverlay();
   syncCampaignTerrainWebGl(appRoot);
 }
 
@@ -884,7 +1026,129 @@ function handleCampaignMapDebugAction(action: string | undefined): void {
   }
 
   if (action === "reset") {
-    setCampaignMapDebugState({ scale: 1, offsetX: 0, offsetY: 0 });
+    setCampaignMapDebugState(campaignMapDebugHomeState);
+  }
+}
+
+function startInitialCampaignMapDebugAnimationIfNeeded(): void {
+  if (
+    hasStartedInitialCampaignMapDebugAnimation ||
+    hasAppliedInitialCampaignMapDebug ||
+    appState.gameState.ui.currentView !== "map"
+  ) {
+    return;
+  }
+
+  hasStartedInitialCampaignMapDebugAnimation = true;
+  initialCampaignMapDebugAnimationStartTime = null;
+  showMapIntroOverlay("第一章·淮西托钵");
+
+  const animate = (timestamp: number) => {
+    if (initialCampaignMapDebugAnimationStartTime == null) {
+      initialCampaignMapDebugAnimationStartTime = timestamp;
+    }
+
+    const elapsedMs = timestamp - initialCampaignMapDebugAnimationStartTime;
+    const progress = clamp(
+      elapsedMs / INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS,
+      0,
+      1
+    );
+
+    setCampaignMapDebugState(interpolateCampaignMapDebugState(progress));
+
+    if (progress < 1) {
+      initialCampaignMapDebugAnimationFrame =
+        window.requestAnimationFrame(animate);
+      return;
+    }
+
+    hasAppliedInitialCampaignMapDebug = true;
+    campaignMapDebugHomeState = {
+      ...TARGET_CAMPAIGN_MAP_DEBUG_STATE,
+    };
+    hideMapIntroOverlay();
+    initialCampaignMapDebugAnimationFrame = null;
+  };
+
+  initialCampaignMapDebugAnimationFrame = window.requestAnimationFrame(animate);
+}
+
+function interpolateCampaignMapDebugState(progress: number): CampaignMapDebugState {
+  return {
+    scale:
+      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.scale +
+      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.scale -
+        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.scale) *
+        progress,
+    offsetX:
+      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetX +
+      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.offsetX -
+        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetX) *
+        progress,
+    offsetY:
+      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetY +
+      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.offsetY -
+        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetY) *
+        progress,
+  };
+}
+
+function isInitialCampaignMapDebugAnimating(): boolean {
+  return (
+    hasStartedInitialCampaignMapDebugAnimation && !hasAppliedInitialCampaignMapDebug
+  );
+}
+
+function showMapIntroOverlay(title: string): void {
+  if (appState.gameState.ui.currentView !== "map") {
+    return;
+  }
+
+  let overlayElement = appRoot.querySelector<HTMLElement>(".c-map-intro-overlay");
+  if (overlayElement == null) {
+    const stageElement = appRoot.querySelector<HTMLElement>(".l-stage");
+    if (stageElement == null) {
+      return;
+    }
+
+    overlayElement = document.createElement("div");
+    overlayElement.className = "c-map-intro-overlay";
+    overlayElement.setAttribute("aria-hidden", "true");
+    overlayElement.innerHTML = `<div class="c-map-intro-overlay__title"></div>`;
+    stageElement.append(overlayElement);
+  }
+
+  const titleElement = overlayElement.querySelector<HTMLElement>(
+    ".c-map-intro-overlay__title"
+  );
+  if (titleElement == null) {
+    return;
+  }
+
+  titleElement.textContent = title;
+  titleElement.classList.remove("is-animating");
+  void titleElement.offsetWidth;
+  titleElement.classList.add("is-animating");
+  activeMapIntroOverlay = overlayElement;
+}
+
+function hideMapIntroOverlay(): void {
+  activeMapIntroOverlay?.remove();
+  activeMapIntroOverlay = null;
+}
+
+function syncMapIntroOverlay(): void {
+  if (appState.gameState.ui.currentView !== "map") {
+    hideMapIntroOverlay();
+    return;
+  }
+
+  if (activeMapIntroOverlay != null && !appRoot.contains(activeMapIntroOverlay)) {
+    activeMapIntroOverlay = null;
+    if (isInitialCampaignMapDebugAnimating()) {
+      showMapIntroOverlay("第一章·淮西托钵");
+    }
   }
 }
 

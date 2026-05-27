@@ -5,8 +5,13 @@ import type { GridCoordinate } from "../application/navigation/travel-to-coordin
 import type { CardDefinition } from "../domain/card";
 import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
+import type { CityEntryDefinition } from "../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../domain/city-npc";
 import type { HouseDefinition } from "../domain/house";
+import type {
+  HistoricalCharacterRecord,
+  HistoricalCityRoster,
+} from "../domain/historical-character";
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { assertExists } from "../shared/assert";
@@ -32,6 +37,7 @@ export type AppRenderInput = {
   mapDefinition: MapDefinition;
   cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
+  cityEntries: CityEntryDefinition[];
   cardDefinitions: CardDefinition[];
   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
   cityCoordinatesById: Record<string, GridCoordinate>;
@@ -39,6 +45,8 @@ export type AppRenderInput = {
   houseNameById: Record<string, string>;
   characterNameById: Record<string, string>;
   cityPortraits: Record<string, string>;
+  historicalCharacters?: HistoricalCharacterRecord[];
+  historicalCityRosters?: HistoricalCityRoster[];
 };
 
 function getActiveHouseDefinition(
@@ -205,18 +213,30 @@ function renderStage(input: AppRenderInput): string {
   const activeHouse = getActiveHouseDefinition(input.appState, input.houseDefinitions);
 
   if (currentView === "map") {
-    const mapViewModel = createMapViewModel({
+    const mapViewModelInput: Parameters<typeof createMapViewModel>[0] = {
       mapDefinition: input.mapDefinition,
       playerCoordinate: input.appState.playerCoordinate,
       cityDefinitions: [input.cityDefinition],
       cityCoordinatesById: input.cityCoordinatesById,
-    });
+    };
+    if (input.historicalCharacters != null) {
+      mapViewModelInput.historicalCharacters = input.historicalCharacters;
+    }
+    if (input.historicalCityRosters != null) {
+      mapViewModelInput.historicalCityRosters = input.historicalCityRosters;
+    }
+    const mapViewModel = createMapViewModel(mapViewModelInput);
 
     return renderMapView(mapViewModel);
   }
 
   if (currentView === "city") {
-    return renderCityView(input.cityDefinition, input.houseDefinitions);
+    return renderCityView(
+      input.cityDefinition,
+      input.houseDefinitions,
+      input.cityEntries,
+      input.appState.cityDirectoryState
+    );
   }
 
   if (currentView === "house" && activeHouse != null) {

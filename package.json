@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:localhost": "vite --host localhost --port 5173",
     "build": "vite build",
     "preview": "vite preview",
+    "serve:prod": "node scripts/serve-static.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "test": "npm run build:test && node --test tests/robustness.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",

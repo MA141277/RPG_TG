@@ -31,8 +31,8 @@ House modules must stay inside the existing layer model:
 
 - `content/house-modules/*`: static content only
 - `domain/house-modules/*`: types, ids, pure rules, stable contracts
-- `application/house-modules/*`: state transitions, reducers, selectors, orchestration
-- `ui/views/house-modules/*`: rendering and input binding view models
+- `application/house-modules/*`: state transitions, selectors, orchestration
+- `ui/views/house/*`: rendering and input binding
 - `styles/*`: styles only
 
 Do not place special-house business logic in:
@@ -50,7 +50,7 @@ Each special house must declare a stable module id.
 Example:
 
 ```ts
-export type HouseModuleId = "grain-shop" | "tea-house" | "dojo";
+export type HouseModuleId = "home-house" | "grain-shop" | "tea-house";
 ```
 
 `HouseDefinition` should point to a module through stable metadata, for example:
@@ -65,6 +65,8 @@ type HouseDefinition = {
   defaultCharacterId: CharacterId | null;
   activityLocationId?: CityNpcActivityLocationId | null;
   moduleId?: HouseModuleId | null;
+  onEnterEventId?: EventId;
+  onLeaveEventId?: EventId;
   backAction: {
     label: string;
     targetView: "city";
@@ -77,6 +79,7 @@ Rules:
 - `type` is presentation/category metadata
 - `activityLocationId` is optional city-level roaming NPC slot metadata
 - `moduleId` is behavior binding
+- `onEnterEventId` / `onLeaveEventId` are event hooks, not house business implementations
 - do not infer business behavior from `house.id` string matching in app entrypoints
 
 ## Required Application Contract
@@ -86,32 +89,54 @@ Each special house must implement a consistent lifecycle.
 Recommended interface:
 
 ```ts
+export type HouseModuleRequest =
+  | { type: "action"; actionId: string }
+  | { type: "field"; fieldId: string; value: string }
+  | { type: "tick"; tickId: string };
+
+export type HouseModuleSideEffect =
+  | {
+      type: "start-interval";
+      intervalId: string;
+      everyMs: number;
+      request: HouseModuleRequest;
+    }
+  | {
+      type: "stop-interval";
+      intervalId: string;
+    };
+
 export type HouseModuleSessionStateMap = {
   "grain-shop": GrainShopSessionState;
+  "tea-house": TeaHouseSessionState;
 };
 
 export type HouseModuleSessionState<ModuleId extends HouseModuleId> =
   HouseModuleSessionStateMap[ModuleId];
 
-export type HouseModuleEnterResult = {
-  state: GameState;
-  sessionState: HouseModuleSessionState<HouseModuleId>;
-  characterDefinitions?: CharacterDefinition[];
-};
-
-export type HouseModuleActionResult = {
-  state: GameState;
-  sessionState: HouseModuleSessionState<HouseModuleId>;
-  characterDefinitions?: CharacterDefinition[];
+export type HouseModuleTransitionResult<
+  ModuleId extends HouseModuleId = HouseModuleId
+> = {
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+  sessionState: HouseModuleSessionState<ModuleId> | null;
   sideEffects?: HouseModuleSideEffect[];
 };
 
-export type HouseModuleDefinition = {
-  moduleId: HouseModuleId;
-  enter(input: HouseModuleEnterInput): HouseModuleEnterResult;
-  leave(input: HouseModuleLeaveInput): HouseModuleLeaveResult;
-  dispatch(input: HouseModuleDispatchInput): HouseModuleActionResult;
-  selectViewModel(input: HouseModuleViewModelInput): HouseModuleViewModel;
+export type HouseModuleDefinition<
+  ModuleId extends HouseModuleId = HouseModuleId
+> = {
+  moduleId: ModuleId;
+  enter(
+    input: HouseModuleEnterInput<ModuleId>
+  ): HouseModuleTransitionResult<ModuleId>;
+  dispatch(
+    input: HouseModuleDispatchInput<ModuleId>
+  ): HouseModuleTransitionResult<ModuleId>;
+  leave(
+    input: HouseModuleLeaveInput<ModuleId>
+  ): HouseModuleTransitionResult<ModuleId>;
+  selectViewModel(input: HouseModuleViewModelInput<ModuleId>): HouseModuleViewModel;
 };
 ```
 
@@ -120,21 +145,21 @@ Typing rules:
 - do not leave shipped house `sessionState` as bare `unknown`
 - represent shared house session through a `moduleId -> sessionState` map
 - keep `GameState.ui.houseSession` as a discriminated union keyed by `moduleId`
-- `main.ts` may pass the active session through generic wiring, but should not cast it with `as`
+- generic wiring may pass the active session through runtime boundaries, but should not recover type safety with ad hoc `as` casting in the entrypoint
 
 Minimum required lifecycle:
 
 - `enter`
-- `leave`
 - `dispatch`
+- `leave`
 - `selectViewModel`
 
-Optional:
+If a module needs timer-driven behavior, use:
 
-- `tick`
-- `start`
-- `stop`
-- `resolveOverlay`
+- `HouseModuleRequest` with `type: "tick"`
+- `HouseModuleSideEffect` with `start-interval` / `stop-interval`
+
+Do not add parallel custom lifecycle methods for one-off houses unless the shared contract is intentionally being expanded and documented.
 
 ## State Rules
 
@@ -144,6 +169,8 @@ Allowed:
 
 - `GameState.runtime.variables`
 - `GameState.runtime.flags`
+- `GameState.runtime.cityMarkets`
+- `GameState.runtime.cityNpcPools`
 - dedicated unified `GameState.ui.houseSession`
 - a future `GameState.modules` branch if introduced as shared architecture
 
@@ -208,13 +235,16 @@ type AlertOverlayModel = {
   title: string;
   paragraphs: string[];
   tone?: "info" | "success" | "warning";
+  confirmActionId: string;
+  confirmLabel: string;
 };
 ```
 
 Then `ui/views/*` converts that into markup.
 
 Shared overlay unions may grow when a special house needs a richer structured interaction
-(for example a module-specific trade picker or a rest-days input panel), but the data must remain typed and UI-facing.
+(for example a module-specific trade picker, a rest-days input panel, or a market trade selector),
+but the data must remain typed and UI-facing.
 Do not fall back to raw HTML strings in `application`.
 
 ## Main Entry Rules
@@ -225,16 +255,34 @@ Allowed:
 
 - resolve current house definition
 - look up `moduleId`
-- call house module registry
+- call generic house runtime wiring
 - pass dispatched actions into a generic house module dispatcher
 
 Not allowed:
 
 - `if (isGrainShopHouse(houseId))`
-- custom imports for each house business flow
+- custom imports for each house business flow from the entrypoint
 - special render branches for individual house ids
 
 If `main.ts` needs to know a concrete house name, the interface is wrong.
+
+### Grouped Entry Rule
+
+Some special house flows may be reached through a grouped city entry instead of a direct `house-id` button.
+
+Example:
+
+- `将领府邸` card
+- open a same-city character directory
+- pick one character
+- enter a shared `leader-residence` module with the selected character bound through unified runtime state
+
+Rules:
+
+- grouped entry selection happens before entering the house module
+- the grouped entry is a city-level navigation concern, not a house-specific branch in `main.ts`
+- the selected target must still be passed into the house module through unified state / metadata
+- do not bypass the special-house lifecycle just because the card first opens a list
 
 ## Registry Pattern
 
@@ -244,7 +292,11 @@ Example:
 
 ```ts
 export const houseModuleRegistry: Record<HouseModuleId, HouseModuleDefinition> = {
+  "home-house": homeHouseHouseModule,
   "grain-shop": grainShopHouseModule,
+  "market-house": marketHouseHouseModule,
+  tavern: tavernHouseModule,
+  "tea-house": teaHouseHouseModule,
 };
 ```
 
@@ -255,7 +307,11 @@ export const houseModuleViewRegistry: Record<
   HouseModuleId,
   (viewModel: HouseModuleViewModel) => string
 > = {
+  "home-house": renderHomeHouseView,
   "grain-shop": renderGrainShopHouseView,
+  "market-house": renderMarketHouseView,
+  tavern: renderTavernHouseView,
+  "tea-house": renderTeaHouseHouseView,
 };
 ```
 
@@ -268,6 +324,8 @@ The app should:
 5. call generic module lifecycle methods
 6. resolve the registered renderer for the returned view model
 
+If a city entry first opens a directory, that directory should still resolve to a stable target house id and then continue through the same registry path.
+
 ## View Model Contract
 
 UI house views should accept view models, not raw `GameState`.
@@ -275,16 +333,17 @@ UI house views should accept view models, not raw `GameState`.
 Recommended shape:
 
 ```ts
-type SpecialHouseViewModel = {
+type HouseModuleViewModel = {
+  moduleId: HouseModuleId;
+  houseId: string;
   sceneTitle: string;
-  npcName: string;
-  actions: Array<{
-    id: string;
-    label: string;
-    disabled?: boolean;
-  }>;
+  sceneSubtitle?: string;
+  standbyRoster: HouseStandbyActorViewModel[];
+  dialogue: HouseDialogueViewModel | null;
+  actionContainer: HouseActionContainerViewModel | null;
+  statusCard: HouseStatusCardViewModel | null;
   overlay: HouseOverlayViewModel | null;
-  sessionPhase: string;
+  leaveAction: HouseActionViewModel;
 };
 ```
 
@@ -321,6 +380,7 @@ A new house implementation is acceptable only if all are true:
 - persistent changes are written through unified state
 - entering house does not reset player base stats
 - session state is stored through a unified contract
+- timer behavior, if any, runs through `tick` requests plus shared side-effect wiring
 - `docs/change-log.md` is updated for shared-interface changes
 
 ## Review Checklist
@@ -332,5 +392,6 @@ When reviewing a house implementation, check these first:
 3. Did it return HTML from `application`?
 4. Did it overwrite player baseline stats on enter?
 5. Did it introduce a stable `moduleId` and registry path?
+6. Did it bypass shared `tick` / interval side-effect wiring with custom runtime hooks?
 
 If any answer is yes for 1 to 4, reject the implementation.

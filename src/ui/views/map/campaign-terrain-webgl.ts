@@ -27,15 +27,27 @@ type CampaignTerrainCamera = {
   offsetY: number;
 };
 
-let activeRenderer: (() => void) | null = null;
-let activeCanvas: HTMLCanvasElement | null = null;
-let activeRender: (() => void) | null = null;
-let activeProjectionInput: {
+type CampaignTerrainRenderer = {
+  canvas: HTMLCanvasElement;
+  dispose: () => void;
+  render: () => void;
+  projectionInput: {
+    canvas: HTMLCanvasElement;
+    heights: Float32Array;
+    columns: number;
+    rows: number;
+  };
+};
+
+const activeRenderers = new Map<HTMLCanvasElement, CampaignTerrainRenderer>();
+
+type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
   heights: Float32Array;
   columns: number;
   rows: number;
-} | null = null;
+};
+
 let currentCamera: CampaignTerrainCamera = {
   scale: 1,
   offsetX: 0,
@@ -44,64 +56,71 @@ let currentCamera: CampaignTerrainCamera = {
 
 export function setCampaignTerrainCamera(camera: CampaignTerrainCamera): void {
   currentCamera = camera;
-  activeRender?.();
-  if (activeProjectionInput != null) {
-    syncProjectedPoints(activeProjectionInput);
+  for (const renderer of activeRenderers.values()) {
+    renderer.render();
+    syncProjectedPoints(renderer.projectionInput);
   }
 }
 
 export function syncCampaignTerrainWebGl(root: ParentNode): void {
-  const canvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
-  if (canvas == null) {
-    disposeCampaignTerrainWebGl();
+  const canvases = Array.from(
+    root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-terrain]")
+  );
+  const nextCanvasSet = new Set(canvases);
+
+  for (const [canvas, renderer] of activeRenderers.entries()) {
+    if (!nextCanvasSet.has(canvas)) {
+      renderer.dispose();
+      activeRenderers.delete(canvas);
+    }
+  }
+
+  if (canvases.length === 0) {
     return;
   }
 
-  if (canvas === activeCanvas) {
-    return;
-  }
-
-  disposeCampaignTerrainWebGl();
-  activeCanvas = canvas;
-
-  const textureUrl = canvas.dataset.mapTextureUrl;
-  const heightUrl = canvas.dataset.mapHeightUrl;
-  const materialUrl = canvas.dataset.mapMaterialUrl;
-  if (textureUrl == null || heightUrl == null || materialUrl == null) {
-    return;
-  }
-
-  void initCampaignTerrainWebGl({
-    canvas,
-    textureUrl,
-    heightUrl,
-    materialUrl,
-  }).then((dispose) => {
-    if (activeCanvas !== canvas) {
-      dispose();
-      return;
+  for (const canvas of canvases) {
+    if (activeRenderers.has(canvas)) {
+      continue;
     }
 
-    activeRenderer = dispose;
-    canvas.classList.add("is-ready");
-  }).catch((error: unknown) => {
-    console.error("Failed to render campaign terrain WebGL map.", error);
-    canvas.classList.add("has-error");
-  });
+    const textureUrl = canvas.dataset.mapTextureUrl;
+    const heightUrl = canvas.dataset.mapHeightUrl;
+    const materialUrl = canvas.dataset.mapMaterialUrl;
+    if (textureUrl == null || heightUrl == null || materialUrl == null) {
+      continue;
+    }
+
+    void initCampaignTerrainWebGl({
+      canvas,
+      textureUrl,
+      heightUrl,
+      materialUrl,
+    }).then((renderer) => {
+      if (!nextCanvasSet.has(canvas) || !canvas.isConnected) {
+        renderer.dispose();
+        return;
+      }
+
+      activeRenderers.set(canvas, renderer);
+      canvas.classList.add("is-ready");
+    }).catch((error: unknown) => {
+      console.error("Failed to render campaign terrain WebGL map.", error);
+      canvas.classList.add("has-error");
+    });
+  }
 }
 
 function disposeCampaignTerrainWebGl(): void {
-  if (activeRenderer != null) {
-    activeRenderer();
-    activeRenderer = null;
+  for (const renderer of activeRenderers.values()) {
+    renderer.dispose();
   }
-
-  activeCanvas = null;
-  activeRender = null;
-  activeProjectionInput = null;
+  activeRenderers.clear();
 }
 
-async function initCampaignTerrainWebGl(input: CampaignTerrainInput): Promise<() => void> {
+async function initCampaignTerrainWebGl(
+  input: CampaignTerrainInput
+): Promise<CampaignTerrainRenderer> {
   const gl = input.canvas.getContext("webgl", {
     alpha: true,
     antialias: true,
@@ -154,7 +173,7 @@ async function initCampaignTerrainWebGl(input: CampaignTerrainInput): Promise<()
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
   gl.enable(gl.DEPTH_TEST);
   gl.disable(gl.CULL_FACE);
-  activeProjectionInput = {
+  const projectionInput: CampaignTerrainProjectionInput = {
     canvas: input.canvas,
     heights: heightSamples,
     columns: GRID_COLUMNS,
@@ -198,27 +217,28 @@ async function initCampaignTerrainWebGl(input: CampaignTerrainInput): Promise<()
     );
     gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
   };
-  activeRender = render;
 
   render();
-  syncProjectedPoints(activeProjectionInput);
+  syncProjectedPoints(projectionInput);
   frameId = window.requestAnimationFrame(render);
   window.addEventListener("resize", render);
 
-  return () => {
-    if (frameId != null) {
-      window.cancelAnimationFrame(frameId);
-    }
+  return {
+    canvas: input.canvas,
+    render,
+    projectionInput,
+    dispose: () => {
+      if (frameId != null) {
+        window.cancelAnimationFrame(frameId);
+      }
 
-    window.removeEventListener("resize", render);
-    gl.deleteBuffer(vertexBuffer);
-    gl.deleteBuffer(indexBuffer);
-    gl.deleteTexture(texture);
-    gl.deleteTexture(materialTexture);
-    gl.deleteProgram(program);
-    if (activeRender === render) {
-      activeRender = null;
-    }
+      window.removeEventListener("resize", render);
+      gl.deleteBuffer(vertexBuffer);
+      gl.deleteBuffer(indexBuffer);
+      gl.deleteTexture(texture);
+      gl.deleteTexture(materialTexture);
+      gl.deleteProgram(program);
+    },
   };
 }
 

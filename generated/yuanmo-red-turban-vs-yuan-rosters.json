@@ -1,0 +1,4018 @@
+{
+  "generatedAt": "2026-05-26T13:11:20.404Z",
+  "assumptions": {
+    "redTurbanFactions": [
+      "portugal",
+      "papal_states",
+      "scotland",
+      "sicily"
+    ],
+    "yuanFactions": [
+      "byzantium",
+      "moors",
+      "saxons",
+      "turks"
+    ],
+    "redTurbanKeywords": [
+      "chuang_",
+      "shun_",
+      "daxi_",
+      "jianghan_",
+      "zhongyuan_",
+      "dqs ",
+      "dqs_",
+      "qin_",
+      "capital_",
+      "ming_",
+      "hongdengzhao",
+      "xiaodaohui"
+    ],
+    "yuanKeywords": [
+      "dayuan",
+      "menggu",
+      "mongol",
+      "manchu",
+      "steppe",
+      "mon_",
+      "hanren",
+      "lvying",
+      "baqi",
+      "qing_"
+    ],
+    "note": "Conservative roster extraction. Units are classified only when type, dictionary, or soldier model explicitly indicates a Red Turban or Yuan lineage. Ships are excluded, and generic faction-owned militia is intentionally left out."
+  },
+  "redTurbanFriendlyUnits": [
+    {
+      "type": "Chuang_archer",
+      "dictionary": "Chuang_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Chuang_archer, 80, 0, 0.8, 0.35, 1.6",
+      "soldierModel": "Chuang_archer",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "8, 1, composite_arrow, 140, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "3, 2, no, 0, 0, melee, melee_simple, piercing, knife, -25, 0.2",
+      "statCost": "1, 240, 80, 35, 50, 220, 8, 80",
+      "armourUgModels": [
+        "Chuang_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Chuang_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_swordsman",
+      "dictionary": "Chuang_swordsman",
+      "category": "infantry",
+      "class": "light",
+      "soldier": "Chuang_swordsman, 80, 0, 1, 0.34, 1.55",
+      "soldierModel": "Chuang_swordsman",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "5, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "1, 260, 90, 50, 70, 260, 8, 150",
+      "armourUgModels": [
+        "Chuang_swordsman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Chuang_swordsman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Shun_elite_swordsman",
+      "dictionary": "Shun_elite_swordsman",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Shun_elite_swordsman, 48, 0, 1.2, 0.34, 1.55",
+      "soldierModel": "Shun_elite_swordsman",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "15, 5, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 2060, 415, 100, 100, 1180, 4, 80",
+      "armourUgModels": [
+        "Shun_elite_swordsman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw"
+      ],
+      "displayName": "Shun_elite_swordsman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Shun_elite_infantry",
+      "dictionary": "Shun_elite_infantry",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Shun_elite_infantry, 48, 0, 1.2, 0.35, 1.55",
+      "soldierModel": "Shun_elite_infantry",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "16, 6, no, 0, 0, melee, melee_blade, slashing, axe, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 2200, 440, 200, 200, 1050, 3, 80",
+      "armourUgModels": [
+        "Shun_elite_infantry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy"
+      ],
+      "displayName": "Shun_elite_infantry",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Shun_elite_archer",
+      "dictionary": "Shun_elite_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Shun_elite_archer, 48, 0, 0.8, 0.35, 1.6",
+      "soldierModel": "Shun_elite_archer",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "14, 1, composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "7, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1600, 400, 100, 100, 1000, 4, 80",
+      "armourUgModels": [
+        "Shun_elite_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Shun_elite_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_chosen_spearman",
+      "dictionary": "Chuang_chosen_spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Chuang_chosen_spearman, 56, 0, 1.2, 0.36, 1.65",
+      "soldierModel": "Chuang_chosen_spearman",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "12, 4, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1580, 340, 95, 95, 590, 4, 150",
+      "armourUgModels": [
+        "Chuang_chosen_spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw"
+      ],
+      "displayName": "Chuang_chosen_spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_chosen_staff",
+      "dictionary": "Chuang_chosen_staff",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Chuang_chosen_staff, 56, 0, 1.2, 0.35, 1.55",
+      "soldierModel": "Chuang_chosen_staff",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "14, 5, no, 0, 0, melee, melee_blade, slashing, axe, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1640, 350, 100, 100, 820, 4, 80",
+      "armourUgModels": [
+        "Chuang_chosen_staff"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "frighten_foot"
+      ],
+      "displayName": "Chuang_chosen_staff",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_cavalry",
+      "dictionary": "Chuang_cavalry",
+      "category": "cavalry",
+      "class": "light",
+      "soldier": "Chuang_cavalry, 26, 0, 1",
+      "soldierModel": "Chuang_cavalry",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "5, 2, no, 0, 0, melee, melee_blade, slashing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "1, 620, 190, 80, 80, 560, 6, 80",
+      "armourUgModels": [
+        "Chuang_cavalry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy"
+      ],
+      "displayName": "Chuang_cavalry",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_scout",
+      "dictionary": "Chuang_scout",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "Chuang_scout, 26, 0, 1",
+      "soldierModel": "Chuang_scout",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "8, 2, javelin, 55, 8, thrown, missile_mechanical, piercing, spear, 25, 1",
+      "statSec": "5, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "2, 760, 220, 120, 95, 480, 5, 200",
+      "armourUgModels": [
+        "Chuang_scout"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "horse_javelinmen"
+      ],
+      "displayName": "Chuang_scout",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "dqs gongsheng",
+      "dictionary": "dqs_gongsheng      ;   ǰ˾  ʥ",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "dqs_gongsheng, 26, 0, 1",
+      "soldierModel": "dqs_gongsheng",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "portugal"
+      ],
+      "statPri": "12, 3, pistol_bullet, 55, 20, missile, missile_gunpowder, piercing, none, musket_shot_set, 0, 1",
+      "statSec": "7, 6, no, 0, 0, melee, melee_blade, piercing, spear, 25, 1",
+      "statCost": "3, 1480, 520, 120, 95, 980, 4, 290",
+      "armourUgModels": [
+        "dqs_gongsheng"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "cantabrian_circle",
+        "gunpowder_unit",
+        "start_not_skirmishing",
+        "guncavalry"
+      ],
+      "displayName": "dqs_gongsheng      ;   ǰ˾  ʥ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "dqs menghu",
+      "dictionary": "dqs_menghu      ;   ǰ˾             ͻ  ز",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "hu1, 48, 0, 1",
+      "soldierModel": "hu1",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "slave"
+      ],
+      "statPri": "16, 5, no, 0, 0, melee, melee_blade, blunt, mace, -25, 0.1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, -25, 0.1",
+      "statCost": "4, 1940, 605, 95, 95, 540, 4, 130",
+      "armourUgModels": [
+        "hu",
+        "hu1",
+        "hu2"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "frighten_foot"
+      ],
+      "displayName": "dqs_menghu      ;   ǰ˾             ͻ  ز",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "dqs zhugenu",
+      "dictionary": "dqs_zhugenu      ;   ǰ˾",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "zgnu, 64, 0, 0.65, 0.3189, 1.5712",
+      "soldierModel": "zgnu",
+      "soldierCount": 64,
+      "mount": null,
+      "ownership": [
+        "portugal"
+      ],
+      "statPri": "15, 2, composite_arrow, 100, 60, missile, missile_mechanical, piercing, none, 0, 0.35",
+      "statSec": "9, 1, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1830, 480, 95, 120, 830, 4, 80",
+      "armourUgModels": [
+        "zgnu"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "crossbow",
+        "start_skirmishing",
+        "very_hardy",
+        "stakes"
+      ],
+      "displayName": "dqs_zhugenu      ;   ǰ˾",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "dqs sanyan",
+      "dictionary": "dqs_sanyan      ;   ǰ˾            ۻ 沈",
+      "category": "infantry ;removed fire_by_rank",
+      "class": "missile",
+      "soldier": "sanyanhuochong, 48, 0, 0.8",
+      "soldierModel": "sanyanhuochong",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "portugal"
+      ],
+      "statPri": "14, 1, arquebus_bullet, 120, 25, missile, missile_gunpowder, piercing, none, musket_shot_set, 400, 1",
+      "statSec": "8, 2, no, 0, 0, melee, melee_blade, piercing, sword, 25, 1",
+      "statCost": "3, 1420, 400, 65, 50, 420, 4, 110",
+      "armourUgModels": [
+        "sanyanhuochong"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "gunpowder_unit",
+        "start_not_skirmishing",
+        "gunmen",
+        "stakes"
+      ],
+      "displayName": "dqs_sanyan      ;   ǰ˾            ۻ 沈",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_chosen_cavalry",
+      "dictionary": "Chuang_chosen_cavalry",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Chuang_chosen_cavalry, 14, 0, 1",
+      "soldierModel": "Chuang_chosen_cavalry",
+      "soldierCount": 14,
+      "mount": "zhongma",
+      "ownership": [
+        "portugal"
+      ],
+      "statPri": "11, 8, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "9, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1280, 320, 40, 50, 640, 2, 200",
+      "armourUgModels": [
+        "Chuang_chosen_cavalry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "general_unit",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Chuang_chosen_cavalry",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_bambard",
+      "dictionary": "Chuang_bambard",
+      "category": "siege",
+      "class": "missile",
+      "soldier": "ee_mortar_crew, 24, 4, 1",
+      "soldierModel": "ee_mortar_crew",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "milan",
+        "sicily",
+        "scotland",
+        "venice",
+        "portugal",
+        "timurids",
+        "slave"
+      ],
+      "statPri": "4, 1, no, 0, 0, melee, artillery_gunpowder, piercing, knife, -25, 0.2",
+      "statSec": "30, 3, bombard_shot, 280, 30, siege_missile, artillery_gunpowder, blunt, none, 25, 1",
+      "statCost": "1, 1080, 270, 90, 70, 540, 4, 200",
+      "armourUgModels": [
+        "ee_mortar_crew"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "gunpowder_unit",
+        "cannon",
+        "artillery",
+        "affected_by_rain"
+      ],
+      "displayName": "Chuang_bambard",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_cannon",
+      "dictionary": "Chuang_cannon",
+      "category": "siege",
+      "class": "missile",
+      "soldier": "ee_bombard_crew, 24, 4, 1",
+      "soldierModel": "ee_bombard_crew",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "milan",
+        "sicily",
+        "scotland",
+        "venice",
+        "portugal",
+        "timurids",
+        "slave"
+      ],
+      "statPri": "4, 1, no, 0, 0, melee, artillery_gunpowder, piercing, knife, -25, 0.2",
+      "statSec": "25, 3, bombard_shot, 250, 30, siege_missile, artillery_gunpowder, blunt, none, 25, 1",
+      "statCost": "1, 1000, 250, 90, 70, 500, 4, 80",
+      "armourUgModels": [
+        "ee_bombard_crew"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "gunpowder_unit",
+        "cannon",
+        "artillery",
+        "affected_by_rain"
+      ],
+      "displayName": "Chuang_cannon",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_rocketer",
+      "dictionary": "ming_rocketer",
+      "category": "siege",
+      "class": "missile",
+      "soldier": "buyi_rocket, 24, 4, 1",
+      "soldierModel": "buyi_rocket",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "milan",
+        "hre",
+        "sicily",
+        "france",
+        "scotland",
+        "slave"
+      ],
+      "statPri": "3, 1, no, 0, 0, melee, artillery_mechanical, piercing, knife, -25, 0.2",
+      "statSec": "50, 3, rocket, 250, 108, siege_missile, artillery_gunpowder, blunt, none, 25, 1",
+      "statCost": "1, 800, 200, 90, 90, 580, 2, 170",
+      "armourUgModels": [
+        "buyi_rocket"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "gunpowder_unit",
+        "artillery",
+        "rocket",
+        "affected_by_rain"
+      ],
+      "displayName": "ming_rocketer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_hudun",
+      "dictionary": "Ming_hudun",
+      "category": "siege",
+      "class": "missile",
+      "soldier": "buyi_mortar, 24, 4, 1",
+      "soldierModel": "buyi_mortar",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "milan",
+        "hre",
+        "sicily",
+        "france",
+        "scotland",
+        "timurids",
+        "slave"
+      ],
+      "statPri": "3, 1, no, 0, 0, melee, artillery_mechanical, piercing, knife, -25, 0.2",
+      "statSec": "45, 3, mortar_shot, 250, 30, siege_missile, artillery_gunpowder, blunt, none, 25, 1",
+      "statCost": "1, 540, 170, 70, 80, 520, 2, 180",
+      "armourUgModels": [
+        "buyi_mortar"
+      ],
+      "attributes": [
+        "sea_faring",
+        "can_withdraw",
+        "gunpowder_unit",
+        "artillery",
+        "affected_by_rain"
+      ],
+      "displayName": "Ming_hudun",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_hongyipao",
+      "dictionary": "Ming_hongyipao",
+      "category": "siege",
+      "class": "missile",
+      "soldier": "buyi_basilisk, 24, 4, 1",
+      "soldierModel": "buyi_basilisk",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "milan",
+        "hre",
+        "sicily",
+        "france",
+        "scotland",
+        "slave"
+      ],
+      "statPri": "3, 1, no, 0, 0, melee, artillery_mechanical, piercing, knife, -25, 0.2",
+      "statSec": "50, 3, basilisk_shot, 360, 30, siege_missile, artillery_gunpowder, blunt, none, 25, 1",
+      "statCost": "2, 1780, 400, 100, 120, 780, 3, 210",
+      "armourUgModels": [
+        "buyi_basilisk"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "gunpowder_unit",
+        "cannon",
+        "explode",
+        "artillery",
+        "affected_by_rain"
+      ],
+      "displayName": "Ming_hongyipao",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_gongrongpao",
+      "dictionary": "Ming_gongrongpao",
+      "category": "siege",
+      "class": "missile",
+      "soldier": "buyi_cannon, 24, 4, 1",
+      "soldierModel": "buyi_cannon",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "milan",
+        "hre",
+        "sicily",
+        "france",
+        "scotland",
+        "slave"
+      ],
+      "statPri": "3, 1, no, 0, 0, melee, artillery_mechanical, piercing, knife, -25, 0.2",
+      "statSec": "40, 3, cannon_shot, 270, 30, siege_missile, artillery_gunpowder, blunt, none, 25, 1",
+      "statCost": "1, 1240, 310, 90, 100, 620, 2, 210",
+      "armourUgModels": [
+        "buyi_cannon"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "gunpowder_unit",
+        "cannon",
+        "explode",
+        "artillery",
+        "affected_by_rain"
+      ],
+      "displayName": "Ming_gongrongpao",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_Jinyiwei",
+      "dictionary": "Ming_Jinyiwei",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Ming_Jinyiwei, 26, 0, 1.4, 0.35",
+      "soldierModel": "Ming_Jinyiwei",
+      "soldierCount": 26,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "22, 9, no, 0, 0, melee, melee_blade, slashing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "4, 1340, 540, 200, 200, 920, 4, 80",
+      "armourUgModels": [
+        "Ming_Jinyiwei"
+      ],
+      "attributes": [
+        "sea_faring",
+        "can_withdraw",
+        "hide_anywhere",
+        "hide_long_grass",
+        "very_hardy",
+        "frighten_foot",
+        "command"
+      ],
+      "displayName": "Ming_Jinyiwei",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_Light_Archers",
+      "dictionary": "Ming_Light_Archers",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Ming_Light_Archers, 80, 0, 0.8, 0.35",
+      "soldierModel": "Ming_Light_Archers",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "8, 5, composite_arrow, 150, 25, missile, missile_mechanical, piercing, none, 0, 0.35",
+      "statSec": "3, 1, no, 0, 0, melee, melee_simple, piercing, knife, -25, 0.2",
+      "statCost": "1, 240, 80, 65, 50, 220, 7, 90",
+      "armourUgModels": [
+        "Ming_Light_Archers"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "is_peasant",
+        "foot_archers",
+        "stakes"
+      ],
+      "displayName": "Ming_Light_Archers",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_Light_Swordman",
+      "dictionary": "Ming_Light_Swordman",
+      "category": "infantry",
+      "class": "light",
+      "soldier": "Ming_Light_Swordman, 80, 0, 1, 0.35",
+      "soldierModel": "Ming_Light_Swordman",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "5, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "1, 280, 95, 75, 55, 190, 7, 100",
+      "armourUgModels": [
+        "Ming_Light_Swordman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "is_peasant",
+        "peasant"
+      ],
+      "displayName": "Ming_Light_Swordman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_Light_Spearmen",
+      "dictionary": "Ming_Light_Spearmen",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Ming_Light_Spearmen, 80, 0, 1, 0.35",
+      "soldierModel": "Ming_Light_Spearmen",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "4, 2, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "1, 280, 90, 70, 50, 180, 7, 80",
+      "armourUgModels": [
+        "Ming_Light_Spearmen"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "is_peasant",
+        "peasant"
+      ],
+      "displayName": "Ming_Light_Spearmen",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Zhongyuan_Gunners",
+      "dictionary": "Zhongyuan_Gunners",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Zhongyuan_Gunners, 72, 0, 0.8, 0.35",
+      "soldierModel": "Zhongyuan_Gunners",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "10, 6, hand_gun_bullet, 70, 30, missile, missile_gunpowder, piercing, none, musket_shot_set, 0, 1",
+      "statSec": "8, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "2, 640, 190, 80, 75, 620, 5, 230",
+      "armourUgModels": [
+        "Zhongyuan_Gunners"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "start_not_skirmishing",
+        "gunpowder_unit",
+        "gunmen",
+        "affected_by_rain"
+      ],
+      "displayName": "Zhongyuan_Gunners",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Zhongyuan_spearman",
+      "dictionary": "Zhongyuan_spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Zhongyuan_spearman, 72, 0, 1, 0.35",
+      "soldierModel": "Zhongyuan_spearman",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "8, 3, no, 0, 0, melee, melee_simple, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 560, 180, 90, 90, 480, 6, 80",
+      "armourUgModels": [
+        "Zhongyuan_spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw"
+      ],
+      "displayName": "Zhongyuan_spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Zhongyuan_archer",
+      "dictionary": "Zhongyuan_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Zhongyuan_archer, 72, 0, 0.8, 0.35",
+      "soldierModel": "Zhongyuan_archer",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "12, 6, composite_arrow, 200, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "7, 2, no, 0, 0, melee, melee_simple, piercing, knife, -25, 0.2",
+      "statCost": "2, 530, 170, 80, 80, 495, 6, 80",
+      "armourUgModels": [
+        "Zhongyuan_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Zhongyuan_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Qin_Standard_Cav",
+      "dictionary": "Qin_Standard_Cav",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Qin_Standard_Cav, 26, 0, 1",
+      "soldierModel": "Qin_Standard_Cav",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "13, 6, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "8, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1610, 520, 120, 95, 980, 4, 120",
+      "armourUgModels": [
+        "Qin_Standard_Cav"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_formed_charge",
+        "can_withdraw"
+      ],
+      "displayName": "Qin_Standard_Cav",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Daxi_spearmen",
+      "dictionary": "Daxi_spearmen",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Daxi_spearmen, 40, 0, 1.2, 0.35, 1.55",
+      "soldierModel": "Daxi_spearmen",
+      "soldierCount": 40,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "10, 1, steel_crossbow_bolt, 100, 30, missile, missile_mechanical, piercing, none, -25, 0.1",
+      "statSec": "6, 1, no, 0, 0, melee, melee_blade, piercing, sword, 25, 1",
+      "statCost": "2, 520, 165, 65, 50, 520, 4, 120",
+      "armourUgModels": [
+        "Daxi_spearmen"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "crossbow"
+      ],
+      "displayName": "Daxi_spearmen",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_shenji",
+      "dictionary": "Ming_shenji",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Ming_shenji, 56, 0, 0.8, 0.35",
+      "soldierModel": "Ming_shenji",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "17, 10, arquebus_bullet, 220, 30, missile, missile_gunpowder, piercing, none, musket_shot_set, 25, 1",
+      "statSec": "10, 6, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "4, 1940, 550, 130, 80, 1120, 4, 200",
+      "armourUgModels": [
+        "Ming_shenji"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "start_not_skirmishing",
+        "stakes",
+        "stakes",
+        "gunpowder_unit",
+        "fire_by_rank",
+        "extreme_range",
+        "gunmen",
+        "affected_by_rain"
+      ],
+      "displayName": "Ming_shenji",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Capital_swordsman",
+      "dictionary": "Capital_swordsman",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Capital_swordsman, 48, 0, 0.2, 0.35",
+      "soldierModel": "Capital_swordsman",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "15, 6, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1700, 380, 100, 100, 1180, 4, 80",
+      "armourUgModels": [
+        "Capital_swordsman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw"
+      ],
+      "displayName": "Capital_swordsman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Capital_elite_infantry",
+      "dictionary": "Capital_elite_infantry",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Capital_elite_infantry, 40, 0, 1.2, 0.35",
+      "soldierModel": "Capital_elite_infantry",
+      "soldierCount": 40,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "19, 10, no, 0, 0, melee, melee_blade, slashing, axe, 25, 1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "5, 2960, 655, 200, 200, 1180, 4, 80",
+      "armourUgModels": [
+        "Capital_elite_infantry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "very_hardy",
+        "frighten_mounted"
+      ],
+      "displayName": "Capital_elite_infantry",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Capital_archer",
+      "dictionary": "Capital_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Capital_archer, 48, 0, 0.8, 0.35",
+      "soldierModel": "Capital_archer",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "16, 10, composite_arrow, 250, 50, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "10, 6, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "4, 1870, 500, 100, 100, 935, 4, 80",
+      "armourUgModels": [
+        "Capital_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "affected_by_rain",
+        "foot_archers",
+        "very_hardy"
+      ],
+      "displayName": "Capital_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_Baigan",
+      "dictionary": "Ming_Baigan",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "bizika_pikeman, 72, 0, 1, 0.35",
+      "soldierModel": "bizika_pikeman",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "13, 5, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 1260, 330, 100, 100, 680, 1, 80",
+      "armourUgModels": [
+        "bizika_pikeman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hide_improved_forest",
+        "can_withdraw",
+        "very_hardy",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Ming_Baigan",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Capital_horcearcher",
+      "dictionary": "Capital_horcearcher",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "Capital_horcearcher, 26, 0, 1",
+      "soldierModel": "Capital_horcearcher",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "8, 2, cav_composite_arrow, 150, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "5, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "2, 970, 330, 100, 100, 1060, 6, 80",
+      "armourUgModels": [
+        "Capital_horcearcher"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "Capital_horcearcher",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_elite_cav",
+      "dictionary": "ming_elite_cav   ;  ǧӪ",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "ming_heav_cav, 26, 0, 1.2",
+      "soldierModel": "ming_heav_cav",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "12, 5, arrow, 160, 60, missile, missile_mechanical, piercing, none, 0, 0.35",
+      "statSec": "8, 5, no, 0, 0, melee, melee_blade, slashing, axe, -25, 0.1",
+      "statCost": "4, 2300, 700, 120, 95, 1000, 4, 200",
+      "armourUgModels": [
+        "ming_heav_cav"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "can_formed_charge",
+        "cantabrian_circle"
+      ],
+      "displayName": "ming_elite_cav   ;  ǧӪ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_heavy_cavalry",
+      "dictionary": "ming_heavy_cavalry      ; ʮ  Ӫ",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "ming_heavy_cavalry, 26, 0, 1.1",
+      "soldierModel": "ming_heavy_cavalry",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "14, 9, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.1",
+      "statSec": "9, 4, no, 0, 0, melee, melee_blade, blunt, mace, -25, 0.1",
+      "statCost": "4, 2300, 700, 120, 95, 890, 4, 170",
+      "armourUgModels": [
+        "ming_heavy_cavalry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "frighten_foot",
+        "can_formed_charge"
+      ],
+      "displayName": "ming_heavy_cavalry      ; ʮ  Ӫ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_s_lancer",
+      "dictionary": "ming_s_lancer      ; Ч  Ӫ",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "ming_s_lancer, 50, 0, 0.45",
+      "soldierModel": "ming_s_lancer",
+      "soldierCount": 50,
+      "mount": null,
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "12, 3, no, 0, 0, melee, melee_blade, piercing, spear, 25, 1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 0.35",
+      "statCost": "3, 1640, 350, 105, 80, 870, 4, 140",
+      "armourUgModels": [
+        "ming_s_lancer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "very_hardy",
+        "pike",
+        "frighten_mounted"
+      ],
+      "displayName": "ming_s_lancer      ; Ч  Ӫ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_bx_lancer",
+      "dictionary": "ming_bx_lancer       ;     Ӫ",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "ming_bx_lancer, 50, 0, 0.75",
+      "soldierModel": "ming_bx_lancer",
+      "soldierCount": 50,
+      "mount": null,
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "14, 5, no, 0, 0, melee, melee_blade, blunt, mace, -25, 0.1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, -25, 0.1",
+      "statCost": "3, 1630, 350, 75, 55, 540, 4, 130",
+      "armourUgModels": [
+        "ming_bx_lancer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "very_hardy"
+      ],
+      "displayName": "ming_bx_lancer       ;     Ӫ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_d_lancer",
+      "dictionary": "ming_d_lancer      ;  ׹     Ӫ",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "ming_d_lancer, 50, 0, 0.8",
+      "soldierModel": "ming_d_lancer",
+      "soldierCount": 50,
+      "mount": null,
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "13, 3, no, 0, 0, melee, melee_blade, slashing, sword, -25, 0.1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, -25, 0.25",
+      "statCost": "3, 1620, 350, 90, 70, 800, 4, 200",
+      "armourUgModels": [
+        "ming_d_lancer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "very_hardy",
+        "can_withdraw",
+        "frighten_foot"
+      ],
+      "displayName": "ming_d_lancer      ;  ׹     Ӫ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_n_lancer",
+      "dictionary": "ming_n_lancer  ;Χ    Ӫ",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "ming_n_lancer, 50, 0, 0.15",
+      "soldierModel": "ming_n_lancer",
+      "soldierCount": 50,
+      "mount": null,
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "14, 2, arrow, 163, 60, missile, missile_mechanical, piercing, none, -450, 0.35",
+      "statSec": "9, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.1",
+      "statCost": "3, 1610, 350, 120, 95, 700, 4, 230",
+      "armourUgModels": [
+        "ming_n_lancer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "stakes",
+        "very_hardy"
+      ],
+      "displayName": "ming_n_lancer  ;Χ    Ӫ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_wuqian",
+      "dictionary": "Ming_wuqian",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Ming_wuqian, 26, 0, 1",
+      "soldierModel": "Ming_wuqian",
+      "soldierCount": 26,
+      "mount": "zhongma",
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "12, 9, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "4, 1500, 495, 120, 130, 1390, 4, 120",
+      "armourUgModels": [
+        "Ming_wuqian"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "frighten_foot"
+      ],
+      "displayName": "Ming_wuqian",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Ming_bodyguard",
+      "dictionary": "Ming_bodyguard",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Ming_bodyguard, 12, 0, 1",
+      "soldierModel": "Ming_bodyguard",
+      "soldierCount": 12,
+      "mount": "zhongma",
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "14, 6, cav_composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "10, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1840, 360, 120, 95, 920, 4, 230",
+      "armourUgModels": [
+        "Ming_bodyguard"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "general_unit",
+        "can_formed_charge",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "Ming_bodyguard",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "minghuangdi",
+      "dictionary": "minghuangdi",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Qin_Standard_Cav, 14, 0, 1",
+      "soldierModel": "Qin_Standard_Cav",
+      "soldierCount": 14,
+      "mount": "zhongma",
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "19, 13, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, -25, 0.1",
+      "statCost": "1, 1000, 0, 200, 200, 555, 1, 100",
+      "armourUgModels": [
+        "Qin_Standard_Cav"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "no_custom",
+        "general_unit",
+        "command"
+      ],
+      "displayName": "minghuangdi",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "DIWAANGMINGZI",
+      "dictionary": "DIWAANGMINGZI",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Ming_wuqian, 12, 0, 1",
+      "soldierModel": "Ming_wuqian",
+      "soldierCount": 12,
+      "mount": "zhongma",
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "16, 12, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, -25, 0.1",
+      "statCost": "1, 1000, 0, 200, 200, 555, 1, 100",
+      "armourUgModels": [
+        "Ming_wuqian"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "no_custom",
+        "general_unit",
+        "command"
+      ],
+      "displayName": "DIWAANGMINGZI",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Qinliangyu_bodyguard",
+      "dictionary": "Qinliangyu_bodyguard",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Ming_bodyguard, 12, 0, 1",
+      "soldierModel": "Ming_bodyguard",
+      "soldierCount": 12,
+      "mount": "zhongma",
+      "ownership": [
+        "papal_states"
+      ],
+      "statPri": "14, 11, cav_composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "12, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "1, 1000, 0, 120, 95, 920, 4, 230",
+      "armourUgModels": [
+        "Ming_bodyguard"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "no_custom",
+        "general_unit",
+        "can_formed_charge",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "Qinliangyu_bodyguard",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Damingjiangjun",
+      "dictionary": "Damingjiangjun",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Ming_wuqian, 12, 0, 1",
+      "soldierModel": "Ming_wuqian",
+      "soldierCount": 12,
+      "mount": "zhongma",
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "16, 12, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, -25, 0.1",
+      "statCost": "1, 1000, 0, 200, 200, 555, 1, 100",
+      "armourUgModels": [
+        "Ming_wuqian"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "no_custom",
+        "general_unit",
+        "command"
+      ],
+      "displayName": "Damingjiangjun",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_dismounted_cav",
+      "dictionary": "ming_dismounted_cav",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "ming_dismounted_cav, 48, 0, 1, 0.35",
+      "soldierModel": "ming_dismounted_cav",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "france",
+        "hre",
+        "slave"
+      ],
+      "statPri": "14, 1, composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "7, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 800, 270, 70, 110, 920, 4, 110",
+      "armourUgModels": [
+        "ming_dismounted_cav"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_improved_forest",
+        "hardy",
+        "can_withdraw",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "ming_dismounted_cav",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_tiaodangqi",
+      "dictionary": "ming_tiaodangqi",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "ming_tiaodangqi, 24, 0, 1",
+      "soldierModel": "ming_tiaodangqi",
+      "soldierCount": 24,
+      "mount": "ming horse",
+      "ownership": [
+        "france",
+        "hre",
+        "slave"
+      ],
+      "statPri": "12, 2, hand_gun_bullet, 45, 8, missile, missile_gunpowder, piercing, none, musket_shot_set, 25, 1",
+      "statSec": "7, 5, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statCost": "2, 840, 290, 120, 95, 1020, 2, 230",
+      "armourUgModels": [
+        "ming_tiaodangqi"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "start_not_skirmishing",
+        "gunpowder_unit",
+        "guncavalry",
+        "affected_by_rain"
+      ],
+      "displayName": "ming_tiaodangqi",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_bianjungongqi",
+      "dictionary": "ming_bianjungongqi",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "ming_bianjungongqi, 24, 0, 1",
+      "soldierModel": "ming_bianjungongqi",
+      "soldierCount": 24,
+      "mount": "ming horse",
+      "ownership": [
+        "france",
+        "hre",
+        "slave"
+      ],
+      "statPri": "10, 2, cav_composite_arrow, 150, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "7, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1050, 380, 120, 95, 975, 3, 220",
+      "armourUgModels": [
+        "ming_bianjungongqi"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "affected_by_rain",
+        "horse_archers",
+        "cantabrian_circle"
+      ],
+      "displayName": "ming_bianjungongqi",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "ming_bj_heavy_cavalry",
+      "dictionary": "ming_bj_heavy_cavalry",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "ming_bj_heavy_cavalry, 12, 0, 1",
+      "soldierModel": "ming_bj_heavy_cavalry",
+      "soldierCount": 12,
+      "mount": "zhongma",
+      "ownership": [
+        "hre",
+        "france",
+        "slave"
+      ],
+      "statPri": "12, 8, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "9, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 2070, 315, 120, 95, 1035, 4, 120",
+      "armourUgModels": [
+        "ming_bj_heavy_cavalry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "frighten_foot",
+        "general_unit",
+        "free_upkeep_unit"
+      ],
+      "displayName": "ming_bj_heavy_cavalry",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_Light_Gunners",
+      "dictionary": "Jianghan_Light_Gunners",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "jianghanqin_Gunners, 56, 0, 0.8, 0.35",
+      "soldierModel": "jianghanqin_Gunners",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "12, 1, hand_gun_bullet, 55, 8, missile, missile_gunpowder, piercing, none, musket_shot_set, 0, 1",
+      "statSec": "7, 1, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "1, 540, 190, 80, 75, 620, 1, 230",
+      "armourUgModels": [
+        "jianghanqin_Gunners"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "start_not_skirmishing",
+        "gunpowder_unit",
+        "gunmen",
+        "affected_by_rain"
+      ],
+      "displayName": "Jianghan_Light_Gunners",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_Light_spearman",
+      "dictionary": "Jianghan_Light_spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "jianghanqin_spearman, 72, 0, 1, 0.35",
+      "soldierModel": "jianghanqin_spearman",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "5, 3, no, 0, 0, melee, melee_simple, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "1, 290, 95, 80, 80, 480, 1, 80",
+      "armourUgModels": [
+        "jianghanqin_spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw"
+      ],
+      "displayName": "Jianghan_Light_spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_Light_archer",
+      "dictionary": "Jianghan_Light_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "jianghanqin_archer, 72, 0, 0.8, 0.35",
+      "soldierModel": "jianghanqin_archer",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "8, 1, composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "3, 2, no, 0, 0, melee, melee_simple, piercing, knife, -25, 0.2",
+      "statCost": "1, 290, 115, 80, 80, 495, 1, 80",
+      "armourUgModels": [
+        "jianghanqin_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Jianghan_Light_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_archer",
+      "dictionary": "Jianghan_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Jianghan_archer, 64, 0, 0.8, 0.35",
+      "soldierModel": "Jianghan_archer",
+      "soldierCount": 64,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "10, 1, composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "5, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "1, 520, 195, 70, 110, 810, 2, 110",
+      "armourUgModels": [
+        "Jianghan_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Jianghan_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_Gunner",
+      "dictionary": "Jianghan_Gunner",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Jianghan_Gunner, 48, 0, 0.8, 0.35",
+      "soldierModel": "Jianghan_Gunner",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "14, 1, arquebus_asia_bullet, 180, 20, missile, missile_gunpowder, piercing, none, musket_shot_set, 25, 1",
+      "statSec": "5, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "2, 980, 415, 125, 90, 790, 4, 200",
+      "armourUgModels": [
+        "Jianghan_Gunner"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "gunpowder_unit",
+        "start_not_skirmishing",
+        "fire_by_rank",
+        "extreme_range",
+        "gunmen",
+        "affected_by_rain"
+      ],
+      "displayName": "Jianghan_Gunner",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_heavy_spear",
+      "dictionary": "Jianghan_heavy_spear",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Jianghan_heavy_spear, 56, 0, 1.2, 0.35",
+      "soldierModel": "Jianghan_heavy_spear",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "12, 4, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 1220, 395, 100, 100, 860, 5, 80",
+      "armourUgModels": [
+        "Jianghan_heavy_spear"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy"
+      ],
+      "displayName": "Jianghan_heavy_spear",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_heavy_sword",
+      "dictionary": "Jianghan_heavy_sword",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Jianghan_heavy_sword, 48, 0, 0.55, 0.34, 1.55",
+      "soldierModel": "Jianghan_heavy_sword",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "15, 6, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "4, 1760, 530, 120, 130, 880, 4, 80",
+      "armourUgModels": [
+        "Jianghan_heavy_sword"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw"
+      ],
+      "displayName": "Jianghan_heavy_sword",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_horsearcher",
+      "dictionary": "Jianghan_horsearcher",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Jianghan_horsearcher, 24, 0, 1",
+      "soldierModel": "Jianghan_horsearcher",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "12, 1, crossbow_bolt, 100, 40, missile, missile_mechanical, piercing, none, 0, 0.35",
+      "statSec": "9, 1, no, 0, 0, melee, melee_simple, piercing, sword, -25, 0.1",
+      "statCost": "2, 350, 150, 100, 100, 555, 1, 100",
+      "armourUgModels": [
+        "Jianghan_horsearcher"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "crossbow",
+        "start_skirmishing"
+      ],
+      "displayName": "Jianghan_horsearcher",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_Heavy_cav",
+      "dictionary": "Jianghan_Heavy_cav",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "jianghan_zhongqi, 26, 0, 1",
+      "soldierModel": "jianghan_zhongqi",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "11, 5, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "6, 3, no, 0, 0, melee, melee_blade, blunt, mace, -25, 0.2",
+      "statCost": "3, 1560, 490, 130, 80, 980, 4, 230",
+      "armourUgModels": [
+        "jianghan_zhongqi"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "can_formed_charge"
+      ],
+      "displayName": "Jianghan_Heavy_cav",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_scout",
+      "dictionary": "Jianghan_scout",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "jianghan_chihou, 26, 0, 1",
+      "soldierModel": "jianghan_chihou",
+      "soldierCount": 26,
+      "mount": "ming horse",
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "5, 2, cav_composite_arrow, 145, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "5, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "1, 460, 165, 200, 200, 730, 6, 80",
+      "armourUgModels": [
+        "jianghan_chihou"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "Jianghan_scout",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Jianghan_Guard",
+      "dictionary": "Jianghan_Guard",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Jianghan_Guard, 12, 0, 1",
+      "soldierModel": "Jianghan_Guard",
+      "soldierCount": 12,
+      "mount": "zhongma",
+      "ownership": [
+        "scotland"
+      ],
+      "statPri": "11, 7, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1880, 370, 200, 200, 940, 4, 80",
+      "armourUgModels": [
+        "Jianghan_Guard"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "general_unit",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Jianghan_Guard",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Qin_bodyguard",
+      "dictionary": "Qin_bodyguard",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "Qin_bodyguard, 12, 0, 1",
+      "soldierModel": "Qin_bodyguard",
+      "soldierCount": 12,
+      "mount": "zhongma",
+      "ownership": [
+        "spain"
+      ],
+      "statPri": "11, 2, cav_composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "9, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1900, 375, 120, 95, 950, 1, 220",
+      "armourUgModels": [
+        "Qin_bodyguard"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "general_unit",
+        "free_upkeep_unit",
+        "horse_archers"
+      ],
+      "displayName": "Qin_bodyguard",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Qin_Spearman",
+      "dictionary": "Qin_Spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Qin_Spearman, 64, 0, 1, 0.35",
+      "soldierModel": "Qin_Spearman",
+      "soldierCount": 64,
+      "mount": null,
+      "ownership": [
+        "spain",
+        "slave"
+      ],
+      "statPri": "13, 5, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1720, 360, 80, 80, 560, 4, 80",
+      "armourUgModels": [
+        "Qin_Spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw"
+      ],
+      "displayName": "Qin_Spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Qin_Archers",
+      "dictionary": "Qin_Archers",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Qin_Archers, 48, 0, 1",
+      "soldierModel": "Qin_Archers",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "spain",
+        "slave"
+      ],
+      "statPri": "14, 3, composite_arrow, 220, 30, missile, missile_mechanical, piercing, none, 100, 1",
+      "statSec": "5, 3, no, 0, 0, melee, melee_blade, piercing, sword, 0, 1",
+      "statCost": "3, 1460, 340, 95, 105, 460, 4, 160",
+      "armourUgModels": [
+        "Qin_Archers"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw"
+      ],
+      "displayName": "Qin_Archers",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Qin_Gunners",
+      "dictionary": "Qin_Gunners",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Qin_Gunners, 48, 0, 1",
+      "soldierModel": "Qin_Gunners",
+      "soldierCount": 48,
+      "mount": null,
+      "ownership": [
+        "spain",
+        "slave"
+      ],
+      "statPri": "13, 1, steel_crossbow_bolt, 200, 20, missile, missile_mechanical, piercing, none, 200, 1",
+      "statSec": "6, 3, no, 0, 0, melee, melee_blade, piercing, sword, 25, 1",
+      "statCost": "3, 1500, 355, 95, 110, 360, 4, 120",
+      "armourUgModels": [
+        "Qin_Gunners"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "crossbow"
+      ],
+      "displayName": "Qin_Gunners",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "hongdengzhao1",
+      "dictionary": "hongdengzhao1",
+      "category": "infantry",
+      "class": "light",
+      "soldier": "hongdengzhao1, 40, 0, 1.0",
+      "soldierModel": "hongdengzhao1",
+      "soldierCount": 40,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "scotland",
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "15, 3, no, 0, 0, melee, melee_blade, piercing, sword, 25, 1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 25, 1",
+      "statCost": "2, 1000, 300, 50, 70, 650, 4, 40",
+      "armourUgModels": [
+        "hongdengzhao1",
+        "hongdengzhao1"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_improved_forest",
+        "druid",
+        "mercenary_unit",
+        "legionary_name",
+        "free_upkeep_unit"
+      ],
+      "displayName": "hongdengzhao1",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "xiaodaohuisword",
+      "dictionary": "xiaodaohuisword",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "xiaodaohuisword, 40, 0, 1.2",
+      "soldierModel": "xiaodaohuisword",
+      "soldierCount": 40,
+      "mount": null,
+      "ownership": [
+        "portugal",
+        "scotland",
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "18, 2, javelin, 48, 3, thrown, missile_mechanical, piercing, sword, 25, 0.3",
+      "statSec": "13, 5, no, 0, 0, melee, melee_blade, piercing, sword, 25, 1",
+      "statCost": "5, 1300, 400, 50, 70, 800, 4, 150",
+      "armourUgModels": [
+        "xiaodaohuisword",
+        "xiaodaohuisword"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_anywhere",
+        "can_withdraw",
+        "frighten_foot",
+        "very_hardy",
+        "command",
+        "frighten_foot",
+        "start_not_skirmishing",
+        "cannot_skirmish",
+        "mercenary_unit",
+        "legionary_name"
+      ],
+      "displayName": "xiaodaohuisword",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Daxi_archer",
+      "dictionary": "Daxi_archer",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Daxi_archer, 40, 0, 1",
+      "soldierModel": "Daxi_archer",
+      "soldierCount": 40,
+      "mount": "heavy horse",
+      "ownership": [
+        "turks",
+        "slave"
+      ],
+      "statPri": "5, 1, crossbow_bolt, 120, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "3, 4, no, 0, 0, melee, melee_blade, piercing, sword, 25, 1",
+      "statCost": "1, 270, 115, 90, 70, 470, 4, 110",
+      "armourUgModels": [
+        "Daxi_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "cantabrian_circle"
+      ],
+      "displayName": "Daxi_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Daxi_swordsman",
+      "dictionary": "Daxi_swordsman",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Daxi_swordsman, 100, 0, 1.2",
+      "soldierModel": "Daxi_swordsman",
+      "soldierCount": 100,
+      "mount": null,
+      "ownership": [
+        "turks",
+        "slave"
+      ],
+      "statPri": "14, 6, no, 0, 0, melee, melee_blade, slashing, sword, 25, 1.3",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1680, 450, 90, 70, 680, 4, 170",
+      "armourUgModels": [
+        "Daxi_swordsman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw"
+      ],
+      "displayName": "Daxi_swordsman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Chuang_spearmen",
+      "dictionary": "Chuang_spearmen",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Chuang_spearmen, 72, 0, 1, 0.36, 1.65",
+      "soldierModel": "Chuang_spearmen",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "venice",
+        "slave"
+      ],
+      "statPri": "4, 2, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "1, 280, 70, 80, 200, 190, 1, 80",
+      "armourUgModels": [
+        "Chuang_spearmen"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Chuang_spearmen",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Qin_Standard_Spearman",
+      "dictionary": "Qin_Standard_Spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Qin_Standard_Spearman, 56, 0, 1.2, 0.36, 1.65",
+      "soldierModel": "Qin_Standard_Spearman",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "6, 4, no, 0, 0, melee, melee_blade, piercing, spear, 25, 1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 1720, 345, 50, 70, 860, 4, 120",
+      "armourUgModels": [
+        "Qin_Standard_Spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "pike"
+      ],
+      "displayName": "Qin_Standard_Spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    },
+    {
+      "type": "Qin_Standard_Swordman",
+      "dictionary": "Qin_Standard_Swordman",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Qin_Standard_Swordman, 56, 0, 1, 0.35",
+      "soldierModel": "Qin_Standard_Swordman",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "scotland",
+        "slave"
+      ],
+      "statPri": "10, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 1800, 360, 80, 80, 900, 1, 80",
+      "armourUgModels": [
+        "Qin_Standard_Swordman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw"
+      ],
+      "displayName": "Qin_Standard_Swordman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "red_turban"
+    }
+  ],
+  "yuanEnemyUnits": [
+    {
+      "type": "Mon_skirmisher",
+      "dictionary": "Mon_skirmisher",
+      "category": "infantry",
+      "class": "skirmish",
+      "soldier": "Mon_skirmisher, 56, 0, 1, 0.34, 1.55",
+      "soldierModel": "Mon_skirmisher",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "normans",
+        "slave"
+      ],
+      "statPri": "10, 1, javelin, 50, 5, thrown, missile_mechanical, piercing, spear, 25, 1",
+      "statSec": "5, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "2, 370, 180, 90, 70, 185, 4, 160",
+      "armourUgModels": [
+        "Mon_skirmisher"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "foot_javelinmen"
+      ],
+      "displayName": "Mon_skirmisher",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Steppe_levy_spearman",
+      "dictionary": "Steppe_levy_spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Steppe_levy_spearman, 80, 0, 1, 0.36, 1.65",
+      "soldierModel": "Steppe_levy_spearman",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "mongols",
+        "spain",
+        "poland",
+        "slave"
+      ],
+      "statPri": "4, 2, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "0, 170, 70, 75, 60, 170, 1, 70",
+      "armourUgModels": [
+        "Steppe_levy_spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "is_peasant",
+        "peasant"
+      ],
+      "displayName": "Steppe_levy_spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Steppe_heavy_spearman",
+      "dictionary": "Steppe_heavy_spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Steppe_heavy_spearman, 56, 0, 1, 0.36, 1.65",
+      "soldierModel": "Steppe_heavy_spearman",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "mongols",
+        "spain",
+        "poland",
+        "slave"
+      ],
+      "statPri": "9, 3, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 750, 312, 90, 70, 650, 4, 100",
+      "armourUgModels": [
+        "Steppe_heavy_spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw"
+      ],
+      "displayName": "Steppe_heavy_spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Steppe_herdsman",
+      "dictionary": "Steppe_herdsman",
+      "category": "cavalry",
+      "class": "light",
+      "soldier": "Steppe_herdsman, 30, 0, 1",
+      "soldierModel": "Steppe_herdsman",
+      "soldierCount": 30,
+      "mount": "mongol horse",
+      "ownership": [
+        "mongols",
+        "spain",
+        "poland",
+        "slave"
+      ],
+      "statPri": "6, 5, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "5, 2, no, 0, 0, melee, melee_blade, piercing, mace, -25, 0.2",
+      "statCost": "0, 310, 155, 120, 95, 310, 7, 140",
+      "armourUgModels": [
+        "Steppe_herdsman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Steppe_herdsman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Steppe_Spearmen",
+      "dictionary": "Steppe_Spearmen",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Steppe_Spearmen, 72, 0, 1, 0.36, 1.65",
+      "soldierModel": "Steppe_Spearmen",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "mongols",
+        "byzantium",
+        "moors",
+        "turks",
+        "slave"
+      ],
+      "statPri": "4, 2, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "1, 185, 75, 85, 65, 185, 7, 80",
+      "armourUgModels": [
+        "Steppe_Spearmen"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Steppe_Spearmen",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Steppe_Archers",
+      "dictionary": "Steppe_Archers",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Steppe_Archers, 72, 0, 0.8, 0.35, 1.6",
+      "soldierModel": "Steppe_Archers",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "mongols",
+        "byzantium",
+        "moors",
+        "turks",
+        "slave"
+      ],
+      "statPri": "7, 1, composite_arrow, 145, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "3, 1, no, 0, 0, melee, melee_simple, piercing, knife, -25, 0.2",
+      "statCost": "1, 245, 100, 65, 50, 245, 1, 50",
+      "armourUgModels": [
+        "Steppe_Archers"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Steppe_Archers",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mon_keshikten",
+      "dictionary": "mon_keshikten",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "mon_keshikten, 14, 0, 1",
+      "soldierModel": "mon_keshikten",
+      "soldierCount": 14,
+      "mount": "mongol armoured horse",
+      "ownership": [
+        "mongols"
+      ],
+      "statPri": "11, 7, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "6, 4, no, 0, 0, melee, melee_blade, blunt, mace, -25, 0.2",
+      "statCost": "3, 850, 405, 65, 155, 850, 4, 170",
+      "armourUgModels": [
+        "mon_keshikten"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "knight",
+        "can_formed_charge",
+        "general_unit",
+        "free_upkeep_unit"
+      ],
+      "displayName": "mon_keshikten",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mon_lubchiten",
+      "dictionary": "mon_lubchiten",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "mon_lubchiten, 28, 0, 1",
+      "soldierModel": "mon_lubchiten",
+      "soldierCount": 28,
+      "mount": "fast mongol horse",
+      "ownership": [
+        "mongols",
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "9, 2, cav_composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "5, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "2, 640, 320, 150, 95, 640, 4, 140",
+      "armourUgModels": [
+        "mon_lubchiten"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "cantabrian_circle",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "mon_lubchiten",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mon_hoshiga",
+      "dictionary": "mon_hoshiga",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "mon_hoshiga, 30, 0, 1",
+      "soldierModel": "mon_hoshiga",
+      "soldierCount": 30,
+      "mount": "fast mongol horse",
+      "ownership": [
+        "mongols",
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "7, 2, cav_composite_arrow, 140, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "4, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "1, 510, 255, 130, 95, 510, 4, 140",
+      "armourUgModels": [
+        "mon_hoshiga"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "cantabrian_circle",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "mon_hoshiga",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Mongol_Horse_Heavy_Archers",
+      "dictionary": "Mongol_Horse_Heavy_Archers",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "Mongol_Horse_Heavy_Archers, 26, 0, 1",
+      "soldierModel": "Mongol_Horse_Heavy_Archers",
+      "soldierCount": 26,
+      "mount": "mongol horse",
+      "ownership": [
+        "mongols",
+        "slave"
+      ],
+      "statPri": "12, 2, cav_composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "7, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "4, 1680, 540, 90, 70, 980, 4, 80",
+      "armourUgModels": [
+        "Mongol_Horse_Heavy_Archers"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "cantabrian_circle",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "Mongol_Horse_Heavy_Archers",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "manchu_sibing",
+      "dictionary": "manchu_sibing",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "manchu_sibing, 56, 0, 1.2, 0.35, 1.55",
+      "soldierModel": "manchu_sibing",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "13, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1580, 355, 50, 70, 840, 4, 100",
+      "armourUgModels": [
+        "manchu_sibing"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "frighten_foot"
+      ],
+      "displayName": "manchu_sibing",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Han_baqi_sword",
+      "dictionary": "Han_baqi_sword",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Han_baqi_sword, 56, 0, 1.2, 0.34, 1.55",
+      "soldierModel": "Han_baqi_sword",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "papal_states",
+        "slave"
+      ],
+      "statPri": "13, 5, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 940, 300, 50, 70, 670, 4, 30",
+      "armourUgModels": [
+        "Han_baqi_sword"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_improved_forest",
+        "can_withdraw",
+        "hardy"
+      ],
+      "displayName": "Han_baqi_sword",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "hanrenxiangjun_infantry",
+      "dictionary": "hanrenxiangjun_infantry  ;   ˾     -ok*   Ѷ",
+      "category": "infantry",
+      "class": "light",
+      "soldier": "hanren_infantry, 94, 0, 0.85",
+      "soldierModel": "hanren_infantry",
+      "soldierCount": 94,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "saxons",
+        "moors",
+        "turks",
+        "spain",
+        "slave"
+      ],
+      "statPri": "7, 3, no, 0, 0, melee, melee_blade, piercing, spear, 25, 0.6",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 25, 1",
+      "statCost": "1, 280, 125, 85, 65, 370, 1, 90",
+      "armourUgModels": [
+        "hanren_infantry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "hanrenxiangjun_infantry  ;   ˾     -ok*   Ѷ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "hanrennu_xbow",
+      "dictionary": "hanrennu_xbow      ;    ˾    -ok",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "hanrennu_xbow, 92, 0, 0.85",
+      "soldierModel": "hanrennu_xbow",
+      "soldierCount": 92,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "saxons",
+        "moors",
+        "turks",
+        "spain",
+        "slave"
+      ],
+      "statPri": "7, 1, steel_crossbow_bolt, 160, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "3, 1, no, 0, 0, melee, melee_blade, piercing, sword, 25, 1",
+      "statCost": "1, 280, 98, 65, 50, 400, 1, 100",
+      "armourUgModels": [
+        "hanrennu_xbow"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "crossbow",
+        "free_upkeep_unit"
+      ],
+      "displayName": "hanrennu_xbow      ;    ˾    -ok",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "hanrengong_arch",
+      "dictionary": "hanrengong_arch      ;    ˾     -ok",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "hanrengong_arch, 92, 0, 0.85",
+      "soldierModel": "hanrengong_arch",
+      "soldierCount": 92,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "saxons",
+        "moors",
+        "turks",
+        "spain",
+        "slave"
+      ],
+      "statPri": "7, 1, arrow, 140, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "3, 1, no, 0, 0, melee, melee_simple, piercing, knife, 25, 1",
+      "statCost": "1, 270, 90, 65, 50, 220, 8, 50",
+      "armourUgModels": [
+        "hanrengong_arch"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "free_upkeep_unit"
+      ],
+      "displayName": "hanrengong_arch      ;    ˾     -ok",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Lvying_archer",
+      "dictionary": "Lvying_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Lvying_archer, 64, 0, 0.8, 0.35, 1.6",
+      "soldierModel": "Lvying_archer",
+      "soldierCount": 64,
+      "mount": null,
+      "ownership": [
+        "spain",
+        "slave"
+      ],
+      "statPri": "10, 1, composite_arrow, 165, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "3, 1, no, 0, 0, melee, melee_simple, piercing, knife, -25, 0.2",
+      "statCost": "2, 870, 170, 80, 80, 220, 4, 80",
+      "armourUgModels": [
+        "Lvying_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Lvying_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Lvying_infantry",
+      "dictionary": "Lvying_infantry",
+      "category": "infantry",
+      "class": "light",
+      "soldier": "Lvying_infantry, 72, 0, 1, 0.34, 1.55",
+      "soldierModel": "Lvying_infantry",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "spain",
+        "slave"
+      ],
+      "statPri": "13, 6, no, 0, 0, melee, melee_simple, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1630, 330, 180, 180, 240, 4, 80",
+      "armourUgModels": [
+        "Lvying_infantry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Lvying_infantry",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Lvying_spearmen",
+      "dictionary": "Lvying_spearmen",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Lvying_spearmen, 72, 0, 1, 0.36, 1.65",
+      "soldierModel": "Lvying_spearmen",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "spain",
+        "slave"
+      ],
+      "statPri": "10, 3, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 1520, 290, 180, 180, 180, 4, 80",
+      "armourUgModels": [
+        "Lvying_spearmen"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "Lvying_spearmen",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Lvying_lancer",
+      "dictionary": "Lvying_lancer",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Lvying_lancer, 24, 0, 1",
+      "soldierModel": "Lvying_lancer",
+      "soldierCount": 24,
+      "mount": "Manchu light horse",
+      "ownership": [
+        "spain",
+        "slave"
+      ],
+      "statPri": "10, 6, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "7, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1480, 360, 80, 80, 740, 3, 80",
+      "armourUgModels": [
+        "Lvying_lancer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "can_formed_charge",
+        "hardy"
+      ],
+      "displayName": "Lvying_lancer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mon_han_blade",
+      "dictionary": "mon_han_blade  ;Ԫ    ǩ",
+      "category": "infantry",
+      "class": "light",
+      "soldier": "mon_han_blade, 100, 0, 0.8",
+      "soldierModel": "mon_han_blade",
+      "soldierCount": 100,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "mongols",
+        "saxons",
+        "moors",
+        "turks",
+        "spain",
+        "slave"
+      ],
+      "statPri": "3, 2, no, 0, 0, melee, melee_blade, piercing, sword, 25, 1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 25, 1",
+      "statCost": "1, 130, 40, 15, 25, 370, 8, 30",
+      "armourUgModels": [
+        "mon_han_blade"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "mon_han_blade  ;Ԫ    ǩ",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mon_han_spear",
+      "dictionary": "mon_han_spear",
+      "category": "infantry",
+      "class": "light",
+      "soldier": "mon_han_spear, 100, 0, 0.8",
+      "soldierModel": "mon_han_spear",
+      "soldierCount": 100,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "mongols",
+        "saxons",
+        "moors",
+        "turks",
+        "spain",
+        "slave"
+      ],
+      "statPri": "3, 1, no, 0, 0, melee, melee_blade, piercing, spear, 25, 1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 25, 1",
+      "statCost": "1, 120, 40, 15, 20, 150, 8, 30",
+      "armourUgModels": [
+        "mon_han_spear"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "mon_han_spear",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mon_hoshuchi",
+      "dictionary": "mon_hoshuchi",
+      "category": "cavalry",
+      "class": "light",
+      "soldier": "mon_hoshuchi, 26, 0, 1",
+      "soldierModel": "mon_hoshuchi",
+      "soldierCount": 26,
+      "mount": "eastern barded horse",
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "8, 4, no, 0, 0, melee, melee_blade, piercing, spear, 25, 1",
+      "statSec": "5, 2, no, 0, 0, melee, melee_blade, piercing, axe, 25, 1",
+      "statCost": "1, 720, 300, 120, 95, 720, 6, 140",
+      "armourUgModels": [
+        "mon_hoshuchi"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge"
+      ],
+      "displayName": "mon_hoshuchi",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mengguzhongjia_qiang6",
+      "dictionary": "mengguzhongjia_qiang6",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "mengguzhongjia_qiang6, 72, 0, 1, 0.36, 1.65",
+      "soldierModel": "mengguzhongjia_qiang6",
+      "soldierCount": 72,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "8, 2, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "1, 530, 220, 80, 200, 190, 6, 80",
+      "armourUgModels": [
+        "mengguzhongjia_qiang6"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "mengguzhongjia_qiang6",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "dayuan_gong",
+      "dictionary": "dayuan_gong",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "dayuan_gong, 80, 0, 0.25, 0.3189, 1.5712",
+      "soldierModel": "dayuan_gong",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "8, 5, composite_arrow, 150, 25, missile, missile_mechanical, piercing, none, 0, 0.35",
+      "statSec": "6, 4, no, 0, 0, melee, melee_simple, piercing, knife, -15, 0.2",
+      "statCost": "1, 475, 130, 65, 50, 175, 6, 70",
+      "armourUgModels": [
+        "dayuan_gong"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw"
+      ],
+      "displayName": "dayuan_gong",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "dayuan_gong2",
+      "dictionary": "dayuan_gong2",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "dayuan_gong2, 80, 0, 0.25, 0.3189, 1.5712",
+      "soldierModel": "dayuan_gong2",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "10, 5, composite_arrow, 150, 25, missile, missile_mechanical, piercing, none, 0, 0.35",
+      "statSec": "6, 4, no, 0, 0, melee, melee_simple, piercing, knife, -15, 0.2",
+      "statCost": "1, 565, 170, 65, 50, 175, 5, 70",
+      "armourUgModels": [
+        "dayuan_gong2"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw"
+      ],
+      "displayName": "dayuan_gong2",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "dayuan_qiangqi3",
+      "dictionary": "dayuan_qiangqi3",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "dayuan_qiangqi3, 26, 0, 1.45, 0.3189, 1.5712",
+      "soldierModel": "dayuan_qiangqi3",
+      "soldierCount": 26,
+      "mount": "eastern barded horse",
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "9, 5, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.1",
+      "statSec": "6, 5, no, 0, 0, melee, melee_blade, blunt, mace, 15, 0.1",
+      "statCost": "2, 1310, 330, 120, 95, 1010, 5, 220",
+      "armourUgModels": [
+        "dayuan_qiangqi3"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "general_unit",
+        "frighten_foot"
+      ],
+      "displayName": "dayuan_qiangqi3",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "menggu6_daopai",
+      "dictionary": "menggu6_daopai",
+      "category": "infantry",
+      "class": "light",
+      "soldier": "menggu6_daopai, 80, 0, 0.25, 0.3189, 1.5712",
+      "soldierModel": "menggu6_daopai",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "7, 3, no, 0, 0, melee, melee_blade, piercing, sword, -15, 0.5",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 0.35",
+      "statCost": "1, 415, 212, 70, 50, 175, 4, 90",
+      "armourUgModels": [
+        "menggu6_daopai"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "free_upkeep_unit"
+      ],
+      "displayName": "menggu6_daopai",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "menggu6_gong",
+      "dictionary": "menggu6_gong",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "menggu6_gong, 26, 0, 0.8, 0.3189, 1.5712",
+      "soldierModel": "menggu6_gong",
+      "soldierCount": 26,
+      "mount": "eastern barded horse",
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "9, 5, cav_composite_arrow, 200, 25, missile, missile_mechanical, piercing, none, -25, 0.1",
+      "statSec": "7, 2, no, 0, 0, melee, melee_blade, piercing, sword, 15, 0.1",
+      "statCost": "1, 1320, 350, 120, 95, 820, 5, 220",
+      "armourUgModels": [
+        "menggu6_gong"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "cantabrian_circle"
+      ],
+      "displayName": "menggu6_gong",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "menggu_gong",
+      "dictionary": "menggu_gong",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "menggu_gong, 80, 0, 0.25, 0.3189, 1.5712",
+      "soldierModel": "menggu_gong",
+      "soldierCount": 80,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "11, 5, composite_arrow, 150, 25, missile, missile_mechanical, piercing, none, 0, 0.35",
+      "statSec": "6, 4, no, 0, 0, melee, melee_simple, piercing, knife, -15, 0.2",
+      "statCost": "2, 755, 210, 65, 50, 175, 5, 70",
+      "armourUgModels": [
+        "menggu_gong"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy"
+      ],
+      "displayName": "menggu_gong",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mengguzhongjia_gong",
+      "dictionary": "mengguzhongjia_gong",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "mengguzhongjia_gong, 26, 0, 0.8, 0.3189, 1.5712",
+      "soldierModel": "mengguzhongjia_gong",
+      "soldierCount": 26,
+      "mount": "eastern barded horse",
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "10, 5, cav_composite_arrow, 200, 45, missile, missile_mechanical, piercing, none, -25, 0.1",
+      "statSec": "7, 2, no, 0, 0, melee, melee_blade, piercing, sword, 15, 0.1",
+      "statCost": "3, 1520, 380, 120, 95, 820, 5, 220",
+      "armourUgModels": [
+        "mengguzhongjia_gong"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "cantabrian_circle"
+      ],
+      "displayName": "mengguzhongjia_gong",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_armoured_spearman",
+      "dictionary": "Manchu_armoured_spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Manchu_armoured_spearman, 62, 0, 1.2, 0.36, 1.65",
+      "soldierModel": "Manchu_armoured_spearman",
+      "soldierCount": 62,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "11, 3, no, 0, 0, melee, melee_simple, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 1560, 355, 100, 100, 480, 5, 80",
+      "armourUgModels": [
+        "Manchu_armoured_spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy"
+      ],
+      "displayName": "Manchu_armoured_spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Mongol_Heavy_Archers",
+      "dictionary": "Mongol_Heavy_Archers",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Mongol_Heavy_Archers, 56, 0, 1, 0.35, 1.6",
+      "soldierModel": "Mongol_Heavy_Archers",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "mongols",
+        "byzantium",
+        "moors",
+        "turks"
+      ],
+      "statPri": "10, 2, composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "4, 3, no, 0, 0, melee, melee_blade, blunt, mace, -25, 0.2",
+      "statCost": "2, 880, 255, 65, 50, 880, 4, 70",
+      "armourUgModels": [
+        "Mongol_Heavy_Archers"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Mongol_Heavy_Archers",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_armoured_archer",
+      "dictionary": "Manchu_armoured_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Manchu_armoured_archer, 50, 0, 1.2, 0.35, 1.6",
+      "soldierModel": "Manchu_armoured_archer",
+      "soldierCount": 50,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "14, 2, cav_bodkin_arrow, 135, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "4, 2, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1300, 355, 200, 200, 500, 4, 80",
+      "armourUgModels": [
+        "Manchu_armoured_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Manchu_armoured_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_baqi_spearman",
+      "dictionary": "Manchu_baqi_spearman",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "Manchu_baqi_spearman, 56, 0, 1.2, 0.36, 1.65",
+      "soldierModel": "Manchu_baqi_spearman",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "11, 4, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "2, 1400, 340, 200, 200, 800, 4, 80",
+      "armourUgModels": [
+        "Manchu_baqi_spearman"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "very_hardy"
+      ],
+      "displayName": "Manchu_baqi_spearman",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_baqi_archer",
+      "dictionary": "Manchu_baqi_archer",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Manchu_baqi_archer, 56, 0, 1, 0.35, 1.55",
+      "soldierModel": "Manchu_baqi_archer",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "13, 2, cav_bodkin_arrow, 135, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "7, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1180, 305, 200, 200, 840, 4, 80",
+      "armourUgModels": [
+        "Manchu_baqi_archer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "very_hardy",
+        "affected_by_rain",
+        "foot_archers"
+      ],
+      "displayName": "Manchu_baqi_archer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Mongol_baqi_infantry",
+      "dictionary": "Mongol_baqi_infantry",
+      "category": "infantry",
+      "class": "heavy",
+      "soldier": "Mongol_baqi_infantry, 56, 0, 1.2, 0.34, 1.55",
+      "soldierModel": "Mongol_baqi_infantry",
+      "soldierCount": 56,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "13, 4, no, 0, 0, melee, melee_blade, blunt, mace, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1660, 520, 100, 100, 780, 4, 80",
+      "armourUgModels": [
+        "Mongol_baqi_infantry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw"
+      ],
+      "displayName": "Mongol_baqi_infantry",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "manchu_xiaoqi",
+      "dictionary": "manchu_xiaoqi",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "manchu_xiaoqi, 26, 0, 1",
+      "soldierModel": "manchu_xiaoqi",
+      "soldierCount": 26,
+      "mount": "Manchu light horse",
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "13, 2, cav_composite_arrow, 140, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "8, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "4, 2180, 540, 120, 95, 560, 4, 220",
+      "armourUgModels": [
+        "manchu_xiaoqi"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "cantabrian_circle",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "manchu_xiaoqi",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_armoured_cavalry",
+      "dictionary": "Manchu_armoured_cavalry",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Manchu_armoured_cavalry, 26, 0, 1",
+      "soldierModel": "Manchu_armoured_cavalry",
+      "soldierCount": 26,
+      "mount": "Manchu light horse",
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "11, 6, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "3, 1560, 380, 100, 100, 800, 4, 80",
+      "armourUgModels": [
+        "Manchu_armoured_cavalry"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw",
+        "knight",
+        "can_formed_charge"
+      ],
+      "displayName": "Manchu_armoured_cavalry",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_baqi_lancer",
+      "dictionary": "Manchu_baqi_lancer",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Manchu_baqi_lancer, 26, 0, 1",
+      "soldierModel": "Manchu_baqi_lancer",
+      "soldierCount": 26,
+      "mount": "mongol cataphract horse",
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "13, 7, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.2",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 0, 1",
+      "statCost": "4, 1960, 480, 100, 100, 980, 4, 80",
+      "armourUgModels": [
+        "Manchu_baqi_lancer"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "knight",
+        "can_formed_charge"
+      ],
+      "displayName": "Manchu_baqi_lancer",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_horsearcher",
+      "dictionary": "Manchu_horsearcher",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "Manchu_horsearcher, 26, 0, 1",
+      "soldierModel": "Manchu_horsearcher",
+      "soldierCount": 26,
+      "mount": "Manchu light horse",
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "12, 2, cav_composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "7, 4, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1800, 440, 100, 100, 1040, 4, 80",
+      "armourUgModels": [
+        "Manchu_horsearcher"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "affected_by_rain",
+        "horse_archers",
+        "cantabrian_circle"
+      ],
+      "displayName": "Manchu_horsearcher",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_forward",
+      "dictionary": "Manchu_forward",
+      "category": "cavalry",
+      "class": "missile",
+      "soldier": "Manchu_forward, 24, 0, 1",
+      "soldierModel": "Manchu_forward",
+      "soldierCount": 24,
+      "mount": "zhongma",
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "13, 3, cav_composite_arrow, 160, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "7, 5, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "4, 1920, 495, 130, 100, 1060, 4, 200",
+      "armourUgModels": [
+        "Manchu_forward"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "knight",
+        "start_not_skirmishing",
+        "can_formed_charge",
+        "affected_by_rain",
+        "horse_archers",
+        "cantabrian_circle"
+      ],
+      "displayName": "Manchu_forward",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_bodyguard",
+      "dictionary": "Manchu_bodyguard",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Manchu_bodyguard, 12, 0, 1",
+      "soldierModel": "Manchu_bodyguard",
+      "soldierCount": 12,
+      "mount": "zhongma",
+      "ownership": [
+        "byzantium"
+      ],
+      "statPri": "8, 3, cav_composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "8, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1760, 320, 60, 90, 880, 4, 500",
+      "armourUgModels": [
+        "Manchu_bodyguard"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "knight",
+        "can_formed_charge",
+        "frighten_foot",
+        "general_unit",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "Manchu_bodyguard",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Qing_cannon",
+      "dictionary": "Qing_cannon",
+      "category": "siege",
+      "class": "missile",
+      "soldier": "ne_mortar_crew, 24, 4, 1",
+      "soldierModel": "ne_mortar_crew",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "4, 2, no, 0, 0, melee, artillery_gunpowder, piercing, knife, -25, 0.2",
+      "statSec": "45, 3, basilisk_shot, 360, 30, siege_missile, artillery_gunpowder, blunt, none, 25, 1",
+      "statCost": "1, 1520, 380, 90, 70, 760, 4, 80",
+      "armourUgModels": [
+        "ne_mortar_crew"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "gunpowder_unit",
+        "cannon",
+        "explode",
+        "artillery",
+        "affected_by_rain"
+      ],
+      "displayName": "Qing_cannon",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Qing_bambard",
+      "dictionary": "Qing_bambard",
+      "category": "siege",
+      "class": "missile",
+      "soldier": "mongol_bombard_crew, 24, 4, 1",
+      "soldierModel": "mongol_bombard_crew",
+      "soldierCount": 24,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "4, 2, no, 0, 0, melee, artillery_gunpowder, piercing, knife, -25, 0.2",
+      "statSec": "35, 3, bombard_shot, 180, 20, siege_missile, artillery_gunpowder, blunt, none, -25, 0.1",
+      "statCost": "1, 1080, 270, 90, 70, 540, 4, 80",
+      "armourUgModels": [
+        "mongol_bombard_crew"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hardy",
+        "can_withdraw",
+        "gunpowder_unit",
+        "cannon",
+        "artillery",
+        "affected_by_rain"
+      ],
+      "displayName": "Qing_bambard",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Han_baqi_muskteers",
+      "dictionary": "Han_baqi_muskteers",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Han_baqi_muskteers, 50, 0, 0.8, 0.35, 1.6",
+      "soldierModel": "Han_baqi_muskteers",
+      "soldierCount": 50,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "10, 1, arquebus_asia_bullet, 160, 20, missile, missile_gunpowder, piercing, none, musket_shot_set, 25, 1",
+      "statSec": "6, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "2, 1320, 360, 130, 80, 660, 4, 200",
+      "armourUgModels": [
+        "Han_baqi_muskteers"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy",
+        "gunpowder_unit",
+        "start_not_skirmishing",
+        "stakes",
+        "fire_by_rank",
+        "extreme_range",
+        "gunmen",
+        "affected_by_rain"
+      ],
+      "displayName": "Han_baqi_muskteers",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "Manchu_muskteers",
+      "dictionary": "Manchu_muskteers",
+      "category": "infantry",
+      "class": "missile",
+      "soldier": "Manchu_muskteers, 50, 0, 0.8, 0.35, 1.6",
+      "soldierModel": "Manchu_muskteers",
+      "soldierCount": 50,
+      "mount": null,
+      "ownership": [
+        "byzantium",
+        "slave"
+      ],
+      "statPri": "14, 1, arquebus_asia_bullet, 180, 20, missile, missile_gunpowder, piercing, none, musket_shot_set, 25, 1",
+      "statSec": "7, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1900, 550, 130, 80, 1100, 4, 200",
+      "armourUgModels": [
+        "Manchu_muskteers"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "can_withdraw",
+        "hardy",
+        "gunpowder_unit",
+        "start_not_skirmishing",
+        "stakes",
+        "stakes",
+        "fire_by_rank",
+        "extreme_range",
+        "gunmen",
+        "affected_by_rain"
+      ],
+      "displayName": "Manchu_muskteers",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "dayuangongting",
+      "dictionary": "dayuangongting",
+      "category": "infantry",
+      "class": "spearmen",
+      "soldier": "dayuangongting, 54, 0, 0.55, 0.3189, 1.5712",
+      "soldierModel": "dayuangongting",
+      "soldierCount": 54,
+      "mount": null,
+      "ownership": [
+        "byzantium"
+      ],
+      "statPri": "15, 6, no, 0, 0, melee, melee_blade, slashing, axe, -25, 0.1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 25, 1",
+      "statCost": "4, 2200, 645, 50, 70, 590, 4, 130",
+      "armourUgModels": [
+        "dayuangongting"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "hardy",
+        "can_withdraw"
+      ],
+      "displayName": "dayuangongting",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "dayuangongting1",
+      "dictionary": "dayuangongting1",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "dayuangongting1, 26, 0, 0.75, 0.3189, 1.5712",
+      "soldierModel": "dayuangongting1",
+      "soldierCount": 26,
+      "mount": "eastern barded horse",
+      "ownership": [
+        "byzantium"
+      ],
+      "statPri": "15, 6, no, 0, 0, melee, melee_blade, piercing, spear, -25, 0.1",
+      "statSec": "0, 0, no, 0, 0, no, melee_simple, blunt, none, 15, 0.1",
+      "statCost": "4, 1980, 605, 120, 95, 1480, 4, 120",
+      "armourUgModels": [
+        "dayuangongting1"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "can_formed_charge",
+        "general_unit"
+      ],
+      "displayName": "dayuangongting1",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    },
+    {
+      "type": "mon_bodyguard",
+      "dictionary": "mon_bodyguard",
+      "category": "cavalry",
+      "class": "heavy",
+      "soldier": "Manchu_bodyguard, 12, 0, 1",
+      "soldierModel": "Manchu_bodyguard",
+      "soldierCount": 12,
+      "mount": "mongol cataphract horse",
+      "ownership": [
+        "byzantium",
+        "moors",
+        "turks",
+        "saxons"
+      ],
+      "statPri": "8, 3, cav_composite_arrow, 155, 30, missile, missile_mechanical, piercing, none, 25, 1",
+      "statSec": "8, 3, no, 0, 0, melee, melee_blade, piercing, sword, -25, 0.2",
+      "statCost": "3, 1760, 320, 60, 90, 880, 4, 500",
+      "armourUgModels": [
+        "manchu_xiaoqi"
+      ],
+      "attributes": [
+        "sea_faring",
+        "hide_forest",
+        "very_hardy",
+        "can_withdraw",
+        "knight",
+        "can_formed_charge",
+        "frighten_foot",
+        "general_unit",
+        "free_upkeep_unit",
+        "affected_by_rain",
+        "horse_archers"
+      ],
+      "displayName": "mon_bodyguard",
+      "shortDescription": null,
+      "longDescription": null,
+      "alignment": "yuan"
+    }
+  ]
+}

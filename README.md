@@ -1,67 +1,55 @@
-# HTML 版《太阁立志传》复刻项目基线
+# RPG_TG
 
-这是第一版工程基线，目标不是直接开做页面，而是先把多人协作最容易失控的三件事固定下来：
+RPG_TG is a Vite-based browser game project.
 
-- 领域数据结构
-- 模块边界与代码规范
-- CSS 拆分策略
+## Local Development
 
-当前目录结构：
+Run the game locally with Vite and keep HMR on `localhost`:
 
-```text
-docs/
-  architecture.md
-  change-log.md
-  collaboration.md
-  frontend-conventions.md
-  game-component-inventory.md
-src/
-  application/
-    README.md
-  content/
-    base/
-    sample-scenario.ts
-  domain/
-    action.ts
-    character.ts
-    city.ts
-    event.ts
-    game-state.ts
-    global-ui.ts
-    house.ts
-    index.ts
-    map.ts
-    mission.ts
-  shared/
-    README.md
-  styles/
-    app.css
-    base.css
-    components.css
-    layout.css
-    tokens.css
-    views.css
-  ui/
-    README.md
+```powershell
+npm run dev:localhost
 ```
 
-建议后续技术方向：
+Default local URL:
 
-- 语言：TypeScript
-- 渲染：原生 DOM / Vue / React 都可以，但领域层保持框架无关
-- 状态：单一 `GameState`，按 `map / city / house / scene / ui` 分 slice
-- 内容：剧情、城市、人物、房屋、小游戏入口统一走配置驱动
+```text
+http://localhost:5173
+```
 
-规范补充文档：
+## Build
 
-- 架构设计：[docs/architecture.md](D:/RPG_TG/docs/architecture.md)
-- 变更记录：[docs/change-log.md](D:/RPG_TG/docs/change-log.md)
-- 协作规范：[docs/collaboration.md](D:/RPG_TG/docs/collaboration.md)
-- 前端命名与拆分规范：[docs/frontend-conventions.md](D:/RPG_TG/docs/frontend-conventions.md)
-- 游戏组件缺口清单：[docs/game-component-inventory.md](D:/RPG_TG/docs/game-component-inventory.md)
+Create the production bundle:
 
-入口开发顺序建议：
+```powershell
+npm run build
+```
 
-1. 先跑通 `地图 -> 城市 -> 房屋 -> 角色功能 -> 事件动作列表`
-2. 再补数值系统、任务系统、交易系统、小游戏系统
-3. 最后再做模组加载器、存档、多人协作工具链
+## Local Production-Style Serving
+
+Serve the built `dist/` folder with the repository static server:
+
+```powershell
+npm run serve:prod
+```
+
+Default local production-style URL:
+
+```text
+http://127.0.0.1:8080
+```
+
+## Server Deployment
+
+If the server is a Windows Server machine at `159.75.153.83` and should be reachable without a port suffix, use the deployment workflow documented here:
+
+[docs/server-deployment.md](/D:/RPG_TG/docs/server-deployment.md)
+
+That workflow keeps:
+
+- local debugging on `http://localhost:5173`
+- production access on `http://159.75.153.83`
+
+by combining:
+
+- local Vite development on `localhost`
+- IIS on Windows Server bound to port `80`

@@ -384,6 +384,41 @@
   inset: 0;
   transform: none;
   transform-origin: center;
+  z-index: 1;
+}
+
+.c-campaign-map__transform--tiltshift {
+  z-index: 1;
+  filter: blur(14px) saturate(0.92);
+  opacity: 0.92;
+  mask-image:
+    linear-gradient(
+      180deg,
+      rgb(0 0 0 / 100%) 0%,
+      rgb(0 0 0 / 92%) 7%,
+      rgb(0 0 0 / 60%) 12%,
+      rgb(0 0 0 / 18%) 17%,
+      rgb(0 0 0 / 0%) 24%,
+      rgb(0 0 0 / 0%) 76%,
+      rgb(0 0 0 / 18%) 83%,
+      rgb(0 0 0 / 60%) 88%,
+      rgb(0 0 0 / 92%) 93%,
+      rgb(0 0 0 / 100%) 100%
+    );
+  -webkit-mask-image:
+    linear-gradient(
+      180deg,
+      rgb(0 0 0 / 100%) 0%,
+      rgb(0 0 0 / 92%) 7%,
+      rgb(0 0 0 / 60%) 12%,
+      rgb(0 0 0 / 18%) 17%,
+      rgb(0 0 0 / 0%) 24%,
+      rgb(0 0 0 / 0%) 76%,
+      rgb(0 0 0 / 18%) 83%,
+      rgb(0 0 0 / 60%) 88%,
+      rgb(0 0 0 / 92%) 93%,
+      rgb(0 0 0 / 100%) 100%
+    );
 }
 
 .c-campaign-map__terrain,
@@ -420,6 +455,38 @@
   mix-blend-mode: overlay;
   opacity: 0.2;
   pointer-events: none;
+}
+
+.c-campaign-map__tiltshift,
+.c-campaign-map__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.c-campaign-map__tiltshift {
+  z-index: 8;
+  overflow: hidden;
+}
+
+.c-campaign-map__vignette {
+  z-index: 9;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgb(0 0 0 / 0%) 48%,
+      rgb(0 0 0 / 12%) 66%,
+      rgb(0 0 0 / 28%) 82%,
+      rgb(0 0 0 / 44%) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(2 4 8 / 28%) 0%,
+      rgb(2 4 8 / 0%) 16%,
+      rgb(2 4 8 / 0%) 84%,
+      rgb(2 4 8 / 28%) 100%
+    );
+  mix-blend-mode: multiply;
 }
 
 .c-campaign-map-debug {
@@ -478,6 +545,51 @@
   background: linear-gradient(180deg, rgb(112 88 42 / 96%), rgb(51 59 49 / 96%));
 }
 
+.c-map-intro-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--z-scene-overlay) + 2);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.c-map-intro-overlay__title {
+  padding: 18px 28px;
+  color: #f8edca;
+  font-family: var(--font-title);
+  font-size: clamp(3rem, 5.8vw, 4.8rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-align: center;
+  text-shadow:
+    0 2px 10px rgb(255 248 224 / 28%),
+    0 0 24px rgb(255 244 214 / 20%);
+  animation: map-intro-title-fade 5000ms ease forwards;
+}
+
+@keyframes map-intro-title-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  68% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-12px) scale(1.02);
+  }
+}
+
 .c-campaign-marker {
   position: absolute;
   left: var(--terrain-point-left, var(--marker-left));
@@ -485,8 +597,8 @@
   bottom: var(--terrain-point-bottom, var(--marker-bottom));
   z-index: 5;
   display: grid;
-  grid-template-columns: 12px max-content;
-  gap: 4px;
+  grid-template-columns: 36px max-content;
+  gap: 8px;
   align-items: center;
   max-width: calc(140px * var(--map-marker-inverse-scale, 1));
   border: 0;
@@ -500,30 +612,28 @@
     0 0 6px rgb(0 0 0 / 70%);
   transform:
     translate(
-      calc(-6px + var(--terrain-point-offset-x, 0px)),
-      calc(6px + var(--terrain-point-offset-y, 0px))
+      calc(-18px + var(--terrain-point-offset-x, 0px)),
+      calc(18px + var(--terrain-point-offset-y, 0px))
     )
     scale(var(--terrain-point-perspective-scale, 1));
-  transform-origin: 6px 6px;
+  transform-origin: 18px 18px;
   cursor: pointer;
 }
 
 .c-campaign-marker__dot {
-  width: 10px;
-  height: 10px;
-  border: 1px solid rgb(255 248 218 / 88%);
-  border-radius: 50%;
-  background: #d9482c;
-  box-shadow:
-    0 0 0 2px rgb(0 0 0 / 38%),
-    0 0 10px rgb(238 207 119 / 36%);
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 0;
+  background: center / contain no-repeat url("../../yuansu/zhen.png");
+  box-shadow: none;
   transform: scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));
   transform-origin: center;
 }
 
 .c-campaign-marker--fort .c-campaign-marker__dot {
-  border-radius: 2px;
-  background: #2f78b7;
+  border-radius: 0;
+  background: center / contain no-repeat url("../../yuansu/cheng.png");
 }
 
 .c-campaign-marker--landmark .c-campaign-marker__dot {
@@ -539,12 +649,10 @@
   transform-origin: left center;
 }
 
-.c-campaign-marker--fort .c-campaign-marker__label,
 .c-campaign-marker--landmark .c-campaign-marker__label {
   display: none;
 }
 
-.c-campaign-marker--fort:hover .c-campaign-marker__label,
 .c-campaign-marker--landmark:hover .c-campaign-marker__label {
   display: inline;
 }
@@ -923,6 +1031,10 @@
   filter: drop-shadow(0 6px 14px rgb(0 0 0 / 18%));
 }
 
+.c-kulan-house-card--home-house .c-kulan-house-card__art {
+  background-image: url("../../ui/card/6_063_card_zizhai_2.0.png");
+}
+
 /* house card 图打标：chaguan / shuaifu / dangpu / lianghang / jiusi */
 .c-kulan-house-card--tea-house .c-kulan-house-card__art {
   background-image: url("../../ui1/ui/card/card_chaguan(1).png");
@@ -944,8 +1056,139 @@
   background-image: url("../../ui/card/6_066_card_jiusi_2.0.png");
 }
 
+.c-kulan-house-card--leader-residence .c-kulan-house-card__art {
+  background-image: url("../../ui/card/6_062_card_jianglingfu_2.0.png");
+}
+
 .c-kulan-house-card--fallback .c-kulan-house-card__art {
   background-image: url("../../sliced_ui_assets/1_013_blank_large_frame_1.0.png");
+}
+
+.c-city-directory {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+}
+
+.c-city-directory__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(9 10 16 / 52%);
+  backdrop-filter: blur(6px);
+}
+
+.c-city-directory__panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  gap: 16px;
+  width: min(860px, calc(100% - 64px));
+  max-height: calc(100% - 80px);
+  padding: 22px 24px;
+  overflow: auto;
+  border: 2px solid rgb(78 56 35 / 88%);
+  border-radius: 18px;
+  box-shadow:
+    0 24px 80px rgb(0 0 0 / 30%),
+    inset 0 0 0 1px rgb(255 248 226 / 42%);
+  background:
+    linear-gradient(180deg, rgb(247 236 208 / 96%), rgb(227 205 156 / 94%)),
+    #e9d6a7;
+  transform: translate(-50%, -50%);
+}
+
+.c-city-directory__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.c-city-directory__eyebrow {
+  margin: 0 0 4px;
+  color: #7a5030;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.c-city-directory__title {
+  margin: 0;
+  color: #24180e;
+  font-family: var(--font-title);
+  font-size: 1.9rem;
+}
+
+.c-city-directory__close {
+  padding: 10px 16px;
+  color: #f7edd1;
+  border: 1px solid rgb(92 51 25 / 86%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b34930, #7e2417);
+}
+
+.c-city-directory__list {
+  display: grid;
+  gap: 12px;
+}
+
+.c-city-directory__option {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  color: inherit;
+  text-align: left;
+  border: 1px solid rgb(124 92 54 / 34%);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(255 248 234 / 94%), rgb(240 221 177 / 92%));
+}
+
+.c-city-directory__option:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.c-city-directory__option-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.c-city-directory__option-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.c-city-directory__option-title {
+  color: #24180e;
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+}
+
+.c-city-directory__option-status,
+.c-city-directory__option-subtitle,
+.c-city-directory__option-meta {
+  color: #6d5037;
+}
+
+.c-city-directory__option-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: end;
+}
+
+.c-city-directory__option-tag {
+  padding: 6px 10px;
+  color: #7d2f1f;
+  border: 1px solid rgb(164 116 76 / 42%);
+  border-radius: 999px;
+  background: rgb(255 248 233 / 86%);
+  font-size: 0.84rem;
 }
 
 .c-house-list,

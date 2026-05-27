@@ -22,6 +22,7 @@ D:\RPG_TG\map\yuan mo feng yun lu\yuan mo feng yun lu\yuan mo feng yun lu\mods\y
 - `generated/yuanmo-npc-summary.json`：NPC 统计和大都/顺天附近样本。
 - `generated/yuanmo-events.json`：历史事件调用、标题正文、触发 monitor、脚本片段、刷兵/控制台命令/计数器摘要。
 - `generated/yuanmo-event-summary.json`：事件统计、章节分布和前 20 个样例。
+- `docs/zhu-yuanzhang-character-roster-task-list.md`：朱元璋立志传时期人物候选池和人物表实施任务，按势力、优先级、来源类型整理。
 
 重新生成：
 
@@ -159,3 +160,19 @@ tools/extract-yuanmo-events.mjs
 - 若继续做材质，优先使用高度图和地表分类色，而不是盲目叠油亮噪声。
 - 事件脚本里的派系 ID 仍是 Medieval II 原始 id，例如 `byzantium`、`turks`、`papal_states`，需要单独建立元末势力中文映射。
 - 生成数据来自本地模组文件；改模组文件后必须重新运行抽取脚本。
+## 朱元璋早期人物与城市填充
+
+当前项目已经把“朱元璋还在和尚/投军早期”相关人物整理为结构化数据：
+
+- `src/domain/historical-character.ts`：历史人物和城市 roster 的类型定义。
+- `src/content/zhu-yuanzhang-early-characters.ts`：人物表与城市人物分配表。
+- `tools/validate-zhu-yuanzhang-roster.mjs`：校验人物 id、城市节点 id、城市 roster 引用。
+
+当前覆盖 51 个候选人物、21 个中国地区城市 roster。地图 tooltip 通过 `zhuYuanzhangCityRosters.cityNodeId` 读取人物，不要按城市中文名或 label 字符串猜测匹配。
+
+校验命令：
+
+```powershell
+node tools\validate-zhu-yuanzhang-roster.mjs
+npm run typecheck
+```
