@@ -9,7 +9,15 @@ export type HouseDefinition = {
   id: HouseId;
   cityId: string;
   name: string;
-  type: "castle" | "merchant" | "inn" | "dojo" | "tea-house" | "residence" | "custom";
+  type:
+    | "castle"
+    | "merchant"
+    | "inn"
+    | "dojo"
+    | "tea-house"
+    | "medicine-house"
+    | "residence"
+    | "custom";
   characterIds: CharacterId[];
   defaultCharacterId: CharacterId | null;
   activityLocationId?: CityNpcActivityLocationId | null;
