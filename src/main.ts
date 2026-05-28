@@ -87,6 +87,7 @@ const MAP_DEBUG_SCALE_STEP = 0.2;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
+const MEDICINE_HOUSE_BGM_URL = new URL("../医馆.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 1,
   offsetX: 0,
@@ -108,7 +109,7 @@ type SaveDataResult = {
   selectedCharacterId?: string | null;
 } | null;
 
-type BackgroundMusicMode = "opening" | "in-game";
+type BackgroundMusicMode = "opening" | "in-game" | "medicine-house";
 
 const appElement = document.querySelector<HTMLElement>("#app");
 const uiOverlayElement = document.querySelector<HTMLElement>("#ui-overlay");
@@ -215,6 +216,12 @@ let layoutEditorDragState:
       pointerId: number;
       startClientX: number;
       startClientY: number;
+    }
+  | null = null;
+let medicineHouseDragState:
+  | {
+      actionId: string;
+      herbId: string;
     }
   | null = null;
 
@@ -333,7 +340,7 @@ function startMainGame(selectedCharacter: CharacterDefinition): void {
 function setGameVisibility(isVisible: boolean): void {
   appRoot.style.visibility = isVisible ? "visible" : "hidden";
   appRoot.style.pointerEvents = isVisible ? "auto" : "none";
-  syncBackgroundMusic(isVisible ? "in-game" : "opening");
+  syncBackgroundMusic(selectBackgroundMusicMode());
 }
 
 function resetMainGameRuntime(): void {
@@ -368,7 +375,12 @@ function createBackgroundMusicPlayer(): HTMLAudioElement {
 }
 
 function syncBackgroundMusic(mode: BackgroundMusicMode): void {
-  const nextSourceUrl = mode === "opening" ? OPENING_BGM_URL : IN_GAME_BGM_URL;
+  const nextSourceUrl =
+    mode === "opening"
+      ? OPENING_BGM_URL
+      : mode === "medicine-house"
+        ? MEDICINE_HOUSE_BGM_URL
+        : IN_GAME_BGM_URL;
   if (activeBackgroundMusicMode !== mode) {
     activeBackgroundMusicMode = mode;
     backgroundMusicPlayer.pause();
@@ -392,6 +404,23 @@ function resumeBackgroundMusicIfNeeded(): void {
   if (backgroundMusicPlayer.paused) {
     void playBackgroundMusic();
   }
+}
+
+function selectBackgroundMusicMode(): BackgroundMusicMode {
+  if (appRoot.style.visibility !== "visible") {
+    return "opening";
+  }
+
+  const houseSession = appState.gameState.ui.houseSession;
+  if (
+    appState.gameState.ui.currentView === "house" &&
+    houseSession?.moduleId === "medicine-house" &&
+    houseSession.state.overlay?.type === "compounding"
+  ) {
+    return "medicine-house";
+  }
+
+  return "in-game";
 }
 
 window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
@@ -680,6 +709,99 @@ appElement.addEventListener("pointermove", (event) => {
 
 appElement.addEventListener("pointerup", endCampaignMapDrag);
 appElement.addEventListener("pointercancel", endCampaignMapDrag);
+
+appElement.addEventListener("dragstart", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const herbCard = targetElement.closest<HTMLElement>("[data-medicine-herb-action]");
+  if (herbCard == null) {
+    return;
+  }
+
+  const actionId = herbCard.dataset.medicineHerbAction;
+  const herbId = herbCard.dataset.medicineHerbId;
+  if (actionId == null || herbId == null) {
+    return;
+  }
+
+  medicineHouseDragState = {
+    actionId,
+    herbId,
+  };
+  herbCard.classList.add("is-dragging");
+
+  if (event.dataTransfer != null) {
+    event.dataTransfer.effectAllowed = "copy";
+    event.dataTransfer.setData("text/plain", actionId);
+  }
+});
+
+appElement.addEventListener("dragover", (event) => {
+  if (medicineHouseDragState == null) {
+    return;
+  }
+
+  const dropzone = getMedicineHouseDropzone(event.target);
+  if (dropzone == null) {
+    clearMedicineHouseDragClasses();
+    return;
+  }
+
+  event.preventDefault();
+  if (event.dataTransfer != null) {
+    event.dataTransfer.dropEffect = "copy";
+  }
+
+  clearMedicineHouseDragClasses();
+  dropzone.classList.add("is-drop-target");
+  appRoot
+    .querySelector<HTMLElement>(
+      `[data-medicine-herb-id="${medicineHouseDragState.herbId}"]`
+    )
+    ?.classList.add("is-dragging");
+});
+
+appElement.addEventListener("dragleave", (event) => {
+  const dropzone = getMedicineHouseDropzone(event.target);
+  if (
+    dropzone != null &&
+    event.relatedTarget instanceof Node &&
+    dropzone.contains(event.relatedTarget)
+  ) {
+    return;
+  }
+
+  if (dropzone != null) {
+    dropzone.classList.remove("is-drop-target");
+  }
+});
+
+appElement.addEventListener("drop", (event) => {
+  if (medicineHouseDragState == null) {
+    return;
+  }
+
+  const dropzone = getMedicineHouseDropzone(event.target);
+  if (dropzone == null) {
+    clearMedicineHouseDragState();
+    return;
+  }
+
+  event.preventDefault();
+  const { actionId } = medicineHouseDragState;
+  clearMedicineHouseDragState();
+  houseRuntime.dispatchCurrentHouseRequest({
+    type: "action",
+    actionId,
+  });
+});
+
+appElement.addEventListener("dragend", () => {
+  clearMedicineHouseDragState();
+});
 
 appElement.addEventListener("click", (event) => {
   if (shouldSuppressNextClickAfterMapDrag) {
@@ -1104,6 +1226,7 @@ function restoreCampaignTerrainCanvases(
 }
 
 function renderApp() {
+  syncBackgroundMusic(selectBackgroundMusicMode());
   appState = {
     ...appState,
     gameState: ensureCityNpcPoolsForCurrentDay(
@@ -1366,6 +1489,29 @@ function syncCampaignMapDebugView(): void {
   if (offsetYElement != null) {
     offsetYElement.textContent = `${campaignMapDebugState.offsetY}px`;
   }
+}
+
+function clearMedicineHouseDragClasses(): void {
+  appRoot
+    .querySelectorAll<HTMLElement>(
+      ".c-medicine-house-herb-card.is-dragging, .c-medicine-house-cauldron__dropzone.is-drop-target"
+    )
+    .forEach((element) => {
+      element.classList.remove("is-dragging", "is-drop-target");
+    });
+}
+
+function clearMedicineHouseDragState(): void {
+  clearMedicineHouseDragClasses();
+  medicineHouseDragState = null;
+}
+
+function getMedicineHouseDropzone(target: EventTarget | null): HTMLElement | null {
+  if (!(target instanceof Element)) {
+    return null;
+  }
+
+  return target.closest<HTMLElement>("[data-medicine-dropzone]");
 }
 
 function endCampaignMapDrag(event: PointerEvent): void {

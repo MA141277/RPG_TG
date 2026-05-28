@@ -43,6 +43,13 @@ import { createInitialMedicineHouseSessionState } from "./medicine-house-session
 const COMPOUNDING_INTERVAL_ID = "medicine-house-compounding";
 const BUY_SELECT_ACTION_PREFIX = "buy-select:";
 const COMPOUND_HERB_ACTION_PREFIX = "compound-herb:";
+const COMPOUND_CLEAR_ACTION_ID = "compound-clear";
+
+function countCompoundingSelections(
+  selections: Array<{ amount: number }>
+): number {
+  return selections.reduce((total, selection) => total + Math.max(0, selection.amount), 0);
+}
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -450,6 +457,22 @@ function handleAction(
         ]
       );
     }
+    case COMPOUND_CLEAR_ACTION_ID: {
+      const overlay = sessionState?.overlay;
+      if (overlay?.type !== "compounding" || overlay.selections.length === 0) {
+        return createTransitionResult(input);
+      }
+
+      const refundedSelections = countCompoundingSelections(overlay.selections);
+
+      return withSessionState(input, sessionState, {
+        overlay: {
+          ...overlay,
+          selections: [],
+          selectionsLeft: overlay.selectionsLeft + refundedSelections,
+        },
+      });
+    }
     case "compound-finish":
       return finalizeCompounding(input, sessionState);
     default: {
@@ -577,6 +600,8 @@ function selectOverlayViewModel(
         );
         return `${herb?.name ?? selection.herbId} ×${selection.amount}`;
       }),
+      clearActionId: COMPOUND_CLEAR_ACTION_ID,
+      clearLabel: "清空药盘",
       finishActionId: "compound-finish",
       finishLabel: "封炉成方",
     };

@@ -253,6 +253,8 @@ export type HouseOverlayViewModel =
         actionId: string;
       }>;
       selectionSummary: string[];
+      clearActionId: string;
+      clearLabel: string;
       finishActionId: string;
       finishLabel: string;
     };
