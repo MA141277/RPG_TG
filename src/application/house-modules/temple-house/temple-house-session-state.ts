@@ -1,0 +1,20 @@
+import type {
+  TempleHouseMeetingStage,
+  TempleHouseSessionMode,
+  TempleHouseSessionState,
+} from "../../../domain/house-modules/temple-house-session";
+
+export function createInitialTempleHouseSessionState(
+  mode: TempleHouseSessionMode,
+  meetingStage: TempleHouseMeetingStage,
+  dialogueLines: string[]
+): TempleHouseSessionState {
+  return {
+    mode,
+    meetingStage,
+    dialogueLines,
+    dialoguePhase: "greeting",
+    overlay: null,
+    selectedTaskId: null,
+  };
+}

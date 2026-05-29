@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-05-29T05:23:45.010Z",
+  "targets": [
+    {
+      "id": "red-turban-strat",
+      "modelFile": "red-turban-strat.json",
+      "textureFile": "red-turban-strat.png",
+      "vertexCount": 4914,
+      "triangleCount": 6924,
+      "boneCount": 20
+    },
+    {
+      "id": "yuan-infantry-strat",
+      "modelFile": "yuan-infantry-strat.json",
+      "textureFile": "yuan-infantry-strat.png",
+      "vertexCount": 1040,
+      "triangleCount": 1614,
+      "boneCount": 20
+    }
+  ]
+}

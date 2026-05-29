@@ -1,5 +1,9 @@
 import { selectCityNpcSummariesForHouse } from "../application/city-npcs/select-city-npcs-for-house";
 import { getHouseModule } from "../application/house-modules/house-module-registry";
+import {
+  isCityEntryVisibleForStoryStage,
+  isHouseVisibleForStoryStage,
+} from "../application/story/story-stage-access";
 import type { AppState, AppModalState } from "../application/app-shell";
 import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
 import type { CardDefinition } from "../domain/card";
@@ -36,6 +40,7 @@ export type AppRenderInput = {
   playerCharacterId: string;
   mapDefinition: MapDefinition;
   cityDefinition: CityDefinition;
+  cityDefinitions?: CityDefinition[];
   houseDefinitions: HouseDefinition[];
   cityEntries: CityEntryDefinition[];
   cardDefinitions: CardDefinition[];
@@ -208,15 +213,50 @@ function renderModal(
   });
 }
 
+function renderCampaignTravelBanner(
+  campaignTravelState: AppState["campaignTravelState"]
+): string {
+  if (campaignTravelState == null) {
+    return "";
+  }
+
+  const destinationLabel =
+    campaignTravelState.cityName ??
+    `(${campaignTravelState.targetCoordinate.x}, ${campaignTravelState.targetCoordinate.y})`;
+
+  return `
+    <div class="c-campaign-travel-banner" role="status" aria-live="polite">
+      <span class="c-campaign-travel-banner__label">正在前往 ${destinationLabel}</span>
+      <button
+        type="button"
+        class="c-campaign-travel-banner__cancel"
+        data-action="cancel-campaign-travel"
+        aria-label="取消前往 ${destinationLabel}"
+        title="取消前往"
+      >
+        x
+      </button>
+    </div>
+  `;
+}
+
 function renderStage(input: AppRenderInput): string {
   const currentView = input.appState.gameState.ui.currentView;
   const activeHouse = getActiveHouseDefinition(input.appState, input.houseDefinitions);
+  const cityDefinitions = input.cityDefinitions ?? [input.cityDefinition];
+  const activeCityDefinition =
+    cityDefinitions.find(
+      (cityDefinition) =>
+        cityDefinition.id === input.appState.gameState.world.currentCityId
+    ) ?? input.cityDefinition;
 
   if (currentView === "map") {
     const mapViewModelInput: Parameters<typeof createMapViewModel>[0] = {
       mapDefinition: input.mapDefinition,
       playerCoordinate: input.appState.playerCoordinate,
-      cityDefinitions: [input.cityDefinition],
+      playerFacingDegrees: input.appState.campaignActorState.facingDegrees,
+      playerIsMoving: input.appState.campaignActorState.isMoving,
+      cityDefinitions,
       cityCoordinatesById: input.cityCoordinatesById,
     };
     const mapViewModel = createMapViewModel(mapViewModelInput);
@@ -225,10 +265,35 @@ function renderStage(input: AppRenderInput): string {
   }
 
   if (currentView === "city") {
+    const cityHouseIds = new Set(activeCityDefinition.houseIds);
+    const activeCityHouseDefinitions = input.houseDefinitions.filter(
+      (houseDefinition) => {
+        if (
+          !(
+            houseDefinition.cityId === activeCityDefinition.id ||
+            cityHouseIds.has(houseDefinition.id)
+          )
+        ) {
+          return false;
+        }
+
+        return isHouseVisibleForStoryStage(
+          input.appState.gameState,
+          input.appState.characterDefinitions,
+          houseDefinition
+        );
+      }
+    );
+    const activeCityEntries = input.cityEntries.filter(
+      (cityEntry) =>
+        cityEntry.cityId === activeCityDefinition.id &&
+        isCityEntryVisibleForStoryStage(input.appState.gameState, cityEntry)
+    );
+
     return renderCityView(
-      input.cityDefinition,
-      input.houseDefinitions,
-      input.cityEntries,
+      activeCityDefinition,
+      activeCityHouseDefinitions,
+      activeCityEntries,
       input.appState.cityDirectoryState
     );
   }
@@ -319,6 +384,7 @@ export function renderApp(input: AppRenderInput): string {
             <main class="l-stage">
               ${stageMarkup}
               <div class="l-overlay-ui">
+                ${renderCampaignTravelBanner(input.appState.campaignTravelState)}
                 ${renderGlobalPlayerPanel(
                   playerPanelModel,
                   input.appState.uiLayouts.globalHud

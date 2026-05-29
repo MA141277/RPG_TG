@@ -1,0 +1,15 @@
+.view-house-temple {
+  --grain-shop-scene-bg: url("../../ui/background/temple.jpg");
+  --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
+  --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
+}
+
+.view-house-temple::after {
+  background:
+    radial-gradient(circle at 70% 16%, rgb(255 244 211 / 22%), transparent 22%),
+    linear-gradient(180deg, rgb(48 57 38 / 14%) 0%, rgb(46 39 23 / 8%) 28%, rgb(30 22 14 / 26%) 64%, rgb(16 12 8 / 76%) 100%);
+}
+
+.view-house-temple .c-grain-shop-dialogue__npc .c-grain-shop-portrait__name {
+  min-width: 148px;
+}

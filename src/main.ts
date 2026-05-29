@@ -30,6 +30,7 @@ import {
   createHouseRuntime,
   type HouseRuntime,
 } from "./application/house/house-runtime";
+import { canEnterHouseForStoryStage } from "./application/story/story-stage-access";
 import { enterCity } from "./application/navigation/enter-city";
 import {
   travelToCoordinate,
@@ -37,6 +38,7 @@ import {
 } from "./application/navigation/travel-to-coordinate";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
+  createPrototypeCharactersForStoryStage,
   prototypeCards,
   prototypeCharacters,
   prototypeCityEntries,
@@ -71,10 +73,16 @@ import type {
   UiLayoutRect,
 } from "./domain/ui-layout";
 import type { ValuableItemId } from "./domain/valuable-item";
+import {
+  ZHU_YUANZHANG_STORY_STAGES,
+  ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
+  type ZhuYuanzhangStoryStage,
+} from "./domain/zhu-yuanzhang-story";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
+  requestCampaignTerrainRender,
   setCampaignTerrainCamera,
   syncCampaignTerrainWebGl,
 } from "./ui/views/map/campaign-terrain-webgl";
@@ -85,6 +93,11 @@ const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = 40;
 const MAP_DEBUG_SCALE_STEP = 0.2;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
+const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
+const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
+const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
+const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
+const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
@@ -109,6 +122,15 @@ type SaveDataResult = {
 } | null;
 
 type BackgroundMusicMode = "opening" | "in-game";
+
+type CampaignMoveAnimationState = {
+  frameId: number | null;
+  startedAtMs: number;
+  from: GridCoordinate;
+  to: GridCoordinate;
+  durationMs: number;
+  resolve: () => void;
+};
 
 const appElement = document.querySelector<HTMLElement>("#app");
 const uiOverlayElement = document.querySelector<HTMLElement>("#ui-overlay");
@@ -217,6 +239,7 @@ let layoutEditorDragState:
       startClientY: number;
     }
   | null = null;
+let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
 
 let houseRuntime: HouseRuntime = createHouseRuntimeInstance();
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
@@ -234,6 +257,12 @@ mainUiFlow.mount();
 mainUiFlow.showMainMenu();
 
 function createPrototypeAppState(playerCharacterId: string): AppState {
+  const storyStage: ZhuYuanzhangStoryStage =
+    playerCharacterId === defaultPlayerCharacterId
+      ? ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+      : ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp;
+  const storyCharacterDefinitions =
+    createPrototypeCharactersForStoryStage(storyStage);
   let nextAppState: AppState = {
     gameState: ensureCityNpcPoolsForCurrentDay(
       createInitialState({
@@ -270,8 +299,13 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
       }),
       prototypeCityNpcPools
     ),
-    characterDefinitions: [...prototypeCharacters],
+    characterDefinitions: storyCharacterDefinitions,
     playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
     modalState: null,
     cityDirectoryState: null,
     uiLayouts: {
@@ -290,11 +324,23 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     ...nextAppState,
     gameState: {
       ...nextAppState.gameState,
+      ui: {
+        ...nextAppState.gameState.ui,
+        reviewDateText:
+          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+            ? "今日评定"
+            : nextAppState.gameState.ui.reviewDateText,
+        mainHouseMissionText:
+          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+            ? "前往皇觉寺听候住持训示"
+            : nextAppState.gameState.ui.mainHouseMissionText,
+      },
       runtime: {
         ...nextAppState.gameState.runtime,
         variables: {
           ...nextAppState.gameState.runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: storyStage,
         },
       },
     },
@@ -918,7 +964,9 @@ appElement.addEventListener("click", (event) => {
   if (cityEntryButton != null) {
     const cityEntryId = cityEntryButton.dataset.cityEntryId;
     const cityEntry = prototypeCityEntries.find(
-      (entryDefinition) => entryDefinition.id === cityEntryId
+      (entryDefinition) =>
+        entryDefinition.id === cityEntryId &&
+        entryDefinition.cityId === appState.gameState.world.currentCityId
     );
     if (cityEntry?.directoryType === "leader-residence") {
       appState = openCityDirectory(appState, {
@@ -994,8 +1042,30 @@ appElement.addEventListener("click", (event) => {
   if (houseButton != null) {
     const houseId = houseButton.dataset.houseId;
     if (houseId != null) {
+      const houseDefinition = prototypeHouses.find(
+        (candidateHouse) => candidateHouse.id === houseId
+      );
+      if (
+        houseDefinition == null ||
+        !canEnterHouseForStoryStage(
+          appState.gameState,
+          appState.characterDefinitions,
+          houseDefinition
+        )
+      ) {
+        return;
+      }
+
       houseRuntime.enterHouseById(houseId);
     }
+    return;
+  }
+
+  const cancelCampaignTravelButton = targetElement.closest<HTMLElement>(
+    "[data-action='cancel-campaign-travel']"
+  );
+  if (cancelCampaignTravelButton != null) {
+    cancelCampaignTravel();
     return;
   }
 
@@ -1039,24 +1109,42 @@ function handleModalConfirm() {
       appState.playerCoordinate,
       appState.modalState.targetCoordinate
     );
-
     const reachedCityDefinition =
       appState.modalState.cityId == null
         ? null
         : cityDefinitionById[appState.modalState.cityId] ?? null;
-
-    appState = {
-      ...appState,
-      playerCoordinate: nextCoordinate,
-      modalState: reachedCityDefinition != null
+    const pendingEnterCityState =
+      reachedCityDefinition != null
         ? {
-            type: "enter-city-confirm",
+            type: "enter-city-confirm" as const,
             cityId: reachedCityDefinition.id,
             cityName: reachedCityDefinition.name,
           }
-        : null,
+        : null;
+
+    const previousCoordinate = appState.playerCoordinate;
+    appState = {
+      ...appState,
+      campaignTravelState: {
+        targetCoordinate: appState.modalState.targetCoordinate,
+        cityId: appState.modalState.cityId,
+        cityName: appState.modalState.cityName,
+      },
+      modalState: null,
     };
     renderApp();
+    void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+      const shouldEnterCity =
+        appState.campaignTravelState != null &&
+        appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
+        appState.campaignTravelState.targetCoordinate.y === nextCoordinate.y;
+      appState = {
+        ...appState,
+        campaignTravelState: null,
+        modalState: shouldEnterCity ? pendingEnterCityState : null,
+      };
+      renderApp();
+    });
     return;
   }
 
@@ -1067,6 +1155,158 @@ function handleModalConfirm() {
     modalState: null,
   };
   renderApp();
+}
+
+function getFacingDegrees(from: GridCoordinate, to: GridCoordinate): number {
+  const deltaX = to.x - from.x;
+  const deltaY = to.y - from.y;
+  if (deltaX === 0 && deltaY === 0) {
+    return appState.campaignActorState.facingDegrees;
+  }
+
+  return Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+}
+
+function stopCampaignMoveAnimation(): void {
+  if (campaignMoveAnimationState?.frameId != null) {
+    window.cancelAnimationFrame(campaignMoveAnimationState.frameId);
+  }
+  campaignMoveAnimationState = null;
+}
+
+function cancelCampaignTravel(): void {
+  if (campaignMoveAnimationState == null && appState.campaignTravelState == null) {
+    return;
+  }
+
+  stopCampaignMoveAnimation();
+  appState = {
+    ...appState,
+    campaignTravelState: null,
+    campaignActorState: {
+      ...appState.campaignActorState,
+      isMoving: false,
+    },
+  };
+  renderApp();
+}
+
+function animateCampaignMove(
+  from: GridCoordinate,
+  to: GridCoordinate
+): Promise<void> {
+  stopCampaignMoveAnimation();
+
+  const deltaX = to.x - from.x;
+  const deltaY = to.y - from.y;
+  const distance = Math.hypot(deltaX, deltaY);
+  const startFacingDegrees = appState.campaignActorState.facingDegrees;
+  const facingDegrees = getFacingDegrees(from, to);
+  if (distance < 0.001) {
+    syncCampaignActorRuntimeState(to, facingDegrees, false);
+    renderApp();
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const durationMs = Math.max(
+      CAMPAIGN_TRAVEL_MIN_DURATION_MS,
+      Math.min(CAMPAIGN_TRAVEL_MAX_DURATION_MS, distance * CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT)
+    );
+    const facingDelta = getShortestAngleDelta(startFacingDegrees, facingDegrees);
+    const turnDurationMs =
+      Math.abs(facingDelta) < 0.5
+        ? 0
+        : Math.max(180, Math.abs(facingDelta) / CAMPAIGN_TURN_DEGREES_PER_SECOND * 1000);
+    const animationState: CampaignMoveAnimationState = {
+      frameId: null,
+      startedAtMs: performance.now(),
+      from,
+      to,
+      durationMs,
+      resolve,
+    };
+    campaignMoveAnimationState = animationState;
+
+    const tick = (timestamp: number) => {
+      if (campaignMoveAnimationState !== animationState) {
+        resolve();
+        return;
+      }
+
+      const elapsedMs = timestamp - animationState.startedAtMs;
+      const rawProgress = clamp(elapsedMs / animationState.durationMs, 0, 1);
+      const nextCoordinate = {
+        x: animationState.from.x + (animationState.to.x - animationState.from.x) * rawProgress,
+        y: animationState.from.y + (animationState.to.y - animationState.from.y) * rawProgress,
+      };
+      const turnProgress =
+        turnDurationMs <= 0 ? 1 : clamp(elapsedMs / turnDurationMs, 0, 1);
+      const currentFacingDegrees = normalizeDegrees(
+        startFacingDegrees + facingDelta * turnProgress
+      );
+      syncCampaignActorRuntimeState(nextCoordinate, currentFacingDegrees, rawProgress < 1);
+      syncCampaignActorView();
+
+      if (rawProgress >= 1) {
+        campaignMoveAnimationState = null;
+        resolve();
+        return;
+      }
+
+      animationState.frameId = window.requestAnimationFrame(tick);
+    };
+
+    animationState.frameId = window.requestAnimationFrame(tick);
+  });
+}
+
+function syncCampaignActorRuntimeState(
+  coordinate: GridCoordinate,
+  facingDegrees: number,
+  isMoving: boolean
+): void {
+  appState.playerCoordinate = coordinate;
+  appState.campaignActorState.facingDegrees = facingDegrees;
+  appState.campaignActorState.isMoving = isMoving;
+}
+
+function syncCampaignActorView(): void {
+  const playerElement = appRoot.querySelector<HTMLElement>("[data-campaign-player='true']");
+  if (playerElement == null) {
+    return;
+  }
+
+  const coordinateSpace = yuanmoCampaignMap.coordinateSpace;
+  if (coordinateSpace == null) {
+    return;
+  }
+
+  const playerHeightX = appState.playerCoordinate.x / coordinateSpace.width;
+  const playerHeightY = 1 - appState.playerCoordinate.y / coordinateSpace.height;
+  playerElement.dataset.mapHeightU = playerHeightX.toFixed(5);
+  playerElement.dataset.mapHeightV = playerHeightY.toFixed(5);
+  playerElement.dataset.campaignPlayerFacingDeg =
+    appState.campaignActorState.facingDegrees.toFixed(2);
+  playerElement.dataset.campaignPlayerMoving =
+    appState.campaignActorState.isMoving ? "true" : "false";
+  playerElement.setAttribute("data-terrain-projection-ready", "true");
+  playerElement.style.setProperty(
+    "--campaign-player-facing-deg",
+    `${appState.campaignActorState.facingDegrees.toFixed(2)}deg`
+  );
+  playerElement.title =
+    `Player (${appState.playerCoordinate.x.toFixed(1)}, ${appState.playerCoordinate.y.toFixed(1)})`;
+  requestCampaignTerrainRender("dynamic");
+}
+
+function getShortestAngleDelta(fromDegrees: number, toDegrees: number): number {
+  return ((toDegrees - fromDegrees + 540) % 360) - 180;
+}
+
+function normalizeDegrees(degrees: number): number {
+  const normalized = degrees % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
 }
 
 function captureCampaignTerrainCanvases(
@@ -1121,6 +1361,7 @@ function renderApp() {
     playerCharacterId: currentPlayerCharacterId,
     mapDefinition: yuanmoCampaignMap,
     cityDefinition: prototypeCity,
+    cityDefinitions,
     houseDefinitions: prototypeHouses,
     cityEntries: prototypeCityEntries,
     cardDefinitions: prototypeCards,

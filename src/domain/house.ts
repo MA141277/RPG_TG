@@ -15,11 +15,15 @@ export type HouseDefinition = {
     | "inn"
     | "dojo"
     | "tea-house"
+    | "temple"
     | "medicine-house"
     | "residence"
     | "custom";
   characterIds: CharacterId[];
   defaultCharacterId: CharacterId | null;
+  visibleStoryStages?: string[];
+  enterableStoryStages?: string[];
+  requiresPlayerCurrentCityMatch?: boolean;
   activityLocationId?: CityNpcActivityLocationId | null;
   moduleId?: HouseModuleId | null;
   onEnterEventId?: EventId;

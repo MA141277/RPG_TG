@@ -22,6 +22,17 @@ export type AppState = {
   gameState: ReturnType<typeof createInitialState>;
   characterDefinitions: CharacterDefinition[];
   playerCoordinate: GridCoordinate;
+  campaignActorState: {
+    facingDegrees: number;
+    isMoving: boolean;
+  };
+  campaignTravelState:
+    | {
+        targetCoordinate: GridCoordinate;
+        cityId: string | null;
+        cityName: string | null;
+      }
+    | null;
   modalState: AppModalState;
   cityDirectoryState:
     | {

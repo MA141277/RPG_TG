@@ -7,6 +7,7 @@ import type { KeepHouseSessionState } from "./house-modules/keep-house-session";
 import type { LeaderResidenceSessionState } from "./house-modules/leader-residence-session";
 import type { MarketHouseSessionState } from "./house-modules/market-house-session";
 import type { MedicineHouseSessionState } from "./house-modules/medicine-house-session";
+import type { TempleHouseSessionState } from "./house-modules/temple-house-session";
 import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
 
@@ -17,6 +18,7 @@ export type HouseModuleId =
   | "grain-shop"
   | "market-house"
   | "medicine-house"
+  | "temple-house"
   | "tea-house"
   | "tavern";
 
@@ -253,6 +255,8 @@ export type HouseOverlayViewModel =
         actionId: string;
       }>;
       selectionSummary: string[];
+      clearActionId: string;
+      clearLabel: string;
       finishActionId: string;
       finishLabel: string;
     };
@@ -277,6 +281,7 @@ export type HouseModuleSessionStateMap = {
   "grain-shop": GrainShopSessionState;
   "market-house": MarketHouseSessionState;
   "medicine-house": MedicineHouseSessionState;
+  "temple-house": TempleHouseSessionState;
   "tea-house": TeaHouseSessionState;
   tavern: TavernSessionState;
 };

@@ -245,6 +245,8 @@ Then `ui/views/*` converts that into markup.
 Shared overlay unions may grow when a special house needs a richer structured interaction
 (for example a module-specific trade picker, a rest-days input panel, or a market trade selector),
 but the data must remain typed and UI-facing.
+If a module-specific overlay needs extra controls, extend the shared typed contract
+(for example a medicine compounding clear action) instead of relying on DOM-only behavior.
 Do not fall back to raw HTML strings in `application`.
 
 ## Main Entry Rules

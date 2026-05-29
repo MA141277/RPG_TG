@@ -1,0 +1,4096 @@
+{
+  "采绘法": [
+    {
+      "sectionId": "南村辍耕录-section-0004",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十一",
+        "采绘法"
+      ]
+    }
+  ],
+  "草木子卷之二上": [
+    {
+      "sectionId": "草木子-section-0007",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之二上"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0008",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之二上",
+        "原道篇"
+      ]
+    }
+  ],
+  "草木子卷之二下": [
+    {
+      "sectionId": "草木子-section-0009",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之二下"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0010",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之二下",
+        "钩玄篇"
+      ]
+    }
+  ],
+  "草木子卷之三上": [
+    {
+      "sectionId": "草木子-section-0011",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之三上"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0012",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之三上",
+        "克谨篇"
+      ]
+    }
+  ],
+  "草木子卷之三下": [
+    {
+      "sectionId": "草木子-section-0013",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之三下"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0014",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之三下",
+        "杂制篇"
+      ]
+    }
+  ],
+  "草木子卷之四上": [
+    {
+      "sectionId": "草木子-section-0015",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之四上"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0016",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之四上",
+        "谈薮篇"
+      ]
+    }
+  ],
+  "草木子卷之四下": [
+    {
+      "sectionId": "草木子-section-0017",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之四下"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0018",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之四下",
+        "杂俎篇"
+      ]
+    }
+  ],
+  "草木子卷之一上": [
+    {
+      "sectionId": "草木子-section-0003",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之一上"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0004",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之一上",
+        "管窥篇"
+      ]
+    }
+  ],
+  "草木子卷之一下": [
+    {
+      "sectionId": "草木子-section-0005",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之一下"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0006",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之一下",
+        "观物篇"
+      ]
+    }
+  ],
+  "滁阳王": [
+    {
+      "sectionId": "国初群雄事略-section-0004",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷二",
+        "滁阳王"
+      ]
+    }
+  ],
+  "传国玺御": [
+    {
+      "sectionId": "南村辍耕录-section-0022",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十六",
+        "传国玺御"
+      ]
+    }
+  ],
+  "东莞伯何真": [
+    {
+      "sectionId": "国初群雄事略-section-0016",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十四",
+        "东莞伯何真"
+      ]
+    }
+  ],
+  "福建陈友定": [
+    {
+      "sectionId": "国初群雄事略-section-0015",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十三",
+        "福建陈友定"
+      ]
+    }
+  ],
+  "附录": [
+    {
+      "sectionId": "草木子-section-0019",
+      "sourceId": "草木子",
+      "path": [
+        "附录"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0020",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "正德刻本序"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0021",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "万历重刻本序"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0022",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "乾隆重刻本序一"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0023",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "乾隆重刻本序二"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0024",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "同治重刻本序"
+      ]
+    },
+    {
+      "sectionId": "草木子-section-0025",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "快书刻节本草木子题词"
+      ]
+    }
+  ],
+  "附录 张廷玉上明史表": [
+    {
+      "sectionId": "mingshi-section-0333",
+      "sourceId": "明史",
+      "path": [
+        "附录 张廷玉上明史表"
+      ]
+    }
+  ],
+  "公宇": [
+    {
+      "sectionId": "南村辍耕录-section-0017",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十一",
+        "公宇"
+      ]
+    }
+  ],
+  "宫阙制度": [
+    {
+      "sectionId": "南村辍耕录-section-0016",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十一",
+        "宫阙制度"
+      ]
+    }
+  ],
+  "钩玄篇": [
+    {
+      "sectionId": "草木子-section-0010",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之二下",
+        "钩玄篇"
+      ]
+    }
+  ],
+  "古铜器": [
+    {
+      "sectionId": "南村辍耕录-section-0009",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十七",
+        "古铜器"
+      ]
+    }
+  ],
+  "观物篇": [
+    {
+      "sectionId": "草木子-section-0006",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之一下",
+        "观物篇"
+      ]
+    }
+  ],
+  "管窥篇": [
+    {
+      "sectionId": "草木子-section-0004",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之一上",
+        "管窥篇"
+      ]
+    }
+  ],
+  "海西侯纳哈出": [
+    {
+      "sectionId": "国初群雄事略-section-0014",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十二",
+        "海西侯纳哈出"
+      ]
+    }
+  ],
+  "汉陈友谅": [
+    {
+      "sectionId": "国初群雄事略-section-0006",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷四",
+        "汉陈友谅"
+      ]
+    }
+  ],
+  "河南扩廓帖木儿": [
+    {
+      "sectionId": "国初群雄事略-section-0013",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十一",
+        "河南扩廓帖木儿"
+      ]
+    }
+  ],
+  "黄河源": [
+    {
+      "sectionId": "南村辍耕录-section-0018",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十二",
+        "黄河源"
+      ]
+    }
+  ],
+  "黄金缕": [
+    {
+      "sectionId": "南村辍耕录-section-0011",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十七",
+        "黄金缕"
+      ]
+    }
+  ],
+  "记宋宫殿": [
+    {
+      "sectionId": "南村辍耕录-section-0014",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十八",
+        "记宋宫殿"
+      ]
+    }
+  ],
+  "金鳌山": [
+    {
+      "sectionId": "南村辍耕录-section-0003",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷七",
+        "金鳌山"
+      ]
+    }
+  ],
+  "卷八": [
+    {
+      "sectionId": "国初群雄事略-section-0010",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷八",
+        "周张士诚"
+      ]
+    }
+  ],
+  "卷八 本纪第八": [
+    {
+      "sectionId": "mingshi-section-0008",
+      "sourceId": "明史",
+      "path": [
+        "卷八 本纪第八"
+      ]
+    }
+  ],
+  "卷八十 志第五十六": [
+    {
+      "sectionId": "mingshi-section-0080",
+      "sourceId": "明史",
+      "path": [
+        "卷八十 志第五十六"
+      ]
+    }
+  ],
+  "卷八十八 志第六十四": [
+    {
+      "sectionId": "mingshi-section-0088",
+      "sourceId": "明史",
+      "path": [
+        "卷八十八 志第六十四"
+      ]
+    }
+  ],
+  "卷八十二 志第五十八": [
+    {
+      "sectionId": "mingshi-section-0082",
+      "sourceId": "明史",
+      "path": [
+        "卷八十二 志第五十八"
+      ]
+    }
+  ],
+  "卷八十九 志第六十五": [
+    {
+      "sectionId": "mingshi-section-0089",
+      "sourceId": "明史",
+      "path": [
+        "卷八十九 志第六十五"
+      ]
+    }
+  ],
+  "卷八十六 志第六十二": [
+    {
+      "sectionId": "mingshi-section-0086",
+      "sourceId": "明史",
+      "path": [
+        "卷八十六 志第六十二"
+      ]
+    }
+  ],
+  "卷八十七 志第六十三": [
+    {
+      "sectionId": "mingshi-section-0087",
+      "sourceId": "明史",
+      "path": [
+        "卷八十七 志第六十三"
+      ]
+    }
+  ],
+  "卷八十三 志第五十九": [
+    {
+      "sectionId": "mingshi-section-0083",
+      "sourceId": "明史",
+      "path": [
+        "卷八十三 志第五十九"
+      ]
+    }
+  ],
+  "卷八十四 志第六十": [
+    {
+      "sectionId": "mingshi-section-0084",
+      "sourceId": "明史",
+      "path": [
+        "卷八十四 志第六十"
+      ]
+    }
+  ],
+  "卷八十五 志第六十一": [
+    {
+      "sectionId": "mingshi-section-0085",
+      "sourceId": "明史",
+      "path": [
+        "卷八十五 志第六十一"
+      ]
+    }
+  ],
+  "卷八十一 志第五十七": [
+    {
+      "sectionId": "mingshi-section-0081",
+      "sourceId": "明史",
+      "path": [
+        "卷八十一 志第五十七"
+      ]
+    }
+  ],
+  "卷二": [
+    {
+      "sectionId": "国初群雄事略-section-0004",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷二",
+        "滁阳王"
+      ]
+    }
+  ],
+  "卷二 本纪第二": [
+    {
+      "sectionId": "mingshi-section-0002",
+      "sourceId": "明史",
+      "path": [
+        "卷二 本纪第二"
+      ]
+    }
+  ],
+  "卷二百 列传第八十八": [
+    {
+      "sectionId": "mingshi-section-0200",
+      "sourceId": "明史",
+      "path": [
+        "卷二百 列传第八十八"
+      ]
+    }
+  ],
+  "卷二百八 列传第九十六": [
+    {
+      "sectionId": "mingshi-section-0208",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八 列传第九十六"
+      ]
+    }
+  ],
+  "卷二百八十 列传第一百六十八": [
+    {
+      "sectionId": "mingshi-section-0280",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十 列传第一百六十八"
+      ]
+    }
+  ],
+  "卷二百八十八 列传第一百七十六": [
+    {
+      "sectionId": "mingshi-section-0288",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十八 列传第一百七十六"
+      ]
+    }
+  ],
+  "卷二百八十二 列传第一百七十": [
+    {
+      "sectionId": "mingshi-section-0282",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十二 列传第一百七十"
+      ]
+    }
+  ],
+  "卷二百八十九 列传第一百七十七": [
+    {
+      "sectionId": "mingshi-section-0289",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十九 列传第一百七十七"
+      ]
+    }
+  ],
+  "卷二百八十六 列传第一百七十四": [
+    {
+      "sectionId": "mingshi-section-0286",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十六 列传第一百七十四"
+      ]
+    }
+  ],
+  "卷二百八十七 列传第一百七十五": [
+    {
+      "sectionId": "mingshi-section-0287",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十七 列传第一百七十五"
+      ]
+    }
+  ],
+  "卷二百八十三 列传第一百七十一": [
+    {
+      "sectionId": "mingshi-section-0283",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十三 列传第一百七十一"
+      ]
+    }
+  ],
+  "卷二百八十四 列传第一百七十二": [
+    {
+      "sectionId": "mingshi-section-0284",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十四 列传第一百七十二"
+      ]
+    }
+  ],
+  "卷二百八十五 列传第一百七十三": [
+    {
+      "sectionId": "mingshi-section-0285",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十五 列传第一百七十三"
+      ]
+    }
+  ],
+  "卷二百八十一 列传第一百六十九": [
+    {
+      "sectionId": "mingshi-section-0281",
+      "sourceId": "明史",
+      "path": [
+        "卷二百八十一 列传第一百六十九"
+      ]
+    }
+  ],
+  "卷二百二 列传第九十": [
+    {
+      "sectionId": "mingshi-section-0202",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二 列传第九十"
+      ]
+    }
+  ],
+  "卷二百二十 列传第一百八": [
+    {
+      "sectionId": "mingshi-section-0220",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十 列传第一百八"
+      ]
+    }
+  ],
+  "卷二百二十八 列传第一百十六": [
+    {
+      "sectionId": "mingshi-section-0228",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十八 列传第一百十六"
+      ]
+    }
+  ],
+  "卷二百二十二 列传第一百十": [
+    {
+      "sectionId": "mingshi-section-0222",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十二 列传第一百十"
+      ]
+    }
+  ],
+  "卷二百二十九 列传第一百十七": [
+    {
+      "sectionId": "mingshi-section-0229",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十九 列传第一百十七"
+      ]
+    }
+  ],
+  "卷二百二十六 列传第一百十四": [
+    {
+      "sectionId": "mingshi-section-0226",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十六 列传第一百十四"
+      ]
+    }
+  ],
+  "卷二百二十七 列传第一百十五": [
+    {
+      "sectionId": "mingshi-section-0227",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十七 列传第一百十五"
+      ]
+    }
+  ],
+  "卷二百二十三 列传第一百十一": [
+    {
+      "sectionId": "mingshi-section-0223",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十三 列传第一百十一"
+      ]
+    }
+  ],
+  "卷二百二十四 列传第一百十二": [
+    {
+      "sectionId": "mingshi-section-0224",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十四 列传第一百十二"
+      ]
+    }
+  ],
+  "卷二百二十五 列传第一百十三": [
+    {
+      "sectionId": "mingshi-section-0225",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十五 列传第一百十三"
+      ]
+    }
+  ],
+  "卷二百二十一 列传第一百九": [
+    {
+      "sectionId": "mingshi-section-0221",
+      "sourceId": "明史",
+      "path": [
+        "卷二百二十一 列传第一百九"
+      ]
+    }
+  ],
+  "卷二百九 列传第九十七": [
+    {
+      "sectionId": "mingshi-section-0209",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九 列传第九十七"
+      ]
+    }
+  ],
+  "卷二百九十 列传第一百七十八": [
+    {
+      "sectionId": "mingshi-section-0290",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十 列传第一百七十八"
+      ]
+    }
+  ],
+  "卷二百九十八 列传第一百八十六": [
+    {
+      "sectionId": "mingshi-section-0298",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十八 列传第一百八十六"
+      ]
+    }
+  ],
+  "卷二百九十二 列传第一百八十": [
+    {
+      "sectionId": "mingshi-section-0292",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十二 列传第一百八十"
+      ]
+    }
+  ],
+  "卷二百九十九 列传第一百八十七": [
+    {
+      "sectionId": "mingshi-section-0299",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十九 列传第一百八十七"
+      ]
+    }
+  ],
+  "卷二百九十六 列传第一百八十四": [
+    {
+      "sectionId": "mingshi-section-0296",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十六 列传第一百八十四"
+      ]
+    }
+  ],
+  "卷二百九十七 列传第一百八十五": [
+    {
+      "sectionId": "mingshi-section-0297",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十七 列传第一百八十五"
+      ]
+    }
+  ],
+  "卷二百九十三 列传第一百八十一": [
+    {
+      "sectionId": "mingshi-section-0293",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十三 列传第一百八十一"
+      ]
+    }
+  ],
+  "卷二百九十四 列传第一百八十二": [
+    {
+      "sectionId": "mingshi-section-0294",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十四 列传第一百八十二"
+      ]
+    }
+  ],
+  "卷二百九十五 列传第一百八十三": [
+    {
+      "sectionId": "mingshi-section-0295",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十五 列传第一百八十三"
+      ]
+    }
+  ],
+  "卷二百九十一 列传第一百七十九": [
+    {
+      "sectionId": "mingshi-section-0291",
+      "sourceId": "明史",
+      "path": [
+        "卷二百九十一 列传第一百七十九"
+      ]
+    }
+  ],
+  "卷二百六 列传第九十四": [
+    {
+      "sectionId": "mingshi-section-0206",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六 列传第九十四"
+      ]
+    }
+  ],
+  "卷二百六十 列传第一百四十八": [
+    {
+      "sectionId": "mingshi-section-0260",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十 列传第一百四十八"
+      ]
+    }
+  ],
+  "卷二百六十八 列传第一百五十六": [
+    {
+      "sectionId": "mingshi-section-0268",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十八 列传第一百五十六"
+      ]
+    }
+  ],
+  "卷二百六十二 列传第一百五十": [
+    {
+      "sectionId": "mingshi-section-0262",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十二 列传第一百五十"
+      ]
+    }
+  ],
+  "卷二百六十九 列传第一百五十七": [
+    {
+      "sectionId": "mingshi-section-0269",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十九 列传第一百五十七"
+      ]
+    }
+  ],
+  "卷二百六十六 列传第一百五十四": [
+    {
+      "sectionId": "mingshi-section-0266",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十六 列传第一百五十四"
+      ]
+    }
+  ],
+  "卷二百六十七 列传第一百五十五": [
+    {
+      "sectionId": "mingshi-section-0267",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十七 列传第一百五十五"
+      ]
+    }
+  ],
+  "卷二百六十三 列传第一百五十一": [
+    {
+      "sectionId": "mingshi-section-0263",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十三 列传第一百五十一"
+      ]
+    }
+  ],
+  "卷二百六十四 列传第一百五十二": [
+    {
+      "sectionId": "mingshi-section-0264",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十四 列传第一百五十二"
+      ]
+    }
+  ],
+  "卷二百六十五 列传第一百五十三": [
+    {
+      "sectionId": "mingshi-section-0265",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十五 列传第一百五十三"
+      ]
+    }
+  ],
+  "卷二百六十一 列传一百四十九": [
+    {
+      "sectionId": "mingshi-section-0261",
+      "sourceId": "明史",
+      "path": [
+        "卷二百六十一 列传一百四十九"
+      ]
+    }
+  ],
+  "卷二百七 列传第九十五": [
+    {
+      "sectionId": "mingshi-section-0207",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七 列传第九十五"
+      ]
+    }
+  ],
+  "卷二百七十 列传第一百五十八": [
+    {
+      "sectionId": "mingshi-section-0270",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十 列传第一百五十八"
+      ]
+    }
+  ],
+  "卷二百七十八 列传第一百六十六": [
+    {
+      "sectionId": "mingshi-section-0278",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十八 列传第一百六十六"
+      ]
+    }
+  ],
+  "卷二百七十二 列传第一百六十": [
+    {
+      "sectionId": "mingshi-section-0272",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十二 列传第一百六十"
+      ]
+    }
+  ],
+  "卷二百七十九 列传第一百六十七": [
+    {
+      "sectionId": "mingshi-section-0279",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十九 列传第一百六十七"
+      ]
+    }
+  ],
+  "卷二百七十六 列传第一百六十四": [
+    {
+      "sectionId": "mingshi-section-0276",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十六 列传第一百六十四"
+      ]
+    }
+  ],
+  "卷二百七十七 列传第一百六十五": [
+    {
+      "sectionId": "mingshi-section-0277",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十七 列传第一百六十五"
+      ]
+    }
+  ],
+  "卷二百七十三 列传第一百六十一": [
+    {
+      "sectionId": "mingshi-section-0273",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十三 列传第一百六十一"
+      ]
+    }
+  ],
+  "卷二百七十四 列传第一百六十二": [
+    {
+      "sectionId": "mingshi-section-0274",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十四 列传第一百六十二"
+      ]
+    }
+  ],
+  "卷二百七十五 列传第一百六十三": [
+    {
+      "sectionId": "mingshi-section-0275",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十五 列传第一百六十三"
+      ]
+    }
+  ],
+  "卷二百七十一 列传第一百五十九": [
+    {
+      "sectionId": "mingshi-section-0271",
+      "sourceId": "明史",
+      "path": [
+        "卷二百七十一 列传第一百五十九"
+      ]
+    }
+  ],
+  "卷二百三 列传第九十一": [
+    {
+      "sectionId": "mingshi-section-0203",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三 列传第九十一"
+      ]
+    }
+  ],
+  "卷二百三十 列传第一百十八": [
+    {
+      "sectionId": "mingshi-section-0230",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十 列传第一百十八"
+      ]
+    }
+  ],
+  "卷二百三十八 列传一百二十六": [
+    {
+      "sectionId": "mingshi-section-0238",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十八 列传一百二十六"
+      ]
+    }
+  ],
+  "卷二百三十二 列传第一百二十": [
+    {
+      "sectionId": "mingshi-section-0232",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十二 列传第一百二十"
+      ]
+    }
+  ],
+  "卷二百三十九 列传第一百二十七": [
+    {
+      "sectionId": "mingshi-section-0239",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十九 列传第一百二十七"
+      ]
+    }
+  ],
+  "卷二百三十六 列传第一百二十四": [
+    {
+      "sectionId": "mingshi-section-0236",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十六 列传第一百二十四"
+      ]
+    }
+  ],
+  "卷二百三十七 列传第一百二十五": [
+    {
+      "sectionId": "mingshi-section-0237",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十七 列传第一百二十五"
+      ]
+    }
+  ],
+  "卷二百三十三 列传第一百二十一": [
+    {
+      "sectionId": "mingshi-section-0233",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十三 列传第一百二十一"
+      ]
+    }
+  ],
+  "卷二百三十四 列传第一百二十二": [
+    {
+      "sectionId": "mingshi-section-0234",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十四 列传第一百二十二"
+      ]
+    }
+  ],
+  "卷二百三十五 列传第一百二十三": [
+    {
+      "sectionId": "mingshi-section-0235",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十五 列传第一百二十三"
+      ]
+    }
+  ],
+  "卷二百三十一 列传第一百十九": [
+    {
+      "sectionId": "mingshi-section-0231",
+      "sourceId": "明史",
+      "path": [
+        "卷二百三十一 列传第一百十九"
+      ]
+    }
+  ],
+  "卷二百十 列传第九十八": [
+    {
+      "sectionId": "mingshi-section-0210",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十 列传第九十八"
+      ]
+    }
+  ],
+  "卷二百十八 列传第一百六": [
+    {
+      "sectionId": "mingshi-section-0218",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十八 列传第一百六"
+      ]
+    }
+  ],
+  "卷二百十二 列传第一百": [
+    {
+      "sectionId": "mingshi-section-0212",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十二 列传第一百"
+      ]
+    }
+  ],
+  "卷二百十九 列传第一百七": [
+    {
+      "sectionId": "mingshi-section-0219",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十九 列传第一百七"
+      ]
+    }
+  ],
+  "卷二百十六 列传第一百四": [
+    {
+      "sectionId": "mingshi-section-0216",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十六 列传第一百四"
+      ]
+    }
+  ],
+  "卷二百十七 列传第一百五": [
+    {
+      "sectionId": "mingshi-section-0217",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十七 列传第一百五"
+      ]
+    }
+  ],
+  "卷二百十三 列传第一百一": [
+    {
+      "sectionId": "mingshi-section-0213",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十三 列传第一百一"
+      ]
+    }
+  ],
+  "卷二百十四 列传第一百二": [
+    {
+      "sectionId": "mingshi-section-0214",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十四 列传第一百二"
+      ]
+    }
+  ],
+  "卷二百十五 列传第一百三": [
+    {
+      "sectionId": "mingshi-section-0215",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十五 列传第一百三"
+      ]
+    }
+  ],
+  "卷二百十一 列传第九十九": [
+    {
+      "sectionId": "mingshi-section-0211",
+      "sourceId": "明史",
+      "path": [
+        "卷二百十一 列传第九十九"
+      ]
+    }
+  ],
+  "卷二百四 列传第九十二": [
+    {
+      "sectionId": "mingshi-section-0204",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四 列传第九十二"
+      ]
+    }
+  ],
+  "卷二百四十 列传第一百二十八": [
+    {
+      "sectionId": "mingshi-section-0240",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十 列传第一百二十八"
+      ]
+    }
+  ],
+  "卷二百四十八 列传第一百三十六": [
+    {
+      "sectionId": "mingshi-section-0248",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十八 列传第一百三十六"
+      ]
+    }
+  ],
+  "卷二百四十二 列传第一百三十": [
+    {
+      "sectionId": "mingshi-section-0242",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十二 列传第一百三十"
+      ]
+    }
+  ],
+  "卷二百四十九 列传第一百三十七": [
+    {
+      "sectionId": "mingshi-section-0249",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十九 列传第一百三十七"
+      ]
+    }
+  ],
+  "卷二百四十六 列传第一百三十四": [
+    {
+      "sectionId": "mingshi-section-0246",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十六 列传第一百三十四"
+      ]
+    }
+  ],
+  "卷二百四十七 列传第一百三十五": [
+    {
+      "sectionId": "mingshi-section-0247",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十七 列传第一百三十五"
+      ]
+    }
+  ],
+  "卷二百四十三 列传第一百三十一": [
+    {
+      "sectionId": "mingshi-section-0243",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十三 列传第一百三十一"
+      ]
+    }
+  ],
+  "卷二百四十四 列传第一百三十二": [
+    {
+      "sectionId": "mingshi-section-0244",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十四 列传第一百三十二"
+      ]
+    }
+  ],
+  "卷二百四十五 列传第一百三十三": [
+    {
+      "sectionId": "mingshi-section-0245",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十五 列传第一百三十三"
+      ]
+    }
+  ],
+  "卷二百四十一 列传第一百二十九": [
+    {
+      "sectionId": "mingshi-section-0241",
+      "sourceId": "明史",
+      "path": [
+        "卷二百四十一 列传第一百二十九"
+      ]
+    }
+  ],
+  "卷二百五 列传第九十三": [
+    {
+      "sectionId": "mingshi-section-0205",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五 列传第九十三"
+      ]
+    }
+  ],
+  "卷二百五十 列传第一百三十八": [
+    {
+      "sectionId": "mingshi-section-0250",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十 列传第一百三十八"
+      ]
+    }
+  ],
+  "卷二百五十八 列传第一百四十六": [
+    {
+      "sectionId": "mingshi-section-0258",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十八 列传第一百四十六"
+      ]
+    }
+  ],
+  "卷二百五十二 列传第一百四十": [
+    {
+      "sectionId": "mingshi-section-0252",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十二 列传第一百四十"
+      ]
+    }
+  ],
+  "卷二百五十九 列传第一百四十七": [
+    {
+      "sectionId": "mingshi-section-0259",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十九 列传第一百四十七"
+      ]
+    }
+  ],
+  "卷二百五十六 列传第一百四十四": [
+    {
+      "sectionId": "mingshi-section-0256",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十六 列传第一百四十四"
+      ]
+    }
+  ],
+  "卷二百五十七 列传第一百四十五": [
+    {
+      "sectionId": "mingshi-section-0257",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十七 列传第一百四十五"
+      ]
+    }
+  ],
+  "卷二百五十三 列传第一百四十一": [
+    {
+      "sectionId": "mingshi-section-0253",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十三 列传第一百四十一"
+      ]
+    }
+  ],
+  "卷二百五十四 列传第一百四十二": [
+    {
+      "sectionId": "mingshi-section-0254",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十四 列传第一百四十二"
+      ]
+    }
+  ],
+  "卷二百五十五 列传第一百四十三": [
+    {
+      "sectionId": "mingshi-section-0255",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十五 列传第一百四十三"
+      ]
+    }
+  ],
+  "卷二百五十一 列传第一百三十九": [
+    {
+      "sectionId": "mingshi-section-0251",
+      "sourceId": "明史",
+      "path": [
+        "卷二百五十一 列传第一百三十九"
+      ]
+    }
+  ],
+  "卷二百一 列传第八十九": [
+    {
+      "sectionId": "mingshi-section-0201",
+      "sourceId": "明史",
+      "path": [
+        "卷二百一 列传第八十九"
+      ]
+    }
+  ],
+  "卷二十": [
+    {
+      "sectionId": "南村辍耕录-section-0015",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十",
+        "纳音"
+      ]
+    }
+  ],
+  "卷二十 本纪第二十": [
+    {
+      "sectionId": "mingshi-section-0020",
+      "sourceId": "明史",
+      "path": [
+        "卷二十 本纪第二十"
+      ]
+    }
+  ],
+  "卷二十八 志第四": [
+    {
+      "sectionId": "mingshi-section-0028",
+      "sourceId": "明史",
+      "path": [
+        "卷二十八 志第四"
+      ]
+    }
+  ],
+  "卷二十二": [
+    {
+      "sectionId": "南村辍耕录-section-0018",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十二",
+        "黄河源"
+      ]
+    }
+  ],
+  "卷二十二 本纪第二十二": [
+    {
+      "sectionId": "mingshi-section-0022",
+      "sourceId": "明史",
+      "path": [
+        "卷二十二 本纪第二十二"
+      ]
+    }
+  ],
+  "卷二十九 志第五": [
+    {
+      "sectionId": "mingshi-section-0029",
+      "sourceId": "明史",
+      "path": [
+        "卷二十九 志第五"
+      ]
+    }
+  ],
+  "卷二十六": [
+    {
+      "sectionId": "南村辍耕录-section-0022",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十六",
+        "传国玺御"
+      ]
+    }
+  ],
+  "卷二十六 志第二": [
+    {
+      "sectionId": "mingshi-section-0026",
+      "sourceId": "明史",
+      "path": [
+        "卷二十六 志第二"
+      ]
+    }
+  ],
+  "卷二十七": [
+    {
+      "sectionId": "南村辍耕录-section-0023",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十七",
+        "杂剧曲名稗官废而传奇作，传奇作而戏曲继，金季国初，乐府犹宋词之流，传奇犹宋戏曲之变。世传谓之杂剧。金章宗时，董解元所编西厢记，世代未远，尚罕有人能解之者。况今杂剧中曲调之冗乎？因取诸曲名分调类编，以备后来好事稽古者之一览云。"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0024",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十七",
+        "燕南芝庵先生唱论"
+      ]
+    }
+  ],
+  "卷二十七 志第三": [
+    {
+      "sectionId": "mingshi-section-0027",
+      "sourceId": "明史",
+      "path": [
+        "卷二十七 志第三"
+      ]
+    }
+  ],
+  "卷二十三": [
+    {
+      "sectionId": "南村辍耕录-section-0019",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十三",
+        "书画裱轴唐贞观开元间，人主崇尚文雅，其书画皆用紫龙凤白绫为表，绿文纹绫为里，紫檀云花杵头轴，白檀通身柿心轴。此外又有青赤琉璃二等轴，牙签锦带。大和间，王涯自盐铁据相印。家既羡于财，始用金玉为轴。甘露之变，人皆剥剔无遗。南唐则裱以回鸾墨锦，签以潢纸。宋御府所藏，青紫大绫为裱，文锦为带，玉及水晶檀香为轴。靖康之变，民间多有得者。高宗渡江后，和议既成，榷场购求为多。装褫之法，已具名画记及绍兴定式，兹更不赘，姑以所闻见者，使赏鉴之士有考焉。"
+      ]
+    }
+  ],
+  "卷二十三 本纪第二十三": [
+    {
+      "sectionId": "mingshi-section-0023",
+      "sourceId": "明史",
+      "path": [
+        "卷二十三 本纪第二十三"
+      ]
+    }
+  ],
+  "卷二十四": [
+    {
+      "sectionId": "南村辍耕录-section-0020",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十四",
+        "历代医师"
+      ]
+    }
+  ],
+  "卷二十四 本纪第二十四": [
+    {
+      "sectionId": "mingshi-section-0024",
+      "sourceId": "明史",
+      "path": [
+        "卷二十四 本纪第二十四"
+      ]
+    }
+  ],
+  "卷二十五": [
+    {
+      "sectionId": "南村辍耕录-section-0021",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十五",
+        "院本名目"
+      ]
+    }
+  ],
+  "卷二十五 志第一": [
+    {
+      "sectionId": "mingshi-section-0025",
+      "sourceId": "明史",
+      "path": [
+        "卷二十五 志第一"
+      ]
+    }
+  ],
+  "卷二十一": [
+    {
+      "sectionId": "南村辍耕录-section-0016",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十一",
+        "宫阙制度"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0017",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十一",
+        "公宇"
+      ]
+    }
+  ],
+  "卷二十一 本纪第二十一": [
+    {
+      "sectionId": "mingshi-section-0021",
+      "sourceId": "明史",
+      "path": [
+        "卷二十一 本纪第二十一"
+      ]
+    }
+  ],
+  "卷九": [
+    {
+      "sectionId": "国初群雄事略-section-0011",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷九",
+        "台州方谷真"
+      ]
+    }
+  ],
+  "卷九 本纪第九": [
+    {
+      "sectionId": "mingshi-section-0009",
+      "sourceId": "明史",
+      "path": [
+        "卷九 本纪第九"
+      ]
+    }
+  ],
+  "卷九十 志第六十六": [
+    {
+      "sectionId": "mingshi-section-0090",
+      "sourceId": "明史",
+      "path": [
+        "卷九十 志第六十六"
+      ]
+    }
+  ],
+  "卷九十八 志第七十四": [
+    {
+      "sectionId": "mingshi-section-0098",
+      "sourceId": "明史",
+      "path": [
+        "卷九十八 志第七十四"
+      ]
+    }
+  ],
+  "卷九十二 志第六十八": [
+    {
+      "sectionId": "mingshi-section-0092",
+      "sourceId": "明史",
+      "path": [
+        "卷九十二 志第六十八"
+      ]
+    }
+  ],
+  "卷九十九 志第七十五": [
+    {
+      "sectionId": "mingshi-section-0099",
+      "sourceId": "明史",
+      "path": [
+        "卷九十九 志第七十五"
+      ]
+    }
+  ],
+  "卷九十六 志第七十二": [
+    {
+      "sectionId": "mingshi-section-0096",
+      "sourceId": "明史",
+      "path": [
+        "卷九十六 志第七十二"
+      ]
+    }
+  ],
+  "卷九十七 志第七十三": [
+    {
+      "sectionId": "mingshi-section-0097",
+      "sourceId": "明史",
+      "path": [
+        "卷九十七 志第七十三"
+      ]
+    }
+  ],
+  "卷九十三 志第六十九": [
+    {
+      "sectionId": "mingshi-section-0093",
+      "sourceId": "明史",
+      "path": [
+        "卷九十三 志第六十九"
+      ]
+    }
+  ],
+  "卷九十四 志第七十": [
+    {
+      "sectionId": "mingshi-section-0094",
+      "sourceId": "明史",
+      "path": [
+        "卷九十四 志第七十"
+      ]
+    }
+  ],
+  "卷九十五 志第七十一": [
+    {
+      "sectionId": "mingshi-section-0095",
+      "sourceId": "明史",
+      "path": [
+        "卷九十五 志第七十一"
+      ]
+    }
+  ],
+  "卷九十一 志第六十七": [
+    {
+      "sectionId": "mingshi-section-0091",
+      "sourceId": "明史",
+      "path": [
+        "卷九十一 志第六十七"
+      ]
+    }
+  ],
+  "卷六": [
+    {
+      "sectionId": "国初群雄事略-section-0008",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷六",
+        "周张士诚"
+      ]
+    }
+  ],
+  "卷六 本纪第六": [
+    {
+      "sectionId": "mingshi-section-0006",
+      "sourceId": "明史",
+      "path": [
+        "卷六 本纪第六"
+      ]
+    }
+  ],
+  "卷六十 志第三十六": [
+    {
+      "sectionId": "mingshi-section-0060",
+      "sourceId": "明史",
+      "path": [
+        "卷六十 志第三十六"
+      ]
+    }
+  ],
+  "卷六十八 志第四十四": [
+    {
+      "sectionId": "mingshi-section-0068",
+      "sourceId": "明史",
+      "path": [
+        "卷六十八 志第四十四"
+      ]
+    }
+  ],
+  "卷六十二 志第三十八": [
+    {
+      "sectionId": "mingshi-section-0062",
+      "sourceId": "明史",
+      "path": [
+        "卷六十二 志第三十八"
+      ]
+    }
+  ],
+  "卷六十九 志第四十五": [
+    {
+      "sectionId": "mingshi-section-0069",
+      "sourceId": "明史",
+      "path": [
+        "卷六十九 志第四十五"
+      ]
+    }
+  ],
+  "卷六十六 志第四十二": [
+    {
+      "sectionId": "mingshi-section-0066",
+      "sourceId": "明史",
+      "path": [
+        "卷六十六 志第四十二"
+      ]
+    }
+  ],
+  "卷六十七 志第四十三": [
+    {
+      "sectionId": "mingshi-section-0067",
+      "sourceId": "明史",
+      "path": [
+        "卷六十七 志第四十三"
+      ]
+    }
+  ],
+  "卷六十三 志第三十九": [
+    {
+      "sectionId": "mingshi-section-0063",
+      "sourceId": "明史",
+      "path": [
+        "卷六十三 志第三十九"
+      ]
+    }
+  ],
+  "卷六十四 志第四十": [
+    {
+      "sectionId": "mingshi-section-0064",
+      "sourceId": "明史",
+      "path": [
+        "卷六十四 志第四十"
+      ]
+    }
+  ],
+  "卷六十五 志第四十一": [
+    {
+      "sectionId": "mingshi-section-0065",
+      "sourceId": "明史",
+      "path": [
+        "卷六十五 志第四十一"
+      ]
+    }
+  ],
+  "卷六十一 志第三十七": [
+    {
+      "sectionId": "mingshi-section-0061",
+      "sourceId": "明史",
+      "path": [
+        "卷六十一 志第三十七"
+      ]
+    }
+  ],
+  "卷七": [
+    {
+      "sectionId": "国初群雄事略-section-0009",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷七",
+        "周张士诚"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0003",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷七",
+        "金鳌山"
+      ]
+    }
+  ],
+  "卷七 本纪第七": [
+    {
+      "sectionId": "mingshi-section-0007",
+      "sourceId": "明史",
+      "path": [
+        "卷七 本纪第七"
+      ]
+    }
+  ],
+  "卷七十 志第四十六": [
+    {
+      "sectionId": "mingshi-section-0070",
+      "sourceId": "明史",
+      "path": [
+        "卷七十 志第四十六"
+      ]
+    }
+  ],
+  "卷七十八 志第五十四": [
+    {
+      "sectionId": "mingshi-section-0078",
+      "sourceId": "明史",
+      "path": [
+        "卷七十八 志第五十四"
+      ]
+    }
+  ],
+  "卷七十二 志第四十八": [
+    {
+      "sectionId": "mingshi-section-0072",
+      "sourceId": "明史",
+      "path": [
+        "卷七十二 志第四十八"
+      ]
+    }
+  ],
+  "卷七十九 志第五十五": [
+    {
+      "sectionId": "mingshi-section-0079",
+      "sourceId": "明史",
+      "path": [
+        "卷七十九 志第五十五"
+      ]
+    }
+  ],
+  "卷七十六 志第五十二": [
+    {
+      "sectionId": "mingshi-section-0076",
+      "sourceId": "明史",
+      "path": [
+        "卷七十六 志第五十二"
+      ]
+    }
+  ],
+  "卷七十七 志第五十三": [
+    {
+      "sectionId": "mingshi-section-0077",
+      "sourceId": "明史",
+      "path": [
+        "卷七十七 志第五十三"
+      ]
+    }
+  ],
+  "卷七十三 志第四十九": [
+    {
+      "sectionId": "mingshi-section-0073",
+      "sourceId": "明史",
+      "path": [
+        "卷七十三 志第四十九"
+      ]
+    }
+  ],
+  "卷七十四 志第五十": [
+    {
+      "sectionId": "mingshi-section-0074",
+      "sourceId": "明史",
+      "path": [
+        "卷七十四 志第五十"
+      ]
+    }
+  ],
+  "卷七十五 志第五十一": [
+    {
+      "sectionId": "mingshi-section-0075",
+      "sourceId": "明史",
+      "path": [
+        "卷七十五 志第五十一"
+      ]
+    }
+  ],
+  "卷七十一 志第四十七": [
+    {
+      "sectionId": "mingshi-section-0071",
+      "sourceId": "明史",
+      "path": [
+        "卷七十一 志第四十七"
+      ]
+    }
+  ],
+  "卷三": [
+    {
+      "sectionId": "国初群雄事略-section-0005",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷三",
+        "天完徐寿辉"
+      ]
+    }
+  ],
+  "卷三 本纪第三": [
+    {
+      "sectionId": "mingshi-section-0003",
+      "sourceId": "明史",
+      "path": [
+        "卷三 本纪第三"
+      ]
+    }
+  ],
+  "卷三百 列传第一百八十八": [
+    {
+      "sectionId": "mingshi-section-0300",
+      "sourceId": "明史",
+      "path": [
+        "卷三百 列传第一百八十八"
+      ]
+    }
+  ],
+  "卷三百八 列传第一百九十六": [
+    {
+      "sectionId": "mingshi-section-0308",
+      "sourceId": "明史",
+      "path": [
+        "卷三百八 列传第一百九十六"
+      ]
+    }
+  ],
+  "卷三百二 列传第一百九十": [
+    {
+      "sectionId": "mingshi-section-0302",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二 列传第一百九十"
+      ]
+    }
+  ],
+  "卷三百二十 列传第二百八": [
+    {
+      "sectionId": "mingshi-section-0320",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十 列传第二百八"
+      ]
+    }
+  ],
+  "卷三百二十八 列传第二百十六": [
+    {
+      "sectionId": "mingshi-section-0328",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十八 列传第二百十六"
+      ]
+    }
+  ],
+  "卷三百二十二 列传第二百十": [
+    {
+      "sectionId": "mingshi-section-0322",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十二 列传第二百十"
+      ]
+    }
+  ],
+  "卷三百二十九 列传第二百十七": [
+    {
+      "sectionId": "mingshi-section-0329",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十九 列传第二百十七"
+      ]
+    }
+  ],
+  "卷三百二十六 列传第二百十四": [
+    {
+      "sectionId": "mingshi-section-0326",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十六 列传第二百十四"
+      ]
+    }
+  ],
+  "卷三百二十七 列传第二百十五": [
+    {
+      "sectionId": "mingshi-section-0327",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十七 列传第二百十五"
+      ]
+    }
+  ],
+  "卷三百二十三 列传第二百十一": [
+    {
+      "sectionId": "mingshi-section-0323",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十三 列传第二百十一"
+      ]
+    }
+  ],
+  "卷三百二十四 列传第二百十二": [
+    {
+      "sectionId": "mingshi-section-0324",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十四 列传第二百十二"
+      ]
+    }
+  ],
+  "卷三百二十五 列传第二百十三": [
+    {
+      "sectionId": "mingshi-section-0325",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十五 列传第二百十三"
+      ]
+    }
+  ],
+  "卷三百二十一 列传第二百九": [
+    {
+      "sectionId": "mingshi-section-0321",
+      "sourceId": "明史",
+      "path": [
+        "卷三百二十一 列传第二百九"
+      ]
+    }
+  ],
+  "卷三百九 列传第一百九十七": [
+    {
+      "sectionId": "mingshi-section-0309",
+      "sourceId": "明史",
+      "path": [
+        "卷三百九 列传第一百九十七"
+      ]
+    }
+  ],
+  "卷三百六 列传第一百九十四": [
+    {
+      "sectionId": "mingshi-section-0306",
+      "sourceId": "明史",
+      "path": [
+        "卷三百六 列传第一百九十四"
+      ]
+    }
+  ],
+  "卷三百七 列传第一百九十五": [
+    {
+      "sectionId": "mingshi-section-0307",
+      "sourceId": "明史",
+      "path": [
+        "卷三百七 列传第一百九十五"
+      ]
+    }
+  ],
+  "卷三百三 列传第一百九十一": [
+    {
+      "sectionId": "mingshi-section-0303",
+      "sourceId": "明史",
+      "path": [
+        "卷三百三 列传第一百九十一"
+      ]
+    }
+  ],
+  "卷三百三十 列传第二百十八": [
+    {
+      "sectionId": "mingshi-section-0330",
+      "sourceId": "明史",
+      "path": [
+        "卷三百三十 列传第二百十八"
+      ]
+    }
+  ],
+  "卷三百三十二 列传第二百二十": [
+    {
+      "sectionId": "mingshi-section-0332",
+      "sourceId": "明史",
+      "path": [
+        "卷三百三十二 列传第二百二十"
+      ]
+    }
+  ],
+  "卷三百三十一 列传第二百十七": [
+    {
+      "sectionId": "mingshi-section-0331",
+      "sourceId": "明史",
+      "path": [
+        "卷三百三十一 列传第二百十七"
+      ]
+    }
+  ],
+  "卷三百十 列传第一百九十八": [
+    {
+      "sectionId": "mingshi-section-0310",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十 列传第一百九十八"
+      ]
+    }
+  ],
+  "卷三百十八 列传第二百六": [
+    {
+      "sectionId": "mingshi-section-0318",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十八 列传第二百六"
+      ]
+    }
+  ],
+  "卷三百十二 列传第二百": [
+    {
+      "sectionId": "mingshi-section-0312",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十二 列传第二百"
+      ]
+    }
+  ],
+  "卷三百十九 列传第二百七": [
+    {
+      "sectionId": "mingshi-section-0319",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十九 列传第二百七"
+      ]
+    }
+  ],
+  "卷三百十六 列传第二百四": [
+    {
+      "sectionId": "mingshi-section-0316",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十六 列传第二百四"
+      ]
+    }
+  ],
+  "卷三百十七 列传第二百五": [
+    {
+      "sectionId": "mingshi-section-0317",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十七 列传第二百五"
+      ]
+    }
+  ],
+  "卷三百十三 列传第二百一": [
+    {
+      "sectionId": "mingshi-section-0313",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十三 列传第二百一"
+      ]
+    }
+  ],
+  "卷三百十四 列传第二百二": [
+    {
+      "sectionId": "mingshi-section-0314",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十四 列传第二百二"
+      ]
+    }
+  ],
+  "卷三百十五 列传第二百三": [
+    {
+      "sectionId": "mingshi-section-0315",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十五 列传第二百三"
+      ]
+    }
+  ],
+  "卷三百十一 列传第一百九十九": [
+    {
+      "sectionId": "mingshi-section-0311",
+      "sourceId": "明史",
+      "path": [
+        "卷三百十一 列传第一百九十九"
+      ]
+    }
+  ],
+  "卷三百四 列传第一百九十二": [
+    {
+      "sectionId": "mingshi-section-0304",
+      "sourceId": "明史",
+      "path": [
+        "卷三百四 列传第一百九十二"
+      ]
+    }
+  ],
+  "卷三百五 列传第一百九十三": [
+    {
+      "sectionId": "mingshi-section-0305",
+      "sourceId": "明史",
+      "path": [
+        "卷三百五 列传第一百九十三"
+      ]
+    }
+  ],
+  "卷三百一 列传第一百八十九": [
+    {
+      "sectionId": "mingshi-section-0301",
+      "sourceId": "明史",
+      "path": [
+        "卷三百一 列传第一百八十九"
+      ]
+    }
+  ],
+  "卷三十": [
+    {
+      "sectionId": "南村辍耕录-section-0025",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷三十",
+        "履舄履考履、舄、履。《履人》注：禅下曰履，复下曰舄。（《说文》无舄字。舄本鹊字，今借为履舄字也。陆佃云：舄通为舄履之舄。古人居欲如燕，行不欲如鹊，故借为舄字，所以为行戒也。然借鹊为。舄，作思积反者，盖舄履也。古今注：以木置屦下，干腊，不畏泥湿，故曰舄。以是知舄屦之下必再用木矣）。《士丧礼》：“夏葛屦，冬皮屦。”《屦人》注又谓：“凡屦，舄各象其裳色。”引《士冠礼》曰：“玄端黑屦，青纟句（劬）纟意（亿）纯（准），素帻白屦。缁纟句纟意纯，爵弁扒屦。黑纟句纯是也。”纟句，《说文》：“纟卢绳纟句也。”《玉藻》注：“履头饰也。”（《韵会》：状如刀衣上鼻，在屦头。言拘者，取自拘持，使低目，不暇顾视。一曰，用缯一寸，屈为之头，着屦头，以受穿贯）。纟意，《屦人》注：“缝中纟川也，博雅纟川绦也。”纯，《屦人》注：“缘也。”言纟意必有纟句纯，言纟句必有纟意纯，三者相将，则屦、舄皆有纟句、纟意、纯矣。凡纟句、纟意、纯，皆一色。又按《屦人》注：“舄有三等，赤舄、白舄、黑舄也，赤舄为上，冕服之舄。《诗》曰：“王锡韩侯，玄哀赤舄。”则诸侯与王同矣。所谓玄舄青舄，王后祭服之舄也。凡屦之饰，如绣次也。黄屦白饰，白屦黑饰，黑屦青饰。天子诸侯，吉事皆舄。其余服冕着舄耳。士爵弁屦，黑纟句纟意纯，尊祭服之屦，饰从缋也。至若履者，《说文》：“足所依也，从尸，从彳，从攵，从舟，象履形。”毛氏曰：“舟能载物，履能载人。又草曰扉。（芳未反）麻曰屦（凡布皆可谓之麻）。皮曰履。按履无别制。《说文》：“屦，履也，从履省，娄声，又也。”徐曰：“，革履也。舄，韵会，履也。”《古今注》：“以木置履下，干腊，不畏泥湿，故曰舄。”以是知履舄履之异名也。但有禅下、复下用木之异耳。古人舄屦履至阶必脱。唯着袜而入。《礼》：“户外有二屦，”是脱屦而入者也；“汉赐剑履上殿”，是不赐则不敢着履上殿明矣。“谏不行则纳履而去，”纳，结也。言纳履，则在外明矣。是脱履而入者也。王乔入朝。双舄化凫先至，是脱舄而入者也。古者堂上皆有席，所以着袜为宜。况袜又从韦乎。又按《乡饮酒》云：“说屦，揖让如初，升堂。”疏云：“凡堂上行揖礼不脱屦，坐则脱屦，理固然也。”由是观之，凡宗庙堂室之间行礼，亦必不脱屦矣。夫降而脱屦，然后升坐，礼也。其后宾与主人酬酢之时，皆在两阶之间，又须降而着屦，复升于阶。酬酢之礼毕，又降而脱屦，复升于坐也。古人礼繁如此，今何略也！"
+      ]
+    }
+  ],
+  "卷三十 志第六": [
+    {
+      "sectionId": "mingshi-section-0030",
+      "sourceId": "明史",
+      "path": [
+        "卷三十 志第六"
+      ]
+    }
+  ],
+  "卷三十八 志第十四": [
+    {
+      "sectionId": "mingshi-section-0038",
+      "sourceId": "明史",
+      "path": [
+        "卷三十八 志第十四"
+      ]
+    }
+  ],
+  "卷三十二 志第八": [
+    {
+      "sectionId": "mingshi-section-0032",
+      "sourceId": "明史",
+      "path": [
+        "卷三十二 志第八"
+      ]
+    }
+  ],
+  "卷三十九 志第十五": [
+    {
+      "sectionId": "mingshi-section-0039",
+      "sourceId": "明史",
+      "path": [
+        "卷三十九 志第十五"
+      ]
+    }
+  ],
+  "卷三十六 志第十二": [
+    {
+      "sectionId": "mingshi-section-0036",
+      "sourceId": "明史",
+      "path": [
+        "卷三十六 志第十二"
+      ]
+    }
+  ],
+  "卷三十七 志第十三": [
+    {
+      "sectionId": "mingshi-section-0037",
+      "sourceId": "明史",
+      "path": [
+        "卷三十七 志第十三"
+      ]
+    }
+  ],
+  "卷三十三 志第九": [
+    {
+      "sectionId": "mingshi-section-0033",
+      "sourceId": "明史",
+      "path": [
+        "卷三十三 志第九"
+      ]
+    }
+  ],
+  "卷三十四 志第十": [
+    {
+      "sectionId": "mingshi-section-0034",
+      "sourceId": "明史",
+      "path": [
+        "卷三十四 志第十"
+      ]
+    }
+  ],
+  "卷三十五 志第十一": [
+    {
+      "sectionId": "mingshi-section-0035",
+      "sourceId": "明史",
+      "path": [
+        "卷三十五 志第十一"
+      ]
+    }
+  ],
+  "卷三十一 志第七": [
+    {
+      "sectionId": "mingshi-section-0031",
+      "sourceId": "明史",
+      "path": [
+        "卷三十一 志第七"
+      ]
+    }
+  ],
+  "卷十": [
+    {
+      "sectionId": "国初群雄事略-section-0012",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十",
+        "汝宁李思齐"
+      ]
+    }
+  ],
+  "卷十 本纪第十": [
+    {
+      "sectionId": "mingshi-section-0010",
+      "sourceId": "明史",
+      "path": [
+        "卷十 本纪第十"
+      ]
+    }
+  ],
+  "卷十八": [
+    {
+      "sectionId": "南村辍耕录-section-0013",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十八",
+        "叙画"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0014",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十八",
+        "记宋宫殿"
+      ]
+    }
+  ],
+  "卷十八 本纪第十八": [
+    {
+      "sectionId": "mingshi-section-0018",
+      "sourceId": "明史",
+      "path": [
+        "卷十八 本纪第十八"
+      ]
+    }
+  ],
+  "卷十二": [
+    {
+      "sectionId": "国初群雄事略-section-0014",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十二",
+        "海西侯纳哈出"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0006",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十二",
+        "园池记"
+      ]
+    }
+  ],
+  "卷十二 本纪第十二": [
+    {
+      "sectionId": "mingshi-section-0012",
+      "sourceId": "明史",
+      "path": [
+        "卷十二 本纪第十二"
+      ]
+    }
+  ],
+  "卷十九 本纪第十九": [
+    {
+      "sectionId": "mingshi-section-0019",
+      "sourceId": "明史",
+      "path": [
+        "卷十九 本纪第十九"
+      ]
+    }
+  ],
+  "卷十六": [
+    {
+      "sectionId": "南村辍耕录-section-0007",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十六",
+        "陶氏二谱宋泰山王质所着《云韬堂绍陶录》，录中首载栗里华阳二谱。惟先生之大节高风，流播千古，而质者乃能次第其出处。作为年谱，且以名吾书绍陶之志，是可尚已，遂录于此云。《书陶栗里谱》元亮高风，发于宋晋去就之际。君曾祖事晋，懋着勋劳。自宋武帝芟元复马，逆揣其末流，即不出。武帝将收贤士以系人心，见要亦不应。陶谢皆世臣，君世地色言俱僻，而灵运为武帝秉任。最后乃欲诡忠义杂江海远师送君过虎溪，而却灵运不入莲社素心皆所鉴知，谱具左方。"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0008",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十六",
+        "药谱"
+      ]
+    }
+  ],
+  "卷十六 本纪第十六": [
+    {
+      "sectionId": "mingshi-section-0016",
+      "sourceId": "明史",
+      "path": [
+        "卷十六 本纪第十六"
+      ]
+    }
+  ],
+  "卷十七": [
+    {
+      "sectionId": "南村辍耕录-section-0009",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十七",
+        "古铜器"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0010",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十七",
+        "旃檀佛"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0011",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十七",
+        "黄金缕"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0012",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十七",
+        "哨遍"
+      ]
+    }
+  ],
+  "卷十七 本纪第十七": [
+    {
+      "sectionId": "mingshi-section-0017",
+      "sourceId": "明史",
+      "path": [
+        "卷十七 本纪第十七"
+      ]
+    }
+  ],
+  "卷十三": [
+    {
+      "sectionId": "国初群雄事略-section-0015",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十三",
+        "福建陈友定"
+      ]
+    }
+  ],
+  "卷十三 本纪第十三": [
+    {
+      "sectionId": "mingshi-section-0013",
+      "sourceId": "明史",
+      "path": [
+        "卷十三 本纪第十三"
+      ]
+    }
+  ],
+  "卷十四": [
+    {
+      "sectionId": "国初群雄事略-section-0016",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十四",
+        "东莞伯何真"
+      ]
+    }
+  ],
+  "卷十四 本纪第十四": [
+    {
+      "sectionId": "mingshi-section-0014",
+      "sourceId": "明史",
+      "path": [
+        "卷十四 本纪第十四"
+      ]
+    }
+  ],
+  "卷十五 本纪第十五": [
+    {
+      "sectionId": "mingshi-section-0015",
+      "sourceId": "明史",
+      "path": [
+        "卷十五 本纪第十五"
+      ]
+    }
+  ],
+  "卷十一": [
+    {
+      "sectionId": "国初群雄事略-section-0013",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十一",
+        "河南扩廓帖木儿"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0004",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十一",
+        "采绘法"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0005",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十一",
+        "梦应之"
+      ]
+    }
+  ],
+  "卷十一 本纪第十一": [
+    {
+      "sectionId": "mingshi-section-0011",
+      "sourceId": "明史",
+      "path": [
+        "卷十一 本纪第十一"
+      ]
+    }
+  ],
+  "卷四": [
+    {
+      "sectionId": "国初群雄事略-section-0006",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷四",
+        "汉陈友谅"
+      ]
+    }
+  ],
+  "卷四 本纪第四": [
+    {
+      "sectionId": "mingshi-section-0004",
+      "sourceId": "明史",
+      "path": [
+        "卷四 本纪第四"
+      ]
+    }
+  ],
+  "卷四十 志第十六": [
+    {
+      "sectionId": "mingshi-section-0040",
+      "sourceId": "明史",
+      "path": [
+        "卷四十 志第十六"
+      ]
+    }
+  ],
+  "卷四十八 志第二十四": [
+    {
+      "sectionId": "mingshi-section-0048",
+      "sourceId": "明史",
+      "path": [
+        "卷四十八 志第二十四"
+      ]
+    }
+  ],
+  "卷四十二 志第十八": [
+    {
+      "sectionId": "mingshi-section-0042",
+      "sourceId": "明史",
+      "path": [
+        "卷四十二 志第十八"
+      ]
+    }
+  ],
+  "卷四十九 志第二十五": [
+    {
+      "sectionId": "mingshi-section-0049",
+      "sourceId": "明史",
+      "path": [
+        "卷四十九 志第二十五"
+      ]
+    }
+  ],
+  "卷四十六 志第二十二": [
+    {
+      "sectionId": "mingshi-section-0046",
+      "sourceId": "明史",
+      "path": [
+        "卷四十六 志第二十二"
+      ]
+    }
+  ],
+  "卷四十七 志第二十三": [
+    {
+      "sectionId": "mingshi-section-0047",
+      "sourceId": "明史",
+      "path": [
+        "卷四十七 志第二十三"
+      ]
+    }
+  ],
+  "卷四十三 志第十九": [
+    {
+      "sectionId": "mingshi-section-0043",
+      "sourceId": "明史",
+      "path": [
+        "卷四十三 志第十九"
+      ]
+    }
+  ],
+  "卷四十四 志第二十": [
+    {
+      "sectionId": "mingshi-section-0044",
+      "sourceId": "明史",
+      "path": [
+        "卷四十四 志第二十"
+      ]
+    }
+  ],
+  "卷四十五 志第二十一": [
+    {
+      "sectionId": "mingshi-section-0045",
+      "sourceId": "明史",
+      "path": [
+        "卷四十五 志第二十一"
+      ]
+    }
+  ],
+  "卷四十一 志第十七": [
+    {
+      "sectionId": "mingshi-section-0041",
+      "sourceId": "明史",
+      "path": [
+        "卷四十一 志第十七"
+      ]
+    }
+  ],
+  "卷五": [
+    {
+      "sectionId": "国初群雄事略-section-0007",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷五",
+        "夏明玉珍"
+      ]
+    }
+  ],
+  "卷五 本纪第五": [
+    {
+      "sectionId": "mingshi-section-0005",
+      "sourceId": "明史",
+      "path": [
+        "卷五 本纪第五"
+      ]
+    }
+  ],
+  "卷五十 志第二十六": [
+    {
+      "sectionId": "mingshi-section-0050",
+      "sourceId": "明史",
+      "path": [
+        "卷五十 志第二十六"
+      ]
+    }
+  ],
+  "卷五十八 志第三十四": [
+    {
+      "sectionId": "mingshi-section-0058",
+      "sourceId": "明史",
+      "path": [
+        "卷五十八 志第三十四"
+      ]
+    }
+  ],
+  "卷五十二 志第二十八": [
+    {
+      "sectionId": "mingshi-section-0052",
+      "sourceId": "明史",
+      "path": [
+        "卷五十二 志第二十八"
+      ]
+    }
+  ],
+  "卷五十九 志第三十五": [
+    {
+      "sectionId": "mingshi-section-0059",
+      "sourceId": "明史",
+      "path": [
+        "卷五十九 志第三十五"
+      ]
+    }
+  ],
+  "卷五十六 志第三十二": [
+    {
+      "sectionId": "mingshi-section-0056",
+      "sourceId": "明史",
+      "path": [
+        "卷五十六 志第三十二"
+      ]
+    }
+  ],
+  "卷五十七 志第三十三": [
+    {
+      "sectionId": "mingshi-section-0057",
+      "sourceId": "明史",
+      "path": [
+        "卷五十七 志第三十三"
+      ]
+    }
+  ],
+  "卷五十三 志第二十九": [
+    {
+      "sectionId": "mingshi-section-0053",
+      "sourceId": "明史",
+      "path": [
+        "卷五十三 志第二十九"
+      ]
+    }
+  ],
+  "卷五十四 志第三十": [
+    {
+      "sectionId": "mingshi-section-0054",
+      "sourceId": "明史",
+      "path": [
+        "卷五十四 志第三十"
+      ]
+    }
+  ],
+  "卷五十五 志第三十一": [
+    {
+      "sectionId": "mingshi-section-0055",
+      "sourceId": "明史",
+      "path": [
+        "卷五十五 志第三十一"
+      ]
+    }
+  ],
+  "卷五十一 志第二十七": [
+    {
+      "sectionId": "mingshi-section-0051",
+      "sourceId": "明史",
+      "path": [
+        "卷五十一 志第二十七"
+      ]
+    }
+  ],
+  "卷一": [
+    {
+      "sectionId": "国初群雄事略-section-0003",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷一",
+        "宋小明王"
+      ]
+    }
+  ],
+  "卷一 本纪第一": [
+    {
+      "sectionId": "mingshi-section-0001",
+      "sourceId": "明史",
+      "path": [
+        "卷一 本纪第一"
+      ]
+    }
+  ],
+  "卷一百 表第一": [
+    {
+      "sectionId": "mingshi-section-0100",
+      "sourceId": "明史",
+      "path": [
+        "卷一百 表第一"
+      ]
+    }
+  ],
+  "卷一百八 表第九": [
+    {
+      "sectionId": "mingshi-section-0108",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八 表第九"
+      ]
+    }
+  ],
+  "卷一百八十 列传第六十八": [
+    {
+      "sectionId": "mingshi-section-0180",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十 列传第六十八"
+      ]
+    }
+  ],
+  "卷一百八十八 列传第七十六": [
+    {
+      "sectionId": "mingshi-section-0188",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十八 列传第七十六"
+      ]
+    }
+  ],
+  "卷一百八十二 列传第七十": [
+    {
+      "sectionId": "mingshi-section-0182",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十二 列传第七十"
+      ]
+    }
+  ],
+  "卷一百八十九 列传第七十七": [
+    {
+      "sectionId": "mingshi-section-0189",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十九 列传第七十七"
+      ]
+    }
+  ],
+  "卷一百八十六 列传第七十四": [
+    {
+      "sectionId": "mingshi-section-0186",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十六 列传第七十四"
+      ]
+    }
+  ],
+  "卷一百八十七 列传第七十五": [
+    {
+      "sectionId": "mingshi-section-0187",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十七 列传第七十五"
+      ]
+    }
+  ],
+  "卷一百八十三 列传第七十一": [
+    {
+      "sectionId": "mingshi-section-0183",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十三 列传第七十一"
+      ]
+    }
+  ],
+  "卷一百八十四 列传第七十二": [
+    {
+      "sectionId": "mingshi-section-0184",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十四 列传第七十二"
+      ]
+    }
+  ],
+  "卷一百八十五 列传第七十三": [
+    {
+      "sectionId": "mingshi-section-0185",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十五 列传第七十三"
+      ]
+    }
+  ],
+  "卷一百八十一 列传第六十九": [
+    {
+      "sectionId": "mingshi-section-0181",
+      "sourceId": "明史",
+      "path": [
+        "卷一百八十一 列传第六十九"
+      ]
+    }
+  ],
+  "卷一百二 表第三": [
+    {
+      "sectionId": "mingshi-section-0102",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二 表第三"
+      ]
+    }
+  ],
+  "卷一百二十 列传第八": [
+    {
+      "sectionId": "mingshi-section-0120",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十 列传第八"
+      ]
+    }
+  ],
+  "卷一百二十八 列传第十六": [
+    {
+      "sectionId": "mingshi-section-0128",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十八 列传第十六"
+      ]
+    }
+  ],
+  "卷一百二十二 列传第十": [
+    {
+      "sectionId": "mingshi-section-0122",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十二 列传第十"
+      ]
+    }
+  ],
+  "卷一百二十九 列传第十七": [
+    {
+      "sectionId": "mingshi-section-0129",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十九 列传第十七"
+      ]
+    }
+  ],
+  "卷一百二十六 列传第十四": [
+    {
+      "sectionId": "mingshi-section-0126",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十六 列传第十四"
+      ]
+    }
+  ],
+  "卷一百二十七 列传第十五": [
+    {
+      "sectionId": "mingshi-section-0127",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十七 列传第十五"
+      ]
+    }
+  ],
+  "卷一百二十三 列传第十一": [
+    {
+      "sectionId": "mingshi-section-0123",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十三 列传第十一"
+      ]
+    }
+  ],
+  "卷一百二十四 列传第十二": [
+    {
+      "sectionId": "mingshi-section-0124",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十四 列传第十二"
+      ]
+    }
+  ],
+  "卷一百二十五 列传第十三": [
+    {
+      "sectionId": "mingshi-section-0125",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十五 列传第十三"
+      ]
+    }
+  ],
+  "卷一百二十一 列传第九": [
+    {
+      "sectionId": "mingshi-section-0121",
+      "sourceId": "明史",
+      "path": [
+        "卷一百二十一 列传第九"
+      ]
+    }
+  ],
+  "卷一百九 表第十": [
+    {
+      "sectionId": "mingshi-section-0109",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九 表第十"
+      ]
+    }
+  ],
+  "卷一百九十 列传第七十八": [
+    {
+      "sectionId": "mingshi-section-0190",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十 列传第七十八"
+      ]
+    }
+  ],
+  "卷一百九十八 列传第八十六": [
+    {
+      "sectionId": "mingshi-section-0198",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十八 列传第八十六"
+      ]
+    }
+  ],
+  "卷一百九十二 列传第八十": [
+    {
+      "sectionId": "mingshi-section-0192",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十二 列传第八十"
+      ]
+    }
+  ],
+  "卷一百九十九 列传第八十七": [
+    {
+      "sectionId": "mingshi-section-0199",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十九 列传第八十七"
+      ]
+    }
+  ],
+  "卷一百九十六 列传第八十四": [
+    {
+      "sectionId": "mingshi-section-0196",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十六 列传第八十四"
+      ]
+    }
+  ],
+  "卷一百九十七 列传第八十五": [
+    {
+      "sectionId": "mingshi-section-0197",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十七 列传第八十五"
+      ]
+    }
+  ],
+  "卷一百九十三 列传第八十一": [
+    {
+      "sectionId": "mingshi-section-0193",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十三 列传第八十一"
+      ]
+    }
+  ],
+  "卷一百九十四 列传第八十二": [
+    {
+      "sectionId": "mingshi-section-0194",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十四 列传第八十二"
+      ]
+    }
+  ],
+  "卷一百九十五 列传第八十三": [
+    {
+      "sectionId": "mingshi-section-0195",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十五 列传第八十三"
+      ]
+    }
+  ],
+  "卷一百九十一 列传第七十九": [
+    {
+      "sectionId": "mingshi-section-0191",
+      "sourceId": "明史",
+      "path": [
+        "卷一百九十一 列传第七十九"
+      ]
+    }
+  ],
+  "卷一百六 表第七": [
+    {
+      "sectionId": "mingshi-section-0106",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六 表第七"
+      ]
+    }
+  ],
+  "卷一百六十 列传第四十八": [
+    {
+      "sectionId": "mingshi-section-0160",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十 列传第四十八"
+      ]
+    }
+  ],
+  "卷一百六十八 列传第五十六": [
+    {
+      "sectionId": "mingshi-section-0168",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十八 列传第五十六"
+      ]
+    }
+  ],
+  "卷一百六十二 列传第五十": [
+    {
+      "sectionId": "mingshi-section-0162",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十二 列传第五十"
+      ]
+    }
+  ],
+  "卷一百六十九 列传第五十七": [
+    {
+      "sectionId": "mingshi-section-0169",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十九 列传第五十七"
+      ]
+    }
+  ],
+  "卷一百六十六 列传第五十四": [
+    {
+      "sectionId": "mingshi-section-0166",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十六 列传第五十四"
+      ]
+    }
+  ],
+  "卷一百六十七 列传第五十五": [
+    {
+      "sectionId": "mingshi-section-0167",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十七 列传第五十五"
+      ]
+    }
+  ],
+  "卷一百六十三 列传第五十一": [
+    {
+      "sectionId": "mingshi-section-0163",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十三 列传第五十一"
+      ]
+    }
+  ],
+  "卷一百六十四 列传第五十二": [
+    {
+      "sectionId": "mingshi-section-0164",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十四 列传第五十二"
+      ]
+    }
+  ],
+  "卷一百六十五 列传第五十三": [
+    {
+      "sectionId": "mingshi-section-0165",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十五 列传第五十三"
+      ]
+    }
+  ],
+  "卷一百六十一 列传第四十九": [
+    {
+      "sectionId": "mingshi-section-0161",
+      "sourceId": "明史",
+      "path": [
+        "卷一百六十一 列传第四十九"
+      ]
+    }
+  ],
+  "卷一百七 表第八": [
+    {
+      "sectionId": "mingshi-section-0107",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七 表第八"
+      ]
+    }
+  ],
+  "卷一百七十 列传第五十八": [
+    {
+      "sectionId": "mingshi-section-0170",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十 列传第五十八"
+      ]
+    }
+  ],
+  "卷一百七十八 列传第六十六": [
+    {
+      "sectionId": "mingshi-section-0178",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十八 列传第六十六"
+      ]
+    }
+  ],
+  "卷一百七十二 列传第六十": [
+    {
+      "sectionId": "mingshi-section-0172",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十二 列传第六十"
+      ]
+    }
+  ],
+  "卷一百七十九 列传第六十七": [
+    {
+      "sectionId": "mingshi-section-0179",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十九 列传第六十七"
+      ]
+    }
+  ],
+  "卷一百七十六 列传第六十四": [
+    {
+      "sectionId": "mingshi-section-0176",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十六 列传第六十四"
+      ]
+    }
+  ],
+  "卷一百七十七 列传第六十五": [
+    {
+      "sectionId": "mingshi-section-0177",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十七 列传第六十五"
+      ]
+    }
+  ],
+  "卷一百七十三 列传第六十一": [
+    {
+      "sectionId": "mingshi-section-0173",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十三 列传第六十一"
+      ]
+    }
+  ],
+  "卷一百七十四 列传第六十二": [
+    {
+      "sectionId": "mingshi-section-0174",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十四 列传第六十二"
+      ]
+    }
+  ],
+  "卷一百七十五 列传第六十三": [
+    {
+      "sectionId": "mingshi-section-0175",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十五 列传第六十三"
+      ]
+    }
+  ],
+  "卷一百七十一 列传第五十九": [
+    {
+      "sectionId": "mingshi-section-0171",
+      "sourceId": "明史",
+      "path": [
+        "卷一百七十一 列传第五十九"
+      ]
+    }
+  ],
+  "卷一百三 表第四": [
+    {
+      "sectionId": "mingshi-section-0103",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三 表第四"
+      ]
+    }
+  ],
+  "卷一百三十 列传第十八": [
+    {
+      "sectionId": "mingshi-section-0130",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十 列传第十八"
+      ]
+    }
+  ],
+  "卷一百三十八 列传第二十六": [
+    {
+      "sectionId": "mingshi-section-0138",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十八 列传第二十六"
+      ]
+    }
+  ],
+  "卷一百三十二 列传第二十": [
+    {
+      "sectionId": "mingshi-section-0132",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十二 列传第二十"
+      ]
+    }
+  ],
+  "卷一百三十九 列传第二十七": [
+    {
+      "sectionId": "mingshi-section-0139",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十九 列传第二十七"
+      ]
+    }
+  ],
+  "卷一百三十六 列传第二十四": [
+    {
+      "sectionId": "mingshi-section-0136",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十六 列传第二十四"
+      ]
+    }
+  ],
+  "卷一百三十七 列传第二十五": [
+    {
+      "sectionId": "mingshi-section-0137",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十七 列传第二十五"
+      ]
+    }
+  ],
+  "卷一百三十三 列传第二十一": [
+    {
+      "sectionId": "mingshi-section-0133",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十三 列传第二十一"
+      ]
+    }
+  ],
+  "卷一百三十四 列传第二十二": [
+    {
+      "sectionId": "mingshi-section-0134",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十四 列传第二十二"
+      ]
+    }
+  ],
+  "卷一百三十五 列传第二十三": [
+    {
+      "sectionId": "mingshi-section-0135",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十五 列传第二十三"
+      ]
+    }
+  ],
+  "卷一百三十一 列传第十九": [
+    {
+      "sectionId": "mingshi-section-0131",
+      "sourceId": "明史",
+      "path": [
+        "卷一百三十一 列传第十九"
+      ]
+    }
+  ],
+  "卷一百十 表第十一": [
+    {
+      "sectionId": "mingshi-section-0110",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十 表第十一"
+      ]
+    }
+  ],
+  "卷一百十八 列传第六": [
+    {
+      "sectionId": "mingshi-section-0118",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十八 列传第六"
+      ]
+    }
+  ],
+  "卷一百十二 表第十三": [
+    {
+      "sectionId": "mingshi-section-0112",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十二 表第十三"
+      ]
+    }
+  ],
+  "卷一百十九 列传第七": [
+    {
+      "sectionId": "mingshi-section-0119",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十九 列传第七"
+      ]
+    }
+  ],
+  "卷一百十六 列传第四": [
+    {
+      "sectionId": "mingshi-section-0116",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十六 列传第四"
+      ]
+    }
+  ],
+  "卷一百十七 列传第五": [
+    {
+      "sectionId": "mingshi-section-0117",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十七 列传第五"
+      ]
+    }
+  ],
+  "卷一百十三 列传第一": [
+    {
+      "sectionId": "mingshi-section-0113",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十三 列传第一"
+      ]
+    }
+  ],
+  "卷一百十四 列传第二": [
+    {
+      "sectionId": "mingshi-section-0114",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十四 列传第二"
+      ]
+    }
+  ],
+  "卷一百十五 列传第三": [
+    {
+      "sectionId": "mingshi-section-0115",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十五 列传第三"
+      ]
+    }
+  ],
+  "卷一百十一 表第十二": [
+    {
+      "sectionId": "mingshi-section-0111",
+      "sourceId": "明史",
+      "path": [
+        "卷一百十一 表第十二"
+      ]
+    }
+  ],
+  "卷一百四 表第五": [
+    {
+      "sectionId": "mingshi-section-0104",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四 表第五"
+      ]
+    }
+  ],
+  "卷一百四十 列传第二十八": [
+    {
+      "sectionId": "mingshi-section-0140",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十 列传第二十八"
+      ]
+    }
+  ],
+  "卷一百四十八 列传第三十六": [
+    {
+      "sectionId": "mingshi-section-0148",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十八 列传第三十六"
+      ]
+    }
+  ],
+  "卷一百四十二 列传第三十": [
+    {
+      "sectionId": "mingshi-section-0142",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十二 列传第三十"
+      ]
+    }
+  ],
+  "卷一百四十九 列传第三十七": [
+    {
+      "sectionId": "mingshi-section-0149",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十九 列传第三十七"
+      ]
+    }
+  ],
+  "卷一百四十六 列传第三十四": [
+    {
+      "sectionId": "mingshi-section-0146",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十六 列传第三十四"
+      ]
+    }
+  ],
+  "卷一百四十七 列传第三十五": [
+    {
+      "sectionId": "mingshi-section-0147",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十七 列传第三十五"
+      ]
+    }
+  ],
+  "卷一百四十三 列传第三十一": [
+    {
+      "sectionId": "mingshi-section-0143",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十三 列传第三十一"
+      ]
+    }
+  ],
+  "卷一百四十四 列传第三十二": [
+    {
+      "sectionId": "mingshi-section-0144",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十四 列传第三十二"
+      ]
+    }
+  ],
+  "卷一百四十五 列传第三十三": [
+    {
+      "sectionId": "mingshi-section-0145",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十五 列传第三十三"
+      ]
+    }
+  ],
+  "卷一百四十一 列传第二十九": [
+    {
+      "sectionId": "mingshi-section-0141",
+      "sourceId": "明史",
+      "path": [
+        "卷一百四十一 列传第二十九"
+      ]
+    }
+  ],
+  "卷一百五 表第六": [
+    {
+      "sectionId": "mingshi-section-0105",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五 表第六"
+      ]
+    }
+  ],
+  "卷一百五十 列传第三十八": [
+    {
+      "sectionId": "mingshi-section-0150",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十 列传第三十八"
+      ]
+    }
+  ],
+  "卷一百五十八 列传第四十六": [
+    {
+      "sectionId": "mingshi-section-0158",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十八 列传第四十六"
+      ]
+    }
+  ],
+  "卷一百五十二 列传第四十": [
+    {
+      "sectionId": "mingshi-section-0152",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十二 列传第四十"
+      ]
+    }
+  ],
+  "卷一百五十九 列传第四十七": [
+    {
+      "sectionId": "mingshi-section-0159",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十九 列传第四十七"
+      ]
+    }
+  ],
+  "卷一百五十六 列传第四十四": [
+    {
+      "sectionId": "mingshi-section-0156",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十六 列传第四十四"
+      ]
+    }
+  ],
+  "卷一百五十七 列传第四十五": [
+    {
+      "sectionId": "mingshi-section-0157",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十七 列传第四十五"
+      ]
+    }
+  ],
+  "卷一百五十三 列传第四十一": [
+    {
+      "sectionId": "mingshi-section-0153",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十三 列传第四十一"
+      ]
+    }
+  ],
+  "卷一百五十四 列传第四十二": [
+    {
+      "sectionId": "mingshi-section-0154",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十四 列传第四十二"
+      ]
+    }
+  ],
+  "卷一百五十五 列传第四十三": [
+    {
+      "sectionId": "mingshi-section-0155",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十五 列传第四十三"
+      ]
+    }
+  ],
+  "卷一百五十一 列传第三十九": [
+    {
+      "sectionId": "mingshi-section-0151",
+      "sourceId": "明史",
+      "path": [
+        "卷一百五十一 列传第三十九"
+      ]
+    }
+  ],
+  "卷一百一 表第二": [
+    {
+      "sectionId": "mingshi-section-0101",
+      "sourceId": "明史",
+      "path": [
+        "卷一百一 表第二"
+      ]
+    }
+  ],
+  "克谨篇": [
+    {
+      "sectionId": "草木子-section-0012",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之三上",
+        "克谨篇"
+      ]
+    }
+  ],
+  "快书刻节本草木子题词": [
+    {
+      "sectionId": "草木子-section-0025",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "快书刻节本草木子题词"
+      ]
+    }
+  ],
+  "历代医师": [
+    {
+      "sectionId": "南村辍耕录-section-0020",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十四",
+        "历代医师"
+      ]
+    }
+  ],
+  "履舄履考履、舄、履。《履人》注：禅下曰履，复下曰舄。（《说文》无舄字。舄本鹊字，今借为履舄字也。陆佃云：舄通为舄履之舄。古人居欲如燕，行不欲如鹊，故借为舄字，所以为行戒也。然借鹊为。舄，作思积反者，盖舄履也。古今注：以木置屦下，干腊，不畏泥湿，故曰舄。以是知舄屦之下必再用木矣）。《士丧礼》：“夏葛屦，冬皮屦。”《屦人》注又谓：“凡屦，舄各象其裳色。”引《士冠礼》曰：“玄端黑屦，青纟句（劬）纟意（亿）纯（准），素帻白屦。缁纟句纟意纯，爵弁扒屦。黑纟句纯是也。”纟句，《说文》：“纟卢绳纟句也。”《玉藻》注：“履头饰也。”（《韵会》：状如刀衣上鼻，在屦头。言拘者，取自拘持，使低目，不暇顾视。一曰，用缯一寸，屈为之头，着屦头，以受穿贯）。纟意，《屦人》注：“缝中纟川也，博雅纟川绦也。”纯，《屦人》注：“缘也。”言纟意必有纟句纯，言纟句必有纟意纯，三者相将，则屦、舄皆有纟句、纟意、纯矣。凡纟句、纟意、纯，皆一色。又按《屦人》注：“舄有三等，赤舄、白舄、黑舄也，赤舄为上，冕服之舄。《诗》曰：“王锡韩侯，玄哀赤舄。”则诸侯与王同矣。所谓玄舄青舄，王后祭服之舄也。凡屦之饰，如绣次也。黄屦白饰，白屦黑饰，黑屦青饰。天子诸侯，吉事皆舄。其余服冕着舄耳。士爵弁屦，黑纟句纟意纯，尊祭服之屦，饰从缋也。至若履者，《说文》：“足所依也，从尸，从彳，从攵，从舟，象履形。”毛氏曰：“舟能载物，履能载人。又草曰扉。（芳未反）麻曰屦（凡布皆可谓之麻）。皮曰履。按履无别制。《说文》：“屦，履也，从履省，娄声，又也。”徐曰：“，革履也。舄，韵会，履也。”《古今注》：“以木置履下，干腊，不畏泥湿，故曰舄。”以是知履舄履之异名也。但有禅下、复下用木之异耳。古人舄屦履至阶必脱。唯着袜而入。《礼》：“户外有二屦，”是脱屦而入者也；“汉赐剑履上殿”，是不赐则不敢着履上殿明矣。“谏不行则纳履而去，”纳，结也。言纳履，则在外明矣。是脱履而入者也。王乔入朝。双舄化凫先至，是脱舄而入者也。古者堂上皆有席，所以着袜为宜。况袜又从韦乎。又按《乡饮酒》云：“说屦，揖让如初，升堂。”疏云：“凡堂上行揖礼不脱屦，坐则脱屦，理固然也。”由是观之，凡宗庙堂室之间行礼，亦必不脱屦矣。夫降而脱屦，然后升坐，礼也。其后宾与主人酬酢之时，皆在两阶之间，又须降而着屦，复升于阶。酬酢之礼毕，又降而脱屦，复升于坐也。古人礼繁如此，今何略也！": [
+    {
+      "sectionId": "南村辍耕录-section-0025",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷三十",
+        "履舄履考履、舄、履。《履人》注：禅下曰履，复下曰舄。（《说文》无舄字。舄本鹊字，今借为履舄字也。陆佃云：舄通为舄履之舄。古人居欲如燕，行不欲如鹊，故借为舄字，所以为行戒也。然借鹊为。舄，作思积反者，盖舄履也。古今注：以木置屦下，干腊，不畏泥湿，故曰舄。以是知舄屦之下必再用木矣）。《士丧礼》：“夏葛屦，冬皮屦。”《屦人》注又谓：“凡屦，舄各象其裳色。”引《士冠礼》曰：“玄端黑屦，青纟句（劬）纟意（亿）纯（准），素帻白屦。缁纟句纟意纯，爵弁扒屦。黑纟句纯是也。”纟句，《说文》：“纟卢绳纟句也。”《玉藻》注：“履头饰也。”（《韵会》：状如刀衣上鼻，在屦头。言拘者，取自拘持，使低目，不暇顾视。一曰，用缯一寸，屈为之头，着屦头，以受穿贯）。纟意，《屦人》注：“缝中纟川也，博雅纟川绦也。”纯，《屦人》注：“缘也。”言纟意必有纟句纯，言纟句必有纟意纯，三者相将，则屦、舄皆有纟句、纟意、纯矣。凡纟句、纟意、纯，皆一色。又按《屦人》注：“舄有三等，赤舄、白舄、黑舄也，赤舄为上，冕服之舄。《诗》曰：“王锡韩侯，玄哀赤舄。”则诸侯与王同矣。所谓玄舄青舄，王后祭服之舄也。凡屦之饰，如绣次也。黄屦白饰，白屦黑饰，黑屦青饰。天子诸侯，吉事皆舄。其余服冕着舄耳。士爵弁屦，黑纟句纟意纯，尊祭服之屦，饰从缋也。至若履者，《说文》：“足所依也，从尸，从彳，从攵，从舟，象履形。”毛氏曰：“舟能载物，履能载人。又草曰扉。（芳未反）麻曰屦（凡布皆可谓之麻）。皮曰履。按履无别制。《说文》：“屦，履也，从履省，娄声，又也。”徐曰：“，革履也。舄，韵会，履也。”《古今注》：“以木置履下，干腊，不畏泥湿，故曰舄。”以是知履舄履之异名也。但有禅下、复下用木之异耳。古人舄屦履至阶必脱。唯着袜而入。《礼》：“户外有二屦，”是脱屦而入者也；“汉赐剑履上殿”，是不赐则不敢着履上殿明矣。“谏不行则纳履而去，”纳，结也。言纳履，则在外明矣。是脱履而入者也。王乔入朝。双舄化凫先至，是脱舄而入者也。古者堂上皆有席，所以着袜为宜。况袜又从韦乎。又按《乡饮酒》云：“说屦，揖让如初，升堂。”疏云：“凡堂上行揖礼不脱屦，坐则脱屦，理固然也。”由是观之，凡宗庙堂室之间行礼，亦必不脱屦矣。夫降而脱屦，然后升坐，礼也。其后宾与主人酬酢之时，皆在两阶之间，又须降而着屦，复升于阶。酬酢之礼毕，又降而脱屦，复升于坐也。古人礼繁如此，今何略也！"
+      ]
+    }
+  ],
+  "梦应之": [
+    {
+      "sectionId": "南村辍耕录-section-0005",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十一",
+        "梦应之"
+      ]
+    }
+  ],
+  "纳音": [
+    {
+      "sectionId": "南村辍耕录-section-0015",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十",
+        "纳音"
+      ]
+    }
+  ],
+  "前言": [
+    {
+      "sectionId": "草木子-section-0001",
+      "sourceId": "草木子",
+      "path": [
+        "前言"
+      ]
+    },
+    {
+      "sectionId": "国初群雄事略-section-0001",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "前言"
+      ]
+    },
+    {
+      "sectionId": "南村辍耕录-section-0001",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "前言"
+      ]
+    }
+  ],
+  "乾隆重刻本序二": [
+    {
+      "sectionId": "草木子-section-0023",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "乾隆重刻本序二"
+      ]
+    }
+  ],
+  "乾隆重刻本序一": [
+    {
+      "sectionId": "草木子-section-0022",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "乾隆重刻本序一"
+      ]
+    }
+  ],
+  "汝宁李思齐": [
+    {
+      "sectionId": "国初群雄事略-section-0012",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷十",
+        "汝宁李思齐"
+      ]
+    }
+  ],
+  "哨遍": [
+    {
+      "sectionId": "南村辍耕录-section-0012",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十七",
+        "哨遍"
+      ]
+    }
+  ],
+  "书画裱轴唐贞观开元间，人主崇尚文雅，其书画皆用紫龙凤白绫为表，绿文纹绫为里，紫檀云花杵头轴，白檀通身柿心轴。此外又有青赤琉璃二等轴，牙签锦带。大和间，王涯自盐铁据相印。家既羡于财，始用金玉为轴。甘露之变，人皆剥剔无遗。南唐则裱以回鸾墨锦，签以潢纸。宋御府所藏，青紫大绫为裱，文锦为带，玉及水晶檀香为轴。靖康之变，民间多有得者。高宗渡江后，和议既成，榷场购求为多。装褫之法，已具名画记及绍兴定式，兹更不赘，姑以所闻见者，使赏鉴之士有考焉。": [
+    {
+      "sectionId": "南村辍耕录-section-0019",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十三",
+        "书画裱轴唐贞观开元间，人主崇尚文雅，其书画皆用紫龙凤白绫为表，绿文纹绫为里，紫檀云花杵头轴，白檀通身柿心轴。此外又有青赤琉璃二等轴，牙签锦带。大和间，王涯自盐铁据相印。家既羡于财，始用金玉为轴。甘露之变，人皆剥剔无遗。南唐则裱以回鸾墨锦，签以潢纸。宋御府所藏，青紫大绫为裱，文锦为带，玉及水晶檀香为轴。靖康之变，民间多有得者。高宗渡江后，和议既成，榷场购求为多。装褫之法，已具名画记及绍兴定式，兹更不赘，姑以所闻见者，使赏鉴之士有考焉。"
+      ]
+    }
+  ],
+  "宋小明王": [
+    {
+      "sectionId": "国初群雄事略-section-0003",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷一",
+        "宋小明王"
+      ]
+    }
+  ],
+  "台州方谷真": [
+    {
+      "sectionId": "国初群雄事略-section-0011",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷九",
+        "台州方谷真"
+      ]
+    }
+  ],
+  "谈薮篇": [
+    {
+      "sectionId": "草木子-section-0016",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之四上",
+        "谈薮篇"
+      ]
+    }
+  ],
+  "陶氏二谱宋泰山王质所着《云韬堂绍陶录》，录中首载栗里华阳二谱。惟先生之大节高风，流播千古，而质者乃能次第其出处。作为年谱，且以名吾书绍陶之志，是可尚已，遂录于此云。《书陶栗里谱》元亮高风，发于宋晋去就之际。君曾祖事晋，懋着勋劳。自宋武帝芟元复马，逆揣其末流，即不出。武帝将收贤士以系人心，见要亦不应。陶谢皆世臣，君世地色言俱僻，而灵运为武帝秉任。最后乃欲诡忠义杂江海远师送君过虎溪，而却灵运不入莲社素心皆所鉴知，谱具左方。": [
+    {
+      "sectionId": "南村辍耕录-section-0007",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十六",
+        "陶氏二谱宋泰山王质所着《云韬堂绍陶录》，录中首载栗里华阳二谱。惟先生之大节高风，流播千古，而质者乃能次第其出处。作为年谱，且以名吾书绍陶之志，是可尚已，遂录于此云。《书陶栗里谱》元亮高风，发于宋晋去就之际。君曾祖事晋，懋着勋劳。自宋武帝芟元复马，逆揣其末流，即不出。武帝将收贤士以系人心，见要亦不应。陶谢皆世臣，君世地色言俱僻，而灵运为武帝秉任。最后乃欲诡忠义杂江海远师送君过虎溪，而却灵运不入莲社素心皆所鉴知，谱具左方。"
+      ]
+    }
+  ],
+  "天完徐寿辉": [
+    {
+      "sectionId": "国初群雄事略-section-0005",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷三",
+        "天完徐寿辉"
+      ]
+    }
+  ],
+  "同治重刻本序": [
+    {
+      "sectionId": "草木子-section-0024",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "同治重刻本序"
+      ]
+    }
+  ],
+  "万历重刻本序": [
+    {
+      "sectionId": "草木子-section-0021",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "万历重刻本序"
+      ]
+    }
+  ],
+  "夏明玉珍": [
+    {
+      "sectionId": "国初群雄事略-section-0007",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷五",
+        "夏明玉珍"
+      ]
+    }
+  ],
+  "序": [
+    {
+      "sectionId": "国初群雄事略-section-0002",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "序"
+      ]
+    }
+  ],
+  "叙": [
+    {
+      "sectionId": "南村辍耕录-section-0002",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "叙"
+      ]
+    }
+  ],
+  "叙画": [
+    {
+      "sectionId": "南村辍耕录-section-0013",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十八",
+        "叙画"
+      ]
+    }
+  ],
+  "燕南芝庵先生唱论": [
+    {
+      "sectionId": "南村辍耕录-section-0024",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十七",
+        "燕南芝庵先生唱论"
+      ]
+    }
+  ],
+  "药谱": [
+    {
+      "sectionId": "南村辍耕录-section-0008",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十六",
+        "药谱"
+      ]
+    }
+  ],
+  "园池记": [
+    {
+      "sectionId": "南村辍耕录-section-0006",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十二",
+        "园池记"
+      ]
+    }
+  ],
+  "原道篇": [
+    {
+      "sectionId": "草木子-section-0008",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之二上",
+        "原道篇"
+      ]
+    }
+  ],
+  "院本名目": [
+    {
+      "sectionId": "南村辍耕录-section-0021",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十五",
+        "院本名目"
+      ]
+    }
+  ],
+  "杂剧曲名稗官废而传奇作，传奇作而戏曲继，金季国初，乐府犹宋词之流，传奇犹宋戏曲之变。世传谓之杂剧。金章宗时，董解元所编西厢记，世代未远，尚罕有人能解之者。况今杂剧中曲调之冗乎？因取诸曲名分调类编，以备后来好事稽古者之一览云。": [
+    {
+      "sectionId": "南村辍耕录-section-0023",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷二十七",
+        "杂剧曲名稗官废而传奇作，传奇作而戏曲继，金季国初，乐府犹宋词之流，传奇犹宋戏曲之变。世传谓之杂剧。金章宗时，董解元所编西厢记，世代未远，尚罕有人能解之者。况今杂剧中曲调之冗乎？因取诸曲名分调类编，以备后来好事稽古者之一览云。"
+      ]
+    }
+  ],
+  "杂制篇": [
+    {
+      "sectionId": "草木子-section-0014",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之三下",
+        "杂制篇"
+      ]
+    }
+  ],
+  "杂俎篇": [
+    {
+      "sectionId": "草木子-section-0018",
+      "sourceId": "草木子",
+      "path": [
+        "草木子卷之四下",
+        "杂俎篇"
+      ]
+    }
+  ],
+  "旃檀佛": [
+    {
+      "sectionId": "南村辍耕录-section-0010",
+      "sourceId": "南村辍耕录",
+      "path": [
+        "卷十七",
+        "旃檀佛"
+      ]
+    }
+  ],
+  "正德刻本序": [
+    {
+      "sectionId": "草木子-section-0020",
+      "sourceId": "草木子",
+      "path": [
+        "附录",
+        "正德刻本序"
+      ]
+    }
+  ],
+  "周张士诚": [
+    {
+      "sectionId": "国初群雄事略-section-0008",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷六",
+        "周张士诚"
+      ]
+    },
+    {
+      "sectionId": "国初群雄事略-section-0009",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷七",
+        "周张士诚"
+      ]
+    },
+    {
+      "sectionId": "国初群雄事略-section-0010",
+      "sourceId": "国初群雄事略",
+      "path": [
+        "卷八",
+        "周张士诚"
+      ]
+    }
+  ],
+  "自序": [
+    {
+      "sectionId": "草木子-section-0002",
+      "sourceId": "草木子",
+      "path": [
+        "自序"
+      ]
+    }
+  ]
+}

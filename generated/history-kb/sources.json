@@ -1,0 +1,34 @@
+[
+  {
+    "id": "草木子",
+    "fileName": "草木子 [流芳阁 lfglib.cn]-c631.txt",
+    "title": "草木子",
+    "author": "明 叶子奇",
+    "sectionCount": 25,
+    "chunkCount": 60
+  },
+  {
+    "id": "国初群雄事略",
+    "fileName": "国初群雄事略 [流芳阁 lfglib.cn]-d505.txt",
+    "title": "国初群雄事略",
+    "author": null,
+    "sectionCount": 16,
+    "chunkCount": 159
+  },
+  {
+    "id": "南村辍耕录",
+    "fileName": "南村辍耕录 [流芳阁 lfglib.cn]-3e13.txt",
+    "title": "南村辍耕录",
+    "author": "元 陶宗仪",
+    "sectionCount": 25,
+    "chunkCount": 50
+  },
+  {
+    "id": "明史",
+    "fileName": "mingshi.txt",
+    "title": "明史",
+    "author": "清 张廷玉",
+    "sectionCount": 333,
+    "chunkCount": 3280
+  }
+]

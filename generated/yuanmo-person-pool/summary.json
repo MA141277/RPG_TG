@@ -1,0 +1,102 @@
+{
+  "total": 752,
+  "playableNpcCandidates": 741,
+  "leaderResidenceCandidates": 287,
+  "bySource": {
+    "curated": 100,
+    "mod": 266,
+    "historyHeading": 492
+  },
+  "byConfidence": {
+    "high": 287,
+    "medium": 465
+  },
+  "byImportance": {
+    "core": 100,
+    "major": 10,
+    "ordinary": 340,
+    "notable": 302
+  },
+  "topFactions": [
+    {
+      "label": "待分类",
+      "count": 454
+    },
+    {
+      "label": "项目精选人物",
+      "count": 100
+    },
+    {
+      "label": "元廷中央",
+      "count": 25
+    },
+    {
+      "label": "察罕帖木儿/扩廓帖木儿系",
+      "count": 15
+    },
+    {
+      "label": "陈友谅汉",
+      "count": 14
+    },
+    {
+      "label": "张士诚周",
+      "count": 13
+    },
+    {
+      "label": "陈友定福建",
+      "count": 13
+    },
+    {
+      "label": "明玉珍夏",
+      "count": 12
+    },
+    {
+      "label": "陕西甘肃元军",
+      "count": 11
+    },
+    {
+      "label": "福建/江西势力",
+      "count": 10
+    },
+    {
+      "label": "西北边军",
+      "count": 8
+    },
+    {
+      "label": "西域/边外势力",
+      "count": 7
+    },
+    {
+      "label": "北方元军",
+      "count": 7
+    },
+    {
+      "label": "陕西地方势力",
+      "count": 7
+    },
+    {
+      "label": "红巾余部",
+      "count": 6
+    },
+    {
+      "label": "辽东/东北元军",
+      "count": 6
+    },
+    {
+      "label": "西南地方势力",
+      "count": 6
+    },
+    {
+      "label": "江南文士",
+      "count": 6
+    },
+    {
+      "label": "江淮势力",
+      "count": 5
+    },
+    {
+      "label": "方国珍浙东",
+      "count": 5
+    }
+  ]
+}
