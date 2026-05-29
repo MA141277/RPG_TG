@@ -22,6 +22,7 @@ export type TeaHouseDebateOverlayState = {
   timeoutCount: number;
   consecutivePlayerWins: number;
   plannedNpcTopic: TeaHouseTopicCard;
+  selectedPlayerTopic: TeaHouseTopicCard | null;
   lastPlayerTopic: TeaHouseTopicCard | null;
   lastNpcTopic: TeaHouseTopicCard | null;
   lastRoundWinner: TeaHouseDebateWinner | null;

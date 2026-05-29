@@ -2,6 +2,23 @@
   --grain-shop-scene-bg: url("../../ui1/ui/backgroung/chalou.png");
   --grain-shop-shopkeeper-portrait: url("../../ui1/ui/npc/chaguan.png");
   --grain-shop-shopkeeper-avatar: url("../../ui1/ui/npc/chaguan(touxiang).png");
+  --tea-house-debate-board: url("../../舌战UI/material-202605281711-001.png");
+  --tea-house-debate-player-frame: url("../../舌战UI/material-202605281719-002.png");
+  --tea-house-debate-npc-frame: url("../../舌战UI/material-202605281719-003.png");
+  --tea-house-debate-spirit-panel: url("../../舌战UI/material-202605281719-010.png");
+  --tea-house-debate-title-medallion: url("../../舌战UI/material-202605281719-012.png");
+  --tea-house-debate-facedown-left: url("../../舌战UI/material-202605281719-013.png");
+  --tea-house-debate-facedown-right: url("../../舌战UI/material-202605281719-014.png");
+  --tea-house-debate-summary-panel: url("../../舌战UI/material-202605281711-017.png");
+  --tea-house-debate-timer: url("../../舌战UI/material-202605281711-036.png");
+  --tea-house-debate-confirm: url("../../舌战UI/material-202605281719-005.png");
+  --tea-house-debate-player-label: url("../../舌战UI/material-202605281719-016.png");
+  --tea-house-debate-npc-label: url("../../舌战UI/material-202605281719-017.png");
+  --tea-house-debate-topic-yi: url("../../舌战UI/material-202605281719-008.png");
+  --tea-house-debate-topic-li: url("../../舌战UI/material-202605281719-009.png");
+  --tea-house-debate-topic-ming: url("../../舌战UI/material-202605281720-001.png");
+  --tea-house-debate-topic-qing: url("../../舌战UI/material-202605281719-006.png");
+  --tea-house-debate-topic-shi: url("../../舌战UI/material-202605281719-007.png");
 }
 
 .view-house-tavern {
@@ -42,31 +59,419 @@
   min-height: 104px;
 }
 
-.c-tea-house-modal {
-  width: min(100%, 520px);
+.c-tea-house-debate-overlay {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+  background:
+    linear-gradient(180deg, rgb(12 8 6 / 34%), rgb(10 7 5 / 70%)),
+    linear-gradient(180deg, #4d3221 0%, #2d1c14 58%, #21140f 100%);
+  backdrop-filter: blur(3px);
+}
+
+.c-tea-house-debate {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #ead9b2;
+}
+
+.c-tea-house-debate::before,
+.c-tea-house-debate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.c-tea-house-debate::before {
+  background:
+    radial-gradient(circle at 50% 27%, rgb(255 219 152 / 10%), transparent 19%),
+    linear-gradient(180deg, rgb(255 225 169 / 5%), transparent 18%),
+    linear-gradient(180deg, #513527 0%, #342116 60%, #281912 100%);
+}
+
+.c-tea-house-debate::after {
+  background:
+    linear-gradient(180deg, rgb(14 9 7 / 0%) 0%, rgb(14 9 7 / 0%) 68%, rgb(11 7 5 / 46%) 68%, rgb(11 7 5 / 62%) 100%),
+    linear-gradient(90deg, rgb(0 0 0 / 18%), transparent 10%, transparent 90%, rgb(0 0 0 / 18%));
+}
+
+.c-tea-house-debate__main {
+  position: absolute;
+  inset: 18px 24px 246px;
+}
+
+.c-tea-house-debate__portrait,
+.c-tea-house-debate__board,
+.c-tea-house-debate__timer,
+.c-tea-house-debate__topic-row,
+.c-tea-house-debate__confirm {
+  position: absolute;
+  z-index: 1;
+}
+
+.c-tea-house-debate__portrait {
+  top: 10px;
+  width: 288px;
+  height: 542px;
+}
+
+.c-tea-house-debate__portrait--player {
+  left: 0;
+}
+
+.c-tea-house-debate__portrait--npc {
+  right: 0;
+}
+
+.c-tea-house-debate__side-label {
+  position: absolute;
+  top: 14px;
+  width: 54px;
+  height: 148px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.c-tea-house-debate__side-label--player {
+  left: -2px;
+  background-image: var(--tea-house-debate-player-label);
+}
+
+.c-tea-house-debate__side-label--npc {
+  right: -2px;
+  background-image: var(--tea-house-debate-npc-label);
+}
+
+.c-tea-house-debate__portrait-frame {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 18px 20px rgb(0 0 0 / 26%));
+}
+
+.c-tea-house-debate__portrait-frame--player {
+  background-image: var(--tea-house-debate-player-frame);
+}
+
+.c-tea-house-debate__portrait-frame--npc {
+  background-image: var(--tea-house-debate-npc-frame);
+}
+
+.c-tea-house-debate__board {
+  top: 0;
+  left: 50%;
+  width: 860px;
+  height: 566px;
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__board-frame {
+  position: absolute;
+  inset: 0;
+  background: center / 100% 100% no-repeat var(--tea-house-debate-board);
+  filter: drop-shadow(0 22px 26px rgb(0 0 0 / 32%));
+}
+
+.c-tea-house-debate__title-medallion {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 152px;
+  height: 152px;
+  background: center / contain no-repeat var(--tea-house-debate-title-medallion);
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__spirit {
+  position: absolute;
+  top: 14px;
+  width: 174px;
+  height: 108px;
+  padding-top: 12px;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  background: center / 100% 100% no-repeat var(--tea-house-debate-spirit-panel);
+}
+
+.c-tea-house-debate__spirit--player {
+  left: 120px;
+}
+
+.c-tea-house-debate__spirit--npc {
+  right: 120px;
+}
+
+.c-tea-house-debate__spirit-label {
+  color: #f0d7a0;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 36%);
+}
+
+.c-tea-house-debate__spirit-value {
+  margin-top: 9px;
+  color: #f5e2b8;
+  font-family: var(--font-title);
+  font-size: 3rem;
+  line-height: 1;
+  text-shadow: 0 2px 1px rgb(0 0 0 / 32%);
+}
+
+.c-tea-house-debate__meta {
+  position: absolute;
+  top: 102px;
+  left: 50%;
+  display: inline-flex;
+  gap: 22px;
+  padding: 8px 18px;
+  color: #d5b988;
+  font-size: 0.92rem;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 36%);
+  background: rgb(23 14 10 / 22%);
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__meta strong {
+  color: #f1ddaf;
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+}
+
+.c-tea-house-debate__facedown {
+  position: absolute;
+  top: 170px;
+  width: 116px;
+  height: 200px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.c-tea-house-debate__facedown--left {
+  left: 192px;
+  background-image: var(--tea-house-debate-facedown-left);
+}
+
+.c-tea-house-debate__facedown--right {
+  right: 192px;
+  background-image: var(--tea-house-debate-facedown-right);
 }
 
 .c-tea-house-debate__summary {
-  text-align: left;
-}
-
-.c-tea-house-debate__summary p:last-child {
-  margin-bottom: 0;
-}
-
-.c-tea-house-topic-grid {
+  position: absolute;
+  left: 50%;
+  top: 182px;
+  width: 430px;
+  min-height: 102px;
+  padding: 18px 34px 20px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  color: #5b3924;
+  text-align: center;
+  background: center / 100% 100% no-repeat var(--tea-house-debate-summary-panel);
+  transform: translateX(-50%);
 }
 
-.c-tea-house-topic-grid__button {
-  min-height: 56px;
-  justify-content: center;
+.c-tea-house-debate__summary p {
+  margin: 0;
+  line-height: 1.55;
 }
 
-@media (width <= 640px) {
-  .c-tea-house-topic-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.c-tea-house-debate__selected-slot {
+  position: absolute;
+  left: 50%;
+  bottom: 92px;
+  width: 126px;
+  height: 180px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border: 1px dashed rgb(232 205 150 / 38%);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgb(19 12 9 / 8%), rgb(19 12 9 / 24%)),
+    rgb(255 240 212 / 5%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 225 169 / 8%),
+    0 10px 16px rgb(0 0 0 / 18%);
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__selected-card {
+  width: 100%;
+  max-width: 108px;
+  pointer-events: none;
+}
+
+.c-tea-house-debate__selected-placeholder {
+  color: #d9be8f;
+  font-size: 0.92rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 32%);
+}
+
+.c-tea-house-debate__timer {
+  left: 50%;
+  bottom: 195px;
+  width: 132px;
+  height: 132px;
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__timer-face {
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat var(--tea-house-debate-timer);
+  filter:
+    drop-shadow(0 0 22px rgb(255 164 78 / 18%))
+    drop-shadow(0 10px 16px rgb(0 0 0 / 24%));
+}
+
+.c-tea-house-debate__timer-value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffe6a8;
+  font-family: var(--font-title);
+  font-size: 3.1rem;
+  line-height: 1;
+  text-shadow:
+    0 0 8px rgb(255 181 92 / 36%),
+    0 2px 2px rgb(0 0 0 / 36%);
+}
+
+.c-tea-house-debate__topic-row {
+  left: 180px;
+  right: 318px;
+  bottom: 26px;
+  display: flex;
+  gap: 22px;
+  align-items: end;
+  justify-content: flex-start;
+}
+
+.c-tea-house-topic-card {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-yi);
+
+  position: relative;
+  width: 140px;
+  aspect-ratio: 151 / 259;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-tea-house-topic-card:hover,
+.c-tea-house-topic-card:focus-visible {
+  transform: translateY(-8px);
+  filter: brightness(1.08);
+}
+
+.c-tea-house-topic-card.is-selected {
+  transform: translateY(-14px);
+  filter:
+    brightness(1.12)
+    drop-shadow(0 0 14px rgb(255 204 128 / 24%));
+}
+
+.c-tea-house-topic-card:focus-visible {
+  outline: 2px solid rgb(244 207 143 / 78%);
+  outline-offset: 4px;
+}
+
+.c-tea-house-topic-card__face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: center / 100% 100% no-repeat var(--tea-house-topic-card-image);
+  filter: drop-shadow(0 10px 12px rgb(0 0 0 / 24%));
+}
+
+.c-tea-house-topic-card--yi {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-yi);
+}
+
+.c-tea-house-topic-card--li {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-li);
+}
+
+.c-tea-house-topic-card--ming {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-ming);
+}
+
+.c-tea-house-topic-card--qing {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-qing);
+}
+
+.c-tea-house-topic-card--shi {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-shi);
+}
+
+.c-tea-house-topic-card--back {
+  --tea-house-topic-card-image: var(--tea-house-debate-facedown-left);
+}
+
+.c-tea-house-debate__confirm {
+  right: 52px;
+  bottom: 32px;
+  width: 236px;
+  height: 236px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
+}
+
+.c-tea-house-debate__confirm:hover,
+.c-tea-house-debate__confirm:focus-visible {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.c-tea-house-debate__confirm:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.c-tea-house-debate__confirm:disabled:hover,
+.c-tea-house-debate__confirm:disabled:focus-visible {
+  transform: none;
+}
+
+.c-tea-house-debate__confirm:focus-visible {
+  outline: 2px solid rgb(244 207 143 / 72%);
+  outline-offset: 6px;
+}
+
+.c-tea-house-debate__confirm-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: center / contain no-repeat var(--tea-house-debate-confirm);
+  filter: drop-shadow(0 14px 18px rgb(0 0 0 / 24%));
+}
+
+.c-tea-house-modal {
+  width: min(100%, 520px);
 }

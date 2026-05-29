@@ -8,53 +8,118 @@ import {
   renderHouseStatusCard,
 } from "./house-shared-view";
 
+function getDebateTopicCardClass(topic: string): string {
+  switch (topic) {
+    case "义":
+      return "c-tea-house-topic-card--yi";
+    case "利":
+      return "c-tea-house-topic-card--li";
+    case "名":
+      return "c-tea-house-topic-card--ming";
+    case "情":
+      return "c-tea-house-topic-card--qing";
+    case "势":
+      return "c-tea-house-topic-card--shi";
+    default:
+      return "c-tea-house-topic-card--back";
+  }
+}
+
 function renderDebateOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "debate" }>
 ): string {
+  const summaryLines =
+    overlay.lastRoundSummary.length > 0
+      ? overlay.lastRoundSummary
+      : [
+          `第 ${overlay.round} 回合，对手 ${overlay.actorName} 已亮出论点。`,
+          `请从“义 / 利 / 名 / 情 / 势”中选出你的出牌。`,
+        ];
+  const selectedTopicClass =
+    overlay.selectedTopic == null
+      ? "c-tea-house-topic-card--back"
+      : getDebateTopicCardClass(overlay.selectedTopic);
+
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="debate">
-      <div
-        class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-tea-house-modal"
-        role="dialog"
-        aria-modal="true"
-      >
-        <header class="c-grain-shop-game__header">
-          <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
-          <div class="c-grain-shop-game__hud">
-            <span>对手 <strong>${overlay.actorName}</strong></span>
-            <span>回合 <strong>${overlay.round}</strong></span>
-            <span>倒计时 <strong>${overlay.secondsLeft}</strong> 秒</span>
-          </div>
-          <div class="c-grain-shop-game__hud">
-            <span>你的气势 <strong>${overlay.playerSpirit}</strong></span>
-            <span>对方气势 <strong>${overlay.npcSpirit}</strong></span>
-            <span>超时 <strong>${overlay.timeoutCount}</strong> 次</span>
-          </div>
-        </header>
-        ${
-          overlay.lastRoundSummary.length === 0
-            ? ""
-            : `
-              <div class="c-grain-shop-ledger c-grain-shop-skin-card c-tea-house-debate__summary">
-                ${overlay.lastRoundSummary.map((line) => `<p>${line}</p>`).join("")}
-              </div>
-            `
-        }
-        <div class="c-grain-shop-game__actions c-tea-house-topic-grid">
+    <div class="c-grain-shop-overlay c-tea-house-debate-overlay" data-house-overlay="debate">
+      <div class="c-tea-house-debate" role="dialog" aria-modal="true" aria-label="${overlay.title}">
+        <div class="c-tea-house-debate__main">
+          <aside class="c-tea-house-debate__portrait c-tea-house-debate__portrait--player" aria-label="玩家">
+            <div class="c-tea-house-debate__side-label c-tea-house-debate__side-label--player" aria-hidden="true"></div>
+            <div class="c-tea-house-debate__portrait-frame c-tea-house-debate__portrait-frame--player" aria-hidden="true"></div>
+          </aside>
+
+          <section class="c-tea-house-debate__board" aria-label="舌战棋盘">
+            <div class="c-tea-house-debate__board-frame" aria-hidden="true"></div>
+            <div class="c-tea-house-debate__title-medallion" aria-hidden="true"></div>
+            <div class="c-tea-house-debate__spirit c-tea-house-debate__spirit--player">
+              <span class="c-tea-house-debate__spirit-label">气势</span>
+              <strong class="c-tea-house-debate__spirit-value">${overlay.playerSpirit}</strong>
+            </div>
+            <div class="c-tea-house-debate__spirit c-tea-house-debate__spirit--npc">
+              <span class="c-tea-house-debate__spirit-label">气势</span>
+              <strong class="c-tea-house-debate__spirit-value">${overlay.npcSpirit}</strong>
+            </div>
+            <div class="c-tea-house-debate__meta">
+              <span>第 <strong>${overlay.round}</strong> 回合</span>
+              <span>对手 <strong>${overlay.actorName}</strong></span>
+              <span>超时 <strong>${overlay.timeoutCount}</strong> 次</span>
+            </div>
+            <div class="c-tea-house-debate__facedown c-tea-house-debate__facedown--left" aria-hidden="true"></div>
+            <div class="c-tea-house-debate__facedown c-tea-house-debate__facedown--right" aria-hidden="true"></div>
+            <div class="c-tea-house-debate__summary" aria-live="polite">
+              ${summaryLines.map((line) => `<p>${line}</p>`).join("")}
+            </div>
+            <div class="c-tea-house-debate__selected-slot" aria-label="已选出牌">
+              ${
+                overlay.selectedTopic == null
+                  ? `<div class="c-tea-house-debate__selected-placeholder">请先选牌</div>`
+                  : `
+                    <div class="c-tea-house-debate__selected-card c-tea-house-topic-card ${selectedTopicClass}">
+                      <span class="c-tea-house-topic-card__face" aria-hidden="true"></span>
+                    </div>
+                  `
+              }
+            </div>
+          </section>
+
+          <aside class="c-tea-house-debate__portrait c-tea-house-debate__portrait--npc" aria-label="对手">
+            <div class="c-tea-house-debate__side-label c-tea-house-debate__side-label--npc" aria-hidden="true"></div>
+            <div class="c-tea-house-debate__portrait-frame c-tea-house-debate__portrait-frame--npc" aria-hidden="true"></div>
+          </aside>
+        </div>
+
+        <div class="c-tea-house-debate__timer" aria-label="倒计时 ${overlay.secondsLeft} 秒">
+          <div class="c-tea-house-debate__timer-face" aria-hidden="true"></div>
+          <strong class="c-tea-house-debate__timer-value">${overlay.secondsLeft}</strong>
+        </div>
+
+        <div class="c-tea-house-debate__topic-row" aria-label="主题牌">
           ${overlay.topicActionIds
             .map(
               (topicAction) => `
                 <button
                   type="button"
-                  class="c-button c-grain-shop-button c-grain-shop-button--gold c-tea-house-topic-grid__button"
+                  class="c-button c-tea-house-topic-card ${getDebateTopicCardClass(topicAction.topic)}${overlay.selectedTopic === topicAction.topic ? " is-selected" : ""}"
                   data-house-action="${topicAction.actionId}"
+                  aria-label="出牌 ${topicAction.topic}"
                 >
-                  ${topicAction.topic}
+                  <span class="c-tea-house-topic-card__face" aria-hidden="true"></span>
                 </button>
               `
             )
             .join("")}
         </div>
+
+        <button
+          type="button"
+          class="c-button c-tea-house-debate__confirm"
+          data-house-action="${overlay.confirmActionId}"
+          ${overlay.confirmDisabled ? "disabled" : ""}
+          aria-label="确认出牌"
+        >
+          <span class="c-tea-house-debate__confirm-art" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
   `;

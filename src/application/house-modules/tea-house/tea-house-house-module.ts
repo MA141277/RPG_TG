@@ -54,6 +54,7 @@ const DEBATE_INTERVAL_ID = "tea-house-debate";
 const MAX_TEA_HOUSE_GUESTS = 2;
 const SELECT_ACTOR_ACTION_PREFIX = "select-actor:";
 const DEBATE_TOPIC_ACTION_PREFIX = "debate-topic:";
+const DEBATE_CONFIRM_ACTION_ID = "confirm-debate-topic";
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -397,6 +398,7 @@ function createDebateOverlay(
   consecutivePlayerWins: number,
   round: number,
   plannedNpcTopic: TeaHouseTopicCard,
+  selectedPlayerTopic: TeaHouseTopicCard | null = null,
   lastRoundSummary: string[] = [],
   lastPlayerTopic: TeaHouseTopicCard | null = null,
   lastNpcTopic: TeaHouseTopicCard | null = null,
@@ -413,6 +415,7 @@ function createDebateOverlay(
     timeoutCount,
     consecutivePlayerWins,
     plannedNpcTopic,
+    selectedPlayerTopic,
     lastPlayerTopic,
     lastNpcTopic,
     lastRoundWinner,
@@ -529,6 +532,7 @@ function resolveDebateTurn(
               roundResult.nextState.consecutivePlayerWins,
               roundResult.nextState.round,
               pickTeaHouseAiTopic(actor.personality),
+              null,
               roundResult.lines,
               roundResult.playerTopic,
               roundResult.npcTopic,
@@ -557,7 +561,7 @@ function handleTick(
     return resolveDebateTurn(
       input,
       sessionState,
-      pickRandom([...TEA_HOUSE_TOPIC_CARDS]),
+      overlay.selectedPlayerTopic ?? pickRandom([...TEA_HOUSE_TOPIC_CARDS]),
       true
     );
   }
@@ -617,7 +621,25 @@ function handleActorAction(
 
   const debateTopic = parseDebateTopicActionId(input.request.actionId);
   if (debateTopic != null) {
-    return resolveDebateTurn(input, sessionState, debateTopic, false);
+    if (sessionState?.overlay?.type !== "debate") {
+      return createTransitionResult(input);
+    }
+
+    return withSessionState(input, sessionState, {
+      overlay: {
+        ...sessionState.overlay,
+        selectedPlayerTopic: debateTopic,
+      },
+    });
+  }
+
+  if (input.request.actionId === DEBATE_CONFIRM_ACTION_ID) {
+    const overlay = sessionState?.overlay;
+    if (overlay?.type !== "debate" || overlay.selectedPlayerTopic == null) {
+      return createTransitionResult(input);
+    }
+
+    return resolveDebateTurn(input, sessionState, overlay.selectedPlayerTopic, false);
   }
 
   if (selectedActor == null) {
@@ -733,7 +755,8 @@ function handleActorAction(
             0,
             0,
             1,
-            pickTeaHouseAiTopic(selectedActor.personality)
+            pickTeaHouseAiTopic(selectedActor.personality),
+            null
           ),
         },
         [
@@ -787,6 +810,9 @@ function selectOverlayViewModel(
         topic,
         actionId: `${DEBATE_TOPIC_ACTION_PREFIX}${topic}`,
       })),
+      selectedTopic: overlay.selectedPlayerTopic,
+      confirmActionId: DEBATE_CONFIRM_ACTION_ID,
+      confirmDisabled: overlay.selectedPlayerTopic == null,
       lastRoundSummary: overlay.lastRoundLines,
     };
   }

@@ -203,6 +203,9 @@ export type HouseOverlayViewModel =
         topic: string;
         actionId: string;
       }>;
+      selectedTopic: string | null;
+      confirmActionId: string;
+      confirmDisabled?: boolean;
       lastRoundSummary: string[];
     }
   | {
