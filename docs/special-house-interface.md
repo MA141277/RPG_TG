@@ -50,7 +50,13 @@ Each special house must declare a stable module id.
 Example:
 
 ```ts
-export type HouseModuleId = "home-house" | "grain-shop" | "tea-house";
+export type HouseModuleId =
+  | "home-house"
+  | "grain-shop"
+  | "tea-house"
+  | "keep-house"
+  | "leader-residence"
+  | "temple-house";
 ```
 
 `HouseDefinition` should point to a module through stable metadata, for example:
@@ -63,6 +69,9 @@ type HouseDefinition = {
   type: HouseType;
   characterIds: CharacterId[];
   defaultCharacterId: CharacterId | null;
+  visibleStoryStages?: string[];
+  enterableStoryStages?: string[];
+  requiresPlayerCurrentCityMatch?: boolean;
   activityLocationId?: CityNpcActivityLocationId | null;
   moduleId?: HouseModuleId | null;
   onEnterEventId?: EventId;
@@ -77,10 +86,16 @@ type HouseDefinition = {
 Rules:
 
 - `type` is presentation/category metadata
+- `visibleStoryStages` / `enterableStoryStages` are optional generic story-stage gates
+- `requiresPlayerCurrentCityMatch` is generic access metadata, not house business logic
 - `activityLocationId` is optional city-level roaming NPC slot metadata
 - `moduleId` is behavior binding
 - `onEnterEventId` / `onLeaveEventId` are event hooks, not house business implementations
 - do not infer business behavior from `house.id` string matching in app entrypoints
+
+If a grouped city entry also needs story-stage gating, keep that metadata on
+`CityEntryDefinition.visibleStoryStages` and resolve it through a generic selector
+rather than adding city-entry branches in `main.ts`.
 
 ## Required Application Contract
 
@@ -107,7 +122,11 @@ export type HouseModuleSideEffect =
     };
 
 export type HouseModuleSessionStateMap = {
+  "home-house": HomeHouseSessionState;
   "grain-shop": GrainShopSessionState;
+  "keep-house": KeepHouseSessionState;
+  "leader-residence": LeaderResidenceSessionState;
+  "temple-house": TempleHouseSessionState;
   "tea-house": TeaHouseSessionState;
 };
 
@@ -296,7 +315,10 @@ Example:
 export const houseModuleRegistry: Record<HouseModuleId, HouseModuleDefinition> = {
   "home-house": homeHouseHouseModule,
   "grain-shop": grainShopHouseModule,
+  "keep-house": keepHouseHouseModule,
+  "leader-residence": leaderResidenceHouseModule,
   "market-house": marketHouseHouseModule,
+  "temple-house": templeHouseHouseModule,
   tavern: tavernHouseModule,
   "tea-house": teaHouseHouseModule,
 };
@@ -311,7 +333,10 @@ export const houseModuleViewRegistry: Record<
 > = {
   "home-house": renderHomeHouseView,
   "grain-shop": renderGrainShopHouseView,
+  "keep-house": renderKeepHouseView,
+  "leader-residence": renderLeaderResidenceHouseView,
   "market-house": renderMarketHouseView,
+  "temple-house": renderTempleHouseView,
   tavern: renderTavernHouseView,
   "tea-house": renderTeaHouseHouseView,
 };

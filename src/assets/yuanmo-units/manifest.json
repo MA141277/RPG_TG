@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-05-29T05:23:45.010Z",
+  "generatedAt": "2026-05-29T09:05:56.351Z",
   "targets": [
     {
       "id": "red-turban-strat",
       "modelFile": "red-turban-strat.json",
       "textureFile": "red-turban-strat.png",
-      "vertexCount": 4914,
-      "triangleCount": 6924,
+      "vertexCount": 2906,
+      "triangleCount": 4578,
       "boneCount": 20
     },
     {

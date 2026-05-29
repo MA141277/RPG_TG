@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-29T03:10:52.479Z",
+  "generatedAt": "2026-05-29T09:05:56.074Z",
   "modelStratFile": "D:\\RPG_TG\\map\\yuan mo feng yun lu\\mods\\yuanmofengyunlu\\data\\descr_model_strat.txt",
   "totalEntries": 127,
   "targets": [
@@ -7,27 +7,23 @@
       "id": "red-turban-strat",
       "label": "Red Turban campaign actor",
       "role": "friendly",
-      "type": "shun_general",
+      "type": "shun_captain",
       "skeleton": "strat_named_with_army",
       "scale": 0.7,
-      "modelFlexi": "models_strat/chuangying.CAS,",
+      "modelFlexi": "models_strat/shun_captain.CAS,",
       "shadowModel": "models_strat/shadow_sword.CAS,",
       "textures": [
         {
           "faction": "moors,",
-          "texturePath": "models_strat/textures/dashun_general.tga"
+          "texturePath": "models_strat/textures/dashun_army.tga"
         },
         {
           "faction": "turks,",
-          "texturePath": "models_strat/textures/dashun_general.tga"
-        },
-        {
-          "faction": "portugal,",
-          "texturePath": "models_strat/textures/dashun_general.tga"
+          "texturePath": "models_strat/textures/dashun_army.tga"
         },
         {
           "faction": "slave,",
-          "texturePath": "models_strat/textures/dashun_general.tga"
+          "texturePath": "models_strat/textures/dashun_army.tga"
         }
       ]
     },

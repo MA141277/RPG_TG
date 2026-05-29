@@ -82,6 +82,7 @@ import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
+  resolveCampaignTerrainUvFromClientPosition,
   requestCampaignTerrainRender,
   setCampaignTerrainCamera,
   syncCampaignTerrainWebGl,
@@ -240,6 +241,7 @@ let layoutEditorDragState:
     }
   | null = null;
 let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
+let campaignTravelRequestId = 0;
 
 let houseRuntime: HouseRuntime = createHouseRuntimeInstance();
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
@@ -1085,17 +1087,34 @@ appElement.addEventListener("click", (event) => {
     const mapNodeName = mapCell.dataset.mapNodeName || null;
     const cityName =
       mapNodeName ?? (cityId == null ? null : cityNameById[cityId] ?? null);
+    startCampaignTravel(
+      { x: xValue, y: yValue },
+      cityId,
+      cityName
+    );
+    return;
+  }
 
-    appState = {
-      ...appState,
-      modalState: {
-        type: "travel-confirm",
-        targetCoordinate: { x: xValue, y: yValue },
-        cityId,
-        cityName,
+  const campaignMap = targetElement.closest<HTMLElement>("[data-campaign-map-viewport]");
+  if (campaignMap != null && appState.gameState.ui.currentView === "map") {
+    const clickTarget = resolveCampaignTerrainUvFromClientPosition(
+      campaignMap,
+      event.clientX,
+      event.clientY
+    );
+    const coordinateSpace = yuanmoCampaignMap.coordinateSpace;
+    if (clickTarget == null || coordinateSpace == null) {
+      return;
+    }
+
+    startCampaignTravel(
+      {
+        x: clickTarget.u * coordinateSpace.width,
+        y: (1 - clickTarget.v) * coordinateSpace.height,
       },
-    };
-    renderApp();
+      null,
+      null
+    );
   }
 });
 
@@ -1179,16 +1198,69 @@ function cancelCampaignTravel(): void {
     return;
   }
 
+  campaignTravelRequestId += 1;
   stopCampaignMoveAnimation();
   appState = {
     ...appState,
     campaignTravelState: null,
+    modalState: null,
     campaignActorState: {
       ...appState.campaignActorState,
       isMoving: false,
     },
   };
   renderApp();
+}
+
+function startCampaignTravel(
+  targetCoordinate: GridCoordinate,
+  cityId: string | null,
+  cityName: string | null
+): void {
+  const nextCoordinate = travelToCoordinate(appState.playerCoordinate, targetCoordinate);
+  const reachedCityDefinition =
+    cityId == null ? null : cityDefinitionById[cityId] ?? null;
+  const pendingEnterCityState =
+    reachedCityDefinition != null
+      ? {
+          type: "enter-city-confirm" as const,
+          cityId: reachedCityDefinition.id,
+          cityName: reachedCityDefinition.name,
+        }
+      : null;
+  const previousCoordinate = appState.playerCoordinate;
+  const travelRequestId = campaignTravelRequestId + 1;
+  campaignTravelRequestId = travelRequestId;
+  stopCampaignMoveAnimation();
+
+  appState = {
+    ...appState,
+    campaignTravelState: {
+      targetCoordinate: nextCoordinate,
+      cityId,
+      cityName,
+    },
+    modalState: null,
+  };
+  renderApp();
+
+  void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+    if (campaignTravelRequestId !== travelRequestId) {
+      return;
+    }
+
+    const activeTravelState = appState.campaignTravelState;
+    const shouldEnterCity =
+      activeTravelState != null &&
+      activeTravelState.targetCoordinate.x === nextCoordinate.x &&
+      activeTravelState.targetCoordinate.y === nextCoordinate.y;
+    appState = {
+      ...appState,
+      campaignTravelState: null,
+      modalState: shouldEnterCity ? pendingEnterCityState : null,
+    };
+    renderApp();
+  });
 }
 
 function animateCampaignMove(
@@ -1313,7 +1385,9 @@ function captureCampaignTerrainCanvases(
   root: ParentNode
 ): HTMLCanvasElement[] | null {
   const canvases = Array.from(
-    root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-terrain]")
+    root.querySelectorAll<HTMLCanvasElement>(
+      "[data-campaign-map-terrain], [data-campaign-map-actor-layer]"
+    )
   );
   return canvases.length === 0 ? null : canvases;
 }
@@ -1327,7 +1401,9 @@ function restoreCampaignTerrainCanvases(
   }
 
   const replacementCanvases = Array.from(
-    root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-terrain]")
+    root.querySelectorAll<HTMLCanvasElement>(
+      "[data-campaign-map-terrain], [data-campaign-map-actor-layer]"
+    )
   );
   if (replacementCanvases.length !== preservedCanvases.length) {
     return;

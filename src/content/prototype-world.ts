@@ -331,8 +331,6 @@ function createStandardCityHouses(
       name: "帅府",
       type: "castle",
       moduleId: "keep-house",
-      visibleStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
-      enterableStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
       characterIds: [],
       defaultCharacterId: null,
       backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
@@ -451,8 +449,6 @@ export const prototypeHouses: HouseDefinition[] = [
     name: "帅府",
     type: "castle",
     moduleId: "keep-house",
-    visibleStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
-    enterableStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
     characterIds: [
       "char.kulan_lord",
       "char.kulan_xu_da",
@@ -1493,18 +1489,22 @@ function cloneCharacterDefinition(
     ...characterDefinition,
     stats: { ...characterDefinition.stats },
     availableFunctions: [...characterDefinition.availableFunctions],
-    portraitVariants: characterDefinition.portraitVariants?.map((variant) => ({
-      ...variant,
-    })),
-    flags: characterDefinition.flags == null ? undefined : [...characterDefinition.flags],
-    skills:
-      characterDefinition.skills == null
-        ? undefined
-        : { ...characterDefinition.skills },
-    teachableSkillKeys:
-      characterDefinition.teachableSkillKeys == null
-        ? undefined
-        : [...characterDefinition.teachableSkillKeys],
+    ...(characterDefinition.portraitVariants == null
+      ? {}
+      : {
+          portraitVariants: characterDefinition.portraitVariants.map((variant) => ({
+            ...variant,
+          })),
+        }),
+    ...(characterDefinition.flags == null
+      ? {}
+      : { flags: [...characterDefinition.flags] }),
+    ...(characterDefinition.skills == null
+      ? {}
+      : { skills: { ...characterDefinition.skills } }),
+    ...(characterDefinition.teachableSkillKeys == null
+      ? {}
+      : { teachableSkillKeys: [...characterDefinition.teachableSkillKeys] }),
   };
 }
 
@@ -1521,7 +1521,7 @@ export function createPrototypeCharactersForStoryStage(
   }
 
   if (storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple) {
-    playerCharacter.clanId = undefined;
+    delete playerCharacter.clanId;
     playerCharacter.title = "挂单僧";
     playerCharacter.occupation = "皇觉寺僧人";
     playerCharacter.houseId = "house.kulan.temple";

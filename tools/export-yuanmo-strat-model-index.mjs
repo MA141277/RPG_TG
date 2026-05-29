@@ -91,8 +91,8 @@ function pickTargets(entries) {
       label: "Red Turban campaign actor",
       role: "friendly",
       match: (entry) =>
-        entry.type === "shun_general" ||
-        normalizeAssetPath(entry.modelFlexi ?? "").endsWith("/chuangying.cas"),
+        entry.type === "shun_captain" ||
+        normalizeAssetPath(entry.modelFlexi ?? "").endsWith("/shun_captain.cas"),
     },
     {
       id: "yuan-infantry-strat",

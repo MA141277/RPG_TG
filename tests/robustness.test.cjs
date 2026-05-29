@@ -11,6 +11,7 @@ const {
 } = require("../.test-dist/application/city-npcs/select-city-npcs-for-house.js");
 const {
   prototypeCards,
+  createPrototypeCharactersForStoryStage,
   prototypeCharacters,
   prototypeCityEntries,
   prototypeHistoricalCharacterIdByCharacterId,
@@ -30,6 +31,9 @@ const {
 const {
   keepHouseHouseModule,
 } = require("../.test-dist/application/house-modules/keep-house/keep-house-house-module.js");
+const {
+  templeHouseHouseModule,
+} = require("../.test-dist/application/house-modules/temple-house/temple-house-house-module.js");
 const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
@@ -52,6 +56,10 @@ const {
   selectLeaderResidenceOptions,
 } = require("../.test-dist/application/city-entries/select-leader-residence-options.js");
 const {
+  canEnterHouseForStoryStage,
+  isHouseVisibleForStoryStage,
+} = require("../.test-dist/application/story/story-stage-access.js");
+const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
 const {
@@ -67,6 +75,7 @@ const {
 const { GRAIN_SHOP_VARIABLE_KEYS } = require("../.test-dist/domain/grain-shop.js");
 const { HOME_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/home-house.js");
 const { KEEP_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/keep-house.js");
+const { TEMPLE_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/temple-house.js");
 const {
   getMedicineInventoryQuantityVariableKey,
   getPlayerFatigueVariableKey,
@@ -79,6 +88,10 @@ const {
   pickTeaHouseAiTopic,
   resolveTeaHouseDebateRound,
 } = require("../.test-dist/application/tea-house/tea-house-debate.js");
+const {
+  ZHU_YUANZHANG_STORY_STAGES,
+  ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
+} = require("../.test-dist/domain/zhu-yuanzhang-story.js");
 
 const playerCharacterId = "char.player";
 const keepHouse = prototypeHouses.find(
@@ -105,6 +118,9 @@ const tavernHouse = prototypeHouses.find(
 const leaderResidenceHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "leader-residence"
 );
+const templeHouse = prototypeHouses.find(
+  (houseDefinition) => houseDefinition.moduleId === "temple-house"
+);
 const leaderResidenceEntry = prototypeCityEntries.find(
   (entryDefinition) => entryDefinition.id === "city-entry.kulan.leader-residence"
 );
@@ -120,6 +136,7 @@ assert.ok(
   leaderResidenceHouse,
   "Expected prototype leader residence house to exist."
 );
+assert.ok(templeHouse, "Expected prototype temple house to exist.");
 assert.ok(
   leaderResidenceEntry,
   "Expected prototype leader residence city entry to exist."
@@ -172,6 +189,21 @@ function createStateWithGrainVariables() {
         [GRAIN_SHOP_VARIABLE_KEYS.relationship]: 0,
         [GRAIN_SHOP_VARIABLE_KEYS.time]: 1,
         [GRAIN_SHOP_VARIABLE_KEYS.grainPrice]: 100,
+      },
+    },
+  };
+}
+
+function createMonkStageState() {
+  const state = createBaseState();
+  return {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      variables: {
+        ...state.runtime.variables,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
+          ZHU_YUANZHANG_STORY_STAGES.huangjueTemple,
       },
     },
   };
@@ -471,6 +503,225 @@ test("keep house starts review meeting at countdown zero and resets to 60 after 
   assert.equal(assignedResult.gameState.world.schedule.councilDate.day, 1);
   assert.equal(assignedResult.gameState.world.schedule.councilDate.month, 3);
   assert.equal(assignedResult.sessionState?.overlay?.type, "alert");
+});
+
+test("story-stage access keeps temple and keep visible in monk stage while hiding home and leader residence", () => {
+  const monkState = createMonkStageState();
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const monkKeepHouse = prototypeHouses.find(
+    (houseDefinition) => houseDefinition.id === "house.kulan.keep"
+  );
+  const monkTempleHouse = prototypeHouses.find(
+    (houseDefinition) => houseDefinition.id === "house.kulan.temple"
+  );
+
+  assert.ok(homeHouse);
+  assert.ok(leaderResidenceHouse);
+  assert.ok(monkKeepHouse);
+  assert.ok(monkTempleHouse);
+
+  assert.equal(
+    isHouseVisibleForStoryStage(monkState, monkCharacters, homeHouse),
+    false
+  );
+  assert.equal(
+    isHouseVisibleForStoryStage(monkState, monkCharacters, leaderResidenceHouse),
+    false
+  );
+  assert.equal(
+    isHouseVisibleForStoryStage(monkState, monkCharacters, monkKeepHouse),
+    true
+  );
+  assert.equal(
+    canEnterHouseForStoryStage(monkState, monkCharacters, monkKeepHouse),
+    true
+  );
+  assert.equal(
+    isHouseVisibleForStoryStage(monkState, monkCharacters, monkTempleHouse),
+    true
+  );
+  assert.equal(
+    canEnterHouseForStoryStage(monkState, monkCharacters, monkTempleHouse),
+    true
+  );
+});
+
+test("keep house stays in audience mode during monk stage even when review countdown is zero", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const enterResult = keepHouseHouseModule.enter({
+    gameState: {
+      ...createMonkStageState(),
+      runtime: {
+        ...createMonkStageState().runtime,
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(enterResult.sessionState?.mode, "audience");
+  assert.equal(enterResult.sessionState?.meetingStage, "finished");
+});
+
+test("temple house starts monk-stage review meeting and assigns a temple duty with 30-day reset", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...createMonkStageState(),
+      runtime: {
+        ...createMonkStageState().runtime,
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(enterResult.sessionState?.mode, "meeting");
+  assert.equal(enterResult.sessionState?.meetingStage, "intro");
+
+  const reflectionResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  assert.equal(reflectionResult.sessionState?.meetingStage, "reflection");
+
+  const assignDutyResult = templeHouseHouseModule.dispatch({
+    gameState: reflectionResult.gameState,
+    characterDefinitions: reflectionResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: reflectionResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  assert.equal(assignDutyResult.sessionState?.meetingStage, "assign-duty");
+
+  const assignedResult = templeHouseHouseModule.dispatch({
+    gameState: assignDutyResult.gameState,
+    characterDefinitions: assignDutyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignDutyResult.sessionState,
+    request: { type: "action", actionId: "assign-temple-task:beg-alms" },
+  });
+
+  assert.equal(
+    assignedResult.gameState.missions.activeMissionId,
+    "mission.temple.beg-alms"
+  );
+  assert.equal(
+    assignedResult.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    30
+  );
+  assert.equal(
+    assignedResult.gameState.runtime.variables[
+      TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId
+    ],
+    "beg-alms"
+  );
+  assert.equal(assignedResult.gameState.world.schedule.councilDate.day, 1);
+  assert.equal(assignedResult.gameState.world.schedule.councilDate.month, 2);
+  assert.equal(assignedResult.sessionState?.overlay?.type, "alert");
+});
+
+test("temple house daily flow resolves fortune and donation through unified state", () => {
+  const wealthyCharacters = prototypeCharacters.map((characterDefinition) =>
+    characterDefinition.id !== playerCharacterId
+      ? characterDefinition
+      : {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold: 500,
+          },
+        }
+  );
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: wealthyCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(enterResult.sessionState?.mode, "daily");
+
+  const openResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  assert.equal(openResult.sessionState?.dialoguePhase, "open");
+
+  const fortuneResult = templeHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "ask-fortune" },
+  });
+  assert.equal(fortuneResult.sessionState?.overlay?.type, "alert");
+
+  const closedFortuneResult = templeHouseHouseModule.dispatch({
+    gameState: fortuneResult.gameState,
+    characterDefinitions: fortuneResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: fortuneResult.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+  });
+  assert.equal(closedFortuneResult.sessionState?.overlay, null);
+
+  const donatePromptResult = templeHouseHouseModule.dispatch({
+    gameState: closedFortuneResult.gameState,
+    characterDefinitions: closedFortuneResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: closedFortuneResult.sessionState,
+    request: { type: "action", actionId: "open-donate" },
+  });
+  assert.equal(donatePromptResult.sessionState?.overlay?.type, "donate-confirm");
+
+  const donatedResult = templeHouseHouseModule.dispatch({
+    gameState: donatePromptResult.gameState,
+    characterDefinitions: donatePromptResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: donatePromptResult.sessionState,
+    request: { type: "action", actionId: "confirm-donate" },
+  });
+
+  const playerCharacter = getPlayerCharacter(donatedResult.characterDefinitions);
+  assert.equal(playerCharacter.stats.gold, 450);
+  assert.equal(
+    donatedResult.gameState.runtime.variables[
+      TEMPLE_HOUSE_VARIABLE_KEYS.donationTotal
+    ],
+    50
+  );
+  assert.equal(donatedResult.sessionState?.overlay?.type, "alert");
 });
 
 test("home house rest-one-day advances date, restores hp and fatigue, and resets morning", () => {

@@ -17,6 +17,7 @@ export * from "./temple-house";
 export * from "./market";
 export * from "./map";
 export * from "./mission";
+export * from "./story";
 export * from "./tavern";
 export * from "./tea-house";
 export * from "./trade-good";

@@ -220,9 +220,11 @@ function renderCampaignTravelBanner(
     return "";
   }
 
+  const coordinateLabel = `(${campaignTravelState.targetCoordinate.x.toFixed(1)}, ${campaignTravelState.targetCoordinate.y.toFixed(1)})`;
   const destinationLabel =
-    campaignTravelState.cityName ??
-    `(${campaignTravelState.targetCoordinate.x}, ${campaignTravelState.targetCoordinate.y})`;
+    campaignTravelState.cityName == null
+      ? coordinateLabel
+      : `${campaignTravelState.cityName} ${coordinateLabel}`;
 
   return `
     <div class="c-campaign-travel-banner" role="status" aria-live="polite">
@@ -365,6 +367,8 @@ export function renderApp(input: AppRenderInput): string {
     input.appState,
     input.playerCharacterId
   );
+  const shouldShowGlobalHud =
+    input.appState.gameState.ui.currentView !== "house";
   const locationText =
     input.cityNameById[input.appState.gameState.world.currentCityId] ??
     input.cityDefinition.name;
@@ -385,10 +389,14 @@ export function renderApp(input: AppRenderInput): string {
               ${stageMarkup}
               <div class="l-overlay-ui">
                 ${renderCampaignTravelBanner(input.appState.campaignTravelState)}
-                ${renderGlobalPlayerPanel(
-                  playerPanelModel,
-                  input.appState.uiLayouts.globalHud
-                )}
+                ${
+                  shouldShowGlobalHud
+                    ? renderGlobalPlayerPanel(
+                        playerPanelModel,
+                        input.appState.uiLayouts.globalHud
+                      )
+                    : ""
+                }
               </div>
             </main>
             ${renderModal(input.appState.modalState, input.cityPortraits)}

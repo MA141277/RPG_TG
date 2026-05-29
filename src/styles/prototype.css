@@ -474,6 +474,7 @@
 }
 
 .c-campaign-map__terrain,
+.c-campaign-map__actor-layer,
 .c-campaign-map__image,
 .c-campaign-map__regions {
   position: absolute;
@@ -489,6 +490,12 @@
   display: block;
 }
 
+.c-campaign-map__actor-layer {
+  z-index: 260;
+  display: block;
+  pointer-events: none;
+}
+
 .c-campaign-map__image--fallback {
   z-index: 0;
   transition: opacity 180ms ease;
@@ -498,7 +505,8 @@
   opacity: 0;
 }
 
-.c-campaign-map__terrain.is-ready.has-actor-model ~ .c-campaign-player {
+.c-campaign-map__terrain.is-ready.has-actor-model ~ .c-campaign-player,
+.c-campaign-map__actor-layer.is-ready.has-actor-model ~ .c-campaign-player {
   opacity: 0;
 }
 
@@ -787,6 +795,10 @@
     scale(var(--terrain-point-perspective-scale, 1));
   transform-origin: 26px 68px;
   pointer-events: none;
+}
+
+.c-campaign-player.has-actor-model {
+  opacity: 0;
 }
 
 .c-campaign-player::after {
