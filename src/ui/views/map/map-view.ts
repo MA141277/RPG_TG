@@ -1,10 +1,12 @@
 import type { GridCoordinate } from "../../../application/navigation/travel-to-coordinate";
 import type { CityDefinition } from "../../../domain/city";
+import { campaignUnitAssets } from "../../../content/yuanmo-strat-unit-assets";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
 } from "../../../domain/historical-character";
 import type { MapDefinition, MapLayer, MapNode, MapStats } from "../../../domain/map";
+import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
 
 type CityMarker = {
   id: string;
@@ -34,6 +36,8 @@ export type MapViewModel = {
   mapName: string;
   size: number;
   playerCoordinate: GridCoordinate;
+  playerFacingDegrees: number;
+  playerIsMoving: boolean;
   cityMarkers: CityMarker[];
   coordinateSpace: {
     width: number;
@@ -55,6 +59,8 @@ export type MapViewModel = {
 export function createMapViewModel(input: {
   mapDefinition: MapDefinition;
   playerCoordinate: GridCoordinate;
+  playerFacingDegrees?: number;
+  playerIsMoving?: boolean;
   cityDefinitions: CityDefinition[];
   cityCoordinatesById: Record<string, GridCoordinate>;
   historicalCharacters?: HistoricalCharacterRecord[];
@@ -84,6 +90,8 @@ export function createMapViewModel(input: {
     mapName: input.mapDefinition.name,
     size: input.mapDefinition.size ?? 5,
     playerCoordinate: input.playerCoordinate,
+    playerFacingDegrees: input.playerFacingDegrees ?? 0,
+    playerIsMoving: input.playerIsMoving ?? false,
     cityMarkers: input.cityDefinitions
       .map((cityDefinition) => {
         const coordinate = input.cityCoordinatesById[cityDefinition.id];
@@ -354,6 +362,23 @@ function renderCampaignMapVisualLayer(
           aria-label="${model.mapName} terrain"
         ></canvas>
       `;
+  const actorCanvasMarkup =
+    options.includeInteractivePoints &&
+    model.primaryImageUrl != null &&
+    model.heightmapImageUrl != null &&
+    model.materialTextureImageUrl != null
+      ? `
+        <canvas
+          class="c-campaign-map__actor-layer"
+          data-campaign-map-actor-layer="true"
+          data-map-texture-url="${model.primaryImageUrl}"
+          data-map-height-url="${model.heightmapImageUrl}"
+          data-map-material-url="${model.materialTextureImageUrl}"
+          aria-hidden="true"
+        ></canvas>
+      `
+      : "";
+  const terrainEnabledMarkup = options.includeInteractivePoints ? terrainCanvasMarkup : "";
   const imageMarkup =
     model.primaryImageUrl == null
       ? ""
@@ -368,23 +393,43 @@ function renderCampaignMapVisualLayer(
   const transformDataAttribute =
     options.transformDataAttribute ?? 'data-campaign-map-transform="true"';
   const ariaHiddenAttribute = options.ariaHidden === true ? ' aria-hidden="true"' : "";
+  const playerClassName = model.playerIsMoving
+    ? "c-campaign-player is-moving has-actor-model"
+    : "c-campaign-player has-actor-model";
 
   return `
     <div class="${transformClassName}" ${transformDataAttribute}${ariaHiddenAttribute}>
-      ${terrainCanvasMarkup}
+      ${terrainEnabledMarkup}
       ${imageMarkup}
       ${regionOverlayMarkup}
       ${
         options.includeInteractivePoints
           ? `
             ${renderCampaignMarkers(model)}
+            ${actorCanvasMarkup}
             <span
-              class="c-campaign-player"
+              class="${playerClassName}"
+              data-campaign-player="true"
+              data-campaign-player-sprite-url="${redTurbanMarkerUrl}"
+              data-campaign-player-model-url="${campaignUnitAssets.friendly.modelUrl}"
+              data-campaign-player-texture-url="${campaignUnitAssets.friendly.textureUrl}"
+              data-campaign-player-idle-animation-url="${campaignUnitAssets.friendly.idleAnimationUrl}"
+              data-campaign-player-walk-animation-url="${campaignUnitAssets.friendly.walkAnimationUrl}"
+              data-campaign-player-facing-deg="${model.playerFacingDegrees.toFixed(2)}"
+              data-campaign-player-moving="${model.playerIsMoving ? "true" : "false"}"
               data-terrain-projected-point="true"
               data-map-height-u="${playerHeightX.toFixed(5)}"
               data-map-height-v="${playerHeightY.toFixed(5)}"
+              style="
+                --campaign-player-image:url('${redTurbanMarkerUrl}');
+                --campaign-player-facing-deg:${model.playerFacingDegrees.toFixed(2)}deg;
+              "
               title="Player (${model.playerCoordinate.x}, ${model.playerCoordinate.y})"
-            ></span>
+            >
+              <span class="c-campaign-player__gait" aria-hidden="true">
+                <span class="c-campaign-player__sprite"></span>
+              </span>
+            </span>
           `
           : ""
       }
