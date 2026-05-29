@@ -87,6 +87,7 @@ const MAP_DEBUG_SCALE_STEP = 0.2;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
+const GRAIN_ACCOUNTING_BGM_URL = new URL("../BGM/Ledger of Grain.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 1,
   offsetX: 0,
@@ -108,7 +109,7 @@ type SaveDataResult = {
   selectedCharacterId?: string | null;
 } | null;
 
-type BackgroundMusicMode = "opening" | "in-game";
+type BackgroundMusicMode = "opening" | "in-game" | "grain-accounting";
 
 const appElement = document.querySelector<HTMLElement>("#app");
 const uiOverlayElement = document.querySelector<HTMLElement>("#ui-overlay");
@@ -333,7 +334,7 @@ function startMainGame(selectedCharacter: CharacterDefinition): void {
 function setGameVisibility(isVisible: boolean): void {
   appRoot.style.visibility = isVisible ? "visible" : "hidden";
   appRoot.style.pointerEvents = isVisible ? "auto" : "none";
-  syncBackgroundMusic(isVisible ? "in-game" : "opening");
+  syncBackgroundMusic(isVisible ? resolveBackgroundMusicMode() : "opening");
 }
 
 function resetMainGameRuntime(): void {
@@ -367,8 +368,30 @@ function createBackgroundMusicPlayer(): HTMLAudioElement {
   return audio;
 }
 
+function isGrainShopAccountingMinigameActive(): boolean {
+  const houseSession = appState.gameState.ui.houseSession;
+  if (houseSession?.moduleId !== "grain-shop") {
+    return false;
+  }
+
+  return houseSession.state.overlay?.type === "minigame";
+}
+
+function resolveBackgroundMusicMode(): BackgroundMusicMode {
+  if (isGrainShopAccountingMinigameActive()) {
+    return "grain-accounting";
+  }
+
+  return "in-game";
+}
+
 function syncBackgroundMusic(mode: BackgroundMusicMode): void {
-  const nextSourceUrl = mode === "opening" ? OPENING_BGM_URL : IN_GAME_BGM_URL;
+  const nextSourceUrl =
+    mode === "opening"
+      ? OPENING_BGM_URL
+      : mode === "grain-accounting"
+        ? GRAIN_ACCOUNTING_BGM_URL
+        : IN_GAME_BGM_URL;
   if (activeBackgroundMusicMode !== mode) {
     activeBackgroundMusicMode = mode;
     backgroundMusicPlayer.pause();
@@ -1138,6 +1161,7 @@ function renderApp() {
   syncCampaignMapDebugView();
   syncMapIntroOverlay();
   syncCampaignTerrainWebGl(appRoot);
+  syncBackgroundMusic(resolveBackgroundMusicMode());
 }
 
 function syncGameViewport(): void {
