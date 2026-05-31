@@ -13,8 +13,11 @@ export function createInitialTempleHouseSessionState(
     mode,
     meetingStage,
     dialogueLines,
+    dialogueOverride: null,
     dialoguePhase: "greeting",
     overlay: null,
     selectedTaskId: null,
+    selectedWorkPlan: null,
+    dailyActionPanel: "root",
   };
 }

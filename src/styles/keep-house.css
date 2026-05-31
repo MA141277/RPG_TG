@@ -1,3 +1,8 @@
+.view-house-keep {
+  --grain-shop-shopkeeper-portrait: url("../../ui/npc/guozixing.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui/npc/guozixing(touxiang).png");
+}
+
 .view-house-keep .c-keep-house-dialogue .c-grain-shop-dialogue__npc {
   align-self: stretch;
 }

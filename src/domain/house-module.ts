@@ -47,6 +47,17 @@ export type HouseModuleSideEffect =
   | {
       type: "stop-interval";
       intervalId: string;
+    }
+  | {
+      type: "start-map-auto-advance";
+      intervalId: string;
+      everyMs: number;
+      targetHouseId: string;
+      label: string;
+    }
+  | {
+      type: "stop-map-auto-advance";
+      intervalId: string;
     };
 
 export type HouseActionViewModel = {
@@ -67,6 +78,10 @@ export type HouseStandbyActorViewModel = {
   title?: string;
   actionId?: string;
   isSelected?: boolean;
+  avatarImageUrl?: string | null;
+  portraitImageUrl?: string | null;
+  avatarArtClassName?: string;
+  portraitArtClassName?: string;
 };
 
 export type HouseDialogueViewModel = {
@@ -74,6 +89,8 @@ export type HouseDialogueViewModel = {
   textLines: string[];
   speakerName?: string;
   characterId?: CharacterId;
+  portraitImageUrl?: string | null;
+  portraitArtClassName?: string;
   position?: "left" | "right";
   advanceActionId?: string | null;
   advanceHintText?: string | null;
@@ -205,6 +222,9 @@ export type HouseOverlayViewModel =
         topic: string;
         actionId: string;
       }>;
+      selectedTopic: string | null;
+      confirmActionId: string;
+      confirmDisabled?: boolean;
       lastRoundSummary: string[];
     }
   | {
@@ -259,6 +279,19 @@ export type HouseOverlayViewModel =
       clearLabel: string;
       finishActionId: string;
       finishLabel: string;
+    }
+  | {
+      type: "qte-bar";
+      title: string;
+      taskLabel: string;
+      round: number;
+      totalRounds: number;
+      successes: number;
+      markerPercent: number;
+      targetStartPercent: number;
+      targetWidthPercent: number;
+      helperLines: string[];
+      stopActionId: string;
     };
 
 export type HouseModuleViewModel = {
@@ -323,6 +356,7 @@ export type HouseModuleTransitionResult<ModuleId extends HouseModuleId = HouseMo
   characterDefinitions: CharacterDefinition[];
   sessionState: HouseModuleSessionState<ModuleId> | null;
   sideEffects?: HouseModuleSideEffect[];
+  navigation?: { type: "stay-in-house" };
 };
 
 export type HouseModuleDefinition<ModuleId extends HouseModuleId = HouseModuleId> = {

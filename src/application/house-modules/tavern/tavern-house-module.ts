@@ -6,11 +6,14 @@ import {
   tavernWorkOffers,
 } from "../../../content/houses/tavern-content";
 import type { CharacterDefinition } from "../../../domain/character";
+import type { GameState } from "../../../domain/game-state";
 import type {
   TavernOverlayState,
+  TavernQteOverlayState,
   TavernSessionState,
 } from "../../../domain/house-modules/tavern-session";
 import type {
+  HouseActionViewModel,
   HouseModuleDefinition,
   HouseModuleDispatchInput,
   HouseModuleTransitionResult,
@@ -24,15 +27,26 @@ import {
 } from "../../../domain/tavern";
 import { assertExists } from "../../../shared/assert";
 import {
+  acceptTavernWork,
   completeTavernWork,
+  failTavernWork,
+  getActiveTavernWorkIds,
+  getTavernWorkProgress,
   increaseTavernDrinkCount,
   increaseTavernTime,
   isTavernWorkCompleted,
+  isTavernWorkFailed,
   mutatePlayerGold,
+  removeActiveTavernWork,
+  setTavernWorkProgress,
 } from "../../tavern/tavern-mutations";
 import { createInitialTavernSessionState } from "./tavern-session-state";
 
-const SELECT_WORK_ACTION_PREFIX = "select-work:";
+const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
+const SUBMIT_WORK_ACTION_PREFIX = "submit-work:";
+const TAVERN_WORK_INTERVAL_ID = "tavern-work-qte";
+const TAVERN_WORK_TOTAL_ROUNDS = 3;
+const TAVERN_WORK_MARKER_STEP = 7;
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -48,11 +62,7 @@ function getPlayerCharacter(
   return playerCharacter;
 }
 
-function readNumericVariable(
-  state: HouseModuleDispatchInput["gameState"],
-  key: string,
-  fallback: number
-): number {
+function readNumericVariable(state: GameState, key: string, fallback: number): number {
   const value = state.runtime.variables[key];
   return typeof value === "number" ? value : fallback;
 }
@@ -91,13 +101,15 @@ function withSessionState(
     "gameState" | "characterDefinitions"
   >,
   sessionState: TavernSessionState | null,
-  patch: Partial<TavernSessionState>
+  patch: Partial<TavernSessionState>,
+  sideEffects?: HouseModuleTransitionResult<"tavern">["sideEffects"]
 ): HouseModuleTransitionResult<"tavern"> {
   if (sessionState == null) {
     return {
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
       sessionState,
+      ...(sideEffects == null ? {} : { sideEffects }),
     };
   }
 
@@ -108,125 +120,470 @@ function withSessionState(
       ...sessionState,
       ...patch,
     },
+    ...(sideEffects == null ? {} : { sideEffects }),
   };
 }
 
+function findWorkOffer(offerId: string): TavernWorkOffer {
+  const offer = tavernWorkOffers.find((candidateOffer) => candidateOffer.id === offerId);
+  assertExists(offer, `Tavern work offer not found for id "${offerId}".`);
+  return offer;
+}
+
+function getAcceptedWorkOffers(gameState: GameState, houseId: string): TavernWorkOffer[] {
+  const activeIds = getActiveTavernWorkIds(gameState, houseId);
+  return activeIds
+    .map((offerId) => tavernWorkOffers.find((offer) => offer.id === offerId) ?? null)
+    .filter((offer): offer is TavernWorkOffer => offer != null);
+}
+
 function getAvailableWorkOffers(
-  gameState: HouseModuleDispatchInput["gameState"],
-  houseId: string
+  gameState: GameState,
+  houseId: string,
+  playerFame: number
 ): TavernWorkOffer[] {
-  return tavernWorkOffers.filter(
-    (offer) => !isTavernWorkCompleted(gameState, houseId, offer.id)
+  const activeIds = new Set(getActiveTavernWorkIds(gameState, houseId));
+  return tavernWorkOffers.filter((offer) => {
+    if (activeIds.has(offer.id)) {
+      return false;
+    }
+    if (isTavernWorkCompleted(gameState, houseId, offer.id)) {
+      return false;
+    }
+    if (isTavernWorkFailed(gameState, houseId, offer.id)) {
+      return false;
+    }
+    return offer.minFame == null || playerFame >= offer.minFame;
+  });
+}
+
+function getWorkCapacity(playerFame: number): number {
+  if (playerFame >= 80) {
+    return 3;
+  }
+  if (playerFame >= 40) {
+    return 2;
+  }
+  return 1;
+}
+
+function parseActionId(actionId: string, prefix: string): string | null {
+  return actionId.startsWith(prefix) ? actionId.slice(prefix.length) : null;
+}
+
+function randomTargetStart(round: number): number {
+  const seed = (round * 19 + 11) % 55;
+  return 15 + seed;
+}
+
+function randomTargetWidth(round: number): number {
+  return round === 3 ? 16 : round === 2 ? 18 : 22;
+}
+
+function createDishwashingOverlay(
+  offer: TavernWorkOffer,
+  round: number,
+  successes: number,
+  markerPercent = 8
+): TavernQteOverlayState {
+  return {
+    type: "qte-bar",
+    offerId: offer.id,
+    taskLabel: offer.title,
+    round,
+    totalRounds: TAVERN_WORK_TOTAL_ROUNDS,
+    successes,
+    markerPercent,
+    markerDirection: 1,
+    targetStartPercent: randomTargetStart(round),
+    targetWidthPercent: randomTargetWidth(round),
+  };
+}
+
+function resolveDishwashingReward(
+  offer: TavernWorkOffer,
+  successes: number
+): { grade: string; rewardGold: number; success: boolean } {
+  if (successes <= 0) {
+    return { grade: "失败", rewardGold: 0, success: false };
+  }
+  if (successes === 1) {
+    return { grade: "勉强", rewardGold: Math.floor(offer.maxRewardGold * 0.3), success: true };
+  }
+  if (successes === 2) {
+    return { grade: "合格", rewardGold: Math.floor(offer.maxRewardGold * 0.65), success: true };
+  }
+  return { grade: "利落", rewardGold: offer.maxRewardGold, success: true };
+}
+
+function refreshWorkLists(
+  gameState: GameState,
+  houseId: string,
+  playerFame: number
+): Pick<TavernSessionState, "availableOffers" | "acceptedOffers"> {
+  return {
+    availableOffers: getAvailableWorkOffers(gameState, houseId, playerFame),
+    acceptedOffers: getAcceptedWorkOffers(gameState, houseId),
+  };
+}
+
+function startDishwashingQte(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  offer: TavernWorkOffer,
+  nextState: GameState
+): HouseModuleTransitionResult<"tavern"> {
+  const playerCharacter = getPlayerCharacter(
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
+
+  return withSessionState(
+    {
+      gameState: nextState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      ...refreshWorkLists(nextState, input.houseDefinition.id, playerCharacter.stats.fame),
+      selectedOfferId: offer.id,
+      selectedSubmitOfferId: offer.id,
+      workPanelMode: "submit",
+      dialoguePhase: "idle",
+      overlay: createDishwashingOverlay(offer, 1, 0),
+    },
+    [
+      { type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID },
+      {
+        type: "start-interval",
+        intervalId: TAVERN_WORK_INTERVAL_ID,
+        everyMs: 90,
+        request: { type: "tick", tickId: TAVERN_WORK_INTERVAL_ID },
+      },
+    ]
   );
 }
 
-function parseSelectedWork(actionId: string): string | null {
-  return actionId.startsWith(SELECT_WORK_ACTION_PREFIX)
-    ? actionId.slice(SELECT_WORK_ACTION_PREFIX.length)
-    : null;
-}
-
-function resolveWorkSelection(
-  offers: TavernWorkOffer[],
-  selectedOfferId: string | null
-): TavernWorkOffer | null {
-  if (selectedOfferId == null) {
-    return offers[0] ?? null;
+function handleTavernWorkTick(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState
+): HouseModuleTransitionResult<"tavern"> {
+  if (
+    input.request.type !== "tick" ||
+    input.request.tickId !== TAVERN_WORK_INTERVAL_ID
+  ) {
+    return createTransitionResult(input);
   }
 
-  return offers.find((offer) => offer.id === selectedOfferId) ?? offers[0] ?? null;
+  const overlay = sessionState.overlay;
+  if (overlay?.type !== "qte-bar") {
+    return createTransitionResult(input, {
+      sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
+    });
+  }
+
+  const nextMarker = overlay.markerPercent + overlay.markerDirection * TAVERN_WORK_MARKER_STEP;
+  if (nextMarker >= 100) {
+    return withSessionState(input, sessionState, {
+      overlay: { ...overlay, markerPercent: 100, markerDirection: -1 },
+    });
+  }
+
+  if (nextMarker <= 0) {
+    return withSessionState(input, sessionState, {
+      overlay: { ...overlay, markerPercent: 0, markerDirection: 1 },
+    });
+  }
+
+  return withSessionState(input, sessionState, {
+    overlay: { ...overlay, markerPercent: nextMarker },
+  });
+}
+
+function handleTavernWorkStop(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState
+): HouseModuleTransitionResult<"tavern"> {
+  const overlay = sessionState.overlay;
+  if (overlay?.type !== "qte-bar") {
+    return createTransitionResult(input);
+  }
+
+  const hit =
+    overlay.markerPercent >= overlay.targetStartPercent &&
+    overlay.markerPercent <= overlay.targetStartPercent + overlay.targetWidthPercent;
+  const nextSuccesses = hit ? overlay.successes + 1 : overlay.successes;
+
+  if (overlay.round < overlay.totalRounds) {
+    const offer = findWorkOffer(overlay.offerId);
+    return withSessionState(input, sessionState, {
+      overlay: createDishwashingOverlay(offer, overlay.round + 1, nextSuccesses),
+    });
+  }
+
+  const offer = findWorkOffer(overlay.offerId);
+  const reward = resolveDishwashingReward(offer, nextSuccesses);
+  const nextState = setTavernWorkProgress(
+    input.gameState,
+    input.houseDefinition.id,
+    offer.id,
+    nextSuccesses
+  );
+
+  return {
+    gameState: nextState,
+    characterDefinitions: input.characterDefinitions,
+    sessionState: {
+      ...sessionState,
+      dialoguePhase: "open",
+      workPanelMode: "submit",
+      selectedSubmitOfferId: offer.id,
+      dialogueLines: [
+        `你把${offer.title}做完了，可以去柜台提交。`,
+        reward.success
+          ? `目前判定：${reward.grade}，预计可领 ${reward.rewardGold} 文。`
+          : "这活干砸了，仍然可以提交，但会按失败处理。",
+      ],
+      overlay: {
+        type: "result",
+        title: "活计进度",
+        grade: reward.grade,
+        score: nextSuccesses,
+        rewardLines: [
+          `${offer.title}`,
+          `命中 ${nextSuccesses} / ${overlay.totalRounds} 次`,
+          reward.success ? `预计报酬 ${reward.rewardGold} 文` : "未达到最低要求，提交会失败",
+        ],
+      },
+    },
+    sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
+  };
+}
+
+function submitWork(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  offer: TavernWorkOffer
+): HouseModuleTransitionResult<"tavern"> {
+  const progress = getTavernWorkProgress(
+    input.gameState,
+    input.houseDefinition.id,
+    offer.id
+  );
+  const reward =
+    offer.type === "dishwashing"
+      ? resolveDishwashingReward(offer, progress)
+      : { grade: "失败", rewardGold: 0, success: false };
+
+  let nextState = removeActiveTavernWork(
+    input.gameState,
+    input.houseDefinition.id,
+    offer.id
+  );
+  nextState = increaseTavernTime(nextState, input.houseDefinition.id, 1);
+  nextState = reward.success
+    ? completeTavernWork(nextState, input.houseDefinition.id, offer.id)
+    : failTavernWork(nextState, input.houseDefinition.id, offer.id);
+
+  const goldMutation =
+    reward.rewardGold === 0
+      ? { state: nextState, characterDefinitions: input.characterDefinitions }
+      : mutatePlayerGold(
+          nextState,
+          input.characterDefinitions,
+          input.playerCharacterId,
+          reward.rewardGold
+        );
+  const playerCharacter = getPlayerCharacter(
+    goldMutation.characterDefinitions,
+    input.playerCharacterId
+  );
+  const lists = refreshWorkLists(
+    goldMutation.state,
+    input.houseDefinition.id,
+    playerCharacter.stats.fame
+  );
+
+  return {
+    gameState: goldMutation.state,
+    characterDefinitions: goldMutation.characterDefinitions,
+    sessionState: {
+      ...sessionState,
+      ...lists,
+      selectedOfferId: lists.availableOffers[0]?.id ?? null,
+      selectedSubmitOfferId: lists.acceptedOffers[0]?.id ?? null,
+      workPanelMode: "submit",
+      dialoguePhase: "open",
+      dialogueLines: reward.success
+        ? [`你提交了${offer.title}。`, `老板点过工钱，递来 ${reward.rewardGold} 文。`]
+        : [`你提交了${offer.title}。`, "老板看完结果摇了摇头，这单按失败记。"],
+      overlay: {
+        type: "result",
+        title: "提交结果",
+        grade: reward.grade,
+        score: Math.max(progress, 0),
+        rewardLines: [
+          reward.success ? "任务完成" : "任务失败",
+          `报酬 ${reward.rewardGold} 文`,
+        ],
+      },
+    },
+    sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
+  };
 }
 
 function handleWorkAction(
   input: HouseModuleDispatchInput<"tavern">,
   sessionState: TavernSessionState | null
 ): HouseModuleTransitionResult<"tavern"> {
-  if (input.request.type !== "action") {
+  if (input.request.type !== "action" || sessionState == null) {
     return createTransitionResult(input);
   }
 
-  const offers = getAvailableWorkOffers(input.gameState, input.houseDefinition.id);
-  const offerId = parseSelectedWork(input.request.actionId);
+  const playerCharacter = getPlayerCharacter(
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
+  const houseId = input.houseDefinition.id;
+  const lists = refreshWorkLists(input.gameState, houseId, playerCharacter.stats.fame);
 
-  if (offerId != null) {
-    const nextOffer = offers.find((offer) => offer.id === offerId);
-    if (nextOffer == null) {
-      return createTransitionResult(input);
-    }
-
+  if (input.request.actionId === "open-work") {
     return withSessionState(input, sessionState, {
-      selectedOfferId: nextOffer.id,
+      ...lists,
+      workPanelMode: "main",
       dialoguePhase: "open",
-      dialogueLines: [
-        `老板把活计账单推到你面前。`,
-        `“${nextOffer.title}，你要是肯做，现在就能接。”`,
-        nextOffer.description,
-        nextOffer.rewardText,
-      ],
+      dialogueLines: ["老板把活计牌翻了出来。", "你可以先接取，也可以提交已经接下的活。"],
       overlay: null,
     });
   }
 
-  if (input.request.actionId !== "take-work") {
-    return createTransitionResult(input);
-  }
-
-  const selectedOffer = resolveWorkSelection(offers, sessionState?.selectedOfferId ?? null);
-  if (selectedOffer == null) {
+  if (input.request.actionId === "open-work-accept") {
     return withSessionState(input, sessionState, {
-      overlay: createAlertOverlay(
-        "没有新活",
-        ["老板摊了摊手。", "“眼下没别的零活了，过些日子再来吧。”"],
-        "info"
-      ),
+      ...lists,
+      workPanelMode: "accept",
+      selectedOfferId: lists.availableOffers[0]?.id ?? null,
+      dialoguePhase: "open",
+      dialogueLines:
+        lists.availableOffers.length === 0
+          ? ["老板翻了翻账本。", "眼下没有适合你接的新活。"]
+          : ["这些是当前酒馆还能接的活。", "前期只能接一个主命以外的任务，名声高了才会放宽。"],
+      overlay: null,
     });
   }
 
-  let nextState = completeTavernWork(
-    input.gameState,
-    input.houseDefinition.id,
-    selectedOffer.id
-  );
-  nextState = increaseTavernTime(nextState, input.houseDefinition.id, 1);
+  if (input.request.actionId === "open-work-submit") {
+    return withSessionState(input, sessionState, {
+      ...lists,
+      workPanelMode: "submit",
+      selectedSubmitOfferId: lists.acceptedOffers[0]?.id ?? null,
+      dialoguePhase: "open",
+      dialogueLines:
+        lists.acceptedOffers.length === 0
+          ? ["老板看了你一眼。", "你在这家酒馆还没有接下的活。"]
+          : ["提交只显示当前酒馆已经接取的任务。", "没做完也能交，但会按失败算。"],
+      overlay: null,
+    });
+  }
 
-  const goldMutation = mutatePlayerGold(
-    nextState,
-    input.characterDefinitions,
-    input.playerCharacterId,
-    80
-  );
+  const acceptOfferId = parseActionId(input.request.actionId, ACCEPT_WORK_ACTION_PREFIX);
+  if (acceptOfferId != null) {
+    const offer = findWorkOffer(acceptOfferId);
+    const capacity = getWorkCapacity(playerCharacter.stats.fame);
+    if (lists.acceptedOffers.length >= capacity) {
+      return withSessionState(input, sessionState, {
+        overlay: createAlertOverlay(
+          "接不了更多活",
+          [`你当前最多能同时接 ${capacity} 个主命以外的任务。`, "名声高了以后，老板才会把更多活交给你。"],
+          "warning"
+        ),
+      });
+    }
+    if (!lists.availableOffers.some((availableOffer) => availableOffer.id === offer.id)) {
+      return createTransitionResult(input);
+    }
 
-  const remainingOffers = getAvailableWorkOffers(
-    goldMutation.state,
-    input.houseDefinition.id
-  );
+    const nextState = acceptTavernWork(input.gameState, houseId, offer.id);
+    if (offer.type === "dishwashing" && offer.canStartImmediately) {
+      return startDishwashingQte(input, sessionState, offer, nextState);
+    }
 
-  return {
-    gameState: goldMutation.state,
-    characterDefinitions: goldMutation.characterDefinitions,
-    sessionState:
-      sessionState == null
-        ? sessionState
-        : {
-            ...sessionState,
-            availableOffers: remainingOffers,
-            selectedOfferId: remainingOffers[0]?.id ?? null,
-            dialoguePhase: "open",
-            dialogueLines: [
-              `你接下了“${selectedOffer.title}”。`,
-              "忙完一圈回来，老板把报酬拍在了桌上。",
-            ],
-            overlay: createAlertOverlay(
-              "活计完成",
-              [
-                selectedOffer.description,
-                "你完成了这份杂活。",
-                "获得 80 文。",
-              ],
-              "success"
-            ),
-          },
-  };
+    const nextLists = refreshWorkLists(nextState, houseId, playerCharacter.stats.fame);
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        ...nextLists,
+        selectedOfferId: nextLists.availableOffers[0]?.id ?? null,
+        selectedSubmitOfferId: offer.id,
+        workPanelMode: "submit",
+        dialoguePhase: "open",
+        dialogueLines: [
+          `你接下了${offer.title}。`,
+          offer.type === "random-event"
+            ? "这类活的随机事件接口已经预留，当前提交会按失败处理。"
+            : "做完后回来提交。",
+        ],
+        overlay: null,
+      }
+    );
+  }
+
+  const submitOfferId = parseActionId(input.request.actionId, SUBMIT_WORK_ACTION_PREFIX);
+  if (submitOfferId != null) {
+    const offer = lists.acceptedOffers.find((acceptedOffer) => acceptedOffer.id === submitOfferId);
+    if (offer == null) {
+      return createTransitionResult(input);
+    }
+
+    const progress = getTavernWorkProgress(input.gameState, houseId, offer.id);
+    return withSessionState(input, sessionState, {
+      selectedSubmitOfferId: offer.id,
+      overlay: {
+        type: "submit-confirm",
+        offerId: offer.id,
+        title: `提交${offer.title}`,
+        paragraphs: [
+          offer.description,
+          progress < 0
+            ? "这个任务还没有完成记录，现在提交会按失败处理。"
+            : `当前完成度 ${progress} / ${TAVERN_WORK_TOTAL_ROUNDS}。`,
+          "确认提交后，这个任务会从当前接取列表移除。",
+        ],
+        confirmActionId: "confirm-submit-work",
+        cancelActionId: "cancel-overlay",
+      },
+    });
+  }
+
+  if (input.request.actionId === "confirm-submit-work") {
+    const offerId = sessionState.selectedSubmitOfferId;
+    if (offerId == null) {
+      return createTransitionResult(input);
+    }
+    const offer = lists.acceptedOffers.find((acceptedOffer) => acceptedOffer.id === offerId);
+    if (offer == null) {
+      return createTransitionResult(input);
+    }
+    return submitWork(input, sessionState, offer);
+  }
+
+  if (input.request.actionId === "tavern-work-stop") {
+    return handleTavernWorkStop(input, sessionState);
+  }
+
+  if (input.request.actionId === "close-tavern-result") {
+    return withSessionState(
+      input,
+      sessionState,
+      { overlay: null },
+      [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }]
+    );
+  }
+
+  return createTransitionResult(input);
 }
 
 function handleDrinkAction(
@@ -243,10 +600,7 @@ function handleDrinkAction(
         type: "drink-confirm",
         title: "点一杯酒",
         price: tavernDrinkPrice,
-        paragraphs: [
-          "老板抬手敲了敲酒坛。",
-          `要花 ${tavernDrinkPrice} 文买一杯酒吗？`,
-        ],
+        paragraphs: ["老板抬手敲了敲酒坛。", `要花 ${tavernDrinkPrice} 文买一杯酒吗？`],
         confirmActionId: "confirm-drink",
         cancelActionId: "cancel-overlay",
       },
@@ -272,11 +626,7 @@ function handleDrinkAction(
     });
   }
 
-  let nextState = increaseTavernDrinkCount(
-    input.gameState,
-    input.houseDefinition.id,
-    1
-  );
+  let nextState = increaseTavernDrinkCount(input.gameState, input.houseDefinition.id, 1);
   nextState = increaseTavernTime(nextState, input.houseDefinition.id, 1);
 
   const goldMutation = mutatePlayerGold(
@@ -295,16 +645,10 @@ function handleDrinkAction(
         : {
             ...sessionState,
             dialoguePhase: "open",
-            dialogueLines: [
-              "老板给你斟了一杯温热的酒。",
-              "辛辣下肚，整个人也慢慢松了下来。",
-            ],
+            dialogueLines: ["老板给你斟了一杯温酒。", "辛辣下肚，整个人也慢慢松了下来。"],
             overlay: createAlertOverlay(
               "喝酒",
-              [
-                `你花了 ${tavernDrinkPrice} 文买酒。`,
-                "当前先按单次喝酒状态结算，后续可继续接入更完整效果。",
-              ],
+              [`你花了 ${tavernDrinkPrice} 文买酒。`, "当前先按单次喝酒状态结算。"],
               "success"
             ),
           },
@@ -312,7 +656,10 @@ function handleDrinkAction(
 }
 
 function clampWager(wager: number, playerGold: number): number {
-  const maxAffordable = Math.max(tavernWagerStep, Math.floor(playerGold / tavernWagerStep) * tavernWagerStep);
+  const maxAffordable = Math.max(
+    tavernWagerStep,
+    Math.floor(playerGold / tavernWagerStep) * tavernWagerStep
+  );
   return Math.max(tavernWagerStep, Math.min(wager, maxAffordable));
 }
 
@@ -334,7 +681,7 @@ function handleGambleAction(
       return withSessionState(input, sessionState, {
         overlay: createAlertOverlay(
           "赌本不够",
-          ["老板摇了摇头。", `至少要有 ${tavernWagerStep} 文，才够上桌。`],
+          ["老板摇了摇头。", `至少要有 ${tavernWagerStep} 文，才能上桌。`],
           "warning"
         ),
       });
@@ -414,7 +761,7 @@ function handleGambleAction(
   const payout = Math.floor(wager * 1.1);
   const delta = payout - wager;
 
-  let nextState = increaseTavernTime(input.gameState, input.houseDefinition.id, 1);
+  const nextState = increaseTavernTime(input.gameState, input.houseDefinition.id, 1);
   const goldMutation = mutatePlayerGold(
     nextState,
     input.characterDefinitions,
@@ -432,15 +779,12 @@ function handleGambleAction(
             ...sessionState,
             currentWager: tavernDefaultWager,
             dialoguePhase: "open",
-            dialogueLines: [
-              "你坐上赌桌，押下了赌本。",
-              "这次先按接口占位返回，后续再接真正的赌博小游戏。",
-            ],
+            dialogueLines: ["你坐上赌桌，押下了赌本。", "这次先按接口占位返回。"],
             overlay: createAlertOverlay(
               "赌局结算",
               [
                 `下注 ${wager} 文。`,
-                `暂时按 1.1 倍返还，拿回 ${payout} 文。`,
+                `暂时按 1.1 倍返回，拿回 ${payout} 文。`,
                 `本次金钱变化 ${delta >= 0 ? "+" : ""}${delta} 文。`,
               ],
               "success"
@@ -479,6 +823,50 @@ function selectOverlayViewModel(
     };
   }
 
+  if (overlay.type === "submit-confirm") {
+    return {
+      type: "confirm",
+      title: overlay.title,
+      paragraphs: overlay.paragraphs,
+      confirmActionId: overlay.confirmActionId,
+      confirmLabel: "确认提交",
+      cancelActionId: overlay.cancelActionId,
+      cancelLabel: "再等等",
+      tone: "warning",
+    };
+  }
+
+  if (overlay.type === "qte-bar") {
+    return {
+      type: "qte-bar",
+      title: "刷盘子",
+      taskLabel: overlay.taskLabel,
+      round: overlay.round,
+      totalRounds: overlay.totalRounds,
+      successes: overlay.successes,
+      markerPercent: overlay.markerPercent,
+      targetStartPercent: overlay.targetStartPercent,
+      targetWidthPercent: overlay.targetWidthPercent,
+      helperLines: [
+        "指针会来回移动，点击“停手”将其停下。",
+        "停在金色区间内算成功，共判定三次。",
+      ],
+      stopActionId: "tavern-work-stop",
+    };
+  }
+
+  if (overlay.type === "result") {
+    return {
+      type: "result",
+      title: overlay.title,
+      grade: overlay.grade,
+      score: overlay.score,
+      rewardLines: overlay.rewardLines,
+      confirmActionId: "close-tavern-result",
+      confirmLabel: "收下",
+    };
+  }
+
   return {
     type: "gamble",
     title: overlay.title,
@@ -493,25 +881,72 @@ function selectOverlayViewModel(
   };
 }
 
+function createWorkActions(
+  sessionState: TavernSessionState,
+  capacity: number
+): HouseActionViewModel[] {
+  if (sessionState.workPanelMode === "accept") {
+    return [
+      ...sessionState.availableOffers.map((offer) => ({
+        id: `${ACCEPT_WORK_ACTION_PREFIX}${offer.id}`,
+        label: `${offer.title} / ${offer.rewardText}`,
+        disabled: sessionState.acceptedOffers.length >= capacity,
+      })),
+      { id: "open-work", label: "返回" },
+      { id: "dismiss-dialogue", label: "关闭" },
+    ];
+  }
+
+  if (sessionState.workPanelMode === "submit") {
+    return [
+      ...sessionState.acceptedOffers.map((offer) => ({
+        id: `${SUBMIT_WORK_ACTION_PREFIX}${offer.id}`,
+        label: `提交：${offer.title}`,
+      })),
+      { id: "open-work", label: "返回" },
+      { id: "dismiss-dialogue", label: "关闭" },
+    ];
+  }
+
+  return [
+    { id: "open-work-accept", label: "接取" },
+    { id: "open-work-submit", label: "提交" },
+    { id: "dismiss-dialogue", label: "关闭" },
+  ];
+}
+
 export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
   moduleId: "tavern",
   enter(input) {
-    const availableOffers = getAvailableWorkOffers(
+    const playerCharacter = getPlayerCharacter(
+      input.characterDefinitions,
+      input.playerCharacterId
+    );
+    const lists = refreshWorkLists(
       input.gameState,
-      input.houseDefinition.id
+      input.houseDefinition.id,
+      playerCharacter.stats.fame
     );
 
     return {
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: createInitialTavernSessionState(
-        availableOffers,
+        lists.availableOffers,
+        lists.acceptedOffers,
         input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
         ["老板抬眼看了你一眼。", "“要找活、喝酒，还是上桌赌两把？”"]
       ),
+      sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
     };
   },
   dispatch(input) {
+    if (input.request.type === "tick") {
+      return input.sessionState == null
+        ? createTransitionResult(input)
+        : handleTavernWorkTick(input, input.sessionState);
+    }
+
     if (input.request.type !== "action") {
       return createTransitionResult(input);
     }
@@ -526,6 +961,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     if (input.request.actionId === "dismiss-dialogue") {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "idle",
+        workPanelMode: "closed",
         overlay: null,
       });
     }
@@ -533,6 +969,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     if (input.request.actionId === "open-boss-dialogue") {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
+        workPanelMode: "closed",
         dialogueLines: ["老板站在柜后看着你。", "“酒、活、赌，三样都明码标价。”"],
         overlay: null,
       });
@@ -540,32 +977,14 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
 
     if (
       input.request.actionId === "open-work" ||
-      input.request.actionId === "take-work" ||
-      input.request.actionId.startsWith(SELECT_WORK_ACTION_PREFIX)
+      input.request.actionId === "open-work-accept" ||
+      input.request.actionId === "open-work-submit" ||
+      input.request.actionId === "confirm-submit-work" ||
+      input.request.actionId === "tavern-work-stop" ||
+      input.request.actionId === "close-tavern-result" ||
+      input.request.actionId.startsWith(ACCEPT_WORK_ACTION_PREFIX) ||
+      input.request.actionId.startsWith(SUBMIT_WORK_ACTION_PREFIX)
     ) {
-      if (input.request.actionId === "open-work") {
-        const offers = getAvailableWorkOffers(input.gameState, input.houseDefinition.id);
-        const selectedOffer = resolveWorkSelection(
-          offers,
-          input.sessionState?.selectedOfferId ?? null
-        );
-
-        return withSessionState(input, input.sessionState, {
-          availableOffers: offers,
-          selectedOfferId: selectedOffer?.id ?? null,
-          dialoguePhase: "open",
-          dialogueLines:
-            selectedOffer == null
-              ? ["老板翻了翻账本。", "“现在没别的零活了。”"]
-              : [
-                  `老板推出一页活单：“${selectedOffer.title}。”`,
-                  selectedOffer.description,
-                  selectedOffer.rewardText,
-                ],
-          overlay: null,
-        });
-      }
-
       return handleWorkAction(input, input.sessionState);
     }
 
@@ -601,28 +1020,27 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: null,
+      sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
     };
   },
   selectViewModel(input): HouseModuleViewModel {
-    const availableOffers = getAvailableWorkOffers(
-      input.gameState,
-      input.houseDefinition.id
-    );
-    const sessionState =
-      input.sessionState ??
-      createInitialTavernSessionState(
-        availableOffers,
-        input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
-        ["老板抬眼看了你一眼。", "“要找活、喝酒，还是上桌赌两把？”"]
-      );
     const playerCharacter = getPlayerCharacter(
       input.characterDefinitions,
       input.playerCharacterId
     );
-    const selectedOffer = resolveWorkSelection(
-      sessionState.availableOffers,
-      sessionState.selectedOfferId
+    const lists = refreshWorkLists(
+      input.gameState,
+      input.houseDefinition.id,
+      playerCharacter.stats.fame
     );
+    const sessionState =
+      input.sessionState ??
+      createInitialTavernSessionState(
+        lists.availableOffers,
+        lists.acceptedOffers,
+        input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
+        ["老板抬眼看了你一眼。", "“要找活、喝酒，还是上桌赌两把？”"]
+      );
     const currentTime = readNumericVariable(
       input.gameState,
       getTavernTimeVariableKey(input.houseDefinition.id),
@@ -633,9 +1051,11 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       getTavernDrinkCountVariableKey(input.houseDefinition.id),
       0
     );
+    const capacity = getWorkCapacity(playerCharacter.stats.fame);
     const isIdle = sessionState.dialoguePhase === "idle";
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
+    const firstAvailableOffer = lists.availableOffers[0] ?? null;
 
     return {
       moduleId: "tavern",
@@ -667,16 +1087,18 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
               advanceActionId: isGreeting ? "advance-greeting" : null,
               advanceHintText: isGreeting ? "点击继续" : null,
             },
-      actionContainer:
-        !isOpen
-          ? null
-          : {
+      actionContainer: !isOpen
+        ? null
+        : sessionState.workPanelMode === "closed"
+          ? {
               title: `${tavernBossProfile.name} / ${tavernBossProfile.specialty}`,
               actions: [
                 {
                   id: "open-work",
-                  label: selectedOffer == null ? "工作（暂无）" : "工作",
-                  disabled: selectedOffer == null,
+                  label: "工作",
+                  disabled:
+                    lists.availableOffers.length === 0 &&
+                    lists.acceptedOffers.length === 0,
                 },
                 {
                   id: "order-drink",
@@ -689,26 +1111,32 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
                   tone: "accent",
                   disabled: playerCharacter.stats.gold < tavernWagerStep,
                 },
-                {
-                  id: "take-work",
-                  label: "接当前活",
-                  disabled: selectedOffer == null,
-                },
                 { id: "dismiss-dialogue", label: "关闭" },
               ],
+            }
+          : {
+              title: `酒馆活计 / 已接 ${lists.acceptedOffers.length}/${capacity}`,
+              actions: createWorkActions(
+                {
+                  ...sessionState,
+                  availableOffers: lists.availableOffers,
+                  acceptedOffers: lists.acceptedOffers,
+                },
+                capacity
+              ),
             },
       statusCard: {
         eyebrow: "屋舍",
         title: "酒馆",
         subtitle:
-          selectedOffer == null
-            ? "老板 / 今晚无新活"
-            : `${selectedOffer.title} / ${selectedOffer.rewardText}`,
+          firstAvailableOffer == null
+            ? `已接 ${lists.acceptedOffers.length}/${capacity}`
+            : `${firstAvailableOffer.title} / ${firstAvailableOffer.rewardText}`,
         metrics: [
           { label: "金钱", value: `${playerCharacter.stats.gold} 文` },
           { label: "喝酒次数", value: `${drinkCount}` },
           { label: "耗时", value: `${currentTime}` },
-          { label: "当前赌本", value: `${sessionState.currentWager} 文` },
+          { label: "接活上限", value: `${capacity}` },
         ],
       },
       overlay: selectOverlayViewModel(sessionState.overlay),

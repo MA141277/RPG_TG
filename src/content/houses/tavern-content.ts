@@ -2,7 +2,7 @@ import type { TavernWorkOffer } from "../../domain/tavern";
 
 export const tavernBossProfile = {
   actorId: "char.kulan_innkeeper",
-  name: "宿场女将",
+  name: "酒馆老板",
   title: "酒馆老板",
   specialty: "门路",
 };
@@ -13,21 +13,29 @@ export const tavernWagerStep = 50;
 
 export const tavernWorkOffers: TavernWorkOffer[] = [
   {
+    id: "offer.kulan.wash_dishes",
+    type: "dishwashing",
+    title: "刷盘子",
+    description: "到后厨帮忙清洗碗碟，手脚利落就能多拿些工钱。",
+    rewardText: "最高 70 文",
+    maxRewardGold: 70,
+    canStartImmediately: true,
+  },
+  {
     id: "offer.kulan.supply_run",
-    title: "货队押运",
-    description: "替城里商队盯一趟短程押运，回来后可拿酬劳。",
-    rewardText: "报酬 80 文",
-  },
-  {
-    id: "offer.kulan.notice_posting",
-    title: "张贴告示",
-    description: "帮衙门在城里贴完几张告示，算半日杂活。",
-    rewardText: "报酬 60 文",
-  },
-  {
-    id: "offer.kulan.errand_run",
+    type: "random-event",
     title: "跑腿采买",
     description: "替酒馆跑一趟采买，把短缺的酒食带回来。",
-    rewardText: "报酬 70 文",
+    rewardText: "事件接口预留",
+    maxRewardGold: 80,
+  },
+  {
+    id: "offer.kulan.caravan_escort",
+    type: "random-event",
+    title: "护送商队",
+    description: "替熟客护送一段短程商队，后续可接入随机事件和战斗判定。",
+    rewardText: "事件接口预留",
+    maxRewardGold: 120,
+    minFame: 45,
   },
 ];

@@ -1,14 +1,22 @@
 .view-house-grain-shop {
-  --grain-shop-panel-light: url("../../sliced_ui_assets/1_016_small_blank_panel_1.0.png");
-  --grain-shop-panel-medium: url("../../sliced_ui_assets/1_021_medium_blank_panel_1.0.png");
-  --grain-shop-panel-dark: url("../../sliced_ui_assets/1_003_small_dark_panel_1.0.png");
-  --grain-shop-frame-large: url("../../sliced_ui_assets/1_013_blank_large_frame_1.0.png");
-  --grain-shop-button-gold: url("../../sliced_ui_assets/1_024_gold_bottom_button_1.0.png");
-  --grain-shop-button-large: url("../../sliced_ui_assets/1_031_large_gold_button_1.0.png");
-  --grain-shop-nameplate: url("../../sliced_ui_assets/1_010_red_nameplate_1.0.png");
   --grain-shop-scene-bg: url("../../sliced_ui_assets/lianghang.png");
   --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
   --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
+  --grain-shop-accounting-title: url("../../算术UI/material-202605291354-006.png");
+  --grain-shop-accounting-hud: url("../../算术UI/material-202605291354-005.png");
+  --grain-shop-accounting-board: url("../../算术UI/material-202605291352-002.png");
+  --grain-shop-accounting-side: url("../../算术UI/material-202605291352-003.png");
+  --grain-shop-accounting-scroll: url("../../算术UI/material-202605291352-001.png");
+  --grain-shop-accounting-scroll-full: url("../../算术UI/material-202605291354-001.png");
+  --grain-shop-accounting-badge: url("../../算术UI/material-202605291354-013.png");
+  --grain-shop-accounting-badge-short: url("../../算术UI/material-202605291352-012.png");
+  --grain-shop-accounting-side-title: url("../../算术UI/material-202605291354-008.png");
+  --grain-shop-accounting-side-title-blank: url("../../算术UI/material-202605291354-009.png");
+  --grain-shop-accounting-confirm: url("../../算术UI/material-202605291354-014.png");
+  --grain-shop-accounting-correct: url("../../算术UI/material-202605291354-011.png");
+  --grain-shop-accounting-wrong: url("../../算术UI/material-202605291354-012.png");
+  --grain-shop-accounting-divider: url("../../算术UI/material-202605291354-019.png");
+  --grain-shop-accounting-divider-alt: url("../../算术UI/material-202605291354-020.png");
 
   position: relative;
   display: grid;
@@ -250,6 +258,15 @@
   background: center bottom / auto 100% no-repeat var(--grain-shop-shopkeeper-portrait);
 }
 
+.c-grain-shop-portrait__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(50vh, 420px);
+  object-fit: contain;
+  object-position: center bottom;
+}
+
 .c-grain-shop-portrait__name {
   margin: 0;
   text-align: center;
@@ -271,6 +288,13 @@
   width: 100%;
   height: 100%;
   background: center / cover no-repeat var(--grain-shop-shopkeeper-avatar);
+}
+
+.c-grain-shop-avatar__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .c-grain-shop-avatar__name {
@@ -366,6 +390,33 @@
   filter: brightness(1.06);
 }
 
+.c-grain-shop-idle-owner {
+  position: fixed;
+  right: var(--space-4);
+  top: 50%;
+  z-index: 10;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.c-grain-shop-idle-owner__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.c-grain-shop-idle-owner__button:hover .c-grain-shop-portrait,
+.c-grain-shop-idle-owner__button:focus-visible .c-grain-shop-portrait {
+  filter: brightness(1.06);
+}
+
 .c-grain-shop-leave {
   position: fixed;
   right: var(--space-4);
@@ -384,6 +435,415 @@
   justify-content: center;
   padding: var(--space-5);
   background: var(--color-mask);
+}
+
+.c-grain-shop-overlay--accounting {
+  padding: 0;
+  background: rgb(15 9 5 / 74%);
+}
+
+.c-grain-shop-accounting {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  padding: 1.5vw 1.8vw 2vw;
+  color: #2d180d;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / 0%) 0%, rgb(0 0 0 / 12%) 100%),
+    center / cover no-repeat var(--grain-shop-accounting-board);
+  overflow: hidden;
+}
+
+.c-grain-shop-accounting::before,
+.c-grain-shop-accounting::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.c-grain-shop-accounting::before {
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 34%, rgb(255 228 168 / 8%), transparent 24%),
+    radial-gradient(circle at 72% 74%, rgb(255 255 255 / 4%), transparent 28%);
+  mix-blend-mode: screen;
+}
+
+.c-grain-shop-accounting::after {
+  inset: 2.2% 1.7%;
+  border: 1px solid rgb(194 138 76 / 16%);
+  box-shadow: inset 0 0 0 1px rgb(22 10 4 / 45%);
+}
+
+.c-grain-shop-accounting__header,
+.c-grain-shop-accounting__body {
+  position: relative;
+  z-index: 1;
+}
+
+.c-grain-shop-accounting__header {
+  display: grid;
+  grid-template-columns: auto minmax(360px, 1fr);
+  align-items: start;
+  gap: 1.4vw;
+  padding: 0 0.4vw;
+}
+
+.c-grain-shop-accounting__title {
+  width: min(23.3vw, 358px);
+  aspect-ratio: 358 / 104;
+  margin: 0;
+  background: center / contain no-repeat var(--grain-shop-accounting-title);
+}
+
+.c-grain-shop-accounting__hud {
+  justify-self: center;
+  width: min(38.3vw, 587px);
+  aspect-ratio: 587 / 88;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 0 5.6% 0 4.2%;
+  background: center / contain no-repeat var(--grain-shop-accounting-hud);
+  color: #d7b167;
+}
+
+.c-grain-shop-accounting__hud-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75vw;
+  min-width: 0;
+}
+
+.c-grain-shop-accounting__hud-section--time {
+  justify-content: flex-start;
+}
+
+.c-grain-shop-accounting__hud-section--score {
+  justify-content: flex-end;
+}
+
+.c-grain-shop-accounting__timer-icon {
+  width: min(2.8vw, 43px);
+  aspect-ratio: 43 / 46;
+  flex: 0 0 auto;
+  background: center / contain no-repeat url("../../算术UI/material-202605291354-021.png");
+}
+
+.c-grain-shop-accounting__hud-label {
+  font-family: var(--font-title);
+  font-size: clamp(1.2rem, 1.35vw, 1.55rem);
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.c-grain-shop-accounting__hud-value {
+  font-family: var(--font-title);
+  font-size: clamp(1.45rem, 1.7vw, 2rem);
+  line-height: 1;
+  font-weight: 600;
+  color: #dfb86a;
+  text-shadow: 0 1px 0 rgb(45 22 8 / 80%);
+}
+
+.c-grain-shop-accounting__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 22vw);
+  gap: clamp(20px, 1.8vw, 34px);
+  align-items: stretch;
+  min-height: 0;
+  padding: 1.2vw 0.2vw 0;
+}
+
+.c-grain-shop-accounting__stage {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.c-grain-shop-accounting__scroll {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: clamp(40px, 3.3vw, 64px) clamp(48px, 4.1vw, 80px) clamp(24px, 2.2vw, 42px);
+}
+
+.c-grain-shop-accounting__scroll::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat var(--grain-shop-accounting-scroll);
+  pointer-events: none;
+}
+
+.c-grain-shop-accounting__scroll-content {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 50vw);
+  max-width: 760px;
+  min-height: min(52vh, 520px);
+  padding: clamp(48px, 4.6vw, 82px) clamp(60px, 5.5vw, 96px) clamp(44px, 4vw, 72px);
+}
+
+.c-grain-shop-accounting__badge {
+  width: min(18.9vw, 291px);
+  min-height: min(4.3vw, 66px);
+  margin: 0 auto clamp(26px, 2.5vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  background: center / contain no-repeat var(--grain-shop-accounting-badge);
+  color: #55331b;
+  font-family: var(--font-title);
+  font-size: clamp(1.35rem, 1.85vw, 2.15rem);
+  font-weight: 600;
+}
+
+.c-grain-shop-accounting__ledger {
+  display: grid;
+  justify-items: center;
+  gap: clamp(18px, 2vw, 28px);
+}
+
+.c-grain-shop-accounting__ledger-row {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: clamp(18px, 1.8vw, 28px);
+  margin: 0;
+}
+
+.c-grain-shop-accounting__ledger-row--stock {
+  margin-top: clamp(4px, 0.4vw, 10px);
+}
+
+.c-grain-shop-accounting__ledger-label,
+.c-grain-shop-accounting__ledger-value {
+  font-family: var(--font-title);
+  line-height: 1.12;
+}
+
+.c-grain-shop-accounting__ledger-label {
+  min-width: clamp(108px, 10vw, 162px);
+  font-size: clamp(2.1rem, 3.15vw, 3.9rem);
+  text-align: right;
+  color: #2b180f;
+}
+
+.c-grain-shop-accounting__ledger-value {
+  min-width: clamp(124px, 12vw, 192px);
+  font-size: clamp(2.2rem, 3.3vw, 4.15rem);
+  text-align: left;
+  color: #8d2719;
+  font-weight: 600;
+}
+
+.c-grain-shop-accounting__ledger-divider {
+  width: min(100%, 299px);
+  height: 6px;
+  margin: clamp(8px, 1vw, 14px) auto;
+  background:
+    center / 100% 100% no-repeat var(--grain-shop-accounting-divider),
+    center / 100% 100% no-repeat var(--grain-shop-accounting-divider-alt);
+  opacity: 0.76;
+}
+
+.c-grain-shop-accounting__actions {
+  display: flex;
+  justify-content: center;
+  gap: clamp(26px, 2.8vw, 48px);
+  margin-top: clamp(12px, 1.7vw, 28px);
+  padding-bottom: clamp(6px, 0.8vw, 14px);
+}
+
+.c-grain-shop-accounting__decision,
+.c-grain-shop-accounting__confirm {
+  border: 0;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  font-family: var(--font-title);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-grain-shop-accounting__decision:hover,
+.c-grain-shop-accounting__decision:focus-visible,
+.c-grain-shop-accounting__confirm:hover,
+.c-grain-shop-accounting__confirm:focus-visible {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.c-grain-shop-accounting__decision {
+  width: min(13.7vw, 210px);
+  aspect-ratio: 210 / 91;
+  color: #f7e7bf;
+  font-size: clamp(1.5rem, 1.8vw, 2rem);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 0 rgb(51 17 7 / 85%);
+}
+
+.c-grain-shop-accounting__decision--correct {
+  background-image: var(--grain-shop-accounting-correct);
+}
+
+.c-grain-shop-accounting__decision--wrong {
+  background-image: var(--grain-shop-accounting-wrong);
+}
+
+.c-grain-shop-accounting__side {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 0;
+  padding-top: clamp(10px, 0.8vw, 18px);
+}
+
+.c-grain-shop-accounting__side-card {
+  position: relative;
+  width: min(100%, 349px);
+  min-height: min(69vh, 569px);
+  padding: clamp(38px, 3.2vw, 56px) clamp(22px, 1.9vw, 30px) clamp(28px, 2.5vw, 40px);
+}
+
+.c-grain-shop-accounting__side-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat var(--grain-shop-accounting-side);
+  pointer-events: none;
+}
+
+.c-grain-shop-accounting__side-title,
+.c-grain-shop-accounting__side-content {
+  position: relative;
+  z-index: 1;
+}
+
+.c-grain-shop-accounting__side-title {
+  width: min(100%, 285px);
+  aspect-ratio: 285 / 100;
+  margin: 0 auto clamp(18px, 1.7vw, 26px);
+  background: center / contain no-repeat var(--grain-shop-accounting-side-title-blank);
+}
+
+.c-grain-shop-accounting__side-title--score {
+  background-image: var(--grain-shop-accounting-side-title-blank);
+}
+
+.c-grain-shop-accounting__side-title--result {
+  background-image: var(--grain-shop-accounting-side-title);
+}
+
+.c-grain-shop-accounting__side-content {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  min-height: 0;
+  padding: clamp(30px, 2.5vw, 42px) clamp(14px, 1.3vw, 24px) clamp(18px, 1.8vw, 26px);
+  color: #4a2616;
+}
+
+.c-grain-shop-accounting__side-content--result {
+  padding-top: clamp(34px, 2.8vw, 48px);
+}
+
+.c-grain-shop-accounting__side-label {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(1.45rem, 1.7vw, 1.95rem);
+  color: #4b2819;
+}
+
+.c-grain-shop-accounting__side-score {
+  margin: clamp(14px, 1.1vw, 20px) 0 clamp(18px, 1.6vw, 24px);
+  font-family: var(--font-title);
+  font-size: clamp(4.2rem, 6.3vw, 6.6rem);
+  line-height: 1;
+  font-weight: 600;
+  color: #9a2e1d;
+}
+
+.c-grain-shop-accounting__side-score--result {
+  margin-top: clamp(18px, 1.5vw, 28px);
+  margin-bottom: clamp(34px, 3vw, 46px);
+  font-size: clamp(4.8rem, 7vw, 7.6rem);
+}
+
+.c-grain-shop-accounting__side-metrics {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.c-grain-shop-accounting__side-metrics div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: clamp(4px, 0.6vw, 10px);
+  font-size: clamp(0.95rem, 1.1vw, 1.18rem);
+}
+
+.c-grain-shop-accounting__side-metrics dt,
+.c-grain-shop-accounting__side-metrics dd {
+  margin: 0;
+}
+
+.c-grain-shop-accounting__confirm {
+  width: min(100%, 210px);
+  aspect-ratio: 210 / 82;
+  color: #f3e0b4;
+  font-size: clamp(1.45rem, 1.7vw, 1.95rem);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 0 rgb(57 22 6 / 85%);
+  background-image: var(--grain-shop-accounting-confirm);
+}
+
+.c-grain-shop-accounting--result .c-grain-shop-accounting__scroll-content {
+  min-height: min(50vh, 500px);
+}
+
+.c-grain-shop-accounting__result {
+  max-width: 540px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.c-grain-shop-accounting__result-grade,
+.c-grain-shop-accounting__result-score {
+  margin: 0 0 18px;
+  font-family: var(--font-title);
+  font-size: clamp(1.5rem, 1.8vw, 2rem);
+}
+
+.c-grain-shop-accounting__result-grade strong,
+.c-grain-shop-accounting__result-score strong {
+  color: #8d2719;
+}
+
+.c-grain-shop-accounting__result-rewards {
+  margin: 16px auto 0;
+  padding-left: 1.2em;
+  width: fit-content;
+  max-width: min(100%, 420px);
+  line-height: 1.8;
+  font-size: clamp(1rem, 1.15vw, 1.22rem);
+  text-align: left;
 }
 
 .c-grain-shop-modal {
@@ -590,6 +1050,7 @@
 }
 
 .view-house-medicine-house {
+  --grain-shop-scene-bg: url("../../ui/background/huichuntang.png");
   --medicine-scene-frame: url("../../药铺UI/material-202605271718-003.png");
   --medicine-top-parchment: url("../../药铺UI/material-202605271713-007.png");
   --medicine-herb-panel: url("../../药铺UI/material-202605271713-002.png");
@@ -1268,9 +1729,98 @@
   filter: brightness(1.06);
 }
 
+@media (width <= 1100px) {
+  .c-grain-shop-accounting {
+    padding: 16px 14px 18px;
+  }
+
+  .c-grain-shop-accounting__header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 12px;
+  }
+
+  .c-grain-shop-accounting__body {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 16px;
+    overflow-y: auto;
+    padding-top: 12px;
+  }
+
+  .c-grain-shop-accounting__stage {
+    width: 100%;
+  }
+
+  .c-grain-shop-accounting__scroll-content {
+    width: min(100%, 720px);
+  }
+
+  .c-grain-shop-accounting__side {
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .c-grain-shop-accounting__side-card {
+    min-height: 500px;
+  }
+}
+
+@media (width <= 760px) {
+  .c-grain-shop-accounting__hud {
+    width: min(100%, 587px);
+  }
+
+  .c-grain-shop-accounting__title {
+    width: min(100%, 358px);
+  }
+
+  .c-grain-shop-accounting__scroll {
+    padding: 26px 18px 16px;
+  }
+
+  .c-grain-shop-accounting__scroll::before {
+    background-image: var(--grain-shop-accounting-scroll-full);
+  }
+
+  .c-grain-shop-accounting__scroll-content {
+    min-height: 360px;
+    padding: 44px 30px 34px;
+  }
+
+  .c-grain-shop-accounting__badge {
+    width: min(100%, 321px);
+    background-image: var(--grain-shop-accounting-badge-short);
+  }
+
+  .c-grain-shop-accounting__ledger-label,
+  .c-grain-shop-accounting__ledger-value {
+    font-size: clamp(1.8rem, 6vw, 2.5rem);
+  }
+
+  .c-grain-shop-accounting__actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .c-grain-shop-accounting__decision {
+    width: min(100%, 210px);
+  }
+
+  .c-grain-shop-accounting__side-card {
+    width: min(100%, 349px);
+    min-height: 460px;
+  }
+}
+
 @media (width <= 640px) {
   .c-grain-shop-npc-idle {
     left: var(--space-3);
+  }
+
+  .c-grain-shop-idle-owner {
+    right: var(--space-3);
   }
 
   .c-grain-shop-scene-card {

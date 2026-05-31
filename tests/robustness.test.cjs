@@ -16,6 +16,7 @@ const {
   prototypeCityEntries,
   prototypeHistoricalCharacterIdByCharacterId,
   prototypeLeaderResidenceHistoricalCharacters,
+  prototypeHouseAccessRefusalRules,
   prototypeHouses,
   prototypeMap,
   prototypeCityNpcPools,
@@ -57,7 +58,9 @@ const {
 } = require("../.test-dist/application/city-entries/select-leader-residence-options.js");
 const {
   canEnterHouseForStoryStage,
+  isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
+  selectHouseEntryAccess,
 } = require("../.test-dist/application/story/story-stage-access.js");
 const {
   createInitialGrainShopSessionState,
@@ -81,6 +84,10 @@ const {
   getPlayerFatigueVariableKey,
 } = require("../.test-dist/domain/medicine-house.js");
 const {
+  getTavernCompletedWorkKey,
+  getTavernFailedWorkKey,
+} = require("../.test-dist/domain/tavern.js");
+const {
   getLeaderResidenceRelationKey,
   LEADER_RESIDENCE_VARIABLE_KEYS,
 } = require("../.test-dist/domain/leader-residence.js");
@@ -89,6 +96,7 @@ const {
   resolveTeaHouseDebateRound,
 } = require("../.test-dist/application/tea-house/tea-house-debate.js");
 const {
+  ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } = require("../.test-dist/domain/zhu-yuanzhang-story.js");
@@ -505,7 +513,7 @@ test("keep house starts review meeting at countdown zero and resets to 60 after 
   assert.equal(assignedResult.sessionState?.overlay?.type, "alert");
 });
 
-test("story-stage access keeps temple and keep visible in monk stage while hiding home and leader residence", () => {
+test("story-stage access keeps leader residence entry visible in monk stage", () => {
   const monkState = createMonkStageState();
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -528,7 +536,11 @@ test("story-stage access keeps temple and keep visible in monk stage while hidin
   );
   assert.equal(
     isHouseVisibleForStoryStage(monkState, monkCharacters, leaderResidenceHouse),
-    false
+    true
+  );
+  assert.equal(
+    isCityEntryVisibleForStoryStage(monkState, leaderResidenceEntry),
+    true
   );
   assert.equal(
     isHouseVisibleForStoryStage(monkState, monkCharacters, monkKeepHouse),
@@ -548,6 +560,75 @@ test("story-stage access keeps temple and keep visible in monk stage while hidin
   );
 });
 
+test("house access refusal blocks leaving temple before first review", () => {
+  const monkState = createMonkStageState();
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const monkGrainShop = prototypeHouses.find(
+    (houseDefinition) => houseDefinition.id === "house.kulan.grain_shop"
+  );
+  const monkTempleHouse = prototypeHouses.find(
+    (houseDefinition) => houseDefinition.id === "house.kulan.temple"
+  );
+
+  assert.ok(monkGrainShop);
+  assert.ok(monkTempleHouse);
+
+  const grainShopAccess = selectHouseEntryAccess(
+    monkState,
+    monkCharacters,
+    monkGrainShop,
+    prototypeHouseAccessRefusalRules
+  );
+  const templeAccess = selectHouseEntryAccess(
+    monkState,
+    monkCharacters,
+    monkTempleHouse,
+    prototypeHouseAccessRefusalRules
+  );
+
+  assert.equal(grainShopAccess.canEnter, false);
+  assert.equal(grainShopAccess.refusal?.speakerCharacterId, "char.player");
+  assert.equal(
+    grainShopAccess.refusal?.text,
+    "既然答应了主持，就先不要离开寺院吧。"
+  );
+  assert.equal(templeAccess.canEnter, true);
+});
+
+test("house access refusal shows guard dialogue for keep during monk stage", () => {
+  const monkState = {
+    ...createMonkStageState(),
+    runtime: {
+      ...createMonkStageState().runtime,
+      flags: {
+        ...createMonkStageState().runtime.flags,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+      },
+    },
+  };
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const monkKeepHouse = prototypeHouses.find(
+    (houseDefinition) => houseDefinition.id === "house.kulan.keep"
+  );
+
+  assert.ok(monkKeepHouse);
+
+  const keepAccess = selectHouseEntryAccess(
+    monkState,
+    monkCharacters,
+    monkKeepHouse,
+    prototypeHouseAccessRefusalRules
+  );
+
+  assert.equal(keepAccess.canEnter, false);
+  assert.equal(keepAccess.refusal?.speakerCharacterId, "char.kulan_soldier");
+  assert.equal(keepAccess.refusal?.text, "军机要出，请阁下回避。");
+});
+
 test("keep house stays in audience mode during monk stage even when review countdown is zero", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -557,6 +638,10 @@ test("keep house stays in audience mode during monk stage even when review count
       ...createMonkStageState(),
       runtime: {
         ...createMonkStageState().runtime,
+        flags: {
+          ...createMonkStageState().runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
         variables: {
           ...createMonkStageState().runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
@@ -572,7 +657,58 @@ test("keep house stays in audience mode during monk stage even when review count
   assert.equal(enterResult.sessionState?.meetingStage, "finished");
 });
 
-test("temple house starts monk-stage review meeting and assigns a temple duty with 30-day reset", () => {
+test("keep house dismiss turns lord into idle roster actor that can reopen dialogue", () => {
+  const enterResult = keepHouseHouseModule.enter({
+    gameState: {
+      ...createBaseState(),
+      runtime: {
+        ...createBaseState().runtime,
+        variables: {
+          ...createBaseState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+  });
+
+  const openResult = keepHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+
+  const idleResult = keepHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "dismiss-dialogue" },
+  });
+
+  const idleViewModel = keepHouseHouseModule.selectViewModel({
+    gameState: idleResult.gameState,
+    characterDefinitions: idleResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: idleResult.sessionState,
+  });
+
+  assert.equal(idleResult.sessionState?.dialoguePhase, "idle");
+  assert.equal(idleViewModel.dialogue, null);
+  assert.equal(idleViewModel.actionContainer, null);
+  assert.equal(idleViewModel.standbyRoster.length, 1);
+  assert.equal(idleViewModel.standbyRoster[0]?.characterId, "char.kulan_lord");
+  assert.equal(idleViewModel.standbyRoster[0]?.actionId, "open-lord-dialogue");
+});
+
+test("temple house review only selects work direction and daily actions start temple chores later", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
   );
@@ -595,7 +731,7 @@ test("temple house starts monk-stage review meeting and assigns a temple duty wi
   assert.equal(enterResult.sessionState?.mode, "meeting");
   assert.equal(enterResult.sessionState?.meetingStage, "intro");
 
-  const reflectionResult = templeHouseHouseModule.dispatch({
+  const contributionResult = templeHouseHouseModule.dispatch({
     gameState: enterResult.gameState,
     characterDefinitions: enterResult.characterDefinitions,
     houseDefinition: templeHouse,
@@ -603,14 +739,35 @@ test("temple house starts monk-stage review meeting and assigns a temple duty wi
     sessionState: enterResult.sessionState,
     request: { type: "action", actionId: "advance-temple-dialogue" },
   });
-  assert.equal(reflectionResult.sessionState?.meetingStage, "reflection");
+  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
+  assert.equal(contributionResult.sessionState?.overlay?.type, "alert");
 
-  const assignDutyResult = templeHouseHouseModule.dispatch({
-    gameState: reflectionResult.gameState,
-    characterDefinitions: reflectionResult.characterDefinitions,
+  const praiseResult = templeHouseHouseModule.dispatch({
+    gameState: contributionResult.gameState,
+    characterDefinitions: contributionResult.characterDefinitions,
     houseDefinition: templeHouse,
     playerCharacterId,
-    sessionState: reflectionResult.sessionState,
+    sessionState: contributionResult.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+  });
+  assert.equal(praiseResult.sessionState?.meetingStage, "praise");
+
+  const policyResult = templeHouseHouseModule.dispatch({
+    gameState: praiseResult.gameState,
+    characterDefinitions: praiseResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: praiseResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  assert.equal(policyResult.sessionState?.meetingStage, "policy");
+
+  const assignDutyResult = templeHouseHouseModule.dispatch({
+    gameState: policyResult.gameState,
+    characterDefinitions: policyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: policyResult.sessionState,
     request: { type: "action", actionId: "advance-temple-dialogue" },
   });
   assert.equal(assignDutyResult.sessionState?.meetingStage, "assign-duty");
@@ -621,12 +778,12 @@ test("temple house starts monk-stage review meeting and assigns a temple duty wi
     houseDefinition: templeHouse,
     playerCharacterId,
     sessionState: assignDutyResult.sessionState,
-    request: { type: "action", actionId: "assign-temple-task:beg-alms" },
+    request: { type: "action", actionId: "select-review-work:temple-help" },
   });
 
   assert.equal(
     assignedResult.gameState.missions.activeMissionId,
-    "mission.temple.beg-alms"
+    null
   );
   assert.equal(
     assignedResult.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
@@ -634,13 +791,362 @@ test("temple house starts monk-stage review meeting and assigns a temple duty wi
   );
   assert.equal(
     assignedResult.gameState.runtime.variables[
-      TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId
+      TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan
     ],
-    "beg-alms"
+    "temple-help"
   );
   assert.equal(assignedResult.gameState.world.schedule.councilDate.day, 1);
   assert.equal(assignedResult.gameState.world.schedule.councilDate.month, 2);
+  assert.equal(assignedResult.sessionState?.mode, "daily");
   assert.equal(assignedResult.sessionState?.overlay?.type, "alert");
+
+  const closeReviewResult = templeHouseHouseModule.dispatch({
+    gameState: assignedResult.gameState,
+    characterDefinitions: assignedResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignedResult.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+  });
+  const dailyViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: closeReviewResult.gameState,
+    characterDefinitions: closeReviewResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: closeReviewResult.sessionState,
+  });
+
+  assert.equal(closeReviewResult.sessionState?.dialoguePhase, "idle");
+  assert.equal(dailyViewModel.actionContainer, null);
+  assert.equal(
+    dailyViewModel.standbyRoster.find(
+      (actor) => actor.characterId === "char.kulan_temple_abbot"
+    )?.actionId,
+    "open-abbot-dialogue"
+  );
+  const reopenResult = templeHouseHouseModule.dispatch({
+    gameState: closeReviewResult.gameState,
+    characterDefinitions: closeReviewResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: closeReviewResult.sessionState,
+    request: { type: "action", actionId: "open-abbot-dialogue" },
+  });
+  const reopenedViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: reopenResult.gameState,
+    characterDefinitions: reopenResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: reopenResult.sessionState,
+  });
+  assert.deepEqual(
+    reopenedViewModel.actionContainer?.actions.map((action) => action.id),
+    [
+      "open-temple-work-menu",
+      "ask-fortune",
+      "open-donate",
+      "dismiss-dialogue",
+    ]
+  );
+  const openWorkMenuResult = templeHouseHouseModule.dispatch({
+    gameState: reopenResult.gameState,
+    characterDefinitions: reopenResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: reopenResult.sessionState,
+    request: { type: "action", actionId: "open-temple-work-menu" },
+  });
+  const workMenuViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: openWorkMenuResult.gameState,
+    characterDefinitions: openWorkMenuResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: openWorkMenuResult.sessionState,
+  });
+  assert.deepEqual(
+    workMenuViewModel.actionContainer?.actions.map((action) => action.id),
+    [
+      "assign-temple-task:copy-scripture",
+      "assign-temple-task:sweep-courtyard",
+      "assign-temple-task:carry-water",
+      "close-temple-work-menu",
+    ]
+  );
+});
+
+test("temple house blocks leaving during first review with player dialogue", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...createMonkStageState(),
+      runtime: {
+        ...createMonkStageState().runtime,
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  const leaveResult = templeHouseHouseModule.leave({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      overlay: {
+        type: "alert",
+        title: "上期寺中贡献",
+        paragraphs: ["1. 觉远：18 点贡献", "2. 朱元璋：0 点贡献"],
+        tone: "info",
+      },
+    },
+  });
+
+  assert.deepEqual(leaveResult.navigation, { type: "stay-in-house" });
+  assert.equal(leaveResult.sessionState?.overlay, null);
+  assert.equal(leaveResult.sessionState?.dialogueOverride?.speakerCharacterId, playerCharacterId);
+  assert.deepEqual(leaveResult.sessionState?.dialogueOverride?.textLines, [
+    "既然答应了主持，就先不要离开寺院吧。",
+  ]);
+
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: leaveResult.gameState,
+    characterDefinitions: leaveResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: leaveResult.sessionState,
+  });
+
+  assert.equal(viewModel.dialogue?.characterId, playerCharacterId);
+  assert.deepEqual(viewModel.dialogue?.textLines, [
+    "既然答应了主持，就先不要离开寺院吧。",
+  ]);
+  assert.equal(
+    viewModel.dialogue?.portraitArtClassName,
+    "c-temple-house-portrait-art--player"
+  );
+
+});
+
+test("temple house only blocks leaving during the first tutorial work period", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const baseState = createMonkStageState();
+  const firstWorkState = {
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      flags: {
+        ...baseState.runtime.flags,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleWorkLockCompleted]: false,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+      },
+      variables: {
+        ...baseState.runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+        [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+      },
+    },
+  };
+  const firstWorkEnterResult = templeHouseHouseModule.enter({
+    gameState: firstWorkState,
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const blockedLeaveResult = templeHouseHouseModule.leave({
+    gameState: firstWorkEnterResult.gameState,
+    characterDefinitions: firstWorkEnterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: firstWorkEnterResult.sessionState,
+  });
+
+  assert.deepEqual(blockedLeaveResult.navigation, { type: "stay-in-house" });
+  assert.deepEqual(blockedLeaveResult.sessionState?.dialogueOverride?.textLines, [
+    "既然答应了主持，就先不要离开寺院吧。",
+  ]);
+
+  const nextReviewEnterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...firstWorkState,
+      runtime: {
+        ...firstWorkState.runtime,
+        variables: {
+          ...firstWorkState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  assert.equal(
+    nextReviewEnterResult.gameState.runtime.flags[
+      ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleWorkLockCompleted
+    ],
+    true
+  );
+
+  const laterTempleHelpState = {
+    ...firstWorkState,
+    runtime: {
+      ...firstWorkState.runtime,
+      flags: {
+        ...firstWorkState.runtime.flags,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleWorkLockCompleted]: true,
+      },
+    },
+  };
+  const laterEnterResult = templeHouseHouseModule.enter({
+    gameState: laterTempleHelpState,
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const allowedLeaveResult = templeHouseHouseModule.leave({
+    gameState: laterEnterResult.gameState,
+    characterDefinitions: laterEnterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: laterEnterResult.sessionState,
+  });
+
+  assert.equal(allowedLeaveResult.navigation, undefined);
+  assert.equal(allowedLeaveResult.sessionState, null);
+});
+
+test("temple house unlocked begging is chosen in review and executes later without qte", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const baseState = createMonkStageState();
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        flags: {
+          ...baseState.runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+        },
+        variables: {
+          ...baseState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  const contributionResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
+  const praiseResult = templeHouseHouseModule.dispatch({
+    gameState: contributionResult.gameState,
+    characterDefinitions: contributionResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: contributionResult.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+  });
+  assert.equal(praiseResult.sessionState?.meetingStage, "praise");
+  const policyResult = templeHouseHouseModule.dispatch({
+    gameState: praiseResult.gameState,
+    characterDefinitions: praiseResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: praiseResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  const assignDutyResult = templeHouseHouseModule.dispatch({
+    gameState: policyResult.gameState,
+    characterDefinitions: policyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: policyResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  const reviewChoiceResult = templeHouseHouseModule.dispatch({
+    gameState: assignDutyResult.gameState,
+    characterDefinitions: assignDutyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignDutyResult.sessionState,
+    request: { type: "action", actionId: "select-review-work:beg-alms" },
+  });
+  const closeReviewResult = templeHouseHouseModule.dispatch({
+    gameState: reviewChoiceResult.gameState,
+    characterDefinitions: reviewChoiceResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: reviewChoiceResult.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+  });
+
+  const reopenResult = templeHouseHouseModule.dispatch({
+    gameState: closeReviewResult.gameState,
+    characterDefinitions: closeReviewResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: closeReviewResult.sessionState,
+    request: { type: "action", actionId: "open-abbot-dialogue" },
+  });
+
+  const begAlmsResult = templeHouseHouseModule.dispatch({
+    gameState: reopenResult.gameState,
+    characterDefinitions: reopenResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: reopenResult.sessionState,
+    request: { type: "action", actionId: "open-temple-work-menu" },
+  });
+
+  const confirmBegAlmsResult = templeHouseHouseModule.dispatch({
+    gameState: begAlmsResult.gameState,
+    characterDefinitions: begAlmsResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: begAlmsResult.sessionState,
+    request: { type: "action", actionId: "assign-temple-task:beg-alms" },
+  });
+
+  assert.equal(
+    confirmBegAlmsResult.gameState.missions.activeMissionId,
+    "mission.temple.beg-alms"
+  );
+  assert.equal(
+    confirmBegAlmsResult.gameState.runtime.variables[TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan],
+    "beg-alms"
+  );
+  assert.equal(
+    confirmBegAlmsResult.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    30
+  );
+  assert.equal(confirmBegAlmsResult.sessionState?.overlay?.type, "alert");
 });
 
 test("temple house daily flow resolves fortune and donation through unified state", () => {
@@ -674,22 +1180,58 @@ test("temple house daily flow resolves fortune and donation through unified stat
   });
   assert.equal(openResult.sessionState?.dialoguePhase, "open");
 
-  const fortuneResult = templeHouseHouseModule.dispatch({
+  const idleResult = templeHouseHouseModule.dispatch({
     gameState: openResult.gameState,
     characterDefinitions: openResult.characterDefinitions,
     houseDefinition: templeHouse,
     playerCharacterId,
     sessionState: openResult.sessionState,
-    request: { type: "action", actionId: "ask-fortune" },
+    request: { type: "action", actionId: "dismiss-dialogue" },
   });
-  assert.equal(fortuneResult.sessionState?.overlay?.type, "alert");
+  const idleViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: idleResult.gameState,
+    characterDefinitions: idleResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: idleResult.sessionState,
+  });
 
-  const closedFortuneResult = templeHouseHouseModule.dispatch({
+  assert.equal(idleResult.sessionState?.dialoguePhase, "idle");
+  assert.equal(idleViewModel.dialogue, null);
+  assert.equal(idleViewModel.actionContainer, null);
+  assert.equal(
+    idleViewModel.standbyRoster.some(
+      (actor) => actor.characterId === "char.kulan_temple_abbot"
+    ),
+    true
+  );
+
+  const fortuneResult = templeHouseHouseModule.dispatch({
+    gameState: idleResult.gameState,
+    characterDefinitions: idleResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: idleResult.sessionState,
+    request: { type: "action", actionId: "open-abbot-dialogue" },
+  });
+  assert.equal(fortuneResult.sessionState?.dialoguePhase, "open");
+
+  const askFortuneResult = templeHouseHouseModule.dispatch({
     gameState: fortuneResult.gameState,
     characterDefinitions: fortuneResult.characterDefinitions,
     houseDefinition: templeHouse,
     playerCharacterId,
     sessionState: fortuneResult.sessionState,
+    request: { type: "action", actionId: "ask-fortune" },
+  });
+  assert.equal(askFortuneResult.sessionState?.overlay?.type, "alert");
+
+  const closedFortuneResult = templeHouseHouseModule.dispatch({
+    gameState: askFortuneResult.gameState,
+    characterDefinitions: askFortuneResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: askFortuneResult.sessionState,
     request: { type: "action", actionId: "close-temple-overlay" },
   });
   assert.equal(closedFortuneResult.sessionState?.overlay, null);
@@ -1464,7 +2006,7 @@ test("tavern gamble flow returns wager at 1.1x placeholder payout", () => {
   assert.equal(settleGamble.sessionState?.overlay?.type, "alert");
 });
 
-test("tavern work flow completes one side offer and grants reward", () => {
+test("tavern work flow accepts dishwashing qte and submits with confirmation", () => {
   const state = createBaseState();
   const enterResult = tavernHouseModule.enter({
     gameState: state,
@@ -1482,18 +2024,146 @@ test("tavern work flow completes one side offer and grants reward", () => {
     request: { type: "action", actionId: "open-work" },
   });
 
-  const takeWork = tavernHouseModule.dispatch({
+  const openAccept = tavernHouseModule.dispatch({
     gameState: openWork.gameState,
     characterDefinitions: openWork.characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
     sessionState: openWork.sessionState,
-    request: { type: "action", actionId: "take-work" },
+    request: { type: "action", actionId: "open-work-accept" },
   });
 
-  const playerCharacter = getPlayerCharacter(takeWork.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 200);
-  assert.equal(takeWork.sessionState?.availableOffers.length, 2);
+  assert.equal(openAccept.sessionState?.workPanelMode, "accept");
+
+  const acceptWork = tavernHouseModule.dispatch({
+    gameState: openAccept.gameState,
+    characterDefinitions: openAccept.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openAccept.sessionState,
+    request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
+  });
+
+  assert.equal(acceptWork.sessionState?.overlay?.type, "qte-bar");
+
+  let qteResult = acceptWork;
+  for (let round = 0; round < 3; round += 1) {
+    qteResult = tavernHouseModule.dispatch({
+      gameState: qteResult.gameState,
+      characterDefinitions: qteResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: {
+        ...qteResult.sessionState,
+        overlay: {
+          ...qteResult.sessionState.overlay,
+          markerPercent: qteResult.sessionState.overlay.targetStartPercent,
+        },
+      },
+      request: { type: "action", actionId: "tavern-work-stop" },
+    });
+  }
+
+  assert.equal(qteResult.sessionState?.overlay?.type, "result");
+
+  const openSubmitConfirm = tavernHouseModule.dispatch({
+    gameState: qteResult.gameState,
+    characterDefinitions: qteResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: qteResult.sessionState,
+    request: { type: "action", actionId: "submit-work:offer.kulan.wash_dishes" },
+  });
+
+  assert.equal(openSubmitConfirm.sessionState?.overlay?.type, "submit-confirm");
+
+  const submitResult = tavernHouseModule.dispatch({
+    gameState: openSubmitConfirm.gameState,
+    characterDefinitions: openSubmitConfirm.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openSubmitConfirm.sessionState,
+    request: { type: "action", actionId: "confirm-submit-work" },
+  });
+
+  const playerCharacter = getPlayerCharacter(submitResult.characterDefinitions);
+  assert.equal(playerCharacter.stats.gold, 190);
+  assert.equal(submitResult.sessionState?.acceptedOffers.length, 0);
+  assert.equal(
+    submitResult.gameState.runtime.flags[
+      getTavernCompletedWorkKey(tavernHouse.id, "offer.kulan.wash_dishes")
+    ],
+    true
+  );
+});
+
+test("tavern submitting unfinished work fails and clears active work", () => {
+  const state = createBaseState();
+  const enterResult = tavernHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+
+  const openWork = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-work" },
+  });
+
+  const openAccept = tavernHouseModule.dispatch({
+    gameState: openWork.gameState,
+    characterDefinitions: openWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openWork.sessionState,
+    request: { type: "action", actionId: "open-work-accept" },
+  });
+
+  const acceptRandom = tavernHouseModule.dispatch({
+    gameState: openAccept.gameState,
+    characterDefinitions: openAccept.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openAccept.sessionState,
+    request: { type: "action", actionId: "accept-work:offer.kulan.supply_run" },
+  });
+
+  assert.equal(acceptRandom.sessionState?.acceptedOffers.length, 1);
+
+  const openSubmitConfirm = tavernHouseModule.dispatch({
+    gameState: acceptRandom.gameState,
+    characterDefinitions: acceptRandom.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: acceptRandom.sessionState,
+    request: { type: "action", actionId: "submit-work:offer.kulan.supply_run" },
+  });
+
+  assert.equal(openSubmitConfirm.sessionState?.overlay?.type, "submit-confirm");
+
+  const submitResult = tavernHouseModule.dispatch({
+    gameState: openSubmitConfirm.gameState,
+    characterDefinitions: openSubmitConfirm.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openSubmitConfirm.sessionState,
+    request: { type: "action", actionId: "confirm-submit-work" },
+  });
+
+  const playerCharacter = getPlayerCharacter(submitResult.characterDefinitions);
+  assert.equal(playerCharacter.stats.gold, 120);
+  assert.equal(submitResult.sessionState?.acceptedOffers.length, 0);
+  assert.equal(
+    submitResult.gameState.runtime.flags[
+      getTavernFailedWorkKey(tavernHouse.id, "offer.kulan.supply_run")
+    ],
+    true
+  );
 });
 
 test("medicine house greeting flow opens actions after advance", () => {
@@ -1614,6 +2284,96 @@ test("medicine house heal and buy update fatigue inventory and gold", () => {
       getMedicineInventoryQuantityVariableKey("medicine_heal_001")
     ],
     1
+  );
+});
+
+test("temple work reaching contribution threshold starts shared map auto advance for next review", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...createMonkStageState(),
+      runtime: {
+        ...createMonkStageState().runtime,
+        flags: {
+          ...createMonkStageState().runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 20,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  const openResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      dialoguePhase: "open",
+    },
+    request: { type: "action", actionId: "open-temple-work-menu" },
+  });
+
+  const startWorkResult = templeHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "assign-temple-task:copy-scripture" },
+  });
+
+  let qteResult = startWorkResult;
+  for (let round = 0; round < 3; round += 1) {
+    qteResult = templeHouseHouseModule.dispatch({
+      gameState: qteResult.gameState,
+      characterDefinitions: qteResult.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: {
+        ...qteResult.sessionState,
+        overlay: {
+          ...qteResult.sessionState.overlay,
+          markerPercent: qteResult.sessionState.overlay.targetStartPercent,
+        },
+      },
+      request: { type: "action", actionId: "temple-work-stop" },
+    });
+  }
+
+  assert.equal(qteResult.sessionState?.overlay?.type, "result");
+  assert.equal(
+    qteResult.gameState.runtime.flags[ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked],
+    true
+  );
+
+  const closeResult = templeHouseHouseModule.dispatch({
+    gameState: qteResult.gameState,
+    characterDefinitions: qteResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: qteResult.sessionState,
+    request: { type: "action", actionId: "close-temple-result" },
+  });
+
+  assert.equal(closeResult.sessionState, null);
+  assert.equal(
+    closeResult.sideEffects?.some(
+      (sideEffect) => sideEffect.type === "start-map-auto-advance"
+    ),
+    true
   );
 });
 

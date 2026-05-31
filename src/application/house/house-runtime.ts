@@ -1,6 +1,8 @@
 import { getHouseModule } from "../house-modules/house-module-registry";
 import type { AppState } from "../app-shell";
 import type { HouseDefinition } from "../../domain/house";
+import type { EventDefinition } from "../../domain/event";
+import type { SceneDefinition } from "../../domain/action";
 import type {
   ActiveHouseModuleSession,
   HouseModuleId,
@@ -8,14 +10,24 @@ import type {
   HouseModuleSessionState,
   HouseModuleTransitionResult,
 } from "../../domain/house-module";
+import { triggerStoryEvents } from "../story/story-runtime";
 import { assertExists } from "../../shared/assert";
 
 type HouseRuntimeDependencies = {
   getAppState(): AppState;
   setAppState(appState: AppState): void;
   renderApp(): void;
+  startMapAutoAdvance(input: {
+    intervalId: string;
+    everyMs: number;
+    targetHouseId: string;
+    label: string;
+  }): void;
+  stopMapAutoAdvance(intervalId: string): void;
   houseDefinitions: HouseDefinition[];
   playerCharacterId: string;
+  eventDefinitionsById: Record<string, EventDefinition>;
+  sceneDefinitionsById: Record<string, SceneDefinition>;
 };
 
 export type HouseRuntime = ReturnType<typeof createHouseRuntime>;
@@ -96,15 +108,44 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     houseDefinition: HouseDefinition,
     moduleId: HouseModuleId,
     sideEffects: Array<{
-      type: "start-interval" | "stop-interval";
+      type:
+        | "start-interval"
+        | "stop-interval"
+        | "start-map-auto-advance"
+        | "stop-map-auto-advance";
       intervalId: string;
       everyMs?: number;
       request?: HouseModuleRequest;
+      targetHouseId?: string;
+      label?: string;
     }>
   ): void {
     sideEffects.forEach((sideEffect) => {
       if (sideEffect.type === "stop-interval") {
         stopHouseInterval(sideEffect.intervalId);
+        return;
+      }
+
+      if (sideEffect.type === "stop-map-auto-advance") {
+        dependencies.stopMapAutoAdvance(sideEffect.intervalId);
+        return;
+      }
+
+      if (sideEffect.type === "start-map-auto-advance") {
+        if (
+          sideEffect.everyMs == null ||
+          sideEffect.targetHouseId == null ||
+          sideEffect.label == null
+        ) {
+          return;
+        }
+
+        dependencies.startMapAutoAdvance({
+          intervalId: sideEffect.intervalId,
+          everyMs: sideEffect.everyMs,
+          targetHouseId: sideEffect.targetHouseId,
+          label: sideEffect.label,
+        });
         return;
       }
 
@@ -187,6 +228,31 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
       applyHouseModuleResult(houseDefinition, moduleId, result);
     }
 
+    const storyResult = triggerStoryEvents(
+      {
+        state: dependencies.getAppState().gameState,
+        characterDefinitions: dependencies.getAppState().characterDefinitions,
+      },
+      {
+        eventDefinitionsById: dependencies.eventDefinitionsById,
+        sceneDefinitionsById: dependencies.sceneDefinitionsById,
+      },
+      {
+        timing: "house-enter",
+        cityId: houseDefinition.cityId,
+        houseId: houseDefinition.id,
+      }
+    );
+
+    if (storyResult.state !== dependencies.getAppState().gameState) {
+      const latestAppState = dependencies.getAppState();
+      dependencies.setAppState({
+        ...latestAppState,
+        gameState: storyResult.state,
+        characterDefinitions: storyResult.characterDefinitions,
+      });
+    }
+
     dependencies.renderApp();
   }
 
@@ -203,6 +269,11 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         sessionState: appState.gameState.ui.houseSession?.state ?? null,
       });
       applyHouseModuleResult(activeHouse, activeHouse.moduleId, result);
+
+      if (result.navigation?.type === "stay-in-house") {
+        dependencies.renderApp();
+        return;
+      }
     } else {
       clearAllHouseIntervals();
     }

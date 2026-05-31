@@ -1,7 +1,7 @@
 .view-house-temple {
   --grain-shop-scene-bg: url("../../ui/background/temple.jpg");
-  --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
-  --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
+  --grain-shop-shopkeeper-portrait: url("../../ui/npc/zhuchi.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui/npc/zhuchi(touxiang).png");
 }
 
 .view-house-temple::after {
@@ -12,4 +12,162 @@
 
 .view-house-temple .c-grain-shop-dialogue__npc .c-grain-shop-portrait__name {
   min-width: 148px;
+}
+
+.view-house-temple .c-keep-house-meeting {
+  position: absolute;
+  inset: 17% 11% 26% 7%;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.4rem 1.6rem;
+  align-content: center;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.view-house-temple .c-keep-house-seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.view-house-temple .c-keep-house-seat.is-selected .c-keep-house-seat__avatar {
+  filter: brightness(1.04);
+  transform: translateY(-4px);
+}
+
+.view-house-temple .c-keep-house-seat__avatar {
+  width: 134px;
+  height: 134px;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.view-house-temple .c-keep-house-seat__nameplate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
+  min-height: 4.4rem;
+  padding: 0.65rem 1rem 0.8rem;
+  color: #2d2117;
+  background:
+    linear-gradient(180deg, rgb(255 250 240 / 96%), rgb(232 224 205 / 92%));
+  border: 1px solid rgb(108 84 56 / 22%);
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 14%),
+    inset 0 1px 0 rgb(255 255 255 / 55%);
+}
+
+.view-house-temple .c-keep-house-seat__name {
+  font-family: var(--font-title);
+  font-size: 1.65rem;
+  line-height: 1.1;
+}
+
+.view-house-temple .c-keep-house-seat__title {
+  margin-top: 0.2rem;
+  font-size: 0.92rem;
+  color: #65503a;
+}
+
+.view-house-temple .c-temple-house-avatar-art--abbot {
+  background-image: url("../../ui/npc/zhuchi(touxiang).png");
+}
+
+.view-house-temple .c-temple-house-portrait-art--abbot {
+  background-image: url("../../ui/npc/zhuchi.png");
+}
+
+.view-house-temple .c-temple-house-avatar-art--player {
+  background-image: url("../../ui/user/20.png");
+}
+
+.view-house-temple .c-temple-house-portrait-art--player {
+  background-image: url("../../ui/user/20.png");
+}
+
+.view-house-temple .c-temple-house-avatar-art--senior-monk {
+  background-image: url("../../ui/npc/shixiong(touxiang).png");
+}
+
+.view-house-temple .c-temple-house-portrait-art--senior-monk {
+  background-image: url("../../ui/npc/shixiong.png");
+}
+
+.c-temple-house-modal {
+  max-width: 640px;
+}
+
+.c-temple-house-qte__header {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.c-temple-house-qte__task,
+.c-temple-house-qte__meta,
+.c-temple-house-result__grade {
+  margin: 0;
+  color: #efe7d0;
+}
+
+.c-temple-house-qte__track {
+  position: relative;
+  height: 24px;
+  margin-top: 18px;
+  border: 1px solid rgb(238 216 171 / 28%);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgb(33 26 20 / 82%) 0%, rgb(18 14 11 / 95%) 100%);
+  overflow: hidden;
+}
+
+.c-temple-house-qte__target {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgb(205 167 92 / 92%) 0%, rgb(138 96 43 / 92%) 100%);
+  box-shadow: 0 0 14px rgb(210 168 92 / 28%);
+}
+
+.c-temple-house-qte__marker {
+  position: absolute;
+  top: -2px;
+  width: 10px;
+  height: 28px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f7f1df 0%, #c8b690 100%);
+  box-shadow: 0 0 10px rgb(255 247 228 / 30%);
+  transform: translateX(-50%);
+}
+
+@media (width <= 900px) {
+  .view-house-temple .c-keep-house-meeting {
+    inset: 12% 4% 30% 4%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.4rem 0.9rem;
+  }
+
+  .view-house-temple .c-keep-house-seat__avatar {
+    width: 108px;
+    height: 108px;
+  }
+
+  .view-house-temple .c-keep-house-seat__nameplate {
+    min-width: 150px;
+    min-height: 3.6rem;
+    padding: 0.45rem 0.7rem 0.6rem;
+  }
+
+  .view-house-temple .c-keep-house-seat__name {
+    font-size: 1.2rem;
+  }
 }

@@ -30,7 +30,15 @@ import {
   createHouseRuntime,
   type HouseRuntime,
 } from "./application/house/house-runtime";
-import { canEnterHouseForStoryStage } from "./application/story/story-stage-access";
+import {
+  advanceStorySceneStep,
+  buildStoryTriggerInput,
+  chooseStorySceneOption,
+  getCurrentChoiceOptions,
+  getCurrentSceneAction,
+  triggerStoryEvents,
+} from "./application/story/story-runtime";
+import { selectHouseEntryAccess } from "./application/story/story-stage-access";
 import { enterCity } from "./application/navigation/enter-city";
 import {
   travelToCoordinate,
@@ -47,6 +55,7 @@ import {
   prototypeHistoricalCharacterIdByCharacterId,
   prototypeCityNpcPools,
   prototypeCityPortraits,
+  prototypeHouseAccessRefusalRules,
   prototypeHouses,
   prototypeValuables,
 } from "./content/prototype-world";
@@ -54,12 +63,17 @@ import {
   createDefaultGlobalHudLayout,
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
+import {
+  storyEventDefinitionsById,
+  storySceneDefinitionsById,
+} from "./content/story";
 import { yuanmoCampaignMap } from "./content/yuanmo-campaign-map";
 import {
   zhuYuanzhangCityRosters,
   zhuYuanzhangEarlyCharacters,
 } from "./content/zhu-yuanzhang-early-characters";
 import type { CharacterDefinition } from "./domain/character";
+import type { HouseDefinition } from "./domain/house";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -108,8 +122,8 @@ const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
 };
 const TARGET_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 40,
-  offsetX: -5695,
-  offsetY: 5918,
+  offsetX: -5737,
+  offsetY: 4769,
 };
 
 type CampaignMapDebugState = {
@@ -230,6 +244,12 @@ let campaignMapDragState:
     }
   | null = null;
 let shouldSuppressNextClickAfterMapDrag = false;
+let recentPointerDispatchedHouseAction:
+  | {
+      actionId: string;
+      timestamp: number;
+    }
+  | null = null;
 let layoutEditorDragState:
   | {
       mode: "component" | "element";
@@ -242,6 +262,7 @@ let layoutEditorDragState:
   | null = null;
 let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
 let campaignTravelRequestId = 0;
+const mapAutoAdvanceHandles: Record<string, number> = {};
 
 let houseRuntime: HouseRuntime = createHouseRuntimeInstance();
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
@@ -309,7 +330,9 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     },
     campaignTravelState: null,
     modalState: null,
+    locationDialogueState: null,
     cityDirectoryState: null,
+    autoAdvanceState: null,
     uiLayouts: {
       globalHud: createDefaultGlobalHudLayout(),
     },
@@ -358,9 +381,188 @@ function createHouseRuntimeInstance(): HouseRuntime {
       appState = nextAppState;
     },
     renderApp,
+    startMapAutoAdvance,
+    stopMapAutoAdvance,
     houseDefinitions: prototypeHouses,
     playerCharacterId: currentPlayerCharacterId,
+    eventDefinitionsById: storyEventDefinitionsById,
+    sceneDefinitionsById: storySceneDefinitionsById,
   });
+}
+
+function getActiveStoryChoiceOptions() {
+  return getCurrentChoiceOptions(
+    appState.gameState,
+    storySceneDefinitionsById
+  );
+}
+
+function readCalendarDateNumber(date: {
+  year: number;
+  month: number;
+  day: number;
+}): number {
+  return date.year * 360 + (date.month - 1) * 30 + date.day;
+}
+
+function advanceStateOneDay(state: AppState["gameState"]): AppState["gameState"] {
+  const currentDateNumber = readCalendarDateNumber(state.calendar) + 1;
+  const nextYear = Math.floor((currentDateNumber - 1) / 360);
+  const dayOfYear = currentDateNumber - nextYear * 360;
+  const nextMonth = Math.floor((dayOfYear - 1) / 30) + 1;
+  const nextDay = ((dayOfYear - 1) % 30) + 1;
+  const nextReviewCountdownValue = state.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown];
+  const nextReviewCountdown =
+    typeof nextReviewCountdownValue === "number"
+      ? Math.max(0, nextReviewCountdownValue - 1)
+      : nextReviewCountdownValue;
+  const daysLeft = Math.max(
+    0,
+    readCalendarDateNumber(state.world.schedule.councilDate) - currentDateNumber
+  );
+
+  return {
+    ...state,
+    calendar: {
+      ...state.calendar,
+      year: nextYear,
+      month: nextMonth,
+      day: nextDay,
+    },
+    world: {
+      ...state.world,
+      timeOfDay: "morning",
+    },
+    ui: {
+      ...state.ui,
+      reviewDateText: daysLeft <= 0 ? "今日评定" : `距离评定 ${daysLeft} 天`,
+    },
+    runtime: {
+      ...state.runtime,
+      variables: {
+        ...state.runtime.variables,
+        ...(typeof nextReviewCountdown === "number"
+          ? { [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: nextReviewCountdown }
+          : {}),
+      },
+    },
+  };
+}
+
+function stopMapAutoAdvance(intervalId: string): void {
+  const handle = mapAutoAdvanceHandles[intervalId];
+  if (handle != null) {
+    window.clearInterval(handle);
+    delete mapAutoAdvanceHandles[intervalId];
+  }
+
+  if (appState.autoAdvanceState?.intervalId === intervalId) {
+    appState = {
+      ...appState,
+      autoAdvanceState: null,
+    };
+  }
+}
+
+function startMapAutoAdvance(input: {
+  intervalId: string;
+  everyMs: number;
+  targetHouseId: string;
+  label: string;
+}): void {
+  stopMapAutoAdvance(input.intervalId);
+  cancelCampaignTravel();
+  houseRuntime.clearAllHouseIntervals();
+  appState = {
+    ...appState,
+    modalState: null,
+    locationDialogueState: null,
+    cityDirectoryState: null,
+    campaignTravelState: null,
+    autoAdvanceState: {
+      intervalId: input.intervalId,
+      label: input.label,
+      targetHouseId: input.targetHouseId,
+    },
+    gameState: {
+      ...appState.gameState,
+      world: {
+        ...appState.gameState.world,
+        currentHouseId: null,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        currentView: "map",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+  };
+  renderApp();
+
+  mapAutoAdvanceHandles[input.intervalId] = window.setInterval(() => {
+    appState = {
+      ...appState,
+      gameState: advanceStateOneDay(appState.gameState),
+    };
+    renderApp();
+
+    if (
+      readCalendarDateNumber(appState.gameState.calendar) >=
+      readCalendarDateNumber(appState.gameState.world.schedule.councilDate)
+    ) {
+      stopMapAutoAdvance(input.intervalId);
+      houseRuntime.enterHouseById(input.targetHouseId);
+    }
+  }, input.everyMs);
+}
+
+function advanceCurrentStoryScene(): void {
+  const result = advanceStorySceneStep(
+    {
+      state: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+    },
+    {
+      eventDefinitionsById: storyEventDefinitionsById,
+      sceneDefinitionsById: storySceneDefinitionsById,
+    }
+  );
+
+  appState = {
+    ...appState,
+    gameState: result.state,
+    characterDefinitions: result.characterDefinitions,
+  };
+  renderApp();
+}
+
+function chooseCurrentStoryOption(choiceId: string): void {
+  const selectedOption = getActiveStoryChoiceOptions().find(
+    (choiceOption) => choiceOption.id === choiceId
+  );
+  if (selectedOption == null) {
+    return;
+  }
+
+  const result = chooseStorySceneOption(
+    {
+      state: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+    },
+    {
+      eventDefinitionsById: storyEventDefinitionsById,
+      sceneDefinitionsById: storySceneDefinitionsById,
+    },
+    selectedOption
+  );
+
+  appState = {
+    ...appState,
+    gameState: result.state,
+    characterDefinitions: result.characterDefinitions,
+  };
+  renderApp();
 }
 
 function loadSaveData(): SaveDataResult {
@@ -440,6 +642,40 @@ function resumeBackgroundMusicIfNeeded(): void {
   if (backgroundMusicPlayer.paused) {
     void playBackgroundMusic();
   }
+}
+
+function canOpenHouseFromCity(houseDefinition: HouseDefinition): boolean {
+  const accessResult = selectHouseEntryAccess(
+    appState.gameState,
+    appState.characterDefinitions,
+    houseDefinition,
+    prototypeHouseAccessRefusalRules
+  );
+
+  if (accessResult.canEnter) {
+    if (appState.locationDialogueState != null) {
+      appState = {
+        ...appState,
+        locationDialogueState: null,
+      };
+    }
+    return true;
+  }
+
+  if (accessResult.refusal != null) {
+    appState = {
+      ...appState,
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: accessResult.refusal.speakerCharacterId,
+        textLines: [accessResult.refusal.text],
+        advanceHintText: accessResult.refusal.confirmLabel,
+      },
+    };
+    renderApp();
+  }
+
+  return false;
 }
 
 window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
@@ -601,6 +837,27 @@ appElement.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  const pointerHouseActionButton = targetElement.closest<HTMLElement>(
+    "[data-house-action]"
+  );
+  const pointerHouseActionId = pointerHouseActionButton?.dataset.houseAction;
+  if (
+    pointerHouseActionId != null &&
+    shouldDispatchHouseActionOnPointerDown(pointerHouseActionId)
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    recentPointerDispatchedHouseAction = {
+      actionId: pointerHouseActionId,
+      timestamp: window.performance.now(),
+    };
+    houseRuntime.dispatchCurrentHouseRequest({
+      type: "action",
+      actionId: pointerHouseActionId,
+    });
+    return;
+  }
+
   const elementHandle = targetElement.closest<HTMLElement>(
     "[data-layout-element-handle]"
   );
@@ -758,6 +1015,18 @@ appElement.addEventListener("click", (event) => {
       handleModalConfirm();
       return;
     }
+  }
+
+  const locationDialogueAction = targetElement.closest<HTMLElement>(
+    "[data-action='close-location-dialogue']"
+  );
+  if (locationDialogueAction != null) {
+    appState = {
+      ...appState,
+      locationDialogueState: null,
+    };
+    renderApp();
+    return;
   }
 
   const closeOverlayButton = targetElement.closest<HTMLElement>(
@@ -942,6 +1211,7 @@ appElement.addEventListener("click", (event) => {
     appState = {
       ...appState,
       cityDirectoryState: null,
+      locationDialogueState: null,
       gameState: {
         ...appState.gameState,
         world: {
@@ -971,6 +1241,13 @@ appElement.addEventListener("click", (event) => {
         entryDefinition.cityId === appState.gameState.world.currentCityId
     );
     if (cityEntry?.directoryType === "leader-residence") {
+      const targetHouse = prototypeHouses.find(
+        (houseDefinition) => houseDefinition.id === cityEntry.targetHouseId
+      );
+      if (targetHouse == null || !canOpenHouseFromCity(targetHouse)) {
+        return;
+      }
+
       appState = openCityDirectory(appState, {
         type: cityEntry.directoryType,
         title: cityEntry.name,
@@ -997,11 +1274,18 @@ appElement.addEventListener("click", (event) => {
   if (cityDirectoryCharacterButton != null && appState.cityDirectoryState != null) {
     const selectedCharacterId =
       cityDirectoryCharacterButton.dataset.cityDirectoryCharacterId;
-    if (selectedCharacterId != null) {
-      const targetHouseId = appState.cityDirectoryState.targetHouseId;
-      appState = {
-        ...closeCityDirectory(appState),
-        gameState: {
+      if (selectedCharacterId != null) {
+        const targetHouseId = appState.cityDirectoryState.targetHouseId;
+        const targetHouse = prototypeHouses.find(
+          (houseDefinition) => houseDefinition.id === targetHouseId
+        );
+        if (targetHouse == null || !canOpenHouseFromCity(targetHouse)) {
+          return;
+        }
+
+        appState = {
+          ...closeCityDirectory(appState),
+          gameState: {
           ...appState.gameState,
           runtime: {
             ...appState.gameState.runtime,
@@ -1018,12 +1302,36 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const sceneAdvanceElement = targetElement.closest<HTMLElement>(
+    "[data-scene-action='advance']"
+  );
+  if (sceneAdvanceElement != null && appState.gameState.ui.currentView === "scene") {
+    advanceCurrentStoryScene();
+    return;
+  }
+
+  const sceneChoiceButton = targetElement.closest<HTMLElement>(
+    "[data-scene-choice-id]"
+  );
+  if (sceneChoiceButton != null && appState.gameState.ui.currentView === "scene") {
+    const choiceId = sceneChoiceButton.dataset.sceneChoiceId;
+    if (choiceId != null) {
+      chooseCurrentStoryOption(choiceId);
+    }
+    return;
+  }
+
   const houseActionButton = targetElement.closest<HTMLElement>(
     "[data-house-action]"
   );
   if (houseActionButton != null) {
     const actionId = houseActionButton.dataset.houseAction;
     if (actionId != null) {
+      if (shouldSuppressPointerDispatchedHouseClick(actionId)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       houseRuntime.dispatchCurrentHouseRequest({
         type: "action",
         actionId,
@@ -1047,14 +1355,11 @@ appElement.addEventListener("click", (event) => {
       const houseDefinition = prototypeHouses.find(
         (candidateHouse) => candidateHouse.id === houseId
       );
-      if (
-        houseDefinition == null ||
-        !canEnterHouseForStoryStage(
-          appState.gameState,
-          appState.characterDefinitions,
-          houseDefinition
-        )
-      ) {
+      if (houseDefinition == null) {
+        return;
+      }
+
+      if (!canOpenHouseFromCity(houseDefinition)) {
         return;
       }
 
@@ -1076,6 +1381,10 @@ appElement.addEventListener("click", (event) => {
   );
   if (mapDebugActionButton != null) {
     handleCampaignMapDebugAction(mapDebugActionButton.dataset.mapDebugAction);
+    return;
+  }
+
+  if (appState.autoAdvanceState != null) {
     return;
   }
 
@@ -1150,6 +1459,7 @@ function handleModalConfirm() {
         cityName: appState.modalState.cityName,
       },
       modalState: null,
+      locationDialogueState: null,
     };
     renderApp();
     void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
@@ -1161,6 +1471,7 @@ function handleModalConfirm() {
         ...appState,
         campaignTravelState: null,
         modalState: shouldEnterCity ? pendingEnterCityState : null,
+        locationDialogueState: null,
       };
       renderApp();
     });
@@ -1172,6 +1483,7 @@ function handleModalConfirm() {
     ...appState,
     gameState: enterCity(appState.gameState, appState.modalState.cityId),
     modalState: null,
+    locationDialogueState: null,
   };
   renderApp();
 }
@@ -1204,6 +1516,7 @@ function cancelCampaignTravel(): void {
     ...appState,
     campaignTravelState: null,
     modalState: null,
+    locationDialogueState: null,
     campaignActorState: {
       ...appState.campaignActorState,
       isMoving: false,
@@ -1241,6 +1554,7 @@ function startCampaignTravel(
       cityName,
     },
     modalState: null,
+    locationDialogueState: null,
   };
   renderApp();
 
@@ -1258,6 +1572,7 @@ function startCampaignTravel(
       ...appState,
       campaignTravelState: null,
       modalState: shouldEnterCity ? pendingEnterCityState : null,
+      locationDialogueState: null,
     };
     renderApp();
   });
@@ -1427,6 +1742,7 @@ function renderApp() {
       prototypeCityNpcPools
     ),
   };
+  syncPassiveStoryTriggers();
   const preservedTerrainCanvases =
     appState.gameState.ui.currentView === "map"
       ? captureCampaignTerrainCanvases(appRoot)
@@ -1449,12 +1765,53 @@ function renderApp() {
     cityPortraits: prototypeCityPortraits,
     historicalCharacters: zhuYuanzhangEarlyCharacters,
     historicalCityRosters: zhuYuanzhangCityRosters,
+    currentSceneAction: getCurrentSceneAction(
+      appState.gameState,
+      storySceneDefinitionsById
+    ),
+    currentSceneChoiceOptions: getCurrentChoiceOptions(
+      appState.gameState,
+      storySceneDefinitionsById
+    ),
+    sceneDefinitionsById: storySceneDefinitionsById,
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncMapIntroOverlay();
   syncCampaignTerrainWebGl(appRoot);
+}
+
+function syncPassiveStoryTriggers(): void {
+  if (appState.gameState.scene.activeSceneId != null) {
+    return;
+  }
+
+  if (appState.gameState.ui.currentView !== "house") {
+    return;
+  }
+
+  const result = triggerStoryEvents(
+    {
+      state: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+    },
+    {
+      eventDefinitionsById: storyEventDefinitionsById,
+      sceneDefinitionsById: storySceneDefinitionsById,
+    },
+    buildStoryTriggerInput("indoor-screen-shown", appState.gameState)
+  );
+
+  if (result.state === appState.gameState) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    gameState: result.state,
+    characterDefinitions: result.characterDefinitions,
+  };
 }
 
 function syncGameViewport(): void {
@@ -1466,6 +1823,27 @@ function syncGameViewport(): void {
   appRoot.style.setProperty("--game-width", `${GAME_VIEWPORT_WIDTH}px`);
   appRoot.style.setProperty("--game-height", `${GAME_VIEWPORT_HEIGHT}px`);
   appRoot.style.setProperty("--game-scale", `${scale}`);
+}
+
+function shouldDispatchHouseActionOnPointerDown(actionId: string): boolean {
+  return actionId === "temple-work-stop" || actionId === "tavern-work-stop";
+}
+
+function shouldSuppressPointerDispatchedHouseClick(actionId: string): boolean {
+  if (recentPointerDispatchedHouseAction == null) {
+    return false;
+  }
+
+  const elapsedMs =
+    window.performance.now() - recentPointerDispatchedHouseAction.timestamp;
+  const shouldSuppress =
+    recentPointerDispatchedHouseAction.actionId === actionId && elapsedMs < 500;
+
+  if (shouldSuppress || elapsedMs >= 500) {
+    recentPointerDispatchedHouseAction = null;
+  }
+
+  return shouldSuppress;
 }
 
 function handleCampaignMapDebugAction(action: string | undefined): void {

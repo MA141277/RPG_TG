@@ -1,4 +1,4 @@
-import { resolveCharacterPortraitImageUrl } from "../../content/portrait-assets";
+import { resolveCharacterPortraitImageUrl } from "../portrait-assets";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import type { MissionDefinition } from "../../domain/mission";

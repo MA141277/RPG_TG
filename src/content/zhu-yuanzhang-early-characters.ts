@@ -497,7 +497,7 @@ const zhuYuanzhangCoreCharacters: HistoricalCharacterRecord[] = [
     currentCityNodeId: "settlement.tieling_province",
     relatedCityNodeIds: ["settlement.runing_province"],
     shortBio: "红巾军重要首领，小明王政权实际主导人物。",
-    gameplayUse: "安丰/汝宁红巾主线。",
+    gameplayUse: "安丰/颍州红巾主线。",
   }),
   character({
     id: "zyz.character.han_shantong",
@@ -2046,7 +2046,7 @@ const zhuYuanzhangCoreCityRosters: HistoricalCityRoster[] = [
       "zyz.character.bai_buxin",
     ],
     backgroundCharacterIds: [],
-    notes: "汝宁红巾活动区，承接韩山童、刘福通线。",
+    notes: "颍州红巾活动区，承接韩山童、刘福通线。",
   },
   {
     cityNodeId: "settlement.luzhou_province",

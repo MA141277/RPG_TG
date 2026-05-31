@@ -4,11 +4,13 @@ import type {
   CityEntryDefinition,
   CityDefinition,
   CityNpcPoolDefinition,
+  HouseAccessRefusalRule,
   HouseDefinition,
   MapDefinition,
   ValuableItemDefinition,
 } from "../domain";
 import {
+  ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
   type ZhuYuanzhangStoryStage,
 } from "../domain";
@@ -16,6 +18,32 @@ import {
   zhuYuanzhangCityRosters,
   zhuYuanzhangEarlyCharacters,
 } from "./zhu-yuanzhang-early-characters";
+
+export const prototypeHouseAccessRefusalRules: HouseAccessRefusalRule[] = [
+  {
+    id: "rule.zhu_yuanzhang.temple.first_review_stay",
+    priority: 100,
+    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
+    excludedHouseModuleIds: ["temple-house", "keep-house"],
+    missingFlags: [
+      ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted,
+    ],
+    speakerCharacterId: "player",
+    title: "暂且留在寺中",
+    text: "既然答应了主持，就先不要离开寺院吧。",
+    confirmLabel: "知道了",
+  },
+  {
+    id: "rule.zhu_yuanzhang.temple.keep_closed",
+    priority: 50,
+    houseModuleIds: ["keep-house"],
+    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
+    speakerCharacterId: "char.kulan_soldier",
+    title: "帅府闭门",
+    text: "军机要出，请阁下回避。",
+    confirmLabel: "离开",
+  },
+];
 
 export const prototypeMap: MapDefinition = {
   id: "map.prototype_frontier",
@@ -96,7 +124,7 @@ const playableYuanmoCitySpecs = [
   },
   {
     slug: "runing",
-    name: "汝宁府",
+    name: "颍州",
     mapNodeId: "settlement.runing_province",
     tags: ["hongjin", "plain", "military"],
     prosperity: 70,
@@ -297,7 +325,6 @@ function createStandardCityHouses(
       name: "将领府邸",
       type: "residence",
       moduleId: "leader-residence",
-      visibleStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
       characterIds: [],
       defaultCharacterId: null,
       backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
@@ -406,7 +433,6 @@ export const prototypeHouses: HouseDefinition[] = [
     name: "将领府邸",
     type: "residence",
     moduleId: "leader-residence",
-    visibleStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
     characterIds: [],
     defaultCharacterId: null,
     backAction: {
@@ -420,6 +446,7 @@ export const prototypeHouses: HouseDefinition[] = [
     name: "皇觉寺",
     type: "temple",
     moduleId: "temple-house",
+    onEnterEventId: "event.story.zhu_yuanzhang.ordination",
     characterIds: ["char.kulan_temple_abbot", "char.kulan_temple_senior_monk"],
     defaultCharacterId: "char.kulan_temple_abbot",
     backAction: {
@@ -541,7 +568,6 @@ export const prototypeCityEntries: CityEntryDefinition[] = [
     directoryType: "leader-residence",
     targetHouseId: "house.kulan.leader_residence",
     artworkId: "leader-residence",
-    visibleStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
   },
   ...generatedPrototypeCities.map((cityDefinition) => {
     const slug = citySlugByCityId[cityDefinition.id] ?? cityDefinition.id;
@@ -552,7 +578,6 @@ export const prototypeCityEntries: CityEntryDefinition[] = [
       directoryType: "leader-residence" as const,
       targetHouseId: `house.${slug}.leader_residence`,
       artworkId: "leader-residence" as const,
-      visibleStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
     };
   }),
 ];
@@ -675,6 +700,49 @@ export const prototypeCharacters: CharacterDefinition[] = [
       rhetoric: 2,
       tea: 2,
       medicine: 1,
+    },
+  },
+  {
+    id: "char.kulan_soldier",
+    name: "小兵",
+    birthYear: 1545,
+    deathYear: null,
+    age: 22,
+    clanId: "clan.guo",
+    title: "值守小兵",
+    occupation: "步卒",
+    cityId: "city.kulan",
+    houseId: "house.kulan.keep",
+    portraitId: "portrait.kulan_soldier",
+    stats: {
+      leadership: 24,
+      martial: 35,
+      intelligence: 18,
+      politics: 10,
+      charm: 18,
+      fame: 1,
+      gold: 8,
+    },
+    stamina: 72,
+    biography: "在帅府门前值守，奉命拦阻闲杂人等。",
+    availableFunctions: [],
+    skills: {
+      ashigaru: 2,
+      horse: 0,
+      teppo: 0,
+      navy: 0,
+      archery: 0,
+      martial: 1,
+      military: 0,
+      ninjutsu: 0,
+      construction: 0,
+      development: 0,
+      mining: 0,
+      arithmetic: 0,
+      etiquette: 0,
+      rhetoric: 0,
+      tea: 0,
+      medicine: 0,
     },
   },
   {
@@ -1124,7 +1192,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
     occupation: "医师",
     cityId: "city.kulan",
     houseId: "house.kulan.medicine_house",
-    portraitId: "portrait.kulan_grain_shopkeeper",
+    portraitId: "portrait.kulan_medicine_doctor",
     stats: {
       leadership: 24,
       martial: 12,

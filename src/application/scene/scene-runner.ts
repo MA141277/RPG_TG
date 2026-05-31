@@ -38,6 +38,7 @@ export function runSceneUntilPause(
     if (
       currentAction.type === "background" ||
       currentAction.type === "music" ||
+      currentAction.type === "narration" ||
       currentAction.type === "dialogue"
     ) {
       return {

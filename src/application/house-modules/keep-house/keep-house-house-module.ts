@@ -618,7 +618,18 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
         ? sessionState.contributionEntries.filter(
             (entry) => entry.characterId !== lordCharacter.id
           )
-        : [];
+        : sessionState.dialoguePhase === "idle"
+          ? [
+              {
+                characterId: lordCharacter.id,
+                name: lordCharacter.name,
+                actionId: "open-lord-dialogue",
+                ...(lordCharacter.title == null
+                  ? {}
+                  : { title: lordCharacter.title }),
+              },
+            ]
+          : [];
     const statusTaskText =
       assignedTask?.title ??
       (nextState.ui.mainHouseMissionText === ""
@@ -637,6 +648,9 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       standbyRoster: rosterEntries.map((entry) => ({
         characterId: entry.characterId,
         name: entry.name,
+        ...("actionId" in entry && entry.actionId != null
+          ? { actionId: entry.actionId }
+          : {}),
         ...(entry.title == null ? {} : { title: entry.title }),
         ...(sessionState.mode === "meeting"
           ? { isSelected: sessionState.contributionEntries[0]?.characterId === entry.characterId }

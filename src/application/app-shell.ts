@@ -18,6 +18,15 @@ export type AppModalState =
     }
   | null;
 
+export type AppLocationDialogueState =
+  | {
+      type: "house-access-refusal";
+      speakerCharacterId: string;
+      textLines: string[];
+      advanceHintText: string;
+    }
+  | null;
+
 export type AppState = {
   gameState: ReturnType<typeof createInitialState>;
   characterDefinitions: CharacterDefinition[];
@@ -34,12 +43,20 @@ export type AppState = {
       }
     | null;
   modalState: AppModalState;
+  locationDialogueState: AppLocationDialogueState;
   cityDirectoryState:
     | {
         type: CityEntryDirectoryType;
         title: string;
         targetHouseId: string;
         options: CityEntryOption[];
+      }
+    | null;
+  autoAdvanceState:
+    | {
+        intervalId: string;
+        label: string;
+        targetHouseId: string;
       }
     | null;
   uiLayouts: {

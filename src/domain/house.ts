@@ -5,6 +5,22 @@ import type { HouseModuleId } from "./house-module";
 
 export type HouseId = string;
 
+export type HouseAccessRefusalRule = {
+  id: string;
+  priority?: number;
+  houseIds?: HouseId[];
+  houseModuleIds?: HouseModuleId[];
+  excludedHouseIds?: HouseId[];
+  excludedHouseModuleIds?: HouseModuleId[];
+  storyStages?: string[];
+  requiredFlags?: string[];
+  missingFlags?: string[];
+  speakerCharacterId: CharacterId | "player";
+  title: string;
+  text: string;
+  confirmLabel: string;
+};
+
 export type HouseDefinition = {
   id: HouseId;
   cityId: string;

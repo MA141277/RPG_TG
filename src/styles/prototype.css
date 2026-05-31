@@ -1,5 +1,12 @@
 .l-shell--prototype {
   --scene-safe-top: 236px;
+  --grain-shop-panel-light: url("../../sliced_ui_assets/1_016_small_blank_panel_1.0.png");
+  --grain-shop-panel-medium: url("../../sliced_ui_assets/1_021_medium_blank_panel_1.0.png");
+  --grain-shop-panel-dark: url("../../sliced_ui_assets/1_003_small_dark_panel_1.0.png");
+  --grain-shop-frame-large: url("../../sliced_ui_assets/1_013_blank_large_frame_1.0.png");
+  --grain-shop-button-gold: url("../../sliced_ui_assets/1_024_gold_bottom_button_1.0.png");
+  --grain-shop-button-large: url("../../sliced_ui_assets/1_031_large_gold_button_1.0.png");
+  --grain-shop-nameplate: url("../../sliced_ui_assets/1_010_red_nameplate_1.0.png");
 
   background:
     radial-gradient(circle at top left, rgb(148 181 170 / 32%), transparent 26%),
@@ -65,6 +72,24 @@
 
 .c-campaign-travel-banner__cancel:hover {
   background: linear-gradient(180deg, #cb5d4f, #932c24);
+}
+
+.c-location-dialogue {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  grid-template-columns: minmax(360px, 520px) auto;
+  color: #2f2319;
+}
+
+.c-location-dialogue__portrait-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
 }
 
 .p-global-status-layout {
@@ -1048,6 +1073,8 @@
 }
 
 .c-city-portrait {
+  position: relative;
+  overflow: hidden;
   display: grid;
   place-items: center;
   width: 120px;
@@ -1059,14 +1086,29 @@
     #6f5832;
 }
 
+.c-city-portrait__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+}
+
 .c-city-portrait--large {
   width: min(100%, 300px);
 }
 
 .c-city-portrait__label {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgb(30 24 17 / 72%);
   color: #fff7e3;
   font-family: var(--font-title);
-  font-size: 1.4rem;
+  font-size: 1rem;
+  text-align: center;
 }
 
 .c-city-layout {
@@ -1129,28 +1171,22 @@
 }
 
 .c-kulan-city__body {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
 }
 
-.c-kulan-city__body {
-  position: relative;
-  margin-top: 8px;
-}
-
 .c-kulan-city__stage {
-  position: relative;
-  min-height: 560px;
-  display: grid;
-  align-items: end;
-  padding: 0 20px 16px 28px;
+  position: absolute;
+  inset: 0;
+  min-height: 0;
 }
 
 
 .c-kulan-city__leave-action {
   position: absolute;
-  right: 32px;
-  bottom: 24px;
+  right: 0;
+  bottom: 0;
   z-index: 4;
   min-height: 74px;
   min-width: 176px;
@@ -1171,13 +1207,24 @@
 }
 
 .c-kulan-city__house-deck {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 190px;
+  bottom: 0;
   z-index: 3;
   display: flex;
   gap: 10px;
   align-items: end;
-  justify-content: center;
-  padding: 0 120px 0 104px;
+  justify-content: flex-start;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0;
+  scrollbar-width: none;
+}
+
+.c-kulan-city__house-deck::-webkit-scrollbar {
+  display: none;
 }
 
 .c-kulan-house-card {
@@ -1214,7 +1261,7 @@
 }
 
 .c-kulan-house-card--medicine-house .c-kulan-house-card__art {
-  background-image: url("../../ui/card/5_048_card_yicang_2.0.png");
+  background-image: url("../../ui/card/3_040_card_huichuntang_1.0.png");
 }
 
 /* house card 图打标：chaguan / shuaifu / dangpu / lianghang / jiusi */
@@ -1223,10 +1270,7 @@
 }
 
 .c-kulan-house-card--temple-house .c-kulan-house-card__art {
-  background-image: url("../../ui/background/temple.jpg");
-  background-size: cover;
-  background-position: center;
-  border-radius: 16px 16px 10px 10px;
+  background-image: url("../../ui/card/card_temlpe.png");
 }
 
 .c-kulan-house-card--keep .c-kulan-house-card__art {
@@ -2031,20 +2075,18 @@
   }
 
   .c-kulan-city__stage {
-    min-height: 420px;
-    padding-inline: 0;
+    min-height: 0;
   }
 
   .c-kulan-city__leave-action {
-    right: 8px;
-    bottom: 8px;
+    right: 0;
+    bottom: 0;
     min-width: 148px;
   }
 
   .c-kulan-city__house-deck {
-    justify-content: flex-start;
-    overflow: hidden;
-    padding: 0 132px 0 56px;
+    right: 158px;
+    padding: 0;
   }
 
   .c-kulan-house-card {

@@ -4,14 +4,24 @@ import {
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
 } from "../application/story/story-stage-access";
-import type { AppState, AppModalState } from "../application/app-shell";
+import type {
+  AppLocationDialogueState,
+  AppState,
+  AppModalState,
+} from "../application/app-shell";
+import {
+  resolveCharacterAvatarImageUrl,
+  resolveCharacterPortraitImageUrl,
+} from "./portrait-assets";
 import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
+import type { ActionNode, ChoiceOption, SceneDefinition } from "../domain/action";
 import type { CardDefinition } from "../domain/card";
 import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
 import type { CityEntryDefinition } from "../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../domain/city-npc";
 import type { HouseDefinition } from "../domain/house";
+import type { HouseModuleViewModel } from "../domain/house-module";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
@@ -30,6 +40,7 @@ import { renderCityView } from "./views/city/city-view";
 import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
+import { renderSceneView } from "./views/scene/scene-view";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
 import { renderLayoutEditor } from "./tools/layout-editor-view";
 
@@ -52,6 +63,9 @@ export type AppRenderInput = {
   cityPortraits: Record<string, string>;
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
+  currentSceneAction?: ActionNode | null;
+  currentSceneChoiceOptions?: ChoiceOption[];
+  sceneDefinitionsById?: Record<string, SceneDefinition>;
 };
 
 function getActiveHouseDefinition(
@@ -213,6 +227,97 @@ function renderModal(
   });
 }
 
+function renderLocationDialogue(
+  dialogueState: AppLocationDialogueState,
+  characterDefinitions: CharacterDefinition[]
+): string {
+  if (dialogueState == null) {
+    return "";
+  }
+
+  const speaker =
+    characterDefinitions.find(
+      (characterDefinition) =>
+        characterDefinition.id === dialogueState.speakerCharacterId
+    ) ?? null;
+  const portraitImageUrl =
+    speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
+
+  return `
+    <footer class="c-grain-shop-dialogue c-scene-dialogue c-location-dialogue" aria-label="地点对话">
+      <div
+        class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-grain-shop-dialogue__text--clickable"
+        data-action="close-location-dialogue"
+        role="button"
+        tabindex="0"
+      >
+        ${dialogueState.textLines
+          .map((line) => `<p class="c-grain-shop-dialogue__line">${line}</p>`)
+          .join("")}
+        <p class="c-grain-shop-dialogue__hint">${dialogueState.advanceHintText}</p>
+      </div>
+      <div class="c-grain-shop-dialogue__npc">
+        <div class="c-grain-shop-portrait" aria-hidden="true">
+          ${
+            portraitImageUrl == null
+              ? '<span class="c-grain-shop-portrait__art"></span>'
+              : `<img class="c-location-dialogue__portrait-image" src="${portraitImageUrl}" alt="">`
+          }
+        </div>
+        <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
+          ${speaker?.name ?? dialogueState.speakerCharacterId}
+        </p>
+      </div>
+    </footer>
+  `;
+}
+
+function withResolvedHousePortraits(
+  viewModel: HouseModuleViewModel,
+  characterDefinitions: CharacterDefinition[]
+): HouseModuleViewModel {
+  const characterById = new Map(
+    characterDefinitions.map((characterDefinition) => [
+      characterDefinition.id,
+      characterDefinition,
+    ])
+  );
+  const dialogueCharacter =
+    viewModel.dialogue?.characterId == null
+      ? null
+      : characterById.get(viewModel.dialogue.characterId) ?? null;
+
+  return {
+    ...viewModel,
+    standbyRoster: viewModel.standbyRoster.map((actor) => {
+      const characterDefinition = characterById.get(actor.characterId);
+      if (characterDefinition == null) {
+        return actor;
+      }
+
+      return {
+        ...actor,
+        avatarImageUrl:
+          actor.avatarImageUrl ?? resolveCharacterAvatarImageUrl(characterDefinition),
+        portraitImageUrl:
+          actor.portraitImageUrl ??
+          resolveCharacterPortraitImageUrl(characterDefinition),
+      };
+    }),
+    dialogue:
+      viewModel.dialogue == null
+        ? null
+        : {
+            ...viewModel.dialogue,
+            portraitImageUrl:
+              viewModel.dialogue.portraitImageUrl ??
+              (dialogueCharacter == null
+                ? null
+                : resolveCharacterPortraitImageUrl(dialogueCharacter)),
+          },
+  };
+}
+
 function renderCampaignTravelBanner(
   campaignTravelState: AppState["campaignTravelState"]
 ): string {
@@ -311,7 +416,12 @@ function renderStage(input: AppRenderInput): string {
         sessionState: input.appState.gameState.ui.houseSession?.state ?? null,
       });
 
-      return renderHouseModuleView(houseViewModel);
+      return renderHouseModuleView(
+        withResolvedHousePortraits(
+          houseViewModel,
+          input.appState.characterDefinitions
+        )
+      );
     }
 
     const houseViewModel = createHouseViewModel(
@@ -359,6 +469,14 @@ function renderStage(input: AppRenderInput): string {
     `;
   }
 
+  if (currentView === "scene") {
+    return renderSceneView({
+      currentAction: input.currentSceneAction ?? null,
+      characterDefinitions: input.appState.characterDefinitions,
+      choiceOptions: input.currentSceneChoiceOptions ?? [],
+    });
+  }
+
   return "";
 }
 
@@ -367,8 +485,11 @@ export function renderApp(input: AppRenderInput): string {
     input.appState,
     input.playerCharacterId
   );
+  const isSceneActive =
+    input.appState.gameState.ui.currentView === "scene" ||
+    input.appState.gameState.scene.activeSceneId != null;
   const shouldShowGlobalHud =
-    input.appState.gameState.ui.currentView !== "house";
+    input.appState.gameState.ui.currentView !== "house" && !isSceneActive;
   const locationText =
     input.cityNameById[input.appState.gameState.world.currentCityId] ??
     input.cityDefinition.name;
@@ -398,8 +519,15 @@ export function renderApp(input: AppRenderInput): string {
                     : ""
                 }
               </div>
+              ${renderLocationDialogue(
+                input.appState.locationDialogueState,
+                input.appState.characterDefinitions
+              )}
             </main>
-            ${renderModal(input.appState.modalState, input.cityPortraits)}
+            ${renderModal(
+              input.appState.modalState,
+              input.cityPortraits
+            )}
             ${renderOverlay(input, playerCharacter)}
             ${renderLayoutEditor(input.appState)}
           </div>
