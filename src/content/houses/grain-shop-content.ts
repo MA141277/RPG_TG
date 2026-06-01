@@ -17,7 +17,7 @@ export const grainShopNpcDefaultLines = [
 ];
 
 export const grainShopMarketRumors = [
-  "凤阳粮价上涨。",
+  "濠州粮价上涨。",
   "濠州最近缺粮。",
   "南边商队正在收粮。",
   "近来雨水不好。",

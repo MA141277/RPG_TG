@@ -30,6 +30,15 @@ import {
   createHouseRuntime,
   type HouseRuntime,
 } from "./application/house/house-runtime";
+import {
+  advanceStorySceneStep,
+  buildStoryTriggerInput,
+  chooseStorySceneOption,
+  getCurrentChoiceOptions,
+  getCurrentSceneAction,
+  triggerStoryEvents,
+} from "./application/story/story-runtime";
+import { selectHouseEntryAccess } from "./application/story/story-stage-access";
 import { enterCity } from "./application/navigation/enter-city";
 import {
   travelToCoordinate,
@@ -37,6 +46,7 @@ import {
 } from "./application/navigation/travel-to-coordinate";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
+  createPrototypeCharactersForStoryStage,
   prototypeCards,
   prototypeCharacters,
   prototypeCityEntries,
@@ -45,6 +55,7 @@ import {
   prototypeHistoricalCharacterIdByCharacterId,
   prototypeCityNpcPools,
   prototypeCityPortraits,
+  prototypeHouseAccessRefusalRules,
   prototypeHouses,
   prototypeValuables,
 } from "./content/prototype-world";
@@ -52,12 +63,17 @@ import {
   createDefaultGlobalHudLayout,
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
+import {
+  storyEventDefinitionsById,
+  storySceneDefinitionsById,
+} from "./content/story";
 import { yuanmoCampaignMap } from "./content/yuanmo-campaign-map";
 import {
   zhuYuanzhangCityRosters,
   zhuYuanzhangEarlyCharacters,
 } from "./content/zhu-yuanzhang-early-characters";
 import type { CharacterDefinition } from "./domain/character";
+import type { HouseDefinition } from "./domain/house";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -71,10 +87,17 @@ import type {
   UiLayoutRect,
 } from "./domain/ui-layout";
 import type { ValuableItemId } from "./domain/valuable-item";
+import {
+  ZHU_YUANZHANG_STORY_STAGES,
+  ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
+  type ZhuYuanzhangStoryStage,
+} from "./domain/zhu-yuanzhang-story";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
+  resolveCampaignTerrainUvFromClientPosition,
+  requestCampaignTerrainRender,
   setCampaignTerrainCamera,
   syncCampaignTerrainWebGl,
 } from "./ui/views/map/campaign-terrain-webgl";
@@ -85,6 +108,11 @@ const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = 40;
 const MAP_DEBUG_SCALE_STEP = 0.2;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
+const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
+const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
+const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
+const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
+const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
@@ -94,8 +122,8 @@ const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
 };
 const TARGET_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 40,
-  offsetX: -5695,
-  offsetY: 5918,
+  offsetX: -5737,
+  offsetY: 4769,
 };
 
 type CampaignMapDebugState = {
@@ -109,6 +137,15 @@ type SaveDataResult = {
 } | null;
 
 type BackgroundMusicMode = "opening" | "in-game";
+
+type CampaignMoveAnimationState = {
+  frameId: number | null;
+  startedAtMs: number;
+  from: GridCoordinate;
+  to: GridCoordinate;
+  durationMs: number;
+  resolve: () => void;
+};
 
 const appElement = document.querySelector<HTMLElement>("#app");
 const uiOverlayElement = document.querySelector<HTMLElement>("#ui-overlay");
@@ -207,6 +244,12 @@ let campaignMapDragState:
     }
   | null = null;
 let shouldSuppressNextClickAfterMapDrag = false;
+let recentPointerDispatchedHouseAction:
+  | {
+      actionId: string;
+      timestamp: number;
+    }
+  | null = null;
 let layoutEditorDragState:
   | {
       mode: "component" | "element";
@@ -217,6 +260,9 @@ let layoutEditorDragState:
       startClientY: number;
     }
   | null = null;
+let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
+let campaignTravelRequestId = 0;
+const mapAutoAdvanceHandles: Record<string, number> = {};
 
 let houseRuntime: HouseRuntime = createHouseRuntimeInstance();
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
@@ -234,6 +280,12 @@ mainUiFlow.mount();
 mainUiFlow.showMainMenu();
 
 function createPrototypeAppState(playerCharacterId: string): AppState {
+  const storyStage: ZhuYuanzhangStoryStage =
+    playerCharacterId === defaultPlayerCharacterId
+      ? ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+      : ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp;
+  const storyCharacterDefinitions =
+    createPrototypeCharactersForStoryStage(storyStage);
   let nextAppState: AppState = {
     gameState: ensureCityNpcPoolsForCurrentDay(
       createInitialState({
@@ -270,10 +322,17 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
       }),
       prototypeCityNpcPools
     ),
-    characterDefinitions: [...prototypeCharacters],
+    characterDefinitions: storyCharacterDefinitions,
     playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
     modalState: null,
+    locationDialogueState: null,
     cityDirectoryState: null,
+    autoAdvanceState: null,
     uiLayouts: {
       globalHud: createDefaultGlobalHudLayout(),
     },
@@ -290,11 +349,23 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     ...nextAppState,
     gameState: {
       ...nextAppState.gameState,
+      ui: {
+        ...nextAppState.gameState.ui,
+        reviewDateText:
+          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+            ? "今日评定"
+            : nextAppState.gameState.ui.reviewDateText,
+        mainHouseMissionText:
+          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+            ? "前往皇觉寺听候住持训示"
+            : nextAppState.gameState.ui.mainHouseMissionText,
+      },
       runtime: {
         ...nextAppState.gameState.runtime,
         variables: {
           ...nextAppState.gameState.runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: storyStage,
         },
       },
     },
@@ -310,9 +381,188 @@ function createHouseRuntimeInstance(): HouseRuntime {
       appState = nextAppState;
     },
     renderApp,
+    startMapAutoAdvance,
+    stopMapAutoAdvance,
     houseDefinitions: prototypeHouses,
     playerCharacterId: currentPlayerCharacterId,
+    eventDefinitionsById: storyEventDefinitionsById,
+    sceneDefinitionsById: storySceneDefinitionsById,
   });
+}
+
+function getActiveStoryChoiceOptions() {
+  return getCurrentChoiceOptions(
+    appState.gameState,
+    storySceneDefinitionsById
+  );
+}
+
+function readCalendarDateNumber(date: {
+  year: number;
+  month: number;
+  day: number;
+}): number {
+  return date.year * 360 + (date.month - 1) * 30 + date.day;
+}
+
+function advanceStateOneDay(state: AppState["gameState"]): AppState["gameState"] {
+  const currentDateNumber = readCalendarDateNumber(state.calendar) + 1;
+  const nextYear = Math.floor((currentDateNumber - 1) / 360);
+  const dayOfYear = currentDateNumber - nextYear * 360;
+  const nextMonth = Math.floor((dayOfYear - 1) / 30) + 1;
+  const nextDay = ((dayOfYear - 1) % 30) + 1;
+  const nextReviewCountdownValue = state.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown];
+  const nextReviewCountdown =
+    typeof nextReviewCountdownValue === "number"
+      ? Math.max(0, nextReviewCountdownValue - 1)
+      : nextReviewCountdownValue;
+  const daysLeft = Math.max(
+    0,
+    readCalendarDateNumber(state.world.schedule.councilDate) - currentDateNumber
+  );
+
+  return {
+    ...state,
+    calendar: {
+      ...state.calendar,
+      year: nextYear,
+      month: nextMonth,
+      day: nextDay,
+    },
+    world: {
+      ...state.world,
+      timeOfDay: "morning",
+    },
+    ui: {
+      ...state.ui,
+      reviewDateText: daysLeft <= 0 ? "今日评定" : `距离评定 ${daysLeft} 天`,
+    },
+    runtime: {
+      ...state.runtime,
+      variables: {
+        ...state.runtime.variables,
+        ...(typeof nextReviewCountdown === "number"
+          ? { [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: nextReviewCountdown }
+          : {}),
+      },
+    },
+  };
+}
+
+function stopMapAutoAdvance(intervalId: string): void {
+  const handle = mapAutoAdvanceHandles[intervalId];
+  if (handle != null) {
+    window.clearInterval(handle);
+    delete mapAutoAdvanceHandles[intervalId];
+  }
+
+  if (appState.autoAdvanceState?.intervalId === intervalId) {
+    appState = {
+      ...appState,
+      autoAdvanceState: null,
+    };
+  }
+}
+
+function startMapAutoAdvance(input: {
+  intervalId: string;
+  everyMs: number;
+  targetHouseId: string;
+  label: string;
+}): void {
+  stopMapAutoAdvance(input.intervalId);
+  cancelCampaignTravel();
+  houseRuntime.clearAllHouseIntervals();
+  appState = {
+    ...appState,
+    modalState: null,
+    locationDialogueState: null,
+    cityDirectoryState: null,
+    campaignTravelState: null,
+    autoAdvanceState: {
+      intervalId: input.intervalId,
+      label: input.label,
+      targetHouseId: input.targetHouseId,
+    },
+    gameState: {
+      ...appState.gameState,
+      world: {
+        ...appState.gameState.world,
+        currentHouseId: null,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        currentView: "map",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+  };
+  renderApp();
+
+  mapAutoAdvanceHandles[input.intervalId] = window.setInterval(() => {
+    appState = {
+      ...appState,
+      gameState: advanceStateOneDay(appState.gameState),
+    };
+    renderApp();
+
+    if (
+      readCalendarDateNumber(appState.gameState.calendar) >=
+      readCalendarDateNumber(appState.gameState.world.schedule.councilDate)
+    ) {
+      stopMapAutoAdvance(input.intervalId);
+      houseRuntime.enterHouseById(input.targetHouseId);
+    }
+  }, input.everyMs);
+}
+
+function advanceCurrentStoryScene(): void {
+  const result = advanceStorySceneStep(
+    {
+      state: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+    },
+    {
+      eventDefinitionsById: storyEventDefinitionsById,
+      sceneDefinitionsById: storySceneDefinitionsById,
+    }
+  );
+
+  appState = {
+    ...appState,
+    gameState: result.state,
+    characterDefinitions: result.characterDefinitions,
+  };
+  renderApp();
+}
+
+function chooseCurrentStoryOption(choiceId: string): void {
+  const selectedOption = getActiveStoryChoiceOptions().find(
+    (choiceOption) => choiceOption.id === choiceId
+  );
+  if (selectedOption == null) {
+    return;
+  }
+
+  const result = chooseStorySceneOption(
+    {
+      state: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+    },
+    {
+      eventDefinitionsById: storyEventDefinitionsById,
+      sceneDefinitionsById: storySceneDefinitionsById,
+    },
+    selectedOption
+  );
+
+  appState = {
+    ...appState,
+    gameState: result.state,
+    characterDefinitions: result.characterDefinitions,
+  };
+  renderApp();
 }
 
 function loadSaveData(): SaveDataResult {
@@ -392,6 +642,40 @@ function resumeBackgroundMusicIfNeeded(): void {
   if (backgroundMusicPlayer.paused) {
     void playBackgroundMusic();
   }
+}
+
+function canOpenHouseFromCity(houseDefinition: HouseDefinition): boolean {
+  const accessResult = selectHouseEntryAccess(
+    appState.gameState,
+    appState.characterDefinitions,
+    houseDefinition,
+    prototypeHouseAccessRefusalRules
+  );
+
+  if (accessResult.canEnter) {
+    if (appState.locationDialogueState != null) {
+      appState = {
+        ...appState,
+        locationDialogueState: null,
+      };
+    }
+    return true;
+  }
+
+  if (accessResult.refusal != null) {
+    appState = {
+      ...appState,
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: accessResult.refusal.speakerCharacterId,
+        textLines: [accessResult.refusal.text],
+        advanceHintText: accessResult.refusal.confirmLabel,
+      },
+    };
+    renderApp();
+  }
+
+  return false;
 }
 
 window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
@@ -553,6 +837,27 @@ appElement.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  const pointerHouseActionButton = targetElement.closest<HTMLElement>(
+    "[data-house-action]"
+  );
+  const pointerHouseActionId = pointerHouseActionButton?.dataset.houseAction;
+  if (
+    pointerHouseActionId != null &&
+    shouldDispatchHouseActionOnPointerDown(pointerHouseActionId)
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    recentPointerDispatchedHouseAction = {
+      actionId: pointerHouseActionId,
+      timestamp: window.performance.now(),
+    };
+    houseRuntime.dispatchCurrentHouseRequest({
+      type: "action",
+      actionId: pointerHouseActionId,
+    });
+    return;
+  }
+
   const elementHandle = targetElement.closest<HTMLElement>(
     "[data-layout-element-handle]"
   );
@@ -710,6 +1015,18 @@ appElement.addEventListener("click", (event) => {
       handleModalConfirm();
       return;
     }
+  }
+
+  const locationDialogueAction = targetElement.closest<HTMLElement>(
+    "[data-action='close-location-dialogue']"
+  );
+  if (locationDialogueAction != null) {
+    appState = {
+      ...appState,
+      locationDialogueState: null,
+    };
+    renderApp();
+    return;
   }
 
   const closeOverlayButton = targetElement.closest<HTMLElement>(
@@ -894,6 +1211,7 @@ appElement.addEventListener("click", (event) => {
     appState = {
       ...appState,
       cityDirectoryState: null,
+      locationDialogueState: null,
       gameState: {
         ...appState.gameState,
         world: {
@@ -918,9 +1236,18 @@ appElement.addEventListener("click", (event) => {
   if (cityEntryButton != null) {
     const cityEntryId = cityEntryButton.dataset.cityEntryId;
     const cityEntry = prototypeCityEntries.find(
-      (entryDefinition) => entryDefinition.id === cityEntryId
+      (entryDefinition) =>
+        entryDefinition.id === cityEntryId &&
+        entryDefinition.cityId === appState.gameState.world.currentCityId
     );
     if (cityEntry?.directoryType === "leader-residence") {
+      const targetHouse = prototypeHouses.find(
+        (houseDefinition) => houseDefinition.id === cityEntry.targetHouseId
+      );
+      if (targetHouse == null || !canOpenHouseFromCity(targetHouse)) {
+        return;
+      }
+
       appState = openCityDirectory(appState, {
         type: cityEntry.directoryType,
         title: cityEntry.name,
@@ -947,11 +1274,18 @@ appElement.addEventListener("click", (event) => {
   if (cityDirectoryCharacterButton != null && appState.cityDirectoryState != null) {
     const selectedCharacterId =
       cityDirectoryCharacterButton.dataset.cityDirectoryCharacterId;
-    if (selectedCharacterId != null) {
-      const targetHouseId = appState.cityDirectoryState.targetHouseId;
-      appState = {
-        ...closeCityDirectory(appState),
-        gameState: {
+      if (selectedCharacterId != null) {
+        const targetHouseId = appState.cityDirectoryState.targetHouseId;
+        const targetHouse = prototypeHouses.find(
+          (houseDefinition) => houseDefinition.id === targetHouseId
+        );
+        if (targetHouse == null || !canOpenHouseFromCity(targetHouse)) {
+          return;
+        }
+
+        appState = {
+          ...closeCityDirectory(appState),
+          gameState: {
           ...appState.gameState,
           runtime: {
             ...appState.gameState.runtime,
@@ -968,12 +1302,36 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const sceneAdvanceElement = targetElement.closest<HTMLElement>(
+    "[data-scene-action='advance']"
+  );
+  if (sceneAdvanceElement != null && appState.gameState.ui.currentView === "scene") {
+    advanceCurrentStoryScene();
+    return;
+  }
+
+  const sceneChoiceButton = targetElement.closest<HTMLElement>(
+    "[data-scene-choice-id]"
+  );
+  if (sceneChoiceButton != null && appState.gameState.ui.currentView === "scene") {
+    const choiceId = sceneChoiceButton.dataset.sceneChoiceId;
+    if (choiceId != null) {
+      chooseCurrentStoryOption(choiceId);
+    }
+    return;
+  }
+
   const houseActionButton = targetElement.closest<HTMLElement>(
     "[data-house-action]"
   );
   if (houseActionButton != null) {
     const actionId = houseActionButton.dataset.houseAction;
     if (actionId != null) {
+      if (shouldSuppressPointerDispatchedHouseClick(actionId)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       houseRuntime.dispatchCurrentHouseRequest({
         type: "action",
         actionId,
@@ -994,8 +1352,27 @@ appElement.addEventListener("click", (event) => {
   if (houseButton != null) {
     const houseId = houseButton.dataset.houseId;
     if (houseId != null) {
+      const houseDefinition = prototypeHouses.find(
+        (candidateHouse) => candidateHouse.id === houseId
+      );
+      if (houseDefinition == null) {
+        return;
+      }
+
+      if (!canOpenHouseFromCity(houseDefinition)) {
+        return;
+      }
+
       houseRuntime.enterHouseById(houseId);
     }
+    return;
+  }
+
+  const cancelCampaignTravelButton = targetElement.closest<HTMLElement>(
+    "[data-action='cancel-campaign-travel']"
+  );
+  if (cancelCampaignTravelButton != null) {
+    cancelCampaignTravel();
     return;
   }
 
@@ -1007,6 +1384,10 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  if (appState.autoAdvanceState != null) {
+    return;
+  }
+
   const mapCell = targetElement.closest<HTMLElement>("[data-map-x][data-map-y]");
   if (mapCell != null && appState.gameState.ui.currentView === "map") {
     const xValue = Number(mapCell.dataset.mapX);
@@ -1015,17 +1396,34 @@ appElement.addEventListener("click", (event) => {
     const mapNodeName = mapCell.dataset.mapNodeName || null;
     const cityName =
       mapNodeName ?? (cityId == null ? null : cityNameById[cityId] ?? null);
+    startCampaignTravel(
+      { x: xValue, y: yValue },
+      cityId,
+      cityName
+    );
+    return;
+  }
 
-    appState = {
-      ...appState,
-      modalState: {
-        type: "travel-confirm",
-        targetCoordinate: { x: xValue, y: yValue },
-        cityId,
-        cityName,
+  const campaignMap = targetElement.closest<HTMLElement>("[data-campaign-map-viewport]");
+  if (campaignMap != null && appState.gameState.ui.currentView === "map") {
+    const clickTarget = resolveCampaignTerrainUvFromClientPosition(
+      campaignMap,
+      event.clientX,
+      event.clientY
+    );
+    const coordinateSpace = yuanmoCampaignMap.coordinateSpace;
+    if (clickTarget == null || coordinateSpace == null) {
+      return;
+    }
+
+    startCampaignTravel(
+      {
+        x: clickTarget.u * coordinateSpace.width,
+        y: (1 - clickTarget.v) * coordinateSpace.height,
       },
-    };
-    renderApp();
+      null,
+      null
+    );
   }
 });
 
@@ -1039,24 +1437,44 @@ function handleModalConfirm() {
       appState.playerCoordinate,
       appState.modalState.targetCoordinate
     );
-
     const reachedCityDefinition =
       appState.modalState.cityId == null
         ? null
         : cityDefinitionById[appState.modalState.cityId] ?? null;
-
-    appState = {
-      ...appState,
-      playerCoordinate: nextCoordinate,
-      modalState: reachedCityDefinition != null
+    const pendingEnterCityState =
+      reachedCityDefinition != null
         ? {
-            type: "enter-city-confirm",
+            type: "enter-city-confirm" as const,
             cityId: reachedCityDefinition.id,
             cityName: reachedCityDefinition.name,
           }
-        : null,
+        : null;
+
+    const previousCoordinate = appState.playerCoordinate;
+    appState = {
+      ...appState,
+      campaignTravelState: {
+        targetCoordinate: appState.modalState.targetCoordinate,
+        cityId: appState.modalState.cityId,
+        cityName: appState.modalState.cityName,
+      },
+      modalState: null,
+      locationDialogueState: null,
     };
     renderApp();
+    void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+      const shouldEnterCity =
+        appState.campaignTravelState != null &&
+        appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
+        appState.campaignTravelState.targetCoordinate.y === nextCoordinate.y;
+      appState = {
+        ...appState,
+        campaignTravelState: null,
+        modalState: shouldEnterCity ? pendingEnterCityState : null,
+        locationDialogueState: null,
+      };
+      renderApp();
+    });
     return;
   }
 
@@ -1065,15 +1483,226 @@ function handleModalConfirm() {
     ...appState,
     gameState: enterCity(appState.gameState, appState.modalState.cityId),
     modalState: null,
+    locationDialogueState: null,
   };
   renderApp();
+}
+
+function getFacingDegrees(from: GridCoordinate, to: GridCoordinate): number {
+  const deltaX = to.x - from.x;
+  const deltaY = to.y - from.y;
+  if (deltaX === 0 && deltaY === 0) {
+    return appState.campaignActorState.facingDegrees;
+  }
+
+  return Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+}
+
+function stopCampaignMoveAnimation(): void {
+  if (campaignMoveAnimationState?.frameId != null) {
+    window.cancelAnimationFrame(campaignMoveAnimationState.frameId);
+  }
+  campaignMoveAnimationState = null;
+}
+
+function cancelCampaignTravel(): void {
+  if (campaignMoveAnimationState == null && appState.campaignTravelState == null) {
+    return;
+  }
+
+  campaignTravelRequestId += 1;
+  stopCampaignMoveAnimation();
+  appState = {
+    ...appState,
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    campaignActorState: {
+      ...appState.campaignActorState,
+      isMoving: false,
+    },
+  };
+  renderApp();
+}
+
+function startCampaignTravel(
+  targetCoordinate: GridCoordinate,
+  cityId: string | null,
+  cityName: string | null
+): void {
+  const nextCoordinate = travelToCoordinate(appState.playerCoordinate, targetCoordinate);
+  const reachedCityDefinition =
+    cityId == null ? null : cityDefinitionById[cityId] ?? null;
+  const pendingEnterCityState =
+    reachedCityDefinition != null
+      ? {
+          type: "enter-city-confirm" as const,
+          cityId: reachedCityDefinition.id,
+          cityName: reachedCityDefinition.name,
+        }
+      : null;
+  const previousCoordinate = appState.playerCoordinate;
+  const travelRequestId = campaignTravelRequestId + 1;
+  campaignTravelRequestId = travelRequestId;
+  stopCampaignMoveAnimation();
+
+  appState = {
+    ...appState,
+    campaignTravelState: {
+      targetCoordinate: nextCoordinate,
+      cityId,
+      cityName,
+    },
+    modalState: null,
+    locationDialogueState: null,
+  };
+  renderApp();
+
+  void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+    if (campaignTravelRequestId !== travelRequestId) {
+      return;
+    }
+
+    const activeTravelState = appState.campaignTravelState;
+    const shouldEnterCity =
+      activeTravelState != null &&
+      activeTravelState.targetCoordinate.x === nextCoordinate.x &&
+      activeTravelState.targetCoordinate.y === nextCoordinate.y;
+    appState = {
+      ...appState,
+      campaignTravelState: null,
+      modalState: shouldEnterCity ? pendingEnterCityState : null,
+      locationDialogueState: null,
+    };
+    renderApp();
+  });
+}
+
+function animateCampaignMove(
+  from: GridCoordinate,
+  to: GridCoordinate
+): Promise<void> {
+  stopCampaignMoveAnimation();
+
+  const deltaX = to.x - from.x;
+  const deltaY = to.y - from.y;
+  const distance = Math.hypot(deltaX, deltaY);
+  const startFacingDegrees = appState.campaignActorState.facingDegrees;
+  const facingDegrees = getFacingDegrees(from, to);
+  if (distance < 0.001) {
+    syncCampaignActorRuntimeState(to, facingDegrees, false);
+    renderApp();
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const durationMs = Math.max(
+      CAMPAIGN_TRAVEL_MIN_DURATION_MS,
+      Math.min(CAMPAIGN_TRAVEL_MAX_DURATION_MS, distance * CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT)
+    );
+    const facingDelta = getShortestAngleDelta(startFacingDegrees, facingDegrees);
+    const turnDurationMs =
+      Math.abs(facingDelta) < 0.5
+        ? 0
+        : Math.max(180, Math.abs(facingDelta) / CAMPAIGN_TURN_DEGREES_PER_SECOND * 1000);
+    const animationState: CampaignMoveAnimationState = {
+      frameId: null,
+      startedAtMs: performance.now(),
+      from,
+      to,
+      durationMs,
+      resolve,
+    };
+    campaignMoveAnimationState = animationState;
+
+    const tick = (timestamp: number) => {
+      if (campaignMoveAnimationState !== animationState) {
+        resolve();
+        return;
+      }
+
+      const elapsedMs = timestamp - animationState.startedAtMs;
+      const rawProgress = clamp(elapsedMs / animationState.durationMs, 0, 1);
+      const nextCoordinate = {
+        x: animationState.from.x + (animationState.to.x - animationState.from.x) * rawProgress,
+        y: animationState.from.y + (animationState.to.y - animationState.from.y) * rawProgress,
+      };
+      const turnProgress =
+        turnDurationMs <= 0 ? 1 : clamp(elapsedMs / turnDurationMs, 0, 1);
+      const currentFacingDegrees = normalizeDegrees(
+        startFacingDegrees + facingDelta * turnProgress
+      );
+      syncCampaignActorRuntimeState(nextCoordinate, currentFacingDegrees, rawProgress < 1);
+      syncCampaignActorView();
+
+      if (rawProgress >= 1) {
+        campaignMoveAnimationState = null;
+        resolve();
+        return;
+      }
+
+      animationState.frameId = window.requestAnimationFrame(tick);
+    };
+
+    animationState.frameId = window.requestAnimationFrame(tick);
+  });
+}
+
+function syncCampaignActorRuntimeState(
+  coordinate: GridCoordinate,
+  facingDegrees: number,
+  isMoving: boolean
+): void {
+  appState.playerCoordinate = coordinate;
+  appState.campaignActorState.facingDegrees = facingDegrees;
+  appState.campaignActorState.isMoving = isMoving;
+}
+
+function syncCampaignActorView(): void {
+  const playerElement = appRoot.querySelector<HTMLElement>("[data-campaign-player='true']");
+  if (playerElement == null) {
+    return;
+  }
+
+  const coordinateSpace = yuanmoCampaignMap.coordinateSpace;
+  if (coordinateSpace == null) {
+    return;
+  }
+
+  const playerHeightX = appState.playerCoordinate.x / coordinateSpace.width;
+  const playerHeightY = 1 - appState.playerCoordinate.y / coordinateSpace.height;
+  playerElement.dataset.mapHeightU = playerHeightX.toFixed(5);
+  playerElement.dataset.mapHeightV = playerHeightY.toFixed(5);
+  playerElement.dataset.campaignPlayerFacingDeg =
+    appState.campaignActorState.facingDegrees.toFixed(2);
+  playerElement.dataset.campaignPlayerMoving =
+    appState.campaignActorState.isMoving ? "true" : "false";
+  playerElement.setAttribute("data-terrain-projection-ready", "true");
+  playerElement.style.setProperty(
+    "--campaign-player-facing-deg",
+    `${appState.campaignActorState.facingDegrees.toFixed(2)}deg`
+  );
+  playerElement.title =
+    `Player (${appState.playerCoordinate.x.toFixed(1)}, ${appState.playerCoordinate.y.toFixed(1)})`;
+  requestCampaignTerrainRender("dynamic");
+}
+
+function getShortestAngleDelta(fromDegrees: number, toDegrees: number): number {
+  return ((toDegrees - fromDegrees + 540) % 360) - 180;
+}
+
+function normalizeDegrees(degrees: number): number {
+  const normalized = degrees % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
 }
 
 function captureCampaignTerrainCanvases(
   root: ParentNode
 ): HTMLCanvasElement[] | null {
   const canvases = Array.from(
-    root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-terrain]")
+    root.querySelectorAll<HTMLCanvasElement>(
+      "[data-campaign-map-terrain], [data-campaign-map-actor-layer]"
+    )
   );
   return canvases.length === 0 ? null : canvases;
 }
@@ -1087,7 +1716,9 @@ function restoreCampaignTerrainCanvases(
   }
 
   const replacementCanvases = Array.from(
-    root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-terrain]")
+    root.querySelectorAll<HTMLCanvasElement>(
+      "[data-campaign-map-terrain], [data-campaign-map-actor-layer]"
+    )
   );
   if (replacementCanvases.length !== preservedCanvases.length) {
     return;
@@ -1111,6 +1742,7 @@ function renderApp() {
       prototypeCityNpcPools
     ),
   };
+  syncPassiveStoryTriggers();
   const preservedTerrainCanvases =
     appState.gameState.ui.currentView === "map"
       ? captureCampaignTerrainCanvases(appRoot)
@@ -1121,6 +1753,7 @@ function renderApp() {
     playerCharacterId: currentPlayerCharacterId,
     mapDefinition: yuanmoCampaignMap,
     cityDefinition: prototypeCity,
+    cityDefinitions,
     houseDefinitions: prototypeHouses,
     cityEntries: prototypeCityEntries,
     cardDefinitions: prototypeCards,
@@ -1132,12 +1765,53 @@ function renderApp() {
     cityPortraits: prototypeCityPortraits,
     historicalCharacters: zhuYuanzhangEarlyCharacters,
     historicalCityRosters: zhuYuanzhangCityRosters,
+    currentSceneAction: getCurrentSceneAction(
+      appState.gameState,
+      storySceneDefinitionsById
+    ),
+    currentSceneChoiceOptions: getCurrentChoiceOptions(
+      appState.gameState,
+      storySceneDefinitionsById
+    ),
+    sceneDefinitionsById: storySceneDefinitionsById,
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncMapIntroOverlay();
   syncCampaignTerrainWebGl(appRoot);
+}
+
+function syncPassiveStoryTriggers(): void {
+  if (appState.gameState.scene.activeSceneId != null) {
+    return;
+  }
+
+  if (appState.gameState.ui.currentView !== "house") {
+    return;
+  }
+
+  const result = triggerStoryEvents(
+    {
+      state: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+    },
+    {
+      eventDefinitionsById: storyEventDefinitionsById,
+      sceneDefinitionsById: storySceneDefinitionsById,
+    },
+    buildStoryTriggerInput("indoor-screen-shown", appState.gameState)
+  );
+
+  if (result.state === appState.gameState) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    gameState: result.state,
+    characterDefinitions: result.characterDefinitions,
+  };
 }
 
 function syncGameViewport(): void {
@@ -1149,6 +1823,27 @@ function syncGameViewport(): void {
   appRoot.style.setProperty("--game-width", `${GAME_VIEWPORT_WIDTH}px`);
   appRoot.style.setProperty("--game-height", `${GAME_VIEWPORT_HEIGHT}px`);
   appRoot.style.setProperty("--game-scale", `${scale}`);
+}
+
+function shouldDispatchHouseActionOnPointerDown(actionId: string): boolean {
+  return actionId === "temple-work-stop" || actionId === "tavern-work-stop";
+}
+
+function shouldSuppressPointerDispatchedHouseClick(actionId: string): boolean {
+  if (recentPointerDispatchedHouseAction == null) {
+    return false;
+  }
+
+  const elapsedMs =
+    window.performance.now() - recentPointerDispatchedHouseAction.timestamp;
+  const shouldSuppress =
+    recentPointerDispatchedHouseAction.actionId === actionId && elapsedMs < 500;
+
+  if (shouldSuppress || elapsedMs >= 500) {
+    recentPointerDispatchedHouseAction = null;
+  }
+
+  return shouldSuppress;
 }
 
 function handleCampaignMapDebugAction(action: string | undefined): void {

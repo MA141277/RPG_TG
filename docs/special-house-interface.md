@@ -50,7 +50,13 @@ Each special house must declare a stable module id.
 Example:
 
 ```ts
-export type HouseModuleId = "home-house" | "grain-shop" | "tea-house";
+export type HouseModuleId =
+  | "home-house"
+  | "grain-shop"
+  | "tea-house"
+  | "keep-house"
+  | "leader-residence"
+  | "temple-house";
 ```
 
 `HouseDefinition` should point to a module through stable metadata, for example:
@@ -63,6 +69,9 @@ type HouseDefinition = {
   type: HouseType;
   characterIds: CharacterId[];
   defaultCharacterId: CharacterId | null;
+  visibleStoryStages?: string[];
+  enterableStoryStages?: string[];
+  requiresPlayerCurrentCityMatch?: boolean;
   activityLocationId?: CityNpcActivityLocationId | null;
   moduleId?: HouseModuleId | null;
   onEnterEventId?: EventId;
@@ -77,10 +86,32 @@ type HouseDefinition = {
 Rules:
 
 - `type` is presentation/category metadata
+- `visibleStoryStages` / `enterableStoryStages` are optional generic story-stage gates
+- `requiresPlayerCurrentCityMatch` is generic access metadata, not house business logic
 - `activityLocationId` is optional city-level roaming NPC slot metadata
 - `moduleId` is behavior binding
 - `onEnterEventId` / `onLeaveEventId` are event hooks, not house business implementations
 - do not infer business behavior from `house.id` string matching in app entrypoints
+
+If a visible city location should reject entry with dialogue, define the rejection as
+content data and resolve it through a generic selector. A refusal rule may match by
+house id, `moduleId`, story stage, and runtime flags, then return structured
+dialogue data such as speaker character, title, text, and confirm label. The
+entrypoint may display that returned model through the shared dialogue component,
+but it must not contain the house-specific reason or branch.
+
+Shared story/event timing may observe house lifecycle generically, for example:
+
+- `house-enter`
+- `indoor-screen-shown`
+
+These timings must be wired through shared runtime trigger evaluation. Do not
+implement them as house-specific branches in `main.ts` or inside one concrete
+house module.
+
+If a grouped city entry also needs story-stage gating, keep that metadata on
+`CityEntryDefinition.visibleStoryStages` and resolve it through a generic selector
+rather than adding city-entry branches in `main.ts`.
 
 ## Required Application Contract
 
@@ -104,10 +135,25 @@ export type HouseModuleSideEffect =
   | {
       type: "stop-interval";
       intervalId: string;
+    }
+  | {
+      type: "start-map-auto-advance";
+      intervalId: string;
+      everyMs: number;
+      targetHouseId: string;
+      label: string;
+    }
+  | {
+      type: "stop-map-auto-advance";
+      intervalId: string;
     };
 
 export type HouseModuleSessionStateMap = {
+  "home-house": HomeHouseSessionState;
   "grain-shop": GrainShopSessionState;
+  "keep-house": KeepHouseSessionState;
+  "leader-residence": LeaderResidenceSessionState;
+  "temple-house": TempleHouseSessionState;
   "tea-house": TeaHouseSessionState;
 };
 
@@ -121,6 +167,7 @@ export type HouseModuleTransitionResult<
   characterDefinitions: CharacterDefinition[];
   sessionState: HouseModuleSessionState<ModuleId> | null;
   sideEffects?: HouseModuleSideEffect[];
+  navigation?: { type: "stay-in-house" };
 };
 
 export type HouseModuleDefinition<
@@ -159,7 +206,20 @@ If a module needs timer-driven behavior, use:
 - `HouseModuleRequest` with `type: "tick"`
 - `HouseModuleSideEffect` with `start-interval` / `stop-interval`
 
+If a module needs to hand control back to the world layer for reusable time-skip / wait-until-review behavior, use shared side effects such as:
+
+- `start-map-auto-advance`
+- `stop-map-auto-advance`
+
+This path is for generic map-view time progression and automatic re-entry, not for house-specific logic inside `main.ts`.
+
 Do not add parallel custom lifecycle methods for one-off houses unless the shared contract is intentionally being expanded and documented.
+
+If a module must reject the shared leave action, keep the player in the active
+house by returning `navigation: { type: "stay-in-house" }` from `leave()`.
+The module should update its typed session state with structured dialogue or
+overlay data explaining the rejection. The runtime may honor the navigation
+result, but it must not contain house-specific leave reasons.
 
 ## State Rules
 
@@ -190,6 +250,7 @@ Persistent:
 - progress flags
 - unlock state
 - timers that matter after leaving and re-entering
+- accepted/completed/failed task state for house-specific jobs
 
 Temporary session state:
 
@@ -245,6 +306,14 @@ Then `ui/views/*` converts that into markup.
 Shared overlay unions may grow when a special house needs a richer structured interaction
 (for example a module-specific trade picker, a rest-days input panel, or a market trade selector),
 but the data must remain typed and UI-facing.
+If a module-specific overlay needs extra controls, extend the shared typed contract
+(for example a medicine compounding clear action or a shared QTE bar-stop minigame overlay)
+instead of relying on DOM-only behavior.
+If one overlay contains a staged interaction
+(for example "select a topic, then confirm"),
+extend the shared overlay contract with the staged control fields first
+(for example `selectedTopic`, `confirmActionId`, `confirmDisabled`)
+and keep the temporary selection in the module session state.
 Do not fall back to raw HTML strings in `application`.
 
 ## Main Entry Rules
@@ -294,7 +363,10 @@ Example:
 export const houseModuleRegistry: Record<HouseModuleId, HouseModuleDefinition> = {
   "home-house": homeHouseHouseModule,
   "grain-shop": grainShopHouseModule,
+  "keep-house": keepHouseHouseModule,
+  "leader-residence": leaderResidenceHouseModule,
   "market-house": marketHouseHouseModule,
+  "temple-house": templeHouseHouseModule,
   tavern: tavernHouseModule,
   "tea-house": teaHouseHouseModule,
 };
@@ -309,7 +381,10 @@ export const houseModuleViewRegistry: Record<
 > = {
   "home-house": renderHomeHouseView,
   "grain-shop": renderGrainShopHouseView,
+  "keep-house": renderKeepHouseView,
+  "leader-residence": renderLeaderResidenceHouseView,
   "market-house": renderMarketHouseView,
+  "temple-house": renderTempleHouseView,
   tavern: renderTavernHouseView,
   "tea-house": renderTeaHouseHouseView,
 };
@@ -381,6 +456,7 @@ A new house implementation is acceptable only if all are true:
 - entering house does not reset player base stats
 - session state is stored through a unified contract
 - timer behavior, if any, runs through `tick` requests plus shared side-effect wiring
+- map-based time skip, if any, runs through shared side-effect wiring instead of entrypoint special cases
 - `docs/change-log.md` is updated for shared-interface changes
 
 ## Review Checklist

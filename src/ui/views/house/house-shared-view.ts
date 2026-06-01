@@ -20,6 +20,12 @@ type LeaveButtonOptions = {
   className?: string;
 };
 
+type IdleOwnerOptions = {
+  containerClassName?: string;
+  buttonClassName?: string;
+  renderSecondaryText?: (actor: HouseStandbyActorViewModel) => string;
+};
+
 export function renderHouseAlertOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "alert" }>
 ): string {
@@ -103,7 +109,11 @@ export function renderHouseStandbyRoster(
               aria-label="与 ${actor.name} 交谈"
             >
               <div class="c-grain-shop-avatar" aria-hidden="true">
-                <span class="c-grain-shop-avatar__art"></span>
+                ${
+                  actor.avatarImageUrl == null
+                    ? `<span class="c-grain-shop-avatar__art ${actor.avatarArtClassName ?? ""}"></span>`
+                    : `<img class="c-grain-shop-avatar__image" src="${actor.avatarImageUrl}" alt="">`
+                }
               </div>
               <p class="c-grain-shop-avatar__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
                 ${actor.name}
@@ -151,7 +161,11 @@ export function renderHouseDialogue(
           : `
             <div class="c-grain-shop-dialogue__npc">
               <div class="c-grain-shop-portrait" aria-hidden="true">
-                <span class="c-grain-shop-portrait__art"></span>
+                ${
+                  viewModel.dialogue.portraitImageUrl == null
+                    ? `<span class="c-grain-shop-portrait__art ${viewModel.dialogue.portraitArtClassName ?? ""}"></span>`
+                    : `<img class="c-grain-shop-portrait__image" src="${viewModel.dialogue.portraitImageUrl}" alt="">`
+                }
               </div>
               <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
                 ${viewModel.dialogue.speakerName ?? ""}
@@ -163,36 +177,49 @@ export function renderHouseDialogue(
   `;
 }
 
-export function renderHouseStatusCard(
-  viewModel: HouseModuleViewModel
+export function renderHouseIdleOwner(
+  actor: HouseStandbyActorViewModel | null,
+  options: IdleOwnerOptions = {}
 ): string {
-  if (viewModel.statusCard == null) {
+  if (actor == null) {
     return "";
   }
 
+  const secondaryText = options.renderSecondaryText?.(actor) ?? "";
+  const containerClassName =
+    options.containerClassName ?? "c-grain-shop-idle-owner";
+  const buttonClassName =
+    options.buttonClassName ?? "c-grain-shop-idle-owner__button";
+
   return `
-    <aside class="c-grain-shop-scene-card c-grain-shop-skin-dark" aria-label="当前场景">
-      <p class="c-grain-shop-scene-card__eyebrow">${viewModel.statusCard.eyebrow}</p>
-      <h2 class="c-grain-shop-scene-card__title">${viewModel.statusCard.title}</h2>
-      ${
-        viewModel.statusCard.subtitle == null
-          ? ""
-          : `<p class="c-grain-shop-scene-card__subtitle">${viewModel.statusCard.subtitle}</p>`
-      }
-      <dl class="c-grain-shop-scene-card__stats">
-        ${viewModel.statusCard.metrics
-          .map(
-            (metric) => `
-              <div>
-                <dt>${metric.label}</dt>
-                <dd>${metric.value}</dd>
-              </div>
-            `
-          )
-          .join("")}
-      </dl>
+    <aside class="${containerClassName}" aria-label="${actor.name}">
+      <button
+        type="button"
+        class="${buttonClassName}"
+        ${actor.actionId == null ? "" : `data-house-action="${actor.actionId}"`}
+        aria-label="与 ${actor.name} 交谈"
+      >
+        <div class="c-grain-shop-portrait" aria-hidden="true">
+          ${
+            actor.portraitImageUrl == null
+              ? `<span class="c-grain-shop-portrait__art ${actor.portraitArtClassName ?? ""}"></span>`
+              : `<img class="c-grain-shop-portrait__image" src="${actor.portraitImageUrl}" alt="">`
+          }
+        </div>
+        <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
+          ${actor.name}
+        </p>
+        ${secondaryText}
+      </button>
     </aside>
   `;
+}
+
+export function renderHouseStatusCard(
+  viewModel: HouseModuleViewModel
+): string {
+  void viewModel;
+  return "";
 }
 
 export function renderHouseLeaveButton(

@@ -1,14 +1,22 @@
 .view-house-grain-shop {
-  --grain-shop-panel-light: url("../../sliced_ui_assets/1_016_small_blank_panel_1.0.png");
-  --grain-shop-panel-medium: url("../../sliced_ui_assets/1_021_medium_blank_panel_1.0.png");
-  --grain-shop-panel-dark: url("../../sliced_ui_assets/1_003_small_dark_panel_1.0.png");
-  --grain-shop-frame-large: url("../../sliced_ui_assets/1_013_blank_large_frame_1.0.png");
-  --grain-shop-button-gold: url("../../sliced_ui_assets/1_024_gold_bottom_button_1.0.png");
-  --grain-shop-button-large: url("../../sliced_ui_assets/1_031_large_gold_button_1.0.png");
-  --grain-shop-nameplate: url("../../sliced_ui_assets/1_010_red_nameplate_1.0.png");
   --grain-shop-scene-bg: url("../../sliced_ui_assets/lianghang.png");
   --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
   --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
+  --grain-shop-accounting-title: url("../../算术UI/material-202605291354-006.png");
+  --grain-shop-accounting-hud: url("../../算术UI/material-202605291354-005.png");
+  --grain-shop-accounting-board: url("../../算术UI/material-202605291352-002.png");
+  --grain-shop-accounting-side: url("../../算术UI/material-202605291352-003.png");
+  --grain-shop-accounting-scroll: url("../../算术UI/material-202605291352-001.png");
+  --grain-shop-accounting-scroll-full: url("../../算术UI/material-202605291354-001.png");
+  --grain-shop-accounting-badge: url("../../算术UI/material-202605291354-013.png");
+  --grain-shop-accounting-badge-short: url("../../算术UI/material-202605291352-012.png");
+  --grain-shop-accounting-side-title: url("../../算术UI/material-202605291354-008.png");
+  --grain-shop-accounting-side-title-blank: url("../../算术UI/material-202605291354-009.png");
+  --grain-shop-accounting-confirm: url("../../算术UI/material-202605291354-014.png");
+  --grain-shop-accounting-correct: url("../../算术UI/material-202605291354-011.png");
+  --grain-shop-accounting-wrong: url("../../算术UI/material-202605291354-012.png");
+  --grain-shop-accounting-divider: url("../../算术UI/material-202605291354-019.png");
+  --grain-shop-accounting-divider-alt: url("../../算术UI/material-202605291354-020.png");
 
   position: relative;
   display: grid;
@@ -250,6 +258,15 @@
   background: center bottom / auto 100% no-repeat var(--grain-shop-shopkeeper-portrait);
 }
 
+.c-grain-shop-portrait__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(50vh, 420px);
+  object-fit: contain;
+  object-position: center bottom;
+}
+
 .c-grain-shop-portrait__name {
   margin: 0;
   text-align: center;
@@ -271,6 +288,13 @@
   width: 100%;
   height: 100%;
   background: center / cover no-repeat var(--grain-shop-shopkeeper-avatar);
+}
+
+.c-grain-shop-avatar__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .c-grain-shop-avatar__name {
@@ -366,6 +390,33 @@
   filter: brightness(1.06);
 }
 
+.c-grain-shop-idle-owner {
+  position: fixed;
+  right: var(--space-4);
+  top: 50%;
+  z-index: 10;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.c-grain-shop-idle-owner__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.c-grain-shop-idle-owner__button:hover .c-grain-shop-portrait,
+.c-grain-shop-idle-owner__button:focus-visible .c-grain-shop-portrait {
+  filter: brightness(1.06);
+}
+
 .c-grain-shop-leave {
   position: fixed;
   right: var(--space-4);
@@ -384,6 +435,415 @@
   justify-content: center;
   padding: var(--space-5);
   background: var(--color-mask);
+}
+
+.c-grain-shop-overlay--accounting {
+  padding: 0;
+  background: rgb(15 9 5 / 74%);
+}
+
+.c-grain-shop-accounting {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  padding: 1.5vw 1.8vw 2vw;
+  color: #2d180d;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / 0%) 0%, rgb(0 0 0 / 12%) 100%),
+    center / cover no-repeat var(--grain-shop-accounting-board);
+  overflow: hidden;
+}
+
+.c-grain-shop-accounting::before,
+.c-grain-shop-accounting::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.c-grain-shop-accounting::before {
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 34%, rgb(255 228 168 / 8%), transparent 24%),
+    radial-gradient(circle at 72% 74%, rgb(255 255 255 / 4%), transparent 28%);
+  mix-blend-mode: screen;
+}
+
+.c-grain-shop-accounting::after {
+  inset: 2.2% 1.7%;
+  border: 1px solid rgb(194 138 76 / 16%);
+  box-shadow: inset 0 0 0 1px rgb(22 10 4 / 45%);
+}
+
+.c-grain-shop-accounting__header,
+.c-grain-shop-accounting__body {
+  position: relative;
+  z-index: 1;
+}
+
+.c-grain-shop-accounting__header {
+  display: grid;
+  grid-template-columns: auto minmax(360px, 1fr);
+  align-items: start;
+  gap: 1.4vw;
+  padding: 0 0.4vw;
+}
+
+.c-grain-shop-accounting__title {
+  width: min(23.3vw, 358px);
+  aspect-ratio: 358 / 104;
+  margin: 0;
+  background: center / contain no-repeat var(--grain-shop-accounting-title);
+}
+
+.c-grain-shop-accounting__hud {
+  justify-self: center;
+  width: min(38.3vw, 587px);
+  aspect-ratio: 587 / 88;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 0 5.6% 0 4.2%;
+  background: center / contain no-repeat var(--grain-shop-accounting-hud);
+  color: #d7b167;
+}
+
+.c-grain-shop-accounting__hud-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75vw;
+  min-width: 0;
+}
+
+.c-grain-shop-accounting__hud-section--time {
+  justify-content: flex-start;
+}
+
+.c-grain-shop-accounting__hud-section--score {
+  justify-content: flex-end;
+}
+
+.c-grain-shop-accounting__timer-icon {
+  width: min(2.8vw, 43px);
+  aspect-ratio: 43 / 46;
+  flex: 0 0 auto;
+  background: center / contain no-repeat url("../../算术UI/material-202605291354-021.png");
+}
+
+.c-grain-shop-accounting__hud-label {
+  font-family: var(--font-title);
+  font-size: clamp(1.2rem, 1.35vw, 1.55rem);
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.c-grain-shop-accounting__hud-value {
+  font-family: var(--font-title);
+  font-size: clamp(1.45rem, 1.7vw, 2rem);
+  line-height: 1;
+  font-weight: 600;
+  color: #dfb86a;
+  text-shadow: 0 1px 0 rgb(45 22 8 / 80%);
+}
+
+.c-grain-shop-accounting__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 22vw);
+  gap: clamp(20px, 1.8vw, 34px);
+  align-items: stretch;
+  min-height: 0;
+  padding: 1.2vw 0.2vw 0;
+}
+
+.c-grain-shop-accounting__stage {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.c-grain-shop-accounting__scroll {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: clamp(40px, 3.3vw, 64px) clamp(48px, 4.1vw, 80px) clamp(24px, 2.2vw, 42px);
+}
+
+.c-grain-shop-accounting__scroll::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat var(--grain-shop-accounting-scroll);
+  pointer-events: none;
+}
+
+.c-grain-shop-accounting__scroll-content {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 50vw);
+  max-width: 760px;
+  min-height: min(52vh, 520px);
+  padding: clamp(48px, 4.6vw, 82px) clamp(60px, 5.5vw, 96px) clamp(44px, 4vw, 72px);
+}
+
+.c-grain-shop-accounting__badge {
+  width: min(18.9vw, 291px);
+  min-height: min(4.3vw, 66px);
+  margin: 0 auto clamp(26px, 2.5vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  background: center / contain no-repeat var(--grain-shop-accounting-badge);
+  color: #55331b;
+  font-family: var(--font-title);
+  font-size: clamp(1.35rem, 1.85vw, 2.15rem);
+  font-weight: 600;
+}
+
+.c-grain-shop-accounting__ledger {
+  display: grid;
+  justify-items: center;
+  gap: clamp(18px, 2vw, 28px);
+}
+
+.c-grain-shop-accounting__ledger-row {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: clamp(18px, 1.8vw, 28px);
+  margin: 0;
+}
+
+.c-grain-shop-accounting__ledger-row--stock {
+  margin-top: clamp(4px, 0.4vw, 10px);
+}
+
+.c-grain-shop-accounting__ledger-label,
+.c-grain-shop-accounting__ledger-value {
+  font-family: var(--font-title);
+  line-height: 1.12;
+}
+
+.c-grain-shop-accounting__ledger-label {
+  min-width: clamp(108px, 10vw, 162px);
+  font-size: clamp(2.1rem, 3.15vw, 3.9rem);
+  text-align: right;
+  color: #2b180f;
+}
+
+.c-grain-shop-accounting__ledger-value {
+  min-width: clamp(124px, 12vw, 192px);
+  font-size: clamp(2.2rem, 3.3vw, 4.15rem);
+  text-align: left;
+  color: #8d2719;
+  font-weight: 600;
+}
+
+.c-grain-shop-accounting__ledger-divider {
+  width: min(100%, 299px);
+  height: 6px;
+  margin: clamp(8px, 1vw, 14px) auto;
+  background:
+    center / 100% 100% no-repeat var(--grain-shop-accounting-divider),
+    center / 100% 100% no-repeat var(--grain-shop-accounting-divider-alt);
+  opacity: 0.76;
+}
+
+.c-grain-shop-accounting__actions {
+  display: flex;
+  justify-content: center;
+  gap: clamp(26px, 2.8vw, 48px);
+  margin-top: clamp(12px, 1.7vw, 28px);
+  padding-bottom: clamp(6px, 0.8vw, 14px);
+}
+
+.c-grain-shop-accounting__decision,
+.c-grain-shop-accounting__confirm {
+  border: 0;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  font-family: var(--font-title);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-grain-shop-accounting__decision:hover,
+.c-grain-shop-accounting__decision:focus-visible,
+.c-grain-shop-accounting__confirm:hover,
+.c-grain-shop-accounting__confirm:focus-visible {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.c-grain-shop-accounting__decision {
+  width: min(13.7vw, 210px);
+  aspect-ratio: 210 / 91;
+  color: #f7e7bf;
+  font-size: clamp(1.5rem, 1.8vw, 2rem);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 0 rgb(51 17 7 / 85%);
+}
+
+.c-grain-shop-accounting__decision--correct {
+  background-image: var(--grain-shop-accounting-correct);
+}
+
+.c-grain-shop-accounting__decision--wrong {
+  background-image: var(--grain-shop-accounting-wrong);
+}
+
+.c-grain-shop-accounting__side {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 0;
+  padding-top: clamp(10px, 0.8vw, 18px);
+}
+
+.c-grain-shop-accounting__side-card {
+  position: relative;
+  width: min(100%, 349px);
+  min-height: min(69vh, 569px);
+  padding: clamp(38px, 3.2vw, 56px) clamp(22px, 1.9vw, 30px) clamp(28px, 2.5vw, 40px);
+}
+
+.c-grain-shop-accounting__side-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat var(--grain-shop-accounting-side);
+  pointer-events: none;
+}
+
+.c-grain-shop-accounting__side-title,
+.c-grain-shop-accounting__side-content {
+  position: relative;
+  z-index: 1;
+}
+
+.c-grain-shop-accounting__side-title {
+  width: min(100%, 285px);
+  aspect-ratio: 285 / 100;
+  margin: 0 auto clamp(18px, 1.7vw, 26px);
+  background: center / contain no-repeat var(--grain-shop-accounting-side-title-blank);
+}
+
+.c-grain-shop-accounting__side-title--score {
+  background-image: var(--grain-shop-accounting-side-title-blank);
+}
+
+.c-grain-shop-accounting__side-title--result {
+  background-image: var(--grain-shop-accounting-side-title);
+}
+
+.c-grain-shop-accounting__side-content {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  min-height: 0;
+  padding: clamp(30px, 2.5vw, 42px) clamp(14px, 1.3vw, 24px) clamp(18px, 1.8vw, 26px);
+  color: #4a2616;
+}
+
+.c-grain-shop-accounting__side-content--result {
+  padding-top: clamp(34px, 2.8vw, 48px);
+}
+
+.c-grain-shop-accounting__side-label {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(1.45rem, 1.7vw, 1.95rem);
+  color: #4b2819;
+}
+
+.c-grain-shop-accounting__side-score {
+  margin: clamp(14px, 1.1vw, 20px) 0 clamp(18px, 1.6vw, 24px);
+  font-family: var(--font-title);
+  font-size: clamp(4.2rem, 6.3vw, 6.6rem);
+  line-height: 1;
+  font-weight: 600;
+  color: #9a2e1d;
+}
+
+.c-grain-shop-accounting__side-score--result {
+  margin-top: clamp(18px, 1.5vw, 28px);
+  margin-bottom: clamp(34px, 3vw, 46px);
+  font-size: clamp(4.8rem, 7vw, 7.6rem);
+}
+
+.c-grain-shop-accounting__side-metrics {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.c-grain-shop-accounting__side-metrics div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: clamp(4px, 0.6vw, 10px);
+  font-size: clamp(0.95rem, 1.1vw, 1.18rem);
+}
+
+.c-grain-shop-accounting__side-metrics dt,
+.c-grain-shop-accounting__side-metrics dd {
+  margin: 0;
+}
+
+.c-grain-shop-accounting__confirm {
+  width: min(100%, 210px);
+  aspect-ratio: 210 / 82;
+  color: #f3e0b4;
+  font-size: clamp(1.45rem, 1.7vw, 1.95rem);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 0 rgb(57 22 6 / 85%);
+  background-image: var(--grain-shop-accounting-confirm);
+}
+
+.c-grain-shop-accounting--result .c-grain-shop-accounting__scroll-content {
+  min-height: min(50vh, 500px);
+}
+
+.c-grain-shop-accounting__result {
+  max-width: 540px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.c-grain-shop-accounting__result-grade,
+.c-grain-shop-accounting__result-score {
+  margin: 0 0 18px;
+  font-family: var(--font-title);
+  font-size: clamp(1.5rem, 1.8vw, 2rem);
+}
+
+.c-grain-shop-accounting__result-grade strong,
+.c-grain-shop-accounting__result-score strong {
+  color: #8d2719;
+}
+
+.c-grain-shop-accounting__result-rewards {
+  margin: 16px auto 0;
+  padding-left: 1.2em;
+  width: fit-content;
+  max-width: min(100%, 420px);
+  line-height: 1.8;
+  font-size: clamp(1rem, 1.15vw, 1.22rem);
+  text-align: left;
 }
 
 .c-grain-shop-modal {
@@ -589,9 +1049,778 @@
   opacity: 0.8;
 }
 
+.view-house-medicine-house {
+  --grain-shop-scene-bg: url("../../ui/background/huichuntang.png");
+  --medicine-scene-frame: url("../../药铺UI/material-202605271718-003.png");
+  --medicine-top-parchment: url("../../药铺UI/material-202605271713-007.png");
+  --medicine-herb-panel: url("../../药铺UI/material-202605271713-002.png");
+  --medicine-cauldron: url("../../药铺UI/material-202605271713-001.png");
+  --medicine-stats-paper: url("../../药铺UI/material-202605271713-004.png");
+  --medicine-tray: url("../../药铺UI/material-202605271713-006.png");
+  --medicine-finish-tag: url("../../药铺UI/material-202605271713-026.png");
+  --medicine-drawer: url("../../药铺UI/material-202605271713-016.png");
+  --medicine-note-chip: url("../../药铺UI/material-202605271713-027.png");
+  --medicine-dark-chip: url("../../药铺UI/material-202605271713-028.png");
+  --medicine-fill-cold: url("../../药铺UI/material-202605271713-035.png");
+  --medicine-fill-heal: url("../../药铺UI/material-202605271713-030.png");
+  --medicine-fill-poison: url("../../药铺UI/material-202605271713-037.png");
+  --medicine-fill-track: url("../../药铺UI/material-202605271713-046.png");
+}
+
+.c-medicine-house-overlay {
+  padding: 12px;
+  background:
+    radial-gradient(circle at 50% 30%, rgb(95 58 28 / 18%), transparent 30%),
+    linear-gradient(180deg, rgb(10 7 5 / 86%), rgb(7 5 4 / 94%));
+  backdrop-filter: blur(4px);
+}
+
+.c-medicine-house-compounding {
+  width: min(100%, 1280px);
+  aspect-ratio: 1024 / 576;
+}
+
+.c-medicine-house-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 22px solid transparent;
+  border-image-source: var(--medicine-scene-frame);
+  border-image-slice: 34 fill;
+  border-image-width: 22px;
+  border-image-repeat: stretch;
+  box-shadow:
+    0 28px 80px rgb(0 0 0 / 42%),
+    inset 0 0 0 1px rgb(221 170 96 / 12%);
+  background:
+    radial-gradient(circle at 50% 46%, rgb(143 100 54 / 18%), transparent 28%),
+    linear-gradient(180deg, rgb(50 28 14 / 18%), transparent 18%, transparent 74%, rgb(16 10 6 / 26%)),
+    linear-gradient(180deg, #3d2416 0%, #2f1d13 46%, #28180f 100%);
+}
+
+.c-medicine-house-scene::before,
+.c-medicine-house-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.c-medicine-house-scene::before {
+  background:
+    radial-gradient(circle at 48% 50%, rgb(255 235 182 / 5%), transparent 24%),
+    linear-gradient(180deg, rgb(255 248 232 / 6%), transparent 14%, transparent 82%, rgb(0 0 0 / 22%));
+}
+
+.c-medicine-house-scene::after {
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 14%), transparent 8%, transparent 92%, rgb(0 0 0 / 14%)),
+    linear-gradient(180deg, rgb(0 0 0 / 26%), transparent 12%, transparent 88%, rgb(0 0 0 / 26%));
+}
+
+.c-medicine-house-scene__top,
+.c-medicine-house-scene__herbs,
+.c-medicine-house-scene__cauldron,
+.c-medicine-house-scene__stats,
+.c-medicine-house-scene__drawer,
+.c-medicine-house-scene__tray,
+.c-medicine-house-scene__clear,
+.c-medicine-house-scene__finish {
+  position: absolute;
+  z-index: 1;
+}
+
+.c-medicine-house-scene__top {
+  top: 2.4%;
+  left: 33.8%;
+  right: 2.6%;
+  display: grid;
+  gap: 6px;
+}
+
+.c-medicine-house-top-panel {
+  display: grid;
+  grid-template-columns: 0.92fr 1.18fr 0.8fr 0.72fr 0.72fr 0.88fr;
+  min-height: 70px;
+  padding: 8px 18px 10px;
+  background: center / 100% 100% no-repeat var(--medicine-top-parchment);
+}
+
+.c-medicine-house-top-panel__segment {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 0 10px;
+  text-align: center;
+  color: #382316;
+}
+
+.c-medicine-house-top-panel__segment + .c-medicine-house-top-panel__segment {
+  border-left: 1px solid rgb(89 59 34 / 28%);
+}
+
+.c-medicine-house-top-panel__segment strong {
+  font-family: var(--font-title);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #3d2415;
+}
+
+.c-medicine-house-top-panel__segment--label strong,
+.c-medicine-house-top-panel__metric-label {
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.c-medicine-house-top-panel__segment--ailment {
+  font-family: var(--font-title);
+  font-size: 2.2rem;
+  color: #2f1b11;
+}
+
+.c-medicine-house-top-panel__subtle {
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+}
+
+.c-medicine-house-scene__meta {
+  justify-self: end;
+  display: inline-flex;
+  gap: 18px;
+  padding: 0 8px;
+  color: #dbc08c;
+  font-size: 0.92rem;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 32%);
+}
+
+.c-medicine-house-scene__meta strong {
+  color: #f2dec0;
+  font-size: 1.05rem;
+}
+
+.c-medicine-house-scene__herbs {
+  top: 7.3%;
+  left: 1.6%;
+  width: 30.8%;
+  height: 67%;
+}
+
+.c-medicine-house-herbs-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: center / 100% 100% no-repeat var(--medicine-herb-panel);
+}
+
+.c-medicine-house-herbs-panel__tag {
+  position: absolute;
+  left: 1.2%;
+  top: 11.2%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b2b14;
+  font-family: var(--font-title);
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.c-medicine-house-herbs-panel__grid {
+  position: absolute;
+  inset: 8% 5.8% 15% 13.5%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.c-medicine-house-herbs-panel__pager {
+  position: absolute;
+  inset: auto 11.5% 4.5% 18%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  color: #c7a66d;
+  font-size: 0.96rem;
+}
+
+.c-medicine-house-herbs-panel__arrow {
+  opacity: 0.7;
+}
+
+.c-medicine-house-herb-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: start;
+  min-width: 0;
+  padding: 10px 10px 12px;
+  border: 0;
+  color: #f1d9a4;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-medicine-house-herb-card[draggable="true"] {
+  cursor: grab;
+}
+
+.c-medicine-house-herb-card.is-dragging {
+  opacity: 0.48;
+  cursor: grabbing;
+}
+
+.c-medicine-house-herb-card:hover,
+.c-medicine-house-herb-card:focus-visible,
+.c-medicine-house-herb-card.is-selected {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.c-medicine-house-herb-card--frame-a {
+  background-image: url("../../药铺UI/material-202605271713-009.png");
+}
+
+.c-medicine-house-herb-card--frame-b {
+  background-image: url("../../药铺UI/material-202605271713-010.png");
+}
+
+.c-medicine-house-herb-card--frame-c {
+  background-image: url("../../药铺UI/material-202605271713-011.png");
+}
+
+.c-medicine-house-herb-card--frame-d {
+  background-image: url("../../药铺UI/material-202605271713-012.png");
+}
+
+.c-medicine-house-herb-card--frame-e {
+  background-image: url("../../药铺UI/material-202605271713-013.png");
+}
+
+.c-medicine-house-herb-card--frame-f {
+  background-image: url("../../药铺UI/material-202605271713-014.png");
+}
+
+.c-medicine-house-herb-card--empty {
+  cursor: default;
+  filter: saturate(0.8) brightness(0.8);
+}
+
+.c-medicine-house-herb-card__empty-text {
+  align-self: center;
+  justify-self: center;
+  margin-top: 34px;
+  font-size: 0.86rem;
+  color: rgb(214 184 127 / 62%);
+}
+
+.c-medicine-house-herb-card__name {
+  justify-self: center;
+  max-width: calc(100% - 20px);
+  padding-top: 2px;
+  overflow: hidden;
+  color: #f2dcb0;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c-medicine-house-herb-card__amount {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgb(46 25 13 / 78%);
+  color: #f0d9ad;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.c-medicine-house-herb-card__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 4px;
+  color: #d7bb89;
+  font-size: 0.72rem;
+}
+
+.c-medicine-house-herb-art {
+  display: block;
+  width: 68%;
+  aspect-ratio: 1;
+  justify-self: center;
+  align-self: center;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 5px 6px rgb(0 0 0 / 28%));
+}
+
+.c-medicine-house-herb-art--generic {
+  background-image: url("../../药铺UI/material-202605271718-020.png");
+}
+
+.c-medicine-house-herb-art--ai-cao {
+  background-image: url("../../药铺UI/material-202605271718-016.png");
+}
+
+.c-medicine-house-herb-art--huang-lian {
+  background-image: url("../../药铺UI/material-202605271718-011.png");
+}
+
+.c-medicine-house-herb-art--sheng-jiang {
+  background-image: url("../../药铺UI/material-202605271718-009.png");
+}
+
+.c-medicine-house-herb-art--bo-he {
+  background-image: url("../../药铺UI/material-202605271718-005.png");
+}
+
+.c-medicine-house-herb-art--dang-gui {
+  background-image: url("../../药铺UI/material-202605271718-010.png");
+}
+
+.c-medicine-house-herb-art--xing-ren {
+  background-image: url("../../药铺UI/material-202605271718-013.png");
+}
+
+.c-medicine-house-herb-art--gan-cao {
+  background-image: url("../../药铺UI/material-202605271718-012.png");
+}
+
+.c-medicine-house-herb-art--wu-tou {
+  background-image: url("../../药铺UI/material-202605271718-014.png");
+}
+
+.c-medicine-house-scene__cauldron {
+  top: 17.8%;
+  left: 34.2%;
+  width: 36.4%;
+  height: 56%;
+}
+
+.c-medicine-house-cauldron {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: center / contain no-repeat var(--medicine-cauldron);
+}
+
+.c-medicine-house-cauldron__hint {
+  position: absolute;
+  top: 1.8%;
+  left: 50%;
+  min-width: 34%;
+  padding: 9px 28px 13px;
+  color: #c7a36b;
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+  text-align: center;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 44%);
+  background: center / 100% 100% no-repeat var(--medicine-note-chip);
+  transform: translateX(-50%);
+}
+
+.c-medicine-house-cauldron__dropzone {
+  position: absolute;
+  inset: 31% 26% 29%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  color: #d8c29a;
+  text-align: center;
+  border-radius: 999px;
+  transition:
+    background-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+.c-medicine-house-cauldron__dropzone.is-drop-target {
+  background: radial-gradient(circle, rgb(245 220 160 / 14%), transparent 65%);
+  box-shadow:
+    inset 0 0 0 1px rgb(233 205 144 / 28%),
+    0 0 24px rgb(255 214 154 / 12%);
+  transform: scale(1.02);
+}
+
+.c-medicine-house-cauldron__contents {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 10px;
+  align-items: center;
+  justify-items: center;
+}
+
+.c-medicine-house-cauldron__token {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 56px;
+}
+
+.c-medicine-house-cauldron__token .c-medicine-house-herb-art {
+  width: 80%;
+  max-width: 68px;
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 26%));
+}
+
+.c-medicine-house-cauldron__token-amount {
+  position: absolute;
+  right: 8%;
+  bottom: 4%;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgb(45 25 13 / 80%);
+  color: #f1ddb3;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.c-medicine-house-cauldron__empty {
+  color: rgb(216 194 154 / 66%);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.c-medicine-house-scene__stats {
+  top: 15.6%;
+  right: 2.7%;
+  width: 24.8%;
+  height: 54.4%;
+}
+
+.c-medicine-house-stats {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: center / 100% 100% no-repeat var(--medicine-stats-paper);
+}
+
+.c-medicine-house-stats__title {
+  position: absolute;
+  top: 7.8%;
+  left: 16%;
+  right: 16%;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0 10px;
+  color: #f0d8a6;
+  font-family: var(--font-title);
+  font-size: 1.12rem;
+  background: center / 100% 100% no-repeat var(--medicine-dark-chip);
+}
+
+.c-medicine-house-stats__body {
+  position: absolute;
+  inset: 22% 11% 15% 12%;
+  display: grid;
+  align-content: start;
+  gap: 24px;
+}
+
+.c-medicine-house-stats__row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.c-medicine-house-stats__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: rgb(93 69 43 / 82%);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 56%;
+}
+
+.c-medicine-house-stats__icon--cold {
+  background-image: url("../../药铺UI/material-202605271713-045.png");
+}
+
+.c-medicine-house-stats__icon--heal {
+  background-image: url("../../药铺UI/material-202605271713-042.png");
+}
+
+.c-medicine-house-stats__icon--poison {
+  background-image: url("../../药铺UI/material-202605271713-043.png");
+}
+
+.c-medicine-house-stats__metric {
+  display: grid;
+  gap: 6px;
+}
+
+.c-medicine-house-stats__metric-head {
+  color: #402716;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.c-medicine-house-stats__bar {
+  position: relative;
+  display: block;
+  height: 18px;
+  overflow: hidden;
+  background: center / 100% 100% no-repeat var(--medicine-fill-track);
+}
+
+.c-medicine-house-stats__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  transform: scaleX(var(--medicine-fill-scale, 0));
+  transform-origin: left center;
+  background-position: left center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.c-medicine-house-stats__fill--cold {
+  background-image: var(--medicine-fill-cold);
+}
+
+.c-medicine-house-stats__fill--warm {
+  background-image: linear-gradient(90deg, rgb(190 106 53 / 94%), rgb(147 63 33 / 94%));
+}
+
+.c-medicine-house-stats__fill--heal {
+  background-image: var(--medicine-fill-heal);
+}
+
+.c-medicine-house-stats__fill--poison {
+  background-image: var(--medicine-fill-poison);
+}
+
+.c-medicine-house-stats__value {
+  min-width: 20px;
+  color: #3e2617;
+  font-family: var(--font-title);
+  font-size: 1.9rem;
+  line-height: 1;
+  text-align: right;
+}
+
+.c-medicine-house-scene__drawer {
+  left: 1.6%;
+  bottom: 2.1%;
+  width: 10.6%;
+  aspect-ratio: 1;
+  background: center / contain no-repeat var(--medicine-drawer);
+}
+
+.c-medicine-house-scene__tray {
+  left: 12%;
+  right: 7.2%;
+  bottom: 2.35%;
+  height: 21.5%;
+}
+
+.c-medicine-house-scene__clear {
+  right: 9.2%;
+  bottom: 6.4%;
+  min-width: 112px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  font-size: 0.96rem;
+  pointer-events: auto;
+}
+
+.c-medicine-house-tray {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: center / 100% 100% no-repeat var(--medicine-tray);
+}
+
+.c-medicine-house-tray__items {
+  position: absolute;
+  inset: 16% 3.2% 14% 2.4%;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.c-medicine-house-tray__slot {
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.c-medicine-house-tray__slot--filled .c-medicine-house-herb-art {
+  width: 72%;
+}
+
+.c-medicine-house-tray__name {
+  overflow: hidden;
+  max-width: 100%;
+  margin-top: 2px;
+  color: #efd7a7;
+  font-family: var(--font-title);
+  font-size: 0.92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c-medicine-house-tray__amount {
+  color: #d1af76;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.c-medicine-house-scene__finish {
+  right: 1.8%;
+  bottom: 2.9%;
+  width: 6.2%;
+  height: 26%;
+  border: 0;
+  padding: 18px 0 24px;
+  color: #4a2b16;
+  font-family: var(--font-title);
+  font-size: 1.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-shadow: 0 1px 0 rgb(255 247 226 / 38%);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  background: center / contain no-repeat var(--medicine-finish-tag);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-medicine-house-scene__finish:hover,
+.c-medicine-house-scene__finish:focus-visible {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+@media (width <= 1100px) {
+  .c-grain-shop-accounting {
+    padding: 16px 14px 18px;
+  }
+
+  .c-grain-shop-accounting__header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 12px;
+  }
+
+  .c-grain-shop-accounting__body {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 16px;
+    overflow-y: auto;
+    padding-top: 12px;
+  }
+
+  .c-grain-shop-accounting__stage {
+    width: 100%;
+  }
+
+  .c-grain-shop-accounting__scroll-content {
+    width: min(100%, 720px);
+  }
+
+  .c-grain-shop-accounting__side {
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .c-grain-shop-accounting__side-card {
+    min-height: 500px;
+  }
+}
+
+@media (width <= 760px) {
+  .c-grain-shop-accounting__hud {
+    width: min(100%, 587px);
+  }
+
+  .c-grain-shop-accounting__title {
+    width: min(100%, 358px);
+  }
+
+  .c-grain-shop-accounting__scroll {
+    padding: 26px 18px 16px;
+  }
+
+  .c-grain-shop-accounting__scroll::before {
+    background-image: var(--grain-shop-accounting-scroll-full);
+  }
+
+  .c-grain-shop-accounting__scroll-content {
+    min-height: 360px;
+    padding: 44px 30px 34px;
+  }
+
+  .c-grain-shop-accounting__badge {
+    width: min(100%, 321px);
+    background-image: var(--grain-shop-accounting-badge-short);
+  }
+
+  .c-grain-shop-accounting__ledger-label,
+  .c-grain-shop-accounting__ledger-value {
+    font-size: clamp(1.8rem, 6vw, 2.5rem);
+  }
+
+  .c-grain-shop-accounting__actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .c-grain-shop-accounting__decision {
+    width: min(100%, 210px);
+  }
+
+  .c-grain-shop-accounting__side-card {
+    width: min(100%, 349px);
+    min-height: 460px;
+  }
+}
+
 @media (width <= 640px) {
   .c-grain-shop-npc-idle {
     left: var(--space-3);
+  }
+
+  .c-grain-shop-idle-owner {
+    right: var(--space-3);
   }
 
   .c-grain-shop-scene-card {
@@ -640,5 +1869,59 @@
   .c-grain-shop-game__actions,
   .c-grain-shop-modal__actions--split {
     flex-direction: column;
+  }
+
+  .c-medicine-house-overlay {
+    padding: 8px;
+  }
+
+  .c-medicine-house-scene__meta {
+    gap: 10px;
+    font-size: 0.8rem;
+  }
+
+  .c-medicine-house-herbs-panel__grid,
+  .c-medicine-house-tray__items {
+    gap: 6px;
+  }
+
+  .c-medicine-house-herb-card__name,
+  .c-medicine-house-tray__name,
+  .c-medicine-house-cauldron__dropzone {
+    font-size: 0.78rem;
+  }
+
+  .c-medicine-house-herb-card__meta,
+  .c-medicine-house-tray__amount {
+    font-size: 0.66rem;
+  }
+
+  .c-medicine-house-stats__body {
+    gap: 16px;
+  }
+
+  .c-medicine-house-stats__row {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .c-medicine-house-stats__icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .c-medicine-house-stats__value {
+    font-size: 1.2rem;
+  }
+
+  .c-medicine-house-scene__finish {
+    font-size: 1rem;
+  }
+
+  .c-medicine-house-scene__clear {
+    min-width: 82px;
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 0.74rem;
   }
 }

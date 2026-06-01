@@ -42,6 +42,10 @@ export type ActionNode =
       loop?: boolean;
     }
   | {
+      type: "narration";
+      text: string;
+    }
+  | {
       type: "dialogue";
       characterId: CharacterId;
       side: DialogueSide;

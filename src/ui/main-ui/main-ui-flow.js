@@ -1,4 +1,4 @@
-import { resolveCharacterPortraitImageUrl } from "../../content/portrait-assets";
+import { resolveCharacterPortraitImageUrl } from "../portrait-assets";
 
 export class MainUiFlow {
   constructor(options) {

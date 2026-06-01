@@ -8,6 +8,11 @@
     "dev:localhost": "vite --host localhost --port 5173",
     "build": "vite build",
     "preview": "vite preview",
+    "kb:history:build": "node tools/build-history-kb.mjs",
+    "kb:history:search": "node tools/search-history-kb.mjs",
+    "kb:yuanmo-person-pool:build": "node tools/build-yuanmo-person-pool.mjs",
+    "kb:yuanmo-person-pool:validate": "node tools/validate-yuanmo-person-pool.mjs",
+    "scrape:mingshi": "node tools/scrape-mingshi.mjs",
     "serve:prod": "node scripts/serve-static.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "test": "npm run build:test && node --test tests/robustness.test.cjs",
@@ -26,6 +31,8 @@
     "vite": "^7.1.12"
   },
   "dependencies": {
-    "gdal3.js": "^2.8.1"
+    "gdal3.js": "^2.8.1",
+    "pngjs": "^7.0.0",
+    "tga": "^1.0.7"
   }
 }

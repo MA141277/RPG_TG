@@ -12,6 +12,7 @@ export type CityEntryDefinition = {
   directoryType: CityEntryDirectoryType;
   targetHouseId: HouseId;
   artworkId: CityEntryArtworkId;
+  visibleStoryStages?: string[];
 };
 
 export type CityEntryOption = {

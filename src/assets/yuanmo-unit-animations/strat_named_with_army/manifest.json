@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-05-29T07:53:03.532Z",
+  "sourceManifestPath": "D:/RPG_TG/generated/yuanmo-strat-animation-export/manifest.json",
+  "skeletonType": "strat_named_with_army",
+  "outputs": [
+    {
+      "animationId": "stand_a_idle",
+      "outputPath": "D:\\RPG_TG\\src\\assets\\yuanmo-unit-animations\\strat_named_with_army\\stand_a_idle.json",
+      "outputRelativePath": "src/assets/yuanmo-unit-animations/strat_named_with_army/stand_a_idle.json",
+      "frameCount": 11,
+      "animatedBoneCount": 19
+    },
+    {
+      "animationId": "walk",
+      "outputPath": "D:\\RPG_TG\\src\\assets\\yuanmo-unit-animations\\strat_named_with_army\\walk.json",
+      "outputRelativePath": "src/assets/yuanmo-unit-animations/strat_named_with_army/walk.json",
+      "frameCount": 27,
+      "animatedBoneCount": 19
+    }
+  ]
+}

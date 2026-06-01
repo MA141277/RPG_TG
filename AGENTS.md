@@ -47,3 +47,39 @@ If a house module changes shared interfaces, runtime session structure, registry
 
 - `docs/special-house-interface.md`
 - `docs/change-log.md`
+
+## Mechanism-First Design Rule
+
+For gameplay loop, progression, review/council flow, timed skip, assignment, minigame, or story-driven system work:
+
+1. Do not treat the current request as a one-off scene or one-off house patch by default.
+2. First inspect whether the repo already has a similar mechanism, cadence, or lifecycle that should be extracted and reused.
+3. Prefer refining a reusable mechanism component, shared state machine, or shared runtime contract over copying a flow into another module.
+4. If an implementation feels like a temporary story insert, hand-written special branch, or duplicated house logic, stop and redesign the shared mechanism first.
+5. When a feature is intentionally stage-specific, keep the stage-specific part in data/content, and keep the flow skeleton reusable.
+
+Typical examples that should be treated this way include:
+
+- periodic review / council flows
+- contribution ranking and praise
+- policy / strategy announcement
+- work assignment and execution-cycle handoff
+- map-based time skip / fast-forward
+- reusable QTE or other minigame shells
+
+## Genre Reference Rule
+
+This project is a Taiko-like historical simulation game. Agents must not invent core gameplay concepts from scratch when established genre patterns already exist.
+
+Before proposing or implementing a new gameplay loop, system concept, or pacing structure:
+
+1. Check the existing repo for a corresponding mechanic first.
+2. Align with classic Taiko-style and other proven historical simulation design patterns where applicable.
+3. Reuse known genre concepts, cadence, and terminology unless the user explicitly asks for a deliberate deviation.
+4. Only invent a new mechanic when existing repo structures and genre precedents both fail to fit the requirement.
+
+In short:
+
+- prefer extraction over duplication
+- prefer reusable systems over temporary patches
+- prefer genre-proven design over ad hoc invention

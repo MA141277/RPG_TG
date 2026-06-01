@@ -7,22 +7,24 @@ import type { HouseDefinition } from "../../../domain/house";
 import cityBackgroundVideoUrl from "../../../../ui/background/city.mp4?url";
 
 function getHouseArtworkClass(houseDefinition: HouseDefinition): string {
-  switch (houseDefinition.id) {
-    case "home_001":
+  switch (houseDefinition.moduleId) {
+    case "home-house":
       return "c-kulan-house-card--home-house";
-    case "house.kulan.medicine_house":
+    case "medicine-house":
       return "c-kulan-house-card--medicine-house";
-    case "house.kulan.tea_house":
+    case "tea-house":
       return "c-kulan-house-card--tea-house";
-    case "house.kulan.keep":
+    case "temple-house":
+      return "c-kulan-house-card--temple-house";
+    case "keep-house":
       return "c-kulan-house-card--keep";
-    case "house.kulan.market":
+    case "market-house":
       return "c-kulan-house-card--market";
-    case "house.kulan.grain_shop":
+    case "grain-shop":
       return "c-kulan-house-card--grain-shop";
-    case "house.kulan.inn":
+    case "tavern":
       return "c-kulan-house-card--inn";
-    case "house.kulan.leader_residence":
+    case "leader-residence":
       return "c-kulan-house-card--leader-residence";
     default:
       return "c-kulan-house-card--fallback";

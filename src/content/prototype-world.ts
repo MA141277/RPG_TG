@@ -4,11 +4,46 @@ import type {
   CityEntryDefinition,
   CityDefinition,
   CityNpcPoolDefinition,
+  HouseAccessRefusalRule,
   HouseDefinition,
   MapDefinition,
   ValuableItemDefinition,
 } from "../domain";
-import { zhuYuanzhangEarlyCharacters } from "./zhu-yuanzhang-early-characters";
+import {
+  ZHU_YUANZHANG_STORY_FLAG_KEYS,
+  ZHU_YUANZHANG_STORY_STAGES,
+  type ZhuYuanzhangStoryStage,
+} from "../domain";
+import {
+  zhuYuanzhangCityRosters,
+  zhuYuanzhangEarlyCharacters,
+} from "./zhu-yuanzhang-early-characters";
+
+export const prototypeHouseAccessRefusalRules: HouseAccessRefusalRule[] = [
+  {
+    id: "rule.zhu_yuanzhang.temple.first_review_stay",
+    priority: 100,
+    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
+    excludedHouseModuleIds: ["temple-house", "keep-house"],
+    missingFlags: [
+      ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted,
+    ],
+    speakerCharacterId: "player",
+    title: "暂且留在寺中",
+    text: "既然答应了主持，就先不要离开寺院吧。",
+    confirmLabel: "知道了",
+  },
+  {
+    id: "rule.zhu_yuanzhang.temple.keep_closed",
+    priority: 50,
+    houseModuleIds: ["keep-house"],
+    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
+    speakerCharacterId: "char.kulan_soldier",
+    title: "帅府闭门",
+    text: "军机要出，请阁下回避。",
+    confirmLabel: "离开",
+  },
+];
 
 export const prototypeMap: MapDefinition = {
   id: "map.prototype_frontier",
@@ -24,6 +59,7 @@ export const prototypeCity: CityDefinition = {
   mapNodeId: "settlement.fenyang_province",
   houseIds: [
     "house.kulan.leader_residence",
+    "house.kulan.temple",
     "home_001",
     "house.kulan.keep",
     "house.kulan.tea_house",
@@ -40,7 +76,355 @@ export const prototypeCity: CityDefinition = {
   specialDemand: ["silk", "tea", "luxury"],
 };
 
-export const prototypeCities: CityDefinition[] = [prototypeCity];
+const playableYuanmoCitySpecs = [
+  {
+    slug: "yingtian",
+    name: "集庆路",
+    mapNodeId: "settlement.yingtian_province",
+    tags: ["jiangnan", "large-city", "former-yuan-garrison"],
+    prosperity: 92,
+    danger: 35,
+    specialDemand: ["silk", "tea", "luxury"],
+  },
+  {
+    slug: "luzhou",
+    name: "庐州路",
+    mapNodeId: "settlement.luzhou_province",
+    tags: ["jianghuai", "market", "military"],
+    prosperity: 76,
+    danger: 32,
+    specialDemand: ["grain", "iron", "medicine"],
+  },
+  {
+    slug: "anqing",
+    name: "安庆路",
+    mapNodeId: "settlement.anqing_province",
+    tags: ["jianghuai", "river-port", "frontier"],
+    prosperity: 72,
+    danger: 42,
+    specialDemand: ["grain", "timber", "iron"],
+  },
+  {
+    slug: "taiping",
+    name: "太平路",
+    mapNodeId: "settlement.taiping_province",
+    tags: ["river-port", "military", "frontier"],
+    prosperity: 74,
+    danger: 48,
+    specialDemand: ["fish", "timber", "iron"],
+  },
+  {
+    slug: "anfeng",
+    name: "安丰路",
+    mapNodeId: "settlement.tieling_province",
+    tags: ["hongjin", "military", "plain"],
+    prosperity: 68,
+    danger: 50,
+    specialDemand: ["grain", "horses", "cloth"],
+  },
+  {
+    slug: "runing",
+    name: "颍州",
+    mapNodeId: "settlement.runing_province",
+    tags: ["hongjin", "plain", "military"],
+    prosperity: 70,
+    danger: 52,
+    specialDemand: ["grain", "salt", "cloth"],
+  },
+  {
+    slug: "huaian",
+    name: "高邮府",
+    mapNodeId: "settlement.huaian_province",
+    tags: ["canal", "salt", "zhang-shicheng"],
+    prosperity: 84,
+    danger: 40,
+    specialDemand: ["salt", "grain", "silk"],
+  },
+  {
+    slug: "yangzhou",
+    name: "扬州路",
+    mapNodeId: "settlement.yangzhou_province",
+    tags: ["canal", "commercial", "zhang-shicheng"],
+    prosperity: 88,
+    danger: 38,
+    specialDemand: ["salt", "silk", "luxury"],
+  },
+  {
+    slug: "suzhou",
+    name: "平江路",
+    mapNodeId: "settlement.suzhou_province",
+    tags: ["jiangnan", "commercial", "large-city"],
+    prosperity: 96,
+    danger: 28,
+    specialDemand: ["silk", "tea", "luxury"],
+  },
+  {
+    slug: "wuchang",
+    name: "武昌路",
+    mapNodeId: "settlement.wuchang_province",
+    tags: ["chen-han", "river-port", "large-city"],
+    prosperity: 86,
+    danger: 46,
+    specialDemand: ["fish", "iron", "grain"],
+  },
+  {
+    slug: "nanchang",
+    name: "龙兴路",
+    mapNodeId: "settlement.nanchang_province",
+    tags: ["jiangxi", "frontier", "military"],
+    prosperity: 80,
+    danger: 44,
+    specialDemand: ["grain", "timber", "medicine"],
+  },
+  {
+    slug: "chongqing",
+    name: "重庆路",
+    mapNodeId: "settlement.chongqing_province",
+    tags: ["sichuan", "mountain", "river-port"],
+    prosperity: 78,
+    danger: 34,
+    specialDemand: ["medicine", "timber", "salt"],
+  },
+  {
+    slug: "chengdu",
+    name: "成都路",
+    mapNodeId: "settlement.chendu_province",
+    tags: ["sichuan", "large-city", "commercial"],
+    prosperity: 90,
+    danger: 24,
+    specialDemand: ["silk", "medicine", "grain"],
+  },
+  {
+    slug: "ningbo",
+    name: "庆元路",
+    mapNodeId: "settlement.ningbo_province",
+    tags: ["coastal", "fang-guozhen", "trade"],
+    prosperity: 82,
+    danger: 36,
+    specialDemand: ["fish", "silk", "salt"],
+  },
+  {
+    slug: "wenzhou",
+    name: "温州路",
+    mapNodeId: "settlement.wenzhou_province",
+    tags: ["coastal", "fang-guozhen", "trade"],
+    prosperity: 76,
+    danger: 34,
+    specialDemand: ["fish", "timber", "salt"],
+  },
+  {
+    slug: "fuzhou",
+    name: "福州路",
+    mapNodeId: "settlement.fuzhou_province",
+    tags: ["coastal", "yuan-loyalist", "trade"],
+    prosperity: 80,
+    danger: 36,
+    specialDemand: ["fish", "tea", "timber"],
+  },
+  {
+    slug: "dadu",
+    name: "大都路",
+    mapNodeId: "settlement.shuntian_province",
+    tags: ["yuan-court", "capital", "large-city"],
+    prosperity: 98,
+    danger: 18,
+    specialDemand: ["luxury", "horses", "silk"],
+  },
+  {
+    slug: "kaifeng",
+    name: "汴梁路",
+    mapNodeId: "settlement.kaifeng_province",
+    tags: ["henan", "yuan-garrison", "large-city"],
+    prosperity: 86,
+    danger: 44,
+    specialDemand: ["grain", "horses", "iron"],
+  },
+  {
+    slug: "gongchang",
+    name: "巩昌路",
+    mapNodeId: "settlement.gongchang_province",
+    tags: ["northwest", "yuan-garrison", "frontier"],
+    prosperity: 66,
+    danger: 42,
+    specialDemand: ["horses", "iron", "grain"],
+  },
+  {
+    slug: "fengyuan",
+    name: "奉元路",
+    mapNodeId: "settlement.xian_province",
+    tags: ["shaanxi", "large-city", "yuan-garrison"],
+    prosperity: 84,
+    danger: 36,
+    specialDemand: ["horses", "grain", "iron"],
+  },
+] as const;
+
+type PlayableYuanmoCitySpec = (typeof playableYuanmoCitySpecs)[number];
+
+function getCityId(spec: PlayableYuanmoCitySpec): string {
+  return `city.${spec.slug}`;
+}
+
+function getCityHouseIds(slug: string): string[] {
+  return [
+    `house.${slug}.leader_residence`,
+    `house.${slug}.temple`,
+    `home.${slug}`,
+    `house.${slug}.keep`,
+    `house.${slug}.tea_house`,
+    `house.${slug}.market`,
+    `house.${slug}.grain_shop`,
+    `house.${slug}.medicine_house`,
+    `house.${slug}.inn`,
+  ];
+}
+
+const generatedPrototypeCities: CityDefinition[] = playableYuanmoCitySpecs.map(
+  (spec) => ({
+    id: getCityId(spec),
+    name: spec.name,
+    regionId: "region.yuanmo_china",
+    mapNodeId: spec.mapNodeId,
+    houseIds: getCityHouseIds(spec.slug),
+    neighbourCityIds: [],
+    travelCost: 1,
+    tags: [...spec.tags],
+    prosperity: spec.prosperity,
+    danger: spec.danger,
+    specialDemand: [...spec.specialDemand],
+  })
+);
+
+const playableCityByMapNodeId: Record<string, CityDefinition> = Object.fromEntries(
+  [prototypeCity, ...generatedPrototypeCities].map((cityDefinition) => [
+    cityDefinition.mapNodeId,
+    cityDefinition,
+  ])
+);
+
+const citySlugByCityId: Record<string, string> = {
+  "city.kulan": "kulan",
+  ...Object.fromEntries(
+    playableYuanmoCitySpecs.map((spec) => [getCityId(spec), spec.slug])
+  ),
+};
+
+export const prototypeCities: CityDefinition[] = [
+  prototypeCity,
+  ...generatedPrototypeCities,
+];
+
+function createStandardCityHouses(
+  cityDefinition: CityDefinition,
+  slug: string
+): HouseDefinition[] {
+  return [
+    {
+      id: `house.${slug}.leader_residence`,
+      cityId: cityDefinition.id,
+      name: "将领府邸",
+      type: "residence",
+      moduleId: "leader-residence",
+      characterIds: [],
+      defaultCharacterId: null,
+      backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
+    },
+    {
+      id: `house.${slug}.temple`,
+      cityId: cityDefinition.id,
+      name: "寺庙",
+      type: "temple",
+      moduleId: "temple-house",
+      characterIds: [],
+      defaultCharacterId: null,
+      backAction: { label: `杩斿洖${cityDefinition.name}`, targetView: "city" },
+    },
+    {
+      id: `home.${slug}`,
+      cityId: cityDefinition.id,
+      name: "自宅",
+      type: "residence",
+      moduleId: "home-house",
+      visibleStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
+      enterableStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
+      requiresPlayerCurrentCityMatch: true,
+      characterIds: [],
+      defaultCharacterId: null,
+      backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
+    },
+    {
+      id: `house.${slug}.keep`,
+      cityId: cityDefinition.id,
+      name: "帅府",
+      type: "castle",
+      moduleId: "keep-house",
+      characterIds: [],
+      defaultCharacterId: null,
+      backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
+    },
+    {
+      id: `house.${slug}.tea_house`,
+      cityId: cityDefinition.id,
+      name: "茶馆",
+      type: "tea-house",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "tea-house",
+      moduleId: "tea-house",
+      backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
+    },
+    {
+      id: `house.${slug}.market`,
+      cityId: cityDefinition.id,
+      name: "货栈",
+      type: "merchant",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "market",
+      moduleId: "market-house",
+      backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
+    },
+    {
+      id: `house.${slug}.grain_shop`,
+      cityId: cityDefinition.id,
+      name: "粮铺",
+      type: "merchant",
+      moduleId: "grain-shop",
+      characterIds: [],
+      defaultCharacterId: null,
+      backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
+    },
+    {
+      id: `house.${slug}.medicine_house`,
+      cityId: cityDefinition.id,
+      name: "药铺",
+      type: "medicine-house",
+      moduleId: "medicine-house",
+      characterIds: [],
+      defaultCharacterId: null,
+      backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
+    },
+    {
+      id: `house.${slug}.inn`,
+      cityId: cityDefinition.id,
+      name: "客栈",
+      type: "inn",
+      moduleId: "tavern",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "tavern",
+      backAction: { label: `返回${cityDefinition.name}`, targetView: "city" },
+    },
+  ];
+}
+
+const generatedPrototypeHouses: HouseDefinition[] =
+  generatedPrototypeCities.flatMap((cityDefinition) =>
+    createStandardCityHouses(
+      cityDefinition,
+      citySlugByCityId[cityDefinition.id] ?? cityDefinition.id.replace("city.", "")
+    )
+  );
 
 export const prototypeHouses: HouseDefinition[] = [
   {
@@ -57,11 +441,28 @@ export const prototypeHouses: HouseDefinition[] = [
     },
   },
   {
+    id: "house.kulan.temple",
+    cityId: "city.kulan",
+    name: "皇觉寺",
+    type: "temple",
+    moduleId: "temple-house",
+    onEnterEventId: "event.story.zhu_yuanzhang.ordination",
+    characterIds: ["char.kulan_temple_abbot", "char.kulan_temple_senior_monk"],
+    defaultCharacterId: "char.kulan_temple_abbot",
+    backAction: {
+      label: "杩斿洖婵犲窞",
+      targetView: "city",
+    },
+  },
+  {
     id: "home_001",
     cityId: "city.kulan",
     name: "自宅",
     type: "residence",
     moduleId: "home-house",
+    visibleStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
+    enterableStoryStages: [ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp],
+    requiresPlayerCurrentCityMatch: true,
     characterIds: [],
     defaultCharacterId: null,
     backAction: {
@@ -156,6 +557,7 @@ export const prototypeHouses: HouseDefinition[] = [
       targetView: "city",
     },
   },
+  ...generatedPrototypeHouses,
 ];
 
 export const prototypeCityEntries: CityEntryDefinition[] = [
@@ -167,6 +569,17 @@ export const prototypeCityEntries: CityEntryDefinition[] = [
     targetHouseId: "house.kulan.leader_residence",
     artworkId: "leader-residence",
   },
+  ...generatedPrototypeCities.map((cityDefinition) => {
+    const slug = citySlugByCityId[cityDefinition.id] ?? cityDefinition.id;
+    return {
+      id: `city-entry.${slug}.leader-residence`,
+      cityId: cityDefinition.id,
+      name: "将领府邸",
+      directoryType: "leader-residence" as const,
+      targetHouseId: `house.${slug}.leader_residence`,
+      artworkId: "leader-residence" as const,
+    };
+  }),
 ];
 
 export const prototypeCharacters: CharacterDefinition[] = [
@@ -184,17 +597,37 @@ export const prototypeCharacters: CharacterDefinition[] = [
     portraitId: "portrait.player",
     portraitVariants: [
       {
-        id: "normal",
+        id: "stage-20",
         label: "通常",
-        portraitId: "portrait.player.normal",
+        portraitId: "portrait.player.stage.20",
       },
       {
-        id: "smile",
+        id: "stage-25",
         label: "微笑",
-        portraitId: "portrait.player.smile",
+        portraitId: "portrait.player.stage.25",
+      },
+      {
+        id: "stage-26",
+        label: "二十六岁",
+        portraitId: "portrait.player.stage.26",
+      },
+      {
+        id: "stage-29",
+        label: "二十九岁",
+        portraitId: "portrait.player.stage.29",
+      },
+      {
+        id: "stage-34-39",
+        label: "三十四至三十九岁",
+        portraitId: "portrait.player.stage.34_39",
+      },
+      {
+        id: "stage-40",
+        label: "四十岁",
+        portraitId: "portrait.player.stage.40",
       },
     ],
-    portraitVariantId: "normal",
+    portraitVariantId: "stage-20",
     stats: {
       leadership: 60,
       martial: 58,
@@ -267,6 +700,49 @@ export const prototypeCharacters: CharacterDefinition[] = [
       rhetoric: 2,
       tea: 2,
       medicine: 1,
+    },
+  },
+  {
+    id: "char.kulan_soldier",
+    name: "小兵",
+    birthYear: 1545,
+    deathYear: null,
+    age: 22,
+    clanId: "clan.guo",
+    title: "值守小兵",
+    occupation: "步卒",
+    cityId: "city.kulan",
+    houseId: "house.kulan.keep",
+    portraitId: "portrait.kulan_soldier",
+    stats: {
+      leadership: 24,
+      martial: 35,
+      intelligence: 18,
+      politics: 10,
+      charm: 18,
+      fame: 1,
+      gold: 8,
+    },
+    stamina: 72,
+    biography: "在帅府门前值守，奉命拦阻闲杂人等。",
+    availableFunctions: [],
+    skills: {
+      ashigaru: 2,
+      horse: 0,
+      teppo: 0,
+      navy: 0,
+      archery: 0,
+      martial: 1,
+      military: 0,
+      ninjutsu: 0,
+      construction: 0,
+      development: 0,
+      mining: 0,
+      arithmetic: 0,
+      etiquette: 0,
+      rhetoric: 0,
+      tea: 0,
+      medicine: 0,
     },
   },
   {
@@ -539,6 +1015,90 @@ export const prototypeCharacters: CharacterDefinition[] = [
     teachableSkillKeys: ["development", "etiquette", "arithmetic"],
   },
   {
+    id: "char.kulan_temple_abbot",
+    name: "慧明住持",
+    birthYear: 1510,
+    deathYear: null,
+    age: 57,
+    title: "住持",
+    occupation: "寺院主持",
+    cityId: "city.kulan",
+    houseId: "house.kulan.temple",
+    portraitId: "portrait.kulan_temple_abbot",
+    stats: {
+      leadership: 36,
+      martial: 18,
+      intelligence: 77,
+      politics: 52,
+      charm: 76,
+      fame: 20,
+      gold: 160,
+    },
+    stamina: 72,
+    biography: "皇觉寺住持，管着寺中香火、施粥与僧众起居，也时常提点乱世里的人该如何安身。",
+    availableFunctions: [],
+    skills: {
+      ashigaru: 0,
+      horse: 0,
+      teppo: 0,
+      navy: 0,
+      archery: 0,
+      martial: 1,
+      military: 1,
+      ninjutsu: 0,
+      construction: 0,
+      development: 2,
+      mining: 0,
+      arithmetic: 2,
+      etiquette: 4,
+      rhetoric: 3,
+      tea: 2,
+      medicine: 2,
+    },
+  },
+  {
+    id: "char.kulan_temple_senior_monk",
+    name: "觉远",
+    birthYear: 1527,
+    deathYear: null,
+    age: 40,
+    title: "知客僧",
+    occupation: "寺中执事",
+    cityId: "city.kulan",
+    houseId: "house.kulan.temple",
+    portraitId: "portrait.kulan_temple_senior_monk",
+    stats: {
+      leadership: 24,
+      martial: 22,
+      intelligence: 58,
+      politics: 38,
+      charm: 49,
+      fame: 7,
+      gold: 28,
+    },
+    stamina: 74,
+    biography: "寺里跑前跑后的知客僧，熟悉香客、流民和僧众杂务，常替住持传话。",
+    availableFunctions: [],
+    skills: {
+      ashigaru: 0,
+      horse: 0,
+      teppo: 0,
+      navy: 0,
+      archery: 0,
+      martial: 1,
+      military: 0,
+      ninjutsu: 0,
+      construction: 0,
+      development: 1,
+      mining: 0,
+      arithmetic: 1,
+      etiquette: 2,
+      rhetoric: 1,
+      tea: 1,
+      medicine: 1,
+    },
+  },
+  {
     id: "char.kulan_tea_boss",
     name: "柳四",
     birthYear: 1534,
@@ -632,7 +1192,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
     occupation: "医师",
     cityId: "city.kulan",
     houseId: "house.kulan.medicine_house",
-    portraitId: "portrait.kulan_grain_shopkeeper",
+    portraitId: "portrait.kulan_medicine_doctor",
     stats: {
       leadership: 24,
       martial: 12,
@@ -750,6 +1310,186 @@ export const prototypeCharacters: CharacterDefinition[] = [
   },
 ];
 
+const historicalCharacterIdsAlreadyRepresented = new Set([
+  "zyz.character.zhu_yuanzhang",
+  "zyz.character.guo_zixing",
+  "zyz.character.tang_he",
+  "zyz.character.xu_da",
+  "zyz.character.chang_yuchun",
+  "zyz.character.li_shanchang",
+  "zyz.character.liu_ji",
+]);
+
+const historicalCharacterById = Object.fromEntries(
+  zhuYuanzhangEarlyCharacters.map((characterRecord) => [
+    characterRecord.id,
+    characterRecord,
+  ])
+);
+
+function getRuntimeCharacterId(historicalCharacterId: string): string {
+  return `char.${historicalCharacterId.replace(/^zyz\.character\./, "yuanmo.")}`;
+}
+
+function getHistoricalRecordCityId(
+  characterRecord: (typeof zhuYuanzhangEarlyCharacters)[number]
+): string | null {
+  const cityNodeId =
+    characterRecord.currentCityNodeId ??
+    characterRecord.homeCityNodeId ??
+    characterRecord.relatedCityNodeIds[0] ??
+    null;
+
+  if (cityNodeId == null) {
+    return null;
+  }
+
+  return playableCityByMapNodeId[cityNodeId]?.id ?? null;
+}
+
+function getHistoricalRecordHouseId(
+  characterRecord: (typeof zhuYuanzhangEarlyCharacters)[number],
+  cityId: string
+): string {
+  const slug = citySlugByCityId[cityId] ?? cityId.replace("city.", "");
+  const leaderResidenceProfile = characterRecord.leaderResidenceProfile;
+
+  if (leaderResidenceProfile?.eligible === true) {
+    return `house.${slug}.leader_residence`;
+  }
+
+  if (characterRecord.roleTags.includes("merchant")) {
+    return `house.${slug}.market`;
+  }
+
+  if (characterRecord.roleTags.includes("monk")) {
+    return `house.${slug}.temple`;
+  }
+
+  if (
+    characterRecord.roleTags.includes("rumor-source") ||
+    characterRecord.roleTags.includes("commoner")
+  ) {
+    return `house.${slug}.tea_house`;
+  }
+
+  return `house.${slug}.inn`;
+}
+
+function getHistoricalRecordStats(
+  characterRecord: (typeof zhuYuanzhangEarlyCharacters)[number]
+): CharacterDefinition["stats"] {
+  const priorityBonus = characterRecord.priority === "P0" ? 18 : characterRecord.priority === "P1" ? 10 : 4;
+  const isMilitary =
+    characterRecord.roleTags.includes("general") ||
+    characterRecord.roleTags.includes("commander");
+  const isCivil =
+    characterRecord.roleTags.includes("advisor") ||
+    characterRecord.roleTags.includes("civil-official") ||
+    characterRecord.roleTags.includes("local-elite");
+  const isMerchant = characterRecord.roleTags.includes("merchant");
+
+  return {
+    leadership: 38 + priorityBonus + (isMilitary ? 18 : 0) + (isCivil ? 6 : 0),
+    martial: 28 + priorityBonus + (isMilitary ? 22 : 0),
+    intelligence: 40 + priorityBonus + (isCivil ? 22 : 0) + (isMerchant ? 8 : 0),
+    politics: 34 + priorityBonus + (isCivil ? 24 : 0) + (isMerchant ? 10 : 0),
+    charm: 38 + priorityBonus + (characterRecord.roleTags.includes("family") ? 12 : 0),
+    fame: 8 + priorityBonus * 2,
+    gold: 80 + priorityBonus * 18 + (isMerchant ? 180 : 0),
+  };
+}
+
+function getHistoricalRecordSkills(
+  characterRecord: (typeof zhuYuanzhangEarlyCharacters)[number]
+): NonNullable<CharacterDefinition["skills"]> {
+  const isMilitary =
+    characterRecord.roleTags.includes("general") ||
+    characterRecord.roleTags.includes("commander");
+  const isCivil =
+    characterRecord.roleTags.includes("advisor") ||
+    characterRecord.roleTags.includes("civil-official") ||
+    characterRecord.roleTags.includes("local-elite");
+  const isMerchant = characterRecord.roleTags.includes("merchant");
+  const isMonk = characterRecord.roleTags.includes("monk");
+
+  return {
+    ashigaru: isMilitary ? 3 : 0,
+    horse: isMilitary ? 2 : 0,
+    teppo: 0,
+    navy: characterRecord.stageTags.includes("jiqing-campaign") ? 1 : 0,
+    archery: isMilitary ? 1 : 0,
+    martial: isMilitary ? 3 : isMonk ? 1 : 0,
+    military: isMilitary ? 3 : isCivil ? 2 : 0,
+    ninjutsu: 0,
+    construction: isCivil ? 2 : 0,
+    development: isCivil ? 3 : isMerchant ? 2 : 0,
+    mining: 0,
+    arithmetic: isCivil || isMerchant ? 3 : 1,
+    etiquette: isCivil ? 3 : 1,
+    rhetoric: isCivil ? 3 : characterRecord.roleTags.includes("rumor-source") ? 2 : 0,
+    tea: isCivil || isMerchant ? 1 : 0,
+    medicine: isMonk ? 1 : 0,
+  };
+}
+
+const generatedHistoricalCharacters: CharacterDefinition[] =
+  zhuYuanzhangEarlyCharacters
+    .filter(
+      (characterRecord) =>
+        !historicalCharacterIdsAlreadyRepresented.has(characterRecord.id)
+    )
+    .map((characterRecord): CharacterDefinition | null => {
+      const cityId = getHistoricalRecordCityId(characterRecord);
+      if (cityId == null) {
+        return null;
+      }
+
+      const leaderResidenceProfile = characterRecord.leaderResidenceProfile;
+      const birthYear = characterRecord.birthYear ?? 1330;
+
+      return {
+        id: getRuntimeCharacterId(characterRecord.id),
+        name: characterRecord.displayName,
+        birthYear,
+        deathYear: characterRecord.deathYear,
+        age: Math.max(16, 1352 - birthYear),
+        clanId: characterRecord.factionId,
+        title:
+          leaderResidenceProfile?.title ??
+          characterRecord.cityNpcProfile?.title ??
+          characterRecord.factionName,
+        occupation:
+          leaderResidenceProfile?.occupation ??
+          characterRecord.cityNpcProfile?.specialty ??
+          "历史人物",
+        affiliationLabel:
+          leaderResidenceProfile?.affiliationLabel ?? characterRecord.factionName,
+        cityId,
+        houseId: getHistoricalRecordHouseId(characterRecord, cityId),
+        portraitId: `portrait.${getRuntimeCharacterId(characterRecord.id).replace("char.", "")}`,
+        stats: getHistoricalRecordStats(characterRecord),
+        stamina: 70 + (characterRecord.priority === "P0" ? 18 : characterRecord.priority === "P1" ? 10 : 4),
+        biography: `${characterRecord.shortBio} ${characterRecord.gameplayUse}`.trim(),
+        flags: [
+          `historical-priority.${characterRecord.priority}`,
+          `faction.${characterRecord.factionId}`,
+        ],
+        isHistoricalFigure: true,
+        leaderResidenceEligible: leaderResidenceProfile?.eligible === true,
+        leaderResidenceStatus: leaderResidenceProfile?.status ?? "available",
+        availableFunctions: [],
+        skills: getHistoricalRecordSkills(characterRecord),
+        teachableSkillKeys: leaderResidenceProfile?.teachableSkillKeys ?? [],
+      };
+    })
+    .filter(
+      (characterDefinition): characterDefinition is CharacterDefinition =>
+        characterDefinition != null
+    );
+
+prototypeCharacters.push(...generatedHistoricalCharacters);
+
 const leaderResidenceCharacterOverrides: Record<
   string,
   Partial<CharacterDefinition>
@@ -810,6 +1550,87 @@ for (const characterDefinition of prototypeCharacters) {
   }
 }
 
+function cloneCharacterDefinition(
+  characterDefinition: CharacterDefinition
+): CharacterDefinition {
+  return {
+    ...characterDefinition,
+    stats: { ...characterDefinition.stats },
+    availableFunctions: [...characterDefinition.availableFunctions],
+    ...(characterDefinition.portraitVariants == null
+      ? {}
+      : {
+          portraitVariants: characterDefinition.portraitVariants.map((variant) => ({
+            ...variant,
+          })),
+        }),
+    ...(characterDefinition.flags == null
+      ? {}
+      : { flags: [...characterDefinition.flags] }),
+    ...(characterDefinition.skills == null
+      ? {}
+      : { skills: { ...characterDefinition.skills } }),
+    ...(characterDefinition.teachableSkillKeys == null
+      ? {}
+      : { teachableSkillKeys: [...characterDefinition.teachableSkillKeys] }),
+  };
+}
+
+export function createPrototypeCharactersForStoryStage(
+  storyStage: ZhuYuanzhangStoryStage
+): CharacterDefinition[] {
+  const characterDefinitions = prototypeCharacters.map(cloneCharacterDefinition);
+  const playerCharacter = characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === "char.player"
+  );
+
+  if (playerCharacter == null) {
+    return characterDefinitions;
+  }
+
+  if (storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple) {
+    delete playerCharacter.clanId;
+    playerCharacter.title = "挂单僧";
+    playerCharacter.occupation = "皇觉寺僧人";
+    playerCharacter.houseId = "house.kulan.temple";
+    playerCharacter.biography =
+      "寺中饥荒未歇，你暂在皇觉寺挂单度日，一边听候住持训示，一边思量乱世中的出路。";
+  }
+
+  return characterDefinitions;
+}
+
+const characterDefinitionsByHouseId = new Map<string, CharacterDefinition[]>();
+for (const characterDefinition of prototypeCharacters) {
+  if (characterDefinition.houseId == null) {
+    continue;
+  }
+
+  const existingCharacters =
+    characterDefinitionsByHouseId.get(characterDefinition.houseId) ?? [];
+  existingCharacters.push(characterDefinition);
+  characterDefinitionsByHouseId.set(characterDefinition.houseId, existingCharacters);
+}
+
+for (const houseDefinition of prototypeHouses) {
+  const houseCharacters =
+    characterDefinitionsByHouseId.get(houseDefinition.id) ?? [];
+  if (houseCharacters.length === 0) {
+    continue;
+  }
+
+  houseDefinition.characterIds = [
+    ...new Set([
+      ...houseDefinition.characterIds,
+      ...houseCharacters.map((characterDefinition) => characterDefinition.id),
+    ]),
+  ];
+
+  if (houseDefinition.defaultCharacterId == null) {
+    houseDefinition.defaultCharacterId = houseCharacters[0]?.id ?? null;
+  }
+}
+
 export const prototypeHistoricalCharacterIdByCharacterId: Record<string, string> = {
   "char.kulan_lord": "zyz.character.guo_zixing",
   "char.kulan_tang_he": "zyz.character.tang_he",
@@ -817,10 +1638,65 @@ export const prototypeHistoricalCharacterIdByCharacterId: Record<string, string>
   "char.kulan_chang_yuchun": "zyz.character.chang_yuchun",
   "char.kulan_li_shanchang": "zyz.character.li_shanchang",
   "char.kulan_liu_bowen": "zyz.character.liu_ji",
+  ...Object.fromEntries(
+    generatedHistoricalCharacters.map((characterDefinition) => [
+      characterDefinition.id,
+      characterDefinition.id.replace(/^char\.yuanmo\./, "zyz.character."),
+    ])
+  ),
 };
 
 export const prototypeLeaderResidenceHistoricalCharacters =
   zhuYuanzhangEarlyCharacters;
+
+const generatedCityNpcPools: CityNpcPoolDefinition[] = prototypeCities
+  .filter((cityDefinition) => cityDefinition.id !== "city.kulan")
+  .map((cityDefinition) => {
+    const slug = citySlugByCityId[cityDefinition.id] ?? cityDefinition.id;
+    const cityCharacters = prototypeCharacters
+      .filter(
+        (characterDefinition) =>
+          characterDefinition.cityId === cityDefinition.id &&
+          characterDefinition.isHistoricalFigure === true
+      )
+      .slice(0, 12);
+
+    return {
+      cityId: cityDefinition.id,
+      residents: cityCharacters.map((characterDefinition, index) => {
+        const historicalCharacterId =
+          prototypeHistoricalCharacterIdByCharacterId[characterDefinition.id];
+        const historicalCharacter =
+          historicalCharacterId == null
+            ? null
+            : historicalCharacterById[historicalCharacterId] ?? null;
+        const cityNpcProfile = historicalCharacter?.cityNpcProfile;
+
+        return {
+          id: `city-npc.${slug}.${characterDefinition.id.replace(/^char\./, "").replaceAll(".", "_")}`,
+          cityId: cityDefinition.id,
+          name: characterDefinition.name,
+          title: cityNpcProfile?.title ?? characterDefinition.title ?? "城中人物",
+          personality: cityNpcProfile?.personality ?? (index % 2 === 0 ? "谨慎" : "观望"),
+          specialty: cityNpcProfile?.specialty ?? characterDefinition.occupation ?? "见闻",
+          favorability: cityNpcProfile?.favorability ?? 0,
+          activityWeight: cityNpcProfile?.activityWeight ?? {
+            "tea-house": 30,
+            tavern: 20,
+            market: 20,
+            street: 30,
+          },
+          dialoguePool: cityNpcProfile?.dialoguePool ?? [
+            `${cityDefinition.name}近日军情和商路都不太安稳。`,
+            "天下纷乱，能守住一城已是不易。",
+          ],
+          intelPool: cityNpcProfile?.intelPool ?? [
+            `${cityDefinition.name}的府邸、茶馆和市井都能打听到人物线索。`,
+          ],
+        };
+      }),
+    };
+  });
 
 export const prototypeCityNpcPools: CityNpcPoolDefinition[] = [
   {
@@ -910,6 +1786,7 @@ export const prototypeCityNpcPools: CityNpcPoolDefinition[] = [
       },
     ],
   },
+  ...generatedCityNpcPools,
 ];
 
 export const prototypeCityPortraits: Record<string, string> = {

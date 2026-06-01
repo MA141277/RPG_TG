@@ -1,0 +1,1225 @@
+{
+  "generatedAt": "2026-05-29T07:31:05.751Z",
+  "modelIndexPath": "D:/RPG_TG/generated/yuanmo-strat-model-index.json",
+  "descrSkeletonPath": "D:/RPG_TG/map/yuan mo feng yun lu/mods/yuanmofengyunlu/data/descr_skeleton.txt",
+  "packIndexPath": "D:/RPG_TG/map/yuan mo feng yun lu/mods/yuanmofengyunlu/data/animations/pack.idx",
+  "packDataPath": "D:/RPG_TG/map/yuan mo feng yun lu/mods/yuanmofengyunlu/data/animations/pack.dat",
+  "selectedSkeletonTypes": [
+    "strat_named_with_army"
+  ],
+  "packIndexEntryCount": 3649,
+  "unresolvedClipCount": 0,
+  "requiresCasConversion": true,
+  "unresolvedClips": [],
+  "skeletons": [
+    {
+      "type": "strat_named_with_army",
+      "scale": 0.7,
+      "actorIds": [
+        "red-turban-strat",
+        "yuan-infantry-strat",
+        "yuan-general-strat",
+        "ming-captain-strat"
+      ],
+      "actorRoles": [
+        "friendly",
+        "enemy",
+        "enemy",
+        "reference"
+      ],
+      "clipCount": 46,
+      "clips": [
+        {
+          "animationId": "default",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_basepose.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_basepose.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_basepose.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_basepose.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_basepose.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_basepose.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_basepose.cas",
+          "byteLength": 9497,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 95,
+            "dataOffset": 61139459,
+            "dataSize": 9497,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_idle",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_idle.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_idle.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_idle.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_idle.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_idle.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_idle.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_idle.cas",
+          "byteLength": 6161,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 100,
+            "dataOffset": 61492683,
+            "dataSize": 6161,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_to_selected",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_selected.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_selected.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_selected.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_selected.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_selected.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_selected.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_selected.cas",
+          "byteLength": 41745,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 91,
+            "dataOffset": 61387975,
+            "dataSize": 41745,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "selected",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_idle_selected.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_idle_selected.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_idle_selected.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_idle_selected.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_idle_selected.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_idle_selected.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_idle_selected.cas",
+          "byteLength": 36185,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 96,
+            "dataOffset": 61498844,
+            "dataSize": 36185,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "selected_to_stand",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_unselected.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_unselected.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_unselected.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_unselected.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_unselected.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_unselected.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_unselected.cas",
+          "byteLength": 39521,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 86,
+            "dataOffset": 61844795,
+            "dataSize": 39521,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "idle_1",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_1.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_lf_idle_1.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_1.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_1.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_1.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_lf_idle_1.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_lf_idle_1.cas",
+          "byteLength": 35073,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 96,
+            "dataOffset": 61535029,
+            "dataSize": 35073,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "idle_2",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_2.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_lf_idle_2.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_2.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_2.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_2.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_lf_idle_2.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_lf_idle_2.cas",
+          "byteLength": 17281,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 96,
+            "dataOffset": 61570102,
+            "dataSize": 17281,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "idle_3",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_3.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_lf_idle_3.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_3.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_3.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_lf_idle_3.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_lf_idle_3.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_lf_idle_3.cas",
+          "byteLength": 12833,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 96,
+            "dataOffset": 61587383,
+            "dataSize": 12833,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_to_walk",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_to_walk.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_to_walk.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_to_walk.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_to_walk.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_to_walk.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_to_walk.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_to_walk.cas",
+          "byteLength": 18393,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 103,
+            "dataOffset": 61663269,
+            "dataSize": 18393,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "walk",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_walk.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_walk.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_walk.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_walk.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_walk.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_walk.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_walk.cas",
+          "byteLength": 15057,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 92,
+            "dataOffset": 61898261,
+            "dataSize": 15057,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "walk_to_stand_a",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_walk_to_stand_A.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_walk_to_stand_a.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_walk_to_stand_A.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_walk_to_stand_A.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_walk_to_stand_A.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_walk_to_stand_A.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_walk_to_stand_A.cas",
+          "byteLength": 45081,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 87,
+            "dataOffset": 61942320,
+            "dataSize": 45081,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_to_walk_backward",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_to_walk_backward.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_to_walk_backward.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_to_walk_backward.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_to_walk_backward.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_to_walk_backward.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_to_walk_backward.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_to_walk_backward.cas",
+          "byteLength": 25065,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 98,
+            "dataOffset": 61681662,
+            "dataSize": 25065,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "walk_backward",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_walk_backward.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_walk_backward.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_walk_backward.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_walk_backward.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_walk_backward.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_walk_backward.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_walk_backward.cas",
+          "byteLength": 11721,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 103,
+            "dataOffset": 61913318,
+            "dataSize": 11721,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "walk_backward_to_stand_a",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_walk_backward_to_stand_A.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_walk_backward_to_stand_a.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_walk_backward_to_stand_A.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_walk_backward_to_stand_A.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_walk_backward_to_stand_A.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_walk_backward_to_stand_A.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_walk_backward_to_stand_A.cas",
+          "byteLength": 17281,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 94,
+            "dataOffset": 61925039,
+            "dataSize": 17281,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_turn_90_cw_1",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_turn_90_cw.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_turn_90_cw.cas",
+          "flags": [
+            {
+              "raw": "-mintd:10",
+              "kind": "mintd",
+              "value": "10"
+            },
+            {
+              "raw": "-maxtd:115",
+              "kind": "maxtd",
+              "value": "115"
+            },
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_turn_90_cw.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_turn_90_cw.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_turn_90_cw.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_turn_90_cw.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_turn_90_cw.cas",
+          "byteLength": 50641,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 93,
+            "dataOffset": 61731792,
+            "dataSize": 50641,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_turn_90_ccw_1",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_turn_90_ccw.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_turn_90_ccw.cas",
+          "flags": [
+            {
+              "raw": "-mintd:10",
+              "kind": "mintd",
+              "value": "10"
+            },
+            {
+              "raw": "-maxtd:115",
+              "kind": "maxtd",
+              "value": "115"
+            },
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_turn_90_ccw.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_turn_90_ccw.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_turn_90_ccw.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_turn_90_ccw.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_turn_90_ccw.cas",
+          "byteLength": 25065,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 97,
+            "dataOffset": 61706727,
+            "dataSize": 25065,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_turn_90_cw_2",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_turn_90_cw.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_turn_90_cw.cas",
+          "flags": [
+            {
+              "raw": "-mintd:10",
+              "kind": "mintd",
+              "value": "10"
+            },
+            {
+              "raw": "-maxtd:115",
+              "kind": "maxtd",
+              "value": "115"
+            },
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_turn_90_cw.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_turn_90_cw.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_turn_90_cw.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_turn_90_cw.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_turn_90_cw.cas",
+          "byteLength": 50641,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 93,
+            "dataOffset": 61731792,
+            "dataSize": 50641,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_turn_90_ccw_2",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_turn_90_ccw.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_turn_90_ccw.cas",
+          "flags": [
+            {
+              "raw": "-mintd:10",
+              "kind": "mintd",
+              "value": "10"
+            },
+            {
+              "raw": "-maxtd:115",
+              "kind": "maxtd",
+              "value": "115"
+            },
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_turn_90_ccw.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_turn_90_ccw.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_turn_90_ccw.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_turn_90_ccw.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_turn_90_ccw.cas",
+          "byteLength": 25065,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 97,
+            "dataOffset": 61706727,
+            "dataSize": 25065,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_to_no_mp",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_to_no_mp.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_to_no_mp.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_to_no_mp.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_to_no_mp.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_to_no_mp.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_to_no_mp.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_to_no_mp.cas",
+          "byteLength": 12833,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 95,
+            "dataOffset": 61639827,
+            "dataSize": 12833,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "no_mp",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_no_mp_idle.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_no_mp_idle.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_no_mp_idle.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_no_mp_idle.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_no_mp_idle.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_no_mp_idle.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_no_mp_idle.cas",
+          "byteLength": 9497,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 95,
+            "dataOffset": 61358973,
+            "dataSize": 9497,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "no_mp_to_stand",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_no_mp_to_stand_A.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_no_mp_to_stand_a.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_no_mp_to_stand_A.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_no_mp_to_stand_A.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_no_mp_to_stand_A.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_no_mp_to_stand_A.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_no_mp_to_stand_A.cas",
+          "byteLength": 19505,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 87,
+            "dataOffset": 61368470,
+            "dataSize": 19505,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "die_forward_1",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_die_forward_1.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_die_forward_1.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_die_forward_1.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_die_forward_1.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_die_forward_1.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_die_forward_1.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_die_forward_1.cas",
+          "byteLength": 6161,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 91,
+            "dataOffset": 61252552,
+            "dataSize": 6161,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "die_backward_1",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_die_backward_1.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_die_backward_1.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_die_backward_1.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_die_backward_1.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_die_backward_1.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_die_backward_1.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_die_backward_1.cas",
+          "byteLength": 19505,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 92,
+            "dataOffset": 61233047,
+            "dataSize": 19505,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "die_to_back_right_1",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_die_backward_1.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_die_backward_1.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_die_backward_1.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_die_backward_1.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_die_backward_1.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_die_backward_1.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_die_backward_1.cas",
+          "byteLength": 19505,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 92,
+            "dataOffset": 61233047,
+            "dataSize": 19505,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_to_build_settlement",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_to_build_settlement.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_to_build_settlement.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_to_build_settlement.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_to_build_settlement.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_to_build_settlement.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_to_build_settlement.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_to_build_settlement.cas",
+          "byteLength": 15057,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 102,
+            "dataOffset": 61614161,
+            "dataSize": 15057,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "build_settlement",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_build_settlement.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_build_settlement.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_build_settlement.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_build_settlement.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_build_settlement.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_build_settlement.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_build_settlement.cas",
+          "byteLength": 11721,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 106,
+            "dataOffset": 61148956,
+            "dataSize": 11721,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "build_settlement_to_stand",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_build_settlement_to_stand_A.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_build_settlement_to_stand_a.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_build_settlement_to_stand_A.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_build_settlement_to_stand_A.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_build_settlement_to_stand_A.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_build_settlement_to_stand_A.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_build_settlement_to_stand_A.cas",
+          "byteLength": 41745,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 97,
+            "dataOffset": 61160677,
+            "dataSize": 41745,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_to_ready",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_idle_selected.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_idle_selected.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_idle_selected.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_idle_selected.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_idle_selected.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_idle_selected.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_idle_selected.cas",
+          "byteLength": 36185,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 96,
+            "dataOffset": 61498844,
+            "dataSize": 36185,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "attack_right_high_1",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_dummy_attack.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_dummy_attack.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_dummy_attack.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_dummy_attack.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_dummy_attack.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_dummy_attack.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_dummy_attack.cas",
+          "byteLength": 9497,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 91,
+            "dataOffset": 61258713,
+            "dataSize": 9497,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "ready_to_stand_a",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_attack.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_attack.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_attack.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_attack.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_attack.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_attack.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_attack.cas",
+          "byteLength": 7185,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 87,
+            "dataOffset": 61132274,
+            "dataSize": 7185,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "impact",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_impact.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_impact.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_impact.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_impact.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_impact.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_impact.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_impact.cas",
+          "byteLength": 22841,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 89,
+            "dataOffset": 61336132,
+            "dataSize": 22841,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "retreat_to_ready",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_walk_backward_to_stand_A.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_walk_backward_to_stand_a.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_walk_backward_to_stand_A.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_walk_backward_to_stand_A.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_walk_backward_to_stand_A.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_walk_backward_to_stand_A.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_walk_backward_to_stand_A.cas",
+          "byteLength": 17281,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 94,
+            "dataOffset": 61925039,
+            "dataSize": 17281,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "despoil",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_despoil.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_despoil.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_despoil.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_despoil.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_despoil.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_despoil.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_despoil.cas",
+          "byteLength": 11721,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 89,
+            "dataOffset": 61833074,
+            "dataSize": 11721,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "decimate",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_decimate.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_decimate.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_decimate.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_decimate.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_decimate.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_decimate.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_decimate.cas",
+          "byteLength": 50641,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 92,
+            "dataOffset": 61782433,
+            "dataSize": 50641,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_to_ambush",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_to_ambush.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_to_ambush.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_to_ambush.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_to_ambush.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_to_ambush.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_to_ambush.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_to_ambush.cas",
+          "byteLength": 13945,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 106,
+            "dataOffset": 61600216,
+            "dataSize": 13945,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "ambush",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_ambush_idle.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_ambush_idle.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_ambush_idle.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_ambush_idle.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_ambush_idle.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_ambush_idle.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_ambush_idle.cas",
+          "byteLength": 11721,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 96,
+            "dataOffset": 61078808,
+            "dataSize": 11721,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "ambush_to_stand",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_ambush_to_stand_A.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_ambush_to_stand_a.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_ambush_to_stand_A.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_ambush_to_stand_A.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_ambush_to_stand_A.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_ambush_to_stand_A.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_ambush_to_stand_A.cas",
+          "byteLength": 41745,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 85,
+            "dataOffset": 61090529,
+            "dataSize": 41745,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "victory",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_victory.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_victory.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_victory.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_victory.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_victory.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_victory.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_victory.cas",
+          "byteLength": 13945,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 83,
+            "dataOffset": 61884316,
+            "dataSize": 13945,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "capture_settlement",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_capture_settlement.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_capture_settlement.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_capture_settlement.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_capture_settlement.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_capture_settlement.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_capture_settlement.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_capture_settlement.cas",
+          "byteLength": 30625,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 93,
+            "dataOffset": 61202422,
+            "dataSize": 30625,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_to_siege",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_to_siege.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_to_siege.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_to_siege.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_to_siege.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_to_siege.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_to_siege.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_to_siege.cas",
+          "byteLength": 10609,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 94,
+            "dataOffset": 61652660,
+            "dataSize": 10609,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "siege_idle",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_siege_idle.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_siege_idle.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_siege_idle.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_siege_idle.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_siege_idle.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_siege_idle.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_siege_idle.cas",
+          "byteLength": 17281,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 95,
+            "dataOffset": 61452561,
+            "dataSize": 17281,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "siege_action",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_siege_action.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_siege_action.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_siege_action.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_siege_action.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_siege_action.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_siege_action.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_siege_action.cas",
+          "byteLength": 22841,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 89,
+            "dataOffset": 61429720,
+            "dataSize": 22841,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "siege_to_stand",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_siege_to_stand_A.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_siege_to_stand_a.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_siege_to_stand_A.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_siege_to_stand_A.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_siege_to_stand_A.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_siege_to_stand_A.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_siege_to_stand_A.cas",
+          "byteLength": 22841,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 91,
+            "dataOffset": 61469842,
+            "dataSize": 22841,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "stand_a_to_run",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_stand_A_to_forced_march.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_stand_a_to_forced_march.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_stand_A_to_forced_march.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_stand_A_to_forced_march.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_stand_A_to_forced_march.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_stand_A_to_forced_march.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_stand_A_to_forced_march.cas",
+          "byteLength": 10609,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 95,
+            "dataOffset": 61629218,
+            "dataSize": 10609,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "run",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_forced_march.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_forced_march.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_forced_march.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_forced_march.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_forced_march.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_forced_march.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_forced_march.cas",
+          "byteLength": 21729,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 102,
+            "dataOffset": 61268210,
+            "dataSize": 21729,
+            "scale": 0.699999988079071
+          }
+        },
+        {
+          "animationId": "run_to_stand_a",
+          "sourcePath": "data/animations/Stratmap_General/Strat_General_forced_march_to_stand_A.cas",
+          "normalizedSourcePath": "data/animations/stratmap_general/strat_general_forced_march_to_stand_a.cas",
+          "flags": [
+            {
+              "raw": "-evt:data/animations/Stratmap_General/Strat_General_forced_march_to_stand_A.evt",
+              "kind": "evt",
+              "value": "data/animations/Stratmap_General/Strat_General_forced_march_to_stand_A.evt"
+            }
+          ],
+          "resolvedStorage": "pack",
+          "formatKind": "packed_animation_chunk",
+          "resolvedSourcePath": "mods/Asia_empires/data/animations/Stratmap_General/Strat_General_forced_march_to_stand_A.cas",
+          "outputPath": "D:\\RPG_TG\\generated\\yuanmo-strat-animation-export\\clips\\strat_named_with_army\\Strat_General_forced_march_to_stand_A.cas",
+          "outputRelativePath": "generated/yuanmo-strat-animation-export/clips/strat_named_with_army/Strat_General_forced_march_to_stand_A.cas",
+          "byteLength": 46193,
+          "looksLikeCas": false,
+          "packEntry": {
+            "recordSize": 85,
+            "dataOffset": 61289939,
+            "dataSize": 46193,
+            "scale": 0.699999988079071
+          }
+        }
+      ]
+    }
+  ]
+}

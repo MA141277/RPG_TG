@@ -46,23 +46,86 @@ function renderTradeOverlay(
 function renderMinigameOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "minigame" }>
 ): string {
+  const bought = overlay.ledgerRows.find((row) => row.label === "买入")?.value ?? "--";
+  const sold = overlay.ledgerRows.find((row) => row.label === "卖出")?.value ?? "--";
+  const stock = overlay.ledgerRows.find((row) => row.label === "库存")?.value ?? "--";
+  const minutes = String(Math.max(0, Math.floor(overlay.secondsLeft / 60))).padStart(2, "0");
+  const seconds = String(Math.max(0, overlay.secondsLeft % 60)).padStart(2, "0");
+
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="minigame">
-      <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel" role="dialog" aria-modal="true">
-        <header class="c-grain-shop-game__header">
-          <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
-          <div class="c-grain-shop-game__hud">
-            <span>剩余 <strong>${overlay.secondsLeft}</strong> 秒</span>
-            <span>得分 <strong>${overlay.score}</strong></span>
-            <span>可错 <strong>${overlay.wrongsLeft}</strong> 次</span>
+    <div class="c-grain-shop-overlay c-grain-shop-overlay--accounting" data-house-overlay="minigame">
+      <div class="c-grain-shop-accounting" role="dialog" aria-modal="true" aria-label="${overlay.title}">
+        <header class="c-grain-shop-accounting__header">
+          <h3 class="c-grain-shop-accounting__title">
+            <span class="u-visually-hidden">${overlay.title}</span>
+          </h3>
+          <div class="c-grain-shop-accounting__hud" aria-label="当前剩余时间与得分">
+            <div class="c-grain-shop-accounting__hud-section c-grain-shop-accounting__hud-section--time">
+              <span class="c-grain-shop-accounting__timer-icon" aria-hidden="true"></span>
+              <strong class="c-grain-shop-accounting__hud-value">${minutes}:${seconds}</strong>
+            </div>
+            <div class="c-grain-shop-accounting__hud-section c-grain-shop-accounting__hud-section--score">
+              <span class="c-grain-shop-accounting__hud-label">得分：</span>
+              <strong class="c-grain-shop-accounting__hud-value">${overlay.score}</strong>
+            </div>
           </div>
         </header>
-        <div class="c-grain-shop-ledger c-grain-shop-skin-card">
-          ${overlay.ledgerRows.map((row) => `<p>${row.label}：${row.value}</p>`).join("")}
-        </div>
-        <div class="c-grain-shop-game__actions">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.correctActionId}">账对</button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.wrongActionId}">账错</button>
+        <div class="c-grain-shop-accounting__body">
+          <div class="c-grain-shop-accounting__stage">
+            <section class="c-grain-shop-accounting__scroll" aria-label="账目题板">
+              <div class="c-grain-shop-accounting__scroll-content">
+                <div class="c-grain-shop-accounting__badge">当前题目</div>
+                <div class="c-grain-shop-accounting__ledger">
+                  <p class="c-grain-shop-accounting__ledger-row">
+                    <span class="c-grain-shop-accounting__ledger-label">购入：</span>
+                    <strong class="c-grain-shop-accounting__ledger-value">${bought}</strong>
+                  </p>
+                  <p class="c-grain-shop-accounting__ledger-row">
+                    <span class="c-grain-shop-accounting__ledger-label">卖出：</span>
+                    <strong class="c-grain-shop-accounting__ledger-value">${sold}</strong>
+                  </p>
+                  <div class="c-grain-shop-accounting__ledger-divider" aria-hidden="true"></div>
+                  <p class="c-grain-shop-accounting__ledger-row c-grain-shop-accounting__ledger-row--stock">
+                    <span class="c-grain-shop-accounting__ledger-label">库存：</span>
+                    <strong class="c-grain-shop-accounting__ledger-value">${stock}</strong>
+                  </p>
+                </div>
+              </div>
+            </section>
+            <div class="c-grain-shop-accounting__actions">
+              <button
+                type="button"
+                class="c-grain-shop-accounting__decision c-grain-shop-accounting__decision--correct"
+                data-house-action="${overlay.correctActionId}"
+                aria-label="账对"
+              ></button>
+              <button
+                type="button"
+                class="c-grain-shop-accounting__decision c-grain-shop-accounting__decision--wrong"
+                data-house-action="${overlay.wrongActionId}"
+                aria-label="账错"
+              ></button>
+            </div>
+          </div>
+          <aside class="c-grain-shop-accounting__side" aria-label="当前成绩">
+            <div class="c-grain-shop-accounting__side-card">
+              <div class="c-grain-shop-accounting__side-title c-grain-shop-accounting__side-title--score">当前得分</div>
+              <div class="c-grain-shop-accounting__side-content">
+                <p class="c-grain-shop-accounting__side-label">累计得分</p>
+                <p class="c-grain-shop-accounting__side-score">${overlay.score}</p>
+                <dl class="c-grain-shop-accounting__side-metrics">
+                  <div>
+                    <dt>剩余时间</dt>
+                    <dd>${minutes}:${seconds}</dd>
+                  </div>
+                  <div>
+                    <dt>可错次数</dt>
+                    <dd>${overlay.wrongsLeft} 次</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
@@ -73,20 +136,55 @@ function renderResultOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "result" }>
 ): string {
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="result">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
-        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
-        <div class="c-grain-shop-modal__body">
-          <p class="c-grain-shop-result__grade">评级：<strong>${overlay.grade}</strong></p>
-          <p>本局得分：${overlay.score} 分</p>
-          <ul class="c-grain-shop-result__rewards">
-            ${overlay.rewardLines.map((rewardLine) => `<li>${rewardLine}</li>`).join("")}
-          </ul>
-        </div>
-        <div class="c-grain-shop-modal__actions">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
-            ${overlay.confirmLabel}
-          </button>
+    <div class="c-grain-shop-overlay c-grain-shop-overlay--accounting" data-house-overlay="result">
+      <div class="c-grain-shop-accounting c-grain-shop-accounting--result" role="dialog" aria-modal="true" aria-label="${overlay.title}">
+        <header class="c-grain-shop-accounting__header">
+          <h3 class="c-grain-shop-accounting__title">
+            <span class="u-visually-hidden">${overlay.title}</span>
+          </h3>
+          <div class="c-grain-shop-accounting__hud" aria-label="本局最终得分">
+            <div class="c-grain-shop-accounting__hud-section c-grain-shop-accounting__hud-section--time">
+              <span class="c-grain-shop-accounting__hud-label">状态：</span>
+              <strong class="c-grain-shop-accounting__hud-value">已结束</strong>
+            </div>
+            <div class="c-grain-shop-accounting__hud-section c-grain-shop-accounting__hud-section--score">
+              <span class="c-grain-shop-accounting__hud-label">得分：</span>
+              <strong class="c-grain-shop-accounting__hud-value">${overlay.score}</strong>
+            </div>
+          </div>
+        </header>
+        <div class="c-grain-shop-accounting__body">
+          <div class="c-grain-shop-accounting__stage">
+            <section class="c-grain-shop-accounting__scroll c-grain-shop-accounting__scroll--result" aria-label="算账结算">
+              <div class="c-grain-shop-accounting__scroll-content">
+                <div class="c-grain-shop-accounting__badge">算账结算</div>
+                <div class="c-grain-shop-accounting__result">
+                  <p class="c-grain-shop-accounting__result-grade">评级：<strong>${overlay.grade}</strong></p>
+                  <p class="c-grain-shop-accounting__result-score">本局得分：<strong>${overlay.score}</strong></p>
+                  <ul class="c-grain-shop-accounting__result-rewards">
+                    ${overlay.rewardLines.map((rewardLine) => `<li>${rewardLine}</li>`).join("")}
+                  </ul>
+                </div>
+              </div>
+            </section>
+          </div>
+          <aside class="c-grain-shop-accounting__side" aria-label="结算面板">
+            <div class="c-grain-shop-accounting__side-card">
+              <div class="c-grain-shop-accounting__side-title c-grain-shop-accounting__side-title--result">
+                <span class="u-visually-hidden">游戏结束</span>
+              </div>
+              <div class="c-grain-shop-accounting__side-content c-grain-shop-accounting__side-content--result">
+                <p class="c-grain-shop-accounting__side-label">最终得分</p>
+                <p class="c-grain-shop-accounting__side-score c-grain-shop-accounting__side-score--result">${overlay.score}</p>
+                <button
+                  type="button"
+                  class="c-grain-shop-accounting__confirm"
+                  data-house-action="${overlay.confirmActionId}"
+                  aria-label="${overlay.confirmLabel}"
+                ></button>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
