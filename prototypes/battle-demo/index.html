@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>棋盘格战斗原型 — 战略验证 Demo</title>
+  <style>
+    :root {
+      --bg: #1a1612;
+      --panel: #2a2218;
+      --border: #4a3c28;
+      --text: #e8dcc8;
+      --muted: #9a8870;
+      --accent: #c9a227;
+      --player: #3a6ea5;
+      --enemy: #a53a3a;
+      --plain: #6b8f4e;
+      --forest: #2d5a3d;
+      --hill: #8a7355;
+      --river: #2a4a6a;
+      --bridge: #9a8260;
+      --highlight-move: rgba(100, 180, 255, 0.45);
+      --highlight-attack: rgba(255, 100, 80, 0.5);
+      --highlight-skill: rgba(255, 200, 80, 0.45);
+      --side-w: 300px;
+      --header-h: 52px;
+      --deploy-h: 46px;
+      --controls-h: 38px;
+      --cell: min(
+        calc((100vh - var(--header-h) - var(--deploy-h) - var(--controls-h) - 20px) / 8 - 2px),
+        calc((100vw - var(--side-w) - 32px) / 10 - 2px),
+        46px
+      );
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: "Noto Serif SC", "SimSun", serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      height: var(--header-h);
+      flex-shrink: 0;
+      padding: 4px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header h1 { font-size: 0.95rem; color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+    .phase-badge {
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      background: var(--panel);
+      white-space: nowrap;
+    }
+    .phase-badge.player { border-color: var(--player); color: #8ec4ff; }
+    .phase-badge.enemy { border-color: var(--enemy); color: #ff9090; }
+
+    .objective-bar {
+      font-size: 0.72rem;
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #turn-info {
+      color: var(--muted);
+      font-size: 0.72rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+
+    main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      overflow: hidden;
+    }
+
+    .battle-area {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .board-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px;
+      overflow: hidden;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(10, var(--cell));
+      grid-template-rows: repeat(8, var(--cell));
+      gap: 2px;
+      user-select: none;
+    }
+
+    .cell {
+      width: var(--cell);
+      height: var(--cell);
+      border: 1px solid rgba(0,0,0,0.3);
+      border-radius: 3px;
+      position: relative;
+      cursor: default;
+      font-size: clamp(0.4rem, calc(var(--cell) * 0.12), 0.6rem);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cell.plain { background: var(--plain); }
+    .cell.forest { background: var(--forest); }
+    .cell.hill { background: var(--hill); }
+    .cell.river { background: var(--river); }
+    .cell.bridge { background: var(--bridge); }
+
+    .cell.deploy-zone { outline: 1px dashed rgba(100,180,255,0.4); }
+    .cell.defense-zone { outline: 1px dashed rgba(201,162,39,0.35); }
+    .cell.can-move { background-color: var(--highlight-move) !important; cursor: pointer; }
+    .cell.can-attack { background-color: var(--highlight-attack) !important; cursor: crosshair; }
+    .cell.can-skill { background-color: var(--highlight-skill) !important; cursor: pointer; }
+    .cell.selected { outline: 2px solid var(--accent); z-index: 2; }
+
+    .terrain-icon { position: absolute; top: 1px; left: 2px; opacity: 0.55; font-size: 0.5rem; }
+
+    .point-marker {
+      position: absolute;
+      bottom: 1px;
+      right: 2px;
+      font-size: 0.48rem;
+      padding: 0 2px;
+      border-radius: 2px;
+      background: rgba(0,0,0,0.45);
+      line-height: 1.2;
+    }
+    .point-marker.player-own { color: #8ec4ff; border: 1px solid var(--player); }
+    .point-marker.enemy-own { color: #ff9090; border: 1px solid var(--enemy); }
+    .point-marker.neutral { color: var(--muted); border: 1px solid var(--muted); }
+
+    .capture-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(0,0,0,0.4);
+    }
+    .capture-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
+
+    .unit {
+      width: calc(var(--cell) - 4px);
+      min-height: calc(var(--cell) - 4px);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(0.4rem, calc(var(--cell) * 0.11), 0.55rem);
+      font-weight: 600;
+      cursor: grab;
+      border: 2px solid;
+      position: relative;
+      z-index: 1;
+      line-height: 1.05;
+      text-align: center;
+      padding: 1px;
+    }
+
+    .unit.player { background: #1e3a5f; border-color: #5a9fd4; color: #cfe8ff; }
+    .unit.enemy { background: #5f1e1e; border-color: #d45a5a; color: #ffcfcf; }
+    .unit.commander { box-shadow: 0 0 4px gold; }
+    .unit.acted { opacity: 0.55; }
+    .unit.chaos { animation: shake 0.4s infinite; border-color: #ff8800; }
+    .unit.rout { animation: flee-pulse 0.8s infinite; border-color: #888; opacity: 0.65; }
+    .unit.in-river { outline: 1px dashed #6af; }
+
+    .unit-status {
+      font-size: 0.48rem;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+    .unit-status.high { color: #8f8; }
+    .unit-status.normal { color: #ccc; }
+    .unit-status.shaken { color: #fc8; }
+    .unit-status.chaos { color: #f80; }
+    .unit-status.rout { color: #aaa; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(-1px); }
+    }
+    @keyframes flee-pulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 0.8; }
+    }
+
+    .controls {
+      flex-shrink: 0;
+      height: var(--controls-h);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    button {
+      font-family: inherit;
+      padding: 5px 12px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary { background: #3a2e10; border-color: var(--accent); color: var(--accent); }
+
+    .skill-bar { display: flex; gap: 4px; overflow: hidden; min-width: 0; }
+    .skill-btn { font-size: 0.75rem; padding: 4px 8px; }
+
+    .side-panel {
+      width: var(--side-w);
+      flex-shrink: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .log-panel {
+      flex-shrink: 0;
+      height: 72px;
+      overflow-y: auto;
+      background: #12100e;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 7px;
+      font-size: 0.7rem;
+      line-height: 1.35;
+    }
+    .log-panel .entry { margin-bottom: 2px; }
+    .log-panel .entry.damage { color: #ff8080; }
+    .log-panel .entry.heal { color: #80ff80; }
+    .log-panel .entry.skill { color: #ffd080; }
+    .log-panel .entry.system { color: var(--muted); }
+    .log-panel .entry.morale { color: #c8a0ff; }
+
+    .morale-log-panel {
+      flex-shrink: 0;
+      height: 72px;
+      overflow-y: auto;
+      background: #151018;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 7px;
+      font-size: 0.68rem;
+      line-height: 1.35;
+    }
+    .morale-log-panel h3 {
+      font-size: 0.72rem;
+      color: var(--accent);
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+    .morale-log-panel .entry { margin-bottom: 2px; color: #c8a0ff; }
+
+    .debug-panel {
+      flex: 1;
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .debug-panel h2 {
+      padding: 5px 8px;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .debug-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 5px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      align-content: start;
+    }
+    .debug-unit {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 5px;
+      font-size: 0.62rem;
+      line-height: 1.4;
+    }
+    .debug-unit.player-side { border-left: 3px solid var(--player); }
+    .debug-unit.enemy-side { border-left: 3px solid var(--enemy); }
+    .debug-unit .name { font-weight: 600; font-size: 0.68rem; }
+    .morale-bar { height: 3px; background: #333; border-radius: 2px; overflow: hidden; margin: 2px 0; }
+    .morale-fill { height: 100%; background: linear-gradient(90deg, #a53a3a, #c9a227, #3a8a3a); }
+
+    .deploy-pool {
+      flex-shrink: 0;
+      height: var(--deploy-h);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      padding: 4px 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .deploy-pool .unit {
+      width: auto;
+      min-width: 68px;
+      height: 36px;
+      flex-shrink: 0;
+      padding: 0 5px;
+    }
+
+    .type-tag {
+      display: inline-block;
+      padding: 0 4px;
+      border-radius: 2px;
+      font-size: 0.58rem;
+      background: rgba(0,0,0,0.3);
+    }
+
+    .overlay-msg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .overlay-msg.hidden { display: none; }
+    .overlay-box {
+      background: var(--panel);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 28px 40px;
+      text-align: center;
+    }
+    .overlay-box h2 { font-size: 1.4rem; color: var(--accent); margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <h1>棋盘格战斗原型</h1>
+      <span class="phase-badge" id="phase-badge">部署阶段</span>
+      <span id="turn-info"></span>
+    </div>
+    <div class="objective-bar" id="objective-bar">战斗目标：—</div>
+  </header>
+
+  <main>
+    <div class="battle-area">
+      <div class="deploy-pool" id="deploy-pool"></div>
+      <div class="board-wrap"><div id="board"></div></div>
+      <div class="controls">
+        <button class="primary" id="btn-start">开始战斗</button>
+        <button id="btn-end-turn" disabled>结束回合</button>
+        <button id="btn-wait" disabled>待机</button>
+        <div class="skill-bar" id="skill-bar"></div>
+      </div>
+    </div>
+
+    <aside class="side-panel">
+      <div class="log-panel" id="log"></div>
+      <div class="morale-log-panel">
+        <h3>士气变化</h3>
+        <div id="morale-log"></div>
+      </div>
+      <div class="debug-panel">
+        <h2>部队数据</h2>
+        <div class="debug-list" id="debug-list"></div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="overlay-msg hidden" id="overlay">
+    <div class="overlay-box">
+      <h2 id="overlay-title">胜利</h2>
+      <p id="overlay-desc"></p>
+      <button class="primary" id="btn-restart" style="margin-top: 14px;">重新开始</button>
+    </div>
+  </div>
+
+  <script>
+    const COLS = 10, ROWS = 8;
+    const PLAYER_DEPLOY_ROWS = [5, 6, 7];
+    const ENEMY_DEPLOY_ROWS = [0, 1, 2];
+    const RIVER_DAMAGE_MULT = 1.4;
+    const FOREST_LOCK_RANGE = 3;
+
+    const TERRAIN = {
+      plain: { label: '平', name: '平原' },
+      forest: { label: '林', name: '森林' },
+      hill: { label: '高', name: '高地' },
+      river: { label: '河', name: '河流' },
+      bridge: { label: '桥', name: '桥梁' },
+    };
+
+    const STRATEGIC = {
+      camp: { label: '寨', name: '营寨', desc: '占领方每回合士气恢复，附近友军持续恢复' },
+      supplyDepot: { label: '粮', name: '粮仓', desc: '占领后全军士气提升，失去则下降' },
+      watchTower: { label: '塔', name: '箭塔', desc: '额外视野，附近远程射程+1' },
+    };
+
+    const TROOP_TYPES = {
+      infantry: { label: '步兵', attack: 50, defense: 50, speed: 30, range: 1 },
+      spear: { label: '长枪', attack: 45, defense: 55, speed: 28, range: 1 },
+      cavalry: { label: '骑兵', attack: 65, defense: 40, speed: 45, range: 1 },
+      archer: { label: '弓兵', attack: 55, defense: 35, speed: 32, range: 3 },
+      gunpowder: { label: '火器', attack: 75, defense: 30, speed: 22, range: 2 },
+    };
+
+    const TYPE_ADVANTAGE = {
+      spear: { cavalry: 1.25 },
+      cavalry: { archer: 1.25 },
+      infantry: { gunpowder: 1.2 },
+    };
+
+    const OBJECTIVES = [
+      { id: 'annihilation', name: '歼灭战', desc: '消灭全部敌军或迫其全线溃逃' },
+      { id: 'strongpoint', name: '据点战', desc: '占领全部战略据点' },
+      { id: 'defense', name: '守卫战', desc: '守住中央区域3回合' },
+      { id: 'assassination', name: '斩首战', desc: '击败敌军主将' },
+      { id: 'supply', name: '粮道战', desc: '夺取粮仓' },
+    ];
+
+    const SKILL_USES = { inspire: 1, charge: 1, fireAttack: 1 };
+
+    let grid = [], units = [], strategicPoints = [];
+    let nextId = 1, phase = 'deploy', turn = 'player';
+    let selectedUnit = null, mode = null;
+    let reachable = [], attackable = [], skillTargets = [], dragUnit = null;
+    let battleObjective = null, defenseHoldTurns = 0, turnCounter = 0;
+    let playerOwnsSupply = false, enemyOwnsSupply = false;
+
+    function uid() { return 'u' + (nextId++); }
+    function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    function manhattan(x1, y1, x2, y2) { return Math.abs(x1 - x2) + Math.abs(y1 - y2); }
+    function inBounds(x, y) { return x >= 0 && x < COLS && y >= 0 && y < ROWS; }
+    function cellKey(x, y) { return x + ',' + y; }
+
+    function log(msg, cls = 'system') {
+      const el = document.getElementById('log');
+      const e = document.createElement('div');
+      e.className = 'entry ' + cls;
+      e.textContent = msg;
+      el.prepend(e);
+    }
+
+    function logMorale(msg) {
+      const el = document.getElementById('morale-log');
+      const e = document.createElement('div');
+      e.className = 'entry';
+      e.textContent = msg;
+      el.prepend(e);
+    }
+
+    function getMoraleTier(m) {
+      if (m >= 80) return { id: 'high', label: '高昂', atk: 1.12, def: 1.1, hit: 1.1, counter: 1.15 };
+      if (m >= 50) return { id: 'normal', label: '正常', atk: 1, def: 1, hit: 1, counter: 1 };
+      if (m >= 30) return { id: 'shaken', label: '动摇', atk: 0.82, def: 0.88, hit: 0.82, counter: 0.65 };
+      if (m >= 10) return { id: 'chaos', label: '混乱', atk: 0.55, def: 0.72, hit: 0.45, counter: 0.25 };
+      return { id: 'rout', label: '溃逃', atk: 0, def: 0, hit: 0, counter: 0 };
+    }
+
+    function isRout(u) { return u.morale < 10; }
+    function isChaos(u) { return u.morale >= 10 && u.morale < 30; }
+
+    function changeMorale(unit, delta, reason, broadcast = true) {
+      if (!unit || unit.soldiers <= 0) return;
+      const old = unit.morale;
+      const wasRout = isRout(unit);
+      unit.morale = clamp(unit.morale + delta, 0, 100);
+      if (delta !== 0 && broadcast) {
+        logMorale(`${unit.name} ${reason} 士气${delta >= 0 ? '+' : ''}${delta} (${old}→${unit.morale})`);
+      }
+      if (!wasRout && isRout(unit)) triggerRoutChain(unit);
+    }
+
+    function changeMoraleSide(side, delta, reason) {
+      for (const u of units) {
+        if (u.side === side && u.soldiers > 0) changeMorale(u, delta, reason);
+      }
+    }
+
+    function triggerRoutChain(routUnit) {
+      logMorale(`${routUnit.name} 溃逃 → 附近友军士气-5`);
+      for (const u of units) {
+        if (u.side !== routUnit.side || u.id === routUnit.id || u.soldiers <= 0) continue;
+        if (manhattan(u.x, u.y, routUnit.x, routUnit.y) <= 2) {
+          changeMorale(u, -5, '友军溃逃波及', false);
+          logMorale(`${u.name} 受${routUnit.name}溃逃影响 士气-5`);
+        }
+      }
+    }
+
+    function onGeneralFallen(unit) {
+      if (!unit.isCommander) return;
+      const sideLabel = unit.side === 'player' ? '我军' : '敌军';
+      logMorale(`${sideLabel}主将${unit.general.name}阵亡 → 全军士气-15`);
+      changeMoraleSide(unit.side, -15, '主将阵亡', false);
+    }
+
+    function getTypeAdv(a, d) {
+      const t = TYPE_ADVANTAGE[a.troopType];
+      return t && t[d.troopType] ? t[d.troopType] : 1;
+    }
+
+    function moveRange(unit) {
+      return Math.max(2, Math.min(5, Math.round(unit.speed / 10)));
+    }
+
+    function getCell(x, y) {
+      return grid.find(c => c.x === x && c.y === y);
+    }
+
+    function getTerrain(x, y) {
+      return getCell(x, y)?.terrain || 'plain';
+    }
+
+    function getPointAt(x, y) {
+      return strategicPoints.find(p => p.x === x && p.y === y);
+    }
+
+    function unitAt(x, y) {
+      return units.find(u => u.x === x && u.y === y && u.soldiers > 0);
+    }
+
+    function isRiverTerrain(t) { return t === 'river'; }
+    function isBridgeTerrain(t) { return t === 'bridge'; }
+
+    function ownsWatchTower(side, x, y) {
+      for (const p of strategicPoints) {
+        if (p.type !== 'watchTower' || p.owner !== side) continue;
+        if (manhattan(x, y, p.x, p.y) <= 1) return true;
+      }
+      return false;
+    }
+
+    function getVision(unit) {
+      let v = 3;
+      if (getTerrain(unit.x, unit.y) === 'hill') v += 2;
+      if (getTerrain(unit.x, unit.y) === 'forest') v = 1;
+      for (const p of strategicPoints) {
+        if (p.type === 'watchTower' && p.owner === unit.side && manhattan(unit.x, unit.y, p.x, p.y) <= 2) v += 2;
+      }
+      return v;
+    }
+
+    function canSee(attacker, tx, ty) {
+      return manhattan(attacker.x, attacker.y, tx, ty) <= getVision(attacker);
+    }
+
+    function getEffectiveRange(unit) {
+      let r = TROOP_TYPES[unit.troopType].range;
+      if (r <= 1) return r;
+      if (unit.troopType === 'archer' && getTerrain(unit.x, unit.y) === 'hill') r += 1;
+      if (ownsWatchTower(unit.side, unit.x, unit.y)) r += 1;
+      return r;
+    }
+
+    function rangeToTarget(attacker, defender) {
+      let r = getEffectiveRange(attacker);
+      if (r > 1 && (getTerrain(attacker.x, attacker.y) === 'forest' || getTerrain(defender.x, defender.y) === 'forest')) {
+        r = Math.max(1, Math.floor(r / 2));
+      }
+      return r;
+    }
+
+    function canLockTarget(attacker, defender) {
+      const dist = manhattan(attacker.x, attacker.y, defender.x, defender.y);
+      if (getTerrain(defender.x, defender.y) === 'forest' && dist >= FOREST_LOCK_RANGE) return false;
+      if (!canSee(attacker, defender.x, defender.y)) return false;
+      return dist <= rangeToTarget(attacker, defender);
+    }
+
+    function canApplyChargeBonus(unit) {
+      return getTerrain(unit.x, unit.y) !== 'forest';
+    }
+
+    function isOnHill(x, y) { return getTerrain(x, y) === 'hill'; }
+
+    // ─── 地图生成 ───────────────────────────────────────────
+    function generateMap() {
+      grid = [];
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          let terrain = 'plain';
+          const r = Math.random();
+          if (r < 0.16) terrain = 'forest';
+          else if (r < 0.24) terrain = 'hill';
+          grid.push({ x, y, terrain });
+        }
+      }
+
+      const riverY = randInt(2, 4);
+      const bridgeX = randInt(2, COLS - 3);
+      for (let x = 0; x < COLS; x++) {
+        const c = getCell(x, riverY);
+        c.terrain = x === bridgeX ? 'bridge' : 'river';
+      }
+
+      strategicPoints = [];
+      const types = ['camp', 'supplyDepot', 'watchTower'];
+      const used = new Set([cellKey(bridgeX, riverY)]);
+
+      for (const type of types) {
+        let tries = 0;
+        while (tries < 80) {
+          tries++;
+          const x = randInt(1, COLS - 2), y = randInt(1, ROWS - 2);
+          const k = cellKey(x, y);
+          if (used.has(k)) continue;
+          const t = getTerrain(x, y);
+          if (isRiverTerrain(t) || isBridgeTerrain(t)) continue;
+          if (PLAYER_DEPLOY_ROWS.includes(y) || ENEMY_DEPLOY_ROWS.includes(y)) continue;
+          used.add(k);
+          strategicPoints.push({
+            id: type + '_' + x + y,
+            type, x, y,
+            owner: 'neutral',
+            captureSide: null,
+            captureProgress: 0,
+          });
+          break;
+        }
+      }
+    }
+
+    function pickObjective() {
+      battleObjective = OBJECTIVES[randInt(0, OBJECTIVES.length - 1)];
+      defenseHoldTurns = 0;
+      turnCounter = 0;
+      updateObjectiveBar();
+    }
+
+    function updateObjectiveBar() {
+      const el = document.getElementById('objective-bar');
+      if (!battleObjective) { el.textContent = '战斗目标：—'; return; }
+      let extra = '';
+      if (battleObjective.id === 'defense') extra = ` （已守${defenseHoldTurns}/3回合）`;
+      el.textContent = `【${battleObjective.name}】${battleObjective.desc}${extra}`;
+    }
+
+    // ─── 单位 ───────────────────────────────────────────────
+    const GENERAL_NAMES = ['赵云', '张飞', '关羽', '黄忠', '马超', '张辽', '徐晃', '于禁', '乐进', '李典'];
+    const ENEMY_GENERAL_NAMES = ['夏侯惇', '夏侯渊', '许褚', '典韦', '张郃', '曹仁', '曹洪', '荀攸', '郭嘉', '贾诩'];
+
+    function createGeneral(pool) {
+      return {
+        name: pool[randInt(0, pool.length - 1)],
+        leadership: randInt(60, 95),
+        strength: randInt(55, 90),
+        intelligence: randInt(50, 88),
+      };
+    }
+
+    function createUnit(name, troopType, soldiers, side, general, extra = {}) {
+      const base = TROOP_TYPES[troopType];
+      return {
+        id: uid(), name, troopType, soldiers, maxSoldiers: soldiers,
+        attack: base.attack, defense: base.defense, speed: base.speed,
+        range: base.range,
+        morale: 75 + randInt(0, 20),
+        general: general || createGeneral(side === 'player' ? GENERAL_NAMES : ENEMY_GENERAL_NAMES),
+        side, x: -1, y: -1,
+        hasMoved: false, hasActed: false,
+        inRiver: false,
+        skillUses: { ...SKILL_USES },
+        chargeReady: false,
+        isCommander: false,
+        ...extra,
+      };
+    }
+
+    function createPlayerPool() {
+      return [
+        createUnit('长枪营', 'spear', 300, 'player'),
+        createUnit('骑兵连', 'cavalry', 200, 'player'),
+        createUnit('弓兵队', 'archer', 250, 'player'),
+        createUnit('步兵营', 'infantry', 350, 'player'),
+        createUnit('火器营', 'gunpowder', 180, 'player'),
+      ];
+    }
+
+    function spawnEnemies() {
+      const types = ['infantry', 'spear', 'cavalry', 'archer', 'gunpowder'];
+      const names = ['曹军步兵', '曹军长枪', '曹军骑兵', '曹军弓兵', '曹军火器', '曹军先锋'];
+      const occupied = new Set();
+      const count = randInt(4, 6);
+      let commander = null;
+
+      for (let i = 0; i < count; i++) {
+        let x, y, tries = 0;
+        do {
+          x = randInt(0, COLS - 1);
+          y = ENEMY_DEPLOY_ROWS[randInt(0, ENEMY_DEPLOY_ROWS.length - 1)];
+          tries++;
+        } while (occupied.has(cellKey(x, y)) && tries < 50);
+        if (occupied.has(cellKey(x, y))) continue;
+        occupied.add(cellKey(x, y));
+
+        const type = types[randInt(0, types.length - 1)];
+        const u = createUnit(names[i] || '曹军部队', type, randInt(150, 350), 'enemy');
+        u.x = x; u.y = y;
+        if (!commander) { u.isCommander = true; commander = u; }
+        units.push(u);
+      }
+    }
+
+    // ─── 移动 ───────────────────────────────────────────────
+    function computeReachable(unit) {
+      const maxDist = moveRange(unit);
+      const result = [], visited = new Map();
+      const queue = [{ x: unit.x, y: unit.y, dist: 0 }];
+      visited.set(cellKey(unit.x, unit.y), 0);
+
+      while (queue.length) {
+        const { x, y, dist } = queue.shift();
+        if (dist > 0) result.push({ x, y });
+        if (dist >= maxDist) continue;
+
+        for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+          const nx = x + dx, ny = y + dy;
+          if (!inBounds(nx, ny)) continue;
+          const nk = cellKey(nx, ny);
+          const blocked = unitAt(nx, ny);
+          if (blocked && blocked.id !== unit.id) continue;
+          const nd = dist + 1;
+          if (!visited.has(nk) || visited.get(nk) > nd) {
+            visited.set(nk, nd);
+            queue.push({ x: nx, y: ny, dist: nd });
+          }
+        }
+      }
+      return result.filter(c => !unitAt(c.x, c.y));
+    }
+
+    function computeAttackable(unit) {
+      return units.filter(u =>
+        u.side !== unit.side && u.soldiers > 0 && canLockTarget(unit, u)
+      );
+    }
+
+    function applyMove(unit, nx, ny) {
+      const terrain = getTerrain(nx, ny);
+      unit.x = nx; unit.y = ny;
+      unit.hasMoved = true;
+
+      if (isRiverTerrain(terrain)) {
+        unit.inRiver = true;
+        unit.hasActed = true;
+        log(`${unit.name} 进入河流 — 行动结束，渡河期间受伤加重`, 'system');
+      } else {
+        unit.inRiver = false;
+      }
+    }
+
+    // ─── 战斗 ───────────────────────────────────────────────
+    function calcDamage(attacker, defender, chargeBonus = false) {
+      const atkTier = getMoraleTier(attacker.morale);
+      const defTier = getMoraleTier(defender.morale);
+      const typeAdv = getTypeAdv(attacker, defender);
+
+      let hitRate = 0.72 * atkTier.hit;
+      if (isChaos(attacker) && Math.random() < 0.35) {
+        return { hit: false, damage: 0, counter: 0, typeAdv, chaosFail: true };
+      }
+      if (Math.random() > hitRate) return { hit: false, damage: 0, counter: 0, typeAdv };
+
+      const effAtk = attacker.attack * (1 + attacker.general.strength / 200) * atkTier.atk;
+      const effDef = defender.defense * defTier.def;
+
+      let damage = Math.round(
+        (effAtk / Math.max(effDef, 1)) * 14 * typeAdv *
+        (attacker.soldiers / attacker.maxSoldiers) * (0.85 + Math.random() * 0.3)
+      );
+
+      const hillFirst = isOnHill(attacker.x, attacker.y) && !isOnHill(defender.x, defender.y);
+      if (hillFirst) damage = Math.round(damage * 1.25);
+
+      const useCharge = chargeBonus || attacker.chargeReady;
+      if (useCharge && canApplyChargeBonus(attacker)) {
+        damage = Math.round(damage * 1.5);
+        attacker.chargeReady = false;
+      } else if (useCharge) {
+        attacker.chargeReady = false;
+        log(`${attacker.name} 在森林中无法发动冲锋`, 'system');
+      }
+
+      if (defender.inRiver) damage = Math.round(damage * RIVER_DAMAGE_MULT);
+      damage = clamp(damage, 1, Math.round(attacker.soldiers * 0.15));
+
+      let counter = 0;
+      const dist = manhattan(attacker.x, attacker.y, defender.x, defender.y);
+      if (!hillFirst && defender.soldiers > 0 && defender.range >= dist) {
+        const counterRate = 0.55 * defTier.counter;
+        if (Math.random() < counterRate) {
+          const cAtk = defender.attack * (1 + defender.general.strength / 200) * defTier.atk;
+          const cDef = attacker.defense * 0.5 * atkTier.def;
+          counter = Math.round((cAtk / Math.max(cDef, 1)) * 7 * (defender.soldiers / defender.maxSoldiers));
+          if (attacker.inRiver) counter = Math.round(counter * RIVER_DAMAGE_MULT);
+          counter = clamp(counter, 0, Math.round(defender.soldiers * 0.1));
+        }
+      }
+
+      return { hit: true, damage, counter, typeAdv, hillFirst };
+    }
+
+    function applyDamage(unit, amount) {
+      const wasAlive = unit.soldiers > 0;
+      unit.soldiers = Math.max(0, unit.soldiers - amount);
+      changeMorale(unit, -Math.round(amount / unit.maxSoldiers * 35), '战损', false);
+      if (wasAlive && unit.soldiers <= 0) onGeneralFallen(unit);
+    }
+
+    function resolveAttack(attacker, defender, chargeBonus = false) {
+      if (isRout(attacker)) return;
+      if (isChaos(attacker) && Math.random() < 0.25) {
+        log(`${attacker.name} 混乱中行动失败`, 'system');
+        return;
+      }
+
+      const wasCharge = (chargeBonus || attacker.chargeReady) && canApplyChargeBonus(attacker);
+      const result = calcDamage(attacker, defender, chargeBonus);
+      const typeLabel = TROOP_TYPES[attacker.troopType].label;
+      const advLabel = result.typeAdv > 1 ? `（克制×${result.typeAdv}）` : '';
+
+      if (result.chaosFail) {
+        log(`${attacker.name} 混乱中攻击失误`, 'system');
+        attacker.hasActed = true;
+        return;
+      }
+      if (!result.hit) {
+        log(`${attacker.name} 攻击 ${defender.name} — 未命中`, 'system');
+        attacker.hasActed = true;
+        return;
+      }
+
+      if (result.hillFirst) log(`${attacker.name} 占高地先手！`, 'skill');
+      applyDamage(defender, result.damage);
+      if (result.counter > 0) applyDamage(attacker, result.counter);
+
+      const chargeText = wasCharge ? '发动冲锋！' : '发动攻击！';
+      log(`${attacker.name}（${typeLabel}）${chargeText}${advLabel}`, 'skill');
+      log(`  ${defender.name} 损失 ${result.damage}${result.counter ? `，${attacker.name} 损失 ${result.counter}` : ''}`, 'damage');
+      changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
+    }
+
+    // ─── 技能 ───────────────────────────────────────────────
+    function useInspire(caster, target) {
+      if (caster.skillUses.inspire <= 0) return;
+      const bonus = Math.round(20 * (1 + caster.general.intelligence / 200));
+      changeMorale(target, bonus, '鼓舞');
+      caster.skillUses.inspire--;
+      caster.hasActed = true;
+    }
+
+    function useCharge(caster) {
+      if (caster.skillUses.charge <= 0) return;
+      if (getTerrain(caster.x, caster.y) === 'forest') {
+        log('森林中骑兵无法冲锋', 'system');
+        return;
+      }
+      caster.chargeReady = true;
+      caster.skillUses.charge--;
+      log(`${caster.general.name} 预备【冲锋】— 下次攻击+50%`, 'skill');
+    }
+
+    function useFireAttack(caster, tx, ty) {
+      if (caster.skillUses.fireAttack <= 0) return;
+      const intBonus = 1 + caster.general.intelligence / 150;
+      const victims = units.filter(u =>
+        u.side !== caster.side && u.soldiers > 0 && manhattan(tx, ty, u.x, u.y) <= 1
+      );
+      caster.skillUses.fireAttack--;
+      caster.hasActed = true;
+      log(`${caster.general.name} 使用【火攻】`, 'skill');
+      for (const v of victims) {
+        const dmg = Math.round(randInt(28, 55) * intBonus);
+        applyDamage(v, dmg);
+        log(`  ${v.name} 损失 ${dmg}`, 'damage');
+      }
+      if (!victims.length) log('  未命中敌军', 'system');
+    }
+
+    // ─── 据点 ───────────────────────────────────────────────
+    function capturePoint(point, side) {
+      const prev = point.owner;
+      point.owner = side;
+      point.captureProgress = 0;
+      point.captureSide = null;
+      const info = STRATEGIC[point.type];
+      log(`【${info.name}】被${side === 'player' ? '我军' : '敌军'}占领！`, 'skill');
+
+      if (point.type === 'supplyDepot') {
+        if (side === 'player') {
+          if (!playerOwnsSupply) {
+            changeMoraleSide('player', 10, '占领粮仓');
+            logMorale('我军占领粮仓 → 全军士气+10');
+          }
+          if (enemyOwnsSupply) {
+            changeMoraleSide('enemy', -10, '失去粮仓');
+            logMorale('敌军失去粮仓 → 敌军士气-10');
+          }
+          playerOwnsSupply = true;
+          enemyOwnsSupply = false;
+        } else {
+          if (!enemyOwnsSupply) {
+            changeMoraleSide('enemy', 10, '占领粮仓');
+            logMorale('敌军占领粮仓 → 敌军士气+10');
+          }
+          if (playerOwnsSupply) {
+            changeMoraleSide('player', -10, '失去粮仓');
+            logMorale('我军失去粮仓 → 全军士气-10');
+          }
+          enemyOwnsSupply = true;
+          playerOwnsSupply = false;
+        }
+      }
+    }
+
+    function processCaptureProgress() {
+      for (const point of strategicPoints) {
+        const u = unitAt(point.x, point.y);
+        if (!u) {
+          if (point.captureSide) {
+            point.captureSide = null;
+            point.captureProgress = 0;
+          }
+          continue;
+        }
+        if (u.side === point.owner) {
+          point.captureSide = null;
+          point.captureProgress = 0;
+          continue;
+        }
+        if (point.captureSide === u.side) {
+          point.captureProgress += 1;
+          if (point.captureProgress >= 1) capturePoint(point, u.side);
+        } else {
+          point.captureSide = u.side;
+          point.captureProgress = 0;
+        }
+      }
+    }
+
+    function applyStrategicTurnEffects(side) {
+      for (const p of strategicPoints) {
+        if (p.owner !== side) continue;
+        if (p.type === 'camp') {
+          changeMoraleSide(side, 2, '营寨补给', false);
+          logMorale(`${side === 'player' ? '我军' : '敌军'}据守营寨 → 全军士气+2`);
+          for (const u of units) {
+            if (u.side !== side || u.soldiers <= 0) continue;
+            if (manhattan(u.x, u.y, p.x, p.y) <= 1) changeMorale(u, 3, '营寨附近', false);
+          }
+        }
+      }
+    }
+
+    function recoverMorale(side) {
+      for (const u of units) {
+        if (u.side !== side || u.soldiers <= 0 || isRout(u)) continue;
+        changeMorale(u, Math.round(u.general.leadership / 22), '统率恢复', false);
+      }
+    }
+
+    // ─── 溃逃 ───────────────────────────────────────────────
+    function processRout() {
+      for (const u of units) {
+        if (!isRout(u) || u.soldiers <= 0) continue;
+        const edges = [];
+        for (let x = 0; x < COLS; x++) { edges.push({ x, y: 0 }, { x, y: ROWS - 1 }); }
+        for (let y = 0; y < ROWS; y++) { edges.push({ x: 0, y }, { x: COLS - 1, y }); }
+
+        let best = edges[0], bestDist = Infinity;
+        for (const e of edges) {
+          const d = manhattan(u.x, u.y, e.x, e.y);
+          if (d < bestDist) { bestDist = d; best = e; }
+        }
+
+        let moved = false;
+        for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+          const nx = u.x + dx, ny = u.y + dy;
+          if (!inBounds(nx, ny) || unitAt(nx, ny)) continue;
+          if (manhattan(nx, ny, best.x, best.y) < bestDist) {
+            u.x = nx; u.y = ny;
+            u.inRiver = isRiverTerrain(getTerrain(nx, ny));
+            moved = true;
+            break;
+          }
+        }
+        if (!moved) {
+          for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+            const nx = u.x + dx, ny = u.y + dy;
+            if (inBounds(nx, ny) && !unitAt(nx, ny)) {
+              u.x = nx; u.y = ny;
+              u.inRiver = isRiverTerrain(getTerrain(nx, ny));
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // ─── 胜负 ───────────────────────────────────────────────
+    function livingUnits(side) {
+      return units.filter(u => u.side === side && u.soldiers > 0);
+    }
+
+    function activeUnits(side) {
+      return livingUnits(side).filter(u => !isRout(u));
+    }
+
+    function allPointsOwnedBy(side) {
+      return strategicPoints.every(p => p.owner === side);
+    }
+
+    function playerHoldsDefenseZone() {
+      const zoneRows = [3, 4];
+      return livingUnits('player').some(u => zoneRows.includes(u.y) && !isRout(u));
+    }
+
+    function checkObjectiveWin() {
+      const obj = battleObjective;
+      if (!obj) return null;
+
+      if (obj.id === 'annihilation') {
+        if (livingUnits('enemy').length === 0) return { win: true, msg: '敌军全灭！' };
+        if (activeUnits('enemy').length === 0) return { win: true, msg: '敌军全线溃逃！' };
+      }
+      if (obj.id === 'strongpoint' && allPointsOwnedBy('player')) {
+        return { win: true, msg: '全部据点已占领！' };
+      }
+      if (obj.id === 'assassination') {
+        const cmd = units.find(u => u.side === 'enemy' && u.isCommander);
+        if (cmd && cmd.soldiers <= 0) return { win: true, msg: '敌军主将已阵斩！' };
+      }
+      if (obj.id === 'supply') {
+        const depot = strategicPoints.find(p => p.type === 'supplyDepot');
+        if (depot && depot.owner === 'player') return { win: true, msg: '粮仓已夺取！' };
+      }
+      if (obj.id === 'defense' && defenseHoldTurns >= 3) {
+        return { win: true, msg: '成功守住中央区域3回合！' };
+      }
+      return null;
+    }
+
+    function checkObjectiveLoss() {
+      if (livingUnits('player').length === 0) return { win: false, msg: '我军全灭……' };
+      if (activeUnits('player').length === 0) return { win: false, msg: '我军全部溃逃……' };
+      if (battleObjective?.id === 'defense' && turnCounter > 0 && !playerHoldsDefenseZone()) {
+        return { win: false, msg: '中央区域失守……' };
+      }
+      return null;
+    }
+
+    function checkVictory() {
+      const win = checkObjectiveWin();
+      if (win) { showOverlay('胜利', win.msg); return true; }
+      const loss = checkObjectiveLoss();
+      if (loss) { showOverlay('失败', loss.msg); return true; }
+      return false;
+    }
+
+    function showOverlay(title, desc) {
+      document.getElementById('overlay-title').textContent = title;
+      document.getElementById('overlay-desc').textContent = desc;
+      document.getElementById('overlay').classList.remove('hidden');
+      phase = 'ended';
+    }
+
+    // ─── AI ───────────────────────────────────────────────
+    function scoreMove(enemy, cell) {
+      let score = 0;
+      const point = getPointAt(cell.x, cell.y);
+      if (point && point.owner !== enemy.side) score += 40;
+      if (getTerrain(cell.x, cell.y) === 'hill') score += 15;
+      if (getTerrain(cell.x, cell.y) === 'forest') score += 8;
+      const players = activeUnits('player');
+      if (players.length) {
+        const nearest = Math.min(...players.map(p => manhattan(cell.x, cell.y, p.x, p.y)));
+        score -= nearest * 3;
+      }
+      return score;
+    }
+
+    async function runEnemyTurn() {
+      turn = 'enemy';
+      updateUI();
+      log('—— 敌方回合 ——', 'system');
+
+      for (const enemy of units.filter(u => u.side === 'enemy' && u.soldiers > 0 && !isRout(u))) {
+        if (checkVictory()) return;
+        enemy.hasMoved = false;
+        enemy.hasActed = false;
+
+        const targets = activeUnits('player');
+        if (!targets.length) break;
+
+        const attackables = computeAttackable(enemy);
+        if (attackables.length && !enemy.hasActed) {
+          attackables.sort((a, b) => getTypeAdv(enemy, b) - getTypeAdv(enemy, a));
+          resolveAttack(enemy, attackables[0]);
+          enemy.hasActed = true;
+        } else if (!enemy.hasMoved) {
+          const reach = computeReachable(enemy);
+          if (reach.length) {
+            reach.sort((a, b) => scoreMove(enemy, b) - scoreMove(enemy, a));
+            applyMove(enemy, reach[0].x, reach[0].y);
+          }
+        }
+
+        renderBoard();
+        updateDebug();
+        await sleep(350);
+      }
+
+      processCaptureProgress();
+      processRout();
+      applyStrategicTurnEffects('enemy');
+      if (checkVictory()) return;
+
+      recoverMorale('enemy');
+      turn = 'player';
+      resetPlayerTurn();
+      log('—— 我方回合 ——', 'system');
+      updateUI();
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function resetPlayerTurn() {
+      for (const u of units) {
+        if (u.side === 'player' && u.soldiers > 0) {
+          u.hasMoved = false;
+          u.hasActed = false;
+        }
+      }
+      turnCounter++;
+      if (battleObjective?.id === 'defense' && playerHoldsDefenseZone()) {
+        defenseHoldTurns++;
+        updateObjectiveBar();
+        log(`守卫进度：${defenseHoldTurns}/3 回合`, 'system');
+      }
+      recoverMorale('player');
+      applyStrategicTurnEffects('player');
+      clearSelection();
+    }
+
+    // ─── 渲染 ───────────────────────────────────────────────
+    function renderBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      const zoneRows = [3, 4];
+
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const terrain = getTerrain(x, y);
+          const cell = document.createElement('div');
+          cell.className = 'cell ' + terrain;
+
+          if (phase === 'deploy' && PLAYER_DEPLOY_ROWS.includes(y)) cell.classList.add('deploy-zone');
+          if (battleObjective?.id === 'defense' && zoneRows.includes(y)) cell.classList.add('defense-zone');
+
+          const ti = document.createElement('span');
+          ti.className = 'terrain-icon';
+          ti.textContent = TERRAIN[terrain].label;
+          cell.appendChild(ti);
+
+          const point = getPointAt(x, y);
+          if (point) {
+            const pm = document.createElement('span');
+            pm.className = 'point-marker ' + (point.owner === 'player' ? 'player-own' : point.owner === 'enemy' ? 'enemy-own' : 'neutral');
+            pm.textContent = STRATEGIC[point.type].label;
+            pm.title = STRATEGIC[point.type].desc + (point.owner !== 'neutral' ? `\n所属：${point.owner === 'player' ? '我军' : '敌军'}` : '');
+            cell.appendChild(pm);
+
+            if (point.captureSide && point.owner !== point.captureSide) {
+              const bar = document.createElement('div');
+              bar.className = 'capture-bar';
+              const pct = point.captureProgress >= 1 ? 100 : 50;
+              bar.innerHTML = `<div class="capture-fill" style="width:${pct}%"></div>`;
+              cell.appendChild(bar);
+            }
+          }
+
+          if (reachable.some(c => c.x === x && c.y === y)) cell.classList.add('can-move');
+          if (attackable.some(u => u.x === x && u.y === y)) cell.classList.add('can-attack');
+          if (skillTargets.some(c => c.x === x && c.y === y)) cell.classList.add('can-skill');
+
+          const unit = unitAt(x, y);
+          if (unit) {
+            const tier = getMoraleTier(unit.morale);
+            const ue = document.createElement('div');
+            ue.className = `unit ${unit.side} ${unit.hasActed && unit.hasMoved ? 'acted' : ''} ${tier.id === 'chaos' || tier.id === 'rout' ? tier.id : ''} ${unit.isCommander ? 'commander' : ''} ${unit.inRiver ? 'in-river' : ''}`;
+            if (selectedUnit?.id === unit.id) cell.classList.add('selected');
+
+            ue.innerHTML = `
+              <span>${TROOP_TYPES[unit.troopType].label}</span>
+              <span>${unit.soldiers}</span>
+              <span class="unit-status ${tier.id}">${tier.label}${unit.morale}</span>
+            `;
+            ue.title = `${unit.name} · ${unit.general.name}\n${STRATEGIC[point?.type]?.desc || TERRAIN[terrain].name}`;
+
+            if (phase === 'deploy' && unit.side === 'player' && unit.x >= 0) {
+              ue.draggable = true;
+              ue.addEventListener('dragstart', e => { dragUnit = unit; e.dataTransfer.effectAllowed = 'move'; });
+            }
+            cell.appendChild(ue);
+          }
+
+          cell.addEventListener('click', () => onCellClick(x, y));
+          cell.addEventListener('dragover', e => { if (phase === 'deploy') e.preventDefault(); });
+          cell.addEventListener('drop', e => { e.preventDefault(); onDeployDrop(x, y); });
+          board.appendChild(cell);
+        }
+      }
+    }
+
+    function renderDeployPool() {
+      const pool = document.getElementById('deploy-pool');
+      pool.innerHTML = '';
+      const undeployed = units.filter(u => u.side === 'player' && u.x < 0);
+      if (!undeployed.length) {
+        pool.innerHTML = '<span style="color:var(--muted);font-size:0.72rem;">部署完成 · 点击开始战斗</span>';
+        return;
+      }
+      for (const u of undeployed) {
+        const el = document.createElement('div');
+        el.className = 'unit player';
+        el.draggable = true;
+        el.innerHTML = `<span>${u.name}</span><span>${TROOP_TYPES[u.troopType].label}</span>`;
+        el.addEventListener('dragstart', e => { dragUnit = u; e.dataTransfer.effectAllowed = 'move'; });
+        pool.appendChild(el);
+      }
+    }
+
+    function updateDebug() {
+      const list = document.getElementById('debug-list');
+      list.innerHTML = '';
+      for (const u of units) {
+        if (u.soldiers <= 0 && phase !== 'deploy') continue;
+        const tier = getMoraleTier(u.morale);
+        const pos = u.x >= 0 ? `(${u.x},${u.y})` : '未部署';
+        const el = document.createElement('div');
+        el.className = 'debug-unit ' + (u.side === 'player' ? 'player-side' : 'enemy-side');
+        el.innerHTML = `
+          <div class="name">${u.name}${u.isCommander ? '★' : ''} <span class="type-tag">${TROOP_TYPES[u.troopType].label}</span></div>
+          <div>${pos} · ${u.soldiers} · <span class="unit-status ${tier.id}">${tier.label}</span></div>
+          <div class="morale-bar"><div class="morale-fill" style="width:${u.morale}%"></div></div>
+          <div>${u.general.name}${u.inRiver ? ' · 渡河' : ''}</div>
+        `;
+        list.appendChild(el);
+      }
+    }
+
+    function updateUI() {
+      const badge = document.getElementById('phase-badge');
+      const turnInfo = document.getElementById('turn-info');
+      const btnStart = document.getElementById('btn-start');
+      const btnEnd = document.getElementById('btn-end-turn');
+      const btnWait = document.getElementById('btn-wait');
+
+      if (phase === 'deploy') {
+        badge.textContent = '部署阶段';
+        badge.className = 'phase-badge';
+        turnInfo.textContent = '拖至底部三排 · 抢据点/高地/桥梁';
+        btnStart.disabled = false;
+        btnEnd.disabled = true;
+        btnWait.disabled = true;
+      } else if (phase === 'battle') {
+        badge.textContent = turn === 'player' ? '我方回合' : '敌方回合';
+        badge.className = 'phase-badge ' + turn;
+        turnInfo.textContent = turn === 'player' ? '移动→攻击/占点 · 森林伏击 · 高地先手 · 河流截断' : '敌方行动中…';
+        btnStart.disabled = true;
+        btnEnd.disabled = turn !== 'player';
+        btnWait.disabled = turn !== 'player' || !selectedUnit;
+      }
+
+      renderSkillBar();
+      renderBoard();
+      renderDeployPool();
+      updateDebug();
+    }
+
+    function renderSkillBar() {
+      const bar = document.getElementById('skill-bar');
+      bar.innerHTML = '';
+      if (phase !== 'battle' || turn !== 'player' || !selectedUnit || selectedUnit.hasActed) return;
+      const u = selectedUnit;
+      [
+        { id: 'inspire', label: `鼓舞(${u.skillUses.inspire})`, ok: u.skillUses.inspire > 0 },
+        { id: 'charge', label: `冲锋(${u.skillUses.charge})`, ok: u.skillUses.charge > 0 && !u.chargeReady && getTerrain(u.x, u.y) !== 'forest' },
+        { id: 'fire', label: `火攻(${u.skillUses.fireAttack})`, ok: u.skillUses.fireAttack > 0 },
+      ].forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'skill-btn';
+        btn.textContent = s.label;
+        btn.disabled = !s.ok;
+        btn.addEventListener('click', () => onSkillClick(s.id));
+        bar.appendChild(btn);
+      });
+    }
+
+    function clearSelection() {
+      selectedUnit = null; mode = null;
+      reachable = []; attackable = []; skillTargets = [];
+    }
+
+    function finishUnitAction(unit) {
+      unit.hasActed = true;
+      processRout();
+      checkVictory();
+    }
+
+    function onCellClick(x, y) {
+      if (phase !== 'battle' || turn !== 'player') return;
+      const clicked = unitAt(x, y);
+
+      if (mode === 'skill-inspire') {
+        if (clicked?.side === 'player' && clicked.id !== selectedUnit.id) {
+          useInspire(selectedUnit, clicked);
+          clearSelection(); updateUI();
+        }
+        return;
+      }
+      if (mode === 'skill-fire') {
+        useFireAttack(selectedUnit, x, y);
+        clearSelection(); updateUI(); checkVictory();
+        return;
+      }
+
+      if (mode === 'move') {
+        if (clicked?.side === 'enemy' && attackable.some(u => u.id === clicked.id)) {
+          resolveAttack(selectedUnit, clicked, selectedUnit.chargeReady);
+          finishUnitAction(selectedUnit);
+          clearSelection(); updateUI();
+          return;
+        }
+        if (reachable.some(c => c.x === x && c.y === y)) {
+          applyMove(selectedUnit, x, y);
+          if (selectedUnit.hasActed) {
+            finishUnitAction(selectedUnit);
+            clearSelection();
+          } else {
+            mode = 'attack';
+            reachable = [];
+            attackable = computeAttackable(selectedUnit);
+            if (!attackable.length) mode = null;
+          }
+          updateUI();
+        }
+        return;
+      }
+
+      if (mode === 'attack') {
+        if (clicked?.side === 'enemy' && attackable.some(u => u.id === clicked.id)) {
+          resolveAttack(selectedUnit, clicked, selectedUnit.chargeReady);
+          finishUnitAction(selectedUnit);
+          clearSelection(); updateUI();
+        }
+        return;
+      }
+
+      if (clicked?.side === 'player' && !clicked.hasActed) {
+        if (isRout(clicked)) { log(`${clicked.name} 溃逃中`, 'system'); return; }
+        selectedUnit = clicked;
+        attackable = computeAttackable(clicked);
+        if (!clicked.hasMoved) {
+          mode = 'move';
+          reachable = computeReachable(clicked);
+        } else {
+          mode = attackable.length ? 'attack' : null;
+        }
+        updateUI();
+        return;
+      }
+
+      clearSelection(); updateUI();
+    }
+
+    function onSkillClick(id) {
+      if (!selectedUnit || selectedUnit.hasActed) return;
+      if (id === 'inspire') { mode = 'skill-inspire'; log('选择友军使用【鼓舞】', 'skill'); }
+      else if (id === 'charge') { useCharge(selectedUnit); updateUI(); }
+      else if (id === 'fire') {
+        mode = 'skill-fire';
+        skillTargets = grid.map(c => ({ x: c.x, y: c.y }));
+        log('点击格子释放【火攻】', 'skill');
+        updateUI();
+      }
+    }
+
+    function onDeployDrop(x, y) {
+      if (phase !== 'deploy' || !dragUnit) return;
+      if (!PLAYER_DEPLOY_ROWS.includes(y)) { log('只能部署在底部三排', 'system'); return; }
+      if (unitAt(x, y)) { log('该格已有部队', 'system'); return; }
+      dragUnit.x = x; dragUnit.y = y;
+      dragUnit = null;
+      renderBoard(); renderDeployPool(); updateDebug();
+    }
+
+    function startBattle() {
+      if (!units.some(u => u.side === 'player' && u.x >= 0)) {
+        log('请至少部署一支部队', 'system'); return;
+      }
+      phase = 'battle';
+      turn = 'player';
+      resetPlayerTurn();
+      log(`战斗开始！【${battleObjective.name}】`, 'system');
+      log('—— 我方回合 ——', 'system');
+      updateUI();
+    }
+
+    function init() {
+      generateMap();
+      pickObjective();
+      units = createPlayerPool();
+      spawnEnemies();
+      phase = 'deploy';
+      turn = 'player';
+      playerOwnsSupply = false;
+      enemyOwnsSupply = false;
+      clearSelection();
+
+      document.getElementById('log').innerHTML = '';
+      document.getElementById('morale-log').innerHTML = '';
+      document.getElementById('overlay').classList.add('hidden');
+      log('部署：底部三排 · 争夺桥梁/高地/据点', 'system');
+      log(`本局目标：【${battleObjective.name}】${battleObjective.desc}`, 'system');
+      updateUI();
+    }
+
+    document.getElementById('btn-start').addEventListener('click', startBattle);
+    document.getElementById('btn-end-turn').addEventListener('click', () => {
+      if (turn !== 'player') return;
+      processCaptureProgress();
+      processRout();
+      if (checkVictory()) return;
+      runEnemyTurn();
+    });
+    document.getElementById('btn-wait').addEventListener('click', () => {
+      if (!selectedUnit) return;
+      selectedUnit.hasActed = true;
+      selectedUnit.hasMoved = true;
+      clearSelection(); updateUI();
+    });
+    document.getElementById('btn-restart').addEventListener('click', () => { nextId = 1; init(); });
+
+    init();
+  </script>
+</body>
+</html>
