@@ -23,7 +23,7 @@
       --highlight-attack: rgba(255, 100, 80, 0.5);
       --highlight-skill: rgba(255, 200, 80, 0.45);
       --side-w: 300px;
-      --header-h: 52px;
+      --header-h: 64px;
       --deploy-h: 46px;
       --controls-h: 38px;
       --cell: min(
@@ -76,6 +76,14 @@
     .objective-bar {
       font-size: 0.72rem;
       color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .objective-progress {
+      font-size: 0.68rem;
+      color: var(--muted);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -156,7 +164,29 @@
     .cell.can-move { background-color: var(--highlight-move) !important; cursor: pointer; }
     .cell.can-attack { background-color: var(--highlight-attack) !important; cursor: crosshair; }
     .cell.can-skill { background-color: var(--highlight-skill) !important; cursor: pointer; }
-    .cell.selected { outline: 2px solid var(--accent); z-index: 2; }
+    .cell.highlight-player-camp { box-shadow: inset 0 0 0 2px rgba(58, 110, 165, 0.7); }
+    .cell.highlight-enemy-camp { box-shadow: inset 0 0 0 2px rgba(165, 58, 58, 0.7); }
+    .cell.highlight-supply-depot { outline: 1px solid #c9a227; }
+    .cell.highlight-cart { outline: 1px solid #ffcc66; }
+
+    .camp-marker {
+      position: absolute;
+      top: 1px;
+      right: 2px;
+      font-size: 0.48rem;
+      opacity: 0.75;
+    }
+
+    .dropped-supply {
+      position: absolute;
+      font-size: 0.55rem;
+      z-index: 0;
+      color: #ffd080;
+      text-shadow: 0 0 4px #000;
+    }
+
+    .unit.supply-cart { background: #4a3a18; border-color: #e8b84a; color: #ffe8a0; }
+    .unit.supply-cart .cart-hp { font-size: 0.45rem; }
 
     .terrain-icon { position: absolute; top: 1px; left: 2px; opacity: 0.55; font-size: 0.5rem; }
 
@@ -390,6 +420,57 @@
       text-align: center;
     }
     .overlay-box h2 { font-size: 1.4rem; color: var(--accent); margin-bottom: 10px; }
+    .overlay-box p { font-size: 0.88rem; line-height: 1.5; color: var(--text); }
+    .recap-box {
+      margin-top: 14px;
+      text-align: left;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+    .recap-box h3 { font-size: 0.88rem; color: var(--accent); margin-bottom: 8px; }
+    .recap-box ul { padding-left: 18px; color: var(--muted); }
+    .recap-box li { margin-bottom: 4px; }
+
+    .tutorial-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(360px, calc(100vw - 32px));
+      background: var(--panel);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px 16px;
+      z-index: 110;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .tutorial-toast.hidden { display: none; }
+    .tutorial-toast h3 { font-size: 0.95rem; color: var(--accent); margin-bottom: 6px; }
+    .tutorial-toast p { font-size: 0.82rem; line-height: 1.55; color: var(--text); margin-bottom: 10px; }
+    .tutorial-toast button { width: 100%; }
+
+    .objective-intro {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 105;
+    }
+    .objective-intro.hidden { display: none; }
+    .objective-intro-box {
+      background: var(--panel);
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      padding: 28px 36px;
+      text-align: center;
+      max-width: 380px;
+    }
+    .objective-intro-box h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 10px; }
+    .objective-intro-box p { font-size: 0.9rem; line-height: 1.6; color: var(--text); margin-bottom: 16px; }
   </style>
 </head>
 <body>
@@ -400,6 +481,7 @@
       <span id="turn-info"></span>
     </div>
     <div class="objective-bar" id="objective-bar">战斗目标：—</div>
+    <div class="objective-progress" id="objective-progress"></div>
   </header>
 
   <main>
@@ -427,10 +509,28 @@
     </aside>
   </main>
 
+  <div class="objective-intro hidden" id="objective-intro">
+    <div class="objective-intro-box">
+      <h2 id="objective-intro-title">战斗目标</h2>
+      <p id="objective-intro-desc"></p>
+      <button class="primary" id="btn-objective-ok">开始作战</button>
+    </div>
+  </div>
+
+  <div class="tutorial-toast hidden" id="tutorial-toast">
+    <h3 id="tutorial-title"></h3>
+    <p id="tutorial-body"></p>
+    <button class="primary" id="btn-tutorial-close">知道了</button>
+  </div>
+
   <div class="overlay-msg hidden" id="overlay">
     <div class="overlay-box">
       <h2 id="overlay-title">胜利</h2>
       <p id="overlay-desc"></p>
+      <div class="recap-box hidden" id="recap-box">
+        <h3>本场关键事件</h3>
+        <ul id="recap-list"></ul>
+      </div>
       <button class="primary" id="btn-restart" style="margin-top: 14px;">重新开始</button>
     </div>
   </div>
@@ -451,9 +551,17 @@
     };
 
     const STRATEGIC = {
-      camp: { label: '寨', name: '营寨', desc: '占领方每回合士气恢复，附近友军持续恢复' },
-      supplyDepot: { label: '粮', name: '粮仓', desc: '占领后全军士气提升，失去则下降' },
-      watchTower: { label: '塔', name: '箭塔', desc: '额外视野，附近远程射程+1' },
+      camp: { label: '寨', name: '营寨', desc: '营寨适合恢复，长期据守更有利' },
+      supplyDepot: { label: '粮', name: '粮仓', desc: '夺得粮秣可鼓舞本阵；粮道战中还会派出粮车' },
+      watchTower: { label: '塔', name: '箭塔', desc: '箭塔扩大视野，利于远程控场' },
+    };
+
+    const TERRAIN_HINT = {
+      plain: '平原',
+      forest: '森林适合隐藏',
+      hill: '高地更有利于远程单位',
+      river: '渡河会受阻',
+      bridge: '桥梁是必争通道',
     };
 
     const TROOP_TYPES = {
@@ -471,12 +579,22 @@
     };
 
     const OBJECTIVES = [
-      { id: 'annihilation', name: '歼灭战', desc: '消灭全部敌军或迫其全线溃逃' },
-      { id: 'strongpoint', name: '据点战', desc: '占领全部战略据点' },
-      { id: 'defense', name: '守卫战', desc: '守住中央区域3回合' },
-      { id: 'assassination', name: '斩首战', desc: '击败敌军主将' },
-      { id: 'supply', name: '粮道战', desc: '夺取粮仓' },
+      { id: 'annihilation', name: '歼灭战', friendlyTitle: '击溃敌军', friendlyDesc: '消灭或击溃全部敌军即可获胜' },
+      { id: 'strongpoint', name: '据点战', friendlyTitle: '占领据点', friendlyDesc: '占领全部战略据点即可获胜' },
+      { id: 'defense', name: '守卫战', friendlyTitle: '守卫阵地', friendlyDesc: '在中央区域坚守3回合即可获胜' },
+      { id: 'assassination', name: '斩首战', friendlyTitle: '阵斩敌将', friendlyDesc: '击败敌军主将即可获胜' },
+      { id: 'supplyTransport', name: '粮道运输战', friendlyTitle: '护送粮车', friendlyDesc: '占领粮仓后护送粮车回营，或击溃敌军' },
     ];
+
+    /** 剧情战役可配置的标签，系统据此自动挂载教学 */
+    const LESSON_TAG_TIPS = {
+      BridgeBattle: { id: 'lesson_bridge', title: '桥梁', body: '桥梁是河流上的唯一通道。\n控制桥梁，就能截断敌军进退。' },
+      SupplyBattle: { id: 'lesson_supply', title: '粮道', body: '本场战斗围绕粮仓展开。\n占领后需护送粮车回营。' },
+      SupplyTransportBattle: { id: 'lesson_supply_transport', title: '粮道战', body: '占领粮仓后将立即派出粮车。\n成功将粮食运回营地才能获得胜利。\n保护粮车，拦截敌方运输。' },
+      DefenseBattle: { id: 'lesson_defense', title: '守势', body: '不必急于进攻。\n守住指定区域，撑到时限即可获胜。' },
+      AmbushBattle: { id: 'lesson_ambush', title: '伏击', body: '利用森林隐藏部队，待敌军靠近再出击。' },
+      CommanderBattle: { id: 'lesson_commander', title: '主将', body: '敌军主将带有标记。\n阵斩主将，可沉重打击敌军士气。' },
+    };
 
     const SKILL_USES = { inspire: 1, charge: 1, fireAttack: 1 };
 
@@ -485,7 +603,102 @@
     let selectedUnit = null, mode = null;
     let reachable = [], attackable = [], skillTargets = [], dragUnit = null;
     let battleObjective = null, defenseHoldTurns = 0, turnCounter = 0;
-    let playerOwnsSupply = false, enemyOwnsSupply = false;
+    let supplyCartClaimSide = null;
+    let playerCamp = null, enemyCamp = null;
+    let droppedSupplies = [];
+    const CART_MAX_HP = 80;
+    const CART_MOVE_PER_TURN = 1;
+    const SUPPLY_CAPTURE_MORALE_BONUS = 6;
+    const DROPPED_SUPPLY_MORALE_BONUS = 4;
+    let battleRecap = [];
+    let battleConfig = { lessonTags: [] };
+
+    // ─── BattleTutorialManager ───────────────────────────────
+    const BattleTutorialManager = (() => {
+      const STORAGE_KEY = 'rpg_tg_battle_tutorial_v1';
+      const TIPS = {
+        terrain_forest: { title: '森林', body: '部队进入森林后可以隐藏自身。\n非常适合伏击敌军。' },
+        terrain_hill: { title: '高地', body: '高地拥有更好的视野。\n远程单位在高地作战更有优势。' },
+        terrain_river: { title: '河流', body: '渡河会降低部队机动能力。\n请谨慎选择渡河时机。' },
+        point_supplyDepot: { title: '粮仓', body: '占领粮仓后将派出粮车。\n护送粮车返回营地即可获胜。' },
+        supply_cart_spawn: { title: '粮车出发', body: '粮车已出发。\n请护送其返回营地。' },
+        supply_cart_destroyed: { title: '粮车被毁', body: '粮车被摧毁。\n粮食散落在战场上。' },
+        supply_pickup: { title: '粮食夺取', body: '粮食已被重新夺取。\n将从此处继续运输。' },
+        point_camp: { title: '营寨', body: '营寨可以恢复士气。\n适合长期防守。' },
+        point_watchTower: { title: '箭塔', body: '箭塔能够扩大视野范围。\n帮助远程部队控制战场。' },
+        morale_boost: { title: '士气提升', body: '高士气部队战斗能力更强。' },
+        morale_shaken: { title: '部队动摇', body: '低士气会影响战斗表现。' },
+        morale_rout: { title: '部队溃逃', body: '士气崩溃的部队将脱离战场。' },
+      };
+
+      let seen = new Set();
+      let pendingId = null;
+      let onCloseCb = null;
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) seen = new Set(JSON.parse(raw));
+        } catch (_) { seen = new Set(); }
+      }
+
+      function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...seen])); } catch (_) {}
+      }
+
+      function hasSeen(id) { return seen.has(id); }
+
+      function markSeen(id) {
+        seen.add(id);
+        save();
+      }
+
+      function resolveTip(id) {
+        return TIPS[id] || Object.values(LESSON_TAG_TIPS).find(t => t.id === id);
+      }
+
+      function showToast(title, body, tipId, onClose) {
+        const el = document.getElementById('tutorial-toast');
+        document.getElementById('tutorial-title').textContent = title;
+        document.getElementById('tutorial-body').textContent = body;
+        pendingId = tipId;
+        onCloseCb = onClose;
+        el.classList.remove('hidden');
+      }
+
+      function hideToast() {
+        document.getElementById('tutorial-toast').classList.add('hidden');
+        if (pendingId) markSeen(pendingId);
+        pendingId = null;
+        if (onCloseCb) { onCloseCb(); onCloseCb = null; }
+      }
+
+      function maybeShow(id) {
+        if (hasSeen(id)) return;
+        const tip = resolveTip(id);
+        if (!tip) return;
+        showToast(tip.title, tip.body, id);
+      }
+
+      function applyLessonTags(tags) {
+        if (!tags?.length) return;
+        for (const tag of tags) {
+          const lesson = LESSON_TAG_TIPS[tag];
+          if (lesson && !hasSeen(lesson.id)) {
+            setTimeout(() => showToast(lesson.title, lesson.body, lesson.id), 800);
+            break;
+          }
+        }
+      }
+
+      function resetAll() {
+        seen.clear();
+        save();
+      }
+
+      load();
+      return { maybeShow, applyLessonTags, hideToast, resetAll, hasSeen, markSeen };
+    })();
 
     function uid() { return 'u' + (nextId++); }
     function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -500,6 +713,10 @@
       e.className = 'entry ' + cls;
       e.textContent = msg;
       el.prepend(e);
+    }
+
+    function addRecap(text) {
+      if (!battleRecap.includes(text)) battleRecap.push(text);
     }
 
     function logMorale(msg) {
@@ -524,11 +741,21 @@
     function changeMorale(unit, delta, reason, broadcast = true) {
       if (!unit || unit.soldiers <= 0) return;
       const old = unit.morale;
+      const oldTier = getMoraleTier(old);
       const wasRout = isRout(unit);
       unit.morale = clamp(unit.morale + delta, 0, 100);
+      const newTier = getMoraleTier(unit.morale);
+
       if (delta !== 0 && broadcast) {
-        logMorale(`${unit.name} ${reason} 士气${delta >= 0 ? '+' : ''}${delta} (${old}→${unit.morale})`);
+        logMorale(`${unit.name} ${reason}${delta >= 0 ? ' ↑' : ' ↓'}`);
       }
+
+      if (unit.side === 'player') {
+        if (delta > 0 && broadcast) BattleTutorialManager.maybeShow('morale_boost');
+        if (oldTier.id !== 'shaken' && newTier.id === 'shaken') BattleTutorialManager.maybeShow('morale_shaken');
+        if (!wasRout && isRout(unit)) BattleTutorialManager.maybeShow('morale_rout');
+      }
+
       if (!wasRout && isRout(unit)) triggerRoutChain(unit);
     }
 
@@ -539,12 +766,14 @@
     }
 
     function triggerRoutChain(routUnit) {
-      logMorale(`${routUnit.name} 溃逃 → 附近友军士气-5`);
+      logMorale(`${routUnit.name} 溃逃，波及附近部队`);
+      if (routUnit.side === 'player') addRecap(`${routUnit.name} 士气崩溃`);
+      else addRecap(`敌军 ${routUnit.name} 士气崩溃`);
       for (const u of units) {
         if (u.side !== routUnit.side || u.id === routUnit.id || u.soldiers <= 0) continue;
         if (manhattan(u.x, u.y, routUnit.x, routUnit.y) <= 2) {
           changeMorale(u, -5, '友军溃逃波及', false);
-          logMorale(`${u.name} 受${routUnit.name}溃逃影响 士气-5`);
+          if (u.side === 'player') logMorale(`${u.name} 受溃逃波及`);
         }
       }
     }
@@ -552,7 +781,9 @@
     function onGeneralFallen(unit) {
       if (!unit.isCommander) return;
       const sideLabel = unit.side === 'player' ? '我军' : '敌军';
-      logMorale(`${sideLabel}主将${unit.general.name}阵亡 → 全军士气-15`);
+      logMorale(`${sideLabel}主将${unit.general.name}阵亡`);
+      if (unit.side === 'enemy') addRecap('敌军主将阵亡');
+      else addRecap('我军主将阵亡');
       changeMoraleSide(unit.side, -15, '主将阵亡', false);
     }
 
@@ -577,8 +808,230 @@
       return strategicPoints.find(p => p.x === x && p.y === y);
     }
 
+    function isSupplyTransportBattle() {
+      return battleObjective?.id === 'supplyTransport';
+    }
+
+    function getCart(side) {
+      return units.find(u => u.isSupplyCart && u.side === side && u.soldiers > 0);
+    }
+
+    function getAnyCart() {
+      return units.find(u => u.isSupplyCart && u.soldiers > 0) || null;
+    }
+
+    function getSupplyDepot() {
+      return strategicPoints.find(p => p.type === 'supplyDepot');
+    }
+
+    function isPassableTile(x, y, ignoreUnitId = null) {
+      if (!inBounds(x, y)) return false;
+      const t = getTerrain(x, y);
+      if (isRiverTerrain(t)) return false;
+      const occ = units.find(u => u.soldiers > 0 && u.x === x && u.y === y && u.id !== ignoreUnitId);
+      return !occ;
+    }
+
+    function isInCampZone(x, y, side) {
+      const camp = side === 'player' ? playerCamp : enemyCamp;
+      if (!camp) return false;
+      return camp.cells.some(c => c.x === x && c.y === y);
+    }
+
+    function distToCamp(cart) {
+      const camp = cart.side === 'player' ? playerCamp : enemyCamp;
+      if (!camp?.cells.length) return 99;
+      return Math.min(...camp.cells.map(c => manhattan(cart.x, cart.y, c.x, c.y)));
+    }
+
+    function removeCartsOfSide(side) {
+      units = units.filter(u => !(u.isSupplyCart && u.side === side));
+    }
+
+    function getCampAnchor(side) {
+      return side === 'player'
+        ? { x: 1, y: 6 }
+        : { x: COLS - 2, y: 1 };
+    }
+
+    function raiseSupplyMorale(side, delta, reason) {
+      let affected = 0;
+      for (const unit of units) {
+        if (unit.side !== side || unit.soldiers <= 0 || unit.isSupplyCart) continue;
+        changeMorale(unit, delta, reason, false);
+        affected++;
+      }
+      if (!affected) return;
+      const sideLabel = side === 'player' ? '我军' : '敌军';
+      logMorale(`${sideLabel}${reason}，士气提升`);
+      if (side === 'player') BattleTutorialManager.maybeShow('morale_boost');
+    }
+
+    function findSpawnNear(originX, originY, side) {
+      const candidates = [];
+      const queue = [{ x: originX, y: originY, dist: 0 }];
+      const visited = new Set([cellKey(originX, originY)]);
+
+      while (queue.length && candidates.length < 8) {
+        const { x, y, dist } = queue.shift();
+        if (dist > 0 && dist <= 2 && isPassableTile(x, y)) {
+          if (!(x === originX && y === originY)) candidates.push({ x, y });
+        }
+        if (dist >= 2) continue;
+        for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+          const nx = x + dx, ny = y + dy;
+          const nk = cellKey(nx, ny);
+          if (!inBounds(nx, ny) || visited.has(nk)) continue;
+          visited.add(nk);
+          queue.push({ x: nx, y: ny, dist: dist + 1 });
+        }
+      }
+
+      const camp = side === 'player' ? playerCamp : enemyCamp;
+      const campCenter = camp?.cells[0] || { x: originX, y: originY };
+      candidates.sort((a, b) =>
+        manhattan(a.x, a.y, campCenter.x, campCenter.y) - manhattan(b.x, b.y, campCenter.x, campCenter.y)
+      );
+      return candidates[0] || null;
+    }
+
+    function createSupplyCart(side, spawnX, spawnY) {
+      return {
+        id: uid(),
+        name: side === 'player' ? '我军粮车' : '敌军粮车',
+        troopType: 'supplyCart',
+        isSupplyCart: true,
+        soldiers: CART_MAX_HP,
+        maxSoldiers: CART_MAX_HP,
+        attack: 0,
+        defense: 15,
+        speed: 12,
+        range: 0,
+        morale: 100,
+        general: { name: '—', leadership: 0, strength: 0, intelligence: 0 },
+        side,
+        x: spawnX,
+        y: spawnY,
+        hasMoved: false,
+        hasActed: true,
+        inRiver: false,
+        skillUses: { inspire: 0, charge: 0, fireAttack: 0 },
+        chargeReady: false,
+        isCommander: false,
+      };
+    }
+
+    function spawnSupplyCart(side, originX, originY, fromDepot = true) {
+      if (!isSupplyTransportBattle()) return;
+      if (supplyCartClaimSide != null && supplyCartClaimSide !== side) {
+        log(
+          `${side === 'player' ? '我军' : '敌军'}已失去粮车归属，无法再生成粮车`,
+          'system'
+        );
+        return false;
+      }
+      if (getAnyCart()) return false;
+      const spot = findSpawnNear(originX, originY, side);
+      if (!spot) {
+        log(`${side === 'player' ? '我军' : '敌军'}粮车无法出发（无可用空地）`, 'system');
+        return false;
+      }
+      supplyCartClaimSide = side;
+      const cart = createSupplyCart(side, spot.x, spot.y);
+      units.push(cart);
+      const label = side === 'player' ? '我军' : '敌军';
+      if (fromDepot) {
+        log(`${label}粮车已从粮仓附近出发`, 'skill');
+      } else {
+        log(`${label}粮车从散落粮食处重新出发`, 'skill');
+      }
+      if (side === 'player') {
+        addRecap('粮车已出发');
+        log('粮车已出发。请护送其返回营地。', 'system');
+        BattleTutorialManager.maybeShow('supply_cart_spawn');
+      } else {
+        log('敌军粮车已出发', 'system');
+      }
+      return true;
+    }
+
+    function destroyCart(cart) {
+      const sideLabel = cart.side === 'player' ? '我军' : '敌军';
+      log(`${sideLabel}粮车被摧毁`, 'damage');
+      log('粮车被摧毁。粮食散落在战场上。', 'system');
+      if (cart.side === 'player') addRecap('我军粮车被摧毁');
+      droppedSupplies.push({ x: cart.x, y: cart.y });
+      units = units.filter(u => u.id !== cart.id);
+      if (cart.side === 'player') BattleTutorialManager.maybeShow('supply_cart_destroyed');
+    }
+
+    function tryPickupDroppedSupply(unit) {
+      if (!isSupplyTransportBattle() || unit.isSupplyCart) return;
+      const idx = droppedSupplies.findIndex(d => d.x === unit.x && d.y === unit.y);
+      if (idx < 0) return;
+      if (supplyCartClaimSide != null && supplyCartClaimSide !== unit.side) return;
+      const spawned = spawnSupplyCart(unit.side, unit.x, unit.y, false);
+      if (!spawned) return;
+      droppedSupplies.splice(idx, 1);
+      log('粮食已被重新夺取。', 'skill');
+      addRecap(`${unit.side === 'player' ? '我军' : '敌军'}重新夺取散落粮食`);
+      raiseSupplyMorale(unit.side, DROPPED_SUPPLY_MORALE_BONUS, '夺回散落军粮');
+      if (unit.side === 'player') BattleTutorialManager.maybeShow('supply_pickup');
+    }
+
+    function autoMoveCartStep(cart) {
+      if (cart.soldiers <= 0) return;
+      const campCells = (cart.side === 'player' ? playerCamp : enemyCamp)?.cells || [];
+      if (!campCells.length) return;
+
+      let best = null, bestDist = Infinity;
+      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const nx = cart.x + dx, ny = cart.y + dy;
+        if (!isPassableTile(nx, ny, cart.id)) continue;
+        const d = Math.min(...campCells.map(c => manhattan(nx, ny, c.x, c.y)));
+        if (d < bestDist) {
+          bestDist = d;
+          best = { x: nx, y: ny };
+        }
+      }
+      if (best) {
+        cart.x = best.x;
+        cart.y = best.y;
+        cart.inRiver = false;
+      }
+    }
+
+    function processSupplyCartMoves() {
+      if (!isSupplyTransportBattle()) return;
+      for (const cart of units.filter(u => u.isSupplyCart && u.soldiers > 0)) {
+        for (let i = 0; i < CART_MOVE_PER_TURN; i++) {
+          if (isInCampZone(cart.x, cart.y, cart.side)) break;
+          autoMoveCartStep(cart);
+          if (isInCampZone(cart.x, cart.y, cart.side)) break;
+        }
+        if (isInCampZone(cart.x, cart.y, cart.side)) {
+          if (cart.side === 'player') {
+            addRecap('粮车成功运回营地');
+            showOverlay('胜利', '粮食已运回营地！', true);
+          } else {
+            showOverlay('失败', '敌军粮食已运回营地……', false);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function militaryAt(x, y) {
+      return units.find(u => u.x === x && u.y === y && u.soldiers > 0 && !u.isSupplyCart);
+    }
+
+    function cartAt(x, y) {
+      return units.find(u => u.x === x && u.y === y && u.soldiers > 0 && u.isSupplyCart);
+    }
+
     function unitAt(x, y) {
-      return units.find(u => u.x === x && u.y === y && u.soldiers > 0);
+      return militaryAt(x, y) || cartAt(x, y);
     }
 
     function isRiverTerrain(t) { return t === 'river'; }
@@ -636,6 +1089,34 @@
     function isOnHill(x, y) { return getTerrain(x, y) === 'hill'; }
 
     // ─── 地图生成 ───────────────────────────────────────────
+    function scoreStrategicPoint(type, x, y) {
+      if (type !== 'supplyDepot' || !isSupplyTransportBattle()) return Math.random();
+      const enemyAnchor = getCampAnchor('enemy');
+      const playerAnchor = getCampAnchor('player');
+      const enemyDistance = manhattan(x, y, enemyAnchor.x, enemyAnchor.y);
+      const playerDistance = manhattan(x, y, playerAnchor.x, playerAnchor.y);
+      return enemyDistance * 5 - playerDistance * 2 + Math.abs(y - 3) * 2 + Math.random();
+    }
+
+    function findStrategicPointSlot(type, used) {
+      const candidates = [];
+      let tries = 0;
+      while (tries < 120) {
+        tries++;
+        const x = randInt(1, COLS - 2), y = randInt(1, ROWS - 2);
+        const k = cellKey(x, y);
+        if (used.has(k)) continue;
+        const t = getTerrain(x, y);
+        if (isRiverTerrain(t) || isBridgeTerrain(t)) continue;
+        if (PLAYER_DEPLOY_ROWS.includes(y) || ENEMY_DEPLOY_ROWS.includes(y)) continue;
+        candidates.push({ x, y, score: scoreStrategicPoint(type, x, y) });
+      }
+      if (!candidates.length) return null;
+      candidates.sort((a, b) => a.score - b.score);
+      const pool = candidates.slice(0, Math.min(4, candidates.length));
+      return pool[randInt(0, pool.length - 1)];
+    }
+
     function generateMap() {
       grid = [];
       for (let y = 0; y < ROWS; y++) {
@@ -656,45 +1137,174 @@
       }
 
       strategicPoints = [];
-      const types = ['camp', 'supplyDepot', 'watchTower'];
+      playerCamp = null;
+      enemyCamp = null;
+      droppedSupplies = [];
+
+      const types = isSupplyTransportBattle()
+        ? ['supplyDepot', 'watchTower']
+        : ['camp', 'supplyDepot', 'watchTower'];
       const used = new Set([cellKey(bridgeX, riverY)]);
 
       for (const type of types) {
+        const slot = findStrategicPointSlot(type, used);
+        if (!slot) continue;
+        used.add(cellKey(slot.x, slot.y));
+        strategicPoints.push({
+          id: type + '_' + slot.x + slot.y,
+          type,
+          x: slot.x,
+          y: slot.y,
+          owner: 'neutral',
+          captureSide: null,
+          captureProgress: 0,
+        });
+      }
+
+      if (!isSupplyTransportBattle() && !strategicPoints.some(p => p.type === 'camp')) {
         let tries = 0;
         while (tries < 80) {
           tries++;
-          const x = randInt(1, COLS - 2), y = randInt(1, ROWS - 2);
+          const x = randInt(1, COLS - 2), y = randInt(2, 4);
           const k = cellKey(x, y);
           if (used.has(k)) continue;
-          const t = getTerrain(x, y);
-          if (isRiverTerrain(t) || isBridgeTerrain(t)) continue;
-          if (PLAYER_DEPLOY_ROWS.includes(y) || ENEMY_DEPLOY_ROWS.includes(y)) continue;
+          if (isRiverTerrain(getTerrain(x, y))) continue;
           used.add(k);
-          strategicPoints.push({
-            id: type + '_' + x + y,
-            type, x, y,
-            owner: 'neutral',
-            captureSide: null,
-            captureProgress: 0,
-          });
+          strategicPoints.push({ id: 'camp_' + x + y, type: 'camp', x, y, owner: 'neutral', captureSide: null, captureProgress: 0 });
           break;
         }
       }
+
+      placeFactionCamps(used);
+    }
+
+    function placeFactionCamps(used) {
+      const playerCells = [
+        { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 1, y: 7 }, { x: 2, y: 7 },
+      ];
+      const enemyCells = [
+        { x: COLS - 3, y: 0 }, { x: COLS - 2, y: 0 }, { x: COLS - 3, y: 1 }, { x: COLS - 2, y: 1 },
+      ];
+
+      playerCamp = { side: 'player', cells: playerCells.filter(c => {
+        const k = cellKey(c.x, c.y);
+        if (used.has(k)) return false;
+        used.add(k);
+        const cell = getCell(c.x, c.y);
+        if (cell) cell.campZone = 'player';
+        return true;
+      }) };
+
+      enemyCamp = { side: 'enemy', cells: enemyCells.filter(c => {
+        const k = cellKey(c.x, c.y);
+        if (used.has(k)) return false;
+        used.add(k);
+        const cell = getCell(c.x, c.y);
+        if (cell) cell.campZone = 'enemy';
+        return true;
+      }) };
     }
 
     function pickObjective() {
-      battleObjective = OBJECTIVES[randInt(0, OBJECTIVES.length - 1)];
+      if (battleConfig.objectiveId) {
+        battleObjective = OBJECTIVES.find(o => o.id === battleConfig.objectiveId) || OBJECTIVES[0];
+      } else {
+        battleObjective = OBJECTIVES[randInt(0, OBJECTIVES.length - 1)];
+      }
       defenseHoldTurns = 0;
       turnCounter = 0;
       updateObjectiveBar();
     }
 
+    function inferLessonTags() {
+      const tags = [];
+      if (grid.some(c => c.terrain === 'bridge')) tags.push('BridgeBattle');
+      if (battleObjective?.id === 'supplyTransport') tags.push('SupplyTransportBattle');
+      if (battleObjective?.id === 'defense') tags.push('DefenseBattle');
+      if (grid.some(c => c.terrain === 'forest')) tags.push('AmbushBattle');
+      if (battleObjective?.id === 'assassination') tags.push('CommanderBattle');
+      return tags;
+    }
+
+    function getObjectiveProgressText() {
+      if (!battleObjective || phase === 'deploy') return '';
+      const obj = battleObjective;
+      if (obj.id === 'defense') {
+        const remain = Math.max(0, 3 - defenseHoldTurns);
+        return `守卫进度 ${defenseHoldTurns}/3 · 还需${remain}回合`;
+      }
+      if (obj.id === 'strongpoint') {
+        const owned = strategicPoints.filter(p => p.owner === 'player').length;
+        return `据点进度 ${owned}/${strategicPoints.length}`;
+      }
+      if (obj.id === 'supplyTransport') {
+        const cart = getCart('player');
+        if (cart) {
+          return `粮车生命 ${cart.soldiers}/${cart.maxSoldiers} · 距营地 ${distToCamp(cart)} 格`;
+        }
+        const depot = getSupplyDepot();
+        if (depot?.owner === 'player') return '等待粮车出发或已在途中';
+        if (depot?.captureSide === 'player') return '正在占领粮仓…';
+        if (droppedSupplies.length) return '战场上有散落粮食';
+        return '向粮仓进军并占领';
+      }
+      if (obj.id === 'assassination') {
+        const cmd = units.find(u => u.side === 'enemy' && u.isCommander && u.soldiers > 0);
+        return cmd ? `敌将 ${cmd.general.name} 仍在阵上` : '敌将已被击败';
+      }
+      if (obj.id === 'annihilation') {
+        const n = activeUnits('enemy').length;
+        return n ? `仍有 ${n} 支敌军可战` : '敌军已无战意';
+      }
+      return '';
+    }
+
     function updateObjectiveBar() {
-      const el = document.getElementById('objective-bar');
-      if (!battleObjective) { el.textContent = '战斗目标：—'; return; }
-      let extra = '';
-      if (battleObjective.id === 'defense') extra = ` （已守${defenseHoldTurns}/3回合）`;
-      el.textContent = `【${battleObjective.name}】${battleObjective.desc}${extra}`;
+      const bar = document.getElementById('objective-bar');
+      const prog = document.getElementById('objective-progress');
+      if (!battleObjective) {
+        bar.textContent = '战斗目标：—';
+        prog.textContent = '';
+        return;
+      }
+      bar.textContent = isSupplyTransportBattle()
+        ? `【护送粮车】${battleObjective.friendlyDesc}`
+        : `【${battleObjective.friendlyTitle}】${battleObjective.friendlyDesc}`;
+      prog.textContent = phase === 'battle' ? getObjectiveProgressText() : '';
+      if (isSupplyTransportBattle() && phase === 'battle') {
+        const cart = getCart('player');
+        const sub = cart
+          ? `当前目标：护送粮车返回营地 · 粮车 ${cart.soldiers}/${cart.maxSoldiers} · 距营地 ${distToCamp(cart)} 格`
+          : '当前目标：护送粮车返回营地';
+        prog.textContent = getObjectiveProgressText() ? `${sub} · ${getObjectiveProgressText()}` : sub;
+      }
+    }
+
+    function showObjectiveIntro() {
+      if (!battleObjective) return;
+      document.getElementById('objective-intro-title').textContent = `【${battleObjective.friendlyTitle}】`;
+      document.getElementById('objective-intro-desc').textContent = battleObjective.friendlyDesc;
+      document.getElementById('objective-intro').classList.remove('hidden');
+    }
+
+    function hideObjectiveIntro() {
+      document.getElementById('objective-intro').classList.add('hidden');
+    }
+
+    function checkTerrainTutorial(unit, terrain) {
+      if (unit.side !== 'player') return;
+      if (terrain === 'forest') BattleTutorialManager.maybeShow('terrain_forest');
+      else if (terrain === 'hill') BattleTutorialManager.maybeShow('terrain_hill');
+      else if (terrain === 'river') BattleTutorialManager.maybeShow('terrain_river');
+    }
+
+    function checkApproachTutorials(unit) {
+      if (unit.side !== 'player') return;
+      for (const p of strategicPoints) {
+        if (manhattan(unit.x, unit.y, p.x, p.y) <= 2) {
+          BattleTutorialManager.maybeShow('point_' + p.type);
+        }
+      }
     }
 
     // ─── 单位 ───────────────────────────────────────────────
@@ -792,9 +1402,21 @@
     }
 
     function computeAttackable(unit) {
+      if (unit.isSupplyCart) return [];
       return units.filter(u =>
         u.side !== unit.side && u.soldiers > 0 && canLockTarget(unit, u)
       );
+    }
+
+    function aiTargetPriority(attacker, target) {
+      if (!isSupplyTransportBattle()) {
+        return (target.isCommander ? 50 : 0) + getTypeAdv(attacker, target) * 10;
+      }
+      if (target.isSupplyCart && target.side !== attacker.side) return 120;
+      const enemyCart = getCart(attacker.side === 'player' ? 'enemy' : 'player');
+      if (enemyCart && manhattan(target.x, target.y, enemyCart.x, enemyCart.y) <= 1) return 70;
+      if (target.isCommander) return 55;
+      return 10 + getTypeAdv(attacker, target) * 5;
     }
 
     function applyMove(unit, nx, ny) {
@@ -802,13 +1424,17 @@
       unit.x = nx; unit.y = ny;
       unit.hasMoved = true;
 
+      checkTerrainTutorial(unit, terrain);
+      checkApproachTutorials(unit);
+
       if (isRiverTerrain(terrain)) {
         unit.inRiver = true;
         unit.hasActed = true;
-        log(`${unit.name} 进入河流 — 行动结束，渡河期间受伤加重`, 'system');
+        log(`${unit.name} 进入河流 — 渡河受阻，本回合行动结束`, 'system');
       } else {
         unit.inRiver = false;
       }
+      tryPickupDroppedSupply(unit);
     }
 
     // ─── 战斗 ───────────────────────────────────────────────
@@ -848,7 +1474,7 @@
 
       let counter = 0;
       const dist = manhattan(attacker.x, attacker.y, defender.x, defender.y);
-      if (!hillFirst && defender.soldiers > 0 && defender.range >= dist) {
+      if (!defender.isSupplyCart && !hillFirst && defender.soldiers > 0 && defender.range >= dist) {
         const counterRate = 0.55 * defTier.counter;
         if (Math.random() < counterRate) {
           const cAtk = defender.attack * (1 + defender.general.strength / 200) * defTier.atk;
@@ -865,11 +1491,16 @@
     function applyDamage(unit, amount) {
       const wasAlive = unit.soldiers > 0;
       unit.soldiers = Math.max(0, unit.soldiers - amount);
+      if (unit.isSupplyCart) {
+        if (wasAlive && unit.soldiers <= 0) destroyCart(unit);
+        return;
+      }
       changeMorale(unit, -Math.round(amount / unit.maxSoldiers * 35), '战损', false);
       if (wasAlive && unit.soldiers <= 0) onGeneralFallen(unit);
     }
 
     function resolveAttack(attacker, defender, chargeBonus = false) {
+      if (attacker.isSupplyCart) return;
       if (isRout(attacker)) return;
       if (isChaos(attacker) && Math.random() < 0.25) {
         log(`${attacker.name} 混乱中行动失败`, 'system');
@@ -879,7 +1510,7 @@
       const wasCharge = (chargeBonus || attacker.chargeReady) && canApplyChargeBonus(attacker);
       const result = calcDamage(attacker, defender, chargeBonus);
       const typeLabel = TROOP_TYPES[attacker.troopType].label;
-      const advLabel = result.typeAdv > 1 ? `（克制×${result.typeAdv}）` : '';
+      const advLabel = result.typeAdv > 1 ? '（克制）' : '';
 
       if (result.chaosFail) {
         log(`${attacker.name} 混乱中攻击失误`, 'system');
@@ -897,8 +1528,9 @@
       if (result.counter > 0) applyDamage(attacker, result.counter);
 
       const chargeText = wasCharge ? '发动冲锋！' : '发动攻击！';
+      const targetName = defender.isSupplyCart ? '粮车' : defender.name;
       log(`${attacker.name}（${typeLabel}）${chargeText}${advLabel}`, 'skill');
-      log(`  ${defender.name} 损失 ${result.damage}${result.counter ? `，${attacker.name} 损失 ${result.counter}` : ''}`, 'damage');
+      log(`  ${targetName} 损失 ${result.damage}${result.counter ? `，${attacker.name} 损失 ${result.counter}` : ''}`, 'damage');
       changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
     }
 
@@ -919,7 +1551,7 @@
       }
       caster.chargeReady = true;
       caster.skillUses.charge--;
-      log(`${caster.general.name} 预备【冲锋】— 下次攻击+50%`, 'skill');
+      log(`${caster.general.name} 预备【冲锋】`, 'skill');
     }
 
     function useFireAttack(caster, tx, ty) {
@@ -941,36 +1573,18 @@
 
     // ─── 据点 ───────────────────────────────────────────────
     function capturePoint(point, side) {
-      const prev = point.owner;
       point.owner = side;
       point.captureProgress = 0;
       point.captureSide = null;
       const info = STRATEGIC[point.type];
       log(`【${info.name}】被${side === 'player' ? '我军' : '敌军'}占领！`, 'skill');
 
+      if (side === 'player') addRecap(`你占领了${info.name}`);
+
       if (point.type === 'supplyDepot') {
-        if (side === 'player') {
-          if (!playerOwnsSupply) {
-            changeMoraleSide('player', 10, '占领粮仓');
-            logMorale('我军占领粮仓 → 全军士气+10');
-          }
-          if (enemyOwnsSupply) {
-            changeMoraleSide('enemy', -10, '失去粮仓');
-            logMorale('敌军失去粮仓 → 敌军士气-10');
-          }
-          playerOwnsSupply = true;
-          enemyOwnsSupply = false;
-        } else {
-          if (!enemyOwnsSupply) {
-            changeMoraleSide('enemy', 10, '占领粮仓');
-            logMorale('敌军占领粮仓 → 敌军士气+10');
-          }
-          if (playerOwnsSupply) {
-            changeMoraleSide('player', -10, '失去粮仓');
-            logMorale('我军失去粮仓 → 全军士气-10');
-          }
-          enemyOwnsSupply = true;
-          playerOwnsSupply = false;
+        raiseSupplyMorale(side, SUPPLY_CAPTURE_MORALE_BONUS, '夺得粮仓');
+        if (isSupplyTransportBattle()) {
+          spawnSupplyCart(side, point.x, point.y, true);
         }
       }
     }
@@ -1005,7 +1619,7 @@
         if (p.owner !== side) continue;
         if (p.type === 'camp') {
           changeMoraleSide(side, 2, '营寨补给', false);
-          logMorale(`${side === 'player' ? '我军' : '敌军'}据守营寨 → 全军士气+2`);
+          logMorale(`${side === 'player' ? '我军' : '敌军'}据守营寨，士气恢复`);
           for (const u of units) {
             if (u.side !== side || u.soldiers <= 0) continue;
             if (manhattan(u.x, u.y, p.x, p.y) <= 1) changeMorale(u, 3, '营寨附近', false);
@@ -1061,7 +1675,7 @@
 
     // ─── 胜负 ───────────────────────────────────────────────
     function livingUnits(side) {
-      return units.filter(u => u.side === side && u.soldiers > 0);
+      return units.filter(u => u.side === side && u.soldiers > 0 && !u.isSupplyCart);
     }
 
     function activeUnits(side) {
@@ -1081,9 +1695,12 @@
       const obj = battleObjective;
       if (!obj) return null;
 
-      if (obj.id === 'annihilation') {
+      if (obj.id === 'supplyTransport' || obj.id === 'annihilation') {
         if (livingUnits('enemy').length === 0) return { win: true, msg: '敌军全灭！' };
-        if (activeUnits('enemy').length === 0) return { win: true, msg: '敌军全线溃逃！' };
+        if (activeUnits('enemy').length === 0) {
+          addRecap('敌军士气崩溃');
+          return { win: true, msg: '敌军全线溃逃！' };
+        }
       }
       if (obj.id === 'strongpoint' && allPointsOwnedBy('player')) {
         return { win: true, msg: '全部据点已占领！' };
@@ -1091,10 +1708,6 @@
       if (obj.id === 'assassination') {
         const cmd = units.find(u => u.side === 'enemy' && u.isCommander);
         if (cmd && cmd.soldiers <= 0) return { win: true, msg: '敌军主将已阵斩！' };
-      }
-      if (obj.id === 'supply') {
-        const depot = strategicPoints.find(p => p.type === 'supplyDepot');
-        if (depot && depot.owner === 'player') return { win: true, msg: '粮仓已夺取！' };
       }
       if (obj.id === 'defense' && defenseHoldTurns >= 3) {
         return { win: true, msg: '成功守住中央区域3回合！' };
@@ -1113,15 +1726,24 @@
 
     function checkVictory() {
       const win = checkObjectiveWin();
-      if (win) { showOverlay('胜利', win.msg); return true; }
+      if (win) { showOverlay('胜利', win.msg, true); return true; }
       const loss = checkObjectiveLoss();
-      if (loss) { showOverlay('失败', loss.msg); return true; }
+      if (loss) { showOverlay('失败', loss.msg, false); return true; }
       return false;
     }
 
-    function showOverlay(title, desc) {
+    function showOverlay(title, desc, isWin = false) {
       document.getElementById('overlay-title').textContent = title;
       document.getElementById('overlay-desc').textContent = desc;
+      const recapBox = document.getElementById('recap-box');
+      const recapList = document.getElementById('recap-list');
+      if (isWin && battleRecap.length) {
+        recapList.innerHTML = battleRecap.map(t => `<li>${t}</li>`).join('');
+        recapBox.classList.remove('hidden');
+      } else {
+        recapBox.classList.add('hidden');
+        recapList.innerHTML = '';
+      }
       document.getElementById('overlay').classList.remove('hidden');
       phase = 'ended';
     }
@@ -1133,10 +1755,24 @@
       if (point && point.owner !== enemy.side) score += 40;
       if (getTerrain(cell.x, cell.y) === 'hill') score += 15;
       if (getTerrain(cell.x, cell.y) === 'forest') score += 8;
-      const players = activeUnits('player');
-      if (players.length) {
-        const nearest = Math.min(...players.map(p => manhattan(cell.x, cell.y, p.x, p.y)));
-        score -= nearest * 3;
+
+      if (isSupplyTransportBattle()) {
+        const playerCart = getCart('player');
+        const enemyCart = getCart('enemy');
+        if (playerCart) {
+          const d = manhattan(cell.x, cell.y, playerCart.x, playerCart.y);
+          score += 55 - d * 9;
+        }
+        if (enemyCart) {
+          const d = manhattan(cell.x, cell.y, enemyCart.x, enemyCart.y);
+          score += 30 - d * 6;
+        }
+      } else {
+        const players = activeUnits('player');
+        if (players.length) {
+          const nearest = Math.min(...players.map(p => manhattan(cell.x, cell.y, p.x, p.y)));
+          score -= nearest * 3;
+        }
       }
       return score;
     }
@@ -1156,7 +1792,7 @@
 
         const attackables = computeAttackable(enemy);
         if (attackables.length && !enemy.hasActed) {
-          attackables.sort((a, b) => getTypeAdv(enemy, b) - getTypeAdv(enemy, a));
+          attackables.sort((a, b) => aiTargetPriority(enemy, b) - aiTargetPriority(enemy, a));
           resolveAttack(enemy, attackables[0]);
           enemy.hasActed = true;
         } else if (!enemy.hasMoved) {
@@ -1164,6 +1800,7 @@
           if (reach.length) {
             reach.sort((a, b) => scoreMove(enemy, b) - scoreMove(enemy, a));
             applyMove(enemy, reach[0].x, reach[0].y);
+            tryPickupDroppedSupply(enemy);
           }
         }
 
@@ -1173,6 +1810,7 @@
       }
 
       processCaptureProgress();
+      if (processSupplyCartMoves()) return;
       processRout();
       applyStrategicTurnEffects('enemy');
       if (checkVictory()) return;
@@ -1197,10 +1835,11 @@
       if (battleObjective?.id === 'defense' && playerHoldsDefenseZone()) {
         defenseHoldTurns++;
         updateObjectiveBar();
-        log(`守卫进度：${defenseHoldTurns}/3 回合`, 'system');
+        log(`守卫进度 ${defenseHoldTurns}/3`, 'system');
       }
       recoverMorale('player');
       applyStrategicTurnEffects('player');
+      updateObjectiveBar();
       clearSelection();
     }
 
@@ -1209,20 +1848,43 @@
       const board = document.getElementById('board');
       board.innerHTML = '';
       const zoneRows = [3, 4];
+      const depot = getSupplyDepot();
+      const playerCart = getCart('player');
+      const highlightCart = playerCart || getCart('enemy');
 
       for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
           const terrain = getTerrain(x, y);
+          const cellData = getCell(x, y);
           const cell = document.createElement('div');
           cell.className = 'cell ' + terrain;
 
           if (phase === 'deploy' && PLAYER_DEPLOY_ROWS.includes(y)) cell.classList.add('deploy-zone');
           if (battleObjective?.id === 'defense' && zoneRows.includes(y)) cell.classList.add('defense-zone');
+          if (cellData?.campZone === 'player') cell.classList.add('highlight-player-camp');
+          if (cellData?.campZone === 'enemy') cell.classList.add('highlight-enemy-camp');
+          if (depot && depot.x === x && depot.y === y) cell.classList.add('highlight-supply-depot');
+          if (highlightCart && highlightCart.x === x && highlightCart.y === y) cell.classList.add('highlight-cart');
 
           const ti = document.createElement('span');
           ti.className = 'terrain-icon';
           ti.textContent = TERRAIN[terrain].label;
           cell.appendChild(ti);
+
+          if (cellData?.campZone === 'player') {
+            const cm = document.createElement('span');
+            cm.className = 'camp-marker';
+            cm.textContent = '我营';
+            cm.title = '我军营地 · 粮车运抵此处获胜';
+            cell.appendChild(cm);
+          }
+          if (cellData?.campZone === 'enemy') {
+            const cm = document.createElement('span');
+            cm.className = 'camp-marker';
+            cm.textContent = '敌营';
+            cm.title = '敌军营地';
+            cell.appendChild(cm);
+          }
 
           const point = getPointAt(x, y);
           if (point) {
@@ -1241,28 +1903,49 @@
             }
           }
 
+          const drop = droppedSupplies.find(d => d.x === x && d.y === y);
+          if (drop) {
+            const de = document.createElement('span');
+            de.className = 'dropped-supply';
+            de.textContent = '粮';
+            de.title = '散落粮食 · 任意部队进入可拾取';
+            cell.appendChild(de);
+          }
+
           if (reachable.some(c => c.x === x && c.y === y)) cell.classList.add('can-move');
           if (attackable.some(u => u.x === x && u.y === y)) cell.classList.add('can-attack');
           if (skillTargets.some(c => c.x === x && c.y === y)) cell.classList.add('can-skill');
 
-          const unit = unitAt(x, y);
-          if (unit) {
-            const tier = getMoraleTier(unit.morale);
+          const military = militaryAt(x, y);
+          const cart = cartAt(x, y);
+
+          if (military) {
+            const tier = getMoraleTier(military.morale);
             const ue = document.createElement('div');
-            ue.className = `unit ${unit.side} ${unit.hasActed && unit.hasMoved ? 'acted' : ''} ${tier.id === 'chaos' || tier.id === 'rout' ? tier.id : ''} ${unit.isCommander ? 'commander' : ''} ${unit.inRiver ? 'in-river' : ''}`;
-            if (selectedUnit?.id === unit.id) cell.classList.add('selected');
+            ue.className = `unit ${military.side} ${military.hasActed && military.hasMoved ? 'acted' : ''} ${tier.id === 'chaos' || tier.id === 'rout' ? tier.id : ''} ${military.isCommander ? 'commander' : ''} ${military.inRiver ? 'in-river' : ''}`;
+            if (selectedUnit?.id === military.id) cell.classList.add('selected');
 
             ue.innerHTML = `
-              <span>${TROOP_TYPES[unit.troopType].label}</span>
-              <span>${unit.soldiers}</span>
-              <span class="unit-status ${tier.id}">${tier.label}${unit.morale}</span>
+              <span>${TROOP_TYPES[military.troopType].label}</span>
+              <span>${military.soldiers}</span>
+              <span class="unit-status ${tier.id}">${tier.label}</span>
             `;
-            ue.title = `${unit.name} · ${unit.general.name}\n${STRATEGIC[point?.type]?.desc || TERRAIN[terrain].name}`;
+            ue.title = `${military.name} · ${military.general.name}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
 
-            if (phase === 'deploy' && unit.side === 'player' && unit.x >= 0) {
+            if (phase === 'deploy' && military.side === 'player' && military.x >= 0) {
               ue.draggable = true;
-              ue.addEventListener('dragstart', e => { dragUnit = unit; e.dataTransfer.effectAllowed = 'move'; });
+              ue.addEventListener('dragstart', e => { dragUnit = military; e.dataTransfer.effectAllowed = 'move'; });
             }
+            cell.appendChild(ue);
+          } else if (cart) {
+            const ue = document.createElement('div');
+            ue.className = `unit supply-cart ${cart.side}`;
+            ue.innerHTML = `
+              <span>粮车</span>
+              <span class="cart-hp">${cart.soldiers}</span>
+              <span class="unit-status">运粮</span>
+            `;
+            ue.title = `${cart.name} · 生命 ${cart.soldiers}/${cart.maxSoldiers}\n距营地 ${distToCamp(cart)} 格`;
             cell.appendChild(ue);
           }
 
@@ -1296,6 +1979,16 @@
       const list = document.getElementById('debug-list');
       list.innerHTML = '';
       for (const u of units) {
+        if (u.isSupplyCart && phase !== 'deploy') {
+          const el = document.createElement('div');
+          el.className = 'debug-unit ' + (u.side === 'player' ? 'player-side' : 'enemy-side');
+          el.innerHTML = `
+            <div class="name">${u.name} <span class="type-tag">粮车</span></div>
+            <div>(${u.x},${u.y}) · 生命 ${u.soldiers}/${u.maxSoldiers} · 距营地 ${distToCamp(u)} 格</div>
+          `;
+          list.appendChild(el);
+          continue;
+        }
         if (u.soldiers <= 0 && phase !== 'deploy') continue;
         const tier = getMoraleTier(u.morale);
         const pos = u.x >= 0 ? `(${u.x},${u.y})` : '未部署';
@@ -1321,19 +2014,22 @@
       if (phase === 'deploy') {
         badge.textContent = '部署阶段';
         badge.className = 'phase-badge';
-        turnInfo.textContent = '拖至底部三排 · 抢据点/高地/桥梁';
+        turnInfo.textContent = isSupplyTransportBattle()
+          ? '占领粮仓 → 护送粮车回营 · 可拦截敌军粮车'
+          : '拖至底部三排 · 观察据点与地形';
         btnStart.disabled = false;
         btnEnd.disabled = true;
         btnWait.disabled = true;
       } else if (phase === 'battle') {
         badge.textContent = turn === 'player' ? '我方回合' : '敌方回合';
         badge.className = 'phase-badge ' + turn;
-        turnInfo.textContent = turn === 'player' ? '移动→攻击/占点 · 森林伏击 · 高地先手 · 河流截断' : '敌方行动中…';
+        turnInfo.textContent = turn === 'player' ? '移动、占点、维持士气' : '敌方行动中…';
         btnStart.disabled = true;
         btnEnd.disabled = turn !== 'player';
         btnWait.disabled = turn !== 'player' || !selectedUnit;
       }
 
+      updateObjectiveBar();
       renderSkillBar();
       renderBoard();
       renderDeployPool();
@@ -1375,7 +2071,7 @@
       const clicked = unitAt(x, y);
 
       if (mode === 'skill-inspire') {
-        if (clicked?.side === 'player' && clicked.id !== selectedUnit.id) {
+        if (clicked?.side === 'player' && !clicked.isSupplyCart && clicked.id !== selectedUnit.id) {
           useInspire(selectedUnit, clicked);
           clearSelection(); updateUI();
         }
@@ -1419,7 +2115,7 @@
         return;
       }
 
-      if (clicked?.side === 'player' && !clicked.hasActed) {
+      if (clicked?.side === 'player' && !clicked.hasActed && !clicked.isSupplyCart) {
         if (isRout(clicked)) { log(`${clicked.name} 溃逃中`, 'system'); return; }
         selectedUnit = clicked;
         attackable = computeAttackable(clicked);
@@ -1453,6 +2149,7 @@
       if (!PLAYER_DEPLOY_ROWS.includes(y)) { log('只能部署在底部三排', 'system'); return; }
       if (unitAt(x, y)) { log('该格已有部队', 'system'); return; }
       dragUnit.x = x; dragUnit.y = y;
+      checkApproachTutorials(dragUnit);
       dragUnit = null;
       renderBoard(); renderDeployPool(); updateDebug();
     }
@@ -1461,37 +2158,54 @@
       if (!units.some(u => u.side === 'player' && u.x >= 0)) {
         log('请至少部署一支部队', 'system'); return;
       }
+      showObjectiveIntro();
+    }
+
+    function beginBattle() {
+      hideObjectiveIntro();
       phase = 'battle';
       turn = 'player';
+      battleRecap = [];
       resetPlayerTurn();
-      log(`战斗开始！【${battleObjective.name}】`, 'system');
+      BattleTutorialManager.applyLessonTags(battleConfig.lessonTags);
+      if (isSupplyTransportBattle()) BattleTutorialManager.maybeShow('lesson_supply_transport');
+      log(`战斗开始 — ${battleObjective.friendlyTitle}`, 'system');
       log('—— 我方回合 ——', 'system');
       updateUI();
     }
 
-    function init() {
-      generateMap();
+    function init(config = {}) {
+      battleConfig = { lessonTags: config.lessonTags || [], objectiveId: config.objectiveId || null };
       pickObjective();
+      generateMap();
       units = createPlayerPool();
       spawnEnemies();
       phase = 'deploy';
       turn = 'player';
-      playerOwnsSupply = false;
-      enemyOwnsSupply = false;
+      supplyCartClaimSide = null;
+      droppedSupplies = [];
+      battleRecap = [];
       clearSelection();
+      hideObjectiveIntro();
+      BattleTutorialManager.hideToast();
+
+      if (!battleConfig.lessonTags.length) battleConfig.lessonTags = inferLessonTags();
 
       document.getElementById('log').innerHTML = '';
       document.getElementById('morale-log').innerHTML = '';
       document.getElementById('overlay').classList.add('hidden');
-      log('部署：底部三排 · 争夺桥梁/高地/据点', 'system');
-      log(`本局目标：【${battleObjective.name}】${battleObjective.desc}`, 'system');
+      document.getElementById('recap-box').classList.add('hidden');
+      log('部署部队，观察地图上的据点与地形', 'system');
       updateUI();
     }
 
     document.getElementById('btn-start').addEventListener('click', startBattle);
+    document.getElementById('btn-objective-ok').addEventListener('click', beginBattle);
+    document.getElementById('btn-tutorial-close').addEventListener('click', () => BattleTutorialManager.hideToast());
     document.getElementById('btn-end-turn').addEventListener('click', () => {
       if (turn !== 'player') return;
       processCaptureProgress();
+      if (processSupplyCartMoves()) return;
       processRout();
       if (checkVictory()) return;
       runEnemyTurn();
@@ -1503,6 +2217,9 @@
       clearSelection(); updateUI();
     });
     document.getElementById('btn-restart').addEventListener('click', () => { nextId = 1; init(); });
+
+    /** 剧情战役：init({ objectiveId: 'supplyTransport', lessonTags: ['SupplyTransportBattle'] }) */
+    window.BattleDemo = { init, BattleTutorialManager, inferLessonTags };
 
     init();
   </script>
