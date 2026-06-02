@@ -27,8 +27,8 @@
       --deploy-h: 46px;
       --controls-h: 38px;
       --cell: min(
-        calc((100vh - var(--header-h) - var(--deploy-h) - var(--controls-h) - 20px) / 8 - 2px),
-        calc((100vw - var(--side-w) - 32px) / 10 - 2px),
+        calc((100vh - var(--header-h) - var(--deploy-h) - var(--controls-h) - 20px) / 10 - 2px),
+        calc((100vw - var(--side-w) - 32px) / 12 - 2px),
         46px
       );
     }
@@ -133,8 +133,8 @@
 
     #board {
       display: grid;
-      grid-template-columns: repeat(10, var(--cell));
-      grid-template-rows: repeat(8, var(--cell));
+      grid-template-columns: repeat(12, var(--cell));
+      grid-template-rows: repeat(10, var(--cell));
       gap: 2px;
       user-select: none;
     }
@@ -168,6 +168,8 @@
     .cell.highlight-enemy-camp { box-shadow: inset 0 0 0 2px rgba(165, 58, 58, 0.7); }
     .cell.highlight-supply-depot { outline: 1px solid #c9a227; }
     .cell.highlight-cart { outline: 1px solid #ffcc66; }
+    .cell.highlight-target-commander { box-shadow: inset 0 0 0 2px rgba(255, 215, 96, 0.95); }
+    .cell.highlight-protect-commander { box-shadow: inset 0 0 0 2px rgba(126, 200, 255, 0.95); }
 
     .camp-marker {
       position: absolute;
@@ -249,6 +251,20 @@
     .unit-status.shaken { color: #fc8; }
     .unit-status.chaos { color: #f80; }
     .unit-status.rout { color: #aaa; }
+
+    .commander-badge {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      min-width: 1.4em;
+      padding: 0 2px;
+      border-radius: 2px;
+      font-size: 0.42rem;
+      line-height: 1.2;
+      color: #241300;
+      background: #f6d36b;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
+    }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
@@ -536,9 +552,10 @@
   </div>
 
   <script>
-    const COLS = 10, ROWS = 8;
-    const PLAYER_DEPLOY_ROWS = [5, 6, 7];
+    const COLS = 12, ROWS = 10;
+    const PLAYER_DEPLOY_ROWS = [7, 8, 9];
     const ENEMY_DEPLOY_ROWS = [0, 1, 2];
+    const DEFENSE_ZONE_ROWS = [4, 5];
     const RIVER_DAMAGE_MULT = 1.4;
     const FOREST_LOCK_RANGE = 3;
 
@@ -610,6 +627,10 @@
     const CART_MOVE_PER_TURN = 1;
     const SUPPLY_CAPTURE_MORALE_BONUS = 6;
     const DROPPED_SUPPLY_MORALE_BONUS = 4;
+    const STRONGPOINT_CAPTURE_REQUIRED = 2;
+    const STRONGPOINT_MIN_POINT_DISTANCE = 3;
+    const STRONGPOINT_MIN_CAMP_DISTANCE = 3;
+    const STRONGPOINT_TYPES = ['camp', 'supplyDepot', 'watchTower', 'watchTower'];
     let battleRecap = [];
     let battleConfig = { lessonTags: [] };
 
@@ -812,8 +833,24 @@
       return battleObjective?.id === 'supplyTransport';
     }
 
+    function isStrongpointBattle() {
+      return battleObjective?.id === 'strongpoint';
+    }
+
+    function isAssassinationBattle() {
+      return battleObjective?.id === 'assassination';
+    }
+
     function getCart(side) {
       return units.find(u => u.isSupplyCart && u.side === side && u.soldiers > 0);
+    }
+
+    function getCommander(side, includeDefeated = false) {
+      return units.find(u =>
+        u.side === side &&
+        u.isCommander &&
+        (includeDefeated || u.soldiers > 0)
+      ) || null;
     }
 
     function getAnyCart() {
@@ -850,7 +887,7 @@
 
     function getCampAnchor(side) {
       return side === 'player'
-        ? { x: 1, y: 6 }
+        ? { x: 1, y: 8 }
         : { x: COLS - 2, y: 1 };
     }
 
@@ -1090,6 +1127,12 @@
 
     // ─── 地图生成 ───────────────────────────────────────────
     function scoreStrategicPoint(type, x, y) {
+      if (isStrongpointBattle()) {
+        const centerX = (COLS - 1) / 2;
+        const centerY = (ROWS - 1) / 2;
+        const centerBias = Math.abs(x - centerX) * 1.4 + Math.abs(y - centerY) * 2.2;
+        return centerBias + Math.random();
+      }
       if (type !== 'supplyDepot' || !isSupplyTransportBattle()) return Math.random();
       const enemyAnchor = getCampAnchor('enemy');
       const playerAnchor = getCampAnchor('player');
@@ -1100,6 +1143,8 @@
 
     function findStrategicPointSlot(type, used) {
       const candidates = [];
+      const playerAnchor = getCampAnchor('player');
+      const enemyAnchor = getCampAnchor('enemy');
       let tries = 0;
       while (tries < 120) {
         tries++;
@@ -1109,7 +1154,54 @@
         const t = getTerrain(x, y);
         if (isRiverTerrain(t) || isBridgeTerrain(t)) continue;
         if (PLAYER_DEPLOY_ROWS.includes(y) || ENEMY_DEPLOY_ROWS.includes(y)) continue;
+        if (isStrongpointBattle()) {
+          if (
+            manhattan(x, y, playerAnchor.x, playerAnchor.y) < STRONGPOINT_MIN_CAMP_DISTANCE ||
+            manhattan(x, y, enemyAnchor.x, enemyAnchor.y) < STRONGPOINT_MIN_CAMP_DISTANCE
+          ) {
+            continue;
+          }
+          if (
+            strategicPoints.some(point =>
+              manhattan(x, y, point.x, point.y) < STRONGPOINT_MIN_POINT_DISTANCE
+            )
+          ) {
+            continue;
+          }
+        }
         candidates.push({ x, y, score: scoreStrategicPoint(type, x, y) });
+      }
+      if (!candidates.length && isStrongpointBattle()) {
+        const relaxedCandidates = [];
+        tries = 0;
+        while (tries < 120) {
+          tries++;
+          const x = randInt(1, COLS - 2), y = randInt(1, ROWS - 2);
+          const k = cellKey(x, y);
+          if (used.has(k)) continue;
+          const t = getTerrain(x, y);
+          if (isRiverTerrain(t) || isBridgeTerrain(t)) continue;
+          if (PLAYER_DEPLOY_ROWS.includes(y) || ENEMY_DEPLOY_ROWS.includes(y)) continue;
+          if (
+            manhattan(x, y, playerAnchor.x, playerAnchor.y) < Math.max(2, STRONGPOINT_MIN_CAMP_DISTANCE - 1) ||
+            manhattan(x, y, enemyAnchor.x, enemyAnchor.y) < Math.max(2, STRONGPOINT_MIN_CAMP_DISTANCE - 1)
+          ) {
+            continue;
+          }
+          if (
+            strategicPoints.some(point =>
+              manhattan(x, y, point.x, point.y) < Math.max(2, STRONGPOINT_MIN_POINT_DISTANCE - 1)
+            )
+          ) {
+            continue;
+          }
+          relaxedCandidates.push({ x, y, score: scoreStrategicPoint(type, x, y) });
+        }
+        if (relaxedCandidates.length) {
+          relaxedCandidates.sort((a, b) => a.score - b.score);
+          const pool = relaxedCandidates.slice(0, Math.min(4, relaxedCandidates.length));
+          return pool[randInt(0, pool.length - 1)];
+        }
       }
       if (!candidates.length) return null;
       candidates.sort((a, b) => a.score - b.score);
@@ -1143,7 +1235,9 @@
 
       const types = isSupplyTransportBattle()
         ? ['supplyDepot', 'watchTower']
-        : ['camp', 'supplyDepot', 'watchTower'];
+        : isStrongpointBattle()
+          ? STRONGPOINT_TYPES
+          : ['camp', 'supplyDepot', 'watchTower'];
       const used = new Set([cellKey(bridgeX, riverY)]);
 
       for (const type of types) {
@@ -1180,7 +1274,7 @@
 
     function placeFactionCamps(used) {
       const playerCells = [
-        { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 1, y: 7 }, { x: 2, y: 7 },
+        { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 9 }, { x: 2, y: 9 },
       ];
       const enemyCells = [
         { x: COLS - 3, y: 0 }, { x: COLS - 2, y: 0 }, { x: COLS - 3, y: 1 }, { x: COLS - 2, y: 1 },
@@ -1249,8 +1343,13 @@
         return '向粮仓进军并占领';
       }
       if (obj.id === 'assassination') {
-        const cmd = units.find(u => u.side === 'enemy' && u.isCommander && u.soldiers > 0);
-        return cmd ? `敌将 ${cmd.general.name} 仍在阵上` : '敌将已被击败';
+        const enemyCommander = getCommander('enemy');
+        const playerCommander = getCommander('player');
+        if (!enemyCommander) return '敌将已被击败';
+        const playerStatus = playerCommander
+          ? `我方主将 ${playerCommander.general.name} ${playerCommander.soldiers}/${playerCommander.maxSoldiers}`
+          : '我方主将未设定';
+        return `敌将 ${enemyCommander.general.name} 仍在阵上 · ${playerStatus}`;
       }
       if (obj.id === 'annihilation') {
         const n = activeUnits('enemy').length;
@@ -1373,6 +1472,20 @@
       }
     }
 
+    function configureBattleCommanders() {
+      for (const unit of units) {
+        if (unit.side === 'player') unit.isCommander = false;
+      }
+      const enemyCommander = units.find(unit => unit.side === 'enemy' && unit.isCommander);
+      if (!enemyCommander) {
+        const firstEnemy = units.find(unit => unit.side === 'enemy');
+        if (firstEnemy) firstEnemy.isCommander = true;
+      }
+      if (!isAssassinationBattle()) return;
+      const playerCommander = units.find(unit => unit.side === 'player');
+      if (playerCommander) playerCommander.isCommander = true;
+    }
+
     // ─── 移动 ───────────────────────────────────────────────
     function computeReachable(unit) {
       const maxDist = moveRange(unit);
@@ -1409,6 +1522,9 @@
     }
 
     function aiTargetPriority(attacker, target) {
+      if (isAssassinationBattle() && target.isCommander) {
+        return target.side === 'player' ? 140 : 135;
+      }
       if (!isSupplyTransportBattle()) {
         return (target.isCommander ? 50 : 0) + getTypeAdv(attacker, target) * 10;
       }
@@ -1590,6 +1706,7 @@
     }
 
     function processCaptureProgress() {
+      const captureRequired = isStrongpointBattle() ? STRONGPOINT_CAPTURE_REQUIRED : 1;
       for (const point of strategicPoints) {
         const u = unitAt(point.x, point.y);
         if (!u) {
@@ -1606,7 +1723,7 @@
         }
         if (point.captureSide === u.side) {
           point.captureProgress += 1;
-          if (point.captureProgress >= 1) capturePoint(point, u.side);
+          if (point.captureProgress >= captureRequired) capturePoint(point, u.side);
         } else {
           point.captureSide = u.side;
           point.captureProgress = 0;
@@ -1687,7 +1804,7 @@
     }
 
     function playerHoldsDefenseZone() {
-      const zoneRows = [3, 4];
+      const zoneRows = DEFENSE_ZONE_ROWS;
       return livingUnits('player').some(u => zoneRows.includes(u.y) && !isRout(u));
     }
 
@@ -1706,7 +1823,7 @@
         return { win: true, msg: '全部据点已占领！' };
       }
       if (obj.id === 'assassination') {
-        const cmd = units.find(u => u.side === 'enemy' && u.isCommander);
+        const cmd = getCommander('enemy', true);
         if (cmd && cmd.soldiers <= 0) return { win: true, msg: '敌军主将已阵斩！' };
       }
       if (obj.id === 'defense' && defenseHoldTurns >= 3) {
@@ -1716,6 +1833,12 @@
     }
 
     function checkObjectiveLoss() {
+      if (isAssassinationBattle()) {
+        const playerCommander = getCommander('player', true);
+        if (playerCommander != null && playerCommander.soldiers <= 0) {
+          return { win: false, msg: '我军主将已被阵斩……' };
+        }
+      }
       if (livingUnits('player').length === 0) return { win: false, msg: '我军全灭……' };
       if (activeUnits('player').length === 0) return { win: false, msg: '我军全部溃逃……' };
       if (battleObjective?.id === 'defense' && turnCounter > 0 && !playerHoldsDefenseZone()) {
@@ -1752,9 +1875,39 @@
     function scoreMove(enemy, cell) {
       let score = 0;
       const point = getPointAt(cell.x, cell.y);
-      if (point && point.owner !== enemy.side) score += 40;
+      if (point && point.owner !== enemy.side) score += isStrongpointBattle() ? 120 : 40;
+      if (isStrongpointBattle() && point?.owner === enemy.side) score += 55;
       if (getTerrain(cell.x, cell.y) === 'hill') score += 15;
       if (getTerrain(cell.x, cell.y) === 'forest') score += 8;
+
+      if (isAssassinationBattle()) {
+        const enemyCommander = getCommander('enemy');
+        const playerCommander = getCommander('player');
+        const playerUnits = activeUnits('player');
+        if (enemy.isCommander) {
+          const nearestThreat = playerUnits.length
+            ? Math.min(...playerUnits.map(unit => manhattan(cell.x, cell.y, unit.x, unit.y)))
+            : 6;
+          const nearbyAllies = activeUnits('enemy').filter(
+            unit => unit.id !== enemy.id && manhattan(cell.x, cell.y, unit.x, unit.y) <= 2
+          ).length;
+          score += nearestThreat * 9 + nearbyAllies * 12;
+        } else if (enemyCommander) {
+          score += Math.max(0, 48 - manhattan(cell.x, cell.y, enemyCommander.x, enemyCommander.y) * 14);
+          const threatsNearCommander = playerUnits.filter(
+            unit => manhattan(unit.x, unit.y, enemyCommander.x, enemyCommander.y) <= 4
+          );
+          if (threatsNearCommander.length) {
+            const nearestThreatDistance = Math.min(
+              ...threatsNearCommander.map(unit => manhattan(cell.x, cell.y, unit.x, unit.y))
+            );
+            score += Math.max(0, 40 - nearestThreatDistance * 9);
+          }
+        }
+        if (playerCommander) {
+          score += Math.max(0, 24 - manhattan(cell.x, cell.y, playerCommander.x, playerCommander.y) * 4);
+        }
+      }
 
       if (isSupplyTransportBattle()) {
         const playerCart = getCart('player');
@@ -1777,6 +1930,12 @@
       return score;
     }
 
+    function shouldEnemyHoldStrongpoint(enemy) {
+      if (!isStrongpointBattle()) return false;
+      const point = getPointAt(enemy.x, enemy.y);
+      return point?.owner === enemy.side;
+    }
+
     async function runEnemyTurn() {
       turn = 'enemy';
       updateUI();
@@ -1795,6 +1954,8 @@
           attackables.sort((a, b) => aiTargetPriority(enemy, b) - aiTargetPriority(enemy, a));
           resolveAttack(enemy, attackables[0]);
           enemy.hasActed = true;
+        } else if (shouldEnemyHoldStrongpoint(enemy)) {
+          enemy.hasMoved = true;
         } else if (!enemy.hasMoved) {
           const reach = computeReachable(enemy);
           if (reach.length) {
@@ -1847,10 +2008,12 @@
     function renderBoard() {
       const board = document.getElementById('board');
       board.innerHTML = '';
-      const zoneRows = [3, 4];
+      const zoneRows = DEFENSE_ZONE_ROWS;
       const depot = getSupplyDepot();
       const playerCart = getCart('player');
       const highlightCart = playerCart || getCart('enemy');
+      const enemyCommander = getCommander('enemy');
+      const playerCommander = getCommander('player');
 
       for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
@@ -1865,6 +2028,12 @@
           if (cellData?.campZone === 'enemy') cell.classList.add('highlight-enemy-camp');
           if (depot && depot.x === x && depot.y === y) cell.classList.add('highlight-supply-depot');
           if (highlightCart && highlightCart.x === x && highlightCart.y === y) cell.classList.add('highlight-cart');
+          if (isAssassinationBattle() && enemyCommander?.x === x && enemyCommander?.y === y) {
+            cell.classList.add('highlight-target-commander');
+          }
+          if (isAssassinationBattle() && playerCommander?.x === x && playerCommander?.y === y) {
+            cell.classList.add('highlight-protect-commander');
+          }
 
           const ti = document.createElement('span');
           ti.className = 'terrain-icon';
@@ -1897,7 +2066,11 @@
             if (point.captureSide && point.owner !== point.captureSide) {
               const bar = document.createElement('div');
               bar.className = 'capture-bar';
-              const pct = point.captureProgress >= 1 ? 100 : 50;
+              const captureRequired = isStrongpointBattle() ? STRONGPOINT_CAPTURE_REQUIRED : 1;
+              const pct = Math.min(
+                100,
+                Math.round(((point.captureProgress + 1) / (captureRequired + 1)) * 100)
+              );
               bar.innerHTML = `<div class="capture-fill" style="width:${pct}%"></div>`;
               cell.appendChild(bar);
             }
@@ -1930,6 +2103,16 @@
               <span>${military.soldiers}</span>
               <span class="unit-status ${tier.id}">${tier.label}</span>
             `;
+            if (military.isCommander) {
+              const badge = document.createElement('span');
+              badge.className = 'commander-badge';
+              badge.textContent = isAssassinationBattle()
+                ? military.side === 'enemy'
+                  ? '敌主'
+                  : '我主'
+                : '主';
+              ue.appendChild(badge);
+            }
             ue.title = `${military.name} · ${military.general.name}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
 
             if (phase === 'deploy' && military.side === 'player' && military.x >= 0) {
@@ -1969,7 +2152,7 @@
         const el = document.createElement('div');
         el.className = 'unit player';
         el.draggable = true;
-        el.innerHTML = `<span>${u.name}</span><span>${TROOP_TYPES[u.troopType].label}</span>`;
+        el.innerHTML = `<span>${u.name}${u.isCommander ? '·主将' : ''}</span><span>${TROOP_TYPES[u.troopType].label}</span>`;
         el.addEventListener('dragstart', e => { dragUnit = u; e.dataTransfer.effectAllowed = 'move'; });
         pool.appendChild(el);
       }
@@ -2158,6 +2341,12 @@
       if (!units.some(u => u.side === 'player' && u.x >= 0)) {
         log('请至少部署一支部队', 'system'); return;
       }
+      if (isAssassinationBattle()) {
+        const playerCommander = getCommander('player', true);
+        if (playerCommander && playerCommander.x < 0) {
+          log('斩将战必须先部署我方主将', 'system'); return;
+        }
+      }
       showObjectiveIntro();
     }
 
@@ -2180,6 +2369,7 @@
       generateMap();
       units = createPlayerPool();
       spawnEnemies();
+      configureBattleCommanders();
       phase = 'deploy';
       turn = 'player';
       supplyCartClaimSide = null;
