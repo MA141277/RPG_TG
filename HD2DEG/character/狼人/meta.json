@@ -1,0 +1,17 @@
+{
+  "id": "狼人",
+  "kind": "character",
+  "title": "狼人",
+  "prompt": "狼人",
+  "tags": [],
+  "createdAt": "2026-04-13T20:11:41+08:00",
+  "updatedAt": "2026-04-13T20:11:41+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/狼人/sheet.png",
+    "preview": "character/狼人/preview.png"
+  }
+}

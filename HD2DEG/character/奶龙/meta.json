@@ -1,0 +1,17 @@
+{
+  "id": "奶龙",
+  "kind": "character",
+  "title": "奶龙",
+  "prompt": "奶龙",
+  "tags": [],
+  "createdAt": "2026-04-29T19:12:10+08:00",
+  "updatedAt": "2026-04-29T19:12:10+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/奶龙/sheet.png",
+    "preview": "character/奶龙/preview.png"
+  }
+}

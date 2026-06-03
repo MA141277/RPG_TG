@@ -1,0 +1,587 @@
+{
+  "schemaVersion": 1,
+  "npcs": [
+    {
+      "npcId": "npc.suzhou.leader_residence.1",
+      "anchors": {
+        "home": "house:1",
+        "work": "zyz.suzhou_leader_residence:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "将领府邸",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_leader_residence:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.temple.1",
+      "anchors": {
+        "home": "house:2",
+        "work": "zyz.suzhou_temple:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "寺庙",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_temple:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.home.1",
+      "anchors": {
+        "home": "house:3",
+        "work": "zyz.home_suzhou:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "自宅",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.home_suzhou:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.keep.1",
+      "anchors": {
+        "home": "house:4",
+        "work": "zyz.suzhou_keep:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "帅府",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_keep:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.keep.2",
+      "anchors": {
+        "home": "house:4",
+        "work": "zyz.suzhou_keep:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "帅府",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_keep:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.tea_house.1",
+      "anchors": {
+        "home": "house:5",
+        "work": "zyz.suzhou_tea_house:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "茶馆",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_tea_house:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.market.1",
+      "anchors": {
+        "home": "house:6",
+        "work": "zyz.suzhou_market:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "货栈",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_market:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.grain_shop.1",
+      "anchors": {
+        "home": "house:7",
+        "work": "zyz.suzhou_grain_shop:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "粮铺",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_grain_shop:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.medicine_house.1",
+      "anchors": {
+        "home": "house:8",
+        "work": "zyz.suzhou_medicine_house:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "药铺",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_medicine_house:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.suzhou.inn.1",
+      "anchors": {
+        "home": "house:9",
+        "work": "zyz.suzhou_inn:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "客栈",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.suzhou_inn:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    }
+  ],
+  "locationRefs": {
+    "town-square": {
+      "wx": 0,
+      "wy": 0,
+      "radius": 14
+    },
+    "zyz.suzhou_leader_residence:front": {
+      "wx": 0,
+      "wy": -92,
+      "radius": 8,
+      "houseId": "house.suzhou.leader_residence",
+      "sceneObjectId": "zyz.suzhou_leader_residence"
+    },
+    "zyz.suzhou_temple:front": {
+      "wx": 86,
+      "wy": -52,
+      "radius": 8,
+      "houseId": "house.suzhou.temple",
+      "sceneObjectId": "zyz.suzhou_temple"
+    },
+    "zyz.home_suzhou:front": {
+      "wx": 42,
+      "wy": 86,
+      "radius": 8,
+      "houseId": "home.suzhou",
+      "sceneObjectId": "zyz.home_suzhou"
+    },
+    "zyz.suzhou_keep:front": {
+      "wx": -58,
+      "wy": -56,
+      "radius": 8,
+      "houseId": "house.suzhou.keep",
+      "sceneObjectId": "zyz.suzhou_keep"
+    },
+    "zyz.suzhou_tea_house:front": {
+      "wx": -58,
+      "wy": 54,
+      "radius": 8,
+      "houseId": "house.suzhou.tea_house",
+      "sceneObjectId": "zyz.suzhou_tea_house"
+    },
+    "zyz.suzhou_market:front": {
+      "wx": -58,
+      "wy": -8,
+      "radius": 8,
+      "houseId": "house.suzhou.market",
+      "sceneObjectId": "zyz.suzhou_market"
+    },
+    "zyz.suzhou_grain_shop:front": {
+      "wx": 58,
+      "wy": -8,
+      "radius": 8,
+      "houseId": "house.suzhou.grain_shop",
+      "sceneObjectId": "zyz.suzhou_grain_shop"
+    },
+    "zyz.suzhou_medicine_house:front": {
+      "wx": -42,
+      "wy": 86,
+      "radius": 8,
+      "houseId": "house.suzhou.medicine_house",
+      "sceneObjectId": "zyz.suzhou_medicine_house"
+    },
+    "zyz.suzhou_inn:front": {
+      "wx": 58,
+      "wy": 54,
+      "radius": 8,
+      "houseId": "house.suzhou.inn",
+      "sceneObjectId": "zyz.suzhou_inn"
+    }
+  },
+  "activityResolvers": {},
+  "facilities": {}
+}

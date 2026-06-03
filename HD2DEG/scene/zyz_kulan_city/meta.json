@@ -1,0 +1,14 @@
+{
+  "id": "zyz_kulan_city",
+  "kind": "scene",
+  "title": "zyz_kulan_city",
+  "createdAt": "2026-06-01T14:10:58+08:00",
+  "updatedAt": "2026-06-01T14:18:23+08:00",
+  "schemaVersion": 1,
+  "objectCount": 9,
+  "buildingCount": 9,
+  "npcCount": 11,
+  "files": {
+    "scene": "scene/zyz_kulan_city/scene.json"
+  }
+}

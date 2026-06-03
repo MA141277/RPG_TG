@@ -1,0 +1,18 @@
+{
+  "id": "理工男穿搭的男大学生",
+  "kind": "character",
+  "title": "理工男穿搭的男大学生",
+  "prompt": "理工男穿搭的男大学生",
+  "tags": [],
+  "createdAt": "2026-05-18T22:50:59+08:00",
+  "updatedAt": "2026-05-18T22:50:59+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/理工男穿搭的男大学生/sheet.png",
+    "idle": "",
+    "preview": "character/理工男穿搭的男大学生/preview.png"
+  }
+}

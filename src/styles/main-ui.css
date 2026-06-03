@@ -47,6 +47,58 @@
   height: 100%;
 }
 
+.c-main-ui-layout-component {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.c-main-ui-main-menu__content.c-main-ui-layout-component {
+  transform: none;
+}
+
+.c-main-ui-layout-component.is-layout-editable {
+  outline: 2px dashed rgb(92 198 255 / 86%);
+  outline-offset: 2px;
+  cursor: grab;
+}
+
+.c-main-ui-layout-component.is-selected-layout-component {
+  outline-color: #ffd36a;
+  box-shadow: 0 0 0 3px rgb(255 211 106 / 20%);
+}
+
+.c-main-ui-layout-component.is-layout-editable::after {
+  content: attr(data-layout-live-label);
+  position: absolute;
+  left: 0;
+  top: -24px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: #f7eed4;
+  background: rgb(24 27 35 / 92%);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.c-main-ui-layout-resize-handle {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  z-index: 4;
+  display: block;
+  width: 14px;
+  height: 14px;
+  background: rgb(255 226 132 / 96%);
+  box-shadow: 0 0 0 1px rgb(53 38 20 / 82%);
+  cursor: nwse-resize;
+}
+
 .c-main-ui-main-menu::after {
   content: "";
   position: absolute;

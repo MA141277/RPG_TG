@@ -1,0 +1,30 @@
+{
+  "id": "城门楼-城门镂空",
+  "kind": "building",
+  "title": "城门楼，城门镂空",
+  "prompt": "城门楼，城门镂空",
+  "tags": [
+    "sign"
+  ],
+  "widthTiles": 18,
+  "drawRoad": false,
+  "facilityProfile": null,
+  "createdAt": "2026-05-15T17:57:37+08:00",
+  "updatedAt": "2026-05-15T17:57:37+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 134,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/城门楼-城门镂空/front.png",
+    "side": "building/城门楼-城门镂空/side.png",
+    "top": "building/城门楼-城门镂空/top.png",
+    "preview": "building/城门楼-城门镂空/preview.png",
+    "previewProcessed": "building/城门楼-城门镂空/preview-processed.png"
+  }
+}

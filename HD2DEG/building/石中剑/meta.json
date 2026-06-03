@@ -1,0 +1,29 @@
+{
+  "id": "石中剑",
+  "kind": "building",
+  "title": "石中剑",
+  "prompt": "石中剑",
+  "tags": [
+    "decoration"
+  ],
+  "widthTiles": 1,
+  "drawRoad": false,
+  "createdAt": "2026-05-06T19:36:13+08:00",
+  "updatedAt": "2026-05-06T19:36:13+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 64,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/石中剑/front.png",
+    "side": "building/石中剑/side.png",
+    "top": "building/石中剑/top.png",
+    "preview": "building/石中剑/preview.png",
+    "previewProcessed": "building/石中剑/preview-processed.png"
+  }
+}

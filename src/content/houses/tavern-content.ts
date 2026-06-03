@@ -8,7 +8,7 @@ export const tavernBossProfile = {
 };
 
 export const tavernDrinkPrice = 100;
-export const tavernDefaultWager = 50;
+export const tavernDefaultWager = 100;
 export const tavernWagerStep = 50;
 
 export const tavernWorkOffers: TavernWorkOffer[] = [

@@ -1,13 +1,86 @@
 import type { AppState } from "../app-shell";
+import { uiLayoutComponentBaseSizeById } from "../../domain/ui-layout";
 import type {
+  GlobalHudLayout,
   LayoutBackgroundAssetOption,
+  LayoutEditorTargetId,
+  StartScreenLayout,
+  UiLayout,
   UiLayoutBackgroundMode,
   UiLayoutRect,
   UiLayoutSlice,
 } from "../../domain/ui-layout";
 
+function getLayoutKey(targetId: LayoutEditorTargetId): keyof AppState["uiLayouts"] {
+  return targetId === "start-screen" ? "startScreen" : "globalHud";
+}
+
+function getSelectedLayout(appState: AppState): UiLayout {
+  return appState.uiLayouts[getLayoutKey(appState.layoutEditor.selectedTargetId)];
+}
+
+function updateSelectedLayout(
+  appState: AppState,
+  updater: (layout: UiLayout) => UiLayout
+): AppState {
+  if (appState.layoutEditor.selectedTargetId === "start-screen") {
+    return {
+      ...appState,
+      uiLayouts: {
+        ...appState.uiLayouts,
+        startScreen: updater(appState.uiLayouts.startScreen) as StartScreenLayout,
+      },
+    };
+  }
+
+  return {
+    ...appState,
+    uiLayouts: {
+      ...appState.uiLayouts,
+      globalHud: updater(appState.uiLayouts.globalHud) as GlobalHudLayout,
+    },
+  };
+}
+
 function clampNumber(value: number): number {
   return Number.isFinite(value) ? Math.round(value) : 0;
+}
+
+function resolveProportionalComponentRect(
+  componentId: string,
+  rect: UiLayoutRect,
+  input: { width?: number; height?: number }
+): UiLayoutRect {
+  const baseSize = uiLayoutComponentBaseSizeById[componentId];
+  if (baseSize == null) {
+    return {
+      ...rect,
+      ...(input.width == null ? null : { width: Math.max(1, clampNumber(input.width)) }),
+      ...(input.height == null ? null : { height: Math.max(1, clampNumber(input.height)) }),
+    };
+  }
+
+  if (input.width != null) {
+    const width = Math.max(1, clampNumber(input.width));
+    const scale = width / Math.max(baseSize.width, 1);
+    return {
+      ...rect,
+      width,
+      height: Math.max(1, clampNumber(baseSize.height * scale)),
+    };
+  }
+
+  if (input.height != null) {
+    const height = Math.max(1, clampNumber(input.height));
+    const scale = height / Math.max(baseSize.height, 1);
+    return {
+      ...rect,
+      width: Math.max(1, clampNumber(baseSize.width * scale)),
+      height,
+    };
+  }
+
+  return rect;
 }
 
 function updateComponentRect(
@@ -15,23 +88,17 @@ function updateComponentRect(
   componentId: string,
   updater: (rect: UiLayoutRect) => UiLayoutRect
 ): AppState {
-  return {
-    ...appState,
-    uiLayouts: {
-      ...appState.uiLayouts,
-      globalHud: {
-        ...appState.uiLayouts.globalHud,
-        components: appState.uiLayouts.globalHud.components.map((component) =>
-          component.id === componentId
-            ? {
-                ...component,
-                rect: updater(component.rect),
-              }
-            : component
-        ),
-      },
-    },
-  };
+  return updateSelectedLayout(appState, (layout) => ({
+    ...layout,
+    components: layout.components.map((component) =>
+      component.id === componentId
+        ? {
+            ...component,
+            rect: updater(component.rect),
+          }
+        : component
+    ),
+  }));
 }
 
 function updateElementRect(
@@ -40,30 +107,24 @@ function updateElementRect(
   elementId: string,
   updater: (rect: UiLayoutRect) => UiLayoutRect
 ): AppState {
-  return {
-    ...appState,
-    uiLayouts: {
-      ...appState.uiLayouts,
-      globalHud: {
-        ...appState.uiLayouts.globalHud,
-        components: appState.uiLayouts.globalHud.components.map((component) =>
-          component.id === componentId
-            ? {
-                ...component,
-                elements: component.elements.map((element) =>
-                  element.id === elementId
-                    ? {
-                        ...element,
-                        rect: updater(element.rect),
-                      }
-                    : element
-                ),
-              }
-            : component
-        ),
-      },
-    },
-  };
+  return updateSelectedLayout(appState, (layout) => ({
+    ...layout,
+    components: layout.components.map((component) =>
+      component.id === componentId
+        ? {
+            ...component,
+            elements: component.elements.map((element) =>
+              element.id === elementId
+                ? {
+                    ...element,
+                    rect: updater(element.rect),
+                  }
+                : element
+            ),
+          }
+        : component
+    ),
+  }));
 }
 
 export function toggleLayoutEditor(appState: AppState, isOpen: boolean): AppState {
@@ -103,6 +164,22 @@ export function selectLayoutEditorComponent(
   };
 }
 
+export function selectLayoutEditorTarget(
+  appState: AppState,
+  targetId: LayoutEditorTargetId
+): AppState {
+  const layout = appState.uiLayouts[getLayoutKey(targetId)];
+  return {
+    ...appState,
+    layoutEditor: {
+      ...appState.layoutEditor,
+      selectedTargetId: targetId,
+      selectedComponentId: layout.components[0]?.id ?? "",
+      selectedElementId: null,
+    },
+  };
+}
+
 export function selectLayoutEditorElement(
   appState: AppState,
   componentId: string,
@@ -131,6 +208,44 @@ export function updateLayoutEditorComponentPosition(
   }));
 }
 
+export function updateLayoutEditorComponentSize(
+  appState: AppState,
+  componentId: string,
+  resizeAxis: "x" | "y" | "xy",
+  deltaWidth: number,
+  deltaHeight: number
+): AppState {
+  return updateComponentRect(appState, componentId, (rect) => {
+    const baseSize = uiLayoutComponentBaseSizeById[componentId];
+    if (baseSize == null) {
+      return {
+        ...rect,
+        width: Math.max(1, clampNumber(rect.width + deltaWidth)),
+        height: Math.max(1, clampNumber(rect.height + deltaHeight)),
+      };
+    }
+
+    const currentScale = rect.width / Math.max(baseSize.width, 1);
+    const widthScaleDelta = deltaWidth / Math.max(baseSize.width, 1);
+    const heightScaleDelta = deltaHeight / Math.max(baseSize.height, 1);
+    const scaleDelta =
+      resizeAxis === "x"
+        ? widthScaleDelta
+        : resizeAxis === "y"
+          ? heightScaleDelta
+          : Math.abs(widthScaleDelta) >= Math.abs(heightScaleDelta)
+            ? widthScaleDelta
+            : heightScaleDelta;
+    const nextScale = Math.max(1 / Math.max(baseSize.width, baseSize.height), currentScale + scaleDelta);
+
+    return {
+      ...rect,
+      width: Math.max(1, clampNumber(baseSize.width * nextScale)),
+      height: Math.max(1, clampNumber(baseSize.height * nextScale)),
+    };
+  });
+}
+
 export function updateLayoutEditorElementPosition(
   appState: AppState,
   componentId: string,
@@ -151,10 +266,20 @@ export function setLayoutEditorComponentRectField(
   field: keyof UiLayoutRect,
   value: number
 ): AppState {
-  return updateComponentRect(appState, componentId, (rect) => ({
-    ...rect,
-    [field]: clampNumber(value),
-  }));
+  return updateComponentRect(appState, componentId, (rect) => {
+    if (field === "width") {
+      return resolveProportionalComponentRect(componentId, rect, { width: value });
+    }
+
+    if (field === "height") {
+      return resolveProportionalComponentRect(componentId, rect, { height: value });
+    }
+
+    return {
+      ...rect,
+      [field]: clampNumber(value),
+    };
+  });
 }
 
 export function setLayoutEditorElementRectField(
@@ -175,40 +300,34 @@ export function setLayoutEditorBackgroundAsset(
   componentId: string,
   asset: LayoutBackgroundAssetOption
 ): AppState {
-  return {
-    ...appState,
-    uiLayouts: {
-      ...appState.uiLayouts,
-      globalHud: {
-        ...appState.uiLayouts.globalHud,
-        components: appState.uiLayouts.globalHud.components.map((component) =>
-          component.id === componentId
-            ? {
-                ...component,
-                background:
-                  component.background == null
-                    ? {
-                        assetId: asset.id,
-                        imageUrl: asset.imageUrl,
-                        mode: "stretch",
-                        slice: {
-                          top: 24,
-                          right: 24,
-                          bottom: 24,
-                          left: 24,
-                        },
-                      }
-                    : {
-                        ...component.background,
-                        assetId: asset.id,
-                        imageUrl: asset.imageUrl,
-                      },
-              }
-            : component
-        ),
-      },
-    },
-  };
+  return updateSelectedLayout(appState, (layout) => ({
+    ...layout,
+    components: layout.components.map((component) =>
+      component.id === componentId
+        ? {
+            ...component,
+            background:
+              component.background == null
+                ? {
+                    assetId: asset.id,
+                    imageUrl: asset.imageUrl,
+                    mode: "stretch",
+                    slice: {
+                      top: 24,
+                      right: 24,
+                      bottom: 24,
+                      left: 24,
+                    },
+                  }
+                : {
+                    ...component.background,
+                    assetId: asset.id,
+                    imageUrl: asset.imageUrl,
+                  },
+          }
+        : component
+    ),
+  }));
 }
 
 export function setLayoutEditorBackgroundMode(
@@ -216,26 +335,20 @@ export function setLayoutEditorBackgroundMode(
   componentId: string,
   mode: UiLayoutBackgroundMode
 ): AppState {
-  return {
-    ...appState,
-    uiLayouts: {
-      ...appState.uiLayouts,
-      globalHud: {
-        ...appState.uiLayouts.globalHud,
-        components: appState.uiLayouts.globalHud.components.map((component) =>
-          component.id === componentId && component.background != null
-            ? {
-                ...component,
-                background: {
-                  ...component.background,
-                  mode,
-                },
-              }
-            : component
-        ),
-      },
-    },
-  };
+  return updateSelectedLayout(appState, (layout) => ({
+    ...layout,
+    components: layout.components.map((component) =>
+      component.id === componentId && component.background != null
+        ? {
+            ...component,
+            background: {
+              ...component.background,
+              mode,
+            },
+          }
+        : component
+    ),
+  }));
 }
 
 export function setLayoutEditorBackgroundSlice(
@@ -244,27 +357,25 @@ export function setLayoutEditorBackgroundSlice(
   edge: keyof UiLayoutSlice,
   value: number
 ): AppState {
-  return {
-    ...appState,
-    uiLayouts: {
-      ...appState.uiLayouts,
-      globalHud: {
-        ...appState.uiLayouts.globalHud,
-        components: appState.uiLayouts.globalHud.components.map((component) =>
-          component.id === componentId && component.background != null
-            ? {
-                ...component,
-                background: {
-                  ...component.background,
-                  slice: {
-                    ...component.background.slice,
-                    [edge]: clampNumber(value),
-                  },
-                },
-              }
-            : component
-        ),
-      },
-    },
-  };
+  return updateSelectedLayout(appState, (layout) => ({
+    ...layout,
+    components: layout.components.map((component) =>
+      component.id === componentId && component.background != null
+        ? {
+            ...component,
+            background: {
+              ...component.background,
+              slice: {
+                ...component.background.slice,
+                [edge]: clampNumber(value),
+              },
+            },
+          }
+        : component
+    ),
+  }));
+}
+
+export function getSelectedLayoutForEditor(appState: AppState): UiLayout {
+  return getSelectedLayout(appState);
 }

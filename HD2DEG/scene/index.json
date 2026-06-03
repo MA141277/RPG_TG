@@ -1,0 +1,524 @@
+{
+  "updatedAt": "2026-06-01T06:18:43.165Z",
+  "count": 37,
+  "items": [
+    {
+      "id": "zyz_anfeng_city",
+      "kind": "scene",
+      "title": "安丰路 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.958Z",
+      "updatedAt": "2026-06-01T06:18:42.958Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_anfeng_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_anqing_city",
+      "kind": "scene",
+      "title": "安庆路 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.936Z",
+      "updatedAt": "2026-06-01T06:18:42.936Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_anqing_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_chengdu_city",
+      "kind": "scene",
+      "title": "成都路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.054Z",
+      "updatedAt": "2026-06-01T06:18:43.054Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_chengdu_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_chongqing_city",
+      "kind": "scene",
+      "title": "重庆路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.041Z",
+      "updatedAt": "2026-06-01T06:18:43.041Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_chongqing_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_dadu_city",
+      "kind": "scene",
+      "title": "大都路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.100Z",
+      "updatedAt": "2026-06-01T06:18:43.100Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_dadu_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_fengyuan_city",
+      "kind": "scene",
+      "title": "奉元路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.137Z",
+      "updatedAt": "2026-06-01T06:18:43.137Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_fengyuan_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_fuzhou_city",
+      "kind": "scene",
+      "title": "福州路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.090Z",
+      "updatedAt": "2026-06-01T06:18:43.090Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_fuzhou_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_gongchang_city",
+      "kind": "scene",
+      "title": "巩昌路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.125Z",
+      "updatedAt": "2026-06-01T06:18:43.125Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_gongchang_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_haozhou",
+      "kind": "scene",
+      "title": "zyz_haozhou",
+      "createdAt": "2026-06-01T05:02:40.497Z",
+      "updatedAt": "2026-06-01T05:02:40.497Z",
+      "schemaVersion": 1,
+      "objectCount": 39,
+      "buildingCount": 39,
+      "npcCount": 10,
+      "files": {
+        "scene": "scene/zyz_haozhou/scene.json"
+      }
+    },
+    {
+      "id": "zyz_huaian_city",
+      "kind": "scene",
+      "title": "高邮府 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.981Z",
+      "updatedAt": "2026-06-01T06:18:42.981Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_huaian_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_kaifeng_city",
+      "kind": "scene",
+      "title": "汴梁路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.112Z",
+      "updatedAt": "2026-06-01T06:18:43.112Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_kaifeng_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_kulan_city",
+      "kind": "scene",
+      "title": "濠州 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.893Z",
+      "updatedAt": "2026-06-01T06:18:42.893Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_kulan_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_kulan_city__interior__house_1",
+      "kind": "scene",
+      "title": "zyz_kulan_city__interior__house_1",
+      "createdAt": "2026-06-01T14:18:22+08:00",
+      "updatedAt": "2026-06-01T14:18:25+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/zyz_kulan_city__interior__house_1/scene.json"
+      }
+    },
+    {
+      "id": "zyz_kulan_city__interior__house_2",
+      "kind": "scene",
+      "title": "zyz_kulan_city__interior__house_2",
+      "createdAt": "2026-06-01T14:10:58+08:00",
+      "updatedAt": "2026-06-01T14:11:00+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/zyz_kulan_city__interior__house_2/scene.json"
+      }
+    },
+    {
+      "id": "zyz_kulan_city__interior__house_3",
+      "kind": "scene",
+      "title": "zyz_kulan_city__interior__house_3",
+      "createdAt": "2026-06-01T14:11:05+08:00",
+      "updatedAt": "2026-06-01T14:11:08+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/zyz_kulan_city__interior__house_3/scene.json"
+      }
+    },
+    {
+      "id": "zyz_kulan_city__interior__house_4",
+      "kind": "scene",
+      "title": "zyz_kulan_city__interior__house_4",
+      "createdAt": "2026-06-01T14:11:14+08:00",
+      "updatedAt": "2026-06-01T14:11:16+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/zyz_kulan_city__interior__house_4/scene.json"
+      }
+    },
+    {
+      "id": "zyz_luzhou_city",
+      "kind": "scene",
+      "title": "庐州路 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.925Z",
+      "updatedAt": "2026-06-01T06:18:42.925Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_luzhou_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_nanchang_city",
+      "kind": "scene",
+      "title": "龙兴路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.028Z",
+      "updatedAt": "2026-06-01T06:18:43.028Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_nanchang_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_ningbo_city",
+      "kind": "scene",
+      "title": "庆元路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.065Z",
+      "updatedAt": "2026-06-01T06:18:43.065Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_ningbo_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_runing_city",
+      "kind": "scene",
+      "title": "颍州 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.970Z",
+      "updatedAt": "2026-06-01T06:18:42.970Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_runing_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_suzhou_city",
+      "kind": "scene",
+      "title": "平江路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.003Z",
+      "updatedAt": "2026-06-01T06:18:43.003Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_suzhou_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_taiping_city",
+      "kind": "scene",
+      "title": "太平路 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.947Z",
+      "updatedAt": "2026-06-01T06:18:42.947Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_taiping_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_wenzhou_city",
+      "kind": "scene",
+      "title": "温州路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.078Z",
+      "updatedAt": "2026-06-01T06:18:43.078Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_wenzhou_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_wuchang_city",
+      "kind": "scene",
+      "title": "武昌路 3D 城市",
+      "createdAt": "2026-06-01T06:18:43.017Z",
+      "updatedAt": "2026-06-01T06:18:43.017Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_wuchang_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_yangzhou_city",
+      "kind": "scene",
+      "title": "扬州路 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.991Z",
+      "updatedAt": "2026-06-01T06:18:42.991Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_yangzhou_city/scene.json"
+      }
+    },
+    {
+      "id": "zyz_yingtian_city",
+      "kind": "scene",
+      "title": "集庆路 3D 城市",
+      "createdAt": "2026-06-01T06:18:42.912Z",
+      "updatedAt": "2026-06-01T06:18:42.912Z",
+      "schemaVersion": 1,
+      "objectCount": 9,
+      "buildingCount": 9,
+      "npcCount": 11,
+      "files": {
+        "scene": "scene/zyz_yingtian_city/scene.json"
+      }
+    },
+    {
+      "id": "default_scene",
+      "kind": "scene",
+      "title": "default_scene",
+      "createdAt": "2026-04-27T16:56:48+08:00",
+      "updatedAt": "2026-06-01T13:09:11+08:00",
+      "schemaVersion": 1,
+      "objectCount": 39,
+      "buildingCount": 39,
+      "npcCount": 10,
+      "files": {
+        "scene": "scene/default_scene/scene.json"
+      }
+    },
+    {
+      "id": "default_scene__interior__house_1",
+      "kind": "scene",
+      "title": "default_scene__interior__house_1",
+      "createdAt": "2026-04-29T10:45:17+08:00",
+      "updatedAt": "2026-04-29T17:37:26+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene__interior__house_1/scene.json"
+      }
+    },
+    {
+      "id": "default_scene__interior__house_3",
+      "kind": "scene",
+      "title": "default_scene__interior__house_3",
+      "createdAt": "2026-04-29T01:26:31+08:00",
+      "updatedAt": "2026-05-06T20:11:06+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene__interior__house_3/scene.json"
+      }
+    },
+    {
+      "id": "default_scene__interior__house_4",
+      "kind": "scene",
+      "title": "default_scene__interior__house_4",
+      "createdAt": "2026-04-29T00:21:30+08:00",
+      "updatedAt": "2026-04-29T22:41:34+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene__interior__house_4/scene.json"
+      }
+    },
+    {
+      "id": "default_scene__interior__house_5",
+      "kind": "scene",
+      "title": "default_scene__interior__house_5",
+      "createdAt": "2026-04-29T00:21:08+08:00",
+      "updatedAt": "2026-04-30T22:37:09+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene__interior__house_5/scene.json"
+      }
+    },
+    {
+      "id": "default_scene__interior__house_6",
+      "kind": "scene",
+      "title": "default_scene__interior__house_6",
+      "createdAt": "2026-04-28T20:24:11+08:00",
+      "updatedAt": "2026-04-29T00:07:27+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene__interior__house_6/scene.json"
+      }
+    },
+    {
+      "id": "default_scene1",
+      "kind": "scene",
+      "title": "default_scene1",
+      "createdAt": "2026-04-29T13:17:41+08:00",
+      "updatedAt": "2026-06-01T13:09:28+08:00",
+      "schemaVersion": 1,
+      "objectCount": 39,
+      "buildingCount": 39,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene1/scene.json"
+      }
+    },
+    {
+      "id": "default_scene1__interior__house_2",
+      "kind": "scene",
+      "title": "default_scene1__interior__house_2",
+      "createdAt": "2026-04-29T13:17:41+08:00",
+      "updatedAt": "2026-04-29T13:34:48+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene1__interior__house_2/scene.json"
+      }
+    },
+    {
+      "id": "default_scene1__interior__house_227",
+      "kind": "scene",
+      "title": "default_scene1__interior__house_227",
+      "createdAt": "2026-04-30T11:44:25+08:00",
+      "updatedAt": "2026-05-08T10:21:56+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene1__interior__house_227/scene.json"
+      }
+    },
+    {
+      "id": "default_scene1__interior__house_228",
+      "kind": "scene",
+      "title": "default_scene1__interior__house_228",
+      "createdAt": "2026-04-30T13:43:51+08:00",
+      "updatedAt": "2026-05-06T19:36:53+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene1__interior__house_228/scene.json"
+      }
+    },
+    {
+      "id": "default_scene1__interior__house_229",
+      "kind": "scene",
+      "title": "default_scene1__interior__house_229",
+      "createdAt": "2026-04-30T22:39:18+08:00",
+      "updatedAt": "2026-05-06T21:37:37+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene1__interior__house_229/scene.json"
+      }
+    }
+  ]
+}

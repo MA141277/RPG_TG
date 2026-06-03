@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>定居点分布模式实验室</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles/settlement-patterns.css" />
+</head>
+<body>
+  <div class="grid-bg" aria-hidden="true"></div>
+  <main class="wrap">
+    <header class="hero">
+      <div>
+        <h1>SETTLEMENT PATTERN LAB</h1>
+        <p class="sub">只讨论定居点在 tilemap 2D 网格上的分布模式：道路、节点、建筑簇和空间气质。</p>
+      </div>
+      <a class="back-link" href="./pixel-workflow.html">回到像素工作流</a>
+    </header>
+
+    <section class="panel controls">
+      <div class="panel-title">生成参数</div>
+      <div class="control-grid">
+        <label for="modeSelect">分布模式</label>
+        <select id="modeSelect"></select>
+
+        <label for="seedInput">Seed</label>
+        <input id="seedInput" type="text" value="settlement-demo" />
+
+        <label for="gridSizeInput">Tilemap 网格</label>
+        <select id="gridSizeInput">
+          <option value="96">96 x 96</option>
+          <option value="128">128 x 128</option>
+          <option value="160" selected>160 x 160</option>
+          <option value="192">192 x 192</option>
+        </select>
+
+        <label for="populationInput">规模</label>
+        <input id="populationInput" type="range" min="4" max="32" step="1" value="12" />
+
+        <label>房屋占地</label>
+        <div class="readonly-metric">15 x 10 tiles</div>
+
+        <label for="spreadInput">散落程度</label>
+        <input id="spreadInput" type="range" min="0" max="100" step="1" value="45" />
+
+        <label for="roadInput">道路强度</label>
+        <input id="roadInput" type="range" min="0" max="100" step="1" value="60" />
+      </div>
+      <div class="actions">
+        <button type="button" id="regenBtn">重新生成</button>
+        <button type="button" class="secondary" id="randomSeedBtn">随机 Seed</button>
+      </div>
+      <p class="hint" id="summaryText"></p>
+    </section>
+
+    <section class="main-grid">
+      <div class="panel map-panel">
+        <div class="panel-head">
+          <div class="panel-title">Tilemap 2D 网格</div>
+          <div class="mode-badge" id="modeBadge"></div>
+        </div>
+        <canvas id="mapCanvas" width="960" height="960"></canvas>
+        <div class="legend">
+          <span><i class="road"></i>道路</span>
+          <span><i class="center"></i>中心/营火</span>
+          <span><i class="house"></i>居住</span>
+          <span><i class="work"></i>功能建筑</span>
+          <span><i class="wild"></i>空地/游牧节点</span>
+        </div>
+      </div>
+
+      <aside class="panel notes-panel">
+        <div class="panel-title">模式讨论</div>
+        <h2 id="modeTitle"></h2>
+        <p class="lead" id="modeSummary"></p>
+
+        <h3>空间特征</h3>
+        <ul id="traitList"></ul>
+
+        <h3>适合的用户描述</h3>
+        <p id="promptHint"></p>
+
+        <h3>生成设计建议</h3>
+        <p id="designHint"></p>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div class="panel-title">模式缩略对比</div>
+        <p class="hint">点击卡片切换主视图。所有缩略图都用同一组参数重算，方便比较结构差异。</p>
+      </div>
+      <div class="compare-grid" id="compareGrid"></div>
+    </section>
+
+    <section class="panel json-panel">
+      <div class="panel-head">
+        <div class="panel-title">SettlementPlan JSON</div>
+        <button type="button" class="secondary" id="copyJsonBtn">复制 JSON</button>
+      </div>
+      <p class="hint">这里输出的是可映射到主世界的数据：lots 带 15x10 footprint、朝向、门点、道路接入点；roads 按主干/支路/门前短接分层。</p>
+      <textarea id="planJson" spellcheck="false" readonly></textarea>
+    </section>
+  </main>
+
+  <script src="./scripts/settlement-patterns.js"></script>
+</body>
+</html>

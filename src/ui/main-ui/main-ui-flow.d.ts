@@ -1,4 +1,5 @@
 import type { CharacterDefinition } from "../../domain/character";
+import type { AppState } from "../../application/app-shell";
 
 type SaveDataResult = {
   selectedCharacterId?: string | null;
@@ -9,12 +10,14 @@ type MainUiFlowOptions = {
   characters: CharacterDefinition[];
   onStartGame(selectedCharacter: CharacterDefinition): void;
   loadSaveData(): Promise<SaveDataResult> | SaveDataResult;
+  getAppState(): AppState;
 };
 
 export class MainUiFlow {
   constructor(options: MainUiFlowOptions);
   mount(): void;
   destroy(): void;
+  render(): void;
   showMainMenu(): void;
   hide(): void;
 }

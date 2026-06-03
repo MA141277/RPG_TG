@@ -1,0 +1,24 @@
+{
+  "id": "生成一个石狮子",
+  "kind": "building",
+  "title": "生成一个石狮子",
+  "prompt": "生成一个石狮子",
+  "tags": [],
+  "createdAt": "2026-04-13T21:36:59+08:00",
+  "updatedAt": "2026-04-13T21:36:59+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true
+  },
+  "files": {
+    "front": "building/生成一个石狮子/front.png",
+    "side": "building/生成一个石狮子/side.png",
+    "top": "building/生成一个石狮子/top.png",
+    "preview": "building/生成一个石狮子/preview.png",
+    "previewProcessed": "building/生成一个石狮子/preview-processed.png"
+  }
+}

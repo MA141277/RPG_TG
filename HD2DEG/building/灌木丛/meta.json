@@ -1,0 +1,25 @@
+{
+  "id": "灌木丛",
+  "kind": "building",
+  "title": "灌木丛",
+  "prompt": "灌木丛",
+  "tags": [],
+  "createdAt": "2026-04-24T12:13:55+08:00",
+  "updatedAt": "2026-04-24T12:13:55+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/灌木丛/front.png",
+    "side": "building/灌木丛/side.png",
+    "top": "building/灌木丛/top.png",
+    "preview": "building/灌木丛/preview.png",
+    "previewProcessed": "building/灌木丛/preview-processed.png"
+  }
+}

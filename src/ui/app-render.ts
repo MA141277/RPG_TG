@@ -20,6 +20,7 @@ import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
 import type { CityEntryDefinition } from "../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../domain/city-npc";
+import type { CitySceneMapping } from "../domain/city-scene-mapping";
 import type { HouseDefinition } from "../domain/house";
 import type { HouseModuleViewModel } from "../domain/house-module";
 import type {
@@ -36,6 +37,7 @@ import {
 } from "./panels/global-player-panel";
 import { renderCharacterDetailView } from "./views/character/character-detail-view";
 import { renderCardLibraryView } from "./views/cards/card-library-view";
+import { renderCity3dView } from "./views/city/city-3d-view";
 import { renderCityView } from "./views/city/city-view";
 import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
@@ -61,6 +63,7 @@ export type AppRenderInput = {
   houseNameById: Record<string, string>;
   characterNameById: Record<string, string>;
   cityPortraits: Record<string, string>;
+  citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
   currentSceneAction?: ActionNode | null;
@@ -401,7 +404,15 @@ function renderStage(input: AppRenderInput): string {
       activeCityDefinition,
       activeCityHouseDefinitions,
       activeCityEntries,
-      input.appState.cityDirectoryState
+      input.appState.cityDirectoryState,
+      input.citySceneMappingsByCityId?.[activeCityDefinition.id] ?? null
+    );
+  }
+
+  if (currentView === "city-3d") {
+    return renderCity3dView(
+      activeCityDefinition,
+      input.citySceneMappingsByCityId?.[activeCityDefinition.id] ?? null
     );
   }
 

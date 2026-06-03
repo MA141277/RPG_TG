@@ -1,4 +1,4 @@
-import {
+﻿import {
   tavernBossProfile,
   tavernDefaultWager,
   tavernDrinkPrice,
@@ -25,6 +25,38 @@ import {
   getTavernTimeVariableKey,
   type TavernWorkOffer,
 } from "../../../domain/tavern";
+import {
+  advanceTavernGambleMeldCountdown,
+  advanceTavernLongPublicReveal,
+  advanceTavernGambleNpcThinking,
+  canHumanLongHu,
+  clearTavernGamblePlaySlot,
+  confirmSelectedTavernGambleDiscards,
+  confirmTavernGamblePlayGroup,
+  createTavernGambleSession,
+  createTavernLongGambleSession,
+  declareTavernGambleMeld,
+  drawForTavernGamble,
+  getMeldKindLabel,
+  getTavernGamblePhaseLabel,
+  getTavernGambleStreetLabel,
+  getTavernGambleWinners,
+  getTavernMahjongTileLabel,
+  passHumanLongHu,
+  passTavernGamblePlayGroups,
+  pushHumanLongHu,
+  reorderTavernGambleHand,
+  resolveTavernGambleBettingAction,
+  scoreTavernGambleSessionPlayer,
+  skipTavernGambleMeld,
+  toggleTavernGamblePlayTile,
+  TAVERN_GAMBLE_BIG_BLIND,
+  TAVERN_GAMBLE_SMALL_BLIND,
+  TAVERN_LONG_GAMBLE_HAND_SIZE,
+  type TavernGambleActionKind,
+  type TavernGambleSession,
+  type TavernGambleVariant,
+} from "../../../domain/tavern-gambling";
 import { assertExists } from "../../../shared/assert";
 import {
   acceptTavernWork,
@@ -45,8 +77,14 @@ import { createInitialTavernSessionState } from "./tavern-session-state";
 const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
 const SUBMIT_WORK_ACTION_PREFIX = "submit-work:";
 const TAVERN_WORK_INTERVAL_ID = "tavern-work-qte";
+const TAVERN_GAMBLE_NPC_INTERVAL_ID = "tavern-gamble-npc-thinking";
 const TAVERN_WORK_TOTAL_ROUNDS = 3;
 const TAVERN_WORK_MARKER_STEP = 7;
+const GAMBLE_MELD_ACTION_PREFIX = "gamble-meld:";
+const GAMBLE_DISCARD_ACTION_PREFIX = "gamble-discard:";
+const GAMBLE_REORDER_ACTION_PREFIX = "gamble-reorder:";
+const GAMBLE_PLAY_TILE_ACTION_PREFIX = "gamble-play-tile:";
+const SELECT_GAMBLE_VARIANT_ACTION_PREFIX = "select-gamble-variant:";
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -663,6 +701,149 @@ function clampWager(wager: number, playerGold: number): number {
   return Math.max(tavernWagerStep, Math.min(wager, maxAffordable));
 }
 
+function getGambleVariantLabel(variant: TavernGambleVariant): string {
+  return variant === "long" ? "长牌" : "短牌";
+}
+
+function getHumanGamblePlayer(session: TavernGambleSession) {
+  const player = session.players.find((candidate) => candidate.isHuman);
+  assertExists(player, "Tavern gambling session has no human player.");
+  return player;
+}
+
+function getGambleNetResult(session: TavernGambleSession): number {
+  const human = getHumanGamblePlayer(session);
+  if (session.showdown == null) {
+    return -human.committed;
+  }
+  const winners = getTavernGambleWinners(session);
+  if (winners.length === 0 || !winners.some((winner) => winner.playerId === human.id)) {
+    return -human.committed;
+  }
+  return Math.floor(session.pot / winners.length) - human.committed;
+}
+
+function resolveGambleSettlement(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  session: TavernGambleSession
+): HouseModuleTransitionResult<"tavern"> {
+  const delta = getGambleNetResult(session);
+  const nextState = increaseTavernTime(input.gameState, input.houseDefinition.id, 1);
+  const goldMutation =
+    delta === 0
+      ? { state: nextState, characterDefinitions: input.characterDefinitions }
+      : mutatePlayerGold(nextState, input.characterDefinitions, input.playerCharacterId, delta);
+  return {
+    gameState: goldMutation.state,
+    characterDefinitions: goldMutation.characterDefinitions,
+    sessionState: {
+      ...sessionState,
+      currentWager: tavernDefaultWager,
+      gambleSession: null,
+      dialoguePhase: "open",
+      dialogueLines: [
+        "牌局已结。",
+        delta >= 0 ? `你本局净赚 ${delta} 文。` : `你本局净输 ${Math.abs(delta)} 文。`,
+      ],
+      overlay: createAlertOverlay(
+        "赌局结算",
+        [
+          `底池 ${session.pot} 文。`,
+          delta >= 0 ? `本次金钱变化 +${delta} 文。` : `本次金钱变化 ${delta} 文。`,
+        ],
+        delta >= 0 ? "success" : "warning"
+      ),
+    },
+    sideEffects: [{ type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID }],
+  };
+}
+
+function getGambleSideEffects(session: TavernGambleSession): HouseModuleTransitionResult<"tavern">["sideEffects"] {
+  return session.phase !== "npc-thinking" &&
+    session.phase !== "meld-window" &&
+    (session.longPublicRevealTicks ?? 0) <= 0
+    ? [{ type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID }]
+    : [
+        { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+        {
+          type: "start-interval",
+          intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID,
+          everyMs: 1000,
+          request: { type: "tick", tickId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+        },
+      ];
+}
+
+function withGambleSession(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  gambleSession: TavernGambleSession
+): HouseModuleTransitionResult<"tavern"> {
+  return withSessionState(
+    input,
+    sessionState,
+    {
+      gambleSession,
+      overlay: {
+        type: "gamble-table",
+        session: gambleSession,
+      },
+      dialoguePhase: "open",
+      dialogueLines: ["你坐上赌桌。", "四轮下注、摸打、碰杠之后摊牌比番。"],
+    },
+    getGambleSideEffects(gambleSession)
+  );
+}
+
+function handleGambleTick(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState
+): HouseModuleTransitionResult<"tavern"> {
+  if (
+    input.request.type !== "tick" ||
+    input.request.tickId !== TAVERN_GAMBLE_NPC_INTERVAL_ID ||
+    sessionState.gambleSession == null
+  ) {
+    return createTransitionResult(input);
+  }
+
+  const nextSession =
+    (sessionState.gambleSession.longPublicRevealTicks ?? 0) > 0
+      ? advanceTavernLongPublicReveal(sessionState.gambleSession)
+      : sessionState.gambleSession.phase === "meld-window"
+        ? advanceTavernGambleMeldCountdown(sessionState.gambleSession)
+        : advanceTavernGambleNpcThinking(sessionState.gambleSession);
+  return withGambleSession(input, sessionState, nextSession);
+}
+
+function getGambleSessionSeed(
+  input: HouseModuleDispatchInput<"tavern">,
+  wager: number
+): number {
+  const tavernTime = readNumericVariable(
+    input.gameState,
+    getTavernTimeVariableKey(input.houseDefinition.id),
+    0
+  );
+  const playerGold = getPlayerCharacter(
+    input.characterDefinitions,
+    input.playerCharacterId
+  ).stats.gold;
+  const timeSeed = Math.floor(Date.now() % 2147483647);
+  const randomSeed = Math.floor(Math.random() * 2147483647);
+  return Math.max(
+    1,
+    ((tavernTime * 4099 +
+      playerGold * 37 +
+      wager * 101 +
+      input.houseDefinition.id.length +
+      timeSeed) ^
+      randomSeed) >>>
+      0
+  );
+}
+
 function handleGambleAction(
   input: HouseModuleDispatchInput<"tavern">,
   sessionState: TavernSessionState | null
@@ -686,17 +867,46 @@ function handleGambleAction(
         ),
       });
     }
+    return withSessionState(input, sessionState, {
+      overlay: {
+        type: "gamble-choice",
+        title: "选择牌局",
+        options: [
+          {
+            id: "long",
+            label: "长牌",
+            description: "5 暗牌 + 9 公共牌，按轮下注，再进入传统麻将摸打。",
+            actionId: `${SELECT_GAMBLE_VARIANT_ACTION_PREFIX}long`,
+          },
+          {
+            id: "short",
+            label: "短牌",
+            description: "保留原有酒馆短牌规则。",
+            actionId: `${SELECT_GAMBLE_VARIANT_ACTION_PREFIX}short`,
+          },
+        ],
+        cancelActionId: "cancel-overlay",
+      },
+    });
+  }
 
+  const selectedVariant = parseActionId(
+    input.request.actionId,
+    SELECT_GAMBLE_VARIANT_ACTION_PREFIX
+  );
+  if (selectedVariant === "short" || selectedVariant === "long") {
     const currentWager = clampWager(
       sessionState?.currentWager ?? tavernDefaultWager,
       playerCharacter.stats.gold
     );
-
     return withSessionState(input, sessionState, {
       currentWager,
+      currentGambleVariant: selectedVariant,
       overlay: {
         type: "gamble",
-        title: "下注",
+        title: `${getGambleVariantLabel(selectedVariant)}下注`,
+        variant: selectedVariant,
+        variantLabel: getGambleVariantLabel(selectedVariant),
         wager: currentWager,
         options: [
           tavernWagerStep,
@@ -740,6 +950,104 @@ function handleGambleAction(
   }
 
   if (input.request.actionId !== "confirm-gamble") {
+    if (sessionState == null || sessionState.gambleSession == null) {
+      return createTransitionResult(input);
+    }
+
+    const actionId = input.request.actionId;
+    const gambleSession = sessionState.gambleSession;
+
+    if (
+      actionId === "gamble-check" ||
+      actionId === "gamble-call" ||
+      actionId === "gamble-raise" ||
+      actionId === "gamble-fold"
+    ) {
+      const action = actionId.replace("gamble-", "") as TavernGambleActionKind;
+      return withGambleSession(
+        input,
+        sessionState,
+        resolveTavernGambleBettingAction(gambleSession, action)
+      );
+    }
+    if (actionId === "gamble-skip-meld") {
+      return withGambleSession(input, sessionState, skipTavernGambleMeld(gambleSession));
+    }
+    const meldId = parseActionId(actionId, GAMBLE_MELD_ACTION_PREFIX);
+    if (meldId != null) {
+      return withGambleSession(input, sessionState, declareTavernGambleMeld(gambleSession, meldId));
+    }
+    if (actionId === "gamble-draw") {
+      return withGambleSession(input, sessionState, drawForTavernGamble(gambleSession));
+    }
+    if (actionId === "gamble-clear-play") {
+      return withGambleSession(input, sessionState, clearTavernGamblePlaySlot(gambleSession));
+    }
+    if (actionId === "gamble-confirm-play") {
+      return withGambleSession(input, sessionState, confirmTavernGamblePlayGroup(gambleSession));
+    }
+    if (actionId === "gamble-pass-play") {
+      return withGambleSession(input, sessionState, passTavernGamblePlayGroups(gambleSession));
+    }
+    if (actionId === "gamble-push-hu") {
+      return withGambleSession(input, sessionState, pushHumanLongHu(gambleSession));
+    }
+    if (actionId === "gamble-pass-hu") {
+      return withGambleSession(input, sessionState, passHumanLongHu(gambleSession));
+    }
+    if (actionId === "gamble-confirm-discard") {
+      return withGambleSession(
+        input,
+        sessionState,
+        confirmSelectedTavernGambleDiscards(gambleSession)
+      );
+    }
+    const playTileId = parseActionId(actionId, GAMBLE_PLAY_TILE_ACTION_PREFIX);
+    if (playTileId != null) {
+      return withGambleSession(
+        input,
+        sessionState,
+        toggleTavernGamblePlayTile(gambleSession, playTileId)
+      );
+    }
+    const discardTileId = parseActionId(actionId, GAMBLE_DISCARD_ACTION_PREFIX);
+    if (discardTileId != null) {
+      return withGambleSession(
+        input,
+        sessionState,
+        toggleTavernGamblePlayTile(gambleSession, discardTileId)
+      );
+    }
+    const reorderPayload = parseActionId(actionId, GAMBLE_REORDER_ACTION_PREFIX);
+    if (reorderPayload != null) {
+      const [tileId, beforeTileId] = reorderPayload.split(":");
+      if (tileId == null || tileId.length === 0) {
+        return createTransitionResult(input);
+      }
+      return withGambleSession(
+        input,
+        sessionState,
+        reorderTavernGambleHand(
+          gambleSession,
+          tileId,
+          beforeTileId == null || beforeTileId === "end" ? null : beforeTileId
+        )
+      );
+    }
+    if (actionId === "gamble-settle") {
+      return resolveGambleSettlement(input, sessionState, gambleSession);
+    }
+    if (actionId === "gamble-close") {
+      return withSessionState(
+        input,
+        sessionState,
+        {
+          gambleSession: null,
+          overlay: null,
+        },
+        [{ type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID }]
+      );
+    }
     return createTransitionResult(input);
   }
 
@@ -757,40 +1065,23 @@ function handleGambleAction(
       ),
     });
   }
-
-  const payout = Math.floor(wager * 1.1);
-  const delta = payout - wager;
-
-  const nextState = increaseTavernTime(input.gameState, input.houseDefinition.id, 1);
-  const goldMutation = mutatePlayerGold(
-    nextState,
-    input.characterDefinitions,
-    input.playerCharacterId,
-    delta
+  if (sessionState == null) {
+    return createTransitionResult(input);
+  }
+  const createSession =
+    sessionState.currentGambleVariant === "long"
+      ? createTavernLongGambleSession
+      : createTavernGambleSession;
+  return withGambleSession(
+    input,
+    sessionState,
+    createSession({
+      wager,
+      seed: getGambleSessionSeed(input, wager),
+      playerName: playerCharacter.name,
+      limitMode: "no-limit",
+    })
   );
-
-  return {
-    gameState: goldMutation.state,
-    characterDefinitions: goldMutation.characterDefinitions,
-    sessionState:
-      sessionState == null
-        ? sessionState
-        : {
-            ...sessionState,
-            currentWager: tavernDefaultWager,
-            dialoguePhase: "open",
-            dialogueLines: ["你坐上赌桌，押下了赌本。", "这次先按接口占位返回。"],
-            overlay: createAlertOverlay(
-              "赌局结算",
-              [
-                `下注 ${wager} 文。`,
-                `暂时按 1.1 倍返回，拿回 ${payout} 文。`,
-                `本次金钱变化 ${delta >= 0 ? "+" : ""}${delta} 文。`,
-              ],
-              "success"
-            ),
-          },
-  };
 }
 
 function selectOverlayViewModel(
@@ -867,9 +1158,248 @@ function selectOverlayViewModel(
     };
   }
 
+  if (overlay.type === "gamble-choice") {
+    return {
+      type: "gamble-choice",
+      title: overlay.title,
+      options: overlay.options,
+      cancelActionId: overlay.cancelActionId,
+      cancelLabel: "取消",
+    };
+  }
+
+  if (overlay.type === "gamble-table") {
+    const session = overlay.session;
+    const human = getHumanGamblePlayer(session);
+    const winners = getTavernGambleWinners(session);
+    const isLong = session.variant === "long";
+    const humanPublicSlots = human.publicTileSlots ?? [];
+    const humanOpenPublicSlots = humanPublicSlots.filter((slot) => !slot.covered);
+    const longPublicStage = !isLong
+      ? undefined
+      : session.street === "pre-flop"
+        ? "hidden"
+        : session.street === "flop" && session.phase === "betting"
+          ? "centered"
+          : (session.longPublicRevealTicks ?? 0) > 0
+            ? "revealing"
+            : "revealed";
+    const longPublicInHand = isLong && (longPublicStage === "revealing" || longPublicStage === "revealed");
+    const humanPublicTiles = isLong
+      ? (longPublicInHand
+          ? humanOpenPublicSlots.map((slot) => ({
+              tile: slot.tile,
+            }))
+          : session.publicTiles.map((tile) => ({
+              tile,
+            }))).map((slot, index) => ({
+          id: slot.tile.id,
+          label: getTavernMahjongTileLabel(slot.tile),
+          selected: session.selectedPlayTileIds.includes(slot.tile.id),
+          spent: false,
+          covered: false,
+          actionId:
+            longPublicInHand &&
+            session.phase === "draw-discard" &&
+            session.pendingDiscardsRemaining > 0
+              ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${slot.tile.id}`
+              : `gamble-long-public-preview:${index}`,
+        }))
+      : session.publicTiles.map((tile) => ({
+          id: tile.id,
+          label: getTavernMahjongTileLabel(tile),
+          selected: session.selectedPlayTileIds.includes(tile.id),
+          spent: (human.spentPublicTileIds ?? []).includes(tile.id),
+          actionId: `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${tile.id}`,
+        }));
+    const longVisibleTileIds = [
+      ...human.hand.map((tile) => tile.id),
+      ...humanOpenPublicSlots.map((slot) => slot.tile.id),
+    ];
+    const preferredLongOrder = human.longTileOrder ?? [];
+    const longTileOrder = preferredLongOrder
+      .filter((tileId) => longVisibleTileIds.includes(tileId))
+      .concat(longVisibleTileIds.filter((tileId) => !preferredLongOrder.includes(tileId)));
+    const longCombinedHandTiles = longTileOrder
+      .map((tileId) => {
+        const handTile = human.hand.find((tile) => tile.id === tileId);
+        if (handTile != null) {
+          const actionId =
+            session.phase === "draw-discard" && session.pendingDiscardsRemaining > 0
+              ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${handTile.id}`
+              : null;
+          return {
+            id: handTile.id,
+            label: getTavernMahjongTileLabel(handTile),
+            selected: session.selectedPlayTileIds.includes(handTile.id),
+            tone: "hand" as const,
+            ...(actionId == null ? {} : { actionId }),
+          };
+        }
+        const publicSlot = humanOpenPublicSlots.find((slot) => slot.tile.id === tileId);
+        if (publicSlot == null) {
+          return null;
+        }
+        const actionId =
+          session.phase === "draw-discard" && session.pendingDiscardsRemaining > 0
+            ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${publicSlot.tile.id}`
+            : null;
+        return {
+          id: publicSlot.tile.id,
+          label: getTavernMahjongTileLabel(publicSlot.tile),
+          selected: session.selectedPlayTileIds.includes(publicSlot.tile.id),
+          tone: "public" as const,
+          entering: longPublicStage === "revealing",
+          revealIndex: humanOpenPublicSlots.findIndex((slot) => slot.tile.id === publicSlot.tile.id),
+          ...(actionId == null ? {} : { actionId }),
+        };
+      })
+      .filter((tile): tile is NonNullable<typeof tile> => tile != null);
+    return {
+      type: "gamble-table",
+      variant: session.variant,
+      title: isLong ? "酒馆长牌" : "酒馆短牌",
+      street: getTavernGambleStreetLabel(session.street),
+      phase: getTavernGamblePhaseLabel(session.phase),
+      pot: session.pot,
+      currentBet: session.currentBet,
+      wager: session.wager,
+      smallBlind: TAVERN_GAMBLE_SMALL_BLIND,
+      bigBlind: TAVERN_GAMBLE_BIG_BLIND,
+      wallCount: session.wall.length,
+      publicTiles: humanPublicTiles,
+      publicDiscardTiles: session.publicDiscards.map((tile) => ({
+        label: getTavernMahjongTileLabel(tile),
+        fromPublicTile: (session.unclaimableDiscardTileIds ?? []).includes(tile.id),
+      })),
+      handTiles:
+        isLong && longPublicInHand
+          ? longCombinedHandTiles
+          : human.hand.map((tile) => {
+              const actionId =
+                session.phase === "draw-discard" && session.pendingDiscardsRemaining > 0
+                  ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${tile.id}`
+                  : null;
+              return {
+                id: tile.id,
+                label: getTavernMahjongTileLabel(tile),
+                selected: session.selectedPlayTileIds.includes(tile.id),
+                tone: "hand" as const,
+                ...(actionId == null ? {} : { actionId }),
+              };
+            }),
+      flowers: human.flowers.map(getTavernMahjongTileLabel),
+      playSlotTiles: session.selectedPlayTileIds
+        .map(
+          (tileId) =>
+            [
+              ...human.hand,
+              ...(isLong ? humanOpenPublicSlots.map((slot) => slot.tile) : session.publicTiles),
+            ].find((tile) => tile.id === tileId) ?? null
+        )
+        .filter((tile): tile is NonNullable<typeof tile> => tile != null)
+        .map(getTavernMahjongTileLabel),
+      playedOwnTileCount: human.playedOwnTileCount,
+      completedPlayedGroups: human.playedGroups.length >= 2,
+      canConfirmPlayGroup: session.selectedPlayTileIds.length === 3,
+      melds: [
+        ...human.exposedMelds.map(
+          (meld) => `${getMeldKindLabel(meld.kind)} ${meld.tileLabel} / ${meld.fan} 番`
+        ),
+        ...human.playedGroups.map(
+          (group) =>
+            `${group.usesPublicTile ? "明" : "暗"}${group.kind === "sequence" ? "顺" : "刻"} ${group.tileLabels.join("、")} / 自牌 ${group.ownTileCount}`
+        ),
+      ],
+      logLines: session.roundLog.slice(-5),
+      pendingDiscardsRemaining: session.pendingDiscardsRemaining,
+      hasPendingDraw: session.pendingDrawTile != null,
+      pendingHuChoice: session.pendingHumanHu === true && canHumanLongHu(session),
+      longPublicStage,
+      meldCountdownTicks: session.meldCountdownTicks,
+      meldWindowStage: session.meldWindow?.stage ?? null,
+      playerRows: session.players.map((player) => {
+        const score = scoreTavernGambleSessionPlayer(session, player).bestScore;
+        const playerPublicSlots = player.publicTileSlots ?? [];
+        const playerOpenPublicSlots = playerPublicSlots.filter((slot) => !slot.covered);
+        const playerCoveredPublicCount = playerPublicSlots.length - playerOpenPublicSlots.length;
+        return {
+          id: player.id,
+          name: player.name,
+          seatIndex: player.seatIndex,
+          committed: player.committed,
+          remainingChips: Math.max(0, session.wager - player.committed),
+          folded: player.folded,
+          completedPlayedGroups: player.playedGroups.length >= 2,
+          handCount:
+            isLong && longPublicInHand
+              ? player.hand.length + playerOpenPublicSlots.length
+              : player.hand.length,
+          discardCount: player.discarded.length,
+          lastDiscard:
+            player.discarded.length === 0
+              ? null
+              : getTavernMahjongTileLabel(player.discarded[player.discarded.length - 1]!),
+          discardLabels: player.discarded.map((tile) => ({
+            label: getTavernMahjongTileLabel(tile),
+            fromPublicTile: (session.unclaimableDiscardTileIds ?? []).includes(tile.id),
+          })),
+          publicTileLabels:
+            !longPublicInHand
+              ? []
+              : playerOpenPublicSlots.map((slot) => getTavernMahjongTileLabel(slot.tile)),
+          privateBackCount: isLong
+            ? !longPublicInHand
+              ? TAVERN_LONG_GAMBLE_HAND_SIZE
+              : player.hand.length + playerCoveredPublicCount
+            : 0,
+          playedGroupLabels: player.playedGroups.map(
+            (group) =>
+              `${group.usesPublicTile ? "明" : "暗"}${group.kind === "sequence" ? "顺" : "刻"} ${group.tileLabels.join("、")}`
+          ),
+          bestPattern: score.mainPattern,
+          bestFan: score.validHu ? score.totalFan : 0,
+        };
+      }),
+      meldOptions: session.pendingMelds.map((option) => ({
+        id: option.id,
+        kind: option.kind,
+        label: `${getMeldKindLabel(option.kind)} ${option.tileLabel} / ${option.fan} 番`,
+        actionId: `${GAMBLE_MELD_ACTION_PREFIX}${option.id}`,
+        flashing: session.meldWindow?.source === "discard",
+      })),
+      showdownRows: (session.showdown ?? []).map((row) => ({
+        playerName: row.playerName,
+        totalFan: row.totalFan,
+        best: `${row.bestScore.mainPattern} ${row.bestScore.totalFan} 番`,
+        selectedTiles: row.bestScore.selectedTiles,
+        detailLines: row.bestScore.detailLines,
+        folded: row.folded,
+        winner: winners.some((winner) => winner.playerId === row.playerId),
+      })),
+      actionIds: {
+        check: "gamble-check",
+        call: "gamble-call",
+        raise: "gamble-raise",
+        fold: "gamble-fold",
+        skipMeld: "gamble-skip-meld",
+        draw: "gamble-draw",
+        settle: "gamble-settle",
+        close: "gamble-close",
+        clearPlay: "gamble-clear-play",
+        confirmPlay: "gamble-confirm-play",
+        passPlay: "gamble-pass-play",
+        confirmDiscard: "gamble-confirm-discard",
+        pushHu: "gamble-push-hu",
+        passHu: "gamble-pass-hu",
+      },
+    };
+  }
+
   return {
     type: "gamble",
     title: overlay.title,
+    variantLabel: overlay.variantLabel,
     wager: overlay.wager,
     options: overlay.options,
     decrementActionId: overlay.decrementActionId,
@@ -937,14 +1467,21 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
         input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
         ["老板抬眼看了你一眼。", "“要找活、喝酒，还是上桌赌两把？”"]
       ),
-      sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
+      sideEffects: [
+        { type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID },
+        { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+      ],
     };
   },
   dispatch(input) {
     if (input.request.type === "tick") {
-      return input.sessionState == null
-        ? createTransitionResult(input)
-        : handleTavernWorkTick(input, input.sessionState);
+      if (input.sessionState == null) {
+        return createTransitionResult(input);
+      }
+      if (input.request.tickId === TAVERN_GAMBLE_NPC_INTERVAL_ID) {
+        return handleGambleTick(input, input.sessionState);
+      }
+      return handleTavernWorkTick(input, input.sessionState);
     }
 
     if (input.request.type !== "action") {
@@ -999,7 +1536,26 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       input.request.actionId === "open-gamble" ||
       input.request.actionId === "decrease-wager" ||
       input.request.actionId === "increase-wager" ||
-      input.request.actionId === "confirm-gamble"
+      input.request.actionId === "confirm-gamble" ||
+      input.request.actionId.startsWith(SELECT_GAMBLE_VARIANT_ACTION_PREFIX) ||
+      input.request.actionId === "gamble-check" ||
+      input.request.actionId === "gamble-call" ||
+      input.request.actionId === "gamble-raise" ||
+      input.request.actionId === "gamble-fold" ||
+      input.request.actionId === "gamble-skip-meld" ||
+      input.request.actionId === "gamble-draw" ||
+      input.request.actionId === "gamble-clear-play" ||
+      input.request.actionId === "gamble-confirm-play" ||
+      input.request.actionId === "gamble-pass-play" ||
+      input.request.actionId === "gamble-settle" ||
+      input.request.actionId === "gamble-close" ||
+      input.request.actionId.startsWith(GAMBLE_MELD_ACTION_PREFIX) ||
+      input.request.actionId.startsWith(GAMBLE_DISCARD_ACTION_PREFIX) ||
+      input.request.actionId.startsWith(GAMBLE_REORDER_ACTION_PREFIX) ||
+      input.request.actionId.startsWith(GAMBLE_PLAY_TILE_ACTION_PREFIX) ||
+      input.request.actionId === "gamble-confirm-discard" ||
+      input.request.actionId === "gamble-push-hu" ||
+      input.request.actionId === "gamble-pass-hu"
     ) {
       return handleGambleAction(input, input.sessionState);
     }
@@ -1020,7 +1576,10 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: null,
-      sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
+      sideEffects: [
+        { type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID },
+        { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+      ],
     };
   },
   selectViewModel(input): HouseModuleViewModel {

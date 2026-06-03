@@ -1,0 +1,30 @@
+{
+  "id": "城墙",
+  "kind": "building",
+  "title": "城墙",
+  "prompt": "城墙",
+  "tags": [
+    "decoration"
+  ],
+  "widthTiles": 15,
+  "drawRoad": false,
+  "facilityProfile": null,
+  "createdAt": "2026-05-15T17:39:09+08:00",
+  "updatedAt": "2026-05-15T17:39:09+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/城墙/front.png",
+    "side": "building/城墙/side.png",
+    "top": "building/城墙/top.png",
+    "preview": "building/城墙/preview.png",
+    "previewProcessed": "building/城墙/preview-processed.png"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "二层酒楼",
+  "kind": "building",
+  "title": "二层酒楼",
+  "prompt": "二层酒楼",
+  "tags": [],
+  "createdAt": "2026-04-14T01:44:12+08:00",
+  "updatedAt": "2026-04-26T19:18:52+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true
+  },
+  "files": {
+    "front": "building/二层酒楼/front.png",
+    "side": "building/二层酒楼/side.png",
+    "top": "building/二层酒楼/top.png",
+    "preview": "building/二层酒楼/preview.png",
+    "previewProcessed": "building/二层酒楼/preview-processed.png"
+  },
+  "drawRoad": true
+}

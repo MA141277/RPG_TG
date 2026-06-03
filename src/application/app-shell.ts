@@ -1,6 +1,10 @@
 import type { CharacterDefinition } from "../domain/character";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
-import type { GlobalHudLayout, LayoutEditorState } from "../domain/ui-layout";
+import type {
+  GlobalHudLayout,
+  LayoutEditorState,
+  StartScreenLayout,
+} from "../domain/ui-layout";
 import type { GridCoordinate } from "./navigation/travel-to-coordinate";
 import type { createInitialState } from "./state/create-initial-state";
 
@@ -61,6 +65,7 @@ export type AppState = {
     | null;
   uiLayouts: {
     globalHud: GlobalHudLayout;
+    startScreen: StartScreenLayout;
   };
   layoutEditor: LayoutEditorState;
 };

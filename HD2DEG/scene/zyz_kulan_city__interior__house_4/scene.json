@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "kind": "interior",
+  "id": "zyz_kulan_city__interior__house_4",
+  "title": "zyz_kulan_city__interior__house_4",
+  "savedAt": 1780294276008,
+  "nextBuildingId": 1,
+  "tilemapBaseDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAPElEQVR4AeyQoQ0AMAgECbKurrZJ91+ptqIJI0AYAAFI+OTU58zhXJujICTWsjNeBysSjN4FizO++akjAAAA//9k990RAAAABklEQVQDACFqOnZ3Y+ezAAAAAElFTkSuQmCC",
+  "tilemapDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAPElEQVR4AeyQoQ0AMAgECbKurrZJ91+ptqIJI0AYAAFI+OTU58zhXJujICTWsjNeBysSjN4FizO++akjAAAA//9k990RAAAABklEQVQDACFqOnZ3Y+ezAAAAAElFTkSuQmCC",
+  "objects": [],
+  "roadNetwork": null,
+  "spawn": {
+    "x": 7.5,
+    "y": 14.5
+  },
+  "bounds": {
+    "minX": 0,
+    "minY": 0,
+    "maxX": 14,
+    "maxY": 15,
+    "width": 15,
+    "height": 16
+  },
+  "entities": {
+    "npcs": []
+  },
+  "extensions": {
+    "sceneKind": "interior",
+    "parentSceneId": "zyz_kulan_city",
+    "hostObjectId": 4,
+    "interiorLayout": {
+      "version": 1,
+      "kind": "house-room",
+      "width": 15,
+      "height": 15,
+      "door": {
+        "side": "south",
+        "x": 7,
+        "y": 15,
+        "entryX": 7,
+        "entryY": 14
+      },
+      "spawnX": 7.5,
+      "spawnY": 14.5,
+      "facilities": [
+        {
+          "id": "table",
+          "x": 6,
+          "y": 6,
+          "w": 3,
+          "d": 2,
+          "h": 0.8,
+          "block": true,
+          "top": "#8f6140",
+          "sideColor": "#4a2f1c"
+        },
+        {
+          "id": "cabinet",
+          "x": 11,
+          "y": 9,
+          "w": 2,
+          "d": 1,
+          "h": 1.35,
+          "block": true,
+          "top": "#72513a",
+          "sideColor": "#321d12"
+        }
+      ]
+    },
+    "returnWorldX": 97.43199378235673,
+    "returnWorldY": 67.32172078019347
+  },
+  "sceneMeta": {
+    "kind": "interior",
+    "parentSceneId": "zyz_kulan_city",
+    "hostObjectId": 4,
+    "interiorLayout": {
+      "version": 1,
+      "kind": "house-room",
+      "width": 15,
+      "height": 15,
+      "door": {
+        "side": "south",
+        "x": 7,
+        "y": 15,
+        "entryX": 7,
+        "entryY": 14
+      },
+      "spawnX": 7.5,
+      "spawnY": 14.5,
+      "facilities": [
+        {
+          "id": "table",
+          "x": 6,
+          "y": 6,
+          "w": 3,
+          "d": 2,
+          "h": 0.8,
+          "block": true,
+          "top": "#8f6140",
+          "sideColor": "#4a2f1c"
+        },
+        {
+          "id": "cabinet",
+          "x": 11,
+          "y": 9,
+          "w": 2,
+          "d": 1,
+          "h": 1.35,
+          "block": true,
+          "top": "#72513a",
+          "sideColor": "#321d12"
+        }
+      ]
+    },
+    "returnWorldX": 97.43199378235673,
+    "returnWorldY": 67.32172078019347
+  },
+  "updatedAt": "2026-06-01T14:11:16+08:00"
+}

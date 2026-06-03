@@ -1,0 +1,2455 @@
+{
+  "schemaVersion": 1,
+  "kind": "world",
+  "id": "zyz_huaian_city",
+  "title": "高邮府 3D 城市",
+  "savedAt": 1780294722988,
+  "nextBuildingId": 10,
+  "tilemapBaseDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGklEQVR4nGNk+M9QzwAEYBxVSF+F5lQBALeQAhHvhXesAAAAAElFTkSuQmCC",
+  "tilemapDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGklEQVR4nGNk+M9QzwAEYBxVSF+F5lQBALeQAhHvhXesAAAAAElFTkSuQmCC",
+  "objects": [
+    {
+      "id": 1,
+      "type": "generated",
+      "wx": 0,
+      "wy": -118,
+      "angle": 1.5707963267948966,
+      "scale": 0.14,
+      "label": "高邮府 将领府邸",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "中国风像素建筑，明朝红巾军帅府",
+        "widthTiles": 18,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 134,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true,
+          "maskSmooth": false
+        },
+        "libraryMeta": {
+          "id": "中国风像素建筑-明朝红巾军帅府",
+          "kind": "building",
+          "title": "中国风像素建筑，明朝红巾军帅府",
+          "prompt": "中国风像素建筑，明朝红巾军帅府",
+          "tags": [
+            "house"
+          ],
+          "widthTiles": 18,
+          "drawRoad": true,
+          "facilityProfile": null,
+          "createdAt": "2026-06-01T13:02:09+08:00",
+          "updatedAt": "2026-06-01T13:02:09+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 134,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true,
+            "maskSmooth": false
+          },
+          "files": {
+            "front": "building/中国风像素建筑-明朝红巾军帅府/front.png",
+            "side": "building/中国风像素建筑-明朝红巾军帅府/side.png",
+            "top": "building/中国风像素建筑-明朝红巾军帅府/top.png",
+            "preview": "building/中国风像素建筑-明朝红巾军帅府/preview.png",
+            "previewProcessed": "building/中国风像素建筑-明朝红巾军帅府/preview-processed.png"
+          }
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_1",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 1,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "table",
+            "x": 6,
+            "y": 6,
+            "w": 3,
+            "d": 2,
+            "h": 0.8,
+            "block": true,
+            "top": "#8f6140",
+            "sideColor": "#4a2f1c"
+          },
+          {
+            "id": "cabinet",
+            "x": 11,
+            "y": 9,
+            "w": 2,
+            "d": 1,
+            "h": 1.35,
+            "block": true,
+            "top": "#72513a",
+            "sideColor": "#321d12"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.huaian_leader_residence",
+          "houseId": "house.huaian.leader_residence",
+          "cityId": "city.huaian",
+          "label": "将领府邸",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": 0,
+          "wy": -92,
+          "radius": 10
+        }
+      },
+      "model": null
+    },
+    {
+      "id": 2,
+      "type": "generated",
+      "wx": 86,
+      "wy": -78,
+      "angle": 1.5707963267948966,
+      "scale": 0.14,
+      "label": "高邮府 寺庙",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "故宫大殿",
+        "widthTiles": 15,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 112,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true
+        },
+        "libraryMeta": {
+          "id": "故宫大殿",
+          "kind": "building",
+          "title": "故宫大殿",
+          "prompt": "故宫大殿",
+          "tags": [],
+          "createdAt": "2026-04-13T20:14:25+08:00",
+          "updatedAt": "2026-04-13T20:14:25+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 112,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true
+          },
+          "files": {
+            "front": "building/故宫大殿/front.png",
+            "side": "building/故宫大殿/side.png",
+            "top": "building/故宫大殿/top.png",
+            "preview": "building/故宫大殿/preview.png",
+            "previewProcessed": "building/故宫大殿/preview-processed.png"
+          }
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_2",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 2,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "altar",
+            "x": 6,
+            "y": 3,
+            "w": 3,
+            "d": 2,
+            "h": 1.1,
+            "block": true,
+            "top": "#9a7c45",
+            "sideColor": "#4a3218"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.huaian_temple",
+          "houseId": "house.huaian.temple",
+          "cityId": "city.huaian",
+          "label": "寺庙",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": 86,
+          "wy": -52,
+          "radius": 10
+        }
+      },
+      "model": null
+    },
+    {
+      "id": 3,
+      "type": "generated",
+      "wx": 42,
+      "wy": 112,
+      "angle": -1.5707963267948966,
+      "scale": 0.14,
+      "label": "高邮府 自宅",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "中国风像素建筑，元末明初平民住宅1",
+        "widthTiles": 15,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 112,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true,
+          "maskSmooth": false
+        },
+        "libraryMeta": {
+          "id": "中国风像素建筑-元末明初平民住宅1",
+          "kind": "building",
+          "title": "中国风像素建筑，元末明初平民住宅1",
+          "prompt": "中国风像素建筑，元末明初平民住宅1",
+          "tags": [
+            "house"
+          ],
+          "widthTiles": 15,
+          "drawRoad": true,
+          "facilityProfile": null,
+          "createdAt": "2026-06-01T13:04:36+08:00",
+          "updatedAt": "2026-06-01T13:04:36+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 112,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true,
+            "maskSmooth": false
+          },
+          "files": {
+            "front": "building/中国风像素建筑-元末明初平民住宅1/front.png",
+            "side": "building/中国风像素建筑-元末明初平民住宅1/side.png",
+            "top": "building/中国风像素建筑-元末明初平民住宅1/top.png",
+            "preview": "building/中国风像素建筑-元末明初平民住宅1/preview.png",
+            "previewProcessed": "building/中国风像素建筑-元末明初平民住宅1/preview-processed.png"
+          }
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_3",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 3,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "table",
+            "x": 6,
+            "y": 6,
+            "w": 3,
+            "d": 2,
+            "h": 0.8,
+            "block": true,
+            "top": "#8f6140",
+            "sideColor": "#4a2f1c"
+          },
+          {
+            "id": "cabinet",
+            "x": 11,
+            "y": 9,
+            "w": 2,
+            "d": 1,
+            "h": 1.35,
+            "block": true,
+            "top": "#72513a",
+            "sideColor": "#321d12"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.home_huaian",
+          "houseId": "home.huaian",
+          "cityId": "city.huaian",
+          "label": "自宅",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": 42,
+          "wy": 86,
+          "radius": 10
+        }
+      },
+      "model": null
+    },
+    {
+      "id": 4,
+      "type": "generated",
+      "wx": -58,
+      "wy": -82,
+      "angle": 1.5707963267948966,
+      "scale": 0.14,
+      "label": "高邮府 帅府",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "中国风像素建筑，明朝红巾军帅府",
+        "widthTiles": 18,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 134,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true,
+          "maskSmooth": false
+        },
+        "libraryMeta": {
+          "id": "中国风像素建筑-明朝红巾军帅府",
+          "kind": "building",
+          "title": "中国风像素建筑，明朝红巾军帅府",
+          "prompt": "中国风像素建筑，明朝红巾军帅府",
+          "tags": [
+            "house"
+          ],
+          "widthTiles": 18,
+          "drawRoad": true,
+          "facilityProfile": null,
+          "createdAt": "2026-06-01T13:02:09+08:00",
+          "updatedAt": "2026-06-01T13:02:09+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 134,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true,
+            "maskSmooth": false
+          },
+          "files": {
+            "front": "building/中国风像素建筑-明朝红巾军帅府/front.png",
+            "side": "building/中国风像素建筑-明朝红巾军帅府/side.png",
+            "top": "building/中国风像素建筑-明朝红巾军帅府/top.png",
+            "preview": "building/中国风像素建筑-明朝红巾军帅府/preview.png",
+            "previewProcessed": "building/中国风像素建筑-明朝红巾军帅府/preview-processed.png"
+          }
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_4",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 4,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "table",
+            "x": 6,
+            "y": 6,
+            "w": 3,
+            "d": 2,
+            "h": 0.8,
+            "block": true,
+            "top": "#8f6140",
+            "sideColor": "#4a2f1c"
+          },
+          {
+            "id": "cabinet",
+            "x": 11,
+            "y": 9,
+            "w": 2,
+            "d": 1,
+            "h": 1.35,
+            "block": true,
+            "top": "#72513a",
+            "sideColor": "#321d12"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.huaian_keep",
+          "houseId": "house.huaian.keep",
+          "cityId": "city.huaian",
+          "label": "帅府",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": -58,
+          "wy": -56,
+          "radius": 10
+        }
+      },
+      "model": null
+    },
+    {
+      "id": 5,
+      "type": "generated",
+      "wx": -84,
+      "wy": 54,
+      "angle": 0,
+      "scale": 0.14,
+      "label": "高邮府 茶馆",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "二层酒楼",
+        "widthTiles": 15,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 112,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true
+        },
+        "libraryMeta": {
+          "id": "二层酒楼",
+          "kind": "building",
+          "title": "二层酒楼",
+          "prompt": "二层酒楼",
+          "tags": [],
+          "createdAt": "2026-04-14T01:44:12+08:00",
+          "updatedAt": "2026-04-26T19:18:52+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 112,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true
+          },
+          "files": {
+            "front": "building/二层酒楼/front.png",
+            "side": "building/二层酒楼/side.png",
+            "top": "building/二层酒楼/top.png",
+            "preview": "building/二层酒楼/preview.png",
+            "previewProcessed": "building/二层酒楼/preview-processed.png"
+          },
+          "drawRoad": true
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_5",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 5,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "table",
+            "x": 6,
+            "y": 6,
+            "w": 3,
+            "d": 2,
+            "h": 0.8,
+            "block": true,
+            "top": "#8f6140",
+            "sideColor": "#4a2f1c"
+          },
+          {
+            "id": "cabinet",
+            "x": 11,
+            "y": 9,
+            "w": 2,
+            "d": 1,
+            "h": 1.35,
+            "block": true,
+            "top": "#72513a",
+            "sideColor": "#321d12"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.huaian_tea_house",
+          "houseId": "house.huaian.tea_house",
+          "cityId": "city.huaian",
+          "label": "茶馆",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": -58,
+          "wy": 54,
+          "radius": 10
+        }
+      },
+      "model": null
+    },
+    {
+      "id": 6,
+      "type": "generated",
+      "wx": -84,
+      "wy": -8,
+      "angle": 0,
+      "scale": 0.14,
+      "label": "高邮府 货栈",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "中国风像素建筑，元末明初平民住宅2",
+        "widthTiles": 18,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 134,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true,
+          "maskSmooth": false
+        },
+        "libraryMeta": {
+          "id": "中国风像素建筑-元末明初平民住宅2",
+          "kind": "building",
+          "title": "中国风像素建筑，元末明初平民住宅2",
+          "prompt": "中国风像素建筑，元末明初平民住宅2",
+          "tags": [
+            "house"
+          ],
+          "widthTiles": 18,
+          "drawRoad": true,
+          "facilityProfile": null,
+          "createdAt": "2026-06-01T13:08:15+08:00",
+          "updatedAt": "2026-06-01T13:08:15+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 134,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true,
+            "maskSmooth": false
+          },
+          "files": {
+            "front": "building/中国风像素建筑-元末明初平民住宅2/front.png",
+            "side": "building/中国风像素建筑-元末明初平民住宅2/side.png",
+            "top": "building/中国风像素建筑-元末明初平民住宅2/top.png",
+            "preview": "building/中国风像素建筑-元末明初平民住宅2/preview.png",
+            "previewProcessed": "building/中国风像素建筑-元末明初平民住宅2/preview-processed.png"
+          }
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_6",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 6,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "table",
+            "x": 6,
+            "y": 6,
+            "w": 3,
+            "d": 2,
+            "h": 0.8,
+            "block": true,
+            "top": "#8f6140",
+            "sideColor": "#4a2f1c"
+          },
+          {
+            "id": "cabinet",
+            "x": 11,
+            "y": 9,
+            "w": 2,
+            "d": 1,
+            "h": 1.35,
+            "block": true,
+            "top": "#72513a",
+            "sideColor": "#321d12"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.huaian_market",
+          "houseId": "house.huaian.market",
+          "cityId": "city.huaian",
+          "label": "货栈",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": -58,
+          "wy": -8,
+          "radius": 10
+        }
+      },
+      "model": null
+    },
+    {
+      "id": 7,
+      "type": "generated",
+      "wx": 84,
+      "wy": -8,
+      "angle": 3.141592653589793,
+      "scale": 0.14,
+      "label": "高邮府 粮铺",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "中国风像素建筑，粮食店",
+        "widthTiles": 14,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 105,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true,
+          "maskSmooth": false
+        },
+        "libraryMeta": {
+          "id": "中国风像素建筑-粮食店",
+          "kind": "building",
+          "title": "中国风像素建筑，粮食店",
+          "prompt": "中国风像素建筑，粮食店",
+          "tags": [
+            "facility",
+            "container"
+          ],
+          "widthTiles": 14,
+          "drawRoad": false,
+          "facilityProfile": {
+            "actionLabel": "储粮",
+            "summary": "用于存放和管理粮食类物品。"
+          },
+          "createdAt": "2026-06-01T12:57:05+08:00",
+          "updatedAt": "2026-06-01T12:57:05+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 105,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true,
+            "maskSmooth": false
+          },
+          "files": {
+            "front": "building/中国风像素建筑-粮食店/front.png",
+            "side": "building/中国风像素建筑-粮食店/side.png",
+            "top": "building/中国风像素建筑-粮食店/top.png",
+            "preview": "building/中国风像素建筑-粮食店/preview.png",
+            "previewProcessed": "building/中国风像素建筑-粮食店/preview-processed.png"
+          }
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_7",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 7,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "table",
+            "x": 6,
+            "y": 6,
+            "w": 3,
+            "d": 2,
+            "h": 0.8,
+            "block": true,
+            "top": "#8f6140",
+            "sideColor": "#4a2f1c"
+          },
+          {
+            "id": "cabinet",
+            "x": 11,
+            "y": 9,
+            "w": 2,
+            "d": 1,
+            "h": 1.35,
+            "block": true,
+            "top": "#72513a",
+            "sideColor": "#321d12"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.huaian_grain_shop",
+          "houseId": "house.huaian.grain_shop",
+          "cityId": "city.huaian",
+          "label": "粮铺",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": 58,
+          "wy": -8,
+          "radius": 10
+        }
+      },
+      "model": null
+    },
+    {
+      "id": 8,
+      "type": "generated",
+      "wx": -42,
+      "wy": 112,
+      "angle": -1.5707963267948966,
+      "scale": 0.14,
+      "label": "高邮府 药铺",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "中国风像素建筑，元末明初平民住宅1",
+        "widthTiles": 15,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 112,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true,
+          "maskSmooth": false
+        },
+        "libraryMeta": {
+          "id": "中国风像素建筑-元末明初平民住宅1",
+          "kind": "building",
+          "title": "中国风像素建筑，元末明初平民住宅1",
+          "prompt": "中国风像素建筑，元末明初平民住宅1",
+          "tags": [
+            "house"
+          ],
+          "widthTiles": 15,
+          "drawRoad": true,
+          "facilityProfile": null,
+          "createdAt": "2026-06-01T13:04:36+08:00",
+          "updatedAt": "2026-06-01T13:04:36+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 112,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true,
+            "maskSmooth": false
+          },
+          "files": {
+            "front": "building/中国风像素建筑-元末明初平民住宅1/front.png",
+            "side": "building/中国风像素建筑-元末明初平民住宅1/side.png",
+            "top": "building/中国风像素建筑-元末明初平民住宅1/top.png",
+            "preview": "building/中国风像素建筑-元末明初平民住宅1/preview.png",
+            "previewProcessed": "building/中国风像素建筑-元末明初平民住宅1/preview-processed.png"
+          }
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_8",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 8,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "table",
+            "x": 6,
+            "y": 6,
+            "w": 3,
+            "d": 2,
+            "h": 0.8,
+            "block": true,
+            "top": "#8f6140",
+            "sideColor": "#4a2f1c"
+          },
+          {
+            "id": "cabinet",
+            "x": 11,
+            "y": 9,
+            "w": 2,
+            "d": 1,
+            "h": 1.35,
+            "block": true,
+            "top": "#72513a",
+            "sideColor": "#321d12"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.huaian_medicine_house",
+          "houseId": "house.huaian.medicine_house",
+          "cityId": "city.huaian",
+          "label": "药铺",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": -42,
+          "wy": 86,
+          "radius": 10
+        }
+      },
+      "model": null
+    },
+    {
+      "id": 9,
+      "type": "generated",
+      "wx": 84,
+      "wy": 54,
+      "angle": 3.141592653589793,
+      "scale": 0.14,
+      "label": "高邮府 客栈",
+      "tags": [
+        "house"
+      ],
+      "interactionTags": [
+        "house"
+      ],
+      "drawRoad": true,
+      "buildingTag": "house",
+      "isHouse": true,
+      "_worldGenerated": true,
+      "asset": {
+        "kind": "generated-building",
+        "prompt": "二层酒楼",
+        "widthTiles": 15,
+        "tags": [
+          "house"
+        ],
+        "interactionTags": [
+          "house"
+        ],
+        "buildingTag": "house",
+        "drawRoad": true,
+        "voxelOptions": {
+          "targetLongest": 112,
+          "shellOnly": true,
+          "frontPriority": false,
+          "pruneTopColorMismatch": true
+        },
+        "libraryMeta": {
+          "id": "二层酒楼",
+          "kind": "building",
+          "title": "二层酒楼",
+          "prompt": "二层酒楼",
+          "tags": [],
+          "createdAt": "2026-04-14T01:44:12+08:00",
+          "updatedAt": "2026-04-26T19:18:52+08:00",
+          "sourceModel": "gemini-3-pro-image-preview",
+          "imageSize": "1024x1024",
+          "voxelOptions": {
+            "targetLongest": 112,
+            "shellOnly": true,
+            "frontPriority": false,
+            "pruneTopColorMismatch": true
+          },
+          "files": {
+            "front": "building/二层酒楼/front.png",
+            "side": "building/二层酒楼/side.png",
+            "top": "building/二层酒楼/top.png",
+            "preview": "building/二层酒楼/preview.png",
+            "previewProcessed": "building/二层酒楼/preview-processed.png"
+          },
+          "drawRoad": true
+        }
+      },
+      "interiorRef": {
+        "id": "zyz_huaian_city__interior__house_9",
+        "parentSceneId": "zyz_huaian_city",
+        "hostObjectId": 9,
+        "version": 1
+      },
+      "interior": {
+        "version": 1,
+        "kind": "house-room",
+        "width": 15,
+        "height": 15,
+        "door": {
+          "side": "south",
+          "x": 7,
+          "y": 15,
+          "entryX": 7,
+          "entryY": 14
+        },
+        "spawnX": 7.5,
+        "spawnY": 14.5,
+        "facilities": [
+          {
+            "id": "table",
+            "x": 6,
+            "y": 6,
+            "w": 3,
+            "d": 2,
+            "h": 0.8,
+            "block": true,
+            "top": "#8f6140",
+            "sideColor": "#4a2f1c"
+          },
+          {
+            "id": "cabinet",
+            "x": 11,
+            "y": 9,
+            "w": 2,
+            "d": 1,
+            "h": 1.35,
+            "block": true,
+            "top": "#72513a",
+            "sideColor": "#321d12"
+          }
+        ]
+      },
+      "properties": {
+        "zhuYuanzhangBridge": {
+          "version": 2,
+          "sceneObjectId": "zyz.huaian_inn",
+          "houseId": "house.huaian.inn",
+          "cityId": "city.huaian",
+          "label": "客栈",
+          "source": "house-card-scene-generator"
+        },
+        "zhuStopPoint": {
+          "wx": 58,
+          "wy": 54,
+          "radius": 10
+        }
+      },
+      "model": null
+    }
+  ],
+  "roadNetwork": {
+    "points": [
+      {
+        "x": 0,
+        "y": -92
+      },
+      {
+        "x": 86,
+        "y": -52
+      },
+      {
+        "x": 42,
+        "y": 86
+      },
+      {
+        "x": -58,
+        "y": -56
+      },
+      {
+        "x": -58,
+        "y": 54
+      },
+      {
+        "x": -58,
+        "y": -8
+      },
+      {
+        "x": 58,
+        "y": -8
+      },
+      {
+        "x": -42,
+        "y": 86
+      },
+      {
+        "x": 58,
+        "y": 54
+      }
+    ],
+    "segments": [
+      {
+        "ax": 0,
+        "ay": 128,
+        "bx": 0,
+        "by": -96,
+        "width": 6,
+        "role": "main-street",
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "minX": -6,
+        "minY": -102,
+        "maxX": 6,
+        "maxY": 134
+      },
+      {
+        "ax": -92,
+        "ay": -8,
+        "bx": 92,
+        "by": -8,
+        "width": 5,
+        "role": "market-street",
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "minX": -97,
+        "minY": -13,
+        "maxX": 97,
+        "maxY": -3
+      },
+      {
+        "ax": -92,
+        "ay": 54,
+        "bx": 92,
+        "by": 54,
+        "width": 4,
+        "role": "inn-street",
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "minX": -96,
+        "minY": 50,
+        "maxX": 96,
+        "maxY": 58
+      },
+      {
+        "ax": -52,
+        "ay": 86,
+        "bx": 52,
+        "by": 86,
+        "width": 4,
+        "role": "south-residence-street",
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "minX": -56,
+        "minY": 82,
+        "maxX": 56,
+        "maxY": 90
+      },
+      {
+        "ax": -58,
+        "ay": -56,
+        "bx": 86,
+        "by": -52,
+        "width": 4,
+        "role": "north-civic-street",
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "minX": -62,
+        "minY": -60,
+        "maxX": 90,
+        "maxY": -48
+      },
+      {
+        "ax": 0,
+        "ay": -56,
+        "bx": 0,
+        "by": -92,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": -3,
+        "minY": -95,
+        "maxX": 3,
+        "maxY": -53
+      },
+      {
+        "ax": 86,
+        "ay": -56,
+        "bx": 86,
+        "by": -52,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": 83,
+        "minY": -59,
+        "maxX": 89,
+        "maxY": -49
+      },
+      {
+        "ax": 42,
+        "ay": 86,
+        "bx": 42,
+        "by": 86,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": 39,
+        "minY": 83,
+        "maxX": 45,
+        "maxY": 89
+      },
+      {
+        "ax": -58,
+        "ay": -56,
+        "bx": -58,
+        "by": -56,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": -61,
+        "minY": -59,
+        "maxX": -55,
+        "maxY": -53
+      },
+      {
+        "ax": -58,
+        "ay": 54,
+        "bx": -58,
+        "by": 54,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": -61,
+        "minY": 51,
+        "maxX": -55,
+        "maxY": 57
+      },
+      {
+        "ax": -58,
+        "ay": -8,
+        "bx": -58,
+        "by": -8,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": -61,
+        "minY": -11,
+        "maxX": -55,
+        "maxY": -5
+      },
+      {
+        "ax": 58,
+        "ay": -8,
+        "bx": 58,
+        "by": -8,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": 55,
+        "minY": -11,
+        "maxX": 61,
+        "maxY": -5
+      },
+      {
+        "ax": -42,
+        "ay": 86,
+        "bx": -42,
+        "by": 86,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": -45,
+        "minY": 83,
+        "maxX": -39,
+        "maxY": 89
+      },
+      {
+        "ax": 58,
+        "ay": 54,
+        "bx": 58,
+        "by": 54,
+        "width": 3,
+        "baseColor": [
+          210,
+          156,
+          92
+        ],
+        "highlightColor": [
+          232,
+          198,
+          145
+        ],
+        "role": "house-front-access",
+        "minX": 55,
+        "minY": 51,
+        "maxX": 61,
+        "maxY": 57
+      }
+    ],
+    "bounds": {
+      "minX": -140,
+      "minY": -150,
+      "maxX": 140,
+      "maxY": 150
+    },
+    "mode": "zhu-city-grid-streets"
+  },
+  "spawn": {
+    "x": 0,
+    "y": 0
+  },
+  "bounds": {
+    "minX": -140,
+    "minY": -150,
+    "maxX": 140,
+    "maxY": 150
+  },
+  "entities": {
+    "npcs": [
+      {
+        "npcId": "npc.huaian.player_shadow",
+        "name": "朱元璋",
+        "homeObjectId": null,
+        "sheetCharacterId": "红巾军小兵",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 10,
+        "initialWx": 0,
+        "initialWy": 10,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "player-anchor",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军小兵"
+        },
+        "anchors": {
+          "home": "house:null",
+          "work": "house:null:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "player-anchor",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.leader_residence.1",
+        "name": "将领府邸管事",
+        "homeObjectId": 1,
+        "sheetCharacterId": "红巾军将领",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": -4,
+        "wy": -90,
+        "initialWx": -4,
+        "initialWy": -90,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "将领府邸",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军将领"
+        },
+        "anchors": {
+          "home": "house:1",
+          "work": "house:1:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "将领府邸",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.temple.1",
+        "name": "寺庙管事",
+        "homeObjectId": 2,
+        "sheetCharacterId": "npc_temple_monk",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 82,
+        "wy": -50,
+        "initialWx": 82,
+        "initialWy": -50,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "寺庙",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，寺庙老僧，高德淡薄，慈悲；灰白僧袍，手持念珠，眉须微白，清瘦；气质安静。"
+        },
+        "anchors": {
+          "home": "house:2",
+          "work": "house:2:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "寺庙",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.home.1",
+        "name": "自宅管事",
+        "homeObjectId": 3,
+        "sheetCharacterId": "红巾军小兵",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 38,
+        "wy": 88,
+        "initialWx": 38,
+        "initialWy": 88,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "自宅",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军小兵"
+        },
+        "anchors": {
+          "home": "house:3",
+          "work": "house:3:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "自宅",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.keep.1",
+        "name": "帅府管事",
+        "homeObjectId": 4,
+        "sheetCharacterId": "红巾军将领",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": -62,
+        "wy": -54,
+        "initialWx": -62,
+        "initialWy": -54,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "帅府",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军将领"
+        },
+        "anchors": {
+          "home": "house:4",
+          "work": "house:4:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "帅府",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.keep.2",
+        "name": "帅府随从",
+        "homeObjectId": 4,
+        "sheetCharacterId": "红巾军将领",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": -54,
+        "wy": -54,
+        "initialWx": -54,
+        "initialWy": -54,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "帅府",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军将领"
+        },
+        "anchors": {
+          "home": "house:4",
+          "work": "house:4:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "帅府",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.tea_house.1",
+        "name": "茶馆管事",
+        "homeObjectId": 5,
+        "sheetCharacterId": "npc_inn_bosslady",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": -62,
+        "wy": 56,
+        "initialWx": -62,
+        "initialWy": 56,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "茶馆",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，酒肆老板娘掌柜，中年女性，精明爽利但亲和；盘发带发簪，深红与墨绿对襟襦裙，围腰，腰间钥匙串；手势利落。"
+        },
+        "anchors": {
+          "home": "house:5",
+          "work": "house:5:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "茶馆",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.market.1",
+        "name": "货栈管事",
+        "homeObjectId": 6,
+        "sheetCharacterId": "npc_merchants_husband",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": -62,
+        "wy": -6,
+        "initialWx": -62,
+        "initialWy": -6,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "货栈",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。"
+        },
+        "anchors": {
+          "home": "house:6",
+          "work": "house:6:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "货栈",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.grain_shop.1",
+        "name": "粮铺管事",
+        "homeObjectId": 7,
+        "sheetCharacterId": "npc_merchants_husband",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 54,
+        "wy": -6,
+        "initialWx": 54,
+        "initialWy": -6,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "粮铺",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。"
+        },
+        "anchors": {
+          "home": "house:7",
+          "work": "house:7:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "粮铺",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.medicine_house.1",
+        "name": "药铺管事",
+        "homeObjectId": 8,
+        "sheetCharacterId": "npc_merchants_husband",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": -46,
+        "wy": 88,
+        "initialWx": -46,
+        "initialWy": 88,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "药铺",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。"
+        },
+        "anchors": {
+          "home": "house:8",
+          "work": "house:8:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "药铺",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.huaian.inn.1",
+        "name": "客栈管事",
+        "homeObjectId": 9,
+        "sheetCharacterId": "npc_inn_bosslady",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 54,
+        "wy": 56,
+        "initialWx": 54,
+        "initialWy": 56,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": null,
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": null,
+          "targetWy": null
+        },
+        "meta": {
+          "role": "客栈",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，酒肆老板娘掌柜，中年女性，精明爽利但亲和；盘发带发簪，深红与墨绿对襟襦裙，围腰，腰间钥匙串；手势利落。"
+        },
+        "anchors": {
+          "home": "house:9",
+          "work": "house:9:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "客栈",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      }
+    ]
+  },
+  "extensions": {
+    "sceneKind": "world",
+    "zhuYuanzhangCityScene": {
+      "version": 1,
+      "cityId": "city.huaian",
+      "generatedFrom": "city-house-cards",
+      "usesOnlyLibraryAssets": true
+    }
+  },
+  "sceneMeta": {
+    "kind": "world",
+    "cityId": "city.huaian",
+    "generatedFrom": "city-house-cards"
+  },
+  "updatedAt": "2026-06-01T06:18:42.981Z"
+}

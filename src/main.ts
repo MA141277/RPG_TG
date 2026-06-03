@@ -3,6 +3,7 @@ import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh
 import {
   selectLayoutEditorComponent,
   selectLayoutEditorElement,
+  selectLayoutEditorTarget,
   setLayoutEditorBackgroundAsset,
   setLayoutEditorBackgroundAssetQuery,
   setLayoutEditorBackgroundMode,
@@ -11,6 +12,7 @@ import {
   setLayoutEditorElementRectField,
   toggleLayoutEditor,
   updateLayoutEditorComponentPosition,
+  updateLayoutEditorComponentSize,
   updateLayoutEditorElementPosition,
 } from "./application/layout-editor/layout-editor-actions";
 import {
@@ -59,8 +61,10 @@ import {
   prototypeHouses,
   prototypeValuables,
 } from "./content/prototype-world";
+import { zhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
 import {
   createDefaultGlobalHudLayout,
+  createDefaultStartScreenLayout,
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
 import {
@@ -83,8 +87,9 @@ import { KEEP_HOUSE_VARIABLE_KEYS } from "./domain/keep-house";
 import { LEADER_RESIDENCE_VARIABLE_KEYS } from "./domain/leader-residence";
 import type {
   UiLayoutBackgroundMode,
-  UiLayoutComponent,
+  UiLayout,
   UiLayoutRect,
+  LayoutEditorTargetId,
 } from "./domain/ui-layout";
 import type { ValuableItemId } from "./domain/valuable-item";
 import {
@@ -250,14 +255,33 @@ let recentPointerDispatchedHouseAction:
       timestamp: number;
     }
   | null = null;
+let houseDragPayload: string | null = null;
+let houseTileDragState:
+  | {
+      pointerId: number;
+      payload: string;
+      root: HTMLElement;
+      sourceTile: HTMLElement;
+      ghostTile: HTMLElement;
+      startClientX: number;
+      startClientY: number;
+      offsetX: number;
+      offsetY: number;
+      didMove: boolean;
+      currentBeforeId: string | null;
+      restingBeforeId: string | null;
+    }
+  | null = null;
+let suppressHouseClickUntilMs = 0;
 let layoutEditorDragState:
   | {
-      mode: "component" | "element";
+      mode: "component" | "element" | "component-size";
       componentId: string;
       elementId: string | null;
       pointerId: number;
       startClientX: number;
       startClientY: number;
+      resizeAxis?: "x" | "y" | "xy";
     }
   | null = null;
 let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
@@ -271,6 +295,7 @@ const mainUiFlow = new MainUiFlow({
   characters: selectableCharacters,
   onStartGame: startMainGame,
   loadSaveData,
+  getAppState: () => appState,
 });
 
 syncGameViewport();
@@ -335,6 +360,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     autoAdvanceState: null,
     uiLayouts: {
       globalHud: createDefaultGlobalHudLayout(),
+      startScreen: createDefaultStartScreenLayout(),
     },
     layoutEditor: {
       isOpen: false,
@@ -678,19 +704,93 @@ function canOpenHouseFromCity(houseDefinition: HouseDefinition): boolean {
   return false;
 }
 
+function enterMappedCity3dHouseBySceneObjectId(
+  sceneObjectId: string,
+  requestedHouseId: string | null = null
+): void {
+  const normalizedSceneObjectId = sceneObjectId.trim();
+  if (!normalizedSceneObjectId) {
+    return;
+  }
+
+  const mapping =
+    zhuYuanzhangCitySceneMappingByCityId[appState.gameState.world.currentCityId];
+  const mappedHouse =
+    mapping?.houses.find(
+      (houseMapping) =>
+        houseMapping.sceneObjectId === normalizedSceneObjectId &&
+        (requestedHouseId == null || houseMapping.houseId === requestedHouseId)
+    ) ?? null;
+  if (mappedHouse == null) {
+    return;
+  }
+
+  const houseDefinition = prototypeHouses.find(
+    (candidateHouse) => candidateHouse.id === mappedHouse.houseId
+  );
+  if (houseDefinition == null || !canOpenHouseFromCity(houseDefinition)) {
+    return;
+  }
+
+  houseRuntime.enterHouseById(mappedHouse.houseId);
+}
+
 window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
   passive: true,
 });
 window.addEventListener("keydown", resumeBackgroundMusicIfNeeded);
+window.addEventListener("message", (event) => {
+  if (event.origin !== window.location.origin) {
+    return;
+  }
 
-function getSelectedLayoutComponent(): UiLayoutComponent | null {
-  return (
-    appState.uiLayouts.globalHud.components.find(
-      (component) => component.id === appState.layoutEditor.selectedComponentId
-    ) ??
-    appState.uiLayouts.globalHud.components[0] ??
-    null
+  const data = event.data;
+  if (
+    data == null ||
+    typeof data !== "object" ||
+    data.type !== "hd2deg:enter-house" ||
+    typeof data.sceneObjectId !== "string"
+  ) {
+    return;
+  }
+
+  enterMappedCity3dHouseBySceneObjectId(
+    data.sceneObjectId,
+    typeof data.houseId === "string" ? data.houseId : null
   );
+});
+
+function getLayoutEditorDragHandleSelector(): string {
+  if (layoutEditorDragState == null) {
+    return "";
+  }
+
+  if (layoutEditorDragState.mode === "component-size") {
+    return `[data-layout-component-resize="${layoutEditorDragState.componentId}"][data-layout-resize-axis="${layoutEditorDragState.resizeAxis}"]`;
+  }
+
+  return layoutEditorDragState.mode === "component"
+    ? `[data-layout-component-handle="${layoutEditorDragState.componentId}"]`
+    : `[data-layout-element-handle="${layoutEditorDragState.componentId}:${layoutEditorDragState.elementId}"]`;
+}
+
+function getSelectedLayout(): UiLayout {
+  return appState.layoutEditor.selectedTargetId === "start-screen"
+    ? appState.uiLayouts.startScreen
+    : appState.uiLayouts.globalHud;
+}
+
+function renderActiveSurface(): void {
+  if (uiOverlayElement == null) {
+    renderApp();
+    return;
+  }
+  if (uiOverlayElement.classList.contains("is-hidden")) {
+    renderApp();
+    return;
+  }
+
+  mainUiFlow.render();
 }
 
 async function copyCurrentLayoutParams(): Promise<void> {
@@ -698,12 +798,335 @@ async function copyCurrentLayoutParams(): Promise<void> {
     targetId: appState.layoutEditor.selectedTargetId,
     selectedComponentId: appState.layoutEditor.selectedComponentId,
     selectedElementId: appState.layoutEditor.selectedElementId,
-    layout: appState.uiLayouts.globalHud,
+    layout: getSelectedLayout(),
   };
   await navigator.clipboard.writeText(`${JSON.stringify(payload, null, 2)}\n`);
 }
 
+function handleLayoutEditorInput(targetElement: EventTarget | null): boolean {
+  if (
+    !(
+      targetElement instanceof HTMLInputElement ||
+      targetElement instanceof HTMLSelectElement
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-layout-background-asset-query")
+  ) {
+    appState = setLayoutEditorBackgroundAssetQuery(appState, targetElement.value);
+    renderActiveSurface();
+    return true;
+  }
+
+  const componentId = targetElement.dataset.layoutComponentId;
+  if (componentId == null) {
+    return false;
+  }
+
+  if (
+    targetElement instanceof HTMLSelectElement &&
+    targetElement.hasAttribute("data-layout-background-asset")
+  ) {
+    const selectedAsset = globalHudBackgroundOptions.find(
+      (asset) => asset.id === targetElement.value
+    );
+    if (selectedAsset != null) {
+      appState = setLayoutEditorBackgroundAsset(
+        appState,
+        componentId,
+        selectedAsset
+      );
+      renderActiveSurface();
+    }
+    return true;
+  }
+
+  if (
+    targetElement instanceof HTMLSelectElement &&
+    targetElement.hasAttribute("data-layout-background-mode")
+  ) {
+    appState = setLayoutEditorBackgroundMode(
+      appState,
+      componentId,
+      targetElement.value as UiLayoutBackgroundMode
+    );
+    renderActiveSurface();
+    return true;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.layoutSliceEdge != null
+  ) {
+    appState = setLayoutEditorBackgroundSlice(
+      appState,
+      componentId,
+      targetElement.dataset.layoutSliceEdge as "top" | "right" | "bottom" | "left",
+      Number(targetElement.value)
+    );
+    renderActiveSurface();
+    return true;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.layoutComponentField != null
+  ) {
+    appState = setLayoutEditorComponentRectField(
+      appState,
+      componentId,
+      targetElement.dataset.layoutComponentField as keyof UiLayoutRect,
+      Number(targetElement.value)
+    );
+    renderActiveSurface();
+    return true;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.layoutElementField != null &&
+    targetElement.dataset.layoutElementId != null
+  ) {
+    appState = setLayoutEditorElementRectField(
+      appState,
+      componentId,
+      targetElement.dataset.layoutElementId,
+      targetElement.dataset.layoutElementField as keyof UiLayoutRect,
+      Number(targetElement.value)
+    );
+    renderActiveSurface();
+    return true;
+  }
+
+  return false;
+}
+
+function handleLayoutEditorClick(targetElement: EventTarget | null): boolean {
+  if (!(targetElement instanceof HTMLElement)) {
+    return false;
+  }
+
+  const openLayoutEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-layout-editor']"
+  );
+  if (openLayoutEditorButton != null) {
+    if (uiOverlayElement == null) {
+      return false;
+    }
+    const nextTargetId = uiOverlayElement.classList.contains("is-hidden")
+      ? (appState.layoutEditor.selectedTargetId ?? "start-screen")
+      : "start-screen";
+    appState =
+      nextTargetId === appState.layoutEditor.selectedTargetId
+        ? appState
+        : selectLayoutEditorTarget(appState, nextTargetId);
+    appState = toggleLayoutEditor(appState, true);
+    renderActiveSurface();
+    return true;
+  }
+
+  const closeLayoutEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-layout-editor']"
+  );
+  if (closeLayoutEditorButton != null) {
+    appState = toggleLayoutEditor(appState, false);
+    renderActiveSurface();
+    return true;
+  }
+
+  const layoutTargetButton = targetElement.closest<HTMLElement>(
+    "[data-layout-target-id]"
+  );
+  if (layoutTargetButton != null) {
+    const targetId = layoutTargetButton.dataset.layoutTargetId;
+    if (targetId === "global-hud" || targetId === "start-screen") {
+      appState = selectLayoutEditorTarget(appState, targetId as LayoutEditorTargetId);
+      renderActiveSurface();
+    }
+    return true;
+  }
+
+  const layoutComponentSelectButton = targetElement.closest<HTMLElement>(
+    "[data-layout-component-select]"
+  );
+  if (layoutComponentSelectButton != null) {
+    const componentId = layoutComponentSelectButton.dataset.layoutComponentSelect;
+    if (componentId != null) {
+      appState = selectLayoutEditorComponent(appState, componentId);
+      renderActiveSurface();
+    }
+    return true;
+  }
+
+  const layoutElementSelectButton = targetElement.closest<HTMLElement>(
+    "[data-layout-element-select]"
+  );
+  if (layoutElementSelectButton != null) {
+    const value = layoutElementSelectButton.dataset.layoutElementSelect;
+    const [componentId, elementId] = value?.split(":") ?? [];
+    if (componentId != null && elementId != null) {
+      appState = selectLayoutEditorElement(appState, componentId, elementId);
+      renderActiveSurface();
+    }
+    return true;
+  }
+
+  const copyLayoutParamsButton = targetElement.closest<HTMLElement>(
+    "[data-action='copy-layout-params']"
+  );
+  if (copyLayoutParamsButton != null) {
+    void copyCurrentLayoutParams();
+    return true;
+  }
+
+  return false;
+}
+
+function startLayoutEditorDrag(event: PointerEvent): boolean {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return false;
+  }
+
+  const componentResizeHandle = targetElement.closest<HTMLElement>(
+    "[data-layout-component-resize]"
+  );
+  if (componentResizeHandle != null) {
+    const componentId = componentResizeHandle.dataset.layoutComponentResize;
+    const resizeAxis = componentResizeHandle.dataset.layoutResizeAxis;
+    if (
+      componentId != null &&
+      (resizeAxis === "x" || resizeAxis === "y" || resizeAxis === "xy")
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      layoutEditorDragState = {
+        mode: "component-size",
+        componentId,
+        elementId: null,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        resizeAxis,
+      };
+      componentResizeHandle.setPointerCapture(event.pointerId);
+      return true;
+    }
+  }
+
+  const elementHandle = targetElement.closest<HTMLElement>(
+    "[data-layout-element-handle]"
+  );
+  if (elementHandle != null) {
+    const [componentId, elementId] =
+      elementHandle.dataset.layoutElementHandle?.split(":") ?? [];
+    if (componentId != null && elementId != null) {
+      layoutEditorDragState = {
+        mode: "element",
+        componentId,
+        elementId,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+      };
+      elementHandle.setPointerCapture(event.pointerId);
+      return true;
+    }
+  }
+
+  const componentHandle = targetElement.closest<HTMLElement>(
+    "[data-layout-component-handle]"
+  );
+  if (componentHandle != null) {
+    const componentId = componentHandle.dataset.layoutComponentHandle;
+    if (componentId != null) {
+      layoutEditorDragState = {
+        mode: "component",
+        componentId,
+        elementId: null,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+      };
+      componentHandle.setPointerCapture(event.pointerId);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function moveLayoutEditorDrag(event: PointerEvent): boolean {
+  if (
+    layoutEditorDragState == null ||
+    layoutEditorDragState.pointerId !== event.pointerId
+  ) {
+    return false;
+  }
+
+  const deltaX = event.clientX - layoutEditorDragState.startClientX;
+  const deltaY = event.clientY - layoutEditorDragState.startClientY;
+  layoutEditorDragState = {
+    ...layoutEditorDragState,
+    startClientX: event.clientX,
+    startClientY: event.clientY,
+  };
+
+  if (layoutEditorDragState.mode === "component") {
+    appState = updateLayoutEditorComponentPosition(
+      appState,
+      layoutEditorDragState.componentId,
+      deltaX,
+      deltaY
+    );
+  } else if (layoutEditorDragState.mode === "component-size") {
+    appState = updateLayoutEditorComponentSize(
+      appState,
+      layoutEditorDragState.componentId,
+      layoutEditorDragState.resizeAxis ?? "xy",
+      layoutEditorDragState.resizeAxis === "y" ? 0 : deltaX,
+      layoutEditorDragState.resizeAxis === "x" ? 0 : deltaY
+    );
+  } else if (layoutEditorDragState.elementId != null) {
+    appState = updateLayoutEditorElementPosition(
+      appState,
+      layoutEditorDragState.componentId,
+      layoutEditorDragState.elementId,
+      deltaX,
+      deltaY
+    );
+  }
+
+  renderActiveSurface();
+  return true;
+}
+
+function endLayoutEditorDrag(event: PointerEvent): boolean {
+  if (
+    layoutEditorDragState == null ||
+    layoutEditorDragState.pointerId !== event.pointerId
+  ) {
+    return false;
+  }
+
+  const handle =
+    document.querySelector<HTMLElement>(getLayoutEditorDragHandleSelector()) ?? null;
+  if (handle?.hasPointerCapture(event.pointerId) === true) {
+    handle.releasePointerCapture(event.pointerId);
+  }
+  layoutEditorDragState = null;
+  return true;
+}
+
 appElement.addEventListener("input", (event) => {
+  if (handleLayoutEditorInput(event.target)) {
+    return;
+  }
+
   const targetElement = event.target;
   if (
     !(
@@ -811,6 +1234,30 @@ appElement.addEventListener("input", (event) => {
   }
 });
 
+uiOverlayElement.addEventListener("input", (event) => {
+  handleLayoutEditorInput(event.target);
+});
+
+uiOverlayElement.addEventListener("pointerdown", (event) => {
+  startLayoutEditorDrag(event);
+});
+
+uiOverlayElement.addEventListener("pointermove", (event) => {
+  moveLayoutEditorDrag(event);
+});
+
+uiOverlayElement.addEventListener("pointerup", (event) => {
+  endLayoutEditorDrag(event);
+});
+
+uiOverlayElement.addEventListener("pointercancel", (event) => {
+  endLayoutEditorDrag(event);
+});
+
+uiOverlayElement.addEventListener("click", (event) => {
+  handleLayoutEditorClick(event.target);
+});
+
 appElement.addEventListener("wheel", (event) => {
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
@@ -832,6 +1279,10 @@ appElement.addEventListener("wheel", (event) => {
 });
 
 appElement.addEventListener("pointerdown", (event) => {
+  if (startLayoutEditorDrag(event)) {
+    return;
+  }
+
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
     return;
@@ -856,6 +1307,32 @@ appElement.addEventListener("pointerdown", (event) => {
       actionId: pointerHouseActionId,
     });
     return;
+  }
+
+  const componentResizeHandle = targetElement.closest<HTMLElement>(
+    "[data-layout-component-resize]"
+  );
+  if (componentResizeHandle != null) {
+    const componentId = componentResizeHandle.dataset.layoutComponentResize;
+    const resizeAxis = componentResizeHandle.dataset.layoutResizeAxis;
+    if (
+      componentId != null &&
+      (resizeAxis === "x" || resizeAxis === "y" || resizeAxis === "xy")
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      layoutEditorDragState = {
+        mode: "component-size",
+        componentId,
+        elementId: null,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        resizeAxis,
+      };
+      componentResizeHandle.setPointerCapture(event.pointerId);
+      return;
+    }
   }
 
   const elementHandle = targetElement.closest<HTMLElement>(
@@ -930,36 +1407,7 @@ appElement.addEventListener("pointerdown", (event) => {
 });
 
 appElement.addEventListener("pointermove", (event) => {
-  if (
-    layoutEditorDragState != null &&
-    layoutEditorDragState.pointerId === event.pointerId
-  ) {
-    const deltaX = event.clientX - layoutEditorDragState.startClientX;
-    const deltaY = event.clientY - layoutEditorDragState.startClientY;
-    layoutEditorDragState = {
-      ...layoutEditorDragState,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-    };
-
-    if (layoutEditorDragState.mode === "component") {
-      appState = updateLayoutEditorComponentPosition(
-        appState,
-        layoutEditorDragState.componentId,
-        deltaX,
-        deltaY
-      );
-    } else if (layoutEditorDragState.elementId != null) {
-      appState = updateLayoutEditorElementPosition(
-        appState,
-        layoutEditorDragState.componentId,
-        layoutEditorDragState.elementId,
-        deltaX,
-        deltaY
-      );
-    }
-
-    renderApp();
+  if (moveLayoutEditorDrag(event)) {
     return;
   }
 
@@ -986,6 +1434,228 @@ appElement.addEventListener("pointermove", (event) => {
 appElement.addEventListener("pointerup", endCampaignMapDrag);
 appElement.addEventListener("pointercancel", endCampaignMapDrag);
 
+function clearHouseTileDropMarkers(): void {
+  appRoot
+    .querySelectorAll<HTMLElement>(
+      ".is-house-drop-before, .is-house-drop-after, .is-house-drag-origin"
+    )
+    .forEach((element) => {
+      element.classList.remove(
+        "is-house-drop-before",
+        "is-house-drop-after",
+        "is-house-drag-origin"
+      );
+    });
+}
+
+function endHouseTileDrag(): void {
+  if (houseTileDragState == null) {
+    return;
+  }
+  houseTileDragState.ghostTile.remove();
+  clearHouseTileDropMarkers();
+  houseTileDragState = null;
+}
+
+function updateHouseTileDropMarker(clientX: number, clientY: number): void {
+  if (houseTileDragState == null) {
+    return;
+  }
+  clearHouseTileDropMarkers();
+  houseTileDragState.sourceTile.classList.add("is-house-drag-origin");
+  const rootRect = houseTileDragState.root.getBoundingClientRect();
+  const outsideRecognitionRange =
+    clientX < rootRect.left - 32 ||
+    clientX > rootRect.right + 32 ||
+    clientY < rootRect.top - 36 ||
+    clientY > rootRect.bottom + 36;
+  if (outsideRecognitionRange) {
+    houseTileDragState.currentBeforeId = houseTileDragState.restingBeforeId;
+    return;
+  }
+  const tiles = [...houseTileDragState.root.querySelectorAll<HTMLElement>("[data-house-drop-before]")].filter(
+    (tile) =>
+      tile !== houseTileDragState?.sourceTile &&
+      tile.dataset.houseDropBefore !== "end"
+  );
+  let currentBeforeId: string | null = null;
+  let previousTile: HTMLElement | null = null;
+  let nextTile: HTMLElement | null = null;
+  for (const tile of tiles) {
+    const rect = tile.getBoundingClientRect();
+    const midpoint = rect.left + rect.width / 2;
+    if (clientX < midpoint) {
+      currentBeforeId = tile.dataset.houseDropBefore ?? null;
+      nextTile = tile;
+      break;
+    }
+    previousTile = tile;
+  }
+  if (currentBeforeId === houseTileDragState.restingBeforeId) {
+    houseTileDragState.currentBeforeId = currentBeforeId;
+    return;
+  }
+  previousTile?.classList.add("is-house-drop-after");
+  nextTile?.classList.add("is-house-drop-before");
+  houseTileDragState.currentBeforeId = currentBeforeId;
+}
+
+appElement.addEventListener("pointermove", (event) => {
+  if (houseTileDragState == null || houseTileDragState.pointerId !== event.pointerId) {
+    return;
+  }
+  const deltaX = event.clientX - houseTileDragState.startClientX;
+  const deltaY = event.clientY - houseTileDragState.startClientY;
+  if (!houseTileDragState.didMove && Math.abs(deltaX) + Math.abs(deltaY) < 6) {
+    return;
+  }
+  houseTileDragState.didMove = true;
+  houseTileDragState.ghostTile.style.left = `${event.clientX - houseTileDragState.offsetX}px`;
+  houseTileDragState.ghostTile.style.top = `${event.clientY - houseTileDragState.offsetY}px`;
+  updateHouseTileDropMarker(event.clientX, event.clientY);
+});
+
+appElement.addEventListener("pointerup", (event) => {
+  if (houseTileDragState == null || houseTileDragState.pointerId !== event.pointerId) {
+    return;
+  }
+  const dragState = houseTileDragState;
+  const didMove = dragState.didMove;
+  const beforeId = dragState.currentBeforeId;
+  endHouseTileDrag();
+  if (!didMove) {
+    return;
+  }
+  if (beforeId === dragState.restingBeforeId) {
+    return;
+  }
+  suppressHouseClickUntilMs = window.performance.now() + 250;
+  houseRuntime.dispatchCurrentHouseRequest({
+    type: "action",
+    actionId: `${dragState.root.dataset.houseDropActionPrefix}${dragState.payload}:${beforeId ?? "end"}`,
+  });
+  renderApp();
+});
+
+appElement.addEventListener("pointercancel", () => {
+  endHouseTileDrag();
+});
+
+appElement.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) {
+    return;
+  }
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+  const tile = targetElement.closest<HTMLElement>("[data-house-sortable-tile='true'][data-house-drag-payload]");
+  const root = targetElement.closest<HTMLElement>("[data-house-drop-action-prefix]");
+  const payload = tile?.dataset.houseDragPayload;
+  const actionPrefix = root?.dataset.houseDropActionPrefix;
+  if (tile == null || root == null || payload == null || actionPrefix == null) {
+    return;
+  }
+  const rect = tile.getBoundingClientRect();
+  const sortableTiles = [...root.querySelectorAll<HTMLElement>("[data-house-drop-before]")].filter(
+    (candidateTile) => candidateTile.dataset.houseDropBefore !== "end"
+  );
+  const sourceIndex = sortableTiles.indexOf(tile);
+  const restingBeforeId =
+    sourceIndex >= 0 && sourceIndex < sortableTiles.length - 1
+      ? sortableTiles[sourceIndex + 1]?.dataset.houseDropBefore ?? null
+      : null;
+  const ghostTile = tile.cloneNode(true) as HTMLElement;
+  ghostTile.removeAttribute("data-house-action");
+  ghostTile.style.position = "fixed";
+  ghostTile.style.left = `${rect.left}px`;
+  ghostTile.style.top = `${rect.top}px`;
+  ghostTile.style.width = `${rect.width}px`;
+  ghostTile.style.height = `${rect.height}px`;
+  ghostTile.style.pointerEvents = "none";
+  ghostTile.style.zIndex = "9999";
+  ghostTile.style.opacity = "0.96";
+  ghostTile.style.transform = "translateY(-10px) scale(1.03)";
+  ghostTile.style.boxShadow = "0 16px 28px rgb(0 0 0 / 28%)";
+  ghostTile.classList.add("is-house-drag-ghost");
+  document.body.appendChild(ghostTile);
+  houseTileDragState = {
+    pointerId: event.pointerId,
+    payload,
+    root,
+    sourceTile: tile,
+    ghostTile,
+    startClientX: event.clientX,
+    startClientY: event.clientY,
+    offsetX: event.clientX - rect.left,
+    offsetY: event.clientY - rect.top,
+    didMove: false,
+    currentBeforeId: restingBeforeId,
+    restingBeforeId,
+  };
+});
+
+appElement.addEventListener("dragstart", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+  if (targetElement.closest("[data-house-sortable-tile='true']") != null) {
+    event.preventDefault();
+    return;
+  }
+  const dragElement = targetElement.closest<HTMLElement>("[data-house-drag-payload]");
+  const payload = dragElement?.dataset.houseDragPayload;
+  if (payload == null) {
+    return;
+  }
+  houseDragPayload = payload;
+  event.dataTransfer?.setData("text/plain", payload);
+  if (event.dataTransfer != null) {
+    event.dataTransfer.effectAllowed = "move";
+  }
+});
+
+appElement.addEventListener("dragover", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement) || houseDragPayload == null) {
+    return;
+  }
+  const dropElement = targetElement.closest<HTMLElement>("[data-house-drop-before]");
+  if (dropElement == null) {
+    return;
+  }
+  event.preventDefault();
+  if (event.dataTransfer != null) {
+    event.dataTransfer.dropEffect = "move";
+  }
+});
+
+appElement.addEventListener("drop", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+  const dropElement = targetElement.closest<HTMLElement>("[data-house-drop-before]");
+  const actionRoot = targetElement.closest<HTMLElement>("[data-house-drop-action-prefix]");
+  const payload = houseDragPayload ?? event.dataTransfer?.getData("text/plain") ?? null;
+  const before = dropElement?.dataset.houseDropBefore;
+  const actionPrefix = actionRoot?.dataset.houseDropActionPrefix;
+  houseDragPayload = null;
+  if (payload == null || before == null || actionPrefix == null) {
+    return;
+  }
+  event.preventDefault();
+  houseRuntime.dispatchCurrentHouseRequest({
+    type: "action",
+    actionId: `${actionPrefix}${payload}:${before}`,
+  });
+});
+
+appElement.addEventListener("dragend", () => {
+  houseDragPayload = null;
+});
+
 appElement.addEventListener("click", (event) => {
   if (shouldSuppressNextClickAfterMapDrag) {
     shouldSuppressNextClickAfterMapDrag = false;
@@ -996,6 +1666,10 @@ appElement.addEventListener("click", (event) => {
 
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  if (handleLayoutEditorClick(targetElement)) {
     return;
   }
 
@@ -1230,6 +1904,74 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const enterCity3dButton = targetElement.closest<HTMLElement>(
+    "[data-action='enter-city-3d']"
+  );
+  if (enterCity3dButton != null) {
+    const mapping =
+      zhuYuanzhangCitySceneMappingByCityId[appState.gameState.world.currentCityId];
+    if (mapping == null) {
+      return;
+    }
+
+    houseRuntime.clearAllHouseIntervals();
+    appState = {
+      ...appState,
+      cityDirectoryState: null,
+      locationDialogueState: null,
+      gameState: {
+        ...appState.gameState,
+        world: {
+          ...appState.gameState.world,
+          currentHouseId: null,
+        },
+        ui: {
+          ...appState.gameState.ui,
+          currentView: "city-3d",
+          overlayView: null,
+          houseSession: null,
+        },
+      },
+    };
+    renderApp();
+    return;
+  }
+
+  const leaveCity3dButton = targetElement.closest<HTMLElement>(
+    "[data-action='leave-city-3d']"
+  );
+  if (leaveCity3dButton != null) {
+    appState = {
+      ...appState,
+      gameState: {
+        ...appState.gameState,
+        world: {
+          ...appState.gameState.world,
+          currentHouseId: null,
+        },
+        ui: {
+          ...appState.gameState.ui,
+          currentView: "city",
+          overlayView: null,
+          houseSession: null,
+        },
+      },
+    };
+    renderApp();
+    return;
+  }
+
+  const city3dHouseButton = targetElement.closest<HTMLElement>(
+    "[data-city-3d-house-id]"
+  );
+  if (city3dHouseButton != null) {
+    const sceneObjectId = city3dHouseButton.dataset.city3dSceneObjectId;
+    if (sceneObjectId != null) {
+      enterMappedCity3dHouseBySceneObjectId(sceneObjectId);
+    }
+    return;
+  }
+
   const cityEntryButton = targetElement.closest<HTMLElement>(
     "[data-city-entry-id]"
   );
@@ -1325,6 +2067,12 @@ appElement.addEventListener("click", (event) => {
     "[data-house-action]"
   );
   if (houseActionButton != null) {
+    if (window.performance.now() < suppressHouseClickUntilMs) {
+      event.preventDefault();
+      event.stopPropagation();
+      suppressHouseClickUntilMs = 0;
+      return;
+    }
     const actionId = houseActionButton.dataset.houseAction;
     if (actionId != null) {
       if (shouldSuppressPointerDispatchedHouseClick(actionId)) {
@@ -1763,6 +2511,7 @@ function renderApp() {
     houseNameById,
     characterNameById,
     cityPortraits: prototypeCityPortraits,
+    citySceneMappingsByCityId: zhuYuanzhangCitySceneMappingByCityId,
     historicalCharacters: zhuYuanzhangEarlyCharacters,
     historicalCityRosters: zhuYuanzhangCityRosters,
     currentSceneAction: getCurrentSceneAction(
@@ -2069,11 +2818,8 @@ function endCampaignMapDrag(event: PointerEvent): void {
     layoutEditorDragState.pointerId === event.pointerId
   ) {
     const handle =
-      appRoot.querySelector<HTMLElement>(
-        layoutEditorDragState.mode === "component"
-          ? `[data-layout-component-handle="${layoutEditorDragState.componentId}"]`
-          : `[data-layout-element-handle="${layoutEditorDragState.componentId}:${layoutEditorDragState.elementId}"]`
-      ) ?? null;
+      appRoot.querySelector<HTMLElement>(getLayoutEditorDragHandleSelector()) ??
+      null;
     if (handle?.hasPointerCapture(event.pointerId) === true) {
       handle.releasePointerCapture(event.pointerId);
     }

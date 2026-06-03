@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "worldId": "default_scene",
+  "title": "default_scene NPC blueprint",
+  "generatedAt": "2026-04-29T10:55:00+08:00",
+  "defaults": {
+    "sprite": { "columns": 6, "rows": 5 },
+    "spawn": { "mode": "near_home", "offset": { "x": 6, "y": 3 } },
+    "simDefaults": {
+      "needs": { "hunger": 15, "energy": 85, "comfort": 70, "social": 55, "curiosity": 55 }
+    }
+  },
+  "characters": [
+    {
+      "npcId": "npc_inn_bosslady",
+      "displayName": "沈掌柜",
+      "homeObjectId": 1,
+      "role": "酒肆老板娘/掌柜",
+      "personality": ["精明爽利", "护短", "讲义气", "爱热闹"],
+      "skills": ["经营", "议价", "识人", "管账"],
+      "appearancePrompt": "中国风像素角色，酒肆老板娘掌柜，中年女性，精明爽利但亲和；盘发带发簪，深红与墨绿对襟襦裙，围腰，腰间钥匙串；手势利落。",
+      "spawn": { "mode": "near_home", "offset": { "x": 8, "y": 5 } }
+    },
+    {
+      "npcId": "npc_inn_cook_owner",
+      "displayName": "沈福",
+      "homeObjectId": 1,
+      "role": "酒肆老板/后厨厨师",
+      "personality": ["沉稳", "寡言", "认真", "护家"],
+      "skills": ["烹饪", "刀工", "火候", "备菜"],
+      "appearancePrompt": "中国风像素角色，酒肆老板兼厨师，中年男性，沉稳寡言；灰白围裙，袖口绑绳，短须，手持布巾；厨师气质但不要画灶台或大厨具。",
+      "spawn": { "mode": "near_home", "offset": { "x": 5, "y": 6 } }
+    },
+    {
+      "npcId": "npc_inn_waiter",
+      "displayName": "阿顺",
+      "homeObjectId": 1,
+      "role": "酒肆伙计/跑堂",
+      "personality": ["热心", "腿脚快", "爱八卦", "机灵"],
+      "skills": ["跑腿", "搬运", "招呼客人", "记路"],
+      "appearancePrompt": "中国风像素角色，酒肆伙计，年轻男性，热心腿脚快；青布短褂，腰间毛巾，轻便布鞋；精神利落，动作有跑堂感。",
+      "spawn": { "mode": "near_home", "offset": { "x": 10, "y": 2 } }
+    },
+    {
+      "npcId": "npc_temple_monk",
+      "displayName": "慧远",
+      "homeObjectId": 5,
+      "role": "寺庙老僧",
+      "personality": ["淡薄", "慈悲", "洞察", "平和"],
+      "skills": ["开导", "医理", "抄经", "礼佛"],
+      "appearancePrompt": "中国风像素角色，寺庙老僧，高德淡薄，慈悲；灰白僧袍，手持念珠，眉须微白，清瘦；气质安静。",
+      "spawn": { "mode": "near_home", "offset": { "x": 6, "y": 4 } }
+    },
+    {
+      "npcId": "npc_merchants_husband",
+      "displayName": "邵远舟",
+      "homeObjectId": 5,
+      "role": "行商（借宿寺庙）",
+      "personality": ["圆滑", "谨慎", "会说话", "务实"],
+      "skills": ["贸易", "算账", "谈价", "察言观色"],
+      "appearancePrompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。",
+      "spawn": { "mode": "near_home", "offset": { "x": 10, "y": 6 } }
+    },
+    {
+      "npcId": "npc_merchants_wife",
+      "displayName": "邵婉娘",
+      "homeObjectId": 5,
+      "role": "行商同伴（借宿寺庙）",
+      "personality": ["干练", "警惕", "护货", "冷静"],
+      "skills": ["记账", "验货", "谈价", "收纳"],
+      "appearancePrompt": "中国风像素角色，行商女子30-40岁，干练警惕；束发，便装外披短斗篷，背小包袱（简化），护货气质。",
+      "spawn": { "mode": "near_home", "offset": { "x": 12, "y": 4 } }
+    },
+    {
+      "npcId": "npc_yang_grandpa",
+      "displayName": "杨守仁",
+      "homeObjectId": 3,
+      "role": "杨家老太爷（监护人）",
+      "personality": ["严中带慈", "守旧但讲理", "稳重"],
+      "skills": ["家务", "修补", "照料"],
+      "appearancePrompt": "中国风像素角色，杨家老太爷，老年男性，严中带慈；深色长衫，拄拐或手背在后，白发半束；步态稳。",
+      "spawn": { "mode": "near_home", "offset": { "x": 6, "y": 5 } }
+    },
+    {
+      "npcId": "npc_yangliu",
+      "displayName": "杨柳",
+      "homeObjectId": 3,
+      "role": "少女",
+      "personality": ["天真", "好奇", "善良", "爱提问"],
+      "skills": ["观察", "跑腿", "采集"],
+      "appearancePrompt": "中国风像素角色，少女杨柳，天真美丽好奇；双髻或马尾，浅绿淡黄衣裙，小布包或小饰物；眼神灵动。",
+      "spawn": { "mode": "near_home", "offset": { "x": 10, "y": 3 } }
+    },
+    {
+      "npcId": "npc_hunter",
+      "displayName": "韩猎户",
+      "homeObjectId": 4,
+      "role": "猎人",
+      "personality": ["寡言", "警觉", "讲规矩", "可靠"],
+      "skills": ["狩猎", "追踪", "弓弩", "野外生存"],
+      "appearancePrompt": "中国风像素角色，猎人男子30-40岁，寡言警觉；皮甲护臂，短披风，背弓（简化轮廓），结实；不要血迹。",
+      "spawn": { "mode": "near_home", "offset": { "x": 6, "y": 4 } }
+    },
+    {
+      "npcId": "npc_hunter_wife",
+      "displayName": "韩氏",
+      "homeObjectId": 4,
+      "role": "猎人妻子",
+      "personality": ["温和", "坚韧", "务实"],
+      "skills": ["烹饪", "缝补", "采集", "整理"],
+      "appearancePrompt": "中国风像素角色，猎人妻子30-40岁，温和坚韧；围裙或束袖，发髻，手帕或小篮（简化），居家务实。",
+      "spawn": { "mode": "near_home", "offset": { "x": 10, "y": 5 } }
+    }
+  ]
+}

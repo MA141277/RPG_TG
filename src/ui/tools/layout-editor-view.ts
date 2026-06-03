@@ -1,7 +1,10 @@
 import { globalHudBackgroundOptions } from "../../content/layout-editor-presets";
 import type { AppState } from "../../application/app-shell";
+import { uiLayoutComponentBaseSizeById } from "../../domain/ui-layout";
 import type {
   LayoutBackgroundAssetOption,
+  LayoutEditorTargetId,
+  UiLayout,
   UiLayoutBackgroundMode,
   UiLayoutComponent,
   UiLayoutElement,
@@ -15,57 +18,89 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function getLayoutForEditor(appState: AppState): UiLayout {
+  return appState.layoutEditor.selectedTargetId === "start-screen"
+    ? appState.uiLayouts.startScreen
+    : appState.uiLayouts.globalHud;
+}
+
 function getBackgroundPreviewStyle(component: UiLayoutComponent): string {
   const background = component.background;
   if (background == null) {
     return "";
   }
 
-  const base: string[] = [];
   if (background.mode === "nine-slice") {
-    base.push(
-      `border-style:solid;`,
-      `border-width:${background.slice.top}px ${background.slice.right}px ${background.slice.bottom}px ${background.slice.left}px;`,
-      `border-image-source:url(${background.imageUrl});`,
-      `border-image-slice:${background.slice.top} ${background.slice.right} ${background.slice.bottom} ${background.slice.left} fill;`,
-      `border-image-width:${background.slice.top} ${background.slice.right} ${background.slice.bottom} ${background.slice.left};`
-    );
-  } else {
-    const backgroundSize =
-      background.mode === "contain"
-        ? "contain"
-        : background.mode === "cover"
-          ? "cover"
-          : "100% 100%";
-    base.push(
-      `background-image:url(${background.imageUrl});`,
-      `background-position:center;`,
-      `background-repeat:no-repeat;`,
-      `background-size:${backgroundSize};`
-    );
+    return [
+      "border-style:solid",
+      `border-width:${background.slice.top}px ${background.slice.right}px ${background.slice.bottom}px ${background.slice.left}px`,
+      `border-image-source:url(${background.imageUrl})`,
+      `border-image-slice:${background.slice.top} ${background.slice.right} ${background.slice.bottom} ${background.slice.left} fill`,
+      `border-image-width:${background.slice.top} ${background.slice.right} ${background.slice.bottom} ${background.slice.left}`,
+    ].join(";");
   }
 
-  return base.join("");
+  const backgroundSize =
+    background.mode === "contain"
+      ? "contain"
+      : background.mode === "cover"
+        ? "cover"
+        : "100% 100%";
+
+  return [
+    `background-image:url(${background.imageUrl})`,
+    "background-position:center",
+    "background-repeat:no-repeat",
+    `background-size:${backgroundSize}`,
+  ].join(";");
+}
+
+function getPreviewContentStyle(component: UiLayoutComponent): string {
+  const baseSize = uiLayoutComponentBaseSizeById[component.id];
+  if (baseSize == null) {
+    return "width:100%;height:100%;";
+  }
+
+  const scale = component.rect.width / Math.max(baseSize.width, 1);
+  return [
+    `width:${baseSize.width}px`,
+    `height:${baseSize.height}px`,
+    "transform-origin:top left",
+    `transform:scale(${scale})`,
+  ].join(";");
 }
 
 function renderTargetList(appState: AppState): string {
-  const isSelected = appState.layoutEditor.selectedTargetId === "global-hud";
+  const targets: Array<{ id: LayoutEditorTargetId; label: string }> = [
+    { id: "global-hud", label: appState.uiLayouts.globalHud.label },
+    { id: "start-screen", label: appState.uiLayouts.startScreen.label },
+  ];
+
   return `
     <div class="c-layout-editor__section">
       <h3 class="c-layout-editor__section-title">可编辑界面</h3>
-      <button
-        type="button"
-        class="c-layout-editor__list-button ${isSelected ? "is-selected" : ""}"
-        data-layout-target-id="global-hud"
-      >
-        顶部全局属性栏
-      </button>
+      <div class="c-layout-editor__list">
+        ${targets
+          .map((target) => {
+            const isSelected = appState.layoutEditor.selectedTargetId === target.id;
+            return `
+              <button
+                type="button"
+                class="c-layout-editor__list-button ${isSelected ? "is-selected" : ""}"
+                data-layout-target-id="${target.id}"
+              >
+                ${escapeHtml(target.label)}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
     </div>
   `;
 }
 
 function renderComponentList(appState: AppState): string {
-  const layout = appState.uiLayouts.globalHud;
+  const layout = getLayoutForEditor(appState);
   return `
     <div class="c-layout-editor__section">
       <h3 class="c-layout-editor__section-title">组件列表</h3>
@@ -78,7 +113,7 @@ function renderComponentList(appState: AppState): string {
                 class="c-layout-editor__list-button ${component.id === appState.layoutEditor.selectedComponentId ? "is-selected" : ""}"
                 data-layout-component-select="${component.id}"
               >
-                ${component.label}
+                ${escapeHtml(component.label)}
               </button>
             `
           )
@@ -95,8 +130,8 @@ function renderAssetOptions(
   return options
     .map(
       (option) => `
-        <option value="${option.id}" ${option.id === selectedAssetId ? "selected" : ""}>
-          ${option.label}
+        <option value="${escapeHtml(option.id)}" ${option.id === selectedAssetId ? "selected" : ""}>
+          ${escapeHtml(option.label)}
         </option>
       `
     )
@@ -205,10 +240,7 @@ function renderBackgroundSection(
         <label class="c-layout-editor__field">
           <span>项目图片</span>
           <select data-layout-background-asset data-layout-component-id="${component.id}">
-            ${renderAssetOptions(
-              visibleOptions,
-              selectedAssetId
-            )}
+            ${renderAssetOptions(visibleOptions, selectedAssetId)}
           </select>
         </label>
         <label class="c-layout-editor__field">
@@ -255,7 +287,7 @@ function renderElementList(
                 class="c-layout-editor__list-button ${element.id === appState.layoutEditor.selectedElementId ? "is-selected" : ""}"
                 data-layout-element-select="${component.id}:${element.id}"
               >
-                ${element.label}
+                ${escapeHtml(element.label)}
               </button>
             `
           )
@@ -266,10 +298,11 @@ function renderElementList(
 }
 
 function renderInspector(appState: AppState): string {
+  const layout = getLayoutForEditor(appState);
   const component =
-    appState.uiLayouts.globalHud.components.find(
+    layout.components.find(
       (entry) => entry.id === appState.layoutEditor.selectedComponentId
-    ) ?? appState.uiLayouts.globalHud.components[0] ?? null;
+    ) ?? layout.components[0] ?? null;
   if (component == null) {
     return `
       <aside class="c-layout-editor__sidebar">
@@ -285,7 +318,7 @@ function renderInspector(appState: AppState): string {
     ) ?? null;
 
   return `
-      <aside class="c-layout-editor__sidebar">
+    <aside class="c-layout-editor__sidebar">
       ${renderTargetList(appState)}
       ${renderComponentList(appState)}
       <div class="c-layout-editor__section c-layout-editor__section-actions">
@@ -335,13 +368,22 @@ function renderPreviewComponent(
         top:${component.rect.y}px;
         width:${component.rect.width}px;
         height:${component.rect.height}px;
-        ${getBackgroundPreviewStyle(component)}
       "
       data-layout-component-handle="${component.id}"
       data-layout-component-select="${component.id}"
       title="${escapeHtml(component.label)}"
     >
-      <span class="c-layout-editor-preview__component-label">${component.label}</span>
+      <span class="c-layout-editor-preview__component-label">${escapeHtml(component.label)}</span>
+      <span
+        class="c-layout-editor-preview__resize-handle c-layout-editor-preview__resize-handle--corner"
+        data-layout-component-resize="${component.id}"
+        data-layout-resize-axis="xy"
+        aria-hidden="true"
+      ></span>
+      <span
+        class="c-layout-editor-preview__component-content"
+        style="${getPreviewContentStyle(component)};${getBackgroundPreviewStyle(component)}"
+      >
       ${component.elements
         .map((element) => {
           const elementSelected =
@@ -360,23 +402,24 @@ function renderPreviewComponent(
               data-layout-element-select="${component.id}:${element.id}"
               title="${escapeHtml(element.label)}"
             >
-              <span class="c-layout-editor-preview__element-label">${element.label}</span>
+              <span class="c-layout-editor-preview__element-label">${escapeHtml(element.label)}</span>
             </span>
           `;
         })
         .join("")}
+      </span>
     </button>
   `;
 }
 
 function renderPreview(appState: AppState): string {
-  const layout = appState.uiLayouts.globalHud;
+  const layout = getLayoutForEditor(appState);
   return `
     <section class="c-layout-editor__preview-shell">
       <header class="c-layout-editor__preview-header">
         <div>
           <p class="c-layout-editor__eyebrow">布局预览</p>
-          <h2 class="c-layout-editor__preview-title">${layout.label}</h2>
+          <h2 class="c-layout-editor__preview-title">${escapeHtml(layout.label)}</h2>
         </div>
         <button type="button" class="c-button c-button--ghost" data-action="close-layout-editor">
           关闭编辑器
@@ -406,6 +449,23 @@ export function renderLayoutEditor(appState: AppState): string {
       >
         界面编辑器
       </button>
+    `;
+  }
+
+  if (appState.layoutEditor.selectedTargetId === "start-screen") {
+    return `
+      <div class="c-layout-editor-live-panel">
+        <button
+          type="button"
+          class="c-layout-editor-launch c-layout-editor-launch--open"
+          data-action="close-layout-editor"
+        >
+          关闭编辑器
+        </button>
+        <div class="c-layout-editor-live-panel__body">
+          ${renderInspector(appState)}
+        </div>
+      </div>
     `;
   }
 

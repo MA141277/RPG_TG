@@ -1,0 +1,18 @@
+{
+  "id": "淮西文人",
+  "kind": "character",
+  "title": "淮西文人",
+  "prompt": "淮西文人",
+  "tags": [],
+  "createdAt": "2026-06-01T12:52:30+08:00",
+  "updatedAt": "2026-06-01T12:52:30+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/淮西文人/sheet.png",
+    "idle": "",
+    "preview": "character/淮西文人/preview.png"
+  }
+}

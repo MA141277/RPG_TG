@@ -51,6 +51,22 @@ const {
   tavernHouseModule,
 } = require("../.test-dist/application/house-modules/tavern/tavern-house-module.js");
 const {
+  advanceTavernGambleMeldCountdown,
+  advanceTavernGambleNpcThinking,
+  createTavernLongGambleSession,
+  confirmTavernGamblePlayGroup,
+  createTavernGambleSession,
+  createTavernMahjongDeck,
+  declareTavernGambleMeld,
+  discardForTavernGamble,
+  drawForTavernGamble,
+  passHumanLongHu,
+  pushHumanLongHu,
+  resolveTavernGambleBettingAction,
+  scoreTavernGamblePlayer,
+  toggleTavernGamblePlayTile,
+} = require("../.test-dist/domain/tavern-gambling.js");
+const {
   leaderResidenceHouseModule,
 } = require("../.test-dist/application/house-modules/leader-residence/leader-residence-house-module.js");
 const {
@@ -1969,7 +1985,7 @@ test("tavern drink flow spends 100 gold after confirmation", () => {
   assert.equal(confirmDrink.sessionState?.overlay?.type, "alert");
 });
 
-test("tavern gamble flow returns wager at 1.1x placeholder payout", () => {
+test("tavern gamble flow opens structured mahjong table session", () => {
   const state = createBaseState();
   const enterResult = tavernHouseModule.enter({
     gameState: state,
@@ -1987,23 +2003,662 @@ test("tavern gamble flow returns wager at 1.1x placeholder payout", () => {
     request: { type: "action", actionId: "open-gamble" },
   });
 
-  assert.equal(openGamble.sessionState?.overlay?.type, "gamble");
+  assert.equal(openGamble.sessionState?.overlay?.type, "gamble-choice");
 
-  const settleGamble = tavernHouseModule.dispatch({
+  const selectShortGamble = tavernHouseModule.dispatch({
     gameState: openGamble.gameState,
     characterDefinitions: openGamble.characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
+    sessionState: openGamble.sessionState,
+    request: { type: "action", actionId: "select-gamble-variant:short" },
+  });
+
+  assert.equal(selectShortGamble.sessionState?.overlay?.type, "gamble");
+
+  const startGamble = tavernHouseModule.dispatch({
+    gameState: selectShortGamble.gameState,
+    characterDefinitions: selectShortGamble.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
     sessionState: {
-      ...openGamble.sessionState,
+      ...selectShortGamble.sessionState,
       currentWager: 100,
     },
     request: { type: "action", actionId: "confirm-gamble" },
   });
 
-  const playerCharacter = getPlayerCharacter(settleGamble.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 130);
-  assert.equal(settleGamble.sessionState?.overlay?.type, "alert");
+  const playerCharacter = getPlayerCharacter(startGamble.characterDefinitions);
+  assert.equal(playerCharacter.stats.gold, 120);
+  assert.equal(startGamble.sessionState?.overlay?.type, "gamble-table");
+  assert.equal(startGamble.sessionState?.gambleSession?.phase, "betting");
+  assert.equal(startGamble.sessionState?.gambleSession?.players[0]?.hand.length, 4);
+  assert.equal(startGamble.sessionState?.gambleSession?.wager, 100);
+  assert.equal(startGamble.sessionState?.gambleSession?.currentBet, 20);
+  assert.equal(startGamble.sessionState?.gambleSession?.pot, 30);
+  assert.equal(startGamble.sessionState?.gambleSession?.players[1]?.committed, 10);
+  assert.equal(startGamble.sessionState?.gambleSession?.players[2]?.committed, 20);
+});
+
+test("tavern long gamble starts with personal public tile slots", () => {
+  const state = createBaseState();
+  const enterResult = tavernHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+
+  const openGamble = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-gamble" },
+  });
+
+  const selectLongGamble = tavernHouseModule.dispatch({
+    gameState: openGamble.gameState,
+    characterDefinitions: openGamble.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openGamble.sessionState,
+    request: { type: "action", actionId: "select-gamble-variant:long" },
+  });
+
+  const startGamble = tavernHouseModule.dispatch({
+    gameState: selectLongGamble.gameState,
+    characterDefinitions: selectLongGamble.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...selectLongGamble.sessionState,
+      currentWager: 100,
+    },
+    request: { type: "action", actionId: "confirm-gamble" },
+  });
+
+  const session = startGamble.sessionState?.gambleSession;
+  assert.equal(session?.variant, "long");
+  assert.equal(session?.players[0]?.hand.length, 5);
+  assert.equal(session?.players[0]?.publicTileSlots?.length, 9);
+  assert.deepEqual(
+    session?.players[0]?.publicTileSlots?.map((slot) => slot.tile.kind === "suited" ? `${slot.tile.suit}-${slot.tile.rank}` : slot.tile.kind === "honor" ? slot.tile.honor : slot.tile.flower),
+    session?.players[1]?.publicTileSlots?.map((slot) => slot.tile.kind === "suited" ? `${slot.tile.suit}-${slot.tile.rank}` : slot.tile.kind === "honor" ? slot.tile.honor : slot.tile.flower)
+  );
+  assert.equal(session?.publicTiles.length, 0);
+});
+
+test("tavern long gamble human can choose push hu or pass", () => {
+  const deck = createTavernMahjongDeck();
+  const suited = (suit, rank, count = 1) =>
+    deck.filter((tile) => tile.kind === "suited" && tile.suit === suit && tile.rank === rank).slice(0, count);
+  const honors = (honor, count = 1) =>
+    deck.filter((tile) => tile.kind === "honor" && tile.honor === honor).slice(0, count);
+  const eastTiles = honors("east", 3);
+  const zhongTiles = honors("zhong", 2);
+
+  const base = createTavernLongGambleSession({
+    wager: 100,
+    seed: 99,
+    playerName: "tester",
+  });
+  const human = {
+    ...base.players[0],
+    hand: [suited("wan", 1)[0], suited("wan", 2)[0], suited("wan", 3)[0], suited("tiao", 1)[0], suited("tiao", 2)[0]],
+    publicTileSlots: [
+      suited("tiao", 3)[0],
+      suited("tong", 1)[0],
+      suited("tong", 2)[0],
+      suited("tong", 3)[0],
+      eastTiles[0],
+      eastTiles[1],
+      eastTiles[2],
+      zhongTiles[0],
+      zhongTiles[1],
+    ].map((tile, index) => ({
+      id: `human-public-${index}`,
+      tile: { ...tile, id: `human-public-copy-${index}` },
+      covered: false,
+    })),
+  };
+  const session = {
+    ...base,
+    phase: "draw-discard",
+    pendingDrawTile: null,
+    pendingDiscardsRemaining: 0,
+    wall: [suited("wan", 9)[0], suited("tiao", 9)[0], suited("tong", 9)[0]],
+    players: [human, ...base.players.slice(1)],
+  };
+
+  const drawn = drawForTavernGamble(session);
+  assert.equal(drawn.pendingHumanHu, true);
+
+  const passed = passHumanLongHu(drawn);
+  assert.equal(passed.pendingHumanHu, false);
+  assert.equal(passed.pendingDiscardsRemaining, 3);
+
+  const pushed = pushHumanLongHu(drawn);
+  assert.equal(pushed.phase, "finished");
+  assert.ok(pushed.showdown);
+});
+
+test("tavern long gamble npc no longer auto-plays short groups", () => {
+  const deck = createTavernMahjongDeck();
+  const suited = (suit, rank, count = 1) =>
+    deck.filter((tile) => tile.kind === "suited" && tile.suit === suit && tile.rank === rank).slice(0, count);
+  const honors = (honor, count = 1) =>
+    deck.filter((tile) => tile.kind === "honor" && tile.honor === honor).slice(0, count);
+
+  const base = createTavernLongGambleSession({
+    wager: 100,
+    seed: 109,
+    playerName: "tester",
+  });
+  const npc = {
+    ...base.players[1],
+    hand: [suited("wan", 1)[0], suited("wan", 4)[0], suited("tiao", 6)[0], suited("tong", 9)[0], honors("fa", 1)[0]],
+    publicTileSlots: [
+      suited("wan", 7)[0],
+      suited("wan", 9)[1],
+      suited("tiao", 2)[0],
+      suited("tiao", 8)[0],
+      suited("tong", 1)[1],
+      suited("tong", 5)[0],
+      honors("east", 1)[0],
+      honors("south", 1)[0],
+      honors("bai", 1)[0],
+    ].map((tile, index) => ({
+      id: `npc-public-${index}`,
+      tile: { ...tile, id: `npc-public-copy-${index}` },
+      covered: false,
+    })),
+  };
+  const session = {
+    ...base,
+    phase: "npc-thinking",
+    npcThinkingSeat: npc.seatIndex,
+    npcThinkTicksRemaining: 1,
+    wall: [suited("wan", 2)[1], suited("tiao", 7)[1], suited("tong", 8)[1]],
+    players: [base.players[0], npc, ...base.players.slice(2)],
+  };
+
+  const next = advanceTavernGambleNpcThinking(session);
+  const nextNpc = next.players.find((player) => player.id === npc.id);
+  assert.ok(nextNpc);
+  assert.equal(nextNpc.playedGroups.length, 0);
+  assert.equal(next.publicDiscards.length, 3);
+});
+
+test("tavern gamble scoring rejects scattered all-big tiles without a complete shape", () => {
+  const deck = createTavernMahjongDeck();
+  const tilesByKey = (key, count = 1) => {
+    const [suit, rankText] = key.split("-");
+    const tiles = deck.filter(
+      (candidate) =>
+        candidate.kind === "suited" &&
+        candidate.suit === suit &&
+        candidate.rank === Number(rankText)
+    );
+    assert.equal(tiles.length >= count, true, `missing tile ${key}`);
+    return tiles.slice(0, count);
+  };
+  const tileByKey = (key) => tilesByKey(key)[0];
+  const createPlayer = (tiles) => ({
+    id: "tester",
+    name: "tester",
+    isHuman: true,
+    seatIndex: 0,
+    hand: tiles.slice(0, 4),
+    flowers: [],
+    discarded: [],
+    exposedMelds: [],
+    playedGroups: [],
+    playedOwnTileCount: 0,
+    folded: false,
+    committed: 0,
+    skipsDraw: false,
+  });
+
+  const scattered = [
+    "wan-7",
+    "tiao-7",
+    "wan-8",
+    "tong-8",
+    "tiao-9",
+    "tong-9",
+  ].map(tileByKey);
+  const scatteredScore = scoreTavernGamblePlayer(
+    createPlayer(scattered),
+    scattered.slice(4)
+  );
+  assert.equal(scatteredScore.totalFan, 0);
+  assert.equal(scatteredScore.bestScore.validHu, false);
+
+  const shaped = ["wan-7", "wan-8", "wan-9", "tiao-7", "tiao-8", "tiao-9"].map(
+    tileByKey
+  );
+  const shapedScore = scoreTavernGamblePlayer(createPlayer(shaped), shaped.slice(4));
+  assert.equal(shapedScore.bestScore.mainPattern, "双顺");
+  assert.equal(shapedScore.bestScore.validHu, true);
+  assert.equal(
+    shapedScore.bestScore.detailLines.some((line) => line.includes("全大+2")),
+    true
+  );
+
+  const doubleTriplet = [
+    ...tilesByKey("wan-7", 3),
+    ...tilesByKey("tiao-8", 3),
+  ];
+  const doubleTripletScore = scoreTavernGamblePlayer(
+    createPlayer(doubleTriplet),
+    doubleTriplet.slice(4)
+  );
+  assert.equal(doubleTripletScore.bestScore.mainPattern, "双刻");
+  assert.equal(doubleTripletScore.bestScore.validHu, true);
+  assert.equal(doubleTripletScore.bestScore.totalFan >= 7, true);
+
+  const stepStraight = [
+    ...tilesByKey("wan-1", 1),
+    ...tilesByKey("wan-2", 2),
+    ...tilesByKey("wan-3", 2),
+    ...tilesByKey("wan-4", 1),
+  ];
+  const stepStraightScore = scoreTavernGamblePlayer(
+    createPlayer(stepStraight),
+    stepStraight.slice(4)
+  );
+  assert.equal(stepStraightScore.bestScore.mainPattern, "双顺");
+  assert.equal(
+    stepStraightScore.bestScore.detailLines.some((line) => line.includes("步步高+4")),
+    true
+  );
+
+  const playedFirstPlayer = {
+    ...createPlayer([
+      ...tilesByKey("wan-7", 3),
+      ...tilesByKey("tiao-8", 1),
+    ]),
+    playedGroups: [
+      {
+        id: "played-you-1",
+        kind: "sequence",
+        tileLabels: ["1万", "2万", "3万"],
+        ownTileCount: 3,
+        usesPublicTile: false,
+        fan: 1,
+      },
+      {
+        id: "played-you-2",
+        kind: "sequence",
+        tileLabels: ["4条", "5条", "6条"],
+        ownTileCount: 3,
+        usesPublicTile: false,
+        fan: 1,
+      },
+    ],
+    playedOwnTileCount: 6,
+  };
+  const playedFirstScore = scoreTavernGamblePlayer(playedFirstPlayer, [
+    ...tilesByKey("tiao-8", 2),
+    ...tilesByKey("tiao-9", 3),
+  ]);
+
+  assert.deepEqual(playedFirstScore.bestScore.selectedTiles, [
+    "1万",
+    "2万",
+    "3万",
+    "4条",
+    "5条",
+    "6条",
+  ]);
+  assert.equal(playedFirstScore.bestScore.mainPattern, "双顺");
+  assert.equal(
+    playedFirstScore.bestScore.detailLines.some((line) => line.includes("提前胡+2")),
+    true
+  );
+});
+
+test("tavern gamble played group locks public tiles and still requires discards", () => {
+  const deck = createTavernMahjongDeck();
+  const takeTiles = (key, count = 1) => {
+    const [suit, rankText] = key.split("-");
+    const tiles = deck.filter(
+      (candidate) =>
+        candidate.kind === "suited" &&
+        candidate.suit === suit &&
+        candidate.rank === Number(rankText)
+    );
+    assert.equal(tiles.length >= count, true, `missing tile ${key}`);
+    return tiles.slice(0, count);
+  };
+  const [wan1] = takeTiles("wan-1");
+  const [wan2] = takeTiles("wan-2");
+  const [wan3] = takeTiles("wan-3");
+  const [tong5] = takeTiles("tong-5");
+  const [tong8] = takeTiles("tong-8");
+  const [tiao9] = takeTiles("tiao-9");
+  const [wan9] = takeTiles("wan-9");
+  const [draw1] = takeTiles("tiao-1");
+  const [draw2] = takeTiles("tiao-2");
+  const [draw3] = takeTiles("tong-1");
+  const [draw4] = takeTiles("tong-2");
+
+  const base = createTavernGambleSession({
+    wager: 100,
+    seed: 77,
+    playerName: "tester",
+  });
+  const human = {
+    ...base.players[0],
+    hand: [wan1, wan2, tong5, tong8, tiao9, wan9],
+  };
+  const session = {
+    ...base,
+    phase: "draw-discard",
+    pendingDrawTile: wan9,
+    pendingDiscardsRemaining: 0,
+    publicTiles: [wan3],
+    wall: [draw1, draw2, draw3, draw4],
+    players: [human, ...base.players.slice(1)],
+    selectedPlayTileIds: [],
+    spentPublicTileIds: [],
+  };
+
+  const selected = [wan1.id, wan2.id, wan3.id].reduce(
+    (nextSession, tileId) => toggleTavernGamblePlayTile(nextSession, tileId),
+    session
+  );
+  const selectedDespiteGlobalSpent = [wan1.id, wan2.id, wan3.id].reduce(
+    (nextSession, tileId) => toggleTavernGamblePlayTile(nextSession, tileId),
+    { ...session, spentPublicTileIds: [wan3.id] }
+  );
+
+  assert.deepEqual(selectedDespiteGlobalSpent.selectedPlayTileIds, [
+    wan1.id,
+    wan2.id,
+    wan3.id,
+  ]);
+
+  const played = confirmTavernGamblePlayGroup(selected);
+  const playedHuman = played.players[0];
+
+  assert.deepEqual(played.spentPublicTileIds, []);
+  assert.deepEqual(playedHuman.spentPublicTileIds, [wan3.id]);
+  assert.equal(playedHuman.playedOwnTileCount, 2);
+  assert.equal(playedHuman.playedGroups.length, 1);
+  assert.equal(playedHuman.hand.length, 6);
+  assert.equal(played.pendingDiscardsRemaining, 2);
+
+  const afterFirstDiscard = discardForTavernGamble(played, playedHuman.hand[0].id);
+  const afterSecondDiscardHuman = afterFirstDiscard.players[0];
+  const afterSecondDiscard = discardForTavernGamble(
+    afterFirstDiscard,
+    afterSecondDiscardHuman.hand[0].id
+  );
+
+  assert.equal(afterSecondDiscard.players[0].hand.length, 4);
+  assert.equal(afterSecondDiscard.pendingDrawTile, null);
+
+  const waitingHuman = {
+    ...human,
+    hand: [wan1, wan2, tong5, tong8, tiao9, wan9],
+    playedGroups: [
+      {
+        id: "played-you-1",
+        kind: "sequence",
+        tileLabels: ["1万", "2万", "3万"],
+        ownTileCount: 3,
+        usesPublicTile: false,
+        fan: 1,
+      },
+    ],
+    playedOwnTileCount: 3,
+  };
+  const secondGroupSession = {
+    ...session,
+    players: [waitingHuman, ...base.players.slice(1)],
+    selectedPlayTileIds: [],
+    spentPublicTileIds: [],
+  };
+  const secondSelected = [wan1.id, wan2.id, wan3.id].reduce(
+    (nextSession, tileId) => toggleTavernGamblePlayTile(nextSession, tileId),
+    secondGroupSession
+  );
+  const afterSecondGroup = confirmTavernGamblePlayGroup(secondSelected);
+
+  assert.equal(afterSecondGroup.players[0].playedGroups.length, 2);
+  assert.equal(afterSecondGroup.pendingDiscardsRemaining, 0);
+  assert.notEqual(afterSecondGroup.phase, "draw-discard");
+});
+
+test("tavern gamble opens staged discard response windows", () => {
+  const deck = createTavernMahjongDeck();
+  const takeTiles = (key, count = 1) => {
+    const [suit, rankText] = key.split("-");
+    const tiles = deck.filter(
+      (candidate) =>
+        candidate.kind === "suited" &&
+        candidate.suit === suit &&
+        candidate.rank === Number(rankText)
+    );
+    assert.equal(tiles.length >= count, true, `missing tile ${key}`);
+    return tiles.slice(0, count);
+  };
+  const [wan1] = takeTiles("wan-1");
+  const [wan2] = takeTiles("wan-2");
+  const wan3Tiles = takeTiles("wan-3", 4);
+  const [tong5] = takeTiles("tong-5");
+  const [wan8] = takeTiles("wan-8");
+  const [tiao9] = takeTiles("tiao-9");
+
+  const base = createTavernGambleSession({
+    wager: 100,
+    seed: 91,
+    playerName: "tester",
+  });
+  const human = {
+    ...base.players[0],
+    hand: [wan1, wan2, wan3Tiles[1], wan3Tiles[2]],
+  };
+  const npc = {
+    ...base.players[1],
+    hand: [wan3Tiles[0], tong5],
+  };
+  const session = {
+    ...base,
+    phase: "npc-thinking",
+    npcThinkingSeat: npc.seatIndex,
+    npcThinkTicksRemaining: 1,
+    wall: [wan8, tiao9],
+    publicTiles: [],
+    publicDiscards: [],
+    players: [human, npc, ...base.players.slice(2)],
+  };
+
+  const response = advanceTavernGambleNpcThinking(session);
+  assert.equal(response.phase, "meld-window");
+  assert.equal(response.meldCountdownTicks, 3);
+  assert.equal(response.meldWindow?.stage, "chi-pong-kong");
+  assert.equal(response.pendingMelds.some((option) => option.kind === "chi"), true);
+  assert.equal(response.pendingMelds.some((option) => option.kind === "pong"), true);
+
+  const pongWindow = advanceTavernGambleMeldCountdown(
+    advanceTavernGambleMeldCountdown(
+      advanceTavernGambleMeldCountdown(response)
+    )
+  );
+  assert.equal(pongWindow.phase, "meld-window");
+  assert.equal(pongWindow.meldWindow?.stage, "pong-kong");
+  assert.equal(pongWindow.pendingMelds.some((option) => option.kind === "chi"), false);
+  assert.equal(pongWindow.pendingMelds.some((option) => option.kind === "pong"), true);
+});
+
+test("tavern gamble discard responses can use public tiles with hand tiles", () => {
+  const deck = createTavernMahjongDeck();
+  const takeTiles = (key, count = 1) => {
+    const [suit, rankText] = key.split("-");
+    const tiles = deck.filter(
+      (candidate) =>
+        candidate.kind === "suited" &&
+        candidate.suit === suit &&
+        candidate.rank === Number(rankText)
+    );
+    assert.equal(tiles.length >= count, true, `missing tile ${key}`);
+    return tiles.slice(0, count);
+  };
+  const [wan6] = takeTiles("wan-6");
+  const [wan7] = takeTiles("wan-7");
+  const wan8Tiles = takeTiles("wan-8", 4);
+  const [tong5] = takeTiles("tong-5");
+  const [tiao9] = takeTiles("tiao-9");
+  const base = createTavernGambleSession({
+    wager: 100,
+    seed: 93,
+    playerName: "tester",
+  });
+  const human = {
+    ...base.players[0],
+    hand: [wan6, wan8Tiles[1], tong5, tiao9],
+  };
+  const npc = {
+    ...base.players[1],
+    hand: [tong5],
+    skipsDraw: true,
+  };
+  const session = {
+    ...base,
+    phase: "npc-thinking",
+    npcThinkingSeat: npc.seatIndex,
+    npcThinkTicksRemaining: 1,
+    wall: [takeTiles("tong-1")[0], takeTiles("tong-2")[0]],
+    publicTiles: [wan7, wan8Tiles[2], wan8Tiles[3]],
+    publicDiscards: [wan8Tiles[0]],
+    players: [human, npc, ...base.players.slice(2)],
+  };
+
+  const response = advanceTavernGambleNpcThinking(session);
+  assert.equal(response.phase, "meld-window");
+  assert.equal(response.pendingMelds.some((option) => option.kind === "chi"), true);
+  assert.equal(response.pendingMelds.some((option) => option.kind === "pong"), true);
+  assert.equal(response.pendingMelds.some((option) => option.kind === "public-kong"), true);
+
+  const kongOption = response.pendingMelds.find((option) => option.kind === "public-kong");
+  assert.ok(kongOption);
+  const declared = declareTavernGambleMeld(response, kongOption.id);
+  const declaredHuman = declared.players[0];
+  assert.equal(declaredHuman.exposedMelds.some((meld) => meld.kind === "public-kong"), true);
+  assert.equal(declaredHuman.spentPublicTileIds.includes(wan8Tiles[2].id), true);
+  assert.equal(declaredHuman.spentPublicTileIds.includes(wan8Tiles[3].id), true);
+});
+
+test("tavern gamble npc cannot auto-play more than two groups", () => {
+  const deck = createTavernMahjongDeck();
+  const takeTiles = (key, count = 1) => {
+    const [suit, rankText] = key.split("-");
+    const tiles = deck.filter(
+      (candidate) =>
+        candidate.kind === "suited" &&
+        candidate.suit === suit &&
+        candidate.rank === Number(rankText)
+    );
+    assert.equal(tiles.length >= count, true, `missing tile ${key}`);
+    return tiles.slice(0, count);
+  };
+  const base = createTavernGambleSession({
+    wager: 100,
+    seed: 92,
+    playerName: "tester",
+  });
+  const npc = {
+    ...base.players[1],
+    hand: [
+      takeTiles("wan-1")[0],
+      takeTiles("wan-2")[0],
+      takeTiles("wan-3")[0],
+      takeTiles("tiao-1")[0],
+    ],
+  };
+  const session = {
+    ...base,
+    phase: "npc-thinking",
+    npcThinkingSeat: npc.seatIndex,
+    npcThinkTicksRemaining: 1,
+    wall: [
+      takeTiles("tiao-2")[0],
+      takeTiles("tiao-3")[0],
+      takeTiles("tong-1")[0],
+      takeTiles("tong-2")[0],
+      takeTiles("tong-3")[0],
+      takeTiles("wan-4")[0],
+      takeTiles("wan-5")[0],
+      takeTiles("wan-6")[0],
+    ],
+    publicTiles: [
+      takeTiles("tong-4")[0],
+      takeTiles("tong-5")[0],
+      takeTiles("tong-6")[0],
+    ],
+    players: [base.players[0], npc, ...base.players.slice(2)],
+  };
+
+  const next = advanceTavernGambleNpcThinking(session);
+  const nextNpc = next.players.find((player) => player.id === npc.id);
+  assert.ok(nextNpc);
+  assert.equal(nextNpc.playedGroups.length <= 2, true);
+});
+
+test("tavern gamble completed player skips later betting and draw actions", () => {
+  const base = createTavernGambleSession({
+    wager: 100,
+    seed: 81,
+    playerName: "tester",
+  });
+  const completedGroup = {
+    id: "played-you-1",
+    kind: "sequence",
+    tileLabels: ["1万", "2万", "3万"],
+    ownTileCount: 3,
+    usesPublicTile: false,
+    fan: 1,
+  };
+  const completedHuman = {
+    ...base.players[0],
+    playedGroups: [
+      completedGroup,
+      {
+        ...completedGroup,
+        id: "played-you-2",
+        tileLabels: ["4万", "5万", "6万"],
+      },
+    ],
+    playedOwnTileCount: 6,
+  };
+
+  const bettingSkipped = resolveTavernGambleBettingAction(
+    {
+      ...base,
+      phase: "betting",
+      players: [completedHuman, ...base.players.slice(1)],
+    },
+    "check"
+  );
+
+  assert.notEqual(bettingSkipped.phase, "betting");
+  assert.equal(bettingSkipped.players[0].playedGroups.length, 2);
+
+  const drawSkipped = drawForTavernGamble({
+    ...base,
+    phase: "draw-discard",
+    pendingDrawTile: null,
+    pendingDiscardsRemaining: 0,
+    players: [completedHuman, ...base.players.slice(1)],
+  });
+
+  assert.notEqual(drawSkipped.phase, "draw-discard");
+  assert.equal(drawSkipped.pendingDiscardsRemaining, 0);
+  assert.equal(drawSkipped.players[0].playedGroups.length, 2);
 });
 
 test("tavern work flow accepts dishwashing qte and submits with confirmation", () => {

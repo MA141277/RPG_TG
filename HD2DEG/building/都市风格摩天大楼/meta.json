@@ -1,0 +1,29 @@
+{
+  "id": "都市风格摩天大楼",
+  "kind": "building",
+  "title": "都市风格摩天大楼",
+  "prompt": "都市风格摩天大楼",
+  "tags": [
+    "house"
+  ],
+  "widthTiles": 18,
+  "drawRoad": true,
+  "createdAt": "2026-04-26T20:52:54+08:00",
+  "updatedAt": "2026-04-26T20:52:54+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 134,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/都市风格摩天大楼/front.png",
+    "side": "building/都市风格摩天大楼/side.png",
+    "top": "building/都市风格摩天大楼/top.png",
+    "preview": "building/都市风格摩天大楼/preview.png",
+    "previewProcessed": "building/都市风格摩天大楼/preview-processed.png"
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "kind": "interior",
+  "id": "default_scene__interior__house_3",
+  "title": "default_scene__interior__house_3",
+  "savedAt": 1778069466746,
+  "nextBuildingId": 1,
+  "tilemapBaseDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAC9JREFUOE9jFJRQ/M9AJmAc1UxayI0GGGnhxTAiA4yBgQFnljRV4mU4fe8zzmAEAMPZF1fA4T1XAAAAAElFTkSuQmCC",
+  "tilemapDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAC9JREFUOE9jFJRQ/M9AJmAc1UxayI0GGGnhxTAiA4yBgQFnljRV4mU4fe8zzmAEAMPZF1fA4T1XAAAAAElFTkSuQmCC",
+  "objects": [],
+  "roadNetwork": null,
+  "spawn": {
+    "x": 7.0308980809237855,
+    "y": 15.95187446196931
+  },
+  "bounds": {
+    "minX": 0,
+    "minY": 0,
+    "maxX": 14,
+    "maxY": 15,
+    "width": 15,
+    "height": 16
+  },
+  "entities": {
+    "npcs": []
+  },
+  "extensions": {
+    "sceneKind": "interior",
+    "parentSceneId": "default_scene",
+    "hostObjectId": 3,
+    "interiorLayout": {
+      "version": 1,
+      "kind": "house-room",
+      "width": 15,
+      "height": 15,
+      "door": {
+        "side": "south",
+        "x": 7,
+        "y": 15,
+        "entryX": 7,
+        "entryY": 14
+      },
+      "spawnX": 7.5,
+      "spawnY": 14.5,
+      "facilities": [
+        {
+          "id": "bed",
+          "x": 1,
+          "y": 2,
+          "w": 3,
+          "d": 2,
+          "h": 1.15,
+          "block": true,
+          "top": "#5f7289",
+          "sideColor": "#2b3847"
+        },
+        {
+          "id": "table",
+          "x": 10,
+          "y": 4,
+          "w": 2,
+          "d": 2,
+          "h": 0.85,
+          "block": true,
+          "top": "#9d744f",
+          "sideColor": "#4d3421"
+        },
+        {
+          "id": "cabinet",
+          "x": 11,
+          "y": 11,
+          "w": 2,
+          "d": 1,
+          "h": 1.45,
+          "block": true,
+          "top": "#7b5f49",
+          "sideColor": "#382618"
+        },
+        {
+          "id": "lamp",
+          "x": 7,
+          "y": 7,
+          "w": 1,
+          "d": 1,
+          "h": 1.55,
+          "block": false,
+          "top": "#ffd96b",
+          "sideColor": "#735c25"
+        }
+      ]
+    },
+    "returnWorldX": -185.76247204270175,
+    "returnWorldY": -15.80491883784407
+  },
+  "sceneMeta": {
+    "kind": "interior",
+    "parentSceneId": "default_scene",
+    "hostObjectId": 3,
+    "interiorLayout": {
+      "version": 1,
+      "kind": "house-room",
+      "width": 15,
+      "height": 15,
+      "door": {
+        "side": "south",
+        "x": 7,
+        "y": 15,
+        "entryX": 7,
+        "entryY": 14
+      },
+      "spawnX": 7.5,
+      "spawnY": 14.5,
+      "facilities": [
+        {
+          "id": "bed",
+          "x": 1,
+          "y": 2,
+          "w": 3,
+          "d": 2,
+          "h": 1.15,
+          "block": true,
+          "top": "#5f7289",
+          "sideColor": "#2b3847"
+        },
+        {
+          "id": "table",
+          "x": 10,
+          "y": 4,
+          "w": 2,
+          "d": 2,
+          "h": 0.85,
+          "block": true,
+          "top": "#9d744f",
+          "sideColor": "#4d3421"
+        },
+        {
+          "id": "cabinet",
+          "x": 11,
+          "y": 11,
+          "w": 2,
+          "d": 1,
+          "h": 1.45,
+          "block": true,
+          "top": "#7b5f49",
+          "sideColor": "#382618"
+        },
+        {
+          "id": "lamp",
+          "x": 7,
+          "y": 7,
+          "w": 1,
+          "d": 1,
+          "h": 1.55,
+          "block": false,
+          "top": "#ffd96b",
+          "sideColor": "#735c25"
+        }
+      ]
+    },
+    "returnWorldX": -185.76247204270175,
+    "returnWorldY": -15.80491883784407
+  },
+  "updatedAt": "2026-05-06T20:11:06+08:00"
+}

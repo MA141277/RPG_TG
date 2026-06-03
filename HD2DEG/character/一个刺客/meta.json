@@ -1,0 +1,18 @@
+{
+  "id": "一个刺客",
+  "kind": "character",
+  "title": "一个刺客",
+  "prompt": "一个刺客",
+  "tags": [],
+  "createdAt": "2026-05-08T10:11:59+08:00",
+  "updatedAt": "2026-05-08T10:11:59+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/一个刺客/sheet.png",
+    "idle": "",
+    "preview": "character/一个刺客/preview.png"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "水井",
+  "kind": "building",
+  "title": "水井",
+  "prompt": "水井",
+  "tags": [],
+  "createdAt": "2026-04-24T10:37:03+08:00",
+  "updatedAt": "2026-04-24T10:37:03+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/水井/front.png",
+    "side": "building/水井/side.png",
+    "top": "building/水井/top.png",
+    "preview": "building/水井/preview.png",
+    "previewProcessed": "building/水井/preview-processed.png"
+  }
+}

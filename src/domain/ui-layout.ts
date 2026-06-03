@@ -39,8 +39,10 @@ export type UiLayoutComponent = {
   elements: UiLayoutElement[];
 };
 
-export type GlobalHudLayout = {
-  id: "global-hud";
+export type LayoutEditorTargetId = "global-hud" | "start-screen";
+
+export type UiLayout = {
+  id: LayoutEditorTargetId;
   label: string;
   screenSize: {
     width: number;
@@ -49,7 +51,13 @@ export type GlobalHudLayout = {
   components: UiLayoutComponent[];
 };
 
-export type LayoutEditorTargetId = "global-hud";
+export type GlobalHudLayout = UiLayout & {
+  id: "global-hud";
+};
+
+export type StartScreenLayout = UiLayout & {
+  id: "start-screen";
+};
 
 export type LayoutEditorState = {
   isOpen: boolean;
@@ -63,4 +71,17 @@ export type LayoutBackgroundAssetOption = {
   id: string;
   label: string;
   imageUrl: string;
+};
+
+export const uiLayoutComponentBaseSizeById: Record<
+  string,
+  { width: number; height: number }
+> = {
+  "portrait-frame": { width: 178, height: 214 },
+  "status-board": { width: 764, height: 219 },
+  "task-panel": { width: 248, height: 494 },
+  "main-menu-content": { width: 320, height: 220 },
+  "main-menu-subtitle": { width: 420, height: 36 },
+  "start-button": { width: 136, height: 136 },
+  "continue-button": { width: 136, height: 136 },
 };

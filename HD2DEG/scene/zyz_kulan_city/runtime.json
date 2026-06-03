@@ -1,0 +1,1531 @@
+{
+  "entities": {
+    "npcs": [
+      {
+        "npcId": "npc.kulan.player_shadow",
+        "name": "朱元璋",
+        "homeObjectId": 0,
+        "sheetCharacterId": "红巾军小兵",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": -1.1883804259110409,
+        "wy": -0.1665892052670085,
+        "initialWx": 0,
+        "initialWy": 10,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916761,
+          "summary": "",
+          "blocks": []
+        },
+        "currentTask": null,
+        "recentEvents": [],
+        "relationships": {
+          "npc.kulan.temple.1": {
+            "affection": 0,
+            "trust": 0,
+            "tension": 0,
+            "lastTalkDayKey": "",
+            "lastTalkMinute": -1
+          }
+        },
+        "current": {
+          "action": "wander",
+          "targetWx": -5.549083857350254,
+          "targetWy": -0.7778800875546938
+        },
+        "meta": {
+          "role": "player-anchor",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军小兵"
+        },
+        "anchors": {
+          "home": "house:null",
+          "work": "house:null:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "player-anchor",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": []
+        },
+        "activityProfile": {
+          "primary": [
+            "stand_guard",
+            "receive_guest"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井",
+            "粮价"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.leader_residence.1",
+        "name": "将领府邸管事",
+        "homeObjectId": 1,
+        "sheetCharacterId": "红巾军将领",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0.031627427376722105,
+        "wy": -1.1995831383599598,
+        "initialWx": -4,
+        "initialWy": -90,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 44
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916762,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 363,
+              "endMin": 1263,
+              "locationRef": "zyz.kulan_leader_residence:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_leader_residence:front",
+          "state": "travel_to_task",
+          "startedMinute": 716,
+          "blockStartMin": 363,
+          "blockEndMin": 1263,
+          "performed": false,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": -118,
+          "facilityType": "",
+          "facilityObjectId": null
+        },
+        "recentEvents": [],
+        "relationships": {},
+        "current": {
+          "action": "travel_to_task",
+          "targetWx": 3.111111111111111,
+          "targetWy": -118
+        },
+        "meta": {
+          "role": "将领府邸",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军将领"
+        },
+        "anchors": {
+          "home": "house:1",
+          "work": "zyz.kulan_leader_residence:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "将领府邸",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_leader_residence:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.temple.1",
+        "name": "寺庙管事",
+        "homeObjectId": 2,
+        "sheetCharacterId": "npc_temple_monk",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": 82,
+        "initialWy": -50,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 49,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "寺庙管事在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916763,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 354,
+              "endMin": 1254,
+              "locationRef": "zyz.kulan_temple:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_temple:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 354,
+          "blockEndMin": 1254,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "寺庙管事在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {
+          "npc.kulan.player_shadow": {
+            "affection": 0,
+            "trust": 0,
+            "tension": 0,
+            "lastTalkDayKey": "",
+            "lastTalkMinute": -1
+          }
+        },
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "寺庙",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，寺庙老僧，高德淡薄，慈悲；灰白僧袍，手持念珠，眉须微白，清瘦；气质安静。"
+        },
+        "anchors": {
+          "home": "house:2",
+          "work": "zyz.kulan_temple:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "寺庙",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_temple:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.home.1",
+        "name": "自宅管事",
+        "homeObjectId": 3,
+        "sheetCharacterId": "红巾军小兵",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": 38,
+        "initialWy": 88,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "自宅管事在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916763,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 365,
+              "endMin": 1265,
+              "locationRef": "zyz.home_001:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.home_001:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 365,
+          "blockEndMin": 1265,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "自宅管事在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "自宅",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军小兵"
+        },
+        "anchors": {
+          "home": "house:3",
+          "work": "zyz.home_001:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "自宅",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.home_001:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.keep.1",
+        "name": "帅府管事",
+        "homeObjectId": 4,
+        "sheetCharacterId": "红巾军将领",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": -62,
+        "initialWy": -54,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "帅府管事在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916764,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 366,
+              "endMin": 1266,
+              "locationRef": "zyz.kulan_keep:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_keep:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 366,
+          "blockEndMin": 1266,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "帅府管事在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "帅府",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军将领"
+        },
+        "anchors": {
+          "home": "house:4",
+          "work": "zyz.kulan_keep:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "帅府",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_keep:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.keep.2",
+        "name": "帅府随从",
+        "homeObjectId": 4,
+        "sheetCharacterId": "红巾军将领",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": -54,
+        "initialWy": -54,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "帅府随从在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916765,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 358,
+              "endMin": 1258,
+              "locationRef": "zyz.kulan_keep:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_keep:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 358,
+          "blockEndMin": 1258,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "帅府随从在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "帅府",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "红巾军将领"
+        },
+        "anchors": {
+          "home": "house:4",
+          "work": "zyz.kulan_keep:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "帅府",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_keep:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.tea_house.1",
+        "name": "茶馆管事",
+        "homeObjectId": 5,
+        "sheetCharacterId": "npc_inn_bosslady",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": -62,
+        "initialWy": 56,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "茶馆管事在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916765,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 363,
+              "endMin": 1263,
+              "locationRef": "zyz.kulan_tea_house:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_tea_house:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 363,
+          "blockEndMin": 1263,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "茶馆管事在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "茶馆",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，酒肆老板娘掌柜，中年女性，精明爽利但亲和；盘发带发簪，深红与墨绿对襟襦裙，围腰，腰间钥匙串；手势利落。"
+        },
+        "anchors": {
+          "home": "house:5",
+          "work": "zyz.kulan_tea_house:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "茶馆",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_tea_house:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.market.1",
+        "name": "货栈管事",
+        "homeObjectId": 6,
+        "sheetCharacterId": "npc_merchants_husband",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": -62,
+        "initialWy": -6,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 44
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "货栈管事在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916766,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 359,
+              "endMin": 1259,
+              "locationRef": "zyz.kulan_market:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_market:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 359,
+          "blockEndMin": 1259,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "货栈管事在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "货栈",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。"
+        },
+        "anchors": {
+          "home": "house:6",
+          "work": "zyz.kulan_market:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "货栈",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_market:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.grain_shop.1",
+        "name": "粮铺管事",
+        "homeObjectId": 7,
+        "sheetCharacterId": "npc_merchants_husband",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": 54,
+        "initialWy": -6,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "粮铺管事在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916766,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 352,
+              "endMin": 1252,
+              "locationRef": "zyz.kulan_grain_shop:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_grain_shop:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 352,
+          "blockEndMin": 1252,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "粮铺管事在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "粮铺",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。"
+        },
+        "anchors": {
+          "home": "house:7",
+          "work": "zyz.kulan_grain_shop:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "粮铺",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_grain_shop:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.medicine_house.1",
+        "name": "药铺管事",
+        "homeObjectId": 8,
+        "sheetCharacterId": "npc_merchants_husband",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": -46,
+        "initialWy": 88,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "药铺管事在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916767,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 362,
+              "endMin": 1262,
+              "locationRef": "zyz.kulan_medicine_house:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_medicine_house:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 362,
+          "blockEndMin": 1262,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "药铺管事在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "药铺",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。"
+        },
+        "anchors": {
+          "home": "house:8",
+          "work": "zyz.kulan_medicine_house:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "药铺",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_medicine_house:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      },
+      {
+        "npcId": "npc.kulan.inn.1",
+        "name": "客栈管事",
+        "homeObjectId": 9,
+        "sheetCharacterId": "npc_inn_bosslady",
+        "renderScale": 0.82,
+        "heightWorld": 4,
+        "wx": 0,
+        "wy": 0,
+        "initialWx": 54,
+        "initialWy": 56,
+        "needs": {
+          "hunger": 20,
+          "energy": 85,
+          "comfort": 70,
+          "social": 50,
+          "curiosity": 45
+        },
+        "inventory": [],
+        "equipment": [],
+        "memory": [
+          "客栈管事在standby上花了一些时间。"
+        ],
+        "_initialMemory": [],
+        "emotions": {
+          "mood": 0,
+          "stress": 0,
+          "hope": 0,
+          "frustration": 0
+        },
+        "dayPlan": {
+          "dayKey": "day-1",
+          "dayIndex": 1,
+          "source": "template",
+          "model": "",
+          "generatedAt": 1780294916767,
+          "summary": "",
+          "blocks": [
+            {
+              "activityType": "standby",
+              "startMin": 364,
+              "endMin": 1264,
+              "locationRef": "zyz.kulan_inn:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house",
+              "taskId": "day-1:0:standby"
+            }
+          ]
+        },
+        "currentTask": {
+          "dayKey": "day-1",
+          "taskId": "day-1:0:standby",
+          "activityType": "standby",
+          "locationRef": "zyz.kulan_inn:front",
+          "state": "perform_activity",
+          "startedMinute": 716,
+          "blockStartMin": 364,
+          "blockEndMin": 1264,
+          "performed": true,
+          "useFacility": "",
+          "facilityUsePlanned": false,
+          "anchorX": 3.111111111111111,
+          "anchorY": 4.222222222222222,
+          "facilityType": "",
+          "facilityObjectId": null,
+          "performedAtMinute": 716
+        },
+        "recentEvents": [
+          {
+            "type": "activity",
+            "activityType": "standby",
+            "dayKey": "day-1",
+            "minuteOfDay": 716,
+            "summary": "客栈管事在standby上花了一些时间。"
+          }
+        ],
+        "relationships": {},
+        "current": {
+          "action": "idle",
+          "targetWx": 0,
+          "targetWy": 0
+        },
+        "meta": {
+          "role": "客栈",
+          "personality": [],
+          "skills": [],
+          "appearancePrompt": "中国风像素角色，酒肆老板娘掌柜，中年女性，精明爽利但亲和；盘发带发簪，深红与墨绿对襟襦裙，围腰，腰间钥匙串；手势利落。"
+        },
+        "anchors": {
+          "home": "house:9",
+          "work": "zyz.kulan_inn:front",
+          "social": [
+            "town-square"
+          ],
+          "boundary": []
+        },
+        "dailyPattern": {
+          "archetype": "客栈",
+          "wakeMin": 360,
+          "sleepMin": 1260,
+          "defaultBlocks": [
+            {
+              "activityType": "standby",
+              "startMin": 360,
+              "endMin": 1260,
+              "locationRef": "zyz.kulan_inn:front",
+              "mode": "soft_do",
+              "wanderRadius": 4,
+              "arrivalSlackMin": 8,
+              "useFacility": "",
+              "note": "stand near mapped house"
+            }
+          ]
+        },
+        "activityProfile": {
+          "primary": [
+            "standby"
+          ],
+          "secondary": [
+            "chat"
+          ],
+          "facilityUse": []
+        },
+        "socialProfile": {
+          "closeTo": [],
+          "tradeWith": [],
+          "chatTopics": [
+            "军情",
+            "市井"
+          ]
+        },
+        "emotionBias": {
+          "baselineMood": 0,
+          "stressors": [],
+          "comforts": []
+        },
+        "storyHooks": []
+      }
+    ]
+  },
+  "extensions": {
+    "sceneKind": "world",
+    "zhuYuanzhangCityScene": {
+      "version": 1,
+      "cityId": "city.kulan",
+      "generatedFrom": "city-house-cards",
+      "usesOnlyLibraryAssets": true
+    },
+    "npcSim": {
+      "version": 2,
+      "dayIndex": 1,
+      "lastTimePercent": 49.74229999999989,
+      "lastMinuteOfDay": 716,
+      "lastDayKey": "day-1",
+      "lastConversationAt": {},
+      "playerConversationAt": {}
+    }
+  },
+  "updatedAt": "2026-06-01T14:21:57+08:00"
+}

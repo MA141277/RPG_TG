@@ -1,0 +1,587 @@
+{
+  "schemaVersion": 1,
+  "npcs": [
+    {
+      "npcId": "npc.dadu.leader_residence.1",
+      "anchors": {
+        "home": "house:1",
+        "work": "zyz.dadu_leader_residence:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "将领府邸",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_leader_residence:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.temple.1",
+      "anchors": {
+        "home": "house:2",
+        "work": "zyz.dadu_temple:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "寺庙",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_temple:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.home.1",
+      "anchors": {
+        "home": "house:3",
+        "work": "zyz.home_dadu:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "自宅",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.home_dadu:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.keep.1",
+      "anchors": {
+        "home": "house:4",
+        "work": "zyz.dadu_keep:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "帅府",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_keep:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.keep.2",
+      "anchors": {
+        "home": "house:4",
+        "work": "zyz.dadu_keep:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "帅府",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_keep:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.tea_house.1",
+      "anchors": {
+        "home": "house:5",
+        "work": "zyz.dadu_tea_house:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "茶馆",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_tea_house:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.market.1",
+      "anchors": {
+        "home": "house:6",
+        "work": "zyz.dadu_market:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "货栈",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_market:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.grain_shop.1",
+      "anchors": {
+        "home": "house:7",
+        "work": "zyz.dadu_grain_shop:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "粮铺",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_grain_shop:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.medicine_house.1",
+      "anchors": {
+        "home": "house:8",
+        "work": "zyz.dadu_medicine_house:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "药铺",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_medicine_house:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.dadu.inn.1",
+      "anchors": {
+        "home": "house:9",
+        "work": "zyz.dadu_inn:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "客栈",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.dadu_inn:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    }
+  ],
+  "locationRefs": {
+    "town-square": {
+      "wx": 0,
+      "wy": 0,
+      "radius": 14
+    },
+    "zyz.dadu_leader_residence:front": {
+      "wx": 0,
+      "wy": -92,
+      "radius": 8,
+      "houseId": "house.dadu.leader_residence",
+      "sceneObjectId": "zyz.dadu_leader_residence"
+    },
+    "zyz.dadu_temple:front": {
+      "wx": 86,
+      "wy": -52,
+      "radius": 8,
+      "houseId": "house.dadu.temple",
+      "sceneObjectId": "zyz.dadu_temple"
+    },
+    "zyz.home_dadu:front": {
+      "wx": 42,
+      "wy": 86,
+      "radius": 8,
+      "houseId": "home.dadu",
+      "sceneObjectId": "zyz.home_dadu"
+    },
+    "zyz.dadu_keep:front": {
+      "wx": -58,
+      "wy": -56,
+      "radius": 8,
+      "houseId": "house.dadu.keep",
+      "sceneObjectId": "zyz.dadu_keep"
+    },
+    "zyz.dadu_tea_house:front": {
+      "wx": -58,
+      "wy": 54,
+      "radius": 8,
+      "houseId": "house.dadu.tea_house",
+      "sceneObjectId": "zyz.dadu_tea_house"
+    },
+    "zyz.dadu_market:front": {
+      "wx": -58,
+      "wy": -8,
+      "radius": 8,
+      "houseId": "house.dadu.market",
+      "sceneObjectId": "zyz.dadu_market"
+    },
+    "zyz.dadu_grain_shop:front": {
+      "wx": 58,
+      "wy": -8,
+      "radius": 8,
+      "houseId": "house.dadu.grain_shop",
+      "sceneObjectId": "zyz.dadu_grain_shop"
+    },
+    "zyz.dadu_medicine_house:front": {
+      "wx": -42,
+      "wy": 86,
+      "radius": 8,
+      "houseId": "house.dadu.medicine_house",
+      "sceneObjectId": "zyz.dadu_medicine_house"
+    },
+    "zyz.dadu_inn:front": {
+      "wx": 58,
+      "wy": 54,
+      "radius": 8,
+      "houseId": "house.dadu.inn",
+      "sceneObjectId": "zyz.dadu_inn"
+    }
+  },
+  "activityResolvers": {},
+  "facilities": {}
+}

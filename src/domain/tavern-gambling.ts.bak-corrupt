@@ -1,0 +1,3027 @@
+export type TavernMahjongSuit = "wan" | "tiao" | "tong";
+export type TavernMahjongHonor =
+  | "east"
+  | "south"
+  | "west"
+  | "north"
+  | "zhong"
+  | "fa"
+  | "bai";
+export type TavernMahjongFlower =
+  | "spring"
+  | "summer"
+  | "autumn"
+  | "winter"
+  | "plum"
+  | "orchid"
+  | "bamboo"
+  | "chrysanthemum";
+
+export type TavernMahjongTile =
+  | { id: string; kind: "suited"; suit: TavernMahjongSuit; rank: number; copy: number }
+  | { id: string; kind: "honor"; honor: TavernMahjongHonor; copy: number }
+  | { id: string; kind: "flower"; flower: TavernMahjongFlower };
+
+export type TavernGambleVariant = "short" | "long";
+export type TavernGambleLimitMode = "no-limit" | "pot-limit" | "fixed-limit";
+export type TavernGambleStreet = "pre-flop" | "flop" | "turn" | "river" | "showdown";
+export type TavernGamblePhase =
+  | "betting"
+  | "meld-window"
+  | "draw-discard"
+  | "draw-bet"
+  | "npc-thinking"
+  | "showdown"
+  | "finished";
+export type TavernGambleActionKind = "check" | "call" | "raise" | "fold";
+export type TavernGambleMeldKind = "chi" | "pong" | "public-kong" | "concealed-kong";
+export type TavernGamblePlayedGroupKind = "sequence" | "triplet";
+export type TavernGambleMeldWindowStage = "chi-pong-kong" | "pong-kong" | "kong";
+
+export type TavernGamblePublicTileSlot = {
+  id: string;
+  tile: TavernMahjongTile;
+  covered: boolean;
+};
+
+export type TavernGambleMeldWindow = {
+  source: "public" | "draw" | "discard";
+  stage: TavernGambleMeldWindowStage;
+  discardTileId: string | null;
+  resumeNpcAfterSeat: number | null;
+};
+
+export type TavernGamblePlayer = {
+  id: string;
+  name: string;
+  isHuman: boolean;
+  seatIndex: number;
+  hand: TavernMahjongTile[];
+  flowers: TavernMahjongTile[];
+  discarded: TavernMahjongTile[];
+  exposedMelds: TavernGambleMeld[];
+  playedGroups: TavernGamblePlayedGroup[];
+  playedOwnTileCount: number;
+  spentPublicTileIds: string[];
+  publicTileSlots?: TavernGamblePublicTileSlot[];
+  longTileOrder?: string[];
+  folded: boolean;
+  committed: number;
+  skipsDraw: boolean;
+};
+
+const TAVERN_GAMBLE_PLAYED_GROUP_TARGET = 2;
+
+export type TavernGambleMeld = {
+  kind: TavernGambleMeldKind;
+  tileKey: string;
+  tileLabel: string;
+  fan: number;
+};
+
+export type TavernGamblePlayedGroup = {
+  id: string;
+  kind: TavernGamblePlayedGroupKind;
+  tileLabels: string[];
+  ownTileCount: number;
+  usesPublicTile: boolean;
+  fan: number;
+};
+
+export type TavernGambleScore = {
+  totalFan: number;
+  mainFan: number;
+  mainPattern: string;
+  selectedTiles: string[];
+  purityRank: number;
+  groupRank: number;
+  pairRank: number;
+  handContribution: number;
+  flowerCount: number;
+  kongCount: number;
+  validHu: boolean;
+  detailLines: string[];
+};
+
+export type TavernGambleShowdownResult = {
+  playerId: string;
+  playerName: string;
+  bestScore: TavernGambleScore;
+  totalFan: number;
+  rankKey: number[];
+  folded: boolean;
+};
+
+export type TavernGambleSession = {
+  id: string;
+  variant: TavernGambleVariant;
+  limitMode: TavernGambleLimitMode;
+  street: TavernGambleStreet;
+  phase: TavernGamblePhase;
+  dealerSeat: number;
+  smallBlindSeat: number;
+  bigBlindSeat: number;
+  actingSeat: number;
+  currentBet: number;
+  minRaise: number;
+  pot: number;
+  wager: number;
+  wall: TavernMahjongTile[];
+  deadWall: TavernMahjongTile[];
+  publicTiles: TavernMahjongTile[];
+  publicDiscards: TavernMahjongTile[];
+  unclaimableDiscardTileIds?: string[];
+  players: TavernGamblePlayer[];
+  pendingDrawTile: TavernMahjongTile | null;
+  pendingDiscardsRemaining: number;
+  selectedPlayTileIds: string[];
+  spentPublicTileIds: string[];
+  pendingMelds: TavernGambleMeldOption[];
+  meldWindow: TavernGambleMeldWindow | null;
+  resolvedDiscardResponseTileIds: string[];
+  meldCountdownTicks: number;
+  npcThinkingSeat: number | null;
+  npcThinkTicksRemaining: number;
+  bettingRound: number;
+  pendingHumanHu?: boolean;
+  longPublicRevealTicks?: number;
+  roundLog: string[];
+  showdown: TavernGambleShowdownResult[] | null;
+};
+
+export type TavernGambleMeldOption = {
+  id: string;
+  kind: TavernGambleMeldKind;
+  tileKey: string;
+  tileLabel: string;
+  fan: number;
+  raiseAmount: number;
+  claimTileIds?: string[];
+};
+
+export const TAVERN_GAMBLE_PLAYER_COUNT = 4;
+export const TAVERN_GAMBLE_HAND_SIZE = 4;
+export const TAVERN_GAMBLE_DRAW_DISCARD_COUNT = 2;
+export const TAVERN_GAMBLE_MELD_RESPONSE_SECONDS = 5;
+export const TAVERN_GAMBLE_DISCARD_RESPONSE_SECONDS = 3;
+export const TAVERN_GAMBLE_PUBLIC_TILE_COUNT = 9;
+export const TAVERN_GAMBLE_SHOWDOWN_SIZE = 6;
+export const TAVERN_LONG_GAMBLE_HAND_SIZE = 5;
+export const TAVERN_LONG_GAMBLE_PUBLIC_TILE_COUNT = 9;
+const TAVERN_LONG_GAMBLE_REVEAL_TICKS = 1;
+export const TAVERN_LONG_GAMBLE_DRAW_DISCARD_COUNT = 3;
+export const TAVERN_LONG_GAMBLE_MELD_RESPONSE_SECONDS = 10;
+export const TAVERN_GAMBLE_SMALL_BLIND = 10;
+export const TAVERN_GAMBLE_BIG_BLIND = 20;
+
+const suitLabels: Record<TavernMahjongSuit, string> = {
+  wan: "涓?,
+  tiao: "鏉?,
+  tong: "绛?,
+};
+
+const honorLabels: Record<TavernMahjongHonor, string> = {
+  east: "涓?,
+  south: "鍗?,
+  west: "瑗?,
+  north: "鍖?,
+  zhong: "涓?,
+  fa: "鍙?,
+  bai: "鐧?,
+};
+
+const flowerLabels: Record<TavernMahjongFlower, string> = {
+  spring: "鏄?,
+  summer: "澶?,
+  autumn: "绉?,
+  winter: "鍐?,
+  plum: "姊?,
+  orchid: "鍏?,
+  bamboo: "绔?,
+  chrysanthemum: "鑿?,
+};
+
+const dragonHonors = new Set<TavernMahjongHonor>(["zhong", "fa", "bai"]);
+const windHonors = new Set<TavernMahjongHonor>(["east", "south", "west", "north"]);
+
+export function createTavernMahjongDeck(): TavernMahjongTile[] {
+  const tiles: TavernMahjongTile[] = [];
+  for (const suit of Object.keys(suitLabels) as TavernMahjongSuit[]) {
+    for (let rank = 1; rank <= 9; rank += 1) {
+      for (let copy = 1; copy <= 4; copy += 1) {
+        tiles.push({ id: `${suit}-${rank}-${copy}`, kind: "suited", suit, rank, copy });
+      }
+    }
+  }
+  for (const honor of Object.keys(honorLabels) as TavernMahjongHonor[]) {
+    for (let copy = 1; copy <= 4; copy += 1) {
+      tiles.push({ id: `${honor}-${copy}`, kind: "honor", honor, copy });
+    }
+  }
+  for (const flower of Object.keys(flowerLabels) as TavernMahjongFlower[]) {
+    tiles.push({ id: `flower-${flower}`, kind: "flower", flower });
+  }
+  return tiles;
+}
+
+export function shuffleTavernMahjongDeck(deck: TavernMahjongTile[], seed: number): TavernMahjongTile[] {
+  const result = [...deck];
+  let cursor = seed <= 0 ? 1 : seed;
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    cursor = (cursor * 1664525 + 1013904223) >>> 0;
+    const swapIndex = cursor % (index + 1);
+    const current = result[index];
+    const swap = result[swapIndex];
+    if (current != null && swap != null) {
+      result[index] = swap;
+      result[swapIndex] = current;
+    }
+  }
+  return result;
+}
+
+export function getTavernMahjongTileLabel(tile: TavernMahjongTile): string {
+  if (tile.kind === "suited") {
+    return `${tile.rank}${suitLabels[tile.suit]}`;
+  }
+  if (tile.kind === "honor") {
+    return honorLabels[tile.honor];
+  }
+  return flowerLabels[tile.flower];
+}
+
+export function getTavernMahjongTileKey(tile: TavernMahjongTile): string {
+  if (tile.kind === "suited") {
+    return `${tile.suit}-${tile.rank}`;
+  }
+  if (tile.kind === "honor") {
+    return tile.honor;
+  }
+  return tile.flower;
+}
+
+export function getTavernGambleStreetLabel(street: TavernGambleStreet): string {
+  return getStreetLabel(street);
+}
+
+export function getTavernGamblePhaseLabel(phase: TavernGamblePhase): string {
+  switch (phase) {
+    case "betting":
+      return "涓嬫敞";
+    case "meld-window":
+      return "纰版潬";
+    case "draw-discard":
+      return "鎽告墦";
+    case "draw-bet":
+      return "鎽稿悗涓嬫敞";
+    case "npc-thinking":
+      return "NPC鎬濊€?;
+    case "showdown":
+      return "鎽婄墝";
+    case "finished":
+      return "缁撶畻";
+  }
+}
+
+export function getMeldKindLabel(kind: TavernGambleMeldKind): string {
+  switch (kind) {
+    case "chi":
+      return "鍚?;
+    case "pong":
+      return "纰?;
+    case "public-kong":
+      return "鏄庢潬";
+    case "concealed-kong":
+      return "鏆楁潬";
+  }
+}
+
+export function getStreetLabel(street: TavernGambleStreet): string {
+  switch (street) {
+    case "pre-flop":
+      return "缈荤墝鍓?;
+    case "flop":
+      return "缈荤墝";
+    case "turn":
+      return "杞墝";
+    case "river":
+      return "娌崇墝";
+    case "showdown":
+      return "鎽婄墝";
+  }
+}
+
+export function createTavernGambleSession(input: {
+  wager: number;
+  seed: number;
+  playerName: string;
+  limitMode?: TavernGambleLimitMode;
+}): TavernGambleSession {
+  const shuffled = shuffleTavernMahjongDeck(createTavernMahjongDeck(), input.seed);
+  let deadWall = shuffled.slice(-16);
+  const wall = shuffled.slice(0, -16);
+  const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+    id,
+    name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌",
+    isHuman: index === 0,
+    seatIndex: index,
+    hand: [],
+    flowers: [],
+    discarded: [],
+    exposedMelds: [],
+    playedGroups: [],
+    playedOwnTileCount: 0,
+    spentPublicTileIds: [],
+    longTileOrder: [],
+    folded: false,
+    committed: 0,
+    skipsDraw: false,
+  }));
+
+  let dealWall = wall;
+  const dealtPlayers = players.map((player) => {
+    const handResult = drawNonFlowerTiles(dealWall, deadWall, TAVERN_GAMBLE_HAND_SIZE);
+    dealWall = handResult.wall;
+    deadWall = handResult.deadWall;
+    return { ...player, hand: handResult.tiles, flowers: handResult.flowers };
+  });
+
+  const smallBlind = Math.min(TAVERN_GAMBLE_SMALL_BLIND, input.wager);
+  const bigBlind = Math.min(TAVERN_GAMBLE_BIG_BLIND, input.wager);
+  dealtPlayers[1] = { ...dealtPlayers[1]!, committed: smallBlind };
+  dealtPlayers[2] = { ...dealtPlayers[2]!, committed: bigBlind };
+
+  return {
+    id: `tavern-gamble-${input.seed}`,
+    variant: "short",
+    limitMode: input.limitMode ?? "no-limit",
+    street: "pre-flop",
+    phase: "betting",
+    dealerSeat: 0,
+    smallBlindSeat: 1,
+    bigBlindSeat: 2,
+    actingSeat: 3,
+    currentBet: bigBlind,
+    minRaise: bigBlind,
+    pot: smallBlind + bigBlind,
+    wager: input.wager,
+    wall: dealWall,
+    deadWall,
+    publicTiles: [],
+    publicDiscards: [],
+    unclaimableDiscardTileIds: [],
+    players: dealtPlayers,
+    pendingDrawTile: null,
+    pendingHumanHu: false,
+    pendingDiscardsRemaining: 0,
+    selectedPlayTileIds: [],
+    spentPublicTileIds: [],
+    pendingMelds: [],
+    meldWindow: null,
+    resolvedDiscardResponseTileIds: [],
+    meldCountdownTicks: 0,
+    npcThinkingSeat: null,
+    npcThinkTicksRemaining: 0,
+    bettingRound: 1,
+    longPublicRevealTicks: 0,
+    roundLog: ["瀹氫笅鎸夐挳浣嶏紝灏忕洸娉ㄤ笌澶х洸娉ㄥ凡缁忓叆姹犮€?, "姣忓悕鐜╁鍙?4 寮犳殫鐗岋紝鍏叡鐗屾寜 5 / 2 / 2 缈诲紑銆?],
+    showdown: null,
+  };
+}
+
+export function createTavernLongGambleSession(input: {
+  wager: number;
+  seed: number;
+  playerName: string;
+  limitMode?: TavernGambleLimitMode;
+}): TavernGambleSession {
+  const shuffled = shuffleTavernMahjongDeck(createTavernMahjongDeck(), input.seed);
+  let deadWall = shuffled.slice(-16);
+  const wall = shuffled.slice(0, -16);
+  const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+    id,
+    name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌",
+    isHuman: index === 0,
+    seatIndex: index,
+    hand: [],
+    flowers: [],
+    discarded: [],
+    exposedMelds: [],
+    playedGroups: [],
+    playedOwnTileCount: 0,
+    spentPublicTileIds: [],
+    publicTileSlots: [],
+    longTileOrder: [],
+    folded: false,
+    committed: 0,
+    skipsDraw: false,
+  }));
+
+  let dealWall = wall;
+  const sharedPublicResult = drawNonFlowerTiles(dealWall, deadWall, TAVERN_LONG_GAMBLE_PUBLIC_TILE_COUNT);
+  dealWall = sharedPublicResult.wall;
+  deadWall = sharedPublicResult.deadWall;
+  const dealtPlayers = players.map((player) => {
+    const handResult = drawNonFlowerTiles(dealWall, deadWall, TAVERN_LONG_GAMBLE_HAND_SIZE);
+    dealWall = handResult.wall;
+    deadWall = handResult.deadWall;
+    return {
+      ...player,
+      hand: handResult.tiles,
+      flowers: [...handResult.flowers],
+      publicTileSlots: sharedPublicResult.tiles.map((tile, slotIndex) => ({
+        id: `${player.id}-public-${slotIndex + 1}`,
+        tile: { ...tile, id: `${player.id}-public-copy-${slotIndex + 1}-${tile.id}` },
+        covered: false,
+      })),
+      longTileOrder: [
+        ...handResult.tiles.map((tile) => tile.id),
+        ...sharedPublicResult.tiles.map((tile, slotIndex) => `${player.id}-public-copy-${slotIndex + 1}-${tile.id}`),
+      ],
+    };
+  });
+
+  const smallBlind = Math.min(TAVERN_GAMBLE_SMALL_BLIND, input.wager);
+  const bigBlind = Math.min(TAVERN_GAMBLE_BIG_BLIND, input.wager);
+  dealtPlayers[1] = { ...dealtPlayers[1]!, committed: smallBlind };
+  dealtPlayers[2] = { ...dealtPlayers[2]!, committed: bigBlind };
+
+  return {
+    id: `tavern-long-gamble-${input.seed}`,
+    variant: "long",
+    limitMode: input.limitMode ?? "no-limit",
+    street: "pre-flop",
+    phase: "betting",
+    dealerSeat: 0,
+    smallBlindSeat: 1,
+    bigBlindSeat: 2,
+    actingSeat: 3,
+    currentBet: bigBlind,
+    minRaise: bigBlind,
+    pot: smallBlind + bigBlind,
+    wager: input.wager,
+    wall: dealWall,
+    deadWall,
+    publicTiles: sharedPublicResult.tiles,
+    publicDiscards: [],
+    unclaimableDiscardTileIds: [],
+    players: dealtPlayers,
+    pendingDrawTile: null,
+    pendingDiscardsRemaining: 0,
+    selectedPlayTileIds: [],
+    spentPublicTileIds: [],
+    pendingMelds: [],
+    meldWindow: null,
+    resolvedDiscardResponseTileIds: [],
+    meldCountdownTicks: 0,
+    npcThinkingSeat: null,
+    npcThinkTicksRemaining: 0,
+    bettingRound: 1,
+    longPublicRevealTicks: 0,
+    roundLog: [
+      "??????? 5 ????????? 9 ????????????????????",
+      "???????? 3 ? 3??????????????????????????????????",
+    ],
+    showdown: null,
+  };
+}
+
+export function resolveTavernGambleBettingAction(session: TavernGambleSession, action: TavernGambleActionKind): TavernGambleSession {
+  if (session.phase !== "betting" && session.phase !== "draw-bet") {
+    return session;
+  }
+  const player = getHumanPlayer(session);
+  if (hasCompletedPlayedGroups(player)) {
+    const skipLog = "浣犲凡鎵撳嚭涓ょ粍椤?鍒伙紝鏈眬涓嶅啀鍙備笌琛屽姩锛岀瓑寰呯粨绠椼€?;
+    return session.phase === "draw-bet"
+      ? startNpcThinking({ ...session, pendingDrawTile: null, pendingDiscardsRemaining: 0 }, skipLog)
+      : advanceAfterBetting(session, skipLog);
+  }
+  if (session.phase === "draw-bet") {
+    return resolveHumanDrawBettingAction(session, player, action);
+  }
+  if (player.folded) {
+    return advanceAfterBetting(session, "浣犲凡缁忓純鐗屻€?);
+  }
+  if (action === "fold") {
+    return advanceAfterBetting(updatePlayer(session, player.id, { folded: true }), "浣犲純鐗屻€?);
+  }
+  const callAmount = Math.max(0, session.currentBet - player.committed);
+  if (action === "raise") {
+    const raiseAmount = session.minRaise;
+    const commitAmount = getAffordableCommit(session, player, callAmount + raiseAmount);
+    const nextCommitted = player.committed + commitAmount;
+    const raisedSession = updatePlayer(session, player.id, { committed: nextCommitted });
+    return advanceAfterBetting({ ...raisedSession, currentBet: nextCommitted, pot: session.pot + commitAmount }, `浣犲姞娉ㄥ埌 ${nextCommitted} 鏂囥€俙);
+  }
+  if (action === "call") {
+    const commitAmount = getAffordableCommit(session, player, callAmount);
+    const calledSession = updatePlayer(session, player.id, { committed: player.committed + commitAmount });
+    return advanceAfterBetting({ ...calledSession, pot: session.pot + commitAmount }, commitAmount === 0 ? "浣犺鐗屻€? : `浣犺窡娉?${commitAmount} 鏂囥€俙);
+  }
+  if (callAmount > 0) {
+    const commitAmount = getAffordableCommit(session, player, callAmount);
+    const calledSession = updatePlayer(session, player.id, { committed: player.committed + commitAmount });
+    return advanceAfterBetting({ ...calledSession, pot: session.pot + commitAmount }, `褰撳墠涓嶈兘鍏嶈垂璁╃墝锛屾敼涓鸿窡娉?${commitAmount} 鏂囥€俙);
+  }
+  return advanceAfterBetting(session, "浣犺鐗屻€?);
+}
+
+function resolveHumanDrawBettingAction(
+  session: TavernGambleSession,
+  player: TavernGamblePlayer,
+  action: TavernGambleActionKind
+): TavernGambleSession {
+  if (player.folded) {
+    return startNpcThinking({ ...session, pendingDrawTile: null, pendingDiscardsRemaining: 0 }, "浣犲凡缁忓純鐗屻€?);
+  }
+  if (action === "fold") {
+    return startNpcThinking(
+      {
+        ...updatePlayer(session, player.id, { folded: true }),
+        pendingDrawTile: null,
+        pendingDiscardsRemaining: 0,
+      },
+      "浣犲純鐗岋紝鏈疆涓嶅啀寮冪墝銆?
+    );
+  }
+
+  const callAmount = Math.max(0, session.currentBet - player.committed);
+  if (action === "raise") {
+    const raiseAmount = session.minRaise;
+    const commitAmount = getAffordableCommit(session, player, callAmount + raiseAmount);
+    const nextCommitted = player.committed + commitAmount;
+    const raisedSession = updatePlayer(session, player.id, { committed: nextCommitted });
+    return startNpcThinking(
+      {
+        ...raisedSession,
+        currentBet: nextCommitted,
+        pot: session.pot + commitAmount,
+      },
+      `浣犲姞娉ㄥ埌 ${nextCommitted} 鏂囷紝鏈疆鎽稿悗琛屽姩缁撴潫銆俙
+    );
+  }
+
+  if (action === "call" || callAmount > 0) {
+    const commitAmount = getAffordableCommit(session, player, callAmount);
+    const calledSession = updatePlayer(session, player.id, { committed: player.committed + commitAmount });
+    return startNpcThinking(
+      {
+        ...calledSession,
+        pot: session.pot + commitAmount,
+      },
+      callAmount === 0 ? "浣犻€夋嫨璺熺墝锛屾湰杞懜鍚庤鍔ㄧ粨鏉熴€? : `浣犺窡娉?${callAmount} 鏂囷紝鏈疆鎽稿悗琛屽姩缁撴潫銆俙
+    );
+  }
+
+  return startNpcThinking(session, "浣犺鐗岋紝鏈疆鎽稿悗琛屽姩缁撴潫銆?);
+}
+
+export function skipTavernGambleMeld(session: TavernGambleSession): TavernGambleSession {
+  if (session.phase !== "meld-window") {
+    return session;
+  }
+  if (session.meldWindow?.source === "discard") {
+    return resumeAfterDiscardResponse({
+      ...session,
+      pendingMelds: [],
+      meldWindow: null,
+      meldCountdownTicks: 0,
+    });
+  }
+  const player = getHumanPlayer(session);
+  if (hasCompletedPlayedGroups(player)) {
+    return startNpcThinking(session, "浣犲凡鎵撳嚭涓ょ粍椤?鍒伙紝鏈眬涓嶅啀鍙備笌琛屽姩锛岀瓑寰呯粨绠椼€?);
+  }
+  if (hasPlayableGroup(player, session)) {
+    return {
+      ...session,
+      phase: "draw-discard",
+      pendingMelds: [],
+      meldWindow: null,
+      meldCountdownTicks: 0,
+      roundLog: [...session.roundLog, "娌℃湁澹版槑鏉狅紝鍙户缁墦鍑洪『/鍒汇€?],
+    };
+  }
+  return enterPostDrawDiscard(session, "娌℃湁澹版槑鏉狅紝涔熸病鏈夊彲鎵撳嚭鐨勯『/鍒伙紝璇峰純 2 寮犮€?);
+}
+
+export function declareTavernGambleMeld(session: TavernGambleSession, optionId: string): TavernGambleSession {
+  if (session.phase !== "meld-window") {
+    return session;
+  }
+  const option = session.pendingMelds.find((candidate) => candidate.id === optionId);
+  if (option == null) {
+    return session;
+  }
+  const player = getHumanPlayer(session);
+  if (hasCompletedPlayedGroups(player)) {
+    return startNpcThinking(session, "浣犲凡鎵撳嚭涓ょ粍椤?鍒伙紝鏈眬涓嶅啀鍙備笌琛屽姩锛岀瓑寰呯粨绠椼€?);
+  }
+  if (session.meldWindow?.source === "discard") {
+    return declareDiscardResponseMeld(session, player, option);
+  }
+  const meld: TavernGambleMeld = {
+    kind: option.kind,
+    tileKey: option.tileKey,
+    tileLabel: option.tileLabel,
+    fan: option.fan,
+  };
+  const commitAmount = getAffordableCommit(session, player, option.raiseAmount);
+  const nextCommitted = player.committed + commitAmount;
+  const withMeld = updatePlayer(session, player.id, {
+    exposedMelds: [...player.exposedMelds, meld],
+    committed: nextCommitted,
+    skipsDraw: option.kind === "pong",
+  });
+  const withRaise =
+    commitAmount > 0
+      ? {
+          ...withMeld,
+          currentBet: Math.max(withMeld.currentBet, nextCommitted),
+          minRaise: Math.max(withMeld.minRaise, commitAmount),
+          pot: withMeld.pot + commitAmount,
+        }
+      : withMeld;
+  const log =
+    option.kind === "pong"
+      ? `浣犵鍑?${option.tileLabel}锛屾湰杞斁寮冩懜鐗屻€俙
+      : `浣犲０鏄?{getMeldKindLabel(option.kind)} ${option.tileLabel}锛屾彁鍓嶅姞娉?${option.raiseAmount} 鏂囥€俙;
+  return enterPostDrawDiscard(withRaise, log);
+}
+
+function declareDiscardResponseMeld(
+  session: TavernGambleSession,
+  player: TavernGamblePlayer,
+  option: TavernGambleMeldOption
+): TavernGambleSession {
+  const discardTileId = session.meldWindow?.discardTileId;
+  const discardTile = session.publicDiscards.find((tile) => tile.id === discardTileId) ?? null;
+  const claimTileIds = option.claimTileIds ?? [];
+  const claimTiles = getClaimTiles(player, session, claimTileIds);
+  if (discardTile == null) {
+    return session;
+  }
+  const selectedTiles = [...claimTiles.ownTiles, ...claimTiles.publicTiles, discardTile];
+  const groupKind = resolvePlayableGroupKind(selectedTiles);
+  const isValidChi = option.kind === "chi" && groupKind === "sequence" && selectedTiles.length === 3;
+  const isValidPong = option.kind === "pong" && selectedTiles.length === 3 && groupKind === "triplet";
+  const isValidKong =
+    option.kind === "public-kong" &&
+    selectedTiles.length === 4 &&
+    selectedTiles.every((tile) => getTavernMahjongTileKey(tile) === getTavernMahjongTileKey(discardTile));
+  if (!isValidChi && !isValidPong && !isValidKong) {
+    return session;
+  }
+  const drawn = drawNonFlowerTiles(session.wall, session.deadWall, claimTiles.ownTiles.length);
+  const nextExposedMelds =
+    option.kind === "chi"
+      ? player.exposedMelds
+      : [
+          ...player.exposedMelds,
+          {
+            kind: option.kind,
+            tileKey: option.tileKey,
+            tileLabel: option.tileLabel,
+            fan: option.fan,
+          },
+        ];
+  const nextPlayedGroups =
+    option.kind !== "chi"
+      ? player.playedGroups
+      : [
+          ...player.playedGroups,
+          {
+            id: `played-${player.id}-${player.playedGroups.length + 1}`,
+            kind: "sequence" as const,
+            tileLabels: selectedTiles.map(getTavernMahjongTileLabel),
+            ownTileCount: claimTiles.ownTiles.length,
+            usesPublicTile: true,
+            fan: 0,
+          },
+        ];
+  const nextPlayer = {
+    ...player,
+    hand: [
+      ...player.hand.filter((tile) => !claimTiles.ownTiles.some((ownTile) => ownTile.id === tile.id)),
+      ...drawn.tiles,
+    ],
+    flowers: [...player.flowers, ...drawn.flowers],
+    exposedMelds: nextExposedMelds,
+    playedGroups: nextPlayedGroups,
+    playedOwnTileCount:
+      option.kind === "chi"
+        ? player.playedOwnTileCount + claimTiles.ownTiles.length
+        : player.playedOwnTileCount,
+    spentPublicTileIds: [
+      ...getPlayerSpentPublicTileIds(player),
+      ...claimTiles.publicTiles.map((tile) => tile.id),
+    ],
+    skipsDraw: option.kind === "pong",
+  };
+  const nextPlayerWithCovered = coverPublicSlots(
+    nextPlayer,
+    claimTiles.publicTiles.map((tile) => tile.id)
+  );
+  const withClaim: TavernGambleSession = {
+    ...updatePlayer(session, player.id, nextPlayerWithCovered),
+    wall: drawn.wall,
+    deadWall: drawn.deadWall,
+    publicDiscards: removeTileById(session.publicDiscards, discardTile.id),
+    resolvedDiscardResponseTileIds: [...session.resolvedDiscardResponseTileIds, discardTile.id],
+    pendingDrawTile: discardTile,
+    pendingMelds: [],
+    meldWindow: null,
+    meldCountdownTicks: 0,
+    selectedPlayTileIds: [],
+    roundLog: [
+      ...session.roundLog,
+      `浣?{getMeldKindLabel(option.kind)} ${selectedTiles.map(getTavernMahjongTileLabel).join("銆?)}銆俙,
+    ],
+  };
+  if (hasCompletedPlayedGroups(nextPlayerWithCovered)) {
+    return startNpcThinking(
+      {
+        ...withClaim,
+        pendingDrawTile: null,
+        pendingDiscardsRemaining: 0,
+        selectedPlayTileIds: [],
+      },
+      "浣犲凡鎵撳嚭涓ょ粍椤?鍒伙紝鏈眬鍚庣画琛屽姩璺宠繃锛岀瓑寰呯粨绠椼€?
+    );
+  }
+  if (option.kind === "chi" && hasPlayableGroup(nextPlayerWithCovered, withClaim)) {
+    return withClaim;
+  }
+  return enterDiscardMode(withClaim, 1, "响应碰/吃后请按传统规则弃 1 张。");
+}
+
+export function drawForTavernGamble(session: TavernGambleSession): TavernGambleSession {
+  if (session.phase !== "draw-discard" || session.pendingDrawTile != null) {
+    return session;
+  }
+  const player = getHumanPlayer(session);
+  if (hasCompletedPlayedGroups(player)) {
+    return startNpcThinking(session, "浣犲凡鎵撳嚭涓ょ粍椤?鍒伙紝鏈眬涓嶅啀鍙備笌琛屽姩锛岀瓑寰呯粨绠椼€?);
+  }
+  if (player.skipsDraw) {
+    return startNpcThinking(updatePlayer(session, player.id, { skipsDraw: false }), "浣犳湰杞凡缁忕鐗岋紝璺宠繃鎽告墦銆?);
+  }
+  const drawn = drawNonFlowerTiles(session.wall, session.deadWall, getGambleDrawDiscardCount(session));
+  const lastDrawnTile = drawn.tiles[drawn.tiles.length - 1];
+  if (lastDrawnTile == null) {
+    return session;
+  }
+  const nextPlayer = { ...player, hand: [...player.hand, ...drawn.tiles], flowers: [...player.flowers, ...drawn.flowers] };
+  const withDrawn = {
+    ...updatePlayer(session, player.id, nextPlayer),
+    wall: drawn.wall,
+    deadWall: drawn.deadWall,
+    pendingDrawTile: lastDrawnTile,
+    pendingDiscardsRemaining: 0,
+    selectedPlayTileIds: [],
+    roundLog: [
+      ...session.roundLog,
+      `浣犳懜鍒?${drawn.tiles.map(getTavernMahjongTileLabel).join("銆?)}銆俙,
+    ],
+  };
+  if (canHumanLongHu(withDrawn)) {
+    return {
+      ...withDrawn,
+      pendingHumanHu: true,
+      roundLog: [...withDrawn.roundLog, "?????????????????"],
+    };
+  }
+  const pendingMelds = getAvailableKongs(nextPlayer, withDrawn);
+  if (pendingMelds.length > 0) {
+    return {
+      ...withDrawn,
+      phase: "meld-window",
+      pendingMelds,
+      meldWindow: {
+        source: "draw",
+        stage: "kong",
+        discardTileId: null,
+        resumeNpcAfterSeat: null,
+      },
+      meldCountdownTicks: getGambleMeldResponseSeconds(session),
+    };
+  }
+  if (isLongGamble(withDrawn)) {
+    return enterPostDrawDiscard(withDrawn, "闀跨墝鎽?3 寮犲悗锛岃浠庢殫鐗屾垨鑷繁鐨勬槑鐗屾Ы寮?3 寮犮€?);
+  }
+  if (!hasPlayableGroup(nextPlayer, withDrawn)) {
+    return enterPostDrawDiscard(withDrawn, "鎽稿悗娌℃湁鍙墦鍑虹殑椤?鍒伙紝璇峰純 2 寮犮€?);
+  }
+  return {
+    ...withDrawn,
+    roundLog: [...withDrawn.roundLog, "鎽稿悗褰㈡垚椤?鍒伙紝鍙粠鎵嬬墝鍜屽叕鍏辩墝绉诲叆鍑虹墝妲芥墦鍑恒€?],
+  };
+}
+
+export function toggleTavernGamblePlayTile(session: TavernGambleSession, tileId: string): TavernGambleSession {
+  if (session.phase !== "draw-discard" || session.pendingDrawTile == null) {
+    return session;
+  }
+  const player = getHumanPlayer(session);
+  if (getPlayerSpentPublicTileIds(player).includes(tileId)) {
+    return session;
+  }
+  const tile = [...player.hand, ...getAvailablePublicTiles(session, player)].find((candidate) => candidate.id === tileId);
+  if (tile == null) {
+    return session;
+  }
+  const selectionCap = Math.max(1, session.pendingDiscardsRemaining > 0 ? session.pendingDiscardsRemaining : 3);
+  const selected = session.selectedPlayTileIds.includes(tileId)
+    ? session.selectedPlayTileIds.filter((selectedId) => selectedId !== tileId)
+    : [...session.selectedPlayTileIds, tileId].slice(-selectionCap);
+  return { ...session, selectedPlayTileIds: selected };
+}
+
+export function confirmSelectedTavernGambleDiscards(session: TavernGambleSession): TavernGambleSession {
+  if (
+    session.phase !== "draw-discard" ||
+    session.pendingDrawTile == null ||
+    session.pendingDiscardsRemaining <= 0 ||
+    session.selectedPlayTileIds.length < session.pendingDiscardsRemaining
+  ) {
+    return session;
+  }
+  let nextSession: TavernGambleSession = { ...session };
+  const discardQueue = nextSession.selectedPlayTileIds.slice(0, nextSession.pendingDiscardsRemaining);
+  nextSession = { ...nextSession, selectedPlayTileIds: [] };
+  for (const tileId of discardQueue) {
+    const before = nextSession;
+    nextSession = discardForTavernGamble(nextSession, tileId);
+    if (nextSession === before) {
+      break;
+    }
+    if (nextSession.phase !== "draw-discard") {
+      return nextSession;
+    }
+  }
+  return nextSession;
+}
+
+export function clearTavernGamblePlaySlot(session: TavernGambleSession): TavernGambleSession {
+  if (session.phase !== "draw-discard") {
+    return session;
+  }
+  return { ...session, selectedPlayTileIds: [] };
+}
+
+export function passTavernGamblePlayGroups(session: TavernGambleSession): TavernGambleSession {
+  if (session.phase !== "draw-discard" || session.pendingDrawTile == null) {
+    return session;
+  }
+  return enterPostDrawDiscard({ ...session, selectedPlayTileIds: [] }, "浣犱笉鍐嶆墦鍑洪『/鍒伙紝璇峰純 2 寮犮€?);
+}
+
+export function confirmTavernGamblePlayGroup(session: TavernGambleSession): TavernGambleSession {
+  if (session.phase !== "draw-discard" || session.pendingDrawTile == null || session.selectedPlayTileIds.length !== 3) {
+    return session;
+  }
+  const player = getHumanPlayer(session);
+  const availablePublicTiles = getAvailablePublicTiles(session, player);
+  const selectedTiles = session.selectedPlayTileIds
+    .map((tileId) => [...player.hand, ...availablePublicTiles].find((tile) => tile.id === tileId) ?? null)
+    .filter((tile): tile is TavernMahjongTile => tile != null);
+  if (selectedTiles.length !== 3) {
+    return session;
+  }
+  const groupKind = resolvePlayableGroupKind(selectedTiles);
+  if (groupKind == null) {
+    return session;
+  }
+  const ownTileIds = new Set(player.hand.map((tile) => tile.id));
+  const publicTileIds = new Set(availablePublicTiles.map((tile) => tile.id));
+  const ownSelectedTiles = selectedTiles.filter((tile) => ownTileIds.has(tile.id));
+  const publicSelectedTiles = selectedTiles.filter((tile) => publicTileIds.has(tile.id));
+  const drawn = drawNonFlowerTiles(session.wall, session.deadWall, ownSelectedTiles.length);
+  const playedGroup: TavernGamblePlayedGroup = {
+    id: `played-${player.id}-${player.playedGroups.length + 1}`,
+    kind: groupKind,
+    tileLabels: selectedTiles.map(getTavernMahjongTileLabel),
+    ownTileCount: ownSelectedTiles.length,
+    usesPublicTile: publicSelectedTiles.length > 0,
+    fan: publicSelectedTiles.length > 0 ? 0 : 1,
+  };
+  const nextOwnCount = player.playedOwnTileCount + ownSelectedTiles.length;
+  const nextPlayer = {
+    ...player,
+    hand: [
+      ...player.hand.filter((tile) => !session.selectedPlayTileIds.includes(tile.id)),
+      ...drawn.tiles,
+    ],
+    flowers: [...player.flowers, ...drawn.flowers],
+    playedGroups: [...player.playedGroups, playedGroup],
+    playedOwnTileCount: nextOwnCount,
+    spentPublicTileIds: [...getPlayerSpentPublicTileIds(player), ...publicSelectedTiles.map((tile) => tile.id)],
+  };
+  const nextPlayerWithCovered = coverPublicSlots(nextPlayer, publicSelectedTiles.map((tile) => tile.id));
+  const withPlayed: TavernGambleSession = {
+    ...updatePlayer(session, player.id, nextPlayerWithCovered),
+    wall: drawn.wall,
+    deadWall: drawn.deadWall,
+    selectedPlayTileIds: [],
+    roundLog: [
+      ...session.roundLog,
+      `浣犳墦鍑?{playedGroup.usesPublicTile ? "鏄? : "鏆?}${groupKind === "sequence" ? "椤? : "鍒?}锛?{playedGroup.tileLabels.join("銆?)}锛岃ˉ ${ownSelectedTiles.length} 寮犮€俙,
+    ],
+  };
+  if (hasCompletedPlayedGroups(nextPlayerWithCovered)) {
+    return startNpcThinking(
+      {
+        ...withPlayed,
+        pendingDrawTile: null,
+        pendingDiscardsRemaining: 0,
+        selectedPlayTileIds: [],
+      },
+      `浣犲凡鎵撳嚭涓ょ粍椤?鍒伙紝鏈眬鍚庣画琛屽姩璺宠繃锛岀瓑寰呯粨绠椼€俙
+    );
+  }
+  const withEarlyLog =
+    nextOwnCount >= TAVERN_GAMBLE_SHOWDOWN_SIZE
+      ? {
+          ...withPlayed,
+          roundLog: [...withPlayed.roundLog, `浣犲凡鎵撳嚭 ${nextOwnCount} 寮犺嚜宸辩殑鐗岋紝鎻愬墠鑳″姞鐣€俙],
+        }
+      : withPlayed;
+  if (hasPlayableGroup(nextPlayerWithCovered, withPlayed)) {
+    return withEarlyLog;
+  }
+  return enterPostDrawDiscard(withEarlyLog, "娌℃湁鏂扮殑椤?鍒诲彲鎵擄紝璇峰純 2 寮犮€?);
+}
+
+export function discardForTavernGamble(session: TavernGambleSession, tileId: string): TavernGambleSession {
+  if (session.phase !== "draw-discard" || session.pendingDrawTile == null || session.pendingDiscardsRemaining <= 0) {
+    return session;
+  }
+  const player = getHumanPlayer(session);
+  let nextPlayerBase = player;
+  let discarded = player.hand.find((tile) => tile.id === tileId) ?? null;
+  let unclaimable = false;
+  if (discarded == null && isLongGamble(session)) {
+    const publicDiscard = coverPublicSlotWithReplacement(player, tileId);
+    nextPlayerBase = publicDiscard.player;
+    discarded = publicDiscard.discarded;
+    unclaimable = publicDiscard.unclaimable;
+  }
+  if (discarded == null) {
+    return session;
+  }
+  const remainingDiscards = session.pendingDiscardsRemaining - 1;
+  const nextPlayer = {
+    ...nextPlayerBase,
+    hand: discarded.id === tileId ? removeTileById(nextPlayerBase.hand, tileId) : nextPlayerBase.hand,
+    discarded: [...player.discarded, discarded],
+  };
+  const nextUnclaimableDiscardTileIds =
+    unclaimable
+      ? [...(session.unclaimableDiscardTileIds ?? []), discarded.id]
+      : (session.unclaimableDiscardTileIds ?? []);
+  const withDiscard = {
+    ...updatePlayer(
+      session,
+      player.id,
+      remainingDiscards === 0 && !isLongGamble(session) ? normalizeHand(nextPlayer) : nextPlayer
+    ),
+    publicDiscards: [...session.publicDiscards, discarded],
+    unclaimableDiscardTileIds: nextUnclaimableDiscardTileIds,
+    pendingDiscardsRemaining: remainingDiscards,
+  };
+  if (remainingDiscards > 0) {
+    return {
+      ...withDiscard,
+      roundLog: [
+        ...session.roundLog,
+        `浣犳墦鍑?${getTavernMahjongTileLabel(discarded)}锛岃繕闇€鎵撳嚭 ${remainingDiscards} 寮犮€俙,
+      ],
+    };
+  }
+  return startNpcThinking(
+    {
+      ...withDiscard,
+      pendingDrawTile: null,
+    },
+    `浣犳墦鍑?${getTavernMahjongTileLabel(discarded)}銆俙
+  );
+}
+
+function hasPlayableGroup(player: TavernGamblePlayer, session: TavernGambleSession): boolean {
+  const availablePublicTiles = getAvailablePublicTiles(session, player);
+  const tiles = [...player.hand, ...availablePublicTiles].filter((tile) => tile.kind !== "flower");
+  return combinations(tiles, 3).some((candidate) => resolvePlayableGroupKind(candidate) != null);
+}
+
+function resolvePlayableGroupKind(tiles: TavernMahjongTile[]): TavernGamblePlayedGroupKind | null {
+  if (tiles.length !== 3 || tiles.some((tile) => tile.kind === "flower")) {
+    return null;
+  }
+  const keys = tiles.map(getTavernMahjongTileKey);
+  if (keys.every((key) => key === keys[0])) {
+    return "triplet";
+  }
+  const suited = tiles.filter((tile): tile is Extract<TavernMahjongTile, { kind: "suited" }> => tile.kind === "suited");
+  if (suited.length !== 3 || new Set(suited.map((tile) => tile.suit)).size !== 1) {
+    return null;
+  }
+  const ranks = suited.map((tile) => tile.rank).sort((left, right) => left - right);
+  return ranks[0] != null && ranks[1] === ranks[0] + 1 && ranks[2] === ranks[1] + 1 ? "sequence" : null;
+}
+
+export function reorderTavernGambleHand(
+  session: TavernGambleSession,
+  tileId: string,
+  beforeTileId: string | null
+): TavernGambleSession {
+  const player = getHumanPlayer(session);
+  if (beforeTileId === tileId) {
+    return session;
+  }
+  if (isLongGamble(session) && session.street !== "pre-flop") {
+    const visibleOrder = getLongVisibleTileOrder(player);
+    if (!visibleOrder.includes(tileId)) {
+      return session;
+    }
+    const withoutMoving = visibleOrder.filter((id) => id !== tileId);
+    const insertIndex = beforeTileId == null ? withoutMoving.length : withoutMoving.findIndex((id) => id === beforeTileId);
+    const nextOrder =
+      insertIndex < 0
+        ? [...withoutMoving, tileId]
+        : [...withoutMoving.slice(0, insertIndex), tileId, ...withoutMoving.slice(insertIndex)];
+    return updatePlayer(session, player.id, { longTileOrder: nextOrder });
+  }
+  const movingTile = player.hand.find((tile) => tile.id === tileId);
+  if (movingTile == null) {
+    return session;
+  }
+  const withoutMoving = player.hand.filter((tile) => tile.id !== tileId);
+  const insertIndex =
+    beforeTileId == null
+      ? withoutMoving.length
+      : withoutMoving.findIndex((tile) => tile.id === beforeTileId);
+  const nextHand =
+    insertIndex < 0
+      ? [...withoutMoving, movingTile]
+      : [
+          ...withoutMoving.slice(0, insertIndex),
+          movingTile,
+          ...withoutMoving.slice(insertIndex),
+        ];
+  return updatePlayer(session, player.id, { hand: nextHand });
+}
+
+export function advanceTavernLongPublicReveal(session: TavernGambleSession): TavernGambleSession {
+  if (!isLongGamble(session) || (session.longPublicRevealTicks ?? 0) <= 0) {
+    return session;
+  }
+  return {
+    ...session,
+    longPublicRevealTicks: Math.max(0, (session.longPublicRevealTicks ?? 0) - 1),
+  };
+}
+
+export function advanceTavernGambleNpcThinking(session: TavernGambleSession): TavernGambleSession {
+  if (session.phase !== "npc-thinking" || session.npcThinkingSeat == null) {
+    return session;
+  }
+
+  if (session.npcThinkTicksRemaining > 1) {
+    return { ...session, npcThinkTicksRemaining: session.npcThinkTicksRemaining - 1 };
+  }
+
+  const player = session.players.find((candidate) => candidate.seatIndex === session.npcThinkingSeat);
+  if (player == null || player.isHuman || player.folded) {
+    return continueNpcThinking(session, session.npcThinkingSeat);
+  }
+
+  if (player.skipsDraw) {
+    const skipped = updatePlayer(session, player.id, { skipsDraw: false });
+    return continueNpcThinking(
+      {
+        ...skipped,
+        roundLog: [...session.roundLog, `${player.name} 鏈疆宸茬粡纰扮墝锛岃烦杩囨懜鎵撱€俙],
+      },
+      player.seatIndex
+    );
+  }
+
+  const drawn = drawNonFlowerTiles(session.wall, session.deadWall, getGambleDrawDiscardCount(session));
+  const withDrawn = { ...player, hand: [...player.hand, ...drawn.tiles], flowers: [...player.flowers, ...drawn.flowers] };
+  const longHu = resolveLongHuIfAny(
+    {
+      ...updatePlayer(session, player.id, withDrawn),
+      wall: drawn.wall,
+      deadWall: drawn.deadWall,
+    },
+    `${player.name} 鎽哥墝鍚庢垚鑳★紝鐗屽眬绔嬪嵆缁撶畻銆俙
+  );
+  if (longHu.phase === "finished") {
+    return longHu;
+  }
+  if (isLongGamble(session)) {
+    const npcDecision = resolveNpcDrawBetting(
+      {
+        ...updatePlayer(session, player.id, withDrawn),
+        wall: drawn.wall,
+        deadWall: drawn.deadWall,
+      },
+      withDrawn
+    );
+    if (npcDecision.player.folded) {
+      const folded = updatePlayer(session, player.id, npcDecision.player);
+      return continueNpcThinking(
+        {
+          ...folded,
+          wall: drawn.wall,
+          deadWall: drawn.deadWall,
+          pot: npcDecision.pot,
+          roundLog: [...session.roundLog, `${player.name} 鎽哥墝鍚庡純鐗屻€俙],
+        },
+        player.seatIndex
+      );
+    }
+    const npcDiscardDecision = chooseNpcDiscards(npcDecision.player, getGambleDrawDiscardCount(session), session);
+    const discards = npcDiscardDecision.discards;
+    return continueNpcThinking(
+      {
+        ...updatePlayer(session, player.id, {
+          ...npcDiscardDecision.player,
+          discarded: [...npcDecision.player.discarded, ...discards],
+        }),
+        wall: drawn.wall,
+        deadWall: drawn.deadWall,
+        pot: npcDecision.pot,
+        publicDiscards: [...session.publicDiscards, ...discards],
+        unclaimableDiscardTileIds: [
+          ...(session.unclaimableDiscardTileIds ?? []),
+          ...npcDiscardDecision.unclaimableTileIds,
+        ],
+        roundLog: [
+          ...session.roundLog,
+          `${player.name} 鎽稿悗鎷嗙墝鎵撳嚭 ${discards.map(getTavernMahjongTileLabel).join("銆?)}銆俙,
+        ],
+      },
+      player.seatIndex
+    );
+  }
+  const npcPlayed = resolveNpcPlayedGroups(
+    {
+      ...session,
+      wall: drawn.wall,
+      deadWall: drawn.deadWall,
+    },
+    withDrawn
+  );
+  if (hasCompletedPlayedGroups(npcPlayed.player)) {
+    return continueNpcThinking(
+      {
+        ...updatePlayer(npcPlayed.session, player.id, npcPlayed.player),
+        roundLog: [
+          ...npcPlayed.session.roundLog,
+          `${player.name} 宸叉墦鍑轰袱缁勯『/鍒伙紝鏈眬鍚庣画琛屽姩璺宠繃銆俙,
+        ],
+      },
+      player.seatIndex
+    );
+  }
+  const npcDecision = resolveNpcDrawBetting(npcPlayed.session, npcPlayed.player);
+  if (npcDecision.player.folded) {
+    const folded = updatePlayer(npcPlayed.session, player.id, npcDecision.player);
+    return continueNpcThinking(
+      {
+        ...folded,
+        roundLog: [...npcPlayed.session.roundLog, `${player.name} 鎽哥墝鍚庡純鐗屻€俙],
+      },
+      player.seatIndex
+    );
+  }
+  const npcDiscardDecision = chooseNpcDiscards(npcDecision.player, getGambleDrawDiscardCount(session), session);
+  const discards = npcDiscardDecision.discards;
+  const discardedIds = new Set(discards.map((discard) => discard.id));
+  const normalized = isLongGamble(session)
+    ? {
+        ...npcDiscardDecision.player,
+        discarded: [...npcDiscardDecision.player.discarded, ...discards],
+      }
+    : normalizeHand({
+    ...npcDiscardDecision.player,
+    hand: npcDiscardDecision.player.hand.filter((tile) => !discardedIds.has(tile.id)),
+    discarded: [...npcDecision.player.discarded, ...discards],
+  });
+  return continueNpcThinking(
+    {
+      ...updatePlayer(npcPlayed.session, player.id, normalized),
+      pot: npcDecision.pot,
+      publicDiscards: [...npcPlayed.session.publicDiscards, ...discards],
+      unclaimableDiscardTileIds: [
+        ...(npcPlayed.session.unclaimableDiscardTileIds ?? []),
+        ...npcDiscardDecision.unclaimableTileIds,
+      ],
+      roundLog: [
+        ...npcPlayed.session.roundLog,
+        ...(normalized.playedOwnTileCount >= TAVERN_GAMBLE_SHOWDOWN_SIZE
+          ? [`${player.name} 宸叉墦鍑?${normalized.playedOwnTileCount} 寮犺嚜宸辩殑鐗岋紝鎻愬墠鑳″姞鐣€俙]
+          : []),
+        `${player.name} 鎽稿悗鎵撳嚭 ${discards.map(getTavernMahjongTileLabel).join("銆?)}銆俙,
+      ],
+    },
+    player.seatIndex
+  );
+}
+
+export function advanceTavernGambleMeldCountdown(session: TavernGambleSession): TavernGambleSession {
+  if (session.phase !== "meld-window") {
+    return session;
+  }
+  if (session.meldCountdownTicks <= 1) {
+    if (session.meldWindow?.source === "discard") {
+      return advanceDiscardResponseStage({
+        ...session,
+        meldCountdownTicks: 0,
+      });
+    }
+    return skipTavernGambleMeld({
+      ...session,
+      meldCountdownTicks: 0,
+    });
+  }
+  return {
+    ...session,
+    meldCountdownTicks: session.meldCountdownTicks - 1,
+  };
+}
+
+export function resolveTavernGambleShowdown(session: TavernGambleSession): TavernGambleSession {
+  const showdown = session.players.map((player) => scoreTavernGambleSessionPlayer(session, player)).sort(compareShowdownResults);
+  return {
+    ...session,
+    phase: "finished",
+    street: "showdown",
+    showdown,
+    roundLog: [...session.roundLog, "鎽婄墝瀹屾垚锛屼粠 4 寮犳墜鐗屼笌 9 寮犲叕鍏辩墝涓€夋渶浣?6 寮犳瘮鐣€?],
+  };
+}
+
+function resolveLongHuIfAny(session: TavernGambleSession, log: string): TavernGambleSession {
+  if (!isLongGamble(session)) {
+    return session;
+  }
+  const showdown = session.players.map((player) => scoreTavernGambleSessionPlayer(session, player)).sort(compareShowdownResults);
+  if (!showdown.some((result) => !result.folded && result.bestScore.validHu && result.totalFan > 0)) {
+    return session;
+  }
+  return {
+    ...session,
+    phase: "finished",
+    street: "showdown",
+    showdown,
+    pendingDrawTile: null,
+    pendingDiscardsRemaining: 0,
+    selectedPlayTileIds: [],
+    pendingMelds: [],
+    meldWindow: null,
+    meldCountdownTicks: 0,
+    npcThinkingSeat: null,
+    npcThinkTicksRemaining: 0,
+    roundLog: [...session.roundLog, log],
+  };
+}
+
+export function canHumanLongHu(session: TavernGambleSession): boolean {
+  if (!isLongGamble(session)) {
+    return false;
+  }
+  const human = getHumanPlayer(session);
+  const result = scoreTavernGambleSessionPlayer(session, human);
+  return !result.folded && result.bestScore.validHu && result.totalFan > 0;
+}
+
+export function pushHumanLongHu(session: TavernGambleSession): TavernGambleSession {
+  if (!session.pendingHumanHu || !canHumanLongHu(session)) {
+    return session;
+  }
+  return resolveLongHuIfAny(
+    {
+      ...session,
+      pendingHumanHu: false,
+    },
+    "浣犳帹鐗岃儭浜嗭紝鐗屽眬绔嬪嵆缁撶畻銆?
+  );
+}
+
+export function passHumanLongHu(session: TavernGambleSession): TavernGambleSession {
+  if (!session.pendingHumanHu || !isLongGamble(session)) {
+    return session;
+  }
+  return enterPostDrawDiscard(
+    {
+      ...session,
+      pendingHumanHu: false,
+    },
+    "浣犻€夋嫨涓嶆帹鑳★紝缁х画寮?3 寮犮€?
+  );
+}
+
+export function getTavernGambleWinners(session: TavernGambleSession): TavernGambleShowdownResult[] {
+  const showdown = session.showdown ?? [];
+  const top = showdown[0];
+  if (top == null) {
+    return [];
+  }
+  return showdown.filter((result) => compareRankKeys(result.rankKey, top.rankKey) === 0);
+}
+
+export function scoreTavernGamblePlayer(player: TavernGamblePlayer, publicTiles: TavernMahjongTile[]): TavernGambleShowdownResult {
+  const bestScore = scoreBestSix([...player.hand, ...publicTiles], player);
+  const totalFan = player.folded || !bestScore.validHu ? 0 : bestScore.totalFan;
+  const rankKey = [
+    totalFan,
+    bestScore.mainFan,
+    bestScore.groupRank,
+    bestScore.purityRank,
+    bestScore.pairRank,
+    bestScore.flowerCount,
+    bestScore.kongCount,
+    bestScore.handContribution,
+  ];
+  return { playerId: player.id, playerName: player.name, bestScore, totalFan, rankKey, folded: player.folded };
+}
+
+export function scoreTavernGambleSessionPlayer(
+  session: TavernGambleSession,
+  player: TavernGamblePlayer
+): TavernGambleShowdownResult {
+  if (!isLongGamble(session)) {
+    return scoreTavernGamblePlayer(player, session.publicTiles);
+  }
+  const bestScore = scoreBestLongHand([...player.hand, ...getPlayerScoringPublicTiles(session, player)], player);
+  const totalFan = player.folded || !bestScore.validHu ? 0 : bestScore.totalFan;
+  const rankKey = [
+    totalFan,
+    bestScore.mainFan,
+    bestScore.groupRank,
+    bestScore.purityRank,
+    bestScore.pairRank,
+    bestScore.flowerCount,
+    bestScore.kongCount,
+    bestScore.handContribution,
+  ];
+  return { playerId: player.id, playerName: player.name, bestScore, totalFan, rankKey, folded: player.folded };
+}
+
+function advanceAfterBetting(session: TavernGambleSession, playerLog: string): TavernGambleSession {
+  const npcSession = runNpcBetting(session);
+  const next = { ...npcSession, roundLog: [...npcSession.roundLog, playerLog, "鍏朵綑鐜╁瀹屾垚寮€灞€涓嬫敞琛屽姩銆?] };
+  return advanceStreet(next, "寮€灞€涓嬫敞宸插畾銆?);
+}
+
+function runNpcBetting(session: TavernGambleSession): TavernGambleSession {
+  let next = session;
+  for (const player of next.players) {
+    if (player.isHuman || player.folded || hasCompletedPlayedGroups(player)) {
+      continue;
+    }
+    const callAmount = Math.max(0, next.currentBet - player.committed);
+    const shouldFold = next.bettingRound >= 3 && player.seatIndex === 3 && callAmount > 0;
+    if (shouldFold) {
+      next = updatePlayer(next, player.id, { folded: true });
+      continue;
+    }
+    const commitAmount = getAffordableCommit(next, player, callAmount);
+    next = updatePlayer(next, player.id, { committed: player.committed + commitAmount });
+    next = { ...next, pot: next.pot + commitAmount };
+  }
+  return next;
+}
+
+function revealNextPublicTiles(session: TavernGambleSession): TavernGambleSession {
+  const revealCount = session.street === "pre-flop" ? 5 : 2;
+  const revealed = drawNonFlowerTiles(session.wall, session.deadWall, revealCount);
+  const nextPublic = revealed.tiles;
+  const nextStreet: TavernGambleStreet = session.street === "pre-flop" ? "flop" : session.street === "flop" ? "turn" : "river";
+  return {
+    ...session,
+    street: nextStreet,
+    wall: revealed.wall,
+    deadWall: revealed.deadWall,
+    publicTiles: [...session.publicTiles, ...nextPublic].slice(0, TAVERN_GAMBLE_PUBLIC_TILE_COUNT),
+    currentBet: 0,
+    bettingRound: session.bettingRound + 1,
+    roundLog: [
+      ...session.roundLog,
+      `${getStreetLabel(nextStreet)}鍙戝嚭锛?{nextPublic.map(getTavernMahjongTileLabel).join("銆?)}銆俙,
+      ...(revealed.flowers.length > 0 ? [`鍏叡鐗屾懜鍒拌姳鐗?${revealed.flowers.map(getTavernMahjongTileLabel).join("銆?)}锛屽凡浠庣墝灏捐ˉ鐗屻€俙] : []),
+    ],
+  };
+}
+
+function enterPostDrawDiscard(session: TavernGambleSession, log: string): TavernGambleSession {
+  return enterDiscardMode(session, getGambleDrawDiscardCount(session), log);
+}
+
+function enterDiscardMode(session: TavernGambleSession, discardCount: number, log: string): TavernGambleSession {
+  return {
+    ...session,
+    phase: "draw-discard",
+    pendingHumanHu: false,
+    pendingMelds: [],
+    meldWindow: null,
+    selectedPlayTileIds: [],
+    pendingDiscardsRemaining: discardCount,
+    meldCountdownTicks: 0,
+    npcThinkingSeat: null,
+    npcThinkTicksRemaining: 0,
+    roundLog: [...session.roundLog, log],
+  };
+}
+
+function startDrawDiscard(session: TavernGambleSession, log: string): TavernGambleSession {
+  const nextSession: TavernGambleSession = {
+    ...session,
+    phase: "draw-discard",
+    pendingHumanHu: false,
+    pendingMelds: [],
+    meldWindow: null,
+    pendingDrawTile: null,
+    pendingDiscardsRemaining: 0,
+    selectedPlayTileIds: [],
+    meldCountdownTicks: 0,
+    npcThinkingSeat: null,
+    npcThinkTicksRemaining: 0,
+    roundLog: [
+      ...session.roundLog,
+      log,
+      isLongGamble(session)
+        ? "闀跨墝杞锛氭湭寮冪墝鐜╁渚濇鎽?3 寮狅紝鍐嶄粠鏆楃墝鎴栬嚜宸辩殑鏄庣墝妲藉純 3 寮犮€?
+        : "寮€鐗屽悗锛屾湭寮冪墝鐜╁渚濇鎽?2 寮狅紱鑻ヨ兘缁勬垚椤?鍒伙紝鍙繛缁墦鍑哄苟鎸夎嚜宸辫础鐚墝鏁拌ˉ鐗屻€?,
+    ],
+  };
+  const human = getHumanPlayer(nextSession);
+  if (hasCompletedPlayedGroups(human)) {
+    return startNpcThinking(nextSession, "浣犲凡鎵撳嚭涓ょ粍椤?鍒伙紝鏈疆璺宠繃琛屽姩銆?);
+  }
+  return nextSession;
+}
+
+function advanceStreet(session: TavernGambleSession, log: string): TavernGambleSession {
+  if (isLongGamble(session)) {
+    return advanceLongStreet(session, log);
+  }
+  if (session.street === "river") {
+    return resolveTavernGambleShowdown({
+      ...session,
+      pendingDrawTile: null,
+      pendingDiscardsRemaining: 0,
+      selectedPlayTileIds: [],
+      meldCountdownTicks: 0,
+      npcThinkingSeat: null,
+      npcThinkTicksRemaining: 0,
+      roundLog: [...session.roundLog, log],
+    });
+  }
+  const withPublic = revealNextPublicTiles({
+    ...session,
+    pendingDrawTile: null,
+    pendingDiscardsRemaining: 0,
+    pendingMelds: [],
+    meldWindow: null,
+    meldCountdownTicks: 0,
+    npcThinkingSeat: null,
+    npcThinkTicksRemaining: 0,
+    roundLog: [...session.roundLog, log],
+  });
+  return startDrawDiscard(
+    {
+      ...withPublic,
+      minRaise: TAVERN_GAMBLE_BIG_BLIND,
+    },
+    "鍏叡鐗屽凡寮€锛屽簞瀹跺厛鎽哥墝銆?
+  );
+}
+
+function advanceLongStreet(session: TavernGambleSession, log: string): TavernGambleSession {
+  const cleared: TavernGambleSession = {
+    ...session,
+    pendingDrawTile: null,
+    pendingDiscardsRemaining: 0,
+    pendingMelds: [],
+    meldWindow: null,
+    meldCountdownTicks: 0,
+    npcThinkingSeat: null,
+    npcThinkTicksRemaining: 0,
+    selectedPlayTileIds: [],
+    roundLog: [...session.roundLog, log],
+  };
+
+  if (session.phase !== "betting") {
+    return {
+      ...cleared,
+      phase: "betting",
+      currentBet: 0,
+      minRaise: TAVERN_GAMBLE_BIG_BLIND,
+      bettingRound: session.bettingRound + 1,
+      longPublicRevealTicks: 0,
+      roundLog: [...cleared.roundLog, "鏈疆鎽告墦缁撴潫锛岃繘鍏ヤ笅涓€杞笅娉ㄣ€?],
+    };
+  }
+
+  if (session.street === "river") {
+    return startDrawDiscard(
+      {
+        ...cleared,
+        street: "river",
+        currentBet: 0,
+        minRaise: TAVERN_GAMBLE_BIG_BLIND,
+        longPublicRevealTicks: 0,
+      },
+      "\u6ca1\u6709\u4eba\u63a8\u80e1\uff0c\u7ee7\u7eed\u8fdb\u5165\u4e0b\u4e00\u8f6e\u6478 3 \u6253 3\u3002"
+    );
+  }
+
+  if (session.street === "pre-flop") {
+    return {
+      ...cleared,
+      street: "flop",
+      phase: "betting",
+      currentBet: 0,
+      minRaise: TAVERN_GAMBLE_BIG_BLIND,
+      bettingRound: session.bettingRound + 1,
+      longPublicRevealTicks: 0,
+      roundLog: [...cleared.roundLog, "棣栬疆涓嬫敞缁撴潫锛屼寒鍑哄叕鍏辩墝锛岃繘鍏ヤ笅涓€杞笅娉ㄣ€?],
+    };
+  }
+
+  const nextStreet: TavernGambleStreet =
+    session.street === "flop" ? "turn" : "river";
+  return startDrawDiscard(
+    {
+      ...cleared,
+      street: nextStreet,
+      currentBet: 0,
+      minRaise: TAVERN_GAMBLE_BIG_BLIND,
+      longPublicRevealTicks: session.street === "flop" ? TAVERN_LONG_GAMBLE_REVEAL_TICKS : 0,
+    },
+    `${getStreetLabel(nextStreet)}涓嬫敞瀹屾垚锛屽紑濮嬫懜 3 鎵?3銆俙
+  );
+}
+
+function startNpcThinking(session: TavernGambleSession, log: string): TavernGambleSession {
+  const firstNpc = findNextNpcDrawPlayer(session, 0);
+  if (firstNpc == null) {
+    return advanceStreet(session, log);
+  }
+  const delay = getNpcThinkDelay(session, firstNpc);
+  return {
+    ...session,
+    phase: "npc-thinking",
+    pendingDrawTile: null,
+    pendingDiscardsRemaining: 0,
+    selectedPlayTileIds: [],
+    pendingMelds: [],
+    meldWindow: null,
+    meldCountdownTicks: 0,
+    npcThinkingSeat: firstNpc.seatIndex,
+    npcThinkTicksRemaining: delay,
+    roundLog: [...session.roundLog, log, `${firstNpc.name} 姝ｅ湪鎬濊€?..`],
+  };
+}
+
+function openHumanDiscardResponseWindow(
+  session: TavernGambleSession,
+  discardTile: TavernMahjongTile | null,
+  resumeNpcAfterSeat: number
+): TavernGambleSession {
+  if (
+    discardTile == null ||
+    session.resolvedDiscardResponseTileIds.includes(discardTile.id) ||
+    session.meldWindow != null ||
+    (session.unclaimableDiscardTileIds ?? []).includes(discardTile.id)
+  ) {
+    return session;
+  }
+  const human = getHumanPlayer(session);
+  if (human.folded || hasCompletedPlayedGroups(human)) {
+    return {
+      ...session,
+      resolvedDiscardResponseTileIds: [...session.resolvedDiscardResponseTileIds, discardTile.id],
+    };
+  }
+  const options = getDiscardResponseOptions(human, session, discardTile, "chi-pong-kong");
+  if (options.length === 0) {
+    return {
+      ...session,
+      resolvedDiscardResponseTileIds: [...session.resolvedDiscardResponseTileIds, discardTile.id],
+    };
+  }
+  return {
+    ...session,
+    phase: "meld-window",
+    pendingMelds: options,
+    meldWindow: {
+      source: "discard",
+      stage: "chi-pong-kong",
+      discardTileId: discardTile.id,
+      resumeNpcAfterSeat,
+    },
+    meldCountdownTicks: getDiscardResponseSeconds(session),
+    npcThinkingSeat: null,
+    npcThinkTicksRemaining: 0,
+    roundLog: [...session.roundLog, "寮冪墝鍝嶅簲锛? 绉掑唴鍙悆/纰?鏉犮€?],
+  };
+}
+
+function advanceDiscardResponseStage(session: TavernGambleSession): TavernGambleSession {
+  const window = session.meldWindow;
+  if (window?.source !== "discard" || window.discardTileId == null) {
+    return skipTavernGambleMeld(session);
+  }
+  const nextStage = getNextDiscardResponseStage(window.stage);
+  if (nextStage == null) {
+    return resumeAfterDiscardResponse(session);
+  }
+  const discardTile = session.publicDiscards.find((tile) => tile.id === window.discardTileId) ?? null;
+  const options =
+    discardTile == null ? [] : getDiscardResponseOptions(getHumanPlayer(session), session, discardTile, nextStage);
+  if (options.length === 0) {
+    return resumeAfterDiscardResponse({
+      ...session,
+      meldWindow: { ...window, stage: nextStage },
+    });
+  }
+  return {
+    ...session,
+    pendingMelds: options,
+    meldWindow: { ...window, stage: nextStage },
+    meldCountdownTicks: getDiscardResponseSeconds(session),
+    roundLog: [...session.roundLog, "鍝嶅簲绐楀彛缁х画缂╁皬锛屽墿浣欏彲鐢ㄥ姩浣滈棯鐑併€?],
+  };
+}
+
+function getNextDiscardResponseStage(
+  stage: TavernGambleMeldWindowStage
+): TavernGambleMeldWindowStage | null {
+  if (stage === "chi-pong-kong") return "pong-kong";
+  if (stage === "pong-kong") return "kong";
+  return null;
+}
+
+function resumeAfterDiscardResponse(session: TavernGambleSession): TavernGambleSession {
+  const discardTileId = session.meldWindow?.discardTileId;
+  const previousSeat = session.meldWindow?.resumeNpcAfterSeat ?? 0;
+  const resolved =
+    discardTileId == null || session.resolvedDiscardResponseTileIds.includes(discardTileId)
+      ? session.resolvedDiscardResponseTileIds
+      : [...session.resolvedDiscardResponseTileIds, discardTileId];
+  return continueNpcThinking(
+    {
+      ...session,
+      phase: "npc-thinking",
+      pendingMelds: [],
+      meldWindow: null,
+      resolvedDiscardResponseTileIds: resolved,
+      meldCountdownTicks: 0,
+      selectedPlayTileIds: [],
+    },
+    previousSeat
+  );
+}
+
+function continueNpcThinking(session: TavernGambleSession, previousSeat: number): TavernGambleSession {
+  const latestDiscard = session.publicDiscards[session.publicDiscards.length - 1] ?? null;
+  const responseWindow = openHumanDiscardResponseWindow(session, latestDiscard, previousSeat);
+  if (responseWindow.phase === "meld-window") {
+    return responseWindow;
+  }
+  const nextNpc = findNextNpcDrawPlayer(responseWindow, previousSeat);
+  if (nextNpc == null) {
+    return advanceStreet(
+      {
+        ...responseWindow,
+        npcThinkingSeat: null,
+        npcThinkTicksRemaining: 0,
+      },
+      "鍏朵綑鐜╁鎽告墦缁撴潫銆?
+    );
+  }
+  const delay = getNpcThinkDelay(responseWindow, nextNpc);
+  return {
+    ...responseWindow,
+    npcThinkingSeat: nextNpc.seatIndex,
+    npcThinkTicksRemaining: delay,
+    roundLog: [...session.roundLog, `${nextNpc.name} 姝ｅ湪鎬濊€?..`],
+  };
+}
+
+function findNextNpcDrawPlayer(session: TavernGambleSession, previousSeat: number): TavernGamblePlayer | null {
+  return (
+    [...session.players]
+      .sort((left, right) => left.seatIndex - right.seatIndex)
+      .find(
+        (player) =>
+          !player.isHuman &&
+          !player.folded &&
+          !hasCompletedPlayedGroups(player) &&
+          player.seatIndex > previousSeat
+      ) ?? null
+  );
+}
+
+function hasCompletedPlayedGroups(player: TavernGamblePlayer): boolean {
+  return player.playedGroups.length >= TAVERN_GAMBLE_PLAYED_GROUP_TARGET;
+}
+
+function getPlayerSpentPublicTileIds(player: TavernGamblePlayer): string[] {
+  return player.spentPublicTileIds ?? [];
+}
+
+function isLongGamble(session: TavernGambleSession): boolean {
+  return session.variant === "long";
+}
+
+function getLongVisibleTileOrder(player: TavernGamblePlayer): string[] {
+  const visibleIds = [
+    ...player.hand.map((tile) => tile.id),
+    ...getOpenPublicSlotTiles(player).map((tile) => tile.id),
+  ];
+  if (visibleIds.length === 0) {
+    return [];
+  }
+  const preferred = player.longTileOrder ?? [];
+  const preferredVisible = preferred.filter((id) => visibleIds.includes(id));
+  const missing = visibleIds.filter((id) => !preferredVisible.includes(id));
+  return [...preferredVisible, ...missing];
+}
+
+function syncLongTileOrder(player: TavernGamblePlayer): TavernGamblePlayer {
+  if (player.longTileOrder == null) {
+    return player;
+  }
+  return {
+    ...player,
+    longTileOrder: getLongVisibleTileOrder(player),
+  };
+}
+
+function getGambleDrawDiscardCount(session: TavernGambleSession): number {
+  return isLongGamble(session) ? TAVERN_LONG_GAMBLE_DRAW_DISCARD_COUNT : TAVERN_GAMBLE_DRAW_DISCARD_COUNT;
+}
+
+function getGambleMeldResponseSeconds(session: TavernGambleSession): number {
+  return isLongGamble(session) ? TAVERN_LONG_GAMBLE_MELD_RESPONSE_SECONDS : TAVERN_GAMBLE_MELD_RESPONSE_SECONDS;
+}
+
+function getDiscardResponseSeconds(session: TavernGambleSession): number {
+  return isLongGamble(session) ? TAVERN_LONG_GAMBLE_MELD_RESPONSE_SECONDS : TAVERN_GAMBLE_DISCARD_RESPONSE_SECONDS;
+}
+
+function getOpenPublicSlotTiles(player: TavernGamblePlayer): TavernMahjongTile[] {
+  return (player.publicTileSlots ?? [])
+    .filter((slot) => !slot.covered)
+    .map((slot) => slot.tile);
+}
+
+function getPlayerScoringPublicTiles(session: TavernGambleSession, player: TavernGamblePlayer): TavernMahjongTile[] {
+  if (!isLongGamble(session)) {
+    return session.publicTiles;
+  }
+  return (player.publicTileSlots ?? []).map((slot) => slot.tile);
+}
+
+function getAvailablePublicTiles(session: TavernGambleSession, player: TavernGamblePlayer): TavernMahjongTile[] {
+  if (isLongGamble(session)) {
+    return getOpenPublicSlotTiles(player);
+  }
+  const spentPublicTileIds = new Set(getPlayerSpentPublicTileIds(player));
+  return session.publicTiles.filter((tile) => !spentPublicTileIds.has(tile.id));
+}
+
+function coverPublicSlotWithReplacement(
+  player: TavernGamblePlayer,
+  tileId: string
+): { player: TavernGamblePlayer; discarded: TavernMahjongTile | null; unclaimable: boolean } {
+  const slots = player.publicTileSlots ?? [];
+  const slot = slots.find((candidate) => candidate.tile.id === tileId && !candidate.covered);
+  if (slot == null) {
+    return { player, discarded: null, unclaimable: false };
+  }
+  const nextSlots = slots.map((candidate) =>
+    candidate.id === slot.id
+      ? {
+          ...candidate,
+          covered: true,
+        }
+      : candidate
+  );
+  return {
+    player: syncLongTileOrder({
+      ...player,
+      publicTileSlots: nextSlots,
+    }),
+    discarded: slot.tile,
+    unclaimable: true,
+  };
+}
+
+function coverPublicSlots(player: TavernGamblePlayer, tileIds: string[]): TavernGamblePlayer {
+  if (tileIds.length === 0 || player.publicTileSlots == null) {
+    return player;
+  }
+  const tileIdSet = new Set(tileIds);
+  return {
+    ...syncLongTileOrder({
+      ...player,
+      publicTileSlots: player.publicTileSlots.map((slot) =>
+        tileIdSet.has(slot.tile.id) ? { ...slot, covered: true } : slot
+      ),
+    }),
+  };
+}
+
+function getNpcThinkDelay(session: TavernGambleSession, player: TavernGamblePlayer): number {
+  return 1 + ((session.bettingRound * 13 + player.seatIndex * 7 + session.wall.length) % 3);
+}
+
+function resolveNpcPlayedGroups(
+  session: TavernGambleSession,
+  player: TavernGamblePlayer
+): { session: TavernGambleSession; player: TavernGamblePlayer } {
+  let nextSession = session;
+  let nextPlayer = player;
+  let guard = 0;
+  while (guard < 6 && !hasCompletedPlayedGroups(nextPlayer)) {
+    guard += 1;
+    const group = chooseNpcPlayableGroup(nextSession, nextPlayer);
+    if (group == null) {
+      break;
+    }
+    const ownTileIds = new Set(nextPlayer.hand.map((tile) => tile.id));
+    const publicTileIds = new Set(getAvailablePublicTiles(nextSession, nextPlayer).map((tile) => tile.id));
+    const ownTiles = group.filter((tile) => ownTileIds.has(tile.id));
+    const publicTiles = group.filter((tile) => publicTileIds.has(tile.id));
+    const drawn = drawNonFlowerTiles(nextSession.wall, nextSession.deadWall, ownTiles.length);
+    const groupKind = resolvePlayableGroupKind(group);
+    if (groupKind == null) {
+      break;
+    }
+    const playedGroup: TavernGamblePlayedGroup = {
+      id: `played-${nextPlayer.id}-${nextPlayer.playedGroups.length + 1}`,
+      kind: groupKind,
+      tileLabels: group.map(getTavernMahjongTileLabel),
+      ownTileCount: ownTiles.length,
+      usesPublicTile: publicTiles.length > 0,
+      fan: publicTiles.length > 0 ? 0 : 1,
+    };
+    nextPlayer = {
+      ...nextPlayer,
+      hand: [
+        ...nextPlayer.hand.filter((tile) => !ownTiles.some((ownTile) => ownTile.id === tile.id)),
+        ...drawn.tiles,
+      ],
+      flowers: [...nextPlayer.flowers, ...drawn.flowers],
+      playedGroups: [...nextPlayer.playedGroups, playedGroup],
+      playedOwnTileCount: nextPlayer.playedOwnTileCount + ownTiles.length,
+      spentPublicTileIds: [...getPlayerSpentPublicTileIds(nextPlayer), ...publicTiles.map((tile) => tile.id)],
+    };
+    nextPlayer = coverPublicSlots(nextPlayer, publicTiles.map((tile) => tile.id));
+    nextSession = {
+      ...nextSession,
+      wall: drawn.wall,
+      deadWall: drawn.deadWall,
+      roundLog: [
+        ...nextSession.roundLog,
+        `${nextPlayer.name} 鎵撳嚭${playedGroup.usesPublicTile ? "鏄? : "鏆?}${groupKind === "sequence" ? "椤? : "鍒?}銆俙,
+      ],
+    };
+  }
+  return { session: nextSession, player: nextPlayer };
+}
+
+function chooseNpcPlayableGroup(session: TavernGambleSession, player: TavernGamblePlayer): TavernMahjongTile[] | null {
+  const availablePublicTiles = getAvailablePublicTiles(session, player);
+  const candidates = combinations([...player.hand, ...availablePublicTiles], 3)
+    .filter((candidate) => resolvePlayableGroupKind(candidate) != null)
+    .sort((left, right) => {
+      const ownTileIds = new Set(player.hand.map((tile) => tile.id));
+      const leftOwn = left.filter((tile) => ownTileIds.has(tile.id)).length;
+      const rightOwn = right.filter((tile) => ownTileIds.has(tile.id)).length;
+      if (leftOwn !== rightOwn) return rightOwn - leftOwn;
+      return getGroupTileRank(right) - getGroupTileRank(left);
+    });
+  return candidates[0] ?? null;
+}
+
+function getGroupTileRank(tiles: TavernMahjongTile[]): number {
+  return tiles.reduce((best, tile) => Math.max(best, getTileSortRank(tile)), 0);
+}
+
+function chooseNpcDiscard(player: TavernGamblePlayer): TavernMahjongTile {
+  const counts = countByTileKey(player.hand);
+  const discard = [...player.hand].sort((left, right) => {
+    const leftCount = counts.get(getTavernMahjongTileKey(left)) ?? 0;
+    const rightCount = counts.get(getTavernMahjongTileKey(right)) ?? 0;
+    return leftCount === rightCount ? getTileSortRank(right) - getTileSortRank(left) : leftCount - rightCount;
+  })[0];
+  if (discard == null) {
+    throw new Error("Tavern gambling NPC has no discard.");
+  }
+  return discard;
+}
+
+function chooseNpcDiscards(
+  player: TavernGamblePlayer,
+  count: number,
+  session: TavernGambleSession
+): { player: TavernGamblePlayer; discards: TavernMahjongTile[]; unclaimableTileIds: string[] } {
+  if (isLongGamble(session)) {
+    return chooseLongNpcDiscards(player, count, session);
+  }
+  let nextPlayer = player;
+  const discards: TavernMahjongTile[] = [];
+  const unclaimableTileIds: string[] = [];
+  while (discards.length < count) {
+    const shouldUsePublicSlot =
+      isLongGamble(session) &&
+      discards.length % 2 === 1 &&
+      getOpenPublicSlotTiles(nextPlayer).length > 0 &&
+      nextPlayer.hand.length > 0;
+    if (shouldUsePublicSlot) {
+      const slotTile = getOpenPublicSlotTiles(nextPlayer)[0];
+      if (slotTile != null) {
+        const publicDiscard = coverPublicSlotWithReplacement(nextPlayer, slotTile.id);
+        if (publicDiscard.discarded != null) {
+          discards.push(publicDiscard.discarded);
+          unclaimableTileIds.push(publicDiscard.discarded.id);
+          nextPlayer = publicDiscard.player;
+          continue;
+        }
+      }
+    }
+    const discard = chooseNpcDiscard(nextPlayer);
+    discards.push(discard);
+    nextPlayer = { ...nextPlayer, hand: removeTileById(nextPlayer.hand, discard.id) };
+  }
+  return { player: nextPlayer, discards, unclaimableTileIds };
+}
+
+function chooseLongNpcDiscards(
+  player: TavernGamblePlayer,
+  count: number,
+  session: TavernGambleSession
+): { player: TavernGamblePlayer; discards: TavernMahjongTile[]; unclaimableTileIds: string[] } {
+  let nextPlayer = player;
+  const discards: TavernMahjongTile[] = [];
+  const unclaimableTileIds: string[] = [];
+
+  while (discards.length < count) {
+    const candidates = [
+      ...nextPlayer.hand.map((tile) => ({ kind: "hand" as const, tile })),
+      ...getOpenPublicSlotTiles(nextPlayer).map((tile) => ({ kind: "public" as const, tile })),
+    ];
+    if (candidates.length === 0) {
+      break;
+    }
+
+    const bestCandidate = candidates
+      .map((candidate) => {
+        if (candidate.kind === "public") {
+          const covered = coverPublicSlotWithReplacement(nextPlayer, candidate.tile.id);
+          const score = evaluateLongNpcShapeAfterDiscard(covered.player, session);
+          return { candidate, nextPlayer: covered.player, discarded: covered.discarded, unclaimable: covered.unclaimable, score };
+        }
+
+        const simulatedPlayer = {
+          ...nextPlayer,
+          hand: removeTileById(nextPlayer.hand, candidate.tile.id),
+        };
+        const score = evaluateLongNpcShapeAfterDiscard(simulatedPlayer, session);
+        return { candidate, nextPlayer: simulatedPlayer, discarded: candidate.tile, unclaimable: false, score };
+      })
+      .sort((left, right) => {
+        if (left.score !== right.score) {
+          return right.score - left.score;
+        }
+        if (left.candidate.kind !== right.candidate.kind) {
+          return left.candidate.kind === "hand" ? -1 : 1;
+        }
+        return getTileSortRank(right.candidate.tile) - getTileSortRank(left.candidate.tile);
+      })[0];
+
+    if (bestCandidate == null || bestCandidate.discarded == null) {
+      break;
+    }
+
+    nextPlayer = bestCandidate.nextPlayer;
+    discards.push(bestCandidate.discarded);
+    if (bestCandidate.unclaimable) {
+      unclaimableTileIds.push(bestCandidate.discarded.id);
+    }
+  }
+
+  return { player: nextPlayer, discards, unclaimableTileIds };
+}
+
+function evaluateLongNpcShapeAfterDiscard(player: TavernGamblePlayer, session: TavernGambleSession): number {
+  const openPublicTiles = getOpenPublicSlotTiles(player);
+  const tiles = [...player.hand, ...openPublicTiles].filter((tile) => tile.kind !== "flower");
+  const counts = countByTileKey(tiles);
+  const suitedTiles = tiles.filter((tile): tile is Extract<TavernMahjongTile, { kind: "suited" }> => tile.kind === "suited");
+  const honors = tiles.filter((tile): tile is Extract<TavernMahjongTile, { kind: "honor" }> => tile.kind === "honor");
+  const suits = new Set(suitedTiles.map((tile) => tile.suit));
+
+  let score = 0;
+
+  if (tiles.length === 14) {
+    const exact = scoreLongFourMeldsAndPair(tiles, player);
+    if (exact.validHu) {
+      score += 10000 + exact.totalFan * 100;
+    }
+  }
+
+  for (const [tileKey, count] of counts.entries()) {
+    if (count >= 3) {
+      score += 60;
+      score += (count - 3) * 8;
+    } else if (count === 2) {
+      score += 26;
+    }
+
+    const tile = createVirtualTileFromKey(tileKey, `npc-eval-${tileKey}`);
+    if (tile.kind === "honor") {
+      if (count === 1) {
+        score -= 10;
+      }
+      continue;
+    }
+    if (tile.kind !== "suited") {
+      continue;
+    }
+
+    const sameSuit = tile.suit;
+    const left1 = counts.get(`${sameSuit}-${tile.rank - 1}`) ?? 0;
+    const right1 = counts.get(`${sameSuit}-${tile.rank + 1}`) ?? 0;
+    const left2 = counts.get(`${sameSuit}-${tile.rank - 2}`) ?? 0;
+    const right2 = counts.get(`${sameSuit}-${tile.rank + 2}`) ?? 0;
+    const adjacency = Math.min(2, left1) + Math.min(2, right1);
+    const gapSupport = Math.min(1, left2) + Math.min(1, right2);
+
+    score += adjacency * 7;
+    score += gapSupport * 3;
+
+    const isolated = count === 1 && adjacency === 0 && gapSupport === 0;
+    if (isolated) {
+      score -= tile.rank === 1 || tile.rank === 9 ? 9 : 7;
+    }
+  }
+
+  score += estimateSequencePotential(counts) * 18;
+  score += estimatePairPotential(counts) * 10;
+  score += estimateTripletPotential(counts) * 12;
+
+  if (suits.size === 1 && suitedTiles.length > 0) {
+    score += honors.length === 0 ? 40 : 20;
+  } else if (suits.size === 2) {
+    score += 8;
+  }
+
+  score += player.exposedMelds.length * 6;
+  score += openPublicTiles.length * 2;
+  return score;
+}
+
+function estimatePairPotential(counts: Map<string, number>): number {
+  let pairs = 0;
+  for (const count of counts.values()) {
+    if (count >= 2) {
+      pairs += 1;
+    }
+  }
+  return pairs;
+}
+
+function estimateTripletPotential(counts: Map<string, number>): number {
+  let tripletPotential = 0;
+  for (const count of counts.values()) {
+    if (count >= 3) {
+      tripletPotential += 2;
+    } else if (count === 2) {
+      tripletPotential += 1;
+    }
+  }
+  return tripletPotential;
+}
+
+function estimateSequencePotential(counts: Map<string, number>): number {
+  let potential = 0;
+  for (const suit of Object.keys(suitLabels) as TavernMahjongSuit[]) {
+    for (let start = 1; start <= 7; start += 1) {
+      const first = counts.get(`${suit}-${start}`) ?? 0;
+      const second = counts.get(`${suit}-${start + 1}`) ?? 0;
+      const third = counts.get(`${suit}-${start + 2}`) ?? 0;
+      const hitCount = Number(first > 0) + Number(second > 0) + Number(third > 0);
+      if (hitCount === 3) {
+        potential += 2;
+      } else if (hitCount === 2) {
+        potential += 1;
+      }
+    }
+  }
+  return potential;
+}
+
+function resolveNpcDrawBetting(
+  session: TavernGambleSession,
+  player: TavernGamblePlayer
+): { player: TavernGamblePlayer; pot: number } {
+  const callAmount = Math.max(0, session.currentBet - player.committed);
+  const shouldFold = session.bettingRound >= 3 && player.seatIndex === 3 && callAmount > 0;
+  if (shouldFold) {
+    return { player: { ...player, folded: true }, pot: session.pot };
+  }
+  const commitAmount = getAffordableCommit(session, player, callAmount);
+  return {
+    player: { ...player, committed: player.committed + commitAmount },
+    pot: session.pot + commitAmount,
+  };
+}
+
+function getAvailableKongs(
+  player: TavernGamblePlayer,
+  session: TavernGambleSession
+): TavernGambleMeldOption[] {
+  return getAvailableMelds(player, session).filter((option) => option.kind !== "pong");
+}
+
+function getDiscardResponseOptions(
+  player: TavernGamblePlayer,
+  session: TavernGambleSession,
+  discardTile: TavernMahjongTile,
+  stage: TavernGambleMeldWindowStage
+): TavernGambleMeldOption[] {
+  const tileKey = getTavernMahjongTileKey(discardTile);
+  const tileLabel = getTavernMahjongTileLabel(discardTile);
+  const claimableTiles = getClaimableTiles(player, session);
+  const sameKeyTiles = claimableTiles.filter((tile) => getTavernMahjongTileKey(tile) === tileKey);
+  const options: TavernGambleMeldOption[] = [];
+  if (stage === "chi-pong-kong") {
+    options.push(...getDiscardChiOptions(player, session, discardTile));
+  }
+  if (stage === "chi-pong-kong" || stage === "pong-kong") {
+    if (sameKeyTiles.length >= 2) {
+      options.push({
+        id: `pong:${discardTile.id}`,
+        kind: "pong",
+        tileKey,
+        tileLabel,
+        fan: 0,
+        raiseAmount: 0,
+        claimTileIds: sameKeyTiles.slice(0, 2).map((tile) => tile.id),
+      });
+    }
+  }
+  if (sameKeyTiles.length >= 3) {
+    options.push({
+      id: `public-kong:${discardTile.id}`,
+      kind: "public-kong",
+      tileKey,
+      tileLabel,
+      fan: 2,
+      raiseAmount: 0,
+      claimTileIds: sameKeyTiles.slice(0, 3).map((tile) => tile.id),
+    });
+  }
+  return options;
+}
+
+function getDiscardChiOptions(
+  player: TavernGamblePlayer,
+  session: TavernGambleSession,
+  discardTile: TavernMahjongTile
+): TavernGambleMeldOption[] {
+  if (discardTile.kind !== "suited") {
+    return [];
+  }
+  const suitedClaimableTiles = getClaimableTiles(player, session).filter(
+    (tile): tile is Extract<TavernMahjongTile, { kind: "suited" }> =>
+      tile.kind === "suited" && tile.suit === discardTile.suit
+  );
+  return combinations(suitedClaimableTiles, 2)
+    .filter((tiles) => resolvePlayableGroupKind([...tiles, discardTile]) === "sequence")
+    .map((tiles) => ({
+      id: `chi:${discardTile.id}:${tiles.map((tile) => tile.id).join(":")}`,
+      kind: "chi" as const,
+      tileKey: getTavernMahjongTileKey(discardTile),
+      tileLabel: getTavernMahjongTileLabel(discardTile),
+      fan: 0,
+      raiseAmount: 0,
+      claimTileIds: tiles.map((tile) => tile.id),
+    }));
+}
+
+function getClaimableTiles(
+  player: TavernGamblePlayer,
+  session: TavernGambleSession
+): TavernMahjongTile[] {
+  return [...player.hand, ...getAvailablePublicTiles(session, player)];
+}
+
+function getClaimTiles(
+  player: TavernGamblePlayer,
+  session: TavernGambleSession,
+  tileIds: string[]
+): { ownTiles: TavernMahjongTile[]; publicTiles: TavernMahjongTile[] } {
+  const remainingTileIds = [...tileIds];
+  const takeRequestedTile = (tile: TavernMahjongTile) => {
+    const index = remainingTileIds.indexOf(tile.id);
+    if (index < 0) {
+      return false;
+    }
+    remainingTileIds.splice(index, 1);
+    return true;
+  };
+  const ownTiles = player.hand.filter(takeRequestedTile);
+  const publicTiles = getAvailablePublicTiles(session, player).filter(takeRequestedTile);
+  return remainingTileIds.length === 0 ? { ownTiles, publicTiles } : { ownTiles: [], publicTiles: [] };
+}
+
+function getAvailableMelds(player: TavernGamblePlayer, session: TavernGambleSession): TavernGambleMeldOption[] {
+  const counts = countByTileKey(player.hand);
+  const publicCounts = countByTileKey(getAvailablePublicTiles(session, player));
+  const options: TavernGambleMeldOption[] = [];
+  for (const [tileKey, count] of counts.entries()) {
+    const publicCount = publicCounts.get(tileKey) ?? 0;
+    const tile = player.hand.find((candidate) => getTavernMahjongTileKey(candidate) === tileKey);
+    if (tile == null) {
+      continue;
+    }
+    const tileLabel = getTavernMahjongTileLabel(tile);
+    if (count >= 4) {
+      options.push({
+        id: `concealed-kong:${tileKey}`,
+        kind: "concealed-kong",
+        tileKey,
+        tileLabel,
+        fan: 4,
+        raiseAmount: TAVERN_GAMBLE_BIG_BLIND * 2,
+      });
+    }
+    if (count >= 3 && publicCount >= 1) {
+      options.push({
+        id: `public-kong:${tileKey}`,
+        kind: "public-kong",
+        tileKey,
+        tileLabel,
+        fan: 2,
+        raiseAmount: TAVERN_GAMBLE_BIG_BLIND,
+      });
+    }
+    if (count >= 2 && publicCount >= 1) {
+      options.push({ id: `pong:${tileKey}`, kind: "pong", tileKey, tileLabel, fan: 0, raiseAmount: 0 });
+    }
+  }
+  return options.sort((left, right) => {
+    const rank = { "concealed-kong": 4, "public-kong": 3, pong: 2, chi: 1 };
+    return rank[right.kind] - rank[left.kind];
+  });
+}
+
+function scoreBestSix(tiles: TavernMahjongTile[], player: TavernGamblePlayer): TavernGambleScore {
+  const playedGroupTiles = (player.playedGroups ?? []).map(createVirtualPlayedGroupTiles);
+  const fixedPlayedTiles = playedGroupTiles.flat().slice(0, TAVERN_GAMBLE_SHOWDOWN_SIZE);
+  const ordinaryTiles = removePlayedLabelsFromCandidates(
+    tiles.filter((tile) => tile.kind !== "flower"),
+    fixedPlayedTiles.map(getTavernMahjongTileLabel)
+  );
+  const meldTriplets = player.exposedMelds.map(createVirtualMeldTriplet);
+  const neededFromCandidates = TAVERN_GAMBLE_SHOWDOWN_SIZE - fixedPlayedTiles.length;
+  const candidates =
+    fixedPlayedTiles.length >= TAVERN_GAMBLE_SHOWDOWN_SIZE
+      ? [fixedPlayedTiles]
+      : [
+          ...combinations(ordinaryTiles, neededFromCandidates).map((rest) => [
+            ...fixedPlayedTiles,
+            ...rest,
+          ]),
+          ...meldTriplets.flatMap((triplet) =>
+            combinations(ordinaryTiles, neededFromCandidates - triplet.length).map((rest) => [
+              ...fixedPlayedTiles,
+              ...triplet,
+              ...rest,
+            ])
+          ),
+          ...(neededFromCandidates === TAVERN_GAMBLE_SHOWDOWN_SIZE
+            ? combinations(meldTriplets, 2).map(([left, right]) => [...left!, ...right!])
+            : []),
+        ];
+  const scored = candidates.map((candidate) => scoreSix(candidate, player));
+  scored.sort(compareScores);
+  return scored[0] ?? createEmptyScore(player);
+}
+
+function removePlayedLabelsFromCandidates(
+  tiles: TavernMahjongTile[],
+  playedLabels: string[]
+): TavernMahjongTile[] {
+  const remainingPlayedLabels = [...playedLabels];
+  return tiles.filter((tile) => {
+    const labelIndex = remainingPlayedLabels.indexOf(getTavernMahjongTileLabel(tile));
+    if (labelIndex < 0) {
+      return true;
+    }
+    remainingPlayedLabels.splice(labelIndex, 1);
+    return false;
+  });
+}
+
+function scoreSix(tiles: TavernMahjongTile[], player: TavernGamblePlayer): TavernGambleScore {
+  const suitedTiles = tiles.filter((tile): tile is Extract<TavernMahjongTile, { kind: "suited" }> => tile.kind === "suited");
+  const suits = new Set(suitedTiles.map((tile) => tile.suit));
+  const honors = tiles.filter((tile): tile is Extract<TavernMahjongTile, { kind: "honor" }> => tile.kind === "honor");
+  const hasHonor = honors.length > 0;
+  const shape = resolveSixTileShape(tiles);
+  const allSameSuit = suitedTiles.length === tiles.length && suits.size === 1;
+  const mixedOneSuit = hasHonor && suitedTiles.length > 0 && suits.size === 1;
+  const allTerminalsOrHonors = tiles.every(
+    (tile) => tile.kind === "honor" || (tile.kind === "suited" && (tile.rank === 1 || tile.rank === 9))
+  );
+  const allBig = suitedTiles.length === tiles.length && suitedTiles.every((tile) => tile.rank >= 7);
+  const allMiddle =
+    suitedTiles.length === tiles.length &&
+    suitedTiles.every((tile) => tile.rank >= 4 && tile.rank <= 6);
+  const allSmall = suitedTiles.length === tiles.length && suitedTiles.every((tile) => tile.rank <= 3);
+  const allEven = suitedTiles.length === tiles.length && suitedTiles.every((tile) => tile.rank % 2 === 0);
+  const bonusItems: Array<{ label: string; fan: number }> = [];
+  if (shape.valid) {
+    if (hasSameSequenceDifferentSuits(tiles)) bonusItems.push({ label: "鍠滅浉閫?, fan: 3 });
+    if (hasCleanSixRun(tiles)) bonusItems.push({ label: "杩炲叚", fan: 3 });
+    if (hasStepStraightSameSuit(tiles)) bonusItems.push({ label: "姝ユ楂?, fan: 4 });
+    if (hasOldYoungSameSuit(tiles)) bonusItems.push({ label: "鑰佸皯鍓?, fan: 4 });
+    if (hasIdenticalSequencesSameSuit(tiles)) bonusItems.push({ label: "涓€鑸珮", fan: 2 });
+    if (hasSameRankTripletsDifferentSuits(tiles)) bonusItems.push({ label: "鍙屽悓鍒?, fan: 4 });
+    if (hasTerminalPairOfTriplets(tiles)) bonusItems.push({ label: "骞轰節鍙屽埢", fan: 4 });
+    if (hasTwoHonorTriplets(tiles)) bonusItems.push({ label: "瀛楃墝鍙屽埢", fan: 5 });
+    if (allTerminalsOrHonors) bonusItems.push({ label: "娓呭购涔?, fan: 5 });
+    if (allSameSuit) bonusItems.push({ label: "娓呬竴鑹?, fan: 4 });
+    if (mixedOneSuit) bonusItems.push({ label: "娣蜂竴鑹?, fan: 3 });
+    if (allBig) bonusItems.push({ label: "鍏ㄥぇ", fan: 2 });
+    if (allMiddle) bonusItems.push({ label: "鍏ㄤ腑", fan: 2 });
+    if (allSmall) bonusItems.push({ label: "鍏ㄥ皬", fan: 2 });
+    if (allEven) bonusItems.push({ label: "鍏ㄥ弻", fan: 2 });
+    if (hasTerminalOrHonorGroup(tiles)) bonusItems.push({ label: "骞轰節/瀛楃墝缁?, fan: 1 });
+    if (hasDragonTriplet(tiles)) bonusItems.push({ label: "绠埢", fan: 2 });
+    if (player.playedOwnTileCount === 5) bonusItems.push({ label: "浜斿紶鑳?, fan: 2 });
+    if (player.playedOwnTileCount >= 6) bonusItems.push({ label: "鎻愬墠鑳?, fan: 2 });
+    if (player.playedOwnTileCount >= 7) bonusItems.push({ label: "涓冨紶瓒呰儭", fan: 1 });
+    const concealedTripletCount = countConcealedTriplets(tiles, player);
+    if (concealedTripletCount > 0) {
+      bonusItems.push({ label: concealedTripletCount >= 2 ? "鍙屾殫鍒? : "鏆楀埢", fan: concealedTripletCount });
+    }
+    if (!hasHonor) bonusItems.push({ label: "鏃犲瓧", fan: 1 });
+  }
+  const flowerFan = player.flowers.length;
+  const kongFan = player.exposedMelds.reduce((sum, meld) => sum + meld.fan, 0);
+  const kongCount = player.exposedMelds.filter((meld) => meld.kind.includes("kong")).length;
+  const playedContribution = tiles.filter((tile) => tile.id.startsWith("played-group-")).length;
+  const handContribution =
+    playedContribution + tiles.filter((tile) => player.hand.some((handTile) => handTile.id === tile.id)).length;
+  const bonusFan = bonusItems.reduce((sum, item) => sum + item.fan, 0) + flowerFan + kongFan;
+  const totalFan = shape.valid ? shape.fan + bonusFan : 0;
+  const bonusSummary = [
+    ...bonusItems.map((item) => `${item.label}+${item.fan}`),
+    ...(flowerFan > 0 ? [`鑺辩墝+${flowerFan}`] : []),
+    ...(kongFan > 0 ? [`鏉?${kongFan}`] : []),
+  ];
+  return {
+    totalFan,
+    mainFan: shape.fan,
+    mainPattern: shape.label,
+    selectedTiles: tiles.map(getTavernMahjongTileLabel),
+    purityRank: allSameSuit ? 4 : mixedOneSuit ? 3 : suits.size <= 2 ? 2 : hasHonor ? 0 : 1,
+    groupRank: getGroupRank(tiles),
+    pairRank: getPairRank(tiles),
+    handContribution,
+    flowerCount: player.flowers.length,
+    kongCount,
+    validHu: shape.valid,
+    detailLines: [
+      `鍩虹锛?{shape.label} ${shape.fan} 鐣猔,
+      `鍔犳垚锛?{bonusSummary.length > 0 ? bonusSummary.join("銆?) : "鏃?}`,
+      `缁撴瀯锛?{shape.valid ? "鎴愬瀷鍗虫湁鏁? : "鏈垚涓ょ粍/涓夊/鐗规畩瀛楃墝鍨?}`,
+      `鍑虹墝/鎵嬬墝鍏ラ€?${handContribution} 寮狅紝鑺辩墝 ${flowerFan} 寮狅紝鏉犵暘 ${kongFan}`,
+    ],
+  };
+}
+
+function scoreBestLongHand(tiles: TavernMahjongTile[], player: TavernGamblePlayer): TavernGambleScore {
+  const ordinaryTiles = tiles.filter((tile) => tile.kind !== "flower");
+  const candidates = combinations(ordinaryTiles, 14);
+  const scored = candidates.map((candidate) => scoreLongFourMeldsAndPair(candidate, player));
+  scored.sort(compareScores);
+  return scored[0] ?? {
+    ...createEmptyScore(player),
+    mainPattern: "鏈儭",
+    detailLines: ["闀跨墝闇€瑕佷粠 5 鏆楃墝涓庝釜浜烘槑鐗?鐩栫墝涓粍鎴?14 寮犺儭鐗屽瀷銆?],
+  };
+}
+
+function scoreLongFourMeldsAndPair(tiles: TavernMahjongTile[], player: TavernGamblePlayer): TavernGambleScore {
+  const ordinaryTiles = tiles.filter((tile) => tile.kind !== "flower");
+  if (ordinaryTiles.length !== 14) {
+    return createEmptyScore(player);
+  }
+  const suitedTiles = ordinaryTiles.filter((tile): tile is Extract<TavernMahjongTile, { kind: "suited" }> => tile.kind === "suited");
+  const suits = new Set(suitedTiles.map((tile) => tile.suit));
+  const honors = ordinaryTiles.filter((tile): tile is Extract<TavernMahjongTile, { kind: "honor" }> => tile.kind === "honor");
+  const counts = countByTileKey(ordinaryTiles);
+  const pairShape = [...counts.values()].filter((count) => count === 2).length === 7;
+  const meldShape = pairShape ? null : resolveStandardMeldShapeWithPairDetailed(counts);
+  const validHu = pairShape || meldShape != null;
+  if (!validHu) {
+    return createEmptyScore(player);
+  }
+
+  const allSameSuit = suitedTiles.length === ordinaryTiles.length && suits.size === 1;
+  const mixedOneSuit = honors.length > 0 && suitedTiles.length > 0 && suits.size === 1;
+  const allTerminalsOrHonors = ordinaryTiles.every(
+    (tile) => tile.kind === "honor" || (tile.kind === "suited" && (tile.rank === 1 || tile.rank === 9))
+  );
+  const bonusItems: Array<{ label: string; fan: number }> = [];
+  if (pairShape) bonusItems.push({ label: "涓冨", fan: 24 });
+  if (allTerminalsOrHonors) bonusItems.push({ label: "娣峰购涔?, fan: 32 });
+  if (allSameSuit) bonusItems.push({ label: "娓呬竴鑹?, fan: 24 });
+  if (mixedOneSuit) bonusItems.push({ label: "娣蜂竴鑹?, fan: 6 });
+  if (hasDragonTriplet(ordinaryTiles)) bonusItems.push({ label: "绠埢", fan: 2 });
+  if (hasTwoHonorTriplets(ordinaryTiles)) bonusItems.push({ label: "鍙岀/椋庡埢", fan: 6 });
+  if (honors.length === 0) bonusItems.push({ label: "鏃犲瓧", fan: 1 });
+
+  const flowerFan = player.flowers.length;
+  const kongFan = player.exposedMelds.reduce((sum, meld) => sum + meld.fan, 0);
+  const baseFan = pairShape ? 24 : 8;
+  const bonusFan = bonusItems.reduce((sum, item) => sum + item.fan, 0) + flowerFan + kongFan;
+  const mainPattern = pairShape ? "涓冨" : "鍥涚粍涓€瀵?;
+  const selectedTiles = pairShape
+    ? getOrderedSevenPairsLabels(counts)
+    : getOrderedStandardHuLabels(meldShape!);
+  const handContribution = ordinaryTiles.filter((tile) => player.hand.some((handTile) => handTile.id === tile.id)).length;
+  return {
+    totalFan: baseFan + bonusFan,
+    mainFan: baseFan,
+    mainPattern,
+    selectedTiles,
+    purityRank: allSameSuit ? 4 : mixedOneSuit ? 3 : suits.size <= 2 ? 2 : honors.length > 0 ? 0 : 1,
+    groupRank: getGroupRank(ordinaryTiles),
+    pairRank: getPairRank(ordinaryTiles),
+    handContribution,
+    flowerCount: player.flowers.length,
+    kongCount: player.exposedMelds.filter((meld) => meld.kind.includes("kong")).length,
+    validHu: true,
+    detailLines: [
+      `鍩虹锛?{mainPattern} ${baseFan} 鐣猔,
+      `鏍稿績鐣細${bonusItems.length > 0 ? bonusItems.map((item) => `${item.label}+${item.fan}`).join("銆?) : "鏃?}`,
+      `鑺辩墝 ${flowerFan}锛屾潬鐣?${kongFan}`,
+    ],
+  };
+}
+
+function resolveStandardMeldShapeWithPair(counts: Map<string, number>): { sequences: number; triplets: number } | null {
+  const resolved = resolveStandardMeldShapeWithPairDetailed(counts);
+  return resolved == null ? null : { sequences: resolved.sequences, triplets: resolved.triplets };
+}
+
+function resolveStandardMeldShapeWithPairDetailed(
+  counts: Map<string, number>
+): { sequences: number; triplets: number; melds: string[][]; pairKey: string } | null {
+  for (const [pairKey, count] of counts.entries()) {
+    if (count < 2) {
+      continue;
+    }
+    const rest = new Map(counts);
+    rest.set(pairKey, count - 2);
+    const shape = resolveMeldShapeDetailed(rest, 4);
+    if (shape != null) {
+      return { sequences: shape.sequences, triplets: shape.triplets, melds: shape.melds, pairKey };
+    }
+  }
+  return null;
+}
+
+function resolveSixTileShape(tiles: TavernMahjongTile[]): { label: string; fan: number; valid: boolean } {
+  const ordinaryTiles = tiles.filter((tile) => tile.kind !== "flower");
+  if (ordinaryTiles.length !== TAVERN_GAMBLE_SHOWDOWN_SIZE) {
+    return { label: "鏈垚鐗屽瀷", fan: 0, valid: false };
+  }
+  if (hasFourWindsWithPair(ordinaryTiles)) {
+    return { label: "鍥涘枩闆忓舰", fan: 8, valid: true };
+  }
+  if (hasSixUnpairedHonors(ordinaryTiles)) {
+    return { label: "鍏瓧涓嶉潬", fan: 6, valid: true };
+  }
+  const counts = countByTileKey(ordinaryTiles);
+  const countValues = [...counts.values()].sort((left, right) => left - right);
+  if (countValues.length === 3 && countValues.every((count) => count === 2)) {
+    return { label: "涓夊灏?, fan: 3, valid: true };
+  }
+  const meldShape = resolveMeldShape(counts, 2);
+  if (meldShape == null) {
+    return { label: "鏈垚鐗屽瀷", fan: 0, valid: false };
+  }
+  if (meldShape.triplets === 2) {
+    return { label: "鍙屽埢", fan: 5, valid: true };
+  }
+  if (meldShape.triplets === 1 && meldShape.sequences === 1) {
+    return { label: "涓€椤轰竴鍒?, fan: 3, valid: true };
+  }
+  return { label: "鍙岄『", fan: 2, valid: true };
+}
+
+function createEmptyScore(player: TavernGamblePlayer): TavernGambleScore {
+  return {
+    totalFan: player.flowers.length,
+    mainFan: 0,
+    mainPattern: "鏃犳湁鏁堢墝鍨?,
+    selectedTiles: [],
+    purityRank: 0,
+    groupRank: 0,
+    pairRank: 0,
+    handContribution: 0,
+    flowerCount: player.flowers.length,
+    kongCount: player.exposedMelds.filter((meld) => meld.kind.includes("kong")).length,
+    validHu: false,
+    detailLines: ["鏃犳湁鏁堣鍒嗛」"],
+  };
+}
+
+function createVirtualPlayedGroupTiles(group: TavernGamblePlayedGroup): TavernMahjongTile[] {
+  return group.tileLabels.map((label, index) => createVirtualTileFromLabel(label, `played-group-${group.id}-${index}`));
+}
+
+function createVirtualMeldTriplet(meld: TavernGambleMeld): TavernMahjongTile[] {
+  const baseTile = createVirtualTileFromKey(meld.tileKey, `${meld.kind}-${meld.tileKey}`);
+  return [1, 2, 3].map((copy) => ({ ...baseTile, id: `${baseTile.id}-${copy}` }));
+}
+
+function createVirtualTileFromLabel(label: string, id: string): TavernMahjongTile {
+  const suitedMatch = /^([1-9])(涓噟鏉绛?$/.exec(label);
+  if (suitedMatch != null) {
+    const [, rankText, suitLabel] = suitedMatch;
+    const suitEntry = (Object.entries(suitLabels) as Array<[TavernMahjongSuit, string]>).find(
+      ([, candidateLabel]) => candidateLabel === suitLabel
+    );
+    if (rankText != null && suitEntry != null) {
+      return {
+        id,
+        kind: "suited",
+        suit: suitEntry[0],
+        rank: Number(rankText),
+        copy: 0,
+      };
+    }
+  }
+  const honorEntry = (Object.entries(honorLabels) as Array<[TavernMahjongHonor, string]>).find(
+    ([, candidateLabel]) => candidateLabel === label
+  );
+  if (honorEntry != null) {
+    return { id, kind: "honor", honor: honorEntry[0], copy: 0 };
+  }
+  throw new Error(`Invalid tavern gambling tile label: ${label}`);
+}
+
+function createVirtualTileFromKey(tileKey: string, idPrefix: string): TavernMahjongTile {
+  const [suit, rankText] = tileKey.split("-");
+  if (suit === "wan" || suit === "tiao" || suit === "tong") {
+    const rank = Number(rankText);
+    if (!Number.isInteger(rank) || rank < 1 || rank > 9) {
+      throw new Error(`Invalid tavern gambling suited tile key: ${tileKey}`);
+    }
+    return { id: idPrefix, kind: "suited", suit, rank, copy: 0 };
+  }
+  if (tileKey in honorLabels) {
+    return { id: idPrefix, kind: "honor", honor: tileKey as TavernMahjongHonor, copy: 0 };
+  }
+  throw new Error(`Invalid tavern gambling meld tile key: ${tileKey}`);
+}
+
+function getOrderedSevenPairsLabels(counts: Map<string, number>): string[] {
+  return [...counts.entries()]
+    .filter(([, count]) => count >= 2)
+    .sort(([leftKey], [rightKey]) => compareTileKeys(leftKey, rightKey))
+    .flatMap(([tileKey]) => [getTileLabelFromKey(tileKey), getTileLabelFromKey(tileKey)]);
+}
+
+function getOrderedStandardHuLabels(shape: { melds: string[][]; pairKey: string }): string[] {
+  const meldLabels = [...shape.melds]
+    .sort(compareMeldKeyGroups)
+    .flatMap((meld) => meld.map((tileKey) => getTileLabelFromKey(tileKey)));
+  return [...meldLabels, getTileLabelFromKey(shape.pairKey), getTileLabelFromKey(shape.pairKey)];
+}
+
+function compareMeldKeyGroups(left: string[], right: string[]): number {
+  const maxLength = Math.max(left.length, right.length);
+  for (let index = 0; index < maxLength; index += 1) {
+    const compared = compareTileKeys(left[index] ?? "", right[index] ?? "");
+    if (compared !== 0) {
+      return compared;
+    }
+  }
+  return 0;
+}
+
+function compareTileKeys(leftKey: string, rightKey: string): number {
+  return getTileSortRankFromKey(leftKey) - getTileSortRankFromKey(rightKey);
+}
+
+function getTileLabelFromKey(tileKey: string): string {
+  return getTavernMahjongTileLabel(createVirtualTileFromKey(tileKey, `ordered-${tileKey}`));
+}
+
+function getTileSortRankFromKey(tileKey: string): number {
+  if (tileKey.length === 0) {
+    return 0;
+  }
+  return getTileSortRank(createVirtualTileFromKey(tileKey, `sort-${tileKey}`));
+}
+
+function compareShowdownResults(left: TavernGambleShowdownResult, right: TavernGambleShowdownResult): number {
+  return compareRankKeys(right.rankKey, left.rankKey);
+}
+
+function compareScores(left: TavernGambleScore, right: TavernGambleScore): number {
+  return compareRankKeys(rightToKey(right), rightToKey(left));
+}
+
+function rightToKey(score: TavernGambleScore): number[] {
+  return [
+    score.totalFan,
+    score.mainFan,
+    score.groupRank,
+    score.purityRank,
+    score.pairRank,
+    score.flowerCount,
+    score.kongCount,
+    score.handContribution,
+  ];
+}
+
+function compareRankKeys(left: number[], right: number[]): number {
+  for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+    const leftValue = left[index] ?? 0;
+    const rightValue = right[index] ?? 0;
+    if (leftValue !== rightValue) {
+      return leftValue - rightValue;
+    }
+  }
+  return 0;
+}
+
+function getGroupRank(tiles: TavernMahjongTile[]): number {
+  const counts = countByTileKey(tiles);
+  let best = 0;
+  for (const [tileKey, count] of counts.entries()) {
+    if (count >= 3) {
+      best = Math.max(best, 200 + getTileSortRankByKey(tileKey, tiles));
+    } else if (count >= 2) {
+      best = Math.max(best, 100 + getTileSortRankByKey(tileKey, tiles));
+    }
+  }
+  return best;
+}
+
+function getPairRank(tiles: TavernMahjongTile[]): number {
+  const counts = countByTileKey(tiles);
+  let best = 0;
+  for (const [tileKey, count] of counts.entries()) {
+    if (count >= 2) {
+      best = Math.max(best, getTileSortRankByKey(tileKey, tiles));
+    }
+  }
+  return best;
+}
+
+function getTileSortRankByKey(tileKey: string, tiles: TavernMahjongTile[]): number {
+  const tile = tiles.find((candidate) => getTavernMahjongTileKey(candidate) === tileKey);
+  return tile == null ? 0 : getTileSortRank(tile);
+}
+
+function getTileSortRank(tile: TavernMahjongTile): number {
+  if (tile.kind === "honor") {
+    return 300 + Object.keys(honorLabels).indexOf(tile.honor);
+  }
+  if (tile.kind === "suited") {
+    const suitRank = tile.suit === "wan" ? 30 : tile.suit === "tiao" ? 20 : 10;
+    return suitRank + tile.rank;
+  }
+  return 0;
+}
+
+function hasSameSequenceDifferentSuits(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  for (let start = 1; start <= 7; start += 1) {
+    const suitHits = (Object.keys(suitLabels) as TavernMahjongSuit[]).filter((suit) =>
+      [start, start + 1, start + 2].every((rank) => (counts.get(`${suit}-${rank}`) ?? 0) >= 1)
+    );
+    if (suitHits.length >= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasIdenticalSequencesSameSuit(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  for (const suit of Object.keys(suitLabels) as TavernMahjongSuit[]) {
+    for (let start = 1; start <= 7; start += 1) {
+      if ([start, start + 1, start + 2].every((rank) => (counts.get(`${suit}-${rank}`) ?? 0) >= 2)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function hasOldYoungSameSuit(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  for (const suit of Object.keys(suitLabels) as TavernMahjongSuit[]) {
+    const hasYoung = [1, 2, 3].every((rank) => (counts.get(`${suit}-${rank}`) ?? 0) >= 1);
+    const hasOld = [7, 8, 9].every((rank) => (counts.get(`${suit}-${rank}`) ?? 0) >= 1);
+    if (hasYoung && hasOld) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasCleanSixRun(tiles: TavernMahjongTile[]): boolean {
+  const suited = tiles.filter((tile): tile is Extract<TavernMahjongTile, { kind: "suited" }> => tile.kind === "suited");
+  if (suited.length !== TAVERN_GAMBLE_SHOWDOWN_SIZE || new Set(suited.map((tile) => tile.suit)).size !== 1) {
+    return false;
+  }
+  const ranks = new Set(suited.map((tile) => tile.rank));
+  return [1, 2, 3, 4].some((start) => [0, 1, 2, 3, 4, 5].every((offset) => ranks.has(start + offset)));
+}
+
+function hasStepStraightSameSuit(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  for (const suit of Object.keys(suitLabels) as TavernMahjongSuit[]) {
+    for (let firstStart = 1; firstStart <= 7; firstStart += 1) {
+      for (const step of [1, 2]) {
+        const secondStart = firstStart + step;
+        if (secondStart > 7) {
+          continue;
+        }
+        const needed = [
+          firstStart,
+          firstStart + 1,
+          firstStart + 2,
+          secondStart,
+          secondStart + 1,
+          secondStart + 2,
+        ].map((rank) => `${suit}-${rank}`);
+        const neededCounts = new Map<string, number>();
+        for (const key of needed) {
+          neededCounts.set(key, (neededCounts.get(key) ?? 0) + 1);
+        }
+        if ([...neededCounts.entries()].every(([key, count]) => (counts.get(key) ?? 0) >= count)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function hasSameRankTripletsDifferentSuits(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  for (let rank = 1; rank <= 9; rank += 1) {
+    const tripletSuits = (Object.keys(suitLabels) as TavernMahjongSuit[]).filter(
+      (suit) => (counts.get(`${suit}-${rank}`) ?? 0) >= 3
+    );
+    if (tripletSuits.length >= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasTerminalPairOfTriplets(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  let terminalTripletCount = 0;
+  for (const suit of Object.keys(suitLabels) as TavernMahjongSuit[]) {
+    if ((counts.get(`${suit}-1`) ?? 0) >= 3) terminalTripletCount += 1;
+    if ((counts.get(`${suit}-9`) ?? 0) >= 3) terminalTripletCount += 1;
+  }
+  return terminalTripletCount >= 2;
+}
+
+function hasTwoHonorTriplets(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  let honorTripletCount = 0;
+  for (const honor of Object.keys(honorLabels) as TavernMahjongHonor[]) {
+    if ((counts.get(honor) ?? 0) >= 3) {
+      honorTripletCount += 1;
+    }
+  }
+  return honorTripletCount >= 2;
+}
+
+function countConcealedTriplets(tiles: TavernMahjongTile[], player: TavernGamblePlayer): number {
+  const counts = countByTileKey(tiles);
+  const handCounts = countByTileKey(player.hand);
+  let concealedTriplets = 0;
+  for (const [tileKey, count] of counts.entries()) {
+    if (count >= 3 && (handCounts.get(tileKey) ?? 0) >= 3) {
+      concealedTriplets += 1;
+    }
+  }
+  return concealedTriplets;
+}
+
+function hasFourWindsWithPair(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  const hasAllWinds = [...windHonors].every((honor) => (counts.get(honor) ?? 0) >= 1);
+  return hasAllWinds && [...counts.values()].some((count) => count >= 2);
+}
+
+function hasSixUnpairedHonors(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  return tiles.every((tile) => tile.kind === "honor") && counts.size === TAVERN_GAMBLE_SHOWDOWN_SIZE;
+}
+
+function resolveMeldShape(
+  counts: Map<string, number>,
+  meldsLeft: number
+): { sequences: number; triplets: number } | null {
+  const resolved = resolveMeldShapeDetailed(counts, meldsLeft);
+  return resolved == null ? null : { sequences: resolved.sequences, triplets: resolved.triplets };
+}
+
+function resolveMeldShapeDetailed(
+  counts: Map<string, number>,
+  meldsLeft: number
+): { sequences: number; triplets: number; melds: string[][] } | null {
+  if (meldsLeft === 0) {
+    return [...counts.values()].every((count) => count === 0) ? { sequences: 0, triplets: 0, melds: [] } : null;
+  }
+
+  const firstKey = [...counts.entries()]
+    .filter(([, count]) => count > 0)
+    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))[0]?.[0];
+  if (firstKey == null) {
+    return null;
+  }
+
+  if ((counts.get(firstKey) ?? 0) >= 3) {
+    const tripletCounts = new Map(counts);
+    tripletCounts.set(firstKey, (tripletCounts.get(firstKey) ?? 0) - 3);
+    const rest = resolveMeldShapeDetailed(tripletCounts, meldsLeft - 1);
+    if (rest != null) {
+      return { sequences: rest.sequences, triplets: rest.triplets + 1, melds: [[firstKey, firstKey, firstKey], ...rest.melds] };
+    }
+  }
+
+  const [suit, rankText] = firstKey.split("-");
+  const rank = Number(rankText);
+  if (suit !== "wan" && suit !== "tiao" && suit !== "tong") {
+    return null;
+  }
+  if (!Number.isInteger(rank) || rank > 7) {
+    return null;
+  }
+
+  const sequenceKeys = [rank, rank + 1, rank + 2].map((sequenceRank) => `${suit}-${sequenceRank}`);
+  if (!sequenceKeys.every((key) => (counts.get(key) ?? 0) > 0)) {
+    return null;
+  }
+  const sequenceCounts = new Map(counts);
+  for (const key of sequenceKeys) {
+    sequenceCounts.set(key, (sequenceCounts.get(key) ?? 0) - 1);
+  }
+  const rest = resolveMeldShapeDetailed(sequenceCounts, meldsLeft - 1);
+  return rest == null
+    ? null
+    : { sequences: rest.sequences + 1, triplets: rest.triplets, melds: [sequenceKeys, ...rest.melds] };
+}
+
+function hasDragonTriplet(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  for (const honor of dragonHonors) {
+    if ((counts.get(honor) ?? 0) >= 3) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasTerminalOrHonorGroup(tiles: TavernMahjongTile[]): boolean {
+  const counts = countByTileKey(tiles);
+  for (const [tileKey, count] of counts.entries()) {
+    if (count < 2) continue;
+    const tile = tiles.find((candidate) => getTavernMahjongTileKey(candidate) === tileKey);
+    if (tile?.kind === "honor" || (tile?.kind === "suited" && (tile.rank === 1 || tile.rank === 9))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function combinations<T>(items: T[], size: number): T[][] {
+  if (size < 0) return [];
+  if (size === 0) return [[]];
+  if (items.length < size) return [];
+  const [head, ...tail] = items;
+  return [...combinations(tail, size - 1).map((candidate) => [head as T, ...candidate]), ...combinations(tail, size)];
+}
+
+function drawNonFlowerTiles(wall: TavernMahjongTile[], deadWall: TavernMahjongTile[], count: number): {
+  tiles: TavernMahjongTile[];
+  flowers: TavernMahjongTile[];
+  wall: TavernMahjongTile[];
+  deadWall: TavernMahjongTile[];
+} {
+  let nextWall = wall;
+  let nextDeadWall = deadWall;
+  const tiles: TavernMahjongTile[] = [];
+  const flowers: TavernMahjongTile[] = [];
+  while (tiles.length < count) {
+    const drawn = drawOneNonFlower(nextWall, nextDeadWall);
+    tiles.push(drawn.tile);
+    flowers.push(...drawn.flowers);
+    nextWall = drawn.wall;
+    nextDeadWall = drawn.deadWall;
+  }
+  return { tiles, flowers, wall: nextWall, deadWall: nextDeadWall };
+}
+
+function drawOneNonFlower(wall: TavernMahjongTile[], deadWall: TavernMahjongTile[]): {
+  tile: TavernMahjongTile;
+  flowers: TavernMahjongTile[];
+  wall: TavernMahjongTile[];
+  deadWall: TavernMahjongTile[];
+} {
+  let nextWall = wall;
+  let nextDeadWall = deadWall;
+  const flowers: TavernMahjongTile[] = [];
+  let tile = nextWall[0];
+  nextWall = nextWall.slice(1);
+  while (tile?.kind === "flower") {
+    flowers.push(tile);
+    tile = nextDeadWall[0];
+    nextDeadWall = nextDeadWall.slice(1);
+  }
+  if (tile == null) {
+    const fallback = nextDeadWall.find((candidate) => candidate.kind !== "flower");
+    if (fallback == null) {
+      throw new Error("Tavern gambling wall exhausted.");
+    }
+    tile = fallback;
+    nextDeadWall = removeTileById(nextDeadWall, fallback.id);
+  }
+  return { tile, flowers, wall: nextWall, deadWall: nextDeadWall };
+}
+
+function normalizeHand(player: TavernGamblePlayer): TavernGamblePlayer {
+  return { ...player, hand: player.hand.slice(0, TAVERN_GAMBLE_HAND_SIZE) };
+}
+
+function getHumanPlayer(session: TavernGambleSession): TavernGamblePlayer {
+  const player = session.players.find((candidate) => candidate.isHuman);
+  if (player == null) {
+    throw new Error("Tavern gambling session has no human player.");
+  }
+  return player;
+}
+
+function updatePlayer(session: TavernGambleSession, playerId: string, patch: Partial<TavernGamblePlayer>): TavernGambleSession {
+  return {
+    ...session,
+    players: session.players.map((player) => (player.id === playerId ? { ...player, ...patch } : player)),
+  };
+}
+
+function getAffordableCommit(
+  session: TavernGambleSession,
+  player: TavernGamblePlayer,
+  requestedAmount: number
+): number {
+  return Math.max(0, Math.min(requestedAmount, session.wager - player.committed));
+}
+
+function removeTileById<T extends { id: string }>(tiles: T[], tileId: string): T[] {
+  let removed = false;
+  return tiles.filter((tile) => {
+    if (!removed && tile.id === tileId) {
+      removed = true;
+      return false;
+    }
+    return true;
+  });
+}
+
+function countByTileKey(tiles: TavernMahjongTile[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const tile of tiles) {
+    const key = getTavernMahjongTileKey(tile);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}

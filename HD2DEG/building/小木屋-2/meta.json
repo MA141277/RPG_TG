@@ -1,0 +1,29 @@
+{
+  "id": "小木屋-2",
+  "kind": "building",
+  "title": "小木屋",
+  "prompt": "小木屋",
+  "tags": [
+    "house"
+  ],
+  "widthTiles": 12,
+  "drawRoad": true,
+  "createdAt": "2026-04-26T19:21:17+08:00",
+  "updatedAt": "2026-04-28T08:31:37+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/小木屋-2/front.png",
+    "side": "building/小木屋-2/side.png",
+    "top": "building/小木屋-2/top.png",
+    "preview": "building/小木屋-2/preview.png",
+    "previewProcessed": "building/小木屋-2/preview-processed.png"
+  }
+}

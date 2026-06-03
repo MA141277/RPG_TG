@@ -1,0 +1,1101 @@
+[2m11:25:19[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/domain/tavern-gambling.ts (resolved id: D:/RPG_TG/src/domain/tavern-gambling.ts) in D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts. Does the file exist?
+[2m11:32:54[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../../domain/tavern-gambling" from "src/application/house-modules/tavern/tavern-house-module.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:43:7
+[33m  23 |    scoreTavernGamblePlayer,
+  24 |    skipTavernGambleMeld
+  25 |  } from "../../../domain/tavern-gambling";
+     |          ^
+  26 |  import { assertExists } from "../../../shared/assert";
+  27 |  import {[39m
+[2m11:32:56[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../../domain/tavern-gambling" from "src/application/house-modules/tavern/tavern-house-module.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:43:7
+[33m  23 |    scoreTavernGamblePlayer,
+  24 |    skipTavernGambleMeld
+  25 |  } from "../../../domain/tavern-gambling";
+     |          ^
+  26 |  import { assertExists } from "../../../shared/assert";
+  27 |  import {[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 2)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:33:06[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../../domain/tavern-gambling" from "src/application/house-modules/tavern/tavern-house-module.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:43:7
+[33m  23 |    scoreTavernGamblePlayer,
+  24 |    skipTavernGambleMeld
+  25 |  } from "../../../domain/tavern-gambling";
+     |          ^
+  26 |  import { assertExists } from "../../../shared/assert";
+  27 |  import {[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 2)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:35:30[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../../domain/tavern-gambling" from "src/application/house-modules/tavern/tavern-house-module.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:43:7
+[33m  23 |    scoreTavernGamblePlayer,
+  24 |    skipTavernGambleMeld
+  25 |  } from "../../../domain/tavern-gambling";
+     |          ^
+  26 |  import { assertExists } from "../../../shared/assert";
+  27 |  import {[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 2)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m11:35:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../../domain/tavern-gambling" from "src/application/house-modules/tavern/tavern-house-module.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:43:7
+[33m  23 |    scoreTavernGamblePlayer,
+  24 |    skipTavernGambleMeld
+  25 |  } from "../../../domain/tavern-gambling";
+     |          ^
+  26 |  import { assertExists } from "../../../shared/assert";
+  27 |  import {[39m
+      at TransformPluginContext._formatLog (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 2)
+      at async TransformPluginContext.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///D:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m13:09:33[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:114:42: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:114:42
+[33m  
+  [33mUnterminated string literal[33m
+  113 |      >
+  114 |        ${tile.covered ? "�? : tile.label}
+  115 |      </button>
+      |   ^
+  116 |    `;
+  117 |  }
+  [39m
+[2m13:09:37[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:114:42: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:114:42
+[33m  
+  [33mUnterminated string literal[33m
+  113 |      >
+  114 |        ${tile.covered ? "�? : tile.label}
+  115 |      </button>
+      |   ^
+  116 |    `;
+  117 |  }
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m13:10:39[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:114:42: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:114:42
+[33m  
+  [33mUnterminated string literal[33m
+  113 |      >
+  114 |        ${tile.covered ? "�? : tile.label}
+  115 |      </button>
+      |   ^
+  116 |    `;
+  117 |  }
+  [39m
+[2m13:10:44[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:114:42: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:114:42
+[33m  
+  [33mUnterminated string literal[33m
+  113 |      >
+  114 |        ${tile.covered ? "�? : tile.label}
+  115 |      </button>
+      |   ^
+  116 |    `;
+  117 |  }
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m13:10:46[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:118:42: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:118:42
+[33m  
+  [33mUnterminated string literal[33m
+  117 |      >
+  118 |        ${tile.covered ? "�? : tile.label}
+  119 |      </button>
+      |   ^
+  120 |    `;
+  121 |  }
+  [39m
+[2m13:10:48[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:118:42: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:118:42
+[33m  
+  [33mUnterminated string literal[33m
+  117 |      >
+  118 |        ${tile.covered ? "�? : tile.label}
+  119 |      </button>
+      |   ^
+  120 |    `;
+  121 |  }
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m13:11:38[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:110:42: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:110:42
+[33m  
+  [33mUnterminated string literal[33m
+  109 |      >
+  110 |        ${tile.covered ? "�? : tile.label}
+  111 |      </button>
+      |   ^
+  112 |    `;
+  113 |  }
+  [39m
+[2m13:11:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:110:42: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:110:42
+[33m  
+  [33mUnterminated string literal[33m
+  109 |      >
+  110 |        ${tile.covered ? "�? : tile.label}
+  111 |      </button>
+      |   ^
+  112 |    `;
+  113 |  }
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m13:12:23[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:110:42: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:110:42
+[33m  
+  [33mUnterminated string literal[33m
+  109 |      >
+  110 |        ${tile.covered ? "�? : tile.label}
+  111 |      </button>
+      |   ^
+  112 |    `;
+  113 |  }
+  [39m
+[2m13:12:30[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:110:42: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:110:42
+[33m  
+  [33mUnterminated string literal[33m
+  109 |      >
+  110 |        ${tile.covered ? "�? : tile.label}
+  111 |      </button>
+      |   ^
+  112 |    `;
+  113 |  }
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m13:14:04[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:110:42: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:110:42
+[33m  
+  [33mUnterminated string literal[33m
+  109 |      >
+  110 |        ${tile.covered ? "�? : tile.label}
+  111 |      </button>
+      |   ^
+  112 |    `;
+  113 |  }
+  [39m
+[2m13:14:05[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:110:42: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:110:42
+[33m  
+  [33mUnterminated string literal[33m
+  109 |      >
+  110 |        ${tile.covered ? "�? : tile.label}
+  111 |      </button>
+      |   ^
+  112 |    `;
+  113 |  }
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m13:14:45[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:236:19: ERROR: Unexpected "?"
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:236:19
+[33m  
+  [33mUnexpected "?"[33m
+  234 |                  isLong
+  235 |                    ? ""
+  236 |                <p>???</p>
+      |                     ^
+  237 |                }
+  238 |                <div class="c-tavern-gamble__play-slot${isLong ? " is-hidden" : ""}">
+  [39m
+[2m13:14:47[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/ui/views/house/tavern-house-view.ts:236:19: ERROR: Unexpected "?"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/ui/views/house/tavern-house-view.ts[39m:236:19
+[33m  
+  [33mUnexpected "?"[33m
+  234 |                  isLong
+  235 |                    ? ""
+  236 |                <p>???</p>
+      |                     ^
+  237 |                }
+  238 |                <div class="c-tavern-gamble__play-slot${isLong ? " is-hidden" : ""}">
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m14:17:14[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:178:7: ERROR: Unexpected ")"
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:178:7
+[33m  
+  [33mUnexpected ")"[33m
+  176 |                : undefined,
+  177 |          };
+  178 |        })
+      |         ^
+  179 |        .filter((tile): tile is NonNullable<typeof tile> => tile != null);
+  180 |      return {
+  [39m
+[2m14:17:23[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:178:7: ERROR: Unexpected ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:178:7
+[33m  
+  [33mUnexpected ")"[33m
+  176 |                : undefined,
+  177 |          };
+  178 |        })
+      |         ^
+  179 |        .filter((tile): tile is NonNullable<typeof tile> => tile != null);
+  180 |      return {
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m14:17:27[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:178:7: ERROR: Unexpected ")"
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:178:7
+[33m  
+  [33mUnexpected ")"[33m
+  176 |                : undefined,
+  177 |          };
+  178 |        })
+      |         ^
+  179 |        .filter((tile): tile is NonNullable<typeof tile> => tile != null);
+  180 |      return {
+  [39m
+[2m14:17:32[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:178:7: ERROR: Unexpected ")"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:178:7
+[33m  
+  [33mUnexpected ")"[33m
+  176 |                : undefined,
+  177 |          };
+  178 |        })
+      |         ^
+  179 |        .filter((tile): tile is NonNullable<typeof tile> => tile != null);
+  180 |      return {
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m14:18:33[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:168:0: ERROR: Unexpected "}"
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:168:0
+[33m  
+  [33mUnexpected "}"[33m
+  166 |      ...(sideEffects == null ? {} : { sideEffects }),
+  167 |    };
+  168 |  }
+      |  ^
+  169 |  
+  170 |  function findWorkOffer(offerId: string): TavernWorkOffer {
+  [39m
+[2m14:18:44[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:168:0: ERROR: Unexpected "}"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:168:0
+[33m  
+  [33mUnexpected "}"[33m
+  166 |      ...(sideEffects == null ? {} : { sideEffects }),
+  167 |    };
+  168 |  }
+      |  ^
+  169 |  
+  170 |  function findWorkOffer(offerId: string): TavernWorkOffer {
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m16:12:14[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:391:78: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:391:78
+[33m  
+  [33mUnterminated string literal[33m
+  392 |        ],
+  393 |        overlay: {
+  394 |          type: "result",
+      |                 ^
+  395 |          title: "活计进度",
+  396 |          grade: reward.grade,
+  [39m
+[2m16:12:15[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:391:78: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:391:78
+[33m  
+  [33mUnterminated string literal[33m
+  392 |        ],
+  393 |        overlay: {
+  394 |          type: "result",
+      |                 ^
+  395 |          title: "活计进度",
+  396 |          grade: reward.grade,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m16:13:47[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:1:15: ERROR: Expected ";" but found "琠癡牥䉮獯偳潲楦敬ਬ"
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:1:15
+[33m  
+  [33mExpected ";" but found "琠癡牥䉮獯偳潲楦敬ਬ"[33m
+  1  |  浩潰瑲笠 琠癡牥䉮獯偳潲楦敬ਬ†慴敶湲敄慦汵坴条牥ਬ†慴敶湲牄湩偫楲散ਬ†慴敶湲慗敧卲整Ɒ 琠癡牥坮牯佫晦牥ⱳ紊映潲⁭⸢⼮⸮ⸯ⼮潣瑮湥⽴潨獵獥琯癡牥⵮潣瑮湥≴਻浩潰瑲琠灹⁥⁻桃牡捡整䑲晥湩瑩潩⁮⁽牦浯∠⸮ⸯ⼮⸮搯浯楡⽮档牡捡整≲਻浩潰...
+     |                 ^
+  [39m
+[2m16:13:49[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts:1:15: ERROR: Expected ";" but found "琠癡牥䉮獯偳潲楦敬ਬ"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/application/house-modules/tavern/tavern-house-module.ts[39m:1:15
+[33m  
+  [33mExpected ";" but found "琠癡牥䉮獯偳潲楦敬ਬ"[33m
+  1  |  浩潰瑲笠 琠癡牥䉮獯偳潲楦敬ਬ†慴敶湲敄慦汵坴条牥ਬ†慴敶湲牄湩偫楲散ਬ†慴敶湲慗敧卲整Ɒ 琠癡牥坮牯佫晦牥ⱳ紊映潲⁭⸢⼮⸮ⸯ⼮潣瑮湥⽴潨獵獥琯癡牥⵮潣瑮湥≴਻浩潰瑲琠灹⁥⁻桃牡捡整䑲晥湩瑩潩⁮⁽牦浯∠⸮ⸯ⼮⸮搯浯楡⽮档牡捡整≲਻浩潰...
+     |                 ^
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:25:41[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:178:13: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:178:13
+[33m  
+  [33mUnterminated string literal[33m
+  177 |  const suitLabels: Record<TavernMahjongSuit, string> = {
+  178 |    wan: "涓?,
+  179 |    tiao: "鏉?,
+      |   ^
+  180 |    tong: "绛?,
+  181 |  };
+  [39m
+[2m17:25:43[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:178:13: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:178:13
+[33m  
+  [33mUnterminated string literal[33m
+  177 |  const suitLabels: Record<TavernMahjongSuit, string> = {
+  178 |    wan: "涓?,
+  179 |    tiao: "鏉?,
+      |   ^
+  180 |    tong: "绛?,
+  181 |  };
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:26:18[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:178:13: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:178:13
+[33m  
+  [33mUnterminated string literal[33m
+  177 |  const suitLabels: Record<TavernMahjongSuit, string> = {
+  178 |    wan: "涓?,
+  179 |    tiao: "鏉?,
+      |   ^
+  180 |    tong: "绛?,
+  181 |  };
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:28:19[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:178:13: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:178:13
+[33m  
+  [33mUnterminated string literal[33m
+  177 |  const suitLabels: Record<TavernMahjongSuit, string> = {
+  178 |    wan: "涓?,
+  179 |    tiao: "鏉?,
+      |   ^
+  180 |    tong: "绛?,
+  181 |  };
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:28:21[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+[2m17:28:24[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:30:05[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:30:18[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:30:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:32:03[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:32:50[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:33:03[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:33:23[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:33:39[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:325:89: ERROR: Expected ":" but found "鐗欎汉"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:325:89
+[33m  
+  [33mExpected ":" but found "鐗欎汉"[33m
+  323 |    const players: TavernGamblePlayer[] = ["you", "traveler", "broker", "guard"].map((id, index) => ({
+  324 |      id,
+  325 |      name: index === 0 ? input.playerName : index === 1 ? "琛岃剼瀹? : index === 2 ? "鐗欎汉" : "鎶ら櫌"",
+      |                                                                                           ^
+  326 |      isHuman: index === 0,
+  327 |      seatIndex: index,
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:34:15[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+[2m17:34:19[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:36:44[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:37:04[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:38:23[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:38:34[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:38:46[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:39:24[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:40:04[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:40:51[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:48:18[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:49:16[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m17:49:16[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/RPG_TG/src/domain/tavern-gambling.ts:270:28: ERROR: Unterminated string literal[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/RPG_TG/src/domain/tavern-gambling.ts[39m:270:28
+[33m  
+  [33mUnterminated string literal[33m
+  269 |      case "betting":
+  270 |        return "娑撳鏁?;
+  271 |      case "meld-window":
+      |         ^
+  272 |        return "绾扮増娼?;
+  273 |      case "draw-discard":
+  [39m
+      at failureErrorWithLog (D:\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at D:\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (D:\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (D:\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (D:\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

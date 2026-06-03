@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>三视图体素求交 Demo</title>
+  <style>
+    :root {
+      --bg: #121212;
+      --panel: #1c1c1c;
+      --line: #333;
+      --text: #e8e8e8;
+      --sub: #9f9f9f;
+      --accent: #58d68d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      color: var(--text);
+      background: radial-gradient(circle at top, #1b1b1b, #111);
+      min-height: 100vh;
+      padding: 14px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 12px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    h1 { font-size: 18px; margin: 0 0 8px; }
+    h2 { font-size: 13px; margin: 10px 0 6px; color: var(--accent); }
+    .muted { color: var(--sub); font-size: 12px; line-height: 1.45; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    label { font-size: 12px; color: var(--sub); display: block; margin-bottom: 4px; }
+    input[type="number"], input[type="range"], input[type="file"], button {
+      width: 100%;
+      background: #141414;
+      color: var(--text);
+      border: 1px solid #404040;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+    input[type="checkbox"] { transform: translateY(1px); }
+    button {
+      cursor: pointer;
+      background: #202020;
+    }
+    button:hover { border-color: #666; }
+    .btn-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .source-note {
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #383838;
+      background: #151515;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--sub);
+    }
+    .views {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .view-box {
+      border: 1px solid #3d3d3d;
+      border-radius: 6px;
+      padding: 6px;
+      background: #151515;
+    }
+    .view-box b {
+      display: block;
+      font-size: 11px;
+      margin-bottom: 4px;
+      color: #c6c6c6;
+    }
+    canvas.small {
+      width: 100%;
+      image-rendering: pixelated;
+      border: 1px solid #2d2d2d;
+      background: #0d0d0d;
+    }
+    #renderCanvas {
+      width: 100%;
+      height: 76vh;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      image-rendering: pixelated;
+      background: linear-gradient(#191919, #101010);
+      display: block;
+    }
+    .stat {
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #383838;
+      background: #151515;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .k { color: #89d2ff; }
+    .row .row-full { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <section class="panel">
+      <h1>算法一 · 三视图求交体素</h1>
+      <p class="muted">
+        目标：从 front / side / top 三视图恢复一个低精度场景体块。<br />
+        逻辑：<code>voxel(x,y,z) = front(x,y) && side(z,y) && top(x,z)</code>。<br />
+        建议先点“载入 hut1 / tower”快速验证，再上传你自己的像素图测试。
+      </p>
+
+      <h2>输入</h2>
+      <div class="row">
+        <div>
+          <label>Front（正视图）</label>
+          <input id="frontFile" type="file" accept="image/*" />
+        </div>
+        <div>
+          <label>Side（侧视图）</label>
+          <input id="sideFile" type="file" accept="image/*" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Top（俯视图）</label>
+          <input id="topFile" type="file" accept="image/*" />
+        </div>
+        <div>
+          <label>输入约定</label>
+          <input type="text" value="透明底 PNG，非透明像素即前景" disabled />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Front 路径 / URL</label>
+          <input id="frontSrc" type="text" placeholder="./tower-front.png 或 https://..." />
+        </div>
+        <div>
+          <label>Side 路径 / URL</label>
+          <input id="sideSrc" type="text" placeholder="./tower-side.png 或 https://..." />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Top 路径 / URL</label>
+          <input id="topSrc" type="text" placeholder="./tower-top.png 或 https://..." />
+        </div>
+        <div>
+          <label>通用载入</label>
+          <button id="loadSrcBtn" type="button">按路径载入</button>
+        </div>
+      </div>
+      <div class="source-note" id="sourceNote">
+        建议优先使用本地文件上传，或同源 / 已开启 CORS 的图片 URL。页面会通过 <code>fetch + blob</code> 读取图片，避免 canvas 被污染；如果远程站点没开 CORS，浏览器安全策略仍会拦截，这种情况请先下载到本地再导入。
+      </div>
+      <div class="btn-row" aria-label="单张视图旋转">
+        <button id="rotateFrontBtn" type="button">Front 旋转90度</button>
+        <button id="rotateSideBtn" type="button">Side 旋转90度</button>
+        <button id="rotateTopBtn" type="button">Top 旋转90度</button>
+      </div>
+
+      <h2>网格参数</h2>
+      <div class="row">
+        <div>
+          <label>宽 W（x）</label>
+          <input id="gridW" type="number" min="8" max="192" value="64" />
+        </div>
+        <div>
+          <label>高 H（y）</label>
+          <input id="gridH" type="number" min="8" max="192" value="80" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>深 D（z）</label>
+          <input id="gridD" type="number" min="8" max="192" value="64" />
+        </div>
+        <div>
+          <label>像素尺寸上限（渲染）</label>
+          <input id="voxelSize" type="range" min="4" max="18" value="9" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-full">
+          <label for="gridDetail">
+            体素精度（目标最长边，拖动即按比例重算 W×H×D；已载入三图时以三图轴长为基准，否则以当前网格为基准）
+            <span class="k" id="gridDetailVal">128</span>
+          </label>
+          <input id="gridDetail" type="range" min="32" max="192" step="2" value="128" />
+        </div>
+      </div>
+
+      <h2>后处理</h2>
+      <div class="row">
+        <div>
+          <label><input id="shellOnly" type="checkbox" checked /> 仅保留外壳（折纸感）</label>
+        </div>
+        <div>
+          <label><input id="showGrid" type="checkbox" /> 显示参考网格</label>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label><input id="mergeFaces" type="checkbox" checked /> 合并可见体素面（加速预览）</label>
+        </div>
+        <div>
+          <label><input type="text" value="按三视图贴图上色，不改体素结果" disabled /></label>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label><input id="frontPriority" type="checkbox" checked /> 前视优先（高处放宽 Top 约束）</label>
+        </div>
+        <div>
+          <label><input type="text" value="适合保尖顶、塔楼、正立面特征" disabled /></label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="hut1Btn">载入 hut1</button>
+        <button id="towerBtn">载入 tower</button>
+        <button id="fitGridBtn">自动精度</button>
+        <button id="sampleBtn">生成示例三视图</button>
+        <button id="buildBtn">重建体素</button>
+      </div>
+
+      <div class="views">
+        <div class="view-box">
+          <b>清边后 Front（黑底像素）</b>
+          <canvas id="srcFrontCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+        <div class="view-box">
+          <b>清边后 Side（黑底像素）</b>
+          <canvas id="srcSideCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+        <div class="view-box">
+          <b>清边后 Top（黑底像素）</b>
+          <canvas id="srcTopCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+      </div>
+
+      <div class="views">
+        <div class="view-box">
+          <b>输入 Front</b>
+          <canvas id="frontCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+        <div class="view-box">
+          <b>输入 Side</b>
+          <canvas id="sideCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+        <div class="view-box">
+          <b>输入 Top</b>
+          <canvas id="topCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+      </div>
+
+      <div class="views">
+        <div class="view-box">
+          <b>输出投影 Front'</b>
+          <canvas id="outFrontCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+        <div class="view-box">
+          <b>输出投影 Side'</b>
+          <canvas id="outSideCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+        <div class="view-box">
+          <b>输出投影 Top'</b>
+          <canvas id="outTopCanvas" class="small" width="96" height="96"></canvas>
+        </div>
+      </div>
+
+      <div class="stat" id="stats"></div>
+    </section>
+
+    <section class="panel">
+      <h2>3D 预览（拖动旋转）</h2>
+      <canvas id="renderCanvas" width="1200" height="760"></canvas>
+      <p class="muted">鼠标按住画布左右拖动可旋转。建议观察：轮廓是否大致符合三视图、是否形成建筑感体块。</p>
+    </section>
+  </div>
+
+  <script src="hut1-preset.js"></script>
+  <script src="tower-preset.js"></script>
+  <script>
+    "use strict";
+
+    const $ = (id) => document.getElementById(id);
+
+    const srcFrontCanvas = $("srcFrontCanvas");
+    const srcSideCanvas = $("srcSideCanvas");
+    const srcTopCanvas = $("srcTopCanvas");
+    const frontCanvas = $("frontCanvas");
+    const sideCanvas = $("sideCanvas");
+    const topCanvas = $("topCanvas");
+    const outFrontCanvas = $("outFrontCanvas");
+    const outSideCanvas = $("outSideCanvas");
+    const outTopCanvas = $("outTopCanvas");
+    const renderCanvas = $("renderCanvas");
+    const rctx = renderCanvas.getContext("2d");
+    const statsEl = $("stats");
+    const sourceNoteEl = $("sourceNote");
+    const elGridDetail = $("gridDetail");
+    const elGridDetailVal = $("gridDetailVal");
+    let gridRebuildRaf = 0;
+
+    const imgState = {
+      front: null,
+      side: null,
+      top: null
+    };
+    let projectedSources = null;
+    let sceneState = null;
+    const transientObjectUrls = new Set();
+
+    let voxels = [];
+    let angle = Math.PI * 0.25;
+    let dragging = false;
+    let dragLastX = 0;
+
+    function clearCanvas(c, color = "#0b0b0b") {
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, c.width, c.height);
+    }
+
+    function syncGridDetailLabel() {
+      elGridDetailVal.textContent = elGridDetail.value;
+    }
+
+    function scheduleGridRebuild() {
+      if (gridRebuildRaf) cancelAnimationFrame(gridRebuildRaf);
+      gridRebuildRaf = requestAnimationFrame(() => {
+        gridRebuildRaf = 0;
+        rebuild();
+      });
+    }
+
+    function drawMask(mask, w, h, canvas, fg = "#9ae6b4", align = "center") {
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = "#0b0b0b";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const placement = computeContainPlacement(w, h, canvas.width, canvas.height, align);
+      const sx = placement.drawW / w;
+      const sy = placement.drawH / h;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (mask[y * w + x]) {
+            ctx.fillStyle = fg;
+            ctx.fillRect(
+              placement.offsetX + Math.floor(x * sx),
+              placement.offsetY + Math.floor(y * sy),
+              Math.max(1, Math.ceil(sx)),
+              Math.max(1, Math.ceil(sy))
+            );
+          }
+        }
+      }
+    }
+
+    function drawProjectedSource(source, canvas, align = "center") {
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (!source || !source.width || !source.height || !source.rgba) return;
+
+      const placement = computeContainPlacement(source.width, source.height, canvas.width, canvas.height, align);
+      ctx.drawImage(ensureProjectedSourceCanvas(source), placement.offsetX, placement.offsetY, placement.drawW, placement.drawH);
+    }
+
+    function ensureProjectedSourceCanvas(source) {
+      if (!source || !source.width || !source.height || !source.rgba) return null;
+      if (source.canvas) return source.canvas;
+      const off = document.createElement("canvas");
+      off.width = source.width;
+      off.height = source.height;
+      const offCtx = off.getContext("2d");
+      offCtx.imageSmoothingEnabled = false;
+      const imageData = offCtx.createImageData(source.width, source.height);
+      imageData.data.set(source.rgba);
+      offCtx.putImageData(imageData, 0, 0);
+      source.canvas = off;
+      return off;
+    }
+
+    function setSourceNote(message, isError = false) {
+      if (!sourceNoteEl) return;
+      sourceNoteEl.innerHTML = message;
+      sourceNoteEl.style.borderColor = isError ? "#6a3030" : "#383838";
+      sourceNoteEl.style.color = isError ? "#ffb4b4" : "var(--sub)";
+    }
+
+    function revokeTransientObjectUrls() {
+      transientObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      transientObjectUrls.clear();
+    }
+
+    function createImageElement(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("图片加载失败：" + src));
+        img.src = src;
+      });
+    }
+
+    function isNearWhiteBackgroundPixel(r, g, b, a) {
+      if (a <= 8) return true;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const avg = (r + g + b) / 3;
+      return min >= 228 && avg >= 240 && (max - min) <= 28;
+    }
+
+    function isLikelyWhiteFringePixel(r, g, b, a) {
+      if (a <= 8) return false;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const avg = (r + g + b) / 3;
+      return avg >= 176 && (max - min) <= 42;
+    }
+
+    function removeEdgeWhiteBackground(imageData) {
+      const { data, width, height } = imageData;
+      const visited = new Uint8Array(width * height);
+      const queue = new Uint32Array(width * height);
+      let head = 0;
+      let tail = 0;
+
+      function tryPush(x, y) {
+        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        const idx = y * width + x;
+        if (visited[idx]) return;
+        const p = idx * 4;
+        if (!isNearWhiteBackgroundPixel(data[p], data[p + 1], data[p + 2], data[p + 3])) return;
+        visited[idx] = 1;
+        queue[tail++] = idx;
+      }
+
+      for (let x = 0; x < width; x++) {
+        tryPush(x, 0);
+        tryPush(x, height - 1);
+      }
+      for (let y = 1; y < height - 1; y++) {
+        tryPush(0, y);
+        tryPush(width - 1, y);
+      }
+
+      while (head < tail) {
+        const idx = queue[head++];
+        const x = idx % width;
+        const y = (idx - x) / width;
+        tryPush(x - 1, y);
+        tryPush(x + 1, y);
+        tryPush(x, y - 1);
+        tryPush(x, y + 1);
+      }
+
+      for (let i = 0; i < visited.length; i++) {
+        if (!visited[i]) continue;
+        data[i * 4 + 3] = 0;
+      }
+    }
+
+    function decontaminateWhiteFringe(imageData) {
+      const { data, width, height } = imageData;
+      const source = new Uint8ClampedArray(data);
+
+      function alphaAt(x, y) {
+        return source[(y * width + x) * 4 + 3];
+      }
+
+      function touchesTransparent(x, y) {
+        for (let oy = -1; oy <= 1; oy++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            if (ox === 0 && oy === 0) continue;
+            const nx = x + ox;
+            const ny = y + oy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) return true;
+            if (alphaAt(nx, ny) <= 8) return true;
+          }
+        }
+        return false;
+      }
+
+      function findInwardColor(x, y) {
+        for (let radius = 1; radius <= 3; radius++) {
+          for (let oy = -radius; oy <= radius; oy++) {
+            for (let ox = -radius; ox <= radius; ox++) {
+              const nx = x + ox;
+              const ny = y + oy;
+              if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+              const idx = (ny * width + nx) * 4;
+              const a = source[idx + 3];
+              if (a <= 24) continue;
+              if (touchesTransparent(nx, ny)) continue;
+              const r = source[idx];
+              const g = source[idx + 1];
+              const b = source[idx + 2];
+              if (isLikelyWhiteFringePixel(r, g, b, a)) continue;
+              return [r, g, b, a];
+            }
+          }
+        }
+        return null;
+      }
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const idx = (y * width + x) * 4;
+          const a = source[idx + 3];
+          if (a <= 8) continue;
+          if (!touchesTransparent(x, y)) continue;
+          const r = source[idx];
+          const g = source[idx + 1];
+          const b = source[idx + 2];
+          if (!isLikelyWhiteFringePixel(r, g, b, a)) continue;
+
+          const replacement = findInwardColor(x, y);
+          if (replacement) {
+            data[idx] = replacement[0];
+            data[idx + 1] = replacement[1];
+            data[idx + 2] = replacement[2];
+            data[idx + 3] = Math.max(a, Math.min(255, replacement[3]));
+          } else if (a <= 160) {
+            data[idx + 3] = 0;
+          }
+        }
+      }
+    }
+
+    function sanitizeTransparentSource(imageData) {
+      removeEdgeWhiteBackground(imageData);
+      decontaminateWhiteFringe(imageData);
+      return imageData;
+    }
+
+    function isRemoteHttpUrl(value) {
+      return /^https?:\/\//i.test(value);
+    }
+
+    function readFileAsImage(file) {
+      return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => {
+          createImageElement(fr.result).then(resolve, reject);
+        };
+        fr.onerror = reject;
+        fr.readAsDataURL(file);
+      });
+    }
+
+    async function loadImageFromSrc(src) {
+      const value = String(src || "").trim();
+      if (!value) {
+        throw new Error("缺少图片路径");
+      }
+      if (value.startsWith("data:") || value.startsWith("blob:")) {
+        return createImageElement(value);
+      }
+      if (!isRemoteHttpUrl(value)) {
+        return createImageElement(value);
+      }
+
+      let response;
+      try {
+        response = await fetch(value, {
+          mode: "cors",
+          credentials: "omit",
+          cache: "no-store"
+        });
+      } catch (err) {
+        throw new Error(
+          "读取图片失败：" + value +
+          "。如果这是跨域 URL，请确认对方已开启 CORS；否则请先下载到本地后用文件上传。"
+        );
+      }
+      if (!response.ok) {
+        throw new Error("读取图片失败：" + value + "（HTTP " + response.status + "）");
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      transientObjectUrls.add(objectUrl);
+      try {
+        return await createImageElement(objectUrl);
+      } catch (err) {
+        transientObjectUrls.delete(objectUrl);
+        URL.revokeObjectURL(objectUrl);
+        throw err;
+      }
+    }
+
+    async function setSourceImages(frontSource, sideSource, topSource, noteText = "") {
+      revokeTransientObjectUrls();
+      const [frontImg, sideImg, topImg] = await Promise.all([
+        typeof frontSource === "string" ? loadImageFromSrc(frontSource) : readFileAsImage(frontSource),
+        typeof sideSource === "string" ? loadImageFromSrc(sideSource) : readFileAsImage(sideSource),
+        typeof topSource === "string" ? loadImageFromSrc(topSource) : readFileAsImage(topSource)
+      ]);
+      imgState.front = imageToRawMask(frontImg);
+      imgState.side = imageToRawMask(sideImg);
+      imgState.top = imageToRawMask(topImg);
+      applyRecommendedGrid(Number(elGridDetail.value));
+      rebuild();
+      if (noteText) {
+        setSourceNote(noteText);
+      }
+    }
+
+    function computeContainPlacement(srcW, srcH, dstW, dstH, align = "center") {
+      const scale = Math.min(dstW / srcW, dstH / srcH);
+      const drawW = Math.max(1, Math.round(srcW * scale));
+      const drawH = Math.max(1, Math.round(srcH * scale));
+      let offsetX = Math.floor((dstW - drawW) * 0.5);
+      let offsetY = Math.floor((dstH - drawH) * 0.5);
+
+      if (align === "bottom") offsetY = dstH - drawH;
+      if (align === "top") offsetY = 0;
+      if (align === "left") offsetX = 0;
+      if (align === "right") offsetX = dstW - drawW;
+
+      return { drawW, drawH, offsetX, offsetY };
+    }
+
+    function cropMaskToBounds(source) {
+      if (!source || (source.kind !== "mask" && source.kind !== "source")) return source;
+      let minX = source.width, minY = source.height, maxX = -1, maxY = -1;
+      for (let y = 0; y < source.height; y++) {
+        for (let x = 0; x < source.width; x++) {
+          if (!source.mask[y * source.width + x]) continue;
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+      if (maxX < minX || maxY < minY) {
+        return { kind: source.kind, width: 1, height: 1, mask: new Uint8Array(1), rgba: new Uint8ClampedArray(4) };
+      }
+
+      const outW = maxX - minX + 1;
+      const outH = maxY - minY + 1;
+      const out = new Uint8Array(outW * outH);
+      const rgba = source.rgba ? new Uint8ClampedArray(outW * outH * 4) : null;
+      for (let y = 0; y < outH; y++) {
+        for (let x = 0; x < outW; x++) {
+          const srcIndex = (minY + y) * source.width + (minX + x);
+          const dstIndex = y * outW + x;
+          out[dstIndex] = source.mask[srcIndex];
+          if (rgba) {
+            rgba[dstIndex * 4 + 0] = source.rgba[srcIndex * 4 + 0];
+            rgba[dstIndex * 4 + 1] = source.rgba[srcIndex * 4 + 1];
+            rgba[dstIndex * 4 + 2] = source.rgba[srcIndex * 4 + 2];
+            rgba[dstIndex * 4 + 3] = source.rgba[srcIndex * 4 + 3];
+          }
+        }
+      }
+
+      return { kind: source.kind, width: outW, height: outH, mask: out, rgba };
+    }
+
+    function imageToRawMask(img) {
+      const off = document.createElement("canvas");
+      off.width = img.width;
+      off.height = img.height;
+      const c = off.getContext("2d");
+      c.imageSmoothingEnabled = false;
+      c.clearRect(0, 0, img.width, img.height);
+      c.drawImage(img, 0, 0);
+      let data;
+      try {
+        data = c.getImageData(0, 0, img.width, img.height).data;
+      } catch (err) {
+        if (err && err.name === "SecurityError") {
+          throw new Error(
+            "无法读取图片像素：" +
+            "当前图片来源被浏览器判定为受限资源。请优先使用本地文件上传，或把页面改为通过本地 HTTP 服务打开；远程 URL 还需要目标站点开启 CORS。"
+          );
+        }
+        throw err;
+      }
+      const imageData = c.getImageData(0, 0, img.width, img.height);
+      sanitizeTransparentSource(imageData);
+      data = imageData.data;
+      const mask = new Uint8Array(img.width * img.height);
+      for (let i = 0; i < img.width * img.height; i++) {
+        mask[i] = data[i * 4 + 3] > 8 ? 1 : 0;
+      }
+      return cropMaskToBounds({ kind: "source", width: img.width, height: img.height, mask, rgba: new Uint8ClampedArray(data) });
+    }
+
+    function rotateMaskSourceClockwise(source) {
+      if (!source || (source.kind !== "mask" && source.kind !== "source")) return source;
+      const outW = source.height;
+      const outH = source.width;
+      const outMask = new Uint8Array(outW * outH);
+      const outRgba = source.rgba ? new Uint8ClampedArray(outW * outH * 4) : null;
+
+      for (let y = 0; y < source.height; y++) {
+        for (let x = 0; x < source.width; x++) {
+          const srcIndex = y * source.width + x;
+          const dx = outW - 1 - y;
+          const dy = x;
+          const dstIndex = dy * outW + dx;
+          outMask[dstIndex] = source.mask[srcIndex];
+          if (outRgba) {
+            outRgba[dstIndex * 4 + 0] = source.rgba[srcIndex * 4 + 0];
+            outRgba[dstIndex * 4 + 1] = source.rgba[srcIndex * 4 + 1];
+            outRgba[dstIndex * 4 + 2] = source.rgba[srcIndex * 4 + 2];
+            outRgba[dstIndex * 4 + 3] = source.rgba[srcIndex * 4 + 3];
+          }
+        }
+      }
+
+      return {
+        kind: source.kind,
+        width: outW,
+        height: outH,
+        mask: outMask,
+        rgba: outRgba,
+        canvas: null
+      };
+    }
+
+    function rotateLoadedView(kind) {
+      if (!imgState[kind]) {
+        setSourceNote("请先载入 " + kind + " 视图，再执行旋转。", true);
+        return;
+      }
+      imgState[kind] = rotateMaskSourceClockwise(imgState[kind]);
+      if (imgState.front && imgState.side && imgState.top) {
+        applyRecommendedGrid(Number(elGridDetail.value));
+      }
+      rebuild();
+      setSourceNote("已将 " + kind + " 视图顺时针旋转90度。再次点击可继续旋转。");
+    }
+
+    function imageToMask(img, outW, outH, align = "center") {
+      const off = document.createElement("canvas");
+      off.width = outW;
+      off.height = outH;
+      const c = off.getContext("2d");
+      c.imageSmoothingEnabled = false;
+      c.clearRect(0, 0, outW, outH);
+
+      const placement = computeContainPlacement(img.width, img.height, outW, outH, align);
+      c.drawImage(img, placement.offsetX, placement.offsetY, placement.drawW, placement.drawH);
+
+      let data;
+      try {
+        data = c.getImageData(0, 0, outW, outH).data;
+      } catch (err) {
+        if (err && err.name === "SecurityError") {
+          throw new Error(
+            "无法读取图片像素：" +
+            "当前图片来源被浏览器判定为受限资源。请优先使用本地文件上传，或把页面改为通过本地 HTTP 服务打开；远程 URL 还需要目标站点开启 CORS。"
+          );
+        }
+        throw err;
+      }
+      const mask = new Uint8Array(outW * outH);
+      for (let i = 0; i < outW * outH; i++) {
+        const a = data[i * 4 + 3];
+        mask[i] = a > 8 ? 1 : 0;
+      }
+      return mask;
+    }
+
+    function decodePackedMask(encoded, width, height) {
+      const raw = atob(encoded);
+      const bytes = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+      const out = new Uint8Array(width * height);
+      for (let i = 0; i < out.length; i++) {
+        const byte = bytes[i >> 3];
+        const bit = 7 - (i & 7);
+        out[i] = (byte >> bit) & 1;
+      }
+      return out;
+    }
+
+    function fitMaskNearest(srcMask, srcW, srcH, dstW, dstH, align = "center") {
+      const out = new Uint8Array(dstW * dstH);
+      const placement = computeContainPlacement(srcW, srcH, dstW, dstH, align);
+      for (let y = 0; y < placement.drawH; y++) {
+        const sy = Math.min(srcH - 1, Math.floor((y / placement.drawH) * srcH));
+        for (let x = 0; x < placement.drawW; x++) {
+          const sx = Math.min(srcW - 1, Math.floor((x / placement.drawW) * srcW));
+          const dx = placement.offsetX + x;
+          const dy = placement.offsetY + y;
+          out[dy * dstW + dx] = srcMask[sy * srcW + sx];
+        }
+      }
+      return out;
+    }
+
+    function computeAxisPlacement(srcSpan, sharedSpan, outSpan, align = "center") {
+      const draw = Math.max(1, Math.round((srcSpan / Math.max(1, sharedSpan)) * outSpan));
+      let offset = Math.floor((outSpan - draw) * 0.5);
+      if (align === "bottom" || align === "right") offset = outSpan - draw;
+      if (align === "top" || align === "left") offset = 0;
+      return { draw, offset };
+    }
+
+    function sharedAxisLengths(frontSource, sideSource, topSource) {
+      const x = Math.max(1, frontSource?.width || topSource?.width || 1);
+      const yFront = frontSource?.height || 1;
+      const ySide = sideSource?.height || yFront;
+      const y = Math.max(1, Math.round((yFront + ySide) * 0.5));
+      const z = Math.max(1, sideSource?.width || topSource?.height || 1);
+      return {
+        x,
+        y,
+        z
+      };
+    }
+
+    function projectMaskWithSharedAxes(source, sharedW, sharedH, outW, outH, alignX = "center", alignY = "center") {
+      if (!source || (source.kind !== "mask" && source.kind !== "source")) return null;
+      const out = new Uint8Array(outW * outH);
+      const px = computeAxisPlacement(source.width, sharedW, outW, alignX);
+      const py = computeAxisPlacement(source.height, sharedH, outH, alignY);
+      for (let y = 0; y < py.draw; y++) {
+        const sy = Math.min(source.height - 1, Math.floor((y / py.draw) * source.height));
+        for (let x = 0; x < px.draw; x++) {
+          const sx = Math.min(source.width - 1, Math.floor((x / px.draw) * source.width));
+          const dx = px.offset + x;
+          const dy = py.offset + y;
+          out[dy * outW + dx] = source.mask[sy * source.width + sx];
+        }
+      }
+      return out;
+    }
+
+    function sourceToMask(source, sharedW, sharedH, outW, outH, alignX = "center", alignY = "center") {
+      if (!source) return null;
+      if (source.kind === "mask") {
+        return projectMaskWithSharedAxes(source, sharedW, sharedH, outW, outH, alignX, alignY);
+      }
+      if (source.kind === "source") {
+        return projectMaskWithSharedAxes(source, sharedW, sharedH, outW, outH, alignX, alignY);
+      }
+      return imageToMask(source, outW, outH, alignY);
+    }
+
+    function projectSourceWithSharedAxes(source, sharedW, sharedH, outW, outH, alignX = "center", alignY = "center") {
+      if (!source || source.kind !== "source") return null;
+      const mask = new Uint8Array(outW * outH);
+      const rgba = new Uint8ClampedArray(outW * outH * 4);
+      const px = computeAxisPlacement(source.width, sharedW, outW, alignX);
+      const py = computeAxisPlacement(source.height, sharedH, outH, alignY);
+      for (let y = 0; y < py.draw; y++) {
+        const sy = Math.min(source.height - 1, Math.floor((y / py.draw) * source.height));
+        for (let x = 0; x < px.draw; x++) {
+          const sx = Math.min(source.width - 1, Math.floor((x / px.draw) * source.width));
+          const dx = px.offset + x;
+          const dy = py.offset + y;
+          const dstIndex = dy * outW + dx;
+          const srcIndex = sy * source.width + sx;
+          mask[dstIndex] = source.mask[srcIndex];
+          rgba[dstIndex * 4 + 0] = source.rgba[srcIndex * 4 + 0];
+          rgba[dstIndex * 4 + 1] = source.rgba[srcIndex * 4 + 1];
+          rgba[dstIndex * 4 + 2] = source.rgba[srcIndex * 4 + 2];
+          rgba[dstIndex * 4 + 3] = source.rgba[srcIndex * 4 + 3];
+        }
+      }
+      return { width: outW, height: outH, mask, rgba, canvas: null };
+    }
+
+    function sampleProjectedColor(projected, x, y) {
+      if (!projected) return [0, 0, 0, 0];
+      const sx = Math.max(0, Math.min(projected.width - 1, Math.floor(x)));
+      const sy = Math.max(0, Math.min(projected.height - 1, Math.floor(y)));
+      const i = sy * projected.width + sx;
+      return [
+        projected.rgba[i * 4 + 0],
+        projected.rgba[i * 4 + 1],
+        projected.rgba[i * 4 + 2],
+        projected.rgba[i * 4 + 3]
+      ];
+    }
+
+    function faceColorFromProjected(projected, x, y) {
+      const [r, g, b, a] = sampleProjectedColor(projected, x, y);
+      if (a <= 0) return null;
+      return [r, g, b];
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function snapEven(v) {
+      const n = Math.max(8, Math.round(v));
+      return n % 2 === 0 ? n : n + 1;
+    }
+
+    function applyRecommendedGrid(targetLongest = 128) {
+      let nextW, nextH, nextD;
+      if (imgState.front && imgState.side) {
+        const axes = sharedAxisLengths(imgState.front, imgState.side, imgState.top);
+        const longest = Math.max(axes.x, axes.y, axes.z);
+        const scale = targetLongest / Math.max(1, longest);
+        nextW = clamp(snapEven(axes.x * scale), 8, 192);
+        nextH = clamp(snapEven(axes.y * scale), 8, 192);
+        nextD = clamp(snapEven(axes.z * scale), 8, 192);
+      } else {
+        const curW = Math.max(8, Number($("gridW").value) || 64);
+        const curH = Math.max(8, Number($("gridH").value) || 80);
+        const curD = Math.max(8, Number($("gridD").value) || 64);
+        const longest = Math.max(curW, curH, curD);
+        const scale = targetLongest / Math.max(1, longest);
+        nextW = clamp(snapEven(curW * scale), 8, 192);
+        nextH = clamp(snapEven(curH * scale), 8, 192);
+        nextD = clamp(snapEven(curD * scale), 8, 192);
+      }
+      $("gridW").value = nextW;
+      $("gridH").value = nextH;
+      $("gridD").value = nextD;
+      return true;
+    }
+
+    function sampleMasks(W, H, D) {
+      const front = new Uint8Array(W * H);
+      const side = new Uint8Array(D * H);
+      const top = new Uint8Array(W * D);
+
+      // 一个简单“城门 + 台阶塔”的像素风轮廓
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const inBase = x > 4 && x < W - 5 && y > 4 && y < H - 2;
+          const inTower = x > W * 0.35 && x < W * 0.65 && y > 2 && y < H * 0.68;
+          const gate = x > W * 0.44 && x < W * 0.56 && y > H * 0.5 && y < H - 2;
+          front[y * W + x] = (inBase || inTower) && !gate ? 1 : 0;
+        }
+      }
+
+      for (let y = 0; y < H; y++) {
+        for (let z = 0; z < D; z++) {
+          const inBase = z > 4 && z < D - 5 && y > 4 && y < H - 2;
+          const inTower = z > D * 0.4 && z < D * 0.75 && y > 2 && y < H * 0.72;
+          const backCut = z > D * 0.48 && z < D * 0.62 && y > H * 0.56 && y < H - 2;
+          side[y * D + z] = (inBase || inTower) && !backCut ? 1 : 0;
+        }
+      }
+
+      for (let z = 0; z < D; z++) {
+        for (let x = 0; x < W; x++) {
+          const block = x > 4 && x < W - 5 && z > 4 && z < D - 5;
+          const centerTower = x > W * 0.36 && x < W * 0.66 && z > D * 0.32 && z < D * 0.72;
+          const sideWing = x > W * 0.12 && x < W * 0.28 && z > D * 0.3 && z < D * 0.6;
+          top[z * W + x] = block || centerTower || sideWing ? 1 : 0;
+        }
+      }
+
+      return { front, side, top };
+    }
+
+    function idx3(x, y, z, W, H, D) {
+      return (y * D + z) * W + x;
+    }
+
+    function buildVoxels(front, side, top, W, H, D, shellOnly, frontPriority) {
+      const solid = new Uint8Array(W * H * D);
+      for (let y = 0; y < H; y++) {
+        for (let z = 0; z < D; z++) {
+          const sy = y * D + z;
+          for (let x = 0; x < W; x++) {
+            const imageZ = D - 1 - z;
+            const frontOn = front[y * W + x];
+            const sideOn = side[sy];
+            const topOn = top[imageZ * W + x];
+            const modelY = H - 1 - y;
+            const inUpperBand = modelY >= Math.floor(H * 0.55);
+            const ok = (frontOn && sideOn && topOn) || (frontPriority && inUpperBand && frontOn && sideOn);
+            if (ok) {
+              // Image space grows downward, while model height grows upward.
+              solid[idx3(x, modelY, z, W, H, D)] = 1;
+            }
+          }
+        }
+      }
+
+      const out = [];
+      const dirs = [
+        [1, 0, 0], [-1, 0, 0],
+        [0, 1, 0], [0, -1, 0],
+        [0, 0, 1], [0, 0, -1]
+      ];
+
+      for (let y = 0; y < H; y++) {
+        for (let z = 0; z < D; z++) {
+          for (let x = 0; x < W; x++) {
+            const i = idx3(x, y, z, W, H, D);
+            if (!solid[i]) continue;
+            if (!shellOnly) {
+              out.push({ x, y, z });
+              continue;
+            }
+            let border = false;
+            for (const [dx, dy, dz] of dirs) {
+              const nx = x + dx, ny = y + dy, nz = z + dz;
+              if (nx < 0 || nx >= W || ny < 0 || ny >= H || nz < 0 || nz >= D) {
+                border = true;
+                break;
+              }
+              if (!solid[idx3(nx, ny, nz, W, H, D)]) {
+                border = true;
+                break;
+              }
+            }
+            if (border) out.push({ x, y, z });
+          }
+        }
+      }
+
+      return { solid, list: out };
+    }
+
+    function greedyMerge2D(maskInput, rows, cols) {
+      const mask = new Uint8Array(maskInput);
+      const rects = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const index = r * cols + c;
+          if (!mask[index]) continue;
+          let cw = 1;
+          while (c + cw < cols && mask[r * cols + c + cw]) cw++;
+          let rh = 1;
+          while (r + rh < rows) {
+            let ok = true;
+            for (let t = 0; t < cw; t++) {
+              if (!mask[(r + rh) * cols + c + t]) {
+                ok = false;
+                break;
+              }
+            }
+            if (!ok) break;
+            rh++;
+          }
+          rects.push({ r0: r, c0: c, rh, cw });
+          for (let rr = 0; rr < rh; rr++) {
+            for (let cc = 0; cc < cw; cc++) {
+              mask[(r + rr) * cols + c + cc] = 0;
+            }
+          }
+        }
+      }
+      return rects;
+    }
+
+    function buildVisibleGreedyQuads(solid, W, H, D) {
+      function at(x, y, z) {
+        if (x < 0 || y < 0 || z < 0 || x >= W || y >= H || z >= D) return 0;
+        return solid[idx3(x, y, z, W, H, D)] ? 1 : 0;
+      }
+
+      const quads = [];
+
+      for (let x = 0; x < W; x++) {
+        const mask = new Uint8Array(H * D);
+        for (let y = 0; y < H; y++) {
+          for (let z = 0; z < D; z++) {
+            if (at(x, y, z) && !at(x + 1, y, z)) mask[y * D + z] = 1;
+          }
+        }
+        const rects = greedyMerge2D(mask, H, D);
+        rects.forEach((rect) => {
+          const xi = x + 1;
+          quads.push({
+            face: "px",
+            c: [
+              [xi, rect.r0, rect.c0],
+              [xi, rect.r0, rect.c0 + rect.cw],
+              [xi, rect.r0 + rect.rh, rect.c0 + rect.cw],
+              [xi, rect.r0 + rect.rh, rect.c0]
+            ]
+          });
+        });
+      }
+
+      for (let y = 0; y < H; y++) {
+        const mask = new Uint8Array(W * D);
+        for (let x = 0; x < W; x++) {
+          for (let z = 0; z < D; z++) {
+            if (at(x, y, z) && !at(x, y + 1, z)) mask[x * D + z] = 1;
+          }
+        }
+        const rects = greedyMerge2D(mask, W, D);
+        rects.forEach((rect) => {
+          const yi = y + 1;
+          quads.push({
+            face: "py",
+            c: [
+              [rect.r0, yi, rect.c0],
+              [rect.r0 + rect.rh, yi, rect.c0],
+              [rect.r0 + rect.rh, yi, rect.c0 + rect.cw],
+              [rect.r0, yi, rect.c0 + rect.cw]
+            ]
+          });
+        });
+      }
+
+      for (let z = 0; z < D; z++) {
+        const mask = new Uint8Array(W * H);
+        for (let x = 0; x < W; x++) {
+          for (let y = 0; y < H; y++) {
+            if (at(x, y, z) && !at(x, y, z + 1)) mask[x * H + y] = 1;
+          }
+        }
+        const rects = greedyMerge2D(mask, W, H);
+        rects.forEach((rect) => {
+          const zi = z + 1;
+          quads.push({
+            face: "pz",
+            c: [
+              [rect.r0, rect.c0, zi],
+              [rect.r0 + rect.rh, rect.c0, zi],
+              [rect.r0 + rect.rh, rect.c0 + rect.cw, zi],
+              [rect.r0, rect.c0 + rect.cw, zi]
+            ]
+          });
+        });
+      }
+
+      return quads;
+    }
+
+    function projectMaskFromVoxels(voxelList, W, H, D) {
+      const front = new Uint8Array(W * H);
+      const side = new Uint8Array(D * H);
+      const top = new Uint8Array(W * D);
+      for (const v of voxelList) {
+        const imageY = H - 1 - v.y;
+        const imageZ = D - 1 - v.z;
+        front[imageY * W + v.x] = 1;
+        side[imageY * D + v.z] = 1;
+        top[imageZ * W + v.x] = 1;
+      }
+      return { front, side, top };
+    }
+
+    function quadTextureFrame(quad, W, H, D) {
+      const xs = quad.c.map((corner) => corner[0]);
+      const ys = quad.c.map((corner) => corner[1]);
+      const zs = quad.c.map((corner) => corner[2]);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const minZ = Math.min(...zs);
+      const maxZ = Math.max(...zs);
+
+      if (quad.face === "py") {
+        return {
+          atlas: ensureProjectedSourceCanvas(projectedSources?.top),
+          p0: { u: minX, v: D - minZ },
+          p1: { u: maxX, v: D - minZ },
+          p3: { u: minX, v: D - maxZ }
+        };
+      }
+      if (quad.face === "px") {
+        return {
+          atlas: ensureProjectedSourceCanvas(projectedSources?.side),
+          p0: { u: minZ, v: H - minY },
+          p1: { u: maxZ, v: H - minY },
+          p3: { u: minZ, v: H - maxY }
+        };
+      }
+      return {
+        atlas: ensureProjectedSourceCanvas(projectedSources?.front),
+        p0: { u: minX, v: H - minY },
+        p1: { u: maxX, v: H - minY },
+        p3: { u: minX, v: H - maxY }
+      };
+    }
+
+    function drawTexturedQuad(projectedQuad, textureFrame) {
+      const atlas = textureFrame?.atlas;
+      if (!atlas) return false;
+      const [q0, q1, , q3] = projectedQuad;
+      const { p0, p1, p3 } = textureFrame;
+      const du = p1.u - p0.u;
+      const dv = p3.v - p0.v;
+      if (Math.abs(du) < 1e-6 || Math.abs(dv) < 1e-6) return false;
+
+      const a = (q1.x - q0.x) / du;
+      const b = (q1.y - q0.y) / du;
+      const c = (q3.x - q0.x) / dv;
+      const d = (q3.y - q0.y) / dv;
+      const e = q0.x - a * p0.u - c * p0.v;
+      const f = q0.y - b * p0.u - d * p0.v;
+
+      rctx.save();
+      rctx.beginPath();
+      rctx.moveTo(projectedQuad[0].x, projectedQuad[0].y);
+      rctx.lineTo(projectedQuad[1].x, projectedQuad[1].y);
+      rctx.lineTo(projectedQuad[2].x, projectedQuad[2].y);
+      rctx.lineTo(projectedQuad[3].x, projectedQuad[3].y);
+      rctx.closePath();
+      rctx.clip();
+      rctx.imageSmoothingEnabled = false;
+      rctx.setTransform(a, b, c, d, e, f);
+      rctx.drawImage(atlas, 0, 0);
+      rctx.restore();
+      return true;
+    }
+
+    function buildMergedOutlineSegments(quads) {
+      const edgeMap = new Map();
+
+      function pointKey(point) {
+        return `${Math.round(point.x * 100) / 100},${Math.round(point.y * 100) / 100}`;
+      }
+
+      function addEdge(a, b) {
+        const keyA = pointKey(a);
+        const keyB = pointKey(b);
+        const key = keyA < keyB ? `${keyA}|${keyB}` : `${keyB}|${keyA}`;
+        const existing = edgeMap.get(key);
+        if (existing) {
+          existing.count++;
+          return;
+        }
+        edgeMap.set(key, { a, b, count: 1 });
+      }
+
+      for (const quad of quads) {
+        const p = quad.projected;
+        addEdge(p[0], p[1]);
+        addEdge(p[1], p[2]);
+        addEdge(p[2], p[3]);
+        addEdge(p[3], p[0]);
+      }
+
+      return Array.from(edgeMap.values()).filter((edge) => edge.count === 1);
+    }
+
+    function renderScene(W, H, D, voxelList, solid) {
+      const requestedVoxelSize = Number($("voxelSize").value);
+      const showGrid = $("showGrid").checked;
+      const mergeFaces = $("mergeFaces").checked;
+      rctx.clearRect(0, 0, renderCanvas.width, renderCanvas.height);
+
+      rctx.fillStyle = "#101010";
+      rctx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
+
+      const fitX = (renderCanvas.width * 0.62) / Math.max(1, W + D);
+      const fitY = (renderCanvas.height * 0.7) / Math.max(1, H + (W + D) * 0.5);
+      const voxelSize = Math.max(2, Math.min(requestedVoxelSize, fitX, fitY));
+
+      const cx = renderCanvas.width * 0.52;
+      const cy = renderCanvas.height * 0.72;
+
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+
+      function rotXZ(x, z) {
+        return {
+          x: x * cosA - z * sinA,
+          z: x * sinA + z * cosA
+        };
+      }
+
+      function proj(x, y, z) {
+        const rxz = rotXZ(x - W / 2, z - D / 2);
+        return {
+          x: (rxz.x - rxz.z) * voxelSize + cx,
+          y: (rxz.x + rxz.z) * voxelSize * 0.5 - y * voxelSize + cy,
+          d: rxz.x + rxz.z + y
+        };
+      }
+
+      if (showGrid) {
+        rctx.strokeStyle = "rgba(255,255,255,0.08)";
+        rctx.lineWidth = 1;
+        for (let gx = 0; gx <= W; gx += Math.max(1, Math.floor(W / 8))) {
+          const a = proj(gx, 0, 0);
+          const b = proj(gx, 0, D);
+          rctx.beginPath();
+          rctx.moveTo(a.x, a.y);
+          rctx.lineTo(b.x, b.y);
+          rctx.stroke();
+        }
+        for (let gz = 0; gz <= D; gz += Math.max(1, Math.floor(D / 8))) {
+          const a = proj(0, 0, gz);
+          const b = proj(W, 0, gz);
+          rctx.beginPath();
+          rctx.moveTo(a.x, a.y);
+          rctx.lineTo(b.x, b.y);
+          rctx.stroke();
+        }
+      }
+
+      const occupied = new Uint8Array(W * H * D);
+      for (const v of voxelList) {
+        occupied[idx3(v.x, v.y, v.z, W, H, D)] = 1;
+      }
+      const isFilled = (x, y, z) => {
+        if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return false;
+        return occupied[idx3(x, y, z, W, H, D)] === 1;
+      };
+
+      const sorted = voxelList.slice().sort((a, b) => {
+        const ad = rotXZ(a.x - W / 2, a.z - D / 2);
+        const bd = rotXZ(b.x - W / 2, b.z - D / 2);
+        return (ad.x + ad.z + a.y) - (bd.x + bd.z + b.y);
+      });
+
+      if (mergeFaces && solid) {
+        const quads = buildVisibleGreedyQuads(solid, W, H, D)
+          .map((quad) => {
+            const projected = quad.c.map(([x, y, z]) => proj(x, y, z));
+            const depth = projected.reduce((sum, point) => sum + point.d, 0) / projected.length;
+            return { ...quad, projected, depth };
+          })
+          .sort((a, b) => a.depth - b.depth);
+
+        for (const quad of quads) {
+          const textureFrame = quadTextureFrame(quad, W, H, D);
+          const textured = drawTexturedQuad(quad.projected, textureFrame);
+          if (!textured) {
+            const centerX = (quad.c[0][0] + quad.c[2][0]) * 0.5 - 0.5;
+            const centerY = (quad.c[0][1] + quad.c[2][1]) * 0.5 - 0.5;
+            const centerZ = (quad.c[0][2] + quad.c[2][2]) * 0.5 - 0.5;
+            const imageY = H - 1 - centerY;
+            const imageZ = D - 1 - centerZ;
+            const fallbackColor = quad.face === "py"
+              ? (faceColorFromProjected(projectedSources?.top, centerX, imageZ) || [137, 200, 255])
+              : quad.face === "px"
+                ? (faceColorFromProjected(projectedSources?.side, centerZ, imageY) || [79, 160, 219])
+                : (faceColorFromProjected(projectedSources?.front, centerX, imageY) || [47, 109, 157]);
+            rctx.fillStyle = `rgb(${fallbackColor[0]}, ${fallbackColor[1]}, ${fallbackColor[2]})`;
+            rctx.beginPath();
+            rctx.moveTo(quad.projected[0].x, quad.projected[0].y);
+            rctx.lineTo(quad.projected[1].x, quad.projected[1].y);
+            rctx.lineTo(quad.projected[2].x, quad.projected[2].y);
+            rctx.lineTo(quad.projected[3].x, quad.projected[3].y);
+            rctx.closePath();
+            rctx.fill();
+          }
+        }
+        const outlineSegments = buildMergedOutlineSegments(quads);
+        rctx.strokeStyle = "rgba(8,18,28,0.42)";
+        rctx.lineWidth = 1.15;
+        rctx.beginPath();
+        for (const edge of outlineSegments) {
+          rctx.moveTo(edge.a.x, edge.a.y);
+          rctx.lineTo(edge.b.x, edge.b.y);
+        }
+        rctx.stroke();
+        return { mergedQuadCount: quads.length };
+      }
+
+      for (const v of sorted) {
+        const p000 = proj(v.x, v.y, v.z);
+        const p100 = proj(v.x + 1, v.y, v.z);
+        const p110 = proj(v.x + 1, v.y, v.z + 1);
+        const p010 = proj(v.x, v.y, v.z + 1);
+        const p001 = proj(v.x, v.y + 1, v.z);
+        const p101 = proj(v.x + 1, v.y + 1, v.z);
+        const p111 = proj(v.x + 1, v.y + 1, v.z + 1);
+        const p011 = proj(v.x, v.y + 1, v.z + 1);
+
+        const imageY = H - 1 - v.y;
+        const imageZ = D - 1 - v.z;
+        const topColor = faceColorFromProjected(projectedSources?.top, v.x, imageZ) || [137, 200, 255];
+        const sideColor = faceColorFromProjected(projectedSources?.side, v.z, imageY) || [79, 160, 219];
+        const frontColor = faceColorFromProjected(projectedSources?.front, v.x, imageY) || [47, 109, 157];
+        const showTop = !isFilled(v.x, v.y + 1, v.z);
+        const showXFace = !isFilled(v.x + 1, v.y, v.z);
+        const showZFace = !isFilled(v.x, v.y, v.z + 1);
+
+        if (showTop) {
+          // top
+          rctx.fillStyle = `rgb(${topColor[0]}, ${topColor[1]}, ${topColor[2]})`;
+          rctx.beginPath();
+          rctx.moveTo(p001.x, p001.y);
+          rctx.lineTo(p101.x, p101.y);
+          rctx.lineTo(p111.x, p111.y);
+          rctx.lineTo(p011.x, p011.y);
+          rctx.closePath();
+          rctx.fill();
+          rctx.strokeStyle = "rgba(8,18,28,0.35)";
+          rctx.lineWidth = 1;
+          rctx.stroke();
+        }
+
+        if (showXFace) {
+          // x-face (yz plane -> side view color)
+          rctx.fillStyle = `rgb(${sideColor[0]}, ${sideColor[1]}, ${sideColor[2]})`;
+          rctx.beginPath();
+          rctx.moveTo(p100.x, p100.y);
+          rctx.lineTo(p110.x, p110.y);
+          rctx.lineTo(p111.x, p111.y);
+          rctx.lineTo(p101.x, p101.y);
+          rctx.closePath();
+          rctx.fill();
+          rctx.strokeStyle = "rgba(8,18,28,0.35)";
+          rctx.lineWidth = 1;
+          rctx.stroke();
+        }
+
+        if (showZFace) {
+          // z-face (xy plane -> front view color)
+          rctx.fillStyle = `rgb(${frontColor[0]}, ${frontColor[1]}, ${frontColor[2]})`;
+          rctx.beginPath();
+          rctx.moveTo(p010.x, p010.y);
+          rctx.lineTo(p110.x, p110.y);
+          rctx.lineTo(p111.x, p111.y);
+          rctx.lineTo(p011.x, p011.y);
+          rctx.closePath();
+          rctx.fill();
+          rctx.strokeStyle = "rgba(8,18,28,0.35)";
+          rctx.lineWidth = 1;
+          rctx.stroke();
+        }
+      }
+      return { mergedQuadCount: 0 };
+    }
+
+    function updateStats(W, H, D, solidCount, shellCount, mergedQuadCount = 0) {
+      const total = W * H * D;
+      const rate = ((solidCount / total) * 100).toFixed(2);
+      const mergeFaces = $("mergeFaces").checked;
+      statsEl.innerHTML =
+        `<span class="k">网格</span> ${W} x ${H} x ${D}<br>` +
+        `<span class="k">体素占据</span> ${solidCount} / ${total} (${rate}%)<br>` +
+        `<span class="k">壳体数量</span> ${shellCount}<br>` +
+        `<span class="k">预览模式</span> ${mergeFaces ? "合并面贴图" : "逐体素"}<br>` +
+        (mergeFaces ? `<span class="k">合并面数</span> ${mergedQuadCount}<br>` : "") +
+        `<span class="k">视角</span> ${((angle * 180) / Math.PI).toFixed(1)}°`;
+    }
+
+    function renderCurrentScene() {
+      if (!sceneState) return;
+      const renderStats = renderScene(sceneState.W, sceneState.H, sceneState.D, sceneState.list, sceneState.solid);
+      updateStats(sceneState.W, sceneState.H, sceneState.D, sceneState.solidCount, sceneState.list.length, renderStats.mergedQuadCount);
+    }
+
+    async function handleFileInput(kind, file) {
+      if (!file) return;
+      try {
+        const sources = {
+          front: kind === "front" ? file : imgState.front ? $("frontSrc").value.trim() : null,
+          side: kind === "side" ? file : imgState.side ? $("sideSrc").value.trim() : null,
+          top: kind === "top" ? file : imgState.top ? $("topSrc").value.trim() : null
+        };
+
+        if (!sources.front || !sources.side || !sources.top) {
+          const img = await readFileAsImage(file);
+          imgState[kind] = imageToRawMask(img);
+          if (imgState.front && imgState.side && imgState.top) {
+            applyRecommendedGrid(Number(elGridDetail.value));
+          }
+          rebuild();
+          setSourceNote("已读取 " + kind + " 文件。继续补齐另外两张，或直接使用下方路径输入一次性载入三张。");
+          return;
+        }
+
+        await setSourceImages(
+          kind === "front" ? file : sources.front,
+          kind === "side" ? file : sources.side,
+          kind === "top" ? file : sources.top,
+          "已从文件 / 路径混合载入三视图。"
+        );
+      } catch (err) {
+        console.error(err);
+        setSourceNote(err.message || String(err), true);
+      }
+    }
+
+    function rebuild() {
+      const W = Math.max(8, Number($("gridW").value) || 32);
+      const H = Math.max(8, Number($("gridH").value) || 28);
+      const D = Math.max(8, Number($("gridD").value) || 32);
+      const shellOnly = $("shellOnly").checked;
+      const frontPriority = $("frontPriority").checked;
+
+      let frontMask, sideMask, topMask;
+      if (imgState.front && imgState.side && imgState.top) {
+        const axes = sharedAxisLengths(imgState.front, imgState.side, imgState.top);
+        frontMask = sourceToMask(imgState.front, axes.x, axes.y, W, H, "center", "bottom");
+        sideMask = sourceToMask(imgState.side, axes.z, axes.y, D, H, "center", "bottom");
+        topMask = sourceToMask(imgState.top, axes.x, axes.z, W, D, "center", "center");
+        projectedSources = {
+          front: projectSourceWithSharedAxes(imgState.front, axes.x, axes.y, W, H, "center", "bottom"),
+          side: projectSourceWithSharedAxes(imgState.side, axes.z, axes.y, D, H, "center", "bottom"),
+          top: projectSourceWithSharedAxes(imgState.top, axes.x, axes.z, W, D, "center", "center")
+        };
+      } else {
+        const sample = sampleMasks(W, H, D);
+        frontMask = sample.front;
+        sideMask = sample.side;
+        topMask = sample.top;
+        projectedSources = null;
+      }
+
+      drawProjectedSource(projectedSources?.front, srcFrontCanvas, "bottom");
+      drawProjectedSource(projectedSources?.side, srcSideCanvas, "bottom");
+      drawProjectedSource(projectedSources?.top, srcTopCanvas, "center");
+
+      drawMask(frontMask, W, H, frontCanvas, "#9ae6b4", "bottom");
+      drawMask(sideMask, D, H, sideCanvas, "#f8b195", "bottom");
+      drawMask(topMask, W, D, topCanvas, "#a8d0ff", "center");
+
+      const { solid, list } = buildVoxels(frontMask, sideMask, topMask, W, H, D, shellOnly, frontPriority);
+      voxels = list;
+
+      const projections = projectMaskFromVoxels(list, W, H, D);
+      drawMask(projections.front, W, H, outFrontCanvas, "#90f2be", "bottom");
+      drawMask(projections.side, D, H, outSideCanvas, "#ffbe9f", "bottom");
+      drawMask(projections.top, W, D, outTopCanvas, "#9dc9ff", "center");
+
+      let solidCount = 0;
+      for (let i = 0; i < solid.length; i++) solidCount += solid[i];
+      sceneState = { W, H, D, solid, list, solidCount };
+      renderCurrentScene();
+    }
+
+    function fillSampleImages() {
+      revokeTransientObjectUrls();
+      imgState.front = null;
+      imgState.side = null;
+      imgState.top = null;
+      $("gridW").value = 64;
+      $("gridH").value = 80;
+      $("gridD").value = 64;
+      elGridDetail.value = 128;
+      syncGridDetailLabel();
+      setSourceNote("已切回内置示例。你也可以直接填写三张图片路径 / URL，而不必再改代码写 preset。");
+      rebuild();
+    }
+
+    async function loadPresetImages(preset, name) {
+      if (!preset) {
+        throw new Error(name + " preset is unavailable");
+      }
+      const frontSrc = preset.frontDataUrl || preset.frontSrc;
+      const sideSrc = preset.sideDataUrl || preset.sideSrc;
+      const topSrc = preset.topDataUrl || preset.topSrc;
+      if (!frontSrc || !sideSrc || !topSrc) {
+        throw new Error(name + " preset is incomplete");
+      }
+      $("frontSrc").value = frontSrc;
+      $("sideSrc").value = sideSrc;
+      $("topSrc").value = topSrc;
+      await setSourceImages(frontSrc, sideSrc, topSrc, "已载入 " + name.toLowerCase() + " 预设。后续换别的素材时，直接改这三个路径输入即可。");
+    }
+
+    async function loadFromSourceInputs() {
+      const frontSrc = $("frontSrc").value.trim();
+      const sideSrc = $("sideSrc").value.trim();
+      const topSrc = $("topSrc").value.trim();
+      if (!frontSrc || !sideSrc || !topSrc) {
+        throw new Error("请先填完整 Front / Side / Top 三个路径或 URL");
+      }
+      await setSourceImages(frontSrc, sideSrc, topSrc, "已按路径载入三视图。");
+    }
+
+    async function loadHut1Preset() {
+      return loadPresetImages(window.HUT1_PRESET, "HUT1");
+    }
+
+    async function loadTowerPreset() {
+      return loadPresetImages(window.TOWER_PRESET, "TOWER");
+    }
+
+    // Events
+    $("frontFile").addEventListener("change", (e) => handleFileInput("front", e.target.files[0]));
+    $("sideFile").addEventListener("change", (e) => handleFileInput("side", e.target.files[0]));
+    $("topFile").addEventListener("change", (e) => handleFileInput("top", e.target.files[0]));
+
+    ["gridW", "gridH", "gridD", "shellOnly", "frontPriority"].forEach((id) => {
+      $(id).addEventListener("input", rebuild);
+      $(id).addEventListener("change", rebuild);
+    });
+    ["voxelSize", "showGrid", "mergeFaces"].forEach((id) => {
+      $(id).addEventListener("input", renderCurrentScene);
+      $(id).addEventListener("change", renderCurrentScene);
+    });
+
+    function applyGridDetailAndRebuild() {
+      syncGridDetailLabel();
+      applyRecommendedGrid(Number(elGridDetail.value));
+      scheduleGridRebuild();
+    }
+    elGridDetail.addEventListener("input", applyGridDetailAndRebuild);
+    elGridDetail.addEventListener("change", applyGridDetailAndRebuild);
+    $("hut1Btn").addEventListener("click", () => {
+      loadHut1Preset().catch((err) => {
+        console.error(err);
+        setSourceNote("载入 hut1 失败：" + (err.message || String(err)), true);
+      });
+    });
+    $("towerBtn").addEventListener("click", () => {
+      loadTowerPreset().catch((err) => {
+        console.error(err);
+        setSourceNote("载入 tower 失败：" + (err.message || String(err)), true);
+      });
+    });
+    $("loadSrcBtn").addEventListener("click", () => {
+      loadFromSourceInputs().catch((err) => {
+        console.error(err);
+        setSourceNote(err.message || String(err), true);
+      });
+    });
+    $("rotateFrontBtn").addEventListener("click", () => rotateLoadedView("front"));
+    $("rotateSideBtn").addEventListener("click", () => rotateLoadedView("side"));
+    $("rotateTopBtn").addEventListener("click", () => rotateLoadedView("top"));
+    $("fitGridBtn").addEventListener("click", () => {
+      syncGridDetailLabel();
+      if (applyRecommendedGrid(Number(elGridDetail.value))) {
+        rebuild();
+      }
+    });
+    $("sampleBtn").addEventListener("click", fillSampleImages);
+    $("buildBtn").addEventListener("click", rebuild);
+
+    renderCanvas.addEventListener("mousedown", (e) => {
+      dragging = true;
+      dragLastX = e.clientX;
+    });
+    window.addEventListener("mouseup", () => { dragging = false; });
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - dragLastX;
+      dragLastX = e.clientX;
+      angle += dx * 0.01;
+      renderCurrentScene();
+    });
+
+    // Init
+    clearCanvas(frontCanvas);
+    clearCanvas(sideCanvas);
+    clearCanvas(topCanvas);
+    clearCanvas(srcFrontCanvas, "#000");
+    clearCanvas(srcSideCanvas, "#000");
+    clearCanvas(srcTopCanvas, "#000");
+    clearCanvas(outFrontCanvas);
+    clearCanvas(outSideCanvas);
+    clearCanvas(outTopCanvas);
+    if (location.protocol === "file:") {
+      setSourceNote("当前是 <code>file://</code> 直开模式。为避免本地路径和跨域限制，建议改用本地 HTTP 服务打开这个页面；文件上传仍可用。", true);
+    } else {
+      setSourceNote("支持三种方式：1）本地文件上传；2）同源相对路径；3）开启 CORS 的远程图片 URL。以后换素材，直接改 Front / Side / Top 路径即可。");
+    }
+    syncGridDetailLabel();
+    rebuild();
+  </script>
+</body>
+</html>

@@ -11,7 +11,13 @@ import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
 
-export type ViewName = "map" | "city" | "house" | "scene" | "minigame";
+export type ViewName =
+  | "map"
+  | "city"
+  | "city-3d"
+  | "house"
+  | "scene"
+  | "minigame";
 export type SceneStatus = "idle" | "playing" | "waiting-choice";
 export type TimeOfDay = "morning" | "afternoon" | "night";
 export type CalendarDate = {

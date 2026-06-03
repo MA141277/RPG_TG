@@ -228,8 +228,21 @@ export type HouseOverlayViewModel =
       lastRoundSummary: string[];
     }
   | {
+      type: "gamble-choice";
+      title: string;
+      options: Array<{
+        id: string;
+        label: string;
+        description: string;
+        actionId: string;
+      }>;
+      cancelActionId: string;
+      cancelLabel: string;
+    }
+  | {
       type: "gamble";
       title: string;
+      variantLabel?: string;
       wager: number;
       options: number[];
       decrementActionId: string;
@@ -238,6 +251,107 @@ export type HouseOverlayViewModel =
       confirmLabel: string;
       cancelActionId: string;
       cancelLabel: string;
+    }
+  | {
+      type: "gamble-table";
+      variant: "short" | "long";
+      title: string;
+      street: string;
+      phase: string;
+      pot: number;
+      currentBet: number;
+      wager: number;
+      smallBlind: number;
+      bigBlind: number;
+      wallCount: number;
+      publicTiles: Array<{
+        id: string;
+        label: string;
+        selected: boolean;
+        spent: boolean;
+        covered?: boolean;
+        actionId: string;
+      }>;
+      publicDiscardTiles: Array<{
+        label: string;
+        fromPublicTile?: boolean;
+      }>;
+      handTiles: Array<{
+        id: string;
+        label: string;
+        selected: boolean;
+        covered?: boolean;
+        tone?: "hand" | "public";
+        entering?: boolean;
+        revealIndex?: number;
+        actionId?: string | undefined;
+      }>;
+      playSlotTiles: string[];
+      playedOwnTileCount: number;
+      completedPlayedGroups: boolean;
+      canConfirmPlayGroup: boolean;
+      flowers: string[];
+      melds: string[];
+      logLines: string[];
+      pendingDiscardsRemaining: number;
+      hasPendingDraw: boolean;
+      pendingHuChoice?: boolean;
+      longPublicStage?: "hidden" | "centered" | "revealing" | "revealed" | undefined;
+      meldCountdownTicks: number;
+      meldWindowStage: "chi-pong-kong" | "pong-kong" | "kong" | null;
+      playerRows: Array<{
+        id: string;
+        name: string;
+        seatIndex: number;
+        committed: number;
+        remainingChips: number;
+        folded: boolean;
+        completedPlayedGroups: boolean;
+        handCount: number;
+        discardCount: number;
+        lastDiscard: string | null;
+        discardLabels: Array<{
+          label: string;
+          fromPublicTile?: boolean;
+        }>;
+        publicTileLabels?: string[];
+        privateBackCount?: number;
+        playedGroupLabels: string[];
+        bestPattern: string;
+        bestFan: number;
+      }>;
+      meldOptions: Array<{
+        id: string;
+        kind: "chi" | "pong" | "public-kong" | "concealed-kong";
+        label: string;
+        actionId: string;
+        flashing: boolean;
+      }>;
+      showdownRows: Array<{
+        playerName: string;
+        totalFan: number;
+        best: string;
+        selectedTiles: string[];
+        detailLines: string[];
+        folded: boolean;
+        winner: boolean;
+      }>;
+      actionIds: {
+        check: string;
+        call: string;
+        raise: string;
+        fold: string;
+        skipMeld: string;
+        draw: string;
+        settle: string;
+        close: string;
+        clearPlay: string;
+        confirmPlay: string;
+        passPlay: string;
+        confirmDiscard?: string;
+        pushHu?: string;
+        passHu?: string;
+      };
     }
   | {
       type: "medicine-buy";

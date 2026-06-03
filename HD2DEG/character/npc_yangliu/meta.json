@@ -1,0 +1,19 @@
+{
+  "id": "npc_yangliu",
+  "kind": "character",
+  "title": "npc_yangliu",
+  "prompt": "中国风像素角色，少女杨柳，天真美丽好奇；双髻或马尾，浅绿淡黄衣裙，小布包或小饰物；眼神灵动。",
+  "tags": [
+    "npc:npc_yangliu"
+  ],
+  "createdAt": "2026-04-29T11:05:07+08:00",
+  "updatedAt": "2026-04-29T11:05:07+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_yangliu/sheet.png",
+    "preview": "character/npc_yangliu/preview.png"
+  }
+}

@@ -1,4 +1,5 @@
 import { resolveCharacterPortraitImageUrl } from "../portrait-assets";
+import { uiLayoutComponentBaseSizeById } from "../../domain/ui-layout";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import type { MissionDefinition } from "../../domain/mission";
@@ -28,6 +29,21 @@ function getComponentRectStyle(component: UiLayoutComponent): string {
     `top:${component.rect.y}px`,
     `width:${component.rect.width}px`,
     `height:${component.rect.height}px`,
+  ].join(";");
+}
+
+function getComponentContentStyle(component: UiLayoutComponent): string {
+  const baseSize = uiLayoutComponentBaseSizeById[component.id];
+  if (baseSize == null) {
+    return "width:100%;height:100%;";
+  }
+
+  const scale = component.rect.width / Math.max(baseSize.width, 1);
+  return [
+    `width:${baseSize.width}px`,
+    `height:${baseSize.height}px`,
+    `transform-origin:top left`,
+    `transform:scale(${scale})`,
   ].join(";");
 }
 
@@ -61,12 +77,6 @@ function getBackgroundStyle(component: UiLayoutComponent): string {
   }
 
   return styleParts.join(";");
-}
-
-function getComponentStyle(component: UiLayoutComponent): string {
-  const rectStyle = getComponentRectStyle(component);
-  const backgroundStyle = getBackgroundStyle(component);
-  return backgroundStyle.length === 0 ? rectStyle : `${rectStyle};${backgroundStyle}`;
 }
 
 function getElementStyle(element: UiLayoutElement): string {
@@ -142,23 +152,25 @@ export function renderGlobalPlayerPanel(
               ? ""
               : `
                 <div class="p-global-status-bar__portrait p-layout-component" style="${getComponentRectStyle(portraitComponent)}">
-                  <div class="p-global-status-bar__portrait-shell">
-                    ${
-                      model.portraitImageUrl == null
-                        ? ""
-                        : `
-                          <div class="p-global-status-bar__portrait-mask">
-                            <img class="p-global-status-bar__portrait-art" src="${model.portraitImageUrl}" alt="${model.name}">
-                          </div>
-                        `
-                    }
-                    <div class="p-global-status-bar__portrait-frame" style="${getBackgroundStyle(portraitComponent)}"></div>
-                    <span
-                      class="p-global-status-bar__portrait-label"
-                      style="${portraitLabelElement == null ? "" : getElementStyle(portraitLabelElement)}"
-                    >
-                      ${model.portraitLabel}
-                    </span>
+                  <div class="p-layout-component__content" style="${getComponentContentStyle(portraitComponent)}">
+                    <div class="p-global-status-bar__portrait-shell">
+                      ${
+                        model.portraitImageUrl == null
+                          ? ""
+                          : `
+                            <div class="p-global-status-bar__portrait-mask">
+                              <img class="p-global-status-bar__portrait-art" src="${model.portraitImageUrl}" alt="${model.name}">
+                            </div>
+                          `
+                      }
+                      <div class="p-global-status-bar__portrait-frame" style="${getBackgroundStyle(portraitComponent)}"></div>
+                      <span
+                        class="p-global-status-bar__portrait-label"
+                        style="${portraitLabelElement == null ? "" : getElementStyle(portraitLabelElement)}"
+                      >
+                        ${model.portraitLabel}
+                      </span>
+                    </div>
                   </div>
                 </div>
               `
@@ -167,25 +179,29 @@ export function renderGlobalPlayerPanel(
             statusComponent == null
               ? ""
               : `
-                <div class="p-global-status-bar__board p-layout-component" style="${getComponentStyle(statusComponent)}">
-                  <div class="p-global-status-bar__identity" style="${identityElement == null ? "" : getElementStyle(identityElement)}">
-                    <strong class="p-global-status-bar__name">${model.name}</strong>
-                    <span class="p-global-status-bar__title">${model.title}</span>
-                    <span class="p-global-status-bar__date">${model.currentDateText}</span>
-                  </div>
-                  <div class="p-global-status-bar__gold" style="${goldElement == null ? "" : getElementStyle(goldElement)}">
-                    <strong class="p-global-status-bar__gold-value">${model.goldText}</strong>
-                  </div>
-                  <div class="p-global-status-bar__location" style="${locationElement == null ? "" : getElementStyle(locationElement)}">
-                    <span class="p-global-status-bar__location-icon">◉</span>
-                    <strong class="p-global-status-bar__location-text">${model.locationText}</strong>
-                  </div>
-                  <div class="p-global-status-bar__stamina" style="${staminaElement == null ? "" : getElementStyle(staminaElement)}">
-                    <span class="p-global-status-bar__stamina-label">体力 ${model.stamina}</span>
-                  </div>
-                  <div class="p-global-status-bar__prestige" style="${prestigeElement == null ? "" : getElementStyle(prestigeElement)}">
-                    <span class="p-global-status-bar__prestige-label">威望</span>
-                    <strong class="p-global-status-bar__prestige-value">${model.fame}</strong>
+                <div class="p-layout-component" style="${getComponentRectStyle(statusComponent)}">
+                  <div class="p-layout-component__content" style="${getComponentContentStyle(statusComponent)}">
+                    <div class="p-global-status-bar__board" style="${getBackgroundStyle(statusComponent)}">
+                      <div class="p-global-status-bar__identity" style="${identityElement == null ? "" : getElementStyle(identityElement)}">
+                        <strong class="p-global-status-bar__name">${model.name}</strong>
+                        <span class="p-global-status-bar__title">${model.title}</span>
+                        <span class="p-global-status-bar__date">${model.currentDateText}</span>
+                      </div>
+                      <div class="p-global-status-bar__gold" style="${goldElement == null ? "" : getElementStyle(goldElement)}">
+                        <strong class="p-global-status-bar__gold-value">${model.goldText}</strong>
+                      </div>
+                      <div class="p-global-status-bar__location" style="${locationElement == null ? "" : getElementStyle(locationElement)}">
+                        <span class="p-global-status-bar__location-icon">◉</span>
+                        <strong class="p-global-status-bar__location-text">${model.locationText}</strong>
+                      </div>
+                      <div class="p-global-status-bar__stamina" style="${staminaElement == null ? "" : getElementStyle(staminaElement)}">
+                        <span class="p-global-status-bar__stamina-label">体力 ${model.stamina}</span>
+                      </div>
+                      <div class="p-global-status-bar__prestige" style="${prestigeElement == null ? "" : getElementStyle(prestigeElement)}">
+                        <span class="p-global-status-bar__prestige-label">威望</span>
+                        <strong class="p-global-status-bar__prestige-value">${model.fame}</strong>
+                      </div>
+                    </div>
                   </div>
                 </div>
               `
@@ -196,23 +212,27 @@ export function renderGlobalPlayerPanel(
         taskComponent == null
           ? ""
           : `
-            <div class="p-global-task-panel p-layout-component" style="${getComponentStyle(taskComponent)}">
-              <div class="p-global-task-panel__header"></div>
-              <div class="p-global-task-panel__items">
-                <section class="p-global-task-panel__item" style="${reviewItemElement == null ? "" : getElementStyle(reviewItemElement)}">
-                  <span class="p-global-task-panel__label">距离评定</span>
-                  <strong class="p-global-task-panel__value">${model.reviewDateText}</strong>
-                </section>
-                <section
-                  class="p-global-task-panel__item"
-                  title="${model.mainHouseMissionText}"
-                  style="${missionItemElement == null ? "" : getElementStyle(missionItemElement)}"
-                >
-                  <span class="p-global-task-panel__label">当前任务</span>
-                  <strong class="p-global-task-panel__value">${model.mainHouseMissionText}</strong>
-                </section>
+            <div class="p-layout-component" style="${getComponentRectStyle(taskComponent)}">
+              <div class="p-layout-component__content" style="${getComponentContentStyle(taskComponent)}">
+                <div class="p-global-task-panel" style="${getBackgroundStyle(taskComponent)}">
+                  <div class="p-global-task-panel__header"></div>
+                  <div class="p-global-task-panel__items">
+                    <section class="p-global-task-panel__item" style="${reviewItemElement == null ? "" : getElementStyle(reviewItemElement)}">
+                      <span class="p-global-task-panel__label">距离评定</span>
+                      <strong class="p-global-task-panel__value">${model.reviewDateText}</strong>
+                    </section>
+                    <section
+                      class="p-global-task-panel__item"
+                      title="${model.mainHouseMissionText}"
+                      style="${missionItemElement == null ? "" : getElementStyle(missionItemElement)}"
+                    >
+                      <span class="p-global-task-panel__label">当前任务</span>
+                      <strong class="p-global-task-panel__value">${model.mainHouseMissionText}</strong>
+                    </section>
+                  </div>
+                  <div class="p-global-task-panel__footer"></div>
+                </div>
               </div>
-              <div class="p-global-task-panel__footer"></div>
             </div>
           `
       }

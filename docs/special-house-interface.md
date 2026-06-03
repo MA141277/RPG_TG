@@ -306,6 +306,32 @@ Then `ui/views/*` converts that into markup.
 Shared overlay unions may grow when a special house needs a richer structured interaction
 (for example a module-specific trade picker, a rest-days input panel, or a market trade selector),
 but the data must remain typed and UI-facing.
+For staged table overlays such as tavern gambling, per-player public summaries may include
+current best pattern data and visible discard history, while private hand tiles remain hidden
+from other players in the view model.
+If the table has a timed response window, expose the remaining countdown and shared discard pool
+as typed overlay fields so the view can render them without reading runtime state directly.
+If a table flow has a mode picker before configuration, expose that picker as a structured overlay
+such as `gamble-choice`; the UI may render mode buttons, but the selected mode must be dispatched
+through normal house action ids and stored in the typed module session.
+If a table response window has staged priority, expose the current stage and each available
+action kind as structured fields. Visual emphasis such as flashing buttons must be driven by
+typed overlay data from the module, not inferred from button text in the view.
+If a table overlay needs local reordering, expose it through generic house action ids and
+data attributes; the entrypoint may dispatch the generic action, but must not understand the
+house-specific reorder semantics.
+If a table overlay supports staged tile selection, public tiles that are temporarily selected or
+permanently consumed must be exposed as structured tile view data such as `selected` and `spent`,
+with confirm/clear/pass action ids on the overlay. The UI may render selected public tiles as
+transparent or disabled, but the application module must own the selection and lock state.
+For shared table resources, `spent` should describe the current viewer/player's availability,
+not a global table lock, unless the domain rules explicitly make that resource global.
+For per-player public table resources, expose each viewer-facing tile with explicit `covered`
+and `spent` state. A covered public slot may render like a facedown hand tile, but the application
+module owns whether that slot is still usable, claimable, or unavailable to opponents.
+If a table player can finish their action quota before the full table resolves, expose that
+state explicitly in the overlay, such as `completedPlayedGroups`, so the view can disable
+further betting or draw controls without reading private session rules.
 If a module-specific overlay needs extra controls, extend the shared typed contract
 (for example a medicine compounding clear action or a shared QTE bar-stop minigame overlay)
 instead of relying on DOM-only behavior.

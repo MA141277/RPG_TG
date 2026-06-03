@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>江湖 MUD · 武侠文字冒险</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #0f0e0a;
+      --bg-panel: #1a1812;
+      --bg-bubble-user: #2d4a2a;
+      --bg-bubble-bot: #252018;
+      --border: #3d3528;
+      --text: #e8e0d4;
+      --text-dim: #9a8f7a;
+      --accent: #c9a227;
+      --accent-soft: #8b7355;
+      --danger: #a63d3d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Noto Serif SC", serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,162,39,.08), transparent),
+        linear-gradient(180deg, var(--bg-deep) 0%, #141210 100%);
+    }
+
+    /* ── Header ── */
+    .header {
+      flex-shrink: 0;
+      position: relative;
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(26,24,18,.96);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header h1 {
+      font-family: "Ma Shan Zheng", cursive;
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: var(--accent);
+      letter-spacing: .1em;
+    }
+    .header .sub { font-size: .65rem; color: var(--text-dim); margin-top: 2px; }
+    .header-btns {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 6px;
+    }
+    .hbtn {
+      padding: 5px 10px;
+      font-size: .75rem;
+      font-family: inherit;
+      color: var(--accent);
+      background: transparent;
+      border: 1px solid var(--accent-soft);
+      border-radius: 7px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .hbtn:disabled { opacity: .45; cursor: not-allowed; }
+    .hbtn.danger { color: var(--text-dim); }
+
+    /* ── Map panel ── */
+    .map-panel {
+      display: none;
+      flex-shrink: 0;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+      max-height: 34vh;
+      min-height: 130px;
+    }
+    .map-panel.open { display: flex; }
+
+    .map-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .breadcrumb {
+      flex: 1;
+      font-size: .75rem;
+      color: var(--text-dim);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .breadcrumb span.active { color: var(--accent); }
+    .breadcrumb .sep { margin: 0 4px; opacity: .5; }
+
+    .map-layer-btn {
+      padding: 3px 8px;
+      font-size: .7rem;
+      font-family: inherit;
+      color: var(--text-dim);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .map-layer-btn:hover { border-color: var(--accent-soft); color: var(--accent); }
+    .map-layer-btn:disabled { opacity: .3; cursor: default; }
+
+    .map-svg-wrap { flex: 1; min-height: 0; padding: 10px; overflow: hidden; }
+    .map-svg-wrap svg { display: block; width: 100%; height: 100%; }
+
+    .map-node rect {
+      fill: var(--bg-bubble-bot);
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+    .map-node.cur rect { fill: #2a3d28; stroke: var(--accent); stroke-width: 2; }
+    .map-node.has-sub rect { stroke-dasharray: 4 2; }
+    .map-node text {
+      fill: var(--text);
+      font-family: "Noto Serif SC", serif;
+      pointer-events: none;
+    }
+    /* layer-1 grass map: house nodes */
+    .map-node.grass-tile rect { display: none; }
+    .map-node.grass-tile text {
+      fill: #3a2510;
+      font-weight: bold;
+      text-shadow: 0 0 3px rgba(255,240,200,0.8);
+    }
+    .map-node.grass-tile.cur .house-glow {
+      fill: rgba(240, 208, 96, 0.35);
+      stroke: #f0d060;
+      stroke-width: 2;
+    }
+    .map-edge { stroke: var(--accent-soft); stroke-width: 1; fill: none; }
+    .map-edge-lbl { fill: var(--text-dim); font-family: inherit; }
+    .map-edge.mud-road {
+      stroke: #8b6914;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.7;
+    }
+    .map-edge.mud-road-border {
+      stroke: #5a4212;
+      stroke-width: 11;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.4;
+    }
+    /* boundary exit stub */
+    .map-boundary-line { stroke: #5a4a28; stroke-width: 1; stroke-dasharray: 5 3; fill: none; }
+    .map-boundary-line.mud-road {
+      stroke: #8b6914;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 10 6;
+      opacity: 0.6;
+    }
+    .map-boundary-arrow { fill: #5a4a28; }
+    .map-boundary-arrow.mud-road { fill: #6b5010; }
+    .map-boundary-lbl { fill: #6b5a35; font-family: "Noto Serif SC", serif; }
+    .map-boundary-lbl.mud-road { fill: #3a2510; font-weight: bold; }
+
+    /* ── Chat ── */
+    .chat-area {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px 14px 16px;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .message { margin-bottom: 14px; display: flex; flex-direction: column; align-items: flex-start; }
+    .message.user { align-items: flex-end; }
+    .message .bubble {
+      max-width: 88%;
+      padding: 11px 13px;
+      border-radius: 12px;
+      line-height: 1.65;
+      font-size: .93rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .message.user .bubble { background: var(--bg-bubble-user); color: #d4e8d4; border-bottom-right-radius: 3px; }
+    .message.assistant .bubble { background: var(--bg-bubble-bot); border-bottom-left-radius: 3px; border-left: 3px solid var(--accent-soft); }
+    .message .role-label { font-size: .68rem; color: var(--text-dim); margin-bottom: 4px; }
+    .message.user .role-label { text-align: right; }
+
+    /* ── Input bar ── */
+    .input-bar {
+      flex-shrink: 0;
+      padding: 9px 11px 13px;
+      padding-bottom: max(13px, env(safe-area-inset-bottom));
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+    }
+    .input-row { display: flex; gap: 7px; align-items: flex-end; }
+    #userInput {
+      flex: 1;
+      min-height: 42px;
+      max-height: 120px;
+      padding: 10px 13px;
+      font-family: inherit;
+      font-size: .93rem;
+      color: var(--text);
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      resize: none;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #userInput::placeholder { color: var(--text-dim); }
+    #userInput:focus { border-color: var(--accent-soft); }
+    #sendBtn {
+      flex-shrink: 0;
+      width: 42px; height: 42px;
+      border: none; border-radius: 9px;
+      background: var(--accent);
+      color: var(--bg-deep);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity .2s, transform .1s;
+    }
+    #sendBtn:hover { opacity: .9; }
+    #sendBtn:active { transform: scale(.96); }
+    #sendBtn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .status { text-align: center; padding: 6px; font-size: .78rem; color: var(--text-dim); }
+    .status.error { color: var(--danger); }
+    .status.info  { color: var(--accent); }
+
+    .welcome { text-align: center; padding: 22px 16px; color: var(--text-dim); }
+    .welcome p { margin-bottom: 10px; line-height: 1.7; }
+    .welcome strong { color: var(--accent); }
+    .welcome .gen-hint { font-size: .82rem; margin-top: 14px; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div style="text-align:center">
+    <h1>江湖 MUD</h1>
+    <p class="sub">武侠文字冒险 · 三层地图</p>
+  </div>
+  <div class="header-btns">
+    <button class="hbtn" id="generateBtn">生成世界</button>
+    <button class="hbtn" id="mapToggle">地图</button>
+  </div>
+</header>
+
+<section class="map-panel" id="mapPanel">
+  <div class="map-header">
+    <div class="breadcrumb" id="breadcrumb">——</div>
+    <button class="map-layer-btn" id="layerUpBtn" disabled>↑ 上层</button>
+    <button class="map-layer-btn" id="layerDownBtn" disabled>↓ 下钻</button>
+    <button class="hbtn danger" id="clearMapBtn" style="font-size:.7rem;padding:3px 8px;">清空</button>
+  </div>
+  <div class="map-svg-wrap">
+    <svg id="mapSvg"></svg>
+  </div>
+</section>
+
+<main class="chat-area" id="chatArea">
+  <div class="welcome" id="welcome">
+    <p><strong>欢迎踏入江湖。</strong></p>
+    <p>点击右上角「生成世界」，AI 将依次生成三层地图并开启冒险。</p>
+    <p>或直接输入行动，AI 会自动初始化世界。</p>
+    <div class="gen-hint">地图分三层：大区域 → 地点 → 场景（含NPC）<br>点地图面板中「↑ 上层」「↓ 下钻」可切换层级查看</div>
+  </div>
+</main>
+
+<footer class="input-bar">
+  <div class="input-row">
+    <textarea id="userInput" rows="1" placeholder="输入行动或对话…" autocomplete="off"></textarea>
+    <button type="button" id="sendBtn" aria-label="发送">送</button>
+  </div>
+  <div class="status" id="status"></div>
+</footer>
+
+<script>
+(function () {
+  /* ═══════════════════════════════════════════
+     CONFIG
+  ═══════════════════════════════════════════ */
+  const API_URL  = "https://epone.ggb.today/v1/chat/completions";
+  const API_KEY  = "sk-wGlaPTtG4XRkEyn7OYQAxnWF7cUhzMwSDeyZqhcoStiHTLVa";
+  const MODEL    = "deepseek-v3.2-exp";
+  const MAX_ROUNDS = 30;
+  const STORAGE_KEY = "mud_v3";
+
+  const DIRECTIONS = ["north","south","east","west","ne","nw","se","sw"];
+  const DIR_DELTA  = { north:[0,1],south:[0,-1],east:[1,0],west:[-1,0],ne:[1,1],nw:[-1,1],se:[1,-1],sw:[-1,-1] };
+
+  /* ═══════════════════════════════════════════
+     DOM
+  ═══════════════════════════════════════════ */
+  const chatArea    = document.getElementById("chatArea");
+  const welcome     = document.getElementById("welcome");
+  const userInput   = document.getElementById("userInput");
+  const sendBtn     = document.getElementById("sendBtn");
+  const statusEl    = document.getElementById("status");
+  const mapToggle   = document.getElementById("mapToggle");
+  const mapPanel    = document.getElementById("mapPanel");
+  const mapSvg      = document.getElementById("mapSvg");
+  const breadcrumb  = document.getElementById("breadcrumb");
+  const layerUpBtn  = document.getElementById("layerUpBtn");
+  const layerDownBtn= document.getElementById("layerDownBtn");
+  const clearMapBtn = document.getElementById("clearMapBtn");
+  const generateBtn = document.getElementById("generateBtn");
+
+  /* ═══════════════════════════════════════════
+     STATE
+     mapGraph structure:
+     {
+       world_name: "",
+       current_path: [regionId, locationId, sceneId],
+       region_graph: {
+         [id]: {
+           name, description, coordinates, terrain,
+           exits: {north,south,east,west,ne,nw,se,sw},
+           subgraph: {          // Layer 2
+             [id]: {
+               name, description, coordinates, terrain,
+               exits: {...},
+               subgraph: {      // Layer 3
+                 [id]: { name, description, coordinates, exits:{...}, npcs:[] }
+               }
+             }
+           }
+         }
+       }
+     }
+     viewPath: path currently displayed in map panel (may differ from current_path)
+  ═══════════════════════════════════════════ */
+  let messages  = [];
+  let isLoading = false;
+  let mapGraph  = { world_name:"", current_path:[], region_graph:{} };
+  let viewPath  = [];   // which layer is displayed in the map panel
+
+  /* ═══════════════════════════════════════════
+     SYSTEM PROMPT  (ongoing gameplay)
+  ═══════════════════════════════════════════ */
+  /* ─────────────────────────────────────────
+     helpers: look up nodes anywhere in graph
+  ───────────────────────────────────────── */
+  function getRegionNode(rId) { return mapGraph.region_graph[rId] || null; }
+  function getLocationNode(rId, lId) { return ((getRegionNode(rId) || {}).subgraph || {})[lId] || null; }
+  function getSceneNode(rId, lId, sId) { return ((getLocationNode(rId,lId) || {}).subgraph || {})[sId] || null; }
+
+  /* resolve a __boundary exit: returns { regionId, locationId } target info */
+  function resolveBoundaryTarget(boundaryVal, layer, fromRegionId, fromLocationId) {
+    // boundary format: __boundary:parentId.direction
+    const m = boundaryVal && boundaryVal.match(/^__boundary:(.+)\.(.+)$/);
+    if (!m) return null;
+    const [, parentId, dir] = m;
+    if (layer === 2) {
+      // boundary from scene → goes to another location in same region
+      const rNode = getRegionNode(fromRegionId);
+      const lNode = getLocationNode(fromRegionId, parentId);
+      const targetLocId = lNode && lNode.exits ? lNode.exits[dir] : null;
+      if (!targetLocId || targetLocId.startsWith("__boundary")) return null;
+      return { type:"location", regionId: fromRegionId, locationId: targetLocId };
+    }
+    if (layer === 1) {
+      // boundary from location → goes to another region
+      const rNode = getRegionNode(parentId);
+      const targetRegId = rNode && rNode.exits ? rNode.exits[dir] : null;
+      if (!targetRegId) return null;
+      return { type:"region", regionId: targetRegId };
+    }
+    return null;
+  }
+
+  /* get a human-readable name for a boundary exit target */
+  function boundaryTargetName(boundaryVal, layer, fromRegionId) {
+    const t = resolveBoundaryTarget(boundaryVal, layer, fromRegionId, null);
+    if (!t) return "?";
+    if (t.type === "region") return (getRegionNode(t.regionId) || {}).name || t.regionId;
+    if (t.type === "location") return (getLocationNode(t.regionId, t.locationId) || {}).name || t.locationId;
+    return "?";
+  }
+
+  function buildSystemPrompt() {
+    const cp = mapGraph.current_path || [];
+    const regionId   = cp[0] || "";
+    const locationId = cp[1] || "";
+    const sceneId    = cp[2] || "";
+    const regionNode   = getRegionNode(regionId) || {};
+    const locationNode = getLocationNode(regionId, locationId) || {};
+    const sceneNode    = getSceneNode(regionId, locationId, sceneId) || {};
+    const npcList = (sceneNode.npcs || [])
+      .map(n => `【${n.name}】身份:${n.role} 性格:${n.personality} 可交互:${(n.interactions||[]).join("/")}`)
+      .join("\n");
+
+    // describe exits of current scene including boundary info
+    const sceneExits = Object.entries((sceneNode.exits || {}))
+      .filter(([,v]) => v)
+      .map(([dir, target]) => {
+        if (target.startsWith("__boundary")) {
+          const t = resolveBoundaryTarget(target, 2, regionId, locationId);
+          const name = t ? (t.type === "location"
+            ? (getLocationNode(t.regionId, t.locationId) || {}).name || t.locationId
+            : (getRegionNode(t.regionId) || {}).name || t.regionId) : "?";
+          return `  ${dir} → 【边界出口】前往${name}`;
+        }
+        const sn = getSceneNode(regionId, locationId, target);
+        return `  ${dir} → ${sn ? sn.name : target}`;
+      }).join("\n") || "  （无可用出口）";
+
+    return `你是一个武侠题材的 AI MUD 主持人。严格遵循以下规则：
+
+【当前世界】${mapGraph.world_name || "（未生成）"}
+【当前位置】区域:${regionNode.name||regionId} > 地点:${locationNode.name||locationId} > 场景:${sceneNode.name||sceneId}
+【当前场景描述】${sceneNode.description || ""}
+【当前场景出口】
+${sceneExits}
+【当前场景NPC】
+${npcList || "（无NPC）"}
+
+【世界观设定】
+本世界是中国武侠世界，时代背景类似明清江湖。存在：内力/轻功/刀剑/暗器/门派/帮会/镖局/官府/江湖人士/普通百姓。
+【禁止出现】：法术/魔法咒语/妖怪鬼魂/异界生物/超自然恐怖/血腥猎奇/末世/西方魔幻元素。若玩家要求涉及上述内容，以"此地无此等奇异之事"婉拒。
+氛围基调：豪迈侠气、儿女情长、江湖恩怨、市井烟火，不得渲染恐惧或黑暗惊悚。
+
+【规则】
+1. 物品与功法：玩家只能使用已拥有物品或已学功法。若不存在，必须拒绝并说明"你并没有该物品/该功法"。
+2. 时间：每个操作/对话消耗30分钟自然时间，在叙述中体现时辰变化（子丑寅卯辰巳午未申酉戌亥）。
+3. 叙述风格：简洁武侠/古风文笔，第二人称（你），句子简短有力，保持 MUD 交互感。不使用现代网络词汇。
+4. 移动：玩家只能走【当前场景出口】中列出的方向。若玩家想前往某处，判断对应的出口方向，在回复末尾附带 JSON 指令。
+5. 【必须】回复末尾附带如下 JSON 块（在叙述文字之后，单独一行）：
+   - 若玩家移动：\`\`\`json
+{"op":"move","direction":"方向"}
+\`\`\`
+     方向只能是：north/south/east/west/ne/nw/se/sw 之一，且必须是【当前场景出口】中存在的方向。
+   - 若玩家未移动（对话/查看/战斗等）：\`\`\`json
+{"op":"stay"}
+\`\`\`
+   不得在 JSON 中填写任何 id 或路径，路径由系统自动管理。`;
+  }
+
+  /* ═══════════════════════════════════════════
+     GENERATION PROMPTS
+  ═══════════════════════════════════════════ */
+  const PROMPT_L1 = `你是武侠世界地图生成器。生成 Layer 1 大区域图。
+世界观：纯中国武侠，有内功武学/刀剑轻功/江湖帮派/官府市井，无魔法妖怪异界生物，地域文化鲜明（蜀地/江南/塞北/岭南等）。
+规则：
+- 选择一个具有中国地域特色的武侠世界（蜀地/江南/塞北/岭南等），整体有主题感
+- 生成 5~8 个区域节点（城镇/门派/山脉/荒野/渡口等），覆盖不同类型
+- 每个节点：稳定英文snake_case id、中文 name、description（一句话，武侠风格，不含恐怖/玄幻元素）、coordinates [x,y]（整数格网）、terrain、8方向 exits（null或目标id）
+- exits 互反一致（A.north=B 则 B.south=A）
+- 设置 current_region（玩家起始区域 id）
+- 只输出如下纯 JSON，无多余文字：
+{"world_name":"...","current_region":"id","region_graph":{"id":{"name":"...","description":"...","coordinates":[x,y],"terrain":"...","exits":{"north":null,"south":null,"east":null,"west":null,"ne":null,"nw":null,"se":null,"sw":null}}}}`;
+
+  function buildPromptL2(l1, regionId) {
+    const rNode = l1.region_graph[regionId] || {};
+    const boundaryExits = Object.entries(rNode.exits || {})
+      .filter(([,v]) => v !== null)
+      .map(([dir,target]) => `  ${dir}方向通向区域「${l1.region_graph[target]?.name||target}」，边界节点 exits.${dir} 须填 "__boundary:${regionId}.${dir}"`)
+      .join("\n");
+    return `你是武侠世界地图生成器（纯武侠风格，无魔法妖怪）。以下是 Layer 1 区域图（JSON）：
+${JSON.stringify(l1)}
+
+请为区域「${rNode.name}（${regionId}）」生成完整 Layer 2 地点图。
+规则：
+- 生成 5~8 个该区域内部地点（酒馆/广场/城门/药铺/镖局/书院/码头等，体现「${rNode.name}」文化特色，不含恐怖/玄幻地点）
+- 每个节点：英文id、中文name、description（武侠风格一句话）、coordinates [x,y]、terrain、8方向 exits
+- 与外部区域相邻的边界出口格式：__boundary:${regionId}.<dir>
+${boundaryExits}
+- 设置 current_location（玩家初始地点 id）
+- 只输出纯 JSON：
+{"current_location":"id","location_graph":{"id":{"name":"...","description":"...","coordinates":[x,y],"terrain":"...","exits":{...}}}}`;
+  }
+
+  function buildPromptL3(l1, l2, regionId, locationId) {
+    const rNode = l1.region_graph[regionId] || {};
+    const lNode = l2.location_graph[locationId] || {};
+    const boundaryExits = Object.entries(lNode.exits || {})
+      .filter(([,v]) => v && !v.startsWith("__boundary"))
+      .map(([dir,target]) => {
+        const tNode = l2.location_graph[target];
+        return tNode ? `  ${dir}方向通向地点「${tNode.name}」，边界节点 exits.${dir} = "__boundary:${locationId}.${dir}"` : "";
+      })
+      .filter(Boolean)
+      .join("\n");
+    return `你是武侠世界地图生成器（纯武侠风格，无魔法妖怪异界元素）。背景：
+区域：${rNode.name} / 地点：${lNode.name}（${locationId}）
+
+请为地点「${lNode.name}」生成完整 Layer 3 场景图（建筑内部结构）。
+规则：
+- 生成 4~7 个场景节点（大堂/雅间/厨房/柴房/院子/二楼走廊/地窖等，与地点类型匹配，描述保持市井/江湖气息，不得有鬼怪恐怖氛围）
+- 每个节点：英文id、中文name、description、coordinates [x,y]、8方向 exits
+- 与外部地点相邻的边界出口格式：__boundary:${locationId}.<dir>
+${boundaryExits}
+- 此层节点不含 npcs（下一步单独生成）
+- 设置 current_scene（玩家初始场景 id）
+- 只输出纯 JSON：
+{"current_scene":"id","scene_graph":{"id":{"name":"...","description":"...","coordinates":[x,y],"exits":{...}}}}`;
+  }
+
+  function buildPromptL4(l1, l2, l3, regionId, locationId, sceneId) {
+    const rNode = l1.region_graph[regionId] || {};
+    const lNode = l2.location_graph[locationId] || {};
+    const sNode = l3.scene_graph[sceneId] || {};
+    const allScenes = Object.values(l3.scene_graph || {}).map(n => n.name).join("、");
+    return `你是武侠世界 NPC 生成器（纯武侠，无妖怪鬼神）。背景：
+区域：${rNode.name} / 地点：${lNode.name} / 当前场景：${sNode.name}（${sceneId}）
+场景描述：${sNode.description || ""}
+该地点全部场景：${allScenes}
+
+请为场景「${sNode.name}」生成详细 NPC 数据。
+规则：
+- 生成 1~3 个该场景中存在的 NPC，符合武侠背景和地点文化，只能是普通人/江湖人士/官府差役/商贩/侠客等
+- 禁止生成妖怪/鬼魂/异族/法师类 NPC
+- 每个 NPC：id（英文）、name（中文）、role（身份）、personality（性格一句话）、interactions（可触发行为数组，3~5条）
+- 只输出纯 JSON：
+{"scene_id":"${sceneId}","npcs":[{"id":"...","name":"...","role":"...","personality":"...","interactions":["...","..."]}]}`;
+  }
+
+  /* ═══════════════════════════════════════════
+     API HELPER
+  ═══════════════════════════════════════════ */
+  async function callAPI(msgs, maxTokens) {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "Authorization":"Bearer "+API_KEY },
+      body: JSON.stringify({ model:MODEL, messages:msgs, stream:false, max_tokens: maxTokens || 2048 })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+  }
+
+  function parseJSON(text) {
+    const block = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const raw = block ? block[1].trim() : text.trim();
+    try { return JSON.parse(raw); } catch (_) {}
+    const s = raw.indexOf("{"), e = raw.lastIndexOf("}") + 1;
+    if (s >= 0 && e > s) { try { return JSON.parse(raw.slice(s, e)); } catch (_) {} }
+    return null;
+  }
+
+  /* ═══════════════════════════════════════════
+     STORAGE
+  ═══════════════════════════════════════════ */
+  function saveMap() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(mapGraph)); } catch (_) {}
+  }
+  function loadMap() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) { const d = JSON.parse(raw); if (d && d.region_graph) { mapGraph = d; return; } }
+    } catch (_) {}
+  }
+  function clearMap() {
+    mapGraph = { world_name:"", current_path:[], region_graph:{} };
+    viewPath = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+    mapSvg.innerHTML = "";
+    updateBreadcrumb();
+  }
+
+  /* ═══════════════════════════════════════════
+     ASSEMBLE 4-LAYER RESULT
+  ═══════════════════════════════════════════ */
+  function normalizeExits(raw) {
+    const exits = { north:null,south:null,east:null,west:null,ne:null,nw:null,se:null,sw:null };
+    if (raw && typeof raw === "object") {
+      DIRECTIONS.forEach(d => { exits[d] = raw[d] || null; });
+    }
+    return exits;
+  }
+
+  function assembleMapGraph(l1, l2, l3, l4, regionId, locationId, sceneId) {
+    mapGraph.world_name = l1.world_name || "";
+    mapGraph.current_path = [regionId, locationId, sceneId];
+    mapGraph.region_graph = mapGraph.region_graph || {};
+
+    Object.entries(l1.region_graph || {}).forEach(([id, node]) => {
+      if (!mapGraph.region_graph[id]) mapGraph.region_graph[id] = {};
+      const existing = mapGraph.region_graph[id];
+      mapGraph.region_graph[id] = {
+        name: node.name || existing.name || id,
+        description: node.description || existing.description || "",
+        coordinates: node.coordinates || existing.coordinates || null,
+        terrain: node.terrain || existing.terrain || "",
+        exits: normalizeExits(node.exits),
+        subgraph: existing.subgraph || {}
+      };
+    });
+
+    const regionNode = mapGraph.region_graph[regionId];
+    if (!regionNode) return;
+    regionNode.subgraph = regionNode.subgraph || {};
+
+    Object.entries(l2.location_graph || {}).forEach(([id, node]) => {
+      if (!regionNode.subgraph[id]) regionNode.subgraph[id] = {};
+      const existing = regionNode.subgraph[id];
+      regionNode.subgraph[id] = {
+        name: node.name || existing.name || id,
+        description: node.description || existing.description || "",
+        coordinates: node.coordinates || existing.coordinates || null,
+        terrain: node.terrain || existing.terrain || "",
+        exits: normalizeExits(node.exits),
+        subgraph: existing.subgraph || {}
+      };
+    });
+
+    const locationNode = regionNode.subgraph[locationId];
+    if (!locationNode) return;
+    locationNode.subgraph = locationNode.subgraph || {};
+
+    Object.entries(l3.scene_graph || {}).forEach(([id, node]) => {
+      if (!locationNode.subgraph[id]) locationNode.subgraph[id] = {};
+      const existing = locationNode.subgraph[id];
+      locationNode.subgraph[id] = {
+        name: node.name || existing.name || id,
+        description: node.description || existing.description || "",
+        coordinates: node.coordinates || existing.coordinates || null,
+        exits: normalizeExits(node.exits),
+        npcs: existing.npcs || []
+      };
+    });
+
+    const sceneNode = locationNode.subgraph[sceneId];
+    // l4 现在是一个 bundle：{ npcsByScene: { [sceneId]: NPC[] } }
+    if (l4 && l4.npcsByScene) {
+      Object.entries(l4.npcsByScene).forEach(([sid, npcs]) => {
+        if (!locationNode.subgraph[sid]) return;
+        if (Array.isArray(npcs)) locationNode.subgraph[sid].npcs = npcs;
+      });
+    }
+
+    viewPath = [regionId, locationId, sceneId];
+    saveMap();
+  }
+
+  /* ═══════════════════════════════════════════
+     GENERATE WORLD (4-step sequential)
+  ═══════════════════════════════════════════ */
+  async function generateWorld() {
+    if (isLoading) return;
+    isLoading = true;
+    generateBtn.disabled = true;
+    sendBtn.disabled = true;
+
+    try {
+      // Step 1
+      setStatus("（1/4）生成大区域图…", false, true);
+      const r1 = await callAPI([{ role:"system", content:PROMPT_L1 }], 2048);
+      const l1 = parseJSON(r1);
+      if (!l1 || !l1.region_graph) throw new Error("大区域图解析失败，请重试");
+      const regionId = l1.current_region || Object.keys(l1.region_graph)[0];
+      appendMessage("assistant", `【世界生成 1/4】已生成大区域图，共 ${Object.keys(l1.region_graph).length} 个区域。当前所在：${l1.region_graph[regionId]?.name || regionId}`);
+
+      // Step 2
+      setStatus("（2/4）生成当前区域地点图…", false, true);
+      const r2 = await callAPI([{ role:"system", content:buildPromptL2(l1, regionId) }], 2048);
+      const l2 = parseJSON(r2);
+      if (!l2 || !l2.location_graph) throw new Error("地点图解析失败，请重试");
+      const locationId = l2.current_location || Object.keys(l2.location_graph)[0];
+      appendMessage("assistant", `【世界生成 2/4】已生成「${l1.region_graph[regionId]?.name}」地点图，共 ${Object.keys(l2.location_graph).length} 个地点。当前所在：${l2.location_graph[locationId]?.name || locationId}`);
+
+      // Step 3
+      setStatus("（3/4）生成当前地点场景图…", false, true);
+      const r3 = await callAPI([{ role:"system", content:buildPromptL3(l1, l2, regionId, locationId) }], 2048);
+      const l3 = parseJSON(r3);
+      if (!l3 || !l3.scene_graph) throw new Error("场景图解析失败，请重试");
+      const sceneId = l3.current_scene || Object.keys(l3.scene_graph)[0];
+      appendMessage("assistant", `【世界生成 3/4】已生成「${l2.location_graph[locationId]?.name}」内部场景，共 ${Object.keys(l3.scene_graph).length} 个场景。当前所在：${l3.scene_graph[sceneId]?.name || sceneId}`);
+
+      // Step 4: 为当前 Layer3 所有场景生成 NPC
+      setStatus("（4/4）生成所有场景 NPC…", false, true);
+      const allSceneIds = Object.keys(l3.scene_graph || {});
+      const npcSummary = [];
+      const l4All = {};
+      for (const sid of allSceneIds) {
+        const r4 = await callAPI([{ role:"system", content:buildPromptL4(l1, l2, l3, regionId, locationId, sid) }], 1024);
+        const l4 = parseJSON(r4);
+        if (l4 && Array.isArray(l4.npcs)) {
+          l4All[sid] = l4.npcs;
+          const names = l4.npcs.map(n => n.name).join("、");
+          npcSummary.push(`${l3.scene_graph[sid]?.name || sid}：${names || "（空）"}`);
+        }
+      }
+      const entrySceneName = l3.scene_graph[sceneId]?.name || sceneId;
+      appendMessage("assistant", `【世界生成 4/4】已为该地点全部场景生成 NPC：\n${npcSummary.join("\n") || "（暂无NPC）"}\n\n地图生成完毕。你正身处${l2.location_graph[locationId]?.name}的${entrySceneName}，${l3.scene_graph[sceneId]?.description || ""}。\n\n请输入你的行动……`);
+
+      // Assemble，将每个场景的 NPC 注入 mapGraph
+      const l4Bundle = { npcsByScene: l4All };
+      assembleMapGraph(l1, l2, l3, l4Bundle, regionId, locationId, sceneId);
+      updateBreadcrumb();
+      if (mapPanel.classList.contains("open")) renderMap();
+      setStatus("");
+    } catch (e) {
+      setStatus("生成失败: " + e.message, true);
+    } finally {
+      isLoading = false;
+      generateBtn.disabled = false;
+      sendBtn.disabled = false;
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     HANDLE MOVE PATCH FROM ONGOING REPLIES
+  ═══════════════════════════════════════════ */
+  async function applyAction(action) {
+    if (!action || action.op === "stay") return;
+    if (action.op !== "move" || !action.direction) return;
+
+    const dir = action.direction;
+    const [rId, lId, sId] = mapGraph.current_path;
+    const sceneNode = getSceneNode(rId, lId, sId);
+    if (!sceneNode) return;
+
+    const target = (sceneNode.exits || {})[dir];
+    if (!target) return; // 该方向无出口，忽略
+
+    if (target.startsWith("__boundary")) {
+      // 边界出口：跨越到相邻地点或区域
+      const resolved = resolveBoundaryTarget(target, 2, rId, lId);
+      if (!resolved) return;
+
+      if (resolved.type === "location") {
+        const newRId = resolved.regionId;
+        const newLId = resolved.locationId;
+        // 懒加载目标地点的场景图
+        const newLNode = getLocationNode(newRId, newLId);
+        if (newLNode && (!newLNode.subgraph || Object.keys(newLNode.subgraph).length === 0)) {
+          await lazyGenerateL3(newRId, newLId);
+        }
+        const freshLNode = getLocationNode(newRId, newLId);
+        const newSId = freshLNode && freshLNode.subgraph ? Object.keys(freshLNode.subgraph)[0] || "" : "";
+        mapGraph.current_path = [newRId, newLId, newSId];
+      } else if (resolved.type === "region") {
+        // 跨区域移动：进入目标区域，选取最近地点（第一个有L2的地点）
+        const newRId = resolved.regionId;
+        const newRNode = getRegionNode(newRId);
+        if (!newRNode) return;
+        const newLId = newRNode.subgraph ? Object.keys(newRNode.subgraph)[0] || "" : "";
+        if (!newLId) return;
+        const newLNode = getLocationNode(newRId, newLId);
+        if (newLNode && (!newLNode.subgraph || Object.keys(newLNode.subgraph).length === 0)) {
+          await lazyGenerateL3(newRId, newLId);
+        }
+        const freshLNode = getLocationNode(newRId, newLId);
+        const newSId = freshLNode && freshLNode.subgraph ? Object.keys(freshLNode.subgraph)[0] || "" : "";
+        mapGraph.current_path = [newRId, newLId, newSId];
+      }
+    } else {
+      // 普通场景内移动
+      mapGraph.current_path = [rId, lId, target];
+    }
+
+    saveMap();
+    updateBreadcrumb();
+    updateLayerBtns();
+    if (mapPanel.classList.contains("open")) renderMap();
+  }
+
+  /* lazy-generate L3 scene graph for a location not yet explored */
+  async function lazyGenerateL3(regionId, locationId) {
+    const rNode = getRegionNode(regionId);
+    const lNode = getLocationNode(regionId, locationId);
+    if (!rNode || !lNode) return;
+    setStatus(`进入${lNode.name}，生成场景中…`, false, true);
+    try {
+      // Build a minimal l1/l2 stand-in for the prompts
+      const l1mini = { world_name: mapGraph.world_name, region_graph: mapGraph.region_graph };
+      const l2mini = {
+        location_graph: Object.fromEntries(
+          Object.entries(rNode.subgraph || {}).map(([id, n]) => [id, n])
+        )
+      };
+      const r3 = await callAPI([{ role:"system", content: buildPromptL3(l1mini, l2mini, regionId, locationId) }], 2048);
+      const l3 = parseJSON(r3);
+      if (!l3 || !l3.scene_graph) { setStatus(""); return; }
+      lNode.subgraph = lNode.subgraph || {};
+      Object.entries(l3.scene_graph).forEach(([id, node]) => {
+        lNode.subgraph[id] = {
+          name: node.name || id,
+          description: node.description || "",
+          exits: normalizeExits(node.exits),
+          npcs: []
+        };
+      });
+      // 为该地点下所有场景生成 NPC
+      const allSceneIds = Object.keys(l3.scene_graph || {});
+      for (const sid of allSceneIds) {
+        if (!lNode.subgraph[sid]) continue;
+        const r4 = await callAPI([{ role:"system", content: buildPromptL4(l1mini, l2mini, l3, regionId, locationId, sid) }], 1024);
+        const l4 = parseJSON(r4);
+        if (l4 && Array.isArray(l4.npcs)) lNode.subgraph[sid].npcs = l4.npcs;
+      }
+      saveMap();
+      appendMessage("assistant", `【地图扩展】已进入「${lNode.name}」，发现 ${Object.keys(lNode.subgraph).length} 个场景。`);
+    } catch (_) {}
+    setStatus("");
+  }
+
+  function extractAction(reply) {
+    let narrative = reply;
+    let action = null;
+    const block = reply.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (block) {
+      narrative = reply.replace(block[0], "").trim();
+      try { action = JSON.parse(block[1].trim()); } catch (_) {}
+    }
+    return { narrative, action };
+  }
+
+  /* ═══════════════════════════════════════════
+     RENDER MAP (based on viewPath)
+  ═══════════════════════════════════════════ */
+  function getNodesAtViewPath() {
+    const [rId, lId] = viewPath;
+    if (!rId) return { nodes: mapGraph.region_graph, currentId: mapGraph.current_path[0], layer: 0 };
+    const rNode = mapGraph.region_graph[rId];
+    if (!lId || !rNode) return { nodes: mapGraph.region_graph, currentId: rId, layer: 0 };
+    if (!rNode.subgraph) return { nodes: {}, currentId: "", layer: 1 };
+    const lNode = rNode.subgraph[lId];
+    if (viewPath.length <= 2) return { nodes: rNode.subgraph, currentId: mapGraph.current_path[1], layer: 1 };
+    if (!lNode || !lNode.subgraph) return { nodes: rNode.subgraph, currentId: lId, layer: 1 };
+    return { nodes: lNode.subgraph, currentId: mapGraph.current_path[2], layer: 2 };
+  }
+
+  const TILE_W = 90;  // grass.png 在 SVG 中的绘制宽度
+  const TILE_H = 64;  // grass.png 在 SVG 中的绘制高度（保持原图宽高比约 1.4:1）
+
+  function buildPositions(nodesById, step) {
+    const ids = Object.keys(nodesById);
+    const positions = {};
+    if (ids.length === 0) return positions;
+
+    const STEP = step || 90;
+    const rootId = ids[0];
+    positions[rootId] = { x: 0, y: 0 };
+    const queue = [rootId];
+    const visited = new Set([rootId]);
+    while (queue.length) {
+      const id = queue.shift();
+      const base = positions[id];
+      const node = nodesById[id];
+      DIRECTIONS.forEach(dir => {
+        const toId = node && node.exits ? node.exits[dir] : null;
+        if (!toId || toId.startsWith("__boundary") || !nodesById[toId]) return;
+        if (!positions[toId]) {
+          const d = DIR_DELTA[dir];
+          positions[toId] = { x: base.x + d[0] * STEP, y: base.y - d[1] * STEP };
+        }
+        if (!visited.has(toId)) { visited.add(toId); queue.push(toId); }
+      });
+    }
+    let orphanCol = 0;
+    ids.forEach(id => {
+      if (positions[id]) return;
+      positions[id] = { x: orphanCol * STEP, y: STEP * 3 };
+      orphanCol++;
+    });
+    return positions;
+  }
+
+  function renderMap() {
+    const { nodes, currentId, layer } = getNodesAtViewPath();
+    const ids = Object.keys(nodes || {});
+    mapSvg.innerHTML = "";
+    if (ids.length === 0) return;
+
+    const step = (layer === 1) ? TILE_W : 90;
+    const positions = buildPositions(nodes, step);
+    const allX = ids.map(id => positions[id].x);
+    const allY = ids.map(id => positions[id].y);
+    const pad = (layer === 1) ? TILE_W : 55;
+    const minX = Math.min(...allX) - pad;
+    const maxX = Math.max(...allX) + pad;
+    const minY = Math.min(...allY) - pad;
+    const maxY = Math.max(...allY) + pad;
+    const vw = Math.max(200, maxX - minX);
+    const vh = Math.max(160, maxY - minY);
+    mapSvg.setAttribute("viewBox", `${minX} ${minY} ${vw} ${vh}`);
+
+    // Layer 1: 用 grass.png 铺满网格背景
+    if (layer === 1) {
+      const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+      const pattern = document.createElementNS("http://www.w3.org/2000/svg","pattern");
+      pattern.setAttribute("id","grassTile");
+      pattern.setAttribute("patternUnits","userSpaceOnUse");
+      pattern.setAttribute("width", TILE_W);
+      pattern.setAttribute("height", TILE_H);
+      pattern.setAttribute("x", minX);
+      pattern.setAttribute("y", minY);
+      const img = document.createElementNS("http://www.w3.org/2000/svg","image");
+      img.setAttribute("href","grass.png");
+      img.setAttribute("width", TILE_W);
+      img.setAttribute("height", TILE_H);
+      img.setAttribute("preserveAspectRatio","none");
+      pattern.appendChild(img);
+      defs.appendChild(pattern);
+      mapSvg.appendChild(defs);
+
+      const bg = document.createElementNS("http://www.w3.org/2000/svg","rect");
+      bg.setAttribute("x", minX);
+      bg.setAttribute("y", minY);
+      bg.setAttribute("width", vw);
+      bg.setAttribute("height", vh);
+      bg.setAttribute("fill","url(#grassTile)");
+      mapSvg.appendChild(bg);
+    }
+
+    // Edges — for layer 1 draw mud roads (border + fill, two passes)
+    const gE = document.createElementNS("http://www.w3.org/2000/svg","g");
+    const isMud = layer === 1;
+    const seenEdge = new Set();
+
+    // helper: collect edges
+    const edgeList = [];
+    ids.forEach(fromId => {
+      const node = nodes[fromId];
+      DIRECTIONS.forEach(dir => {
+        const toId = node && node.exits ? node.exits[dir] : null;
+        if (!toId || toId.startsWith("__boundary") || !nodes[toId]) return;
+        const key = [fromId,toId].sort().join("|");
+        if (seenEdge.has(key)) return;
+        seenEdge.add(key);
+        edgeList.push({ a: positions[fromId], b: positions[toId] });
+      });
+    });
+
+    if (isMud) {
+      // dark border layer first
+      edgeList.forEach(({a,b}) => {
+        const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+        line.setAttribute("x1",a.x); line.setAttribute("y1",a.y);
+        line.setAttribute("x2",b.x); line.setAttribute("y2",b.y);
+        line.setAttribute("class","map-edge mud-road-border");
+        gE.appendChild(line);
+      });
+      // lighter fill layer on top
+      edgeList.forEach(({a,b}) => {
+        const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+        line.setAttribute("x1",a.x); line.setAttribute("y1",a.y);
+        line.setAttribute("x2",b.x); line.setAttribute("y2",b.y);
+        line.setAttribute("class","map-edge mud-road");
+        gE.appendChild(line);
+      });
+    } else {
+      edgeList.forEach(({a,b}) => {
+        const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+        line.setAttribute("x1",a.x); line.setAttribute("y1",a.y);
+        line.setAttribute("x2",b.x); line.setAttribute("y2",b.y);
+        line.setAttribute("class","map-edge");
+        gE.appendChild(line);
+      });
+    }
+
+    // Boundary exit stubs
+    const CP = mapGraph.current_path;
+    const mudCls = isMud ? " mud-road" : "";
+    ids.forEach(fromId => {
+      const node = nodes[fromId];
+      DIRECTIONS.forEach(dir => {
+        const toId = node && node.exits ? node.exits[dir] : null;
+        if (!toId || !toId.startsWith("__boundary")) return;
+        const a = positions[fromId];
+        const d = DIR_DELTA[dir] || [0,0];
+        const stubLen = isMud ? 40 : 32;
+        const bx = a.x + d[0] * stubLen, by = a.y - d[1] * stubLen;
+        const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+        line.setAttribute("x1",a.x); line.setAttribute("y1",a.y);
+        line.setAttribute("x2",bx); line.setAttribute("y2",by);
+        line.setAttribute("class","map-boundary-line" + mudCls);
+        gE.appendChild(line);
+        // arrowhead
+        const ah = isMud ? 7 : 5, aw = isMud ? 5 : 3;
+        const nx = d[0], ny = -d[1];
+        const px = -ny, py = nx;
+        const ax1 = bx - nx*ah + px*aw, ay1 = by - ny*ah + py*aw;
+        const ax2 = bx - nx*ah - px*aw, ay2 = by - ny*ah - py*aw;
+        const arrow = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+        arrow.setAttribute("points",`${bx},${by} ${ax1},${ay1} ${ax2},${ay2}`);
+        arrow.setAttribute("class","map-boundary-arrow" + mudCls);
+        gE.appendChild(arrow);
+        // label
+        const targetName = boundaryTargetName(toId, layer, CP[0]);
+        if (targetName !== "?") {
+          const lbl = document.createElementNS("http://www.w3.org/2000/svg","text");
+          lbl.setAttribute("x", bx + d[0]*8); lbl.setAttribute("y", by - d[1]*8 + 3);
+          lbl.setAttribute("text-anchor","middle"); lbl.setAttribute("font-size", isMud ? "9" : "8");
+          lbl.setAttribute("class","map-boundary-lbl" + mudCls);
+          lbl.textContent = "→" + targetName;
+          gE.appendChild(lbl);
+        }
+      });
+    });
+    mapSvg.appendChild(gE);
+
+    // Nodes
+    const gN = document.createElementNS("http://www.w3.org/2000/svg","g");
+    ids.forEach(id => {
+      const node = nodes[id];
+      const pos  = positions[id];
+      const isCur = id === currentId;
+      const hasSub = layer < 2 && node.subgraph && Object.keys(node.subgraph).length > 0;
+      const isGrass = layer === 1;
+      const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+      let cls = "map-node" + (isCur?" cur":"") + (hasSub?" has-sub":"");
+      if (isGrass) cls += " grass-tile";
+      g.setAttribute("class", cls);
+
+      if (isGrass) {
+        // house image centered on node position
+        const hw = 50, hh = 60;
+        if (isCur) {
+          const glow = document.createElementNS("http://www.w3.org/2000/svg","ellipse");
+          glow.setAttribute("cx", pos.x); glow.setAttribute("cy", pos.y + 6);
+          glow.setAttribute("rx", hw/2 + 6); glow.setAttribute("ry", hh/2 - 4);
+          glow.setAttribute("class","house-glow");
+          g.appendChild(glow);
+        }
+        const houseImg = document.createElementNS("http://www.w3.org/2000/svg","image");
+        houseImg.setAttribute("href","house.png");
+        houseImg.setAttribute("x", pos.x - hw/2); houseImg.setAttribute("y", pos.y - hh/2 - 6);
+        houseImg.setAttribute("width", hw); houseImg.setAttribute("height", hh);
+        houseImg.setAttribute("preserveAspectRatio","xMidYMid meet");
+        g.appendChild(houseImg);
+        const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+        txt.setAttribute("x", pos.x); txt.setAttribute("y", pos.y + hh/2 + 2);
+        txt.setAttribute("text-anchor","middle"); txt.setAttribute("font-size","10");
+        txt.textContent = node.name || id;
+        g.appendChild(txt);
+      } else {
+        const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+        rect.setAttribute("x", pos.x - 38); rect.setAttribute("y", pos.y - 13);
+        rect.setAttribute("width", 76); rect.setAttribute("height", 26);
+        rect.setAttribute("rx", 6);
+        g.appendChild(rect);
+        const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+        txt.setAttribute("x", pos.x); txt.setAttribute("y", pos.y + 4);
+        txt.setAttribute("text-anchor","middle"); txt.setAttribute("font-size","11");
+        txt.textContent = node.name || id;
+        g.appendChild(txt);
+      }
+
+      // drill-down click on non-current node with subgraph
+      if (hasSub) {
+        g.style.cursor = "pointer";
+        g.addEventListener("click", () => {
+          if (layer === 0) viewPath = [id];
+          else if (layer === 1) viewPath = [viewPath[0], id];
+          updateBreadcrumb();
+          updateLayerBtns();
+          renderMap();
+        });
+      }
+      gN.appendChild(g);
+    });
+    mapSvg.appendChild(gN);
+
+    updateLayerBtns();
+  }
+
+  function updateBreadcrumb() {
+    const cp = mapGraph.current_path || [];
+    const rId = cp[0], lId = cp[1], sId = cp[2];
+    const rName = (mapGraph.region_graph[rId] || {}).name || rId || "——";
+    const lName = ((mapGraph.region_graph[rId] || {}).subgraph || {})[lId]?.name || lId || "";
+    const sNode = ((((mapGraph.region_graph[rId] || {}).subgraph || {})[lId] || {}).subgraph || {})[sId];
+    const sName = sNode?.name || sId || "";
+
+    const vLen = viewPath.length;
+    const parts = [
+      `<span class="${vLen===0?"active":""}">区域</span>`,
+      rId ? `<span class="${vLen===1?"active":""}"> › ${rName}</span>` : "",
+      lId ? `<span class="${vLen===2?"active":""}"> › ${lName}</span>` : "",
+      sId ? `<span class="${vLen>=3?"active":""}"> › ${sName}</span>` : "",
+    ];
+    breadcrumb.innerHTML = parts.join("");
+  }
+
+  function updateLayerBtns() {
+    layerUpBtn.disabled   = viewPath.length === 0;
+    layerDownBtn.disabled = true;
+    const { nodes, layer } = getNodesAtViewPath();
+    const cp = mapGraph.current_path;
+    if (layer < 2 && cp.length > layer) {
+      const nodeId = cp[layer];
+      const node = (nodes || {})[nodeId];
+      layerDownBtn.disabled = !(node && node.subgraph && Object.keys(node.subgraph).length > 0);
+    }
+  }
+
+  layerUpBtn.addEventListener("click", () => {
+    if (viewPath.length === 0) return;
+    viewPath = viewPath.slice(0, -1);
+    updateBreadcrumb();
+    updateLayerBtns();
+    renderMap();
+  });
+
+  layerDownBtn.addEventListener("click", () => {
+    const { layer } = getNodesAtViewPath();
+    const cp = mapGraph.current_path;
+    if (layer >= 2 || !cp[layer]) return;
+    viewPath = cp.slice(0, layer + 2);
+    updateBreadcrumb();
+    updateLayerBtns();
+    renderMap();
+  });
+
+  /* ═══════════════════════════════════════════
+     STATUS & MESSAGES
+  ═══════════════════════════════════════════ */
+  function setStatus(text, isError, isInfo) {
+    statusEl.textContent = text || "";
+    statusEl.className = "status" + (isError?" error":"") + (isInfo?" info":"");
+  }
+
+  function appendMessage(role, content) {
+    const w = document.getElementById("welcome");
+    if (w) w.remove();
+    const wrap = document.createElement("div");
+    wrap.className = "message " + role;
+    const label = document.createElement("div");
+    label.className = "role-label";
+    label.textContent = role === "user" ? "你" : "江湖";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = content;
+    wrap.appendChild(label);
+    wrap.appendChild(bubble);
+    chatArea.appendChild(wrap);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  /* ═══════════════════════════════════════════
+     SEND (ongoing chat)
+  ═══════════════════════════════════════════ */
+  function trimContext() {
+    if (messages.length > MAX_ROUNDS * 2) messages = messages.slice(-MAX_ROUNDS * 2);
+  }
+
+  async function send() {
+    const text = userInput.value.trim();
+    if (!text || isLoading) return;
+    userInput.value = "";
+    userInput.style.height = "";
+    appendMessage("user", text);
+    messages.push({ role:"user", content:text });
+
+    isLoading = true;
+    sendBtn.disabled = true;
+    generateBtn.disabled = true;
+    setStatus("江湖运转中…");
+    trimContext();
+
+    try {
+      const reply = await callAPI([
+        { role:"system", content:buildSystemPrompt() },
+        ...messages
+      ]);
+      const { narrative, action } = extractAction(reply);
+      const displayText = narrative || reply;
+      appendMessage("assistant", displayText);
+      // 只在对话上下文中保留叙述文本，不保留 JSON action
+      messages.push({ role:"assistant", content:displayText });
+      if (action) await applyAction(action);
+      setStatus("");
+    } catch (e) {
+      setStatus("请求失败: " + e.message, true);
+    } finally {
+      isLoading = false;
+      sendBtn.disabled = false;
+      generateBtn.disabled = false;
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     EVENT LISTENERS
+  ═══════════════════════════════════════════ */
+  sendBtn.addEventListener("click", send);
+  generateBtn.addEventListener("click", generateWorld);
+
+  mapToggle.addEventListener("click", () => {
+    mapPanel.classList.toggle("open");
+    if (mapPanel.classList.contains("open")) {
+      if (viewPath.length === 0 && mapGraph.current_path.length > 0) viewPath = [...mapGraph.current_path];
+      updateBreadcrumb();
+      updateLayerBtns();
+      renderMap();
+    }
+  });
+
+  clearMapBtn.addEventListener("click", () => {
+    if (confirm("确定清空地图？（不影响聊天记录）")) clearMap();
+  });
+
+  userInput.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  userInput.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 120) + "px";
+  });
+
+  /* ═══════════════════════════════════════════
+     INIT
+  ═══════════════════════════════════════════ */
+  loadMap();
+  if (Object.keys(mapGraph.region_graph).length > 0) {
+    viewPath = [...(mapGraph.current_path || [])];
+    updateBreadcrumb();
+    updateLayerBtns();
+  }
+
+})();
+</script>
+</body>
+</html>

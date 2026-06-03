@@ -27,6 +27,576 @@
   --grain-shop-shopkeeper-avatar: url("../../ui/npc/jiusilaoban(touxiang).png");
 }
 
+.c-tavern-gamble-overlay {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  background: rgb(9 12 10 / 78%);
+}
+
+.c-tavern-gamble {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  border-image: none;
+  border-radius: 0;
+  padding: 0;
+  color: #f8edc8;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(26 138 110 / 96%), rgb(11 86 72 / 98%) 56%, rgb(5 43 39) 100%),
+    #0b5a4e;
+  box-shadow: inset 0 0 0 12px rgb(255 255 255 / 5%), inset 0 0 80px rgb(0 0 0 / 34%);
+}
+
+.c-tavern-gamble__table {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+}
+
+.c-tavern-gamble__sidebar {
+  min-height: 0;
+  overflow: auto;
+  border: 0;
+  border-right: 1px solid rgb(255 230 168 / 18%);
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, rgb(35 22 13 / 80%), rgb(18 29 24 / 82%)),
+    rgb(22 25 21 / 88%);
+  padding: 14px 12px 96px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  box-shadow: inset -18px 0 34px rgb(0 0 0 / 18%);
+}
+
+.c-tavern-gamble__sidebar h3 {
+  margin: 0 0 4px;
+  color: #ffe8b0;
+  font-size: 1rem;
+}
+
+.c-tavern-gamble__felt {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgb(33 155 122 / 88%), rgb(10 103 86 / 96%) 58%, rgb(4 55 49 / 98%)),
+    #0b5a4e;
+  box-shadow:
+    inset 0 0 0 10px rgb(255 255 255 / 5%),
+    inset 0 0 64px rgb(0 0 0 / 28%);
+}
+
+.c-tavern-gamble__header {
+  position: relative;
+  z-index: 2;
+  padding: 14px 16px 0;
+}
+
+.c-tavern-gamble__meta,
+.c-tavern-gamble__tiles,
+.c-tavern-gamble__notes,
+.c-tavern-gamble__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.c-tavern-gamble__meta span,
+.c-tavern-gamble__notes span,
+.c-tavern-gamble__player,
+.c-tavern-gamble__showdown > div {
+  border: 1px solid rgb(255 230 168 / 28%);
+  border-radius: 6px;
+  background: rgb(16 31 27 / 72%);
+  padding: 6px 8px;
+  color: #ffe8b0;
+}
+
+.c-tavern-gamble__player {
+  display: grid;
+  gap: 5px;
+}
+
+.c-tavern-gamble__player div {
+  display: grid;
+  gap: 2px;
+}
+
+.c-tavern-gamble__player span,
+.c-tavern-gamble__player small {
+  color: #d8c191;
+}
+
+.c-tavern-gamble__player.is-folded {
+  opacity: 0.58;
+}
+
+.c-tavern-gamble__discard-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.c-tavern-gamble__played-groups,
+.c-tavern-gamble__seat-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.c-tavern-gamble__played-groups span,
+.c-tavern-gamble__seat-groups span {
+  border: 1px solid rgb(255 230 168 / 42%);
+  border-radius: 6px;
+  background: rgb(42 99 82 / 72%);
+  color: #fff4c9;
+  padding: 3px 5px;
+  font-size: 0.76rem;
+}
+
+.c-tavern-gamble__seats {
+  position: absolute;
+  inset: 58px 34px 132px;
+  pointer-events: none;
+}
+
+.c-tavern-gamble__seat {
+  position: absolute;
+  width: min(220px, 34%);
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  color: #f8edc8;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 48%);
+}
+
+.c-tavern-gamble__seat-discards {
+  min-height: 48px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.c-tavern-gamble__seat--0 {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.c-tavern-gamble__seat--1 {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.c-tavern-gamble__seat--2 {
+  top: 50%;
+  right: -44px;
+  transform: translateY(-50%);
+}
+
+.c-tavern-gamble__seat--3 {
+  top: 50%;
+  left: -44px;
+  transform: translateY(-50%);
+}
+
+.c-tavern-gamble__center {
+  position: absolute;
+  inset: 96px 150px 196px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  border: 1px solid rgb(224 255 232 / 22%);
+  border-radius: 8px;
+  background: rgb(0 0 0 / 10%);
+}
+
+.c-tavern-gamble__center--long {
+  inset: 100px 180px 226px;
+  align-content: center;
+}
+
+.c-tavern-gamble__public-discards {
+  min-height: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  max-width: min(100%, 520px);
+}
+
+.c-tavern-gamble__countdown {
+  color: #ffe5a8;
+  font-size: 0.92rem;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 42%);
+}
+
+.c-tavern-gamble__center p,
+.c-tavern-gamble__hand p {
+  margin: 0;
+  color: #f7f0cf;
+  font-weight: 700;
+}
+
+.c-tavern-gamble__tile {
+  --tile-shift-x: 0px;
+  --tile-lift-y: 0px;
+
+  min-width: 52px;
+  min-height: 68px;
+  border: 1px solid #7a552d;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fff8df, #ead19a);
+  color: #3b2817;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 42%);
+  transform: translate(var(--tile-shift-x), var(--tile-lift-y));
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 140ms ease,
+    box-shadow 140ms ease;
+  will-change: transform;
+}
+
+.c-tavern-gamble__discard-strip .c-tavern-gamble__tile {
+  min-width: 34px;
+  min-height: 44px;
+  font-size: 0.78rem;
+}
+
+.c-tavern-gamble__tile--hand {
+  min-width: 62px;
+  min-height: 80px;
+  cursor: pointer;
+}
+
+.c-tavern-gamble__tile--public {
+  border-color: #d6aa3f;
+  cursor: pointer;
+}
+
+.c-tavern-gamble__tile--hand-public {
+  border-color: #8d6f29;
+  background: linear-gradient(180deg, #ccb36a, #876d30);
+  color: #24160a;
+  box-shadow: inset 0 0 0 2px rgb(255 235 182 / 22%);
+}
+
+.c-tavern-gamble__tile.is-selected {
+  outline: 3px solid #f7d982;
+
+  --tile-lift-y: -3px;
+}
+
+.c-tavern-gamble__tile.is-spent {
+  opacity: 0.32;
+  filter: grayscale(0.5);
+}
+
+.c-tavern-gamble__tile.is-covered {
+  background: linear-gradient(180deg, #4b3726, #251914);
+  color: #f7d982;
+  opacity: 0.9;
+}
+
+.c-tavern-gamble__choice {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.c-tavern-gamble__choice span {
+  font-size: 0.84rem;
+  opacity: 0.78;
+}
+
+.c-tavern-gamble__tile--hand[draggable="true"] {
+  cursor: grab;
+}
+
+.c-tavern-gamble__tile--hand[aria-disabled="true"] {
+  opacity: 0.82;
+}
+
+.c-tavern-gamble__tile--discard {
+  min-width: 38px;
+  min-height: 50px;
+  font-size: 0.82rem;
+}
+
+.c-tavern-gamble__tile--discard-public {
+  background: linear-gradient(180deg, #988f60 0%, #7d744c 100%);
+  border-color: #d6c57a;
+  color: #f6efcf;
+  box-shadow: inset 0 0 0 1px rgba(82, 70, 30, 0.28);
+}
+
+.c-tavern-gamble__tiles--public {
+  justify-content: center;
+}
+
+.c-tavern-gamble__tiles--hand {
+  justify-content: center;
+}
+
+.c-tavern-gamble__tiles--long-window {
+  min-height: 94px;
+  align-content: center;
+}
+
+.c-tavern-gamble__tile.is-house-drag-origin {
+  opacity: 0.22;
+}
+
+.c-tavern-gamble__tile.is-house-drop-before {
+  --tile-shift-x: 16px;
+}
+
+.c-tavern-gamble__tile.is-house-drop-after {
+  --tile-shift-x: -16px;
+}
+
+.c-tavern-gamble__tile--hand.is-entering {
+  animation: tavern-gamble-public-fly-in 0.52s ease-out both;
+  animation-delay: calc(var(--tile-enter-index, 0) * 70ms);
+}
+
+.c-tavern-gamble__play-slot {
+  min-width: min(100%, 360px);
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 8px 10px;
+  border: 1px dashed rgb(255 239 184 / 46%);
+  border-radius: 8px;
+  background: rgb(0 0 0 / 16%);
+  color: #f8edc8;
+}
+
+.c-tavern-gamble__play-slot.is-hidden,
+.c-tavern-gamble-overlay--long [data-house-action="gamble-clear-play"],
+.c-tavern-gamble-overlay--long [data-house-action="gamble-confirm-play"],
+.c-tavern-gamble-overlay--long [data-house-action="gamble-pass-play"] {
+  display: none;
+}
+
+.c-tavern-gamble__play-slot strong,
+.c-tavern-gamble__play-slot small,
+.c-tavern-gamble__slot-empty {
+  color: #f8edc8;
+}
+
+.c-tavern-gamble__slot-empty {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 0.88rem;
+}
+
+.c-tavern-gamble__hand-on-felt {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 82px;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 14%);
+}
+
+.c-tavern-gamble__log {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  max-height: 62px;
+  overflow: auto;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 18%);
+  padding: 6px 8px;
+  color: #f8edc8;
+}
+
+.c-tavern-gamble__log p {
+  margin: 0 0 4px;
+}
+
+.c-tavern-gamble__showdown > div {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.c-tavern-gamble__showdown {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 92px;
+  z-index: 10;
+  max-height: min(42vh, 360px);
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgb(97 63 30 / 48%);
+  border-radius: 8px;
+  background: rgb(255 245 218 / 94%);
+  box-shadow: 0 14px 30px rgb(38 26 14 / 32%);
+}
+
+.c-tavern-gamble__showdown header,
+.c-tavern-gamble__showdown-detail,
+.c-tavern-gamble__showdown-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.c-tavern-gamble__showdown header {
+  justify-content: space-between;
+}
+
+.c-tavern-gamble__showdown-detail span {
+  color: #5c3e22;
+  font-size: 0.86rem;
+}
+
+.c-tavern-gamble__showdown-tiles .c-tavern-gamble__tile {
+  min-width: 38px;
+  min-height: 50px;
+  font-size: 0.82rem;
+}
+
+.c-tavern-gamble__showdown .is-winner {
+  background: #f7d982;
+}
+
+.c-tavern-gamble__actions {
+  justify-content: center;
+  max-height: 96px;
+  overflow: auto;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgb(255 230 168 / 18%);
+  background:
+    linear-gradient(180deg, rgb(18 30 25 / 94%), rgb(20 13 8 / 96%)),
+    rgb(18 30 25);
+  box-shadow: 0 -10px 24px rgb(0 0 0 / 22%);
+}
+
+.c-tavern-gamble__meld-action.is-flashing {
+  animation: tavern-gamble-meld-flash 0.75s ease-in-out infinite alternate;
+  border-color: #f7d982;
+  box-shadow: 0 0 0 2px rgb(247 217 130 / 28%), 0 0 14px rgb(247 217 130 / 46%);
+}
+
+@keyframes tavern-gamble-meld-flash {
+  from {
+    filter: brightness(1);
+    transform: translateY(0);
+  }
+
+  to {
+    filter: brightness(1.18);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes tavern-gamble-public-fly-in {
+  from {
+    opacity: 0;
+    transform: translateY(-22vh) scale(0.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (width <= 760px) {
+  .c-tavern-gamble {
+    overflow: hidden;
+  }
+
+  .c-tavern-gamble__table,
+  .c-tavern-gamble__hand {
+    grid-template-columns: 1fr;
+  }
+
+  .c-tavern-gamble__table {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .c-tavern-gamble__sidebar {
+    max-height: 132px;
+    display: flex;
+    gap: 8px;
+    overflow: auto hidden;
+    padding: 10px;
+    border-right: 0;
+    border-bottom: 1px solid rgb(255 230 168 / 18%);
+  }
+
+  .c-tavern-gamble__sidebar h3 {
+    position: sticky;
+    left: 0;
+    min-width: 120px;
+    margin: 0;
+    background: rgb(18 29 24 / 96%);
+  }
+
+  .c-tavern-gamble__player {
+    min-width: 180px;
+  }
+
+  .c-tavern-gamble__felt {
+    min-height: 0;
+  }
+
+  .c-tavern-gamble__center {
+    inset: 78px 16px 162px;
+  }
+
+  .c-tavern-gamble__center--long {
+    inset: 72px 18px 206px;
+  }
+
+  .c-tavern-gamble__seats {
+    display: none;
+  }
+
+  .c-tavern-gamble__hand-on-felt {
+    bottom: 84px;
+  }
+
+  .c-tavern-gamble__actions {
+    max-height: 118px;
+    justify-content: flex-start;
+  }
+}
+
 .view-house-market {
   --grain-shop-scene-bg: url("../../ui/background/dangpu.png");
   --grain-shop-shopkeeper-portrait: url("../../ui/npc/zhanggui.png");
@@ -449,6 +1019,11 @@
   transform: translateY(-4px) scale(1.02);
 }
 
+.c-tea-house-debate__confirm:focus-visible {
+  outline: 2px solid rgb(244 207 143 / 72%);
+  outline-offset: 6px;
+}
+
 .c-tea-house-debate__confirm:disabled {
   cursor: default;
   opacity: 0.55;
@@ -457,11 +1032,6 @@
 .c-tea-house-debate__confirm:disabled:hover,
 .c-tea-house-debate__confirm:disabled:focus-visible {
   transform: none;
-}
-
-.c-tea-house-debate__confirm:focus-visible {
-  outline: 2px solid rgb(244 207 143 / 72%);
-  outline-offset: 6px;
 }
 
 .c-tea-house-debate__confirm-art {
@@ -524,10 +1094,7 @@
   .c-tea-house-debate__topic-row,
   .c-tea-house-debate__confirm {
     position: relative;
-    left: auto;
-    right: auto;
-    top: auto;
-    bottom: auto;
+    inset: auto;
     transform: none;
   }
 

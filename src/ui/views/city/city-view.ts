@@ -3,6 +3,7 @@ import type {
   CityEntryDefinition,
   CityEntryOption,
 } from "../../../domain/city-entry";
+import type { CitySceneMapping } from "../../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../../domain/house";
 import cityBackgroundVideoUrl from "../../../../ui/background/city.mp4?url";
 
@@ -100,11 +101,25 @@ export function renderCityView(
         title: string;
         options: CityEntryOption[];
       }
-    | null
+    | null,
+  citySceneMapping: CitySceneMapping | null = null
 ): string {
   const visibleHouseDefinitions = houseDefinitions.filter(
     (houseDefinition) => houseDefinition.moduleId !== "leader-residence"
   );
+  const city3dButton =
+    citySceneMapping == null
+      ? ""
+      : `
+        <button
+          type="button"
+          class="c-kulan-city__three-d-action"
+          data-action="enter-city-3d"
+          aria-label="进入 3D 城市场景"
+        >
+          3D
+        </button>
+      `;
 
   return `
     <section class="view-city view-city--kulan">
@@ -124,6 +139,7 @@ export function renderCityView(
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
               返回地图
             </button>
+            ${city3dButton}
             <div class="c-kulan-city__house-deck" aria-label="城内地点">
               ${cityEntries
                 .map(

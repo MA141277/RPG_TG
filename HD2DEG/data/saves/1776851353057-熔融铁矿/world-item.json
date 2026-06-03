@@ -1,0 +1,34 @@
+{
+  "savedAt": "2026-04-22T09:49:13.068Z",
+  "worldItem": {
+    "name": "熔融铁矿",
+    "description": "铁矿经加热后形成的高温熔融中间产物，仍可继续精炼。",
+    "tags": [
+      "熔融",
+      "矿石",
+      "金属",
+      "可熔炼",
+      "中间产物"
+    ],
+    "categories": [
+      "item"
+    ],
+    "attributes": {
+      "volume": 3,
+      "mass": 8
+    },
+    "metadata": {
+      "units": {
+        "volume": "L",
+        "mass": "kg"
+      },
+      "schemaVersion": "1.0.0",
+      "containerCapacity": null
+    },
+    "facility": null
+  },
+  "assets": {
+    "raw": "icon-raw.jpg",
+    "processed": "icon-processed.png"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "天坛",
+  "kind": "building",
+  "title": "天坛",
+  "prompt": "天坛",
+  "tags": [],
+  "createdAt": "2026-04-13T11:29:25+08:00",
+  "updatedAt": "2026-04-13T11:29:25+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false
+  },
+  "files": {
+    "front": "building/天坛/front.png",
+    "side": "building/天坛/side.png",
+    "top": "building/天坛/top.png",
+    "preview": "building/天坛/preview.png",
+    "previewProcessed": "building/天坛/preview-processed.png"
+  }
+}

@@ -1,0 +1,627 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alexia 语义动画预览</title>
+  <style>
+    :root {
+      --bg: #0b0e13;
+      --panel: #141922;
+      --panel-soft: #1a2130;
+      --line: #2d384d;
+      --text: #eef3ff;
+      --muted: #98a7c2;
+      --accent: #f0bf6a;
+      --accent-soft: #87dce7;
+      --shadow: 0 20px 48px rgba(0, 0, 0, 0.34);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font: 14px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(135, 220, 231, 0.11), transparent 28%),
+        radial-gradient(circle at 85% 10%, rgba(240, 191, 106, 0.08), transparent 24%),
+        linear-gradient(180deg, #090c10, #0d1118 42%, #0a0d12);
+    }
+
+    .page {
+      width: min(1240px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(300px, 420px) 1fr;
+      gap: 20px;
+      margin-bottom: 26px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(28, 35, 48, 0.96), rgba(16, 21, 29, 0.98));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .info {
+      padding: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 4vw, 40px);
+      line-height: 1.05;
+      letter-spacing: 0.02em;
+    }
+
+    .lead,
+    .note,
+    .card p,
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .lead {
+      max-width: 56ch;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 16px;
+    }
+
+    .stat {
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+    }
+
+    .stat strong,
+    .toolbar strong,
+    .meta-label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .toolbar label {
+      min-width: 150px;
+    }
+
+    .toolbar input[type="range"] {
+      width: 100%;
+    }
+
+    .toolbar button {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(180deg, #242c3b, #161b24);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .toolbar button:hover,
+    .card:hover {
+      border-color: rgba(240, 191, 106, 0.5);
+    }
+
+    .stage {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      min-height: 360px;
+      padding: 22px;
+    }
+
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgba(240, 191, 106, 0.06), rgba(135, 220, 231, 0.03)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 50%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      pointer-events: none;
+    }
+
+    .checker {
+      background:
+        linear-gradient(45deg, #2d323d 25%, transparent 25%) -12px 0/24px 24px,
+        linear-gradient(-45deg, #2d323d 25%, transparent 25%) -12px 0/24px 24px,
+        linear-gradient(45deg, transparent 75%, #2d323d 75%) -12px 0/24px 24px,
+        linear-gradient(-45deg, transparent 75%, #2d323d 75%) -12px 0/24px 24px,
+        #1c2028;
+    }
+
+    #stageCanvas {
+      width: min(54vw, 360px);
+      height: auto;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border-radius: 18px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+    }
+
+    .stage-meta {
+      width: min(420px, 100%);
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: rgba(8, 11, 16, 0.72);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+    }
+
+    .stage-meta h2 {
+      margin: 0 0 4px;
+      font-size: 18px;
+    }
+
+    .stage-meta .minor {
+      color: var(--accent-soft);
+      font-size: 13px;
+    }
+
+    .section {
+      margin-top: 24px;
+    }
+
+    .section-head {
+      margin-bottom: 12px;
+    }
+
+    .section-head h3 {
+      margin: 0 0 4px;
+      font-size: 20px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .card.active {
+      border-color: rgba(240, 191, 106, 0.56);
+      background: linear-gradient(180deg, rgba(56, 46, 30, 0.9), rgba(21, 18, 13, 0.98));
+      transform: translateY(-2px);
+    }
+
+    .card canvas {
+      display: block;
+      width: 176px;
+      height: 176px;
+      max-width: 100%;
+      margin: 0 auto 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .card h4 {
+      margin: 0 0 4px;
+      font-size: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #fbe8c0;
+      background: rgba(240, 191, 106, 0.16);
+      border: 1px solid rgba(240, 191, 106, 0.28);
+    }
+
+    code {
+      color: #f6d796;
+    }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      #stageCanvas {
+        width: min(74vw, 320px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="panel info">
+        <h1>Alexia 语义动画预览</h1>
+        <p class="lead">这版不再按 row 生硬罗列，而是按我从精灵表里人工识别出的朝向和内容重组。当前判断是：原图稳定提供了正面、背面、右向以及少量斜向帧，左向更多像是需要镜像推断。</p>
+        <div class="stats">
+          <div class="stat">
+            <strong>精灵表</strong>
+            <span>440 x 880</span>
+          </div>
+          <div class="stat">
+            <strong>单帧</strong>
+            <span>44 x 44</span>
+          </div>
+          <div class="stat">
+            <strong>方式</strong>
+            <span>按语义分组</span>
+          </div>
+        </div>
+        <div class="toolbar">
+          <label>
+            <strong>播放速度</strong>
+            <input id="speedInput" type="range" min="60" max="240" step="10" value="120">
+          </label>
+          <button id="toggleBtn" type="button">暂停</button>
+          <button id="resetBtn" type="button">重播当前动作</button>
+        </div>
+        <p class="note">带“镜像推断”的卡片不是原图直接给出的左向帧，而是用右向帧在画布里水平翻转，方便你先看整体组织方式。</p>
+      </div>
+
+      <div class="panel stage">
+        <canvas id="stageCanvas" class="checker" width="176" height="176"></canvas>
+        <div class="stage-meta">
+          <h2 id="stageTitle"></h2>
+          <div class="minor" id="stageMinor"></div>
+          <div class="note" id="stageDesc"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h3>基础朝向</h3>
+        <p>从中下半区提取的基础站立和移动。这里是我对“正面 / 背面 / 右向 / 左向镜像”的第一轮识别。</p>
+      </div>
+      <div class="cards" id="section-base"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h3>提灯状态</h3>
+        <p>底部四行更像是“持灯”状态的独立套组，动作逻辑和普通站立、移动分开。</p>
+      </div>
+      <div class="cards" id="section-lantern"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h3>特殊动作</h3>
+        <p>上半区是零散内容，不适合按方向整齐归档，所以我按“跪倒 / 手势 / 重型道具 / 杖类动作”做了近似归类。</p>
+      </div>
+      <div class="cards" id="section-special"></div>
+    </section>
+  </main>
+
+  <script>
+    const FRAME_W = 44;
+    const FRAME_H = 44;
+    const SCALE = 4;
+    const SHEET_PATH = "./Alexia.png";
+    const ATTACK_SHEET_PATH = "./attack_s.png";
+    const ATTACK_FRAME_RECTS = [
+      { sx: 26, sy: 100, sw: 194, sh: 331 },
+      { sx: 263, sy: 113, sw: 193, sh: 308 },
+      { sx: 503, sy: 121, sw: 190, sh: 331 },
+      { sx: 43, sy: 579, sw: 196, sh: 341 },
+      { sx: 239, sy: 563, sw: 235, sh: 341 },
+      { sx: 498, sy: 562, sw: 201, sh: 347 },
+    ];
+
+    const sections = [
+      {
+        id: "base",
+        mount: "section-base",
+        items: [
+          { key: "idle-south", title: "Idle / South", desc: "Front idle set from the main Alexia sheet.", frames: [[9, 0], [9, 1], [9, 2], [9, 3]], source: "r09 c00-c03" },
+          { key: "idle-north", title: "Idle / North", desc: "Back-facing idle frames stitched from nearby cells.", frames: [[9, 4], [10, 7], [10, 8], [10, 9]], source: "r09 c04 + r10 c07-c09" },
+          { key: "idle-east", title: "Idle / East", desc: "Right-facing idle frames.", frames: [[9, 5], [9, 6], [9, 7], [9, 8], [9, 9]], source: "r09 c05-c09" },
+          { key: "idle-west", title: "Idle / West", desc: "Mirrored from the right-facing idle set.", frames: [[9, 5], [9, 6], [9, 7], [9, 8], [9, 9]], source: "mirror of r09 c05-c09", mirror: true, inferred: true },
+          { key: "walk-south", title: "Walk / South", desc: "Front walk cycle.", frames: [[10, 0], [10, 1], [10, 2], [10, 3], [10, 4], [10, 5], [10, 6]], source: "r10 c00-c06" },
+          { key: "walk-north", title: "Walk / North", desc: "Back walk cycle assembled across two rows.", frames: [[10, 7], [10, 8], [10, 9], [11, 0], [11, 1], [11, 2]], source: "r10 c07-c09 + r11 c00-c02" },
+          { key: "walk-east", title: "Walk / East", desc: "Right-facing walk cycle.", frames: [[11, 3], [11, 4], [11, 5], [11, 6], [11, 7], [11, 8], [11, 9]], source: "r11 c03-c09" },
+          { key: "walk-west", title: "Walk / West", desc: "Mirrored from the right-facing walk cycle.", frames: [[11, 3], [11, 4], [11, 5], [11, 6], [11, 7], [11, 8], [11, 9]], source: "mirror of r11 c03-c09", mirror: true, inferred: true }
+        ]
+      },
+      {
+        id: "lantern",
+        mount: "section-lantern",
+        items: [
+          { key: "lantern-idle-south", title: "Lantern Idle / South", desc: "Lantern-holding idle pose, front-facing.", frames: [[16, 0], [16, 1], [16, 2]], source: "r16 c00-c02" },
+          { key: "lantern-idle-north", title: "Lantern Idle / North", desc: "Lantern idle, back-facing.", frames: [[16, 3], [17, 6], [17, 7], [17, 8], [17, 9]], source: "r16 c03 + r17 c06-c09" },
+          { key: "lantern-idle-east", title: "Lantern Idle / East", desc: "Lantern idle, right-facing.", frames: [[16, 4], [16, 5], [16, 6], [16, 7], [16, 8], [16, 9]], source: "r16 c04-c09" },
+          { key: "lantern-idle-west", title: "Lantern Idle / West", desc: "Mirrored from the lantern right-facing set.", frames: [[16, 4], [16, 5], [16, 6], [16, 7], [16, 8], [16, 9]], source: "mirror of r16 c04-c09", mirror: true, inferred: true },
+          { key: "lantern-walk-south", title: "Lantern Walk / South", desc: "Front lantern walk cycle.", frames: [[17, 0], [17, 1], [17, 2], [17, 3], [17, 4], [17, 5]], source: "r17 c00-c05" },
+          { key: "lantern-walk-north", title: "Lantern Walk / North", desc: "Back lantern walk cycle assembled across rows.", frames: [[18, 0], [18, 1], [19, 4], [19, 5], [19, 6], [19, 7], [19, 8], [19, 9]], source: "r18 c00-c01 + r19 c04-c09" },
+          { key: "lantern-walk-east", title: "Lantern Walk / East", desc: "Right-facing lantern walk cycle.", frames: [[18, 2], [18, 3], [18, 4], [18, 5], [18, 6], [18, 7], [18, 8], [18, 9]], source: "r18 c02-c09" },
+          { key: "lantern-walk-west", title: "Lantern Walk / West", desc: "Mirrored from the lantern right-facing walk set.", frames: [[18, 2], [18, 3], [18, 4], [18, 5], [18, 6], [18, 7], [18, 8], [18, 9]], source: "mirror of r18 c02-c09", mirror: true, inferred: true }
+        ]
+      },
+      {
+        id: "special",
+        mount: "section-special",
+        items: [
+          { key: "kneel-collapse", title: "Kneel / Collapse", desc: "A short kneel-to-fall motion.", frames: [[0, 3], [0, 4], [0, 5], [0, 6], [0, 7]], source: "r00 c03-c07" },
+          { key: "combat-ready", title: "Combat Ready", desc: "Preparatory combat stance.", frames: [[0, 8], [0, 9], [1, 0], [1, 1]], source: "r00 c08-c09 + r01 c00-c01" },
+          { key: "gesture-cast", title: "Gesture / Cast", desc: "Hand gesture or casting-like motion.", frames: [[1, 2], [1, 3], [1, 4], [1, 5], [1, 7], [13, 6], [13, 7], [13, 8]], source: "r01 c02-c05,c07 + r13 c06-c08" },
+          { key: "book-swing", title: "Heavy Book Motion", desc: "Book lift or swing sequence.", frames: [[2, 0], [2, 2], [2, 4], [2, 6], [2, 8], [3, 0], [3, 2], [3, 4]], source: "r02 even cols + r03 c00,c02,c04" },
+          { key: "staff-swing", title: "Staff Motion", desc: "Rod or staff swing sequence.", frames: [[4, 0], [4, 2], [4, 4], [4, 6], [4, 8], [5, 0], [5, 2], [5, 4]], source: "r04 even cols + r05 c00,c02,c04" },
+          { key: "attack-south", title: "Attack / South", desc: "Imported 6-frame attack animation from attack_s.png.", frames: [0, 1, 2, 3, 4, 5], source: "attack_s.png | 6 frames", sheetKey: "attack" }
+        ]
+      }
+    ];
+
+    const allAnimations = sections.flatMap((section) => {
+      section.items.forEach((item) => {
+        item.section = section.id;
+      });
+      return section.items;
+    });
+
+    const stageCanvas = document.getElementById("stageCanvas");
+    const stageCtx = stageCanvas.getContext("2d");
+    stageCtx.imageSmoothingEnabled = false;
+
+    const stageTitle = document.getElementById("stageTitle");
+    const stageMinor = document.getElementById("stageMinor");
+    const stageDesc = document.getElementById("stageDesc");
+    const speedInput = document.getElementById("speedInput");
+    const toggleBtn = document.getElementById("toggleBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const sheets = {
+      base: new Image(),
+      attack: new Image(),
+    };
+
+    const derivedFrames = {
+      attack: [],
+    };
+
+    let selectedKey = "idle-south";
+    let frameDuration = Number(speedInput.value);
+    let playing = true;
+    let lastTime = 0;
+    let stageFrame = 0;
+    let stageAccum = 0;
+    let started = false;
+
+    function findAnimation(key) {
+      return allAnimations.find((item) => item.key === key);
+    }
+
+    function loadImageElement(image, src) {
+      return new Promise((resolve, reject) => {
+        if (image.complete && image.naturalWidth > 0 && image.src.includes(src.replace("./", ""))) {
+          resolve(image);
+          return;
+        }
+        image.addEventListener("load", () => resolve(image), { once: true });
+        image.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), { once: true });
+        image.src = src;
+      });
+    }
+
+    function buildAttackFrames(image) {
+      return ATTACK_FRAME_RECTS.map((rect) => ({
+        image,
+        sx: rect.sx,
+        sy: rect.sy,
+        sw: rect.sw,
+        sh: rect.sh,
+      }));
+    }
+
+    function resolveFrame(animation, frameIndex) {
+      if (animation.sheetKey === "attack") {
+        return derivedFrames.attack[frameIndex % animation.frames.length] || null;
+      }
+      const [row, col] = animation.frames[frameIndex % animation.frames.length];
+      return {
+        image: sheets.base,
+        sx: col * FRAME_W,
+        sy: row * FRAME_H,
+        sw: FRAME_W,
+        sh: FRAME_H,
+      };
+    }
+
+    function drawFrame(ctx, animation, frameIndex) {
+      const frame = resolveFrame(animation, frameIndex);
+      if (!frame) return;
+
+      const fit = Math.min(ctx.canvas.width / frame.sw, ctx.canvas.height / frame.sh);
+      const drawScale = fit * (animation.sheetKey === "attack" ? 0.86 : 1);
+      const dw = frame.sw * drawScale;
+      const dh = frame.sh * drawScale;
+      const dx = (ctx.canvas.width - dw) / 2;
+      const dy = (ctx.canvas.height - dh) / 2;
+
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.save();
+
+      if (animation.mirror) {
+        ctx.translate(ctx.canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+
+      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, dx, dy, dw, dh);
+      ctx.restore();
+    }
+
+    function updateStageMeta(animation) {
+      stageTitle.textContent = animation.title;
+      stageMinor.textContent = `${animation.section} | ${animation.source}`;
+      stageDesc.textContent = animation.desc + (animation.inferred ? " This direction is mirrored." : "");
+    }
+
+    function renderSections() {
+      sections.forEach((section) => {
+        const root = document.getElementById(section.mount);
+        const fragment = document.createDocumentFragment();
+
+        section.items.forEach((item) => {
+          const card = document.createElement("article");
+          card.className = "panel card";
+          card.dataset.key = item.key;
+
+          const canvas = document.createElement("canvas");
+          canvas.className = "checker";
+          canvas.width = FRAME_W * SCALE;
+          canvas.height = FRAME_H * SCALE;
+
+          const title = document.createElement("h4");
+          title.textContent = item.title;
+
+          const desc = document.createElement("p");
+          desc.textContent = item.source;
+
+          card.append(canvas, title, desc);
+
+          if (item.inferred) {
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.textContent = "Mirrored";
+            card.append(badge);
+          }
+
+          fragment.append(card);
+
+          const ctx = canvas.getContext("2d");
+          ctx.imageSmoothingEnabled = false;
+          item.card = card;
+          item.ctx = ctx;
+          item.frame = 0;
+          item.accum = 0;
+
+          card.addEventListener("click", () => {
+            selectedKey = item.key;
+            stageFrame = 0;
+            stageAccum = 0;
+            syncActive();
+            updateStageMeta(item);
+            drawFrame(stageCtx, item, 0);
+          });
+        });
+
+        root.append(fragment);
+      });
+    }
+
+    function syncActive() {
+      allAnimations.forEach((item) => {
+        item.card.classList.toggle("active", item.key === selectedKey);
+      });
+    }
+
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const delta = timestamp - lastTime;
+      lastTime = timestamp;
+
+      if (playing) {
+        stageAccum += delta;
+        while (stageAccum >= frameDuration) {
+          stageAccum -= frameDuration;
+          const current = findAnimation(selectedKey);
+          stageFrame = (stageFrame + 1) % current.frames.length;
+        }
+
+        allAnimations.forEach((item) => {
+          item.accum += delta;
+          while (item.accum >= frameDuration) {
+            item.accum -= frameDuration;
+            item.frame = (item.frame + 1) % item.frames.length;
+          }
+        });
+      }
+
+      const selected = findAnimation(selectedKey);
+      drawFrame(stageCtx, selected, stageFrame);
+      allAnimations.forEach((item) => drawFrame(item.ctx, item, item.frame));
+      requestAnimationFrame(animate);
+    }
+
+    speedInput.addEventListener("input", () => {
+      frameDuration = Number(speedInput.value);
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      playing = !playing;
+      toggleBtn.textContent = playing ? "Pause" : "Resume";
+    });
+
+    resetBtn.addEventListener("click", () => {
+      const current = findAnimation(selectedKey);
+      stageFrame = 0;
+      stageAccum = 0;
+      current.frame = 0;
+      current.accum = 0;
+      drawFrame(stageCtx, current, 0);
+    });
+
+    async function startPreview() {
+      if (started) return;
+      await Promise.all([
+        loadImageElement(sheets.base, SHEET_PATH),
+        loadImageElement(sheets.attack, ATTACK_SHEET_PATH),
+      ]);
+      derivedFrames.attack = buildAttackFrames(sheets.attack);
+      started = true;
+      drawFrame(stageCtx, findAnimation(selectedKey), 0);
+      requestAnimationFrame(animate);
+    }
+
+    renderSections();
+    syncActive();
+    updateStageMeta(findAnimation(selectedKey));
+
+    startPreview().catch((error) => {
+      stageTitle.textContent = "Load Failed";
+      stageMinor.textContent = "asset loader";
+      stageDesc.textContent = String(error && error.message ? error.message : error);
+    });
+  </script>
+</body>
+</html>
+

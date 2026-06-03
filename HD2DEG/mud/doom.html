@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>城市街道 Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+  canvas { image-rendering: pixelated; cursor: none; }
+  #info {
+    position: fixed; top: 10px; left: 10px; color: #ccc; font: 13px monospace;
+    background: rgba(0,0,0,0.6); padding: 6px 10px; border-radius: 4px; pointer-events: none;
+  }
+  #crosshair {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 12px; height: 12px; pointer-events: none; z-index: 10;
+  }
+  #crosshair::before, #crosshair::after {
+    content: ''; position: absolute; background: rgba(255,255,255,0.5);
+  }
+  #crosshair::before { width: 12px; height: 2px; top: 5px; left: 0; }
+  #crosshair::after  { width: 2px; height: 12px; top: 0; left: 5px; }
+  #start-overlay {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.85); z-index: 100; cursor: pointer;
+  }
+  #start-overlay span {
+    color: #d4a84b; font: bold 22px "Noto Serif SC", serif; text-align: center; line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<div id="start-overlay"><span>点击进入街道<br><small style="font-size:13px;color:#999">WASD 移动 / 鼠标转向 / ESC 释放鼠标</small></span></div>
+<div id="crosshair"></div>
+<div id="info"></div>
+<canvas id="c"></canvas>
+
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════ */
+const SCREEN_W = 640, SCREEN_H = 400;
+const TEX_SIZE = 64;
+const FOV = Math.PI / 3;     // 60 degrees
+const HALF_FOV = FOV / 2;
+const PROJ_X = SCREEN_W / (2 * Math.tan(HALF_FOV));
+const PROJ_Y = SCREEN_H;
+const MOVE_SPEED = 4.0;
+const ROT_SPEED  = 0.003;
+const PLAYER_R   = 0.25;     // collision radius
+const CAMERA_Z   = 0.5;
+const DOOR_OPEN_SPEED = 2.0; // units per second
+const DOOR_TRIGGER_DIST = 2.5;
+const DOOR_CLOSE_DELAY = 2.0; // seconds after player leaves
+
+/* ═══════════════════════════════════════════
+   MAP DEFINITION
+
+   Legend:
+   1 = building wall
+   3 = road
+   4 = sidewalk
+   5 = plaza
+   9 = outer boundary
+
+   用明确的城市分区来塑造大道、节点和天际线，而不是随机填满。
+═══════════════════════════════════════════ */
+const MAP_W = 60, MAP_H = 72;
+const MAP = new Int32Array(MAP_W * MAP_H);
+const WALL_H = new Float32Array(MAP_W * MAP_H);
+const BUILDING_STYLE = new Uint8Array(MAP_W * MAP_H);
+const AVE_ROAD_L = 27;
+const AVE_ROAD_R = 32;
+const AVE_SIDEWALK_L = 24;
+const AVE_SIDEWALK_R = 35;
+const CROSS_STREETS = [11, 24, 38, 52, 64];
+const MAJOR_NODES = [24, 52];
+
+function hash01(x, y) {
+  const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+  return n - Math.floor(n);
+}
+
+function setCell(x, y, cell, height = 0, style = 0) {
+  const i = y * MAP_W + x;
+  MAP[i] = cell;
+  WALL_H[i] = height;
+  BUILDING_STYLE[i] = style;
+}
+
+function minDistanceTo(list, value) {
+  let best = Infinity;
+  for (const n of list) best = Math.min(best, Math.abs(n - value));
+  return best;
+}
+
+function buildingHeight(mx, my) {
+  const parcel = hash01(Math.floor(mx / 3), Math.floor(my / 5));
+  const strip = hash01(Math.floor(mx / 6), Math.floor(my / 8));
+  const distToNode = minDistanceTo(MAJOR_NODES, my);
+  const distToAvenue = Math.min(Math.abs(mx - AVE_SIDEWALK_L), Math.abs(mx - AVE_SIDEWALK_R));
+
+  let h = 4.2 + parcel * 1.6;
+  let style = 1;
+
+  if (strip > 0.7) {
+    h += 1.3 + strip * 1.7;
+    style = 2;
+  }
+
+  if (distToNode <= 6 && distToAvenue <= 8) {
+    h += 1.2;
+  }
+
+  if (distToNode <= 4 && distToAvenue >= 4 && distToAvenue <= 7) {
+    h = 8.8 + strip * 2.8;
+    style = 3;
+  }
+
+  return { height: Math.min(12.2, h), style };
+}
+
+function initCityMap() {
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      if (x === 0 || y === 0 || x === MAP_W - 1 || y === MAP_H - 1) {
+        setCell(x, y, 9, 1.2, 0);
+        continue;
+      }
+
+      const distToCross = minDistanceTo(CROSS_STREETS, y);
+      const distToMajor = minDistanceTo(MAJOR_NODES, y);
+      const avenueBand = x >= AVE_ROAD_L && x <= AVE_ROAD_R;
+      const sidewalkBand = x >= AVE_SIDEWALK_L && x <= AVE_SIDEWALK_R;
+      const cityCore = x >= 4 && x <= MAP_W - 5;
+      const plazaBand = distToMajor <= 2 && x >= AVE_SIDEWALK_L - 4 && x <= AVE_SIDEWALK_R + 4;
+      const setbackBand = distToMajor <= 3 && (x === AVE_SIDEWALK_L - 1 || x === AVE_SIDEWALK_R + 1);
+      const sideStreet = distToCross <= 1 && cityCore;
+
+      if (sideStreet) {
+        if (avenueBand) setCell(x, y, 3);
+        else if (plazaBand || sidewalkBand) setCell(x, y, 5);
+        else if (x >= 6 && x <= MAP_W - 7) setCell(x, y, 3);
+        else setCell(x, y, 4);
+        continue;
+      }
+
+      if (avenueBand) {
+        setCell(x, y, 3);
+        continue;
+      }
+
+      if (sidewalkBand || plazaBand) {
+        setCell(x, y, plazaBand ? 5 : 4);
+        continue;
+      }
+
+      if (setbackBand) {
+        setCell(x, y, 5);
+        continue;
+      }
+
+      const rearLane = (x === 8 || x === MAP_W - 9) && distToCross > 1 && distToMajor > 2;
+      if (rearLane) {
+        setCell(x, y, 4);
+        continue;
+      }
+
+      const { height, style } = buildingHeight(x, y);
+      setCell(x, y, 1, height, style);
+    }
+  }
+}
+
+initCityMap();
+
+function mapAt(x, y) {
+  const mx = Math.floor(x), my = Math.floor(y);
+  if (mx < 0 || mx >= MAP_W || my < 0 || my >= MAP_H) return 9;
+  return MAP[my * MAP_W + mx];
+}
+
+// ceiling: only if not open sky (street / outdoor)
+function hasCeiling(x, y) {
+  const cell = mapAt(x, y);
+  return cell !== 3 && cell !== 4 && cell !== 5;
+}
+
+/* ═══════════════════════════════════════════
+   DOOR STATE
+═══════════════════════════════════════════ */
+const doors = {};
+
+function initDoors() {
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      if (MAP[y * MAP_W + x] === 2) {
+        const key = x + "," + y;
+        // detect orientation: wall on north/south = horizontal door (slides east/west)
+        const wallNS = (mapAt(x, y-1) === 1 || mapAt(x, y-1) === 9) && (mapAt(x, y+1) === 1 || mapAt(x, y+1) === 9);
+        doors[key] = { x, y, open: 0, target: 0, closeTimer: 0, horizontal: !wallNS };
+      }
+    }
+  }
+}
+
+function updateDoors(dt, px, py) {
+  for (const key in doors) {
+    const d = doors[key];
+    const cx = d.x + 0.5, cy = d.y + 0.5;
+    const dist = Math.hypot(px - cx, py - cy);
+
+    if (dist < DOOR_TRIGGER_DIST) {
+      d.target = 1;
+      d.closeTimer = DOOR_CLOSE_DELAY;
+    } else if (d.target === 1) {
+      d.closeTimer -= dt;
+      if (d.closeTimer <= 0) d.target = 0;
+    }
+
+    if (d.open < d.target) d.open = Math.min(d.open + DOOR_OPEN_SPEED * dt, 1);
+    if (d.open > d.target) d.open = Math.max(d.open - DOOR_OPEN_SPEED * dt, 0);
+  }
+}
+
+function getDoor(mx, my) {
+  return doors[mx + "," + my] || null;
+}
+
+// for collision: door blocks if not fully open
+function isDoorBlocking(mx, my) {
+  const d = getDoor(mx, my);
+  return d ? d.open < 0.8 : false;
+}
+
+function isSolid(x, y) {
+  const v = mapAt(x, y);
+  if (v === 1 || v === 9) return true;
+  if (v === 2) return isDoorBlocking(Math.floor(x), Math.floor(y));
+  return false;
+}
+
+/* ═══════════════════════════════════════════
+   PLAYER STATE
+═══════════════════════════════════════════ */
+let player = { x: 29.5, y: 6.5, angle: Math.PI / 2 };
+
+/* ═══════════════════════════════════════════
+   INPUT
+═══════════════════════════════════════════ */
+const keys = {};
+let mouseLocked = false;
+let mouseDX = 0;
+
+document.addEventListener("keydown", e => { keys[e.code] = true; });
+document.addEventListener("keyup",   e => { keys[e.code] = false; });
+document.addEventListener("mousemove", e => {
+  if (mouseLocked) mouseDX += e.movementX;
+});
+
+const overlay = document.getElementById("start-overlay");
+overlay.addEventListener("click", () => {
+  overlay.style.display = "none";
+  canvas.requestPointerLock();
+});
+document.addEventListener("pointerlockchange", () => {
+  mouseLocked = !!document.pointerLockElement;
+});
+
+/* ═══════════════════════════════════════════
+   CANVAS SETUP
+═══════════════════════════════════════════ */
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+canvas.width  = SCREEN_W;
+canvas.height = SCREEN_H;
+
+// scale canvas to fill window
+function resizeCanvas() {
+  const scale = Math.min(window.innerWidth / SCREEN_W, window.innerHeight / SCREEN_H);
+  canvas.style.width  = (SCREEN_W * scale) + "px";
+  canvas.style.height = (SCREEN_H * scale) + "px";
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+const imageData = ctx.createImageData(SCREEN_W, SCREEN_H);
+const buf = imageData.data;
+
+/* ═══════════════════════════════════════════
+   TEXTURE LOADING  (requires HTTP server – no file:// )
+═══════════════════════════════════════════ */
+const textures = {};
+const texNames = ["wall", "wood", "stone", "door"];
+const spriteNames = ["girl", "boy"];
+const TOTAL_TEX = texNames.length + spriteNames.length;
+let texLoaded = 0;
+
+function loadTex(name, w, h, dest) {
+  const img = new Image();
+  img.src = name + ".png";
+  img.onload = () => {
+    const tc = document.createElement("canvas");
+    tc.width = w; tc.height = h;
+    const tctx = tc.getContext("2d");
+    tctx.drawImage(img, 0, 0, w, h);
+    dest[name] = { data: tctx.getImageData(0, 0, w, h).data, w, h };
+    texLoaded++;
+  };
+  img.onerror = () => { console.warn("Failed to load", name + ".png"); texLoaded++; };
+}
+
+texNames.forEach(n => loadTex(n, TEX_SIZE, TEX_SIZE, textures));
+
+const spriteTex = {};
+spriteNames.forEach(name => {
+  const img = new Image();
+  img.src = name + ".png";
+  img.onload = () => {
+    const tc = document.createElement("canvas");
+    tc.width = img.naturalWidth; tc.height = img.naturalHeight;
+    const tctx = tc.getContext("2d");
+    tctx.drawImage(img, 0, 0);
+    spriteTex[name] = {
+      data: tctx.getImageData(0, 0, img.naturalWidth, img.naturalHeight).data,
+      w: img.naturalWidth,
+      h: img.naturalHeight
+    };
+    texLoaded++;
+  };
+  img.onerror = () => { console.warn("Failed to load", name + ".png"); texLoaded++; };
+});
+
+// texPixel helper needs textures[name].data – wrap to support new format
+function texPixelRaw(name, tx, ty) {
+  const t = textures[name];
+  if (!t) return [80, 80, 80];
+  const cx = ((tx % t.w) + t.w) % t.w;
+  const cy = ((ty % t.h) + t.h) % t.h;
+  const i = (cy * t.w + cx) * 4;
+  return [t.data[i], t.data[i+1], t.data[i+2]];
+}
+
+const sprites = [];
+
+function texPixel(name, tx, ty) {
+  return texPixelRaw(name, tx, ty);
+}
+
+const lampPosts = [];
+const bridgeSpans = [];
+const landmarkTowers = [];
+const busStops = [];
+const treePlanters = [];
+const lobbyEntrances = [];
+const adBoxes = [];
+
+function initCityProps() {
+  lampPosts.length = 0;
+  bridgeSpans.length = 0;
+  landmarkTowers.length = 0;
+  busStops.length = 0;
+  treePlanters.length = 0;
+  lobbyEntrances.length = 0;
+  adBoxes.length = 0;
+
+  for (let y = 8; y <= MAP_H - 8; y += 6) {
+    if (minDistanceTo(CROSS_STREETS, y) <= 1) continue;
+    lampPosts.push({ x: AVE_SIDEWALK_L + 0.7, y: y + 0.5, h: 2.8, arm: 0.8, side: "left" });
+    lampPosts.push({ x: AVE_SIDEWALK_R - 0.7, y: y + 0.5, h: 2.8, arm: 0.8, side: "right" });
+  }
+
+  bridgeSpans.push(
+    { x1: AVE_SIDEWALK_L - 0.2, x2: AVE_SIDEWALK_R + 0.2, y: 18.5, z1: 2.6, z2: 3.35, type: "skybridge" },
+    { x1: AVE_SIDEWALK_L - 1.0, x2: AVE_SIDEWALK_R + 1.0, y: 47.5, z1: 3.4, z2: 4.2, type: "viaduct" }
+  );
+
+  landmarkTowers.push(
+    { x: 29.5, y: 66.5, w: 1.6, h: 14.5, crown: 2.2, color: [150, 164, 188] },
+    { x: 25.8, y: 63.5, w: 1.1, h: 10.6, crown: 1.4, color: [124, 138, 160] },
+    { x: 33.2, y: 63.2, w: 1.25, h: 11.2, crown: 1.7, color: [126, 142, 166] }
+  );
+
+  busStops.push(
+    { x: 26.0, y: 15.5, side: "left", w: 1.15, h: 2.15, roofW: 1.5, roofH: 2.3 },
+    { x: 34.0, y: 31.5, side: "right", w: 1.15, h: 2.15, roofW: 1.5, roofH: 2.3 },
+    { x: 26.0, y: 58.5, side: "left", w: 1.15, h: 2.15, roofW: 1.5, roofH: 2.3 }
+  );
+
+  for (let y = 9; y <= MAP_H - 10; y += 7) {
+    if (minDistanceTo(CROSS_STREETS, y) <= 1) continue;
+    if (Math.abs(y - 15.5) < 3 || Math.abs(y - 31.5) < 3 || Math.abs(y - 58.5) < 3) continue;
+    treePlanters.push({ x: 24.8, y: y + 0.2, size: 0.72, h: 2.5, crown: 1.05 });
+    if (y % 14 !== 9) treePlanters.push({ x: 35.2, y: y + 0.6, size: 0.72, h: 2.7, crown: 1.1 });
+  }
+
+  lobbyEntrances.push(
+    { x: 23.62, y: 20.5, side: "left", w: 1.35, h: 3.5 },
+    { x: 36.38, y: 43.5, side: "right", w: 1.45, h: 3.7 },
+    { x: 23.62, y: 56.0, side: "left", w: 1.25, h: 3.3 }
+  );
+
+  adBoxes.push(
+    { x: 26.35, y: 14.95, w: 0.28, h: 2.0, color: [242, 227, 186], glow: [255, 222, 168] },
+    { x: 33.65, y: 30.95, w: 0.28, h: 2.0, color: [204, 226, 242], glow: [188, 220, 255] },
+    { x: 26.35, y: 57.95, w: 0.28, h: 2.0, color: [235, 214, 180], glow: [255, 214, 154] },
+    { x: 24.35, y: 20.2, w: 0.24, h: 2.15, color: [242, 232, 194], glow: [255, 228, 166] },
+    { x: 35.65, y: 43.15, w: 0.24, h: 2.15, color: [212, 226, 244], glow: [188, 214, 255] },
+    { x: 24.35, y: 55.7, w: 0.24, h: 2.05, color: [244, 225, 190], glow: [255, 220, 162] }
+  );
+}
+
+initCityProps();
+
+/* ═══════════════════════════════════════════
+   RAY CASTING
+═══════════════════════════════════════════ */
+function castRay(ox, oy, angle) {
+  const sin = Math.sin(angle), cos = Math.cos(angle);
+  const dx = cos, dy = sin;
+
+  const maxDist = 90;
+
+  // DDA algorithm for precise wall hits
+  let mapX = Math.floor(ox), mapY = Math.floor(oy);
+  const deltaDistX = Math.abs(1 / (dx || 1e-10));
+  const deltaDistY = Math.abs(1 / (dy || 1e-10));
+  const stepX = dx > 0 ? 1 : -1;
+  const stepY = dy > 0 ? 1 : -1;
+  let sideDistX = dx > 0 ? (mapX + 1 - ox) * deltaDistX : (ox - mapX) * deltaDistX;
+  let sideDistY = dy > 0 ? (mapY + 1 - oy) * deltaDistY : (oy - mapY) * deltaDistY;
+  let side = 0; // 0 = hit vertical grid line (NS wall), 1 = hit horizontal grid line (EW wall)
+
+  for (let i = 0; i < 200; i++) {
+    if (sideDistX < sideDistY) {
+      sideDistX += deltaDistX;
+      mapX += stepX;
+      side = 0;
+    } else {
+      sideDistY += deltaDistY;
+      mapY += stepY;
+      side = 1;
+    }
+
+    const cell = mapAt(mapX, mapY);
+    if (cell === 1 || cell === 9) {
+      const dist = side === 0
+        ? (mapX - ox + (1 - stepX) / 2) / dx
+        : (mapY - oy + (1 - stepY) / 2) / dy;
+      const hitX = ox + dx * dist;
+      const hitY = oy + dy * dist;
+      let wallX = side === 0 ? hitY - Math.floor(hitY) : hitX - Math.floor(hitX);
+      const wi = mapY * MAP_W + mapX;
+      const wallH = WALL_H[wi] || 1;
+      return { dist, side, cell, wallX, mapX, mapY, isDoor: false, wallH };
+    }
+
+    if (cell === 2) {
+      const door = getDoor(mapX, mapY);
+      if (door) {
+        // compute exact distance to door center plane
+        let dist, hitPos;
+        if (door.horizontal) {
+          // door runs east-west, centered at mapY+0.5
+          const ty = mapY + 0.5;
+          dist = (ty - oy) / dy;
+          hitPos = ox + dx * dist - mapX;
+        } else {
+          // door runs north-south, centered at mapX+0.5
+          const tx = mapX + 0.5;
+          dist = (tx - ox) / dx;
+          hitPos = oy + dy * dist - mapY;
+        }
+
+        if (dist > 0) {
+          // check if hit point is in the closed portion
+          const openAmt = door.open;
+          // left half: [0, 0.5-openAmt/2], right half: [0.5+openAmt/2, 1]
+          const gapL = 0.5 - openAmt * 0.5;
+          const gapR = 0.5 + openAmt * 0.5;
+
+          if (hitPos < 0 || hitPos > 1) {
+            continue; // missed the door cell
+          }
+
+          if (hitPos >= gapL && hitPos <= gapR) {
+            continue; // ray goes through the gap
+          }
+
+          // compute texture coordinate
+          let texU;
+          if (hitPos < gapL) {
+            texU = hitPos / 0.5; // left panel: 0->gapL maps to 0->1 in left half of texture
+            texU = hitPos * 2; // map [0, 0.5] to [0, 1] of left half
+          } else {
+            texU = (hitPos - 0.5) * 2; // right half
+            texU = 0.5 + texU * 0.5;
+          }
+
+          return { dist, side: door.horizontal ? 1 : 0, cell: 2, wallX: hitPos, mapX, mapY, isDoor: true, doorOpen: openAmt, wallH: 1 };
+        }
+      } else {
+        // no door data, treat as wall
+        const dist = side === 0
+          ? (mapX - ox + (1 - stepX) / 2) / dx
+          : (mapY - oy + (1 - stepY) / 2) / dy;
+        const hitX = ox + dx * dist;
+        const hitY = oy + dy * dist;
+        let wallX = side === 0 ? hitY - Math.floor(hitY) : hitX - Math.floor(hitX);
+        return { dist, side, cell: 1, wallX, mapX, mapY, isDoor: false, wallH: 1 };
+      }
+    }
+  }
+  return { dist: maxDist, side: 0, cell: 0, wallX: 0, mapX: 0, mapY: 0, isDoor: false, wallH: 1 };
+}
+
+/* ═══════════════════════════════════════════
+   RENDERING
+═══════════════════════════════════════════ */
+const zBuffer = new Float64Array(SCREEN_W);
+
+function buildingFaceRGB(mx, my, side) {
+  const idx = my * MAP_W + mx;
+  const style = BUILDING_STYLE[idx];
+  const seed = hash01(mx * 0.9 + style, my * 1.2 + side);
+  let r = 62 + seed * 24;
+  let g = 70 + seed * 26;
+  let b = 88 + seed * 34;
+
+  if (style === 2) {
+    r += 8; g += 10; b += 14;
+  } else if (style === 3) {
+    r += 14; g += 16; b += 20;
+  }
+
+  if (side === 1) {
+    r -= 18; g -= 14; b -= 12;
+  }
+
+  return [r, g, b];
+}
+
+function blendFog(r, g, b, dist, factor = 1) {
+  const fog = Math.max(0, Math.min(1, (dist - 10) / 52)) * factor;
+  const fr = 112, fg = 132, fb = 158;
+  return [
+    r * (1 - fog) + fr * fog,
+    g * (1 - fog) + fg * fog,
+    b * (1 - fog) + fb * fog
+  ];
+}
+
+function roadSurfaceColor(x, y) {
+  const localX = x - AVE_ROAD_L;
+  const roadCenter = (AVE_ROAD_L + AVE_ROAD_R) * 0.5;
+  let r = 42, g = 44, b = 50;
+
+  const asphaltNoise = hash01(Math.floor(x * 2), Math.floor(y * 2)) * 8;
+  r += asphaltNoise;
+  g += asphaltNoise;
+  b += asphaltNoise;
+
+  const dash = Math.floor(y * 2) % 6 <= 2;
+  const centerStripe = Math.abs(x - roadCenter) < 0.08;
+  if (centerStripe && dash) {
+    r = 218; g = 200; b = 120;
+  }
+
+  const laneStripe = Math.abs(localX - 1.05) < 0.05 || Math.abs(localX - 4.95) < 0.05;
+  if (laneStripe) {
+    r = 170; g = 174; b = 180;
+  }
+
+  for (const cross of CROSS_STREETS) {
+    if (Math.abs(y - cross) < 0.75 && Math.floor(x * 3) % 2 === 0) {
+      r = 210; g = 210; b = 214;
+    }
+  }
+
+  return [r, g, b];
+}
+
+function sidewalkColor(x, y, plaza = false) {
+  const fracX = x - Math.floor(x);
+  const fracY = y - Math.floor(y);
+  let r = plaza ? 118 : 102;
+  let g = plaza ? 120 : 104;
+  let b = plaza ? 126 : 110;
+
+  if (fracX < 0.05 || fracY < 0.05) {
+    r -= 16; g -= 16; b -= 16;
+  }
+
+  if (plaza && (Math.floor(x * 0.5) + Math.floor(y * 0.5)) % 2 === 0) {
+    r += 8; g += 8; b += 10;
+  }
+
+  return [r, g, b];
+}
+
+function projectWorld(wx, wy, wz, px, py, pa) {
+  const dx = wx - px;
+  const dy = wy - py;
+  const sinA = Math.sin(pa);
+  const cosA = Math.cos(pa);
+  const camX = dx * cosA + dy * sinA;
+  const camY = -dx * sinA + dy * cosA;
+  if (camX <= 0.05) return null;
+  return {
+    depth: camX,
+    sx: SCREEN_W * 0.5 + (camY / camX) * PROJ_X,
+    sy: SCREEN_H * 0.5 - ((wz - CAMERA_Z) / camX) * PROJ_Y
+  };
+}
+
+function drawBillboard(wx, wy, baseZ, width, height, color, px, py, pa, depthBuffer, depthBias = 0) {
+  const base = projectWorld(wx, wy, baseZ, px, py, pa);
+  const top = projectWorld(wx, wy, baseZ + height, px, py, pa);
+  if (!base || !top) return null;
+  const halfW = Math.max(1, (width * PROJ_X) / Math.max(base.depth, 0.05));
+  const depth = base.depth + depthBias;
+  drawScreenRect(base.sx - halfW, base.sx + halfW, top.sy, base.sy, color, depth, depthBuffer);
+  return { base, top, halfW, depth };
+}
+
+function drawScreenRect(x1, x2, y1, y2, color, depth, depthBuffer) {
+  const left = Math.max(0, Math.floor(Math.min(x1, x2)));
+  const right = Math.min(SCREEN_W, Math.ceil(Math.max(x1, x2)));
+  const top = Math.max(0, Math.floor(Math.min(y1, y2)));
+  const bottom = Math.min(SCREEN_H, Math.ceil(Math.max(y1, y2)));
+  if (left >= right || top >= bottom) return;
+
+  for (let x = left; x < right; x++) {
+    if (depth >= depthBuffer[x]) continue;
+    depthBuffer[x] = depth;
+    for (let y = top; y < bottom; y++) {
+      const idx = (y * SCREEN_W + x) * 4;
+      buf[idx] = color[0];
+      buf[idx + 1] = color[1];
+      buf[idx + 2] = color[2];
+      buf[idx + 3] = 255;
+    }
+  }
+}
+
+function drawGlow(x, y, radius, color, alpha, depth, depthBuffer) {
+  const left = Math.max(0, Math.floor(x - radius));
+  const right = Math.min(SCREEN_W, Math.ceil(x + radius));
+  const top = Math.max(0, Math.floor(y - radius));
+  const bottom = Math.min(SCREEN_H, Math.ceil(y + radius));
+  const r2 = radius * radius;
+
+  for (let sx = left; sx < right; sx++) {
+    if (depth >= depthBuffer[sx] + 0.5) continue;
+    for (let sy = top; sy < bottom; sy++) {
+      const dx = sx + 0.5 - x;
+      const dy = sy + 0.5 - y;
+      const dist2 = dx * dx + dy * dy;
+      if (dist2 > r2) continue;
+      const t = 1 - dist2 / r2;
+      const idx = (sy * SCREEN_W + sx) * 4;
+      const blend = alpha * t;
+      buf[idx] = buf[idx] * (1 - blend) + color[0] * blend;
+      buf[idx + 1] = buf[idx + 1] * (1 - blend) + color[1] * blend;
+      buf[idx + 2] = buf[idx + 2] * (1 - blend) + color[2] * blend;
+      buf[idx + 3] = 255;
+    }
+  }
+}
+
+function drawProjectedBeam(span, px, py, pa, depthBuffer) {
+  const aTop = projectWorld(span.x1, span.y, span.z2, px, py, pa);
+  const bTop = projectWorld(span.x2, span.y, span.z2, px, py, pa);
+  const aBot = projectWorld(span.x1, span.y, span.z1, px, py, pa);
+  const bBot = projectWorld(span.x2, span.y, span.z1, px, py, pa);
+  if (!aTop || !bTop || !aBot || !bBot) return;
+
+  const minX = Math.max(0, Math.floor(Math.min(aTop.sx, bTop.sx, aBot.sx, bBot.sx)));
+  const maxX = Math.min(SCREEN_W - 1, Math.ceil(Math.max(aTop.sx, bTop.sx, aBot.sx, bBot.sx)));
+  if (minX >= maxX) return;
+
+  const baseColor = span.type === "viaduct" ? [98, 104, 118] : [132, 144, 164];
+  for (let x = minX; x <= maxX; x++) {
+    const denom = (bBot.sx - aBot.sx) || 1;
+    const t = Math.max(0, Math.min(1, (x - aBot.sx) / denom));
+    const yTop = aTop.sy + (bTop.sy - aTop.sy) * t;
+    const yBot = aBot.sy + (bBot.sy - aBot.sy) * t;
+    const depth = aBot.depth + (bBot.depth - aBot.depth) * t;
+    if (depth >= depthBuffer[x]) continue;
+    const color = blendFog(baseColor[0], baseColor[1], baseColor[2], depth, 0.95);
+    const top = Math.max(0, Math.floor(Math.min(yTop, yBot)));
+    const bottom = Math.min(SCREEN_H, Math.ceil(Math.max(yTop, yBot)));
+    depthBuffer[x] = depth;
+    for (let y = top; y < bottom; y++) {
+      const idx = (y * SCREEN_W + x) * 4;
+      buf[idx] = color[0];
+      buf[idx + 1] = color[1];
+      buf[idx + 2] = color[2];
+      buf[idx + 3] = 255;
+    }
+  }
+
+  const supportColor = span.type === "viaduct" ? [88, 94, 106] : [112, 122, 142];
+  const leftSupport = projectWorld(span.x1, span.y, 0, px, py, pa);
+  const leftSupportTop = projectWorld(span.x1, span.y, span.z1, px, py, pa);
+  const rightSupport = projectWorld(span.x2, span.y, 0, px, py, pa);
+  const rightSupportTop = projectWorld(span.x2, span.y, span.z1, px, py, pa);
+  if (leftSupport && leftSupportTop) {
+    const w = Math.max(2, 0.18 * PROJ_X / leftSupport.depth);
+    drawScreenRect(leftSupport.sx - w, leftSupport.sx + w, leftSupportTop.sy, leftSupport.sy, blendFog(supportColor[0], supportColor[1], supportColor[2], leftSupport.depth, 0.95), leftSupport.depth, depthBuffer);
+  }
+  if (rightSupport && rightSupportTop) {
+    const w = Math.max(2, 0.18 * PROJ_X / rightSupport.depth);
+    drawScreenRect(rightSupport.sx - w, rightSupport.sx + w, rightSupportTop.sy, rightSupport.sy, blendFog(supportColor[0], supportColor[1], supportColor[2], rightSupport.depth, 0.95), rightSupport.depth, depthBuffer);
+  }
+}
+
+function drawLampPost(lamp, px, py, pa, depthBuffer) {
+  const base = projectWorld(lamp.x, lamp.y, 0, px, py, pa);
+  const top = projectWorld(lamp.x, lamp.y, lamp.h, px, py, pa);
+  if (!base || !top) return;
+  const poleW = Math.max(1, 0.06 * PROJ_X / base.depth);
+  const poleColor = blendFog(78, 84, 92, base.depth, 0.95);
+  drawScreenRect(base.sx - poleW, base.sx + poleW, top.sy, base.sy, poleColor, base.depth, depthBuffer);
+
+  const armDir = lamp.side === "left" ? 1 : -1;
+  const armOuter = projectWorld(lamp.x + armDir * lamp.arm, lamp.y, lamp.h - 0.2, px, py, pa);
+  if (!armOuter) return;
+  const armInner = projectWorld(lamp.x, lamp.y, lamp.h - 0.2, px, py, pa);
+  if (!armInner) return;
+  drawScreenRect(armInner.sx, armOuter.sx, armOuter.sy - 1, armOuter.sy + 1, blendFog(92, 98, 108, base.depth, 0.95), base.depth - 0.02, depthBuffer);
+
+  const lampHead = projectWorld(lamp.x + armDir * (lamp.arm + 0.08), lamp.y, lamp.h - 0.26, px, py, pa);
+  if (!lampHead) return;
+  const headW = Math.max(2, 0.11 * PROJ_X / lampHead.depth);
+  drawScreenRect(lampHead.sx - headW, lampHead.sx + headW, lampHead.sy - headW * 0.5, lampHead.sy + headW * 0.5, blendFog(248, 226, 174, lampHead.depth, 0.65), lampHead.depth - 0.03, depthBuffer);
+  drawGlow(lampHead.sx, lampHead.sy + 1, Math.max(4, 0.55 * PROJ_X / lampHead.depth), [255, 220, 150], 0.18, lampHead.depth, depthBuffer);
+}
+
+function drawLandmarkTower(tower, px, py, pa, depthBuffer) {
+  const base = projectWorld(tower.x, tower.y, 0, px, py, pa);
+  const top = projectWorld(tower.x, tower.y, tower.h, px, py, pa);
+  if (!base || !top) return;
+  const width = Math.max(4, tower.w * PROJ_X / base.depth);
+  let color = blendFog(tower.color[0], tower.color[1], tower.color[2], base.depth, 1);
+  drawScreenRect(base.sx - width, base.sx + width, top.sy, base.sy, color, base.depth, depthBuffer);
+
+  const crownTop = projectWorld(tower.x, tower.y, tower.h + tower.crown, px, py, pa);
+  if (crownTop) {
+    drawScreenRect(base.sx - width * 0.42, base.sx + width * 0.42, crownTop.sy, top.sy + 4, blendFog(208, 214, 228, base.depth, 0.9), base.depth - 0.05, depthBuffer);
+    drawGlow(base.sx, crownTop.sy + 2, Math.max(6, 0.85 * PROJ_X / base.depth), [190, 210, 255], 0.12, base.depth, depthBuffer);
+  }
+}
+
+function drawBusStop(stop, px, py, pa, depthBuffer) {
+  const metal = blendFog(112, 122, 136, Math.hypot(stop.x - px, stop.y - py), 0.9);
+  const glass = blendFog(150, 168, 182, Math.hypot(stop.x - px, stop.y - py), 0.9);
+  const bench = blendFog(94, 100, 110, Math.hypot(stop.x - px, stop.y - py), 0.9);
+
+  drawBillboard(stop.x, stop.y, stop.roofH - 0.06, stop.roofW, 0.12, blendFog(164, 174, 188, 18, 0.8), px, py, pa, depthBuffer, -0.06);
+
+  const sideMul = stop.side === "left" ? -1 : 1;
+  const backX = stop.x + sideMul * 0.16;
+  drawBillboard(backX, stop.y + 0.08, 0, 0.12, stop.h, metal, px, py, pa, depthBuffer, -0.04);
+  drawBillboard(backX, stop.y - 0.55, 0, 0.12, stop.h, metal, px, py, pa, depthBuffer, -0.04);
+  drawBillboard(stop.x + sideMul * 0.1, stop.y - 0.18, 0.25, stop.w, stop.h - 0.55, glass, px, py, pa, depthBuffer, -0.03);
+  drawBillboard(stop.x, stop.y + 0.25, 0.45, 0.7, 0.12, bench, px, py, pa, depthBuffer, -0.02);
+}
+
+function drawTreePlanter(tree, px, py, pa, depthBuffer) {
+  const dist = Math.hypot(tree.x - px, tree.y - py);
+  drawBillboard(tree.x, tree.y, 0, tree.size, 0.36, blendFog(118, 122, 116, dist, 0.9), px, py, pa, depthBuffer, -0.02);
+  drawBillboard(tree.x, tree.y, 0.28, 0.12, tree.h - 0.6, blendFog(86, 70, 58, dist, 0.92), px, py, pa, depthBuffer, -0.03);
+  const crown = projectWorld(tree.x, tree.y, tree.h, px, py, pa);
+  if (!crown) return;
+  drawGlow(crown.sx, crown.sy + 2, Math.max(6, (tree.crown * PROJ_X) / Math.max(crown.depth, 0.08)), blendFog(92, 124, 90, dist, 0.88), 0.28, crown.depth - 0.02, depthBuffer);
+  drawGlow(crown.sx - 4, crown.sy + 3, Math.max(5, (tree.crown * 0.8 * PROJ_X) / Math.max(crown.depth, 0.08)), blendFog(76, 110, 78, dist, 0.88), 0.16, crown.depth - 0.01, depthBuffer);
+}
+
+function drawLobbyEntrance(lobby, px, py, pa, depthBuffer) {
+  const dist = Math.hypot(lobby.x - px, lobby.y - py);
+  const frame = blendFog(154, 160, 168, dist, 0.95);
+  const interior = blendFog(26, 28, 34, dist, 0.95);
+  const canopy = blendFog(184, 188, 196, dist, 0.9);
+
+  drawBillboard(lobby.x, lobby.y, 0, lobby.w + 0.26, lobby.h + 0.22, frame, px, py, pa, depthBuffer, -0.08);
+  drawBillboard(lobby.x, lobby.y, 0.05, lobby.w * 0.72, lobby.h - 0.28, interior, px, py, pa, depthBuffer, -0.1);
+  drawBillboard(lobby.x, lobby.y, lobby.h - 0.16, lobby.w + 0.38, 0.16, canopy, px, py, pa, depthBuffer, -0.11);
+}
+
+function drawAdBox(box, px, py, pa, depthBuffer) {
+  const dist = Math.hypot(box.x - px, box.y - py);
+  const frame = blendFog(84, 90, 98, dist, 0.92);
+  drawBillboard(box.x, box.y, 0, box.w + 0.06, box.h + 0.08, frame, px, py, pa, depthBuffer, -0.02);
+  const panel = drawBillboard(box.x, box.y, 0.04, box.w, box.h, blendFog(box.color[0], box.color[1], box.color[2], dist, 0.8), px, py, pa, depthBuffer, -0.03);
+  if (panel) {
+    drawGlow(panel.base.sx, (panel.base.sy + panel.top.sy) * 0.5, Math.max(5, 0.42 * PROJ_X / Math.max(panel.base.depth, 0.1)), blendFog(box.glow[0], box.glow[1], box.glow[2], dist, 0.7), 0.16, panel.depth, depthBuffer);
+  }
+}
+
+function renderCityProps(px, py, pa) {
+  const depthBuffer = new Float64Array(zBuffer);
+  const bridgeOrder = bridgeSpans.slice().sort((a, b) => b.y - a.y);
+  for (const span of bridgeOrder) drawProjectedBeam(span, px, py, pa, depthBuffer);
+
+  const landmarkOrder = landmarkTowers.slice().sort((a, b) => b.y - a.y);
+  for (const tower of landmarkOrder) drawLandmarkTower(tower, px, py, pa, depthBuffer);
+
+  const lobbyOrder = lobbyEntrances.slice().sort((a, b) => ((b.x - px) ** 2 + (b.y - py) ** 2) - ((a.x - px) ** 2 + (a.y - py) ** 2));
+  for (const lobby of lobbyOrder) drawLobbyEntrance(lobby, px, py, pa, depthBuffer);
+
+  const busOrder = busStops.slice().sort((a, b) => ((b.x - px) ** 2 + (b.y - py) ** 2) - ((a.x - px) ** 2 + (a.y - py) ** 2));
+  for (const stop of busOrder) drawBusStop(stop, px, py, pa, depthBuffer);
+
+  const treeOrder = treePlanters.slice().sort((a, b) => ((b.x - px) ** 2 + (b.y - py) ** 2) - ((a.x - px) ** 2 + (a.y - py) ** 2));
+  for (const tree of treeOrder) drawTreePlanter(tree, px, py, pa, depthBuffer);
+
+  const adOrder = adBoxes.slice().sort((a, b) => ((b.x - px) ** 2 + (b.y - py) ** 2) - ((a.x - px) ** 2 + (a.y - py) ** 2));
+  for (const box of adOrder) drawAdBox(box, px, py, pa, depthBuffer);
+
+  const lampOrder = lampPosts.slice().sort((a, b) => {
+    const da = (a.x - px) ** 2 + (a.y - py) ** 2;
+    const db = (b.x - px) ** 2 + (b.y - py) ** 2;
+    return db - da;
+  });
+  for (const lamp of lampOrder) drawLampPost(lamp, px, py, pa, depthBuffer);
+}
+
+function renderFrame() {
+  const px = player.x, py = player.y, pa = player.angle;
+
+  // sky gradient + floor darkness (cleared per-pixel later, but fill base)
+  buf.fill(0);
+
+  for (let col = 0; col < SCREEN_W; col++) {
+    const rayAngle = pa - HALF_FOV + (col / SCREEN_W) * FOV;
+    const hit = castRay(px, py, rayAngle);
+
+    // fish-eye correction
+    const corrDist = hit.dist * Math.cos(rayAngle - pa);
+
+    const baseH = SCREEN_H / Math.max(corrDist, 0.0001);
+    const hFactor = hit.wallH > 0 ? hit.wallH : 1;
+    const lineHeight = Math.floor(baseH * hFactor);
+    const drawEnd = Math.floor(SCREEN_H / 2 + baseH / 2);
+    const drawStart = drawEnd - lineHeight;
+
+    const isWallHit = hit.cell === 1 || hit.cell === 9 || hit.cell === 2;
+    zBuffer[col] = isWallHit ? corrDist : 1e9;
+
+    if (isWallHit) {
+      let br, bg, bb;
+      if (hit.isDoor) {
+        br = 90; bg = 55; bb = 35;
+      } else if (hit.cell === 9) {
+        br = 42; bg = 46; bb = 52;
+      } else {
+        [br, bg, bb] = buildingFaceRGB(hit.mapX, hit.mapY, hit.side);
+      }
+      const ds = Math.max(0, drawStart), de = Math.min(SCREEN_H, drawEnd);
+      for (let y = ds; y < de; y++) {
+        const prog = (y - drawStart) / Math.max(1, lineHeight);
+        let r = br, g = bg, b = bb;
+
+        if (hit.cell === 1) {
+          const idx = hit.mapY * MAP_W + hit.mapX;
+          const style = BUILDING_STYLE[idx];
+          const floors = Math.max(8, Math.floor(hit.wallH * 5));
+          const windowRows = Math.max(1, Math.floor((1 - prog) * floors));
+          const windowCols = Math.floor(hit.wallX * (style === 3 ? 9 : 7));
+          const gridLine = Math.abs((hit.wallX * (style === 3 ? 9 : 7)) % 1 - 0.5) > 0.42;
+          const windowOn = hash01(hit.mapX * 13 + windowCols, hit.mapY * 17 + windowRows) > (style === 3 ? 0.35 : 0.55);
+
+          if (prog < 0.045) {
+            r += 28; g += 28; b += 30;
+          } else if (prog > 0.8) {
+            r -= 18; g -= 16; b -= 14;
+          } else if (!gridLine && windowOn && prog > 0.12 && prog < 0.78) {
+            r += style === 3 ? 72 : 44;
+            g += style === 3 ? 82 : 54;
+            b += style === 3 ? 98 : 70;
+          }
+        }
+
+        const shade = Math.min(1, 2.9 / Math.max(corrDist, 0.001)) * (hit.side === 1 ? 0.76 : 1) * (0.58 + 0.42 * prog);
+        [r, g, b] = blendFog(r * shade, g * shade, b * shade, corrDist, 1);
+        const idx = (y * SCREEN_W + col) * 4;
+        buf[idx]     = r;
+        buf[idx + 1] = g;
+        buf[idx + 2] = b;
+        buf[idx + 3] = 255;
+      }
+    }
+
+    const wallTop = isWallHit ? Math.max(0, drawStart) : 0;
+    const wallBot = isWallHit ? Math.min(SCREEN_H, drawEnd) : SCREEN_H;
+
+    // ceiling and floor for this column
+    for (let y = 0; y < SCREEN_H; y++) {
+      if (isWallHit && y >= wallTop && y < wallBot) continue;
+
+      const isAbove = y < SCREEN_H / 2;
+      const rowDist = SCREEN_H / Math.max(0.0001, 2.0 * Math.abs(y - SCREEN_H / 2));
+      const realRowDist = rowDist / Math.cos(rayAngle - pa);
+
+      const floorX = px + Math.cos(rayAngle) * realRowDist;
+      const floorY = py + Math.sin(rayAngle) * realRowDist;
+
+      const idx = (y * SCREEN_W + col) * 4;
+
+      if (isAbove) {
+        // ceiling or sky
+        const ceilCell = mapAt(floorX, floorY);
+        if (ceilCell === 3 || ceilCell === 4 || ceilCell === 5 || (ceilCell === 0 && !hasCeiling(floorX, floorY))) {
+          // sky gradient
+          const t = y / (SCREEN_H / 2);
+          const glow = Math.max(0, 1 - Math.abs(col - SCREEN_W * 0.5) / (SCREEN_W * 0.55));
+          const sr = 72 + 88 * (1 - t) + glow * 10;
+          const sg = 104 + 116 * (1 - t) + glow * 12;
+          const sb = 146 + 108 * (1 - t) + glow * 18;
+          buf[idx]     = sr;
+          buf[idx + 1] = sg;
+          buf[idx + 2] = sb;
+          buf[idx + 3] = 255;
+        } else {
+          const shade = Math.min(1, 2.0 / Math.max(realRowDist, 0.001)) * 0.4;
+          let r = 62, g = 66, b = 76;
+          [r, g, b] = blendFog(r * shade, g * shade, b * shade, realRowDist, 0.8);
+          buf[idx]     = r;
+          buf[idx + 1] = g;
+          buf[idx + 2] = b;
+          buf[idx + 3] = 255;
+        }
+      } else {
+        // floor
+        const floorCell = mapAt(floorX, floorY);
+        const shade = Math.min(1, 2.7 / Math.max(realRowDist, 0.001));
+        let r, g, b;
+        if (floorCell === 3) {
+          [r, g, b] = roadSurfaceColor(floorX, floorY);
+        } else if (floorCell === 4) {
+          [r, g, b] = sidewalkColor(floorX, floorY, false);
+        } else if (floorCell === 5) {
+          [r, g, b] = sidewalkColor(floorX, floorY, true);
+        } else {
+          r = 86; g = 88; b = 92;
+        }
+        [r, g, b] = blendFog(r * shade, g * shade, b * shade, realRowDist, 0.85);
+        buf[idx]     = r;
+        buf[idx + 1] = g;
+        buf[idx + 2] = b;
+        buf[idx + 3] = 255;
+      }
+    }
+  }
+
+  renderCityProps(px, py, pa);
+  renderSprites(px, py, pa);
+
+  ctx.putImageData(imageData, 0, 0);
+
+  // minimap overlay
+  drawMinimap();
+}
+
+/* ═══════════════════════════════════════════
+   SPRITE (BILLBOARD) RENDERING
+═══════════════════════════════════════════ */
+const SPRITE_SCALE = 0.75; // sprite height as fraction of wall height
+
+function normalizeAngle(a) {
+  while (a >  Math.PI) a -= Math.PI * 2;
+  while (a < -Math.PI) a += Math.PI * 2;
+  return a;
+}
+
+function renderSprites(px, py, pa) {
+  // sort far to near so closer sprites overdraw farther ones
+  const order = sprites.map((s, i) => ({
+    i, dist2: (s.x - px) ** 2 + (s.y - py) ** 2
+  })).sort((a, b) => b.dist2 - a.dist2);
+
+  for (const { i } of order) {
+    const sp = sprites[i];
+    const tex = spriteTex[sp.tex];
+    if (!tex) continue;
+
+    const dx = sp.x - px, dy = sp.y - py;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 0.05) continue;
+
+    const angTo = Math.atan2(dy, dx);
+    const rel   = normalizeAngle(angTo - pa);
+
+    // fish-eye-corrected depth (same formula as wall corrDist)
+    const corrDist = dist * Math.cos(rel);
+    if (corrDist <= 0.05) continue;
+
+    // horizontal screen position
+    const screenX = Math.floor((0.5 + rel / FOV) * SCREEN_W);
+
+    // wall projection parameters for this depth
+    const wallH   = Math.floor(SCREEN_H / corrDist);
+    const wallTop = Math.floor((SCREEN_H - wallH) / 2);
+    const wallBot = wallTop + wallH;           // = floor line
+
+    // sprite dimensions – scale relative to wall height, keep aspect
+    const sprH = Math.max(1, Math.floor(wallH * SPRITE_SCALE));
+    const sprW = Math.max(1, Math.floor(sprH * tex.w / tex.h));
+
+    // anchor bottom of sprite to the floor line
+    const y1 = wallBot - sprH;   // top
+    const y2 = wallBot;          // bottom (feet on floor)
+    const x1 = screenX - (sprW >> 1);
+    const x2 = x1 + sprW;
+
+    const shade = Math.min(1, 3.0 / dist);
+
+    for (let col = Math.max(0, x1); col < Math.min(SCREEN_W, x2); col++) {
+      if (corrDist >= zBuffer[col]) continue;   // behind a wall
+      const texX = Math.floor((col - x1) / sprW * tex.w);
+
+      for (let row = Math.max(0, y1); row < Math.min(SCREEN_H, y2); row++) {
+        const texY = Math.floor((row - y1) / sprH * tex.h);
+        const si   = (texY * tex.w + texX) * 4;
+        if (tex.data[si + 3] < 10) continue;   // skip transparent pixels
+
+        const idx = (row * SCREEN_W + col) * 4;
+        buf[idx]     = tex.data[si]     * shade;
+        buf[idx + 1] = tex.data[si + 1] * shade;
+        buf[idx + 2] = tex.data[si + 2] * shade;
+        buf[idx + 3] = 255;
+      }
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   MINIMAP
+═══════════════════════════════════════════ */
+function drawMinimap() {
+  const scale = Math.max(3, Math.floor(Math.min((SCREEN_W - 20) / MAP_W, (SCREEN_H - 20) / MAP_H)));
+  const ox = SCREEN_W - MAP_W * scale - 10;
+  const oy = 10;
+  ctx.globalAlpha = 0.6;
+  for (let my = 0; my < MAP_H; my++) {
+    for (let mx = 0; mx < MAP_W; mx++) {
+      const v = MAP[my * MAP_W + mx];
+      if (v === 1 || v === 9) ctx.fillStyle = "#555";
+      else if (v === 2) ctx.fillStyle = "#a06020";
+      else if (v === 3) ctx.fillStyle = "#2a3038";
+      else if (v === 4) ctx.fillStyle = "#646872";
+      else if (v === 5) ctx.fillStyle = "#7a7f88";
+      else ctx.fillStyle = "#8b7355";
+      ctx.fillRect(ox + mx * scale, oy + my * scale, scale, scale);
+    }
+  }
+  // NPC dots
+  for (const sp of sprites) {
+    ctx.fillStyle = sp.tex === "girl" ? "#f6a" : "#4bf";
+    ctx.beginPath();
+    ctx.arc(ox + sp.x * scale, oy + sp.y * scale, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = "#8fd0ff";
+  for (const span of bridgeSpans) {
+    ctx.beginPath();
+    ctx.moveTo(ox + span.x1 * scale, oy + span.y * scale);
+    ctx.lineTo(ox + span.x2 * scale, oy + span.y * scale);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#c6dcff";
+  for (const tower of landmarkTowers) {
+    ctx.fillRect(ox + (tower.x - 0.4) * scale, oy + (tower.y - 0.4) * scale, Math.max(2, scale), Math.max(2, scale));
+  }
+  ctx.fillStyle = "#7bd28f";
+  for (const tree of treePlanters) {
+    ctx.fillRect(ox + (tree.x - 0.2) * scale, oy + (tree.y - 0.2) * scale, Math.max(2, scale - 1), Math.max(2, scale - 1));
+  }
+  ctx.strokeStyle = "#ffe1a3";
+  for (const stop of busStops) {
+    ctx.strokeRect(ox + (stop.x - 0.35) * scale, oy + (stop.y - 0.55) * scale, Math.max(3, scale + 1), Math.max(4, scale + 2));
+  }
+  ctx.fillStyle = "#ffd7a8";
+  for (const lobby of lobbyEntrances) {
+    ctx.fillRect(ox + (lobby.x - 0.2) * scale, oy + (lobby.y - 0.2) * scale, Math.max(2, scale - 1), Math.max(2, scale - 1));
+  }
+  // player dot
+  ctx.fillStyle = "#ff0";
+  ctx.beginPath();
+  ctx.arc(ox + player.x * scale, oy + player.y * scale, 2, 0, Math.PI * 2);
+  ctx.fill();
+  // direction line
+  ctx.strokeStyle = "#ff0";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(ox + player.x * scale, oy + player.y * scale);
+  ctx.lineTo(ox + (player.x + Math.cos(player.angle) * 1.5) * scale,
+             oy + (player.y + Math.sin(player.angle) * 1.5) * scale);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+/* ═══════════════════════════════════════════
+   MOVEMENT + COLLISION
+═══════════════════════════════════════════ */
+function update(dt) {
+  // mouse rotation
+  player.angle += mouseDX * ROT_SPEED;
+  mouseDX = 0;
+
+  // keyboard
+  let dx = 0, dy = 0;
+  const cos = Math.cos(player.angle), sin = Math.sin(player.angle);
+  if (keys["KeyW"] || keys["ArrowUp"])    { dx += cos * MOVE_SPEED * dt; dy += sin * MOVE_SPEED * dt; }
+  if (keys["KeyS"] || keys["ArrowDown"])  { dx -= cos * MOVE_SPEED * dt; dy -= sin * MOVE_SPEED * dt; }
+  if (keys["KeyA"] || keys["ArrowLeft"])  { dx += sin * MOVE_SPEED * dt; dy -= cos * MOVE_SPEED * dt; }
+  if (keys["KeyD"] || keys["ArrowRight"]) { dx -= sin * MOVE_SPEED * dt; dy += cos * MOVE_SPEED * dt; }
+
+  // collision: try X then Y independently
+  const nx = player.x + dx;
+  const ny = player.y + dy;
+  const r = PLAYER_R;
+
+  if (!isSolid(nx - r, player.y - r) && !isSolid(nx + r, player.y - r) &&
+      !isSolid(nx - r, player.y + r) && !isSolid(nx + r, player.y + r)) {
+    player.x = nx;
+  }
+  if (!isSolid(player.x - r, ny - r) && !isSolid(player.x + r, ny - r) &&
+      !isSolid(player.x - r, ny + r) && !isSolid(player.x + r, ny + r)) {
+    player.y = ny;
+  }
+
+  updateDoors(dt, player.x, player.y);
+}
+
+/* ═══════════════════════════════════════════
+   MAIN LOOP
+═══════════════════════════════════════════ */
+let lastTime = 0;
+const infoEl = document.getElementById("info");
+
+function gameLoop(timestamp) {
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+
+  update(dt);
+  renderFrame();
+
+  const fps = Math.round(1 / (dt || 0.016));
+  const cell = mapAt(player.x, player.y);
+  const area = cell === 3 ? "车道" : cell === 4 ? "人行道" : cell === 5 ? "广场" : "建筑";
+  infoEl.textContent = `FPS:${fps}  ${area}  (${player.x.toFixed(1)},${player.y.toFixed(1)})`;
+
+  requestAnimationFrame(gameLoop);
+}
+
+initDoors();
+requestAnimationFrame(gameLoop);
+
+</script>
+</body>
+</html>

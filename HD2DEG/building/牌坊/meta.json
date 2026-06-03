@@ -1,0 +1,26 @@
+{
+  "id": "牌坊",
+  "kind": "building",
+  "title": "牌坊",
+  "prompt": "牌坊",
+  "tags": [],
+  "createdAt": "2026-04-26T17:34:34+08:00",
+  "updatedAt": "2026-04-27T19:29:16+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/牌坊/front.png",
+    "side": "building/牌坊/side.png",
+    "top": "building/牌坊/top.png",
+    "preview": "building/牌坊/preview.png",
+    "previewProcessed": "building/牌坊/preview-processed.png"
+  },
+  "drawRoad": true
+}

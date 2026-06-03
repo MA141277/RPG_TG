@@ -1,0 +1,25 @@
+{
+  "id": "宝箱",
+  "kind": "building",
+  "title": "宝箱",
+  "prompt": "宝箱",
+  "tags": [],
+  "createdAt": "2026-04-24T11:03:27+08:00",
+  "updatedAt": "2026-04-24T11:03:27+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/宝箱/front.png",
+    "side": "building/宝箱/side.png",
+    "top": "building/宝箱/top.png",
+    "preview": "building/宝箱/preview.png",
+    "previewProcessed": "building/宝箱/preview-processed.png"
+  }
+}

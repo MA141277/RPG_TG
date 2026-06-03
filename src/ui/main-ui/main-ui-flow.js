@@ -1,4 +1,5 @@
 import { resolveCharacterPortraitImageUrl } from "../portrait-assets";
+import { renderLayoutEditor } from "../tools/layout-editor-view";
 
 export class MainUiFlow {
   constructor(options) {
@@ -6,6 +7,7 @@ export class MainUiFlow {
     this.characters = [...options.characters];
     this.onStartGame = options.onStartGame;
     this.loadSaveData = options.loadSaveData;
+    this.getAppState = options.getAppState;
     this.selectedCharacterId = this.characters[0]?.id ?? null;
     this.currentScreen = "main-menu";
     this.handleClick = (event) => {
@@ -49,10 +51,49 @@ export class MainUiFlow {
       return;
     }
 
-    this.overlayRoot.innerHTML =
+    const screenMarkup =
       this.currentScreen === "main-menu"
         ? this.renderMainMenu()
         : this.renderCharacterSelect();
+    this.overlayRoot.innerHTML =
+      screenMarkup + renderLayoutEditor(this.getAppState());
+    if (this.currentScreen === "main-menu") {
+      this.syncStartScreenLayout();
+    }
+  }
+
+  syncStartScreenLayout() {
+    const appState = this.getAppState();
+    const layout = appState.uiLayouts.startScreen;
+    const contentComponent = getLayoutComponent(layout, "main-menu-content");
+    applyLayoutComponentStyle(
+      this.overlayRoot.querySelector(".c-main-ui-main-menu__content"),
+      layout,
+      "main-menu-content",
+      null,
+      appState
+    );
+    applyLayoutComponentStyle(
+      this.overlayRoot.querySelector(".c-main-ui-main-menu__subtitle"),
+      layout,
+      "main-menu-subtitle",
+      contentComponent,
+      appState
+    );
+    applyLayoutComponentStyle(
+      this.overlayRoot.querySelector(".c-main-ui-image-button--start"),
+      layout,
+      "start-button",
+      contentComponent,
+      appState
+    );
+    applyLayoutComponentStyle(
+      this.overlayRoot.querySelector(".c-main-ui-image-button--continue"),
+      layout,
+      "continue-button",
+      contentComponent,
+      appState
+    );
   }
 
   renderMainMenu() {
@@ -277,6 +318,13 @@ export class MainUiFlow {
       return;
     }
 
+    if (
+      this.getAppState().layoutEditor.isOpen &&
+      target.closest("[data-layout-component-handle]") != null
+    ) {
+      return;
+    }
+
     const action = actionElement.dataset.mainUiAction;
     if (action === "open-character-select") {
       this.showCharacterSelect();
@@ -343,4 +391,94 @@ function escapeHtml(value) {
 
 function formatStatValue(value) {
   return typeof value === "number" ? String(value) : "0";
+}
+
+function getLayoutComponent(layout, componentId) {
+  return layout.components.find((component) => component.id === componentId) ?? null;
+}
+
+function applyLayoutComponentStyle(
+  element,
+  layout,
+  componentId,
+  offsetComponent = null,
+  appState = null
+) {
+  if (element == null || typeof element.classList?.add !== "function") {
+    return;
+  }
+
+  const component = getLayoutComponent(layout, componentId);
+  if (component == null) {
+    return;
+  }
+
+  const offsetX = offsetComponent?.rect.x ?? 0;
+  const offsetY = offsetComponent?.rect.y ?? 0;
+  element.classList.add("c-main-ui-layout-component");
+  syncLayoutEditorHandleAttributes(element, layout, componentId, appState);
+  element.style.left = `${component.rect.x - offsetX}px`;
+  element.style.top = `${component.rect.y - offsetY}px`;
+  element.style.width = `${component.rect.width}px`;
+  element.style.height = `${component.rect.height}px`;
+
+  if (component.background != null) {
+    const backgroundSize =
+      component.background.mode === "cover"
+        ? "cover"
+        : component.background.mode === "contain"
+          ? "contain"
+          : "100% 100%";
+    element.style.backgroundImage = `url("${component.background.imageUrl}")`;
+    element.style.backgroundPosition = "center";
+    element.style.backgroundRepeat = "no-repeat";
+    element.style.backgroundSize = backgroundSize;
+  }
+}
+
+function syncLayoutEditorHandleAttributes(element, layout, componentId, appState) {
+  const shouldEnable =
+    appState?.layoutEditor?.isOpen === true &&
+    appState.layoutEditor.selectedTargetId === "start-screen";
+
+  if (!shouldEnable) {
+    element.removeAttribute("data-layout-component-handle");
+    element.removeAttribute("data-layout-component-select");
+    element.removeAttribute("data-layout-live-label");
+    element.classList.remove("is-layout-editable", "is-selected-layout-component");
+    syncLayoutResizeHandle(element, componentId, false);
+    return;
+  }
+
+  const component = getLayoutComponent(layout, componentId);
+  element.dataset.layoutComponentHandle = componentId;
+  element.dataset.layoutComponentSelect = componentId;
+  element.dataset.layoutLiveLabel = component?.label ?? componentId;
+  element.classList.add("is-layout-editable");
+  element.classList.toggle(
+    "is-selected-layout-component",
+    appState.layoutEditor.selectedComponentId === componentId
+  );
+  syncLayoutResizeHandle(element, componentId, true);
+}
+
+function syncLayoutResizeHandle(element, componentId, shouldEnable) {
+  const existingHandle = element.querySelector(
+    ":scope > .c-main-ui-layout-resize-handle"
+  );
+
+  if (!shouldEnable) {
+    existingHandle?.remove();
+    return;
+  }
+
+  const handle = existingHandle ?? element.ownerDocument.createElement("span");
+  handle.className = "c-main-ui-layout-resize-handle";
+  handle.dataset.layoutComponentResize = componentId;
+  handle.dataset.layoutResizeAxis = "xy";
+  handle.setAttribute("aria-hidden", "true");
+
+  if (existingHandle == null) {
+    element.append(handle);
+  }
 }

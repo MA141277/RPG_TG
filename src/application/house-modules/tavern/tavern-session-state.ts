@@ -20,5 +20,7 @@ export function createInitialTavernSessionState(
     workPanelMode: "closed",
     overlay: null,
     currentWager: tavernDefaultWager,
+    currentGambleVariant: "short",
+    gambleSession: null,
   };
 }

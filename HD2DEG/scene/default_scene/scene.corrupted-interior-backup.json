@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "kind": "interior",
+  "id": "default_scene",
+  "title": "default_scene",
+  "savedAt": 1777440336457,
+  "nextBuildingId": 1,
+  "tilemapBaseDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAC9JREFUOE9jFJRQ/M9AJmAc1UxayI0GGGnhxTAiA4yBgQFnljRV4mU4fe8zzmAEAMPZF1fA4T1XAAAAAElFTkSuQmCC",
+  "tilemapDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAC9JREFUOE9jFJRQ/M9AJmAc1UxayI0GGGnhxTAiA4yBgQFnljRV4mU4fe8zzmAEAMPZF1fA4T1XAAAAAElFTkSuQmCC",
+  "objects": [],
+  "roadNetwork": null,
+  "spawn": {
+    "x": 7.984825041492787,
+    "y": 15.990952824972181
+  },
+  "bounds": {
+    "minX": 0,
+    "minY": 0,
+    "maxX": 14,
+    "maxY": 15,
+    "width": 15,
+    "height": 16
+  },
+  "entities": {
+    "npcs": []
+  },
+  "extensions": {
+    "sceneKind": "interior",
+    "parentSceneId": "default_scene",
+    "hostObjectId": 5,
+    "interiorLayout": {
+      "version": 1,
+      "kind": "house-room",
+      "width": 15,
+      "height": 15,
+      "door": {
+        "side": "south",
+        "x": 7,
+        "y": 15,
+        "entryX": 7,
+        "entryY": 14
+      },
+      "spawnX": 7.5,
+      "spawnY": 14.5,
+      "facilities": [
+        {
+          "id": "bed",
+          "x": 1,
+          "y": 2,
+          "w": 3,
+          "d": 2,
+          "h": 1.15,
+          "block": true,
+          "top": "#5f7289",
+          "sideColor": "#2b3847"
+        },
+        {
+          "id": "table",
+          "x": 10,
+          "y": 4,
+          "w": 2,
+          "d": 2,
+          "h": 0.85,
+          "block": true,
+          "top": "#9d744f",
+          "sideColor": "#4d3421"
+        }
+      ]
+    },
+    "returnWorldX": -184.53565939967035,
+    "returnWorldY": -149.99328173966833,
+    "itemAgent": {
+      "version": 1,
+      "resourceDrops": {},
+      "itemsByName": {}
+    }
+  },
+  "sceneMeta": {
+    "kind": "interior",
+    "parentSceneId": "default_scene",
+    "hostObjectId": 5,
+    "interiorLayout": {
+      "version": 1,
+      "kind": "house-room",
+      "width": 15,
+      "height": 15,
+      "door": {
+        "side": "south",
+        "x": 7,
+        "y": 15,
+        "entryX": 7,
+        "entryY": 14
+      },
+      "spawnX": 7.5,
+      "spawnY": 14.5,
+      "facilities": [
+        {
+          "id": "bed",
+          "x": 1,
+          "y": 2,
+          "w": 3,
+          "d": 2,
+          "h": 1.15,
+          "block": true,
+          "top": "#5f7289",
+          "sideColor": "#2b3847"
+        },
+        {
+          "id": "table",
+          "x": 10,
+          "y": 4,
+          "w": 2,
+          "d": 2,
+          "h": 0.85,
+          "block": true,
+          "top": "#9d744f",
+          "sideColor": "#4d3421"
+        }
+      ]
+    },
+    "returnWorldX": -184.53565939967035,
+    "returnWorldY": -149.99328173966833
+  },
+  "updatedAt": "2026-04-29T13:25:36+08:00"
+}

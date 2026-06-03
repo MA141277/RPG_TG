@@ -1,0 +1,8 @@
+{
+  "name": "world-item-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo-server": "node world-item-demo-server.mjs"
+  }
+}

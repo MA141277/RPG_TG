@@ -1,0 +1,19 @@
+{
+  "id": "npc_inn_bosslady",
+  "kind": "character",
+  "title": "npc_inn_bosslady",
+  "prompt": "中国风像素角色，酒肆老板娘掌柜，中年女性，精明爽利但亲和；盘发带发簪，深红与墨绿对襟襦裙，围腰，腰间钥匙串；手势利落。",
+  "tags": [
+    "npc:npc_inn_bosslady"
+  ],
+  "createdAt": "2026-04-28T17:13:24+08:00",
+  "updatedAt": "2026-04-28T17:13:24+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_inn_bosslady/sheet.png",
+    "preview": "character/npc_inn_bosslady/preview.png"
+  }
+}

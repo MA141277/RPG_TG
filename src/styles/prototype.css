@@ -102,6 +102,13 @@
 
 .p-layout-component {
   position: absolute;
+  overflow: visible;
+}
+
+.p-layout-component__content {
+  position: relative;
+  overflow: visible;
+  will-change: transform;
 }
 
 .p-global-status-bar__portrait {
@@ -1204,6 +1211,27 @@
 .c-kulan-city__leave-action:hover {
   transform: translateY(-1px);
   filter: brightness(1.06);
+}
+
+.c-kulan-city__three-d-action {
+  position: absolute;
+  right: 190px;
+  bottom: 16px;
+  z-index: 4;
+  width: 58px;
+  height: 44px;
+  border: 1px solid rgb(233 202 127 / 70%);
+  border-radius: 6px;
+  background: rgb(20 18 14 / 82%);
+  color: #f6ddb0;
+  font: 700 16px/1 var(--font-ui);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.c-kulan-city__three-d-action:hover {
+  border-color: rgb(246 220 148 / 90%);
+  color: #fff1c7;
 }
 
 .c-kulan-city__house-deck {

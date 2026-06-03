@@ -1,0 +1,30 @@
+{
+  "id": "中国风像素建筑-元末明初平民住宅1",
+  "kind": "building",
+  "title": "中国风像素建筑，元末明初平民住宅1",
+  "prompt": "中国风像素建筑，元末明初平民住宅1",
+  "tags": [
+    "house"
+  ],
+  "widthTiles": 15,
+  "drawRoad": true,
+  "facilityProfile": null,
+  "createdAt": "2026-06-01T13:04:36+08:00",
+  "updatedAt": "2026-06-01T13:04:36+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/中国风像素建筑-元末明初平民住宅1/front.png",
+    "side": "building/中国风像素建筑-元末明初平民住宅1/side.png",
+    "top": "building/中国风像素建筑-元末明初平民住宅1/top.png",
+    "preview": "building/中国风像素建筑-元末明初平民住宅1/preview.png",
+    "previewProcessed": "building/中国风像素建筑-元末明初平民住宅1/preview-processed.png"
+  }
+}

@@ -1,4 +1,5 @@
 import type { TavernWorkOffer } from "../tavern";
+import type { TavernGambleSession, TavernGambleVariant } from "../tavern-gambling";
 
 export type TavernAlertOverlayState = {
   type: "alert";
@@ -19,12 +20,31 @@ export type TavernDrinkConfirmOverlayState = {
 export type TavernGambleOverlayState = {
   type: "gamble";
   title: string;
+  variant: TavernGambleVariant;
+  variantLabel: string;
   wager: number;
   options: number[];
   incrementActionId: string;
   decrementActionId: string;
   confirmActionId: string;
   cancelActionId: string;
+};
+
+export type TavernGambleChoiceOverlayState = {
+  type: "gamble-choice";
+  title: string;
+  options: Array<{
+    id: TavernGambleVariant;
+    label: string;
+    description: string;
+    actionId: string;
+  }>;
+  cancelActionId: string;
+};
+
+export type TavernGambleTableOverlayState = {
+  type: "gamble-table";
+  session: TavernGambleSession;
 };
 
 export type TavernSubmitConfirmOverlayState = {
@@ -60,7 +80,9 @@ export type TavernResultOverlayState = {
 export type TavernOverlayState =
   | TavernAlertOverlayState
   | TavernDrinkConfirmOverlayState
+  | TavernGambleChoiceOverlayState
   | TavernGambleOverlayState
+  | TavernGambleTableOverlayState
   | TavernSubmitConfirmOverlayState
   | TavernQteOverlayState
   | TavernResultOverlayState
@@ -78,6 +100,8 @@ export type TavernSessionState = {
   workPanelMode: TavernWorkPanelMode;
   overlay: TavernOverlayState;
   currentWager: number;
+  currentGambleVariant: TavernGambleVariant;
+  gambleSession: TavernGambleSession | null;
   availableOffers: TavernWorkOffer[];
   acceptedOffers: TavernWorkOffer[];
 };

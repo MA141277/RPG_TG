@@ -1,0 +1,19 @@
+{
+  "id": "npc_yang_grandpa",
+  "kind": "character",
+  "title": "npc_yang_grandpa",
+  "prompt": "中国风像素角色，杨家老太爷，老年男性，严中带慈；深色长衫，拄拐或手背在后，白发半束；步态稳。",
+  "tags": [
+    "npc:npc_yang_grandpa"
+  ],
+  "createdAt": "2026-04-29T11:02:32+08:00",
+  "updatedAt": "2026-04-29T11:02:32+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_yang_grandpa/sheet.png",
+    "preview": "character/npc_yang_grandpa/preview.png"
+  }
+}
