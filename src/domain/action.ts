@@ -18,6 +18,18 @@ export type Effect =
   | { type: "set-flag"; key: string; value: boolean }
   | { type: "set-variable"; key: string; value: number | string }
   | { type: "change-variable"; key: string; delta: number }
+  | {
+      type: "patch-character";
+      characterId: CharacterId;
+      changes: {
+        title?: string | null;
+        occupation?: string | null;
+        biography?: string | null;
+        houseId?: string | null;
+        clanId?: string | null;
+        affiliationLabel?: string | null;
+      };
+    }
   | { type: "modify-character-stat"; characterId: CharacterId; stat: string; delta: number }
   | { type: "start-mission"; missionId: string }
   | { type: "finish-mission"; missionId: string };

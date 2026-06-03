@@ -589,11 +589,9 @@ export const prototypeCharacters: CharacterDefinition[] = [
     birthYear: 1535,
     deathYear: null,
     age: 32,
-    clanId: "clan.guo",
-    title: "亲兵",
-    occupation: "军中跑腿",
+    title: "流民",
+    occupation: "无依贫民",
     cityId: "city.kulan",
-    houseId: "home_001",
     portraitId: "portrait.player",
     portraitVariants: [
       {
@@ -638,7 +636,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
       gold: 120,
     },
     stamina: 100,
-    biography: "郭子兴帐下的新近亲兵，资历尚浅，先从跑腿与粮道杂务做起。",
+    biography: "家破之后流落濠州，眼下只是乱世里求活的一名饥民，还未在任何门下安身。",
     availableFunctions: [],
     skills: {
       ashigaru: 2,
@@ -1577,27 +1575,9 @@ function cloneCharacterDefinition(
 }
 
 export function createPrototypeCharactersForStoryStage(
-  storyStage: ZhuYuanzhangStoryStage
+  _storyStage: ZhuYuanzhangStoryStage
 ): CharacterDefinition[] {
-  const characterDefinitions = prototypeCharacters.map(cloneCharacterDefinition);
-  const playerCharacter = characterDefinitions.find(
-    (characterDefinition) => characterDefinition.id === "char.player"
-  );
-
-  if (playerCharacter == null) {
-    return characterDefinitions;
-  }
-
-  if (storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple) {
-    delete playerCharacter.clanId;
-    playerCharacter.title = "挂单僧";
-    playerCharacter.occupation = "皇觉寺僧人";
-    playerCharacter.houseId = "house.kulan.temple";
-    playerCharacter.biography =
-      "寺中饥荒未歇，你暂在皇觉寺挂单度日，一边听候住持训示，一边思量乱世中的出路。";
-  }
-
-  return characterDefinitions;
+  return prototypeCharacters.map(cloneCharacterDefinition);
 }
 
 const characterDefinitionsByHouseId = new Map<string, CharacterDefinition[]>();

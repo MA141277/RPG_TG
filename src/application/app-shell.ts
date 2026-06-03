@@ -1,4 +1,6 @@
 import type { CharacterDefinition } from "../domain/character";
+import type { CityBeggingMiniGameState } from "../domain/city-begging-minigame";
+import type { CityMenuState } from "./city-menu/city-menu";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type { GlobalHudLayout, LayoutEditorState } from "../domain/ui-layout";
 import type { GridCoordinate } from "./navigation/travel-to-coordinate";
@@ -44,6 +46,8 @@ export type AppState = {
     | null;
   modalState: AppModalState;
   locationDialogueState: AppLocationDialogueState;
+  beggingMiniGameState: CityBeggingMiniGameState | null;
+  cityMenuState: CityMenuState | null;
   cityDirectoryState:
     | {
         type: CityEntryDirectoryType;

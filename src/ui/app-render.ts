@@ -37,6 +37,7 @@ import {
 import { renderCharacterDetailView } from "./views/character/character-detail-view";
 import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderCityView } from "./views/city/city-view";
+import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
 import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
@@ -347,7 +348,10 @@ function renderCampaignTravelBanner(
   `;
 }
 
-function renderStage(input: AppRenderInput): string {
+function renderStage(
+  input: AppRenderInput,
+  playerCharacter: CharacterDefinition
+): string {
   const currentView = input.appState.gameState.ui.currentView;
   const activeHouse = getActiveHouseDefinition(input.appState, input.houseDefinitions);
   const cityDefinitions = input.cityDefinitions ?? [input.cityDefinition];
@@ -396,11 +400,12 @@ function renderStage(input: AppRenderInput): string {
         cityEntry.cityId === activeCityDefinition.id &&
         isCityEntryVisibleForStoryStage(input.appState.gameState, cityEntry)
     );
-
     return renderCityView(
       activeCityDefinition,
+      playerCharacter,
       activeCityHouseDefinitions,
       activeCityEntries,
+      input.appState.cityMenuState,
       input.appState.cityDirectoryState
     );
   }
@@ -488,8 +493,11 @@ export function renderApp(input: AppRenderInput): string {
   const isSceneActive =
     input.appState.gameState.ui.currentView === "scene" ||
     input.appState.gameState.scene.activeSceneId != null;
+  const isBeggingMiniGameActive = input.appState.beggingMiniGameState != null;
   const shouldShowGlobalHud =
-    input.appState.gameState.ui.currentView !== "house" && !isSceneActive;
+    input.appState.gameState.ui.currentView !== "house" &&
+    !isSceneActive &&
+    !isBeggingMiniGameActive;
   const locationText =
     input.cityNameById[input.appState.gameState.world.currentCityId] ??
     input.cityDefinition.name;
@@ -499,7 +507,7 @@ export function renderApp(input: AppRenderInput): string {
     null,
     locationText
   );
-  const stageMarkup = renderStage(input);
+  const stageMarkup = renderStage(input, playerCharacter);
 
   return `
     <div class="l-viewport">
@@ -528,6 +536,7 @@ export function renderApp(input: AppRenderInput): string {
               input.appState.modalState,
               input.cityPortraits
             )}
+            ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             ${renderOverlay(input, playerCharacter)}
             ${renderLayoutEditor(input.appState)}
           </div>

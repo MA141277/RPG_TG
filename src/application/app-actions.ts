@@ -1,4 +1,5 @@
 import type { CardDefinition } from "../domain/card";
+import type { CityMenuState } from "./city-menu/city-menu";
 import type {
   CityEntryDirectoryType,
   CityEntryOption,
@@ -51,6 +52,23 @@ export function openCityDirectory(
       targetHouseId: input.targetHouseId,
       options: input.options,
     },
+  };
+}
+
+export function openCityMenu(
+  appState: AppState,
+  cityMenuState: CityMenuState
+): AppState {
+  return {
+    ...appState,
+    cityMenuState,
+  };
+}
+
+export function closeCityMenu(appState: AppState): AppState {
+  return {
+    ...appState,
+    cityMenuState: null,
   };
 }
 

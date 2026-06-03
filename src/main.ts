@@ -14,8 +14,10 @@ import {
   updateLayoutEditorElementPosition,
 } from "./application/layout-editor/layout-editor-actions";
 import {
+  closeCityMenu,
   closeCityDirectory,
   equipValuable,
+  openCityMenu,
   openCityDirectory,
   selectCard,
   selectValuable,
@@ -25,6 +27,19 @@ import {
   updateOverlayView,
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
+import {
+  createCityBeggingMiniGameState,
+  getCityBeggingMiniGameCompletionResult,
+  getCityBeggingMiniGameStatus,
+  isCityBeggingMiniGamePlaying,
+  setCityBeggingMiniGamePointer,
+  updateCityBeggingMiniGameState,
+} from "./application/minigames/city-begging-minigame";
+import {
+  createCityMenuState,
+  isPlayerMonkIdentity,
+  type CityMenuPanelId,
+} from "./application/city-menu/city-menu";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import {
   createHouseRuntime,
@@ -38,7 +53,11 @@ import {
   getCurrentSceneAction,
   triggerStoryEvents,
 } from "./application/story/story-runtime";
-import { selectHouseEntryAccess } from "./application/story/story-stage-access";
+import {
+  isCityEntryVisibleForStoryStage,
+  isHouseVisibleForStoryStage,
+  selectHouseEntryAccess,
+} from "./application/story/story-stage-access";
 import { enterCity } from "./application/navigation/enter-city";
 import {
   travelToCoordinate,
@@ -73,6 +92,7 @@ import {
   zhuYuanzhangEarlyCharacters,
 } from "./content/zhu-yuanzhang-early-characters";
 import type { CharacterDefinition } from "./domain/character";
+import type { CityBeggingGameCompletionResult } from "./domain/city-begging-minigame";
 import type { HouseDefinition } from "./domain/house";
 import type {
   CardLibraryFilter,
@@ -101,12 +121,21 @@ import {
   setCampaignTerrainCamera,
   syncCampaignTerrainWebGl,
 } from "./ui/views/map/campaign-terrain-webgl";
+import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 
 const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;
 const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = 40;
 const MAP_DEBUG_SCALE_STEP = 0.2;
+
+declare global {
+  interface Window {
+    onBeggingGameComplete?: (
+      result: CityBeggingGameCompletionResult
+    ) => void;
+  }
+}
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
 const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
 const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
@@ -261,6 +290,7 @@ let layoutEditorDragState:
     }
   | null = null;
 let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
+let cityBeggingMiniGameFrameId: number | null = null;
 let campaignTravelRequestId = 0;
 const mapAutoAdvanceHandles: Record<string, number> = {};
 
@@ -331,6 +361,8 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
     uiLayouts: {
@@ -372,6 +404,198 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
   };
 
   return nextAppState;
+}
+
+function getCurrentPlayerCharacter(): CharacterDefinition | null {
+  return (
+    appState.characterDefinitions.find(
+      (characterDefinition) => characterDefinition.id === currentPlayerCharacterId
+    ) ?? null
+  );
+}
+
+function getCurrentCityUiContext(): {
+  cityDefinition: (typeof cityDefinitions)[number];
+  houseDefinitions: HouseDefinition[];
+  cityEntries: typeof prototypeCityEntries;
+  cityNpcPoolDefinition: (typeof prototypeCityNpcPools)[number] | null;
+} | null {
+  const cityDefinition =
+    cityDefinitionById[appState.gameState.world.currentCityId] ?? null;
+
+  if (cityDefinition == null) {
+    return null;
+  }
+
+  const cityHouseIds = new Set(cityDefinition.houseIds);
+  const houseDefinitions = prototypeHouses.filter((houseDefinition) => {
+    if (
+      !(
+        houseDefinition.cityId === cityDefinition.id ||
+        cityHouseIds.has(houseDefinition.id)
+      )
+    ) {
+      return false;
+    }
+
+    return isHouseVisibleForStoryStage(
+      appState.gameState,
+      appState.characterDefinitions,
+      houseDefinition
+    );
+  });
+  const cityEntries = prototypeCityEntries.filter(
+    (cityEntry) =>
+      cityEntry.cityId === cityDefinition.id &&
+      isCityEntryVisibleForStoryStage(appState.gameState, cityEntry)
+  );
+  const cityNpcPoolDefinition =
+    prototypeCityNpcPools.find(
+      (poolDefinition) => poolDefinition.cityId === cityDefinition.id
+    ) ?? null;
+
+  return {
+    cityDefinition,
+    houseDefinitions,
+    cityEntries,
+    cityNpcPoolDefinition,
+  };
+}
+
+function openCityMenuPanel(panelId: CityMenuPanelId): void {
+  const playerCharacter = getCurrentPlayerCharacter();
+  const cityContext = getCurrentCityUiContext();
+
+  if (playerCharacter == null || cityContext == null) {
+    return;
+  }
+
+  if (panelId === "begging" && !isPlayerMonkIdentity(playerCharacter)) {
+    return;
+  }
+
+  appState = openCityMenu(
+    closeCityDirectory(appState),
+    createCityMenuState({
+      panelId,
+      cityDefinition: cityContext.cityDefinition,
+      houseDefinitions: cityContext.houseDefinitions,
+      cityEntries: cityContext.cityEntries,
+      cityNpcPoolDefinition: cityContext.cityNpcPoolDefinition,
+      calendar: appState.gameState.calendar,
+    })
+  );
+  renderApp();
+}
+
+function stopCityBeggingMiniGameLoop(): void {
+  if (cityBeggingMiniGameFrameId != null) {
+    window.cancelAnimationFrame(cityBeggingMiniGameFrameId);
+  }
+  cityBeggingMiniGameFrameId = null;
+}
+
+function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
+  window.onBeggingGameComplete?.(result);
+}
+
+function confirmBeggingMiniGameResult(): void {
+  const result = appState.beggingMiniGameState;
+  const completionResult = getCityBeggingMiniGameCompletionResult(result);
+  if (completionResult == null) {
+    return;
+  }
+
+  onBeggingGameComplete(completionResult);
+  stopCityBeggingMiniGameLoop();
+  appState = {
+    ...appState,
+    beggingMiniGameState: null,
+  };
+  renderApp();
+}
+
+function syncCityBeggingMiniGamePointer(clientX: number): void {
+  const currentState = appState.beggingMiniGameState;
+  if (currentState == null || !isCityBeggingMiniGamePlaying(currentState)) {
+    return;
+  }
+
+  const canvas = appRoot.querySelector<HTMLCanvasElement>(
+    "[data-begging-game-canvas]"
+  );
+  if (canvas == null) {
+    return;
+  }
+
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0) {
+    return;
+  }
+
+  const normalizedX = (clientX - rect.left) / rect.width;
+  const pointerX = normalizedX * canvas.width;
+  appState = {
+    ...appState,
+    beggingMiniGameState: setCityBeggingMiniGamePointer(
+      currentState,
+      pointerX
+    ),
+  };
+  syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
+}
+
+function tickCityBeggingMiniGame(timestamp: number): void {
+  cityBeggingMiniGameFrameId = null;
+  const currentState = appState.beggingMiniGameState;
+  if (currentState == null || !isCityBeggingMiniGamePlaying(currentState)) {
+    return;
+  }
+
+  const nextState = updateCityBeggingMiniGameState(currentState, timestamp);
+  const shouldRerender =
+    getCityBeggingMiniGameStatus(nextState) !==
+    getCityBeggingMiniGameStatus(currentState);
+  appState = {
+    ...appState,
+    beggingMiniGameState: nextState,
+  };
+
+  if (shouldRerender) {
+    renderApp();
+    return;
+  }
+
+  syncCityBeggingMiniGameOverlay(appRoot, nextState);
+  cityBeggingMiniGameFrameId = window.requestAnimationFrame(
+    tickCityBeggingMiniGame
+  );
+}
+
+function startCityBeggingMiniGameLoop(): void {
+  if (cityBeggingMiniGameFrameId != null) {
+    return;
+  }
+
+  cityBeggingMiniGameFrameId = window.requestAnimationFrame(
+    tickCityBeggingMiniGame
+  );
+}
+
+function openBeggingMiniGame(): void {
+  const playerCharacter = getCurrentPlayerCharacter();
+  if (playerCharacter == null || !isPlayerMonkIdentity(playerCharacter)) {
+    return;
+  }
+
+  stopCityBeggingMiniGameLoop();
+  appState = {
+    ...closeCityMenu(closeCityDirectory(appState)),
+    locationDialogueState: null,
+    beggingMiniGameState: createCityBeggingMiniGameState(performance.now()),
+  };
+  renderApp();
+  startCityBeggingMiniGameLoop();
 }
 
 function createHouseRuntimeInstance(): HouseRuntime {
@@ -477,6 +701,7 @@ function startMapAutoAdvance(input: {
     ...appState,
     modalState: null,
     locationDialogueState: null,
+    cityMenuState: null,
     cityDirectoryState: null,
     campaignTravelState: null,
     autoAdvanceState: {
@@ -588,6 +813,7 @@ function setGameVisibility(isVisible: boolean): void {
 
 function resetMainGameRuntime(): void {
   houseRuntime.clearAllHouseIntervals();
+  stopCityBeggingMiniGameLoop();
 
   if (initialCampaignMapDebugAnimationFrame != null) {
     window.cancelAnimationFrame(initialCampaignMapDebugAnimationFrame);
@@ -837,6 +1063,11 @@ appElement.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  if (isCityBeggingMiniGamePlaying(appState.beggingMiniGameState)) {
+    syncCityBeggingMiniGamePointer(event.clientX);
+    return;
+  }
+
   const pointerHouseActionButton = targetElement.closest<HTMLElement>(
     "[data-house-action]"
   );
@@ -930,6 +1161,11 @@ appElement.addEventListener("pointerdown", (event) => {
 });
 
 appElement.addEventListener("pointermove", (event) => {
+  if (isCityBeggingMiniGamePlaying(appState.beggingMiniGameState)) {
+    syncCityBeggingMiniGamePointer(event.clientX);
+    return;
+  }
+
   if (
     layoutEditorDragState != null &&
     layoutEditorDragState.pointerId === event.pointerId
@@ -996,6 +1232,18 @@ appElement.addEventListener("click", (event) => {
 
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const beggingGameConfirmButton = targetElement.closest<HTMLElement>(
+    "[data-action='confirm-begging-game-result']"
+  );
+  if (beggingGameConfirmButton != null) {
+    confirmBeggingMiniGameResult();
+    return;
+  }
+
+  if (targetElement.closest(".c-begging-game") != null) {
     return;
   }
 
@@ -1161,6 +1409,15 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const closeCityMenuButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-city-menu']"
+  );
+  if (closeCityMenuButton != null) {
+    appState = closeCityMenu(appState);
+    renderApp();
+    return;
+  }
+
   const closeLayoutEditorButton = targetElement.closest<HTMLElement>(
     "[data-action='close-layout-editor']"
   );
@@ -1208,8 +1465,11 @@ appElement.addEventListener("click", (event) => {
   );
   if (leaveCityButton != null) {
     houseRuntime.clearAllHouseIntervals();
+    stopCityBeggingMiniGameLoop();
     appState = {
       ...appState,
+      beggingMiniGameState: null,
+      cityMenuState: null,
       cityDirectoryState: null,
       locationDialogueState: null,
       gameState: {
@@ -1230,10 +1490,27 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const cityMenuButton = targetElement.closest<HTMLElement>("[data-city-menu-open]");
+  if (cityMenuButton != null) {
+    const panelId = cityMenuButton.dataset.cityMenuOpen as
+      | CityMenuPanelId
+      | undefined;
+
+    if (panelId != null) {
+      if (panelId === "begging") {
+        openBeggingMiniGame();
+      } else {
+        openCityMenuPanel(panelId);
+      }
+    }
+    return;
+  }
+
   const cityEntryButton = targetElement.closest<HTMLElement>(
     "[data-city-entry-id]"
   );
   if (cityEntryButton != null) {
+    appState = closeCityMenu(appState);
     const cityEntryId = cityEntryButton.dataset.cityEntryId;
     const cityEntry = prototypeCityEntries.find(
       (entryDefinition) =>
@@ -1284,7 +1561,7 @@ appElement.addEventListener("click", (event) => {
         }
 
         appState = {
-          ...closeCityDirectory(appState),
+          ...closeCityMenu(closeCityDirectory(appState)),
           gameState: {
           ...appState.gameState,
           runtime: {
@@ -1352,6 +1629,7 @@ appElement.addEventListener("click", (event) => {
   if (houseButton != null) {
     const houseId = houseButton.dataset.houseId;
     if (houseId != null) {
+      appState = closeCityMenu(appState);
       const houseDefinition = prototypeHouses.find(
         (candidateHouse) => candidateHouse.id === houseId
       );
@@ -1460,6 +1738,7 @@ function handleModalConfirm() {
       },
       modalState: null,
       locationDialogueState: null,
+      cityMenuState: null,
     };
     renderApp();
     void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
@@ -1472,6 +1751,7 @@ function handleModalConfirm() {
         campaignTravelState: null,
         modalState: shouldEnterCity ? pendingEnterCityState : null,
         locationDialogueState: null,
+        cityMenuState: null,
       };
       renderApp();
     });
@@ -1484,6 +1764,8 @@ function handleModalConfirm() {
     gameState: enterCity(appState.gameState, appState.modalState.cityId),
     modalState: null,
     locationDialogueState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
   };
   renderApp();
 }
@@ -1517,6 +1799,7 @@ function cancelCampaignTravel(): void {
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
+    cityMenuState: null,
     campaignActorState: {
       ...appState.campaignActorState,
       isMoving: false,
@@ -1555,6 +1838,7 @@ function startCampaignTravel(
     },
     modalState: null,
     locationDialogueState: null,
+    cityMenuState: null,
   };
   renderApp();
 
@@ -1573,6 +1857,7 @@ function startCampaignTravel(
       campaignTravelState: null,
       modalState: shouldEnterCity ? pendingEnterCityState : null,
       locationDialogueState: null,
+      cityMenuState: null,
     };
     renderApp();
   });
@@ -1780,6 +2065,7 @@ function renderApp() {
   syncCampaignMapDebugView();
   syncMapIntroOverlay();
   syncCampaignTerrainWebGl(appRoot);
+  syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
 }
 
 function syncPassiveStoryTriggers(): void {

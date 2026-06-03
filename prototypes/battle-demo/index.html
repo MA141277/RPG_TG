@@ -556,6 +556,8 @@
     const PLAYER_DEPLOY_ROWS = [7, 8, 9];
     const ENEMY_DEPLOY_ROWS = [0, 1, 2];
     const DEFENSE_ZONE_ROWS = [4, 5];
+    const DEFENSE_HOLD_REQUIRED = 5;
+    const DEFENSE_PLAYER_UNITS_REQUIRED = 2;
     const RIVER_DAMAGE_MULT = 1.4;
     const FOREST_LOCK_RANGE = 3;
 
@@ -598,7 +600,7 @@
     const OBJECTIVES = [
       { id: 'annihilation', name: '歼灭战', friendlyTitle: '击溃敌军', friendlyDesc: '消灭或击溃全部敌军即可获胜' },
       { id: 'strongpoint', name: '据点战', friendlyTitle: '占领据点', friendlyDesc: '占领全部战略据点即可获胜' },
-      { id: 'defense', name: '守卫战', friendlyTitle: '守卫阵地', friendlyDesc: '在中央区域坚守3回合即可获胜' },
+      { id: 'defense', name: '守卫战', friendlyTitle: '守卫阵地', friendlyDesc: '守住高亮中央防区，连续5回合压住敌军即可获胜' },
       { id: 'assassination', name: '斩首战', friendlyTitle: '阵斩敌将', friendlyDesc: '击败敌军主将即可获胜' },
       { id: 'supplyTransport', name: '粮道运输战', friendlyTitle: '护送粮车', friendlyDesc: '占领粮仓后护送粮车回营，或击溃敌军' },
     ];
@@ -839,6 +841,18 @@
 
     function isAssassinationBattle() {
       return battleObjective?.id === 'assassination';
+    }
+
+    function getDefenseZoneLabel() {
+      return `中央防区（第 ${DEFENSE_ZONE_ROWS[0] + 1}-${DEFENSE_ZONE_ROWS[DEFENSE_ZONE_ROWS.length - 1] + 1} 行高亮区域）`;
+    }
+
+    function getObjectiveDescription(objective) {
+      if (!objective) return '';
+      if (objective.id === 'defense') {
+        return `${getDefenseZoneLabel()}内至少保有 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队，且敌军不得踏入，连续守住 ${DEFENSE_HOLD_REQUIRED} 回合。`;
+      }
+      return objective.friendlyDesc;
     }
 
     function getCart(side) {
@@ -1324,8 +1338,10 @@
       if (!battleObjective || phase === 'deploy') return '';
       const obj = battleObjective;
       if (obj.id === 'defense') {
-        const remain = Math.max(0, 3 - defenseHoldTurns);
-        return `守卫进度 ${defenseHoldTurns}/3 · 还需${remain}回合`;
+        const defenders = activeUnits('player').filter(u => DEFENSE_ZONE_ROWS.includes(u.y)).length;
+        const intruders = activeUnits('enemy').filter(u => DEFENSE_ZONE_ROWS.includes(u.y)).length;
+        const remain = Math.max(0, DEFENSE_HOLD_REQUIRED - defenseHoldTurns);
+        return `${getDefenseZoneLabel()} · 守卫进度 ${defenseHoldTurns}/${DEFENSE_HOLD_REQUIRED} · 我军 ${defenders}/${DEFENSE_PLAYER_UNITS_REQUIRED} · 敌军 ${intruders} · 还需${remain}回合`;
       }
       if (obj.id === 'strongpoint') {
         const owned = strategicPoints.filter(p => p.owner === 'player').length;
@@ -1382,7 +1398,7 @@
     function showObjectiveIntro() {
       if (!battleObjective) return;
       document.getElementById('objective-intro-title').textContent = `【${battleObjective.friendlyTitle}】`;
-      document.getElementById('objective-intro-desc').textContent = battleObjective.friendlyDesc;
+      document.getElementById('objective-intro-desc').textContent = getObjectiveDescription(battleObjective);
       document.getElementById('objective-intro').classList.remove('hidden');
     }
 
@@ -1804,8 +1820,9 @@
     }
 
     function playerHoldsDefenseZone() {
-      const zoneRows = DEFENSE_ZONE_ROWS;
-      return livingUnits('player').some(u => zoneRows.includes(u.y) && !isRout(u));
+      const playerDefenders = activeUnits('player').filter(u => DEFENSE_ZONE_ROWS.includes(u.y));
+      const enemyIntruders = activeUnits('enemy').filter(u => DEFENSE_ZONE_ROWS.includes(u.y));
+      return playerDefenders.length >= DEFENSE_PLAYER_UNITS_REQUIRED && enemyIntruders.length === 0;
     }
 
     function checkObjectiveWin() {
@@ -1826,8 +1843,8 @@
         const cmd = getCommander('enemy', true);
         if (cmd && cmd.soldiers <= 0) return { win: true, msg: '敌军主将已阵斩！' };
       }
-      if (obj.id === 'defense' && defenseHoldTurns >= 3) {
-        return { win: true, msg: '成功守住中央区域3回合！' };
+      if (obj.id === 'defense' && defenseHoldTurns >= DEFENSE_HOLD_REQUIRED) {
+        return { win: true, msg: `成功守住${getDefenseZoneLabel()} ${DEFENSE_HOLD_REQUIRED} 回合！` };
       }
       return null;
     }
@@ -1842,7 +1859,7 @@
       if (livingUnits('player').length === 0) return { win: false, msg: '我军全灭……' };
       if (activeUnits('player').length === 0) return { win: false, msg: '我军全部溃逃……' };
       if (battleObjective?.id === 'defense' && turnCounter > 0 && !playerHoldsDefenseZone()) {
-        return { win: false, msg: '中央区域失守……' };
+        return { win: false, msg: `${getDefenseZoneLabel()}失守……` };
       }
       return null;
     }
@@ -1996,7 +2013,7 @@
       if (battleObjective?.id === 'defense' && playerHoldsDefenseZone()) {
         defenseHoldTurns++;
         updateObjectiveBar();
-        log(`守卫进度 ${defenseHoldTurns}/3`, 'system');
+        log(`守卫进度 ${defenseHoldTurns}/${DEFENSE_HOLD_REQUIRED} · ${getDefenseZoneLabel()}`, 'system');
       }
       recoverMorale('player');
       applyStrategicTurnEffects('player');
@@ -2199,14 +2216,20 @@
         badge.className = 'phase-badge';
         turnInfo.textContent = isSupplyTransportBattle()
           ? '占领粮仓 → 护送粮车回营 · 可拦截敌军粮车'
-          : '拖至底部三排 · 观察据点与地形';
+          : battleObjective?.id === 'defense'
+            ? `部署后前往${getDefenseZoneLabel()}`
+            : '拖至底部三排 · 观察据点与地形';
         btnStart.disabled = false;
         btnEnd.disabled = true;
         btnWait.disabled = true;
       } else if (phase === 'battle') {
         badge.textContent = turn === 'player' ? '我方回合' : '敌方回合';
         badge.className = 'phase-badge ' + turn;
-        turnInfo.textContent = turn === 'player' ? '移动、占点、维持士气' : '敌方行动中…';
+        turnInfo.textContent = turn === 'player'
+          ? battleObjective?.id === 'defense'
+            ? `守住${getDefenseZoneLabel()} · 至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 人驻守且敌军不得进入`
+            : '移动、占点、维持士气'
+          : '敌方行动中…';
         btnStart.disabled = true;
         btnEnd.disabled = turn !== 'player';
         btnWait.disabled = turn !== 'player' || !selectedUnit;
@@ -2386,6 +2409,9 @@
       document.getElementById('overlay').classList.add('hidden');
       document.getElementById('recap-box').classList.add('hidden');
       log('部署部队，观察地图上的据点与地形', 'system');
+      if (battleObjective?.id === 'defense') {
+        log(`本局需守住${getDefenseZoneLabel()}：至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队驻守，且敌军不得踏入，连续 ${DEFENSE_HOLD_REQUIRED} 回合。`, 'system');
+      }
       updateUI();
     }
 

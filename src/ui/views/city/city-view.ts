@@ -1,3 +1,10 @@
+import {
+  createCityCultureViewModel,
+  createCityManagementViewModel,
+  isPlayerMonkIdentity,
+  type CityMenuState,
+} from "../../../application/city-menu/city-menu";
+import type { CharacterDefinition } from "../../../domain/character";
 import type { CityDefinition } from "../../../domain/city";
 import type {
   CityEntryDefinition,
@@ -91,10 +98,258 @@ function renderCityDirectory(
   `;
 }
 
+function renderCityMenuButtons(playerCharacter: CharacterDefinition): string {
+  const baseButtons = [
+    { id: "culture", label: "风土人情" },
+    { id: "intel", label: "情报" },
+    { id: "locations", label: "地点" },
+    { id: "management", label: "管理" },
+  ];
+  const buttons = isPlayerMonkIdentity(playerCharacter)
+    ? [...baseButtons, { id: "begging", label: "化缘" }]
+    : baseButtons;
+
+  return `
+    <div class="c-city-menu" aria-label="城市功能菜单">
+      ${buttons
+        .map(
+          (button) => `
+            <button
+              type="button"
+              class="c-city-menu__button${button.id === "begging" ? " c-city-menu__button--special" : ""}"
+              data-city-menu-open="${button.id}"
+            >
+              ${button.label}
+            </button>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderLocationOption(
+  input:
+    | {
+        type: "entry";
+        cityEntry: CityEntryDefinition;
+      }
+    | {
+        type: "house";
+        houseDefinition: HouseDefinition;
+      }
+): string {
+  if (input.type === "entry") {
+    return `
+      <button
+        type="button"
+        class="c-city-menu-panel__location"
+        data-city-entry-id="${input.cityEntry.id}"
+      >
+        <strong class="c-city-menu-panel__location-title">${input.cityEntry.name}</strong>
+        <span class="c-city-menu-panel__location-subtitle">特殊地点入口</span>
+      </button>
+    `;
+  }
+
+  return `
+    <button
+      type="button"
+      class="c-city-menu-panel__location"
+      data-house-id="${input.houseDefinition.id}"
+    >
+      <strong class="c-city-menu-panel__location-title">${input.houseDefinition.name}</strong>
+      <span class="c-city-menu-panel__location-subtitle">进入该 House</span>
+    </button>
+  `;
+}
+
+function renderLocationsDeckView(input: {
+  cityDefinition: CityDefinition;
+  houseDefinitions: HouseDefinition[];
+  cityEntries: CityEntryDefinition[];
+}): string {
+  const visibleHouseDefinitions = input.houseDefinitions.filter(
+    (houseDefinition) => houseDefinition.moduleId !== "leader-residence"
+  );
+
+  return `
+    <div class="c-city-locations-view" role="dialog" aria-modal="true" aria-label="${input.cityDefinition.name}地点">
+      <div class="c-city-locations-view__backdrop" data-action="close-city-menu"></div>
+      <div class="c-city-locations-view__chrome">
+        <div class="c-city-locations-view__header">
+          <div>
+            <p class="c-city-locations-view__eyebrow">地点</p>
+            <h2 class="c-city-locations-view__title">${input.cityDefinition.name}地点</h2>
+          </div>
+          <button type="button" class="c-city-locations-view__close" data-action="close-city-menu">
+            返回菜单
+          </button>
+        </div>
+        <div class="c-city-locations-view__deck" aria-label="城内地点卡片">
+          ${input.cityEntries
+            .map(
+              (cityEntry) => `
+                <button
+                  type="button"
+                  class="c-kulan-house-card c-kulan-house-card--leader-residence"
+                  data-city-entry-id="${cityEntry.id}"
+                  aria-label="打开${cityEntry.name}"
+                >
+                  <span class="c-kulan-house-card__art" aria-hidden="true"></span>
+                </button>
+              `
+            )
+            .join("")}
+          ${visibleHouseDefinitions
+            .map(
+              (houseDefinition) => `
+                <button
+                  type="button"
+                  class="c-kulan-house-card ${getHouseArtworkClass(houseDefinition)}"
+                  data-house-id="${houseDefinition.id}"
+                  aria-label="进入${houseDefinition.name}"
+                >
+                  <span class="c-kulan-house-card__art" aria-hidden="true"></span>
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+        <button
+          type="button"
+          class="c-city-locations-view__return-action"
+          data-action="close-city-menu"
+        >
+          返回
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCityMenuPanel(input: {
+  cityDefinition: CityDefinition;
+  houseDefinitions: HouseDefinition[];
+  cityEntries: CityEntryDefinition[];
+  cityMenuState: CityMenuState | null;
+}): string {
+  if (input.cityMenuState == null) {
+    return "";
+  }
+
+  const cultureViewModel = createCityCultureViewModel(input.cityDefinition);
+  const managementViewModel = createCityManagementViewModel();
+  let eyebrow = "城市菜单";
+  let title = "城市功能";
+  let bodyMarkup = "";
+
+  if (input.cityMenuState.panelId === "locations") {
+    return renderLocationsDeckView(input);
+  }
+
+  switch (input.cityMenuState.panelId) {
+    case "culture":
+      eyebrow = "城市信息面板";
+      title = cultureViewModel.cityName;
+      bodyMarkup = `
+        <section class="c-city-menu-panel__section">
+          <h3 class="c-city-menu-panel__section-title">人文描述</h3>
+          <p class="c-city-menu-panel__paragraph">${cultureViewModel.description}</p>
+        </section>
+        <section class="c-city-menu-panel__section">
+          <h3 class="c-city-menu-panel__section-title">经济状况</h3>
+          <div class="c-city-menu-panel__economy">
+            <strong class="c-city-menu-panel__economy-level">${cultureViewModel.economyLevel}</strong>
+            <span class="c-city-menu-panel__economy-value">economyValue: ${cultureViewModel.economyValue}</span>
+          </div>
+        </section>
+        <section class="c-city-menu-panel__section">
+          <h3 class="c-city-menu-panel__section-title">预留字段</h3>
+          <dl class="c-city-menu-panel__meta">
+            <div><dt>population</dt><dd>${cultureViewModel.population ?? "待接入"}</dd></div>
+            <div><dt>security</dt><dd>${cultureViewModel.security ?? "待接入"}</dd></div>
+          </dl>
+        </section>
+      `;
+      break;
+    case "intel":
+      eyebrow = "城市情报面板";
+      title = `${input.cityDefinition.name}情报`;
+      bodyMarkup = `
+        <section class="c-city-menu-panel__section">
+          <p class="c-city-menu-panel__hint">当前版本使用模拟情报，后续将接入真实 House、NPC 与事件内容。</p>
+          <div class="c-city-menu-panel__intel-list">
+            ${input.cityMenuState.intelItems
+              .map(
+                (intelItem) => `
+                  <article class="c-city-menu-panel__intel-item">
+                    <p>${intelItem}</p>
+                  </article>
+                `
+              )
+              .join("")}
+          </div>
+        </section>
+      `;
+      break;
+    case "management":
+      eyebrow = "管理面板";
+      title = "城市管理";
+      bodyMarkup = `
+        <section class="c-city-menu-panel__section">
+          <div class="c-city-menu-panel__lock">
+            <strong class="c-city-menu-panel__lock-title">需要成为城主或势力领袖后解锁。</strong>
+            <p class="c-city-menu-panel__hint">当前版本仅保留接口，不实现建设、升级、税率与治安功能。</p>
+          </div>
+          <dl class="c-city-menu-panel__meta">
+            <div><dt>canManageTown</dt><dd>${managementViewModel.canManageTown ? "true" : "false"}</dd></div>
+            <div><dt>townLevel</dt><dd>${managementViewModel.townLevel ?? "待接入"}</dd></div>
+            <div><dt>buildingList</dt><dd>${managementViewModel.buildingList.length === 0 ? "待接入" : managementViewModel.buildingList.join("、")}</dd></div>
+            <div><dt>taxRate</dt><dd>${managementViewModel.taxRate ?? "待接入"}</dd></div>
+          </dl>
+        </section>
+      `;
+      break;
+    case "begging":
+      eyebrow = "化缘";
+      title = "化缘小游戏";
+      bodyMarkup = `
+        <section class="c-city-menu-panel__section">
+          <div class="c-city-menu-panel__lock">
+            <strong class="c-city-menu-panel__lock-title">化缘小游戏开发中</strong>
+            <p class="c-city-menu-panel__hint">当前仅保留入口接口，后续接入正式小游戏。</p>
+          </div>
+        </section>
+      `;
+      break;
+  }
+
+  return `
+    <div class="c-city-directory c-city-menu-panel" role="dialog" aria-modal="true">
+      <div class="c-city-directory__backdrop" data-action="close-city-menu"></div>
+      <div class="c-city-directory__panel c-city-menu-panel__panel">
+        <div class="c-city-directory__header">
+          <div>
+            <p class="c-city-directory__eyebrow">${eyebrow}</p>
+            <h2 class="c-city-directory__title">${title}</h2>
+          </div>
+          <button type="button" class="c-city-directory__close" data-action="close-city-menu">
+            关闭
+          </button>
+        </div>
+        ${bodyMarkup}
+      </div>
+    </div>
+  `;
+}
+
 export function renderCityView(
-  _cityDefinition: CityDefinition,
+  cityDefinition: CityDefinition,
+  playerCharacter: CharacterDefinition,
   houseDefinitions: HouseDefinition[],
   cityEntries: CityEntryDefinition[],
+  cityMenuState: CityMenuState | null,
   cityDirectoryState:
     | {
         title: string;
@@ -102,10 +357,6 @@ export function renderCityView(
       }
     | null
 ): string {
-  const visibleHouseDefinitions = houseDefinitions.filter(
-    (houseDefinition) => houseDefinition.moduleId !== "leader-residence"
-  );
-
   return `
     <section class="view-city view-city--kulan">
       <div class="c-kulan-city">
@@ -124,38 +375,15 @@ export function renderCityView(
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
               返回地图
             </button>
-            <div class="c-kulan-city__house-deck" aria-label="城内地点">
-              ${cityEntries
-                .map(
-                  (cityEntry) => `
-                    <button
-                      type="button"
-                      class="c-kulan-house-card c-kulan-house-card--leader-residence"
-                      data-city-entry-id="${cityEntry.id}"
-                      aria-label="打开${cityEntry.name}"
-                    >
-                      <span class="c-kulan-house-card__art" aria-hidden="true"></span>
-                    </button>
-                  `
-                )
-                .join("")}
-              ${visibleHouseDefinitions
-                .map(
-                  (houseDefinition) => `
-                    <button
-                      type="button"
-                      class="c-kulan-house-card ${getHouseArtworkClass(houseDefinition)}"
-                      data-house-id="${houseDefinition.id}"
-                      aria-label="进入${houseDefinition.name}"
-                    >
-                      <span class="c-kulan-house-card__art" aria-hidden="true"></span>
-                    </button>
-                  `
-                )
-                .join("")}
-            </div>
+            ${renderCityMenuButtons(playerCharacter)}
           </div>
         </div>
+        ${renderCityMenuPanel({
+          cityDefinition,
+          houseDefinitions,
+          cityEntries,
+          cityMenuState,
+        })}
         ${renderCityDirectory(cityDirectoryState)}
       </div>
     </section>
