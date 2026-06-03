@@ -1,22 +1,22 @@
 .view-house-grain-shop {
-  --grain-shop-scene-bg: url("../../sliced_ui_assets/lianghang.png");
-  --grain-shop-shopkeeper-portrait: url("../../sliced_ui_assets/zhanggui.png");
-  --grain-shop-shopkeeper-avatar: url("../../sliced_ui_assets/zhangguitouxiang.png");
-  --grain-shop-accounting-title: url("../../算术UI/material-202605291354-006.png");
-  --grain-shop-accounting-hud: url("../../算术UI/material-202605291354-005.png");
-  --grain-shop-accounting-board: url("../../算术UI/material-202605291352-002.png");
-  --grain-shop-accounting-side: url("../../算术UI/material-202605291352-003.png");
-  --grain-shop-accounting-scroll: url("../../算术UI/material-202605291352-001.png");
-  --grain-shop-accounting-scroll-full: url("../../算术UI/material-202605291354-001.png");
-  --grain-shop-accounting-badge: url("../../算术UI/material-202605291354-013.png");
-  --grain-shop-accounting-badge-short: url("../../算术UI/material-202605291352-012.png");
-  --grain-shop-accounting-side-title: url("../../算术UI/material-202605291354-008.png");
-  --grain-shop-accounting-side-title-blank: url("../../算术UI/material-202605291354-009.png");
-  --grain-shop-accounting-confirm: url("../../算术UI/material-202605291354-014.png");
-  --grain-shop-accounting-correct: url("../../算术UI/material-202605291354-011.png");
-  --grain-shop-accounting-wrong: url("../../算术UI/material-202605291354-012.png");
-  --grain-shop-accounting-divider: url("../../算术UI/material-202605291354-019.png");
-  --grain-shop-accounting-divider-alt: url("../../算术UI/material-202605291354-020.png");
+  --grain-shop-scene-bg: url("../../ui/background/lianghang.png");
+  --grain-shop-shopkeeper-portrait: url("../../ui/npc/zhanggui.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui/npc/zhangguitouxiang.png");
+  --grain-shop-accounting-title: url("../../ui/算术UI/material-202605291354-006.png");
+  --grain-shop-accounting-hud: url("../../ui/算术UI/material-202605291354-005.png");
+  --grain-shop-accounting-board: url("../../ui/算术UI/material-202605291352-002.png");
+  --grain-shop-accounting-side: url("../../ui/算术UI/material-202605291352-003.png");
+  --grain-shop-accounting-scroll: url("../../ui/算术UI/material-202605291352-001.png");
+  --grain-shop-accounting-scroll-full: url("../../ui/算术UI/material-202605291354-001.png");
+  --grain-shop-accounting-badge: url("../../ui/算术UI/material-202605291354-013.png");
+  --grain-shop-accounting-badge-short: url("../../ui/算术UI/material-202605291352-012.png");
+  --grain-shop-accounting-side-title: url("../../ui/算术UI/material-202605291354-008.png");
+  --grain-shop-accounting-side-title-blank: url("../../ui/算术UI/material-202605291354-009.png");
+  --grain-shop-accounting-confirm: url("../../ui/算术UI/material-202605291354-014.png");
+  --grain-shop-accounting-correct: url("../../ui/算术UI/material-202605291354-011.png");
+  --grain-shop-accounting-wrong: url("../../ui/算术UI/material-202605291354-012.png");
+  --grain-shop-accounting-divider: url("../../ui/算术UI/material-202605291354-019.png");
+  --grain-shop-accounting-divider-alt: url("../../ui/算术UI/material-202605291354-020.png");
 
   position: relative;
   display: grid;
@@ -159,7 +159,7 @@
   width: min(100%, 226px);
   padding: 18px 16px 16px;
   border: 16px solid transparent;
-  border-image-source: url("../../sliced_ui_assets/1_015_left_mission_panel_1.0.png");
+  border-image-source: url("../../ui/yuansu/1_015_left_mission_panel_1.0.png");
   border-image-slice: 34 fill;
   border-image-width: 16px;
   border-image-repeat: stretch;
@@ -531,7 +531,7 @@
   width: min(2.8vw, 43px);
   aspect-ratio: 43 / 46;
   flex: 0 0 auto;
-  background: center / contain no-repeat url("../../算术UI/material-202605291354-021.png");
+  background: center / contain no-repeat url("../../ui/算术UI/material-202605291354-021.png");
 }
 
 .c-grain-shop-accounting__hud-label {
@@ -1051,20 +1051,20 @@
 
 .view-house-medicine-house {
   --grain-shop-scene-bg: url("../../ui/background/huichuntang.png");
-  --medicine-scene-frame: url("../../药铺UI/material-202605271718-003.png");
-  --medicine-top-parchment: url("../../药铺UI/material-202605271713-007.png");
-  --medicine-herb-panel: url("../../药铺UI/material-202605271713-002.png");
-  --medicine-cauldron: url("../../药铺UI/material-202605271713-001.png");
-  --medicine-stats-paper: url("../../药铺UI/material-202605271713-004.png");
-  --medicine-tray: url("../../药铺UI/material-202605271713-006.png");
-  --medicine-finish-tag: url("../../药铺UI/material-202605271713-026.png");
-  --medicine-drawer: url("../../药铺UI/material-202605271713-016.png");
-  --medicine-note-chip: url("../../药铺UI/material-202605271713-027.png");
-  --medicine-dark-chip: url("../../药铺UI/material-202605271713-028.png");
-  --medicine-fill-cold: url("../../药铺UI/material-202605271713-035.png");
-  --medicine-fill-heal: url("../../药铺UI/material-202605271713-030.png");
-  --medicine-fill-poison: url("../../药铺UI/material-202605271713-037.png");
-  --medicine-fill-track: url("../../药铺UI/material-202605271713-046.png");
+  --medicine-scene-frame: url("../../ui/药铺UI/material-202605271718-003.png");
+  --medicine-top-parchment: url("../../ui/药铺UI/material-202605271713-007.png");
+  --medicine-herb-panel: url("../../ui/药铺UI/material-202605271713-002.png");
+  --medicine-cauldron: url("../../ui/药铺UI/material-202605271713-001.png");
+  --medicine-stats-paper: url("../../ui/药铺UI/material-202605271713-004.png");
+  --medicine-tray: url("../../ui/药铺UI/material-202605271713-006.png");
+  --medicine-finish-tag: url("../../ui/药铺UI/material-202605271713-026.png");
+  --medicine-drawer: url("../../ui/药铺UI/material-202605271713-016.png");
+  --medicine-note-chip: url("../../ui/药铺UI/material-202605271713-027.png");
+  --medicine-dark-chip: url("../../ui/药铺UI/material-202605271713-028.png");
+  --medicine-fill-cold: url("../../ui/药铺UI/material-202605271713-035.png");
+  --medicine-fill-heal: url("../../ui/药铺UI/material-202605271713-030.png");
+  --medicine-fill-poison: url("../../ui/药铺UI/material-202605271713-037.png");
+  --medicine-fill-track: url("../../ui/药铺UI/material-202605271713-046.png");
 }
 
 .c-medicine-house-overlay {
@@ -1289,27 +1289,27 @@
 }
 
 .c-medicine-house-herb-card--frame-a {
-  background-image: url("../../药铺UI/material-202605271713-009.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-009.png");
 }
 
 .c-medicine-house-herb-card--frame-b {
-  background-image: url("../../药铺UI/material-202605271713-010.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-010.png");
 }
 
 .c-medicine-house-herb-card--frame-c {
-  background-image: url("../../药铺UI/material-202605271713-011.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-011.png");
 }
 
 .c-medicine-house-herb-card--frame-d {
-  background-image: url("../../药铺UI/material-202605271713-012.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-012.png");
 }
 
 .c-medicine-house-herb-card--frame-e {
-  background-image: url("../../药铺UI/material-202605271713-013.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-013.png");
 }
 
 .c-medicine-house-herb-card--frame-f {
-  background-image: url("../../药铺UI/material-202605271713-014.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-014.png");
 }
 
 .c-medicine-house-herb-card--empty {
@@ -1374,39 +1374,39 @@
 }
 
 .c-medicine-house-herb-art--generic {
-  background-image: url("../../药铺UI/material-202605271718-020.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-020.png");
 }
 
 .c-medicine-house-herb-art--ai-cao {
-  background-image: url("../../药铺UI/material-202605271718-016.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-016.png");
 }
 
 .c-medicine-house-herb-art--huang-lian {
-  background-image: url("../../药铺UI/material-202605271718-011.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-011.png");
 }
 
 .c-medicine-house-herb-art--sheng-jiang {
-  background-image: url("../../药铺UI/material-202605271718-009.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-009.png");
 }
 
 .c-medicine-house-herb-art--bo-he {
-  background-image: url("../../药铺UI/material-202605271718-005.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-005.png");
 }
 
 .c-medicine-house-herb-art--dang-gui {
-  background-image: url("../../药铺UI/material-202605271718-010.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-010.png");
 }
 
 .c-medicine-house-herb-art--xing-ren {
-  background-image: url("../../药铺UI/material-202605271718-013.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-013.png");
 }
 
 .c-medicine-house-herb-art--gan-cao {
-  background-image: url("../../药铺UI/material-202605271718-012.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-012.png");
 }
 
 .c-medicine-house-herb-art--wu-tou {
-  background-image: url("../../药铺UI/material-202605271718-014.png");
+  background-image: url("../../ui/药铺UI/material-202605271718-014.png");
 }
 
 .c-medicine-house-scene__cauldron {
@@ -1562,15 +1562,15 @@
 }
 
 .c-medicine-house-stats__icon--cold {
-  background-image: url("../../药铺UI/material-202605271713-045.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-045.png");
 }
 
 .c-medicine-house-stats__icon--heal {
-  background-image: url("../../药铺UI/material-202605271713-042.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-042.png");
 }
 
 .c-medicine-house-stats__icon--poison {
-  background-image: url("../../药铺UI/material-202605271713-043.png");
+  background-image: url("../../ui/药铺UI/material-202605271713-043.png");
 }
 
 .c-medicine-house-stats__metric {

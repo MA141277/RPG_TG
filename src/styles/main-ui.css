@@ -38,7 +38,7 @@
 .c-main-ui-screen--main-menu {
   background:
     linear-gradient(180deg, rgb(248 244 232 / 26%), rgb(18 16 14 / 20%)),
-    url("../../yuansu/开局ui/background.png") center center / cover no-repeat;
+    url("../../ui/yuansu/开局ui/background.png") center center / cover no-repeat;
 }
 
 .c-main-ui-main-menu {
@@ -167,17 +167,17 @@
 }
 
 .c-main-ui-image-button--start {
-  background-image: url("../../yuansu/开局ui/start.png");
+  background-image: url("../../ui/yuansu/开局ui/start.png");
 }
 
 .c-main-ui-image-button--continue {
-  background-image: url("../../yuansu/开局ui/continue.png");
+  background-image: url("../../ui/yuansu/开局ui/continue.png");
 }
 
 .c-main-ui-screen--character-select {
   background:
     linear-gradient(180deg, rgb(248 242 229 / 76%), rgb(233 223 202 / 88%)),
-    url("../../yuansu/人物选择ui/backgroung.png") center center / cover no-repeat;
+    url("../../ui/yuansu/人物选择ui/backgroung.png") center center / cover no-repeat;
 }
 
 .c-main-ui-character-layout {
@@ -348,7 +348,7 @@
   border-radius: 14px;
   background:
     linear-gradient(180deg, rgb(214 196 167 / 60%), rgb(232 223 207 / 92%)),
-    url("../../yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
+    url("../../ui/yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
 }
 
 .c-main-ui-character-card__avatar,
@@ -377,7 +377,7 @@
   right: 6px;
   width: 38px;
   height: 62px;
-  background: url("../../yuansu/人物选择ui/下载 (10).png") center center / contain no-repeat;
+  background: url("../../ui/yuansu/人物选择ui/下载 (10).png") center center / contain no-repeat;
 }
 
 .c-main-ui-character-card__body {
@@ -437,7 +437,7 @@
   border-radius: 20px;
   background:
     linear-gradient(180deg, rgb(255 253 246 / 88%), rgb(247 239 224 / 96%)),
-    url("../../yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
+    url("../../ui/yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 46%),
     0 16px 28px rgb(113 81 43 / 8%);
@@ -602,14 +602,14 @@
 .c-main-ui-book-pagination__ornament {
   width: 72px;
   height: 12px;
-  background: url("../../yuansu/人物选择ui/下载 (15).png") center center / contain no-repeat;
+  background: url("../../ui/yuansu/人物选择ui/下载 (15).png") center center / contain no-repeat;
 }
 
 .c-main-ui-image-button--choose {
   justify-self: end;
   width: 168px;
   aspect-ratio: 1;
-  background-image: url("../../yuansu/人物选择ui/下载 (4).png");
+  background-image: url("../../ui/yuansu/人物选择ui/下载 (4).png");
 }
 
 @media (width <= 1100px) {

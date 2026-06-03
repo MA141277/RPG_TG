@@ -1,24 +1,24 @@
 .view-house-tea-house {
-  --grain-shop-scene-bg: url("../../ui1/ui/backgroung/chalou.png");
+  --grain-shop-scene-bg: url("../../ui/background/chalou.png");
   --grain-shop-shopkeeper-portrait: url("../../ui/npc/chaguan.png");
   --grain-shop-shopkeeper-avatar: url("../../ui/npc/chaguan(touxiang).png");
-  --tea-house-debate-board: url("../../舌战UI/material-202605281711-001.png");
-  --tea-house-debate-player-frame: url("../../舌战UI/material-202605281719-002.png");
-  --tea-house-debate-npc-frame: url("../../舌战UI/material-202605281719-003.png");
-  --tea-house-debate-spirit-panel: url("../../舌战UI/material-202605281719-015.png");
-  --tea-house-debate-title-medallion: url("../../舌战UI/material-202605281719-012.png");
-  --tea-house-debate-facedown-left: url("../../舌战UI/material-202605281719-013.png");
-  --tea-house-debate-facedown-right: url("../../舌战UI/material-202605281719-014.png");
-  --tea-house-debate-summary-panel: url("../../舌战UI/material-202605281711-017.png");
-  --tea-house-debate-timer: url("../../舌战UI/material-202605281711-036.png");
-  --tea-house-debate-confirm: url("../../舌战UI/material-202605281719-005.png");
-  --tea-house-debate-player-label: url("../../舌战UI/material-202605281719-016.png");
-  --tea-house-debate-npc-label: url("../../舌战UI/material-202605281719-017.png");
-  --tea-house-debate-topic-yi: url("../../舌战UI/material-202605281719-008.png");
-  --tea-house-debate-topic-li: url("../../舌战UI/material-202605281719-009.png");
-  --tea-house-debate-topic-ming: url("../../舌战UI/material-202605281720-001.png");
-  --tea-house-debate-topic-qing: url("../../舌战UI/material-202605281719-006.png");
-  --tea-house-debate-topic-shi: url("../../舌战UI/material-202605281719-007.png");
+  --tea-house-debate-board: url("../../ui/舌战UI/material-202605281711-001.png");
+  --tea-house-debate-player-frame: url("../../ui/舌战UI/material-202605281719-002.png");
+  --tea-house-debate-npc-frame: url("../../ui/舌战UI/material-202605281719-003.png");
+  --tea-house-debate-spirit-panel: url("../../ui/舌战UI/material-202605281719-015.png");
+  --tea-house-debate-title-medallion: url("../../ui/舌战UI/material-202605281719-012.png");
+  --tea-house-debate-facedown-left: url("../../ui/舌战UI/material-202605281719-013.png");
+  --tea-house-debate-facedown-right: url("../../ui/舌战UI/material-202605281719-014.png");
+  --tea-house-debate-summary-panel: url("../../ui/舌战UI/material-202605281711-017.png");
+  --tea-house-debate-timer: url("../../ui/舌战UI/material-202605281711-036.png");
+  --tea-house-debate-confirm: url("../../ui/舌战UI/material-202605281719-005.png");
+  --tea-house-debate-player-label: url("../../ui/舌战UI/material-202605281719-016.png");
+  --tea-house-debate-npc-label: url("../../ui/舌战UI/material-202605281719-017.png");
+  --tea-house-debate-topic-yi: url("../../ui/舌战UI/material-202605281719-008.png");
+  --tea-house-debate-topic-li: url("../../ui/舌战UI/material-202605281719-009.png");
+  --tea-house-debate-topic-ming: url("../../ui/舌战UI/material-202605281720-001.png");
+  --tea-house-debate-topic-qing: url("../../ui/舌战UI/material-202605281719-006.png");
+  --tea-house-debate-topic-shi: url("../../ui/舌战UI/material-202605281719-007.png");
 }
 
 .view-house-tavern {
