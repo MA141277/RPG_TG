@@ -7,9 +7,9 @@ import type {
   UiLayoutRect,
   UiLayoutSlice,
 } from "../domain/ui-layout";
-import portraitFrameUrl from "../../yuansu/toukuang.png?url";
-import statusBoardUrl from "../../yuansu/1_002_top_status_bar_1.0.png?url";
-import taskPanelUrl from "../../yuansu/1_015_left_mission_panel_1.0.png?url";
+import portraitFrameUrl from "../../ui/yuansu/toukuang.png?url";
+import statusBoardUrl from "../../ui/yuansu/1_002_top_status_bar_1.0.png?url";
+import taskPanelUrl from "../../ui/yuansu/1_015_left_mission_panel_1.0.png?url";
 
 const defaultSlice: UiLayoutSlice = {
   top: 24,
@@ -22,9 +22,6 @@ const projectImageModules = import.meta.glob<{ default: string }>(
   [
     "/src/assets/**/*.{png,jpg,jpeg,webp,gif}",
     "/ui/**/*.{png,jpg,jpeg,webp,gif}",
-    "/ui1/**/*.{png,jpg,jpeg,webp,gif}",
-    "/yuansu/**/*.{png,jpg,jpeg,webp,gif}",
-    "/sliced_ui_assets/**/*.{png,jpg,jpeg,webp,gif}",
     "/map/**/*.{png,jpg,jpeg,webp,gif}",
   ],
   { eager: true }
@@ -63,13 +60,13 @@ function findAssetOption(
   );
 }
 
-const portraitFrameAsset = findAssetOption("/yuansu/toukuang.png", portraitFrameUrl);
+const portraitFrameAsset = findAssetOption("/ui/yuansu/toukuang.png", portraitFrameUrl);
 const statusBoardAsset = findAssetOption(
-  "/yuansu/1_002_top_status_bar_1.0.png",
+  "/ui/yuansu/1_002_top_status_bar_1.0.png",
   statusBoardUrl
 );
 const taskPanelAsset = findAssetOption(
-  "/yuansu/1_015_left_mission_panel_1.0.png",
+  "/ui/yuansu/1_015_left_mission_panel_1.0.png",
   taskPanelUrl
 );
 

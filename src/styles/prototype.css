@@ -1,12 +1,12 @@
 .l-shell--prototype {
   --scene-safe-top: 236px;
-  --grain-shop-panel-light: url("../../sliced_ui_assets/1_016_small_blank_panel_1.0.png");
-  --grain-shop-panel-medium: url("../../sliced_ui_assets/1_021_medium_blank_panel_1.0.png");
-  --grain-shop-panel-dark: url("../../sliced_ui_assets/1_003_small_dark_panel_1.0.png");
-  --grain-shop-frame-large: url("../../sliced_ui_assets/1_013_blank_large_frame_1.0.png");
-  --grain-shop-button-gold: url("../../sliced_ui_assets/1_024_gold_bottom_button_1.0.png");
-  --grain-shop-button-large: url("../../sliced_ui_assets/1_031_large_gold_button_1.0.png");
-  --grain-shop-nameplate: url("../../sliced_ui_assets/1_010_red_nameplate_1.0.png");
+  --grain-shop-panel-light: url("../../ui/yuansu/1_016_small_blank_panel_1.0.png");
+  --grain-shop-panel-medium: url("../../ui/yuansu/1_021_medium_blank_panel_1.0.png");
+  --grain-shop-panel-dark: url("../../ui/yuansu/1_003_small_dark_panel_1.0.png");
+  --grain-shop-frame-large: url("../../ui/yuansu/1_013_blank_large_frame_1.0.png");
+  --grain-shop-button-gold: url("../../ui/yuansu/1_024_gold_bottom_button_1.0.png");
+  --grain-shop-button-large: url("../../ui/yuansu/1_031_large_gold_button_1.0.png");
+  --grain-shop-nameplate: url("../../ui/yuansu/1_010_red_nameplate_1.0.png");
 
   background:
     radial-gradient(circle at top left, rgb(148 181 170 / 32%), transparent 26%),
@@ -725,7 +725,7 @@
   height: 36px;
   border: 0;
   border-radius: 0;
-  background: center / contain no-repeat url("../../yuansu/zhen.png");
+  background: center / contain no-repeat url("../../ui/yuansu/zhen.png");
   box-shadow: none;
   transform: scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));
   transform-origin: center;
@@ -733,7 +733,7 @@
 
 .c-campaign-marker--fort .c-campaign-marker__dot {
   border-radius: 0;
-  background: center / contain no-repeat url("../../yuansu/cheng.png");
+  background: center / contain no-repeat url("../../ui/yuansu/cheng.png");
 }
 
 .c-campaign-marker--landmark .c-campaign-marker__dot {
@@ -1129,12 +1129,12 @@
 }
 
 .c-kulan-city {
-  --kulan-top-bar: url("../../yuansu/1_002_top_status_bar_1.0.png");
-  --kulan-left-panel: url("../../yuansu/1_015_left_mission_panel_1.0.png");
-  --kulan-info-button: url("../../yuansu/1_007_info_button_1.0.png");
-  --kulan-function-button: url("../../yuansu/1_008_function_button_1.0.png");
-  --kulan-large-button: url("../../yuansu/1_031_large_gold_button_1.0.png");
-  --kulan-nameplate: url("../../yuansu/1_010_red_nameplate_1.0.png");
+  --kulan-top-bar: url("../../ui/yuansu/1_002_top_status_bar_1.0.png");
+  --kulan-left-panel: url("../../ui/yuansu/1_015_left_mission_panel_1.0.png");
+  --kulan-info-button: url("../../ui/yuansu/1_007_info_button_1.0.png");
+  --kulan-function-button: url("../../ui/yuansu/1_008_function_button_1.0.png");
+  --kulan-large-button: url("../../ui/yuansu/1_031_large_gold_button_1.0.png");
+  --kulan-nameplate: url("../../ui/yuansu/1_010_red_nameplate_1.0.png");
   position: relative;
   height: 100%;
   min-height: 100%;
@@ -1266,11 +1266,11 @@
 
 /* house card 图打标：chaguan / shuaifu / dangpu / lianghang / jiusi */
 .c-kulan-house-card--tea-house .c-kulan-house-card__art {
-  background-image: url("../../ui1/ui/card/card_chaguan(1).png");
+  background-image: url("../../ui/card/card_chaguan.png");
 }
 
 .c-kulan-house-card--temple-house .c-kulan-house-card__art {
-  background-image: url("../../ui/card/card_temlpe.png");
+  background-image: url("../../ui/card/card_temple.png");
 }
 
 .c-kulan-house-card--keep .c-kulan-house-card__art {
@@ -1294,7 +1294,7 @@
 }
 
 .c-kulan-house-card--fallback .c-kulan-house-card__art {
-  background-image: url("../../sliced_ui_assets/1_013_blank_large_frame_1.0.png");
+  background-image: url("../../ui/yuansu/1_013_blank_large_frame_1.0.png");
 }
 
 .c-city-directory {
