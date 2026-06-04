@@ -252,6 +252,11 @@ Persistent:
 - timers that matter after leaving and re-entering
 - accepted/completed/failed task state for house-specific jobs
 
+If multiple houses operate on the same persistent resource
+(for example backpack grain that can be bought in one house and submitted in another),
+store that resource in one shared runtime inventory namespace.
+Do not keep parallel house-local copies of the same commodity and reconcile them later.
+
 Temporary session state:
 
 - current overlay
@@ -306,6 +311,10 @@ Then `ui/views/*` converts that into markup.
 Shared overlay unions may grow when a special house needs a richer structured interaction
 (for example a module-specific trade picker, a rest-days input panel, or a market trade selector),
 but the data must remain typed and UI-facing.
+If a module needs a numeric handoff
+(for example “from backpack choose how many to submit / rest / donate”),
+extend the shared overlay contract with a typed quantity panel
+rather than handling the input only in DOM or reusing unrelated overlay copy.
 If a module-specific overlay needs extra controls, extend the shared typed contract
 (for example a medicine compounding clear action or a shared QTE bar-stop minigame overlay)
 instead of relying on DOM-only behavior.

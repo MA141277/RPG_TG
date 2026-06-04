@@ -46,6 +46,10 @@ import {
   mutatePlayerRhetoric,
   mutateTeaHouseActorFavorability,
 } from "../../tea-house/tea-house-mutations";
+import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  spendPlayerStamina,
+} from "../../player/player-stamina";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
 
 const DEBATE_INTERVAL_ID = "tea-house-debate";
@@ -482,10 +486,19 @@ function resolveDebateTurn(
             };
 
     const mutation = applyTeaHouseOutcome(input, actor, finishedOutcome);
+    const staminaMutation = spendPlayerStamina(
+      mutation.gameState,
+      mutation.characterDefinitions,
+      input.playerCharacterId
+    );
+    const effectSummaryLines = [
+      ...formatOutcomeSummaryLines(finishedOutcome),
+      `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+    ];
 
     return {
-      gameState: mutation.gameState,
-      characterDefinitions: mutation.characterDefinitions,
+      gameState: staminaMutation.state,
+      characterDefinitions: staminaMutation.characterDefinitions,
       sessionState:
         sessionState == null
           ? sessionState
@@ -499,7 +512,7 @@ function resolveDebateTurn(
                   actor,
                   roundResult.outcome,
                   roundResult.lines,
-                  formatOutcomeSummaryLines(finishedOutcome)
+                  effectSummaryLines
                 ),
                 roundResult.outcome.winner === "player"
                   ? "success"

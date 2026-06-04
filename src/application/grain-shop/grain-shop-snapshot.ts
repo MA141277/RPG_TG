@@ -5,6 +5,8 @@ import {
   type GrainShopPlayerSnapshot,
 } from "../../domain/grain-shop";
 import { grainShopInitialValues } from "../../content/houses/grain-shop-content";
+import { convertDouToWholeShi } from "../../domain/grain-unit";
+import { readPlayerGrainDou } from "../inventory/trade-inventory";
 
 function readNumericVariable(
   state: GameState,
@@ -19,13 +21,12 @@ export function createGrainShopSnapshot(
   state: GameState,
   playerCharacter: CharacterDefinition
 ): GrainShopPlayerSnapshot {
+  const foodDou = readPlayerGrainDou(state);
+
   return {
     money: playerCharacter.stats.gold,
-    food: readNumericVariable(
-      state,
-      GRAIN_SHOP_VARIABLE_KEYS.food,
-      grainShopInitialValues.food
-    ),
+    foodDou,
+    sellableFoodShi: convertDouToWholeShi(foodDou),
     math: playerCharacter.skills?.arithmetic ?? 0,
     relationship: readNumericVariable(
       state,

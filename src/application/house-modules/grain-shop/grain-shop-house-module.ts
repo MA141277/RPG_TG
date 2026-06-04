@@ -8,6 +8,7 @@ import type {
   HouseOverlayViewModel,
 } from "../../../domain/house-module";
 import type { GrainShopPlayerSnapshot } from "../../../domain/grain-shop";
+import { formatGrainAsShiAndDou } from "../../../domain/grain-unit";
 import type {
   GrainShopDialoguePhase,
   GrainShopSessionState,
@@ -20,6 +21,7 @@ import { getQuotedGrainPrice, getTradeTotal, pickNpcDefaultLine, pickNpcGreeting
 import { investigateGrainMarket } from "../../grain-shop/investigate-grain-market";
 import { initGrainShopSession } from "../../grain-shop/init-grain-shop-session";
 import { setGrainPrice } from "../../grain-shop/grain-shop-mutations";
+import { ACTIVITY_COMPLETION_STAMINA_COST } from "../../player/player-stamina";
 import { assertExists } from "../../../shared/assert";
 import { createInitialGrainShopSessionState } from "./grain-shop-session-state";
 
@@ -463,6 +465,7 @@ function selectOverlayViewModel(overlay: GrainShopSessionState["overlay"]): Hous
         overlay.reward.money > 0 ? `金钱 +${overlay.reward.money}` : "金钱 不变",
         overlay.reward.relationship > 0 ? `与掌柜关系 +${overlay.reward.relationship}` : "与掌柜关系 不变",
         "时间 +1",
+        `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
       ];
 
       return {
@@ -487,8 +490,9 @@ function createStatusCard(snapshot: GrainShopPlayerSnapshot, title: string) {
     subtitle: "陈记粮行 / 南北通商",
     metrics: [
       { label: "金钱", value: `${snapshot.money} 文` },
-      { label: "粮仓", value: `${snapshot.food} 石` },
-      { label: "市价", value: `${snapshot.grainPrice} 文` },
+      { label: "粮仓", value: formatGrainAsShiAndDou(snapshot.foodDou) },
+      { label: "可卖整粮", value: `${snapshot.sellableFoodShi} 石` },
+      { label: "市价", value: `每石 ${snapshot.grainPrice} 文` },
     ],
   };
 }

@@ -28,6 +28,7 @@ import {
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
 import {
+  applyCityBeggingMiniGameCompletion,
   createCityBeggingMiniGameState,
   getCityBeggingMiniGameCompletionResult,
   getCityBeggingMiniGameStatus,
@@ -496,6 +497,17 @@ function stopCityBeggingMiniGameLoop(): void {
 }
 
 function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
+  const completion = applyCityBeggingMiniGameCompletion(
+    appState.gameState,
+    appState.characterDefinitions,
+    currentPlayerCharacterId,
+    result
+  );
+  appState = {
+    ...appState,
+    gameState: completion.state,
+    characterDefinitions: completion.characterDefinitions,
+  };
   window.onBeggingGameComplete?.(result);
 }
 

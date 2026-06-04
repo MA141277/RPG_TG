@@ -3,6 +3,14 @@ import type {
   CityBeggingMiniGameState,
   CityBeggingMiniGameVariantId,
 } from "../../domain/city-begging-minigame";
+import { CITY_BEGGING_RUNTIME_KEYS } from "../../domain/city-begging-minigame";
+import type { GameState } from "../../domain/game-state";
+import { mutatePlayerGrainDou } from "../inventory/trade-inventory";
+import type { CharacterDefinition } from "../../domain/character";
+import {
+  type PlayerStaminaMutationResult,
+  spendPlayerStamina,
+} from "../player/player-stamina";
 import { CITY_BEGGING_GRANARY_ESCORT_CONFIG, createGranaryEscortMiniGameState, setGranaryEscortMiniGamePointer, updateGranaryEscortMiniGameState } from "./city-begging-granary-escort";
 import { CITY_BEGGING_VILLAGE_CATCHING_CONFIG, createVillageCatchingMiniGameState, setVillageCatchingMiniGamePointer, updateVillageCatchingMiniGameState } from "./city-begging-village-catching";
 
@@ -100,4 +108,70 @@ export function getCityBeggingMiniGameCompletionResult(
   }
 
   return state.variantState.result;
+}
+
+export function recordCityBeggingMiniGameCompletion(
+  state: GameState,
+  characterDefinitions: CharacterDefinition[],
+  playerCharacterId: string,
+  result: CityBeggingGameCompletionResult
+): {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+} {
+  const nextState = mutatePlayerGrainDou(state, result.foodGain);
+  const completionCountValue =
+    nextState.runtime.variables[CITY_BEGGING_RUNTIME_KEYS.completionCount];
+  const completionCount =
+    typeof completionCountValue === "number" ? completionCountValue : 0;
+  const nextCharacterDefinitions = characterDefinitions.map((characterDefinition) => {
+    if (characterDefinition.id !== playerCharacterId) {
+      return characterDefinition;
+    }
+
+    return {
+      ...characterDefinition,
+      stats: {
+        ...characterDefinition.stats,
+        gold: characterDefinition.stats.gold + result.goldGain,
+      },
+    };
+  });
+
+  return {
+    state: {
+      ...nextState,
+      runtime: {
+        ...nextState.runtime,
+        variables: {
+          ...nextState.runtime.variables,
+          [CITY_BEGGING_RUNTIME_KEYS.completionCount]: completionCount + 1,
+          [CITY_BEGGING_RUNTIME_KEYS.lastFoodGain]: result.foodGain,
+          [CITY_BEGGING_RUNTIME_KEYS.lastGoldGain]: result.goldGain,
+          [CITY_BEGGING_RUNTIME_KEYS.lastMaxCombo]: result.maxCombo,
+        },
+      },
+    },
+    characterDefinitions: nextCharacterDefinitions,
+  };
+}
+
+export function applyCityBeggingMiniGameCompletion(
+  state: GameState,
+  characterDefinitions: CharacterDefinition[],
+  playerCharacterId: string,
+  result: CityBeggingGameCompletionResult
+): PlayerStaminaMutationResult {
+  const completion = recordCityBeggingMiniGameCompletion(
+    state,
+    characterDefinitions,
+    playerCharacterId,
+    result
+  );
+
+  return spendPlayerStamina(
+    completion.state,
+    completion.characterDefinitions,
+    playerCharacterId
+  );
 }

@@ -38,6 +38,10 @@ import {
   readPlayerFatigue,
   readReservedPlayerStatus,
 } from "../../medicine-house/medicine-house-mutations";
+import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  spendPlayerStamina,
+} from "../../player/player-stamina";
 import { createInitialMedicineHouseSessionState } from "./medicine-house-session-state";
 
 const COMPOUNDING_INTERVAL_ID = "medicine-house-compounding";
@@ -255,11 +259,19 @@ function finalizeCompounding(
     outcome
   );
 
-  const rewardLines = formatOutcomeSummary(outcome);
+  const staminaMutation = spendPlayerStamina(
+    mutation.state,
+    mutation.characterDefinitions,
+    input.playerCharacterId
+  );
+  const rewardLines = [
+    ...formatOutcomeSummary(outcome),
+    `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+  ];
 
   return {
-    gameState: mutation.state,
-    characterDefinitions: mutation.characterDefinitions,
+    gameState: staminaMutation.state,
+    characterDefinitions: staminaMutation.characterDefinitions,
     sessionState:
       sessionState == null
         ? sessionState

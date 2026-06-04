@@ -24,6 +24,9 @@ const {
 } = require("../.test-dist/content/prototype-world.js");
 const { executeGrainTrade } = require("../.test-dist/application/grain-shop/grain-trade.js");
 const {
+  PLAYER_GRAIN_RUNTIME_KEYS,
+} = require("../.test-dist/application/inventory/trade-inventory.js");
+const {
   homeHouseHouseModule,
 } = require("../.test-dist/application/house-modules/home-house/home-house-house-module.js");
 const {
@@ -62,6 +65,12 @@ const {
   isHouseVisibleForStoryStage,
   selectHouseEntryAccess,
 } = require("../.test-dist/application/story/story-stage-access.js");
+const {
+  applyCityBeggingMiniGameCompletion,
+} = require("../.test-dist/application/minigames/city-begging-minigame.js");
+const {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+} = require("../.test-dist/application/player/player-stamina.js");
 const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
@@ -245,6 +254,36 @@ test("grain trade succeeds for a valid buy and advances runtime state", () => {
   assert.equal(playerCharacter.stats.gold, 20);
   assert.equal(result.mutation.state.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.food], 6);
   assert.equal(result.mutation.state.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.time], 2);
+});
+
+test("city begging completion applies reward and spends stamina", () => {
+  const playerBefore = getPlayerCharacter(prototypeCharacters);
+  const result = applyCityBeggingMiniGameCompletion(
+    createBaseState(),
+    prototypeCharacters,
+    playerCharacterId,
+    {
+      foodGain: 3,
+      goldGain: 20,
+      maxCombo: 4,
+      success: true,
+    }
+  );
+
+  const playerAfter = getPlayerCharacter(result.characterDefinitions);
+  assert.equal(
+    playerAfter.stamina,
+    playerBefore.stamina - ACTIVITY_COMPLETION_STAMINA_COST
+  );
+  assert.equal(playerAfter.stats.gold, playerBefore.stats.gold + 20);
+  assert.equal(
+    result.state.runtime.variables["var.minigame.city_begging.completion_count"],
+    1
+  );
+  assert.equal(
+    result.state.runtime.variables[PLAYER_GRAIN_RUNTIME_KEYS.quantityDou],
+    3
+  );
 });
 
 test("leader residence selector only lists eligible historical visitors in the city", () => {
@@ -843,6 +882,7 @@ test("temple house review only selects work direction and daily actions start te
     reopenedViewModel.actionContainer?.actions.map((action) => action.id),
     [
       "open-temple-work-menu",
+      "open-temple-rest-menu",
       "ask-fortune",
       "open-donate",
       "dismiss-dialogue",
@@ -1147,6 +1187,65 @@ test("temple house unlocked begging is chosen in review and executes later witho
     30
   );
   assert.equal(confirmBegAlmsResult.sessionState?.overlay?.type, "alert");
+});
+
+test("temple begging submission spends stamina when work is settled", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const baseState = createMonkStageState();
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        flags: {
+          ...baseState.runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+        },
+        variables: {
+          ...baseState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "beg-alms",
+          [PLAYER_GRAIN_RUNTIME_KEYS.quantityDou]: 6,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  const openResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "submit-temple-begging-food" },
+  });
+
+  assert.equal(openResult.sessionState?.overlay?.type, "submit-food");
+
+  const submitResult = templeHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "confirm-temple-begging-food" },
+  });
+
+  assert.equal(submitResult.sessionState?.overlay?.type, "result");
+  assert.equal(
+    getPlayerCharacter(submitResult.characterDefinitions).stamina,
+    100 - ACTIVITY_COMPLETION_STAMINA_COST
+  );
+  assert.equal(
+    submitResult.gameState.runtime.variables[PLAYER_GRAIN_RUNTIME_KEYS.quantityDou],
+    0
+  );
 });
 
 test("temple house daily flow resolves fortune and donation through unified state", () => {
@@ -1683,6 +1782,7 @@ test("minigame tick settles into result overlay and applies grade reward", () =>
   const playerCharacter = getPlayerCharacter(result.characterDefinitions);
   assert.equal(result.sessionState.overlay.grade, "A");
   assert.equal(playerCharacter.stats.gold, 120 + reward.money);
+  assert.equal(playerCharacter.stamina, 100 - ACTIVITY_COMPLETION_STAMINA_COST);
   assert.equal(playerCharacter.skills.arithmetic, 1 + reward.math);
   assert.equal(
     result.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
@@ -1935,6 +2035,61 @@ test("tea house ai weights bias topic choice by personality", () => {
   assert.equal(pickTeaHouseAiTopic("傲气", () => 0.5), "名");
 });
 
+test("tea house completed debate spends stamina", () => {
+  const state = ensureCityNpcPoolsForCurrentDay(
+    createBaseState(),
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const openResult = teaHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+  const startDebateResult = teaHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "start-debate" },
+  });
+
+  assert.equal(startDebateResult.sessionState?.overlay?.type, "debate");
+
+  const finishResult = teaHouseHouseModule.dispatch({
+    gameState: startDebateResult.gameState,
+    characterDefinitions: startDebateResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: {
+      ...startDebateResult.sessionState,
+      overlay: {
+        ...startDebateResult.sessionState.overlay,
+        playerSpirit: 2,
+        npcSpirit: 1,
+        consecutivePlayerWins: 1,
+        plannedNpcTopic: "利",
+        selectedPlayerTopic: "义",
+      },
+    },
+    request: { type: "action", actionId: "confirm-debate-topic" },
+  });
+
+  const playerCharacter = getPlayerCharacter(finishResult.characterDefinitions);
+  assert.equal(playerCharacter.stamina, 100 - ACTIVITY_COMPLETION_STAMINA_COST);
+  assert.equal(finishResult.sessionState?.overlay?.type, "alert");
+});
+
 test("tavern drink flow spends 100 gold after confirmation", () => {
   const state = createBaseState();
   const enterResult = tavernHouseModule.enter({
@@ -2088,6 +2243,7 @@ test("tavern work flow accepts dishwashing qte and submits with confirmation", (
 
   const playerCharacter = getPlayerCharacter(submitResult.characterDefinitions);
   assert.equal(playerCharacter.stats.gold, 190);
+  assert.equal(playerCharacter.stamina, 100 - ACTIVITY_COMPLETION_STAMINA_COST);
   assert.equal(submitResult.sessionState?.acceptedOffers.length, 0);
   assert.equal(
     submitResult.gameState.runtime.flags[
@@ -2157,6 +2313,7 @@ test("tavern submitting unfinished work fails and clears active work", () => {
 
   const playerCharacter = getPlayerCharacter(submitResult.characterDefinitions);
   assert.equal(playerCharacter.stats.gold, 120);
+  assert.equal(playerCharacter.stamina, 100 - ACTIVITY_COMPLETION_STAMINA_COST);
   assert.equal(submitResult.sessionState?.acceptedOffers.length, 0);
   assert.equal(
     submitResult.gameState.runtime.flags[
@@ -2287,6 +2444,53 @@ test("medicine house heal and buy update fatigue inventory and gold", () => {
   );
 });
 
+test("medicine compounding completion spends stamina", () => {
+  const state = createBaseState();
+  const enterResult = medicineHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const openResult = medicineHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+  const startResult = medicineHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "start-compounding" },
+  });
+
+  assert.equal(startResult.sessionState?.overlay?.type, "compounding");
+
+  const finishResult = medicineHouseHouseModule.dispatch({
+    gameState: startResult.gameState,
+    characterDefinitions: startResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: {
+      ...startResult.sessionState,
+      overlay: {
+        ...startResult.sessionState.overlay,
+        secondsLeft: 1,
+      },
+    },
+    request: { type: "tick", tickId: "medicine-house-compounding" },
+  });
+
+  const playerCharacter = getPlayerCharacter(finishResult.characterDefinitions);
+  assert.equal(playerCharacter.stamina, 100 - ACTIVITY_COMPLETION_STAMINA_COST);
+  assert.equal(finishResult.sessionState?.overlay?.type, "result");
+});
+
 test("temple work reaching contribution threshold starts shared map auto advance for next review", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -2357,6 +2561,10 @@ test("temple work reaching contribution threshold starts shared map auto advance
   assert.equal(
     qteResult.gameState.runtime.flags[ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked],
     true
+  );
+  assert.equal(
+    getPlayerCharacter(qteResult.characterDefinitions).stamina,
+    100 - ACTIVITY_COMPLETION_STAMINA_COST
   );
 
   const closeResult = templeHouseHouseModule.dispatch({

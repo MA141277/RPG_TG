@@ -40,6 +40,10 @@ import {
   removeActiveTavernWork,
   setTavernWorkProgress,
 } from "../../tavern/tavern-mutations";
+import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  spendPlayerStamina,
+} from "../../player/player-stamina";
 import { createInitialTavernSessionState } from "./tavern-session-state";
 
 const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
@@ -385,12 +389,17 @@ function submitWork(
     ? completeTavernWork(nextState, input.houseDefinition.id, offer.id)
     : failTavernWork(nextState, input.houseDefinition.id, offer.id);
 
+  const staminaMutation = spendPlayerStamina(
+    nextState,
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
   const goldMutation =
     reward.rewardGold === 0
-      ? { state: nextState, characterDefinitions: input.characterDefinitions }
+      ? staminaMutation
       : mutatePlayerGold(
-          nextState,
-          input.characterDefinitions,
+          staminaMutation.state,
+          staminaMutation.characterDefinitions,
           input.playerCharacterId,
           reward.rewardGold
         );
@@ -425,6 +434,7 @@ function submitWork(
         rewardLines: [
           reward.success ? "任务完成" : "任务失败",
           `报酬 ${reward.rewardGold} 文`,
+          `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
         ],
       },
     },

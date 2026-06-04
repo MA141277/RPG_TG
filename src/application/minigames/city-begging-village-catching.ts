@@ -64,7 +64,7 @@ export const CITY_BEGGING_VILLAGE_CATCHING_CONFIG = {
     },
     coin: {
       radius: 12,
-      points: 2,
+      goldGain: 2,
       fallSpeed: {
         min: 184,
         max: 246,
@@ -196,10 +196,12 @@ function calculateEffectiveScore(rawScore: number, maxCombo: number): number {
 
 function buildCompletionResult(
   effectiveScore: number,
+  goldGain: number,
   maxCombo: number
 ): CityBeggingGameCompletionResult {
   return {
     foodGain: convertEffectiveScoreToFoodGain(effectiveScore),
+    goldGain,
     maxCombo,
     success: true,
   };
@@ -289,7 +291,9 @@ export function createVillageCatchingMiniGameState(
     rawScore: 0,
     effectiveScore: 0,
     previewFoodGain: 0,
+    goldGain: 0,
     riceBagCaughtCount: 0,
+    coinCaughtCount: 0,
     comboToastValue: null,
     comboToastTtlMs: 0,
     slowedRemainingMs: 0,
@@ -375,8 +379,8 @@ function spawnItem(
   return nextState;
 }
 
-function isPositiveItem(kind: CityBeggingVillageItemKind): boolean {
-  return kind === "rice-bag" || kind === "steamed-bun" || kind === "coin";
+function isFoodComboItem(kind: CityBeggingVillageItemKind): boolean {
+  return kind === "rice-bag" || kind === "steamed-bun";
 }
 
 function isPlayerColliding(item: CityBeggingVillageItemState, playerX: number): boolean {
@@ -503,8 +507,19 @@ export function updateVillageCatchingMiniGameState(
           },
           createFeedback(nextState, "破碗!", nextItem.x, nextItem.y, "#b7d4e4")
         );
+      } else if (nextItem.kind === "coin") {
+        const goldGain = CITY_BEGGING_VILLAGE_CATCHING_CONFIG.items.coin.goldGain;
+        nextState = pushFeedback(
+          {
+            ...nextState,
+            goldGain: nextState.goldGain + goldGain,
+            coinCaughtCount: nextState.coinCaughtCount + 1,
+          },
+          createFeedback(nextState, `+${goldGain}文`, nextItem.x, nextItem.y, "#ffe28e")
+        );
       } else {
-        const points = CITY_BEGGING_VILLAGE_CATCHING_CONFIG.items[nextItem.kind].points;
+        const points =
+          CITY_BEGGING_VILLAGE_CATCHING_CONFIG.items[nextItem.kind].points;
         const combo = nextState.combo + 1;
         const maxCombo = Math.max(nextState.maxCombo, combo);
         nextState = updatePreview(
@@ -523,13 +538,7 @@ export function updateVillageCatchingMiniGameState(
                   ? CITY_BEGGING_VILLAGE_CATCHING_CONFIG.combo.toastTtlMs
                   : nextState.comboToastTtlMs,
             },
-            createFeedback(
-              nextState,
-              `+${points}分`,
-              nextItem.x,
-              nextItem.y,
-              nextItem.kind === "coin" ? "#ffe28e" : "#f4ebcf"
-            )
+            createFeedback(nextState, `+${points}分`, nextItem.x, nextItem.y, "#f4ebcf")
           )
         );
       }
@@ -538,7 +547,7 @@ export function updateVillageCatchingMiniGameState(
     }
 
     if (nextItem.y >= CITY_BEGGING_VILLAGE_CATCHING_CONFIG.world.groundY) {
-      if (isPositiveItem(nextItem.kind)) {
+      if (isFoodComboItem(nextItem.kind)) {
         nextState = breakCombo(nextState);
       }
       continue;
@@ -557,11 +566,16 @@ export function updateVillageCatchingMiniGameState(
       nextState.rawScore,
       nextState.maxCombo
     );
-    const result = buildCompletionResult(effectiveScore, nextState.maxCombo);
+    const result = buildCompletionResult(
+      effectiveScore,
+      nextState.goldGain,
+      nextState.maxCombo
+    );
 
     return {
       status: "result",
       riceBagCaughtCount: nextState.riceBagCaughtCount,
+      coinCaughtCount: nextState.coinCaughtCount,
       maxCombo: nextState.maxCombo,
       rawScore: nextState.rawScore,
       effectiveScore,

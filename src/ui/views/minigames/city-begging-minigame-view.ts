@@ -237,6 +237,8 @@ function renderVillageCatchingOverlay(state: CityBeggingMiniGameState): string {
             <h2 class="c-begging-game__result-title">获得粮食：${state.variantState.result.foodGain}斗</h2>
             ${renderResultStats([
               { label: "接住米袋", value: `${state.variantState.riceBagCaughtCount}个` },
+              { label: "接住铜钱", value: `${state.variantState.coinCaughtCount}枚` },
+              { label: "获得金钱", value: `${state.variantState.result.goldGain}文` },
               { label: "最高连击", value: `${state.variantState.maxCombo}` },
               { label: "评价", value: state.variantState.evaluation },
             ])}

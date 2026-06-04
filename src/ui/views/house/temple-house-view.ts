@@ -8,6 +8,7 @@ import {
   renderHouseDialogue,
   renderHouseIdleOwner,
   renderHouseLeaveButton,
+  renderHouseQuantityConfirmOverlay,
   renderHouseStandbyRoster,
 } from "./house-shared-view";
 
@@ -101,6 +102,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
 
   if (overlay.type === "confirm") {
     return renderConfirmOverlay(overlay);
+  }
+
+  if (overlay.type === "quantity-confirm") {
+    return renderHouseQuantityConfirmOverlay(overlay);
   }
 
   if (overlay.type === "qte-bar") {

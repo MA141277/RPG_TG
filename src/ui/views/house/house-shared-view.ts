@@ -50,6 +50,46 @@ export function renderHouseAlertOverlay(
   `;
 }
 
+export function renderHouseQuantityConfirmOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "quantity-confirm" }>
+): string {
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="quantity-confirm">
+      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
+        <div class="c-grain-shop-modal__body">
+          ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
+          ${overlay.helperLines.map((line) => `<p>${line}</p>`).join("")}
+        </div>
+        <label class="c-grain-shop-trade__label" for="${overlay.quantityFieldId}">
+          ${overlay.quantityLabel}
+        </label>
+        <div class="c-grain-shop-trade__quantity">
+          <button type="button" class="c-grain-shop-qty-btn" data-house-action="${overlay.decrementActionId}" aria-label="减少">-</button>
+          <input
+            id="${overlay.quantityFieldId}"
+            class="c-grain-shop-trade__input"
+            type="number"
+            min="1"
+            max="${overlay.maxQuantity}"
+            value="${overlay.quantity}"
+            data-house-field="${overlay.quantityFieldId}"
+          />
+          <button type="button" class="c-grain-shop-qty-btn" data-house-action="${overlay.incrementActionId}" aria-label="增加">+</button>
+        </div>
+        <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+            ${overlay.cancelLabel}
+          </button>
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+            ${overlay.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 export function renderHouseActionContainer(
   viewModel: HouseModuleViewModel
 ): string {

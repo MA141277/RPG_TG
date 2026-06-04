@@ -38,7 +38,9 @@ export type CityBeggingVillagePlayingState = {
   rawScore: number;
   effectiveScore: number;
   previewFoodGain: number;
+  goldGain: number;
   riceBagCaughtCount: number;
+  coinCaughtCount: number;
   comboToastValue: number | null;
   comboToastTtlMs: number;
   slowedRemainingMs: number;
@@ -59,6 +61,7 @@ export type CityBeggingVillageEvaluation =
 export type CityBeggingVillageResultState = {
   status: "result";
   riceBagCaughtCount: number;
+  coinCaughtCount: number;
   maxCombo: number;
   rawScore: number;
   effectiveScore: number;

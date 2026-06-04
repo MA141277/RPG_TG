@@ -145,6 +145,7 @@ function buildCompletionResult(
 ): CityBeggingGameCompletionResult {
   return {
     foodGain: calculateGranaryEscortFoodGain(successCount, maxCombo),
+    goldGain: 0,
     maxCombo,
     success: true,
   };

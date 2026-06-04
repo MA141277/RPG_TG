@@ -10,6 +10,11 @@ export const templeHouseOpenLines = [
   "求签可问前路，布施可积香火。若心还乱，先坐下听钟声也无妨。",
 ];
 
+export const templeHouseRestMenuLines = [
+  "僧舍里已留出一张草席，钟声与木鱼声也渐渐沉了下来。",
+  "这次打算在寺中静修到什么时候？",
+];
+
 export const templeHouseMeetingIntroLines = [
   "住持召集寺中僧众，在偏殿前点起一炷清香。",
   "“今日本寺评定，不论修行深浅，先看你这段时日做了多少实事。”",

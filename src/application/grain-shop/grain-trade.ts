@@ -1,5 +1,6 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import { convertShiToDou } from "../../domain/grain-unit";
 import type { GrainShopTradeMode } from "../../domain/grain-shop";
 import { assertExists } from "../../shared/assert";
 import { getTradeTotal } from "./grain-market";
@@ -55,15 +56,15 @@ export function executeGrainTrade(
     return {
       ok: true,
       mutation: { state: nextState, characterDefinitions: nextCharacters },
-      message: `已购入 ${quantity} 石粮食，花费 ${total} 文。`,
+      message: `已购入 ${quantity} 石粮食（折合 ${convertShiToDou(quantity)} 斗），花费 ${total} 文。`,
     };
   }
 
-  if (snapshot.food < quantity) {
+  if (snapshot.sellableFoodShi < quantity) {
     return {
       ok: false,
       errorTitle: "粮食不足",
-      errorMessage: "随身带的粮食不够这么多。",
+      errorMessage: "随身整石粮食不够这么多。",
     };
   }
 
@@ -83,6 +84,6 @@ export function executeGrainTrade(
   return {
     ok: true,
     mutation: { state: nextState, characterDefinitions: nextCharacters },
-    message: `已卖出 ${quantity} 石粮食，收入 ${total} 文。`,
+    message: `已卖出 ${quantity} 石粮食（折合 ${convertShiToDou(quantity)} 斗），收入 ${total} 文。`,
   };
 }
