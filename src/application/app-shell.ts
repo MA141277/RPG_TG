@@ -1,10 +1,11 @@
 import type { CharacterDefinition } from "../domain/character";
+import type { CityBeggingMiniGameState } from "../domain/city-begging-minigame";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type {
-  GlobalHudLayout,
   LayoutEditorState,
-  StartScreenLayout,
+  UiLayoutByTargetId,
 } from "../domain/ui-layout";
+import type { CityMenuState } from "./city-menu/city-menu";
 import type { GridCoordinate } from "./navigation/travel-to-coordinate";
 import type { createInitialState } from "./state/create-initial-state";
 
@@ -48,6 +49,8 @@ export type AppState = {
     | null;
   modalState: AppModalState;
   locationDialogueState: AppLocationDialogueState;
+  beggingMiniGameState: CityBeggingMiniGameState | null;
+  cityMenuState: CityMenuState | null;
   cityDirectoryState:
     | {
         type: CityEntryDirectoryType;
@@ -63,9 +66,6 @@ export type AppState = {
         targetHouseId: string;
       }
     | null;
-  uiLayouts: {
-    globalHud: GlobalHudLayout;
-    startScreen: StartScreenLayout;
-  };
+  uiLayouts: UiLayoutByTargetId;
   layoutEditor: LayoutEditorState;
 };

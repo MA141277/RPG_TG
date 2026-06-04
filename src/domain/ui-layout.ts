@@ -59,6 +59,11 @@ export type StartScreenLayout = UiLayout & {
   id: "start-screen";
 };
 
+export type UiLayoutByTargetId = {
+  "global-hud": GlobalHudLayout;
+  "start-screen": StartScreenLayout;
+};
+
 export type LayoutEditorState = {
   isOpen: boolean;
   selectedTargetId: LayoutEditorTargetId;

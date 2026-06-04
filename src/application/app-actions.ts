@@ -3,6 +3,7 @@ import type {
   CityEntryDirectoryType,
   CityEntryOption,
 } from "../domain/city-entry";
+import type { CityMenuState } from "./city-menu/city-menu";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -58,6 +59,23 @@ export function closeCityDirectory(appState: AppState): AppState {
   return {
     ...appState,
     cityDirectoryState: null,
+  };
+}
+
+export function openCityMenu(
+  appState: AppState,
+  cityMenuState: CityMenuState
+): AppState {
+  return {
+    ...appState,
+    cityMenuState,
+  };
+}
+
+export function closeCityMenu(appState: AppState): AppState {
+  return {
+    ...appState,
+    cityMenuState: null,
   };
 }
 

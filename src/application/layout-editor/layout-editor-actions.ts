@@ -1,43 +1,28 @@
 import type { AppState } from "../app-shell";
 import { uiLayoutComponentBaseSizeById } from "../../domain/ui-layout";
 import type {
-  GlobalHudLayout,
   LayoutBackgroundAssetOption,
   LayoutEditorTargetId,
-  StartScreenLayout,
   UiLayout,
   UiLayoutBackgroundMode,
   UiLayoutRect,
   UiLayoutSlice,
 } from "../../domain/ui-layout";
 
-function getLayoutKey(targetId: LayoutEditorTargetId): keyof AppState["uiLayouts"] {
-  return targetId === "start-screen" ? "startScreen" : "globalHud";
-}
-
 function getSelectedLayout(appState: AppState): UiLayout {
-  return appState.uiLayouts[getLayoutKey(appState.layoutEditor.selectedTargetId)];
+  return appState.uiLayouts[appState.layoutEditor.selectedTargetId];
 }
 
 function updateSelectedLayout(
   appState: AppState,
   updater: (layout: UiLayout) => UiLayout
 ): AppState {
-  if (appState.layoutEditor.selectedTargetId === "start-screen") {
-    return {
-      ...appState,
-      uiLayouts: {
-        ...appState.uiLayouts,
-        startScreen: updater(appState.uiLayouts.startScreen) as StartScreenLayout,
-      },
-    };
-  }
-
+  const targetId = appState.layoutEditor.selectedTargetId;
   return {
     ...appState,
     uiLayouts: {
       ...appState.uiLayouts,
-      globalHud: updater(appState.uiLayouts.globalHud) as GlobalHudLayout,
+      [targetId]: updater(appState.uiLayouts[targetId]),
     },
   };
 }
@@ -168,7 +153,7 @@ export function selectLayoutEditorTarget(
   appState: AppState,
   targetId: LayoutEditorTargetId
 ): AppState {
-  const layout = appState.uiLayouts[getLayoutKey(targetId)];
+  const layout = appState.uiLayouts[targetId];
   return {
     ...appState,
     layoutEditor: {

@@ -18,6 +18,10 @@
 - `global-hud`
 - `start-screen`
 
+布局目标统一登记在：
+
+- [src/application/layout-editor/layout-editor-target-registry.ts](D:/RPG_TG/src/application/layout-editor/layout-editor-target-registry.ts)
+
 ## 2. 当前原则
 
 - 可视化编辑器只负责产出参数，不直接改源码文件。
@@ -135,7 +139,13 @@
 
    开始/继续按钮的图片原本写在 `.c-main-ui-image-button--start` / `.c-main-ui-image-button--continue` 的 CSS `background-image` 中，但布局编辑器预览只读取 `component.background`。因此所有需要在编辑器中显示或替换图片的组件，都必须在 `src/content/layout-editor-presets.ts` 的对应 `component.background` 中显式写入 `assetId / imageUrl / mode / slice`。
 
-   真实界面也应优先从布局组件背景读取图片，否则会出现“预览无图”或“编辑器换图不作用于真实按钮”的问题。
+真实界面也应优先从布局组件背景读取图片，否则会出现“预览无图”或“编辑器换图不作用于真实按钮”的问题。
+
+`start-screen` 的实际界面编辑能力通过通用 live binding helper 接入：
+
+- [src/ui/tools/live-layout-bindings.js](D:/RPG_TG/src/ui/tools/live-layout-bindings.js)
+
+后续其他界面如果也要支持“直接在真实界面拖拽/缩放”，应复用这个 helper，而不是在各自 view 里复制拖拽框、缩放柄和背景应用逻辑。
 
 ## 9. 当前已确定的操作边界
 
@@ -149,6 +159,8 @@
 后续如果继续扩展这套工作流，按这个顺序推进：
 
 1. 扩展更多 `LayoutEditorTargetId`。
-2. 为更多界面提供默认布局预设。
-3. 支持把用户粘贴的 JSON 反向导入运行时编辑器。
-4. 如果资源体积变大，再收缩可搜索资源目录，而不是改掉协作流程。
+2. 在 `layout-editor-target-registry.ts` 中登记目标的 `id / label / mode`。
+3. 为新界面提供默认布局预设，并加入 `uiLayouts` 初始化。
+4. 如果目标使用 `mode: "live"`，在对应 view 中声明 DOM selector -> `componentId` 的 binding，并调用 `applyLiveLayoutBindings`。
+5. 支持把用户粘贴的 JSON 反向导入运行时编辑器。
+6. 如果资源体积变大，再收缩可搜索资源目录，而不是改掉协作流程。

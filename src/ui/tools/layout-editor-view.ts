@@ -1,9 +1,12 @@
 import { globalHudBackgroundOptions } from "../../content/layout-editor-presets";
 import type { AppState } from "../../application/app-shell";
+import {
+  getLayoutEditorTarget,
+  layoutEditorTargets,
+} from "../../application/layout-editor/layout-editor-target-registry";
 import { uiLayoutComponentBaseSizeById } from "../../domain/ui-layout";
 import type {
   LayoutBackgroundAssetOption,
-  LayoutEditorTargetId,
   UiLayout,
   UiLayoutBackgroundMode,
   UiLayoutComponent,
@@ -19,9 +22,7 @@ function escapeHtml(value: string): string {
 }
 
 function getLayoutForEditor(appState: AppState): UiLayout {
-  return appState.layoutEditor.selectedTargetId === "start-screen"
-    ? appState.uiLayouts.startScreen
-    : appState.uiLayouts.globalHud;
+  return appState.uiLayouts[appState.layoutEditor.selectedTargetId];
 }
 
 function getBackgroundPreviewStyle(component: UiLayoutComponent): string {
@@ -71,16 +72,11 @@ function getPreviewContentStyle(component: UiLayoutComponent): string {
 }
 
 function renderTargetList(appState: AppState): string {
-  const targets: Array<{ id: LayoutEditorTargetId; label: string }> = [
-    { id: "global-hud", label: appState.uiLayouts.globalHud.label },
-    { id: "start-screen", label: appState.uiLayouts.startScreen.label },
-  ];
-
   return `
     <div class="c-layout-editor__section">
       <h3 class="c-layout-editor__section-title">可编辑界面</h3>
       <div class="c-layout-editor__list">
-        ${targets
+        ${layoutEditorTargets
           .map((target) => {
             const isSelected = appState.layoutEditor.selectedTargetId === target.id;
             return `
@@ -452,7 +448,7 @@ export function renderLayoutEditor(appState: AppState): string {
     `;
   }
 
-  if (appState.layoutEditor.selectedTargetId === "start-screen") {
+  if (getLayoutEditorTarget(appState.layoutEditor.selectedTargetId).mode === "live") {
     return `
       <div class="c-layout-editor-live-panel">
         <button

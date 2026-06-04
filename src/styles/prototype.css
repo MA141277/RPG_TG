@@ -2121,3 +2121,1276 @@
     flex: 0 0 112px;
   }
 }
+
+.c-begging-game {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.c-begging-game__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top, rgb(255 237 195 / 18%), transparent 44%),
+    linear-gradient(180deg, rgb(24 18 12 / 42%), rgb(34 24 16 / 78%));
+  backdrop-filter: blur(4px);
+}
+
+.c-begging-game__panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 16px;
+  width: min(1320px, calc(100% - 48px));
+}
+
+.c-begging-game__panel--battle {
+  height: min(760px, calc(100% - 48px));
+}
+
+.c-begging-game__shell {
+  display: flex;
+  gap: 8px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.c-begging-game__play-area {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.c-begging-game__board-wrap {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 6px;
+  overflow: hidden;
+  border: 1px solid rgb(122 86 48 / 48%);
+  border-radius: 8px;
+  background: rgb(44 29 17 / 74%);
+}
+
+.c-begging-game__side-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  flex: 0 0 270px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.c-begging-game__side-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  color: #f7ebcf;
+  border: 1px solid rgb(130 92 52 / 46%);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgb(69 44 27 / 94%), rgb(37 24 17 / 96%));
+}
+
+.c-begging-game__side-title,
+.c-begging-game__side-copy {
+  margin: 0;
+}
+
+.c-begging-game__side-title {
+  color: #fff1cb;
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+}
+
+.c-begging-game__side-copy {
+  color: #dbc7a4;
+  line-height: 1.6;
+}
+
+.c-begging-game__hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.c-begging-game__hud--three-up .c-begging-game__hud-item {
+  flex: 1 1 0;
+}
+
+.c-begging-game__hud-item {
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+  padding: 14px 18px;
+  border: 1px solid rgb(118 80 47 / 48%);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgb(67 42 24 / 92%), rgb(38 25 16 / 96%));
+  box-shadow: 0 18px 40px rgb(0 0 0 / 22%);
+}
+
+.c-begging-game__hud-label {
+  color: #d6b889;
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+}
+
+.c-begging-game__hud-value {
+  color: #fff1cb;
+  font-family: var(--font-title);
+  font-size: 1.8rem;
+}
+
+.c-begging-game__board {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(122 86 48 / 48%);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgb(111 82 46 / 92%), rgb(63 42 22 / 96%));
+  box-shadow: 0 26px 64px rgb(0 0 0 / 34%);
+}
+
+.c-begging-game__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1000 / 560;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.c-begging-game__combo {
+  position: absolute;
+  top: 108px;
+  left: 50%;
+  min-width: 160px;
+  padding: 12px 20px;
+  color: #fff5d8;
+  text-align: center;
+  border: 1px solid rgb(225 196 114 / 42%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(163 65 37 / 94%), rgb(107 31 17 / 96%));
+  box-shadow: 0 18px 38px rgb(67 12 5 / 28%);
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transform: translate(-50%, -12px) scale(0.94);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+  pointer-events: none;
+}
+
+.c-begging-game__combo.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.c-begging-game__event {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  min-width: 148px;
+  padding: 10px 16px;
+  color: #fff6d6;
+  text-align: center;
+  border: 1px solid rgb(241 211 132 / 42%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(150 95 38 / 92%), rgb(97 56 21 / 94%));
+  box-shadow: 0 14px 34px rgb(70 34 7 / 24%);
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+  pointer-events: none;
+}
+
+.c-begging-game__event.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.c-begging-game__panel--result {
+  width: min(520px, calc(100% - 48px));
+}
+
+.c-begging-game__result-card {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+  color: #f7ebcf;
+  border: 1px solid rgb(130 92 52 / 46%);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgb(69 44 27 / 96%), rgb(37 24 17 / 98%)),
+    linear-gradient(135deg, rgb(247 221 163 / 10%), transparent 48%);
+  box-shadow: 0 28px 64px rgb(0 0 0 / 34%);
+}
+
+.c-begging-game__result-card--animated {
+  animation: begging-result-pop 220ms ease-out;
+}
+
+.c-begging-game__eyebrow {
+  margin: 0;
+  color: #d6b889;
+  letter-spacing: 0.08em;
+}
+
+.c-begging-game__result-title {
+  margin: 0;
+  color: #fff1cb;
+  font-family: var(--font-title);
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.c-begging-game__result-stats {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.c-begging-game__result-stats div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgb(255 244 218 / 10%);
+}
+
+.c-begging-game__result-stats dt,
+.c-begging-game__result-stats dd {
+  margin: 0;
+}
+
+.c-begging-game__result-stats dt {
+  color: #dbc7a4;
+}
+
+.c-begging-game__result-stats dd {
+  color: #fff4d8;
+  font-family: var(--font-title);
+  font-size: 1.4rem;
+}
+
+.c-begging-game__confirm {
+  justify-self: end;
+  min-width: 140px;
+  padding: 12px 22px;
+  color: #fff4d8;
+  border: 1px solid rgb(208 168 88 / 42%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b34b30, #7e2417);
+  font-family: var(--font-title);
+  font-size: 1.08rem;
+}
+
+.c-begging-game__confirm:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+@keyframes begging-result-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.c-begging-game--village {
+  --begging-village-stage-bg: url("../../ui/化缘UI/背景图.png");
+  --begging-village-top-border: url("../../ui/化缘UI/material-202606031548-003.png");
+  --begging-village-floor-trim: url("../../ui/化缘UI/material-202606031548-010.png");
+  --begging-village-card-base: url("../../ui/化缘UI/material-202606031551-012.png");
+  --begging-village-card-score: url("../../ui/化缘UI/material-202606031551-011.png");
+  --begging-village-card-food: url("../../ui/化缘UI/material-202606031551-013.png");
+  --begging-village-combo-ring: url("../../ui/化缘UI/material-202606031551-009.png");
+  --begging-village-combo-toast: url("../../ui/化缘UI/material-202606031551-010.png");
+  --begging-village-timer-dial: url("../../ui/化缘UI/material-202606031551-014.png");
+  --begging-village-event-scroll: url("../../ui/化缘UI/material-202606031551-008.png");
+  --begging-village-control: url("../../ui/化缘UI/material-202606031548-015.png");
+  --begging-village-food-bag: url("../../ui/化缘UI/material-202606031551-019.png");
+  --begging-village-gold-bead: url("../../ui/化缘UI/material-202606031551-041.png");
+  padding: 0;
+}
+
+.c-begging-game--village .c-begging-game__panel--village {
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.c-begging-game__village-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.c-begging-game__village-battle-area {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.c-begging-game__village-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.c-begging-game__village-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgb(129 85 38 / 0.12), transparent 58%),
+    linear-gradient(180deg, rgb(15 8 3 / 0.94), rgb(41 19 4 / 0.5) 22%, rgb(61 32 12 / 0.1) 35%, rgb(38 17 4 / 0.24) 78%, rgb(21 11 4 / 0.82));
+}
+
+.c-begging-game__village-board {
+  position: absolute;
+  inset: 2.6% 1.4% 9.8%;
+  z-index: 1;
+  background: center / 100% 100% no-repeat var(--begging-village-stage-bg);
+  filter: drop-shadow(0 18px 32px rgb(8 3 1 / 0.34));
+}
+
+.c-begging-game__village-top-border {
+  position: absolute;
+  top: 0.5%;
+  left: 50%;
+  z-index: 4;
+  width: 82%;
+  height: 10%;
+  transform: translateX(-50%);
+  background:
+    center top / auto 100% no-repeat var(--begging-village-top-border),
+    linear-gradient(180deg, rgb(65 32 10 / 0.75), rgb(22 10 3 / 0));
+  pointer-events: none;
+}
+
+.c-begging-game__village-floor {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
+  height: 18%;
+  background:
+    center top / auto 33% no-repeat var(--begging-village-floor-trim),
+    linear-gradient(180deg, rgb(28 14 4 / 0.42), rgb(21 10 3 / 0.94) 30%, rgb(36 17 6 / 0.98));
+  pointer-events: none;
+}
+
+.c-begging-game__village-side-panel {
+  position: absolute;
+  top: 6.6%;
+  bottom: 18.6%;
+  z-index: 5;
+  display: grid;
+}
+
+.c-begging-game__village-side-panel--left {
+  left: 3.7%;
+  width: 14.2%;
+  grid-template-rows: 0.84fr 1.14fr 1.28fr;
+  gap: 2.9%;
+}
+
+.c-begging-game__village-side-panel--right {
+  right: 3.9%;
+  width: 14%;
+  grid-template-rows: 0.86fr 1.54fr;
+  gap: 4.2%;
+}
+
+.c-begging-game__village-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  padding: 11% 13% 12%;
+  color: #f3d790;
+  text-align: center;
+}
+
+.c-begging-game__village-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: center / 100% 100% no-repeat var(--begging-village-card-base);
+}
+
+.c-begging-game__village-card::after {
+  content: "";
+  position: absolute;
+  inset: 7% 8%;
+  z-index: -1;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.28));
+  opacity: 0;
+}
+
+.c-begging-game__village-card--score::before {
+  background-image: var(--begging-village-card-score);
+}
+
+.c-begging-game__village-card--combo::before {
+  background-image: var(--begging-village-card-base);
+}
+
+.c-begging-game__village-card--combo::after {
+  inset: 18% 10% 21%;
+  background: center / 100% 100% no-repeat var(--begging-village-combo-ring);
+  opacity: 1;
+}
+
+.c-begging-game__village-card--food::before {
+  background-image: var(--begging-village-card-food);
+}
+
+.c-begging-game__village-card-label {
+  position: relative;
+  z-index: 1;
+  color: #edc969;
+  font-family: "KaiTi", "STKaiti", "Noto Serif SC", serif;
+  font-size: clamp(1.1rem, 1.5vw, 1.95rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 1px 0 rgb(58 27 4 / 0.9),
+    0 0 12px rgb(255 206 89 / 0.18);
+}
+
+.c-begging-game__village-card-value {
+  position: relative;
+  z-index: 1;
+  margin: auto 0;
+  color: #f6db86;
+  font-family: var(--font-title);
+  font-size: clamp(2rem, 3.1vw, 4.25rem);
+  line-height: 1;
+  text-shadow:
+    0 2px 0 rgb(92 45 8 / 0.95),
+    0 0 16px rgb(255 206 96 / 0.18);
+}
+
+.c-begging-game__village-card-value--combo {
+  margin-top: 20%;
+  margin-bottom: 10%;
+  font-size: clamp(2.5rem, 4.1vw, 5.1rem);
+}
+
+.c-begging-game__village-card-value--food {
+  margin-top: auto;
+  margin-bottom: 2%;
+  font-size: clamp(1.8rem, 2.65vw, 3.5rem);
+}
+
+.c-begging-game__village-food-bag {
+  display: block;
+  width: 64%;
+  aspect-ratio: 149 / 138;
+  margin-top: 8%;
+  background: center / contain no-repeat var(--begging-village-food-bag);
+  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 0.18));
+}
+
+.c-begging-game__village-combo-pips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3.6%;
+  width: 88%;
+  margin-top: auto;
+  padding-bottom: 3%;
+}
+
+.c-begging-game__village-combo-pip {
+  flex: 0 0 14%;
+  aspect-ratio: 1;
+  background:
+    center / contain no-repeat var(--begging-village-gold-bead),
+    radial-gradient(circle, rgb(187 115 25 / 0.28), transparent 72%);
+  filter: saturate(0.2) brightness(0.5);
+  opacity: 0.55;
+}
+
+.c-begging-game__village-combo-pip.is-active {
+  filter: drop-shadow(0 0 10px rgb(255 183 46 / 0.55));
+  opacity: 1;
+}
+
+.c-begging-game__village-card--timer {
+  padding: 12% 10% 16%;
+}
+
+.c-begging-game__village-card--timer::before {
+  background-image: var(--begging-village-card-score);
+}
+
+.c-begging-game__village-timer-dial {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+}
+
+.c-begging-game__village-timer-dial::before {
+  content: "";
+  position: absolute;
+  inset: 2% 12% auto;
+  aspect-ratio: 204 / 205;
+  background: center / contain no-repeat var(--begging-village-timer-dial);
+}
+
+.c-begging-game__village-timer-label,
+.c-begging-game__village-timer-value {
+  position: relative;
+  z-index: 1;
+}
+
+.c-begging-game__village-timer-label {
+  color: #f2d488;
+  font-family: "KaiTi", "STKaiti", "Noto Serif SC", serif;
+  font-size: clamp(1rem, 1.4vw, 1.7rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 0 rgb(73 36 7 / 0.9);
+}
+
+.c-begging-game__village-timer-value {
+  margin: 6% 0 4%;
+  color: #f9df8f;
+  font-family: var(--font-title);
+  font-size: clamp(2.9rem, 4.35vw, 5.8rem);
+  line-height: 0.92;
+  text-shadow:
+    0 2px 0 rgb(91 45 8 / 0.95),
+    0 0 20px rgb(255 202 85 / 0.16);
+}
+
+.c-begging-game__village-card--event {
+  padding: 2% 5% 3%;
+  color: #f3d790;
+}
+
+.c-begging-game__village-card--event::before {
+  background-image: var(--begging-village-event-scroll);
+}
+
+.c-begging-game__village-event-scroll {
+  position: absolute;
+  top: 6%;
+  left: 17%;
+  right: 17%;
+  bottom: 20%;
+  display: grid;
+  place-items: center;
+}
+
+.c-begging-game__village-event-text {
+  color: #4d1f03;
+  font-family: "KaiTi", "STKaiti", "Noto Serif SC", serif;
+  font-size: clamp(1.6rem, 2.35vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  text-shadow:
+    0 1px 0 rgb(255 242 211 / 0.3),
+    0 0 14px rgb(255 209 112 / 0.22);
+}
+
+.c-begging-game__village-event-time {
+  position: absolute;
+  inset: auto 0 7%;
+  color: #f5d175;
+  font-family: var(--font-title);
+  font-size: clamp(1.4rem, 2.3vw, 3rem);
+  line-height: 1;
+  text-shadow:
+    0 2px 0 rgb(84 38 5 / 0.95),
+    0 0 12px rgb(255 191 64 / 0.2);
+}
+
+.c-begging-game__village-card--event.is-active {
+  filter: drop-shadow(0 0 18px rgb(255 174 34 / 0.18));
+}
+
+.c-begging-game__village-playzone {
+  position: absolute;
+  left: 15.2%;
+  top: 7.5%;
+  z-index: 4;
+  width: 69.6%;
+  aspect-ratio: 1000 / 560;
+  overflow: hidden;
+}
+
+.c-begging-game__village-playzone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgb(255 223 154 / 0.07), transparent 62%),
+    linear-gradient(180deg, rgb(255 241 207 / 0.02), rgb(0 0 0 / 0.12));
+  pointer-events: none;
+}
+
+.c-begging-game__canvas--village {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+.c-begging-game--village .c-begging-game__combo--village {
+  top: 8.5%;
+  width: 15.6%;
+  min-width: 150px;
+  min-height: 0;
+  padding: 2.9% 1.4% 2.2%;
+  color: #fff1cb;
+  border: 0;
+  border-radius: 0;
+  background: center / 100% 100% no-repeat var(--begging-village-combo-toast);
+  box-shadow: 0 18px 38px rgb(67 12 5 / 0.24);
+  font-family: "KaiTi", "STKaiti", "Noto Serif SC", serif;
+  font-size: clamp(1rem, 1.35vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.05;
+  text-shadow:
+    0 2px 0 rgb(90 44 7 / 0.9),
+    0 0 10px rgb(255 185 75 / 0.14);
+}
+
+.c-begging-game__village-control {
+  position: absolute;
+  left: 50%;
+  bottom: 2.2%;
+  z-index: 6;
+  width: 31.5%;
+  aspect-ratio: 289 / 77;
+  transform: translateX(-50%);
+  background: center / contain no-repeat var(--begging-village-control);
+  filter: drop-shadow(0 12px 18px rgb(7 2 0 / 0.35));
+}
+
+@media (max-width: 1100px) {
+  .c-begging-game--village .c-begging-game__panel--village {
+    width: 100%;
+    height: 100%;
+  }
+
+  .c-begging-game__village-side-panel {
+    top: 6.9%;
+    bottom: 18.9%;
+  }
+
+  .c-begging-game__village-side-panel--left {
+    left: 3%;
+    width: 15.5%;
+  }
+
+  .c-begging-game__village-side-panel--right {
+    right: 3%;
+    width: 15.2%;
+  }
+
+  .c-begging-game__village-playzone {
+    left: 16.6%;
+    top: 8.2%;
+    width: 66.8%;
+  }
+
+  .c-begging-game--village .c-begging-game__combo--village {
+    width: 17%;
+    min-width: 136px;
+    font-size: 0.98rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .c-begging-game--village .c-begging-game__panel--village {
+    width: 100%;
+    height: 100%;
+  }
+
+  .c-begging-game__village-stage {
+    border-radius: 0;
+  }
+
+  .c-begging-game__village-side-panel {
+    top: 5.8%;
+    bottom: 18.4%;
+  }
+
+  .c-begging-game__village-side-panel--left {
+    left: 1.6%;
+    width: 18%;
+  }
+
+  .c-begging-game__village-side-panel--right {
+    right: 1.7%;
+    width: 17.6%;
+  }
+
+  .c-begging-game__village-playzone {
+    left: 19.4%;
+    top: 8.8%;
+    width: 61.2%;
+  }
+
+  .c-begging-game__village-event-scroll {
+    left: 22%;
+    right: 22%;
+  }
+
+  .c-begging-game__village-control {
+    bottom: 2%;
+    width: 34%;
+  }
+
+  .c-begging-game--village .c-begging-game__combo--village {
+    width: 18.5%;
+    min-width: 124px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .c-begging-game {
+    padding: 16px;
+  }
+
+  .c-begging-game--village {
+    padding: 0;
+  }
+
+  .c-begging-game__panel {
+    width: min(100%, calc(100% - 8px));
+  }
+
+  .c-begging-game__hud {
+    flex-direction: column;
+  }
+
+  .c-begging-game__hud-item {
+    min-width: 0;
+  }
+
+  .c-begging-game__combo {
+    top: 88px;
+    font-size: 1.2rem;
+  }
+
+  .c-begging-game__event {
+    top: 18px;
+    right: 18px;
+    min-width: 124px;
+    font-size: 0.92rem;
+  }
+
+  .c-begging-game__result-card {
+    padding: 22px;
+  }
+
+  .c-begging-game__result-title {
+    font-size: 1.7rem;
+  }
+}
+
+.c-city-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 4;
+  display: grid;
+  gap: 14px;
+  width: min(280px, calc(100% - 48px));
+  transform: translate(-50%, -50%);
+}
+
+.c-city-menu__button {
+  min-height: 74px;
+  width: 100%;
+  padding: 0 24px;
+  color: #f7e5b7;
+  border: 0;
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  background: center / 100% 100% no-repeat var(--kulan-large-button);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-city-menu__button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.c-city-menu__button--special {
+  filter: saturate(1.08);
+}
+
+.c-kulan-city__house-deck {
+  position: absolute;
+  left: 0;
+  right: 190px;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  justify-content: flex-start;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0;
+  scrollbar-width: none;
+}
+
+.c-kulan-city__house-deck::-webkit-scrollbar {
+  display: none;
+}
+
+.c-kulan-house-card {
+  display: grid;
+  justify-items: center;
+  width: min(21vw, 132px);
+  min-width: 108px;
+  padding: 0;
+  color: inherit;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-kulan-house-card:hover {
+  transform: translateY(-4px);
+  filter: brightness(1.05);
+}
+
+.c-kulan-house-card__art {
+  width: 100%;
+  aspect-ratio: 210 / 437;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 6px 14px rgb(0 0 0 / 18%));
+}
+
+.c-kulan-house-card--home-house .c-kulan-house-card__art {
+  background-image: url("../../ui/card/6_063_card_zizhai_2.0.png");
+}
+
+.c-kulan-house-card--medicine-house .c-kulan-house-card__art {
+  background-image: url("../../ui/card/3_040_card_huichuntang_1.0.png");
+}
+
+/* house card 图打标：chaguan / shuaifu / dangpu / lianghang / jiusi */
+.c-kulan-house-card--tea-house .c-kulan-house-card__art {
+  background-image: url("../../ui/card/card_chaguan.png");
+}
+
+.c-kulan-house-card--temple-house .c-kulan-house-card__art {
+  background-image: url("../../ui/card/card_temple.png");
+}
+
+.c-kulan-house-card--keep .c-kulan-house-card__art {
+  background-image: url("../../ui/card/6_060_card_shuaifu_2.0.png");
+}
+
+.c-kulan-house-card--market .c-kulan-house-card__art {
+  background-image: url("../../ui/card/5_046_card_dangpu_2.0.png");
+}
+
+.c-kulan-house-card--grain-shop .c-kulan-house-card__art {
+  background-image: url("../../ui/card/6_064_card_lianghang_2.0.png");
+}
+
+.c-kulan-house-card--inn .c-kulan-house-card__art {
+  background-image: url("../../ui/card/6_066_card_jiusi_2.0.png");
+}
+
+.c-kulan-house-card--leader-residence .c-kulan-house-card__art {
+  background-image: url("../../ui/card/6_062_card_jianglingfu_2.0.png");
+}
+
+.c-kulan-house-card--fallback .c-kulan-house-card__art {
+  background-image: url("../../ui/yuansu/1_013_blank_large_frame_1.0.png");
+}
+
+.c-city-directory {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+}
+
+.c-city-directory__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(9 10 16 / 52%);
+  backdrop-filter: blur(6px);
+}
+
+.c-city-directory__panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  gap: 16px;
+  width: min(860px, calc(100% - 64px));
+  max-height: calc(100% - 80px);
+  padding: 22px 24px;
+  overflow: auto;
+  border: 2px solid rgb(78 56 35 / 88%);
+  border-radius: 18px;
+  box-shadow:
+    0 24px 80px rgb(0 0 0 / 30%),
+    inset 0 0 0 1px rgb(255 248 226 / 42%);
+  background:
+    linear-gradient(180deg, rgb(247 236 208 / 96%), rgb(227 205 156 / 94%)),
+    #e9d6a7;
+  transform: translate(-50%, -50%);
+}
+
+.c-city-directory__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.c-city-directory__eyebrow {
+  margin: 0 0 4px;
+  color: #7a5030;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.c-city-directory__title {
+  margin: 0;
+  color: #24180e;
+  font-family: var(--font-title);
+  font-size: 1.9rem;
+}
+
+.c-city-directory__close {
+  padding: 10px 16px;
+  color: #f7edd1;
+  border: 1px solid rgb(92 51 25 / 86%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b34930, #7e2417);
+}
+
+.c-city-directory__list {
+  display: grid;
+  gap: 12px;
+}
+
+.c-city-directory__option {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  color: inherit;
+  text-align: left;
+  border: 1px solid rgb(124 92 54 / 34%);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(255 248 234 / 94%), rgb(240 221 177 / 92%));
+}
+
+.c-city-directory__option:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.c-city-directory__option-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.c-city-directory__option-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.c-city-directory__option-title {
+  color: #24180e;
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+}
+
+.c-city-directory__option-status,
+.c-city-directory__option-subtitle,
+.c-city-directory__option-meta {
+  color: #6d5037;
+}
+
+.c-city-directory__option-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: end;
+}
+
+.c-city-directory__option-tag {
+  padding: 6px 10px;
+  color: #7d2f1f;
+  border: 1px solid rgb(164 116 76 / 42%);
+  border-radius: 999px;
+  background: rgb(255 248 233 / 86%);
+  font-size: 0.84rem;
+}
+
+.c-city-menu-panel__panel {
+  gap: 18px;
+}
+
+.c-city-menu-panel__section {
+  display: grid;
+  gap: 12px;
+}
+
+.c-city-menu-panel__section-title {
+  margin: 0;
+  color: #3d2818;
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+}
+
+.c-city-menu-panel__paragraph,
+.c-city-menu-panel__hint {
+  margin: 0;
+  color: #5f4631;
+  line-height: 1.8;
+}
+
+.c-city-menu-panel__economy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+}
+
+.c-city-menu-panel__economy-level {
+  padding: 8px 14px;
+  color: #fff3d2;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #9a4130, #6d2016);
+  font-size: 1rem;
+}
+
+.c-city-menu-panel__economy-value {
+  color: #7a5030;
+  font-size: 0.92rem;
+}
+
+.c-city-menu-panel__meta {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.c-city-menu-panel__meta div {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(255 248 233 / 72%);
+}
+
+.c-city-menu-panel__meta dt,
+.c-city-menu-panel__meta dd {
+  margin: 0;
+}
+
+.c-city-menu-panel__meta dt {
+  color: #7d5b3d;
+}
+
+.c-city-menu-panel__meta dd {
+  color: #24180e;
+  font-weight: 600;
+}
+
+.c-city-menu-panel__intel-list,
+.c-city-menu-panel__location-list {
+  display: grid;
+  gap: 12px;
+}
+
+.c-city-menu-panel__intel-item,
+.c-city-menu-panel__location,
+.c-city-menu-panel__lock {
+  padding: 14px 16px;
+  border: 1px solid rgb(124 92 54 / 28%);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(255 248 234 / 94%), rgb(240 221 177 / 92%));
+}
+
+.c-city-menu-panel__intel-item p {
+  margin: 0;
+  color: #4f3826;
+  line-height: 1.75;
+}
+
+.c-city-menu-panel__location {
+  display: grid;
+  gap: 6px;
+  color: inherit;
+  text-align: left;
+}
+
+.c-city-menu-panel__location-title,
+.c-city-menu-panel__lock-title {
+  color: #24180e;
+  font-family: var(--font-title);
+  font-size: 1.08rem;
+}
+
+.c-city-menu-panel__location-subtitle {
+  color: #6d5037;
+  font-size: 0.92rem;
+}
+
+.c-city-locations-view {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+}
+
+.c-city-locations-view__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(10 12 18 / 55%), rgb(10 12 18 / 72%)),
+    radial-gradient(circle at 50% 80%, rgb(223 181 94 / 12%), transparent 38%);
+  backdrop-filter: blur(4px);
+}
+
+.c-city-locations-view__chrome {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 28px 28px 26px;
+}
+
+.c-city-locations-view__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.c-city-locations-view__eyebrow {
+  margin: 0 0 4px;
+  color: rgb(244 218 160 / 88%);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.c-city-locations-view__title {
+  margin: 0;
+  color: #f7ebcf;
+  font-family: var(--font-title);
+  font-size: 1.9rem;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 36%);
+}
+
+.c-city-locations-view__close {
+  padding: 10px 16px;
+  color: #f7edd1;
+  border: 1px solid rgb(92 51 25 / 86%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b34930, #7e2417);
+}
+
+.c-city-locations-view__return-action {
+  position: absolute;
+  right: 28px;
+  bottom: 24px;
+  z-index: 2;
+  min-height: 74px;
+  min-width: 176px;
+  border: 0;
+  color: #f7e5b7;
+  font-family: var(--font-title);
+  font-size: 1.45rem;
+  background: center / contain no-repeat var(--kulan-large-button);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-city-locations-view__return-action:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.c-city-locations-view__deck {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 24px;
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  justify-content: flex-start;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0 172px 0 0;
+  scrollbar-width: none;
+}
+
+.c-city-locations-view__deck::-webkit-scrollbar {
+  display: none;
+}

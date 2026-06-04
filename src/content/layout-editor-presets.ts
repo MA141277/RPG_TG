@@ -1,6 +1,7 @@
 import type {
   GlobalHudLayout,
   LayoutBackgroundAssetOption,
+  StartScreenLayout,
   UiLayoutBackground,
   UiLayoutComponent,
   UiLayoutElement,
@@ -10,6 +11,8 @@ import type {
 import portraitFrameUrl from "../../ui/yuansu/toukuang.png?url";
 import statusBoardUrl from "../../ui/yuansu/1_002_top_status_bar_1.0.png?url";
 import taskPanelUrl from "../../ui/yuansu/1_015_left_mission_panel_1.0.png?url";
+import startButtonUrl from "../../ui/yuansu/开局ui/start.png?url";
+import continueButtonUrl from "../../ui/yuansu/开局ui/continue.png?url";
 
 const defaultSlice: UiLayoutSlice = {
   top: 24,
@@ -68,6 +71,11 @@ const statusBoardAsset = findAssetOption(
 const taskPanelAsset = findAssetOption(
   "/ui/yuansu/1_015_left_mission_panel_1.0.png",
   taskPanelUrl
+);
+const startButtonAsset = findAssetOption("/ui/yuansu/开局ui/start.png", startButtonUrl);
+const continueButtonAsset = findAssetOption(
+  "/ui/yuansu/开局ui/continue.png",
+  continueButtonUrl
 );
 
 function createRect(
@@ -161,6 +169,47 @@ export function createDefaultGlobalHudLayout(): GlobalHudLayout {
           createElement("review-item", "评定倒计时", createRect(24, 74, 200, 96)),
           createElement("mission-item", "当前任务", createRect(25, 154, 200, 144)),
         ],
+      }),
+    ],
+  };
+}
+
+export function createDefaultStartScreenLayout(): StartScreenLayout {
+  return {
+    id: "start-screen",
+    label: "开始界面",
+    screenSize: {
+      width: 1600,
+      height: 900,
+    },
+    components: [
+      createComponent({
+        id: "main-menu-content",
+        label: "主菜单内容组",
+        rect: createRect(170, 416, 320, 220),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "main-menu-subtitle",
+        label: "主菜单副标题",
+        rect: createRect(170, 416, 420, 36),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "start-button",
+        label: "开始游戏按钮",
+        rect: createRect(170, 476, 136, 136),
+        background: createBackground(startButtonAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "continue-button",
+        label: "继续游戏按钮",
+        rect: createRect(328, 476, 136, 136),
+        background: createBackground(continueButtonAsset, "contain"),
+        elements: [],
       }),
     ],
   };
