@@ -49,6 +49,10 @@ import {
   type HouseRuntime,
 } from "./application/house/house-runtime";
 import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
+} from "./application/player/player-stamina";
+import {
   advanceStorySceneStep,
   buildStoryTriggerInput,
   chooseStorySceneOption,
@@ -623,6 +627,25 @@ function startCityBeggingMiniGameLoop(): void {
 function openBeggingMiniGame(): void {
   const playerCharacter = getCurrentPlayerCharacter();
   if (playerCharacter == null || !isPlayerMonkIdentity(playerCharacter)) {
+    return;
+  }
+
+  if (!canAffordActivityCost(playerCharacter)) {
+    stopCityBeggingMiniGameLoop();
+    appState = {
+      ...closeCityMenu(closeCityDirectory(appState)),
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: "char.kulan_temple_abbot",
+        textLines: [
+          "方丈隔着人群唤住了你：“你这会儿脚步都虚了，就别再硬撑着出去化缘。”",
+          `“先回去歇息，体力缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再出门也不迟。”`,
+        ],
+        advanceHintText: "先去休息",
+      },
+      beggingMiniGameState: null,
+    };
+    renderApp();
     return;
   }
 

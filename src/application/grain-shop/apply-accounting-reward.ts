@@ -8,6 +8,7 @@ import {
   mutatePlayerGold,
   type GrainShopMutationResult,
 } from "./grain-shop-mutations";
+import { spendPlayerStamina } from "../player/player-stamina";
 import { getAccountingGradeReward } from "./accounting-minigame";
 
 export function applyAccountingReward(
@@ -38,6 +39,14 @@ export function applyAccountingReward(
   );
   nextState = mathMutation.state;
   nextCharacters = mathMutation.characterDefinitions;
+
+  const staminaMutation = spendPlayerStamina(
+    nextState,
+    nextCharacters,
+    playerCharacterId
+  );
+  nextState = staminaMutation.state;
+  nextCharacters = staminaMutation.characterDefinitions;
 
   nextState = mutateGrainShopRelationship(nextState, reward.relationship);
   nextState = advanceGrainShopTime(nextState);

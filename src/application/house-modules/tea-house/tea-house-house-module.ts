@@ -46,6 +46,11 @@ import {
   mutatePlayerRhetoric,
   mutateTeaHouseActorFavorability,
 } from "../../tea-house/tea-house-mutations";
+import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
+  spendPlayerStamina,
+} from "../../player/player-stamina";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
 
 const DEBATE_INTERVAL_ID = "tea-house-debate";
@@ -482,10 +487,19 @@ function resolveDebateTurn(
             };
 
     const mutation = applyTeaHouseOutcome(input, actor, finishedOutcome);
+    const staminaMutation = spendPlayerStamina(
+      mutation.gameState,
+      mutation.characterDefinitions,
+      input.playerCharacterId
+    );
+    const effectSummaryLines = [
+      ...formatOutcomeSummaryLines(finishedOutcome),
+      `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+    ];
 
     return {
-      gameState: mutation.gameState,
-      characterDefinitions: mutation.characterDefinitions,
+      gameState: staminaMutation.state,
+      characterDefinitions: staminaMutation.characterDefinitions,
       sessionState:
         sessionState == null
           ? sessionState
@@ -499,7 +513,7 @@ function resolveDebateTurn(
                   actor,
                   roundResult.outcome,
                   roundResult.lines,
-                  formatOutcomeSummaryLines(finishedOutcome)
+                  effectSummaryLines
                 ),
                 roundResult.outcome.winner === "player"
                   ? "success"
@@ -740,6 +754,23 @@ function handleActorAction(
       );
     }
     case "start-debate": {
+      const playerCharacter = getPlayerCharacter(
+        input.characterDefinitions,
+        input.playerCharacterId
+      );
+      if (!canAffordActivityCost(playerCharacter)) {
+        return withSessionState(input, sessionState, {
+          overlay: createAlertOverlay(
+            "先缓口气",
+            [
+              `${selectedActor.name}放下茶盏，摇头道：“你这会儿神浮气短，真要舌战，也只是强撑。”`,
+              `“先去歇一歇，体力攒到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点以上，再来和我论个高下。”`,
+            ],
+            "warning"
+          ),
+        });
+      }
+
       return withSessionState(
         input,
         sessionState,

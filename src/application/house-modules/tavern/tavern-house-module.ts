@@ -72,6 +72,11 @@ import {
   removeActiveTavernWork,
   setTavernWorkProgress,
 } from "../../tavern/tavern-mutations";
+import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
+  spendPlayerStamina,
+} from "../../player/player-stamina";
 import { createInitialTavernSessionState } from "./tavern-session-state";
 
 const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
@@ -116,6 +121,17 @@ function createAlertOverlay(
     paragraphs,
     ...(tone == null ? {} : { tone }),
   };
+}
+
+function createLowStaminaOverlay(actionLabel: string): TavernOverlayState {
+  return createAlertOverlay(
+    "先去休息",
+    [
+      `老板摆了摆手：“你这会儿脚下都发虚，还想${actionLabel}？只会把事情办砸。”`,
+      `“先去歇够，体力至少回到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来柜上说话。”`,
+    ],
+    "warning"
+  );
 }
 
 function createTransitionResult(
@@ -423,12 +439,17 @@ function submitWork(
     ? completeTavernWork(nextState, input.houseDefinition.id, offer.id)
     : failTavernWork(nextState, input.houseDefinition.id, offer.id);
 
+  const staminaMutation = spendPlayerStamina(
+    nextState,
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
   const goldMutation =
     reward.rewardGold === 0
-      ? { state: nextState, characterDefinitions: input.characterDefinitions }
+      ? staminaMutation
       : mutatePlayerGold(
-          nextState,
-          input.characterDefinitions,
+          staminaMutation.state,
+          staminaMutation.characterDefinitions,
           input.playerCharacterId,
           reward.rewardGold
         );
@@ -463,6 +484,7 @@ function submitWork(
         rewardLines: [
           reward.success ? "任务完成" : "任务失败",
           `报酬 ${reward.rewardGold} 文`,
+          `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
         ],
       },
     },
@@ -525,6 +547,12 @@ function handleWorkAction(
 
   const acceptOfferId = parseActionId(input.request.actionId, ACCEPT_WORK_ACTION_PREFIX);
   if (acceptOfferId != null) {
+    if (!canAffordActivityCost(playerCharacter)) {
+      return withSessionState(input, sessionState, {
+        overlay: createLowStaminaOverlay("接活"),
+      });
+    }
+
     const offer = findWorkOffer(acceptOfferId);
     const capacity = getWorkCapacity(playerCharacter.stats.fame);
     if (lists.acceptedOffers.length >= capacity) {
@@ -597,6 +625,12 @@ function handleWorkAction(
   }
 
   if (input.request.actionId === "confirm-submit-work") {
+    if (!canAffordActivityCost(playerCharacter)) {
+      return withSessionState(input, sessionState, {
+        overlay: createLowStaminaOverlay("交活"),
+      });
+    }
+
     const offerId = sessionState.selectedSubmitOfferId;
     if (offerId == null) {
       return createTransitionResult(input);
@@ -730,10 +764,20 @@ function resolveGambleSettlement(
 ): HouseModuleTransitionResult<"tavern"> {
   const delta = getGambleNetResult(session);
   const nextState = increaseTavernTime(input.gameState, input.houseDefinition.id, 1);
+  const staminaMutation = spendPlayerStamina(
+    nextState,
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
   const goldMutation =
     delta === 0
-      ? { state: nextState, characterDefinitions: input.characterDefinitions }
-      : mutatePlayerGold(nextState, input.characterDefinitions, input.playerCharacterId, delta);
+      ? staminaMutation
+      : mutatePlayerGold(
+          staminaMutation.state,
+          staminaMutation.characterDefinitions,
+          input.playerCharacterId,
+          delta
+        );
   return {
     gameState: goldMutation.state,
     characterDefinitions: goldMutation.characterDefinitions,
@@ -751,6 +795,7 @@ function resolveGambleSettlement(
         [
           `底池 ${session.pot} 文。`,
           delta >= 0 ? `本次金钱变化 +${delta} 文。` : `本次金钱变化 ${delta} 文。`,
+          `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
         ],
         delta >= 0 ? "success" : "warning"
       ),
@@ -1063,6 +1108,11 @@ function handleGambleAction(
         ["你摸了摸钱袋。", "临到上桌，才发现钱不够。"],
         "warning"
       ),
+    });
+  }
+  if (!canAffordActivityCost(playerCharacter)) {
+    return withSessionState(input, sessionState, {
+      overlay: createLowStaminaOverlay("上桌"),
     });
   }
   if (sessionState == null) {

@@ -21,6 +21,10 @@ import { getQuotedGrainPrice, getTradeTotal, pickNpcDefaultLine, pickNpcGreeting
 import { investigateGrainMarket } from "../../grain-shop/investigate-grain-market";
 import { initGrainShopSession } from "../../grain-shop/init-grain-shop-session";
 import { setGrainPrice } from "../../grain-shop/grain-shop-mutations";
+import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
+} from "../../player/player-stamina";
 import { assertExists } from "../../../shared/assert";
 import { createInitialGrainShopSessionState } from "./grain-shop-session-state";
 
@@ -347,6 +351,25 @@ function handleAction(
       return updateTradeQuantity(input, sessionState, overlay.quantity + 1);
     }
     case "accounting": {
+      const playerCharacter = getPlayerCharacter(
+        input.characterDefinitions,
+        input.playerCharacterId
+      );
+      if (!canAffordActivityCost(playerCharacter)) {
+        return withOverlay(
+          input,
+          sessionState,
+          toAlertOverlay(
+            "先歇一歇",
+            [
+              "粮铺掌柜抬手按住了账册：“你这会儿眼都发花，再算下去只会把账越算越乱。”",
+              `“先去缓口气，攒够 ${ACTIVITY_COMPLETION_STAMINA_COST} 点体力，再回来拨算盘。”`,
+            ],
+            "warning"
+          )
+        );
+      }
+
       const firstQuestion = generateLedgerQuestion();
       return withOverlay(
         input,
@@ -464,6 +487,7 @@ function selectOverlayViewModel(overlay: GrainShopSessionState["overlay"]): Hous
         overlay.reward.money > 0 ? `金钱 +${overlay.reward.money}` : "金钱 不变",
         overlay.reward.relationship > 0 ? `与掌柜关系 +${overlay.reward.relationship}` : "与掌柜关系 不变",
         "时间 +1",
+        `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
       ];
 
       return {

@@ -42,6 +42,7 @@ import {
 } from "../../inventory/trade-inventory";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
   spendPlayerStamina,
 } from "../../player/player-stamina";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
@@ -585,6 +586,17 @@ function ensureTempleRuntimeState(gameState: GameState): GameState {
       variables: nextVariables,
     },
   };
+}
+
+function createLowStaminaOverlay(actionLabel: string): NonNullable<TempleHouseOverlayState> {
+  return createAlertOverlay(
+    "先去歇息",
+    [
+      `住持合十道：“你这会儿心力已竭，今日不必强撑着去${actionLabel}。”`,
+      `“先回禅房静养，体力至少缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来继续。”`,
+    ],
+    "warning"
+  );
 }
 
 function resolveFortuneLines(
@@ -1403,34 +1415,41 @@ function finalizeTempleWork(
     `命中 ${overlay.successes} / ${overlay.totalRounds} 次`,
     `寺中贡献 +${resolution.contribution}`,
     `累计贡献 ${nextContribution} / 30`,
+    `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
     ...(unlockBegging
       ? ["方丈似乎已经留意到你的踏实，回到寺中后或许会有新的安排。"]
       : []),
   ];
+  const nextState = {
+    ...input.gameState,
+    ui: {
+      ...input.gameState.ui,
+      mainHouseMissionText: unlockBegging
+        ? "休整至下次评定"
+        : "继续寺内帮忙",
+    },
+    runtime: {
+      ...input.gameState.runtime,
+      flags: {
+        ...input.gameState.runtime.flags,
+        ...(unlockBegging
+          ? {
+              [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+            }
+          : {}),
+      },
+      variables: nextVariables,
+    },
+  };
+  const staminaMutation = spendPlayerStamina(
+    nextState,
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
 
   return {
-    gameState: {
-      ...input.gameState,
-      ui: {
-        ...input.gameState.ui,
-        mainHouseMissionText: unlockBegging
-          ? "休整至下次评定"
-          : "继续寺内帮忙",
-      },
-      runtime: {
-        ...input.gameState.runtime,
-        flags: {
-          ...input.gameState.runtime.flags,
-          ...(unlockBegging
-            ? {
-                [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
-              }
-            : {}),
-        },
-        variables: nextVariables,
-      },
-    },
-    characterDefinitions: input.characterDefinitions,
+    gameState: staminaMutation.state,
+    characterDefinitions: staminaMutation.characterDefinitions,
     sessionState: {
       ...sessionState,
       dialoguePhase: "open",
@@ -1951,6 +1970,19 @@ function handleAction(
   }
 
   if (input.request.actionId === CONFIRM_TEMPLE_BEGGING_FOOD_ACTION_ID) {
+    if (!canAffordActivityCost(playerCharacter)) {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createLowStaminaOverlay("交粮回寺"),
+        }
+      );
+    }
+
     return confirmTempleBeggingFoodSubmission(
       {
         ...input,
@@ -2192,6 +2224,19 @@ function handleAction(
     assertExists(taskDefinition, `Temple house task not found for id "${selectedTaskId}".`);
 
     if (isMonkStoryStage(nextState) && TEMPLE_HELP_QTE_TASK_IDS.has(taskDefinition.id)) {
+      if (!canAffordActivityCost(playerCharacter)) {
+        return withSessionState(
+          {
+            gameState: nextState,
+            characterDefinitions: input.characterDefinitions,
+          },
+          sessionState,
+          {
+            overlay: createLowStaminaOverlay(taskDefinition.title),
+          }
+        );
+      }
+
       return startTempleWorkMinigame(
         {
           ...input,
@@ -2203,6 +2248,19 @@ function handleAction(
     }
 
     if (isMonkStoryStage(nextState) && taskDefinition.id === "beg-alms") {
+      if (!canAffordActivityCost(playerCharacter)) {
+        return withSessionState(
+          {
+            gameState: nextState,
+            characterDefinitions: input.characterDefinitions,
+          },
+          sessionState,
+          {
+            overlay: createLowStaminaOverlay(taskDefinition.title),
+          }
+        );
+      }
+
       return startBegAlmsWork(
         {
           ...input,

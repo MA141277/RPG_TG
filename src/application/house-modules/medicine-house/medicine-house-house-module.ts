@@ -38,6 +38,11 @@ import {
   readPlayerFatigue,
   readReservedPlayerStatus,
 } from "../../medicine-house/medicine-house-mutations";
+import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
+  spendPlayerStamina,
+} from "../../player/player-stamina";
 import { createInitialMedicineHouseSessionState } from "./medicine-house-session-state";
 
 const COMPOUNDING_INTERVAL_ID = "medicine-house-compounding";
@@ -255,11 +260,19 @@ function finalizeCompounding(
     outcome
   );
 
-  const rewardLines = formatOutcomeSummary(outcome);
+  const staminaMutation = spendPlayerStamina(
+    mutation.state,
+    mutation.characterDefinitions,
+    input.playerCharacterId
+  );
+  const rewardLines = [
+    ...formatOutcomeSummary(outcome),
+    `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+  ];
 
   return {
-    gameState: mutation.state,
-    characterDefinitions: mutation.characterDefinitions,
+    gameState: staminaMutation.state,
+    characterDefinitions: staminaMutation.characterDefinitions,
     sessionState:
       sessionState == null
         ? sessionState
@@ -426,6 +439,19 @@ function handleAction(
       );
     }
     case "start-compounding": {
+      if (!canAffordActivityCost(playerCharacter)) {
+        return withSessionState(input, sessionState, {
+          overlay: createAlertOverlay(
+            "先去歇息",
+            [
+              "陈郎中按住药杵，皱眉道：“你这会儿气息不稳，硬要配药，只会把药性配岔了。”",
+              `“回去静一静，体力至少缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来动手。”`,
+            ],
+            "warning"
+          ),
+        });
+      }
+
       const medicineSkill = getPlayerMedicineSkill(playerCharacter);
       const limits = getCompoundingLimits(medicineSkill);
       const target = pickCompoundingTarget(medicineSkill);

@@ -8,6 +8,13 @@ export type PlayerStaminaMutationResult = {
   characterDefinitions: CharacterDefinition[];
 };
 
+export function canAffordActivityCost(
+  characterDefinition: Pick<CharacterDefinition, "stamina">,
+  amount = ACTIVITY_COMPLETION_STAMINA_COST
+): boolean {
+  return characterDefinition.stamina >= Math.max(0, amount);
+}
+
 export function mutatePlayerStamina(
   state: GameState,
   characterDefinitions: CharacterDefinition[],
