@@ -48,6 +48,7 @@ import {
 } from "../../tea-house/tea-house-mutations";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
   spendPlayerStamina,
 } from "../../player/player-stamina";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
@@ -753,6 +754,23 @@ function handleActorAction(
       );
     }
     case "start-debate": {
+      const playerCharacter = getPlayerCharacter(
+        input.characterDefinitions,
+        input.playerCharacterId
+      );
+      if (!canAffordActivityCost(playerCharacter)) {
+        return withSessionState(input, sessionState, {
+          overlay: createAlertOverlay(
+            "先缓口气",
+            [
+              `${selectedActor.name}放下茶盏，摇头道：“你这会儿神浮气短，真要舌战，也只是强撑。”`,
+              `“先去歇一歇，体力攒到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点以上，再来和我论个高下。”`,
+            ],
+            "warning"
+          ),
+        });
+      }
+
       return withSessionState(
         input,
         sessionState,

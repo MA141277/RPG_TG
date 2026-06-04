@@ -44,6 +44,7 @@ import {
 } from "../../inventory/trade-inventory";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
   spendPlayerStamina,
 } from "../../player/player-stamina";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
@@ -464,6 +465,17 @@ function ensureTempleRuntimeState(gameState: GameState): GameState {
       variables: nextVariables,
     },
   };
+}
+
+function createLowStaminaOverlay(actionLabel: string): NonNullable<TempleHouseOverlayState> {
+  return createAlertOverlay(
+    "先去歇息",
+    [
+      `住持合十道：“你这会儿心力已竭，今日不必强撑着去${actionLabel}。”`,
+      `“先回禅房静养，体力至少缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来继续。”`,
+    ],
+    "warning"
+  );
 }
 
 function advanceTempleRestOneDay(
@@ -2255,6 +2267,19 @@ function handleAction(
   }
 
   if (input.request.actionId === CONFIRM_TEMPLE_BEGGING_FOOD_ACTION_ID) {
+    if (!canAffordActivityCost(playerCharacter)) {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createLowStaminaOverlay("交粮回寺"),
+        }
+      );
+    }
+
     return confirmTempleBeggingFoodSubmission(
       {
         ...input,
@@ -2472,6 +2497,19 @@ function handleAction(
     assertExists(taskDefinition, `Temple house task not found for id "${selectedTaskId}".`);
 
     if (isMonkStoryStage(nextState) && TEMPLE_HELP_QTE_TASK_IDS.has(taskDefinition.id)) {
+      if (!canAffordActivityCost(playerCharacter)) {
+        return withSessionState(
+          {
+            gameState: nextState,
+            characterDefinitions: input.characterDefinitions,
+          },
+          sessionState,
+          {
+            overlay: createLowStaminaOverlay(taskDefinition.title),
+          }
+        );
+      }
+
       return startTempleWorkMinigame(
         {
           ...input,
@@ -2483,6 +2521,19 @@ function handleAction(
     }
 
     if (isMonkStoryStage(nextState) && taskDefinition.id === "beg-alms") {
+      if (!canAffordActivityCost(playerCharacter)) {
+        return withSessionState(
+          {
+            gameState: nextState,
+            characterDefinitions: input.characterDefinitions,
+          },
+          sessionState,
+          {
+            overlay: createLowStaminaOverlay(taskDefinition.title),
+          }
+        );
+      }
+
       return startBegAlmsWork(
         {
           ...input,

@@ -42,6 +42,7 @@ import {
 } from "../../tavern/tavern-mutations";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
+  canAffordActivityCost,
   spendPlayerStamina,
 } from "../../player/player-stamina";
 import { createInitialTavernSessionState } from "./tavern-session-state";
@@ -82,6 +83,17 @@ function createAlertOverlay(
     paragraphs,
     ...(tone == null ? {} : { tone }),
   };
+}
+
+function createLowStaminaOverlay(actionLabel: string): TavernOverlayState {
+  return createAlertOverlay(
+    "先去休息",
+    [
+      `老板摆了摆手：“你这会儿脚下都发虚，还想${actionLabel}？只会把事情办砸。”`,
+      `“先去歇够，体力至少回到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来柜上说话。”`,
+    ],
+    "warning"
+  );
 }
 
 function createTransitionResult(
@@ -497,6 +509,12 @@ function handleWorkAction(
 
   const acceptOfferId = parseActionId(input.request.actionId, ACCEPT_WORK_ACTION_PREFIX);
   if (acceptOfferId != null) {
+    if (!canAffordActivityCost(playerCharacter)) {
+      return withSessionState(input, sessionState, {
+        overlay: createLowStaminaOverlay("接活"),
+      });
+    }
+
     const offer = findWorkOffer(acceptOfferId);
     const capacity = getWorkCapacity(playerCharacter.stats.fame);
     if (lists.acceptedOffers.length >= capacity) {
@@ -569,6 +587,12 @@ function handleWorkAction(
   }
 
   if (input.request.actionId === "confirm-submit-work") {
+    if (!canAffordActivityCost(playerCharacter)) {
+      return withSessionState(input, sessionState, {
+        overlay: createLowStaminaOverlay("交活"),
+      });
+    }
+
     const offerId = sessionState.selectedSubmitOfferId;
     if (offerId == null) {
       return createTransitionResult(input);
