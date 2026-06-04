@@ -200,6 +200,7 @@ function buildCompletionResult(
 ): CityBeggingGameCompletionResult {
   return {
     foodGain: convertEffectiveScoreToFoodGain(effectiveScore),
+    goldGain: 0,
     maxCombo,
     success: true,
   };

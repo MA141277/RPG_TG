@@ -141,10 +141,6 @@ function renderLocationsDeckView(input: {
       <div class="c-city-locations-view__backdrop" data-action="close-city-menu"></div>
       <div class="c-city-locations-view__chrome">
         <div class="c-city-locations-view__header">
-          <div>
-            <p class="c-city-locations-view__eyebrow">地点</p>
-            <h2 class="c-city-locations-view__title">${input.cityDefinition.name}地点</h2>
-          </div>
           <button type="button" class="c-city-locations-view__close" data-action="close-city-menu">
             返回菜单
           </button>

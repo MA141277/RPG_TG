@@ -79,7 +79,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 30;
+  z-index: calc(var(--z-global-ui) - 1);
   grid-template-columns: minmax(360px, 520px) auto;
   color: #2f2319;
 }

@@ -1,5 +1,9 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import {
+  convertShiToDou,
+  formatGrainAsShiAndDou,
+} from "../../domain/grain-unit";
 import type { GrainShopTradeMode } from "../../domain/grain-shop";
 import { assertExists } from "../../shared/assert";
 import { getTradeTotal } from "./grain-market";
@@ -10,6 +14,7 @@ import {
   type GrainShopMutationResult,
 } from "./grain-shop-mutations";
 import { createGrainShopSnapshot } from "./grain-shop-snapshot";
+import { ensurePlayerGrainInventory } from "../inventory/trade-inventory";
 
 export type GrainTradeResult =
   | { ok: true; mutation: GrainShopMutationResult; message: string }
@@ -24,11 +29,12 @@ export function executeGrainTrade(
   grainPrice: number
 ): GrainTradeResult {
   const total = getTradeTotal(grainPrice, quantity);
+  const syncedState = ensurePlayerGrainInventory(state);
   const playerCharacter = characterDefinitions.find(
     (characterDefinition) => characterDefinition.id === playerCharacterId
   );
   assertExists(playerCharacter, `Player character not found for id "${playerCharacterId}".`);
-  const snapshot = createGrainShopSnapshot(state, playerCharacter);
+  const snapshot = createGrainShopSnapshot(syncedState, playerCharacter);
 
   if (mode === "buy") {
     if (snapshot.money < total) {
@@ -39,7 +45,7 @@ export function executeGrainTrade(
       };
     }
 
-    let nextState = state;
+    let nextState = syncedState;
     let nextCharacters = characterDefinitions;
     const goldMutation = mutatePlayerGold(
       nextState,
@@ -55,11 +61,11 @@ export function executeGrainTrade(
     return {
       ok: true,
       mutation: { state: nextState, characterDefinitions: nextCharacters },
-      message: `已购入 ${quantity} 石粮食，花费 ${total} 文。`,
+      message: `已购入 ${formatGrainAsShiAndDou(convertShiToDou(quantity))} 粮食，花费 ${total} 文。`,
     };
   }
 
-  if (snapshot.food < quantity) {
+  if (snapshot.sellableFoodShi < quantity) {
     return {
       ok: false,
       errorTitle: "粮食不足",
@@ -67,7 +73,7 @@ export function executeGrainTrade(
     };
   }
 
-  let nextState = state;
+  let nextState = syncedState;
   let nextCharacters = characterDefinitions;
   const goldMutation = mutatePlayerGold(
     nextState,
@@ -83,6 +89,6 @@ export function executeGrainTrade(
   return {
     ok: true,
     mutation: { state: nextState, characterDefinitions: nextCharacters },
-    message: `已卖出 ${quantity} 石粮食，收入 ${total} 文。`,
+    message: `已卖出 ${formatGrainAsShiAndDou(convertShiToDou(quantity))} 粮食，收入 ${total} 文。`,
   };
 }

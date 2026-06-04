@@ -2,6 +2,25 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-04 Battle Branch Selective Integration
+
+### Added
+- 新增共享玩家粮食运行时库存 `var.player_inventory.grain_dou`，用斗作为统一单位承接粮店、城市化缘和寺庙交粮。
+- 新增共享粮食单位换算 helper 与玩家体力消耗 helper，避免寺庙、粮店和化缘结果各自复制资源变更逻辑。
+- `HouseOverlayViewModel` 新增结构化 `quantity-confirm` overlay，用于寺庙提交化缘粮食这类带上限的数量确认流程。
+- 皇觉寺日常事务新增休息面板和本轮化缘交粮流程：可提交随身粮食、结算寺中贡献、记录本轮交粮评价并扣除活动体力。
+
+### Changed
+- 城市“化缘”按钮继续只在玩家 `title` / `occupation` 具备僧人/和尚身份时显示；皇觉寺开局不再提前赋予和尚身份，改由剃度剧情通过结构化 `patch-character` 效果写入 `挂单僧 / 皇觉寺僧人`。
+- 粮店买卖粮食改为读写共享玩家粮食库存，并在进入粮店时迁移旧的粮店/市场米粮变量。
+- 城市化缘小游戏完成后会将获得粮食写入共享库存，记录最近一次化缘结果，并消耗一次活动体力。
+- 寺庙状态栏展示随身粮食、体力和本轮交粮结果；寺庙业务仍保留在 `temple-house` module 内，入口层只处理通用小游戏完成回调。
+- [docs/special-house-interface.md](/D:/RPG_TG/docs/special-house-interface.md) 补充共享运行时库存和 `quantity-confirm` overlay 契约。
+
+### Impact
+- 没有直接合并 `origin/战斗`，避免覆盖本地酒馆长牌、城市 UI 和其他未提交改动。
+- 后续若战斗分支继续推进体力、化缘奖励或寺庙评定，可继续扩展共享库存/体力 helper 和 typed overlay，而不是在 `src/main.ts` 写 house 特判。
+
 ## 2026-06-03 Tavern Long Gambling Variant
 
 ### Added

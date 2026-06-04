@@ -539,11 +539,11 @@ export function renderApp(input: AppRenderInput): string {
                     : ""
                 }
               </div>
-              ${renderLocationDialogue(
-                input.appState.locationDialogueState,
-                input.appState.characterDefinitions
-              )}
             </main>
+            ${renderLocationDialogue(
+              input.appState.locationDialogueState,
+              input.appState.characterDefinitions
+            )}
             ${renderModal(
               input.appState.modalState,
               input.cityPortraits

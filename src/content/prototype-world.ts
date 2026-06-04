@@ -1584,17 +1584,12 @@ export function createPrototypeCharactersForStoryStage(
     (characterDefinition) => characterDefinition.id === "char.player"
   );
 
-  if (playerCharacter == null) {
-    return characterDefinitions;
-  }
-
-  if (storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple) {
+  if (
+    playerCharacter != null &&
+    storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  ) {
     delete playerCharacter.clanId;
-    playerCharacter.title = "挂单僧";
-    playerCharacter.occupation = "皇觉寺僧人";
-    playerCharacter.houseId = "house.kulan.temple";
-    playerCharacter.biography =
-      "寺中饥荒未歇，你暂在皇觉寺挂单度日，一边听候住持训示，一边思量乱世中的出路。";
+    delete playerCharacter.affiliationLabel;
   }
 
   return characterDefinitions;

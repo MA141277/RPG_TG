@@ -4,6 +4,7 @@ import { GRAIN_SHOP_VARIABLE_KEYS } from "../../domain/grain-shop";
 import { grainShopInitialValues } from "../../content/houses/grain-shop-content";
 import { getQuotedGrainPrice } from "./grain-market";
 import { setGrainPrice } from "./grain-shop-mutations";
+import { ensurePlayerGrainInventory } from "../inventory/trade-inventory";
 
 export type InitGrainShopSessionResult = {
   state: GameState;
@@ -31,7 +32,8 @@ export function initGrainShopSession(
       variables: nextVariables,
     },
   };
-  const quotedPrice = getQuotedGrainPrice(seededState);
+  const inventorySyncedState = ensurePlayerGrainInventory(seededState);
+  const quotedPrice = getQuotedGrainPrice(inventorySyncedState);
   const nextState = setGrainPrice(quotedPrice.state, quotedPrice.buyPrice);
 
   return {

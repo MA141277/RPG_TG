@@ -34,6 +34,7 @@ import {
   getCityBeggingMiniGameCompletionResult,
   getCityBeggingMiniGameStatus,
   isCityBeggingMiniGamePlaying,
+  applyCityBeggingMiniGameCompletion,
   setCityBeggingMiniGamePointer,
   updateCityBeggingMiniGameState,
 } from "./application/minigames/city-begging-minigame";
@@ -522,6 +523,17 @@ function stopCityBeggingMiniGameLoop(): void {
 }
 
 function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
+  const completion = applyCityBeggingMiniGameCompletion(
+    appState.gameState,
+    appState.characterDefinitions,
+    currentPlayerCharacterId,
+    result
+  );
+  appState = {
+    ...appState,
+    gameState: completion.state,
+    characterDefinitions: completion.characterDefinitions,
+  };
   window.onBeggingGameComplete?.(result);
 }
 

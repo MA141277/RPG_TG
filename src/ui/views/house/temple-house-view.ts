@@ -8,6 +8,7 @@ import {
   renderHouseDialogue,
   renderHouseIdleOwner,
   renderHouseLeaveButton,
+  renderHouseQuantityConfirmOverlay,
   renderHouseStandbyRoster,
 } from "./house-shared-view";
 
@@ -90,6 +91,39 @@ function renderResultOverlay(
   `;
 }
 
+function renderRestDaysOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "rest-days" }>
+): string {
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="rest-days">
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal" role="dialog" aria-modal="true">
+        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
+        <div class="c-grain-shop-modal__body">
+          ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
+          <label class="c-grain-shop-trade__field">
+            <span>休息天数</span>
+            <input
+              type="number"
+              min="1"
+              max="99"
+              value="${overlay.dayCount}"
+              data-house-field="${overlay.quantityFieldId}"
+            >
+          </label>
+        </div>
+        <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+            ${overlay.cancelLabel}
+          </button>
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+            ${overlay.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderOverlay(overlay: HouseOverlayViewModel | null): string {
   if (overlay == null) {
     return "";
@@ -105,6 +139,14 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
 
   if (overlay.type === "qte-bar") {
     return renderQteOverlay(overlay);
+  }
+
+  if (overlay.type === "quantity-confirm") {
+    return renderHouseQuantityConfirmOverlay(overlay);
+  }
+
+  if (overlay.type === "rest-days") {
+    return renderRestDaysOverlay(overlay);
   }
 
   if (overlay.type === "result") {

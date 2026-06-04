@@ -261,6 +261,25 @@ Temporary session state:
 
 Temporary session state must still live in a unified session branch, not loose globals.
 
+### Shared Runtime Inventory
+
+When multiple systems read or write the same player-owned resource, add or reuse a shared
+runtime inventory key instead of keeping one copy per house.
+
+Current shared keys:
+
+- `var.player_inventory.grain_dou`: player grain measured in dou
+
+Rules:
+
+- house modules may migrate legacy house-local inventory variables on enter, but must not reset
+  existing player-owned resources
+- grain shop, market inventory, city begging rewards, and temple work submission must read and
+  mutate the shared grain key
+- unit conversion belongs in shared domain helpers, not in one concrete house renderer
+- house-local variables may store derived progress such as submitted amount or last grade, but
+  not an independent copy of the player inventory
+
 ## Mutation Rules
 
 A house module must never silently reset player base data on enter.
@@ -304,8 +323,12 @@ type AlertOverlayModel = {
 Then `ui/views/*` converts that into markup.
 
 Shared overlay unions may grow when a special house needs a richer structured interaction
-(for example a module-specific trade picker, a rest-days input panel, or a market trade selector),
+(for example a module-specific trade picker, a rest-days input panel, a quantity confirmation
+panel, or a market trade selector),
 but the data must remain typed and UI-facing.
+Use `quantity-confirm` for reusable numeric submissions where a module needs min/max bounded
+quantity input plus increment/decrement actions. The temporary input stays in the module session;
+confirmation performs the persistent mutation through the module lifecycle.
 For staged table overlays such as tavern gambling, per-player public summaries may include
 current best pattern data and visible discard history, while private hand tiles remain hidden
 from other players in the view model.

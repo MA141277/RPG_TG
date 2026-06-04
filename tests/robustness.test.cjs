@@ -24,6 +24,9 @@ const {
 } = require("../.test-dist/content/prototype-world.js");
 const { executeGrainTrade } = require("../.test-dist/application/grain-shop/grain-trade.js");
 const {
+  PLAYER_GRAIN_RUNTIME_KEYS,
+} = require("../.test-dist/application/inventory/trade-inventory.js");
+const {
   homeHouseHouseModule,
 } = require("../.test-dist/application/house-modules/home-house/home-house-house-module.js");
 const {
@@ -259,7 +262,11 @@ test("grain trade succeeds for a valid buy and advances runtime state", () => {
 
   const playerCharacter = getPlayerCharacter(result.mutation.characterDefinitions);
   assert.equal(playerCharacter.stats.gold, 20);
-  assert.equal(result.mutation.state.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.food], 6);
+  assert.equal(
+    result.mutation.state.runtime.variables[PLAYER_GRAIN_RUNTIME_KEYS.quantityDou],
+    60
+  );
+  assert.equal(result.mutation.state.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.food], 0);
   assert.equal(result.mutation.state.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.time], 2);
 });
 
@@ -859,6 +866,7 @@ test("temple house review only selects work direction and daily actions start te
     reopenedViewModel.actionContainer?.actions.map((action) => action.id),
     [
       "open-temple-work-menu",
+      "open-temple-rest-menu",
       "ask-fortune",
       "open-donate",
       "dismiss-dialogue",

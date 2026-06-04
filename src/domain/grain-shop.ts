@@ -36,6 +36,8 @@ export type AccountingGradeReward = {
 export type GrainShopPlayerSnapshot = {
   money: number;
   food: number;
+  foodDou: number;
+  sellableFoodShi: number;
   math: number;
   relationship: number;
   time: number;

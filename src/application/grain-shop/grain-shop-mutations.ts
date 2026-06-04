@@ -1,6 +1,8 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import { convertShiToDou } from "../../domain/grain-unit";
 import { GRAIN_SHOP_VARIABLE_KEYS } from "../../domain/grain-shop";
+import { mutatePlayerGrainDou } from "../inventory/trade-inventory";
 
 export type GrainShopMutationResult = {
   state: GameState;
@@ -95,12 +97,7 @@ export function mutateGrainShopFood(
   state: GameState,
   delta: number
 ): GameState {
-  const currentFood = readVariable(state, GRAIN_SHOP_VARIABLE_KEYS.food, 0);
-  return withVariable(
-    state,
-    GRAIN_SHOP_VARIABLE_KEYS.food,
-    Math.max(0, currentFood + delta)
-  );
+  return mutatePlayerGrainDou(state, convertShiToDou(delta));
 }
 
 export function mutateGrainShopRelationship(

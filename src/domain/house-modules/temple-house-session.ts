@@ -25,6 +25,17 @@ export type TempleHouseQteOverlayState = {
   targetWidthPercent: number;
 };
 
+export type TempleHouseFoodSubmitOverlayState = {
+  type: "submit-food";
+  quantity: number;
+  maxQuantity: number;
+};
+
+export type TempleHouseRestDaysOverlayState = {
+  type: "rest-days";
+  inputValue: string;
+};
+
 export type TempleHouseResultOverlayState = {
   type: "result";
   title: string;
@@ -37,6 +48,8 @@ export type TempleHouseOverlayState =
   | TempleHouseAlertOverlayState
   | TempleHouseDonateConfirmOverlayState
   | TempleHouseQteOverlayState
+  | TempleHouseFoodSubmitOverlayState
+  | TempleHouseRestDaysOverlayState
   | TempleHouseResultOverlayState
   | null;
 
@@ -53,7 +66,7 @@ export type TempleHouseSessionMode = "daily" | "meeting";
 
 export type TempleHouseWorkPlan = "temple-help" | "beg-alms" | null;
 
-export type TempleHouseDailyActionPanel = "root" | "work";
+export type TempleHouseDailyActionPanel = "root" | "work" | "rest";
 
 export type TempleHouseMeetingStage =
   | "intro"

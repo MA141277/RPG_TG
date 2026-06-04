@@ -2,6 +2,7 @@
   templeHouseGreetingLines,
   templeHouseMeetingIntroLines,
   templeHouseOpenLines,
+  templeHouseRestMenuLines,
   templeHouseTaskDefinitions,
 } from "../../../content/houses/temple-house-content";
 import type { CharacterDefinition } from "../../../domain/character";
@@ -16,6 +17,10 @@ import type {
 } from "../../../domain/house-module";
 import type { TempleHouseTaskDefinition } from "../../../domain/temple-house";
 import { TEMPLE_HOUSE_VARIABLE_KEYS } from "../../../domain/temple-house";
+import {
+  formatGrainAsDou,
+  formatGrainAsShiAndDou,
+} from "../../../domain/grain-unit";
 import type {
   TempleHouseOverlayState,
   TempleHouseQteOverlayState,
@@ -30,6 +35,15 @@ import {
   readZhuYuanzhangStoryStage,
 } from "../../../domain/zhu-yuanzhang-story";
 import { assertExists } from "../../../shared/assert";
+import {
+  ensurePlayerGrainInventory,
+  mutatePlayerGrainDou,
+  readPlayerGrainDou,
+} from "../../inventory/trade-inventory";
+import {
+  ACTIVITY_COMPLETION_STAMINA_COST,
+  spendPlayerStamina,
+} from "../../player/player-stamina";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
 
 const DONATION_AMOUNT = 50;
@@ -37,11 +51,27 @@ const ASSIGN_TEMPLE_TASK_ACTION_PREFIX = "assign-temple-task:";
 const SELECT_REVIEW_WORK_ACTION_PREFIX = "select-review-work:";
 const OPEN_TEMPLE_WORK_MENU_ACTION_ID = "open-temple-work-menu";
 const CLOSE_TEMPLE_WORK_MENU_ACTION_ID = "close-temple-work-menu";
+const OPEN_TEMPLE_REST_MENU_ACTION_ID = "open-temple-rest-menu";
+const CLOSE_TEMPLE_REST_MENU_ACTION_ID = "close-temple-rest-menu";
+const OPEN_TEMPLE_REST_DAYS_ACTION_ID = "open-temple-rest-days";
+const CONFIRM_TEMPLE_REST_DAYS_ACTION_ID = "confirm-temple-rest-days";
+const TEMPLE_REST_ONE_DAY_ACTION_ID = "temple-rest-one-day";
+const TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID = "temple-rest-until-council";
+const TEMPLE_REST_UNTIL_RECOVERED_ACTION_ID = "temple-rest-until-recovered";
+const TEMPLE_REST_DAYS_FIELD_ID = "temple-house-rest-days";
 const CLOSE_TEMPLE_LEAVE_REFUSAL_ACTION_ID = "close-temple-leave-refusal";
+const SUBMIT_TEMPLE_BEGGING_FOOD_ACTION_ID = "submit-temple-begging-food";
+const TEMPLE_BEGGING_SUBMIT_FIELD_ID = "temple-begging-submit-quantity";
+const CONFIRM_TEMPLE_BEGGING_FOOD_ACTION_ID = "confirm-temple-begging-food";
+const CANCEL_TEMPLE_BEGGING_FOOD_ACTION_ID = "cancel-temple-begging-food";
+const DECREMENT_TEMPLE_BEGGING_FOOD_ACTION_ID = "decrement-temple-begging-food";
+const INCREMENT_TEMPLE_BEGGING_FOOD_ACTION_ID = "increment-temple-begging-food";
 const TEMPLE_WORK_INTERVAL_ID = "temple-house-work-qte";
 const TEMPLE_REVIEW_AUTO_ADVANCE_INTERVAL_ID = "temple-review-auto-advance";
 const TEMPLE_WORK_TOTAL_ROUNDS = 3;
 const TEMPLE_WORK_MARKER_STEP = 7;
+const TEMPLE_REST_MAX_DAYS = 99;
+const TEMPLE_REST_BASE_RECOVERY = 12;
 
 const FIRST_WEEK_TEMPLE_TASK_IDS = [
   "copy-scripture",
@@ -100,11 +130,32 @@ function readNumericVariable(
   return typeof value === "number" ? value : fallback;
 }
 
+function readStringVariable(
+  state: GameState,
+  key: string,
+  fallback: string
+): string {
+  const value = state.runtime.variables[key];
+  return typeof value === "string" ? value : fallback;
+}
+
 function readBooleanFlag(
   state: GameState,
   key: string
 ): boolean {
   return state.runtime.flags[key] === true;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function isSameDate(left: CalendarDate, right: CalendarDate): boolean {
+  return (
+    left.year === right.year &&
+    left.month === right.month &&
+    left.day === right.day
+  );
 }
 
 function getCurrentDate(state: GameState): CalendarDate {
@@ -264,9 +315,199 @@ function resolveTempleWorkContribution(successes: number): {
   };
 }
 
+function readTempleAvailableFood(state: GameState): number {
+  return readPlayerGrainDou(state);
+}
+
+function readTempleBeggingSubmittedFood(state: GameState): number {
+  return readNumericVariable(
+    state,
+    TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood,
+    0
+  );
+}
+
+function readTempleBeggingLastGrade(state: GameState): string {
+  return readStringVariable(
+    state,
+    TEMPLE_HOUSE_VARIABLE_KEYS.beggingLastGrade,
+    ""
+  );
+}
+
+function isTempleBeggingWorkSubmitted(state: GameState): boolean {
+  return readTempleBeggingSubmittedFood(state) > 0;
+}
+
+function isTempleBeggingFoodReadyForSubmission(state: GameState): boolean {
+  return (
+    readTempleWorkPlan(state) === "beg-alms" &&
+    !isTempleBeggingWorkSubmitted(state) &&
+    readTempleAvailableFood(state) > 0
+  );
+}
+
+function formatTempleGrainAmount(quantityDou: number): string {
+  return quantityDou >= 10
+    ? formatGrainAsShiAndDou(quantityDou)
+    : formatGrainAsDou(quantityDou);
+}
+
+function resolveTempleBeggingDelivery(quantityDou: number): {
+  grade: string;
+  contribution: number;
+  praiseLines: string[];
+} {
+  if (quantityDou >= 30) {
+    return {
+      grade: "功德充盈",
+      contribution: 15,
+      praiseLines: [
+        "方丈让知客僧接过粮袋，神色终于松了几分。",
+        "这一趟化缘能接济寺众，也能分出些许给山门外的饥民。",
+      ],
+    };
+  }
+
+  if (quantityDou >= 15) {
+    return {
+      grade: "足以交差",
+      contribution: 10,
+      praiseLines: [
+        "方丈点头道，粮虽不算多，至少能撑过眼前几日。",
+        "乱世中愿意把求来的粮带回寺里，便不是空走一遭。",
+      ],
+    };
+  }
+
+  return {
+    grade: "杯水车薪",
+    contribution: 5,
+    praiseLines: [
+      "方丈收下粮食，只叮嘱你下回多留意村口与粮仓差事。",
+      "粮少也是粮，能交回来便算有一分心力。",
+    ],
+  };
+}
+
+function recoverTempleStamina(playerCharacter: CharacterDefinition): CharacterDefinition {
+  const maxStamina = Math.max(100, playerCharacter.stamina);
+  return {
+    ...playerCharacter,
+    stamina: Math.min(
+      maxStamina,
+      playerCharacter.stamina + TEMPLE_REST_BASE_RECOVERY
+    ),
+  };
+}
+
+function advanceTempleRestOneDay(
+  state: GameState,
+  characterDefinitions: CharacterDefinition[],
+  playerCharacterId: string
+): {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  recovered: number;
+} {
+  const playerCharacter = getPlayerCharacter(characterDefinitions, playerCharacterId);
+  const nextPlayerCharacter = recoverTempleStamina(playerCharacter);
+  const currentCountdown = readNumericVariable(
+    state,
+    KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
+    0
+  );
+  const nextDate = addDaysToDate(getCurrentDate(state), 1);
+
+  return {
+    state: {
+      ...state,
+      calendar: {
+        ...state.calendar,
+        ...nextDate,
+      },
+      ui: {
+        ...state.ui,
+        reviewDateText: formatReviewDateText(Math.max(0, currentCountdown - 1)),
+      },
+      runtime: {
+        ...state.runtime,
+        variables: {
+          ...state.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: Math.max(
+            0,
+            currentCountdown - 1
+          ),
+        },
+      },
+    },
+    characterDefinitions: replaceCharacter(characterDefinitions, nextPlayerCharacter),
+    recovered: nextPlayerCharacter.stamina - playerCharacter.stamina,
+  };
+}
+
+function runTempleRestPlan(
+  state: GameState,
+  characterDefinitions: CharacterDefinition[],
+  playerCharacterId: string,
+  shouldContinue: (
+    state: GameState,
+    characterDefinitions: CharacterDefinition[],
+    daysRested: number
+  ) => boolean
+): {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  daysRested: number;
+  totalRecovered: number;
+} {
+  let nextState = state;
+  let nextCharacters = characterDefinitions;
+  let daysRested = 0;
+  let totalRecovered = 0;
+
+  while (
+    daysRested < TEMPLE_REST_MAX_DAYS &&
+    shouldContinue(nextState, nextCharacters, daysRested)
+  ) {
+    const result = advanceTempleRestOneDay(
+      nextState,
+      nextCharacters,
+      playerCharacterId
+    );
+    nextState = result.state;
+    nextCharacters = result.characterDefinitions;
+    daysRested += 1;
+    totalRecovered += result.recovered;
+  }
+
+  return {
+    state: nextState,
+    characterDefinitions: nextCharacters,
+    daysRested,
+    totalRecovered,
+  };
+}
+
+function createTempleRestResultOverlay(
+  summary: { daysRested: number; totalRecovered: number },
+  title: string
+): NonNullable<TempleHouseOverlayState> {
+  return {
+    type: "alert",
+    title,
+    paragraphs: [
+      `共休息 ${summary.daysRested} 天，恢复体力 ${summary.totalRecovered}。`,
+      "寺中钟鼓照常，评定日程也随日子推进。",
+    ],
+    tone: "success",
+  };
+}
+
 function ensureTempleRuntimeState(gameState: GameState): GameState {
-  const nextFlags = { ...gameState.runtime.flags };
-  const nextVariables = { ...gameState.runtime.variables };
+  const syncedState = ensurePlayerGrainInventory(gameState);
+  const nextFlags = { ...syncedState.runtime.flags };
+  const nextVariables = { ...syncedState.runtime.variables };
 
   if (typeof nextVariables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown] !== "number") {
     nextVariables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown] = 0;
@@ -282,6 +523,14 @@ function ensureTempleRuntimeState(gameState: GameState): GameState {
 
   if (typeof nextVariables[TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan] !== "string") {
     nextVariables[TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan] = "";
+  }
+
+  if (typeof nextVariables[TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood] !== "number") {
+    nextVariables[TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood] = 0;
+  }
+
+  if (typeof nextVariables[TEMPLE_HOUSE_VARIABLE_KEYS.beggingLastGrade] !== "string") {
+    nextVariables[TEMPLE_HOUSE_VARIABLE_KEYS.beggingLastGrade] = "";
   }
 
   if (typeof nextVariables[ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution] !== "number") {
@@ -313,15 +562,15 @@ function ensureTempleRuntimeState(gameState: GameState): GameState {
   }
 
   return {
-    ...gameState,
+    ...syncedState,
     ui: {
-      ...gameState.ui,
+      ...syncedState.ui,
       reviewDateText: formatReviewDateText(
         readNumericVariable(
           {
-            ...gameState,
+            ...syncedState,
             runtime: {
-              ...gameState.runtime,
+              ...syncedState.runtime,
               variables: nextVariables,
             },
           },
@@ -331,7 +580,7 @@ function ensureTempleRuntimeState(gameState: GameState): GameState {
       ),
     },
     runtime: {
-      ...gameState.runtime,
+      ...syncedState.runtime,
       flags: nextFlags,
       variables: nextVariables,
     },
@@ -678,6 +927,7 @@ function getTempleRootActions(
 ): HouseActionViewModel[] {
   if (!isMonkStoryStage(gameState)) {
     return [
+      { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息", tone: "accent" },
       { id: "ask-fortune", label: "测运势", tone: "accent" },
       { id: "open-donate", label: "捐香火" },
       ...(dialoguePhase === "idle"
@@ -687,17 +937,37 @@ function getTempleRootActions(
   }
 
   return [
+    ...(isTempleBeggingFoodReadyForSubmission(gameState)
+      ? [
+          {
+            id: SUBMIT_TEMPLE_BEGGING_FOOD_ACTION_ID,
+            label: `提交粮食：${formatTempleGrainAmount(readTempleAvailableFood(gameState))}`,
+            tone: "accent",
+          } satisfies HouseActionViewModel,
+        ]
+      : []),
     {
       id: OPEN_TEMPLE_WORK_MENU_ACTION_ID,
       label: currentWorkPlan == null ? "工作（待评定）" : "工作",
       tone: "accent",
       disabled: currentWorkPlan == null,
     },
+    { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息" },
     { id: "ask-fortune", label: "测运势" },
     { id: "open-donate", label: "捐香火" },
     ...(dialoguePhase === "idle"
       ? []
       : [{ id: "dismiss-dialogue", label: "先退下" }]),
+  ];
+}
+
+function getTempleRestMenuActions(): HouseActionViewModel[] {
+  return [
+    { id: TEMPLE_REST_ONE_DAY_ACTION_ID, label: "休息一日", tone: "accent" },
+    { id: OPEN_TEMPLE_REST_DAYS_ACTION_ID, label: "指定天数" },
+    { id: TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID, label: "休至评定日" },
+    { id: TEMPLE_REST_UNTIL_RECOVERED_ACTION_ID, label: "休至体力恢复" },
+    { id: CLOSE_TEMPLE_REST_MENU_ACTION_ID, label: "返回" },
   ];
 }
 
@@ -932,6 +1202,147 @@ function startBegAlmsWork(
   };
 }
 
+function openTempleBeggingFoodOverlay(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState
+): HouseModuleTransitionResult<"temple-house"> {
+  const availableFood = readTempleAvailableFood(input.gameState);
+  if (availableFood <= 0) {
+    return withSessionState(
+      {
+        gameState: input.gameState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: createAlertOverlay(
+          "暂无可交粮食",
+          [
+            "你身上还没有可交给寺里的化缘粮。",
+            "先离寺去城中化缘，完成后再回寺提交。",
+          ],
+          "warning"
+        ),
+      }
+    );
+  }
+
+  return withSessionState(
+    {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      overlay: {
+        type: "submit-food",
+        quantity: availableFood,
+        maxQuantity: availableFood,
+      },
+    }
+  );
+}
+
+function updateTempleBeggingSubmitQuantity(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  quantity: number
+): HouseModuleTransitionResult<"temple-house"> {
+  const overlay = sessionState.overlay;
+  if (overlay?.type !== "submit-food") {
+    return createTransitionResult(input);
+  }
+
+  const maxQuantity = Math.max(1, readTempleAvailableFood(input.gameState));
+  return withSessionState(input, sessionState, {
+    overlay: {
+      ...overlay,
+      quantity: clamp(quantity, 1, maxQuantity),
+      maxQuantity,
+    },
+  });
+}
+
+function confirmTempleBeggingFoodSubmission(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState
+): HouseModuleTransitionResult<"temple-house"> {
+  const overlay = sessionState.overlay;
+  const availableFood = readTempleAvailableFood(input.gameState);
+  const submittedQuantity =
+    overlay?.type === "submit-food"
+      ? Math.min(availableFood, Math.max(1, overlay.quantity))
+      : 0;
+
+  if (submittedQuantity <= 0) {
+    return withSessionState(
+      {
+        gameState: input.gameState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: createAlertOverlay(
+          "暂无可交粮食",
+          ["你身上还没有可交给寺里的化缘粮。"],
+          "warning"
+        ),
+      }
+    );
+  }
+
+  const resolution = resolveTempleBeggingDelivery(submittedQuantity);
+  const currentContribution = getTempleContribution(input.gameState);
+  const nextContribution = currentContribution + resolution.contribution;
+  let nextState = mutatePlayerGrainDou(input.gameState, -submittedQuantity);
+  const staminaMutation = spendPlayerStamina(
+    nextState,
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
+  nextState = staminaMutation.state;
+
+  nextState = {
+    ...nextState,
+    ui: {
+      ...nextState.ui,
+      mainHouseMissionText: "化缘粮食已交",
+    },
+    runtime: {
+      ...nextState.runtime,
+      variables: {
+        ...nextState.runtime.variables,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: nextContribution,
+        [TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood]: submittedQuantity,
+        [TEMPLE_HOUSE_VARIABLE_KEYS.beggingLastGrade]: resolution.grade,
+      },
+    },
+  };
+
+  return {
+    gameState: nextState,
+    characterDefinitions: staminaMutation.characterDefinitions,
+    sessionState: {
+      ...sessionState,
+      dialoguePhase: "open",
+      dailyActionPanel: "root",
+      overlay: {
+        type: "result",
+        title: "化缘粮食已交",
+        grade: resolution.grade,
+        score: resolution.contribution,
+        rewardLines: [
+          `交粮 ${formatTempleGrainAmount(submittedQuantity)}`,
+          `寺中贡献 +${resolution.contribution}`,
+          `累计贡献 ${nextContribution} / 30`,
+          `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+          ...resolution.praiseLines,
+        ],
+      },
+    },
+  };
+}
+
 function startTempleWorkMinigame(
   input: HouseModuleDispatchInput<"temple-house">,
   sessionState: TempleHouseSessionState,
@@ -1140,6 +1551,51 @@ function handleTempleWorkStop(
   );
 }
 
+function handleField(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState | null
+): HouseModuleTransitionResult<"temple-house"> {
+  if (input.request.type !== "field" || sessionState == null) {
+    return createTransitionResult(input);
+  }
+
+  const nextState = ensureTempleRuntimeState(input.gameState);
+
+  if (input.request.fieldId === TEMPLE_REST_DAYS_FIELD_ID) {
+    if (sessionState.overlay?.type !== "rest-days") {
+      return createTransitionResult(input, { gameState: nextState });
+    }
+
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: {
+          ...sessionState.overlay,
+          inputValue: input.request.value,
+        },
+      }
+    );
+  }
+
+  if (input.request.fieldId === TEMPLE_BEGGING_SUBMIT_FIELD_ID) {
+    const quantity = Number.parseInt(input.request.value, 10) || 1;
+    return updateTempleBeggingSubmitQuantity(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      sessionState,
+      quantity
+    );
+  }
+
+  return createTransitionResult(input, { gameState: nextState });
+}
+
 function handleAction(
   input: HouseModuleDispatchInput<"temple-house">,
   sessionState: TempleHouseSessionState | null
@@ -1311,6 +1767,196 @@ function handleAction(
       {
         dailyActionPanel: "root",
       }
+    );
+  }
+
+  if (input.request.actionId === OPEN_TEMPLE_REST_MENU_ACTION_ID) {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        dailyActionPanel: "rest",
+        dialoguePhase: "open",
+        dialogueLines: templeHouseRestMenuLines,
+      }
+    );
+  }
+
+  if (input.request.actionId === CLOSE_TEMPLE_REST_MENU_ACTION_ID) {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        dailyActionPanel: "root",
+      }
+    );
+  }
+
+  if (input.request.actionId === OPEN_TEMPLE_REST_DAYS_ACTION_ID) {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: {
+          type: "rest-days",
+          inputValue: "3",
+        },
+      }
+    );
+  }
+
+  if (
+    input.request.actionId === TEMPLE_REST_ONE_DAY_ACTION_ID ||
+    input.request.actionId === TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID ||
+    input.request.actionId === TEMPLE_REST_UNTIL_RECOVERED_ACTION_ID
+  ) {
+    const actionId = input.request.actionId;
+    const summary = runTempleRestPlan(
+      nextState,
+      input.characterDefinitions,
+      input.playerCharacterId,
+      (state, characterDefinitions, daysRested) => {
+        if (actionId === TEMPLE_REST_ONE_DAY_ACTION_ID) {
+          return daysRested < 1;
+        }
+
+        if (actionId === TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID) {
+          return !isSameDate(getCurrentDate(state), state.world.schedule.councilDate);
+        }
+
+        const nextPlayerCharacter = getPlayerCharacter(
+          characterDefinitions,
+          input.playerCharacterId
+        );
+        return nextPlayerCharacter.stamina < 100;
+      }
+    );
+
+    return {
+      gameState: summary.state,
+      characterDefinitions: summary.characterDefinitions,
+      sessionState: {
+        ...sessionState,
+        dailyActionPanel: "root",
+        overlay: createTempleRestResultOverlay(
+          summary,
+          actionId === TEMPLE_REST_ONE_DAY_ACTION_ID
+            ? "休息一日"
+            : actionId === TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID
+              ? "休至评定日"
+              : "休至体力恢复"
+        ),
+      },
+    };
+  }
+
+  if (input.request.actionId === CONFIRM_TEMPLE_REST_DAYS_ACTION_ID) {
+    const inputValue =
+      sessionState.overlay?.type === "rest-days" ? sessionState.overlay.inputValue : "";
+    const parsedDays = Number.parseInt(inputValue, 10);
+    if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "休息天数无效",
+            ["请输入 1 到 99 之间的天数。"],
+            "warning"
+          ),
+        }
+      );
+    }
+
+    const days = clamp(parsedDays, 1, TEMPLE_REST_MAX_DAYS);
+    const summary = runTempleRestPlan(
+      nextState,
+      input.characterDefinitions,
+      input.playerCharacterId,
+      (_state, _characterDefinitions, daysRested) => daysRested < days
+    );
+
+    return {
+      gameState: summary.state,
+      characterDefinitions: summary.characterDefinitions,
+      sessionState: {
+        ...sessionState,
+        dailyActionPanel: "root",
+        overlay: createTempleRestResultOverlay(summary, `休息 ${days} 天`),
+      },
+    };
+  }
+
+  if (input.request.actionId === SUBMIT_TEMPLE_BEGGING_FOOD_ACTION_ID) {
+    return openTempleBeggingFoodOverlay(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      sessionState
+    );
+  }
+
+  if (input.request.actionId === CANCEL_TEMPLE_BEGGING_FOOD_ACTION_ID) {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      { overlay: null }
+    );
+  }
+
+  if (input.request.actionId === DECREMENT_TEMPLE_BEGGING_FOOD_ACTION_ID) {
+    const quantity =
+      sessionState.overlay?.type === "submit-food"
+        ? sessionState.overlay.quantity - 1
+        : 1;
+    return updateTempleBeggingSubmitQuantity(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      sessionState,
+      quantity
+    );
+  }
+
+  if (input.request.actionId === INCREMENT_TEMPLE_BEGGING_FOOD_ACTION_ID) {
+    const quantity =
+      sessionState.overlay?.type === "submit-food"
+        ? sessionState.overlay.quantity + 1
+        : 1;
+    return updateTempleBeggingSubmitQuantity(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      sessionState,
+      quantity
+    );
+  }
+
+  if (input.request.actionId === CONFIRM_TEMPLE_BEGGING_FOOD_ACTION_ID) {
+    return confirmTempleBeggingFoodSubmission(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      sessionState
     );
   }
 
@@ -1623,6 +2269,41 @@ function selectOverlayViewModel(
     };
   }
 
+  if (overlay.type === "submit-food") {
+    return {
+      type: "quantity-confirm",
+      title: "提交化缘粮食",
+      paragraphs: [
+        "选择要交给寺里的粮食数量。",
+        "提交后会扣除随身粮食，结算本轮化缘贡献。",
+      ],
+      quantityLabel: "交粮数量（斗）",
+      quantity: overlay.quantity,
+      maxQuantity: overlay.maxQuantity,
+      quantityFieldId: TEMPLE_BEGGING_SUBMIT_FIELD_ID,
+      decrementActionId: DECREMENT_TEMPLE_BEGGING_FOOD_ACTION_ID,
+      incrementActionId: INCREMENT_TEMPLE_BEGGING_FOOD_ACTION_ID,
+      confirmActionId: CONFIRM_TEMPLE_BEGGING_FOOD_ACTION_ID,
+      confirmLabel: "交给寺里",
+      cancelActionId: CANCEL_TEMPLE_BEGGING_FOOD_ACTION_ID,
+      cancelLabel: "暂缓",
+    };
+  }
+
+  if (overlay.type === "rest-days") {
+    return {
+      type: "rest-days",
+      title: "指定休息天数",
+      paragraphs: ["输入要在寺中休息的天数，日程会同步推进。"],
+      dayCount: overlay.inputValue,
+      quantityFieldId: TEMPLE_REST_DAYS_FIELD_ID,
+      confirmActionId: CONFIRM_TEMPLE_REST_DAYS_ACTION_ID,
+      confirmLabel: "开始休息",
+      cancelActionId: "close-temple-overlay",
+      cancelLabel: "返回",
+    };
+  }
+
   if (overlay.type === "qte-bar") {
     return {
       type: "qte-bar",
@@ -1689,6 +2370,10 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
   dispatch(input) {
     if (input.request.type === "tick") {
       return handleTick(input, input.sessionState);
+    }
+
+    if (input.request.type === "field") {
+      return handleField(input, input.sessionState);
     }
 
     return handleAction(input, input.sessionState);
@@ -1762,6 +2447,9 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
     const templeWeek = getTempleWeek(nextState);
     const currentWorkPlan =
       sessionState.selectedWorkPlan ?? readTempleWorkPlan(nextState);
+    const beggingSubmittedFood = readTempleBeggingSubmittedFood(nextState);
+    const beggingLastGrade = readTempleBeggingLastGrade(nextState);
+    const beggingFoodToSubmit = readTempleAvailableFood(nextState);
     const dailyTasks = getDailyTempleTasks(nextState, currentWorkPlan);
     const reviewWorkChoices = getReviewWorkChoices(nextState);
     const dialogueOverrideSpeaker =
@@ -1895,11 +2583,15 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
         : shouldShowDailyActions
           ? {
               title:
-                isMonkStoryStage(nextState) && sessionState.dailyActionPanel === "work"
+                sessionState.dailyActionPanel === "rest"
+                  ? "休息"
+                  : isMonkStoryStage(nextState) && sessionState.dailyActionPanel === "work"
                   ? "工作"
                   : "寺庙事务",
               actions:
-                sessionState.dailyActionPanel === "work"
+                sessionState.dailyActionPanel === "rest"
+                  ? getTempleRestMenuActions()
+                  : sessionState.dailyActionPanel === "work"
                   ? getTempleWorkMenuActions(dailyTasks, currentWorkPlan)
                   : getTempleRootActions(
                       nextState,
@@ -1937,6 +2629,23 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                 ? "暂无"
                 : nextState.ui.mainHouseMissionText),
           },
+          ...(isMonkStoryStage(nextState)
+            ? [
+                { label: "玩家体力", value: `${playerCharacter.stamina} / 100` },
+                {
+                  label: "随身粮食",
+                  value: formatTempleGrainAmount(beggingFoodToSubmit),
+                },
+                ...(currentWorkPlan === "beg-alms" && beggingSubmittedFood > 0
+                  ? [
+                      {
+                        label: "本轮交粮",
+                        value: `${formatTempleGrainAmount(beggingSubmittedFood)} / ${beggingLastGrade}`,
+                      },
+                    ]
+                  : []),
+              ]
+            : []),
           { label: "玩家金钱", value: `${playerCharacter.stats.gold} 文` },
         ],
       },

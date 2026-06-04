@@ -139,6 +139,21 @@ export type HouseOverlayViewModel =
       cancelLabel: string;
     }
   | {
+      type: "quantity-confirm";
+      title: string;
+      paragraphs: string[];
+      quantityLabel: string;
+      quantity: number;
+      maxQuantity: number;
+      quantityFieldId: string;
+      decrementActionId: string;
+      incrementActionId: string;
+      confirmActionId: string;
+      confirmLabel: string;
+      cancelActionId: string;
+      cancelLabel: string;
+    }
+  | {
       type: "trade";
       title: string;
       mode: "buy" | "sell";

@@ -8,6 +8,7 @@ import type {
   HouseOverlayViewModel,
 } from "../../../domain/house-module";
 import type { GrainShopPlayerSnapshot } from "../../../domain/grain-shop";
+import { formatGrainAsShiAndDou } from "../../../domain/grain-unit";
 import type {
   GrainShopDialoguePhase,
   GrainShopSessionState,
@@ -487,7 +488,7 @@ function createStatusCard(snapshot: GrainShopPlayerSnapshot, title: string) {
     subtitle: "陈记粮行 / 南北通商",
     metrics: [
       { label: "金钱", value: `${snapshot.money} 文` },
-      { label: "粮仓", value: `${snapshot.food} 石` },
+      { label: "粮仓", value: formatGrainAsShiAndDou(snapshot.foodDou) },
       { label: "市价", value: `${snapshot.grainPrice} 文` },
     ],
   };
