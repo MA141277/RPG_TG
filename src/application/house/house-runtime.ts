@@ -3,14 +3,16 @@ import type { AppState } from "../app-shell";
 import type { HouseDefinition } from "../../domain/house";
 import type { EventDefinition } from "../../domain/event";
 import type { SceneDefinition } from "../../domain/action";
+import type { GameState } from "../../domain/game-state";
 import type {
   ActiveHouseModuleSession,
   HouseModuleId,
+  HouseModuleTransitionResult,
   HouseModuleRequest,
   HouseModuleSessionState,
-  HouseModuleTransitionResult,
 } from "../../domain/house-module";
 import { triggerStoryEvents } from "../story/story-runtime";
+import { advanceGameStateTimeSegments } from "../time/time-progression";
 import { assertExists } from "../../shared/assert";
 
 type HouseRuntimeDependencies = {
@@ -28,6 +30,10 @@ type HouseRuntimeDependencies = {
   playerCharacterId: string;
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  syncCouncilPriorityAfterGameStateChange(
+    previousGameState: GameState,
+    councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
+  ): boolean;
 };
 
 export type HouseRuntime = ReturnType<typeof createHouseRuntime>;
@@ -50,8 +56,13 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     houseDefinition: HouseDefinition,
     moduleId: HouseModuleId,
     result: HouseModuleTransitionResult<HouseModuleId>
-  ): void {
+  ): boolean {
     const appState = dependencies.getAppState();
+    const previousGameState = appState.gameState;
+    const nextGameState =
+      result.timeAdvanceCost == null || result.timeAdvanceCost <= 0
+        ? result.gameState
+        : advanceGameStateTimeSegments(result.gameState, result.timeAdvanceCost);
     const houseSession =
       result.sessionState == null
         ? null
@@ -60,9 +71,9 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     dependencies.setAppState({
       ...appState,
       gameState: {
-        ...result.gameState,
+        ...nextGameState,
         ui: {
-          ...result.gameState.ui,
+          ...nextGameState.ui,
           houseSession,
         },
       },
@@ -70,6 +81,10 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     });
 
     applyHouseSideEffects(houseDefinition, moduleId, result.sideEffects ?? []);
+    return dependencies.syncCouncilPriorityAfterGameStateChange(
+      previousGameState,
+      result.councilArrivalNotice
+    );
   }
 
   function createActiveHouseSession<ModuleId extends HouseModuleId>(
@@ -100,8 +115,10 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
       request,
     });
 
-    applyHouseModuleResult(activeHouse, moduleId, result);
-    dependencies.renderApp();
+    const councilTriggered = applyHouseModuleResult(activeHouse, moduleId, result);
+    if (!councilTriggered) {
+      dependencies.renderApp();
+    }
   }
 
   function applyHouseSideEffects(
@@ -268,10 +285,16 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         playerCharacterId: dependencies.playerCharacterId,
         sessionState: appState.gameState.ui.houseSession?.state ?? null,
       });
-      applyHouseModuleResult(activeHouse, activeHouse.moduleId, result);
+      const councilTriggered = applyHouseModuleResult(
+        activeHouse,
+        activeHouse.moduleId,
+        result
+      );
 
       if (result.navigation?.type === "stay-in-house") {
-        dependencies.renderApp();
+        if (!councilTriggered) {
+          dependencies.renderApp();
+        }
         return;
       }
     } else {

@@ -16,6 +16,7 @@ import { CITY_BEGGING_VILLAGE_CATCHING_CONFIG, createVillageCatchingMiniGameStat
 
 export const DEFAULT_CITY_BEGGING_MINIGAME_VARIANT: CityBeggingMiniGameVariantId =
   "village-catching";
+export const CITY_BEGGING_DURATION_DAYS = 10;
 
 export const CITY_BEGGING_MINIGAME_VARIANTS = {
   "granary-escort": {

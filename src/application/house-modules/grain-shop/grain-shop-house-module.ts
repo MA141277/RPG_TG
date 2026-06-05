@@ -1,5 +1,6 @@
 import { accountingGameDurationSec, accountingMaxWrongAnswers } from "../../../content/houses/grain-shop-content";
 import type { CharacterDefinition } from "../../../domain/character";
+import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
   HouseModuleDefinition,
   HouseModuleDispatchInput,
@@ -22,6 +23,12 @@ import { investigateGrainMarket } from "../../grain-shop/investigate-grain-marke
 import { initGrainShopSession } from "../../grain-shop/init-grain-shop-session";
 import { setGrainPrice } from "../../grain-shop/grain-shop-mutations";
 import {
+  convertHouseActivityDaysToSegments,
+  formatHouseActivityCostLine,
+  getHouseMinigameDurationDays,
+} from "../../house/house-activity-costs";
+import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   canAffordActivityCost,
 } from "../../player/player-stamina";
@@ -30,6 +37,8 @@ import { createInitialGrainShopSessionState } from "./grain-shop-session-state";
 
 const ACCOUNTING_INTERVAL_ID = "grain-shop-accounting";
 const TRADE_QUANTITY_FIELD_ID = "grain-shop-trade-quantity";
+const CONFIRM_START_ACCOUNTING_ACTION_ID = "confirm-start-accounting";
+const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -43,6 +52,10 @@ function getPlayerCharacter(
     `Player character not found for id "${playerCharacterId}" in grain shop module.`
   );
   return playerCharacter;
+}
+
+function getPlayerArithmeticSkill(playerCharacter: CharacterDefinition): number {
+  return Math.max(1, playerCharacter.skills?.arithmetic ?? 1);
 }
 
 function createTransitionResult(
@@ -185,29 +198,41 @@ function finalizeAccountingMinigame(
     };
   }
 
+  const playerCharacter = getPlayerCharacter(
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
+  const durationDays = getHouseMinigameDurationDays(
+    getPlayerArithmeticSkill(playerCharacter)
+  );
   const grade = resolveAccountingGrade(overlay.score);
   const reward = getAccountingGradeReward(grade);
   const mutation = applyAccountingReward(
     input.gameState,
     input.characterDefinitions,
     input.playerCharacterId,
-    grade
+    grade,
+    durationDays
   );
 
-  return withOverlay(
-    {
-      gameState: mutation.state,
-      characterDefinitions: mutation.characterDefinitions,
-    },
-    sessionState,
-    {
-      type: "result",
-      grade,
-      score: overlay.score,
-      reward,
-    },
-    [{ type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID }]
-  );
+  return {
+    ...withOverlay(
+      {
+        gameState: mutation.state,
+        characterDefinitions: mutation.characterDefinitions,
+      },
+      sessionState,
+      {
+        type: "result",
+        grade,
+        score: overlay.score,
+        reward,
+        durationDays,
+      },
+      [{ type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID }]
+    ),
+    timeAdvanceCost: convertHouseActivityDaysToSegments(durationDays),
+  };
 }
 
 function handleTick(
@@ -261,6 +286,93 @@ function toAlertOverlay(title: string, paragraphs: string[], tone?: "info" | "su
   };
 }
 
+function createActivityConfirmOverlay(
+  title: string,
+  paragraphs: string[],
+  confirmActionId: string
+): HouseActivityConfirmOverlayState {
+  return {
+    type: "activity-confirm",
+    title,
+    paragraphs,
+    confirmActionId,
+    confirmLabel: "现在开始",
+    cancelActionId: CANCEL_ACTIVITY_CONFIRM_ACTION_ID,
+    cancelLabel: "稍后再说",
+    tone: "info",
+  };
+}
+
+function createCouncilTimeInsufficientOverlay(
+  durationDays: number,
+  remainingDays: number
+): GrainShopSessionState["overlay"] {
+  return toAlertOverlay(
+    "时日不够",
+    remainingDays <= 0
+      ? [
+          "粮铺掌柜把账册按回柜上，抬眼看了看你。",
+          `“评定日期已到，这轮账少说也要 ${durationDays} 天，眼下动不得。”`,
+          "“先去把评定应下，回头再来拨算盘。”",
+        ]
+      : [
+          "粮铺掌柜把账册按回柜上，抬眼看了看你。",
+          `“离评定只剩 ${remainingDays} 天，这轮账少说也要 ${durationDays} 天，眼下已经来不及了。”`,
+          "“先去把评定应下，回头再来拨算盘。”",
+        ],
+    "warning"
+  );
+}
+
+function startAccountingMinigame(
+  input: HouseModuleDispatchInput<"grain-shop">,
+  sessionState: GrainShopSessionState | null
+): HouseModuleTransitionResult<"grain-shop"> {
+  const playerCharacter = getPlayerCharacter(
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
+  const durationDays = getHouseMinigameDurationDays(
+    getPlayerArithmeticSkill(playerCharacter)
+  );
+  const remainingDays = getInsufficientDaysForTimedActivity(
+    input.gameState,
+    durationDays
+  );
+  if (remainingDays != null) {
+    return withOverlay(
+      input,
+      sessionState,
+      createCouncilTimeInsufficientOverlay(durationDays, remainingDays)
+    );
+  }
+
+  const firstQuestion = generateLedgerQuestion();
+  return withOverlay(
+    input,
+    sessionState,
+    {
+      type: "minigame",
+      score: 0,
+      wrongCount: 0,
+      secondsLeft: accountingGameDurationSec,
+      question: firstQuestion,
+    },
+    [
+      { type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID },
+      {
+        type: "start-interval",
+        intervalId: ACCOUNTING_INTERVAL_ID,
+        everyMs: 1000,
+        request: {
+          type: "tick",
+          tickId: ACCOUNTING_INTERVAL_ID,
+        },
+      },
+    ]
+  );
+}
+
 function handleAction(
   input: HouseModuleDispatchInput<"grain-shop">,
   sessionState: GrainShopSessionState | null
@@ -282,6 +394,7 @@ function handleAction(
     case "close-alert":
     case "close-trade":
     case "close-result":
+    case CANCEL_ACTIVITY_CONFIRM_ACTION_ID:
       return withOverlay(input, sessionState, null, [
         { type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID },
       ]);
@@ -291,18 +404,21 @@ function handleAction(
         input.characterDefinitions,
         input.playerCharacterId
       );
-      return withOverlay(
-        {
-          gameState: result.mutation.state,
-          characterDefinitions: result.mutation.characterDefinitions,
-        },
-        sessionState,
-        toAlertOverlay("市场调查", [
-          result.dialogue,
-          `传闻：${result.rumor}`,
-          `当前粮价约为每石 ${result.grainPrice} 文。`,
-        ])
-      );
+      return {
+        ...withOverlay(
+          {
+            gameState: result.mutation.state,
+            characterDefinitions: result.mutation.characterDefinitions,
+          },
+          sessionState,
+          toAlertOverlay("市场调查", [
+            result.dialogue,
+            `传闻：${result.rumor}`,
+            `当前粮价约为每石 ${result.grainPrice} 文。`,
+          ])
+        ),
+        timeAdvanceCost: 1,
+      };
     }
     case "confirm-trade": {
       const overlay = sessionState?.overlay;
@@ -327,14 +443,17 @@ function handleAction(
         );
       }
 
-      return withOverlay(
-        {
-          gameState: tradeResult.mutation.state,
-          characterDefinitions: tradeResult.mutation.characterDefinitions,
-        },
-        sessionState,
-        toAlertOverlay("成交", [tradeResult.message], "success")
-      );
+      return {
+        ...withOverlay(
+          {
+            gameState: tradeResult.mutation.state,
+            characterDefinitions: tradeResult.mutation.characterDefinitions,
+          },
+          sessionState,
+          toAlertOverlay("成交", [tradeResult.message], "success")
+        ),
+        timeAdvanceCost: 1,
+      };
     }
     case "trade-qty-minus": {
       const overlay = sessionState?.overlay;
@@ -370,31 +489,33 @@ function handleAction(
         );
       }
 
-      const firstQuestion = generateLedgerQuestion();
+      const durationDays = getHouseMinigameDurationDays(
+        getPlayerArithmeticSkill(playerCharacter)
+      );
+      const remainingDays = getInsufficientDaysForTimedActivity(
+        input.gameState,
+        durationDays
+      );
+      if (remainingDays != null) {
+        return withOverlay(
+          input,
+          sessionState,
+          createCouncilTimeInsufficientOverlay(durationDays, remainingDays)
+        );
+      }
+
       return withOverlay(
         input,
         sessionState,
-        {
-          type: "minigame",
-          score: 0,
-          wrongCount: 0,
-          secondsLeft: accountingGameDurationSec,
-          question: firstQuestion,
-        },
-        [
-          { type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID },
-          {
-            type: "start-interval",
-            intervalId: ACCOUNTING_INTERVAL_ID,
-            everyMs: 1000,
-            request: {
-              type: "tick",
-              tickId: ACCOUNTING_INTERVAL_ID,
-            },
-          },
-        ]
+        createActivityConfirmOverlay("帮忙算账", [
+          "粮铺掌柜把账册推到了你面前。",
+          `“照你现在的算术底子，这一轮账真要细细理顺，少说也得耗上 ${durationDays} 天。”`,
+          formatHouseActivityCostLine(durationDays),
+        ], CONFIRM_START_ACCOUNTING_ACTION_ID)
       );
     }
+    case CONFIRM_START_ACCOUNTING_ACTION_ID:
+      return startAccountingMinigame(input, sessionState);
     case "ledger-correct":
     case "ledger-wrong": {
       const overlay = sessionState?.overlay;
@@ -466,6 +587,17 @@ function selectOverlayViewModel(overlay: GrainShopSessionState["overlay"]): Hous
         cancelActionId: "close-trade",
         cancelLabel: "取消",
       };
+    case "activity-confirm":
+      return {
+        type: "confirm",
+        title: overlay.title,
+        paragraphs: overlay.paragraphs,
+        confirmActionId: overlay.confirmActionId,
+        confirmLabel: overlay.confirmLabel,
+        cancelActionId: overlay.cancelActionId,
+        cancelLabel: overlay.cancelLabel,
+        ...(overlay.tone == null ? {} : { tone: overlay.tone }),
+      };
     case "minigame":
       return {
         type: "minigame",
@@ -486,7 +618,7 @@ function selectOverlayViewModel(overlay: GrainShopSessionState["overlay"]): Hous
         overlay.reward.math > 0 ? `算术 +${overlay.reward.math}` : overlay.reward.math < 0 ? `算术 ${overlay.reward.math}` : "算术 不变",
         overlay.reward.money > 0 ? `金钱 +${overlay.reward.money}` : "金钱 不变",
         overlay.reward.relationship > 0 ? `与掌柜关系 +${overlay.reward.relationship}` : "与掌柜关系 不变",
-        "时间 +1",
+        `时间 +${overlay.durationDays}天`,
         `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
       ];
 

@@ -7,6 +7,7 @@
 } from "../../../content/houses/tavern-content";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { GameState } from "../../../domain/game-state";
+import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
   TavernOverlayState,
   TavernQteOverlayState,
@@ -77,9 +78,16 @@ import {
   canAffordActivityCost,
   spendPlayerStamina,
 } from "../../player/player-stamina";
+import {
+  convertHouseActivityDaysToSegments,
+  formatHouseActivityCostLine,
+  getHouseWorkDurationDays,
+} from "../../house/house-activity-costs";
+import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialTavernSessionState } from "./tavern-session-state";
 
 const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
+const CONFIRM_START_WORK_ACTION_PREFIX = "confirm-start-work:";
 const SUBMIT_WORK_ACTION_PREFIX = "submit-work:";
 const TAVERN_WORK_INTERVAL_ID = "tavern-work-qte";
 const TAVERN_GAMBLE_NPC_INTERVAL_ID = "tavern-gamble-npc-thinking";
@@ -90,6 +98,7 @@ const GAMBLE_DISCARD_ACTION_PREFIX = "gamble-discard:";
 const GAMBLE_REORDER_ACTION_PREFIX = "gamble-reorder:";
 const GAMBLE_PLAY_TILE_ACTION_PREFIX = "gamble-play-tile:";
 const SELECT_GAMBLE_VARIANT_ACTION_PREFIX = "select-gamble-variant:";
+const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -419,6 +428,7 @@ function submitWork(
   sessionState: TavernSessionState,
   offer: TavernWorkOffer
 ): HouseModuleTransitionResult<"tavern"> {
+  const durationDays = getHouseWorkDurationDays();
   const progress = getTavernWorkProgress(
     input.gameState,
     input.houseDefinition.id,
@@ -434,7 +444,7 @@ function submitWork(
     input.houseDefinition.id,
     offer.id
   );
-  nextState = increaseTavernTime(nextState, input.houseDefinition.id, 1);
+  nextState = increaseTavernTime(nextState, input.houseDefinition.id, durationDays);
   nextState = reward.success
     ? completeTavernWork(nextState, input.houseDefinition.id, offer.id)
     : failTavernWork(nextState, input.houseDefinition.id, offer.id);
@@ -484,12 +494,110 @@ function submitWork(
         rewardLines: [
           reward.success ? "任务完成" : "任务失败",
           `报酬 ${reward.rewardGold} 文`,
+          `时间 +${durationDays}天`,
           `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
         ],
       },
     },
     sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
+    timeAdvanceCost: convertHouseActivityDaysToSegments(durationDays),
   };
+}
+
+function beginAcceptedWorkOffer(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  offer: TavernWorkOffer
+): HouseModuleTransitionResult<"tavern"> {
+  const playerCharacter = getPlayerCharacter(
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
+  const durationDays = getHouseWorkDurationDays();
+  const remainingDays = getInsufficientDaysForTimedActivity(
+    input.gameState,
+    durationDays
+  );
+  if (remainingDays != null) {
+    return withSessionState(input, sessionState, {
+      overlay: createCouncilTimeInsufficientOverlay(
+        offer.title,
+        durationDays,
+        remainingDays
+      ),
+    });
+  }
+
+  const nextState = acceptTavernWork(input.gameState, input.houseDefinition.id, offer.id);
+  if (offer.type === "dishwashing" && offer.canStartImmediately) {
+    return startDishwashingQte(input, sessionState, offer, nextState);
+  }
+
+  const nextLists = refreshWorkLists(
+    nextState,
+    input.houseDefinition.id,
+    playerCharacter.stats.fame
+  );
+  return withSessionState(
+    {
+      gameState: nextState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      ...nextLists,
+      selectedOfferId: nextLists.availableOffers[0]?.id ?? null,
+      selectedSubmitOfferId: offer.id,
+      workPanelMode: "submit",
+      dialoguePhase: "open",
+      dialogueLines: [
+        `你接下了${offer.title}。`,
+        offer.type === "random-event"
+          ? "这类活的随机事件接口已经预留，当前提交会按失败处理。"
+          : "做完后回来提交。",
+      ],
+      overlay: null,
+    }
+  );
+}
+
+function createActivityConfirmOverlay(
+  title: string,
+  paragraphs: string[],
+  confirmActionId: string
+): HouseActivityConfirmOverlayState {
+  return {
+    type: "activity-confirm",
+    title,
+    paragraphs,
+    confirmActionId,
+    confirmLabel: "接下这活",
+    cancelActionId: CANCEL_ACTIVITY_CONFIRM_ACTION_ID,
+    cancelLabel: "再看看",
+    tone: "info",
+  };
+}
+
+function createCouncilTimeInsufficientOverlay(
+  offerTitle: string,
+  durationDays: number,
+  remainingDays: number
+): TavernOverlayState {
+  return createAlertOverlay(
+    "时日不够",
+    remainingDays <= 0
+      ? [
+          `老板把“${offerTitle}”的活牌收回手边，抬眼看着你。`,
+          `“评定日期已到，这活至少得占你 ${durationDays} 天，眼下接不得。”`,
+          "“先去把评定应下，回来再谈这单。”",
+        ]
+      : [
+          `老板把“${offerTitle}”的活牌收回手边，抬眼看着你。`,
+          `“离评定只剩 ${remainingDays} 天，这活至少得占你 ${durationDays} 天，眼下接不得。”`,
+          "“先去把评定应下，回来再谈这单。”",
+        ],
+    "warning"
+  );
 }
 
 function handleWorkAction(
@@ -545,6 +653,10 @@ function handleWorkAction(
     });
   }
 
+  if (input.request.actionId === CANCEL_ACTIVITY_CONFIRM_ACTION_ID) {
+    return withSessionState(input, sessionState, { overlay: null });
+  }
+
   const acceptOfferId = parseActionId(input.request.actionId, ACCEPT_WORK_ACTION_PREFIX);
   if (acceptOfferId != null) {
     if (!canAffordActivityCost(playerCharacter)) {
@@ -568,33 +680,43 @@ function handleWorkAction(
       return createTransitionResult(input);
     }
 
-    const nextState = acceptTavernWork(input.gameState, houseId, offer.id);
-    if (offer.type === "dishwashing" && offer.canStartImmediately) {
-      return startDishwashingQte(input, sessionState, offer, nextState);
+    const durationDays = getHouseWorkDurationDays();
+    const remainingDays = getInsufficientDaysForTimedActivity(
+      input.gameState,
+      durationDays
+    );
+    if (remainingDays != null) {
+      return withSessionState(input, sessionState, {
+        overlay: createCouncilTimeInsufficientOverlay(
+          offer.title,
+          durationDays,
+          remainingDays
+        ),
+      });
     }
 
-    const nextLists = refreshWorkLists(nextState, houseId, playerCharacter.stats.fame);
-    return withSessionState(
-      {
-        gameState: nextState,
-        characterDefinitions: input.characterDefinitions,
-      },
-      sessionState,
-      {
-        ...nextLists,
-        selectedOfferId: nextLists.availableOffers[0]?.id ?? null,
-        selectedSubmitOfferId: offer.id,
-        workPanelMode: "submit",
-        dialoguePhase: "open",
-        dialogueLines: [
-          `你接下了${offer.title}。`,
-          offer.type === "random-event"
-            ? "这类活的随机事件接口已经预留，当前提交会按失败处理。"
-            : "做完后回来提交。",
-        ],
-        overlay: null,
-      }
+    return withSessionState(input, sessionState, {
+      overlay: createActivityConfirmOverlay(offer.title, [
+        offer.description,
+        `老板抬了抬下巴：“这活真接下来，少说得占你 ${durationDays} 天。”`,
+        formatHouseActivityCostLine(durationDays),
+      ], `${CONFIRM_START_WORK_ACTION_PREFIX}${offer.id}`),
+    });
+  }
+
+  const confirmOfferId = parseActionId(
+    input.request.actionId,
+    CONFIRM_START_WORK_ACTION_PREFIX
+  );
+  if (confirmOfferId != null) {
+    const offer = lists.availableOffers.find(
+      (availableOffer) => availableOffer.id === confirmOfferId
     );
+    if (offer == null) {
+      return createTransitionResult(input);
+    }
+
+    return beginAcceptedWorkOffer(input, sessionState, offer);
   }
 
   const submitOfferId = parseActionId(input.request.actionId, SUBMIT_WORK_ACTION_PREFIX);
@@ -724,6 +846,7 @@ function handleDrinkAction(
               "success"
             ),
           },
+    timeAdvanceCost: 1,
   };
 }
 
@@ -801,6 +924,7 @@ function resolveGambleSettlement(
       ),
     },
     sideEffects: [{ type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID }],
+    timeAdvanceCost: 1,
   };
 }
 
@@ -1161,6 +1285,19 @@ function selectOverlayViewModel(
       confirmLabel: `花 ${overlay.price} 文买酒`,
       cancelActionId: overlay.cancelActionId,
       cancelLabel: "算了",
+    };
+  }
+
+  if (overlay.type === "activity-confirm") {
+    return {
+      type: "confirm",
+      title: overlay.title,
+      paragraphs: overlay.paragraphs,
+      confirmActionId: overlay.confirmActionId,
+      confirmLabel: overlay.confirmLabel,
+      cancelActionId: overlay.cancelActionId,
+      cancelLabel: overlay.cancelLabel,
+      ...(overlay.tone == null ? {} : { tone: overlay.tone }),
     };
   }
 
@@ -1570,6 +1707,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       input.request.actionId === "tavern-work-stop" ||
       input.request.actionId === "close-tavern-result" ||
       input.request.actionId.startsWith(ACCEPT_WORK_ACTION_PREFIX) ||
+      input.request.actionId.startsWith(CONFIRM_START_WORK_ACTION_PREFIX) ||
       input.request.actionId.startsWith(SUBMIT_WORK_ACTION_PREFIX)
     ) {
       return handleWorkAction(input, input.sessionState);

@@ -15,7 +15,8 @@ export function applyAccountingReward(
   state: GameState,
   characterDefinitions: CharacterDefinition[],
   playerCharacterId: string,
-  grade: AccountingGrade
+  grade: AccountingGrade,
+  durationDays: number
 ): GrainShopMutationResult {
   const reward = getAccountingGradeReward(grade);
 
@@ -49,7 +50,7 @@ export function applyAccountingReward(
   nextCharacters = staminaMutation.characterDefinitions;
 
   nextState = mutateGrainShopRelationship(nextState, reward.relationship);
-  nextState = advanceGrainShopTime(nextState);
+  nextState = advanceGrainShopTime(nextState, durationDays);
 
   return {
     state: nextState,

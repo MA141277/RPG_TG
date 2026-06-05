@@ -1,3 +1,4 @@
+import type { HouseActivityConfirmOverlayState } from "../house-activity";
 export type TempleHouseAlertOverlayState = {
   type: "alert";
   title: string;
@@ -46,6 +47,7 @@ export type TempleHouseResultOverlayState = {
 
 export type TempleHouseOverlayState =
   | TempleHouseAlertOverlayState
+  | HouseActivityConfirmOverlayState
   | TempleHouseDonateConfirmOverlayState
   | TempleHouseQteOverlayState
   | TempleHouseFoodSubmitOverlayState

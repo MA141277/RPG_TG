@@ -30,6 +30,13 @@ export type AppLocationDialogueState =
       textLines: string[];
       advanceHintText: string;
     }
+  | {
+      type: "council-arrival-reminder";
+      speakerCharacterId: string;
+      textLines: string[];
+      advanceHintText: string;
+      targetHouseId: string;
+    }
   | null;
 
 export type AppState = {

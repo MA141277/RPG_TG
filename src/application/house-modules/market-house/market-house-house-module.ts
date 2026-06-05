@@ -977,21 +977,24 @@ function handleAction(
     };
     const mutation = applyActionOutcome(input, selectedActor, outcome);
 
-    return withSessionState(
-      {
-        gameState: mutation.state,
-        characterDefinitions: mutation.characterDefinitions,
-      },
-      sessionState,
-      {
-        dialoguePhase: "open",
-        dialogueLines: [outcome.marketMessage],
-        overlay: createAlertOverlay("闲谈", [
-          outcome.marketMessage,
-          ...formatOutcomeSummary(outcome),
-        ], "success"),
-      }
-    );
+    return {
+      ...withSessionState(
+        {
+          gameState: mutation.state,
+          characterDefinitions: mutation.characterDefinitions,
+        },
+        sessionState,
+        {
+          dialoguePhase: "open",
+          dialogueLines: [outcome.marketMessage],
+          overlay: createAlertOverlay("闲谈", [
+            outcome.marketMessage,
+            ...formatOutcomeSummary(outcome),
+          ], "success"),
+        }
+      ),
+      timeAdvanceCost: outcome.timeCost,
+    };
   }
 
   if (input.request.actionId === "investigate-market") {
@@ -1008,16 +1011,19 @@ function handleAction(
     };
     const mutation = applyActionOutcome(input, selectedActor, outcome);
 
-    return withSessionState(
-      {
-        gameState: mutation.state,
-        characterDefinitions: mutation.characterDefinitions,
-      },
-      sessionState,
-      {
-        overlay: createAlertOverlay("调查行情", outcome.marketMessage.split("\n"), "info"),
-      }
-    );
+    return {
+      ...withSessionState(
+        {
+          gameState: mutation.state,
+          characterDefinitions: mutation.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay("调查行情", outcome.marketMessage.split("\n"), "info"),
+        }
+      ),
+      timeAdvanceCost: outcome.timeCost,
+    };
   }
 
   if (input.request.actionId === "buy-goods") {
@@ -1205,24 +1211,27 @@ function handleAction(
       };
       const mutation = applyActionOutcome(input, selectedActor, outcome);
 
-      return withSessionState(
-        {
-          gameState: mutation.state,
-          characterDefinitions: mutation.characterDefinitions,
-        },
-        sessionState,
-        {
-          overlay: createAlertOverlay(
-            "成交",
-            [
-              outcome.marketMessage,
-              `花费 ${totalPrice} 文。`,
-              ...formatOutcomeSummary(outcome),
-            ],
-            "success"
-          ),
-        }
-      );
+      return {
+        ...withSessionState(
+          {
+            gameState: mutation.state,
+            characterDefinitions: mutation.characterDefinitions,
+          },
+          sessionState,
+          {
+            overlay: createAlertOverlay(
+              "成交",
+              [
+                outcome.marketMessage,
+                `花费 ${totalPrice} 文。`,
+                ...formatOutcomeSummary(outcome),
+              ],
+              "success"
+            ),
+          }
+        ),
+        timeAdvanceCost: outcome.timeCost,
+      };
     }
 
     if (selectedGoods.ownedQuantity < quantity) {
@@ -1253,24 +1262,27 @@ function handleAction(
     };
     const mutation = applyActionOutcome(input, selectedActor, outcome);
 
-    return withSessionState(
-      {
-        gameState: mutation.state,
-        characterDefinitions: mutation.characterDefinitions,
-      },
-      sessionState,
-      {
-        overlay: createAlertOverlay(
-          "成交",
-          [
-            outcome.marketMessage,
-            `收入 ${totalPrice} 文。`,
-            ...formatOutcomeSummary(outcome),
-          ],
-          "success"
-        ),
-      }
-    );
+    return {
+      ...withSessionState(
+        {
+          gameState: mutation.state,
+          characterDefinitions: mutation.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "成交",
+            [
+              outcome.marketMessage,
+              `收入 ${totalPrice} 文。`,
+              ...formatOutcomeSummary(outcome),
+            ],
+            "success"
+          ),
+        }
+      ),
+      timeAdvanceCost: outcome.timeCost,
+    };
   }
 
   return createTransitionResult(input, { gameState: snapshot.state });
