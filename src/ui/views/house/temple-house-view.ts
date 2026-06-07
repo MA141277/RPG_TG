@@ -137,12 +137,12 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
     return renderConfirmOverlay(overlay);
   }
 
-  if (overlay.type === "qte-bar") {
-    return renderQteOverlay(overlay);
-  }
-
   if (overlay.type === "quantity-confirm") {
     return renderHouseQuantityConfirmOverlay(overlay);
+  }
+
+  if (overlay.type === "qte-bar") {
+    return renderQteOverlay(overlay);
   }
 
   if (overlay.type === "rest-days") {

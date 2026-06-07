@@ -1235,6 +1235,10 @@ function submitReviewWorkPlan(
         councilDate: addDaysToDate(getCurrentDate(input.gameState), 30),
       },
     },
+    missions: {
+      ...input.gameState.missions,
+      activeMissionId: workPlan === "beg-alms" ? "mission.temple.beg-alms" : null,
+    },
     ui: {
       ...input.gameState.ui,
       activeMissionId: workPlan === "beg-alms" ? "mission.temple.beg-alms" : null,

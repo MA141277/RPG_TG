@@ -489,7 +489,7 @@ export type HouseModuleTransitionResult<ModuleId extends HouseModuleId = HouseMo
     speakerCharacterId?: string;
     textLines: string[];
     advanceHintText?: string;
-  };
+  } | undefined;
   sideEffects?: HouseModuleSideEffect[];
   navigation?: { type: "stay-in-house" };
 };

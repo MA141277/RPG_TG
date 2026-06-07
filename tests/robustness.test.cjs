@@ -207,6 +207,38 @@ function createBaseState() {
   });
 }
 
+function addTestDays(date, days) {
+  const currentNumber = date.year * 360 + (date.month - 1) * 30 + date.day;
+  const nextNumber = currentNumber + days;
+  const nextYear = Math.floor((nextNumber - 1) / 360);
+  const dayOfYear = nextNumber - nextYear * 360;
+  return {
+    year: nextYear,
+    month: Math.floor((dayOfYear - 1) / 30) + 1,
+    day: ((dayOfYear - 1) % 30) + 1,
+  };
+}
+
+function withCouncilInDays(state, days = 30) {
+  return {
+    ...state,
+    world: {
+      ...state.world,
+      schedule: {
+        ...state.world.schedule,
+        councilDate: addTestDays(state.calendar, days),
+      },
+    },
+    runtime: {
+      ...state.runtime,
+      variables: {
+        ...state.runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: days,
+      },
+    },
+  };
+}
+
 function createStateWithGrainVariables() {
   const state = createBaseState();
   return {
@@ -1184,7 +1216,7 @@ test("temple house unlocked begging is chosen in review and executes later witho
     confirmBegAlmsResult.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
     30
   );
-  assert.equal(confirmBegAlmsResult.sessionState?.overlay?.type, "alert");
+  assert.equal(confirmBegAlmsResult.sessionState?.overlay?.type, "activity-confirm");
 });
 
 test("temple house daily flow resolves fortune and donation through unified state", () => {
@@ -1731,7 +1763,7 @@ test("minigame tick settles into result overlay and applies grade reward", () =>
     result.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
     reward.relationship
   );
-  assert.equal(result.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.time], 2);
+  assert.equal(result.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.time], 11);
   assert.deepEqual(result.sideEffects, [
     { type: "stop-interval", intervalId: "grain-shop-accounting" },
   ]);
@@ -2007,7 +2039,7 @@ test("tea house debate is blocked when stamina is below activity cost", () => {
   );
   const enterResult = teaHouseHouseModule.enter({
     gameState: ensureCityNpcPoolsForCurrentDay(
-      createBaseState(),
+      withCouncilInDays(createBaseState(), 90),
       prototypeCityNpcPools,
       () => 0.1
     ),
@@ -2036,7 +2068,7 @@ test("tea house debate spends stamina when settled", () => {
   const startingStamina = getPlayerCharacter(prototypeCharacters).stamina;
   const enterResult = teaHouseHouseModule.enter({
     gameState: ensureCityNpcPoolsForCurrentDay(
-      createBaseState(),
+      withCouncilInDays(createBaseState(), 200),
       prototypeCityNpcPools,
       () => 0.1
     ),
@@ -2055,16 +2087,26 @@ test("tea house debate spends stamina when settled", () => {
     },
     request: { type: "action", actionId: "start-debate" },
   });
+  assert.equal(startDebate.sessionState?.overlay?.type, "activity-confirm");
 
-  const result = teaHouseHouseModule.dispatch({
+  const confirmedDebate = teaHouseHouseModule.dispatch({
     gameState: startDebate.gameState,
     characterDefinitions: startDebate.characterDefinitions,
     houseDefinition: teaHouse,
     playerCharacterId,
+    sessionState: startDebate.sessionState,
+    request: { type: "action", actionId: "confirm-start-debate" },
+  });
+
+  const result = teaHouseHouseModule.dispatch({
+    gameState: confirmedDebate.gameState,
+    characterDefinitions: confirmedDebate.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
     sessionState: {
-      ...startDebate.sessionState,
+      ...confirmedDebate.sessionState,
       overlay: {
-        ...startDebate.sessionState.overlay,
+        ...confirmedDebate.sessionState.overlay,
         npcSpirit: 1,
         plannedNpcTopic: "利",
         selectedPlayerTopic: "义",
@@ -2175,7 +2217,7 @@ test("tavern gamble start is blocked when stamina is below activity cost", () =>
     ACTIVITY_COMPLETION_STAMINA_COST - 1
   );
   const enterResult = tavernHouseModule.enter({
-    gameState: createBaseState(),
+    gameState: withCouncilInDays(createBaseState(), 200),
     characterDefinitions: lowStaminaCharacters,
     houseDefinition: tavernHouse,
     playerCharacterId,
@@ -2888,7 +2930,7 @@ test("tavern gamble completed player skips later betting and draw actions", () =
 });
 
 test("tavern work flow accepts dishwashing qte and submits with confirmation", () => {
-  const state = createBaseState();
+  const state = withCouncilInDays(createBaseState(), 30);
   const startingStamina = getPlayerCharacter(prototypeCharacters).stamina;
   const enterResult = tavernHouseModule.enter({
     gameState: state,
@@ -2926,9 +2968,23 @@ test("tavern work flow accepts dishwashing qte and submits with confirmation", (
     request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
   });
 
-  assert.equal(acceptWork.sessionState?.overlay?.type, "qte-bar");
+  assert.equal(acceptWork.sessionState?.overlay?.type, "activity-confirm");
 
-  let qteResult = acceptWork;
+  const confirmedWork = tavernHouseModule.dispatch({
+    gameState: acceptWork.gameState,
+    characterDefinitions: acceptWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: acceptWork.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-start-work:offer.kulan.wash_dishes",
+    },
+  });
+
+  assert.equal(confirmedWork.sessionState?.overlay?.type, "qte-bar");
+
+  let qteResult = confirmedWork;
   for (let round = 0; round < 3; round += 1) {
     qteResult = tavernHouseModule.dispatch({
       gameState: qteResult.gameState,
@@ -3026,7 +3082,7 @@ test("tavern work acceptance is blocked when stamina is below activity cost", ()
 
 test("tavern work submission is blocked when stamina is below activity cost", () => {
   const enterResult = tavernHouseModule.enter({
-    gameState: createBaseState(),
+    gameState: withCouncilInDays(createBaseState(), 90),
     characterDefinitions: prototypeCharacters,
     houseDefinition: tavernHouse,
     playerCharacterId,
@@ -3055,8 +3111,19 @@ test("tavern work submission is blocked when stamina is below activity cost", ()
     sessionState: openAccept.sessionState,
     request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
   });
+  const confirmedWork = tavernHouseModule.dispatch({
+    gameState: acceptWork.gameState,
+    characterDefinitions: acceptWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: acceptWork.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-start-work:offer.kulan.wash_dishes",
+    },
+  });
 
-  let qteResult = acceptWork;
+  let qteResult = confirmedWork;
   for (let round = 0; round < 3; round += 1) {
     qteResult = tavernHouseModule.dispatch({
       gameState: qteResult.gameState,
@@ -3102,7 +3169,7 @@ test("tavern work submission is blocked when stamina is below activity cost", ()
 });
 
 test("tavern submitting unfinished work fails and clears active work", () => {
-  const state = createBaseState();
+  const state = withCouncilInDays(createBaseState(), 30);
   const enterResult = tavernHouseModule.enter({
     gameState: state,
     characterDefinitions: prototypeCharacters,
@@ -3137,14 +3204,28 @@ test("tavern submitting unfinished work fails and clears active work", () => {
     request: { type: "action", actionId: "accept-work:offer.kulan.supply_run" },
   });
 
-  assert.equal(acceptRandom.sessionState?.acceptedOffers.length, 1);
+  assert.equal(acceptRandom.sessionState?.overlay?.type, "activity-confirm");
 
-  const openSubmitConfirm = tavernHouseModule.dispatch({
+  const confirmedRandom = tavernHouseModule.dispatch({
     gameState: acceptRandom.gameState,
     characterDefinitions: acceptRandom.characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
     sessionState: acceptRandom.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-start-work:offer.kulan.supply_run",
+    },
+  });
+
+  assert.equal(confirmedRandom.sessionState?.acceptedOffers.length, 1);
+
+  const openSubmitConfirm = tavernHouseModule.dispatch({
+    gameState: confirmedRandom.gameState,
+    characterDefinitions: confirmedRandom.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: confirmedRandom.sessionState,
     request: { type: "action", actionId: "submit-work:offer.kulan.supply_run" },
   });
 
@@ -3297,7 +3378,7 @@ test("medicine compounding is blocked when stamina is below activity cost", () =
     ACTIVITY_COMPLETION_STAMINA_COST - 1
   );
   const enterResult = medicineHouseHouseModule.enter({
-    gameState: createBaseState(),
+    gameState: withCouncilInDays(createBaseState(), 30),
     characterDefinitions: lowStaminaCharacters,
     houseDefinition: medicineHouse,
     playerCharacterId,
@@ -3322,7 +3403,7 @@ test("medicine compounding is blocked when stamina is below activity cost", () =
 test("medicine compounding spends stamina when settled", () => {
   const startingStamina = getPlayerCharacter(prototypeCharacters).stamina;
   const enterResult = medicineHouseHouseModule.enter({
-    gameState: createBaseState(),
+    gameState: withCouncilInDays(createBaseState(), 200),
     characterDefinitions: prototypeCharacters,
     houseDefinition: medicineHouse,
     playerCharacterId,
@@ -3338,13 +3419,23 @@ test("medicine compounding spends stamina when settled", () => {
     },
     request: { type: "action", actionId: "start-compounding" },
   });
+  assert.equal(startResult.sessionState?.overlay?.type, "activity-confirm");
 
-  const result = medicineHouseHouseModule.dispatch({
+  const confirmedStart = medicineHouseHouseModule.dispatch({
     gameState: startResult.gameState,
     characterDefinitions: startResult.characterDefinitions,
     houseDefinition: medicineHouse,
     playerCharacterId,
     sessionState: startResult.sessionState,
+    request: { type: "action", actionId: "confirm-start-compounding" },
+  });
+
+  const result = medicineHouseHouseModule.dispatch({
+    gameState: confirmedStart.gameState,
+    characterDefinitions: confirmedStart.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: confirmedStart.sessionState,
     request: { type: "action", actionId: "compound-finish" },
   });
 
@@ -3483,16 +3574,16 @@ test("temple work reaching contribution threshold starts shared map auto advance
   const startingStamina = getPlayerCharacter(monkCharacters).stamina;
   const enterResult = templeHouseHouseModule.enter({
     gameState: {
-      ...createMonkStageState(),
+      ...withCouncilInDays(createMonkStageState(), 30),
       runtime: {
-        ...createMonkStageState().runtime,
+        ...withCouncilInDays(createMonkStageState(), 30).runtime,
         flags: {
-          ...createMonkStageState().runtime.flags,
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.flags,
           [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
           [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
         },
         variables: {
-          ...createMonkStageState().runtime.variables,
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
           [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 20,
@@ -3524,8 +3615,21 @@ test("temple work reaching contribution threshold starts shared map auto advance
     sessionState: openResult.sessionState,
     request: { type: "action", actionId: "assign-temple-task:copy-scripture" },
   });
+  assert.equal(startWorkResult.sessionState?.overlay?.type, "activity-confirm");
 
-  let qteResult = startWorkResult;
+  const confirmedWorkResult = templeHouseHouseModule.dispatch({
+    gameState: startWorkResult.gameState,
+    characterDefinitions: startWorkResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: startWorkResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-start-temple-task:copy-scripture",
+    },
+  });
+
+  let qteResult = confirmedWorkResult;
   for (let round = 0; round < 3; round += 1) {
     qteResult = templeHouseHouseModule.dispatch({
       gameState: qteResult.gameState,

@@ -13,6 +13,17 @@ export type TempleHouseDonateConfirmOverlayState = {
   amount: number;
 };
 
+export type TempleHouseFoodSubmitOverlayState = {
+  type: "submit-food";
+  quantity: number;
+  maxQuantity: number;
+};
+
+export type TempleHouseRestDaysOverlayState = {
+  type: "rest-days";
+  inputValue: string;
+};
+
 export type TempleHouseQteOverlayState = {
   type: "qte-bar";
   taskId: string;
@@ -24,17 +35,6 @@ export type TempleHouseQteOverlayState = {
   markerDirection: 1 | -1;
   targetStartPercent: number;
   targetWidthPercent: number;
-};
-
-export type TempleHouseFoodSubmitOverlayState = {
-  type: "submit-food";
-  quantity: number;
-  maxQuantity: number;
-};
-
-export type TempleHouseRestDaysOverlayState = {
-  type: "rest-days";
-  inputValue: string;
 };
 
 export type TempleHouseResultOverlayState = {
