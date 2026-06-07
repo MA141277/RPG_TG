@@ -6,6 +6,7 @@ import {
   medicineHousePreparedMedicines,
 } from "../../../content/houses/medicine-house-content";
 import type { CharacterDefinition } from "../../../domain/character";
+import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
   MedicineHouseDialoguePhase,
   MedicineHouseOverlayState,
@@ -43,12 +44,20 @@ import {
   canAffordActivityCost,
   spendPlayerStamina,
 } from "../../player/player-stamina";
+import {
+  convertHouseActivityDaysToSegments,
+  formatHouseActivityCostLine,
+  getHouseMinigameDurationDays,
+} from "../../house/house-activity-costs";
+import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialMedicineHouseSessionState } from "./medicine-house-session-state";
 
 const COMPOUNDING_INTERVAL_ID = "medicine-house-compounding";
 const BUY_SELECT_ACTION_PREFIX = "buy-select:";
 const COMPOUND_HERB_ACTION_PREFIX = "compound-herb:";
 const COMPOUND_CLEAR_ACTION_ID = "compound-clear";
+const CONFIRM_START_COMPOUNDING_ACTION_ID = "confirm-start-compounding";
+const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
 
 function countCompoundingSelections(
   selections: Array<{ amount: number }>
@@ -211,7 +220,46 @@ function finalizeInteraction(
               tone
             ),
           },
+    timeAdvanceCost: outcome.timeCost,
   };
+}
+
+function createActivityConfirmOverlay(
+  title: string,
+  paragraphs: string[],
+  confirmActionId: string
+): HouseActivityConfirmOverlayState {
+  return {
+    type: "activity-confirm",
+    title,
+    paragraphs,
+    confirmActionId,
+    confirmLabel: "开始配药",
+    cancelActionId: CANCEL_ACTIVITY_CONFIRM_ACTION_ID,
+    cancelLabel: "稍后再来",
+    tone: "info",
+  };
+}
+
+function createCouncilTimeInsufficientOverlay(
+  durationDays: number,
+  remainingDays: number
+): MedicineHouseOverlayState {
+  return createAlertOverlay(
+    "时日不够",
+    remainingDays <= 0
+      ? [
+          "陈郎中把药杵收了回去，先摇了摇头。",
+          `“评定日期已到，这炉药至少要 ${durationDays} 天，眼下开不得。”`,
+          "“先去把评定应下，回来我再看你这一炉。”",
+        ]
+      : [
+          "陈郎中把药杵收了回去，先摇了摇头。",
+          `“离评定只剩 ${remainingDays} 天，这炉药至少要 ${durationDays} 天，眼下开不得。”`,
+          "“先去把评定应下，回来我再看你这一炉。”",
+        ],
+    "warning"
+  );
 }
 
 function getPlayerMedicineSkill(playerCharacter: CharacterDefinition): number {
@@ -234,6 +282,13 @@ function finalizeCompounding(
     overlay.selections,
     overlay.availableHerbs
   );
+  const playerCharacter = getPlayerCharacter(
+    input.characterDefinitions,
+    input.playerCharacterId
+  );
+  const durationDays = getHouseMinigameDurationDays(
+    getPlayerMedicineSkill(playerCharacter)
+  );
   const outcome: MedicineHouseActionOutcome = {
     relationshipChange: gradeResult.reward.relationship,
     attributeChange:
@@ -249,7 +304,7 @@ function finalizeCompounding(
     fatigueRecovery: 0,
     moneyChange: 0,
     inventoryChange: [],
-    timeCost: 1,
+    timeCost: durationDays,
   };
   const mutation = applyMedicineHouseOutcome(
     input.gameState,
@@ -287,6 +342,7 @@ function finalizeCompounding(
             },
           },
     sideEffects: [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }],
+    timeAdvanceCost: convertHouseActivityDaysToSegments(outcome.timeCost),
   };
 }
 
@@ -453,6 +509,38 @@ function handleAction(
       }
 
       const medicineSkill = getPlayerMedicineSkill(playerCharacter);
+      const durationDays = getHouseMinigameDurationDays(medicineSkill);
+      const remainingDays = getInsufficientDaysForTimedActivity(
+        input.gameState,
+        durationDays
+      );
+      if (remainingDays != null) {
+        return withSessionState(input, sessionState, {
+          overlay: createCouncilTimeInsufficientOverlay(durationDays, remainingDays),
+        });
+      }
+
+      return withSessionState(input, sessionState, {
+        overlay: createActivityConfirmOverlay("配药", [
+          "陈郎中把药筛与药杵一并推了过来。",
+          `“照你现在的医术火候，这一炉药要配得稳妥，至少得花上 ${durationDays} 天。”`,
+          formatHouseActivityCostLine(durationDays),
+        ], CONFIRM_START_COMPOUNDING_ACTION_ID),
+      });
+    }
+    case CONFIRM_START_COMPOUNDING_ACTION_ID: {
+      const medicineSkill = getPlayerMedicineSkill(playerCharacter);
+      const durationDays = getHouseMinigameDurationDays(medicineSkill);
+      const remainingDays = getInsufficientDaysForTimedActivity(
+        input.gameState,
+        durationDays
+      );
+      if (remainingDays != null) {
+        return withSessionState(input, sessionState, {
+          overlay: createCouncilTimeInsufficientOverlay(durationDays, remainingDays),
+        });
+      }
+
       const limits = getCompoundingLimits(medicineSkill);
       const target = pickCompoundingTarget(medicineSkill);
       const availableHerbs = getAvailableHerbsForSkill(medicineSkill);
@@ -484,6 +572,8 @@ function handleAction(
         ]
       );
     }
+    case CANCEL_ACTIVITY_CONFIRM_ACTION_ID:
+      return withSessionState(input, sessionState, { overlay: null });
     case COMPOUND_CLEAR_ACTION_ID: {
       const overlay = sessionState?.overlay;
       if (overlay?.type !== "compounding" || overlay.selections.length === 0) {
@@ -574,6 +664,19 @@ function selectOverlayViewModel(
       ...(overlay.tone == null ? {} : { tone: overlay.tone }),
       confirmActionId: "close-alert",
       confirmLabel: "知道了",
+    };
+  }
+
+  if (overlay.type === "activity-confirm") {
+    return {
+      type: "confirm",
+      title: overlay.title,
+      paragraphs: overlay.paragraphs,
+      confirmActionId: overlay.confirmActionId,
+      confirmLabel: overlay.confirmLabel,
+      cancelActionId: overlay.cancelActionId,
+      cancelLabel: overlay.cancelLabel,
+      ...(overlay.tone == null ? {} : { tone: overlay.tone }),
     };
   }
 

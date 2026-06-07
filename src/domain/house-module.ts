@@ -484,6 +484,12 @@ export type HouseModuleTransitionResult<ModuleId extends HouseModuleId = HouseMo
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
   sessionState: HouseModuleSessionState<ModuleId> | null;
+  timeAdvanceCost?: number;
+  councilArrivalNotice?: {
+    speakerCharacterId?: string;
+    textLines: string[];
+    advanceHintText?: string;
+  };
   sideEffects?: HouseModuleSideEffect[];
   navigation?: { type: "stay-in-house" };
 };

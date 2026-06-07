@@ -1,3 +1,4 @@
+import type { HouseActivityConfirmOverlayState } from "../house-activity";
 import type {
   CompoundingHerbSelection,
   CompoundingSessionTarget,
@@ -35,6 +36,7 @@ export type MedicineHouseResultOverlayState = {
 
 export type MedicineHouseOverlayState =
   | MedicineHouseAlertOverlayState
+  | HouseActivityConfirmOverlayState
   | MedicineHouseBuyOverlayState
   | MedicineHouseCompoundingOverlayState
   | MedicineHouseResultOverlayState

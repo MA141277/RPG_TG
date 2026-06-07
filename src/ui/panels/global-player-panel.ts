@@ -8,6 +8,7 @@ import type {
   UiLayoutComponent,
   UiLayoutElement,
 } from "../../domain/ui-layout";
+import { getCouncilStatusText } from "../../application/time/time-progression";
 
 export type GlobalPlayerPanelModel = {
   portraitLabel: string;
@@ -22,6 +23,19 @@ export type GlobalPlayerPanelModel = {
   reviewDateText: string;
   mainHouseMissionText: string;
 };
+
+function formatTimeOfDayLabel(timeOfDay: GameState["world"]["timeOfDay"]): string {
+  switch (timeOfDay) {
+    case "morning":
+      return "早晨";
+    case "afternoon":
+      return "午后";
+    case "night":
+      return "夜晚";
+    default:
+      return timeOfDay;
+  }
+}
 
 function getComponentRectStyle(component: UiLayoutComponent): string {
   return [
@@ -116,12 +130,14 @@ export function createGlobalPlayerPanelModel(
     portraitImageUrl: resolveCharacterPortraitImageUrl(playerCharacter),
     name: playerCharacter.name,
     title: playerCharacter.title ?? playerCharacter.occupation ?? "无官职",
-    currentDateText: `${state.calendar.year}年${state.calendar.month}月${state.calendar.day}日`,
+    currentDateText:
+      `${state.calendar.year}年${state.calendar.month}月${state.calendar.day}日` +
+      `・${formatTimeOfDayLabel(state.world.timeOfDay)}`,
     locationText,
     goldText: `${playerCharacter.stats.gold} 文`,
     stamina: playerCharacter.stamina,
     fame: playerCharacter.stats.fame,
-    reviewDateText: state.ui.reviewDateText,
+    reviewDateText: getCouncilStatusText(state),
     mainHouseMissionText:
       activeMission?.title ?? state.ui.mainHouseMissionText ?? "暂无任务",
   };
@@ -218,7 +234,7 @@ export function renderGlobalPlayerPanel(
                   <div class="p-global-task-panel__header"></div>
                   <div class="p-global-task-panel__items">
                     <section class="p-global-task-panel__item" style="${reviewItemElement == null ? "" : getElementStyle(reviewItemElement)}">
-                      <span class="p-global-task-panel__label">距离评定</span>
+                      <span class="p-global-task-panel__label">评定</span>
                       <strong class="p-global-task-panel__value">${model.reviewDateText}</strong>
                     </section>
                     <section

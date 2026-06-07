@@ -5,6 +5,7 @@ import {
 } from "../../../content/houses/tea-house-content";
 import { prototypeCityNpcPools } from "../../../content/prototype-world";
 import type { CharacterDefinition } from "../../../domain/character";
+import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
   TeaHouseDialoguePhase,
   TeaHouseOverlayState,
@@ -51,6 +52,12 @@ import {
   canAffordActivityCost,
   spendPlayerStamina,
 } from "../../player/player-stamina";
+import {
+  convertHouseActivityDaysToSegments,
+  formatHouseActivityCostLine,
+  getHouseMinigameDurationDays,
+} from "../../house/house-activity-costs";
+import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
 
 const DEBATE_INTERVAL_ID = "tea-house-debate";
@@ -58,6 +65,8 @@ const MAX_TEA_HOUSE_GUESTS = 2;
 const SELECT_ACTOR_ACTION_PREFIX = "select-actor:";
 const DEBATE_TOPIC_ACTION_PREFIX = "debate-topic:";
 const DEBATE_CONFIRM_ACTION_ID = "confirm-debate-topic";
+const CONFIRM_START_DEBATE_ACTION_ID = "confirm-start-debate";
+const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -349,7 +358,47 @@ function finalizeInteraction(
               tone
             ),
           },
+    timeAdvanceCost: outcome.timeCost,
   };
+}
+
+function createActivityConfirmOverlay(
+  title: string,
+  paragraphs: string[],
+  confirmActionId: string
+): HouseActivityConfirmOverlayState {
+  return {
+    type: "activity-confirm",
+    title,
+    paragraphs,
+    confirmActionId,
+    confirmLabel: "现在开始",
+    cancelActionId: CANCEL_ACTIVITY_CONFIRM_ACTION_ID,
+    cancelLabel: "改日再论",
+    tone: "info",
+  };
+}
+
+function createCouncilTimeInsufficientOverlay(
+  actorName: string,
+  durationDays: number,
+  remainingDays: number
+): TeaHouseOverlayState {
+  return createAlertOverlay(
+    "时日不够",
+    remainingDays <= 0
+      ? [
+          `${actorName}抬手按住茶盏，先把你拦了下来。`,
+          `“评定日期已到，这一场少说要磨上 ${durationDays} 天，眼下已经来不及了。”`,
+          "“先去把评定应下，改日再坐下来论。”",
+        ]
+      : [
+          `${actorName}抬手按住茶盏，先把你拦了下来。`,
+          `“离评定只剩 ${remainingDays} 天，这一场少说要磨上 ${durationDays} 天，眼下已经来不及了。”`,
+          "“先去把评定应下，改日再坐下来论。”",
+        ],
+    "warning"
+  );
 }
 
 function parseActorActionId(actionId: string): string | null {
@@ -461,6 +510,13 @@ function resolveDebateTurn(
   );
 
   if (roundResult.outcome != null) {
+    const playerCharacter = getPlayerCharacter(
+      input.characterDefinitions,
+      input.playerCharacterId
+    );
+    const durationDays = getHouseMinigameDurationDays(
+      Math.max(1, playerCharacter.skills?.rhetoric ?? 1)
+    );
     const finishedOutcome =
       roundResult.outcome.winner === "player"
         ? {
@@ -468,7 +524,7 @@ function resolveDebateTurn(
             attributeChange: [{ key: "rhetoric" as const, label: "辩才", delta: 1 }],
             intelGain: Math.random() < teaHouseLowIntelChance ? 1 : 0,
             moneyChange: 0,
-            timeCost: 1,
+            timeCost: durationDays,
           }
         : roundResult.outcome.winner === "npc"
           ? {
@@ -476,14 +532,14 @@ function resolveDebateTurn(
               attributeChange: [],
               intelGain: 0,
               moneyChange: 0,
-              timeCost: 1,
+              timeCost: durationDays,
             }
           : {
               relationshipChange: 0,
               attributeChange: [],
               intelGain: 0,
               moneyChange: 0,
-              timeCost: 1,
+              timeCost: durationDays,
             };
 
     const mutation = applyTeaHouseOutcome(input, actor, finishedOutcome);
@@ -523,6 +579,9 @@ function resolveDebateTurn(
               ),
             },
       sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
+      timeAdvanceCost: convertHouseActivityDaysToSegments(
+        finishedOutcome.timeCost
+      ),
     };
   }
 
@@ -594,7 +653,10 @@ function handleActorAction(
     return createTransitionResult(input);
   }
 
-  if (input.request.actionId === "close-alert") {
+  if (
+    input.request.actionId === "close-alert" ||
+    input.request.actionId === CANCEL_ACTIVITY_CONFIRM_ACTION_ID
+  ) {
     return withSessionState(
       input,
       sessionState,
@@ -652,6 +714,64 @@ function handleActorAction(
     }
 
     return resolveDebateTurn(input, sessionState, overlay.selectedPlayerTopic, false);
+  }
+
+  if (input.request.actionId === CONFIRM_START_DEBATE_ACTION_ID) {
+    if (selectedActor == null) {
+      return createTransitionResult(input);
+    }
+
+    const playerCharacter = getPlayerCharacter(
+      input.characterDefinitions,
+      input.playerCharacterId
+    );
+    const durationDays = getHouseMinigameDurationDays(
+      Math.max(1, playerCharacter.skills?.rhetoric ?? 1)
+    );
+    const remainingDays = getInsufficientDaysForTimedActivity(
+      input.gameState,
+      durationDays
+    );
+    if (remainingDays != null) {
+      return withSessionState(input, sessionState, {
+        overlay: createCouncilTimeInsufficientOverlay(
+          selectedActor.name,
+          durationDays,
+          remainingDays
+        ),
+      });
+    }
+
+    return withSessionState(
+      input,
+      sessionState,
+      {
+        dialogueLines: [`${selectedActor.name}放下茶盏，示意你出题。`],
+        dialoguePhase: "open",
+        overlay: createDebateOverlay(
+          selectedActor,
+          createInitialTeaHouseDebateState().playerSpirit,
+          createInitialTeaHouseDebateState().npcSpirit,
+          0,
+          0,
+          1,
+          pickTeaHouseAiTopic(selectedActor.personality),
+          null
+        ),
+      },
+      [
+        { type: "stop-interval", intervalId: DEBATE_INTERVAL_ID },
+        {
+          type: "start-interval",
+          intervalId: DEBATE_INTERVAL_ID,
+          everyMs: 1000,
+          request: {
+            type: "tick",
+            tickId: DEBATE_INTERVAL_ID,
+          },
+        },
+      ]
+    );
   }
 
   if (selectedActor == null) {
@@ -771,36 +891,29 @@ function handleActorAction(
         });
       }
 
-      return withSessionState(
-        input,
-        sessionState,
-        {
-          dialogueLines: [`${selectedActor.name}放下茶盏，示意你出题。`],
-          dialoguePhase: "open",
-          overlay: createDebateOverlay(
-            selectedActor,
-            createInitialTeaHouseDebateState().playerSpirit,
-            createInitialTeaHouseDebateState().npcSpirit,
-            0,
-            0,
-            1,
-            pickTeaHouseAiTopic(selectedActor.personality),
-            null
-          ),
-        },
-        [
-          { type: "stop-interval", intervalId: DEBATE_INTERVAL_ID },
-          {
-            type: "start-interval",
-            intervalId: DEBATE_INTERVAL_ID,
-            everyMs: 1000,
-            request: {
-              type: "tick",
-              tickId: DEBATE_INTERVAL_ID,
-            },
-          },
-        ]
+      const durationDays = getHouseMinigameDurationDays(
+        Math.max(1, playerCharacter.skills?.rhetoric ?? 1)
       );
+      const remainingDays = getInsufficientDaysForTimedActivity(
+        input.gameState,
+        durationDays
+      );
+      if (remainingDays != null) {
+        return withSessionState(input, sessionState, {
+          overlay: createCouncilTimeInsufficientOverlay(
+            selectedActor.name,
+            durationDays,
+            remainingDays
+          ),
+        });
+      }
+
+      return withSessionState(input, sessionState, {
+        overlay: createActivityConfirmOverlay("舌战", [
+          `${selectedActor.name}抬手压住茶盏：“真要论起来，照你如今的辩才，这一场少说也要磨上 ${durationDays} 天。”`,
+          formatHouseActivityCostLine(durationDays),
+        ], CONFIRM_START_DEBATE_ACTION_ID),
+      });
     }
     default:
       return createTransitionResult(input);
@@ -822,6 +935,19 @@ function selectOverlayViewModel(
       ...(overlay.tone == null ? {} : { tone: overlay.tone }),
       confirmActionId: "close-alert",
       confirmLabel: "知道了",
+    };
+  }
+
+  if (overlay.type === "activity-confirm") {
+    return {
+      type: "confirm",
+      title: overlay.title,
+      paragraphs: overlay.paragraphs,
+      confirmActionId: overlay.confirmActionId,
+      confirmLabel: overlay.confirmLabel,
+      cancelActionId: overlay.cancelActionId,
+      cancelLabel: overlay.cancelLabel,
+      ...(overlay.tone == null ? {} : { tone: overlay.tone }),
     };
   }
 

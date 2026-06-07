@@ -1,3 +1,4 @@
+import type { HouseActivityConfirmOverlayState } from "../house-activity";
 import type {
   AccountingGrade,
   AccountingGradeReward,
@@ -33,10 +34,12 @@ export type GrainShopResultOverlayState = {
   grade: AccountingGrade;
   score: number;
   reward: AccountingGradeReward;
+  durationDays: number;
 };
 
 export type GrainShopOverlayState =
   | GrainShopAlertOverlayState
+  | HouseActivityConfirmOverlayState
   | GrainShopTradeOverlayState
   | GrainShopMinigameOverlayState
   | GrainShopResultOverlayState

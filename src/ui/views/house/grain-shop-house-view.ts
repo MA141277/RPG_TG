@@ -2,6 +2,7 @@ import type { HouseModuleViewModel, HouseOverlayViewModel } from "../../../domai
 import {
   renderHouseActionContainer,
   renderHouseAlertOverlay,
+  renderHouseConfirmOverlay,
   renderHouseDialogue,
   renderHouseLeaveButton,
   renderHouseStandbyRoster,
@@ -199,6 +200,8 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
   switch (overlay.type) {
     case "alert":
       return renderHouseAlertOverlay(overlay);
+    case "confirm":
+      return renderHouseConfirmOverlay(overlay);
     case "trade":
       return renderTradeOverlay(overlay);
     case "minigame":

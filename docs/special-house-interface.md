@@ -166,6 +166,12 @@ export type HouseModuleTransitionResult<
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
   sessionState: HouseModuleSessionState<ModuleId> | null;
+  timeAdvanceCost?: number;
+  councilArrivalNotice?: {
+    speakerCharacterId?: string;
+    textLines: string[];
+    advanceHintText?: string;
+  };
   sideEffects?: HouseModuleSideEffect[];
   navigation?: { type: "stay-in-house" };
 };
@@ -212,6 +218,19 @@ If a module needs to hand control back to the world layer for reusable time-skip
 - `stop-map-auto-advance`
 
 This path is for generic map-view time progression and automatic re-entry, not for house-specific logic inside `main.ts`.
+
+If a module completes one player activity and should consume shared world time,
+return `timeAdvanceCost` on `HouseModuleTransitionResult`.
+
+Rules:
+
+- `timeAdvanceCost` is generic world-time metadata, not house-local UI state
+- the shared house runtime advances `world.timeOfDay` and rolls into the next day when needed
+- if a house result causes world time to cross into the review date, the shared runtime will immediately route into the current priority review house; if the player is already inside that house, the runtime will re-enter it so `enter()` can switch straight into the meeting flow
+- if a module needs to attach extra reminder text when review day arrives during that result (for example, interrupted rest summary), return `councilArrivalNotice`; the shared runtime will carry it into the reminder dialogue before handing control to the review house
+- use `timeAdvanceCost` for common actions such as trade, inquiry, work settlement, study, donation, or debate
+- do not manually patch `calendar` / `timeOfDay` inside each module for single-step activity costs
+- if a module intentionally skips whole days, it may still mutate date directly or use shared map auto-advance, but that should be the exception and remain explicit
 
 Do not add parallel custom lifecycle methods for one-off houses unless the shared contract is intentionally being expanded and documented.
 
@@ -329,6 +348,10 @@ but the data must remain typed and UI-facing.
 Use `quantity-confirm` for reusable numeric submissions where a module needs min/max bounded
 quantity input plus increment/decrement actions. The temporary input stays in the module session;
 confirmation performs the persistent mutation through the module lifecycle.
+Use an `activity-confirm` style session overlay when a house needs to warn the player about
+world-time and stamina costs before starting a minigame or work loop. The overlay should stay
+typed, dispatch through normal house action ids, and the actual persistent time/stamina mutation
+should still happen only inside the module lifecycle when the activity resolves.
 For staged table overlays such as tavern gambling, per-player public summaries may include
 current best pattern data and visible discard history, while private hand tiles remain hidden
 from other players in the view model.
@@ -506,6 +529,7 @@ A new house implementation is acceptable only if all are true:
 - session state is stored through a unified contract
 - timer behavior, if any, runs through `tick` requests plus shared side-effect wiring
 - map-based time skip, if any, runs through shared side-effect wiring instead of entrypoint special cases
+- single-step activity time costs, if any, are returned through shared `timeAdvanceCost` instead of ad hoc `calendar` mutations
 - `docs/change-log.md` is updated for shared-interface changes
 
 ## Review Checklist

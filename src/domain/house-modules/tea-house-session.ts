@@ -1,3 +1,4 @@
+import type { HouseActivityConfirmOverlayState } from "../house-activity";
 import type {
   TeaHouseDebateSummary,
   TeaHouseDebateWinner,
@@ -38,6 +39,7 @@ export type TeaHouseResultOverlayState = {
 
 export type TeaHouseOverlayState =
   | TeaHouseAlertOverlayState
+  | HouseActivityConfirmOverlayState
   | TeaHouseDebateOverlayState
   | TeaHouseResultOverlayState
   | null;

@@ -2,6 +2,7 @@ import type { HouseModuleViewModel, HouseOverlayViewModel } from "../../../domai
 import {
   renderHouseActionContainer,
   renderHouseAlertOverlay,
+  renderHouseConfirmOverlay,
   renderHouseDialogue,
   renderHouseLeaveButton,
   renderHouseStandbyRoster,
@@ -132,6 +133,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
 
   if (overlay.type === "alert") {
     return renderHouseAlertOverlay(overlay);
+  }
+
+  if (overlay.type === "confirm") {
+    return renderHouseConfirmOverlay(overlay);
   }
 
   if (overlay.type === "debate") {

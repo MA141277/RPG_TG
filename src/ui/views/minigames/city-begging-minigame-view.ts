@@ -5,6 +5,8 @@ import type {
   CityBeggingVillageItemState,
   CityBeggingVillagePlayingState,
 } from "../../../domain/minigames/city-begging-village-catching";
+import { CITY_BEGGING_DURATION_DAYS } from "../../../application/minigames/city-begging-minigame";
+import { ACTIVITY_COMPLETION_STAMINA_COST } from "../../../application/player/player-stamina";
 import { CITY_BEGGING_GRANARY_ESCORT_CONFIG } from "../../../application/minigames/city-begging-granary-escort";
 import { CITY_BEGGING_VILLAGE_CATCHING_CONFIG } from "../../../application/minigames/city-begging-village-catching";
 
@@ -176,6 +178,8 @@ function renderGranaryEscortOverlay(state: CityBeggingMiniGameState): string {
             ${renderResultStats([
               { label: "成功送达米袋", value: `${state.variantState.successCount}个` },
               { label: "最高连击", value: `${state.variantState.maxCombo}` },
+              { label: "耗时", value: `${CITY_BEGGING_DURATION_DAYS}天` },
+              { label: "体力", value: `-${ACTIVITY_COMPLETION_STAMINA_COST}` },
             ])}
             <button
               type="button"
@@ -312,6 +316,8 @@ function renderVillageCatchingOverlay(state: CityBeggingMiniGameState): string {
               { label: "接住米袋", value: `${state.variantState.riceBagCaughtCount}个` },
               { label: "最高连击", value: `${state.variantState.maxCombo}` },
               { label: "评价", value: state.variantState.evaluation },
+              { label: "耗时", value: `${CITY_BEGGING_DURATION_DAYS}天` },
+              { label: "体力", value: `-${ACTIVITY_COMPLETION_STAMINA_COST}` },
             ])}
             <button
               type="button"

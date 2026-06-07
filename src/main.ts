@@ -30,6 +30,7 @@ import {
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
 import {
+  CITY_BEGGING_DURATION_DAYS,
   createCityBeggingMiniGameState,
   getCityBeggingMiniGameCompletionResult,
   getCityBeggingMiniGameStatus,
@@ -38,6 +39,7 @@ import {
   setCityBeggingMiniGamePointer,
   updateCityBeggingMiniGameState,
 } from "./application/minigames/city-begging-minigame";
+import { convertHouseActivityDaysToSegments } from "./application/house/house-activity-costs";
 import {
   createCityMenuState,
   isPlayerMonkIdentity,
@@ -52,6 +54,17 @@ import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   canAffordActivityCost,
 } from "./application/player/player-stamina";
+import {
+  advanceGameStateOneDay,
+  advanceGameStateTimeSegments,
+  readCalendarDateNumber,
+} from "./application/time/time-progression";
+import {
+  getInsufficientDaysForTimedActivity,
+  getCouncilPriorityHouseModuleId,
+  hasReachedCouncilDate,
+  isCouncilPriorityHouseDefinition,
+} from "./application/time/council-priority";
 import {
   advanceStorySceneStep,
   buildStoryTriggerInput,
@@ -96,6 +109,7 @@ import {
   storySceneDefinitionsById,
 } from "./content/story";
 import { yuanmoCampaignMap } from "./content/yuanmo-campaign-map";
+import type { GameState } from "./domain/game-state";
 import {
   zhuYuanzhangCityRosters,
   zhuYuanzhangEarlyCharacters,
@@ -103,6 +117,7 @@ import {
 import type { CharacterDefinition } from "./domain/character";
 import type { CityBeggingGameCompletionResult } from "./domain/city-begging-minigame";
 import type { HouseDefinition } from "./domain/house";
+import type { HouseModuleTransitionResult } from "./domain/house-module";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -533,12 +548,198 @@ function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
     currentPlayerCharacterId,
     result
   );
+  const previousGameState = appState.gameState;
   appState = {
     ...appState,
-    gameState: completion.state,
+    gameState: advanceGameStateTimeSegments(
+      completion.state,
+      convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
+    ),
     characterDefinitions: completion.characterDefinitions,
   };
+  syncCouncilPriorityAfterGameStateChange(previousGameState);
   window.onBeggingGameComplete?.(result);
+}
+
+function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
+  const priorityModuleId = getCouncilPriorityHouseModuleId(appState.gameState);
+  const currentCityId = appState.gameState.world.currentCityId;
+
+  return (
+    prototypeHouses.find(
+      (houseDefinition) =>
+        houseDefinition.moduleId === priorityModuleId &&
+        houseDefinition.cityId === currentCityId
+    ) ??
+    prototypeHouses.find(
+      (houseDefinition) => houseDefinition.moduleId === priorityModuleId
+    ) ??
+    null
+  );
+}
+
+function createCouncilArrivalDialogue(
+  targetHouseId: string,
+  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
+): NonNullable<AppState["locationDialogueState"]> | null {
+  const priorityHouse = getCouncilPriorityHouseDefinition();
+  if (priorityHouse == null) {
+    return null;
+  }
+
+  const isTempleReview = priorityHouse.moduleId === "temple-house";
+  const defaultSpeakerCharacterId =
+    priorityHouse.defaultCharacterId ??
+    (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard");
+  const defaultTextLines = isTempleReview
+    ? [
+        `评定日期已到，先去${priorityHouse.name}听候方丈安排。`,
+        "寺中知客僧已经在前殿等你了，别再误了时辰。",
+      ]
+    : [
+        `评定日期已到，速去${priorityHouse.name}应评。`,
+        "门前亲兵已经来催，你该先把这一轮评定办完。",
+      ];
+
+  return {
+    type: "council-arrival-reminder",
+    speakerCharacterId:
+      councilArrivalNotice?.speakerCharacterId ?? defaultSpeakerCharacterId,
+    textLines: [...defaultTextLines, ...(councilArrivalNotice?.textLines ?? [])],
+    advanceHintText: councilArrivalNotice?.advanceHintText ?? "知道了",
+    targetHouseId,
+  };
+}
+
+function clearTransientUiForCouncilTrigger(): void {
+  appState = {
+    ...appState,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    campaignTravelState: null,
+  };
+}
+
+function syncCouncilPriorityAfterGameStateChange(
+  previousGameState: GameState,
+  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
+): boolean {
+  if (
+    hasReachedCouncilDate(previousGameState) ||
+    !hasReachedCouncilDate(appState.gameState)
+  ) {
+    return false;
+  }
+  const targetHouseId = getCouncilPriorityHouseDefinition()?.id ?? null;
+  if (targetHouseId == null) {
+    return false;
+  }
+
+  clearTransientUiForCouncilTrigger();
+  const councilArrivalDialogue = createCouncilArrivalDialogue(
+    targetHouseId,
+    councilArrivalNotice
+  );
+  appState = {
+    ...appState,
+    locationDialogueState: councilArrivalDialogue,
+  };
+  renderApp();
+  return true;
+}
+
+function showCouncilPriorityRefusal(): void {
+  const priorityHouse = getCouncilPriorityHouseDefinition();
+  const isTempleReview = priorityHouse?.moduleId === "temple-house";
+
+  appState = {
+    ...appState,
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId:
+        priorityHouse?.defaultCharacterId ??
+        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
+      textLines: isTempleReview
+        ? [
+            `今日是寺中评定，先去${priorityHouse?.name ?? "皇觉寺"}听候安排。`,
+            "其他去处都先放下，评定要紧。",
+          ]
+        : [
+            `今日该去${priorityHouse?.name ?? "帅府"}参加评定。`,
+            "别处都先不用跑，先把评定办完。",
+          ],
+      advanceHintText: priorityHouse == null ? "知道了" : `前往${priorityHouse.name}`,
+    },
+  };
+  renderApp();
+}
+
+function showCouncilInsufficientTimeRefusal(
+  activityLabel: string,
+  durationDays: number,
+  remainingDays: number
+): void {
+  const priorityHouse = getCouncilPriorityHouseDefinition();
+  const isTempleReview = priorityHouse?.moduleId === "temple-house";
+  const targetName = priorityHouse?.name ?? (isTempleReview ? "皇觉寺" : "帅府");
+
+  appState = {
+    ...closeCityMenu(closeCityDirectory(appState)),
+    beggingMiniGameState: null,
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId:
+        priorityHouse?.defaultCharacterId ??
+        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
+      textLines: isTempleReview
+        ? remainingDays <= 0
+          ? [
+              `知客僧上前提醒你：“评定日期已到，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。”`,
+              `“先去${targetName}把评定应下，回来再说这桩事。”`,
+            ]
+          : [
+              `知客僧上前提醒你：“离评定只剩 ${remainingDays} 天，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。”`,
+              `“先去${targetName}把评定应下，回来再说这桩事。”`,
+            ]
+        : remainingDays <= 0
+          ? [
+              `门前亲兵催道：“评定日期已到，这趟${activityLabel}至少要 ${durationDays} 天，眼下抽不开身。”`,
+              `“先去${targetName}应评，别把时辰误了。”`,
+            ]
+          : [
+              `门前亲兵催道：“离评定只剩 ${remainingDays} 天，这趟${activityLabel}至少要 ${durationDays} 天，眼下抽不开身。”`,
+              `“先去${targetName}应评，别把时辰误了。”`,
+            ],
+      advanceHintText: "知道了",
+    },
+  };
+  renderApp();
+}
+
+function shouldBlockForCouncilPriority(targetHouseDefinition?: HouseDefinition | null): boolean {
+  if (!hasReachedCouncilDate(appState.gameState)) {
+    return false;
+  }
+
+  if (
+    targetHouseDefinition != null &&
+    isCouncilPriorityHouseDefinition(appState.gameState, targetHouseDefinition)
+  ) {
+    if (appState.locationDialogueState != null) {
+      appState = {
+        ...appState,
+        locationDialogueState: null,
+      };
+    }
+    return false;
+  }
+
+  showCouncilPriorityRefusal();
+  return true;
 }
 
 function confirmBeggingMiniGameResult(): void {
@@ -649,6 +850,16 @@ function openBeggingMiniGame(): void {
     return;
   }
 
+  const remainingDays = getInsufficientDaysForTimedActivity(
+    appState.gameState,
+    CITY_BEGGING_DURATION_DAYS
+  );
+  if (remainingDays != null) {
+    stopCityBeggingMiniGameLoop();
+    showCouncilInsufficientTimeRefusal("化缘", CITY_BEGGING_DURATION_DAYS, remainingDays);
+    return;
+  }
+
   stopCityBeggingMiniGameLoop();
   appState = {
     ...closeCityMenu(closeCityDirectory(appState)),
@@ -666,6 +877,7 @@ function createHouseRuntimeInstance(): HouseRuntime {
       appState = nextAppState;
     },
     renderApp,
+    syncCouncilPriorityAfterGameStateChange,
     startMapAutoAdvance,
     stopMapAutoAdvance,
     houseDefinitions: prototypeHouses,
@@ -680,58 +892,6 @@ function getActiveStoryChoiceOptions() {
     appState.gameState,
     storySceneDefinitionsById
   );
-}
-
-function readCalendarDateNumber(date: {
-  year: number;
-  month: number;
-  day: number;
-}): number {
-  return date.year * 360 + (date.month - 1) * 30 + date.day;
-}
-
-function advanceStateOneDay(state: AppState["gameState"]): AppState["gameState"] {
-  const currentDateNumber = readCalendarDateNumber(state.calendar) + 1;
-  const nextYear = Math.floor((currentDateNumber - 1) / 360);
-  const dayOfYear = currentDateNumber - nextYear * 360;
-  const nextMonth = Math.floor((dayOfYear - 1) / 30) + 1;
-  const nextDay = ((dayOfYear - 1) % 30) + 1;
-  const nextReviewCountdownValue = state.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown];
-  const nextReviewCountdown =
-    typeof nextReviewCountdownValue === "number"
-      ? Math.max(0, nextReviewCountdownValue - 1)
-      : nextReviewCountdownValue;
-  const daysLeft = Math.max(
-    0,
-    readCalendarDateNumber(state.world.schedule.councilDate) - currentDateNumber
-  );
-
-  return {
-    ...state,
-    calendar: {
-      ...state.calendar,
-      year: nextYear,
-      month: nextMonth,
-      day: nextDay,
-    },
-    world: {
-      ...state.world,
-      timeOfDay: "morning",
-    },
-    ui: {
-      ...state.ui,
-      reviewDateText: daysLeft <= 0 ? "今日评定" : `距离评定 ${daysLeft} 天`,
-    },
-    runtime: {
-      ...state.runtime,
-      variables: {
-        ...state.runtime.variables,
-        ...(typeof nextReviewCountdown === "number"
-          ? { [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: nextReviewCountdown }
-          : {}),
-      },
-    },
-  };
 }
 
 function stopMapAutoAdvance(intervalId: string): void {
@@ -787,19 +947,16 @@ function startMapAutoAdvance(input: {
   renderApp();
 
   mapAutoAdvanceHandles[input.intervalId] = window.setInterval(() => {
+    const previousGameState = appState.gameState;
     appState = {
       ...appState,
-      gameState: advanceStateOneDay(appState.gameState),
+      gameState: advanceGameStateOneDay(appState.gameState),
     };
-    renderApp();
-
-    if (
-      readCalendarDateNumber(appState.gameState.calendar) >=
-      readCalendarDateNumber(appState.gameState.world.schedule.councilDate)
-    ) {
+    if (syncCouncilPriorityAfterGameStateChange(previousGameState)) {
       stopMapAutoAdvance(input.intervalId);
-      houseRuntime.enterHouseById(input.targetHouseId);
+      return;
     }
+    renderApp();
   }, input.everyMs);
 }
 
@@ -2569,13 +2726,17 @@ function handleModalConfirm() {
         appState.campaignTravelState != null &&
         appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
         appState.campaignTravelState.targetCoordinate.y === nextCoordinate.y;
+      const previousGameState = appState.gameState;
       appState = {
         ...appState,
         campaignTravelState: null,
         modalState: shouldEnterCity ? pendingEnterCityState : null,
         locationDialogueState: null,
+        gameState: advanceGameStateTimeSegments(appState.gameState, 1),
       };
-      renderApp();
+      if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
+        renderApp();
+      }
     });
     return;
   }
@@ -2670,13 +2831,17 @@ function startCampaignTravel(
       activeTravelState != null &&
       activeTravelState.targetCoordinate.x === nextCoordinate.x &&
       activeTravelState.targetCoordinate.y === nextCoordinate.y;
+    const previousGameState = appState.gameState;
     appState = {
       ...appState,
       campaignTravelState: null,
       modalState: shouldEnterCity ? pendingEnterCityState : null,
       locationDialogueState: null,
+      gameState: advanceGameStateTimeSegments(appState.gameState, 1),
     };
-    renderApp();
+    if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
+      renderApp();
+    }
   });
 }
 

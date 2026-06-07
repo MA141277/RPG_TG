@@ -25,6 +25,14 @@ import {
   type KeepHouseTaskTier,
 } from "../../../domain/keep-house";
 import { assertExists } from "../../../shared/assert";
+import {
+  markLateCouncilAttendancePenaltyProcessed,
+  resolveLateCouncilAttendance,
+} from "../../time/council-attendance";
+import {
+  formatCouncilStatusText,
+  getCouncilStatusText,
+} from "../../time/time-progression";
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
@@ -41,6 +49,15 @@ function getPlayerCharacter(
     `Player character not found for id "${playerCharacterId}" in keep house module.`
   );
   return playerCharacter;
+}
+
+function replaceCharacter(
+  characterDefinitions: CharacterDefinition[],
+  nextCharacter: CharacterDefinition
+): CharacterDefinition[] {
+  return characterDefinitions.map((characterDefinition) =>
+    characterDefinition.id === nextCharacter.id ? nextCharacter : characterDefinition
+  );
 }
 
 function getLordCharacter(
@@ -77,7 +94,7 @@ function readStringVariable(
 }
 
 function formatReviewDateText(daysLeft: number): string {
-  return `距离评定 ${daysLeft} 天`;
+  return formatCouncilStatusText(daysLeft);
 }
 
 function getCurrentDate(state: GameState): CalendarDate {
@@ -139,19 +156,7 @@ function ensureKeepRuntimeState(
     ...gameState,
     ui: {
       ...gameState.ui,
-      reviewDateText: formatReviewDateText(
-        readNumericVariable(
-          {
-            ...gameState,
-            runtime: {
-              ...gameState.runtime,
-              variables: nextVariables,
-            },
-          },
-          KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
-          0
-        )
-      ),
+      reviewDateText: getCouncilStatusText(gameState),
       mainHouseMissionText:
         gameState.ui.mainHouseMissionText === "前往评定会场"
           ? "前往帅府听候差遣"
@@ -284,6 +289,107 @@ function getMeetingIntroLines(lordCharacter: CharacterDefinition): string[] {
     `${lordCharacter.name}端坐主位，厅中诸将已经依次列坐。`,
     "“评定已到，今日先报功过，再定今后的方针与差事。”",
   ];
+}
+
+function getLateMeetingIntroLines(
+  lordCharacter: CharacterDefinition,
+  lateDays: number,
+  contributionPenalty: number
+): string[] {
+  return lateDays > 5
+    ? [
+        `${lordCharacter.name}冷冷看了你一眼，堂中气氛一下子沉了下去。`,
+        `“评定过了 ${lateDays} 天，你才露面，还敢让众人等你？”`,
+        `“先削去你 ${contributionPenalty} 点功劳，再把这轮评定补上。坐下听令。”`,
+      ]
+    : [
+        `${lordCharacter.name}敲了敲案角，目光没再挪开。`,
+        `“评定拖了 ${lateDays} 天才来，军中不养散漫之人。”`,
+        `“先记你迟到，削去 ${contributionPenalty} 点功劳。坐下，把这轮评定补完。”`,
+      ];
+}
+
+function getLateExpulsionLines(
+  lordCharacter: CharacterDefinition,
+  lateDays: number,
+  contributionPenalty: number
+): string[] {
+  return [
+    `${lordCharacter.name}把案上的军报一合，声音冷得发硬。`,
+    `“评定过了 ${lateDays} 天，你才来应声，还想继续混在营里？”`,
+    `“功劳先削去 ${contributionPenalty} 点。从今日起，你不再算我营中之人。”`,
+  ];
+}
+
+function applyKeepLateCouncilAttendancePenalty(
+  state: GameState,
+  characterDefinitions: CharacterDefinition[],
+  playerCharacterId: string
+): {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  resolution: ReturnType<typeof resolveLateCouncilAttendance>;
+} {
+  const resolution = resolveLateCouncilAttendance(state);
+  if (resolution == null) {
+    return {
+      state,
+      characterDefinitions,
+      resolution,
+    };
+  }
+
+  const contributionKey = getKeepHouseContributionVariableKey(playerCharacterId);
+  const currentContribution = readNumericVariable(state, contributionKey, 0);
+  let nextState = markLateCouncilAttendancePenaltyProcessed({
+    ...state,
+    runtime: {
+      ...state.runtime,
+      variables: {
+        ...state.runtime.variables,
+        [contributionKey]: Math.max(0, currentContribution - resolution.contributionPenalty),
+      },
+    },
+  });
+  let nextCharacterDefinitions = characterDefinitions;
+
+  if (resolution.expelled) {
+    const playerCharacter = getPlayerCharacter(characterDefinitions, playerCharacterId);
+    const expelledPlayer: CharacterDefinition = {
+      ...playerCharacter,
+      affiliationLabel: "无所属",
+    };
+    delete expelledPlayer.clanId;
+    nextCharacterDefinitions = replaceCharacter(characterDefinitions, expelledPlayer);
+    nextState = {
+      ...nextState,
+      world: {
+        ...nextState.world,
+        schedule: {
+          ...nextState.world.schedule,
+          councilDate: addDaysToDate(getCurrentDate(nextState), 60),
+        },
+      },
+      ui: {
+        ...nextState.ui,
+        reviewDateText: formatReviewDateText(60),
+        mainHouseMissionText: "另谋出路",
+      },
+      runtime: {
+        ...nextState.runtime,
+        variables: {
+          ...nextState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
+        },
+      },
+    };
+  }
+
+  return {
+    state: nextState,
+    characterDefinitions: nextCharacterDefinitions,
+    resolution,
+  };
 }
 
 function getMeetingPraiseLines(
@@ -527,40 +633,74 @@ function selectOverlayViewModel(
 export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
   moduleId: "keep-house",
   enter(input) {
-    const nextState = ensureKeepRuntimeState(input.gameState, input.characterDefinitions);
-    const lordCharacter = getLordCharacter(
+    const preparedState = ensureKeepRuntimeState(input.gameState, input.characterDefinitions);
+    const lateAttendance = applyKeepLateCouncilAttendancePenalty(
+      preparedState,
       input.characterDefinitions,
+      input.playerCharacterId
+    );
+    const nextState = lateAttendance.state;
+    const lordCharacter = getLordCharacter(
+      lateAttendance.characterDefinitions,
       input.houseDefinition.defaultCharacterId
     );
     const playerCharacter = getPlayerCharacter(
-      input.characterDefinitions,
+      lateAttendance.characterDefinitions,
       input.playerCharacterId
     );
     const contributionEntries = createContributionEntries(
       nextState,
-      input.characterDefinitions,
+      lateAttendance.characterDefinitions,
       lordCharacter.clanId
     );
     const shouldStartMeeting =
       isPlayersLord(playerCharacter, lordCharacter) &&
       readNumericVariable(nextState, KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown, 0) <= 0;
 
+    const lateExpelled = lateAttendance.resolution?.expelled === true;
+    const baseSessionState = shouldStartMeeting
+      ? createInitialKeepHouseSessionState(
+          "meeting",
+          "intro",
+          lateAttendance.resolution == null
+            ? getMeetingIntroLines(lordCharacter)
+            : getLateMeetingIntroLines(
+                lordCharacter,
+                lateAttendance.resolution.lateDays,
+                lateAttendance.resolution.contributionPenalty
+              ),
+          contributionEntries
+        )
+      : createInitialKeepHouseSessionState(
+          "audience",
+          "finished",
+          lateExpelled && lateAttendance.resolution != null
+            ? getLateExpulsionLines(
+                lordCharacter,
+                lateAttendance.resolution.lateDays,
+                lateAttendance.resolution.contributionPenalty
+              )
+            : getAudienceGreetingLines(lordCharacter),
+          contributionEntries
+        );
+
     return {
       gameState: nextState,
-      characterDefinitions: input.characterDefinitions,
-      sessionState: shouldStartMeeting
-        ? createInitialKeepHouseSessionState(
-            "meeting",
-            "intro",
-            getMeetingIntroLines(lordCharacter),
-            contributionEntries
-          )
-        : createInitialKeepHouseSessionState(
-            "audience",
-            "finished",
-            getAudienceGreetingLines(lordCharacter),
-            contributionEntries
-          ),
+      characterDefinitions: lateAttendance.characterDefinitions,
+      sessionState: lateExpelled
+        ? {
+            ...baseSessionState,
+            dialoguePhase: "open",
+            overlay: createAlertOverlay(
+              "逐出营门",
+              [
+                `你迟到了 ${lateAttendance.resolution?.lateDays ?? 0} 天。`,
+                `军中先扣去 ${lateAttendance.resolution?.contributionPenalty ?? 0} 点功劳，再将你逐出营门。`,
+              ],
+              "warning"
+            ),
+          }
+        : baseSessionState,
     };
   },
   dispatch(input) {

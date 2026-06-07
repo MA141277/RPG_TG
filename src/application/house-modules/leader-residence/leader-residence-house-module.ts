@@ -291,6 +291,7 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
           overlay: null,
         },
         gameState: updateRelationValue(input.gameState, visitedCharacter.id, 1),
+        timeAdvanceCost: 1,
       });
     }
 
@@ -306,6 +307,7 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
           "success"
         ),
         gameState: updateRelationValue(input.gameState, visitedCharacter.id, 2),
+        timeAdvanceCost: 1,
       });
     }
 
@@ -343,6 +345,7 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
           ],
           "success"
         ),
+        timeAdvanceCost: 1,
       });
     }
 

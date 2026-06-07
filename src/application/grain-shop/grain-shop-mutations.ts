@@ -31,13 +31,20 @@ function readVariable(state: GameState, key: string, fallback: number): number {
   return typeof value === "number" ? value : fallback;
 }
 
-export function advanceGrainShopTime(state: GameState): GameState {
+export function advanceGrainShopTime(
+  state: GameState,
+  amount = 1
+): GameState {
   const currentTime = readVariable(
     state,
     GRAIN_SHOP_VARIABLE_KEYS.time,
     1
   );
-  return withVariable(state, GRAIN_SHOP_VARIABLE_KEYS.time, currentTime + 1);
+  return withVariable(
+    state,
+    GRAIN_SHOP_VARIABLE_KEYS.time,
+    currentTime + Math.max(0, amount)
+  );
 }
 
 export function mutatePlayerGold(

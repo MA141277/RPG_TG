@@ -14,9 +14,9 @@ import {
 } from "../../../domain/home-house";
 import type {
   HouseActionViewModel,
+  HouseModuleTransitionResult,
   HouseModuleDefinition,
   HouseModuleDispatchInput,
-  HouseModuleTransitionResult,
   HouseModuleViewModel,
   HouseOverlayViewModel,
 } from "../../../domain/house-module";
@@ -25,6 +25,14 @@ import type {
   HomeHouseSessionState,
 } from "../../../domain/house-modules/home-house-session";
 import { KEEP_HOUSE_VARIABLE_KEYS } from "../../../domain/keep-house";
+import {
+  getCouncilPriorityHouseModuleId,
+  hasReachedCouncilDate,
+} from "../../time/council-priority";
+import {
+  advanceGameStateOneDay,
+  getCouncilStatusText,
+} from "../../time/time-progression";
 import { assertExists } from "../../../shared/assert";
 import { createInitialHomeHouseSessionState } from "./home-house-session-state";
 
@@ -68,10 +76,6 @@ function readNumericVariable(state: GameState, key: string, fallback: number): n
   return typeof value === "number" ? value : fallback;
 }
 
-function readDateNumber(date: CalendarDate): number {
-  return date.year * 360 + (date.month - 1) * 30 + date.day;
-}
-
 function getCurrentDate(state: GameState): CalendarDate {
   return {
     year: state.calendar.year,
@@ -80,45 +84,8 @@ function getCurrentDate(state: GameState): CalendarDate {
   };
 }
 
-function isSameDate(left: CalendarDate, right: CalendarDate): boolean {
-  return (
-    left.year === right.year &&
-    left.month === right.month &&
-    left.day === right.day
-  );
-}
-
-function addDays(date: CalendarDate, days: number): CalendarDate {
-  let totalDays = readDateNumber(date) + days;
-  const year = Math.floor(totalDays / 360);
-  totalDays -= year * 360;
-  const month = Math.floor(totalDays / 30) + 1;
-  const day = (totalDays % 30) || 30;
-
-  return {
-    year,
-    month: day === 30 && totalDays % 30 === 0 ? month - 1 : month,
-    day,
-  };
-}
-
 function advanceCalendarOneDay(state: GameState): GameState {
-  const currentNumber = readDateNumber(getCurrentDate(state));
-  const nextNumber = currentNumber + 1;
-  const nextYear = Math.floor(nextNumber / 360);
-  const dayOfYear = nextNumber - nextYear * 360;
-  const nextMonth = Math.floor((dayOfYear - 1) / 30) + 1;
-  const nextDay = ((dayOfYear - 1) % 30) + 1;
-
-  return {
-    ...state,
-    calendar: {
-      ...state.calendar,
-      year: nextYear,
-      month: nextMonth,
-      day: nextDay,
-    },
-  };
+  return advanceGameStateOneDay(state);
 }
 
 function formatDateText(date: CalendarDate): string {
@@ -136,14 +103,6 @@ function formatTimeOfDay(timeOfDay: TimeOfDay): string {
     default:
       return timeOfDay;
   }
-}
-
-function getCouncilCountdown(state: GameState): number {
-  return Math.max(0, readDateNumber(state.world.schedule.councilDate) - readDateNumber(getCurrentDate(state)));
-}
-
-function formatCouncilCountdownText(daysLeft: number): string {
-  return daysLeft <= 0 ? "今日评定" : `距离评定 ${daysLeft} 天`;
 }
 
 function calculateRecovery(current: number, max: number, base: number, ratio: number): number {
@@ -186,6 +145,22 @@ function getRestInterruptParagraph(reason: HomeRestInterruptionReason): string {
   }
 }
 
+function getCouncilLateChoiceParagraphs(state: GameState): string[] {
+  if (getCouncilPriorityHouseModuleId(state) === "temple-house") {
+    return [
+      "评定日期已到。你现在可以立刻去前殿听候方丈安排，也可以先不去。",
+      "若在评定后的五天内赶到，会被斥责并扣掉寺中贡献。",
+      "若拖得更久，贡献会扣得更多，住持也会当众严词训斥你。",
+    ];
+  }
+
+  return [
+    "评定日期已到。你现在可以立刻赶去帅府，也可以先不去。",
+    "若在评定后的五天内赶到，会被申斥并扣掉贡献。",
+    "若拖得更久，处罚会更重，严重时还可能被逐出当前阵营。",
+  ];
+}
+
 function ensureHomeRuntimeState(
   gameState: GameState,
   playerCharacter: CharacterDefinition
@@ -216,7 +191,7 @@ function ensureHomeRuntimeState(
     ...gameState,
     ui: {
       ...gameState.ui,
-      reviewDateText: formatCouncilCountdownText(getCouncilCountdown(gameState)),
+      reviewDateText: getCouncilStatusText(gameState),
     },
     runtime: {
       ...gameState.runtime,
@@ -309,9 +284,10 @@ function advanceRestOneDay(
   };
   const nextCharacterDefinitions = replaceCharacter(characterDefinitions, nextPlayerCharacter);
   const advancedState = advanceCalendarOneDay(ensuredState);
-  const nextCountdown = Math.max(
-    0,
-    readNumericVariable(advancedState, KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown, 0) - 1
+  const nextCountdown = readNumericVariable(
+    advancedState,
+    KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
+    0
   );
   const stateWithRest: GameState = {
     ...advancedState,
@@ -321,7 +297,7 @@ function advanceRestOneDay(
     },
     ui: {
       ...advancedState.ui,
-      reviewDateText: formatCouncilCountdownText(getCouncilCountdown(advancedState)),
+      reviewDateText: getCouncilStatusText(advancedState),
     },
     runtime: {
       ...advancedState.runtime,
@@ -374,7 +350,7 @@ function runRestPlan(
       };
     }
 
-    if (isSameDate(getCurrentDate(nextState), nextState.world.schedule.councilDate)) {
+    if (hasReachedCouncilDate(nextState)) {
       return {
         state: nextState,
         characterDefinitions: nextCharacterDefinitions,
@@ -393,7 +369,7 @@ function runRestPlan(
     recoveredFatigue += dailyResult.recoveredFatigue;
     daysRested += 1;
 
-    if (isSameDate(getCurrentDate(nextState), nextState.world.schedule.councilDate)) {
+    if (hasReachedCouncilDate(nextState)) {
       return {
         state: nextState,
         characterDefinitions: nextCharacterDefinitions,
@@ -458,13 +434,31 @@ function withSessionState(
   };
 }
 
-function createRestResultOverlay(summary: HomeRestSummary, title: string): NonNullable<HomeHouseOverlayState> {
+function createRestResultOverlay(
+  summary: HomeRestSummary,
+  title: string,
+  playerCharacterId: string
+): NonNullable<HomeHouseOverlayState> {
+  const playerCharacter = getPlayerCharacter(
+    summary.characterDefinitions,
+    playerCharacterId
+  );
+  const currentHp = readNumericVariable(
+    summary.state,
+    HOME_HOUSE_VARIABLE_KEYS.hp,
+    playerCharacter.stamina
+  );
+  const maxHp = readNumericVariable(summary.state, HOME_HOUSE_VARIABLE_KEYS.maxHp, currentHp);
   if (summary.daysRested <= 0) {
-    return createAlertOverlay(
-      title,
+    const paragraphs =
       summary.interruptedReason == null
         ? ["今日本就无需继续静养。"]
-        : [getRestInterruptParagraph(summary.interruptedReason)],
+        : summary.interruptedReason === "council-date"
+          ? getCouncilLateChoiceParagraphs(summary.state)
+          : [getRestInterruptParagraph(summary.interruptedReason)];
+    return createAlertOverlay(
+      title,
+      paragraphs,
       summary.interruptedReason == null ? "info" : "warning"
     );
   }
@@ -472,10 +466,14 @@ function createRestResultOverlay(summary: HomeRestSummary, title: string): NonNu
   const paragraphs = [
     `在自宅中静养了 ${summary.daysRested} 日。`,
     `HP 恢复 ${summary.recoveredHp}，疲劳恢复 ${summary.recoveredFatigue}。`,
+    `当前体力 ${playerCharacter.stamina}，当前 HP ${currentHp} / ${maxHp}。`,
   ];
 
   if (summary.interruptedReason != null) {
     paragraphs.push(getRestInterruptParagraph(summary.interruptedReason));
+    if (summary.interruptedReason === "council-date") {
+      paragraphs.push(...getCouncilLateChoiceParagraphs(summary.state));
+    }
   } else {
     paragraphs.push("身体恢复了些许，疲劳也慢慢消退。");
   }
@@ -485,6 +483,36 @@ function createRestResultOverlay(summary: HomeRestSummary, title: string): NonNu
     paragraphs,
     summary.interruptedReason == null ? "success" : "warning"
   );
+}
+
+function createCouncilArrivalNoticeFromRestSummary(
+  summary: HomeRestSummary,
+  playerCharacterId: string
+): NonNullable<HouseModuleTransitionResult["councilArrivalNotice"]> | undefined {
+  if (summary.interruptedReason !== "council-date") {
+    return undefined;
+  }
+
+  const playerCharacter = getPlayerCharacter(summary.characterDefinitions, playerCharacterId);
+  const currentHp = readNumericVariable(
+    summary.state,
+    HOME_HOUSE_VARIABLE_KEYS.hp,
+    playerCharacter.stamina
+  );
+  const maxHp = readNumericVariable(summary.state, HOME_HOUSE_VARIABLE_KEYS.maxHp, currentHp);
+
+  return {
+    textLines:
+      summary.daysRested > 0
+        ? [
+            `这次静养共休了 ${summary.daysRested} 日，体力已恢复到 ${playerCharacter.stamina}。`,
+            `眼下气血 ${currentHp} / ${maxHp}，该起身去应这场评定了。`,
+          ]
+        : [
+            `休息尚未来得及继续，当前体力为 ${playerCharacter.stamina}。`,
+            `眼下气血 ${currentHp} / ${maxHp}，先去把今日评定办完。`,
+          ],
+  };
 }
 
 function createStatusParagraphs(
@@ -635,9 +663,14 @@ function handleAction(
         descriptionLines: homeHouseMainLines,
         overlay: createRestResultOverlay(
           summary,
-          input.request.actionId === "end-day" ? "今日已过" : "静养一日"
+          input.request.actionId === "end-day" ? "今日已过" : "静养一日",
+          input.playerCharacterId
         ),
       },
+      councilArrivalNotice: createCouncilArrivalNoticeFromRestSummary(
+        summary,
+        input.playerCharacterId
+      ),
     };
   }
 
@@ -646,7 +679,7 @@ function handleAction(
       ensuredState,
       input.characterDefinitions,
       input.playerCharacterId,
-      (state) => !isSameDate(getCurrentDate(state), state.world.schedule.councilDate)
+      (state) => !hasReachedCouncilDate(state)
     );
 
     return {
@@ -656,8 +689,12 @@ function handleAction(
         ...sessionState,
         mode: "main",
         descriptionLines: homeHouseMainLines,
-        overlay: createRestResultOverlay(summary, "休息到评定日"),
+        overlay: createRestResultOverlay(summary, "休息到评定日", input.playerCharacterId),
       },
+      councilArrivalNotice: createCouncilArrivalNoticeFromRestSummary(
+        summary,
+        input.playerCharacterId
+      ),
     };
   }
 
@@ -688,8 +725,16 @@ function handleAction(
         ...sessionState,
         mode: "main",
         descriptionLines: homeHouseMainLines,
-        overlay: createRestResultOverlay(summary, "休息到恢复体力"),
+        overlay: createRestResultOverlay(
+          summary,
+          "休息到恢复体力",
+          input.playerCharacterId
+        ),
       },
+      councilArrivalNotice: createCouncilArrivalNoticeFromRestSummary(
+        summary,
+        input.playerCharacterId
+      ),
     };
   }
 
@@ -725,8 +770,16 @@ function handleAction(
         ...sessionState,
         mode: "main",
         descriptionLines: homeHouseMainLines,
-        overlay: createRestResultOverlay(summary, `静养 ${days} 日`),
+        overlay: createRestResultOverlay(
+          summary,
+          `静养 ${days} 日`,
+          input.playerCharacterId
+        ),
       },
+      councilArrivalNotice: createCouncilArrivalNoticeFromRestSummary(
+        summary,
+        input.playerCharacterId
+      ),
     };
   }
 
@@ -893,7 +946,7 @@ export const homeHouseHouseModule: HouseModuleDefinition<"home-house"> = {
           { label: "金钱", value: `${playerCharacter.stats.gold} 文` },
           {
             label: "评定",
-            value: formatCouncilCountdownText(getCouncilCountdown(ensuredState)),
+            value: getCouncilStatusText(ensuredState),
           },
           { label: "宅邸等级", value: `${persistentState.growth.homeLevel}` },
           {

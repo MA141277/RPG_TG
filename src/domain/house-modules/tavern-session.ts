@@ -1,3 +1,4 @@
+import type { HouseActivityConfirmOverlayState } from "../house-activity";
 import type { TavernWorkOffer } from "../tavern";
 import type { TavernGambleSession, TavernGambleVariant } from "../tavern-gambling";
 
@@ -79,6 +80,7 @@ export type TavernResultOverlayState = {
 
 export type TavernOverlayState =
   | TavernAlertOverlayState
+  | HouseActivityConfirmOverlayState
   | TavernDrinkConfirmOverlayState
   | TavernGambleChoiceOverlayState
   | TavernGambleOverlayState
