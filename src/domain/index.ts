@@ -1,4 +1,5 @@
 export * from "./action";
+export * from "./battle-formation";
 export * from "./card";
 export * from "./character";
 export * from "./city";

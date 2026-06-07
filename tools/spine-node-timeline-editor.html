@@ -1,0 +1,3869 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spine 节点时间轴编辑器</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #151719;
+        --panel: #202326;
+        --panel-2: #292d31;
+        --line: #3b4147;
+        --text: #eef2f5;
+        --muted: #9aa5ae;
+        --accent: #35b6b4;
+        --accent-2: #e6a23c;
+        --danger: #e66f6f;
+        --ok: #77c66e;
+        --canvas: #101214;
+        --track: #23282d;
+        --track-alt: #1b1f23;
+        --key: #f5c84b;
+        --key-active: #ff7a59;
+        --shadow: 0 18px 50px rgb(0 0 0 / 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui,
+          sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        min-height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #30363b;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: var(--accent);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        min-height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #171a1d;
+        color: var(--text);
+        padding: 5px 8px;
+      }
+
+      textarea {
+        min-height: 96px;
+        resize: vertical;
+        line-height: 1.45;
+      }
+
+      .app {
+        display: grid;
+        grid-template-rows: 48px 1fr 224px;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: minmax(260px, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+        background: #1c2024;
+      }
+
+      .brand {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        background:
+          linear-gradient(135deg, transparent 48%, #ffffff40 50%, transparent 52%),
+          linear-gradient(135deg, var(--accent), #4d8ecf);
+      }
+
+      .brand h1 {
+        margin: 0;
+        overflow: hidden;
+        font-size: 15px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .brand span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .toolbar button {
+        padding: 0 10px;
+      }
+
+      .mode-button.active {
+        border-color: var(--accent);
+        background: #244f4f;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 280px 1fr 300px;
+        min-height: 0;
+      }
+
+      .panel {
+        min-height: 0;
+        border-right: 1px solid var(--line);
+        background: var(--panel);
+        overflow: auto;
+      }
+
+      .panel.right {
+        border-right: 0;
+        border-left: 1px solid var(--line);
+      }
+
+      .panel-section {
+        padding: 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .panel-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .node-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .node-item {
+        display: grid;
+        grid-template-columns: 18px 1fr auto;
+        gap: 6px;
+        align-items: center;
+        min-height: 32px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: transparent;
+        padding: 4px 8px;
+        color: var(--text);
+        text-align: left;
+      }
+
+      .node-item.active {
+        border-color: var(--accent);
+        background: #294144;
+      }
+
+      .node-depth {
+        color: var(--muted);
+        font-size: 12px;
+        text-align: right;
+      }
+
+      .node-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .node-color {
+        width: 14px;
+        height: 14px;
+        border: 1px solid #ffffff80;
+        border-radius: 50%;
+      }
+
+      .stage-wrap {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        background:
+          linear-gradient(#ffffff08 1px, transparent 1px),
+          linear-gradient(90deg, #ffffff08 1px, transparent 1px), var(--canvas);
+        background-size: 32px 32px;
+        user-select: none;
+      }
+
+      #stage {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .stage-hint {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        max-width: min(520px, calc(100% - 24px));
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: rgb(22 25 28 / 0.82);
+        color: var(--muted);
+        padding: 8px 10px;
+        font-size: 12px;
+        pointer-events: none;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      .field label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .field.checkbox-field {
+        justify-content: end;
+      }
+
+      .field.checkbox-field label {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        min-height: 32px;
+        color: var(--text);
+      }
+
+      .field.checkbox-field input {
+        width: 16px;
+        min-height: 16px;
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .danger {
+        border-color: #6d3838;
+        background: #4a2424;
+      }
+
+      .primary {
+        border-color: #337f7d;
+        background: #236160;
+      }
+
+      .timeline {
+        display: grid;
+        grid-template-rows: 42px 1fr;
+        min-height: 0;
+        border-top: 1px solid var(--line);
+        background: #191d20;
+      }
+
+      .timeline-top {
+        display: grid;
+        grid-template-columns: 280px 1fr 300px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .transport,
+      .timeline-meta,
+      .timeline-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 6px 10px;
+      }
+
+      .transport {
+        border-right: 1px solid var(--line);
+      }
+
+      .timeline-actions {
+        justify-content: flex-end;
+        border-left: 1px solid var(--line);
+      }
+
+      .transport button,
+      .timeline-actions button {
+        min-width: 34px;
+        padding: 0 8px;
+      }
+
+      .small-input {
+        width: 72px;
+      }
+
+      .timeline-body {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        min-height: 0;
+      }
+
+      .track-labels {
+        overflow: hidden auto;
+        border-right: 1px solid var(--line);
+      }
+
+      .track-label {
+        display: flex;
+        align-items: center;
+        min-height: 30px;
+        border-bottom: 1px solid #ffffff10;
+        padding: 0 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .tracks-viewport {
+        position: relative;
+        overflow: auto;
+      }
+
+      .tracks {
+        position: relative;
+        min-height: 100%;
+      }
+
+      .frame-ruler,
+      .track-row {
+        position: relative;
+        min-height: 30px;
+      }
+
+      .frame-ruler {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: #1f2428;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .track-row {
+        border-bottom: 1px solid #ffffff10;
+        background: var(--track);
+      }
+
+      .track-row:nth-child(odd) {
+        background: var(--track-alt);
+      }
+
+      .frame-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: #ffffff14;
+      }
+
+      .frame-label {
+        position: absolute;
+        top: 8px;
+        color: var(--muted);
+        font-size: 11px;
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+
+      .playhead {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        z-index: 3;
+        width: 2px;
+        background: var(--accent-2);
+        pointer-events: none;
+      }
+
+      .playhead::before {
+        position: absolute;
+        top: 0;
+        left: -5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 0 0 6px 6px;
+        background: var(--accent-2);
+        content: "";
+      }
+
+      .key {
+        position: absolute;
+        top: 8px;
+        z-index: 2;
+        width: 14px;
+        height: 14px;
+        border: 1px solid #6f4d00;
+        border-radius: 3px;
+        background: var(--key);
+        cursor: ew-resize;
+        transform: translateX(-50%) rotate(45deg);
+        box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+      }
+
+      .key.active {
+        border-color: #8c2d15;
+        background: var(--key-active);
+      }
+
+      .status {
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .toast {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 20;
+        max-width: 360px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #24292e;
+        box-shadow: var(--shadow);
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 13px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(8px);
+        transition:
+          opacity 160ms ease,
+          transform 160ms ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 980px) {
+        .workspace {
+          grid-template-columns: 230px 1fr;
+        }
+
+        .panel.right {
+          display: none;
+        }
+
+        .timeline-top {
+          grid-template-columns: 230px 1fr;
+        }
+
+        .timeline-actions {
+          display: none;
+        }
+
+        .timeline-body {
+          grid-template-columns: 230px 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div>
+            <h1>Spine 节点时间轴编辑器</h1>
+            <span>骨骼节点 · 关键帧 · 插值播放 · JSON 工程导入导出</span>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="newProjectBtn" type="button">新建</button>
+          <button id="importBtn" type="button">导入 JSON</button>
+          <button id="exportBtn" type="button">导出 JSON</button>
+          <button id="sampleBtn" type="button">示例</button>
+          <button id="walkSampleBtn" type="button">侧面行走</button>
+          <button id="slashSampleBtn" type="button">侧身劈砍</button>
+          <button id="threeQuarterSampleBtn" type="button">70度侧身</button>
+          <button id="viewToggleBtn" type="button">骨骼视图</button>
+          <button id="nodeModeBtn" class="mode-button active" type="button">节点移动</button>
+          <button id="boneModeBtn" class="mode-button" type="button">骨骼移动</button>
+          <input id="fileInput" class="file-input" type="file" accept=".json,application/json" />
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="panel">
+          <section class="panel-section">
+            <div class="panel-title">
+              <span>节点树</span>
+              <button id="addNodeBtn" type="button">添加</button>
+            </div>
+            <div id="nodeList" class="node-list"></div>
+          </section>
+          <section class="panel-section">
+            <div class="panel-title">项目设置</div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="fpsInput">FPS</label>
+                <input id="fpsInput" type="number" min="1" max="120" step="1" />
+              </div>
+              <div class="field">
+                <label for="durationInput">总帧数</label>
+                <input id="durationInput" type="number" min="1" max="1200" step="1" />
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="stage-wrap">
+          <canvas id="stage" draggable="false"></canvas>
+          <div class="stage-hint">
+            节点移动：拖拽关节圆点，沿父骨骼方向会拉伸/缩短父骨骼并带动相连子链；骨骼移动：拖拽骨骼段会平移当前骨骼和子骨骼。
+          </div>
+        </section>
+
+        <aside class="panel right">
+          <section class="panel-section">
+            <div class="panel-title">节点属性</div>
+            <div class="form-grid">
+              <div class="field full">
+                <label for="nodeNameInput">名称</label>
+                <input id="nodeNameInput" type="text" />
+              </div>
+              <div class="field full">
+                <label for="parentSelect">父节点</label>
+                <select id="parentSelect"></select>
+              </div>
+              <div class="field">
+                <label for="xInput">X</label>
+                <input id="xInput" type="number" step="1" />
+              </div>
+              <div class="field">
+                <label for="yInput">Y</label>
+                <input id="yInput" type="number" step="1" />
+              </div>
+              <div class="field">
+                <label for="rotationInput">旋转</label>
+                <input id="rotationInput" type="number" step="1" />
+              </div>
+              <div class="field">
+                <label for="lengthInput">长度</label>
+                <input id="lengthInput" type="number" min="4" step="1" />
+              </div>
+              <div class="field">
+                <label for="scaleXInput">缩放 X</label>
+                <input id="scaleXInput" type="number" min="0.05" step="0.05" />
+              </div>
+              <div class="field">
+                <label for="scaleYInput">缩放 Y</label>
+                <input id="scaleYInput" type="number" min="0.05" step="0.05" />
+              </div>
+              <div class="field full">
+                <label for="colorInput">颜色</label>
+                <input id="colorInput" type="color" />
+              </div>
+              <div class="field full">
+                <label for="attachmentImageSelect">贴图</label>
+                <select id="attachmentImageSelect">
+                  <option value="">无</option>
+                  <option value="body">body.png</option>
+                  <option value="head">head.png</option>
+                  <option value="arm">arm_right.png</option>
+                  <option value="leg">leg.png</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="attachmentOffsetXInput">贴图 X</label>
+                <input id="attachmentOffsetXInput" type="number" step="1" />
+              </div>
+              <div class="field">
+                <label for="attachmentOffsetYInput">贴图 Y</label>
+                <input id="attachmentOffsetYInput" type="number" step="1" />
+              </div>
+              <div class="field">
+                <label for="attachmentWidthInput">贴图宽度</label>
+                <input id="attachmentWidthInput" type="number" min="1" step="1" />
+              </div>
+              <div class="field">
+                <label for="attachmentLengthScaleInput">拉伸比例</label>
+                <input id="attachmentLengthScaleInput" type="number" min="0.1" step="0.05" />
+              </div>
+              <div class="field">
+                <label for="attachmentRotationInput">贴图旋转</label>
+                <input id="attachmentRotationInput" type="number" step="1" />
+              </div>
+              <div class="field">
+                <label for="attachmentAlphaInput">透明度</label>
+                <input id="attachmentAlphaInput" type="number" min="0" max="1" step="0.05" />
+              </div>
+              <div class="field">
+                <label for="attachmentLayerInput">图层</label>
+                <input id="attachmentLayerInput" type="number" step="1" />
+              </div>
+              <div class="field">
+                <label for="attachmentAnchorXInput">锚点 X</label>
+                <input id="attachmentAnchorXInput" type="number" min="0" max="1" step="0.05" />
+              </div>
+              <div class="field checkbox-field">
+                <label for="attachmentSegmentsInput">
+                  <input id="attachmentSegmentsInput" type="checkbox" />
+                  分段弯曲
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label for="attachmentReverseInput">
+                  <input id="attachmentReverseInput" type="checkbox" />
+                  反向贴图
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label for="attachmentScarfEnabledInput">
+                  <input id="attachmentScarfEnabledInput" type="checkbox" />
+                  头巾弹簧
+                </label>
+              </div>
+              <div class="field">
+                <label for="attachmentScarfSplitInput">头巾分割</label>
+                <input id="attachmentScarfSplitInput" type="number" min="0.05" max="0.95" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentScarfRootXInput">弹簧 X</label>
+                <input id="attachmentScarfRootXInput" type="number" min="0" max="1" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentScarfRootYInput">弹簧 Y</label>
+                <input id="attachmentScarfRootYInput" type="number" min="0" max="1" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentScarfTipXInput">弹簧长度</label>
+                <input id="attachmentScarfTipXInput" type="number" min="0.05" max="2" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentScarfTipYInput">弹簧角度</label>
+                <input id="attachmentScarfTipYInput" type="number" step="1" />
+              </div>
+              <div class="field">
+                <label for="attachmentScarfStiffnessInput">弹簧强度</label>
+                <input id="attachmentScarfStiffnessInput" type="number" min="0" max="1" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentScarfDampingInput">弹簧阻尼</label>
+                <input id="attachmentScarfDampingInput" type="number" min="0" max="0.99" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentScarfGravityInput">弹簧重力</label>
+                <input id="attachmentScarfGravityInput" type="number" step="10" />
+              </div>
+              <div class="field">
+                <label for="attachmentScarfWaveInput">弹簧摆幅</label>
+                <input id="attachmentScarfWaveInput" type="number" min="0" step="0.1" />
+              </div>
+              <div class="field checkbox-field">
+                <label for="attachmentHemEnabledInput">
+                  <input id="attachmentHemEnabledInput" type="checkbox" />
+                  下摆弹簧
+                </label>
+              </div>
+              <div class="field">
+                <label for="attachmentHemXInput">下摆 X</label>
+                <input id="attachmentHemXInput" type="number" min="0" max="1" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentHemYInput">下摆 Y</label>
+                <input id="attachmentHemYInput" type="number" min="0" max="1" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentHemLengthInput">下摆长度</label>
+                <input id="attachmentHemLengthInput" type="number" min="0.05" max="2" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="attachmentHemAngleInput">下摆角度</label>
+                <input id="attachmentHemAngleInput" type="number" step="1" />
+              </div>
+            </div>
+            <div class="button-row">
+              <button id="keyframeBtn" class="primary" type="button">记录关键帧</button>
+              <button id="deleteNodeBtn" class="danger" type="button">删除节点</button>
+            </div>
+          </section>
+          <section class="panel-section">
+            <div class="panel-title">工程 JSON</div>
+            <textarea id="jsonPreview"></textarea>
+            <div class="button-row">
+              <button id="copyJsonBtn" type="button">复制</button>
+              <button id="applyJsonBtn" type="button">应用文本</button>
+            </div>
+          </section>
+        </aside>
+      </main>
+
+      <section class="timeline">
+        <div class="timeline-top">
+          <div class="transport">
+            <button id="prevFrameBtn" type="button">◀</button>
+            <button id="playBtn" type="button">播放</button>
+            <button id="nextFrameBtn" type="button">▶</button>
+            <input id="frameInput" class="small-input" type="number" min="0" step="1" />
+          </div>
+          <div class="timeline-meta">
+            <span id="timeStatus" class="status"></span>
+          </div>
+          <div class="timeline-actions">
+            <button id="deleteKeyBtn" class="danger" type="button">删关键帧</button>
+            <button id="snapAllBtn" type="button">全部记录</button>
+          </div>
+        </div>
+        <div class="timeline-body">
+          <div id="trackLabels" class="track-labels"></div>
+          <div id="tracksViewport" class="tracks-viewport">
+            <div id="tracks" class="tracks"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div id="toast" class="toast"></div>
+
+    <script>
+      const frameWidth = 20;
+      const rowHeight = 30;
+      const state = {
+        fps: 24,
+        duration: 96,
+        currentFrame: 0,
+        selectedNodeId: "root",
+        selectedKey: null,
+        editMode: "node",
+        renderMode: "texture",
+        playing: false,
+        nodes: [
+          {
+            id: "root",
+            name: "root",
+            parentId: null,
+            x: 420,
+            y: 330,
+            rotation: -90,
+            length: 90,
+            scaleX: 1,
+            scaleY: 1,
+            color: "#35b6b4",
+          },
+          {
+            id: "torso",
+            name: "torso",
+            parentId: "root",
+            x: 0,
+            y: 0,
+            rotation: 0,
+            length: 110,
+            scaleX: 1,
+            scaleY: 1,
+            color: "#e6a23c",
+          },
+          {
+            id: "arm",
+            name: "arm",
+            parentId: "torso",
+            x: 0,
+            y: 0,
+            rotation: -45,
+            length: 86,
+            scaleX: 1,
+            scaleY: 1,
+            color: "#d96a7b",
+          },
+        ],
+        timelines: {
+          root: [
+            { frame: 0, x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
+            { frame: 48, x: 420, y: 330, rotation: -104, length: 90, scaleX: 1, scaleY: 1 },
+            { frame: 96, x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
+          ],
+          torso: [
+            { frame: 0, x: 0, y: 0, rotation: 0, length: 110, scaleX: 1, scaleY: 1 },
+            { frame: 32, x: 0, y: 0, rotation: -8, length: 110, scaleX: 1, scaleY: 1 },
+            { frame: 64, x: 0, y: 0, rotation: 8, length: 110, scaleX: 1, scaleY: 1 },
+            { frame: 96, x: 0, y: 0, rotation: 0, length: 110, scaleX: 1, scaleY: 1 },
+          ],
+          arm: [
+            { frame: 0, x: 0, y: 0, rotation: -45, length: 86, scaleX: 1, scaleY: 1 },
+            { frame: 24, x: 0, y: 0, rotation: -100, length: 86, scaleX: 1, scaleY: 1 },
+            { frame: 48, x: 0, y: 0, rotation: 20, length: 86, scaleX: 1, scaleY: 1 },
+            { frame: 72, x: 0, y: 0, rotation: -70, length: 86, scaleX: 1, scaleY: 1 },
+            { frame: 96, x: 0, y: 0, rotation: -45, length: 86, scaleX: 1, scaleY: 1 },
+          ],
+        },
+      };
+
+      const el = {
+        stage: document.getElementById("stage"),
+        nodeList: document.getElementById("nodeList"),
+        addNodeBtn: document.getElementById("addNodeBtn"),
+        deleteNodeBtn: document.getElementById("deleteNodeBtn"),
+        keyframeBtn: document.getElementById("keyframeBtn"),
+        deleteKeyBtn: document.getElementById("deleteKeyBtn"),
+        snapAllBtn: document.getElementById("snapAllBtn"),
+        playBtn: document.getElementById("playBtn"),
+        prevFrameBtn: document.getElementById("prevFrameBtn"),
+        nextFrameBtn: document.getElementById("nextFrameBtn"),
+        frameInput: document.getElementById("frameInput"),
+        fpsInput: document.getElementById("fpsInput"),
+        durationInput: document.getElementById("durationInput"),
+        timeStatus: document.getElementById("timeStatus"),
+        tracks: document.getElementById("tracks"),
+        tracksViewport: document.getElementById("tracksViewport"),
+        trackLabels: document.getElementById("trackLabels"),
+        nodeNameInput: document.getElementById("nodeNameInput"),
+        parentSelect: document.getElementById("parentSelect"),
+        xInput: document.getElementById("xInput"),
+        yInput: document.getElementById("yInput"),
+        rotationInput: document.getElementById("rotationInput"),
+        lengthInput: document.getElementById("lengthInput"),
+        scaleXInput: document.getElementById("scaleXInput"),
+        scaleYInput: document.getElementById("scaleYInput"),
+        colorInput: document.getElementById("colorInput"),
+        attachmentImageSelect: document.getElementById("attachmentImageSelect"),
+        attachmentOffsetXInput: document.getElementById("attachmentOffsetXInput"),
+        attachmentOffsetYInput: document.getElementById("attachmentOffsetYInput"),
+        attachmentWidthInput: document.getElementById("attachmentWidthInput"),
+        attachmentLengthScaleInput: document.getElementById("attachmentLengthScaleInput"),
+        attachmentRotationInput: document.getElementById("attachmentRotationInput"),
+        attachmentAlphaInput: document.getElementById("attachmentAlphaInput"),
+        attachmentLayerInput: document.getElementById("attachmentLayerInput"),
+        attachmentAnchorXInput: document.getElementById("attachmentAnchorXInput"),
+        attachmentSegmentsInput: document.getElementById("attachmentSegmentsInput"),
+        attachmentReverseInput: document.getElementById("attachmentReverseInput"),
+        attachmentScarfEnabledInput: document.getElementById("attachmentScarfEnabledInput"),
+        attachmentScarfSplitInput: document.getElementById("attachmentScarfSplitInput"),
+        attachmentScarfRootXInput: document.getElementById("attachmentScarfRootXInput"),
+        attachmentScarfRootYInput: document.getElementById("attachmentScarfRootYInput"),
+        attachmentScarfTipXInput: document.getElementById("attachmentScarfTipXInput"),
+        attachmentScarfTipYInput: document.getElementById("attachmentScarfTipYInput"),
+        attachmentScarfStiffnessInput: document.getElementById("attachmentScarfStiffnessInput"),
+        attachmentScarfDampingInput: document.getElementById("attachmentScarfDampingInput"),
+        attachmentScarfGravityInput: document.getElementById("attachmentScarfGravityInput"),
+        attachmentScarfWaveInput: document.getElementById("attachmentScarfWaveInput"),
+        attachmentHemEnabledInput: document.getElementById("attachmentHemEnabledInput"),
+        attachmentHemXInput: document.getElementById("attachmentHemXInput"),
+        attachmentHemYInput: document.getElementById("attachmentHemYInput"),
+        attachmentHemLengthInput: document.getElementById("attachmentHemLengthInput"),
+        attachmentHemAngleInput: document.getElementById("attachmentHemAngleInput"),
+        jsonPreview: document.getElementById("jsonPreview"),
+        copyJsonBtn: document.getElementById("copyJsonBtn"),
+        applyJsonBtn: document.getElementById("applyJsonBtn"),
+        exportBtn: document.getElementById("exportBtn"),
+        importBtn: document.getElementById("importBtn"),
+        fileInput: document.getElementById("fileInput"),
+        sampleBtn: document.getElementById("sampleBtn"),
+        walkSampleBtn: document.getElementById("walkSampleBtn"),
+        slashSampleBtn: document.getElementById("slashSampleBtn"),
+        threeQuarterSampleBtn: document.getElementById("threeQuarterSampleBtn"),
+        viewToggleBtn: document.getElementById("viewToggleBtn"),
+        newProjectBtn: document.getElementById("newProjectBtn"),
+        nodeModeBtn: document.getElementById("nodeModeBtn"),
+        boneModeBtn: document.getElementById("boneModeBtn"),
+        toast: document.getElementById("toast"),
+      };
+
+      const ctx = el.stage.getContext("2d");
+      let drag = null;
+      let rafId = 0;
+      let lastTime = 0;
+      const poseOverrides = new Map();
+      const dynamicScarves = new Map();
+      const warriorImages = loadWarriorImages();
+
+      function loadWarriorImages() {
+        const sources = {
+          arm: "/ui/spine/warrior/arm_right.png",
+          body: "/ui/spine/warrior/body.png",
+          head: "/ui/spine/warrior/head.png",
+          leg: "/ui/spine/warrior/leg.png",
+        };
+        return Object.fromEntries(
+          Object.entries(sources).map(([id, src]) => {
+            const image = new Image();
+            image.onload = drawStage;
+            image.src = src;
+            return [id, image];
+          }),
+        );
+      }
+
+      function key(nodeId, frame, patch = {}) {
+        const node = state?.nodes?.find((item) => item.id === nodeId);
+        const base = node || {
+          x: 0,
+          y: 0,
+          rotation: 0,
+          length: 80,
+          scaleX: 1,
+          scaleY: 1,
+        };
+        return {
+          frame,
+          x: patch.x ?? base.x,
+          y: patch.y ?? base.y,
+          rotation: patch.rotation ?? base.rotation,
+          length: patch.length ?? base.length,
+          scaleX: patch.scaleX ?? base.scaleX,
+          scaleY: patch.scaleY ?? base.scaleY,
+        };
+      }
+
+      function uid(prefix) {
+        return `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+
+      function selectedNode() {
+        return state.nodes.find((node) => node.id === state.selectedNodeId) || state.nodes[0];
+      }
+
+      function attachmentEditNode(node = selectedNode()) {
+        if (!node) return null;
+        if (node.attachment) return node;
+        return (
+          state.nodes.find(
+            (item) => item.attachment?.segments && item.attachment.chainTo === node.id,
+          ) || node
+        );
+      }
+
+      function attachmentEditContext(node = selectedNode()) {
+        const owner = attachmentEditNode(node);
+        if (!owner?.attachment) return { owner, lower: false };
+        return { owner, lower: owner.id !== node?.id && owner.attachment.chainTo === node?.id };
+      }
+
+      function selectedAttachmentView(node = selectedNode()) {
+        const context = attachmentEditContext(node);
+        if (!context.owner?.attachment) return null;
+        return context.lower
+          ? { ...context.owner.attachment, ...(context.owner.attachment.lower || {}) }
+          : context.owner.attachment;
+      }
+
+      function clampFrame(frame) {
+        return Math.max(0, Math.min(state.duration, Math.round(frame)));
+      }
+
+      function sortedNodes() {
+        const result = [];
+        const walk = (parentId, depth) => {
+          state.nodes
+            .filter((node) => node.parentId === parentId)
+            .forEach((node) => {
+              result.push({ ...node, depth });
+              walk(node.id, depth + 1);
+            });
+        };
+        walk(null, 0);
+        state.nodes
+          .filter((node) => !result.some((item) => item.id === node.id))
+          .forEach((node) => result.push({ ...node, depth: 0 }));
+        return result;
+      }
+
+      function getLocalPose(node, frame = state.currentFrame) {
+        const override = poseOverrides.get(node.id);
+        if (override) return { ...node, ...override };
+        const keys = [...(state.timelines[node.id] || [])].sort((a, b) => a.frame - b.frame);
+        if (keys.length === 0) return { ...node };
+        const before = [...keys].reverse().find((item) => item.frame <= frame) || keys[0];
+        const after = keys.find((item) => item.frame >= frame) || keys[keys.length - 1];
+        if (before.frame === after.frame) return { ...node, ...before };
+        const t = (frame - before.frame) / (after.frame - before.frame);
+        return {
+          ...node,
+          x: lerp(before.x, after.x, t),
+          y: lerp(before.y, after.y, t),
+          rotation: lerpAngle(before.rotation, after.rotation, t),
+          length: lerp(before.length, after.length, t),
+          scaleX: lerp(before.scaleX, after.scaleX, t),
+          scaleY: lerp(before.scaleY, after.scaleY, t),
+        };
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function lerpAngle(a, b, t) {
+        let diff = ((b - a + 180) % 360) - 180;
+        if (diff < -180) diff += 360;
+        return a + diff * t;
+      }
+
+      function worldPose(node, frame = state.currentFrame, seen = new Set()) {
+        if (seen.has(node.id)) return getLocalPose(node, frame);
+        seen.add(node.id);
+        const local = getLocalPose(node, frame);
+        if (!node.parentId) {
+          return {
+            ...local,
+            worldX: local.x,
+            worldY: local.y,
+            worldRotation: local.rotation,
+            worldScaleX: local.scaleX,
+            worldScaleY: local.scaleY,
+          };
+        }
+        const parent = state.nodes.find((item) => item.id === node.parentId);
+        if (!parent) {
+          return {
+            ...local,
+            worldX: local.x,
+            worldY: local.y,
+            worldRotation: local.rotation,
+            worldScaleX: local.scaleX,
+            worldScaleY: local.scaleY,
+          };
+        }
+        const p = worldPose(parent, frame, seen);
+        const anchor = endPoint(p);
+        const rad = (p.worldRotation * Math.PI) / 180;
+        const px = local.x * p.worldScaleX;
+        const py = local.y * p.worldScaleY;
+        const rotatedX = px * Math.cos(rad) - py * Math.sin(rad);
+        const rotatedY = px * Math.sin(rad) + py * Math.cos(rad);
+        return {
+          ...local,
+          worldX: anchor.x + rotatedX,
+          worldY: anchor.y + rotatedY,
+          worldRotation: p.worldRotation + local.rotation,
+          worldScaleX: p.worldScaleX * local.scaleX,
+          worldScaleY: p.worldScaleY * local.scaleY,
+        };
+      }
+
+      function endPoint(pose) {
+        const rad = (pose.worldRotation * Math.PI) / 180;
+        return {
+          x: pose.worldX + Math.cos(rad) * pose.length * pose.worldScaleX,
+          y: pose.worldY + Math.sin(rad) * pose.length * pose.worldScaleY,
+        };
+      }
+
+      function resizeCanvas() {
+        const rect = el.stage.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        el.stage.width = Math.max(1, Math.floor(rect.width * dpr));
+        el.stage.height = Math.max(1, Math.floor(rect.height * dpr));
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawStage();
+      }
+
+      function drawStage() {
+        const rect = el.stage.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        drawAxes(rect);
+        const nodes = sortedNodes();
+        if (state.renderMode === "texture") {
+          drawWarriorTextures();
+          drawTextureHandles(nodes);
+        } else {
+          nodes.forEach((node) => drawParentLink(node));
+          nodes.forEach((node) => drawBone(node, node.id === state.selectedNodeId));
+        }
+      }
+
+      function drawAxes(rect) {
+        ctx.save();
+        ctx.strokeStyle = "#ffffff10";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, rect.height / 2);
+        ctx.lineTo(rect.width, rect.height / 2);
+        ctx.moveTo(rect.width / 2, 0);
+        ctx.lineTo(rect.width / 2, rect.height);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawBone(node, active) {
+        const pose = worldPose(node);
+        const end = endPoint(pose);
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = node.color;
+        ctx.lineWidth = active ? 9 : 6;
+        ctx.globalAlpha = active ? 1 : 0.78;
+        ctx.beginPath();
+        ctx.moveTo(pose.worldX, pose.worldY);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = active ? "#ffffff" : node.color;
+        ctx.strokeStyle = active ? varColor("--accent-2") : "#00000080";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(pose.worldX, pose.worldY, active ? 8 : 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = active ? varColor("--accent-2") : "#ffffff";
+        ctx.beginPath();
+        ctx.arc(end.x, end.y, active ? 6 : 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#eef2f5";
+        ctx.font = "12px sans-serif";
+        ctx.fillText(node.name, pose.worldX + 10, pose.worldY - 8);
+        ctx.restore();
+      }
+
+      function drawWarriorTextures() {
+        const texturedNodes = state.nodes.filter((node) => node.attachment);
+        if (texturedNodes.length === 0) return;
+        texturedNodes
+          .slice()
+          .sort((a, b) => {
+            const layerDiff = (a.attachment.layer || 0) - (b.attachment.layer || 0);
+            if (layerDiff) return layerDiff;
+            return (a.attachment.alpha || 1) - (b.attachment.alpha || 1);
+          })
+          .forEach((node) => drawAttachment(node));
+      }
+
+      function drawAttachment(node) {
+        const attachment = node.attachment;
+        const image = warriorImages[attachment.image];
+        if (!image?.complete) return;
+        const pose = worldPose(node);
+        if (attachment.segments && attachment.chainTo) {
+          drawSegmentedAttachment(node, attachment, image);
+          return;
+        }
+        if (attachment.image === "head") {
+          drawHeadAttachment(node, attachment, image);
+          return;
+        }
+        let start = { x: pose.worldX, y: pose.worldY };
+        let end = endPoint(pose);
+        if (attachment.chainTo) {
+          const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
+          if (!chainNode) return;
+          end = endPoint(worldPose(chainNode));
+        }
+        if (attachment.reverse) {
+          const nextStart = end;
+          end = start;
+          start = nextStart;
+        }
+        const length = Math.max(8, distance(start, end) * attachment.lengthScale);
+        if (attachment.image === "body" && attachment.hemEnabled) {
+          drawBodyWithSpringHem(image, start, end, attachment, length, node.id);
+          return;
+        }
+        drawImageAlong(
+          image,
+          start,
+          end,
+          attachment.width,
+          length,
+          attachment.alpha,
+          attachment.anchorX,
+          attachment.rotationOffset,
+          attachment.offsetX,
+          attachment.offsetY,
+        );
+      }
+
+      function drawBodyWithSpringHem(image, start, end, attachment, length, nodeId) {
+        const cutRatio = attachment.hemY;
+        const sourceCut = Math.round(image.height * cutRatio);
+        const seamOverlap = Math.min(4, Math.max(1, attachment.width * 0.04));
+        const sourceOverlap = Math.min(6, Math.max(1, Math.round(image.height * 0.02)));
+        const topLength = Math.max(1, length * cutRatio + seamOverlap);
+        drawImageSliceAlong(
+          image,
+          start,
+          end,
+          attachment.width,
+          topLength,
+          attachment.alpha,
+          attachment.anchorX,
+          0,
+          Math.min(image.height, sourceCut + sourceOverlap),
+          attachment.rotationOffset,
+          attachment.offsetX,
+          attachment.offsetY,
+        );
+        const hemSourceStart = Math.max(0, sourceCut - sourceOverlap);
+        const hemAnchorY = Math.max(0, cutRatio - seamOverlap / length);
+        drawSpringCloth(nodeId, image, start, end, attachment, {
+            sourceStart: hemSourceStart,
+            sourceSize: Math.max(1, image.height - hemSourceStart),
+            anchorX: attachment.hemX,
+            anchorY: hemAnchorY,
+            length: attachment.hemLength,
+            angle: attachment.hemAngle,
+            width: attachment.width,
+            alpha: attachment.alpha,
+            drawnLength: length,
+          });
+      }
+
+      function drawSegmentedAttachment(node, attachment, image) {
+        const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
+        if (!chainNode) return;
+        const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
+        const upperPose = worldPose(node);
+        const lowerPose = worldPose(chainNode);
+        const shoulder = { x: upperPose.worldX, y: upperPose.worldY };
+        const elbow = { x: lowerPose.worldX, y: lowerPose.worldY };
+        const hand = endPoint(lowerPose);
+        const halfHeight = image.height / 2;
+        drawImageSliceAlong(
+          image,
+          shoulder,
+          elbow,
+          attachment.width,
+          distance(shoulder, elbow),
+          attachment.alpha,
+          attachment.anchorX,
+          0,
+          halfHeight,
+          attachment.rotationOffset,
+          attachment.offsetX,
+          attachment.offsetY,
+        );
+        drawImageSliceAlong(
+          image,
+          elbow,
+          hand,
+          lowerAttachment.width,
+          distance(elbow, hand),
+          lowerAttachment.alpha,
+          lowerAttachment.anchorX,
+          halfHeight,
+          halfHeight,
+          lowerAttachment.rotationOffset,
+          lowerAttachment.offsetX,
+          lowerAttachment.offsetY,
+        );
+      }
+
+      function drawHeadAttachment(node, attachment, image) {
+        const pose = worldPose(node);
+        const center = {
+          x: pose.worldX + attachment.offsetX,
+          y: pose.worldY + attachment.offsetY,
+        };
+        const width = attachment.width;
+        const height = width * 0.96;
+        const baseX = -width * 0.5;
+        const baseY = -width * 0.55;
+        const headAngle = ((pose.worldRotation + 90 + attachment.rotationOffset) * Math.PI) / 180;
+        const scarfSourceEnd = Math.min(image.width, Math.round(image.width * attachment.scarfSplit));
+        const headSourceX = Math.max(0, Math.round(image.width * Math.max(0, attachment.scarfSplit - 0.18)));
+        const headDestX = baseX + (headSourceX / image.width) * width;
+        const headDestWidth = width * ((image.width - headSourceX) / image.width);
+        if (attachment.scarfEnabled) {
+          drawSpringScarf(node, attachment, image, center, headAngle, {
+            baseX,
+            baseY,
+            width,
+            height,
+            imageWidth: image.width,
+            imageHeight: image.height,
+            sourceEnd: scarfSourceEnd,
+            rootX: attachment.scarfRootX,
+            rootY: attachment.scarfRootY,
+            length: attachment.scarfLength,
+            angle: attachment.scarfAngle,
+            stiffness: attachment.scarfStiffness,
+            damping: attachment.scarfDamping,
+            gravity: attachment.scarfGravity,
+            wave: attachment.scarfWave,
+          });
+        }
+        ctx.save();
+        ctx.globalAlpha = attachment.alpha;
+        ctx.translate(center.x, center.y);
+        ctx.rotate(headAngle);
+        if (attachment.scarfEnabled) {
+          ctx.drawImage(
+            image,
+            headSourceX,
+            0,
+            image.width - headSourceX,
+            image.height,
+            headDestX,
+            baseY,
+            headDestWidth,
+            height,
+          );
+        } else {
+          ctx.drawImage(image, baseX, baseY, width, height);
+        }
+        ctx.restore();
+      }
+
+      function drawSpringScarf(node, attachment, image, center, angle, layout) {
+        const mesh = buildScarfMesh(center, angle, layout);
+        const points = solveGravityMesh(`scarf:${node.id}`, mesh.dest, {
+          stiffness: layout.stiffness,
+          damping: layout.damping,
+          gravity: layout.gravity,
+        });
+        drawTexturedMesh(image, mesh.source, points, attachment.alpha);
+      }
+
+      function solveSpringScarf(nodeId, center, angle, layout) {
+        const rest = scarfRestPoints(center, angle, layout);
+        return solveSpringPoints(`scarf:${nodeId}`, rest, layout);
+      }
+
+      function solveSpringPoints(key, rest, layout) {
+        let sim = dynamicScarves.get(key);
+        const now = performance.now();
+        const shouldReset =
+          !state.playing ||
+          !sim ||
+          Math.abs((sim.frame ?? state.currentFrame) - state.currentFrame) > 4 ||
+          now - (sim.time || now) > 250;
+        if (shouldReset) {
+          sim = {
+            points: rest.map((point) => ({ ...point })),
+            previous: rest.map((point) => ({ ...point })),
+            frame: state.currentFrame,
+            time: now,
+          };
+          dynamicScarves.set(key, sim);
+          return sim.points;
+        }
+
+        const dt = Math.min(1 / 24, Math.max(1 / 120, (now - sim.time) / 1000));
+        sim.time = now;
+        sim.frame = state.currentFrame;
+        sim.points[0] = { ...rest[0] };
+        sim.previous[0] = { ...rest[0] };
+        for (let index = 1; index < sim.points.length; index += 1) {
+          const point = sim.points[index];
+          const previous = sim.previous[index];
+          const old = { ...point };
+          point.x +=
+            (point.x - previous.x) * layout.damping +
+            (rest[index].x - point.x) * layout.stiffness;
+          point.y +=
+            (point.y - previous.y) * layout.damping +
+            (rest[index].y - point.y) * layout.stiffness +
+            layout.gravity * dt * dt;
+          sim.previous[index] = old;
+        }
+        const segmentLengths = rest.slice(1).map((point, index) => distance(rest[index], point));
+        for (let pass = 0; pass < 4; pass += 1) {
+          sim.points[0] = { ...rest[0] };
+          for (let index = 1; index < sim.points.length; index += 1) {
+            const prev = sim.points[index - 1];
+            const point = sim.points[index];
+            const dx = point.x - prev.x;
+            const dy = point.y - prev.y;
+            const currentLength = Math.hypot(dx, dy) || 1;
+            const correction = (currentLength - segmentLengths[index - 1]) / currentLength;
+            point.x -= dx * correction;
+            point.y -= dy * correction;
+          }
+        }
+        return sim.points;
+      }
+
+      function scarfRestPoints(center, angle, layout) {
+        const scale = (layout.width / 67) * layout.wave;
+        const rootX = layout.baseX + layout.rootX * layout.width;
+        const rootY = layout.baseY + layout.rootY * layout.height;
+        const clothAngle = (layout.angle * Math.PI) / 180;
+        const clothLength = layout.length * layout.width;
+        const tipX = rootX + Math.cos(clothAngle) * clothLength;
+        const tipY = rootY + Math.sin(clothAngle) * clothLength;
+        const localPoints = [
+          { x: rootX, y: rootY },
+          { x: rootX * 0.65 + tipX * 0.35, y: rootY * 0.65 + tipY * 0.35 + layout.height * 0.04 },
+          { x: rootX * 0.3 + tipX * 0.7, y: rootY * 0.3 + tipY * 0.7 + layout.height * 0.08 },
+          { x: tipX, y: tipY },
+        ];
+        return localPoints.map((point, index) =>
+          rotateLocalPoint(
+            center,
+            angle,
+            point.x,
+            point.y + (index > 0 ? Math.sin((state.currentFrame / state.fps) * Math.PI * 2 + index) * scale : 0),
+          ),
+        );
+      }
+
+      function drawSpringCloth(nodeId, image, start, end, attachment, options) {
+        const drawAngle =
+          Math.atan2(end.y - start.y, end.x - start.x) -
+          Math.PI / 2 +
+          (attachment.rotationOffset * Math.PI) / 180;
+        const drawnLength = Math.max(8, distance(start, end) * attachment.lengthScale);
+        const localToWorld = (point) => {
+          const cos = Math.cos(drawAngle);
+          const sin = Math.sin(drawAngle);
+          const x = -attachment.width * attachment.anchorX + attachment.offsetX + point.x;
+          const y = attachment.offsetY + point.y;
+          return {
+            x: start.x + x * cos - y * sin,
+            y: start.y + x * sin + y * cos,
+          };
+        };
+        const mesh = buildHemMesh(image, attachment, options, drawnLength, localToWorld);
+        const points = solveGravityMesh(`hem:${nodeId}`, mesh.dest, {
+          stiffness: attachment.scarfStiffness,
+          damping: attachment.scarfDamping,
+          gravity: attachment.scarfGravity,
+        });
+        drawTexturedMesh(image, mesh.source, points, options.alpha);
+      }
+
+      function buildHemMesh(image, attachment, options, drawnLength, localToWorld) {
+        const cols = 5;
+        const rows = 7;
+        const source = [];
+        const dest = [];
+        const sourceBottom = options.sourceStart + options.sourceSize;
+        const restHeight =
+          drawnLength * (options.sourceSize / image.height) * Math.max(0.05, options.length);
+        for (let row = 0; row < rows; row += 1) {
+          const v = row / (rows - 1);
+          const sourceRow = [];
+          const destRow = [];
+          for (let col = 0; col < cols; col += 1) {
+            const u = col / (cols - 1);
+            sourceRow.push({
+              x: image.width * u,
+              y: options.sourceStart + (sourceBottom - options.sourceStart) * v,
+            });
+            destRow.push(
+              localToWorld({
+                x: attachment.width * u,
+                y: drawnLength * options.anchorY + restHeight * v,
+              }),
+            );
+          }
+          source.push(sourceRow);
+          dest.push(destRow);
+        }
+        return { source, dest };
+      }
+
+      function buildScarfMesh(center, angle, layout) {
+        const cols = 4;
+        const rows = 7;
+        const source = [];
+        const dest = [];
+        const rootX = layout.baseX + layout.rootX * layout.width;
+        const rootY = layout.baseY + layout.rootY * layout.height;
+        const clothAngle = (layout.angle * Math.PI) / 180;
+        const dir = { x: Math.cos(clothAngle), y: Math.sin(clothAngle) };
+        const normal = { x: -dir.y, y: dir.x };
+        const clothLength = layout.length * layout.width;
+        for (let row = 0; row < rows; row += 1) {
+          const v = row / (rows - 1);
+          const sourceRow = [];
+          const destRow = [];
+          const centerX = rootX + dir.x * clothLength * v;
+          const centerY = rootY + dir.y * clothLength * v;
+          for (let col = 0; col < cols; col += 1) {
+            const u = col / (cols - 1);
+            sourceRow.push({
+              x: layout.sourceEnd * (1 - v),
+              y: layout.imageHeight * u,
+            });
+            destRow.push(
+              rotateLocalPoint(
+                center,
+                angle,
+                centerX + normal.x * (u - 0.5) * layout.height,
+                centerY + normal.y * (u - 0.5) * layout.height,
+              ),
+            );
+          }
+          source.push(sourceRow);
+          dest.push(destRow);
+        }
+        return { source, dest };
+      }
+
+      function solveGravityMesh(key, rest, options) {
+        let sim = dynamicScarves.get(key);
+        const now = performance.now();
+        const rows = rest.length;
+        const cols = rest[0]?.length || 0;
+        const flatRest = rest.flat();
+        const shouldReset =
+          !state.playing ||
+          !sim ||
+          sim.rows !== rows ||
+          sim.cols !== cols ||
+          now - (sim.time || now) > 250;
+        if (shouldReset) {
+          sim = {
+            rows,
+            cols,
+            points: flatRest.map((point) => ({ ...point })),
+            previous: flatRest.map((point) => ({ ...point })),
+            time: now,
+          };
+          dynamicScarves.set(key, sim);
+        }
+
+        const dt = Math.min(1 / 24, Math.max(1 / 120, (now - sim.time) / 1000));
+        sim.time = now;
+        for (let index = 0; index < sim.points.length; index += 1) {
+          const row = Math.floor(index / cols);
+          if (row === 0) {
+            sim.points[index] = { ...flatRest[index] };
+            sim.previous[index] = { ...flatRest[index] };
+            continue;
+          }
+          const point = sim.points[index];
+          const previous = sim.previous[index];
+          const old = { ...point };
+          const rowFactor = row / Math.max(1, rows - 1);
+          point.x +=
+            (point.x - previous.x) * options.damping +
+            (flatRest[index].x - point.x) * options.stiffness * 0.7;
+          point.y +=
+            (point.y - previous.y) * options.damping +
+            (flatRest[index].y - point.y) * options.stiffness * 0.45 +
+            options.gravity * (0.45 + rowFactor * 1.4) * dt * dt;
+          sim.previous[index] = old;
+        }
+
+        const constrainPair = (aIndex, bIndex, axis) => {
+          const a = sim.points[aIndex];
+          const b = sim.points[bIndex];
+          const ar = flatRest[aIndex];
+          const br = flatRest[bIndex];
+          const row = Math.min(Math.floor(aIndex / cols), Math.floor(bIndex / cols));
+          const rowFactor = row / Math.max(1, rows - 1);
+          const target =
+            distance(ar, br) * (axis === "vertical" ? 1 + rowFactor * 0.22 : 1);
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const current = Math.hypot(dx, dy) || 1;
+          const strength = axis === "horizontal" ? 0.92 : 0.32;
+          const correction = ((current - target) / current) * strength;
+          const aPinned = Math.floor(aIndex / cols) === 0;
+          const bPinned = Math.floor(bIndex / cols) === 0;
+          if (!aPinned && !bPinned) {
+            a.x += dx * correction * 0.5;
+            a.y += dy * correction * 0.5;
+            b.x -= dx * correction * 0.5;
+            b.y -= dy * correction * 0.5;
+          } else if (aPinned && !bPinned) {
+            b.x -= dx * correction;
+            b.y -= dy * correction;
+          } else if (!aPinned && bPinned) {
+            a.x += dx * correction;
+            a.y += dy * correction;
+          }
+        };
+
+        for (let pass = 0; pass < 3; pass += 1) {
+          for (let row = 0; row < rows; row += 1) {
+            for (let col = 0; col < cols; col += 1) {
+              const index = row * cols + col;
+              if (row === 0) sim.points[index] = { ...flatRest[index] };
+              if (col < cols - 1) constrainPair(index, index + 1, "horizontal");
+              if (row < rows - 1) constrainPair(index, index + cols, "vertical");
+            }
+          }
+        }
+
+        const points = [];
+        for (let row = 0; row < rows; row += 1) {
+          points.push(sim.points.slice(row * cols, row * cols + cols));
+        }
+        return points;
+      }
+
+      function drawTexturedMesh(image, source, dest, alpha) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        for (let row = 0; row < source.length - 1; row += 1) {
+          for (let col = 0; col < source[row].length - 1; col += 1) {
+            drawImageTriangle(image, source[row][col], source[row + 1][col], source[row][col + 1], dest[row][col], dest[row + 1][col], dest[row][col + 1]);
+            drawImageTriangle(image, source[row + 1][col], source[row + 1][col + 1], source[row][col + 1], dest[row + 1][col], dest[row + 1][col + 1], dest[row][col + 1]);
+          }
+        }
+        ctx.restore();
+      }
+
+      function drawImageTriangle(image, s0, s1, s2, d0, d1, d2) {
+        const denominator =
+          s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
+        if (Math.abs(denominator) < 0.001) return;
+        const a =
+          (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) /
+          denominator;
+        const b =
+          (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) /
+          denominator;
+        const c =
+          (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) /
+          denominator;
+        const d =
+          (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.y * (s1.x - s0.x)) /
+          denominator;
+        const e =
+          (d0.x * (s1.x * s2.y - s2.x * s1.y) +
+            d1.x * (s2.x * s0.y - s0.x * s2.y) +
+            d2.x * (s0.x * s1.y - s1.x * s0.y)) /
+          denominator;
+        const f =
+          (d0.y * (s1.x * s2.y - s2.x * s1.y) +
+            d1.y * (s2.x * s0.y - s0.x * s2.y) +
+            d2.y * (s0.x * s1.y - s1.x * s0.y)) /
+          denominator;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(d0.x, d0.y);
+        ctx.lineTo(d1.x, d1.y);
+        ctx.lineTo(d2.x, d2.y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.transform(a, b, c, d, e, f);
+        ctx.drawImage(image, 0, 0);
+        ctx.restore();
+      }
+
+      function rotateLocalPoint(center, angle, x, y) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+          x: center.x + x * cos - y * sin,
+          y: center.y + x * sin + y * cos,
+        };
+      }
+
+      function drawImageHorizontalSliceAlong(image, start, end, width, sourceX, sourceWidth, alpha) {
+        const length = distance(start, end);
+        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(start.x, start.y);
+        ctx.rotate(angle);
+        ctx.drawImage(image, sourceX, 0, sourceWidth, image.height, 0, -width * 0.5, length, width);
+        ctx.restore();
+      }
+
+      function drawImageAlong(
+        image,
+        start,
+        end,
+        width,
+        length,
+        alpha,
+        anchorX,
+        rotationOffset = 0,
+        offsetX = 0,
+        offsetY = 0,
+      ) {
+        drawImageSliceAlong(
+          image,
+          start,
+          end,
+          width,
+          length,
+          alpha,
+          anchorX,
+          0,
+          image.height,
+          rotationOffset,
+          offsetX,
+          offsetY,
+        );
+      }
+
+      function drawImageSliceAlong(
+        image,
+        start,
+        end,
+        width,
+        length,
+        alpha,
+        anchorX,
+        sourceY,
+        sourceHeight,
+        rotationOffset = 0,
+        offsetX = 0,
+        offsetY = 0,
+      ) {
+        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+        const drawAngle = angle - Math.PI / 2 + (rotationOffset * Math.PI) / 180;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(start.x, start.y);
+        ctx.rotate(drawAngle);
+        ctx.drawImage(
+          image,
+          0,
+          sourceY,
+          image.width,
+          sourceHeight,
+          -width * anchorX + offsetX,
+          offsetY,
+          width,
+          length,
+        );
+        ctx.restore();
+      }
+
+      function drawTextureHandles(nodes) {
+        const selected = state.nodes.find((node) => node.id === state.selectedNodeId);
+        if (!selected) return;
+        const pose = worldPose(selected);
+        const end = endPoint(pose);
+        ctx.save();
+        ctx.fillStyle = varColor("--accent-2");
+        ctx.strokeStyle = "#000000cc";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(pose.worldX, pose.worldY, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(end.x, end.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawParentLink(node) {
+        if (!node.parentId) return;
+        const parent = state.nodes.find((item) => item.id === node.parentId);
+        if (!parent) return;
+        const parentEnd = endPoint(worldPose(parent));
+        const pose = worldPose(node);
+        const gap = Math.hypot(parentEnd.x - pose.worldX, parentEnd.y - pose.worldY);
+        if (gap < 0.5) return;
+        ctx.save();
+        ctx.strokeStyle = "#ffffff55";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(parentEnd.x, parentEnd.y);
+        ctx.lineTo(pose.worldX, pose.worldY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function varColor(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      }
+
+      function renderAll() {
+        renderNodeList();
+        renderProperties();
+        renderTimeline();
+        renderStatus();
+        renderJsonPreview();
+        drawStage();
+      }
+
+      function renderNodeList() {
+        el.nodeList.innerHTML = "";
+        sortedNodes().forEach((node) => {
+          const button = document.createElement("button");
+          button.className = `node-item${node.id === state.selectedNodeId ? " active" : ""}`;
+          button.type = "button";
+          button.dataset.id = node.id;
+          button.innerHTML = `
+            <span class="node-depth">${"·".repeat(node.depth)}</span>
+            <span class="node-name">${escapeHtml(node.name)}</span>
+            <span class="node-color" style="background:${node.color}"></span>
+          `;
+          button.addEventListener("click", () => {
+            state.selectedNodeId = node.id;
+            state.selectedKey = null;
+            renderAll();
+          });
+          el.nodeList.appendChild(button);
+        });
+      }
+
+      function renderProperties() {
+        const node = selectedNode();
+        const disabled = !node;
+        [
+          el.nodeNameInput,
+          el.parentSelect,
+          el.xInput,
+          el.yInput,
+          el.rotationInput,
+          el.lengthInput,
+          el.scaleXInput,
+          el.scaleYInput,
+          el.colorInput,
+          el.attachmentImageSelect,
+          el.keyframeBtn,
+          el.deleteNodeBtn,
+        ].forEach((input) => {
+          input.disabled = disabled;
+        });
+        if (!node) return;
+        el.nodeNameInput.value = node.name;
+        el.xInput.value = round(node.x);
+        el.yInput.value = round(node.y);
+        el.rotationInput.value = round(node.rotation);
+        el.lengthInput.value = round(node.length);
+        el.scaleXInput.value = round(node.scaleX, 2);
+        el.scaleYInput.value = round(node.scaleY, 2);
+        el.colorInput.value = node.color;
+        renderAttachmentProperties(node);
+
+        el.parentSelect.innerHTML = '<option value="">无</option>';
+        sortedNodes()
+          .filter((item) => item.id !== node.id && !isDescendant(item.id, node.id))
+          .forEach((item) => {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.textContent = `${"  ".repeat(item.depth)}${item.name}`;
+            option.selected = item.id === node.parentId;
+            el.parentSelect.appendChild(option);
+          });
+      }
+
+      function renderAttachmentProperties(node) {
+        const context = attachmentEditContext(node);
+        const attachment = selectedAttachmentView(node);
+        const scarfInputs = [
+          el.attachmentScarfEnabledInput,
+          el.attachmentScarfSplitInput,
+          el.attachmentScarfRootXInput,
+          el.attachmentScarfRootYInput,
+          el.attachmentScarfTipXInput,
+          el.attachmentScarfTipYInput,
+        ];
+        const springInputs = [
+          el.attachmentScarfStiffnessInput,
+          el.attachmentScarfDampingInput,
+          el.attachmentScarfGravityInput,
+          el.attachmentScarfWaveInput,
+        ];
+        const hemInputs = [
+          el.attachmentHemEnabledInput,
+          el.attachmentHemXInput,
+          el.attachmentHemYInput,
+          el.attachmentHemLengthInput,
+          el.attachmentHemAngleInput,
+        ];
+        const attachmentInputs = [
+          el.attachmentOffsetXInput,
+          el.attachmentOffsetYInput,
+          el.attachmentWidthInput,
+          el.attachmentLengthScaleInput,
+          el.attachmentRotationInput,
+          el.attachmentAlphaInput,
+          el.attachmentLayerInput,
+          el.attachmentAnchorXInput,
+          el.attachmentSegmentsInput,
+          el.attachmentReverseInput,
+          ...scarfInputs,
+          ...springInputs,
+          ...hemInputs,
+        ];
+        el.attachmentImageSelect.value = attachment?.image || "";
+        attachmentInputs.forEach((input) => {
+          input.disabled = !attachment;
+        });
+        scarfInputs.forEach((input) => {
+          input.disabled = !attachment || attachment.image !== "head";
+        });
+        springInputs.forEach((input) => {
+          input.disabled = !attachment || !["head", "body"].includes(attachment.image);
+        });
+        hemInputs.forEach((input) => {
+          input.disabled = !attachment || attachment.image !== "body";
+        });
+        el.attachmentOffsetXInput.value = round(attachment?.offsetX || 0);
+        el.attachmentOffsetYInput.value = round(attachment?.offsetY || 0);
+        el.attachmentWidthInput.value = round(attachment?.width || 48);
+        el.attachmentLengthScaleInput.value = round(attachment?.lengthScale || 1, 2);
+        el.attachmentRotationInput.value = round(attachment?.rotationOffset || 0);
+        el.attachmentAlphaInput.value = round(attachment?.alpha ?? 1, 2);
+        el.attachmentLayerInput.value = round(attachment?.layer || 0);
+        el.attachmentAnchorXInput.value = round(attachment?.anchorX ?? 0.5, 2);
+        el.attachmentSegmentsInput.checked = Boolean(attachment?.segments);
+        el.attachmentReverseInput.checked = Boolean(attachment?.reverse);
+        el.attachmentScarfEnabledInput.checked = Boolean(attachment?.scarfEnabled);
+        el.attachmentScarfSplitInput.value = round(attachment?.scarfSplit ?? 0.52, 2);
+        el.attachmentScarfRootXInput.value = round(attachment?.scarfRootX ?? 0.52, 2);
+        el.attachmentScarfRootYInput.value = round(attachment?.scarfRootY ?? 0.6, 2);
+        el.attachmentScarfTipXInput.value = round(attachment?.scarfLength ?? 0.55, 2);
+        el.attachmentScarfTipYInput.value = round(attachment?.scarfAngle ?? 154);
+        el.attachmentScarfStiffnessInput.value = round(attachment?.scarfStiffness ?? 0.06, 2);
+        el.attachmentScarfDampingInput.value = round(attachment?.scarfDamping ?? 0.84, 2);
+        el.attachmentScarfGravityInput.value = round(attachment?.scarfGravity ?? 420);
+        el.attachmentScarfWaveInput.value = round(attachment?.scarfWave ?? 1, 2);
+        el.attachmentHemEnabledInput.checked = Boolean(attachment?.hemEnabled);
+        el.attachmentHemXInput.value = round(attachment?.hemX ?? 0.5, 2);
+        el.attachmentHemYInput.value = round(attachment?.hemY ?? 0.68, 2);
+        el.attachmentHemLengthInput.value = round(attachment?.hemLength ?? 0.75, 2);
+        el.attachmentHemAngleInput.value = round(attachment?.hemAngle ?? 90);
+      }
+
+      function renderTimeline() {
+        const rows = sortedNodes();
+        const width = (state.duration + 1) * frameWidth;
+        el.tracks.style.width = `${width}px`;
+        el.tracks.style.height = `${(rows.length + 1) * rowHeight}px`;
+        el.trackLabels.innerHTML = '<div class="track-label">帧 / 节点</div>';
+        rows.forEach((node) => {
+          const label = document.createElement("div");
+          label.className = "track-label";
+          label.textContent = `${"  ".repeat(node.depth)}${node.name}`;
+          el.trackLabels.appendChild(label);
+        });
+
+        el.tracks.innerHTML = "";
+        const ruler = document.createElement("div");
+        ruler.className = "frame-ruler";
+        ruler.style.width = `${width}px`;
+        el.tracks.appendChild(ruler);
+
+        for (let frame = 0; frame <= state.duration; frame += 4) {
+          const line = document.createElement("div");
+          line.className = "frame-line";
+          line.style.left = `${frame * frameWidth}px`;
+          line.style.opacity = frame % 24 === 0 ? "1" : "0.45";
+          ruler.appendChild(line);
+          if (frame % 12 === 0) {
+            const label = document.createElement("div");
+            label.className = "frame-label";
+            label.style.left = `${frame * frameWidth}px`;
+            label.textContent = frame;
+            ruler.appendChild(label);
+          }
+        }
+
+        rows.forEach((node, index) => {
+          const row = document.createElement("div");
+          row.className = "track-row";
+          row.style.width = `${width}px`;
+          row.dataset.nodeId = node.id;
+          row.style.height = `${rowHeight}px`;
+          row.addEventListener("pointerdown", (event) => {
+            if (event.target !== row) return;
+            const frame = frameFromPointer(event, el.tracksViewport);
+            state.currentFrame = clampFrame(frame);
+            state.selectedNodeId = node.id;
+            state.selectedKey = null;
+            renderAll();
+          });
+
+          (state.timelines[node.id] || []).forEach((keyframe) => {
+            const marker = document.createElement("div");
+            marker.className =
+              "key" +
+              (state.selectedKey &&
+              state.selectedKey.nodeId === node.id &&
+              state.selectedKey.frame === keyframe.frame
+                ? " active"
+                : "");
+            marker.style.left = `${keyframe.frame * frameWidth}px`;
+            marker.title = `${node.name} @ ${keyframe.frame}`;
+            marker.addEventListener("pointerdown", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              state.selectedNodeId = node.id;
+              state.selectedKey = { nodeId: node.id, frame: keyframe.frame };
+              drag = {
+                type: "key",
+                nodeId: node.id,
+                startX: event.clientX,
+                sourceFrame: keyframe.frame,
+              };
+              marker.setPointerCapture(event.pointerId);
+              renderAll();
+            });
+            row.appendChild(marker);
+          });
+
+          row.style.position = "absolute";
+          row.style.top = `${(index + 1) * rowHeight}px`;
+          el.tracks.appendChild(row);
+        });
+
+        const playhead = document.createElement("div");
+        playhead.className = "playhead";
+        playhead.style.left = `${state.currentFrame * frameWidth}px`;
+        el.tracks.appendChild(playhead);
+      }
+
+      function renderStatus() {
+        el.frameInput.max = state.duration;
+        el.frameInput.value = state.currentFrame;
+        el.fpsInput.value = state.fps;
+        el.durationInput.value = state.duration;
+        el.timeStatus.textContent = `第 ${state.currentFrame} 帧 / ${state.duration}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
+        el.playBtn.textContent = state.playing ? "暂停" : "播放";
+        el.viewToggleBtn.textContent = state.renderMode === "texture" ? "骨骼视图" : "贴图视图";
+        el.nodeModeBtn.classList.toggle("active", state.editMode === "node");
+        el.boneModeBtn.classList.toggle("active", state.editMode === "bone");
+      }
+
+      function renderJsonPreview() {
+        el.jsonPreview.value = JSON.stringify(projectData(), null, 2);
+      }
+
+      function projectData() {
+        return {
+          format: "spine-node-timeline-editor",
+          version: 1,
+          fps: state.fps,
+          duration: state.duration,
+          nodes: state.nodes,
+          timelines: state.timelines,
+        };
+      }
+
+      function applyProjectData(data) {
+        if (!data || !Array.isArray(data.nodes) || typeof data.timelines !== "object") {
+          throw new Error("JSON 缺少 nodes 或 timelines");
+        }
+        state.fps = Math.max(1, Number(data.fps) || 24);
+        state.duration = Math.max(1, Number(data.duration) || 96);
+        state.currentFrame = 0;
+        state.selectedNodeId = data.nodes[0]?.id || null;
+        state.selectedKey = null;
+        state.playing = false;
+        dynamicScarves.clear();
+        state.nodes = data.nodes.map((node) => ({
+          id: String(node.id || uid("node")),
+          name: String(node.name || "node"),
+          parentId: node.parentId || null,
+          x: Number(node.x) || 0,
+          y: Number(node.y) || 0,
+          rotation: Number(node.rotation) || 0,
+          length: Math.max(4, Number(node.length) || 80),
+          scaleX: Math.max(0.05, Number(node.scaleX) || 1),
+          scaleY: Math.max(0.05, Number(node.scaleY) || 1),
+          color: /^#[0-9a-f]{6}$/i.test(node.color) ? node.color : "#35b6b4",
+          attachment: normalizeAttachment(node.attachment),
+        }));
+        state.timelines = {};
+        Object.entries(data.timelines).forEach(([nodeId, keys]) => {
+          if (!Array.isArray(keys)) return;
+          state.timelines[nodeId] = keys
+            .map((item) => ({
+              frame: clampFrame(item.frame),
+              x: Number(item.x) || 0,
+              y: Number(item.y) || 0,
+              rotation: Number(item.rotation) || 0,
+              length: Math.max(4, Number(item.length) || 80),
+              scaleX: Math.max(0.05, Number(item.scaleX) || 1),
+              scaleY: Math.max(0.05, Number(item.scaleY) || 1),
+            }))
+            .sort((a, b) => a.frame - b.frame);
+        });
+      }
+
+      function normalizeAttachment(attachment) {
+        if (!attachment || typeof attachment !== "object") return null;
+        return {
+          image: String(attachment.image || ""),
+          chainTo: attachment.chainTo ? String(attachment.chainTo) : null,
+          width: Math.max(1, Number(attachment.width) || 48),
+          alpha: Number.isFinite(Number(attachment.alpha))
+            ? Math.max(0, Math.min(1, Number(attachment.alpha)))
+            : 1,
+          layer: Number(attachment.layer) || 0,
+          anchorX: Number.isFinite(Number(attachment.anchorX)) ? Number(attachment.anchorX) : 0.5,
+          lengthScale: Math.max(0.1, Number(attachment.lengthScale) || 1),
+          reverse: Boolean(attachment.reverse),
+          segments: Boolean(attachment.segments),
+          rotationOffset: Number(attachment.rotationOffset) || 0,
+          offsetX: Number(attachment.offsetX) || 0,
+          offsetY: Number(attachment.offsetY) || 0,
+          lower: normalizeSegmentAttachment(attachment.lower),
+          scarfEnabled:
+            attachment.scarfEnabled === undefined
+              ? String(attachment.image || "") === "head"
+              : Boolean(attachment.scarfEnabled),
+          scarfSplit: clampNumber(attachment.scarfSplit, 0.05, 0.95, 0.52),
+          scarfRootX: clampNumber(attachment.scarfRootX, 0, 1, 0.52),
+          scarfRootY: clampNumber(attachment.scarfRootY, 0, 1, 0.6),
+          scarfLength: normalizeSpringLength(attachment),
+          scarfAngle: normalizeSpringAngle(attachment),
+          scarfStiffness: clampNumber(attachment.scarfStiffness, 0, 1, 0.06),
+          scarfDamping: clampNumber(attachment.scarfDamping, 0, 0.99, 0.84),
+          scarfGravity: Number.isFinite(Number(attachment.scarfGravity))
+            ? Number(attachment.scarfGravity)
+            : 420,
+          scarfWave: Number.isFinite(Number(attachment.scarfWave))
+            ? Math.max(0, Number(attachment.scarfWave))
+            : 1,
+          hemEnabled: Boolean(attachment.hemEnabled),
+          hemX: clampNumber(attachment.hemX, 0, 1, 0.5),
+          hemY: clampNumber(attachment.hemY, 0, 1, 0.68),
+          hemLength: clampNumber(attachment.hemLength, 0.05, 2, 0.75),
+          hemAngle: Number.isFinite(Number(attachment.hemAngle)) ? Number(attachment.hemAngle) : 90,
+        };
+      }
+
+      function normalizeSpringLength(attachment) {
+        if (Number.isFinite(Number(attachment.scarfLength))) {
+          return clampNumber(attachment.scarfLength, 0.05, 2, 0.55);
+        }
+        if (
+          Number.isFinite(Number(attachment.scarfRootX)) &&
+          Number.isFinite(Number(attachment.scarfRootY)) &&
+          Number.isFinite(Number(attachment.scarfTipX)) &&
+          Number.isFinite(Number(attachment.scarfTipY))
+        ) {
+          const dx = Number(attachment.scarfTipX) - Number(attachment.scarfRootX);
+          const dy = Number(attachment.scarfTipY) - Number(attachment.scarfRootY);
+          return clampNumber(Math.hypot(dx, dy), 0.05, 2, 0.55);
+        }
+        return 0.55;
+      }
+
+      function normalizeSpringAngle(attachment) {
+        if (Number.isFinite(Number(attachment.scarfAngle))) return Number(attachment.scarfAngle);
+        if (
+          Number.isFinite(Number(attachment.scarfRootX)) &&
+          Number.isFinite(Number(attachment.scarfRootY)) &&
+          Number.isFinite(Number(attachment.scarfTipX)) &&
+          Number.isFinite(Number(attachment.scarfTipY))
+        ) {
+          const dx = Number(attachment.scarfTipX) - Number(attachment.scarfRootX);
+          const dy = Number(attachment.scarfTipY) - Number(attachment.scarfRootY);
+          return (Math.atan2(dy, dx) * 180) / Math.PI;
+        }
+        return 154;
+      }
+
+      function normalizeSegmentAttachment(attachment) {
+        if (!attachment || typeof attachment !== "object") return null;
+        return {
+          width: Math.max(1, Number(attachment.width) || 48),
+          alpha: Number.isFinite(Number(attachment.alpha))
+            ? Math.max(0, Math.min(1, Number(attachment.alpha)))
+            : 1,
+          anchorX: Number.isFinite(Number(attachment.anchorX)) ? Number(attachment.anchorX) : 0.5,
+          rotationOffset: Number(attachment.rotationOffset) || 0,
+          offsetX: Number(attachment.offsetX) || 0,
+          offsetY: Number(attachment.offsetY) || 0,
+        };
+      }
+
+      function clampNumber(value, min, max, fallback) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return fallback;
+        return Math.max(min, Math.min(max, number));
+      }
+
+      function round(value, places = 1) {
+        const scale = 10 ** places;
+        return Math.round(value * scale) / scale;
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          })[char],
+        );
+      }
+
+      function isDescendant(candidateId, ancestorId) {
+        let current = state.nodes.find((node) => node.id === candidateId);
+        while (current?.parentId) {
+          if (current.parentId === ancestorId) return true;
+          current = state.nodes.find((node) => node.id === current.parentId);
+        }
+        return false;
+      }
+
+      function setNodePatch(patch, shouldRender = true) {
+        const node = selectedNode();
+        if (!node) return;
+        Object.assign(node, patch);
+        syncKeyAtCurrentFrame(node);
+        if (shouldRender) renderAll();
+      }
+
+      function setAttachmentPatch(patch) {
+        const { owner: node, lower } = attachmentEditContext();
+        if (!node) return;
+        if (patch === null) {
+          if (lower && node.attachment) node.attachment.lower = null;
+          else node.attachment = null;
+        } else {
+          if (lower) {
+            const sharedPatch = {};
+            const lowerPatch = {};
+            Object.entries(patch).forEach(([key, value]) => {
+              if (["image", "chainTo", "segments", "layer"].includes(key)) sharedPatch[key] = value;
+              else if (
+                ["width", "alpha", "anchorX", "rotationOffset", "offsetX", "offsetY"].includes(key)
+              ) {
+                lowerPatch[key] = value;
+              }
+            });
+            node.attachment = normalizeAttachment({
+              ...(node.attachment || createDefaultAttachment()),
+              ...sharedPatch,
+              lower: normalizeSegmentAttachment({
+                ...(node.attachment?.lower || {
+                  width: node.attachment?.width,
+                  alpha: node.attachment?.alpha,
+                  anchorX: node.attachment?.anchorX,
+                  rotationOffset: node.attachment?.rotationOffset,
+                  offsetX: node.attachment?.offsetX,
+                  offsetY: node.attachment?.offsetY,
+                }),
+                ...lowerPatch,
+              }),
+            });
+          } else {
+            node.attachment = normalizeAttachment({
+              ...(node.attachment || createDefaultAttachment()),
+              ...patch,
+            });
+          }
+        }
+        dynamicScarves.clear();
+        renderAll();
+      }
+
+      function createDefaultAttachment(image = "body") {
+        return {
+          image,
+          chainTo: null,
+          width: image === "head" ? 56 : 48,
+          alpha: 1,
+          layer: 0,
+          anchorX: 0.5,
+          lengthScale: 1,
+          reverse: false,
+          segments: false,
+          rotationOffset: 0,
+          offsetX: 0,
+          offsetY: 0,
+          scarfEnabled: image === "head",
+          scarfSplit: 0.52,
+          scarfRootX: 0.52,
+          scarfRootY: 0.6,
+          scarfLength: 0.55,
+          scarfAngle: 154,
+          scarfStiffness: 0.06,
+          scarfDamping: 0.84,
+          scarfGravity: 420,
+          scarfWave: 1,
+          hemEnabled: false,
+          hemX: 0.5,
+          hemY: 0.68,
+          hemLength: 0.75,
+          hemAngle: 90,
+        };
+      }
+
+      function syncKeyAtCurrentFrame(node) {
+        const keys = state.timelines[node.id] || [];
+        const existing = keys.find((item) => item.frame === state.currentFrame);
+        if (existing) Object.assign(existing, snapshotNode(node));
+      }
+
+      function snapshotNode(node) {
+        const override = poseOverrides.get(node.id);
+        const source = override ? { ...node, ...override } : node;
+        return {
+          frame: state.currentFrame,
+          x: source.x,
+          y: source.y,
+          rotation: source.rotation,
+          length: source.length,
+          scaleX: source.scaleX,
+          scaleY: source.scaleY,
+        };
+      }
+
+      function addKeyframe(node = selectedNode()) {
+        if (!node) return;
+        upsertKeyframe(node);
+        state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
+        toast(`已记录 ${node.name} 第 ${state.currentFrame} 帧`);
+        renderAll();
+      }
+
+      function upsertKeyframe(node) {
+        const keys = state.timelines[node.id] || [];
+        const snap = snapshotNode(node);
+        const existing = keys.find((item) => item.frame === state.currentFrame);
+        if (existing) Object.assign(existing, snap);
+        else keys.push(snap);
+        keys.sort((a, b) => a.frame - b.frame);
+        state.timelines[node.id] = keys;
+      }
+
+      function deleteSelectedKey() {
+        if (!state.selectedKey) {
+          const node = selectedNode();
+          state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
+        }
+        const keys = state.timelines[state.selectedKey.nodeId] || [];
+        const next = keys.filter((item) => item.frame !== state.selectedKey.frame);
+        state.timelines[state.selectedKey.nodeId] = next;
+        state.selectedKey = null;
+        renderAll();
+      }
+
+      function frameFromPointer(event, container) {
+        const rect = container.getBoundingClientRect();
+        const x = event.clientX - rect.left + container.scrollLeft;
+        return Math.round(x / frameWidth);
+      }
+
+      function canvasPoint(event) {
+        const rect = el.stage.getBoundingClientRect();
+        return {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        };
+      }
+
+      function hitTest(point) {
+        const nodes = sortedNodes().reverse();
+        for (const node of nodes) {
+          const pose = worldPose(node);
+          const end = endPoint(pose);
+          if (distance(point, end) <= 12) {
+            const childAtJoint = firstChildOf(node.id);
+            if (childAtJoint) {
+              return { type: "origin", node: childAtJoint, jointId: endJointId(node) };
+            }
+            return { type: "end", node, jointId: endJointId(node) };
+          }
+          if (distance(point, { x: pose.worldX, y: pose.worldY }) <= 12) {
+            return { type: "origin", node, jointId: startJointId(node) };
+          }
+          if (pointSegmentDistance(point, { x: pose.worldX, y: pose.worldY }, end) <= 8) {
+            return { type: "bone", node };
+          }
+        }
+        return null;
+      }
+
+      function firstChildOf(parentId) {
+        return sortedNodes().find((node) => node.parentId === parentId) || null;
+      }
+
+      function startJointId(node) {
+        return node.parentId ? endJointId({ id: node.parentId }) : `base:${node.id}`;
+      }
+
+      function endJointId(node) {
+        return `end:${node.id}`;
+      }
+
+      function distance(a, b) {
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+
+      function pointSegmentDistance(point, a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const lengthSquared = dx * dx + dy * dy;
+        if (lengthSquared === 0) return distance(point, a);
+        const t = Math.max(
+          0,
+          Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared),
+        );
+        return distance(point, { x: a.x + dx * t, y: a.y + dy * t });
+      }
+
+      function localFromWorld(node, world) {
+        if (!node.parentId) return world;
+        const parent = state.nodes.find((item) => item.id === node.parentId);
+        if (!parent) return world;
+        const p = worldPose(parent);
+        const anchor = endPoint(p);
+        const dx = world.x - anchor.x;
+        const dy = world.y - anchor.y;
+        const rad = (-p.worldRotation * Math.PI) / 180;
+        return {
+          x: (dx * Math.cos(rad) - dy * Math.sin(rad)) / p.worldScaleX,
+          y: (dx * Math.sin(rad) + dy * Math.cos(rad)) / p.worldScaleY,
+        };
+      }
+
+      function captureWorldPoses() {
+        return Object.fromEntries(
+          state.nodes.map((node) => {
+            const pose = worldPose(node);
+            const end = endPoint(pose);
+            return [
+              node.id,
+              {
+                origin: { x: pose.worldX, y: pose.worldY },
+                end: { x: end.x, y: end.y },
+              },
+            ];
+          }),
+        );
+      }
+
+      function solveGenericJointDrag(jointId, targetWorld) {
+        const positions = captureJointPositions();
+        positions[jointId] = { x: targetWorld.x, y: targetWorld.y };
+        const edges = state.nodes.map((node) => ({
+          node,
+          startId: startJointId(node),
+          endId: endJointId(node),
+          length: node.length,
+        }));
+
+        for (let pass = 0; pass < 18; pass += 1) {
+          edges.forEach((edge) => {
+            const start = positions[edge.startId];
+            const end = positions[edge.endId];
+            if (!start || !end) return;
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const currentLength = Math.hypot(dx, dy);
+            if (currentLength <= 0.001) return;
+            const diff = (currentLength - edge.length) / currentLength;
+            const offset = { x: dx * diff, y: dy * diff };
+            const startPinned = edge.startId === jointId;
+            const endPinned = edge.endId === jointId;
+            if (startPinned && !endPinned) {
+              end.x -= offset.x;
+              end.y -= offset.y;
+            } else if (!startPinned && endPinned) {
+              start.x += offset.x;
+              start.y += offset.y;
+            } else if (!startPinned && !endPinned) {
+              start.x += offset.x * 0.5;
+              start.y += offset.y * 0.5;
+              end.x -= offset.x * 0.5;
+              end.y -= offset.y * 0.5;
+            }
+          });
+          positions[jointId] = { x: targetWorld.x, y: targetWorld.y };
+        }
+
+        applySolvedJointPositions(positions);
+      }
+
+      function captureJointPositions() {
+        const positions = {};
+        sortedNodes().forEach((node) => {
+          const pose = worldPose(node);
+          positions[startJointId(node)] = { x: pose.worldX, y: pose.worldY };
+          positions[endJointId(node)] = endPoint(pose);
+        });
+        return positions;
+      }
+
+      function applySolvedJointPositions(positions) {
+        sortedNodes().forEach((node) => {
+          const start = positions[startJointId(node)];
+          const end = positions[endJointId(node)];
+          if (!start || !end) return;
+          if (!node.parentId) {
+            node.x = start.x;
+            node.y = start.y;
+          } else {
+            node.x = 0;
+            node.y = 0;
+          }
+          const parentRotation = node.parentId
+            ? worldPose(state.nodes.find((item) => item.id === node.parentId)).worldRotation
+            : 0;
+          node.rotation = (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI - parentRotation;
+          poseOverrides.set(node.id, {
+            x: node.x,
+            y: node.y,
+            rotation: node.rotation,
+            length: node.length,
+            scaleX: node.scaleX,
+            scaleY: node.scaleY,
+          });
+          syncKeyAtCurrentFrame(node);
+          drag?.touched?.add(node.id);
+        });
+      }
+
+      function moveBoneRigid(node, deltaWorld, startWorldOrigin) {
+        const targetOrigin = {
+          x: startWorldOrigin.x + deltaWorld.x,
+          y: startWorldOrigin.y + deltaWorld.y,
+        };
+        const local = localFromWorld(node, targetOrigin);
+        node.x = local.x;
+        node.y = local.y;
+        poseOverrides.set(node.id, {
+          x: node.x,
+          y: node.y,
+          rotation: node.rotation,
+          length: node.length,
+          scaleX: node.scaleX,
+          scaleY: node.scaleY,
+        });
+        syncKeyAtCurrentFrame(node);
+        drag?.touched?.add(node.id);
+      }
+
+      function toast(message) {
+        el.toast.textContent = message;
+        el.toast.classList.add("show");
+        window.clearTimeout(toast.timer);
+        toast.timer = window.setTimeout(() => el.toast.classList.remove("show"), 1700);
+      }
+
+      function downloadJson() {
+        const blob = new Blob([JSON.stringify(projectData(), null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "spine-node-animation.json";
+        anchor.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function resetProject() {
+        state.fps = 24;
+        state.duration = 96;
+        state.currentFrame = 0;
+        state.selectedNodeId = "root";
+        state.selectedKey = null;
+        state.playing = false;
+        state.nodes = [
+          {
+            id: "root",
+            name: "root",
+            parentId: null,
+            x: 420,
+            y: 330,
+            rotation: -90,
+            length: 90,
+            scaleX: 1,
+            scaleY: 1,
+            color: "#35b6b4",
+          },
+        ];
+        state.timelines = { root: [key("root", 0)] };
+        renderAll();
+      }
+
+      function loadSample() {
+        applyProjectData({
+          fps: 24,
+          duration: 96,
+          nodes: [
+            {
+              id: "root",
+              name: "root",
+              parentId: null,
+              x: 420,
+              y: 330,
+              rotation: -90,
+              length: 90,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#35b6b4",
+            },
+            {
+              id: "torso",
+              name: "torso",
+              parentId: "root",
+              x: 0,
+              y: 0,
+              rotation: 0,
+              length: 110,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#e6a23c",
+              attachment: {
+                image: "body",
+                width: 61,
+                alpha: 1,
+                anchorX: 0.5,
+                lengthScale: 1.55,
+                reverse: true,
+                segments: false,
+                },
+            },
+            {
+              id: "head",
+              name: "head",
+              parentId: "torso",
+              x: 0,
+              y: 0,
+              rotation: 0,
+              length: 42,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#77c66e",
+            },
+            {
+              id: "arm",
+              name: "arm",
+              parentId: "torso",
+              x: 0,
+              y: 0,
+              rotation: -45,
+              length: 88,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#d96a7b",
+            },
+          ],
+          timelines: {
+            root: [
+              { frame: 0, x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
+              { frame: 48, x: 420, y: 330, rotation: -105, length: 90, scaleX: 1, scaleY: 1 },
+              { frame: 96, x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
+            ],
+            torso: [
+              { frame: 0, x: 0, y: 0, rotation: 0, length: 110, scaleX: 1, scaleY: 1 },
+              { frame: 32, x: 0, y: 0, rotation: -9, length: 110, scaleX: 1, scaleY: 1 },
+              { frame: 64, x: 0, y: 0, rotation: 9, length: 110, scaleX: 1, scaleY: 1 },
+              { frame: 96, x: 0, y: 0, rotation: 0, length: 110, scaleX: 1, scaleY: 1 },
+            ],
+            head: [
+              { frame: 0, x: 0, y: 0, rotation: 0, length: 42, scaleX: 1, scaleY: 1 },
+              { frame: 48, x: 0, y: 0, rotation: 16, length: 42, scaleX: 1, scaleY: 1 },
+              { frame: 96, x: 0, y: 0, rotation: 0, length: 42, scaleX: 1, scaleY: 1 },
+            ],
+            arm: [
+              { frame: 0, x: 0, y: 0, rotation: -45, length: 88, scaleX: 1, scaleY: 1 },
+              { frame: 24, x: 0, y: 0, rotation: -112, length: 88, scaleX: 1, scaleY: 1 },
+              { frame: 48, x: 0, y: 0, rotation: 20, length: 88, scaleX: 1, scaleY: 1 },
+              { frame: 72, x: 0, y: 0, rotation: -78, length: 88, scaleX: 1, scaleY: 1 },
+              { frame: 96, x: 0, y: 0, rotation: -45, length: 88, scaleX: 1, scaleY: 1 },
+            ],
+          },
+        });
+        renderAll();
+      }
+
+      function loadSideWalkSample() {
+        const frames = [0, 12, 24, 36, 48];
+        const keySet = (values) =>
+          frames.map((frame, index) => ({
+            frame,
+            x: values.x?.[index] ?? 0,
+            y: values.y?.[index] ?? 0,
+            rotation: values.rotation[index],
+            length: values.length,
+            scaleX: 1,
+            scaleY: 1,
+          }));
+        applyProjectData({
+          fps: 24,
+          duration: 48,
+          nodes: [
+            {
+              id: "root",
+              name: "hip_root",
+              parentId: null,
+              x: 332,
+              y: 420,
+              rotation: 180,
+              length: 26,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#35b6b4",
+            },
+            {
+              id: "torso",
+              name: "torso",
+              parentId: "root",
+              x: 0,
+              y: 0,
+              rotation: 96,
+              length: 92,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#e6a23c",
+              attachment: {
+                image: "body",
+                chainTo: null,
+                width: 61,
+                alpha: 1,
+                layer: 1,
+                anchorX: 0.5,
+                lengthScale: 1.55,
+                reverse: true,
+                segments: false,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: -23,
+                hemEnabled: true,
+                hemX: 0.5,
+                hemY: 0.68,
+                hemLength: 0.75,
+                hemAngle: 90,
+              },
+            },
+            {
+              id: "head",
+              name: "head",
+              parentId: "torso",
+              x: 0,
+              y: 0,
+              rotation: 0,
+              length: 34,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#77c66e",
+              attachment: {
+                image: "head",
+                chainTo: null,
+                width: 67,
+                alpha: 1,
+                layer: -1,
+                anchorX: 0.5,
+                lengthScale: 1.7,
+                reverse: false,
+                segments: false,
+                rotationOffset: 0,
+                offsetX: -13,
+                offsetY: -28,
+                scarfEnabled: true,
+                scarfSplit: 0.52,
+                scarfRootX: 0.52,
+                scarfRootY: 0.4,
+                scarfLength: 0.55,
+                scarfAngle: 127,
+                scarfStiffness: 0.09,
+                scarfDamping: 0.84,
+                scarfGravity: 740,
+                scarfWave: 1.8,
+              },
+            },
+            {
+              id: "front_upper_arm",
+              name: "front_upper_arm",
+              parentId: "torso",
+              x: 0,
+              y: 0,
+              rotation: 232,
+              length: 52,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#d96a7b",
+              attachment: {
+                image: "arm",
+                chainTo: "front_lower_arm",
+                width: 48,
+                alpha: 1,
+                layer: 20,
+                anchorX: 0.5,
+                lengthScale: 1,
+                reverse: false,
+                segments: true,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: 0,
+                lower: {
+                  width: 48,
+                  alpha: 1,
+                  anchorX: 0.5,
+                  rotationOffset: 38,
+                  offsetX: 0,
+                  offsetY: 0,
+                },
+              },
+            },
+            {
+              id: "front_lower_arm",
+              name: "front_lower_arm",
+              parentId: "front_upper_arm",
+              x: 0,
+              y: 0,
+              rotation: -28,
+              length: 46,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#e28d9c",
+            },
+            {
+              id: "back_upper_arm",
+              name: "back_upper_arm",
+              parentId: "torso",
+              x: 0,
+              y: 0,
+              rotation: 152,
+              length: 50,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#8a5fbf",
+              attachment: {
+                image: "arm",
+                chainTo: "back_lower_arm",
+                width: 44,
+                alpha: 0.72,
+                layer: -10,
+                anchorX: 0.5,
+                lengthScale: 1,
+                reverse: false,
+                segments: true,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: 0,
+                lower: {
+                  width: 44,
+                  alpha: 0.72,
+                  anchorX: 0.5,
+                  rotationOffset: 34,
+                  offsetX: 0,
+                  offsetY: -5,
+                },
+              },
+            },
+            {
+              id: "back_lower_arm",
+              name: "back_lower_arm",
+              parentId: "back_upper_arm",
+              x: 0,
+              y: 0,
+              rotation: -18,
+              length: 44,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#b08ad6",
+            },
+            {
+              id: "front_upper_leg",
+              name: "front_upper_leg",
+              parentId: "root",
+              x: 0,
+              y: 0,
+              rotation: -58,
+              length: 70,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#4d8ecf",
+              attachment: {
+                image: "leg",
+                chainTo: "front_lower_leg",
+                width: 52,
+                alpha: 1,
+                layer: 0,
+                anchorX: 0.5,
+                lengthScale: 1,
+                reverse: false,
+                segments: true,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: 0,
+              },
+            },
+            {
+              id: "front_lower_leg",
+              name: "front_lower_leg",
+              parentId: "front_upper_leg",
+              x: 0,
+              y: 0,
+              rotation: 22,
+              length: 66,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#7eaee8",
+            },
+            {
+              id: "back_upper_leg",
+              name: "back_upper_leg",
+              parentId: "root",
+              x: 0,
+              y: 0,
+              rotation: -118,
+              length: 70,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#3aa877",
+              attachment: {
+                image: "leg",
+                chainTo: "back_lower_leg",
+                width: 48,
+                alpha: 0.72,
+                layer: -1,
+                anchorX: 0.5,
+                lengthScale: 1,
+                reverse: false,
+                segments: true,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: 0,
+              },
+            },
+            {
+              id: "back_lower_leg",
+              name: "back_lower_leg",
+              parentId: "back_upper_leg",
+              x: 0,
+              y: 0,
+              rotation: 42,
+              length: 66,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#70c99b",
+            },
+          ],
+          timelines: {
+            root: keySet({
+              x: [332, 324.0672259963335, 316, 309.74678323852606, 332],
+              y: [420, 413.9985057604049, 420, 414.1925846747223, 420],
+              rotation: [180, -169.21799674272063, 180, -164.291978920584, 180],
+              length: 26,
+            }),
+            torso: keySet({
+              rotation: [96, 78.41918474914729, 96, 81.68075197856724, 96],
+              length: 92,
+            }),
+            head: keySet({
+              rotation: [-4, 2.389909885030036, -4, -3.103983822043176, -4],
+              length: 34,
+            }),
+            front_upper_arm: keySet({
+              rotation: [232, 188.7993969670677, 154, 184.01835031993323, 232],
+              length: 52,
+            }),
+            front_lower_arm: keySet({
+              rotation: [-28, -10.034688025596239, -36, -11.217696362223464, -28],
+              length: 46,
+            }),
+            back_upper_arm: keySet({
+              rotation: [152, 184.37056067273062, 228, 186.62873481474213, 152],
+              length: 50,
+            }),
+            back_lower_arm: keySet({
+              rotation: [-18, -19.46386131675412, -20, -19.684168575935402, -18],
+              length: 44,
+            }),
+            front_upper_leg: keySet({
+              rotation: [-58, 258.9202961661567, -126, 242.44328903357348, -58],
+              length: 70,
+            }),
+            front_lower_leg: keySet({
+              rotation: [22, 51.89965903356614, 18, -17.197740087620502, 22],
+              length: 66,
+            }),
+            back_upper_leg: keySet({
+              rotation: [-118, 255.42731789544456, -58, 268.8033641486692, -118],
+              length: 70,
+            }),
+            back_lower_leg: keySet({
+              rotation: [42, -7.164689087851912, 18, 53.28172360479192, 42],
+              length: 66,
+            }),
+          },
+        });
+        renderAll();
+        toast("已载入侧面行走人形");
+      }
+
+      function loadSideSlashSample() {
+        loadSideWalkSample();
+        const frames = [0, 6, 12, 18, 24, 36];
+        const keySet = (values) =>
+          frames.map((frame, index) => ({
+            frame,
+            x: values.x?.[index] ?? 0,
+            y: values.y?.[index] ?? 0,
+            rotation: values.rotation[index],
+            length: values.length,
+            scaleX: 1,
+            scaleY: 1,
+          }));
+        state.fps = 24;
+        state.duration = 36;
+        state.currentFrame = 0;
+        state.playing = false;
+        state.selectedNodeId = "front_upper_arm";
+        state.selectedKey = null;
+        dynamicScarves.clear();
+        state.timelines = {
+          root: keySet({
+            x: [332, 332, 333, 332, 331, 332],
+            y: [420, 419, 418, 421, 420, 420],
+            rotation: [180, 178, 176, 183, 181, 180],
+            length: 26,
+          }),
+          torso: keySet({
+            rotation: [96, 108, 116, 86, 92, 96],
+            length: 92,
+          }),
+          head: keySet({
+            rotation: [-4, -8, -12, 4, -2, -4],
+            length: 34,
+          }),
+          front_upper_arm: keySet({
+            rotation: [54, 14, 88, 146, 102, 54],
+            length: 52,
+          }),
+          front_lower_arm: keySet({
+            rotation: [-20, 18, 15, 7, 10, -20],
+            length: 46,
+          }),
+          back_upper_arm: keySet({
+            rotation: [128, 110, 96, 132, 142, 128],
+            length: 50,
+          }),
+          back_lower_arm: keySet({
+            rotation: [10, -8, -16, 8, 4, 10],
+            length: 44,
+          }),
+          front_upper_leg: keySet({
+            rotation: [-58, -64, -72, -54, -56, -58],
+            length: 70,
+          }),
+          front_lower_leg: keySet({
+            rotation: [22, 20, 16, 26, 24, 22],
+            length: 66,
+          }),
+          back_upper_leg: keySet({
+            rotation: [-118, -112, -104, -122, -120, -118],
+            length: 70,
+          }),
+          back_lower_leg: keySet({
+            rotation: [42, 36, 30, 48, 44, 42],
+            length: 66,
+          }),
+        };
+        renderAll();
+        toast("已载入侧身劈砍动作");
+      }
+
+      function loadThreeQuarterSample() {
+        const poseKey = (id, pose) => [
+          { frame: 0, ...pose },
+          { frame: 48, ...pose },
+        ];
+        const nodePose = (rotation, length, x = 0, y = 0) => ({
+          x,
+          y,
+          rotation,
+          length,
+          scaleX: 1,
+          scaleY: 1,
+        });
+        applyProjectData({
+          fps: 24,
+          duration: 48,
+          nodes: [
+            {
+              id: "root",
+              name: "hip_root",
+              parentId: null,
+              x: 390,
+              y: 430,
+              rotation: 166,
+              length: 28,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#35b6b4",
+            },
+            {
+              id: "front_hip",
+              name: "front_hip",
+              parentId: "root",
+              x: 0,
+              y: 0,
+              rotation: -18,
+              length: 18,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#5aa1dd",
+            },
+            {
+              id: "back_hip",
+              name: "back_hip",
+              parentId: "root",
+              x: 0,
+              y: 0,
+              rotation: 22,
+              length: 14,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#4ba06f",
+            },
+            {
+              id: "torso",
+              name: "torso_70deg",
+              parentId: "root",
+              x: 0,
+              y: 0,
+              rotation: 82,
+              length: 94,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#e6a23c",
+              attachment: {
+                image: "body",
+                chainTo: null,
+                width: 70,
+                alpha: 1,
+                layer: 1,
+                anchorX: 0.5,
+                lengthScale: 1.5,
+                reverse: true,
+                segments: false,
+                rotationOffset: -7,
+                offsetX: 1,
+                offsetY: -22,
+                hemEnabled: true,
+                hemX: 0.5,
+                hemY: 0.68,
+                hemLength: 0.75,
+                hemAngle: 90,
+                scarfStiffness: 0.06,
+                scarfDamping: 0.84,
+                scarfGravity: 420,
+                scarfWave: 1,
+              },
+            },
+            {
+              id: "front_shoulder",
+              name: "front_shoulder",
+              parentId: "torso",
+              x: 0,
+              y: 0,
+              rotation: 16,
+              length: 20,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#f08a98",
+            },
+            {
+              id: "back_shoulder",
+              name: "back_shoulder",
+              parentId: "torso",
+              x: 0,
+              y: 0,
+              rotation: -18,
+              length: 16,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#9a73cc",
+            },
+            {
+              id: "head",
+              name: "head_70deg",
+              parentId: "torso",
+              x: 0,
+              y: 0,
+              rotation: -2,
+              length: 35,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#77c66e",
+              attachment: {
+                image: "head",
+                chainTo: null,
+                width: 70,
+                alpha: 1,
+                layer: 4,
+                anchorX: 0.5,
+                lengthScale: 1.65,
+                reverse: false,
+                segments: false,
+                rotationOffset: -6,
+                offsetX: -8,
+                offsetY: -30,
+                scarfEnabled: true,
+                scarfSplit: 0.52,
+                scarfRootX: 0.52,
+                scarfRootY: 0.4,
+                scarfLength: 0.55,
+                scarfAngle: 127,
+                scarfStiffness: 0.09,
+                scarfDamping: 0.84,
+                scarfGravity: 740,
+                scarfWave: 1.8,
+              },
+            },
+            {
+              id: "front_upper_arm",
+              name: "front_upper_arm",
+              parentId: "front_shoulder",
+              x: 0,
+              y: 0,
+              rotation: 222,
+              length: 54,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#d96a7b",
+              attachment: {
+                image: "arm",
+                chainTo: "front_lower_arm",
+                width: 50,
+                alpha: 1,
+                layer: 24,
+                anchorX: 0.5,
+                lengthScale: 1,
+                reverse: false,
+                segments: true,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: 0,
+                lower: {
+                  width: 50,
+                  alpha: 1,
+                  anchorX: 0.5,
+                  rotationOffset: 36,
+                  offsetX: 0,
+                  offsetY: 0,
+                },
+              },
+            },
+            {
+              id: "front_lower_arm",
+              name: "front_lower_arm",
+              parentId: "front_upper_arm",
+              x: 0,
+              y: 0,
+              rotation: -18,
+              length: 47,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#e28d9c",
+            },
+            {
+              id: "back_upper_arm",
+              name: "back_upper_arm",
+              parentId: "back_shoulder",
+              x: 0,
+              y: 0,
+              rotation: 166,
+              length: 43,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#8a5fbf",
+              attachment: {
+                image: "arm",
+                chainTo: "back_lower_arm",
+                width: 38,
+                alpha: 0.58,
+                layer: -12,
+                anchorX: 0.5,
+                lengthScale: 1,
+                reverse: false,
+                segments: true,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: 0,
+                lower: {
+                  width: 38,
+                  alpha: 0.58,
+                  anchorX: 0.5,
+                  rotationOffset: 28,
+                  offsetX: 0,
+                  offsetY: -4,
+                },
+              },
+            },
+            {
+              id: "back_lower_arm",
+              name: "back_lower_arm",
+              parentId: "back_upper_arm",
+              x: 0,
+              y: 0,
+              rotation: -24,
+              length: 39,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#b08ad6",
+            },
+            {
+              id: "front_upper_leg",
+              name: "front_upper_leg",
+              parentId: "front_hip",
+              x: 0,
+              y: 0,
+              rotation: -64,
+              length: 72,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#4d8ecf",
+              attachment: {
+                image: "leg",
+                chainTo: "front_lower_leg",
+                width: 54,
+                alpha: 1,
+                layer: 6,
+                anchorX: 0.5,
+                lengthScale: 1,
+                reverse: false,
+                segments: true,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: 0,
+              },
+            },
+            {
+              id: "front_lower_leg",
+              name: "front_lower_leg",
+              parentId: "front_upper_leg",
+              x: 0,
+              y: 0,
+              rotation: 18,
+              length: 67,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#7eaee8",
+            },
+            {
+              id: "back_upper_leg",
+              name: "back_upper_leg",
+              parentId: "back_hip",
+              x: 0,
+              y: 0,
+              rotation: -112,
+              length: 63,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#3aa877",
+              attachment: {
+                image: "leg",
+                chainTo: "back_lower_leg",
+                width: 42,
+                alpha: 0.58,
+                layer: -8,
+                anchorX: 0.5,
+                lengthScale: 1,
+                reverse: false,
+                segments: true,
+                rotationOffset: 0,
+                offsetX: 0,
+                offsetY: 0,
+              },
+            },
+            {
+              id: "back_lower_leg",
+              name: "back_lower_leg",
+              parentId: "back_upper_leg",
+              x: 0,
+              y: 0,
+              rotation: 36,
+              length: 58,
+              scaleX: 1,
+              scaleY: 1,
+              color: "#70c99b",
+            },
+          ],
+          timelines: {
+            root: poseKey("root", nodePose(166, 28, 390, 430)),
+            front_hip: poseKey("front_hip", nodePose(-18, 18)),
+            back_hip: poseKey("back_hip", nodePose(22, 14)),
+            torso: poseKey("torso", nodePose(82, 94)),
+            front_shoulder: poseKey("front_shoulder", nodePose(16, 20)),
+            back_shoulder: poseKey("back_shoulder", nodePose(-18, 16)),
+            head: poseKey("head", nodePose(-2, 35)),
+            front_upper_arm: poseKey("front_upper_arm", nodePose(222, 54)),
+            front_lower_arm: poseKey("front_lower_arm", nodePose(-18, 47)),
+            back_upper_arm: poseKey("back_upper_arm", nodePose(166, 43)),
+            back_lower_arm: poseKey("back_lower_arm", nodePose(-24, 39)),
+            front_upper_leg: poseKey("front_upper_leg", nodePose(-64, 72)),
+            front_lower_leg: poseKey("front_lower_leg", nodePose(18, 67)),
+            back_upper_leg: poseKey("back_upper_leg", nodePose(-112, 63)),
+            back_lower_leg: poseKey("back_lower_leg", nodePose(36, 58)),
+          },
+        });
+        renderAll();
+        toast("已载入 70 度侧身骨骼");
+      }
+
+      function bindEvents() {
+        window.addEventListener("resize", resizeCanvas);
+        el.addNodeBtn.addEventListener("click", () => {
+          const parent = selectedNode();
+          const id = uid("node");
+          const node = {
+            id,
+            name: `node_${state.nodes.length}`,
+            parentId: parent?.id || null,
+            x: parent ? 0 : 420,
+            y: parent ? 0 : 330,
+            rotation: 0,
+            length: 70,
+            scaleX: 1,
+            scaleY: 1,
+            color: ["#35b6b4", "#e6a23c", "#77c66e", "#d96a7b", "#4d8ecf"][
+              state.nodes.length % 5
+            ],
+          };
+          state.nodes.push(node);
+          state.timelines[id] = [{ ...snapshotNode(node), frame: state.currentFrame }];
+          state.selectedNodeId = id;
+          renderAll();
+        });
+
+        el.deleteNodeBtn.addEventListener("click", () => {
+          const node = selectedNode();
+          if (!node) return;
+          if (state.nodes.length === 1) {
+            toast("至少保留一个节点");
+            return;
+          }
+          state.nodes.forEach((item) => {
+            if (item.parentId === node.id) item.parentId = node.parentId;
+          });
+          state.nodes = state.nodes.filter((item) => item.id !== node.id);
+          delete state.timelines[node.id];
+          state.selectedNodeId = state.nodes[0]?.id || null;
+          state.selectedKey = null;
+          renderAll();
+        });
+
+        el.keyframeBtn.addEventListener("click", () => addKeyframe());
+        el.snapAllBtn.addEventListener("click", () => {
+          state.nodes.forEach((node) => addKeyframe(node));
+          toast(`已记录全部节点第 ${state.currentFrame} 帧`);
+        });
+        el.deleteKeyBtn.addEventListener("click", deleteSelectedKey);
+
+        el.playBtn.addEventListener("click", () => {
+          state.playing = !state.playing;
+          lastTime = performance.now();
+          if (state.playing) dynamicScarves.clear();
+          renderStatus();
+          if (state.playing) rafId = requestAnimationFrame(tick);
+        });
+        el.prevFrameBtn.addEventListener("click", () => {
+          state.currentFrame = clampFrame(state.currentFrame - 1);
+          state.selectedKey = null;
+          renderAll();
+        });
+        el.nextFrameBtn.addEventListener("click", () => {
+          state.currentFrame = clampFrame(state.currentFrame + 1);
+          state.selectedKey = null;
+          renderAll();
+        });
+        el.frameInput.addEventListener("change", () => {
+          state.currentFrame = clampFrame(Number(el.frameInput.value) || 0);
+          state.selectedKey = null;
+          renderAll();
+        });
+        el.frameInput.addEventListener("input", () => {
+          state.currentFrame = clampFrame(Number(el.frameInput.value) || 0);
+          state.selectedKey = null;
+          renderAll();
+        });
+        el.fpsInput.addEventListener("change", () => {
+          state.fps = Math.max(1, Math.min(120, Number(el.fpsInput.value) || 24));
+          renderAll();
+        });
+        el.durationInput.addEventListener("change", () => {
+          state.duration = Math.max(1, Math.min(1200, Number(el.durationInput.value) || 96));
+          state.currentFrame = clampFrame(state.currentFrame);
+          Object.keys(state.timelines).forEach((id) => {
+            state.timelines[id] = state.timelines[id].filter(
+              (item) => item.frame <= state.duration,
+            );
+          });
+          renderAll();
+        });
+
+        bindPropertyInputs();
+        bindCanvas();
+        bindTimelineDrag();
+
+        el.exportBtn.addEventListener("click", downloadJson);
+        el.importBtn.addEventListener("click", () => el.fileInput.click());
+        el.fileInput.addEventListener("change", async () => {
+          const file = el.fileInput.files[0];
+          if (!file) return;
+          try {
+            applyProjectData(JSON.parse(await file.text()));
+            renderAll();
+            toast("JSON 已导入");
+          } catch (error) {
+            toast(error.message || "导入失败");
+          } finally {
+            el.fileInput.value = "";
+          }
+        });
+        el.copyJsonBtn.addEventListener("click", async () => {
+          await navigator.clipboard.writeText(el.jsonPreview.value);
+          toast("JSON 已复制");
+        });
+        el.applyJsonBtn.addEventListener("click", () => {
+          try {
+            applyProjectData(JSON.parse(el.jsonPreview.value));
+            renderAll();
+            toast("JSON 文本已应用");
+          } catch (error) {
+            toast(error.message || "JSON 解析失败");
+          }
+        });
+        el.sampleBtn.addEventListener("click", loadSample);
+        el.walkSampleBtn.addEventListener("click", loadSideWalkSample);
+        el.slashSampleBtn.addEventListener("click", loadSideSlashSample);
+        el.threeQuarterSampleBtn.addEventListener("click", loadThreeQuarterSample);
+        el.viewToggleBtn.addEventListener("click", () => {
+          state.renderMode = state.renderMode === "texture" ? "skeleton" : "texture";
+          renderAll();
+        });
+        el.newProjectBtn.addEventListener("click", resetProject);
+        el.nodeModeBtn.addEventListener("click", () => {
+          state.editMode = "node";
+          renderStatus();
+          toast("节点移动：拖圆点关节，骨骼保持长度并递归传导");
+        });
+        el.boneModeBtn.addEventListener("click", () => {
+          state.editMode = "bone";
+          renderStatus();
+          toast("骨骼移动：只在拖骨骼线段中间时生效，圆点仍按节点拖动");
+        });
+      }
+
+      function bindPropertyInputs() {
+        el.nodeNameInput.addEventListener("input", () =>
+          setNodePatch({ name: el.nodeNameInput.value || "node" }),
+        );
+        el.parentSelect.addEventListener("change", () =>
+          setNodePatch({ parentId: el.parentSelect.value || null }),
+        );
+        el.xInput.addEventListener("change", () => setNodePatch({ x: Number(el.xInput.value) || 0 }));
+        el.yInput.addEventListener("change", () => setNodePatch({ y: Number(el.yInput.value) || 0 }));
+        el.rotationInput.addEventListener("change", () =>
+          setNodePatch({ rotation: Number(el.rotationInput.value) || 0 }),
+        );
+        el.lengthInput.addEventListener("change", () =>
+          setNodePatch({ length: Math.max(4, Number(el.lengthInput.value) || 80) }),
+        );
+        el.scaleXInput.addEventListener("change", () =>
+          setNodePatch({ scaleX: Math.max(0.05, Number(el.scaleXInput.value) || 1) }),
+        );
+        el.scaleYInput.addEventListener("change", () =>
+          setNodePatch({ scaleY: Math.max(0.05, Number(el.scaleYInput.value) || 1) }),
+        );
+        el.colorInput.addEventListener("input", () => setNodePatch({ color: el.colorInput.value }));
+        el.attachmentImageSelect.addEventListener("change", () => {
+          const image = el.attachmentImageSelect.value;
+          if (!image) {
+            setAttachmentPatch(null);
+            return;
+          }
+          setAttachmentPatch({ ...createDefaultAttachment(image), ...(attachmentEditNode()?.attachment || {}), image });
+        });
+        el.attachmentOffsetXInput.addEventListener("change", () =>
+          setAttachmentPatch({ offsetX: Number(el.attachmentOffsetXInput.value) || 0 }),
+        );
+        el.attachmentOffsetYInput.addEventListener("change", () =>
+          setAttachmentPatch({ offsetY: Number(el.attachmentOffsetYInput.value) || 0 }),
+        );
+        el.attachmentWidthInput.addEventListener("change", () =>
+          setAttachmentPatch({ width: Math.max(1, Number(el.attachmentWidthInput.value) || 48) }),
+        );
+        el.attachmentLengthScaleInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            lengthScale: Math.max(0.1, Number(el.attachmentLengthScaleInput.value) || 1),
+          }),
+        );
+        el.attachmentRotationInput.addEventListener("change", () =>
+          setAttachmentPatch({ rotationOffset: Number(el.attachmentRotationInput.value) || 0 }),
+        );
+        el.attachmentAlphaInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            alpha: Math.max(0, Math.min(1, Number(el.attachmentAlphaInput.value) || 0)),
+          }),
+        );
+        el.attachmentLayerInput.addEventListener("change", () =>
+          setAttachmentPatch({ layer: Number(el.attachmentLayerInput.value) || 0 }),
+        );
+        el.attachmentAnchorXInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            anchorX: Math.max(0, Math.min(1, Number(el.attachmentAnchorXInput.value) || 0)),
+          }),
+        );
+        el.attachmentSegmentsInput.addEventListener("change", () =>
+          setAttachmentPatch({ segments: el.attachmentSegmentsInput.checked }),
+        );
+        el.attachmentReverseInput.addEventListener("change", () =>
+          setAttachmentPatch({ reverse: el.attachmentReverseInput.checked }),
+        );
+        el.attachmentScarfEnabledInput.addEventListener("change", () =>
+          setAttachmentPatch({ scarfEnabled: el.attachmentScarfEnabledInput.checked }),
+        );
+        el.attachmentScarfSplitInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfSplit: clampNumber(el.attachmentScarfSplitInput.value, 0.05, 0.95, 0.52),
+          }),
+        );
+        el.attachmentScarfRootXInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfRootX: clampNumber(el.attachmentScarfRootXInput.value, 0, 1, 0.52),
+          }),
+        );
+        el.attachmentScarfRootYInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfRootY: clampNumber(el.attachmentScarfRootYInput.value, 0, 1, 0.6),
+          }),
+        );
+        el.attachmentScarfTipXInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfLength: clampNumber(el.attachmentScarfTipXInput.value, 0.05, 2, 0.55),
+          }),
+        );
+        el.attachmentScarfTipYInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfAngle: Number(el.attachmentScarfTipYInput.value) || 0,
+          }),
+        );
+        el.attachmentScarfStiffnessInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfStiffness: clampNumber(el.attachmentScarfStiffnessInput.value, 0, 1, 0.06),
+          }),
+        );
+        el.attachmentScarfDampingInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfDamping: clampNumber(el.attachmentScarfDampingInput.value, 0, 0.99, 0.84),
+          }),
+        );
+        el.attachmentScarfGravityInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfGravity: Number(el.attachmentScarfGravityInput.value) || 0,
+          }),
+        );
+        el.attachmentScarfWaveInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            scarfWave: Math.max(0, Number(el.attachmentScarfWaveInput.value) || 0),
+          }),
+        );
+        el.attachmentHemEnabledInput.addEventListener("change", () =>
+          setAttachmentPatch({ hemEnabled: el.attachmentHemEnabledInput.checked }),
+        );
+        el.attachmentHemXInput.addEventListener("change", () =>
+          setAttachmentPatch({ hemX: clampNumber(el.attachmentHemXInput.value, 0, 1, 0.5) }),
+        );
+        el.attachmentHemYInput.addEventListener("change", () =>
+          setAttachmentPatch({ hemY: clampNumber(el.attachmentHemYInput.value, 0, 1, 0.68) }),
+        );
+        el.attachmentHemLengthInput.addEventListener("change", () =>
+          setAttachmentPatch({
+            hemLength: clampNumber(el.attachmentHemLengthInput.value, 0.05, 2, 0.75),
+          }),
+        );
+        el.attachmentHemAngleInput.addEventListener("change", () =>
+          setAttachmentPatch({ hemAngle: Number(el.attachmentHemAngleInput.value) || 0 }),
+        );
+      }
+
+      function bindCanvas() {
+        const startDrag = (event) => {
+          if (drag && drag.type !== "key") return;
+          const point = canvasPoint(event);
+          const hit = hitTest(point);
+          if (!hit) return;
+          event.preventDefault();
+          poseOverrides.clear();
+          state.selectedNodeId = hit.node.id;
+          state.selectedKey = null;
+          const pose = worldPose(hit.node);
+          const end = endPoint(pose);
+          drag = {
+            type: hit.type,
+            nodeId: hit.node.id,
+            jointId: hit.jointId,
+            start: point,
+            startWorldOrigin: { x: pose.worldX, y: pose.worldY },
+            startWorldEnd: { x: end.x, y: end.y },
+            startPoses: captureWorldPoses(),
+            touched: new Set([hit.node.id]),
+          };
+          if (event.pointerId !== undefined && el.stage.setPointerCapture) {
+            el.stage.setPointerCapture(event.pointerId);
+          }
+          renderAll();
+        };
+
+        const moveDrag = (event) => {
+          const point = canvasPoint(event);
+          if (!drag) {
+            el.stage.style.cursor = hitTest(point) ? "grab" : "default";
+            return;
+          }
+          event.preventDefault();
+          const node = state.nodes.find((item) => item.id === drag.nodeId);
+          if (!node) return;
+          if (drag.type === "origin") {
+            solveGenericJointDrag(drag.jointId, point);
+          }
+          if (drag.type === "bone") {
+            moveBoneRigid(
+              node,
+              { x: point.x - drag.start.x, y: point.y - drag.start.y },
+              drag.startWorldOrigin,
+            );
+          }
+          if (drag.type === "end") {
+            solveGenericJointDrag(drag.jointId, point);
+          }
+          renderProperties();
+          renderTimeline();
+          renderStatus();
+          renderJsonPreview();
+          drawStage();
+        };
+
+        const endDrag = (event) => {
+          commitActiveDrag();
+          if (event.pointerId !== undefined && el.stage.releasePointerCapture) {
+            el.stage.releasePointerCapture(event.pointerId);
+          }
+        };
+
+        el.stage.addEventListener("pointerdown", startDrag);
+        el.stage.addEventListener("pointermove", moveDrag);
+        el.stage.addEventListener("pointerup", endDrag);
+        el.stage.addEventListener("mousedown", startDrag);
+        window.addEventListener("mousemove", moveDrag);
+        window.addEventListener("mouseup", endDrag);
+      }
+
+      function commitActiveDrag() {
+        if (!drag || drag.type === "key") return;
+        persistTouchedNodes();
+        const activeNode = state.nodes.find((node) => node.id === drag.nodeId);
+        if (activeNode) {
+          state.selectedKey = { nodeId: activeNode.id, frame: state.currentFrame };
+          toast(`已记录 ${drag.touched?.size || 1} 个节点第 ${state.currentFrame} 帧`);
+        }
+        drag = null;
+        poseOverrides.clear();
+        renderAll();
+      }
+
+      function persistTouchedNodes() {
+        if (!drag?.touched) return;
+        const touchedNodes = state.nodes.filter((node) => drag.touched?.has(node.id));
+        touchedNodes.forEach((node) => upsertKeyframe(node));
+      }
+
+      function bindTimelineDrag() {
+        document.addEventListener("pointermove", (event) => {
+          if (!drag || drag.type !== "key") return;
+          const delta = Math.round((event.clientX - drag.startX) / frameWidth);
+          const nextFrame = clampFrame(drag.sourceFrame + delta);
+          const keys = state.timelines[drag.nodeId] || [];
+          const keyframe = keys.find((item) => item.frame === drag.sourceFrame);
+          if (!keyframe) return;
+          const occupied = keys.some(
+            (item) => item !== keyframe && item.frame === nextFrame,
+          );
+          if (!occupied) {
+            keyframe.frame = nextFrame;
+            state.currentFrame = nextFrame;
+            state.selectedKey = { nodeId: drag.nodeId, frame: nextFrame };
+            keys.sort((a, b) => a.frame - b.frame);
+            renderAll();
+          }
+        });
+        document.addEventListener("pointerup", () => {
+          commitActiveDrag();
+          if (drag?.type === "key") drag = null;
+        });
+        el.tracksViewport.addEventListener("pointerdown", (event) => {
+          if (event.target !== el.tracks && !event.target.classList.contains("frame-ruler")) return;
+          state.currentFrame = clampFrame(frameFromPointer(event, el.tracksViewport));
+          state.selectedKey = null;
+          renderAll();
+        });
+      }
+
+      function tick(now) {
+        if (!state.playing) return;
+        const elapsed = (now - lastTime) / 1000;
+        lastTime = now;
+        state.currentFrame += elapsed * state.fps;
+        if (state.currentFrame > state.duration) state.currentFrame = 0;
+        state.currentFrame = Math.round(state.currentFrame * 100) / 100;
+        el.frameInput.value = Math.round(state.currentFrame);
+        el.timeStatus.textContent = `第 ${Math.round(state.currentFrame)} 帧 / ${state.duration}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
+        drawStage();
+        renderTimeline();
+        rafId = requestAnimationFrame(tick);
+      }
+
+      bindEvents();
+      resizeCanvas();
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("sample") === "walk") {
+        loadSideWalkSample();
+      } else {
+        renderAll();
+      }
+    </script>
+  </body>
+</html>

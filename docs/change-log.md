@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-05 Battle Formation Baseline
+
+### Added
+- 新增 [src/domain/battle-formation.ts](/D:/RPG_TG/src/domain/battle-formation.ts)，定义合战编队、3x3 阵位、单位占用规模、容量公式、编队校验和兵种发挥率纯领域函数。
+- 新增 [docs/battle-formation-design.md](/D:/RPG_TG/docs/battle-formation-design.md)，记录参考《战争交响曲》的编队容量、占用规模、属性换算和后续接入顺序。
+
+### Changed
+- `src/domain/index.ts` 导出编队领域模块，便于后续 `application/battle` 和 UI 统一消费。
+
+### Impact
+- 当前变更不接入 `src/main.ts`，不改变现有战棋 Demo 行为。
+- 后续战斗实现应通过共享编队结构与 `src/application/battle` 服务接入，避免把编队规则写成页面层或主循环特判。
+
 ## 2026-06-04 Battle Branch Selective Integration
 
 ### Added
