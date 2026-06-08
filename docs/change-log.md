@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-04 Character Select Layout Editor Target
+
+### Added
+- 新增 `character-select-screen` 布局编辑目标，选择人物界面现在可通过 live layout editor 直接拖拽调整真实界面组件。
+- 选择人物界面新增默认布局预设，覆盖整体布局、左侧标题栏、人物名册面板、分页签、人物卡片网格、详情面板、底部操作区、返回按钮、分页文字和开始冒险按钮。
+
+### Changed
+- `LayoutEditorTargetId` 和 `UiLayoutByTargetId` 增加选择人物界面目标，`src/main.ts` 的编辑器打开逻辑会根据当前主界面自动选择 `start-screen` 或 `character-select-screen`。
+- `docs/ui-layout-alignment-workflow.md` 补充 live target 扩展边界，并将资源扫描范围对齐为当前实际目录：`src/assets`、`ui`、`map`。
+
+### Impact
+- 后续继续接入其他真实界面时，应复用 `UiLayout`、`layout-editor-target-registry.ts`、默认 preset 和 `applyLiveLayoutBindings` 这条链路，不新增界面专属编辑器协议。
+- 本次属于 UI 布局协作流程扩展，不改变 house 模块接口，也不在 `src/main.ts` 增加 house 业务分支。
+
 ## 2026-06-03 Tavern Long Gambling Variant
 
 ### Added

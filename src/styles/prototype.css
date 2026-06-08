@@ -1118,6 +1118,85 @@
   text-align: center;
 }
 
+.c-confirm-modal--map-entry.c-panel {
+  width: min(78vw, 821px);
+  aspect-ratio: 821 / 724;
+  border: 0;
+  border-radius: 0;
+  padding: clamp(82px, 9.6vw, 118px) clamp(132px, 15vw, 176px) clamp(58px, 7.2vw, 78px);
+  background: url("../../ui/yuansu/地图弹窗ui/1.png") center / 100% 100% no-repeat;
+  box-shadow: none;
+}
+
+.c-confirm-modal--map-entry .c-confirm-modal__content {
+  justify-items: center;
+  gap: clamp(14px, 1.7vw, 20px);
+  text-align: center;
+}
+
+.c-confirm-modal--map-entry .c-confirm-modal__eyebrow {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  clip-path: inset(50%);
+}
+
+.c-confirm-modal--map-entry .c-confirm-modal__title {
+  margin-top: clamp(6px, 1.1vw, 12px);
+  color: #3f3028;
+  font-size: clamp(2.2rem, 3.4vw, 3.1rem);
+  letter-spacing: 0;
+}
+
+.c-confirm-modal--map-entry .c-confirm-modal__body {
+  color: #3e342c;
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  line-height: 1.55;
+}
+
+.c-confirm-modal--map-entry .c-city-portrait {
+  width: min(100%, 404px);
+  aspect-ratio: 404 / 267;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.c-confirm-modal--map-entry .c-city-portrait__image {
+  object-fit: cover;
+  object-position: center;
+}
+
+.c-confirm-modal--map-entry .c-city-portrait__label {
+  display: none;
+}
+
+.c-confirm-modal--map-entry .c-confirm-modal__actions {
+  justify-content: center;
+  gap: clamp(20px, 3.4vw, 34px);
+  margin-top: clamp(16px, 2vw, 22px);
+}
+
+.c-confirm-modal--map-entry .c-button {
+  overflow: hidden;
+  width: clamp(172px, 19vw, 239px);
+  aspect-ratio: 239 / 78;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  color: transparent;
+  background: url("../../ui/yuansu/地图弹窗ui/进入地图.png") center / 100% 100% no-repeat;
+  font-size: 0;
+  box-shadow: none;
+}
+
+.c-confirm-modal--map-entry .c-button--ghost {
+  background-image: url("../../ui/yuansu/地图弹窗ui/稍后.png");
+}
+
 .c-city-layout {
   display: grid;
   grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
@@ -1507,264 +1586,311 @@
   inset: 0;
   z-index: calc(var(--z-scene-overlay) + 1);
   overflow: hidden;
-  padding: 16px;
-  background:
-    radial-gradient(circle at center, rgb(255 255 255 / 7%), transparent 45%),
-    linear-gradient(180deg, rgb(14 20 28 / 88%), rgb(10 15 22 / 92%)),
-    #111821;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
 }
 
 .c-character-detail {
-  display: grid;
-  grid-template-columns: minmax(320px, 520px) minmax(420px, 500px);
-  gap: 14px 24px;
-  width: min(1120px, 100%);
-  height: 100%;
+  position: relative;
+  width: min(1672px, 100vw, 177.68vh);
+  aspect-ratio: 1672 / 941;
+  max-height: 100vh;
   min-height: 0;
-  margin: 0 auto;
-}
-
-.c-character-detail__header {
-  grid-column: 1 / -1;
-  display: grid;
-  padding: 18px 22px;
-  border: 3px solid rgb(60 61 53 / 88%);
-  box-shadow:
-    inset 0 0 0 2px rgb(220 216 196 / 88%),
-    0 12px 30px rgb(0 0 0 / 18%);
-  background:
-    linear-gradient(90deg, rgb(231 229 214 / 96%), rgb(206 205 192 / 96%)),
-    #ddd7c8;
-}
-
-.c-character-detail__header-title {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.c-character-detail__header-copy {
-  display: grid;
-  gap: 8px;
-}
-
-.c-character-detail__name {
-  color: #221d16;
-  font-family: var(--font-title);
-  font-size: clamp(2rem, 4vw, 2.4rem);
-  line-height: 1.05;
-}
-
-.c-character-detail__header-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-  color: #48453d;
-  font-size: 1.05rem;
-}
-
-.c-character-detail__portrait-chip {
-  min-width: 72px;
-  padding: 8px 12px;
-  border: 2px solid rgb(70 82 93 / 82%);
-  box-shadow: inset 0 0 0 1px rgb(213 226 235 / 68%);
-  background: linear-gradient(180deg, rgb(95 124 157 / 96%), rgb(47 76 110 / 96%));
-  color: #eff8ff;
-  text-align: center;
-  font-size: 0.92rem;
-  font-weight: 700;
+  overflow: hidden;
+  border: 0;
+  background: url("../../ui/yuansu/具体面板ui/back.png") center / contain no-repeat;
+  color: #2c2318;
 }
 
 .c-character-detail__left-column {
-  display: grid;
-  grid-template-rows: minmax(420px, 1fr) auto;
-  gap: 14px;
+  display: contents;
 }
 
-.c-character-detail__portrait {
+.c-character-detail__name-plaque {
+  position: absolute;
+  left: 3.1%;
+  top: 3%;
   display: grid;
   place-items: center;
-  min-height: 420px;
-  border: 3px solid rgb(56 57 49 / 92%);
-  box-shadow:
-    inset 0 0 0 2px rgb(219 214 196 / 88%),
-    0 12px 30px rgb(0 0 0 / 14%);
-  background:
-    radial-gradient(circle at 50% 18%, rgb(255 255 255 / 26%), transparent 34%),
-    linear-gradient(180deg, rgb(205 209 194 / 96%), rgb(122 131 118 / 96%));
+  width: 7.1%;
+  height: 55.7%;
+  padding: 4.8% 1.2% 10.2%;
+  background: url("../../ui/yuansu/具体面板ui/003_vertical_name_plaque_1.0.png") center / contain no-repeat;
 }
 
 .c-character-detail__portrait-label {
-  color: #172017;
-  font-family: var(--font-title);
-  font-size: 1.8rem;
-}
-
-.c-character-detail__biography {
   display: grid;
-  gap: 10px;
-  padding: 14px 18px;
-  border: 3px solid rgb(56 57 49 / 92%);
-  box-shadow: inset 0 0 0 2px rgb(219 214 196 / 88%);
-  background:
-    linear-gradient(180deg, rgb(232 231 221 / 97%), rgb(214 211 197 / 97%)),
-    #ddd7c8;
+  place-items: center;
+  color: #3a2818;
+  font-family: var(--font-title);
+  font-size: clamp(1.2rem, 2.7vw, 3.2rem);
+  line-height: 1;
+  text-align: center;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
 }
 
-.c-character-detail__lifespan {
-  justify-self: end;
-  color: #2f2a20;
-  font-size: 1rem;
+.c-character-detail__portrait {
+  position: absolute;
+  left: 10.6%;
+  top: 5.8%;
+  display: grid;
+  place-items: center;
+  width: 26.8%;
+  height: 59.4%;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
 }
 
-.c-character-detail__bio {
-  margin: 0;
-  color: #231f1a;
-  font-size: 1rem;
-  line-height: 1.9;
-  white-space: pre-wrap;
+.c-character-detail__portrait-image {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: auto;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: translateX(-50%);
+  user-select: none;
+  pointer-events: none;
 }
 
 .c-character-detail__right-column {
-  display: grid;
-  align-content: start;
-  gap: 12px;
-  padding: 14px 16px;
-  border: 3px solid rgb(56 57 49 / 92%);
-  box-shadow:
-    inset 0 0 0 2px rgb(219 214 196 / 88%),
-    0 12px 30px rgb(0 0 0 / 14%);
-  background:
-    linear-gradient(180deg, rgb(231 229 215 / 97%), rgb(207 205 191 / 97%)),
-    #ddd7c8;
+  display: contents;
+}
+
+.c-character-detail__biography {
+  position: absolute;
+  overflow: hidden;
+  min-width: 0;
+  color: #342719;
+  background: url("../../ui/yuansu/具体面板ui/011_panel_biography_1.0.png") center / 100% 100% no-repeat;
+}
+
+.c-character-detail__lifespan,
+.c-character-detail__bio {
+  position: absolute;
+  margin: 0;
+  color: #3c2c1a;
+  letter-spacing: 0;
+}
+
+.c-character-detail__lifespan {
+  font-size: clamp(0.58rem, 0.95vw, 1rem);
+  line-height: 1.4;
+}
+
+.c-character-detail__bio {
+  font-size: clamp(0.58rem, 0.92vw, 0.98rem);
+  line-height: 1.65;
+  text-align: left;
+}
+
+.c-character-detail__info-panel,
+.c-character-detail__ability-panel,
+.c-character-detail__skill-panel {
+  position: absolute;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.c-character-detail__info-panel {
+  left: 39.4%;
+  top: 4.2%;
+  width: 55.7%;
+  height: 34.9%;
+  padding: 3.7% 4.2% 2.4%;
+  background: url("../../ui/yuansu/具体面板ui/005_panel_basic_info_with_tab_1.0.png") center / contain no-repeat;
+}
+
+.c-character-detail__ability-panel {
+  left: 39.4%;
+  top: 40.7%;
+  width: 54.9%;
+  height: 18%;
+  padding: 3.2% 4.4% 1.6%;
+  background: url("../../ui/yuansu/具体面板ui/006_panel_ability_info_with_tab_1.0.png") center / contain no-repeat;
+}
+
+.c-character-detail__skill-panel {
+  left: 39.4%;
+  top: 59%;
+  width: 54.9%;
+  height: 18%;
+  padding: 2.5% 2.8% 1.4%;
+  background: url("../../ui/yuansu/具体面板ui/007_panel_skill_info_with_tab_1.0.png") center / contain no-repeat;
+}
+
+.c-character-detail__panel-title {
+  position: absolute;
+  left: 6.2%;
+  top: 4.8%;
+  margin: 0;
+  color: #6b4b24;
+  font-family: var(--font-title);
+  font-size: clamp(0.9rem, 1.6vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .c-character-detail__info-grid {
   display: grid;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4% 8%;
+  height: 100%;
+  padding-top: 1.2%;
 }
 
 .c-character-detail__info-row {
   display: grid;
-  grid-template-columns: 70px minmax(0, 1fr) 52px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 34% minmax(0, 1fr);
+  gap: 0 6%;
   align-items: center;
-  min-height: 32px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgb(44 47 39 / 38%);
+  min-height: 0;
+  color: #2e251b;
+  font-size: clamp(0.62rem, 1.05vw, 1.08rem);
+  border-bottom: 1px solid rgb(110 88 52 / 22%);
+}
+
+.c-character-detail__info-row:nth-child(1),
+.c-character-detail__info-row:nth-child(2) {
+  grid-template-columns: 28% minmax(0, 1fr) 28% minmax(0, 1fr);
 }
 
 .c-character-detail__info-span {
-  grid-column: 2 / -1;
+  grid-column: auto;
 }
 
 .c-character-detail__label {
-  color: #3f6d1f;
-  font-size: 0.94rem;
+  color: #5f421f;
+  font-size: clamp(0.62rem, 1.05vw, 1.08rem);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 
-.c-character-detail__reputation,
-.c-character-detail__stats {
+.c-character-detail__ability-grid {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7% 10%;
+  height: 100%;
+  padding-top: 1%;
 }
 
-.c-character-detail__reputation-item,
 .c-character-detail__stat-row {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) 40px;
-  gap: 10px;
+  grid-template-columns: 16% minmax(0, 1fr) 12%;
+  gap: 4%;
   align-items: center;
+  min-width: 0;
+  color: #2c241a;
+  font-size: clamp(0.62rem, 1vw, 1.06rem);
 }
 
 .c-character-detail__meter {
   position: relative;
-  height: 18px;
-  border: 1px solid rgb(75 87 73 / 82%);
-  box-shadow: inset 0 0 0 1px rgb(231 227 209 / 62%);
-  background: rgb(154 162 144 / 46%);
+  height: clamp(8px, 1vw, 16px);
+  border: 1px solid rgb(91 80 55 / 66%);
+  background: rgb(128 128 120 / 42%);
   overflow: hidden;
 }
 
 .c-character-detail__meter-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  background: linear-gradient(90deg, #c18fd1, #9462a4);
+  background: linear-gradient(90deg, #7bb552, #3f8f43);
 }
 
 .c-character-detail__meter-fill--dark {
-  background: linear-gradient(90deg, #9b8ca0, #625a67);
+  background: linear-gradient(90deg, #9f463a, #6f2b27);
 }
 
 .c-character-detail__skills-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 8px 18px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  align-items: stretch;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.c-character-detail__skills-column {
+.c-character-detail__skill-item {
   display: grid;
-  gap: 8px;
-}
-
-.c-character-detail__skill-row {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 2.2em minmax(0, 1fr);
+  gap: 4px;
   align-items: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .c-character-detail__skill-name {
-  color: #2b5320;
-  font-size: 0.94rem;
+  color: #3c2a18;
+  font-size: clamp(0.62rem, 1.05vw, 1.08rem);
   font-weight: 700;
+  line-height: 1.05;
+  white-space: nowrap;
 }
 
-.c-character-detail__skill-pips {
-  display: flex;
-  gap: 4px;
+.c-character-detail__skill-icons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
 }
 
-.c-character-detail__pip {
-  width: 14px;
-  height: 20px;
-  clip-path: polygon(50% 0%, 100% 24%, 78% 100%, 22% 100%, 0% 24%);
-  border: 1px solid rgb(63 63 63 / 82%);
-  background: rgb(159 159 159 / 26%);
-}
-
-.c-character-detail__pip--purple {
-  border-color: rgb(114 72 122 / 90%);
-  background: linear-gradient(180deg, #d7b8e3, #975dab);
-}
-
-.c-character-detail__pip--gray {
-  border-color: rgb(88 88 88 / 90%);
-  background: linear-gradient(180deg, #bbb8b2, #707070);
-}
-
-.c-character-detail__pip--empty {
-  background: linear-gradient(180deg, rgb(153 153 153 / 18%), rgb(96 96 96 / 14%));
+.c-character-detail__skill-icon {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: clamp(12px, 1.15vw, 20px);
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
 }
 
 .c-character-detail__actions {
-  display: grid;
-  justify-items: end;
-  gap: 10px;
-  margin-top: auto;
-  padding-top: 6px;
+  position: absolute;
+  right: 4%;
+  bottom: 2.7%;
+  display: flex;
+  justify-content: end;
+  gap: 2.2%;
+  align-items: center;
+  width: 44%;
 }
 
-.c-character-detail__actions .c-button {
-  min-width: 116px;
-  font-size: 1rem;
+.c-character-detail__action-button {
+  width: 31%;
+  aspect-ratio: 319 / 72;
+  border: 0;
+  padding: 0 3%;
+  color: #423018;
+  background: url("../../ui/yuansu/具体面板ui/001_footer_button_yellow_1.0.png") center / contain no-repeat;
+  font: inherit;
+  font-size: clamp(0.75rem, 1.4vw, 1.55rem);
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.c-button--danger {
-  background: linear-gradient(180deg, #d89474, #b85d45);
+.c-character-detail__action-button--item {
+  aspect-ratio: 312 / 72;
+  background: url("../../ui/yuansu/具体面板ui/002_footer_button_green_1.0.png") center / contain no-repeat;
+  color: #f4ead1;
+}
+
+.c-character-detail__action-button:hover,
+.c-character-detail__action-button:focus-visible {
+  filter: brightness(1.05);
 }
 
 .view-library-overlay {
@@ -2061,32 +2187,6 @@
 
   .c-confirm-modal__actions {
     flex-direction: column;
-  }
-
-  .c-character-detail,
-  .c-character-detail__skills-grid,
-  .c-character-detail__info-row {
-    grid-template-columns: 1fr;
-  }
-
-  .c-character-detail {
-    min-height: auto;
-  }
-
-  .c-character-detail__left-column {
-    grid-template-rows: auto auto;
-  }
-
-  .c-character-detail__portrait {
-    min-height: 280px;
-  }
-
-  .c-character-detail__actions {
-    justify-items: stretch;
-  }
-
-  .c-character-detail__actions .c-button {
-    min-width: 0;
   }
 
   .c-library-shell__header,

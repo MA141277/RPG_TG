@@ -35,6 +35,7 @@ import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
 } from "./panels/global-player-panel";
+import cityEntryPortraitUrl from "../../ui/card/chengzhengsuoluetu.png?url";
 import { renderCharacterDetailView } from "./views/character/character-detail-view";
 import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderCity3dView } from "./views/city/city-3d-view";
@@ -136,6 +137,8 @@ function buildCharacterDetailOptions(
   const notorietyValue = input.appState.gameState.runtime.variables.notoriety;
 
   const options: CharacterDetailViewOptions = {
+    layout: input.appState.uiLayouts["character-detail-screen"],
+    layoutEditor: input.appState.layoutEditor,
     notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
     stipendText: `${playerCharacter.stats.gold} 文`,
     schoolName: "无",
@@ -227,7 +230,9 @@ function renderModal(
     body: "人物与城市坐标已经重合，确认后展开城市结构。",
     confirmLabel: "进入城市",
     cancelLabel: "稍后",
+    className: "c-confirm-modal--map-entry",
     portraitLabel: cityPortraits[modalState.cityId] ?? modalState.cityName,
+    portraitImageUrl: cityEntryPortraitUrl,
   });
 }
 

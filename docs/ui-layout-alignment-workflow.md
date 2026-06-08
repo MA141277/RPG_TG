@@ -17,6 +17,7 @@
 
 - `global-hud`
 - `start-screen`
+- `character-select-screen`
 
 布局目标统一登记在：
 
@@ -58,7 +59,7 @@
 3. 点击“复制完整布局参数”。
 4. 把复制出的 JSON 原样粘贴到对话里。
 
-补充：`start-screen` 支持实际界面编辑模式。打开开始界面的布局编辑器时，右侧显示参数面板，真实开始界面上的可编辑组件会出现拖拽框。对齐开始界面时应优先拖真实界面上的组件，而不是只依赖独立预览。
+补充：`start-screen` 和 `character-select-screen` 支持实际界面编辑模式。打开对应界面的布局编辑器时，右侧显示参数面板，真实界面上的可编辑组件会出现拖拽框。对齐 live 界面时应优先拖真实界面上的组件，而不是只依赖独立预览。
 
 代理侧：
 
@@ -114,9 +115,6 @@
 
 - `src/assets`
 - `ui`
-- `ui1`
-- `yuansu`
-- `sliced_ui_assets`
 - `map`
 
 机制目标：
@@ -125,9 +123,9 @@
 - 编辑器复制出的参数里带上资源路径。
 - 代理收到后按路径回写默认配置。
 
-## 8. 开始界面布局注意事项
+## 8. Live 界面布局注意事项
 
-开始界面已经接入 `start-screen` 布局目标。后续使用或扩展编辑器时，必须注意以下两个问题：
+开始界面已经接入 `start-screen` 布局目标，选择人物界面已经接入 `character-select-screen` 布局目标。后续使用或扩展编辑器时，必须注意以下问题：
 
 1. 默认布局坐标和尺寸必须贴合原 CSS 视觉结果。
 
@@ -141,7 +139,11 @@
 
 真实界面也应优先从布局组件背景读取图片，否则会出现“预览无图”或“编辑器换图不作用于真实按钮”的问题。
 
-`start-screen` 的实际界面编辑能力通过通用 live binding helper 接入：
+3. 新增 live target 时要同步默认预设、绑定关系和文档。
+
+   选择人物界面通过 `character-select-screen` 目标接入，默认布局写在 `src/content/layout-editor-presets.ts`，真实 DOM 绑定写在 `src/ui/main-ui/main-ui-flow.js` 的 selector -> `componentId` 映射中。类似界面扩展时必须继续复用同一套 `UiLayout` 数据结构和 `applyLiveLayoutBindings`，不能为单个界面另写拖拽框、缩放柄或临时协议。
+
+`start-screen` 和 `character-select-screen` 的实际界面编辑能力通过通用 live binding helper 接入：
 
 - [src/ui/tools/live-layout-bindings.js](D:/RPG_TG/src/ui/tools/live-layout-bindings.js)
 

@@ -1,0 +1,118 @@
+.c-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #17130d;
+  pointer-events: auto;
+}
+
+.c-loading-screen__stage {
+  position: relative;
+  width: min(100vw, calc(100vh * 1672 / 941));
+  aspect-ratio: 1672 / 941;
+  overflow: hidden;
+}
+
+.c-loading-screen__image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.c-loading-screen__image--full {
+  opacity: var(--loading-full-alpha);
+}
+
+.c-loading-screen__progress-mask-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: inset(
+    var(--loading-bar-top)
+    var(--loading-bar-right-inset)
+    var(--loading-bar-bottom)
+    var(--loading-bar-left)
+  );
+  opacity: var(--loading-bar-layer-opacity);
+  pointer-events: none;
+}
+
+.c-loading-screen__progress-highlight-image {
+  opacity: 1;
+}
+
+.c-loading-screen__cursor-generated {
+  position: absolute;
+  left: var(--loading-cursor-x);
+  top: var(--loading-cursor-y);
+  width: var(--loading-cursor-size);
+  aspect-ratio: 1;
+  opacity: var(--loading-cursor-effective-opacity);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgb(255 255 232 / 100%) 0%,
+      rgb(255 226 132 / 96%) 18%,
+      rgb(255 178 65 / 54%) 45%,
+      rgb(255 160 40 / 0%) 72%
+    );
+  box-shadow:
+    0 0 8px rgb(255 226 130 / 86%),
+    0 0 18px rgb(255 170 60 / 58%),
+    0 0 30px rgb(255 130 30 / 30%);
+  transform: translate(-50%, -50%) scale(0.96);
+  transform-origin: center;
+  animation: loading-cursor-breathe 1200ms ease-in-out infinite alternate;
+  pointer-events: none;
+  user-select: none;
+}
+
+.c-loading-screen__cursor-generated::before,
+.c-loading-screen__cursor-generated::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 999px;
+  background: rgb(255 235 160 / 62%);
+  transform: translate(-50%, -50%);
+}
+
+.c-loading-screen__cursor-generated::before {
+  width: 130%;
+  height: 7%;
+}
+
+.c-loading-screen__cursor-generated::after {
+  width: 7%;
+  height: 130%;
+}
+
+.c-loading-screen__sr-progress {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}
+
+@keyframes loading-cursor-breathe {
+  from {
+    opacity: calc(var(--loading-cursor-effective-opacity) * 0.75);
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+
+  to {
+    opacity: var(--loading-cursor-effective-opacity);
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}

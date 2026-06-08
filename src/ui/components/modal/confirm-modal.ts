@@ -4,6 +4,7 @@ export type ConfirmModalConfig = {
   confirmLabel: string;
   cancelLabel?: string;
   eyebrow?: string;
+  className?: string;
   portraitLabel?: string;
   portraitImageUrl?: string | null;
 };
@@ -11,7 +12,7 @@ export type ConfirmModalConfig = {
 export function renderConfirmModal(config: ConfirmModalConfig): string {
   return `
     <div class="c-modal-overlay">
-      <div class="c-confirm-modal c-panel">
+      <div class="c-confirm-modal c-panel${config.className == null ? "" : ` ${config.className}`}">
         <div class="c-confirm-modal__content">
           <p class="c-confirm-modal__eyebrow">${config.eyebrow ?? "确认"}</p>
           <h2 class="c-confirm-modal__title">${config.title}</h2>

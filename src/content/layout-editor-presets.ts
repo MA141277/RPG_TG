@@ -1,4 +1,6 @@
 import type {
+  CharacterDetailScreenLayout,
+  CharacterSelectScreenLayout,
   GlobalHudLayout,
   LayoutBackgroundAssetOption,
   StartScreenLayout,
@@ -8,11 +10,86 @@ import type {
   UiLayoutRect,
   UiLayoutSlice,
 } from "../domain/ui-layout";
-import portraitFrameUrl from "../../ui/yuansu/toukuang.png?url";
-import statusBoardUrl from "../../ui/yuansu/1_002_top_status_bar_1.0.png?url";
-import taskPanelUrl from "../../ui/yuansu/1_015_left_mission_panel_1.0.png?url";
-import startButtonUrl from "../../ui/yuansu/开局ui/start.png?url";
-import continueButtonUrl from "../../ui/yuansu/开局ui/continue.png?url";
+const portraitFrameUrl = new URL("../../ui/yuansu/toukuang.png", import.meta.url)
+  .href;
+const statusBoardUrl = new URL(
+  "../../ui/yuansu/1_002_top_status_bar_1.0.png",
+  import.meta.url
+).href;
+const taskPanelUrl = new URL(
+  "../../ui/yuansu/1_015_left_mission_panel_1.0.png",
+  import.meta.url
+).href;
+const startButtonUrl = new URL("../../ui/yuansu/开局ui/start.png", import.meta.url)
+  .href;
+const continueButtonUrl = new URL(
+  "../../ui/yuansu/开局ui/continue.png",
+  import.meta.url
+).href;
+const characterSelectBookUrl = new URL(
+  "../../ui/yuansu/人物选择ui/upload_1779790295652461983.png",
+  import.meta.url
+).href;
+const characterSelectCardUrl = new URL(
+  "../../ui/yuansu/人物选择ui/下载 (9).png",
+  import.meta.url
+).href;
+const characterSelectTagUrl = new URL(
+  "../../ui/yuansu/人物选择ui/下载 (7).png",
+  import.meta.url
+).href;
+const characterSelectChooseButtonUrl = new URL(
+  "../../ui/yuansu/人物选择ui/下载 (4).png",
+  import.meta.url
+).href;
+const characterSelectBackButtonUrl = new URL(
+  "../../ui/yuansu/人物选择ui/返回.png",
+  import.meta.url
+).href;
+const characterSelectDetailPaperUrl = new URL(
+  "../../ui/yuansu/人物选择ui/下载 (6).png",
+  import.meta.url
+).href;
+const characterSelectPreviousPageButtonUrl = new URL(
+  "../../ui/yuansu/人物选择ui/上一页.png",
+  import.meta.url
+).href;
+const characterSelectNextPageButtonUrl = new URL(
+  "../../ui/yuansu/人物选择ui/下一页.png",
+  import.meta.url
+).href;
+const characterDetailNamePlaqueUrl = new URL(
+  "../../ui/yuansu/具体面板ui/003_vertical_name_plaque_1.0.png",
+  import.meta.url
+).href;
+const characterDetailBackUrl = new URL(
+  "../../ui/yuansu/具体面板ui/back.png",
+  import.meta.url
+).href;
+const characterDetailBasicInfoPanelUrl = new URL(
+  "../../ui/yuansu/具体面板ui/005_panel_basic_info_with_tab_1.0.png",
+  import.meta.url
+).href;
+const characterDetailAbilityInfoPanelUrl = new URL(
+  "../../ui/yuansu/具体面板ui/006_panel_ability_info_with_tab_1.0.png",
+  import.meta.url
+).href;
+const characterDetailSkillInfoPanelUrl = new URL(
+  "../../ui/yuansu/具体面板ui/007_panel_skill_info_with_tab_1.0.png",
+  import.meta.url
+).href;
+const characterDetailBiographyPanelUrl = new URL(
+  "../../ui/yuansu/具体面板ui/011_panel_biography_1.0.png",
+  import.meta.url
+).href;
+const characterDetailYellowButtonUrl = new URL(
+  "../../ui/yuansu/具体面板ui/001_footer_button_yellow_1.0.png",
+  import.meta.url
+).href;
+const characterDetailGreenButtonUrl = new URL(
+  "../../ui/yuansu/具体面板ui/002_footer_button_green_1.0.png",
+  import.meta.url
+).href;
 
 const defaultSlice: UiLayoutSlice = {
   top: 24,
@@ -35,7 +112,11 @@ function normalizeAssetPath(path: string): string {
 }
 
 function createAssetLabel(path: string): string {
-  return path.startsWith("/") ? path.slice(1) : path;
+  const visiblePath = path.startsWith("/") ? path.slice(1) : path;
+  const pathParts = visiblePath.split("/");
+  const fileName = pathParts[pathParts.length - 1] ?? visiblePath;
+  const directory = pathParts.slice(0, -1).join("/");
+  return directory.length === 0 ? fileName : `${fileName} | ${directory}`;
 }
 
 function createAssetOption(path: string, imageUrl: string): LayoutBackgroundAssetOption {
@@ -76,6 +157,70 @@ const startButtonAsset = findAssetOption("/ui/yuansu/开局ui/start.png", startB
 const continueButtonAsset = findAssetOption(
   "/ui/yuansu/开局ui/continue.png",
   continueButtonUrl
+);
+const characterSelectBookAsset = findAssetOption(
+  "/ui/yuansu/人物选择ui/upload_1779790295652461983.png",
+  characterSelectBookUrl
+);
+const characterSelectCardAsset = findAssetOption(
+  "/ui/yuansu/人物选择ui/下载 (9).png",
+  characterSelectCardUrl
+);
+const characterSelectTagAsset = findAssetOption(
+  "/ui/yuansu/人物选择ui/下载 (7).png",
+  characterSelectTagUrl
+);
+const characterSelectChooseButtonAsset = findAssetOption(
+  "/ui/yuansu/人物选择ui/下载 (4).png",
+  characterSelectChooseButtonUrl
+);
+const characterSelectBackButtonAsset = findAssetOption(
+  "/ui/yuansu/人物选择ui/返回.png",
+  characterSelectBackButtonUrl
+);
+const characterSelectDetailPaperAsset = findAssetOption(
+  "/ui/yuansu/人物选择ui/下载 (6).png",
+  characterSelectDetailPaperUrl
+);
+const characterSelectPreviousPageButtonAsset = findAssetOption(
+  "/ui/yuansu/人物选择ui/上一页.png",
+  characterSelectPreviousPageButtonUrl
+);
+const characterSelectNextPageButtonAsset = findAssetOption(
+  "/ui/yuansu/人物选择ui/下一页.png",
+  characterSelectNextPageButtonUrl
+);
+const characterDetailNamePlaqueAsset = findAssetOption(
+  "/ui/yuansu/具体面板ui/003_vertical_name_plaque_1.0.png",
+  characterDetailNamePlaqueUrl
+);
+const characterDetailBackAsset = findAssetOption(
+  "/ui/yuansu/具体面板ui/back.png",
+  characterDetailBackUrl
+);
+const characterDetailBasicInfoPanelAsset = findAssetOption(
+  "/ui/yuansu/具体面板ui/005_panel_basic_info_with_tab_1.0.png",
+  characterDetailBasicInfoPanelUrl
+);
+const characterDetailAbilityInfoPanelAsset = findAssetOption(
+  "/ui/yuansu/具体面板ui/006_panel_ability_info_with_tab_1.0.png",
+  characterDetailAbilityInfoPanelUrl
+);
+const characterDetailSkillInfoPanelAsset = findAssetOption(
+  "/ui/yuansu/具体面板ui/007_panel_skill_info_with_tab_1.0.png",
+  characterDetailSkillInfoPanelUrl
+);
+const characterDetailBiographyPanelAsset = findAssetOption(
+  "/ui/yuansu/具体面板ui/011_panel_biography_1.0.png",
+  characterDetailBiographyPanelUrl
+);
+const characterDetailYellowButtonAsset = findAssetOption(
+  "/ui/yuansu/具体面板ui/001_footer_button_yellow_1.0.png",
+  characterDetailYellowButtonUrl
+);
+const characterDetailGreenButtonAsset = findAssetOption(
+  "/ui/yuansu/具体面板ui/002_footer_button_green_1.0.png",
+  characterDetailGreenButtonUrl
 );
 
 function createRect(
@@ -186,29 +331,348 @@ export function createDefaultStartScreenLayout(): StartScreenLayout {
       createComponent({
         id: "main-menu-content",
         label: "主菜单内容组",
-        rect: createRect(170, 416, 320, 220),
+        rect: createRect(350, 507, 553, 380),
         background: null,
         elements: [],
       }),
       createComponent({
         id: "main-menu-subtitle",
         label: "主菜单副标题",
-        rect: createRect(170, 416, 420, 36),
+        rect: createRect(49, 719, 420, 36),
         background: null,
         elements: [],
       }),
       createComponent({
         id: "start-button",
         label: "开始游戏按钮",
-        rect: createRect(170, 476, 136, 136),
+        rect: createRect(294, 616, 286, 286),
         background: createBackground(startButtonAsset, "contain"),
         elements: [],
       }),
       createComponent({
         id: "continue-button",
         label: "继续游戏按钮",
-        rect: createRect(328, 476, 136, 136),
+        rect: createRect(369, 608, 201, 201),
         background: createBackground(continueButtonAsset, "contain"),
+        elements: [],
+      }),
+    ],
+  };
+}
+
+const characterCardLayoutOrigin = {
+  x: 422,
+  y: 126,
+};
+const characterCardLayoutSize = {
+  width: 142,
+  height: 242,
+};
+const characterCardLayoutGap = {
+  x: 30,
+  y: 24,
+};
+
+function createCharacterCardComponents(): UiLayoutComponent[] {
+  return Array.from({ length: 8 }, (_, index) => {
+    const column = index % 4;
+    const row = Math.floor(index / 4);
+
+    return createComponent({
+      id: `character-card-${index + 1}`,
+      label: `人物卡片 ${index + 1}`,
+      rect: createRect(
+        characterCardLayoutOrigin.x +
+          column * (characterCardLayoutSize.width + characterCardLayoutGap.x),
+        characterCardLayoutOrigin.y +
+          row * (characterCardLayoutSize.height + characterCardLayoutGap.y),
+        characterCardLayoutSize.width,
+        characterCardLayoutSize.height
+      ),
+      background: createBackground(characterSelectCardAsset, "contain"),
+      elements: [
+        createElement(
+          "portrait",
+          "头像区域",
+          createRect(18, 20, characterCardLayoutSize.width - 36, 132)
+        ),
+        createElement(
+          "meta",
+          "卡片身份行",
+          createRect(14, 151, characterCardLayoutSize.width - 28, 16)
+        ),
+        createElement(
+          "name",
+          "卡片姓名",
+          createRect(20, 184, characterCardLayoutSize.width - 40, 28)
+        ),
+        createElement(
+          "bio",
+          "卡片简介",
+          createRect(18, 210, characterCardLayoutSize.width - 36, 24)
+        ),
+        createElement(
+          "placeholder-label",
+          "占位标题",
+          createRect(18, 162, characterCardLayoutSize.width - 36, 24)
+        ),
+        createElement(
+          "placeholder-index",
+          "占位卷号",
+          createRect(18, 194, characterCardLayoutSize.width - 36, 18)
+        ),
+      ],
+    });
+  });
+}
+
+export function createDefaultCharacterSelectScreenLayout(): CharacterSelectScreenLayout {
+  return {
+    id: "character-select-screen",
+    label: "选择人物界面",
+    screenSize: {
+      width: 1600,
+      height: 900,
+    },
+    components: [
+      createComponent({
+        id: "character-layout",
+        label: "人物选择整体布局",
+        rect: createRect(90, -40, 1600, 900),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "character-hero",
+        label: "左侧标题栏",
+        rect: createRect(34, 117, 190, 720),
+        background: null,
+        elements: [
+          createElement("era", "时代印章", createRect(213, -19, 50, 50)),
+          createElement("poem", "竖排说明", createRect(-176, 322, 70, 190)),
+        ],
+      }),
+      createComponent({
+        id: "character-book",
+        label: "人物名册面板",
+        rect: createRect(211, 0, 1388, 783),
+        background: createBackground(characterSelectBookAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-tabs",
+        label: "名册分页签",
+        rect: createRect(340, 142, 110, 460),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "character-tab-characters",
+        label: "人物传页签",
+        rect: createRect(315, 109, 168, 211),
+        background: createBackground(characterSelectTagAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-tab-roster",
+        label: "群雄录页签",
+        rect: createRect(315, 285, 168, 210),
+        background: createBackground(characterSelectTagAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-tab-ministers",
+        label: "名臣卷页签",
+        rect: createRect(315, 459, 168, 210),
+        background: createBackground(characterSelectTagAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-book-content",
+        label: "名册内容区",
+        rect: createRect(447, 144, 988, 562),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "character-grid",
+        label: "人物卡片网格",
+        rect: createRect(422, 126, 658, 508),
+        background: null,
+        elements: [],
+      }),
+      ...createCharacterCardComponents(),
+      createComponent({
+        id: "character-detail",
+        label: "人物详情面板",
+        rect: createRect(1110, 126, 292, 492),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "character-detail-paper",
+        label: "详情纸张内容",
+        rect: createRect(1110, 126, 292, 492),
+        background: createBackground(characterSelectDetailPaperAsset, "stretch"),
+        elements: [
+          createElement("eyebrow", "详情眉标", createRect(38, 34, 168, 18)),
+          createElement("name", "详情姓名", createRect(38, 62, 166, 36)),
+          createElement("subtitle", "详情副标题", createRect(38, 102, 204, 22)),
+          createElement("badge", "已选徽章", createRect(218, 48, 48, 84)),
+          createElement("stats", "属性列表", createRect(38, 146, 216, 218)),
+          createElement("section-title", "简介标题", createRect(38, 378, 120, 20)),
+          createElement("bio", "详情简介", createRect(38, 404, 216, 54)),
+          createElement("empty", "空状态提示", createRect(38, 42, 210, 24)),
+        ],
+      }),
+      createComponent({
+        id: "character-footer",
+        label: "底部操作区",
+        rect: createRect(75, 715, 1392, 154),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "character-back-button",
+        label: "返回按钮",
+        rect: createRect(84, 724, 112, 112),
+        background: createBackground(characterSelectBackButtonAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-pagination",
+        label: "分页文字",
+        rect: createRect(672, 769, 318, 36),
+        background: null,
+        elements: [
+          createElement("left-ornament", "左侧分页纹样", createRect(0, 6, 132, 24)),
+          createElement("text", "分页文本", createRect(124, -8, 118, 32)),
+          createElement("right-ornament", "右侧分页纹样", createRect(186, 6, 132, 24)),
+        ],
+      }),
+      createComponent({
+        id: "character-choose-button",
+        label: "开始冒险按钮",
+        rect: createRect(1188, 692, 176, 176),
+        background: createBackground(characterSelectChooseButtonAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-previous-page-button",
+        label: "上一页按钮",
+        rect: createRect(1058, 724, 118, 118),
+        background: createBackground(characterSelectPreviousPageButtonAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-next-page-button",
+        label: "下一页按钮",
+        rect: createRect(1372, 724, 116, 116),
+        background: createBackground(characterSelectNextPageButtonAsset, "contain"),
+        elements: [],
+      }),
+    ],
+  };
+}
+
+export function createDefaultCharacterDetailScreenLayout(): CharacterDetailScreenLayout {
+  return {
+    id: "character-detail-screen",
+    label: "人物通用界面",
+    screenSize: {
+      width: 1672,
+      height: 941,
+    },
+    components: [
+      createComponent({
+        id: "character-detail-canvas",
+        label: "人物通用界面画布",
+        rect: createRect(-10, -14, 1635, 920),
+        background: createBackground(characterDetailBackAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-detail-name-plaque",
+        label: "人物姓名竖牌",
+        rect: createRect(123, 58, 92, 406),
+        background: createBackground(characterDetailNamePlaqueAsset, "contain"),
+        elements: [
+          createElement("name", "竖排姓名", createRect(14, 0, 58, 292)),
+        ],
+      }),
+      createComponent({
+        id: "character-detail-portrait-area",
+        label: "人物展示区",
+        rect: createRect(219, 106, 385, 481),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "character-detail-biography",
+        label: "人物简介面板",
+        rect: createRect(141, 613, 490, 182),
+        background: createBackground(characterDetailBiographyPanelAsset, "stretch"),
+        elements: [
+          createElement("lifespan", "生卒年份", createRect(66, 36, 274, 35)),
+          createElement("bio", "人物简介", createRect(34, 74, 430, 70)),
+        ],
+      }),
+      createComponent({
+        id: "character-detail-basic-info",
+        label: "基本情报面板",
+        rect: createRect(629, 104, 880, 310),
+        background: createBackground(characterDetailBasicInfoPanelAsset, "contain"),
+        elements: [
+          createElement("title", "基本情报标题", createRect(62, 10, 180, 42)),
+          createElement("content", "基本情报内容", createRect(34, 64, 788, 218)),
+        ],
+      }),
+      createComponent({
+        id: "character-detail-ability-info",
+        label: "能力情报面板",
+        rect: createRect(620, 432, 888, 163),
+        background: createBackground(characterDetailAbilityInfoPanelAsset, "contain"),
+        elements: [
+          createElement("title", "能力情报标题", createRect(62, 13, 180, 40)),
+          createElement("content", "能力列表", createRect(41, 46, 777, 56)),
+        ],
+      }),
+      createComponent({
+        id: "character-detail-skill-info",
+        label: "技能情报面板",
+        rect: createRect(628, 627, 880, 162),
+        background: createBackground(characterDetailSkillInfoPanelAsset, "stretch"),
+        elements: [
+          createElement("title", "技能情报标题", createRect(62, 3, 180, 40)),
+          createElement("content", "技能列表", createRect(38, 42, 818, 92)),
+        ],
+      }),
+      createComponent({
+        id: "character-detail-actions",
+        label: "底部按钮组",
+        rect: createRect(869, 812, 736, 52),
+        background: null,
+        elements: [],
+      }),
+      createComponent({
+        id: "character-detail-card-button",
+        label: "卡片按钮",
+        rect: createRect(808, 796, 228, 52),
+        background: createBackground(characterDetailYellowButtonAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-detail-valuables-button",
+        label: "贵重品按钮",
+        rect: createRect(1043, 796, 228, 52),
+        background: createBackground(characterDetailGreenButtonAsset, "contain"),
+        elements: [],
+      }),
+      createComponent({
+        id: "character-detail-back-button",
+        label: "返回按钮",
+        rect: createRect(1277, 796, 228, 52),
+        background: createBackground(characterDetailYellowButtonAsset, "contain"),
         elements: [],
       }),
     ],
