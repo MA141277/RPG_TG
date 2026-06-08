@@ -2,8 +2,7 @@ import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
 import type { HouseModuleId } from "../../domain/house-module";
 import {
-  ZHU_YUANZHANG_STORY_STAGES,
-  readZhuYuanzhangStoryStage,
+  isZhuYuanzhangMonkStoryStage,
 } from "../../domain/zhu-yuanzhang-story";
 import { readCalendarDateNumber } from "./time-progression";
 
@@ -38,9 +37,7 @@ export function getInsufficientDaysForTimedActivity(
 export function getCouncilPriorityHouseModuleId(
   state: GameState
 ): Extract<HouseModuleId, "keep-house" | "temple-house"> {
-  return readZhuYuanzhangStoryStage(state) === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-    ? "temple-house"
-    : "keep-house";
+  return isZhuYuanzhangMonkStoryStage(state) ? "temple-house" : "keep-house";
 }
 
 export function isCouncilPriorityHouseDefinition(

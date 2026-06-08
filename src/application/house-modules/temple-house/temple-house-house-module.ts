@@ -30,6 +30,8 @@ import type {
 } from "../../../domain/house-modules/temple-house-session";
 import { KEEP_HOUSE_VARIABLE_KEYS } from "../../../domain/keep-house";
 import {
+  isZhuYuanzhangBeggingJourneyStage,
+  isZhuYuanzhangMonkStoryStage,
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
@@ -338,9 +340,22 @@ function createActivityConfirmOverlay(
 }
 
 function isMonkStoryStage(gameState: GameState): boolean {
+  return isZhuYuanzhangMonkStoryStage(gameState);
+}
+
+function isBeggingJourneyStage(gameState: GameState): boolean {
+  return isZhuYuanzhangBeggingJourneyStage(gameState);
+}
+
+function isThirdTempleWeekAssignmentPending(gameState: GameState): boolean {
   return (
     readZhuYuanzhangStoryStage(gameState) ===
-    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple &&
+    isBeggingUnlocked(gameState) &&
+    readBooleanFlag(
+      gameState,
+      ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingTransitionAssigned
+    )
   );
 }
 
@@ -1059,6 +1074,13 @@ function getTempleMeetingPolicyLines(gameState: GameState): string[] {
     ];
   }
 
+  if (isThirdTempleWeekAssignmentPending(gameState)) {
+    return [
+      "方丈翻过簿册，道：濠州左近已快讨不出粮来，只守着院里杂务，终究救不了眼前饥荒。",
+      "汝颍一路近来人群杂沓、施粮处也多些，这一轮不再任你自选，改由你北上远途化缘，为寺里带粮回来。",
+    ];
+  }
+
   if (isBeggingUnlocked(gameState)) {
     return [
       "方丈道：这一轮仍以维持寺庙运转为先，院中缺人手，院外也缺米粮。",
@@ -1073,11 +1095,20 @@ function getTempleMeetingPolicyLines(gameState: GameState): string[] {
 }
 
 function getTempleAssignDutyLines(
+  gameState: GameState,
   reviewWorkChoices: ReturnType<typeof getReviewWorkChoices>
 ): string[] {
   const availableLabels = reviewWorkChoices
     .filter((workChoice) => workChoice.disabled !== true)
     .map((workChoice) => workChoice.label);
+
+  if (isThirdTempleWeekAssignmentPending(gameState)) {
+    return [
+      "方丈用指节轻轻点在木牌上，道：这一轮不再由你自挑。",
+      "差事已定为远途化缘，先往颍州方向走，看哪里还能求得些米粮回来接济寺众。",
+      "你只管带粮回寺，外头风声再杂，也先莫忘了这一轮的本分。",
+    ];
+  }
 
   return [
     "方丈抬手点了点案前木牌，示意你自选这一轮的差事。",
@@ -1096,6 +1127,16 @@ function getReviewWorkChoices(gameState: GameState): Array<{
 }> {
   if (!isMonkStoryStage(gameState)) {
     return [];
+  }
+
+  if (isThirdTempleWeekAssignmentPending(gameState)) {
+    return [
+      {
+        id: "beg-alms",
+        label: "远途化缘",
+        tone: "accent",
+      },
+    ];
   }
 
   const choices: Array<{
@@ -1206,6 +1247,17 @@ function submitReviewWorkPlan(
   sessionState: TempleHouseSessionState,
   workPlan: "temple-help" | "beg-alms"
 ): HouseModuleTransitionResult<"temple-house"> {
+  const thirdTempleWeekAssignment = isThirdTempleWeekAssignmentPending(
+    input.gameState
+  );
+  const secondTempleWeekTransition =
+    !thirdTempleWeekAssignment &&
+    readZhuYuanzhangStoryStage(input.gameState) ===
+      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple &&
+    isBeggingUnlocked(input.gameState) &&
+    getTempleWeek(input.gameState) === 2;
+  const nextWorkPlan = thirdTempleWeekAssignment ? "beg-alms" : workPlan;
+
   if (workPlan === "beg-alms" && !isBeggingUnlocked(input.gameState)) {
     return withSessionState(
       {
@@ -1237,9 +1289,15 @@ function submitReviewWorkPlan(
     },
     ui: {
       ...input.gameState.ui,
-      activeMissionId: workPlan === "beg-alms" ? "mission.temple.beg-alms" : null,
+      activeMissionId:
+        nextWorkPlan === "beg-alms" ? "mission.temple.beg-alms" : null,
       reviewDateText: formatReviewDateText(30),
-      mainHouseMissionText: workPlan === "beg-alms" ? "外出化缘" : "寺内帮忙",
+      mainHouseMissionText:
+        nextWorkPlan === "beg-alms"
+          ? thirdTempleWeekAssignment
+            ? "远赴颍州化缘"
+            : "外出化缘"
+          : "寺内帮忙",
     },
     runtime: {
       ...input.gameState.runtime,
@@ -1247,13 +1305,24 @@ function submitReviewWorkPlan(
         ...input.gameState.runtime.flags,
         [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
         [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        ...(secondTempleWeekTransition
+          ? {
+              [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingTransitionAssigned]: true,
+            }
+          : {}),
       },
       variables: {
         ...input.gameState.runtime.variables,
         [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: thirdTempleWeekAssignment
+          ? ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
+          : readZhuYuanzhangStoryStage(input.gameState),
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: thirdTempleWeekAssignment
+          ? 3
+          : getTempleWeek(input.gameState),
         [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
         [TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: "",
-        [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: workPlan,
+        [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: nextWorkPlan,
         [TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood]: 0,
         [TEMPLE_HOUSE_VARIABLE_KEYS.beggingLastGrade]: "",
       },
@@ -1269,13 +1338,20 @@ function submitReviewWorkPlan(
       meetingStage: "assigned",
       dialoguePhase: "open",
       selectedTaskId: null,
-      selectedWorkPlan: workPlan,
+      selectedWorkPlan: nextWorkPlan,
       dailyActionPanel: "root",
       dialogueLines:
-        workPlan === "beg-alms"
+        nextWorkPlan === "beg-alms"
           ? [
-              "这一轮评定，你改去寺外化缘。",
-              "离寺后直接在城中按化缘流程推进，不必再回寺里点这份工作。",
+              ...(thirdTempleWeekAssignment
+                ? [
+                    "这一轮评定，你改去颍州方向远途化缘。",
+                    "离寺后先往北路城镇走，在外地按化缘流程求粮，带回寺里即可交差。",
+                  ]
+                : [
+                    "这一轮评定，你改去寺外化缘。",
+                    "离寺后直接在城中按化缘流程推进，不必再回寺里点这份工作。",
+                  ]),
             ]
           : [
               "这一轮评定，先以寺内帮忙为主。",
@@ -1284,8 +1360,10 @@ function submitReviewWorkPlan(
       overlay: createAlertOverlay(
         "本轮差事已定",
         [
-          workPlan === "beg-alms"
-            ? "本轮方向已定为外出化缘。离寺后直接去城中化缘，不再从寺庙工作菜单进入。"
+          nextWorkPlan === "beg-alms"
+            ? thirdTempleWeekAssignment
+              ? "本轮方向已定为远途化缘。先往颍州方向求粮，离寺后直接在外地城镇推进，不再从寺庙工作菜单进入。"
+              : "本轮方向已定为外出化缘。离寺后直接去城中化缘，不再从寺庙工作菜单进入。"
             : "本轮方向已定为寺内帮忙。离开评定后，可在寺庙事务中选择抄经、扫院或挑水。",
           "本次寺中评定结束，下次评定倒计时已重置为 30 天。",
         ],
@@ -1381,7 +1459,9 @@ function startBegAlmsWork(
       ui: {
         ...input.gameState.ui,
         activeMissionId: taskDefinition.missionId,
-        mainHouseMissionText: taskDefinition.title,
+        mainHouseMissionText: isBeggingJourneyStage(input.gameState)
+          ? "远赴颍州化缘"
+          : taskDefinition.title,
       },
       runtime: {
         ...input.gameState.runtime,
@@ -1398,10 +1478,17 @@ function startBegAlmsWork(
       selectedTaskId: taskDefinition.id,
       dailyActionPanel: "work",
       overlay: createAlertOverlay(
-        "准备外出化缘",
+        isBeggingJourneyStage(input.gameState) ? "准备远途化缘" : "准备外出化缘",
         [
-          taskDefinition.briefing,
-          "这次不走寺内杂务考校。离开寺庙后，你便可按外出赚钱的流程推进。",
+          ...(isBeggingJourneyStage(input.gameState)
+            ? [
+                "住持已把这一轮差事定为远途化缘，你先往颍州方向走，在外地城镇求粮。",
+                "这次不走寺内杂务考校。离开寺庙后，直接按城中化缘与买粮流程推进，带粮回寺即可。",
+              ]
+            : [
+                taskDefinition.briefing,
+                "这次不走寺内杂务考校。离开寺庙后，你便可按外出赚钱的流程推进。",
+              ]),
         ],
         "info"
       ),
@@ -1926,7 +2013,10 @@ function handleAction(
             {
               meetingStage: "assign-duty",
               dialoguePhase: "open",
-              dialogueLines: getTempleAssignDutyLines(reviewWorkChoices),
+              dialogueLines: getTempleAssignDutyLines(
+                nextState,
+                reviewWorkChoices
+              ),
             }
           );
         default:
@@ -3043,6 +3133,9 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
           {
             label: "当前差事",
             value:
+              (isBeggingJourneyStage(nextState)
+                ? "远途化缘"
+                : null) ??
               selectedTask?.title ??
               (currentWorkPlan === "beg-alms"
                 ? "外出化缘"
