@@ -37,7 +37,10 @@ export const prototypeHouseAccessRefusalRules: HouseAccessRefusalRule[] = [
     id: "rule.zhu_yuanzhang.temple.keep_closed",
     priority: 50,
     houseModuleIds: ["keep-house"],
-    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
+    storyStages: [
+      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple,
+      ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
+    ],
     speakerCharacterId: "char.kulan_soldier",
     title: "帅府闭门",
     text: "军机要出，请阁下回避。",
@@ -1586,7 +1589,8 @@ export function createPrototypeCharactersForStoryStage(
 
   if (
     playerCharacter != null &&
-    storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+    (storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple ||
+      storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney)
   ) {
     delete playerCharacter.clanId;
     delete playerCharacter.affiliationLabel;

@@ -119,6 +119,7 @@ import {
 } from "./content/zhu-yuanzhang-early-characters";
 import type { CharacterDefinition } from "./domain/character";
 import type { CityBeggingGameCompletionResult } from "./domain/city-begging-minigame";
+import type { EventTriggerTiming } from "./domain/event";
 import type { HouseDefinition } from "./domain/house";
 import type { HouseModuleTransitionResult } from "./domain/house-module";
 import type {
@@ -136,6 +137,7 @@ import type {
 } from "./domain/ui-layout";
 import type { ValuableItemId } from "./domain/valuable-item";
 import {
+  isHaozhouShortageDuringBeggingJourney,
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
   type ZhuYuanzhangStoryStage,
@@ -577,6 +579,27 @@ function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
   window.onBeggingGameComplete?.(result);
 }
 
+function triggerStoryEventsForTiming(
+  timing: EventTriggerTiming,
+  state: GameState,
+  characterDefinitions: CharacterDefinition[]
+): {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+} {
+  return triggerStoryEvents(
+    {
+      state,
+      characterDefinitions,
+    },
+    {
+      eventDefinitionsById: storyEventDefinitionsById,
+      sceneDefinitionsById: storySceneDefinitionsById,
+    },
+    buildStoryTriggerInput(timing, state)
+  );
+}
+
 function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
   const priorityModuleId = getCouncilPriorityHouseModuleId(appState.gameState);
   const currentCityId = appState.gameState.world.currentCityId;
@@ -844,6 +867,25 @@ function startCityBeggingMiniGameLoop(): void {
 function openBeggingMiniGame(): void {
   const playerCharacter = getCurrentPlayerCharacter();
   if (playerCharacter == null || !isPlayerMonkIdentity(playerCharacter)) {
+    return;
+  }
+
+  if (isHaozhouShortageDuringBeggingJourney(appState.gameState)) {
+    stopCityBeggingMiniGameLoop();
+    appState = {
+      ...closeCityMenu(closeCityDirectory(appState)),
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: "char.kulan_temple_abbot",
+        textLines: [
+          "濠州近来断粮得厉害，沿街托钵也讨不出几把米来。",
+          "住持早已吩咐过，这一轮别把时日耗在城里，还是往颍州方向走，外地才更有指望。",
+        ],
+        advanceHintText: "改去北路",
+      },
+      beggingMiniGameState: null,
+    };
+    renderApp();
     return;
   }
 
@@ -2919,9 +2961,16 @@ function handleModalConfirm() {
   }
 
   houseRuntime.clearAllHouseIntervals();
+  const enteredCityState = enterCity(appState.gameState, appState.modalState.cityId);
+  const storyResult = triggerStoryEventsForTiming(
+    "city-enter",
+    enteredCityState,
+    appState.characterDefinitions
+  );
   appState = {
     ...appState,
-    gameState: enterCity(appState.gameState, appState.modalState.cityId),
+    gameState: storyResult.state,
+    characterDefinitions: storyResult.characterDefinitions,
     modalState: null,
     locationDialogueState: null,
   };
@@ -3237,16 +3286,10 @@ function syncPassiveStoryTriggers(): void {
     return;
   }
 
-  const result = triggerStoryEvents(
-    {
-      state: appState.gameState,
-      characterDefinitions: appState.characterDefinitions,
-    },
-    {
-      eventDefinitionsById: storyEventDefinitionsById,
-      sceneDefinitionsById: storySceneDefinitionsById,
-    },
-    buildStoryTriggerInput("indoor-screen-shown", appState.gameState)
+  const result = triggerStoryEventsForTiming(
+    "indoor-screen-shown",
+    appState.gameState,
+    appState.characterDefinitions
   );
 
   if (result.state === appState.gameState) {

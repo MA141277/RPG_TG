@@ -14,6 +14,7 @@ import type {
   GrainShopDialoguePhase,
   GrainShopSessionState,
 } from "../../../domain/house-modules/grain-shop-session";
+import { isHaozhouShortageDuringBeggingJourney } from "../../../domain/zhu-yuanzhang-story";
 import { generateLedgerQuestion, getAccountingGradeReward, isLedgerAnswerCorrect, resolveAccountingGrade } from "../../grain-shop/accounting-minigame";
 import { applyAccountingReward } from "../../grain-shop/apply-accounting-reward";
 import { createGrainShopSnapshot } from "../../grain-shop/grain-shop-snapshot";
@@ -324,6 +325,17 @@ function createCouncilTimeInsufficientOverlay(
   );
 }
 
+function createGrainSoldOutOverlay(): GrainShopSessionState["overlay"] {
+  return toAlertOverlay(
+    "今日无米可买",
+    [
+      "粮铺掌柜摊了摊手：“濠州这一阵闹得太凶，店里剩下的几袋米早被熟客和军中先订走了。”",
+      "“你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。”",
+    ],
+    "warning"
+  );
+}
+
 function startAccountingMinigame(
   input: HouseModuleDispatchInput<"grain-shop">,
   sessionState: GrainShopSessionState | null
@@ -388,6 +400,9 @@ function handleAction(
     case "dismiss-dialogue":
       return withDialoguePhase(input, sessionState, "idle");
     case "buy":
+      if (isHaozhouShortageDuringBeggingJourney(input.gameState)) {
+        return withOverlay(input, sessionState, createGrainSoldOutOverlay());
+      }
       return openTradeOverlay(input, sessionState, "buy");
     case "sell":
       return openTradeOverlay(input, sessionState, "sell");
@@ -424,6 +439,13 @@ function handleAction(
       const overlay = sessionState?.overlay;
       if (overlay?.type !== "trade") {
         return createTransitionResult(input);
+      }
+
+      if (
+        overlay.mode === "buy" &&
+        isHaozhouShortageDuringBeggingJourney(input.gameState)
+      ) {
+        return withOverlay(input, sessionState, createGrainSoldOutOverlay());
       }
 
       const tradeResult = executeGrainTrade(
@@ -697,6 +719,7 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
     const isIdle = sessionState.dialoguePhase === "idle";
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
+    const isBuyBlocked = isHaozhouShortageDuringBeggingJourney(input.gameState);
 
     return {
       moduleId: "grain-shop",
@@ -730,7 +753,11 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
         ? {
             title: "粮行操作",
             actions: [
-              { id: "buy", label: "买粮" },
+              {
+                id: "buy",
+                label: isBuyBlocked ? "买粮（断供）" : "买粮",
+                ...(isBuyBlocked ? { disabled: true } : {}),
+              },
               { id: "sell", label: "卖粮" },
               { id: "investigate", label: "调查" },
               { id: "accounting", label: "算账", tone: "accent" },

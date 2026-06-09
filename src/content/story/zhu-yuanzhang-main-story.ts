@@ -4,6 +4,7 @@ import type { StoryArcDefinition, StoryBeatDefinition } from "../../domain/story
 import { createStoryBeatFlagKey } from "../../domain/story";
 import {
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
+  ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } from "../../domain/zhu-yuanzhang-story";
 
@@ -14,7 +15,7 @@ export const zhuYuanzhangMainStoryArc: StoryArcDefinition = {
   chapterId: "chapter.zhu-yuanzhang-rise",
   title: "朱元璋主线",
   summary:
-    "以皇觉寺开场、寺中评定、寺内劳作与化缘解锁为起点的早期主线草案。",
+    "以皇觉寺开场、寺中评定、寺内劳作、化缘解锁与第三周远途化缘为起点的早期主线草案。",
   entryEventId: "event.story.zhu_yuanzhang.ordination",
   stageVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage,
   defaultStage: "huangjue-temple",
@@ -22,6 +23,7 @@ export const zhuYuanzhangMainStoryArc: StoryArcDefinition = {
     "ordination-and-stay",
     "first-temple-review",
     "earn-trust-in-temple",
+    "far-alms-journey",
   ],
   tags: ["main-story", "temple-opening"],
 };
@@ -58,6 +60,16 @@ export const zhuYuanzhangMainStoryBeats: StoryBeatDefinition[] = [
     eventIds: ["event.story.zhu_yuanzhang.unlock_begging"],
     completionFlagKey: createStoryBeatFlagKey(ARC_ID, "earn-trust-in-temple"),
     tags: ["loop", "unlock"],
+  },
+  {
+    id: "far-alms-journey",
+    arcId: ARC_ID,
+    title: "远途化缘",
+    summary:
+      "第三周目被方丈定为远途化缘，玩家初到颍州时第一次真正听见汝颍红巾与濠州兵气的风声。",
+    eventIds: ["event.story.zhu_yuanzhang.runing_broadcast"],
+    completionFlagKey: createStoryBeatFlagKey(ARC_ID, "far-alms-journey"),
+    tags: ["loop", "foreshadowing", "city-enter"],
   },
 ];
 
@@ -140,6 +152,34 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     ],
     entrySceneId: "scene.story.zhu_yuanzhang.unlock_begging",
     tags: ["main-story", "unlock", "temple-loop"],
+  },
+  {
+    id: "event.story.zhu_yuanzhang.runing_broadcast",
+    chapterId: zhuYuanzhangMainStoryArc.chapterId,
+    name: "颍州街头风声",
+    occurrence: "once",
+    trigger: {
+      timing: "city-enter",
+      scope: {
+        cityId: "city.runing",
+      },
+      priority: 160,
+    },
+    conditions: [
+      {
+        type: "flag",
+        key: ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked,
+        expected: true,
+      },
+      {
+        type: "variable",
+        key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage,
+        operator: "==",
+        value: ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
+      },
+    ],
+    entrySceneId: "scene.story.zhu_yuanzhang.runing_broadcast",
+    tags: ["main-story", "city-enter", "foreshadowing"],
   },
 ];
 
@@ -236,6 +276,11 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
             key: ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked,
             value: false,
           },
+          {
+            type: "set-flag",
+            key: ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingTransitionAssigned,
+            value: false,
+          },
         ],
       },
     ],
@@ -311,6 +356,28 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
             value: true,
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "scene.story.zhu_yuanzhang.runing_broadcast",
+    name: "颍州街头风声",
+    actions: [
+      {
+        type: "narration",
+        text: "你背着旧布袋踏进颍州城门，只见街上行人挤得发闷，粮铺门前和施粥棚下都排着长队，叫卖声、哭喊声、议论声混成一片。",
+      },
+      {
+        type: "narration",
+        text: "有人在街口高声招呼，说汝颍之间近来聚众愈多，红巾号子一传十、十传百；也有人低声提起韩林儿的名字，说北路还有施粮活民的地方。",
+      },
+      {
+        type: "narration",
+        text: "茶棚边又有商旅压低嗓子议论：濠州近来也起了兵气，郭子兴已经聚起一股人马，城门盘查只会越来越紧。",
+      },
+      {
+        type: "narration",
+        text: "你把这些风声都听进耳里，却没忘住持交代的本分。此行先求粮，先把能带回寺里的活路背稳。",
       },
     ],
   },
