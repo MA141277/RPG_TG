@@ -1,0 +1,1766 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Faxian Piece Spine Editor</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101216;
+        --panel: #191d24;
+        --panel-2: #242a34;
+        --text: #eef2f6;
+        --muted: #9ba8b8;
+        --line: #343b48;
+        --accent: #e2b84a;
+        --blue: #6fb6ff;
+        --green: #63d297;
+        --danger: #ef6b6b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        min-height: 100vh;
+      }
+
+      .stage {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 24px;
+        overflow: auto;
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          #0c0e12;
+        background-size: 32px 32px;
+      }
+
+      .viewport {
+        position: relative;
+        width: min(780px, calc(100vw - 450px));
+        aspect-ratio: 1773 / 2364;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        overflow: hidden;
+        background: white;
+      }
+
+      #referenceCanvas,
+      #pieceCanvas,
+      #boneOverlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #referenceCanvas,
+      #pieceCanvas {
+        display: block;
+      }
+
+      #boneOverlay {
+        touch-action: none;
+        cursor: crosshair;
+      }
+
+      .part-box {
+        fill: rgba(111, 182, 255, 0.07);
+        stroke: var(--blue);
+        stroke-width: 4;
+        stroke-dasharray: 16 10;
+        pointer-events: none;
+      }
+
+      .part-anchor {
+        fill: var(--green);
+        stroke: #0b1117;
+        stroke-width: 2;
+        pointer-events: none;
+      }
+
+      .bone-line {
+        stroke: var(--accent);
+        stroke-width: 5;
+        stroke-linecap: round;
+        filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.65));
+      }
+
+      .bone-line.selected {
+        stroke: var(--blue);
+      }
+
+      .bone-line.foreign {
+        stroke: rgba(226, 184, 74, 0.45);
+      }
+
+      .bone-joint {
+        fill: #101216;
+        stroke: white;
+        stroke-width: 2;
+      }
+
+      .bone-joint.selected {
+        fill: var(--blue);
+      }
+
+      .bone-joint.vertex-selected {
+        fill: var(--accent);
+      }
+
+      .draft-line {
+        stroke: var(--blue);
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-dasharray: 10 8;
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 100vh;
+        padding: 22px;
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: 0;
+      }
+
+      .note {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .controls {
+        display: grid;
+        gap: 14px;
+      }
+
+      label,
+      .control-block {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .row,
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .checkbox-row {
+        min-height: 32px;
+      }
+
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--blue);
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--blue);
+      }
+
+      output {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: var(--blue);
+      }
+
+      button.active,
+      button[aria-pressed="true"] {
+        border-color: var(--blue);
+        background: #26384b;
+      }
+
+      button.danger:hover {
+        border-color: var(--danger);
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .button-row.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .part-list,
+      .bone-list {
+        display: grid;
+        gap: 6px;
+        max-height: 170px;
+        overflow: auto;
+      }
+
+      .part-list button,
+      .bone-list button {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 10px;
+        text-align: left;
+      }
+
+      .part-list small,
+      .bone-list small {
+        color: var(--muted);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 210px;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px;
+        background: #0d1118;
+        color: var(--text);
+        font: 12px/1.5 Consolas, "Cascadia Mono", monospace;
+      }
+
+      .stats {
+        margin-top: auto;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 980px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .viewport {
+          width: min(780px, calc(100vw - 44px));
+        }
+
+        .sidebar {
+          min-height: auto;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="stage">
+        <div class="viewport">
+          <canvas id="referenceCanvas" width="1773" height="2364"></canvas>
+          <canvas id="pieceCanvas" width="1773" height="2364"></canvas>
+          <svg id="boneOverlay" viewBox="0 0 1773 2364" aria-label="骨骼和分件编辑层"></svg>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div>
+          <h1>Faxian Piece Spine Editor</h1>
+          <p class="note">先排布分件素材，再选中部位建立该部位骨骼。骨骼端点可以从任意已有骨骼继续拉出。</p>
+        </div>
+
+        <div class="controls">
+          <div class="button-row">
+            <button id="arrangeMode" type="button">排布素材</button>
+            <button id="boneMode" type="button">建立骨骼</button>
+          </div>
+
+          <label class="checkbox-row">
+            <span>预览待机</span>
+            <input id="idlePreview" type="checkbox" />
+          </label>
+
+          <label>
+            <span class="row">待机幅度 <output id="idleStrengthValue">1.00</output></span>
+            <input id="idleStrength" type="range" min="0" max="2" step="0.01" value="1" />
+          </label>
+
+          <label>
+            <span class="row">待机速度 <output id="idleSpeedValue">1.00</output></span>
+            <input id="idleSpeed" type="range" min="0.2" max="2" step="0.01" value="1" />
+          </label>
+
+          <label>
+            <span class="row">底图透明度 <output id="opacityValue">0.35</output></span>
+            <input id="referenceOpacity" type="range" min="0" max="1" step="0.01" value="0.35" />
+          </label>
+
+          <label class="checkbox-row">
+            <span>显示分件贴图</span>
+            <input id="showPieces" type="checkbox" checked />
+          </label>
+
+          <label>
+            <span class="row">贴图透明度 <output id="pieceOpacityValue">0.92</output></span>
+            <input id="pieceOpacity" type="range" min="0" max="1" step="0.01" value="0.92" />
+          </label>
+
+          <div class="control-block">
+            <span>部位素材</span>
+            <div class="part-list" id="partList"></div>
+          </div>
+
+          <div class="button-row three">
+            <button id="layerUp" type="button">上移图层</button>
+            <button id="layerDown" type="button">下移图层</button>
+            <button id="resetPart" type="button">重置部位</button>
+          </div>
+
+          <label>
+            <span class="row">选中部位缩放 <output id="partScaleValue">1.00</output></span>
+            <input id="partScale" type="range" min="0.15" max="3" step="0.01" value="1" />
+          </label>
+
+          <label class="checkbox-row">
+            <span>隐藏骨骼</span>
+            <input id="hideBones" type="checkbox" />
+          </label>
+
+          <div class="button-row">
+            <button id="addBone" type="button">创建骨骼</button>
+            <button id="resetDraft" type="button">取消起点</button>
+          </div>
+
+          <div class="control-block">
+            <span>骨骼列表</span>
+            <div class="bone-list" id="boneList"></div>
+          </div>
+
+          <div class="button-row">
+            <button id="deleteBone" class="danger" type="button">删除选中骨骼</button>
+            <button id="clearBones" class="danger" type="button">清空骨骼</button>
+          </div>
+
+          <div class="button-row">
+            <button id="refreshJson" type="button">刷新 JSON</button>
+            <button id="copyJson" type="button">复制 JSON</button>
+          </div>
+
+          <textarea id="spineJson" spellcheck="false"></textarea>
+        </div>
+
+        <p class="stats" id="status">载入素材中...</p>
+      </aside>
+    </main>
+
+    <script src="./initial-markup.generated.js"></script>
+    <script src="./user-layout.generated.js"></script>
+    <script src="./piece-assets.generated.js"></script>
+    <script type="module">
+      const referencePath = "../../src/faxian/leg/man.png";
+      const imageSize = { width: 1773, height: 2364 };
+      const piecePaths = {
+        head: window.FAXIAN_PIECE_ASSETS?.head || "../../src/faxian/leg/head.png",
+        torso: window.FAXIAN_PIECE_ASSETS?.torso || "../../src/faxian/leg/torso.png",
+        leftArm: window.FAXIAN_PIECE_ASSETS?.leftArm || "../../src/faxian/leg/leftarm.png",
+        rightArm: window.FAXIAN_PIECE_ASSETS?.rightArm || "../../src/faxian/leg/rightarm.png",
+        leftLeg: window.FAXIAN_PIECE_ASSETS?.leftLeg || "../../src/faxian/leg/leftleg.png",
+        rightLeg: window.FAXIAN_PIECE_ASSETS?.rightLeg || "../../src/faxian/leg/rightleg%20(1).png",
+        sword: window.FAXIAN_PIECE_ASSETS?.sword || "../../src/faxian/leg/sword.png",
+      };
+      const pieceNames = {
+        head: "\u5934\u90e8",
+        torso: "\u8eaf\u5e72",
+        leftArm: "\u5de6\u81c2",
+        rightArm: "\u53f3\u81c2",
+        leftLeg: "\u5de6\u817f",
+        rightLeg: "\u53f3\u817f",
+        sword: "\u5200",
+      };
+      const idleProfiles = {
+        torso: { dx: 0, dy: -18, rotation: 1.1, phase: 0 },
+        head: { dx: 0, dy: -24, rotation: -2.4, phase: 0.12 },
+        leftArm: { dx: -4, dy: -12, rotation: -3.4, phase: 0.22 },
+        rightArm: { dx: 4, dy: -10, rotation: 3.8, phase: 0.35 },
+        leftLeg: { dx: 1, dy: -5, rotation: 1.4, phase: 0.5 },
+        rightLeg: { dx: -1, dy: -4, rotation: -1.1, phase: 0.42 },
+        sword: { dx: 6, dy: -8, rotation: 2.8, phase: 0.32 },
+      };
+      const jointWeldDistance = 18;
+      const jointDriverPriority = ["torso", "head", "rightArm", "leftArm", "rightLeg", "leftLeg", "sword"];
+      const defaultPartSpecs = [
+        { id: "sword", imageKey: "sword", boneName: "Bone 4", pointKey: "end", anchorX: 0.5, anchorY: 0.06, scale: 0.82, offsetX: -40, offsetY: -8, rotation: 75, layer: 70 },
+        { id: "rightArm", imageKey: "rightArm", boneName: "Bone 2", pointKey: "end", anchorX: 0.55, anchorY: 0.05, scale: 1.45, offsetX: -80, offsetY: -10, rotation: -3, layer: 40 },
+        { id: "leftArm", imageKey: "leftArm", boneName: "Bone 5", pointKey: "end", anchorX: 0.45, anchorY: 0.05, scale: 1.45, offsetX: -30, offsetY: -10, rotation: -1, layer: 50 },
+        { id: "rightLeg", imageKey: "rightLeg", boneName: "Bone 13", pointKey: "start", anchorX: 0.35, anchorY: 0.05, scale: 1.95, offsetX: 80, offsetY: 80, rotation: 0, layer: 20 },
+        { id: "leftLeg", imageKey: "leftLeg", boneName: "Bone 10", pointKey: "start", anchorX: 0.65, anchorY: 0.05, scale: 1.95, offsetX: -100, offsetY: 80, rotation: -2, layer: 30 },
+        { id: "torso", imageKey: "torso", boneName: "Bone 8", pointKey: "start", anchorX: 0.5, anchorY: 0.05, scale: 1.48, offsetX: -20, offsetY: -5, rotation: -1, layer: 60 },
+        { id: "head", imageKey: "head", boneName: "Bone 1", pointKey: "start", anchorX: 0.55, anchorY: 0.58, scale: 1.42, offsetX: -35, offsetY: 85, rotation: 2, layer: 80 },
+      ];
+      const partFallbacks = {
+        head: { x: 900, y: 410 },
+        torso: { x: 830, y: 760 },
+        leftArm: { x: 710, y: 760 },
+        rightArm: { x: 1110, y: 760 },
+        leftLeg: { x: 735, y: 1390 },
+        rightLeg: { x: 1035, y: 1390 },
+        sword: { x: 535, y: 905 },
+      };
+      const bonePartGuess = {
+        "Bone 1": "head",
+        "Bone 2": "rightArm",
+        "Bone 3": "rightArm",
+        "Bone 4": "rightArm",
+        "Bone 5": "leftArm",
+        "Bone 6": "leftArm",
+        "Bone 7": "leftArm",
+        "Bone 8": "torso",
+        "Bone 9": "torso",
+        "Bone 10": "leftLeg",
+        "Bone 11": "leftLeg",
+        "Bone 12": "leftLeg",
+        "Bone 13": "rightLeg",
+        "Bone 14": "rightLeg",
+        "Bone 15": "rightLeg",
+      };
+
+      const canvas = document.querySelector("#referenceCanvas");
+      const ctx = canvas.getContext("2d");
+      const pieceCanvas = document.querySelector("#pieceCanvas");
+      const pieceCtx = pieceCanvas.getContext("2d");
+      const overlay = document.querySelector("#boneOverlay");
+      const partList = document.querySelector("#partList");
+      const boneList = document.querySelector("#boneList");
+      const jsonText = document.querySelector("#spineJson");
+      const statusText = document.querySelector("#status");
+      const controls = {
+        arrangeMode: document.querySelector("#arrangeMode"),
+        boneMode: document.querySelector("#boneMode"),
+        idlePreview: document.querySelector("#idlePreview"),
+        idleStrength: document.querySelector("#idleStrength"),
+        idleSpeed: document.querySelector("#idleSpeed"),
+        referenceOpacity: document.querySelector("#referenceOpacity"),
+        showPieces: document.querySelector("#showPieces"),
+        pieceOpacity: document.querySelector("#pieceOpacity"),
+        layerUp: document.querySelector("#layerUp"),
+        layerDown: document.querySelector("#layerDown"),
+        resetPart: document.querySelector("#resetPart"),
+        partScale: document.querySelector("#partScale"),
+        hideBones: document.querySelector("#hideBones"),
+        addBone: document.querySelector("#addBone"),
+        resetDraft: document.querySelector("#resetDraft"),
+        deleteBone: document.querySelector("#deleteBone"),
+        clearBones: document.querySelector("#clearBones"),
+        refreshJson: document.querySelector("#refreshJson"),
+        copyJson: document.querySelector("#copyJson"),
+      };
+      const outputs = {
+        opacity: document.querySelector("#opacityValue"),
+        pieceOpacity: document.querySelector("#pieceOpacityValue"),
+        partScale: document.querySelector("#partScaleValue"),
+        idleStrength: document.querySelector("#idleStrengthValue"),
+        idleSpeed: document.querySelector("#idleSpeedValue"),
+      };
+      const state = {
+        mode: "arrange",
+        idlePreview: false,
+        idleTime: 0,
+        addingBone: false,
+        hideBones: false,
+        draftStart: null,
+        draftFromVertex: false,
+        pointerPoint: null,
+        selectedPartId: "torso",
+        selectedBoneId: null,
+        selectedVertex: null,
+        draggingPart: null,
+        parts: [],
+        bones: [],
+        jointClusters: [],
+        endpointJoints: new Map(),
+        partConstraints: new Map(),
+        posedBones: new Map(),
+      };
+
+      const referenceImage = await loadImage(referencePath);
+      const pieceImages = Object.fromEntries(
+        await Promise.all(Object.entries(piecePaths).map(async ([key, src]) => [key, await loadImage(src)])),
+      );
+      const startupProject = window.FAXIAN_USER_SPINE_LAYOUT || window.FAXIAN_SPINE_MARKUP;
+      if (startupProject) {
+        importProject(startupProject);
+      }
+      if (state.parts.length === 0) {
+        state.parts = makeDefaultParts();
+      }
+      drawScene();
+      syncUi();
+      statusText.textContent = `已载入 man.png、${state.parts.length} 个分件、${state.bones.length} 根骨骼`;
+      setInterval(() => animate(performance.now()), 33);
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error(`Cannot load ${src}`));
+          img.src = src;
+        });
+      }
+
+      function makeDefaultParts() {
+        return defaultPartSpecs.map((spec) => {
+          const bone = state.bones.find((item) => item.name === spec.boneName);
+          const point = bone?.[spec.pointKey] || partFallbacks[spec.id] || { x: imageSize.width / 2, y: imageSize.height / 2 };
+          return {
+            id: spec.id,
+            name: pieceNames[spec.id],
+            imageKey: spec.imageKey,
+            x: point.x + spec.offsetX,
+            y: point.y + spec.offsetY,
+            anchorX: spec.anchorX,
+            anchorY: spec.anchorY,
+            scale: spec.scale,
+            rotation: spec.rotation,
+            layer: spec.layer,
+          };
+        });
+      }
+
+      function selectedPart() {
+        return state.parts.find((part) => part.id === state.selectedPartId) || null;
+      }
+
+      function selectedBone() {
+        return state.bones.find((bone) => bone.id === state.selectedBoneId) || null;
+      }
+
+      function drawReference() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.globalAlpha = Number.parseFloat(controls.referenceOpacity.value);
+        ctx.drawImage(referenceImage, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      function drawScene() {
+        drawReference();
+        drawParts();
+      }
+
+      function drawParts() {
+        pieceCtx.clearRect(0, 0, pieceCanvas.width, pieceCanvas.height);
+        window.FAXIAN_DRAWN_PIECES = 0;
+        if (!controls.showPieces.checked) {
+          return;
+        }
+        ensurePoseBones();
+        pieceCtx.save();
+        pieceCtx.globalAlpha = Number.parseFloat(controls.pieceOpacity.value);
+        for (const part of sortedParts()) {
+          drawPart(part);
+          window.FAXIAN_DRAWN_PIECES += 1;
+        }
+        pieceCtx.restore();
+      }
+
+      function drawPart(part) {
+        const image = pieceImages[part.imageKey];
+        if (!image) {
+          return;
+        }
+        const segments = partPoseSegments(part.id);
+        if (segments.length > 0) {
+          drawSkinnedPart(part, image, segments);
+          return;
+        }
+        const width = image.naturalWidth * part.scale;
+        const height = image.naturalHeight * part.scale;
+        const pivot = partPivot(part.id) || { x: part.x, y: part.y };
+        pieceCtx.save();
+        pieceCtx.translate(pivot.x, pivot.y);
+        pieceCtx.translate(part.x - pivot.x, part.y - pivot.y);
+        pieceCtx.rotate(degToRad(part.rotation));
+        pieceCtx.drawImage(image, -width * part.anchorX, -height * part.anchorY, width, height);
+        pieceCtx.restore();
+      }
+
+      function sortedParts() {
+        return [...state.parts].sort((a, b) => a.layer - b.layer);
+      }
+
+      function pointFromEvent(event) {
+        const rect = overlay.getBoundingClientRect();
+        return {
+          x: ((event.clientX - rect.left) / rect.width) * imageSize.width,
+          y: ((event.clientY - rect.top) / rect.height) * imageSize.height,
+        };
+      }
+
+      function localPointInPart(point, part) {
+        const image = pieceImages[part.imageKey];
+        if (!image) {
+          return null;
+        }
+        const cos = Math.cos(degToRad(-part.rotation));
+        const sin = Math.sin(degToRad(-part.rotation));
+        const dx = point.x - part.x;
+        const dy = point.y - part.y;
+        const localX = dx * cos - dy * sin;
+        const localY = dx * sin + dy * cos;
+        const left = -image.naturalWidth * part.scale * part.anchorX;
+        const top = -image.naturalHeight * part.scale * part.anchorY;
+        return {
+          x: localX,
+          y: localY,
+          hit:
+            localX >= left &&
+            localX <= left + image.naturalWidth * part.scale &&
+            localY >= top &&
+            localY <= top + image.naturalHeight * part.scale,
+        };
+      }
+
+      function hitTestPart(point) {
+        return sortedParts()
+          .reverse()
+          .find((part) => localPointInPart(point, part)?.hit);
+      }
+
+      function partBoxPoints(part) {
+        const image = pieceImages[part.imageKey];
+        if (!image) {
+          return [];
+        }
+        const width = image.naturalWidth * part.scale;
+        const height = image.naturalHeight * part.scale;
+        const left = -width * part.anchorX;
+        const top = -height * part.anchorY;
+        return [
+          rotatePartPoint(part, left, top),
+          rotatePartPoint(part, left + width, top),
+          rotatePartPoint(part, left + width, top + height),
+          rotatePartPoint(part, left, top + height),
+        ].map((point) => deformPartPoint(part, point));
+      }
+
+      function rotatePartPoint(part, localX, localY) {
+        const cos = Math.cos(degToRad(part.rotation));
+        const sin = Math.sin(degToRad(part.rotation));
+        return {
+          x: part.x + localX * cos - localY * sin,
+          y: part.y + localX * sin + localY * cos,
+        };
+      }
+
+      function imagePointToWorld(part, image, sx, sy) {
+        const width = image.naturalWidth * part.scale;
+        const height = image.naturalHeight * part.scale;
+        const localX = (sx / image.naturalWidth) * width - width * part.anchorX;
+        const localY = (sy / image.naturalHeight) * height - height * part.anchorY;
+        return rotatePartPoint(part, localX, localY);
+      }
+
+      function drawSkinnedPart(part, image, segments) {
+        const cols = part.id === "torso" ? 5 : 4;
+        const rows = Math.max(6, segments.length * 5);
+        const grid = [];
+        for (let row = 0; row <= rows; row += 1) {
+          const v = row / rows;
+          const line = [];
+          for (let col = 0; col <= cols; col += 1) {
+            const u = col / cols;
+            const sx = u * image.naturalWidth;
+            const sy = v * image.naturalHeight;
+            const restPoint = imagePointToWorld(part, image, sx, sy);
+            line.push(deformPointBySegments(restPoint, segments));
+          }
+          grid.push(line);
+        }
+
+        for (let row = 0; row < rows; row += 1) {
+          for (let col = 0; col < cols; col += 1) {
+            const source = [
+              { x: (col / cols) * image.naturalWidth, y: (row / rows) * image.naturalHeight },
+              { x: ((col + 1) / cols) * image.naturalWidth, y: (row / rows) * image.naturalHeight },
+              { x: (col / cols) * image.naturalWidth, y: ((row + 1) / rows) * image.naturalHeight },
+              { x: ((col + 1) / cols) * image.naturalWidth, y: ((row + 1) / rows) * image.naturalHeight },
+            ];
+            drawImageTriangle(image, source[0], source[1], source[2], grid[row][col], grid[row][col + 1], grid[row + 1][col]);
+            drawImageTriangle(image, source[3], source[2], source[1], grid[row + 1][col + 1], grid[row + 1][col], grid[row][col + 1]);
+          }
+        }
+      }
+
+      function drawImageTriangle(image, s0, s1, s2, d0, d1, d2) {
+        pieceCtx.save();
+        pieceCtx.beginPath();
+        pieceCtx.moveTo(d0.x, d0.y);
+        pieceCtx.lineTo(d1.x, d1.y);
+        pieceCtx.lineTo(d2.x, d2.y);
+        pieceCtx.closePath();
+        pieceCtx.clip();
+
+        const sourceMatrix = triangleMatrix(s0, s1, s2);
+        const destMatrix = triangleMatrix(d0, d1, d2);
+        const inverse = invertMatrix(sourceMatrix);
+        if (inverse) {
+          const matrix = multiplyMatrix(destMatrix, inverse);
+          pieceCtx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+          pieceCtx.drawImage(image, 0, 0);
+        }
+        pieceCtx.restore();
+      }
+
+      function partPivot(partId) {
+        const firstBone = state.bones.find((bone) => bone.partId === partId);
+        if (firstBone) {
+          return firstBone.start;
+        }
+        const part = state.parts.find((item) => item.id === partId);
+        return part ? { x: part.x, y: part.y } : null;
+      }
+
+      function currentPartPivot(partId, fallbackPivot) {
+        const firstBone = state.bones.find((bone) => bone.partId === partId);
+        if (!firstBone) {
+          return fallbackPivot;
+        }
+        return currentBonePoint(firstBone, "start", false);
+      }
+
+      function transformPartPoint(part, point) {
+        return deformPartPoint(part, point);
+      }
+
+      function deformPartPoint(part, point) {
+        ensurePoseBones();
+        const segments = partPoseSegments(part.id);
+        return segments.length > 0 ? deformPointBySegments(point, segments) : point;
+      }
+
+      function idlePose(partId) {
+        if (!state.idlePreview || !hasPartBone(partId)) {
+          return { dx: 0, dy: 0, rotation: 0 };
+        }
+        const profile = idleProfiles[partId] || { dx: 0, dy: -6, rotation: 1, phase: 0 };
+        const strength = Number.parseFloat(controls.idleStrength.value);
+        const speed = Number.parseFloat(controls.idleSpeed.value);
+        const wave = Math.sin((state.idleTime * speed + profile.phase) * Math.PI * 2);
+        const breathe = Math.sin((state.idleTime * speed * 0.5 + profile.phase) * Math.PI * 2);
+        return {
+          dx: profile.dx * wave * strength,
+          dy: profile.dy * breathe * strength,
+          rotation: profile.rotation * wave * strength,
+        };
+      }
+
+      function hasPartBone(partId) {
+        return state.bones.some((bone) => bone.partId === partId);
+      }
+
+      function currentBonePoint(bone, pointKey, includeOwnPose = true) {
+        ensurePoseBones();
+        const pose = includeOwnPose ? state.posedBones.get(bone.id) : null;
+        if (pose) {
+          return pose[pointKey];
+        }
+        return bone[pointKey];
+      }
+
+      function partPoseSegments(partId) {
+        ensurePoseBones();
+        return state.bones
+          .filter((bone) => bone.partId === partId)
+          .map((bone) => state.posedBones.get(bone.id))
+          .filter(Boolean);
+      }
+
+      function ensurePoseBones() {
+        if (state.poseStamp === state.idleTime && state.posedBones.size === state.bones.length) {
+          return;
+        }
+        state.poseStamp = state.idleTime;
+        state.posedBones = computePoseBones();
+      }
+
+      function computePoseBones() {
+        const posed = new Map();
+        for (const bone of state.bones) {
+          posed.set(bone.id, { bone, start: { ...bone.start }, end: { ...bone.end }, restStart: bone.start, restEnd: bone.end });
+        }
+
+        const torsoPose = idlePose("torso");
+        const torsoPivot = torsoRootPoint();
+        const torsoRotation = degToRad(torsoPose.rotation);
+        for (const bone of state.bones.filter((item) => item.partId === "torso")) {
+          posed.set(bone.id, {
+            bone,
+            start: rotateAround(bone.start, torsoPivot, torsoRotation, torsoPose.dx, torsoPose.dy),
+            end: rotateAround(bone.end, torsoPivot, torsoRotation, torsoPose.dx, torsoPose.dy),
+            restStart: bone.start,
+            restEnd: bone.end,
+          });
+        }
+
+        for (const partId of ["head", "rightArm", "leftArm", "rightLeg", "leftLeg", "sword"]) {
+          const chain = orientedPartChain(partId);
+          if (chain.length === 0) {
+            continue;
+          }
+          let root = posedJointPoint(chain[0].bone, chain[0].startKey, posed);
+          let previousRestAngle = null;
+          let currentAngle = null;
+          const inheritedRotation = driverRotationAtEndpoint(chain[0].bone, chain[0].startKey, posed);
+          chain.forEach((segment, index) => {
+            const restStart = segment.bone[segment.startKey];
+            const restEnd = segment.bone[segment.endKey];
+            const restAngle = Math.atan2(restEnd.y - restStart.y, restEnd.x - restStart.x);
+            const local = degToRad(localBoneRotation(segment.bone.partId, index, chain.length));
+            if (currentAngle === null) {
+              currentAngle = restAngle + inheritedRotation + local;
+            } else {
+              currentAngle += restAngle - previousRestAngle + local;
+            }
+            const length = distance(restStart, restEnd);
+            const end = {
+              x: root.x + Math.cos(currentAngle) * length,
+              y: root.y + Math.sin(currentAngle) * length,
+            };
+            const pose = {
+              bone: segment.bone,
+              start: segment.startKey === "start" ? root : end,
+              end: segment.startKey === "start" ? end : root,
+              restStart: segment.bone.start,
+              restEnd: segment.bone.end,
+            };
+            posed.set(segment.bone.id, pose);
+            root = end;
+            previousRestAngle = restAngle;
+          });
+        }
+        return posed;
+      }
+
+      function torsoRootPoint() {
+        const torsoBones = state.bones.filter((bone) => bone.partId === "torso");
+        const points = torsoBones.flatMap((bone) => [bone.start, bone.end]);
+        return points.reduce((lowest, point) => (point.y > lowest.y ? point : lowest), points[0] || { x: imageSize.width / 2, y: imageSize.height / 2 });
+      }
+
+      function orientedPartChain(partId) {
+        const bones = state.bones.filter((bone) => bone.partId === partId);
+        if (bones.length === 0) {
+          return [];
+        }
+        const endpoints = bones.flatMap((bone) => [
+          { bone, pointKey: "start", point: bone.start },
+          { bone, pointKey: "end", point: bone.end },
+        ]);
+        let rootEndpoint =
+          endpoints.find((endpoint) => endpointJoint(endpoint.bone, endpoint.pointKey)?.endpoints.some((item) => item.bone.partId === "torso")) ||
+          endpoints.reduce((top, endpoint) => (endpoint.point.y < top.point.y ? endpoint : top), endpoints[0]);
+        if (partId === "head") {
+          rootEndpoint =
+            endpoints.find((endpoint) => endpointJoint(endpoint.bone, endpoint.pointKey)?.endpoints.some((item) => item.bone.partId === "torso")) ||
+            endpoints.reduce((low, endpoint) => (endpoint.point.y > low.point.y ? endpoint : low), endpoints[0]);
+        }
+
+        const chain = [];
+        const used = new Set();
+        let currentBone = rootEndpoint.bone;
+        let currentStartKey = rootEndpoint.pointKey;
+        while (currentBone && !used.has(currentBone.id)) {
+          used.add(currentBone.id);
+          const endKey = currentStartKey === "start" ? "end" : "start";
+          chain.push({ bone: currentBone, startKey: currentStartKey, endKey });
+          const next = bones.find((candidate) => {
+            if (used.has(candidate.id)) {
+              return false;
+            }
+            return (
+              endpointConnected(currentBone, endKey, candidate, "start") ||
+              endpointConnected(currentBone, endKey, candidate, "end")
+            );
+          });
+          if (!next) {
+            break;
+          }
+          currentStartKey = endpointConnected(currentBone, endKey, next, "start") ? "start" : "end";
+          currentBone = next;
+        }
+        return chain;
+      }
+
+      function endpointConnected(aBone, aKey, bBone, bKey) {
+        return distance(aBone[aKey], bBone[bKey]) <= jointWeldDistance;
+      }
+
+      function endpointJoint(bone, pointKey) {
+        return state.endpointJoints.get(endpointKey(bone.id, pointKey)) || null;
+      }
+
+      function posedJointPoint(bone, pointKey, posed) {
+        const joint = endpointJoint(bone, pointKey);
+        if (!joint) {
+          return { ...bone[pointKey] };
+        }
+        const torsoEndpoint = joint.endpoints.find((endpoint) => endpoint.bone.partId === "torso");
+        const torsoPose = torsoEndpoint ? posed.get(torsoEndpoint.bone.id)?.[torsoEndpoint.pointKey] : null;
+        if (torsoPose) {
+          return { ...torsoPose };
+        }
+        const posedPoints = joint.endpoints
+          .map((endpoint) => posed.get(endpoint.bone.id)?.[endpoint.pointKey])
+          .filter(Boolean);
+        return posedPoints.length > 0 ? averagePoints(posedPoints) : { ...joint.point };
+      }
+
+      function driverRotationAtEndpoint(bone, pointKey, posed) {
+        const joint = endpointJoint(bone, pointKey);
+        if (!joint) {
+          return 0;
+        }
+        const torsoEndpoint = joint.endpoints.find((endpoint) => endpoint.bone.partId === "torso");
+        const torsoPose = torsoEndpoint ? posed.get(torsoEndpoint.bone.id) : null;
+        if (!torsoPose) {
+          return 0;
+        }
+        const restAngle = Math.atan2(torsoEndpoint.bone.end.y - torsoEndpoint.bone.start.y, torsoEndpoint.bone.end.x - torsoEndpoint.bone.start.x);
+        const poseAngle = Math.atan2(torsoPose.end.y - torsoPose.start.y, torsoPose.end.x - torsoPose.start.x);
+        return poseAngle - restAngle;
+      }
+
+      function localBoneRotation(partId, index, count) {
+        if (!state.idlePreview || !hasPartBone(partId)) {
+          return 0;
+        }
+        const profile = idleProfiles[partId] || { rotation: 0, phase: 0 };
+        const strength = Number.parseFloat(controls.idleStrength.value);
+        const speed = Number.parseFloat(controls.idleSpeed.value);
+        const wave = Math.sin((state.idleTime * speed + profile.phase + index * 0.08) * Math.PI * 2);
+        const falloff = count <= 1 ? 1 : 1 - index * 0.25;
+        return profile.rotation * wave * strength * Math.max(0.35, falloff);
+      }
+
+      function deformPointBySegments(point, segments) {
+        if (segments.length === 0) {
+          return point;
+        }
+
+        let totalWeight = 0;
+        const blended = { x: 0, y: 0 };
+        for (const segment of segments) {
+          const rest = projectPointOnSegment(point, segment.restStart, segment.restEnd);
+          const distanceToSegment = distance(point, rest.point);
+          const weight = segmentWeight(distanceToSegment, segment);
+          const deformed = mapPointBySegment(point, segment);
+          blended.x += deformed.x * weight;
+          blended.y += deformed.y * weight;
+          totalWeight += weight;
+        }
+
+        if (totalWeight <= 0) {
+          return point;
+        }
+        return {
+          x: blended.x / totalWeight,
+          y: blended.y / totalWeight,
+        };
+      }
+
+      function mapPointBySegment(point, segment) {
+        const currentLength = Math.max(1, distance(segment.start, segment.end));
+        const restLength = Math.max(1, distance(segment.restStart, segment.restEnd));
+        const restDir = normalize({
+          x: segment.restEnd.x - segment.restStart.x,
+          y: segment.restEnd.y - segment.restStart.y,
+        });
+        const currentDir = normalize({
+          x: segment.end.x - segment.start.x,
+          y: segment.end.y - segment.start.y,
+        });
+        const restNormal = { x: -restDir.y, y: restDir.x };
+        const currentNormal = { x: -currentDir.y, y: currentDir.x };
+        const local = {
+          x: point.x - segment.restStart.x,
+          y: point.y - segment.restStart.y,
+        };
+        const axial = dot(local, restDir) * (currentLength / restLength);
+        const lateral = dot(local, restNormal);
+        const lateralScale = currentLength / restLength;
+        const deformed = {
+          x: segment.start.x + currentDir.x * axial + currentNormal.x * lateral * lateralScale,
+          y: segment.start.y + currentDir.y * axial + currentNormal.y * lateral * lateralScale,
+        };
+        return {
+          x: deformed.x,
+          y: deformed.y,
+        };
+      }
+
+      function segmentWeight(distanceToSegment, segment) {
+        const length = distance(segment.restStart, segment.restEnd);
+        const reach = Math.max(24, length * 0.42);
+        const normalizedDistance = distanceToSegment / reach;
+        return 1 / ((normalizedDistance + 0.18) * (normalizedDistance + 0.18));
+      }
+
+      function rebuildJointClusters() {
+        const endpointItems = [];
+        for (const bone of state.bones) {
+          endpointItems.push({ bone, pointKey: "start", point: bone.start });
+          endpointItems.push({ bone, pointKey: "end", point: bone.end });
+        }
+
+        const clusters = [];
+        for (const item of endpointItems) {
+          let cluster = clusters.find((candidate) => distance(candidate.point, item.point) <= jointWeldDistance);
+          if (!cluster) {
+            cluster = { point: { ...item.point }, endpoints: [] };
+            clusters.push(cluster);
+          }
+          cluster.endpoints.push(item);
+          cluster.point = averagePoints(cluster.endpoints.map((endpoint) => endpoint.point));
+        }
+
+        state.endpointJoints = new Map();
+        state.jointClusters = clusters.filter((cluster) => cluster.endpoints.length > 1);
+        for (const cluster of state.jointClusters) {
+          cluster.driverPartId = chooseJointDriver(cluster);
+          for (const endpoint of cluster.endpoints) {
+            endpoint.bone[endpoint.pointKey] = { ...cluster.point };
+            state.endpointJoints.set(endpointKey(endpoint.bone.id, endpoint.pointKey), cluster);
+          }
+        }
+      }
+
+      function snapPointToJoint(point) {
+        const joint = state.jointClusters.find((cluster) => distance(cluster.point, point) <= jointWeldDistance);
+        if (joint) {
+          return { ...joint.point };
+        }
+        const nearest = nearestEndpoint(point);
+        return nearest && distance(nearest, point) <= jointWeldDistance ? { ...nearest } : point;
+      }
+
+      function nearestEndpoint(point) {
+        let best = null;
+        let bestDistance = Infinity;
+        for (const bone of state.bones) {
+          for (const pointKey of ["start", "end"]) {
+            const endpoint = bone[pointKey];
+            const endpointDistance = distance(endpoint, point);
+            if (endpointDistance < bestDistance) {
+              best = endpoint;
+              bestDistance = endpointDistance;
+            }
+          }
+        }
+        return best;
+      }
+
+      function chooseJointDriver(cluster) {
+        const partIds = new Set(cluster.endpoints.map((endpoint) => endpoint.bone.partId).filter(Boolean));
+        return jointDriverPriority.find((partId) => partIds.has(partId)) || cluster.endpoints[0]?.bone.partId || "torso";
+      }
+
+      function averagePoints(points) {
+        const total = points.reduce(
+          (sum, point) => ({ x: sum.x + point.x, y: sum.y + point.y }),
+          { x: 0, y: 0 },
+        );
+        return { x: total.x / points.length, y: total.y / points.length };
+      }
+
+      function endpointKey(boneId, pointKey) {
+        return `${boneId}:${pointKey}`;
+      }
+
+      function vertexPoint(vertex) {
+        const bone = state.bones.find((item) => item.id === vertex?.boneId);
+        return bone ? bone[vertex.pointKey] : null;
+      }
+
+      function toNormalized(point) {
+        return {
+          x: Number((point.x / imageSize.width).toFixed(6)),
+          y: Number((point.y / imageSize.height).toFixed(6)),
+        };
+      }
+
+      function addBone(start, end) {
+        start = snapPointToJoint(start);
+        end = snapPointToJoint(end);
+        const length = Math.hypot(end.x - start.x, end.y - start.y);
+        if (length < 16 || !state.selectedPartId) {
+          return;
+        }
+        const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+        state.bones.push({
+          id,
+          name: `${pieceNames[state.selectedPartId] || state.selectedPartId} ${partBoneCount(state.selectedPartId) + 1}`,
+          partId: state.selectedPartId,
+          start: { ...start },
+          end: { ...end },
+        });
+        state.selectedBoneId = id;
+        state.selectedVertex = null;
+        state.addingBone = false;
+        state.draftStart = null;
+        state.draftFromVertex = false;
+        state.pointerPoint = null;
+        rebuildJointClusters();
+        statusText.textContent = `已为 ${pieceNames[state.selectedPartId]} 创建骨骼`;
+        syncUi();
+      }
+
+      function partBoneCount(partId) {
+        return state.bones.filter((bone) => bone.partId === partId).length;
+      }
+
+      function guessPartId(bone, index) {
+        return bone.partId || bonePartGuess[bone.name] || defaultPartSpecs[index % defaultPartSpecs.length].id;
+      }
+
+      function importProject(project) {
+        if (!project || !Array.isArray(project.bones)) {
+          return;
+        }
+        const nameCounters = {};
+        state.bones = project.bones.map((bone, index) => ({
+          id: String(bone.id || `bone-${index + 1}`),
+          partId: guessPartId(bone, index),
+          name: normalizedBoneName(guessPartId(bone, index), nameCounters),
+          start: bone.pixelStart
+            ? { x: Number(bone.pixelStart.x), y: Number(bone.pixelStart.y) }
+            : {
+                x: Number(bone.start?.x || 0) * imageSize.width,
+                y: Number(bone.start?.y || 0) * imageSize.height,
+              },
+          end: bone.pixelEnd
+            ? { x: Number(bone.pixelEnd.x), y: Number(bone.pixelEnd.y) }
+            : {
+                x: Number(bone.end?.x || 0) * imageSize.width,
+                y: Number(bone.end?.y || 0) * imageSize.height,
+              },
+        }));
+        state.parts = Array.isArray(project.parts)
+          ? project.parts.map((part, index) => ({
+              id: String(part.id || part.imageKey || `part-${index + 1}`),
+              name: pieceNames[part.id] || pieceNames[part.imageKey] || String(part.name || `部位 ${index + 1}`),
+              imageKey: String(part.imageKey || part.id),
+              x: Number(part.x || 0),
+              y: Number(part.y || 0),
+              anchorX: Number(part.anchorX ?? 0.5),
+              anchorY: Number(part.anchorY ?? 0.5),
+              scale: Number(part.scale || 1),
+              rotation: Number(part.rotation || 0),
+              layer: Number(part.layer ?? index),
+            }))
+          : [];
+        state.selectedBoneId = state.bones[0]?.id || null;
+        state.selectedPartId = project.selectedPartId || state.parts[0]?.id || state.bones[0]?.partId || "torso";
+        state.selectedVertex = null;
+        state.draftStart = null;
+        state.draftFromVertex = false;
+        state.pointerPoint = null;
+        state.addingBone = false;
+        rebuildJointClusters();
+      }
+
+      function normalizedBoneName(partId, counters) {
+        counters[partId] = (counters[partId] || 0) + 1;
+        return `${pieceNames[partId] || partId || "骨骼"} ${counters[partId]}`;
+      }
+
+      function renderOverlay() {
+        overlay.innerHTML = "";
+        if (state.mode === "arrange" && controls.showPieces.checked) {
+          renderSelectedPartBox();
+        }
+        if (state.hideBones) {
+          return;
+        }
+        for (const bone of state.bones) {
+          const selected = bone.id === state.selectedBoneId;
+          const foreign = state.selectedPartId && bone.partId !== state.selectedPartId;
+          const start = currentBonePoint(bone, "start");
+          const end = currentBonePoint(bone, "end");
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("class", `bone-line${selected ? " selected" : ""}${foreign ? " foreign" : ""}`);
+          line.setAttribute("x1", String(start.x));
+          line.setAttribute("y1", String(start.y));
+          line.setAttribute("x2", String(end.x));
+          line.setAttribute("y2", String(end.y));
+          line.dataset.boneId = bone.id;
+          overlay.appendChild(line);
+
+          for (const pointKey of ["start", "end"]) {
+            const point = currentBonePoint(bone, pointKey);
+            const vertexSelected =
+              state.selectedVertex?.boneId === bone.id && state.selectedVertex?.pointKey === pointKey;
+            const joint = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            joint.setAttribute(
+              "class",
+              `bone-joint${selected ? " selected" : ""}${vertexSelected ? " vertex-selected" : ""}`,
+            );
+            joint.setAttribute("cx", String(point.x));
+            joint.setAttribute("cy", String(point.y));
+            joint.setAttribute("r", "8");
+            joint.dataset.boneId = bone.id;
+            joint.dataset.pointKey = pointKey;
+            overlay.appendChild(joint);
+          }
+        }
+
+        if (state.draftStart) {
+          const start = state.draftStart;
+          const end = state.pointerPoint || start;
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("class", "draft-line");
+          line.setAttribute("x1", String(start.x));
+          line.setAttribute("y1", String(start.y));
+          line.setAttribute("x2", String(end.x));
+          line.setAttribute("y2", String(end.y));
+          overlay.appendChild(line);
+
+          const joint = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          joint.setAttribute("class", "bone-joint vertex-selected");
+          joint.setAttribute("cx", String(start.x));
+          joint.setAttribute("cy", String(start.y));
+          joint.setAttribute("r", "8");
+          overlay.appendChild(joint);
+        }
+      }
+
+      function renderSelectedPartBox() {
+        const part = selectedPart();
+        const points = part ? partBoxPoints(part) : [];
+        if (points.length !== 4) {
+          return;
+        }
+        const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        polygon.setAttribute("class", "part-box");
+        polygon.setAttribute("points", points.map((point) => `${point.x},${point.y}`).join(" "));
+        overlay.appendChild(polygon);
+
+        const anchor = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        anchor.setAttribute("class", "part-anchor");
+        anchor.setAttribute("cx", String(part.x));
+        anchor.setAttribute("cy", String(part.y));
+        anchor.setAttribute("r", "9");
+        overlay.appendChild(anchor);
+      }
+
+      function renderPartList() {
+        partList.innerHTML = "";
+        for (const part of sortedParts().reverse()) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.dataset.partId = part.id;
+          button.setAttribute("aria-pressed", String(part.id === state.selectedPartId));
+          button.innerHTML = `<span>${part.name}</span><small>层 ${part.layer} / 骨 ${partBoneCount(part.id)}</small>`;
+          partList.appendChild(button);
+        }
+      }
+
+      function renderBoneList() {
+        boneList.innerHTML = "";
+        for (const bone of state.bones) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.dataset.boneId = bone.id;
+          button.setAttribute("aria-pressed", String(bone.id === state.selectedBoneId));
+          button.innerHTML = `<span>${bone.name}</span><small>${pieceNames[bone.partId] || bone.partId || "未归属"}</small>`;
+          boneList.appendChild(button);
+        }
+      }
+
+      function exportProject() {
+        return {
+          format: "faxian-piece-spine-editor",
+          version: 2,
+          source: "src/faxian/leg/man.png",
+          imageSize,
+          selectedPartId: state.selectedPartId,
+          joints: state.jointClusters.map((joint, index) => ({
+            id: `joint-${index + 1}`,
+            driverPartId: joint.driverPartId,
+            x: Number(joint.point.x.toFixed(2)),
+            y: Number(joint.point.y.toFixed(2)),
+            endpoints: joint.endpoints.map((endpoint) => ({
+              boneId: endpoint.bone.id,
+              pointKey: endpoint.pointKey,
+              partId: endpoint.bone.partId,
+            })),
+          })),
+          constraints: state.bones.map((bone) => ({
+            boneId: bone.id,
+            partId: bone.partId,
+            parentId: parentBoneIdForExport(bone),
+          })),
+          parts: sortedParts().map((part) => ({
+            id: part.id,
+            name: part.name,
+            imageKey: part.imageKey,
+            x: Number(part.x.toFixed(2)),
+            y: Number(part.y.toFixed(2)),
+            anchorX: Number(part.anchorX.toFixed(4)),
+            anchorY: Number(part.anchorY.toFixed(4)),
+            scale: Number(part.scale.toFixed(4)),
+            rotation: Number(part.rotation.toFixed(2)),
+            layer: part.layer,
+          })),
+          bones: state.bones.map((bone, index) => ({
+            id: bone.id,
+            name: bone.name || `Bone ${index + 1}`,
+            partId: bone.partId || null,
+            start: toNormalized(bone.start),
+            end: toNormalized(bone.end),
+            pixelStart: {
+              x: Number(bone.start.x.toFixed(2)),
+              y: Number(bone.start.y.toFixed(2)),
+            },
+            pixelEnd: {
+              x: Number(bone.end.x.toFixed(2)),
+              y: Number(bone.end.y.toFixed(2)),
+            },
+          })),
+        };
+      }
+
+      function parentBoneIdForExport(bone) {
+        const joint = endpointJoint(bone, "start");
+        const parent = joint?.endpoints.find((endpoint) => endpoint.pointKey === "end" && endpoint.bone.id !== bone.id);
+        return parent?.bone.id || null;
+      }
+
+      function refreshJson() {
+        jsonText.value = JSON.stringify(exportProject(), null, 2);
+      }
+
+      function syncUi() {
+        const part = selectedPart();
+        controls.arrangeMode.classList.toggle("active", state.mode === "arrange");
+        controls.boneMode.classList.toggle("active", state.mode === "bone");
+        controls.addBone.classList.toggle("active", state.addingBone);
+        controls.hideBones.checked = state.hideBones;
+        controls.idlePreview.checked = state.idlePreview;
+        controls.partScale.disabled = !part;
+        controls.partScale.value = String(part?.scale || 1);
+        outputs.opacity.value = Number.parseFloat(controls.referenceOpacity.value).toFixed(2);
+        outputs.pieceOpacity.value = Number.parseFloat(controls.pieceOpacity.value).toFixed(2);
+        outputs.partScale.value = Number.parseFloat(controls.partScale.value).toFixed(2);
+        outputs.idleStrength.value = Number.parseFloat(controls.idleStrength.value).toFixed(2);
+        outputs.idleSpeed.value = Number.parseFloat(controls.idleSpeed.value).toFixed(2);
+        drawScene();
+        renderOverlay();
+        renderPartList();
+        renderBoneList();
+        refreshJson();
+      }
+
+      function animate(timestamp) {
+        state.idleTime = timestamp / 1000;
+        if (state.idlePreview) {
+          drawScene();
+          renderOverlay();
+        }
+      }
+
+      function setMode(mode) {
+        state.mode = mode;
+        state.draggingPart = null;
+        state.draftStart = null;
+        state.draftFromVertex = false;
+        state.pointerPoint = null;
+        state.addingBone = mode === "bone";
+        statusText.textContent =
+          mode === "arrange" ? "排布模式：拖动部位，滚轮缩放选中部位" : "骨骼模式：选部位后，在图上拖拉创建骨骼";
+        syncUi();
+      }
+
+      function moveLayer(direction) {
+        const part = selectedPart();
+        if (!part) {
+          return;
+        }
+        const ordered = sortedParts();
+        const index = ordered.findIndex((item) => item.id === part.id);
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= ordered.length) {
+          return;
+        }
+        const other = ordered[targetIndex];
+        const currentLayer = part.layer;
+        part.layer = other.layer;
+        other.layer = currentLayer;
+        normalizeLayers();
+        statusText.textContent = `${part.name} 已调整到图层 ${part.layer}`;
+        syncUi();
+      }
+
+      function normalizeLayers() {
+        sortedParts().forEach((part, index) => {
+          part.layer = (index + 1) * 10;
+        });
+      }
+
+      function resetSelectedPart() {
+        const part = selectedPart();
+        const spec = defaultPartSpecs.find((item) => item.id === part?.id);
+        if (!part || !spec) {
+          return;
+        }
+        const bone = state.bones.find((item) => item.name === spec.boneName);
+        const point = bone?.[spec.pointKey] || partFallbacks[part.id] || { x: imageSize.width / 2, y: imageSize.height / 2 };
+        Object.assign(part, {
+          x: point.x + spec.offsetX,
+          y: point.y + spec.offsetY,
+          anchorX: spec.anchorX,
+          anchorY: spec.anchorY,
+          scale: spec.scale,
+          rotation: spec.rotation,
+          layer: spec.layer,
+        });
+        normalizeLayers();
+        statusText.textContent = `${part.name} 已重置`;
+        syncUi();
+      }
+
+      overlay.addEventListener("pointerdown", (event) => {
+        const point = pointFromEvent(event);
+        if (state.mode === "arrange") {
+          const part = hitTestPart(point);
+          if (!part) {
+            return;
+          }
+          state.selectedPartId = part.id;
+          state.draggingPart = {
+            partId: part.id,
+            offsetX: point.x - part.x,
+            offsetY: point.y - part.y,
+          };
+          overlay.setPointerCapture(event.pointerId);
+          statusText.textContent = `正在移动 ${part.name}`;
+          syncUi();
+          return;
+        }
+
+        const targetBoneId = event.target?.dataset?.boneId;
+        const pointKey = event.target?.dataset?.pointKey;
+        if (targetBoneId) {
+          state.selectedBoneId = targetBoneId;
+          if (pointKey) {
+            state.selectedVertex = { boneId: targetBoneId, pointKey };
+            state.draftStart = { ...vertexPoint(state.selectedVertex) };
+            state.draftFromVertex = true;
+            state.addingBone = true;
+            statusText.textContent = `从已有端点继续，为 ${pieceNames[state.selectedPartId]} 建骨骼`;
+          }
+          syncUi();
+          return;
+        }
+
+        if (!state.addingBone || !state.selectedPartId) {
+          return;
+        }
+        if (!state.draftStart) {
+          state.draftStart = point;
+          state.draftFromVertex = false;
+        }
+        state.pointerPoint = point;
+        overlay.setPointerCapture(event.pointerId);
+        renderOverlay();
+      });
+
+      overlay.addEventListener("pointermove", (event) => {
+        const point = pointFromEvent(event);
+        if (state.mode === "arrange" && state.draggingPart) {
+          const part = state.parts.find((item) => item.id === state.draggingPart.partId);
+          if (!part) {
+            return;
+          }
+          part.x = point.x - state.draggingPart.offsetX;
+          part.y = point.y - state.draggingPart.offsetY;
+          drawScene();
+          renderOverlay();
+          refreshJson();
+          return;
+        }
+        if (!state.draftStart) {
+          return;
+        }
+        state.pointerPoint = point;
+        renderOverlay();
+      });
+
+      overlay.addEventListener("pointerup", (event) => {
+        if (state.mode === "arrange") {
+          state.draggingPart = null;
+          refreshJson();
+          return;
+        }
+        if (!state.draftStart || !state.addingBone) {
+          return;
+        }
+        addBone(state.draftStart, pointFromEvent(event));
+      });
+
+      overlay.addEventListener(
+        "wheel",
+        (event) => {
+          if (state.mode !== "arrange") {
+            return;
+          }
+          const point = pointFromEvent(event);
+          const part = hitTestPart(point) || selectedPart();
+          if (!part) {
+            return;
+          }
+          event.preventDefault();
+          state.selectedPartId = part.id;
+          const before = localPointInPart(point, part);
+          const factor = event.deltaY < 0 ? 1.06 : 1 / 1.06;
+          part.scale = clamp(part.scale * factor, 0.15, 3);
+          if (before) {
+            const afterWorld = rotatePartPoint(part, before.x, before.y);
+            part.x += point.x - afterWorld.x;
+            part.y += point.y - afterWorld.y;
+          }
+          statusText.textContent = `${part.name} 缩放 ${part.scale.toFixed(2)}`;
+          syncUi();
+        },
+        { passive: false },
+      );
+
+      partList.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-part-id]");
+        if (!button) {
+          return;
+        }
+        state.selectedPartId = button.dataset.partId;
+        state.mode = "arrange";
+        state.addingBone = false;
+        state.draftStart = null;
+        statusText.textContent = `已选中 ${pieceNames[state.selectedPartId]}`;
+        syncUi();
+      });
+
+      boneList.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-bone-id]");
+        if (!button) {
+          return;
+        }
+        const bone = state.bones.find((item) => item.id === button.dataset.boneId);
+        state.selectedBoneId = button.dataset.boneId;
+        state.selectedPartId = bone?.partId || state.selectedPartId;
+        state.selectedVertex = null;
+        state.draftStart = null;
+        state.draftFromVertex = false;
+        syncUi();
+      });
+
+      controls.arrangeMode.addEventListener("click", () => setMode("arrange"));
+      controls.boneMode.addEventListener("click", () => setMode("bone"));
+      controls.idlePreview.addEventListener("change", () => {
+        state.idlePreview = controls.idlePreview.checked;
+        syncUi();
+      });
+      controls.idleStrength.addEventListener("input", syncUi);
+      controls.idleSpeed.addEventListener("input", syncUi);
+      controls.referenceOpacity.addEventListener("input", syncUi);
+      controls.showPieces.addEventListener("change", syncUi);
+      controls.pieceOpacity.addEventListener("input", syncUi);
+      controls.layerUp.addEventListener("click", () => moveLayer(1));
+      controls.layerDown.addEventListener("click", () => moveLayer(-1));
+      controls.resetPart.addEventListener("click", resetSelectedPart);
+      controls.partScale.addEventListener("input", () => {
+        const part = selectedPart();
+        if (!part) {
+          return;
+        }
+        part.scale = Number.parseFloat(controls.partScale.value);
+        syncUi();
+      });
+      controls.hideBones.addEventListener("change", () => {
+        state.hideBones = controls.hideBones.checked;
+        syncUi();
+      });
+      controls.addBone.addEventListener("click", () => {
+        state.mode = "bone";
+        state.addingBone = !state.addingBone;
+        if (state.addingBone) {
+          const point = vertexPoint(state.selectedVertex);
+          state.draftStart = point ? { ...point } : null;
+          statusText.textContent = point ? "从已选端点继续创建" : `为 ${pieceNames[state.selectedPartId]} 创建骨骼`;
+        } else {
+          state.draftStart = null;
+          state.draftFromVertex = false;
+          state.pointerPoint = null;
+          statusText.textContent = "已暂停创建骨骼";
+        }
+        syncUi();
+      });
+      controls.resetDraft.addEventListener("click", () => {
+        state.draftStart = null;
+        state.draftFromVertex = false;
+        state.pointerPoint = null;
+        state.selectedVertex = null;
+        statusText.textContent = "已取消当前起点";
+        syncUi();
+      });
+      controls.deleteBone.addEventListener("click", () => {
+        if (!state.selectedBoneId) {
+          return;
+        }
+        state.bones = state.bones.filter((bone) => bone.id !== state.selectedBoneId);
+        state.selectedBoneId = state.bones[0]?.id || null;
+        state.selectedVertex = null;
+        state.draftStart = null;
+        state.draftFromVertex = false;
+        rebuildJointClusters();
+        statusText.textContent = "已删除选中骨骼";
+        syncUi();
+      });
+      controls.clearBones.addEventListener("click", () => {
+        state.bones = [];
+        state.selectedBoneId = null;
+        state.selectedVertex = null;
+        state.draftStart = null;
+        state.draftFromVertex = false;
+        state.pointerPoint = null;
+        rebuildJointClusters();
+        statusText.textContent = "已清空骨骼";
+        syncUi();
+      });
+      controls.refreshJson.addEventListener("click", refreshJson);
+      controls.copyJson.addEventListener("click", async () => {
+        refreshJson();
+        jsonText.select();
+        try {
+          await navigator.clipboard.writeText(jsonText.value);
+          statusText.textContent = "JSON 已复制";
+        } catch {
+          document.execCommand("copy");
+          statusText.textContent = "JSON 已选中";
+        }
+      });
+
+      function degToRad(value) {
+        return (value * Math.PI) / 180;
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function distance(a, b) {
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+
+      function dot(a, b) {
+        return a.x * b.x + a.y * b.y;
+      }
+
+      function normalize(vector) {
+        const length = Math.hypot(vector.x, vector.y) || 1;
+        return { x: vector.x / length, y: vector.y / length };
+      }
+
+      function projectPointOnSegment(point, start, end) {
+        const vx = end.x - start.x;
+        const vy = end.y - start.y;
+        const lengthSq = vx * vx + vy * vy || 1;
+        const t = clamp(((point.x - start.x) * vx + (point.y - start.y) * vy) / lengthSq, 0, 1);
+        return { t, point: { x: start.x + vx * t, y: start.y + vy * t } };
+      }
+
+      function rotateAround(point, pivot, angle, offsetX = 0, offsetY = 0) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const dx = point.x - pivot.x;
+        const dy = point.y - pivot.y;
+        return {
+          x: pivot.x + offsetX + dx * cos - dy * sin,
+          y: pivot.y + offsetY + dx * sin + dy * cos,
+        };
+      }
+
+      function triangleMatrix(p0, p1, p2) {
+        return {
+          a: p1.x - p0.x,
+          b: p1.y - p0.y,
+          c: p2.x - p0.x,
+          d: p2.y - p0.y,
+          e: p0.x,
+          f: p0.y,
+        };
+      }
+
+      function invertMatrix(matrix) {
+        const det = matrix.a * matrix.d - matrix.b * matrix.c;
+        if (Math.abs(det) < 0.000001) {
+          return null;
+        }
+        return {
+          a: matrix.d / det,
+          b: -matrix.b / det,
+          c: -matrix.c / det,
+          d: matrix.a / det,
+          e: (matrix.c * matrix.f - matrix.d * matrix.e) / det,
+          f: (matrix.b * matrix.e - matrix.a * matrix.f) / det,
+        };
+      }
+
+      function multiplyMatrix(left, right) {
+        return {
+          a: left.a * right.a + left.c * right.b,
+          b: left.b * right.a + left.d * right.b,
+          c: left.a * right.c + left.c * right.d,
+          d: left.b * right.c + left.d * right.d,
+          e: left.a * right.e + left.c * right.f + left.e,
+          f: left.b * right.e + left.d * right.f + left.f,
+        };
+      }
+    </script>
+  </body>
+</html>

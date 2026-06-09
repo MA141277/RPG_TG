@@ -87,7 +87,7 @@
 
       .app {
         display: grid;
-        grid-template-rows: 48px 1fr 224px;
+        grid-template-rows: auto 1fr 224px;
         width: 100vw;
         height: 100vh;
       }
@@ -96,7 +96,7 @@
         display: grid;
         grid-template-columns: minmax(260px, 1fr) auto;
         gap: 16px;
-        align-items: center;
+        align-items: start;
         padding: 8px 12px;
         border-bottom: 1px solid var(--line);
         background: #1c2024;
@@ -107,6 +107,7 @@
         gap: 10px;
         align-items: center;
         min-width: 0;
+        min-height: 32px;
       }
 
       .brand-mark {
@@ -305,6 +306,10 @@
         grid-template-columns: 1fr 1fr;
         gap: 8px;
         margin-top: 10px;
+      }
+
+      .button-row.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
       .danger {
@@ -545,11 +550,15 @@
           <button id="exportBtn" type="button">导出 JSON</button>
           <button id="sampleBtn" type="button">示例</button>
           <button id="walkSampleBtn" type="button">侧面行走</button>
+          <button id="newVersionSampleBtn" type="button">新版</button>
+          <button id="idleAnimationBtn" type="button">待机动画</button>
           <button id="slashSampleBtn" type="button">侧身劈砍</button>
           <button id="threeQuarterSampleBtn" type="button">70度侧身</button>
           <button id="viewToggleBtn" type="button">骨骼视图</button>
+          <button id="skeletonOverlayBtn" type="button">显示骨骼</button>
           <button id="nodeModeBtn" class="mode-button active" type="button">节点移动</button>
           <button id="boneModeBtn" class="mode-button" type="button">骨骼移动</button>
+          <button id="stretchModeBtn" class="mode-button" type="button">骨骼伸缩</button>
           <input id="fileInput" class="file-input" type="file" accept=".json,application/json" />
         </div>
       </header>
@@ -633,6 +642,13 @@
                   <option value="head">head.png</option>
                   <option value="arm">arm_right.png</option>
                   <option value="leg">leg.png</option>
+                  <option value="newHead">新版/head.png</option>
+                  <option value="newTorso">新版/torso.png</option>
+                  <option value="newLeftArm">新版/leftarm.png</option>
+                  <option value="newRightArm">新版/rightarm.png</option>
+                  <option value="newLeftLeg">新版/leftleg.png</option>
+                  <option value="newRightLeg">新版/rightleg.png</option>
+                  <option value="newSword">新版/sword.png</option>
                 </select>
               </div>
               <div class="field">
@@ -748,6 +764,11 @@
               <button id="keyframeBtn" class="primary" type="button">记录关键帧</button>
               <button id="deleteNodeBtn" class="danger" type="button">删除节点</button>
             </div>
+            <div class="button-row three">
+              <button id="keySourcePrevBtn" class="mode-button" type="button">上一关键帧</button>
+              <button id="keySourceNextBtn" class="mode-button" type="button">下一关键帧</button>
+              <button id="keySourceStartBtn" class="mode-button" type="button">起始帧</button>
+            </div>
           </section>
           <section class="panel-section">
             <div class="panel-title">工程 JSON</div>
@@ -766,7 +787,7 @@
             <button id="prevFrameBtn" type="button">◀</button>
             <button id="playBtn" type="button">播放</button>
             <button id="nextFrameBtn" type="button">▶</button>
-            <input id="frameInput" class="small-input" type="number" min="0" step="1" />
+            <input id="frameInput" class="small-input" type="number" min="1" step="1" />
           </div>
           <div class="timeline-meta">
             <span id="timeStatus" class="status"></span>
@@ -786,17 +807,21 @@
     </div>
     <div id="toast" class="toast"></div>
 
+    <script src="../prototypes/faxian-leg-spine/user-layout.generated.js"></script>
     <script>
       const frameWidth = 20;
       const rowHeight = 30;
       const state = {
+        name: "默认",
         fps: 24,
-        duration: 96,
+        duration: 95,
         currentFrame: 0,
         selectedNodeId: "root",
         selectedKey: null,
         editMode: "node",
         renderMode: "texture",
+        showSkeletonOverlay: false,
+        keyframeSource: "previous",
         playing: false,
         nodes: [
           {
@@ -810,6 +835,7 @@
             scaleX: 1,
             scaleY: 1,
             color: "#35b6b4",
+            bindPose: { x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
           },
           {
             id: "torso",
@@ -822,6 +848,7 @@
             scaleX: 1,
             scaleY: 1,
             color: "#e6a23c",
+            bindPose: { x: 0, y: 0, rotation: 0, length: 110, scaleX: 1, scaleY: 1 },
           },
           {
             id: "arm",
@@ -834,26 +861,27 @@
             scaleX: 1,
             scaleY: 1,
             color: "#d96a7b",
+            bindPose: { x: 0, y: 0, rotation: -45, length: 86, scaleX: 1, scaleY: 1 },
           },
         ],
         timelines: {
           root: [
             { frame: 0, x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
             { frame: 48, x: 420, y: 330, rotation: -104, length: 90, scaleX: 1, scaleY: 1 },
-            { frame: 96, x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
+            { frame: 95, x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
           ],
           torso: [
             { frame: 0, x: 0, y: 0, rotation: 0, length: 110, scaleX: 1, scaleY: 1 },
             { frame: 32, x: 0, y: 0, rotation: -8, length: 110, scaleX: 1, scaleY: 1 },
             { frame: 64, x: 0, y: 0, rotation: 8, length: 110, scaleX: 1, scaleY: 1 },
-            { frame: 96, x: 0, y: 0, rotation: 0, length: 110, scaleX: 1, scaleY: 1 },
+            { frame: 95, x: 0, y: 0, rotation: 0, length: 110, scaleX: 1, scaleY: 1 },
           ],
           arm: [
             { frame: 0, x: 0, y: 0, rotation: -45, length: 86, scaleX: 1, scaleY: 1 },
             { frame: 24, x: 0, y: 0, rotation: -100, length: 86, scaleX: 1, scaleY: 1 },
             { frame: 48, x: 0, y: 0, rotation: 20, length: 86, scaleX: 1, scaleY: 1 },
             { frame: 72, x: 0, y: 0, rotation: -70, length: 86, scaleX: 1, scaleY: 1 },
-            { frame: 96, x: 0, y: 0, rotation: -45, length: 86, scaleX: 1, scaleY: 1 },
+            { frame: 95, x: 0, y: 0, rotation: -45, length: 86, scaleX: 1, scaleY: 1 },
           ],
         },
       };
@@ -864,6 +892,9 @@
         addNodeBtn: document.getElementById("addNodeBtn"),
         deleteNodeBtn: document.getElementById("deleteNodeBtn"),
         keyframeBtn: document.getElementById("keyframeBtn"),
+        keySourcePrevBtn: document.getElementById("keySourcePrevBtn"),
+        keySourceNextBtn: document.getElementById("keySourceNextBtn"),
+        keySourceStartBtn: document.getElementById("keySourceStartBtn"),
         deleteKeyBtn: document.getElementById("deleteKeyBtn"),
         snapAllBtn: document.getElementById("snapAllBtn"),
         playBtn: document.getElementById("playBtn"),
@@ -920,11 +951,15 @@
         sampleBtn: document.getElementById("sampleBtn"),
         walkSampleBtn: document.getElementById("walkSampleBtn"),
         slashSampleBtn: document.getElementById("slashSampleBtn"),
+        newVersionSampleBtn: document.getElementById("newVersionSampleBtn"),
+        idleAnimationBtn: document.getElementById("idleAnimationBtn"),
         threeQuarterSampleBtn: document.getElementById("threeQuarterSampleBtn"),
         viewToggleBtn: document.getElementById("viewToggleBtn"),
+        skeletonOverlayBtn: document.getElementById("skeletonOverlayBtn"),
         newProjectBtn: document.getElementById("newProjectBtn"),
         nodeModeBtn: document.getElementById("nodeModeBtn"),
         boneModeBtn: document.getElementById("boneModeBtn"),
+        stretchModeBtn: document.getElementById("stretchModeBtn"),
         toast: document.getElementById("toast"),
       };
 
@@ -932,6 +967,8 @@
       let drag = null;
       let rafId = 0;
       let lastTime = 0;
+      let drawAlphaMultiplier = 1;
+      let ignorePoseOverrides = false;
       const poseOverrides = new Map();
       const dynamicScarves = new Map();
       const warriorImages = loadWarriorImages();
@@ -942,6 +979,13 @@
           body: "/ui/spine/warrior/body.png",
           head: "/ui/spine/warrior/head.png",
           leg: "/ui/spine/warrior/leg.png",
+          newHead: "/src/faxian/leg/head.png",
+          newTorso: "/src/faxian/leg/torso.png",
+          newLeftArm: "/src/faxian/leg/leftarm.png",
+          newRightArm: "/src/faxian/leg/rightarm.png",
+          newLeftLeg: "/src/faxian/leg/leftleg.png",
+          newRightLeg: "/src/faxian/leg/rightleg%20(1).png",
+          newSword: "/src/faxian/leg/sword.png",
         };
         return Object.fromEntries(
           Object.entries(sources).map(([id, src]) => {
@@ -1028,14 +1072,28 @@
       }
 
       function getLocalPose(node, frame = state.currentFrame) {
-        const override = poseOverrides.get(node.id);
+        const override = ignorePoseOverrides ? null : poseOverrides.get(node.id);
         if (override) return { ...node, ...override };
         const keys = [...(state.timelines[node.id] || [])].sort((a, b) => a.frame - b.frame);
         if (keys.length === 0) return { ...node };
-        const before = [...keys].reverse().find((item) => item.frame <= frame) || keys[0];
-        const after = keys.find((item) => item.frame >= frame) || keys[keys.length - 1];
-        if (before.frame === after.frame) return { ...node, ...before };
+        const exact = keys.find((item) => item.frame === frame);
+        if (exact) return { ...node, ...exact };
+        if (keys.length === 1) return { ...node, ...keys[0] };
+        const before = [...keys].reverse().find((item) => item.frame < frame);
+        const after = keys.find((item) => item.frame > frame);
+        if (!before) return { ...node, ...keys[0] };
+        if (!after) {
+          const start = keys.find((item) => item.frame === 0) || keys[0];
+          const loopEndFrame = state.duration + 1;
+          const span = Math.max(1, loopEndFrame - before.frame);
+          const t = Math.max(0, Math.min(1, (frame - before.frame) / span));
+          return interpolateLocalPose(node, before, start, t);
+        }
         const t = (frame - before.frame) / (after.frame - before.frame);
+        return interpolateLocalPose(node, before, after, t);
+      }
+
+      function interpolateLocalPose(node, before, after, t) {
         return {
           ...node,
           x: lerp(before.x, after.x, t),
@@ -1099,6 +1157,52 @@
         };
       }
 
+      function getRestLocalPose(node) {
+        return { ...node, ...(node.bindPose || {}) };
+      }
+
+      function restWorldPose(node, seen = new Set()) {
+        if (seen.has(node.id)) return getRestLocalPose(node);
+        seen.add(node.id);
+        const local = getRestLocalPose(node);
+        if (!node.parentId) {
+          return {
+            ...local,
+            worldX: local.x,
+            worldY: local.y,
+            worldRotation: local.rotation,
+            worldScaleX: local.scaleX,
+            worldScaleY: local.scaleY,
+          };
+        }
+        const parent = state.nodes.find((item) => item.id === node.parentId);
+        if (!parent) {
+          return {
+            ...local,
+            worldX: local.x,
+            worldY: local.y,
+            worldRotation: local.rotation,
+            worldScaleX: local.scaleX,
+            worldScaleY: local.scaleY,
+          };
+        }
+        const p = restWorldPose(parent, seen);
+        const anchor = endPoint(p);
+        const rad = (p.worldRotation * Math.PI) / 180;
+        const px = local.x * p.worldScaleX;
+        const py = local.y * p.worldScaleY;
+        const rotatedX = px * Math.cos(rad) - py * Math.sin(rad);
+        const rotatedY = px * Math.sin(rad) + py * Math.cos(rad);
+        return {
+          ...local,
+          worldX: anchor.x + rotatedX,
+          worldY: anchor.y + rotatedY,
+          worldRotation: p.worldRotation + local.rotation,
+          worldScaleX: p.worldScaleX * local.scaleX,
+          worldScaleY: p.worldScaleY * local.scaleY,
+        };
+      }
+
       function endPoint(pose) {
         const rad = (pose.worldRotation * Math.PI) / 180;
         return {
@@ -1121,13 +1225,51 @@
         ctx.clearRect(0, 0, rect.width, rect.height);
         drawAxes(rect);
         const nodes = sortedNodes();
+        drawPreviousKeyGhost(nodes);
         if (state.renderMode === "texture") {
           drawWarriorTextures();
+          if (state.showSkeletonOverlay) {
+            nodes.forEach((node) => drawParentLink(node));
+            nodes.forEach((node) => drawBone(node, node.id === state.selectedNodeId));
+          }
           drawTextureHandles(nodes);
         } else {
           nodes.forEach((node) => drawParentLink(node));
           nodes.forEach((node) => drawBone(node, node.id === state.selectedNodeId));
         }
+      }
+
+      function drawPreviousKeyGhost(nodes) {
+        const frame = previousKeyFrameForSelected();
+        if (frame === null) return;
+        const currentFrame = state.currentFrame;
+        const previousAlpha = drawAlphaMultiplier;
+        const previousIgnore = ignorePoseOverrides;
+        state.currentFrame = frame;
+        drawAlphaMultiplier = 0.28;
+        ignorePoseOverrides = true;
+        ctx.save();
+        if (state.renderMode === "texture") {
+          drawWarriorTextures();
+          nodes.forEach((node) => drawParentLink(node));
+          nodes.forEach((node) => drawBone(node, false));
+        } else {
+          nodes.forEach((node) => drawParentLink(node));
+          nodes.forEach((node) => drawBone(node, false));
+        }
+        ctx.restore();
+        ignorePoseOverrides = previousIgnore;
+        drawAlphaMultiplier = previousAlpha;
+        state.currentFrame = currentFrame;
+      }
+
+      function previousKeyFrameForSelected() {
+        const node = selectedNode();
+        if (!node) return null;
+        const currentFrame = Number(state.currentFrame);
+        const keys = [...(state.timelines[node.id] || [])].sort((a, b) => a.frame - b.frame);
+        const previous = [...keys].reverse().find((item) => item.frame < currentFrame - 0.001);
+        return previous?.frame ?? null;
       }
 
       function drawAxes(rect) {
@@ -1151,13 +1293,13 @@
         ctx.lineJoin = "round";
         ctx.strokeStyle = node.color;
         ctx.lineWidth = active ? 9 : 6;
-        ctx.globalAlpha = active ? 1 : 0.78;
+        setDrawAlpha(active ? 1 : 0.78);
         ctx.beginPath();
         ctx.moveTo(pose.worldX, pose.worldY);
         ctx.lineTo(end.x, end.y);
         ctx.stroke();
 
-        ctx.globalAlpha = 1;
+        setDrawAlpha(1);
         ctx.fillStyle = active ? "#ffffff" : node.color;
         ctx.strokeStyle = active ? varColor("--accent-2") : "#00000080";
         ctx.lineWidth = 2;
@@ -1195,6 +1337,10 @@
         const image = warriorImages[attachment.image];
         if (!image?.complete) return;
         const pose = worldPose(node);
+        if (attachment.fullSkin) {
+          drawFullSkinAttachment(attachment, image);
+          return;
+        }
         if (attachment.segments && attachment.chainTo) {
           drawSegmentedAttachment(node, attachment, image);
           return;
@@ -1278,35 +1424,218 @@
         const shoulder = { x: upperPose.worldX, y: upperPose.worldY };
         const elbow = { x: lowerPose.worldX, y: lowerPose.worldY };
         const hand = endPoint(lowerPose);
-        const halfHeight = image.height / 2;
-        drawImageSliceAlong(
-          image,
-          shoulder,
-          elbow,
-          attachment.width,
-          distance(shoulder, elbow),
-          attachment.alpha,
-          attachment.anchorX,
+        const upperRestPose = restWorldPose(node);
+        const lowerRestPose = restWorldPose(chainNode);
+        const restShoulder = { x: upperRestPose.worldX, y: upperRestPose.worldY };
+        const restElbow = { x: lowerRestPose.worldX, y: lowerRestPose.worldY };
+        const restHand = endPoint(lowerRestPose);
+        drawSkinnedAttachment(image, [
+          {
+            sourceY: 0,
+            sourceHeight: image.height / 2,
+            width: attachment.width,
+            anchorX: attachment.anchorX,
+            rotationOffset: attachment.rotationOffset,
+            offsetX: attachment.offsetX,
+            offsetY: attachment.offsetY,
+            restStart: restShoulder,
+            restEnd: restElbow,
+            start: shoulder,
+            end: elbow,
+          },
+          {
+            sourceY: image.height / 2,
+            sourceHeight: image.height / 2,
+            width: lowerAttachment.width,
+            anchorX: lowerAttachment.anchorX,
+            rotationOffset: lowerAttachment.rotationOffset,
+            offsetX: lowerAttachment.offsetX,
+            offsetY: lowerAttachment.offsetY,
+            restStart: restElbow,
+            restEnd: restHand,
+            start: elbow,
+            end: hand,
+          },
+        ], attachment.alpha);
+      }
+
+      function drawSkinnedAttachment(image, segments, alpha) {
+        const cols = 6;
+        const rows = 13;
+        const source = [];
+        const dest = [];
+        for (let row = 0; row < rows; row += 1) {
+          const v = row / (rows - 1);
+          const sourceRow = [];
+          const destRow = [];
+          const sourceY = image.height * v;
+          const segment = sourceY < image.height / 2 ? segments[0] : segments[1];
+          for (let col = 0; col < cols; col += 1) {
+            const u = col / (cols - 1);
+            const sourcePoint = {
+              x: image.width * u,
+              y: sourceY,
+            };
+            const restPoint = imagePointToSegmentRest(sourcePoint, image, segment, u);
+            sourceRow.push(sourcePoint);
+            destRow.push(deformByAttachmentSegments(restPoint, segments));
+          }
+          source.push(sourceRow);
+          dest.push(destRow);
+        }
+        drawTexturedMesh(image, source, dest, alpha);
+      }
+
+      function drawFullSkinAttachment(attachment, image) {
+        const segments = (attachment.skinBoneIds || [])
+          .map((nodeId) => state.nodes.find((item) => item.id === nodeId))
+          .filter(Boolean)
+          .map((boneNode) => {
+            const pose = worldPose(boneNode);
+            const rest = restWorldPose(boneNode);
+            return {
+              restStart: { x: rest.worldX, y: rest.worldY },
+              restEnd: endPoint(rest),
+              start: { x: pose.worldX, y: pose.worldY },
+              end: endPoint(pose),
+            };
+          });
+        if (segments.length === 0 || !attachment.restPart) return;
+
+        const cols = attachment.restPart.partId === "torso" ? 5 : 4;
+        const rows = Math.max(6, segments.length * 5);
+        const source = [];
+        const dest = [];
+        for (let row = 0; row <= rows; row += 1) {
+          const v = row / rows;
+          const sourceRow = [];
+          const destRow = [];
+          for (let col = 0; col <= cols; col += 1) {
+            const u = col / cols;
+            const sourcePoint = {
+              x: image.width * u,
+              y: image.height * v,
+            };
+            sourceRow.push(sourcePoint);
+            destRow.push(
+              deformByAttachmentSegments(
+                imagePointToFullSkinRest(sourcePoint, image, attachment.restPart),
+                segments,
+              ),
+            );
+          }
+          source.push(sourceRow);
+          dest.push(destRow);
+        }
+        drawTexturedMesh(image, source, dest, attachment.alpha);
+      }
+
+      function imagePointToFullSkinRest(sourcePoint, image, restPart) {
+        const width = image.width * restPart.scale;
+        const height = image.height * restPart.scale;
+        const localX = (sourcePoint.x / image.width) * width - width * restPart.anchorX;
+        const localY = (sourcePoint.y / image.height) * height - height * restPart.anchorY;
+        const angle = (restPart.rotation * Math.PI) / 180;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+          x: restPart.x + localX * cos - localY * sin,
+          y: restPart.y + localX * sin + localY * cos,
+        };
+      }
+
+      function imagePointToSegmentRest(sourcePoint, image, segment, u) {
+        const relY = (sourcePoint.y - segment.sourceY) / Math.max(1, segment.sourceHeight);
+        const restLength = distance(segment.restStart, segment.restEnd);
+        const angle =
+          Math.atan2(segment.restEnd.y - segment.restStart.y, segment.restEnd.x - segment.restStart.x) -
+          Math.PI / 2 +
+          (segment.rotationOffset * Math.PI) / 180;
+        const x = -segment.width * segment.anchorX + segment.offsetX + segment.width * u;
+        const y = segment.offsetY + restLength * relY;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+          x: segment.restStart.x + x * cos - y * sin,
+          y: segment.restStart.y + x * sin + y * cos,
+        };
+      }
+
+      function deformByAttachmentSegments(point, segments) {
+        let totalWeight = 0;
+        const blended = { x: 0, y: 0 };
+        for (const segment of segments) {
+          const projection = projectPointOnSegment(point, segment.restStart, segment.restEnd);
+          const weight = attachmentSegmentWeight(distance(point, projection.point), segment);
+          const mapped = mapPointByAttachmentSegment(point, segment);
+          blended.x += mapped.x * weight;
+          blended.y += mapped.y * weight;
+          totalWeight += weight;
+        }
+        if (totalWeight <= 0) return point;
+        return {
+          x: blended.x / totalWeight,
+          y: blended.y / totalWeight,
+        };
+      }
+
+      function mapPointByAttachmentSegment(point, segment) {
+        const restLength = Math.max(1, distance(segment.restStart, segment.restEnd));
+        const currentLength = Math.max(1, distance(segment.start, segment.end));
+        const restDir = normalizeVector({
+          x: segment.restEnd.x - segment.restStart.x,
+          y: segment.restEnd.y - segment.restStart.y,
+        });
+        const currentDir = normalizeVector({
+          x: segment.end.x - segment.start.x,
+          y: segment.end.y - segment.start.y,
+        });
+        const restNormal = { x: -restDir.y, y: restDir.x };
+        const currentNormal = { x: -currentDir.y, y: currentDir.x };
+        const local = {
+          x: point.x - segment.restStart.x,
+          y: point.y - segment.restStart.y,
+        };
+        const scale = currentLength / restLength;
+        const softenedScale = 1 + (scale - 1) * 0.72;
+        const axial = dotVector(local, restDir) * softenedScale;
+        const lateral = dotVector(local, restNormal);
+        return {
+          x: segment.start.x + currentDir.x * axial + currentNormal.x * lateral,
+          y: segment.start.y + currentDir.y * axial + currentNormal.y * lateral,
+        };
+      }
+
+      function attachmentSegmentWeight(distanceToSegment, segment) {
+        const length = distance(segment.restStart, segment.restEnd);
+        const reach = Math.max(16, length * 0.34);
+        const normalizedDistance = distanceToSegment / reach;
+        const base = 1 / ((normalizedDistance + 0.18) * (normalizedDistance + 0.18));
+        return base * Math.sqrt(base);
+      }
+
+      function projectPointOnSegment(point, a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const lengthSquared = dx * dx + dy * dy;
+        if (lengthSquared === 0) return { point: { ...a }, t: 0 };
+        const t = Math.max(
           0,
-          halfHeight,
-          attachment.rotationOffset,
-          attachment.offsetX,
-          attachment.offsetY,
+          Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared),
         );
-        drawImageSliceAlong(
-          image,
-          elbow,
-          hand,
-          lowerAttachment.width,
-          distance(elbow, hand),
-          lowerAttachment.alpha,
-          lowerAttachment.anchorX,
-          halfHeight,
-          halfHeight,
-          lowerAttachment.rotationOffset,
-          lowerAttachment.offsetX,
-          lowerAttachment.offsetY,
-        );
+        return {
+          point: { x: a.x + dx * t, y: a.y + dy * t },
+          t,
+        };
+      }
+
+      function normalizeVector(vector) {
+        const length = Math.hypot(vector.x, vector.y) || 1;
+        return { x: vector.x / length, y: vector.y / length };
+      }
+
+      function dotVector(a, b) {
+        return a.x * b.x + a.y * b.y;
       }
 
       function drawHeadAttachment(node, attachment, image) {
@@ -1344,7 +1673,7 @@
           });
         }
         ctx.save();
-        ctx.globalAlpha = attachment.alpha;
+        setDrawAlpha(attachment.alpha);
         ctx.translate(center.x, center.y);
         ctx.rotate(headAngle);
         if (attachment.scarfEnabled) {
@@ -1648,7 +1977,7 @@
 
       function drawTexturedMesh(image, source, dest, alpha) {
         ctx.save();
-        ctx.globalAlpha = alpha;
+        setDrawAlpha(alpha);
         for (let row = 0; row < source.length - 1; row += 1) {
           for (let col = 0; col < source[row].length - 1; col += 1) {
             drawImageTriangle(image, source[row][col], source[row + 1][col], source[row][col + 1], dest[row][col], dest[row + 1][col], dest[row][col + 1]);
@@ -1709,7 +2038,7 @@
         const length = distance(start, end);
         const angle = Math.atan2(end.y - start.y, end.x - start.x);
         ctx.save();
-        ctx.globalAlpha = alpha;
+        setDrawAlpha(alpha);
         ctx.translate(start.x, start.y);
         ctx.rotate(angle);
         ctx.drawImage(image, sourceX, 0, sourceWidth, image.height, 0, -width * 0.5, length, width);
@@ -1761,7 +2090,7 @@
         const angle = Math.atan2(end.y - start.y, end.x - start.x);
         const drawAngle = angle - Math.PI / 2 + (rotationOffset * Math.PI) / 180;
         ctx.save();
-        ctx.globalAlpha = alpha;
+        setDrawAlpha(alpha);
         ctx.translate(start.x, start.y);
         ctx.rotate(drawAngle);
         ctx.drawImage(
@@ -1819,6 +2148,10 @@
 
       function varColor(name) {
         return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      }
+
+      function setDrawAlpha(alpha) {
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha * drawAlphaMultiplier));
       }
 
       function renderAll() {
@@ -2001,7 +2334,7 @@
             const label = document.createElement("div");
             label.className = "frame-label";
             label.style.left = `${frame * frameWidth}px`;
-            label.textContent = frame;
+            label.textContent = frame + 1;
             ruler.appendChild(label);
           }
         }
@@ -2031,7 +2364,7 @@
                 ? " active"
                 : "");
             marker.style.left = `${keyframe.frame * frameWidth}px`;
-            marker.title = `${node.name} @ ${keyframe.frame}`;
+            marker.title = `${node.name} @ 第 ${keyframe.frame + 1} 帧`;
             marker.addEventListener("pointerdown", (event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -2061,15 +2394,21 @@
       }
 
       function renderStatus() {
-        el.frameInput.max = state.duration;
-        el.frameInput.value = state.currentFrame;
+        el.frameInput.max = state.duration + 1;
+        el.frameInput.value = Math.round(state.currentFrame) + 1;
         el.fpsInput.value = state.fps;
-        el.durationInput.value = state.duration;
-        el.timeStatus.textContent = `第 ${state.currentFrame} 帧 / ${state.duration}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
+        el.durationInput.value = state.duration + 1;
+        el.timeStatus.textContent = `第 ${Math.round(state.currentFrame) + 1} 帧 / ${state.duration + 1}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
         el.playBtn.textContent = state.playing ? "暂停" : "播放";
         el.viewToggleBtn.textContent = state.renderMode === "texture" ? "骨骼视图" : "贴图视图";
+        el.skeletonOverlayBtn.textContent = state.showSkeletonOverlay ? "隐藏骨骼" : "显示骨骼";
+        el.skeletonOverlayBtn.classList.toggle("active", state.showSkeletonOverlay);
         el.nodeModeBtn.classList.toggle("active", state.editMode === "node");
         el.boneModeBtn.classList.toggle("active", state.editMode === "bone");
+        el.stretchModeBtn.classList.toggle("active", state.editMode === "stretch");
+        el.keySourcePrevBtn.classList.toggle("active", state.keyframeSource === "previous");
+        el.keySourceNextBtn.classList.toggle("active", state.keyframeSource === "next");
+        el.keySourceStartBtn.classList.toggle("active", state.keyframeSource === "start");
       }
 
       function renderJsonPreview() {
@@ -2080,6 +2419,7 @@
         return {
           format: "spine-node-timeline-editor",
           version: 1,
+          name: state.name || "未命名",
           fps: state.fps,
           duration: state.duration,
           nodes: state.nodes,
@@ -2091,8 +2431,9 @@
         if (!data || !Array.isArray(data.nodes) || typeof data.timelines !== "object") {
           throw new Error("JSON 缺少 nodes 或 timelines");
         }
+        state.name = String(data.name || "未命名");
         state.fps = Math.max(1, Number(data.fps) || 24);
-        state.duration = Math.max(1, Number(data.duration) || 96);
+        state.duration = Math.max(0, Number.isFinite(Number(data.duration)) ? Number(data.duration) : 95);
         state.currentFrame = 0;
         state.selectedNodeId = data.nodes[0]?.id || null;
         state.selectedKey = null;
@@ -2109,6 +2450,8 @@
           scaleX: Math.max(0.05, Number(node.scaleX) || 1),
           scaleY: Math.max(0.05, Number(node.scaleY) || 1),
           color: /^#[0-9a-f]{6}$/i.test(node.color) ? node.color : "#35b6b4",
+          role: String(node.role || node.partId || ""),
+          bindPose: normalizeBindPose(node.bindPose || node),
           attachment: normalizeAttachment(node.attachment),
         }));
         state.timelines = {};
@@ -2146,6 +2489,26 @@
           offsetX: Number(attachment.offsetX) || 0,
           offsetY: Number(attachment.offsetY) || 0,
           lower: normalizeSegmentAttachment(attachment.lower),
+          fullSkin: Boolean(attachment.fullSkin),
+          skinBoneIds: Array.isArray(attachment.skinBoneIds)
+            ? attachment.skinBoneIds.map((id) => String(id))
+            : [],
+          restPart:
+            attachment.restPart && typeof attachment.restPart === "object"
+              ? {
+                  partId: String(attachment.restPart.partId || ""),
+                  x: Number(attachment.restPart.x) || 0,
+                  y: Number(attachment.restPart.y) || 0,
+                  scale: Math.max(0.001, Number(attachment.restPart.scale) || 1),
+                  rotation: Number(attachment.restPart.rotation) || 0,
+                  anchorX: Number.isFinite(Number(attachment.restPart.anchorX))
+                    ? Number(attachment.restPart.anchorX)
+                    : 0.5,
+                  anchorY: Number.isFinite(Number(attachment.restPart.anchorY))
+                    ? Number(attachment.restPart.anchorY)
+                    : 0.5,
+                }
+              : null,
           scarfEnabled:
             attachment.scarfEnabled === undefined
               ? String(attachment.image || "") === "head"
@@ -2214,6 +2577,17 @@
           rotationOffset: Number(attachment.rotationOffset) || 0,
           offsetX: Number(attachment.offsetX) || 0,
           offsetY: Number(attachment.offsetY) || 0,
+        };
+      }
+
+      function normalizeBindPose(pose) {
+        return {
+          x: Number(pose?.x) || 0,
+          y: Number(pose?.y) || 0,
+          rotation: Number(pose?.rotation) || 0,
+          length: Math.max(4, Number(pose?.length) || 80),
+          scaleX: Math.max(0.05, Number(pose?.scaleX) || 1),
+          scaleY: Math.max(0.05, Number(pose?.scaleY) || 1),
         };
       }
 
@@ -2353,17 +2727,39 @@
         };
       }
 
+      function copyPoseAtFrame(source, frame = state.currentFrame) {
+        return {
+          frame,
+          x: source.x,
+          y: source.y,
+          rotation: source.rotation,
+          length: source.length,
+          scaleX: source.scaleX,
+          scaleY: source.scaleY,
+        };
+      }
+
+      function sourceSnapshotNode(node) {
+        const keys = [...(state.timelines[node.id] || [])].sort((a, b) => a.frame - b.frame);
+        if (!keys.length) return snapshotNode(node);
+        const start = keys.find((item) => item.frame === 0) || keys[0];
+        const previous = [...keys].reverse().find((item) => item.frame < state.currentFrame) || start;
+        const next = keys.find((item) => item.frame > state.currentFrame) || start;
+        const source =
+          state.keyframeSource === "next" ? next : state.keyframeSource === "start" ? start : previous;
+        return copyPoseAtFrame(source);
+      }
+
       function addKeyframe(node = selectedNode()) {
         if (!node) return;
-        upsertKeyframe(node);
+        upsertKeyframe(node, sourceSnapshotNode(node));
         state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
-        toast(`已记录 ${node.name} 第 ${state.currentFrame} 帧`);
+        toast(`已记录 ${node.name} 第 ${state.currentFrame + 1} 帧`);
         renderAll();
       }
 
-      function upsertKeyframe(node) {
+      function upsertKeyframe(node, snap = snapshotNode(node)) {
         const keys = state.timelines[node.id] || [];
-        const snap = snapshotNode(node);
         const existing = keys.find((item) => item.frame === state.currentFrame);
         if (existing) Object.assign(existing, snap);
         else keys.push(snap);
@@ -2398,6 +2794,7 @@
       }
 
       function hitTest(point) {
+        if (state.editMode === "stretch") return hitTestStretch(point);
         const nodes = sortedNodes().reverse();
         for (const node of nodes) {
           const pose = worldPose(node);
@@ -2415,6 +2812,33 @@
           if (pointSegmentDistance(point, { x: pose.worldX, y: pose.worldY }, end) <= 8) {
             return { type: "bone", node };
           }
+        }
+        return null;
+      }
+
+      function hitTestStretch(point) {
+        const active = selectedNode();
+        if (active) {
+          const activeHit = hitTestStretchNode(point, active);
+          if (activeHit) return activeHit;
+        }
+        const nodes = sortedNodes().reverse();
+        for (const node of nodes) {
+          if (node.id === active?.id) continue;
+          const hit = hitTestStretchNode(point, node);
+          if (hit) return hit;
+        }
+        return null;
+      }
+
+      function hitTestStretchNode(point, node) {
+        const pose = worldPose(node);
+        const end = endPoint(pose);
+        if (distance(point, end) <= 14) {
+          return { type: "stretch-end", node, jointId: endJointId(node) };
+        }
+        if (distance(point, { x: pose.worldX, y: pose.worldY }) <= 14) {
+          return { type: "stretch-origin", node, jointId: startJointId(node) };
         }
         return null;
       }
@@ -2579,6 +3003,32 @@
         drag?.touched?.add(node.id);
       }
 
+      function stretchBoneEndpoint(node, movingType, targetWorld) {
+        const start = movingType === "stretch-origin" ? targetWorld : drag.startWorldOrigin;
+        const end = movingType === "stretch-end" ? targetWorld : drag.startWorldEnd;
+        const parent = node.parentId ? state.nodes.find((item) => item.id === node.parentId) : null;
+        const parentPose = parent ? worldPose(parent) : null;
+        const parentRotation = parentPose?.worldRotation || 0;
+        const parentScaleX = Math.abs(parentPose?.worldScaleX || 1);
+        const nodeScaleX = Math.abs(node.scaleX || 1);
+        const localStart = localFromWorld(node, start);
+        const worldLength = distance(start, end);
+        node.x = localStart.x;
+        node.y = localStart.y;
+        node.rotation = (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI - parentRotation;
+        node.length = Math.max(4, worldLength / Math.max(0.001, parentScaleX * nodeScaleX));
+        poseOverrides.set(node.id, {
+          x: node.x,
+          y: node.y,
+          rotation: node.rotation,
+          length: node.length,
+          scaleX: node.scaleX,
+          scaleY: node.scaleY,
+        });
+        syncKeyAtCurrentFrame(node);
+        drag?.touched?.add(node.id);
+      }
+
       function toast(message) {
         el.toast.textContent = message;
         el.toast.classList.add("show");
@@ -2599,8 +3049,9 @@
       }
 
       function resetProject() {
+        state.name = "默认";
         state.fps = 24;
-        state.duration = 96;
+        state.duration = 95;
         state.currentFrame = 0;
         state.selectedNodeId = "root";
         state.selectedKey = null;
@@ -2617,10 +3068,248 @@
             scaleX: 1,
             scaleY: 1,
             color: "#35b6b4",
+            bindPose: { x: 420, y: 330, rotation: -90, length: 90, scaleX: 1, scaleY: 1 },
           },
         ];
         state.timelines = { root: [key("root", 0)] };
         renderAll();
+      }
+
+      function applyIdleAnimation() {
+        state.duration = 47;
+        state.currentFrame = 0;
+        state.selectedKey = null;
+        state.nodes.forEach((node) => {
+          state.timelines[node.id] = buildIdleTimelineForNode(node, state.duration);
+        });
+        renderAll();
+        toast("已生成 48 帧待机循环");
+      }
+
+      function buildIdleTimelineForNode(node, duration = 47) {
+        const loopLength = duration + 1;
+        const frames = [0, 0.25, 0.5, 0.75].map((ratio) =>
+          Math.max(0, Math.min(duration, Math.round(loopLength * ratio))),
+        );
+        const base = {
+          x: node.x,
+          y: node.y,
+          rotation: node.rotation,
+          length: node.length,
+          scaleX: node.scaleX,
+          scaleY: node.scaleY,
+        };
+        return frames.map((frame, index) => idlePoseAtFrame(node, base, frame, index));
+      }
+
+      function idlePoseAtFrame(node, base, frame, index) {
+        const breath = [0, 1, 0, -0.65][index] || 0;
+        const sway = [0, 0.55, 0, -0.55][index] || 0;
+        const role = idleRole(node);
+        const pose = { frame, ...base };
+        if (!node.parentId) {
+          pose.y = base.y - breath * 2.5;
+          pose.rotation = base.rotation + sway * 0.35;
+        }
+        if (role === "head") {
+          pose.y = base.y - breath * 0.8;
+          pose.rotation = base.rotation - sway * 0.9;
+        } else if (role === "torso") {
+          pose.rotation = base.rotation + sway * 1.2;
+          pose.length = Math.max(4, base.length * (1 - breath * 0.012));
+        } else if (role === "rightArm") {
+          pose.rotation = base.rotation - breath * 1.8 + sway * 0.7;
+          pose.length = Math.max(4, base.length * (1 + breath * 0.004));
+        } else if (role === "leftArm") {
+          pose.rotation = base.rotation + breath * 1.5 - sway * 0.6;
+          pose.length = Math.max(4, base.length * (1 + breath * 0.004));
+        } else if (role === "rightLeg") {
+          pose.rotation = base.rotation + sway * 0.45;
+        } else if (role === "leftLeg") {
+          pose.rotation = base.rotation - sway * 0.45;
+        }
+        return {
+          frame: pose.frame,
+          x: round(pose.x, 2),
+          y: round(pose.y, 2),
+          rotation: round(pose.rotation, 2),
+          length: round(pose.length, 2),
+          scaleX: round(pose.scaleX, 3),
+          scaleY: round(pose.scaleY, 3),
+        };
+      }
+
+      function idleRole(node) {
+        if (node.role) return node.role;
+        const name = String(node.name || "").toLowerCase();
+        if (name.includes("head") || name.includes("头")) return "head";
+        if (name.includes("torso") || name.includes("身") || name.includes("躯")) return "torso";
+        if (name.includes("rightarm") || name.includes("右臂")) return "rightArm";
+        if (name.includes("leftarm") || name.includes("左臂")) return "leftArm";
+        if (name.includes("rightleg") || name.includes("右腿")) return "rightLeg";
+        if (name.includes("leftleg") || name.includes("左腿")) return "leftLeg";
+        return "";
+      }
+
+      function loadNewVersionSample() {
+        const layout = window.FAXIAN_USER_SPINE_LAYOUT;
+        if (!layout?.bones?.length || !layout?.parts?.length) {
+          toast("未找到新版骨骼数据");
+          return;
+        }
+        applyProjectData(buildNewVersionProject(layout));
+        renderAll();
+        toast("已载入新版");
+      }
+
+      function buildNewVersionProject(layout) {
+        const scale = 0.26;
+        const offset = { x: 170, y: 0 };
+        const colors = {
+          head: "#77c66e",
+          torso: "#e6a23c",
+          leftArm: "#4d8ecf",
+          rightArm: "#d96a7b",
+          leftLeg: "#9a7af0",
+          rightLeg: "#70c99b",
+          sword: "#d8d2bd",
+        };
+        const imageKeys = {
+          head: "newHead",
+          torso: "newTorso",
+          leftArm: "newLeftArm",
+          rightArm: "newRightArm",
+          leftLeg: "newLeftLeg",
+          rightLeg: "newRightLeg",
+          sword: "newSword",
+        };
+        const toStage = (point) => ({
+          x: point.x * scale + offset.x,
+          y: point.y * scale + offset.y,
+        });
+        const samePoint = (a, b) => distance(a, b) <= 1.5;
+        const nodeByBoneId = new Map();
+        const nodes = layout.bones.map((bone) => {
+          const start = toStage(bone.pixelStart);
+          const end = toStage(bone.pixelEnd);
+          const parentBone = layout.bones.find(
+            (candidate) => candidate.id !== bone.id && samePoint(candidate.pixelEnd, bone.pixelStart),
+          );
+          const parentNode = parentBone ? nodeByBoneId.get(parentBone.id) : null;
+          const worldRotation = (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI;
+          const parentRotation = parentNode ? parentNode.worldRotation : 0;
+          const parentEnd = parentNode
+            ? {
+                x: parentNode.worldStart.x + Math.cos((parentNode.worldRotation * Math.PI) / 180) * parentNode.length,
+                y: parentNode.worldStart.y + Math.sin((parentNode.worldRotation * Math.PI) / 180) * parentNode.length,
+              }
+            : null;
+          const localOffset = parentNode ? rotateVector(start.x - parentEnd.x, start.y - parentEnd.y, -parentRotation) : start;
+          const node = {
+            id: bone.id,
+            name: bone.name,
+            parentId: parentNode?.id || null,
+            x: parentNode ? round(localOffset.x, 2) : round(start.x, 2),
+            y: parentNode ? round(localOffset.y, 2) : round(start.y, 2),
+            rotation: round(worldRotation - parentRotation, 2),
+            length: round(distance(start, end), 2),
+            scaleX: 1,
+            scaleY: 1,
+            color: colors[bone.partId] || "#35b6b4",
+            role: bone.partId,
+            worldStart: start,
+            worldRotation,
+          };
+          nodeByBoneId.set(bone.id, node);
+          return node;
+        });
+
+        const timelines = {};
+        nodes.forEach((node) => {
+          const { worldStart, worldRotation, ...cleanNode } = node;
+          Object.assign(node, cleanNode);
+          node.bindPose = normalizeBindPose(node);
+          timelines[node.id] = buildIdleTimelineForNode(node, 47);
+          delete node.worldStart;
+          delete node.worldRotation;
+        });
+
+        const partBoneIds = resolveNewVersionPartBoneIds(layout.bones);
+        for (const part of layout.parts) {
+          const partBones = (partBoneIds[part.id] || []).map((id) => layout.bones.find((bone) => bone.id === id)).filter(Boolean);
+          const skinBoneIds =
+            partBones.length > 0
+              ? partBones.map((bone) => bone.id)
+              : fallbackSkinBoneIds(part.id, layout.bones);
+          const owner = nodes.find((node) => node.id === skinBoneIds[0]);
+          if (!owner) continue;
+          owner.attachment = {
+            image: imageKeys[part.id],
+            chainTo: null,
+            width: 48,
+            alpha: 1,
+            layer: part.layer,
+            anchorX: part.anchorX,
+            lengthScale: 1,
+            reverse: false,
+            segments: false,
+            fullSkin: true,
+            skinBoneIds,
+            rotationOffset: 0,
+            offsetX: 0,
+            offsetY: 0,
+            restPart: {
+              partId: part.id,
+              x: round(part.x * scale + offset.x, 2),
+              y: round(part.y * scale + offset.y, 2),
+              scale: round(part.scale * scale, 4),
+              rotation: part.rotation,
+              anchorX: part.anchorX,
+              anchorY: part.anchorY,
+            },
+          };
+        }
+
+        return {
+          format: "spine-node-timeline-editor",
+          version: 1,
+          name: "新版",
+          fps: 24,
+          duration: 47,
+          nodes,
+          timelines,
+        };
+      }
+
+      function fallbackSkinBoneIds(partId, bones) {
+        if (partId === "sword") {
+          return bones.filter((bone) => bone.partId === "rightArm").slice(-1).map((bone) => bone.id);
+        }
+        return [];
+      }
+
+      function resolveNewVersionPartBoneIds(bones) {
+        const byPart = (partId) => bones.filter((bone) => bone.partId === partId).map((bone) => bone.id);
+        const torsoBones = bones.filter((bone) => bone.partId === "torso");
+        return {
+          head: byPart("head"),
+          torso: torsoBones.slice(0, 4).map((bone) => bone.id),
+          rightArm: byPart("rightArm"),
+          leftArm: torsoBones.slice(4, 6).map((bone) => bone.id),
+          leftLeg: byPart("leftLeg"),
+          rightLeg: byPart("rightLeg"),
+          sword: bones.filter((bone) => bone.partId === "rightArm").slice(-1).map((bone) => bone.id),
+        };
+      }
+
+      function rotateVector(x, y, degrees) {
+        const angle = (degrees * Math.PI) / 180;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+          x: x * cos - y * sin,
+          y: x * sin + y * cos,
+        };
       }
 
       function loadSample() {
@@ -3462,6 +4151,7 @@
               state.nodes.length % 5
             ],
           };
+          node.bindPose = normalizeBindPose(node);
           state.nodes.push(node);
           state.timelines[id] = [{ ...snapshotNode(node), frame: state.currentFrame }];
           state.selectedNodeId = id;
@@ -3486,9 +4176,21 @@
         });
 
         el.keyframeBtn.addEventListener("click", () => addKeyframe());
+        el.keySourcePrevBtn.addEventListener("click", () => {
+          state.keyframeSource = "previous";
+          renderStatus();
+        });
+        el.keySourceNextBtn.addEventListener("click", () => {
+          state.keyframeSource = "next";
+          renderStatus();
+        });
+        el.keySourceStartBtn.addEventListener("click", () => {
+          state.keyframeSource = "start";
+          renderStatus();
+        });
         el.snapAllBtn.addEventListener("click", () => {
           state.nodes.forEach((node) => addKeyframe(node));
-          toast(`已记录全部节点第 ${state.currentFrame} 帧`);
+          toast(`已记录全部节点第 ${state.currentFrame + 1} 帧`);
         });
         el.deleteKeyBtn.addEventListener("click", deleteSelectedKey);
 
@@ -3510,12 +4212,12 @@
           renderAll();
         });
         el.frameInput.addEventListener("change", () => {
-          state.currentFrame = clampFrame(Number(el.frameInput.value) || 0);
+          state.currentFrame = clampFrame((Number(el.frameInput.value) || 1) - 1);
           state.selectedKey = null;
           renderAll();
         });
         el.frameInput.addEventListener("input", () => {
-          state.currentFrame = clampFrame(Number(el.frameInput.value) || 0);
+          state.currentFrame = clampFrame((Number(el.frameInput.value) || 1) - 1);
           state.selectedKey = null;
           renderAll();
         });
@@ -3524,7 +4226,7 @@
           renderAll();
         });
         el.durationInput.addEventListener("change", () => {
-          state.duration = Math.max(1, Math.min(1200, Number(el.durationInput.value) || 96));
+          state.duration = Math.max(0, Math.min(1199, (Number(el.durationInput.value) || 1) - 1));
           state.currentFrame = clampFrame(state.currentFrame);
           Object.keys(state.timelines).forEach((id) => {
             state.timelines[id] = state.timelines[id].filter(
@@ -3568,10 +4270,16 @@
         });
         el.sampleBtn.addEventListener("click", loadSample);
         el.walkSampleBtn.addEventListener("click", loadSideWalkSample);
+        el.newVersionSampleBtn.addEventListener("click", loadNewVersionSample);
+        el.idleAnimationBtn.addEventListener("click", applyIdleAnimation);
         el.slashSampleBtn.addEventListener("click", loadSideSlashSample);
         el.threeQuarterSampleBtn.addEventListener("click", loadThreeQuarterSample);
         el.viewToggleBtn.addEventListener("click", () => {
           state.renderMode = state.renderMode === "texture" ? "skeleton" : "texture";
+          renderAll();
+        });
+        el.skeletonOverlayBtn.addEventListener("click", () => {
+          state.showSkeletonOverlay = !state.showSkeletonOverlay;
           renderAll();
         });
         el.newProjectBtn.addEventListener("click", resetProject);
@@ -3584,6 +4292,11 @@
           state.editMode = "bone";
           renderStatus();
           toast("骨骼移动：只在拖骨骼线段中间时生效，圆点仍按节点拖动");
+        });
+        el.stretchModeBtn.addEventListener("click", () => {
+          state.editMode = "stretch";
+          renderStatus();
+          toast("骨骼伸缩：拖动一个端点，另一个端点固定，自动旋转并改变长度");
         });
       }
 
@@ -3737,6 +4450,7 @@
             nodeId: hit.node.id,
             jointId: hit.jointId,
             start: point,
+            hasMoved: false,
             startWorldOrigin: { x: pose.worldX, y: pose.worldY },
             startWorldEnd: { x: end.x, y: end.y },
             startPoses: captureWorldPoses(),
@@ -3757,6 +4471,11 @@
           event.preventDefault();
           const node = state.nodes.find((item) => item.id === drag.nodeId);
           if (!node) return;
+          const moveDistance = distance(point, drag.start);
+          if (!drag.hasMoved && moveDistance < 3) {
+            return;
+          }
+          drag.hasMoved = true;
           if (drag.type === "origin") {
             solveGenericJointDrag(drag.jointId, point);
           }
@@ -3766,6 +4485,9 @@
               { x: point.x - drag.start.x, y: point.y - drag.start.y },
               drag.startWorldOrigin,
             );
+          }
+          if (drag.type === "stretch-origin" || drag.type === "stretch-end") {
+            stretchBoneEndpoint(node, drag.type, point);
           }
           if (drag.type === "end") {
             solveGenericJointDrag(drag.jointId, point);
@@ -3794,11 +4516,17 @@
 
       function commitActiveDrag() {
         if (!drag || drag.type === "key") return;
+        if (!drag.hasMoved) {
+          drag = null;
+          poseOverrides.clear();
+          renderAll();
+          return;
+        }
         persistTouchedNodes();
         const activeNode = state.nodes.find((node) => node.id === drag.nodeId);
         if (activeNode) {
           state.selectedKey = { nodeId: activeNode.id, frame: state.currentFrame };
-          toast(`已记录 ${drag.touched?.size || 1} 个节点第 ${state.currentFrame} 帧`);
+          toast(`已记录 ${drag.touched?.size || 1} 个节点第 ${state.currentFrame + 1} 帧`);
         }
         drag = null;
         poseOverrides.clear();
@@ -3849,8 +4577,8 @@
         state.currentFrame += elapsed * state.fps;
         if (state.currentFrame > state.duration) state.currentFrame = 0;
         state.currentFrame = Math.round(state.currentFrame * 100) / 100;
-        el.frameInput.value = Math.round(state.currentFrame);
-        el.timeStatus.textContent = `第 ${Math.round(state.currentFrame)} 帧 / ${state.duration}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
+        el.frameInput.value = Math.round(state.currentFrame) + 1;
+        el.timeStatus.textContent = `第 ${Math.round(state.currentFrame) + 1} 帧 / ${state.duration + 1}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
         drawStage();
         renderTimeline();
         rafId = requestAnimationFrame(tick);
@@ -3859,7 +4587,9 @@
       bindEvents();
       resizeCanvas();
       const params = new URLSearchParams(window.location.search);
-      if (params.get("sample") === "walk") {
+      if (params.get("sample") === "new") {
+        loadNewVersionSample();
+      } else if (params.get("sample") === "walk") {
         loadSideWalkSample();
       } else {
         renderAll();
