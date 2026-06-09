@@ -19,6 +19,16 @@ export const layoutEditorTargets: LayoutEditorTargetDefinition[] = [
     label: "开始界面",
     mode: "live",
   },
+  {
+    id: "character-select-screen",
+    label: "选择人物界面",
+    mode: "live",
+  },
+  {
+    id: "character-detail-screen",
+    label: "人物通用界面",
+    mode: "live",
+  },
 ];
 
 export const layoutEditorTargetById: Record<

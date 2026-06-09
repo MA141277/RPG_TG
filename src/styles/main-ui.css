@@ -56,18 +56,26 @@
   transform: none;
 }
 
-.c-main-ui-layout-component.is-layout-editable {
+.c-main-ui-layout-component.is-layout-editable,
+.c-main-ui-layout-element.is-layout-editable {
   outline: 2px dashed rgb(92 198 255 / 86%);
   outline-offset: 2px;
   cursor: grab;
 }
 
-.c-main-ui-layout-component.is-selected-layout-component {
+.c-main-ui-layout-element {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.c-main-ui-layout-component.is-selected-layout-component,
+.c-main-ui-layout-element.is-selected-layout-element {
   outline-color: #ffd36a;
   box-shadow: 0 0 0 3px rgb(255 211 106 / 20%);
 }
 
-.c-main-ui-layout-component.is-layout-editable::after {
+.c-main-ui-layout-component.is-layout-editable::after,
+.c-main-ui-layout-element.is-layout-editable::after {
   content: attr(data-layout-live-label);
   position: absolute;
   left: 0;
@@ -86,7 +94,8 @@
   pointer-events: none;
 }
 
-.c-main-ui-layout-resize-handle {
+.c-main-ui-layout-resize-handle,
+.c-main-ui-layout-element-resize-handle {
   position: absolute;
   right: -7px;
   bottom: -7px;
@@ -175,164 +184,131 @@
 }
 
 .c-main-ui-screen--character-select {
-  background:
-    linear-gradient(180deg, rgb(248 242 229 / 76%), rgb(233 223 202 / 88%)),
-    url("../../ui/yuansu/人物选择ui/backgroung.png") center center / cover no-repeat;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--game-width, 1600px);
+  height: var(--game-height, 900px);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: url("../../ui/yuansu/人物选择ui/backgroung.png") center center / cover no-repeat;
+  transform: translate(-50%, -50%) scale(var(--game-scale, 1));
+  transform-origin: center;
 }
 
 .c-main-ui-character-layout {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
-  gap: 24px;
+  position: relative;
   height: 100%;
-  padding: 34px 48px 42px;
 }
 
 .c-main-ui-character-layout__hero {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 1;
 }
 
 .c-main-ui-character-layout__hero-inner {
-  display: grid;
-  justify-items: center;
-  gap: 16px;
+  position: relative;
+  width: 100%;
+  height: 100%;
   color: rgb(40 27 17 / 92%);
 }
 
 .c-main-ui-character-layout__era {
   margin: 0;
-  min-width: 30px;
-  padding: 8px 6px;
-  border-radius: 999px;
-  color: rgb(255 245 227 / 100%);
-  font-size: 14px;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  color: transparent;
+  font-size: 0;
   line-height: 1;
-  writing-mode: vertical-rl;
-  background: linear-gradient(180deg, rgb(161 40 25 / 100%), rgb(120 22 14 / 100%));
-  box-shadow: 0 8px 24px rgb(120 37 22 / 18%);
-}
-
-.c-main-ui-character-layout__title {
-  margin: 0;
-  color: rgb(18 14 10 / 94%);
-  font-size: clamp(48px, 4vw, 66px);
-  line-height: 0.95;
-  letter-spacing: 0.06em;
-  writing-mode: vertical-rl;
-  text-shadow: 0 2px 0 rgb(255 250 239 / 40%);
+  background: url("../../ui/yuansu/人物选择ui/下载 (1).png") center center / contain no-repeat;
+  box-shadow: none;
 }
 
 .c-main-ui-character-layout__poem {
   margin: 0;
-  color: rgb(105 80 51 / 88%);
+  color: rgb(70 54 38 / 82%);
   font-size: 14px;
-  line-height: 1.9;
+  line-height: 1.8;
   writing-mode: vertical-rl;
 }
 
 .c-main-ui-character-book {
   position: relative;
   min-width: 0;
-  height: 100%;
-  padding: 42px 34px 26px;
-  border: 1px solid rgb(137 106 61 / 24%);
-  border-radius: 26px;
-  background:
-    linear-gradient(180deg, rgb(255 251 244 / 92%), rgb(245 236 219 / 94%)),
-    rgb(245 236 219 / 94%);
-  box-shadow:
-    0 24px 72px rgb(96 71 43 / 18%),
-    inset 0 0 0 1px rgb(255 255 255 / 46%);
+  border: 0;
+  border-radius: 0;
+  background: url("../../ui/yuansu/人物选择ui/upload_1779790295652461983.png") center center / contain no-repeat;
+  box-shadow: none;
 }
 
 .c-main-ui-character-book::before {
-  content: "";
-  position: absolute;
-  inset: 18px 22px;
-  border: 1px solid rgb(151 120 75 / 22%);
-  border-radius: 18px;
-  pointer-events: none;
+  content: none;
 }
 
 .c-main-ui-character-book__tabs {
   position: absolute;
-  left: -20px;
-  top: 92px;
   display: grid;
-  gap: 10px;
+  gap: 18px;
 }
 
 .c-main-ui-book-tab {
-  min-width: 72px;
-  padding: 14px 12px;
-  border: 1px solid rgb(135 107 66 / 30%);
-  border-radius: 14px 0 0 14px;
-  color: rgb(104 79 50 / 82%);
-  font-size: 13px;
+  display: grid;
+  place-items: center;
+  width: 86px;
+  height: 108px;
+  padding: 16px 16px 18px;
+  border: 0;
+  color: rgb(62 45 30 / 90%);
+  font-size: 14px;
+  line-height: 1.25;
   text-align: center;
-  background: linear-gradient(180deg, rgb(238 226 200 / 96%), rgb(228 211 181 / 94%));
-  box-shadow: 0 10px 20px rgb(99 74 47 / 10%);
+  writing-mode: vertical-rl;
+  background: url("../../ui/yuansu/人物选择ui/下载 (7).png") center center / contain no-repeat;
+  box-shadow: none;
 }
 
 .c-main-ui-book-tab.is-active {
-  color: rgb(255 247 233 / 100%);
-  background: linear-gradient(180deg, rgb(84 111 102 / 100%), rgb(59 84 77 / 100%));
+  color: rgb(45 31 19 / 96%);
+  filter: drop-shadow(0 5px 8px rgb(92 59 32 / 18%));
 }
 
 .c-main-ui-character-book__content {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.86fr);
-  gap: 28px;
-  height: calc(100% - 92px);
 }
 
 .c-main-ui-character-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px 16px;
+  gap: 24px 30px;
   align-content: start;
 }
 
 .c-main-ui-character-card {
   position: relative;
-  display: grid;
-  grid-template-rows: 132px auto;
-  gap: 10px;
+  display: block;
   min-width: 0;
-  border: 1px solid rgb(146 112 67 / 16%);
-  border-radius: 18px;
-  padding: 12px;
-  text-align: left;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  text-align: center;
   color: rgb(47 32 20 / 92%);
-  background:
-    linear-gradient(180deg, rgb(255 252 244 / 90%), rgb(244 234 213 / 95%)),
-    rgb(244 234 213 / 95%);
-  box-shadow:
-    0 10px 24px rgb(100 74 43 / 8%),
-    inset 0 0 0 1px rgb(255 255 255 / 48%);
+  background: url("../../ui/yuansu/人物选择ui/下载 (9).png") center center / contain no-repeat;
+  box-shadow: none;
   transition:
     transform 140ms ease,
-    box-shadow 140ms ease,
-    border-color 140ms ease;
+    filter 140ms ease;
 }
 
 .c-main-ui-character-card:hover {
   transform: translateY(-2px);
-  border-color: rgb(165 90 60 / 36%);
-  box-shadow:
-    0 14px 28px rgb(114 71 38 / 12%),
-    inset 0 0 0 1px rgb(255 255 255 / 48%);
+  filter: drop-shadow(0 8px 12px rgb(115 65 36 / 18%));
 }
 
 .c-main-ui-character-card.is-selected {
-  border-color: rgb(181 81 52 / 42%);
-  box-shadow:
-    0 18px 36px rgb(137 67 42 / 16%),
-    inset 0 0 0 1px rgb(213 118 76 / 24%);
+  filter: drop-shadow(0 0 0 rgb(0 0 0 / 0%)) drop-shadow(0 0 12px rgb(160 36 23 / 28%));
 }
 
 .c-main-ui-character-card--placeholder {
@@ -345,36 +321,41 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgb(214 196 167 / 60%), rgb(232 223 207 / 92%)),
-    url("../../ui/yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
+  border-radius: 0;
+  background: transparent;
 }
 
-.c-main-ui-character-card__avatar,
 .c-main-ui-character-card__avatar-placeholder {
   width: 100%;
   height: 100%;
-  border-radius: 10px;
+  border-radius: 0;
 }
 
-.c-main-ui-character-card__avatar {
-  object-fit: cover;
-  filter: saturate(0.88) contrast(1.02);
+.c-main-ui-character-card__avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  pointer-events: none;
+  user-select: none;
 }
 
 .c-main-ui-character-card__avatar-placeholder {
   display: grid;
   place-items: center;
-  color: rgb(92 70 46 / 92%);
-  font-size: 28px;
+  color: rgb(65 45 27 / 78%);
+  font-size: 52px;
   font-weight: 700;
+  background:
+    linear-gradient(180deg, rgb(236 222 190 / 34%), rgb(248 239 218 / 64%)),
+    url("../../ui/yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
 }
 
 .c-main-ui-character-card__selected-seal {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 14px;
+  right: 2px;
   width: 38px;
   height: 62px;
   background: url("../../ui/yuansu/人物选择ui/下载 (10).png") center center / contain no-repeat;
@@ -386,27 +367,28 @@
 
 .c-main-ui-character-card__meta {
   margin: 0;
-  color: rgb(138 101 60 / 92%);
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  color: rgb(122 84 52 / 84%);
+  font-size: 10px;
+  letter-spacing: 0;
 }
 
 .c-main-ui-character-card__name {
-  margin: 6px 0 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
   color: rgb(30 20 12 / 96%);
   font-size: 20px;
   line-height: 1.1;
+  background: url("../../ui/yuansu/人物选择ui/下载 (3).png") center center / contain no-repeat;
 }
 
 .c-main-ui-character-card__bio {
-  display: -webkit-box;
-  margin: 8px 0 0;
+  display: block;
+  margin: 0;
   overflow: hidden;
-  color: rgb(112 86 56 / 92%);
-  font-size: 12px;
-  line-height: 1.6;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  color: rgb(112 78 48 / 0%);
+  font-size: 0;
+  line-height: 1;
 }
 
 .c-main-ui-character-card__placeholder-label,
@@ -432,69 +414,69 @@
 .c-main-ui-character-detail__paper {
   position: relative;
   height: 100%;
-  padding: 28px 24px 24px;
-  border: 1px solid rgb(145 111 65 / 20%);
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgb(255 253 246 / 88%), rgb(247 239 224 / 96%)),
-    url("../../ui/yuansu/人物选择ui/下载 (6).png") center center / cover no-repeat;
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 46%),
-    0 16px 28px rgb(113 81 43 / 8%);
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: url("../../ui/yuansu/人物选择ui/下载 (6).png") center center / 100% 100% no-repeat;
+  box-shadow: none;
 }
 
 .c-main-ui-character-detail__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid rgb(152 118 76 / 22%);
+  display: contents;
 }
 
 .c-main-ui-character-detail__eyebrow {
   margin: 0;
   color: rgb(159 44 29 / 90%);
   font-size: 12px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .c-main-ui-character-detail__name {
-  margin: 8px 0 0;
+  margin: 0;
   color: rgb(32 22 13 / 96%);
-  font-size: 34px;
+  font-size: 28px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .c-main-ui-character-detail__subtitle {
-  margin: 8px 0 0;
+  margin: 0;
   color: rgb(123 93 61 / 92%);
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .c-main-ui-character-detail__badge {
-  flex: none;
-  min-width: 64px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  color: rgb(255 245 230 / 100%);
-  font-size: 12px;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 0;
+  border-radius: 0;
+  color: transparent;
+  font-size: 0;
   text-align: center;
-  background: linear-gradient(180deg, rgb(163 51 35 / 100%), rgb(120 32 22 / 100%));
+  background: url("../../ui/yuansu/人物选择ui/下载 (10).png") center center / contain no-repeat;
 }
 
 .c-main-ui-character-detail__stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 18px;
-  margin: 20px 0 0;
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 .c-main-ui-character-detail__stat-row {
   display: grid;
-  grid-template-columns: 52px 1fr;
-  gap: 12px;
+  grid-template-columns: 58px 1fr;
+  gap: 8px;
   align-items: baseline;
-  padding-bottom: 8px;
+  min-height: 21px;
+  padding-bottom: 3px;
   border-bottom: 1px dashed rgb(155 122 76 / 20%);
 }
 
@@ -505,84 +487,68 @@
 
 .c-main-ui-character-detail__stat-row dt {
   color: rgb(132 102 68 / 92%);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
 }
 
 .c-main-ui-character-detail__stat-row dd {
   color: rgb(47 32 19 / 94%);
-  font-size: 14px;
+  overflow: hidden;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .c-main-ui-character-detail__section {
-  margin-top: 22px;
+  margin-top: 0;
+  display: contents;
 }
 
 .c-main-ui-character-detail__section-title {
   margin: 0;
   color: rgb(85 62 36 / 94%);
-  font-size: 15px;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .c-main-ui-character-detail__bio {
-  margin: 12px 0 0;
+  margin: 0;
+  overflow: hidden;
   color: rgb(89 68 42 / 92%);
-  font-size: 14px;
-  line-height: 1.85;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: justify;
 }
 
 .c-main-ui-character-detail__empty {
   margin: 0;
   color: rgb(108 82 53 / 88%);
-  font-size: 15px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .c-main-ui-character-book__footer {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: 120px 1fr 176px;
-  align-items: center;
-  gap: 18px;
-  margin-top: 18px;
 }
 
 .c-main-ui-page-button {
   position: relative;
-  width: 108px;
-  height: 108px;
-  justify-self: start;
   border: 0;
   padding: 0;
-  color: rgb(0 0 0 / 0%);
-  background: transparent;
+  color: rgb(246 232 199 / 100%);
+  background: url("../../ui/yuansu/人物选择ui/返回.png") center center / contain no-repeat;
   transition:
     transform 140ms ease,
     filter 140ms ease;
 }
 
 .c-main-ui-page-button::before {
-  content: "";
-  position: absolute;
-  inset: 12px;
-  border: 2px solid rgb(205 184 139 / 100%);
-  background: linear-gradient(180deg, rgb(91 121 111 / 100%), rgb(55 82 76 / 100%));
-  box-shadow:
-    0 12px 24px rgb(81 77 57 / 20%),
-    inset 0 0 0 3px rgb(37 62 56 / 42%);
-  transform: rotate(45deg);
-}
-
-.c-main-ui-page-button span {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  width: 100%;
-  height: 100%;
-  place-items: center;
-  color: rgb(246 232 199 / 100%);
-  font-size: 22px;
-  letter-spacing: 0.08em;
+  content: none;
 }
 
 .c-main-ui-page-button:hover {
@@ -590,26 +556,51 @@
   filter: brightness(1.04);
 }
 
+.c-main-ui-page-turn-button {
+  position: relative;
+  border: 0;
+  padding: 0;
+  color: transparent;
+  background-color: transparent;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease;
+}
+
+.c-main-ui-page-turn-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+}
+
+.c-main-ui-page-turn-button--previous {
+  background-image: url("../../ui/yuansu/人物选择ui/上一页.png");
+}
+
+.c-main-ui-page-turn-button--next {
+  background-image: url("../../ui/yuansu/人物选择ui/下一页.png");
+}
+
 .c-main-ui-book-pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  color: rgb(126 98 66 / 92%);
+  gap: 8px;
+  color: rgb(99 73 46 / 92%);
   font-size: 14px;
 }
 
 .c-main-ui-book-pagination__ornament {
-  width: 72px;
-  height: 12px;
+  width: 132px;
+  height: 24px;
   background: url("../../ui/yuansu/人物选择ui/下载 (15).png") center center / contain no-repeat;
 }
 
 .c-main-ui-image-button--choose {
-  justify-self: end;
-  width: 168px;
-  aspect-ratio: 1;
   background-image: url("../../ui/yuansu/人物选择ui/下载 (4).png");
+  background-size: contain;
 }
 
 @media (width <= 1100px) {
@@ -700,6 +691,7 @@
   }
 
   .c-main-ui-page-button,
+  .c-main-ui-page-turn-button,
   .c-main-ui-image-button--choose {
     justify-self: center;
   }
@@ -707,4 +699,41 @@
   .c-main-ui-book-pagination {
     order: 3;
   }
+}
+
+.c-main-ui-screen--character-select .c-main-ui-layout-component,
+.c-main-ui-screen--character-select .c-main-ui-layout-element {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.c-main-ui-character-layout.c-main-ui-layout-component {
+  display: block;
+  grid-template-columns: none;
+  gap: 0;
+  padding: 0;
+}
+
+.c-main-ui-character-book.c-main-ui-layout-component {
+  padding: 0;
+}
+
+.c-main-ui-character-book__content.c-main-ui-layout-component {
+  display: block;
+  grid-template-columns: none;
+  gap: 0;
+  height: auto;
+}
+
+.c-main-ui-character-book__footer.c-main-ui-layout-component {
+  display: block;
+  grid-template-columns: none;
+  gap: 0;
+  margin-top: 0;
+}
+
+.c-main-ui-page-button.c-main-ui-layout-component,
+.c-main-ui-page-turn-button.c-main-ui-layout-component,
+.c-main-ui-image-button--choose.c-main-ui-layout-component {
+  justify-self: auto;
 }

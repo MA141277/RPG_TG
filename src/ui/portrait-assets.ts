@@ -32,11 +32,17 @@ import templeAbbotAvatarUrl from "../../ui/npc/zhuchi(touxiang).png?url";
 import xuDaUrl from "../../ui/npc/xuda.png?url";
 import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
 import zhuStage20Url from "../../ui/user/20.png?url";
+import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
 import zhuStage25Url from "../../ui/user/25.png?url";
+import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";
 import zhuStage26Url from "../../ui/user/26.png?url";
+import zhuStage26AvatarUrl from "../../ui/user/26 - touxiang.png?url";
 import zhuStage29Url from "../../ui/user/29.png?url";
+import zhuStage29AvatarUrl from "../../ui/user/29 - touxiang.png?url";
 import zhuStage34To39Url from "../../ui/user/34-39.png?url";
+import zhuStage34To39AvatarUrl from "../../ui/user/34-39 - touxiang.png?url";
 import zhuStage40Url from "../../ui/user/40.png?url";
+import zhuStage40AvatarUrl from "../../ui/user/40 - touxiang.png?url";
 import dengYuUrl from "../../ui/npc/dengyu.png?url";
 import dengYuAvatarUrl from "../../ui/npc/dengyu(touxiang).png?url";
 import fengGuoyongUrl from "../../ui/npc/fengguoyong.png?url";
@@ -58,19 +64,24 @@ import zhouDexingAvatarUrl from "../../ui/npc/zhoudexing(touxiang).png?url";
 import zhuLiangzuUrl from "../../ui/npc/zhuliangzu.png?url";
 import zhuLiangzuAvatarUrl from "../../ui/npc/zhuliangzu(touxiang).png?url";
 
+const fullPortraitModules = import.meta.glob<string>(
+  ["../../ui/user/*.png", "../../ui/npc/*.png", "../../ui/family/*.png"],
+  { eager: true, query: "?url", import: "default" }
+);
+
 type PortraitAsset = {
   portraitUrl: string;
   avatarUrl: string;
 };
 
 const portraitAssetById: Record<string, PortraitAsset> = {
-  "portrait.player": { portraitUrl: zhuStage20Url, avatarUrl: zhuStage20Url },
-  "portrait.player.stage.20": { portraitUrl: zhuStage20Url, avatarUrl: zhuStage20Url },
-  "portrait.player.stage.25": { portraitUrl: zhuStage25Url, avatarUrl: zhuStage25Url },
-  "portrait.player.stage.26": { portraitUrl: zhuStage26Url, avatarUrl: zhuStage26Url },
-  "portrait.player.stage.29": { portraitUrl: zhuStage29Url, avatarUrl: zhuStage29Url },
-  "portrait.player.stage.34_39": { portraitUrl: zhuStage34To39Url, avatarUrl: zhuStage34To39Url },
-  "portrait.player.stage.40": { portraitUrl: zhuStage40Url, avatarUrl: zhuStage40Url },
+  "portrait.player": { portraitUrl: zhuStage20Url, avatarUrl: zhuStage20AvatarUrl },
+  "portrait.player.stage.20": { portraitUrl: zhuStage20Url, avatarUrl: zhuStage20AvatarUrl },
+  "portrait.player.stage.25": { portraitUrl: zhuStage25Url, avatarUrl: zhuStage25AvatarUrl },
+  "portrait.player.stage.26": { portraitUrl: zhuStage26Url, avatarUrl: zhuStage26AvatarUrl },
+  "portrait.player.stage.29": { portraitUrl: zhuStage29Url, avatarUrl: zhuStage29AvatarUrl },
+  "portrait.player.stage.34_39": { portraitUrl: zhuStage34To39Url, avatarUrl: zhuStage34To39AvatarUrl },
+  "portrait.player.stage.40": { portraitUrl: zhuStage40Url, avatarUrl: zhuStage40AvatarUrl },
   "portrait.kulan_lord": { portraitUrl: guoZixingUrl, avatarUrl: guoZixingAvatarUrl },
   "portrait.kulan_guard": { portraitUrl: sunDeyaUrl, avatarUrl: sunDeyaAvatarUrl },
   "portrait.kulan_soldier": { portraitUrl: xiaoBingUrl, avatarUrl: xiaoBingAvatarUrl },
@@ -100,11 +111,87 @@ const portraitAssetById: Record<string, PortraitAsset> = {
   "portrait.yuanmo.zhu_liangzu": { portraitUrl: zhuLiangzuUrl, avatarUrl: zhuLiangzuAvatarUrl },
 };
 
-function resolveCharacterPortraitAsset(character: CharacterDefinition): PortraitAsset | null {
-  const activeVariantPortraitId =
+const portraitLookupAliasesByCharacterName: Record<string, string[]> = {
+  李贞: ["lizhen"],
+  马姑娘: ["maguniang"],
+  马氏: ["maguniang", "mahuanghou"],
+  马皇后: ["mahuanghou", "mahuanghou2"],
+  朱文正: ["zhuwenzheng"],
+  朱文忠: ["zhuwenzhong"],
+};
+
+function normalizePortraitLookupKey(value: string): string {
+  return value
+    .replace(/\.[^.]+$/, "")
+    .replace(/[（(][^）)]*[）)]/g, "")
+    .replace(/touxiang|头像/gi, "")
+    .replace(/[_\s-]+/g, "")
+    .toLowerCase();
+}
+
+function isAvatarPortraitPath(path: string): boolean {
+  return /touxiang|头像/i.test(path);
+}
+
+const fullPortraitUrlByLookupKey = Object.entries(fullPortraitModules).reduce<
+  Record<string, string>
+>((accumulator, [path, url]) => {
+  if (isAvatarPortraitPath(path)) {
+    return accumulator;
+  }
+
+  const fileName = path.split("/").pop() ?? path;
+  const lookupKey = normalizePortraitLookupKey(fileName);
+
+  if (lookupKey.length > 0 && accumulator[lookupKey] == null) {
+    accumulator[lookupKey] = url;
+  }
+
+  return accumulator;
+}, {});
+
+function getActiveVariantPortraitId(character: CharacterDefinition): string | null {
+  return (
     character.portraitVariants?.find(
       (variant) => variant.id === character.portraitVariantId
-    )?.portraitId ?? null;
+    )?.portraitId ?? null
+  );
+}
+
+function getPortraitIdTail(portraitId: string): string {
+  return portraitId.split(".").at(-1) ?? portraitId;
+}
+
+function resolveFullPortraitUrlByCharacter(
+  character: CharacterDefinition
+): string | null {
+  const activeVariantPortraitId = getActiveVariantPortraitId(character);
+  const candidateKeys = [
+    activeVariantPortraitId,
+    character.portraitId,
+    activeVariantPortraitId == null
+      ? null
+      : getPortraitIdTail(activeVariantPortraitId),
+    getPortraitIdTail(character.portraitId),
+    character.name,
+    ...(portraitLookupAliasesByCharacterName[character.name] ?? []),
+  ]
+    .filter((candidate): candidate is string => candidate != null)
+    .map((candidate) => normalizePortraitLookupKey(candidate));
+
+  for (const candidateKey of candidateKeys) {
+    const matchedUrl = fullPortraitUrlByLookupKey[candidateKey];
+
+    if (matchedUrl != null) {
+      return matchedUrl;
+    }
+  }
+
+  return null;
+}
+
+function resolveCharacterPortraitAsset(character: CharacterDefinition): PortraitAsset | null {
+  const activeVariantPortraitId = getActiveVariantPortraitId(character);
 
   return (
     (activeVariantPortraitId == null
@@ -118,7 +205,10 @@ function resolveCharacterPortraitAsset(character: CharacterDefinition): Portrait
 export function resolveCharacterPortraitImageUrl(
   character: CharacterDefinition
 ): string | null {
-  return resolveCharacterPortraitAsset(character)?.portraitUrl ?? null;
+  return (
+    resolveCharacterPortraitAsset(character)?.portraitUrl ??
+    resolveFullPortraitUrlByCharacter(character)
+  );
 }
 
 export function resolveCharacterAvatarImageUrl(

@@ -245,6 +245,27 @@ export function updateLayoutEditorElementPosition(
   }));
 }
 
+export function updateLayoutEditorElementSize(
+  appState: AppState,
+  componentId: string,
+  elementId: string,
+  resizeAxis: "x" | "y" | "xy",
+  deltaWidth: number,
+  deltaHeight: number
+): AppState {
+  return updateElementRect(appState, componentId, elementId, (rect) => ({
+    ...rect,
+    width:
+      resizeAxis === "y"
+        ? rect.width
+        : Math.max(1, clampNumber(rect.width + deltaWidth)),
+    height:
+      resizeAxis === "x"
+        ? rect.height
+        : Math.max(1, clampNumber(rect.height + deltaHeight)),
+  }));
+}
+
 export function setLayoutEditorComponentRectField(
   appState: AppState,
   componentId: string,

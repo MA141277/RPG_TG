@@ -14,6 +14,7 @@ import {
   updateLayoutEditorComponentPosition,
   updateLayoutEditorComponentSize,
   updateLayoutEditorElementPosition,
+  updateLayoutEditorElementSize,
 } from "./application/layout-editor/layout-editor-actions";
 import {
   closeCityMenu,
@@ -100,6 +101,8 @@ import {
 } from "./content/prototype-world";
 import { zhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
 import {
+  createDefaultCharacterDetailScreenLayout,
+  createDefaultCharacterSelectScreenLayout,
   createDefaultGlobalHudLayout,
   createDefaultStartScreenLayout,
   globalHudBackgroundOptions,
@@ -139,6 +142,12 @@ import {
 } from "./domain/zhu-yuanzhang-story";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
+import {
+  renderLoadingScreen,
+  selectRandomLoadingTheme,
+  setLoadingScreenProgress,
+  type LoadingTheme,
+} from "./ui/loading-screen";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
   resolveCampaignTerrainUvFromClientPosition,
@@ -154,6 +163,7 @@ const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = 40;
 const MAP_DEBUG_SCALE_STEP = 0.2;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
+const LOADING_SCREEN_SIMULATION_DURATION_MS = 1800;
 const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
 const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
@@ -324,7 +334,7 @@ let houseTileDragState:
 let suppressHouseClickUntilMs = 0;
 let layoutEditorDragState:
   | {
-      mode: "component" | "element" | "component-size";
+      mode: "component" | "element" | "component-size" | "element-size";
       componentId: string;
       elementId: string | null;
       pointerId: number;
@@ -336,6 +346,10 @@ let layoutEditorDragState:
 let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
 let cityBeggingMiniGameFrameId: number | null = null;
 let campaignTravelRequestId = 0;
+let loadingScreenAnimationFrameId: number | null = null;
+let loadingScreenRequestId = 0;
+let activeLoadingScreenElement: HTMLElement | null = null;
+let activeLoadingTheme: LoadingTheme | null = null;
 const mapAutoAdvanceHandles: Record<string, number> = {};
 
 let houseRuntime: HouseRuntime = createHouseRuntimeInstance();
@@ -343,7 +357,7 @@ const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
   characters: selectableCharacters,
-  onStartGame: startMainGame,
+  onStartGame: startMainGameWithLoading,
   loadSaveData,
   getAppState: () => appState,
 });
@@ -413,6 +427,8 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     uiLayouts: {
       "global-hud": createDefaultGlobalHudLayout(),
       "start-screen": createDefaultStartScreenLayout(),
+      "character-select-screen": createDefaultCharacterSelectScreenLayout(),
+      "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
     },
     layoutEditor: {
       isOpen: false,
@@ -1013,6 +1029,25 @@ function loadSaveData(): SaveDataResult {
   return null;
 }
 
+function startMainGameWithLoading(selectedCharacter: CharacterDefinition): void {
+  const requestId = beginLoadingScreen();
+
+  simulateLoadingProgress((progress) => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    setActiveLoadingProgress(progress);
+  }).then(() => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    startMainGame(selectedCharacter);
+    endLoadingScreen(requestId);
+  });
+}
+
 function startMainGame(selectedCharacter: CharacterDefinition): void {
   resetMainGameRuntime();
   currentPlayerCharacterId = selectedCharacter.id;
@@ -1021,6 +1056,87 @@ function startMainGame(selectedCharacter: CharacterDefinition): void {
   setGameVisibility(true);
   mainUiFlow.hide();
   renderApp();
+}
+
+function beginLoadingScreen(): number {
+  loadingScreenRequestId += 1;
+
+  if (loadingScreenAnimationFrameId != null) {
+    window.cancelAnimationFrame(loadingScreenAnimationFrameId);
+    loadingScreenAnimationFrameId = null;
+  }
+
+  const selectedLoadingTheme = selectRandomLoadingTheme();
+  activeLoadingTheme = selectedLoadingTheme;
+  window.console.log(
+    "[Loading] selected theme:",
+    selectedLoadingTheme.name,
+    selectedLoadingTheme.cursorPath
+  );
+  const loadingHost = document.createElement("div");
+  loadingHost.className = "c-loading-screen-host";
+  loadingHost.innerHTML = renderLoadingScreen(0, selectedLoadingTheme);
+  document.body.append(loadingHost);
+  activeLoadingScreenElement = loadingHost.querySelector<HTMLElement>(
+    ".c-loading-screen"
+  );
+  mainUiFlow.hide();
+
+  return loadingScreenRequestId;
+}
+
+function setActiveLoadingProgress(progress: number): void {
+  if (activeLoadingScreenElement == null) {
+    return;
+  }
+
+  if (activeLoadingTheme == null) {
+    return;
+  }
+
+  setLoadingScreenProgress(activeLoadingScreenElement, progress, activeLoadingTheme);
+}
+
+function endLoadingScreen(requestId: number): void {
+  if (requestId !== loadingScreenRequestId) {
+    return;
+  }
+
+  activeLoadingScreenElement?.parentElement?.remove();
+  activeLoadingScreenElement = null;
+  activeLoadingTheme = null;
+  loadingScreenAnimationFrameId = null;
+}
+
+function simulateLoadingProgress(
+  onProgress: (progress: number) => void
+): Promise<void> {
+  return new Promise((resolve) => {
+    const startedAtMs = performance.now();
+
+    const tick = (timestamp: number): void => {
+      const elapsedMs = timestamp - startedAtMs;
+      const linearProgress = Math.min(
+        elapsedMs / LOADING_SCREEN_SIMULATION_DURATION_MS,
+        1
+      );
+      const easedProgress = 1 - (1 - linearProgress) ** 3;
+
+      // Replace this simulated value with real asset/scene loading progress when
+      // the project has an async loading pipeline.
+      onProgress(easedProgress);
+
+      if (linearProgress < 1) {
+        loadingScreenAnimationFrameId = window.requestAnimationFrame(tick);
+        return;
+      }
+
+      loadingScreenAnimationFrameId = null;
+      resolve();
+    };
+
+    loadingScreenAnimationFrameId = window.requestAnimationFrame(tick);
+  });
 }
 
 function setGameVisibility(isVisible: boolean): void {
@@ -1032,6 +1148,13 @@ function setGameVisibility(isVisible: boolean): void {
 function resetMainGameRuntime(): void {
   houseRuntime.clearAllHouseIntervals();
   stopCityBeggingMiniGameLoop();
+
+  if (loadingScreenAnimationFrameId != null) {
+    window.cancelAnimationFrame(loadingScreenAnimationFrameId);
+  }
+
+  loadingScreenAnimationFrameId = null;
+  activeLoadingTheme = null;
 
   if (initialCampaignMapDebugAnimationFrame != null) {
     window.cancelAnimationFrame(initialCampaignMapDebugAnimationFrame);
@@ -1186,6 +1309,10 @@ function getLayoutEditorDragHandleSelector(): string {
 
   if (layoutEditorDragState.mode === "component-size") {
     return `[data-layout-component-resize="${layoutEditorDragState.componentId}"][data-layout-resize-axis="${layoutEditorDragState.resizeAxis}"]`;
+  }
+
+  if (layoutEditorDragState.mode === "element-size") {
+    return `[data-layout-element-resize="${layoutEditorDragState.componentId}:${layoutEditorDragState.elementId}"][data-layout-resize-axis="${layoutEditorDragState.resizeAxis}"]`;
   }
 
   return layoutEditorDragState.mode === "component"
@@ -1356,9 +1483,14 @@ function handleLayoutEditorClick(targetElement: EventTarget | null): boolean {
     if (uiOverlayElement == null) {
       return false;
     }
-    const nextTargetId = uiOverlayElement.classList.contains("is-hidden")
-      ? (appState.layoutEditor.selectedTargetId ?? "start-screen")
-      : "start-screen";
+    const nextTargetId: LayoutEditorTargetId =
+      appState.gameState.ui.overlayView === "detail"
+        ? "character-detail-screen"
+        : uiOverlayElement.classList.contains("is-hidden")
+          ? appState.layoutEditor.selectedTargetId
+          : uiOverlayElement.querySelector(".c-main-ui-screen--character-select") != null
+            ? "character-select-screen"
+            : "start-screen";
     appState =
       nextTargetId === appState.layoutEditor.selectedTargetId
         ? appState
@@ -1382,20 +1514,13 @@ function handleLayoutEditorClick(targetElement: EventTarget | null): boolean {
   );
   if (layoutTargetButton != null) {
     const targetId = layoutTargetButton.dataset.layoutTargetId;
-    if (targetId === "global-hud" || targetId === "start-screen") {
+    if (
+      targetId === "global-hud" ||
+      targetId === "start-screen" ||
+      targetId === "character-select-screen" ||
+      targetId === "character-detail-screen"
+    ) {
       appState = selectLayoutEditorTarget(appState, targetId as LayoutEditorTargetId);
-      renderActiveSurface();
-    }
-    return true;
-  }
-
-  const layoutComponentSelectButton = targetElement.closest<HTMLElement>(
-    "[data-layout-component-select]"
-  );
-  if (layoutComponentSelectButton != null) {
-    const componentId = layoutComponentSelectButton.dataset.layoutComponentSelect;
-    if (componentId != null) {
-      appState = selectLayoutEditorComponent(appState, componentId);
       renderActiveSurface();
     }
     return true;
@@ -1409,6 +1534,18 @@ function handleLayoutEditorClick(targetElement: EventTarget | null): boolean {
     const [componentId, elementId] = value?.split(":") ?? [];
     if (componentId != null && elementId != null) {
       appState = selectLayoutEditorElement(appState, componentId, elementId);
+      renderActiveSurface();
+    }
+    return true;
+  }
+
+  const layoutComponentSelectButton = targetElement.closest<HTMLElement>(
+    "[data-layout-component-select]"
+  );
+  if (layoutComponentSelectButton != null) {
+    const componentId = layoutComponentSelectButton.dataset.layoutComponentSelect;
+    if (componentId != null) {
+      appState = selectLayoutEditorComponent(appState, componentId);
       renderActiveSurface();
     }
     return true;
@@ -1453,6 +1590,34 @@ function startLayoutEditorDrag(event: PointerEvent | MouseEvent): boolean {
         resizeAxis,
       };
       setLayoutEditorPointerCapture(componentResizeHandle, event);
+      return true;
+    }
+  }
+
+  const elementResizeHandle = targetElement.closest<HTMLElement>(
+    "[data-layout-element-resize]"
+  );
+  if (elementResizeHandle != null) {
+    const [componentId, elementId] =
+      elementResizeHandle.dataset.layoutElementResize?.split(":") ?? [];
+    const resizeAxis = elementResizeHandle.dataset.layoutResizeAxis;
+    if (
+      componentId != null &&
+      elementId != null &&
+      (resizeAxis === "x" || resizeAxis === "y" || resizeAxis === "xy")
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      layoutEditorDragState = {
+        mode: "element-size",
+        componentId,
+        elementId,
+        pointerId: getLayoutEditorDragEventId(event),
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        resizeAxis,
+      };
+      setLayoutEditorPointerCapture(elementResizeHandle, event);
       return true;
     }
   }
@@ -1526,6 +1691,18 @@ function moveLayoutEditorDrag(event: PointerEvent | MouseEvent): boolean {
     appState = updateLayoutEditorComponentSize(
       appState,
       layoutEditorDragState.componentId,
+      layoutEditorDragState.resizeAxis ?? "xy",
+      layoutEditorDragState.resizeAxis === "y" ? 0 : deltaX,
+      layoutEditorDragState.resizeAxis === "x" ? 0 : deltaY
+    );
+  } else if (
+    layoutEditorDragState.mode === "element-size" &&
+    layoutEditorDragState.elementId != null
+  ) {
+    appState = updateLayoutEditorElementSize(
+      appState,
+      layoutEditorDragState.componentId,
+      layoutEditorDragState.elementId,
       layoutEditorDragState.resizeAxis ?? "xy",
       layoutEditorDragState.resizeAxis === "y" ? 0 : deltaX,
       layoutEditorDragState.resizeAxis === "x" ? 0 : deltaY
@@ -2350,18 +2527,6 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const layoutComponentSelectButton = targetElement.closest<HTMLElement>(
-    "[data-layout-component-select]"
-  );
-  if (layoutComponentSelectButton != null) {
-    const componentId = layoutComponentSelectButton.dataset.layoutComponentSelect;
-    if (componentId != null) {
-      appState = selectLayoutEditorComponent(appState, componentId);
-      renderApp();
-    }
-    return;
-  }
-
   const layoutElementSelectButton = targetElement.closest<HTMLElement>(
     "[data-layout-element-select]"
   );
@@ -2370,6 +2535,18 @@ appElement.addEventListener("click", (event) => {
     const [componentId, elementId] = value?.split(":") ?? [];
     if (componentId != null && elementId != null) {
       appState = selectLayoutEditorElement(appState, componentId, elementId);
+      renderApp();
+    }
+    return;
+  }
+
+  const layoutComponentSelectButton = targetElement.closest<HTMLElement>(
+    "[data-layout-component-select]"
+  );
+  if (layoutComponentSelectButton != null) {
+    const componentId = layoutComponentSelectButton.dataset.layoutComponentSelect;
+    if (componentId != null) {
+      appState = selectLayoutEditorComponent(appState, componentId);
       renderApp();
     }
     return;
@@ -3092,6 +3269,9 @@ function syncGameViewport(): void {
   appRoot.style.setProperty("--game-width", `${GAME_VIEWPORT_WIDTH}px`);
   appRoot.style.setProperty("--game-height", `${GAME_VIEWPORT_HEIGHT}px`);
   appRoot.style.setProperty("--game-scale", `${scale}`);
+  uiOverlayElement?.style.setProperty("--game-width", `${GAME_VIEWPORT_WIDTH}px`);
+  uiOverlayElement?.style.setProperty("--game-height", `${GAME_VIEWPORT_HEIGHT}px`);
+  uiOverlayElement?.style.setProperty("--game-scale", `${scale}`);
 }
 
 function shouldDispatchHouseActionOnPointerDown(actionId: string): boolean {

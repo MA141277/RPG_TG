@@ -1,5 +1,5 @@
-import { resolveCharacterPortraitImageUrl } from "../portrait-assets";
 import { applyLiveLayoutBindings } from "../tools/live-layout-bindings";
+import { resolveCharacterAvatarImageUrl } from "../portrait-assets";
 import { renderLayoutEditor } from "../tools/layout-editor-view";
 
 const startScreenLayoutBindings = [
@@ -18,6 +18,141 @@ const startScreenLayoutBindings = [
     componentId: "continue-button",
     selector: ".c-main-ui-image-button--continue",
     offsetComponentId: "main-menu-content",
+  },
+];
+
+const characterCardLayoutElements = [
+  {
+    elementId: "portrait",
+    selector: ":scope > .c-main-ui-character-card__portrait",
+  },
+  { elementId: "meta", selector: ".c-main-ui-character-card__meta" },
+  { elementId: "name", selector: ".c-main-ui-character-card__name" },
+  { elementId: "bio", selector: ".c-main-ui-character-card__bio" },
+  {
+    elementId: "placeholder-label",
+    selector: ".c-main-ui-character-card__placeholder-label",
+  },
+  {
+    elementId: "placeholder-index",
+    selector: ".c-main-ui-character-card__placeholder-index",
+  },
+];
+
+const characterCardLayoutBindings = Array.from({ length: 8 }, (_, index) => ({
+  componentId: `character-card-${index + 1}`,
+  selector: `.c-main-ui-character-grid > .c-main-ui-character-card:nth-child(${index + 1})`,
+  offsetComponentId: "character-grid",
+  elements: characterCardLayoutElements,
+}));
+
+const characterSelectLayoutBindings = [
+  { componentId: "character-layout", selector: ".c-main-ui-character-layout" },
+  {
+    componentId: "character-hero",
+    selector: ".c-main-ui-character-layout__hero",
+    offsetComponentId: "character-layout",
+    elements: [
+      { elementId: "era", selector: ".c-main-ui-character-layout__era" },
+      { elementId: "poem", selector: ".c-main-ui-character-layout__poem" },
+    ],
+  },
+  {
+    componentId: "character-book",
+    selector: ".c-main-ui-character-book",
+    offsetComponentId: "character-layout",
+  },
+  {
+    componentId: "character-tabs",
+    selector: ".c-main-ui-character-book__tabs",
+    offsetComponentId: "character-book",
+  },
+  {
+    componentId: "character-tab-characters",
+    selector: ".c-main-ui-book-tab--characters",
+    offsetComponentId: "character-tabs",
+  },
+  {
+    componentId: "character-tab-roster",
+    selector: ".c-main-ui-book-tab--roster",
+    offsetComponentId: "character-tabs",
+  },
+  {
+    componentId: "character-tab-ministers",
+    selector: ".c-main-ui-book-tab--ministers",
+    offsetComponentId: "character-tabs",
+  },
+  {
+    componentId: "character-book-content",
+    selector: ".c-main-ui-character-book__content",
+    offsetComponentId: "character-book",
+  },
+  {
+    componentId: "character-grid",
+    selector: ".c-main-ui-character-grid",
+    offsetComponentId: "character-book-content",
+  },
+  ...characterCardLayoutBindings,
+  {
+    componentId: "character-detail",
+    selector: ".c-main-ui-character-detail",
+    offsetComponentId: "character-book-content",
+  },
+  {
+    componentId: "character-detail-paper",
+    selector: ".c-main-ui-character-detail__paper",
+    offsetComponentId: "character-detail",
+    elements: [
+      { elementId: "eyebrow", selector: ".c-main-ui-character-detail__eyebrow" },
+      { elementId: "name", selector: ".c-main-ui-character-detail__name" },
+      { elementId: "subtitle", selector: ".c-main-ui-character-detail__subtitle" },
+      { elementId: "badge", selector: ".c-main-ui-character-detail__badge" },
+      { elementId: "stats", selector: ".c-main-ui-character-detail__stats" },
+      { elementId: "section-title", selector: ".c-main-ui-character-detail__section-title" },
+      { elementId: "bio", selector: ".c-main-ui-character-detail__bio" },
+      { elementId: "empty", selector: ".c-main-ui-character-detail__empty" },
+    ],
+  },
+  {
+    componentId: "character-footer",
+    selector: ".c-main-ui-character-book__footer",
+    offsetComponentId: "character-book",
+  },
+  {
+    componentId: "character-back-button",
+    selector: ".c-main-ui-page-button",
+    offsetComponentId: "character-footer",
+  },
+  {
+    componentId: "character-pagination",
+    selector: ".c-main-ui-book-pagination",
+    offsetComponentId: "character-footer",
+    elements: [
+      {
+        elementId: "left-ornament",
+        selector: ":scope > .c-main-ui-book-pagination__ornament:nth-child(1)",
+      },
+      { elementId: "text", selector: ":scope > span:nth-child(2)" },
+      {
+        elementId: "right-ornament",
+        selector: ":scope > .c-main-ui-book-pagination__ornament:nth-child(3)",
+      },
+    ],
+  },
+  {
+    componentId: "character-choose-button",
+    selector: ".c-main-ui-image-button--choose",
+    offsetComponentId: "character-footer",
+  },
+  {
+    componentId: "character-previous-page-button",
+    selector: ".c-main-ui-page-turn-button--previous",
+    offsetComponentId: "character-footer",
+  },
+  {
+    componentId: "character-next-page-button",
+    selector: ".c-main-ui-page-turn-button--next",
+    offsetComponentId: "character-footer",
   },
 ];
 
@@ -79,6 +214,8 @@ export class MainUiFlow {
       screenMarkup + renderLayoutEditor(this.getAppState());
     if (this.currentScreen === "main-menu") {
       this.syncStartScreenLayout();
+    } else if (this.currentScreen === "character-select") {
+      this.syncCharacterSelectLayout();
     }
   }
 
@@ -89,6 +226,16 @@ export class MainUiFlow {
       layout: appState.uiLayouts["start-screen"],
       appState,
       bindings: startScreenLayoutBindings,
+    });
+  }
+
+  syncCharacterSelectLayout() {
+    const appState = this.getAppState();
+    applyLiveLayoutBindings({
+      root: this.overlayRoot,
+      layout: appState.uiLayouts["character-select-screen"],
+      appState,
+      bindings: characterSelectLayoutBindings,
     });
   }
 
@@ -130,8 +277,7 @@ export class MainUiFlow {
         <div class="c-main-ui-character-layout">
           <aside class="c-main-ui-character-layout__hero">
             <div class="c-main-ui-character-layout__hero-inner">
-              <div class="c-main-ui-character-layout__era">大明</div>
-              <h1 class="c-main-ui-character-layout__title">太祖立志传</h1>
+              <div class="c-main-ui-character-layout__era" aria-hidden="true"></div>
               <p class="c-main-ui-character-layout__poem">
                 大明开国人物传。<br />
                 选定出战人物后，<br />
@@ -142,9 +288,9 @@ export class MainUiFlow {
 
           <div class="c-main-ui-character-book">
             <div class="c-main-ui-character-book__tabs" aria-hidden="true">
-              <span class="c-main-ui-book-tab is-active">人物传</span>
-              <span class="c-main-ui-book-tab">群雄录</span>
-              <span class="c-main-ui-book-tab">名臣卷</span>
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--characters is-active">人物传</span>
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--roster">群雄录</span>
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--ministers">名臣卷</span>
             </div>
 
             <div class="c-main-ui-character-book__content">
@@ -160,9 +306,7 @@ export class MainUiFlow {
                 class="c-main-ui-page-button"
                 data-main-ui-action="back-to-menu"
                 aria-label="返回主菜单"
-              >
-                <span>返回</span>
-              </button>
+              ></button>
 
               <div class="c-main-ui-book-pagination" aria-hidden="true">
                 <span class="c-main-ui-book-pagination__ornament"></span>
@@ -170,15 +314,27 @@ export class MainUiFlow {
                 <span class="c-main-ui-book-pagination__ornament"></span>
               </div>
 
-          <button
-            type="button"
+              <button
+                type="button"
+                class="c-main-ui-page-turn-button c-main-ui-page-turn-button--previous"
+                aria-label="上一页"
+              ></button>
+
+              <button
+                type="button"
                 class="c-main-ui-image-button c-main-ui-image-button--choose"
-            data-main-ui-action="start-adventure"
+                data-main-ui-action="start-adventure"
                 aria-label="开始冒险"
-            ${selectedCharacter == null ? "disabled" : ""}
-          >
+                ${selectedCharacter == null ? "disabled" : ""}
+              >
                 <span class="c-main-ui-sr-only">开始冒险</span>
-          </button>
+              </button>
+
+              <button
+                type="button"
+                class="c-main-ui-page-turn-button c-main-ui-page-turn-button--next"
+                aria-label="下一页"
+              ></button>
             </div>
           </div>
         </div>
@@ -205,17 +361,13 @@ export class MainUiFlow {
     const titleParts = [character.title, character.occupation].filter(Boolean);
     const subtitle =
       titleParts.length === 0 ? "角色资料待补充" : titleParts.join(" / ");
-    const portraitUrl = resolveCharacterPortraitImageUrl(character);
+    const avatarImageUrl = resolveCharacterAvatarImageUrl(character);
     const avatarMarkup =
-      portraitUrl == null
+      avatarImageUrl == null
         ? `<div class="c-main-ui-character-card__avatar-placeholder" aria-hidden="true">${escapeHtml(
             character.name.slice(0, 1) || "?"
           )}</div>`
-        : `<img
-            class="c-main-ui-character-card__avatar"
-            src="${escapeHtml(portraitUrl)}"
-            alt="${escapeHtml(character.name)}头像"
-          />`;
+        : `<img class="c-main-ui-character-card__avatar-image" src="${escapeHtml(avatarImageUrl)}" alt="" aria-hidden="true">`;
 
     return `
       <button
@@ -276,7 +428,7 @@ export class MainUiFlow {
                 ${escapeHtml([character.title, character.occupation].filter(Boolean).join(" / ") || "人物资料")}
               </p>
             </div>
-            <span class="c-main-ui-character-detail__badge" aria-hidden="true">已选</span>
+            <span class="c-main-ui-character-detail__badge" aria-hidden="true"></span>
           </div>
 
           <dl class="c-main-ui-character-detail__stats">

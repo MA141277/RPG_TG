@@ -127,7 +127,7 @@ function renderAssetOptions(
     .map(
       (option) => `
         <option value="${escapeHtml(option.id)}" ${option.id === selectedAssetId ? "selected" : ""}>
-          ${escapeHtml(option.label)}
+          ${escapeHtml(option.label)} [${escapeHtml(option.id)}]
         </option>
       `
     )
@@ -143,9 +143,14 @@ function filterAssetOptions(
     return options;
   }
 
-  return options.filter((option) =>
-    option.label.toLowerCase().includes(normalizedQuery)
-  );
+  return options.filter((option) => {
+    const normalizedId = option.id.toLowerCase();
+    const normalizedLabel = option.label.toLowerCase();
+    return (
+      normalizedLabel.includes(normalizedQuery) ||
+      normalizedId.includes(normalizedQuery)
+    );
+  });
 }
 
 function renderModeOptions(selectedMode: UiLayoutBackgroundMode | null): string {
