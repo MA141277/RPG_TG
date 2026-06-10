@@ -15,7 +15,7 @@ export const zhuYuanzhangMainStoryArc: StoryArcDefinition = {
   chapterId: "chapter.zhu-yuanzhang-rise",
   title: "朱元璋主线",
   summary:
-    "以皇觉寺开场、寺中评定、寺内劳作、化缘解锁与第三周远途化缘为起点的早期主线草案。",
+    "以皇觉寺开场、寺中评定、寺内劳作、化缘解锁、远途化缘以及卷入郭子兴部为起点的早期主线草案。",
   entryEventId: "event.story.zhu_yuanzhang.ordination",
   stageVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage,
   defaultStage: "huangjue-temple",
@@ -24,6 +24,7 @@ export const zhuYuanzhangMainStoryArc: StoryArcDefinition = {
     "first-temple-review",
     "earn-trust-in-temple",
     "far-alms-journey",
+    "captured-and-enlisted",
   ],
   tags: ["main-story", "temple-opening"],
 };
@@ -70,6 +71,16 @@ export const zhuYuanzhangMainStoryBeats: StoryBeatDefinition[] = [
     eventIds: ["event.story.zhu_yuanzhang.runing_broadcast"],
     completionFlagKey: createStoryBeatFlagKey(ARC_ID, "far-alms-journey"),
     tags: ["loop", "foreshadowing", "city-enter"],
+  },
+  {
+    id: "captured-and-enlisted",
+    arcId: ARC_ID,
+    title: "归路遇变",
+    summary:
+      "第四周自外地折返时，朱重八在路上遇盗取胜，入濠州后又被郭子兴部守军疑为谍者，最终被留置左右，自此脱离和尚期。",
+    eventIds: ["event.story.zhu_yuanzhang.haozhou_return_encounter"],
+    completionFlagKey: createStoryBeatFlagKey(ARC_ID, "captured-and-enlisted"),
+    tags: ["battle-hook", "city-enter", "historical-core", "fictionalized-bridge"],
   },
 ];
 
@@ -181,6 +192,35 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     entrySceneId: "scene.story.zhu_yuanzhang.runing_broadcast",
     tags: ["main-story", "city-enter", "foreshadowing"],
   },
+  {
+    id: "event.story.zhu_yuanzhang.haozhou_return_encounter",
+    chapterId: zhuYuanzhangMainStoryArc.chapterId,
+    name: "归濠州遇盗与入郭",
+    occurrence: "once",
+    trigger: {
+      timing: "city-enter",
+      scope: {
+        cityId: "city.kulan",
+      },
+      priority: 155,
+    },
+    conditions: [
+      {
+        type: "variable",
+        key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage,
+        operator: "==",
+        value: ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
+      },
+      {
+        type: "variable",
+        key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek,
+        operator: "==",
+        value: 4,
+      },
+    ],
+    entrySceneId: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
+    tags: ["main-story", "city-enter", "battle-hook", "join-guo-zixing"],
+  },
 ];
 
 export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
@@ -281,6 +321,26 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
             key: ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingTransitionAssigned,
             value: false,
           },
+          {
+            type: "set-flag",
+            key: ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleCompleted,
+            value: false,
+          },
+          {
+            type: "set-flag",
+            key: ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleWon,
+            value: false,
+          },
+          {
+            type: "set-variable",
+            key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
+            value: "",
+          },
+          {
+            type: "set-variable",
+            key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
+            value: "",
+          },
         ],
       },
     ],
@@ -378,6 +438,92 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
       {
         type: "narration",
         text: "你把这些风声都听进耳里，却没忘住持交代的本分。此行先求粮，先把能带回寺里的活路背稳。",
+      },
+    ],
+  },
+  {
+    id: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
+    name: "归濠州遇盗与入郭",
+    actions: [
+      {
+        type: "narration",
+        text: "你自外路折返，布袋里压着几把零碎米粮。离濠州尚有一程时，路旁枯林里忽然窜出数名持棍短刃的盗伙，见你背袋鼓起，便喝骂着扑了上来。",
+      },
+      {
+        type: "callback",
+        handlerId: "story.placeholder-battle",
+        payload: {
+          battleId: "story.zhu_yuanzhang.week4.roadside-bandits",
+          result: "victory",
+          completedFlagKey:
+            ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleCompleted,
+          winFlagKey: ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleWon,
+          battleIdVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
+          resultVariableKey:
+            ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
+        },
+      },
+      {
+        type: "narration",
+        text: "你贴着土路边石连退两步，趁那带头贼扑空的当口夺棍回扫，几下便把人打散。余众见势不对，骂了两句，拖着伤者钻回荒草深处。",
+      },
+      {
+        type: "narration",
+        text: "再往前走，城门方向已尽是红巾号衣与临时木栅。濠州显然已不是你离寺前的濠州，巡哨比商旅还多，问路的人个个先看你包里背的是什么。",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.kulan_soldier",
+        side: "left",
+        text: "站住。你这和尚是从哪一路回来的？北边口音杂、行装也杂，莫不是替人探路的？",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.player",
+        side: "right",
+        text: "我自外路化缘回来，只想入城换口热汤，再寻处歇脚。袋里不过几把米，没替谁探什么路。",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.kulan_soldier",
+        side: "left",
+        text: "外路才乱成这样，你一个挂单僧偏能从那边全身回来，还带着粮？先押去见元帅，是真是假，自有人断。",
+      },
+      {
+        type: "narration",
+        text: "几名军卒把你连人带袋押进营前。帐下火光映得兵器发白，众人七嘴八舌，都说北路近来探子最多，这和尚来得太巧，宁可信其有，不可信其无。",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.kulan_lord",
+        side: "left",
+        text: "你自哪来？门下军士说你像个谍子。可我看你一路风尘未定，倒不像专替元军递话的人。",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.player",
+        side: "right",
+        text: "我是钟离人，早年在皇觉寺挂单。如今世道逼人，只得四处化缘求活。若真是谍子，先前路上也不必为几把米和盗伙拼命。",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.kulan_lord",
+        side: "left",
+        text: "门者疑你为谍，本也不算无由。可你人既敢回濠州，话又说得直，倒像个肯担事的。",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.kulan_lord",
+        side: "left",
+        text: "这样罢，先不放你走，也不杀你。把人留在我左右，从亲兵和粮道杂务做起。若真有别心，迟早露出来；若没有，便算我帐下多一个能用的人。",
+      },
+      {
+        type: "callback",
+        handlerId: "story.zhu_yuanzhang.join-guo-zixing-camp",
+      },
+      {
+        type: "narration",
+        text: "你低头应下，心里却明白，自此再不能只把自己当作寺中挂单的和尚。濠州兵气扑面而来，你已被卷进郭子兴军中，再退不得了。",
       },
     ],
   },

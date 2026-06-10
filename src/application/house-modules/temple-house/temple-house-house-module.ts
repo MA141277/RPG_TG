@@ -359,6 +359,13 @@ function isThirdTempleWeekAssignmentPending(gameState: GameState): boolean {
   );
 }
 
+function isFourthTempleWeekAssignmentPending(gameState: GameState): boolean {
+  return (
+    isBeggingJourneyStage(gameState) &&
+    getTempleWeek(gameState) === 3
+  );
+}
+
 function randomTargetStart(round: number): number {
   const seed = (round * 17 + 13) % 55;
   return 15 + seed;
@@ -1081,6 +1088,13 @@ function getTempleMeetingPolicyLines(gameState: GameState): string[] {
     ];
   }
 
+  if (isFourthTempleWeekAssignmentPending(gameState)) {
+    return [
+      "方丈把你上次带回的粮与账目一并推回案前，道：这一趟虽有收获，寺里的口粮却仍旧紧。",
+      "外路还能讨得些活米，这一轮你仍去外地化缘。得粮便尽快南归，不可在路上久留。",
+    ];
+  }
+
   if (isBeggingUnlocked(gameState)) {
     return [
       "方丈道：这一轮仍以维持寺庙运转为先，院中缺人手，院外也缺米粮。",
@@ -1110,6 +1124,14 @@ function getTempleAssignDutyLines(
     ];
   }
 
+  if (isFourthTempleWeekAssignmentPending(gameState)) {
+    return [
+      "方丈垂目道：这一轮仍定你去外地化缘，不必回院里抄经扫地。",
+      "路上若能得粮便背回，若世道更乱，也先保住性命，再寻路归寺。",
+      "你只记得一条：先把粮背稳，莫被旁事拖住脚。",
+    ];
+  }
+
   return [
     "方丈抬手点了点案前木牌，示意你自选这一轮的差事。",
     availableLabels.length === 0
@@ -1134,6 +1156,16 @@ function getReviewWorkChoices(gameState: GameState): Array<{
       {
         id: "beg-alms",
         label: "远途化缘",
+        tone: "accent",
+      },
+    ];
+  }
+
+  if (isFourthTempleWeekAssignmentPending(gameState)) {
+    return [
+      {
+        id: "beg-alms",
+        label: "外地化缘",
         tone: "accent",
       },
     ];
@@ -1250,13 +1282,20 @@ function submitReviewWorkPlan(
   const thirdTempleWeekAssignment = isThirdTempleWeekAssignmentPending(
     input.gameState
   );
+  const fourthTempleWeekAssignment = isFourthTempleWeekAssignmentPending(
+    input.gameState
+  );
   const secondTempleWeekTransition =
     !thirdTempleWeekAssignment &&
+    !fourthTempleWeekAssignment &&
     readZhuYuanzhangStoryStage(input.gameState) ===
       ZHU_YUANZHANG_STORY_STAGES.huangjueTemple &&
     isBeggingUnlocked(input.gameState) &&
     getTempleWeek(input.gameState) === 2;
-  const nextWorkPlan = thirdTempleWeekAssignment ? "beg-alms" : workPlan;
+  const nextWorkPlan =
+    thirdTempleWeekAssignment || fourthTempleWeekAssignment
+      ? "beg-alms"
+      : workPlan;
 
   if (workPlan === "beg-alms" && !isBeggingUnlocked(input.gameState)) {
     return withSessionState(
@@ -1292,13 +1331,15 @@ function submitReviewWorkPlan(
       activeMissionId:
         nextWorkPlan === "beg-alms" ? "mission.temple.beg-alms" : null,
       reviewDateText: formatReviewDateText(30),
-      mainHouseMissionText:
-        nextWorkPlan === "beg-alms"
-          ? thirdTempleWeekAssignment
-            ? "远赴颍州化缘"
-            : "外出化缘"
-          : "寺内帮忙",
-    },
+        mainHouseMissionText:
+          nextWorkPlan === "beg-alms"
+            ? thirdTempleWeekAssignment
+              ? "远赴颍州化缘"
+              : fourthTempleWeekAssignment
+                ? "外地化缘"
+              : "外出化缘"
+            : "寺内帮忙",
+      },
     runtime: {
       ...input.gameState.runtime,
       flags: {
@@ -1314,12 +1355,15 @@ function submitReviewWorkPlan(
       variables: {
         ...input.gameState.runtime.variables,
         [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
-        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: thirdTempleWeekAssignment
-          ? ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
-          : readZhuYuanzhangStoryStage(input.gameState),
-        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: thirdTempleWeekAssignment
-          ? 3
-          : getTempleWeek(input.gameState),
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: thirdTempleWeekAssignment
+            ? ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
+            : readZhuYuanzhangStoryStage(input.gameState),
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]:
+            thirdTempleWeekAssignment
+              ? 3
+              : fourthTempleWeekAssignment
+                ? 4
+                : getTempleWeek(input.gameState),
         [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
         [TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: "",
         [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: nextWorkPlan,
@@ -1340,32 +1384,39 @@ function submitReviewWorkPlan(
       selectedTaskId: null,
       selectedWorkPlan: nextWorkPlan,
       dailyActionPanel: "root",
-      dialogueLines:
-        nextWorkPlan === "beg-alms"
-          ? [
-              ...(thirdTempleWeekAssignment
-                ? [
-                    "这一轮评定，你改去颍州方向远途化缘。",
-                    "离寺后先往北路城镇走，在外地按化缘流程求粮，带回寺里即可交差。",
-                  ]
-                : [
-                    "这一轮评定，你改去寺外化缘。",
-                    "离寺后直接在城中按化缘流程推进，不必再回寺里点这份工作。",
-                  ]),
-            ]
+        dialogueLines:
+          nextWorkPlan === "beg-alms"
+            ? [
+                ...(thirdTempleWeekAssignment
+                  ? [
+                      "这一轮评定，你改去颍州方向远途化缘。",
+                      "离寺后先往北路城镇走，在外地按化缘流程求粮，带回寺里即可交差。",
+                    ]
+                  : fourthTempleWeekAssignment
+                    ? [
+                        "这一轮评定，你仍去外地化缘。",
+                        "先在外路求粮，得手后尽快回程；若路上遇乱，先保住人和粮，再设法归寺。",
+                      ]
+                  : [
+                      "这一轮评定，你改去寺外化缘。",
+                      "离寺后直接在城中按化缘流程推进，不必再回寺里点这份工作。",
+                    ]),
+              ]
           : [
               "这一轮评定，先以寺内帮忙为主。",
               "评定到此为止，回到寺中事务里，再挑具体杂务去做。",
             ],
       overlay: createAlertOverlay(
         "本轮差事已定",
-        [
-          nextWorkPlan === "beg-alms"
-            ? thirdTempleWeekAssignment
-              ? "本轮方向已定为远途化缘。先往颍州方向求粮，离寺后直接在外地城镇推进，不再从寺庙工作菜单进入。"
-              : "本轮方向已定为外出化缘。离寺后直接去城中化缘，不再从寺庙工作菜单进入。"
-            : "本轮方向已定为寺内帮忙。离开评定后，可在寺庙事务中选择抄经、扫院或挑水。",
-          "本次寺中评定结束，下次评定倒计时已重置为 30 天。",
+          [
+            nextWorkPlan === "beg-alms"
+              ? thirdTempleWeekAssignment
+                ? "本轮方向已定为远途化缘。先往颍州方向求粮，离寺后直接在外地城镇推进，不再从寺庙工作菜单进入。"
+                : fourthTempleWeekAssignment
+                  ? "本轮方向已定为外地化缘。离寺后仍按外地求粮推进，得粮后尽快回程，不再从寺庙工作菜单进入。"
+                : "本轮方向已定为外出化缘。离寺后直接去城中化缘，不再从寺庙工作菜单进入。"
+              : "本轮方向已定为寺内帮忙。离开评定后，可在寺庙事务中选择抄经、扫院或挑水。",
+            "本次寺中评定结束，下次评定倒计时已重置为 30 天。",
         ],
         "success"
       ),
@@ -1456,13 +1507,15 @@ function startBegAlmsWork(
         ...input.gameState.missions,
         activeMissionId: taskDefinition.missionId,
       },
-      ui: {
-        ...input.gameState.ui,
-        activeMissionId: taskDefinition.missionId,
-        mainHouseMissionText: isBeggingJourneyStage(input.gameState)
-          ? "远赴颍州化缘"
-          : taskDefinition.title,
-      },
+        ui: {
+          ...input.gameState.ui,
+          activeMissionId: taskDefinition.missionId,
+          mainHouseMissionText: isBeggingJourneyStage(input.gameState)
+            ? getTempleWeek(input.gameState) >= 4
+              ? "外地化缘"
+              : "远赴颍州化缘"
+            : taskDefinition.title,
+        },
       runtime: {
         ...input.gameState.runtime,
         variables: {
@@ -1477,17 +1530,26 @@ function startBegAlmsWork(
       dialoguePhase: "open",
       selectedTaskId: taskDefinition.id,
       dailyActionPanel: "work",
-      overlay: createAlertOverlay(
-        isBeggingJourneyStage(input.gameState) ? "准备远途化缘" : "准备外出化缘",
-        [
-          ...(isBeggingJourneyStage(input.gameState)
-            ? [
-                "住持已把这一轮差事定为远途化缘，你先往颍州方向走，在外地城镇求粮。",
-                "这次不走寺内杂务考校。离开寺庙后，直接按城中化缘与买粮流程推进，带粮回寺即可。",
-              ]
-            : [
-                taskDefinition.briefing,
-                "这次不走寺内杂务考校。离开寺庙后，你便可按外出赚钱的流程推进。",
+        overlay: createAlertOverlay(
+          isBeggingJourneyStage(input.gameState)
+            ? getTempleWeek(input.gameState) >= 4
+              ? "准备外地化缘"
+              : "准备远途化缘"
+            : "准备外出化缘",
+          [
+            ...(isBeggingJourneyStage(input.gameState)
+              ? getTempleWeek(input.gameState) >= 4
+                ? [
+                    "住持已把这一轮差事定为外地化缘，你仍先往外路求粮，得手后尽快回程。",
+                    "这次不走寺内杂务考校。离开寺庙后，直接按外地城镇的化缘与买粮流程推进即可。",
+                  ]
+                : [
+                    "住持已把这一轮差事定为远途化缘，你先往颍州方向走，在外地城镇求粮。",
+                    "这次不走寺内杂务考校。离开寺庙后，直接按城中化缘与买粮流程推进，带粮回寺即可。",
+                  ]
+              : [
+                  taskDefinition.briefing,
+                  "这次不走寺内杂务考校。离开寺庙后，你便可按外出赚钱的流程推进。",
               ]),
         ],
         "info"

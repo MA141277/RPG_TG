@@ -15,6 +15,8 @@ export const ZHU_YUANZHANG_STORY_VARIABLE_KEYS = {
   stage: "var.story.zhu_yuanzhang.stage",
   templeContribution: "var.story.zhu_yuanzhang.temple_contribution",
   templeWeek: "var.story.zhu_yuanzhang.temple_week",
+  lastBattleId: "var.story.zhu_yuanzhang.last_battle_id",
+  lastBattleResult: "var.story.zhu_yuanzhang.last_battle_result",
 } as const;
 
 export const ZHU_YUANZHANG_STORY_FLAG_KEYS = {
@@ -27,6 +29,8 @@ export const ZHU_YUANZHANG_STORY_FLAG_KEYS = {
   beggingUnlocked: "flag.story.zhu_yuanzhang.begging_unlocked",
   beggingTransitionAssigned:
     "flag.story.zhu_yuanzhang.begging_transition_assigned",
+  banditBattleCompleted: "flag.story.zhu_yuanzhang.bandit_battle.completed",
+  banditBattleWon: "flag.story.zhu_yuanzhang.bandit_battle.won",
 } as const;
 
 export function isZhuYuanzhangStoryStage(
