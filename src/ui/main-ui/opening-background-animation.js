@@ -5,6 +5,9 @@ const SCENE_HEIGHT = 1152;
 const EDITOR_SCALE = 0.34;
 const CLOTH_FRAME_DURATION = 47;
 const CLOTH_FPS = 24;
+const PARALLAX_MAX_X = 36;
+const PARALLAX_MAX_Y = 20;
+const PARALLAX_EASE = 0.09;
 
 const asset = (fileName) =>
   new URL(`../../../ui/yuansu/开局ui/${fileName}`, import.meta.url).href;
@@ -37,24 +40,55 @@ const cloudLayers = [
     image: "cloudMidGray",
     speed: sourcePx(1.2),
     bounds: [486, 176, 1386, 500],
+    depth: 0.16,
   },
   {
     image: "cloudLeftBottom",
     speed: sourcePx(1.8),
     bounds: [1, 735, 929, 1146],
+    depth: 0.44,
   },
   {
     image: "cloudRightMid",
     speed: sourcePx(1.3),
     bounds: [1386, 275, 2032, 513],
+    depth: 0.22,
   },
 ];
 
 const boatLayers = [
-  { image: "boatFar01", driftX: sourcePx(-9), driftY: sourcePx(-1.8), duration: 34, phase: 0.05 },
-  { image: "boatMid01", driftX: sourcePx(11), driftY: sourcePx(2.4), duration: 38, phase: 0.42 },
-  { image: "boatMid02", driftX: sourcePx(5), driftY: sourcePx(-0.7), duration: 64, phase: 0.46 },
-  { image: "boatFar02", driftX: sourcePx(-3), driftY: sourcePx(0.6), duration: 70, phase: 0.18 },
+  {
+    image: "boatFar01",
+    driftX: sourcePx(-9),
+    driftY: sourcePx(-1.8),
+    duration: 34,
+    phase: 0.05,
+    depth: 0.32,
+  },
+  {
+    image: "boatMid01",
+    driftX: sourcePx(11),
+    driftY: sourcePx(2.4),
+    duration: 38,
+    phase: 0.42,
+    depth: 0.5,
+  },
+  {
+    image: "boatMid02",
+    driftX: sourcePx(5),
+    driftY: sourcePx(-0.7),
+    duration: 64,
+    phase: 0.46,
+    depth: 0.46,
+  },
+  {
+    image: "boatFar02",
+    driftX: sourcePx(-3),
+    driftY: sourcePx(0.6),
+    duration: 70,
+    phase: 0.18,
+    depth: 0.28,
+  },
 ];
 
 const clothLayers = [
@@ -72,6 +106,7 @@ const clothLayers = [
     phaseOffset: 0.06,
     directionX: 1,
     directionY: 0,
+    depth: 0.28,
   },
   {
     image: "cloakHem",
@@ -87,6 +122,7 @@ const clothLayers = [
     phaseOffset: 0,
     directionX: 1,
     directionY: 0,
+    depth: 1,
   },
   {
     image: "redFlagTop",
@@ -102,6 +138,7 @@ const clothLayers = [
     phaseOffset: 0.08,
     directionX: 1,
     directionY: 0,
+    depth: 1,
   },
   {
     image: "redFlagBottom",
@@ -117,6 +154,7 @@ const clothLayers = [
     phaseOffset: 0.14,
     directionX: 1,
     directionY: 0,
+    depth: 1,
   },
 ];
 
@@ -136,6 +174,7 @@ const dragonLayer = {
   tailTwist: 5.5,
   tailDriftX: -4,
   tailDriftY: 6,
+  depth: 0.34,
 };
 
 export function mountOpeningBackgroundAnimation(root) {
@@ -150,6 +189,7 @@ export function mountOpeningBackgroundAnimation(root) {
   }
 
   const images = loadImages(imageSources);
+  const parallax = createParallaxState(root);
   const startTimes = {
     clouds: performance.now(),
     boats: performance.now(),
@@ -161,7 +201,8 @@ export function mountOpeningBackgroundAnimation(root) {
   const render = () => {
     if (destroyed) return;
     resizeCanvas(canvas);
-    drawScene(context, canvas, images, startTimes);
+    updateParallax(parallax.state);
+    drawScene(context, canvas, images, startTimes, parallax.state);
     frameId = requestAnimationFrame(render);
   };
 
@@ -169,8 +210,44 @@ export function mountOpeningBackgroundAnimation(root) {
 
   return () => {
     destroyed = true;
+    parallax.destroy();
     cancelAnimationFrame(frameId);
   };
+}
+
+function createParallaxState(root) {
+  const state = {
+    x: 0,
+    y: 0,
+    targetX: 0,
+    targetY: 0,
+  };
+  const onPointerMove = (event) => {
+    const rect = root.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    state.targetX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+    state.targetY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+  };
+  const onPointerLeave = () => {
+    state.targetX = 0;
+    state.targetY = 0;
+  };
+
+  root.addEventListener("pointermove", onPointerMove, { passive: true });
+  root.addEventListener("pointerleave", onPointerLeave, { passive: true });
+
+  return {
+    state,
+    destroy: () => {
+      root.removeEventListener("pointermove", onPointerMove);
+      root.removeEventListener("pointerleave", onPointerLeave);
+    },
+  };
+}
+
+function updateParallax(state) {
+  state.x += (state.targetX - state.x) * PARALLAX_EASE;
+  state.y += (state.targetY - state.y) * PARALLAX_EASE;
 }
 
 function loadImages(sources) {
@@ -194,7 +271,7 @@ function resizeCanvas(canvas) {
   }
 }
 
-function drawScene(ctx, canvas, images, startTimes) {
+function drawScene(ctx, canvas, images, startTimes, parallax) {
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const viewportWidth = canvas.width / dpr;
   const viewportHeight = canvas.height / dpr;
@@ -211,23 +288,56 @@ function drawScene(ctx, canvas, images, startTimes) {
   ctx.translate(offsetX, offsetY);
   ctx.scale(coverScale, coverScale);
 
-  drawCloud(ctx, images, cloudLayers[0], now, startTimes.clouds);
-  drawCloud(ctx, images, cloudLayers[1], now, startTimes.clouds);
-  drawDragon(ctx, images[dragonLayer.image], dragonLayer, now, startTimes.dragon);
-  drawFullImage(ctx, images.emperorBackStatic);
-  drawWindCloth(ctx, images.emperorBackHem, clothLayers[0], now);
-  drawFullImage(ctx, images.landscape);
-  drawCloud(ctx, images, cloudLayers[2], now, startTimes.clouds);
-  drawFullImage(ctx, images.cloudRightTop);
-  boatLayers.forEach((layer) => drawBoat(ctx, images, layer, now, startTimes.boats));
-  drawFullImage(ctx, images.monkBottomStatic);
-  drawFullImage(ctx, images.cloakStatic);
-  drawWindCloth(ctx, images.cloakHem, clothLayers[1], now);
-  drawWindCloth(ctx, images.redFlagTop, clothLayers[2], now);
-  drawWindCloth(ctx, images.redFlagBottom, clothLayers[3], now);
-  drawFullImage(ctx, images.title);
+  drawParallaxLayer(ctx, parallax, cloudLayers[0].depth, () =>
+    drawCloud(ctx, images, cloudLayers[0], now, startTimes.clouds),
+  );
+  drawParallaxLayer(ctx, parallax, cloudLayers[1].depth, () =>
+    drawCloud(ctx, images, cloudLayers[1], now, startTimes.clouds),
+  );
+  drawParallaxLayer(ctx, parallax, dragonLayer.depth, () =>
+    drawDragon(ctx, images[dragonLayer.image], dragonLayer, now, startTimes.dragon),
+  );
+  drawParallaxLayer(ctx, parallax, 0.24, () => drawFullImage(ctx, images.emperorBackStatic));
+  drawParallaxLayer(ctx, parallax, clothLayers[0].depth, () =>
+    drawWindCloth(ctx, images.emperorBackHem, clothLayers[0], now),
+  );
+  drawParallaxLayer(ctx, parallax, 0.2, () => drawFullImage(ctx, images.landscape));
+  drawParallaxLayer(ctx, parallax, cloudLayers[2].depth, () =>
+    drawCloud(ctx, images, cloudLayers[2], now, startTimes.clouds),
+  );
+  drawParallaxLayer(ctx, parallax, 0.3, () => drawFullImage(ctx, images.cloudRightTop));
+  boatLayers.forEach((layer) => {
+    drawParallaxLayer(ctx, parallax, layer.depth, () => drawBoat(ctx, images, layer, now, startTimes.boats));
+  });
+  drawParallaxLayer(ctx, parallax, 0.92, () => drawFullImage(ctx, images.monkBottomStatic));
+  drawParallaxLayer(ctx, parallax, 0.98, () => drawFullImage(ctx, images.cloakStatic));
+  drawParallaxLayer(ctx, parallax, clothLayers[1].depth, () =>
+    drawWindCloth(ctx, images.cloakHem, clothLayers[1], now),
+  );
+  drawParallaxLayer(ctx, parallax, clothLayers[2].depth, () =>
+    drawWindCloth(ctx, images.redFlagTop, clothLayers[2], now),
+  );
+  drawParallaxLayer(ctx, parallax, clothLayers[3].depth, () =>
+    drawWindCloth(ctx, images.redFlagBottom, clothLayers[3], now),
+  );
+  drawParallaxLayer(ctx, parallax, 0, () => drawFullImage(ctx, images.title));
 
   ctx.restore();
+}
+
+function drawParallaxLayer(ctx, parallax, depth, draw) {
+  const offset = parallaxOffset(parallax, depth);
+  ctx.save();
+  ctx.translate(offset.x, offset.y);
+  draw();
+  ctx.restore();
+}
+
+function parallaxOffset(parallax, depth) {
+  return {
+    x: parallax.x * PARALLAX_MAX_X * depth,
+    y: parallax.y * PARALLAX_MAX_Y * depth,
+  };
 }
 
 function drawFullImage(ctx, image, x = 0, y = 0) {
