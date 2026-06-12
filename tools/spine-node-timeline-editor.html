@@ -551,6 +551,8 @@
           <button id="sampleBtn" type="button">示例</button>
           <button id="walkSampleBtn" type="button">侧面行走</button>
           <button id="newVersionSampleBtn" type="button">新版</button>
+          <button id="openingMonkSampleBtn" type="button">开局人物</button>
+          <button id="openingCloakSampleBtn" type="button">开局披风</button>
           <button id="idleAnimationBtn" type="button">待机动画</button>
           <button id="slashSampleBtn" type="button">侧身劈砍</button>
           <button id="threeQuarterSampleBtn" type="button">70度侧身</button>
@@ -559,6 +561,7 @@
           <button id="nodeModeBtn" class="mode-button active" type="button">节点移动</button>
           <button id="boneModeBtn" class="mode-button" type="button">骨骼移动</button>
           <button id="stretchModeBtn" class="mode-button" type="button">骨骼伸缩</button>
+          <button id="addBoneModeBtn" class="mode-button" type="button">画骨骼</button>
           <input id="fileInput" class="file-input" type="file" accept=".json,application/json" />
         </div>
       </header>
@@ -568,7 +571,7 @@
           <section class="panel-section">
             <div class="panel-title">
               <span>节点树</span>
-              <button id="addNodeBtn" type="button">添加</button>
+              <button id="addNodeBtn" type="button">添加骨骼</button>
             </div>
             <div id="nodeList" class="node-list"></div>
           </section>
@@ -590,7 +593,7 @@
         <section class="stage-wrap">
           <canvas id="stage" draggable="false"></canvas>
           <div class="stage-hint">
-            节点移动：拖拽关节圆点，沿父骨骼方向会拉伸/缩短父骨骼并带动相连子链；骨骼移动：拖拽骨骼段会平移当前骨骼和子骨骼。
+            画骨骼：在参考图上从起点拖到终点创建骨骼；选中已有骨骼后再画，会把新骨骼接到当前骨骼末端。
           </div>
         </section>
 
@@ -649,6 +652,8 @@
                   <option value="newLeftLeg">新版/leftleg.png</option>
                   <option value="newRightLeg">新版/rightleg.png</option>
                   <option value="newSword">新版/sword.png</option>
+                  <option value="openingMonk">开局/foreground_monk_cliff_flag.png</option>
+                  <option value="openingCloak">开局/opening_mid_cloak.png</option>
                 </select>
               </div>
               <div class="field">
@@ -819,10 +824,14 @@
         selectedNodeId: "root",
         selectedKey: null,
         editMode: "node",
+        underlayImages: [],
+        referenceImage: null,
+        overlayImages: [],
         renderMode: "texture",
         showSkeletonOverlay: false,
         keyframeSource: "previous",
         playing: false,
+        clothOverlays: [],
         nodes: [
           {
             id: "root",
@@ -951,8 +960,10 @@
         sampleBtn: document.getElementById("sampleBtn"),
         walkSampleBtn: document.getElementById("walkSampleBtn"),
         slashSampleBtn: document.getElementById("slashSampleBtn"),
-        newVersionSampleBtn: document.getElementById("newVersionSampleBtn"),
-        idleAnimationBtn: document.getElementById("idleAnimationBtn"),
+          newVersionSampleBtn: document.getElementById("newVersionSampleBtn"),
+          openingMonkSampleBtn: document.getElementById("openingMonkSampleBtn"),
+          openingCloakSampleBtn: document.getElementById("openingCloakSampleBtn"),
+          idleAnimationBtn: document.getElementById("idleAnimationBtn"),
         threeQuarterSampleBtn: document.getElementById("threeQuarterSampleBtn"),
         viewToggleBtn: document.getElementById("viewToggleBtn"),
         skeletonOverlayBtn: document.getElementById("skeletonOverlayBtn"),
@@ -960,6 +971,7 @@
         nodeModeBtn: document.getElementById("nodeModeBtn"),
         boneModeBtn: document.getElementById("boneModeBtn"),
         stretchModeBtn: document.getElementById("stretchModeBtn"),
+        addBoneModeBtn: document.getElementById("addBoneModeBtn"),
         toast: document.getElementById("toast"),
       };
 
@@ -967,6 +979,9 @@
       let drag = null;
       let rafId = 0;
       let lastTime = 0;
+      let cloudStartTime = performance.now();
+      let boatStartTime = performance.now();
+      let dragonStartTime = performance.now();
       let drawAlphaMultiplier = 1;
       let ignorePoseOverrides = false;
       const poseOverrides = new Map();
@@ -986,6 +1001,28 @@
           newLeftLeg: "/src/faxian/leg/leftleg.png",
           newRightLeg: "/src/faxian/leg/rightleg%20(1).png",
           newSword: "/src/faxian/leg/sword.png",
+          openingMonk: "/ui/spine/opening/foreground_monk_cliff_flag.png",
+          openingBase: "/ui/yuansu/开局ui/bg/base_FFFBF2.png",
+          openingCloudMidGray: "/ui/yuansu/开局ui/cloud_mid_gray.png",
+          openingCloudLeftBottom: "/ui/yuansu/开局ui/cloud_left_bottom.png",
+          openingDragonGold: "/ui/yuansu/开局ui/dragon_gold.png",
+          openingEmperorBack: "/ui/yuansu/开局ui/emperor_back.png",
+          openingEmperorBackStatic: "/ui/spine/opening/opening_emperor_back_static_no_hem.png?v=emperor-cloth-03",
+          openingEmperorBackHemCloth: "/ui/spine/opening/opening_emperor_back_hem_cloth.png?v=emperor-cloth-03",
+          openingLandscapeCityMountain: "/ui/yuansu/开局ui/landscape_city_mountain.png",
+          openingCloudRightMid: "/ui/yuansu/开局ui/cloud_right_mid.png",
+          openingCloudRightTop: "/ui/yuansu/开局ui/cloud_right_top.png",
+          openingBoatFar01: "/ui/yuansu/开局ui/boat_far_01.png",
+          openingBoatMid01: "/ui/yuansu/开局ui/boat_mid_01.png",
+          openingBoatMid02: "/ui/yuansu/开局ui/boat_mid_02.png",
+          openingBoatFar02: "/ui/yuansu/开局ui/boat_far_02.png",
+          openingMonkBottomStatic: "/ui/yuansu/开局ui/img_v3_0212i_b3059506-4159-44f0-8999-76a1503c02dg.png",
+          openingTitle: "/ui/yuansu/开局ui/title_dazu_lizhizhuan.png",
+          openingCloak: "/ui/spine/opening/opening_mid_cloak.png",
+          openingCloakStatic: "/ui/spine/opening/opening_mid_cloak_static_no_hem.png?v=wide-cloth-04",
+          openingCloakHemCloth: "/ui/spine/opening/opening_mid_cloak_hem_cloth.png?v=wide-cloth-04",
+          openingRedFlagTop: "/ui/spine/opening/opening_red_flag_top.png?v=red-flag-01",
+          openingRedFlagBottom: "/ui/spine/opening/opening_red_flag_bottom.png?v=red-flag-01",
         };
         return Object.fromEntries(
           Object.entries(sources).map(([id, src]) => {
@@ -1225,6 +1262,10 @@
         ctx.clearRect(0, 0, rect.width, rect.height);
         drawAxes(rect);
         const nodes = sortedNodes();
+        drawUnderlayImages();
+        drawReferenceImage();
+        drawClothOverlays();
+        drawOverlayImages();
         drawPreviousKeyGhost(nodes);
         if (state.renderMode === "texture") {
           drawWarriorTextures();
@@ -1237,6 +1278,249 @@
           nodes.forEach((node) => drawParentLink(node));
           nodes.forEach((node) => drawBone(node, node.id === state.selectedNodeId));
         }
+        drawCreateBonePreview();
+      }
+
+      function drawUnderlayImages() {
+        if (!state.underlayImages?.length) return;
+        state.underlayImages.forEach((underlay) => {
+          if (underlay.kind === "dragonRig") drawDragonRig(underlay);
+          else if (underlay.kind === "windCloth") drawWindPlacedImage(underlay);
+          else drawPlacedImage(underlay);
+        });
+      }
+
+      function drawOverlayImages() {
+        if (!state.overlayImages?.length) return;
+        state.overlayImages.forEach((overlay) => drawPlacedImage(overlay));
+      }
+
+      function drawReferenceImage() {
+        const reference = state.referenceImage;
+        drawPlacedImage(reference);
+      }
+
+      function drawPlacedImage(reference) {
+        if (!reference) return;
+        const image = warriorImages[reference.image];
+        if (!image?.complete) return;
+        ctx.save();
+        setDrawAlpha(reference.alpha ?? 1);
+        const drift = placedDriftOffset(reference);
+        ctx.translate(
+          (reference.x || 0) + movingImageOffsetX(reference, image) + drift.x,
+          (reference.y || 0) + drift.y,
+        );
+        ctx.rotate(((reference.rotation || 0) * Math.PI) / 180);
+        const scale = reference.scale || 1;
+        ctx.drawImage(image, 0, 0, image.width * scale, image.height * scale);
+        ctx.restore();
+      }
+
+      function drawDragonRig(reference) {
+        const image = warriorImages[reference.image];
+        if (!image?.complete) return;
+        const scale = reference.scale || 1;
+        const bounds = reference.sourceBounds || [789, 62, 1772, 741];
+        const segmentCount = Math.max(3, Math.round(reference.segments || 9));
+        const overlap = Math.max(0, Number(reference.overlap) || 18);
+        const period = Math.max(2, Number(reference.period) || 9);
+        const seconds = (performance.now() - dragonStartTime) / 1000;
+        const cycle = (seconds % period) / period;
+        const appear = smoothStep(0.04, 0.16, cycle);
+        const travel = cycle < 0.72 ? smoothStep(0.12, 0.72, cycle) : 1;
+        const vanish = smoothStep(0.58, 0.78, cycle);
+        const baseAlpha = appear * (1 - vanish);
+        const spawnEase = 1 - smoothStep(0.04, 0.28, cycle);
+        const globalX = (Number(reference.spawnX) || 0) * spawnEase + (Number(reference.travelX) || 28) * travel;
+        const globalY = (Number(reference.spawnY) || 0) * spawnEase + (Number(reference.travelY) || 24) * travel;
+        const width = bounds[2] - bounds[0];
+        const segmentWidth = width / segmentCount;
+
+        ctx.save();
+        ctx.translate(reference.x || 0, reference.y || 0);
+        for (let index = 0; index < segmentCount; index += 1) {
+          const u = index / Math.max(1, segmentCount - 1);
+          const sourceX = Math.max(0, Math.floor(bounds[0] + segmentWidth * index - overlap));
+          const sourceRight = Math.min(image.width, Math.ceil(bounds[0] + segmentWidth * (index + 1) + overlap));
+          const sourceY = bounds[1];
+          const sourceW = Math.max(1, sourceRight - sourceX);
+          const sourceH = bounds[3] - bounds[1];
+          const destX = sourceX * scale;
+          const destY = sourceY * scale;
+          const destW = sourceW * scale;
+          const destH = sourceH * scale;
+          const pivotX = destX + destW * 0.5;
+          const pivotY = destY + destH * 0.5;
+          const wave = Math.sin(cycle * Math.PI * 2 + u * Math.PI * 1.7);
+          const weight = 0.35 + Math.sin(u * Math.PI) * 0.65;
+          const tailWeight = Math.pow(Math.max(0, 1 - u / 0.34), 1.7);
+          const tailWave = Math.sin(cycle * Math.PI * 2.8 + u * Math.PI * 2.4);
+          const vanishLead = smoothStep(0.32 + (1 - u) * 0.22, 0.76 + (1 - u) * 0.12, cycle);
+          const alpha = Math.max(0, Math.min(1, baseAlpha * (1 - vanishLead * 0.45)));
+          const drillX = (Number(reference.drillX) || 42) * vanishLead;
+          const drillY = (Number(reference.drillY) || -34) * vanishLead;
+          const tailRotate = (Number(reference.tailTwist) || 0) * tailWave * tailWeight * (1 - vanish * 0.55);
+          const tailX = (Number(reference.tailDriftX) || 0) * tailWave * tailWeight;
+          const tailY = (Number(reference.tailDriftY) || 0) * tailWave * tailWeight;
+          const rotate =
+            (((Number(reference.twist) || 5) * wave * weight * (1 - vanish * 0.45) + tailRotate) * Math.PI) /
+            180;
+
+          ctx.save();
+          setDrawAlpha((reference.alpha ?? 1) * alpha);
+          ctx.translate(
+            pivotX + (globalX + drillX + tailX) * scale,
+            pivotY + (globalY + drillY + tailY) * scale,
+          );
+          ctx.rotate(rotate);
+          ctx.drawImage(
+            image,
+            sourceX,
+            sourceY,
+            sourceW,
+            sourceH,
+            -destW * 0.5,
+            -destH * 0.5,
+            destW,
+            destH,
+          );
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+
+      function smoothStep(edge0, edge1, value) {
+        const t = Math.max(0, Math.min(1, (value - edge0) / Math.max(0.0001, edge1 - edge0)));
+        return t * t * (3 - 2 * t);
+      }
+
+      function movingImageOffsetX(reference, image) {
+        if (!reference.moveXSpeed) return 0;
+        const bounds = reference.wrapBounds || [0, 0, image.width, image.height];
+        const scale = reference.scale || 1;
+        const viewportWidth = Number(reference.wrapViewportWidth) || image.width * scale;
+        const left = Number(bounds[0]) || 0;
+        const right = Number(bounds[2]) || image.width;
+        const start = -right * scale;
+        const end = viewportWidth - left * scale;
+        const span = Math.max(1, end - start);
+        const seconds = (performance.now() - cloudStartTime) / 1000;
+        const initialOffset = Number(reference.moveXOffset) || 0;
+        const progress = seconds * reference.moveXSpeed + initialOffset - start;
+        return start + positiveModulo(progress, span);
+      }
+
+      function positiveModulo(value, modulo) {
+        return ((value % modulo) + modulo) % modulo;
+      }
+
+      function placedDriftOffset(reference) {
+        if (!reference.driftX && !reference.driftY) return { x: 0, y: 0 };
+        const duration = Math.max(1, Number(reference.driftDuration) || 40);
+        const phase = Number(reference.driftPhase) || 0;
+        const seconds = (performance.now() - boatStartTime) / 1000;
+        const t = positiveModulo(seconds / duration + phase, 1);
+        const raw = t <= 0.5 ? t * 2 : (1 - t) * 2;
+        const eased = raw * raw * (3 - 2 * raw);
+        return {
+          x: (Number(reference.driftX) || 0) * eased,
+          y: (Number(reference.driftY) || 0) * eased,
+        };
+      }
+
+      function drawClothOverlays() {
+        if (!state.clothOverlays?.length) return;
+        state.clothOverlays.forEach((overlay, index) => {
+          const image = warriorImages[overlay.image];
+          if (!image?.complete) return;
+          drawWindClothOverlay(image, overlay, index);
+        });
+      }
+
+      function drawWindClothOverlay(image, overlay, index) {
+        const mesh = buildWindClothMesh(image, overlay);
+        if (overlay.solver === "analytic") {
+          drawTexturedMesh(image, mesh.source, mesh.dest, overlay.alpha);
+          return;
+        }
+        const points = solveGravityMesh(`overlay-cloth:${overlay.id || index}`, mesh.dest, {
+          stiffness: overlay.stiffness,
+          damping: overlay.damping,
+          gravity: overlay.gravity,
+        });
+        drawTexturedMesh(image, mesh.source, points, overlay.alpha);
+      }
+
+      function drawWindPlacedImage(overlay) {
+        const image = warriorImages[overlay.image];
+        if (!image?.complete) return;
+        const mesh = buildWindClothMesh(image, overlay);
+        drawTexturedMesh(image, mesh.source, mesh.dest, overlay.alpha);
+      }
+
+      function buildWindClothMesh(image, overlay) {
+        const cols = Math.max(3, Math.round(overlay.cols));
+        const rows = Math.max(3, Math.round(overlay.rows));
+        const scale = overlay.scale || 1;
+        const width = image.width * scale;
+        const height = image.height * scale;
+        const seconds = state.currentFrame / Math.max(1, state.fps);
+        const source = [];
+        const dest = [];
+        const motion = overlay.motionMode === "pingpong"
+          ? pingPongMotion(overlay)
+          : sineMotion(seconds, overlay);
+        for (let row = 0; row < rows; row += 1) {
+          const v = row / (rows - 1);
+          const topLooseness = Math.max(0, Math.min(0.35, Number(overlay.topLooseness) || 0));
+          const sourceRow = [];
+          const destRow = [];
+          for (let col = 0; col < cols; col += 1) {
+            const u = col / (cols - 1);
+            const leftLooseness = Math.max(0, Math.min(0.35, Number(overlay.leftLooseness) || 0));
+            const looseness =
+              overlay.weightMode === "left"
+                ? leftLooseness + (1 - leftLooseness) * Math.pow(u, 1.35)
+                : topLooseness + (1 - topLooseness) * Math.pow(v, 1.45);
+            const rightDownBias = Math.max(0, Math.min(0.6, Number(overlay.rightDownBias) || 0));
+            const rightDownWeight = 1 + rightDownBias * u * Math.pow(v, 1.2);
+            const clothWeight = looseness * rightDownWeight;
+            const windX = motion.swing * overlay.amplitude * clothWeight;
+            const windY = motion.lift * overlay.verticalAmplitude * clothWeight * 0.35;
+            sourceRow.push({
+              x: image.width * u,
+              y: image.height * v,
+            });
+            destRow.push({
+              x: overlay.x + width * u + windX,
+              y: overlay.y + height * v + overlay.sag * clothWeight + windY,
+            });
+          }
+          source.push(sourceRow);
+          dest.push(destRow);
+        }
+        return { source, dest };
+      }
+
+      function sineMotion(seconds, overlay) {
+        return {
+          swing: Math.sin(seconds * overlay.speed * Math.PI * 2 + overlay.phase),
+          lift: Math.sin(seconds * overlay.speed * Math.PI * 2 + overlay.phase + Math.PI / 2),
+        };
+      }
+
+      function pingPongMotion(overlay) {
+        const duration = Math.max(1, state.duration);
+        const frame = Math.max(0, Math.min(duration, state.currentFrame));
+        const phaseOffset = Number.isFinite(Number(overlay.phaseOffset)) ? Number(overlay.phaseOffset) : 0;
+        const t = (frame / duration + phaseOffset) % 1;
+        const raw = t <= 0.5 ? t * 2 : (1 - t) * 2;
+        const eased = raw * raw * (3 - 2 * raw);
+        return {
+          swing: eased * (Number(overlay.directionX) || 1),
+          lift: eased * (Number(overlay.directionY) || 0),
+        };
       }
 
       function drawPreviousKeyGhost(nodes) {
@@ -2203,7 +2487,12 @@
         ].forEach((input) => {
           input.disabled = disabled;
         });
-        if (!node) return;
+        if (!node) {
+          el.nodeNameInput.value = "";
+          el.parentSelect.innerHTML = '<option value="">无</option>';
+          renderAttachmentProperties(null);
+          return;
+        }
         el.nodeNameInput.value = node.name;
         el.xInput.value = round(node.x);
         el.yInput.value = round(node.y);
@@ -2406,6 +2695,7 @@
         el.nodeModeBtn.classList.toggle("active", state.editMode === "node");
         el.boneModeBtn.classList.toggle("active", state.editMode === "bone");
         el.stretchModeBtn.classList.toggle("active", state.editMode === "stretch");
+        el.addBoneModeBtn.classList.toggle("active", state.editMode === "add-bone");
         el.keySourcePrevBtn.classList.toggle("active", state.keyframeSource === "previous");
         el.keySourceNextBtn.classList.toggle("active", state.keyframeSource === "next");
         el.keySourceStartBtn.classList.toggle("active", state.keyframeSource === "start");
@@ -2422,6 +2712,10 @@
           name: state.name || "未命名",
           fps: state.fps,
           duration: state.duration,
+          underlayImages: state.underlayImages,
+          referenceImage: state.referenceImage,
+          overlayImages: state.overlayImages,
+          clothOverlays: state.clothOverlays,
           nodes: state.nodes,
           timelines: state.timelines,
         };
@@ -2438,6 +2732,10 @@
         state.selectedNodeId = data.nodes[0]?.id || null;
         state.selectedKey = null;
         state.playing = false;
+        state.underlayImages = normalizePlacedImages(data.underlayImages);
+        state.referenceImage = normalizeReferenceImage(data.referenceImage);
+        state.overlayImages = normalizePlacedImages(data.overlayImages);
+        state.clothOverlays = normalizeClothOverlays(data.clothOverlays);
         dynamicScarves.clear();
         state.nodes = data.nodes.map((node) => ({
           id: String(node.id || uid("node")),
@@ -2770,6 +3068,7 @@
       function deleteSelectedKey() {
         if (!state.selectedKey) {
           const node = selectedNode();
+          if (!node) return;
           state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
         }
         const keys = state.timelines[state.selectedKey.nodeId] || [];
@@ -2795,6 +3094,7 @@
 
       function hitTest(point) {
         if (state.editMode === "stretch") return hitTestStretch(point);
+        if (state.editMode === "add-bone") return null;
         const nodes = sortedNodes().reverse();
         for (const node of nodes) {
           const pose = worldPose(node);
@@ -2869,6 +3169,58 @@
           Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared),
         );
         return distance(point, { x: a.x + dx * t, y: a.y + dy * t });
+      }
+
+      function createManualBoneFromDrag(start, end, parent = selectedNode()) {
+        const length = distance(start, end);
+        if (length < 8) {
+          toast("拖拽距离太短，未创建骨骼");
+          return null;
+        }
+        const id = uid("bone");
+        const parentPose = parent ? worldPose(parent) : null;
+        const localStart = parent ? localFromWorld({ parentId: parent.id }, start) : start;
+        const worldRotation = (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI;
+        const node = {
+          id,
+          name: `bone_${state.nodes.length + 1}`,
+          parentId: parent?.id || null,
+          x: round(localStart.x, 2),
+          y: round(localStart.y, 2),
+          rotation: round(worldRotation - (parentPose?.worldRotation || 0), 2),
+          length: round(length, 2),
+          scaleX: 1,
+          scaleY: 1,
+          color: ["#35b6b4", "#e6a23c", "#77c66e", "#d96a7b", "#4d8ecf"][
+            state.nodes.length % 5
+          ],
+        };
+        node.bindPose = normalizeBindPose(node);
+        state.nodes.push(node);
+        state.timelines[id] = [{ ...snapshotNode(node), frame: state.currentFrame }];
+        state.selectedNodeId = id;
+        state.selectedKey = { nodeId: id, frame: state.currentFrame };
+        return node;
+      }
+
+      function drawCreateBonePreview() {
+        if (!drag || drag.type !== "create-bone") return;
+        ctx.save();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = varColor("--accent-2");
+        ctx.fillStyle = varColor("--accent-2");
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.moveTo(drag.start.x, drag.start.y);
+        ctx.lineTo(drag.end.x, drag.end.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        [drag.start, drag.end].forEach((point) => {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
       }
 
       function localFromWorld(node, world) {
@@ -3056,6 +3408,10 @@
         state.selectedNodeId = "root";
         state.selectedKey = null;
         state.playing = false;
+        state.underlayImages = [];
+        state.referenceImage = null;
+        state.overlayImages = [];
+        state.clothOverlays = [];
         state.nodes = [
           {
             id: "root",
@@ -3149,6 +3505,412 @@
         if (name.includes("rightleg") || name.includes("右腿")) return "rightLeg";
         if (name.includes("leftleg") || name.includes("左腿")) return "leftLeg";
         return "";
+      }
+
+      function normalizeReferenceImage(reference) {
+        if (!reference || typeof reference !== "object") return null;
+        return normalizePlacedImage(reference);
+      }
+
+      function normalizePlacedImages(images) {
+        if (!Array.isArray(images)) return [];
+        return images.map(normalizePlacedImage).filter(Boolean);
+      }
+
+      function normalizePlacedImage(reference) {
+        if (!reference || typeof reference !== "object") return null;
+        return {
+          kind: ["dragonRig", "windCloth"].includes(reference.kind) ? reference.kind : "image",
+          image: String(reference.image || ""),
+          x: Number(reference.x) || 0,
+          y: Number(reference.y) || 0,
+          scale: Math.max(0.001, Number(reference.scale) || 1),
+          rotation: Number(reference.rotation) || 0,
+          alpha: Number.isFinite(Number(reference.alpha))
+            ? Math.max(0, Math.min(1, Number(reference.alpha)))
+            : 1,
+          moveXSpeed: Number(reference.moveXSpeed) || 0,
+          moveXOffset: Number(reference.moveXOffset) || 0,
+          wrapViewportWidth: Number(reference.wrapViewportWidth) || 0,
+          wrapBounds: Array.isArray(reference.wrapBounds)
+            ? reference.wrapBounds.map((value) => Number(value) || 0).slice(0, 4)
+            : null,
+          driftX: Number(reference.driftX) || 0,
+          driftY: Number(reference.driftY) || 0,
+          driftDuration: Math.max(1, Number(reference.driftDuration) || 40),
+          driftPhase: Number(reference.driftPhase) || 0,
+          sourceBounds: Array.isArray(reference.sourceBounds)
+            ? reference.sourceBounds.map((value) => Number(value) || 0).slice(0, 4)
+            : null,
+          segments: Number(reference.segments) || 0,
+          overlap: Number(reference.overlap) || 0,
+          period: Number(reference.period) || 0,
+          twist: Number(reference.twist) || 0,
+          spawnX: Number(reference.spawnX) || 0,
+          spawnY: Number(reference.spawnY) || 0,
+          travelX: Number(reference.travelX) || 0,
+          travelY: Number(reference.travelY) || 0,
+          drillX: Number(reference.drillX) || 0,
+          drillY: Number(reference.drillY) || 0,
+          tailTwist: Number(reference.tailTwist) || 0,
+          tailDriftX: Number(reference.tailDriftX) || 0,
+          tailDriftY: Number(reference.tailDriftY) || 0,
+          solver: reference.solver === "analytic" ? "analytic" : "physics",
+          motionMode: reference.motionMode === "pingpong" ? "pingpong" : "sine",
+          weightMode: reference.weightMode === "left" ? "left" : "top",
+          rows: Math.max(3, Number(reference.rows) || 7),
+          cols: Math.max(3, Number(reference.cols) || 9),
+          amplitude: Number.isFinite(Number(reference.amplitude)) ? Math.max(0, Number(reference.amplitude)) : 4,
+          verticalAmplitude: Number.isFinite(Number(reference.verticalAmplitude))
+            ? Math.max(0, Number(reference.verticalAmplitude))
+            : 1.2,
+          ripple: Number.isFinite(Number(reference.ripple)) ? Math.max(0, Number(reference.ripple)) : 1.4,
+          sag: Number.isFinite(Number(reference.sag)) ? Math.max(0, Number(reference.sag)) : 2,
+          topLooseness: Math.max(0, Math.min(0.35, Number(reference.topLooseness) || 0)),
+          leftLooseness: Math.max(0, Math.min(0.35, Number(reference.leftLooseness) || 0)),
+          rightDownBias: Math.max(0, Math.min(0.6, Number(reference.rightDownBias) || 0)),
+          speed: Math.max(0.05, Number(reference.speed) || 0.85),
+          phase: Number(reference.phase) || 0,
+          phaseOffset: Number(reference.phaseOffset) || 0,
+          directionX: Number.isFinite(Number(reference.directionX)) ? Number(reference.directionX) : 1,
+          directionY: Number.isFinite(Number(reference.directionY)) ? Number(reference.directionY) : 0,
+        };
+      }
+
+      function normalizeClothOverlays(overlays) {
+        if (!Array.isArray(overlays)) return [];
+        return overlays
+          .filter((overlay) => overlay && typeof overlay === "object")
+          .map((overlay, index) => ({
+            id: String(overlay.id || `cloth-${index}`),
+            image: String(overlay.image || ""),
+            x: Number(overlay.x) || 0,
+            y: Number(overlay.y) || 0,
+            scale: Math.max(0.001, Number(overlay.scale) || 1),
+            alpha: Number.isFinite(Number(overlay.alpha))
+              ? Math.max(0, Math.min(1, Number(overlay.alpha)))
+              : 1,
+            solver: overlay.solver === "analytic" ? "analytic" : "physics",
+            motionMode: overlay.motionMode === "pingpong" ? "pingpong" : "sine",
+            weightMode: overlay.weightMode === "left" ? "left" : "top",
+            rows: Math.max(3, Number(overlay.rows) || 7),
+            cols: Math.max(3, Number(overlay.cols) || 9),
+            amplitude: Number.isFinite(Number(overlay.amplitude)) ? Math.max(0, Number(overlay.amplitude)) : 4,
+            verticalAmplitude: Number.isFinite(Number(overlay.verticalAmplitude))
+              ? Math.max(0, Number(overlay.verticalAmplitude))
+              : 1.2,
+            ripple: Number.isFinite(Number(overlay.ripple)) ? Math.max(0, Number(overlay.ripple)) : 1.4,
+            sag: Number.isFinite(Number(overlay.sag)) ? Math.max(0, Number(overlay.sag)) : 2,
+            topLooseness: Math.max(0, Math.min(0.35, Number(overlay.topLooseness) || 0)),
+            leftLooseness: Math.max(0, Math.min(0.35, Number(overlay.leftLooseness) || 0)),
+            rightDownBias: Math.max(0, Math.min(0.6, Number(overlay.rightDownBias) || 0)),
+            speed: Math.max(0.05, Number(overlay.speed) || 0.85),
+            stiffness: Math.max(0.01, Math.min(1, Number(overlay.stiffness) || 0.2)),
+            damping: Math.max(0, Math.min(0.99, Number(overlay.damping) || 0.9)),
+            gravity: Number.isFinite(Number(overlay.gravity)) ? Math.max(0, Number(overlay.gravity)) : 6,
+            phase: Number(overlay.phase) || 0,
+            phaseOffset: Number(overlay.phaseOffset) || 0,
+            directionX: Number.isFinite(Number(overlay.directionX)) ? Number(overlay.directionX) : 1,
+            directionY: Number.isFinite(Number(overlay.directionY)) ? Number(overlay.directionY) : 0,
+          }));
+      }
+
+      function loadOpeningMonkSample() {
+        const project = buildOpeningMonkProject();
+        applyProjectData(project);
+        state.selectedNodeId = null;
+        state.editMode = "add-bone";
+        state.showSkeletonOverlay = true;
+        renderAll();
+        toast("已载入参考图，请用画骨骼模式手动添加");
+      }
+
+      function buildOpeningMonkProject() {
+        return {
+          format: "spine-node-timeline-editor",
+          version: 1,
+          name: "开局人物 foreground_monk_cliff_flag 手动建骨骼",
+          fps: 24,
+          duration: 47,
+          referenceImage: {
+            image: "openingMonk",
+            x: 0,
+            y: 90,
+            scale: 0.34,
+            rotation: 0,
+            alpha: 1,
+          },
+          nodes: [],
+          timelines: {},
+        };
+      }
+
+      function loadOpeningCloakSample() {
+        const project = buildOpeningCloakProject();
+        applyProjectData(project);
+        state.selectedNodeId = null;
+        state.editMode = "add-bone";
+        state.showSkeletonOverlay = true;
+        state.playing = true;
+        lastTime = performance.now();
+        cloudStartTime = performance.now();
+        boatStartTime = performance.now();
+        dragonStartTime = performance.now();
+        dynamicScarves.clear();
+        renderAll();
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(tick);
+        toast("已载入开局披风，请用画骨骼模式手动添加");
+      }
+
+      function buildOpeningCloakProject() {
+        return {
+          format: "spine-node-timeline-editor",
+          version: 1,
+          name: "开局披风 img_v3_0212i_f48ccfbb 手动建骨骼",
+          fps: 24,
+          duration: 47,
+          underlayImages: [
+            { image: "openingBase", x: 0, y: 90, scale: 0.34, rotation: 0, alpha: 1 },
+            {
+              image: "openingCloudMidGray",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              moveXSpeed: 1.2,
+              moveXOffset: 0,
+              wrapBounds: [486, 176, 1386, 500],
+            },
+            {
+              image: "openingCloudLeftBottom",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              moveXSpeed: 1.8,
+              moveXOffset: 0,
+              wrapBounds: [1, 735, 929, 1146],
+            },
+            {
+              kind: "dragonRig",
+              image: "openingDragonGold",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              sourceBounds: [789, 62, 1772, 741],
+              segments: 9,
+              overlap: 22,
+              period: 13,
+              twist: 3.6,
+              spawnX: -34,
+              spawnY: -22,
+              travelX: 46,
+              travelY: 28,
+              drillX: 30,
+              drillY: -18,
+              tailTwist: 5.5,
+              tailDriftX: -4,
+              tailDriftY: 6,
+            },
+            { image: "openingEmperorBackStatic", x: 0, y: 90, scale: 0.34, rotation: 0, alpha: 1 },
+            {
+              kind: "windCloth",
+              image: "openingEmperorBackHemCloth",
+              x: 369.58,
+              y: 196.08,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              solver: "analytic",
+              motionMode: "pingpong",
+              weightMode: "top",
+              rows: 10,
+              cols: 12,
+              amplitude: 1.9,
+              verticalAmplitude: 0.12,
+              ripple: 0,
+              sag: 0.55,
+              topLooseness: 0.012,
+              rightDownBias: 0.3,
+              speed: 0.5,
+              phase: 0,
+              phaseOffset: 0.06,
+              directionX: 1,
+              directionY: 0,
+            },
+            { image: "openingLandscapeCityMountain", x: 0, y: 90, scale: 0.34, rotation: 0, alpha: 1 },
+            {
+              image: "openingCloudRightMid",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              moveXSpeed: 1.3,
+              moveXOffset: 0,
+              wrapBounds: [1386, 275, 2032, 513],
+            },
+            { image: "openingCloudRightTop", x: 0, y: 90, scale: 0.34, rotation: 0, alpha: 1 },
+            {
+              image: "openingBoatFar01",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              driftX: -9,
+              driftY: -1.8,
+              driftDuration: 34,
+              driftPhase: 0.05,
+            },
+            {
+              image: "openingBoatMid01",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              driftX: 11,
+              driftY: 2.4,
+              driftDuration: 38,
+              driftPhase: 0.42,
+            },
+            {
+              image: "openingBoatMid02",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              driftX: 5,
+              driftY: -0.7,
+              driftDuration: 64,
+              driftPhase: 0.46,
+            },
+            {
+              image: "openingBoatFar02",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+              driftX: -3,
+              driftY: 0.6,
+              driftDuration: 70,
+              driftPhase: 0.18,
+            },
+            {
+              image: "openingMonkBottomStatic",
+              x: 0,
+              y: 90,
+              scale: 0.34,
+              rotation: 0,
+              alpha: 1,
+            },
+          ],
+          referenceImage: {
+            image: "openingCloakStatic",
+            x: 0,
+            y: 90,
+            scale: 0.34,
+            rotation: 0,
+            alpha: 1,
+          },
+          clothOverlays: [
+            {
+              id: "cloak-lower-hem-wind",
+              image: "openingCloakHemCloth",
+              x: 527.34,
+              y: 311.68,
+              scale: 0.34,
+              alpha: 1,
+              solver: "analytic",
+              motionMode: "pingpong",
+              rows: 10,
+              cols: 10,
+              amplitude: 3.1,
+              verticalAmplitude: 0.08,
+              ripple: 0,
+              sag: 0.85,
+              topLooseness: 0.035,
+              rightDownBias: 0.4,
+              speed: 0.58,
+              stiffness: 0.32,
+              damping: 0.92,
+              gravity: 2.2,
+              phase: 0.35,
+              phaseOffset: 0,
+              directionX: 1,
+              directionY: 0,
+            },
+            {
+              id: "red-flag-top-wind",
+              image: "openingRedFlagTop",
+              x: 651.78,
+              y: 299.44,
+              scale: 0.34,
+              alpha: 1,
+              solver: "analytic",
+              motionMode: "pingpong",
+              weightMode: "left",
+              rows: 8,
+              cols: 9,
+              amplitude: 3.5,
+              verticalAmplitude: 0.04,
+              ripple: 0,
+              sag: 0,
+              topLooseness: 0,
+              leftLooseness: 0.025,
+              rightDownBias: 0,
+              speed: 0.74,
+              stiffness: 0.32,
+              damping: 0.92,
+              gravity: 0,
+              phase: 1.05,
+              phaseOffset: 0.08,
+              directionX: 1,
+              directionY: 0,
+            },
+            {
+              id: "red-flag-bottom-wind",
+              image: "openingRedFlagBottom",
+              x: 628.66,
+              y: 354.18,
+              scale: 0.34,
+              alpha: 1,
+              solver: "analytic",
+              motionMode: "pingpong",
+              weightMode: "left",
+              rows: 7,
+              cols: 7,
+              amplitude: 2.85,
+              verticalAmplitude: 0.035,
+              ripple: 0,
+              sag: 0,
+              topLooseness: 0,
+              leftLooseness: 0.025,
+              rightDownBias: 0,
+              speed: 0.68,
+              stiffness: 0.32,
+              damping: 0.92,
+              gravity: 0,
+              phase: 1.45,
+              phaseOffset: 0.14,
+              directionX: 1,
+            directionY: 0,
+            },
+          ],
+          overlayImages: [
+            { image: "openingTitle", x: 0, y: 90, scale: 0.34, rotation: 0, alpha: 1 },
+          ],
+          nodes: [],
+          timelines: {},
+        };
       }
 
       function loadNewVersionSample() {
@@ -4135,27 +4897,9 @@
       function bindEvents() {
         window.addEventListener("resize", resizeCanvas);
         el.addNodeBtn.addEventListener("click", () => {
-          const parent = selectedNode();
-          const id = uid("node");
-          const node = {
-            id,
-            name: `node_${state.nodes.length}`,
-            parentId: parent?.id || null,
-            x: parent ? 0 : 420,
-            y: parent ? 0 : 330,
-            rotation: 0,
-            length: 70,
-            scaleX: 1,
-            scaleY: 1,
-            color: ["#35b6b4", "#e6a23c", "#77c66e", "#d96a7b", "#4d8ecf"][
-              state.nodes.length % 5
-            ],
-          };
-          node.bindPose = normalizeBindPose(node);
-          state.nodes.push(node);
-          state.timelines[id] = [{ ...snapshotNode(node), frame: state.currentFrame }];
-          state.selectedNodeId = id;
-          renderAll();
+          state.editMode = "add-bone";
+          renderStatus();
+          toast("画骨骼：在画布上从起点拖到终点");
         });
 
         el.deleteNodeBtn.addEventListener("click", () => {
@@ -4271,6 +5015,8 @@
         el.sampleBtn.addEventListener("click", loadSample);
         el.walkSampleBtn.addEventListener("click", loadSideWalkSample);
         el.newVersionSampleBtn.addEventListener("click", loadNewVersionSample);
+        el.openingMonkSampleBtn.addEventListener("click", loadOpeningMonkSample);
+        el.openingCloakSampleBtn.addEventListener("click", loadOpeningCloakSample);
         el.idleAnimationBtn.addEventListener("click", applyIdleAnimation);
         el.slashSampleBtn.addEventListener("click", loadSideSlashSample);
         el.threeQuarterSampleBtn.addEventListener("click", loadThreeQuarterSample);
@@ -4297,6 +5043,11 @@
           state.editMode = "stretch";
           renderStatus();
           toast("骨骼伸缩：拖动一个端点，另一个端点固定，自动旋转并改变长度");
+        });
+        el.addBoneModeBtn.addEventListener("click", () => {
+          state.editMode = "add-bone";
+          renderStatus();
+          toast("画骨骼：在画布上从起点拖到终点");
         });
       }
 
@@ -4437,6 +5188,21 @@
         const startDrag = (event) => {
           if (drag && drag.type !== "key") return;
           const point = canvasPoint(event);
+          if (state.editMode === "add-bone") {
+            event.preventDefault();
+            drag = {
+              type: "create-bone",
+              start: point,
+              end: point,
+              hasMoved: false,
+              parentId: selectedNode()?.id || null,
+            };
+            if (event.pointerId !== undefined && el.stage.setPointerCapture) {
+              el.stage.setPointerCapture(event.pointerId);
+            }
+            drawStage();
+            return;
+          }
           const hit = hitTest(point);
           if (!hit) return;
           event.preventDefault();
@@ -4465,10 +5231,16 @@
         const moveDrag = (event) => {
           const point = canvasPoint(event);
           if (!drag) {
-            el.stage.style.cursor = hitTest(point) ? "grab" : "default";
+            el.stage.style.cursor = state.editMode === "add-bone" ? "crosshair" : hitTest(point) ? "grab" : "default";
             return;
           }
           event.preventDefault();
+          if (drag.type === "create-bone") {
+            drag.end = point;
+            drag.hasMoved = distance(point, drag.start) >= 3;
+            drawStage();
+            return;
+          }
           const node = state.nodes.find((item) => item.id === drag.nodeId);
           if (!node) return;
           const moveDistance = distance(point, drag.start);
@@ -4516,6 +5288,15 @@
 
       function commitActiveDrag() {
         if (!drag || drag.type === "key") return;
+        if (drag.type === "create-bone") {
+          const parent = drag.parentId ? state.nodes.find((node) => node.id === drag.parentId) : null;
+          const node = createManualBoneFromDrag(drag.start, drag.end, parent);
+          drag = null;
+          poseOverrides.clear();
+          renderAll();
+          if (node) toast(`已创建 ${node.name}`);
+          return;
+        }
         if (!drag.hasMoved) {
           drag = null;
           poseOverrides.clear();
@@ -4589,6 +5370,10 @@
       const params = new URLSearchParams(window.location.search);
       if (params.get("sample") === "new") {
         loadNewVersionSample();
+      } else if (params.get("sample") === "monk") {
+        loadOpeningMonkSample();
+      } else if (params.get("sample") === "cloak") {
+        loadOpeningCloakSample();
       } else if (params.get("sample") === "walk") {
         loadSideWalkSample();
       } else {
