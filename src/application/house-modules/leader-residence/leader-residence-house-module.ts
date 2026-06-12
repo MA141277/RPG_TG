@@ -116,8 +116,8 @@ function getPendingCharacterId(input: {
   return typeof value === "string" ? value : null;
 }
 
-function getGreetingLine(characterDefinition: CharacterDefinition): string {
-  return `${characterDefinition.name} 抬手一礼，请你入座叙话。`;
+function getGreetingLine(_characterDefinition: CharacterDefinition): string {
+  return "（抬手一礼）请你入座叙话。";
 }
 
 function getRelationValue(
@@ -285,9 +285,7 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
       return createTransitionResult(input, {
         sessionState: {
           ...sessionState,
-          dialogueLines: [
-            `${visitedCharacter.name} 与你寒暄几句，气氛比初见时和缓了些。`,
-          ],
+          dialogueLines: ["（与你寒暄了几句）气氛比初见时和缓了些。"],
           overlay: null,
         },
         gameState: updateRelationValue(input.gameState, visitedCharacter.id, 1),
@@ -300,7 +298,7 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
         sessionState: createAlertState(
           {
             ...sessionState,
-            dialogueLines: [`${visitedCharacter.name} 收下礼物，神色明显和缓。`],
+            dialogueLines: ["（收下礼物）神色明显和缓。"],
           },
           "送礼",
           [`你向 ${visitedCharacter.name} 奉上一份薄礼。`, "关系上升 2 点。"],

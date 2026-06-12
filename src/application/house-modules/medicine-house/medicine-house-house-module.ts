@@ -249,14 +249,12 @@ function createCouncilTimeInsufficientOverlay(
     "时日不够",
     remainingDays <= 0
       ? [
-          "陈郎中把药杵收了回去，先摇了摇头。",
-          `“评定日期已到，这炉药至少要 ${durationDays} 天，眼下开不得。”`,
-          "“先去把评定应下，回来我再看你这一炉。”",
+          `（把药杵收了回去，先摇了摇头）评定日期已到，这炉药至少要 ${durationDays} 天，眼下开不得。`,
+          "先去把评定应下，回来我再看你这一炉。",
         ]
       : [
-          "陈郎中把药杵收了回去，先摇了摇头。",
-          `“离评定只剩 ${remainingDays} 天，这炉药至少要 ${durationDays} 天，眼下开不得。”`,
-          "“先去把评定应下，回来我再看你这一炉。”",
+          `（把药杵收了回去，先摇了摇头）离评定只剩 ${remainingDays} 天，这炉药至少要 ${durationDays} 天，眼下开不得。`,
+          "先去把评定应下，回来我再看你这一炉。",
         ],
     "warning"
   );
@@ -423,7 +421,7 @@ function handleAction(
         return withSessionState(input, sessionState, {
           overlay: createAlertOverlay(
             "疗伤",
-            ["你手头银两不够，陈郎中摇了摇头。"],
+            ["（摇了摇头）你手头银两不够。"],
             "warning"
           ),
         });
@@ -434,7 +432,7 @@ function handleAction(
         sessionState,
         "疗伤",
         [
-          "陈郎中为你把脉施针，气色渐渐平复。",
+          "（为你把脉施针）你的气色渐渐平复。",
           `收费 ${medicineHouseHealService.cost} 文。`,
         ],
         {
@@ -500,8 +498,8 @@ function handleAction(
           overlay: createAlertOverlay(
             "先去歇息",
             [
-              "陈郎中按住药杵，皱眉道：“你这会儿气息不稳，硬要配药，只会把药性配岔了。”",
-              `“回去静一静，体力至少缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来动手。”`,
+              "（按住药杵，皱起眉）你这会儿气息不稳，硬要配药，只会把药性配岔了。",
+              `回去静一静，体力至少缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来动手。`,
             ],
             "warning"
           ),
@@ -522,8 +520,7 @@ function handleAction(
 
       return withSessionState(input, sessionState, {
         overlay: createActivityConfirmOverlay("配药", [
-          "陈郎中把药筛与药杵一并推了过来。",
-          `“照你现在的医术火候，这一炉药要配得稳妥，至少得花上 ${durationDays} 天。”`,
+          `（把药筛与药杵一并推了过来）照你现在的医术火候，这一炉药要配得稳妥，至少得花上 ${durationDays} 天。`,
           formatHouseActivityCostLine(durationDays),
         ], CONFIRM_START_COMPOUNDING_ACTION_ID),
       });
@@ -837,7 +834,7 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
               speakerName: npc.name,
               characterId: npc.id,
               position: "right",
-              textLines: [isGreeting ? sessionState.npcGreeting : "陈郎中看着你，等你开口。"],
+              textLines: [isGreeting ? sessionState.npcGreeting : "（看着你）等你开口。"],
               advanceActionId: isGreeting ? "advance-greeting" : null,
               advanceHintText: isGreeting ? "点击继续" : null,
             },

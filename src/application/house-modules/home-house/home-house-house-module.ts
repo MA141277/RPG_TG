@@ -13,12 +13,14 @@ import {
   type HomeRestInterruptionReason,
 } from "../../../domain/home-house";
 import type {
+  ActiveHouseModuleSession,
   HouseActionViewModel,
   HouseModuleTransitionResult,
   HouseModuleDefinition,
   HouseModuleDispatchInput,
   HouseModuleViewModel,
   HouseOverlayViewModel,
+  MapAutoAdvanceSnapshot,
 } from "../../../domain/house-module";
 import type {
   HomeHouseOverlayState,
@@ -33,10 +35,12 @@ import {
   advanceGameStateOneDay,
   getCouncilStatusText,
 } from "../../time/time-progression";
+import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
 import { assertExists } from "../../../shared/assert";
 import { createInitialHomeHouseSessionState } from "./home-house-session-state";
 
 const REST_DAYS_FIELD_ID = "home-house-rest-days";
+const HOME_REST_AUTO_ADVANCE_INTERVAL_ID = "home-house-rest-auto-advance";
 
 type HomeRestSummary = {
   state: GameState;
@@ -46,6 +50,7 @@ type HomeRestSummary = {
   recoveredFatigue: number;
   interruptedReason: HomeRestInterruptionReason | null;
   stoppedAtCouncilDate: boolean;
+  snapshots: MapAutoAdvanceSnapshot[];
 };
 
 function getPlayerCharacter(
@@ -335,6 +340,7 @@ function runRestPlan(
   let daysRested = 0;
   let recoveredHp = 0;
   let recoveredFatigue = 0;
+  const snapshots: MapAutoAdvanceSnapshot[] = [];
 
   while (shouldContinue(nextState, nextCharacterDefinitions, daysRested)) {
     const hookResult = resolveHomeRestHook(nextState);
@@ -347,6 +353,7 @@ function runRestPlan(
         recoveredFatigue,
         interruptedReason: hookResult.reason,
         stoppedAtCouncilDate: false,
+        snapshots,
       };
     }
 
@@ -359,12 +366,17 @@ function runRestPlan(
         recoveredFatigue,
         interruptedReason: "council-date",
         stoppedAtCouncilDate: true,
+        snapshots,
       };
     }
 
     const dailyResult = advanceRestOneDay(nextState, nextCharacterDefinitions, playerCharacterId);
     nextState = dailyResult.state;
     nextCharacterDefinitions = dailyResult.characterDefinitions;
+    snapshots.push({
+      gameState: nextState,
+      characterDefinitions: nextCharacterDefinitions,
+    });
     recoveredHp += dailyResult.recoveredHp;
     recoveredFatigue += dailyResult.recoveredFatigue;
     daysRested += 1;
@@ -378,6 +390,7 @@ function runRestPlan(
         recoveredFatigue,
         interruptedReason: "council-date",
         stoppedAtCouncilDate: true,
+        snapshots,
       };
     }
   }
@@ -390,6 +403,7 @@ function runRestPlan(
     recoveredFatigue,
     interruptedReason: null,
     stoppedAtCouncilDate: false,
+    snapshots,
   };
 }
 
@@ -485,33 +499,54 @@ function createRestResultOverlay(
   );
 }
 
-function createCouncilArrivalNoticeFromRestSummary(
+function createHomeRestCompletionSession(
+  sessionState: HomeHouseSessionState,
   summary: HomeRestSummary,
+  title: string,
   playerCharacterId: string
-): NonNullable<HouseModuleTransitionResult["councilArrivalNotice"]> | undefined {
-  if (summary.interruptedReason !== "council-date") {
-    return undefined;
-  }
-
-  const playerCharacter = getPlayerCharacter(summary.characterDefinitions, playerCharacterId);
-  const currentHp = readNumericVariable(
-    summary.state,
-    HOME_HOUSE_VARIABLE_KEYS.hp,
-    playerCharacter.stamina
-  );
-  const maxHp = readNumericVariable(summary.state, HOME_HOUSE_VARIABLE_KEYS.maxHp, currentHp);
-
+): ActiveHouseModuleSession {
   return {
-    textLines:
-      summary.daysRested > 0
-        ? [
-            `这次静养共休了 ${summary.daysRested} 日，体力已恢复到 ${playerCharacter.stamina}。`,
-            `眼下气血 ${currentHp} / ${maxHp}，该起身去应这场评定了。`,
-          ]
-        : [
-            `休息尚未来得及继续，当前体力为 ${playerCharacter.stamina}。`,
-            `眼下气血 ${currentHp} / ${maxHp}，先去把今日评定办完。`,
-          ],
+    moduleId: "home-house",
+    state: {
+      ...sessionState,
+      mode: "main",
+      descriptionLines: homeHouseMainLines,
+      overlay: createRestResultOverlay(summary, title, playerCharacterId),
+    },
+  };
+}
+
+function createHomeRestAutoAdvanceResult(
+  input: HouseModuleDispatchInput<"home-house">,
+  sessionState: HomeHouseSessionState,
+  summary: HomeRestSummary,
+  title: string,
+  currentState: GameState
+): HouseModuleTransitionResult<"home-house"> {
+  return {
+    gameState: currentState,
+    characterDefinitions: input.characterDefinitions,
+    sessionState,
+    sideEffects: [
+      {
+        type: "start-map-auto-advance",
+        intervalId: HOME_REST_AUTO_ADVANCE_INTERVAL_ID,
+        everyMs: HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS,
+        targetHouseId: input.houseDefinition.id,
+        label: title,
+        snapshots: summary.snapshots,
+        completion: {
+          type: "restore-house-session",
+          houseId: input.houseDefinition.id,
+          houseSession: createHomeRestCompletionSession(
+            sessionState,
+            summary,
+            title,
+            input.playerCharacterId
+          ),
+        },
+      },
+    ],
   };
 }
 
@@ -654,24 +689,13 @@ function handleAction(
       (_state, _characterDefinitions, daysRested) => daysRested < 1
     );
 
-    return {
-      gameState: summary.state,
-      characterDefinitions: summary.characterDefinitions,
-      sessionState: {
-        ...sessionState,
-        mode: "main",
-        descriptionLines: homeHouseMainLines,
-        overlay: createRestResultOverlay(
-          summary,
-          input.request.actionId === "end-day" ? "今日已过" : "静养一日",
-          input.playerCharacterId
-        ),
-      },
-      councilArrivalNotice: createCouncilArrivalNoticeFromRestSummary(
-        summary,
-        input.playerCharacterId
-      ),
-    };
+    return createHomeRestAutoAdvanceResult(
+      input,
+      sessionState,
+      summary,
+      input.request.actionId === "end-day" ? "今日已过" : "静养一日",
+      ensuredState
+    );
   }
 
   if (input.request.actionId === "rest-until-council") {
@@ -682,20 +706,13 @@ function handleAction(
       (state) => !hasReachedCouncilDate(state)
     );
 
-    return {
-      gameState: summary.state,
-      characterDefinitions: summary.characterDefinitions,
-      sessionState: {
-        ...sessionState,
-        mode: "main",
-        descriptionLines: homeHouseMainLines,
-        overlay: createRestResultOverlay(summary, "休息到评定日", input.playerCharacterId),
-      },
-      councilArrivalNotice: createCouncilArrivalNoticeFromRestSummary(
-        summary,
-        input.playerCharacterId
-      ),
-    };
+    return createHomeRestAutoAdvanceResult(
+      input,
+      sessionState,
+      summary,
+      "休息到评定日",
+      ensuredState
+    );
   }
 
   if (input.request.actionId === "rest-until-recovered") {
@@ -718,24 +735,13 @@ function handleAction(
       }
     );
 
-    return {
-      gameState: summary.state,
-      characterDefinitions: summary.characterDefinitions,
-      sessionState: {
-        ...sessionState,
-        mode: "main",
-        descriptionLines: homeHouseMainLines,
-        overlay: createRestResultOverlay(
-          summary,
-          "休息到恢复体力",
-          input.playerCharacterId
-        ),
-      },
-      councilArrivalNotice: createCouncilArrivalNoticeFromRestSummary(
-        summary,
-        input.playerCharacterId
-      ),
-    };
+    return createHomeRestAutoAdvanceResult(
+      input,
+      sessionState,
+      summary,
+      "休息到恢复体力",
+      ensuredState
+    );
   }
 
   if (input.request.actionId === "confirm-rest-days") {
@@ -763,24 +769,13 @@ function handleAction(
       (_state, _characterDefinitions, daysRested) => daysRested < days
     );
 
-    return {
-      gameState: summary.state,
-      characterDefinitions: summary.characterDefinitions,
-      sessionState: {
-        ...sessionState,
-        mode: "main",
-        descriptionLines: homeHouseMainLines,
-        overlay: createRestResultOverlay(
-          summary,
-          `静养 ${days} 日`,
-          input.playerCharacterId
-        ),
-      },
-      councilArrivalNotice: createCouncilArrivalNoticeFromRestSummary(
-        summary,
-        input.playerCharacterId
-      ),
-    };
+    return createHomeRestAutoAdvanceResult(
+      input,
+      sessionState,
+      summary,
+      `静养 ${days} 日`,
+      ensuredState
+    );
   }
 
   return createTransitionResult(

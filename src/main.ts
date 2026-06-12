@@ -512,13 +512,23 @@ function getCurrentCityUiContext(): {
 
 function openCityMenuPanel(panelId: CityMenuPanelId): void {
   const playerCharacter = getCurrentPlayerCharacter();
-  const cityContext = getCurrentCityUiContext();
 
-  if (playerCharacter == null || cityContext == null) {
+  if (playerCharacter == null) {
     return;
   }
 
   if (panelId === "begging" && !isPlayerMonkIdentity(playerCharacter)) {
+    return;
+  }
+
+  if (panelId === "begging") {
+    openBeggingMiniGame();
+    return;
+  }
+
+  const cityContext = getCurrentCityUiContext();
+
+  if (cityContext == null) {
     return;
   }
 
@@ -721,12 +731,12 @@ function showCouncilInsufficientTimeRefusal(
       textLines: isTempleReview
         ? remainingDays <= 0
           ? [
-              `知客僧上前提醒你：“评定日期已到，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。”`,
-              `“先去${targetName}把评定应下，回来再说这桩事。”`,
+              `（上前提醒你）评定日期已到，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。`,
+              `先去${targetName}把评定应下，回来再说这桩事。`,
             ]
           : [
-              `知客僧上前提醒你：“离评定只剩 ${remainingDays} 天，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。”`,
-              `“先去${targetName}把评定应下，回来再说这桩事。”`,
+              `（上前提醒你）离评定只剩 ${remainingDays} 天，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。`,
+              `先去${targetName}把评定应下，回来再说这桩事。`,
             ]
         : remainingDays <= 0
           ? [
@@ -881,8 +891,8 @@ function openBeggingMiniGame(): void {
         type: "house-access-refusal",
         speakerCharacterId: "char.kulan_temple_abbot",
         textLines: [
-          "方丈隔着人群唤住了你：“你这会儿脚步都虚了，就别再硬撑着出去化缘。”",
-          `“先回去歇息，体力缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再出门也不迟。”`,
+          "（隔着人群唤住了你）你这会儿脚步都虚了，就别再硬撑着出去化缘。",
+          `先回去歇息，体力缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再出门也不迟。`,
         ],
         advanceHintText: "先去休息",
       },
@@ -956,8 +966,14 @@ function startMapAutoAdvance(input: {
   everyMs: number;
   targetHouseId: string;
   label: string;
+  snapshots?: NonNullable<AppState["autoAdvanceState"]>["snapshots"];
+  completion?: NonNullable<AppState["autoAdvanceState"]>["completion"];
 }): void {
   stopMapAutoAdvance(input.intervalId);
+  if (input.snapshots != null && input.snapshots.length === 0 && input.completion != null) {
+    houseRuntime.applyMapAutoAdvanceCompletion(input.completion);
+    return;
+  }
   cancelCampaignTravel();
   houseRuntime.clearAllHouseIntervals();
   appState = {
@@ -971,6 +987,8 @@ function startMapAutoAdvance(input: {
       intervalId: input.intervalId,
       label: input.label,
       targetHouseId: input.targetHouseId,
+      snapshots: input.snapshots ?? null,
+      completion: input.completion ?? null,
     },
     gameState: {
       ...appState.gameState,
@@ -989,11 +1007,71 @@ function startMapAutoAdvance(input: {
   renderApp();
 
   mapAutoAdvanceHandles[input.intervalId] = window.setInterval(() => {
+    const autoAdvanceState = appState.autoAdvanceState;
+    if (autoAdvanceState == null || autoAdvanceState.intervalId !== input.intervalId) {
+      stopMapAutoAdvance(input.intervalId);
+      return;
+    }
+
+    if (autoAdvanceState.snapshots != null) {
+      const [nextSnapshot, ...remainingSnapshots] = autoAdvanceState.snapshots;
+      if (nextSnapshot == null) {
+        stopMapAutoAdvance(input.intervalId);
+        if (autoAdvanceState.completion != null) {
+          houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+          return;
+        }
+        renderApp();
+        return;
+      }
+
+      appState = {
+        ...appState,
+        characterDefinitions: nextSnapshot.characterDefinitions,
+        autoAdvanceState: {
+          ...autoAdvanceState,
+          snapshots: remainingSnapshots,
+        },
+        gameState: {
+          ...nextSnapshot.gameState,
+          world: {
+            ...nextSnapshot.gameState.world,
+            currentHouseId: null,
+          },
+          ui: {
+            ...nextSnapshot.gameState.ui,
+            currentView: "map",
+            overlayView: null,
+            houseSession: null,
+          },
+        },
+      };
+
+      if (remainingSnapshots.length === 0) {
+        stopMapAutoAdvance(input.intervalId);
+        if (autoAdvanceState.completion != null) {
+          houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+          return;
+        }
+      }
+
+      renderApp();
+      return;
+    }
+
     const previousGameState = appState.gameState;
     appState = {
       ...appState,
       gameState: advanceGameStateOneDay(appState.gameState),
     };
+    const councilArrived =
+      !hasReachedCouncilDate(previousGameState) &&
+      hasReachedCouncilDate(appState.gameState);
+    if (councilArrived && autoAdvanceState.completion != null) {
+      stopMapAutoAdvance(input.intervalId);
+      houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+      return;
+    }
     if (syncCouncilPriorityAfterGameStateChange(previousGameState)) {
       stopMapAutoAdvance(input.intervalId);
       return;

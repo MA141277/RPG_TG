@@ -528,7 +528,7 @@ function getActorOpenLines(actor: MarketHouseActor): string[] {
 
   return [
     marketHouseGuestOpenLineBySpecialty[actor.specialty] ??
-      `${actor.name}端起茶盏，像是在等你先挑话头。`,
+      "（端起茶盏）像是在等你先挑话头。",
     `“我这一路专做${actor.specialty}买卖，消息多少知道一点。”`,
   ];
 }
@@ -742,14 +742,14 @@ function pickInvestigationMessage(
 
   const specialtyLine =
     actor.specialty === "外地见闻"
-      ? "罗行商压低声音说，外地货最近走得比本地货快。"
+      ? "（压低声音）外地货最近走得比本地货快。"
       : actor.specialty === "药材"
-        ? "孙药商提醒你，山路一断，药材价就容易往上跳。"
+        ? "（提醒你）山路一断，药材价就容易往上跳。"
         : actor.specialty === "书画"
-          ? "韩书商说，真正的高价，不在货本身，而在遇见识货的人。"
+          ? "真正的高价，不在货本身，而在遇见识货的人。"
           : actor.specialty === "丝绸"
-            ? "沈老板眯着眼笑，说富城最舍得为绸缎出价。"
-            : "钱掌柜只敲了敲账板，示意你多看差价。";
+            ? "（眯着眼笑）富城最舍得为绸缎出价。"
+            : "（敲了敲账板）示意你多看差价。";
 
   return [
     `${cityDefinition.name}繁荣 ${cityDefinition.prosperity}，风险 ${cityDefinition.danger}。`,

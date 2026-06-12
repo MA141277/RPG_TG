@@ -60,20 +60,20 @@ export const marketHouseRandomNpcPool: MarketHouseActorContent[] = [
 ];
 
 export const marketHouseGreetingLines = [
-  "钱掌柜拨了拨算盘，抬眼便笑。",
+  "（拨了拨算盘，抬眼便笑）",
   "“货栈刚开门，南来北往的货都在这里。想跑商，先看准价。”",
 ];
 
 export const marketHouseBossOpenLines = [
-  "钱掌柜抬手请你靠近货单。",
+  "（抬手）请你靠近货单。",
   "“想买想卖都行，先把价看明白，商路上吃亏的都是心急人。”",
 ];
 
 export const marketHouseGuestOpenLineBySpecialty: Record<string, string> = {
-  书画: "韩书商抖了抖衣袖，像是在等你先问哪座城的行情。",
-  药材: "孙药商把药包压得更紧了些，话里透着几分试探。",
-  丝绸: "沈老板笑而不语，只用指尖轻轻点了点货箱。",
-  外地见闻: "罗行商一坐下就压低了嗓音，像是肚里装满了路上消息。",
+  书画: "（抖了抖衣袖）像是在等你先问哪座城的行情。",
+  药材: "（把药包压得更紧了些）话里透着几分试探。",
+  丝绸: "（笑而不语，用指尖轻轻点了点货箱）",
+  外地见闻: "（一坐下就压低了嗓音）像是肚里装满了路上消息。",
 };
 
 export const marketHouseSmallTalkLines = [

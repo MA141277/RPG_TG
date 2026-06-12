@@ -2,6 +2,10 @@ import type { CharacterDefinition } from "../domain/character";
 import type { CityBeggingMiniGameState } from "../domain/city-begging-minigame";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type {
+  HouseMapAutoAdvanceCompletion,
+  MapAutoAdvanceSnapshot,
+} from "../domain/house-module";
+import type {
   LayoutEditorState,
   UiLayoutByTargetId,
 } from "../domain/ui-layout";
@@ -71,6 +75,8 @@ export type AppState = {
         intervalId: string;
         label: string;
         targetHouseId: string;
+        snapshots: MapAutoAdvanceSnapshot[] | null;
+        completion: HouseMapAutoAdvanceCompletion | null;
       }
     | null;
   uiLayouts: UiLayoutByTargetId;
