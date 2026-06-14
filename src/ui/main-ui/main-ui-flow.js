@@ -1,4 +1,5 @@
 import { applyLiveLayoutBindings } from "../tools/live-layout-bindings";
+import { mountOpeningBackgroundAnimation } from "./opening-background-animation";
 import { resolveCharacterAvatarImageUrl } from "../portrait-assets";
 import { renderLayoutEditor } from "../tools/layout-editor-view";
 
@@ -179,6 +180,7 @@ export class MainUiFlow {
     this.previousCharacterDetail = null;
     this.characterDetailTransitionToken = 0;
     this.characterDetailTransitionTimer = 0;
+    this.destroyOpeningBackgroundAnimation = null;
   }
 
   mount() {
@@ -194,6 +196,8 @@ export class MainUiFlow {
     this.overlayRoot.removeEventListener("mouseover", this.handleHover);
     this.overlayRoot.removeEventListener("focusin", this.handleFocus);
     this.destroyInkParticleSystem();
+    this.destroyOpeningBackgroundAnimation?.();
+    this.destroyOpeningBackgroundAnimation = null;
     this.clearCharacterDetailTransitionTimer();
     this.overlayRoot.className = "";
     this.overlayRoot.innerHTML = "";
@@ -219,6 +223,8 @@ export class MainUiFlow {
 
   render() {
     this.destroyInkParticleSystem();
+    this.destroyOpeningBackgroundAnimation?.();
+    this.destroyOpeningBackgroundAnimation = null;
     this.clearCharacterDetailTransitionTimer();
 
     if (this.currentScreen === "hidden") {
@@ -233,6 +239,7 @@ export class MainUiFlow {
     this.overlayRoot.innerHTML =
       screenMarkup + renderLayoutEditor(this.getAppState());
     if (this.currentScreen === "main-menu") {
+      this.destroyOpeningBackgroundAnimation = mountOpeningBackgroundAnimation(this.overlayRoot);
       this.syncStartScreenLayout();
     } else if (this.currentScreen === "character-select") {
       this.syncCharacterSelectLayout();
@@ -264,6 +271,7 @@ export class MainUiFlow {
   renderMainMenu() {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--main-menu" aria-label="主菜单">
+        <canvas class="c-main-ui-opening-background-canvas" aria-hidden="true"></canvas>
         <div class="c-main-ui-main-menu">
           <div class="c-main-ui-main-menu__content">
             <p class="c-main-ui-main-menu__subtitle">洪武前夜 · 群雄并起</p>
