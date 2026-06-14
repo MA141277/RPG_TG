@@ -1,7 +1,21 @@
 {
-  "updatedAt": "2026-06-01T06:18:43.165Z",
+  "updatedAt": "2026-06-11T20:07:30+08:00",
   "count": 37,
   "items": [
+    {
+      "id": "default_scene",
+      "kind": "scene",
+      "title": "default_scene",
+      "createdAt": "2026-04-27T16:56:48+08:00",
+      "updatedAt": "2026-06-11T20:07:30+08:00",
+      "schemaVersion": 1,
+      "objectCount": 37,
+      "buildingCount": 37,
+      "npcCount": 10,
+      "files": {
+        "scene": "scene/default_scene/scene.json"
+      }
+    },
     {
       "id": "zyz_anfeng_city",
       "kind": "scene",
@@ -364,20 +378,6 @@
       "npcCount": 11,
       "files": {
         "scene": "scene/zyz_yingtian_city/scene.json"
-      }
-    },
-    {
-      "id": "default_scene",
-      "kind": "scene",
-      "title": "default_scene",
-      "createdAt": "2026-04-27T16:56:48+08:00",
-      "updatedAt": "2026-06-01T13:09:11+08:00",
-      "schemaVersion": 1,
-      "objectCount": 39,
-      "buildingCount": 39,
-      "npcCount": 10,
-      "files": {
-        "scene": "scene/default_scene/scene.json"
       }
     },
     {

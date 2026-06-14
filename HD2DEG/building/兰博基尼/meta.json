@@ -1,0 +1,30 @@
+{
+  "id": "兰博基尼",
+  "kind": "building",
+  "title": "兰博基尼",
+  "prompt": "兰博基尼",
+  "tags": [
+    "decoration"
+  ],
+  "widthTiles": 18,
+  "drawRoad": false,
+  "facilityProfile": null,
+  "createdAt": "2026-06-11T20:08:14+08:00",
+  "updatedAt": "2026-06-11T20:08:14+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 134,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/兰博基尼/front.png",
+    "side": "building/兰博基尼/side.png",
+    "top": "building/兰博基尼/top.png",
+    "preview": "building/兰博基尼/preview.png",
+    "previewProcessed": "building/兰博基尼/preview-processed.png"
+  }
+}

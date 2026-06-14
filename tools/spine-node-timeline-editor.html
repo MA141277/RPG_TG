@@ -229,6 +229,19 @@
         border-radius: 50%;
       }
 
+      .action-list {
+        margin-top: 10px;
+      }
+
+      .action-item {
+        grid-template-columns: 1fr auto;
+      }
+
+      .action-meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
       .stage-wrap {
         position: relative;
         min-width: 0;
@@ -552,8 +565,8 @@
           <button id="walkSampleBtn" type="button">侧面行走</button>
           <button id="newVersionSampleBtn" type="button">新版</button>
           <button id="idleAnimationBtn" type="button">待机动画</button>
-          <button id="slashSampleBtn" type="button">侧身劈砍</button>
-          <button id="threeQuarterSampleBtn" type="button">70度侧身</button>
+          <button id="slashSampleBtn" type="button" hidden>侧身劈砍</button>
+          <button id="threeQuarterSampleBtn" type="button" hidden>70度侧身</button>
           <button id="viewToggleBtn" type="button">骨骼视图</button>
           <button id="skeletonOverlayBtn" type="button">显示骨骼</button>
           <button id="nodeModeBtn" class="mode-button active" type="button">节点移动</button>
@@ -565,6 +578,21 @@
 
       <main class="workspace">
         <aside class="panel">
+          <section class="panel-section">
+            <div class="panel-title">
+              <span>动作列表</span>
+              <button id="newActionBtn" type="button">新建</button>
+            </div>
+            <div class="field">
+              <label for="actionNameInput">动作名</label>
+              <input id="actionNameInput" type="text" />
+            </div>
+            <div class="button-row">
+              <button id="saveActionBtn" class="primary" type="button">保存动作</button>
+              <button id="applyIdleToActionBtn" type="button">生成待机</button>
+            </div>
+            <div id="actionList" class="node-list action-list"></div>
+          </section>
           <section class="panel-section">
             <div class="panel-title">
               <span>节点树</span>
@@ -776,6 +804,7 @@
             <div class="button-row">
               <button id="copyJsonBtn" type="button">复制</button>
               <button id="applyJsonBtn" type="button">应用文本</button>
+              <button id="saveJsonFileBtn" class="primary" type="button">保存JSON文件</button>
             </div>
           </section>
         </aside>
@@ -794,6 +823,8 @@
           </div>
           <div class="timeline-actions">
             <button id="deleteKeyBtn" class="danger" type="button">删关键帧</button>
+            <button id="deleteFrameKeysBtn" class="danger" type="button">删本帧全部</button>
+            <button id="keyMoveModeBtn" type="button">单个移动</button>
             <button id="snapAllBtn" type="button">全部记录</button>
           </div>
         </div>
@@ -808,6 +839,7 @@
     <div id="toast" class="toast"></div>
 
     <script src="../prototypes/faxian-leg-spine/user-layout.generated.js"></script>
+    <script src="./spine-new-recovered-project.generated.js"></script>
     <script>
       const frameWidth = 20;
       const rowHeight = 30;
@@ -822,6 +854,9 @@
         renderMode: "texture",
         showSkeletonOverlay: false,
         keyframeSource: "previous",
+        keyMoveMode: "single",
+        actions: [],
+        selectedActionId: null,
         playing: false,
         nodes: [
           {
@@ -888,6 +923,11 @@
 
       const el = {
         stage: document.getElementById("stage"),
+        actionList: document.getElementById("actionList"),
+        actionNameInput: document.getElementById("actionNameInput"),
+        newActionBtn: document.getElementById("newActionBtn"),
+        saveActionBtn: document.getElementById("saveActionBtn"),
+        applyIdleToActionBtn: document.getElementById("applyIdleToActionBtn"),
         nodeList: document.getElementById("nodeList"),
         addNodeBtn: document.getElementById("addNodeBtn"),
         deleteNodeBtn: document.getElementById("deleteNodeBtn"),
@@ -896,6 +936,8 @@
         keySourceNextBtn: document.getElementById("keySourceNextBtn"),
         keySourceStartBtn: document.getElementById("keySourceStartBtn"),
         deleteKeyBtn: document.getElementById("deleteKeyBtn"),
+        deleteFrameKeysBtn: document.getElementById("deleteFrameKeysBtn"),
+        keyMoveModeBtn: document.getElementById("keyMoveModeBtn"),
         snapAllBtn: document.getElementById("snapAllBtn"),
         playBtn: document.getElementById("playBtn"),
         prevFrameBtn: document.getElementById("prevFrameBtn"),
@@ -945,6 +987,7 @@
         jsonPreview: document.getElementById("jsonPreview"),
         copyJsonBtn: document.getElementById("copyJsonBtn"),
         applyJsonBtn: document.getElementById("applyJsonBtn"),
+        saveJsonFileBtn: document.getElementById("saveJsonFileBtn"),
         exportBtn: document.getElementById("exportBtn"),
         importBtn: document.getElementById("importBtn"),
         fileInput: document.getElementById("fileInput"),
@@ -969,6 +1012,7 @@
       let lastTime = 0;
       let drawAlphaMultiplier = 1;
       let ignorePoseOverrides = false;
+      let actionAutosavePaused = false;
       const poseOverrides = new Map();
       const dynamicScarves = new Map();
       const warriorImages = loadWarriorImages();
@@ -2155,12 +2199,36 @@
       }
 
       function renderAll() {
+        syncCurrentActionFromTimeline();
+        renderActionList();
         renderNodeList();
         renderProperties();
         renderTimeline();
         renderStatus();
         renderJsonPreview();
         drawStage();
+      }
+
+      function renderActionList() {
+        if (!state.actions.length) {
+          state.actions = [createActionSnapshot("当前动作")];
+          state.selectedActionId = state.actions[0].id;
+        }
+        const selected = selectedAction();
+        el.actionNameInput.value = selected?.name || "";
+        el.actionList.innerHTML = "";
+        state.actions.forEach((action) => {
+          const button = document.createElement("button");
+          button.className = `node-item action-item${action.id === state.selectedActionId ? " active" : ""}`;
+          button.type = "button";
+          button.dataset.id = action.id;
+          button.innerHTML = `
+            <span class="node-name">${escapeHtml(action.name)}</span>
+            <span class="action-meta">${action.duration + 1}帧</span>
+          `;
+          button.addEventListener("click", () => selectAction(action.id));
+          el.actionList.appendChild(button);
+        });
       }
 
       function renderNodeList() {
@@ -2375,6 +2443,8 @@
                 nodeId: node.id,
                 startX: event.clientX,
                 sourceFrame: keyframe.frame,
+                keyMoveMode: event.shiftKey ? "all" : state.keyMoveMode,
+                keyEntries: keyDragEntries(node.id, keyframe, event.shiftKey ? "all" : state.keyMoveMode),
               };
               marker.setPointerCapture(event.pointerId);
               renderAll();
@@ -2409,6 +2479,8 @@
         el.keySourcePrevBtn.classList.toggle("active", state.keyframeSource === "previous");
         el.keySourceNextBtn.classList.toggle("active", state.keyframeSource === "next");
         el.keySourceStartBtn.classList.toggle("active", state.keyframeSource === "start");
+        el.keyMoveModeBtn.textContent = state.keyMoveMode === "all" ? "整帧移动" : "单个移动";
+        el.keyMoveModeBtn.classList.toggle("active", state.keyMoveMode === "all");
       }
 
       function renderJsonPreview() {
@@ -2416,6 +2488,7 @@
       }
 
       function projectData() {
+        syncCurrentActionFromTimeline();
         return {
           format: "spine-node-timeline-editor",
           version: 1,
@@ -2424,6 +2497,13 @@
           duration: state.duration,
           nodes: state.nodes,
           timelines: state.timelines,
+          selectedActionId: state.selectedActionId,
+          actions: state.actions.map((action) => ({
+            id: action.id,
+            name: action.name,
+            duration: action.duration,
+            timelines: cloneTimelines(action.timelines),
+          })),
         };
       }
 
@@ -2454,12 +2534,40 @@
           bindPose: normalizeBindPose(node.bindPose || node),
           attachment: normalizeAttachment(node.attachment),
         }));
-        state.timelines = {};
-        Object.entries(data.timelines).forEach(([nodeId, keys]) => {
+        state.timelines = normalizeTimelineMap(data.timelines, state.duration);
+        state.actions = normalizeActions(data.actions);
+        if (!state.actions.length) state.actions = [createActionSnapshot(state.name || "当前动作")];
+        state.selectedActionId =
+          state.actions.find((action) => action.id === data.selectedActionId)?.id || state.actions[0]?.id || null;
+      }
+
+      function normalizeActions(actions) {
+        if (!Array.isArray(actions)) return [];
+        return actions
+          .map((action, index) => {
+            if (!action || typeof action !== "object") return null;
+            const duration = Math.max(
+              0,
+              Number.isFinite(Number(action.duration)) ? Number(action.duration) : state.duration,
+            );
+            return {
+              id: String(action.id || uid("action")),
+              name: String(action.name || `动作 ${index + 1}`),
+              duration,
+              timelines: normalizeTimelineMap(action.timelines || {}, duration),
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function normalizeTimelineMap(timelines, duration) {
+        const result = {};
+        if (!timelines || typeof timelines !== "object") return result;
+        Object.entries(timelines).forEach(([nodeId, keys]) => {
           if (!Array.isArray(keys)) return;
-          state.timelines[nodeId] = keys
+          result[nodeId] = keys
             .map((item) => ({
-              frame: clampFrame(item.frame),
+              frame: clampFrameToDuration(item.frame, duration),
               x: Number(item.x) || 0,
               y: Number(item.y) || 0,
               rotation: Number(item.rotation) || 0,
@@ -2469,6 +2577,11 @@
             }))
             .sort((a, b) => a.frame - b.frame);
         });
+        return result;
+      }
+
+      function clampFrameToDuration(frame, duration) {
+        return Math.max(0, Math.min(Math.max(0, duration), Math.round(Number(frame) || 0)));
       }
 
       function normalizeAttachment(attachment) {
@@ -2779,6 +2892,113 @@
         renderAll();
       }
 
+      function deleteCurrentFrameKeys() {
+        const frame = Math.round(state.currentFrame);
+        let deleted = 0;
+        Object.keys(state.timelines).forEach((nodeId) => {
+          const keys = state.timelines[nodeId] || [];
+          const next = keys.filter((item) => item.frame !== frame);
+          deleted += keys.length - next.length;
+          state.timelines[nodeId] = next;
+        });
+        state.selectedKey = null;
+        renderAll();
+        toast(deleted ? `已删除第 ${frame + 1} 帧的 ${deleted} 个关键帧` : `第 ${frame + 1} 帧没有关键帧`);
+      }
+
+      function keyDragEntries(nodeId, keyframe, mode = state.keyMoveMode) {
+        const sourceFrame = keyframe.frame;
+        if (mode !== "all") return [{ nodeId, keyframe, sourceFrame }];
+        return Object.entries(state.timelines).flatMap(([entryNodeId, keys]) =>
+          (keys || [])
+            .filter((item) => item.frame === sourceFrame)
+            .map((item) => ({ nodeId: entryNodeId, keyframe: item, sourceFrame })),
+        );
+      }
+
+      function selectedAction() {
+        return state.actions.find((action) => action.id === state.selectedActionId) || state.actions[0] || null;
+      }
+
+      function syncCurrentActionFromTimeline() {
+        if (actionAutosavePaused) return;
+        const action = selectedAction();
+        if (!action) return;
+        action.duration = state.duration;
+        action.timelines = cloneTimelines(state.timelines);
+      }
+
+      function createActionSnapshot(name, id = uid("action")) {
+        return {
+          id,
+          name: String(name || "未命名动作"),
+          duration: state.duration,
+          timelines: cloneTimelines(state.timelines),
+        };
+      }
+
+      function cloneTimelines(timelines) {
+        return Object.fromEntries(
+          Object.entries(timelines || {}).map(([nodeId, keys]) => [
+            nodeId,
+            Array.isArray(keys) ? keys.map((keyframe) => ({ ...keyframe })) : [],
+          ]),
+        );
+      }
+
+      function currentPoseTimelines() {
+        const result = {};
+        state.nodes.forEach((node) => {
+          result[node.id] = [copyPoseAtFrame(getLocalPose(node), 0)];
+        });
+        return result;
+      }
+
+      function newAction() {
+        const suggested = `动作 ${state.actions.length + 1}`;
+        const name = window.prompt("新动作名称", suggested);
+        if (name === null) return;
+        const action = {
+          id: uid("action"),
+          name: String(name || suggested),
+          duration: state.duration,
+          timelines: currentPoseTimelines(),
+        };
+        state.actions.push(action);
+        selectAction(action.id);
+        toast(`已新建动作：${action.name}`);
+      }
+
+      async function saveCurrentAction() {
+        let action = selectedAction();
+        if (!action) {
+          action = createActionSnapshot(el.actionNameInput.value || "当前动作");
+          state.actions.push(action);
+          state.selectedActionId = action.id;
+        }
+        action.name = el.actionNameInput.value.trim() || action.name || "未命名动作";
+        action.duration = state.duration;
+        action.timelines = cloneTimelines(state.timelines);
+        renderAll();
+        await saveProjectJsonFile();
+      }
+
+      function selectAction(actionId) {
+        const action = state.actions.find((item) => item.id === actionId);
+        if (!action) return;
+        syncCurrentActionFromTimeline();
+        state.selectedActionId = action.id;
+        state.duration = Math.max(0, Number(action.duration) || 0);
+        state.currentFrame = 0;
+        state.selectedKey = null;
+        state.playing = false;
+        dynamicScarves.clear();
+        state.timelines = cloneTimelines(action.timelines);
+        syncCurrentActionFromTimeline();
+        renderAll();
+        toast(`已切换动作：${action.name}`);
+      }
+
       function frameFromPointer(event, container) {
         const rect = container.getBoundingClientRect();
         const x = event.clientX - rect.left + container.scrollLeft;
@@ -3048,6 +3268,26 @@
         URL.revokeObjectURL(url);
       }
 
+      async function saveProjectJsonFile() {
+        try {
+          const data = projectData();
+          const response = await fetch("/api/spine-editor/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              path: "src/faxian/leg/new-version-spine-project.json",
+              data,
+            }),
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || "保存失败");
+          renderJsonPreview();
+          toast(`已保存到 ${result.path || "JSON 文件"}`);
+        } catch (error) {
+          toast(error.message || "保存 JSON 文件失败");
+        }
+      }
+
       function resetProject() {
         state.name = "默认";
         state.fps = 24;
@@ -3072,6 +3312,8 @@
           },
         ];
         state.timelines = { root: [key("root", 0)] };
+        state.actions = [createActionSnapshot("默认")];
+        state.selectedActionId = state.actions[0].id;
         renderAll();
       }
 
@@ -3082,6 +3324,12 @@
         state.nodes.forEach((node) => {
           state.timelines[node.id] = buildIdleTimelineForNode(node, state.duration);
         });
+        const action = selectedAction();
+        if (action) {
+          action.name = el.actionNameInput.value.trim() || action.name || "待机";
+          action.duration = state.duration;
+          action.timelines = cloneTimelines(state.timelines);
+        }
         renderAll();
         toast("已生成 48 帧待机循环");
       }
@@ -3151,7 +3399,127 @@
         return "";
       }
 
-      function loadNewVersionSample() {
+      function buildJumpTimelines(nodes, duration = 47) {
+        return Object.fromEntries(nodes.map((node) => [node.id, buildJumpTimelineForNode(node, duration)]));
+      }
+
+      function buildJumpTimelineForNode(node, duration = 47) {
+        const frames = [0, 8, 14, 24, 34, 42].map((frame) => Math.min(duration, frame));
+        const base = {
+          x: node.x,
+          y: node.y,
+          rotation: node.rotation,
+          length: node.length,
+          scaleX: node.scaleX,
+          scaleY: node.scaleY,
+        };
+        return frames.map((frame, index) => jumpPoseAtFrame(node, base, frame, index));
+      }
+
+      function jumpPoseAtFrame(node, base, frame, index) {
+        const phase = ["ready", "crouch", "takeoff", "apex", "fall", "land"][index] || "ready";
+        const role = jumpRole(node);
+        const partIndex = nodePartIndex(node);
+        const pose = { frame, ...base };
+
+        if (!node.parentId) {
+          const rootY = {
+            ready: 0,
+            crouch: 18,
+            takeoff: -38,
+            apex: -96,
+            fall: -52,
+            land: 10,
+          };
+          const rootTilt = {
+            ready: 0,
+            crouch: -1.5,
+            takeoff: 3,
+            apex: 0,
+            fall: -2,
+            land: -1,
+          };
+          pose.y = base.y + rootY[phase];
+          pose.rotation = base.rotation + rootTilt[phase];
+        }
+
+        if (role === "head") {
+          pose.rotation += { ready: 0, crouch: 4, takeoff: -5, apex: -2, fall: 3, land: 5 }[phase];
+          pose.y += { ready: 0, crouch: 1, takeoff: -1, apex: -2, fall: 1, land: 2 }[phase];
+        } else if (role === "torso") {
+          const torsoDepth = partIndex >= 3 ? 1.4 : 1;
+          pose.rotation =
+            base.rotation + ({ ready: 0, crouch: 8, takeoff: -10, apex: -4, fall: 5, land: 10 }[phase] * torsoDepth);
+          pose.length = Math.max(
+            4,
+            base.length * (1 + { ready: 0, crouch: -0.04, takeoff: 0.025, apex: 0.01, fall: -0.01, land: -0.05 }[phase]),
+          );
+        } else if (role === "rightArm") {
+          const lower = partIndex >= 2 ? 1.35 : 1;
+          pose.rotation = base.rotation + ({ ready: 0, crouch: 20, takeoff: -28, apex: -18, fall: 14, land: 24 }[phase] * lower);
+          pose.length = Math.max(4, base.length * (1 + { ready: 0, crouch: -0.015, takeoff: 0.02, apex: 0, fall: 0, land: -0.01 }[phase]));
+        } else if (role === "leftArm") {
+          const lower = partIndex >= 2 ? 1.35 : 1;
+          pose.rotation = base.rotation + ({ ready: 0, crouch: -18, takeoff: 32, apex: 24, fall: -10, land: -20 }[phase] * lower);
+          pose.length = Math.max(4, base.length * (1 + { ready: 0, crouch: -0.015, takeoff: 0.02, apex: 0, fall: 0, land: -0.01 }[phase]));
+        } else if (role === "rightLeg") {
+          const lower = partIndex >= 2 ? 1.25 : 1;
+          pose.rotation = base.rotation + ({ ready: 0, crouch: -24, takeoff: 18, apex: 34, fall: 8, land: -30 }[phase] * lower);
+          pose.length = Math.max(4, base.length * (1 + { ready: 0, crouch: -0.055, takeoff: 0.035, apex: 0.005, fall: -0.015, land: -0.06 }[phase]));
+        } else if (role === "leftLeg") {
+          const lower = partIndex >= 2 ? 1.25 : 1;
+          pose.rotation = base.rotation + ({ ready: 0, crouch: 22, takeoff: -16, apex: -28, fall: -6, land: 28 }[phase] * lower);
+          pose.length = Math.max(4, base.length * (1 + { ready: 0, crouch: -0.055, takeoff: 0.035, apex: 0.005, fall: -0.015, land: -0.06 }[phase]));
+        }
+
+        return {
+          frame: pose.frame,
+          x: round(pose.x, 2),
+          y: round(pose.y, 2),
+          rotation: round(pose.rotation, 2),
+          length: round(pose.length, 2),
+          scaleX: round(pose.scaleX, 3),
+          scaleY: round(pose.scaleY, 3),
+        };
+      }
+
+      function jumpRole(node) {
+        const name = String(node.name || "");
+        if (node.role === "torso" && /躯干\s*[56]/.test(name)) return "leftArm";
+        return idleRole(node);
+      }
+
+      function nodePartIndex(node) {
+        const match = String(node.name || "").match(/(\d+)\s*$/);
+        return match ? Number(match[1]) : 1;
+      }
+
+      async function loadProjectJsonFile(url) {
+        try {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) return null;
+          const data = await response.json();
+          return data?.format === "spine-node-timeline-editor" ? data : null;
+        } catch (error) {
+          console.warn("Failed to load project JSON", error);
+          return null;
+        }
+      }
+
+      async function loadNewVersionSample() {
+        const savedProject = await loadProjectJsonFile("/src/faxian/leg/new-version-spine-project.json");
+        if (savedProject) {
+          applyProjectData(savedProject);
+          renderAll();
+          toast("已载入 JSON 文件中的新版动作");
+          return;
+        }
+        if (window.RECOVERED_SPINE_PROJECT) {
+          applyProjectData(window.RECOVERED_SPINE_PROJECT);
+          renderAll();
+          toast("已载入恢复版新版动作");
+          return;
+        }
         const layout = window.FAXIAN_USER_SPINE_LAYOUT;
         if (!layout?.bones?.length || !layout?.parts?.length) {
           toast("未找到新版骨骼数据");
@@ -3224,15 +3592,16 @@
           return node;
         });
 
-        const timelines = {};
+        const idleTimelines = {};
         nodes.forEach((node) => {
           const { worldStart, worldRotation, ...cleanNode } = node;
           Object.assign(node, cleanNode);
           node.bindPose = normalizeBindPose(node);
-          timelines[node.id] = buildIdleTimelineForNode(node, 47);
+          idleTimelines[node.id] = buildIdleTimelineForNode(node, 47);
           delete node.worldStart;
           delete node.worldRotation;
         });
+        const jumpTimelines = buildJumpTimelines(nodes, 47);
 
         const partBoneIds = resolveNewVersionPartBoneIds(layout.bones);
         for (const part of layout.parts) {
@@ -3277,7 +3646,22 @@
           fps: 24,
           duration: 47,
           nodes,
-          timelines,
+          timelines: jumpTimelines,
+          selectedActionId: "jump",
+          actions: [
+            {
+              id: "idle",
+              name: "待机",
+              duration: 47,
+              timelines: idleTimelines,
+            },
+            {
+              id: "jump",
+              name: "跳跃",
+              duration: 47,
+              timelines: jumpTimelines,
+            },
+          ],
         };
       }
 
@@ -4175,6 +4559,15 @@
           renderAll();
         });
 
+        el.newActionBtn.addEventListener("click", newAction);
+        el.saveActionBtn.addEventListener("click", saveCurrentAction);
+        el.applyIdleToActionBtn.addEventListener("click", applyIdleAnimation);
+        el.actionNameInput.addEventListener("change", () => {
+          const action = selectedAction();
+          if (!action) return;
+          action.name = el.actionNameInput.value.trim() || action.name;
+          renderAll();
+        });
         el.keyframeBtn.addEventListener("click", () => addKeyframe());
         el.keySourcePrevBtn.addEventListener("click", () => {
           state.keyframeSource = "previous";
@@ -4193,6 +4586,12 @@
           toast(`已记录全部节点第 ${state.currentFrame + 1} 帧`);
         });
         el.deleteKeyBtn.addEventListener("click", deleteSelectedKey);
+        el.deleteFrameKeysBtn.addEventListener("click", deleteCurrentFrameKeys);
+        el.keyMoveModeBtn.addEventListener("click", () => {
+          state.keyMoveMode = state.keyMoveMode === "all" ? "single" : "all";
+          renderStatus();
+          toast(state.keyMoveMode === "all" ? "整帧移动：拖一个关键帧会带动同帧全部关键帧" : "单个移动：只移动被拖动的关键帧");
+        });
 
         el.playBtn.addEventListener("click", () => {
           state.playing = !state.playing;
@@ -4268,6 +4667,7 @@
             toast(error.message || "JSON 解析失败");
           }
         });
+        el.saveJsonFileBtn.addEventListener("click", saveProjectJsonFile);
         el.sampleBtn.addEventListener("click", loadSample);
         el.walkSampleBtn.addEventListener("click", loadSideWalkSample);
         el.newVersionSampleBtn.addEventListener("click", loadNewVersionSample);
@@ -4544,17 +4944,20 @@
           if (!drag || drag.type !== "key") return;
           const delta = Math.round((event.clientX - drag.startX) / frameWidth);
           const nextFrame = clampFrame(drag.sourceFrame + delta);
-          const keys = state.timelines[drag.nodeId] || [];
-          const keyframe = keys.find((item) => item.frame === drag.sourceFrame);
-          if (!keyframe) return;
-          const occupied = keys.some(
-            (item) => item !== keyframe && item.frame === nextFrame,
+          const entries = drag.keyEntries || [];
+          if (!entries.length) return;
+          const occupied = entries.some(({ nodeId, keyframe }) =>
+            (state.timelines[nodeId] || []).some((item) => item !== keyframe && item.frame === nextFrame),
           );
           if (!occupied) {
-            keyframe.frame = nextFrame;
+            entries.forEach(({ keyframe }) => {
+              keyframe.frame = nextFrame;
+            });
             state.currentFrame = nextFrame;
             state.selectedKey = { nodeId: drag.nodeId, frame: nextFrame };
-            keys.sort((a, b) => a.frame - b.frame);
+            [...new Set(entries.map((entry) => entry.nodeId))].forEach((nodeId) => {
+              state.timelines[nodeId]?.sort((a, b) => a.frame - b.frame);
+            });
             renderAll();
           }
         });

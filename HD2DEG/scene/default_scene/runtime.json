@@ -8,13 +8,13 @@
         "sheetCharacterId": "npc_inn_bosslady",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -25.077414246229864,
-        "wy": -14.91292100943001,
+        "wx": -207.28823590657046,
+        "wy": -112.49842754370304,
         "initialWx": -213.4627106189811,
         "initialWy": -122.45540004802027,
         "needs": {
           "hunger": 100,
-          "energy": 94,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -58,7 +58,7 @@
           },
           {
             "itemId": "coin_copper",
-            "count": 629,
+            "count": 661,
             "name": "铜钱",
             "icon": "",
             "description": "",
@@ -66,7 +66,7 @@
           },
           {
             "itemId": "ledger_note",
-            "count": 4,
+            "count": 5,
             "name": "ledger note",
             "icon": "",
             "description": "",
@@ -87,38 +87,38 @@
           "coin_pouch"
         ],
         "memory": [
-          "沈掌柜和阿顺聊了聊酒肆生意。",
-          "沈掌柜和沈福聊了聊酒肆生意。",
-          "沈掌柜完成了run_shop，得到铜钱x610。",
-          "清晨备店，白天两段营生，傍晚收尾后回家歇息。",
-          "沈掌柜和邵远舟聊了聊清晨店门口寒暄。",
+          "沈掌柜和阿顺聊了聊暮色收工。",
+          "沈掌柜完成了run_shop，得到铜钱x651。",
+          "沈掌柜和杨柳聊了聊暮色收工。",
+          "沈掌柜完成了run_shop，得到铜钱x653。",
+          "沈掌柜和阿顺聊了聊暮色收工。",
+          "沈掌柜和阿顺聊了聊暮色收工。",
+          "沈掌柜在close shop上花了一些时间。",
+          "沈掌柜在close shop上花了一些时间。",
+          "沈掌柜和阿顺聊了聊暮色收工。",
+          "清晨备店，白天守着酒肆经营并顺手管账，傍晚收尾后回家休息。",
           "沈掌柜和阿顺聊了聊清晨备店。",
+          "沈掌柜和邵远舟聊了聊清晨开张。",
+          "沈掌柜在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_shop，得到ledger notex5。",
+          "沈掌柜和邵婉娘聊了聊清晨开张与借宿护货。",
+          "沈掌柜和邵远舟聊了聊清晨开张与借宿护货。",
+          "沈掌柜和阿顺聊了聊清晨开张。",
+          "沈掌柜和沈福聊了聊清晨开张。",
+          "沈掌柜完成了run_shop，得到铜钱x656。",
+          "白天照常守店，晚间收摊后回家歇息。",
+          "沈掌柜和阿顺聊了聊清晨开张。",
           "沈掌柜在prepare shop上花了一些时间。",
-          "沈掌柜和邵婉娘聊了聊清晨借宿寺前的问候。",
-          "清晨备店后开门做生意，白天兼顾收账与应酬，傍晚巡看店内后收铺回家休息。",
-          "沈掌柜和阿顺聊了聊清晨备店。",
-          "沈掌柜和邵远舟聊了聊清晨借宿与开店寒暄。",
-          "沈掌柜在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_shop，得到ledger notex4。",
-          "沈掌柜和邵婉娘聊了聊清晨借宿与备货寒暄。",
-          "沈掌柜和沈福聊了聊清晨备货。",
-          "沈掌柜和阿顺聊了聊清晨备货。",
-          "沈掌柜完成了run_shop，得到铜钱x613。",
-          "沈掌柜和阿顺聊了聊清晨备货。",
-          "沈掌柜完成了run_shop，得到铜钱x619。",
-          "沈掌柜和沈福聊了聊暮色酒肆。",
-          "沈掌柜完成了run_shop，得到铜钱x620。",
-          "沈掌柜和邵婉娘聊了聊寺庙夜借宿。",
-          "沈掌柜完成了run_shop，得到铜钱x626。",
-          "沈掌柜和阿顺聊了聊夜里收摊。",
-          "沈掌柜在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了close_shop，得到铜钱x629。",
-          "沈掌柜和阿顺聊了聊夜里收摊。",
-          "沈掌柜和沈福聊了聊夜里收摊。",
-          "沈掌柜和阿顺聊了聊夜里收摊。",
-          "沈掌柜在rest上花了一些时间。",
-          "沈掌柜在rest上花了一些时间。",
-          "沈掌柜和阿顺聊了聊夜里收摊。",
-          "沈掌柜在rest上花了一些时间。",
-          "清晨备店，白天守柜台收账补货，傍晚照看酒肆与人情往来，夜里回家歇息。"
+          "沈掌柜和杨守仁聊了聊清晨开张。",
+          "沈掌柜和沈福聊了聊清晨开张。",
+          "沈掌柜和邵婉娘聊了聊清晨问安。",
+          "沈掌柜和邵远舟聊了聊晨间开张。",
+          "沈掌柜和阿顺聊了聊晨间开张。",
+          "沈掌柜完成了run_shop，得到铜钱x661。",
+          "沈掌柜和邵远舟聊了聊晨间开张与行商歇脚。",
+          "沈掌柜和阿顺聊了聊晨间开张。",
+          "晨起先在家休息，按时开店，傍晚收摊后回家睡觉。",
+          "沈掌柜在sleep上花了一些时间。",
+          "晨起开店，白天在酒肆忙经营与收账，午后顺手补货理账，傍晚收摊后回家休息睡觉。"
         ],
         "_initialMemory": [],
         "emotions": {
@@ -128,280 +128,235 @@
           "frustration": 0
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290544803,
-          "summary": "清晨备店，白天守柜台收账补货，傍晚照看酒肆与人情往来，夜里回家歇息。",
+          "generatedAt": 1781179635643,
+          "summary": "晨起开店，白天在酒肆忙经营与收账，午后顺手补货理账，傍晚收摊后回家休息睡觉。",
           "blocks": [
             {
               "activityType": "prepare_shop",
-              "startMin": 360,
-              "endMin": 485,
+              "startMin": 356,
+              "endMin": 470,
               "locationRef": "inn_counter",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "storage",
-              "note": "清点账目，开柜备酒，顺手安排补货。",
-              "taskId": "day-58:0:prepare_shop"
+              "note": "开门前整理柜台、清点酒水与零钱。",
+              "taskId": "day-71:0:prepare_shop"
             },
             {
               "activityType": "run_shop",
-              "startMin": 485,
-              "endMin": 730,
+              "startMin": 472,
+              "endMin": 718,
               "locationRef": "inn_counter",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
-              "useFacility": "storage",
-              "note": "守柜收钱，接待客人，见缝插针催收欠账。",
-              "taskId": "day-58:1:run_shop"
+              "useFacility": "stove",
+              "note": "正常迎客卖酒，顺手识人议价，遇熟客可寒暄几句。",
+              "taskId": "day-71:1:run_shop"
             },
             {
-              "activityType": "walk_floor",
-              "startMin": 730,
-              "endMin": 845,
+              "activityType": "collect_payment",
+              "startMin": 728,
+              "endMin": 810,
               "locationRef": "inn_hall",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "在堂内转一圈，顺便招呼熟客、听点风声。",
-              "taskId": "day-58:2:walk_floor"
+              "note": "趁客少时收账、催结零散欠款，顺带稳住场面。",
+              "taskId": "day-71:2:collect_payment"
             },
             {
               "activityType": "restock",
-              "startMin": 845,
-              "endMin": 1010,
+              "startMin": 820,
+              "endMin": 980,
               "locationRef": "inn_kitchen",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
-              "useFacility": "stove",
-              "note": "补酒备菜，检查后厨存货，盯着明日用度。",
-              "taskId": "day-58:3:restock"
+              "useFacility": "storage",
+              "note": "补酒菜、搬货入库，检查存货与明日所需。",
+              "taskId": "day-71:3:restock"
             },
             {
               "activityType": "run_shop",
-              "startMin": 1010,
-              "endMin": 1150,
+              "startMin": 990,
+              "endMin": 1140,
               "locationRef": "inn_counter",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
-              "useFacility": "",
-              "note": "晚间继续看店，若有争执就顺手调停。",
-              "taskId": "day-58:4:run_shop"
+              "useFacility": "stove",
+              "note": "晚间继续看店，照应晚归客与歇脚行商。",
+              "taskId": "day-71:4:run_shop"
             },
             {
               "activityType": "close_shop",
-              "startMin": 1150,
-              "endMin": 1255,
+              "startMin": 1145,
+              "endMin": 1235,
               "locationRef": "home",
               "mode": "must_do",
-              "wanderRadius": 6,
+              "wanderRadius": 4,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "收尾回家，带上账本和要紧物件，准备睡觉。",
-              "taskId": "day-58:5:close_shop"
+              "note": "收拾账本与钥匙，关店后回家休息睡觉。",
+              "taskId": "day-71:5:close_shop"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:1:run_shop",
-          "activityType": "run_shop",
-          "locationRef": "inn_counter",
-          "state": "travel_to_task",
-          "startedMinute": 723,
-          "blockStartMin": 485,
-          "blockEndMin": 730,
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
+          "locationRef": "home",
+          "state": "sleeping",
+          "startedMinute": 42,
+          "blockStartMin": 0,
+          "blockEndMin": 1439,
           "performed": false,
-          "useFacility": "storage",
-          "facilityUsePlanned": true,
-          "anchorX": -205.4627106189811,
-          "anchorY": -123.45540004802027,
-          "facilityType": "storage",
-          "facilityObjectId": null
+          "useFacility": ""
         },
         "recentEvents": [
           {
             "type": "conversation",
-            "dayKey": "day-57",
+            "dayKey": "day-66",
+            "minuteOfDay": 490,
+            "summary": "沈掌柜和邵远舟聊了聊清晨开张与借宿护货。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-66",
+            "minuteOfDay": 495,
+            "summary": "沈掌柜和阿顺聊了聊清晨开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-66",
             "minuteOfDay": 522,
-            "summary": "沈掌柜和阿顺聊了聊清晨备货。"
+            "summary": "沈掌柜和沈福聊了聊清晨开张。"
           },
           {
             "type": "activity",
             "activityType": "run_shop",
             "facilityType": "",
             "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 571,
-            "summary": "沈掌柜完成了run_shop，得到铜钱x613。",
+            "dayKey": "day-66",
+            "minuteOfDay": 566,
+            "summary": "沈掌柜完成了run_shop，得到铜钱x656。",
             "outputs": [
               {
                 "itemId": "coin_copper",
-                "count": 613,
+                "count": 656,
                 "name": "铜钱",
                 "icon": "",
                 "description": "",
                 "tags": []
               }
             ]
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 643,
-            "summary": "沈掌柜和阿顺聊了聊清晨备货。"
-          },
-          {
-            "type": "activity",
-            "activityType": "run_shop",
-            "facilityType": "",
-            "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 679,
-            "summary": "沈掌柜完成了run_shop，得到铜钱x619。",
-            "outputs": [
-              {
-                "itemId": "coin_copper",
-                "count": 619,
-                "name": "铜钱",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 858,
-            "summary": "沈掌柜和沈福聊了聊暮色酒肆。"
-          },
-          {
-            "type": "activity",
-            "activityType": "run_shop",
-            "facilityType": "",
-            "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 906,
-            "summary": "沈掌柜完成了run_shop，得到铜钱x620。",
-            "outputs": [
-              {
-                "itemId": "coin_copper",
-                "count": 620,
-                "name": "铜钱",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 976,
-            "summary": "沈掌柜和邵婉娘聊了聊寺庙夜借宿。"
-          },
-          {
-            "type": "activity",
-            "activityType": "run_shop",
-            "facilityType": "",
-            "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 1014,
-            "summary": "沈掌柜完成了run_shop，得到铜钱x626。",
-            "outputs": [
-              {
-                "itemId": "coin_copper",
-                "count": 626,
-                "name": "铜钱",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1016,
-            "summary": "沈掌柜和阿顺聊了聊夜里收摊。"
-          },
-          {
-            "type": "facility_activity",
-            "activityType": "close_shop",
-            "facilityType": "storage",
-            "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 1125,
-            "summary": "沈掌柜在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了close_shop，得到铜钱x629。",
-            "outputs": [
-              {
-                "itemId": "coin_copper",
-                "count": 629,
-                "name": "铜钱",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1136,
-            "summary": "沈掌柜和阿顺聊了聊夜里收摊。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1212,
-            "summary": "沈掌柜和沈福聊了聊夜里收摊。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1256,
-            "summary": "沈掌柜和阿顺聊了聊夜里收摊。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1285,
-            "summary": "沈掌柜在rest上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1299,
-            "summary": "沈掌柜在rest上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1384,
-            "summary": "沈掌柜和阿顺聊了聊夜里收摊。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1417,
-            "summary": "沈掌柜在rest上花了一些时间。"
           },
           {
             "type": "daily_plan",
-            "dayKey": "day-58",
-            "minuteOfDay": 2,
-            "summary": "清晨备店，白天守柜台收账补货，傍晚照看酒肆与人情往来，夜里回家歇息。"
+            "dayKey": "day-68",
+            "minuteOfDay": 0,
+            "summary": "白天照常守店，晚间收摊后回家歇息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 371,
+            "summary": "沈掌柜和阿顺聊了聊清晨开张。"
+          },
+          {
+            "type": "activity",
+            "activityType": "prepare_shop",
+            "dayKey": "day-68",
+            "minuteOfDay": 399,
+            "summary": "沈掌柜在prepare shop上花了一些时间。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 434,
+            "summary": "沈掌柜和杨守仁聊了聊清晨开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 493,
+            "summary": "沈掌柜和沈福聊了聊清晨开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 474,
+            "summary": "沈掌柜和邵婉娘聊了聊清晨问安。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 492,
+            "summary": "沈掌柜和邵远舟聊了聊晨间开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 513,
+            "summary": "沈掌柜和阿顺聊了聊晨间开张。"
+          },
+          {
+            "type": "activity",
+            "activityType": "run_shop",
+            "facilityType": "",
+            "facilityObjectId": null,
+            "dayKey": "day-68",
+            "minuteOfDay": 581,
+            "summary": "沈掌柜完成了run_shop，得到铜钱x661。",
+            "outputs": [
+              {
+                "itemId": "coin_copper",
+                "count": 661,
+                "name": "铜钱",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 615,
+            "summary": "沈掌柜和邵远舟聊了聊晨间开张与行商歇脚。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 363,
+            "summary": "沈掌柜和阿顺聊了聊晨间开张。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "晨起先在家休息，按时开店，傍晚收摊后回家睡觉。"
+          },
+          {
+            "type": "activity",
+            "activityType": "sleep",
+            "dayKey": "day-70",
+            "minuteOfDay": 125,
+            "summary": "沈掌柜在sleep上花了一些时间。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
+            "minuteOfDay": 0,
+            "summary": "晨起开店，白天在酒肆忙经营与收账，午后顺手补货理账，傍晚收摊后回家休息睡觉。"
           }
         ],
         "relationships": {
@@ -409,15 +364,15 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1384
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 363
           },
           "npc_inn_cook_owner": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1212
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 493
           },
           "player": {
             "affection": 5,
@@ -430,22 +385,22 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 377
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 615
           },
           "npc_yangliu": {
-            "affection": 4,
-            "trust": 4,
+            "affection": 5,
+            "trust": 5,
             "tension": 0,
-            "lastTalkDayKey": "day-37",
-            "lastTalkMinute": 1066
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 983
           },
           "npc_merchants_wife": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 976
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 474
           },
           "npc_temple_monk": {
             "affection": 3,
@@ -469,17 +424,17 @@
             "lastTalkMinute": 341
           },
           "npc_yang_grandpa": {
-            "affection": 3,
-            "trust": 3,
+            "affection": 4,
+            "trust": 4,
             "tension": 0,
-            "lastTalkDayKey": "day-53",
-            "lastTalkMinute": 566
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 434
           }
         },
         "current": {
-          "action": "travel_to_task",
-          "targetWx": -205.4627106189811,
-          "targetWy": -123.45540004802027
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "酒肆老板娘/掌柜",
@@ -626,13 +581,13 @@
         "sheetCharacterId": "npc_inn_cook_owner",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -26.019388796658184,
-        "wy": -13.208415897476227,
+        "wx": -209.17818625934143,
+        "wy": -112.586520435652,
         "initialWx": -216.4627106189811,
         "initialWy": -121.45540004802027,
         "needs": {
           "hunger": 100,
-          "energy": 94,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -648,7 +603,7 @@
           },
           {
             "itemId": "cooked_meal",
-            "count": 12,
+            "count": 15,
             "name": "熟食",
             "icon": "",
             "description": "",
@@ -656,7 +611,7 @@
           },
           {
             "itemId": "ledger_note",
-            "count": 5,
+            "count": 7,
             "name": "ledger note",
             "icon": "",
             "description": "",
@@ -664,7 +619,7 @@
           },
           {
             "itemId": "hot_soup",
-            "count": 1,
+            "count": 4,
             "name": "hot soup",
             "icon": "",
             "description": "",
@@ -695,53 +650,53 @@
           "fire_tongs"
         ],
         "memory": [
-          "沈福在prepare fire上花了一些时间。",
-          "沈福在prepare fire上花了一些时间。",
-          "沈福在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x11。",
-          "沈福在prepare fire上花了一些时间。",
-          "沈福在prepare fire上花了一些时间。",
-          "沈福想做cook_food，但缺少柴火。",
-          "沈福和慧远聊了聊食材够不够。",
-          "沈福和沈掌柜聊了聊酒肆生意。",
-          "沈福在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_ingredients，得到ledger notex5。",
-          "清晨备火，白天后厨做餐，傍晚补充备菜，夜间收拾后回家休息。",
-          "沈福在prepare fire上花了一些时间。",
-          "沈福和韩氏聊了聊清晨备火与早市。",
-          "清晨备火，白天后厨做餐，傍晚补充备菜，夜间收拾后回家休息。",
-          "沈福在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x12。",
-          "沈福和韩氏聊了聊清晨备火与早市。",
-          "沈福和阿顺聊了聊清晨备火与跑堂。",
-          "沈福和沈掌柜聊了聊清晨备货。",
-          "沈福和邵婉娘聊了聊清晨备货。",
-          "沈福和杨守仁聊了聊清晨家务与酒肆准备。",
+          "沈福和沈掌柜聊了聊清晨开张。",
+          "清晨备灶，白天两轮备菜与烹制，傍晚收拾后回家休息。",
+          "沈福在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到hot soupx3。",
+          "沈福和沈掌柜聊了聊清晨开张。",
+          "沈福和阿顺聊了聊清晨备菜。",
+          "沈福和邵远舟聊了聊清晨热汤。",
+          "沈福在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x15。",
           "沈福想做cook_food，但缺少柴火。",
           "沈福想做cook_food，但缺少柴火。",
-          "沈福和沈掌柜聊了聊暮色酒肆。",
-          "沈福在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_ingredients，得到铜钱x32。",
-          "沈福和邵婉娘聊了聊夜借柴火。",
           "沈福在prepare ingredients上花了一些时间。",
-          "沈福和韩氏聊了聊夜里送柴。",
+          "沈福在prepare ingredients上花了一些时间。",
           "沈福想做cook_food，但缺少柴火。",
           "沈福想做cook_food，但缺少柴火。",
           "沈福在clean kitchen上花了一些时间。",
-          "沈福和阿顺聊了聊夜里收摊与柴火。",
-          "沈福和沈掌柜聊了聊夜里收摊。",
-          "清晨补火备厨，白天与傍晚按时开灶，夜间收拾后回家休息。"
+          "沈福在clean kitchen上花了一些时间。",
+          "沈福在sleep上花了一些时间。",
+          "沈福在sleep上花了一些时间。",
+          "沈福在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到hot soupx4。",
+          "沈福想做cook_food，但缺少柴火。",
+          "沈福想做cook_food，但缺少柴火。",
+          "按酒肆备火、做两轮出餐、收尾后回家休息。",
+          "沈福想做cook_food，但缺少柴火。",
+          "沈福想做cook_food，但缺少柴火。",
+          "沈福在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_ingredients，得到ledger notex6。",
+          "沈福在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_ingredients，得到ledger notex7。",
+          "沈福想做cook_food，但缺少柴火。",
+          "沈福在clean kitchen上花了一些时间。",
+          "沈福在clean kitchen上花了一些时间。",
+          "沈福在sleep上花了一些时间。",
+          "沈福在sleep上花了一些时间。",
+          "白日以备料、烹饪和收尾为主，兼顾后厨整理，傍晚回家休息。",
+          "沈福调整了今天的安排。"
         ],
         "_initialMemory": [],
         "emotions": {
-          "mood": 10,
-          "stress": 1,
-          "hope": 23,
-          "frustration": 99
+          "mood": 7,
+          "stress": 5,
+          "hope": 31,
+          "frustration": 100
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290545156,
-          "summary": "清晨补火备厨，白天与傍晚按时开灶，夜间收拾后回家休息。",
+          "generatedAt": 1781179634471,
+          "summary": "",
           "blocks": [
             {
               "activityType": "prepare_fire",
@@ -752,8 +707,8 @@
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "stove",
-              "note": "先处理柴火与灶台，确保后续能正常起灶。",
-              "taskId": "day-58:0:prepare_fire"
+              "note": "",
+              "taskId": "day-71:0:prepare_fire"
             },
             {
               "activityType": "cook_food",
@@ -764,140 +719,106 @@
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "stove",
-              "note": "按酒肆晨间出餐节奏准备热食。",
-              "taskId": "day-58:1:cook_food"
+              "note": "",
+              "taskId": "day-71:1:cook_food"
             },
             {
               "activityType": "prepare_ingredients",
-              "startMin": 910,
-              "endMin": 1030,
+              "startMin": 900,
+              "endMin": 1020,
               "locationRef": "inn_kitchen",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "storage",
-              "note": "备好晚间所需食材，顺手检查余料。",
-              "taskId": "day-58:2:prepare_ingredients"
+              "note": "",
+              "taskId": "day-71:2:prepare_ingredients"
             },
             {
               "activityType": "cook_food",
-              "startMin": 1035,
-              "endMin": 1155,
+              "startMin": 1025,
+              "endMin": 1145,
               "locationRef": "inn_kitchen",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "stove",
-              "note": "晚间主灶出菜，保持火候稳定。",
-              "taskId": "day-58:3:cook_food"
+              "note": "",
+              "taskId": "day-71:3:cook_food"
             },
             {
               "activityType": "clean_kitchen",
-              "startMin": 1160,
-              "endMin": 1215,
+              "startMin": 1148,
+              "endMin": 1208,
               "locationRef": "inn_kitchen",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
-              "useFacility": "well",
-              "note": "收尾清理灶台与厨具，整理后回家。",
-              "taskId": "day-58:4:clean_kitchen"
+              "useFacility": "storage",
+              "note": "",
+              "taskId": "day-71:4:clean_kitchen"
             },
             {
               "activityType": "sleep",
-              "startMin": 1230,
+              "startMin": 1220,
               "endMin": 1439,
               "locationRef": "home",
               "mode": "must_do",
-              "wanderRadius": 2,
+              "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "回家休息，次日早起继续备厨。",
-              "taskId": "day-58:5:sleep"
+              "note": "傍晚收尾后回家休息",
+              "taskId": "day-71:5:sleep"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:1:cook_food",
-          "activityType": "cook_food",
-          "locationRef": "inn_kitchen",
-          "state": "travel_to_task",
-          "startedMinute": 723,
-          "blockStartMin": 610,
-          "blockEndMin": 790,
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
+          "locationRef": "home",
+          "state": "sleeping",
+          "startedMinute": 27,
+          "blockStartMin": 0,
+          "blockEndMin": 1439,
           "performed": false,
-          "useFacility": "stove",
-          "facilityUsePlanned": true,
-          "anchorX": -231.4627106189811,
-          "anchorY": -115.45540004802027,
-          "facilityType": "stove",
-          "facilityObjectId": null
+          "useFacility": ""
         },
         "recentEvents": [
           {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 372,
-            "summary": "沈福和韩氏聊了聊清晨备火与早市。"
+            "type": "activity",
+            "activityType": "clean_kitchen",
+            "dayKey": "day-68",
+            "minuteOfDay": 1193,
+            "summary": "沈福在clean kitchen上花了一些时间。"
           },
           {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 488,
-            "summary": "沈福和阿顺聊了聊清晨备火与跑堂。"
+            "type": "activity",
+            "activityType": "sleep",
+            "dayKey": "day-68",
+            "minuteOfDay": 1290,
+            "summary": "沈福在sleep上花了一些时间。"
           },
           {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 492,
-            "summary": "沈福和沈掌柜聊了聊清晨备货。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 528,
-            "summary": "沈福和邵婉娘聊了聊清晨备货。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 567,
-            "summary": "沈福和杨守仁聊了聊清晨家务与酒肆准备。"
-          },
-          {
-            "type": "activity_failed",
-            "activityType": "cook_food",
-            "dayKey": "day-57",
-            "minuteOfDay": 660,
-            "summary": "沈福想做cook_food，但缺少柴火。"
-          },
-          {
-            "type": "activity_failed",
-            "activityType": "cook_food",
-            "dayKey": "day-57",
-            "minuteOfDay": 759,
-            "summary": "沈福想做cook_food，但缺少柴火。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 858,
-            "summary": "沈福和沈掌柜聊了聊暮色酒肆。"
+            "type": "activity",
+            "activityType": "sleep",
+            "dayKey": "day-68",
+            "minuteOfDay": 1397,
+            "summary": "沈福在sleep上花了一些时间。"
           },
           {
             "type": "facility_activity",
-            "activityType": "prepare_ingredients",
-            "facilityType": "storage",
+            "activityType": "prepare_fire",
+            "facilityType": "stove",
             "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 936,
-            "summary": "沈福在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_ingredients，得到铜钱x32。",
+            "dayKey": "day-69",
+            "minuteOfDay": 380,
+            "summary": "沈福在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到hot soupx4。",
             "outputs": [
               {
-                "itemId": "coin_copper",
-                "count": 32,
-                "name": "铜钱",
+                "itemId": "hot_soup",
+                "count": 4,
+                "name": "hot soup",
                 "icon": "",
                 "description": "",
                 "tags": []
@@ -905,62 +826,123 @@
             ]
           },
           {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 973,
-            "summary": "沈福和邵婉娘聊了聊夜借柴火。"
-          },
-          {
-            "type": "activity",
-            "activityType": "prepare_ingredients",
-            "dayKey": "day-57",
-            "minuteOfDay": 1011,
-            "summary": "沈福在prepare ingredients上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1039,
-            "summary": "沈福和韩氏聊了聊夜里送柴。"
-          },
-          {
             "type": "activity_failed",
             "activityType": "cook_food",
-            "dayKey": "day-57",
-            "minuteOfDay": 1068,
+            "dayKey": "day-69",
+            "minuteOfDay": 671,
             "summary": "沈福想做cook_food，但缺少柴火。"
           },
           {
             "type": "activity_failed",
             "activityType": "cook_food",
-            "dayKey": "day-57",
-            "minuteOfDay": 1133,
+            "dayKey": "day-69",
+            "minuteOfDay": 687,
+            "summary": "沈福想做cook_food，但缺少柴火。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-69",
+            "minuteOfDay": 300,
+            "summary": "按酒肆备火、做两轮出餐、收尾后回家休息。"
+          },
+          {
+            "type": "activity_failed",
+            "activityType": "cook_food",
+            "dayKey": "day-69",
+            "minuteOfDay": 756,
+            "summary": "沈福想做cook_food，但缺少柴火。"
+          },
+          {
+            "type": "activity_failed",
+            "activityType": "cook_food",
+            "dayKey": "day-69",
+            "minuteOfDay": 785,
+            "summary": "沈福想做cook_food，但缺少柴火。"
+          },
+          {
+            "type": "facility_activity",
+            "activityType": "prepare_ingredients",
+            "facilityType": "storage",
+            "facilityObjectId": null,
+            "dayKey": "day-69",
+            "minuteOfDay": 936,
+            "summary": "沈福在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_ingredients，得到ledger notex6。",
+            "outputs": [
+              {
+                "itemId": "ledger_note",
+                "count": 6,
+                "name": "ledger note",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "facility_activity",
+            "activityType": "prepare_ingredients",
+            "facilityType": "storage",
+            "facilityObjectId": null,
+            "dayKey": "day-69",
+            "minuteOfDay": 977,
+            "summary": "沈福在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了prepare_ingredients，得到ledger notex7。",
+            "outputs": [
+              {
+                "itemId": "ledger_note",
+                "count": 7,
+                "name": "ledger note",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "activity_failed",
+            "activityType": "cook_food",
+            "dayKey": "day-69",
+            "minuteOfDay": 1081,
             "summary": "沈福想做cook_food，但缺少柴火。"
           },
           {
             "type": "activity",
             "activityType": "clean_kitchen",
-            "dayKey": "day-57",
-            "minuteOfDay": 1167,
+            "dayKey": "day-69",
+            "minuteOfDay": 1163,
             "summary": "沈福在clean kitchen上花了一些时间。"
           },
           {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1174,
-            "summary": "沈福和阿顺聊了聊夜里收摊与柴火。"
+            "type": "activity",
+            "activityType": "clean_kitchen",
+            "dayKey": "day-69",
+            "minuteOfDay": 1180,
+            "summary": "沈福在clean kitchen上花了一些时间。"
           },
           {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1212,
-            "summary": "沈福和沈掌柜聊了聊夜里收摊。"
+            "type": "activity",
+            "activityType": "sleep",
+            "dayKey": "day-69",
+            "minuteOfDay": 1291,
+            "summary": "沈福在sleep上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "sleep",
+            "dayKey": "day-69",
+            "minuteOfDay": 1398,
+            "summary": "沈福在sleep上花了一些时间。"
           },
           {
             "type": "daily_plan",
-            "dayKey": "day-58",
-            "minuteOfDay": 2,
-            "summary": "清晨补火备厨，白天与傍晚按时开灶，夜间收拾后回家休息。"
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "白日以备料、烹饪和收尾为主，兼顾后厨整理，傍晚回家休息。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
+            "minuteOfDay": 0,
+            "summary": "沈福调整了今天的安排。"
           }
         ],
         "relationships": {
@@ -968,36 +950,36 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1212
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 493
           },
           "npc_inn_waiter": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1174
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 511
           },
           "npc_hunter": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-54",
-            "lastTalkMinute": 981
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 1170
           },
           "npc_merchants_husband": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-53",
-            "lastTalkMinute": 1210
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 566
           },
           "npc_merchants_wife": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 973
+            "lastTalkDayKey": "day-61",
+            "lastTalkMinute": 506
           },
           "player": {
             "affection": 2,
@@ -1010,8 +992,8 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1039
+            "lastTalkDayKey": "day-66",
+            "lastTalkMinute": 364
           },
           "npc_yang_grandpa": {
             "affection": 3,
@@ -1021,17 +1003,17 @@
             "lastTalkMinute": 567
           },
           "npc_temple_monk": {
-            "affection": 1,
-            "trust": 0,
+            "affection": 2,
+            "trust": 1,
             "tension": 0,
-            "lastTalkDayKey": "day-55",
-            "lastTalkMinute": 863
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 883
           }
         },
         "current": {
-          "action": "travel_to_task",
-          "targetWx": -231.4627106189811,
-          "targetWy": -115.45540004802027
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "酒肆老板/后厨厨师",
@@ -1177,13 +1159,13 @@
         "sheetCharacterId": "npc_inn_waiter",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -25.809868996089573,
-        "wy": -13.616500170891538,
+        "wx": -206.12361187843118,
+        "wy": -110.49431590056861,
         "initialWx": -211.4627106189811,
         "initialWy": -125.45540004802027,
         "needs": {
           "hunger": 100,
-          "energy": 94,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -1191,7 +1173,7 @@
         "inventory": [
           {
             "itemId": "coin_copper",
-            "count": 29,
+            "count": 32,
             "name": "铜钱",
             "icon": "",
             "description": "",
@@ -1223,7 +1205,7 @@
           },
           {
             "itemId": "water",
-            "count": 2,
+            "count": 3,
             "name": "water",
             "icon": "",
             "description": "",
@@ -1235,261 +1217,263 @@
           "rag_towel"
         ],
         "memory": [
-          "阿顺和沈掌柜聊了聊酒肆生意。",
-          "阿顺和沈掌柜聊了聊酒肆生意。",
-          "清晨回酒肆准备，白天在厅内招呼客人并跑腿送物，傍晚补一次外出差事，夜里回家休息。",
-          "阿顺和沈掌柜聊了聊清晨备店。",
-          "阿顺和邵远舟聊了聊清晨寒暄。",
-          "清晨回酒肆备店，白天在厅内招呼客人并顺手跑腿，傍晚外出送一次差事，夜里回家休息。",
-          "阿顺和沈掌柜聊了聊清晨备店。",
-          "阿顺和邵远舟聊了聊清晨寒暄。",
-          "阿顺和邵婉娘聊了聊清晨问候与护货。",
-          "阿顺在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了clean_hall，得到铜钱x29。",
-          "阿顺和沈福聊了聊清晨备火与跑堂。",
-          "阿顺和沈掌柜聊了聊清晨备货。",
-          "阿顺和沈掌柜聊了聊清晨备货。",
-          "阿顺在serve guests上花了一些时间。",
-          "阿顺在serve guests上花了一些时间。",
-          "阿顺和邵婉娘聊了聊傍晚借宿与货物安置。",
+          "阿顺在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了deliver_items，得到铜钱x32。",
+          "阿顺和沈掌柜聊了聊暮色收工。",
           "阿顺在deliver items上花了一些时间。",
-          "阿顺和邵远舟聊了聊暮色借宿。",
-          "阿顺和邵婉娘聊了聊寺庙夜借宿与货物安置。",
-          "阿顺在gossip上花了一些时间。",
-          "阿顺和沈掌柜聊了聊夜里收摊。",
-          "阿顺和邵婉娘聊了聊夜借宿与货物安置。",
+          "阿顺和邵婉娘聊了聊暮色借宿。",
+          "阿顺和沈掌柜聊了聊暮色收工。",
+          "阿顺和沈福聊了聊夜里备灶。",
+          "阿顺和韩猎户聊了聊夜里交接柴火。",
           "阿顺在serve guests上花了一些时间。",
+          "阿顺和沈掌柜聊了聊暮色收工。",
           "阿顺在serve guests上花了一些时间。",
-          "阿顺和沈掌柜聊了聊夜里收摊。",
-          "阿顺和沈福聊了聊夜里收摊与柴火。",
-          "阿顺和沈掌柜聊了聊夜里收摊。",
           "阿顺在rest上花了一些时间。",
+          "阿顺和沈掌柜聊了聊暮色收工。",
           "阿顺在rest上花了一些时间。",
-          "阿顺和沈掌柜聊了聊夜里收摊。",
-          "阿顺在rest上花了一些时间。",
-          "清晨回店准备，白天在酒肆接待并兼顾跑腿，傍晚送些东西顺路打听消息，夜里收工回家休息。"
+          "阿顺照旧清晨回店准备，白天在酒肆忙招呼与跑腿，傍晚兼着送些东西，夜里回家歇息。",
+          "阿顺和沈掌柜聊了聊清晨备店。",
+          "阿顺和邵远舟聊了聊清晨借问。",
+          "阿顺和邵婉娘聊了聊清晨备店。",
+          "阿顺在clean hall上花了一些时间。",
+          "阿顺和沈掌柜聊了聊清晨开张。",
+          "阿顺和沈福聊了聊清晨备店。",
+          "阿顺在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx3。",
+          "清晨先在酒肆里收拾备开张，白天主要在前厅招呼客人，中午抽空跑一趟送货和打听消息，傍晚回柜台继续帮忙，夜里回家休息。",
+          "阿顺和沈掌柜聊了聊清晨开张。",
+          "阿顺和邵婉娘聊了聊清晨寺前问安。",
+          "阿顺在clean hall上花了一些时间。",
+          "阿顺和杨守仁聊了聊清晨开张。",
+          "阿顺和沈掌柜聊了聊晨间开张。",
+          "阿顺和沈福聊了聊清晨备菜。",
+          "阿顺和邵远舟聊了聊晨间借宿。",
+          "阿顺和沈掌柜聊了聊晨间开张。",
+          "清晨先在客栈内外张罗开张，白天主要在大堂招呼客人，兼顾跑腿送物与补水，傍晚回到客栈继续待命，最后回家休息。",
+          "清晨收拾酒肆，白天在大堂招呼客人，间隙去井边打水和跑腿送物，傍晚回家休息。"
         ],
         "_initialMemory": [],
         "emotions": {
           "mood": 10,
           "stress": 0,
-          "hope": 12,
+          "hope": 14,
           "frustration": 0
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290545156,
-          "summary": "清晨回店准备，白天在酒肆接待并兼顾跑腿，傍晚送些东西顺路打听消息，夜里收工回家休息。",
+          "generatedAt": 1781179655915,
+          "summary": "清晨收拾酒肆，白天在大堂招呼客人，间隙去井边打水和跑腿送物，傍晚回家休息。",
           "blocks": [
             {
-              "activityType": "rest",
-              "startMin": 2,
-              "endMin": 260,
-              "locationRef": "home",
-              "mode": "must_do",
-              "wanderRadius": 6,
-              "arrivalSlackMin": 12,
-              "useFacility": "",
-              "note": "天未亮先补觉，养足腿脚。",
-              "taskId": "day-58:0:rest"
-            },
-            {
               "activityType": "clean_hall",
-              "startMin": 413,
-              "endMin": 533,
+              "startMin": 418,
+              "endMin": 538,
               "locationRef": "inn_hall",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
-              "useFacility": "",
-              "note": "到堂内打扫收拾，顺手归置桌椅。",
-              "taskId": "day-58:1:clean_hall"
+              "useFacility": "storage",
+              "note": "",
+              "taskId": "day-71:0:clean_hall"
             },
             {
               "activityType": "serve_guests",
-              "startMin": 601,
-              "endMin": 841,
+              "startMin": 605,
+              "endMin": 835,
               "locationRef": "inn_hall",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "正经跑堂，招呼客人、上菜倒水。",
-              "taskId": "day-58:2:serve_guests"
+              "note": "",
+              "taskId": "day-71:1:serve_guests"
             },
             {
-              "activityType": "deliver_items",
-              "startMin": 853,
-              "endMin": 953,
-              "locationRef": "market_road",
+              "activityType": "carry_water",
+              "startMin": 845,
+              "endMin": 905,
+              "locationRef": "well_side",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "well",
-              "note": "帮忙送一趟东西，路上若有空顺便听点消息。",
-              "taskId": "day-58:3:deliver_items"
+              "note": "",
+              "taskId": "day-71:2:carry_water"
+            },
+            {
+              "activityType": "deliver_items",
+              "startMin": 920,
+              "endMin": 1010,
+              "locationRef": "market_road",
+              "mode": "soft_do",
+              "wanderRadius": 6,
+              "arrivalSlackMin": 12,
+              "useFacility": "storage",
+              "note": "",
+              "taskId": "day-71:3:deliver_items"
             },
             {
               "activityType": "serve_guests",
-              "startMin": 1012,
-              "endMin": 1180,
+              "startMin": 1030,
+              "endMin": 1260,
               "locationRef": "inn_hall",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "晚间继续看店，收尾后准备歇息。",
-              "taskId": "day-58:4:serve_guests"
+              "note": "",
+              "taskId": "day-71:4:serve_guests"
             },
             {
-              "activityType": "rest",
-              "startMin": 1180,
+              "activityType": "sleep",
+              "startMin": 1335,
               "endMin": 1439,
               "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "回家睡觉，恢复体力。",
-              "taskId": "day-58:5:rest"
+              "note": "",
+              "taskId": "day-71:5:sleep"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:2:serve_guests",
-          "activityType": "serve_guests",
-          "locationRef": "inn_hall",
-          "state": "travel_to_task",
-          "startedMinute": 723,
-          "blockStartMin": 601,
-          "blockEndMin": 841,
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
+          "locationRef": "home",
+          "state": "sleeping",
+          "startedMinute": 57,
+          "blockStartMin": 0,
+          "blockEndMin": 1439,
           "performed": false,
-          "useFacility": "",
-          "facilityUsePlanned": false,
-          "anchorX": -213.4627106189811,
-          "anchorY": -111.45540004802027,
-          "facilityType": "",
-          "facilityObjectId": null
+          "useFacility": ""
         },
         "recentEvents": [
           {
-            "type": "activity",
-            "activityType": "serve_guests",
-            "dayKey": "day-57",
-            "minuteOfDay": 719,
-            "summary": "阿顺在serve guests上花了一些时间。"
+            "type": "conversation",
+            "dayKey": "day-66",
+            "minuteOfDay": 370,
+            "summary": "阿顺和沈掌柜聊了聊清晨备店。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 749,
-            "summary": "阿顺和邵婉娘聊了聊傍晚借宿与货物安置。"
-          },
-          {
-            "type": "activity",
-            "activityType": "deliver_items",
-            "dayKey": "day-57",
-            "minuteOfDay": 881,
-            "summary": "阿顺在deliver items上花了一些时间。"
+            "dayKey": "day-66",
+            "minuteOfDay": 374,
+            "summary": "阿顺和邵远舟聊了聊清晨借问。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 887,
-            "summary": "阿顺和邵远舟聊了聊暮色借宿。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 922,
-            "summary": "阿顺和邵婉娘聊了聊寺庙夜借宿与货物安置。"
+            "dayKey": "day-66",
+            "minuteOfDay": 415,
+            "summary": "阿顺和邵婉娘聊了聊清晨备店。"
           },
           {
             "type": "activity",
-            "activityType": "gossip",
-            "dayKey": "day-57",
-            "minuteOfDay": 982,
-            "summary": "阿顺在gossip上花了一些时间。"
+            "activityType": "clean_hall",
+            "dayKey": "day-66",
+            "minuteOfDay": 441,
+            "summary": "阿顺在clean hall上花了一些时间。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1016,
-            "summary": "阿顺和沈掌柜聊了聊夜里收摊。"
+            "dayKey": "day-66",
+            "minuteOfDay": 495,
+            "summary": "阿顺和沈掌柜聊了聊清晨开张。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1064,
-            "summary": "阿顺和邵婉娘聊了聊夜借宿与货物安置。"
+            "dayKey": "day-66",
+            "minuteOfDay": 516,
+            "summary": "阿顺和沈福聊了聊清晨备店。"
           },
           {
-            "type": "activity",
-            "activityType": "serve_guests",
-            "dayKey": "day-57",
-            "minuteOfDay": 1092,
-            "summary": "阿顺在serve guests上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "serve_guests",
-            "dayKey": "day-57",
-            "minuteOfDay": 1123,
-            "summary": "阿顺在serve guests上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1136,
-            "summary": "阿顺和沈掌柜聊了聊夜里收摊。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1174,
-            "summary": "阿顺和沈福聊了聊夜里收摊与柴火。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1256,
-            "summary": "阿顺和沈掌柜聊了聊夜里收摊。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1290,
-            "summary": "阿顺在rest上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1301,
-            "summary": "阿顺在rest上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1384,
-            "summary": "阿顺和沈掌柜聊了聊夜里收摊。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1421,
-            "summary": "阿顺在rest上花了一些时间。"
+            "type": "facility_activity",
+            "activityType": "carry_water",
+            "facilityType": "well",
+            "facilityObjectId": 6,
+            "dayKey": "day-66",
+            "minuteOfDay": 565,
+            "summary": "阿顺在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx3。",
+            "outputs": [
+              {
+                "itemId": "water",
+                "count": 3,
+                "name": "water",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
           },
           {
             "type": "daily_plan",
-            "dayKey": "day-58",
-            "minuteOfDay": 2,
-            "summary": "清晨回店准备，白天在酒肆接待并兼顾跑腿，傍晚送些东西顺路打听消息，夜里收工回家休息。"
+            "dayKey": "day-68",
+            "minuteOfDay": 0,
+            "summary": "清晨先在酒肆里收拾备开张，白天主要在前厅招呼客人，中午抽空跑一趟送货和打听消息，傍晚回柜台继续帮忙，夜里回家休息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 371,
+            "summary": "阿顺和沈掌柜聊了聊清晨开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 439,
+            "summary": "阿顺和邵婉娘聊了聊清晨寺前问安。"
+          },
+          {
+            "type": "activity",
+            "activityType": "clean_hall",
+            "dayKey": "day-68",
+            "minuteOfDay": 467,
+            "summary": "阿顺在clean hall上花了一些时间。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 468,
+            "summary": "阿顺和杨守仁聊了聊清晨开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 513,
+            "summary": "阿顺和沈掌柜聊了聊晨间开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 511,
+            "summary": "阿顺和沈福聊了聊清晨备菜。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 572,
+            "summary": "阿顺和邵远舟聊了聊晨间借宿。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 363,
+            "summary": "阿顺和沈掌柜聊了聊晨间开张。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "清晨先在客栈内外张罗开张，白天主要在大堂招呼客人，兼顾跑腿送物与补水，傍晚回到客栈继续待命，最后回家休息。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
+            "minuteOfDay": 0,
+            "summary": "清晨收拾酒肆，白天在大堂招呼客人，间隙去井边打水和跑腿送物，傍晚回家休息。"
           }
         ],
         "relationships": {
@@ -1497,15 +1481,15 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1384
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 363
           },
           "npc_inn_cook_owner": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1174
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 511
           },
           "npc_yangliu": {
             "affection": 3,
@@ -1525,35 +1509,35 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1064
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 439
           },
           "npc_merchants_husband": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 887
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 572
           },
           "npc_hunter": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-54",
-            "lastTalkMinute": 1002
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 1067
           },
           "npc_yang_grandpa": {
-            "affection": 5,
-            "trust": 7,
+            "affection": 6,
+            "trust": 8,
             "tension": 0,
-            "lastTalkDayKey": "day-53",
-            "lastTalkMinute": 569
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 468
           }
         },
         "current": {
-          "action": "travel_to_task",
-          "targetWx": -213.4627106189811,
-          "targetWy": -111.45540004802027
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "酒肆伙计/跑堂",
@@ -1688,13 +1672,13 @@
         "sheetCharacterId": "npc_temple_monk",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -23.379862248342683,
-        "wy": -17.461599289399796,
+        "wx": -179.74752074556338,
+        "wy": -138.9387333813536,
         "initialWx": -183.9627106189811,
         "initialWy": -148.4387333813536,
         "needs": {
           "hunger": 100,
-          "energy": 94,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -1742,7 +1726,7 @@
           },
           {
             "itemId": "cooked_meal",
-            "count": 1,
+            "count": 3,
             "name": "熟食",
             "icon": "",
             "description": "",
@@ -1755,152 +1739,231 @@
           "medicine_pouch"
         ],
         "memory": [
+          "慧远在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了brew_medicine，得到熟食x2。",
+          "慧远和沈福聊了聊借柴备灶。",
+          "慧远和邵婉娘聊了聊夜宿寺中。",
+          "慧远在pray上花了一些时间。",
+          "清晨礼佛、整理寺院、白天开导往来者，午后少量调药，夜间回寺静修后归寝。",
+          "慧远在pray上花了一些时间。",
+          "慧远和邵婉娘聊了聊清晨借宿。",
+          "慧远在clean temple上花了一些时间。",
+          "慧远在clean temple上花了一些时间。",
+          "慧远清晨礼佛，随后整理寺院，上午在寺中随缘开导，午后煎药备治，夜间回到住处静坐安歇。",
+          "慧远在pray上花了一些时间。",
+          "慧远和邵婉娘聊了聊清晨借宿。",
+          "慧远和邵远舟聊了聊清晨借宿。",
+          "慧远在clean temple上花了一些时间。",
+          "慧远在clean temple上花了一些时间。",
+          "慧远在advise people上花了一些时间。",
           "慧远在pray上花了一些时间。",
           "慧远在clean temple上花了一些时间。",
           "慧远在advise people上花了一些时间。",
           "慧远在advise people上花了一些时间。",
-          "慧远在加工（将放入材料在设施中转化为产物。）时完成了brew_medicine，得到waterx4。",
-          "慧远在pray上花了一些时间。",
-          "慧远在pray上花了一些时间。",
-          "清晨礼佛，随后清理寺院，白日接待与开导来访者，午后简短制药，傍晚再行静修。",
-          "慧远在pray上花了一些时间。",
-          "慧远在pray上花了一些时间。",
-          "慧远在pray上花了一些时间。",
-          "慧远在pray上花了一些时间。",
-          "慧远在pray上花了一些时间。",
-          "慧远在advise people上花了一些时间。",
-          "慧远和沈福聊了聊食材够不够。",
-          "慧远在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了brew_medicine，得到熟食x1。",
-          "清晨礼佛，上午整理寺院并开导来访者，午后短暂制药与静修，傍晚回寺再作礼佛安歇。",
-          "慧远在pray上花了一些时间。",
-          "慧远和邵婉娘聊了聊晨起寺中短谈。",
-          "清晨礼佛后整理寺院，白天于寺中答疑开导，午后短暂制药与静修，傍晚回寺礼佛并归家安歇。",
-          "慧远在pray上花了一些时间。",
-          "慧远在clean temple上花了一些时间。",
-          "慧远在advise people上花了一些时间。",
-          "慧远在advise people上花了一些时间。",
-          "慧远和邵远舟聊了聊暮色借宿。",
           "慧远在brew medicine上花了一些时间。",
-          "慧远和邵远舟聊了聊寺庙夜宿。",
+          "慧远在pray上花了一些时间。",
+          "清晨礼佛，随后整理寺院、接待与开导来访者，午后在寺中制药，傍晚再行晚课。",
+          "慧远在pray上花了一些时间。",
+          "慧远在clean temple上花了一些时间。",
+          "慧远在advise people上花了一些时间。",
+          "慧远在advise people上花了一些时间。",
+          "慧远在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了brew_medicine，得到熟食x3。",
           "慧远在pray上花了一些时间。",
           "慧远在pray上花了一些时间。",
-          "慧远在rest上花了一些时间。",
-          "慧远在rest上花了一些时间。",
-          "清晨礼佛，随后打理寺院，白日于殿中安住并随缘开导，午后简作药事，傍晚回寺礼佛，夜间归家静息。"
+          "清晨礼佛，随后整理寺院，白日接待与开导来访者，午后静处煎药，夜间回房安睡。",
+          "清晨礼佛整寺，白日接待开导，午后煎药静处，夜归安睡。"
         ],
         "_initialMemory": [],
         "emotions": {
           "mood": 10,
-          "stress": 1,
-          "hope": 11,
+          "stress": 3,
+          "hope": 13,
           "frustration": 0
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290545156,
-          "summary": "清晨礼佛，随后打理寺院，白日于殿中安住并随缘开导，午后简作药事，傍晚回寺礼佛，夜间归家静息。",
+          "generatedAt": 1781179634346,
+          "summary": "清晨礼佛整寺，白日接待开导，午后煎药静处，夜归安睡。",
           "blocks": [
             {
               "activityType": "pray",
-              "startMin": 295,
-              "endMin": 415,
+              "startMin": 300,
+              "endMin": 405,
               "locationRef": "temple_hall",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "清晨诵经礼佛，安定心神。",
-              "taskId": "day-58:0:pray"
+              "note": "",
+              "taskId": "day-71:0:pray"
             },
             {
               "activityType": "clean_temple",
-              "startMin": 425,
-              "endMin": 545,
+              "startMin": 410,
+              "endMin": 530,
               "locationRef": "temple_courtyard",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "洒扫庭院，整理寺内。",
-              "taskId": "day-58:1:clean_temple"
+              "note": "",
+              "taskId": "day-71:1:clean_temple"
             },
             {
               "activityType": "advise_people",
-              "startMin": 555,
-              "endMin": 715,
+              "startMin": 540,
+              "endMin": 705,
               "locationRef": "temple_hall",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "若有人求问，可随缘开导。",
-              "taskId": "day-58:2:advise_people"
+              "note": "",
+              "taskId": "day-71:2:advise_people"
             },
             {
               "activityType": "brew_medicine",
-              "startMin": 845,
-              "endMin": 965,
+              "startMin": 835,
+              "endMin": 940,
               "locationRef": "temple_courtyard",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "stove",
-              "note": "备些简易汤药，以应不时之需。",
-              "taskId": "day-58:3:brew_medicine"
+              "note": "",
+              "taskId": "day-71:3:brew_medicine"
             },
             {
               "activityType": "pray",
               "startMin": 1145,
-              "endMin": 1255,
-              "locationRef": "temple_hall",
+              "endMin": 1225,
+              "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "晚课礼佛后返家安睡。",
-              "taskId": "day-58:4:pray"
+              "note": "夜间回房安睡前静心礼佛",
+              "taskId": "day-71:4:pray"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:4:pray",
-          "activityType": "pray",
-          "locationRef": "temple_hall",
-          "state": "travel_to_task",
-          "startedMinute": 723,
-          "blockStartMin": 1145,
-          "blockEndMin": 1255,
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
+          "locationRef": "home",
+          "state": "sleeping",
+          "startedMinute": 25,
+          "blockStartMin": 0,
+          "blockEndMin": 1439,
           "performed": false,
-          "useFacility": "",
-          "facilityUsePlanned": false,
-          "anchorX": -192.9627106189811,
-          "anchorY": -142.4387333813536,
-          "facilityType": "",
-          "facilityObjectId": null
+          "useFacility": ""
         },
         "recentEvents": [
           {
-            "type": "conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 863,
-            "summary": "慧远和沈福聊了聊食材够不够。"
+            "type": "activity",
+            "activityType": "clean_temple",
+            "dayKey": "day-68",
+            "minuteOfDay": 490,
+            "summary": "慧远在clean temple上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "advise_people",
+            "dayKey": "day-68",
+            "minuteOfDay": 616,
+            "summary": "慧远在advise people上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "pray",
+            "dayKey": "day-68",
+            "minuteOfDay": 342,
+            "summary": "慧远在pray上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "clean_temple",
+            "dayKey": "day-68",
+            "minuteOfDay": 467,
+            "summary": "慧远在clean temple上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "advise_people",
+            "dayKey": "day-68",
+            "minuteOfDay": 616,
+            "summary": "慧远在advise people上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "advise_people",
+            "dayKey": "day-68",
+            "minuteOfDay": 651,
+            "summary": "慧远在advise people上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "brew_medicine",
+            "dayKey": "day-68",
+            "minuteOfDay": 882,
+            "summary": "慧远在brew medicine上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "pray",
+            "dayKey": "day-68",
+            "minuteOfDay": 1182,
+            "summary": "慧远在pray上花了一些时间。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-69",
+            "minuteOfDay": 270,
+            "summary": "清晨礼佛，随后整理寺院、接待与开导来访者，午后在寺中制药，傍晚再行晚课。"
+          },
+          {
+            "type": "activity",
+            "activityType": "pray",
+            "dayKey": "day-69",
+            "minuteOfDay": 337,
+            "summary": "慧远在pray上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "clean_temple",
+            "dayKey": "day-69",
+            "minuteOfDay": 467,
+            "summary": "慧远在clean temple上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "advise_people",
+            "dayKey": "day-69",
+            "minuteOfDay": 606,
+            "summary": "慧远在advise people上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "advise_people",
+            "dayKey": "day-69",
+            "minuteOfDay": 649,
+            "summary": "慧远在advise people上花了一些时间。"
           },
           {
             "type": "facility_activity",
             "activityType": "brew_medicine",
             "facilityType": "stove",
             "facilityObjectId": null,
-            "dayKey": "day-55",
-            "minuteOfDay": 880,
-            "summary": "慧远在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了brew_medicine，得到熟食x1。",
+            "dayKey": "day-69",
+            "minuteOfDay": 894,
+            "summary": "慧远在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了brew_medicine，得到熟食x3。",
             "outputs": [
               {
                 "itemId": "cooked_meal",
-                "count": 1,
+                "count": 3,
                 "name": "熟食",
                 "icon": "",
                 "description": "",
@@ -1909,110 +1972,30 @@
             ]
           },
           {
+            "type": "activity",
+            "activityType": "pray",
+            "dayKey": "day-69",
+            "minuteOfDay": 1187,
+            "summary": "慧远在pray上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "pray",
+            "dayKey": "day-69",
+            "minuteOfDay": 1211,
+            "summary": "慧远在pray上花了一些时间。"
+          },
+          {
             "type": "daily_plan",
-            "dayKey": "day-56",
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "清晨礼佛，随后整理寺院，白日接待与开导来访者，午后静处煎药，夜间回房安睡。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
             "minuteOfDay": 0,
-            "summary": "清晨礼佛，上午整理寺院并开导来访者，午后短暂制药与静修，傍晚回寺再作礼佛安歇。"
-          },
-          {
-            "type": "activity",
-            "activityType": "pray",
-            "dayKey": "day-56",
-            "minuteOfDay": 342,
-            "summary": "慧远在pray上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-56",
-            "minuteOfDay": 386,
-            "summary": "慧远和邵婉娘聊了聊晨起寺中短谈。"
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-57",
-            "minuteOfDay": 0,
-            "summary": "清晨礼佛后整理寺院，白天于寺中答疑开导，午后短暂制药与静修，傍晚回寺礼佛并归家安歇。"
-          },
-          {
-            "type": "activity",
-            "activityType": "pray",
-            "dayKey": "day-57",
-            "minuteOfDay": 342,
-            "summary": "慧远在pray上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "clean_temple",
-            "dayKey": "day-57",
-            "minuteOfDay": 467,
-            "summary": "慧远在clean temple上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "advise_people",
-            "dayKey": "day-57",
-            "minuteOfDay": 602,
-            "summary": "慧远在advise people上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "advise_people",
-            "dayKey": "day-57",
-            "minuteOfDay": 647,
-            "summary": "慧远在advise people上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 769,
-            "summary": "慧远和邵远舟聊了聊暮色借宿。"
-          },
-          {
-            "type": "activity",
-            "activityType": "brew_medicine",
-            "dayKey": "day-57",
-            "minuteOfDay": 888,
-            "summary": "慧远在brew medicine上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1149,
-            "summary": "慧远和邵远舟聊了聊寺庙夜宿。"
-          },
-          {
-            "type": "activity",
-            "activityType": "pray",
-            "dayKey": "day-57",
-            "minuteOfDay": 1176,
-            "summary": "慧远在pray上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "pray",
-            "dayKey": "day-57",
-            "minuteOfDay": 1204,
-            "summary": "慧远在pray上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1314,
-            "summary": "慧远在rest上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1426,
-            "summary": "慧远在rest上花了一些时间。"
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-58",
-            "minuteOfDay": 2,
-            "summary": "清晨礼佛，随后打理寺院，白日于殿中安住并随缘开导，午后简作药事，傍晚回寺礼佛，夜间归家静息。"
+            "summary": "清晨礼佛整寺，白日接待开导，午后煎药静处，夜归安睡。"
           }
         ],
         "relationships": {
@@ -2020,15 +2003,15 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1149
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 397
           },
           "npc_merchants_wife": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-56",
-            "lastTalkMinute": 386
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 365
           },
           "npc_yangliu": {
             "affection": 7,
@@ -2059,17 +2042,17 @@
             "lastTalkMinute": 888
           },
           "npc_inn_cook_owner": {
-            "affection": 1,
-            "trust": 0,
+            "affection": 2,
+            "trust": 1,
             "tension": 0,
-            "lastTalkDayKey": "day-55",
-            "lastTalkMinute": 863
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 883
           }
         },
         "current": {
-          "action": "travel_to_task",
-          "targetWx": -192.9627106189811,
-          "targetWy": -142.4387333813536
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "寺庙老僧",
@@ -2216,13 +2199,13 @@
         "sheetCharacterId": "npc_merchants_husband",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -24.894721994462834,
-        "wy": -14.984268113592732,
+        "wx": -178.93946947222554,
+        "wy": -138.47700521301869,
         "initialWx": -182.9627106189811,
         "initialWy": -146.4387333813536,
         "needs": {
           "hunger": 100,
-          "energy": 94,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -2230,7 +2213,7 @@
         "inventory": [
           {
             "itemId": "coin_copper",
-            "count": 65,
+            "count": 69,
             "name": "铜钱",
             "icon": "",
             "description": "",
@@ -2270,7 +2253,7 @@
           },
           {
             "itemId": "ledger_note",
-            "count": 7,
+            "count": 10,
             "name": "ledger note",
             "icon": "",
             "description": "",
@@ -2283,171 +2266,148 @@
           "coin_pouch"
         ],
         "memory": [
-          "清晨整理货物，白天在市集交易与探价，午后打听消息，傍晚复盘账目，夜间回寺庙借宿处休息。",
-          "邵远舟和邵婉娘聊了聊清晨清点与启程。",
+          "邵远舟在trade goods上花了一些时间。",
+          "邵远舟和邵婉娘聊了聊寺中点货。",
+          "邵远舟和沈掌柜聊了聊暮色收工与借宿问安。",
+          "邵远舟和沈福聊了聊借柴。",
+          "邵远舟在price check上花了一些时间。",
+          "邵远舟和阿顺聊了聊暮色收工与借宿。",
+          "邵远舟和韩猎户聊了聊借宿与夜巡。",
+          "邵远舟和邵婉娘聊了聊寺中夜巡与点货。",
+          "邵远舟在trade goods上花了一些时间。",
+          "邵远舟在trade goods上花了一些时间。",
+          "邵远舟在count coins上花了一些时间。",
+          "邵远舟和邵婉娘聊了聊寺中夜宿与点货。",
+          "清晨在寺中整理货物，白天两段赶集交易，中午顺路查价并打听消息，夜里回寺清点钱货并休息。",
+          "邵远舟和阿顺聊了聊清晨借问。",
           "邵远舟和沈掌柜聊了聊清晨开张。",
-          "邵远舟和阿顺聊了聊清晨开张。",
-          "邵远舟在trade goods上花了一些时间。",
-          "邵远舟和邵婉娘聊了聊外地货价。",
-          "邵远舟在collect rumors上花了一些时间。",
-          "邵远舟和杨守仁聊了聊外地货价。",
-          "清晨整理货物，白天在集市做买卖并顺带探价，傍晚回寺庙借宿处清点账目，夜里休息。",
-          "邵远舟和沈掌柜聊了聊清晨店门口寒暄。",
-          "邵远舟和阿顺聊了聊清晨寒暄。",
-          "邵远舟和邵婉娘聊了聊晨起核货。",
-          "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了sort_goods，得到ledger notex7。",
-          "清晨整理货物，上午到集市做买卖，中午回寺中歇脚并打听消息，下午继续交易，傍晚核算账目后回借宿处休息。",
-          "邵远舟和阿顺聊了聊清晨寒暄。",
-          "邵远舟和沈掌柜聊了聊清晨借宿与开店寒暄。",
-          "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了sort_goods，得到铜钱x65。",
-          "邵远舟在trade goods上花了一些时间。",
-          "邵远舟和邵婉娘聊了聊寺庙借宿与清点货物。",
-          "邵远舟在trade goods上花了一些时间。",
-          "邵远舟和慧远聊了聊暮色借宿。",
-          "邵远舟在collect rumors上花了一些时间。",
-          "邵远舟在collect rumors上花了一些时间。",
-          "邵远舟和阿顺聊了聊暮色借宿。",
-          "邵远舟和邵婉娘聊了聊寺庙夜宿与货物安置。",
-          "邵远舟在trade goods上花了一些时间。",
-          "邵远舟和邵婉娘聊了聊寺庙夜宿与货物安置。",
-          "邵远舟在count coins上花了一些时间。",
-          "邵远舟和慧远聊了聊寺庙夜宿。",
-          "邵远舟在count coins上花了一些时间。",
-          "邵远舟和邵婉娘聊了聊寺庙夜宿。",
-          "清晨整理货物，上午在集市做买卖，中午到寺庙/客栈周边打听行情并谈价，下午继续交易并检查价格，夜里回住处休整。"
+          "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了sort_goods，得到ledger notex8。",
+          "邵远舟和邵婉娘聊了聊清晨借宿寺庙，收拾货物。",
+          "邵远舟和沈掌柜聊了聊清晨开张与借宿护货。",
+          "邵远舟和沈福聊了聊清晨开张与借宿护货。",
+          "白天整理货物、往返集市交易，晚间回家歇息。",
+          "邵远舟和慧远聊了聊清晨借宿。",
+          "邵远舟和邵婉娘聊了聊清晨借宿护货。",
+          "邵远舟在sort goods上花了一些时间。",
+          "邵远舟和沈掌柜聊了聊晨间开张。",
+          "邵远舟和阿顺聊了聊晨间借宿。",
+          "邵远舟和沈福聊了聊清晨热汤。",
+          "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了trade_goods，得到ledger notex9。",
+          "邵远舟和沈掌柜聊了聊晨间开张与行商歇脚。",
+          "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了sort_goods，得到ledger notex10。",
+          "邵远舟和邵婉娘聊了聊寺庙晨间盘点。",
+          "夜间休息，清晨整理货物，白天两轮行商，傍晚回家休息",
+          "清晨在寺庙客房整理货物，白天两轮在集市行商，中间顺带核价与打听行情，傍晚收摊回住处休息。"
         ],
         "_initialMemory": [],
         "emotions": {
           "mood": 10,
           "stress": 0,
-          "hope": 21,
+          "hope": 25,
           "frustration": 0
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290545156,
-          "summary": "清晨整理货物，上午在集市做买卖，中午到寺庙/客栈周边打听行情并谈价，下午继续交易并检查价格，夜里回住处休整。",
+          "generatedAt": 1781179634302,
+          "summary": "清晨在寺庙客房整理货物，白天两轮在集市行商，中间顺带核价与打听行情，傍晚收摊回住处休息。",
           "blocks": [
             {
               "activityType": "sort_goods",
-              "startMin": 430,
+              "startMin": 420,
               "endMin": 490,
               "locationRef": "temple_guestroom",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "storage",
-              "note": "起身后先清点并整理随身货物。",
-              "taskId": "day-58:0:sort_goods"
+              "note": "",
+              "taskId": "day-71:0:sort_goods"
             },
             {
               "activityType": "trade_goods",
-              "startMin": 545,
-              "endMin": 725,
+              "startMin": 540,
+              "endMin": 715,
               "locationRef": "market_spot",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "在集市主位售卖、换货，优先做成交。",
-              "taskId": "day-58:1:trade_goods"
-            },
-            {
-              "activityType": "collect_rumors",
-              "startMin": 735,
-              "endMin": 805,
-              "locationRef": "inn_hall",
-              "mode": "soft_do",
-              "wanderRadius": 6,
-              "arrivalSlackMin": 12,
-              "useFacility": "",
-              "note": "顺路与客人、店家寒暄，打听行情和村里消息。",
-              "taskId": "day-58:2:collect_rumors"
+              "note": "",
+              "taskId": "day-71:1:trade_goods"
             },
             {
               "activityType": "price_check",
-              "startMin": 825,
-              "endMin": 945,
+              "startMin": 780,
+              "endMin": 900,
               "locationRef": "inn_door",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "核对货价与后续进货空间，观察往来客商。",
-              "taskId": "day-58:3:price_check"
+              "note": "",
+              "taskId": "day-71:2:price_check"
             },
             {
               "activityType": "trade_goods",
-              "startMin": 960,
-              "endMin": 1100,
+              "startMin": 905,
+              "endMin": 1075,
               "locationRef": "market_spot",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "下午继续卖货与谈价，尽量消化存货。",
-              "taskId": "day-58:4:trade_goods"
+              "note": "",
+              "taskId": "day-71:3:trade_goods"
             },
             {
               "activityType": "count_coins",
               "startMin": 1140,
-              "endMin": 1200,
-              "locationRef": "home",
+              "endMin": 1205,
+              "locationRef": "temple_guestroom",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "storage",
-              "note": "回住处收尾，核账、点钱、准备明日行程。",
-              "taskId": "day-58:5:count_coins"
+              "note": "",
+              "taskId": "day-71:4:count_coins"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:2:collect_rumors",
-          "activityType": "collect_rumors",
-          "locationRef": "inn_hall",
-          "state": "travel_to_task",
-          "startedMinute": 725,
-          "blockStartMin": 735,
-          "blockEndMin": 805,
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
+          "locationRef": "home",
+          "state": "sleeping",
+          "startedMinute": 24,
+          "blockStartMin": 0,
+          "blockEndMin": 1439,
           "performed": false,
-          "useFacility": "",
-          "facilityUsePlanned": false,
-          "anchorX": -213.4627106189811,
-          "anchorY": -111.45540004802027,
-          "facilityType": "",
-          "facilityObjectId": null
+          "useFacility": ""
         },
         "recentEvents": [
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 375,
-            "summary": "邵远舟和阿顺聊了聊清晨寒暄。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 377,
-            "summary": "邵远舟和沈掌柜聊了聊清晨借宿与开店寒暄。"
+            "dayKey": "day-66",
+            "minuteOfDay": 369,
+            "summary": "邵远舟和沈掌柜聊了聊清晨开张。"
           },
           {
             "type": "facility_activity",
             "activityType": "sort_goods",
             "facilityType": "storage",
             "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 441,
-            "summary": "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了sort_goods，得到铜钱x65。",
+            "dayKey": "day-66",
+            "minuteOfDay": 446,
+            "summary": "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了sort_goods，得到ledger notex8。",
             "outputs": [
               {
-                "itemId": "coin_copper",
-                "count": 65,
-                "name": "铜钱",
+                "itemId": "ledger_note",
+                "count": 8,
+                "name": "ledger note",
                 "icon": "",
                 "description": "",
                 "tags": []
@@ -2455,101 +2415,127 @@
             ]
           },
           {
-            "type": "activity",
-            "activityType": "trade_goods",
-            "dayKey": "day-57",
-            "minuteOfDay": 602,
-            "summary": "邵远舟在trade goods上花了一些时间。"
+            "type": "conversation",
+            "dayKey": "day-66",
+            "minuteOfDay": 446,
+            "summary": "邵远舟和邵婉娘聊了聊清晨借宿寺庙，收拾货物。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 616,
-            "summary": "邵远舟和邵婉娘聊了聊寺庙借宿与清点货物。"
-          },
-          {
-            "type": "activity",
-            "activityType": "trade_goods",
-            "dayKey": "day-57",
-            "minuteOfDay": 713,
-            "summary": "邵远舟在trade goods上花了一些时间。"
+            "dayKey": "day-66",
+            "minuteOfDay": 490,
+            "summary": "邵远舟和沈掌柜聊了聊清晨开张与借宿护货。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 769,
-            "summary": "邵远舟和慧远聊了聊暮色借宿。"
-          },
-          {
-            "type": "activity",
-            "activityType": "collect_rumors",
-            "dayKey": "day-57",
-            "minuteOfDay": 797,
-            "summary": "邵远舟在collect rumors上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "collect_rumors",
-            "dayKey": "day-57",
-            "minuteOfDay": 821,
-            "summary": "邵远舟在collect rumors上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 887,
-            "summary": "邵远舟和阿顺聊了聊暮色借宿。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 926,
-            "summary": "邵远舟和邵婉娘聊了聊寺庙夜宿与货物安置。"
-          },
-          {
-            "type": "activity",
-            "activityType": "trade_goods",
-            "dayKey": "day-57",
-            "minuteOfDay": 987,
-            "summary": "邵远舟在trade goods上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1120,
-            "summary": "邵远舟和邵婉娘聊了聊寺庙夜宿与货物安置。"
-          },
-          {
-            "type": "activity",
-            "activityType": "count_coins",
-            "dayKey": "day-57",
-            "minuteOfDay": 1149,
-            "summary": "邵远舟在count coins上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1149,
-            "summary": "邵远舟和慧远聊了聊寺庙夜宿。"
-          },
-          {
-            "type": "activity",
-            "activityType": "count_coins",
-            "dayKey": "day-57",
-            "minuteOfDay": 1235,
-            "summary": "邵远舟在count coins上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1245,
-            "summary": "邵远舟和邵婉娘聊了聊寺庙夜宿。"
+            "dayKey": "day-66",
+            "minuteOfDay": 524,
+            "summary": "邵远舟和沈福聊了聊清晨开张与借宿护货。"
           },
           {
             "type": "daily_plan",
-            "dayKey": "day-58",
-            "minuteOfDay": 2,
-            "summary": "清晨整理货物，上午在集市做买卖，中午到寺庙/客栈周边打听行情并谈价，下午继续交易并检查价格，夜里回住处休整。"
+            "dayKey": "day-68",
+            "minuteOfDay": 0,
+            "summary": "白天整理货物、往返集市交易，晚间回家歇息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 397,
+            "summary": "邵远舟和慧远聊了聊清晨借宿。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 396,
+            "summary": "邵远舟和邵婉娘聊了聊清晨借宿护货。"
+          },
+          {
+            "type": "activity",
+            "activityType": "sort_goods",
+            "dayKey": "day-68",
+            "minuteOfDay": 444,
+            "summary": "邵远舟在sort goods上花了一些时间。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 492,
+            "summary": "邵远舟和沈掌柜聊了聊晨间开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 572,
+            "summary": "邵远舟和阿顺聊了聊晨间借宿。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 566,
+            "summary": "邵远舟和沈福聊了聊清晨热汤。"
+          },
+          {
+            "type": "facility_activity",
+            "activityType": "trade_goods",
+            "facilityType": "storage",
+            "facilityObjectId": null,
+            "dayKey": "day-68",
+            "minuteOfDay": 615,
+            "summary": "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了trade_goods，得到ledger notex9。",
+            "outputs": [
+              {
+                "itemId": "ledger_note",
+                "count": 9,
+                "name": "ledger note",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 615,
+            "summary": "邵远舟和沈掌柜聊了聊晨间开张与行商歇脚。"
+          },
+          {
+            "type": "facility_activity",
+            "activityType": "sort_goods",
+            "facilityType": "storage",
+            "facilityObjectId": null,
+            "dayKey": "day-68",
+            "minuteOfDay": 444,
+            "summary": "邵远舟在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了sort_goods，得到ledger notex10。",
+            "outputs": [
+              {
+                "itemId": "ledger_note",
+                "count": 10,
+                "name": "ledger note",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 519,
+            "summary": "邵远舟和邵婉娘聊了聊寺庙晨间盘点。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "夜间休息，清晨整理货物，白天两轮行商，傍晚回家休息"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
+            "minuteOfDay": 0,
+            "summary": "清晨在寺庙客房整理货物，白天两轮在集市行商，中间顺带核价与打听行情，傍晚收摊回住处休息。"
           }
         ],
         "relationships": {
@@ -2557,43 +2543,43 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1245
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 519
           },
           "npc_temple_monk": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1149
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 397
           },
           "npc_inn_waiter": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 887
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 572
           },
           "npc_inn_bosslady": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 377
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 615
           },
           "npc_inn_cook_owner": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-53",
-            "lastTalkMinute": 1210
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 566
           },
           "npc_hunter": {
-            "affection": 2,
-            "trust": 2,
+            "affection": 3,
+            "trust": 3,
             "tension": 0,
-            "lastTalkDayKey": "day-36",
-            "lastTalkMinute": 869
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 872
           },
           "npc_yangliu": {
             "affection": 2,
@@ -2618,9 +2604,9 @@
           }
         },
         "current": {
-          "action": "travel_to_task",
-          "targetWx": -213.4627106189811,
-          "targetWy": -111.45540004802027
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "行商（借宿寺庙）",
@@ -2764,13 +2750,13 @@
         "sheetCharacterId": "npc_merchants_wife",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -23.82952508489479,
-        "wy": -16.834949023403738,
+        "wx": -179.74752074556338,
+        "wy": -138.9387333813536,
         "initialWx": -180.9627106189811,
         "initialWy": -148.4387333813536,
         "needs": {
           "hunger": 100,
-          "energy": 94,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -2778,7 +2764,7 @@
         "inventory": [
           {
             "itemId": "coin_copper",
-            "count": 45,
+            "count": 50,
             "name": "铜钱",
             "icon": "",
             "description": "",
@@ -2818,7 +2804,7 @@
           },
           {
             "itemId": "ledger_note",
-            "count": 9,
+            "count": 10,
             "name": "ledger note",
             "icon": "",
             "description": "",
@@ -2831,227 +2817,165 @@
           "money_wrap"
         ],
         "memory": [
-          "邵婉娘和邵远舟聊了聊清晨清点与启程。",
-          "邵婉娘和沈掌柜聊了聊酒肆生意。",
-          "邵婉娘和阿顺聊了聊村里八卦。",
+          "邵婉娘和沈掌柜聊了聊清晨备店与点货。",
+          "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了inventory_check，得到ledger notex10。",
+          "邵婉娘和阿顺聊了聊清晨点货。",
+          "邵婉娘和邵远舟聊了聊清晨点货。",
           "邵婉娘在trade goods上花了一些时间。",
-          "邵婉娘和邵远舟聊了聊外地货价。",
-          "邵婉娘在barter上花了一些时间。",
-          "清晨在寺中先清点货物，白天去集市边做买卖与谈价，傍晚回寺附近整理与守货，夜间回借宿处安歇。",
-          "邵婉娘和慧远聊了聊晨起寺中短谈。",
-          "邵婉娘和邵远舟聊了聊晨起核货。",
-          "邵婉娘和沈掌柜聊了聊清晨借宿寺前的问候。",
-          "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了inventory_check，得到ledger notex7。",
-          "清晨先核货记账，白日去集市周边议价看货，午后回寺中整理与护货，傍晚做简短巡看并收尾。",
-          "邵婉娘和沈掌柜聊了聊清晨借宿与备货寒暄。",
-          "邵婉娘和阿顺聊了聊清晨问候与护货。",
-          "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了inventory_check，得到ledger notex8。",
-          "邵婉娘和沈福聊了聊清晨备货。",
           "邵婉娘在trade goods上花了一些时间。",
-          "邵婉娘和邵远舟聊了聊寺庙借宿与清点货物。",
-          "邵婉娘和阿顺聊了聊傍晚借宿与货物安置。",
-          "邵婉娘和杨柳聊了聊寺庙借宿与货物安置。",
+          "邵婉娘和邵远舟聊了聊寺中点货。",
           "邵婉娘在barter上花了一些时间。",
-          "邵婉娘和阿顺聊了聊寺庙夜借宿与货物安置。",
-          "邵婉娘和邵远舟聊了聊寺庙夜宿与货物安置。",
-          "邵婉娘和沈福聊了聊夜借柴火。",
-          "邵婉娘和沈掌柜聊了聊寺庙夜借宿。",
-          "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了protect_goods，得到铜钱x45。",
-          "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了protect_goods，得到ledger notex9。",
-          "邵婉娘和阿顺聊了聊夜借宿与货物安置。",
-          "邵婉娘和邵远舟聊了聊寺庙夜宿与货物安置。",
+          "邵婉娘和阿顺聊了聊暮色借宿。",
+          "邵婉娘和邵远舟聊了聊寺中夜巡与点货。",
+          "邵婉娘在mend cloth上花了一些时间。",
+          "邵婉娘和慧远聊了聊夜宿寺中。",
           "邵婉娘在count coins上花了一些时间。",
-          "邵婉娘和邵远舟聊了聊寺庙夜宿。",
-          "清晨先在寺庙客房盘点货物，上午转去市集附近交易与谈价，下午回寺庙周边整理、观察与修补，夜间回住处清点钱货并休息。"
+          "邵婉娘和邵远舟聊了聊寺中夜宿与点货。",
+          "清晨先清点货物与账目，白天前往集市周边护货兼交易，傍晚回寺中安置与整货，夜间回借宿处休息。",
+          "邵婉娘和慧远聊了聊清晨借宿。",
+          "邵婉娘和阿顺聊了聊清晨备店。",
+          "邵婉娘和沈掌柜聊了聊清晨开张与借宿护货。",
+          "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了inventory_check，得到铜钱x47。",
+          "邵婉娘和邵远舟聊了聊清晨借宿寺庙，收拾货物。",
+          "清晨清点，白天交易议价，傍晚守货收账后歇息。",
+          "邵婉娘和慧远聊了聊清晨借宿。",
+          "邵婉娘和邵远舟聊了聊清晨借宿护货。",
+          "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了inventory_check，得到铜钱x50。",
+          "邵婉娘和阿顺聊了聊清晨寺前问安。",
+          "邵婉娘和杨守仁聊了聊寺前清晨问安。",
+          "邵婉娘和沈掌柜聊了聊清晨问安。",
+          "邵婉娘在trade goods上花了一些时间。",
+          "邵婉娘在inventory check上花了一些时间。",
+          "邵婉娘和邵远舟聊了聊寺庙晨间盘点。",
+          "清晨盘点后整理货物，白天外出谈价与观察，夜间回到借宿处收纳并休息。",
+          "清晨在寺庙客房盘点货物，白天去市集谈价并顺路观察行情，傍晚回寺庙整理与收纳，夜里在借宿处休息。"
         ],
         "_initialMemory": [],
         "emotions": {
           "mood": 10,
           "stress": 0,
-          "hope": 17,
+          "hope": 20,
           "frustration": 0
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290545157,
-          "summary": "清晨先在寺庙客房盘点货物，上午转去市集附近交易与谈价，下午回寺庙周边整理、观察与修补，夜间回住处清点钱货并休息。",
+          "generatedAt": 1781179634481,
+          "summary": "清晨在寺庙客房盘点货物，白天去市集谈价并顺路观察行情，傍晚回寺庙整理与收纳，夜里在借宿处休息。",
           "blocks": [
             {
               "activityType": "inventory_check",
-              "startMin": 425,
-              "endMin": 490,
+              "startMin": 420,
+              "endMin": 485,
               "locationRef": "temple_guestroom",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "storage",
-              "note": "起身后先核对货物、账目与封包，确认夜宿寺庙期间的安置情况",
-              "taskId": "day-58:0:inventory_check"
+              "note": "",
+              "taskId": "day-71:0:inventory_check"
             },
             {
               "activityType": "trade_goods",
-              "startMin": 550,
-              "endMin": 720,
+              "startMin": 535,
+              "endMin": 710,
               "locationRef": "market_spot_side",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "在市集侧边完成验货、谈价与小额出货，保持警惕，避免货物离身",
-              "taskId": "day-58:1:trade_goods"
+              "note": "",
+              "taskId": "day-71:1:trade_goods"
             },
             {
               "activityType": "barter",
-              "startMin": 835,
-              "endMin": 945,
+              "startMin": 850,
+              "endMin": 955,
               "locationRef": "market_road",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "沿路观察行情，顺手与熟人谈价，若时机不合则缩短停留",
-              "taskId": "day-58:2:barter"
+              "note": "",
+              "taskId": "day-71:2:barter"
             },
             {
               "activityType": "quiet_observe",
-              "startMin": 950,
-              "endMin": 1055,
+              "startMin": 970,
+              "endMin": 1070,
               "locationRef": "temple_courtyard",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "回寺庙附近安静观察人流与货物动静，顺便放松警惕但不离开太远",
-              "taskId": "day-58:3:quiet_observe"
+              "note": "",
+              "taskId": "day-71:3:quiet_observe"
             },
             {
               "activityType": "count_coins",
-              "startMin": 1145,
-              "endMin": 1205,
-              "locationRef": "temple_guestroom",
+              "startMin": 1135,
+              "endMin": 1195,
+              "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "storage",
-              "note": "夜间回住处清点钱款与收纳账册，准备休息",
-              "taskId": "day-58:4:count_coins"
+              "note": "",
+              "taskId": "day-71:4:count_coins"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:4:count_coins",
-          "activityType": "count_coins",
-          "locationRef": "temple_guestroom",
-          "state": "travel_to_task",
-          "startedMinute": 723,
-          "blockStartMin": 1145,
-          "blockEndMin": 1205,
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
+          "locationRef": "home",
+          "state": "sleeping",
+          "startedMinute": 25,
+          "blockStartMin": 0,
+          "blockEndMin": 1439,
           "performed": false,
-          "useFacility": "storage",
-          "facilityUsePlanned": false,
-          "anchorX": -208.9627106189811,
-          "anchorY": -144.4387333813536,
-          "facilityType": "",
-          "facilityObjectId": null
+          "useFacility": ""
         },
         "recentEvents": [
+          {
+            "type": "daily_plan",
+            "dayKey": "day-66",
+            "minuteOfDay": 1,
+            "summary": "清晨先清点货物与账目，白天前往集市周边护货兼交易，傍晚回寺中安置与整货，夜间回借宿处休息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-66",
+            "minuteOfDay": 367,
+            "summary": "邵婉娘和慧远聊了聊清晨借宿。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-66",
+            "minuteOfDay": 415,
+            "summary": "邵婉娘和阿顺聊了聊清晨备店。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-66",
+            "minuteOfDay": 418,
+            "summary": "邵婉娘和沈掌柜聊了聊清晨开张与借宿护货。"
+          },
           {
             "type": "facility_activity",
             "activityType": "inventory_check",
             "facilityType": "storage",
             "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 463,
-            "summary": "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了inventory_check，得到ledger notex8。",
-            "outputs": [
-              {
-                "itemId": "ledger_note",
-                "count": 8,
-                "name": "ledger note",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 528,
-            "summary": "邵婉娘和沈福聊了聊清晨备货。"
-          },
-          {
-            "type": "activity",
-            "activityType": "trade_goods",
-            "dayKey": "day-57",
-            "minuteOfDay": 615,
-            "summary": "邵婉娘在trade goods上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 616,
-            "summary": "邵婉娘和邵远舟聊了聊寺庙借宿与清点货物。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 749,
-            "summary": "邵婉娘和阿顺聊了聊傍晚借宿与货物安置。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 849,
-            "summary": "邵婉娘和杨柳聊了聊寺庙借宿与货物安置。"
-          },
-          {
-            "type": "activity",
-            "activityType": "barter",
-            "dayKey": "day-57",
-            "minuteOfDay": 920,
-            "summary": "邵婉娘在barter上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 922,
-            "summary": "邵婉娘和阿顺聊了聊寺庙夜借宿与货物安置。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 926,
-            "summary": "邵婉娘和邵远舟聊了聊寺庙夜宿与货物安置。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 973,
-            "summary": "邵婉娘和沈福聊了聊夜借柴火。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 976,
-            "summary": "邵婉娘和沈掌柜聊了聊寺庙夜借宿。"
-          },
-          {
-            "type": "facility_activity",
-            "activityType": "protect_goods",
-            "facilityType": "storage",
-            "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 1012,
-            "summary": "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了protect_goods，得到铜钱x45。",
+            "dayKey": "day-66",
+            "minuteOfDay": 445,
+            "summary": "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了inventory_check，得到铜钱x47。",
             "outputs": [
               {
                 "itemId": "coin_copper",
-                "count": 45,
+                "count": 47,
                 "name": "铜钱",
                 "icon": "",
                 "description": "",
@@ -3060,18 +2984,42 @@
             ]
           },
           {
+            "type": "conversation",
+            "dayKey": "day-66",
+            "minuteOfDay": 446,
+            "summary": "邵婉娘和邵远舟聊了聊清晨借宿寺庙，收拾货物。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-68",
+            "minuteOfDay": 0,
+            "summary": "清晨清点，白天交易议价，傍晚守货收账后歇息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 365,
+            "summary": "邵婉娘和慧远聊了聊清晨借宿。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 396,
+            "summary": "邵婉娘和邵远舟聊了聊清晨借宿护货。"
+          },
+          {
             "type": "facility_activity",
-            "activityType": "protect_goods",
+            "activityType": "inventory_check",
             "facilityType": "storage",
             "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 1056,
-            "summary": "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了protect_goods，得到ledger notex9。",
+            "dayKey": "day-68",
+            "minuteOfDay": 444,
+            "summary": "邵婉娘在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了inventory_check，得到铜钱x50。",
             "outputs": [
               {
-                "itemId": "ledger_note",
-                "count": 9,
-                "name": "ledger note",
+                "itemId": "coin_copper",
+                "count": 50,
+                "name": "铜钱",
                 "icon": "",
                 "description": "",
                 "tags": []
@@ -3080,34 +3028,53 @@
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1064,
-            "summary": "邵婉娘和阿顺聊了聊夜借宿与货物安置。"
+            "dayKey": "day-68",
+            "minuteOfDay": 439,
+            "summary": "邵婉娘和阿顺聊了聊清晨寺前问安。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1120,
-            "summary": "邵婉娘和邵远舟聊了聊寺庙夜宿与货物安置。"
+            "dayKey": "day-68",
+            "minuteOfDay": 476,
+            "summary": "邵婉娘和杨守仁聊了聊寺前清晨问安。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 474,
+            "summary": "邵婉娘和沈掌柜聊了聊清晨问安。"
           },
           {
             "type": "activity",
-            "activityType": "count_coins",
-            "dayKey": "day-57",
-            "minuteOfDay": 1193,
-            "summary": "邵婉娘在count coins上花了一些时间。"
+            "activityType": "trade_goods",
+            "dayKey": "day-68",
+            "minuteOfDay": 604,
+            "summary": "邵婉娘在trade goods上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "inventory_check",
+            "dayKey": "day-68",
+            "minuteOfDay": 444,
+            "summary": "邵婉娘在inventory check上花了一些时间。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1245,
-            "summary": "邵婉娘和邵远舟聊了聊寺庙夜宿。"
+            "dayKey": "day-68",
+            "minuteOfDay": 519,
+            "summary": "邵婉娘和邵远舟聊了聊寺庙晨间盘点。"
           },
           {
             "type": "daily_plan",
-            "dayKey": "day-58",
-            "minuteOfDay": 2,
-            "summary": "清晨先在寺庙客房盘点货物，上午转去市集附近交易与谈价，下午回寺庙周边整理、观察与修补，夜间回住处清点钱货并休息。"
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "清晨盘点后整理货物，白天外出谈价与观察，夜间回到借宿处收纳并休息。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
+            "minuteOfDay": 0,
+            "summary": "清晨在寺庙客房盘点货物，白天去市集谈价并顺路观察行情，傍晚回寺庙整理与收纳，夜里在借宿处休息。"
           }
         ],
         "relationships": {
@@ -3115,29 +3082,29 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1245
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 519
           },
           "npc_temple_monk": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-56",
-            "lastTalkMinute": 386
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 365
           },
           "npc_inn_waiter": {
-            "affection": 9,
+            "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1064
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 439
           },
           "npc_inn_bosslady": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 976
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 474
           },
           "npc_yangliu": {
             "affection": 4,
@@ -3147,11 +3114,11 @@
             "lastTalkMinute": 849
           },
           "npc_inn_cook_owner": {
-            "affection": 9,
+            "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 973
+            "lastTalkDayKey": "day-61",
+            "lastTalkMinute": 506
           },
           "player": {
             "affection": 0,
@@ -3161,17 +3128,24 @@
             "lastTalkMinute": 295
           },
           "npc_yang_grandpa": {
-            "affection": 1,
-            "trust": 1,
+            "affection": 2,
+            "trust": 2,
             "tension": 0,
-            "lastTalkDayKey": "day-51",
+            "lastTalkDayKey": "day-68",
             "lastTalkMinute": 476
+          },
+          "npc_hunter_wife": {
+            "affection": 0,
+            "trust": 0,
+            "tension": 0,
+            "lastTalkDayKey": "",
+            "lastTalkMinute": -1
           }
         },
         "current": {
-          "action": "travel_to_task",
-          "targetWx": -208.9627106189811,
-          "targetWy": -144.4387333813536
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "行商同伴（借宿寺庙）",
@@ -3318,13 +3292,13 @@
         "sheetCharacterId": "npc_yang_grandpa",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -29.07018015349435,
-        "wy": -2.5484685577097106,
+        "wx": -179.72813379281305,
+        "wy": -15.384578619859425,
         "initialWx": -186.9627106189811,
         "initialWy": -10.4887333813536,
         "needs": {
           "hunger": 100,
-          "energy": 94,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -3356,7 +3330,7 @@
           },
           {
             "itemId": "repaired_tool",
-            "count": 66,
+            "count": 70,
             "name": "修好的工具",
             "icon": "",
             "description": "",
@@ -3369,6 +3343,14 @@
             "icon": "",
             "description": "",
             "tags": []
+          },
+          {
+            "itemId": "ledger_note",
+            "count": 1,
+            "name": "ledger note",
+            "icon": "",
+            "description": "",
+            "tags": []
           }
         ],
         "equipment": [
@@ -3377,152 +3359,231 @@
           "old_key"
         ],
         "memory": [
-          "杨守仁和慧远聊了聊暮色安宁。",
-          "杨守仁在watch house上花了一些时间。",
-          "杨守仁在watch house上花了一些时间。",
-          "杨守仁在supervise family上花了一些时间。",
-          "杨守仁在supervise family上花了一些时间。",
-          "白天以看护家宅、修补杂务为主，间或在门口与邻里寒暄，傍晚再巡视家门后回家歇息。",
-          "杨守仁在watch house上花了一些时间。",
-          "杨守仁完成了repair_item，得到修好的工具x62。",
-          "杨守仁完成了repair_item，得到修好的工具x63。",
-          "杨守仁在chat with neighbors上花了一些时间。",
-          "杨守仁在chat with neighbors上花了一些时间。",
-          "杨守仁在watch house上花了一些时间。",
-          "杨守仁在light errand上花了一些时间。",
-          "清晨巡看杨家院落，随后做些修补；午后在家中整理家务并短暂照料家人，傍晚到村口守望并与邻里寒暄，夜里回家休息。",
-          "杨守仁和杨柳聊了聊杨柳近况。",
-          "杨守仁完成了repair_item，得到修好的工具x64。",
-          "杨守仁在加工（将放入材料在设施中转化为产物。）时完成了supervise_family，得到waterx2。",
-          "杨守仁和邵远舟聊了聊外地货价。",
-          "杨守仁调整了今天的安排。",
-          "杨守仁和杨柳聊了聊清晨家中安排。",
-          "清晨巡看家中与院落，上午修补杂物并照料家务，午后在家门口短暂留守，傍晚与邻里寒暄后回家收尾休息。",
-          "杨守仁和杨柳聊了聊清晨家中安排。",
-          "杨守仁在watch house上花了一些时间。",
-          "杨守仁和沈福聊了聊清晨家务与酒肆准备。",
-          "杨守仁在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了repair_item，得到修好的工具x65。",
-          "杨守仁完成了repair_item，得到修好的工具x66。",
-          "杨守仁在supervise family上花了一些时间。",
-          "杨守仁和杨柳聊了聊傍晚归家与修好农具。",
           "杨守仁在chat with neighbors上花了一些时间。",
           "杨守仁在watch house上花了一些时间。",
           "杨守仁在watch house上花了一些时间。",
-          "清晨先巡看杨家与院落，上午修补杂务，傍晚在家门口与邻里寒暄，夜里回到家中守夜歇息。"
+          "清晨先巡看杨家与院落，上午修补杂务，傍晚在家门口与邻里寒暄，夜里回到家中守夜歇息。",
+          "清晨巡看杨家与院落，上午修补杂务，傍晚在家门口与邻里寒暄，夜里回家守夜歇息。",
+          "清晨巡看杨家院落，上午在院中修补杂务，傍晚于家门口照看并与邻里寒暄，夜里回家守夜歇息。",
+          "杨守仁和杨柳聊了聊清晨问安。",
+          "杨守仁在watch house上花了一些时间。",
+          "杨守仁完成了repair_item，得到修好的工具x67。",
+          "清晨巡看院落，白天修补并照看家务，傍晚门口寒暄，夜里回家歇息。",
+          "清晨巡看院落，白天修补并照看家务，傍晚门口寒暄，夜里回家歇息。",
+          "杨守仁和杨柳聊了聊清晨院落。",
+          "杨守仁在watch house上花了一些时间。",
+          "杨守仁完成了repair_item，得到修好的工具x68。",
+          "杨守仁在chat with neighbors上花了一些时间。",
+          "杨守仁在watch house上花了一些时间。",
+          "杨守仁在watch house上花了一些时间。",
+          "杨守仁在watch house上花了一些时间。",
+          "守夜、修补、照看家宅，并在傍晚与邻里寒暄，夜里回家歇息。",
+          "杨守仁和杨柳聊了聊清晨家宅。",
+          "杨守仁在watch house上花了一些时间。",
+          "晨起照看家宅，白日修补与走动，傍晚守看院门，夜里回家歇息。",
+          "杨守仁和沈掌柜聊了聊清晨开张。",
+          "杨守仁在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了supervise_family，得到ledger notex1。",
+          "杨守仁和阿顺聊了聊清晨开张。",
+          "杨守仁和邵婉娘聊了聊寺前清晨问安。",
+          "杨守仁完成了repair_item，得到修好的工具x69。",
+          "杨守仁在supervise family上花了一些时间。",
+          "杨守仁在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了repair_item，得到修好的工具x70。",
+          "杨守仁和杨柳聊了聊家中整备。",
+          "清晨守望家宅，上午修补整理，中午略作巡看，傍晚与邻里寒暄，夜间回家守夜并歇息。",
+          "杨守仁调整了今天的安排。"
         ],
         "_initialMemory": [],
         "emotions": {
           "mood": 10,
           "stress": 0,
-          "hope": 69,
+          "hope": 74,
           "frustration": 0
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290545157,
-          "summary": "清晨先巡看杨家与院落，上午修补杂务，傍晚在家门口与邻里寒暄，夜里回到家中守夜歇息。",
+          "generatedAt": 1781179634475,
+          "summary": "",
           "blocks": [
             {
               "activityType": "watch_house",
-              "startMin": 430,
-              "endMin": 545,
+              "startMin": 420,
+              "endMin": 540,
               "locationRef": "yang_house_yard",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "清晨照看家宅与院中动静。",
-              "taskId": "day-58:0:watch_house"
+              "note": "清晨守望家宅，留意院内动静。",
+              "taskId": "day-71:0:watch_house"
             },
             {
               "activityType": "repair_item",
-              "startMin": 555,
-              "endMin": 675,
+              "startMin": 545,
+              "endMin": 665,
               "locationRef": "yang_house_yard",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "storage",
-              "note": "整理并修补农具、家什，顺手收拢院内杂物。",
-              "taskId": "day-58:1:repair_item"
+              "note": "上午修补整理，顺手清点和补货。",
+              "taskId": "day-71:1:repair_item"
             },
             {
-              "activityType": "light_errand",
-              "startMin": 840,
+              "activityType": "supervise_family",
+              "startMin": 810,
               "endMin": 930,
-              "locationRef": "market_road",
-              "mode": "soft_do",
+              "locationRef": "yang_house_gate",
+              "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
-              "useFacility": "well",
-              "note": "顺路办些轻便差事，兼顾取水或打听消息。",
-              "taskId": "day-58:2:light_errand"
+              "useFacility": "",
+              "note": "中午略作巡看，照应家中大小事务。",
+              "taskId": "day-71:2:supervise_family"
             },
             {
               "activityType": "chat_with_neighbors",
-              "startMin": 935,
-              "endMin": 995,
+              "startMin": 960,
+              "endMin": 1050,
               "locationRef": "yang_house_gate",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "在家门口与邻里聊几句，语气稳重和气。",
-              "taskId": "day-58:3:chat_with_neighbors"
+              "note": "傍晚与邻里寒暄，维持往来情分。",
+              "taskId": "day-71:3:chat_with_neighbors"
             },
             {
               "activityType": "watch_house",
-              "startMin": 1015,
-              "endMin": 1135,
+              "startMin": 1080,
+              "endMin": 1410,
               "locationRef": "home",
               "mode": "must_do",
-              "wanderRadius": 6,
+              "wanderRadius": 3,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "夜里守着家中，确保家人安稳后再歇息。",
-              "taskId": "day-58:4:watch_house"
+              "note": "夜间回家守夜并歇息。",
+              "taskId": "day-71:4:watch_house"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:4:watch_house",
-          "activityType": "watch_house",
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
           "locationRef": "home",
-          "state": "travel_to_task",
-          "startedMinute": 723,
-          "blockStartMin": 1015,
-          "blockEndMin": 1135,
+          "state": "sleeping",
+          "startedMinute": 15,
+          "blockStartMin": 0,
+          "blockEndMin": 1439,
           "performed": false,
-          "useFacility": "",
-          "facilityUsePlanned": false,
-          "anchorX": -181.4127106189811,
-          "anchorY": -15.4887333813536,
-          "facilityType": "",
-          "facilityObjectId": null
+          "useFacility": ""
         },
         "recentEvents": [
           {
+            "type": "activity",
+            "activityType": "chat_with_neighbors",
+            "dayKey": "day-65",
+            "minuteOfDay": 886,
+            "summary": "杨守仁在chat with neighbors上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "watch_house",
+            "dayKey": "day-65",
+            "minuteOfDay": 1066,
+            "summary": "杨守仁在watch house上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "watch_house",
+            "dayKey": "day-65",
+            "minuteOfDay": 1084,
+            "summary": "杨守仁在watch house上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "watch_house",
+            "dayKey": "day-65",
+            "minuteOfDay": 1184,
+            "summary": "杨守仁在watch house上花了一些时间。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-66",
+            "minuteOfDay": 1,
+            "summary": "守夜、修补、照看家宅，并在傍晚与邻里寒暄，夜里回家歇息。"
+          },
+          {
             "type": "conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 426,
-            "summary": "杨守仁和杨柳聊了聊杨柳近况。"
+            "dayKey": "day-66",
+            "minuteOfDay": 424,
+            "summary": "杨守仁和杨柳聊了聊清晨家宅。"
+          },
+          {
+            "type": "activity",
+            "activityType": "watch_house",
+            "dayKey": "day-66",
+            "minuteOfDay": 462,
+            "summary": "杨守仁在watch house上花了一些时间。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-68",
+            "minuteOfDay": 0,
+            "summary": "晨起照看家宅，白日修补与走动，傍晚守看院门，夜里回家歇息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 434,
+            "summary": "杨守仁和沈掌柜聊了聊清晨开张。"
+          },
+          {
+            "type": "facility_activity",
+            "activityType": "supervise_family",
+            "facilityType": "storage",
+            "facilityObjectId": null,
+            "dayKey": "day-68",
+            "minuteOfDay": 462,
+            "summary": "杨守仁在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了supervise_family，得到ledger notex1。",
+            "outputs": [
+              {
+                "itemId": "ledger_note",
+                "count": 1,
+                "name": "ledger note",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 468,
+            "summary": "杨守仁和阿顺聊了聊清晨开张。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 476,
+            "summary": "杨守仁和邵婉娘聊了聊寺前清晨问安。"
           },
           {
             "type": "activity",
             "activityType": "repair_item",
             "facilityType": "",
             "facilityObjectId": null,
-            "dayKey": "day-55",
-            "minuteOfDay": 594,
-            "summary": "杨守仁完成了repair_item，得到修好的工具x64。",
+            "dayKey": "day-68",
+            "minuteOfDay": 597,
+            "summary": "杨守仁完成了repair_item，得到修好的工具x69。",
             "outputs": [
               {
                 "itemId": "repaired_tool",
-                "count": 64,
+                "count": 69,
                 "name": "修好的工具",
                 "icon": "",
                 "description": "",
@@ -3531,144 +3592,48 @@
             ]
           },
           {
-            "type": "facility_activity",
-            "activityType": "supervise_family",
-            "facilityType": "well",
-            "facilityObjectId": 6,
-            "dayKey": "day-55",
-            "minuteOfDay": 882,
-            "summary": "杨守仁在加工（将放入材料在设施中转化为产物。）时完成了supervise_family，得到waterx2。",
-            "outputs": [
-              {
-                "itemId": "water",
-                "count": 2,
-                "name": "water",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 885,
-            "summary": "杨守仁和邵远舟聊了聊外地货价。"
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-56",
-            "minuteOfDay": 0,
-            "summary": "杨守仁调整了今天的安排。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-56",
-            "minuteOfDay": 432,
-            "summary": "杨守仁和杨柳聊了聊清晨家中安排。"
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-57",
-            "minuteOfDay": 0,
-            "summary": "清晨巡看家中与院落，上午修补杂物并照料家务，午后在家门口短暂留守，傍晚与邻里寒暄后回家收尾休息。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 443,
-            "summary": "杨守仁和杨柳聊了聊清晨家中安排。"
-          },
-          {
             "type": "activity",
-            "activityType": "watch_house",
-            "dayKey": "day-57",
-            "minuteOfDay": 472,
-            "summary": "杨守仁在watch house上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 567,
-            "summary": "杨守仁和沈福聊了聊清晨家务与酒肆准备。"
+            "activityType": "supervise_family",
+            "dayKey": "day-68",
+            "minuteOfDay": 462,
+            "summary": "杨守仁在supervise family上花了一些时间。"
           },
           {
             "type": "facility_activity",
             "activityType": "repair_item",
             "facilityType": "storage",
             "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 594,
-            "summary": "杨守仁在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了repair_item，得到修好的工具x65。",
+            "dayKey": "day-68",
+            "minuteOfDay": 597,
+            "summary": "杨守仁在整理（柜台和后房的储物点，用来清点、取放和补货。）时完成了repair_item，得到修好的工具x70。",
             "outputs": [
               {
                 "itemId": "repaired_tool",
-                "count": 65,
+                "count": 70,
                 "name": "修好的工具",
                 "icon": "",
                 "description": "",
                 "tags": []
               }
             ]
-          },
-          {
-            "type": "activity",
-            "activityType": "repair_item",
-            "facilityType": "",
-            "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 634,
-            "summary": "杨守仁完成了repair_item，得到修好的工具x66。",
-            "outputs": [
-              {
-                "itemId": "repaired_tool",
-                "count": 66,
-                "name": "修好的工具",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "activity",
-            "activityType": "supervise_family",
-            "dayKey": "day-57",
-            "minuteOfDay": 738,
-            "summary": "杨守仁在supervise family上花了一些时间。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 754,
-            "summary": "杨守仁和杨柳聊了聊傍晚归家与修好农具。"
-          },
-          {
-            "type": "activity",
-            "activityType": "chat_with_neighbors",
-            "dayKey": "day-57",
-            "minuteOfDay": 882,
-            "summary": "杨守仁在chat with neighbors上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "watch_house",
-            "dayKey": "day-57",
-            "minuteOfDay": 1057,
-            "summary": "杨守仁在watch house上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "watch_house",
-            "dayKey": "day-57",
-            "minuteOfDay": 1151,
-            "summary": "杨守仁在watch house上花了一些时间。"
+            "dayKey": "day-68",
+            "minuteOfDay": 694,
+            "summary": "杨守仁和杨柳聊了聊家中整备。"
           },
           {
             "type": "daily_plan",
-            "dayKey": "day-58",
-            "minuteOfDay": 2,
-            "summary": "清晨先巡看杨家与院落，上午修补杂务，傍晚在家门口与邻里寒暄，夜里回到家中守夜歇息。"
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "清晨守望家宅，上午修补整理，中午略作巡看，傍晚与邻里寒暄，夜间回家守夜并歇息。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
+            "minuteOfDay": 0,
+            "summary": "杨守仁调整了今天的安排。"
           }
         ],
         "relationships": {
@@ -3676,8 +3641,8 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 754
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 694
           },
           "player": {
             "affection": 3,
@@ -3687,24 +3652,24 @@
             "lastTalkMinute": -1
           },
           "npc_inn_bosslady": {
-            "affection": 3,
-            "trust": 3,
+            "affection": 4,
+            "trust": 4,
             "tension": 0,
-            "lastTalkDayKey": "day-53",
-            "lastTalkMinute": 566
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 434
           },
           "npc_inn_waiter": {
-            "affection": 5,
-            "trust": 6,
+            "affection": 6,
+            "trust": 7,
             "tension": 0,
-            "lastTalkDayKey": "day-53",
-            "lastTalkMinute": 569
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 468
           },
           "npc_merchants_wife": {
-            "affection": 1,
-            "trust": 1,
+            "affection": 2,
+            "trust": 2,
             "tension": 0,
-            "lastTalkDayKey": "day-51",
+            "lastTalkDayKey": "day-68",
             "lastTalkMinute": 476
           },
           "npc_inn_cook_owner": {
@@ -3730,9 +3695,9 @@
           }
         },
         "current": {
-          "action": "travel_to_task",
-          "targetWx": -181.4127106189811,
-          "targetWy": -15.4887333813536
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "杨家老太爷（监护人）",
@@ -3863,13 +3828,13 @@
         "sheetCharacterId": "npc_yangliu",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -29.07018015349435,
-        "wy": -2.5484685577097106,
+        "wx": -179.72813379281305,
+        "wy": -15.384578619859425,
         "initialWx": -182.9627106189811,
         "initialWy": -12.4887333813536,
         "needs": {
           "hunger": 100,
-          "energy": 0,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -3885,7 +3850,7 @@
           },
           {
             "itemId": "berry",
-            "count": 15,
+            "count": 18,
             "name": "浆果",
             "icon": "",
             "description": "",
@@ -3932,29 +3897,6 @@
           "flower_string"
         ],
         "memory": [
-          "杨柳完成了forage_small，得到草药x9。",
-          "杨柳在return home上花了一些时间。",
-          "杨柳和杨守仁聊了聊夜归问安。",
-          "杨柳今天先在家帮忙，上午到村里观察人群并顺路去井边看看，午后去采集，傍晚跑一趟小差，夜里回家休息。",
-          "杨柳和杨守仁聊了聊晨间家中问安。",
-          "杨柳在help household上花了一些时间。",
-          "杨柳和杨守仁聊了聊暮色归家。",
-          "清晨在家帮忙，上午到村里观察人群并顺路去井边，午后去采集，傍晚跑一趟小差，夜里回家休息。",
-          "杨柳调整了今天的安排。",
-          "杨柳在help household上花了一些时间。",
-          "杨柳和杨守仁聊了聊午间家中问答。",
-          "清晨在家帮忙，上午去村里观察人群并顺路到井边，午后外出采集，傍晚跑一趟小差，夜里回家休息。",
-          "白天先在家帮忙，随后外出观察村里与井边动静，中午顺路在井边短暂停留，下午去采集，傍晚跑一趟小差，夜里回家休息。",
-          "杨柳和杨守仁聊了聊清晨家务。",
-          "杨柳在help household上花了一些时间。",
-          "杨柳和杨守仁聊了聊暮色归家。",
-          "清晨先在家帮忙并与家人简单搭话，随后在村里和井边观察动静；中午在井边停留片刻，下午去村道与林缘附近采集；傍晚跑一趟小差并顺路回家休息。",
-          "清晨先在杨家帮忙并简单搭话，随后在井边和村里观察动静；中午在井边停留片刻，下午去村道与林缘附近采集，傍晚跑一趟小差后回家休息。",
-          "杨柳和杨守仁聊了聊杨柳近况。",
-          "杨柳在加工（将放入材料在设施中转化为产物。）时完成了observe_people，得到waterx1。",
-          "杨柳在加工（将放入材料在设施中转化为产物。）时完成了wait，得到waterx2。",
-          "杨柳完成了forage_small，得到野花x13。",
-          "清晨帮家里，上午在村里观察与跑腿，傍晚去采集，夜间回家休息。",
           "杨柳和杨守仁聊了聊清晨家中安排。",
           "清晨先帮家里，上午在村里观察与跑腿，中午稍作休息，傍晚去采集，夜里回家休息。",
           "杨柳在help household上花了一些时间。",
@@ -3963,92 +3905,127 @@
           "杨柳在errand上花了一些时间。",
           "杨柳和邵婉娘聊了聊寺庙借宿与货物安置。",
           "杨柳完成了forage_small，得到草药x10。",
-          "清晨在家附近帮忙，白天外出观察与跑腿，傍晚到井边与村里转转，夜里回家休息。"
+          "清晨在家附近帮忙，白天外出观察与跑腿，傍晚到井边与村里转转，夜里回家休息。",
+          "清晨在家附近帮忙，白天外出观察与跑腿，傍晚在井边与村里转转，夜里回家休息。",
+          "杨柳和杨守仁聊了聊清晨问安。",
+          "杨柳在help household上花了一些时间。",
+          "清晨帮忙，白天观察与采集，傍晚聊天后回家休息。",
+          "清晨帮忙，白天观察跑腿，傍晚在井边聊天，夜里回家休息。",
+          "清晨帮家务，白天在村里观察和采集，傍晚去井边聊天，夜里回家休息。",
+          "杨柳和杨守仁聊了聊清晨院落。",
+          "杨柳在help household上花了一些时间。",
+          "杨柳完成了forage_small，得到浆果x16。",
+          "杨柳完成了forage_small，得到浆果x18。",
+          "杨柳和沈掌柜聊了聊暮色收工。",
+          "杨柳在chat上花了一些时间。",
+          "杨柳在return home上花了一些时间。",
+          "杨柳在return home上花了一些时间。",
+          "清晨回家后帮忙，白天在村里观察和跑腿，傍晚去井边采集，晚间回家休息。",
+          "杨柳和杨守仁聊了聊清晨家宅。",
+          "杨柳在help household上花了一些时间。",
+          "清晨帮忙，白天观察跑腿，傍晚井边采集，晚间聊天后回家休息。",
+          "杨柳在help household上花了一些时间。",
+          "杨柳在help household上花了一些时间。",
+          "杨柳和杨守仁聊了聊家中整备。",
+          "清晨在杨家院里帮忙，白天外出观察顺路跑腿，傍晚去井边采集，晚间与人聊天后回家休息。",
+          "清晨在杨家院里帮忙，白天在村里观察并跑腿，傍晚去井边采集，晚间与人聊天后回家休息。"
         ],
         "_initialMemory": [],
         "emotions": {
           "mood": 10,
           "stress": 0,
-          "hope": 40,
+          "hope": 42,
           "frustration": 0
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290495000,
-          "summary": "清晨在家附近帮忙，白天外出观察与跑腿，傍晚到井边与村里转转，夜里回家休息。",
+          "generatedAt": 1781179633899,
+          "summary": "清晨在杨家院里帮忙，白天在村里观察并跑腿，傍晚去井边采集，晚间与人聊天后回家休息。",
           "blocks": [
             {
               "activityType": "help_household",
               "startMin": 420,
-              "endMin": 540,
+              "endMin": 525,
               "locationRef": "yang_house_yard",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "先做些家务，顺便听家里人说说今天的安排。",
-              "taskId": "day-58:0:help_household"
+              "note": "先帮家里整理院内事务。",
+              "taskId": "day-71:0:help_household"
             },
             {
               "activityType": "observe_people",
-              "startMin": 555,
-              "endMin": 675,
+              "startMin": 540,
+              "endMin": 660,
               "locationRef": "free_roam_village",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "在村里多看看多问问，留意大家早上的动向。",
-              "taskId": "day-58:1:observe_people"
-            },
-            {
-              "activityType": "forage_small",
-              "startMin": 840,
-              "endMin": 960,
-              "locationRef": "forest_edge_west",
-              "mode": "soft_do",
-              "wanderRadius": 6,
-              "arrivalSlackMin": 12,
-              "useFacility": "well",
-              "note": "顺路采些能用的小东西，若有机会先去井边整理一下再出发。",
-              "taskId": "day-58:2:forage_small"
+              "note": "边走边观察村里人来往，顺路问问需要跑腿的事。",
+              "taskId": "day-71:1:observe_people"
             },
             {
               "activityType": "errand",
-              "startMin": 975,
-              "endMin": 1095,
-              "locationRef": "market_spot",
+              "startMin": 840,
+              "endMin": 945,
+              "locationRef": "market_road",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "替人跑腿送取小物件，保持脚步轻快。",
-              "taskId": "day-58:3:errand"
+              "note": "替人送小东西或捎话，保持轻快往返。",
+              "taskId": "day-71:2:errand"
+            },
+            {
+              "activityType": "forage_small",
+              "startMin": 960,
+              "endMin": 1080,
+              "locationRef": "well_side",
+              "mode": "soft_do",
+              "wanderRadius": 6,
+              "arrivalSlackMin": 12,
+              "useFacility": "well",
+              "note": "傍晚去井边附近采集可用的小物件。",
+              "taskId": "day-71:3:forage_small"
+            },
+            {
+              "activityType": "chat",
+              "startMin": 1110,
+              "endMin": 1170,
+              "locationRef": "inn_gate",
+              "mode": "soft_do",
+              "wanderRadius": 6,
+              "arrivalSlackMin": 12,
+              "useFacility": "",
+              "note": "晚间找人聊聊天再慢慢回家。",
+              "taskId": "day-71:4:chat"
             },
             {
               "activityType": "return_home",
-              "startMin": 1140,
-              "endMin": 1200,
+              "startMin": 1185,
+              "endMin": 1230,
               "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "天黑前回家，准备休息。",
-              "taskId": "day-58:4:return_home"
+              "note": "回家睡觉休息。",
+              "taskId": "day-71:5:return_home"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:rest",
-          "activityType": "rest",
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
           "locationRef": "home",
-          "state": "return_home",
-          "startedMinute": 728,
+          "state": "sleeping",
+          "startedMinute": 15,
           "blockStartMin": 0,
           "blockEndMin": 1439,
           "performed": false,
@@ -4056,167 +4033,145 @@
         },
         "recentEvents": [
           {
+            "type": "daily_plan",
+            "dayKey": "day-63",
+            "minuteOfDay": 0,
+            "summary": "清晨帮家务，白天在村里观察和采集，傍晚去井边聊天，夜里回家休息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-65",
+            "minuteOfDay": 427,
+            "summary": "杨柳和杨守仁聊了聊清晨院落。"
+          },
+          {
             "type": "activity",
             "activityType": "help_household",
-            "dayKey": "day-53",
+            "dayKey": "day-65",
+            "minuteOfDay": 467,
+            "summary": "杨柳在help household上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "forage_small",
+            "facilityType": "",
+            "facilityObjectId": null,
+            "dayKey": "day-65",
+            "minuteOfDay": 881,
+            "summary": "杨柳完成了forage_small，得到浆果x16。",
+            "outputs": [
+              {
+                "itemId": "berry",
+                "count": 16,
+                "name": "浆果",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "activity",
+            "activityType": "forage_small",
+            "facilityType": "",
+            "facilityObjectId": null,
+            "dayKey": "day-65",
+            "minuteOfDay": 944,
+            "summary": "杨柳完成了forage_small，得到浆果x18。",
+            "outputs": [
+              {
+                "itemId": "berry",
+                "count": 18,
+                "name": "浆果",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-65",
+            "minuteOfDay": 983,
+            "summary": "杨柳和沈掌柜聊了聊暮色收工。"
+          },
+          {
+            "type": "activity",
+            "activityType": "chat",
+            "dayKey": "day-65",
+            "minuteOfDay": 1018,
+            "summary": "杨柳在chat上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "return_home",
+            "dayKey": "day-65",
+            "minuteOfDay": 1155,
+            "summary": "杨柳在return home上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "return_home",
+            "dayKey": "day-65",
+            "minuteOfDay": 1177,
+            "summary": "杨柳在return home上花了一些时间。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-66",
+            "minuteOfDay": 1,
+            "summary": "清晨回家后帮忙，白天在村里观察和跑腿，傍晚去井边采集，晚间回家休息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-66",
+            "minuteOfDay": 424,
+            "summary": "杨柳和杨守仁聊了聊清晨家宅。"
+          },
+          {
+            "type": "activity",
+            "activityType": "help_household",
+            "dayKey": "day-66",
             "minuteOfDay": 462,
             "summary": "杨柳在help household上花了一些时间。"
           },
           {
-            "type": "conversation",
-            "dayKey": "day-53",
-            "minuteOfDay": 740,
-            "summary": "杨柳和杨守仁聊了聊暮色归家。"
-          },
-          {
             "type": "daily_plan",
-            "dayKey": "day-54",
+            "dayKey": "day-68",
             "minuteOfDay": 0,
-            "summary": "清晨先在家帮忙并与家人简单搭话，随后在村里和井边观察动静；中午在井边停留片刻，下午去村道与林缘附近采集；傍晚跑一趟小差并顺路回家休息。"
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-55",
-            "minuteOfDay": 0,
-            "summary": "清晨先在杨家帮忙并简单搭话，随后在井边和村里观察动静；中午在井边停留片刻，下午去村道与林缘附近采集，傍晚跑一趟小差后回家休息。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 426,
-            "summary": "杨柳和杨守仁聊了聊杨柳近况。"
-          },
-          {
-            "type": "facility_activity",
-            "activityType": "observe_people",
-            "facilityType": "well",
-            "facilityObjectId": 6,
-            "dayKey": "day-55",
-            "minuteOfDay": 592,
-            "summary": "杨柳在加工（将放入材料在设施中转化为产物。）时完成了observe_people，得到waterx1。",
-            "outputs": [
-              {
-                "itemId": "water",
-                "count": 1,
-                "name": "water",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "facility_activity",
-            "activityType": "wait",
-            "facilityType": "well",
-            "facilityObjectId": 6,
-            "dayKey": "day-55",
-            "minuteOfDay": 709,
-            "summary": "杨柳在加工（将放入材料在设施中转化为产物。）时完成了wait，得到waterx2。",
-            "outputs": [
-              {
-                "itemId": "water",
-                "count": 2,
-                "name": "water",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "activity",
-            "activityType": "forage_small",
-            "facilityType": "",
-            "facilityObjectId": null,
-            "dayKey": "day-55",
-            "minuteOfDay": 894,
-            "summary": "杨柳完成了forage_small，得到野花x13。",
-            "outputs": [
-              {
-                "itemId": "wildflower",
-                "count": 13,
-                "name": "野花",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-56",
-            "minuteOfDay": 0,
-            "summary": "清晨帮家里，上午在村里观察与跑腿，傍晚去采集，夜间回家休息。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-56",
-            "minuteOfDay": 432,
-            "summary": "杨柳和杨守仁聊了聊清晨家中安排。"
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-57",
-            "minuteOfDay": 0,
-            "summary": "清晨先帮家里，上午在村里观察与跑腿，中午稍作休息，傍晚去采集，夜里回家休息。"
+            "summary": "清晨帮忙，白天观察跑腿，傍晚井边采集，晚间聊天后回家休息。"
           },
           {
             "type": "activity",
             "activityType": "help_household",
-            "dayKey": "day-57",
-            "minuteOfDay": 447,
+            "dayKey": "day-68",
+            "minuteOfDay": 464,
+            "summary": "杨柳在help household上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "help_household",
+            "dayKey": "day-68",
+            "minuteOfDay": 464,
             "summary": "杨柳在help household上花了一些时间。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 443,
-            "summary": "杨柳和杨守仁聊了聊清晨家中安排。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 754,
-            "summary": "杨柳和杨守仁聊了聊傍晚归家与修好农具。"
-          },
-          {
-            "type": "activity",
-            "activityType": "errand",
-            "dayKey": "day-57",
-            "minuteOfDay": 822,
-            "summary": "杨柳在errand上花了一些时间。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 849,
-            "summary": "杨柳和邵婉娘聊了聊寺庙借宿与货物安置。"
-          },
-          {
-            "type": "activity",
-            "activityType": "forage_small",
-            "facilityType": "",
-            "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 957,
-            "summary": "杨柳完成了forage_small，得到草药x10。",
-            "outputs": [
-              {
-                "itemId": "herb",
-                "count": 10,
-                "name": "草药",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
+            "dayKey": "day-68",
+            "minuteOfDay": 694,
+            "summary": "杨柳和杨守仁聊了聊家中整备。"
           },
           {
             "type": "daily_plan",
-            "dayKey": "day-58",
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "清晨在杨家院里帮忙，白天外出观察顺路跑腿，傍晚去井边采集，晚间与人聊天后回家休息。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
             "minuteOfDay": 0,
-            "summary": "清晨在家附近帮忙，白天外出观察与跑腿，傍晚到井边与村里转转，夜里回家休息。"
+            "summary": "清晨在杨家院里帮忙，白天在村里观察并跑腿，傍晚去井边采集，晚间与人聊天后回家休息。"
           }
         ],
         "relationships": {
@@ -4224,8 +4179,8 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 754
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 694
           },
           "player": {
             "affection": 6,
@@ -4256,11 +4211,11 @@
             "lastTalkMinute": 887
           },
           "npc_inn_bosslady": {
-            "affection": 4,
-            "trust": 4,
+            "affection": 5,
+            "trust": 5,
             "tension": 0,
-            "lastTalkDayKey": "day-37",
-            "lastTalkMinute": 1066
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 983
           },
           "npc_merchants_wife": {
             "affection": 4,
@@ -4278,9 +4233,9 @@
           }
         },
         "current": {
-          "action": "rest",
-          "targetWx": -181.4127106189811,
-          "targetWy": -15.4887333813536
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "少女",
@@ -4425,13 +4380,13 @@
         "sheetCharacterId": "npc_hunter",
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -28.428897116677295,
-        "wy": -6.58545813078999,
+        "wx": -246.88966154314062,
+        "wy": -57.48778253325674,
         "initialWx": -254.19604395231443,
         "initialWy": -53.22206671468693,
         "needs": {
           "hunger": 100,
-          "energy": 0,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -4487,7 +4442,7 @@
           },
           {
             "itemId": "firewood",
-            "count": 81,
+            "count": 85,
             "name": "柴火",
             "icon": "",
             "description": "",
@@ -4511,7 +4466,7 @@
           },
           {
             "itemId": "wood_piece",
-            "count": 6,
+            "count": 9,
             "name": "木片",
             "icon": "",
             "description": "",
@@ -4532,89 +4487,89 @@
           "quiver"
         ],
         "memory": [
-          "韩猎户和沈福聊了聊暮色将临。",
+          "韩猎户在check gear上花了一些时间。",
+          "清晨整备后出外巡猎，午后返家歇息，傍晚去北侧林缘拾柴，夜前回家休整。",
+          "清晨整备后去西侧林缘巡猎，午后返家歇息，傍晚到北侧林缘拾柴，夜前回家休整。",
+          "韩猎户调整了今天的安排。",
+          "韩猎户在制作（将放入材料加工为新物品。）时完成了check_gear，得到木片x8。",
+          "韩猎户调整了今天的安排。",
+          "清晨整备后去西侧林缘巡猎，午后拾柴，夜里回家休整。",
+          "韩猎户和沈福聊了聊清晨巡猎与备店。",
+          "韩猎户和韩氏聊了聊清晨出门前的嘱咐。",
+          "韩猎户在check gear上花了一些时间。",
+          "韩猎户和沈福聊了聊备柴。",
+          "韩猎户在return home上花了一些时间。",
+          "韩猎户和韩氏聊了聊黄昏归家。",
+          "韩猎户和邵远舟聊了聊借宿与夜巡。",
+          "韩猎户和沈福聊了聊借柴备灶。",
+          "韩猎户完成了gather_wood，得到柴火x85。",
+          "韩猎户和沈福聊了聊夜里备灶与交接柴火。",
+          "韩猎户和阿顺聊了聊夜里交接柴火。",
           "韩猎户在sell game上花了一些时间。",
-          "韩猎户和韩氏聊了聊暮色与柴火。",
-          "韩猎户在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了rest，得到熟食x1。",
-          "韩猎户在rest上花了一些时间。",
-          "清晨整备后外出狩猎，午后返家休整，傍晚顺路修整与交易，夜间回到家中休息。",
-          "韩猎户在制作（将放入材料加工为新物品。）时完成了check_gear，得到木片x4。",
-          "韩猎户在return home上花了一些时间。",
-          "韩猎户在return home上花了一些时间。",
-          "韩猎户在制作（将放入材料加工为新物品。）时完成了repair_gear，得到木片x5。",
-          "韩猎户和沈福聊了聊夜里备火。",
           "韩猎户在sell game上花了一些时间。",
-          "韩猎户和阿顺聊了聊夜里备酒与进山提醒。",
-          "韩猎户在sleep上花了一些时间。",
-          "韩猎户在sleep上花了一些时间。",
-          "清晨整备后外出巡猎，中午返家休整，傍晚顺路拾柴，夜里回家安歇。",
+          "韩猎户和沈福聊了聊夜里备灶。",
+          "清晨整备后去西林边狩猎，午后返家短歇，傍晚去北林捡些柴木，夜里到客栈门口处理猎物买卖，之后回家休息。",
+          "韩猎户在制作（将放入材料加工为新物品。）时完成了check_gear，得到木片x9。",
+          "清晨整备，白天狩猎，午后返家短歇，傍晚采柴，夜里卖猎物后回家休息。",
+          "韩猎户和韩氏聊了聊清晨备家。",
           "韩猎户在check gear上花了一些时间。",
-          "韩猎户在制作（将放入材料加工为新物品。）时完成了check_gear，得到木片x6。",
-          "韩猎户和玩家谈到了开场。",
-          "韩猎户和玩家谈到了开场寒暄。",
-          "韩猎户和玩家谈到了查看物品。",
-          "韩猎户和玩家谈到了猎物。",
+          "韩猎户在check gear上花了一些时间。",
           "韩猎户在return home上花了一些时间。",
-          "韩猎户和韩氏聊了聊山里猎况。",
-          "韩猎户完成了gather_wood，得到柴火x81。",
-          "清晨整备后去西侧林缘狩猎，午后返家休息，傍晚再去北侧林缘拾柴，晚些时候顺路去客栈门口处理猎物并回家歇息。",
-          "韩猎户和韩氏聊了聊清晨备猎。",
-          "韩猎户在check gear上花了一些时间。",
-          "清晨整备后外出巡猎，午后返家休息，傍晚去北侧林缘拾柴，夜前回家歇息。",
-          "韩猎户和韩氏聊了聊清晨备猎。",
-          "韩猎户在check gear上花了一些时间。",
-          "清晨整备后出外巡猎，午后返家歇息，傍晚去北侧林缘拾柴，夜前回家休整。"
+          "韩猎户在return home上花了一些时间。",
+          "韩猎户和韩氏聊了聊暮色归家。",
+          "晨间整备后去西林狩猎，午后回家短歇，傍晚收木并去卖货，夜间回家休息。",
+          "清晨整备后出猎，午后回家歇息，傍晚去北林收木并顺路售卖猎物，夜里回家休息。"
         ],
         "_initialMemory": [],
         "emotions": {
           "mood": 10,
           "stress": 1,
-          "hope": 45,
-          "frustration": 42
+          "hope": 48,
+          "frustration": 39
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290496467,
-          "summary": "清晨整备后出外巡猎，午后返家歇息，傍晚去北侧林缘拾柴，夜前回家休整。",
+          "generatedAt": 1781179634208,
+          "summary": "清晨整备后出猎，午后回家歇息，傍晚去北林收木并顺路售卖猎物，夜里回家休息。",
           "blocks": [
             {
               "activityType": "check_gear",
-              "startMin": 330,
-              "endMin": 420,
+              "startMin": 320,
+              "endMin": 405,
               "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "workbench",
-              "note": "按规矩检查弓弩、箭袋与护具。",
-              "taskId": "day-58:0:check_gear"
+              "note": "晨起检查弓弩、箭矢与补给。",
+              "taskId": "day-71:0:check_gear"
             },
             {
               "activityType": "hunt",
-              "startMin": 435,
-              "endMin": 660,
+              "startMin": 420,
+              "endMin": 655,
               "locationRef": "forest_edge_west",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "保持警觉，优先巡猎与追踪。",
-              "taskId": "day-58:1:hunt"
+              "note": "按规矩在西林边缘巡猎，避免过深深入林。",
+              "taskId": "day-71:1:hunt"
             },
             {
               "activityType": "return_home",
-              "startMin": 705,
-              "endMin": 825,
+              "startMin": 715,
+              "endMin": 840,
               "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "午后返家休息，整理猎获与行装。",
-              "taskId": "day-58:2:return_home"
+              "note": "午后回家短歇，整理猎获与状态。",
+              "taskId": "day-71:2:return_home"
             },
             {
               "activityType": "gather_wood",
@@ -4625,42 +4580,42 @@
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "顺手拾柴，注意天色和林缘动静。",
-              "taskId": "day-58:3:gather_wood"
+              "note": "傍晚顺手收些柴木，便于夜里取用。",
+              "taskId": "day-71:3:gather_wood"
             },
             {
               "activityType": "sell_game",
-              "startMin": 1080,
-              "endMin": 1140,
+              "startMin": 1075,
+              "endMin": 1135,
               "locationRef": "inn_door",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "若有猎物可顺路处理，之后回家歇息。",
-              "taskId": "day-58:4:sell_game"
+              "note": "在客栈门口交售猎物，尽量简短。",
+              "taskId": "day-71:4:sell_game"
             },
             {
               "activityType": "rest",
               "startMin": 1145,
-              "endMin": 1439,
+              "endMin": 1320,
               "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
-              "useFacility": "",
-              "note": "夜间留在家中，早睡养精神。",
-              "taskId": "day-58:5:rest"
+              "useFacility": "stove",
+              "note": "夜间回家休息，靠炉火缓解疲劳。",
+              "taskId": "day-71:5:rest"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:rest",
-          "activityType": "rest",
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
           "locationRef": "home",
-          "state": "return_home",
-          "startedMinute": 728,
+          "state": "sleeping",
+          "startedMinute": 30,
           "blockStartMin": 0,
           "blockEndMin": 1439,
           "performed": false,
@@ -4668,93 +4623,23 @@
         },
         "recentEvents": [
           {
-            "type": "activity",
-            "activityType": "sleep",
-            "dayKey": "day-54",
-            "minuteOfDay": 1260,
-            "summary": "韩猎户在sleep上花了一些时间。"
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-55",
-            "minuteOfDay": 0,
-            "summary": "清晨整备后外出巡猎，中午返家休整，傍晚顺路拾柴，夜里回家安歇。"
-          },
-          {
-            "type": "activity",
-            "activityType": "check_gear",
-            "dayKey": "day-55",
-            "minuteOfDay": 368,
-            "summary": "韩猎户在check gear上花了一些时间。"
-          },
-          {
-            "type": "facility_activity",
-            "activityType": "check_gear",
-            "facilityType": "workbench",
-            "facilityObjectId": 268,
-            "dayKey": "day-55",
-            "minuteOfDay": 380,
-            "summary": "韩猎户在制作（将放入材料加工为新物品。）时完成了check_gear，得到木片x6。",
-            "outputs": [
-              {
-                "itemId": "wood_piece",
-                "count": 6,
-                "name": "木片",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "player_conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 381,
-            "summary": "韩猎户和玩家谈到了开场。"
-          },
-          {
-            "type": "player_conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 383,
-            "summary": "韩猎户和玩家谈到了开场寒暄。"
-          },
-          {
-            "type": "player_conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 384,
-            "summary": "韩猎户和玩家谈到了查看物品。"
-          },
-          {
-            "type": "player_conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 385,
-            "summary": "韩猎户和玩家谈到了猎物。"
-          },
-          {
-            "type": "activity",
-            "activityType": "return_home",
-            "dayKey": "day-55",
-            "minuteOfDay": 743,
-            "summary": "韩猎户在return home上花了一些时间。"
-          },
-          {
             "type": "conversation",
-            "dayKey": "day-55",
-            "minuteOfDay": 784,
-            "summary": "韩猎户和韩氏聊了聊山里猎况。"
+            "dayKey": "day-65",
+            "minuteOfDay": 871,
+            "summary": "韩猎户和沈福聊了聊借柴备灶。"
           },
           {
             "type": "activity",
             "activityType": "gather_wood",
             "facilityType": "",
             "facilityObjectId": null,
-            "dayKey": "day-55",
-            "minuteOfDay": 928,
-            "summary": "韩猎户完成了gather_wood，得到柴火x81。",
+            "dayKey": "day-65",
+            "minuteOfDay": 940,
+            "summary": "韩猎户完成了gather_wood，得到柴火x85。",
             "outputs": [
               {
                 "itemId": "firewood",
-                "count": 81,
+                "count": 85,
                 "name": "柴火",
                 "icon": "",
                 "description": "",
@@ -4763,48 +4648,119 @@
             ]
           },
           {
-            "type": "daily_plan",
-            "dayKey": "day-56",
-            "minuteOfDay": 0,
-            "summary": "清晨整备后去西侧林缘狩猎，午后返家休息，傍晚再去北侧林缘拾柴，晚些时候顺路去客栈门口处理猎物并回家歇息。"
+            "type": "conversation",
+            "dayKey": "day-65",
+            "minuteOfDay": 1035,
+            "summary": "韩猎户和沈福聊了聊夜里备灶与交接柴火。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-56",
-            "minuteOfDay": 334,
-            "summary": "韩猎户和韩氏聊了聊清晨备猎。"
+            "dayKey": "day-65",
+            "minuteOfDay": 1067,
+            "summary": "韩猎户和阿顺聊了聊夜里交接柴火。"
+          },
+          {
+            "type": "activity",
+            "activityType": "sell_game",
+            "dayKey": "day-65",
+            "minuteOfDay": 1105,
+            "summary": "韩猎户在sell game上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "sell_game",
+            "dayKey": "day-65",
+            "minuteOfDay": 1162,
+            "summary": "韩猎户在sell game上花了一些时间。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-65",
+            "minuteOfDay": 1170,
+            "summary": "韩猎户和沈福聊了聊夜里备灶。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-66",
+            "minuteOfDay": 1,
+            "summary": "清晨整备后去西林边狩猎，午后返家短歇，傍晚去北林捡些柴木，夜里到客栈门口处理猎物买卖，之后回家休息。"
+          },
+          {
+            "type": "facility_activity",
+            "activityType": "check_gear",
+            "facilityType": "workbench",
+            "facilityObjectId": 268,
+            "dayKey": "day-66",
+            "minuteOfDay": 354,
+            "summary": "韩猎户在制作（将放入材料加工为新物品。）时完成了check_gear，得到木片x9。",
+            "outputs": [
+              {
+                "itemId": "wood_piece",
+                "count": 9,
+                "name": "木片",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-68",
+            "minuteOfDay": 0,
+            "summary": "清晨整备，白天狩猎，午后返家短歇，傍晚采柴，夜里卖猎物后回家休息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 340,
+            "summary": "韩猎户和韩氏聊了聊清晨备家。"
           },
           {
             "type": "activity",
             "activityType": "check_gear",
-            "dayKey": "day-56",
-            "minuteOfDay": 361,
+            "dayKey": "day-68",
+            "minuteOfDay": 370,
             "summary": "韩猎户在check gear上花了一些时间。"
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-57",
-            "minuteOfDay": 0,
-            "summary": "清晨整备后外出巡猎，午后返家休息，傍晚去北侧林缘拾柴，夜前回家歇息。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 334,
-            "summary": "韩猎户和韩氏聊了聊清晨备猎。"
           },
           {
             "type": "activity",
             "activityType": "check_gear",
-            "dayKey": "day-57",
-            "minuteOfDay": 351,
+            "dayKey": "day-68",
+            "minuteOfDay": 369,
             "summary": "韩猎户在check gear上花了一些时间。"
           },
           {
+            "type": "activity",
+            "activityType": "return_home",
+            "dayKey": "day-68",
+            "minuteOfDay": 767,
+            "summary": "韩猎户在return home上花了一些时间。"
+          },
+          {
+            "type": "activity",
+            "activityType": "return_home",
+            "dayKey": "day-68",
+            "minuteOfDay": 803,
+            "summary": "韩猎户在return home上花了一些时间。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 829,
+            "summary": "韩猎户和韩氏聊了聊暮色归家。"
+          },
+          {
             "type": "daily_plan",
-            "dayKey": "day-58",
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "晨间整备后去西林狩猎，午后回家短歇，傍晚收木并去卖货，夜间回家休息。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
             "minuteOfDay": 0,
-            "summary": "清晨整备后出外巡猎，午后返家歇息，傍晚去北侧林缘拾柴，夜前回家休整。"
+            "summary": "清晨整备后出猎，午后回家歇息，傍晚去北林收木并顺路售卖猎物，夜里回家休息。"
           }
         ],
         "relationships": {
@@ -4812,22 +4768,22 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 334
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 829
           },
           "npc_inn_waiter": {
             "affection": 1,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-54",
-            "lastTalkMinute": 1002
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 1067
           },
           "npc_inn_cook_owner": {
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-54",
-            "lastTalkMinute": 981
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 1170
           },
           "npc_inn_bosslady": {
             "affection": 4,
@@ -4838,10 +4794,10 @@
           },
           "npc_merchants_husband": {
             "affection": 0,
-            "trust": 2,
+            "trust": 3,
             "tension": 0,
-            "lastTalkDayKey": "day-36",
-            "lastTalkMinute": 869
+            "lastTalkDayKey": "day-65",
+            "lastTalkMinute": 872
           },
           "player": {
             "affection": 0,
@@ -4852,9 +4808,9 @@
           }
         },
         "current": {
-          "action": "rest",
-          "targetWx": -249.69604395231443,
-          "targetWy": -57.22206671468693
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "猎人",
@@ -5002,13 +4958,13 @@
         "sheetCharacterId": null,
         "renderScale": 1,
         "heightWorld": 4,
-        "wx": -28.760033885265923,
-        "wy": -4.887619508597791,
+        "wx": -247.53142772613464,
+        "wy": -56.82264000560306,
         "initialWx": -253.19604395231443,
         "initialWy": -52.22206671468693,
         "needs": {
           "hunger": 100,
-          "energy": 94,
+          "energy": 100,
           "comfort": 70,
           "social": 0,
           "curiosity": 0
@@ -5024,7 +4980,7 @@
           },
           {
             "itemId": "herb",
-            "count": 15,
+            "count": 16,
             "name": "草药",
             "icon": "",
             "description": "",
@@ -5040,7 +4996,7 @@
           },
           {
             "itemId": "berry",
-            "count": 20,
+            "count": 22,
             "name": "浆果",
             "icon": "",
             "description": "",
@@ -5056,7 +5012,7 @@
           },
           {
             "itemId": "wildflower",
-            "count": 13,
+            "count": 15,
             "name": "野花",
             "icon": "",
             "description": "",
@@ -5072,7 +5028,7 @@
           },
           {
             "itemId": "water",
-            "count": 4,
+            "count": 7,
             "name": "water",
             "icon": "",
             "description": "",
@@ -5080,7 +5036,7 @@
           },
           {
             "itemId": "hot_soup",
-            "count": 1,
+            "count": 2,
             "name": "hot soup",
             "icon": "",
             "description": "",
@@ -5093,77 +5049,77 @@
           "kitchen_knife"
         ],
         "memory": [
-          "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x3。",
-          "韩氏在carry water上花了一些时间。",
-          "韩氏和沈福聊了聊午前备火。",
-          "韩氏完成了forage_small，得到草药x14。",
-          "清晨备火做饭，上午取水与整理，午后外出采集，傍晚缝补，夜前回家烹饪收尾。",
-          "韩氏和沈福聊了聊清晨备火。",
-          "韩氏和阿顺聊了聊清晨问候与草药。",
-          "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到hot soupx1。",
-          "韩氏在prepare fire上花了一些时间。",
-          "韩氏在prepare fire上花了一些时间。",
-          "韩氏在prepare fire上花了一些时间。",
-          "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x4。",
-          "韩氏在prepare fire上花了一些时间。",
-          "韩氏和韩猎户聊了聊山里猎况。",
-          "清晨备火做饭，上午去取水并在村里顺手采集，下午修补衣物，傍晚回家继续烹饪，夜间在家休息。",
-          "韩氏和韩猎户聊了聊清晨备猎。",
-          "韩氏和沈福聊了聊清晨备火与早市。",
-          "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x5。",
+          "清晨备火取水，上午外出采集，中午前后缝补，傍晚回家做饭并休息。",
+          "清晨备火取水，上午外出采集，中午前后缝补，傍晚回家做饭并休息。",
           "韩氏调整了今天的安排。",
-          "韩氏和韩猎户聊了聊清晨备猎。",
-          "韩氏和沈福聊了聊清晨备火与早市。",
-          "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x6。",
-          "韩氏在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx4。",
-          "韩氏完成了forage_small，得到草药x15。",
+          "韩氏在prepare fire上花了一些时间。",
+          "韩氏在carry water上花了一些时间。",
+          "清晨备火取水，上午外出采集与处理日常事务，中午前后缝补整理，傍晚回家做饭并休息。",
+          "清晨备火取水，上午外出采集，午后缝补整理，傍晚回家做饭，夜里在家休息。",
+          "韩氏和韩猎户聊了聊清晨出门前的嘱咐。",
+          "韩氏在prepare fire上花了一些时间。",
+          "韩氏和沈福聊了聊晨间寒暄与备店。",
+          "韩氏在carry water上花了一些时间。",
+          "韩氏和沈福聊了聊晨间备店。",
+          "韩氏完成了forage_small，得到野花x15。",
+          "韩氏和韩猎户聊了聊黄昏归家。",
           "韩氏在mend clothes上花了一些时间。",
-          "韩氏在mend clothes上花了一些时间。",
-          "韩氏和沈福聊了聊夜里送柴。",
           "韩氏想做cook_food，但缺少柴火。",
-          "韩氏在rest上花了一些时间。",
-          "韩氏在rest上花了一些时间。",
-          "韩氏在rest上花了一些时间。",
-          "清晨备火取水，上午外出采集，中午前后缝补，傍晚回家做饭并休息。"
+          "韩氏想做cook_food，但缺少柴火。",
+          "清晨备柴生火，上午取水并在村中顺路采集，午后整理缝补，傍晚回家做饭。",
+          "韩氏和沈福聊了聊清晨备灶。",
+          "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到hot soupx2。",
+          "韩氏在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx5。",
+          "韩氏今日照例备灶、取水、顺路采集、整理缝补，傍晚回家做饭，夜里在家休息。",
+          "韩氏和韩猎户聊了聊清晨备家。",
+          "韩氏在prepare fire上花了一些时间。",
+          "韩氏在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx6。",
+          "韩氏在prepare fire上花了一些时间。",
+          "韩氏在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx7。",
+          "韩氏完成了forage_small，得到草药x16。",
+          "韩氏完成了forage_small，得到浆果x22。",
+          "韩氏和韩猎户聊了聊暮色归家。",
+          "清晨备火取水，白天外出采集，傍晚缝补与做饭后回家休息。",
+          "清晨在家备火取水，白天沿村道与林缘采集，傍晚回到家附近缝补并做饭，夜里回家休息。"
         ],
         "_initialMemory": [],
         "emotions": {
-          "mood": 9,
-          "stress": 4,
-          "hope": 47,
-          "frustration": 76
+          "mood": 10,
+          "stress": 2,
+          "hope": 54,
+          "frustration": 73
         },
         "dayPlan": {
-          "dayKey": "day-58",
-          "dayIndex": 58,
+          "dayKey": "day-71",
+          "dayIndex": 71,
           "source": "llm",
           "model": "gpt-5.4-mini",
-          "generatedAt": 1780290545157,
-          "summary": "清晨备火取水，上午外出采集，中午前后缝补，傍晚回家做饭并休息。",
+          "generatedAt": 1781179634470,
+          "summary": "清晨在家备火取水，白天沿村道与林缘采集，傍晚回到家附近缝补并做饭，夜里回家休息。",
           "blocks": [
             {
               "activityType": "prepare_fire",
-              "startMin": 360,
-              "endMin": 480,
+              "startMin": 361,
+              "endMin": 481,
               "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "stove",
-              "note": "先把柴火和灶火准备好，避免再次无法做饭。",
-              "taskId": "day-58:0:prepare_fire"
+              "note": "清晨先备火，保持家中日常运转。",
+              "taskId": "day-71:0:prepare_fire"
             },
             {
               "activityType": "carry_water",
-              "startMin": 540,
-              "endMin": 600,
+              "startMin": 495,
+              "endMin": 555,
               "locationRef": "well_side",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "well",
-              "note": "顺路取水，补足家中日常用水。",
-              "taskId": "day-58:1:carry_water"
+              "note": "顺路取水，补足白天用水。",
+              "taskId": "day-71:1:carry_water"
             },
             {
               "activityType": "forage_small",
@@ -5171,136 +5127,109 @@
               "endMin": 780,
               "locationRef": "forest_edge_west",
               "mode": "soft_do",
-              "wanderRadius": 6,
+              "wanderRadius": 8,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "趁白天去附近采些可用食材和杂物。",
-              "taskId": "day-58:2:forage_small"
+              "note": "白天外出采集草药、浆果等杂物。",
+              "taskId": "day-71:2:forage_small"
             },
             {
               "activityType": "mend_clothes",
-              "startMin": 900,
-              "endMin": 1020,
+              "startMin": 910,
+              "endMin": 1010,
               "locationRef": "hunter_house_yard",
               "mode": "soft_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "",
-              "note": "为家人整理和缝补衣物。",
-              "taskId": "day-58:3:mend_clothes"
+              "note": "傍晚在家人附近缝补衣物，收拾白天带回的东西。",
+              "taskId": "day-71:3:mend_clothes"
             },
             {
               "activityType": "cook_food",
-              "startMin": 1035,
-              "endMin": 1155,
+              "startMin": 1025,
+              "endMin": 1145,
               "locationRef": "home",
               "mode": "must_do",
               "wanderRadius": 6,
               "arrivalSlackMin": 12,
               "useFacility": "stove",
-              "note": "傍晚回家生火做饭，优先处理可食材。",
-              "taskId": "day-58:4:cook_food"
+              "note": "晚饭按时做好，留给家人回家食用。",
+              "taskId": "day-71:4:cook_food"
             },
             {
               "activityType": "rest",
-              "startMin": 1165,
-              "endMin": 1260,
+              "startMin": 1160,
+              "endMin": 1439,
               "locationRef": "home",
-              "mode": "soft_do",
-              "wanderRadius": 6,
+              "mode": "must_do",
+              "wanderRadius": 4,
               "arrivalSlackMin": 12,
-              "useFacility": "",
-              "note": "晚间在家休息，恢复体力。",
-              "taskId": "day-58:5:rest"
+              "useFacility": "home",
+              "note": "夜间留在家中休息，结束当天行程。",
+              "taskId": "day-71:5:rest"
             }
           ]
         },
         "currentTask": {
-          "dayKey": "day-58",
-          "taskId": "day-58:2:forage_small",
-          "activityType": "forage_small",
-          "locationRef": "forest_edge_west",
-          "state": "travel_to_task",
-          "startedMinute": 723,
-          "blockStartMin": 660,
-          "blockEndMin": 780,
+          "dayKey": "day-71",
+          "taskId": "day-71:sleep",
+          "activityType": "sleep",
+          "locationRef": "home",
+          "state": "sleeping",
+          "startedMinute": 30,
+          "blockStartMin": 0,
+          "blockEndMin": 1439,
           "performed": false,
-          "useFacility": "",
-          "facilityUsePlanned": false,
-          "anchorX": -327.1960439523144,
-          "anchorY": -51.22206671468693,
-          "facilityType": "",
-          "facilityObjectId": null
+          "useFacility": ""
         },
         "recentEvents": [
           {
+            "type": "activity",
+            "activityType": "mend_clothes",
+            "dayKey": "day-65",
+            "minuteOfDay": 941,
+            "summary": "韩氏在mend clothes上花了一些时间。"
+          },
+          {
+            "type": "activity_failed",
+            "activityType": "cook_food",
+            "dayKey": "day-65",
+            "minuteOfDay": 1063,
+            "summary": "韩氏想做cook_food，但缺少柴火。"
+          },
+          {
+            "type": "activity_failed",
+            "activityType": "cook_food",
+            "dayKey": "day-65",
+            "minuteOfDay": 1131,
+            "summary": "韩氏想做cook_food，但缺少柴火。"
+          },
+          {
             "type": "daily_plan",
-            "dayKey": "day-56",
-            "minuteOfDay": 0,
-            "summary": "清晨备火做饭，上午去取水并在村里顺手采集，下午修补衣物，傍晚回家继续烹饪，夜间在家休息。"
+            "dayKey": "day-66",
+            "minuteOfDay": 1,
+            "summary": "清晨备柴生火，上午取水并在村中顺路采集，午后整理缝补，傍晚回家做饭。"
           },
           {
             "type": "conversation",
-            "dayKey": "day-56",
-            "minuteOfDay": 334,
-            "summary": "韩氏和韩猎户聊了聊清晨备猎。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-56",
-            "minuteOfDay": 378,
-            "summary": "韩氏和沈福聊了聊清晨备火与早市。"
+            "dayKey": "day-66",
+            "minuteOfDay": 364,
+            "summary": "韩氏和沈福聊了聊清晨备灶。"
           },
           {
             "type": "facility_activity",
             "activityType": "prepare_fire",
             "facilityType": "stove",
             "facilityObjectId": null,
-            "dayKey": "day-56",
-            "minuteOfDay": 405,
-            "summary": "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x5。",
+            "dayKey": "day-66",
+            "minuteOfDay": 397,
+            "summary": "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到hot soupx2。",
             "outputs": [
               {
-                "itemId": "cooked_meal",
-                "count": 5,
-                "name": "熟食",
-                "icon": "",
-                "description": "",
-                "tags": []
-              }
-            ]
-          },
-          {
-            "type": "daily_plan",
-            "dayKey": "day-57",
-            "minuteOfDay": 0,
-            "summary": "韩氏调整了今天的安排。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 334,
-            "summary": "韩氏和韩猎户聊了聊清晨备猎。"
-          },
-          {
-            "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 372,
-            "summary": "韩氏和沈福聊了聊清晨备火与早市。"
-          },
-          {
-            "type": "facility_activity",
-            "activityType": "prepare_fire",
-            "facilityType": "stove",
-            "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 411,
-            "summary": "韩氏在烹饪（客栈厨房里的炉灶，用来备火、做饭和热食。）时完成了prepare_fire，得到熟食x6。",
-            "outputs": [
-              {
-                "itemId": "cooked_meal",
-                "count": 6,
-                "name": "熟食",
+                "itemId": "hot_soup",
+                "count": 2,
+                "name": "hot soup",
                 "icon": "",
                 "description": "",
                 "tags": []
@@ -5312,13 +5241,77 @@
             "activityType": "carry_water",
             "facilityType": "well",
             "facilityObjectId": 6,
-            "dayKey": "day-57",
-            "minuteOfDay": 568,
-            "summary": "韩氏在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx4。",
+            "dayKey": "day-66",
+            "minuteOfDay": 561,
+            "summary": "韩氏在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx5。",
             "outputs": [
               {
                 "itemId": "water",
-                "count": 4,
+                "count": 5,
+                "name": "water",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-68",
+            "minuteOfDay": 0,
+            "summary": "韩氏今日照例备灶、取水、顺路采集、整理缝补，傍晚回家做饭，夜里在家休息。"
+          },
+          {
+            "type": "conversation",
+            "dayKey": "day-68",
+            "minuteOfDay": 340,
+            "summary": "韩氏和韩猎户聊了聊清晨备家。"
+          },
+          {
+            "type": "activity",
+            "activityType": "prepare_fire",
+            "dayKey": "day-68",
+            "minuteOfDay": 403,
+            "summary": "韩氏在prepare fire上花了一些时间。"
+          },
+          {
+            "type": "facility_activity",
+            "activityType": "carry_water",
+            "facilityType": "well",
+            "facilityObjectId": 6,
+            "dayKey": "day-68",
+            "minuteOfDay": 566,
+            "summary": "韩氏在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx6。",
+            "outputs": [
+              {
+                "itemId": "water",
+                "count": 6,
+                "name": "water",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
+          },
+          {
+            "type": "activity",
+            "activityType": "prepare_fire",
+            "dayKey": "day-68",
+            "minuteOfDay": 402,
+            "summary": "韩氏在prepare fire上花了一些时间。"
+          },
+          {
+            "type": "facility_activity",
+            "activityType": "carry_water",
+            "facilityType": "well",
+            "facilityObjectId": 6,
+            "dayKey": "day-68",
+            "minuteOfDay": 564,
+            "summary": "韩氏在加工（将放入材料在设施中转化为产物。）时完成了carry_water，得到waterx7。",
+            "outputs": [
+              {
+                "itemId": "water",
+                "count": 7,
                 "name": "water",
                 "icon": "",
                 "description": "",
@@ -5331,13 +5324,13 @@
             "activityType": "forage_small",
             "facilityType": "",
             "facilityObjectId": null,
-            "dayKey": "day-57",
-            "minuteOfDay": 692,
-            "summary": "韩氏完成了forage_small，得到草药x15。",
+            "dayKey": "day-68",
+            "minuteOfDay": 712,
+            "summary": "韩氏完成了forage_small，得到草药x16。",
             "outputs": [
               {
                 "itemId": "herb",
-                "count": 15,
+                "count": 16,
                 "name": "草药",
                 "icon": "",
                 "description": "",
@@ -5347,57 +5340,40 @@
           },
           {
             "type": "activity",
-            "activityType": "mend_clothes",
-            "dayKey": "day-57",
-            "minuteOfDay": 932,
-            "summary": "韩氏在mend clothes上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "mend_clothes",
-            "dayKey": "day-57",
-            "minuteOfDay": 955,
-            "summary": "韩氏在mend clothes上花了一些时间。"
+            "activityType": "forage_small",
+            "facilityType": "",
+            "facilityObjectId": null,
+            "dayKey": "day-68",
+            "minuteOfDay": 786,
+            "summary": "韩氏完成了forage_small，得到浆果x22。",
+            "outputs": [
+              {
+                "itemId": "berry",
+                "count": 22,
+                "name": "浆果",
+                "icon": "",
+                "description": "",
+                "tags": []
+              }
+            ]
           },
           {
             "type": "conversation",
-            "dayKey": "day-57",
-            "minuteOfDay": 1039,
-            "summary": "韩氏和沈福聊了聊夜里送柴。"
-          },
-          {
-            "type": "activity_failed",
-            "activityType": "cook_food",
-            "dayKey": "day-57",
-            "minuteOfDay": 1085,
-            "summary": "韩氏想做cook_food，但缺少柴火。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1254,
-            "summary": "韩氏在rest上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1281,
-            "summary": "韩氏在rest上花了一些时间。"
-          },
-          {
-            "type": "activity",
-            "activityType": "rest",
-            "dayKey": "day-57",
-            "minuteOfDay": 1378,
-            "summary": "韩氏在rest上花了一些时间。"
+            "dayKey": "day-68",
+            "minuteOfDay": 829,
+            "summary": "韩氏和韩猎户聊了聊暮色归家。"
           },
           {
             "type": "daily_plan",
-            "dayKey": "day-58",
-            "minuteOfDay": 2,
-            "summary": "清晨备火取水，上午外出采集，中午前后缝补，傍晚回家做饭并休息。"
+            "dayKey": "day-70",
+            "minuteOfDay": 1,
+            "summary": "清晨备火取水，白天外出采集，傍晚缝补与做饭后回家休息。"
+          },
+          {
+            "type": "daily_plan",
+            "dayKey": "day-71",
+            "minuteOfDay": 0,
+            "summary": "清晨在家备火取水，白天沿村道与林缘采集，傍晚回到家附近缝补并做饭，夜里回家休息。"
           }
         ],
         "relationships": {
@@ -5405,8 +5381,8 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 334
+            "lastTalkDayKey": "day-68",
+            "lastTalkMinute": 829
           },
           "npc_inn_waiter": {
             "affection": 4,
@@ -5440,14 +5416,21 @@
             "affection": 10,
             "trust": 10,
             "tension": 0,
-            "lastTalkDayKey": "day-57",
-            "lastTalkMinute": 1039
+            "lastTalkDayKey": "day-66",
+            "lastTalkMinute": 364
+          },
+          "npc_merchants_wife": {
+            "affection": 0,
+            "trust": 0,
+            "tension": 0,
+            "lastTalkDayKey": "",
+            "lastTalkMinute": -1
           }
         },
         "current": {
-          "action": "travel_to_task",
-          "targetWx": -327.1960439523144,
-          "targetWy": -51.22206671468693
+          "action": "sleep",
+          "targetWx": 0,
+          "targetWy": 0
         },
         "meta": {
           "role": "猎人妻子",
@@ -5944,77 +5927,77 @@
     },
     "npcSim": {
       "version": 2,
-      "dayIndex": 58,
-      "lastTimePercent": 50.60853333333243,
-      "lastMinuteOfDay": 728,
-      "lastDayKey": "day-58",
+      "dayIndex": 71,
+      "lastTimePercent": 15.374966666691611,
+      "lastMinuteOfDay": 221,
+      "lastDayKey": "day-71",
       "lastConversationAt": {
         "npc_temple_monk|npc_yangliu": "day-42:887",
         "npc_yangliu|npc_temple_monk": "day-42:887",
-        "npc_yang_grandpa|npc_yangliu": "day-57:754",
-        "npc_yangliu|npc_yang_grandpa": "day-57:754",
-        "npc_inn_bosslady|npc_inn_cook_owner": "day-57:1212",
-        "npc_inn_cook_owner|npc_inn_bosslady": "day-57:1212",
-        "npc_temple_monk|npc_merchants_wife": "day-56:386",
-        "npc_merchants_wife|npc_temple_monk": "day-56:386",
-        "npc_temple_monk|npc_merchants_husband": "day-57:1149",
-        "npc_merchants_husband|npc_temple_monk": "day-57:1149",
-        "npc_merchants_husband|npc_merchants_wife": "day-57:1245",
-        "npc_merchants_wife|npc_merchants_husband": "day-57:1245",
-        "npc_hunter|npc_hunter_wife": "day-57:334",
-        "npc_hunter_wife|npc_hunter": "day-57:334",
-        "npc_inn_bosslady|npc_inn_waiter": "day-57:1384",
-        "npc_inn_waiter|npc_inn_bosslady": "day-57:1384",
-        "npc_inn_cook_owner|npc_inn_waiter": "day-57:1174",
-        "npc_inn_waiter|npc_inn_cook_owner": "day-57:1174",
+        "npc_yang_grandpa|npc_yangliu": "day-68:694",
+        "npc_yangliu|npc_yang_grandpa": "day-68:694",
+        "npc_inn_bosslady|npc_inn_cook_owner": "day-68:493",
+        "npc_inn_cook_owner|npc_inn_bosslady": "day-68:493",
+        "npc_temple_monk|npc_merchants_wife": "day-68:365",
+        "npc_merchants_wife|npc_temple_monk": "day-68:365",
+        "npc_temple_monk|npc_merchants_husband": "day-68:397",
+        "npc_merchants_husband|npc_temple_monk": "day-68:397",
+        "npc_merchants_husband|npc_merchants_wife": "day-68:519",
+        "npc_merchants_wife|npc_merchants_husband": "day-68:519",
+        "npc_hunter|npc_hunter_wife": "day-68:829",
+        "npc_hunter_wife|npc_hunter": "day-68:829",
+        "npc_inn_bosslady|npc_inn_waiter": "day-68:363",
+        "npc_inn_waiter|npc_inn_bosslady": "day-68:363",
+        "npc_inn_cook_owner|npc_inn_waiter": "day-68:511",
+        "npc_inn_waiter|npc_inn_cook_owner": "day-68:511",
         "npc_inn_waiter|npc_yangliu": "day-27:894",
         "npc_yangliu|npc_inn_waiter": "day-27:894",
         "npc_inn_waiter|npc_hunter_wife": "day-55:374",
         "npc_hunter_wife|npc_inn_waiter": "day-55:374",
-        "npc_inn_waiter|npc_merchants_wife": "day-57:1064",
-        "npc_merchants_wife|npc_inn_waiter": "day-57:1064",
-        "npc_inn_bosslady|npc_merchants_husband": "day-57:377",
-        "npc_merchants_husband|npc_inn_bosslady": "day-57:377",
-        "npc_inn_bosslady|npc_yangliu": "day-37:1066",
-        "npc_yangliu|npc_inn_bosslady": "day-37:1066",
-        "npc_inn_waiter|npc_hunter": "day-54:1002",
-        "npc_hunter|npc_inn_waiter": "day-54:1002",
-        "npc_inn_cook_owner|npc_hunter": "day-54:981",
-        "npc_hunter|npc_inn_cook_owner": "day-54:981",
-        "npc_inn_bosslady|npc_merchants_wife": "day-57:976",
-        "npc_merchants_wife|npc_inn_bosslady": "day-57:976",
-        "npc_inn_waiter|npc_merchants_husband": "day-57:887",
-        "npc_merchants_husband|npc_inn_waiter": "day-57:887",
-        "npc_inn_cook_owner|npc_merchants_husband": "day-53:1210",
-        "npc_merchants_husband|npc_inn_cook_owner": "day-53:1210",
+        "npc_inn_waiter|npc_merchants_wife": "day-68:439",
+        "npc_merchants_wife|npc_inn_waiter": "day-68:439",
+        "npc_inn_bosslady|npc_merchants_husband": "day-68:615",
+        "npc_merchants_husband|npc_inn_bosslady": "day-68:615",
+        "npc_inn_bosslady|npc_yangliu": "day-65:983",
+        "npc_yangliu|npc_inn_bosslady": "day-65:983",
+        "npc_inn_waiter|npc_hunter": "day-65:1067",
+        "npc_hunter|npc_inn_waiter": "day-65:1067",
+        "npc_inn_cook_owner|npc_hunter": "day-65:1170",
+        "npc_hunter|npc_inn_cook_owner": "day-65:1170",
+        "npc_inn_bosslady|npc_merchants_wife": "day-68:474",
+        "npc_merchants_wife|npc_inn_bosslady": "day-68:474",
+        "npc_inn_waiter|npc_merchants_husband": "day-68:572",
+        "npc_merchants_husband|npc_inn_waiter": "day-68:572",
+        "npc_inn_cook_owner|npc_merchants_husband": "day-68:566",
+        "npc_merchants_husband|npc_inn_cook_owner": "day-68:566",
         "npc_merchants_wife|npc_yangliu": "day-57:849",
         "npc_yangliu|npc_merchants_wife": "day-57:849",
         "npc_inn_bosslady|npc_temple_monk": "day-34:1107",
         "npc_temple_monk|npc_inn_bosslady": "day-34:1107",
-        "npc_inn_cook_owner|npc_merchants_wife": "day-57:973",
-        "npc_merchants_wife|npc_inn_cook_owner": "day-57:973",
+        "npc_inn_cook_owner|npc_merchants_wife": "day-61:506",
+        "npc_merchants_wife|npc_inn_cook_owner": "day-61:506",
         "npc_inn_bosslady|npc_hunter": "day-36:865",
         "npc_hunter|npc_inn_bosslady": "day-36:865",
-        "npc_merchants_husband|npc_hunter": "day-36:869",
-        "npc_hunter|npc_merchants_husband": "day-36:869",
+        "npc_merchants_husband|npc_hunter": "day-65:872",
+        "npc_hunter|npc_merchants_husband": "day-65:872",
         "npc_merchants_husband|npc_yangliu": "day-47:1000",
         "npc_yangliu|npc_merchants_husband": "day-47:1000",
-        "npc_inn_cook_owner|npc_hunter_wife": "day-57:1039",
-        "npc_hunter_wife|npc_inn_cook_owner": "day-57:1039",
+        "npc_inn_cook_owner|npc_hunter_wife": "day-66:364",
+        "npc_hunter_wife|npc_inn_cook_owner": "day-66:364",
         "npc_inn_bosslady|npc_hunter_wife": "day-42:341",
         "npc_hunter_wife|npc_inn_bosslady": "day-42:341",
-        "npc_inn_bosslady|npc_yang_grandpa": "day-53:566",
-        "npc_yang_grandpa|npc_inn_bosslady": "day-53:566",
-        "npc_inn_waiter|npc_yang_grandpa": "day-53:569",
-        "npc_yang_grandpa|npc_inn_waiter": "day-53:569",
-        "npc_merchants_wife|npc_yang_grandpa": "day-51:476",
-        "npc_yang_grandpa|npc_merchants_wife": "day-51:476",
+        "npc_inn_bosslady|npc_yang_grandpa": "day-68:434",
+        "npc_yang_grandpa|npc_inn_bosslady": "day-68:434",
+        "npc_inn_waiter|npc_yang_grandpa": "day-68:468",
+        "npc_yang_grandpa|npc_inn_waiter": "day-68:468",
+        "npc_merchants_wife|npc_yang_grandpa": "day-68:476",
+        "npc_yang_grandpa|npc_merchants_wife": "day-68:476",
         "npc_inn_cook_owner|npc_yang_grandpa": "day-57:567",
         "npc_yang_grandpa|npc_inn_cook_owner": "day-57:567",
         "npc_temple_monk|npc_yang_grandpa": "day-53:888",
         "npc_yang_grandpa|npc_temple_monk": "day-53:888",
-        "npc_inn_cook_owner|npc_temple_monk": "day-55:863",
-        "npc_temple_monk|npc_inn_cook_owner": "day-55:863",
+        "npc_inn_cook_owner|npc_temple_monk": "day-65:883",
+        "npc_temple_monk|npc_inn_cook_owner": "day-65:883",
         "npc_merchants_husband|npc_yang_grandpa": "day-55:885",
         "npc_yang_grandpa|npc_merchants_husband": "day-55:885"
       },
@@ -6031,5 +6014,5 @@
       }
     }
   },
-  "updatedAt": "2026-06-01T13:41:11+08:00"
+  "updatedAt": "2026-06-11T20:08:45+08:00"
 }

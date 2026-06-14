@@ -739,6 +739,291 @@
       model._greedyQuads = null;
     }
 
+    function alphaAtRgba(image, x, y) {
+      if (!image || x < 0 || y < 0 || x >= image.width || y >= image.height) return 0;
+      return image.data[(y * image.width + x) * 4 + 3] || 0;
+    }
+
+    function rgbaCanvasFromImage(img, width, height, fitX = "center", fitY = "center") {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.floor(width) || 1);
+      canvas.height = Math.max(1, Math.floor(height) || 1);
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = false;
+      const iw = img.naturalWidth || img.width || 1;
+      const ih = img.naturalHeight || img.height || 1;
+      const scale = Math.min(canvas.width / iw, canvas.height / ih);
+      const dw = Math.max(1, Math.round(iw * scale));
+      const dh = Math.max(1, Math.round(ih * scale));
+      let dx = 0;
+      let dy = 0;
+      if (fitX === "center") dx = Math.floor((canvas.width - dw) * 0.5);
+      else if (fitX === "right") dx = canvas.width - dw;
+      if (fitY === "center") dy = Math.floor((canvas.height - dh) * 0.5);
+      else if (fitY === "bottom") dy = canvas.height - dh;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, dx, dy, dw, dh);
+      return canvas;
+    }
+
+    function maskFromCanvasAlpha(canvas, alphaThreshold = 8) {
+      const rgba = readCanvasRgba(canvas);
+      if (!rgba) return null;
+      const mask = new Uint8Array(rgba.width * rgba.height);
+      for (let i = 0; i < mask.length; i++) {
+        mask[i] = rgba.data[i * 4 + 3] > alphaThreshold ? 1 : 0;
+      }
+      return mask;
+    }
+
+    function decodeNormalPixel(image, x, y, convention = null) {
+      const px = readPixelChannels(image, x, y);
+      if (!px || px[3] <= 8) return null;
+      let nx = px[0] / 127.5 - 1;
+      let ny = px[1] / 127.5 - 1;
+      let nz = px[2] / 127.5 - 1;
+      const green = convention?.green || "up";
+      const blue = convention?.blue || "toward-camera";
+      if (green === "down" || green === "inverted") ny = -ny;
+      if (blue === "away-camera" || blue === "inverted") nz = -nz;
+      const len = Math.hypot(nx, ny, nz) || 1;
+      return { x: nx / len, y: ny / len, z: nz / len };
+    }
+
+    function normalSurfaceDepth(normal, maxDepth, baseDepth) {
+      if (!normal) return Math.max(1, baseDepth || 1);
+      const slope = Math.min(1, Math.hypot(normal.x, normal.y));
+      const facing = Math.max(0, normal.z);
+      const relief = slope * 0.68 + (1 - facing) * 0.32;
+      return Math.max(1, Math.round((baseDepth || 1) + relief * Math.max(1, maxDepth || 1)));
+    }
+
+    function addSolidVoxelClamped(solid, W, H, D, x, y, z) {
+      if (x < 0 || y < 0 || z < 0 || x >= W || y >= H || z >= D) return;
+      solid[voxelSolidIndex(x, y, z, W, D)] = 1;
+    }
+
+    function maskHasVoxel(mask, width, height, x, y, radius = 0) {
+      if (!mask || !width || !height) return true;
+      const ix = Math.round(x);
+      const iy = Math.round(y);
+      const r = Math.max(0, Math.floor(Number(radius) || 0));
+      for (let oy = -r; oy <= r; oy++) {
+        const yy = iy + oy;
+        if (yy < 0 || yy >= height) continue;
+        for (let ox = -r; ox <= r; ox++) {
+          const xx = ix + ox;
+          if (xx < 0 || xx >= width) continue;
+          if (mask[yy * width + xx]) return true;
+        }
+      }
+      return false;
+    }
+
+    function pixelLuma01(image, x, y) {
+      const px = readPixelChannels(image, x, y);
+      if (!px || px[3] <= 8) return null;
+      return (px[0] * 0.2126 + px[1] * 0.7152 + px[2] * 0.0722) / 255;
+    }
+
+    function buildDepthFieldFromCanvas(depthCanvas, supportMask, opts = {}) {
+      const image = readCanvasRgba(depthCanvas);
+      if (!image || !supportMask) return null;
+      const raw = new Float32Array(image.width * image.height);
+      raw.fill(-1);
+      const samples = [];
+      for (let y = 0; y < image.height; y++) {
+        for (let x = 0; x < image.width; x++) {
+          const idx = y * image.width + x;
+          if (!supportMask[idx]) continue;
+          const value = pixelLuma01(image, x, y);
+          if (value == null) continue;
+          raw[idx] = value;
+          samples.push(value);
+        }
+      }
+      if (!samples.length) return null;
+      samples.sort((a, b) => a - b);
+      const loIndex = Math.floor(samples.length * 0.02);
+      const hiIndex = Math.min(samples.length - 1, Math.ceil(samples.length * 0.98));
+      const lo = Number.isFinite(Number(opts.minValue)) ? Number(opts.minValue) : samples[loIndex];
+      const hi = Number.isFinite(Number(opts.maxValue)) ? Number(opts.maxValue) : samples[hiIndex];
+      const inv = 1 / Math.max(0.001, hi - lo);
+      const whiteIsNear = (opts.near || opts.white || "white") !== "black";
+      const out = new Float32Array(image.width * image.height);
+      out.fill(-1);
+      for (let i = 0; i < raw.length; i++) {
+        if (raw[i] < 0) continue;
+        const normalized = Math.max(0, Math.min(1, (raw[i] - lo) * inv));
+        out[i] = whiteIsNear ? 1 - normalized : normalized;
+      }
+      return {
+        width: image.width,
+        height: image.height,
+        values: out,
+        minValue: lo,
+        maxValue: hi,
+        near: whiteIsNear ? "white" : "black",
+      };
+    }
+
+    function addDepthFrontSurface(solid, dims, masks, fields, opts) {
+      const { W, H, D } = dims;
+      const field = fields.front;
+      if (!field || !masks.frontMask) return;
+      const thickness = Math.max(1, Math.round(Number(opts.surfaceThickness) || 2));
+      const radius = Math.max(0, Math.round(Number(opts.supportRadius) || 0));
+      for (let imageY = 0; imageY < H; imageY++) {
+        const y = H - 1 - imageY;
+        for (let x = 0; x < W; x++) {
+          if (!masks.frontMask[imageY * W + x]) continue;
+          const depth01 = field.values[imageY * W + x];
+          if (depth01 < 0) continue;
+          const zCenter = Math.round(depth01 * (D - 1));
+          for (let t = -Math.floor(thickness / 2); t <= Math.ceil(thickness / 2); t++) {
+            const z = zCenter + t;
+            if (opts.strictOrthographicSupport !== false) {
+              const topY = D - 1 - z;
+              if (!maskHasVoxel(masks.sideMask, D, H, z, imageY, radius)) continue;
+              if (!maskHasVoxel(masks.topMask, W, D, x, topY, radius)) continue;
+            }
+            addSolidVoxelClamped(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+    }
+
+    function addDepthSideSurface(solid, dims, masks, fields, opts) {
+      const { W, H, D } = dims;
+      const field = fields.side;
+      if (!field || !masks.sideMask) return;
+      const thickness = Math.max(1, Math.round(Number(opts.surfaceThickness) || 2));
+      const radius = Math.max(0, Math.round(Number(opts.supportRadius) || 0));
+      for (let imageY = 0; imageY < H; imageY++) {
+        const y = H - 1 - imageY;
+        for (let z = 0; z < D; z++) {
+          if (!masks.sideMask[imageY * D + z]) continue;
+          const depth01 = field.values[imageY * D + z];
+          if (depth01 < 0) continue;
+          const xCenter = Math.round(depth01 * (W - 1));
+          for (let t = -Math.floor(thickness / 2); t <= Math.ceil(thickness / 2); t++) {
+            const x = xCenter + t;
+            if (opts.strictOrthographicSupport !== false) {
+              const topY = D - 1 - z;
+              if (!maskHasVoxel(masks.frontMask, W, H, x, imageY, radius)) continue;
+              if (!maskHasVoxel(masks.topMask, W, D, x, topY, radius)) continue;
+            }
+            addSolidVoxelClamped(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+    }
+
+    function addDepthTopSurface(solid, dims, masks, fields, opts) {
+      const { W, H, D } = dims;
+      const field = fields.top;
+      if (!field || !masks.topMask) return;
+      const thickness = Math.max(1, Math.round(Number(opts.surfaceThickness) || 2));
+      const radius = Math.max(0, Math.round(Number(opts.supportRadius) || 0));
+      for (let imageZ = 0; imageZ < D; imageZ++) {
+        const z = D - 1 - imageZ;
+        for (let x = 0; x < W; x++) {
+          if (!masks.topMask[imageZ * W + x]) continue;
+          const depth01 = field.values[imageZ * W + x];
+          if (depth01 < 0) continue;
+          const yCenter = Math.round((1 - depth01) * (H - 1));
+          for (let t = -Math.floor(thickness / 2); t <= Math.ceil(thickness / 2); t++) {
+            const y = yCenter + t;
+            const frontY = H - 1 - y;
+            if (opts.strictOrthographicSupport !== false) {
+              if (!maskHasVoxel(masks.frontMask, W, H, x, frontY, radius)) continue;
+              if (!maskHasVoxel(masks.sideMask, D, H, z, frontY, radius)) continue;
+            }
+            addSolidVoxelClamped(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+    }
+
+    function addNormalFrontSurface(solid, dims, masks, normals, opts, mirrored) {
+      const { W, H, D } = dims;
+      const front = normals.front;
+      if (!front || !masks.frontMask) return;
+      const convention = opts.normalConvention || null;
+      const maxDepth = Math.max(1, Math.round(D * opts.reliefDepthRatio));
+      for (let imageY = 0; imageY < H; imageY++) {
+        const y = H - 1 - imageY;
+        for (let x = 0; x < W; x++) {
+          if (!masks.frontMask[imageY * W + x]) continue;
+          const normal = decodeNormalPixel(front, x, imageY, convention);
+          const depth = normalSurfaceDepth(normal, maxDepth, opts.baseShellThickness);
+          const zStart = mirrored ? 0 : D - 1;
+          const zStep = mirrored ? 1 : -1;
+          for (let t = 0; t < depth; t++) {
+            const z = zStart + zStep * t;
+            if (opts.strictOrthographicSupport) {
+              const topY = D - 1 - z;
+              if (masks.sideMask && !masks.sideMask[imageY * D + z]) continue;
+              if (masks.topMask && !masks.topMask[topY * W + x]) continue;
+            }
+            addSolidVoxelClamped(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+    }
+
+    function addNormalSideSurface(solid, dims, masks, normals, opts, mirrored) {
+      const { W, H, D } = dims;
+      const side = normals.side;
+      if (!side || !masks.sideMask) return;
+      const convention = opts.normalConvention || null;
+      const maxDepth = Math.max(1, Math.round(W * opts.reliefDepthRatio));
+      for (let imageY = 0; imageY < H; imageY++) {
+        const y = H - 1 - imageY;
+        for (let z = 0; z < D; z++) {
+          if (!masks.sideMask[imageY * D + z]) continue;
+          const normal = decodeNormalPixel(side, z, imageY, convention);
+          const depth = normalSurfaceDepth(normal, maxDepth, opts.baseShellThickness);
+          const xStart = mirrored ? 0 : W - 1;
+          const xStep = mirrored ? 1 : -1;
+          for (let t = 0; t < depth; t++) {
+            const x = xStart + xStep * t;
+            if (opts.strictOrthographicSupport) {
+              const topY = D - 1 - z;
+              if (masks.frontMask && !masks.frontMask[imageY * W + x]) continue;
+              if (masks.topMask && !masks.topMask[topY * W + x]) continue;
+            }
+            addSolidVoxelClamped(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+    }
+
+    function addNormalTopSurface(solid, dims, masks, normals, opts) {
+      const { W, H, D } = dims;
+      const top = normals.top;
+      if (!top || !masks.topMask) return;
+      const convention = opts.normalConvention || null;
+      const maxDepth = Math.max(1, Math.round(H * opts.reliefDepthRatio));
+      for (let topY = 0; topY < D; topY++) {
+        const z = D - 1 - topY;
+        for (let x = 0; x < W; x++) {
+          if (!masks.topMask[topY * W + x]) continue;
+          const normal = decodeNormalPixel(top, x, topY, convention);
+          const depth = normalSurfaceDepth(normal, maxDepth, opts.baseShellThickness);
+          for (let t = 0; t < depth; t++) {
+            const y = H - 1 - t;
+            if (opts.strictOrthographicSupport) {
+              const imageY = H - 1 - y;
+              if (masks.frontMask && !masks.frontMask[imageY * W + x]) continue;
+              if (masks.sideMask && !masks.sideMask[imageY * D + z]) continue;
+            }
+            addSolidVoxelClamped(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+    }
+
     function bytesToBase64(bytes) {
       if (!bytes || !bytes.length) return "";
       let binary = "";
@@ -2876,6 +3161,46 @@
       };
     }
 
+    async function normalizeNormalThreeViews({ normalMapUrl, normalFrontUrl, normalSideUrl, normalTopUrl, rotateTop }) {
+      if (normalFrontUrl && normalSideUrl && normalTopUrl) {
+        return {
+          frontUrl: normalFrontUrl,
+          sideUrl: normalSideUrl,
+          topUrl: rotateTop ? await rotateImageDataUrl90(normalTopUrl, true) : normalTopUrl,
+          source: "split",
+        };
+      }
+      if (!normalMapUrl) return null;
+      const cleaned = await removeAllWhiteBackground(normalMapUrl);
+      const views = await extractBuildingThreeViews(cleaned);
+      return {
+        frontUrl: views.front,
+        sideUrl: views.side,
+        topUrl: rotateTop ? await rotateImageDataUrl90(views.top, true) : views.top,
+        source: "atlas",
+      };
+    }
+
+    async function normalizeDepthThreeViews({ depthMapUrl, depthFrontUrl, depthSideUrl, depthTopUrl, rotateTop }) {
+      if (depthFrontUrl && depthSideUrl && depthTopUrl) {
+        return {
+          frontUrl: depthFrontUrl,
+          sideUrl: depthSideUrl,
+          topUrl: rotateTop ? await rotateImageDataUrl90(depthTopUrl, true) : depthTopUrl,
+          source: "split",
+        };
+      }
+      if (!depthMapUrl) return null;
+      const cleaned = await removeAllWhiteBackground(depthMapUrl);
+      const views = await extractBuildingThreeViews(cleaned);
+      return {
+        frontUrl: views.front,
+        sideUrl: views.side,
+        topUrl: rotateTop ? await rotateImageDataUrl90(views.top, true) : views.top,
+        source: "atlas",
+      };
+    }
+
     function isEdgeBackgroundWhite(r, g, b, a) {
       if (a < 8) return true;
       const max = Math.max(r, g, b);
@@ -3389,6 +3714,15 @@
         sideUrl,
         topUrl,
         voxelOptions: opts,
+        geometry: entry.geometry || null,
+        normalMapUrl: entry.files.normalMap ? bustAssetUrl(entry.files.normalMap, seed) : "",
+        normalFrontUrl: entry.files.normalFront ? bustAssetUrl(entry.files.normalFront, seed) : "",
+        normalSideUrl: entry.files.normalSide ? bustAssetUrl(entry.files.normalSide, seed) : "",
+        normalTopUrl: entry.files.normalTop ? bustAssetUrl(entry.files.normalTop, seed) : "",
+        depthMapUrl: entry.files.depthMap ? bustAssetUrl(entry.files.depthMap, seed) : "",
+        depthFrontUrl: entry.files.depthFront ? bustAssetUrl(entry.files.depthFront, seed) : "",
+        depthSideUrl: entry.files.depthSide ? bustAssetUrl(entry.files.depthSide, seed) : "",
+        depthTopUrl: entry.files.depthTop ? bustAssetUrl(entry.files.depthTop, seed) : "",
       });
       return {
         id: entry.id,
@@ -3396,6 +3730,8 @@
         originalSrc: entry.files.preview ? bustAssetUrl(entry.files.preview, seed) : frontUrl,
         processedSrc: entry.files.previewProcessed ? bustAssetUrl(entry.files.previewProcessed, seed) : frontUrl,
         views: built.views,
+        normalViews: built.normalViews || null,
+        depthViews: built.depthViews || null,
         model: built.model,
         voxelOptions: built.voxelOptions,
         tags: normalizeSemanticTags(entry.tags, entry.prompt || entry.title || ""),
@@ -3415,7 +3751,246 @@
       if (placeAfterLoad) startPlacementGenerated();
     }
 
-    async function buildPlacedBuildingModelFromViews({ frontUrl, sideUrl, topUrl, voxelOptions }) {
+    function snapEvenVoxelDim(v) {
+      const n = Math.max(8, Math.round(v));
+      return n % 2 === 0 ? n : n + 1;
+    }
+
+    async function buildVoxelModelFromNormalCharts({
+      frontUrl,
+      sideUrl,
+      topUrl,
+      normalMapUrl,
+      normalFrontUrl,
+      normalSideUrl,
+      normalTopUrl,
+      rotatedTop,
+      voxelOptions,
+    }) {
+      const normalViews = await normalizeNormalThreeViews({
+        normalMapUrl,
+        normalFrontUrl,
+        normalSideUrl,
+        normalTopUrl,
+        rotateTop: rotatedTop,
+      });
+      if (!normalViews) {
+        throw new Error("normal-tsdf-voxel-v1 需要 normalMap 或 normalFront/normalSide/normalTop。");
+      }
+
+      const opts = Object.assign(
+        {
+          targetLongest: 144,
+          shellOnly: true,
+          reliefDepthRatio: 0.12,
+          baseShellThickness: 2,
+          mirroredSurfaces: true,
+          strictOrthographicSupport: false,
+          normalConvention: {
+            space: "view",
+            green: "up",
+            blue: "toward-camera",
+          },
+        },
+        voxelOptions || {}
+      );
+      const [frontImg, sideImg, topImg, normalFrontImg, normalSideImg, normalTopImg] = await Promise.all([
+        loadImage(frontUrl),
+        loadImage(sideUrl),
+        loadImage(topUrl),
+        loadImage(normalViews.frontUrl),
+        loadImage(normalViews.sideUrl),
+        loadImage(normalViews.topUrl),
+      ]);
+      const axesX = Math.max(1, frontImg.naturalWidth || frontImg.width || topImg.naturalWidth || topImg.width || 1);
+      const axesY = Math.max(1, frontImg.naturalHeight || frontImg.height || sideImg.naturalHeight || sideImg.height || 1);
+      const axesZ = Math.max(1, sideImg.naturalWidth || sideImg.width || topImg.naturalHeight || topImg.height || 1);
+      const longest = Math.max(axesX, axesY, axesZ);
+      const scale = (Number(opts.targetLongest) || 144) / Math.max(1, longest);
+      const W = clampNumber(snapEvenVoxelDim(axesX * scale), 8, 192);
+      const H = clampNumber(snapEvenVoxelDim(axesY * scale), 8, 192);
+      const D = clampNumber(snapEvenVoxelDim(axesZ * scale), 8, 192);
+
+      const frontCanvas = rgbaCanvasFromImage(frontImg, W, H, "center", "bottom");
+      const sideCanvas = rgbaCanvasFromImage(sideImg, D, H, "center", "bottom");
+      const topCanvas = rgbaCanvasFromImage(topImg, W, D, "center", "center");
+      const normalFrontCanvas = rgbaCanvasFromImage(normalFrontImg, W, H, "center", "bottom");
+      const normalSideCanvas = rgbaCanvasFromImage(normalSideImg, D, H, "center", "bottom");
+      const normalTopCanvas = rgbaCanvasFromImage(normalTopImg, W, D, "center", "center");
+
+      const frontMask = maskFromCanvasAlpha(frontCanvas);
+      const sideMask = maskFromCanvasAlpha(sideCanvas);
+      const topMask = maskFromCanvasAlpha(topCanvas);
+      if (!frontMask || !sideMask || !topMask) {
+        throw new Error("normal-tsdf-voxel-v1 无法读取三视图 alpha 域。");
+      }
+      const solid = new Uint8Array(W * H * D);
+      const dims = { W, H, D };
+      const masks = { frontMask, sideMask, topMask };
+      const normals = {
+        front: readCanvasRgba(normalFrontCanvas),
+        side: readCanvasRgba(normalSideCanvas),
+        top: readCanvasRgba(normalTopCanvas),
+      };
+
+      addNormalFrontSurface(solid, dims, masks, normals, opts, false);
+      addNormalSideSurface(solid, dims, masks, normals, opts, false);
+      addNormalTopSurface(solid, dims, masks, normals, opts);
+      if (opts.mirroredSurfaces !== false) {
+        addNormalFrontSurface(solid, dims, masks, normals, opts, true);
+        addNormalSideSurface(solid, dims, masks, normals, opts, true);
+      }
+
+      const model = {
+        W,
+        H,
+        D,
+        solid,
+        list: [],
+        frontMask,
+        sideMask,
+        topMask,
+        _normalFront: normalFrontCanvas,
+        _normalSide: normalSideCanvas,
+        _normalTop: normalTopCanvas,
+        _constructionMethod: "normal-tsdf-voxel-v1",
+        _normalViews: normalViews,
+      };
+      rebuildVoxelListFromSolid(model, opts.shellOnly !== false);
+      if (!model.list.length) {
+        throw new Error("normal-tsdf-voxel-v1 生成体素为空，请检查 normal map 的三视图 alpha 域。");
+      }
+      await globalThis.applyTexturedAtlasesFromDataUrls(model, {
+        frontDataUrl: frontUrl,
+        sideDataUrl: sideUrl,
+        topDataUrl: topUrl,
+      });
+      return finalizeVoxelModel(model);
+    }
+
+    async function buildVoxelModelFromDepthCharts({
+      frontUrl,
+      sideUrl,
+      topUrl,
+      depthMapUrl,
+      depthFrontUrl,
+      depthSideUrl,
+      depthTopUrl,
+      rotatedTop,
+      voxelOptions,
+      depthConvention,
+    }) {
+      const depthViews = await normalizeDepthThreeViews({
+        depthMapUrl,
+        depthFrontUrl,
+        depthSideUrl,
+        depthTopUrl,
+        rotateTop: rotatedTop,
+      });
+      if (!depthViews) {
+        throw new Error("depth-ortho-voxel-v1 需要 depthMap 或 depthFront/depthSide/depthTop。");
+      }
+      const opts = Object.assign(
+        {
+          targetLongest: 144,
+          shellOnly: true,
+          fillMode: "surface-shell",
+          surfaceThickness: 2,
+          supportRadius: 2,
+          strictOrthographicSupport: true,
+        },
+        voxelOptions || {},
+        { depthConvention: depthConvention || voxelOptions?.depthConvention || {} }
+      );
+      const [frontImg, sideImg, topImg, depthFrontImg, depthSideImg, depthTopImg] = await Promise.all([
+        loadImage(frontUrl),
+        loadImage(sideUrl),
+        loadImage(topUrl),
+        loadImage(depthViews.frontUrl),
+        loadImage(depthViews.sideUrl),
+        loadImage(depthViews.topUrl),
+      ]);
+      const axesX = Math.max(1, frontImg.naturalWidth || frontImg.width || topImg.naturalWidth || topImg.width || 1);
+      const axesY = Math.max(1, frontImg.naturalHeight || frontImg.height || sideImg.naturalHeight || sideImg.height || 1);
+      const axesZ = Math.max(1, sideImg.naturalWidth || sideImg.width || topImg.naturalHeight || topImg.height || 1);
+      const longest = Math.max(axesX, axesY, axesZ);
+      const scale = (Number(opts.targetLongest) || 144) / Math.max(1, longest);
+      const W = clampNumber(snapEvenVoxelDim(axesX * scale), 8, 192);
+      const H = clampNumber(snapEvenVoxelDim(axesY * scale), 8, 192);
+      const D = clampNumber(snapEvenVoxelDim(axesZ * scale), 8, 192);
+
+      const frontCanvas = rgbaCanvasFromImage(frontImg, W, H, "center", "bottom");
+      const sideCanvas = rgbaCanvasFromImage(sideImg, D, H, "center", "bottom");
+      const topCanvas = rgbaCanvasFromImage(topImg, W, D, "center", "center");
+      const depthFrontCanvas = rgbaCanvasFromImage(depthFrontImg, W, H, "center", "bottom");
+      const depthSideCanvas = rgbaCanvasFromImage(depthSideImg, D, H, "center", "bottom");
+      const depthTopCanvas = rgbaCanvasFromImage(depthTopImg, W, D, "center", "center");
+
+      const frontMask = maskFromCanvasAlpha(frontCanvas);
+      const sideMask = maskFromCanvasAlpha(sideCanvas);
+      const topMask = maskFromCanvasAlpha(topCanvas);
+      if (!frontMask || !sideMask || !topMask) {
+        throw new Error("depth-ortho-voxel-v1 无法读取三视图 alpha 域。");
+      }
+      const fields = {
+        front: buildDepthFieldFromCanvas(depthFrontCanvas, frontMask, opts.depthConvention),
+        side: buildDepthFieldFromCanvas(depthSideCanvas, sideMask, opts.depthConvention),
+        top: buildDepthFieldFromCanvas(depthTopCanvas, topMask, opts.depthConvention),
+      };
+      if (!fields.front || !fields.side || !fields.top) {
+        throw new Error("depth-ortho-voxel-v1 无法读取三张 depth map。");
+      }
+
+      const solid = new Uint8Array(W * H * D);
+      const dims = { W, H, D };
+      const masks = { frontMask, sideMask, topMask };
+      addDepthFrontSurface(solid, dims, masks, fields, opts);
+      addDepthSideSurface(solid, dims, masks, fields, opts);
+      addDepthTopSurface(solid, dims, masks, fields, opts);
+
+      const model = {
+        W,
+        H,
+        D,
+        solid,
+        list: [],
+        frontMask,
+        sideMask,
+        topMask,
+        _depthFront: depthFrontCanvas,
+        _depthSide: depthSideCanvas,
+        _depthTop: depthTopCanvas,
+        _constructionMethod: "depth-ortho-voxel-v1",
+        _depthViews: depthViews,
+        _depthFields: fields,
+      };
+      rebuildVoxelListFromSolid(model, opts.shellOnly !== false);
+      if (!model.list.length) {
+        throw new Error("depth-ortho-voxel-v1 生成体素为空，请检查 depth map 与三视图轮廓是否对齐。");
+      }
+      await globalThis.applyTexturedAtlasesFromDataUrls(model, {
+        frontDataUrl: frontUrl,
+        sideDataUrl: sideUrl,
+        topDataUrl: topUrl,
+      });
+      return finalizeVoxelModel(model);
+    }
+
+    async function buildPlacedBuildingModelFromViews({
+      frontUrl,
+      sideUrl,
+      topUrl,
+      voxelOptions,
+      geometry,
+      normalMapUrl,
+      normalFrontUrl,
+      normalSideUrl,
+      normalTopUrl,
+      depthMapUrl,
+      depthFrontUrl,
+      depthSideUrl,
+      depthTopUrl,
+    }) {
       const normalizedViews = await normalizeBuildingThreeViews({ frontUrl, sideUrl, topUrl });
       frontUrl = normalizedViews.frontUrl;
       sideUrl = normalizedViews.sideUrl;
@@ -3429,6 +4004,57 @@
         },
         voxelOptions || {}
       );
+      if (geometry?.method === "normal-tsdf-voxel-v1") {
+        const normalModel = await buildVoxelModelFromNormalCharts({
+          frontUrl,
+          sideUrl,
+          topUrl,
+          normalMapUrl: normalMapUrl || geometry.normalMap,
+          normalFrontUrl: normalFrontUrl || geometry.normalMaps?.front,
+          normalSideUrl: normalSideUrl || geometry.normalMaps?.side,
+          normalTopUrl: normalTopUrl || geometry.normalMaps?.top,
+          rotatedTop: normalizedViews.rotatedTop,
+          voxelOptions: Object.assign({}, baseOpts, geometry.voxel || {}, {
+            normalConvention: geometry.normalConvention || geometry.voxel?.normalConvention,
+          }),
+        });
+        return {
+          model: normalModel,
+          voxelOptions: Object.assign({}, baseOpts, geometry.voxel || {}, { method: geometry.method }),
+          views: {
+            front: frontUrl,
+            side: sideUrl,
+            top: topUrl,
+          },
+          normalizedViews,
+          normalViews: normalModel._normalViews || null,
+        };
+      }
+      if (geometry?.method === "depth-ortho-voxel-v1") {
+        const depthModel = await buildVoxelModelFromDepthCharts({
+          frontUrl,
+          sideUrl,
+          topUrl,
+          depthMapUrl: depthMapUrl || geometry.depthMap,
+          depthFrontUrl: depthFrontUrl || geometry.depthMaps?.front,
+          depthSideUrl: depthSideUrl || geometry.depthMaps?.side,
+          depthTopUrl: depthTopUrl || geometry.depthMaps?.top,
+          rotatedTop: normalizedViews.rotatedTop,
+          voxelOptions: Object.assign({}, baseOpts, geometry.voxel || {}),
+          depthConvention: geometry.depthConvention || geometry.voxel?.depthConvention,
+        });
+        return {
+          model: depthModel,
+          voxelOptions: Object.assign({}, baseOpts, geometry.voxel || {}, { method: geometry.method }),
+          views: {
+            front: frontUrl,
+            side: sideUrl,
+            top: topUrl,
+          },
+          normalizedViews,
+          depthViews: depthModel._depthViews || null,
+        };
+      }
       async function buildOnce(opts) {
         const rawModel = await globalThis.buildVoxelModelFromDataUrls({
           frontDataUrl: frontUrl,
