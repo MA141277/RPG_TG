@@ -1,27 +1,27 @@
 import type { TempleHouseTaskDefinition } from "../../domain/temple-house";
 
 export const templeHouseGreetingLines = [
-  "跨进寺门，木鱼声和香火气扑面而来，住持已经在廊下等你。",
+  "（已在廊下等你）跨进寺门时，木鱼声和香火气一同扑面而来。",
   "庙里不问刀兵先后，但乱世中的人，总要先安定心神。",
 ];
 
 export const templeHouseOpenLines = [
-  "住持合十而立，示意你把近来的烦忧和打算慢慢说来。",
+  "（合十而立）示意你把近来的烦忧和打算慢慢说来。",
   "求签可问前路，布施可积香火。若心还乱，先坐下听钟声也无妨。",
 ];
 
 export const templeHouseRestMenuLines = [
-  "寺里钟声低缓，住持让你量力歇息。",
+  "（让你量力歇息）寺里钟声低缓，正适合静养。",
   "乱世行路要紧，先把体力养回来，才接得住下一桩差事。",
 ];
 
 export const templeHouseMeetingIntroLines = [
-  "住持召集寺中僧众，在偏殿前点起一炷清香。",
+  "（召集寺中僧众，在偏殿前点起一炷清香）",
   "“今日本寺评定，不论修行深浅，先看你这段时日做了多少实事。”",
 ];
 
 export const templeHouseMeetingReflectionLines = [
-  "住持翻过记事木牍，缓缓说道：“乱世里守住本心，比背熟经卷更难。”",
+  "（翻过记事木牍）乱世里守住本心，比背熟经卷更难。",
   "“寺里缺人手，也缺米粮。你既在庙中，就该担起眼前这一份。”",
 ];
 

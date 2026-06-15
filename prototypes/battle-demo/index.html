@@ -391,23 +391,58 @@
     .capture-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
 
     .unit {
-      width: calc(var(--tile-w) * 0.72);
-      min-height: calc(var(--tile-w) * 0.52);
+      width: calc(var(--tile-w) * 0.74);
+      min-height: calc(var(--tile-w) * 0.64);
       border-radius: 3px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
       font-size: clamp(0.4rem, calc(var(--tile-w) * 0.1), 0.55rem);
       font-weight: 600;
       cursor: grab;
-      border: 2px solid;
+      border: 0;
       position: relative;
       z-index: 1;
       line-height: 1.05;
       text-align: center;
-      padding: 1px;
-      box-shadow: 0 5px 8px rgba(0,0,0,0.35);
+      padding: calc(var(--tile-w) * 0.38) 2px 3px;
+      background: transparent;
+      color: #f7ecd2;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.88);
+    }
+
+    .unit::after {
+      content: "";
+      position: absolute;
+      left: 16%;
+      right: 16%;
+      bottom: 5px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.34);
+      filter: blur(2px);
+      z-index: -1;
+    }
+
+    .unit-art {
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      width: calc(var(--tile-w) * 0.9);
+      height: calc(var(--tile-w) * 1.02);
+      transform: translateX(-50%);
+      background: var(--unit-sprite) center bottom / contain no-repeat;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .unit > span:not(.unit-art):not(.commander-badge) {
+      min-width: 78%;
+      padding: 0 3px;
+      border-radius: 2px;
+      background: rgba(0,0,0,0.46);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
     }
 
     .formation-chips {
@@ -423,14 +458,15 @@
       background: rgba(255,255,255,0.58);
     }
 
-    .unit.player { background: #1e3a5f; border-color: #5a9fd4; color: #cfe8ff; }
-    .unit.enemy { background: #5f1e1e; border-color: #d45a5a; color: #ffcfcf; }
-    .unit.commander { box-shadow: 0 0 4px gold; }
+    .unit.player { color: #ffd9d2; }
+    .unit.enemy { color: #d9ecff; }
+    .unit.commander .unit-art { filter: drop-shadow(0 0 5px rgba(246,211,107,0.8)); }
+    .unit.supply-cart { background: #4a3a18; border: 2px solid #e8b84a; color: #ffe8a0; padding: 1px; box-shadow: 0 5px 8px rgba(0,0,0,0.35); }
+    .unit.supply-cart::after { display: none; }
     .unit.acted { opacity: 0.55; }
     .unit.chaos { animation: shake 0.4s infinite; border-color: #ff8800; }
     .unit.rout { animation: flee-pulse 0.8s infinite; border-color: #888; opacity: 0.65; }
     .unit.in-river { outline: 1px dashed #6af; }
-
     .unit-status {
       font-size: 0.48rem;
       font-weight: 400;
@@ -672,6 +708,8 @@
       flex-shrink: 0;
       padding: 0 5px;
     }
+    .deploy-pool .unit::after { display: none; }
+    .deploy-pool .unit.player { background: #5f1e1e; border: 2px solid #d45a5a; color: #ffd9d2; }
 
     .type-tag {
       display: inline-block;
@@ -756,8 +794,8 @@
       inset: 0;
       z-index: 120;
       background:
-        linear-gradient(rgba(12, 16, 18, 0.06), rgba(12, 16, 18, 0.1)),
-        url("../../ui/battle/battlegroun_forest.png") center / cover no-repeat;
+        linear-gradient(rgba(12, 16, 18, 0.03), rgba(12, 16, 18, 0.08)),
+        url("../../ui/battle/stage.png") center / cover no-repeat;
       display: block;
       overflow: hidden;
     }
@@ -814,14 +852,15 @@
     .battle-morale-bar.enemy .battle-morale-fill { background: linear-gradient(90deg, #cf3e45, #65171b); }
     .formation-side {
       position: absolute;
-      top: 18%;
-      width: min(450px, 38vw);
-      height: 48vh;
-      min-height: 300px;
+      top: auto;
+      bottom: 168px;
+      width: min(360px, 32vw);
+      height: min(270px, 40vh);
+      min-height: 230px;
       z-index: 2;
     }
-    .formation-side.player { left: 9vw; }
-    .formation-side.enemy { right: 9vw; }
+    .formation-side.player { left: 6vw; }
+    .formation-side.enemy { right: 6vw; }
     .formation-side h2 {
       position: absolute;
       top: -32px;
@@ -839,10 +878,10 @@
     }
     .formation-slot {
       position: absolute;
-      left: calc(var(--col) * 27% + var(--row-offset));
-      top: calc(var(--row) * 30% + 10px);
-      width: 88px;
-      min-height: 128px;
+      left: calc(var(--x) * 1%);
+      top: calc(var(--y) * 1%);
+      width: 122px;
+      min-height: 224px;
       border: 0;
       border-radius: 999px 999px 42px 42px;
       background: transparent;
@@ -851,12 +890,11 @@
       line-height: 1.2;
       transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s, opacity 0.18s;
       filter: drop-shadow(0 14px 8px rgba(0,0,0,0.42));
-      --row-offset: 0px;
     }
-    .formation-slot.row-middle { --row-offset: -28px; }
-    .formation-slot.row-rear { --row-offset: -56px; }
-    .formation-side.enemy .formation-slot.row-middle { --row-offset: 28px; }
-    .formation-side.enemy .formation-slot.row-rear { --row-offset: 56px; }
+    .formation-side.enemy .formation-slot {
+      left: auto;
+      right: calc(var(--x) * 1%);
+    }
     .formation-slot.empty { opacity: 0; pointer-events: none; }
     .formation-slot.fallen { opacity: 0.42; filter: grayscale(0.85) drop-shadow(0 10px 6px rgba(0,0,0,0.35)); }
     .formation-slot.striker {
@@ -879,6 +917,33 @@
         radial-gradient(circle at 50% 20%, rgba(255,255,255,0.32), transparent 20%),
         linear-gradient(180deg, #6fa3d8, #1d3556 58%, #11151d);
       box-shadow: inset 0 0 14px rgba(255,255,255,0.12), 0 12px 0 rgba(0,0,0,0.18);
+    }
+    .formation-spine-canvas {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 186px;
+      height: 259px;
+      margin: -78px auto -26px;
+      pointer-events: none;
+    }
+    .formation-side.enemy .formation-spine-canvas {
+      transform: scaleX(-1);
+    }
+    .battle-spine-proxy {
+      position: absolute;
+      z-index: 6;
+      width: 240px;
+      height: 333px;
+      pointer-events: none;
+      filter: drop-shadow(0 18px 10px rgba(0,0,0,0.48));
+      will-change: transform, left, top;
+    }
+    .battle-spine-proxy.enemy {
+      transform: scaleX(-1);
+    }
+    .formation-slot.is-proxying .formation-spine-canvas {
+      visibility: hidden;
     }
     .formation-side.enemy .formation-standee {
       background:
@@ -1097,6 +1162,7 @@
     </div>
   </div>
 
+  <script src="../../tools/spine-new-recovered-project.generated.js"></script>
   <script>
     const COLS = 12, ROWS = 10;
     const PLAYER_DEPLOY_ROWS = [7, 8, 9];
@@ -1106,6 +1172,32 @@
     const DEFENSE_PLAYER_UNITS_REQUIRED = 2;
     const RIVER_DAMAGE_MULT = 1.4;
     const FOREST_LOCK_RANGE = 3;
+    const BOARD_UNIT_SPRITES = {
+      player: {
+        man: {
+          down: '../../ui/battle/red_man/material-202606150823-001.png',
+          up: '../../ui/battle/red_man/material-202606150823-002.png',
+          left: '../../ui/battle/red_man/material-202606150823-003.png',
+          right: '../../ui/battle/red_man/material-202606150823-004.png',
+        },
+        horse: {
+          up: '../../ui/battle/red_horse/material-202606150817-001.png',
+          down: '../../ui/battle/red_horse/material-202606150817-002.png',
+        },
+      },
+      enemy: {
+        man: {
+          down: '../../ui/battle/blue_man/material-202606150819-001.png',
+          up: '../../ui/battle/blue_man/material-202606150819-002.png',
+          left: '../../ui/battle/blue_man/material-202606150819-003.png',
+          right: '../../ui/battle/blue_man/material-202606150819-004.png',
+        },
+        horse: {
+          down: '../../ui/battle/blue_horse/material-202606150815-001.png',
+          up: '../../ui/battle/blue_horse/material-202606150815-002.png',
+        },
+      },
+    };
 
     const TERRAIN = {
       plain: { label: '平', name: '平原' },
@@ -1230,6 +1322,9 @@
     let supplyCartClaimSide = null;
     let playerCamp = null, enemyCamp = null;
     let droppedSupplies = [];
+    let battleSpineRendererPromise = null;
+    let battleSpineIdleRaf = 0;
+    let battleSpineLastIdleRender = 0;
     const CART_MAX_HP = 80;
     const CART_MOVE_PER_TURN = 1;
     const SUPPLY_CAPTURE_MORALE_BONUS = 6;
@@ -1240,6 +1335,37 @@
     const STRONGPOINT_TYPES = ['camp', 'supplyDepot', 'watchTower', 'watchTower'];
     let battleRecap = [];
     let battleConfig = { lessonTags: [] };
+    let initialBattleConfig = null;
+    let lastBattleResult = null;
+    const STORY_BATTLE_SCENARIOS = {
+      'sundeya-rescue': {
+        scenarioId: 'sundeya-rescue',
+        embedded: true,
+        objectiveId: 'annihilation',
+        lessonTags: ['CommanderBattle', 'AmbushBattle'],
+        autoDeployment: true,
+        playerUnits: [
+          { name: '朱重八本队', controller: 'player', template: 'vanguard', troopType: 'infantry', soldiers: 360, x: 2, y: 7, morale: 86, general: { name: '朱重八', leadership: 78, strength: 82, intelligence: 73 } },
+          { name: '郭子兴中军', controller: 'npc', template: 'guard', troopType: 'spear', soldiers: 520, x: 4, y: 7, morale: 84, general: { name: '郭子兴', leadership: 84, strength: 68, intelligence: 72 }, isCommander: true },
+          { name: '汤和队', controller: 'npc', template: 'assault', troopType: 'cavalry', soldiers: 380, x: 1, y: 8, morale: 82, general: { name: '汤和', leadership: 76, strength: 77, intelligence: 68 } },
+          { name: '徐达队', controller: 'npc', template: 'missile', troopType: 'archer', soldiers: 360, x: 5, y: 8, morale: 82, general: { name: '徐达', leadership: 82, strength: 76, intelligence: 80 } },
+          { name: '孙德崖残队', controller: 'npc', template: 'guard', troopType: 'spear', soldiers: 180, x: 7, y: 4, morale: 46, general: { name: '孙德崖', leadership: 70, strength: 65, intelligence: 63 } },
+        ],
+        enemyUnits: [
+          { name: '元军北哨', template: 'mobile', troopType: 'cavalry', soldiers: 280, x: 7, y: 3, morale: 76, general: { name: '元军百户', leadership: 68, strength: 72, intelligence: 56 } },
+          { name: '元军前锋', template: 'vanguard', troopType: 'infantry', soldiers: 340, x: 8, y: 4, morale: 78, general: { name: '元军千户', leadership: 76, strength: 75, intelligence: 61 }, isCommander: true },
+          { name: '元军南哨', template: 'missile', troopType: 'archer', soldiers: 260, x: 7, y: 5, morale: 74, general: { name: '元军弓手头目', leadership: 65, strength: 62, intelligence: 64 } },
+        ],
+        strategicPoints: [],
+        terrain: [
+          { x: 3, y: 6, terrain: 'forest' },
+          { x: 4, y: 5, terrain: 'forest' },
+          { x: 6, y: 4, terrain: 'hill' },
+          { x: 7, y: 4, terrain: 'plain' },
+          { x: 8, y: 4, terrain: 'plain' },
+        ],
+      },
+    };
 
     // ─── BattleTutorialManager ───────────────────────────────
     const BattleTutorialManager = (() => {
@@ -1995,6 +2121,42 @@
       placeFactionCamps(used);
     }
 
+    function applyScenarioMap() {
+      const scenario = battleConfig.scenario;
+      if (!scenario) return;
+
+      for (const cell of grid) {
+        cell.terrain = 'plain';
+        delete cell.campZone;
+      }
+
+      for (const patch of scenario.terrain || []) {
+        const cell = getCell(patch.x, patch.y);
+        if (cell) cell.terrain = patch.terrain;
+      }
+
+      strategicPoints = (scenario.strategicPoints || []).map(point => ({
+        id: point.id || `${point.type}_${point.x}_${point.y}`,
+        type: point.type,
+        x: point.x,
+        y: point.y,
+        owner: point.owner || 'neutral',
+        captureSide: null,
+        captureProgress: 0,
+      }));
+
+      playerCamp = { side: 'player', cells: [{ x: 1, y: 8 }, { x: 2, y: 8 }] };
+      enemyCamp = { side: 'enemy', cells: [{ x: 9, y: 2 }, { x: 10, y: 2 }] };
+      for (const cell of playerCamp.cells) {
+        const target = getCell(cell.x, cell.y);
+        if (target) target.campZone = 'player';
+      }
+      for (const cell of enemyCamp.cells) {
+        const target = getCell(cell.x, cell.y);
+        if (target) target.campZone = 'enemy';
+      }
+    }
+
     function placeFactionCamps(used) {
       const playerCells = [
         { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 9 }, { x: 2, y: 9 },
@@ -2303,6 +2465,38 @@
       `;
     }
 
+    function getDefaultUnitFacing(side) {
+      return side === 'enemy' ? 'right' : 'up';
+    }
+
+    function getFacingFromDelta(dx, dy, fallback = 'down') {
+      if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+      if (dy !== 0) return dy > 0 ? 'down' : 'up';
+      if (dx !== 0) return dx > 0 ? 'right' : 'left';
+      return fallback;
+    }
+
+    function faceUnitToward(unit, tx, ty) {
+      if (!unit) return;
+      unit.facing = getFacingFromDelta(tx - unit.x, ty - unit.y, unit.facing || getDefaultUnitFacing(unit.side));
+    }
+
+    function getBoardUnitSprite(unit) {
+      const sideSprites = BOARD_UNIT_SPRITES[unit.side === 'enemy' ? 'enemy' : 'player'];
+      const facing = unit.facing || getDefaultUnitFacing(unit.side);
+      if (unit.isCommander) {
+        const horseFacing = facing === 'down'
+          ? 'down'
+          : facing === 'up'
+            ? 'up'
+            : unit.side === 'enemy'
+              ? 'down'
+              : 'up';
+        return sideSprites.horse[horseFacing];
+      }
+      return sideSprites.man[facing] || sideSprites.man[getDefaultUnitFacing(unit.side)];
+    }
+
     function createUnit(name, troopType, soldiers, side, general, extra = {}) {
       const base = TROOP_TYPES[troopType];
       const templateKey = extra.formationTemplate;
@@ -2317,6 +2511,7 @@
         side, x: -1, y: -1,
         hasMoved: false, hasActed: false,
         inRiver: false,
+        facing: getDefaultUnitFacing(side),
         skillUses: { ...SKILL_USES },
         chargeReady: false,
         isCommander: false,
@@ -2328,7 +2523,30 @@
       return unit;
     }
 
+    function createScenarioUnit(definition, side) {
+      const unit = createUnit(
+        definition.name,
+        definition.troopType,
+        definition.soldiers,
+        side,
+        definition.general,
+        {
+          formationTemplate: definition.template,
+          controller: definition.controller || (side === 'player' ? 'player' : 'npc'),
+        }
+      );
+      unit.x = definition.x;
+      unit.y = definition.y;
+      if (typeof definition.morale === 'number') unit.morale = definition.morale;
+      if (definition.isCommander) unit.isCommander = true;
+      return unit;
+    }
+
     function createPlayerPool() {
+      if (battleConfig.scenario?.playerUnits?.length) {
+        return battleConfig.scenario.playerUnits.map(definition => createScenarioUnit(definition, 'player'));
+      }
+
       return [
         createUnit('先锋编队', 'infantry', 420, 'player', null, { formationTemplate: 'vanguard' }),
         createUnit('突击编队', 'cavalry', 360, 'player', null, { formationTemplate: 'assault' }),
@@ -2339,6 +2557,13 @@
     }
 
     function spawnEnemies() {
+      if (battleConfig.scenario?.enemyUnits?.length) {
+        for (const definition of battleConfig.scenario.enemyUnits) {
+          units.push(createScenarioUnit(definition, 'enemy'));
+        }
+        return;
+      }
+
       const templates = ['vanguard', 'assault', 'missile', 'guard', 'mobile'];
       const names = ['曹军先锋', '曹军突击', '曹军射击', '曹军守备', '曹军机动', '曹军偏师'];
       const occupied = new Set();
@@ -2371,6 +2596,15 @@
     }
 
     function configureBattleCommanders() {
+      if (battleConfig.scenario) {
+        const enemyCommander = units.find(unit => unit.side === 'enemy' && unit.isCommander);
+        if (!enemyCommander) {
+          const firstEnemy = units.find(unit => unit.side === 'enemy');
+          if (firstEnemy) firstEnemy.isCommander = true;
+        }
+        return;
+      }
+
       for (const unit of units) {
         if (unit.side === 'player') unit.isCommander = false;
       }
@@ -2446,6 +2680,7 @@
 
     function applyMove(unit, nx, ny) {
       const terrain = getTerrain(nx, ny);
+      faceUnitToward(unit, nx, ny);
       unit.x = nx; unit.y = ny;
       unit.hasMoved = true;
 
@@ -2508,6 +2743,7 @@
         if (i === path.length - 1) {
           applyMove(unit, step.x, step.y);
         } else {
+          faceUnitToward(unit, step.x, step.y);
           unit.x = step.x;
           unit.y = step.y;
           unit.inRiver = isRiverTerrain(getTerrain(step.x, step.y));
@@ -2631,6 +2867,9 @@
     }
 
     function resolveAttack(attacker, defender, chargeBonus = false) {
+      faceUnitToward(attacker, defender.x, defender.y);
+      renderBoard();
+      updateDebug();
       if (defender.isSupplyCart || !attacker.formationMembers?.length || !defender.formationMembers?.length) {
         return resolveDirectAttack(attacker, defender, chargeBonus);
       }
@@ -2914,6 +3153,15 @@
       return false;
     }
 
+    function notifyBattleDemoResult() {
+      if (!battleConfig.embedded || !lastBattleResult) return;
+      window.parent?.postMessage({
+        type: 'rpg-tg:battle-demo-result',
+        scenarioId: battleConfig.scenarioId,
+        result: lastBattleResult.result,
+      }, '*');
+    }
+
     function showOverlay(title, desc, isWin = false) {
       document.getElementById('overlay-title').textContent = title;
       document.getElementById('overlay-desc').textContent = desc;
@@ -2927,6 +3175,11 @@
         recapList.innerHTML = '';
       }
       document.getElementById('overlay').classList.remove('hidden');
+      lastBattleResult = { result: isWin ? 'victory' : 'defeat', title, desc };
+      const restartButton = document.getElementById('btn-restart');
+      if (battleConfig.embedded && restartButton) {
+        restartButton.textContent = isWin ? '返回帅府评定' : '重新挑战';
+      }
       phase = 'ended';
     }
 
@@ -2934,11 +3187,509 @@
       const [rowName, colName] = slotKey.split('-');
       const rowMap = { front: 0, middle: 1, rear: 2 };
       const colMap = { left: 0, center: 1, right: 2 };
+      const xByRow = { front: 52, middle: 36, rear: 20 };
+      const xByCol = { left: -7, center: 0, right: 7 };
+      const yByCol = { left: 42, center: 53, right: 64 };
+      const rowLift = { front: 0, middle: 2, rear: 4 };
       return {
         row: rowMap[rowName] ?? 0,
         col: colMap[colName] ?? 0,
         rowClass: `row-${rowName}`,
+        x: (xByRow[rowName] ?? 36) + (xByCol[colName] ?? 0),
+        y: (yByCol[colName] ?? 53) + (rowLift[rowName] ?? 0),
+        z: 10 + (colMap[colName] ?? 0) * 3 + (rowMap[rowName] ?? 0),
       };
+    }
+
+    class BattleSpineRenderer {
+      constructor(project, images) {
+        this.project = project;
+        this.nodes = project.nodes || [];
+        this.images = images;
+        this.fps = project.fps || 24;
+        this.idleAction = this.findAction('idle') || project.actions?.[0] || null;
+        this.jumpAction = this.findAction('jump') || this.idleAction;
+        this.slashAction =
+          this.findAction(project.selectedActionId) ||
+          (project.actions || []).find(action => action.name === '挥砍') ||
+          (project.actions || []).find(action => action.id !== 'idle' && action.id !== 'jump') ||
+          this.jumpAction;
+        this.bounds = this.computeBounds();
+      }
+
+      static async load() {
+        let project = null;
+        if (window.location.protocol !== 'file:') {
+          const response = await fetch('/src/faxian/leg/new-version-spine-project.json', { cache: 'no-store' });
+          project = await response.json();
+        }
+        project ||= window.RECOVERED_SPINE_PROJECT || null;
+        if (!project) throw new Error('Missing Spine project data.');
+        const imageSources = {
+          newHead: '../../src/faxian/leg/head.png',
+          newTorso: '../../src/faxian/leg/torso.png',
+          newLeftArm: '../../src/faxian/leg/leftarm.png',
+          newRightArm: '../../src/faxian/leg/rightarm.png',
+          newLeftLeg: '../../src/faxian/leg/leftleg.png',
+          newRightLeg: '../../src/faxian/leg/rightleg%20(1).png',
+          newSword: '../../src/faxian/leg/sword.png',
+        };
+        const images = {};
+        await Promise.all(Object.entries(imageSources).map(([key, src]) => new Promise(resolve => {
+          const image = new Image();
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+          image.src = src;
+          images[key] = image;
+        })));
+        return new BattleSpineRenderer(project, images);
+      }
+
+      findAction(id) {
+        return (this.project.actions || []).find(action => action.id === id) || null;
+      }
+
+      computeBounds() {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const node of this.nodes) {
+          const attachment = node.attachment;
+          const image = this.images[attachment?.image];
+          const restPart = attachment?.restPart;
+          if (!image || !restPart) continue;
+          const corners = [
+            { x: 0, y: 0 },
+            { x: image.width, y: 0 },
+            { x: image.width, y: image.height },
+            { x: 0, y: image.height },
+          ].map(point => this.imagePointToFullSkinRest(point, image, restPart));
+          for (const point of corners) {
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+          }
+        }
+        return Number.isFinite(minX)
+          ? { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY }
+          : { minX: 280, minY: 40, maxX: 610, maxY: 620, width: 330, height: 580 };
+      }
+
+      getAction(actionId) {
+        if (actionId === 'jump') return this.jumpAction;
+        if (actionId === 'slash') return this.slashAction;
+        return this.idleAction;
+      }
+
+      getActionDurationMs(actionId) {
+        const action = this.getAction(actionId);
+        return (((action?.duration ?? this.project.duration ?? 29) + 1) / this.fps) * 1000;
+      }
+
+      render(canvas, actionId = 'idle', elapsedMs = 0, options = {}) {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const width = Math.max(1, Math.round(rect.width * dpr));
+        const height = Math.max(1, Math.round(rect.height * dpr));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        this.lowDetail = rect.width < 64 || rect.height < 84;
+        const action = this.getAction(actionId);
+        const duration = Math.max(1, action?.duration ?? this.project.duration ?? 29);
+        const rawFrame = (elapsedMs / 1000) * this.fps;
+        const frame = options.loop === false ? Math.min(duration, rawFrame) : rawFrame % (duration + 1);
+        const scale = Math.min(rect.width / Math.max(1, this.bounds.width), rect.height / Math.max(1, this.bounds.height)) * 0.94;
+        ctx.save();
+        ctx.translate(rect.width / 2, rect.height * 0.58);
+        ctx.scale(scale, scale);
+        ctx.translate(-(this.bounds.minX + this.bounds.width / 2), -(this.bounds.minY + this.bounds.height * 0.52));
+        this.drawCharacter(ctx, action, frame);
+        ctx.restore();
+      }
+
+      drawCharacter(ctx, action, frame) {
+        this.nodes
+          .filter(node => node.attachment)
+          .slice()
+          .sort((a, b) => {
+            const layerDiff = (a.attachment.layer || 0) - (b.attachment.layer || 0);
+            return layerDiff || (a.attachment.alpha || 1) - (b.attachment.alpha || 1);
+          })
+          .forEach(node => this.drawAttachment(ctx, node, action, frame));
+      }
+
+      drawAttachment(ctx, node, action, frame) {
+        const attachment = node.attachment;
+        const image = this.images[attachment.image];
+        if (!image?.complete || !attachment.fullSkin || !attachment.restPart) return;
+        const segments = (attachment.skinBoneIds || [])
+          .map(nodeId => this.nodes.find(item => item.id === nodeId))
+          .filter(Boolean)
+          .map(boneNode => {
+            const pose = this.worldPose(boneNode, action, frame);
+            const rest = this.restWorldPose(boneNode);
+            return {
+              restStart: { x: rest.worldX, y: rest.worldY },
+              restEnd: this.endPoint(rest),
+              start: { x: pose.worldX, y: pose.worldY },
+              end: this.endPoint(pose),
+            };
+          });
+        if (!segments.length) return;
+        const cols = this.lowDetail ? 3 : attachment.restPart.partId === 'torso' ? 5 : 4;
+        const rows = this.lowDetail ? Math.max(4, segments.length * 3) : Math.max(6, segments.length * 5);
+        const source = [];
+        const dest = [];
+        for (let row = 0; row <= rows; row += 1) {
+          const v = row / rows;
+          const sourceRow = [];
+          const destRow = [];
+          for (let col = 0; col <= cols; col += 1) {
+            const u = col / cols;
+            const sourcePoint = { x: image.width * u, y: image.height * v };
+            sourceRow.push(sourcePoint);
+            destRow.push(this.deformByAttachmentSegments(
+              this.imagePointToFullSkinRest(sourcePoint, image, attachment.restPart),
+              segments,
+            ));
+          }
+          source.push(sourceRow);
+          dest.push(destRow);
+        }
+        this.drawTexturedMesh(ctx, image, source, dest, attachment.alpha);
+      }
+
+      getLocalPose(node, action, frame) {
+        const keys = [...((action?.timelines || {})[node.id] || [])].sort((a, b) => a.frame - b.frame);
+        if (!keys.length) return { ...node };
+        const exact = keys.find(item => item.frame === frame);
+        if (exact) return { ...node, ...exact };
+        if (keys.length === 1) return { ...node, ...keys[0] };
+        const before = [...keys].reverse().find(item => item.frame < frame);
+        const after = keys.find(item => item.frame > frame);
+        if (!before) return { ...node, ...keys[0] };
+        if (!after) {
+          const start = keys.find(item => item.frame === 0) || keys[0];
+          const span = Math.max(1, (action?.duration ?? this.project.duration ?? 29) + 1 - before.frame);
+          return this.interpolateLocalPose(node, before, start, Math.max(0, Math.min(1, (frame - before.frame) / span)));
+        }
+        return this.interpolateLocalPose(node, before, after, (frame - before.frame) / (after.frame - before.frame));
+      }
+
+      interpolateLocalPose(node, before, after, t) {
+        return {
+          ...node,
+          x: this.lerp(before.x, after.x, t),
+          y: this.lerp(before.y, after.y, t),
+          rotation: this.lerpAngle(before.rotation, after.rotation, t),
+          length: this.lerp(before.length, after.length, t),
+          scaleX: this.lerp(before.scaleX, after.scaleX, t),
+          scaleY: this.lerp(before.scaleY, after.scaleY, t),
+        };
+      }
+
+      worldPose(node, action, frame, seen = new Set()) {
+        if (seen.has(node.id)) return this.getLocalPose(node, action, frame);
+        seen.add(node.id);
+        const local = this.getLocalPose(node, action, frame);
+        if (!node.parentId) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        }
+        const parent = this.nodes.find(item => item.id === node.parentId);
+        if (!parent) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        }
+        const p = this.worldPose(parent, action, frame, seen);
+        const anchor = this.endPoint(p);
+        const rad = (p.worldRotation * Math.PI) / 180;
+        const px = local.x * p.worldScaleX;
+        const py = local.y * p.worldScaleY;
+        return {
+          ...local,
+          worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
+          worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
+          worldRotation: p.worldRotation + local.rotation,
+          worldScaleX: p.worldScaleX * local.scaleX,
+          worldScaleY: p.worldScaleY * local.scaleY,
+        };
+      }
+
+      restWorldPose(node, seen = new Set()) {
+        if (seen.has(node.id)) return { ...node, ...(node.bindPose || {}) };
+        seen.add(node.id);
+        const local = { ...node, ...(node.bindPose || {}) };
+        if (!node.parentId) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        }
+        const parent = this.nodes.find(item => item.id === node.parentId);
+        if (!parent) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        }
+        const p = this.restWorldPose(parent, seen);
+        const anchor = this.endPoint(p);
+        const rad = (p.worldRotation * Math.PI) / 180;
+        const px = local.x * p.worldScaleX;
+        const py = local.y * p.worldScaleY;
+        return {
+          ...local,
+          worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
+          worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
+          worldRotation: p.worldRotation + local.rotation,
+          worldScaleX: p.worldScaleX * local.scaleX,
+          worldScaleY: p.worldScaleY * local.scaleY,
+        };
+      }
+
+      endPoint(pose) {
+        const rad = (pose.worldRotation * Math.PI) / 180;
+        return {
+          x: pose.worldX + Math.cos(rad) * pose.length * pose.worldScaleX,
+          y: pose.worldY + Math.sin(rad) * pose.length * pose.worldScaleY,
+        };
+      }
+
+      imagePointToFullSkinRest(sourcePoint, image, restPart) {
+        const width = image.width * restPart.scale;
+        const height = image.height * restPart.scale;
+        const localX = (sourcePoint.x / image.width) * width - width * restPart.anchorX;
+        const localY = (sourcePoint.y / image.height) * height - height * restPart.anchorY;
+        const angle = (restPart.rotation * Math.PI) / 180;
+        return {
+          x: restPart.x + localX * Math.cos(angle) - localY * Math.sin(angle),
+          y: restPart.y + localX * Math.sin(angle) + localY * Math.cos(angle),
+        };
+      }
+
+      deformByAttachmentSegments(point, segments) {
+        let totalWeight = 0;
+        const blended = { x: 0, y: 0 };
+        for (const segment of segments) {
+          const projection = this.projectPointOnSegment(point, segment.restStart, segment.restEnd);
+          const weight = this.attachmentSegmentWeight(this.distance(point, projection.point), segment);
+          const mapped = this.mapPointByAttachmentSegment(point, segment);
+          blended.x += mapped.x * weight;
+          blended.y += mapped.y * weight;
+          totalWeight += weight;
+        }
+        return totalWeight <= 0 ? point : { x: blended.x / totalWeight, y: blended.y / totalWeight };
+      }
+
+      mapPointByAttachmentSegment(point, segment) {
+        const restLength = Math.max(1, this.distance(segment.restStart, segment.restEnd));
+        const currentLength = Math.max(1, this.distance(segment.start, segment.end));
+        const restDir = this.normalizeVector({ x: segment.restEnd.x - segment.restStart.x, y: segment.restEnd.y - segment.restStart.y });
+        const currentDir = this.normalizeVector({ x: segment.end.x - segment.start.x, y: segment.end.y - segment.start.y });
+        const restNormal = { x: -restDir.y, y: restDir.x };
+        const currentNormal = { x: -currentDir.y, y: currentDir.x };
+        const local = { x: point.x - segment.restStart.x, y: point.y - segment.restStart.y };
+        const softenedScale = 1 + (currentLength / restLength - 1) * 0.72;
+        const axial = this.dotVector(local, restDir) * softenedScale;
+        const lateral = this.dotVector(local, restNormal);
+        return {
+          x: segment.start.x + currentDir.x * axial + currentNormal.x * lateral,
+          y: segment.start.y + currentDir.y * axial + currentNormal.y * lateral,
+        };
+      }
+
+      attachmentSegmentWeight(distanceToSegment, segment) {
+        const reach = Math.max(16, this.distance(segment.restStart, segment.restEnd) * 0.34);
+        const base = 1 / ((distanceToSegment / reach + 0.18) * (distanceToSegment / reach + 0.18));
+        return base * Math.sqrt(base);
+      }
+
+      projectPointOnSegment(point, a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const lengthSquared = dx * dx + dy * dy;
+        if (lengthSquared === 0) return { point: { ...a }, t: 0 };
+        const t = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared));
+        return { point: { x: a.x + dx * t, y: a.y + dy * t }, t };
+      }
+
+      drawTexturedMesh(ctx, image, source, dest, alpha) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+        for (let row = 0; row < source.length - 1; row += 1) {
+          for (let col = 0; col < source[row].length - 1; col += 1) {
+            this.drawImageTriangle(ctx, image, source[row][col], source[row + 1][col], source[row][col + 1], dest[row][col], dest[row + 1][col], dest[row][col + 1]);
+            this.drawImageTriangle(ctx, image, source[row + 1][col], source[row + 1][col + 1], source[row][col + 1], dest[row + 1][col], dest[row + 1][col + 1], dest[row][col + 1]);
+          }
+        }
+        ctx.restore();
+      }
+
+      drawImageTriangle(ctx, image, s0, s1, s2, d0, d1, d2) {
+        const denominator = s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
+        if (Math.abs(denominator) < 0.001) return;
+        const a = (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) / denominator;
+        const b = (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) / denominator;
+        const c = (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) / denominator;
+        const d = (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.y * (s1.x - s0.x)) / denominator;
+        const e = (d0.x * (s1.x * s2.y - s2.x * s1.y) + d1.x * (s2.x * s0.y - s0.x * s2.y) + d2.x * (s0.x * s1.y - s1.x * s0.y)) / denominator;
+        const f = (d0.y * (s1.x * s2.y - s2.x * s1.y) + d1.y * (s2.x * s0.y - s0.x * s2.y) + d2.y * (s0.x * s1.y - s1.x * s0.y)) / denominator;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(d0.x, d0.y);
+        ctx.lineTo(d1.x, d1.y);
+        ctx.lineTo(d2.x, d2.y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.transform(a, b, c, d, e, f);
+        ctx.drawImage(image, 0, 0);
+        ctx.restore();
+      }
+
+      lerp(a, b, t) { return a + (b - a) * t; }
+      lerpAngle(a, b, t) {
+        let diff = ((b - a + 180) % 360) - 180;
+        if (diff < -180) diff += 360;
+        return a + diff * t;
+      }
+      distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+      normalizeVector(vector) {
+        const length = Math.hypot(vector.x, vector.y) || 1;
+        return { x: vector.x / length, y: vector.y / length };
+      }
+      dotVector(a, b) { return a.x * b.x + a.y * b.y; }
+    }
+
+    function getBattleSpineRenderer() {
+      if (!battleSpineRendererPromise) {
+        battleSpineRendererPromise = BattleSpineRenderer.load().catch(error => {
+          console.warn('Failed to load battle Spine renderer', error);
+          return null;
+        });
+      }
+      return battleSpineRendererPromise;
+    }
+
+    function startBattleSpineIdleLoop() {
+      if (battleSpineIdleRaf) return;
+      const tick = () => {
+        const now = performance.now();
+        if (now - battleSpineLastIdleRender < 83) return;
+        battleSpineLastIdleRender = now;
+        getBattleSpineRenderer().then(renderer => {
+          if (!renderer) return;
+          document.querySelectorAll('.formation-spine-canvas').forEach(canvas => {
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) return;
+            renderer.render(canvas, canvas.dataset.action || 'idle', now + Number(canvas.dataset.phase || 0));
+          });
+        });
+      };
+      battleSpineIdleRaf = window.setInterval(tick, 100);
+      tick();
+    }
+
+    function stopBattleSpineIdleLoop() {
+      if (!battleSpineIdleRaf) return;
+      window.clearInterval(battleSpineIdleRaf);
+      battleSpineIdleRaf = 0;
+    }
+
+    function getBattleVisualGridId(report, timelineSide) {
+      const leftKey = report.attackerBefore.side === 'player' ? 'attacker' : 'defender';
+      return timelineSide === leftKey ? 'battle-attacker-grid' : 'battle-defender-grid';
+    }
+
+    function getBattleTimelineUnit(report, timelineSide) {
+      return timelineSide === 'attacker' ? report.attackerBefore : report.defenderBefore;
+    }
+
+    async function playBattleSpineStrike(report, step, onImpact) {
+      const renderer = await getBattleSpineRenderer();
+      if (!renderer) {
+        await sleep(380);
+        onImpact?.();
+        return;
+      }
+      const sourceGrid = document.getElementById(getBattleVisualGridId(report, step.sourceSide));
+      const targetGrid = document.getElementById(getBattleVisualGridId(report, step.targetSide));
+      const sourceSlot = sourceGrid?.querySelector(`.formation-slot[data-slot="${step.sourceSlotKey}"]`);
+      const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
+      const sourceCanvas = sourceSlot?.querySelector('.formation-spine-canvas');
+      const targetCanvas = targetSlot?.querySelector('.formation-spine-canvas');
+      const box = document.querySelector('.formation-battle-box');
+      if (!sourceCanvas || !targetCanvas || !box) {
+        await sleep(380);
+        onImpact?.();
+        return;
+      }
+
+      const boxRect = box.getBoundingClientRect();
+      const sourceRect = sourceCanvas.getBoundingClientRect();
+      const targetRect = targetCanvas.getBoundingClientRect();
+      const proxy = document.createElement('canvas');
+      const sourceUnit = getBattleTimelineUnit(report, step.sourceSide);
+      const proxyOffsetX = 27;
+      const proxyOffsetTop = 44;
+      proxy.className = `battle-spine-proxy ${sourceUnit.side === 'enemy' ? 'enemy' : 'player'}`;
+      proxy.style.left = `${sourceRect.left - boxRect.left - proxyOffsetX}px`;
+      proxy.style.top = `${sourceRect.top - boxRect.top - proxyOffsetTop}px`;
+      box.appendChild(proxy);
+      sourceSlot.classList.add('is-proxying');
+
+      const from = {
+        x: sourceRect.left - boxRect.left - proxyOffsetX,
+        y: sourceRect.top - boxRect.top - proxyOffsetTop,
+      };
+      const to = {
+        x: targetRect.left - boxRect.left - proxyOffsetX,
+        y: targetRect.top - boxRect.top - proxyOffsetTop,
+      };
+
+      await animateBattleSpineProxy(proxy, renderer, from, to, 'jump', renderer.getActionDurationMs('jump'), {
+        moveStartFrame: 9,
+        moveEndFrame: 24,
+      });
+      await animateBattleSpineProxy(proxy, renderer, to, to, 'slash', renderer.getActionDurationMs('slash'), {
+        impactFrame: 17,
+        onImpact,
+      });
+
+      sourceSlot.classList.remove('is-proxying');
+      proxy.remove();
+    }
+
+    function animateBattleSpineProxy(proxy, renderer, from, to, action, duration, movement = {}) {
+      return new Promise(resolve => {
+        const start = performance.now();
+        let impactTriggered = false;
+        const frame = now => {
+          const t = Math.min(1, (now - start) / duration);
+          const elapsedMs = now - start;
+          const actionFrame = (elapsedMs / 1000) * renderer.fps;
+          const moveStartFrame = movement.moveStartFrame ?? 0;
+          const moveEndFrame = Math.max(moveStartFrame + 0.001, movement.moveEndFrame ?? moveStartFrame);
+          const moveT = movement.moveStartFrame == null
+            ? t
+            : Math.max(0, Math.min(1, (actionFrame - moveStartFrame) / (moveEndFrame - moveStartFrame)));
+          proxy.style.left = `${from.x + (to.x - from.x) * moveT}px`;
+          proxy.style.top = `${from.y + (to.y - from.y) * moveT}px`;
+          renderer.render(proxy, action, elapsedMs, { loop: false });
+          if (
+            !impactTriggered &&
+            movement.impactFrame != null &&
+            actionFrame >= movement.impactFrame
+          ) {
+            impactTriggered = true;
+            movement.onImpact?.();
+          }
+          if (t < 1) requestAnimationFrame(frame);
+          else {
+            if (!impactTriggered && movement.impactFrame != null) {
+              movement.onImpact?.();
+            }
+            resolve();
+          }
+        };
+        requestAnimationFrame(frame);
+      });
     }
 
     function renderBattleFormationGrid(snapshotBefore, snapshotAfter, active = {}) {
@@ -2953,14 +3704,15 @@
         if (active.sourceSlotKey === slotKey) stateClasses.push('striker');
         if (active.targetSlotKey === slotKey) stateClasses.push('targeted');
         if (!after && !before) {
-          return `<div class="formation-slot empty ${pos.rowClass}" data-slot="${slotKey}" style="--row:${pos.row};--col:${pos.col};"></div>`;
+          return `<div class="formation-slot empty ${pos.rowClass}" data-slot="${slotKey}" style="--row:${pos.row};--col:${pos.col};--x:${pos.x};--y:${pos.y};z-index:${pos.z};"></div>`;
         }
         const current = after || before;
         const loss = before && after ? before.soldiers - after.soldiers : 0;
         const hpRatio = current.maxSoldiers > 0 ? clamp((after ? after.soldiers : 0) / current.maxSoldiers, 0, 1) * 100 : 0;
+        const phase = (pos.row * 137 + pos.col * 83) % 1000;
         return `
-          <div class="formation-slot ${pos.rowClass} ${stateClasses.join(' ')}" data-slot="${slotKey}" style="--row:${pos.row};--col:${pos.col};">
-            <div class="formation-standee"></div>
+          <div class="formation-slot ${pos.rowClass} ${stateClasses.join(' ')}" data-slot="${slotKey}" style="--row:${pos.row};--col:${pos.col};--x:${pos.x};--y:${pos.y};z-index:${pos.z};">
+            <canvas class="formation-spine-canvas" data-action="idle" data-phase="${phase}" aria-hidden="true"></canvas>
             <div class="slot-name">${FORMATION_SLOT_LABELS[slotKey]}</div>
             <div class="member-name">${TROOP_TYPES[current.troopType].label}</div>
             <div class="member-hp"><div class="member-hp-fill" style="width:${hpRatio}%"></div></div>
@@ -3015,6 +3767,7 @@
       let attackerSnapshot = report.attackerBefore;
       let defenderSnapshot = report.defenderBefore;
       renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot);
+      startBattleSpineIdleLoop();
 
       for (const step of report.timeline) {
         if (step.type === 'round' || step.type === 'entry') {
@@ -3024,11 +3777,17 @@
         }
 
         renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, step);
-        await sleep(160);
-        attackerSnapshot = step.attackerSnapshot;
-        defenderSnapshot = step.defenderSnapshot;
-        renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, step.hit ? step : {});
-        appendBattleEvent(step);
+        let impactApplied = false;
+        const applyImpact = () => {
+          if (impactApplied) return;
+          impactApplied = true;
+          attackerSnapshot = step.attackerSnapshot;
+          defenderSnapshot = step.defenderSnapshot;
+          renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, step.hit ? step : {});
+          appendBattleEvent(step);
+        };
+        await playBattleSpineStrike(report, step, applyImpact);
+        applyImpact();
         await sleep(step.hit ? 220 : 160);
       }
 
@@ -3039,6 +3798,7 @@
     }
 
     function showFormationBattleOverlay(report) {
+      stopBattleSpineIdleLoop();
       if (activeBattleOverlayResolve) {
         activeBattleOverlayResolve();
         activeBattleOverlayResolve = null;
@@ -3051,6 +3811,7 @@
         `敌方 · ${enemySnapshot.name} · ${enemySnapshot.generalName}`;
       document.getElementById('battle-sequence-title').textContent = `编队交战 · 距离 ${report.distance}`;
       document.getElementById('formation-battle').classList.remove('hidden');
+      startBattleSpineIdleLoop();
       playFormationBattleTimeline(report);
       return new Promise(resolve => {
         activeBattleOverlayResolve = resolve;
@@ -3128,6 +3889,63 @@
       if (!isStrongpointBattle()) return false;
       const point = getPointAt(enemy.x, enemy.y);
       return point?.owner === enemy.side;
+    }
+
+    function scoreNpcAllyMove(ally, cell) {
+      let score = 0;
+      const point = getPointAt(cell.x, cell.y);
+      if (point && point.owner !== ally.side) score += 24;
+      if (getTerrain(cell.x, cell.y) === 'hill') score += 12;
+      if (getTerrain(cell.x, cell.y) === 'forest') score += 6;
+      const enemies = activeUnits('enemy');
+      if (enemies.length) {
+        const nearest = Math.min(...enemies.map(enemy => manhattan(cell.x, cell.y, enemy.x, enemy.y)));
+        score += Math.max(0, 70 - nearest * 10);
+      }
+      const endangered = units.find(unit => unit.name.includes('孙德崖') && unit.soldiers > 0);
+      if (endangered) {
+        score += Math.max(0, 30 - manhattan(cell.x, cell.y, endangered.x, endangered.y) * 4);
+      }
+      return score;
+    }
+
+    async function runNpcAllyTurn() {
+      const allies = units.filter(u => u.side === 'player' && u.controller === 'npc' && u.soldiers > 0 && !isRout(u));
+      if (!allies.length) return false;
+
+      log('—— 友军行动 ——', 'system');
+      for (const ally of allies) {
+        if (checkVictory()) return true;
+        ally.hasMoved = false;
+        ally.hasActed = false;
+
+        const attackables = computeAttackable(ally);
+        if (attackables.length && !ally.hasActed) {
+          attackables.sort((a, b) => aiTargetPriority(ally, b) - aiTargetPriority(ally, a));
+          await resolveAttack(ally, attackables[0]);
+          ally.hasActed = true;
+        } else if (!ally.hasMoved) {
+          const reach = computeReachable(ally);
+          if (reach.length) {
+            reach.sort((a, b) => scoreNpcAllyMove(ally, b) - scoreNpcAllyMove(ally, a));
+            await animateUnitMove(ally, reach[0].x, reach[0].y);
+            const postMoveAttackables = computeAttackable(ally);
+            if (postMoveAttackables.length && !ally.hasActed) {
+              postMoveAttackables.sort((a, b) => aiTargetPriority(ally, b) - aiTargetPriority(ally, a));
+              await resolveAttack(ally, postMoveAttackables[0]);
+              ally.hasActed = true;
+            }
+          }
+        }
+
+        renderBoard();
+        updateDebug();
+        await sleep(300);
+      }
+
+      processCaptureProgress();
+      processRout();
+      return checkVictory();
     }
 
     async function runEnemyTurn() {
@@ -3315,9 +4133,11 @@
             const tier = getMoraleTier(military.morale);
             const ue = document.createElement('div');
             ue.className = `unit ${military.side} ${military.hasActed && military.hasMoved ? 'acted' : ''} ${tier.id === 'chaos' || tier.id === 'rout' ? tier.id : ''} ${military.isCommander ? 'commander' : ''} ${military.inRiver ? 'in-river' : ''}`;
+            ue.style.setProperty('--unit-sprite', `url("${getBoardUnitSprite(military)}")`);
             if (selectedUnit?.id === military.id) cell.classList.add('selected');
 
             ue.innerHTML = `
+              <span class="unit-art" aria-hidden="true"></span>
               <span>${getFormationTemplateLabel(military)}</span>
               <span>${military.soldiers}</span>
               <span class="unit-status ${tier.id}">${tier.label}</span>
@@ -3544,7 +4364,7 @@
     }
 
     function canSelectPlayerUnit(unit) {
-      return Boolean(unit && unit.side === 'player' && !unit.hasActed && !unit.isSupplyCart);
+      return Boolean(unit && unit.side === 'player' && unit.controller !== 'npc' && !unit.hasActed && !unit.isSupplyCart);
     }
 
     function selectPlayerUnit(unit) {
@@ -3728,9 +4548,17 @@
     }
 
     function init(config = {}) {
-      battleConfig = { lessonTags: config.lessonTags || [], objectiveId: config.objectiveId || null };
+      const scenario = config.scenarioId ? STORY_BATTLE_SCENARIOS[config.scenarioId] || null : null;
+      battleConfig = {
+        lessonTags: config.lessonTags || scenario?.lessonTags || [],
+        objectiveId: config.objectiveId || scenario?.objectiveId || null,
+        scenarioId: config.scenarioId || scenario?.scenarioId || null,
+        embedded: Boolean(config.embedded || scenario?.embedded),
+        scenario,
+      };
       pickObjective();
       generateMap();
+      applyScenarioMap();
       units = createPlayerPool();
       spawnEnemies();
       configureBattleCommanders();
@@ -3739,6 +4567,7 @@
       supplyCartClaimSide = null;
       droppedSupplies = [];
       battleRecap = [];
+      lastBattleResult = null;
       inspectedUnit = null;
       clearSelection();
       hideObjectiveIntro();
@@ -3755,17 +4584,24 @@
         log(`本局需守住${getDefenseZoneLabel()}：至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队驻守，且敌军不得踏入，连续 ${DEFENSE_HOLD_REQUIRED} 回合。`, 'system');
       }
       updateUI();
+      if (battleConfig.scenario?.autoDeployment) {
+        log('剧情战役已载入：玩家只可操控朱重八本队，其余友军由 NPC 自动行动。', 'system');
+        renderBoard();
+        renderDeployPool();
+        showObjectiveIntro();
+      }
     }
 
     document.getElementById('btn-start').addEventListener('click', startBattle);
     document.getElementById('btn-objective-ok').addEventListener('click', beginBattle);
     document.getElementById('btn-tutorial-close').addEventListener('click', () => BattleTutorialManager.hideToast());
-    document.getElementById('btn-end-turn').addEventListener('click', () => {
+    document.getElementById('btn-end-turn').addEventListener('click', async () => {
       if (turn !== 'player') return;
       processCaptureProgress();
       if (processSupplyCartMoves()) return;
       processRout();
       if (checkVictory()) return;
+      if (await runNpcAllyTurn()) return;
       runEnemyTurn();
     });
     document.getElementById('btn-wait').addEventListener('click', () => {
@@ -3785,12 +4621,28 @@
       event.preventDefault();
       undoPendingMove();
     });
-    document.getElementById('btn-restart').addEventListener('click', () => { nextId = 1; init(); });
+    function getBattleConfigFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        scenarioId: params.get('scenario') || null,
+        embedded: params.get('embedded') === '1',
+      };
+    }
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      if (battleConfig.embedded && lastBattleResult?.result === 'victory') {
+        notifyBattleDemoResult();
+        return;
+      }
+      nextId = 1;
+      init(initialBattleConfig || {});
+    });
 
     /** 剧情战役：init({ objectiveId: 'supplyTransport', lessonTags: ['SupplyTransportBattle'] }) */
     window.BattleDemo = { init, BattleTutorialManager, inferLessonTags };
 
-    init();
+    initialBattleConfig = getBattleConfigFromUrl();
+    init(initialBattleConfig);
   </script>
 </body>
 </html>

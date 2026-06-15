@@ -9,6 +9,10 @@ type MainUiFlowOptions = {
   overlayRoot: HTMLElement;
   characters: CharacterDefinition[];
   onStartGame(selectedCharacter: CharacterDefinition): void;
+  onContinueGame?(
+    selectedCharacter: CharacterDefinition,
+    saveData: SaveDataResult
+  ): void;
   loadSaveData(): Promise<SaveDataResult> | SaveDataResult;
   getAppState(): AppState;
 };

@@ -162,6 +162,7 @@ export class MainUiFlow {
     this.overlayRoot = options.overlayRoot;
     this.characters = [...options.characters];
     this.onStartGame = options.onStartGame;
+    this.onContinueGame = options.onContinueGame;
     this.loadSaveData = options.loadSaveData;
     this.getAppState = options.getAppState;
     this.selectedCharacterId = this.characters[0]?.id ?? null;
@@ -549,7 +550,11 @@ export class MainUiFlow {
 
       if (selectedCharacter != null) {
         this.selectedCharacterId = selectedCharacter.id;
-        this.onStartGame(selectedCharacter);
+        if (this.onContinueGame != null) {
+          this.onContinueGame(selectedCharacter, saveData ?? null);
+        } else {
+          this.onStartGame(selectedCharacter);
+        }
       }
     }
   }

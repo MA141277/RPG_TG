@@ -6,7 +6,9 @@ import type { SceneDefinition } from "../../domain/action";
 import type { GameState } from "../../domain/game-state";
 import type {
   ActiveHouseModuleSession,
+  HouseMapAutoAdvanceCompletion,
   HouseModuleId,
+  MapAutoAdvanceSnapshot,
   HouseModuleTransitionResult,
   HouseModuleRequest,
   HouseModuleSessionState,
@@ -24,6 +26,8 @@ type HouseRuntimeDependencies = {
     everyMs: number;
     targetHouseId: string;
     label: string;
+    snapshots?: MapAutoAdvanceSnapshot[];
+    completion?: HouseMapAutoAdvanceCompletion;
   }): void;
   stopMapAutoAdvance(intervalId: string): void;
   houseDefinitions: HouseDefinition[];
@@ -135,6 +139,8 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
       request?: HouseModuleRequest;
       targetHouseId?: string;
       label?: string;
+      snapshots?: MapAutoAdvanceSnapshot[];
+      completion?: HouseMapAutoAdvanceCompletion;
     }>
   ): void {
     sideEffects.forEach((sideEffect) => {
@@ -162,6 +168,10 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
           everyMs: sideEffect.everyMs,
           targetHouseId: sideEffect.targetHouseId,
           label: sideEffect.label,
+          ...(sideEffect.snapshots == null ? {} : { snapshots: sideEffect.snapshots }),
+          ...(sideEffect.completion == null
+            ? {}
+            : { completion: sideEffect.completion }),
         });
         return;
       }
@@ -322,7 +332,37 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     dependencies.renderApp();
   }
 
+  function applyMapAutoAdvanceCompletion(
+    completion: HouseMapAutoAdvanceCompletion
+  ): void {
+    if (completion.type === "enter-house") {
+      enterHouseById(completion.houseId);
+      return;
+    }
+
+    clearAllHouseIntervals();
+    const appState = dependencies.getAppState();
+    dependencies.setAppState({
+      ...appState,
+      gameState: {
+        ...appState.gameState,
+        world: {
+          ...appState.gameState.world,
+          currentHouseId: completion.houseId,
+        },
+        ui: {
+          ...appState.gameState.ui,
+          currentView: "house",
+          overlayView: null,
+          houseSession: completion.houseSession,
+        },
+      },
+    });
+    dependencies.renderApp();
+  }
+
   return {
+    applyMapAutoAdvanceCompletion,
     clearAllHouseIntervals,
     dispatchCurrentHouseRequest,
     enterHouseById,

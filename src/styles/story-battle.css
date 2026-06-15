@@ -1,0 +1,191 @@
+.view-story-battle {
+  min-height: 100%;
+  padding: 28px;
+  color: #f4ead5;
+  background:
+    linear-gradient(180deg, rgb(23 25 28 / 78%), rgb(18 16 14 / 90%)),
+    url("../../ui/battle/battlegroun_forest.png") center / cover no-repeat;
+}
+
+.view-story-battle--embedded {
+  display: block;
+  min-height: 100vh;
+  padding: 0;
+  background: #090b0a;
+}
+
+.c-story-battle__demo-frame {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+  background: #090b0a;
+}
+
+.c-story-battle__header {
+  max-width: 980px;
+  margin-bottom: 20px;
+}
+
+.c-story-battle__eyebrow {
+  margin: 0 0 6px;
+  color: #e3b65e;
+  font-size: 13px;
+}
+
+.c-story-battle__header h1 {
+  margin: 0 0 8px;
+  font-size: 30px;
+}
+
+.c-story-battle__header p {
+  margin: 0;
+  color: rgb(244 234 213 / 86%);
+}
+
+.c-story-battle__body {
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr) 300px;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.c-story-battle__brief,
+.c-story-battle__log {
+  min-height: 520px;
+  padding: 18px;
+  border: 1px solid rgb(225 190 108 / 42%);
+  background: rgb(20 18 16 / 78%);
+  box-shadow: 0 18px 36px rgb(0 0 0 / 26%);
+}
+
+.c-story-battle__brief h2,
+.c-story-battle__log h2 {
+  margin: 0 0 12px;
+  color: #f5d891;
+  font-size: 18px;
+}
+
+.c-story-battle__brief p,
+.c-story-battle__log p {
+  margin: 0 0 10px;
+  color: rgb(244 234 213 / 84%);
+  line-height: 1.6;
+}
+
+.c-story-battle__control-note {
+  margin: 18px 0;
+  padding: 12px;
+  border-left: 3px solid #d69d45;
+  background: rgb(242 197 111 / 12%);
+  color: #f8dfac;
+  line-height: 1.5;
+}
+
+.c-story-battle__primary-action {
+  width: 100%;
+  min-height: 46px;
+  border-color: #d69d45;
+  color: #2b1a0f;
+  background: linear-gradient(180deg, #f6d179, #c9852f);
+  font-weight: 700;
+}
+
+.c-story-battle__field {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(90px, 1fr));
+  grid-template-rows: repeat(5, 96px);
+  gap: 12px;
+  min-height: 520px;
+  padding: 18px;
+  border: 1px solid rgb(225 190 108 / 35%);
+  background:
+    radial-gradient(circle at 74% 42%, rgb(151 33 27 / 20%), transparent 28%),
+    linear-gradient(135deg, rgb(73 84 61 / 62%), rgb(46 49 39 / 78%));
+}
+
+.c-story-battle-unit {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  background: rgb(32 35 34 / 86%);
+  box-shadow: 0 10px 18px rgb(0 0 0 / 26%);
+}
+
+.c-story-battle-unit--player {
+  border-color: #5bb7ea;
+  background: rgb(28 72 98 / 88%);
+}
+
+.c-story-battle-unit--ally {
+  border-color: #78c386;
+  background: rgb(38 78 49 / 88%);
+}
+
+.c-story-battle-unit--enemy {
+  border-color: #d25e55;
+  background: rgb(94 34 33 / 88%);
+}
+
+.c-story-battle-unit.is-player-controlled {
+  outline: 2px solid #f4d06f;
+  outline-offset: 2px;
+}
+
+.c-story-battle-unit.is-surrounded {
+  box-shadow:
+    0 0 0 3px rgb(210 75 64 / 34%),
+    0 10px 18px rgb(0 0 0 / 26%);
+}
+
+.c-story-battle-unit.is-routed {
+  opacity: 0.46;
+  filter: grayscale(0.9);
+}
+
+.c-story-battle-unit.is-relieved {
+  border-color: #f4d06f;
+}
+
+.c-story-battle-unit__role,
+.c-story-battle-unit__status,
+.c-story-battle-unit__strength {
+  overflow: hidden;
+  color: rgb(255 248 230 / 76%);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.c-story-battle-unit__name {
+  overflow: hidden;
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.c-story-battle-unit__bar {
+  height: 6px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 36%);
+}
+
+.c-story-battle-unit__bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f2d06d, #f47b51);
+}
+
+@media (width <= 1100px) {
+  .c-story-battle__body {
+    grid-template-columns: 1fr;
+  }
+
+  .c-story-battle__brief,
+  .c-story-battle__log {
+    min-height: 0;
+  }
+}

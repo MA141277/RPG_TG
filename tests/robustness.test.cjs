@@ -118,6 +118,11 @@ const {
   ACTIVITY_COMPLETION_STAMINA_COST,
 } = require("../.test-dist/application/player/player-stamina.js");
 const {
+  createSundeyaRescueBattleSession,
+  dispatchStoryBattleAction,
+  startStoryBattle,
+} = require("../.test-dist/application/story-battle/story-battle-runtime.js");
+const {
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
@@ -1389,13 +1394,32 @@ test("home house rest-one-day advances date, restores hp and fatigue, and resets
     },
   });
 
-  const playerCharacter = getPlayerCharacter(restResult.characterDefinitions);
-  assert.equal(restResult.gameState.calendar.day, 2);
-  assert.equal(restResult.gameState.world.timeOfDay, "morning");
-  assert.equal(restResult.gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.hp] > 50, true);
-  assert.equal(restResult.gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.fatigue] > 40, true);
+  const autoAdvanceEffect = restResult.sideEffects?.find(
+    (sideEffect) => sideEffect.type === "start-map-auto-advance"
+  );
+  assert.ok(autoAdvanceEffect);
+  assert.equal(restResult.gameState.calendar.day, 1);
+  assert.equal(restResult.gameState.world.timeOfDay, "night");
+  assert.equal(autoAdvanceEffect.snapshots.length, 1);
+
+  const finalSnapshot = autoAdvanceEffect.snapshots[0];
+  const playerCharacter = getPlayerCharacter(finalSnapshot.characterDefinitions);
+  assert.equal(finalSnapshot.gameState.calendar.day, 2);
+  assert.equal(finalSnapshot.gameState.world.timeOfDay, "morning");
+  assert.equal(
+    finalSnapshot.gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.hp] > 50,
+    true
+  );
+  assert.equal(
+    finalSnapshot.gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.fatigue] > 40,
+    true
+  );
   assert.equal(playerCharacter.stamina > 40, true);
-  assert.equal(restResult.sessionState?.overlay?.type, "alert");
+  assert.equal(autoAdvanceEffect.completion?.type, "restore-house-session");
+  assert.equal(
+    autoAdvanceEffect.completion?.houseSession?.state.overlay?.type,
+    "alert"
+  );
 });
 
 test("home house rest-until-council stops at configured council date", () => {
@@ -1431,15 +1455,26 @@ test("home house rest-until-council stops at configured council date", () => {
     },
   });
 
-  assert.equal(restResult.gameState.calendar.day, 3);
-  assert.equal(restResult.gameState.ui.reviewDateText, "今日评定");
-  assert.equal(restResult.sessionState?.overlay?.type, "alert");
-  if (restResult.sessionState?.overlay?.type !== "alert") {
+  const autoAdvanceEffect = restResult.sideEffects?.find(
+    (sideEffect) => sideEffect.type === "start-map-auto-advance"
+  );
+  assert.ok(autoAdvanceEffect);
+  assert.equal(restResult.gameState.calendar.day, 1);
+  assert.equal(autoAdvanceEffect.snapshots.length, 2);
+
+  const finalSnapshot = autoAdvanceEffect.snapshots.at(-1);
+  assert.equal(finalSnapshot.gameState.calendar.day, 3);
+  assert.equal(finalSnapshot.gameState.ui.reviewDateText, "今日评定");
+  assert.equal(autoAdvanceEffect.completion?.type, "restore-house-session");
+  const completionOverlay =
+    autoAdvanceEffect.completion?.houseSession?.state.overlay;
+  assert.equal(completionOverlay?.type, "alert");
+  if (completionOverlay?.type !== "alert") {
     return;
   }
 
   assert.equal(
-    restResult.sessionState.overlay.paragraphs.some((paragraph) => paragraph.includes("评定")),
+    completionOverlay.paragraphs.some((paragraph) => paragraph.includes("评定")),
     true
   );
 });
@@ -1598,7 +1633,7 @@ test("market house follows greeting open idle rhythm with fixed boss and guest r
   });
 
   assert.equal(openResult.sessionState?.dialoguePhase, "open");
-  assert.equal(openResult.sessionState?.dialogueLines[0].includes("钱掌柜"), true);
+  assert.equal(openResult.sessionState?.dialogueLines[0].includes("货单"), true);
 
   const idleResult = marketHouseHouseModule.dispatch({
     gameState: openResult.gameState,
@@ -3672,6 +3707,49 @@ test("temple work reaching contribution threshold starts shared map auto advance
       (sideEffect) => sideEffect.type === "start-map-auto-advance"
     ),
     true
+  );
+});
+
+test("story battle rescue flow opens battle demo scenario and returns to keep review", () => {
+  const completion = {
+    completedFlagKey:
+      ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted,
+    winFlagKey: ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon,
+    battleIdVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
+    resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
+    enterHouseId: keepHouse.id,
+    mainMissionText: "战后帅府评定",
+  };
+  const session = createSundeyaRescueBattleSession(completion);
+  const startedState = startStoryBattle(createBaseState(), session);
+
+  assert.equal(startedState.ui.currentView, "battle");
+  assert.equal(startedState.storyBattle?.phase, "embedded-running");
+  assert.equal(startedState.storyBattle?.demoScenarioId, "sundeya-rescue");
+  assert.equal(
+    startedState.storyBattle?.units.filter((unit) => unit.controller === "player").length,
+    1
+  );
+
+  const finishResult = dispatchStoryBattleAction(startedState, "embedded-victory");
+  assert.equal(finishResult.enterHouseId, keepHouse.id);
+  assert.equal(finishResult.state.storyBattle, null);
+  assert.equal(finishResult.state.ui.currentView, "house");
+  assert.equal(
+    finishResult.state.runtime.flags[
+      ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted
+    ],
+    true
+  );
+  assert.equal(
+    finishResult.state.runtime.variables[
+      ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult
+    ],
+    "victory"
+  );
+  assert.equal(
+    finishResult.state.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    0
   );
 });
 

@@ -142,10 +142,28 @@ export type HouseModuleSideEffect =
       everyMs: number;
       targetHouseId: string;
       label: string;
+      snapshots?: MapAutoAdvanceSnapshot[];
+      completion?: HouseMapAutoAdvanceCompletion;
     }
   | {
       type: "stop-map-auto-advance";
       intervalId: string;
+    };
+
+export type MapAutoAdvanceSnapshot = {
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+};
+
+export type HouseMapAutoAdvanceCompletion =
+  | {
+      type: "enter-house";
+      houseId: string;
+    }
+  | {
+      type: "restore-house-session";
+      houseId: string;
+      houseSession: ActiveHouseModuleSession;
     };
 
 export type HouseModuleSessionStateMap = {
@@ -218,6 +236,18 @@ If a module needs to hand control back to the world layer for reusable time-skip
 - `stop-map-auto-advance`
 
 This path is for generic map-view time progression and automatic re-entry, not for house-specific logic inside `main.ts`.
+
+If a module needs the player to visibly watch several days pass on the world map and then return to a house scene, it should supply:
+
+- `snapshots`: one entry per skipped day, so shared runtime can update HUD time and any daily state changes during playback
+- `completion: { type: "restore-house-session" }` when the target scene should resume a prepared house session after playback
+- `completion: { type: "enter-house" }` when playback should end by re-entering the target house and letting that module's `enter()` lifecycle decide the next flow, such as immediately starting a review meeting
+
+Do not emulate this by:
+
+- mutating calendar inside `main.ts`
+- manually switching `currentView` in one concrete house branch
+- showing fake house-local rest results while world time is supposed to be advancing on the map
 
 If a module completes one player activity and should consume shared world time,
 return `timeAdvanceCost` on `HouseModuleTransitionResult`.

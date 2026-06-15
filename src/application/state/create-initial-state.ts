@@ -54,6 +54,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       status:
         input.activeSceneId == null ? "idle" : "playing",
     },
+    storyBattle: null,
     ui: {
       visiblePanels: ["player-card", "main-mission", "notifications"],
       pinnedCharacterId: input.pinnedCharacterId,

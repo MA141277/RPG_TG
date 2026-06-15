@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-15 Story Battle Rescue Hook
+
+### Added
+- 新增共享 `storyBattle` 运行态、剧情战视图与 story battle runtime，用于把主线 scene callback 接到可交互战斗会话，而不是从剧情硬跳单文件战斗原型。
+- 朱元璋郭子兴入营段新增“救援孙德崖”剧情战：郭子兴、汤和、徐达等友军由 NPC 推进，玩家只操作朱重八本队突入缺口，胜利后回帅府评定。
+
+### Changed
+- 第四周入郭剧情从占位战斗结果扩展为“对话铺垫 -> 剧情战 -> 胜利进入评定”的可复用流程。
+- 主线剧情战视图改为嵌入完整 `prototypes/battle-demo` 战斗页面，并通过 `sundeya-rescue` 场景参数加载固定救援战；原型页新增剧情场景配置、NPC 友军自动行动和胜利 `postMessage` 回调。
+
+### Impact
+- 后续主线若要接个人战、救援战、护送战等剧情战，应继续复用 `storyBattle` 会话和 battle-demo 场景参数启动方式；正式化时再把 `prototypes/battle-demo` 的战棋规则抽进共享 application/domain 模块，避免长期依赖 iframe 原型页。
+
 ## 2026-06-12 Battle Demo Isometric Formation Prototype
 
 ### Changed
@@ -57,6 +70,36 @@
 ### Impact
 - 当前变更不接入 `src/main.ts`，不改变现有战棋 Demo 行为。
 - 后续战斗实现应通过共享编队结构与 `src/application/battle` 服务接入，避免把编队规则写成页面层或主循环特判。
+
+## 2026-06-12 Rest Map Playback And Auto Return
+
+### Changed
+- 自宅与皇觉寺的休息不再在 house 内直接静默跳到最终日期；现在会先生成逐日休息快照，再切到主世界地图按天播放时间流逝，让右侧全局时间面板真实显示休息期间的日期推进与体力恢复。
+- 共享 `start-map-auto-advance` 契约扩展为支持 `snapshots` 与 `completion`：house module 现在可以把“世界层播放几天时间”与“播放结束后如何回到目标 house”交给共享运行时处理，而不需要在 `main.ts` 补 house 分支。
+- 休息播放结束后会自动回到原场景：在自宅休息会落回自宅并显示休息结果；在皇觉寺休息若只是普通静养则回到寺庙日常，若休息途中正好撞上评定日，则会直接重进寺庙并由 `enter()` 立即切入评定流程。
+- 皇觉寺第一周工作后的“休整至评定期”也接入同一套自动收口，地图时间播放到评定日后会直接回寺开评，不再停在地图层等待额外点击。
+
+### Impact
+- “多日休息/等待”现在成为共享世界层机制：后续别的 house 若也要做可见的时间快进并在结束后回场景，可以复用同一套 snapshot + completion 契约，而不是各写一条一次性跳转。
+- 休息的时间表现、回场景行为和评定入场顺序现在一致收口到共享运行时，避免再次出现“日期已经过去，但玩家还停在休息前 house 画面”或“先弹提醒、再手动找回 house”的割裂感。
+
+## 2026-06-10 Zhu Yuanzhang Week Four Return And Story Callback Hook
+
+### Added
+- 新增共享 story callback 运行接线 [src/application/story/story-callbacks.ts](/E:/RPG_TG/src/application/story/story-callbacks.ts)；scene 中原先只占位的 `callback` action 现在可以执行注册回调，用于承接“剧情里需要留接口、但暂不落完整系统”的过渡逻辑。
+- 新增共享占位战斗回调 `story.placeholder-battle`：当前可按 payload 自动写入“战斗已触发 / 已获胜 / 最后战斗 id 与结果”这类运行态，先保证剧情链可测试，后续真实个人战接入时可直接替换同一接口。
+- 朱元璋主线新增第四周事件 `event.story.zhu_yuanzhang.haozhou_return_encounter`，覆盖“外地化缘返程 -> 路遇盗匪 -> 入濠州被疑为谍 -> 郭子兴留置左右”的完整转轨段。
+
+### Changed
+- 皇觉寺和尚期新增第四周评定语义：第三周远途化缘结束后的下一轮评定，仍由方丈强制派发“外地化缘”，不再回退成普通“寺内帮忙 / 外出化缘”自由选工。
+- 第四周主线转折由共享进城触发链承接：玩家完成第四周外路化缘后，第一次回到濠州城就会切入“路遇盗匪 -> 城门被疑为谍 -> 郭子兴留置左右”scene。
+- 朱元璋从和尚期切入郭子兴帐下的身份变更，改由共享 story callback 统一处理：包括 `stage -> guo-zixing-camp`、玩家身份改为亲兵、清空寺庙差事残留、重置帅府评定倒计时与主任务文案。
+- scene 对话视图不再只吃寺庙 CSS 占位立绘；现在会优先走共享 portrait asset 解析，朱元璋、小兵、郭子兴等剧情角色都能直接显示各自 UI 目录中的真实立绘。
+
+### Impact
+- scene `callback` 终于成为真实可复用机制，后续如果还要做“剧情中先留个人战/辩论/审讯接口，系统稍后再接”，可以继续复用同一条 story callback 链。
+- 第四周现在能在不引入临时 house、也不在 `main.ts` 硬写剧情分支的前提下，于返程路上完成和尚期到郭子兴线的正式转轨。
+- 共享 scene 渲染拿到真实立绘后，后续新增非寺庙剧情时不必再为每个角色补一套一次性的 CSS 立绘特判。
 
 ## 2026-06-08 Temple Third Week Long-Distance Begging
 

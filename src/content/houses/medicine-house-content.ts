@@ -21,8 +21,8 @@ export const medicineHouseDialoguePool = [
 ] as const;
 
 export const medicineHouseGreetingLines = [
-  "陈郎中放下药秤，朝你点了点头。",
-  "药香弥漫，陈郎中示意你上前说话。",
+  "（放下药秤，朝你点了点头）",
+  "（示意你上前说话）",
 ] as const;
 
 export const medicineHouseHealService = {
