@@ -7,6 +7,7 @@ import type { HouseId } from "./house";
 import type { CityMarketData } from "./market";
 import type { MapId } from "./map";
 import type { MissionId } from "./mission";
+import type { ActiveStoryBattleSession } from "./story-battle";
 import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
@@ -17,6 +18,7 @@ export type ViewName =
   | "city-3d"
   | "house"
   | "scene"
+  | "battle"
   | "minigame";
 export type SceneStatus = "idle" | "playing" | "waiting-choice";
 export type TimeOfDay = "morning" | "afternoon" | "night";
@@ -51,6 +53,7 @@ export type GameState = {
     cursor: number;
     status: SceneStatus;
   };
+  storyBattle: ActiveStoryBattleSession;
   ui: GlobalUIState & {
     currentView: ViewName;
   };

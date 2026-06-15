@@ -215,22 +215,22 @@ function getSelectedActor(
 function pickActorDialogueLine(actor: TeaHouseActor): string {
   return actor.dialoguePool.length > 0
     ? pickRandom(actor.dialoguePool)
-    : `${actor.name}轻轻抿茶，没有立刻开口。`;
+    : "（轻轻抿茶）没有立刻开口。";
 }
 
 function getActorGreetingLines(actor: TeaHouseActor): string[] {
   return [
     actor.isFixedHost
-      ? "柳四擦着茶盏，像是已经知道你会来。"
-      : `${actor.name}抬眼看了你一下，像是在判断你值不值得多说两句。`,
+      ? "（擦着茶盏）像是已经知道你会来。"
+      : "（抬眼看了你一下）像是在判断你值不值得多说两句。",
   ];
 }
 
 function getActorOpenLines(actor: TeaHouseActor): string[] {
   return [
     actor.isFixedHost
-      ? "柳四笑着抬手，请你入座。"
-      : `${actor.name}看了你一眼，像是在等你先开口。`,
+      ? "（笑着抬手）请你入座。"
+      : "（看了你一眼）像是在等你先开口。",
   ];
 }
 
@@ -380,7 +380,7 @@ function createActivityConfirmOverlay(
 }
 
 function createCouncilTimeInsufficientOverlay(
-  actorName: string,
+  _actorName: string,
   durationDays: number,
   remainingDays: number
 ): TeaHouseOverlayState {
@@ -388,14 +388,12 @@ function createCouncilTimeInsufficientOverlay(
     "时日不够",
     remainingDays <= 0
       ? [
-          `${actorName}抬手按住茶盏，先把你拦了下来。`,
-          `“评定日期已到，这一场少说要磨上 ${durationDays} 天，眼下已经来不及了。”`,
-          "“先去把评定应下，改日再坐下来论。”",
+          `（抬手按住茶盏）评定日期已到，这一场少说要磨上 ${durationDays} 天，眼下已经来不及了。`,
+          "先去把评定应下，改日再坐下来论。",
         ]
       : [
-          `${actorName}抬手按住茶盏，先把你拦了下来。`,
-          `“离评定只剩 ${remainingDays} 天，这一场少说要磨上 ${durationDays} 天，眼下已经来不及了。”`,
-          "“先去把评定应下，改日再坐下来论。”",
+          `（抬手按住茶盏）离评定只剩 ${remainingDays} 天，这一场少说要磨上 ${durationDays} 天，眼下已经来不及了。`,
+          "先去把评定应下，改日再坐下来论。",
         ],
     "warning"
   );
@@ -746,7 +744,7 @@ function handleActorAction(
       input,
       sessionState,
       {
-        dialogueLines: [`${selectedActor.name}放下茶盏，示意你出题。`],
+        dialogueLines: ["（放下茶盏）示意你出题。"],
         dialoguePhase: "open",
         overlay: createDebateOverlay(
           selectedActor,
@@ -839,8 +837,8 @@ function handleActorAction(
         selectedActor,
         [
           selectedActor.isFixedHost
-            ? "柳四亲自添茶，笑意里多了几分亲近。"
-            : `${selectedActor.name}接过茶盏，神色也缓了下来。`,
+            ? "（亲自添茶）笑意里多了几分亲近。"
+            : "（接过茶盏）神色也缓了下来。",
         ],
         {
           relationshipChange: 2,
@@ -860,7 +858,7 @@ function handleActorAction(
         input,
         sessionState,
         selectedActor,
-        [`${selectedActor.name}压低声音说道：${intelLine}`],
+        [`（压低声音）${intelLine}`],
         {
           relationshipChange: 1,
           attributeChange: [],
@@ -883,8 +881,8 @@ function handleActorAction(
           overlay: createAlertOverlay(
             "先缓口气",
             [
-              `${selectedActor.name}放下茶盏，摇头道：“你这会儿神浮气短，真要舌战，也只是强撑。”`,
-              `“先去歇一歇，体力攒到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点以上，再来和我论个高下。”`,
+              "（放下茶盏，摇了摇头）你这会儿神浮气短，真要舌战，也只是强撑。",
+              `先去歇一歇，体力攒到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点以上，再来和我论个高下。`,
             ],
             "warning"
           ),
@@ -910,7 +908,7 @@ function handleActorAction(
 
       return withSessionState(input, sessionState, {
         overlay: createActivityConfirmOverlay("舌战", [
-          `${selectedActor.name}抬手压住茶盏：“真要论起来，照你如今的辩才，这一场少说也要磨上 ${durationDays} 天。”`,
+          `（抬手压住茶盏）真要论起来，照你如今的辩才，这一场少说也要磨上 ${durationDays} 天。`,
           formatHouseActivityCostLine(durationDays),
         ], CONFIRM_START_DEBATE_ACTION_ID),
       });
@@ -1090,7 +1088,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
               textLines:
                 sessionState.dialogueLines.length > 0
                   ? sessionState.dialogueLines
-                  : [`${selectedActor.name}正端详着你的神色。`],
+                  : ["（正端详着你的神色）"],
               advanceActionId: isGreeting ? "advance-greeting" : null,
               advanceHintText: isGreeting ? "点击继续" : null,
             },

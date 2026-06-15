@@ -196,8 +196,6 @@ export function buildStoryTriggerInput(
   return {
     timing,
     cityId: state.world.currentCityId,
-    ...(state.world.currentHouseId == null
-      ? {}
-      : { houseId: state.world.currentHouseId }),
+    ...(state.world.currentHouseId == null ? {} : { houseId: state.world.currentHouseId }),
   };
 }

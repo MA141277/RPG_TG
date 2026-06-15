@@ -9,12 +9,14 @@ import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
+  ActiveHouseModuleSession,
   HouseActionViewModel,
   HouseModuleDefinition,
   HouseModuleDispatchInput,
   HouseModuleTransitionResult,
   HouseModuleViewModel,
   HouseOverlayViewModel,
+  MapAutoAdvanceSnapshot,
 } from "../../../domain/house-module";
 import type { TempleHouseTaskDefinition } from "../../../domain/temple-house";
 import { TEMPLE_HOUSE_VARIABLE_KEYS } from "../../../domain/temple-house";
@@ -53,6 +55,7 @@ import {
   formatHouseActivityCostLine,
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
+import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
 import {
   markLateCouncilAttendancePenaltyProcessed,
   resolveLateCouncilAttendance,
@@ -91,11 +94,21 @@ const DECREMENT_TEMPLE_BEGGING_FOOD_ACTION_ID = "decrement-temple-begging-food";
 const INCREMENT_TEMPLE_BEGGING_FOOD_ACTION_ID = "increment-temple-begging-food";
 const TEMPLE_WORK_INTERVAL_ID = "temple-house-work-qte";
 const TEMPLE_REVIEW_AUTO_ADVANCE_INTERVAL_ID = "temple-review-auto-advance";
+const TEMPLE_REST_AUTO_ADVANCE_INTERVAL_ID = "temple-rest-auto-advance";
 const TEMPLE_WORK_TOTAL_ROUNDS = 3;
 const TEMPLE_WORK_MARKER_STEP = 7;
 const TEMPLE_REST_MAX_DAYS = 99;
 const TEMPLE_REST_BASE_RECOVERY = 12;
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
+
+type TempleRestSummary = {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  daysRested: number;
+  totalRecovered: number;
+  interruptedByCouncilDate: boolean;
+  snapshots: MapAutoAdvanceSnapshot[];
+};
 
 const FIRST_WEEK_TEMPLE_TASK_IDS = [
   "copy-scripture",
@@ -174,14 +187,12 @@ function getTempleLateChoiceParagraphs(): string[] {
 function getTempleLateMeetingIntroLines(lateDays: number, contributionPenalty: number): string[] {
   return lateDays > 5
     ? [
-        "方丈抬眼看你，语气已沉了下去。",
-        `“评定过了 ${lateDays} 天，你才来应声，寺中规矩不是给你看的？”`,
-        `“先记你迟到重过，扣去 ${contributionPenalty} 点寺中贡献。坐下，把这一轮评定补完。”`,
+        `（抬眼看你，语气已沉了下去）评定过了 ${lateDays} 天，你才来应声，寺中规矩不是给你看的？`,
+        `先记你迟到重过，扣去 ${contributionPenalty} 点寺中贡献。坐下，把这一轮评定补完。`,
       ]
     : [
-        "方丈看了你一眼，先把木鱼搁在了一旁。",
-        `“评定拖了 ${lateDays} 天才来，终究不像话。”`,
-        `“先记你迟到，扣去 ${contributionPenalty} 点寺中贡献。坐下，把这一轮评定补完。”`,
+        `（看了你一眼，先把木鱼搁在了一旁）评定拖了 ${lateDays} 天才来，终究不像话。`,
+        `先记你迟到，扣去 ${contributionPenalty} 点寺中贡献。坐下，把这一轮评定补完。`,
       ];
 }
 
@@ -359,6 +370,13 @@ function isThirdTempleWeekAssignmentPending(gameState: GameState): boolean {
   );
 }
 
+function isFourthTempleWeekAssignmentPending(gameState: GameState): boolean {
+  return (
+    isBeggingJourneyStage(gameState) &&
+    getTempleWeek(gameState) === 3
+  );
+}
+
 function randomTargetStart(round: number): number {
   const seed = (round * 17 + 13) % 55;
   return 15 + seed;
@@ -398,7 +416,7 @@ function resolveTempleWorkContribution(successes: number): {
       grade: "偷懒",
       contribution: 5,
       praiseLines: [
-        "方丈皱眉道，你这几日心神散乱，手上并未真正用力。",
+        "（皱起眉）你这几日心神散乱，手上并未真正用力。",
         "虽未把差事彻底误了，但还远称不上踏实。",
       ],
     };
@@ -409,7 +427,7 @@ function resolveTempleWorkContribution(successes: number): {
       grade: "合格",
       contribution: 10,
       praiseLines: [
-        "方丈点头道，做事虽还生涩，至少已经肯下力气。",
+        "（点了点头）做事虽还生涩，至少已经肯下力气。",
         "乱世里先把眼前活计做稳，比空谈志气更要紧。",
       ],
     };
@@ -417,11 +435,11 @@ function resolveTempleWorkContribution(successes: number): {
 
   return {
     grade: "勤勉",
-    contribution: 15,
-    praiseLines: [
-      "方丈难得露出赞许神色，说你这几日倒真肯吃苦。",
-      "寺中众人都看在眼里，这份踏实不是装出来的。",
-    ],
+      contribution: 15,
+      praiseLines: [
+        "（露出赞许神色）你这几日倒真肯吃苦。",
+        "寺中众人都看在眼里，这份踏实不是装出来的。",
+      ],
   };
 }
 
@@ -473,7 +491,7 @@ function resolveTempleBeggingDelivery(quantityDou: number): {
       grade: "功德充盈",
       contribution: 15,
       praiseLines: [
-        "方丈让知客僧接过粮袋，神色终于松了几分。",
+        "（让知客僧接过粮袋）神色终于松了几分。",
         "这一趟化缘能接济寺众，也能分出些许给山门外的饥民。",
       ],
     };
@@ -484,7 +502,7 @@ function resolveTempleBeggingDelivery(quantityDou: number): {
       grade: "足以交差",
       contribution: 10,
       praiseLines: [
-        "方丈点头道，粮虽不算多，至少能撑过眼前几日。",
+        "（点了点头）粮虽不算多，至少能撑过眼前几日。",
         "乱世中愿意把求来的粮带回寺里，便不是空走一遭。",
       ],
     };
@@ -492,11 +510,11 @@ function resolveTempleBeggingDelivery(quantityDou: number): {
 
   return {
     grade: "杯水车薪",
-    contribution: 5,
-    praiseLines: [
-      "方丈收下粮食，只叮嘱你下回多留意村口与粮仓差事。",
-      "粮少也是粮，能交回来便算有一分心力。",
-    ],
+      contribution: 5,
+      praiseLines: [
+        "（收下粮食）只叮嘱你下回多留意村口与粮仓差事。",
+        "粮少也是粮，能交回来便算有一分心力。",
+      ],
   };
 }
 
@@ -540,17 +558,12 @@ function runTempleRestPlan(
     characterDefinitions: CharacterDefinition[],
     daysRested: number
   ) => boolean
-): {
-  state: GameState;
-  characterDefinitions: CharacterDefinition[];
-  daysRested: number;
-  totalRecovered: number;
-  interruptedByCouncilDate: boolean;
-} {
+): TempleRestSummary {
   let nextState = state;
   let nextCharacters = characterDefinitions;
   let daysRested = 0;
   let totalRecovered = 0;
+  const snapshots: MapAutoAdvanceSnapshot[] = [];
 
   while (
     daysRested < TEMPLE_REST_MAX_DAYS &&
@@ -563,6 +576,7 @@ function runTempleRestPlan(
         daysRested,
         totalRecovered,
         interruptedByCouncilDate: true,
+        snapshots,
       };
     }
 
@@ -573,6 +587,10 @@ function runTempleRestPlan(
     );
     nextState = result.state;
     nextCharacters = result.characterDefinitions;
+    snapshots.push({
+      gameState: nextState,
+      characterDefinitions: nextCharacters,
+    });
     daysRested += 1;
     totalRecovered += result.recovered;
 
@@ -583,6 +601,7 @@ function runTempleRestPlan(
         daysRested,
         totalRecovered,
         interruptedByCouncilDate: true,
+        snapshots,
       };
     }
   }
@@ -593,17 +612,12 @@ function runTempleRestPlan(
     daysRested,
     totalRecovered,
     interruptedByCouncilDate: false,
+    snapshots,
   };
 }
 
 function createTempleRestResultOverlay(
-  summary: {
-    daysRested: number;
-    totalRecovered: number;
-    interruptedByCouncilDate: boolean;
-    state: GameState;
-    characterDefinitions: CharacterDefinition[];
-  },
+  summary: TempleRestSummary,
   title: string,
   playerCharacterId: string
 ): NonNullable<TempleHouseOverlayState> {
@@ -641,34 +655,62 @@ function createTempleRestResultOverlay(
   };
 }
 
-function createTempleRestCouncilArrivalNotice(
-  summary: {
-    daysRested: number;
-    interruptedByCouncilDate: boolean;
-    characterDefinitions: CharacterDefinition[];
-  },
+function createTempleRestCompletionSession(
+  sessionState: TempleHouseSessionState,
+  summary: TempleRestSummary,
+  title: string,
   playerCharacterId: string
-): NonNullable<HouseModuleTransitionResult["councilArrivalNotice"]> | undefined {
-  if (!summary.interruptedByCouncilDate) {
-    return undefined;
-  }
-
-  const playerCharacter = getPlayerCharacter(
-    summary.characterDefinitions,
-    playerCharacterId
-  );
-
+): ActiveHouseModuleSession {
   return {
-    textLines:
-      summary.daysRested > 0
-        ? [
-            `这次静养共休了 ${summary.daysRested} 天，体力已恢复到 ${playerCharacter.stamina}。`,
-            "评定日程已经压到眼前，先去前殿应评。",
-          ]
-        : [
-            `休息尚未来得及继续，当前体力为 ${playerCharacter.stamina}。`,
-            "先去把今日评定办完，之后再回来歇息。",
-          ],
+    moduleId: "temple-house",
+    state: {
+      ...sessionState,
+      mode: "daily",
+      meetingStage: "finished",
+      dialoguePhase: "idle",
+      dialogueOverride: null,
+      dailyActionPanel: "root",
+      overlay: createTempleRestResultOverlay(summary, title, playerCharacterId),
+    },
+  };
+}
+
+function createTempleRestAutoAdvanceResult(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  summary: TempleRestSummary,
+  title: string,
+  currentState: GameState
+): HouseModuleTransitionResult<"temple-house"> {
+  return {
+    gameState: currentState,
+    characterDefinitions: input.characterDefinitions,
+    sessionState,
+    sideEffects: [
+      {
+        type: "start-map-auto-advance",
+        intervalId: TEMPLE_REST_AUTO_ADVANCE_INTERVAL_ID,
+        everyMs: HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS,
+        targetHouseId: input.houseDefinition.id,
+        label: title,
+        snapshots: summary.snapshots,
+        completion: summary.interruptedByCouncilDate
+          ? {
+              type: "enter-house",
+              houseId: input.houseDefinition.id,
+            }
+          : {
+              type: "restore-house-session",
+              houseId: input.houseDefinition.id,
+              houseSession: createTempleRestCompletionSession(
+                sessionState,
+                summary,
+                title,
+                input.playerCharacterId
+              ),
+            },
+      },
+    ],
   };
 }
 
@@ -747,8 +789,8 @@ function createLowStaminaOverlay(actionLabel: string): NonNullable<TempleHouseOv
   return createAlertOverlay(
     "先去歇息",
     [
-      `住持合十道：“你这会儿心力已竭，今日不必强撑着去${actionLabel}。”`,
-      `“先回禅房静养，体力至少缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来继续。”`,
+      `（合十）你这会儿心力已竭，今日不必强撑着去${actionLabel}。`,
+      `先回禅房静养，体力至少缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来继续。`,
     ],
     "warning"
   );
@@ -786,7 +828,7 @@ function resolveFortuneLines(
     return {
       title: "中签",
       paragraphs: [
-        "住持将签纸放回案上，只道凡事莫急，急则生乱。",
+        "（将签纸放回案上）凡事莫急，急则生乱。",
         "眼前未必有捷径，但一步一步走，未必比旁人慢。",
       ],
       tone: "info",
@@ -796,7 +838,7 @@ function resolveFortuneLines(
   return {
     title: "下签",
     paragraphs: [
-      "签文并不吉利。住持却摇头说，凶签不是坏事，是让人知道哪里该避。",
+      "签文并不吉利。（摇了摇头）凶签不是坏事，是让人知道哪里该避。",
       "少争一口闲气，多护一分性命。先熬过眼前，才谈得上转机。",
     ],
     tone: "warning",
@@ -865,12 +907,12 @@ function createTempleInsufficientTimeResult(
         "时日不够",
         remainingDays <= 0
           ? [
-              `知客僧合十道：“评定日期已到，这轮${activityLabel}少说也要 ${durationDays} 天，眼下已经来不及了。”`,
-              "“先去前殿把评定应下，等过了这桩大事，再回来继续。”",
+              `（合十）评定日期已到，这轮${activityLabel}少说也要 ${durationDays} 天，眼下已经来不及了。`,
+              "先去前殿把评定应下，等过了这桩大事，再回来继续。",
             ]
           : [
-              `知客僧合十道：“离评定只剩 ${remainingDays} 天，这轮${activityLabel}少说也要 ${durationDays} 天，眼下已经来不及了。”`,
-              "“先去前殿把评定应下，等过了这桩大事，再回来继续。”",
+              `（合十）离评定只剩 ${remainingDays} 天，这轮${activityLabel}少说也要 ${durationDays} 天，眼下已经来不及了。`,
+              "先去前殿把评定应下，等过了这桩大事，再回来继续。",
             ],
         "warning"
       ),
@@ -1048,18 +1090,18 @@ function getTempleMeetingPraiseLines(
   const topEntries = contributionEntries.slice(0, 2);
 
   if (topEntries.length === 0) {
-    return ["方丈合十道，本期无人立功，寺里上下都该再自省。"];
+    return ["（合十）本期无人立功，寺里上下都该再自省。"];
   }
 
   return topEntries.map((entry, index) => {
     if (entry.characterId === playerCharacterId && entry.contribution >= 30) {
       return index === 0
-        ? "方丈看向朱重八，道：你这一个月来倒算踏实，这份苦功众人都看在眼里。"
-        : "方丈点名朱重八，道：你这一个月来倒算踏实，手上活计没有白做。";
+        ? "（看向朱重八）你这一个月来倒算踏实，这份苦功众人都看在眼里。"
+        : "（点名朱重八）你这一个月来倒算踏实，手上活计没有白做。";
     }
 
     if (entry.characterId === playerCharacterId && entry.contribution <= 0) {
-      return "方丈又看了朱重八一眼，道：你初来挂单，暂不论功，先看今后肯不肯做实事。";
+      return "（又看了朱重八一眼）你初来挂单，暂不论功，先看今后肯不肯做实事。";
     }
 
     return `方丈道：${index === 0 ? "首功" : "次功"}记在${entry.name}名下，${entry.contribution}点贡献，做得扎实。`;
@@ -1069,15 +1111,22 @@ function getTempleMeetingPraiseLines(
 function getTempleMeetingPolicyLines(gameState: GameState): string[] {
   if (!readBooleanFlag(gameState, ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted)) {
     return [
-      "方丈将木鱼轻轻一扣，道：这一轮寺中方针只有一条，先维持寺庙运转。",
+      "（将木鱼轻轻一扣）这一轮寺中方针只有一条，先维持寺庙运转。",
       "你初来乍到，第一周不许乱走，只准在寺内帮忙。",
     ];
   }
 
   if (isThirdTempleWeekAssignmentPending(gameState)) {
     return [
-      "方丈翻过簿册，道：濠州左近已快讨不出粮来，只守着院里杂务，终究救不了眼前饥荒。",
+      "（翻过簿册）濠州左近已快讨不出粮来，只守着院里杂务，终究救不了眼前饥荒。",
       "汝颍一路近来人群杂沓、施粮处也多些，这一轮不再任你自选，改由你北上远途化缘，为寺里带粮回来。",
+    ];
+  }
+
+  if (isFourthTempleWeekAssignmentPending(gameState)) {
+    return [
+      "（把你上次带回的粮与账目一并推回案前）这一趟虽有收获，寺里的口粮却仍旧紧。",
+      "外路还能讨得些活米，这一轮你仍去外地化缘。得粮便尽快南归，不可在路上久留。",
     ];
   }
 
@@ -1089,7 +1138,7 @@ function getTempleMeetingPolicyLines(gameState: GameState): string[] {
   }
 
   return [
-    "方丈翻过簿册，道：这一轮先照旧维持寺庙运转，院里活计不能断。",
+    "（翻过簿册）这一轮先照旧维持寺庙运转，院里活计不能断。",
     "外出化缘尚未开放，先把寺内杂务一件件做稳再说。",
   ];
 }
@@ -1104,14 +1153,22 @@ function getTempleAssignDutyLines(
 
   if (isThirdTempleWeekAssignmentPending(gameState)) {
     return [
-      "方丈用指节轻轻点在木牌上，道：这一轮不再由你自挑。",
+      "（用指节轻轻点在木牌上）这一轮不再由你自挑。",
       "差事已定为远途化缘，先往颍州方向走，看哪里还能求得些米粮回来接济寺众。",
       "你只管带粮回寺，外头风声再杂，也先莫忘了这一轮的本分。",
     ];
   }
 
+  if (isFourthTempleWeekAssignmentPending(gameState)) {
+    return [
+      "（垂下目光）这一轮仍定你去外地化缘，不必回院里抄经扫地。",
+      "路上若能得粮便背回，若世道更乱，也先保住性命，再寻路归寺。",
+      "你只记得一条：先把粮背稳，莫被旁事拖住脚。",
+    ];
+  }
+
   return [
-    "方丈抬手点了点案前木牌，示意你自选这一轮的差事。",
+    "（抬手点了点案前木牌）示意你自选这一轮的差事。",
     availableLabels.length === 0
       ? "这一轮暂时没有可领的寺务。"
       : `这一轮可领的差事有：${availableLabels.join("、")}。`,
@@ -1134,6 +1191,16 @@ function getReviewWorkChoices(gameState: GameState): Array<{
       {
         id: "beg-alms",
         label: "远途化缘",
+        tone: "accent",
+      },
+    ];
+  }
+
+  if (isFourthTempleWeekAssignmentPending(gameState)) {
+    return [
+      {
+        id: "beg-alms",
+        label: "外地化缘",
         tone: "accent",
       },
     ];
@@ -1250,13 +1317,20 @@ function submitReviewWorkPlan(
   const thirdTempleWeekAssignment = isThirdTempleWeekAssignmentPending(
     input.gameState
   );
+  const fourthTempleWeekAssignment = isFourthTempleWeekAssignmentPending(
+    input.gameState
+  );
   const secondTempleWeekTransition =
     !thirdTempleWeekAssignment &&
+    !fourthTempleWeekAssignment &&
     readZhuYuanzhangStoryStage(input.gameState) ===
       ZHU_YUANZHANG_STORY_STAGES.huangjueTemple &&
     isBeggingUnlocked(input.gameState) &&
     getTempleWeek(input.gameState) === 2;
-  const nextWorkPlan = thirdTempleWeekAssignment ? "beg-alms" : workPlan;
+  const nextWorkPlan =
+    thirdTempleWeekAssignment || fourthTempleWeekAssignment
+      ? "beg-alms"
+      : workPlan;
 
   if (workPlan === "beg-alms" && !isBeggingUnlocked(input.gameState)) {
     return withSessionState(
@@ -1296,13 +1370,15 @@ function submitReviewWorkPlan(
       activeMissionId:
         nextWorkPlan === "beg-alms" ? "mission.temple.beg-alms" : null,
       reviewDateText: formatReviewDateText(30),
-      mainHouseMissionText:
-        nextWorkPlan === "beg-alms"
-          ? thirdTempleWeekAssignment
-            ? "远赴颍州化缘"
-            : "外出化缘"
-          : "寺内帮忙",
-    },
+        mainHouseMissionText:
+          nextWorkPlan === "beg-alms"
+            ? thirdTempleWeekAssignment
+              ? "远赴颍州化缘"
+              : fourthTempleWeekAssignment
+                ? "外地化缘"
+              : "外出化缘"
+            : "寺内帮忙",
+      },
     runtime: {
       ...input.gameState.runtime,
       flags: {
@@ -1318,12 +1394,15 @@ function submitReviewWorkPlan(
       variables: {
         ...input.gameState.runtime.variables,
         [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
-        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: thirdTempleWeekAssignment
-          ? ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
-          : readZhuYuanzhangStoryStage(input.gameState),
-        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: thirdTempleWeekAssignment
-          ? 3
-          : getTempleWeek(input.gameState),
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: thirdTempleWeekAssignment
+            ? ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
+            : readZhuYuanzhangStoryStage(input.gameState),
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]:
+            thirdTempleWeekAssignment
+              ? 3
+              : fourthTempleWeekAssignment
+                ? 4
+                : getTempleWeek(input.gameState),
         [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
         [TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: "",
         [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: nextWorkPlan,
@@ -1344,32 +1423,39 @@ function submitReviewWorkPlan(
       selectedTaskId: null,
       selectedWorkPlan: nextWorkPlan,
       dailyActionPanel: "root",
-      dialogueLines:
-        nextWorkPlan === "beg-alms"
-          ? [
-              ...(thirdTempleWeekAssignment
-                ? [
-                    "这一轮评定，你改去颍州方向远途化缘。",
-                    "离寺后先往北路城镇走，在外地按化缘流程求粮，带回寺里即可交差。",
-                  ]
-                : [
-                    "这一轮评定，你改去寺外化缘。",
-                    "离寺后直接在城中按化缘流程推进，不必再回寺里点这份工作。",
-                  ]),
-            ]
+        dialogueLines:
+          nextWorkPlan === "beg-alms"
+            ? [
+                ...(thirdTempleWeekAssignment
+                  ? [
+                      "这一轮评定，你改去颍州方向远途化缘。",
+                      "离寺后先往北路城镇走，在外地按化缘流程求粮，带回寺里即可交差。",
+                    ]
+                  : fourthTempleWeekAssignment
+                    ? [
+                        "这一轮评定，你仍去外地化缘。",
+                        "先在外路求粮，得手后尽快回程；若路上遇乱，先保住人和粮，再设法归寺。",
+                      ]
+                  : [
+                      "这一轮评定，你改去寺外化缘。",
+                      "离寺后直接在城中按化缘流程推进，不必再回寺里点这份工作。",
+                    ]),
+              ]
           : [
               "这一轮评定，先以寺内帮忙为主。",
               "评定到此为止，回到寺中事务里，再挑具体杂务去做。",
             ],
       overlay: createAlertOverlay(
         "本轮差事已定",
-        [
-          nextWorkPlan === "beg-alms"
-            ? thirdTempleWeekAssignment
-              ? "本轮方向已定为远途化缘。先往颍州方向求粮，离寺后直接在外地城镇推进，不再从寺庙工作菜单进入。"
-              : "本轮方向已定为外出化缘。离寺后直接去城中化缘，不再从寺庙工作菜单进入。"
-            : "本轮方向已定为寺内帮忙。离开评定后，可在寺庙事务中选择抄经、扫院或挑水。",
-          "本次寺中评定结束，下次评定倒计时已重置为 30 天。",
+          [
+            nextWorkPlan === "beg-alms"
+              ? thirdTempleWeekAssignment
+                ? "本轮方向已定为远途化缘。先往颍州方向求粮，离寺后直接在外地城镇推进，不再从寺庙工作菜单进入。"
+                : fourthTempleWeekAssignment
+                  ? "本轮方向已定为外地化缘。离寺后仍按外地求粮推进，得粮后尽快回程，不再从寺庙工作菜单进入。"
+                : "本轮方向已定为外出化缘。离寺后直接去城中化缘，不再从寺庙工作菜单进入。"
+              : "本轮方向已定为寺内帮忙。离开评定后，可在寺庙事务中选择抄经、扫院或挑水。",
+            "本次寺中评定结束，下次评定倒计时已重置为 30 天。",
         ],
         "success"
       ),
@@ -1460,13 +1546,15 @@ function startBegAlmsWork(
         ...input.gameState.missions,
         activeMissionId: taskDefinition.missionId,
       },
-      ui: {
-        ...input.gameState.ui,
-        activeMissionId: taskDefinition.missionId,
-        mainHouseMissionText: isBeggingJourneyStage(input.gameState)
-          ? "远赴颍州化缘"
-          : taskDefinition.title,
-      },
+        ui: {
+          ...input.gameState.ui,
+          activeMissionId: taskDefinition.missionId,
+          mainHouseMissionText: isBeggingJourneyStage(input.gameState)
+            ? getTempleWeek(input.gameState) >= 4
+              ? "外地化缘"
+              : "远赴颍州化缘"
+            : taskDefinition.title,
+        },
       runtime: {
         ...input.gameState.runtime,
         variables: {
@@ -1481,17 +1569,26 @@ function startBegAlmsWork(
       dialoguePhase: "open",
       selectedTaskId: taskDefinition.id,
       dailyActionPanel: "work",
-      overlay: createAlertOverlay(
-        isBeggingJourneyStage(input.gameState) ? "准备远途化缘" : "准备外出化缘",
-        [
-          ...(isBeggingJourneyStage(input.gameState)
-            ? [
-                "住持已把这一轮差事定为远途化缘，你先往颍州方向走，在外地城镇求粮。",
-                "这次不走寺内杂务考校。离开寺庙后，直接按城中化缘与买粮流程推进，带粮回寺即可。",
-              ]
-            : [
-                taskDefinition.briefing,
-                "这次不走寺内杂务考校。离开寺庙后，你便可按外出赚钱的流程推进。",
+        overlay: createAlertOverlay(
+          isBeggingJourneyStage(input.gameState)
+            ? getTempleWeek(input.gameState) >= 4
+              ? "准备外地化缘"
+              : "准备远途化缘"
+            : "准备外出化缘",
+          [
+            ...(isBeggingJourneyStage(input.gameState)
+              ? getTempleWeek(input.gameState) >= 4
+                ? [
+                    "住持已把这一轮差事定为外地化缘，你仍先往外路求粮，得手后尽快回程。",
+                    "这次不走寺内杂务考校。离开寺庙后，直接按外地城镇的化缘与买粮流程推进即可。",
+                  ]
+                : [
+                    "住持已把这一轮差事定为远途化缘，你先往颍州方向走，在外地城镇求粮。",
+                    "这次不走寺内杂务考校。离开寺庙后，直接按城中化缘与买粮流程推进，带粮回寺即可。",
+                  ]
+              : [
+                  taskDefinition.briefing,
+                  "这次不走寺内杂务考校。离开寺庙后，你便可按外出赚钱的流程推进。",
               ]),
         ],
         "info"
@@ -2169,27 +2266,17 @@ function handleAction(
       }
     );
 
-    return {
-      gameState: summary.state,
-      characterDefinitions: summary.characterDefinitions,
-      sessionState: {
-        ...sessionState,
-        dailyActionPanel: "root",
-        overlay: createTempleRestResultOverlay(
-          summary,
-          actionId === TEMPLE_REST_ONE_DAY_ACTION_ID
-            ? "休息一日"
-            : actionId === TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID
-              ? "休至评定日"
-              : "休至体力恢复",
-          input.playerCharacterId
-        ),
-      },
-      councilArrivalNotice: createTempleRestCouncilArrivalNotice(
-        summary,
-        input.playerCharacterId
-      ),
-    };
+    return createTempleRestAutoAdvanceResult(
+      input,
+      sessionState,
+      summary,
+      actionId === TEMPLE_REST_ONE_DAY_ACTION_ID
+        ? "休息一日"
+        : actionId === TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID
+          ? "休至评定日"
+          : "休至体力恢复",
+      nextState
+    );
   }
 
   if (input.request.actionId === CONFIRM_TEMPLE_REST_DAYS_ACTION_ID) {
@@ -2221,23 +2308,13 @@ function handleAction(
       (_state, _characterDefinitions, daysRested) => daysRested < days
     );
 
-    return {
-      gameState: summary.state,
-      characterDefinitions: summary.characterDefinitions,
-      sessionState: {
-        ...sessionState,
-        dailyActionPanel: "root",
-        overlay: createTempleRestResultOverlay(
-          summary,
-          `休息 ${days} 天`,
-          input.playerCharacterId
-        ),
-      },
-      councilArrivalNotice: createTempleRestCouncilArrivalNotice(
-        summary,
-        input.playerCharacterId
-      ),
-    };
+    return createTempleRestAutoAdvanceResult(
+      input,
+      sessionState,
+      summary,
+      `休息 ${days} 天`,
+      nextState
+    );
   }
 
   if (input.request.actionId === SUBMIT_TEMPLE_BEGGING_FOOD_ACTION_ID) {
@@ -2373,7 +2450,7 @@ function handleAction(
             "香火钱不够",
             [
               `你身上只剩 ${playerCharacter.stats.gold} 文，还不够这次布施。`,
-              "住持并不催促，只让你先把日子过稳。",
+              "（并不催促）只让你先把日子过稳。",
             ],
             "warning"
           ),
@@ -2447,9 +2524,13 @@ function handleAction(
           {
             type: "start-map-auto-advance",
             intervalId: TEMPLE_REVIEW_AUTO_ADVANCE_INTERVAL_ID,
-            everyMs: 450,
+            everyMs: HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS,
             targetHouseId: input.houseDefinition.id,
             label: "休整至评定期",
+            completion: {
+              type: "enter-house",
+              houseId: input.houseDefinition.id,
+            },
           },
         ],
       };

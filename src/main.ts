@@ -72,8 +72,10 @@ import {
   chooseStorySceneOption,
   getCurrentChoiceOptions,
   getCurrentSceneAction,
+  startStoryEventById,
   triggerStoryEvents,
 } from "./application/story/story-runtime";
+import { dispatchStoryBattleAction } from "./application/story-battle/story-battle-runtime";
 import {
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
@@ -138,6 +140,7 @@ import type {
 import type { ValuableItemId } from "./domain/valuable-item";
 import {
   isHaozhouShortageDuringBeggingJourney,
+  ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
   type ZhuYuanzhangStoryStage,
@@ -173,6 +176,7 @@ const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
+const HAOZHOU_RETURN_ENCOUNTER_SPY_SCENE_CURSOR = 4;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 1,
   offsetX: 0,
@@ -203,6 +207,7 @@ type SaveDataResult = {
 } | null;
 
 type BackgroundMusicMode = "opening" | "in-game";
+type StartupScenario = "default" | "haozhou-return-encounter";
 
 type CampaignMoveAnimationState = {
   frameId: number | null;
@@ -360,6 +365,7 @@ const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
   characters: selectableCharacters,
   onStartGame: startMainGameWithLoading,
+  onContinueGame: startContinueGameWithLoading,
   loadSaveData,
   getAppState: () => appState,
 });
@@ -528,13 +534,23 @@ function getCurrentCityUiContext(): {
 
 function openCityMenuPanel(panelId: CityMenuPanelId): void {
   const playerCharacter = getCurrentPlayerCharacter();
-  const cityContext = getCurrentCityUiContext();
 
-  if (playerCharacter == null || cityContext == null) {
+  if (playerCharacter == null) {
     return;
   }
 
   if (panelId === "begging" && !isPlayerMonkIdentity(playerCharacter)) {
+    return;
+  }
+
+  if (panelId === "begging") {
+    openBeggingMiniGame();
+    return;
+  }
+
+  const cityContext = getCurrentCityUiContext();
+
+  if (cityContext == null) {
     return;
   }
 
@@ -737,12 +753,12 @@ function showCouncilInsufficientTimeRefusal(
       textLines: isTempleReview
         ? remainingDays <= 0
           ? [
-              `知客僧上前提醒你：“评定日期已到，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。”`,
-              `“先去${targetName}把评定应下，回来再说这桩事。”`,
+              `（上前提醒你）评定日期已到，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。`,
+              `先去${targetName}把评定应下，回来再说这桩事。`,
             ]
           : [
-              `知客僧上前提醒你：“离评定只剩 ${remainingDays} 天，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。”`,
-              `“先去${targetName}把评定应下，回来再说这桩事。”`,
+              `（上前提醒你）离评定只剩 ${remainingDays} 天，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。`,
+              `先去${targetName}把评定应下，回来再说这桩事。`,
             ]
         : remainingDays <= 0
           ? [
@@ -897,8 +913,8 @@ function openBeggingMiniGame(): void {
         type: "house-access-refusal",
         speakerCharacterId: "char.kulan_temple_abbot",
         textLines: [
-          "方丈隔着人群唤住了你：“你这会儿脚步都虚了，就别再硬撑着出去化缘。”",
-          `“先回去歇息，体力缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再出门也不迟。”`,
+          "（隔着人群唤住了你）你这会儿脚步都虚了，就别再硬撑着出去化缘。",
+          `先回去歇息，体力缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再出门也不迟。`,
         ],
         advanceHintText: "先去休息",
       },
@@ -972,8 +988,14 @@ function startMapAutoAdvance(input: {
   everyMs: number;
   targetHouseId: string;
   label: string;
+  snapshots?: NonNullable<AppState["autoAdvanceState"]>["snapshots"];
+  completion?: NonNullable<AppState["autoAdvanceState"]>["completion"];
 }): void {
   stopMapAutoAdvance(input.intervalId);
+  if (input.snapshots != null && input.snapshots.length === 0 && input.completion != null) {
+    houseRuntime.applyMapAutoAdvanceCompletion(input.completion);
+    return;
+  }
   cancelCampaignTravel();
   houseRuntime.clearAllHouseIntervals();
   appState = {
@@ -987,6 +1009,8 @@ function startMapAutoAdvance(input: {
       intervalId: input.intervalId,
       label: input.label,
       targetHouseId: input.targetHouseId,
+      snapshots: input.snapshots ?? null,
+      completion: input.completion ?? null,
     },
     gameState: {
       ...appState.gameState,
@@ -1005,11 +1029,71 @@ function startMapAutoAdvance(input: {
   renderApp();
 
   mapAutoAdvanceHandles[input.intervalId] = window.setInterval(() => {
+    const autoAdvanceState = appState.autoAdvanceState;
+    if (autoAdvanceState == null || autoAdvanceState.intervalId !== input.intervalId) {
+      stopMapAutoAdvance(input.intervalId);
+      return;
+    }
+
+    if (autoAdvanceState.snapshots != null) {
+      const [nextSnapshot, ...remainingSnapshots] = autoAdvanceState.snapshots;
+      if (nextSnapshot == null) {
+        stopMapAutoAdvance(input.intervalId);
+        if (autoAdvanceState.completion != null) {
+          houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+          return;
+        }
+        renderApp();
+        return;
+      }
+
+      appState = {
+        ...appState,
+        characterDefinitions: nextSnapshot.characterDefinitions,
+        autoAdvanceState: {
+          ...autoAdvanceState,
+          snapshots: remainingSnapshots,
+        },
+        gameState: {
+          ...nextSnapshot.gameState,
+          world: {
+            ...nextSnapshot.gameState.world,
+            currentHouseId: null,
+          },
+          ui: {
+            ...nextSnapshot.gameState.ui,
+            currentView: "map",
+            overlayView: null,
+            houseSession: null,
+          },
+        },
+      };
+
+      if (remainingSnapshots.length === 0) {
+        stopMapAutoAdvance(input.intervalId);
+        if (autoAdvanceState.completion != null) {
+          houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+          return;
+        }
+      }
+
+      renderApp();
+      return;
+    }
+
     const previousGameState = appState.gameState;
     appState = {
       ...appState,
       gameState: advanceGameStateOneDay(appState.gameState),
     };
+    const councilArrived =
+      !hasReachedCouncilDate(previousGameState) &&
+      hasReachedCouncilDate(appState.gameState);
+    if (councilArrived && autoAdvanceState.completion != null) {
+      stopMapAutoAdvance(input.intervalId);
+      houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+      return;
+    }
     if (syncCouncilPriorityAfterGameStateChange(previousGameState)) {
       stopMapAutoAdvance(input.intervalId);
       return;
@@ -1066,12 +1150,59 @@ function chooseCurrentStoryOption(choiceId: string): void {
   renderApp();
 }
 
+function dispatchCurrentStoryBattleAction(actionId: string): void {
+  const result = dispatchStoryBattleAction(appState.gameState, actionId);
+  appState = {
+    ...appState,
+    gameState: result.state,
+  };
+
+  if (result.enterHouseId != null) {
+    houseRuntime.enterHouseById(result.enterHouseId);
+    return;
+  }
+
+  renderApp();
+}
+
+type BattleDemoResultMessage = {
+  type: "rpg-tg:battle-demo-result";
+  scenarioId?: string;
+  result?: "victory" | "defeat";
+};
+
+function handleBattleDemoResultMessage(message: unknown): void {
+  if (message == null || typeof message !== "object") {
+    return;
+  }
+
+  const resultMessage = message as BattleDemoResultMessage;
+  const activeBattle = appState.gameState.storyBattle;
+  if (
+    resultMessage.type !== "rpg-tg:battle-demo-result" ||
+    activeBattle?.demoScenarioId == null ||
+    resultMessage.scenarioId !== activeBattle.demoScenarioId ||
+    resultMessage.result !== "victory"
+  ) {
+    return;
+  }
+
+  dispatchCurrentStoryBattleAction("embedded-victory");
+}
+
 function loadSaveData(): SaveDataResult {
   // Placeholder for future save loading integration.
   return null;
 }
 
-function startMainGameWithLoading(selectedCharacter: CharacterDefinition): void {
+function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): void {
+  startMainGameWithLoading(selectedCharacter, "haozhou-return-encounter");
+}
+
+function startMainGameWithLoading(
+  selectedCharacter: CharacterDefinition,
+  startupScenario: StartupScenario = "default"
+): void {
   const requestId = beginLoadingScreen();
 
   simulateLoadingProgress((progress) => {
@@ -1085,19 +1216,108 @@ function startMainGameWithLoading(selectedCharacter: CharacterDefinition): void 
       return;
     }
 
-    startMainGame(selectedCharacter);
+    startMainGame(selectedCharacter, startupScenario);
     endLoadingScreen(requestId);
   });
 }
 
-function startMainGame(selectedCharacter: CharacterDefinition): void {
+function startMainGame(
+  selectedCharacter: CharacterDefinition,
+  startupScenario: StartupScenario = "default"
+): void {
   resetMainGameRuntime();
   currentPlayerCharacterId = selectedCharacter.id;
   appState = createPrototypeAppState(currentPlayerCharacterId);
+  if (startupScenario === "haozhou-return-encounter") {
+    appState = createHaozhouReturnEncounterAppState(appState);
+  }
   houseRuntime = createHouseRuntimeInstance();
   setGameVisibility(true);
   mainUiFlow.hide();
   renderApp();
+}
+
+function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
+  let nextAppState: AppState = {
+    ...baseState,
+    gameState: {
+      ...baseState.gameState,
+      world: {
+        ...baseState.gameState.world,
+        currentCityId: "city.kulan",
+        currentHouseId: null,
+      },
+      ui: {
+        ...baseState.gameState.ui,
+        currentView: "city",
+        overlayView: null,
+        houseSession: null,
+        mainHouseMissionText: "返濠州听候盘查",
+      },
+      runtime: {
+        ...baseState.gameState.runtime,
+        flags: {
+          ...baseState.gameState.runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.ordinationCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingTransitionAssigned]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleWon]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted]: false,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon]: false,
+        },
+        variables: {
+          ...baseState.gameState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
+            ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 4,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId]:
+            "story.zhu_yuanzhang.week4.roadside-bandits",
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult]: "victory",
+        },
+      },
+    },
+    characterDefinitions: createPrototypeCharactersForStoryStage(
+      ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
+    ),
+    modalState: null,
+    locationDialogueState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    beggingMiniGameState: null,
+    campaignTravelState: null,
+  };
+
+  const storyResult = startStoryEventById(
+    {
+      state: nextAppState.gameState,
+      characterDefinitions: nextAppState.characterDefinitions,
+    },
+    {
+      eventDefinitionsById: storyEventDefinitionsById,
+      sceneDefinitionsById: storySceneDefinitionsById,
+    },
+    "event.story.zhu_yuanzhang.haozhou_return_encounter"
+  );
+
+  nextAppState = {
+    ...nextAppState,
+    gameState: {
+      ...storyResult.state,
+      scene: {
+        ...storyResult.state.scene,
+        cursor: HAOZHOU_RETURN_ENCOUNTER_SPY_SCENE_CURSOR,
+        status: "playing",
+      },
+    },
+    characterDefinitions: storyResult.characterDefinitions,
+  };
+
+  return nextAppState;
 }
 
 function beginLoadingScreen(): number {
@@ -2333,6 +2553,10 @@ appElement.addEventListener("dragend", () => {
   houseDragPayload = null;
 });
 
+window.addEventListener("message", (event) => {
+  handleBattleDemoResultMessage(event.data);
+});
+
 appElement.addEventListener("click", (event) => {
   if (shouldSuppressNextClickAfterMapDrag) {
     shouldSuppressNextClickAfterMapDrag = false;
@@ -2789,6 +3013,20 @@ appElement.addEventListener("click", (event) => {
     const choiceId = sceneChoiceButton.dataset.sceneChoiceId;
     if (choiceId != null) {
       chooseCurrentStoryOption(choiceId);
+    }
+    return;
+  }
+
+  const storyBattleActionButton = targetElement.closest<HTMLElement>(
+    "[data-story-battle-action]"
+  );
+  if (
+    storyBattleActionButton != null &&
+    appState.gameState.ui.currentView === "battle"
+  ) {
+    const actionId = storyBattleActionButton.dataset.storyBattleAction;
+    if (actionId != null) {
+      dispatchCurrentStoryBattleAction(actionId);
     }
     return;
   }

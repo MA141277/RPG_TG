@@ -136,8 +136,8 @@ function createLowStaminaOverlay(actionLabel: string): TavernOverlayState {
   return createAlertOverlay(
     "先去休息",
     [
-      `老板摆了摆手：“你这会儿脚下都发虚，还想${actionLabel}？只会把事情办砸。”`,
-      `“先去歇够，体力至少回到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来柜上说话。”`,
+      `（摆了摆手）你这会儿脚下都发虚，还想${actionLabel}？只会把事情办砸。`,
+      `先去歇够，体力至少回到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来柜上说话。`,
     ],
     "warning"
   );
@@ -484,8 +484,8 @@ function submitWork(
       workPanelMode: "submit",
       dialoguePhase: "open",
       dialogueLines: reward.success
-        ? [`你提交了${offer.title}。`, `老板点过工钱，递来 ${reward.rewardGold} 文。`]
-        : [`你提交了${offer.title}。`, "老板看完结果摇了摇头，这单按失败记。"],
+        ? [`你提交了${offer.title}。`, `（点过工钱）递来 ${reward.rewardGold} 文。`]
+        : [`你提交了${offer.title}。`, "（看完结果，摇了摇头）这单按失败记。"],
       overlay: {
         type: "result",
         title: "提交结果",
@@ -587,14 +587,12 @@ function createCouncilTimeInsufficientOverlay(
     "时日不够",
     remainingDays <= 0
       ? [
-          `老板把“${offerTitle}”的活牌收回手边，抬眼看着你。`,
-          `“评定日期已到，这活至少得占你 ${durationDays} 天，眼下接不得。”`,
-          "“先去把评定应下，回来再谈这单。”",
+          `（把“${offerTitle}”的活牌收回手边，抬眼看着你）评定日期已到，这活至少得占你 ${durationDays} 天，眼下接不得。`,
+          "先去把评定应下，回来再谈这单。",
         ]
       : [
-          `老板把“${offerTitle}”的活牌收回手边，抬眼看着你。`,
-          `“离评定只剩 ${remainingDays} 天，这活至少得占你 ${durationDays} 天，眼下接不得。”`,
-          "“先去把评定应下，回来再谈这单。”",
+          `（把“${offerTitle}”的活牌收回手边，抬眼看着你）离评定只剩 ${remainingDays} 天，这活至少得占你 ${durationDays} 天，眼下接不得。`,
+          "先去把评定应下，回来再谈这单。",
         ],
     "warning"
   );
@@ -620,7 +618,7 @@ function handleWorkAction(
       ...lists,
       workPanelMode: "main",
       dialoguePhase: "open",
-      dialogueLines: ["老板把活计牌翻了出来。", "你可以先接取，也可以提交已经接下的活。"],
+      dialogueLines: ["（把活计牌翻了出来）", "你可以先接取，也可以提交已经接下的活。"],
       overlay: null,
     });
   }
@@ -633,7 +631,7 @@ function handleWorkAction(
       dialoguePhase: "open",
       dialogueLines:
         lists.availableOffers.length === 0
-          ? ["老板翻了翻账本。", "眼下没有适合你接的新活。"]
+          ? ["（翻了翻账本）", "眼下没有适合你接的新活。"]
           : ["这些是当前酒馆还能接的活。", "前期只能接一个主命以外的任务，名声高了才会放宽。"],
       overlay: null,
     });
@@ -647,7 +645,7 @@ function handleWorkAction(
       dialoguePhase: "open",
       dialogueLines:
         lists.acceptedOffers.length === 0
-          ? ["老板看了你一眼。", "你在这家酒馆还没有接下的活。"]
+          ? ["（看了你一眼）", "你在这家酒馆还没有接下的活。"]
           : ["提交只显示当前酒馆已经接取的任务。", "没做完也能交，但会按失败算。"],
       overlay: null,
     });
@@ -698,7 +696,7 @@ function handleWorkAction(
     return withSessionState(input, sessionState, {
       overlay: createActivityConfirmOverlay(offer.title, [
         offer.description,
-        `老板抬了抬下巴：“这活真接下来，少说得占你 ${durationDays} 天。”`,
+        `（抬了抬下巴）这活真接下来，少说得占你 ${durationDays} 天。`,
         formatHouseActivityCostLine(durationDays),
       ], `${CONFIRM_START_WORK_ACTION_PREFIX}${offer.id}`),
     });
@@ -794,7 +792,7 @@ function handleDrinkAction(
         type: "drink-confirm",
         title: "点一杯酒",
         price: tavernDrinkPrice,
-        paragraphs: ["老板抬手敲了敲酒坛。", `要花 ${tavernDrinkPrice} 文买一杯酒吗？`],
+        paragraphs: ["（抬手敲了敲酒坛）", `要花 ${tavernDrinkPrice} 文买一杯酒吗？`],
         confirmActionId: "confirm-drink",
         cancelActionId: "cancel-overlay",
       },
@@ -839,7 +837,7 @@ function handleDrinkAction(
         : {
             ...sessionState,
             dialoguePhase: "open",
-            dialogueLines: ["老板给你斟了一杯温酒。", "辛辣下肚，整个人也慢慢松了下来。"],
+            dialogueLines: ["（给你斟了一杯温酒）", "辛辣下肚，整个人也慢慢松了下来。"],
             overlay: createAlertOverlay(
               "喝酒",
               [`你花了 ${tavernDrinkPrice} 文买酒。`, "当前先按单次喝酒状态结算。"],
@@ -1031,7 +1029,7 @@ function handleGambleAction(
       return withSessionState(input, sessionState, {
         overlay: createAlertOverlay(
           "赌本不够",
-          ["老板摇了摇头。", `至少要有 ${tavernWagerStep} 文，才能上桌。`],
+          ["（摇了摇头）", `至少要有 ${tavernWagerStep} 文，才能上桌。`],
           "warning"
         ),
       });
@@ -1652,7 +1650,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
         lists.availableOffers,
         lists.acceptedOffers,
         input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
-        ["老板抬眼看了你一眼。", "“要找活、喝酒，还是上桌赌两把？”"]
+        ["（抬眼看了你一眼）要找活、喝酒，还是上桌赌两把？"]
       ),
       sideEffects: [
         { type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID },
@@ -1678,7 +1676,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     if (input.request.actionId === "advance-greeting") {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
-        dialogueLines: ["老板把算盘往旁边一拨。", "“说吧，你今天想干什么？”"],
+        dialogueLines: ["（把算盘往旁边一拨）说吧，你今天想干什么？"],
       });
     }
 
@@ -1694,7 +1692,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
         workPanelMode: "closed",
-        dialogueLines: ["老板站在柜后看着你。", "“酒、活、赌，三样都明码标价。”"],
+        dialogueLines: ["（站在柜后看着你）酒、活、赌，三样都明码标价。"],
         overlay: null,
       });
     }
@@ -1786,7 +1784,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
         lists.availableOffers,
         lists.acceptedOffers,
         input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
-        ["老板抬眼看了你一眼。", "“要找活、喝酒，还是上桌赌两把？”"]
+        ["（抬眼看了你一眼）要找活、喝酒，还是上桌赌两把？"]
       );
     const currentTime = readNumericVariable(
       input.gameState,

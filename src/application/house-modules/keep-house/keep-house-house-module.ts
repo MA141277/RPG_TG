@@ -270,52 +270,52 @@ function getAvailableTasks(
   );
 }
 
-function getAudienceGreetingLines(lordCharacter: CharacterDefinition): string[] {
+function getAudienceGreetingLines(_lordCharacter: CharacterDefinition): string[] {
   return [
-    `${lordCharacter.name}抬了抬手，示意你上前。`,
+    "（抬了抬手）示意你上前。",
     "“有话就说，军中事务不喜拖沓。”",
   ];
 }
 
-function getAudienceOpenLines(lordCharacter: CharacterDefinition): string[] {
+function getAudienceOpenLines(_lordCharacter: CharacterDefinition): string[] {
   return [
-    `${lordCharacter.name}翻着案上的军报，仍分出神来看了你一眼。`,
+    "（翻着案上的军报）仍分出神来看了你一眼。",
     "“军情、粮道、市面，凡是看见的，都可以报上来。”",
   ];
 }
 
-function getMeetingIntroLines(lordCharacter: CharacterDefinition): string[] {
+function getMeetingIntroLines(_lordCharacter: CharacterDefinition): string[] {
   return [
-    `${lordCharacter.name}端坐主位，厅中诸将已经依次列坐。`,
+    "（端坐主位）厅中诸将已经依次列坐。",
     "“评定已到，今日先报功过，再定今后的方针与差事。”",
   ];
 }
 
 function getLateMeetingIntroLines(
-  lordCharacter: CharacterDefinition,
+  _lordCharacter: CharacterDefinition,
   lateDays: number,
   contributionPenalty: number
 ): string[] {
   return lateDays > 5
     ? [
-        `${lordCharacter.name}冷冷看了你一眼，堂中气氛一下子沉了下去。`,
+        "（冷冷看了你一眼）堂中气氛一下子沉了下去。",
         `“评定过了 ${lateDays} 天，你才露面，还敢让众人等你？”`,
         `“先削去你 ${contributionPenalty} 点功劳，再把这轮评定补上。坐下听令。”`,
       ]
     : [
-        `${lordCharacter.name}敲了敲案角，目光没再挪开。`,
+        "（敲了敲案角）目光没再挪开。",
         `“评定拖了 ${lateDays} 天才来，军中不养散漫之人。”`,
         `“先记你迟到，削去 ${contributionPenalty} 点功劳。坐下，把这轮评定补完。”`,
       ];
 }
 
 function getLateExpulsionLines(
-  lordCharacter: CharacterDefinition,
+  _lordCharacter: CharacterDefinition,
   lateDays: number,
   contributionPenalty: number
 ): string[] {
   return [
-    `${lordCharacter.name}把案上的军报一合，声音冷得发硬。`,
+    "（把案上的军报一合）声音冷得发硬。",
     `“评定过了 ${lateDays} 天，你才来应声，还想继续混在营里？”`,
     `“功劳先削去 ${contributionPenalty} 点。从今日起，你不再算我营中之人。”`,
   ];

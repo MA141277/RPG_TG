@@ -1,5 +1,6 @@
 import type { ActionNode, ChoiceOption } from "../../../domain/action";
 import type { CharacterDefinition } from "../../../domain/character";
+import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
 type SceneViewInput = {
   currentAction: ActionNode | null;
@@ -29,12 +30,24 @@ function getCharacterName(
   );
 }
 
+function getCharacterDefinition(
+  characterDefinitions: CharacterDefinition[],
+  characterId: string
+): CharacterDefinition | null {
+  return (
+    characterDefinitions.find(
+      (characterDefinition) => characterDefinition.id === characterId
+    ) ?? null
+  );
+}
+
 function renderSceneDialogueCard(
   paragraphs: string[],
   options: {
     advanceActionId?: string;
     speakerName?: string;
     narration?: boolean;
+    portraitImageUrl?: string | null;
     portraitArtClassName?: string;
   } = {}
 ): string {
@@ -61,7 +74,11 @@ function renderSceneDialogueCard(
           : `
             <div class="c-grain-shop-dialogue__npc">
               <div class="c-grain-shop-portrait" aria-hidden="true">
-                <span class="c-grain-shop-portrait__art ${options.portraitArtClassName ?? ""}"></span>
+                ${
+                  options.portraitImageUrl == null
+                    ? `<span class="c-grain-shop-portrait__art ${options.portraitArtClassName ?? ""}"></span>`
+                    : `<img class="c-grain-shop-portrait__image" src="${options.portraitImageUrl}" alt="">`
+                }
               </div>
               <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
                 ${options.speakerName ?? ""}
@@ -113,12 +130,28 @@ export function renderSceneView(input: SceneViewInput): string {
   }
 
   if (action.type === "dialogue") {
+    const speaker = getCharacterDefinition(
+      input.characterDefinitions,
+      action.characterId
+    );
+    const portraitImageUrl =
+      speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
+
     return `
       <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="dialogue">
         ${renderSceneDialogueCard([action.text], {
           advanceActionId: "advance",
-          speakerName: getCharacterName(input.characterDefinitions, action.characterId),
-          portraitArtClassName: getScenePortraitArtClassName(action.characterId),
+          speakerName:
+            speaker?.name ??
+            getCharacterName(input.characterDefinitions, action.characterId),
+          portraitImageUrl,
+          ...(portraitImageUrl == null
+            ? {
+                portraitArtClassName: getScenePortraitArtClassName(
+                  action.characterId
+                ),
+              }
+            : {}),
         })}
       </section>
     `;

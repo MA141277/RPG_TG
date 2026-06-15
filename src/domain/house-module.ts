@@ -37,6 +37,44 @@ export type HouseModuleRequest =
       tickId: string;
     };
 
+export type HouseModuleSessionStateMap = {
+  "home-house": HomeHouseSessionState;
+  "keep-house": KeepHouseSessionState;
+  "leader-residence": LeaderResidenceSessionState;
+  "grain-shop": GrainShopSessionState;
+  "market-house": MarketHouseSessionState;
+  "medicine-house": MedicineHouseSessionState;
+  "temple-house": TempleHouseSessionState;
+  "tea-house": TeaHouseSessionState;
+  tavern: TavernSessionState;
+};
+
+export type ActiveHouseModuleSession = {
+  [ModuleId in HouseModuleId]: {
+    moduleId: ModuleId;
+    state: HouseModuleSessionStateMap[ModuleId];
+  };
+}[HouseModuleId] | null;
+
+export type HouseModuleSessionState<ModuleId extends HouseModuleId> =
+  HouseModuleSessionStateMap[ModuleId];
+
+export type MapAutoAdvanceSnapshot = {
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+};
+
+export type HouseMapAutoAdvanceCompletion =
+  | {
+      type: "enter-house";
+      houseId: string;
+    }
+  | {
+      type: "restore-house-session";
+      houseId: string;
+      houseSession: ActiveHouseModuleSession;
+    };
+
 export type HouseModuleSideEffect =
   | {
       type: "start-interval";
@@ -54,6 +92,8 @@ export type HouseModuleSideEffect =
       everyMs: number;
       targetHouseId: string;
       label: string;
+      snapshots?: MapAutoAdvanceSnapshot[];
+      completion?: HouseMapAutoAdvanceCompletion;
     }
   | {
       type: "stop-map-auto-advance";
@@ -435,28 +475,6 @@ export type HouseModuleViewModel = {
   overlay: HouseOverlayViewModel | null;
   leaveAction: HouseActionViewModel;
 };
-
-export type HouseModuleSessionStateMap = {
-  "home-house": HomeHouseSessionState;
-  "keep-house": KeepHouseSessionState;
-  "leader-residence": LeaderResidenceSessionState;
-  "grain-shop": GrainShopSessionState;
-  "market-house": MarketHouseSessionState;
-  "medicine-house": MedicineHouseSessionState;
-  "temple-house": TempleHouseSessionState;
-  "tea-house": TeaHouseSessionState;
-  tavern: TavernSessionState;
-};
-
-export type ActiveHouseModuleSession = {
-  [ModuleId in HouseModuleId]: {
-    moduleId: ModuleId;
-    state: HouseModuleSessionStateMap[ModuleId];
-  };
-}[HouseModuleId] | null;
-
-export type HouseModuleSessionState<ModuleId extends HouseModuleId> =
-  HouseModuleSessionStateMap[ModuleId];
 
 export type HouseModuleBaseInput<ModuleId extends HouseModuleId = HouseModuleId> = {
   gameState: GameState;

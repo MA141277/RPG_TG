@@ -45,6 +45,7 @@ import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import { renderSceneView } from "./views/scene/scene-view";
+import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
 import { renderLayoutEditor } from "./tools/layout-editor-view";
 
@@ -499,6 +500,10 @@ function renderStage(
     });
   }
 
+  if (currentView === "battle") {
+    return renderStoryBattleView(input.appState.gameState.storyBattle);
+  }
+
   return "";
 }
 
@@ -513,6 +518,7 @@ export function renderApp(input: AppRenderInput): string {
   const isBeggingMiniGameActive = input.appState.beggingMiniGameState != null;
   const shouldShowGlobalHud =
     input.appState.gameState.ui.currentView !== "house" &&
+    input.appState.gameState.ui.currentView !== "battle" &&
     !isSceneActive &&
     !isBeggingMiniGameActive;
   const locationText =

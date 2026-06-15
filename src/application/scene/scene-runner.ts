@@ -4,6 +4,7 @@ import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import { applyEffects } from "../effects/effect-applier";
 import { startEvent } from "../events/event-runner";
+import { runStoryCallback } from "../story/story-callbacks";
 
 export type SceneRunnerContext = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
@@ -95,6 +96,16 @@ export function runSceneUntilPause(
       const targetEvent = context.eventDefinitionsById[currentAction.eventId];
       nextState =
         targetEvent == null ? incrementSceneCursor(nextState) : startEvent(nextState, targetEvent);
+      continue;
+    }
+
+    if (currentAction.type === "callback") {
+      const callbackResult = runStoryCallback(currentAction.handlerId, currentAction.payload, {
+        state: nextState,
+        characterDefinitions: nextCharacterDefinitions,
+      });
+      nextState = incrementSceneCursor(callbackResult.state);
+      nextCharacterDefinitions = callbackResult.characterDefinitions;
       continue;
     }
 
