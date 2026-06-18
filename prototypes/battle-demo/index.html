@@ -1288,7 +1288,7 @@
       CommanderBattle: { id: 'lesson_commander', title: '主将', body: '敌军主将带有标记。\n阵斩主将，可沉重打击敌军士气。' },
     };
 
-    const SKILL_USES = { inspire: 1, charge: 1 };
+    const SKILL_USES = { inspire: 1 };
     const FORMATION_SLOT_KEYS = [
       'front-left', 'front-center', 'front-right',
       'middle-left', 'middle-center', 'middle-right',
@@ -1738,8 +1738,7 @@
         hasMoved: false,
         hasActed: true,
         inRiver: false,
-        skillUses: { inspire: 0, charge: 0 },
-        chargeReady: false,
+        skillUses: { inspire: 0 },
         isCommander: false,
       };
     }
@@ -1912,10 +1911,6 @@
       return isInFixedAttackPattern(attacker, defender.x, defender.y) && getBattleReadyMembers(attacker, dist).length > 0;
     }
 
-    function canApplyChargeBonus(unit) {
-      return getTerrain(unit.x, unit.y) !== 'forest';
-    }
-
     function getAliveCombatMembers(unit) {
       if (unit.formationMembers?.length) {
         return unit.formationMembers.filter(member => member.soldiers > 0 && member.status !== 'stunned');
@@ -2001,69 +1996,15 @@
       ).x;
     }
 
-    function getLockedFormationTarget(attackerUnit, attackerMember, defenderUnit) {
-      const alive = getAliveFormationMembers(defenderUnit);
-      if (!alive.length) return null;
-      const attackerSlot = getFormationSlotMeta(
-        attackerMember.slotKey,
-        shouldMirrorFormationCols(attackerUnit)
+    function getLockedFormationTarget(_attackerUnit, _attackerMember, defenderUnit) {
+      const aliveBySlot = new Map(
+        getAliveFormationMembers(defenderUnit).map(member => [member.slotKey, member])
       );
-      const depthBands = [];
-      const sortedByDepth = alive
-        .map(member => ({
-          member,
-          depth: getVisualFormationDepth(defenderUnit, member),
-        }))
-        .sort((a, b) => b.depth - a.depth);
-      for (const entry of sortedByDepth) {
-        const currentBand = depthBands[depthBands.length - 1];
-        if (currentBand == null || Math.abs(currentBand.depth - entry.depth) > 14) {
-          depthBands.push({ depth: entry.depth, members: [entry.member] });
-          continue;
-        }
-        currentBand.members.push(entry.member);
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const member = aliveBySlot.get(slotKey);
+        if (member) return member;
       }
-      for (const band of depthBands) {
-        const rowMembers = band.members;
-        const bestDistance = Math.min(
-          ...rowMembers.map(
-            member => Math.abs(
-              getFormationSlotMeta(
-                member.slotKey,
-                shouldMirrorFormationCols(defenderUnit)
-              ).visualCol - attackerSlot.visualCol
-            )
-          )
-        );
-        const laneMatched = rowMembers.filter(
-          member => Math.abs(
-            getFormationSlotMeta(
-              member.slotKey,
-              shouldMirrorFormationCols(defenderUnit)
-            ).visualCol - attackerSlot.visualCol
-          ) === bestDistance
-        );
-        const tightestCenter = Math.min(
-          ...laneMatched.map(
-            member => Math.abs(
-              getFormationSlotMeta(
-                member.slotKey,
-                shouldMirrorFormationCols(defenderUnit)
-              ).visualCol - 1
-            )
-          )
-        );
-        const centered = laneMatched.filter(
-          member => Math.abs(
-            getFormationSlotMeta(
-              member.slotKey,
-              shouldMirrorFormationCols(defenderUnit)
-            ).visualCol - 1
-          ) === tightestCenter
-        );
-        return centered[randInt(0, centered.length - 1)];
-      }
-      return alive[0];
+      return null;
     }
 
     function chooseFormationTarget(attackerUnit, attackerMember, defenderUnit) {
@@ -2092,7 +2033,6 @@
 
       if (isOnHill(attackerUnit.x, attackerUnit.y) && !isOnHill(defenderUnit.x, defenderUnit.y)) damage = Math.round(damage * 1.15);
       if (defenderUnit.inRiver) damage = Math.round(damage * RIVER_DAMAGE_MULT);
-      if (attackerMember.troopType === 'cavalry' && distance <= 1 && canApplyChargeBonus(attackerUnit)) damage = Math.round(damage * 1.12);
       damage = clamp(damage, 1, Math.max(1, Math.round(attackerMember.soldiers * 0.22)));
       return { damage, typeAdv };
     }
@@ -2645,7 +2585,6 @@
         inRiver: false,
         facing: getDefaultUnitFacing(side),
         skillUses: { ...SKILL_USES },
-        chargeReady: false,
         isCommander: false,
         formationTemplate: templateKey || null,
         formationMembers,
@@ -2887,7 +2826,7 @@
     }
 
     // ─── 战斗 ───────────────────────────────────────────────
-    function calcDamage(attacker, defender, chargeBonus = false) {
+    function calcDamage(attacker, defender) {
       const atkTier = getMoraleTier(attacker.morale);
       const defTier = getMoraleTier(defender.morale);
       const typeAdv = getTypeAdv(attacker, defender);
@@ -2908,15 +2847,6 @@
 
       const hillFirst = isOnHill(attacker.x, attacker.y) && !isOnHill(defender.x, defender.y);
       if (hillFirst) damage = Math.round(damage * 1.25);
-
-      const useCharge = chargeBonus || attacker.chargeReady;
-      if (useCharge && canApplyChargeBonus(attacker)) {
-        damage = Math.round(damage * 1.5);
-        attacker.chargeReady = false;
-      } else if (useCharge) {
-        attacker.chargeReady = false;
-        log(`${attacker.name} 在森林中无法发动冲锋`, 'system');
-      }
 
       if (defender.inRiver) damage = Math.round(damage * RIVER_DAMAGE_MULT);
       damage = clamp(damage, 1, Math.round(attacker.soldiers * 0.15));
@@ -2962,7 +2892,7 @@
       if (wasAlive && unit.soldiers <= 0) onGeneralFallen(unit);
     }
 
-    function resolveDirectAttack(attacker, defender, chargeBonus = false) {
+    function resolveDirectAttack(attacker, defender) {
       if (attacker.isSupplyCart) return Promise.resolve();
       if (isRout(attacker)) return Promise.resolve();
       if (isChaos(attacker) && Math.random() < 0.25) {
@@ -2970,8 +2900,7 @@
         return Promise.resolve();
       }
 
-      const wasCharge = (chargeBonus || attacker.chargeReady) && canApplyChargeBonus(attacker);
-      const result = calcDamage(attacker, defender, chargeBonus);
+      const result = calcDamage(attacker, defender);
       const advLabel = result.typeAdv > 1 ? '（克制）' : '';
 
       if (result.chaosFail) {
@@ -2989,20 +2918,19 @@
       applyDamage(defender, result.damage);
       if (result.counter > 0) applyDamage(attacker, result.counter);
 
-      const chargeText = wasCharge ? '发动冲锋！' : '发动攻击！';
       const targetName = defender.isSupplyCart ? '粮车' : defender.name;
-      log(`${attacker.name}${chargeText}${advLabel}`, 'skill');
+      log(`${attacker.name}发动攻击！${advLabel}`, 'skill');
       log(`  ${targetName} 损失 ${result.damage}${result.counter ? `，${attacker.name} 损失 ${result.counter}` : ''}`, 'damage');
       changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
       return Promise.resolve();
     }
 
-    function resolveAttack(attacker, defender, chargeBonus = false) {
+    function resolveAttack(attacker, defender) {
       faceUnitToward(attacker, defender.x, defender.y);
       renderBoard();
       updateDebug();
       if (defender.isSupplyCart || !attacker.formationMembers?.length || !defender.formationMembers?.length) {
-        return resolveDirectAttack(attacker, defender, chargeBonus);
+        return resolveDirectAttack(attacker, defender);
       }
 
       if (attacker.isSupplyCart || isRout(attacker)) return Promise.resolve();
@@ -3053,7 +2981,7 @@
               targetTroopType: targetMember.troopType,
               hit: false,
               damage: 0,
-              delayMs: randInt(20, 180),
+              delayMs: randInt(0, 120),
             });
             continue;
           }
@@ -3071,7 +2999,7 @@
             typeAdv: result.typeAdv,
             hit: true,
             damage: result.damage,
-            delayMs: randInt(20, 180),
+            delayMs: randInt(0, 120),
           });
         }
 
@@ -3081,9 +3009,6 @@
         }
 
         plannedStrikes.sort((a, b) => a.delayMs - b.delayMs);
-        for (let i = 1; i < plannedStrikes.length; i++) {
-          plannedStrikes[i].delayMs = Math.max(plannedStrikes[i].delayMs, plannedStrikes[i - 1].delayMs + 36);
-        }
 
         for (const strike of plannedStrikes) {
           if (sourceUnit.soldiers <= 0 || targetUnit.soldiers <= 0) return;
@@ -3121,7 +3046,6 @@
       }
 
       changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
-      attacker.chargeReady = false;
 
       log(`${attacker.name} 与 ${defender.name} 展开编队交战`, 'skill');
       log(`  ${defender.name} 损失 ${totalDamageToDefender}，${attacker.name} 损失 ${totalDamageToAttacker}`, 'damage');
@@ -3144,17 +3068,6 @@
       changeMorale(target, bonus, '鼓舞');
       caster.skillUses.inspire--;
       caster.hasActed = true;
-    }
-
-    function useCharge(caster) {
-      if (caster.skillUses.charge <= 0) return;
-      if (getTerrain(caster.x, caster.y) === 'forest') {
-        log('森林中骑兵无法冲锋', 'system');
-        return;
-      }
-      caster.chargeReady = true;
-      caster.skillUses.charge--;
-      log(`${caster.general.name} 预备【冲锋】`, 'skill');
     }
 
     // ─── 据点 ───────────────────────────────────────────────
@@ -4075,7 +3988,7 @@
       })());
       await Promise.all(tasks);
       renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot);
-      await sleep(110);
+      await sleep(60);
     }
 
     async function playFormationBattleTimeline(report) {
@@ -4482,7 +4395,7 @@
                 : '主';
               ue.appendChild(badge);
             }
-            ue.title = `${military.name} · ${military.general.name}\n兵力 ${military.soldiers}/${military.maxSoldiers} · 士气 ${military.morale}\n${getFormationCompositionText(military)}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
+            ue.title = `${military.name} · ${military.general.name}\n兵力 ${military.soldiers}/${military.maxSoldiers} · 士气 ${military.morale}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
 
             if (phase === 'deploy' && military.side === 'player' && military.x >= 0) {
               ue.draggable = true;
@@ -4523,9 +4436,9 @@
         el.draggable = true;
         el.innerHTML = `
           <span class="unit-caption">${u.name}${u.isCommander ? '·主将' : ''}</span>
-          <span class="unit-caption">${getFormationCompositionText(u)}</span>
+          <span class="unit-caption">${getFormationTemplateLabel(u)}</span>
         `;
-        el.title = `${u.general.name}\n${getFormationCompositionText(u)}`;
+        el.title = `${u.general.name}\n${getFormationTemplateLabel(u)}`;
         el.addEventListener('click', () => { inspectUnit(u); updateUI(); });
         el.addEventListener('dragstart', e => { dragUnit = u; e.dataTransfer.effectAllowed = 'move'; });
         pool.appendChild(el);
@@ -4556,7 +4469,7 @@
           <div>${pos} · ${u.soldiers} · <span class="unit-status ${tier.id}">${tier.label}</span></div>
           <div class="morale-bar"><div class="morale-fill" style="width:${u.morale}%"></div></div>
           <div>${u.general.name}${u.inRiver ? ' · 渡河' : ''}</div>
-          <div>${getFormationCompositionText(u)}</div>
+          <div>${getFormationTemplateLabel(u)}</div>
         `;
         list.appendChild(el);
       }
@@ -4610,7 +4523,6 @@
       const u = selectedUnit;
       [
         { id: 'inspire', label: `鼓舞(${u.skillUses.inspire})`, ok: u.skillUses.inspire > 0 },
-        { id: 'charge', label: `冲锋(${u.skillUses.charge})`, ok: u.skillUses.charge > 0 && !u.chargeReady && getTerrain(u.x, u.y) !== 'forest' },
       ].forEach(s => {
         const btn = document.createElement('button');
         btn.className = 'skill-btn';
@@ -4768,7 +4680,6 @@
       const isAfterMove = Boolean(selectedUnit.movedFrom);
       const moraleGain = isAfterMove ? 8 : 12;
       changeMorale(selectedUnit, moraleGain, '整顿');
-      if (selectedUnit.chargeReady) selectedUnit.chargeReady = false;
       log(`${selectedUnit.name} 整顿队伍，士气恢复`, 'heal');
       finishUnitAction(selectedUnit);
       clearSelection();
@@ -4820,7 +4731,7 @@
       if (mode === 'target-attack') {
         if (clicked?.side === 'enemy' && attackable.some(u => u.id === clicked.id)) {
           selectedUnit.movedFrom = null;
-          await resolveAttack(selectedUnit, clicked, selectedUnit.chargeReady);
+          await resolveAttack(selectedUnit, clicked);
           finishUnitAction(selectedUnit);
           clearSelection(); updateUI();
         } else {
@@ -4840,7 +4751,6 @@
     function onSkillClick(id) {
       if (!selectedUnit || selectedUnit.hasActed) return;
       if (id === 'inspire') { mode = 'skill-inspire'; log('选择友军使用【鼓舞】', 'skill'); }
-      else if (id === 'charge') { useCharge(selectedUnit); updateUI(); }
     }
 
     function onDeployDrop(x, y) {
