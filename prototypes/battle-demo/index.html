@@ -391,9 +391,9 @@
     .capture-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
 
     .unit {
-      width: calc(var(--tile-w) * 0.74);
-      min-height: calc(var(--tile-w) * 0.64);
-      border-radius: 3px;
+      width: calc(var(--tile-w) * 0.8);
+      min-height: calc(var(--tile-w) * 0.84);
+      border-radius: 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -406,7 +406,7 @@
       z-index: 1;
       line-height: 1.05;
       text-align: center;
-      padding: calc(var(--tile-w) * 0.38) 2px 3px;
+      padding: calc(var(--tile-w) * 0.36) 2px 5px;
       background: transparent;
       color: #f7ecd2;
       text-shadow: 0 1px 2px rgba(0,0,0,0.88);
@@ -428,7 +428,7 @@
     .unit-art {
       position: absolute;
       left: 50%;
-      bottom: 10px;
+      bottom: 14px;
       width: calc(var(--tile-w) * 0.9);
       height: calc(var(--tile-w) * 1.02);
       transform: translateX(-50%);
@@ -437,12 +437,49 @@
       z-index: -1;
     }
 
-    .unit > span:not(.unit-art):not(.commander-badge) {
-      min-width: 78%;
-      padding: 0 3px;
+    .unit-caption {
+      min-width: 82%;
+      padding: 1px 4px;
       border-radius: 2px;
-      background: rgba(0,0,0,0.46);
+      background: rgba(0,0,0,0.52);
       box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .unit-name {
+      margin-bottom: 3px;
+    }
+
+    .unit-bars {
+      width: 82%;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .unit-bar {
+      height: 5px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(8, 10, 14, 0.74);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+    }
+
+    .unit-bar-fill {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .unit-bar--hp .unit-bar-fill {
+      background: linear-gradient(90deg, #c54b43, #f1b05f);
+    }
+
+    .unit-bar--morale .unit-bar-fill {
+      background: linear-gradient(90deg, #2a6fa0, #4ed8d2);
     }
 
     .formation-chips {
@@ -704,9 +741,10 @@
     .deploy-pool .unit {
       width: auto;
       min-width: 68px;
-      height: 36px;
+      min-height: 44px;
+      height: auto;
       flex-shrink: 0;
-      padding: 0 5px;
+      padding: 4px 5px;
     }
     .deploy-pool .unit::after { display: none; }
     .deploy-pool .unit.player { background: #5f1e1e; border: 2px solid #d45a5a; color: #ffd9d2; }
@@ -853,14 +891,14 @@
     .formation-side {
       position: absolute;
       top: auto;
-      bottom: 168px;
-      width: min(360px, 32vw);
-      height: min(270px, 40vh);
-      min-height: 230px;
+      bottom: 182px;
+      width: min(400px, 34vw);
+      height: min(340px, 46vh);
+      min-height: 270px;
       z-index: 2;
     }
-    .formation-side.player { left: 6vw; }
-    .formation-side.enemy { right: 6vw; }
+    .formation-side.player { left: clamp(88px, 16vw, 240px); }
+    .formation-side.enemy { right: clamp(88px, 16vw, 240px); }
     .formation-side h2 {
       position: absolute;
       top: -32px;
@@ -880,8 +918,8 @@
       position: absolute;
       left: calc(var(--x) * 1%);
       top: calc(var(--y) * 1%);
-      width: 122px;
-      min-height: 224px;
+      width: 108px;
+      min-height: 194px;
       border: 0;
       border-radius: 999px 999px 42px 42px;
       background: transparent;
@@ -900,8 +938,8 @@
     .formation-slot.striker {
       filter: drop-shadow(0 0 18px rgba(255, 225, 122, 0.8)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
     }
-    .formation-side.player .formation-slot.striker { transform: translateX(42px) scale(1.06); }
-    .formation-side.enemy .formation-slot.striker { transform: translateX(-42px) scale(1.06); }
+    .formation-side.player .formation-slot.striker { transform: translateX(30px) scale(1.06); }
+    .formation-side.enemy .formation-slot.striker { transform: translateX(-30px) scale(1.06); }
     .formation-slot.targeted {
       filter: drop-shadow(0 0 18px rgba(255, 95, 80, 0.78)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
       animation: hitShake 0.26s ease;
@@ -922,9 +960,9 @@
       position: relative;
       z-index: 1;
       display: block;
-      width: 186px;
-      height: 259px;
-      margin: -78px auto -26px;
+      width: 156px;
+      height: 220px;
+      margin: -58px auto -18px;
       pointer-events: none;
     }
     .formation-side.enemy .formation-spine-canvas {
@@ -1021,9 +1059,9 @@
     .battle-sequence {
       position: absolute;
       left: 50%;
-      bottom: 18px;
-      width: min(650px, 56vw);
-      height: 126px;
+      bottom: 12px;
+      width: min(680px, 58vw);
+      height: 142px;
       transform: translateX(-50%);
       z-index: 4;
       display: flex;
@@ -1071,7 +1109,7 @@
         <div class="unit-card-body" id="unit-card-body"></div>
       </section>
       <section class="unit-formation-panel">
-        <div class="panel-title">编队构成（3x3）</div>
+        <div class="panel-title">编队详情（3x3）</div>
         <div class="unit-formation-grid" id="unit-formation-grid"></div>
       </section>
     </aside>
@@ -1229,11 +1267,8 @@
       gunpowder: { label: '火器', attack: 75, defense: 30, speed: 22, range: 2 },
     };
 
-    const TYPE_ADVANTAGE = {
-      spear: { cavalry: 1.25 },
-      cavalry: { archer: 1.25 },
-      infantry: { gunpowder: 1.2 },
-    };
+    const TYPE_ADVANTAGE = {};
+    const FORMATION_GENERIC_LABEL = '编队';
 
     const OBJECTIVES = [
       { id: 'annihilation', name: '歼灭战', friendlyTitle: '击溃敌军', friendlyDesc: '消灭或击溃全部敌军即可获胜' },
@@ -1253,7 +1288,7 @@
       CommanderBattle: { id: 'lesson_commander', title: '主将', body: '敌军主将带有标记。\n阵斩主将，可沉重打击敌军士气。' },
     };
 
-    const SKILL_USES = { inspire: 1, charge: 1 };
+    const SKILL_USES = { inspire: 1 };
     const FORMATION_SLOT_KEYS = [
       'front-left', 'front-center', 'front-right',
       'middle-left', 'middle-center', 'middle-right',
@@ -1325,6 +1360,11 @@
     let battleSpineRendererPromise = null;
     let battleSpineIdleRaf = 0;
     let battleSpineLastIdleRender = 0;
+    const battleFormationViewState = {
+      initialized: false,
+      attacker: null,
+      defender: null,
+    };
     const CART_MAX_HP = 80;
     const CART_MOVE_PER_TURN = 1;
     const SUPPLY_CAPTURE_MORALE_BONUS = 6;
@@ -1543,9 +1583,8 @@
       changeMoraleSide(unit.side, -15, '主将阵亡', false);
     }
 
-    function getTypeAdv(a, d) {
-      const t = TYPE_ADVANTAGE[a.troopType];
-      return t && t[d.troopType] ? t[d.troopType] : 1;
+    function getTypeAdv() {
+      return 1;
     }
 
     function moveRange(unit) {
@@ -1699,8 +1738,7 @@
         hasMoved: false,
         hasActed: true,
         inRiver: false,
-        skillUses: { inspire: 0, charge: 0 },
-        chargeReady: false,
+        skillUses: { inspire: 0 },
         isCommander: false,
       };
     }
@@ -1873,10 +1911,6 @@
       return isInFixedAttackPattern(attacker, defender.x, defender.y) && getBattleReadyMembers(attacker, dist).length > 0;
     }
 
-    function canApplyChargeBonus(unit) {
-      return getTerrain(unit.x, unit.y) !== 'forest';
-    }
-
     function getAliveCombatMembers(unit) {
       if (unit.formationMembers?.length) {
         return unit.formationMembers.filter(member => member.soldiers > 0 && member.status !== 'stunned');
@@ -1936,22 +1970,61 @@
       };
     }
 
-    function chooseFormationTarget(attackerMember, defenderUnit) {
-      const alive = getAliveFormationMembers(defenderUnit);
-      if (!alive.length) return null;
-      const front = alive.filter(member => member.slotKey.startsWith('front'));
-      const middle = alive.filter(member => member.slotKey.startsWith('middle'));
-      const rear = alive.filter(member => member.slotKey.startsWith('rear'));
-      if (attackerMember.range > 1 && Math.random() < 0.35) {
-        return (rear[0] || middle[0] || front[0] || alive[0]);
+    function getFormationSlotMeta(slotKey, mirrorCols = false) {
+      const [rowName = 'front', colName = 'center'] = String(slotKey).split('-');
+      const row = rowName === 'front' ? 0 : rowName === 'middle' ? 1 : 2;
+      const rawCol = colName === 'left' ? 0 : colName === 'center' ? 1 : 2;
+      const displayColName = mirrorCols
+        ? ({ left: 'right', center: 'center', right: 'left' }[colName] || colName)
+        : colName;
+      const visualCol = displayColName === 'left' ? 0 : displayColName === 'center' ? 1 : 2;
+      return { rowName, colName, row, col: rawCol, visualCol, displayColName };
+    }
+
+    function shouldMirrorFormationCols(unit) {
+      return unit?.side === 'player';
+    }
+
+    function getFormationRowMembers(alive, rowName) {
+      return alive.filter(member => member.slotKey.startsWith(`${rowName}-`));
+    }
+
+    function getVisualFormationDepth(unit, member) {
+      return getBattleSlotPosition(
+        member.slotKey,
+        shouldMirrorFormationCols(unit)
+      ).x;
+    }
+
+    function getLockedFormationTarget(_attackerUnit, _attackerMember, defenderUnit) {
+      const aliveBySlot = new Map(
+        getAliveFormationMembers(defenderUnit).map(member => [member.slotKey, member])
+      );
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const member = aliveBySlot.get(slotKey);
+        if (member) return member;
       }
-      return (front[0] || middle[0] || rear[0] || alive[0]);
+      return null;
+    }
+
+    function chooseFormationTarget(attackerUnit, attackerMember, defenderUnit) {
+      return getLockedFormationTarget(attackerUnit, attackerMember, defenderUnit);
+    }
+
+    function getMemberTypeAdv(attackerMember, defenderMember) {
+      if (attackerMember.troopType === 'cavalry' && defenderMember.range > 1) {
+        return 1.5;
+      }
+      if (attackerMember.troopType === 'spear' && defenderMember.troopType === 'cavalry') {
+        return 1.5;
+      }
+      return 1;
     }
 
     function calculateMemberDamage(attackerUnit, attackerMember, defenderUnit, defenderMember, distance, isCounter = false) {
       const atkTier = getMoraleTier(attackerUnit.morale);
       const defTier = getMoraleTier(defenderUnit.morale);
-      const typeAdv = TYPE_ADVANTAGE[attackerMember.troopType]?.[defenderMember.troopType] || 1;
+      const typeAdv = getMemberTypeAdv(attackerMember, defenderMember);
       const rangePenalty = distance > 1 && attackerMember.range === distance ? 0.9 : 1;
       const strengthBonus = 1 + attackerUnit.general.strength / 240;
       const effAtk = attackerMember.attack * strengthBonus * atkTier.atk * rangePenalty;
@@ -1960,7 +2033,6 @@
 
       if (isOnHill(attackerUnit.x, attackerUnit.y) && !isOnHill(defenderUnit.x, defenderUnit.y)) damage = Math.round(damage * 1.15);
       if (defenderUnit.inRiver) damage = Math.round(damage * RIVER_DAMAGE_MULT);
-      if (attackerMember.troopType === 'cavalry' && distance <= 1 && canApplyChargeBonus(attackerUnit)) damage = Math.round(damage * 1.12);
       damage = clamp(damage, 1, Math.max(1, Math.round(attackerMember.soldiers * 0.22)));
       return { damage, typeAdv };
     }
@@ -2356,11 +2428,11 @@
     }
 
     function getFormationTemplateLabel(unit) {
-      return FORMATION_TEMPLATES[unit.formationTemplate]?.label || TROOP_TYPES[unit.troopType]?.label || '编队';
+      return FORMATION_GENERIC_LABEL;
     }
 
     function getFormationCompositionText(unit) {
-      if (!unit.formationMembers?.length) return TROOP_TYPES[unit.troopType]?.label || '—';
+      if (!unit.formationMembers?.length) return FORMATION_GENERIC_LABEL;
       const counts = new Map();
       for (const member of unit.formationMembers) {
         counts.set(member.troopType, (counts.get(member.troopType) || 0) + 1);
@@ -2426,7 +2498,7 @@
           <div class="muted">${sideLabel} · ${escapeHtml(getFormationTemplateLabel(unit))} · ${pos}</div>
           <div class="unit-stat-row"><span>总兵力</span><strong>${total}</strong></div>
           <div class="unit-stat-row"><span>士气</span><strong>${unit.morale ?? 0}/100 · ${escapeHtml(tier.label)}</strong></div>
-          <div class="unit-stat-row"><span>构成</span><strong>${escapeHtml(getFormationCompositionText(unit))}</strong></div>
+          <div class="unit-stat-row"><span>内部构成</span><strong>${escapeHtml(getFormationCompositionText(unit))}</strong></div>
         </div>
       `;
 
@@ -2513,7 +2585,6 @@
         inRiver: false,
         facing: getDefaultUnitFacing(side),
         skillUses: { ...SKILL_USES },
-        chargeReady: false,
         isCommander: false,
         formationTemplate: templateKey || null,
         formationMembers,
@@ -2548,11 +2619,11 @@
       }
 
       return [
-        createUnit('先锋编队', 'infantry', 420, 'player', null, { formationTemplate: 'vanguard' }),
-        createUnit('突击编队', 'cavalry', 360, 'player', null, { formationTemplate: 'assault' }),
-        createUnit('射击编队', 'archer', 340, 'player', null, { formationTemplate: 'missile' }),
-        createUnit('守备编队', 'spear', 440, 'player', null, { formationTemplate: 'guard' }),
-        createUnit('机动编队', 'cavalry', 320, 'player', null, { formationTemplate: 'mobile' }),
+        createUnit('前军一队', 'infantry', 420, 'player', null, { formationTemplate: 'vanguard' }),
+        createUnit('前军二队', 'cavalry', 360, 'player', null, { formationTemplate: 'assault' }),
+        createUnit('前军三队', 'archer', 340, 'player', null, { formationTemplate: 'missile' }),
+        createUnit('中军一队', 'spear', 440, 'player', null, { formationTemplate: 'guard' }),
+        createUnit('中军二队', 'cavalry', 320, 'player', null, { formationTemplate: 'mobile' }),
       ];
     }
 
@@ -2755,7 +2826,7 @@
     }
 
     // ─── 战斗 ───────────────────────────────────────────────
-    function calcDamage(attacker, defender, chargeBonus = false) {
+    function calcDamage(attacker, defender) {
       const atkTier = getMoraleTier(attacker.morale);
       const defTier = getMoraleTier(defender.morale);
       const typeAdv = getTypeAdv(attacker, defender);
@@ -2776,15 +2847,6 @@
 
       const hillFirst = isOnHill(attacker.x, attacker.y) && !isOnHill(defender.x, defender.y);
       if (hillFirst) damage = Math.round(damage * 1.25);
-
-      const useCharge = chargeBonus || attacker.chargeReady;
-      if (useCharge && canApplyChargeBonus(attacker)) {
-        damage = Math.round(damage * 1.5);
-        attacker.chargeReady = false;
-      } else if (useCharge) {
-        attacker.chargeReady = false;
-        log(`${attacker.name} 在森林中无法发动冲锋`, 'system');
-      }
 
       if (defender.inRiver) damage = Math.round(damage * RIVER_DAMAGE_MULT);
       damage = clamp(damage, 1, Math.round(attacker.soldiers * 0.15));
@@ -2830,7 +2892,7 @@
       if (wasAlive && unit.soldiers <= 0) onGeneralFallen(unit);
     }
 
-    function resolveDirectAttack(attacker, defender, chargeBonus = false) {
+    function resolveDirectAttack(attacker, defender) {
       if (attacker.isSupplyCart) return Promise.resolve();
       if (isRout(attacker)) return Promise.resolve();
       if (isChaos(attacker) && Math.random() < 0.25) {
@@ -2838,9 +2900,7 @@
         return Promise.resolve();
       }
 
-      const wasCharge = (chargeBonus || attacker.chargeReady) && canApplyChargeBonus(attacker);
-      const result = calcDamage(attacker, defender, chargeBonus);
-      const typeLabel = TROOP_TYPES[attacker.troopType].label;
+      const result = calcDamage(attacker, defender);
       const advLabel = result.typeAdv > 1 ? '（克制）' : '';
 
       if (result.chaosFail) {
@@ -2858,20 +2918,19 @@
       applyDamage(defender, result.damage);
       if (result.counter > 0) applyDamage(attacker, result.counter);
 
-      const chargeText = wasCharge ? '发动冲锋！' : '发动攻击！';
       const targetName = defender.isSupplyCart ? '粮车' : defender.name;
-      log(`${attacker.name}（${typeLabel}）${chargeText}${advLabel}`, 'skill');
+      log(`${attacker.name}发动攻击！${advLabel}`, 'skill');
       log(`  ${targetName} 损失 ${result.damage}${result.counter ? `，${attacker.name} 损失 ${result.counter}` : ''}`, 'damage');
       changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
       return Promise.resolve();
     }
 
-    function resolveAttack(attacker, defender, chargeBonus = false) {
+    function resolveAttack(attacker, defender) {
       faceUnitToward(attacker, defender.x, defender.y);
       renderBoard();
       updateDebug();
       if (defender.isSupplyCart || !attacker.formationMembers?.length || !defender.formationMembers?.length) {
-        return resolveDirectAttack(attacker, defender, chargeBonus);
+        return resolveDirectAttack(attacker, defender);
       }
 
       if (attacker.isSupplyCart || isRout(attacker)) return Promise.resolve();
@@ -2901,15 +2960,16 @@
           pushBattleStep({ type: 'entry', text: `${label}无成员能够出手` });
           return;
         }
+        const plannedTargetState = cloneFormationSnapshot(targetUnit);
+        const plannedStrikes = [];
         for (const member of readyMembers) {
           if (member.soldiers <= 0 || member.status === 'stunned') continue;
           if (distance > 1 && member.range < distance) continue;
-          if (sourceUnit.soldiers <= 0 || targetUnit.soldiers <= 0) return;
-          const targetMember = chooseFormationTarget(member, targetUnit);
-          if (!targetMember) return;
+          const targetMember = chooseFormationTarget(sourceUnit, member, plannedTargetState);
+          if (!targetMember) continue;
           const hitRate = 0.76 * getMoraleTier(sourceUnit.morale).hit;
           if (Math.random() > hitRate) {
-            pushBattleStep({
+            plannedStrikes.push({
               type: 'strike',
               className: 'miss',
               text: `${label}${TROOP_TYPES[member.troopType].label}攻击落空`,
@@ -2917,26 +2977,64 @@
               targetSide,
               sourceSlotKey: member.slotKey,
               targetSlotKey: targetMember.slotKey,
+              sourceTroopType: member.troopType,
+              targetTroopType: targetMember.troopType,
+              hit: false,
+              damage: 0,
+              delayMs: randInt(0, 120),
+            });
+            continue;
+          }
+          const result = calculateMemberDamage(sourceUnit, member, targetUnit, targetMember, distance, isCounter);
+          plannedStrikes.push({
+            type: 'strike',
+            className: 'damage',
+            text: `${label}${TROOP_TYPES[member.troopType].label}击中${targetUnit.name}${TROOP_TYPES[targetMember.troopType].label}，损失 ${result.damage}${result.typeAdv > 1 ? '（克制）' : ''}`,
+            sourceSide,
+            targetSide,
+            sourceSlotKey: member.slotKey,
+            targetSlotKey: targetMember.slotKey,
+            sourceTroopType: member.troopType,
+            targetTroopType: targetMember.troopType,
+            typeAdv: result.typeAdv,
+            hit: true,
+            damage: result.damage,
+            delayMs: randInt(0, 120),
+          });
+        }
+
+        if (!plannedStrikes.length) {
+          pushBattleStep({ type: 'entry', text: `${label}未形成有效攻击` });
+          return;
+        }
+
+        plannedStrikes.sort((a, b) => a.delayMs - b.delayMs);
+
+        for (const strike of plannedStrikes) {
+          if (sourceUnit.soldiers <= 0 || targetUnit.soldiers <= 0) return;
+          if (!strike.hit) {
+            pushBattleStep(strike);
+            continue;
+          }
+          const liveTargetMember = targetUnit.formationMembers?.find(member => member.slotKey === strike.targetSlotKey);
+          if (!liveTargetMember || liveTargetMember.soldiers <= 0) {
+            pushBattleStep({
+              ...strike,
+              className: 'miss',
+              text: `${label}${TROOP_TYPES[strike.sourceTroopType].label}扑空`,
               hit: false,
               damage: 0,
             });
             continue;
           }
-          const result = calculateMemberDamage(sourceUnit, member, targetUnit, targetMember, distance, isCounter);
-          applyMemberDamage(targetUnit, targetMember, result.damage);
-          if (targetUnit.id === defender.id) totalDamageToDefender += result.damage;
-          else totalDamageToAttacker += result.damage;
-          const adv = result.typeAdv > 1 ? '（克制）' : '';
+          const actualDamage = Math.min(strike.damage, liveTargetMember.soldiers);
+          applyMemberDamage(targetUnit, liveTargetMember, actualDamage);
+          if (targetUnit.id === defender.id) totalDamageToDefender += actualDamage;
+          else totalDamageToAttacker += actualDamage;
           pushBattleStep({
-            type: 'strike',
-            className: 'damage',
-            text: `${label}${TROOP_TYPES[member.troopType].label}击中${targetUnit.name}${TROOP_TYPES[targetMember.troopType].label}，损失 ${result.damage}${adv}`,
-            sourceSide,
-            targetSide,
-            sourceSlotKey: member.slotKey,
-            targetSlotKey: targetMember.slotKey,
-            hit: true,
-            damage: result.damage,
+            ...strike,
+            damage: actualDamage,
+            text: `${label}${TROOP_TYPES[strike.sourceTroopType].label}击中${targetUnit.name}${TROOP_TYPES[strike.targetTroopType].label}，损失 ${actualDamage}${strike.typeAdv > 1 ? '（克制）' : ''}`,
           });
         }
       }
@@ -2948,7 +3046,6 @@
       }
 
       changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
-      attacker.chargeReady = false;
 
       log(`${attacker.name} 与 ${defender.name} 展开编队交战`, 'skill');
       log(`  ${defender.name} 损失 ${totalDamageToDefender}，${attacker.name} 损失 ${totalDamageToAttacker}`, 'damage');
@@ -2971,17 +3068,6 @@
       changeMorale(target, bonus, '鼓舞');
       caster.skillUses.inspire--;
       caster.hasActed = true;
-    }
-
-    function useCharge(caster) {
-      if (caster.skillUses.charge <= 0) return;
-      if (getTerrain(caster.x, caster.y) === 'forest') {
-        log('森林中骑兵无法冲锋', 'system');
-        return;
-      }
-      caster.chargeReady = true;
-      caster.skillUses.charge--;
-      log(`${caster.general.name} 预备【冲锋】`, 'skill');
     }
 
     // ─── 据点 ───────────────────────────────────────────────
@@ -3183,21 +3269,24 @@
       phase = 'ended';
     }
 
-    function getBattleSlotPosition(slotKey) {
+    function getBattleSlotPosition(slotKey, mirrorCols = false) {
       const [rowName, colName] = slotKey.split('-');
       const rowMap = { front: 0, middle: 1, rear: 2 };
       const colMap = { left: 0, center: 1, right: 2 };
-      const xByRow = { front: 52, middle: 36, rear: 20 };
-      const xByCol = { left: -7, center: 0, right: 7 };
-      const yByCol = { left: 42, center: 53, right: 64 };
-      const rowLift = { front: 0, middle: 2, rear: 4 };
+      const displayColName = mirrorCols
+        ? ({ left: 'right', center: 'center', right: 'left' }[colName] || colName)
+        : colName;
+      const xByRow = { front: 66, middle: 38, rear: 10 };
+      const xByCol = { left: -6, center: 0, right: 6 };
+      const yByCol = { left: 16, center: 50, right: 84 };
+      const rowLift = { front: 0, middle: 10, rear: 20 };
       return {
         row: rowMap[rowName] ?? 0,
         col: colMap[colName] ?? 0,
         rowClass: `row-${rowName}`,
-        x: (xByRow[rowName] ?? 36) + (xByCol[colName] ?? 0),
-        y: (yByCol[colName] ?? 53) + (rowLift[rowName] ?? 0),
-        z: 10 + (colMap[colName] ?? 0) * 3 + (rowMap[rowName] ?? 0),
+        x: (xByRow[rowName] ?? 38) + (xByCol[displayColName] ?? 0),
+        y: (yByCol[displayColName] ?? 51) + (rowLift[rowName] ?? 0),
+        z: 10 + (colMap[displayColName] ?? 0) * 3 + (rowMap[rowName] ?? 0),
       };
     }
 
@@ -3303,10 +3392,18 @@
         const rawFrame = (elapsedMs / 1000) * this.fps;
         const frame = options.loop === false ? Math.min(duration, rawFrame) : rawFrame % (duration + 1);
         const scale = Math.min(rect.width / Math.max(1, this.bounds.width), rect.height / Math.max(1, this.bounds.height)) * 0.94;
+        const padding = 4;
+        const minTranslateX = padding - this.bounds.minX * scale;
+        const maxTranslateX = rect.width - padding - this.bounds.maxX * scale;
+        const minTranslateY = padding - this.bounds.minY * scale;
+        const maxTranslateY = rect.height - padding - this.bounds.maxY * scale;
+        const desiredTranslateX = rect.width / 2 - (this.bounds.minX + this.bounds.width / 2) * scale;
+        const desiredTranslateY = rect.height * 0.58 - (this.bounds.minY + this.bounds.height * 0.52) * scale;
+        const translateX = Math.min(Math.max(desiredTranslateX, minTranslateX), maxTranslateX);
+        const translateY = Math.min(Math.max(desiredTranslateY, minTranslateY), maxTranslateY);
         ctx.save();
-        ctx.translate(rect.width / 2, rect.height * 0.58);
+        ctx.translate(translateX, translateY);
         ctx.scale(scale, scale);
-        ctx.translate(-(this.bounds.minX + this.bounds.width / 2), -(this.bounds.minY + this.bounds.height * 0.52));
         this.drawCharacter(ctx, action, frame);
         ctx.restore();
       }
@@ -3570,16 +3667,28 @@
     function startBattleSpineIdleLoop() {
       if (battleSpineIdleRaf) return;
       const tick = () => {
+        const overlay = document.getElementById('formation-battle');
+        if (overlay?.classList.contains('hidden')) return;
         const now = performance.now();
         if (now - battleSpineLastIdleRender < 83) return;
         battleSpineLastIdleRender = now;
         getBattleSpineRenderer().then(renderer => {
           if (!renderer) return;
-          document.querySelectorAll('.formation-spine-canvas').forEach(canvas => {
-            const rect = canvas.getBoundingClientRect();
-            if (rect.width <= 0 || rect.height <= 0) return;
-            renderer.render(canvas, canvas.dataset.action || 'idle', now + Number(canvas.dataset.phase || 0));
-          });
+          for (const entry of getBattleSpineCanvasEntries()) {
+            if (
+              entry.slot.classList.contains('empty') ||
+              entry.slot.classList.contains('is-proxying')
+            ) {
+              continue;
+            }
+            const rect = entry.canvas.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) continue;
+            renderer.render(
+              entry.canvas,
+              entry.canvas.dataset.action || 'idle',
+              now + Number(entry.canvas.dataset.phase || 0)
+            );
+          }
         });
       };
       battleSpineIdleRaf = window.setInterval(tick, 100);
@@ -3590,6 +3699,137 @@
       if (!battleSpineIdleRaf) return;
       window.clearInterval(battleSpineIdleRaf);
       battleSpineIdleRaf = 0;
+      battleSpineLastIdleRender = 0;
+    }
+
+    function getBattleSpineCanvasEntries() {
+      if (!battleFormationViewState.initialized) {
+        return [];
+      }
+      const entries = [];
+      for (const view of [battleFormationViewState.attacker, battleFormationViewState.defender]) {
+        if (!view) continue;
+        for (const entry of view.slots.values()) {
+          entries.push(entry);
+        }
+      }
+      return entries;
+    }
+
+    function createBattleFormationSlotElement(slotKey, mirrorCols = false) {
+      const pos = getBattleSlotPosition(slotKey, mirrorCols);
+      const slot = document.createElement('div');
+      slot.className = `formation-slot ${pos.rowClass} empty`;
+      slot.dataset.slot = slotKey;
+      slot.style.setProperty('--row', String(pos.row));
+      slot.style.setProperty('--col', String(pos.col));
+      slot.style.setProperty('--x', String(pos.x));
+      slot.style.setProperty('--y', String(pos.y));
+      slot.style.zIndex = String(pos.z);
+
+      const canvas = document.createElement('canvas');
+      canvas.className = 'formation-spine-canvas';
+      canvas.dataset.action = 'idle';
+      canvas.dataset.phase = String((pos.row * 137 + pos.col * 83) % 1000);
+      canvas.setAttribute('aria-hidden', 'true');
+
+      const slotName = document.createElement('div');
+      slotName.className = 'slot-name';
+      slotName.textContent = FORMATION_SLOT_LABELS[slotKey];
+
+      const memberName = document.createElement('div');
+      memberName.className = 'member-name';
+
+      const memberHp = document.createElement('div');
+      memberHp.className = 'member-hp';
+      const memberHpFill = document.createElement('div');
+      memberHpFill.className = 'member-hp-fill';
+      memberHp.appendChild(memberHpFill);
+
+      const memberLoss = document.createElement('div');
+      memberLoss.className = 'member-loss';
+      memberLoss.hidden = true;
+
+      slot.appendChild(canvas);
+      slot.appendChild(slotName);
+      slot.appendChild(memberName);
+      slot.appendChild(memberHp);
+      slot.appendChild(memberLoss);
+
+      return {
+        slot,
+        canvas,
+        memberName,
+        memberHpFill,
+        memberLoss,
+      };
+    }
+
+    function initializeBattleFormationGrid(gridId, mirrorCols = false) {
+      const grid = document.getElementById(gridId);
+      const slots = new Map();
+      if (!grid) {
+        return { root: null, slots, mirrorCols };
+      }
+      grid.innerHTML = '';
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const entry = createBattleFormationSlotElement(slotKey, mirrorCols);
+        slots.set(slotKey, entry);
+        grid.appendChild(entry.slot);
+      }
+      return { root: grid, slots, mirrorCols };
+    }
+
+    function ensureBattleFormationViews() {
+      if (battleFormationViewState.initialized) {
+        return;
+      }
+      battleFormationViewState.attacker = initializeBattleFormationGrid('battle-attacker-grid', true);
+      battleFormationViewState.defender = initializeBattleFormationGrid('battle-defender-grid', false);
+      battleFormationViewState.initialized = true;
+    }
+
+    function clearBattleFormationProxyState() {
+      document.querySelectorAll('.battle-spine-proxy').forEach(proxy => proxy.remove());
+      document.querySelectorAll('.formation-slot.is-proxying').forEach(slot => {
+        slot.classList.remove('is-proxying');
+      });
+    }
+
+    function updateBattleFormationView(view, snapshotBefore, snapshotAfter, active = {}) {
+      if (!view?.root) {
+        return;
+      }
+      const beforeBySlot = new Map(snapshotBefore.formationMembers.map(member => [member.slotKey, member]));
+      const afterBySlot = new Map(snapshotAfter.formationMembers.map(member => [member.slotKey, member]));
+
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const entry = view.slots.get(slotKey);
+        if (!entry) continue;
+
+        const before = beforeBySlot.get(slotKey);
+        const after = afterBySlot.get(slotKey);
+        const current = after || before || null;
+        const loss = before && after ? before.soldiers - after.soldiers : 0;
+        const hpRatio =
+          current && current.maxSoldiers > 0
+            ? clamp((after ? after.soldiers : 0) / current.maxSoldiers, 0, 1) * 100
+            : 0;
+
+        entry.slot.classList.toggle('empty', current == null);
+        entry.slot.classList.toggle('fallen', Boolean(after && after.soldiers <= 0));
+        entry.slot.classList.toggle('striker', active.sourceSlotKey === slotKey);
+        entry.slot.classList.toggle('targeted', active.targetSlotKey === slotKey);
+        entry.canvas.dataset.action = 'idle';
+
+        entry.memberName.textContent =
+          current == null
+            ? ''
+            : TROOP_TYPES[current.troopType]?.label || current.troopType || '';
+        entry.memberHpFill.style.width = `${hpRatio}%`;
+        entry.memberLoss.hidden = !(loss > 0);
+        entry.memberLoss.textContent = loss > 0 ? `-${loss}` : '';
+      }
     }
 
     function getBattleVisualGridId(report, timelineSide) {
@@ -3692,36 +3932,6 @@
       });
     }
 
-    function renderBattleFormationGrid(snapshotBefore, snapshotAfter, active = {}) {
-      const beforeBySlot = new Map(snapshotBefore.formationMembers.map(member => [member.slotKey, member]));
-      const afterBySlot = new Map(snapshotAfter.formationMembers.map(member => [member.slotKey, member]));
-      return FORMATION_SLOT_KEYS.map(slotKey => {
-        const before = beforeBySlot.get(slotKey);
-        const after = afterBySlot.get(slotKey);
-        const pos = getBattleSlotPosition(slotKey);
-        const stateClasses = [];
-        if (after && after.soldiers <= 0) stateClasses.push('fallen');
-        if (active.sourceSlotKey === slotKey) stateClasses.push('striker');
-        if (active.targetSlotKey === slotKey) stateClasses.push('targeted');
-        if (!after && !before) {
-          return `<div class="formation-slot empty ${pos.rowClass}" data-slot="${slotKey}" style="--row:${pos.row};--col:${pos.col};--x:${pos.x};--y:${pos.y};z-index:${pos.z};"></div>`;
-        }
-        const current = after || before;
-        const loss = before && after ? before.soldiers - after.soldiers : 0;
-        const hpRatio = current.maxSoldiers > 0 ? clamp((after ? after.soldiers : 0) / current.maxSoldiers, 0, 1) * 100 : 0;
-        const phase = (pos.row * 137 + pos.col * 83) % 1000;
-        return `
-          <div class="formation-slot ${pos.rowClass} ${stateClasses.join(' ')}" data-slot="${slotKey}" style="--row:${pos.row};--col:${pos.col};--x:${pos.x};--y:${pos.y};z-index:${pos.z};">
-            <canvas class="formation-spine-canvas" data-action="idle" data-phase="${phase}" aria-hidden="true"></canvas>
-            <div class="slot-name">${FORMATION_SLOT_LABELS[slotKey]}</div>
-            <div class="member-name">${TROOP_TYPES[current.troopType].label}</div>
-            <div class="member-hp"><div class="member-hp-fill" style="width:${hpRatio}%"></div></div>
-            ${loss > 0 ? `<div class="member-loss">-${loss}</div>` : ''}
-          </div>
-        `;
-      }).join('');
-    }
-
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -3736,6 +3946,7 @@
     }
 
     function renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, active = {}) {
+      ensureBattleFormationViews();
       const leftKey = report.attackerBefore.side === 'player' ? 'attacker' : 'defender';
       const rightKey = leftKey === 'attacker' ? 'defender' : 'attacker';
       const beforeByKey = {
@@ -3751,12 +3962,41 @@
         : active.targetSide === key
           ? { targetSlotKey: active.targetSlotKey }
           : {};
-      document.getElementById('battle-attacker-grid').innerHTML =
-        renderBattleFormationGrid(beforeByKey[leftKey], snapshotByKey[leftKey], getActiveState(leftKey));
-      document.getElementById('battle-defender-grid').innerHTML =
-        renderBattleFormationGrid(beforeByKey[rightKey], snapshotByKey[rightKey], getActiveState(rightKey));
+      updateBattleFormationView(
+        battleFormationViewState.attacker,
+        beforeByKey[leftKey],
+        snapshotByKey[leftKey],
+        getActiveState(leftKey)
+      );
+      updateBattleFormationView(
+        battleFormationViewState.defender,
+        beforeByKey[rightKey],
+        snapshotByKey[rightKey],
+        getActiveState(rightKey)
+      );
       document.getElementById('battle-attacker-morale').style.width = `${clamp(snapshotByKey[leftKey].morale, 0, 100)}%`;
       document.getElementById('battle-defender-morale').style.width = `${clamp(snapshotByKey[rightKey].morale, 0, 100)}%`;
+    }
+
+    async function playFormationStrikeBatch(report, steps, state) {
+      const tasks = steps.map(step => (async () => {
+        if (step.delayMs > 0) await sleep(step.delayMs);
+        renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, step);
+        let impactApplied = false;
+        const applyImpact = () => {
+          if (impactApplied) return;
+          impactApplied = true;
+          state.attackerSnapshot = step.attackerSnapshot;
+          state.defenderSnapshot = step.defenderSnapshot;
+          renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, step.hit ? step : {});
+          appendBattleEvent(step);
+        };
+        await playBattleSpineStrike(report, step, applyImpact);
+        applyImpact();
+      })());
+      await Promise.all(tasks);
+      renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot);
+      await sleep(60);
     }
 
     async function playFormationBattleTimeline(report) {
@@ -3769,26 +4009,26 @@
       renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot);
       startBattleSpineIdleLoop();
 
-      for (const step of report.timeline) {
+      for (let index = 0; index < report.timeline.length; index++) {
+        const step = report.timeline[index];
         if (step.type === 'round' || step.type === 'entry') {
           appendBattleEvent(step);
           await sleep(step.type === 'round' ? 260 : 180);
           continue;
         }
-
-        renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, step);
-        let impactApplied = false;
-        const applyImpact = () => {
-          if (impactApplied) return;
-          impactApplied = true;
-          attackerSnapshot = step.attackerSnapshot;
-          defenderSnapshot = step.defenderSnapshot;
-          renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, step.hit ? step : {});
-          appendBattleEvent(step);
-        };
-        await playBattleSpineStrike(report, step, applyImpact);
-        applyImpact();
-        await sleep(step.hit ? 220 : 160);
+        const strikeBatch = [step];
+        while (
+          index + 1 < report.timeline.length &&
+          report.timeline[index + 1].type === 'strike' &&
+          report.timeline[index + 1].sourceSide === step.sourceSide
+        ) {
+          strikeBatch.push(report.timeline[index + 1]);
+          index++;
+        }
+        const state = { attackerSnapshot, defenderSnapshot };
+        await playFormationStrikeBatch(report, strikeBatch, state);
+        attackerSnapshot = state.attackerSnapshot;
+        defenderSnapshot = state.defenderSnapshot;
       }
 
       renderBattleAnimationState(report, report.attackerAfter, report.defenderAfter);
@@ -3799,6 +4039,8 @@
 
     function showFormationBattleOverlay(report) {
       stopBattleSpineIdleLoop();
+      clearBattleFormationProxyState();
+      ensureBattleFormationViews();
       if (activeBattleOverlayResolve) {
         activeBattleOverlayResolve();
         activeBattleOverlayResolve = null;
@@ -3810,6 +4052,7 @@
       document.getElementById('battle-defender-title').textContent =
         `敌方 · ${enemySnapshot.name} · ${enemySnapshot.generalName}`;
       document.getElementById('battle-sequence-title').textContent = `编队交战 · 距离 ${report.distance}`;
+      renderBattleAnimationState(report, report.attackerBefore, report.defenderBefore);
       document.getElementById('formation-battle').classList.remove('hidden');
       startBattleSpineIdleLoop();
       playFormationBattleTimeline(report);
@@ -3819,6 +4062,8 @@
     }
 
     function closeFormationBattleOverlay() {
+      stopBattleSpineIdleLoop();
+      clearBattleFormationProxyState();
       document.getElementById('formation-battle').classList.add('hidden');
       if (activeBattleOverlayResolve) {
         activeBattleOverlayResolve();
@@ -4131,6 +4376,10 @@
 
           if (military) {
             const tier = getMoraleTier(military.morale);
+            const soldierPercent = military.maxSoldiers > 0
+              ? clamp(Math.round((military.soldiers / military.maxSoldiers) * 100), 0, 100)
+              : 0;
+            const moralePercent = clamp(Math.round(military.morale || 0), 0, 100);
             const ue = document.createElement('div');
             ue.className = `unit ${military.side} ${military.hasActed && military.hasMoved ? 'acted' : ''} ${tier.id === 'chaos' || tier.id === 'rout' ? tier.id : ''} ${military.isCommander ? 'commander' : ''} ${military.inRiver ? 'in-river' : ''}`;
             ue.style.setProperty('--unit-sprite', `url("${getBoardUnitSprite(military)}")`);
@@ -4138,10 +4387,11 @@
 
             ue.innerHTML = `
               <span class="unit-art" aria-hidden="true"></span>
-              <span>${getFormationTemplateLabel(military)}</span>
-              <span>${military.soldiers}</span>
-              <span class="unit-status ${tier.id}">${tier.label}</span>
-              ${renderFormationChips(military)}
+              <span class="unit-caption unit-name">${escapeHtml(military.name)}</span>
+              <div class="unit-bars" aria-hidden="true">
+                <div class="unit-bar unit-bar--hp"><span class="unit-bar-fill" style="width:${soldierPercent}%"></span></div>
+                <div class="unit-bar unit-bar--morale"><span class="unit-bar-fill" style="width:${moralePercent}%"></span></div>
+              </div>
             `;
             if (military.isCommander) {
               const badge = document.createElement('span');
@@ -4153,7 +4403,7 @@
                 : '主';
               ue.appendChild(badge);
             }
-            ue.title = `${military.name} · ${military.general.name}\n${getFormationCompositionText(military)}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
+            ue.title = `${military.name} · ${military.general.name}\n兵力 ${military.soldiers}/${military.maxSoldiers} · 士气 ${military.morale}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
 
             if (phase === 'deploy' && military.side === 'player' && military.x >= 0) {
               ue.draggable = true;
@@ -4192,8 +4442,11 @@
         const el = document.createElement('div');
         el.className = 'unit player';
         el.draggable = true;
-        el.innerHTML = `<span>${u.name}${u.isCommander ? '·主将' : ''}</span><span>${getFormationCompositionText(u)}</span>`;
-        el.title = `${u.general.name}\n${getFormationCompositionText(u)}`;
+        el.innerHTML = `
+          <span class="unit-caption">${u.name}${u.isCommander ? '·主将' : ''}</span>
+          <span class="unit-caption">${getFormationTemplateLabel(u)}</span>
+        `;
+        el.title = `${u.general.name}\n${getFormationTemplateLabel(u)}`;
         el.addEventListener('click', () => { inspectUnit(u); updateUI(); });
         el.addEventListener('dragstart', e => { dragUnit = u; e.dataTransfer.effectAllowed = 'move'; });
         pool.appendChild(el);
@@ -4224,7 +4477,7 @@
           <div>${pos} · ${u.soldiers} · <span class="unit-status ${tier.id}">${tier.label}</span></div>
           <div class="morale-bar"><div class="morale-fill" style="width:${u.morale}%"></div></div>
           <div>${u.general.name}${u.inRiver ? ' · 渡河' : ''}</div>
-          <div>${getFormationCompositionText(u)}</div>
+          <div>${getFormationTemplateLabel(u)}</div>
         `;
         list.appendChild(el);
       }
@@ -4278,7 +4531,6 @@
       const u = selectedUnit;
       [
         { id: 'inspire', label: `鼓舞(${u.skillUses.inspire})`, ok: u.skillUses.inspire > 0 },
-        { id: 'charge', label: `冲锋(${u.skillUses.charge})`, ok: u.skillUses.charge > 0 && !u.chargeReady && getTerrain(u.x, u.y) !== 'forest' },
       ].forEach(s => {
         const btn = document.createElement('button');
         btn.className = 'skill-btn';
@@ -4436,7 +4688,6 @@
       const isAfterMove = Boolean(selectedUnit.movedFrom);
       const moraleGain = isAfterMove ? 8 : 12;
       changeMorale(selectedUnit, moraleGain, '整顿');
-      if (selectedUnit.chargeReady) selectedUnit.chargeReady = false;
       log(`${selectedUnit.name} 整顿队伍，士气恢复`, 'heal');
       finishUnitAction(selectedUnit);
       clearSelection();
@@ -4488,7 +4739,7 @@
       if (mode === 'target-attack') {
         if (clicked?.side === 'enemy' && attackable.some(u => u.id === clicked.id)) {
           selectedUnit.movedFrom = null;
-          await resolveAttack(selectedUnit, clicked, selectedUnit.chargeReady);
+          await resolveAttack(selectedUnit, clicked);
           finishUnitAction(selectedUnit);
           clearSelection(); updateUI();
         } else {
@@ -4508,7 +4759,6 @@
     function onSkillClick(id) {
       if (!selectedUnit || selectedUnit.hasActed) return;
       if (id === 'inspire') { mode = 'skill-inspire'; log('选择友军使用【鼓舞】', 'skill'); }
-      else if (id === 'charge') { useCharge(selectedUnit); updateUI(); }
     }
 
     function onDeployDrop(x, y) {

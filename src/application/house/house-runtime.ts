@@ -3,6 +3,7 @@ import type { AppState } from "../app-shell";
 import type { HouseDefinition } from "../../domain/house";
 import type { EventDefinition } from "../../domain/event";
 import type { SceneDefinition } from "../../domain/action";
+import type { ActivityDefinition } from "../../domain/activity";
 import type { GameState } from "../../domain/game-state";
 import type {
   ActiveHouseModuleSession,
@@ -34,6 +35,7 @@ type HouseRuntimeDependencies = {
   playerCharacterId: string;
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   syncCouncilPriorityAfterGameStateChange(
     previousGameState: GameState,
     councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
@@ -263,6 +265,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
       {
         eventDefinitionsById: dependencies.eventDefinitionsById,
         sceneDefinitionsById: dependencies.sceneDefinitionsById,
+        activityDefinitionsById: dependencies.activityDefinitionsById,
       },
       {
         timing: "house-enter",

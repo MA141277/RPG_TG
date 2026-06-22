@@ -495,6 +495,7 @@ function renderStage(
   if (currentView === "scene") {
     return renderSceneView({
       currentAction: input.currentSceneAction ?? null,
+      activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
       choiceOptions: input.currentSceneChoiceOptions ?? [],
     });

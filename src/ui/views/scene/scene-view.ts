@@ -1,9 +1,11 @@
 import type { ActionNode, ChoiceOption } from "../../../domain/action";
+import type { ActiveActivitySession } from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
 type SceneViewInput = {
   currentAction: ActionNode | null;
+  activitySession: ActiveActivitySession;
   characterDefinitions: CharacterDefinition[];
   choiceOptions: ChoiceOption[];
 };
@@ -112,10 +114,67 @@ function renderChoiceList(choiceOptions: ChoiceOption[]): string {
   `;
 }
 
+function renderActivityOverlay(activitySession: ActiveActivitySession): string {
+  if (activitySession?.type === "qte-bar") {
+    return `
+      <div class="c-grain-shop-overlay" data-activity-overlay="qte-bar">
+        <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal" role="dialog" aria-modal="true">
+          <div class="c-temple-house-qte__header">
+            <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${activitySession.title}</h3>
+            <p class="c-temple-house-qte__task">${activitySession.taskLabel}</p>
+            <p class="c-temple-house-qte__meta">第 ${activitySession.round} / ${activitySession.totalRounds} 轮 · 已中 ${activitySession.successes} 次</p>
+          </div>
+          <div class="c-grain-shop-modal__body">
+            <p>看准金色区间，点击停手。</p>
+            <div class="c-temple-house-qte__track" aria-hidden="true">
+              <span
+                class="c-temple-house-qte__target"
+                style="left:${activitySession.targetStartPercent}%; width:${activitySession.targetWidthPercent}%;"
+              ></span>
+              <span
+                class="c-temple-house-qte__marker"
+                style="left:${activitySession.markerPercent}%;"
+              ></span>
+            </div>
+          </div>
+          <div class="c-grain-shop-modal__actions">
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-activity-action="stop-qte">
+              停手
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (activitySession?.type === "result") {
+    return `
+      <div class="c-grain-shop-overlay" data-activity-overlay="result">
+        <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal" role="dialog" aria-modal="true">
+          <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${activitySession.title}</h3>
+          <div class="c-grain-shop-modal__body">
+            <p class="c-temple-house-result__grade">评语：${activitySession.grade}</p>
+            <p class="c-temple-house-result__grade">命中：${activitySession.score}</p>
+            ${activitySession.rewardLines.map((line) => `<p>${line}</p>`).join("")}
+          </div>
+          <div class="c-grain-shop-modal__actions">
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-activity-action="close-result">
+              确认
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return "";
+}
+
 export function renderSceneView(input: SceneViewInput): string {
   const action = input.currentAction;
+  const activityOverlay = renderActivityOverlay(input.activitySession);
   if (action == null) {
-    return "";
+    return activityOverlay;
   }
 
   if (action.type === "narration") {
@@ -126,6 +185,7 @@ export function renderSceneView(input: SceneViewInput): string {
           narration: true,
         })}
       </section>
+      ${activityOverlay}
     `;
   }
 
@@ -154,6 +214,7 @@ export function renderSceneView(input: SceneViewInput): string {
             : {}),
         })}
       </section>
+      ${activityOverlay}
     `;
   }
 
@@ -166,6 +227,7 @@ export function renderSceneView(input: SceneViewInput): string {
         )}
         ${renderChoiceList(input.choiceOptions)}
       </section>
+      ${activityOverlay}
     `;
   }
 
@@ -176,5 +238,6 @@ export function renderSceneView(input: SceneViewInput): string {
         narration: true,
       })}
     </section>
+    ${activityOverlay}
   `;
 }

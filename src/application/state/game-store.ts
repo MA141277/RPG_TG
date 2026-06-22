@@ -1,6 +1,7 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
 import type { ChoiceOption } from "../../domain/action";
 import { resolveChoiceOption } from "../scene/choice-resolver";
@@ -10,6 +11,7 @@ export type GameContent = {
   characterDefinitions: CharacterDefinition[];
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
 };
 
 export type GameStoreSnapshot = {
@@ -35,6 +37,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
       const result = runSceneUntilPause(state, {
         sceneDefinitionsById: content.sceneDefinitionsById,
         eventDefinitionsById: content.eventDefinitionsById,
+        activityDefinitionsById: content.activityDefinitionsById,
         characterDefinitions,
       });
 
@@ -48,6 +51,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
       const result = advanceScene(state, {
         sceneDefinitionsById: content.sceneDefinitionsById,
         eventDefinitionsById: content.eventDefinitionsById,
+        activityDefinitionsById: content.activityDefinitionsById,
         characterDefinitions,
       });
 

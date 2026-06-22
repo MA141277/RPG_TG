@@ -1,7 +1,9 @@
 import type { ActionNode, SceneDefinition } from "../../domain/action";
+import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import { runActivity } from "../activity/activity-runner";
 import { applyEffects } from "../effects/effect-applier";
 import { startEvent } from "../events/event-runner";
 import { runStoryCallback } from "../story/story-callbacks";
@@ -9,6 +11,7 @@ import { runStoryCallback } from "../story/story-callbacks";
 export type SceneRunnerContext = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   eventDefinitionsById: Record<string, EventDefinition>;
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   characterDefinitions: CharacterDefinition[];
 };
 
@@ -96,6 +99,26 @@ export function runSceneUntilPause(
       const targetEvent = context.eventDefinitionsById[currentAction.eventId];
       nextState =
         targetEvent == null ? incrementSceneCursor(nextState) : startEvent(nextState, targetEvent);
+      continue;
+    }
+
+    if (currentAction.type === "start-activity") {
+      const activityResult =
+        context.activityDefinitionsById == null
+          ? null
+          : runActivity(
+              nextState,
+              currentAction.activityId,
+              {
+                activityDefinitionsById: context.activityDefinitionsById,
+                characterDefinitions: nextCharacterDefinitions,
+              },
+              currentAction.fallbackActivityId
+            );
+
+      nextState = incrementSceneCursor(activityResult?.state ?? nextState);
+      nextCharacterDefinitions =
+        activityResult?.characterDefinitions ?? nextCharacterDefinitions;
       continue;
     }
 

@@ -122,6 +122,13 @@ const {
   dispatchStoryBattleAction,
   startStoryBattle,
 } = require("../.test-dist/application/story-battle/story-battle-runtime.js");
+const { startEvent } = require("../.test-dist/application/events/event-runner.js");
+const {
+  runSceneUntilPause,
+} = require("../.test-dist/application/scene/scene-runner.js");
+const {
+  stopActivityQte,
+} = require("../.test-dist/application/activity/activity-qte-runtime.js");
 const {
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
@@ -223,6 +230,124 @@ function addTestDays(date, days) {
     day: ((dayOfYear - 1) % 30) + 1,
   };
 }
+
+test("scene start-activity action executes registered fallback activity", () => {
+  const state = createBaseState();
+  const activityDefinition = {
+    id: "activity.test.special",
+    label: "Special activity",
+    handlerId: "missing.special-handler",
+    fallbackHandlerId: "generic.qte",
+    qte: {
+      totalRounds: 3,
+      requiredSuccesses: 2,
+    },
+    outcome: {
+      completedFlagKey: "flag.test.activity.completed",
+      gradeVariableKey: "var.test.activity.grade",
+      effects: [
+        {
+          type: "change-variable",
+          key: "var.test.activity.points",
+          delta: 5,
+        },
+      ],
+    },
+  };
+  const eventDefinition = {
+    id: "event.test.activity",
+    chapterId: "chapter.prototype",
+    name: "Activity integration test",
+    occurrence: "repeatable",
+    trigger: { timing: "manual" },
+    conditions: [],
+    entrySceneId: "scene.test.activity",
+  };
+  const sceneDefinitionsById = {
+    "scene.test.activity": {
+      id: "scene.test.activity",
+      name: "Activity scene",
+      actions: [
+        {
+          type: "start-activity",
+          activityId: "activity.test.special",
+        },
+        {
+          type: "narration",
+          text: "Activity resolved.",
+        },
+      ],
+    },
+  };
+  const result = runSceneUntilPause(startEvent(state, eventDefinition), {
+    sceneDefinitionsById,
+    eventDefinitionsById: {
+      [eventDefinition.id]: eventDefinition,
+    },
+    activityDefinitionsById: {
+      "activity.test.special": activityDefinition,
+    },
+    characterDefinitions: prototypeCharacters,
+  });
+
+  assert.equal(result.currentAction?.type, "narration");
+  assert.equal(result.state.runtime.activitySession?.type, "qte-bar");
+  assert.equal(result.state.runtime.activitySession.activityId, "activity.test.special");
+  assert.equal(result.state.runtime.variables["var.test.activity.points"], undefined);
+
+  const firstStop = stopActivityQte(
+    {
+      ...result.state,
+      runtime: {
+        ...result.state.runtime,
+        activitySession: {
+          ...result.state.runtime.activitySession,
+          markerPercent: 45,
+        },
+      },
+    },
+    activityDefinition,
+    prototypeCharacters
+  );
+  const secondStop = stopActivityQte(
+    {
+      ...firstStop.state,
+      runtime: {
+        ...firstStop.state.runtime,
+        activitySession: {
+          ...firstStop.state.runtime.activitySession,
+          markerPercent: 62,
+        },
+      },
+    },
+    activityDefinition,
+    firstStop.characterDefinitions
+  );
+  const thirdStop = stopActivityQte(
+    {
+      ...secondStop.state,
+      runtime: {
+        ...secondStop.state.runtime,
+        activitySession: {
+          ...secondStop.state.runtime.activitySession,
+          markerPercent: 0,
+        },
+      },
+    },
+    activityDefinition,
+    secondStop.characterDefinitions
+  );
+
+  assert.equal(thirdStop.state.runtime.activitySession?.type, "result");
+  assert.equal(thirdStop.state.runtime.flags["flag.test.activity.completed"], true);
+  assert.equal(
+    thirdStop.state.runtime.flags["flag.activity.test.special.completed"],
+    true
+  );
+  assert.equal(thirdStop.state.runtime.variables["var.test.activity.grade"], "success");
+  assert.equal(thirdStop.state.runtime.variables["var.test.activity.points"], 5);
+  assert.equal(thirdStop.state.runtime.variables["var.activity.last_handler"], "generic.qte");
+});
 
 function withCouncilInDays(state, days = 30) {
   return {

@@ -113,17 +113,35 @@ import {
   storyEventDefinitionsById,
   storySceneDefinitionsById,
 } from "./content/story";
+import { scenarioActivityDefinitionsById } from "./content/activities/scenario-activities";
+import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
 import { yuanmoCampaignMap } from "./content/yuanmo-campaign-map";
+import {
+  loadScenarioPackFromUrl,
+  parseScenarioPackText,
+} from "./application/scenario/scenario-pack-loader";
+import {
+  advanceActivityQteMarker,
+  clearActivityResult,
+  stopActivityQte,
+} from "./application/activity/activity-qte-runtime";
+import type { ActivityDefinition } from "./domain/activity";
+import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
+import type { CityDefinition } from "./domain/city";
 import {
   zhuYuanzhangCityRosters,
   zhuYuanzhangEarlyCharacters,
 } from "./content/zhu-yuanzhang-early-characters";
 import type { CharacterDefinition } from "./domain/character";
 import type { CityBeggingGameCompletionResult } from "./domain/city-begging-minigame";
-import type { EventTriggerTiming } from "./domain/event";
+import type { EventDefinition, EventTriggerTiming } from "./domain/event";
 import type { HouseDefinition } from "./domain/house";
 import type { HouseModuleTransitionResult } from "./domain/house-module";
+import type {
+  ScenarioPackDefinition,
+  ScenarioPackSummary,
+} from "./domain/scenario-pack";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -174,6 +192,7 @@ const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
+const ACTIVITY_QTE_INTERVAL_MS = 90;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const HAOZHOU_RETURN_ENCOUNTER_SPY_SCENE_CURSOR = 4;
@@ -237,41 +256,64 @@ const selectableCharacterIds = [
   "char.kulan_tang_he",
   "char.kulan_chang_yuchun",
 ] as const;
-const cityDefinitions = prototypeCities;
 const mapNodeById = Object.fromEntries(
   yuanmoCampaignMap.nodes
     .filter((mapNode) => mapNode.id != null)
     .map((mapNode) => [mapNode.id as string, mapNode])
 );
-const cityCoordinatesById: Record<string, GridCoordinate> = Object.fromEntries(
-  cityDefinitions.map((cityDefinition) => {
-    assertExists(
-      cityDefinition.mapNodeId,
-      `Missing map node id for city "${cityDefinition.id}".`
-    );
-    const mapNode = mapNodeById[cityDefinition.mapNodeId];
-    assertExists(
-      mapNode,
-      `Missing campaign map node "${cityDefinition.mapNodeId}" for city "${cityDefinition.id}".`
-    );
-    return [cityDefinition.id, { x: mapNode.x, y: mapNode.y }];
-  })
-);
-const cityDefinitionById = Object.fromEntries(
-  cityDefinitions.map((cityDefinition) => [cityDefinition.id, cityDefinition])
-);
-const cityNameById = Object.fromEntries(
-  cityDefinitions.map((cityDefinition) => [
-    cityDefinition.id,
-    cityDefinition.name,
-  ])
-);
-const houseNameById = Object.fromEntries(
-  prototypeHouses.map((houseDefinition) => [
-    houseDefinition.id,
-    houseDefinition.name,
-  ])
-);
+function createCityCoordinatesById(
+  definitions: CityDefinition[]
+): Record<string, GridCoordinate> {
+  return Object.fromEntries(
+    definitions.map((cityDefinition) => {
+      assertExists(
+        cityDefinition.mapNodeId,
+        `Missing map node id for city "${cityDefinition.id}".`
+      );
+      const mapNode = mapNodeById[cityDefinition.mapNodeId];
+      assertExists(
+        mapNode,
+        `Missing campaign map node "${cityDefinition.mapNodeId}" for city "${cityDefinition.id}".`
+      );
+      return [cityDefinition.id, { x: mapNode.x, y: mapNode.y }];
+    })
+  );
+}
+
+function createCityDefinitionById(
+  definitions: CityDefinition[]
+): Record<string, CityDefinition> {
+  return Object.fromEntries(
+    definitions.map((cityDefinition) => [cityDefinition.id, cityDefinition])
+  );
+}
+
+function createCityNameById(definitions: CityDefinition[]): Record<string, string> {
+  return Object.fromEntries(
+    definitions.map((cityDefinition) => [
+      cityDefinition.id,
+      cityDefinition.name,
+    ])
+  );
+}
+
+function createHouseNameById(definitions: HouseDefinition[]): Record<string, string> {
+  return Object.fromEntries(
+    definitions.map((houseDefinition) => [
+      houseDefinition.id,
+      houseDefinition.name,
+    ])
+  );
+}
+
+let cityDefinitions: CityDefinition[] = prototypeCities;
+let houseDefinitions: HouseDefinition[] = prototypeHouses;
+let cityCoordinatesById: Record<string, GridCoordinate> =
+  createCityCoordinatesById(cityDefinitions);
+let cityDefinitionById: Record<string, CityDefinition> =
+  createCityDefinitionById(cityDefinitions);
+let cityNameById: Record<string, string> = createCityNameById(cityDefinitions);
+let houseNameById: Record<string, string> = createHouseNameById(houseDefinitions);
 const characterNameById = Object.fromEntries(
   prototypeCharacters.map((characterDefinition) => [
     characterDefinition.id,
@@ -290,6 +332,15 @@ const selectableCharacters = selectableCharacterIds.map((characterId) => {
 });
 
 let currentPlayerCharacterId = defaultPlayerCharacterId;
+let activeStoryEventDefinitionsById: Record<string, EventDefinition> = {
+  ...storyEventDefinitionsById,
+};
+let activeStorySceneDefinitionsById: Record<string, SceneDefinition> = {
+  ...storySceneDefinitionsById,
+};
+let activeActivityDefinitionsById: Record<string, ActivityDefinition> = {
+  ...scenarioActivityDefinitionsById,
+};
 
 let appState: AppState = createPrototypeAppState(currentPlayerCharacterId);
 let campaignMapDebugState: CampaignMapDebugState = {
@@ -352,6 +403,7 @@ let layoutEditorDragState:
   | null = null;
 let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
 let cityBeggingMiniGameFrameId: number | null = null;
+let activityQteIntervalHandle: number | null = null;
 let campaignTravelRequestId = 0;
 let loadingScreenAnimationFrameId: number | null = null;
 let loadingScreenRequestId = 0;
@@ -364,8 +416,11 @@ const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
   characters: selectableCharacters,
+  scenarioPacks: builtInScenarioPacks,
   onStartGame: startMainGameWithLoading,
   onContinueGame: startContinueGameWithLoading,
+  onStartScenarioPack: startScenarioPackWithLoading,
+  onImportScenarioPackText: startScenarioPackTextWithLoading,
   loadSaveData,
   getAppState: () => appState,
 });
@@ -485,7 +540,7 @@ function getCurrentPlayerCharacter(): CharacterDefinition | null {
 }
 
 function getCurrentCityUiContext(): {
-  cityDefinition: (typeof cityDefinitions)[number];
+  cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
   cityEntries: typeof prototypeCityEntries;
   cityNpcPoolDefinition: (typeof prototypeCityNpcPools)[number] | null;
@@ -498,7 +553,7 @@ function getCurrentCityUiContext(): {
   }
 
   const cityHouseIds = new Set(cityDefinition.houseIds);
-  const houseDefinitions = prototypeHouses.filter((houseDefinition) => {
+  const activeCityHouseDefinitions = houseDefinitions.filter((houseDefinition) => {
     if (
       !(
         houseDefinition.cityId === cityDefinition.id ||
@@ -526,7 +581,7 @@ function getCurrentCityUiContext(): {
 
   return {
     cityDefinition,
-    houseDefinitions,
+    houseDefinitions: activeCityHouseDefinitions,
     cityEntries,
     cityNpcPoolDefinition,
   };
@@ -609,8 +664,9 @@ function triggerStoryEventsForTiming(
       characterDefinitions,
     },
     {
-      eventDefinitionsById: storyEventDefinitionsById,
-      sceneDefinitionsById: storySceneDefinitionsById,
+      eventDefinitionsById: activeStoryEventDefinitionsById,
+      sceneDefinitionsById: activeStorySceneDefinitionsById,
+      activityDefinitionsById: activeActivityDefinitionsById,
     },
     buildStoryTriggerInput(timing, state)
   );
@@ -621,12 +677,12 @@ function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
   const currentCityId = appState.gameState.world.currentCityId;
 
   return (
-    prototypeHouses.find(
+    houseDefinitions.find(
       (houseDefinition) =>
         houseDefinition.moduleId === priorityModuleId &&
         houseDefinition.cityId === currentCityId
     ) ??
-    prototypeHouses.find(
+    houseDefinitions.find(
       (houseDefinition) => houseDefinition.moduleId === priorityModuleId
     ) ??
     null
@@ -954,17 +1010,18 @@ function createHouseRuntimeInstance(): HouseRuntime {
     syncCouncilPriorityAfterGameStateChange,
     startMapAutoAdvance,
     stopMapAutoAdvance,
-    houseDefinitions: prototypeHouses,
+    houseDefinitions,
     playerCharacterId: currentPlayerCharacterId,
-    eventDefinitionsById: storyEventDefinitionsById,
-    sceneDefinitionsById: storySceneDefinitionsById,
+    eventDefinitionsById: activeStoryEventDefinitionsById,
+    sceneDefinitionsById: activeStorySceneDefinitionsById,
+    activityDefinitionsById: activeActivityDefinitionsById,
   });
 }
 
 function getActiveStoryChoiceOptions() {
   return getCurrentChoiceOptions(
     appState.gameState,
-    storySceneDefinitionsById
+    activeStorySceneDefinitionsById
   );
 }
 
@@ -981,6 +1038,85 @@ function stopMapAutoAdvance(intervalId: string): void {
       autoAdvanceState: null,
     };
   }
+}
+
+function isActivityQteBlockingScene(): boolean {
+  return appState.gameState.runtime.activitySession?.type === "qte-bar";
+}
+
+function stopActivityQteLoop(): void {
+  if (activityQteIntervalHandle != null) {
+    window.clearInterval(activityQteIntervalHandle);
+    activityQteIntervalHandle = null;
+  }
+}
+
+function syncActivityQteLoop(): void {
+  if (appState.gameState.runtime.activitySession?.type !== "qte-bar") {
+    stopActivityQteLoop();
+    return;
+  }
+
+  if (activityQteIntervalHandle != null) {
+    return;
+  }
+
+  activityQteIntervalHandle = window.setInterval(() => {
+    if (appState.gameState.runtime.activitySession?.type !== "qte-bar") {
+      stopActivityQteLoop();
+      return;
+    }
+
+    appState = {
+      ...appState,
+      gameState: advanceActivityQteMarker(appState.gameState),
+    };
+    renderApp();
+  }, ACTIVITY_QTE_INTERVAL_MS);
+}
+
+function stopCurrentActivityQte(): void {
+  const session = appState.gameState.runtime.activitySession;
+  if (session?.type !== "qte-bar") {
+    return;
+  }
+
+  const activityDefinition = activeActivityDefinitionsById[session.activityId];
+  if (activityDefinition == null) {
+    stopActivityQteLoop();
+    appState = {
+      ...appState,
+      gameState: {
+        ...appState.gameState,
+        runtime: {
+          ...appState.gameState.runtime,
+          activitySession: null,
+        },
+      },
+    };
+    renderApp();
+    return;
+  }
+
+  const result = stopActivityQte(
+    appState.gameState,
+    activityDefinition,
+    appState.characterDefinitions
+  );
+  appState = {
+    ...appState,
+    gameState: result.state,
+    characterDefinitions: result.characterDefinitions,
+  };
+  renderApp();
+}
+
+function closeCurrentActivityResult(): void {
+  appState = {
+    ...appState,
+    gameState: clearActivityResult(appState.gameState),
+  };
+  renderApp();
 }
 
 function startMapAutoAdvance(input: {
@@ -1109,8 +1245,9 @@ function advanceCurrentStoryScene(): void {
       characterDefinitions: appState.characterDefinitions,
     },
     {
-      eventDefinitionsById: storyEventDefinitionsById,
-      sceneDefinitionsById: storySceneDefinitionsById,
+      eventDefinitionsById: activeStoryEventDefinitionsById,
+      sceneDefinitionsById: activeStorySceneDefinitionsById,
+      activityDefinitionsById: activeActivityDefinitionsById,
     }
   );
 
@@ -1136,8 +1273,9 @@ function chooseCurrentStoryOption(choiceId: string): void {
       characterDefinitions: appState.characterDefinitions,
     },
     {
-      eventDefinitionsById: storyEventDefinitionsById,
-      sceneDefinitionsById: storySceneDefinitionsById,
+      eventDefinitionsById: activeStoryEventDefinitionsById,
+      sceneDefinitionsById: activeStorySceneDefinitionsById,
+      activityDefinitionsById: activeActivityDefinitionsById,
     },
     selectedOption
   );
@@ -1226,6 +1364,7 @@ function startMainGame(
   startupScenario: StartupScenario = "default"
 ): void {
   resetMainGameRuntime();
+  resetActiveScenarioContent();
   currentPlayerCharacterId = selectedCharacter.id;
   appState = createPrototypeAppState(currentPlayerCharacterId);
   if (startupScenario === "haozhou-return-encounter") {
@@ -1235,6 +1374,277 @@ function startMainGame(
   setGameVisibility(true);
   mainUiFlow.hide();
   renderApp();
+}
+
+async function startScenarioPackWithLoading(
+  scenarioPack: ScenarioPackSummary
+): Promise<void> {
+  try {
+    const loadedScenarioPack = await loadScenarioPackFromUrl(scenarioPack.url);
+    startLoadedScenarioPackWithLoading(loadedScenarioPack);
+  } catch (error) {
+    window.alert(
+      error instanceof Error
+        ? `JSON 开局读取失败：${error.message}`
+        : "JSON 开局读取失败。"
+    );
+  }
+}
+
+function startScenarioPackTextWithLoading(fileName: string, text: string): void {
+  try {
+    startLoadedScenarioPackWithLoading(parseScenarioPackText(text));
+  } catch (error) {
+    window.alert(
+      error instanceof Error
+        ? `JSON 开局读取失败（${fileName}）：${error.message}`
+        : `JSON 开局读取失败（${fileName}）。`
+    );
+  }
+}
+
+function startLoadedScenarioPackWithLoading(
+  scenarioPack: ScenarioPackDefinition
+): void {
+  const requestId = beginLoadingScreen();
+
+  simulateLoadingProgress((progress) => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    setActiveLoadingProgress(progress);
+  }).then(() => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    startLoadedScenarioPack(scenarioPack);
+    endLoadingScreen(requestId);
+  });
+}
+
+function startLoadedScenarioPack(scenarioPack: ScenarioPackDefinition): void {
+  resetMainGameRuntime();
+  resetActiveScenarioContent();
+  installScenarioPackContent(scenarioPack);
+  currentPlayerCharacterId = scenarioPack.scenarioProfile.playerCharacterId;
+  appState = createScenarioPackAppState(scenarioPack);
+  houseRuntime = createHouseRuntimeInstance();
+  setGameVisibility(true);
+  mainUiFlow.hide();
+  renderApp();
+}
+
+function resetActiveScenarioContent(): void {
+  activeStoryEventDefinitionsById = { ...storyEventDefinitionsById };
+  activeStorySceneDefinitionsById = { ...storySceneDefinitionsById };
+  activeActivityDefinitionsById = { ...scenarioActivityDefinitionsById };
+  resetActiveWorldContent();
+}
+
+function resetActiveWorldContent(): void {
+  cityDefinitions = prototypeCities;
+  houseDefinitions = prototypeHouses;
+  cityCoordinatesById = createCityCoordinatesById(cityDefinitions);
+  cityDefinitionById = createCityDefinitionById(cityDefinitions);
+  cityNameById = createCityNameById(cityDefinitions);
+  houseNameById = createHouseNameById(houseDefinitions);
+}
+
+function installScenarioPackContent(scenarioPack: ScenarioPackDefinition): void {
+  activeStoryEventDefinitionsById = {
+    ...activeStoryEventDefinitionsById,
+    ...Object.fromEntries(
+      scenarioPack.events.map((eventDefinition) => [
+        eventDefinition.id,
+        eventDefinition,
+      ])
+    ),
+  };
+  activeStorySceneDefinitionsById = {
+    ...activeStorySceneDefinitionsById,
+    ...Object.fromEntries(
+      scenarioPack.scenes.map((sceneDefinition) => [
+        sceneDefinition.id,
+        sceneDefinition,
+      ])
+    ),
+  };
+  activeActivityDefinitionsById = {
+    ...activeActivityDefinitionsById,
+    ...Object.fromEntries(
+      (scenarioPack.activities ?? []).map((activityDefinition) => [
+        activityDefinition.id,
+        activityDefinition,
+      ])
+    ),
+  };
+  installScenarioPackWorldContent(scenarioPack);
+}
+
+function installScenarioPackWorldContent(
+  scenarioPack: ScenarioPackDefinition
+): void {
+  cityDefinitions = mergeById(cityDefinitions, scenarioPack.cities ?? []);
+  houseDefinitions = mergeById(houseDefinitions, scenarioPack.houses ?? []);
+  cityCoordinatesById = createCityCoordinatesById(cityDefinitions);
+  cityDefinitionById = createCityDefinitionById(cityDefinitions);
+  cityNameById = createCityNameById(cityDefinitions);
+  houseNameById = createHouseNameById(houseDefinitions);
+}
+
+function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {
+  if (next.length === 0) {
+    return base;
+  }
+
+  const nextIds = new Set(next.map((definition) => definition.id));
+  return [
+    ...base.filter((definition) => !nextIds.has(definition.id)),
+    ...next,
+  ];
+}
+
+function createScenarioPackAppState(
+  scenarioPack: ScenarioPackDefinition
+): AppState {
+  const profile = scenarioPack.scenarioProfile;
+  const calendar = profile.initialCalendar ?? {
+    year: 1,
+    month: 1,
+    day: 1,
+  };
+  const playerCoordinate =
+    profile.initialPlayerCoordinate ??
+    cityCoordinatesById[profile.initialLocation.cityId] ??
+    yuanmoCampaignMap.initialPlayerCoordinate ??
+    { x: 0, y: 0 };
+
+  let nextAppState: AppState = {
+    gameState: ensureCityNpcPoolsForCurrentDay(
+      createInitialState({
+        currentMapId: profile.initialLocation.mapId,
+        currentCityId: profile.initialLocation.cityId,
+        currentHouseId: profile.initialLocation.houseId,
+        playerCharacterId: profile.playerCharacterId,
+        chapterId: profile.chapterId,
+        year: calendar.year,
+        month: calendar.month,
+        day: calendar.day,
+        pinnedCharacterId: profile.playerCharacterId,
+        reviewDateText: profile.initialUi?.reviewDateText ?? "JSON 开局",
+        mainHouseMissionText:
+          profile.initialUi?.mainHouseMissionText ?? scenarioPack.title,
+        cards: {
+          ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
+          selectedCardId: prototypeCards[0]?.id ?? null,
+        },
+        valuables: {
+          items: prototypeValuables,
+          selectedItemId: prototypeValuables[0]?.id ?? null,
+          equippedWeaponSet: {
+            swordId:
+              prototypeValuables.find(
+                (valuableDefinition) => valuableDefinition.category === "weapon"
+              )?.id ?? null,
+            armorId:
+              prototypeValuables.find(
+                (valuableDefinition) => valuableDefinition.category === "armor"
+              )?.id ?? null,
+          },
+        },
+        currentView: profile.initialLocation.view,
+      }),
+      prototypeCityNpcPools
+    ),
+    characterDefinitions: mergeCharacterDefinitions(
+      prototypeCharacters,
+      scenarioPack.characters
+    ),
+    playerCoordinate,
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {
+      "global-hud": createDefaultGlobalHudLayout(),
+      "start-screen": createDefaultStartScreenLayout(),
+      "character-select-screen": createDefaultCharacterSelectScreenLayout(),
+      "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
+    },
+    layoutEditor: {
+      isOpen: false,
+      selectedTargetId: "global-hud",
+      selectedComponentId: "status-board",
+      selectedElementId: null,
+      backgroundAssetQuery: "",
+    },
+  };
+
+  nextAppState = {
+    ...nextAppState,
+    gameState: {
+      ...nextAppState.gameState,
+      runtime: {
+        ...nextAppState.gameState.runtime,
+        flags: {
+          ...nextAppState.gameState.runtime.flags,
+          ...(profile.initialRuntime?.flags ?? {}),
+        },
+        variables: {
+          ...nextAppState.gameState.runtime.variables,
+          ...(profile.initialRuntime?.variables ?? {}),
+        },
+      },
+    },
+  };
+
+  if (profile.entryEventId != null) {
+    const storyResult = startStoryEventById(
+      {
+        state: nextAppState.gameState,
+        characterDefinitions: nextAppState.characterDefinitions,
+      },
+      {
+        eventDefinitionsById: activeStoryEventDefinitionsById,
+        sceneDefinitionsById: activeStorySceneDefinitionsById,
+        activityDefinitionsById: activeActivityDefinitionsById,
+      },
+      profile.entryEventId
+    );
+
+    nextAppState = {
+      ...nextAppState,
+      gameState: storyResult.state,
+      characterDefinitions: storyResult.characterDefinitions,
+    };
+  }
+
+  return nextAppState;
+}
+
+function mergeCharacterDefinitions(
+  baseCharacters: CharacterDefinition[],
+  scenarioCharacters: CharacterDefinition[]
+): CharacterDefinition[] {
+  const scenarioCharacterIds = new Set(
+    scenarioCharacters.map((characterDefinition) => characterDefinition.id)
+  );
+
+  return [
+    ...baseCharacters.filter(
+      (characterDefinition) => !scenarioCharacterIds.has(characterDefinition.id)
+    ),
+    ...scenarioCharacters,
+  ];
 }
 
 function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
@@ -1298,8 +1708,9 @@ function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
       characterDefinitions: nextAppState.characterDefinitions,
     },
     {
-      eventDefinitionsById: storyEventDefinitionsById,
-      sceneDefinitionsById: storySceneDefinitionsById,
+      eventDefinitionsById: activeStoryEventDefinitionsById,
+      sceneDefinitionsById: activeStorySceneDefinitionsById,
+      activityDefinitionsById: activeActivityDefinitionsById,
     },
     "event.story.zhu_yuanzhang.haozhou_return_encounter"
   );
@@ -1410,6 +1821,7 @@ function setGameVisibility(isVisible: boolean): void {
 function resetMainGameRuntime(): void {
   houseRuntime.clearAllHouseIntervals();
   stopCityBeggingMiniGameLoop();
+  stopActivityQteLoop();
 
   if (loadingScreenAnimationFrameId != null) {
     window.cancelAnimationFrame(loadingScreenAnimationFrameId);
@@ -1529,7 +1941,7 @@ function enterMappedCity3dHouseBySceneObjectId(
     return;
   }
 
-  const houseDefinition = prototypeHouses.find(
+  const houseDefinition = houseDefinitions.find(
     (candidateHouse) => candidateHouse.id === mappedHouse.houseId
   );
   if (houseDefinition == null || !canOpenHouseFromCity(houseDefinition)) {
@@ -2937,7 +3349,7 @@ appElement.addEventListener("click", (event) => {
         entryDefinition.cityId === appState.gameState.world.currentCityId
     );
     if (cityEntry?.directoryType === "leader-residence") {
-      const targetHouse = prototypeHouses.find(
+      const targetHouse = houseDefinitions.find(
         (houseDefinition) => houseDefinition.id === cityEntry.targetHouseId
       );
       if (targetHouse == null || !canOpenHouseFromCity(targetHouse)) {
@@ -2972,7 +3384,7 @@ appElement.addEventListener("click", (event) => {
       cityDirectoryCharacterButton.dataset.cityDirectoryCharacterId;
       if (selectedCharacterId != null) {
         const targetHouseId = appState.cityDirectoryState.targetHouseId;
-        const targetHouse = prototypeHouses.find(
+        const targetHouse = houseDefinitions.find(
           (houseDefinition) => houseDefinition.id === targetHouseId
         );
         if (targetHouse == null || !canOpenHouseFromCity(targetHouse)) {
@@ -2998,10 +3410,26 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const activityActionButton = targetElement.closest<HTMLElement>(
+    "[data-activity-action]"
+  );
+  if (activityActionButton != null) {
+    const activityAction = activityActionButton.dataset.activityAction;
+    if (activityAction === "stop-qte") {
+      stopCurrentActivityQte();
+    } else if (activityAction === "close-result") {
+      closeCurrentActivityResult();
+    }
+    return;
+  }
+
   const sceneAdvanceElement = targetElement.closest<HTMLElement>(
     "[data-scene-action='advance']"
   );
   if (sceneAdvanceElement != null && appState.gameState.ui.currentView === "scene") {
+    if (isActivityQteBlockingScene()) {
+      return;
+    }
     advanceCurrentStoryScene();
     return;
   }
@@ -3010,6 +3438,9 @@ appElement.addEventListener("click", (event) => {
     "[data-scene-choice-id]"
   );
   if (sceneChoiceButton != null && appState.gameState.ui.currentView === "scene") {
+    if (isActivityQteBlockingScene()) {
+      return;
+    }
     const choiceId = sceneChoiceButton.dataset.sceneChoiceId;
     if (choiceId != null) {
       chooseCurrentStoryOption(choiceId);
@@ -3068,7 +3499,7 @@ appElement.addEventListener("click", (event) => {
   if (houseButton != null) {
     const houseId = houseButton.dataset.houseId;
     if (houseId != null) {
-      const houseDefinition = prototypeHouses.find(
+      const houseDefinition = houseDefinitions.find(
         (candidateHouse) => candidateHouse.id === houseId
       );
       if (houseDefinition == null) {
@@ -3485,7 +3916,7 @@ function renderApp() {
     mapDefinition: yuanmoCampaignMap,
     cityDefinition: prototypeCity,
     cityDefinitions,
-    houseDefinitions: prototypeHouses,
+    houseDefinitions,
     cityEntries: prototypeCityEntries,
     cardDefinitions: prototypeCards,
     cityNpcPoolDefinitions: prototypeCityNpcPools,
@@ -3499,18 +3930,19 @@ function renderApp() {
     historicalCityRosters: zhuYuanzhangCityRosters,
     currentSceneAction: getCurrentSceneAction(
       appState.gameState,
-      storySceneDefinitionsById
+      activeStorySceneDefinitionsById
     ),
     currentSceneChoiceOptions: getCurrentChoiceOptions(
       appState.gameState,
-      storySceneDefinitionsById
+      activeStorySceneDefinitionsById
     ),
-    sceneDefinitionsById: storySceneDefinitionsById,
+    sceneDefinitionsById: activeStorySceneDefinitionsById,
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncMapIntroOverlay();
+  syncActivityQteLoop();
   syncCampaignTerrainWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
 }

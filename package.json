@@ -13,6 +13,7 @@
     "kb:yuanmo-person-pool:build": "node tools/build-yuanmo-person-pool.mjs",
     "kb:yuanmo-person-pool:validate": "node tools/validate-yuanmo-person-pool.mjs",
     "scrape:mingshi": "node tools/scrape-mingshi.mjs",
+    "spine:replace-pieces": "node tools/replace-faxian-spine-pieces.mjs",
     "serve:prod": "node scripts/serve-static.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "test": "npm run build:test && node --test tests/robustness.test.cjs",

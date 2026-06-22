@@ -565,6 +565,7 @@
           <button id="walkSampleBtn" type="button">侧面行走</button>
           <button id="newVersionSampleBtn" type="button">新版</button>
           <button id="idleAnimationBtn" type="button">待机动画</button>
+          <button id="replaceMaterialBtn" type="button">素材替换</button>
           <button id="slashSampleBtn" type="button" hidden>侧身劈砍</button>
           <button id="threeQuarterSampleBtn" type="button" hidden>70度侧身</button>
           <button id="viewToggleBtn" type="button">骨骼视图</button>
@@ -573,6 +574,7 @@
           <button id="boneModeBtn" class="mode-button" type="button">骨骼移动</button>
           <button id="stretchModeBtn" class="mode-button" type="button">骨骼伸缩</button>
           <input id="fileInput" class="file-input" type="file" accept=".json,application/json" />
+          <input id="materialInput" class="file-input" type="file" accept="image/png,image/jpeg,image/webp" />
         </div>
       </header>
 
@@ -995,6 +997,8 @@
         walkSampleBtn: document.getElementById("walkSampleBtn"),
         slashSampleBtn: document.getElementById("slashSampleBtn"),
         newVersionSampleBtn: document.getElementById("newVersionSampleBtn"),
+        replaceMaterialBtn: document.getElementById("replaceMaterialBtn"),
+        materialInput: document.getElementById("materialInput"),
         idleAnimationBtn: document.getElementById("idleAnimationBtn"),
         threeQuarterSampleBtn: document.getElementById("threeQuarterSampleBtn"),
         viewToggleBtn: document.getElementById("viewToggleBtn"),
@@ -1016,6 +1020,21 @@
       const poseOverrides = new Map();
       const dynamicScarves = new Map();
       const warriorImages = loadWarriorImages();
+      const materialReferencePath = "/src/faxian/leg/%E7%B4%A0%E6%9D%90.png";
+      const materialReplacementSpecs = [
+        { id: "head", imageKey: "newHead", targetWidth: 283, targetHeight: 265 },
+        { id: "torso", imageKey: "newTorso", targetWidth: 345, targetHeight: 609 },
+        { id: "rightArm", imageKey: "newRightArm", targetWidth: 217, targetHeight: 488 },
+        { id: "leftArm", imageKey: "newLeftArm", targetWidth: 214, targetHeight: 506 },
+        { id: "rightLeg", imageKey: "newRightLeg", targetWidth: 236, targetHeight: 511 },
+        { id: "leftLeg", imageKey: "newLeftLeg", targetWidth: 243, targetHeight: 468 },
+        { id: "sword", imageKey: "newSword", targetWidth: 104, targetHeight: 637 },
+      ];
+      const materialReplacementOptions = {
+        backgroundTolerance: 45,
+        minPixels: 1000,
+        padding: 2,
+      };
 
       function loadWarriorImages() {
         const sources = {
@@ -1039,6 +1058,364 @@
             return [id, image];
           }),
         );
+      }
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error(`Cannot load ${src}`));
+          image.src = src;
+        });
+      }
+
+      function loadFileImage(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const image = new Image();
+          image.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(image);
+          };
+          image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error(`Cannot load ${file.name}`));
+          };
+          image.src = url;
+        });
+      }
+
+      function imageToImageData(image) {
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth || image.width;
+        canvas.height = image.naturalHeight || image.height;
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        context.drawImage(image, 0, 0);
+        return context.getImageData(0, 0, canvas.width, canvas.height);
+      }
+
+      function imageDataToImage(imageData) {
+        const canvas = document.createElement("canvas");
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+        canvas.getContext("2d").putImageData(imageData, 0, 0);
+        return loadImage(canvas.toDataURL("image/png"));
+      }
+
+      function imageDataOffset(imageData, x, y) {
+        return (y * imageData.width + x) * 4;
+      }
+
+      function estimateMaterialBackground(imageData) {
+        const samples = [];
+        const edge = Math.min(24, imageData.width, imageData.height);
+        for (let y = 0; y < edge; y += 1) {
+          for (let x = 0; x < edge; x += 1) {
+            const points = [
+              [x, y],
+              [imageData.width - 1 - x, y],
+              [x, imageData.height - 1 - y],
+              [imageData.width - 1 - x, imageData.height - 1 - y],
+            ];
+            for (const [px, py] of points) {
+              const offset = imageDataOffset(imageData, px, py);
+              samples.push([imageData.data[offset], imageData.data[offset + 1], imageData.data[offset + 2]]);
+            }
+          }
+        }
+        return [0, 1, 2].map((channel) => {
+          const sorted = samples.map((sample) => sample[channel]).sort((a, b) => a - b);
+          return sorted[Math.floor(sorted.length / 2)] || 255;
+        });
+      }
+
+      function materialColorDistance(background, r, g, b) {
+        const dr = r - background[0];
+        const dg = g - background[1];
+        const db = b - background[2];
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+      }
+
+      function createMaterialForegroundMask(imageData) {
+        const { width, height, data } = imageData;
+        const background = estimateMaterialBackground(imageData);
+        const count = width * height;
+        const edgeBackground = new Uint8Array(count);
+        const queue = [];
+        let cursor = 0;
+
+        function isBackground(index) {
+          const offset = index * 4;
+          const alpha = data[offset + 3];
+          if (alpha < 8) return true;
+          const r = data[offset];
+          const g = data[offset + 1];
+          const b = data[offset + 2];
+          return (
+            materialColorDistance(background, r, g, b) <= materialReplacementOptions.backgroundTolerance ||
+            (r >= 235 && g >= 232 && b >= 228)
+          );
+        }
+
+        function push(index) {
+          if (edgeBackground[index]) return;
+          edgeBackground[index] = 1;
+          queue.push(index);
+        }
+
+        for (let x = 0; x < width; x += 1) {
+          const top = x;
+          const bottom = (height - 1) * width + x;
+          if (isBackground(top)) push(top);
+          if (isBackground(bottom)) push(bottom);
+        }
+        for (let y = 0; y < height; y += 1) {
+          const left = y * width;
+          const right = y * width + width - 1;
+          if (isBackground(left)) push(left);
+          if (isBackground(right)) push(right);
+        }
+
+        while (cursor < queue.length) {
+          const index = queue[cursor++];
+          const x = index % width;
+          const y = Math.floor(index / width);
+          const neighbors = [];
+          if (x > 0) neighbors.push(index - 1);
+          if (x < width - 1) neighbors.push(index + 1);
+          if (y > 0) neighbors.push(index - width);
+          if (y < height - 1) neighbors.push(index + width);
+          for (const neighbor of neighbors) {
+            if (!edgeBackground[neighbor] && isBackground(neighbor)) {
+              push(neighbor);
+            }
+          }
+        }
+
+        const foreground = new Uint8Array(count);
+        for (let index = 0; index < count; index += 1) {
+          foreground[index] = edgeBackground[index] || data[index * 4 + 3] < 8 ? 0 : 1;
+        }
+        return foreground;
+      }
+
+      function detectMaterialComponents(imageData) {
+        const { width, height } = imageData;
+        const foreground = createMaterialForegroundMask(imageData);
+        const seen = new Uint8Array(width * height);
+        const components = [];
+
+        for (let index = 0; index < foreground.length; index += 1) {
+          if (!foreground[index] || seen[index]) continue;
+          const stack = [index];
+          seen[index] = 1;
+          let pixels = 0;
+          let minX = width;
+          let minY = height;
+          let maxX = 0;
+          let maxY = 0;
+
+          for (let cursor = 0; cursor < stack.length; cursor += 1) {
+            const current = stack[cursor];
+            const x = current % width;
+            const y = Math.floor(current / width);
+            pixels += 1;
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+            const neighbors = [];
+            if (x > 0) neighbors.push(current - 1);
+            if (x < width - 1) neighbors.push(current + 1);
+            if (y > 0) neighbors.push(current - width);
+            if (y < height - 1) neighbors.push(current + width);
+            for (const neighbor of neighbors) {
+              if (foreground[neighbor] && !seen[neighbor]) {
+                seen[neighbor] = 1;
+                stack.push(neighbor);
+              }
+            }
+          }
+
+          if (pixels >= materialReplacementOptions.minPixels) {
+            components.push({
+              pixels,
+              minX,
+              minY,
+              maxX,
+              maxY,
+              width: maxX - minX + 1,
+              height: maxY - minY + 1,
+              cx: (minX + maxX + 1) / 2,
+              cy: (minY + maxY + 1) / 2,
+            });
+          }
+        }
+        return components.sort((a, b) => b.pixels - a.pixels);
+      }
+
+      function matchMaterialReferenceSlots(referenceImageData, referenceComponents) {
+        const slots = [];
+        const used = new Set();
+        for (const spec of materialReplacementSpecs) {
+          let best = null;
+          let bestScore = Number.POSITIVE_INFINITY;
+          for (const component of referenceComponents) {
+            if (used.has(component)) continue;
+            const widthRatio = Math.abs(component.width - spec.targetWidth) / Math.max(spec.targetWidth, 1);
+            const heightRatio = Math.abs(component.height - spec.targetHeight) / Math.max(spec.targetHeight, 1);
+            const score = widthRatio + heightRatio;
+            if (score < bestScore) {
+              best = component;
+              bestScore = score;
+            }
+          }
+          if (!best) throw new Error(`Cannot find reference slot for ${spec.id}`);
+          used.add(best);
+          slots.push({
+            ...spec,
+            reference: best,
+            referenceImageSize: {
+              width: referenceImageData.width,
+              height: referenceImageData.height,
+            },
+            normalizedCenter: {
+              x: best.cx / referenceImageData.width,
+              y: best.cy / referenceImageData.height,
+            },
+          });
+        }
+        return slots;
+      }
+
+      function matchMaterialInputComponents(inputImageData, inputComponents, slots) {
+        const matches = [];
+        const scaleX = inputImageData.width / slots[0].referenceImageSize.width;
+        const scaleY = inputImageData.height / slots[0].referenceImageSize.height;
+        for (const slot of slots) {
+          const expected = {
+            minX: Math.round(slot.reference.minX * scaleX),
+            minY: Math.round(slot.reference.minY * scaleY),
+            maxX: Math.round(slot.reference.maxX * scaleX),
+            maxY: Math.round(slot.reference.maxY * scaleY),
+          };
+          expected.width = expected.maxX - expected.minX + 1;
+          expected.height = expected.maxY - expected.minY + 1;
+          expected.cx = (expected.minX + expected.maxX + 1) / 2;
+          expected.cy = (expected.minY + expected.maxY + 1) / 2;
+
+          let best = null;
+          let bestScore = Number.POSITIVE_INFINITY;
+          for (const component of inputComponents) {
+            const cx = component.cx / inputImageData.width;
+            const cy = component.cy / inputImageData.height;
+            const dx = cx - slot.normalizedCenter.x;
+            const dy = cy - slot.normalizedCenter.y;
+            const positionScore = Math.sqrt(dx * dx + dy * dy) * 10;
+            const sizeScore =
+              Math.abs(component.width / inputImageData.width - expected.width / inputImageData.width) +
+              Math.abs(component.height / inputImageData.height - expected.height / inputImageData.height);
+            const score = positionScore + sizeScore;
+            if (score < bestScore) {
+              best = component;
+              bestScore = score;
+            }
+          }
+          if (!best) throw new Error(`Cannot find input component for ${slot.id}`);
+
+          const tooWide = best.width > expected.width * 1.35;
+          const tooTall = best.height > expected.height * 1.35;
+          const tooFar =
+            Math.abs(best.cx - expected.cx) > expected.width * 0.9 ||
+            Math.abs(best.cy - expected.cy) > expected.height * 0.9;
+          matches.push({
+            slot,
+            component: tooWide || tooTall || tooFar ? expected : best,
+            mode: tooWide || tooTall || tooFar ? "slot" : "component",
+          });
+        }
+        return matches;
+      }
+
+      function extractMaterialPiece(sourceImageData, component, padding) {
+        const minX = Math.max(0, component.minX - padding);
+        const minY = Math.max(0, component.minY - padding);
+        const maxX = Math.min(sourceImageData.width - 1, component.maxX + padding);
+        const maxY = Math.min(sourceImageData.height - 1, component.maxY + padding);
+        const output = new ImageData(maxX - minX + 1, maxY - minY + 1);
+        const foreground = createMaterialForegroundMask(sourceImageData);
+        for (let y = minY; y <= maxY; y += 1) {
+          for (let x = minX; x <= maxX; x += 1) {
+            const sourceIndex = y * sourceImageData.width + x;
+            const outputIndex = (y - minY) * output.width + (x - minX);
+            const sourceOffset = sourceIndex * 4;
+            const outputOffset = outputIndex * 4;
+            if (!foreground[sourceIndex]) {
+              output.data[outputOffset + 3] = 0;
+              continue;
+            }
+            output.data[outputOffset] = sourceImageData.data[sourceOffset];
+            output.data[outputOffset + 1] = sourceImageData.data[sourceOffset + 1];
+            output.data[outputOffset + 2] = sourceImageData.data[sourceOffset + 2];
+            output.data[outputOffset + 3] = sourceImageData.data[sourceOffset + 3];
+          }
+        }
+        return output;
+      }
+
+      function normalizeMaterialPiece(pieceImageData, width, height, padding) {
+        if (pieceImageData.width === width && pieceImageData.height === height) return pieceImageData;
+        const output = new ImageData(width, height);
+        const drawWidth = Math.max(1, width - padding * 2);
+        const drawHeight = Math.max(1, height - padding * 2);
+        for (let y = 0; y < drawHeight; y += 1) {
+          const sourceY = Math.min(pieceImageData.height - 1, Math.floor((y / drawHeight) * pieceImageData.height));
+          for (let x = 0; x < drawWidth; x += 1) {
+            const sourceX = Math.min(pieceImageData.width - 1, Math.floor((x / drawWidth) * pieceImageData.width));
+            const sourceOffset = (sourceY * pieceImageData.width + sourceX) * 4;
+            const outputOffset = ((y + padding) * width + (x + padding)) * 4;
+            output.data[outputOffset] = pieceImageData.data[sourceOffset];
+            output.data[outputOffset + 1] = pieceImageData.data[sourceOffset + 1];
+            output.data[outputOffset + 2] = pieceImageData.data[sourceOffset + 2];
+            output.data[outputOffset + 3] = pieceImageData.data[sourceOffset + 3];
+          }
+        }
+        return output;
+      }
+
+      async function applyMaterialReplacement(file) {
+        if (!file) return;
+        el.replaceMaterialBtn.disabled = true;
+        toast("正在识别素材图...");
+        try {
+          const [referenceImage, inputImage] = await Promise.all([
+            loadImage(materialReferencePath),
+            loadFileImage(file),
+          ]);
+          const referenceImageData = imageToImageData(referenceImage);
+          const inputImageData = imageToImageData(inputImage);
+          const referenceComponents = detectMaterialComponents(referenceImageData);
+          const inputComponents = detectMaterialComponents(inputImageData);
+          const slots = matchMaterialReferenceSlots(referenceImageData, referenceComponents);
+          const matches = matchMaterialInputComponents(inputImageData, inputComponents, slots);
+          for (const match of matches) {
+            const extracted = extractMaterialPiece(inputImageData, match.component, materialReplacementOptions.padding);
+            const normalized = normalizeMaterialPiece(
+              extracted,
+              match.slot.targetWidth,
+              match.slot.targetHeight,
+              materialReplacementOptions.padding,
+            );
+            warriorImages[match.slot.imageKey] = await imageDataToImage(normalized);
+          }
+          drawStage();
+          toast(`已替换新版关键帧贴图：${matches.length} 个部件`);
+        } catch (error) {
+          toast(error instanceof Error ? error.message : String(error));
+        } finally {
+          el.replaceMaterialBtn.disabled = false;
+          el.materialInput.value = "";
+        }
       }
 
       function key(nodeId, frame, patch = {}) {
@@ -4671,6 +5048,8 @@
         el.sampleBtn.addEventListener("click", loadSample);
         el.walkSampleBtn.addEventListener("click", loadSideWalkSample);
         el.newVersionSampleBtn.addEventListener("click", loadNewVersionSample);
+        el.replaceMaterialBtn.addEventListener("click", () => el.materialInput.click());
+        el.materialInput.addEventListener("change", () => applyMaterialReplacement(el.materialInput.files[0]));
         el.idleAnimationBtn.addEventListener("click", applyIdleAnimation);
         el.slashSampleBtn.addEventListener("click", loadSideSlashSample);
         el.threeQuarterSampleBtn.addEventListener("click", loadThreeQuarterSample);

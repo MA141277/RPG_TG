@@ -251,6 +251,23 @@
         color: var(--muted);
       }
 
+      .file-action {
+        display: grid;
+        gap: 8px;
+      }
+
+      .file-action input[type="file"] {
+        width: 100%;
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 6px;
+        background: #0d1118;
+        color: var(--muted);
+        font: inherit;
+        font-size: 12px;
+      }
+
       textarea {
         width: 100%;
         min-height: 210px;
@@ -339,6 +356,12 @@
             <input id="pieceOpacity" type="range" min="0" max="1" step="0.01" value="0.92" />
           </label>
 
+          <div class="control-block file-action">
+            <span>素材图替换</span>
+            <input id="replacementMaterial" type="file" accept="image/png,image/jpeg,image/webp" />
+            <button id="applyReplacementMaterial" type="button">一键识别替换贴图</button>
+          </div>
+
           <div class="control-block">
             <span>部位素材</span>
             <div class="part-list" id="partList"></div>
@@ -411,6 +434,21 @@
         rightLeg: "\u53f3\u817f",
         sword: "\u5200",
       };
+      const materialReferencePath = "../../src/faxian/leg/%E7%B4%A0%E6%9D%90.png";
+      const replacementPartSpecs = [
+        { id: "head", targetWidth: 283, targetHeight: 265 },
+        { id: "torso", targetWidth: 345, targetHeight: 609 },
+        { id: "rightArm", targetWidth: 217, targetHeight: 488 },
+        { id: "leftArm", targetWidth: 214, targetHeight: 506 },
+        { id: "rightLeg", targetWidth: 236, targetHeight: 511 },
+        { id: "leftLeg", targetWidth: 243, targetHeight: 468 },
+        { id: "sword", targetWidth: 104, targetHeight: 637 },
+      ];
+      const replacementOptions = {
+        backgroundTolerance: 45,
+        minPixels: 1000,
+        padding: 2,
+      };
       const idleProfiles = {
         torso: { dx: 0, dy: -18, rotation: 1.1, phase: 0 },
         head: { dx: 0, dy: -24, rotation: -2.4, phase: 0.12 },
@@ -476,6 +514,8 @@
         referenceOpacity: document.querySelector("#referenceOpacity"),
         showPieces: document.querySelector("#showPieces"),
         pieceOpacity: document.querySelector("#pieceOpacity"),
+        replacementMaterial: document.querySelector("#replacementMaterial"),
+        applyReplacementMaterial: document.querySelector("#applyReplacementMaterial"),
         layerUp: document.querySelector("#layerUp"),
         layerDown: document.querySelector("#layerDown"),
         resetPart: document.querySelector("#resetPart"),
@@ -539,6 +579,364 @@
           img.onerror = () => reject(new Error(`Cannot load ${src}`));
           img.src = src;
         });
+      }
+
+      function loadFileImage(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error(`Cannot load ${file.name}`));
+          };
+          img.src = url;
+        });
+      }
+
+      function imageToImageData(image) {
+        const workCanvas = document.createElement("canvas");
+        workCanvas.width = image.naturalWidth || image.width;
+        workCanvas.height = image.naturalHeight || image.height;
+        const workCtx = workCanvas.getContext("2d", { willReadFrequently: true });
+        workCtx.drawImage(image, 0, 0);
+        return workCtx.getImageData(0, 0, workCanvas.width, workCanvas.height);
+      }
+
+      function imageDataToImage(imageData) {
+        const workCanvas = document.createElement("canvas");
+        workCanvas.width = imageData.width;
+        workCanvas.height = imageData.height;
+        workCanvas.getContext("2d").putImageData(imageData, 0, 0);
+        return loadImage(workCanvas.toDataURL("image/png"));
+      }
+
+      function imageDataOffset(imageData, x, y) {
+        return (y * imageData.width + x) * 4;
+      }
+
+      function estimateReplacementBackground(imageData) {
+        const samples = [];
+        const edge = Math.min(24, imageData.width, imageData.height);
+        for (let y = 0; y < edge; y += 1) {
+          for (let x = 0; x < edge; x += 1) {
+            const points = [
+              [x, y],
+              [imageData.width - 1 - x, y],
+              [x, imageData.height - 1 - y],
+              [imageData.width - 1 - x, imageData.height - 1 - y],
+            ];
+            for (const [px, py] of points) {
+              const offset = imageDataOffset(imageData, px, py);
+              samples.push([imageData.data[offset], imageData.data[offset + 1], imageData.data[offset + 2]]);
+            }
+          }
+        }
+        return [0, 1, 2].map((channel) => {
+          const sorted = samples.map((sample) => sample[channel]).sort((a, b) => a - b);
+          return sorted[Math.floor(sorted.length / 2)] || 255;
+        });
+      }
+
+      function replacementColorDistance(background, r, g, b) {
+        const dr = r - background[0];
+        const dg = g - background[1];
+        const db = b - background[2];
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+      }
+
+      function createReplacementForegroundMask(imageData) {
+        const { width, height, data } = imageData;
+        const background = estimateReplacementBackground(imageData);
+        const count = width * height;
+        const edgeBackground = new Uint8Array(count);
+        const queue = [];
+        let cursor = 0;
+
+        function isBackground(index) {
+          const offset = index * 4;
+          const alpha = data[offset + 3];
+          if (alpha < 8) return true;
+          const r = data[offset];
+          const g = data[offset + 1];
+          const b = data[offset + 2];
+          return (
+            replacementColorDistance(background, r, g, b) <= replacementOptions.backgroundTolerance ||
+            (r >= 235 && g >= 232 && b >= 228)
+          );
+        }
+
+        function push(index) {
+          if (edgeBackground[index]) return;
+          edgeBackground[index] = 1;
+          queue.push(index);
+        }
+
+        for (let x = 0; x < width; x += 1) {
+          const top = x;
+          const bottom = (height - 1) * width + x;
+          if (isBackground(top)) push(top);
+          if (isBackground(bottom)) push(bottom);
+        }
+        for (let y = 0; y < height; y += 1) {
+          const left = y * width;
+          const right = y * width + width - 1;
+          if (isBackground(left)) push(left);
+          if (isBackground(right)) push(right);
+        }
+
+        while (cursor < queue.length) {
+          const index = queue[cursor++];
+          const x = index % width;
+          const y = Math.floor(index / width);
+          const next = [];
+          if (x > 0) next.push(index - 1);
+          if (x < width - 1) next.push(index + 1);
+          if (y > 0) next.push(index - width);
+          if (y < height - 1) next.push(index + width);
+          for (const neighbor of next) {
+            if (!edgeBackground[neighbor] && isBackground(neighbor)) {
+              push(neighbor);
+            }
+          }
+        }
+
+        const foreground = new Uint8Array(count);
+        for (let index = 0; index < count; index += 1) {
+          foreground[index] = edgeBackground[index] || data[index * 4 + 3] < 8 ? 0 : 1;
+        }
+        return foreground;
+      }
+
+      function detectReplacementComponents(imageData) {
+        const { width, height } = imageData;
+        const foreground = createReplacementForegroundMask(imageData);
+        const seen = new Uint8Array(width * height);
+        const components = [];
+
+        for (let index = 0; index < foreground.length; index += 1) {
+          if (!foreground[index] || seen[index]) continue;
+          const stack = [index];
+          seen[index] = 1;
+          let pixels = 0;
+          let minX = width;
+          let minY = height;
+          let maxX = 0;
+          let maxY = 0;
+
+          for (let cursor = 0; cursor < stack.length; cursor += 1) {
+            const current = stack[cursor];
+            const x = current % width;
+            const y = Math.floor(current / width);
+            pixels += 1;
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+            const next = [];
+            if (x > 0) next.push(current - 1);
+            if (x < width - 1) next.push(current + 1);
+            if (y > 0) next.push(current - width);
+            if (y < height - 1) next.push(current + width);
+            for (const neighbor of next) {
+              if (foreground[neighbor] && !seen[neighbor]) {
+                seen[neighbor] = 1;
+                stack.push(neighbor);
+              }
+            }
+          }
+
+          if (pixels >= replacementOptions.minPixels) {
+            components.push({
+              pixels,
+              minX,
+              minY,
+              maxX,
+              maxY,
+              width: maxX - minX + 1,
+              height: maxY - minY + 1,
+              cx: (minX + maxX + 1) / 2,
+              cy: (minY + maxY + 1) / 2,
+            });
+          }
+        }
+        return components.sort((a, b) => b.pixels - a.pixels);
+      }
+
+      function matchReplacementReferenceSlots(referenceImageData, referenceComponents) {
+        const slots = [];
+        const used = new Set();
+        for (const spec of replacementPartSpecs) {
+          let best = null;
+          let bestScore = Number.POSITIVE_INFINITY;
+          for (const component of referenceComponents) {
+            if (used.has(component)) continue;
+            const widthRatio = Math.abs(component.width - spec.targetWidth) / Math.max(spec.targetWidth, 1);
+            const heightRatio = Math.abs(component.height - spec.targetHeight) / Math.max(spec.targetHeight, 1);
+            const score = widthRatio + heightRatio;
+            if (score < bestScore) {
+              best = component;
+              bestScore = score;
+            }
+          }
+          if (!best) {
+            throw new Error(`Cannot find reference slot for ${spec.id}`);
+          }
+          used.add(best);
+          slots.push({
+            ...spec,
+            reference: best,
+            referenceImageSize: {
+              width: referenceImageData.width,
+              height: referenceImageData.height,
+            },
+            normalizedCenter: {
+              x: best.cx / referenceImageData.width,
+              y: best.cy / referenceImageData.height,
+            },
+          });
+        }
+        return slots;
+      }
+
+      function matchReplacementInputComponents(inputImageData, inputComponents, slots) {
+        const matches = [];
+        const scaleX = inputImageData.width / slots[0].referenceImageSize.width;
+        const scaleY = inputImageData.height / slots[0].referenceImageSize.height;
+        for (const slot of slots) {
+          const expected = {
+            minX: Math.round(slot.reference.minX * scaleX),
+            minY: Math.round(slot.reference.minY * scaleY),
+            maxX: Math.round(slot.reference.maxX * scaleX),
+            maxY: Math.round(slot.reference.maxY * scaleY),
+          };
+          expected.width = expected.maxX - expected.minX + 1;
+          expected.height = expected.maxY - expected.minY + 1;
+          expected.cx = (expected.minX + expected.maxX + 1) / 2;
+          expected.cy = (expected.minY + expected.maxY + 1) / 2;
+
+          let best = null;
+          let bestScore = Number.POSITIVE_INFINITY;
+          for (const component of inputComponents) {
+            const cx = component.cx / inputImageData.width;
+            const cy = component.cy / inputImageData.height;
+            const dx = cx - slot.normalizedCenter.x;
+            const dy = cy - slot.normalizedCenter.y;
+            const positionScore = Math.sqrt(dx * dx + dy * dy) * 10;
+            const sizeScore =
+              Math.abs(component.width / inputImageData.width - expected.width / inputImageData.width) +
+              Math.abs(component.height / inputImageData.height - expected.height / inputImageData.height);
+            const score = positionScore + sizeScore;
+            if (score < bestScore) {
+              best = component;
+              bestScore = score;
+            }
+          }
+          if (!best) {
+            throw new Error(`Cannot find input component for ${slot.id}`);
+          }
+
+          const tooWide = best.width > expected.width * 1.35;
+          const tooTall = best.height > expected.height * 1.35;
+          const tooFar =
+            Math.abs(best.cx - expected.cx) > expected.width * 0.9 ||
+            Math.abs(best.cy - expected.cy) > expected.height * 0.9;
+          const useExpectedSlot = tooWide || tooTall || tooFar;
+          matches.push({
+            slot,
+            component: useExpectedSlot ? expected : best,
+            mode: useExpectedSlot ? "slot" : "component",
+            score: bestScore,
+          });
+        }
+        return matches;
+      }
+
+      function extractReplacementPiece(sourceImageData, component, padding) {
+        const minX = Math.max(0, component.minX - padding);
+        const minY = Math.max(0, component.minY - padding);
+        const maxX = Math.min(sourceImageData.width - 1, component.maxX + padding);
+        const maxY = Math.min(sourceImageData.height - 1, component.maxY + padding);
+        const output = new ImageData(maxX - minX + 1, maxY - minY + 1);
+        const foreground = createReplacementForegroundMask(sourceImageData);
+        for (let y = minY; y <= maxY; y += 1) {
+          for (let x = minX; x <= maxX; x += 1) {
+            const sourceIndex = y * sourceImageData.width + x;
+            const outputIndex = (y - minY) * output.width + (x - minX);
+            const sourceOffset = sourceIndex * 4;
+            const outputOffset = outputIndex * 4;
+            if (!foreground[sourceIndex]) {
+              output.data[outputOffset + 3] = 0;
+              continue;
+            }
+            output.data[outputOffset] = sourceImageData.data[sourceOffset];
+            output.data[outputOffset + 1] = sourceImageData.data[sourceOffset + 1];
+            output.data[outputOffset + 2] = sourceImageData.data[sourceOffset + 2];
+            output.data[outputOffset + 3] = sourceImageData.data[sourceOffset + 3];
+          }
+        }
+        return output;
+      }
+
+      function normalizeReplacementPiece(pieceImageData, width, height, padding) {
+        if (pieceImageData.width === width && pieceImageData.height === height) return pieceImageData;
+        const output = new ImageData(width, height);
+        const drawWidth = Math.max(1, width - padding * 2);
+        const drawHeight = Math.max(1, height - padding * 2);
+        for (let y = 0; y < drawHeight; y += 1) {
+          const sourceY = Math.min(pieceImageData.height - 1, Math.floor((y / drawHeight) * pieceImageData.height));
+          for (let x = 0; x < drawWidth; x += 1) {
+            const sourceX = Math.min(pieceImageData.width - 1, Math.floor((x / drawWidth) * pieceImageData.width));
+            const sourceOffset = (sourceY * pieceImageData.width + sourceX) * 4;
+            const outputOffset = ((y + padding) * width + (x + padding)) * 4;
+            output.data[outputOffset] = pieceImageData.data[sourceOffset];
+            output.data[outputOffset + 1] = pieceImageData.data[sourceOffset + 1];
+            output.data[outputOffset + 2] = pieceImageData.data[sourceOffset + 2];
+            output.data[outputOffset + 3] = pieceImageData.data[sourceOffset + 3];
+          }
+        }
+        return output;
+      }
+
+      async function applyReplacementMaterial() {
+        const file = controls.replacementMaterial.files?.[0];
+        if (!file) {
+          statusText.textContent = "请先选择一张素材图";
+          return;
+        }
+        controls.applyReplacementMaterial.disabled = true;
+        statusText.textContent = "正在识别素材图...";
+        try {
+          const [referenceMaterialImage, inputImage] = await Promise.all([
+            loadImage(materialReferencePath),
+            loadFileImage(file),
+          ]);
+          const referenceImageData = imageToImageData(referenceMaterialImage);
+          const inputImageData = imageToImageData(inputImage);
+          const referenceComponents = detectReplacementComponents(referenceImageData);
+          const inputComponents = detectReplacementComponents(inputImageData);
+          const slots = matchReplacementReferenceSlots(referenceImageData, referenceComponents);
+          const matches = matchReplacementInputComponents(inputImageData, inputComponents, slots);
+          for (const match of matches) {
+            const extracted = extractReplacementPiece(inputImageData, match.component, replacementOptions.padding);
+            const normalized = normalizeReplacementPiece(
+              extracted,
+              match.slot.targetWidth,
+              match.slot.targetHeight,
+              replacementOptions.padding,
+            );
+            pieceImages[match.slot.id] = await imageDataToImage(normalized);
+          }
+          syncUi();
+          statusText.textContent = `已替换 ${matches.length} 个贴图：${matches.map((match) => `${pieceNames[match.slot.id]}(${match.mode})`).join("、")}`;
+        } catch (error) {
+          statusText.textContent = error instanceof Error ? error.message : String(error);
+        } finally {
+          controls.applyReplacementMaterial.disabled = false;
+        }
       }
 
       function makeDefaultParts() {
@@ -1606,6 +2004,7 @@
       controls.referenceOpacity.addEventListener("input", syncUi);
       controls.showPieces.addEventListener("change", syncUi);
       controls.pieceOpacity.addEventListener("input", syncUi);
+      controls.applyReplacementMaterial.addEventListener("click", applyReplacementMaterial);
       controls.layerUp.addEventListener("click", () => moveLayer(1));
       controls.layerDown.addEventListener("click", () => moveLayer(-1));
       controls.resetPart.addEventListener("click", resetSelectedPart);

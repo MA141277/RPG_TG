@@ -2,6 +2,47 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-18 JSON Scenario Pack Entry
+
+### Added
+- 新增 JSON scenario pack 契约 `ScenarioPackDefinition`，一个 JSON 包现在可以携带 `scenarioProfile`、`characters`、`events`、`scenes` 和 `activities`。
+- 新增 scenario pack 加载/校验入口 `application/scenario/scenario-pack-loader.ts`，支持从内置 URL 或本地 JSON 文本读取并解析开局包。
+- 新增内置 JSON 包 `content/scenario-packs/liu-bang-pei-county-opening.json`：刘邦作为玩家角色，从沛县亭长开局，入口剧情、人物、选择分支和默认活动 fallback 都来自 JSON。
+- 开始界面新增 `JSON 开局` 入口，可选择内置“刘邦：沛县亭长开局”，也可导入本地 `.json` 开局包。
+
+### Changed
+- 主运行时的 story/event/scene/activity 内容源从固定静态表扩展为“当前激活内容注册表”。普通开局会重置为内置内容；读取 JSON 开局时会先 merge JSON 包内容，再用该包的 `entryEventId` 启动开局。
+- scene 渲染、剧情推进、选项处理和 house 触发现在都读取当前激活内容注册表，因此 JSON scene 可以正常推进和选择。
+
+### Impact
+- 这一步已经形成“选择 JSON -> runtime 读取 -> 生成开局 scene”的可见闭环。当前 JSON 包仍复用现有地图/城市容器，尚未让 JSON 动态新增完整 map/city/house/content registry；下一步应把 city、house、map、resource 也纳入 scenario pack 汇总和校验。
+
+## 2026-06-18 Modular Authoring Activity Loop
+
+### Added
+- 新增 `ScenarioProfileDefinition`，用于描述表单化/Mod 化开局档案：玩家角色、章节、初始地图/城市/house/view、初始 runtime、入口事件和 opening flow。
+- 新增 `ActivityDefinition` 与 `FlowDefinition`，把“专属 function 或 fallback QTE”活动从剧情文本中拆成可注册、可校验的结构化内容。
+- 新增 `ActionNode` 类型 `start-activity`，scene 可以通过稳定 `activityId` 启动活动，而不是在剧情或入口层写业务分支。
+- 新增 `application/activity/activity-runner.ts`，按 `handlerId` 执行活动；当前内置 `generic.qte` fallback，会写入统一 `GameState.runtime.flags/variables` 并执行配置化 effects。
+- 新增示例内容 `content/activities/scenario-activities.ts` 与 `content/scenarios/scenario-profiles.ts`，覆盖朱元璋和尚开局与秦始皇皇宫开局的表单化数据骨架。
+- 新增 [docs/modular-authoring-closed-loop-plan.md](/D:/RPG_TG/docs/modular-authoring-closed-loop-plan.md)，记录从 schema、flow runner、交互式 QTE 到 Mod 包加载和编辑器 UI 的完整闭环规划。
+
+### Changed
+- `SceneRunnerContext`、`StoryContent`、`GameContent` 和 house runtime 的 story trigger 依赖现在可携带 `activityDefinitionsById`，让剧情推进链可以消费结构化活动注册表。
+- `main.ts` 只传入活动注册表，不增加角色、house 或活动的专属业务分支。
+
+### Impact
+- 后续“输入一段文字生成剧情”“开局表单决定流程”“缺少专属 function 时 fallback 到 QTE”应继续走 `scenario/event/scene/flow/activity` 数据链路，运行时不得根据文本或 id 字符串临场猜语义。
+- 当前 `generic.qte` 是自动结算 fallback，尚未接成可交互 overlay；下一步应抽共享 activity/minigame shell，而不是复制寺庙或酒馆 QTE 逻辑。
+
+## 2026-06-17 Battle Demo Formation Targeting Cleanup
+
+### Changed
+- [prototypes/battle-demo/index.html](/D:/RPG_TG/prototypes/battle-demo/index.html) 的编队对战目标锁定改为固定前排优先顺序，成员按“前排到后排、从左到右”选择目标，不再按同路/居中随机切换目标。
+- 编队成员攻击继续采用“先锁定目标、再随机短延时并发出手”的演出方式，缩短同批次成员攻击之间的等待，避免退回逐个串行撞击节奏。
+- 兵种克制收口为两条成员级规则：骑兵攻击远程成员伤害 +50%，长枪攻击骑兵伤害 +50%；移除冲锋对伤害的额外加成与相关技能入口。
+- 棋盘单位与部署/调试摘要统一按“编队”显示，不再在战场棋子摘要里暴露具体内部兵种构成；棋盘本体继续只显示兵力条和士气条。
+
 ## 2026-06-15 Story Battle Rescue Hook
 
 ### Added
@@ -851,6 +892,21 @@
 - Local debugging remains on `http://localhost:5173` while production can be exposed on `http://159.75.153.83` through `nginx` on port `80`.
 - The built game can now run as a managed background process behind `systemd` instead of depending on a manually attached shell session.
 - On Windows Server, the built game can now be hosted directly by IIS on port `80`, with `W3SVC` acting as the daemonized service manager.
+## 2026-06-18 JSON World Data And Generic Activity QTE
+
+### Added
+- `ScenarioPackDefinition` now accepts optional `cities` and `houses` arrays, so a JSON start pack can materialize world entities instead of only swapping character/event/scene/activity data.
+- Added shared `GameState.runtime.activitySession` plus a reusable `generic.qte` activity session runner. Scene `start-activity` now opens an interactive QTE overlay and settles configured outcome effects only after the player clicks through the rounds.
+- Liu Bang's JSON opening pack now defines `city.pei_county` and starts Liu Bang, Xiao He, and Lu Wan in that city.
+
+### Changed
+- Runtime city and house registries in `main.ts` are now resettable and scenario-pack aware, rather than fixed startup constants.
+- `generic.qte` no longer auto-completes activities. Missing specialized handlers now fall back to the same click-bar interaction shape used by the Zhu Yuanzhang temple work QTE.
+
+### Impact
+- JSON packs are closer to the intended “runtime input JSON -> new opening/game variant” loop: world location data can be carried by the pack and consumed by the existing runtime.
+- Activity results remain schema-driven through `ActivityDefinition.outcome`; runtime does not infer behavior from activity labels or scene text.
+
 ## 2026-05-30 Mechanism-First Gameplay Guidance
 
 ### Added

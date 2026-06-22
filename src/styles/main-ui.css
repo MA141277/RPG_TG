@@ -194,6 +194,119 @@
   background-image: url("../../ui/yuansu/开局ui/continue.png");
 }
 
+.c-main-ui-json-button,
+.c-main-ui-json-text-button {
+  min-width: 118px;
+  min-height: 42px;
+  border: 1px solid rgb(113 74 36 / 62%);
+  border-radius: 4px;
+  padding: 0 18px;
+  color: rgb(64 39 20);
+  background:
+    linear-gradient(180deg, rgb(255 239 190 / 94%), rgb(199 145 76 / 90%));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 48%),
+    0 8px 18px rgb(58 25 12 / 26%);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease;
+}
+
+.c-main-ui-json-button:hover,
+.c-main-ui-json-text-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+}
+
+.c-main-ui-screen--scenario-select {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--game-width, 1600px);
+  height: var(--game-height, 900px);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgb(33 25 22 / 78%), rgb(33 25 22 / 36%)),
+    url("../../ui/yuansu/浜虹墿閫夋嫨ui/backgroung.png") center center / cover no-repeat;
+  transform: translate(-50%, -50%) scale(var(--game-scale, 1));
+  transform-origin: center;
+}
+
+.c-main-ui-scenario-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(760px, calc(100% - 72px));
+  max-height: calc(100% - 88px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  padding: 28px;
+  border: 1px solid rgb(115 83 45 / 65%);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgb(255 248 227 / 96%), rgb(223 198 151 / 94%));
+  box-shadow: 0 24px 60px rgb(20 12 8 / 42%);
+  transform: translate(-50%, -50%);
+}
+
+.c-main-ui-scenario-panel__header {
+  display: grid;
+  gap: 6px;
+}
+
+.c-main-ui-scenario-panel__title {
+  margin: 0;
+  color: rgb(70 42 20);
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.c-main-ui-scenario-list {
+  display: grid;
+  gap: 12px;
+  overflow: auto;
+}
+
+.c-main-ui-scenario-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid rgb(130 91 46 / 42%);
+  border-radius: 6px;
+  background: rgb(255 252 240 / 72%);
+}
+
+.c-main-ui-scenario-card__title {
+  margin: 0 0 6px;
+  color: rgb(67 39 18);
+  font-size: 18px;
+}
+
+.c-main-ui-scenario-card__description {
+  margin: 0;
+  color: rgb(95 72 50);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.c-main-ui-scenario-panel__footer {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.c-main-ui-json-text-button--accent {
+  min-width: 86px;
+}
+
 .c-main-ui-screen--character-select {
   position: absolute;
   left: 50%;

@@ -1,4 +1,5 @@
 export * from "./action";
+export * from "./activity";
 export * from "./battle-formation";
 export * from "./card";
 export * from "./character";
@@ -19,6 +20,8 @@ export * from "./market";
 export * from "./map";
 export * from "./mission";
 export * from "./story";
+export * from "./scenario-profile";
+export * from "./scenario-pack";
 export * from "./tavern";
 export * from "./tea-house";
 export * from "./trade-good";

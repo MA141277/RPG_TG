@@ -161,8 +161,11 @@ export class MainUiFlow {
   constructor(options) {
     this.overlayRoot = options.overlayRoot;
     this.characters = [...options.characters];
+    this.scenarioPacks = [...(options.scenarioPacks ?? [])];
     this.onStartGame = options.onStartGame;
     this.onContinueGame = options.onContinueGame;
+    this.onStartScenarioPack = options.onStartScenarioPack;
+    this.onImportScenarioPackText = options.onImportScenarioPackText;
     this.loadSaveData = options.loadSaveData;
     this.getAppState = options.getAppState;
     this.selectedCharacterId = this.characters[0]?.id ?? null;
@@ -175,6 +178,9 @@ export class MainUiFlow {
     };
     this.handleFocus = (event) => {
       this.onFocus(event);
+    };
+    this.handleChange = (event) => {
+      void this.onChange(event);
     };
     this.inkParticleSystem = null;
     this.pendingSelectedInkBurstCharacterId = null;
@@ -189,6 +195,7 @@ export class MainUiFlow {
     this.overlayRoot.addEventListener("click", this.handleClick);
     this.overlayRoot.addEventListener("mouseover", this.handleHover);
     this.overlayRoot.addEventListener("focusin", this.handleFocus);
+    this.overlayRoot.addEventListener("change", this.handleChange);
     this.render();
   }
 
@@ -196,6 +203,7 @@ export class MainUiFlow {
     this.overlayRoot.removeEventListener("click", this.handleClick);
     this.overlayRoot.removeEventListener("mouseover", this.handleHover);
     this.overlayRoot.removeEventListener("focusin", this.handleFocus);
+    this.overlayRoot.removeEventListener("change", this.handleChange);
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
@@ -236,7 +244,9 @@ export class MainUiFlow {
     const screenMarkup =
       this.currentScreen === "main-menu"
         ? this.renderMainMenu()
-        : this.renderCharacterSelect();
+        : this.currentScreen === "scenario-select"
+          ? this.renderScenarioSelect()
+          : this.renderCharacterSelect();
     this.overlayRoot.innerHTML =
       screenMarkup + renderLayoutEditor(this.getAppState());
     if (this.currentScreen === "main-menu") {
@@ -293,10 +303,61 @@ export class MainUiFlow {
           >
                 <span class="c-main-ui-sr-only">继续游戏</span>
           </button>
+          <button
+            type="button"
+            class="c-main-ui-json-button"
+            data-main-ui-action="open-json-scenario-select"
+          >
+            JSON 开局
+          </button>
             </div>
           </div>
         </div>
       </section>
+    `;
+  }
+
+  renderScenarioSelect() {
+    return `
+      <section class="c-main-ui-screen c-main-ui-screen--scenario-select" aria-label="JSON 开局选择">
+        <div class="c-main-ui-scenario-panel">
+          <header class="c-main-ui-scenario-panel__header">
+            <p class="c-main-ui-character-detail__eyebrow">模组开局</p>
+            <h2 class="c-main-ui-scenario-panel__title">读取 JSON 开局</h2>
+          </header>
+
+          <div class="c-main-ui-scenario-list">
+            ${this.scenarioPacks.map((scenarioPack) => this.renderScenarioPackCard(scenarioPack)).join("")}
+          </div>
+
+          <div class="c-main-ui-scenario-panel__footer">
+            <button type="button" class="c-main-ui-page-button" data-main-ui-action="back-to-menu" aria-label="返回主菜单"></button>
+            <button type="button" class="c-main-ui-json-text-button" data-main-ui-action="import-scenario-file">
+              导入 JSON
+            </button>
+            <input class="c-main-ui-scenario-file-input" type="file" accept="application/json,.json" data-main-ui-scenario-file hidden>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  renderScenarioPackCard(scenarioPack) {
+    return `
+      <article class="c-main-ui-scenario-card">
+        <div>
+          <h3 class="c-main-ui-scenario-card__title">${escapeHtml(scenarioPack.title)}</h3>
+          <p class="c-main-ui-scenario-card__description">${escapeHtml(scenarioPack.description ?? "")}</p>
+        </div>
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+          data-main-ui-action="start-scenario-pack"
+          data-scenario-pack-id="${escapeHtml(scenarioPack.id)}"
+        >
+          读取
+        </button>
+      </article>
     `;
   }
 
@@ -511,6 +572,11 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "open-json-scenario-select") {
+      this.setScreen("scenario-select");
+      return;
+    }
+
     if (action === "back-to-menu") {
       this.showMainMenu();
       return;
@@ -541,6 +607,24 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "start-scenario-pack") {
+      const scenarioPackId = actionElement.dataset.scenarioPackId;
+      const scenarioPack = this.scenarioPacks.find(
+        (candidatePack) => candidatePack.id === scenarioPackId
+      );
+      if (scenarioPack != null) {
+        await this.onStartScenarioPack?.(scenarioPack);
+      }
+      return;
+    }
+
+    if (action === "import-scenario-file") {
+      this.overlayRoot
+        .querySelector("[data-main-ui-scenario-file]")
+        ?.click();
+      return;
+    }
+
     if (action === "continue-game") {
       const saveData = await this.loadSaveData();
       const selectedCharacter =
@@ -557,6 +641,25 @@ export class MainUiFlow {
         }
       }
     }
+  }
+
+  async onChange(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    if (!target.matches("[data-main-ui-scenario-file]")) {
+      return;
+    }
+
+    const file = target.files?.[0];
+    target.value = "";
+    if (file == null) {
+      return;
+    }
+
+    await this.onImportScenarioPackText?.(file.name, await file.text());
   }
 
   scheduleCharacterDetailTransitionCleanup() {

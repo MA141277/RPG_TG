@@ -1,4 +1,5 @@
 import type { ChoiceOption, SceneDefinition } from "../../domain/action";
+import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
@@ -13,6 +14,7 @@ import { advanceScene, runSceneUntilPause } from "../scene/scene-runner";
 type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
 };
 
 type StoryRuntimeContext = {
@@ -76,6 +78,7 @@ export function syncStoryScene(
   const result = runSceneUntilPause(runtime.state, {
     sceneDefinitionsById: content.sceneDefinitionsById,
     eventDefinitionsById: content.eventDefinitionsById,
+    activityDefinitionsById: content.activityDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
   });
 
@@ -136,6 +139,7 @@ export function advanceStorySceneStep(
   const result = advanceScene(runtime.state, {
     sceneDefinitionsById: content.sceneDefinitionsById,
     eventDefinitionsById: content.eventDefinitionsById,
+    activityDefinitionsById: content.activityDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
   });
 

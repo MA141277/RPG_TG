@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "id": "scenario-pack.liu_bang.pei_county_opening",
+  "title": "刘邦：沛县亭长开局",
+  "description": "一份可由运行时读取的 JSON 开局包：包含玩家人物、入口事件、剧情场景和默认活动 fallback。",
+  "scenarioProfile": {
+    "id": "scenario.liu_bang.pei_county_opening",
+    "title": "刘邦沛县开局",
+    "playerCharacterId": "char.liu_bang",
+    "chapterId": "chapter.chu_han_rising",
+    "initialCalendar": {
+      "year": 1,
+      "month": 9,
+      "day": 1
+    },
+    "initialLocation": {
+      "mapId": "map.yuanmo_campaign",
+      "cityId": "city.pei_county",
+      "houseId": null,
+      "view": "scene"
+    },
+    "initialPlayerCoordinate": {
+      "x": 334,
+      "y": 318
+    },
+    "initialUi": {
+      "reviewDateText": "暂无评定",
+      "mainHouseMissionText": "在沛县站稳脚跟"
+    },
+    "initialRuntime": {
+      "flags": {
+        "flag.story.liu_bang.opening.started": true
+      },
+      "variables": {
+        "var.story.liu_bang.stage": "pei-county-constable",
+        "var.story.liu_bang.local_reputation": 0
+      }
+    },
+    "entryEventId": "event.story.liu_bang.pei_county_opening",
+    "openingFlowId": "flow.liu_bang.pei_county_opening",
+    "tags": ["json-pack", "chu-han", "opening"]
+  },
+  "cities": [
+    {
+      "id": "city.pei_county",
+      "name": "沛县",
+      "regionId": "region.chu_han",
+      "mapNodeId": "settlement.fenyang_province",
+      "houseIds": [],
+      "neighbourCityIds": [],
+      "travelCost": 1,
+      "tags": ["county", "qin", "chu-han", "opening"],
+      "prosperity": 54,
+      "danger": 32,
+      "specialDemand": ["grain", "labor", "cloth"]
+    }
+  ],
+  "characters": [
+    {
+      "id": "char.liu_bang",
+      "name": "刘邦",
+      "birthYear": -256,
+      "deathYear": -195,
+      "age": 47,
+      "title": "泗水亭长",
+      "occupation": "沛县亭长",
+      "affiliationLabel": "沛县",
+      "cityId": "city.pei_county",
+      "portraitId": "portrait.liu_bang",
+      "defaultSide": "right",
+      "stats": {
+        "leadership": 74,
+        "martial": 58,
+        "intelligence": 67,
+        "politics": 71,
+        "charm": 91,
+        "fame": 12,
+        "gold": 300
+      },
+      "stamina": 100,
+      "biography": "沛县亭长，出身微末而善结豪杰。此时天下未定，县中差役、乡里人情与秦法压力交织在一起。",
+      "isHistoricalFigure": true,
+      "availableFunctions": []
+    },
+    {
+      "id": "char.xiao_he",
+      "name": "萧何",
+      "birthYear": -257,
+      "deathYear": -193,
+      "age": 48,
+      "title": "县吏",
+      "occupation": "沛县主吏",
+      "affiliationLabel": "沛县",
+      "cityId": "city.pei_county",
+      "portraitId": "portrait.xiao_he",
+      "defaultSide": "left",
+      "stats": {
+        "leadership": 42,
+        "martial": 28,
+        "intelligence": 88,
+        "politics": 93,
+        "charm": 72,
+        "fame": 16,
+        "gold": 260
+      },
+      "stamina": 100,
+      "biography": "沛县县吏，熟悉法令簿册，长于筹划人事，是刘邦早期最可靠的行政支点。",
+      "isHistoricalFigure": true,
+      "availableFunctions": []
+    },
+    {
+      "id": "char.lu_wan",
+      "name": "卢绾",
+      "birthYear": -256,
+      "deathYear": -194,
+      "age": 47,
+      "title": "乡里故人",
+      "occupation": "沛县豪侠",
+      "affiliationLabel": "沛县",
+      "cityId": "city.pei_county",
+      "portraitId": "portrait.lu_wan",
+      "defaultSide": "left",
+      "stats": {
+        "leadership": 54,
+        "martial": 63,
+        "intelligence": 48,
+        "politics": 39,
+        "charm": 70,
+        "fame": 10,
+        "gold": 180
+      },
+      "stamina": 100,
+      "biography": "刘邦同里故旧，熟悉乡中豪杰往来，常在酒肆与里巷间替刘邦探听风声。",
+      "isHistoricalFigure": true,
+      "availableFunctions": []
+    }
+  ],
+  "events": [
+    {
+      "id": "event.story.liu_bang.pei_county_opening",
+      "chapterId": "chapter.chu_han_rising",
+      "name": "沛县亭长开局",
+      "occurrence": "once",
+      "trigger": {
+        "timing": "manual",
+        "priority": 200
+      },
+      "conditions": [],
+      "participants": [
+        {
+          "role": "player",
+          "characterId": "char.liu_bang",
+          "required": true
+        },
+        {
+          "role": "primary",
+          "characterId": "char.xiao_he",
+          "required": true
+        }
+      ],
+      "entrySceneId": "scene.story.liu_bang.pei_county_opening",
+      "tags": ["json-pack", "opening"]
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene.story.liu_bang.pei_county_opening",
+      "name": "沛县清晨",
+      "actions": [
+        {
+          "type": "background",
+          "backgroundId": "bg.pei_county.office"
+        },
+        {
+          "type": "narration",
+          "text": "沛县晨雾未散，县署前的木牌还沾着露水。催役的文书压在案上，乡里豪杰的请托也已经递到了门口。"
+        },
+        {
+          "type": "dialogue",
+          "characterId": "char.xiao_he",
+          "side": "left",
+          "text": "季兄，县中差役不能再拖。秦法催得紧，可乡里人心也不能一味逼迫。"
+        },
+        {
+          "type": "dialogue",
+          "characterId": "char.liu_bang",
+          "side": "right",
+          "text": "法令要应，人也要留。先把最急的事办了，别让沛县今日就乱起来。"
+        },
+        {
+          "type": "choice",
+          "prompt": "刘邦今日先处理哪一头？",
+          "options": [
+            {
+              "id": "liu-opening-duty",
+              "label": "先办县中差役",
+              "nextSceneId": "scene.story.liu_bang.first_duty",
+              "effects": [
+                {
+                  "type": "change-variable",
+                  "key": "var.story.liu_bang.local_reputation",
+                  "delta": 1
+                }
+              ]
+            },
+            {
+              "id": "liu-opening-heroes",
+              "label": "先会乡里故人",
+              "nextSceneId": "scene.story.liu_bang.first_heroes",
+              "effects": [
+                {
+                  "type": "set-flag",
+                  "key": "flag.story.liu_bang.met_local_heroes",
+                  "value": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scene.story.liu_bang.first_duty",
+      "name": "县中差役",
+      "actions": [
+        {
+          "type": "start-activity",
+          "activityId": "activity.liu_bang.pei_county.default_errand"
+        },
+        {
+          "type": "narration",
+          "text": "你翻开案上簿册，把催役名目、乡里担保和上官限期一一重新排定。杂务虽小，却先稳住了县署今日的阵脚。"
+        },
+        {
+          "type": "dialogue",
+          "characterId": "char.xiao_he",
+          "side": "left",
+          "text": "先把簿册理顺，后面无论押送、催役还是应付上官，都有回旋余地。"
+        },
+        {
+          "type": "effect",
+          "effects": [
+            {
+              "type": "set-flag",
+              "key": "flag.story.liu_bang.opening.completed",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "narration",
+          "text": "沛县的一日就这样压了下来。你已在县署与乡里之间立住第一步，后续流程将继续由 JSON 开局包扩展。"
+        }
+      ]
+    },
+    {
+      "id": "scene.story.liu_bang.first_heroes",
+      "name": "乡里故人",
+      "actions": [
+        {
+          "type": "dialogue",
+          "characterId": "char.lu_wan",
+          "side": "left",
+          "text": "季哥，酒肆里都在说外头徭役越发紧了。你若要人帮忙，得先让大家知道你心里有数。"
+        },
+        {
+          "type": "start-activity",
+          "activityId": "activity.liu_bang.pei_county.default_errand"
+        },
+        {
+          "type": "narration",
+          "text": "你借着乡里故人的消息，把几桩棘手杂务拆给可信的人手。县中差役未必轻松，但人情脉络已经动了起来。"
+        },
+        {
+          "type": "effect",
+          "effects": [
+            {
+              "type": "set-flag",
+              "key": "flag.story.liu_bang.opening.completed",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "narration",
+          "text": "卢绾带着话头离去，酒肆与里巷很快会知道你今日的安排。后续流程将继续由 JSON 开局包扩展。"
+        }
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "id": "activity.liu_bang.pei_county.default_errand",
+      "label": "沛县杂务",
+      "handlerId": "pei-county.errand",
+      "fallbackHandlerId": "generic.qte",
+      "timeAdvanceCost": 1,
+      "qte": {
+        "totalRounds": 3,
+        "requiredSuccesses": 2
+      },
+      "outcome": {
+        "completedFlagKey": "flag.story.liu_bang.first_errand.completed",
+        "gradeVariableKey": "var.story.liu_bang.first_errand.grade",
+        "scoreVariableKey": "var.story.liu_bang.first_errand.score",
+        "effects": [
+          {
+            "type": "change-variable",
+            "key": "var.story.liu_bang.local_reputation",
+            "delta": 2
+          }
+        ]
+      },
+      "tags": ["json-pack", "fallback", "qte"]
+    }
+  ]
+}

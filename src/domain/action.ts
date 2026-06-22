@@ -1,4 +1,5 @@
 import type { EventId } from "./event";
+import type { ActivityId } from "./activity";
 
 export type SceneId = string;
 export type BackgroundId = string;
@@ -80,6 +81,11 @@ export type ActionNode =
   | {
       type: "start-event";
       eventId: EventId;
+    }
+  | {
+      type: "start-activity";
+      activityId: ActivityId;
+      fallbackActivityId?: ActivityId;
     }
   | {
       type: "callback";

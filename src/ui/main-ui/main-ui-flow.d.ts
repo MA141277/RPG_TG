@@ -1,5 +1,6 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { AppState } from "../../application/app-shell";
+import type { ScenarioPackSummary } from "../../domain/scenario-pack";
 
 type SaveDataResult = {
   selectedCharacterId?: string | null;
@@ -8,11 +9,17 @@ type SaveDataResult = {
 type MainUiFlowOptions = {
   overlayRoot: HTMLElement;
   characters: CharacterDefinition[];
+  scenarioPacks?: ScenarioPackSummary[];
   onStartGame(selectedCharacter: CharacterDefinition): void;
   onContinueGame?(
     selectedCharacter: CharacterDefinition,
     saveData: SaveDataResult
   ): void;
+  onStartScenarioPack?(scenarioPack: ScenarioPackSummary): void | Promise<void>;
+  onImportScenarioPackText?(
+    fileName: string,
+    text: string
+  ): void | Promise<void>;
   loadSaveData(): Promise<SaveDataResult> | SaveDataResult;
   getAppState(): AppState;
 };

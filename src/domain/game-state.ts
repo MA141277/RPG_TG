@@ -8,6 +8,7 @@ import type { CityMarketData } from "./market";
 import type { MapId } from "./map";
 import type { MissionId } from "./mission";
 import type { ActiveStoryBattleSession } from "./story-battle";
+import type { ActiveActivitySession } from "./activity-session";
 import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
@@ -68,6 +69,7 @@ export type GameState = {
     variables: Record<string, number | string>;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
     cityMarkets: Record<CityId, CityMarketData>;
+    activitySession: ActiveActivitySession;
     eventHistory: Record<
       EventId,
       {
