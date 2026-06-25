@@ -28,6 +28,12 @@ export const teaHouseTeaCost = 20;
 export const teaHouseInitialSpirit = 10;
 export const teaHouseTurnTimeLimitSec = 5;
 export const teaHouseLowIntelChance = 0.25;
+export const teaHouseDebateHandSize = 3;
+export const teaHouseNpcThinkingTickMs = 200;
+export const teaHouseNpcThinkingTicks = 4;
+export const teaHouseNpcHintAccuracy = 0.7;
+export const teaHouseProudRepeatChance = 0.7;
+export const teaHousePredictionVisibleMs = 2000;
 
 export const teaHouseTopicCounterMap: Record<TeaHouseTopicCard, TeaHouseTopicCard> = {
   利: "情",

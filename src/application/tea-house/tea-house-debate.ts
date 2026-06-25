@@ -1,10 +1,14 @@
 import {
+  teaHouseDebateHandSize,
   teaHouseInitialSpirit,
+  teaHouseNpcHintAccuracy,
+  teaHouseProudRepeatChance,
   teaHousePersonalityTopicWeights,
   teaHouseTopicCounterMap,
   teaHouseTurnTimeLimitSec,
 } from "../../content/houses/tea-house-content";
 import type {
+  TeaHouseDebateEmotion,
   TeaHouseDebateSummary,
   TeaHouseDebateWinner,
   TeaHouseTopicCard,
@@ -32,11 +36,45 @@ export type TeaHouseDebateRoundResult = {
   outcome: TeaHouseDebateSummary | null;
 };
 
-function getTotalWeight(weights: Record<TeaHouseTopicCard, number>): number {
-  return TEA_HOUSE_TOPIC_CARDS.reduce(
-    (sum, topic) => sum + weights[topic],
-    0
-  );
+export type TeaHouseAiTopicPick = {
+  handIndex: number;
+  topic: TeaHouseTopicCard;
+};
+
+function randomIndex(length: number, randomSource: RandomSource): number {
+  return Math.floor(randomSource() * length);
+}
+
+function pickRandomTopic(
+  topics: readonly TeaHouseTopicCard[],
+  randomSource: RandomSource
+): TeaHouseTopicCard {
+  return topics[randomIndex(topics.length, randomSource)]!;
+}
+
+function getWeightedHandIndex(
+  hand: readonly TeaHouseTopicCard[],
+  personality: string,
+  randomSource: RandomSource
+): number {
+  const defaultWeights = teaHousePersonalityTopicWeights["圆滑"];
+  if (defaultWeights == null) {
+    throw new Error("Missing default tea house debate weights.");
+  }
+
+  const weights: Record<TeaHouseTopicCard, number> =
+    teaHousePersonalityTopicWeights[personality] ?? defaultWeights;
+  const totalWeight = hand.reduce((sum, topic) => sum + weights[topic], 0);
+  let threshold = randomSource() * totalWeight;
+
+  for (let index = 0; index < hand.length; index += 1) {
+    threshold -= weights[hand[index]!]!;
+    if (threshold < 0) {
+      return index;
+    }
+  }
+
+  return hand.length - 1;
 }
 
 export function createInitialTeaHouseDebateState(): TeaHouseDebateRoundState {
@@ -49,39 +87,127 @@ export function createInitialTeaHouseDebateState(): TeaHouseDebateRoundState {
   };
 }
 
-export function pickTeaHouseAiTopic(
-  personality: string,
+export function drawTeaHouseTopicCard(
   randomSource: RandomSource = Math.random
 ): TeaHouseTopicCard {
-  const defaultWeights = teaHousePersonalityTopicWeights["圆滑"];
-  if (defaultWeights == null) {
-    throw new Error("Missing default tea house debate weights.");
+  return TEA_HOUSE_TOPIC_CARDS[randomIndex(TEA_HOUSE_TOPIC_CARDS.length, randomSource)]!;
+}
+
+export function createTeaHouseDebateHand(
+  handSize = teaHouseDebateHandSize,
+  randomSource: RandomSource = Math.random
+): TeaHouseTopicCard[] {
+  return Array.from({ length: handSize }, () => drawTeaHouseTopicCard(randomSource));
+}
+
+export function removeTeaHouseHandCard(
+  hand: readonly TeaHouseTopicCard[],
+  handIndex: number
+): TeaHouseTopicCard[] {
+  return hand.filter((_, index) => index !== handIndex);
+}
+
+export function refillTeaHouseDebateHand(
+  hand: readonly TeaHouseTopicCard[],
+  handSize = teaHouseDebateHandSize,
+  randomSource: RandomSource = Math.random
+): TeaHouseTopicCard[] {
+  const nextHand = [...hand];
+  while (nextHand.length < handSize) {
+    nextHand.push(drawTeaHouseTopicCard(randomSource));
   }
 
-  const weights: Record<TeaHouseTopicCard, number> =
-    teaHousePersonalityTopicWeights[personality] ?? defaultWeights;
-  const totalWeight = getTotalWeight(weights);
-  let threshold = randomSource() * totalWeight;
+  return nextHand;
+}
 
-  for (const topic of TEA_HOUSE_TOPIC_CARDS) {
-    threshold -= weights[topic];
-    if (threshold < 0) {
-      return topic;
+export function pickTeaHouseRandomHandIndex(
+  hand: readonly TeaHouseTopicCard[],
+  randomSource: RandomSource = Math.random
+): number {
+  if (hand.length === 0) {
+    return -1;
+  }
+
+  return randomIndex(hand.length, randomSource);
+}
+
+export function getTeaHouseDebateEmotion(
+  lastRoundWinner: TeaHouseDebateWinner | null
+): TeaHouseDebateEmotion {
+  if (lastRoundWinner === "npc") {
+    return "得意";
+  }
+
+  if (lastRoundWinner === "player") {
+    return "愤怒";
+  }
+
+  return "冷静";
+}
+
+export function pickTeaHouseAiHandCard(
+  personality: string,
+  hand: readonly TeaHouseTopicCard[],
+  emotion: TeaHouseDebateEmotion,
+  lastNpcTopic: TeaHouseTopicCard | null,
+  randomSource: RandomSource = Math.random
+): TeaHouseAiTopicPick {
+  if (hand.length === 0) {
+    throw new Error("Tea house AI cannot pick from an empty hand.");
+  }
+
+  if (emotion === "得意" && lastNpcTopic != null && randomSource() < teaHouseProudRepeatChance) {
+    const repeatedIndex = hand.findIndex((topic) => topic === lastNpcTopic);
+    if (repeatedIndex >= 0) {
+      return {
+        handIndex: repeatedIndex,
+        topic: hand[repeatedIndex]!,
+      };
     }
   }
 
-  return "义";
+  if (emotion === "愤怒") {
+    const handIndex = pickTeaHouseRandomHandIndex(hand, randomSource);
+    return {
+      handIndex,
+      topic: hand[handIndex]!,
+    };
+  }
+
+  const handIndex = getWeightedHandIndex(hand, personality, randomSource);
+  return {
+    handIndex,
+    topic: hand[handIndex]!,
+  };
+}
+
+export function createTeaHouseNpcHintTopic(
+  actualTopic: TeaHouseTopicCard,
+  randomSource: RandomSource = Math.random
+): TeaHouseTopicCard {
+  if (randomSource() < teaHouseNpcHintAccuracy) {
+    return actualTopic;
+  }
+
+  const alternativeTopics = TEA_HOUSE_TOPIC_CARDS.filter(
+    (topic) => topic !== actualTopic
+  );
+  return pickRandomTopic(alternativeTopics, randomSource);
 }
 
 export function resolveTeaHouseDebateWinner(
   playerTopic: TeaHouseTopicCard,
   npcTopic: TeaHouseTopicCard
 ): TeaHouseDebateWinner {
-  if (playerTopic === npcTopic) {
-    return "draw";
+  if (teaHouseTopicCounterMap[playerTopic] === npcTopic) {
+    return "player";
   }
 
-  return teaHouseTopicCounterMap[playerTopic] === npcTopic ? "player" : "npc";
+  if (teaHouseTopicCounterMap[npcTopic] === playerTopic) {
+    return "npc";
+  }
+
+  return "draw";
 }
 
 function createOutcome(
@@ -138,10 +264,8 @@ export function resolveTeaHouseDebateRound(
     consecutivePlayerWins = 0;
     lines.push("对方顺势反压，你的气势 -2。");
   } else {
-    playerSpirit -= 1;
-    npcSpirit -= 1;
     consecutivePlayerWins = 0;
-    lines.push("双方各执一词，气势各 -1。");
+    lines.push("双方论点并无明确克制，僵持不下，气势不变。");
   }
 
   const nextState: TeaHouseDebateRoundState = {

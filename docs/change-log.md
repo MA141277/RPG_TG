@@ -2,6 +2,22 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-25 Tea House Debate Hand System
+
+### Added
+- 茶馆舌战新增共享手牌抽取能力：玩家与 NPC 都改为开局 3 张手牌、出牌后离手、再从统一论点池补 1 张，允许重复。
+- 茶馆辩论 overlay/session 新增“选牌阶段 / NPC 思考阶段” typed 状态、隐藏 NPC 手牌、情绪标签与 70% 预判提示字段，并在 [docs/special-house-interface.md](/E:/RPG_TG/docs/special-house-interface.md) 补充了 slot-based hand overlay 和私有手牌可见性规则。
+
+### Changed
+- 舌战胜负判定改为只有存在明确克制关系时才分胜负：`利 > 情`、`情 > 名`、`名 > 势`、`势 > 义`、`义 > 利`；其余组合一律平局，平局时双方都不掉气势。
+- 茶馆舌战底部交互从“五种论点常驻可选”改为“当前手牌三张可选”，但继续保留现有棋盘、确认按钮、五种论点美术和整体流程骨架。
+- NPC 出牌不再直接从全论点池单张生成，而是先基于自身手牌、当前情绪和既有人格权重选择手牌，再经过约 0.8 秒“正在思考……”阶段显示文字化预判图标后结算。
+- 舌战预判提示改为每回合开始时出现一次，约 2 秒后自动消失，不再持续闪烁或在临近结算时才出现。
+
+### Impact
+- 后续若要接入更正式的 NPC 人格库，只需要替换手牌选牌偏好层，不必再改舌战的回合状态机、UI 可见性规则或 shared house tick wiring。
+- 其他需要“玩家公开手牌 + 对手私有手牌 + staged reveal” 的 house 小游戏，现在可以复用同样的 typed overlay/session 设计，而不是把暗牌和提示逻辑散落到视图层。
+
 ## 2026-06-17 Battle Demo Formation Targeting Cleanup
 
 ### Changed

@@ -1,5 +1,6 @@
 import type { HouseActivityConfirmOverlayState } from "../house-activity";
 import type {
+  TeaHouseDebateEmotion,
   TeaHouseDebateSummary,
   TeaHouseDebateWinner,
   TeaHouseTopicCard,
@@ -17,13 +18,22 @@ export type TeaHouseDebateOverlayState = {
   actorId: string;
   actorName: string;
   round: number;
+  phase: "selecting" | "npc-thinking";
   secondsLeft: number;
   playerSpirit: number;
   npcSpirit: number;
   timeoutCount: number;
   consecutivePlayerWins: number;
-  plannedNpcTopic: TeaHouseTopicCard;
-  selectedPlayerTopic: TeaHouseTopicCard | null;
+  playerHand: TeaHouseTopicCard[];
+  npcHand: TeaHouseTopicCard[];
+  npcEmotion: TeaHouseDebateEmotion;
+  selectedPlayerHandIndex: number | null;
+  pendingPlayerHandIndex: number | null;
+  pendingNpcHandIndex: number | null;
+  pendingDidTimeout: boolean;
+  hintedNpcTopic: TeaHouseTopicCard | null;
+  predictionTicksRemaining: number;
+  thinkingTicksRemaining: number;
   lastPlayerTopic: TeaHouseTopicCard | null;
   lastNpcTopic: TeaHouseTopicCard | null;
   lastRoundWinner: TeaHouseDebateWinner | null;

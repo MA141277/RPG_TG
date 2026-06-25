@@ -26,20 +26,47 @@ function getDebateTopicCardClass(topic: string): string {
   }
 }
 
+function getDebatePredictionText(topic: string | null): string {
+  switch (topic) {
+    case "利":
+      return "钱币";
+    case "情":
+      return "红心";
+    case "名":
+      return "书卷";
+    case "势":
+      return "印章";
+    case "义":
+      return "侠义";
+    default:
+      return "";
+  }
+}
+
 function renderDebateOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "debate" }>
 ): string {
   const summaryLines =
-    overlay.lastRoundSummary.length > 0
+    overlay.phase === "npc-thinking"
+      ? [
+          `${overlay.actorName} 正在思考……`,
+          overlay.predictionTopic == null
+            ? "你暂时还没看清对方的意图。"
+            : `你瞥见一抹「${getDebatePredictionText(overlay.predictionTopic)}」的影子。`,
+        ]
+      : overlay.lastRoundSummary.length > 0
       ? overlay.lastRoundSummary
       : [
-          `第 ${overlay.round} 回合，对手 ${overlay.actorName} 已亮出论点。`,
-          "请从“义 / 利 / 名 / 情 / 势”中选出你的出牌。",
+          `第 ${overlay.round} 回合，对手 ${overlay.actorName} 已摆开论势。`,
+          overlay.predictionTopic == null
+            ? "请从当前手牌中选出你的出牌。"
+            : "预判已现，请从当前手牌中选出你的出牌。",
         ];
   const selectedTopicClass =
     overlay.selectedTopic == null
       ? "c-tea-house-topic-card--back"
       : getDebateTopicCardClass(overlay.selectedTopic);
+  const predictionText = getDebatePredictionText(overlay.predictionTopic);
 
   return `
     <div class="c-grain-shop-overlay c-tea-house-debate-overlay" data-house-overlay="debate">
@@ -64,12 +91,23 @@ function renderDebateOverlay(
             <div class="c-tea-house-debate__meta">
               <span>第 <strong>${overlay.round}</strong> 回合</span>
               <span>对手 <strong>${overlay.actorName}</strong></span>
+              <span>暗牌 <strong>${overlay.npcHandCount}</strong> 张</span>
               <span>超时 <strong>${overlay.timeoutCount}</strong> 次</span>
             </div>
             <div class="c-tea-house-debate__facedown c-tea-house-debate__facedown--left" aria-hidden="true"></div>
             <div class="c-tea-house-debate__facedown c-tea-house-debate__facedown--right" aria-hidden="true"></div>
             <div class="c-tea-house-debate__summary" aria-live="polite">
               ${summaryLines.map((line) => `<p>${line}</p>`).join("")}
+              ${
+                overlay.predictionTopic != null
+                  ? `
+                    <div class="c-tea-house-debate__prediction c-tea-house-debate__prediction--${overlay.predictionTopic}">
+                      <span class="c-tea-house-debate__prediction-label">预判</span>
+                      <strong class="c-tea-house-debate__prediction-text">${predictionText}</strong>
+                    </div>
+                  `
+                  : ""
+              }
             </div>
             <div class="c-tea-house-debate__selected-slot" aria-label="已选出牌">
               ${
@@ -92,18 +130,21 @@ function renderDebateOverlay(
 
         <div class="c-tea-house-debate__timer" aria-label="倒计时 ${overlay.secondsLeft} 秒">
           <div class="c-tea-house-debate__timer-face" aria-hidden="true"></div>
-          <strong class="c-tea-house-debate__timer-value">${overlay.secondsLeft}</strong>
+          <strong class="c-tea-house-debate__timer-value">${overlay.phase === "selecting" ? overlay.secondsLeft : "思"}</strong>
         </div>
 
-        <div class="c-tea-house-debate__topic-row" aria-label="主题牌">
-          ${overlay.topicActionIds
+        <div class="c-tea-house-debate__hand-heading">当前手牌</div>
+
+        <div class="c-tea-house-debate__topic-row" aria-label="当前手牌">
+          ${overlay.playerHand
             .map(
-              (topicAction) => `
+              (handCard) => `
                 <button
                   type="button"
-                  class="c-button c-tea-house-topic-card ${getDebateTopicCardClass(topicAction.topic)}${overlay.selectedTopic === topicAction.topic ? " is-selected" : ""}"
-                  data-house-action="${topicAction.actionId}"
-                  aria-label="出牌 ${topicAction.topic}"
+                  class="c-button c-tea-house-topic-card ${getDebateTopicCardClass(handCard.topic)}${handCard.selected ? " is-selected" : ""}"
+                  data-house-action="${handCard.actionId}"
+                  aria-label="出牌 ${handCard.topic}"
+                  ${handCard.disabled ? "disabled" : ""}
                 >
                   <span class="c-tea-house-topic-card__face" aria-hidden="true"></span>
                 </button>

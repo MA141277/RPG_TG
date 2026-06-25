@@ -859,6 +859,53 @@
   line-height: 1.55;
 }
 
+.c-tea-house-debate__prediction {
+  --tea-house-debate-prediction-accent: #7f572f;
+
+  margin-top: 6px;
+  display: inline-grid;
+  gap: 2px;
+  justify-items: center;
+  min-width: 120px;
+  padding: 6px 12px;
+  border: 1px solid rgb(127 87 47 / 22%);
+  border-radius: 999px;
+  background: rgb(255 248 232 / 66%);
+  color: var(--tea-house-debate-prediction-accent);
+  box-shadow: 0 4px 10px rgb(86 57 30 / 10%);
+}
+
+.c-tea-house-debate__prediction-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+}
+
+.c-tea-house-debate__prediction-text {
+  font-family: var(--font-title);
+  font-size: 1.12rem;
+  line-height: 1;
+}
+
+.c-tea-house-debate__prediction--义 {
+  --tea-house-debate-prediction-accent: #7f572f;
+}
+
+.c-tea-house-debate__prediction--利 {
+  --tea-house-debate-prediction-accent: #8b6a1b;
+}
+
+.c-tea-house-debate__prediction--名 {
+  --tea-house-debate-prediction-accent: #4c5f86;
+}
+
+.c-tea-house-debate__prediction--情 {
+  --tea-house-debate-prediction-accent: #a34d56;
+}
+
+.c-tea-house-debate__prediction--势 {
+  --tea-house-debate-prediction-accent: #6d5335;
+}
+
 .c-tea-house-debate__selected-slot {
   position: absolute;
   left: 50%;
@@ -924,6 +971,17 @@
     0 2px 2px rgb(0 0 0 / 36%);
 }
 
+.c-tea-house-debate__hand-heading {
+  position: absolute;
+  left: 180px;
+  bottom: 188px;
+  z-index: 1;
+  color: #d8bd8d;
+  font-size: 0.82rem;
+  letter-spacing: 0.22em;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 36%);
+}
+
 .c-tea-house-debate__topic-row {
   left: 180px;
   right: 318px;
@@ -965,6 +1023,17 @@
 .c-tea-house-topic-card:focus-visible {
   outline: 2px solid rgb(244 207 143 / 78%);
   outline-offset: 4px;
+}
+
+.c-tea-house-topic-card:disabled {
+  cursor: default;
+  opacity: 0.82;
+}
+
+.c-tea-house-topic-card:disabled:hover,
+.c-tea-house-topic-card:disabled:focus-visible {
+  transform: none;
+  filter: none;
 }
 
 .c-tea-house-topic-card__face {
@@ -1067,6 +1136,11 @@
     gap: 14px;
   }
 
+  .c-tea-house-debate__hand-heading {
+    left: 92px;
+    bottom: 176px;
+  }
+
   .c-tea-house-topic-card {
     width: 106px;
   }
@@ -1091,6 +1165,7 @@
 
   .c-tea-house-debate__board,
   .c-tea-house-debate__timer,
+  .c-tea-house-debate__hand-heading,
   .c-tea-house-debate__topic-row,
   .c-tea-house-debate__confirm {
     position: relative;
@@ -1110,6 +1185,11 @@
     flex-wrap: wrap;
     gap: 10px;
     padding: 12px;
+  }
+
+  .c-tea-house-debate__hand-heading {
+    margin-top: 10px;
+    text-align: center;
   }
 
   .c-tea-house-topic-card {

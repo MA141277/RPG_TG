@@ -2,6 +2,8 @@ export const TEA_HOUSE_TOPIC_CARDS = ["义", "利", "名", "情", "势"] as cons
 
 export type TeaHouseTopicCard = (typeof TEA_HOUSE_TOPIC_CARDS)[number];
 
+export type TeaHouseDebateEmotion = "冷静" | "得意" | "愤怒";
+
 export type TeaHouseActionAttributeChange = {
   key: "rhetoric";
   label: string;

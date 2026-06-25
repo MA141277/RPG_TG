@@ -1,6 +1,9 @@
 import {
   teaHouseBossProfile,
   teaHouseLowIntelChance,
+  teaHouseNpcThinkingTickMs,
+  teaHouseNpcThinkingTicks,
+  teaHousePredictionVisibleMs,
   teaHouseTeaCost,
 } from "../../../content/houses/tea-house-content";
 import { prototypeCityNpcPools } from "../../../content/prototype-world";
@@ -22,9 +25,10 @@ import {
   getTeaHouseIntelVariableKey,
   getTeaHouseTimeVariableKey,
   type TeaHouseActionOutcome,
+  type TeaHouseDebateEmotion,
   type TeaHouseDebateSummary,
+  type TeaHouseDebateWinner,
   type TeaHouseTopicCard,
-  TEA_HOUSE_TOPIC_CARDS,
 } from "../../../domain/tea-house";
 import { assertExists } from "../../../shared/assert";
 import { pickRandom } from "../../../shared/random";
@@ -35,9 +39,15 @@ import {
   type TeaHouseActor,
 } from "../../tea-house/tea-house-actors";
 import {
+  createTeaHouseDebateHand,
+  createTeaHouseNpcHintTopic,
   createDebateNextRoundTimer,
   createInitialTeaHouseDebateState,
-  pickTeaHouseAiTopic,
+  getTeaHouseDebateEmotion,
+  pickTeaHouseAiHandCard,
+  pickTeaHouseRandomHandIndex,
+  refillTeaHouseDebateHand,
+  removeTeaHouseHandCard,
   resolveTeaHouseDebateRound,
 } from "../../tea-house/tea-house-debate";
 import {
@@ -61,9 +71,10 @@ import { getInsufficientDaysForTimedActivity } from "../../time/council-priority
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
 
 const DEBATE_INTERVAL_ID = "tea-house-debate";
+const DEBATE_THINKING_INTERVAL_ID = "tea-house-debate-thinking";
 const MAX_TEA_HOUSE_GUESTS = 2;
 const SELECT_ACTOR_ACTION_PREFIX = "select-actor:";
-const DEBATE_TOPIC_ACTION_PREFIX = "debate-topic:";
+const DEBATE_HAND_ACTION_PREFIX = "debate-hand:";
 const DEBATE_CONFIRM_ACTION_ID = "confirm-debate-topic";
 const CONFIRM_START_DEBATE_ACTION_ID = "confirm-start-debate";
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
@@ -405,15 +416,13 @@ function parseActorActionId(actionId: string): string | null {
     : null;
 }
 
-function parseDebateTopicActionId(actionId: string): TeaHouseTopicCard | null {
-  if (!actionId.startsWith(DEBATE_TOPIC_ACTION_PREFIX)) {
+function parseDebateHandActionId(actionId: string): number | null {
+  if (!actionId.startsWith(DEBATE_HAND_ACTION_PREFIX)) {
     return null;
   }
 
-  const topic = actionId.slice(DEBATE_TOPIC_ACTION_PREFIX.length);
-  return TEA_HOUSE_TOPIC_CARDS.includes(topic as TeaHouseTopicCard)
-    ? (topic as TeaHouseTopicCard)
-    : null;
+  const handIndex = Number(actionId.slice(DEBATE_HAND_ACTION_PREFIX.length));
+  return Number.isInteger(handIndex) && handIndex >= 0 ? handIndex : null;
 }
 
 function buildDebateOutcomeParagraphs(
@@ -440,47 +449,167 @@ function buildDebateOutcomeParagraphs(
   ];
 }
 
+function createDebateCountdownSideEffects(): NonNullable<
+  HouseModuleTransitionResult<"tea-house">["sideEffects"]
+> {
+  return [
+    { type: "stop-interval", intervalId: DEBATE_THINKING_INTERVAL_ID },
+    { type: "stop-interval", intervalId: DEBATE_INTERVAL_ID },
+    {
+      type: "start-interval",
+      intervalId: DEBATE_INTERVAL_ID,
+      everyMs: 1000,
+      request: {
+        type: "tick",
+        tickId: DEBATE_INTERVAL_ID,
+      },
+    },
+  ];
+}
+
+function createDebateThinkingSideEffects(): NonNullable<
+  HouseModuleTransitionResult<"tea-house">["sideEffects"]
+> {
+  return [
+    { type: "stop-interval", intervalId: DEBATE_INTERVAL_ID },
+    { type: "stop-interval", intervalId: DEBATE_THINKING_INTERVAL_ID },
+    {
+      type: "start-interval",
+      intervalId: DEBATE_THINKING_INTERVAL_ID,
+      everyMs: teaHouseNpcThinkingTickMs,
+      request: {
+        type: "tick",
+        tickId: DEBATE_THINKING_INTERVAL_ID,
+      },
+    },
+  ];
+}
+
+function createDebateStopSideEffects(): NonNullable<
+  HouseModuleTransitionResult<"tea-house">["sideEffects"]
+> {
+  return [
+    { type: "stop-interval", intervalId: DEBATE_INTERVAL_ID },
+    { type: "stop-interval", intervalId: DEBATE_THINKING_INTERVAL_ID },
+  ];
+}
+
+type DebateOverlayConfig = {
+  round: number;
+  phase: "selecting" | "npc-thinking";
+  secondsLeft?: number;
+  playerSpirit: number;
+  npcSpirit: number;
+  timeoutCount: number;
+  consecutivePlayerWins: number;
+  playerHand: TeaHouseTopicCard[];
+  npcHand: TeaHouseTopicCard[];
+  npcEmotion: TeaHouseDebateEmotion;
+  selectedPlayerHandIndex?: number | null;
+  pendingPlayerHandIndex?: number | null;
+  pendingNpcHandIndex?: number | null;
+  pendingDidTimeout?: boolean;
+  hintedNpcTopic?: TeaHouseTopicCard | null;
+  predictionTicksRemaining?: number;
+  thinkingTicksRemaining?: number;
+  lastRoundSummary?: string[];
+  lastPlayerTopic?: TeaHouseTopicCard | null;
+  lastNpcTopic?: TeaHouseTopicCard | null;
+  lastRoundWinner?: TeaHouseDebateWinner | null;
+};
+
+type PlannedNpcDebatePick = {
+  handIndex: number;
+  hintedTopic: TeaHouseTopicCard;
+};
+
+function createPredictionTicksRemaining(): number {
+  return Math.ceil(teaHousePredictionVisibleMs / teaHouseNpcThinkingTickMs);
+}
+
+function planNpcDebatePick(
+  actor: TeaHouseActor,
+  npcHand: readonly TeaHouseTopicCard[],
+  npcEmotion: TeaHouseDebateEmotion,
+  lastNpcTopic: TeaHouseTopicCard | null
+): PlannedNpcDebatePick {
+  const npcPick = pickTeaHouseAiHandCard(
+    actor.personality,
+    npcHand,
+    npcEmotion,
+    lastNpcTopic
+  );
+
+  return {
+    handIndex: npcPick.handIndex,
+    hintedTopic: createTeaHouseNpcHintTopic(npcPick.topic),
+  };
+}
+
 function createDebateOverlay(
   actor: TeaHouseActor,
-  playerSpirit: number,
-  npcSpirit: number,
-  timeoutCount: number,
-  consecutivePlayerWins: number,
-  round: number,
-  plannedNpcTopic: TeaHouseTopicCard,
-  selectedPlayerTopic: TeaHouseTopicCard | null = null,
-  lastRoundSummary: string[] = [],
-  lastPlayerTopic: TeaHouseTopicCard | null = null,
-  lastNpcTopic: TeaHouseTopicCard | null = null,
-  lastRoundWinner: "player" | "npc" | "draw" | null = null
+  config: DebateOverlayConfig
 ): TeaHouseOverlayState {
   return {
     type: "debate",
     actorId: actor.id,
     actorName: actor.name,
-    round,
-    secondsLeft: createDebateNextRoundTimer(),
-    playerSpirit,
-    npcSpirit,
-    timeoutCount,
-    consecutivePlayerWins,
-    plannedNpcTopic,
-    selectedPlayerTopic,
-    lastPlayerTopic,
-    lastNpcTopic,
-    lastRoundWinner,
-    lastRoundLines: lastRoundSummary,
+    round: config.round,
+    phase: config.phase,
+    secondsLeft:
+      config.secondsLeft ??
+      (config.phase === "selecting" ? createDebateNextRoundTimer() : 0),
+    playerSpirit: config.playerSpirit,
+    npcSpirit: config.npcSpirit,
+    timeoutCount: config.timeoutCount,
+    consecutivePlayerWins: config.consecutivePlayerWins,
+    playerHand: [...config.playerHand],
+    npcHand: [...config.npcHand],
+    npcEmotion: config.npcEmotion,
+    selectedPlayerHandIndex: config.selectedPlayerHandIndex ?? null,
+    pendingPlayerHandIndex: config.pendingPlayerHandIndex ?? null,
+    pendingNpcHandIndex: config.pendingNpcHandIndex ?? null,
+    pendingDidTimeout: config.pendingDidTimeout ?? false,
+    hintedNpcTopic: config.hintedNpcTopic ?? null,
+    predictionTicksRemaining: config.predictionTicksRemaining ?? 0,
+    thinkingTicksRemaining: config.thinkingTicksRemaining ?? 0,
+    lastPlayerTopic: config.lastPlayerTopic ?? null,
+    lastNpcTopic: config.lastNpcTopic ?? null,
+    lastRoundWinner: config.lastRoundWinner ?? null,
+    lastRoundLines: config.lastRoundSummary ?? [],
   };
 }
 
-function resolveDebateTurn(
+function getSelectedPlayerTopic(
+  overlay: Extract<TeaHouseOverlayState, { type: "debate" }>
+): TeaHouseTopicCard | null {
+  if (overlay.selectedPlayerHandIndex == null) {
+    return null;
+  }
+
+  return overlay.playerHand[overlay.selectedPlayerHandIndex] ?? null;
+}
+
+function getFallbackPlayerHandIndex(
+  overlay: Extract<TeaHouseOverlayState, { type: "debate" }>
+): number {
+  if (
+    overlay.selectedPlayerHandIndex != null &&
+    overlay.playerHand[overlay.selectedPlayerHandIndex] != null
+  ) {
+    return overlay.selectedPlayerHandIndex;
+  }
+
+  return pickTeaHouseRandomHandIndex(overlay.playerHand);
+}
+
+function startDebateThinking(
   input: HouseModuleDispatchInput<"tea-house">,
   sessionState: TeaHouseSessionState | null,
-  playerTopic: TeaHouseTopicCard,
   didTimeout: boolean
 ): HouseModuleTransitionResult<"tea-house"> {
   const overlay = sessionState?.overlay;
-  if (overlay?.type !== "debate") {
+  if (overlay?.type !== "debate" || overlay.phase !== "selecting") {
     return createTransitionResult(input);
   }
 
@@ -494,6 +623,87 @@ function resolveDebateTurn(
     return createTransitionResult(input);
   }
 
+  const playerHandIndex = getFallbackPlayerHandIndex(overlay);
+  if (playerHandIndex < 0 || overlay.playerHand[playerHandIndex] == null) {
+    return createTransitionResult(input);
+  }
+
+  const plannedNpcPick =
+    overlay.pendingNpcHandIndex != null &&
+    overlay.npcHand[overlay.pendingNpcHandIndex] != null &&
+    overlay.hintedNpcTopic != null
+      ? {
+          handIndex: overlay.pendingNpcHandIndex,
+          hintedTopic: overlay.hintedNpcTopic,
+        }
+      : planNpcDebatePick(
+          actor,
+          overlay.npcHand,
+          overlay.npcEmotion,
+          overlay.lastNpcTopic
+        );
+
+  return withSessionState(
+    input,
+    sessionState,
+    {
+      overlay: createDebateOverlay(actor, {
+        round: overlay.round,
+        phase: "npc-thinking",
+        playerSpirit: overlay.playerSpirit,
+        npcSpirit: overlay.npcSpirit,
+        timeoutCount: overlay.timeoutCount,
+        consecutivePlayerWins: overlay.consecutivePlayerWins,
+        playerHand: overlay.playerHand,
+        npcHand: overlay.npcHand,
+        npcEmotion: overlay.npcEmotion,
+        selectedPlayerHandIndex: playerHandIndex,
+        pendingPlayerHandIndex: playerHandIndex,
+        pendingNpcHandIndex: plannedNpcPick.handIndex,
+        pendingDidTimeout: didTimeout,
+        hintedNpcTopic: plannedNpcPick.hintedTopic,
+        predictionTicksRemaining: overlay.predictionTicksRemaining,
+        thinkingTicksRemaining: teaHouseNpcThinkingTicks,
+        lastRoundSummary: overlay.lastRoundLines,
+        lastPlayerTopic: overlay.lastPlayerTopic,
+        lastNpcTopic: overlay.lastNpcTopic,
+        lastRoundWinner: overlay.lastRoundWinner,
+      }),
+    },
+    createDebateThinkingSideEffects()
+  );
+}
+
+function resolvePreparedDebateTurn(
+  input: HouseModuleDispatchInput<"tea-house">,
+  sessionState: TeaHouseSessionState | null
+): HouseModuleTransitionResult<"tea-house"> {
+  const overlay = sessionState?.overlay;
+  if (overlay?.type !== "debate" || overlay.phase !== "npc-thinking") {
+    return createTransitionResult(input);
+  }
+
+  const actor = getSelectedActor(
+    input.gameState,
+    input.houseDefinition.id,
+    input.houseDefinition.cityId,
+    sessionState
+  );
+  if (actor == null) {
+    return createTransitionResult(input);
+  }
+
+  if (
+    overlay.pendingPlayerHandIndex == null ||
+    overlay.pendingNpcHandIndex == null ||
+    overlay.playerHand[overlay.pendingPlayerHandIndex] == null ||
+    overlay.npcHand[overlay.pendingNpcHandIndex] == null
+  ) {
+    return createTransitionResult(input);
+  }
+
+  const playerTopic = overlay.playerHand[overlay.pendingPlayerHandIndex]!;
+  const npcTopic = overlay.npcHand[overlay.pendingNpcHandIndex]!;
   const roundResult = resolveTeaHouseDebateRound(
     {
       round: overlay.round,
@@ -503,8 +713,8 @@ function resolveDebateTurn(
       consecutivePlayerWins: overlay.consecutivePlayerWins,
     },
     playerTopic,
-    overlay.plannedNpcTopic,
-    didTimeout
+    npcTopic,
+    overlay.pendingDidTimeout
   );
 
   if (roundResult.outcome != null) {
@@ -576,12 +786,26 @@ function resolveDebateTurn(
                     : "info"
               ),
             },
-      sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
+      sideEffects: createDebateStopSideEffects(),
       timeAdvanceCost: convertHouseActivityDaysToSegments(
         finishedOutcome.timeCost
       ),
     };
   }
+
+  const nextPlayerHand = refillTeaHouseDebateHand(
+    removeTeaHouseHandCard(overlay.playerHand, overlay.pendingPlayerHandIndex)
+  );
+  const nextNpcHand = refillTeaHouseDebateHand(
+    removeTeaHouseHandCard(overlay.npcHand, overlay.pendingNpcHandIndex)
+  );
+  const nextEmotion = getTeaHouseDebateEmotion(roundResult.winner);
+  const nextPlannedNpcPick = planNpcDebatePick(
+    actor,
+    nextNpcHand,
+    nextEmotion,
+    roundResult.npcTopic
+  );
 
   return {
     gameState: input.gameState,
@@ -593,21 +817,26 @@ function resolveDebateTurn(
             ...sessionState,
             dialogueLines: roundResult.lines,
             dialoguePhase: "open",
-            overlay: createDebateOverlay(
-              actor,
-              roundResult.nextState.playerSpirit,
-              roundResult.nextState.npcSpirit,
-              roundResult.nextState.timeoutCount,
-              roundResult.nextState.consecutivePlayerWins,
-              roundResult.nextState.round,
-              pickTeaHouseAiTopic(actor.personality),
-              null,
-              roundResult.lines,
-              roundResult.playerTopic,
-              roundResult.npcTopic,
-              roundResult.winner
-            ),
+            overlay: createDebateOverlay(actor, {
+              round: roundResult.nextState.round,
+              phase: "selecting",
+              playerSpirit: roundResult.nextState.playerSpirit,
+              npcSpirit: roundResult.nextState.npcSpirit,
+              timeoutCount: roundResult.nextState.timeoutCount,
+              consecutivePlayerWins: roundResult.nextState.consecutivePlayerWins,
+              playerHand: nextPlayerHand,
+              npcHand: nextNpcHand,
+              npcEmotion: nextEmotion,
+              pendingNpcHandIndex: nextPlannedNpcPick.handIndex,
+              hintedNpcTopic: nextPlannedNpcPick.hintedTopic,
+              predictionTicksRemaining: createPredictionTicksRemaining(),
+              lastRoundSummary: roundResult.lines,
+              lastPlayerTopic: roundResult.playerTopic,
+              lastNpcTopic: roundResult.npcTopic,
+              lastRoundWinner: roundResult.winner,
+            }),
           },
+    sideEffects: createDebateCountdownSideEffects(),
   };
 }
 
@@ -615,30 +844,50 @@ function handleTick(
   input: HouseModuleDispatchInput<"tea-house">,
   sessionState: TeaHouseSessionState | null
 ): HouseModuleTransitionResult<"tea-house"> {
-  if (input.request.type !== "tick" || input.request.tickId !== DEBATE_INTERVAL_ID) {
+  if (input.request.type !== "tick") {
     return createTransitionResult(input);
   }
 
   const overlay = sessionState?.overlay;
-  if (overlay?.type !== "debate") {
-    return createTransitionResult(input, {
-      sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
+  if (input.request.tickId === DEBATE_INTERVAL_ID) {
+    if (overlay?.type !== "debate" || overlay.phase !== "selecting") {
+      return createTransitionResult(input, {
+        sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
+      });
+    }
+
+    if (overlay.secondsLeft <= 1) {
+      return startDebateThinking(input, sessionState, true);
+    }
+
+    return withSessionState(input, sessionState, {
+      overlay: {
+        ...overlay,
+        secondsLeft: overlay.secondsLeft - 1,
+        predictionTicksRemaining: Math.max(0, overlay.predictionTicksRemaining - 5),
+      },
     });
   }
 
-  if (overlay.secondsLeft <= 1) {
-    return resolveDebateTurn(
-      input,
-      sessionState,
-      overlay.selectedPlayerTopic ?? pickRandom([...TEA_HOUSE_TOPIC_CARDS]),
-      true
-    );
+  if (input.request.tickId !== DEBATE_THINKING_INTERVAL_ID) {
+    return createTransitionResult(input);
+  }
+
+  if (overlay?.type !== "debate" || overlay.phase !== "npc-thinking") {
+    return createTransitionResult(input, {
+      sideEffects: [{ type: "stop-interval", intervalId: DEBATE_THINKING_INTERVAL_ID }],
+    });
+  }
+
+  if (overlay.thinkingTicksRemaining <= 1) {
+    return resolvePreparedDebateTurn(input, sessionState);
   }
 
   return withSessionState(input, sessionState, {
     overlay: {
       ...overlay,
-      secondsLeft: overlay.secondsLeft - 1,
+      thinkingTicksRemaining: overlay.thinkingTicksRemaining - 1,
+      predictionTicksRemaining: Math.max(0, overlay.predictionTicksRemaining - 1),
     },
   });
 }
@@ -659,7 +908,7 @@ function handleActorAction(
       input,
       sessionState,
       { overlay: null },
-      [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }]
+      createDebateStopSideEffects()
     );
   }
 
@@ -691,27 +940,35 @@ function handleActorAction(
     });
   }
 
-  const debateTopic = parseDebateTopicActionId(input.request.actionId);
-  if (debateTopic != null) {
-    if (sessionState?.overlay?.type !== "debate") {
+  const debateHandIndex = parseDebateHandActionId(input.request.actionId);
+  if (debateHandIndex != null) {
+    if (
+      sessionState?.overlay?.type !== "debate" ||
+      sessionState.overlay.phase !== "selecting" ||
+      sessionState.overlay.playerHand[debateHandIndex] == null
+    ) {
       return createTransitionResult(input);
     }
 
     return withSessionState(input, sessionState, {
       overlay: {
         ...sessionState.overlay,
-        selectedPlayerTopic: debateTopic,
+        selectedPlayerHandIndex: debateHandIndex,
       },
     });
   }
 
   if (input.request.actionId === DEBATE_CONFIRM_ACTION_ID) {
     const overlay = sessionState?.overlay;
-    if (overlay?.type !== "debate" || overlay.selectedPlayerTopic == null) {
+    if (
+      overlay?.type !== "debate" ||
+      overlay.phase !== "selecting" ||
+      getSelectedPlayerTopic(overlay) == null
+    ) {
       return createTransitionResult(input);
     }
 
-    return resolveDebateTurn(input, sessionState, overlay.selectedPlayerTopic, false);
+    return startDebateThinking(input, sessionState, false);
   }
 
   if (input.request.actionId === CONFIRM_START_DEBATE_ACTION_ID) {
@@ -740,35 +997,37 @@ function handleActorAction(
       });
     }
 
+    const initialDebateState = createInitialTeaHouseDebateState();
+    const initialPlayerHand = createTeaHouseDebateHand();
+    const initialNpcHand = createTeaHouseDebateHand();
+    const initialPlannedNpcPick = planNpcDebatePick(
+      selectedActor,
+      initialNpcHand,
+      "冷静",
+      null
+    );
     return withSessionState(
       input,
       sessionState,
       {
         dialogueLines: ["（放下茶盏）示意你出题。"],
         dialoguePhase: "open",
-        overlay: createDebateOverlay(
-          selectedActor,
-          createInitialTeaHouseDebateState().playerSpirit,
-          createInitialTeaHouseDebateState().npcSpirit,
-          0,
-          0,
-          1,
-          pickTeaHouseAiTopic(selectedActor.personality),
-          null
-        ),
+        overlay: createDebateOverlay(selectedActor, {
+          round: initialDebateState.round,
+          phase: "selecting",
+          playerSpirit: initialDebateState.playerSpirit,
+          npcSpirit: initialDebateState.npcSpirit,
+          timeoutCount: initialDebateState.timeoutCount,
+          consecutivePlayerWins: initialDebateState.consecutivePlayerWins,
+          playerHand: initialPlayerHand,
+          npcHand: initialNpcHand,
+          npcEmotion: "冷静",
+          pendingNpcHandIndex: initialPlannedNpcPick.handIndex,
+          hintedNpcTopic: initialPlannedNpcPick.hintedTopic,
+          predictionTicksRemaining: createPredictionTicksRemaining(),
+        }),
       },
-      [
-        { type: "stop-interval", intervalId: DEBATE_INTERVAL_ID },
-        {
-          type: "start-interval",
-          intervalId: DEBATE_INTERVAL_ID,
-          everyMs: 1000,
-          request: {
-            type: "tick",
-            tickId: DEBATE_INTERVAL_ID,
-          },
-        },
-      ]
+      createDebateCountdownSideEffects()
     );
   }
 
@@ -950,22 +1209,32 @@ function selectOverlayViewModel(
   }
 
   if (overlay.type === "debate") {
+    const selectedTopic = getSelectedPlayerTopic(overlay);
     return {
       type: "debate",
       title: "舌战",
       actorName: overlay.actorName,
       round: overlay.round,
-      secondsLeft: overlay.secondsLeft,
+      phase: overlay.phase,
+      secondsLeft: overlay.phase === "selecting" ? overlay.secondsLeft : 0,
       playerSpirit: overlay.playerSpirit,
       npcSpirit: overlay.npcSpirit,
       timeoutCount: overlay.timeoutCount,
-      topicActionIds: TEA_HOUSE_TOPIC_CARDS.map((topic) => ({
+      npcHandCount: overlay.npcHand.length,
+      npcEmotion: overlay.npcEmotion,
+      playerHand: overlay.playerHand.map((topic, slotIndex) => ({
+        slotIndex,
         topic,
-        actionId: `${DEBATE_TOPIC_ACTION_PREFIX}${topic}`,
+        actionId: `${DEBATE_HAND_ACTION_PREFIX}${slotIndex}`,
+        selected: overlay.selectedPlayerHandIndex === slotIndex,
+        disabled: overlay.phase !== "selecting",
       })),
-      selectedTopic: overlay.selectedPlayerTopic,
+      predictionTopic:
+        overlay.predictionTicksRemaining > 0 ? overlay.hintedNpcTopic : null,
+      selectedTopic: selectedTopic,
       confirmActionId: DEBATE_CONFIRM_ACTION_ID,
-      confirmDisabled: overlay.selectedPlayerTopic == null,
+      confirmDisabled:
+        overlay.phase !== "selecting" || overlay.selectedPlayerHandIndex == null,
       lastRoundSummary: overlay.lastRoundLines,
     };
   }
@@ -1004,7 +1273,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
         bossActorId,
         getActorGreetingLines(bossActor)
       ),
-      sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
+      sideEffects: createDebateStopSideEffects(),
     };
   },
   dispatch(input) {
@@ -1019,7 +1288,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: null,
-      sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
+      sideEffects: createDebateStopSideEffects(),
     };
   },
   selectViewModel(input): HouseModuleViewModel {

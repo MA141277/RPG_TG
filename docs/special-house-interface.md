@@ -416,6 +416,16 @@ If one overlay contains a staged interaction
 extend the shared overlay contract with the staged control fields first
 (for example `selectedTopic`, `confirmActionId`, `confirmDisabled`)
 and keep the temporary selection in the module session state.
+If a staged hand-based overlay allows duplicate cards or slot-local actions,
+expose viewer-facing hand entries as structured slot data such as
+`slotIndex`, `topic`, `actionId`, `selected`, and `disabled`,
+instead of collapsing the hand into one action per topic string.
+If the opponent also uses a private hand, expose only the viewer-safe summary
+(for example hidden hand count, current emotion label, or a prediction hint),
+and keep the actual private hand plus pending choice inside typed module session state.
+Timed reveal steps such as "NPC thinking for 0.8s, then resolve"
+must still run through shared `tick` requests and typed overlay/session fields;
+the UI may animate a hint badge, but it must not infer private card state on its own.
 Do not fall back to raw HTML strings in `application`.
 
 ## Main Entry Rules

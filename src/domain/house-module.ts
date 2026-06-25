@@ -269,14 +269,21 @@ export type HouseOverlayViewModel =
       title: string;
       actorName: string;
       round: number;
+      phase: "selecting" | "npc-thinking";
       secondsLeft: number;
       playerSpirit: number;
       npcSpirit: number;
       timeoutCount: number;
-      topicActionIds: Array<{
+      npcHandCount: number;
+      npcEmotion: string;
+      playerHand: Array<{
+        slotIndex: number;
         topic: string;
         actionId: string;
+        selected: boolean;
+        disabled?: boolean;
       }>;
+      predictionTopic: string | null;
       selectedTopic: string | null;
       confirmActionId: string;
       confirmDisabled?: boolean;

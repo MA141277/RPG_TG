@@ -3754,25 +3754,85 @@ test("story battle rescue flow opens battle demo scenario and returns to keep re
 });
 
 test("medicine compounding grades targets by closeness", () => {
-  const perfect = resolveCompoundingGrade(
+  const warmMix = resolveCompoundingGrade(
     {
       ailmentId: "wind_cold",
       ailmentName: "风寒",
-      coldRequired: 2,
+      coldRequired: -2,
       healRequired: 5,
       maxPoison: 1,
     },
     [
-      { herbId: "herb_bo_he", amount: 1 },
+      { herbId: "herb_ai_cao", amount: 1 },
       { herbId: "herb_xing_ren", amount: 1 },
-      { herbId: "herb_dang_gui", amount: 1 },
+      { herbId: "herb_gan_cao", amount: 1 },
     ],
     [
-      { id: "herb_bo_he", name: "薄荷", cold: 2, heat: 0, poison: 0, heal: 1 },
+      { id: "herb_ai_cao", name: "艾草", cold: 0, heat: 2, poison: 0, heal: 1 },
       { id: "herb_xing_ren", name: "杏仁", cold: 1, heat: 0, poison: 0, heal: 2 },
-      { id: "herb_dang_gui", name: "当归", cold: 0, heat: 1, poison: 0, heal: 3 },
+      { id: "herb_gan_cao", name: "甘草", cold: 0, heat: 0, poison: -1, heal: 2 },
     ]
   );
 
-  assert.equal(perfect.grade, "S");
+  const coolMix = resolveCompoundingGrade(
+    {
+      ailmentId: "wind_cold",
+      ailmentName: "风寒",
+      coldRequired: -2,
+      healRequired: 5,
+      maxPoison: 1,
+    },
+    [
+      { herbId: "herb_huang_lian", amount: 1 },
+      { herbId: "herb_bo_he", amount: 1 },
+    ],
+    [
+      { id: "herb_huang_lian", name: "黄连", cold: 3, heat: 0, poison: 1, heal: 2 },
+      { id: "herb_bo_he", name: "薄荷", cold: 2, heat: 0, poison: 0, heal: 1 },
+    ]
+  );
+
+  assert.equal(warmMix.grade, "A");
+  assert.equal(coolMix.grade, "D");
+});
+
+test("medicine compounding expects cooling herbs for inner heat", () => {
+  const coolMix = resolveCompoundingGrade(
+    {
+      ailmentId: "inner_heat",
+      ailmentName: "内热",
+      coldRequired: 2,
+      healRequired: 4,
+      maxPoison: 1,
+    },
+    [
+      { herbId: "herb_huang_lian", amount: 1 },
+      { herbId: "herb_gan_cao", amount: 1 },
+    ],
+    [
+      { id: "herb_huang_lian", name: "黄连", cold: 3, heat: 0, poison: 1, heal: 2 },
+      { id: "herb_gan_cao", name: "甘草", cold: 0, heat: 0, poison: -1, heal: 2 },
+    ]
+  );
+
+  const warmMix = resolveCompoundingGrade(
+    {
+      ailmentId: "inner_heat",
+      ailmentName: "内热",
+      coldRequired: 2,
+      healRequired: 4,
+      maxPoison: 1,
+    },
+    [
+      { herbId: "herb_ai_cao", amount: 1 },
+      { herbId: "herb_sheng_jiang", amount: 1 },
+    ],
+    [
+      { id: "herb_ai_cao", name: "艾草", cold: 0, heat: 2, poison: 0, heal: 1 },
+      { id: "herb_sheng_jiang", name: "生姜", cold: 0, heat: 2, poison: 0, heal: 1 },
+    ]
+  );
+
+  assert.equal(coolMix.grade, "A");
+  assert.equal(warmMix.grade, "D");
 });

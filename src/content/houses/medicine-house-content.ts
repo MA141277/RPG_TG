@@ -78,14 +78,14 @@ export const medicineHouseAilmentTargets: CompoundingSessionTarget[] = [
   {
     ailmentId: "wind_cold",
     ailmentName: "风寒",
-    coldRequired: 2,
+    coldRequired: -2,
     healRequired: 5,
     maxPoison: 1,
   },
   {
     ailmentId: "inner_heat",
     ailmentName: "内热",
-    coldRequired: -2,
+    coldRequired: 2,
     healRequired: 4,
     maxPoison: 1,
   },
