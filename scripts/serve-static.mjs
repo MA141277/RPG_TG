@@ -43,7 +43,7 @@ function readArg(name, fallback) {
   return fallback;
 }
 
-const host = process.env.HOST ?? readArg("host", "127.0.0.1");
+const host = process.env.HOST ?? readArg("host", "0.0.0.0");
 const port = Number(process.env.PORT ?? readArg("port", "8080"));
 const rootArg = process.env.STATIC_ROOT ?? readArg("root", "dist");
 const staticRoot = resolve(projectRoot, rootArg);

@@ -69,7 +69,7 @@ export const sampleCharacters: CharacterDefinition[] = [
       gold: 5000,
     },
     stamina: 92,
-    biography: "织田家的年轻家督，正处于扩张势力的关键阶段。",
+    biography: "织田家的年轻家督，正处于势力扩张的关键阶段。",
     availableFunctions: [
       {
         id: "func.oda.assign_mission",
@@ -127,6 +127,14 @@ export const sampleMission: MissionDefinition = {
   issuerCharacterId: "char.oda_nobunaga",
   statusText: "前往相关城池处理内政与外交。",
   rewardText: "提升名声与家中地位。",
+};
+
+export const sampleTextEntries: Record<string, string> = {
+  "scene.gifu.council_001.001": "主公，请把这个任务交给我吧！",
+  "scene.gifu.council_001.002": "噢？那你就试试看吧，猴子。",
+  "scene.gifu.council_001.prompt": "你要如何回应？",
+  "scene.gifu.council_001.choice.accept": "接受任务",
+  "scene.gifu.council_001.choice.reject": "拒绝并推荐他人",
 };
 
 export const sampleEvent: EventDefinition = {
@@ -195,26 +203,26 @@ export const sampleScene: SceneDefinition = {
       type: "dialogue",
       characterId: "char.kinoshita_tokichiro",
       side: "right",
-      text: "主公，请把这个任务交给我吧！",
+      textId: "scene.gifu.council_001.001",
     },
     {
       type: "dialogue",
       characterId: "char.oda_nobunaga",
       side: "left",
-      text: "噢？那你就试试看吧，猴子。",
+      textId: "scene.gifu.council_001.002",
     },
     {
       type: "choice",
-      prompt: "你要如何回应？",
+      promptTextId: "scene.gifu.council_001.prompt",
       options: [
         {
           id: "choice.accept",
-          label: "接受任务",
+          labelTextId: "scene.gifu.council_001.choice.accept",
           effects: [{ type: "start-mission", missionId: "mission.unify_mino" }],
         },
         {
           id: "choice.reject",
-          label: "拒绝并推荐他人",
+          labelTextId: "scene.gifu.council_001.choice.reject",
         },
       ],
     },

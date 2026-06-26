@@ -4,13 +4,13 @@ import {
   grainShopNpcGreetings,
 } from "../../content/houses/grain-shop-content";
 import { globalGoodsPool } from "../../content/markets/global-goods-pool";
-import { prototypeCities } from "../../content/prototype-world";
 import type { CityDefinition } from "../../domain/city";
 import type { GameState } from "../../domain/game-state";
 import type { ShopInventoryEntry, ShopMarketData } from "../../domain/market";
 import type { TradeGoodDefinition } from "../../domain/trade-good";
 import { assertExists } from "../../shared/assert";
 import { pickRandom } from "../../shared/random";
+import { defaultRuntimeContent } from "../content/default-runtime-content";
 import { ensureShopMarketData } from "../markets/market-refresh-system";
 import { selectCurrentCity } from "../selectors/select-current-city";
 
@@ -70,10 +70,13 @@ export type GrainMarketSnapshot = {
 };
 
 export function ensureCurrentGrainMarket(state: GameState): GrainMarketSnapshot {
-  const cityDefinition = selectCurrentCity(state, prototypeCities);
+  const cityDefinition = selectCurrentCity(
+    state,
+    defaultRuntimeContent.cities
+  );
   assertExists(
     cityDefinition,
-    `Current city "${state.world.currentCityId}" is missing from prototype city content.`
+    `Current city "${state.world.currentCityId}" is missing from active city content.`
   );
 
   const ensuredMarket = ensureShopMarketData(state, cityDefinition, "grain-shop");

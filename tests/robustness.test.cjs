@@ -1,5 +1,7 @@
 ﻿const test = require("node:test");
 const assert = require("node:assert/strict");
+const { fileURLToPath, pathToFileURL } = require("node:url");
+const ts = require("typescript");
 
 const { createInitialState } = require("../.test-dist/application/state/create-initial-state.js");
 const {
@@ -127,6 +129,15 @@ const {
   runSceneUntilPause,
 } = require("../.test-dist/application/scene/scene-runner.js");
 const {
+  createActiveGameContent,
+} = require("../.test-dist/application/content/active-game-content.js");
+const {
+  loadDefaultRuntimeContent,
+} = require("../.test-dist/application/content/default-runtime-content.js");
+const {
+  sampleScene,
+} = require("../.test-dist/content/sample-scenario.js");
+const {
   stopActivityQte,
 } = require("../.test-dist/application/activity/activity-qte-runtime.js");
 const {
@@ -134,6 +145,8 @@ const {
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } = require("../.test-dist/domain/zhu-yuanzhang-story.js");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const playerCharacterId = "char.player";
 const keepHouse = prototypeHouses.find(
@@ -230,6 +243,105 @@ function addTestDays(date, days) {
     day: ((dayOfYear - 1) % 30) + 1,
   };
 }
+
+async function withLocalJsonFileFetch(run) {
+  const originalFetch = global.fetch;
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input.url;
+
+    if (url.startsWith("file:")) {
+      const localPath = fileURLToPath(url);
+      if (!fs.existsSync(localPath)) {
+        return new Response(null, { status: 404 });
+      }
+
+      return new Response(fs.readFileSync(localPath, "utf8"), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
+    return originalFetch(input);
+  };
+
+  try {
+    await run();
+  } finally {
+    global.fetch = originalFetch;
+  }
+}
+
+function loadCurrentViteConfigModule() {
+  const sourceFilePath = path.join(process.cwd(), "vite.config.ts");
+  const sourceText = fs.readFileSync(sourceFilePath, "utf8");
+  const transpiled = ts.transpileModule(sourceText, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+      esModuleInterop: true,
+      verbatimModuleSyntax: false,
+    },
+    fileName: sourceFilePath,
+  });
+  const LoadedModule = module.constructor;
+  const loadedModule = new LoadedModule(sourceFilePath, module);
+
+  loadedModule.filename = sourceFilePath;
+  loadedModule.paths = LoadedModule._nodeModulePaths(path.dirname(sourceFilePath));
+  loadedModule._compile(transpiled.outputText, sourceFilePath);
+
+  return loadedModule.exports;
+}
+
+function collectTypeScriptSourceFiles(rootPath) {
+  const entries = fs.readdirSync(rootPath, { withFileTypes: true });
+
+  return entries.flatMap((entry) => {
+    const entryPath = path.join(rootPath, entry.name);
+
+    if (entry.isDirectory()) {
+      return collectTypeScriptSourceFiles(entryPath);
+    }
+
+    if (entry.isFile() && entry.name.endsWith(".ts")) {
+      return [entryPath];
+    }
+
+    return [];
+  });
+}
+
+function findForbiddenProductionSourceReferences(forbiddenPatterns) {
+  const sourceRoot = path.join(process.cwd(), "src");
+  const sourceFilePaths = collectTypeScriptSourceFiles(sourceRoot);
+
+  return sourceFilePaths.flatMap((filePath) => {
+    const source = fs.readFileSync(filePath, "utf8");
+    const matchedPatterns = forbiddenPatterns.filter((pattern) =>
+      source.includes(pattern)
+    );
+
+    if (matchedPatterns.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        filePath: path.relative(process.cwd(), filePath),
+        matchedPatterns,
+      },
+    ];
+  });
+}
+
+test.before(async () => {
+  await withLocalJsonFileFetch(async () => {
+    await loadDefaultRuntimeContent();
+  });
+});
 
 test("scene start-activity action executes registered fallback activity", () => {
   const state = createBaseState();
@@ -419,6 +531,959 @@ function withPlayerStamina(characterDefinitions, stamina) {
       : characterDefinition
   );
 }
+
+test("active game content indexes pack text entries by id", () => {
+  const content = createActiveGameContent({
+    schemaVersion: 1,
+    id: "pack.test.text",
+    title: "Text pack",
+    textEntries: {
+      "scene.test.line.001": "第一句台词",
+      "scene.test.choice.001": "接受",
+    },
+    scenes: [],
+    events: [],
+    characters: [],
+    cities: [],
+    houses: [],
+    maps: [],
+    cityEntries: [],
+    activities: [],
+    cards: [],
+    valuables: [],
+  });
+
+  assert.equal(content.textEntriesById["scene.test.line.001"], "第一句台词");
+  assert.equal(content.textEntriesById["scene.test.choice.001"], "接受");
+});
+
+test("scene view resolves narration dialogue and choice text through text ids", () => {
+  const {
+    resolveActionNodeText,
+  } = require("../.test-dist/application/content/text-resolution.js");
+
+  const textEntriesById = {
+    "scene.test.prompt": "你要如何回应？",
+    "scene.test.choice.yes": "接受",
+    "scene.test.choice.no": "拒绝",
+  };
+
+  const resolved = resolveActionNodeText(
+    {
+      type: "choice",
+      promptTextId: "scene.test.prompt",
+      options: [
+        { id: "yes", labelTextId: "scene.test.choice.yes" },
+        { id: "no", labelTextId: "scene.test.choice.no" },
+      ],
+    },
+    ({
+      textEntriesById,
+    })
+  );
+
+  assert.equal(resolved.prompt, "你要如何回应？");
+  assert.deepEqual(
+    resolved.options.map((option) => option.label),
+    ["接受", "拒绝"]
+  );
+});
+
+test("sample scenario scene content is migrated to text ids", () => {
+  const dialogueAction = sampleScene.actions.find(
+    (action) => action.type === "dialogue"
+  );
+  const choiceAction = sampleScene.actions.find(
+    (action) => action.type === "choice"
+  );
+
+  assert.ok(dialogueAction);
+  assert.equal(dialogueAction.text, undefined);
+  assert.equal(typeof dialogueAction.textId, "string");
+
+  assert.ok(choiceAction);
+  assert.equal(choiceAction.prompt, undefined);
+  assert.equal(typeof choiceAction.promptTextId, "string");
+  assert.equal(choiceAction.options.every((option) => option.label == null), true);
+  assert.equal(
+    choiceAction.options.every((option) => typeof option.labelTextId === "string"),
+    true
+  );
+});
+
+test("liu bang json scenario pack uses external text entries for scene content", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "liu-bang-pei-county-opening"
+  );
+  const packManifest = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "pack.json"), "utf8")
+  );
+  const scenes = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "scenes.json"), "utf8")
+  );
+  const textEntries = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "text-entries.json"), "utf8")
+  );
+
+  assert.equal(packManifest.files.textEntries, "text-entries.json");
+  assert.equal(
+    scenes.some((scene) =>
+      scene.actions.some(
+        (action) =>
+          (action.type === "narration" || action.type === "dialogue") &&
+          typeof action.textId === "string" &&
+          action.text == null
+      )
+    ),
+    true
+  );
+  assert.equal(
+    scenes.some((scene) =>
+      scene.actions.some(
+        (action) =>
+          action.type === "choice" &&
+          typeof action.promptTextId === "string" &&
+          action.prompt == null &&
+          action.options.every((option) => option.label == null) &&
+          action.options.every((option) => typeof option.labelTextId === "string")
+      )
+    ),
+    true
+  );
+  assert.equal(
+    typeof textEntries["scene.story.liu_bang.pei_county_opening.001"],
+    "string"
+  );
+});
+
+test("zhuyuanzhang scenario pack manifest follows canonical split-table shape", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const packManifest = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "pack.json"), "utf8")
+  );
+
+  assert.equal(packManifest.kind, "scenario-pack");
+  assert.equal(typeof packManifest.files.scenarioProfile, "string");
+  assert.equal(typeof packManifest.files.events, "string");
+  assert.equal(typeof packManifest.files.scenes, "string");
+  assert.equal(typeof packManifest.files.textEntries, "string");
+  assert.equal(typeof packManifest.files.activities, "string");
+
+  [
+    packManifest.files.scenarioProfile,
+    packManifest.files.events,
+    packManifest.files.scenes,
+    packManifest.files.textEntries,
+    packManifest.files.activities,
+  ].forEach((fileName) => {
+    assert.equal(
+      fs.existsSync(path.join(packRoot, fileName)),
+      true,
+      `Expected zhuyuanzhang pack file ${fileName} to exist`
+    );
+  });
+});
+
+test("zhuyuanzhang scenario pack keeps scene text in pack-local text entries", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const scenes = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "scenes.json"), "utf8")
+  );
+  const textEntries = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "text-entries.json"), "utf8")
+  );
+  const scenarioProfile = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "scenario-profile.json"), "utf8")
+  );
+
+  assert.equal(scenarioProfile.id, "scenario.zhu_yuanzhang.monk_opening");
+  assert.equal(
+    scenes.some((scene) =>
+      scene.actions.some(
+        (action) =>
+          (action.type === "narration" || action.type === "dialogue") &&
+          typeof action.textId === "string" &&
+          action.text == null
+      )
+    ),
+    true
+  );
+  assert.equal(
+    typeof textEntries["scene.story.zhu_yuanzhang.ordination.001"],
+    "string"
+  );
+});
+
+test("base game content no longer imports zhuyuanzhang base-content-pack", () => {
+  const sourceRoot = path.join(process.cwd(), "src", "content");
+  const baseGameContentSource = fs.readFileSync(
+    path.join(sourceRoot, "base-game-content-pack.ts"),
+    "utf8"
+  );
+  const scenarioProfilesSource = fs.readFileSync(
+    path.join(sourceRoot, "scenarios", "scenario-profiles.ts"),
+    "utf8"
+  );
+
+  assert.equal(
+    baseGameContentSource.includes(
+      './scenario-packs/zhuyuanzhang/base-content-pack'
+    ),
+    false
+  );
+  assert.equal(
+    scenarioProfilesSource.includes(
+      "../scenario-packs/zhuyuanzhang/base-content-pack"
+    ),
+    false
+  );
+});
+
+test("zhuyuanzhang pack directory has no TypeScript assembly entrypoint", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+
+  assert.equal(fs.existsSync(path.join(packRoot, "base-content-pack.ts")), false);
+});
+
+test(
+  "scenario pack catalog declares default zhuyuanzhang and liu bang manifests",
+  () => {
+    const catalog = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          process.cwd(),
+          "src",
+          "content",
+          "scenario-packs",
+          "catalog.json"
+        ),
+        "utf8"
+      )
+    );
+
+    assert.equal(
+      catalog.some(
+        (entry) => entry.id === "scenario-pack.zhu_yuanzhang.monk_opening"
+      ),
+      true
+    );
+    assert.equal(
+      catalog.some(
+        (entry) => entry.id === "scenario-pack.liu_bang.pei_county_opening"
+      ),
+      true
+    );
+    assert.equal(
+      catalog.find(
+        (entry) => entry.id === "scenario-pack.zhu_yuanzhang.monk_opening"
+      )?.isDefault,
+      true
+    );
+    assert.equal(
+      catalog.every((entry) => entry.scenarioProfile == null),
+      true
+    );
+  }
+);
+
+test(
+  "scenario pack catalog loader resolves default zhuyuanzhang manifest url",
+  async () => {
+    const {
+      parseScenarioPackCatalogText,
+      getDefaultScenarioPackCatalogEntry,
+      resolveScenarioPackSummaries,
+    } = require("../.test-dist/application/content/catalog-loader.js");
+    const catalogPath = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "catalog.json"
+    );
+    const catalogUrl = pathToFileURL(catalogPath).href;
+    const catalogEntries = parseScenarioPackCatalogText(
+      fs.readFileSync(catalogPath, "utf8")
+    );
+    const defaultEntry = getDefaultScenarioPackCatalogEntry(catalogEntries);
+    const summaries = resolveScenarioPackSummaries(catalogEntries, catalogUrl);
+
+    assert.equal(
+      defaultEntry.id,
+      "scenario-pack.zhu_yuanzhang.monk_opening"
+    );
+    assert.equal(summaries[0]?.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+    assert.equal(
+      summaries[0]?.url.endsWith("/src/content/scenario-packs/zhuyuanzhang/pack.json"),
+      true
+    );
+    assert.equal(
+      summaries[1]?.url.endsWith(
+        "/src/content/scenario-packs/liu-bang-pei-county-opening/pack.json"
+      ),
+      true
+    );
+  }
+);
+
+test(
+  "built-in scenario pack summaries use the published /scenario-packs route",
+  () => {
+    const {
+      builtInScenarioPacks,
+    } = require("../.test-dist/content/scenario-packs/scenario-pack-catalog.js");
+
+    assert.equal(
+      builtInScenarioPacks[0]?.url,
+      "/scenario-packs/zhuyuanzhang/pack.json"
+    );
+    assert.equal(
+      builtInScenarioPacks[1]?.url,
+      "/scenario-packs/liu-bang-pei-county-opening/pack.json"
+    );
+  }
+);
+
+test(
+  "scenario profiles source no longer imports zhuyuanzhangScenarioProfile",
+  () => {
+    const source = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "content",
+        "scenarios",
+        "scenario-profiles.ts"
+      ),
+      "utf8"
+    );
+
+    assert.equal(source.includes("zhuyuanzhangScenarioProfile"), false);
+    assert.equal(source.includes("entry.scenarioProfile"), false);
+    assert.equal(source.includes("loadScenarioPackFromUrl"), true);
+    assert.equal(source.includes("qin_shihuang"), false);
+  }
+);
+
+test(
+  "production TypeScript sources contain no zhuyuanzhang pack-private assembly references",
+  () => {
+    const forbiddenReferences = [
+      "scenario-packs/zhuyuanzhang/base-content-pack",
+      "zhuyuanzhangScenarioProfile",
+      "createZhuyuanzhangBaseContentPackCore",
+    ];
+    const offenders = findForbiddenProductionSourceReferences(
+      forbiddenReferences
+    );
+
+    assert.deepEqual(
+      offenders,
+      [],
+      `Expected production sources to avoid pack-private assembly references, found ${JSON.stringify(
+        offenders,
+        null,
+        2
+      )}`
+    );
+  }
+);
+
+test(
+  "scenario profiles load default built-in scenario profile through manifest-driven catalog loading",
+  async () => {
+    const {
+      loadScenarioProfiles,
+    } = require("../.test-dist/content/scenarios/scenario-profiles.js");
+    const scenarioPackRoot = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs"
+    );
+    const originalFetch = global.fetch;
+
+    global.fetch = async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+      const baseUrl = "https://example.test/content/scenario-packs/";
+      const relativePath = url.startsWith(baseUrl)
+        ? url.slice(baseUrl.length)
+        : null;
+
+      assert.notEqual(relativePath, null, `Unexpected fetch url ${url}`);
+      const localPath = path.join(
+        scenarioPackRoot,
+        relativePath.replaceAll("/", path.sep)
+      );
+
+      if (!fs.existsSync(localPath)) {
+        return new Response(null, { status: 404 });
+      }
+
+      return new Response(fs.readFileSync(localPath, "utf8"), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    };
+
+    try {
+      const scenarioProfiles = await loadScenarioProfiles(
+        "https://example.test/content/scenario-packs/catalog.json"
+      );
+
+      assert.equal(
+        scenarioProfiles[0]?.id,
+        "scenario.zhu_yuanzhang.monk_opening"
+      );
+      assert.equal(
+        scenarioProfiles[1]?.id,
+        "scenario.liu_bang.pei_county_opening"
+      );
+      assert.equal(
+        scenarioProfiles.length,
+        2
+      );
+    } finally {
+      global.fetch = originalFetch;
+    }
+  }
+);
+
+test("vite scenario-pack publisher stages zhuyuanzhang manifest content to the browser route", () => {
+  const {
+    publishScenarioPacksToDir,
+    SCENARIO_PACK_PUBLIC_ROOT,
+  } = loadCurrentViteConfigModule();
+  const outputRoot = fs.mkdtempSync(
+    path.join(require("node:os").tmpdir(), "rpg-tg-pack-publish-")
+  );
+
+  publishScenarioPacksToDir(process.cwd(), outputRoot);
+
+  const publishedPackRoot = path.join(
+    outputRoot,
+    SCENARIO_PACK_PUBLIC_ROOT.replace(/^\//, "")
+  );
+
+  assert.equal(
+    fs.existsSync(path.join(publishedPackRoot, "zhuyuanzhang", "pack.json")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(publishedPackRoot, "zhuyuanzhang", "cities.json")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(publishedPackRoot, "zhuyuanzhang", "assets", "maps", "HD.png")),
+    true
+  );
+});
+
+test("base game content pack is sourced from the shared content-pack loader", async () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "base-game-content-pack.ts"),
+    "utf8"
+  );
+
+  assert.equal(
+    source.includes("loadContentPackFromManifestUrl"),
+    true,
+    "Expected base-game-content-pack.ts to delegate to the shared loader."
+  );
+  assert.equal(
+    source.includes("scenario-packs/zhuyuanzhang/pack.json"),
+    true,
+    "Expected base-game-content-pack.ts to load the fixed zhuyuanzhang manifest path."
+  );
+  assert.equal(
+    source.includes("/scenario-packs/zhuyuanzhang/pack.json"),
+    true,
+    "Expected the browser runtime to fetch the published scenario-pack route."
+  );
+  assert.equal(
+    source.includes("/src/content/scenario-packs/zhuyuanzhang/pack.json"),
+    false,
+    "Expected the browser runtime to stop fetching the source-tree path directly."
+  );
+  assert.equal(
+    source.includes('scenario-packs/zhuyuanzhang/characters.json'),
+    false,
+    "Expected base-game-content-pack.ts to stop importing split tables directly."
+  );
+
+  const {
+    createBaseGameContentPack,
+  } = require("../.test-dist/content/base-game-content-pack.js");
+
+  await withLocalJsonFileFetch(async () => {
+    const pack = await createBaseGameContentPack();
+
+    assert.equal(pack.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+    assert.equal(pack.characters.some((character) => character.id === "char.player"), true);
+    assert.equal(
+      pack.historicalCharacters.some(
+        (character) => character.id === "zyz.character.zhu_yuanzhang"
+      ),
+      true
+    );
+    assert.equal(
+      pack.historicalCharacterIdByCharacterId["char.yuanmo.zhu_yuanzhang"],
+      "zyz.character.zhu_yuanzhang"
+    );
+    assert.equal(pack.cityNpcPools.some((pool) => pool.cityId === "city.kulan"), true);
+    assert.equal(
+      pack.houseAccessRefusalRules.some(
+        (rule) => rule.id === "rule.zhu_yuanzhang.temple.first_review_stay"
+      ),
+      true
+    );
+  });
+});
+
+test("zhuyuanzhang scenario pack manifest includes pack-local city and access tables", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const packManifest = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "pack.json"), "utf8")
+  );
+
+  assert.equal(typeof packManifest.files.cityEntries, "string");
+  assert.equal(typeof packManifest.files.cityNpcPools, "string");
+  assert.equal(typeof packManifest.files.houseAccessRefusalRules, "string");
+  assert.equal(typeof packManifest.files.cityPortraits, "string");
+
+  [
+    packManifest.files.cityEntries,
+    packManifest.files.cityNpcPools,
+    packManifest.files.houseAccessRefusalRules,
+    packManifest.files.cityPortraits,
+  ].forEach((fileName) => {
+    assert.equal(
+      fs.existsSync(path.join(packRoot, fileName)),
+      true,
+      `Expected zhuyuanzhang pack file ${fileName} to exist`
+    );
+  });
+});
+
+test("zhuyuanzhang pack-local city and access tables contain kulan content", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const cityEntries = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "city-entries.json"), "utf8")
+  );
+  const cityNpcPools = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "city-npc-pools.json"), "utf8")
+  );
+  const houseAccessRefusalRules = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "house-access-refusal-rules.json"), "utf8")
+  );
+  const cityPortraits = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "city-portraits.json"), "utf8")
+  );
+
+  assert.equal(
+    cityEntries.some((entry) => entry.id === "city-entry.kulan.leader-residence"),
+    true
+  );
+  assert.equal(
+    cityNpcPools.some((pool) => pool.cityId === "city.kulan" && pool.residents.length > 0),
+    true
+  );
+  assert.equal(
+    houseAccessRefusalRules.some(
+      (rule) => rule.id === "rule.zhu_yuanzhang.temple.first_review_stay"
+    ),
+    true
+  );
+  assert.equal(cityPortraits["city.kulan"] != null, true);
+});
+
+test("zhuyuanzhang pack manifest includes historical split tables", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const packManifest = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "pack.json"), "utf8")
+  );
+
+  assert.equal(
+    packManifest.files.historicalCharacters,
+    "historical-characters.json"
+  );
+  assert.equal(
+    packManifest.files.historicalCityRosters,
+    "historical-city-rosters.json"
+  );
+  assert.equal(
+    packManifest.files.historicalCharacterIdByCharacterId,
+    "historical-character-id-map.json"
+  );
+});
+
+test("zhuyuanzhang pack-local historical tables contain zhu yuanzhang records", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const historicalCharacters = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "historical-characters.json"), "utf8")
+  );
+  const historicalCityRosters = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "historical-city-rosters.json"), "utf8")
+  );
+  const historicalCharacterIdByCharacterId = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "historical-character-id-map.json"), "utf8")
+  );
+  const historicalCharacterIds = new Set(
+    historicalCharacters.map((characterRecord) => characterRecord.id)
+  );
+  const fenyangRoster = historicalCityRosters.find(
+    (rosterRecord) => rosterRecord.cityNodeId === "settlement.fenyang_province"
+  );
+  const mappedZhuYuanzhangId =
+    historicalCharacterIdByCharacterId["char.yuanmo.zhu_yuanzhang"];
+
+  assert.equal(
+    historicalCharacters.some(
+      (characterRecord) => characterRecord.id === "zyz.character.zhu_yuanzhang"
+    ),
+    true
+  );
+  assert.ok(fenyangRoster);
+  assert.equal("cityId" in fenyangRoster, false);
+  assert.equal(
+    [
+      ...fenyangRoster.primaryCharacterIds,
+      ...fenyangRoster.secondaryCharacterIds,
+      ...fenyangRoster.backgroundCharacterIds,
+    ].includes("zyz.character.zhu_yuanzhang"),
+    true
+  );
+  assert.equal(
+    [
+      ...fenyangRoster.primaryCharacterIds,
+      ...fenyangRoster.secondaryCharacterIds,
+      ...fenyangRoster.backgroundCharacterIds,
+    ].every((characterId) => historicalCharacterIds.has(characterId)),
+    true
+  );
+  assert.equal(
+    typeof mappedZhuYuanzhangId,
+    "string"
+  );
+  assert.equal(historicalCharacterIds.has(mappedZhuYuanzhangId), true);
+});
+
+test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const maps = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "maps.json"), "utf8")
+  );
+  const yuanmoCampaignMap = maps.find((map) => map.id === "map.yuanmo_campaign");
+
+  assert.ok(yuanmoCampaignMap);
+  assert.equal("primaryImageAssetId" in yuanmoCampaignMap, false);
+  assert.equal("regionOverlayImageAssetId" in yuanmoCampaignMap, false);
+  assert.equal(yuanmoCampaignMap.primaryImageUrl, "./assets/maps/HD.png");
+  assert.equal(
+    yuanmoCampaignMap.regionOverlayImageUrl,
+    "./assets/maps/yuanmo-map-regions.png"
+  );
+  assert.equal(
+    yuanmoCampaignMap.layers.every((layer) => typeof layer.imageUrl === "string"),
+    true
+  );
+  assert.equal(
+    yuanmoCampaignMap.layers.every((layer) => layer.imageUrl.startsWith("./assets/maps/")),
+    true
+  );
+  assert.equal(
+    yuanmoCampaignMap.layers.some((layer) => "imageAssetId" in layer),
+    false
+  );
+
+  [
+    yuanmoCampaignMap.primaryImageUrl,
+    yuanmoCampaignMap.regionOverlayImageUrl,
+    ...yuanmoCampaignMap.layers.map((layer) => layer.imageUrl),
+  ].forEach((relativeAssetUrl) => {
+    const assetPath = path.join(
+      packRoot,
+      relativeAssetUrl.replaceAll("/", path.sep)
+    );
+
+    assert.equal(
+      fs.existsSync(assetPath),
+      true,
+      `Expected zhuyuanzhang map asset ${relativeAssetUrl} to exist`
+    );
+  });
+});
+
+test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
+  const {
+    loadContentPackFromManifestText,
+  } = require("../.test-dist/application/content/content-pack-loader.js");
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const manifestText = fs.readFileSync(path.join(packRoot, "pack.json"), "utf8");
+  const manifestUrl =
+    "https://example.test/content/scenario-packs/zhuyuanzhang/pack.json";
+  const packBaseUrl =
+    "https://example.test/content/scenario-packs/zhuyuanzhang/";
+  const originalFetch = global.fetch;
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input.url;
+    const relativePath = url.startsWith(packBaseUrl)
+      ? url.slice(packBaseUrl.length)
+      : null;
+
+    assert.notEqual(relativePath, null, `Unexpected fetch url ${url}`);
+    const localPath = path.join(packRoot, relativePath.replaceAll("/", path.sep));
+
+    if (!fs.existsSync(localPath)) {
+      return new Response(null, { status: 404 });
+    }
+
+    return new Response(fs.readFileSync(localPath, "utf8"), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  };
+
+  try {
+    const pack = await loadContentPackFromManifestText(manifestText, manifestUrl);
+    const yuanmoCampaignMap = pack.maps.find(
+      (map) => map.id === "map.yuanmo_campaign"
+    );
+
+    assert.equal(pack.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+    assert.ok(yuanmoCampaignMap);
+    assert.equal(
+      yuanmoCampaignMap.primaryImageUrl,
+      `${packBaseUrl}assets/maps/HD.png`
+    );
+    assert.equal(
+      yuanmoCampaignMap.regionOverlayImageUrl,
+      `${packBaseUrl}assets/maps/yuanmo-map-regions.png`
+    );
+    assert.equal(
+      yuanmoCampaignMap.layers.every((layer) =>
+        layer.imageUrl.startsWith(`${packBaseUrl}assets/maps/`)
+      ),
+      true
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test(
+  "scenario pack loader resolves zhuyuanzhang manifest map asset urls on the real startup path",
+  async () => {
+    const {
+      loadScenarioPackFromUrl,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const packRoot = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang"
+    );
+    const manifestUrl =
+      "https://example.test/content/scenario-packs/zhuyuanzhang/pack.json";
+    const packBaseUrl =
+      "https://example.test/content/scenario-packs/zhuyuanzhang/";
+    const originalFetch = global.fetch;
+
+    global.fetch = async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+      const relativePath = url.startsWith(packBaseUrl)
+        ? url.slice(packBaseUrl.length)
+        : null;
+
+      assert.notEqual(relativePath, null, `Unexpected fetch url ${url}`);
+      const localPath = path.join(packRoot, relativePath.replaceAll("/", path.sep));
+
+      if (!fs.existsSync(localPath)) {
+        return new Response(null, { status: 404 });
+      }
+
+      return new Response(fs.readFileSync(localPath, "utf8"), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    };
+
+    try {
+      const pack = await loadScenarioPackFromUrl(manifestUrl);
+      const yuanmoCampaignMap = pack.maps.find(
+        (map) => map.id === "map.yuanmo_campaign"
+      );
+
+      assert.ok(yuanmoCampaignMap);
+      assert.equal(
+        yuanmoCampaignMap.primaryImageUrl,
+        `${packBaseUrl}assets/maps/HD.png`
+      );
+      assert.equal(
+        yuanmoCampaignMap.regionOverlayImageUrl,
+        `${packBaseUrl}assets/maps/yuanmo-map-regions.png`
+      );
+      assert.equal(
+        yuanmoCampaignMap.layers.every((layer) =>
+          layer.imageUrl.startsWith(`${packBaseUrl}assets/maps/`)
+        ),
+        true
+      );
+    } finally {
+      global.fetch = originalFetch;
+    }
+  }
+);
+
+test("pack-derived runtime consumers no longer import prototype-world directly", () => {
+  const sourceFiles = [
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "grain-shop",
+      "grain-market.ts"
+    ),
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "market-house",
+      "market-house-house-module.ts"
+    ),
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "tea-house",
+      "tea-house-house-module.ts"
+    ),
+    path.join(process.cwd(), "src", "content", "city-scene-mappings.ts"),
+  ];
+
+  sourceFiles.forEach((filePath) => {
+    const source = fs.readFileSync(filePath, "utf8");
+    assert.equal(
+      source.includes("prototype-world"),
+      false,
+      `Expected ${path.relative(process.cwd(), filePath)} to stop importing prototype-world directly.`
+    );
+  });
+});
+
+test("default runtime content loads from the shared base content pack path", async () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "content",
+      "default-runtime-content.ts"
+    ),
+    "utf8"
+  );
+
+  assert.equal(
+    source.includes("scenario-packs/zhuyuanzhang/cities.json"),
+    false,
+    "Expected default-runtime-content.ts to stop importing pack JSON tables directly."
+  );
+
+  const {
+    defaultRuntimeContent,
+    loadDefaultRuntimeContent,
+  } = require("../.test-dist/application/content/default-runtime-content.js");
+
+  assert.equal(typeof loadDefaultRuntimeContent, "function");
+
+  await withLocalJsonFileFetch(async () => {
+    const content = await loadDefaultRuntimeContent();
+
+    assert.equal(content, defaultRuntimeContent);
+    assert.equal(
+      defaultRuntimeContent.cities.some((city) => city.id === "city.kulan"),
+      true
+    );
+    assert.equal(
+      defaultRuntimeContent.houses.some(
+        (house) => house.id === "house.kulan.market"
+      ),
+      true
+    );
+    assert.equal(
+      defaultRuntimeContent.cityNpcPools.some((pool) => pool.cityId === "city.kulan"),
+      true
+    );
+  });
+});
 
 test("grain trade succeeds for a valid buy and advances runtime state", () => {
   const state = createStateWithGrainVariables();

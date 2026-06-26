@@ -6,7 +6,7 @@ import type {
   Hd2degAssetRef,
 } from "../domain/city-scene-mapping";
 import type { HouseDefinition } from "../domain/house";
-import { prototypeCities, prototypeHouses } from "./prototype-world";
+import { defaultRuntimeContent } from "../application/content/default-runtime-content";
 
 const HD2DEG_SCENE_VERSION = "2026060107";
 
@@ -161,7 +161,7 @@ function createNpcMappings(
 function createCitySceneMapping(cityDefinition: CityDefinition): CitySceneMapping {
   const sceneId = getSceneIdForCity(cityDefinition.id);
   const cityHouseIdSet = new Set(cityDefinition.houseIds);
-  const houseDefinitions = prototypeHouses.filter(
+  const houseDefinitions = defaultRuntimeContent.houses.filter(
     (houseDefinition) =>
       houseDefinition.cityId === cityDefinition.id ||
       cityHouseIdSet.has(houseDefinition.id)
@@ -179,10 +179,15 @@ function createCitySceneMapping(cityDefinition: CityDefinition): CitySceneMappin
   };
 }
 
-export const zhuYuanzhangCitySceneMappings: CitySceneMapping[] =
-  prototypeCities.map(createCitySceneMapping);
+export function getZhuYuanzhangCitySceneMappings(): CitySceneMapping[] {
+  return defaultRuntimeContent.cities.map(createCitySceneMapping);
+}
 
-export const zhuYuanzhangCitySceneMappingByCityId: Record<string, CitySceneMapping> =
-  Object.fromEntries(
-    zhuYuanzhangCitySceneMappings.map((mapping) => [mapping.cityId, mapping])
+export function getZhuYuanzhangCitySceneMappingByCityId(): Record<
+  string,
+  CitySceneMapping
+> {
+  return Object.fromEntries(
+    getZhuYuanzhangCitySceneMappings().map((mapping) => [mapping.cityId, mapping])
   );
+}

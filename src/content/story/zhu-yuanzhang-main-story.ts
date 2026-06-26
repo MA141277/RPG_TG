@@ -234,41 +234,41 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
       },
       {
         type: "narration",
-        text: "濠州城外荒烟未散，皇觉寺山门前却还留着一线香火。朱重八被领进院中，站在石阶下，听着木鱼声一下一下敲进暮色里。",
+        textId: "scene.story.zhu_yuanzhang.ordination.001",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_temple_senior_monk",
         side: "left",
-        text: "低头些。剃了发，入了门，从今往后便算佛门里的人。",
+        textId: "scene.story.zhu_yuanzhang.ordination.002",
       },
       {
         type: "narration",
-        text: "刀锋贴着头皮走过，断发簌簌落地。待师兄持香轻轻触到朱重八头顶，那一点火星竟倏地熄了。",
+        textId: "scene.story.zhu_yuanzhang.ordination.003",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_temple_senior_monk",
         side: "left",
-        text: "怪了，香才碰到你头顶，竟自己灭了。",
+        textId: "scene.story.zhu_yuanzhang.ordination.004",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_temple_senior_monk",
         side: "left",
-        text: "此人定是孽缘深重，不应久留寺中。",
+        textId: "scene.story.zhu_yuanzhang.ordination.005",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_temple_senior_monk",
         side: "left",
-        text: "若真留下来，寺里本就不多的口粮，怕是又要分出去一份……",
+        textId: "scene.story.zhu_yuanzhang.ordination.006",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_temple_abbot",
         side: "right",
-        text: "乱年逐人出门，也是罪过。罢了，你就先留在寺里帮工，能活一日是一日。",
+        textId: "scene.story.zhu_yuanzhang.ordination.007",
       },
       {
         type: "effect",
@@ -357,13 +357,13 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
         type: "dialogue",
         characterId: "char.kulan_temple_abbot",
         side: "left",
-        text: "往后这段时日，寺里的方针只有一条，先维持住寺院。",
+        textId: "scene.story.zhu_yuanzhang.first_temple_review.001",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_temple_abbot",
         side: "left",
-        text: "你初来乍到，第一周不许乱走，只准在寺内帮忙。",
+        textId: "scene.story.zhu_yuanzhang.first_temple_review.002",
       },
       {
         type: "effect",
@@ -394,13 +394,13 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
         type: "dialogue",
         characterId: "char.kulan_temple_abbot",
         side: "left",
-        text: "你这一个月来倒算踏实，杂活虽苦，竟也都做下来了。",
+        textId: "scene.story.zhu_yuanzhang.unlock_begging.001",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_temple_abbot",
         side: "left",
-        text: "再下一轮评定，不必只困在院中。准你外出化缘，也替寺里，替自己寻口活路。",
+        textId: "scene.story.zhu_yuanzhang.unlock_begging.002",
       },
       {
         type: "effect",
@@ -425,19 +425,19 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
     actions: [
       {
         type: "narration",
-        text: "你背着旧布袋踏进颍州城门，只见街上行人挤得发闷，粮铺门前和施粥棚下都排着长队，叫卖声、哭喊声、议论声混成一片。",
+        textId: "scene.story.zhu_yuanzhang.runing_broadcast.001",
       },
       {
         type: "narration",
-        text: "有人在街口高声招呼，说汝颍之间近来聚众愈多，红巾号子一传十、十传百；也有人低声提起韩林儿的名字，说北路还有施粮活民的地方。",
+        textId: "scene.story.zhu_yuanzhang.runing_broadcast.002",
       },
       {
         type: "narration",
-        text: "茶棚边又有商旅压低嗓子议论：濠州近来也起了兵气，郭子兴已经聚起一股人马，城门盘查只会越来越紧。",
+        textId: "scene.story.zhu_yuanzhang.runing_broadcast.003",
       },
       {
         type: "narration",
-        text: "你把这些风声都听进耳里，却没忘住持交代的本分。此行先求粮，先把能带回寺里的活路背稳。",
+        textId: "scene.story.zhu_yuanzhang.runing_broadcast.004",
       },
     ],
   },
@@ -447,7 +447,7 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
     actions: [
       {
         type: "narration",
-        text: "你自外路折返，布袋里压着几把零碎米粮。离濠州尚有一程时，路旁枯林里忽然窜出数名持棍短刃的盗伙，见你背袋鼓起，便喝骂着扑了上来。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.001",
       },
       {
         type: "callback",
@@ -465,57 +465,57 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
       },
       {
         type: "narration",
-        text: "你贴着土路边石连退两步，趁那带头贼扑空的当口夺棍回扫，几下便把人打散。余众见势不对，骂了两句，拖着伤者钻回荒草深处。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.002",
       },
       {
         type: "narration",
-        text: "再往前走，城门方向已尽是红巾号衣与临时木栅。濠州显然已不是你离寺前的濠州，巡哨比商旅还多，问路的人个个先看你包里背的是什么。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.003",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_soldier",
         side: "left",
-        text: "站住。你这和尚是从哪一路回来的？北边口音杂、行装也杂，莫不是替人探路的？",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.004",
       },
       {
         type: "dialogue",
         characterId: "char.player",
         side: "right",
-        text: "我自外路化缘回来，只想入城换口热汤，再寻处歇脚。袋里不过几把米，没替谁探什么路。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.005",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_soldier",
         side: "left",
-        text: "外路才乱成这样，你一个挂单僧偏能从那边全身回来，还带着粮？先押去见元帅，是真是假，自有人断。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.006",
       },
       {
         type: "narration",
-        text: "几名军卒把你连人带袋押进营前。帐下火光映得兵器发白，众人七嘴八舌，都说北路近来探子最多，这和尚来得太巧，宁可信其有，不可信其无。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.007",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_lord",
         side: "left",
-        text: "你自哪来？门下军士说你像个谍子。可我看你一路风尘未定，倒不像专替元军递话的人。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.008",
       },
       {
         type: "dialogue",
         characterId: "char.player",
         side: "right",
-        text: "我是钟离人，早年在皇觉寺挂单。如今世道逼人，只得四处化缘求活。若真是谍子，先前路上也不必为几把米和盗伙拼命。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.009",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_lord",
         side: "left",
-        text: "门者疑你为谍，本也不算无由。可你人既敢回濠州，话又说得直，倒像个肯担事的。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.010",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_lord",
         side: "left",
-        text: "这样罢，先不放你走，也不杀你。把人留在我左右，从亲兵和粮道杂务做起。若真有别心，迟早露出来；若没有，便算我帐下多一个能用的人。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.011",
       },
       {
         type: "callback",
@@ -525,19 +525,19 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
         type: "dialogue",
         characterId: "char.kulan_lord",
         side: "left",
-        text: "既入我营，便先跟着走一遭。孙德崖一队在前路被元军三面围住，我带诸队去解围，你只管领自己的小队抢住南侧缺口。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.012",
       },
       {
         type: "dialogue",
         characterId: "char.player",
         side: "right",
-        text: "我只是新入营的亲兵，也能领一队上前？",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.013",
       },
       {
         type: "dialogue",
         characterId: "char.kulan_lord",
         side: "left",
-        text: "只领你这一队。汤和、徐达自有他们的路数，其余诸队也有人调度。你能把本队带稳，便算立住了第一件军功。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.014",
       },
       {
         type: "callback",
@@ -553,7 +553,7 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
       },
       {
         type: "narration",
-        text: "战后诸队回到帅府听候评定。你低头应下，心里却明白，自此再不能只把自己当作寺中挂单的和尚。濠州兵气扑面而来，你已被卷进郭子兴军中，再退不得了。",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.015",
       },
     ],
   },

@@ -11,7 +11,10 @@
     "src/application/**/*.ts",
     "src/domain/**/*.ts",
     "src/shared/**/*.ts",
+    "src/types/**/*.d.ts",
     "src/content/prototype-world.ts",
+    "src/content/scenarios/**/*.ts",
+    "src/content/scenario-packs/scenario-pack-catalog.ts",
     "src/content/houses/**/*.ts",
     "src/content/markets/**/*.ts"
   ],

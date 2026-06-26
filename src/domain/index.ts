@@ -6,6 +6,7 @@ export * from "./character";
 export * from "./city";
 export * from "./city-entry";
 export * from "./city-npc";
+export * from "./content-pack";
 export * from "./event";
 export * from "./game-state";
 export * from "./global-ui";

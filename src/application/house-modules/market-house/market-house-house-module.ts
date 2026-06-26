@@ -10,7 +10,6 @@ import {
   type MarketHouseActorContent,
 } from "../../../content/houses/market-house-content";
 import { globalGoodsPool } from "../../../content/markets/global-goods-pool";
-import { prototypeCities } from "../../../content/prototype-world";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CityDefinition } from "../../../domain/city";
 import type { HouseDefinition } from "../../../domain/house";
@@ -46,6 +45,7 @@ import type {
 } from "../../../domain/trade-good";
 import { assertExists } from "../../../shared/assert";
 import { pickRandom, randomInt } from "../../../shared/random";
+import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { ensureShopMarketData, readShopMarketData } from "../../markets/market-refresh-system";
 import { createInitialMarketHouseSessionState } from "./market-house-session-state";
 
@@ -109,7 +109,9 @@ function getPlayerCharacter(
 }
 
 function getCityDefinition(cityId: string): CityDefinition {
-  const cityDefinition = prototypeCities.find((candidateCity) => candidateCity.id === cityId);
+  const cityDefinition = defaultRuntimeContent.cities.find(
+    (candidateCity) => candidateCity.id === cityId
+  );
   assertExists(cityDefinition, `City definition missing for id "${cityId}" in market house module.`);
   return cityDefinition;
 }

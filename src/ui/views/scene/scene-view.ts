@@ -1,6 +1,10 @@
 import type { ActionNode, ChoiceOption } from "../../../domain/action";
 import type { ActiveActivitySession } from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
+import {
+  resolveActionNodeText,
+  resolveChoiceOptionText,
+} from "../../../application/content/text-resolution";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
 type SceneViewInput = {
@@ -8,6 +12,7 @@ type SceneViewInput = {
   activitySession: ActiveActivitySession;
   characterDefinitions: CharacterDefinition[];
   choiceOptions: ChoiceOption[];
+  textEntriesById?: Record<string, string>;
 };
 
 function getScenePortraitArtClassName(characterId: string): string {
@@ -171,7 +176,14 @@ function renderActivityOverlay(activitySession: ActiveActivitySession): string {
 }
 
 export function renderSceneView(input: SceneViewInput): string {
-  const action = input.currentAction;
+  const textEntriesById = input.textEntriesById ?? {};
+  const action =
+    input.currentAction == null
+      ? null
+      : resolveActionNodeText(input.currentAction, { textEntriesById });
+  const resolvedChoiceOptions = input.choiceOptions.map((option) =>
+    resolveChoiceOptionText(option, { textEntriesById })
+  );
   const activityOverlay = renderActivityOverlay(input.activitySession);
   if (action == null) {
     return activityOverlay;
@@ -180,7 +192,7 @@ export function renderSceneView(input: SceneViewInput): string {
   if (action.type === "narration") {
     return `
       <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="narration">
-        ${renderSceneDialogueCard([action.text], {
+        ${renderSceneDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
           narration: true,
         })}
@@ -199,7 +211,7 @@ export function renderSceneView(input: SceneViewInput): string {
 
     return `
       <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="dialogue">
-        ${renderSceneDialogueCard([action.text], {
+        ${renderSceneDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
           speakerName:
             speaker?.name ??
@@ -225,7 +237,7 @@ export function renderSceneView(input: SceneViewInput): string {
           [action.prompt ?? "你要如何回应？"],
           { narration: true }
         )}
-        ${renderChoiceList(input.choiceOptions)}
+        ${renderChoiceList(resolvedChoiceOptions)}
       </section>
       ${activityOverlay}
     `;

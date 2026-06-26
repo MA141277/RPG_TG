@@ -3,7 +3,6 @@ import {
   teaHouseLowIntelChance,
   teaHouseTeaCost,
 } from "../../../content/houses/tea-house-content";
-import { prototypeCityNpcPools } from "../../../content/prototype-world";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
@@ -28,6 +27,7 @@ import {
 } from "../../../domain/tea-house";
 import { assertExists } from "../../../shared/assert";
 import { pickRandom } from "../../../shared/random";
+import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { sampleCityNpcIdsForLocation } from "../../city-npcs/city-npc-pool-state";
 import {
   createTeaHouseBossActor,
@@ -188,7 +188,7 @@ function createTeaHouseActors(
       ? []
       : createTeaHouseGuestActors(
           gameState,
-          prototypeCityNpcPools,
+          defaultRuntimeContent.cityNpcPools,
           cityId,
           sessionState.guestNpcIds
         );
@@ -984,7 +984,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
   enter(input) {
     const guestNpcIds = sampleCityNpcIdsForLocation(
       input.gameState,
-      prototypeCityNpcPools,
+      defaultRuntimeContent.cityNpcPools,
       input.houseDefinition.cityId,
       "tea-house",
       MAX_TEA_HOUSE_GUESTS

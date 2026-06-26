@@ -65,6 +65,7 @@ export type AppRenderInput = {
   cityNameById: Record<string, string>;
   houseNameById: Record<string, string>;
   characterNameById: Record<string, string>;
+  textEntriesById?: Record<string, string>;
   cityPortraits: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   historicalCharacters?: HistoricalCharacterRecord[];
@@ -498,6 +499,9 @@ function renderStage(
       activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
       choiceOptions: input.currentSceneChoiceOptions ?? [],
+      ...(input.textEntriesById == null
+        ? {}
+        : { textEntriesById: input.textEntriesById }),
     });
   }
 

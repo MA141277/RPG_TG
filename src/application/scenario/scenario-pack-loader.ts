@@ -1,3 +1,4 @@
+import { resolveContentPackMapAssetUrls } from "../content/content-pack-loader";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 
 export async function loadScenarioPackFromUrl(
@@ -8,7 +9,12 @@ export async function loadScenarioPackFromUrl(
     throw new Error(`Failed to load scenario pack: ${response.status}`);
   }
 
-  return parseScenarioPack(await response.json());
+  const rawPack = await response.json();
+  if (isScenarioPackManifest(rawPack)) {
+    return parseScenarioPack(await hydrateScenarioPackManifest(rawPack, url));
+  }
+
+  return parseScenarioPack(rawPack);
 }
 
 export function parseScenarioPackText(text: string): ScenarioPackDefinition {
@@ -43,14 +49,135 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.houses != null) {
     assertArray(value.houses, "scenario houses");
   }
+  if (value.maps != null) {
+    assertArray(value.maps, "scenario maps");
+  }
+  if (value.cityEntries != null) {
+    assertArray(value.cityEntries, "scenario city entries");
+  }
   assertArray(value.events, "scenario events");
   assertArray(value.scenes, "scenario scenes");
 
   if (value.activities != null) {
     assertArray(value.activities, "scenario activities");
   }
+  if (value.cards != null) {
+    assertArray(value.cards, "scenario cards");
+  }
+  if (value.valuables != null) {
+    assertArray(value.valuables, "scenario valuables");
+  }
+  if (value.cityNpcPools != null) {
+    assertArray(value.cityNpcPools, "scenario city npc pools");
+  }
+  if (value.houseAccessRefusalRules != null) {
+    assertArray(value.houseAccessRefusalRules, "scenario house access refusal rules");
+  }
+  if (value.historicalCharacters != null) {
+    assertArray(value.historicalCharacters, "scenario historical characters");
+  }
+  if (value.historicalCityRosters != null) {
+    assertArray(value.historicalCityRosters, "scenario historical city rosters");
+  }
+  if (value.cityPortraits != null) {
+    assertObject(value.cityPortraits, "scenario city portraits");
+  }
+  if (value.textEntries != null) {
+    assertObject(value.textEntries, "scenario text entries");
+  }
+  if (value.historicalCharacterIdByCharacterId != null) {
+    assertObject(
+      value.historicalCharacterIdByCharacterId,
+      "scenario historical character mapping"
+    );
+  }
 
   return value as ScenarioPackDefinition;
+}
+
+type ScenarioPackManifestFiles = {
+  scenarioProfile: string;
+  characters: string;
+  events: string;
+  scenes: string;
+  cities?: string;
+  houses?: string;
+  maps?: string;
+  cityEntries?: string;
+  textEntries?: string;
+  activities?: string;
+  cards?: string;
+  valuables?: string;
+  cityNpcPools?: string;
+  houseAccessRefusalRules?: string;
+  historicalCharacters?: string;
+  historicalCityRosters?: string;
+  cityPortraits?: string;
+  historicalCharacterIdByCharacterId?: string;
+};
+
+type ScenarioPackManifest = {
+  schemaVersion: 1;
+  kind?: "scenario-pack";
+  id: string;
+  title: string;
+  description?: string;
+  files: ScenarioPackManifestFiles;
+};
+
+async function hydrateScenarioPackManifest(
+  manifest: ScenarioPackManifest,
+  manifestUrl: string
+): Promise<unknown> {
+  const fileEntries = Object.entries(manifest.files);
+  const resolvedEntries = await Promise.all(
+    fileEntries.map(async ([key, relativePath]) => {
+      const response = await fetch(new URL(relativePath, manifestUrl).href);
+      if (!response.ok) {
+        throw new Error(`Failed to load scenario pack file "${key}": ${response.status}`);
+      }
+
+      return [key, await response.json()] as const;
+    })
+  );
+
+  const hydratedFields = Object.fromEntries(resolvedEntries);
+  const resolvedMaps = resolveContentPackMapAssetUrls(
+    hydratedFields.maps,
+    manifestUrl
+  );
+
+  return {
+    schemaVersion: manifest.schemaVersion,
+    id: manifest.id,
+    title: manifest.title,
+    ...(manifest.description == null ? {} : { description: manifest.description }),
+    ...hydratedFields,
+    ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
+  };
+}
+
+function isScenarioPackManifest(value: unknown): value is ScenarioPackManifest {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  if (candidate.files == null || typeof candidate.files !== "object" || Array.isArray(candidate.files)) {
+    return false;
+  }
+
+  if (typeof candidate.id !== "string" || typeof candidate.title !== "string") {
+    return false;
+  }
+
+  const files = candidate.files as Record<string, unknown>;
+  return (
+    typeof files.scenarioProfile === "string" &&
+    typeof files.characters === "string" &&
+    typeof files.events === "string" &&
+    typeof files.scenes === "string"
+  );
 }
 
 function assertObject(

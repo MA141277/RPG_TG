@@ -37,7 +37,8 @@ export type Effect =
 
 export type ChoiceOption = {
   id: ChoiceId;
-  label: string;
+  label?: string;
+  labelTextId?: string;
   nextSceneId?: SceneId;
   nextEventId?: EventId;
   effects?: Effect[];
@@ -56,18 +57,21 @@ export type ActionNode =
     }
   | {
       type: "narration";
-      text: string;
+      text?: string;
+      textId?: string;
     }
   | {
       type: "dialogue";
       characterId: CharacterId;
       side: DialogueSide;
-      text: string;
+      text?: string;
+      textId?: string;
       portraitId?: string;
     }
   | {
       type: "choice";
       prompt?: string;
+      promptTextId?: string;
       options: ChoiceOption[];
     }
   | {

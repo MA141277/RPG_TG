@@ -1,0 +1,39 @@
+import type { SceneDefinition } from "./action";
+import type { ActivityDefinition } from "./activity";
+import type { CardDefinition } from "./card";
+import type { CharacterDefinition } from "./character";
+import type { CityDefinition } from "./city";
+import type { CityEntryDefinition } from "./city-entry";
+import type { CityNpcPoolDefinition } from "./city-npc";
+import type { EventDefinition } from "./event";
+import type {
+  HistoricalCharacterRecord,
+  HistoricalCityRoster,
+} from "./historical-character";
+import type { HouseDefinition, HouseAccessRefusalRule } from "./house";
+import type { MapDefinition } from "./map";
+import type { ValuableItemDefinition } from "./valuable-item";
+
+export type ContentPackDefinition = {
+  schemaVersion: 1;
+  id: string;
+  title: string;
+  description?: string;
+  textEntries?: Record<string, string>;
+  maps?: MapDefinition[];
+  cities?: CityDefinition[];
+  houses?: HouseDefinition[];
+  cityEntries?: CityEntryDefinition[];
+  characters?: CharacterDefinition[];
+  events?: EventDefinition[];
+  scenes?: SceneDefinition[];
+  activities?: ActivityDefinition[];
+  cards?: CardDefinition[];
+  valuables?: ValuableItemDefinition[];
+  cityNpcPools?: CityNpcPoolDefinition[];
+  houseAccessRefusalRules?: HouseAccessRefusalRule[];
+  cityPortraits?: Record<string, string>;
+  historicalCharacterIdByCharacterId?: Record<string, string>;
+  historicalCharacters?: HistoricalCharacterRecord[];
+  historicalCityRosters?: HistoricalCityRoster[];
+};

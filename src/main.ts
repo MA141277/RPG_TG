@@ -88,20 +88,15 @@ import {
 } from "./application/navigation/travel-to-coordinate";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
+  createActiveGameContent,
+  type ActiveGameContent,
+} from "./application/content/active-game-content";
+import { loadDefaultRuntimeContent } from "./application/content/default-runtime-content";
+import {
   createPrototypeCharactersForStoryStage,
-  prototypeCards,
-  prototypeCharacters,
-  prototypeCityEntries,
-  prototypeCity,
-  prototypeCities,
-  prototypeHistoricalCharacterIdByCharacterId,
-  prototypeCityNpcPools,
-  prototypeCityPortraits,
-  prototypeHouseAccessRefusalRules,
-  prototypeHouses,
-  prototypeValuables,
 } from "./content/prototype-world";
-import { zhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
+import { createBaseGameContentPack } from "./content/base-game-content-pack";
+import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
 import {
   createDefaultCharacterDetailScreenLayout,
   createDefaultCharacterSelectScreenLayout,
@@ -109,13 +104,7 @@ import {
   createDefaultStartScreenLayout,
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
-import {
-  storyEventDefinitionsById,
-  storySceneDefinitionsById,
-} from "./content/story";
-import { scenarioActivityDefinitionsById } from "./content/activities/scenario-activities";
 import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
-import { yuanmoCampaignMap } from "./content/yuanmo-campaign-map";
 import {
   loadScenarioPackFromUrl,
   parseScenarioPackText,
@@ -129,15 +118,14 @@ import type { ActivityDefinition } from "./domain/activity";
 import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
 import type { CityDefinition } from "./domain/city";
-import {
-  zhuYuanzhangCityRosters,
-  zhuYuanzhangEarlyCharacters,
-} from "./content/zhu-yuanzhang-early-characters";
 import type { CharacterDefinition } from "./domain/character";
 import type { CityBeggingGameCompletionResult } from "./domain/city-begging-minigame";
+import type { CityEntryDefinition } from "./domain/city-entry";
+import type { CityNpcPoolDefinition } from "./domain/city-npc";
 import type { EventDefinition, EventTriggerTiming } from "./domain/event";
 import type { HouseDefinition } from "./domain/house";
 import type { HouseModuleTransitionResult } from "./domain/house-module";
+import type { MapDefinition } from "./domain/map";
 import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
@@ -256,13 +244,12 @@ const selectableCharacterIds = [
   "char.kulan_tang_he",
   "char.kulan_chang_yuchun",
 ] as const;
-const mapNodeById = Object.fromEntries(
-  yuanmoCampaignMap.nodes
-    .filter((mapNode) => mapNode.id != null)
-    .map((mapNode) => [mapNode.id as string, mapNode])
-);
+const baseGameContentPack = await createBaseGameContentPack();
+await loadDefaultRuntimeContent();
+
 function createCityCoordinatesById(
-  definitions: CityDefinition[]
+  definitions: CityDefinition[],
+  mapNodesById: ActiveGameContent["mapNodesById"]
 ): Record<string, GridCoordinate> {
   return Object.fromEntries(
     definitions.map((cityDefinition) => {
@@ -270,7 +257,7 @@ function createCityCoordinatesById(
         cityDefinition.mapNodeId,
         `Missing map node id for city "${cityDefinition.id}".`
       );
-      const mapNode = mapNodeById[cityDefinition.mapNodeId];
+      const mapNode = mapNodesById[cityDefinition.mapNodeId];
       assertExists(
         mapNode,
         `Missing campaign map node "${cityDefinition.mapNodeId}" for city "${cityDefinition.id}".`
@@ -306,22 +293,72 @@ function createHouseNameById(definitions: HouseDefinition[]): Record<string, str
   );
 }
 
-let cityDefinitions: CityDefinition[] = prototypeCities;
-let houseDefinitions: HouseDefinition[] = prototypeHouses;
-let cityCoordinatesById: Record<string, GridCoordinate> =
-  createCityCoordinatesById(cityDefinitions);
+function getMapDefinitionById(mapId: string): MapDefinition | null {
+  return activeMapDefinitionById[mapId] ?? null;
+}
+
+function getCurrentMapDefinition(): MapDefinition | null {
+  return (
+    getMapDefinitionById(appState.gameState.world.currentMapId) ??
+    activeMapDefinitions[0] ??
+    null
+  );
+}
+
+let activeGameContent: ActiveGameContent = createActiveGameContent(baseGameContentPack);
+let activeMapDefinitions: MapDefinition[] = activeGameContent.maps;
+let activeMapDefinitionById: Record<string, MapDefinition> =
+  activeGameContent.mapDefinitionById;
+let cityDefinitions: CityDefinition[] = activeGameContent.cities;
+let houseDefinitions: HouseDefinition[] = activeGameContent.houses;
+let cityEntries: CityEntryDefinition[] = activeGameContent.cityEntries;
+let cardDefinitions = activeGameContent.cards;
+let cityNpcPoolDefinitions: CityNpcPoolDefinition[] = activeGameContent.cityNpcPools;
+let historicalCharacters = activeGameContent.historicalCharacters;
+let historicalCityRosters = activeGameContent.historicalCityRosters;
+let historicalCharacterIdByCharacterId =
+  activeGameContent.historicalCharacterIdByCharacterId;
+let cityPortraits = activeGameContent.cityPortraits;
+let textEntriesById = activeGameContent.textEntriesById;
+let cityCoordinatesById: Record<string, GridCoordinate> = createCityCoordinatesById(
+  cityDefinitions,
+  activeGameContent.mapNodesById
+);
 let cityDefinitionById: Record<string, CityDefinition> =
   createCityDefinitionById(cityDefinitions);
 let cityNameById: Record<string, string> = createCityNameById(cityDefinitions);
 let houseNameById: Record<string, string> = createHouseNameById(houseDefinitions);
-const characterNameById = Object.fromEntries(
-  prototypeCharacters.map((characterDefinition) => [
-    characterDefinition.id,
-    characterDefinition.name,
-  ])
-);
+let characterNameById: Record<string, string> = activeGameContent.characterNameById;
+
+function syncActiveGameContent(nextContent: ActiveGameContent): void {
+  activeGameContent = nextContent;
+  activeMapDefinitions = nextContent.maps;
+  activeMapDefinitionById = nextContent.mapDefinitionById;
+  cityDefinitions = nextContent.cities;
+  houseDefinitions = nextContent.houses;
+  cityEntries = nextContent.cityEntries;
+  cardDefinitions = nextContent.cards;
+  cityNpcPoolDefinitions = nextContent.cityNpcPools;
+  historicalCharacters = nextContent.historicalCharacters;
+  historicalCityRosters = nextContent.historicalCityRosters;
+  historicalCharacterIdByCharacterId = nextContent.historicalCharacterIdByCharacterId;
+  cityPortraits = nextContent.cityPortraits;
+  textEntriesById = nextContent.textEntriesById;
+  cityCoordinatesById = createCityCoordinatesById(
+    cityDefinitions,
+    nextContent.mapNodesById
+  );
+  cityDefinitionById = createCityDefinitionById(cityDefinitions);
+  cityNameById = createCityNameById(cityDefinitions);
+  houseNameById = createHouseNameById(houseDefinitions);
+  characterNameById = nextContent.characterNameById;
+  activeStoryEventDefinitionsById = nextContent.eventDefinitionsById;
+  activeStorySceneDefinitionsById = nextContent.sceneDefinitionsById;
+  activeActivityDefinitionsById = nextContent.activityDefinitionsById;
+}
+
 const selectableCharacters = selectableCharacterIds.map((characterId) => {
-  const characterDefinition = prototypeCharacters.find(
+  const characterDefinition = activeGameContent.characters.find(
     (candidateCharacter) => candidateCharacter.id === characterId
   );
   assertExists(
@@ -332,15 +369,12 @@ const selectableCharacters = selectableCharacterIds.map((characterId) => {
 });
 
 let currentPlayerCharacterId = defaultPlayerCharacterId;
-let activeStoryEventDefinitionsById: Record<string, EventDefinition> = {
-  ...storyEventDefinitionsById,
-};
-let activeStorySceneDefinitionsById: Record<string, SceneDefinition> = {
-  ...storySceneDefinitionsById,
-};
-let activeActivityDefinitionsById: Record<string, ActivityDefinition> = {
-  ...scenarioActivityDefinitionsById,
-};
+let activeStoryEventDefinitionsById: Record<string, EventDefinition> =
+  activeGameContent.eventDefinitionsById;
+let activeStorySceneDefinitionsById: Record<string, SceneDefinition> =
+  activeGameContent.sceneDefinitionsById;
+let activeActivityDefinitionsById: Record<string, ActivityDefinition> =
+  activeGameContent.activityDefinitionsById;
 
 let appState: AppState = createPrototypeAppState(currentPlayerCharacterId);
 let campaignMapDebugState: CampaignMapDebugState = {
@@ -432,6 +466,12 @@ mainUiFlow.mount();
 mainUiFlow.showMainMenu();
 
 function createPrototypeAppState(playerCharacterId: string): AppState {
+  const defaultMapDefinition =
+    activeMapDefinitionById["map.yuanmo_campaign"] ?? activeMapDefinitions[0];
+  const defaultCityDefinition =
+    cityDefinitionById["city.kulan"] ?? cityDefinitions[0];
+  assertExists(defaultMapDefinition, "Missing default map definition.");
+  assertExists(defaultCityDefinition, "Missing default city definition.");
   const storyStage: ZhuYuanzhangStoryStage =
     playerCharacterId === defaultPlayerCharacterId
       ? ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -441,8 +481,8 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
   let nextAppState: AppState = {
     gameState: ensureCityNpcPoolsForCurrentDay(
       createInitialState({
-        currentMapId: yuanmoCampaignMap.id,
-        currentCityId: prototypeCity.id,
+        currentMapId: defaultMapDefinition.id,
+        currentCityId: defaultCityDefinition.id,
         currentHouseId: null,
         playerCharacterId,
         chapterId: "chapter.prototype",
@@ -453,29 +493,29 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
         reviewDateText: "距离评定 40 天",
         mainHouseMissionText: "前往评定会场",
         cards: {
-          ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
-          selectedCardId: prototypeCards[0]?.id ?? null,
+          ownedCardIds: cardDefinitions.map((cardDefinition) => cardDefinition.id),
+          selectedCardId: cardDefinitions[0]?.id ?? null,
         },
         valuables: {
-          items: prototypeValuables,
-          selectedItemId: prototypeValuables[0]?.id ?? null,
+          items: activeGameContent.valuables,
+          selectedItemId: activeGameContent.valuables[0]?.id ?? null,
           equippedWeaponSet: {
             swordId:
-              prototypeValuables.find(
+              activeGameContent.valuables.find(
                 (valuableDefinition) => valuableDefinition.category === "weapon"
               )?.id ?? null,
             armorId:
-              prototypeValuables.find(
+              activeGameContent.valuables.find(
                 (valuableDefinition) => valuableDefinition.category === "armor"
               )?.id ?? null,
           },
         },
         currentView: "map",
       }),
-      prototypeCityNpcPools
+      cityNpcPoolDefinitions
     ),
     characterDefinitions: storyCharacterDefinitions,
-    playerCoordinate: yuanmoCampaignMap.initialPlayerCoordinate ?? { x: 0, y: 0 },
+    playerCoordinate: defaultMapDefinition.initialPlayerCoordinate ?? { x: 0, y: 0 },
     campaignActorState: {
       facingDegrees: 0,
       isMoving: false,
@@ -542,8 +582,8 @@ function getCurrentPlayerCharacter(): CharacterDefinition | null {
 function getCurrentCityUiContext(): {
   cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
-  cityEntries: typeof prototypeCityEntries;
-  cityNpcPoolDefinition: (typeof prototypeCityNpcPools)[number] | null;
+  cityEntries: CityEntryDefinition[];
+  cityNpcPoolDefinition: CityNpcPoolDefinition | null;
 } | null {
   const cityDefinition =
     cityDefinitionById[appState.gameState.world.currentCityId] ?? null;
@@ -569,13 +609,13 @@ function getCurrentCityUiContext(): {
       houseDefinition
     );
   });
-  const cityEntries = prototypeCityEntries.filter(
+  const cityEntries = activeGameContent.cityEntries.filter(
     (cityEntry) =>
       cityEntry.cityId === cityDefinition.id &&
       isCityEntryVisibleForStoryStage(appState.gameState, cityEntry)
   );
   const cityNpcPoolDefinition =
-    prototypeCityNpcPools.find(
+    cityNpcPoolDefinitions.find(
       (poolDefinition) => poolDefinition.cityId === cityDefinition.id
     ) ?? null;
 
@@ -1051,6 +1091,23 @@ function stopActivityQteLoop(): void {
   }
 }
 
+function syncRenderedActivityQteMarker(): boolean {
+  const session = appState.gameState.runtime.activitySession;
+  if (session?.type !== "qte-bar") {
+    return false;
+  }
+
+  const markerElement = appRoot.querySelector<HTMLElement>(
+    "[data-activity-overlay='qte-bar'] .c-temple-house-qte__marker"
+  );
+  if (markerElement == null) {
+    return false;
+  }
+
+  markerElement.style.left = `${session.markerPercent}%`;
+  return true;
+}
+
 function syncActivityQteLoop(): void {
   if (appState.gameState.runtime.activitySession?.type !== "qte-bar") {
     stopActivityQteLoop();
@@ -1071,7 +1128,10 @@ function syncActivityQteLoop(): void {
       ...appState,
       gameState: advanceActivityQteMarker(appState.gameState),
     };
-    renderApp();
+
+    if (!syncRenderedActivityQteMarker()) {
+      renderApp();
+    }
   }, ACTIVITY_QTE_INTERVAL_MS);
 }
 
@@ -1437,61 +1497,21 @@ function startLoadedScenarioPack(scenarioPack: ScenarioPackDefinition): void {
 }
 
 function resetActiveScenarioContent(): void {
-  activeStoryEventDefinitionsById = { ...storyEventDefinitionsById };
-  activeStorySceneDefinitionsById = { ...storySceneDefinitionsById };
-  activeActivityDefinitionsById = { ...scenarioActivityDefinitionsById };
-  resetActiveWorldContent();
+  syncActiveGameContent(createActiveGameContent(baseGameContentPack));
 }
 
 function resetActiveWorldContent(): void {
-  cityDefinitions = prototypeCities;
-  houseDefinitions = prototypeHouses;
-  cityCoordinatesById = createCityCoordinatesById(cityDefinitions);
-  cityDefinitionById = createCityDefinitionById(cityDefinitions);
-  cityNameById = createCityNameById(cityDefinitions);
-  houseNameById = createHouseNameById(houseDefinitions);
+  syncActiveGameContent(createActiveGameContent(baseGameContentPack));
 }
 
 function installScenarioPackContent(scenarioPack: ScenarioPackDefinition): void {
-  activeStoryEventDefinitionsById = {
-    ...activeStoryEventDefinitionsById,
-    ...Object.fromEntries(
-      scenarioPack.events.map((eventDefinition) => [
-        eventDefinition.id,
-        eventDefinition,
-      ])
-    ),
-  };
-  activeStorySceneDefinitionsById = {
-    ...activeStorySceneDefinitionsById,
-    ...Object.fromEntries(
-      scenarioPack.scenes.map((sceneDefinition) => [
-        sceneDefinition.id,
-        sceneDefinition,
-      ])
-    ),
-  };
-  activeActivityDefinitionsById = {
-    ...activeActivityDefinitionsById,
-    ...Object.fromEntries(
-      (scenarioPack.activities ?? []).map((activityDefinition) => [
-        activityDefinition.id,
-        activityDefinition,
-      ])
-    ),
-  };
-  installScenarioPackWorldContent(scenarioPack);
+  syncActiveGameContent(createActiveGameContent(baseGameContentPack, scenarioPack));
 }
 
 function installScenarioPackWorldContent(
   scenarioPack: ScenarioPackDefinition
 ): void {
-  cityDefinitions = mergeById(cityDefinitions, scenarioPack.cities ?? []);
-  houseDefinitions = mergeById(houseDefinitions, scenarioPack.houses ?? []);
-  cityCoordinatesById = createCityCoordinatesById(cityDefinitions);
-  cityDefinitionById = createCityDefinitionById(cityDefinitions);
-  cityNameById = createCityNameById(cityDefinitions);
-  houseNameById = createHouseNameById(houseDefinitions);
+  syncActiveGameContent(createActiveGameContent(baseGameContentPack, scenarioPack));
 }
 
 function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {
@@ -1510,6 +1530,13 @@ function createScenarioPackAppState(
   scenarioPack: ScenarioPackDefinition
 ): AppState {
   const profile = scenarioPack.scenarioProfile;
+  const scenarioMapDefinition =
+    getMapDefinitionById(profile.initialLocation.mapId) ??
+    activeMapDefinitions[0];
+  assertExists(
+    scenarioMapDefinition,
+    `Missing scenario map "${profile.initialLocation.mapId}".`
+  );
   const calendar = profile.initialCalendar ?? {
     year: 1,
     month: 1,
@@ -1518,7 +1545,7 @@ function createScenarioPackAppState(
   const playerCoordinate =
     profile.initialPlayerCoordinate ??
     cityCoordinatesById[profile.initialLocation.cityId] ??
-    yuanmoCampaignMap.initialPlayerCoordinate ??
+    scenarioMapDefinition.initialPlayerCoordinate ??
     { x: 0, y: 0 };
 
   let nextAppState: AppState = {
@@ -1537,30 +1564,30 @@ function createScenarioPackAppState(
         mainHouseMissionText:
           profile.initialUi?.mainHouseMissionText ?? scenarioPack.title,
         cards: {
-          ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
-          selectedCardId: prototypeCards[0]?.id ?? null,
+          ownedCardIds: cardDefinitions.map((cardDefinition) => cardDefinition.id),
+          selectedCardId: cardDefinitions[0]?.id ?? null,
         },
         valuables: {
-          items: prototypeValuables,
-          selectedItemId: prototypeValuables[0]?.id ?? null,
+          items: activeGameContent.valuables,
+          selectedItemId: activeGameContent.valuables[0]?.id ?? null,
           equippedWeaponSet: {
             swordId:
-              prototypeValuables.find(
+              activeGameContent.valuables.find(
                 (valuableDefinition) => valuableDefinition.category === "weapon"
               )?.id ?? null,
             armorId:
-              prototypeValuables.find(
+              activeGameContent.valuables.find(
                 (valuableDefinition) => valuableDefinition.category === "armor"
               )?.id ?? null,
           },
         },
         currentView: profile.initialLocation.view,
       }),
-      prototypeCityNpcPools
+      cityNpcPoolDefinitions
     ),
     characterDefinitions: mergeCharacterDefinitions(
-      prototypeCharacters,
-      scenarioPack.characters
+      activeGameContent.characters,
+      scenarioPack.characters ?? []
     ),
     playerCoordinate,
     campaignActorState: {
@@ -1891,7 +1918,7 @@ function canOpenHouseFromCity(houseDefinition: HouseDefinition): boolean {
     appState.gameState,
     appState.characterDefinitions,
     houseDefinition,
-    prototypeHouseAccessRefusalRules
+    activeGameContent.houseAccessRefusalRules
   );
 
   if (accessResult.canEnter) {
@@ -1930,7 +1957,9 @@ function enterMappedCity3dHouseBySceneObjectId(
   }
 
   const mapping =
-    zhuYuanzhangCitySceneMappingByCityId[appState.gameState.world.currentCityId];
+    getZhuYuanzhangCitySceneMappingByCityId()[
+      appState.gameState.world.currentCityId
+    ];
   const mappedHouse =
     mapping?.houses.find(
       (houseMapping) =>
@@ -3074,7 +3103,7 @@ appElement.addEventListener("click", (event) => {
       | CardLibraryFilter
       | undefined;
     if (filter != null) {
-      appState = setCardFilter(appState, filter, prototypeCards);
+      appState = setCardFilter(appState, filter, cardDefinitions);
       renderApp();
     }
     return;
@@ -3273,7 +3302,9 @@ appElement.addEventListener("click", (event) => {
   );
   if (enterCity3dButton != null) {
     const mapping =
-      zhuYuanzhangCitySceneMappingByCityId[appState.gameState.world.currentCityId];
+      getZhuYuanzhangCitySceneMappingByCityId()[
+        appState.gameState.world.currentCityId
+      ];
     if (mapping == null) {
       return;
     }
@@ -3343,7 +3374,7 @@ appElement.addEventListener("click", (event) => {
   );
   if (cityEntryButton != null) {
     const cityEntryId = cityEntryButton.dataset.cityEntryId;
-    const cityEntry = prototypeCityEntries.find(
+    const cityEntry = cityEntries.find(
       (entryDefinition) =>
         entryDefinition.id === cityEntryId &&
         entryDefinition.cityId === appState.gameState.world.currentCityId
@@ -3365,9 +3396,8 @@ appElement.addEventListener("click", (event) => {
           appState.characterDefinitions,
           cityEntry,
           {
-            historicalCharacters: zhuYuanzhangEarlyCharacters,
-            historicalCharacterIdByCharacterId:
-              prototypeHistoricalCharacterIdByCharacterId,
+            historicalCharacters,
+            historicalCharacterIdByCharacterId,
           }
         ),
       });
@@ -3558,7 +3588,7 @@ appElement.addEventListener("click", (event) => {
       event.clientX,
       event.clientY
     );
-    const coordinateSpace = yuanmoCampaignMap.coordinateSpace;
+    const coordinateSpace = getCurrentMapDefinition()?.coordinateSpace;
     if (clickTarget == null || coordinateSpace == null) {
       return;
     }
@@ -3826,7 +3856,7 @@ function syncCampaignActorView(): void {
     return;
   }
 
-  const coordinateSpace = yuanmoCampaignMap.coordinateSpace;
+  const coordinateSpace = getCurrentMapDefinition()?.coordinateSpace;
   if (coordinateSpace == null) {
     return;
   }
@@ -3901,10 +3931,15 @@ function renderApp() {
     ...appState,
     gameState: ensureCityNpcPoolsForCurrentDay(
       appState.gameState,
-      prototypeCityNpcPools
+      cityNpcPoolDefinitions
     ),
   };
   syncPassiveStoryTriggers();
+  const currentMapDefinition = getCurrentMapDefinition();
+  const currentCityDefinition =
+    cityDefinitionById[appState.gameState.world.currentCityId] ?? cityDefinitions[0] ?? null;
+  assertExists(currentMapDefinition, "Missing active map definition for render.");
+  assertExists(currentCityDefinition, "Missing active city definition for render.");
   const preservedTerrainCanvases =
     appState.gameState.ui.currentView === "map"
       ? captureCampaignTerrainCanvases(appRoot)
@@ -3913,21 +3948,22 @@ function renderApp() {
   appRoot.innerHTML = renderAppMarkup({
     appState,
     playerCharacterId: currentPlayerCharacterId,
-    mapDefinition: yuanmoCampaignMap,
-    cityDefinition: prototypeCity,
+    mapDefinition: currentMapDefinition,
+    cityDefinition: currentCityDefinition,
     cityDefinitions,
     houseDefinitions,
-    cityEntries: prototypeCityEntries,
-    cardDefinitions: prototypeCards,
-    cityNpcPoolDefinitions: prototypeCityNpcPools,
+    cityEntries,
+    cardDefinitions,
+    cityNpcPoolDefinitions,
     cityCoordinatesById,
     cityNameById,
     houseNameById,
     characterNameById,
-    cityPortraits: prototypeCityPortraits,
-    citySceneMappingsByCityId: zhuYuanzhangCitySceneMappingByCityId,
-    historicalCharacters: zhuYuanzhangEarlyCharacters,
-    historicalCityRosters: zhuYuanzhangCityRosters,
+    textEntriesById,
+    cityPortraits,
+    citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
+    historicalCharacters,
+    historicalCityRosters,
     currentSceneAction: getCurrentSceneAction(
       appState.gameState,
       activeStorySceneDefinitionsById

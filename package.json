@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 5173",
     "dev:localhost": "vite --host localhost --port 5173",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0",
     "kb:history:build": "node tools/build-history-kb.mjs",
     "kb:history:search": "node tools/search-history-kb.mjs",
     "kb:yuanmo-person-pool:build": "node tools/build-yuanmo-person-pool.mjs",
