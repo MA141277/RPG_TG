@@ -1,0 +1,29 @@
+{
+  "id": "路灯",
+  "kind": "building",
+  "title": "路灯",
+  "prompt": "路灯",
+  "tags": [
+    "facility"
+  ],
+  "widthTiles": 4,
+  "drawRoad": false,
+  "createdAt": "2026-04-26T19:16:41+08:00",
+  "updatedAt": "2026-04-26T19:16:41+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 64,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/路灯/front.png",
+    "side": "building/路灯/side.png",
+    "top": "building/路灯/top.png",
+    "preview": "building/路灯/preview.png",
+    "previewProcessed": "building/路灯/preview-processed.png"
+  }
+}

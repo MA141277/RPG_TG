@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-dist",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "verbatimModuleSyntax": false
+  },
+  "include": [
+    "src/application/**/*.ts",
+    "src/domain/**/*.ts",
+    "src/shared/**/*.ts",
+    "src/types/**/*.d.ts",
+    "src/content/prototype-world.ts",
+    "src/content/scenarios/**/*.ts",
+    "src/content/scenario-packs/scenario-pack-catalog.ts",
+    "src/content/houses/**/*.ts",
+    "src/content/markets/**/*.ts"
+  ],
+  "exclude": [
+    "src/main.ts",
+    "src/terrain-webgl/**/*.ts",
+    "src/ui/**/*.ts",
+    "src/content/layout-editor-presets.ts",
+    "src/content/portrait-assets.ts",
+    "src/content/yuanmo-campaign-map.ts"
+  ]
+}

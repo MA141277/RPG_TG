@@ -1,0 +1,19 @@
+{
+  "id": "npc_hunter",
+  "kind": "character",
+  "title": "npc_hunter",
+  "prompt": "中国风像素角色，猎人男子30-40岁，寡言警觉；皮甲护臂，短披风，背弓（简化轮廓），结实；不要血迹。",
+  "tags": [
+    "npc:npc_hunter"
+  ],
+  "createdAt": "2026-04-29T11:02:51+08:00",
+  "updatedAt": "2026-04-29T11:02:51+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_hunter/sheet.png",
+    "preview": "character/npc_hunter/preview.png"
+  }
+}

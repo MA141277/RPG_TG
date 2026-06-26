@@ -64,6 +64,67 @@ export function applyEffects(
         };
         break;
       }
+      case "patch-character":
+        nextCharacterDefinitions = nextCharacterDefinitions.map((characterDefinition) => {
+          if (characterDefinition.id !== effect.characterId) {
+            return characterDefinition;
+          }
+
+          const nextCharacter: CharacterDefinition = {
+            ...characterDefinition,
+          };
+
+          if (effect.changes.title !== undefined) {
+            if (effect.changes.title === null) {
+              delete nextCharacter.title;
+            } else {
+              nextCharacter.title = effect.changes.title;
+            }
+          }
+
+          if (effect.changes.occupation !== undefined) {
+            if (effect.changes.occupation === null) {
+              delete nextCharacter.occupation;
+            } else {
+              nextCharacter.occupation = effect.changes.occupation;
+            }
+          }
+
+          if (effect.changes.biography !== undefined) {
+            if (effect.changes.biography === null) {
+              delete nextCharacter.biography;
+            } else {
+              nextCharacter.biography = effect.changes.biography;
+            }
+          }
+
+          if (effect.changes.houseId !== undefined) {
+            if (effect.changes.houseId === null) {
+              delete nextCharacter.houseId;
+            } else {
+              nextCharacter.houseId = effect.changes.houseId;
+            }
+          }
+
+          if (effect.changes.clanId !== undefined) {
+            if (effect.changes.clanId === null) {
+              delete nextCharacter.clanId;
+            } else {
+              nextCharacter.clanId = effect.changes.clanId;
+            }
+          }
+
+          if (effect.changes.affiliationLabel !== undefined) {
+            if (effect.changes.affiliationLabel === null) {
+              delete nextCharacter.affiliationLabel;
+            } else {
+              nextCharacter.affiliationLabel = effect.changes.affiliationLabel;
+            }
+          }
+
+          return nextCharacter;
+        });
+        break;
       case "modify-character-stat":
         nextCharacterDefinitions = nextCharacterDefinitions.map((characterDefinition) => {
           if (characterDefinition.id !== effect.characterId) {

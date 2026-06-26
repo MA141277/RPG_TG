@@ -1,0 +1,1596 @@
+{
+  "updatedAt": "2026-06-11T20:08:14+08:00",
+  "count": 33,
+  "items": [
+    {
+      "id": "兰博基尼",
+      "kind": "building",
+      "title": "兰博基尼",
+      "prompt": "兰博基尼",
+      "tags": [
+        "decoration"
+      ],
+      "widthTiles": 18,
+      "drawRoad": false,
+      "facilityProfile": null,
+      "createdAt": "2026-06-11T20:08:14+08:00",
+      "updatedAt": "2026-06-11T20:08:14+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 134,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/兰博基尼/front.png",
+        "side": "building/兰博基尼/side.png",
+        "top": "building/兰博基尼/top.png",
+        "preview": "building/兰博基尼/preview.png",
+        "previewProcessed": "building/兰博基尼/preview-processed.png"
+      }
+    },
+    {
+      "id": "中国风像素建筑-元末明初平民住宅2",
+      "kind": "building",
+      "title": "中国风像素建筑，元末明初平民住宅2",
+      "prompt": "中国风像素建筑，元末明初平民住宅2",
+      "tags": [
+        "house"
+      ],
+      "widthTiles": 18,
+      "drawRoad": true,
+      "facilityProfile": null,
+      "createdAt": "2026-06-01T13:08:15+08:00",
+      "updatedAt": "2026-06-01T13:08:15+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 134,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/中国风像素建筑-元末明初平民住宅2/front.png",
+        "side": "building/中国风像素建筑-元末明初平民住宅2/side.png",
+        "top": "building/中国风像素建筑-元末明初平民住宅2/top.png",
+        "preview": "building/中国风像素建筑-元末明初平民住宅2/preview.png",
+        "previewProcessed": "building/中国风像素建筑-元末明初平民住宅2/preview-processed.png"
+      }
+    },
+    {
+      "id": "中国风像素建筑-元末明初平民住宅1",
+      "kind": "building",
+      "title": "中国风像素建筑，元末明初平民住宅1",
+      "prompt": "中国风像素建筑，元末明初平民住宅1",
+      "tags": [
+        "house"
+      ],
+      "widthTiles": 15,
+      "drawRoad": true,
+      "facilityProfile": null,
+      "createdAt": "2026-06-01T13:04:36+08:00",
+      "updatedAt": "2026-06-01T13:04:36+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/中国风像素建筑-元末明初平民住宅1/front.png",
+        "side": "building/中国风像素建筑-元末明初平民住宅1/side.png",
+        "top": "building/中国风像素建筑-元末明初平民住宅1/top.png",
+        "preview": "building/中国风像素建筑-元末明初平民住宅1/preview.png",
+        "previewProcessed": "building/中国风像素建筑-元末明初平民住宅1/preview-processed.png"
+      }
+    },
+    {
+      "id": "中国风像素建筑-明朝红巾军帅府",
+      "kind": "building",
+      "title": "中国风像素建筑，明朝红巾军帅府",
+      "prompt": "中国风像素建筑，明朝红巾军帅府",
+      "tags": [
+        "house"
+      ],
+      "widthTiles": 18,
+      "drawRoad": true,
+      "facilityProfile": null,
+      "createdAt": "2026-06-01T13:02:09+08:00",
+      "updatedAt": "2026-06-01T13:02:09+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 134,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/中国风像素建筑-明朝红巾军帅府/front.png",
+        "side": "building/中国风像素建筑-明朝红巾军帅府/side.png",
+        "top": "building/中国风像素建筑-明朝红巾军帅府/top.png",
+        "preview": "building/中国风像素建筑-明朝红巾军帅府/preview.png",
+        "previewProcessed": "building/中国风像素建筑-明朝红巾军帅府/preview-processed.png"
+      }
+    },
+    {
+      "id": "中国风像素建筑-粮食店",
+      "kind": "building",
+      "title": "中国风像素建筑，粮食店",
+      "prompt": "中国风像素建筑，粮食店",
+      "tags": [
+        "facility",
+        "container"
+      ],
+      "widthTiles": 14,
+      "drawRoad": false,
+      "facilityProfile": {
+        "actionLabel": "储粮",
+        "summary": "用于存放和管理粮食类物品。"
+      },
+      "createdAt": "2026-06-01T12:57:05+08:00",
+      "updatedAt": "2026-06-01T12:57:05+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 105,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/中国风像素建筑-粮食店/front.png",
+        "side": "building/中国风像素建筑-粮食店/side.png",
+        "top": "building/中国风像素建筑-粮食店/top.png",
+        "preview": "building/中国风像素建筑-粮食店/preview.png",
+        "previewProcessed": "building/中国风像素建筑-粮食店/preview-processed.png"
+      }
+    },
+    {
+      "id": "城门楼-城门镂空",
+      "kind": "building",
+      "title": "城门楼，城门镂空",
+      "prompt": "城门楼，城门镂空",
+      "tags": [
+        "sign"
+      ],
+      "widthTiles": 18,
+      "drawRoad": false,
+      "facilityProfile": null,
+      "createdAt": "2026-05-15T17:57:37+08:00",
+      "updatedAt": "2026-05-15T17:57:37+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 134,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/城门楼-城门镂空/front.png",
+        "side": "building/城门楼-城门镂空/side.png",
+        "top": "building/城门楼-城门镂空/top.png",
+        "preview": "building/城门楼-城门镂空/preview.png",
+        "previewProcessed": "building/城门楼-城门镂空/preview-processed.png"
+      }
+    },
+    {
+      "id": "城墙",
+      "kind": "building",
+      "title": "城墙",
+      "prompt": "城墙",
+      "tags": [
+        "decoration"
+      ],
+      "widthTiles": 15,
+      "drawRoad": false,
+      "facilityProfile": null,
+      "createdAt": "2026-05-15T17:39:09+08:00",
+      "updatedAt": "2026-05-15T17:39:09+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/城墙/front.png",
+        "side": "building/城墙/side.png",
+        "top": "building/城墙/top.png",
+        "preview": "building/城墙/preview.png",
+        "previewProcessed": "building/城墙/preview-processed.png"
+      }
+    },
+    {
+      "id": "石中剑",
+      "kind": "building",
+      "title": "石中剑",
+      "prompt": "石中剑",
+      "tags": [
+        "decoration"
+      ],
+      "widthTiles": 1,
+      "drawRoad": false,
+      "createdAt": "2026-05-06T19:36:13+08:00",
+      "updatedAt": "2026-05-06T19:36:13+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 64,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/石中剑/front.png",
+        "side": "building/石中剑/side.png",
+        "top": "building/石中剑/top.png",
+        "preview": "building/石中剑/preview.png",
+        "previewProcessed": "building/石中剑/preview-processed.png"
+      }
+    },
+    {
+      "id": "我的世界-金矿",
+      "kind": "building",
+      "title": "我的世界 金矿",
+      "prompt": "我的世界 金矿",
+      "tags": [
+        "resource",
+        "item:ore-source"
+      ],
+      "widthTiles": 2,
+      "drawRoad": false,
+      "createdAt": "2026-04-28T14:15:27+08:00",
+      "updatedAt": "2026-04-28T14:15:33+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 64,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true
+      },
+      "files": {
+        "front": "building/我的世界-金矿/front.png",
+        "side": "building/我的世界-金矿/side.png",
+        "top": "building/我的世界-金矿/top.png",
+        "preview": "building/我的世界-金矿/preview.png",
+        "previewProcessed": "building/我的世界-金矿/preview-processed.png"
+      }
+    },
+    {
+      "id": "苹果树",
+      "kind": "building",
+      "title": "苹果树",
+      "prompt": "苹果树",
+      "tags": [
+        "resource"
+      ],
+      "widthTiles": 2,
+      "drawRoad": false,
+      "createdAt": "2026-04-27T20:23:48+08:00",
+      "updatedAt": "2026-04-28T09:02:53+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 64,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/苹果树/front.png",
+        "side": "building/苹果树/side.png",
+        "top": "building/苹果树/top.png",
+        "preview": "building/苹果树/preview.png",
+        "previewProcessed": "building/苹果树/preview-processed.png"
+      }
+    },
+    {
+      "id": "我的世界-树",
+      "kind": "building",
+      "title": "我的世界 树",
+      "prompt": "我的世界 树",
+      "tags": [
+        "resource"
+      ],
+      "widthTiles": 2,
+      "drawRoad": false,
+      "createdAt": "2026-04-28T09:00:13+08:00",
+      "updatedAt": "2026-04-28T09:02:48+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/我的世界-树/front.png",
+        "side": "building/我的世界-树/side.png",
+        "top": "building/我的世界-树/top.png",
+        "preview": "building/我的世界-树/preview.png",
+        "previewProcessed": "building/我的世界-树/preview-processed.png"
+      }
+    },
+    {
+      "id": "我的世界箱子",
+      "kind": "building",
+      "title": "我的世界箱子",
+      "prompt": "我的世界箱子",
+      "tags": [
+        "container"
+      ],
+      "widthTiles": 4,
+      "drawRoad": false,
+      "createdAt": "2026-04-28T09:01:31+08:00",
+      "updatedAt": "2026-04-28T09:01:31+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 64,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true
+      },
+      "files": {
+        "front": "building/我的世界箱子/front.png",
+        "side": "building/我的世界箱子/side.png",
+        "top": "building/我的世界箱子/top.png",
+        "preview": "building/我的世界箱子/preview.png",
+        "previewProcessed": "building/我的世界箱子/preview-processed.png"
+      }
+    },
+    {
+      "id": "我的世界草方块",
+      "kind": "building",
+      "title": "我的世界草方块",
+      "prompt": "我的世界草方块",
+      "tags": [
+        "resource"
+      ],
+      "widthTiles": 2,
+      "drawRoad": false,
+      "createdAt": "2026-04-27T22:53:10+08:00",
+      "updatedAt": "2026-04-28T08:34:48+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 64,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true
+      },
+      "files": {
+        "front": "building/我的世界草方块/front.png",
+        "side": "building/我的世界草方块/side.png",
+        "top": "building/我的世界草方块/top.png",
+        "preview": "building/我的世界草方块/preview.png",
+        "previewProcessed": "building/我的世界草方块/preview-processed.png"
+      }
+    },
+    {
+      "id": "我的世界铁矿",
+      "kind": "building",
+      "title": "我的世界铁矿",
+      "prompt": "我的世界铁矿",
+      "tags": [
+        "resource"
+      ],
+      "widthTiles": 2,
+      "drawRoad": false,
+      "createdAt": "2026-04-28T01:28:20+08:00",
+      "updatedAt": "2026-04-28T08:34:47+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 64,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true
+      },
+      "files": {
+        "front": "building/我的世界铁矿/front.png",
+        "side": "building/我的世界铁矿/side.png",
+        "top": "building/我的世界铁矿/top.png",
+        "preview": "building/我的世界铁矿/preview.png",
+        "previewProcessed": "building/我的世界铁矿/preview-processed.png"
+      }
+    },
+    {
+      "id": "我的世界煤矿",
+      "kind": "building",
+      "title": "我的世界煤矿",
+      "prompt": "我的世界煤矿",
+      "tags": [
+        "resource"
+      ],
+      "widthTiles": 2,
+      "drawRoad": false,
+      "createdAt": "2026-04-28T01:31:28+08:00",
+      "updatedAt": "2026-04-28T08:34:44+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 64,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true
+      },
+      "files": {
+        "front": "building/我的世界煤矿/front.png",
+        "side": "building/我的世界煤矿/side.png",
+        "top": "building/我的世界煤矿/top.png",
+        "preview": "building/我的世界煤矿/preview.png",
+        "previewProcessed": "building/我的世界煤矿/preview-processed.png"
+      }
+    },
+    {
+      "id": "小木屋-2",
+      "kind": "building",
+      "title": "小木屋",
+      "prompt": "小木屋",
+      "tags": [
+        "house"
+      ],
+      "widthTiles": 12,
+      "drawRoad": true,
+      "createdAt": "2026-04-26T19:21:17+08:00",
+      "updatedAt": "2026-04-28T08:31:37+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/小木屋-2/front.png",
+        "side": "building/小木屋-2/side.png",
+        "top": "building/小木屋-2/top.png",
+        "preview": "building/小木屋-2/preview.png",
+        "previewProcessed": "building/小木屋-2/preview-processed.png"
+      }
+    },
+    {
+      "id": "牌坊",
+      "kind": "building",
+      "title": "牌坊",
+      "prompt": "牌坊",
+      "tags": [],
+      "createdAt": "2026-04-26T17:34:34+08:00",
+      "updatedAt": "2026-04-27T19:29:16+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/牌坊/front.png",
+        "side": "building/牌坊/side.png",
+        "top": "building/牌坊/top.png",
+        "preview": "building/牌坊/preview.png",
+        "previewProcessed": "building/牌坊/preview-processed.png"
+      },
+      "drawRoad": true
+    },
+    {
+      "id": "都市风格摩天大楼",
+      "kind": "building",
+      "title": "都市风格摩天大楼",
+      "prompt": "都市风格摩天大楼",
+      "tags": [
+        "house"
+      ],
+      "widthTiles": 18,
+      "drawRoad": true,
+      "createdAt": "2026-04-26T20:52:54+08:00",
+      "updatedAt": "2026-04-26T20:52:54+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 134,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/都市风格摩天大楼/front.png",
+        "side": "building/都市风格摩天大楼/side.png",
+        "top": "building/都市风格摩天大楼/top.png",
+        "preview": "building/都市风格摩天大楼/preview.png",
+        "previewProcessed": "building/都市风格摩天大楼/preview-processed.png"
+      }
+    },
+    {
+      "id": "上海都市风格摩天大楼",
+      "kind": "building",
+      "title": "上海都市风格摩天大楼",
+      "prompt": "上海都市风格摩天大楼",
+      "tags": [
+        "facility"
+      ],
+      "widthTiles": 24,
+      "drawRoad": false,
+      "createdAt": "2026-04-26T20:46:12+08:00",
+      "updatedAt": "2026-04-26T20:46:12+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 179,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/上海都市风格摩天大楼/front.png",
+        "side": "building/上海都市风格摩天大楼/side.png",
+        "top": "building/上海都市风格摩天大楼/top.png",
+        "preview": "building/上海都市风格摩天大楼/preview.png",
+        "previewProcessed": "building/上海都市风格摩天大楼/preview-processed.png"
+      }
+    },
+    {
+      "id": "小木屋",
+      "kind": "building",
+      "title": "小木屋",
+      "prompt": "小木屋",
+      "tags": [
+        "house"
+      ],
+      "widthTiles": 15,
+      "drawRoad": true,
+      "createdAt": "2026-04-26T19:21:13+08:00",
+      "updatedAt": "2026-04-26T19:21:13+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/小木屋/front.png",
+        "side": "building/小木屋/side.png",
+        "top": "building/小木屋/top.png",
+        "preview": "building/小木屋/preview.png",
+        "previewProcessed": "building/小木屋/preview-processed.png"
+      }
+    },
+    {
+      "id": "二层酒楼",
+      "kind": "building",
+      "title": "二层酒楼",
+      "prompt": "二层酒楼",
+      "tags": [],
+      "createdAt": "2026-04-14T01:44:12+08:00",
+      "updatedAt": "2026-04-26T19:18:52+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true
+      },
+      "files": {
+        "front": "building/二层酒楼/front.png",
+        "side": "building/二层酒楼/side.png",
+        "top": "building/二层酒楼/top.png",
+        "preview": "building/二层酒楼/preview.png",
+        "previewProcessed": "building/二层酒楼/preview-processed.png"
+      },
+      "drawRoad": true
+    },
+    {
+      "id": "路灯",
+      "kind": "building",
+      "title": "路灯",
+      "prompt": "路灯",
+      "tags": [
+        "facility"
+      ],
+      "widthTiles": 4,
+      "drawRoad": false,
+      "createdAt": "2026-04-26T19:16:41+08:00",
+      "updatedAt": "2026-04-26T19:16:41+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 64,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/路灯/front.png",
+        "side": "building/路灯/side.png",
+        "top": "building/路灯/top.png",
+        "preview": "building/路灯/preview.png",
+        "previewProcessed": "building/路灯/preview-processed.png"
+      }
+    },
+    {
+      "id": "20层高的大楼",
+      "kind": "building",
+      "title": "20层高的大楼",
+      "prompt": "20层高的大楼",
+      "tags": [
+        "facility"
+      ],
+      "widthTiles": 20,
+      "drawRoad": false,
+      "createdAt": "2026-04-26T19:14:47+08:00",
+      "updatedAt": "2026-04-26T19:14:47+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 149,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/20层高的大楼/front.png",
+        "side": "building/20层高的大楼/side.png",
+        "top": "building/20层高的大楼/top.png",
+        "preview": "building/20层高的大楼/preview.png",
+        "previewProcessed": "building/20层高的大楼/preview-processed.png"
+      }
+    },
+    {
+      "id": "灌木丛",
+      "kind": "building",
+      "title": "灌木丛",
+      "prompt": "灌木丛",
+      "tags": [],
+      "createdAt": "2026-04-24T12:13:55+08:00",
+      "updatedAt": "2026-04-24T12:13:55+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/灌木丛/front.png",
+        "side": "building/灌木丛/side.png",
+        "top": "building/灌木丛/top.png",
+        "preview": "building/灌木丛/preview.png",
+        "previewProcessed": "building/灌木丛/preview-processed.png"
+      }
+    },
+    {
+      "id": "宝箱",
+      "kind": "building",
+      "title": "宝箱",
+      "prompt": "宝箱",
+      "tags": [],
+      "createdAt": "2026-04-24T11:03:27+08:00",
+      "updatedAt": "2026-04-24T11:03:27+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/宝箱/front.png",
+        "side": "building/宝箱/side.png",
+        "top": "building/宝箱/top.png",
+        "preview": "building/宝箱/preview.png",
+        "previewProcessed": "building/宝箱/preview-processed.png"
+      }
+    },
+    {
+      "id": "水井",
+      "kind": "building",
+      "title": "水井",
+      "prompt": "水井",
+      "tags": [],
+      "createdAt": "2026-04-24T10:37:03+08:00",
+      "updatedAt": "2026-04-24T10:37:03+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/水井/front.png",
+        "side": "building/水井/side.png",
+        "top": "building/水井/top.png",
+        "preview": "building/水井/preview.png",
+        "previewProcessed": "building/水井/preview-processed.png"
+      }
+    },
+    {
+      "id": "面包车-车体银色",
+      "kind": "building",
+      "title": "面包车，车体银色",
+      "prompt": "面包车，车体银色",
+      "tags": [],
+      "createdAt": "2026-04-14T15:48:20+08:00",
+      "updatedAt": "2026-04-14T15:48:20+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "maskSmooth": false
+      },
+      "files": {
+        "front": "building/面包车-车体银色/front.png",
+        "side": "building/面包车-车体银色/side.png",
+        "top": "building/面包车-车体银色/top.png",
+        "preview": "building/面包车-车体银色/preview.png",
+        "previewProcessed": "building/面包车-车体银色/preview-processed.png"
+      }
+    },
+    {
+      "id": "凉亭-2",
+      "kind": "building",
+      "title": "凉亭",
+      "prompt": "凉亭",
+      "tags": [],
+      "createdAt": "2026-04-14T15:03:54+08:00",
+      "updatedAt": "2026-04-14T15:03:54+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "semanticConstraints": {
+          "positiveVolumes": [
+            {
+              "id": "col_nw",
+              "type": "column",
+              "front": {
+                "minX": 0.07,
+                "minY": 0.18,
+                "maxX": 0.16,
+                "maxY": 0.8500000000000001,
+                "width": 0.09,
+                "height": 0.6700000000000002
+              },
+              "side": {
+                "minX": 0.07,
+                "minY": 0.18,
+                "maxX": 0.16,
+                "maxY": 0.8500000000000001,
+                "width": 0.09,
+                "height": 0.6700000000000002
+              },
+              "top": {
+                "minX": 0.07,
+                "minY": 0.07,
+                "maxX": 0.16,
+                "maxY": 0.16,
+                "width": 0.09,
+                "height": 0.09
+              },
+              "minContinuousHeight": 0.6700000000000002,
+              "touchGround": false,
+              "confidence": 0.99
+            },
+            {
+              "id": "col_ne",
+              "type": "column",
+              "front": {
+                "minX": 0.84,
+                "minY": 0.18,
+                "maxX": 0.9299999999999999,
+                "maxY": 0.8500000000000001,
+                "width": 0.08999999999999997,
+                "height": 0.6700000000000002
+              },
+              "side": {
+                "minX": 0.84,
+                "minY": 0.18,
+                "maxX": 0.9299999999999999,
+                "maxY": 0.8500000000000001,
+                "width": 0.08999999999999997,
+                "height": 0.6700000000000002
+              },
+              "top": {
+                "minX": 0.84,
+                "minY": 0.07,
+                "maxX": 0.9299999999999999,
+                "maxY": 0.16,
+                "width": 0.08999999999999997,
+                "height": 0.09
+              },
+              "minContinuousHeight": 0.6700000000000002,
+              "touchGround": false,
+              "confidence": 0.99
+            },
+            {
+              "id": "col_sw",
+              "type": "column",
+              "front": {
+                "minX": 0.07,
+                "minY": 0.85,
+                "maxX": 0.16,
+                "maxY": 0.94,
+                "width": 0.09,
+                "height": 0.08999999999999997
+              },
+              "side": {
+                "minX": 0.07,
+                "minY": 0.85,
+                "maxX": 0.16,
+                "maxY": 0.94,
+                "width": 0.09,
+                "height": 0.08999999999999997
+              },
+              "top": {
+                "minX": 0.07,
+                "minY": 0.84,
+                "maxX": 0.16,
+                "maxY": 0.9299999999999999,
+                "width": 0.09,
+                "height": 0.08999999999999997
+              },
+              "minContinuousHeight": 0.08999999999999997,
+              "touchGround": false,
+              "confidence": 0.99
+            },
+            {
+              "id": "col_se",
+              "type": "column",
+              "front": {
+                "minX": 0.84,
+                "minY": 0.85,
+                "maxX": 0.9299999999999999,
+                "maxY": 0.94,
+                "width": 0.08999999999999997,
+                "height": 0.08999999999999997
+              },
+              "side": {
+                "minX": 0.84,
+                "minY": 0.85,
+                "maxX": 0.9299999999999999,
+                "maxY": 0.94,
+                "width": 0.08999999999999997,
+                "height": 0.08999999999999997
+              },
+              "top": {
+                "minX": 0.84,
+                "minY": 0.84,
+                "maxX": 0.9299999999999999,
+                "maxY": 0.9299999999999999,
+                "width": 0.08999999999999997,
+                "height": 0.08999999999999997
+              },
+              "minContinuousHeight": 0.08999999999999997,
+              "touchGround": false,
+              "confidence": 0.99
+            }
+          ],
+          "negativeVolumes": [
+            {
+              "id": "opening_entry",
+              "type": "opening",
+              "front": {
+                "minX": 0.38,
+                "minY": 0.73,
+                "maxX": 0.62,
+                "maxY": 0.9099999999999999,
+                "width": 0.24,
+                "height": 0.17999999999999994
+              },
+              "side": null,
+              "top": {
+                "minX": 0.38,
+                "minY": 0.93,
+                "maxX": 0.62,
+                "maxY": 1,
+                "width": 0.24,
+                "height": 0.06999999999999995
+              },
+              "touchGround": false,
+              "openingDepth": "through",
+              "confidence": 0.97
+            }
+          ],
+          "regenerationHints": [
+            "四根柱子在top视图均有明确标注，栏杆在top视图有两侧但不完整，建议补全。",
+            "正立面和侧立面栏杆细节略有不同，建模时以top视图为准。",
+            "柱子需要从地面连续到檐口，不要让局部柱脚悬空或断裂。"
+          ],
+          "notes": [
+            "三视图高度一致，均为同一凉亭建筑。",
+            "屋顶为四坡攒尖顶，栏杆和开口位置在top视图有明确对应。"
+          ]
+        },
+        "semanticValidation": {
+          "ok": true,
+          "severity": "minor",
+          "issues": [],
+          "warnings": [
+            "VLM 未识别到门窗语义；开洞保护可能有限。"
+          ],
+          "constraints": {
+            "positiveVolumes": [
+              {
+                "id": "col_nw",
+                "type": "column",
+                "front": {
+                  "minX": 0.07,
+                  "minY": 0.18,
+                  "maxX": 0.16,
+                  "maxY": 0.8500000000000001,
+                  "width": 0.09,
+                  "height": 0.6700000000000002
+                },
+                "side": {
+                  "minX": 0.07,
+                  "minY": 0.18,
+                  "maxX": 0.16,
+                  "maxY": 0.8500000000000001,
+                  "width": 0.09,
+                  "height": 0.6700000000000002
+                },
+                "top": {
+                  "minX": 0.07,
+                  "minY": 0.07,
+                  "maxX": 0.16,
+                  "maxY": 0.16,
+                  "width": 0.09,
+                  "height": 0.09
+                },
+                "minContinuousHeight": 0.6700000000000002,
+                "touchGround": false,
+                "confidence": 0.99
+              },
+              {
+                "id": "col_ne",
+                "type": "column",
+                "front": {
+                  "minX": 0.84,
+                  "minY": 0.18,
+                  "maxX": 0.9299999999999999,
+                  "maxY": 0.8500000000000001,
+                  "width": 0.08999999999999997,
+                  "height": 0.6700000000000002
+                },
+                "side": {
+                  "minX": 0.84,
+                  "minY": 0.18,
+                  "maxX": 0.9299999999999999,
+                  "maxY": 0.8500000000000001,
+                  "width": 0.08999999999999997,
+                  "height": 0.6700000000000002
+                },
+                "top": {
+                  "minX": 0.84,
+                  "minY": 0.07,
+                  "maxX": 0.9299999999999999,
+                  "maxY": 0.16,
+                  "width": 0.08999999999999997,
+                  "height": 0.09
+                },
+                "minContinuousHeight": 0.6700000000000002,
+                "touchGround": false,
+                "confidence": 0.99
+              },
+              {
+                "id": "col_sw",
+                "type": "column",
+                "front": {
+                  "minX": 0.07,
+                  "minY": 0.85,
+                  "maxX": 0.16,
+                  "maxY": 0.94,
+                  "width": 0.09,
+                  "height": 0.08999999999999997
+                },
+                "side": {
+                  "minX": 0.07,
+                  "minY": 0.85,
+                  "maxX": 0.16,
+                  "maxY": 0.94,
+                  "width": 0.09,
+                  "height": 0.08999999999999997
+                },
+                "top": {
+                  "minX": 0.07,
+                  "minY": 0.84,
+                  "maxX": 0.16,
+                  "maxY": 0.9299999999999999,
+                  "width": 0.09,
+                  "height": 0.08999999999999997
+                },
+                "minContinuousHeight": 0.08999999999999997,
+                "touchGround": false,
+                "confidence": 0.99
+              },
+              {
+                "id": "col_se",
+                "type": "column",
+                "front": {
+                  "minX": 0.84,
+                  "minY": 0.85,
+                  "maxX": 0.9299999999999999,
+                  "maxY": 0.94,
+                  "width": 0.08999999999999997,
+                  "height": 0.08999999999999997
+                },
+                "side": {
+                  "minX": 0.84,
+                  "minY": 0.85,
+                  "maxX": 0.9299999999999999,
+                  "maxY": 0.94,
+                  "width": 0.08999999999999997,
+                  "height": 0.08999999999999997
+                },
+                "top": {
+                  "minX": 0.84,
+                  "minY": 0.84,
+                  "maxX": 0.9299999999999999,
+                  "maxY": 0.9299999999999999,
+                  "width": 0.08999999999999997,
+                  "height": 0.08999999999999997
+                },
+                "minContinuousHeight": 0.08999999999999997,
+                "touchGround": false,
+                "confidence": 0.99
+              }
+            ],
+            "negativeVolumes": [
+              {
+                "id": "opening_entry",
+                "type": "opening",
+                "front": {
+                  "minX": 0.38,
+                  "minY": 0.73,
+                  "maxX": 0.62,
+                  "maxY": 0.9099999999999999,
+                  "width": 0.24,
+                  "height": 0.17999999999999994
+                },
+                "side": null,
+                "top": {
+                  "minX": 0.38,
+                  "minY": 0.93,
+                  "maxX": 0.62,
+                  "maxY": 1,
+                  "width": 0.24,
+                  "height": 0.06999999999999995
+                },
+                "touchGround": false,
+                "openingDepth": "through",
+                "confidence": 0.97
+              }
+            ],
+            "regenerationHints": [
+              "四根柱子在top视图均有明确标注，栏杆在top视图有两侧但不完整，建议补全。",
+              "正立面和侧立面栏杆细节略有不同，建模时以top视图为准。",
+              "柱子需要从地面连续到檐口，不要让局部柱脚悬空或断裂。"
+            ],
+            "notes": [
+              "三视图高度一致，均为同一凉亭建筑。",
+              "屋顶为四坡攒尖顶，栏杆和开口位置在top视图有明确对应。"
+            ]
+          }
+        }
+      },
+      "files": {
+        "front": "building/凉亭-2/front.png",
+        "side": "building/凉亭-2/side.png",
+        "top": "building/凉亭-2/top.png",
+        "preview": "building/凉亭-2/preview.png",
+        "previewProcessed": "building/凉亭-2/preview-processed.png"
+      }
+    },
+    {
+      "id": "凉亭",
+      "kind": "building",
+      "title": "凉亭",
+      "prompt": "凉亭",
+      "tags": [],
+      "createdAt": "2026-04-14T13:50:20+08:00",
+      "updatedAt": "2026-04-14T13:50:20+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true,
+        "semanticConstraints": {
+          "positiveVolumes": [
+            {
+              "id": "col-1",
+              "type": "column",
+              "front": {
+                "minX": 0.13,
+                "minY": 0.38,
+                "maxX": 0.21000000000000002,
+                "maxY": 0.8300000000000001,
+                "width": 0.08000000000000002,
+                "height": 0.45000000000000007
+              },
+              "side": {
+                "minX": 0.13,
+                "minY": 0.38,
+                "maxX": 0.21000000000000002,
+                "maxY": 0.8300000000000001,
+                "width": 0.08000000000000002,
+                "height": 0.45000000000000007
+              },
+              "top": {
+                "minX": 0.13,
+                "minY": 0.18,
+                "maxX": 0.21000000000000002,
+                "maxY": 0.26,
+                "width": 0.08000000000000002,
+                "height": 0.08000000000000002
+              },
+              "minContinuousHeight": 0.45000000000000007,
+              "touchGround": false,
+              "confidence": 0.99
+            },
+            {
+              "id": "col-2",
+              "type": "column",
+              "front": {
+                "minX": 0.79,
+                "minY": 0.38,
+                "maxX": 0.87,
+                "maxY": 0.8300000000000001,
+                "width": 0.07999999999999996,
+                "height": 0.45000000000000007
+              },
+              "side": {
+                "minX": 0.79,
+                "minY": 0.38,
+                "maxX": 0.87,
+                "maxY": 0.8300000000000001,
+                "width": 0.07999999999999996,
+                "height": 0.45000000000000007
+              },
+              "top": {
+                "minX": 0.79,
+                "minY": 0.18,
+                "maxX": 0.87,
+                "maxY": 0.26,
+                "width": 0.07999999999999996,
+                "height": 0.08000000000000002
+              },
+              "minContinuousHeight": 0.45000000000000007,
+              "touchGround": false,
+              "confidence": 0.99
+            },
+            {
+              "id": "col-3",
+              "type": "column",
+              "front": {
+                "minX": 0.13,
+                "minY": 0.83,
+                "maxX": 0.21000000000000002,
+                "maxY": 0.9299999999999999,
+                "width": 0.08000000000000002,
+                "height": 0.09999999999999998
+              },
+              "side": {
+                "minX": 0.13,
+                "minY": 0.83,
+                "maxX": 0.21000000000000002,
+                "maxY": 0.9299999999999999,
+                "width": 0.08000000000000002,
+                "height": 0.09999999999999998
+              },
+              "top": {
+                "minX": 0.13,
+                "minY": 0.79,
+                "maxX": 0.21000000000000002,
+                "maxY": 0.87,
+                "width": 0.08000000000000002,
+                "height": 0.07999999999999996
+              },
+              "minContinuousHeight": 0.09999999999999998,
+              "touchGround": false,
+              "confidence": 0.99
+            },
+            {
+              "id": "col-4",
+              "type": "column",
+              "front": {
+                "minX": 0.79,
+                "minY": 0.83,
+                "maxX": 0.87,
+                "maxY": 0.9299999999999999,
+                "width": 0.07999999999999996,
+                "height": 0.09999999999999998
+              },
+              "side": {
+                "minX": 0.79,
+                "minY": 0.83,
+                "maxX": 0.87,
+                "maxY": 0.9299999999999999,
+                "width": 0.07999999999999996,
+                "height": 0.09999999999999998
+              },
+              "top": {
+                "minX": 0.79,
+                "minY": 0.79,
+                "maxX": 0.87,
+                "maxY": 0.87,
+                "width": 0.07999999999999996,
+                "height": 0.07999999999999996
+              },
+              "minContinuousHeight": 0.09999999999999998,
+              "touchGround": false,
+              "confidence": 0.99
+            }
+          ],
+          "negativeVolumes": [
+            {
+              "id": "opening-1",
+              "type": "opening",
+              "front": {
+                "minX": 0.21,
+                "minY": 0.38,
+                "maxX": 0.7899999999999999,
+                "maxY": 0.8300000000000001,
+                "width": 0.58,
+                "height": 0.45000000000000007
+              },
+              "side": null,
+              "top": null,
+              "touchGround": false,
+              "openingDepth": "through",
+              "confidence": 0.97
+            }
+          ],
+          "regenerationHints": [
+            "顶部视图未完全显示所有立柱，但结合正视图和侧视图可确认八根立柱分布于八角形顶点。",
+            "若开洞需要贯穿厚度，请在俯视图或侧视图中给出清晰的进深关系。",
+            "柱子需要从地面连续到檐口，不要让局部柱脚悬空或断裂。"
+          ],
+          "notes": [
+            "凉亭结构三视图一致，均为同一建筑。部分开敞区域在top视图未明确绘制。"
+          ]
+        },
+        "semanticValidation": {
+          "ok": true,
+          "severity": "minor",
+          "issues": [],
+          "warnings": [
+            "VLM 未识别到门窗语义；开洞保护可能有限。"
+          ],
+          "constraints": {
+            "positiveVolumes": [
+              {
+                "id": "col-1",
+                "type": "column",
+                "front": {
+                  "minX": 0.13,
+                  "minY": 0.38,
+                  "maxX": 0.21000000000000002,
+                  "maxY": 0.8300000000000001,
+                  "width": 0.08000000000000002,
+                  "height": 0.45000000000000007
+                },
+                "side": {
+                  "minX": 0.13,
+                  "minY": 0.38,
+                  "maxX": 0.21000000000000002,
+                  "maxY": 0.8300000000000001,
+                  "width": 0.08000000000000002,
+                  "height": 0.45000000000000007
+                },
+                "top": {
+                  "minX": 0.13,
+                  "minY": 0.18,
+                  "maxX": 0.21000000000000002,
+                  "maxY": 0.26,
+                  "width": 0.08000000000000002,
+                  "height": 0.08000000000000002
+                },
+                "minContinuousHeight": 0.45000000000000007,
+                "touchGround": false,
+                "confidence": 0.99
+              },
+              {
+                "id": "col-2",
+                "type": "column",
+                "front": {
+                  "minX": 0.79,
+                  "minY": 0.38,
+                  "maxX": 0.87,
+                  "maxY": 0.8300000000000001,
+                  "width": 0.07999999999999996,
+                  "height": 0.45000000000000007
+                },
+                "side": {
+                  "minX": 0.79,
+                  "minY": 0.38,
+                  "maxX": 0.87,
+                  "maxY": 0.8300000000000001,
+                  "width": 0.07999999999999996,
+                  "height": 0.45000000000000007
+                },
+                "top": {
+                  "minX": 0.79,
+                  "minY": 0.18,
+                  "maxX": 0.87,
+                  "maxY": 0.26,
+                  "width": 0.07999999999999996,
+                  "height": 0.08000000000000002
+                },
+                "minContinuousHeight": 0.45000000000000007,
+                "touchGround": false,
+                "confidence": 0.99
+              },
+              {
+                "id": "col-3",
+                "type": "column",
+                "front": {
+                  "minX": 0.13,
+                  "minY": 0.83,
+                  "maxX": 0.21000000000000002,
+                  "maxY": 0.9299999999999999,
+                  "width": 0.08000000000000002,
+                  "height": 0.09999999999999998
+                },
+                "side": {
+                  "minX": 0.13,
+                  "minY": 0.83,
+                  "maxX": 0.21000000000000002,
+                  "maxY": 0.9299999999999999,
+                  "width": 0.08000000000000002,
+                  "height": 0.09999999999999998
+                },
+                "top": {
+                  "minX": 0.13,
+                  "minY": 0.79,
+                  "maxX": 0.21000000000000002,
+                  "maxY": 0.87,
+                  "width": 0.08000000000000002,
+                  "height": 0.07999999999999996
+                },
+                "minContinuousHeight": 0.09999999999999998,
+                "touchGround": false,
+                "confidence": 0.99
+              },
+              {
+                "id": "col-4",
+                "type": "column",
+                "front": {
+                  "minX": 0.79,
+                  "minY": 0.83,
+                  "maxX": 0.87,
+                  "maxY": 0.9299999999999999,
+                  "width": 0.07999999999999996,
+                  "height": 0.09999999999999998
+                },
+                "side": {
+                  "minX": 0.79,
+                  "minY": 0.83,
+                  "maxX": 0.87,
+                  "maxY": 0.9299999999999999,
+                  "width": 0.07999999999999996,
+                  "height": 0.09999999999999998
+                },
+                "top": {
+                  "minX": 0.79,
+                  "minY": 0.79,
+                  "maxX": 0.87,
+                  "maxY": 0.87,
+                  "width": 0.07999999999999996,
+                  "height": 0.07999999999999996
+                },
+                "minContinuousHeight": 0.09999999999999998,
+                "touchGround": false,
+                "confidence": 0.99
+              }
+            ],
+            "negativeVolumes": [
+              {
+                "id": "opening-1",
+                "type": "opening",
+                "front": {
+                  "minX": 0.21,
+                  "minY": 0.38,
+                  "maxX": 0.7899999999999999,
+                  "maxY": 0.8300000000000001,
+                  "width": 0.58,
+                  "height": 0.45000000000000007
+                },
+                "side": null,
+                "top": null,
+                "touchGround": false,
+                "openingDepth": "through",
+                "confidence": 0.97
+              }
+            ],
+            "regenerationHints": [
+              "顶部视图未完全显示所有立柱，但结合正视图和侧视图可确认八根立柱分布于八角形顶点。",
+              "若开洞需要贯穿厚度，请在俯视图或侧视图中给出清晰的进深关系。",
+              "柱子需要从地面连续到檐口，不要让局部柱脚悬空或断裂。"
+            ],
+            "notes": [
+              "凉亭结构三视图一致，均为同一建筑。部分开敞区域在top视图未明确绘制。"
+            ]
+          }
+        }
+      },
+      "files": {
+        "front": "building/凉亭/front.png",
+        "side": "building/凉亭/side.png",
+        "top": "building/凉亭/top.png",
+        "preview": "building/凉亭/preview.png",
+        "previewProcessed": "building/凉亭/preview-processed.png"
+      }
+    },
+    {
+      "id": "生成一个石狮子",
+      "kind": "building",
+      "title": "生成一个石狮子",
+      "prompt": "生成一个石狮子",
+      "tags": [],
+      "createdAt": "2026-04-13T21:36:59+08:00",
+      "updatedAt": "2026-06-11T16:55:00+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 160,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": false
+      },
+      "geometry": {
+        "method": "depth-ortho-voxel-v1",
+        "depthMap": "building/生成一个石狮子/depthmap.png",
+        "depthMaps": {
+          "front": "building/生成一个石狮子/depth-front.png",
+          "side": "building/生成一个石狮子/depth-side.png",
+          "top": "building/生成一个石狮子/depth-top.png"
+        },
+        "depthConvention": {
+          "near": "white"
+        },
+        "voxel": {
+          "targetLongest": 160,
+          "shellOnly": true,
+          "fillMode": "surface-shell",
+          "surfaceThickness": 2,
+          "supportRadius": 2,
+          "strictOrthographicSupport": true
+        }
+      },
+      "files": {
+        "front": "building/生成一个石狮子/front.png",
+        "side": "building/生成一个石狮子/side.png",
+        "top": "building/生成一个石狮子/top.png",
+        "preview": "building/生成一个石狮子/preview.png",
+        "previewProcessed": "building/生成一个石狮子/preview-processed.png",
+        "normalMap": "building/生成一个石狮子/normalmap.png",
+        "normalFront": "building/生成一个石狮子/normal-front.png",
+        "normalSide": "building/生成一个石狮子/normal-side.png",
+        "normalTop": "building/生成一个石狮子/normal-top.png",
+        "depthMap": "building/生成一个石狮子/depthmap.png",
+        "depthFront": "building/生成一个石狮子/depth-front.png",
+        "depthSide": "building/生成一个石狮子/depth-side.png",
+        "depthTop": "building/生成一个石狮子/depth-top.png"
+      }
+    },
+    {
+      "id": "故宫大殿-2",
+      "kind": "building",
+      "title": "故宫大殿",
+      "prompt": "故宫大殿",
+      "tags": [],
+      "createdAt": "2026-04-13T21:32:50+08:00",
+      "updatedAt": "2026-04-13T21:32:50+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true
+      },
+      "files": {
+        "front": "building/故宫大殿-2/front.png",
+        "side": "building/故宫大殿-2/side.png",
+        "top": "building/故宫大殿-2/top.png",
+        "preview": "building/故宫大殿-2/preview.png",
+        "previewProcessed": "building/故宫大殿-2/preview-processed.png"
+      }
+    },
+    {
+      "id": "故宫大殿",
+      "kind": "building",
+      "title": "故宫大殿",
+      "prompt": "故宫大殿",
+      "tags": [],
+      "createdAt": "2026-04-13T20:14:25+08:00",
+      "updatedAt": "2026-04-13T20:14:25+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false,
+        "pruneTopColorMismatch": true
+      },
+      "files": {
+        "front": "building/故宫大殿/front.png",
+        "side": "building/故宫大殿/side.png",
+        "top": "building/故宫大殿/top.png",
+        "preview": "building/故宫大殿/preview.png",
+        "previewProcessed": "building/故宫大殿/preview-processed.png"
+      }
+    },
+    {
+      "id": "天坛",
+      "kind": "building",
+      "title": "天坛",
+      "prompt": "天坛",
+      "tags": [],
+      "createdAt": "2026-04-13T11:29:25+08:00",
+      "updatedAt": "2026-04-13T11:29:25+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "voxelOptions": {
+        "targetLongest": 112,
+        "shellOnly": true,
+        "frontPriority": false
+      },
+      "files": {
+        "front": "building/天坛/front.png",
+        "side": "building/天坛/side.png",
+        "top": "building/天坛/top.png",
+        "preview": "building/天坛/preview.png",
+        "previewProcessed": "building/天坛/preview-processed.png"
+      }
+    }
+  ]
+}

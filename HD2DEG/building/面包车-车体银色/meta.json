@@ -1,0 +1,25 @@
+{
+  "id": "面包车-车体银色",
+  "kind": "building",
+  "title": "面包车，车体银色",
+  "prompt": "面包车，车体银色",
+  "tags": [],
+  "createdAt": "2026-04-14T15:48:20+08:00",
+  "updatedAt": "2026-04-14T15:48:20+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/面包车-车体银色/front.png",
+    "side": "building/面包车-车体银色/side.png",
+    "top": "building/面包车-车体银色/top.png",
+    "preview": "building/面包车-车体银色/preview.png",
+    "previewProcessed": "building/面包车-车体银色/preview-processed.png"
+  }
+}

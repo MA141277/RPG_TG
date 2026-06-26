@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>像素工作流 · 步骤1 生图</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles/pixel-workflow.css?v=2026060107" />
+</head>
+<body>
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div id="fileProtoWarn" class="file-warn" hidden>
+    当前是 <strong>文件直连（file://）</strong>，部分浏览器会禁止存储或拦截请求。请关闭本页，双击运行目录里的 <strong>启动本地服务.bat</strong>，用自动打开的 http 地址访问。
+  </div>
+  <main class="wrap">
+    <h1>PIXEL WORKFLOW</h1>
+    <p class="sub">本地像素图工作流 — 第一步：文生图并预览</p>
+
+    <div class="step">
+      <span class="step-num">01</span>
+      <span>NANO BANANA · 生图</span>
+    </div>
+
+    <div class="row row-2">
+      <div>
+        <label>接口地址</label>
+        <div class="hint" id="baseUrlText"></div>
+      </div>
+      <div>
+        <label>API Key</label>
+        <div class="hint">已内置（不显示）</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="model">模型</label>
+        <select id="model">
+          <option value="nano-banana">nano-banana（Nanobanana）</option>
+          <option value="gemini-3-pro-image-preview">gemini-3-pro-image-preview</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>参考图（图生图）</label>
+        <div class="hint">已内置：<code>8direction.png</code>（同目录）</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="prompt">提示词</label>
+        <textarea id="prompt" placeholder="例如：角色描述、配色、像素尺寸、风格参考等（系统会自动加上固定动画与排版要求）"></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="btnGen">生成图像</button>
+      <button type="button" id="btnTestMaid">测试去白底（maid.png）</button>
+      <button type="button" id="btnTestHu">测试切片对齐（hu.jpg）</button>
+      <span id="status" class="hint" aria-live="polite"></span>
+    </div>
+    <p class="hint">使用 OpenAI 兼容的 <code>/v1/images/generations</code>。系统提示词已内置：会强制 1:1、白底、无文字/网格/数字，并生成 5 行 × 每行 6 帧的 spritesheet。<strong>请勿双击打开 HTML</strong>，请运行 <code>启动本地服务.bat</code>（在本页目录里）。</p>
+
+    <section class="out is-hidden" id="panelOut" hidden>
+      <h2>RESULT</h2>
+      <div id="outBody"></div>
+    </section>
+
+    <section class="out is-hidden" id="buildingPanel">
+      <h2>BUILDING</h2>
+      <div class="row row-2">
+        <div>
+          <label for="buildingModel">建筑模型</label>
+          <select id="buildingModel">
+            <option value="gemini-3-pro-image-preview">gemini-3-pro-image-preview</option>
+            <option value="gemini-3.1-flash-image-preview">gemini-3.1-flash-image-preview</option>
+            <option value="gpt-image-2">gpt-image-2</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="buildingPrompt">建筑提示词</label>
+          <textarea
+            id="buildingPrompt"
+            placeholder="例如：中式两层客栈，深灰瓦顶，木质立柱，门口有灯笼，像素风，轮廓清晰"
+          ></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" id="btnGenBuilding">生成建筑三视图</button>
+        <span id="buildingStatus" class="hint" aria-live="polite"></span>
+      </div>
+      <p class="hint">
+        固定使用 Gemini 图像模型输出同一栋建筑的 `正 / 侧 / 俯` 三视图。页面会在本地自动去白底、识别主体、切成三张透明底视图，并生成可放置的体素建筑。
+      </p>
+      <div id="buildingOut"></div>
+    </section>
+
+    <section class="animator" id="animatorPanel">
+      <h2>ANIMATOR</h2>
+      <div class="animator-grid">
+        <div>
+          <div class="animator-stage-wrap">
+            <div class="stage-card">
+              <h3>原始像素</h3>
+              <div class="animator-stage">
+                <canvas id="animatorCanvas" width="240" height="240"></canvas>
+              </div>
+            </div>
+            <div class="stage-card" id="animatorFxStageCard">
+              <h3>CRT / FX</h3>
+              <div class="animator-stage fx" id="animatorFxStage">
+                <canvas id="animatorFxCanvas" width="240" height="240"></canvas>
+              </div>
+            </div>
+          </div>
+          <div id="animatorHotbar" class="character-hotbar" aria-label="角色物品栏"></div>
+          <p class="hint" id="animatorInfo">正在加载 maid 动画器…</p>
+        </div>
+        <div>
+          <p class="hint" id="animatorSheetMeta">切片：待加载</p>
+          <p class="hint" id="animatorDirection">方向：待机</p>
+          <p class="hint">
+            控制：<strong>WASD</strong> 相对当前视角移动；<strong>Q / E</strong> 水平偏航；下方<strong>物品栏</strong>用 <kbd>1</kbd>-<kbd>9</kbd> 或点击切换槽位；展开 FX 全屏后物品栏会叠在画面下沿。
+          </p>
+          <div class="kbd-list">
+            <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>Q</kbd><kbd>E</kbd><kbd>WA</kbd><kbd>WD</kbd><kbd>SA</kbd><kbd>SD</kbd>
+          </div>
+          <p class="hint">说明：源图只有 5 行方向，右上 / 右 / 右下 会自动镜像左上 / 左 / 左下。</p>
+          <div class="control-panel">
+            <div class="control-grid">
+              <div class="control-row">
+                <label for="ctrlHorizon">地平线 <span class="value" id="valHorizon">0</span></label>
+                <input id="ctrlHorizon" type="range" min="0" max="150" step="1" value="0" />
+              </div>
+              <div class="control-row">
+                <label for="ctrlCameraHeight">相机高度 <span class="value" id="valCameraHeight">60</span></label>
+                <input id="ctrlCameraHeight" type="range" min="8" max="60" step="1" value="60" />
+              </div>
+              <div class="control-row">
+                <label for="ctrlForwardScale">纵深尺度 <span class="value" id="valForwardScale">1310</span></label>
+                <input id="ctrlForwardScale" type="range" min="80" max="1600" step="10" value="1310" />
+              </div>
+              <div class="control-row">
+                <label for="ctrlSpanBase">近处横向宽度 <span class="value" id="valSpanBase">270</span></label>
+                <input id="ctrlSpanBase" type="range" min="40" max="400" step="5" value="270" />
+              </div>
+              <div class="control-row">
+                <label for="ctrlSpanScale">远处横向扩张 <span class="value" id="valSpanScale">1500</span></label>
+                <input id="ctrlSpanScale" type="range" min="20" max="2000" step="5" value="1500" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="fxFullscreen" class="fx-fullscreen" aria-hidden="true">
+    <div class="fx-wrap">
+      <div class="fx-tip">FX 横屏 <kbd>WASD</kbd> <kbd>Q</kbd>/<kbd>E</kbd> 水平转视角 <kbd>1</kbd>-<kbd>9</kbd> 物品栏 <kbd>ESC</kbd> 退出</div>
+      <canvas id="fxBigCanvas" width="1280" height="720"></canvas>
+      <div id="fxHotbar" class="character-hotbar" aria-label="角色物品栏"></div>
+      <button type="button" id="fxBtnCodex" class="fx-codex-fab" aria-label="图鉴" title="图鉴">📘</button>
+      <button type="button" id="fxBtnEditDelete" class="fx-edit-delete" aria-label="删除建筑" title="删除建筑" hidden>🗑</button>
+      <button type="button" id="fxBtnEditDone" class="fx-edit-done" aria-label="完成编辑" title="完成编辑" hidden>✓</button>
+      <div id="fxCodexPanel" class="fx-codex-panel" hidden>
+        <div class="fx-codex-title">图鉴</div>
+        <div class="fx-codex-actions">
+          <button type="button" id="fxBtnCodexClear">清空缓存与物品</button>
+        </div>
+        <div id="fxCodexBody" class="fx-codex-body"></div>
+      </div>
+      <div id="fxInteractionMenu" class="fx-interaction-menu" aria-live="polite" hidden>
+        <div class="fx-interaction-title">附近交互</div>
+        <div id="fxInteractionList" class="fx-interaction-list"></div>
+      </div>
+      <div id="fxInteractionModal" class="fx-interaction-modal" hidden>
+        <div id="fxInteractionModalCard" class="fx-interaction-modal-card" role="dialog" aria-modal="true"></div>
+      </div>
+      <div class="fx-hud" aria-label="FX 参数面板">
+        <div class="fx-hud-header">
+          <div class="fx-hud-title">PLAY TUNING</div>
+          <div class="fx-hud-header-actions">
+            <button type="button" id="fxBtnMinimizeHud">最小化</button>
+          </div>
+        </div>
+        <div class="fx-hud-world" aria-label="世界生成">
+          <div class="fx-hud-title">WORLD · generate</div>
+          <div class="fx-hud-grid">
+            <label>建筑模型（批量）</label>
+            <select id="fxWorldBuildingModel">
+              <option value="gemini-3-pro-image-preview">gemini-3-pro-image-preview</option>
+              <option value="gemini-3.1-flash-image-preview">gemini-3.1-flash-image-preview</option>
+              <option value="gpt-image-2">gpt-image-2</option>
+            </select>
+            <label>建筑清单（每行一栋）</label>
+            <textarea
+              id="fxWorldBuildingList"
+              placeholder="例如：&#10;中式两层客栈，深灰瓦顶，门口有灯笼&#10;小型木屋，红褐色屋顶，烟囱&#10;铁匠铺，石墙和木门，屋外有砧台"
+            ></textarea>
+          </div>
+          <div class="fx-gen-actions">
+            <button type="button" id="fxBtnGenerateWorld">生成放射村庄</button>
+          </div>
+          <p class="fx-gen-status" id="fxWorldStatus"></p>
+          <div class="fx-world-plan" id="fxWorldPlan"></div>
+        </div>
+        <div class="fx-hud-grid">
+          <label>地平线 <span id="fxValHorizon">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlHorizon" type="range" min="0" max="360" step="1" value="0" />
+            <input id="fxNumHorizon" class="fx-num" type="number" step="1" />
+          </div>
+
+          <label>相机高度 <span id="fxValCamH">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlCamH" type="range" min="8" max="60" step="1" value="60" />
+            <input id="fxNumCamH" class="fx-num" type="number" step="1" />
+          </div>
+
+          <label>纵深尺度 <span id="fxValForward">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlForward" type="range" min="80" max="1600" step="10" value="1310" />
+            <input id="fxNumForward" class="fx-num" type="number" step="10" />
+          </div>
+
+          <label>相机距离（cam_dist） <span id="fxValCamDist">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlCamDist" type="range" min="40" max="320" step="5" value="270" />
+            <input id="fxNumCamDist" class="fx-num" type="number" step="5" />
+          </div>
+
+          <label>深度强度（strength） <span id="fxValStrength">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlStrength" type="range" min="0" max="2000" step="5" value="1500" />
+            <input id="fxNumStrength" class="fx-num" type="number" step="5" />
+          </div>
+
+          <label>世界缩放 <span id="fxValWorldScale">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlWorldScale" type="range" min="0.30" max="1.40" step="0.01" value="1.21" />
+            <input id="fxNumWorldScale" class="fx-num" type="number" step="0.01" />
+          </div>
+
+          <label>人物像素 <span id="fxValCharPx">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlCharPx" type="range" min="10" max="52" step="1" value="42" />
+            <input id="fxNumCharPx" class="fx-num" type="number" step="1" />
+          </div>
+
+          <label>渲染半径 <span id="fxValRadius">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlRadius" type="range" min="120" max="2000" step="10" value="1500" />
+            <input id="fxNumRadius" class="fx-num" type="number" step="10" />
+          </div>
+
+          <label>建筑下沉过渡 <span id="fxValSinkTiles">25</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlSinkTiles" type="range" min="1" max="200" step="1" value="25" />
+            <input id="fxNumSinkTiles" class="fx-num" type="number" step="1" />
+          </div>
+
+          <label>倾角（tilt） <span id="fxValSkew">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlSkew" type="range" min="0.25" max="2.50" step="0.01" value="0.25" />
+            <input id="fxNumSkew" class="fx-num" type="number" step="0.01" />
+          </div>
+
+          <label>画面偏移Y（加到脚底阴影透视锚点 Y） <span id="fxValViewY">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlViewY" type="range" min="-500" max="500" step="1" value="-133" />
+            <input id="fxNumViewY" class="fx-num" type="number" step="1" />
+          </div>
+
+          <label class="fx-toggle-row">
+            <input id="fxToggleTiltShift" type="checkbox" checked />
+            移轴景深
+          </label>
+
+          <label>focusCenter 偏移 <span id="fxValFocusCenter">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlFocusCenter" type="range" min="-320" max="320" step="1" value="0" />
+            <input id="fxNumFocusCenter" class="fx-num" type="number" step="1" />
+          </div>
+
+          <label>focusHalf <span id="fxValFocusHalf">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlFocusHalf" type="range" min="0.02" max="0.35" step="0.01" value="0.12" />
+            <input id="fxNumFocusHalf" class="fx-num" type="number" step="0.01" />
+          </div>
+
+          <label>fade <span id="fxValFade">0</span></label>
+          <div class="fx-hud-row">
+            <input id="fxCtrlFade" type="range" min="0.02" max="0.40" step="0.01" value="0.18" />
+            <input id="fxNumFade" class="fx-num" type="number" step="0.01" />
+          </div>
+
+          <label class="fx-toggle-row">
+            <input id="fxToggleCollisionDebug" type="checkbox" />
+            显示碰撞箱
+          </label>
+        </div>
+        <div class="fx-hud-lighting" aria-label="光影参数">
+          <div class="fx-hud-title">LIGHT · baked</div>
+          <div class="fx-hud-grid">
+            <label>太阳方向 X <span id="fxValSunX">-0.56</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlSunX" type="range" min="-1" max="1" step="0.01" value="-0.56" />
+              <input id="fxNumSunX" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>太阳方向 Y <span id="fxValSunY">-0.83</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlSunY" type="range" min="-1" max="1" step="0.01" value="-0.83" />
+              <input id="fxNumSunY" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>阴影强度 <span id="fxValShadowStrength">0.62</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlShadowStrength" type="range" min="0" max="1.5" step="0.01" value="0.62" />
+              <input id="fxNumShadowStrength" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>影子长度 <span id="fxValShadowLength">0.55</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlShadowLength" type="range" min="0.15" max="2" step="0.01" value="0.55" />
+              <input id="fxNumShadowLength" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>明暗对比 <span id="fxValLightContrast">1</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlLightContrast" type="range" min="0" max="2.5" step="0.01" value="1" />
+              <input id="fxNumLightContrast" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>暖光 <span id="fxValWarmth">0.14</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlWarmth" type="range" min="0" max="0.5" step="0.01" value="0.14" />
+              <input id="fxNumWarmth" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>地面反光 <span id="fxValReflection">0.18</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlReflection" type="range" min="0" max="0.6" step="0.01" value="0.18" />
+              <input id="fxNumReflection" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>远处地暗 <span id="fxValGroundDepthDark">0.18</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlGroundDepthDark" type="range" min="0" max="0.8" step="0.01" value="0.18" />
+              <input id="fxNumGroundDepthDark" class="fx-num" type="number" step="0.01" />
+            </div>
+          </div>
+        </div>
+        <div class="fx-hud-lighting" aria-label="day night cycle">
+          <div class="fx-hud-title">DAY/NIGHT route cycle</div>
+          <div class="fx-hud-grid">
+            <label class="fx-toggle-row">
+              <input id="fxToggleDayNight" type="checkbox" />
+              DAY/NIGHT auto
+            </label>
+
+            <label class="fx-toggle-row">
+              <input id="fxToggleDayNightPause" type="checkbox" />
+              Pause cycle
+            </label>
+
+            <label>DAY sec <span id="fxValDayDuration">360</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlDayDuration" type="range" min="30" max="1200" step="10" value="360" />
+              <input id="fxNumDayDuration" class="fx-num" type="number" step="10" />
+            </div>
+
+            <label>NIGHT sec <span id="fxValNightDuration">240</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlNightDuration" type="range" min="30" max="1200" step="10" value="240" />
+              <input id="fxNumNightDuration" class="fx-num" type="number" step="10" />
+            </div>
+
+            <label>DAY warmth <span id="fxValDayWarmth">0.18</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlDayWarmth" type="range" min="0" max="0.5" step="0.01" value="0.18" />
+              <input id="fxNumDayWarmth" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>NIGHT warmth <span id="fxValNightWarmth">0.02</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlNightWarmth" type="range" min="0" max="0.5" step="0.01" value="0.02" />
+              <input id="fxNumNightWarmth" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>DAY shadow <span id="fxValDayShadowLength">0.55</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlDayShadowLength" type="range" min="0.15" max="2" step="0.01" value="0.55" />
+              <input id="fxNumDayShadowLength" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>NIGHT shadow <span id="fxValNightShadowLength">1.18</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlNightShadowLength" type="range" min="0.15" max="2" step="0.01" value="1.18" />
+              <input id="fxNumNightShadowLength" class="fx-num" type="number" step="0.01" />
+            </div>
+
+            <label>Shadow sweep <span id="fxValShadowRotateRange">78</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlShadowRotateRange" type="range" min="10" max="160" step="1" value="78" />
+              <input id="fxNumShadowRotateRange" class="fx-num" type="number" step="1" />
+            </div>
+
+            <label>Cycle speed <span id="fxValDayNightTimeScale">1</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlDayNightTimeScale" type="range" min="0.1" max="8" step="0.1" value="1" />
+              <input id="fxNumDayNightTimeScale" class="fx-num" type="number" step="0.1" />
+            </div>
+
+            <label>Time % <span id="fxValDayNightCurrentTime">0</span></label>
+            <div class="fx-hud-row">
+              <input id="fxCtrlDayNightCurrentTime" type="range" min="0" max="100" step="0.1" value="0" />
+              <input id="fxNumDayNightCurrentTime" class="fx-num" type="number" step="0.1" />
+            </div>
+          </div>
+          <p class="fx-gen-status" id="fxDayNightStatus"></p>
+        </div>
+        <div class="fx-hud-actions">
+          <button type="button" id="fxBtnSave">保存参数</button>
+          <button type="button" id="fxBtnReset">重置</button>
+          <button type="button" id="fxBtnToggleHud">隐藏</button>
+          <button type="button" id="fxBtnViewUp">画面↑</button>
+          <button type="button" id="fxBtnViewDown">画面↓</button>
+        </div>
+        <div class="fx-hud-generator" aria-label="人物生成">
+          <div class="fx-hud-title">CHARACTER · generate</div>
+          <div class="fx-hud-grid">
+            <label>模型</label>
+            <select id="fxModel"></select>
+            <label>人物提示词</label>
+            <textarea id="fxPrompt" placeholder="例如：冬日像素冒险者，红围巾，蓝色短斗篷"></textarea>
+          </div>
+          <div class="fx-gen-actions">
+            <button type="button" id="fxBtnGenCharacter">生成人物</button>
+            <button type="button" class="secondary" id="fxBtnSaveCharacter">保存当前人物</button>
+            <button type="button" class="secondary" id="fxBtnRefreshCharacters">刷新人物库</button>
+          </div>
+          <p class="fx-gen-status" id="fxCharacterStatus"></p>
+          <p class="fx-gen-status" id="fxCharacterLibraryStatus"></p>
+          <div class="fx-gen-preview-grid" id="fxCharacterPreview"></div>
+          <div class="fx-library-list" id="fxCharacterLibrary"></div>
+        </div>
+        <div class="fx-hud-generator" aria-label="建筑生成">
+          <div class="fx-hud-title">BUILDING · generate</div>
+          <div class="fx-hud-grid">
+            <label>建筑模型</label>
+            <select id="fxBuildingModel">
+              <option value="gemini-3-pro-image-preview">gemini-3-pro-image-preview</option>
+              <option value="gemini-3.1-flash-image-preview">gemini-3.1-flash-image-preview</option>
+              <option value="gpt-image-2">gpt-image-2</option>
+            </select>
+            <label>建筑提示词</label>
+            <textarea id="fxBuildingPrompt" placeholder="例如：中式两层客栈，深灰瓦顶，木质立柱，门口有灯笼，像素风，轮廓清晰"></textarea>
+          </div>
+          <div class="fx-gen-actions">
+            <button type="button" id="fxBtnGenBuildingHud">生成建筑三视图</button>
+            <button type="button" class="secondary" id="fxBtnSaveBuilding">保存当前建筑</button>
+            <button type="button" class="secondary" id="fxBtnRefreshBuildings">刷新建筑库</button>
+          </div>
+          <p class="fx-gen-status" id="fxBuildingStatus"></p>
+          <p class="fx-gen-status" id="fxBuildingLibraryStatus"></p>
+          <div class="fx-gen-preview-grid" id="fxBuildingPreview"></div>
+          <div class="fx-library-list" id="fxBuildingLibrary"></div>
+        </div>
+        <div class="fx-hud-placement" aria-label="建筑放置">
+          <div class="fx-hud-title">BUILD · placeable</div>
+          <div class="fx-place-row">
+            <button type="button" id="fxBtnPlaceHut">放置 Hut</button>
+            <button type="button" id="fxBtnPlaceGenerated">放置 AI 建筑</button>
+            <button type="button" class="secondary" id="fxBtnEditBuilding">编辑建筑</button>
+            <button type="button" class="secondary" id="fxBtnRenderMode">渲染：贴图壳面</button>
+            <button type="button" class="secondary" id="fxBtnPlaceConfirm" hidden>确认</button>
+            <button type="button" class="secondary" id="fxBtnPlaceCancel" hidden>取消</button>
+          </div>
+          <p class="fx-place-hint" id="fxPlaceHint"></p>
+          <div class="fx-place-row">
+            <label for="fxSceneId">场景</label>
+            <input id="fxSceneId" list="fxSceneList" placeholder="例如 village_a" style="min-width:160px" />
+            <datalist id="fxSceneList"></datalist>
+            <button type="button" class="secondary" id="fxBtnSceneNew">新建场景</button>
+            <button type="button" class="secondary" id="fxBtnSceneSave">保存场景</button>
+            <button type="button" class="secondary" id="fxBtnSceneLoad">加载场景</button>
+            <button type="button" class="secondary" id="fxBtnRoadRebuild">重算村路</button>
+          </div>
+          <div class="fx-place-row">
+            <label for="fxResourceSeed">资源种子</label>
+            <input id="fxResourceSeed" placeholder="例如 20260428" style="min-width:140px" />
+            <button type="button" class="secondary" id="fxBtnScatterResources">分布自然资源</button>
+          </div>
+          <p class="fx-place-hint" id="fxSceneStatus"></p>
+        </div>
+        <div class="fx-hud-placement" aria-label="NPC 系统">
+          <div class="fx-hud-title">NPC · bootstrap</div>
+          <div class="fx-place-row">
+            <button type="button" id="fxBtnNpcBootstrap">补全/生成 NPC 资源</button>
+            <button type="button" class="secondary" id="fxBtnNpcResetState">重置 NPC 状态</button>
+            <button type="button" class="secondary" id="fxBtnNpcResetMemory">重置 NPC 记忆</button>
+            <button type="button" class="secondary" id="fxBtnNpcResetAll">重置 NPC 全局</button>
+            <button type="button" class="secondary" id="fxBtnNpcDebugQin">显示秦始皇调试绘制</button>
+          </div>
+          <p class="fx-place-hint" id="fxNpcStatus"></p>
+        </div>
+      </div>
+    </div>
+    <button
+      type="button"
+      id="fxBtnHudFab"
+      class="fx-hud-fab"
+      aria-label="打开参数面板"
+      title="打开参数面板"
+    >
+      ⚙
+    </button>
+  </div>
+
+  <script src="mud/hut1-preset.js"></script>
+  <script src="mud/hut-voxel-runtime.js"></script>
+
+  <!-- app modules (load before legacy monolith; see docs/pixel-workflow-file-map.md) -->
+  <script src="./scripts/app/boot.js"></script>
+
+  <script src="./scripts/pixel-workflow.js?v=202606111655"></script>
+</body>
+</html>

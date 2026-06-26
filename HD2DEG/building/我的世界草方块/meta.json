@@ -1,0 +1,28 @@
+{
+  "id": "我的世界草方块",
+  "kind": "building",
+  "title": "我的世界草方块",
+  "prompt": "我的世界草方块",
+  "tags": [
+    "resource"
+  ],
+  "widthTiles": 2,
+  "drawRoad": false,
+  "createdAt": "2026-04-27T22:53:10+08:00",
+  "updatedAt": "2026-04-28T08:34:48+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 64,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true
+  },
+  "files": {
+    "front": "building/我的世界草方块/front.png",
+    "side": "building/我的世界草方块/side.png",
+    "top": "building/我的世界草方块/top.png",
+    "preview": "building/我的世界草方块/preview.png",
+    "previewProcessed": "building/我的世界草方块/preview-processed.png"
+  }
+}

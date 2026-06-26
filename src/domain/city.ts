@@ -10,5 +10,8 @@ export type CityDefinition = {
   houseIds: HouseId[];
   neighbourCityIds: CityId[];
   travelCost: number;
-  tags?: Array<"castle-town" | "port" | "market" | "capital" | "custom">;
+  tags: string[];
+  prosperity: number;
+  danger: number;
+  specialDemand: string[];
 };

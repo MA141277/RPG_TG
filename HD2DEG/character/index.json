@@ -1,0 +1,353 @@
+{
+  "updatedAt": "2026-06-01T12:52:46+08:00",
+  "count": 19,
+  "items": [
+    {
+      "id": "淮西文人",
+      "kind": "character",
+      "title": "淮西文人",
+      "prompt": "淮西文人",
+      "tags": [],
+      "createdAt": "2026-06-01T12:52:30+08:00",
+      "updatedAt": "2026-06-01T12:52:30+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/淮西文人/sheet.png",
+        "idle": "",
+        "preview": "character/淮西文人/preview.png"
+      }
+    },
+    {
+      "id": "红巾军将领",
+      "kind": "character",
+      "title": "红巾军将领",
+      "prompt": "红巾军将领",
+      "tags": [],
+      "createdAt": "2026-06-01T12:51:56+08:00",
+      "updatedAt": "2026-06-01T12:51:56+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/红巾军将领/sheet.png",
+        "idle": "",
+        "preview": "character/红巾军将领/preview.png"
+      }
+    },
+    {
+      "id": "红巾军小兵",
+      "kind": "character",
+      "title": "红巾军小兵",
+      "prompt": "红巾军小兵",
+      "tags": [],
+      "createdAt": "2026-06-01T12:48:56+08:00",
+      "updatedAt": "2026-06-01T12:48:56+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/红巾军小兵/sheet.png",
+        "idle": "",
+        "preview": "character/红巾军小兵/preview.png"
+      }
+    },
+    {
+      "id": "理工穿搭的女大学生",
+      "kind": "character",
+      "title": "理工穿搭的女大学生",
+      "prompt": "理工穿搭的女大学生",
+      "tags": [],
+      "createdAt": "2026-05-18T22:51:57+08:00",
+      "updatedAt": "2026-05-18T22:51:57+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/理工穿搭的女大学生/sheet.png",
+        "idle": "",
+        "preview": "character/理工穿搭的女大学生/preview.png"
+      }
+    },
+    {
+      "id": "理工男穿搭的男大学生",
+      "kind": "character",
+      "title": "理工男穿搭的男大学生",
+      "prompt": "理工男穿搭的男大学生",
+      "tags": [],
+      "createdAt": "2026-05-18T22:50:59+08:00",
+      "updatedAt": "2026-05-18T22:50:59+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/理工男穿搭的男大学生/sheet.png",
+        "idle": "",
+        "preview": "character/理工男穿搭的男大学生/preview.png"
+      }
+    },
+    {
+      "id": "一个刺客",
+      "kind": "character",
+      "title": "一个刺客",
+      "prompt": "一个刺客",
+      "tags": [],
+      "createdAt": "2026-05-08T10:11:59+08:00",
+      "updatedAt": "2026-05-08T10:11:59+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/一个刺客/sheet.png",
+        "idle": "",
+        "preview": "character/一个刺客/preview.png"
+      }
+    },
+    {
+      "id": "奶龙",
+      "kind": "character",
+      "title": "奶龙",
+      "prompt": "奶龙",
+      "tags": [],
+      "createdAt": "2026-04-29T19:12:10+08:00",
+      "updatedAt": "2026-04-29T19:12:10+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/奶龙/sheet.png",
+        "preview": "character/奶龙/preview.png"
+      }
+    },
+    {
+      "id": "npc_temple_monk",
+      "kind": "character",
+      "title": "npc_temple_monk",
+      "prompt": "中国风像素角色，寺庙老僧，高德淡薄，慈悲；灰白僧袍，手持念珠，眉须微白，清瘦；气质安静。",
+      "tags": [
+        "npc:npc_temple_monk"
+      ],
+      "createdAt": "2026-04-29T16:10:29+08:00",
+      "updatedAt": "2026-04-29T16:10:29+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_temple_monk/sheet.png",
+        "preview": "character/npc_temple_monk/preview.png"
+      }
+    },
+    {
+      "id": "npc_yangliu",
+      "kind": "character",
+      "title": "npc_yangliu",
+      "prompt": "中国风像素角色，少女杨柳，天真美丽好奇；双髻或马尾，浅绿淡黄衣裙，小布包或小饰物；眼神灵动。",
+      "tags": [
+        "npc:npc_yangliu"
+      ],
+      "createdAt": "2026-04-29T11:05:07+08:00",
+      "updatedAt": "2026-04-29T11:05:07+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_yangliu/sheet.png",
+        "preview": "character/npc_yangliu/preview.png"
+      }
+    },
+    {
+      "id": "npc_hunter",
+      "kind": "character",
+      "title": "npc_hunter",
+      "prompt": "中国风像素角色，猎人男子30-40岁，寡言警觉；皮甲护臂，短披风，背弓（简化轮廓），结实；不要血迹。",
+      "tags": [
+        "npc:npc_hunter"
+      ],
+      "createdAt": "2026-04-29T11:02:51+08:00",
+      "updatedAt": "2026-04-29T11:02:51+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_hunter/sheet.png",
+        "preview": "character/npc_hunter/preview.png"
+      }
+    },
+    {
+      "id": "npc_yang_grandpa",
+      "kind": "character",
+      "title": "npc_yang_grandpa",
+      "prompt": "中国风像素角色，杨家老太爷，老年男性，严中带慈；深色长衫，拄拐或手背在后，白发半束；步态稳。",
+      "tags": [
+        "npc:npc_yang_grandpa"
+      ],
+      "createdAt": "2026-04-29T11:02:32+08:00",
+      "updatedAt": "2026-04-29T11:02:32+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_yang_grandpa/sheet.png",
+        "preview": "character/npc_yang_grandpa/preview.png"
+      }
+    },
+    {
+      "id": "npc_merchants_wife",
+      "kind": "character",
+      "title": "npc_merchants_wife",
+      "prompt": "中国风像素角色，行商女子30-40岁，干练警惕；束发，便装外披短斗篷，背小包袱（简化），护货气质。",
+      "tags": [
+        "npc:npc_merchants_wife"
+      ],
+      "createdAt": "2026-04-29T11:02:26+08:00",
+      "updatedAt": "2026-04-29T11:02:26+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_merchants_wife/sheet.png",
+        "preview": "character/npc_merchants_wife/preview.png"
+      }
+    },
+    {
+      "id": "npc_merchants_husband",
+      "kind": "character",
+      "title": "npc_merchants_husband",
+      "prompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。",
+      "tags": [
+        "npc:npc_merchants_husband"
+      ],
+      "createdAt": "2026-04-29T11:02:00+08:00",
+      "updatedAt": "2026-04-29T11:02:00+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_merchants_husband/sheet.png",
+        "preview": "character/npc_merchants_husband/preview.png"
+      }
+    },
+    {
+      "id": "npc_inn_cook_owner",
+      "kind": "character",
+      "title": "npc_inn_cook_owner",
+      "prompt": "中国风像素角色，酒肆老板兼厨师，中年男性，沉稳寡言；灰白围裙，袖口绑绳，短须，手持布巾；厨师气质但不要画灶台或大厨具。",
+      "tags": [
+        "npc:npc_inn_cook_owner"
+      ],
+      "createdAt": "2026-04-29T11:01:59+08:00",
+      "updatedAt": "2026-04-29T11:01:59+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_inn_cook_owner/sheet.png",
+        "preview": "character/npc_inn_cook_owner/preview.png"
+      }
+    },
+    {
+      "id": "小孩",
+      "kind": "character",
+      "title": "小孩",
+      "prompt": "小孩",
+      "tags": [],
+      "createdAt": "2026-04-29T10:49:38+08:00",
+      "updatedAt": "2026-04-29T10:49:38+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/小孩/sheet.png",
+        "preview": "character/小孩/preview.png"
+      }
+    },
+    {
+      "id": "npc_inn_waiter",
+      "kind": "character",
+      "title": "npc_inn_waiter",
+      "prompt": "中国风像素角色，酒肆伙计，年轻男性，热心腿脚快；青布短褂，腰间毛巾，轻便布鞋；精神利落，动作有跑堂感。",
+      "tags": [
+        "npc:npc_inn_waiter"
+      ],
+      "createdAt": "2026-04-28T17:18:01+08:00",
+      "updatedAt": "2026-04-28T17:18:01+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_inn_waiter/sheet.png",
+        "preview": "character/npc_inn_waiter/preview.png"
+      }
+    },
+    {
+      "id": "npc_inn_bosslady",
+      "kind": "character",
+      "title": "npc_inn_bosslady",
+      "prompt": "中国风像素角色，酒肆老板娘掌柜，中年女性，精明爽利但亲和；盘发带发簪，深红与墨绿对襟襦裙，围腰，腰间钥匙串；手势利落。",
+      "tags": [
+        "npc:npc_inn_bosslady"
+      ],
+      "createdAt": "2026-04-28T17:13:24+08:00",
+      "updatedAt": "2026-04-28T17:13:24+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/npc_inn_bosslady/sheet.png",
+        "preview": "character/npc_inn_bosslady/preview.png"
+      }
+    },
+    {
+      "id": "秦始皇",
+      "kind": "character",
+      "title": "秦始皇",
+      "prompt": "秦始皇",
+      "tags": [],
+      "createdAt": "2026-04-14T11:26:31+08:00",
+      "updatedAt": "2026-04-14T11:26:31+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/秦始皇/sheet.png",
+        "preview": "character/秦始皇/preview.png"
+      }
+    },
+    {
+      "id": "狼人",
+      "kind": "character",
+      "title": "狼人",
+      "prompt": "狼人",
+      "tags": [],
+      "createdAt": "2026-04-13T20:11:41+08:00",
+      "updatedAt": "2026-04-13T20:11:41+08:00",
+      "sourceModel": "gemini-3-pro-image-preview",
+      "imageSize": "1024x1024",
+      "columns": 6,
+      "rows": 5,
+      "files": {
+        "sheet": "character/狼人/sheet.png",
+        "preview": "character/狼人/preview.png"
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "activity.zhu_yuanzhang.temple.default_chore",
+    "label": "Temple chore fallback",
+    "handlerId": "temple.chore",
+    "fallbackHandlerId": "generic.qte",
+    "timeAdvanceCost": 1,
+    "qte": {
+      "totalRounds": 3,
+      "requiredSuccesses": 2
+    },
+    "outcome": {
+      "completedFlagKey": "flag.story.zhu_yuanzhang.default_chore.completed",
+      "gradeVariableKey": "var.story.zhu_yuanzhang.default_chore.grade",
+      "scoreVariableKey": "var.story.zhu_yuanzhang.default_chore.score",
+      "effects": [
+        {
+          "type": "change-variable",
+          "key": "var.story.zhu_yuanzhang.temple_contribution",
+          "delta": 3
+        }
+      ]
+    },
+    "tags": ["scenario", "fallback", "qte", "temple"]
+  }
+]

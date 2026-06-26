@@ -1,0 +1,19 @@
+{
+  "id": "npc_merchants_husband",
+  "kind": "character",
+  "title": "npc_merchants_husband",
+  "prompt": "中国风像素角色，行商男子30-40岁，圆滑谨慎；长衫外罩马褂，腰挂钱袋或算盘袋（简化），旅行气质；不要画马车。",
+  "tags": [
+    "npc:npc_merchants_husband"
+  ],
+  "createdAt": "2026-04-29T11:02:00+08:00",
+  "updatedAt": "2026-04-29T11:02:00+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_merchants_husband/sheet.png",
+    "preview": "character/npc_merchants_husband/preview.png"
+  }
+}

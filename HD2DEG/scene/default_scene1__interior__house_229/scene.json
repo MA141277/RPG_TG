@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "kind": "interior",
+  "id": "default_scene1__interior__house_229",
+  "title": "default_scene1__interior__house_229",
+  "savedAt": 1778074657295,
+  "nextBuildingId": 1,
+  "tilemapBaseDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAC9JREFUOE9jFJRQ/M9AJmAc1UxayI0GGGnhxTAiA4yBgQFnljRV4mU4fe8zzmAEAMPZF1fA4T1XAAAAAElFTkSuQmCC",
+  "tilemapDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAC9JREFUOE9jFJRQ/M9AJmAc1UxayI0GGGnhxTAiA4yBgQFnljRV4mU4fe8zzmAEAMPZF1fA4T1XAAAAAElFTkSuQmCC",
+  "objects": [],
+  "roadNetwork": null,
+  "spawn": {
+    "x": 7.5,
+    "y": 14.5
+  },
+  "bounds": {
+    "minX": 0,
+    "minY": 0,
+    "maxX": 14,
+    "maxY": 15,
+    "width": 15,
+    "height": 16
+  },
+  "entities": {
+    "npcs": []
+  },
+  "extensions": {
+    "sceneKind": "interior",
+    "parentSceneId": "default_scene1",
+    "hostObjectId": 229,
+    "interiorLayout": {
+      "version": 1,
+      "kind": "house-room",
+      "width": 15,
+      "height": 15,
+      "door": {
+        "side": "south",
+        "x": 7,
+        "y": 15,
+        "entryX": 7,
+        "entryY": 14
+      },
+      "spawnX": 7.5,
+      "spawnY": 14.5,
+      "facilities": []
+    },
+    "returnWorldX": -39.23298180213874,
+    "returnWorldY": -93.93152445067932
+  },
+  "sceneMeta": {
+    "kind": "interior",
+    "parentSceneId": "default_scene1",
+    "hostObjectId": 229,
+    "interiorLayout": {
+      "version": 1,
+      "kind": "house-room",
+      "width": 15,
+      "height": 15,
+      "door": {
+        "side": "south",
+        "x": 7,
+        "y": 15,
+        "entryX": 7,
+        "entryY": 14
+      },
+      "spawnX": 7.5,
+      "spawnY": 14.5,
+      "facilities": []
+    },
+    "returnWorldX": -39.23298180213874,
+    "returnWorldY": -93.93152445067932
+  },
+  "updatedAt": "2026-05-06T21:37:37+08:00"
+}

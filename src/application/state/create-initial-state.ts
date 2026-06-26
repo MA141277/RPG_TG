@@ -19,6 +19,8 @@ export type InitialStateInput = {
   activeEventId?: string | null;
   activeSceneId?: string | null;
   currentView?: GameState["ui"]["currentView"];
+  timeOfDay?: GameState["world"]["timeOfDay"];
+  councilDate?: GameState["world"]["schedule"]["councilDate"];
 };
 
 export function createInitialState(input: InitialStateInput): GameState {
@@ -27,6 +29,14 @@ export function createInitialState(input: InitialStateInput): GameState {
       currentMapId: input.currentMapId,
       currentCityId: input.currentCityId,
       currentHouseId: input.currentHouseId,
+      timeOfDay: input.timeOfDay ?? "morning",
+      schedule: {
+        councilDate: input.councilDate ?? {
+          year: input.year,
+          month: input.month,
+          day: input.day,
+        },
+      },
     },
     player: {
       characterId: input.playerCharacterId,
@@ -44,6 +54,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       status:
         input.activeSceneId == null ? "idle" : "playing",
     },
+    storyBattle: null,
     ui: {
       visiblePanels: ["player-card", "main-mission", "notifications"],
       pinnedCharacterId: input.pinnedCharacterId,
@@ -55,6 +66,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       valuableLibraryFilter: "all",
       valuableLibrarySortKey: "name",
       valuableLibrarySortDirection: "asc",
+      houseSession: null,
       currentView: input.currentView ?? "map",
     },
     missions: {
@@ -66,6 +78,9 @@ export function createInitialState(input: InitialStateInput): GameState {
     runtime: {
       flags: {},
       variables: {},
+      cityNpcPools: {},
+      cityMarkets: {},
+      activitySession: null,
       eventHistory: {},
     },
   };

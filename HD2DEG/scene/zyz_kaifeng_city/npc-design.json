@@ -1,0 +1,587 @@
+{
+  "schemaVersion": 1,
+  "npcs": [
+    {
+      "npcId": "npc.kaifeng.leader_residence.1",
+      "anchors": {
+        "home": "house:1",
+        "work": "zyz.kaifeng_leader_residence:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "将领府邸",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_leader_residence:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.temple.1",
+      "anchors": {
+        "home": "house:2",
+        "work": "zyz.kaifeng_temple:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "寺庙",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_temple:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.home.1",
+      "anchors": {
+        "home": "house:3",
+        "work": "zyz.home_kaifeng:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "自宅",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.home_kaifeng:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.keep.1",
+      "anchors": {
+        "home": "house:4",
+        "work": "zyz.kaifeng_keep:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "帅府",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_keep:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.keep.2",
+      "anchors": {
+        "home": "house:4",
+        "work": "zyz.kaifeng_keep:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "帅府",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_keep:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.tea_house.1",
+      "anchors": {
+        "home": "house:5",
+        "work": "zyz.kaifeng_tea_house:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "茶馆",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_tea_house:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.market.1",
+      "anchors": {
+        "home": "house:6",
+        "work": "zyz.kaifeng_market:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "货栈",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_market:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.grain_shop.1",
+      "anchors": {
+        "home": "house:7",
+        "work": "zyz.kaifeng_grain_shop:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "粮铺",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_grain_shop:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.medicine_house.1",
+      "anchors": {
+        "home": "house:8",
+        "work": "zyz.kaifeng_medicine_house:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "药铺",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_medicine_house:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.kaifeng.inn.1",
+      "anchors": {
+        "home": "house:9",
+        "work": "zyz.kaifeng_inn:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "客栈",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.kaifeng_inn:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    }
+  ],
+  "locationRefs": {
+    "town-square": {
+      "wx": 0,
+      "wy": 0,
+      "radius": 14
+    },
+    "zyz.kaifeng_leader_residence:front": {
+      "wx": 0,
+      "wy": -92,
+      "radius": 8,
+      "houseId": "house.kaifeng.leader_residence",
+      "sceneObjectId": "zyz.kaifeng_leader_residence"
+    },
+    "zyz.kaifeng_temple:front": {
+      "wx": 86,
+      "wy": -52,
+      "radius": 8,
+      "houseId": "house.kaifeng.temple",
+      "sceneObjectId": "zyz.kaifeng_temple"
+    },
+    "zyz.home_kaifeng:front": {
+      "wx": 42,
+      "wy": 86,
+      "radius": 8,
+      "houseId": "home.kaifeng",
+      "sceneObjectId": "zyz.home_kaifeng"
+    },
+    "zyz.kaifeng_keep:front": {
+      "wx": -58,
+      "wy": -56,
+      "radius": 8,
+      "houseId": "house.kaifeng.keep",
+      "sceneObjectId": "zyz.kaifeng_keep"
+    },
+    "zyz.kaifeng_tea_house:front": {
+      "wx": -58,
+      "wy": 54,
+      "radius": 8,
+      "houseId": "house.kaifeng.tea_house",
+      "sceneObjectId": "zyz.kaifeng_tea_house"
+    },
+    "zyz.kaifeng_market:front": {
+      "wx": -58,
+      "wy": -8,
+      "radius": 8,
+      "houseId": "house.kaifeng.market",
+      "sceneObjectId": "zyz.kaifeng_market"
+    },
+    "zyz.kaifeng_grain_shop:front": {
+      "wx": 58,
+      "wy": -8,
+      "radius": 8,
+      "houseId": "house.kaifeng.grain_shop",
+      "sceneObjectId": "zyz.kaifeng_grain_shop"
+    },
+    "zyz.kaifeng_medicine_house:front": {
+      "wx": -42,
+      "wy": 86,
+      "radius": 8,
+      "houseId": "house.kaifeng.medicine_house",
+      "sceneObjectId": "zyz.kaifeng_medicine_house"
+    },
+    "zyz.kaifeng_inn:front": {
+      "wx": 58,
+      "wy": 54,
+      "radius": 8,
+      "houseId": "house.kaifeng.inn",
+      "sceneObjectId": "zyz.kaifeng_inn"
+    }
+  },
+  "activityResolvers": {},
+  "facilities": {}
+}

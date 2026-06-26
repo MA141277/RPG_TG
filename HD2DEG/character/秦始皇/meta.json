@@ -1,0 +1,17 @@
+{
+  "id": "秦始皇",
+  "kind": "character",
+  "title": "秦始皇",
+  "prompt": "秦始皇",
+  "tags": [],
+  "createdAt": "2026-04-14T11:26:31+08:00",
+  "updatedAt": "2026-04-14T11:26:31+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/秦始皇/sheet.png",
+    "preview": "character/秦始皇/preview.png"
+  }
+}

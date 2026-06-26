@@ -1,0 +1,143 @@
+# Yuanmo Mod Export
+
+Generated: 2026-05-26T13:13:13.629Z
+Mod root: D:/RPG_TG/map/yuan mo feng yun lu/mods/yuanmofengyunlu
+
+## Summary
+- Units: 424
+- Ancillaries: 264
+- Resources: 28
+- 3D meshes: 764
+- 3D textures: 1567
+- Animations (.cas): 1502
+- Unit cards (.tga): 2290
+- Unit info art (.tga): 630
+- Portraits (.tga): 2032
+
+## Red Turban Friendly Units
+Count: 73
+- Chuang_archer
+- Chuang_swordsman
+- Shun_elite_swordsman
+- Shun_elite_infantry
+- Shun_elite_archer
+- Chuang_chosen_spearman
+- Chuang_chosen_staff
+- Chuang_cavalry
+- Chuang_scout
+- dqs gongsheng
+- dqs menghu
+- dqs zhugenu
+- dqs sanyan
+- Chuang_chosen_cavalry
+- Chuang_bambard
+- Chuang_cannon
+- ming_rocketer
+- Ming_hudun
+- Ming_hongyipao
+- Ming_gongrongpao
+- Ming_Jinyiwei
+- Ming_Light_Archers
+- Ming_Light_Swordman
+- Ming_Light_Spearmen
+- Zhongyuan_Gunners
+- Zhongyuan_spearman
+- Zhongyuan_archer
+- Qin_Standard_Cav
+- Daxi_spearmen
+- Ming_shenji
+- Capital_swordsman
+- Capital_elite_infantry
+- Capital_archer
+- Ming_Baigan
+- Capital_horcearcher
+- ming_elite_cav
+- ming_heavy_cavalry
+- ming_s_lancer
+- ming_bx_lancer
+- ming_d_lancer
+- ming_n_lancer
+- Ming_wuqian
+- Ming_bodyguard
+- minghuangdi
+- DIWAANGMINGZI
+- Qinliangyu_bodyguard
+- Damingjiangjun
+- ming_dismounted_cav
+- ming_tiaodangqi
+- ming_bianjungongqi
+- ming_bj_heavy_cavalry
+- Jianghan_Light_Gunners
+- Jianghan_Light_spearman
+- Jianghan_Light_archer
+- Jianghan_archer
+- Jianghan_Gunner
+- Jianghan_heavy_spear
+- Jianghan_heavy_sword
+- Jianghan_horsearcher
+- Jianghan_Heavy_cav
+- Jianghan_scout
+- Jianghan_Guard
+- Qin_bodyguard
+- Qin_Spearman
+- Qin_Archers
+- Qin_Gunners
+- hongdengzhao1
+- xiaodaohuisword
+- Daxi_archer
+- Daxi_swordsman
+- Chuang_spearmen
+- Qin_Standard_Spearman
+- Qin_Standard_Swordman
+
+## Yuan Enemy Units
+Count: 49
+- Mon_skirmisher
+- Steppe_levy_spearman
+- Steppe_heavy_spearman
+- Steppe_herdsman
+- Steppe_Spearmen
+- Steppe_Archers
+- mon_keshikten
+- mon_lubchiten
+- mon_hoshiga
+- Mongol_Horse_Heavy_Archers
+- manchu_sibing
+- Han_baqi_sword
+- hanrenxiangjun_infantry
+- hanrennu_xbow
+- hanrengong_arch
+- Lvying_archer
+- Lvying_infantry
+- Lvying_spearmen
+- Lvying_lancer
+- mon_han_blade
+- mon_han_spear
+- mon_hoshuchi
+- mengguzhongjia_qiang6
+- dayuan_gong
+- dayuan_gong2
+- dayuan_qiangqi3
+- menggu6_daopai
+- menggu6_gong
+- menggu_gong
+- mengguzhongjia_gong
+- Manchu_armoured_spearman
+- Mongol_Heavy_Archers
+- Manchu_armoured_archer
+- Manchu_baqi_spearman
+- Manchu_baqi_archer
+- Mongol_baqi_infantry
+- manchu_xiaoqi
+- Manchu_armoured_cavalry
+- Manchu_baqi_lancer
+- Manchu_horsearcher
+- Manchu_forward
+- Manchu_bodyguard
+- Qing_cannon
+- Qing_bambard
+- Han_baqi_muskteers
+- Manchu_muskteers
+- dayuangongting
+- dayuangongting1
+- mon_bodyguard

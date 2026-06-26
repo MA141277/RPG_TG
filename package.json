@@ -4,9 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "dev:localhost": "vite --host localhost --port 5173",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0",
+    "kb:history:build": "node tools/build-history-kb.mjs",
+    "kb:history:search": "node tools/search-history-kb.mjs",
+    "kb:yuanmo-person-pool:build": "node tools/build-yuanmo-person-pool.mjs",
+    "kb:yuanmo-person-pool:validate": "node tools/validate-yuanmo-person-pool.mjs",
+    "scrape:mingshi": "node tools/scrape-mingshi.mjs",
+    "spine:replace-pieces": "node tools/replace-faxian-spine-pieces.mjs",
+    "serve:prod": "node scripts/serve-static.mjs",
+    "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
+    "test": "npm run build:test && node --test tests/robustness.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint:ts": "eslint .",
     "lint:css": "stylelint \"src/styles/**/*.css\"",
@@ -17,8 +27,14 @@
     "eslint": "^9.39.1",
     "stylelint": "^16.26.0",
     "stylelint-config-standard": "^39.0.1",
-    "typescript-eslint": "^8.46.3",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
     "vite": "^7.1.12"
+  },
+  "dependencies": {
+    "@esotericsoftware/spine-player": "^4.3.6",
+    "gdal3.js": "^2.8.1",
+    "pngjs": "^7.0.0",
+    "tga": "^1.0.7"
   }
 }

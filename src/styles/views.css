@@ -4,10 +4,16 @@
     linear-gradient(180deg, rgb(129 159 121 / 84%), rgb(81 110 74 / 92%));
 }
 
-.view-city .l-stage,
-.view-house .l-stage,
-.view-scene .l-stage {
+.view-map.view-map--campaign {
+  position: absolute;
+  inset: 0;
+  min-height: 100%;
+}
+
+.l-stage:has(> .view-city),
+.l-stage:has(> .view-house),
+.l-stage:has(> .view-scene) {
   background:
-    linear-gradient(rgb(50 26 15 / 32%), rgb(50 26 15 / 32%)),
-    linear-gradient(180deg, rgb(227 208 164 / 94%), rgb(181 145 92 / 94%));
+    linear-gradient(rgb(0 0 0 / 28%), rgb(0 0 0 / 28%)),
+    linear-gradient(180deg, rgb(0 0 0 / 100%), rgb(0 0 0 / 100%));
 }

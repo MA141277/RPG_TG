@@ -1,22 +1,43 @@
 import type { SceneId } from "./action";
 import type { CharacterId } from "./character";
 import type { CityId } from "./city";
+import type { CityNpcPoolRuntimeState } from "./city-npc";
 import type { EventId } from "./event";
 import type { HouseId } from "./house";
+import type { CityMarketData } from "./market";
 import type { MapId } from "./map";
 import type { MissionId } from "./mission";
+import type { ActiveStoryBattleSession } from "./story-battle";
+import type { ActiveActivitySession } from "./activity-session";
 import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
 
-export type ViewName = "map" | "city" | "house" | "scene" | "minigame";
+export type ViewName =
+  | "map"
+  | "city"
+  | "city-3d"
+  | "house"
+  | "scene"
+  | "battle"
+  | "minigame";
 export type SceneStatus = "idle" | "playing" | "waiting-choice";
+export type TimeOfDay = "morning" | "afternoon" | "night";
+export type CalendarDate = {
+  year: number;
+  month: number;
+  day: number;
+};
 
 export type GameState = {
   world: {
     currentMapId: MapId;
     currentCityId: CityId;
     currentHouseId: HouseId | null;
+    timeOfDay: TimeOfDay;
+    schedule: {
+      councilDate: CalendarDate;
+    };
   };
   player: {
     characterId: CharacterId;
@@ -33,6 +54,7 @@ export type GameState = {
     cursor: number;
     status: SceneStatus;
   };
+  storyBattle: ActiveStoryBattleSession;
   ui: GlobalUIState & {
     currentView: ViewName;
   };
@@ -45,6 +67,9 @@ export type GameState = {
   runtime: {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
+    cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
+    cityMarkets: Record<CityId, CityMarketData>;
+    activitySession: ActiveActivitySession;
     eventHistory: Record<
       EventId,
       {

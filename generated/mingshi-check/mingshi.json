@@ -1,0 +1,1682 @@
+{
+  "bookTitle": "《明史》",
+  "source": "https://www.guoxuedashi.com/a/26ozxd/",
+  "scrapedAt": "2026-05-28T12:46:21.478Z",
+  "chapterCount": 333,
+  "exportedChapterCount": 1,
+  "catalog": [
+    {
+      "index": 1,
+      "title": "卷一 本纪第一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122166k.html"
+    },
+    {
+      "index": 2,
+      "title": "卷二 本纪第二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122167s.html"
+    },
+    {
+      "index": 3,
+      "title": "卷三 本纪第三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122168g.html"
+    },
+    {
+      "index": 4,
+      "title": "卷四 本纪第四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122169e.html"
+    },
+    {
+      "index": 5,
+      "title": "卷五 本纪第五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122170b.html"
+    },
+    {
+      "index": 6,
+      "title": "卷六 本纪第六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122171s.html"
+    },
+    {
+      "index": 7,
+      "title": "卷七 本纪第七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122172n.html"
+    },
+    {
+      "index": 8,
+      "title": "卷八 本纪第八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122173m.html"
+    },
+    {
+      "index": 9,
+      "title": "卷九 本纪第九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122174v.html"
+    },
+    {
+      "index": 10,
+      "title": "卷十 本纪第十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122175s.html"
+    },
+    {
+      "index": 11,
+      "title": "卷十一 本纪第十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122176b.html"
+    },
+    {
+      "index": 12,
+      "title": "卷十二 本纪第十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122177e.html"
+    },
+    {
+      "index": 13,
+      "title": "卷十三 本纪第十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122178o.html"
+    },
+    {
+      "index": 14,
+      "title": "卷十四 本纪第十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122179i.html"
+    },
+    {
+      "index": 15,
+      "title": "卷十五 本纪第十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122180z.html"
+    },
+    {
+      "index": 16,
+      "title": "卷十六 本纪第十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122181z.html"
+    },
+    {
+      "index": 17,
+      "title": "卷十七 本纪第十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122182x.html"
+    },
+    {
+      "index": 18,
+      "title": "卷十八 本纪第十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122183r.html"
+    },
+    {
+      "index": 19,
+      "title": "卷十九 本纪第十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122184p.html"
+    },
+    {
+      "index": 20,
+      "title": "卷二十 本纪第二十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122185x.html"
+    },
+    {
+      "index": 21,
+      "title": "卷二十一 本纪第二十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122186w.html"
+    },
+    {
+      "index": 22,
+      "title": "卷二十二 本纪第二十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122187o.html"
+    },
+    {
+      "index": 23,
+      "title": "卷二十三 本纪第二十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122188f.html"
+    },
+    {
+      "index": 24,
+      "title": "卷二十四 本纪第二十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122189g.html"
+    },
+    {
+      "index": 25,
+      "title": "卷二十五 志第一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122190q.html"
+    },
+    {
+      "index": 26,
+      "title": "卷二十六 志第二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122191l.html"
+    },
+    {
+      "index": 27,
+      "title": "卷二十七 志第三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122192g.html"
+    },
+    {
+      "index": 28,
+      "title": "卷二十八 志第四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122193y.html"
+    },
+    {
+      "index": 29,
+      "title": "卷二十九 志第五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122194a.html"
+    },
+    {
+      "index": 30,
+      "title": "卷三十 志第六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122195g.html"
+    },
+    {
+      "index": 31,
+      "title": "卷三十一 志第七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122196e.html"
+    },
+    {
+      "index": 32,
+      "title": "卷三十二 志第八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122197c.html"
+    },
+    {
+      "index": 33,
+      "title": "卷三十三 志第九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122198w.html"
+    },
+    {
+      "index": 34,
+      "title": "卷三十四 志第十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122199g.html"
+    },
+    {
+      "index": 35,
+      "title": "卷三十五 志第十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122200n.html"
+    },
+    {
+      "index": 36,
+      "title": "卷三十六 志第十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122201v.html"
+    },
+    {
+      "index": 37,
+      "title": "卷三十七 志第十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122202s.html"
+    },
+    {
+      "index": 38,
+      "title": "卷三十八 志第十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122203c.html"
+    },
+    {
+      "index": 39,
+      "title": "卷三十九 志第十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122204e.html"
+    },
+    {
+      "index": 40,
+      "title": "卷四十 志第十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122205o.html"
+    },
+    {
+      "index": 41,
+      "title": "卷四十一 志第十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122206i.html"
+    },
+    {
+      "index": 42,
+      "title": "卷四十二 志第十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122207x.html"
+    },
+    {
+      "index": 43,
+      "title": "卷四十三 志第十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122208p.html"
+    },
+    {
+      "index": 44,
+      "title": "卷四十四 志第二十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122209g.html"
+    },
+    {
+      "index": 45,
+      "title": "卷四十五 志第二十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122210l.html"
+    },
+    {
+      "index": 46,
+      "title": "卷四十六 志第二十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122211m.html"
+    },
+    {
+      "index": 47,
+      "title": "卷四十七 志第二十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122212b.html"
+    },
+    {
+      "index": 48,
+      "title": "卷四十八 志第二十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122213s.html"
+    },
+    {
+      "index": 49,
+      "title": "卷四十九 志第二十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122214n.html"
+    },
+    {
+      "index": 50,
+      "title": "卷五十 志第二十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122215k.html"
+    },
+    {
+      "index": 51,
+      "title": "卷五十一 志第二十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122216o.html"
+    },
+    {
+      "index": 52,
+      "title": "卷五十二 志第二十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122217n.html"
+    },
+    {
+      "index": 53,
+      "title": "卷五十三 志第二十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122218w.html"
+    },
+    {
+      "index": 54,
+      "title": "卷五十四 志第三十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122219v.html"
+    },
+    {
+      "index": 55,
+      "title": "卷五十五 志第三十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122220n.html"
+    },
+    {
+      "index": 56,
+      "title": "卷五十六 志第三十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122221d.html"
+    },
+    {
+      "index": 57,
+      "title": "卷五十七 志第三十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122222z.html"
+    },
+    {
+      "index": 58,
+      "title": "卷五十八 志第三十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122223r.html"
+    },
+    {
+      "index": 59,
+      "title": "卷五十九 志第三十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122224i.html"
+    },
+    {
+      "index": 60,
+      "title": "卷六十 志第三十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122225r.html"
+    },
+    {
+      "index": 61,
+      "title": "卷六十一 志第三十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122226j.html"
+    },
+    {
+      "index": 62,
+      "title": "卷六十二 志第三十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122227u.html"
+    },
+    {
+      "index": 63,
+      "title": "卷六十三 志第三十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122228v.html"
+    },
+    {
+      "index": 64,
+      "title": "卷六十四 志第四十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122229u.html"
+    },
+    {
+      "index": 65,
+      "title": "卷六十五 志第四十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122230o.html"
+    },
+    {
+      "index": 66,
+      "title": "卷六十六 志第四十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122231k.html"
+    },
+    {
+      "index": 67,
+      "title": "卷六十七 志第四十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122232h.html"
+    },
+    {
+      "index": 68,
+      "title": "卷六十八 志第四十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122233h.html"
+    },
+    {
+      "index": 69,
+      "title": "卷六十九 志第四十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122234o.html"
+    },
+    {
+      "index": 70,
+      "title": "卷七十 志第四十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122235w.html"
+    },
+    {
+      "index": 71,
+      "title": "卷七十一 志第四十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122236s.html"
+    },
+    {
+      "index": 72,
+      "title": "卷七十二 志第四十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122237b.html"
+    },
+    {
+      "index": 73,
+      "title": "卷七十三 志第四十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122238a.html"
+    },
+    {
+      "index": 74,
+      "title": "卷七十四 志第五十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122239x.html"
+    },
+    {
+      "index": 75,
+      "title": "卷七十五 志第五十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122240p.html"
+    },
+    {
+      "index": 76,
+      "title": "卷七十六 志第五十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122241h.html"
+    },
+    {
+      "index": 77,
+      "title": "卷七十七 志第五十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122242n.html"
+    },
+    {
+      "index": 78,
+      "title": "卷七十八 志第五十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122243v.html"
+    },
+    {
+      "index": 79,
+      "title": "卷七十九 志第五十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122244n.html"
+    },
+    {
+      "index": 80,
+      "title": "卷八十 志第五十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122245f.html"
+    },
+    {
+      "index": 81,
+      "title": "卷八十一 志第五十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122246j.html"
+    },
+    {
+      "index": 82,
+      "title": "卷八十二 志第五十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122247h.html"
+    },
+    {
+      "index": 83,
+      "title": "卷八十三 志第五十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122248h.html"
+    },
+    {
+      "index": 84,
+      "title": "卷八十四 志第六十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122249n.html"
+    },
+    {
+      "index": 85,
+      "title": "卷八十五 志第六十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122250t.html"
+    },
+    {
+      "index": 86,
+      "title": "卷八十六 志第六十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122251g.html"
+    },
+    {
+      "index": 87,
+      "title": "卷八十七 志第六十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122252v.html"
+    },
+    {
+      "index": 88,
+      "title": "卷八十八 志第六十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122253q.html"
+    },
+    {
+      "index": 89,
+      "title": "卷八十九 志第六十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122254o.html"
+    },
+    {
+      "index": 90,
+      "title": "卷九十 志第六十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122255w.html"
+    },
+    {
+      "index": 91,
+      "title": "卷九十一 志第六十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122256u.html"
+    },
+    {
+      "index": 92,
+      "title": "卷九十二 志第六十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122257i.html"
+    },
+    {
+      "index": 93,
+      "title": "卷九十三 志第六十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122258f.html"
+    },
+    {
+      "index": 94,
+      "title": "卷九十四 志第七十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122259y.html"
+    },
+    {
+      "index": 95,
+      "title": "卷九十五 志第七十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122260g.html"
+    },
+    {
+      "index": 96,
+      "title": "卷九十六 志第七十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122261k.html"
+    },
+    {
+      "index": 97,
+      "title": "卷九十七 志第七十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122262g.html"
+    },
+    {
+      "index": 98,
+      "title": "卷九十八 志第七十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122263y.html"
+    },
+    {
+      "index": 99,
+      "title": "卷九十九 志第七十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122264d.html"
+    },
+    {
+      "index": 100,
+      "title": "卷一百 表第一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122265s.html"
+    },
+    {
+      "index": 101,
+      "title": "卷一百一 表第二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122266e.html"
+    },
+    {
+      "index": 102,
+      "title": "卷一百二 表第三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122267q.html"
+    },
+    {
+      "index": 103,
+      "title": "卷一百三 表第四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122268s.html"
+    },
+    {
+      "index": 104,
+      "title": "卷一百四 表第五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122269t.html"
+    },
+    {
+      "index": 105,
+      "title": "卷一百五 表第六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122270p.html"
+    },
+    {
+      "index": 106,
+      "title": "卷一百六 表第七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122271t.html"
+    },
+    {
+      "index": 107,
+      "title": "卷一百七 表第八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122272a.html"
+    },
+    {
+      "index": 108,
+      "title": "卷一百八 表第九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122273s.html"
+    },
+    {
+      "index": 109,
+      "title": "卷一百九 表第十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122274n.html"
+    },
+    {
+      "index": 110,
+      "title": "卷一百十 表第十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122275l.html"
+    },
+    {
+      "index": 111,
+      "title": "卷一百十一 表第十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122276q.html"
+    },
+    {
+      "index": 112,
+      "title": "卷一百十二 表第十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122277v.html"
+    },
+    {
+      "index": 113,
+      "title": "卷一百十三 列传第一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122278g.html"
+    },
+    {
+      "index": 114,
+      "title": "卷一百十四 列传第二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122279t.html"
+    },
+    {
+      "index": 115,
+      "title": "卷一百十五 列传第三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122280d.html"
+    },
+    {
+      "index": 116,
+      "title": "卷一百十六 列传第四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122281f.html"
+    },
+    {
+      "index": 117,
+      "title": "卷一百十七 列传第五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122282r.html"
+    },
+    {
+      "index": 118,
+      "title": "卷一百十八 列传第六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122283v.html"
+    },
+    {
+      "index": 119,
+      "title": "卷一百十九 列传第七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122284e.html"
+    },
+    {
+      "index": 120,
+      "title": "卷一百二十 列传第八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122285h.html"
+    },
+    {
+      "index": 121,
+      "title": "卷一百二十一 列传第九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122286w.html"
+    },
+    {
+      "index": 122,
+      "title": "卷一百二十二 列传第十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122287p.html"
+    },
+    {
+      "index": 123,
+      "title": "卷一百二十三 列传第十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122288i.html"
+    },
+    {
+      "index": 124,
+      "title": "卷一百二十四 列传第十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122289u.html"
+    },
+    {
+      "index": 125,
+      "title": "卷一百二十五 列传第十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122290a.html"
+    },
+    {
+      "index": 126,
+      "title": "卷一百二十六 列传第十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122291r.html"
+    },
+    {
+      "index": 127,
+      "title": "卷一百二十七 列传第十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122292i.html"
+    },
+    {
+      "index": 128,
+      "title": "卷一百二十八 列传第十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122293q.html"
+    },
+    {
+      "index": 129,
+      "title": "卷一百二十九 列传第十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122294g.html"
+    },
+    {
+      "index": 130,
+      "title": "卷一百三十 列传第十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122295g.html"
+    },
+    {
+      "index": 131,
+      "title": "卷一百三十一 列传第十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122296m.html"
+    },
+    {
+      "index": 132,
+      "title": "卷一百三十二 列传第二十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122297r.html"
+    },
+    {
+      "index": 133,
+      "title": "卷一百三十三 列传第二十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122298z.html"
+    },
+    {
+      "index": 134,
+      "title": "卷一百三十四 列传第二十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122299x.html"
+    },
+    {
+      "index": 135,
+      "title": "卷一百三十五 列传第二十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122300p.html"
+    },
+    {
+      "index": 136,
+      "title": "卷一百三十六 列传第二十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122301e.html"
+    },
+    {
+      "index": 137,
+      "title": "卷一百三十七 列传第二十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122302e.html"
+    },
+    {
+      "index": 138,
+      "title": "卷一百三十八 列传第二十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122303f.html"
+    },
+    {
+      "index": 139,
+      "title": "卷一百三十九 列传第二十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122304m.html"
+    },
+    {
+      "index": 140,
+      "title": "卷一百四十 列传第二十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122305w.html"
+    },
+    {
+      "index": 141,
+      "title": "卷一百四十一 列传第二十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122306a.html"
+    },
+    {
+      "index": 142,
+      "title": "卷一百四十二 列传第三十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122307j.html"
+    },
+    {
+      "index": 143,
+      "title": "卷一百四十三 列传第三十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122308t.html"
+    },
+    {
+      "index": 144,
+      "title": "卷一百四十四 列传第三十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122309q.html"
+    },
+    {
+      "index": 145,
+      "title": "卷一百四十五 列传第三十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122310b.html"
+    },
+    {
+      "index": 146,
+      "title": "卷一百四十六 列传第三十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122311h.html"
+    },
+    {
+      "index": 147,
+      "title": "卷一百四十七 列传第三十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122312g.html"
+    },
+    {
+      "index": 148,
+      "title": "卷一百四十八 列传第三十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122313k.html"
+    },
+    {
+      "index": 149,
+      "title": "卷一百四十九 列传第三十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122314g.html"
+    },
+    {
+      "index": 150,
+      "title": "卷一百五十 列传第三十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122315y.html"
+    },
+    {
+      "index": 151,
+      "title": "卷一百五十一 列传第三十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122316e.html"
+    },
+    {
+      "index": 152,
+      "title": "卷一百五十二 列传第四十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122317v.html"
+    },
+    {
+      "index": 153,
+      "title": "卷一百五十三 列传第四十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122318u.html"
+    },
+    {
+      "index": 154,
+      "title": "卷一百五十四 列传第四十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122319l.html"
+    },
+    {
+      "index": 155,
+      "title": "卷一百五十五 列传第四十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122320v.html"
+    },
+    {
+      "index": 156,
+      "title": "卷一百五十六 列传第四十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122321v.html"
+    },
+    {
+      "index": 157,
+      "title": "卷一百五十七 列传第四十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122322q.html"
+    },
+    {
+      "index": 158,
+      "title": "卷一百五十八 列传第四十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122323s.html"
+    },
+    {
+      "index": 159,
+      "title": "卷一百五十九 列传第四十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122324r.html"
+    },
+    {
+      "index": 160,
+      "title": "卷一百六十 列传第四十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122325g.html"
+    },
+    {
+      "index": 161,
+      "title": "卷一百六十一 列传第四十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122326d.html"
+    },
+    {
+      "index": 162,
+      "title": "卷一百六十二 列传第五十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122327x.html"
+    },
+    {
+      "index": 163,
+      "title": "卷一百六十三 列传第五十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122328f.html"
+    },
+    {
+      "index": 164,
+      "title": "卷一百六十四 列传第五十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122329i.html"
+    },
+    {
+      "index": 165,
+      "title": "卷一百六十五 列传第五十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122330x.html"
+    },
+    {
+      "index": 166,
+      "title": "卷一百六十六 列传第五十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122331p.html"
+    },
+    {
+      "index": 167,
+      "title": "卷一百六十七 列传第五十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122332h.html"
+    },
+    {
+      "index": 168,
+      "title": "卷一百六十八 列传第五十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122333n.html"
+    },
+    {
+      "index": 169,
+      "title": "卷一百六十九 列传第五十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122334w.html"
+    },
+    {
+      "index": 170,
+      "title": "卷一百七十 列传第五十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122335t.html"
+    },
+    {
+      "index": 171,
+      "title": "卷一百七十一 列传第五十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122336h.html"
+    },
+    {
+      "index": 172,
+      "title": "卷一百七十二 列传第六十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122337a.html"
+    },
+    {
+      "index": 173,
+      "title": "卷一百七十三 列传第六十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122338g.html"
+    },
+    {
+      "index": 174,
+      "title": "卷一百七十四 列传第六十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122339f.html"
+    },
+    {
+      "index": 175,
+      "title": "卷一百七十五 列传第六十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122340f.html"
+    },
+    {
+      "index": 176,
+      "title": "卷一百七十六 列传第六十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122341n.html"
+    },
+    {
+      "index": 177,
+      "title": "卷一百七十七 列传第六十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122342y.html"
+    },
+    {
+      "index": 178,
+      "title": "卷一百七十八 列传第六十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122343e.html"
+    },
+    {
+      "index": 179,
+      "title": "卷一百七十九 列传第六十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122344z.html"
+    },
+    {
+      "index": 180,
+      "title": "卷一百八十 列传第六十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122345m.html"
+    },
+    {
+      "index": 181,
+      "title": "卷一百八十一 列传第六十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122346j.html"
+    },
+    {
+      "index": 182,
+      "title": "卷一百八十二 列传第七十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122347m.html"
+    },
+    {
+      "index": 183,
+      "title": "卷一百八十三 列传第七十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122348g.html"
+    },
+    {
+      "index": 184,
+      "title": "卷一百八十四 列传第七十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122349s.html"
+    },
+    {
+      "index": 185,
+      "title": "卷一百八十五 列传第七十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122350v.html"
+    },
+    {
+      "index": 186,
+      "title": "卷一百八十六 列传第七十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122351d.html"
+    },
+    {
+      "index": 187,
+      "title": "卷一百八十七 列传第七十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122352b.html"
+    },
+    {
+      "index": 188,
+      "title": "卷一百八十八 列传第七十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122353w.html"
+    },
+    {
+      "index": 189,
+      "title": "卷一百八十九 列传第七十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122354g.html"
+    },
+    {
+      "index": 190,
+      "title": "卷一百九十 列传第七十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122355q.html"
+    },
+    {
+      "index": 191,
+      "title": "卷一百九十一 列传第七十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122356l.html"
+    },
+    {
+      "index": 192,
+      "title": "卷一百九十二 列传第八十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122357f.html"
+    },
+    {
+      "index": 193,
+      "title": "卷一百九十三 列传第八十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122358u.html"
+    },
+    {
+      "index": 194,
+      "title": "卷一百九十四 列传第八十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122359k.html"
+    },
+    {
+      "index": 195,
+      "title": "卷一百九十五 列传第八十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122360p.html"
+    },
+    {
+      "index": 196,
+      "title": "卷一百九十六 列传第八十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122361t.html"
+    },
+    {
+      "index": 197,
+      "title": "卷一百九十七 列传第八十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122362z.html"
+    },
+    {
+      "index": 198,
+      "title": "卷一百九十八 列传第八十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122363s.html"
+    },
+    {
+      "index": 199,
+      "title": "卷一百九十九 列传第八十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122364q.html"
+    },
+    {
+      "index": 200,
+      "title": "卷二百 列传第八十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122365b.html"
+    },
+    {
+      "index": 201,
+      "title": "卷二百一 列传第八十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122366e.html"
+    },
+    {
+      "index": 202,
+      "title": "卷二百二 列传第九十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122367v.html"
+    },
+    {
+      "index": 203,
+      "title": "卷二百三 列传第九十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122368q.html"
+    },
+    {
+      "index": 204,
+      "title": "卷二百四 列传第九十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122369s.html"
+    },
+    {
+      "index": 205,
+      "title": "卷二百五 列传第九十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122370r.html"
+    },
+    {
+      "index": 206,
+      "title": "卷二百六 列传第九十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122371e.html"
+    },
+    {
+      "index": 207,
+      "title": "卷二百七 列传第九十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122372s.html"
+    },
+    {
+      "index": 208,
+      "title": "卷二百八 列传第九十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122373g.html"
+    },
+    {
+      "index": 209,
+      "title": "卷二百九 列传第九十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122374x.html"
+    },
+    {
+      "index": 210,
+      "title": "卷二百十 列传第九十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122375x.html"
+    },
+    {
+      "index": 211,
+      "title": "卷二百十一 列传第九十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122376v.html"
+    },
+    {
+      "index": 212,
+      "title": "卷二百十二 列传第一百",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122377l.html"
+    },
+    {
+      "index": 213,
+      "title": "卷二百十三 列传第一百一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122378q.html"
+    },
+    {
+      "index": 214,
+      "title": "卷二百十四 列传第一百二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122379v.html"
+    },
+    {
+      "index": 215,
+      "title": "卷二百十五 列传第一百三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122380j.html"
+    },
+    {
+      "index": 216,
+      "title": "卷二百十六 列传第一百四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122381i.html"
+    },
+    {
+      "index": 217,
+      "title": "卷二百十七 列传第一百五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122382m.html"
+    },
+    {
+      "index": 218,
+      "title": "卷二百十八 列传第一百六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122383l.html"
+    },
+    {
+      "index": 219,
+      "title": "卷二百十九 列传第一百七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122384v.html"
+    },
+    {
+      "index": 220,
+      "title": "卷二百二十 列传第一百八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122385u.html"
+    },
+    {
+      "index": 221,
+      "title": "卷二百二十一 列传第一百九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122386n.html"
+    },
+    {
+      "index": 222,
+      "title": "卷二百二十二 列传第一百十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122387e.html"
+    },
+    {
+      "index": 223,
+      "title": "卷二百二十三 列传第一百十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122388i.html"
+    },
+    {
+      "index": 224,
+      "title": "卷二百二十四 列传第一百十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122389b.html"
+    },
+    {
+      "index": 225,
+      "title": "卷二百二十五 列传第一百十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122390i.html"
+    },
+    {
+      "index": 226,
+      "title": "卷二百二十六 列传第一百十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122391j.html"
+    },
+    {
+      "index": 227,
+      "title": "卷二百二十七 列传第一百十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122392x.html"
+    },
+    {
+      "index": 228,
+      "title": "卷二百二十八 列传第一百十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122393n.html"
+    },
+    {
+      "index": 229,
+      "title": "卷二百二十九 列传第一百十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122394x.html"
+    },
+    {
+      "index": 230,
+      "title": "卷二百三十 列传第一百十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122395x.html"
+    },
+    {
+      "index": 231,
+      "title": "卷二百三十一 列传第一百十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122396v.html"
+    },
+    {
+      "index": 232,
+      "title": "卷二百三十二 列传第一百二十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122397l.html"
+    },
+    {
+      "index": 233,
+      "title": "卷二百三十三 列传第一百二十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122398s.html"
+    },
+    {
+      "index": 234,
+      "title": "卷二百三十四 列传第一百二十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122399f.html"
+    },
+    {
+      "index": 235,
+      "title": "卷二百三十五 列传第一百二十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122400y.html"
+    },
+    {
+      "index": 236,
+      "title": "卷二百三十六 列传第一百二十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122401d.html"
+    },
+    {
+      "index": 237,
+      "title": "卷二百三十七 列传第一百二十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122402u.html"
+    },
+    {
+      "index": 238,
+      "title": "卷二百三十八 列传一百二十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122403r.html"
+    },
+    {
+      "index": 239,
+      "title": "卷二百三十九 列传第一百二十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122404x.html"
+    },
+    {
+      "index": 240,
+      "title": "卷二百四十 列传第一百二十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122405p.html"
+    },
+    {
+      "index": 241,
+      "title": "卷二百四十一 列传第一百二十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122406h.html"
+    },
+    {
+      "index": 242,
+      "title": "卷二百四十二 列传第一百三十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122407n.html"
+    },
+    {
+      "index": 243,
+      "title": "卷二百四十三 列传第一百三十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122408v.html"
+    },
+    {
+      "index": 244,
+      "title": "卷二百四十四 列传第一百三十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122409q.html"
+    },
+    {
+      "index": 245,
+      "title": "卷二百四十五 列传第一百三十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122410r.html"
+    },
+    {
+      "index": 246,
+      "title": "卷二百四十六 列传第一百三十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122411o.html"
+    },
+    {
+      "index": 247,
+      "title": "卷二百四十七 列传第一百三十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122412p.html"
+    },
+    {
+      "index": 248,
+      "title": "卷二百四十八 列传第一百三十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122413l.html"
+    },
+    {
+      "index": 249,
+      "title": "卷二百四十九 列传第一百三十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122414l.html"
+    },
+    {
+      "index": 250,
+      "title": "卷二百五十 列传第一百三十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122415u.html"
+    },
+    {
+      "index": 251,
+      "title": "卷二百五十一 列传第一百三十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122416q.html"
+    },
+    {
+      "index": 252,
+      "title": "卷二百五十二 列传第一百四十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122417v.html"
+    },
+    {
+      "index": 253,
+      "title": "卷二百五十三 列传第一百四十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122418g.html"
+    },
+    {
+      "index": 254,
+      "title": "卷二百五十四 列传第一百四十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122419r.html"
+    },
+    {
+      "index": 255,
+      "title": "卷二百五十五 列传第一百四十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122420r.html"
+    },
+    {
+      "index": 256,
+      "title": "卷二百五十六 列传第一百四十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122421i.html"
+    },
+    {
+      "index": 257,
+      "title": "卷二百五十七 列传第一百四十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122422q.html"
+    },
+    {
+      "index": 258,
+      "title": "卷二百五十八 列传第一百四十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122423e.html"
+    },
+    {
+      "index": 259,
+      "title": "卷二百五十九 列传第一百四十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122424w.html"
+    },
+    {
+      "index": 260,
+      "title": "卷二百六十 列传第一百四十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122425w.html"
+    },
+    {
+      "index": 261,
+      "title": "卷二百六十一 列传一百四十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122426t.html"
+    },
+    {
+      "index": 262,
+      "title": "卷二百六十二 列传第一百五十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122427d.html"
+    },
+    {
+      "index": 263,
+      "title": "卷二百六十三 列传第一百五十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122428j.html"
+    },
+    {
+      "index": 264,
+      "title": "卷二百六十四 列传第一百五十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122429j.html"
+    },
+    {
+      "index": 265,
+      "title": "卷二百六十五 列传第一百五十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122430v.html"
+    },
+    {
+      "index": 266,
+      "title": "卷二百六十六 列传第一百五十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122431d.html"
+    },
+    {
+      "index": 267,
+      "title": "卷二百六十七 列传第一百五十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122432b.html"
+    },
+    {
+      "index": 268,
+      "title": "卷二百六十八 列传第一百五十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122433v.html"
+    },
+    {
+      "index": 269,
+      "title": "卷二百六十九 列传第一百五十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122434b.html"
+    },
+    {
+      "index": 270,
+      "title": "卷二百七十 列传第一百五十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122435t.html"
+    },
+    {
+      "index": 271,
+      "title": "卷二百七十一 列传第一百五十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122436q.html"
+    },
+    {
+      "index": 272,
+      "title": "卷二百七十二 列传第一百六十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122437x.html"
+    },
+    {
+      "index": 273,
+      "title": "卷二百七十三 列传第一百六十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122438t.html"
+    },
+    {
+      "index": 274,
+      "title": "卷二百七十四 列传第一百六十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122439x.html"
+    },
+    {
+      "index": 275,
+      "title": "卷二百七十五 列传第一百六十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122440i.html"
+    },
+    {
+      "index": 276,
+      "title": "卷二百七十六 列传第一百六十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122441u.html"
+    },
+    {
+      "index": 277,
+      "title": "卷二百七十七 列传第一百六十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122442d.html"
+    },
+    {
+      "index": 278,
+      "title": "卷二百七十八 列传第一百六十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122443g.html"
+    },
+    {
+      "index": 279,
+      "title": "卷二百七十九 列传第一百六十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122444w.html"
+    },
+    {
+      "index": 280,
+      "title": "卷二百八十 列传第一百六十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122445p.html"
+    },
+    {
+      "index": 281,
+      "title": "卷二百八十一 列传第一百六十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122446j.html"
+    },
+    {
+      "index": 282,
+      "title": "卷二百八十二 列传第一百七十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122447z.html"
+    },
+    {
+      "index": 283,
+      "title": "卷二百八十三 列传第一百七十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122448w.html"
+    },
+    {
+      "index": 284,
+      "title": "卷二百八十四 列传第一百七十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122449j.html"
+    },
+    {
+      "index": 285,
+      "title": "卷二百八十五 列传第一百七十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122450e.html"
+    },
+    {
+      "index": 286,
+      "title": "卷二百八十六 列传第一百七十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122451v.html"
+    },
+    {
+      "index": 287,
+      "title": "卷二百八十七 列传第一百七十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122452p.html"
+    },
+    {
+      "index": 288,
+      "title": "卷二百八十八 列传第一百七十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122453p.html"
+    },
+    {
+      "index": 289,
+      "title": "卷二百八十九 列传第一百七十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122454e.html"
+    },
+    {
+      "index": 290,
+      "title": "卷二百九十 列传第一百七十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122455z.html"
+    },
+    {
+      "index": 291,
+      "title": "卷二百九十一 列传第一百七十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122456l.html"
+    },
+    {
+      "index": 292,
+      "title": "卷二百九十二 列传第一百八十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122457f.html"
+    },
+    {
+      "index": 293,
+      "title": "卷二百九十三 列传第一百八十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122458s.html"
+    },
+    {
+      "index": 294,
+      "title": "卷二百九十四 列传第一百八十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122459c.html"
+    },
+    {
+      "index": 295,
+      "title": "卷二百九十五 列传第一百八十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122460d.html"
+    },
+    {
+      "index": 296,
+      "title": "卷二百九十六 列传第一百八十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122461l.html"
+    },
+    {
+      "index": 297,
+      "title": "卷二百九十七 列传第一百八十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122462u.html"
+    },
+    {
+      "index": 298,
+      "title": "卷二百九十八 列传第一百八十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122463r.html"
+    },
+    {
+      "index": 299,
+      "title": "卷二百九十九 列传第一百八十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122464z.html"
+    },
+    {
+      "index": 300,
+      "title": "卷三百 列传第一百八十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122465x.html"
+    },
+    {
+      "index": 301,
+      "title": "卷三百一 列传第一百八十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122466o.html"
+    },
+    {
+      "index": 302,
+      "title": "卷三百二 列传第一百九十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122467c.html"
+    },
+    {
+      "index": 303,
+      "title": "卷三百三 列传第一百九十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122468q.html"
+    },
+    {
+      "index": 304,
+      "title": "卷三百四 列传第一百九十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122469c.html"
+    },
+    {
+      "index": 305,
+      "title": "卷三百五 列传第一百九十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122470j.html"
+    },
+    {
+      "index": 306,
+      "title": "卷三百六 列传第一百九十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122471q.html"
+    },
+    {
+      "index": 307,
+      "title": "卷三百七 列传第一百九十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122472e.html"
+    },
+    {
+      "index": 308,
+      "title": "卷三百八 列传第一百九十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122473x.html"
+    },
+    {
+      "index": 309,
+      "title": "卷三百九 列传第一百九十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122474b.html"
+    },
+    {
+      "index": 310,
+      "title": "卷三百十 列传第一百九十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122475n.html"
+    },
+    {
+      "index": 311,
+      "title": "卷三百十一 列传第一百九十九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122476j.html"
+    },
+    {
+      "index": 312,
+      "title": "卷三百十二 列传第二百",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122477h.html"
+    },
+    {
+      "index": 313,
+      "title": "卷三百十三 列传第二百一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122478h.html"
+    },
+    {
+      "index": 314,
+      "title": "卷三百十四 列传第二百二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122479p.html"
+    },
+    {
+      "index": 315,
+      "title": "卷三百十五 列传第二百三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122480e.html"
+    },
+    {
+      "index": 316,
+      "title": "卷三百十六 列传第二百四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122481c.html"
+    },
+    {
+      "index": 317,
+      "title": "卷三百十七 列传第二百五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122482v.html"
+    },
+    {
+      "index": 318,
+      "title": "卷三百十八 列传第二百六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122483x.html"
+    },
+    {
+      "index": 319,
+      "title": "卷三百十九 列传第二百七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122484d.html"
+    },
+    {
+      "index": 320,
+      "title": "卷三百二十 列传第二百八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122485v.html"
+    },
+    {
+      "index": 321,
+      "title": "卷三百二十一 列传第二百九",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122486u.html"
+    },
+    {
+      "index": 322,
+      "title": "卷三百二十二 列传第二百十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122487o.html"
+    },
+    {
+      "index": 323,
+      "title": "卷三百二十三 列传第二百十一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122488l.html"
+    },
+    {
+      "index": 324,
+      "title": "卷三百二十四 列传第二百十二",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122489k.html"
+    },
+    {
+      "index": 325,
+      "title": "卷三百二十五 列传第二百十三",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122490q.html"
+    },
+    {
+      "index": 326,
+      "title": "卷三百二十六 列传第二百十四",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122491d.html"
+    },
+    {
+      "index": 327,
+      "title": "卷三百二十七 列传第二百十五",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122492p.html"
+    },
+    {
+      "index": 328,
+      "title": "卷三百二十八 列传第二百十六",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122493s.html"
+    },
+    {
+      "index": 329,
+      "title": "卷三百二十九 列传第二百十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122494v.html"
+    },
+    {
+      "index": 330,
+      "title": "卷三百三十 列传第二百十八",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122495x.html"
+    },
+    {
+      "index": 331,
+      "title": "卷三百三十一 列传第二百十七",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122496e.html"
+    },
+    {
+      "index": 332,
+      "title": "卷三百三十二 列传第二百二十",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122497x.html"
+    },
+    {
+      "index": 333,
+      "title": "附录 张廷玉上明史表",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122498h.html"
+    }
+  ],
+  "chapters": [
+    {
+      "index": 1,
+      "title": "卷一 本纪第一",
+      "url": "https://www.guoxuedashi.com/a/26ozxd/122166k.html",
+      "content": "◎太祖一\n\n　　太祖开天行道肇纪立极大圣至神仁文义武俊德成功高皇帝，讳元璋，字国瑞，姓朱氏。先世家沛，徙句容，再徙泗州。父世珍，始徙濠州之钟离。生四子，太祖其季也。母陈氏，方娠，梦神授药一丸，置掌中有光，吞之，寤，口余香气。及产，红光满室。自是夜数有光起，邻里望见，惊以为火，辄奔救，至则无有。比长，姿貌雄杰，奇骨贯顶。志意廓然，人莫能测。\n\n　　至正四年，旱蝗，大饥疫。太祖时年十七，父母兄相继殁，贫不克葬。里人刘继祖与之地，乃克葬，即凤阳陵也。太祖孤无所依，乃入皇觉寺为僧。逾月，游食合肥。道病，二紫衣人与俱，护视甚至。病已，失所在。凡历光、固、汝、颍诸州三年，复还寺。当是时，元政不纲，盗贼四起。刘福通奉韩山童假宋后起颍，徐寿辉僣帝号起蕲，李二、彭大、赵均用起徐，众各数万，并置将帅，杀吏，侵略郡县，而方国珍已先起海上。他盗拥兵据地，寇掠甚众。天下大乱。\n\n　　十二年春二月，定远人郭子兴与其党孙德崖等起兵濠州。元将彻里不花惮不敢攻，而日俘良民以邀赏。太祖时年二十四，谋避兵，卜于神，去留皆不吉。乃曰：“得毋当举大事乎？”卜之吉，大喜，遂以闰三月甲戌朔入濠见子兴。子兴奇其状貌，留为亲兵。战辄胜，遂妻以所抚马公女，即高皇后也。子兴与德崖龃龉，太祖屡调护之。秋九月，元兵复徐州，李二走死，彭大、赵均用奔濠，德崖等纳之。子兴礼大而易均用，均用怨之。德崖遂与谋，伺子兴出，执而械诸孙氏，将杀之。太祖方在淮北，闻难驰至，诉于彭大。大怒，呼兵以行，太祖亦甲而拥盾，发屋出子兴，破械，使人负以归，遂免。是冬，元将贾鲁围濠。太祖与子兴力拒之。\n\n　　十三年春，贾鲁死，围解。太祖收里中兵，得七百人。子兴喜，署为镇抚。时彭、赵所部暴横，子兴弱，太祖度无足与共事，乃以兵属他将，独与徐达、汤和、费聚等南略定远。计降驴牌寨民兵三千，与俱东。夜袭元将张知院于横涧山，收其卒二万。道遇定远人李善长，与语，大悦，遂与俱攻滁州，下之。是年，张士诚据高邮，自称诚王。\n\n　　十四年冬十月，元丞相脱脱大败士诚于高邮，分兵围六合。太祖曰：“六合破，滁且不免。”与耿再成军瓦梁垒，救之。力战，卫老弱还滁。元兵寻大至，攻滁，太祖设伏诱败之。然度元兵势盛且再至，乃还所获马，遣父老具牛酒谢元将曰：“守城备他盗耳，奈何舍巨寇戮良民？”元兵引去，城赖以完。脱脱既破士诚，军声大振，会中谗，遽解兵柄，江淮乱益炽。\n\n　　十五年春正月，子兴用太祖计，遣张天祐等拔和州，檄太祖总其军。太祖虑诸将不相下，秘其檄，期旦日会厅事。时席尚右，诸将先入，皆踞右。太祖故后至，就左。比视事，剖决如流，众瞠目不能发一语，始稍稍屈。议分工甓城，期三日。太祖工竣，诸将皆后。于是始出檄，南面坐曰：“奉命总诸公兵，今甓城皆后期，如军法何？”诸将皆惶恐谢。乃搜军中所掠妇女纵还家，民大悦。元兵十万攻和，拒守三月，食且尽，而太子秃坚、枢密副使绊住马、民兵元帅陈野先分屯新塘、高望、鸡笼山以绝饷道。太祖率众破之，元兵皆走渡江。三月，郭子兴卒。时刘福通迎立韩山童子林儿于亳，国号宋，建元龙凤。檄子兴子天叙为都元帅，张天祐、太祖为左右副元帅。太祖慨然曰：“大丈夫宁能受制于人耶？”遂不受。然念林儿势盛，可倚藉，乃用其年号以令军中。\n\n　　夏四月，常遇春来归。五月，太祖谋渡江，无舟。会巢湖帅廖永安、俞通海以水军千艘来附，太祖大喜，往抚其众。而元中丞蛮子海牙扼铜城闸、马场河诸隘，巢湖舟师不得出。忽大雨，太祖喜曰：“天助我也！”遂乘水涨，从小港纵舟还。因击海牙于峪溪口，大败之，遂定计渡江。诸将请直趋集庆。太祖曰：“取集庆必自采石始。采石重镇，守必固，牛渚前临大江，彼难为备，可必克也。”六月乙卯，乘风引帆，直达牛渚。常遇春先登，拔之。采石兵亦溃。缘江诸垒悉附。诸将以和州饥，争取资粮谋归。太祖谓徐达曰：“渡江幸捷，若舍而归，江东非吾有也。”乃悉断舟缆，放急流中，谓诸将曰：“太平甚近，当与公等取之。”遂乘胜拔太平，执万户纳哈出。总管靳义赴水死，太祖曰：“义士也”，礼葬之。揭榜禁剽掠。有卒违令，斩以徇，军中肃然。改路曰府。置太平兴国翼元帅府，自领元帅事，召陶安参幕府事，李习为知府。时太平四面皆元兵。右丞阿鲁灰、中丞蛮子海牙等严师截姑孰口，陈野先水军帅康茂才以数万众攻城。太祖遣徐达、邓愈、汤和逆战，别将潜出其后，夹击之，擒野先，并降其众，阿鲁灰等引去。秋九月，郭天叙、张天祐攻集庆，野先叛，二人皆战死，于是子兴部将尽归太祖矣。野先寻为民兵所杀，从子兆先收其众，屯方山，与海牙掎角以窥太平。冬十二月壬子，释纳哈出北归。\n\n　　十六年春二月丙子，大破海牙于采石。三月癸未，进攻集庆，擒兆先，降其众三万六千人，皆疑惧不自保。太祖择骁健者五百人入卫，解甲酣寝达旦，众心始安。庚寅，再败元兵于蒋山。元御史大夫福寿，力战死之，蛮子海牙遁归张士诚，康茂才降。太祖入城，悉召官吏父老谕之曰：“元政氵卖扰，干戈蜂起，我来为民除乱耳，其各安堵如故。贤士吾礼用之，旧政不便者除之，吏毋贪暴殃吾民。”民乃大喜过望。改集庆路为应天府，辟夏煜、孙炎、杨宪等十余人，葬御史大夫福寿，以旌其忠。\n\n　　当是时，元将定定扼镇江，别不华、杨仲英屯宁国，青衣军张明鉴据扬州，八思尔不花驻徽州，石抹宜孙守处州，其弟厚孙守婺州，宋伯颜不花守衢州，而池州已为徐寿辉将所据，张士诚自淮东陷平江，转掠浙西。太祖既定集庆，虑士诚、寿辉强，江左、浙右诸郡为所并，于是遣徐达攻镇江，拔之，定定战死。夏六月，邓愈克广德。\n\n　　秋七月己卯，诸将奉太祖为吴国公。置江南行中书省，自总省事，置僚佐。贻书张士诚，士诚不报，引兵攻镇江。徐达败之，进围常州，不下。九月戊寅，如镇江，谒孔子庙。遣儒士告谕父老，劝农桑，寻还应天。\n\n　　十七年春二月，耿炳文克长兴。三月，徐达克常州。夏四月丁卯，自将攻宁国，取之，别不华降。五月，上元、宁国、句容献瑞麦。六月，赵继祖克江阴。秋七月，徐达克常熟。胡大海克徽州，八思尔不花遁。冬十月，常遇春克池州，缪大亨克扬州，张明鉴降。十二月己丑，释囚。是年，徐寿辉将明玉珍据重庆路。\n\n　　十八年春二月乙亥，以康茂才为营田使。三月己酉，录囚。邓愈克建德路。夏四月，徐寿辉将陈友谅遣赵普胜陷池州。是月，友谅据龙兴路。五月，刘福通破汴梁，迎韩林儿都之。初，福通遣将分道四出，破山东，寇秦晋，掠幽蓟，中原大乱，太祖故得次第略定江表。所过不杀，收召才隽，由是人心日附。冬十二月，胡大海攻婺州，久不下，太祖自将往击之。石抹宜孙遣将率车师由松溪来援，太祖曰：“道狭，车战适取败耳。”命胡德济迎战于梅花门，大破之，婺州降，执厚孙。先一日，城中人望见城西五色云如车盖，以为异，及是乃知为太祖驻兵地。入城，发粟振贫民，改州为宁越府。辟范祖干、叶仪、许元等十三人分直讲经史。戊子，遣使招谕方国珍。\n\n　　十九年春正月乙巳，太祖谋取浙东未下诸路。戒诸将曰：“克城以武，戡乱以仁。吾比入集庆，秋毫无犯，故一举而定。每闻诸将得一城不妄杀，辄喜不自胜。夫师行如火，不戢将燎原。为将能以不杀为武，岂惟国家之利，子孙实受其福。”庚申，胡大海克诸暨。是月，命宁越知府王宗显立郡学。三月甲午，赦大逆以下。丁巳，方国珍以温、台、庆元来献，遣其子关为质，不受。夏四月，俞通海等复池州。时耿炳文守长兴，吴良守江阴，汤和守常州，皆数败士诚兵。太祖以故久留宁越，徇浙东。六月壬戌，还应天。秋八月，元察罕帖木儿复汴梁，福通以林儿退保安丰。九月，常遇春克衢州，擒宋伯颜不花。冬十月，遣夏煜授方国珍行省平章，国珍以疾辞。十一月壬寅，胡大海克处州，石抹宜孙遁。时元守兵单弱，且闻中原乱，人心离散，以故江左、浙右诸郡，兵至皆下，遂西与友谅邻。\n\n　　二十年春二月，元福建行省参政袁天禄以福宁降。三月戊子，征刘基、宋濂、章溢、叶琛至。夏五月，徐达、常遇春败陈友谅于池州。闰月丙辰，友谅陷太平，守将朱文逊，院判花云、王鼎，知府许瑗死之。未几，友谅弑其主徐寿辉，自称皇帝，国号汉，尽有江西、湖广地，约士诚合攻应天，应天大震。诸将议先复太平以牵之，太祖曰：“不可。彼居上游，舟师十倍于我，猝难复也。”或请自将迎击，太祖曰：“不可。彼以偏师缀我，而全军趋金陵，顺流半日可达，吾步骑急难引还，百里趋战，兵法所忌，非策也。”乃驰谕胡大海捣信州牵其后，而令康茂才以书绐友谅，令速来。友谅果引兵东。于是常遇春伏石灰山，徐达阵南门外，杨璟屯大胜港，张德胜等以舟师出龙江关，太祖亲督军卢龙山。乙丑，友谅至龙湾，众欲战，太祖曰：“天且雨，趣食，乘雨击之。”须臾，果大雨，士卒竞奋，雨止合战，水陆夹击，大破之，友谅乘别舸走。遂复太平，下安庆，而大海亦克信州。初，太祖令茂才绐友谅，李善长以为疑。太祖曰：“二寇合，吾首尾受敌，惟速其来而先破之，则士诚胆落矣。”已而士诚兵竟不出。丁卯，置儒学提举司，以宋濂为提举，遣子标受经学。六月，耿再成败石抹宜孙于庆元，宜孙战死，遣使祭之。秋九月，徐寿辉旧将欧普祥以袁州降。冬十二月，复遣夏煜以书谕国珍。\n\n　　二十一年春二月甲申，立盐茶课。己亥，置宝源局。三月丁丑，改枢密院为大都督府。元将薛显以泗州降。戊寅，国珍遣使来谢，饰金玉马鞍以献。却之曰：“今有事四方，所需者人材，所用者粟帛，宝玩非所好也。”秋七月，友谅将张定边陷安庆。八月，遣使于元平章察罕帖木儿。时察罕平山东，降田丰，军声大振，故太祖与通好。会察罕方攻益都未下，太祖乃自将舟师征陈友谅。戊戌，克安庆，友谅将丁普郎、傅友德迎降。壬寅，次湖口，追败友谅于江州，克其城，友谅奔武昌。分徇南康、建昌、饶、蕲、黄、广济，皆下。冬十一月己未，克抚州。\n\n　　二十二年春正月，友谅江西行省丞相胡廷瑞以龙兴降。乙卯，如龙兴，改为洪都府。谒孔子庙。告谕父老，除陈氏苛政，罢诸军需，存恤贫无告者，民大悦。袁、瑞、临江、吉安相继下。二月，还应天。邓愈留守洪都。癸未，降人蒋英杀金华守将胡大海，郎中王恺死之，英叛降张士诚。处州降人李祐之闻变，亦杀行枢密院判耿再成反，都事孙炎、知府王道同、元帅朱文刚死之。三月癸亥，降人祝宗、康泰反，陷洪都，邓愈走应天，知府叶琛、都事万思诚死之。是月，明玉珍称帝于重庆，国号夏。夏四月己卯，邵荣复处州。甲午，徐达复洪都。五月丙午，朱文正、赵德胜、邓愈镇洪都。六月戊寅，察罕以书来报，留我使人不遣。察罕寻为田丰所杀。秋七月丙辰，平章邵荣、参政赵继祖谋逆，伏诛。冬十二月，元遣尚书张昶航海至庆元，授太祖江西行省平章政事，不受。察罕子扩廓帖木儿致书归使者。\n\n　　二十三年春正月丙寅，遣汪河报之。二月壬申，命将士屯田积谷。是月，友谅将张定边陷饶州。士诚将吕珍破安丰，杀刘福通。三月辛丑，太祖自将救安丰，珍败走，以韩林儿归滁州，乃还应天。夏四月壬戌，友谅大举兵围洪都。乙丑，诸全守将谢再兴叛，附于士诚。五月，筑礼贤馆。友谅分兵陷吉安，参政刘齐、知府朱叔华死之。陷临江，同知赵天麟死之。陷无为州，知州董会死之。秋七月癸酉，太祖自将救洪都。癸未，次湖口，先伏兵泾江口及南湖觜，遏友谅归路，檄信州兵守武阳渡。友谅闻太祖至，解围，逆战于鄱阳湖。友谅兵号六十万，联巨舟为阵，楼橹高十余丈，绵亘数十里，旌旗戈盾，望之如山。丁亥，遇于康郎山，太祖分军十一队以御之。戊子，合战，徐达击其前锋，俞通海以火炮焚其舟数十，杀伤略相当。友谅骁将张定边直犯太祖舟，舟胶于沙，不得退，危甚，常遇春从旁射中定边，通海复来援，舟骤进，水涌太祖舟，乃得脱。己丑，友谅悉巨舰出战，诸将舟小，仰攻不利，有怖色。太祖亲麾之，不前，斩退缩者十余人，人皆殊死战。会日晡，大风起东北，乃命敢死士操七舟，实火药芦苇中，纵火焚友谅舟。风烈火炽，烟焰涨天，湖水尽赤。友谅兵大乱，诸将鼓噪乘之，斩首二千余级，焚溺死者无算，友谅气夺。辛卯，复战，友谅复大败。于是敛舟自守，不敢更战。壬辰，太祖移军扼左蠡，友谅亦退保渚矶。相持三日，其左、右二金吾将军皆降。友谅势益蹙，忿甚，尽杀所获将士。而太祖则悉还所俘，伤者傅以善药，且祭其亲戚诸将阵亡者。八月壬戌，友谅食尽，趋南湖觜，为南湖军所遏，遂突湖口。太祖邀之，顺流搏战，及于泾江。泾江军复遮击之，友谅中流矢死。张定边以其子理奔武昌。九月，还应天，论功行赏。先是，太祖救安丰，刘基谏不听。至是谓基曰：“我不当有安丰之行。使友谅乘虚直捣应天，大事去矣。乃顿兵南昌，不亡何待。友谅亡，天下不难定也。”壬午，自将征陈理。是月，张士诚自称吴王。冬十月壬寅，围武昌，分徇湖北诸路，皆下。十二月丙申，还应天，常遇春留督诸军。\n\n　　二十四年春正月丙寅朔，李善长等率群臣劝进，不允。固请，乃即吴王位。建百官。以善长为右相国，徐达为左相国，常遇春、俞通海为平章政事，谕之曰：“立国之初，当先正纪纲。元氏暗弱，威福下移，驯至于乱，今宜鉴之。”立子标为世子。二月乙未，复自将征武昌，陈理降，汉、沔、荆、岳皆下。三月乙丑，还应天。丁卯，置起居注。庚午，罢诸翼元帅府，置十七卫亲军指挥使司，命中书省辟文武人材。夏四月，建祠，祀死事丁普郎等于康郎山，赵德胜等于南昌。秋七月丁丑，徐达克卢州。戊寅，常遇春徇江西。八月戊戌，复吉安，遂围赣州。达徇荆、湘诸路。九月甲申，下江陵，夷陵、潭、归皆降。冬十二月庚寅，达克辰州，遣别将下衡州。\n\n　　二十五年春正月己巳，徐达下宝庆，湖湘平。常遇春克赣州，熊天瑞降。遂趋南安，招谕岭南诸路，下韶州、南雄。甲申，如南昌，执大都督朱文正以归，数其罪，安置桐城。二月己丑，福建行省平章陈友定侵处州，参军胡深击败之，遂下浦城。丙午，士诚将李伯升攻诸全之新城，李文忠大败之。夏四月庚寅，常遇春徇襄、汉诸路。五月乙亥，克安陆。己卯，下襄阳。六月壬子，朱亮祖、胡深攻建宁，战于城下，深被执，死之。秋七月，令从渡江士卒被创废疾者养之，死者赡其妻子。九月丙辰，建国子学。冬十月戊戌，下令讨张士诚。是时，士诚所据，南至绍兴，北有通、泰、高邮、淮安、濠、泗，又北至于济宁。乃命徐达、常遇春等先规取淮东。闰月，围泰州，克之。十一月，张士诚寇宜兴，徐达击败之，遂自宜兴还攻高邮。\n\n　　二十六年春正月癸未，士诚窥江阴，太祖自将救之，士诚遁，康茂才追败之于浮子门。太祖还应天。二月，明玉珍死，子升自立。三月丙申，令中书严选举。徐达克高邮。夏四月乙卯，袭破士诚将徐义水军于淮安，义遁，梅思祖以城降。濠、徐、宿三州相继下，淮东平。甲子，如濠州省墓，置守冢二十家，赐故人汪文、刘英粟帛。置酒召父老饮，极欢，曰：“吾去乡十有余年，艰难百战，乃得归省坟墓，与父老子弟复相见。今苦不得久留欢聚为乐。父老幸教子弟孝弟力田，毋远贾，滨淮郡县尚苦寇掠，父老善自爱。”令有司除租赋，皆顿首谢。辛未，徐达克安丰，分兵败扩廓于徐州。夏五月壬午，至自濠。庚寅，求遗书。秋八月庚戌，改筑应天城，作新宫钟山之阳。辛亥，命徐达为大将军，常遇春为副将军，帅师二十万讨张士诚。御戟门誓师曰：“城下之日，毋杀掠，毋毁庐舍，毋发丘垄。士诚母葬平江城外，毋侵毁。”既而召问达、遇春，用兵当何先。遇春欲直捣平江。太祖曰：“湖州张天骐、杭州潘原明为士诚臂指，平江穷蹙，两人悉力赴援，难以取胜。不若先攻湖州，使疲于奔命。羽翼既披，平江势孤，立破矣。”甲戌，败张天骐于湖州，士诚亲率兵来援，复败之于皂林。九月乙未，李文忠攻杭州。冬十月壬子，遇春败士诚兵于乌镇。十一月甲申，张天骐降。辛卯，李文忠下余杭，潘原明降，旁郡悉下。癸卯，围平江。十二月，韩林儿卒。以明年为吴元年，建庙社宫室，祭告山川。所司进宫殿图，命去雕琢奇丽者。是岁，元扩廓帖木儿与李思齐、张良弼构怨，屡相攻击，朝命不行，中原民益困。\n\n　　二十七年春正月戊戌，谕中书省曰：“东南久罹兵革，民生凋敝，吾甚悯之。且太平、应天诸郡，吾渡江开创地，供亿烦劳久矣。今比户空虚，有司急催科，重困吾民，将何以堪。其赐太平田租二年，应天、镇江、宁国、广德各一年。”二月丁未，傅友德败扩廓将李二于徐州，执之。三月丁丑，始设文武科取士。夏四月，方国珍阴遣人通扩廓及陈友定，移书责之。五月己亥，初置翰林院。是月，以旱减膳素食，复徐、宿、濠、泗、寿、邳、东海、安东、襄阳、安陆及新附地田租三年。六月戊辰，大雨，群臣请复膳。太祖曰：“虽雨，伤禾已多，其赐民今年田租。”癸酉，命朝贺罢女乐。秋七月丙子，给府州县官之任费，赐绮帛，及其父母妻长子有差，著为令。己丑，雷震宫门兽吻，赦罪囚。庚寅，遣使责方国珍贡粮。八月癸丑，圜丘、方丘、社稷坛成。九月甲戌，太庙成。朱亮祖帅师讨国珍。戊寅，诏曰：“先王之政，罪不及孥。自今除大逆不道，毋连坐。”辛巳，徐达克平江，执士诚，吴地平。戊戌，遣使致书于元主，送其宗室神保大王等北还。辛丑，论平吴功，封李善长宣国公，徐达信国公，常遇春鄂国公，将士赐赉有差。朱亮祖克台州。癸卯，新宫成。\n\n　　冬十月甲辰，遣起居注吴琳、魏观以币求遗贤于四方。丙午，令百官礼仪尚左。改李善长左相国，徐达右相国。辛亥，祀元臣余阙于安庆，李黼于江州。壬子，置御史台。癸丑，汤和为征南将军，吴祯副之，讨国珍。甲寅，定律令。戊午，正郊社、太庙雅乐。\n\n　　庚申，召诸将议北征。太祖曰：“山东则王宣反侧，河南则扩廓跋扈，关陇则李思齐、张思道枭张猜忌，元祚将亡，中原涂炭。今将北伐，拯生民于水火，何以决胜？”遇春对曰：“以我百战之师，敌彼久逸之卒，直捣元都，破竹之势也。”太祖曰：“元建国百年，守备必固，悬军深入，馈饷不前，援兵四集，危道也。吾欲先取山东，撤彼屏蔽，移兵两河，破其藩篱，拔潼关而守之，扼其户槛。天下形胜入我掌握，然后进兵，元都势孤援绝，不战自克。鼓行而西，云中、九原、关陇可席卷也。”诸将皆曰善。\n\n　　甲子，徐达为征虏大将军，常遇春为副将军，帅师二十五万，由淮入河，北取中原。胡廷瑞为征南将军，何文辉为副将军，取福建。湖广行省平章杨璟、左丞周德兴、参政张彬取广西。己巳，朱亮祖克温州。十一月辛巳，汤和克庆元，方国珍遁入海。壬午，徐达克沂州，斩王宣。己丑，廖永忠为征南副将军，自海道会和讨国珍。乙未，颁《大统历》。辛丑，徐达克益都。十二月甲辰，颁律令。丁未，方国珍降，浙东平。张兴祖下东平，兖东州县相继降。己酉，徐达下济南。胡廷瑞下邵武。癸丑，李善长帅百官劝进，表三上，乃许。甲子，告于上帝。庚午，汤和、廖永忠由海道克福州。"
+    }
+  ]
+}

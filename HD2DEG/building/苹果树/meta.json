@@ -1,0 +1,29 @@
+{
+  "id": "苹果树",
+  "kind": "building",
+  "title": "苹果树",
+  "prompt": "苹果树",
+  "tags": [
+    "resource"
+  ],
+  "widthTiles": 2,
+  "drawRoad": false,
+  "createdAt": "2026-04-27T20:23:48+08:00",
+  "updatedAt": "2026-04-28T09:02:53+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 64,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/苹果树/front.png",
+    "side": "building/苹果树/side.png",
+    "top": "building/苹果树/top.png",
+    "preview": "building/苹果树/preview.png",
+    "previewProcessed": "building/苹果树/preview-processed.png"
+  }
+}

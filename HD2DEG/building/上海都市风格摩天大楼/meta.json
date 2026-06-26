@@ -1,0 +1,29 @@
+{
+  "id": "上海都市风格摩天大楼",
+  "kind": "building",
+  "title": "上海都市风格摩天大楼",
+  "prompt": "上海都市风格摩天大楼",
+  "tags": [
+    "facility"
+  ],
+  "widthTiles": 24,
+  "drawRoad": false,
+  "createdAt": "2026-04-26T20:46:12+08:00",
+  "updatedAt": "2026-04-26T20:46:12+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 179,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/上海都市风格摩天大楼/front.png",
+    "side": "building/上海都市风格摩天大楼/side.png",
+    "top": "building/上海都市风格摩天大楼/top.png",
+    "preview": "building/上海都市风格摩天大楼/preview.png",
+    "previewProcessed": "building/上海都市风格摩天大楼/preview-processed.png"
+  }
+}

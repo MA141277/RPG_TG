@@ -1,0 +1,14 @@
+{
+  "id": "default_scene",
+  "kind": "scene",
+  "title": "default_scene",
+  "createdAt": "2026-04-27T16:56:48+08:00",
+  "updatedAt": "2026-04-29T13:25:36+08:00",
+  "schemaVersion": 1,
+  "objectCount": 0,
+  "buildingCount": 0,
+  "npcCount": 0,
+  "files": {
+    "scene": "scene/default_scene/scene.json"
+  }
+}

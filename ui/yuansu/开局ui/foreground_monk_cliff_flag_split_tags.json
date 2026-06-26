@@ -1,0 +1,57 @@
+{
+  "source_replaced": "foreground_monk_cliff_flag.png",
+  "replacement_layer_order": "bottom_to_top",
+  "parent_layer_order": 12,
+  "opening_background_output": "opening_background_layered_FFFBF2.png",
+  "generated_at": "2026-06-11T20:10:17",
+  "tags": [
+    {
+      "tag": "bottom_monk_cliff_poles",
+      "order_within_replacement": 1,
+      "file": "img_v3_0212i_b3059506-4159-44f0-8999-76a1503c02dg.png",
+      "note": "Bottom layer among the three split foreground images; monk, cliff, and flag poles/static base.",
+      "canvas_size": [
+        2048,
+        1152
+      ],
+      "alpha_bounds": [
+        1062,
+        403,
+        2048,
+        1152
+      ]
+    },
+    {
+      "tag": "mid_cloak",
+      "order_within_replacement": 2,
+      "file": "img_v3_0212i_f48ccfbb-4486-407d-af1b-9dd5d60fa73g.png",
+      "note": "Middle replacement layer; separated cloak/robe cloth piece.",
+      "canvas_size": [
+        2048,
+        1152
+      ],
+      "alpha_bounds": [
+        1567,
+        634,
+        1839,
+        941
+      ]
+    },
+    {
+      "tag": "top_red_flags",
+      "order_within_replacement": 3,
+      "file": "img_v3_0212i_315f714c-4df7-4412-a3e3-30becea0115g.png",
+      "note": "Top replacement layer; red flags/ribbons above the static foreground.",
+      "canvas_size": [
+        2048,
+        1152
+      ],
+      "alpha_bounds": [
+        1859,
+        626,
+        2045,
+        888
+      ]
+    }
+  ]
+}

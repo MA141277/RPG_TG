@@ -28,7 +28,7 @@ Map
       └─ House[]
           ├─ defaultCharacterId
           ├─ Character[]
-          └─ scene/action hooks
+          └─ module / event hooks
 
 Character
   ├─ portrait / stats / flags
@@ -42,26 +42,7 @@ FunctionEntry
   ├─ open-scene
   └─ custom
 
-Scene
-  └─ ActionNode[]
-      ├─ background
-      ├─ music
-      ├─ dialogue
-      ├─ choice
-      ├─ jump
-      ├─ effect
-      └─ callback
-
-GlobalUI
-  ├─ playerCard
-  ├─ activeMission
-  └─ quickPanels
-```
-
-新增一层事件封装后，建议关系改成：
-
-```text
-Trigger/Event
+Event
   ├─ metadata(id / chapter / once or repeatable)
   ├─ trigger(timing / scope / priority)
   ├─ conditions(all / any / not)
@@ -74,13 +55,19 @@ Scene
       ├─ music
       ├─ dialogue
       ├─ choice
-      ├─ effect
       ├─ jump
+      ├─ effect
       ├─ start-event
       └─ callback
+
+GlobalUI
+  ├─ playerCard
+  ├─ activeMission
+  ├─ overlayView
+  └─ houseSession
 ```
 
-## 3. 你这套玩法对应的数据拆法
+## 3. 玩法对应的数据拆法
 
 ### House
 
@@ -89,11 +76,22 @@ Scene
 - `backAction`：返回上一级
 - `characterIds`：房屋中可交互角色
 - `defaultCharacterId`：默认打开主角色
-- `onEnterSceneId`：进入房屋时触发的剧情
+- `activityLocationId`：可选的城市级流动 NPC 槽位
+- `moduleId`：可选的特殊 house 行为绑定
+- `onEnterEventId`：进入房屋时触发的事件入口
+- `onLeaveEventId`：离开房屋时触发的事件入口
 
 不要把人物详细数据直接塞进 `House`，只保留 ID 引用，避免多人编辑时互相冲突。
 
-### Action 列表
+对特殊 house，有额外硬约束：
+
+- 不从 `house.id` 做业务特判
+- 不在 `main.ts` 写具体 house 分支
+- 统一走 `moduleId -> registry -> runtime`
+
+详见 [special-house-interface.md](D:/RPG_TG/docs/special-house-interface.md)。
+
+### Event / Scene / Action
 
 你给出的：
 
@@ -144,7 +142,10 @@ Scene
 - `houseIds`
 - `travelCost`
 - `neighbourCityIds`
-- `market`, `lordHouse`, `inn` 等标签
+- `tags`
+- `prosperity`
+- `danger`
+- `specialDemand`
 
 ### Map
 
@@ -165,10 +166,12 @@ Scene
 - 主任务追踪
 - 通用资源条
 - 通知/提示
+- 全屏浮层
+- house 会话态
 
 这样地图、城市、房屋、剧情页都能共享同一套全局面板。
 
-## 4. 推荐状态结构
+## 4. 当前推荐状态结构
 
 ```ts
 type GameState = {
@@ -176,6 +179,14 @@ type GameState = {
     currentMapId: MapId;
     currentCityId: CityId;
     currentHouseId: HouseId | null;
+    timeOfDay: "morning" | "afternoon" | "night";
+    schedule: {
+      councilDate: {
+        year: number;
+        month: number;
+        day: number;
+      };
+    };
   };
   player: {
     characterId: CharacterId;
@@ -194,14 +205,29 @@ type GameState = {
   };
   ui: {
     currentView: "map" | "city" | "house" | "scene" | "minigame";
-    openPanels: string[];
+    visiblePanels: GlobalPanelType[];
+    pinnedCharacterId: CharacterId;
+    activeMissionId: MissionId | null;
+    reviewDateText: string;
+    mainHouseMissionText: string;
+    overlayView: "detail" | "cards" | "valuables" | null;
+    cardLibraryFilter: CardLibraryFilter;
+    valuableLibraryFilter: ValuableLibraryFilter;
+    valuableLibrarySortKey: ValuableLibrarySortKey;
+    valuableLibrarySortDirection: "asc" | "desc";
+    houseSession: ActiveHouseModuleSession;
   };
   missions: {
     activeMissionId: MissionId | null;
+    completedMissionIds: MissionId[];
   };
+  cards: CardInventory;
+  valuables: ValuableItemInventory;
   runtime: {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
+    cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
+    cityMarkets: Record<CityId, CityMarketData>;
     eventHistory: Record<
       EventId,
       { firedCount: number; lastTriggeredOn: string | null }
@@ -210,22 +236,41 @@ type GameState = {
 };
 ```
 
-其中 `calendar` 和 `runtime.eventHistory` 是事件系统必须的基础字段。没有这两个字段，就很难表达：
+关键边界：
 
-- 某事件只能在某章节之后触发
-- 某事件距离上一次发生已过 X 个月
-- 某事件已经发生过，不能再触发
-- 某连锁事件必须在前置事件发生后才开放
+- `calendar` 和 `runtime.eventHistory` 是事件系统必须的基础字段
+- `runtime.cityNpcPools` 是城市共享流动 NPC 的统一运行态
+- `runtime.cityMarkets` 是跨 city 的统一市场运行态
+- `ui.houseSession` 是特殊 house 的统一临时会话态
+- `cards` / `valuables` 属于统一玩家运行态，不允许 house 私自重置
 
-## 5. 事件触发规则设计
+## 5. 特殊 House 运行规则
+
+特殊 house 不属于普通静态房屋展示，它们是挂在统一 house runtime 上的业务模块。
+
+当前约束：
+
+- `HouseDefinition.moduleId` 负责行为绑定
+- `src/application/house-modules/house-module-registry.ts` 负责模块注册
+- `src/ui/views/house/house-module-view-registry.ts` 负责视图注册
+- `src/application/house/house-runtime.ts` 负责统一 enter / dispatch / leave 调度
+
+禁止：
+
+- 在 `main.ts` 写 `if (isGrainShopHouse(...))`
+- 在 `application` 返回 HTML 字符串
+- 在 house 模块外写顶层会话全局变量
+- 在进入 house 时覆盖玩家金钱、技能、库存等基础数据
+
+## 6. 事件触发规则设计
 
 推荐把触发规则分成三段，不要把所有判断都塞进一个 `if`：
 
-1. `trigger`
+1. `trigger`  
    定义检查时机，例如 `house-enter`、`talk`、`travel-complete`、`indoor-screen-shown`。
-2. `conditions`
+2. `conditions`  
    定义必须满足的世界状态，例如章节、日期、人物存在、家势关系、城池归属、事件前置。
-3. `participants`
+3. `participants`  
    定义本事件要求谁必须可参加。
 
 ### 触发时机
@@ -284,15 +329,15 @@ type GameState = {
 
 ### 一次性与连锁
 
-官方事件设计天然很依赖前置事件和一次性属性，所以你的 HTML 版也要把这两类规则放进领域模型，而不是交给页面层偷偷处理：
+官方事件设计天然很依赖前置事件和一次性属性，所以 HTML 版也要把这两类规则放进领域模型，而不是交给页面层偷偷处理：
 
 - `occurrence: "once" | "repeatable" | "once-per-chapter"`
 - `nextEventId`
 - `eventHistory`
 
-## 6. 对齐官方模组工具后的约束
+## 7. 对齐官方模组工具后的约束
 
-如果你后面想保留“可导出为类似官方事件脚本”的可能性，当前工程应提前遵守这些约束：
+如果后面想保留“可导出为类似官方事件脚本”的可能性，当前工程应提前遵守这些约束：
 
 - 所有事件必须有稳定字符串 ID
 - 事件入口和演出内容要分离
@@ -303,7 +348,7 @@ type GameState = {
 
 换句话说，浏览器版不要直接模仿官方脚本语法，但要模仿它的“结构化约束”。
 
-## 7. 模组化要求
+## 8. 模组化要求
 
 后续一开始就按可模组覆盖来设计：
 
@@ -320,7 +365,7 @@ type GameState = {
 - 加载顺序：本体 -> DLC/官方扩展 -> 用户模组
 - 同 ID 后加载覆盖前加载
 
-## 8. CSS 拆分原则
+## 9. CSS 拆分原则
 
 CSS 不按页面随便堆，按责任拆：
 
@@ -346,7 +391,7 @@ CSS 不按页面随便堆，按责任拆：
 
 因为多人协作时这些名字很快会失控。
 
-## 9. 并行开发切分建议
+## 10. 并行开发切分建议
 
 适合拆给不同成员同时开发的模块：
 
@@ -364,3 +409,45 @@ CSS 不按页面随便堆，按责任拆：
 - 内容配置不得直接调用 DOM
 - UI 组件不得写死剧情台词和人物属性逻辑
 - 小游戏只通过标准输入输出接口接入主流程
+## 0. 开发原则补充
+
+### 机制优先，不写一次性流程
+
+项目中的玩法开发优先提炼为可复用机制，而不是把当前需求写成一次性剧情插片、一次性 house 特判或一次性 UI 流程。
+
+遇到以下需求时，应先判断是否已经存在可抽象的共享骨架：
+
+- 评定 / 议事 / 周期推进
+- 贡献统计、排名、嘉奖
+- 方针宣布、任务分派
+- 时间快进、等待截止日、自动回场
+- 通用小游戏外壳
+
+如果当前实现方式看起来像：
+
+- 某个 house 的临时专属分支
+- 剧情推进中的手工拼接节点
+- 另一套已有机制的复制版本
+
+则优先回退一步，先抽取共享状态机、共享 runtime contract 或共享组件，再落回具体内容数据。
+
+### 内容变化放数据，流程骨架做共享
+
+同类玩法的差异优先放在 `content` / 配置层，不要把流程差异硬编码在 `application` 分支里。
+
+例如：
+
+- 第一次寺庙评定和第二次寺庙评定，可以共用同一评定流程骨架，只替换贡献榜、嘉奖词、方针文本和可选工作列表。
+- 帅府评定、寺庙评定、未来其他阵营评定，应优先共用同类阶段推进机制，而不是各写一套“看起来差不多”的逻辑。
+
+### 参考成熟历史模拟设计，不从零编造概念
+
+本项目是太阁类历史模拟玩法，不应在已有成熟范式存在时从头发明核心玩法概念。
+
+开发新系统前，优先按以下顺序思考：
+
+1. 仓内是否已经有类似机制。
+2. 太阁系与其他经典历史模拟游戏是否已有成熟节奏和结构。
+3. 是否可以在既有 genre 设计上做本项目语义化落地。
+
+只有在“仓内没有、经典范式也不适配”的情况下，才考虑新增完全原创机制。

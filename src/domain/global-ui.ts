@@ -1,5 +1,6 @@
 import type { CharacterId } from "./character";
 import type { CardCategory } from "./card";
+import type { ActiveHouseModuleSession } from "./house-module";
 import type { MissionId } from "./mission";
 
 export type GlobalPanelType = "player-card" | "main-mission" | "resource-bar" | "notifications";
@@ -20,4 +21,5 @@ export type GlobalUIState = {
   valuableLibraryFilter: ValuableLibraryFilter;
   valuableLibrarySortKey: ValuableLibrarySortKey;
   valuableLibrarySortDirection: SortDirection;
+  houseSession: ActiveHouseModuleSession;
 };

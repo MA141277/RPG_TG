@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Depth Ortho Voxel Debug</title>
+  <style>
+    :root {
+      --bg: #101214;
+      --panel: #191c20;
+      --panel-2: #111418;
+      --line: #31363c;
+      --text: #eef2f4;
+      --muted: #9aa4ad;
+      --accent: #5fc28b;
+      --warn: #f0b35d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: 100vh;
+    }
+    aside {
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      padding: 12px;
+      overflow: auto;
+      max-height: 100vh;
+    }
+    main {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      min-width: 0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        #0f1114;
+      background-size: 24px 24px;
+    }
+    h1 { font-size: 17px; margin: 0 0 6px; }
+    h2 {
+      color: var(--accent);
+      font-size: 12px;
+      margin: 14px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .note {
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+    .control {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    label { color: var(--muted); }
+    input[type="range"] { width: 160px; }
+    input[type="checkbox"] { transform: translateY(1px); }
+    select, button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 7px 8px;
+      font: inherit;
+    }
+    button { cursor: pointer; }
+    button:hover { border-color: #65707a; }
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .value {
+      min-width: 52px;
+      text-align: right;
+      color: #d8e6dc;
+    }
+    .views {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .view {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-2);
+      padding: 7px;
+    }
+    .view b {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+    .view canvas {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 1px solid #252a2f;
+      background: #0b0d0f;
+      image-rendering: pixelated;
+    }
+    #render {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+    }
+    .status {
+      display: grid;
+      grid-template-columns: repeat(5, auto) 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 9px 12px;
+      border-top: 1px solid var(--line);
+      background: rgba(16, 18, 20, 0.94);
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .status span b { color: var(--text); font-weight: 600; }
+    .warn { color: var(--warn); }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      aside { max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+      main { min-height: 70vh; }
+      .status { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <h1>Depth 正交体素调试</h1>
+      <p class="note">独立调试页，只使用石狮子的 color 三视图和 depth 三视图，不进入主引擎。</p>
+
+      <h2>Build</h2>
+      <div class="control">
+        <label for="assetSelect">asset</label>
+        <select id="assetSelect">
+          <option value="stone-lion" selected>生成一个石狮子</option>
+          <option value="lamborghini">兰博基尼</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="buildMode">build mode</label>
+        <select id="buildMode">
+          <option value="consistent-hull" selected>depth-consistent visual hull</option>
+          <option value="surface-splat">depth surface splat</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="targetLongest">targetLongest</label>
+        <input id="targetLongest" type="range" min="48" max="192" step="2" value="96" />
+        <div class="value" id="targetLongestValue">96</div>
+      </div>
+      <div class="control">
+        <label for="surfaceThickness">surfaceThickness</label>
+        <input id="surfaceThickness" type="range" min="1" max="10" step="1" value="3" />
+        <div class="value" id="surfaceThicknessValue">3</div>
+      </div>
+      <div class="control">
+        <label for="supportRadius">supportRadius</label>
+        <input id="supportRadius" type="range" min="0" max="8" step="1" value="2" />
+        <div class="value" id="supportRadiusValue">2</div>
+      </div>
+      <div class="control">
+        <label for="depthPower">depthPower</label>
+        <input id="depthPower" type="range" min="0.35" max="8" step="0.05" value="1" />
+        <div class="value" id="depthPowerValue">1.00</div>
+      </div>
+      <div class="control">
+        <label for="blackCutoff">black cutoff</label>
+        <input id="blackCutoff" type="range" min="0" max="220" step="1" value="112" />
+        <div class="value" id="blackCutoffValue">112</div>
+      </div>
+      <div class="control">
+        <label for="depthTolerance">depth tolerance</label>
+        <input id="depthTolerance" type="range" min="0" max="24" step="1" value="5" />
+        <div class="value" id="depthToleranceValue">5</div>
+      </div>
+      <div class="control">
+        <label for="keepScore">keep score</label>
+        <input id="keepScore" type="range" min="0.1" max="0.95" step="0.05" value="0.45" />
+        <div class="value" id="keepScoreValue">0.45</div>
+      </div>
+      <div class="control">
+        <label for="hardReject">hard reject</label>
+        <input id="hardReject" type="range" min="1" max="4" step="0.25" value="2.25" />
+        <div class="value" id="hardRejectValue">2.25</div>
+      </div>
+      <div class="control">
+        <label for="depthNear">near color</label>
+        <select id="depthNear">
+          <option value="white" selected>white is near</option>
+          <option value="black">black is near</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="sideNear">side near</label>
+        <select id="sideNear">
+          <option value="right" selected>right side is near</option>
+          <option value="left">left side is near</option>
+        </select>
+      </div>
+      <div class="control">
+        <label><input id="strictSupport" type="checkbox" checked /> strict orthographic support</label>
+      </div>
+      <div class="control">
+        <label><input id="shellOnly" type="checkbox" checked /> shell only</label>
+      </div>
+      <div class="control">
+        <label><input id="showDepthPoints" type="checkbox" /> show depth surfels only</label>
+      </div>
+      <div class="control">
+        <label><input id="showVoxelStroke" type="checkbox" /> voxel outlines</label>
+      </div>
+      <div class="control">
+        <label for="materialMode">material</label>
+        <select id="materialMode">
+          <option value="texture" selected>texture</option>
+          <option value="white">white clay</option>
+        </select>
+      </div>
+      <div class="control">
+        <label><input id="normalRefine" type="checkbox" checked /> normal voxel refine</label>
+      </div>
+      <div class="control">
+        <label for="normalRadius">normal radius</label>
+        <input id="normalRadius" type="range" min="0" max="4" step="1" value="1" />
+        <div class="value" id="normalRadiusValue">1</div>
+      </div>
+      <div class="control">
+        <label for="normalStrength">normal strength</label>
+        <input id="normalStrength" type="range" min="-6" max="6" step="0.25" value="2" />
+        <div class="value" id="normalStrengthValue">2.00</div>
+      </div>
+      <div class="btn-row">
+        <button id="rebuildBtn" type="button">Rebuild</button>
+        <button id="resetViewBtn" type="button">Reset View</button>
+      </div>
+
+      <h2>View</h2>
+      <div class="control">
+        <label for="yaw">yaw</label>
+        <input id="yaw" type="range" min="-180" max="180" step="1" value="-38" />
+        <div class="value" id="yawValue">-38</div>
+      </div>
+      <div class="control">
+        <label for="pitch">pitch</label>
+        <input id="pitch" type="range" min="12" max="72" step="1" value="34" />
+        <div class="value" id="pitchValue">34</div>
+      </div>
+      <div class="control">
+        <label for="zoom">zoom</label>
+        <input id="zoom" type="range" min="3" max="13" step="0.25" value="6.5" />
+        <div class="value" id="zoomValue">6.50</div>
+      </div>
+
+      <h2>Color Views</h2>
+      <div class="views">
+        <div class="view"><b>front</b><canvas id="frontPreview" width="180" height="180"></canvas></div>
+        <div class="view"><b>side</b><canvas id="sidePreview" width="180" height="180"></canvas></div>
+        <div class="view"><b>top</b><canvas id="topPreview" width="180" height="180"></canvas></div>
+      </div>
+
+      <h2>Depth Views</h2>
+      <div class="views">
+        <div class="view"><b>depth-front</b><canvas id="depthFrontPreview" width="180" height="180"></canvas></div>
+        <div class="view"><b>depth-side</b><canvas id="depthSidePreview" width="180" height="180"></canvas></div>
+        <div class="view"><b>depth-top</b><canvas id="depthTopPreview" width="180" height="180"></canvas></div>
+      </div>
+    </aside>
+
+    <main>
+      <canvas id="render"></canvas>
+      <div class="status">
+        <span>dims <b id="dimsText">-</b></span>
+        <span>solid <b id="solidText">-</b></span>
+        <span>draw <b id="drawText">-</b></span>
+        <span>method <b>depth-ortho-voxel-v1</b></span>
+        <span id="statusText" class="warn">loading</span>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    const ASSETS = {
+      "stone-lion": {
+        label: "生成一个石狮子",
+        dir: "building/生成一个石狮子/",
+        normal: true,
+      },
+      lamborghini: {
+        label: "兰博基尼",
+        dir: "building/兰博基尼/",
+        normal: false,
+      },
+    };
+
+    function sourcesForAsset(assetId) {
+      const asset = ASSETS[assetId] || ASSETS["stone-lion"];
+      const dir = asset.dir;
+      return {
+        label: asset.label,
+        front: dir + "front.png",
+        side: dir + "side.png",
+        top: dir + "top.png",
+        depthFront: dir + "depth-front.png",
+        depthSide: dir + "depth-side.png",
+        depthTop: dir + "depth-top.png",
+        normal: !!asset.normal,
+        normalFront: dir + "normal-front.png",
+        normalSide: dir + "normal-side.png",
+        normalTop: dir + "normal-top.png",
+      };
+    }
+
+    const $ = (id) => document.getElementById(id);
+    const renderCanvas = $("render");
+    const renderCtx = renderCanvas.getContext("2d", { alpha: false });
+    const state = {
+      images: null,
+      assetId: "stone-lion",
+      model: null,
+      dragging: false,
+      dragX: 0,
+      dragY: 0,
+    };
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function snapEven(v) {
+      const n = Math.max(8, Math.round(v));
+      return n % 2 === 0 ? n : n + 1;
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("image load failed: " + src));
+        img.src = encodeURI(src) + "?v=" + Date.now();
+      });
+    }
+
+    function canvasFromImage(img, width, height, fitX = "center", fitY = "center") {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = false;
+      const iw = img.naturalWidth || img.width || 1;
+      const ih = img.naturalHeight || img.height || 1;
+      const scale = Math.min(width / iw, height / ih);
+      const dw = Math.max(1, Math.round(iw * scale));
+      const dh = Math.max(1, Math.round(ih * scale));
+      let dx = Math.floor((width - dw) * 0.5);
+      let dy = Math.floor((height - dh) * 0.5);
+      if (fitX === "left") dx = 0;
+      if (fitX === "right") dx = width - dw;
+      if (fitY === "top") dy = 0;
+      if (fitY === "bottom") dy = height - dh;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(img, dx, dy, dw, dh);
+      return canvas;
+    }
+
+    function removeBlackBackground(canvas, cutoff) {
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const threshold = clamp(Number(cutoff) || 0, 0, 255);
+      for (let i = 0; i < img.data.length; i += 4) {
+        const luma = img.data[i] * 0.2126 + img.data[i + 1] * 0.7152 + img.data[i + 2] * 0.0722;
+        if (luma <= threshold) img.data[i + 3] = 0;
+      }
+      ctx.putImageData(img, 0, 0);
+      return canvas;
+    }
+
+    function imageData(canvas) {
+      return canvas.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, canvas.width, canvas.height);
+    }
+
+    function makeMask(canvas) {
+      const img = imageData(canvas);
+      const mask = new Uint8Array(img.width * img.height);
+      for (let i = 0; i < mask.length; i++) mask[i] = img.data[i * 4 + 3] > 8 ? 1 : 0;
+      return mask;
+    }
+
+    function maskHas(mask, width, height, x, y, radius) {
+      const ix = Math.round(x);
+      const iy = Math.round(y);
+      const r = Math.max(0, Math.floor(radius || 0));
+      for (let oy = -r; oy <= r; oy++) {
+        const yy = iy + oy;
+        if (yy < 0 || yy >= height) continue;
+        for (let ox = -r; ox <= r; ox++) {
+          const xx = ix + ox;
+          if (xx < 0 || xx >= width) continue;
+          if (mask[yy * width + xx]) return true;
+        }
+      }
+      return false;
+    }
+
+    function buildDepthField(canvas, supportMask, opts) {
+      const img = imageData(canvas);
+      const values = new Float32Array(img.width * img.height);
+      values.fill(-1);
+      const samples = [];
+      for (let i = 0; i < supportMask.length; i++) {
+        if (!supportMask[i]) continue;
+        const j = i * 4;
+        if (img.data[j + 3] <= 8) continue;
+        const luma = (img.data[j] * 0.2126 + img.data[j + 1] * 0.7152 + img.data[j + 2] * 0.0722) / 255;
+        values[i] = luma;
+        samples.push(luma);
+      }
+      samples.sort((a, b) => a - b);
+      const lo = samples[Math.floor(samples.length * 0.02)] ?? 0;
+      const hi = samples[Math.min(samples.length - 1, Math.ceil(samples.length * 0.98))] ?? 1;
+      const inv = 1 / Math.max(0.001, hi - lo);
+      const whiteNear = opts.near === "white";
+      const power = Number(opts.power) || 1;
+      for (let i = 0; i < values.length; i++) {
+        if (values[i] < 0) continue;
+        let v = clamp((values[i] - lo) * inv, 0, 1);
+        v = whiteNear ? 1 - v : v;
+        values[i] = Math.pow(v, power);
+      }
+      return { width: img.width, height: img.height, values, lo, hi };
+    }
+
+    function decodeNormalPixel(img, x, y) {
+      if (!img || x < 0 || y < 0 || x >= img.width || y >= img.height) return null;
+      const i = (y * img.width + x) * 4;
+      if (img.data[i + 3] <= 8) return null;
+      let nx = img.data[i] / 127.5 - 1;
+      let ny = img.data[i + 1] / 127.5 - 1;
+      let nz = img.data[i + 2] / 127.5 - 1;
+      const len = Math.hypot(nx, ny, nz) || 1;
+      nx /= len;
+      ny /= len;
+      nz /= len;
+      if (Math.abs(nz) < 0.08) nz = nz < 0 ? -0.08 : 0.08;
+      return { x: nx, y: ny, z: nz };
+    }
+
+    function solidIndex(x, y, z, W, D) {
+      return (y * D + z) * W + x;
+    }
+
+    function addSolid(solid, W, H, D, x, y, z) {
+      if (x < 0 || y < 0 || z < 0 || x >= W || y >= H || z >= D) return;
+      solid[solidIndex(x, y, z, W, D)] = 1;
+    }
+
+    function removeSolid(solid, W, H, D, x, y, z) {
+      if (x < 0 || y < 0 || z < 0 || x >= W || y >= H || z >= D) return false;
+      const i = solidIndex(x, y, z, W, D);
+      if (!solid[i]) return false;
+      solid[i] = 0;
+      return true;
+    }
+
+    function visualHullSupports(model, x, y, z) {
+      const imageY = model.H - 1 - y;
+      const imageZ = model.D - 1 - z;
+      return (
+        x >= 0 && y >= 0 && z >= 0 &&
+        x < model.W && y < model.H && z < model.D &&
+        model.frontMask[imageY * model.W + x] &&
+        model.sideMask[imageY * model.D + z] &&
+        model.topMask[imageZ * model.W + x]
+      );
+    }
+
+    function addDepthSurfaces(model, fields, opts) {
+      const { W, H, D, solid, frontMask, sideMask, topMask } = model;
+      const halfLo = Math.floor(opts.thickness / 2);
+      const halfHi = Math.ceil(opts.thickness / 2);
+      const strict = opts.strict;
+      const radius = opts.radius;
+
+      for (let imageY = 0; imageY < H; imageY++) {
+        const y = H - 1 - imageY;
+        for (let x = 0; x < W; x++) {
+          if (!frontMask[imageY * W + x]) continue;
+          const d = fields.front.values[imageY * W + x];
+          if (d < 0) continue;
+          const z0 = Math.round(d * (D - 1));
+          for (let t = -halfLo; t <= halfHi; t++) {
+            const z = z0 + t;
+            const topY = D - 1 - z;
+            if (strict && (!maskHas(sideMask, D, H, z, imageY, radius) || !maskHas(topMask, W, D, x, topY, radius))) continue;
+            addSolid(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+
+      for (let imageY = 0; imageY < H; imageY++) {
+        const y = H - 1 - imageY;
+        for (let z = 0; z < D; z++) {
+          if (!sideMask[imageY * D + z]) continue;
+          const d = fields.side.values[imageY * D + z];
+          if (d < 0) continue;
+          const x0 = Math.round(d * (W - 1));
+          for (let t = -halfLo; t <= halfHi; t++) {
+            const x = x0 + t;
+            const topY = D - 1 - z;
+            if (strict && (!maskHas(frontMask, W, H, x, imageY, radius) || !maskHas(topMask, W, D, x, topY, radius))) continue;
+            addSolid(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+
+      for (let imageZ = 0; imageZ < D; imageZ++) {
+        const z = D - 1 - imageZ;
+        for (let x = 0; x < W; x++) {
+          if (!topMask[imageZ * W + x]) continue;
+          const d = fields.top.values[imageZ * W + x];
+          if (d < 0) continue;
+          const y0 = Math.round((1 - d) * (H - 1));
+          for (let t = -halfLo; t <= halfHi; t++) {
+            const y = y0 + t;
+            const frontY = H - 1 - y;
+            if (strict && (!maskHas(frontMask, W, H, x, frontY, radius) || !maskHas(sideMask, D, H, z, frontY, radius))) continue;
+            addSolid(solid, W, H, D, x, y, z);
+          }
+        }
+      }
+    }
+
+    function fieldCoord(field, index, span, invert) {
+      if (!field || index < 0 || index >= field.values.length) return null;
+      const d = field.values[index];
+      if (d < 0) return null;
+      const v = invert ? 1 - d : d;
+      return clamp(v * (span - 1), 0, span - 1);
+    }
+
+    function residualScore(residual, tau) {
+      const t = Math.max(0.001, tau);
+      const v = residual / t;
+      return Math.exp(-(v * v));
+    }
+
+    function addDepthConsistentVisualHull(model, fields, opts) {
+      const { W, H, D, solid, frontMask, sideMask, topMask } = model;
+      const tau = Math.max(0, Number(opts.tolerance) || 0);
+      const sideRightNear = opts.sideNear !== "left";
+      const keepScore = clamp(Number(opts.keepScore) || 0.45, 0.01, 0.99);
+      const hardReject = Math.max(1, Number(opts.hardReject) || 2.25);
+      let candidateCount = 0;
+      let rejectedCount = 0;
+      let missingDepthCount = 0;
+      for (let y = 0; y < H; y++) {
+        const imageY = H - 1 - y;
+        for (let z = 0; z < D; z++) {
+          const imageZ = D - 1 - z;
+          for (let x = 0; x < W; x++) {
+            if (!frontMask[imageY * W + x]) continue;
+            if (!sideMask[imageY * D + z]) continue;
+            if (!topMask[imageZ * W + x]) continue;
+            candidateCount++;
+
+            const zFront = fieldCoord(fields.front, imageY * W + x, D, false);
+            const xSide = fieldCoord(fields.side, imageY * D + z, W, sideRightNear);
+            const yTop = fieldCoord(fields.top, imageZ * W + x, H, true);
+            let scoreSum = 0;
+            let weightSum = 0;
+            let strongReject = false;
+
+            if (zFront == null) {
+              missingDepthCount++;
+            } else {
+              const r = Math.abs(z - zFront);
+              const outside = z < zFront - tau;
+              if (outside && r > tau * hardReject) strongReject = true;
+              scoreSum += (outside ? residualScore(r, tau) : 1) * 1;
+              weightSum += 1;
+            }
+
+            if (xSide == null) {
+              missingDepthCount++;
+            } else {
+              const outside = sideRightNear ? x > xSide + tau : x < xSide - tau;
+              const r = Math.abs(x - xSide);
+              if (outside && r > tau * hardReject) strongReject = true;
+              scoreSum += (outside ? residualScore(r, tau) : 1) * 1;
+              weightSum += 1;
+            }
+
+            if (yTop == null) {
+              missingDepthCount++;
+            } else {
+              const outside = y > yTop + tau;
+              const r = Math.abs(y - yTop);
+              if (outside && r > tau * hardReject) strongReject = true;
+              scoreSum += (outside ? residualScore(r, tau) : 1) * 1;
+              weightSum += 1;
+            }
+
+            const score = weightSum ? scoreSum / weightSum : 0;
+            if (strongReject || score < keepScore) {
+              rejectedCount++;
+              continue;
+            }
+
+            solid[solidIndex(x, y, z, W, D)] = 1;
+          }
+        }
+      }
+      model.candidateCount = candidateCount;
+      model.rejectedCount = rejectedCount;
+      model.missingDepthCount = missingDepthCount;
+    }
+
+    function applyFrontNormalRefine(model, fields, normalImage, opts) {
+      const { W, H, D, solid, frontMask } = model;
+      if (!normalImage || !fields.front) return { carved: 0, filled: 0 };
+      const radius = Math.max(0, Math.round(Number(opts.radius) || 0));
+      const strength = Number(opts.strength) || 0;
+      const sideRightNear = opts.sideNear !== "left";
+      let carved = 0;
+      let filled = 0;
+      for (let imageY = 0; imageY < H; imageY++) {
+        const y0 = H - 1 - imageY;
+        for (let x0 = 0; x0 < W; x0++) {
+          if (!frontMask[imageY * W + x0]) continue;
+          const zBase = fieldCoord(fields.front, imageY * W + x0, D, false);
+          if (zBase == null) continue;
+          const n = decodeNormalPixel(normalImage, x0, imageY);
+          if (!n) continue;
+          for (let oy = -radius; oy <= radius; oy++) {
+            const y = y0 + oy;
+            const imageYN = H - 1 - y;
+            if (y < 0 || y >= H || imageYN < 0 || imageYN >= H) continue;
+            for (let ox = -radius; ox <= radius; ox++) {
+              const x = x0 + ox;
+              if (x < 0 || x >= W) continue;
+              const zPlane = zBase - strength * ((n.x * ox - n.y * oy) / Math.abs(n.z));
+              const zStart = Math.floor(zPlane - 2);
+              const zEnd = Math.ceil(zPlane + 2);
+              for (let z = zStart; z <= zEnd; z++) {
+                if (!visualHullSupports(model, x, y, z)) continue;
+                if (z >= Math.round(zPlane) && z <= Math.round(zPlane) + 1) {
+                  const idx = solidIndex(x, y, z, W, D);
+                  if (!solid[idx]) {
+                    solid[idx] = 1;
+                    filled++;
+                  }
+                }
+              }
+              for (let z = 0; z < Math.floor(zPlane - 1); z++) {
+                if (removeSolid(solid, W, H, D, x, y, z)) carved++;
+              }
+              if (!sideRightNear) {
+                // Keep the front-pass rule stable; side near direction is handled by side normals.
+              }
+            }
+          }
+        }
+      }
+      return { carved, filled };
+    }
+
+    function applySideNormalRefine(model, fields, normalImage, opts) {
+      const { W, H, D, solid, sideMask } = model;
+      if (!normalImage || !fields.side) return { carved: 0, filled: 0 };
+      const radius = Math.max(0, Math.round(Number(opts.radius) || 0));
+      const strength = Number(opts.strength) || 0;
+      const sideRightNear = opts.sideNear !== "left";
+      let carved = 0;
+      let filled = 0;
+      for (let imageY = 0; imageY < H; imageY++) {
+        const y0 = H - 1 - imageY;
+        for (let z0 = 0; z0 < D; z0++) {
+          if (!sideMask[imageY * D + z0]) continue;
+          const xBase = fieldCoord(fields.side, imageY * D + z0, W, sideRightNear);
+          if (xBase == null) continue;
+          const n = decodeNormalPixel(normalImage, z0, imageY);
+          if (!n) continue;
+          for (let oy = -radius; oy <= radius; oy++) {
+            const y = y0 + oy;
+            const imageYN = H - 1 - y;
+            if (y < 0 || y >= H || imageYN < 0 || imageYN >= H) continue;
+            for (let oz = -radius; oz <= radius; oz++) {
+              const z = z0 + oz;
+              if (z < 0 || z >= D) continue;
+              const xPlane = xBase - strength * ((n.x * oz - n.y * oy) / Math.abs(n.z));
+              const xStart = Math.floor(xPlane - 2);
+              const xEnd = Math.ceil(xPlane + 2);
+              for (let x = xStart; x <= xEnd; x++) {
+                if (!visualHullSupports(model, x, y, z)) continue;
+                const lo = sideRightNear ? Math.round(xPlane) - 1 : Math.round(xPlane);
+                const hi = sideRightNear ? Math.round(xPlane) : Math.round(xPlane) + 1;
+                if (x >= lo && x <= hi) {
+                  const idx = solidIndex(x, y, z, W, D);
+                  if (!solid[idx]) {
+                    solid[idx] = 1;
+                    filled++;
+                  }
+                }
+              }
+              if (sideRightNear) {
+                for (let x = Math.ceil(xPlane + 1); x < W; x++) {
+                  if (removeSolid(solid, W, H, D, x, y, z)) carved++;
+                }
+              } else {
+                for (let x = 0; x < Math.floor(xPlane - 1); x++) {
+                  if (removeSolid(solid, W, H, D, x, y, z)) carved++;
+                }
+              }
+            }
+          }
+        }
+      }
+      return { carved, filled };
+    }
+
+    function applyTopNormalRefine(model, fields, normalImage, opts) {
+      const { W, H, D, solid, topMask } = model;
+      if (!normalImage || !fields.top) return { carved: 0, filled: 0 };
+      const radius = Math.max(0, Math.round(Number(opts.radius) || 0));
+      const strength = Number(opts.strength) || 0;
+      let carved = 0;
+      let filled = 0;
+      for (let imageZ = 0; imageZ < D; imageZ++) {
+        const z0 = D - 1 - imageZ;
+        for (let x0 = 0; x0 < W; x0++) {
+          if (!topMask[imageZ * W + x0]) continue;
+          const yBase = fieldCoord(fields.top, imageZ * W + x0, H, true);
+          if (yBase == null) continue;
+          const n = decodeNormalPixel(normalImage, x0, imageZ);
+          if (!n) continue;
+          for (let oz = -radius; oz <= radius; oz++) {
+            const z = z0 + oz;
+            const imageZN = D - 1 - z;
+            if (z < 0 || z >= D || imageZN < 0 || imageZN >= D) continue;
+            for (let ox = -radius; ox <= radius; ox++) {
+              const x = x0 + ox;
+              if (x < 0 || x >= W) continue;
+              const yPlane = yBase - strength * ((n.x * ox - n.y * oz) / Math.abs(n.z));
+              const yStart = Math.floor(yPlane - 2);
+              const yEnd = Math.ceil(yPlane + 2);
+              for (let y = yStart; y <= yEnd; y++) {
+                if (!visualHullSupports(model, x, y, z)) continue;
+                if (y >= Math.round(yPlane) - 1 && y <= Math.round(yPlane)) {
+                  const idx = solidIndex(x, y, z, W, D);
+                  if (!solid[idx]) {
+                    solid[idx] = 1;
+                    filled++;
+                  }
+                }
+              }
+              for (let y = Math.ceil(yPlane + 1); y < H; y++) {
+                if (removeSolid(solid, W, H, D, x, y, z)) carved++;
+              }
+            }
+          }
+        }
+      }
+      return { carved, filled };
+    }
+
+    function applyNormalVoxelRefine(model, fields, normals, opts) {
+      if (!normals?.front || !normals?.side || !normals?.top) return null;
+      const front = applyFrontNormalRefine(model, fields, normals.front, opts);
+      const side = applySideNormalRefine(model, fields, normals.side, opts);
+      const top = applyTopNormalRefine(model, fields, normals.top, opts);
+      return {
+        carved: front.carved + side.carved + top.carved,
+        filled: front.filled + side.filled + top.filled,
+      };
+    }
+
+    function rebuildList(model, shellOnly) {
+      const { W, H, D, solid } = model;
+      const dirs = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+      const list = [];
+      let solidCount = 0;
+      for (let y = 0; y < H; y++) {
+        for (let z = 0; z < D; z++) {
+          for (let x = 0; x < W; x++) {
+            if (!solid[solidIndex(x, y, z, W, D)]) continue;
+            solidCount++;
+            let border = !shellOnly;
+            if (shellOnly) {
+              for (const [dx, dy, dz] of dirs) {
+                const nx = x + dx, ny = y + dy, nz = z + dz;
+                if (nx < 0 || ny < 0 || nz < 0 || nx >= W || ny >= H || nz >= D || !solid[solidIndex(nx, ny, nz, W, D)]) {
+                  border = true;
+                  break;
+                }
+              }
+            }
+            if (border) list.push({ x, y, z });
+          }
+        }
+      }
+      model.solidCount = solidCount;
+      model.list = list;
+    }
+
+    function sampleCanvas(canvas, x, y) {
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const ix = clamp(Math.round(x), 0, canvas.width - 1);
+      const iy = clamp(Math.round(y), 0, canvas.height - 1);
+      const d = ctx.getImageData(ix, iy, 1, 1).data;
+      return [d[0], d[1], d[2], d[3]];
+    }
+
+    function colorForVoxel(model, x, y, z, face) {
+      if ($("materialMode").value === "white") return [238, 238, 232, 255];
+      const imageY = model.H - 1 - y;
+      if (face === "top") return sampleCanvas(model.topCanvas, x, model.D - 1 - z);
+      if (face === "right") return sampleCanvas(model.sideCanvas, z, imageY);
+      return sampleCanvas(model.frontCanvas, x, imageY);
+    }
+
+    function shadeColor(rgba, shade) {
+      const [r, g, b, a] = rgba;
+      if (a <= 8) return "rgba(180,185,188,0.85)";
+      return `rgb(${Math.round(r * shade)},${Math.round(g * shade)},${Math.round(b * shade)})`;
+    }
+
+    function isoProject(x, y, z, view) {
+      const cx = x - view.cx;
+      const cy = y - view.cy;
+      const cz = z - view.cz;
+      const yaw = view.yaw * Math.PI / 180;
+      const pitch = view.pitch * Math.PI / 180;
+      const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+      const rx = cx * cosY - cz * sinY;
+      const rz = cx * sinY + cz * cosY;
+      const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
+      const sy = -cy * cosP + rz * sinP;
+      const depth = rz * cosP + cy * sinP;
+      return {
+        x: view.ox + rx * view.zoom,
+        y: view.oy + sy * view.zoom,
+        depth,
+      };
+    }
+
+    function drawPoly(ctx, pts, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = stroke;
+      ctx.stroke();
+    }
+
+    function resizeRenderCanvas() {
+      const rect = renderCanvas.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const w = Math.max(320, Math.floor(rect.width * dpr));
+      const h = Math.max(240, Math.floor(rect.height * dpr));
+      if (renderCanvas.width !== w || renderCanvas.height !== h) {
+        renderCanvas.width = w;
+        renderCanvas.height = h;
+      }
+    }
+
+    function render() {
+      resizeRenderCanvas();
+      const ctx = renderCtx;
+      const Wc = renderCanvas.width;
+      const Hc = renderCanvas.height;
+      ctx.fillStyle = "#101316";
+      ctx.fillRect(0, 0, Wc, Hc);
+      const model = state.model;
+      if (!model) return;
+      const view = {
+        yaw: Number($("yaw").value),
+        pitch: Number($("pitch").value),
+        zoom: Number($("zoom").value),
+        ox: Wc * 0.5,
+        oy: Hc * 0.58,
+        cx: model.W * 0.5,
+        cy: model.H * 0.5,
+        cz: model.D * 0.5,
+      };
+      const faces = [];
+      const showDepthPoints = $("showDepthPoints").checked;
+      const dirs = [
+        { name: "top", n: [0, 1, 0], shade: 1.08, corners: [[0,1,0],[1,1,0],[1,1,1],[0,1,1]] },
+        { name: "front", n: [0, 0, -1], shade: 0.92, corners: [[0,0,0],[1,0,0],[1,1,0],[0,1,0]] },
+        { name: "right", n: [1, 0, 0], shade: 0.78, corners: [[1,0,0],[1,0,1],[1,1,1],[1,1,0]] },
+      ];
+      for (const v of model.list) {
+        if (showDepthPoints) {
+          const p = isoProject(v.x + 0.5, v.y + 0.5, v.z + 0.5, view);
+          faces.push({ depth: p.depth, kind: "point", p, color: "#7ee0a1" });
+          continue;
+        }
+        for (const face of dirs) {
+          const nx = v.x + face.n[0], ny = v.y + face.n[1], nz = v.z + face.n[2];
+          if (nx >= 0 && ny >= 0 && nz >= 0 && nx < model.W && ny < model.H && nz < model.D && model.solid[solidIndex(nx, ny, nz, model.W, model.D)]) continue;
+          const pts = face.corners.map(([dx, dy, dz]) => isoProject(v.x + dx, v.y + dy, v.z + dz, view));
+          const avgDepth = pts.reduce((sum, p) => sum + p.depth, 0) / pts.length;
+          const color = colorForVoxel(model, v.x, v.y, v.z, face.name);
+          faces.push({ depth: avgDepth, pts, fill: shadeColor(color, face.shade) });
+        }
+      }
+      faces.sort((a, b) => a.depth - b.depth);
+      ctx.lineWidth = Math.max(1, Math.round((window.devicePixelRatio || 1) * 0.7));
+      for (const f of faces) {
+        if (f.kind === "point") {
+          ctx.fillStyle = f.color;
+          ctx.fillRect(f.p.x - 1, f.p.y - 1, 2, 2);
+        } else {
+          drawPoly(ctx, f.pts, f.fill, $("showVoxelStroke").checked ? "rgba(0,0,0,0.24)" : f.fill);
+        }
+      }
+      $("drawText").textContent = String(faces.length);
+    }
+
+    function drawPreview(canvas, srcCanvas) {
+      const ctx = canvas.getContext("2d", { alpha: false });
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = "#0b0d0f";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const scale = Math.min(canvas.width / srcCanvas.width, canvas.height / srcCanvas.height);
+      const dw = Math.round(srcCanvas.width * scale);
+      const dh = Math.round(srcCanvas.height * scale);
+      const dx = Math.floor((canvas.width - dw) / 2);
+      const dy = Math.floor((canvas.height - dh) / 2);
+      ctx.drawImage(srcCanvas, dx, dy, dw, dh);
+    }
+
+    function buildModel() {
+      const imgs = state.images;
+      if (!imgs) return;
+      const target = Number($("targetLongest").value) || 128;
+      const axesX = Math.max(imgs.front.naturalWidth, imgs.top.naturalWidth);
+      const axesY = Math.max(imgs.front.naturalHeight, imgs.side.naturalHeight);
+      const axesZ = Math.max(imgs.side.naturalWidth, imgs.top.naturalHeight);
+      const scale = target / Math.max(axesX, axesY, axesZ);
+      const W = clamp(snapEven(axesX * scale), 8, 192);
+      const H = clamp(snapEven(axesY * scale), 8, 192);
+      const D = clamp(snapEven(axesZ * scale), 8, 192);
+      const blackCutoff = Number($("blackCutoff").value) || 0;
+      const frontCanvas = canvasFromImage(imgs.front, W, H, "center", "bottom");
+      const sideCanvas = canvasFromImage(imgs.side, D, H, "center", "bottom");
+      const topCanvas = canvasFromImage(imgs.top, W, D, "center", "center");
+      const depthFrontCanvas = removeBlackBackground(canvasFromImage(imgs.depthFront, W, H, "center", "bottom"), blackCutoff);
+      const depthSideCanvas = removeBlackBackground(canvasFromImage(imgs.depthSide, D, H, "center", "bottom"), blackCutoff);
+      const depthTopCanvas = removeBlackBackground(canvasFromImage(imgs.depthTop, W, D, "center", "center"), blackCutoff);
+      const normalCanvases = imgs.normalFront && imgs.normalSide && imgs.normalTop ? {
+        front: canvasFromImage(imgs.normalFront, W, H, "center", "bottom"),
+        side: canvasFromImage(imgs.normalSide, D, H, "center", "bottom"),
+        top: canvasFromImage(imgs.normalTop, W, D, "center", "center"),
+      } : null;
+      drawPreview($("frontPreview"), frontCanvas);
+      drawPreview($("sidePreview"), sideCanvas);
+      drawPreview($("topPreview"), topCanvas);
+      drawPreview($("depthFrontPreview"), depthFrontCanvas);
+      drawPreview($("depthSidePreview"), depthSideCanvas);
+      drawPreview($("depthTopPreview"), depthTopCanvas);
+      const frontMask = makeMask(frontCanvas);
+      const sideMask = makeMask(sideCanvas);
+      const topMask = makeMask(topCanvas);
+      const depthOpts = {
+        near: $("depthNear").value,
+        power: Number($("depthPower").value) || 1,
+      };
+      const fields = {
+        front: buildDepthField(depthFrontCanvas, frontMask, depthOpts),
+        side: buildDepthField(depthSideCanvas, sideMask, depthOpts),
+        top: buildDepthField(depthTopCanvas, topMask, depthOpts),
+      };
+      const model = {
+        W, H, D,
+        solid: new Uint8Array(W * H * D),
+        frontMask, sideMask, topMask,
+        frontCanvas, sideCanvas, topCanvas,
+        depthFrontCanvas, depthSideCanvas, depthTopCanvas,
+      };
+      if ($("buildMode").value === "surface-splat") {
+        addDepthSurfaces(model, fields, {
+          thickness: Number($("surfaceThickness").value) || 2,
+          radius: Number($("supportRadius").value) || 0,
+          strict: $("strictSupport").checked,
+        });
+      } else {
+        addDepthConsistentVisualHull(model, fields, {
+          tolerance: Number($("depthTolerance").value) || 0,
+          keepScore: Number($("keepScore").value) || 0.45,
+          hardReject: Number($("hardReject").value) || 2.25,
+          sideNear: $("sideNear").value,
+        });
+      }
+      if ($("normalRefine").checked && normalCanvases) {
+        model.normalStats = applyNormalVoxelRefine(
+          model,
+          fields,
+          {
+            front: imageData(normalCanvases.front),
+            side: imageData(normalCanvases.side),
+            top: imageData(normalCanvases.top),
+          },
+          {
+            radius: Number($("normalRadius").value) || 0,
+            strength: Number($("normalStrength").value) || 0,
+            sideNear: $("sideNear").value,
+          }
+        );
+      } else {
+        model.normalStats = null;
+      }
+      rebuildList(model, $("shellOnly").checked);
+      state.model = model;
+      $("dimsText").textContent = `${W}x${H}x${D}`;
+      $("solidText").textContent = `${model.solidCount}/${model.list.length}`;
+      $("statusText").textContent = model.list.length
+        ? `ready${model.candidateCount ? ` / candidates ${model.candidateCount}, reject ${model.rejectedCount}` : ""}${model.normalStats ? ` / normal +${model.normalStats.filled} -${model.normalStats.carved}` : ""}`
+        : "empty";
+      render();
+    }
+
+    function syncLabels() {
+      for (const id of ["targetLongest", "surfaceThickness", "supportRadius", "yaw", "pitch"]) {
+        $(id + "Value").textContent = $(id).value;
+      }
+      $("depthPowerValue").textContent = Number($("depthPower").value).toFixed(2);
+      $("blackCutoffValue").textContent = $("blackCutoff").value;
+      $("depthToleranceValue").textContent = $("depthTolerance").value;
+      $("keepScoreValue").textContent = Number($("keepScore").value).toFixed(2);
+      $("hardRejectValue").textContent = Number($("hardReject").value).toFixed(2);
+      $("normalRadiusValue").textContent = $("normalRadius").value;
+      $("normalStrengthValue").textContent = Number($("normalStrength").value).toFixed(2);
+      $("zoomValue").textContent = Number($("zoom").value).toFixed(2);
+    }
+
+    function attachEvents() {
+      for (const id of ["targetLongest", "surfaceThickness", "supportRadius", "depthPower", "blackCutoff", "depthTolerance", "keepScore", "hardReject", "normalRadius", "normalStrength"]) {
+        $(id).addEventListener("input", () => { syncLabels(); buildModel(); });
+      }
+      for (const id of ["buildMode", "depthNear", "sideNear", "strictSupport", "shellOnly", "showDepthPoints", "showVoxelStroke", "materialMode", "normalRefine"]) {
+        $(id).addEventListener("change", () => { syncLabels(); buildModel(); });
+      }
+      $("assetSelect").addEventListener("change", () => {
+        loadSelectedAsset($("assetSelect").value);
+      });
+      for (const id of ["yaw", "pitch", "zoom"]) {
+        $(id).addEventListener("input", () => { syncLabels(); render(); });
+      }
+      $("rebuildBtn").addEventListener("click", buildModel);
+      $("resetViewBtn").addEventListener("click", () => {
+        $("yaw").value = -38;
+        $("pitch").value = 34;
+        $("zoom").value = 6.5;
+        syncLabels();
+        render();
+      });
+      renderCanvas.addEventListener("pointerdown", (event) => {
+        state.dragging = true;
+        state.dragX = event.clientX;
+        state.dragY = event.clientY;
+        renderCanvas.setPointerCapture(event.pointerId);
+      });
+      renderCanvas.addEventListener("pointermove", (event) => {
+        if (!state.dragging) return;
+        const dx = event.clientX - state.dragX;
+        const dy = event.clientY - state.dragY;
+        state.dragX = event.clientX;
+        state.dragY = event.clientY;
+        $("yaw").value = clamp(Number($("yaw").value) + dx * 0.45, -180, 180);
+        $("pitch").value = clamp(Number($("pitch").value) - dy * 0.35, 12, 72);
+        syncLabels();
+        render();
+      });
+      renderCanvas.addEventListener("pointerup", () => { state.dragging = false; });
+      renderCanvas.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        $("zoom").value = clamp(Number($("zoom").value) - event.deltaY * 0.006, 3, 13);
+        syncLabels();
+        render();
+      }, { passive: false });
+      window.addEventListener("resize", render);
+    }
+
+    async function loadSelectedAsset(assetId) {
+      const sources = sourcesForAsset(assetId);
+      state.assetId = ASSETS[assetId] ? assetId : "stone-lion";
+      $("assetSelect").value = state.assetId;
+      $("statusText").textContent = "loading " + sources.label;
+      state.images = {
+        front: await loadImage(sources.front),
+        side: await loadImage(sources.side),
+        top: await loadImage(sources.top),
+        depthFront: await loadImage(sources.depthFront),
+        depthSide: await loadImage(sources.depthSide),
+        depthTop: await loadImage(sources.depthTop),
+        normalFront: sources.normal ? await loadImage(sources.normalFront) : null,
+        normalSide: sources.normal ? await loadImage(sources.normalSide) : null,
+        normalTop: sources.normal ? await loadImage(sources.normalTop) : null,
+      };
+      $("normalRefine").disabled = !sources.normal;
+      buildModel();
+    }
+
+    async function main() {
+      attachEvents();
+      syncLabels();
+      try {
+        const requested = new URLSearchParams(location.search).get("asset") || "stone-lion";
+        await loadSelectedAsset(requested);
+      } catch (err) {
+        console.error(err);
+        $("statusText").textContent = err.message || String(err);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>

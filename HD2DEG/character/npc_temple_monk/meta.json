@@ -1,0 +1,19 @@
+{
+  "id": "npc_temple_monk",
+  "kind": "character",
+  "title": "npc_temple_monk",
+  "prompt": "中国风像素角色，寺庙老僧，高德淡薄，慈悲；灰白僧袍，手持念珠，眉须微白，清瘦；气质安静。",
+  "tags": [
+    "npc:npc_temple_monk"
+  ],
+  "createdAt": "2026-04-29T16:10:29+08:00",
+  "updatedAt": "2026-04-29T16:10:29+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_temple_monk/sheet.png",
+    "preview": "character/npc_temple_monk/preview.png"
+  }
+}

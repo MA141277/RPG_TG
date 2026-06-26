@@ -54,6 +54,8 @@ export type PortraitVariant = {
   portraitId: string;
 };
 
+export type LeaderResidenceStatus = "available" | "busy" | "closed";
+
 export type CharacterFunctionType =
   | "trade"
   | "minigame"
@@ -90,6 +92,7 @@ export type CharacterDefinition = {
   clanId?: string;
   title?: string;
   occupation?: string;
+  affiliationLabel?: string;
   cityId: string;
   houseId?: string;
   portraitId: string;
@@ -101,7 +104,11 @@ export type CharacterDefinition = {
   stamina: number;
   biography?: string;
   flags?: string[];
+  isHistoricalFigure?: boolean;
+  leaderResidenceEligible?: boolean;
+  leaderResidenceStatus?: LeaderResidenceStatus;
   availableFunctions: CharacterFunction[];
   onTalkSceneId?: SceneId;
   skills?: Record<SkillKey, number>;
+  teachableSkillKeys?: SkillKey[];
 };

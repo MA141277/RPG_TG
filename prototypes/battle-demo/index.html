@@ -1,0 +1,4898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>棋盘格战斗原型 — 战略验证 Demo</title>
+  <style>
+    :root {
+      --page-scale: 1.25;
+      --bg: #1a1612;
+      --panel: #2a2218;
+      --border: #4a3c28;
+      --text: #e8dcc8;
+      --muted: #9a8870;
+      --accent: #c9a227;
+      --player: #3a6ea5;
+      --enemy: #a53a3a;
+      --plain: #6b8f4e;
+      --forest: #2d5a3d;
+      --hill: #8a7355;
+      --river: #2a4a6a;
+      --bridge: #9a8260;
+      --highlight-move: rgba(100, 180, 255, 0.45);
+      --highlight-attack: rgba(255, 100, 80, 0.5);
+      --highlight-skill: rgba(255, 200, 80, 0.45);
+      --left-w: calc(270px * var(--page-scale));
+      --right-w: calc(260px * var(--page-scale));
+      --side-w: calc(var(--left-w) + var(--right-w));
+      --header-h: calc(64px * var(--page-scale));
+      --deploy-h: calc(46px * var(--page-scale));
+      --controls-h: calc(38px * var(--page-scale));
+      --tile-w: calc(56px * var(--page-scale));
+      --tile-h: calc(32px * var(--page-scale));
+      --tile-side: calc(40px * var(--page-scale));
+      --cell: min(
+        calc((100vh - var(--header-h) - var(--deploy-h) - var(--controls-h) - 20px) / 10 - 2px),
+        calc((100vw - var(--side-w) - 40px) / 12 - 2px),
+        calc(56px * var(--page-scale))
+      );
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      height: 100%;
+      overflow: hidden;
+      font-size: calc(100% * var(--page-scale));
+    }
+    body { height: 100%; overflow: hidden; }
+    body {
+      font-family: "Noto Serif SC", "SimSun", serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      height: var(--header-h);
+      flex-shrink: 0;
+      padding: 4px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header h1 { font-size: 0.95rem; color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+    .phase-badge {
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      background: var(--panel);
+      white-space: nowrap;
+    }
+    .phase-badge.player { border-color: var(--player); color: #8ec4ff; }
+    .phase-badge.enemy { border-color: var(--enemy); color: #ff9090; }
+
+    .objective-bar {
+      font-size: 0.72rem;
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .objective-progress {
+      font-size: 0.68rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #turn-info {
+      color: var(--muted);
+      font-size: 0.72rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+
+    main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      gap: 8px;
+      padding: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .command-panel,
+    .right-panel {
+      flex-shrink: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow: hidden;
+      position: relative;
+      z-index: 5;
+    }
+
+    .command-panel { width: var(--left-w); }
+    .right-panel { width: var(--right-w); }
+    .right-panel .debug-panel { display: none; }
+
+    .battle-area {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .unit-card,
+    .unit-formation-panel,
+    .battle-status-panel {
+      background: rgba(18, 16, 14, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .panel-title {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .unit-card { flex-shrink: 0; }
+    .unit-card-body {
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 8px;
+      min-height: 120px;
+    }
+    .unit-portrait {
+      border: 1px solid var(--border);
+      background: #201912;
+      min-height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 0.78rem;
+      text-align: center;
+      padding: 6px;
+    }
+    .unit-summary {
+      min-width: 0;
+      font-size: 0.68rem;
+      line-height: 1.55;
+      color: var(--text);
+    }
+    .unit-summary .name {
+      color: var(--text);
+      font-size: 0.86rem;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .unit-summary .muted { color: var(--muted); }
+    .unit-stat-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      border-top: 1px solid rgba(201, 162, 39, 0.16);
+      padding-top: 3px;
+      margin-top: 3px;
+    }
+
+    .unit-formation-panel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .unit-formation-grid {
+      flex: 1;
+      min-height: 0;
+      padding: 7px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: minmax(72px, 1fr);
+      gap: 5px;
+      overflow: hidden;
+    }
+    .unit-formation-cell {
+      min-width: 0;
+      border: 1px solid var(--border);
+      background: rgba(42, 34, 24, 0.88);
+      border-radius: 4px;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 0.58rem;
+      line-height: 1.2;
+    }
+    .unit-formation-cell.empty {
+      opacity: 0.42;
+      justify-content: center;
+      color: var(--muted);
+    }
+    .unit-formation-cell.fallen {
+      opacity: 0.55;
+      filter: grayscale(0.65);
+    }
+    .unit-formation-cell .slot {
+      color: var(--muted);
+      font-size: 0.52rem;
+    }
+    .unit-formation-cell .troop {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.64rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .unit-formation-cell .hp {
+      color: var(--accent);
+      font-size: 0.56rem;
+    }
+    .unit-formation-cell .bar {
+      height: 4px;
+      background: rgba(0,0,0,0.42);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: auto;
+    }
+    .unit-formation-cell .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6fa3d8, #c9a227);
+    }
+
+    .board-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(rgba(18, 16, 14, 0.08), rgba(18, 16, 14, 0.08)),
+        url("../../ui/battle/battlegroun_forest.png") center / cover no-repeat;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #board {
+      position: relative;
+      user-select: none;
+      width: calc((12 + 10) * var(--tile-w) / 2);
+      height: calc((12 + 10) * var(--tile-h) / 2 + var(--tile-h));
+    }
+
+    .cell {
+      width: var(--tile-w);
+      height: var(--tile-h);
+      position: absolute;
+      cursor: default;
+      font-size: clamp(0.4rem, calc(var(--tile-w) * 0.12), 0.6rem);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform: translateZ(0);
+      --tile-bg: transparent;
+      --tile-edge: #e2bf47;
+      --tile-glow: rgba(0,0,0,0.22);
+    }
+
+    .cell::before {
+      content: "";
+      position: absolute;
+      width: var(--tile-side);
+      height: var(--tile-side);
+      left: calc((var(--tile-w) - var(--tile-side)) / 2);
+      top: calc((var(--tile-h) - var(--tile-side)) / 2);
+      box-sizing: border-box;
+      background: var(--tile-bg);
+      border: 2px solid var(--tile-edge);
+      border-radius: 7px;
+      transform: scaleY(0.52) rotate(45deg);
+      transform-origin: center;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.25);
+      transition: transform 0.12s, filter 0.12s, box-shadow 0.12s;
+    }
+
+    .cell.deploy-zone { outline: 1px dashed rgba(100,180,255,0.4); }
+    .cell.defense-zone { outline: 1px dashed rgba(201,162,39,0.35); }
+    .cell.can-move { cursor: pointer; }
+    .cell.can-move::before { --tile-edge: #8dd4ff; filter: brightness(1.18); box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 12px var(--highlight-move); }
+    .cell.can-attack { cursor: crosshair; }
+    .cell.can-attack::before { --tile-edge: #ff746b; filter: brightness(1.22); box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 14px var(--highlight-attack); }
+    .cell.attack-range::before { --tile-edge: #d86a4c; filter: brightness(1.08); box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 8px rgba(255, 100, 80, 0.28); }
+    .cell.can-skill { cursor: pointer; }
+    .cell.can-skill::before { --tile-edge: #ffd166; filter: brightness(1.22); box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 12px var(--highlight-skill); }
+    .cell.post-move::before,
+    .cell.selected::before { --tile-edge: #ffe17a; transform: scaleY(0.52) rotate(45deg); translate: 0 -2px; box-shadow: 0 6px 0 rgba(0,0,0,0.28), 0 0 16px rgba(255, 225, 122, 0.72); }
+    .cell.highlight-player-camp::before { box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 0 2px rgba(58, 110, 165, 0.7); }
+    .cell.highlight-enemy-camp::before { box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 0 2px rgba(165, 58, 58, 0.7); }
+    .cell.highlight-supply-depot::before { --tile-edge: #ffe17a; }
+    .cell.highlight-cart::before { --tile-edge: #ffcc66; }
+    .cell.highlight-target-commander::before { box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 0 2px rgba(255, 215, 96, 0.95); }
+    .cell.highlight-protect-commander::before { box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 0 2px rgba(126, 200, 255, 0.95); }
+
+    .camp-marker {
+      position: absolute;
+      top: -6px;
+      right: 2px;
+      font-size: 0.48rem;
+      opacity: 0.75;
+      z-index: 2;
+    }
+
+    .dropped-supply {
+      position: absolute;
+      font-size: 0.55rem;
+      z-index: 0;
+      color: #ffd080;
+      text-shadow: 0 0 4px #000;
+    }
+
+    .unit.supply-cart { background: #4a3a18; border-color: #e8b84a; color: #ffe8a0; }
+    .unit.supply-cart .cart-hp { font-size: 0.45rem; }
+
+    .point-marker {
+      position: absolute;
+      bottom: 1px;
+      right: 2px;
+      font-size: 0.48rem;
+      padding: 0 2px;
+      border-radius: 2px;
+      background: rgba(0,0,0,0.45);
+      line-height: 1.2;
+      z-index: 2;
+    }
+    .point-marker.player-own { color: #8ec4ff; border: 1px solid var(--player); }
+    .point-marker.enemy-own { color: #ff9090; border: 1px solid var(--enemy); }
+    .point-marker.neutral { color: var(--muted); border: 1px solid var(--muted); }
+
+    .capture-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(0,0,0,0.4);
+      z-index: 2;
+    }
+    .capture-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
+
+    .unit {
+      width: calc(var(--tile-w) * 0.8);
+      min-height: calc(var(--tile-w) * 0.84);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: clamp(0.4rem, calc(var(--tile-w) * 0.1), 0.55rem);
+      font-weight: 600;
+      cursor: grab;
+      border: 0;
+      position: relative;
+      z-index: 1;
+      line-height: 1.05;
+      text-align: center;
+      padding: calc(var(--tile-w) * 0.36) 2px 5px;
+      background: transparent;
+      color: #f7ecd2;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.88);
+    }
+
+    .unit::after {
+      content: "";
+      position: absolute;
+      left: 16%;
+      right: 16%;
+      bottom: 5px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.34);
+      filter: blur(2px);
+      z-index: -1;
+    }
+
+    .unit-art {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      width: calc(var(--tile-w) * 0.9);
+      height: calc(var(--tile-w) * 1.02);
+      transform: translateX(-50%);
+      background: var(--unit-sprite) center bottom / contain no-repeat;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .unit-caption {
+      min-width: 82%;
+      padding: 1px 4px;
+      border-radius: 2px;
+      background: rgba(0,0,0,0.52);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .unit-name {
+      margin-bottom: 3px;
+    }
+
+    .unit-bars {
+      width: 82%;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .unit-bar {
+      height: 5px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(8, 10, 14, 0.74);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+    }
+
+    .unit-bar-fill {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .unit-bar--hp .unit-bar-fill {
+      background: linear-gradient(90deg, #c54b43, #f1b05f);
+    }
+
+    .unit-bar--morale .unit-bar-fill {
+      background: linear-gradient(90deg, #2a6fa0, #4ed8d2);
+    }
+
+    .formation-chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      width: 70%;
+      margin-top: 1px;
+    }
+    .formation-chips i {
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.58);
+    }
+
+    .unit.player { color: #ffd9d2; }
+    .unit.enemy { color: #d9ecff; }
+    .unit.commander .unit-art { filter: drop-shadow(0 0 5px rgba(246,211,107,0.8)); }
+    .unit.supply-cart { background: #4a3a18; border: 2px solid #e8b84a; color: #ffe8a0; padding: 1px; box-shadow: 0 5px 8px rgba(0,0,0,0.35); }
+    .unit.supply-cart::after { display: none; }
+    .unit.acted { opacity: 0.55; }
+    .unit.chaos { animation: shake 0.4s infinite; border-color: #ff8800; }
+    .unit.rout { animation: flee-pulse 0.8s infinite; border-color: #888; opacity: 0.65; }
+    .unit.in-river { outline: 1px dashed #6af; }
+    .unit-status {
+      font-size: 0.48rem;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+    .unit-status.high { color: #8f8; }
+    .unit-status.normal { color: #ccc; }
+    .unit-status.shaken { color: #fc8; }
+    .unit-status.chaos { color: #f80; }
+    .unit-status.rout { color: #aaa; }
+
+    .commander-badge {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      min-width: 1.4em;
+      padding: 0 2px;
+      border-radius: 2px;
+      font-size: 0.42rem;
+      line-height: 1.2;
+      color: #241300;
+      background: #f6d36b;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(-1px); }
+    }
+    @keyframes flee-pulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 0.8; }
+    }
+
+    .controls {
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      z-index: 4;
+      height: var(--controls-h);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      padding: 5px 7px;
+      background: rgba(18, 16, 14, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    button {
+      font-family: inherit;
+      padding: 5px 12px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary { background: #3a2e10; border-color: var(--accent); color: var(--accent); }
+
+    .skill-bar { display: flex; gap: 4px; overflow: hidden; min-width: 0; }
+    .skill-btn { font-size: 0.75rem; padding: 4px 8px; }
+
+    .action-menu {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: stretch;
+      min-width: 96px;
+      padding: 7px 8px;
+      background: rgba(18, 16, 14, 0.94);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+    }
+    .action-menu.hidden { display: none; }
+    .action-menu .hint {
+      color: var(--muted);
+      font-size: 0.72rem;
+      padding: 0 2px 2px;
+      white-space: normal;
+      line-height: 1.25;
+      text-align: center;
+    }
+    .action-menu button { width: 100%; padding: 5px 8px; }
+
+    .battle-log-panel {
+      flex-shrink: 0;
+      height: 150px;
+      background: #12100e;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .battle-log-panel h3 {
+      flex-shrink: 0;
+      padding: 5px 7px;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .log-panel {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 5px 7px;
+      font-size: 0.7rem;
+      line-height: 1.35;
+    }
+    .log-panel .entry { margin-bottom: 2px; }
+    .log-panel .entry.damage { color: #ff8080; }
+    .log-panel .entry.heal { color: #80ff80; }
+    .log-panel .entry.skill { color: #ffd080; }
+    .log-panel .entry.system { color: var(--muted); }
+    .log-panel .entry.morale { color: #c8a0ff; }
+
+    .morale-log-panel {
+      flex-shrink: 0;
+      height: 118px;
+      overflow-y: auto;
+      background: #151018;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 7px;
+      font-size: 0.68rem;
+      line-height: 1.35;
+    }
+    .morale-log-panel h3 {
+      font-size: 0.72rem;
+      color: var(--accent);
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+    .morale-log-panel .entry { margin-bottom: 2px; color: #c8a0ff; }
+
+    .debug-panel {
+      flex: 1;
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .debug-panel h2 {
+      padding: 5px 8px;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .debug-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 5px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      align-content: start;
+    }
+    .debug-unit {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 5px;
+      font-size: 0.62rem;
+      line-height: 1.4;
+    }
+    .debug-unit.player-side { border-left: 3px solid var(--player); }
+    .debug-unit.enemy-side { border-left: 3px solid var(--enemy); }
+    .debug-unit .name { font-weight: 600; font-size: 0.68rem; }
+    .morale-bar { height: 3px; background: #333; border-radius: 2px; overflow: hidden; margin: 2px 0; }
+    .morale-fill { height: 100%; background: linear-gradient(90deg, #a53a3a, #c9a227, #3a8a3a); }
+
+    .battle-status-panel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .battle-status-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.68rem;
+      line-height: 1.45;
+    }
+    .status-item {
+      border: 1px solid rgba(201, 162, 39, 0.22);
+      background: rgba(42, 34, 24, 0.7);
+      border-radius: 4px;
+      padding: 6px;
+    }
+    .status-item .label {
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .deploy-pool {
+      position: absolute;
+      left: calc(var(--left-w) + 16px);
+      right: calc(var(--right-w) + 16px);
+      top: 8px;
+      z-index: 4;
+      height: var(--deploy-h);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      padding: 4px 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .deploy-pool .unit {
+      width: auto;
+      min-width: 68px;
+      min-height: 44px;
+      height: auto;
+      flex-shrink: 0;
+      padding: 4px 5px;
+    }
+    .deploy-pool .unit::after { display: none; }
+    .deploy-pool .unit.player { background: #5f1e1e; border: 2px solid #d45a5a; color: #ffd9d2; }
+
+    .type-tag {
+      display: inline-block;
+      padding: 0 4px;
+      border-radius: 2px;
+      font-size: 0.58rem;
+      background: rgba(0,0,0,0.3);
+    }
+
+    .overlay-msg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .overlay-msg.hidden { display: none; }
+    .overlay-box {
+      background: var(--panel);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 28px 40px;
+      text-align: center;
+    }
+    .overlay-box h2 { font-size: 1.4rem; color: var(--accent); margin-bottom: 10px; }
+    .overlay-box p { font-size: 0.88rem; line-height: 1.5; color: var(--text); }
+    .recap-box {
+      margin-top: 14px;
+      text-align: left;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+    .recap-box h3 { font-size: 0.88rem; color: var(--accent); margin-bottom: 8px; }
+    .recap-box ul { padding-left: 18px; color: var(--muted); }
+    .recap-box li { margin-bottom: 4px; }
+
+    .tutorial-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(360px, calc(100vw - 32px));
+      background: var(--panel);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px 16px;
+      z-index: 110;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .tutorial-toast.hidden { display: none; }
+    .tutorial-toast h3 { font-size: 0.95rem; color: var(--accent); margin-bottom: 6px; }
+    .tutorial-toast p { font-size: 0.82rem; line-height: 1.55; color: var(--text); margin-bottom: 10px; }
+    .tutorial-toast button { width: 100%; }
+
+    .objective-intro {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 105;
+    }
+    .objective-intro.hidden { display: none; }
+    .objective-intro-box {
+      background: var(--panel);
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      padding: 28px 36px;
+      text-align: center;
+      max-width: 380px;
+    }
+    .objective-intro-box h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 10px; }
+    .objective-intro-box p { font-size: 0.9rem; line-height: 1.6; color: var(--text); margin-bottom: 16px; }
+
+    .formation-battle {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      background:
+        linear-gradient(rgba(12, 16, 18, 0.03), rgba(12, 16, 18, 0.08)),
+        url("../../ui/battle/stage.png") center / cover no-repeat;
+      display: block;
+      overflow: hidden;
+    }
+    .formation-battle.hidden { display: none; }
+    .formation-battle-box {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      min-height: 540px;
+      overflow: hidden;
+    }
+    .battle-morale-frame {
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      width: min(680px, 58vw);
+      height: 42px;
+      transform: translateX(-50%);
+      z-index: 3;
+      display: grid;
+      grid-template-columns: 1fr 88px 1fr;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      background: rgba(18, 16, 14, 0.86);
+      border: 2px solid rgba(70, 56, 36, 0.96);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(201,162,39,0.25);
+    }
+    .battle-morale-frame::after {
+      content: "MORALE";
+      color: #f0e4cf;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: center;
+      text-shadow: 0 2px 2px #000;
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .battle-morale-bar {
+      height: 13px;
+      border: 1px solid rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.55);
+      box-shadow: inset 0 0 5px rgba(255,255,255,0.14);
+      overflow: hidden;
+    }
+    .battle-morale-bar.player { grid-column: 1; }
+    .battle-morale-bar.enemy { grid-column: 3; }
+    .battle-morale-fill {
+      height: 100%;
+      width: 50%;
+      transition: width 0.2s ease;
+    }
+    .battle-morale-bar.player .battle-morale-fill { margin-left: auto; background: linear-gradient(90deg, #1f6ea3, #28b8ef); }
+    .battle-morale-bar.enemy .battle-morale-fill { background: linear-gradient(90deg, #cf3e45, #65171b); }
+    .formation-side {
+      position: absolute;
+      top: auto;
+      bottom: 182px;
+      width: min(400px, 34vw);
+      height: min(340px, 46vh);
+      min-height: 270px;
+      z-index: 2;
+    }
+    .formation-side.player { left: clamp(88px, 16vw, 240px); }
+    .formation-side.enemy { right: clamp(88px, 16vw, 240px); }
+    .formation-side h2 {
+      position: absolute;
+      top: -32px;
+      left: 0;
+      right: 0;
+      font-size: 0.78rem;
+      color: #f0e4cf;
+      text-align: center;
+      text-shadow: 0 2px 3px #000;
+    }
+    .formation-grid {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .formation-slot {
+      position: absolute;
+      left: calc(var(--x) * 1%);
+      top: calc(var(--y) * 1%);
+      width: 108px;
+      min-height: 194px;
+      border: 0;
+      border-radius: 999px 999px 42px 42px;
+      background: transparent;
+      padding: 0;
+      font-size: 0.58rem;
+      line-height: 1.2;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s, opacity 0.18s;
+      filter: drop-shadow(0 14px 8px rgba(0,0,0,0.42));
+    }
+    .formation-side.enemy .formation-slot {
+      left: auto;
+      right: calc(var(--x) * 1%);
+    }
+    .formation-slot.empty { opacity: 0; pointer-events: none; }
+    .formation-slot.fallen { opacity: 0.42; filter: grayscale(0.85) drop-shadow(0 10px 6px rgba(0,0,0,0.35)); }
+    .formation-slot.striker {
+      filter: drop-shadow(0 0 18px rgba(255, 225, 122, 0.8)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
+    }
+    .formation-side.player .formation-slot.striker { transform: translateX(30px) scale(1.06); }
+    .formation-side.enemy .formation-slot.striker { transform: translateX(-30px) scale(1.06); }
+    .formation-slot.targeted {
+      filter: drop-shadow(0 0 18px rgba(255, 95, 80, 0.78)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
+      animation: hitShake 0.26s ease;
+    }
+    .formation-standee {
+      position: relative;
+      width: 76px;
+      height: 106px;
+      margin: 0 auto;
+      border-radius: 50% 50% 44% 44% / 58% 58% 42% 42%;
+      border: 2px solid rgba(255,255,255,0.35);
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,0.32), transparent 20%),
+        linear-gradient(180deg, #6fa3d8, #1d3556 58%, #11151d);
+      box-shadow: inset 0 0 14px rgba(255,255,255,0.12), 0 12px 0 rgba(0,0,0,0.18);
+    }
+    .formation-spine-canvas {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 156px;
+      height: 220px;
+      margin: -58px auto -18px;
+      pointer-events: none;
+    }
+    .formation-side.enemy .formation-spine-canvas {
+      transform: scaleX(-1);
+    }
+    .battle-spine-proxy {
+      position: absolute;
+      z-index: 6;
+      width: 240px;
+      height: 333px;
+      pointer-events: none;
+      filter: drop-shadow(0 18px 10px rgba(0,0,0,0.48));
+      will-change: transform, left, top;
+    }
+    .battle-spine-proxy.enemy {
+      transform: scaleX(-1);
+    }
+    .formation-slot.is-proxying .formation-spine-canvas {
+      visibility: hidden;
+    }
+    .formation-side.enemy .formation-standee {
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,0.28), transparent 20%),
+        linear-gradient(180deg, #c97763, #642122 58%, #171111);
+    }
+    .formation-standee::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: -10px;
+      height: 11px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.32);
+      filter: blur(1px);
+    }
+    .formation-slot .slot-name {
+      position: absolute;
+      left: 50%;
+      bottom: 25px;
+      transform: translateX(-50%);
+      min-width: 54px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.5);
+      color: rgba(240,228,207,0.78);
+      font-size: 0.48rem;
+      text-align: center;
+    }
+    .formation-slot .member-name {
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      min-width: 74px;
+      color: var(--text);
+      font-weight: 600;
+      text-align: center;
+      text-shadow: 0 1px 2px #000;
+      white-space: nowrap;
+    }
+    .formation-slot .member-hp {
+      position: absolute;
+      left: 50%;
+      bottom: -10px;
+      transform: translateX(-50%);
+      width: 74px;
+      height: 8px;
+      border: 1px solid rgba(0,0,0,0.75);
+      background: #111827;
+      overflow: hidden;
+    }
+    .formation-slot .member-hp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0ba34a, #70e081);
+    }
+    .formation-slot .member-loss {
+      position: absolute;
+      left: 50%;
+      top: 2px;
+      transform: translateX(-50%);
+      color: #ffefe0;
+      background: rgba(180, 35, 35, 0.82);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-weight: 700;
+      text-shadow: 0 1px 1px #000;
+    }
+    @keyframes hitShake {
+      0%, 100% { translate: 0 0; }
+      30% { translate: -3px 0; }
+      60% { translate: 3px 0; }
+    }
+    .battle-sequence {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      width: min(680px, 58vw);
+      height: 142px;
+      transform: translateX(-50%);
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(30, 23, 16, 0.88);
+      border: 2px solid rgba(70, 56, 36, 0.96);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(201,162,39,0.2);
+      padding: 8px 12px;
+    }
+    .battle-sequence h2 {
+      text-align: center;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+    .battle-event-list {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.68rem;
+      line-height: 1.42;
+      color: var(--text);
+    }
+    .battle-event-list .entry { margin-bottom: 4px; }
+    .battle-event-list .round { color: var(--accent); margin-top: 6px; }
+    .battle-event-list .miss { color: var(--muted); }
+    .battle-event-list .damage { color: #ffb0a8; }
+    .battle-sequence button { width: 100%; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <h1>棋盘格战斗原型</h1>
+      <span class="phase-badge" id="phase-badge">部署阶段</span>
+      <span id="turn-info"></span>
+    </div>
+    <div class="objective-bar" id="objective-bar">战斗目标：—</div>
+    <div class="objective-progress" id="objective-progress"></div>
+  </header>
+
+  <main>
+    <aside class="command-panel">
+      <section class="unit-card">
+        <div class="panel-title">单位详情</div>
+        <div class="unit-card-body" id="unit-card-body"></div>
+      </section>
+      <section class="unit-formation-panel">
+        <div class="panel-title">编队详情（3x3）</div>
+        <div class="unit-formation-grid" id="unit-formation-grid"></div>
+      </section>
+    </aside>
+
+    <div class="battle-area">
+      <div class="deploy-pool" id="deploy-pool"></div>
+      <div class="board-wrap"><div id="board"></div></div>
+      <div class="controls">
+        <button class="primary" id="btn-start">开始战斗</button>
+        <button id="btn-end-turn" disabled>结束回合</button>
+        <button id="btn-wait" disabled>待机</button>
+        <div class="skill-bar" id="skill-bar"></div>
+      </div>
+      <div class="action-menu hidden" id="action-menu">
+        <span class="hint" id="action-menu-hint">选择行动</span>
+        <button id="action-wait">待机</button>
+        <button id="action-rally">整顿</button>
+        <button id="action-attack">攻击</button>
+        <button id="action-cancel">撤回</button>
+      </div>
+    </div>
+
+    <aside class="right-panel">
+      <section class="battle-status-panel">
+        <div class="panel-title">目标 / 战况</div>
+        <div class="battle-status-list" id="battle-status-list"></div>
+      </section>
+      <section class="battle-log-panel">
+        <h3>战斗日志</h3>
+        <div class="log-panel" id="log"></div>
+      </section>
+      <div class="morale-log-panel">
+        <h3>士气变化</h3>
+        <div id="morale-log"></div>
+      </div>
+      <div class="debug-panel">
+        <h2>部队数据</h2>
+        <div class="debug-list" id="debug-list"></div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="objective-intro hidden" id="objective-intro">
+    <div class="objective-intro-box">
+      <h2 id="objective-intro-title">战斗目标</h2>
+      <p id="objective-intro-desc"></p>
+      <button class="primary" id="btn-objective-ok">开始作战</button>
+    </div>
+  </div>
+
+  <div class="tutorial-toast hidden" id="tutorial-toast">
+    <h3 id="tutorial-title"></h3>
+    <p id="tutorial-body"></p>
+    <button class="primary" id="btn-tutorial-close">知道了</button>
+  </div>
+
+  <div class="overlay-msg hidden" id="overlay">
+    <div class="overlay-box">
+      <h2 id="overlay-title">胜利</h2>
+      <p id="overlay-desc"></p>
+      <div class="recap-box hidden" id="recap-box">
+        <h3>本场关键事件</h3>
+        <ul id="recap-list"></ul>
+      </div>
+      <button class="primary" id="btn-restart" style="margin-top: 14px;">重新开始</button>
+    </div>
+  </div>
+
+  <div class="formation-battle hidden" id="formation-battle">
+    <div class="formation-battle-box">
+      <div class="battle-morale-frame">
+        <div class="battle-morale-bar player"><div class="battle-morale-fill" id="battle-attacker-morale"></div></div>
+        <div class="battle-morale-bar enemy"><div class="battle-morale-fill" id="battle-defender-morale"></div></div>
+      </div>
+      <section class="formation-side player">
+        <h2 id="battle-attacker-title">攻击方</h2>
+        <div class="formation-grid" id="battle-attacker-grid"></div>
+      </section>
+      <section class="battle-sequence">
+        <h2 id="battle-sequence-title">编队交战</h2>
+        <div class="battle-event-list" id="battle-event-list"></div>
+        <button class="primary" id="battle-close">返回战场</button>
+      </section>
+      <section class="formation-side enemy">
+        <h2 id="battle-defender-title">防守方</h2>
+        <div class="formation-grid" id="battle-defender-grid"></div>
+      </section>
+    </div>
+  </div>
+
+  <script src="../../tools/spine-new-recovered-project.generated.js"></script>
+  <script>
+    const COLS = 12, ROWS = 10;
+    const PLAYER_DEPLOY_ROWS = [7, 8, 9];
+    const ENEMY_DEPLOY_ROWS = [0, 1, 2];
+    const DEFENSE_ZONE_ROWS = [4, 5];
+    const DEFENSE_HOLD_REQUIRED = 5;
+    const DEFENSE_PLAYER_UNITS_REQUIRED = 2;
+    const RIVER_DAMAGE_MULT = 1.4;
+    const FOREST_LOCK_RANGE = 3;
+    const BOARD_UNIT_SPRITES = {
+      player: {
+        man: {
+          down: '../../ui/battle/red_man/material-202606150823-001.png',
+          up: '../../ui/battle/red_man/material-202606150823-002.png',
+          left: '../../ui/battle/red_man/material-202606150823-003.png',
+          right: '../../ui/battle/red_man/material-202606150823-004.png',
+        },
+        horse: {
+          up: '../../ui/battle/red_horse/material-202606150817-001.png',
+          down: '../../ui/battle/red_horse/material-202606150817-002.png',
+        },
+      },
+      enemy: {
+        man: {
+          down: '../../ui/battle/blue_man/material-202606150819-001.png',
+          up: '../../ui/battle/blue_man/material-202606150819-002.png',
+          left: '../../ui/battle/blue_man/material-202606150819-003.png',
+          right: '../../ui/battle/blue_man/material-202606150819-004.png',
+        },
+        horse: {
+          down: '../../ui/battle/blue_horse/material-202606150815-001.png',
+          up: '../../ui/battle/blue_horse/material-202606150815-002.png',
+        },
+      },
+    };
+
+    const TERRAIN = {
+      plain: { label: '平', name: '平原' },
+      forest: { label: '林', name: '森林' },
+      hill: { label: '高', name: '高地' },
+      river: { label: '河', name: '河流' },
+      bridge: { label: '桥', name: '桥梁' },
+    };
+
+    const STRATEGIC = {
+      camp: { label: '寨', name: '营寨', desc: '营寨适合恢复，长期据守更有利' },
+      supplyDepot: { label: '粮', name: '粮仓', desc: '夺得粮秣可鼓舞本阵；粮道战中还会派出粮车' },
+      watchTower: { label: '塔', name: '箭塔', desc: '箭塔扩大视野，利于远程控场' },
+    };
+
+    const TERRAIN_HINT = {
+      plain: '平原',
+      forest: '森林适合隐藏',
+      hill: '高地更有利于远程单位',
+      river: '渡河会受阻',
+      bridge: '桥梁是必争通道',
+    };
+
+    const TROOP_TYPES = {
+      infantry: { label: '步兵', attack: 50, defense: 50, speed: 30, range: 1 },
+      spear: { label: '长枪', attack: 45, defense: 55, speed: 28, range: 1 },
+      cavalry: { label: '骑兵', attack: 65, defense: 40, speed: 45, range: 1 },
+      archer: { label: '弓兵', attack: 55, defense: 35, speed: 32, range: 3 },
+      gunpowder: { label: '火器', attack: 75, defense: 30, speed: 22, range: 2 },
+    };
+
+    const TYPE_ADVANTAGE = {};
+    const FORMATION_GENERIC_LABEL = '编队';
+
+    const OBJECTIVES = [
+      { id: 'annihilation', name: '歼灭战', friendlyTitle: '击溃敌军', friendlyDesc: '消灭或击溃全部敌军即可获胜' },
+      { id: 'strongpoint', name: '据点战', friendlyTitle: '占领据点', friendlyDesc: '占领全部战略据点即可获胜' },
+      { id: 'defense', name: '守卫战', friendlyTitle: '守卫阵地', friendlyDesc: '守住高亮中央防区，连续5回合压住敌军即可获胜' },
+      { id: 'assassination', name: '斩首战', friendlyTitle: '阵斩敌将', friendlyDesc: '击败敌军主将即可获胜' },
+      { id: 'supplyTransport', name: '粮道运输战', friendlyTitle: '护送粮车', friendlyDesc: '占领粮仓后护送粮车回营，或击溃敌军' },
+    ];
+
+    /** 剧情战役可配置的标签，系统据此自动挂载教学 */
+    const LESSON_TAG_TIPS = {
+      BridgeBattle: { id: 'lesson_bridge', title: '桥梁', body: '桥梁是河流上的唯一通道。\n控制桥梁，就能截断敌军进退。' },
+      SupplyBattle: { id: 'lesson_supply', title: '粮道', body: '本场战斗围绕粮仓展开。\n占领后需护送粮车回营。' },
+      SupplyTransportBattle: { id: 'lesson_supply_transport', title: '粮道战', body: '占领粮仓后将立即派出粮车。\n成功将粮食运回营地才能获得胜利。\n保护粮车，拦截敌方运输。' },
+      DefenseBattle: { id: 'lesson_defense', title: '守势', body: '不必急于进攻。\n守住指定区域，撑到时限即可获胜。' },
+      AmbushBattle: { id: 'lesson_ambush', title: '伏击', body: '利用森林隐藏部队，待敌军靠近再出击。' },
+      CommanderBattle: { id: 'lesson_commander', title: '主将', body: '敌军主将带有标记。\n阵斩主将，可沉重打击敌军士气。' },
+    };
+
+    const SKILL_USES = { inspire: 1 };
+    const FORMATION_SLOT_KEYS = [
+      'front-left', 'front-center', 'front-right',
+      'middle-left', 'middle-center', 'middle-right',
+      'rear-left', 'rear-center', 'rear-right',
+    ];
+    const FORMATION_SLOT_LABELS = {
+      'front-left': '前左',
+      'front-center': '前中',
+      'front-right': '前右',
+      'middle-left': '中左',
+      'middle-center': '中中',
+      'middle-right': '中右',
+      'rear-left': '后左',
+      'rear-center': '后中',
+      'rear-right': '后右',
+    };
+    const FORMATION_TEMPLATES = {
+      vanguard: {
+        label: '先锋',
+        primary: 'infantry',
+        slots: [
+          ['front-left', 'spear'], ['front-center', 'infantry'], ['front-right', 'spear'],
+          ['middle-center', 'infantry'], ['rear-center', 'archer'],
+        ],
+      },
+      assault: {
+        label: '突击',
+        primary: 'cavalry',
+        slots: [
+          ['front-left', 'cavalry'], ['front-center', 'infantry'], ['front-right', 'cavalry'],
+          ['middle-center', 'spear'], ['rear-center', 'archer'],
+        ],
+      },
+      missile: {
+        label: '射击',
+        primary: 'archer',
+        slots: [
+          ['front-left', 'infantry'], ['front-center', 'spear'], ['front-right', 'infantry'],
+          ['middle-left', 'gunpowder'], ['middle-right', 'gunpowder'], ['rear-center', 'archer'],
+        ],
+      },
+      guard: {
+        label: '守备',
+        primary: 'spear',
+        slots: [
+          ['front-left', 'spear'], ['front-center', 'infantry'], ['front-right', 'spear'],
+          ['middle-left', 'infantry'], ['middle-center', 'infantry'], ['rear-center', 'archer'],
+        ],
+      },
+      mobile: {
+        label: '机动',
+        primary: 'cavalry',
+        slots: [
+          ['front-left', 'cavalry'], ['front-right', 'cavalry'],
+          ['middle-center', 'infantry'], ['rear-left', 'archer'], ['rear-right', 'gunpowder'],
+        ],
+      },
+    };
+
+    let grid = [], units = [], strategicPoints = [];
+    let nextId = 1, phase = 'deploy', turn = 'player';
+    let selectedUnit = null, inspectedUnit = null, mode = null;
+    let reachable = [], attackable = [], skillTargets = [], attackRangeCells = [], dragUnit = null;
+    let activeBattleOverlayResolve = null;
+    let battleObjective = null, defenseHoldTurns = 0, turnCounter = 0;
+    let supplyCartClaimSide = null;
+    let playerCamp = null, enemyCamp = null;
+    let droppedSupplies = [];
+    let battleSpineRendererPromise = null;
+    let battleSpineIdleRaf = 0;
+    let battleSpineLastIdleRender = 0;
+    const battleFormationViewState = {
+      initialized: false,
+      attacker: null,
+      defender: null,
+    };
+    const CART_MAX_HP = 80;
+    const CART_MOVE_PER_TURN = 1;
+    const SUPPLY_CAPTURE_MORALE_BONUS = 6;
+    const DROPPED_SUPPLY_MORALE_BONUS = 4;
+    const STRONGPOINT_CAPTURE_REQUIRED = 2;
+    const STRONGPOINT_MIN_POINT_DISTANCE = 3;
+    const STRONGPOINT_MIN_CAMP_DISTANCE = 3;
+    const STRONGPOINT_TYPES = ['camp', 'supplyDepot', 'watchTower', 'watchTower'];
+    let battleRecap = [];
+    let battleConfig = { lessonTags: [] };
+    let initialBattleConfig = null;
+    let lastBattleResult = null;
+    const STORY_BATTLE_SCENARIOS = {
+      'sundeya-rescue': {
+        scenarioId: 'sundeya-rescue',
+        embedded: true,
+        objectiveId: 'annihilation',
+        lessonTags: ['CommanderBattle', 'AmbushBattle'],
+        autoDeployment: true,
+        playerUnits: [
+          { name: '朱重八本队', controller: 'player', template: 'vanguard', troopType: 'infantry', soldiers: 360, x: 2, y: 7, morale: 86, general: { name: '朱重八', leadership: 78, strength: 82, intelligence: 73 } },
+          { name: '郭子兴中军', controller: 'npc', template: 'guard', troopType: 'spear', soldiers: 520, x: 4, y: 7, morale: 84, general: { name: '郭子兴', leadership: 84, strength: 68, intelligence: 72 }, isCommander: true },
+          { name: '汤和队', controller: 'npc', template: 'assault', troopType: 'cavalry', soldiers: 380, x: 1, y: 8, morale: 82, general: { name: '汤和', leadership: 76, strength: 77, intelligence: 68 } },
+          { name: '徐达队', controller: 'npc', template: 'missile', troopType: 'archer', soldiers: 360, x: 5, y: 8, morale: 82, general: { name: '徐达', leadership: 82, strength: 76, intelligence: 80 } },
+          { name: '孙德崖残队', controller: 'npc', template: 'guard', troopType: 'spear', soldiers: 180, x: 7, y: 4, morale: 46, general: { name: '孙德崖', leadership: 70, strength: 65, intelligence: 63 } },
+        ],
+        enemyUnits: [
+          { name: '元军北哨', template: 'mobile', troopType: 'cavalry', soldiers: 280, x: 7, y: 3, morale: 76, general: { name: '元军百户', leadership: 68, strength: 72, intelligence: 56 } },
+          { name: '元军前锋', template: 'vanguard', troopType: 'infantry', soldiers: 340, x: 8, y: 4, morale: 78, general: { name: '元军千户', leadership: 76, strength: 75, intelligence: 61 }, isCommander: true },
+          { name: '元军南哨', template: 'missile', troopType: 'archer', soldiers: 260, x: 7, y: 5, morale: 74, general: { name: '元军弓手头目', leadership: 65, strength: 62, intelligence: 64 } },
+        ],
+        strategicPoints: [],
+        terrain: [
+          { x: 3, y: 6, terrain: 'forest' },
+          { x: 4, y: 5, terrain: 'forest' },
+          { x: 6, y: 4, terrain: 'hill' },
+          { x: 7, y: 4, terrain: 'plain' },
+          { x: 8, y: 4, terrain: 'plain' },
+        ],
+      },
+    };
+
+    // ─── BattleTutorialManager ───────────────────────────────
+    const BattleTutorialManager = (() => {
+      const STORAGE_KEY = 'rpg_tg_battle_tutorial_v1';
+      const TIPS = {
+        terrain_forest: { title: '森林', body: '部队进入森林后可以隐藏自身。\n非常适合伏击敌军。' },
+        terrain_hill: { title: '高地', body: '高地拥有更好的视野。\n远程单位在高地作战更有优势。' },
+        terrain_river: { title: '河流', body: '渡河会降低部队机动能力。\n请谨慎选择渡河时机。' },
+        point_supplyDepot: { title: '粮仓', body: '占领粮仓后将派出粮车。\n护送粮车返回营地即可获胜。' },
+        supply_cart_spawn: { title: '粮车出发', body: '粮车已出发。\n请护送其返回营地。' },
+        supply_cart_destroyed: { title: '粮车被毁', body: '粮车被摧毁。\n粮食散落在战场上。' },
+        supply_pickup: { title: '粮食夺取', body: '粮食已被重新夺取。\n将从此处继续运输。' },
+        point_camp: { title: '营寨', body: '营寨可以恢复士气。\n适合长期防守。' },
+        point_watchTower: { title: '箭塔', body: '箭塔能够扩大视野范围。\n帮助远程部队控制战场。' },
+        morale_boost: { title: '士气提升', body: '高士气部队战斗能力更强。' },
+        morale_shaken: { title: '部队动摇', body: '低士气会影响战斗表现。' },
+        morale_rout: { title: '部队溃逃', body: '士气崩溃的部队将脱离战场。' },
+      };
+
+      let seen = new Set();
+      let pendingId = null;
+      let onCloseCb = null;
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) seen = new Set(JSON.parse(raw));
+        } catch (_) { seen = new Set(); }
+      }
+
+      function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...seen])); } catch (_) {}
+      }
+
+      function hasSeen(id) { return seen.has(id); }
+
+      function markSeen(id) {
+        seen.add(id);
+        save();
+      }
+
+      function resolveTip(id) {
+        return TIPS[id] || Object.values(LESSON_TAG_TIPS).find(t => t.id === id);
+      }
+
+      function showToast(title, body, tipId, onClose) {
+        const el = document.getElementById('tutorial-toast');
+        document.getElementById('tutorial-title').textContent = title;
+        document.getElementById('tutorial-body').textContent = body;
+        pendingId = tipId;
+        onCloseCb = onClose;
+        el.classList.remove('hidden');
+      }
+
+      function hideToast() {
+        document.getElementById('tutorial-toast').classList.add('hidden');
+        if (pendingId) markSeen(pendingId);
+        pendingId = null;
+        if (onCloseCb) { onCloseCb(); onCloseCb = null; }
+      }
+
+      function maybeShow(id) {
+        if (hasSeen(id)) return;
+        const tip = resolveTip(id);
+        if (!tip) return;
+        showToast(tip.title, tip.body, id);
+      }
+
+      function applyLessonTags(tags) {
+        if (!tags?.length) return;
+        for (const tag of tags) {
+          const lesson = LESSON_TAG_TIPS[tag];
+          if (lesson && !hasSeen(lesson.id)) {
+            setTimeout(() => showToast(lesson.title, lesson.body, lesson.id), 800);
+            break;
+          }
+        }
+      }
+
+      function resetAll() {
+        seen.clear();
+        save();
+      }
+
+      load();
+      return { maybeShow, applyLessonTags, hideToast, resetAll, hasSeen, markSeen };
+    })();
+
+    function uid() { return 'u' + (nextId++); }
+    function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    function manhattan(x1, y1, x2, y2) { return Math.abs(x1 - x2) + Math.abs(y1 - y2); }
+    function inBounds(x, y) { return x >= 0 && x < COLS && y >= 0 && y < ROWS; }
+    function cellKey(x, y) { return x + ',' + y; }
+
+    function log(msg, cls = 'system') {
+      const el = document.getElementById('log');
+      const e = document.createElement('div');
+      e.className = 'entry ' + cls;
+      e.textContent = msg;
+      el.prepend(e);
+    }
+
+    function addRecap(text) {
+      if (!battleRecap.includes(text)) battleRecap.push(text);
+    }
+
+    function logMorale(msg) {
+      const el = document.getElementById('morale-log');
+      const e = document.createElement('div');
+      e.className = 'entry';
+      e.textContent = msg;
+      el.prepend(e);
+    }
+
+    function getMoraleTier(m) {
+      if (m >= 80) return { id: 'high', label: '高昂', atk: 1.12, def: 1.1, hit: 1.1, counter: 1.15 };
+      if (m >= 50) return { id: 'normal', label: '正常', atk: 1, def: 1, hit: 1, counter: 1 };
+      if (m >= 30) return { id: 'shaken', label: '动摇', atk: 0.82, def: 0.88, hit: 0.82, counter: 0.65 };
+      if (m >= 10) return { id: 'chaos', label: '混乱', atk: 0.55, def: 0.72, hit: 0.45, counter: 0.25 };
+      return { id: 'rout', label: '溃逃', atk: 0, def: 0, hit: 0, counter: 0 };
+    }
+
+    function isRout(u) { return u.morale < 10; }
+    function isChaos(u) { return u.morale >= 10 && u.morale < 30; }
+
+    function changeMorale(unit, delta, reason, broadcast = true) {
+      if (!unit || unit.soldiers <= 0) return;
+      const old = unit.morale;
+      const oldTier = getMoraleTier(old);
+      const wasRout = isRout(unit);
+      unit.morale = clamp(unit.morale + delta, 0, 100);
+      const newTier = getMoraleTier(unit.morale);
+
+      if (delta !== 0 && broadcast) {
+        logMorale(`${unit.name} ${reason}${delta >= 0 ? ' ↑' : ' ↓'}`);
+      }
+
+      if (unit.side === 'player') {
+        if (delta > 0 && broadcast) BattleTutorialManager.maybeShow('morale_boost');
+        if (oldTier.id !== 'shaken' && newTier.id === 'shaken') BattleTutorialManager.maybeShow('morale_shaken');
+        if (!wasRout && isRout(unit)) BattleTutorialManager.maybeShow('morale_rout');
+      }
+
+      if (!wasRout && isRout(unit)) triggerRoutChain(unit);
+    }
+
+    function changeMoraleSide(side, delta, reason) {
+      for (const u of units) {
+        if (u.side === side && u.soldiers > 0) changeMorale(u, delta, reason);
+      }
+    }
+
+    function triggerRoutChain(routUnit) {
+      logMorale(`${routUnit.name} 溃逃，波及附近部队`);
+      if (routUnit.side === 'player') addRecap(`${routUnit.name} 士气崩溃`);
+      else addRecap(`敌军 ${routUnit.name} 士气崩溃`);
+      for (const u of units) {
+        if (u.side !== routUnit.side || u.id === routUnit.id || u.soldiers <= 0) continue;
+        if (manhattan(u.x, u.y, routUnit.x, routUnit.y) <= 2) {
+          changeMorale(u, -5, '友军溃逃波及', false);
+          if (u.side === 'player') logMorale(`${u.name} 受溃逃波及`);
+        }
+      }
+    }
+
+    function onGeneralFallen(unit) {
+      if (!unit.isCommander) return;
+      if (unit.commanderFallenReported) return;
+      unit.commanderFallenReported = true;
+      const sideLabel = unit.side === 'player' ? '我军' : '敌军';
+      logMorale(`${sideLabel}主将${unit.general.name}阵亡`);
+      if (unit.side === 'enemy') addRecap('敌军主将阵亡');
+      else addRecap('我军主将阵亡');
+      changeMoraleSide(unit.side, -15, '主将阵亡', false);
+    }
+
+    function getTypeAdv() {
+      return 1;
+    }
+
+    function moveRange(unit) {
+      return Math.max(2, Math.min(5, Math.round(unit.speed / 10)));
+    }
+
+    function getCell(x, y) {
+      return grid.find(c => c.x === x && c.y === y);
+    }
+
+    function getTerrain(x, y) {
+      return getCell(x, y)?.terrain || 'plain';
+    }
+
+    function getPointAt(x, y) {
+      return strategicPoints.find(p => p.x === x && p.y === y);
+    }
+
+    function isSupplyTransportBattle() {
+      return battleObjective?.id === 'supplyTransport';
+    }
+
+    function isStrongpointBattle() {
+      return battleObjective?.id === 'strongpoint';
+    }
+
+    function isAssassinationBattle() {
+      return battleObjective?.id === 'assassination';
+    }
+
+    function getDefenseZoneLabel() {
+      return `中央防区（第 ${DEFENSE_ZONE_ROWS[0] + 1}-${DEFENSE_ZONE_ROWS[DEFENSE_ZONE_ROWS.length - 1] + 1} 行高亮区域）`;
+    }
+
+    function getObjectiveDescription(objective) {
+      if (!objective) return '';
+      if (objective.id === 'defense') {
+        return `${getDefenseZoneLabel()}内至少保有 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队，且敌军不得踏入，连续守住 ${DEFENSE_HOLD_REQUIRED} 回合。`;
+      }
+      return objective.friendlyDesc;
+    }
+
+    function getCart(side) {
+      return units.find(u => u.isSupplyCart && u.side === side && u.soldiers > 0);
+    }
+
+    function getCommander(side, includeDefeated = false) {
+      return units.find(u =>
+        u.side === side &&
+        u.isCommander &&
+        (includeDefeated || u.soldiers > 0)
+      ) || null;
+    }
+
+    function getAnyCart() {
+      return units.find(u => u.isSupplyCart && u.soldiers > 0) || null;
+    }
+
+    function getSupplyDepot() {
+      return strategicPoints.find(p => p.type === 'supplyDepot');
+    }
+
+    function isPassableTile(x, y, ignoreUnitId = null) {
+      if (!inBounds(x, y)) return false;
+      const t = getTerrain(x, y);
+      if (isRiverTerrain(t)) return false;
+      const occ = units.find(u => u.soldiers > 0 && u.x === x && u.y === y && u.id !== ignoreUnitId);
+      return !occ;
+    }
+
+    function isInCampZone(x, y, side) {
+      const camp = side === 'player' ? playerCamp : enemyCamp;
+      if (!camp) return false;
+      return camp.cells.some(c => c.x === x && c.y === y);
+    }
+
+    function distToCamp(cart) {
+      const camp = cart.side === 'player' ? playerCamp : enemyCamp;
+      if (!camp?.cells.length) return 99;
+      return Math.min(...camp.cells.map(c => manhattan(cart.x, cart.y, c.x, c.y)));
+    }
+
+    function removeCartsOfSide(side) {
+      units = units.filter(u => !(u.isSupplyCart && u.side === side));
+    }
+
+    function getCampAnchor(side) {
+      return side === 'player'
+        ? { x: 1, y: 8 }
+        : { x: COLS - 2, y: 1 };
+    }
+
+    function raiseSupplyMorale(side, delta, reason) {
+      let affected = 0;
+      for (const unit of units) {
+        if (unit.side !== side || unit.soldiers <= 0 || unit.isSupplyCart) continue;
+        changeMorale(unit, delta, reason, false);
+        affected++;
+      }
+      if (!affected) return;
+      const sideLabel = side === 'player' ? '我军' : '敌军';
+      logMorale(`${sideLabel}${reason}，士气提升`);
+      if (side === 'player') BattleTutorialManager.maybeShow('morale_boost');
+    }
+
+    function findSpawnNear(originX, originY, side) {
+      const candidates = [];
+      const queue = [{ x: originX, y: originY, dist: 0 }];
+      const visited = new Set([cellKey(originX, originY)]);
+
+      while (queue.length && candidates.length < 8) {
+        const { x, y, dist } = queue.shift();
+        if (dist > 0 && dist <= 2 && isPassableTile(x, y)) {
+          if (!(x === originX && y === originY)) candidates.push({ x, y });
+        }
+        if (dist >= 2) continue;
+        for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+          const nx = x + dx, ny = y + dy;
+          const nk = cellKey(nx, ny);
+          if (!inBounds(nx, ny) || visited.has(nk)) continue;
+          visited.add(nk);
+          queue.push({ x: nx, y: ny, dist: dist + 1 });
+        }
+      }
+
+      const camp = side === 'player' ? playerCamp : enemyCamp;
+      const campCenter = camp?.cells[0] || { x: originX, y: originY };
+      candidates.sort((a, b) =>
+        manhattan(a.x, a.y, campCenter.x, campCenter.y) - manhattan(b.x, b.y, campCenter.x, campCenter.y)
+      );
+      return candidates[0] || null;
+    }
+
+    function createSupplyCart(side, spawnX, spawnY) {
+      return {
+        id: uid(),
+        name: side === 'player' ? '我军粮车' : '敌军粮车',
+        troopType: 'supplyCart',
+        isSupplyCart: true,
+        soldiers: CART_MAX_HP,
+        maxSoldiers: CART_MAX_HP,
+        attack: 0,
+        defense: 15,
+        speed: 12,
+        range: 0,
+        morale: 100,
+        general: { name: '—', leadership: 0, strength: 0, intelligence: 0 },
+        side,
+        x: spawnX,
+        y: spawnY,
+        hasMoved: false,
+        hasActed: true,
+        inRiver: false,
+        skillUses: { inspire: 0 },
+        isCommander: false,
+      };
+    }
+
+    function spawnSupplyCart(side, originX, originY, fromDepot = true) {
+      if (!isSupplyTransportBattle()) return;
+      if (supplyCartClaimSide != null && supplyCartClaimSide !== side) {
+        log(
+          `${side === 'player' ? '我军' : '敌军'}已失去粮车归属，无法再生成粮车`,
+          'system'
+        );
+        return false;
+      }
+      if (getAnyCart()) return false;
+      const spot = findSpawnNear(originX, originY, side);
+      if (!spot) {
+        log(`${side === 'player' ? '我军' : '敌军'}粮车无法出发（无可用空地）`, 'system');
+        return false;
+      }
+      supplyCartClaimSide = side;
+      const cart = createSupplyCart(side, spot.x, spot.y);
+      units.push(cart);
+      const label = side === 'player' ? '我军' : '敌军';
+      if (fromDepot) {
+        log(`${label}粮车已从粮仓附近出发`, 'skill');
+      } else {
+        log(`${label}粮车从散落粮食处重新出发`, 'skill');
+      }
+      if (side === 'player') {
+        addRecap('粮车已出发');
+        log('粮车已出发。请护送其返回营地。', 'system');
+        BattleTutorialManager.maybeShow('supply_cart_spawn');
+      } else {
+        log('敌军粮车已出发', 'system');
+      }
+      return true;
+    }
+
+    function destroyCart(cart) {
+      const sideLabel = cart.side === 'player' ? '我军' : '敌军';
+      log(`${sideLabel}粮车被摧毁`, 'damage');
+      log('粮车被摧毁。粮食散落在战场上。', 'system');
+      if (cart.side === 'player') addRecap('我军粮车被摧毁');
+      droppedSupplies.push({ x: cart.x, y: cart.y });
+      units = units.filter(u => u.id !== cart.id);
+      if (cart.side === 'player') BattleTutorialManager.maybeShow('supply_cart_destroyed');
+    }
+
+    function tryPickupDroppedSupply(unit) {
+      if (!isSupplyTransportBattle() || unit.isSupplyCart) return;
+      const idx = droppedSupplies.findIndex(d => d.x === unit.x && d.y === unit.y);
+      if (idx < 0) return;
+      if (supplyCartClaimSide != null && supplyCartClaimSide !== unit.side) return;
+      const spawned = spawnSupplyCart(unit.side, unit.x, unit.y, false);
+      if (!spawned) return;
+      droppedSupplies.splice(idx, 1);
+      log('粮食已被重新夺取。', 'skill');
+      addRecap(`${unit.side === 'player' ? '我军' : '敌军'}重新夺取散落粮食`);
+      raiseSupplyMorale(unit.side, DROPPED_SUPPLY_MORALE_BONUS, '夺回散落军粮');
+      if (unit.side === 'player') BattleTutorialManager.maybeShow('supply_pickup');
+    }
+
+    function autoMoveCartStep(cart) {
+      if (cart.soldiers <= 0) return;
+      const campCells = (cart.side === 'player' ? playerCamp : enemyCamp)?.cells || [];
+      if (!campCells.length) return;
+
+      let best = null, bestDist = Infinity;
+      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const nx = cart.x + dx, ny = cart.y + dy;
+        if (!isPassableTile(nx, ny, cart.id)) continue;
+        const d = Math.min(...campCells.map(c => manhattan(nx, ny, c.x, c.y)));
+        if (d < bestDist) {
+          bestDist = d;
+          best = { x: nx, y: ny };
+        }
+      }
+      if (best) {
+        cart.x = best.x;
+        cart.y = best.y;
+        cart.inRiver = false;
+      }
+    }
+
+    function processSupplyCartMoves() {
+      if (!isSupplyTransportBattle()) return;
+      for (const cart of units.filter(u => u.isSupplyCart && u.soldiers > 0)) {
+        for (let i = 0; i < CART_MOVE_PER_TURN; i++) {
+          if (isInCampZone(cart.x, cart.y, cart.side)) break;
+          autoMoveCartStep(cart);
+          if (isInCampZone(cart.x, cart.y, cart.side)) break;
+        }
+        if (isInCampZone(cart.x, cart.y, cart.side)) {
+          if (cart.side === 'player') {
+            addRecap('粮车成功运回营地');
+            showOverlay('胜利', '粮食已运回营地！', true);
+          } else {
+            showOverlay('失败', '敌军粮食已运回营地……', false);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function militaryAt(x, y) {
+      return units.find(u => u.x === x && u.y === y && u.soldiers > 0 && !u.isSupplyCart);
+    }
+
+    function cartAt(x, y) {
+      return units.find(u => u.x === x && u.y === y && u.soldiers > 0 && u.isSupplyCart);
+    }
+
+    function unitAt(x, y) {
+      return militaryAt(x, y) || cartAt(x, y);
+    }
+
+    function isRiverTerrain(t) { return t === 'river'; }
+    function isBridgeTerrain(t) { return t === 'bridge'; }
+
+    function ownsWatchTower(side, x, y) {
+      for (const p of strategicPoints) {
+        if (p.type !== 'watchTower' || p.owner !== side) continue;
+        if (manhattan(x, y, p.x, p.y) <= 1) return true;
+      }
+      return false;
+    }
+
+    function getVision(unit) {
+      let v = 3;
+      if (getTerrain(unit.x, unit.y) === 'hill') v += 2;
+      if (getTerrain(unit.x, unit.y) === 'forest') v = 1;
+      for (const p of strategicPoints) {
+        if (p.type === 'watchTower' && p.owner === unit.side && manhattan(unit.x, unit.y, p.x, p.y) <= 2) v += 2;
+      }
+      return v;
+    }
+
+    function canSee(attacker, tx, ty) {
+      return manhattan(attacker.x, attacker.y, tx, ty) <= getVision(attacker);
+    }
+
+    function getEffectiveRange(unit) {
+      if (unit.formationMembers?.length) {
+        const aliveMembers = unit.formationMembers.filter(member => member.soldiers > 0);
+        if (!aliveMembers.length) return 0;
+        let maxRange = Math.max(...aliveMembers.map(member => member.range));
+        if (aliveMembers.some(member => member.troopType === 'archer') && getTerrain(unit.x, unit.y) === 'hill') maxRange += 1;
+        if (ownsWatchTower(unit.side, unit.x, unit.y)) maxRange += 1;
+        return maxRange;
+      }
+      let r = TROOP_TYPES[unit.troopType].range;
+      if (r <= 1) return r;
+      if (unit.troopType === 'archer' && getTerrain(unit.x, unit.y) === 'hill') r += 1;
+      if (ownsWatchTower(unit.side, unit.x, unit.y)) r += 1;
+      return r;
+    }
+
+    function rangeToTarget(attacker, defender) {
+      let r = getEffectiveRange(attacker);
+      if (r > 1 && (getTerrain(attacker.x, attacker.y) === 'forest' || getTerrain(defender.x, defender.y) === 'forest')) {
+        r = Math.max(1, Math.floor(r / 2));
+      }
+      return r;
+    }
+
+    function canLockTarget(attacker, defender) {
+      const dist = manhattan(attacker.x, attacker.y, defender.x, defender.y);
+      if (getTerrain(defender.x, defender.y) === 'forest' && dist >= FOREST_LOCK_RANGE) return false;
+      return isInFixedAttackPattern(attacker, defender.x, defender.y) && getBattleReadyMembers(attacker, dist).length > 0;
+    }
+
+    function getAliveCombatMembers(unit) {
+      if (unit.formationMembers?.length) {
+        return unit.formationMembers.filter(member => member.soldiers > 0 && member.status !== 'stunned');
+      }
+      return unit.soldiers > 0 && !unit.isSupplyCart
+        ? [{ troopType: unit.troopType, range: TROOP_TYPES[unit.troopType]?.range || 1 }]
+        : [];
+    }
+
+    function hasRangedMember(unit) {
+      return getAliveCombatMembers(unit).some(member => member.range > 1);
+    }
+
+    function hasOnlyMeleeMembers(unit) {
+      const members = getAliveCombatMembers(unit);
+      return members.length > 0 && members.every(member => member.range <= 1);
+    }
+
+    function isInFixedAttackPattern(attacker, tx, ty) {
+      const dx = Math.abs(tx - attacker.x);
+      const dy = Math.abs(ty - attacker.y);
+      if (dx === 0 && dy === 0) return false;
+      if (hasRangedMember(attacker)) {
+        return (dx === 0 && dy <= 2) || (dy === 0 && dx <= 2) || (dx === 1 && dy === 1);
+      }
+      if (hasOnlyMeleeMembers(attacker)) {
+        return (dx + dy) === 1;
+      }
+      const maxRange = getEffectiveRange(attacker);
+      return (dx + dy) > 0 && (dx + dy) <= maxRange;
+    }
+
+    function getBattleReadyMembers(unit, distance) {
+      if (!unit.formationMembers?.length) return [];
+      return unit.formationMembers.filter(member =>
+        member.soldiers > 0 &&
+        member.status !== 'stunned' &&
+        (distance <= 1 || member.range >= distance)
+      );
+    }
+
+    function getAliveFormationMembers(unit) {
+      return unit.formationMembers?.filter(member => member.soldiers > 0) || [];
+    }
+
+    function cloneFormationSnapshot(unit) {
+      const members = unit.formationMembers?.map(member => ({ ...member })) || [];
+      return {
+        id: unit.id,
+        name: unit.name,
+        side: unit.side,
+        generalName: unit.general.name,
+        morale: unit.morale,
+        soldiers: unit.soldiers,
+        maxSoldiers: unit.maxSoldiers,
+        formationMembers: members,
+      };
+    }
+
+    function getFormationSlotMeta(slotKey, mirrorCols = false) {
+      const [rowName = 'front', colName = 'center'] = String(slotKey).split('-');
+      const row = rowName === 'front' ? 0 : rowName === 'middle' ? 1 : 2;
+      const rawCol = colName === 'left' ? 0 : colName === 'center' ? 1 : 2;
+      const displayColName = mirrorCols
+        ? ({ left: 'right', center: 'center', right: 'left' }[colName] || colName)
+        : colName;
+      const visualCol = displayColName === 'left' ? 0 : displayColName === 'center' ? 1 : 2;
+      return { rowName, colName, row, col: rawCol, visualCol, displayColName };
+    }
+
+    function shouldMirrorFormationCols(unit) {
+      return unit?.side === 'player';
+    }
+
+    function getFormationRowMembers(alive, rowName) {
+      return alive.filter(member => member.slotKey.startsWith(`${rowName}-`));
+    }
+
+    function getVisualFormationDepth(unit, member) {
+      return getBattleSlotPosition(
+        member.slotKey,
+        shouldMirrorFormationCols(unit)
+      ).x;
+    }
+
+    function getLockedFormationTarget(_attackerUnit, _attackerMember, defenderUnit) {
+      const aliveBySlot = new Map(
+        getAliveFormationMembers(defenderUnit).map(member => [member.slotKey, member])
+      );
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const member = aliveBySlot.get(slotKey);
+        if (member) return member;
+      }
+      return null;
+    }
+
+    function chooseFormationTarget(attackerUnit, attackerMember, defenderUnit) {
+      return getLockedFormationTarget(attackerUnit, attackerMember, defenderUnit);
+    }
+
+    function getMemberTypeAdv(attackerMember, defenderMember) {
+      if (attackerMember.troopType === 'cavalry' && defenderMember.range > 1) {
+        return 1.5;
+      }
+      if (attackerMember.troopType === 'spear' && defenderMember.troopType === 'cavalry') {
+        return 1.5;
+      }
+      return 1;
+    }
+
+    function calculateMemberDamage(attackerUnit, attackerMember, defenderUnit, defenderMember, distance, isCounter = false) {
+      const atkTier = getMoraleTier(attackerUnit.morale);
+      const defTier = getMoraleTier(defenderUnit.morale);
+      const typeAdv = getMemberTypeAdv(attackerMember, defenderMember);
+      const rangePenalty = distance > 1 && attackerMember.range === distance ? 0.9 : 1;
+      const strengthBonus = 1 + attackerUnit.general.strength / 240;
+      const effAtk = attackerMember.attack * strengthBonus * atkTier.atk * rangePenalty;
+      const effDef = Math.max(1, defenderMember.defense * defTier.def);
+      let damage = Math.round((effAtk / effDef) * (isCounter ? 8 : 11) * typeAdv * (0.85 + Math.random() * 0.25));
+
+      if (isOnHill(attackerUnit.x, attackerUnit.y) && !isOnHill(defenderUnit.x, defenderUnit.y)) damage = Math.round(damage * 1.15);
+      if (defenderUnit.inRiver) damage = Math.round(damage * RIVER_DAMAGE_MULT);
+      damage = clamp(damage, 1, Math.max(1, Math.round(attackerMember.soldiers * 0.22)));
+      return { damage, typeAdv };
+    }
+
+    function applyMemberDamage(unit, member, damage) {
+      member.soldiers = Math.max(0, member.soldiers - damage);
+      syncFormationTotals(unit);
+      changeMorale(unit, -Math.max(1, Math.round(damage / unit.maxSoldiers * 35)), '编队战损', false);
+      if (unit.soldiers <= 0) onGeneralFallen(unit);
+    }
+
+    function isOnHill(x, y) { return getTerrain(x, y) === 'hill'; }
+
+    // ─── 地图生成 ───────────────────────────────────────────
+    function scoreStrategicPoint(type, x, y) {
+      if (isStrongpointBattle()) {
+        const centerX = (COLS - 1) / 2;
+        const centerY = (ROWS - 1) / 2;
+        const centerBias = Math.abs(x - centerX) * 1.4 + Math.abs(y - centerY) * 2.2;
+        return centerBias + Math.random();
+      }
+      if (type !== 'supplyDepot' || !isSupplyTransportBattle()) return Math.random();
+      const enemyAnchor = getCampAnchor('enemy');
+      const playerAnchor = getCampAnchor('player');
+      const enemyDistance = manhattan(x, y, enemyAnchor.x, enemyAnchor.y);
+      const playerDistance = manhattan(x, y, playerAnchor.x, playerAnchor.y);
+      return enemyDistance * 5 - playerDistance * 2 + Math.abs(y - 3) * 2 + Math.random();
+    }
+
+    function findStrategicPointSlot(type, used) {
+      const candidates = [];
+      const playerAnchor = getCampAnchor('player');
+      const enemyAnchor = getCampAnchor('enemy');
+      let tries = 0;
+      while (tries < 120) {
+        tries++;
+        const x = randInt(1, COLS - 2), y = randInt(1, ROWS - 2);
+        const k = cellKey(x, y);
+        if (used.has(k)) continue;
+        const t = getTerrain(x, y);
+        if (isRiverTerrain(t) || isBridgeTerrain(t)) continue;
+        if (PLAYER_DEPLOY_ROWS.includes(y) || ENEMY_DEPLOY_ROWS.includes(y)) continue;
+        if (isStrongpointBattle()) {
+          if (
+            manhattan(x, y, playerAnchor.x, playerAnchor.y) < STRONGPOINT_MIN_CAMP_DISTANCE ||
+            manhattan(x, y, enemyAnchor.x, enemyAnchor.y) < STRONGPOINT_MIN_CAMP_DISTANCE
+          ) {
+            continue;
+          }
+          if (
+            strategicPoints.some(point =>
+              manhattan(x, y, point.x, point.y) < STRONGPOINT_MIN_POINT_DISTANCE
+            )
+          ) {
+            continue;
+          }
+        }
+        candidates.push({ x, y, score: scoreStrategicPoint(type, x, y) });
+      }
+      if (!candidates.length && isStrongpointBattle()) {
+        const relaxedCandidates = [];
+        tries = 0;
+        while (tries < 120) {
+          tries++;
+          const x = randInt(1, COLS - 2), y = randInt(1, ROWS - 2);
+          const k = cellKey(x, y);
+          if (used.has(k)) continue;
+          const t = getTerrain(x, y);
+          if (isRiverTerrain(t) || isBridgeTerrain(t)) continue;
+          if (PLAYER_DEPLOY_ROWS.includes(y) || ENEMY_DEPLOY_ROWS.includes(y)) continue;
+          if (
+            manhattan(x, y, playerAnchor.x, playerAnchor.y) < Math.max(2, STRONGPOINT_MIN_CAMP_DISTANCE - 1) ||
+            manhattan(x, y, enemyAnchor.x, enemyAnchor.y) < Math.max(2, STRONGPOINT_MIN_CAMP_DISTANCE - 1)
+          ) {
+            continue;
+          }
+          if (
+            strategicPoints.some(point =>
+              manhattan(x, y, point.x, point.y) < Math.max(2, STRONGPOINT_MIN_POINT_DISTANCE - 1)
+            )
+          ) {
+            continue;
+          }
+          relaxedCandidates.push({ x, y, score: scoreStrategicPoint(type, x, y) });
+        }
+        if (relaxedCandidates.length) {
+          relaxedCandidates.sort((a, b) => a.score - b.score);
+          const pool = relaxedCandidates.slice(0, Math.min(4, relaxedCandidates.length));
+          return pool[randInt(0, pool.length - 1)];
+        }
+      }
+      if (!candidates.length) return null;
+      candidates.sort((a, b) => a.score - b.score);
+      const pool = candidates.slice(0, Math.min(4, candidates.length));
+      return pool[randInt(0, pool.length - 1)];
+    }
+
+    function generateMap() {
+      grid = [];
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          let terrain = 'plain';
+          const r = Math.random();
+          if (r < 0.16) terrain = 'forest';
+          else if (r < 0.24) terrain = 'hill';
+          grid.push({ x, y, terrain });
+        }
+      }
+
+      const riverY = randInt(2, 4);
+      const bridgeX = randInt(2, COLS - 3);
+      for (let x = 0; x < COLS; x++) {
+        const c = getCell(x, riverY);
+        c.terrain = x === bridgeX ? 'bridge' : 'river';
+      }
+
+      strategicPoints = [];
+      playerCamp = null;
+      enemyCamp = null;
+      droppedSupplies = [];
+
+      const types = isSupplyTransportBattle()
+        ? ['supplyDepot', 'watchTower']
+        : isStrongpointBattle()
+          ? STRONGPOINT_TYPES
+          : ['camp', 'supplyDepot', 'watchTower'];
+      const used = new Set([cellKey(bridgeX, riverY)]);
+
+      for (const type of types) {
+        const slot = findStrategicPointSlot(type, used);
+        if (!slot) continue;
+        used.add(cellKey(slot.x, slot.y));
+        strategicPoints.push({
+          id: type + '_' + slot.x + slot.y,
+          type,
+          x: slot.x,
+          y: slot.y,
+          owner: 'neutral',
+          captureSide: null,
+          captureProgress: 0,
+        });
+      }
+
+      if (!isSupplyTransportBattle() && !strategicPoints.some(p => p.type === 'camp')) {
+        let tries = 0;
+        while (tries < 80) {
+          tries++;
+          const x = randInt(1, COLS - 2), y = randInt(2, 4);
+          const k = cellKey(x, y);
+          if (used.has(k)) continue;
+          if (isRiverTerrain(getTerrain(x, y))) continue;
+          used.add(k);
+          strategicPoints.push({ id: 'camp_' + x + y, type: 'camp', x, y, owner: 'neutral', captureSide: null, captureProgress: 0 });
+          break;
+        }
+      }
+
+      placeFactionCamps(used);
+    }
+
+    function applyScenarioMap() {
+      const scenario = battleConfig.scenario;
+      if (!scenario) return;
+
+      for (const cell of grid) {
+        cell.terrain = 'plain';
+        delete cell.campZone;
+      }
+
+      for (const patch of scenario.terrain || []) {
+        const cell = getCell(patch.x, patch.y);
+        if (cell) cell.terrain = patch.terrain;
+      }
+
+      strategicPoints = (scenario.strategicPoints || []).map(point => ({
+        id: point.id || `${point.type}_${point.x}_${point.y}`,
+        type: point.type,
+        x: point.x,
+        y: point.y,
+        owner: point.owner || 'neutral',
+        captureSide: null,
+        captureProgress: 0,
+      }));
+
+      playerCamp = { side: 'player', cells: [{ x: 1, y: 8 }, { x: 2, y: 8 }] };
+      enemyCamp = { side: 'enemy', cells: [{ x: 9, y: 2 }, { x: 10, y: 2 }] };
+      for (const cell of playerCamp.cells) {
+        const target = getCell(cell.x, cell.y);
+        if (target) target.campZone = 'player';
+      }
+      for (const cell of enemyCamp.cells) {
+        const target = getCell(cell.x, cell.y);
+        if (target) target.campZone = 'enemy';
+      }
+    }
+
+    function placeFactionCamps(used) {
+      const playerCells = [
+        { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 9 }, { x: 2, y: 9 },
+      ];
+      const enemyCells = [
+        { x: COLS - 3, y: 0 }, { x: COLS - 2, y: 0 }, { x: COLS - 3, y: 1 }, { x: COLS - 2, y: 1 },
+      ];
+
+      playerCamp = { side: 'player', cells: playerCells.filter(c => {
+        const k = cellKey(c.x, c.y);
+        if (used.has(k)) return false;
+        used.add(k);
+        const cell = getCell(c.x, c.y);
+        if (cell) cell.campZone = 'player';
+        return true;
+      }) };
+
+      enemyCamp = { side: 'enemy', cells: enemyCells.filter(c => {
+        const k = cellKey(c.x, c.y);
+        if (used.has(k)) return false;
+        used.add(k);
+        const cell = getCell(c.x, c.y);
+        if (cell) cell.campZone = 'enemy';
+        return true;
+      }) };
+    }
+
+    function pickObjective() {
+      if (battleConfig.objectiveId) {
+        battleObjective = OBJECTIVES.find(o => o.id === battleConfig.objectiveId) || OBJECTIVES[0];
+      } else {
+        battleObjective = OBJECTIVES[randInt(0, OBJECTIVES.length - 1)];
+      }
+      defenseHoldTurns = 0;
+      turnCounter = 0;
+      updateObjectiveBar();
+    }
+
+    function inferLessonTags() {
+      const tags = [];
+      if (grid.some(c => c.terrain === 'bridge')) tags.push('BridgeBattle');
+      if (battleObjective?.id === 'supplyTransport') tags.push('SupplyTransportBattle');
+      if (battleObjective?.id === 'defense') tags.push('DefenseBattle');
+      if (grid.some(c => c.terrain === 'forest')) tags.push('AmbushBattle');
+      if (battleObjective?.id === 'assassination') tags.push('CommanderBattle');
+      return tags;
+    }
+
+    function getObjectiveProgressText() {
+      if (!battleObjective || phase === 'deploy') return '';
+      const obj = battleObjective;
+      if (obj.id === 'defense') {
+        const defenders = activeUnits('player').filter(u => DEFENSE_ZONE_ROWS.includes(u.y)).length;
+        const intruders = activeUnits('enemy').filter(u => DEFENSE_ZONE_ROWS.includes(u.y)).length;
+        const remain = Math.max(0, DEFENSE_HOLD_REQUIRED - defenseHoldTurns);
+        return `${getDefenseZoneLabel()} · 守卫进度 ${defenseHoldTurns}/${DEFENSE_HOLD_REQUIRED} · 我军 ${defenders}/${DEFENSE_PLAYER_UNITS_REQUIRED} · 敌军 ${intruders} · 还需${remain}回合`;
+      }
+      if (obj.id === 'strongpoint') {
+        const owned = strategicPoints.filter(p => p.owner === 'player').length;
+        return `据点进度 ${owned}/${strategicPoints.length}`;
+      }
+      if (obj.id === 'supplyTransport') {
+        const cart = getCart('player');
+        if (cart) {
+          return `粮车生命 ${cart.soldiers}/${cart.maxSoldiers} · 距营地 ${distToCamp(cart)} 格`;
+        }
+        const depot = getSupplyDepot();
+        if (depot?.owner === 'player') return '等待粮车出发或已在途中';
+        if (depot?.captureSide === 'player') return '正在占领粮仓…';
+        if (droppedSupplies.length) return '战场上有散落粮食';
+        return '向粮仓进军并占领';
+      }
+      if (obj.id === 'assassination') {
+        const enemyCommander = getCommander('enemy');
+        const playerCommander = getCommander('player');
+        if (!enemyCommander) return '敌将已被击败';
+        const playerStatus = playerCommander
+          ? `我方主将 ${playerCommander.general.name} ${playerCommander.soldiers}/${playerCommander.maxSoldiers}`
+          : '我方主将未设定';
+        return `敌将 ${enemyCommander.general.name} 仍在阵上 · ${playerStatus}`;
+      }
+      if (obj.id === 'annihilation') {
+        const n = activeUnits('enemy').length;
+        return n ? `仍有 ${n} 支敌军可战` : '敌军已无战意';
+      }
+      return '';
+    }
+
+    function updateObjectiveBar() {
+      const bar = document.getElementById('objective-bar');
+      const prog = document.getElementById('objective-progress');
+      if (!battleObjective) {
+        bar.textContent = '战斗目标：—';
+        prog.textContent = '';
+        return;
+      }
+      bar.textContent = isSupplyTransportBattle()
+        ? `【护送粮车】${battleObjective.friendlyDesc}`
+        : `【${battleObjective.friendlyTitle}】${battleObjective.friendlyDesc}`;
+      prog.textContent = phase === 'battle' ? getObjectiveProgressText() : '';
+      if (isSupplyTransportBattle() && phase === 'battle') {
+        const cart = getCart('player');
+        const sub = cart
+          ? `当前目标：护送粮车返回营地 · 粮车 ${cart.soldiers}/${cart.maxSoldiers} · 距营地 ${distToCamp(cart)} 格`
+          : '当前目标：护送粮车返回营地';
+        prog.textContent = getObjectiveProgressText() ? `${sub} · ${getObjectiveProgressText()}` : sub;
+      }
+    }
+
+    function showObjectiveIntro() {
+      if (!battleObjective) return;
+      document.getElementById('objective-intro-title').textContent = `【${battleObjective.friendlyTitle}】`;
+      document.getElementById('objective-intro-desc').textContent = getObjectiveDescription(battleObjective);
+      document.getElementById('objective-intro').classList.remove('hidden');
+    }
+
+    function hideObjectiveIntro() {
+      document.getElementById('objective-intro').classList.add('hidden');
+    }
+
+    function checkTerrainTutorial(unit, terrain) {
+      if (unit.side !== 'player') return;
+      if (terrain === 'forest') BattleTutorialManager.maybeShow('terrain_forest');
+      else if (terrain === 'hill') BattleTutorialManager.maybeShow('terrain_hill');
+      else if (terrain === 'river') BattleTutorialManager.maybeShow('terrain_river');
+    }
+
+    function checkApproachTutorials(unit) {
+      if (unit.side !== 'player') return;
+      for (const p of strategicPoints) {
+        if (manhattan(unit.x, unit.y, p.x, p.y) <= 2) {
+          BattleTutorialManager.maybeShow('point_' + p.type);
+        }
+      }
+    }
+
+    // ─── 单位 ───────────────────────────────────────────────
+    const GENERAL_NAMES = ['赵云', '张飞', '关羽', '黄忠', '马超', '张辽', '徐晃', '于禁', '乐进', '李典'];
+    const ENEMY_GENERAL_NAMES = ['夏侯惇', '夏侯渊', '许褚', '典韦', '张郃', '曹仁', '曹洪', '荀攸', '郭嘉', '贾诩'];
+
+    function createGeneral(pool) {
+      return {
+        name: pool[randInt(0, pool.length - 1)],
+        leadership: randInt(60, 95),
+        strength: randInt(55, 90),
+        intelligence: randInt(50, 88),
+      };
+    }
+
+    function distributeSoldiers(total, count) {
+      const base = Math.floor(total / count);
+      let remaining = total;
+      return Array.from({ length: count }, (_, idx) => {
+        const value = idx === count - 1 ? remaining : base;
+        remaining -= value;
+        return Math.max(1, value);
+      });
+    }
+
+    function createFormationMembers(templateKey, totalSoldiers) {
+      const template = FORMATION_TEMPLATES[templateKey] || FORMATION_TEMPLATES.vanguard;
+      const shares = distributeSoldiers(totalSoldiers, template.slots.length);
+      return template.slots.map(([slotKey, troopType], idx) => {
+        const base = TROOP_TYPES[troopType];
+        const maxSoldiers = shares[idx];
+        return {
+          id: uid(),
+          slotKey,
+          troopType,
+          name: base.label,
+          soldiers: maxSoldiers,
+          maxSoldiers,
+          attack: base.attack,
+          defense: base.defense,
+          speed: base.speed,
+          range: base.range,
+          status: 'normal',
+        };
+      });
+    }
+
+    function syncFormationTotals(unit) {
+      if (!unit.formationMembers?.length) return;
+      const aliveMembers = unit.formationMembers.filter(member => member.soldiers > 0);
+      unit.soldiers = unit.formationMembers.reduce((total, member) => total + member.soldiers, 0);
+      unit.maxSoldiers = unit.formationMembers.reduce((total, member) => total + member.maxSoldiers, 0);
+      unit.range = aliveMembers.length ? Math.max(...aliveMembers.map(member => member.range)) : 0;
+      unit.attack = aliveMembers.length
+        ? Math.round(aliveMembers.reduce((total, member) => total + member.attack, 0) / aliveMembers.length)
+        : 0;
+      unit.defense = aliveMembers.length
+        ? Math.round(aliveMembers.reduce((total, member) => total + member.defense, 0) / aliveMembers.length)
+        : 1;
+      unit.speed = aliveMembers.length
+        ? Math.round(aliveMembers.reduce((total, member) => total + member.speed, 0) / aliveMembers.length)
+        : 0;
+    }
+
+    function getFormationTemplateLabel(unit) {
+      return FORMATION_GENERIC_LABEL;
+    }
+
+    function getFormationCompositionText(unit) {
+      if (!unit.formationMembers?.length) return FORMATION_GENERIC_LABEL;
+      const counts = new Map();
+      for (const member of unit.formationMembers) {
+        counts.set(member.troopType, (counts.get(member.troopType) || 0) + 1);
+      }
+      return [...counts.entries()]
+        .map(([troopType, count]) => `${TROOP_TYPES[troopType].label}${count > 1 ? count : ''}`)
+        .join(' / ');
+    }
+
+    function renderFormationChips(unit) {
+      if (!unit.formationMembers?.length) return '';
+      const occupiedSlots = new Map(unit.formationMembers.map(member => [member.slotKey, member]));
+      return `<span class="formation-chips">${FORMATION_SLOT_KEYS.map(slotKey => {
+        const member = occupiedSlots.get(slotKey);
+        const opacity = member && member.soldiers > 0 ? 1 : 0.18;
+        return `<i style="opacity:${opacity}"></i>`;
+      }).join('')}</span>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char]));
+    }
+
+    function getInspectUnit() {
+      if (inspectedUnit && units.includes(inspectedUnit)) return inspectedUnit;
+      if (selectedUnit) return selectedUnit;
+      return units.find(unit => unit.side === 'player' && unit.x >= 0 && !unit.isSupplyCart)
+        || units.find(unit => unit.side === 'player' && !unit.isSupplyCart)
+        || units.find(unit => !unit.isSupplyCart)
+        || null;
+    }
+
+    function inspectUnit(unit) {
+      if (!unit) return;
+      inspectedUnit = unit;
+    }
+
+    function renderInspectedUnitPanel() {
+      const card = document.getElementById('unit-card-body');
+      const grid = document.getElementById('unit-formation-grid');
+      if (!card || !grid) return;
+      const unit = getInspectUnit();
+      if (!unit) {
+        card.innerHTML = '<div class="unit-summary">点击单位查看编队。</div>';
+        grid.innerHTML = '';
+        return;
+      }
+
+      const tier = getMoraleTier(unit.morale || 0);
+      const pos = unit.x >= 0 ? `(${unit.x}, ${unit.y})` : '未部署';
+      const sideLabel = unit.side === 'player' ? '我方' : unit.side === 'enemy' ? '敌方' : '中立';
+      const total = unit.maxSoldiers ? `${unit.soldiers}/${unit.maxSoldiers}` : unit.soldiers;
+      card.innerHTML = `
+        <div class="unit-portrait">${escapeHtml(unit.general?.name || unit.name)}</div>
+        <div class="unit-summary">
+          <div class="name">${escapeHtml(unit.name)}${unit.isCommander ? ' · 主将' : ''}</div>
+          <div class="muted">${sideLabel} · ${escapeHtml(getFormationTemplateLabel(unit))} · ${pos}</div>
+          <div class="unit-stat-row"><span>总兵力</span><strong>${total}</strong></div>
+          <div class="unit-stat-row"><span>士气</span><strong>${unit.morale ?? 0}/100 · ${escapeHtml(tier.label)}</strong></div>
+          <div class="unit-stat-row"><span>内部构成</span><strong>${escapeHtml(getFormationCompositionText(unit))}</strong></div>
+        </div>
+      `;
+
+      const occupiedSlots = new Map((unit.formationMembers || []).map(member => [member.slotKey, member]));
+      grid.innerHTML = FORMATION_SLOT_KEYS.map(slotKey => {
+        const member = occupiedSlots.get(slotKey);
+        if (!member) {
+          return `<div class="unit-formation-cell empty"><div>${escapeHtml(FORMATION_SLOT_LABELS[slotKey])}</div><div>空位</div></div>`;
+        }
+        const pct = member.maxSoldiers ? Math.max(0, Math.round(member.soldiers / member.maxSoldiers * 100)) : 0;
+        const classes = ['unit-formation-cell'];
+        if (member.soldiers <= 0) classes.push('fallen');
+        return `
+          <div class="${classes.join(' ')}">
+            <div class="slot">${escapeHtml(FORMATION_SLOT_LABELS[slotKey])}</div>
+            <div class="troop">${escapeHtml(TROOP_TYPES[member.troopType]?.label || member.troopType)}</div>
+            <div class="hp">${member.soldiers}/${member.maxSoldiers}</div>
+            <div class="muted">射程 ${member.range}</div>
+            <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderBattleStatusPanel() {
+      const list = document.getElementById('battle-status-list');
+      if (!list) return;
+      const playerAlive = units.filter(unit => unit.side === 'player' && unit.soldiers > 0 && !unit.isSupplyCart).length;
+      const enemyAlive = units.filter(unit => unit.side === 'enemy' && unit.soldiers > 0 && !unit.isSupplyCart).length;
+      const selectedText = selectedUnit ? `${selectedUnit.name} · ${mode || '已选中'}` : '未选择单位';
+      list.innerHTML = `
+        <div class="status-item"><div class="label">胜利条件</div><div>${escapeHtml(battleObjective?.friendlyTitle || '未设定')}</div></div>
+        <div class="status-item"><div class="label">当前回合</div><div>${turn === 'player' ? '我方行动' : '敌方行动'}</div></div>
+        <div class="status-item"><div class="label">当前选择</div><div>${escapeHtml(selectedText)}</div></div>
+        <div class="status-item"><div class="label">战场兵力</div><div>我方 ${playerAlive} 队 · 敌方 ${enemyAlive} 队</div></div>
+      `;
+    }
+
+    function getDefaultUnitFacing(side) {
+      return side === 'enemy' ? 'right' : 'up';
+    }
+
+    function getFacingFromDelta(dx, dy, fallback = 'down') {
+      if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+      if (dy !== 0) return dy > 0 ? 'down' : 'up';
+      if (dx !== 0) return dx > 0 ? 'right' : 'left';
+      return fallback;
+    }
+
+    function faceUnitToward(unit, tx, ty) {
+      if (!unit) return;
+      unit.facing = getFacingFromDelta(tx - unit.x, ty - unit.y, unit.facing || getDefaultUnitFacing(unit.side));
+    }
+
+    function getBoardUnitSprite(unit) {
+      const sideSprites = BOARD_UNIT_SPRITES[unit.side === 'enemy' ? 'enemy' : 'player'];
+      const facing = unit.facing || getDefaultUnitFacing(unit.side);
+      if (unit.isCommander) {
+        const horseFacing = facing === 'down'
+          ? 'down'
+          : facing === 'up'
+            ? 'up'
+            : unit.side === 'enemy'
+              ? 'down'
+              : 'up';
+        return sideSprites.horse[horseFacing];
+      }
+      return sideSprites.man[facing] || sideSprites.man[getDefaultUnitFacing(unit.side)];
+    }
+
+    function createUnit(name, troopType, soldiers, side, general, extra = {}) {
+      const base = TROOP_TYPES[troopType];
+      const templateKey = extra.formationTemplate;
+      const formationMembers = extra.isSupplyCart ? null : createFormationMembers(templateKey || 'vanguard', soldiers);
+      const primaryType = templateKey ? FORMATION_TEMPLATES[templateKey].primary : troopType;
+      const unit = {
+        id: uid(), name, troopType: primaryType, soldiers, maxSoldiers: soldiers,
+        attack: base.attack, defense: base.defense, speed: base.speed,
+        range: base.range,
+        morale: 75 + randInt(0, 20),
+        general: general || createGeneral(side === 'player' ? GENERAL_NAMES : ENEMY_GENERAL_NAMES),
+        side, x: -1, y: -1,
+        hasMoved: false, hasActed: false,
+        inRiver: false,
+        facing: getDefaultUnitFacing(side),
+        skillUses: { ...SKILL_USES },
+        isCommander: false,
+        formationTemplate: templateKey || null,
+        formationMembers,
+        ...extra,
+      };
+      syncFormationTotals(unit);
+      return unit;
+    }
+
+    function createScenarioUnit(definition, side) {
+      const unit = createUnit(
+        definition.name,
+        definition.troopType,
+        definition.soldiers,
+        side,
+        definition.general,
+        {
+          formationTemplate: definition.template,
+          controller: definition.controller || (side === 'player' ? 'player' : 'npc'),
+        }
+      );
+      unit.x = definition.x;
+      unit.y = definition.y;
+      if (typeof definition.morale === 'number') unit.morale = definition.morale;
+      if (definition.isCommander) unit.isCommander = true;
+      return unit;
+    }
+
+    function createPlayerPool() {
+      if (battleConfig.scenario?.playerUnits?.length) {
+        return battleConfig.scenario.playerUnits.map(definition => createScenarioUnit(definition, 'player'));
+      }
+
+      return [
+        createUnit('前军一队', 'infantry', 420, 'player', null, { formationTemplate: 'vanguard' }),
+        createUnit('前军二队', 'cavalry', 360, 'player', null, { formationTemplate: 'assault' }),
+        createUnit('前军三队', 'archer', 340, 'player', null, { formationTemplate: 'missile' }),
+        createUnit('中军一队', 'spear', 440, 'player', null, { formationTemplate: 'guard' }),
+        createUnit('中军二队', 'cavalry', 320, 'player', null, { formationTemplate: 'mobile' }),
+      ];
+    }
+
+    function spawnEnemies() {
+      if (battleConfig.scenario?.enemyUnits?.length) {
+        for (const definition of battleConfig.scenario.enemyUnits) {
+          units.push(createScenarioUnit(definition, 'enemy'));
+        }
+        return;
+      }
+
+      const templates = ['vanguard', 'assault', 'missile', 'guard', 'mobile'];
+      const names = ['曹军先锋', '曹军突击', '曹军射击', '曹军守备', '曹军机动', '曹军偏师'];
+      const occupied = new Set();
+      const count = randInt(4, 6);
+      let commander = null;
+
+      for (let i = 0; i < count; i++) {
+        let x, y, tries = 0;
+        do {
+          x = randInt(0, COLS - 1);
+          y = ENEMY_DEPLOY_ROWS[randInt(0, ENEMY_DEPLOY_ROWS.length - 1)];
+          tries++;
+        } while (occupied.has(cellKey(x, y)) && tries < 50);
+        if (occupied.has(cellKey(x, y))) continue;
+        occupied.add(cellKey(x, y));
+
+        const template = templates[randInt(0, templates.length - 1)];
+        const u = createUnit(
+          names[i] || '曹军部队',
+          FORMATION_TEMPLATES[template].primary,
+          randInt(280, 430),
+          'enemy',
+          null,
+          { formationTemplate: template }
+        );
+        u.x = x; u.y = y;
+        if (!commander) { u.isCommander = true; commander = u; }
+        units.push(u);
+      }
+    }
+
+    function configureBattleCommanders() {
+      if (battleConfig.scenario) {
+        const enemyCommander = units.find(unit => unit.side === 'enemy' && unit.isCommander);
+        if (!enemyCommander) {
+          const firstEnemy = units.find(unit => unit.side === 'enemy');
+          if (firstEnemy) firstEnemy.isCommander = true;
+        }
+        return;
+      }
+
+      for (const unit of units) {
+        if (unit.side === 'player') unit.isCommander = false;
+      }
+      const enemyCommander = units.find(unit => unit.side === 'enemy' && unit.isCommander);
+      if (!enemyCommander) {
+        const firstEnemy = units.find(unit => unit.side === 'enemy');
+        if (firstEnemy) firstEnemy.isCommander = true;
+      }
+      if (!isAssassinationBattle()) return;
+      const playerCommander = units.find(unit => unit.side === 'player');
+      if (playerCommander) playerCommander.isCommander = true;
+    }
+
+    // ─── 移动 ───────────────────────────────────────────────
+    function computeReachable(unit) {
+      const maxDist = moveRange(unit);
+      const result = [], visited = new Map();
+      const queue = [{ x: unit.x, y: unit.y, dist: 0 }];
+      visited.set(cellKey(unit.x, unit.y), 0);
+
+      while (queue.length) {
+        const { x, y, dist } = queue.shift();
+        if (dist > 0) result.push({ x, y });
+        if (dist >= maxDist) continue;
+
+        for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+          const nx = x + dx, ny = y + dy;
+          if (!inBounds(nx, ny)) continue;
+          const nk = cellKey(nx, ny);
+          const blocked = unitAt(nx, ny);
+          if (blocked && blocked.id !== unit.id) continue;
+          const nd = dist + 1;
+          if (!visited.has(nk) || visited.get(nk) > nd) {
+            visited.set(nk, nd);
+            queue.push({ x: nx, y: ny, dist: nd });
+          }
+        }
+      }
+      return result.filter(c => !unitAt(c.x, c.y));
+    }
+
+    function computeAttackable(unit) {
+      if (unit.isSupplyCart) return [];
+      return units.filter(u =>
+        u.side !== unit.side && u.soldiers > 0 && canLockTarget(unit, u)
+      );
+    }
+
+    function computeAttackRangeCells(unit) {
+      if (!unit || unit.isSupplyCart) return [];
+      const cells = [];
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          if (isInFixedAttackPattern(unit, x, y)) cells.push({ x, y });
+        }
+      }
+      return cells;
+    }
+
+    function aiTargetPriority(attacker, target) {
+      if (isAssassinationBattle() && target.isCommander) {
+        return target.side === 'player' ? 140 : 135;
+      }
+      if (!isSupplyTransportBattle()) {
+        return (target.isCommander ? 50 : 0) + getTypeAdv(attacker, target) * 10;
+      }
+      if (target.isSupplyCart && target.side !== attacker.side) return 120;
+      const enemyCart = getCart(attacker.side === 'player' ? 'enemy' : 'player');
+      if (enemyCart && manhattan(target.x, target.y, enemyCart.x, enemyCart.y) <= 1) return 70;
+      if (target.isCommander) return 55;
+      return 10 + getTypeAdv(attacker, target) * 5;
+    }
+
+    function applyMove(unit, nx, ny) {
+      const terrain = getTerrain(nx, ny);
+      faceUnitToward(unit, nx, ny);
+      unit.x = nx; unit.y = ny;
+      unit.hasMoved = true;
+
+      checkTerrainTutorial(unit, terrain);
+      checkApproachTutorials(unit);
+
+      if (isRiverTerrain(terrain)) {
+        unit.inRiver = true;
+        unit.hasActed = true;
+        log(`${unit.name} 进入河流 — 渡河受阻，本回合行动结束`, 'system');
+      } else {
+        unit.inRiver = false;
+      }
+      tryPickupDroppedSupply(unit);
+    }
+
+    function findMovePath(unit, tx, ty) {
+      if (unit.x === tx && unit.y === ty) return [];
+      const startKey = cellKey(unit.x, unit.y);
+      const targetKey = cellKey(tx, ty);
+      const queue = [{ x: unit.x, y: unit.y }];
+      const cameFrom = new Map([[startKey, null]]);
+
+      while (queue.length) {
+        const current = queue.shift();
+        if (cellKey(current.x, current.y) === targetKey) break;
+        for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+          const nx = current.x + dx, ny = current.y + dy;
+          if (!inBounds(nx, ny)) continue;
+          const nk = cellKey(nx, ny);
+          if (cameFrom.has(nk)) continue;
+          const blocked = unitAt(nx, ny);
+          if (blocked && blocked.id !== unit.id) continue;
+          cameFrom.set(nk, current);
+          queue.push({ x: nx, y: ny });
+        }
+      }
+
+      if (!cameFrom.has(targetKey)) return [];
+      const path = [];
+      let cursor = { x: tx, y: ty };
+      while (cellKey(cursor.x, cursor.y) !== startKey) {
+        path.push(cursor);
+        cursor = cameFrom.get(cellKey(cursor.x, cursor.y));
+      }
+      return path.reverse();
+    }
+
+    async function animateUnitMove(unit, tx, ty, stepDelay = 160) {
+      const path = findMovePath(unit, tx, ty);
+      if (!path.length) {
+        applyMove(unit, tx, ty);
+        renderBoard();
+        updateDebug();
+        return;
+      }
+
+      for (let i = 0; i < path.length; i++) {
+        const step = path[i];
+        if (i === path.length - 1) {
+          applyMove(unit, step.x, step.y);
+        } else {
+          faceUnitToward(unit, step.x, step.y);
+          unit.x = step.x;
+          unit.y = step.y;
+          unit.inRiver = isRiverTerrain(getTerrain(step.x, step.y));
+        }
+        renderBoard();
+        updateDebug();
+        await sleep(stepDelay);
+      }
+    }
+
+    // ─── 战斗 ───────────────────────────────────────────────
+    function calcDamage(attacker, defender) {
+      const atkTier = getMoraleTier(attacker.morale);
+      const defTier = getMoraleTier(defender.morale);
+      const typeAdv = getTypeAdv(attacker, defender);
+
+      let hitRate = 0.72 * atkTier.hit;
+      if (isChaos(attacker) && Math.random() < 0.35) {
+        return { hit: false, damage: 0, counter: 0, typeAdv, chaosFail: true };
+      }
+      if (Math.random() > hitRate) return { hit: false, damage: 0, counter: 0, typeAdv };
+
+      const effAtk = attacker.attack * (1 + attacker.general.strength / 200) * atkTier.atk;
+      const effDef = defender.defense * defTier.def;
+
+      let damage = Math.round(
+        (effAtk / Math.max(effDef, 1)) * 14 * typeAdv *
+        (attacker.soldiers / attacker.maxSoldiers) * (0.85 + Math.random() * 0.3)
+      );
+
+      const hillFirst = isOnHill(attacker.x, attacker.y) && !isOnHill(defender.x, defender.y);
+      if (hillFirst) damage = Math.round(damage * 1.25);
+
+      if (defender.inRiver) damage = Math.round(damage * RIVER_DAMAGE_MULT);
+      damage = clamp(damage, 1, Math.round(attacker.soldiers * 0.15));
+
+      let counter = 0;
+      const dist = manhattan(attacker.x, attacker.y, defender.x, defender.y);
+      if (!defender.isSupplyCart && !hillFirst && defender.soldiers > 0 && defender.range >= dist) {
+        const counterRate = 0.55 * defTier.counter;
+        if (Math.random() < counterRate) {
+          const cAtk = defender.attack * (1 + defender.general.strength / 200) * defTier.atk;
+          const cDef = attacker.defense * 0.5 * atkTier.def;
+          counter = Math.round((cAtk / Math.max(cDef, 1)) * 7 * (defender.soldiers / defender.maxSoldiers));
+          if (attacker.inRiver) counter = Math.round(counter * RIVER_DAMAGE_MULT);
+          counter = clamp(counter, 0, Math.round(defender.soldiers * 0.1));
+        }
+      }
+
+      return { hit: true, damage, counter, typeAdv, hillFirst };
+    }
+
+    function applyDamage(unit, amount) {
+      const wasAlive = unit.soldiers > 0;
+      if (unit.formationMembers?.length) {
+        let remaining = amount;
+        for (const slotPrefix of ['front', 'middle', 'rear']) {
+          for (const member of unit.formationMembers.filter(item => item.soldiers > 0 && item.slotKey.startsWith(slotPrefix))) {
+            if (remaining <= 0) break;
+            const part = Math.min(member.soldiers, Math.max(1, Math.ceil(remaining / 2)));
+            member.soldiers -= part;
+            remaining -= part;
+          }
+          if (remaining <= 0) break;
+        }
+        syncFormationTotals(unit);
+      } else {
+      unit.soldiers = Math.max(0, unit.soldiers - amount);
+      }
+      if (unit.isSupplyCart) {
+        if (wasAlive && unit.soldiers <= 0) destroyCart(unit);
+        return;
+      }
+      changeMorale(unit, -Math.round(amount / unit.maxSoldiers * 35), '战损', false);
+      if (wasAlive && unit.soldiers <= 0) onGeneralFallen(unit);
+    }
+
+    function resolveDirectAttack(attacker, defender) {
+      if (attacker.isSupplyCart) return Promise.resolve();
+      if (isRout(attacker)) return Promise.resolve();
+      if (isChaos(attacker) && Math.random() < 0.25) {
+        log(`${attacker.name} 混乱中行动失败`, 'system');
+        return Promise.resolve();
+      }
+
+      const result = calcDamage(attacker, defender);
+      const advLabel = result.typeAdv > 1 ? '（克制）' : '';
+
+      if (result.chaosFail) {
+        log(`${attacker.name} 混乱中攻击失误`, 'system');
+        attacker.hasActed = true;
+        return Promise.resolve();
+      }
+      if (!result.hit) {
+        log(`${attacker.name} 攻击 ${defender.name} — 未命中`, 'system');
+        attacker.hasActed = true;
+        return Promise.resolve();
+      }
+
+      if (result.hillFirst) log(`${attacker.name} 占高地先手！`, 'skill');
+      applyDamage(defender, result.damage);
+      if (result.counter > 0) applyDamage(attacker, result.counter);
+
+      const targetName = defender.isSupplyCart ? '粮车' : defender.name;
+      log(`${attacker.name}发动攻击！${advLabel}`, 'skill');
+      log(`  ${targetName} 损失 ${result.damage}${result.counter ? `，${attacker.name} 损失 ${result.counter}` : ''}`, 'damage');
+      changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
+      return Promise.resolve();
+    }
+
+    function resolveAttack(attacker, defender) {
+      faceUnitToward(attacker, defender.x, defender.y);
+      renderBoard();
+      updateDebug();
+      if (defender.isSupplyCart || !attacker.formationMembers?.length || !defender.formationMembers?.length) {
+        return resolveDirectAttack(attacker, defender);
+      }
+
+      if (attacker.isSupplyCart || isRout(attacker)) return Promise.resolve();
+      if (isChaos(attacker) && Math.random() < 0.25) {
+        log(`${attacker.name} 混乱中行动失败`, 'system');
+        return Promise.resolve();
+      }
+
+      const distance = manhattan(attacker.x, attacker.y, defender.x, defender.y);
+      const attackerBefore = cloneFormationSnapshot(attacker);
+      const defenderBefore = cloneFormationSnapshot(defender);
+      const timeline = [];
+      let totalDamageToDefender = 0;
+      let totalDamageToAttacker = 0;
+
+      function pushBattleStep(step) {
+        timeline.push({
+          ...step,
+          attackerSnapshot: cloneFormationSnapshot(attacker),
+          defenderSnapshot: cloneFormationSnapshot(defender),
+        });
+      }
+
+      function runSideRound(sourceUnit, targetUnit, label, isCounter, sourceSide, targetSide) {
+        const readyMembers = getBattleReadyMembers(sourceUnit, distance).slice();
+        if (!readyMembers.length) {
+          pushBattleStep({ type: 'entry', text: `${label}无成员能够出手` });
+          return;
+        }
+        const plannedTargetState = cloneFormationSnapshot(targetUnit);
+        const plannedStrikes = [];
+        for (const member of readyMembers) {
+          if (member.soldiers <= 0 || member.status === 'stunned') continue;
+          if (distance > 1 && member.range < distance) continue;
+          const targetMember = chooseFormationTarget(sourceUnit, member, plannedTargetState);
+          if (!targetMember) continue;
+          const hitRate = 0.76 * getMoraleTier(sourceUnit.morale).hit;
+          if (Math.random() > hitRate) {
+            plannedStrikes.push({
+              type: 'strike',
+              className: 'miss',
+              text: `${label}${TROOP_TYPES[member.troopType].label}攻击落空`,
+              sourceSide,
+              targetSide,
+              sourceSlotKey: member.slotKey,
+              targetSlotKey: targetMember.slotKey,
+              sourceTroopType: member.troopType,
+              targetTroopType: targetMember.troopType,
+              hit: false,
+              damage: 0,
+              delayMs: randInt(0, 120),
+            });
+            continue;
+          }
+          const result = calculateMemberDamage(sourceUnit, member, targetUnit, targetMember, distance, isCounter);
+          plannedStrikes.push({
+            type: 'strike',
+            className: 'damage',
+            text: `${label}${TROOP_TYPES[member.troopType].label}击中${targetUnit.name}${TROOP_TYPES[targetMember.troopType].label}，损失 ${result.damage}${result.typeAdv > 1 ? '（克制）' : ''}`,
+            sourceSide,
+            targetSide,
+            sourceSlotKey: member.slotKey,
+            targetSlotKey: targetMember.slotKey,
+            sourceTroopType: member.troopType,
+            targetTroopType: targetMember.troopType,
+            typeAdv: result.typeAdv,
+            hit: true,
+            damage: result.damage,
+            delayMs: randInt(0, 120),
+          });
+        }
+
+        if (!plannedStrikes.length) {
+          pushBattleStep({ type: 'entry', text: `${label}未形成有效攻击` });
+          return;
+        }
+
+        plannedStrikes.sort((a, b) => a.delayMs - b.delayMs);
+
+        for (const strike of plannedStrikes) {
+          if (sourceUnit.soldiers <= 0 || targetUnit.soldiers <= 0) return;
+          if (!strike.hit) {
+            pushBattleStep(strike);
+            continue;
+          }
+          const liveTargetMember = targetUnit.formationMembers?.find(member => member.slotKey === strike.targetSlotKey);
+          if (!liveTargetMember || liveTargetMember.soldiers <= 0) {
+            pushBattleStep({
+              ...strike,
+              className: 'miss',
+              text: `${label}${TROOP_TYPES[strike.sourceTroopType].label}扑空`,
+              hit: false,
+              damage: 0,
+            });
+            continue;
+          }
+          const actualDamage = Math.min(strike.damage, liveTargetMember.soldiers);
+          applyMemberDamage(targetUnit, liveTargetMember, actualDamage);
+          if (targetUnit.id === defender.id) totalDamageToDefender += actualDamage;
+          else totalDamageToAttacker += actualDamage;
+          pushBattleStep({
+            ...strike,
+            damage: actualDamage,
+            text: `${label}${TROOP_TYPES[strike.sourceTroopType].label}击中${targetUnit.name}${TROOP_TYPES[strike.targetTroopType].label}，损失 ${actualDamage}${strike.typeAdv > 1 ? '（克制）' : ''}`,
+          });
+        }
+      }
+
+      for (let round = 1; round <= 2; round++) {
+        pushBattleStep({ type: 'round', text: `第 ${round} 轮` });
+        runSideRound(attacker, defender, '攻方', false, 'attacker', 'defender');
+        if (defender.soldiers > 0) runSideRound(defender, attacker, '守方还击：', true, 'defender', 'attacker');
+      }
+
+      changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
+
+      log(`${attacker.name} 与 ${defender.name} 展开编队交战`, 'skill');
+      log(`  ${defender.name} 损失 ${totalDamageToDefender}，${attacker.name} 损失 ${totalDamageToAttacker}`, 'damage');
+      if (defender.soldiers <= 0) onGeneralFallen(defender);
+      if (attacker.soldiers <= 0) onGeneralFallen(attacker);
+      return showFormationBattleOverlay({
+        attackerBefore,
+        defenderBefore,
+        attackerAfter: cloneFormationSnapshot(attacker),
+        defenderAfter: cloneFormationSnapshot(defender),
+        timeline,
+        distance,
+      });
+    }
+
+    // ─── 技能 ───────────────────────────────────────────────
+    function useInspire(caster, target) {
+      if (caster.skillUses.inspire <= 0) return;
+      const bonus = Math.round(20 * (1 + caster.general.intelligence / 200));
+      changeMorale(target, bonus, '鼓舞');
+      caster.skillUses.inspire--;
+      caster.hasActed = true;
+    }
+
+    // ─── 据点 ───────────────────────────────────────────────
+    function capturePoint(point, side) {
+      point.owner = side;
+      point.captureProgress = 0;
+      point.captureSide = null;
+      const info = STRATEGIC[point.type];
+      log(`【${info.name}】被${side === 'player' ? '我军' : '敌军'}占领！`, 'skill');
+
+      if (side === 'player') addRecap(`你占领了${info.name}`);
+
+      if (point.type === 'supplyDepot') {
+        raiseSupplyMorale(side, SUPPLY_CAPTURE_MORALE_BONUS, '夺得粮仓');
+        if (isSupplyTransportBattle()) {
+          spawnSupplyCart(side, point.x, point.y, true);
+        }
+      }
+    }
+
+    function processCaptureProgress() {
+      const captureRequired = isStrongpointBattle() ? STRONGPOINT_CAPTURE_REQUIRED : 1;
+      for (const point of strategicPoints) {
+        const u = unitAt(point.x, point.y);
+        if (!u) {
+          if (point.captureSide) {
+            point.captureSide = null;
+            point.captureProgress = 0;
+          }
+          continue;
+        }
+        if (u.side === point.owner) {
+          point.captureSide = null;
+          point.captureProgress = 0;
+          continue;
+        }
+        if (point.captureSide === u.side) {
+          point.captureProgress += 1;
+          if (point.captureProgress >= captureRequired) capturePoint(point, u.side);
+        } else {
+          point.captureSide = u.side;
+          point.captureProgress = 0;
+        }
+      }
+    }
+
+    function applyStrategicTurnEffects(side) {
+      for (const p of strategicPoints) {
+        if (p.owner !== side) continue;
+        if (p.type === 'camp') {
+          changeMoraleSide(side, 2, '营寨补给', false);
+          logMorale(`${side === 'player' ? '我军' : '敌军'}据守营寨，士气恢复`);
+          for (const u of units) {
+            if (u.side !== side || u.soldiers <= 0) continue;
+            if (manhattan(u.x, u.y, p.x, p.y) <= 1) changeMorale(u, 3, '营寨附近', false);
+          }
+        }
+      }
+    }
+
+    function recoverMorale(side) {
+      for (const u of units) {
+        if (u.side !== side || u.soldiers <= 0 || isRout(u)) continue;
+        changeMorale(u, Math.round(u.general.leadership / 22), '统率恢复', false);
+      }
+    }
+
+    // ─── 溃逃 ───────────────────────────────────────────────
+    function processRout() {
+      for (const u of units) {
+        if (!isRout(u) || u.soldiers <= 0) continue;
+        const edges = [];
+        for (let x = 0; x < COLS; x++) { edges.push({ x, y: 0 }, { x, y: ROWS - 1 }); }
+        for (let y = 0; y < ROWS; y++) { edges.push({ x: 0, y }, { x: COLS - 1, y }); }
+
+        let best = edges[0], bestDist = Infinity;
+        for (const e of edges) {
+          const d = manhattan(u.x, u.y, e.x, e.y);
+          if (d < bestDist) { bestDist = d; best = e; }
+        }
+
+        let moved = false;
+        for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+          const nx = u.x + dx, ny = u.y + dy;
+          if (!inBounds(nx, ny) || unitAt(nx, ny)) continue;
+          if (manhattan(nx, ny, best.x, best.y) < bestDist) {
+            u.x = nx; u.y = ny;
+            u.inRiver = isRiverTerrain(getTerrain(nx, ny));
+            moved = true;
+            break;
+          }
+        }
+        if (!moved) {
+          for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+            const nx = u.x + dx, ny = u.y + dy;
+            if (inBounds(nx, ny) && !unitAt(nx, ny)) {
+              u.x = nx; u.y = ny;
+              u.inRiver = isRiverTerrain(getTerrain(nx, ny));
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // ─── 胜负 ───────────────────────────────────────────────
+    function livingUnits(side) {
+      return units.filter(u => u.side === side && u.soldiers > 0 && !u.isSupplyCart);
+    }
+
+    function activeUnits(side) {
+      return livingUnits(side).filter(u => !isRout(u));
+    }
+
+    function allPointsOwnedBy(side) {
+      return strategicPoints.every(p => p.owner === side);
+    }
+
+    function playerHoldsDefenseZone() {
+      const playerDefenders = activeUnits('player').filter(u => DEFENSE_ZONE_ROWS.includes(u.y));
+      const enemyIntruders = activeUnits('enemy').filter(u => DEFENSE_ZONE_ROWS.includes(u.y));
+      return playerDefenders.length >= DEFENSE_PLAYER_UNITS_REQUIRED && enemyIntruders.length === 0;
+    }
+
+    function checkObjectiveWin() {
+      const obj = battleObjective;
+      if (!obj) return null;
+
+      if (obj.id === 'supplyTransport' || obj.id === 'annihilation') {
+        if (livingUnits('enemy').length === 0) return { win: true, msg: '敌军全灭！' };
+        if (activeUnits('enemy').length === 0) {
+          addRecap('敌军士气崩溃');
+          return { win: true, msg: '敌军全线溃逃！' };
+        }
+      }
+      if (obj.id === 'strongpoint' && allPointsOwnedBy('player')) {
+        return { win: true, msg: '全部据点已占领！' };
+      }
+      if (obj.id === 'assassination') {
+        const cmd = getCommander('enemy', true);
+        if (cmd && cmd.soldiers <= 0) return { win: true, msg: '敌军主将已阵斩！' };
+      }
+      if (obj.id === 'defense' && defenseHoldTurns >= DEFENSE_HOLD_REQUIRED) {
+        return { win: true, msg: `成功守住${getDefenseZoneLabel()} ${DEFENSE_HOLD_REQUIRED} 回合！` };
+      }
+      return null;
+    }
+
+    function checkObjectiveLoss() {
+      if (isAssassinationBattle()) {
+        const playerCommander = getCommander('player', true);
+        if (playerCommander != null && playerCommander.soldiers <= 0) {
+          return { win: false, msg: '我军主将已被阵斩……' };
+        }
+      }
+      if (livingUnits('player').length === 0) return { win: false, msg: '我军全灭……' };
+      if (activeUnits('player').length === 0) return { win: false, msg: '我军全部溃逃……' };
+      if (battleObjective?.id === 'defense' && turnCounter > 0 && !playerHoldsDefenseZone()) {
+        return { win: false, msg: `${getDefenseZoneLabel()}失守……` };
+      }
+      return null;
+    }
+
+    function checkVictory() {
+      const win = checkObjectiveWin();
+      if (win) { showOverlay('胜利', win.msg, true); return true; }
+      const loss = checkObjectiveLoss();
+      if (loss) { showOverlay('失败', loss.msg, false); return true; }
+      return false;
+    }
+
+    function notifyBattleDemoResult() {
+      if (!battleConfig.embedded || !lastBattleResult) return;
+      window.parent?.postMessage({
+        type: 'rpg-tg:battle-demo-result',
+        scenarioId: battleConfig.scenarioId,
+        result: lastBattleResult.result,
+      }, '*');
+    }
+
+    function showOverlay(title, desc, isWin = false) {
+      document.getElementById('overlay-title').textContent = title;
+      document.getElementById('overlay-desc').textContent = desc;
+      const recapBox = document.getElementById('recap-box');
+      const recapList = document.getElementById('recap-list');
+      if (isWin && battleRecap.length) {
+        recapList.innerHTML = battleRecap.map(t => `<li>${t}</li>`).join('');
+        recapBox.classList.remove('hidden');
+      } else {
+        recapBox.classList.add('hidden');
+        recapList.innerHTML = '';
+      }
+      document.getElementById('overlay').classList.remove('hidden');
+      lastBattleResult = { result: isWin ? 'victory' : 'defeat', title, desc };
+      const restartButton = document.getElementById('btn-restart');
+      if (battleConfig.embedded && restartButton) {
+        restartButton.textContent = isWin ? '返回帅府评定' : '重新挑战';
+      }
+      phase = 'ended';
+    }
+
+    function getBattleSlotPosition(slotKey, mirrorCols = false) {
+      const [rowName, colName] = slotKey.split('-');
+      const rowMap = { front: 0, middle: 1, rear: 2 };
+      const colMap = { left: 0, center: 1, right: 2 };
+      const displayColName = mirrorCols
+        ? ({ left: 'right', center: 'center', right: 'left' }[colName] || colName)
+        : colName;
+      const xByRow = { front: 66, middle: 38, rear: 10 };
+      const xByCol = { left: -6, center: 0, right: 6 };
+      const yByCol = { left: 16, center: 50, right: 84 };
+      const rowLift = { front: 0, middle: 10, rear: 20 };
+      return {
+        row: rowMap[rowName] ?? 0,
+        col: colMap[colName] ?? 0,
+        rowClass: `row-${rowName}`,
+        x: (xByRow[rowName] ?? 38) + (xByCol[displayColName] ?? 0),
+        y: (yByCol[displayColName] ?? 51) + (rowLift[rowName] ?? 0),
+        z: 10 + (colMap[displayColName] ?? 0) * 3 + (rowMap[rowName] ?? 0),
+      };
+    }
+
+    class BattleSpineRenderer {
+      constructor(project, images) {
+        this.project = project;
+        this.nodes = project.nodes || [];
+        this.images = images;
+        this.fps = project.fps || 24;
+        this.idleAction = this.findAction('idle') || project.actions?.[0] || null;
+        this.jumpAction = this.findAction('jump') || this.idleAction;
+        this.slashAction =
+          this.findAction(project.selectedActionId) ||
+          (project.actions || []).find(action => action.name === '挥砍') ||
+          (project.actions || []).find(action => action.id !== 'idle' && action.id !== 'jump') ||
+          this.jumpAction;
+        this.bounds = this.computeBounds();
+      }
+
+      static async load() {
+        let project = null;
+        if (window.location.protocol !== 'file:') {
+          const response = await fetch('/src/faxian/leg/new-version-spine-project.json', { cache: 'no-store' });
+          project = await response.json();
+        }
+        project ||= window.RECOVERED_SPINE_PROJECT || null;
+        if (!project) throw new Error('Missing Spine project data.');
+        const imageSources = {
+          newHead: '../../src/faxian/leg/head.png',
+          newTorso: '../../src/faxian/leg/torso.png',
+          newLeftArm: '../../src/faxian/leg/leftarm.png',
+          newRightArm: '../../src/faxian/leg/rightarm.png',
+          newLeftLeg: '../../src/faxian/leg/leftleg.png',
+          newRightLeg: '../../src/faxian/leg/rightleg%20(1).png',
+          newSword: '../../src/faxian/leg/sword.png',
+        };
+        const images = {};
+        await Promise.all(Object.entries(imageSources).map(([key, src]) => new Promise(resolve => {
+          const image = new Image();
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+          image.src = src;
+          images[key] = image;
+        })));
+        return new BattleSpineRenderer(project, images);
+      }
+
+      findAction(id) {
+        return (this.project.actions || []).find(action => action.id === id) || null;
+      }
+
+      computeBounds() {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const node of this.nodes) {
+          const attachment = node.attachment;
+          const image = this.images[attachment?.image];
+          const restPart = attachment?.restPart;
+          if (!image || !restPart) continue;
+          const corners = [
+            { x: 0, y: 0 },
+            { x: image.width, y: 0 },
+            { x: image.width, y: image.height },
+            { x: 0, y: image.height },
+          ].map(point => this.imagePointToFullSkinRest(point, image, restPart));
+          for (const point of corners) {
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+          }
+        }
+        return Number.isFinite(minX)
+          ? { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY }
+          : { minX: 280, minY: 40, maxX: 610, maxY: 620, width: 330, height: 580 };
+      }
+
+      getAction(actionId) {
+        if (actionId === 'jump') return this.jumpAction;
+        if (actionId === 'slash') return this.slashAction;
+        return this.idleAction;
+      }
+
+      getActionDurationMs(actionId) {
+        const action = this.getAction(actionId);
+        return (((action?.duration ?? this.project.duration ?? 29) + 1) / this.fps) * 1000;
+      }
+
+      render(canvas, actionId = 'idle', elapsedMs = 0, options = {}) {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const width = Math.max(1, Math.round(rect.width * dpr));
+        const height = Math.max(1, Math.round(rect.height * dpr));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        this.lowDetail = rect.width < 64 || rect.height < 84;
+        const action = this.getAction(actionId);
+        const duration = Math.max(1, action?.duration ?? this.project.duration ?? 29);
+        const rawFrame = (elapsedMs / 1000) * this.fps;
+        const frame = options.loop === false ? Math.min(duration, rawFrame) : rawFrame % (duration + 1);
+        const scale = Math.min(rect.width / Math.max(1, this.bounds.width), rect.height / Math.max(1, this.bounds.height)) * 0.94;
+        const padding = 4;
+        const minTranslateX = padding - this.bounds.minX * scale;
+        const maxTranslateX = rect.width - padding - this.bounds.maxX * scale;
+        const minTranslateY = padding - this.bounds.minY * scale;
+        const maxTranslateY = rect.height - padding - this.bounds.maxY * scale;
+        const desiredTranslateX = rect.width / 2 - (this.bounds.minX + this.bounds.width / 2) * scale;
+        const desiredTranslateY = rect.height * 0.58 - (this.bounds.minY + this.bounds.height * 0.52) * scale;
+        const translateX = Math.min(Math.max(desiredTranslateX, minTranslateX), maxTranslateX);
+        const translateY = Math.min(Math.max(desiredTranslateY, minTranslateY), maxTranslateY);
+        ctx.save();
+        ctx.translate(translateX, translateY);
+        ctx.scale(scale, scale);
+        this.drawCharacter(ctx, action, frame);
+        ctx.restore();
+      }
+
+      drawCharacter(ctx, action, frame) {
+        this.nodes
+          .filter(node => node.attachment)
+          .slice()
+          .sort((a, b) => {
+            const layerDiff = (a.attachment.layer || 0) - (b.attachment.layer || 0);
+            return layerDiff || (a.attachment.alpha || 1) - (b.attachment.alpha || 1);
+          })
+          .forEach(node => this.drawAttachment(ctx, node, action, frame));
+      }
+
+      drawAttachment(ctx, node, action, frame) {
+        const attachment = node.attachment;
+        const image = this.images[attachment.image];
+        if (!image?.complete || !attachment.fullSkin || !attachment.restPart) return;
+        const segments = (attachment.skinBoneIds || [])
+          .map(nodeId => this.nodes.find(item => item.id === nodeId))
+          .filter(Boolean)
+          .map(boneNode => {
+            const pose = this.worldPose(boneNode, action, frame);
+            const rest = this.restWorldPose(boneNode);
+            return {
+              restStart: { x: rest.worldX, y: rest.worldY },
+              restEnd: this.endPoint(rest),
+              start: { x: pose.worldX, y: pose.worldY },
+              end: this.endPoint(pose),
+            };
+          });
+        if (!segments.length) return;
+        const cols = this.lowDetail ? 3 : attachment.restPart.partId === 'torso' ? 5 : 4;
+        const rows = this.lowDetail ? Math.max(4, segments.length * 3) : Math.max(6, segments.length * 5);
+        const source = [];
+        const dest = [];
+        for (let row = 0; row <= rows; row += 1) {
+          const v = row / rows;
+          const sourceRow = [];
+          const destRow = [];
+          for (let col = 0; col <= cols; col += 1) {
+            const u = col / cols;
+            const sourcePoint = { x: image.width * u, y: image.height * v };
+            sourceRow.push(sourcePoint);
+            destRow.push(this.deformByAttachmentSegments(
+              this.imagePointToFullSkinRest(sourcePoint, image, attachment.restPart),
+              segments,
+            ));
+          }
+          source.push(sourceRow);
+          dest.push(destRow);
+        }
+        this.drawTexturedMesh(ctx, image, source, dest, attachment.alpha);
+      }
+
+      getLocalPose(node, action, frame) {
+        const keys = [...((action?.timelines || {})[node.id] || [])].sort((a, b) => a.frame - b.frame);
+        if (!keys.length) return { ...node };
+        const exact = keys.find(item => item.frame === frame);
+        if (exact) return { ...node, ...exact };
+        if (keys.length === 1) return { ...node, ...keys[0] };
+        const before = [...keys].reverse().find(item => item.frame < frame);
+        const after = keys.find(item => item.frame > frame);
+        if (!before) return { ...node, ...keys[0] };
+        if (!after) {
+          const start = keys.find(item => item.frame === 0) || keys[0];
+          const span = Math.max(1, (action?.duration ?? this.project.duration ?? 29) + 1 - before.frame);
+          return this.interpolateLocalPose(node, before, start, Math.max(0, Math.min(1, (frame - before.frame) / span)));
+        }
+        return this.interpolateLocalPose(node, before, after, (frame - before.frame) / (after.frame - before.frame));
+      }
+
+      interpolateLocalPose(node, before, after, t) {
+        return {
+          ...node,
+          x: this.lerp(before.x, after.x, t),
+          y: this.lerp(before.y, after.y, t),
+          rotation: this.lerpAngle(before.rotation, after.rotation, t),
+          length: this.lerp(before.length, after.length, t),
+          scaleX: this.lerp(before.scaleX, after.scaleX, t),
+          scaleY: this.lerp(before.scaleY, after.scaleY, t),
+        };
+      }
+
+      worldPose(node, action, frame, seen = new Set()) {
+        if (seen.has(node.id)) return this.getLocalPose(node, action, frame);
+        seen.add(node.id);
+        const local = this.getLocalPose(node, action, frame);
+        if (!node.parentId) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        }
+        const parent = this.nodes.find(item => item.id === node.parentId);
+        if (!parent) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        }
+        const p = this.worldPose(parent, action, frame, seen);
+        const anchor = this.endPoint(p);
+        const rad = (p.worldRotation * Math.PI) / 180;
+        const px = local.x * p.worldScaleX;
+        const py = local.y * p.worldScaleY;
+        return {
+          ...local,
+          worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
+          worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
+          worldRotation: p.worldRotation + local.rotation,
+          worldScaleX: p.worldScaleX * local.scaleX,
+          worldScaleY: p.worldScaleY * local.scaleY,
+        };
+      }
+
+      restWorldPose(node, seen = new Set()) {
+        if (seen.has(node.id)) return { ...node, ...(node.bindPose || {}) };
+        seen.add(node.id);
+        const local = { ...node, ...(node.bindPose || {}) };
+        if (!node.parentId) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        }
+        const parent = this.nodes.find(item => item.id === node.parentId);
+        if (!parent) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        }
+        const p = this.restWorldPose(parent, seen);
+        const anchor = this.endPoint(p);
+        const rad = (p.worldRotation * Math.PI) / 180;
+        const px = local.x * p.worldScaleX;
+        const py = local.y * p.worldScaleY;
+        return {
+          ...local,
+          worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
+          worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
+          worldRotation: p.worldRotation + local.rotation,
+          worldScaleX: p.worldScaleX * local.scaleX,
+          worldScaleY: p.worldScaleY * local.scaleY,
+        };
+      }
+
+      endPoint(pose) {
+        const rad = (pose.worldRotation * Math.PI) / 180;
+        return {
+          x: pose.worldX + Math.cos(rad) * pose.length * pose.worldScaleX,
+          y: pose.worldY + Math.sin(rad) * pose.length * pose.worldScaleY,
+        };
+      }
+
+      imagePointToFullSkinRest(sourcePoint, image, restPart) {
+        const width = image.width * restPart.scale;
+        const height = image.height * restPart.scale;
+        const localX = (sourcePoint.x / image.width) * width - width * restPart.anchorX;
+        const localY = (sourcePoint.y / image.height) * height - height * restPart.anchorY;
+        const angle = (restPart.rotation * Math.PI) / 180;
+        return {
+          x: restPart.x + localX * Math.cos(angle) - localY * Math.sin(angle),
+          y: restPart.y + localX * Math.sin(angle) + localY * Math.cos(angle),
+        };
+      }
+
+      deformByAttachmentSegments(point, segments) {
+        let totalWeight = 0;
+        const blended = { x: 0, y: 0 };
+        for (const segment of segments) {
+          const projection = this.projectPointOnSegment(point, segment.restStart, segment.restEnd);
+          const weight = this.attachmentSegmentWeight(this.distance(point, projection.point), segment);
+          const mapped = this.mapPointByAttachmentSegment(point, segment);
+          blended.x += mapped.x * weight;
+          blended.y += mapped.y * weight;
+          totalWeight += weight;
+        }
+        return totalWeight <= 0 ? point : { x: blended.x / totalWeight, y: blended.y / totalWeight };
+      }
+
+      mapPointByAttachmentSegment(point, segment) {
+        const restLength = Math.max(1, this.distance(segment.restStart, segment.restEnd));
+        const currentLength = Math.max(1, this.distance(segment.start, segment.end));
+        const restDir = this.normalizeVector({ x: segment.restEnd.x - segment.restStart.x, y: segment.restEnd.y - segment.restStart.y });
+        const currentDir = this.normalizeVector({ x: segment.end.x - segment.start.x, y: segment.end.y - segment.start.y });
+        const restNormal = { x: -restDir.y, y: restDir.x };
+        const currentNormal = { x: -currentDir.y, y: currentDir.x };
+        const local = { x: point.x - segment.restStart.x, y: point.y - segment.restStart.y };
+        const softenedScale = 1 + (currentLength / restLength - 1) * 0.72;
+        const axial = this.dotVector(local, restDir) * softenedScale;
+        const lateral = this.dotVector(local, restNormal);
+        return {
+          x: segment.start.x + currentDir.x * axial + currentNormal.x * lateral,
+          y: segment.start.y + currentDir.y * axial + currentNormal.y * lateral,
+        };
+      }
+
+      attachmentSegmentWeight(distanceToSegment, segment) {
+        const reach = Math.max(16, this.distance(segment.restStart, segment.restEnd) * 0.34);
+        const base = 1 / ((distanceToSegment / reach + 0.18) * (distanceToSegment / reach + 0.18));
+        return base * Math.sqrt(base);
+      }
+
+      projectPointOnSegment(point, a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const lengthSquared = dx * dx + dy * dy;
+        if (lengthSquared === 0) return { point: { ...a }, t: 0 };
+        const t = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared));
+        return { point: { x: a.x + dx * t, y: a.y + dy * t }, t };
+      }
+
+      drawTexturedMesh(ctx, image, source, dest, alpha) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+        for (let row = 0; row < source.length - 1; row += 1) {
+          for (let col = 0; col < source[row].length - 1; col += 1) {
+            this.drawImageTriangle(ctx, image, source[row][col], source[row + 1][col], source[row][col + 1], dest[row][col], dest[row + 1][col], dest[row][col + 1]);
+            this.drawImageTriangle(ctx, image, source[row + 1][col], source[row + 1][col + 1], source[row][col + 1], dest[row + 1][col], dest[row + 1][col + 1], dest[row][col + 1]);
+          }
+        }
+        ctx.restore();
+      }
+
+      drawImageTriangle(ctx, image, s0, s1, s2, d0, d1, d2) {
+        const denominator = s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
+        if (Math.abs(denominator) < 0.001) return;
+        const a = (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) / denominator;
+        const b = (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) / denominator;
+        const c = (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) / denominator;
+        const d = (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.y * (s1.x - s0.x)) / denominator;
+        const e = (d0.x * (s1.x * s2.y - s2.x * s1.y) + d1.x * (s2.x * s0.y - s0.x * s2.y) + d2.x * (s0.x * s1.y - s1.x * s0.y)) / denominator;
+        const f = (d0.y * (s1.x * s2.y - s2.x * s1.y) + d1.y * (s2.x * s0.y - s0.x * s2.y) + d2.y * (s0.x * s1.y - s1.x * s0.y)) / denominator;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(d0.x, d0.y);
+        ctx.lineTo(d1.x, d1.y);
+        ctx.lineTo(d2.x, d2.y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.transform(a, b, c, d, e, f);
+        ctx.drawImage(image, 0, 0);
+        ctx.restore();
+      }
+
+      lerp(a, b, t) { return a + (b - a) * t; }
+      lerpAngle(a, b, t) {
+        let diff = ((b - a + 180) % 360) - 180;
+        if (diff < -180) diff += 360;
+        return a + diff * t;
+      }
+      distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+      normalizeVector(vector) {
+        const length = Math.hypot(vector.x, vector.y) || 1;
+        return { x: vector.x / length, y: vector.y / length };
+      }
+      dotVector(a, b) { return a.x * b.x + a.y * b.y; }
+    }
+
+    function getBattleSpineRenderer() {
+      if (!battleSpineRendererPromise) {
+        battleSpineRendererPromise = BattleSpineRenderer.load().catch(error => {
+          console.warn('Failed to load battle Spine renderer', error);
+          return null;
+        });
+      }
+      return battleSpineRendererPromise;
+    }
+
+    function startBattleSpineIdleLoop() {
+      if (battleSpineIdleRaf) return;
+      const tick = () => {
+        const overlay = document.getElementById('formation-battle');
+        if (overlay?.classList.contains('hidden')) return;
+        const now = performance.now();
+        if (now - battleSpineLastIdleRender < 83) return;
+        battleSpineLastIdleRender = now;
+        getBattleSpineRenderer().then(renderer => {
+          if (!renderer) return;
+          for (const entry of getBattleSpineCanvasEntries()) {
+            if (
+              entry.slot.classList.contains('empty') ||
+              entry.slot.classList.contains('is-proxying')
+            ) {
+              continue;
+            }
+            const rect = entry.canvas.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) continue;
+            renderer.render(
+              entry.canvas,
+              entry.canvas.dataset.action || 'idle',
+              now + Number(entry.canvas.dataset.phase || 0)
+            );
+          }
+        });
+      };
+      battleSpineIdleRaf = window.setInterval(tick, 100);
+      tick();
+    }
+
+    function stopBattleSpineIdleLoop() {
+      if (!battleSpineIdleRaf) return;
+      window.clearInterval(battleSpineIdleRaf);
+      battleSpineIdleRaf = 0;
+      battleSpineLastIdleRender = 0;
+    }
+
+    function getBattleSpineCanvasEntries() {
+      if (!battleFormationViewState.initialized) {
+        return [];
+      }
+      const entries = [];
+      for (const view of [battleFormationViewState.attacker, battleFormationViewState.defender]) {
+        if (!view) continue;
+        for (const entry of view.slots.values()) {
+          entries.push(entry);
+        }
+      }
+      return entries;
+    }
+
+    function createBattleFormationSlotElement(slotKey, mirrorCols = false) {
+      const pos = getBattleSlotPosition(slotKey, mirrorCols);
+      const slot = document.createElement('div');
+      slot.className = `formation-slot ${pos.rowClass} empty`;
+      slot.dataset.slot = slotKey;
+      slot.style.setProperty('--row', String(pos.row));
+      slot.style.setProperty('--col', String(pos.col));
+      slot.style.setProperty('--x', String(pos.x));
+      slot.style.setProperty('--y', String(pos.y));
+      slot.style.zIndex = String(pos.z);
+
+      const canvas = document.createElement('canvas');
+      canvas.className = 'formation-spine-canvas';
+      canvas.dataset.action = 'idle';
+      canvas.dataset.phase = String((pos.row * 137 + pos.col * 83) % 1000);
+      canvas.setAttribute('aria-hidden', 'true');
+
+      const slotName = document.createElement('div');
+      slotName.className = 'slot-name';
+      slotName.textContent = FORMATION_SLOT_LABELS[slotKey];
+
+      const memberName = document.createElement('div');
+      memberName.className = 'member-name';
+
+      const memberHp = document.createElement('div');
+      memberHp.className = 'member-hp';
+      const memberHpFill = document.createElement('div');
+      memberHpFill.className = 'member-hp-fill';
+      memberHp.appendChild(memberHpFill);
+
+      const memberLoss = document.createElement('div');
+      memberLoss.className = 'member-loss';
+      memberLoss.hidden = true;
+
+      slot.appendChild(canvas);
+      slot.appendChild(slotName);
+      slot.appendChild(memberName);
+      slot.appendChild(memberHp);
+      slot.appendChild(memberLoss);
+
+      return {
+        slot,
+        canvas,
+        memberName,
+        memberHpFill,
+        memberLoss,
+      };
+    }
+
+    function initializeBattleFormationGrid(gridId, mirrorCols = false) {
+      const grid = document.getElementById(gridId);
+      const slots = new Map();
+      if (!grid) {
+        return { root: null, slots, mirrorCols };
+      }
+      grid.innerHTML = '';
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const entry = createBattleFormationSlotElement(slotKey, mirrorCols);
+        slots.set(slotKey, entry);
+        grid.appendChild(entry.slot);
+      }
+      return { root: grid, slots, mirrorCols };
+    }
+
+    function ensureBattleFormationViews() {
+      if (battleFormationViewState.initialized) {
+        return;
+      }
+      battleFormationViewState.attacker = initializeBattleFormationGrid('battle-attacker-grid', true);
+      battleFormationViewState.defender = initializeBattleFormationGrid('battle-defender-grid', false);
+      battleFormationViewState.initialized = true;
+    }
+
+    function clearBattleFormationProxyState() {
+      document.querySelectorAll('.battle-spine-proxy').forEach(proxy => proxy.remove());
+      document.querySelectorAll('.formation-slot.is-proxying').forEach(slot => {
+        slot.classList.remove('is-proxying');
+      });
+    }
+
+    function updateBattleFormationView(view, snapshotBefore, snapshotAfter, active = {}) {
+      if (!view?.root) {
+        return;
+      }
+      const beforeBySlot = new Map(snapshotBefore.formationMembers.map(member => [member.slotKey, member]));
+      const afterBySlot = new Map(snapshotAfter.formationMembers.map(member => [member.slotKey, member]));
+
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const entry = view.slots.get(slotKey);
+        if (!entry) continue;
+
+        const before = beforeBySlot.get(slotKey);
+        const after = afterBySlot.get(slotKey);
+        const current = after || before || null;
+        const loss = before && after ? before.soldiers - after.soldiers : 0;
+        const hpRatio =
+          current && current.maxSoldiers > 0
+            ? clamp((after ? after.soldiers : 0) / current.maxSoldiers, 0, 1) * 100
+            : 0;
+
+        entry.slot.classList.toggle('empty', current == null);
+        entry.slot.classList.toggle('fallen', Boolean(after && after.soldiers <= 0));
+        entry.slot.classList.toggle('striker', active.sourceSlotKey === slotKey);
+        entry.slot.classList.toggle('targeted', active.targetSlotKey === slotKey);
+        entry.canvas.dataset.action = 'idle';
+
+        entry.memberName.textContent =
+          current == null
+            ? ''
+            : TROOP_TYPES[current.troopType]?.label || current.troopType || '';
+        entry.memberHpFill.style.width = `${hpRatio}%`;
+        entry.memberLoss.hidden = !(loss > 0);
+        entry.memberLoss.textContent = loss > 0 ? `-${loss}` : '';
+      }
+    }
+
+    function getBattleVisualGridId(report, timelineSide) {
+      const leftKey = report.attackerBefore.side === 'player' ? 'attacker' : 'defender';
+      return timelineSide === leftKey ? 'battle-attacker-grid' : 'battle-defender-grid';
+    }
+
+    function getBattleTimelineUnit(report, timelineSide) {
+      return timelineSide === 'attacker' ? report.attackerBefore : report.defenderBefore;
+    }
+
+    async function playBattleSpineStrike(report, step, onImpact) {
+      const renderer = await getBattleSpineRenderer();
+      if (!renderer) {
+        await sleep(380);
+        onImpact?.();
+        return;
+      }
+      const sourceGrid = document.getElementById(getBattleVisualGridId(report, step.sourceSide));
+      const targetGrid = document.getElementById(getBattleVisualGridId(report, step.targetSide));
+      const sourceSlot = sourceGrid?.querySelector(`.formation-slot[data-slot="${step.sourceSlotKey}"]`);
+      const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
+      const sourceCanvas = sourceSlot?.querySelector('.formation-spine-canvas');
+      const targetCanvas = targetSlot?.querySelector('.formation-spine-canvas');
+      const box = document.querySelector('.formation-battle-box');
+      if (!sourceCanvas || !targetCanvas || !box) {
+        await sleep(380);
+        onImpact?.();
+        return;
+      }
+
+      const boxRect = box.getBoundingClientRect();
+      const sourceRect = sourceCanvas.getBoundingClientRect();
+      const targetRect = targetCanvas.getBoundingClientRect();
+      const proxy = document.createElement('canvas');
+      const sourceUnit = getBattleTimelineUnit(report, step.sourceSide);
+      const proxyOffsetX = 27;
+      const proxyOffsetTop = 44;
+      proxy.className = `battle-spine-proxy ${sourceUnit.side === 'enemy' ? 'enemy' : 'player'}`;
+      proxy.style.left = `${sourceRect.left - boxRect.left - proxyOffsetX}px`;
+      proxy.style.top = `${sourceRect.top - boxRect.top - proxyOffsetTop}px`;
+      box.appendChild(proxy);
+      sourceSlot.classList.add('is-proxying');
+
+      const from = {
+        x: sourceRect.left - boxRect.left - proxyOffsetX,
+        y: sourceRect.top - boxRect.top - proxyOffsetTop,
+      };
+      const to = {
+        x: targetRect.left - boxRect.left - proxyOffsetX,
+        y: targetRect.top - boxRect.top - proxyOffsetTop,
+      };
+
+      await animateBattleSpineProxy(proxy, renderer, from, to, 'jump', renderer.getActionDurationMs('jump'), {
+        moveStartFrame: 9,
+        moveEndFrame: 24,
+      });
+      await animateBattleSpineProxy(proxy, renderer, to, to, 'slash', renderer.getActionDurationMs('slash'), {
+        impactFrame: 17,
+        onImpact,
+      });
+
+      sourceSlot.classList.remove('is-proxying');
+      proxy.remove();
+    }
+
+    function animateBattleSpineProxy(proxy, renderer, from, to, action, duration, movement = {}) {
+      return new Promise(resolve => {
+        const start = performance.now();
+        let impactTriggered = false;
+        const frame = now => {
+          const t = Math.min(1, (now - start) / duration);
+          const elapsedMs = now - start;
+          const actionFrame = (elapsedMs / 1000) * renderer.fps;
+          const moveStartFrame = movement.moveStartFrame ?? 0;
+          const moveEndFrame = Math.max(moveStartFrame + 0.001, movement.moveEndFrame ?? moveStartFrame);
+          const moveT = movement.moveStartFrame == null
+            ? t
+            : Math.max(0, Math.min(1, (actionFrame - moveStartFrame) / (moveEndFrame - moveStartFrame)));
+          proxy.style.left = `${from.x + (to.x - from.x) * moveT}px`;
+          proxy.style.top = `${from.y + (to.y - from.y) * moveT}px`;
+          renderer.render(proxy, action, elapsedMs, { loop: false });
+          if (
+            !impactTriggered &&
+            movement.impactFrame != null &&
+            actionFrame >= movement.impactFrame
+          ) {
+            impactTriggered = true;
+            movement.onImpact?.();
+          }
+          if (t < 1) requestAnimationFrame(frame);
+          else {
+            if (!impactTriggered && movement.impactFrame != null) {
+              movement.onImpact?.();
+            }
+            resolve();
+          }
+        };
+        requestAnimationFrame(frame);
+      });
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function appendBattleEvent(event) {
+      const list = document.getElementById('battle-event-list');
+      const entry = document.createElement('div');
+      entry.className = `entry ${event.type === 'round' ? 'round' : ''} ${event.className || ''}`;
+      entry.textContent = event.text;
+      list.appendChild(entry);
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, active = {}) {
+      ensureBattleFormationViews();
+      const leftKey = report.attackerBefore.side === 'player' ? 'attacker' : 'defender';
+      const rightKey = leftKey === 'attacker' ? 'defender' : 'attacker';
+      const beforeByKey = {
+        attacker: report.attackerBefore,
+        defender: report.defenderBefore,
+      };
+      const snapshotByKey = {
+        attacker: attackerSnapshot,
+        defender: defenderSnapshot,
+      };
+      const getActiveState = key => active.sourceSide === key
+        ? { sourceSlotKey: active.sourceSlotKey }
+        : active.targetSide === key
+          ? { targetSlotKey: active.targetSlotKey }
+          : {};
+      updateBattleFormationView(
+        battleFormationViewState.attacker,
+        beforeByKey[leftKey],
+        snapshotByKey[leftKey],
+        getActiveState(leftKey)
+      );
+      updateBattleFormationView(
+        battleFormationViewState.defender,
+        beforeByKey[rightKey],
+        snapshotByKey[rightKey],
+        getActiveState(rightKey)
+      );
+      document.getElementById('battle-attacker-morale').style.width = `${clamp(snapshotByKey[leftKey].morale, 0, 100)}%`;
+      document.getElementById('battle-defender-morale').style.width = `${clamp(snapshotByKey[rightKey].morale, 0, 100)}%`;
+    }
+
+    async function playFormationStrikeBatch(report, steps, state) {
+      const tasks = steps.map(step => (async () => {
+        if (step.delayMs > 0) await sleep(step.delayMs);
+        renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, step);
+        let impactApplied = false;
+        const applyImpact = () => {
+          if (impactApplied) return;
+          impactApplied = true;
+          state.attackerSnapshot = step.attackerSnapshot;
+          state.defenderSnapshot = step.defenderSnapshot;
+          renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, step.hit ? step : {});
+          appendBattleEvent(step);
+        };
+        await playBattleSpineStrike(report, step, applyImpact);
+        applyImpact();
+      })());
+      await Promise.all(tasks);
+      renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot);
+      await sleep(60);
+    }
+
+    async function playFormationBattleTimeline(report) {
+      const closeBtn = document.getElementById('battle-close');
+      closeBtn.disabled = true;
+      closeBtn.textContent = '演出中...';
+      document.getElementById('battle-event-list').innerHTML = '';
+      let attackerSnapshot = report.attackerBefore;
+      let defenderSnapshot = report.defenderBefore;
+      renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot);
+      startBattleSpineIdleLoop();
+
+      for (let index = 0; index < report.timeline.length; index++) {
+        const step = report.timeline[index];
+        if (step.type === 'round' || step.type === 'entry') {
+          appendBattleEvent(step);
+          await sleep(step.type === 'round' ? 260 : 180);
+          continue;
+        }
+        const strikeBatch = [step];
+        while (
+          index + 1 < report.timeline.length &&
+          report.timeline[index + 1].type === 'strike' &&
+          report.timeline[index + 1].sourceSide === step.sourceSide
+        ) {
+          strikeBatch.push(report.timeline[index + 1]);
+          index++;
+        }
+        const state = { attackerSnapshot, defenderSnapshot };
+        await playFormationStrikeBatch(report, strikeBatch, state);
+        attackerSnapshot = state.attackerSnapshot;
+        defenderSnapshot = state.defenderSnapshot;
+      }
+
+      renderBattleAnimationState(report, report.attackerAfter, report.defenderAfter);
+      closeBtn.disabled = false;
+      closeBtn.textContent = '返回战场';
+      updateUI();
+    }
+
+    function showFormationBattleOverlay(report) {
+      stopBattleSpineIdleLoop();
+      clearBattleFormationProxyState();
+      ensureBattleFormationViews();
+      if (activeBattleOverlayResolve) {
+        activeBattleOverlayResolve();
+        activeBattleOverlayResolve = null;
+      }
+      const playerSnapshot = report.attackerBefore.side === 'player' ? report.attackerBefore : report.defenderBefore;
+      const enemySnapshot = report.attackerBefore.side === 'enemy' ? report.attackerBefore : report.defenderBefore;
+      document.getElementById('battle-attacker-title').textContent =
+        `我方 · ${playerSnapshot.name} · ${playerSnapshot.generalName}`;
+      document.getElementById('battle-defender-title').textContent =
+        `敌方 · ${enemySnapshot.name} · ${enemySnapshot.generalName}`;
+      document.getElementById('battle-sequence-title').textContent = `编队交战 · 距离 ${report.distance}`;
+      renderBattleAnimationState(report, report.attackerBefore, report.defenderBefore);
+      document.getElementById('formation-battle').classList.remove('hidden');
+      startBattleSpineIdleLoop();
+      playFormationBattleTimeline(report);
+      return new Promise(resolve => {
+        activeBattleOverlayResolve = resolve;
+      });
+    }
+
+    function closeFormationBattleOverlay() {
+      stopBattleSpineIdleLoop();
+      clearBattleFormationProxyState();
+      document.getElementById('formation-battle').classList.add('hidden');
+      if (activeBattleOverlayResolve) {
+        activeBattleOverlayResolve();
+        activeBattleOverlayResolve = null;
+      }
+    }
+
+    // ─── AI ───────────────────────────────────────────────
+    function scoreMove(enemy, cell) {
+      let score = 0;
+      const point = getPointAt(cell.x, cell.y);
+      if (point && point.owner !== enemy.side) score += isStrongpointBattle() ? 120 : 40;
+      if (isStrongpointBattle() && point?.owner === enemy.side) score += 55;
+      if (getTerrain(cell.x, cell.y) === 'hill') score += 15;
+      if (getTerrain(cell.x, cell.y) === 'forest') score += 8;
+
+      if (isAssassinationBattle()) {
+        const enemyCommander = getCommander('enemy');
+        const playerCommander = getCommander('player');
+        const playerUnits = activeUnits('player');
+        if (enemy.isCommander) {
+          const nearestThreat = playerUnits.length
+            ? Math.min(...playerUnits.map(unit => manhattan(cell.x, cell.y, unit.x, unit.y)))
+            : 6;
+          const nearbyAllies = activeUnits('enemy').filter(
+            unit => unit.id !== enemy.id && manhattan(cell.x, cell.y, unit.x, unit.y) <= 2
+          ).length;
+          score += nearestThreat * 9 + nearbyAllies * 12;
+        } else if (enemyCommander) {
+          score += Math.max(0, 48 - manhattan(cell.x, cell.y, enemyCommander.x, enemyCommander.y) * 14);
+          const threatsNearCommander = playerUnits.filter(
+            unit => manhattan(unit.x, unit.y, enemyCommander.x, enemyCommander.y) <= 4
+          );
+          if (threatsNearCommander.length) {
+            const nearestThreatDistance = Math.min(
+              ...threatsNearCommander.map(unit => manhattan(cell.x, cell.y, unit.x, unit.y))
+            );
+            score += Math.max(0, 40 - nearestThreatDistance * 9);
+          }
+        }
+        if (playerCommander) {
+          score += Math.max(0, 24 - manhattan(cell.x, cell.y, playerCommander.x, playerCommander.y) * 4);
+        }
+      }
+
+      if (isSupplyTransportBattle()) {
+        const playerCart = getCart('player');
+        const enemyCart = getCart('enemy');
+        if (playerCart) {
+          const d = manhattan(cell.x, cell.y, playerCart.x, playerCart.y);
+          score += 55 - d * 9;
+        }
+        if (enemyCart) {
+          const d = manhattan(cell.x, cell.y, enemyCart.x, enemyCart.y);
+          score += 30 - d * 6;
+        }
+      } else {
+        const players = activeUnits('player');
+        if (players.length) {
+          const nearest = Math.min(...players.map(p => manhattan(cell.x, cell.y, p.x, p.y)));
+          score -= nearest * 3;
+        }
+      }
+      return score;
+    }
+
+    function shouldEnemyHoldStrongpoint(enemy) {
+      if (!isStrongpointBattle()) return false;
+      const point = getPointAt(enemy.x, enemy.y);
+      return point?.owner === enemy.side;
+    }
+
+    function scoreNpcAllyMove(ally, cell) {
+      let score = 0;
+      const point = getPointAt(cell.x, cell.y);
+      if (point && point.owner !== ally.side) score += 24;
+      if (getTerrain(cell.x, cell.y) === 'hill') score += 12;
+      if (getTerrain(cell.x, cell.y) === 'forest') score += 6;
+      const enemies = activeUnits('enemy');
+      if (enemies.length) {
+        const nearest = Math.min(...enemies.map(enemy => manhattan(cell.x, cell.y, enemy.x, enemy.y)));
+        score += Math.max(0, 70 - nearest * 10);
+      }
+      const endangered = units.find(unit => unit.name.includes('孙德崖') && unit.soldiers > 0);
+      if (endangered) {
+        score += Math.max(0, 30 - manhattan(cell.x, cell.y, endangered.x, endangered.y) * 4);
+      }
+      return score;
+    }
+
+    async function runNpcAllyTurn() {
+      const allies = units.filter(u => u.side === 'player' && u.controller === 'npc' && u.soldiers > 0 && !isRout(u));
+      if (!allies.length) return false;
+
+      log('—— 友军行动 ——', 'system');
+      for (const ally of allies) {
+        if (checkVictory()) return true;
+        ally.hasMoved = false;
+        ally.hasActed = false;
+
+        const attackables = computeAttackable(ally);
+        if (attackables.length && !ally.hasActed) {
+          attackables.sort((a, b) => aiTargetPriority(ally, b) - aiTargetPriority(ally, a));
+          await resolveAttack(ally, attackables[0]);
+          ally.hasActed = true;
+        } else if (!ally.hasMoved) {
+          const reach = computeReachable(ally);
+          if (reach.length) {
+            reach.sort((a, b) => scoreNpcAllyMove(ally, b) - scoreNpcAllyMove(ally, a));
+            await animateUnitMove(ally, reach[0].x, reach[0].y);
+            const postMoveAttackables = computeAttackable(ally);
+            if (postMoveAttackables.length && !ally.hasActed) {
+              postMoveAttackables.sort((a, b) => aiTargetPriority(ally, b) - aiTargetPriority(ally, a));
+              await resolveAttack(ally, postMoveAttackables[0]);
+              ally.hasActed = true;
+            }
+          }
+        }
+
+        renderBoard();
+        updateDebug();
+        await sleep(300);
+      }
+
+      processCaptureProgress();
+      processRout();
+      return checkVictory();
+    }
+
+    async function runEnemyTurn() {
+      turn = 'enemy';
+      updateUI();
+      log('—— 敌方回合 ——', 'system');
+
+      for (const enemy of units.filter(u => u.side === 'enemy' && u.soldiers > 0 && !isRout(u))) {
+        if (checkVictory()) return;
+        enemy.hasMoved = false;
+        enemy.hasActed = false;
+
+        const targets = activeUnits('player');
+        if (!targets.length) break;
+
+        const attackables = computeAttackable(enemy);
+        if (attackables.length && !enemy.hasActed) {
+          attackables.sort((a, b) => aiTargetPriority(enemy, b) - aiTargetPriority(enemy, a));
+          await resolveAttack(enemy, attackables[0]);
+          enemy.hasActed = true;
+        } else if (shouldEnemyHoldStrongpoint(enemy)) {
+          enemy.hasMoved = true;
+        } else if (!enemy.hasMoved) {
+          const reach = computeReachable(enemy);
+          if (reach.length) {
+            reach.sort((a, b) => scoreMove(enemy, b) - scoreMove(enemy, a));
+            await animateUnitMove(enemy, reach[0].x, reach[0].y);
+            const postMoveAttackables = computeAttackable(enemy);
+            if (postMoveAttackables.length && !enemy.hasActed) {
+              postMoveAttackables.sort((a, b) => aiTargetPriority(enemy, b) - aiTargetPriority(enemy, a));
+              await resolveAttack(enemy, postMoveAttackables[0]);
+              enemy.hasActed = true;
+            }
+          }
+        }
+
+        renderBoard();
+        updateDebug();
+        await sleep(350);
+      }
+
+      processCaptureProgress();
+      if (processSupplyCartMoves()) return;
+      processRout();
+      applyStrategicTurnEffects('enemy');
+      if (checkVictory()) return;
+
+      recoverMorale('enemy');
+      turn = 'player';
+      resetPlayerTurn();
+      log('—— 我方回合 ——', 'system');
+      updateUI();
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function resetPlayerTurn() {
+      for (const u of units) {
+        if (u.side === 'player' && u.soldiers > 0) {
+          u.hasMoved = false;
+          u.hasActed = false;
+          u.movedFrom = null;
+        }
+      }
+      turnCounter++;
+      if (battleObjective?.id === 'defense' && playerHoldsDefenseZone()) {
+        defenseHoldTurns++;
+        updateObjectiveBar();
+        log(`守卫进度 ${defenseHoldTurns}/${DEFENSE_HOLD_REQUIRED} · ${getDefenseZoneLabel()}`, 'system');
+      }
+      recoverMorale('player');
+      applyStrategicTurnEffects('player');
+      updateObjectiveBar();
+      clearSelection();
+    }
+
+    // ─── 渲染 ───────────────────────────────────────────────
+    function renderBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      const wrap = board.parentElement.getBoundingClientRect();
+      const tileW = Math.max(50, Math.min(85, Math.floor(Math.min(
+        (wrap.width - 12) / ((COLS + ROWS) / 2),
+        (wrap.height - 12) / ((COLS + ROWS) * 0.31)
+      ))));
+      const tileH = Math.round(tileW * 0.5);
+      const tileSide = Math.round(tileW / Math.SQRT2);
+      const boardW = Math.round((COLS + ROWS) * tileW / 2 + tileW);
+      const boardH = Math.round((COLS + ROWS) * tileH / 2 + tileH);
+      board.style.setProperty('--tile-w', `${tileW}px`);
+      board.style.setProperty('--tile-h', `${tileH}px`);
+      board.style.setProperty('--tile-side', `${tileSide}px`);
+      board.style.width = `${boardW}px`;
+      board.style.height = `${boardH}px`;
+      const zoneRows = DEFENSE_ZONE_ROWS;
+      const depot = getSupplyDepot();
+      const playerCart = getCart('player');
+      const highlightCart = playerCart || getCart('enemy');
+      const enemyCommander = getCommander('enemy');
+      const playerCommander = getCommander('player');
+
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const terrain = getTerrain(x, y);
+          const cellData = getCell(x, y);
+          const cell = document.createElement('div');
+          cell.className = 'cell ' + terrain;
+          cell.dataset.x = String(x);
+          cell.dataset.y = String(y);
+          const left = Math.round((x - y) * tileW / 2 + (ROWS - 1) * tileW / 2 + tileW / 2);
+          const top = Math.round((x + y) * tileH / 2 + 8);
+          cell.style.left = `${left}px`;
+          cell.style.top = `${top}px`;
+          cell.style.zIndex = String((x + y) * 2 + (militaryAt(x, y) || cartAt(x, y) ? 2 : 0));
+
+          if (phase === 'deploy' && PLAYER_DEPLOY_ROWS.includes(y)) cell.classList.add('deploy-zone');
+          if (battleObjective?.id === 'defense' && zoneRows.includes(y)) cell.classList.add('defense-zone');
+          if (cellData?.campZone === 'player') cell.classList.add('highlight-player-camp');
+          if (cellData?.campZone === 'enemy') cell.classList.add('highlight-enemy-camp');
+          if (depot && depot.x === x && depot.y === y) cell.classList.add('highlight-supply-depot');
+          if (highlightCart && highlightCart.x === x && highlightCart.y === y) cell.classList.add('highlight-cart');
+          if (isAssassinationBattle() && enemyCommander?.x === x && enemyCommander?.y === y) {
+            cell.classList.add('highlight-target-commander');
+          }
+          if (isAssassinationBattle() && playerCommander?.x === x && playerCommander?.y === y) {
+            cell.classList.add('highlight-protect-commander');
+          }
+
+          if (cellData?.campZone === 'player') {
+            const cm = document.createElement('span');
+            cm.className = 'camp-marker';
+            cm.textContent = '我营';
+            cm.title = '我军营地 · 粮车运抵此处获胜';
+            cell.appendChild(cm);
+          }
+          if (cellData?.campZone === 'enemy') {
+            const cm = document.createElement('span');
+            cm.className = 'camp-marker';
+            cm.textContent = '敌营';
+            cm.title = '敌军营地';
+            cell.appendChild(cm);
+          }
+
+          const point = getPointAt(x, y);
+          if (point) {
+            const pm = document.createElement('span');
+            pm.className = 'point-marker ' + (point.owner === 'player' ? 'player-own' : point.owner === 'enemy' ? 'enemy-own' : 'neutral');
+            pm.textContent = STRATEGIC[point.type].label;
+            pm.title = STRATEGIC[point.type].desc + (point.owner !== 'neutral' ? `\n所属：${point.owner === 'player' ? '我军' : '敌军'}` : '');
+            cell.appendChild(pm);
+
+            if (point.captureSide && point.owner !== point.captureSide) {
+              const bar = document.createElement('div');
+              bar.className = 'capture-bar';
+              const captureRequired = isStrongpointBattle() ? STRONGPOINT_CAPTURE_REQUIRED : 1;
+              const pct = Math.min(
+                100,
+                Math.round(((point.captureProgress + 1) / (captureRequired + 1)) * 100)
+              );
+              bar.innerHTML = `<div class="capture-fill" style="width:${pct}%"></div>`;
+              cell.appendChild(bar);
+            }
+          }
+
+          const drop = droppedSupplies.find(d => d.x === x && d.y === y);
+          if (drop) {
+            const de = document.createElement('span');
+            de.className = 'dropped-supply';
+            de.textContent = '粮';
+            de.title = '散落粮食 · 任意部队进入可拾取';
+            cell.appendChild(de);
+          }
+
+          if (reachable.some(c => c.x === x && c.y === y)) cell.classList.add('can-move');
+          if (mode === 'move' && selectedUnit?.x === x && selectedUnit?.y === y) cell.classList.add('can-move');
+          if (attackRangeCells.some(c => c.x === x && c.y === y)) cell.classList.add('attack-range');
+          if (attackable.some(u => u.x === x && u.y === y)) cell.classList.add('can-attack');
+          if (skillTargets.some(c => c.x === x && c.y === y)) cell.classList.add('can-skill');
+          if (selectedUnit?.x === x && selectedUnit?.y === y && selectedUnit.movedFrom) cell.classList.add('post-move');
+
+          const military = militaryAt(x, y);
+          const cart = cartAt(x, y);
+
+          if (military) {
+            const tier = getMoraleTier(military.morale);
+            const soldierPercent = military.maxSoldiers > 0
+              ? clamp(Math.round((military.soldiers / military.maxSoldiers) * 100), 0, 100)
+              : 0;
+            const moralePercent = clamp(Math.round(military.morale || 0), 0, 100);
+            const ue = document.createElement('div');
+            ue.className = `unit ${military.side} ${military.hasActed && military.hasMoved ? 'acted' : ''} ${tier.id === 'chaos' || tier.id === 'rout' ? tier.id : ''} ${military.isCommander ? 'commander' : ''} ${military.inRiver ? 'in-river' : ''}`;
+            ue.style.setProperty('--unit-sprite', `url("${getBoardUnitSprite(military)}")`);
+            if (selectedUnit?.id === military.id) cell.classList.add('selected');
+
+            ue.innerHTML = `
+              <span class="unit-art" aria-hidden="true"></span>
+              <span class="unit-caption unit-name">${escapeHtml(military.name)}</span>
+              <div class="unit-bars" aria-hidden="true">
+                <div class="unit-bar unit-bar--hp"><span class="unit-bar-fill" style="width:${soldierPercent}%"></span></div>
+                <div class="unit-bar unit-bar--morale"><span class="unit-bar-fill" style="width:${moralePercent}%"></span></div>
+              </div>
+            `;
+            if (military.isCommander) {
+              const badge = document.createElement('span');
+              badge.className = 'commander-badge';
+              badge.textContent = isAssassinationBattle()
+                ? military.side === 'enemy'
+                  ? '敌主'
+                  : '我主'
+                : '主';
+              ue.appendChild(badge);
+            }
+            ue.title = `${military.name} · ${military.general.name}\n兵力 ${military.soldiers}/${military.maxSoldiers} · 士气 ${military.morale}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
+
+            if (phase === 'deploy' && military.side === 'player' && military.x >= 0) {
+              ue.draggable = true;
+              ue.addEventListener('dragstart', e => { dragUnit = military; e.dataTransfer.effectAllowed = 'move'; });
+            }
+            cell.appendChild(ue);
+          } else if (cart) {
+            const ue = document.createElement('div');
+            ue.className = `unit supply-cart ${cart.side}`;
+            ue.innerHTML = `
+              <span>粮车</span>
+              <span class="cart-hp">${cart.soldiers}</span>
+              <span class="unit-status">运粮</span>
+            `;
+            ue.title = `${cart.name} · 生命 ${cart.soldiers}/${cart.maxSoldiers}\n距营地 ${distToCamp(cart)} 格`;
+            cell.appendChild(ue);
+          }
+
+          cell.addEventListener('click', () => onCellClick(x, y));
+          cell.addEventListener('dragover', e => { if (phase === 'deploy') e.preventDefault(); });
+          cell.addEventListener('drop', e => { e.preventDefault(); onDeployDrop(x, y); });
+          board.appendChild(cell);
+        }
+      }
+    }
+
+    function renderDeployPool() {
+      const pool = document.getElementById('deploy-pool');
+      pool.innerHTML = '';
+      const undeployed = units.filter(u => u.side === 'player' && u.x < 0);
+      if (!undeployed.length) {
+        pool.innerHTML = '<span style="color:var(--muted);font-size:0.72rem;">部署完成 · 点击开始战斗</span>';
+        return;
+      }
+      for (const u of undeployed) {
+        const el = document.createElement('div');
+        el.className = 'unit player';
+        el.draggable = true;
+        el.innerHTML = `
+          <span class="unit-caption">${u.name}${u.isCommander ? '·主将' : ''}</span>
+          <span class="unit-caption">${getFormationTemplateLabel(u)}</span>
+        `;
+        el.title = `${u.general.name}\n${getFormationTemplateLabel(u)}`;
+        el.addEventListener('click', () => { inspectUnit(u); updateUI(); });
+        el.addEventListener('dragstart', e => { dragUnit = u; e.dataTransfer.effectAllowed = 'move'; });
+        pool.appendChild(el);
+      }
+    }
+
+    function updateDebug() {
+      const list = document.getElementById('debug-list');
+      list.innerHTML = '';
+      for (const u of units) {
+        if (u.isSupplyCart && phase !== 'deploy') {
+          const el = document.createElement('div');
+          el.className = 'debug-unit ' + (u.side === 'player' ? 'player-side' : 'enemy-side');
+          el.innerHTML = `
+            <div class="name">${u.name} <span class="type-tag">粮车</span></div>
+            <div>(${u.x},${u.y}) · 生命 ${u.soldiers}/${u.maxSoldiers} · 距营地 ${distToCamp(u)} 格</div>
+          `;
+          list.appendChild(el);
+          continue;
+        }
+        if (u.soldiers <= 0 && phase !== 'deploy') continue;
+        const tier = getMoraleTier(u.morale);
+        const pos = u.x >= 0 ? `(${u.x},${u.y})` : '未部署';
+        const el = document.createElement('div');
+        el.className = 'debug-unit ' + (u.side === 'player' ? 'player-side' : 'enemy-side');
+        el.innerHTML = `
+          <div class="name">${u.name}${u.isCommander ? '★' : ''} <span class="type-tag">${getFormationTemplateLabel(u)}</span></div>
+          <div>${pos} · ${u.soldiers} · <span class="unit-status ${tier.id}">${tier.label}</span></div>
+          <div class="morale-bar"><div class="morale-fill" style="width:${u.morale}%"></div></div>
+          <div>${u.general.name}${u.inRiver ? ' · 渡河' : ''}</div>
+          <div>${getFormationTemplateLabel(u)}</div>
+        `;
+        list.appendChild(el);
+      }
+    }
+
+    function updateUI() {
+      const badge = document.getElementById('phase-badge');
+      const turnInfo = document.getElementById('turn-info');
+      const btnStart = document.getElementById('btn-start');
+      const btnEnd = document.getElementById('btn-end-turn');
+      const btnWait = document.getElementById('btn-wait');
+
+      if (phase === 'deploy') {
+        badge.textContent = '部署阶段';
+        badge.className = 'phase-badge';
+        turnInfo.textContent = isSupplyTransportBattle()
+          ? '占领粮仓 → 护送粮车回营 · 可拦截敌军粮车'
+          : battleObjective?.id === 'defense'
+            ? `部署后前往${getDefenseZoneLabel()}`
+            : '拖至底部三排 · 观察据点与地形';
+        btnStart.disabled = false;
+        btnEnd.disabled = true;
+        btnWait.disabled = true;
+      } else if (phase === 'battle') {
+        badge.textContent = turn === 'player' ? '我方回合' : '敌方回合';
+        badge.className = 'phase-badge ' + turn;
+        turnInfo.textContent = turn === 'player'
+          ? battleObjective?.id === 'defense'
+            ? `守住${getDefenseZoneLabel()} · 至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 人驻守且敌军不得进入`
+            : '移动、占点、维持士气'
+          : '敌方行动中…';
+        btnStart.disabled = true;
+        btnEnd.disabled = turn !== 'player';
+        btnWait.disabled = turn !== 'player' || !selectedUnit;
+      }
+
+      updateObjectiveBar();
+      renderSkillBar();
+      renderBoard();
+      renderDeployPool();
+      updateDebug();
+      renderInspectedUnitPanel();
+      renderBattleStatusPanel();
+      renderActionMenu();
+    }
+
+    function renderSkillBar() {
+      const bar = document.getElementById('skill-bar');
+      bar.innerHTML = '';
+      if (phase !== 'battle' || turn !== 'player' || !selectedUnit || selectedUnit.hasActed) return;
+      const u = selectedUnit;
+      [
+        { id: 'inspire', label: `鼓舞(${u.skillUses.inspire})`, ok: u.skillUses.inspire > 0 },
+      ].forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'skill-btn';
+        btn.textContent = s.label;
+        btn.disabled = !s.ok;
+        btn.addEventListener('click', () => onSkillClick(s.id));
+        bar.appendChild(btn);
+      });
+    }
+
+    function renderActionMenu() {
+      const menu = document.getElementById('action-menu');
+      const hint = document.getElementById('action-menu-hint');
+      const waitBtn = document.getElementById('action-wait');
+      const rallyBtn = document.getElementById('action-rally');
+      const attackBtn = document.getElementById('action-attack');
+      const cancelBtn = document.getElementById('action-cancel');
+      if (phase !== 'battle' || turn !== 'player' || !selectedUnit || !selectedUnit.movedFrom || !['post-move', 'target-attack'].includes(mode)) {
+        menu.classList.add('hidden');
+        menu.style.left = '';
+        menu.style.top = '';
+        waitBtn.hidden = false;
+        rallyBtn.hidden = false;
+        attackBtn.hidden = false;
+        cancelBtn.hidden = false;
+        return;
+      }
+      const attackCount = attackable.length;
+      const selectingAttackTarget = mode === 'target-attack';
+      hint.textContent = mode === 'target-attack'
+        ? '选择攻击目标'
+        : `选择行动 · 右键可撤回 · 可攻 ${attackCount}`;
+      waitBtn.hidden = selectingAttackTarget;
+      rallyBtn.hidden = selectingAttackTarget;
+      attackBtn.hidden = selectingAttackTarget;
+      cancelBtn.hidden = false;
+      attackBtn.disabled = attackCount === 0;
+      attackBtn.textContent = mode === 'target-attack' ? '选择目标中' : `攻击${attackCount ? `(${attackCount})` : ''}`;
+      menu.classList.remove('hidden');
+      positionActionMenu(menu);
+    }
+
+    function positionActionMenu(menu) {
+      if (!selectedUnit) return;
+      const area = document.querySelector('.battle-area');
+      const cell = document.querySelector(`#board .cell[data-x="${selectedUnit.x}"][data-y="${selectedUnit.y}"]`);
+      if (!area || !cell) return;
+      const areaRect = area.getBoundingClientRect();
+      const cellRect = cell.getBoundingClientRect();
+      const menuW = menu.offsetWidth || 108;
+      const menuH = menu.offsetHeight || 150;
+      let left = cellRect.right - areaRect.left + 8;
+      let top = cellRect.top - areaRect.top - 10;
+      const maxLeft = Math.max(8, areaRect.width - menuW - 8);
+      const maxTop = Math.max(8, areaRect.height - menuH - 8);
+      if (left > maxLeft) left = cellRect.left - areaRect.left - menuW - 8;
+      left = Math.max(8, Math.min(left, maxLeft));
+      top = Math.max(8, Math.min(top, maxTop));
+      menu.style.left = `${Math.round(left)}px`;
+      menu.style.top = `${Math.round(top)}px`;
+    }
+
+    function clearSelection() {
+      if (selectedUnit) selectedUnit.movedFrom = null;
+      selectedUnit = null; mode = null;
+      reachable = []; attackable = []; skillTargets = []; attackRangeCells = [];
+      renderActionMenu();
+    }
+
+    function cancelCurrentOperation() {
+      if (!selectedUnit) return false;
+      const unit = selectedUnit;
+      if (unit.movedFrom && ['post-move', 'target-attack'].includes(mode)) {
+        const from = unit.movedFrom;
+        unit.x = from.x;
+        unit.y = from.y;
+        unit.inRiver = from.inRiver;
+        unit.hasMoved = false;
+        log(`${unit.name} 撤回移动`, 'system');
+      }
+      clearSelection();
+      return true;
+    }
+
+    function canSelectPlayerUnit(unit) {
+      return Boolean(unit && unit.side === 'player' && unit.controller !== 'npc' && !unit.hasActed && !unit.isSupplyCart);
+    }
+
+    function selectPlayerUnit(unit) {
+      if (!canSelectPlayerUnit(unit)) return false;
+      if (isRout(unit)) {
+        log(`${unit.name} 溃逃中`, 'system');
+        return false;
+      }
+      selectedUnit = unit;
+      inspectUnit(unit);
+      attackable = computeAttackable(unit);
+      if (!unit.hasMoved) {
+        mode = 'move';
+        reachable = computeReachable(unit);
+        attackRangeCells = [];
+      } else {
+        mode = attackable.length ? 'target-attack' : null;
+        reachable = [];
+        attackRangeCells = computeAttackRangeCells(unit);
+      }
+      skillTargets = [];
+      return true;
+    }
+
+    function cancelOperationAndMaybeSelect(clicked) {
+      const nextUnit = clicked?.id !== selectedUnit?.id && canSelectPlayerUnit(clicked) ? clicked : null;
+      cancelCurrentOperation();
+      if (nextUnit) selectPlayerUnit(nextUnit);
+      updateUI();
+    }
+
+    function finishUnitAction(unit) {
+      unit.hasActed = true;
+      unit.hasMoved = true;
+      unit.movedFrom = null;
+      processRout();
+      checkVictory();
+    }
+
+    function enterPostMove(unit) {
+      mode = 'post-move';
+      reachable = [];
+      attackable = computeAttackable(unit);
+      attackRangeCells = computeAttackRangeCells(unit);
+      skillTargets = [];
+    }
+
+    function enterPostMoveAtCurrentCell(unit) {
+      unit.movedFrom = { x: unit.x, y: unit.y, inRiver: unit.inRiver };
+      unit.hasMoved = true;
+      enterPostMove(unit);
+    }
+
+    function undoPendingMove() {
+      if (!selectedUnit?.movedFrom || !['post-move', 'target-attack'].includes(mode)) return;
+      cancelCurrentOperation();
+      updateUI();
+    }
+
+    function waitSelectedUnit() {
+      if (!selectedUnit) return;
+      finishUnitAction(selectedUnit);
+      clearSelection();
+      updateUI();
+    }
+
+    function rallySelectedUnit() {
+      if (!selectedUnit) return;
+      const isAfterMove = Boolean(selectedUnit.movedFrom);
+      const moraleGain = isAfterMove ? 8 : 12;
+      changeMorale(selectedUnit, moraleGain, '整顿');
+      log(`${selectedUnit.name} 整顿队伍，士气恢复`, 'heal');
+      finishUnitAction(selectedUnit);
+      clearSelection();
+      updateUI();
+    }
+
+    async function onCellClick(x, y) {
+      const clicked = unitAt(x, y);
+      if (clicked) inspectUnit(clicked);
+      if (phase !== 'battle' || turn !== 'player') {
+        if (clicked) updateUI();
+        return;
+      }
+
+      if (mode === 'skill-inspire') {
+        if (clicked?.side === 'player' && !clicked.isSupplyCart && clicked.id !== selectedUnit.id) {
+          useInspire(selectedUnit, clicked);
+          clearSelection(); updateUI();
+        } else {
+          cancelOperationAndMaybeSelect(clicked);
+        }
+        return;
+      }
+      if (mode === 'move') {
+        if (selectedUnit.x === x && selectedUnit.y === y) {
+          enterPostMoveAtCurrentCell(selectedUnit);
+          updateUI();
+        } else if (reachable.some(c => c.x === x && c.y === y)) {
+          selectedUnit.movedFrom = { x: selectedUnit.x, y: selectedUnit.y, inRiver: selectedUnit.inRiver };
+          applyMove(selectedUnit, x, y);
+          if (selectedUnit.hasActed) {
+            finishUnitAction(selectedUnit);
+            clearSelection();
+          } else {
+            enterPostMove(selectedUnit);
+          }
+          updateUI();
+        } else {
+          cancelOperationAndMaybeSelect(clicked);
+        }
+        return;
+      }
+
+      if (mode === 'post-move') {
+        cancelOperationAndMaybeSelect(clicked);
+        return;
+      }
+
+      if (mode === 'target-attack') {
+        if (clicked?.side === 'enemy' && attackable.some(u => u.id === clicked.id)) {
+          selectedUnit.movedFrom = null;
+          await resolveAttack(selectedUnit, clicked);
+          finishUnitAction(selectedUnit);
+          clearSelection(); updateUI();
+        } else {
+          cancelOperationAndMaybeSelect(clicked);
+        }
+        return;
+      }
+
+      if (selectPlayerUnit(clicked)) {
+        updateUI();
+        return;
+      }
+
+      clearSelection(); updateUI();
+    }
+
+    function onSkillClick(id) {
+      if (!selectedUnit || selectedUnit.hasActed) return;
+      if (id === 'inspire') { mode = 'skill-inspire'; log('选择友军使用【鼓舞】', 'skill'); }
+    }
+
+    function onDeployDrop(x, y) {
+      if (phase !== 'deploy' || !dragUnit) return;
+      if (!PLAYER_DEPLOY_ROWS.includes(y)) { log('只能部署在底部三排', 'system'); return; }
+      if (unitAt(x, y)) { log('该格已有部队', 'system'); return; }
+      dragUnit.x = x; dragUnit.y = y;
+      checkApproachTutorials(dragUnit);
+      dragUnit = null;
+      renderBoard(); renderDeployPool(); updateDebug();
+    }
+
+    function startBattle() {
+      if (!units.some(u => u.side === 'player' && u.x >= 0)) {
+        log('请至少部署一支部队', 'system'); return;
+      }
+      if (isAssassinationBattle()) {
+        const playerCommander = getCommander('player', true);
+        if (playerCommander && playerCommander.x < 0) {
+          log('斩将战必须先部署我方主将', 'system'); return;
+        }
+      }
+      showObjectiveIntro();
+    }
+
+    function beginBattle() {
+      hideObjectiveIntro();
+      phase = 'battle';
+      turn = 'player';
+      battleRecap = [];
+      resetPlayerTurn();
+      BattleTutorialManager.applyLessonTags(battleConfig.lessonTags);
+      if (isSupplyTransportBattle()) BattleTutorialManager.maybeShow('lesson_supply_transport');
+      log(`战斗开始 — ${battleObjective.friendlyTitle}`, 'system');
+      log('—— 我方回合 ——', 'system');
+      updateUI();
+    }
+
+    function init(config = {}) {
+      const scenario = config.scenarioId ? STORY_BATTLE_SCENARIOS[config.scenarioId] || null : null;
+      battleConfig = {
+        lessonTags: config.lessonTags || scenario?.lessonTags || [],
+        objectiveId: config.objectiveId || scenario?.objectiveId || null,
+        scenarioId: config.scenarioId || scenario?.scenarioId || null,
+        embedded: Boolean(config.embedded || scenario?.embedded),
+        scenario,
+      };
+      pickObjective();
+      generateMap();
+      applyScenarioMap();
+      units = createPlayerPool();
+      spawnEnemies();
+      configureBattleCommanders();
+      phase = 'deploy';
+      turn = 'player';
+      supplyCartClaimSide = null;
+      droppedSupplies = [];
+      battleRecap = [];
+      lastBattleResult = null;
+      inspectedUnit = null;
+      clearSelection();
+      hideObjectiveIntro();
+      BattleTutorialManager.hideToast();
+
+      if (!battleConfig.lessonTags.length) battleConfig.lessonTags = inferLessonTags();
+
+      document.getElementById('log').innerHTML = '';
+      document.getElementById('morale-log').innerHTML = '';
+      document.getElementById('overlay').classList.add('hidden');
+      document.getElementById('recap-box').classList.add('hidden');
+      log('部署部队，观察地图上的据点与地形', 'system');
+      if (battleObjective?.id === 'defense') {
+        log(`本局需守住${getDefenseZoneLabel()}：至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队驻守，且敌军不得踏入，连续 ${DEFENSE_HOLD_REQUIRED} 回合。`, 'system');
+      }
+      updateUI();
+      if (battleConfig.scenario?.autoDeployment) {
+        log('剧情战役已载入：玩家只可操控朱重八本队，其余友军由 NPC 自动行动。', 'system');
+        renderBoard();
+        renderDeployPool();
+        showObjectiveIntro();
+      }
+    }
+
+    document.getElementById('btn-start').addEventListener('click', startBattle);
+    document.getElementById('btn-objective-ok').addEventListener('click', beginBattle);
+    document.getElementById('btn-tutorial-close').addEventListener('click', () => BattleTutorialManager.hideToast());
+    document.getElementById('btn-end-turn').addEventListener('click', async () => {
+      if (turn !== 'player') return;
+      processCaptureProgress();
+      if (processSupplyCartMoves()) return;
+      processRout();
+      if (checkVictory()) return;
+      if (await runNpcAllyTurn()) return;
+      runEnemyTurn();
+    });
+    document.getElementById('btn-wait').addEventListener('click', () => {
+      waitSelectedUnit();
+    });
+    document.getElementById('action-wait').addEventListener('click', waitSelectedUnit);
+    document.getElementById('action-rally').addEventListener('click', rallySelectedUnit);
+    document.getElementById('action-attack').addEventListener('click', () => {
+      if (!selectedUnit || !attackable.length) return;
+      mode = 'target-attack';
+      log('选择敌方编队进入战斗演出', 'skill');
+      updateUI();
+    });
+    document.getElementById('action-cancel').addEventListener('click', undoPendingMove);
+    document.getElementById('battle-close').addEventListener('click', closeFormationBattleOverlay);
+    document.getElementById('board').addEventListener('contextmenu', event => {
+      event.preventDefault();
+      undoPendingMove();
+    });
+    function getBattleConfigFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        scenarioId: params.get('scenario') || null,
+        embedded: params.get('embedded') === '1',
+      };
+    }
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      if (battleConfig.embedded && lastBattleResult?.result === 'victory') {
+        notifyBattleDemoResult();
+        return;
+      }
+      nextId = 1;
+      init(initialBattleConfig || {});
+    });
+
+    /** 剧情战役：init({ objectiveId: 'supplyTransport', lessonTags: ['SupplyTransportBattle'] }) */
+    window.BattleDemo = { init, BattleTutorialManager, inferLessonTags };
+
+    initialBattleConfig = getBattleConfigFromUrl();
+    init(initialBattleConfig);
+  </script>
+</body>
+</html>

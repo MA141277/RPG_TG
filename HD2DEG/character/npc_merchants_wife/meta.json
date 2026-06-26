@@ -1,0 +1,19 @@
+{
+  "id": "npc_merchants_wife",
+  "kind": "character",
+  "title": "npc_merchants_wife",
+  "prompt": "中国风像素角色，行商女子30-40岁，干练警惕；束发，便装外披短斗篷，背小包袱（简化），护货气质。",
+  "tags": [
+    "npc:npc_merchants_wife"
+  ],
+  "createdAt": "2026-04-29T11:02:26+08:00",
+  "updatedAt": "2026-04-29T11:02:26+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_merchants_wife/sheet.png",
+    "preview": "character/npc_merchants_wife/preview.png"
+  }
+}

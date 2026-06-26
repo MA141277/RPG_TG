@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-05-29T09:05:56.074Z",
+  "modelStratFile": "D:\\RPG_TG\\map\\yuan mo feng yun lu\\mods\\yuanmofengyunlu\\data\\descr_model_strat.txt",
+  "totalEntries": 127,
+  "targets": [
+    {
+      "id": "red-turban-strat",
+      "label": "Red Turban campaign actor",
+      "role": "friendly",
+      "type": "shun_captain",
+      "skeleton": "strat_named_with_army",
+      "scale": 0.7,
+      "modelFlexi": "models_strat/shun_captain.CAS,",
+      "shadowModel": "models_strat/shadow_sword.CAS,",
+      "textures": [
+        {
+          "faction": "moors,",
+          "texturePath": "models_strat/textures/dashun_army.tga"
+        },
+        {
+          "faction": "turks,",
+          "texturePath": "models_strat/textures/dashun_army.tga"
+        },
+        {
+          "faction": "slave,",
+          "texturePath": "models_strat/textures/dashun_army.tga"
+        }
+      ]
+    },
+    {
+      "id": "yuan-infantry-strat",
+      "label": "Yuan infantry campaign actor",
+      "role": "enemy",
+      "type": "menggu_general",
+      "skeleton": "strat_named_with_army",
+      "scale": 0.7,
+      "modelFlexi": "models_strat/mongol_infantry.cas,",
+      "shadowModel": "models_strat/shadow_sword.CAS,",
+      "textures": [
+        {
+          "faction": "poland,",
+          "texturePath": "models_strat/textures/mongol_infantry.tga"
+        },
+        {
+          "faction": "byzantium,",
+          "texturePath": "models_strat/textures/mongol_infantry.tga"
+        },
+        {
+          "faction": "turks,",
+          "texturePath": "models_strat/textures/mongol_infantry.tga"
+        },
+        {
+          "faction": "moors,",
+          "texturePath": "models_strat/textures/mongol_infantry.tga"
+        },
+        {
+          "faction": "spain,",
+          "texturePath": "models_strat/textures/mongol_infantry.tga"
+        },
+        {
+          "faction": "mongols,",
+          "texturePath": "models_strat/textures/mongol_infantry.tga"
+        },
+        {
+          "faction": "slave,",
+          "texturePath": "models_strat/textures/mongol_infantry.tga"
+        }
+      ]
+    },
+    {
+      "id": "yuan-general-strat",
+      "label": "Yuan general campaign actor",
+      "role": "enemy",
+      "type": "manzhou_general",
+      "skeleton": "strat_named_with_army",
+      "scale": 0.7,
+      "modelFlexi": "models_strat/dayuanjiangjun.cas,",
+      "shadowModel": "models_strat/shadow_sword.CAS,",
+      "textures": [
+        {
+          "faction": "byzantium,",
+          "texturePath": "models_strat/textures/dayuanjiangjun.tga"
+        },
+        {
+          "faction": "turks,",
+          "texturePath": "models_strat/textures/dayuanjiangjun.tga"
+        },
+        {
+          "faction": "moors,",
+          "texturePath": "models_strat/textures/dayuanjiangjun.tga"
+        },
+        {
+          "faction": "slave,",
+          "texturePath": "models_strat/textures/dayuanjiangjun.tga"
+        }
+      ]
+    },
+    {
+      "id": "ming-captain-strat",
+      "label": "Ming captain reference actor",
+      "role": "reference",
+      "type": "ming_captain",
+      "skeleton": "strat_named_with_army",
+      "scale": 0.7,
+      "modelFlexi": "models_strat/daming_shibing.CAS,",
+      "shadowModel": "models_strat/shadow_sword.CAS,",
+      "textures": []
+    }
+  ],
+  "nextStep": "Convert target modelFlexi CAS files and faction texture variants into GLB/GLTF assets for browser-side 3D campaign actors."
+}

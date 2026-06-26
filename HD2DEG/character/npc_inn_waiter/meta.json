@@ -1,0 +1,19 @@
+{
+  "id": "npc_inn_waiter",
+  "kind": "character",
+  "title": "npc_inn_waiter",
+  "prompt": "中国风像素角色，酒肆伙计，年轻男性，热心腿脚快；青布短褂，腰间毛巾，轻便布鞋；精神利落，动作有跑堂感。",
+  "tags": [
+    "npc:npc_inn_waiter"
+  ],
+  "createdAt": "2026-04-28T17:18:01+08:00",
+  "updatedAt": "2026-04-28T17:18:01+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_inn_waiter/sheet.png",
+    "preview": "character/npc_inn_waiter/preview.png"
+  }
+}

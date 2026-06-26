@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 世界物品生成 Demo</title>
+  <style>
+    :root {
+      --bg: #0c0f18;
+      --panel: #151a2e;
+      --text: #e9edff;
+      --muted: #98a3c9;
+      --accent: #6ea8ff;
+      --accent-2: #a78bfa;
+      --border: #2a3358;
+      --danger: #f87171;
+      --ok: #34d399;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .generator-desc {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .generator-desc code { font-size: 11px; }
+    label { display: block; margin: 10px 0 6px; color: var(--muted); font-size: 12px; }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #0e1428;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    textarea { min-height: 120px; resize: vertical; font-family: inherit; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .generator-panel {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      width: min(440px, calc(100vw - 40px));
+      max-height: calc(100vh - 40px);
+      display: flex;
+      flex-direction: column;
+      z-index: 40;
+      background: linear-gradient(165deg, #171c34 0%, var(--panel) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+      touch-action: none;
+    }
+    .generator-drag-handle {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      cursor: grab;
+      user-select: none;
+      background: rgba(20, 26, 48, 0.95);
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 650;
+      color: var(--text);
+      touch-action: none;
+    }
+    .generator-drag-handle:active { cursor: grabbing; }
+    .generator-drag-handle span { pointer-events: none; }
+    .generator-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 14px 16px 16px;
+      min-height: 0;
+    }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+    button {
+      border: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    button.secondary {
+      background: #2a3558;
+      color: var(--text);
+    }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .stage-wrap {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #eef1f7;
+      background-image:
+        linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+        linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+      overflow: hidden;
+      touch-action: none;
+    }
+    .stage-hint {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: #64748b;
+      font-size: 13px;
+      pointer-events: none;
+      text-align: center;
+      max-width: 80%;
+    }
+    .icon-hit {
+      position: absolute;
+      width: 128px;
+      height: 128px;
+      cursor: grab;
+      display: grid;
+      place-items: center;
+      z-index: 15;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45));
+    }
+    .icon-hit:active { cursor: grabbing; }
+    .icon-hit img {
+      max-width: 120px;
+      max-height: 120px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .log {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 140px;
+      overflow: auto;
+    }
+    .log.err { color: var(--danger); }
+    .log.ok { color: var(--ok); }
+
+    .detail-window {
+      position: absolute;
+      left: min(48vw, 560px);
+      top: 28px;
+      width: min(940px, calc(100vw - 28px));
+      max-width: calc(100vw - 16px);
+      max-height: calc(100vh - 20px);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #12172c;
+      color: var(--text);
+      overflow: hidden;
+      z-index: 30;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
+      touch-action: none;
+    }
+    .detail-window.hidden { display: none; }
+    .detail-window-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+    .detail-window-head:active { cursor: grabbing; }
+    .detail-window-head h3 { margin: 0; font-size: 17px; pointer-events: none; }
+    .modal-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+    .modal-body.single { grid-template-columns: 1fr; }
+    .modal-col {
+      overflow-y: auto;
+      padding: 14px 16px;
+      border-right: 1px solid var(--border);
+    }
+    .modal-col:last-child { border-right: 0; }
+    .sec {
+      margin-bottom: 18px;
+    }
+    .sec:last-child { margin-bottom: 0; }
+    .sec h4 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+    .kv { font-size: 13px; line-height: 1.55; color: var(--muted); }
+    .kv strong { color: var(--text); font-weight: 600; }
+    pre.json {
+      margin: 0;
+      padding: 12px;
+      background: #0a0e1c;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.45;
+      overflow: auto;
+      max-height: 420px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      margin: 0 6px 6px 0;
+      border-radius: 999px;
+      background: #252c4a;
+      font-size: 12px;
+      color: #dbe2ff;
+    }
+    .subcard {
+      background: #0e1428;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .inventory-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(6, 44px);
+      grid-auto-rows: 44px;
+      gap: 6px;
+      padding: 8px;
+      background: #0a1022;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 8px;
+      width: fit-content;
+      min-height: 108px;
+    }
+    .inv-cell {
+      width: 44px;
+      height: 44px;
+      border: 1px dashed #33406b;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .inv-item {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      border: 1px solid #4d5f93;
+      background: #1a2340;
+      display: grid;
+      place-items: center;
+      cursor: grab;
+      user-select: none;
+      z-index: 2;
+    }
+    .inv-item:active { cursor: grabbing; }
+    .inv-item img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      pointer-events: none;
+    }
+    .inv-drag-ghost {
+      position: fixed;
+      width: 40px;
+      height: 40px;
+      border: 1px solid #4d5f93;
+      border-radius: 6px;
+      background: #1a2340;
+      display: grid;
+      place-items: center;
+      z-index: 120;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+    .inv-drag-ghost img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .transform-ctl {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tiny {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .drop-zone {
+      outline: 1px dashed rgba(159, 122, 234, 0.45);
+      outline-offset: -2px;
+    }
+    .subcard .title { font-weight: 600; margin-bottom: 6px; color: #dbe2ff; }
+    .meter {
+      height: 6px;
+      background: #252c4a;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .meter > i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      width: 0%;
+    }
+    .modal-item-preview-slot {
+      background: #eef1f7;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: grid;
+      place-items: center;
+      min-height: 120px;
+    }
+    .modal-item-preview-slot img {
+      max-width: 100%;
+      max-height: 220px;
+      width: auto;
+      height: auto;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      object-fit: contain;
+    }
+    .modal-item-preview-slot:empty::after {
+      content: "（无图）";
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 860px) {
+      .modal-body { grid-template-columns: 1fr; }
+      .modal-col { border-right: 0; border-bottom: 1px solid var(--border); max-height: 40vh; }
+      .grid2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="stage" class="stage-wrap" aria-label="物品舞台">
+    <aside id="generatorPanel" class="generator-panel">
+      <div id="generatorDragHandle" class="generator-drag-handle">
+        <span>物品生成器</span>
+      </div>
+      <div class="generator-body">
+        <p class="generator-desc">
+          请先 <code>npm run demo-server</code>，用 <strong>http://127.0.0.1:8770/</strong> 打开（勿用 file://）。
+          Ark 图经本地缓存可避免 canvas 跨域；可保存到 <code>data/saves/</code>。拖动<strong>标题栏</strong>移动本窗口。
+        </p>
+        <label for="userText">物品描述（自然语言）</label>
+        <textarea id="userText" placeholder="例如：一只带玻璃罩的蒸汽朋克储物罐…"></textarea>
+        <div class="btn-row">
+          <button type="button" id="btnGenerate">解析并生成图标</button>
+          <button type="button" id="btnSave" class="secondary">保存到本地（data/saves）</button>
+          <button type="button" id="btnClear" class="secondary">清空舞台</button>
+        </div>
+        <div id="statusLog" class="log"></div>
+      </div>
+    </aside>
+    <div id="stageHint" class="stage-hint">生成后的图标出现在舞台上，可拖动；点击打开详情。（本面板可拖动标题栏）</div>
+  </div>
+
+    <section id="detailWindow" class="detail-window hidden">
+      <div id="detailWindowHandle" class="detail-window-head">
+        <h3 id="modalTitle">物品</h3>
+        <button type="button" id="modalClose" class="secondary">关闭</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </section>
+
+  <script>
+    /** ========= 与 pixel-workflow.html 一致的连通去白底 ========= */
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("图片加载失败（可能被 CORS 拦截）"));
+        img.src = src;
+      });
+    }
+
+    function isEdgeBackgroundWhite(r, g, b, a) {
+      if (a < 8) return true;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const avg = (r + g + b) / 3;
+      return min >= 232 && avg >= 244 && (max - min) <= 24;
+    }
+
+    function shrinkOpaqueEdgeOnePixel(imageData) {
+      const { data, width, height } = imageData;
+      const nextAlpha = new Uint8ClampedArray(width * height);
+      for (let i = 0; i < width * height; i++) {
+        nextAlpha[i] = data[i * 4 + 3];
+      }
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const idx = y * width + x;
+          if (nextAlpha[idx] <= 8) continue;
+          let touchesTransparent = false;
+          for (let oy = -1; oy <= 1 && !touchesTransparent; oy++) {
+            for (let ox = -1; ox <= 1; ox++) {
+              if (ox === 0 && oy === 0) continue;
+              const nx = x + ox;
+              const ny = y + oy;
+              if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                touchesTransparent = true;
+                break;
+              }
+              const nIdx = ny * width + nx;
+              if (nextAlpha[nIdx] <= 8) {
+                touchesTransparent = true;
+                break;
+              }
+            }
+          }
+          if (touchesTransparent) {
+            data[idx * 4 + 3] = 0;
+          }
+        }
+      }
+    }
+
+    async function removeUnenclosedWhiteBackground(src) {
+      const img = await loadImage(src);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const { data, width, height } = imageData;
+      const visited = new Uint8Array(width * height);
+      const queue = new Uint32Array(width * height);
+      let head = 0;
+      let tail = 0;
+
+      function tryPush(x, y) {
+        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        const idx = y * width + x;
+        if (visited[idx]) return;
+        const p = idx * 4;
+        if (!isEdgeBackgroundWhite(data[p], data[p + 1], data[p + 2], data[p + 3])) return;
+        visited[idx] = 1;
+        queue[tail++] = idx;
+      }
+
+      for (let x = 0; x < width; x++) {
+        tryPush(x, 0);
+        tryPush(x, height - 1);
+      }
+      for (let y = 1; y < height - 1; y++) {
+        tryPush(0, y);
+        tryPush(width - 1, y);
+      }
+
+      while (head < tail) {
+        const idx = queue[head++];
+        const x = idx % width;
+        const y = (idx - x) / width;
+        tryPush(x - 1, y);
+        tryPush(x + 1, y);
+        tryPush(x, y - 1);
+        tryPush(x, y + 1);
+      }
+
+      for (let idx = 0; idx < visited.length; idx++) {
+        if (!visited[idx]) continue;
+        data[idx * 4 + 3] = 0;
+      }
+
+      shrinkOpaqueEdgeOnePixel(imageData);
+      shrinkOpaqueEdgeOnePixel(imageData);
+
+      ctx.putImageData(imageData, 0, 0);
+      return canvas.toDataURL("image/png");
+    }
+
+    /** ========= 固定接口配置（按需求写死） ========= */
+    const FIXED_LLM_BASE = "https://epone.ggb.today/v1";
+    const FIXED_LLM_MODEL = "gpt-5.4-mini";
+    const FIXED_LLM_KEY = "sk-CNzjubL7xVCdLzw3VF9lPrBMqUqjTwhon4CRy5qDiJOeAm2f";
+    const FIXED_IMG_MODEL = "doubao-seedream-5-0-260128";
+    const FIXED_IMG_KEY = "ark-1b0dbad2-561e-447a-b109-10aab9acd4c0-04673";
+
+    /** 与 world-item-demo-server.mjs 同源（用 http 打开页面时为当前站；file 时回退 8770） */
+    function getLocalSaveServerOrigin() {
+      if (typeof location !== "undefined" && /^https?:$/i.test(location.protocol)) {
+        return location.origin;
+      }
+      return "http://127.0.0.1:8770";
+    }
+
+    /** 每条舞台物品独立一份容积演示与缓存路径 */
+    async function cacheRemoteImageForCanvas(remoteUrl) {
+      const origin = getLocalSaveServerOrigin();
+      const res = await fetch(`${origin}/api/cache-remote-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: remoteUrl }),
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`cache-remote-image ${res.status}: ${text.slice(0, 400)}`);
+      const j = JSON.parse(text);
+      if (!j.localPath) throw new Error("缓存响应缺少 localPath");
+      return { fullUrl: origin + j.localPath, localPath: j.localPath };
+    }
+
+    /** ========= LLM：自然语言 → JSON ========= */
+    const STRUCT_PROMPT = `你是游戏「世界物品」结构化助手。用户用中文描述一件物品（可能含容器、设施、转化、消耗）。请只输出一个 JSON 对象，不要 Markdown，不要注释。
+
+字段要求：
+- name: string，简短物品名
+- description: string，对于该物品的简短描述
+- tags: string[]，标签可重复（需要重复就重复写）
+- categories: string[]，从下列中选，可多选可重复： item, facility, container（container 表示具备储物能力）
+- attributes: { volume: number, mass: number }，合理正值；体积/质量为物品本体占用空间与重量
+- metadata: {
+    units: { volume: string, mass: string },
+    schemaVersion: "1.0.0",
+    containerCapacity: number | null
+  }
+  containerCapacity：若该物品可作为「主容器」储物（categories 含 container 或语义是箱子/背包/储物罐等），给出可容纳的其它物品体积总和上限；否则 null。
+
+- facility: 若categories含 facility 给出对象；否则 null。结构：
+  {
+    "transformations": [
+      {
+        "id": "tf",
+        "label"?: "转化",
+        "instruction": string,
+        "acceptedSourceTags"?: string[],
+        "slotVolume": number
+      }
+    ],
+    "consumptions": [
+      {
+        "id": string,
+        "tag": string,
+        "amountPerMinute": number,
+        "slotVolume": number
+      }
+    ]
+  }
+  slotVolume：该转化槽或消耗槽作为「底层槽位容器」可容纳的物品体积上限（与其它物品体积单位一致）。
+  transformations 必须是“转化”语义，
+  transformations / consumptions 若没有则输出空数组。
+
+务必保证 JSON 可被 JSON.parse 解析。`;
+
+    const TRANSFORM_PROMPT = `你是游戏内负责处理物品交互的系统。请根据设施数据结构与投入物数据结构，输出产生的新产物的完整 JSON。
+
+要求：
+- 只输出一个 JSON 对象，不要 markdown，不要解释。
+- 输出结构必须兼容 WorldItem：name, description, tags, categories, attributes, metadata, facility(可空)。
+- 你可以改名、增删 tags/categories、调整 attributes。
+- attributes.volume 与 attributes.mass 必须是 >=0 的数字。
+- 若设施给了 transformation.instruction，请严格参考它推演。
+- 不要返回数组，不要返回额外顶层字段。`;
+
+    function stripJsonFence(text) {
+      let s = String(text || "").trim();
+      const fence = /^```(?:json)?\s*([\s\S]*?)```$/im.exec(s);
+      if (fence) s = fence[1].trim();
+      return s;
+    }
+
+    async function llmExtractWorldItem(userText) {
+      const base = FIXED_LLM_BASE.replace(/\/$/, "");
+      const key = FIXED_LLM_KEY;
+      const model = FIXED_LLM_MODEL;
+
+      const res = await fetch(`${base}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0.2,
+          messages: [
+            { role: "system", content: STRUCT_PROMPT },
+            { role: "user", content: userText },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
+      const raw = await res.text();
+      if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${raw.slice(0, 400)}`);
+
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error("LLM 响应非 JSON");
+      }
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error("LLM 未返回 choices[0].message.content");
+      const jsonText = stripJsonFence(content);
+      let item;
+      try {
+        item = JSON.parse(jsonText);
+      } catch (e) {
+        throw new Error("LLM 内容解析失败: " + (e && e.message));
+      }
+      return normalizeWorldItem(item);
+    }
+
+    async function llmTransformWorldItem(facilityItem, inputItem) {
+      const base = FIXED_LLM_BASE.replace(/\/$/, "");
+      const key = FIXED_LLM_KEY;
+      const model = FIXED_LLM_MODEL;
+      const instruction = getTransformationInstruction(facilityItem?.facility || null);
+      const payload = {
+        facility: facilityItem,
+        inputItem,
+        transformationInstruction: instruction,
+      };
+      const res = await fetch(`${base}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0.2,
+          messages: [
+            { role: "system", content: TRANSFORM_PROMPT },
+            { role: "user", content: JSON.stringify(payload) },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
+      const raw = await res.text();
+      if (!res.ok) throw new Error(`LLM transform HTTP ${res.status}: ${raw.slice(0, 400)}`);
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error("LLM transform 响应非 JSON");
+      }
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error("LLM transform 未返回 content");
+      const text = stripJsonFence(content);
+      let obj;
+      try {
+        obj = JSON.parse(text);
+      } catch (e) {
+        throw new Error("LLM transform 内容解析失败: " + (e && e.message));
+      }
+      return normalizeWorldItem(obj);
+    }
+
+    async function preloadTransformPrediction(hostEntryId, inputEntryId) {
+      const host = getStageEntryById(hostEntryId);
+      const input = getStageEntryById(inputEntryId);
+      if (!host || !input) return;
+      const rt = host.demoStore.runtime || (host.demoStore.runtime = {});
+      if (!rt.transformPreviewById) rt.transformPreviewById = {};
+      const exists = rt.transformPreviewById[inputEntryId];
+      if (exists && (exists.status === "loading" || exists.status === "ready")) return;
+      rt.transformPreviewById[inputEntryId] = {
+        status: "loading",
+        changed: false,
+        result: null,
+        error: "",
+      };
+      if (modalEntryId === hostEntryId) openModal(hostEntryId);
+      try {
+        const predicted = await llmTransformWorldItem(host.worldItem, input.worldItem);
+        const changed = hasMeaningfulTransformChange(input.worldItem, predicted);
+        const stillInSlot = (host.demoStore.transformItems || []).some((x) => getSlotRecordId(x) === inputEntryId);
+        if (!stillInSlot) return;
+        rt.transformPreviewById[inputEntryId] = {
+          status: "ready",
+          changed,
+          result: predicted,
+          error: "",
+        };
+        log(changed ? `预判可转化：${input.worldItem?.name || inputEntryId}` : `预判无变化：${input.worldItem?.name || inputEntryId}`, "ok");
+      } catch (e) {
+        rt.transformPreviewById[inputEntryId] = {
+          status: "error",
+          changed: false,
+          result: null,
+          error: String(e && e.message ? e.message : e),
+        };
+        log(`预判失败：${input.worldItem?.name || inputEntryId}`, "err");
+      } finally {
+        if (modalEntryId === hostEntryId) openModal(hostEntryId);
+      }
+    }
+
+    function normalizeWorldItem(raw) {
+      const o = typeof raw === "object" && raw ? raw : {};
+      const tags = Array.isArray(o.tags) ? o.tags.map(String) : [];
+      const categories = Array.isArray(o.categories) ? o.categories.map(String) : ["item"];
+      const attributes = {
+        volume: Number(o.attributes?.volume) || 0.01,
+        mass: Number(o.attributes?.mass) || 0.01,
+      };
+      const metadata = {
+        units: {
+          volume: String(o.metadata?.units?.volume || "m3"),
+          mass: String(o.metadata?.units?.mass || "kg"),
+        },
+        schemaVersion: "1.0.0",
+        containerCapacity:
+          o.metadata && o.metadata.containerCapacity != null && !Number.isNaN(Number(o.metadata.containerCapacity))
+            ? Number(o.metadata.containerCapacity)
+            : null,
+      };
+
+      let facility = null;
+      if (o.facility && typeof o.facility === "object") {
+        const trRaw = Array.isArray(o.facility.transformations) ? o.facility.transformations : [];
+        const co = Array.isArray(o.facility.consumptions) ? o.facility.consumptions : [];
+        const trPrimary = trRaw.length
+          ? trRaw.reduce((best, cur) => {
+              const b = Number(best?.slotVolume) || 0;
+              const c = Number(cur?.slotVolume) || 0;
+              return c > b ? cur : best;
+            })
+          : null;
+        const tr = trPrimary
+          ? [
+              {
+                id: "tf",
+                label: "统一转化槽",
+                instruction: String(trPrimary.instruction || ""),
+                acceptedSourceTags: Array.isArray(trPrimary.acceptedSourceTags) ? trPrimary.acceptedSourceTags.map(String) : [],
+                slotVolume: Math.max(0, Number(trPrimary.slotVolume) || 0),
+              },
+            ]
+          : [];
+        facility = {
+          transformations: tr,
+          consumptions: co.map((c, i) => ({
+            id: String(c.id || `cs-${i}`),
+            tag: String(c.tag || ""),
+            amountPerMinute: Math.max(0, Number(c.amountPerMinute) || 0),
+            slotVolume: Math.max(0, Number(c.slotVolume) || 0),
+          })),
+        };
+      }
+
+      return {
+        name: String(o.name || "未命名物品"),
+        description: String(o.description || ""),
+        tags,
+        categories,
+        attributes,
+        metadata,
+        facility,
+      };
+    }
+
+    /** ========= 豆包生图 ========= */
+    const ARK_URL = "https://ark.cn-beijing.volces.com/api/v3/images/generations";
+
+    async function generatePixelIcon(worldItem) {
+      const key = FIXED_IMG_KEY;
+      const model = FIXED_IMG_MODEL;
+
+      const prompt = [
+        worldItem.name,
+        worldItem.description,
+        "single centered inventory icon",
+        "pixel art style",
+        "clean silhouette",
+        "high contrast",
+        "pure solid white background #FFFFFF only",
+        "no text no watermark no frame",
+      ].join(", ");
+
+      const res = await fetch(ARK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model,
+          prompt,
+          sequential_image_generation: "disabled",
+          response_format: "url",
+          size: "2k",
+          stream: false,
+          watermark: true,
+        }),
+      });
+      const raw = await res.text();
+      if (!res.ok) throw new Error(`生图 HTTP ${res.status}: ${raw.slice(0, 400)}`);
+
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error("生图响应非 JSON");
+      }
+
+      const url =
+        data?.data?.[0]?.url ||
+        data?.data?.url ||
+        (Array.isArray(data?.images) && data.images[0]?.url);
+      if (!url) throw new Error("未从生图响应中解析出 URL: " + raw.slice(0, 200));
+
+      return String(url);
+    }
+
+    async function regenerateEntryIcon(entry) {
+      if (!entry || !entry.worldItem) return;
+      const rawImgUrl = await generatePixelIcon(entry.worldItem);
+      let sameOriginUrl = rawImgUrl;
+      let cachedPath = null;
+      try {
+        const c = await cacheRemoteImageForCanvas(rawImgUrl);
+        sameOriginUrl = c.fullUrl;
+        cachedPath = c.localPath;
+      } catch (e0) {
+        console.warn(e0);
+      }
+
+      let processedUrl = sameOriginUrl;
+      let processedPngData = null;
+      try {
+        processedUrl = await removeUnenclosedWhiteBackground(sameOriginUrl);
+        if (typeof processedUrl === "string" && processedUrl.startsWith("data:image/png")) {
+          processedPngData = processedUrl;
+        }
+      } catch (e1) {
+        console.warn(e1);
+        processedUrl = sameOriginUrl;
+      }
+
+      entry.iconDisplayUrl = processedUrl;
+      entry.lastRawLocalPath = cachedPath;
+      entry.lastProcessedDataUrl = processedPngData;
+      const el = stage.querySelector(`.icon-hit[data-item-id="${entry.id}"] img`);
+      if (el) el.src = processedUrl;
+    }
+
+    /** ========= 演示：容积与槽位 ========= */
+    function createDemoStore() {
+      return {
+        mainItems: [],
+        transformItems: [],
+        consumeItems: {},
+        runtime: {
+          transforming: false,
+          remainingSec: 0,
+          timer: null,
+          note: "",
+          lastTickMs: 0,
+          consumedVolumeMass: 0,
+          transformPreviewById: {},
+        },
+      };
+    }
+
+    function getTransformationSlotVolume(facility) {
+      const list = Array.isArray(facility?.transformations) ? facility.transformations : [];
+      if (!list.length) return 0;
+      const values = list.map((x) => Number(x?.slotVolume) || 0).filter((n) => n > 0);
+      return values.length ? Math.max(...values) : 0;
+    }
+
+    function getTransformationInstruction(facility) {
+      const list = Array.isArray(facility?.transformations) ? facility.transformations : [];
+      const first = list[0];
+      return String(first?.instruction || "投入物品后由 LLM 结合设施与物品数据结构推演并更新物品数据结构。");
+    }
+
+    function hasMeaningfulTransformChange(beforeItem, afterItem) {
+      const b = beforeItem || {};
+      const a = afterItem || {};
+      const attrsChanged =
+        Math.abs((Number(a?.attributes?.volume) || 0) - (Number(b?.attributes?.volume) || 0)) > 1e-9 ||
+        Math.abs((Number(a?.attributes?.mass) || 0) - (Number(b?.attributes?.mass) || 0)) > 1e-9;
+      const sameArray = (x, y) => JSON.stringify(Array.isArray(x) ? x : []) === JSON.stringify(Array.isArray(y) ? y : []);
+      return (
+        String(a.name || "") !== String(b.name || "") ||
+        String(a.description || "") !== String(b.description || "") ||
+        !sameArray(a.tags, b.tags) ||
+        !sameArray(a.categories, b.categories) ||
+        attrsChanged
+      );
+    }
+
+    function getStageEntryById(id) {
+      return stageItems.find((x) => x.id === id) || null;
+    }
+
+    function getEntryVolumeById(id) {
+      const e = getStageEntryById(id);
+      return Number(e?.worldItem?.attributes?.volume) || 0;
+    }
+
+    function getSlotRecordId(rec) {
+      return typeof rec === "string" ? rec : rec?.id;
+    }
+
+    function ensureSlotRecord(rec, fallbackCell = 0) {
+      if (typeof rec === "string") return { id: rec, cell: fallbackCell };
+      if (!rec || typeof rec !== "object") return { id: "", cell: fallbackCell };
+      return { id: String(rec.id || ""), cell: Number.isFinite(rec.cell) ? rec.cell : fallbackCell };
+    }
+
+    function sumVolume(list) {
+      return list.reduce((s, x) => {
+        const id = getSlotRecordId(x);
+        if (id) return s + getEntryVolumeById(id);
+        return s;
+      }, 0);
+    }
+
+    /** ========= UI 状态：多物品舞台 ========= */
+    const stage = document.getElementById("stage");
+    const generatorPanel = document.getElementById("generatorPanel");
+    const generatorDragHandle = document.getElementById("generatorDragHandle");
+    const detailWindow = document.getElementById("detailWindow");
+    const detailWindowHandle = document.getElementById("detailWindowHandle");
+    const stageHint = document.getElementById("stageHint");
+    /** @type {{ id: string, worldItem: object, iconDisplayUrl: string, pos: {x:number,y:number}, demoStore: ReturnType<createDemoStore>, lastRawLocalPath: string|null, lastProcessedDataUrl: string|null }[]} */
+    let stageItems = [];
+    /** 详情弹窗与容器操作对应的条目 */
+    let modalEntryId = null;
+    /** 保存按钮使用的条目（生成后设为最新；点开详情则改为该物品） */
+    let activeStageEntryId = null;
+    /** 与当前弹窗同步，供原有 tryAddItem / 模板使用 */
+    let worldItem = null;
+    let demoStore = createDemoStore();
+
+    const DRAG_THRESHOLD_PX = 6;
+    let dragSession = null;
+    let panelDragSession = null;
+    let detailDragSession = null;
+    let invDragSession = null;
+
+    function getModalEntry() {
+      return modalEntryId ? getStageEntryById(modalEntryId) : null;
+    }
+
+    function log(msg, cls) {
+      const el = document.getElementById("statusLog");
+      el.textContent = msg;
+      el.className = "log" + (cls ? " " + cls : "");
+    }
+
+    function newStageItemId() {
+      return `st-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    }
+
+    function mountStageIcon(entry) {
+      stageHint.style.display = "none";
+      const wrap = document.createElement("div");
+      wrap.className = "icon-hit";
+      wrap.dataset.itemId = entry.id;
+      wrap.style.left = `${entry.pos.x}px`;
+      wrap.style.top = `${entry.pos.y}px`;
+      const im = document.createElement("img");
+      im.alt = entry.worldItem.name || "icon";
+      im.draggable = false;
+      im.src = entry.iconDisplayUrl;
+      wrap.appendChild(im);
+      stage.appendChild(wrap);
+      refreshOneStageIconVisibility(entry.id);
+    }
+
+    function listContainsEntryId(list, entryId) {
+      return (list || []).some((x) => getSlotRecordId(x) === entryId);
+    }
+
+    function isEntryPlacedInAnySlot(entryId) {
+      for (const host of stageItems) {
+        const s = host?.demoStore;
+        if (!s) continue;
+        if (listContainsEntryId(s.mainItems, entryId)) return true;
+        if (listContainsEntryId(s.transformItems, entryId)) return true;
+        for (const key of Object.keys(s.consumeItems || {})) {
+          if (listContainsEntryId(s.consumeItems[key], entryId)) return true;
+        }
+      }
+      return false;
+    }
+
+    function refreshOneStageIconVisibility(entryId) {
+      const el = stage.querySelector(`.icon-hit[data-item-id="${entryId}"]`);
+      if (!el) return;
+      el.style.display = isEntryPlacedInAnySlot(entryId) ? "none" : "";
+    }
+
+    function refreshAllStageIconVisibility() {
+      stage.querySelectorAll(".icon-hit").forEach((el) => {
+        const id = el.getAttribute("data-item-id");
+        if (!id) return;
+        el.style.display = isEntryPlacedInAnySlot(id) ? "none" : "";
+      });
+    }
+
+    function syncModalGlobals(entry) {
+      worldItem = entry.worldItem;
+      demoStore = entry.demoStore;
+    }
+
+    function stagePointerDown(e) {
+      if (e.target.closest("#generatorPanel")) return;
+      if (e.target.closest("#detailWindow")) return;
+      const hit = e.target.closest(".icon-hit");
+      if (!hit || !stage.contains(hit)) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      const rect = hit.getBoundingClientRect();
+      hit.style.zIndex = "60";
+      dragSession = {
+        pointerId: e.pointerId,
+        el: hit,
+        id: hit.dataset.itemId,
+        dx: e.clientX - rect.left,
+        dy: e.clientY - rect.top,
+        moved: false,
+        startX: e.clientX,
+        startY: e.clientY,
+      };
+      try {
+        hit.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    }
+
+    function stagePointerMove(e) {
+      if (!dragSession || e.pointerId !== dragSession.pointerId) return;
+      const dx = e.clientX - dragSession.startX;
+      const dy = e.clientY - dragSession.startY;
+      if (Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) dragSession.moved = true;
+      const sr = stage.getBoundingClientRect();
+      const el = dragSession.el;
+      let nx = e.clientX - sr.left - dragSession.dx;
+      let ny = e.clientY - sr.top - dragSession.dy;
+      const pad = 8;
+      nx = Math.max(pad, Math.min(nx, sr.width - el.offsetWidth - pad));
+      ny = Math.max(pad, Math.min(ny, sr.height - el.offsetHeight - pad));
+      el.style.left = `${nx}px`;
+      el.style.top = `${ny}px`;
+      const ent = stageItems.find((x) => x.id === dragSession.id);
+      if (ent) {
+        ent.pos.x = nx;
+        ent.pos.y = ny;
+      }
+    }
+
+    function stagePointerUp(e) {
+      if (!dragSession || e.pointerId !== dragSession.pointerId) return;
+      const { el, moved, id } = dragSession;
+      if (moved) {
+        el.dataset.suppressClick = "1";
+        const which = resolveDropZoneAtPoint(e.clientX, e.clientY);
+        if (which && tryAddEntryToSlot(which, id, modalEntryId)) {
+          openModal(modalEntryId);
+        }
+      }
+      try {
+        el.releasePointerCapture(e.pointerId);
+      } catch (_) {}
+      el.style.zIndex = "15";
+      dragSession = null;
+    }
+
+    function stageIconClick(e) {
+      if (e.target.closest("#generatorPanel")) return;
+      if (e.target.closest("#detailWindow")) return;
+      const hit = e.target.closest(".icon-hit");
+      if (!hit || !stage.contains(hit)) {
+        // 点击棋盘空白处：关闭详情窗口
+        detailWindow.classList.add("hidden");
+        return;
+      }
+      if (hit.dataset.suppressClick === "1") {
+        delete hit.dataset.suppressClick;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      openModal(hit.dataset.itemId);
+    }
+
+    function onWindowPointerMove(e) {
+      if (invDragSession && e.pointerId === invDragSession.pointerId) {
+        invDragSession.moved = true;
+        invDragSession.ghost.style.left = `${e.clientX - 20}px`;
+        invDragSession.ghost.style.top = `${e.clientY - 20}px`;
+        return;
+      }
+      if (panelDragSession && e.pointerId === panelDragSession.pointerId) {
+        const dx = e.clientX - panelDragSession.startX;
+        const dy = e.clientY - panelDragSession.startY;
+        let nx = panelDragSession.originLeft + dx;
+        let ny = panelDragSession.originTop + dy;
+        const sr = stage.getBoundingClientRect();
+        const pw = generatorPanel.offsetWidth;
+        const ph = generatorPanel.offsetHeight;
+        const pad = 8;
+        nx = Math.max(pad, Math.min(nx, sr.width - pw - pad));
+        ny = Math.max(pad, Math.min(ny, sr.height - ph - pad));
+        generatorPanel.style.left = `${nx}px`;
+        generatorPanel.style.top = `${ny}px`;
+        return;
+      }
+      if (detailDragSession && e.pointerId === detailDragSession.pointerId) {
+        const dx = e.clientX - detailDragSession.startX;
+        const dy = e.clientY - detailDragSession.startY;
+        let nx = detailDragSession.originLeft + dx;
+        let ny = detailDragSession.originTop + dy;
+        const sr = stage.getBoundingClientRect();
+        const pw = detailWindow.offsetWidth;
+        const ph = detailWindow.offsetHeight;
+        const pad = 8;
+        nx = Math.max(pad, Math.min(nx, sr.width - pw - pad));
+        ny = Math.max(pad, Math.min(ny, sr.height - ph - pad));
+        detailWindow.style.left = `${nx}px`;
+        detailWindow.style.top = `${ny}px`;
+        return;
+      }
+      stagePointerMove(e);
+    }
+
+    function onWindowPointerUp(e) {
+      if (invDragSession && e.pointerId === invDragSession.pointerId) {
+        const sess = invDragSession;
+        if (sess.ghost && sess.ghost.parentNode) sess.ghost.parentNode.removeChild(sess.ghost);
+        const host = getModalEntry();
+        if (host) {
+          const detailRect = detailWindow.getBoundingClientRect();
+          const inWindow =
+            e.clientX >= detailRect.left &&
+            e.clientX <= detailRect.right &&
+            e.clientY >= detailRect.top &&
+            e.clientY <= detailRect.bottom;
+          if (!inWindow) {
+            removeItem(sess.fromWhich, sess.id);
+            openModal(modalEntryId);
+          } else {
+            const els = document.elementsFromPoint(e.clientX, e.clientY);
+            const grid = els.find((el) => el?.classList?.contains("inventory-grid"));
+            if (grid) {
+              const which = grid.dataset.which;
+              const list = getSlotListByWhich(host.demoStore, which);
+              if (list) {
+                // 如跨槽拖动，先尝试加入新槽，再从旧槽移除
+                if (which !== sess.fromWhich) {
+                  const ok = tryAddEntryToSlot(which, sess.id, modalEntryId);
+                  if (ok) removeItem(sess.fromWhich, sess.id);
+                } else {
+                  const r = grid.getBoundingClientRect();
+                  const col = Math.max(0, Math.min(5, Math.floor((e.clientX - r.left - 8) / 50)));
+                  const row = Math.max(0, Math.min(2, Math.floor((e.clientY - r.top - 8) / 50)));
+                  const cell = row * 6 + col;
+                  placeRecordCell(list, sess.id, cell);
+                }
+                openModal(modalEntryId);
+              }
+            }
+          }
+        }
+        invDragSession = null;
+        return;
+      }
+      if (panelDragSession && e.pointerId === panelDragSession.pointerId) {
+        try {
+          generatorDragHandle.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+        panelDragSession = null;
+        return;
+      }
+      if (detailDragSession && e.pointerId === detailDragSession.pointerId) {
+        try {
+          detailWindowHandle.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+        detailDragSession = null;
+        return;
+      }
+      stagePointerUp(e);
+    }
+
+    generatorDragHandle.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.stopPropagation();
+      panelDragSession = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        originLeft: generatorPanel.offsetLeft,
+        originTop: generatorPanel.offsetTop,
+      };
+      try {
+        generatorDragHandle.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    });
+
+    detailWindowHandle.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      // 标题栏里的按钮（关闭）不应触发拖动
+      if (e.target.closest("button")) return;
+      e.stopPropagation();
+      detailDragSession = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        originLeft: detailWindow.offsetLeft,
+        originTop: detailWindow.offsetTop,
+      };
+      try {
+        detailWindowHandle.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    });
+
+    stage.addEventListener("pointerdown", stagePointerDown);
+    window.addEventListener("pointermove", onWindowPointerMove);
+    window.addEventListener("pointerup", onWindowPointerUp);
+    window.addEventListener("pointercancel", onWindowPointerUp);
+    stage.addEventListener("click", stageIconClick, true);
+
+    document.getElementById("modalBody").addEventListener("pointerdown", (e) => {
+      const item = e.target.closest(".inv-item");
+      if (!item) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const img = item.querySelector("img");
+      const ghost = document.createElement("div");
+      ghost.className = "inv-drag-ghost";
+      if (img) {
+        const clone = img.cloneNode(true);
+        ghost.appendChild(clone);
+      }
+      document.body.appendChild(ghost);
+      invDragSession = {
+        pointerId: e.pointerId,
+        id: item.dataset.id,
+        fromWhich: item.dataset.which,
+        ghost,
+        moved: false,
+      };
+      ghost.style.left = `${e.clientX - 20}px`;
+      ghost.style.top = `${e.clientY - 20}px`;
+    });
+
+    function openModal(itemId) {
+      const entry = stageItems.find((x) => x.id === itemId);
+      if (!entry) return;
+      modalEntryId = itemId;
+      syncModalGlobals(entry);
+      document.getElementById("modalTitle").textContent = worldItem.name;
+
+      const cats = worldItem.categories || [];
+      const hasFacility = !!worldItem.facility && ((worldItem.facility.transformations || []).length || (worldItem.facility.consumptions || []).length);
+      const hasContainer =
+        cats.includes("container") ||
+        (worldItem.tags || []).includes("容器") ||
+        (worldItem.metadata && worldItem.metadata.containerCapacity != null && worldItem.metadata.containerCapacity > 0);
+
+      const showFeatures = hasFacility || hasContainer || cats.includes("facility");
+
+      const body = document.getElementById("modalBody");
+      body.className = "modal-body" + (showFeatures ? "" : " single");
+
+      const leftHtml = [];
+      // 顺序：功能 · 容器 · 转化 · 消耗
+      leftHtml.push(`<div class="sec"><h4>功能概览</h4><div class="kv">${escapeHtml(worldItem.description || "（无）")}</div></div>`);
+
+      if (hasContainer && worldItem.metadata?.containerCapacity != null && worldItem.metadata.containerCapacity > 0) {
+        const cap = worldItem.metadata.containerCapacity;
+        const used = sumVolume(demoStore.mainItems);
+        leftHtml.push(renderContainerSection("主容器", cap, used, demoStore.mainItems, "main"));
+      } else if (hasContainer) {
+        leftHtml.push(`<div class="sec"><h4>容器</h4><div class="kv">未设定 containerCapacity，可在描述中说明储物能力。</div></div>`);
+      }
+
+      if (worldItem.facility && (worldItem.facility.transformations || []).length) {
+        leftHtml.push(`<div class="sec"><h4>转化槽</h4>`);
+        const used = sumVolume(demoStore.transformItems);
+        const cap = getTransformationSlotVolume(worldItem.facility);
+        const note = getTransformationInstruction(worldItem.facility);
+        leftHtml.push(renderSlotSection("转化", "统一转化槽", note, cap, used, demoStore.transformItems, "tf"));
+        leftHtml.push(renderTransformControls(entry));
+        leftHtml.push(`</div>`);
+      }
+
+      if (worldItem.facility && (worldItem.facility.consumptions || []).length) {
+        leftHtml.push(`<div class="sec"><h4>消耗槽</h4>`);
+        for (const c of worldItem.facility.consumptions) {
+          const used = sumVolume(demoStore.consumeItems[c.id] || []);
+          const cap = c.slotVolume || 0;
+          leftHtml.push(
+            renderSlotSection(
+              "消耗",
+              `${c.tag} · ${c.amountPerMinute}/分`,
+              `匹配 tag「${escapeHtml(c.tag)}」的物品；槽内为待消耗库存演示。`,
+              cap,
+              used,
+              demoStore.consumeItems[c.id] || [],
+              `cs:${c.id}`
+            )
+          );
+        }
+        leftHtml.push(`</div>`);
+      }
+
+      const rightHtml = [];
+      rightHtml.push(`<div class="sec"><h4>物体信息</h4><div class="modal-item-preview-slot"></div>`);
+      rightHtml.push(`<div class="kv"><strong>名称</strong> ${escapeHtml(worldItem.name)}</div>`);
+      rightHtml.push(`<div class="kv"><strong>类别</strong> ${(worldItem.categories || []).map((c) => `<span class="pill">${escapeHtml(c)}</span>`).join("") || "—"}</div>`);
+      rightHtml.push(`<div class="kv"><strong>标签</strong> ${(worldItem.tags || []).map((t) => `<span class="pill">${escapeHtml(t)}</span>`).join("") || "—"}</div>`);
+      rightHtml.push(
+        `<div class="kv"><strong>体积</strong> ${worldItem.attributes.volume} ${worldItem.metadata.units.volume} · <strong>质量</strong> ${worldItem.attributes.mass} ${worldItem.metadata.units.mass}</div>`
+      );
+      rightHtml.push(`</div>`);
+      rightHtml.push(`<div class="sec"><h4>原始 JSON</h4><pre class="json">${escapeHtml(JSON.stringify(worldItem, null, 2))}</pre></div>`);
+
+      if (showFeatures) {
+        body.innerHTML = `<div class="modal-col">${leftHtml.join("")}</div><div class="modal-col">${rightHtml.join("")}</div>`;
+      } else {
+        body.innerHTML = `<div class="modal-col">${rightHtml.join("")}</div>`;
+      }
+
+      const previewSlot = body.querySelector(".modal-item-preview-slot");
+      if (previewSlot && entry.iconDisplayUrl) {
+        const im = document.createElement("img");
+        im.src = entry.iconDisplayUrl;
+        im.alt = entry.worldItem.name || "";
+        previewSlot.appendChild(im);
+      }
+
+      wireDemoButtons(body);
+      activeStageEntryId = itemId;
+      detailWindow.classList.remove("hidden");
+    }
+
+    function renderContainerSection(title, capacity, used, list, key) {
+      const pct = capacity > 0 ? Math.min(100, (used / capacity) * 100) : 0;
+      const grid = renderInventoryGrid(list, key);
+      return `
+        <div class="sec drop-zone" data-drop-zone="1" data-which="${escapeHtml(key)}">
+          <h4>${escapeHtml(title)}</h4>
+          <div class="kv">总容积 <strong>${capacity}</strong> · 已用 <strong>${used.toFixed(4)}</strong></div>
+          <div class="meter"><i style="width:${pct.toFixed(1)}%"></i></div>
+          ${grid}
+          <div class="kv" style="margin-top:8px;">拖拽物品到此区域可放入。</div>
+        </div>`;
+    }
+
+    function renderSlotSection(kindLabel, subtitle, note, capacity, used, list, slotKey) {
+      const pct = capacity > 0 ? Math.min(100, (used / capacity) * 100) : 0;
+      const grid = renderInventoryGrid(list, slotKey);
+      return `
+        <div class="subcard drop-zone" data-drop-zone="1" data-which="${escapeHtml(slotKey)}">
+          <div class="title">${escapeHtml(kindLabel)} · ${escapeHtml(subtitle)}</div>
+          <div class="kv">${escapeHtml(note)}</div>
+          <div class="kv">槽容积 <strong>${capacity}</strong> · 已用 <strong>${used.toFixed(4)}</strong></div>
+          <div class="meter"><i style="width:${pct.toFixed(1)}%"></i></div>
+          ${grid}
+          <div class="kv" style="margin-top:8px;">拖拽物品到此区域可放入。</div>
+        </div>`;
+    }
+
+    function renderInventoryGrid(list, which) {
+      const CELL_COUNT = 18;
+      const cells = Array.from({ length: CELL_COUNT }, (_, i) => `<div class="inv-cell" data-cell="${i}"></div>`).join("");
+      const items = (list || [])
+        .map((raw, idx) => {
+          const rec = ensureSlotRecord(raw, idx);
+          const e = getStageEntryById(rec.id);
+          if (!e) return "";
+          const cell = Math.max(0, Math.min(CELL_COUNT - 1, Number(rec.cell) || 0));
+          const col = cell % 6;
+          const row = Math.floor(cell / 6);
+          const left = 8 + col * 50 + 2;
+          const top = 8 + row * 50 + 2;
+          return `<div class="inv-item" data-id="${escapeHtml(rec.id)}" data-which="${escapeHtml(which)}" data-cell="${cell}" style="left:${left}px;top:${top}px;"><img src="${escapeHtml(
+            e.iconDisplayUrl || ""
+          )}" alt="${escapeHtml(e.worldItem?.name || rec.id)}" /></div>`;
+        })
+        .join("");
+      return `<div class="inventory-grid" data-which="${escapeHtml(which)}">${cells}${items}</div>`;
+    }
+
+    function renderTransformControls(entry) {
+      const rt = entry?.demoStore?.runtime || {};
+      const previews = rt.transformPreviewById || {};
+      const vals = Object.values(previews);
+      const pending = vals.filter((x) => x?.status === "loading").length;
+      const canCount = vals.filter((x) => x?.status === "ready" && x?.changed).length;
+      const noChange = vals.filter((x) => x?.status === "ready" && !x?.changed).length;
+      const txt = rt.transforming
+        ? `处理中：${Math.max(0, Number(rt.remainingSec) || 0)}s`
+        : rt.note
+          ? `状态：${escapeHtml(rt.note)}`
+          : "状态：待机";
+      const previewText = `预判 可转化:${canCount} 无变化:${noChange} 处理中:${pending}`;
+      return `<div class="transform-ctl"><button type="button" id="btnRunTransform">开始转化</button><span class="tiny">${txt}</span><span class="tiny">${previewText}</span></div>`;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function wireDemoButtons(root) {
+      const runBtn = root.querySelector("#btnRunTransform");
+      if (runBtn) {
+        runBtn.addEventListener("click", () => {
+          startTransformQueue(modalEntryId);
+        });
+      }
+      root.querySelectorAll(".demo-remove").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const which = btn.getAttribute("data-which");
+          const id = btn.getAttribute("data-id");
+          removeItem(which, id);
+          openModal(modalEntryId);
+        });
+      });
+    }
+
+    function getSlotListByWhich(store, which) {
+      if (which === "main") return store.mainItems;
+      if (which === "tf") return store.transformItems;
+      if (String(which || "").startsWith("cs:")) {
+        const sid = String(which).slice(3);
+        if (!store.consumeItems[sid]) store.consumeItems[sid] = [];
+        return store.consumeItems[sid];
+      }
+      return null;
+    }
+
+    function findFreeCell(list, cellCount = 18) {
+      const used = new Set((list || []).map((x, i) => ensureSlotRecord(x, i).cell));
+      for (let i = 0; i < cellCount; i++) {
+        if (!used.has(i)) return i;
+      }
+      return cellCount - 1;
+    }
+
+    function placeRecordCell(list, itemId, targetCell) {
+      const idx = (list || []).findIndex((x) => getSlotRecordId(x) === itemId);
+      if (idx < 0) return;
+      const rec = ensureSlotRecord(list[idx], targetCell);
+      rec.cell = targetCell;
+      list[idx] = rec;
+    }
+
+    function resolveDropZoneAtPoint(clientX, clientY) {
+      if (!modalEntryId || detailWindow.classList.contains("hidden")) return null;
+      const list = document.elementsFromPoint(clientX, clientY);
+      const zone = list.find((el) => el?.dataset?.dropZone === "1" && el?.dataset?.which);
+      return zone ? zone.dataset.which : null;
+    }
+
+    function tryAddEntryToSlot(which, draggedEntryId, hostEntryId) {
+      const host = getStageEntryById(hostEntryId);
+      const dragged = getStageEntryById(draggedEntryId);
+      if (!host || !dragged) return false;
+      if (host.id === dragged.id) {
+        log("不能把物品放入它自身槽位。", "err");
+        return false;
+      }
+
+      const hostItem = host.worldItem;
+      const store = host.demoStore;
+      const vol = Number(dragged.worldItem?.attributes?.volume) || 0;
+      if (vol <= 0) {
+        log("拖拽物品体积无效，无法放入。", "err");
+        return false;
+      }
+
+      if (which === "main") {
+        const cap = Number(hostItem?.metadata?.containerCapacity) || 0;
+        const used = sumVolume(store.mainItems);
+        if (cap <= 0) {
+          log("主容器未设定容积。", "err");
+          return false;
+        }
+        if (store.mainItems.some((x) => getSlotRecordId(x) === dragged.id)) return false;
+        if (used + vol > cap + 1e-9) {
+          log(`主容器超容积：已用 ${used.toFixed(4)} / 上限 ${cap}。`, "err");
+          return false;
+        }
+        store.mainItems.push({ id: dragged.id, cell: findFreeCell(store.mainItems) });
+        refreshOneStageIconVisibility(dragged.id);
+        log(`已放入主容器：${dragged.worldItem?.name || dragged.id}`, "ok");
+        return true;
+      }
+
+      const [prefix, sid] = String(which).split(":");
+      if (!hostItem?.facility) return false;
+      if (prefix === "tf") {
+        const cap = getTransformationSlotVolume(hostItem.facility);
+        const used = sumVolume(store.transformItems);
+        if (cap <= 0) {
+          log("该转化槽未设定 slotVolume。", "err");
+          return false;
+        }
+        if (store.transformItems.some((x) => getSlotRecordId(x) === dragged.id)) return false;
+        if (used + vol > cap + 1e-9) {
+          log(`转化槽超容积：已用 ${used.toFixed(4)} / 上限 ${cap}。`, "err");
+          return false;
+        }
+        store.transformItems.push({ id: dragged.id, cell: findFreeCell(store.transformItems) });
+        refreshOneStageIconVisibility(dragged.id);
+        preloadTransformPrediction(hostEntryId, dragged.id);
+        log(`已放入转化槽：${dragged.worldItem?.name || dragged.id}`, "ok");
+        return true;
+      }
+
+      const targetStore = prefix === "cs" ? store.consumeItems : null;
+      if (!targetStore) return false;
+      if (!targetStore[sid]) targetStore[sid] = [];
+      if (targetStore[sid].some((x) => getSlotRecordId(x) === dragged.id)) return false;
+
+      let cap = 0;
+      const slot = (hostItem.facility.consumptions || []).find((x) => x.id === sid);
+      cap = slot ? Number(slot.slotVolume) || 0 : 0;
+      const used = sumVolume(targetStore[sid]);
+      if (cap <= 0) {
+        log("该槽未设定 slotVolume。", "err");
+        return false;
+      }
+      if (used + vol > cap + 1e-9) {
+        log(`槽位超容积：已用 ${used.toFixed(4)} / 上限 ${cap}。`, "err");
+        return false;
+      }
+      targetStore[sid].push({ id: dragged.id, cell: findFreeCell(targetStore[sid]) });
+      refreshOneStageIconVisibility(dragged.id);
+      log(`已放入槽位：${dragged.worldItem?.name || dragged.id}`, "ok");
+      return true;
+    }
+
+    function startTransformQueue(hostEntryId) {
+      const host = getStageEntryById(hostEntryId);
+      if (!host) return;
+      const store = host.demoStore;
+      const rt = store.runtime || (store.runtime = { transforming: false, remainingSec: 0, timer: null, note: "" });
+      if (rt.transforming) return;
+      const inputs = store.transformItems.map((x) => getSlotRecordId(x)).filter(Boolean);
+      if (!inputs.length) {
+        log("转化槽为空。", "err");
+        return;
+      }
+      const previews = rt.transformPreviewById || {};
+      const readyTransformables = inputs.filter((id) => {
+        const p = previews[id];
+        if (!p) return true; // 未预判时仍允许兜底
+        if (p.status === "loading") return false;
+        if (p.status === "ready") return !!p.changed;
+        return true;
+      });
+      const loadingCount = inputs.filter((id) => previews[id]?.status === "loading").length;
+      if (loadingCount > 0) {
+        log(`仍有 ${loadingCount} 个物品在预判中，请稍后再试。`, "err");
+        return;
+      }
+      if (!readyTransformables.length) {
+        log("预判结果显示当前投入物均无可转化变化。", "err");
+        rt.note = "无可转化物";
+        if (modalEntryId === hostEntryId) openModal(hostEntryId);
+        return;
+      }
+      const consumptions = host.worldItem?.facility?.consumptions || [];
+
+      rt.transforming = true;
+      rt.remainingSec = Math.max(3, readyTransformables.length * 3);
+      rt.note = "队列处理中";
+      rt.lastTickMs = Date.now();
+      rt.consumedVolumeMass = 0;
+      if (rt.timer) clearInterval(rt.timer);
+      rt.timer = setInterval(async () => {
+        const now = Date.now();
+        const dtSec = Math.max(0.01, (now - (rt.lastTickMs || now)) / 1000);
+        rt.lastTickMs = now;
+
+        // 运行中按秒记账：按 rate 扣体积和质量（同单位）
+        for (const c of consumptions) {
+          const rate = Math.max(0, Number(c.amountPerMinute) || 0);
+          const need = rate * (dtSec / 60);
+          if (need <= 1e-9) continue;
+          const got = consumeFromSlotByTag(host, c.id, c.tag, need);
+          rt.consumedVolumeMass += got;
+          if (got + 1e-9 < need) {
+            clearInterval(rt.timer);
+            rt.timer = null;
+            rt.transforming = false;
+            rt.note = "燃料不足中断";
+            log(`转化中断：${c.tag} 不足（需 ${need.toFixed(4)}，得 ${got.toFixed(4)}）。`, "err");
+            if (modalEntryId === hostEntryId) openModal(hostEntryId);
+            refreshAllStageIconVisibility();
+            return;
+          }
+        }
+
+        rt.remainingSec -= 1;
+        if (modalEntryId === hostEntryId) openModal(hostEntryId);
+        if (rt.remainingSec > 0) return;
+        clearInterval(rt.timer);
+        rt.timer = null;
+        rt.transforming = false;
+
+        // 再更新转化物：调用 LLM 基于设施+投入物推演新结构
+        for (const iid of readyTransformables) {
+          const e = getStageEntryById(iid);
+          if (!e) continue;
+          try {
+            const pre = rt.transformPreviewById?.[iid];
+            const updated = pre && pre.status === "ready" && pre.result
+              ? normalizeWorldItem(pre.result)
+              : await llmTransformWorldItem(host.worldItem, e.worldItem);
+            e.worldItem = updated;
+            await regenerateEntryIcon(e);
+          } catch (err) {
+            // 单个物品失败时回退为轻量标记，不阻塞整批队列
+            const n = String(e.worldItem.name || "");
+            if (!n.includes("（转化失败回退）")) e.worldItem.name = n + "（转化失败回退）";
+            if (!Array.isArray(e.worldItem.tags)) e.worldItem.tags = [];
+            if (!e.worldItem.tags.includes("转化失败")) e.worldItem.tags.push("转化失败");
+            console.warn(err);
+          }
+        }
+
+        const transformedSet = new Set(readyTransformables);
+        store.transformItems = store.transformItems.filter((rec) => !transformedSet.has(getSlotRecordId(rec)));
+        for (const id of transformedSet) {
+          if (rt.transformPreviewById) delete rt.transformPreviewById[id];
+        }
+        refreshAllStageIconVisibility();
+        rt.note = "转化完成";
+        log(`转化完成，累计消耗体积/质量 ${rt.consumedVolumeMass.toFixed(4)}。`, "ok");
+        if (modalEntryId === hostEntryId) openModal(hostEntryId);
+      }, 1000);
+      if (modalEntryId === hostEntryId) openModal(hostEntryId);
+    }
+
+    function removeItem(which, id) {
+      if (which === "main") {
+        demoStore.mainItems = demoStore.mainItems.filter((x) => getSlotRecordId(x) !== id);
+        refreshOneStageIconVisibility(id);
+        return;
+      }
+      const [prefix, sid] = String(which).split(":");
+      if (prefix === "tf") {
+        demoStore.transformItems = demoStore.transformItems.filter((x) => getSlotRecordId(x) !== id);
+        if (demoStore.runtime?.transformPreviewById) delete demoStore.runtime.transformPreviewById[id];
+        refreshOneStageIconVisibility(id);
+        return;
+      }
+      const store = prefix === "cs" ? demoStore.consumeItems : null;
+      if (!store || !store[sid]) return;
+      store[sid] = store[sid].filter((x) => getSlotRecordId(x) !== id);
+      refreshOneStageIconVisibility(id);
+    }
+
+    function removeEntryFromAllSlots(entryId) {
+      for (const host of stageItems) {
+        const s = host?.demoStore;
+        if (!s) continue;
+        s.mainItems = (s.mainItems || []).filter((x) => getSlotRecordId(x) !== entryId);
+        s.transformItems = (s.transformItems || []).filter((x) => getSlotRecordId(x) !== entryId);
+        for (const k of Object.keys(s.consumeItems || {})) {
+          s.consumeItems[k] = (s.consumeItems[k] || []).filter((x) => getSlotRecordId(x) !== entryId);
+        }
+      }
+    }
+
+    function destroyStageEntry(entryId) {
+      removeEntryFromAllSlots(entryId);
+      const idx = stageItems.findIndex((x) => x.id === entryId);
+      if (idx >= 0) stageItems.splice(idx, 1);
+      const el = stage.querySelector(`.icon-hit[data-item-id="${entryId}"]`);
+      if (el) el.remove();
+      if (activeStageEntryId === entryId) activeStageEntryId = null;
+      if (modalEntryId === entryId) {
+        modalEntryId = null;
+        detailWindow.classList.add("hidden");
+      }
+    }
+
+    function consumeFromSlotByTag(hostEntry, consumeId, tag, amountUnits) {
+      const list = hostEntry?.demoStore?.consumeItems?.[consumeId] || [];
+      let remaining = Math.max(0, Number(amountUnits) || 0);
+      let consumed = 0;
+      for (const rec of list) {
+        if (remaining <= 1e-9) break;
+        const id = getSlotRecordId(rec);
+        const e = getStageEntryById(id);
+        if (!e) continue;
+        const tags = Array.isArray(e.worldItem?.tags) ? e.worldItem.tags : [];
+        if (!tags.includes(tag)) continue;
+        const attrs = e.worldItem.attributes || (e.worldItem.attributes = { volume: 0, mass: 0 });
+        const can = Math.max(0, Math.min(Number(attrs.volume) || 0, Number(attrs.mass) || 0));
+        if (can <= 1e-9) continue;
+        const delta = Math.min(remaining, can);
+        attrs.volume = Math.max(0, (Number(attrs.volume) || 0) - delta);
+        attrs.mass = Math.max(0, (Number(attrs.mass) || 0) - delta);
+        remaining -= delta;
+        consumed += delta;
+      }
+
+      // 清理被完全烧尽的物品
+      const toDestroy = [];
+      for (const rec of list) {
+        const id = getSlotRecordId(rec);
+        const e = getStageEntryById(id);
+        if (!e) continue;
+        const v = Number(e.worldItem?.attributes?.volume) || 0;
+        const m = Number(e.worldItem?.attributes?.mass) || 0;
+        if (v <= 1e-6 || m <= 1e-6) {
+          toDestroy.push(id);
+        }
+      }
+      for (const id of toDestroy) destroyStageEntry(id);
+      return consumed;
+    }
+
+    document.getElementById("modalClose").addEventListener("click", () => {
+      detailWindow.classList.add("hidden");
+    });
+
+    /** ========= 主流程 ========= */
+    async function runGenerate() {
+      const text = document.getElementById("userText").value.trim();
+      if (!text) {
+        log("请先输入描述。", "err");
+        return;
+      }
+      log("正在调用 LLM 解析…");
+      document.getElementById("btnGenerate").disabled = true;
+      try {
+        const parsedItem = await llmExtractWorldItem(text);
+        log(`结构化完成：${parsedItem.name}。正在请求生图…`);
+
+        const rawImgUrl = await generatePixelIcon(parsedItem);
+        log("生图成功，正经本地服务缓存为同源图（避 TOS 跨域）…");
+
+        let sameOriginUrl = rawImgUrl;
+        let cachedPath = null;
+        try {
+          const c = await cacheRemoteImageForCanvas(rawImgUrl);
+          sameOriginUrl = c.fullUrl;
+          cachedPath = c.localPath;
+        } catch (e0) {
+          console.warn(e0);
+          log(
+            `未走本地缓存：${e0 && e0.message ? e0.message : e0}。去白底会受 CORS 影响。请执行 npm run demo-server 并用 http://127.0.0.1:8770/ 打开。`,
+            "err"
+          );
+        }
+
+        log("正在进行连通去白底…");
+        let processedUrl = sameOriginUrl;
+        let processedPngData = null;
+        try {
+          processedUrl = await removeUnenclosedWhiteBackground(sameOriginUrl);
+          if (typeof processedUrl === "string" && processedUrl.startsWith("data:image/png")) {
+            processedPngData = processedUrl;
+          }
+        } catch (e1) {
+          console.warn(e1);
+          log("去白底失败（常为跨域或未走本地缓存）。舞台将显示缓存图或外链图。", "err");
+          processedUrl = sameOriginUrl;
+        }
+
+        const si = stageItems.length;
+        const entry = {
+          id: newStageItemId(),
+          worldItem: parsedItem,
+          iconDisplayUrl: processedUrl,
+          pos: { x: 28 + (si % 7) * 92, y: 24 + Math.floor(si / 7) * 108 },
+          demoStore: createDemoStore(),
+          lastRawLocalPath: cachedPath,
+          lastProcessedDataUrl: processedPngData,
+        };
+        stageItems.push(entry);
+        mountStageIcon(entry);
+        activeStageEntryId = entry.id;
+        syncModalGlobals(entry);
+        log(`已加入舞台（共 ${stageItems.length} 件）。拖动后松开不会触发打开详情；点击查看。`, "ok");
+      } catch (e) {
+        console.error(e);
+        log(String(e && e.message ? e.message : e), "err");
+      } finally {
+        document.getElementById("btnGenerate").disabled = false;
+      }
+    }
+
+    document.getElementById("btnGenerate").addEventListener("click", runGenerate);
+
+    document.getElementById("btnSave").addEventListener("click", async () => {
+      const sid = activeStageEntryId;
+      const saveEntry = stageItems.find((e) => e.id === sid);
+      if (!saveEntry) {
+        alert("请先在舞台生成物品");
+        return;
+      }
+      const origin = getLocalSaveServerOrigin();
+      log("正在写入 data/saves/ …");
+      try {
+        const res = await fetch(`${origin}/api/save-item`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            worldItem: saveEntry.worldItem,
+            rawCachePath: saveEntry.lastRawLocalPath || "",
+            iconProcessedDataUrl: saveEntry.lastProcessedDataUrl || "",
+          }),
+        });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text.slice(0, 500));
+        const j = JSON.parse(text);
+        log(`已保存 ${origin}${j.manifestPath}`, "ok");
+      } catch (e) {
+        console.error(e);
+        log(`保存失败：${e && e.message ? e.message : e}`, "err");
+      }
+    });
+
+    document.getElementById("btnClear").addEventListener("click", () => {
+      for (const e of stageItems) {
+        const t = e?.demoStore?.runtime?.timer;
+        if (t) clearInterval(t);
+      }
+      dragSession = null;
+      stage.querySelectorAll(".icon-hit").forEach((el) => el.remove());
+      stageItems = [];
+      modalEntryId = null;
+      activeStageEntryId = null;
+      worldItem = null;
+      demoStore = createDemoStore();
+      detailWindow.classList.add("hidden");
+      stageHint.style.display = "";
+      log("已清空舞台。", "ok");
+    });
+
+    log("使用 http://127.0.0.1:8770/ 打开；输入描述后生成，可保存到 data/saves。", "");
+  </script>
+</body>
+</html>

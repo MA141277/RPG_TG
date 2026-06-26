@@ -1,0 +1,1135 @@
+.view-house-tea-house {
+  --grain-shop-scene-bg: url("../../ui/background/chalou.png");
+  --grain-shop-shopkeeper-portrait: url("../../ui/npc/chaguan.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui/npc/chaguan(touxiang).png");
+  --tea-house-debate-board: url("../../ui/舌战UI/material-202605281711-001.png");
+  --tea-house-debate-player-frame: url("../../ui/舌战UI/material-202605281719-002.png");
+  --tea-house-debate-npc-frame: url("../../ui/舌战UI/material-202605281719-003.png");
+  --tea-house-debate-spirit-panel: url("../../ui/舌战UI/material-202605281719-015.png");
+  --tea-house-debate-title-medallion: url("../../ui/舌战UI/material-202605281719-012.png");
+  --tea-house-debate-facedown-left: url("../../ui/舌战UI/material-202605281719-013.png");
+  --tea-house-debate-facedown-right: url("../../ui/舌战UI/material-202605281719-014.png");
+  --tea-house-debate-summary-panel: url("../../ui/舌战UI/material-202605281711-017.png");
+  --tea-house-debate-timer: url("../../ui/舌战UI/material-202605281711-036.png");
+  --tea-house-debate-confirm: url("../../ui/舌战UI/material-202605281719-005.png");
+  --tea-house-debate-player-label: url("../../ui/舌战UI/material-202605281719-016.png");
+  --tea-house-debate-npc-label: url("../../ui/舌战UI/material-202605281719-017.png");
+  --tea-house-debate-topic-yi: url("../../ui/舌战UI/material-202605281719-008.png");
+  --tea-house-debate-topic-li: url("../../ui/舌战UI/material-202605281719-009.png");
+  --tea-house-debate-topic-ming: url("../../ui/舌战UI/material-202605281720-001.png");
+  --tea-house-debate-topic-qing: url("../../ui/舌战UI/material-202605281719-006.png");
+  --tea-house-debate-topic-shi: url("../../ui/舌战UI/material-202605281719-007.png");
+}
+
+.view-house-tavern {
+  --grain-shop-scene-bg: url("../../ui/background/jiusi.png");
+  --grain-shop-shopkeeper-portrait: url("../../ui/npc/jiusilaoban.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui/npc/jiusilaoban(touxiang).png");
+}
+
+.c-tavern-gamble-overlay {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  background: rgb(9 12 10 / 78%);
+}
+
+.c-tavern-gamble {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  border-image: none;
+  border-radius: 0;
+  padding: 0;
+  color: #f8edc8;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(26 138 110 / 96%), rgb(11 86 72 / 98%) 56%, rgb(5 43 39) 100%),
+    #0b5a4e;
+  box-shadow: inset 0 0 0 12px rgb(255 255 255 / 5%), inset 0 0 80px rgb(0 0 0 / 34%);
+}
+
+.c-tavern-gamble__table {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+}
+
+.c-tavern-gamble__sidebar {
+  min-height: 0;
+  overflow: auto;
+  border: 0;
+  border-right: 1px solid rgb(255 230 168 / 18%);
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, rgb(35 22 13 / 80%), rgb(18 29 24 / 82%)),
+    rgb(22 25 21 / 88%);
+  padding: 14px 12px 96px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  box-shadow: inset -18px 0 34px rgb(0 0 0 / 18%);
+}
+
+.c-tavern-gamble__sidebar h3 {
+  margin: 0 0 4px;
+  color: #ffe8b0;
+  font-size: 1rem;
+}
+
+.c-tavern-gamble__felt {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgb(33 155 122 / 88%), rgb(10 103 86 / 96%) 58%, rgb(4 55 49 / 98%)),
+    #0b5a4e;
+  box-shadow:
+    inset 0 0 0 10px rgb(255 255 255 / 5%),
+    inset 0 0 64px rgb(0 0 0 / 28%);
+}
+
+.c-tavern-gamble__header {
+  position: relative;
+  z-index: 2;
+  padding: 14px 16px 0;
+}
+
+.c-tavern-gamble__meta,
+.c-tavern-gamble__tiles,
+.c-tavern-gamble__notes,
+.c-tavern-gamble__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.c-tavern-gamble__meta span,
+.c-tavern-gamble__notes span,
+.c-tavern-gamble__player,
+.c-tavern-gamble__showdown > div {
+  border: 1px solid rgb(255 230 168 / 28%);
+  border-radius: 6px;
+  background: rgb(16 31 27 / 72%);
+  padding: 6px 8px;
+  color: #ffe8b0;
+}
+
+.c-tavern-gamble__player {
+  display: grid;
+  gap: 5px;
+}
+
+.c-tavern-gamble__player div {
+  display: grid;
+  gap: 2px;
+}
+
+.c-tavern-gamble__player span,
+.c-tavern-gamble__player small {
+  color: #d8c191;
+}
+
+.c-tavern-gamble__player.is-folded {
+  opacity: 0.58;
+}
+
+.c-tavern-gamble__discard-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.c-tavern-gamble__played-groups,
+.c-tavern-gamble__seat-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.c-tavern-gamble__played-groups span,
+.c-tavern-gamble__seat-groups span {
+  border: 1px solid rgb(255 230 168 / 42%);
+  border-radius: 6px;
+  background: rgb(42 99 82 / 72%);
+  color: #fff4c9;
+  padding: 3px 5px;
+  font-size: 0.76rem;
+}
+
+.c-tavern-gamble__seats {
+  position: absolute;
+  inset: 58px 34px 132px;
+  pointer-events: none;
+}
+
+.c-tavern-gamble__seat {
+  position: absolute;
+  width: min(220px, 34%);
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  color: #f8edc8;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 48%);
+}
+
+.c-tavern-gamble__seat-discards {
+  min-height: 48px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.c-tavern-gamble__seat--0 {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.c-tavern-gamble__seat--1 {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.c-tavern-gamble__seat--2 {
+  top: 50%;
+  right: -44px;
+  transform: translateY(-50%);
+}
+
+.c-tavern-gamble__seat--3 {
+  top: 50%;
+  left: -44px;
+  transform: translateY(-50%);
+}
+
+.c-tavern-gamble__center {
+  position: absolute;
+  inset: 96px 150px 196px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  border: 1px solid rgb(224 255 232 / 22%);
+  border-radius: 8px;
+  background: rgb(0 0 0 / 10%);
+}
+
+.c-tavern-gamble__center--long {
+  inset: 100px 180px 226px;
+  align-content: center;
+}
+
+.c-tavern-gamble__public-discards {
+  min-height: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  max-width: min(100%, 520px);
+}
+
+.c-tavern-gamble__countdown {
+  color: #ffe5a8;
+  font-size: 0.92rem;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 42%);
+}
+
+.c-tavern-gamble__center p,
+.c-tavern-gamble__hand p {
+  margin: 0;
+  color: #f7f0cf;
+  font-weight: 700;
+}
+
+.c-tavern-gamble__tile {
+  --tile-shift-x: 0px;
+  --tile-lift-y: 0px;
+
+  min-width: 52px;
+  min-height: 68px;
+  border: 1px solid #7a552d;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fff8df, #ead19a);
+  color: #3b2817;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 42%);
+  transform: translate(var(--tile-shift-x), var(--tile-lift-y));
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 140ms ease,
+    box-shadow 140ms ease;
+  will-change: transform;
+}
+
+.c-tavern-gamble__discard-strip .c-tavern-gamble__tile {
+  min-width: 34px;
+  min-height: 44px;
+  font-size: 0.78rem;
+}
+
+.c-tavern-gamble__tile--hand {
+  min-width: 62px;
+  min-height: 80px;
+  cursor: pointer;
+}
+
+.c-tavern-gamble__tile--public {
+  border-color: #d6aa3f;
+  cursor: pointer;
+}
+
+.c-tavern-gamble__tile--hand-public {
+  border-color: #8d6f29;
+  background: linear-gradient(180deg, #ccb36a, #876d30);
+  color: #24160a;
+  box-shadow: inset 0 0 0 2px rgb(255 235 182 / 22%);
+}
+
+.c-tavern-gamble__tile.is-selected {
+  outline: 3px solid #f7d982;
+
+  --tile-lift-y: -3px;
+}
+
+.c-tavern-gamble__tile.is-spent {
+  opacity: 0.32;
+  filter: grayscale(0.5);
+}
+
+.c-tavern-gamble__tile.is-covered {
+  background: linear-gradient(180deg, #4b3726, #251914);
+  color: #f7d982;
+  opacity: 0.9;
+}
+
+.c-tavern-gamble__choice {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.c-tavern-gamble__choice span {
+  font-size: 0.84rem;
+  opacity: 0.78;
+}
+
+.c-tavern-gamble__tile--hand[draggable="true"] {
+  cursor: grab;
+}
+
+.c-tavern-gamble__tile--hand[aria-disabled="true"] {
+  opacity: 0.82;
+}
+
+.c-tavern-gamble__tile--discard {
+  min-width: 38px;
+  min-height: 50px;
+  font-size: 0.82rem;
+}
+
+.c-tavern-gamble__tile--discard-public {
+  background: linear-gradient(180deg, #988f60 0%, #7d744c 100%);
+  border-color: #d6c57a;
+  color: #f6efcf;
+  box-shadow: inset 0 0 0 1px rgba(82, 70, 30, 0.28);
+}
+
+.c-tavern-gamble__tiles--public {
+  justify-content: center;
+}
+
+.c-tavern-gamble__tiles--hand {
+  justify-content: center;
+}
+
+.c-tavern-gamble__tiles--long-window {
+  min-height: 94px;
+  align-content: center;
+}
+
+.c-tavern-gamble__tile.is-house-drag-origin {
+  opacity: 0.22;
+}
+
+.c-tavern-gamble__tile.is-house-drop-before {
+  --tile-shift-x: 16px;
+}
+
+.c-tavern-gamble__tile.is-house-drop-after {
+  --tile-shift-x: -16px;
+}
+
+.c-tavern-gamble__tile--hand.is-entering {
+  animation: tavern-gamble-public-fly-in 0.52s ease-out both;
+  animation-delay: calc(var(--tile-enter-index, 0) * 70ms);
+}
+
+.c-tavern-gamble__play-slot {
+  min-width: min(100%, 360px);
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 8px 10px;
+  border: 1px dashed rgb(255 239 184 / 46%);
+  border-radius: 8px;
+  background: rgb(0 0 0 / 16%);
+  color: #f8edc8;
+}
+
+.c-tavern-gamble__play-slot.is-hidden,
+.c-tavern-gamble-overlay--long [data-house-action="gamble-clear-play"],
+.c-tavern-gamble-overlay--long [data-house-action="gamble-confirm-play"],
+.c-tavern-gamble-overlay--long [data-house-action="gamble-pass-play"] {
+  display: none;
+}
+
+.c-tavern-gamble__play-slot strong,
+.c-tavern-gamble__play-slot small,
+.c-tavern-gamble__slot-empty {
+  color: #f8edc8;
+}
+
+.c-tavern-gamble__slot-empty {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 0.88rem;
+}
+
+.c-tavern-gamble__hand-on-felt {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 82px;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 14%);
+}
+
+.c-tavern-gamble__log {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  max-height: 62px;
+  overflow: auto;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 18%);
+  padding: 6px 8px;
+  color: #f8edc8;
+}
+
+.c-tavern-gamble__log p {
+  margin: 0 0 4px;
+}
+
+.c-tavern-gamble__showdown > div {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.c-tavern-gamble__showdown {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 92px;
+  z-index: 10;
+  max-height: min(42vh, 360px);
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgb(97 63 30 / 48%);
+  border-radius: 8px;
+  background: rgb(255 245 218 / 94%);
+  box-shadow: 0 14px 30px rgb(38 26 14 / 32%);
+}
+
+.c-tavern-gamble__showdown header,
+.c-tavern-gamble__showdown-detail,
+.c-tavern-gamble__showdown-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.c-tavern-gamble__showdown header {
+  justify-content: space-between;
+}
+
+.c-tavern-gamble__showdown-detail span {
+  color: #5c3e22;
+  font-size: 0.86rem;
+}
+
+.c-tavern-gamble__showdown-tiles .c-tavern-gamble__tile {
+  min-width: 38px;
+  min-height: 50px;
+  font-size: 0.82rem;
+}
+
+.c-tavern-gamble__showdown .is-winner {
+  background: #f7d982;
+}
+
+.c-tavern-gamble__actions {
+  justify-content: center;
+  max-height: 96px;
+  overflow: auto;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgb(255 230 168 / 18%);
+  background:
+    linear-gradient(180deg, rgb(18 30 25 / 94%), rgb(20 13 8 / 96%)),
+    rgb(18 30 25);
+  box-shadow: 0 -10px 24px rgb(0 0 0 / 22%);
+}
+
+.c-tavern-gamble__meld-action.is-flashing {
+  animation: tavern-gamble-meld-flash 0.75s ease-in-out infinite alternate;
+  border-color: #f7d982;
+  box-shadow: 0 0 0 2px rgb(247 217 130 / 28%), 0 0 14px rgb(247 217 130 / 46%);
+}
+
+@keyframes tavern-gamble-meld-flash {
+  from {
+    filter: brightness(1);
+    transform: translateY(0);
+  }
+
+  to {
+    filter: brightness(1.18);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes tavern-gamble-public-fly-in {
+  from {
+    opacity: 0;
+    transform: translateY(-22vh) scale(0.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (width <= 760px) {
+  .c-tavern-gamble {
+    overflow: hidden;
+  }
+
+  .c-tavern-gamble__table,
+  .c-tavern-gamble__hand {
+    grid-template-columns: 1fr;
+  }
+
+  .c-tavern-gamble__table {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .c-tavern-gamble__sidebar {
+    max-height: 132px;
+    display: flex;
+    gap: 8px;
+    overflow: auto hidden;
+    padding: 10px;
+    border-right: 0;
+    border-bottom: 1px solid rgb(255 230 168 / 18%);
+  }
+
+  .c-tavern-gamble__sidebar h3 {
+    position: sticky;
+    left: 0;
+    min-width: 120px;
+    margin: 0;
+    background: rgb(18 29 24 / 96%);
+  }
+
+  .c-tavern-gamble__player {
+    min-width: 180px;
+  }
+
+  .c-tavern-gamble__felt {
+    min-height: 0;
+  }
+
+  .c-tavern-gamble__center {
+    inset: 78px 16px 162px;
+  }
+
+  .c-tavern-gamble__center--long {
+    inset: 72px 18px 206px;
+  }
+
+  .c-tavern-gamble__seats {
+    display: none;
+  }
+
+  .c-tavern-gamble__hand-on-felt {
+    bottom: 84px;
+  }
+
+  .c-tavern-gamble__actions {
+    max-height: 118px;
+    justify-content: flex-start;
+  }
+}
+
+.view-house-market {
+  --grain-shop-scene-bg: url("../../ui/background/dangpu.png");
+  --grain-shop-shopkeeper-portrait: url("../../ui/npc/zhanggui.png");
+  --grain-shop-shopkeeper-avatar: url("../../ui/npc/zhanggui(touxiang).png");
+}
+
+.view-house-tea-house::after {
+  background:
+    radial-gradient(circle at 76% 16%, rgb(255 255 255 / 16%), transparent 22%),
+    linear-gradient(180deg, rgb(74 53 31 / 8%) 0%, rgb(87 57 28 / 0%) 30%, rgb(44 29 20 / 18%) 66%, rgb(20 14 10 / 72%) 100%);
+}
+
+.c-tea-house-npc-idle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.c-tea-house-npc-idle .c-grain-shop-npc-idle__button.is-selected {
+  filter: brightness(1.04);
+  box-shadow: 0 10px 24px rgb(110 64 19 / 28%);
+}
+
+.c-tea-house-npc-idle__title {
+  font-size: 0.82rem;
+  color: #5d4126;
+}
+
+.c-tea-house-dialogue .c-grain-shop-dialogue__text {
+  min-height: 104px;
+}
+
+.c-tea-house-debate-overlay {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+  background:
+    linear-gradient(180deg, rgb(12 8 6 / 34%), rgb(10 7 5 / 70%)),
+    linear-gradient(180deg, #4d3221 0%, #2d1c14 58%, #21140f 100%);
+  backdrop-filter: blur(3px);
+}
+
+.c-tea-house-debate {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #ead9b2;
+}
+
+.c-tea-house-debate::before,
+.c-tea-house-debate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.c-tea-house-debate::before {
+  background:
+    radial-gradient(circle at 50% 27%, rgb(255 219 152 / 10%), transparent 19%),
+    linear-gradient(180deg, rgb(255 225 169 / 5%), transparent 18%),
+    linear-gradient(180deg, #513527 0%, #342116 60%, #281912 100%);
+}
+
+.c-tea-house-debate::after {
+  background:
+    linear-gradient(180deg, rgb(14 9 7 / 0%) 0%, rgb(14 9 7 / 0%) 68%, rgb(11 7 5 / 46%) 68%, rgb(11 7 5 / 62%) 100%),
+    linear-gradient(90deg, rgb(0 0 0 / 18%), transparent 10%, transparent 90%, rgb(0 0 0 / 18%));
+}
+
+.c-tea-house-debate__main {
+  position: absolute;
+  inset: 18px 24px 246px;
+}
+
+.c-tea-house-debate__portrait,
+.c-tea-house-debate__board,
+.c-tea-house-debate__timer,
+.c-tea-house-debate__topic-row,
+.c-tea-house-debate__confirm {
+  position: absolute;
+  z-index: 1;
+}
+
+.c-tea-house-debate__portrait {
+  top: 10px;
+  width: 288px;
+  height: 542px;
+}
+
+.c-tea-house-debate__portrait--player {
+  left: 0;
+}
+
+.c-tea-house-debate__portrait--npc {
+  right: 0;
+}
+
+.c-tea-house-debate__side-label {
+  position: absolute;
+  top: 14px;
+  width: 54px;
+  height: 148px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.c-tea-house-debate__side-label--player {
+  left: -2px;
+  background-image: var(--tea-house-debate-player-label);
+}
+
+.c-tea-house-debate__side-label--npc {
+  right: -2px;
+  background-image: var(--tea-house-debate-npc-label);
+}
+
+.c-tea-house-debate__portrait-frame {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 18px 20px rgb(0 0 0 / 26%));
+}
+
+.c-tea-house-debate__portrait-frame--player {
+  background-image: var(--tea-house-debate-player-frame);
+}
+
+.c-tea-house-debate__portrait-frame--npc {
+  background-image: var(--tea-house-debate-npc-frame);
+}
+
+.c-tea-house-debate__board {
+  top: 0;
+  left: 50%;
+  width: 860px;
+  height: 566px;
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__board-frame {
+  position: absolute;
+  inset: 0;
+  background: center / 100% 100% no-repeat var(--tea-house-debate-board);
+  filter: drop-shadow(0 22px 26px rgb(0 0 0 / 32%));
+}
+
+.c-tea-house-debate__title-medallion {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 152px;
+  height: 152px;
+  background: center / contain no-repeat var(--tea-house-debate-title-medallion);
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__spirit {
+  position: absolute;
+  top: 14px;
+  width: 174px;
+  height: 108px;
+  padding-top: 12px;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  background: center / 100% 100% no-repeat var(--tea-house-debate-spirit-panel);
+}
+
+.c-tea-house-debate__spirit--player {
+  left: 120px;
+}
+
+.c-tea-house-debate__spirit--npc {
+  right: 120px;
+}
+
+.c-tea-house-debate__spirit-label {
+  color: #f0d7a0;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 36%);
+}
+
+.c-tea-house-debate__spirit-value {
+  margin-top: 9px;
+  color: #f5e2b8;
+  font-family: var(--font-title);
+  font-size: 3rem;
+  line-height: 1;
+  text-shadow: 0 2px 1px rgb(0 0 0 / 32%);
+}
+
+.c-tea-house-debate__meta {
+  position: absolute;
+  top: 102px;
+  left: 50%;
+  display: inline-flex;
+  gap: 22px;
+  padding: 8px 18px;
+  color: #d5b988;
+  font-size: 0.92rem;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 36%);
+  background: rgb(23 14 10 / 22%);
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__meta strong {
+  color: #f1ddaf;
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+}
+
+.c-tea-house-debate__facedown {
+  position: absolute;
+  top: 170px;
+  width: 116px;
+  height: 200px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.c-tea-house-debate__facedown--left {
+  left: 192px;
+  background-image: var(--tea-house-debate-facedown-left);
+}
+
+.c-tea-house-debate__facedown--right {
+  right: 192px;
+  background-image: var(--tea-house-debate-facedown-right);
+}
+
+.c-tea-house-debate__summary {
+  position: absolute;
+  left: 50%;
+  top: 182px;
+  width: 430px;
+  min-height: 102px;
+  padding: 18px 34px 20px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  color: #5b3924;
+  text-align: center;
+  background: center / 100% 100% no-repeat var(--tea-house-debate-summary-panel);
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__summary p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.c-tea-house-debate__selected-slot {
+  position: absolute;
+  left: 50%;
+  bottom: 92px;
+  width: 126px;
+  height: 180px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border: 1px dashed rgb(232 205 150 / 38%);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgb(19 12 9 / 8%), rgb(19 12 9 / 24%)),
+    rgb(255 240 212 / 5%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 225 169 / 8%),
+    0 10px 16px rgb(0 0 0 / 18%);
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__selected-card {
+  width: 100%;
+  max-width: 108px;
+  pointer-events: none;
+}
+
+.c-tea-house-debate__selected-placeholder {
+  color: #d9be8f;
+  font-size: 0.92rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 32%);
+}
+
+.c-tea-house-debate__timer {
+  left: 50%;
+  bottom: 195px;
+  width: 132px;
+  height: 132px;
+  transform: translateX(-50%);
+}
+
+.c-tea-house-debate__timer-face {
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat var(--tea-house-debate-timer);
+  filter:
+    drop-shadow(0 0 22px rgb(255 164 78 / 18%))
+    drop-shadow(0 10px 16px rgb(0 0 0 / 24%));
+}
+
+.c-tea-house-debate__timer-value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffe6a8;
+  font-family: var(--font-title);
+  font-size: 3.1rem;
+  line-height: 1;
+  text-shadow:
+    0 0 8px rgb(255 181 92 / 36%),
+    0 2px 2px rgb(0 0 0 / 36%);
+}
+
+.c-tea-house-debate__topic-row {
+  left: 180px;
+  right: 318px;
+  bottom: 26px;
+  display: flex;
+  gap: 22px;
+  align-items: end;
+  justify-content: flex-start;
+}
+
+.c-tea-house-topic-card {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-yi);
+
+  position: relative;
+  width: 140px;
+  aspect-ratio: 151 / 259;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.c-tea-house-topic-card:hover,
+.c-tea-house-topic-card:focus-visible {
+  transform: translateY(-8px);
+  filter: brightness(1.08);
+}
+
+.c-tea-house-topic-card.is-selected {
+  transform: translateY(-14px);
+  filter:
+    brightness(1.12)
+    drop-shadow(0 0 14px rgb(255 204 128 / 24%));
+}
+
+.c-tea-house-topic-card:focus-visible {
+  outline: 2px solid rgb(244 207 143 / 78%);
+  outline-offset: 4px;
+}
+
+.c-tea-house-topic-card__face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: center / 100% 100% no-repeat var(--tea-house-topic-card-image);
+  filter: drop-shadow(0 10px 12px rgb(0 0 0 / 24%));
+}
+
+.c-tea-house-topic-card--yi {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-yi);
+}
+
+.c-tea-house-topic-card--li {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-li);
+}
+
+.c-tea-house-topic-card--ming {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-ming);
+}
+
+.c-tea-house-topic-card--qing {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-qing);
+}
+
+.c-tea-house-topic-card--shi {
+  --tea-house-topic-card-image: var(--tea-house-debate-topic-shi);
+}
+
+.c-tea-house-topic-card--back {
+  --tea-house-topic-card-image: var(--tea-house-debate-facedown-left);
+}
+
+.c-tea-house-debate__confirm {
+  right: 52px;
+  bottom: 32px;
+  width: 236px;
+  height: 236px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
+}
+
+.c-tea-house-debate__confirm:hover,
+.c-tea-house-debate__confirm:focus-visible {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.c-tea-house-debate__confirm:focus-visible {
+  outline: 2px solid rgb(244 207 143 / 72%);
+  outline-offset: 6px;
+}
+
+.c-tea-house-debate__confirm:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.c-tea-house-debate__confirm:disabled:hover,
+.c-tea-house-debate__confirm:disabled:focus-visible {
+  transform: none;
+}
+
+.c-tea-house-debate__confirm-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: center / contain no-repeat var(--tea-house-debate-confirm);
+  filter: drop-shadow(0 14px 18px rgb(0 0 0 / 24%));
+}
+
+.c-tea-house-modal {
+  width: min(100%, 520px);
+}
+
+@media (width <= 1100px) {
+  .c-tea-house-debate__main {
+    inset: 12px 16px 212px;
+  }
+
+  .c-tea-house-debate__portrait {
+    width: 220px;
+    height: 414px;
+  }
+
+  .c-tea-house-debate__board {
+    width: 660px;
+    height: 435px;
+  }
+
+  .c-tea-house-debate__topic-row {
+    left: 90px;
+    right: 240px;
+    gap: 14px;
+  }
+
+  .c-tea-house-topic-card {
+    width: 106px;
+  }
+
+  .c-tea-house-debate__confirm {
+    right: 20px;
+    width: 188px;
+    height: 188px;
+  }
+}
+
+@media (width <= 760px) {
+  .c-tea-house-debate__main {
+    position: relative;
+    inset: auto;
+    padding: 20px 12px 0;
+  }
+
+  .c-tea-house-debate__portrait {
+    display: none;
+  }
+
+  .c-tea-house-debate__board,
+  .c-tea-house-debate__timer,
+  .c-tea-house-debate__topic-row,
+  .c-tea-house-debate__confirm {
+    position: relative;
+    inset: auto;
+    transform: none;
+  }
+
+  .c-tea-house-debate__board {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 860 / 566;
+    margin: 0 auto;
+  }
+
+  .c-tea-house-debate__topic-row {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .c-tea-house-topic-card {
+    width: min(28vw, 110px);
+  }
+
+  .c-tea-house-debate__timer {
+    margin: 8px auto 0;
+  }
+
+  .c-tea-house-debate__confirm {
+    width: 164px;
+    height: 164px;
+    margin: 0 auto 18px;
+    display: block;
+  }
+
+  .c-tea-house-debate__meta {
+    gap: 10px;
+    padding-inline: 12px;
+    font-size: 0.82rem;
+  }
+}

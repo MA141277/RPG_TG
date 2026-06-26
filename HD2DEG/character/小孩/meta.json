@@ -1,0 +1,17 @@
+{
+  "id": "小孩",
+  "kind": "character",
+  "title": "小孩",
+  "prompt": "小孩",
+  "tags": [],
+  "createdAt": "2026-04-29T10:49:38+08:00",
+  "updatedAt": "2026-04-29T10:49:38+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/小孩/sheet.png",
+    "preview": "character/小孩/preview.png"
+  }
+}

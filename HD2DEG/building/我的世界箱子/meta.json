@@ -1,0 +1,28 @@
+{
+  "id": "我的世界箱子",
+  "kind": "building",
+  "title": "我的世界箱子",
+  "prompt": "我的世界箱子",
+  "tags": [
+    "container"
+  ],
+  "widthTiles": 4,
+  "drawRoad": false,
+  "createdAt": "2026-04-28T09:01:31+08:00",
+  "updatedAt": "2026-04-28T09:01:31+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 64,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true
+  },
+  "files": {
+    "front": "building/我的世界箱子/front.png",
+    "side": "building/我的世界箱子/side.png",
+    "top": "building/我的世界箱子/top.png",
+    "preview": "building/我的世界箱子/preview.png",
+    "previewProcessed": "building/我的世界箱子/preview-processed.png"
+  }
+}

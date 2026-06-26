@@ -1,0 +1,1852 @@
+{
+  "total": 361,
+  "withLocalizedName": 361,
+  "withBiography": 296,
+  "withEpithet": 164,
+  "byFaction": {
+    "slave": 56,
+    "byzantium": 40,
+    "papal_states": 25,
+    "scotland": 19,
+    "turks": 19,
+    "egypt": 19,
+    "spain": 17,
+    "sicily": 16,
+    "venice": 16,
+    "hre": 14,
+    "denmark": 13,
+    "moors": 11,
+    "france": 10,
+    "kazakh": 10,
+    "portugal": 9,
+    "milan": 8,
+    "russia": 8,
+    "poland": 7,
+    "timurids": 7,
+    "saxons": 6,
+    "aztecs": 6,
+    "england": 6,
+    "normans": 6,
+    "hungary": 5,
+    "mongols": 4,
+    "maratha": 4
+  },
+  "byRole": {
+    "named character": 291,
+    "general": 65,
+    "admiral": 2,
+    "spy": 1,
+    "diplomat": 1,
+    "merchant": 1
+  },
+  "nearDadu": [
+    {
+      "id": "yuanmo.character.QnHuangtaiji_QsAixinjueluo",
+      "sourceName": "QnHuangtaiji QsAixinjueluo",
+      "name": "妥懽帖睦尔孛儿只斤",
+      "faction": "byzantium",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": true,
+      "isHeir": false,
+      "age": 41,
+      "x": 333,
+      "y": 363,
+      "portrait": "yuan",
+      "battleModel": "Manchu_huangtaiji",
+      "traits": [
+        {
+          "id": "LieZhuan-fengchen-31",
+          "level": 1
+        },
+        {
+          "id": "Factionleader",
+          "level": 1
+        },
+        {
+          "id": "NATION03",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 3
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 3
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 3
+        },
+        {
+          "id": "CHARACTER_C",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_D",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_I",
+          "level": 1
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 1
+        },
+        {
+          "id": "GOODFARTHER",
+          "level": 1
+        },
+        {
+          "id": "LEADERWW",
+          "level": 7
+        },
+        {
+          "id": "ARM_A_SEIATT",
+          "level": 2
+        },
+        {
+          "id": "MAN_A_MAN",
+          "level": 6
+        },
+        {
+          "id": "MAN_A_TRA",
+          "level": 3
+        },
+        {
+          "id": "ARM_A_MOV",
+          "level": 1
+        },
+        {
+          "id": "ARM_A_REC",
+          "level": 3
+        },
+        {
+          "id": "MAN_A_PUBSEC",
+          "level": 3
+        },
+        {
+          "id": "MAN_A_CON",
+          "level": 2
+        },
+        {
+          "id": "ARM_A_PER",
+          "level": 3
+        },
+        {
+          "id": "CHA_A_CHIB",
+          "level": 6
+        }
+      ],
+      "biographyTraitId": "LieZhuan-fengchen-31",
+      "biography": "元顺帝孛儿只斤·妥懽帖睦尔（1320年—1370\\n",
+      "epithet": "☆〖元〗惠宗皇帝"
+    },
+    {
+      "id": "yuanmo.character.QnHaoge_QsAixinjueluo",
+      "sourceName": "QnHaoge QsAixinjueluo",
+      "name": "爱猷识理答腊孛儿只斤",
+      "faction": "byzantium",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": true,
+      "age": 24,
+      "x": 329,
+      "y": 363,
+      "portrait": "yuan01",
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-fengchen-32",
+          "level": 1
+        },
+        {
+          "id": "Factionheir",
+          "level": 1
+        },
+        {
+          "id": "NATION03",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 2
+        },
+        {
+          "id": "TALENT_D",
+          "level": 3
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_C",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_D",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_B",
+          "level": 1
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 3
+        },
+        {
+          "id": "GOODFARTHER",
+          "level": 1
+        },
+        {
+          "id": "ARM_B_INF",
+          "level": 1
+        },
+        {
+          "id": "ARM_B_SEIATT",
+          "level": 2
+        },
+        {
+          "id": "ARM_B_ROB",
+          "level": 1
+        },
+        {
+          "id": "CHA_B_CHIB",
+          "level": 3
+        },
+        {
+          "id": "ARM_B_CAV",
+          "level": 2
+        },
+        {
+          "id": "ARM_B_MOV",
+          "level": 3
+        },
+        {
+          "id": "CHA_B_LOYA",
+          "level": 8
+        }
+      ],
+      "biographyTraitId": "LieZhuan-fengchen-32",
+      "biography": "元昭宗孛儿只斤·爱猷识理答腊（1339年—1378\\n",
+      "epithet": "☆〖元〗皇太子"
+    },
+    {
+      "id": "yuanmo.character.QnYebushu_QsAixinjueluo",
+      "sourceName": "QnYebushu QsAixinjueluo",
+      "name": "脱古思帖木儿孛儿只斤",
+      "faction": "byzantium",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 16,
+      "x": 321,
+      "y": 380,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-fengchen-34",
+          "level": 1
+        },
+        {
+          "id": "NATION03",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_E",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "GOODFARTHER",
+          "level": 1
+        }
+      ],
+      "biographyTraitId": "LieZhuan-fengchen-34",
+      "biography": "孛儿只斤·脱古思帖木儿（1342年—1388年）\\n",
+      "epithet": "☆〖元〗益王"
+    },
+    {
+      "id": "yuanmo.character.QnAbatai_QsAixinjueluo",
+      "sourceName": "QnAbatai QsAixinjueluo",
+      "name": "阿鲁辉帖木儿孛儿只斤",
+      "faction": "byzantium",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 44,
+      "x": 351,
+      "y": 383,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-fengchen-33",
+          "level": 1
+        },
+        {
+          "id": "NATION03",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 3
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_B",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 2
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 3
+        },
+        {
+          "id": "GOODFARTHER",
+          "level": 1
+        },
+        {
+          "id": "ARM_B_CAV",
+          "level": 3
+        },
+        {
+          "id": "ARM_B_SEIATT",
+          "level": 1
+        },
+        {
+          "id": "ARM_B_ROB",
+          "level": 1
+        },
+        {
+          "id": "CHA_B_CHIB",
+          "level": 2
+        },
+        {
+          "id": "CHA_B_LOYA",
+          "level": 7
+        },
+        {
+          "id": "ARM_B_ATTACK",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-fengchen-33",
+      "biography": "阿鲁辉帖木儿，灭里大王之裔也。初，太宗生\\n",
+      "epithet": "☆〖元〗阳翟王"
+    },
+    {
+      "id": "yuanmo.character.QnWencheng_QsFan",
+      "sourceName": "QnWencheng QsFan",
+      "name": "祖仁陈",
+      "faction": "byzantium",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 46,
+      "x": 362,
+      "y": 374,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-fengchen-37",
+          "level": 1
+        },
+        {
+          "id": "NATION12",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 3
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 3
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_I",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_E",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_D",
+          "level": 1
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 1
+        },
+        {
+          "id": "GOODKID",
+          "level": 1
+        },
+        {
+          "id": "CHA_A_CHIB",
+          "level": 6
+        },
+        {
+          "id": "CHA_A_LOYA",
+          "level": 8
+        },
+        {
+          "id": "MAN_A_MAN",
+          "level": 8
+        },
+        {
+          "id": "MAN_A_CON",
+          "level": 4
+        },
+        {
+          "id": "MAN_A_TRA",
+          "level": 2
+        },
+        {
+          "id": "MAN_A_FAR",
+          "level": 3
+        }
+      ],
+      "biographyTraitId": "LieZhuan-fengchen-37",
+      "biography": "陈祖仁（1314—1368）汴梁（今河南开封）人\\n",
+      "epithet": "☆〖元〗中书省参议"
+    },
+    {
+      "id": "yuanmo.character.QnChenchou",
+      "sourceName": "QnChenchou",
+      "name": "庆童",
+      "faction": "byzantium",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 50,
+      "x": 370,
+      "y": 366,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-fengchen-38",
+          "level": 1
+        },
+        {
+          "id": "NATION02",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 3
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 2
+        },
+        {
+          "id": "TALENT_D",
+          "level": 3
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_I",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 1
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 1
+        },
+        {
+          "id": "GOODKID",
+          "level": 1
+        },
+        {
+          "id": "ARM_A_ROB",
+          "level": 1
+        },
+        {
+          "id": "CHA_A_CHIB",
+          "level": 4
+        },
+        {
+          "id": "CHA_A_LOYA",
+          "level": 7
+        },
+        {
+          "id": "ARM_A_SEIDEF",
+          "level": 3
+        },
+        {
+          "id": "ARM_A_INF",
+          "level": 2
+        },
+        {
+          "id": "MAN_A_MAN",
+          "level": 6
+        },
+        {
+          "id": "MAN_A_CON",
+          "level": 4
+        },
+        {
+          "id": "MAN_A_FAR",
+          "level": 1
+        }
+      ],
+      "biographyTraitId": "LieZhuan-fengchen-38",
+      "biography": "庆童（？—1368）康里氏，字明德，元康里人\\n",
+      "epithet": "☆〖元〗江南御史大夫"
+    },
+    {
+      "id": "yuanmo.character.QnEbilon",
+      "sourceName": "QnEbilon",
+      "name": "陈野先",
+      "faction": "byzantium",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 30,
+      "x": 372,
+      "y": 376,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "NATION07",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 2
+        },
+        {
+          "id": "TALENT_D",
+          "level": 3
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_D",
+          "level": 1
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 1
+        },
+        {
+          "id": "ARM_A_ROB",
+          "level": 1
+        },
+        {
+          "id": "ARM_A_ATTACK",
+          "level": 2
+        },
+        {
+          "id": "CHA_A_CHIA",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "NATION07",
+      "biography": "华北汉人",
+      "epithet": null
+    },
+    {
+      "id": "yuanmo.character.QnTulai_QsAixinjueluo",
+      "sourceName": "QnTulai QsAixinjueluo",
+      "name": "达理麻识理孛儿只斤",
+      "faction": "byzantium",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 43,
+      "x": 317,
+      "y": 395,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "NATION03",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 2
+        },
+        {
+          "id": "TALENT_D",
+          "level": 3
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_G",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_B",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 1
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 3
+        },
+        {
+          "id": "ARM_B_ATTACK",
+          "level": 3
+        },
+        {
+          "id": "CHA_B_LOYA",
+          "level": 5
+        }
+      ],
+      "biographyTraitId": "NATION03",
+      "biography": "东蒙古人",
+      "epithet": null
+    },
+    {
+      "id": "yuanmo.character.CnZicheng_CsLi",
+      "sourceName": "CnZicheng CsLi",
+      "name": "孛罗帖木儿散只兀氏",
+      "faction": "moors",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": true,
+      "isHeir": false,
+      "age": 37,
+      "x": 306,
+      "y": 365,
+      "portrait": null,
+      "battleModel": "Lizicheng_officer",
+      "traits": [
+        {
+          "id": "LieZhuan-YANWANG-13",
+          "level": 1
+        },
+        {
+          "id": "NATION08",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 3
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-YANWANG-13",
+      "biography": "孛罗帖木儿（？—1365年），散只兀氏，蒙古\\n",
+      "epithet": "〖元〗河南行省平章政事"
+    },
+    {
+      "id": "yuanmo.character.CnGuo_CsLi",
+      "sourceName": "CnGuo CsLi",
+      "name": "答失帖木儿散只兀氏",
+      "faction": "moors",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": true,
+      "age": 19,
+      "x": 324,
+      "y": 357,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "NATION08",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 3
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "NATION08",
+      "biography": "西北汉人",
+      "epithet": null
+    },
+    {
+      "id": "yuanmo.character.CnYigong_CsGao",
+      "sourceName": "CnYigong CsGao",
+      "name": "脱高",
+      "faction": "moors",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 34,
+      "x": 320,
+      "y": 368,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "NATION08",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 3
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "NATION08",
+      "biography": "西北汉人",
+      "epithet": null
+    },
+    {
+      "id": "yuanmo.character.CnRuuyi_CsWei",
+      "sourceName": "CnRuuyi CsWei",
+      "name": "中立魏",
+      "faction": "moors",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 26,
+      "x": 332,
+      "y": 352,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "NATION08",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 3
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "NATION08",
+      "biography": "西北汉人",
+      "epithet": null
+    },
+    {
+      "id": "yuanmo.character.CnRuukui_CsAi",
+      "sourceName": "CnRuukui CsAi",
+      "name": "老的沙罕禄鲁氏",
+      "faction": "moors",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 26,
+      "x": 319,
+      "y": 355,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-YANWANG-14",
+          "level": 1
+        },
+        {
+          "id": "NATION08",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 3
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-YANWANG-14",
+      "biography": "老的沙（？－1365年），突厥罕禄鲁氏，威宁\\n",
+      "epithet": "〖元〗御史大夫"
+    },
+    {
+      "id": "yuanmo.character.J-1302-MiHeng",
+      "sourceName": "J-1302-MiHeng",
+      "name": "扩廓帖木儿",
+      "faction": "turks",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": true,
+      "age": 21,
+      "x": 314,
+      "y": 327,
+      "portrait": "yuan03",
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-beitiao-01",
+          "level": 1
+        },
+        {
+          "id": "NATION04",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 2
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 1
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-beitiao-01",
+      "biography": "扩廓帖木儿。蒙古伯也台部人，生于光州固始\\n",
+      "epithet": "☆〖元〗河南王"
+    },
+    {
+      "id": "yuanmo.character.J-1303-WangXiu",
+      "sourceName": "J-1303-WangXiu",
+      "name": "脱因帖木儿",
+      "faction": "turks",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 19,
+      "x": 320,
+      "y": 330,
+      "portrait": "yuan04",
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-beitiao-02",
+          "level": 1
+        },
+        {
+          "id": "NATION04",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 2
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 1
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-beitiao-02",
+      "biography": "脱因帖木儿是当时的元朝名将扩廓帖木儿（又\\n",
+      "epithet": "☆〖元〗山东参知政事"
+    },
+    {
+      "id": "yuanmo.character.M-13-0001-Xm",
+      "sourceName": "M-13-0001-Xm",
+      "name": "白锁住",
+      "faction": "turks",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 31,
+      "x": 319,
+      "y": 340,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-manzu-02",
+          "level": 1
+        },
+        {
+          "id": "NATION09",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 2
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 1
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-manzu-02",
+      "biography": "白锁住，察罕帖木儿部将，察罕帖木儿遇刺身\\n",
+      "epithet": "☆〖元〗万夫长"
+    },
+    {
+      "id": "yuanmo.character.M-13-0003-Xm",
+      "sourceName": "M-13-0003-Xm",
+      "name": "贺宗哲",
+      "faction": "turks",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 14,
+      "x": 335,
+      "y": 342,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-manzu-04",
+          "level": 1
+        },
+        {
+          "id": "NATION07",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 2
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 1
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-manzu-04",
+      "biography": "贺宗哲，元末将领。元河南王扩廓帖木儿(王\\n",
+      "epithet": "☆〖元〗平章"
+    },
+    {
+      "id": "yuanmo.character.M-13-0004-Xm",
+      "sourceName": "M-13-0004-Xm",
+      "name": "豁鼻马",
+      "faction": "turks",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 25,
+      "x": 340,
+      "y": 344,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-manzu-05",
+          "level": 1
+        },
+        {
+          "id": "NATION03",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 2
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 1
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-manzu-05",
+      "biography": "豁鼻马，元末将领。元河南王扩廓帖木儿(王\\n",
+      "epithet": "☆〖元〗太原副指挥使"
+    },
+    {
+      "id": "yuanmo.character.M-13-0006-Xm",
+      "sourceName": "M-13-0006-Xm",
+      "name": "虎林赤",
+      "faction": "turks",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 28,
+      "x": 359,
+      "y": 348,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-manzu-07",
+          "level": 1
+        },
+        {
+          "id": "NATION03",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 3
+        },
+        {
+          "id": "HIDEMDF",
+          "level": 2
+        },
+        {
+          "id": "HIDEQC",
+          "level": 2
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 1
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_A",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 2
+        }
+      ],
+      "biographyTraitId": "LieZhuan-manzu-07",
+      "biography": "虎林赤，临汾郡公丑妮子子，燕之大兴人也，\\n",
+      "epithet": "☆〖元〗宣徽使"
+    },
+    {
+      "id": "yuanmo.character.M-13-0013-Xm",
+      "sourceName": "M-13-0013-Xm",
+      "name": "王宣",
+      "faction": "turks",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 43,
+      "x": 348,
+      "y": 336,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-YANWANG-10",
+          "level": 1
+        },
+        {
+          "id": "NATION07",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 2
+        },
+        {
+          "id": "TALENT_D",
+          "level": 3
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_G",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_B",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_J",
+          "level": 1
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 3
+        },
+        {
+          "id": "ARM_B_ATTACK",
+          "level": 3
+        },
+        {
+          "id": "CHA_B_LOYA",
+          "level": 5
+        }
+      ],
+      "biographyTraitId": "LieZhuan-YANWANG-10",
+      "biography": "王宣（？——1368）元末明初人，沂州守将。\\n",
+      "epithet": "〖元〗沂州守将"
+    },
+    {
+      "id": "yuanmo.character.M-13-0014-Xm",
+      "sourceName": "M-13-0014-Xm",
+      "name": "普颜不花",
+      "faction": "turks",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 37,
+      "x": 321,
+      "y": 347,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-YANWANG-11",
+          "level": 1
+        },
+        {
+          "id": "NATION03",
+          "level": 1
+        },
+        {
+          "id": "religion_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_A",
+          "level": 2
+        },
+        {
+          "id": "TALENT_B",
+          "level": 2
+        },
+        {
+          "id": "TALENT_C",
+          "level": 1
+        },
+        {
+          "id": "TALENT_D",
+          "level": 2
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_E",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_B",
+          "level": 1
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 2
+        },
+        {
+          "id": "CHA_TYPE",
+          "level": 1
+        },
+        {
+          "id": "ARM_A_ATTACK",
+          "level": 2
+        },
+        {
+          "id": "CHA_A_LOYA",
+          "level": 6
+        }
+      ],
+      "biographyTraitId": "LieZhuan-YANWANG-11",
+      "biography": "普颜不花（？—1367年），又译巴布哈，字希\\n",
+      "epithet": "〖元〗东平都指挥使"
+    },
+    {
+      "id": "yuanmo.character.M-02-0008-Xm",
+      "sourceName": "M-02-0008-Xm",
+      "name": "田丰",
+      "faction": "portugal",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 34,
+      "x": 345,
+      "y": 342,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-MUFU-02",
+          "level": 1
+        },
+        {
+          "id": "NATION13",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 2
+        },
+        {
+          "id": "HIDEMDZ",
+          "level": 2
+        },
+        {
+          "id": "HIDEQC",
+          "level": 3
+        },
+        {
+          "id": "TALENT_A",
+          "level": 3
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 3
+        },
+        {
+          "id": "TALENT_D",
+          "level": 1
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 1
+        }
+      ],
+      "biographyTraitId": "LieZhuan-MUFU-02",
+      "biography": "田丰（？-1362） 元末山东人，毛贵殁后受\\n",
+      "epithet": "〖宋〗益都行省丞相"
+    },
+    {
+      "id": "yuanmo.character.M-02-0009-Xm",
+      "sourceName": "M-02-0009-Xm",
+      "name": "王士诚",
+      "faction": "portugal",
+      "role": "named character",
+      "gender": "male",
+      "isLeader": false,
+      "isHeir": false,
+      "age": 32,
+      "x": 348,
+      "y": 342,
+      "portrait": null,
+      "battleModel": null,
+      "traits": [
+        {
+          "id": "LieZhuan-MUFU-03",
+          "level": 1
+        },
+        {
+          "id": "NATION13",
+          "level": 1
+        },
+        {
+          "id": "HIDETS",
+          "level": 2
+        },
+        {
+          "id": "HIDEMDZ",
+          "level": 2
+        },
+        {
+          "id": "HIDEQC",
+          "level": 3
+        },
+        {
+          "id": "TALENT_A",
+          "level": 3
+        },
+        {
+          "id": "TALENT_B",
+          "level": 1
+        },
+        {
+          "id": "TALENT_C",
+          "level": 3
+        },
+        {
+          "id": "TALENT_D",
+          "level": 1
+        },
+        {
+          "id": "TALENT_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_E",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_F",
+          "level": 2
+        },
+        {
+          "id": "CHARACTER_H",
+          "level": 1
+        }
+      ],
+      "biographyTraitId": "LieZhuan-MUFU-03",
+      "biography": "王士诚，元末红巾军将领。本为刘福通部将。\\n",
+      "epithet": "〖宋〗扫地王"
+    }
+  ]
+}

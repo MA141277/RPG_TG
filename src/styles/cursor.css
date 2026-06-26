@@ -1,0 +1,16 @@
+:root {
+  --app-cursor-brush-size: 48;
+  --app-cursor-brush-hotspot-x: 3;
+  --app-cursor-brush-hotspot-y: 4;
+  --app-cursor-brush: url("../../ui/yuansu/red_brush_cursor_48.png") 3 4,
+    auto;
+}
+
+html,
+body,
+#app,
+#ui-overlay,
+#app *,
+#ui-overlay * {
+  cursor: var(--app-cursor-brush) !important;
+}

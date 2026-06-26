@@ -1,0 +1,271 @@
+.c-layout-editor-launch {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 320;
+  border: 1px solid rgb(104 70 31 / 88%);
+  border-radius: 999px;
+  padding: 10px 18px;
+  color: #f6ecd4;
+  background: linear-gradient(180deg, rgb(125 83 36 / 96%), rgb(72 42 18 / 96%));
+  box-shadow: 0 10px 22px rgb(0 0 0 / 28%);
+  font: inherit;
+  cursor: pointer;
+}
+
+.c-layout-editor-launch--open {
+  position: fixed;
+}
+
+.c-layout-editor-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 310;
+  background: rgb(8 10 15 / 78%);
+  backdrop-filter: blur(6px);
+}
+
+.c-layout-editor-live-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 310;
+  width: min(380px, 100vw);
+  pointer-events: none;
+}
+
+.c-layout-editor-live-panel .c-layout-editor-launch {
+  pointer-events: auto;
+}
+
+.c-layout-editor-live-panel__body {
+  position: absolute;
+  top: 68px;
+  right: 16px;
+  bottom: 16px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  pointer-events: auto;
+}
+
+.c-layout-editor {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  padding: 68px 16px 16px;
+  box-sizing: border-box;
+}
+
+.c-layout-editor__sidebar,
+.c-layout-editor__preview-shell {
+  min-height: 0;
+  border: 1px solid rgb(145 120 84 / 46%);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(242 233 211 / 96%), rgb(226 212 180 / 96%));
+  box-shadow: 0 18px 40px rgb(0 0 0 / 22%);
+}
+
+.c-layout-editor__sidebar {
+  overflow: auto;
+  padding: 18px;
+}
+
+.c-layout-editor-live-panel__body .c-layout-editor__sidebar {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.c-layout-editor__section + .c-layout-editor__section {
+  margin-top: 18px;
+}
+
+.c-layout-editor__section-actions {
+  display: grid;
+}
+
+.c-layout-editor__section-title {
+  margin: 0 0 10px;
+  color: #2f261c;
+  font-size: 1rem;
+}
+
+.c-layout-editor__list,
+.c-layout-editor__stack {
+  display: grid;
+  gap: 8px;
+}
+
+.c-layout-editor__list-button {
+  width: 100%;
+  border: 1px solid rgb(112 80 43 / 28%);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #34281d;
+  background: linear-gradient(180deg, rgb(248 241 228 / 96%), rgb(231 216 184 / 96%));
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.c-layout-editor__list-button.is-selected {
+  border-color: rgb(140 65 44 / 62%);
+  color: #f8eed8;
+  background: linear-gradient(180deg, rgb(148 66 40 / 96%), rgb(107 38 21 / 96%));
+}
+
+.c-layout-editor__action-button {
+  width: 100%;
+}
+
+.c-layout-editor__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.c-layout-editor__field {
+  display: grid;
+  gap: 4px;
+}
+
+.c-layout-editor__field span {
+  color: #5b4a36;
+  font-size: 0.84rem;
+}
+
+.c-layout-editor__field input,
+.c-layout-editor__field select {
+  border: 1px solid rgb(112 80 43 / 28%);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #2f261c;
+  background: rgb(255 251 245 / 96%);
+  font: inherit;
+}
+
+.c-layout-editor__preview-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.c-layout-editor__preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid rgb(112 80 43 / 18%);
+}
+
+.c-layout-editor__eyebrow {
+  margin: 0 0 6px;
+  color: #7e5f39;
+  font-size: 0.84rem;
+}
+
+.c-layout-editor__preview-title {
+  margin: 0;
+  color: #281f16;
+  font-size: 1.3rem;
+}
+
+.c-layout-editor__preview-stage {
+  overflow: auto;
+  padding: 20px;
+  background:
+    linear-gradient(180deg, rgb(57 66 70 / 96%), rgb(29 36 38 / 96%));
+}
+
+.c-layout-editor-preview {
+  position: relative;
+  margin: 0 auto;
+  background:
+    linear-gradient(180deg, rgb(23 31 38 / 100%), rgb(15 21 28 / 100%));
+  box-shadow:
+    inset 0 0 0 1px rgb(255 244 214 / 16%),
+    0 20px 44px rgb(0 0 0 / 34%);
+  transform-origin: top center;
+}
+
+.c-layout-editor-preview__component,
+.c-layout-editor-preview__element {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 0;
+  appearance: none;
+  font: inherit;
+  cursor: grab;
+}
+
+.c-layout-editor-preview__component {
+  border: 0;
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px rgb(228 205 151 / 46%);
+}
+
+.c-layout-editor-preview__component-content {
+  position: relative;
+  display: block;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.c-layout-editor-preview__component.is-selected {
+  box-shadow:
+    inset 0 0 0 2px #e2b256,
+    0 0 0 2px rgb(255 233 178 / 16%);
+}
+
+.c-layout-editor-preview__resize-handle {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  background: rgb(255 226 132 / 92%);
+  box-shadow: 0 0 0 1px rgb(53 38 20 / 82%);
+}
+
+.c-layout-editor-preview__resize-handle--corner {
+  right: -6px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+}
+
+.c-layout-editor-preview__component-label,
+.c-layout-editor-preview__element-label {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: #f7eed4;
+  background: rgb(24 27 35 / 92%);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.c-layout-editor-preview__element {
+  border: 1px dashed rgb(92 198 255 / 78%);
+  background: rgb(61 147 212 / 14%);
+  cursor: move;
+}
+
+.c-layout-editor-preview__element.is-selected {
+  border-color: #6ae0ff;
+  background: rgb(61 147 212 / 22%);
+}
+
+@media (width <= 1200px) {
+  .c-layout-editor {
+    grid-template-columns: 1fr;
+  }
+}

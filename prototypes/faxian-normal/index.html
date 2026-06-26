@@ -1,0 +1,1651 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Depth Spine Rig Prototype</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101216;
+        --panel: #191d24;
+        --panel-2: #232936;
+        --text: #eef2f6;
+        --muted: #9ba8b8;
+        --line: #343b48;
+        --accent: #e2b84a;
+        --blue: #6fb6ff;
+        --danger: #ef6b6b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        min-height: 100vh;
+      }
+
+      .stage {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 22px;
+        overflow: auto;
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          #0c0e12;
+        background-size: 32px 32px;
+      }
+
+      .compare-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+        gap: 16px;
+        width: min(1120px, calc(100vw - 388px));
+      }
+
+      .viewport,
+      .original-panel {
+        position: relative;
+        aspect-ratio: 3 / 4;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #05070a;
+      }
+
+      .original-panel {
+        overflow: hidden;
+      }
+
+      .viewport {
+        overflow: visible;
+      }
+
+      #originalCanvas,
+      #rigCanvas,
+      #boneOverlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #originalCanvas,
+      #rigCanvas {
+        display: block;
+      }
+
+      #boneOverlay {
+        touch-action: none;
+      }
+
+      .bone-line {
+        stroke: var(--accent);
+        stroke-width: 4;
+        stroke-linecap: round;
+        filter: drop-shadow(0 0 4px rgba(226, 184, 74, 0.65));
+      }
+
+      .bone-line.selected {
+        stroke: var(--blue);
+      }
+
+      .bone-joint {
+        fill: #111821;
+        stroke: white;
+        stroke-width: 2;
+      }
+
+      .bone-joint.selected {
+        fill: var(--blue);
+      }
+
+      .bone-joint.vertex-selected {
+        fill: var(--accent);
+      }
+
+      .influence-ring {
+        fill: none;
+        stroke: rgba(111, 182, 255, 0.32);
+        stroke-width: 2;
+        stroke-dasharray: 8 8;
+      }
+
+      .light-handle {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border: 2px solid white;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow:
+          0 0 0 8px rgba(226, 184, 74, 0.18),
+          0 0 34px rgba(226, 184, 74, 0.8);
+        pointer-events: auto;
+        transform: translate(-50%, -50%);
+        z-index: 4;
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        min-height: 100vh;
+        padding: 22px;
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: 0;
+      }
+
+      .note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .controls {
+        display: grid;
+        gap: 14px;
+      }
+
+      label,
+      .control-block {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      output {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--blue);
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: var(--blue);
+      }
+
+      button.danger:hover {
+        border-color: var(--danger);
+      }
+
+      .segmented,
+      .button-row {
+        display: grid;
+        gap: 6px;
+      }
+
+      .segmented {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .button-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .segmented button[aria-pressed="true"],
+      .button-row button[aria-pressed="true"],
+      button.active {
+        border-color: var(--blue);
+        background: #26384b;
+      }
+
+      .bone-list {
+        display: grid;
+        gap: 6px;
+        max-height: 150px;
+        overflow: auto;
+      }
+
+      .bone-list button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 32px;
+        padding: 0 10px;
+        text-align: left;
+      }
+
+      .bone-list button[aria-pressed="true"] {
+        border-color: var(--blue);
+        background: #26384b;
+      }
+
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 34px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .checkbox-row input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--blue);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 150px;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px;
+        background: #0d1118;
+        color: var(--text);
+        font: 12px/1.5 Consolas, "Cascadia Mono", monospace;
+      }
+
+      .stats {
+        margin-top: auto;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 980px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .compare-grid {
+          width: min(760px, calc(100vw - 44px));
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          min-height: auto;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="stage">
+        <div class="compare-grid">
+          <div class="original-panel">
+            <canvas id="originalCanvas" width="900" height="1200"></canvas>
+          </div>
+          <div class="viewport">
+            <canvas id="rigCanvas" width="900" height="1200"></canvas>
+            <svg id="boneOverlay" viewBox="0 0 900 1200" aria-label="骨骼编辑层"></svg>
+            <div class="light-handle" id="lightHandle" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div>
+          <h1>Depth Spine Rig</h1>
+          <p class="note">左侧是原人物图，右侧是骨骼变形结果。选中端点后点创建骨骼，可从该端点继续创建。</p>
+        </div>
+
+        <div class="controls">
+          <div class="control-block">
+            <span>人物图版本</span>
+            <div class="segmented" id="albedoMode">
+              <button type="button" data-albedo="albedo" aria-pressed="true">Man 1</button>
+              <button type="button" data-albedo="albedo2" aria-pressed="false">Man 2</button>
+              <button type="button" data-albedo="albedo3" aria-pressed="false">Man 3</button>
+            </div>
+          </div>
+
+          <div class="control-block">
+            <span>深度图</span>
+            <div class="button-row" id="depthMode">
+              <button type="button" data-depth="depth" aria-pressed="false">Depth 1</button>
+              <button type="button" data-depth="depth2" aria-pressed="true">Depth 2</button>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="addBone" type="button">创建骨骼</button>
+            <button id="resetPose" type="button">重置姿势</button>
+          </div>
+
+          <div class="control-block">
+            <span>骨骼列表</span>
+            <div class="bone-list" id="boneList"></div>
+          </div>
+
+          <label>
+            <span class="row">旋转 <output id="rotationValue">0</output></span>
+            <input id="rotation" type="range" min="-90" max="90" step="1" value="0" />
+          </label>
+
+          <label>
+            <span class="row">水平平移 <output id="translateXValue">0</output></span>
+            <input id="translateX" type="range" min="-0.35" max="0.35" step="0.005" value="0" />
+          </label>
+
+          <label>
+            <span class="row">垂直平移 <output id="translateYValue">0</output></span>
+            <input id="translateY" type="range" min="-0.35" max="0.35" step="0.005" value="0" />
+          </label>
+
+          <label>
+            <span class="row">影响半径 <output id="radiusValue">0.18</output></span>
+            <input id="radius" type="range" min="0.03" max="0.45" step="0.005" value="0.18" />
+          </label>
+
+          <label>
+            <span class="row">深度权重 <output id="depthPowerValue">1.80</output></span>
+            <input id="depthPower" type="range" min="0.4" max="4" step="0.05" value="1.8" />
+          </label>
+
+          <label>
+            <span class="row">变形强度 <output id="deformValue">1.00</output></span>
+            <input id="deformStrength" type="range" min="0" max="1.6" step="0.01" value="1" />
+          </label>
+
+          <label class="checkbox-row">
+            <span>播放待机循环</span>
+            <input id="playIdle" type="checkbox" checked />
+          </label>
+
+          <label class="checkbox-row">
+            <span>隐藏骨骼</span>
+            <input id="hideBones" type="checkbox" />
+          </label>
+
+          <label>
+            <span class="row">待机幅度 <output id="idleAmountValue">1.35</output></span>
+            <input id="idleAmount" type="range" min="0" max="2.8" step="0.01" value="1.35" />
+          </label>
+
+          <label>
+            <span class="row">待机速度 <output id="idleSpeedValue">1.00</output></span>
+            <input id="idleSpeed" type="range" min="0.2" max="2.5" step="0.01" value="1" />
+          </label>
+
+          <label>
+            <span class="row">法线强度 <output id="normalStrengthValue">1.00</output></span>
+            <input id="normalStrength" type="range" min="0" max="4" step="0.01" value="1" />
+          </label>
+
+          <label>
+            <span class="row">光照强度 <output id="lightValue">1.00</output></span>
+            <input id="lightStrength" type="range" min="0" max="2.5" step="0.01" value="1" />
+          </label>
+
+          <label>
+            <span class="row">光源高度 <output id="lightHeightValue">0.34</output></span>
+            <input id="lightHeight" type="range" min="0.05" max="1.2" step="0.01" value="0.34" />
+          </label>
+
+          <label>
+            <span class="row">环境光 <output id="ambientValue">0.55</output></span>
+            <input id="ambient" type="range" min="0" max="1" step="0.01" value="0.55" />
+          </label>
+
+          <label>
+            <span class="row">阴影强度 <output id="shadowValue">0.35</output></span>
+            <input id="shadowStrength" type="range" min="0" max="1" step="0.01" value="0.35" />
+          </label>
+
+          <label>
+            <span class="row">阴影长度 <output id="shadowLengthValue">0.24</output></span>
+            <input id="shadowLength" type="range" min="0.04" max="0.5" step="0.01" value="0.24" />
+          </label>
+
+          <label class="checkbox-row">
+            <span>应用光照</span>
+            <input id="applyLighting" type="checkbox" checked />
+          </label>
+
+          <label class="checkbox-row">
+            <span>应用阴影</span>
+            <input id="applyShadow" type="checkbox" checked />
+          </label>
+
+          <div class="button-row">
+            <button id="deleteBone" class="danger" type="button">删除骨骼</button>
+            <button id="clearBones" class="danger" type="button">清空骨骼</button>
+          </div>
+
+          <div class="button-row">
+            <button id="refreshJson" type="button">刷新 JSON</button>
+            <button id="copyJson" type="button">复制 JSON</button>
+          </div>
+
+          <textarea id="rigJson" spellcheck="false"></textarea>
+        </div>
+
+        <p class="note" id="status">载入中</p>
+        <p class="stats" id="stats"></p>
+      </aside>
+    </main>
+
+    <script src="./assets.generated.js"></script>
+    <script src="./initial-rig.generated.js"></script>
+    <script type="module">
+      const sourcePaths = {
+        albedo: "../../src/faxian/man.png",
+        albedo2: "../../src/faxian/man2.png",
+        albedo3: "../../src/faxian/man3.png",
+        depth: "../../src/faxian/depth.png",
+        depth2: "../../src/faxian/depth2.png",
+        normalmap: "../../src/faxian/normalmap.png",
+      };
+
+      const MAX_BONES = 16;
+      const embeddedAssets = window.FAXIAN_NORMAL_ASSETS || {};
+      const originalCanvas = document.querySelector("#originalCanvas");
+      const originalCtx = originalCanvas.getContext("2d");
+      const canvas = document.querySelector("#rigCanvas");
+      const overlay = document.querySelector("#boneOverlay");
+      const lightHandle = document.querySelector("#lightHandle");
+      const statusText = document.querySelector("#status");
+      const stats = document.querySelector("#stats");
+      const albedoMode = document.querySelector("#albedoMode");
+      const depthMode = document.querySelector("#depthMode");
+      const boneList = document.querySelector("#boneList");
+      const rigJson = document.querySelector("#rigJson");
+
+      const controls = {
+        addBone: document.querySelector("#addBone"),
+        resetPose: document.querySelector("#resetPose"),
+        deleteBone: document.querySelector("#deleteBone"),
+        clearBones: document.querySelector("#clearBones"),
+        refreshJson: document.querySelector("#refreshJson"),
+        copyJson: document.querySelector("#copyJson"),
+        rotation: document.querySelector("#rotation"),
+        translateX: document.querySelector("#translateX"),
+        translateY: document.querySelector("#translateY"),
+        radius: document.querySelector("#radius"),
+        depthPower: document.querySelector("#depthPower"),
+        deformStrength: document.querySelector("#deformStrength"),
+        playIdle: document.querySelector("#playIdle"),
+        hideBones: document.querySelector("#hideBones"),
+        idleAmount: document.querySelector("#idleAmount"),
+        idleSpeed: document.querySelector("#idleSpeed"),
+        normalStrength: document.querySelector("#normalStrength"),
+        lightStrength: document.querySelector("#lightStrength"),
+        lightHeight: document.querySelector("#lightHeight"),
+        ambient: document.querySelector("#ambient"),
+        shadowStrength: document.querySelector("#shadowStrength"),
+        shadowLength: document.querySelector("#shadowLength"),
+        applyLighting: document.querySelector("#applyLighting"),
+        applyShadow: document.querySelector("#applyShadow"),
+      };
+
+      const outputs = {
+        rotation: document.querySelector("#rotationValue"),
+        translateX: document.querySelector("#translateXValue"),
+        translateY: document.querySelector("#translateYValue"),
+        radius: document.querySelector("#radiusValue"),
+        depthPower: document.querySelector("#depthPowerValue"),
+        deformStrength: document.querySelector("#deformValue"),
+        idleAmount: document.querySelector("#idleAmountValue"),
+        idleSpeed: document.querySelector("#idleSpeedValue"),
+        normalStrength: document.querySelector("#normalStrengthValue"),
+        lightStrength: document.querySelector("#lightValue"),
+        lightHeight: document.querySelector("#lightHeightValue"),
+        ambient: document.querySelector("#ambientValue"),
+        shadowStrength: document.querySelector("#shadowValue"),
+        shadowLength: document.querySelector("#shadowLengthValue"),
+      };
+
+      const state = {
+        albedoKey: "albedo",
+        depthKey: "depth2",
+        addingBone: false,
+        draftStart: null,
+        draggingLight: false,
+        lightUv: [0.22, 0.18],
+        applyLighting: true,
+        applyShadow: true,
+        selectedBoneId: null,
+        selectedVertex: null,
+        bones: [],
+        playIdle: true,
+        hideBones: false,
+        fps: 24,
+        duration: 96,
+        currentFrame: 0,
+        lastFrameTime: 0,
+        timelines: {},
+        needsRender: true,
+      };
+
+      const vertexShader = `
+        attribute vec2 aPosition;
+        varying vec2 vUv;
+
+        void main() {
+          vUv = aPosition * 0.5 + 0.5;
+          gl_Position = vec4(aPosition, 0.0, 1.0);
+        }
+      `;
+
+      const fragmentShader = `
+        precision mediump float;
+
+        const int MAX_BONES = 16;
+        uniform sampler2D uAlbedo;
+        uniform sampler2D uDepth;
+        uniform sampler2D uNormalMap;
+        uniform sampler2D uMaskMap;
+        uniform int uBoneCount;
+        uniform vec4 uBoneRest[MAX_BONES];
+        uniform vec4 uBonePose[MAX_BONES];
+        uniform float uDepthPower;
+        uniform float uDeformStrength;
+        uniform vec2 uLightUv;
+        uniform float uApplyLighting;
+        uniform float uApplyShadow;
+        uniform float uLightStrength;
+        uniform float uLightHeight;
+        uniform float uNormalStrength;
+        uniform float uAmbient;
+        uniform float uShadowStrength;
+        uniform float uShadowLength;
+        varying vec2 vUv;
+
+        float segmentDistance(vec2 p, vec2 a, vec2 b) {
+          vec2 ab = b - a;
+          float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 0.00001), 0.0, 1.0);
+          return length(p - (a + ab * h));
+        }
+
+        vec2 rotateAround(vec2 p, vec2 origin, float angle) {
+          float s = sin(angle);
+          float c = cos(angle);
+          vec2 q = p - origin;
+          return origin + vec2(q.x * c - q.y * s, q.x * s + q.y * c);
+        }
+
+        float luminance(vec3 color) {
+          return dot(color, vec3(0.2126, 0.7152, 0.0722));
+        }
+
+        float pureBlack(vec3 color) {
+          return step(max(max(color.r, color.g), color.b), 0.004);
+        }
+
+        vec2 deformSourceUv(vec2 targetUv) {
+          float depth = texture2D(uDepth, targetUv).r;
+          float targetMask = texture2D(uMaskMap, targetUv).r;
+          float depthWeight = pow(clamp(depth, 0.0, 1.0), uDepthPower);
+          vec2 displacement = vec2(0.0);
+          float totalWeight = 0.0;
+
+          for (int i = 0; i < MAX_BONES; i++) {
+            if (i >= uBoneCount) {
+              break;
+            }
+
+            vec2 start = uBoneRest[i].xy;
+            vec2 end = uBoneRest[i].zw;
+            float angle = uBonePose[i].x;
+            vec2 translate = uBonePose[i].yz;
+            float radius = max(uBonePose[i].w, 0.001);
+            float dist = segmentDistance(targetUv, start, end);
+            float influence = smoothstep(radius * 1.18, 0.0, dist);
+            float backgroundCapture = (1.0 - targetMask) * 0.32;
+            float localWeight = influence * max(depthWeight, backgroundCapture);
+            vec2 posed = rotateAround(targetUv, start, angle) + translate;
+            displacement += (posed - targetUv) * localWeight;
+            totalWeight += localWeight;
+          }
+
+          vec2 sourceUv = targetUv;
+          if (totalWeight > 0.0001) {
+            displacement /= totalWeight;
+            sourceUv = targetUv - displacement * clamp(totalWeight, 0.0, 1.0) * uDeformStrength;
+          }
+          return sourceUv;
+        }
+
+        void main() {
+          vec2 uv = vec2(vUv.x, 1.0 - vUv.y);
+          vec2 sourceUv = deformSourceUv(uv);
+
+          if (sourceUv.x < 0.0 || sourceUv.y < 0.0 || sourceUv.x > 1.0 || sourceUv.y > 1.0) {
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            return;
+          }
+
+          vec4 albedo = texture2D(uAlbedo, sourceUv);
+          vec3 color = albedo.rgb;
+          float currentMask = texture2D(uMaskMap, sourceUv).r;
+          if (currentMask <= 0.5) {
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            return;
+          }
+
+          if (uApplyLighting > 0.5) {
+            vec3 normal = normalize(texture2D(uNormalMap, sourceUv).rgb * 2.0 - 1.0);
+            normal.y = -normal.y;
+            normal = normalize(vec3(normal.xy * uNormalStrength, normal.z));
+            vec3 lightDir = normalize(vec3(uLightUv - uv, uLightHeight));
+            float diffuse = max(dot(normal, lightDir), 0.0);
+            float lightDistance = length(uLightUv - uv);
+            float pointFalloff = 1.0 - smoothstep(0.62, 1.15, lightDistance);
+            float farLight = smoothstep(1.0, 2.2, lightDistance);
+            float lightScale = mix(0.55 + pointFalloff * 0.75, 1.0, farLight);
+            color *= uAmbient + diffuse * uLightStrength * lightScale;
+          }
+
+          if (uApplyShadow > 0.5 && pureBlack(albedo.rgb) < 0.5) {
+            vec2 ray = normalize(uLightUv - uv);
+            float currentDepth = texture2D(uDepth, sourceUv).r;
+            float blocker = 0.0;
+
+            for (int i = 1; i <= 48; i++) {
+              float t = float(i) / 48.0;
+              float travel = t * uShadowLength;
+              vec2 sampleUv = uv + ray * travel;
+              if (sampleUv.x < 0.0 || sampleUv.y < 0.0 || sampleUv.x > 1.0 || sampleUv.y > 1.0) {
+                continue;
+              }
+
+              vec2 sampleSourceUv = deformSourceUv(sampleUv);
+              if (sampleSourceUv.x < 0.0 || sampleSourceUv.y < 0.0 || sampleSourceUv.x > 1.0 || sampleSourceUv.y > 1.0) {
+                continue;
+              }
+
+              vec3 sampleColor = texture2D(uAlbedo, sampleSourceUv).rgb;
+              if (pureBlack(sampleColor) > 0.5) {
+                continue;
+              }
+
+              if (texture2D(uMaskMap, sampleSourceUv).r <= 0.5) {
+                continue;
+              }
+
+              float sampleDepth = texture2D(uDepth, sampleSourceUv).r;
+              float depthGap = sampleDepth - currentDepth;
+              float maxProjection = depthGap * uShadowLength * 2.8;
+              float reach = 1.0 - smoothstep(maxProjection * 0.72, maxProjection, travel);
+              float hit = smoothstep(0.04, 0.16, depthGap) * reach;
+              blocker = max(blocker, hit);
+            }
+
+            color *= 1.0 - clamp(blocker * uShadowStrength, 0.0, 0.65);
+          }
+
+          gl_FragColor = vec4(color, albedo.a);
+        }
+      `;
+
+      function assetSource(name) {
+        return embeddedAssets[name] || sourcePaths[name];
+      }
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error(`Cannot load ${src}`));
+          image.src = src;
+        });
+      }
+
+      function compileShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          throw new Error(gl.getShaderInfoLog(shader) || "Shader compile failed.");
+        }
+        return shader;
+      }
+
+      function createProgram(gl) {
+        const program = gl.createProgram();
+        gl.attachShader(program, compileShader(gl, gl.VERTEX_SHADER, vertexShader));
+        gl.attachShader(program, compileShader(gl, gl.FRAGMENT_SHADER, fragmentShader));
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          throw new Error(gl.getProgramInfoLog(program) || "Program link failed.");
+        }
+        return program;
+      }
+
+      const gl = canvas.getContext("webgl", { antialias: true, preserveDrawingBuffer: true });
+      if (!gl) {
+        throw new Error("WebGL is not available.");
+      }
+
+      const program = createProgram(gl);
+      gl.useProgram(program);
+
+      const positionBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+        gl.STATIC_DRAW,
+      );
+
+      const aPosition = gl.getAttribLocation(program, "aPosition");
+      gl.enableVertexAttribArray(aPosition);
+      gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+      const uniforms = {
+        albedo: gl.getUniformLocation(program, "uAlbedo"),
+        depth: gl.getUniformLocation(program, "uDepth"),
+        normalMap: gl.getUniformLocation(program, "uNormalMap"),
+        maskMap: gl.getUniformLocation(program, "uMaskMap"),
+        boneCount: gl.getUniformLocation(program, "uBoneCount"),
+        depthPower: gl.getUniformLocation(program, "uDepthPower"),
+        deformStrength: gl.getUniformLocation(program, "uDeformStrength"),
+        lightUv: gl.getUniformLocation(program, "uLightUv"),
+        applyLighting: gl.getUniformLocation(program, "uApplyLighting"),
+        applyShadow: gl.getUniformLocation(program, "uApplyShadow"),
+        lightStrength: gl.getUniformLocation(program, "uLightStrength"),
+        lightHeight: gl.getUniformLocation(program, "uLightHeight"),
+        normalStrength: gl.getUniformLocation(program, "uNormalStrength"),
+        ambient: gl.getUniformLocation(program, "uAmbient"),
+        shadowStrength: gl.getUniformLocation(program, "uShadowStrength"),
+        shadowLength: gl.getUniformLocation(program, "uShadowLength"),
+        boneRest: Array.from({ length: MAX_BONES }, (_, i) =>
+          gl.getUniformLocation(program, `uBoneRest[${i}]`),
+        ),
+        bonePose: Array.from({ length: MAX_BONES }, (_, i) =>
+          gl.getUniformLocation(program, `uBonePose[${i}]`),
+        ),
+      };
+
+      function createTexture(source) {
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        return texture;
+      }
+
+      let albedoImages;
+      let depthImages;
+      let normalMapImage;
+      let maskCanvas;
+      let albedoTexture;
+      let depthTexture;
+      let normalTexture;
+      let maskTexture;
+
+      function makeWhiteKeyMaskCanvas(image, width, height) {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(image, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const whiteBackground = r > 238 && g > 238 && b > 238 && Math.abs(r - g) < 18 && Math.abs(g - b) < 18;
+          const value = whiteBackground ? 0 : 255;
+          data[i] = value;
+          data[i + 1] = value;
+          data[i + 2] = value;
+          data[i + 3] = 255;
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        return canvas;
+      }
+
+      function drawOriginal() {
+        const image = albedoImages?.[state.albedoKey];
+        if (!image) {
+          return;
+        }
+        originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+        originalCtx.drawImage(image, 0, 0, originalCanvas.width, originalCanvas.height);
+      }
+
+      function replaceTextures() {
+        if (albedoTexture) {
+          gl.deleteTexture(albedoTexture);
+        }
+        if (depthTexture) {
+          gl.deleteTexture(depthTexture);
+        }
+        if (normalTexture) {
+          gl.deleteTexture(normalTexture);
+        }
+        if (maskTexture) {
+          gl.deleteTexture(maskTexture);
+        }
+        albedoTexture = createTexture(albedoImages[state.albedoKey]);
+        depthTexture = createTexture(depthImages[state.depthKey]);
+        normalTexture = createTexture(normalMapImage);
+        maskTexture = createTexture(maskCanvas);
+        drawOriginal();
+        state.needsRender = true;
+      }
+
+      function selectedBone() {
+        return state.bones.find((bone) => bone.id === state.selectedBoneId) || null;
+      }
+
+      function vertexPoint(vertex) {
+        const bone = state.bones.find((item) => item.id === vertex?.boneId);
+        return bone ? bone[vertex.pointKey] : null;
+      }
+
+      function pointFromEvent(event) {
+        const rect = overlay.getBoundingClientRect();
+        return {
+          x: ((event.clientX - rect.left) / rect.width) * 900,
+          y: ((event.clientY - rect.top) / rect.height) * 1200,
+        };
+      }
+
+      function toUv(point) {
+        return [point.x / 900, point.y / 1200];
+      }
+
+      function toDegrees(radians) {
+        return (radians * 180) / Math.PI;
+      }
+
+      function toRadians(degrees) {
+        return (degrees * Math.PI) / 180;
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function lerpAngleDeg(a, b, t) {
+        let diff = ((b - a + 180) % 360) - 180;
+        if (diff < -180) {
+          diff += 360;
+        }
+        return a + diff * t;
+      }
+
+      function normalizeFrame(frame) {
+        const duration = Math.max(1, state.duration);
+        return ((frame % duration) + duration) % duration;
+      }
+
+      function idleProfile(bone, index) {
+        const centerX = (bone.rest[0] + bone.rest[2]) * 0.5;
+        const centerY = (bone.rest[1] + bone.rest[3]) * 0.5;
+        const top = centerY < 0.34;
+        const lower = centerY > 0.58;
+        const side = centerX < 0.46 ? -1 : centerX > 0.58 ? 1 : 0;
+        const rotationAmp = lower ? 2.4 : top ? 4.0 : 5.6 + Math.abs(side) * 2.1;
+        const phase = (index % 4) * 0.65 + centerY * 2.4 + side * 0.4;
+        const translateAmp = lower ? 0.0026 : top ? 0.0038 : 0.006;
+        return { rotationAmp, phase, translateAmp, side };
+      }
+
+      function buildIdleTimelines() {
+        const frames = [0, 24, 48, 72, 96];
+        state.timelines = {};
+        for (const [index, bone] of state.bones.entries()) {
+          const profile = idleProfile(bone, index);
+          state.timelines[bone.id] = frames.map((frame) => {
+            const wave = Math.sin((frame / state.duration) * Math.PI * 2 + profile.phase);
+            const breath = Math.sin((frame / state.duration) * Math.PI * 2);
+            return {
+              frame,
+              rotationOffsetDeg: Number((wave * profile.rotationAmp).toFixed(3)),
+              translateXOffset: Number((wave * profile.side * 0.0032).toFixed(5)),
+              translateYOffset: Number((breath * profile.translateAmp).toFixed(5)),
+              radiusOffset: 0,
+            };
+          });
+        }
+      }
+
+      function ensureIdleTimeline(bone, index) {
+        if (state.timelines[bone.id]) {
+          return;
+        }
+        const previous = state.timelines;
+        buildIdleTimelines();
+        state.timelines = { ...state.timelines, ...previous, [bone.id]: state.timelines[bone.id] };
+      }
+
+      function sampleTimeline(keys, frame) {
+        if (!keys?.length) {
+          return null;
+        }
+        const duration = Math.max(1, state.duration);
+        const localFrame = normalizeFrame(frame);
+        const sorted = [...keys].sort((a, b) => a.frame - b.frame);
+        let before = sorted[sorted.length - 1];
+        let after = sorted[0];
+        let beforeFrame = before.frame;
+        let afterFrame = after.frame + duration;
+
+        for (let i = 0; i < sorted.length; i += 1) {
+          const current = sorted[i];
+          const next = sorted[(i + 1) % sorted.length];
+          const nextFrame = i === sorted.length - 1 ? next.frame + duration : next.frame;
+          if (localFrame >= current.frame && localFrame <= nextFrame) {
+            before = current;
+            after = next;
+            beforeFrame = current.frame;
+            afterFrame = nextFrame;
+            break;
+          }
+        }
+
+        const t = Math.max(0, Math.min(1, (localFrame - beforeFrame) / Math.max(1, afterFrame - beforeFrame)));
+        return {
+          rotationOffsetDeg: lerpAngleDeg(
+            before.rotationOffsetDeg ?? before.rotationDeg ?? 0,
+            after.rotationOffsetDeg ?? after.rotationDeg ?? 0,
+            t,
+          ),
+          translateXOffset: lerp(before.translateXOffset ?? before.translateX ?? 0, after.translateXOffset ?? after.translateX ?? 0, t),
+          translateYOffset: lerp(before.translateYOffset ?? before.translateY ?? 0, after.translateYOffset ?? after.translateY ?? 0, t),
+          radiusOffset: lerp(before.radiusOffset ?? 0, after.radiusOffset ?? 0, t),
+        };
+      }
+
+      function animatedBonePose(bone, index) {
+        const pose = {
+          rotation: bone.rotation,
+          tx: bone.tx,
+          ty: bone.ty,
+          radius: bone.radius,
+        };
+        if (!state.playIdle) {
+          return pose;
+        }
+        ensureIdleTimeline(bone, index);
+        const amount = Number.parseFloat(controls.idleAmount.value);
+        const sample = sampleTimeline(state.timelines[bone.id], state.currentFrame);
+        if (!sample) {
+          return pose;
+        }
+        pose.rotation += toRadians(sample.rotationOffsetDeg * amount);
+        pose.tx += sample.translateXOffset * amount;
+        pose.ty += sample.translateYOffset * amount;
+        pose.radius = Math.max(0.001, pose.radius + sample.radiusOffset * amount);
+        return pose;
+      }
+
+      function exportRig() {
+        return {
+          version: 1,
+          albedoKey: state.albedoKey,
+          depthKey: state.depthKey,
+          depthPower: Number.parseFloat(controls.depthPower.value),
+          deformStrength: Number.parseFloat(controls.deformStrength.value),
+          lighting: {
+            enabled: state.applyLighting,
+            shadowEnabled: state.applyShadow,
+            lightUv: {
+              x: Number(state.lightUv[0].toFixed(6)),
+              y: Number(state.lightUv[1].toFixed(6)),
+            },
+            normalStrength: Number.parseFloat(controls.normalStrength.value),
+            lightStrength: Number.parseFloat(controls.lightStrength.value),
+            lightHeight: Number.parseFloat(controls.lightHeight.value),
+            ambient: Number.parseFloat(controls.ambient.value),
+            shadowStrength: Number.parseFloat(controls.shadowStrength.value),
+            shadowLength: Number.parseFloat(controls.shadowLength.value),
+          },
+          animation: {
+            enabled: state.playIdle,
+            hideBones: state.hideBones,
+            fps: state.fps,
+            duration: state.duration,
+            currentFrame: Number(state.currentFrame.toFixed(3)),
+            idleAmount: Number.parseFloat(controls.idleAmount.value),
+            idleSpeed: Number.parseFloat(controls.idleSpeed.value),
+            timelines: state.timelines,
+          },
+          bones: state.bones.map((bone, index) => ({
+            id: bone.id,
+            name: `Bone ${index + 1}`,
+            start: {
+              x: Number(bone.rest[0].toFixed(6)),
+              y: Number(bone.rest[1].toFixed(6)),
+            },
+            end: {
+              x: Number(bone.rest[2].toFixed(6)),
+              y: Number(bone.rest[3].toFixed(6)),
+            },
+            pose: {
+              rotationDeg: Number(((bone.rotation * 180) / Math.PI).toFixed(3)),
+              translateX: Number(bone.tx.toFixed(6)),
+              translateY: Number(bone.ty.toFixed(6)),
+              radius: Number(bone.radius.toFixed(6)),
+            },
+          })),
+        };
+      }
+
+      function refreshJson() {
+        rigJson.value = JSON.stringify(exportRig(), null, 2);
+      }
+
+      function updateOutputs() {
+        const bone = selectedBone();
+        controls.rotation.disabled = !bone;
+        controls.translateX.disabled = !bone;
+        controls.translateY.disabled = !bone;
+        controls.radius.disabled = !bone;
+
+        if (bone) {
+          controls.rotation.value = String(Math.round((bone.rotation * 180) / Math.PI));
+          controls.translateX.value = String(bone.tx);
+          controls.translateY.value = String(bone.ty);
+          controls.radius.value = String(bone.radius);
+        }
+
+        outputs.rotation.value = bone ? String(Math.round((bone.rotation * 180) / Math.PI)) : "0";
+        outputs.translateX.value = bone ? bone.tx.toFixed(3) : "0";
+        outputs.translateY.value = bone ? bone.ty.toFixed(3) : "0";
+        outputs.radius.value = bone ? bone.radius.toFixed(3) : "0";
+        outputs.depthPower.value = Number.parseFloat(controls.depthPower.value).toFixed(2);
+        outputs.deformStrength.value = Number.parseFloat(controls.deformStrength.value).toFixed(2);
+        outputs.idleAmount.value = Number.parseFloat(controls.idleAmount.value).toFixed(2);
+        outputs.idleSpeed.value = Number.parseFloat(controls.idleSpeed.value).toFixed(2);
+        outputs.normalStrength.value = Number.parseFloat(controls.normalStrength.value).toFixed(2);
+        outputs.lightStrength.value = Number.parseFloat(controls.lightStrength.value).toFixed(2);
+        outputs.lightHeight.value = Number.parseFloat(controls.lightHeight.value).toFixed(2);
+        outputs.ambient.value = Number.parseFloat(controls.ambient.value).toFixed(2);
+        outputs.shadowStrength.value = Number.parseFloat(controls.shadowStrength.value).toFixed(2);
+        outputs.shadowLength.value = Number.parseFloat(controls.shadowLength.value).toFixed(2);
+      }
+
+      function renderBoneOverlay() {
+        overlay.innerHTML = "";
+        if (state.hideBones) {
+          return;
+        }
+        for (const bone of state.bones) {
+          const selected = bone.id === state.selectedBoneId;
+          const midX = (bone.start.x + bone.end.x) * 0.5;
+          const midY = (bone.start.y + bone.end.y) * 0.5;
+          const radius = bone.radius * 900;
+
+          const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          ring.setAttribute("class", "influence-ring");
+          ring.setAttribute("cx", String(midX));
+          ring.setAttribute("cy", String(midY));
+          ring.setAttribute("r", String(radius));
+          overlay.appendChild(ring);
+
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("class", `bone-line${selected ? " selected" : ""}`);
+          line.setAttribute("x1", String(bone.start.x));
+          line.setAttribute("y1", String(bone.start.y));
+          line.setAttribute("x2", String(bone.end.x));
+          line.setAttribute("y2", String(bone.end.y));
+          line.dataset.boneId = bone.id;
+          overlay.appendChild(line);
+
+          for (const pointKey of ["start", "end"]) {
+            const point = bone[pointKey];
+            const vertexSelected =
+              state.selectedVertex?.boneId === bone.id && state.selectedVertex?.pointKey === pointKey;
+            const joint = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            joint.setAttribute(
+              "class",
+              `bone-joint${selected ? " selected" : ""}${vertexSelected ? " vertex-selected" : ""}`,
+            );
+            joint.setAttribute("cx", String(point.x));
+            joint.setAttribute("cy", String(point.y));
+            joint.setAttribute("r", "8");
+            joint.dataset.boneId = bone.id;
+            joint.dataset.pointKey = pointKey;
+            overlay.appendChild(joint);
+          }
+        }
+
+        if (state.draftStart) {
+          const draft = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          draft.setAttribute("class", "bone-joint vertex-selected");
+          draft.setAttribute("cx", String(state.draftStart.x));
+          draft.setAttribute("cy", String(state.draftStart.y));
+          draft.setAttribute("r", "8");
+          overlay.appendChild(draft);
+        }
+      }
+
+      function renderBoneList() {
+        boneList.innerHTML = "";
+        for (const [index, bone] of state.bones.entries()) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.setAttribute("aria-pressed", String(bone.id === state.selectedBoneId));
+          button.dataset.boneId = bone.id;
+          button.innerHTML = `<span>Bone ${index + 1}</span><span>${Math.round(
+            (bone.rotation * 180) / Math.PI,
+          )} deg</span>`;
+          boneList.appendChild(button);
+        }
+      }
+
+      function syncUi() {
+        controls.addBone.classList.toggle("active", state.addingBone);
+        for (const button of albedoMode.querySelectorAll("button")) {
+          button.setAttribute("aria-pressed", String(button.dataset.albedo === state.albedoKey));
+        }
+        for (const button of depthMode.querySelectorAll("button")) {
+          button.setAttribute("aria-pressed", String(button.dataset.depth === state.depthKey));
+        }
+        renderBoneOverlay();
+        renderBoneList();
+        updateOutputs();
+        refreshJson();
+        updateLightHandle();
+      }
+
+      function updateLightHandle() {
+        const rect = overlay.getBoundingClientRect();
+        const parentRect = overlay.parentElement.getBoundingClientRect();
+        lightHandle.style.left = `${state.lightUv[0] * rect.width + rect.left - parentRect.left}px`;
+        lightHandle.style.top = `${state.lightUv[1] * rect.height + rect.top - parentRect.top}px`;
+      }
+
+      function setLightFromEvent(event) {
+        const rect = overlay.getBoundingClientRect();
+        const minUv = -2.0;
+        const maxUv = 3.0;
+        state.lightUv = [
+          Math.max(minUv, Math.min(maxUv, (event.clientX - rect.left) / rect.width)),
+          Math.max(minUv, Math.min(maxUv, (event.clientY - rect.top) / rect.height)),
+        ];
+        updateLightHandle();
+        state.needsRender = true;
+        refreshJson();
+      }
+
+      function importRig(rig) {
+        state.albedoKey = rig.albedoKey || state.albedoKey;
+        state.depthKey = rig.depthKey || state.depthKey;
+        controls.depthPower.value = String(rig.depthPower ?? controls.depthPower.value);
+        controls.deformStrength.value = String(rig.deformStrength ?? controls.deformStrength.value);
+        if (rig.lighting) {
+          state.applyLighting = rig.lighting.enabled ?? state.applyLighting;
+          state.applyShadow = rig.lighting.shadowEnabled ?? state.applyShadow;
+          state.lightUv = [rig.lighting.lightUv?.x ?? state.lightUv[0], rig.lighting.lightUv?.y ?? state.lightUv[1]];
+          controls.normalStrength.value = String(rig.lighting.normalStrength ?? controls.normalStrength.value);
+          controls.lightStrength.value = String(rig.lighting.lightStrength ?? controls.lightStrength.value);
+          controls.lightHeight.value = String(rig.lighting.lightHeight ?? controls.lightHeight.value);
+          controls.ambient.value = String(rig.lighting.ambient ?? controls.ambient.value);
+          controls.shadowStrength.value = String(rig.lighting.shadowStrength ?? controls.shadowStrength.value);
+          controls.shadowLength.value = String(rig.lighting.shadowLength ?? controls.shadowLength.value);
+          controls.applyLighting.checked = state.applyLighting;
+          controls.applyShadow.checked = state.applyShadow;
+        }
+        if (rig.animation) {
+          state.playIdle = rig.animation.enabled ?? state.playIdle;
+          state.hideBones = rig.animation.hideBones ?? state.hideBones;
+          state.fps = Math.max(1, Number(rig.animation.fps) || state.fps);
+          state.duration = Math.max(1, Number(rig.animation.duration) || state.duration);
+          state.currentFrame = Number(rig.animation.currentFrame) || 0;
+          controls.playIdle.checked = state.playIdle;
+          controls.hideBones.checked = state.hideBones;
+          controls.idleAmount.value = String(rig.animation.idleAmount ?? controls.idleAmount.value);
+          controls.idleSpeed.value = String(rig.animation.idleSpeed ?? controls.idleSpeed.value);
+          state.timelines = rig.animation.timelines || {};
+        }
+        state.bones = (rig.bones || []).slice(0, MAX_BONES).map((bone) => {
+          const start = { x: bone.start.x * 900, y: bone.start.y * 1200 };
+          const end = { x: bone.end.x * 900, y: bone.end.y * 1200 };
+          return {
+            id: bone.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())),
+            start,
+            end,
+            rest: [bone.start.x, bone.start.y, bone.end.x, bone.end.y],
+            rotation: ((bone.pose?.rotationDeg || 0) * Math.PI) / 180,
+            tx: bone.pose?.translateX || 0,
+            ty: bone.pose?.translateY || 0,
+            radius: bone.pose?.radius || 0.18,
+          };
+        });
+        if (!rig.animation?.timelines) {
+          buildIdleTimelines();
+        }
+        state.selectedBoneId = state.bones[0]?.id || null;
+        state.selectedVertex = null;
+        replaceTextures();
+        syncUi();
+      }
+
+      function addBone(start, end) {
+        if (state.bones.length >= MAX_BONES) {
+          statusText.textContent = `最多支持 ${MAX_BONES} 根骨骼`;
+          return;
+        }
+
+        const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+        const [sx, sy] = toUv(start);
+        const [ex, ey] = toUv(end);
+        state.bones.push({
+          id,
+          start: { ...start },
+          end: { ...end },
+          rest: [sx, sy, ex, ey],
+          rotation: 0,
+          tx: 0,
+          ty: 0,
+          radius: 0.18,
+        });
+        ensureIdleTimeline(state.bones[state.bones.length - 1], state.bones.length - 1);
+        state.selectedBoneId = id;
+        state.selectedVertex = { boneId: id, pointKey: "end" };
+        state.needsRender = true;
+        syncUi();
+      }
+
+      function render() {
+        if (!albedoTexture || !depthTexture || !normalTexture || !maskTexture) {
+          return;
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.max(1, Math.round(rect.width * ratio));
+        const height = Math.max(1, Math.round(rect.height * ratio));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, albedoTexture);
+        gl.uniform1i(uniforms.albedo, 0);
+
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, depthTexture);
+        gl.uniform1i(uniforms.depth, 1);
+
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, normalTexture);
+        gl.uniform1i(uniforms.normalMap, 2);
+
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, maskTexture);
+        gl.uniform1i(uniforms.maskMap, 3);
+
+        const bones = state.bones.slice(0, MAX_BONES);
+        gl.uniform1i(uniforms.boneCount, bones.length);
+        for (let i = 0; i < MAX_BONES; i += 1) {
+          const bone = bones[i];
+          if (bone) {
+            const pose = animatedBonePose(bone, i);
+            gl.uniform4f(uniforms.boneRest[i], bone.rest[0], bone.rest[1], bone.rest[2], bone.rest[3]);
+            gl.uniform4f(uniforms.bonePose[i], pose.rotation, pose.tx, pose.ty, pose.radius);
+          } else {
+            gl.uniform4f(uniforms.boneRest[i], 0, 0, 0, 0);
+            gl.uniform4f(uniforms.bonePose[i], 0, 0, 0, 0);
+          }
+        }
+        gl.uniform1f(uniforms.depthPower, Number.parseFloat(controls.depthPower.value));
+        gl.uniform1f(uniforms.deformStrength, Number.parseFloat(controls.deformStrength.value));
+        gl.uniform2f(uniforms.lightUv, state.lightUv[0], state.lightUv[1]);
+        gl.uniform1f(uniforms.applyLighting, state.applyLighting ? 1 : 0);
+        gl.uniform1f(uniforms.applyShadow, state.applyShadow ? 1 : 0);
+        gl.uniform1f(uniforms.lightStrength, Number.parseFloat(controls.lightStrength.value));
+        gl.uniform1f(uniforms.lightHeight, Number.parseFloat(controls.lightHeight.value));
+        gl.uniform1f(uniforms.normalStrength, Number.parseFloat(controls.normalStrength.value));
+        gl.uniform1f(uniforms.ambient, Number.parseFloat(controls.ambient.value));
+        gl.uniform1f(uniforms.shadowStrength, Number.parseFloat(controls.shadowStrength.value));
+        gl.uniform1f(uniforms.shadowLength, Number.parseFloat(controls.shadowLength.value));
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+
+      function frame(now) {
+        if (state.playIdle) {
+          if (!state.lastFrameTime) {
+            state.lastFrameTime = now;
+          }
+          const elapsed = (now - state.lastFrameTime) / 1000;
+          state.lastFrameTime = now;
+          state.currentFrame = normalizeFrame(
+            state.currentFrame + elapsed * state.fps * Number.parseFloat(controls.idleSpeed.value),
+          );
+          state.needsRender = true;
+        } else {
+          state.lastFrameTime = now;
+        }
+        if (state.needsRender) {
+          render();
+          state.needsRender = false;
+        }
+        requestAnimationFrame(frame);
+      }
+
+      controls.addBone.addEventListener("click", () => {
+        state.addingBone = !state.addingBone;
+        const selectedPoint = vertexPoint(state.selectedVertex);
+        state.draftStart = state.addingBone && selectedPoint ? { ...selectedPoint } : null;
+        statusText.textContent = state.addingBone
+          ? state.draftStart
+            ? "从已选择端点拖到新位置创建骨骼"
+            : "在右侧画面上拖动创建骨骼"
+          : "已退出创建骨骼";
+        syncUi();
+      });
+
+      overlay.addEventListener("pointerdown", (event) => {
+        if (event.target === lightHandle) {
+          state.draggingLight = true;
+          overlay.setPointerCapture(event.pointerId);
+          setLightFromEvent(event);
+          return;
+        }
+
+        const targetBoneId = event.target?.dataset?.boneId;
+        const pointKey = event.target?.dataset?.pointKey;
+
+        if (targetBoneId) {
+          state.selectedBoneId = targetBoneId;
+
+          if (pointKey) {
+            state.selectedVertex = { boneId: targetBoneId, pointKey };
+            if (state.addingBone) {
+              const point = vertexPoint(state.selectedVertex);
+              state.draftStart = point ? { ...point } : null;
+              overlay.setPointerCapture(event.pointerId);
+            } else {
+              statusText.textContent = "已选择端点；点击创建骨骼可从该端点继续";
+            }
+          }
+
+          syncUi();
+          if (!state.addingBone || pointKey) {
+            return;
+          }
+        }
+
+        if (!state.addingBone) {
+          state.draggingLight = true;
+          overlay.setPointerCapture(event.pointerId);
+          setLightFromEvent(event);
+          return;
+        }
+
+        if (!state.draftStart) {
+          state.draftStart = pointFromEvent(event);
+        }
+        overlay.setPointerCapture(event.pointerId);
+        syncUi();
+      });
+
+      overlay.addEventListener("pointerup", (event) => {
+        if (state.draggingLight) {
+          state.draggingLight = false;
+          return;
+        }
+
+        if (!state.addingBone || !state.draftStart) {
+          return;
+        }
+
+        const end = pointFromEvent(event);
+        const length = Math.hypot(end.x - state.draftStart.x, end.y - state.draftStart.y);
+        if (length > 20) {
+          addBone(state.draftStart, end);
+          statusText.textContent = "已创建骨骼";
+        }
+        state.draftStart = null;
+        state.addingBone = false;
+        syncUi();
+      });
+
+      overlay.addEventListener("pointermove", (event) => {
+        if (state.draggingLight) {
+          setLightFromEvent(event);
+        }
+      });
+
+      lightHandle.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+        state.draggingLight = true;
+        lightHandle.setPointerCapture(event.pointerId);
+        setLightFromEvent(event);
+      });
+
+      window.addEventListener("pointermove", (event) => {
+        if (state.draggingLight) {
+          setLightFromEvent(event);
+        }
+      });
+
+      window.addEventListener("pointerup", () => {
+        state.draggingLight = false;
+      });
+
+      boneList.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-bone-id]");
+        if (!button) {
+          return;
+        }
+        state.selectedBoneId = button.dataset.boneId;
+        state.selectedVertex = null;
+        syncUi();
+      });
+
+      albedoMode.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-albedo]");
+        if (!button || button.dataset.albedo === state.albedoKey) {
+          return;
+        }
+        state.albedoKey = button.dataset.albedo;
+        replaceTextures();
+        syncUi();
+      });
+
+      depthMode.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-depth]");
+        if (!button || button.dataset.depth === state.depthKey) {
+          return;
+        }
+        state.depthKey = button.dataset.depth;
+        replaceTextures();
+        syncUi();
+      });
+
+      for (const key of ["rotation", "translateX", "translateY", "radius"]) {
+        controls[key].addEventListener("input", () => {
+          const bone = selectedBone();
+          if (!bone) {
+            return;
+          }
+          if (key === "rotation") {
+            bone.rotation = (Number.parseFloat(controls.rotation.value) * Math.PI) / 180;
+          } else if (key === "translateX") {
+            bone.tx = Number.parseFloat(controls.translateX.value);
+          } else if (key === "translateY") {
+            bone.ty = Number.parseFloat(controls.translateY.value);
+          } else if (key === "radius") {
+            bone.radius = Number.parseFloat(controls.radius.value);
+          }
+          state.needsRender = true;
+          syncUi();
+        });
+      }
+
+      for (const key of [
+        "depthPower",
+        "deformStrength",
+        "idleAmount",
+        "idleSpeed",
+        "normalStrength",
+        "lightStrength",
+        "lightHeight",
+        "ambient",
+        "shadowStrength",
+        "shadowLength",
+      ]) {
+        controls[key].addEventListener("input", () => {
+          state.needsRender = true;
+          updateOutputs();
+          refreshJson();
+        });
+      }
+
+      controls.playIdle.addEventListener("change", () => {
+        state.playIdle = controls.playIdle.checked;
+        state.lastFrameTime = 0;
+        state.needsRender = true;
+        updateOutputs();
+        refreshJson();
+      });
+
+      controls.hideBones.addEventListener("change", () => {
+        state.hideBones = controls.hideBones.checked;
+        renderBoneOverlay();
+        refreshJson();
+      });
+
+      controls.applyLighting.addEventListener("change", () => {
+        state.applyLighting = controls.applyLighting.checked;
+        state.needsRender = true;
+        refreshJson();
+      });
+
+      controls.applyShadow.addEventListener("change", () => {
+        state.applyShadow = controls.applyShadow.checked;
+        state.needsRender = true;
+        refreshJson();
+      });
+
+      controls.resetPose.addEventListener("click", () => {
+        for (const bone of state.bones) {
+          bone.rotation = 0;
+          bone.tx = 0;
+          bone.ty = 0;
+        }
+        buildIdleTimelines();
+        state.needsRender = true;
+        syncUi();
+      });
+
+      controls.deleteBone.addEventListener("click", () => {
+        if (!state.selectedBoneId) {
+          return;
+        }
+        state.bones = state.bones.filter((bone) => bone.id !== state.selectedBoneId);
+        delete state.timelines[state.selectedBoneId];
+        state.selectedBoneId = state.bones[0]?.id || null;
+        state.selectedVertex = null;
+        state.needsRender = true;
+        syncUi();
+      });
+
+      controls.clearBones.addEventListener("click", () => {
+        state.bones = [];
+        state.timelines = {};
+        state.selectedBoneId = null;
+        state.selectedVertex = null;
+        state.needsRender = true;
+        syncUi();
+      });
+
+      controls.refreshJson.addEventListener("click", refreshJson);
+      controls.copyJson.addEventListener("click", async () => {
+        refreshJson();
+        rigJson.select();
+        try {
+          await navigator.clipboard.writeText(rigJson.value);
+          statusText.textContent = "JSON 已复制";
+        } catch {
+          document.execCommand("copy");
+          statusText.textContent = "JSON 已选中并复制";
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        state.needsRender = true;
+        updateLightHandle();
+      });
+
+      const [loadedAlbedo, loadedAlbedo2, loadedAlbedo3, loadedDepth, loadedDepth2, loadedNormalMap] =
+        await Promise.all([
+          loadImage(assetSource("albedo")),
+          loadImage(assetSource("albedo2")),
+          loadImage(assetSource("albedo3")),
+          loadImage(assetSource("depth")),
+          loadImage(assetSource("depth2")),
+          loadImage(assetSource("normalmap")),
+        ]);
+
+      albedoImages = {
+        albedo: loadedAlbedo,
+        albedo2: loadedAlbedo2,
+        albedo3: loadedAlbedo3,
+      };
+      depthImages = {
+        depth: loadedDepth,
+        depth2: loadedDepth2,
+      };
+      normalMapImage = loadedNormalMap;
+      maskCanvas = makeWhiteKeyMaskCanvas(loadedAlbedo3, 900, 1200);
+
+      if (window.FAXIAN_INITIAL_RIG) {
+        importRig(window.FAXIAN_INITIAL_RIG);
+        statusText.textContent = "已载入你提供的骨骼 JSON";
+      } else {
+        replaceTextures();
+        syncUi();
+        statusText.textContent = "就绪：创建骨骼后调节旋转/平移";
+      }
+      stats.textContent = `Man 1 ${loadedAlbedo.naturalWidth} x ${loadedAlbedo.naturalHeight}；Man 2 ${loadedAlbedo2.naturalWidth} x ${loadedAlbedo2.naturalHeight}；Man 3 ${loadedAlbedo3.naturalWidth} x ${loadedAlbedo3.naturalHeight}；Depth 1 ${loadedDepth.naturalWidth} x ${loadedDepth.naturalHeight}；Depth 2 ${loadedDepth2.naturalWidth} x ${loadedDepth2.naturalHeight}；NormalMap ${loadedNormalMap.naturalWidth} x ${loadedNormalMap.naturalHeight}`;
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

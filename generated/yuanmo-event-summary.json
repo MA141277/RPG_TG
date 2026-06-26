@@ -1,0 +1,181 @@
+{
+  "source": {
+    "campaignScript": "D:\\RPG_TG\\map\\yuan mo feng yun lu\\mods\\yuanmofengyunlu\\data\\world\\maps\\campaign\\imperial_campaign\\campaign_script.txt",
+    "textTables": [
+      "D:\\RPG_TG\\map\\yuan mo feng yun lu\\mods\\yuanmofengyunlu\\data\\text\\historic_events.txt",
+      "D:\\RPG_TG\\map\\yuan mo feng yun lu\\mods\\yuanmofengyunlu\\data\\text\\event_strings.txt",
+      "D:\\RPG_TG\\map\\yuan mo feng yun lu\\mods\\yuanmofengyunlu\\data\\text\\event_titles.txt",
+      "D:\\RPG_TG\\map\\yuan mo feng yun lu\\mods\\yuanmofengyunlu\\data\\text\\missions.txt",
+      "D:\\RPG_TG\\map\\yuan mo feng yun lu\\mods\\yuanmofengyunlu\\data\\text\\campaign_descriptions.txt"
+    ]
+  },
+  "totalMonitors": 370,
+  "monitorsWithHistoricEvents": 79,
+  "totalHistoricEventCalls": 82,
+  "uniqueHistoricEvents": 73,
+  "withTitle": 48,
+  "withBody": 47,
+  "counters": 286,
+  "bySection": {
+    "朱元璋北伐": 22,
+    "名城陷落脚本开始": 10,
+    "名城系统脚本开始": 9,
+    "朱元璋称帝建国： papal_states": 7,
+    "王保保力挽大元": 7,
+    "===================== 历史剧情脚本 =========================": 5,
+    "开局介绍": 4,
+    "是否开启正史演绎": 4,
+    "unsectioned": 4,
+    "G5 战利品脚本": 2,
+    "新trait介绍  手动选择线路脚本": 1,
+    "大名府": 1,
+    "太原": 1,
+    "成都": 1,
+    "大都": 1,
+    "朱元璋灭陈友谅合并": 1,
+    "蒙古定河北": 1,
+    "鄱阳湖之战": 1
+  },
+  "sampleEvents": [
+    {
+      "id": "sack_ai",
+      "title": null,
+      "firstLine": 6533,
+      "section": "G5 战利品脚本",
+      "callCount": 1
+    },
+    {
+      "id": "sack_player",
+      "title": null,
+      "firstLine": 6553,
+      "section": "G5 战利品脚本",
+      "callCount": 1
+    },
+    {
+      "id": "DESCR",
+      "title": "开场历史背景简介",
+      "firstLine": 6570,
+      "section": "开局介绍",
+      "callCount": 1
+    },
+    {
+      "id": "DESCRT",
+      "title": "元末风云录MOD1.04版本",
+      "firstLine": 6571,
+      "section": "开局介绍",
+      "callCount": 1
+    },
+    {
+      "id": "DESMUGHAL",
+      "title": "国家介绍-德里苏丹国",
+      "firstLine": 6578,
+      "section": "开局介绍",
+      "callCount": 1
+    },
+    {
+      "id": "YIZHIYAN",
+      "title": "石人一只眼，挑动黄河天下反！",
+      "firstLine": 6586,
+      "section": "开局介绍",
+      "callCount": 1
+    },
+    {
+      "id": "lishizhengshi",
+      "title": null,
+      "firstLine": 6598,
+      "section": "是否开启正史演绎",
+      "callCount": 1
+    },
+    {
+      "id": "WUGUOGONG",
+      "title": "小明王封朱元璋为吴国公",
+      "firstLine": 6615,
+      "section": "是否开启正史演绎",
+      "callCount": 1
+    },
+    {
+      "id": "WUSHANGFA",
+      "title": "吴立盐茶法，铸大中通宝钱",
+      "firstLine": 6625,
+      "section": "是否开启正史演绎",
+      "callCount": 1
+    },
+    {
+      "id": "SONGJIANGXIANG",
+      "title": "宋将李武、崔德降李思齐",
+      "firstLine": 6635,
+      "section": "是否开启正史演绎",
+      "callCount": 1
+    },
+    {
+      "id": "CHARACTERTYPE",
+      "title": "元末风云录技能系统介绍",
+      "firstLine": 6644,
+      "section": "新trait介绍  手动选择线路脚本",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_MALACCA",
+      "title": "应天易主！",
+      "firstLine": 6696,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_LAHORE",
+      "title": "濠州易主！",
+      "firstLine": 6703,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_JIAYUGUAN",
+      "title": "益都易主！",
+      "firstLine": 6710,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_MADRAS",
+      "title": "江陵易主！",
+      "firstLine": 6717,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_LUANGPRABANG",
+      "title": "长安易主！",
+      "firstLine": 6724,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_LASA",
+      "title": "洛阳易主！",
+      "firstLine": 6731,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_XIAN",
+      "title": "成都易主！",
+      "firstLine": 6738,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_CHENGDU",
+      "title": "大名府易主！",
+      "firstLine": 6746,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    },
+    {
+      "id": "LOST_YINGTIAN",
+      "title": "大都易主！",
+      "firstLine": 6753,
+      "section": "名城陷落脚本开始",
+      "callCount": 1
+    }
+  ]
+}

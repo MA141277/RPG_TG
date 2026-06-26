@@ -1,0 +1,24 @@
+{
+  "id": "故宫大殿-2",
+  "kind": "building",
+  "title": "故宫大殿",
+  "prompt": "故宫大殿",
+  "tags": [],
+  "createdAt": "2026-04-13T21:32:50+08:00",
+  "updatedAt": "2026-04-13T21:32:50+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true
+  },
+  "files": {
+    "front": "building/故宫大殿-2/front.png",
+    "side": "building/故宫大殿-2/side.png",
+    "top": "building/故宫大殿-2/top.png",
+    "preview": "building/故宫大殿-2/preview.png",
+    "previewProcessed": "building/故宫大殿-2/preview-processed.png"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "20层高的大楼",
+  "kind": "building",
+  "title": "20层高的大楼",
+  "prompt": "20层高的大楼",
+  "tags": [
+    "facility"
+  ],
+  "widthTiles": 20,
+  "drawRoad": false,
+  "createdAt": "2026-04-26T19:14:47+08:00",
+  "updatedAt": "2026-04-26T19:14:47+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 149,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/20层高的大楼/front.png",
+    "side": "building/20层高的大楼/side.png",
+    "top": "building/20层高的大楼/top.png",
+    "preview": "building/20层高的大楼/preview.png",
+    "previewProcessed": "building/20层高的大楼/preview-processed.png"
+  }
+}

@@ -1,0 +1,8 @@
+
+> rpg-tg@0.1.0 dev:localhost
+> vite --host localhost --port 5173
+
+
+  VITE v7.3.3  ready in 330 ms
+
+  ➜  Local:   http://localhost:5173/

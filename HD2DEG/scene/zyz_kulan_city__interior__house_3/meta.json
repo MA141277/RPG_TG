@@ -1,0 +1,14 @@
+{
+  "id": "zyz_kulan_city__interior__house_3",
+  "kind": "scene",
+  "title": "zyz_kulan_city__interior__house_3",
+  "createdAt": "2026-06-01T14:11:05+08:00",
+  "updatedAt": "2026-06-01T14:11:08+08:00",
+  "schemaVersion": 1,
+  "objectCount": 0,
+  "buildingCount": 0,
+  "npcCount": 0,
+  "files": {
+    "scene": "scene/zyz_kulan_city__interior__house_3/scene.json"
+  }
+}

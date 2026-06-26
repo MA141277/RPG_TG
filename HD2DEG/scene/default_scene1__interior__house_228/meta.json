@@ -1,0 +1,14 @@
+{
+  "id": "default_scene1__interior__house_228",
+  "kind": "scene",
+  "title": "default_scene1__interior__house_228",
+  "createdAt": "2026-04-30T13:43:51+08:00",
+  "updatedAt": "2026-05-06T19:36:53+08:00",
+  "schemaVersion": 1,
+  "objectCount": 0,
+  "buildingCount": 0,
+  "npcCount": 0,
+  "files": {
+    "scene": "scene/default_scene1__interior__house_228/scene.json"
+  }
+}

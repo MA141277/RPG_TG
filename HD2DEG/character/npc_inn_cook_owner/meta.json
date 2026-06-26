@@ -1,0 +1,19 @@
+{
+  "id": "npc_inn_cook_owner",
+  "kind": "character",
+  "title": "npc_inn_cook_owner",
+  "prompt": "中国风像素角色，酒肆老板兼厨师，中年男性，沉稳寡言；灰白围裙，袖口绑绳，短须，手持布巾；厨师气质但不要画灶台或大厨具。",
+  "tags": [
+    "npc:npc_inn_cook_owner"
+  ],
+  "createdAt": "2026-04-29T11:01:59+08:00",
+  "updatedAt": "2026-04-29T11:01:59+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "columns": 6,
+  "rows": 5,
+  "files": {
+    "sheet": "character/npc_inn_cook_owner/sheet.png",
+    "preview": "character/npc_inn_cook_owner/preview.png"
+  }
+}

@@ -1,0 +1,358 @@
+{
+  "id": "凉亭-2",
+  "kind": "building",
+  "title": "凉亭",
+  "prompt": "凉亭",
+  "tags": [],
+  "createdAt": "2026-04-14T15:03:54+08:00",
+  "updatedAt": "2026-04-14T15:03:54+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 112,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "semanticConstraints": {
+      "positiveVolumes": [
+        {
+          "id": "col_nw",
+          "type": "column",
+          "front": {
+            "minX": 0.07,
+            "minY": 0.18,
+            "maxX": 0.16,
+            "maxY": 0.8500000000000001,
+            "width": 0.09,
+            "height": 0.6700000000000002
+          },
+          "side": {
+            "minX": 0.07,
+            "minY": 0.18,
+            "maxX": 0.16,
+            "maxY": 0.8500000000000001,
+            "width": 0.09,
+            "height": 0.6700000000000002
+          },
+          "top": {
+            "minX": 0.07,
+            "minY": 0.07,
+            "maxX": 0.16,
+            "maxY": 0.16,
+            "width": 0.09,
+            "height": 0.09
+          },
+          "minContinuousHeight": 0.6700000000000002,
+          "touchGround": false,
+          "confidence": 0.99
+        },
+        {
+          "id": "col_ne",
+          "type": "column",
+          "front": {
+            "minX": 0.84,
+            "minY": 0.18,
+            "maxX": 0.9299999999999999,
+            "maxY": 0.8500000000000001,
+            "width": 0.08999999999999997,
+            "height": 0.6700000000000002
+          },
+          "side": {
+            "minX": 0.84,
+            "minY": 0.18,
+            "maxX": 0.9299999999999999,
+            "maxY": 0.8500000000000001,
+            "width": 0.08999999999999997,
+            "height": 0.6700000000000002
+          },
+          "top": {
+            "minX": 0.84,
+            "minY": 0.07,
+            "maxX": 0.9299999999999999,
+            "maxY": 0.16,
+            "width": 0.08999999999999997,
+            "height": 0.09
+          },
+          "minContinuousHeight": 0.6700000000000002,
+          "touchGround": false,
+          "confidence": 0.99
+        },
+        {
+          "id": "col_sw",
+          "type": "column",
+          "front": {
+            "minX": 0.07,
+            "minY": 0.85,
+            "maxX": 0.16,
+            "maxY": 0.94,
+            "width": 0.09,
+            "height": 0.08999999999999997
+          },
+          "side": {
+            "minX": 0.07,
+            "minY": 0.85,
+            "maxX": 0.16,
+            "maxY": 0.94,
+            "width": 0.09,
+            "height": 0.08999999999999997
+          },
+          "top": {
+            "minX": 0.07,
+            "minY": 0.84,
+            "maxX": 0.16,
+            "maxY": 0.9299999999999999,
+            "width": 0.09,
+            "height": 0.08999999999999997
+          },
+          "minContinuousHeight": 0.08999999999999997,
+          "touchGround": false,
+          "confidence": 0.99
+        },
+        {
+          "id": "col_se",
+          "type": "column",
+          "front": {
+            "minX": 0.84,
+            "minY": 0.85,
+            "maxX": 0.9299999999999999,
+            "maxY": 0.94,
+            "width": 0.08999999999999997,
+            "height": 0.08999999999999997
+          },
+          "side": {
+            "minX": 0.84,
+            "minY": 0.85,
+            "maxX": 0.9299999999999999,
+            "maxY": 0.94,
+            "width": 0.08999999999999997,
+            "height": 0.08999999999999997
+          },
+          "top": {
+            "minX": 0.84,
+            "minY": 0.84,
+            "maxX": 0.9299999999999999,
+            "maxY": 0.9299999999999999,
+            "width": 0.08999999999999997,
+            "height": 0.08999999999999997
+          },
+          "minContinuousHeight": 0.08999999999999997,
+          "touchGround": false,
+          "confidence": 0.99
+        }
+      ],
+      "negativeVolumes": [
+        {
+          "id": "opening_entry",
+          "type": "opening",
+          "front": {
+            "minX": 0.38,
+            "minY": 0.73,
+            "maxX": 0.62,
+            "maxY": 0.9099999999999999,
+            "width": 0.24,
+            "height": 0.17999999999999994
+          },
+          "side": null,
+          "top": {
+            "minX": 0.38,
+            "minY": 0.93,
+            "maxX": 0.62,
+            "maxY": 1,
+            "width": 0.24,
+            "height": 0.06999999999999995
+          },
+          "touchGround": false,
+          "openingDepth": "through",
+          "confidence": 0.97
+        }
+      ],
+      "regenerationHints": [
+        "四根柱子在top视图均有明确标注，栏杆在top视图有两侧但不完整，建议补全。",
+        "正立面和侧立面栏杆细节略有不同，建模时以top视图为准。",
+        "柱子需要从地面连续到檐口，不要让局部柱脚悬空或断裂。"
+      ],
+      "notes": [
+        "三视图高度一致，均为同一凉亭建筑。",
+        "屋顶为四坡攒尖顶，栏杆和开口位置在top视图有明确对应。"
+      ]
+    },
+    "semanticValidation": {
+      "ok": true,
+      "severity": "minor",
+      "issues": [],
+      "warnings": [
+        "VLM 未识别到门窗语义；开洞保护可能有限。"
+      ],
+      "constraints": {
+        "positiveVolumes": [
+          {
+            "id": "col_nw",
+            "type": "column",
+            "front": {
+              "minX": 0.07,
+              "minY": 0.18,
+              "maxX": 0.16,
+              "maxY": 0.8500000000000001,
+              "width": 0.09,
+              "height": 0.6700000000000002
+            },
+            "side": {
+              "minX": 0.07,
+              "minY": 0.18,
+              "maxX": 0.16,
+              "maxY": 0.8500000000000001,
+              "width": 0.09,
+              "height": 0.6700000000000002
+            },
+            "top": {
+              "minX": 0.07,
+              "minY": 0.07,
+              "maxX": 0.16,
+              "maxY": 0.16,
+              "width": 0.09,
+              "height": 0.09
+            },
+            "minContinuousHeight": 0.6700000000000002,
+            "touchGround": false,
+            "confidence": 0.99
+          },
+          {
+            "id": "col_ne",
+            "type": "column",
+            "front": {
+              "minX": 0.84,
+              "minY": 0.18,
+              "maxX": 0.9299999999999999,
+              "maxY": 0.8500000000000001,
+              "width": 0.08999999999999997,
+              "height": 0.6700000000000002
+            },
+            "side": {
+              "minX": 0.84,
+              "minY": 0.18,
+              "maxX": 0.9299999999999999,
+              "maxY": 0.8500000000000001,
+              "width": 0.08999999999999997,
+              "height": 0.6700000000000002
+            },
+            "top": {
+              "minX": 0.84,
+              "minY": 0.07,
+              "maxX": 0.9299999999999999,
+              "maxY": 0.16,
+              "width": 0.08999999999999997,
+              "height": 0.09
+            },
+            "minContinuousHeight": 0.6700000000000002,
+            "touchGround": false,
+            "confidence": 0.99
+          },
+          {
+            "id": "col_sw",
+            "type": "column",
+            "front": {
+              "minX": 0.07,
+              "minY": 0.85,
+              "maxX": 0.16,
+              "maxY": 0.94,
+              "width": 0.09,
+              "height": 0.08999999999999997
+            },
+            "side": {
+              "minX": 0.07,
+              "minY": 0.85,
+              "maxX": 0.16,
+              "maxY": 0.94,
+              "width": 0.09,
+              "height": 0.08999999999999997
+            },
+            "top": {
+              "minX": 0.07,
+              "minY": 0.84,
+              "maxX": 0.16,
+              "maxY": 0.9299999999999999,
+              "width": 0.09,
+              "height": 0.08999999999999997
+            },
+            "minContinuousHeight": 0.08999999999999997,
+            "touchGround": false,
+            "confidence": 0.99
+          },
+          {
+            "id": "col_se",
+            "type": "column",
+            "front": {
+              "minX": 0.84,
+              "minY": 0.85,
+              "maxX": 0.9299999999999999,
+              "maxY": 0.94,
+              "width": 0.08999999999999997,
+              "height": 0.08999999999999997
+            },
+            "side": {
+              "minX": 0.84,
+              "minY": 0.85,
+              "maxX": 0.9299999999999999,
+              "maxY": 0.94,
+              "width": 0.08999999999999997,
+              "height": 0.08999999999999997
+            },
+            "top": {
+              "minX": 0.84,
+              "minY": 0.84,
+              "maxX": 0.9299999999999999,
+              "maxY": 0.9299999999999999,
+              "width": 0.08999999999999997,
+              "height": 0.08999999999999997
+            },
+            "minContinuousHeight": 0.08999999999999997,
+            "touchGround": false,
+            "confidence": 0.99
+          }
+        ],
+        "negativeVolumes": [
+          {
+            "id": "opening_entry",
+            "type": "opening",
+            "front": {
+              "minX": 0.38,
+              "minY": 0.73,
+              "maxX": 0.62,
+              "maxY": 0.9099999999999999,
+              "width": 0.24,
+              "height": 0.17999999999999994
+            },
+            "side": null,
+            "top": {
+              "minX": 0.38,
+              "minY": 0.93,
+              "maxX": 0.62,
+              "maxY": 1,
+              "width": 0.24,
+              "height": 0.06999999999999995
+            },
+            "touchGround": false,
+            "openingDepth": "through",
+            "confidence": 0.97
+          }
+        ],
+        "regenerationHints": [
+          "四根柱子在top视图均有明确标注，栏杆在top视图有两侧但不完整，建议补全。",
+          "正立面和侧立面栏杆细节略有不同，建模时以top视图为准。",
+          "柱子需要从地面连续到檐口，不要让局部柱脚悬空或断裂。"
+        ],
+        "notes": [
+          "三视图高度一致，均为同一凉亭建筑。",
+          "屋顶为四坡攒尖顶，栏杆和开口位置在top视图有明确对应。"
+        ]
+      }
+    }
+  },
+  "files": {
+    "front": "building/凉亭-2/front.png",
+    "side": "building/凉亭-2/side.png",
+    "top": "building/凉亭-2/top.png",
+    "preview": "building/凉亭-2/preview.png",
+    "previewProcessed": "building/凉亭-2/preview-processed.png"
+  }
+}

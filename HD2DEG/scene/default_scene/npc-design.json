@@ -1,0 +1,708 @@
+{
+  "schemaVersion": 1,
+  "worldId": "default_scene",
+  "title": "default_scene NPC design",
+  "generatedAt": "2026-05-08T00:00:00+08:00",
+  "notes": "Static design data for planning, simulation, and narrative generation. Dynamic runtime state should stay in runtime.json.",
+  "locationRefs": {
+    "home": {
+      "type": "derived",
+      "description": "Resolved from the NPC's homeObjectId."
+    },
+    "inn_counter": {
+      "type": "poi",
+      "description": "The main counter area of the inn."
+    },
+    "inn_kitchen": {
+      "type": "poi",
+      "description": "The kitchen and stove area inside the inn."
+    },
+    "inn_hall": {
+      "type": "poi",
+      "description": "The public eating and drinking area of the inn."
+    },
+    "inn_door": {
+      "type": "poi",
+      "description": "The area just outside the inn entrance."
+    },
+    "inn_backroom": {
+      "type": "poi",
+      "description": "Private room behind the inn for the owners."
+    },
+    "inn_sidebed": {
+      "type": "poi",
+      "description": "A side sleeping area used by the waiter."
+    },
+    "inn_yard": {
+      "type": "poi",
+      "description": "The small side yard attached to the inn."
+    },
+    "temple_hall": {
+      "type": "poi",
+      "description": "The main worship and reception area of the temple."
+    },
+    "temple_courtyard": {
+      "type": "poi",
+      "description": "The open yard inside the temple compound."
+    },
+    "temple_gate": {
+      "type": "poi",
+      "description": "The entrance of the temple."
+    },
+    "temple_guestroom": {
+      "type": "poi",
+      "description": "A guest lodging space used by traveling merchants."
+    },
+    "market_road": {
+      "type": "poi",
+      "description": "A roadside trading and traffic area in the village."
+    },
+    "market_spot": {
+      "type": "poi",
+      "description": "A preferred trading stand or roadside sales point."
+    },
+    "market_spot_side": {
+      "type": "poi",
+      "description": "A secondary standing point beside the merchant stall."
+    },
+    "yang_house_yard": {
+      "type": "poi",
+      "description": "The yard space of the Yang household."
+    },
+    "yang_house_gate": {
+      "type": "poi",
+      "description": "The gate/front area of the Yang household."
+    },
+    "hunter_house_yard": {
+      "type": "poi",
+      "description": "The yard space of the hunter's household."
+    },
+    "well_side": {
+      "type": "poi",
+      "description": "The communal well area."
+    },
+    "village_path": {
+      "type": "poi",
+      "description": "A common path used for short neighborhood wandering."
+    },
+    "forest_edge_west": {
+      "type": "boundary",
+      "description": "A western village boundary point suitable for abstract hunting."
+    },
+    "forest_edge_north": {
+      "type": "boundary",
+      "description": "A northern village boundary point suitable for abstract hunting or wood gathering."
+    },
+    "free_roam_village": {
+      "type": "virtual",
+      "description": "A roaming pattern resolved among social anchors in the village."
+    }
+  },
+  "facilities": {
+    "well": {
+      "kind": "scene_object",
+      "objectId": 6,
+      "locationRef": "well_side",
+      "actionLabel": "汲取",
+      "summary": "村里的公共水井，用来取水、洗手和短暂停留。",
+      "possibleOutputs": [
+        { "itemId": "water", "count": 1, "weight": 100 }
+      ],
+      "emotionDelta": { "mood": 1, "stress": -1 }
+    },
+    "forge": {
+      "kind": "scene_object",
+      "objectId": 2,
+      "locationRef": "market_road",
+      "actionLabel": "锻造",
+      "summary": "铁匠铺里的锻造设施，用来修理和加工工具。",
+      "possibleOutputs": [
+        { "itemId": "repaired_tool", "count": 1, "weight": 70 },
+        { "itemId": "iron_fitting", "count": 1, "weight": 30 }
+      ],
+      "emotionDelta": { "mood": 1, "stress": 1 }
+    },
+    "workbench": {
+      "kind": "scene_object",
+      "objectId": 268,
+      "locationRef": "market_road",
+      "actionLabel": "制作",
+      "summary": "村里的简易工作台，用来处理木料和小型器物。",
+      "possibleOutputs": [
+        { "itemId": "wood_piece", "countMin": 1, "countMax": 2, "weight": 60 },
+        { "itemId": "repaired_tool", "count": 1, "weight": 40 }
+      ],
+      "emotionDelta": { "mood": 1 }
+    },
+    "stove": {
+      "kind": "virtual",
+      "locationRef": "inn_kitchen",
+      "actionLabel": "烹饪",
+      "summary": "客栈厨房里的炉灶，用来备火、做饭和热食。",
+      "possibleOutputs": [
+        { "itemId": "cooked_meal", "count": 1, "weight": 80 },
+        { "itemId": "hot_soup", "count": 1, "weight": 20 }
+      ],
+      "emotionDelta": { "mood": 1, "stress": 1 }
+    },
+    "storage": {
+      "kind": "virtual",
+      "locationRef": "inn_counter",
+      "actionLabel": "整理",
+      "summary": "柜台和后房的储物点，用来清点、取放和补货。",
+      "possibleOutputs": [
+        { "itemId": "coin_copper", "countMin": 1, "countMax": 4, "weight": 60 },
+        { "itemId": "ledger_note", "count": 1, "weight": 40 }
+      ],
+      "emotionDelta": { "mood": 1, "stress": -1 }
+    }
+  },
+  "activityResolvers": {
+    "hunt": {
+      "consumes": [
+        { "itemId": "arrow", "count": 1 }
+      ],
+      "possibleOutputs": [
+        { "itemId": "rabbit_meat", "count": 1, "weight": 60 },
+        { "itemId": "fur", "count": 1, "weight": 60 },
+        { "itemId": "small_bird", "count": 1, "weight": 25 },
+        { "itemId": "nothing", "count": 0, "weight": 15 }
+      ],
+      "energyDelta": -12
+    },
+    "gather_wood": {
+      "consumes": [],
+      "possibleOutputs": [
+        { "itemId": "firewood", "countMin": 2, "countMax": 4, "weight": 100 }
+      ],
+      "energyDelta": -8
+    },
+    "forage_small": {
+      "consumes": [],
+      "possibleOutputs": [
+        { "itemId": "berry", "countMin": 1, "countMax": 2, "weight": 35 },
+        { "itemId": "wildflower", "countMin": 1, "countMax": 2, "weight": 25 },
+        { "itemId": "herb", "countMin": 1, "countMax": 1, "weight": 20 },
+        { "itemId": "shiny_stone", "countMin": 1, "countMax": 1, "weight": 20 }
+      ],
+      "energyDelta": -3
+    },
+    "cook_food": {
+      "consumes": [
+        { "itemId": "firewood", "count": 1 }
+      ],
+      "possibleOutputs": [
+        { "itemId": "cooked_meal", "count": 1, "weight": 100 }
+      ],
+      "energyDelta": -4
+    },
+    "run_shop": {
+      "consumes": [],
+      "possibleOutputs": [
+        { "itemId": "coin_copper", "countMin": 1, "countMax": 8, "weight": 100 }
+      ],
+      "energyDelta": -4
+    },
+    "repair_item": {
+      "consumes": [
+        { "itemId": "wood_piece", "count": 1, "optional": true },
+        { "itemId": "cloth_patch", "count": 1, "optional": true }
+      ],
+      "possibleOutputs": [
+        { "itemId": "repaired_tool", "count": 1, "weight": 100 }
+      ],
+      "energyDelta": -2
+    }
+  },
+  "npcs": [
+    {
+      "npcId": "npc_inn_bosslady",
+      "displayName": "沈掌柜",
+      "homeObjectId": 1,
+      "role": "酒肆老板娘/掌柜",
+      "anchors": {
+        "home": "inn_backroom",
+        "work": "inn_counter",
+        "social": ["inn_hall", "inn_door", "market_road"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["key_ring", "ledger", "coin_pouch"],
+        "inventory": [
+          { "itemId": "coin_copper", "count": 80 },
+          { "itemId": "coin_silver", "count": 4 },
+          { "itemId": "tea_leaf", "count": 2 },
+          { "itemId": "small_snack", "count": 2 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "shopkeeper",
+        "wakeMin": 330,
+        "sleepMin": 1320,
+        "defaultBlocks": [
+          { "activityType": "prepare_shop", "startMin": 360, "endMin": 480, "locationRef": "inn_counter", "mode": "must_do" },
+          { "activityType": "run_shop", "startMin": 480, "endMin": 720, "locationRef": "inn_counter", "mode": "must_do" },
+          { "activityType": "walk_floor", "startMin": 720, "endMin": 840, "locationRef": "inn_hall", "mode": "soft_do" },
+          { "activityType": "run_shop", "startMin": 840, "endMin": 1080, "locationRef": "inn_counter", "mode": "must_do" },
+          { "activityType": "close_shop", "startMin": 1140, "endMin": 1260, "locationRef": "inn_counter", "mode": "must_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["run_shop", "collect_payment", "restock"],
+        "secondary": ["mediate_dispute", "gossip"],
+        "facilityUse": ["storage", "stove"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_inn_cook_owner", "npc_inn_waiter"],
+        "tradeWith": ["npc_merchants_husband", "player"],
+        "chatTopics": ["酒肆生意", "村里消息", "行商货价", "谁欠账"]
+      },
+      "emotionBias": {
+        "baselineMood": 1,
+        "stressors": ["偷拿货", "酒肆太冷清", "账目不平"],
+        "comforts": ["客满", "账对得上", "买卖谈成"]
+      },
+      "storyHooks": ["村内情报中转", "酒肆经营线", "与行商议价线"]
+    },
+    {
+      "npcId": "npc_inn_cook_owner",
+      "displayName": "沈福",
+      "homeObjectId": 1,
+      "role": "酒肆老板/后厨厨师",
+      "anchors": {
+        "home": "inn_backroom",
+        "work": "inn_kitchen",
+        "social": ["inn_yard", "inn_hall"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["kitchen_knife", "rag_towel", "fire_tongs"],
+        "inventory": [
+          { "itemId": "raw_meat", "count": 1 },
+          { "itemId": "vegetable", "count": 2 },
+          { "itemId": "coin_copper", "count": 18 },
+          { "itemId": "firewood", "count": 2 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "cook",
+        "wakeMin": 300,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          { "activityType": "prepare_fire", "startMin": 330, "endMin": 450, "locationRef": "inn_kitchen", "mode": "must_do" },
+          { "activityType": "cook_food", "startMin": 600, "endMin": 780, "locationRef": "inn_kitchen", "mode": "must_do" },
+          { "activityType": "prepare_ingredients", "startMin": 900, "endMin": 1020, "locationRef": "inn_kitchen", "mode": "must_do" },
+          { "activityType": "cook_food", "startMin": 1020, "endMin": 1140, "locationRef": "inn_kitchen", "mode": "must_do" },
+          { "activityType": "clean_kitchen", "startMin": 1140, "endMin": 1200, "locationRef": "inn_kitchen", "mode": "soft_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["cook_food", "prepare_ingredients"],
+        "secondary": ["buy_ingredients", "repair_utensils"],
+        "facilityUse": ["stove", "well", "storage"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_inn_bosslady", "npc_inn_waiter"],
+        "tradeWith": ["npc_hunter", "npc_hunter_wife", "player"],
+        "chatTopics": ["食材够不够", "今天客多不多", "猎物新不新鲜"]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": ["食材短缺", "火候失手", "后厨太乱"],
+        "comforts": ["灶火稳定", "有人夸手艺", "晚饭有人等"]
+      },
+      "storyHooks": ["食材供给链", "猎物烹饪线", "酒肆后厨线"]
+    },
+    {
+      "npcId": "npc_inn_waiter",
+      "displayName": "阿顺",
+      "homeObjectId": 1,
+      "role": "酒肆伙计/跑堂",
+      "anchors": {
+        "home": "inn_sidebed",
+        "work": "inn_hall",
+        "social": ["inn_door", "market_road", "well_side"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["tray", "rag_towel"],
+        "inventory": [
+          { "itemId": "coin_copper", "count": 9 },
+          { "itemId": "small_note", "count": 1 },
+          { "itemId": "snack", "count": 1 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "runner",
+        "wakeMin": 360,
+        "sleepMin": 1320,
+        "defaultBlocks": [
+          { "activityType": "clean_hall", "startMin": 420, "endMin": 540, "locationRef": "inn_hall", "mode": "must_do" },
+          { "activityType": "serve_guests", "startMin": 600, "endMin": 840, "locationRef": "inn_hall", "mode": "must_do" },
+          { "activityType": "deliver_items", "startMin": 840, "endMin": 960, "locationRef": "market_road", "mode": "soft_do" },
+          { "activityType": "serve_guests", "startMin": 1020, "endMin": 1260, "locationRef": "inn_hall", "mode": "must_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["serve_guests", "deliver_items", "carry_water"],
+        "secondary": ["gossip", "errand"],
+        "facilityUse": ["well", "storage"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_inn_bosslady", "npc_inn_cook_owner", "npc_yangliu"],
+        "tradeWith": ["player"],
+        "chatTopics": ["村里八卦", "谁来借宿", "哪里有热闹"]
+      },
+      "emotionBias": {
+        "baselineMood": 1,
+        "stressors": ["忙到漏单", "被掌柜训", "跑腿白跑"],
+        "comforts": ["听见新消息", "客人打赏", "店里热闹"]
+      },
+      "storyHooks": ["村内流言传播", "跑腿支线", "玩家情报入口"]
+    },
+    {
+      "npcId": "npc_temple_monk",
+      "displayName": "慧远",
+      "homeObjectId": 5,
+      "role": "寺庙老僧",
+      "anchors": {
+        "home": "temple_guestroom",
+        "work": "temple_hall",
+        "social": ["temple_courtyard", "temple_gate", "well_side"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["prayer_beads", "broom", "medicine_pouch"],
+        "inventory": [
+          { "itemId": "herb", "count": 2 },
+          { "itemId": "cloth_strip", "count": 2 },
+          { "itemId": "coin_copper", "count": 3 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "monastic",
+        "wakeMin": 270,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          { "activityType": "pray", "startMin": 300, "endMin": 420, "locationRef": "temple_hall", "mode": "must_do" },
+          { "activityType": "clean_temple", "startMin": 420, "endMin": 540, "locationRef": "temple_courtyard", "mode": "must_do" },
+          { "activityType": "advise_people", "startMin": 540, "endMin": 720, "locationRef": "temple_hall", "mode": "soft_do" },
+          { "activityType": "brew_medicine", "startMin": 840, "endMin": 960, "locationRef": "temple_courtyard", "mode": "soft_do" },
+          { "activityType": "pray", "startMin": 1140, "endMin": 1260, "locationRef": "temple_hall", "mode": "must_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["pray", "clean_temple", "advise_people"],
+        "secondary": ["brew_medicine", "host_travelers"],
+        "facilityUse": ["well", "stove"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_merchants_husband", "npc_merchants_wife", "npc_yangliu"],
+        "tradeWith": ["player"],
+        "chatTopics": ["因果", "村外风声", "旅人见闻", "劝解"]
+      },
+      "emotionBias": {
+        "baselineMood": 2,
+        "stressors": ["争执过多", "病人无药", "香火荒废"],
+        "comforts": ["庭院安静", "帮到别人", "晚课顺利"]
+      },
+      "storyHooks": ["情绪恢复节点", "寺庙借宿线", "村外消息线"]
+    },
+    {
+      "npcId": "npc_merchants_husband",
+      "displayName": "邵远舟",
+      "homeObjectId": 5,
+      "role": "行商（借宿寺庙）",
+      "anchors": {
+        "home": "temple_guestroom",
+        "work": "market_spot",
+        "social": ["temple_gate", "inn_hall", "market_road"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["account_abacus", "trade_bundle", "coin_pouch"],
+        "inventory": [
+          { "itemId": "coin_copper", "count": 35 },
+          { "itemId": "coin_silver", "count": 2 },
+          { "itemId": "cloth_roll", "count": 1 },
+          { "itemId": "tea_brick", "count": 1 },
+          { "itemId": "small_goods", "count": 3 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "travelling_merchant",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          { "activityType": "sort_goods", "startMin": 420, "endMin": 480, "locationRef": "temple_guestroom", "mode": "must_do" },
+          { "activityType": "trade_goods", "startMin": 540, "endMin": 720, "locationRef": "market_spot", "mode": "must_do" },
+          { "activityType": "price_check", "startMin": 780, "endMin": 900, "locationRef": "inn_door", "mode": "soft_do" },
+          { "activityType": "trade_goods", "startMin": 900, "endMin": 1080, "locationRef": "market_spot", "mode": "must_do" },
+          { "activityType": "count_coins", "startMin": 1140, "endMin": 1200, "locationRef": "temple_guestroom", "mode": "must_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["trade_goods", "price_check", "collect_rumors"],
+        "secondary": ["barter", "negotiate_lodging"],
+        "facilityUse": ["storage"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_merchants_wife"],
+        "tradeWith": ["npc_inn_bosslady", "player"],
+        "chatTopics": ["外地货价", "路上见闻", "村里缺什么"]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": ["丢货", "卖不动", "旅途危险"],
+        "comforts": ["谈成生意", "路途平安", "掌握消息"]
+      },
+      "storyHooks": ["稀有商品入口", "外部世界消息入口", "借宿寺庙线"]
+    },
+    {
+      "npcId": "npc_merchants_wife",
+      "displayName": "邵婉娘",
+      "homeObjectId": 5,
+      "role": "行商同伴（借宿寺庙）",
+      "anchors": {
+        "home": "temple_guestroom",
+        "work": "market_spot_side",
+        "social": ["temple_courtyard", "market_road", "well_side"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["small_bundle", "needle_kit", "money_wrap"],
+        "inventory": [
+          { "itemId": "coin_copper", "count": 22 },
+          { "itemId": "coin_silver", "count": 1 },
+          { "itemId": "cloth_patch", "count": 2 },
+          { "itemId": "hairpin", "count": 1 },
+          { "itemId": "dried_food", "count": 2 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "merchant_partner",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          { "activityType": "inventory_check", "startMin": 420, "endMin": 480, "locationRef": "temple_guestroom", "mode": "must_do" },
+          { "activityType": "trade_goods", "startMin": 540, "endMin": 720, "locationRef": "market_spot_side", "mode": "must_do" },
+          { "activityType": "barter", "startMin": 840, "endMin": 960, "locationRef": "market_road", "mode": "soft_do" },
+          { "activityType": "mend_cloth", "startMin": 960, "endMin": 1080, "locationRef": "temple_courtyard", "mode": "soft_do" },
+          { "activityType": "count_coins", "startMin": 1140, "endMin": 1200, "locationRef": "temple_guestroom", "mode": "must_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["inventory_check", "barter", "protect_goods"],
+        "secondary": ["mend_cloth", "quiet_observe"],
+        "facilityUse": ["storage", "well"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_merchants_husband", "npc_hunter_wife"],
+        "tradeWith": ["npc_inn_bosslady", "npc_hunter_wife", "player"],
+        "chatTopics": ["货物真假", "村里妇人消息", "借宿安稳否"]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": ["货少钱乱", "有人盯货", "丈夫太冒进"],
+        "comforts": ["货物整齐", "账本清楚", "夜里平安"]
+      },
+      "storyHooks": ["以物易物线", "货物保护线", "行商内部关系线"]
+    },
+    {
+      "npcId": "npc_yang_grandpa",
+      "displayName": "杨守仁",
+      "homeObjectId": 3,
+      "role": "杨家老太爷（监护人）",
+      "anchors": {
+        "home": "home",
+        "work": "yang_house_yard",
+        "social": ["yang_house_gate", "village_path"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["walking_stick", "repair_knife", "old_key"],
+        "inventory": [
+          { "itemId": "coin_copper", "count": 11 },
+          { "itemId": "wood_piece", "count": 2 },
+          { "itemId": "twine", "count": 1 },
+          { "itemId": "herb", "count": 1 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "elder_guardian",
+        "wakeMin": 390,
+        "sleepMin": 1200,
+        "defaultBlocks": [
+          { "activityType": "watch_house", "startMin": 420, "endMin": 540, "locationRef": "yang_house_yard", "mode": "must_do" },
+          { "activityType": "repair_item", "startMin": 540, "endMin": 660, "locationRef": "yang_house_yard", "mode": "soft_do" },
+          { "activityType": "chat_with_neighbors", "startMin": 840, "endMin": 960, "locationRef": "yang_house_gate", "mode": "soft_do" },
+          { "activityType": "watch_house", "startMin": 1020, "endMin": 1140, "locationRef": "yang_house_gate", "mode": "must_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["watch_house", "repair_item", "supervise_family"],
+        "secondary": ["chat_with_neighbors", "light_errand"],
+        "facilityUse": ["well", "storage"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_yangliu"],
+        "tradeWith": ["npc_inn_bosslady", "player"],
+        "chatTopics": ["杨柳近况", "老规矩", "村里秩序"]
+      },
+      "emotionBias": {
+        "baselineMood": -1,
+        "stressors": ["杨柳晚归", "家中缺柴缺药", "年轻人不守规矩"],
+        "comforts": ["家里安稳", "有人讲礼数", "修补顺利"]
+      },
+      "storyHooks": ["保守派意见来源", "监护关系线", "家务修补线"]
+    },
+    {
+      "npcId": "npc_yangliu",
+      "displayName": "杨柳",
+      "homeObjectId": 3,
+      "role": "少女",
+      "anchors": {
+        "home": "home",
+        "work": "free_roam_village",
+        "social": ["well_side", "temple_gate", "inn_door", "yang_house_yard"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["small_bag", "flower_string"],
+        "inventory": [
+          { "itemId": "wildflower", "count": 2 },
+          { "itemId": "berry", "count": 2 },
+          { "itemId": "coin_copper", "count": 3 },
+          { "itemId": "shiny_stone", "count": 1 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "curious_girl",
+        "wakeMin": 420,
+        "sleepMin": 1200,
+        "defaultBlocks": [
+          { "activityType": "help_household", "startMin": 420, "endMin": 540, "locationRef": "yang_house_yard", "mode": "must_do" },
+          { "activityType": "observe_people", "startMin": 540, "endMin": 660, "locationRef": "free_roam_village", "mode": "soft_do" },
+          { "activityType": "forage_small", "startMin": 840, "endMin": 960, "locationRef": "village_path", "mode": "soft_do" },
+          { "activityType": "chat", "startMin": 960, "endMin": 1080, "locationRef": "temple_gate", "mode": "soft_do" },
+          { "activityType": "return_home", "startMin": 1140, "endMin": 1200, "locationRef": "home", "mode": "must_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["forage_small", "observe_people", "errand"],
+        "secondary": ["chat", "bring_small_item"],
+        "facilityUse": ["well"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_yang_grandpa", "npc_temple_monk", "npc_inn_waiter"],
+        "tradeWith": ["player"],
+        "chatTopics": ["村外有什么", "谁最好说话", "今天捡到什么"]
+      },
+      "emotionBias": {
+        "baselineMood": 2,
+        "stressors": ["被训斥", "没见到新鲜事", "不能出门"],
+        "comforts": ["得到礼物", "听故事", "有人陪她说话"]
+      },
+      "storyHooks": ["轻互动入口", "随机小剧情线", "采集线"]
+    },
+    {
+      "npcId": "npc_hunter",
+      "displayName": "韩猎户",
+      "homeObjectId": 4,
+      "role": "猎人",
+      "anchors": {
+        "home": "home",
+        "work": "forest_edge_west",
+        "social": ["hunter_house_yard", "inn_door"],
+        "boundary": ["forest_edge_west", "forest_edge_north"]
+      },
+      "loadout": {
+        "equipment": ["bow", "knife", "quiver"],
+        "inventory": [
+          { "itemId": "arrow", "count": 12 },
+          { "itemId": "coin_copper", "count": 8 },
+          { "itemId": "rope", "count": 1 },
+          { "itemId": "snare", "count": 1 },
+          { "itemId": "dried_meat", "count": 1 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "outdoor_worker",
+        "wakeMin": 300,
+        "sleepMin": 1200,
+        "defaultBlocks": [
+          { "activityType": "check_gear", "startMin": 330, "endMin": 420, "locationRef": "home", "mode": "must_do" },
+          { "activityType": "hunt", "startMin": 420, "endMin": 660, "locationRef": "forest_edge_west", "mode": "must_do" },
+          { "activityType": "return_home", "startMin": 720, "endMin": 840, "locationRef": "home", "mode": "must_do" },
+          { "activityType": "gather_wood", "startMin": 900, "endMin": 1020, "locationRef": "forest_edge_north", "mode": "soft_do" },
+          { "activityType": "sell_game", "startMin": 1080, "endMin": 1140, "locationRef": "inn_door", "mode": "soft_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["hunt", "gather_wood"],
+        "secondary": ["sell_game", "repair_gear"],
+        "facilityUse": ["well", "stove", "workbench"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_hunter_wife"],
+        "tradeWith": ["npc_inn_bosslady", "npc_inn_cook_owner", "player"],
+        "chatTopics": ["山里猎况", "箭够不够", "有没有狼踪"]
+      },
+      "emotionBias": {
+        "baselineMood": -1,
+        "stressors": ["空手而归", "箭耗尽", "晚归"],
+        "comforts": ["打到猎物", "家里有热饭", "换到现钱"]
+      },
+      "storyHooks": ["村边狩猎线", "狼踪线", "资源供给线"]
+    },
+    {
+      "npcId": "npc_hunter_wife",
+      "displayName": "韩氏",
+      "homeObjectId": 4,
+      "role": "猎人妻子",
+      "anchors": {
+        "home": "home",
+        "work": "hunter_house_yard",
+        "social": ["well_side", "yang_house_gate", "hunter_house_yard"],
+        "boundary": []
+      },
+      "loadout": {
+        "equipment": ["basket", "needle_kit", "kitchen_knife"],
+        "inventory": [
+          { "itemId": "coin_copper", "count": 10 },
+          { "itemId": "herb", "count": 1 },
+          { "itemId": "cloth_strip", "count": 2 },
+          { "itemId": "berry", "count": 2 }
+        ]
+      },
+      "dailyPattern": {
+        "archetype": "home_support",
+        "wakeMin": 330,
+        "sleepMin": 1200,
+        "defaultBlocks": [
+          { "activityType": "prepare_fire", "startMin": 360, "endMin": 480, "locationRef": "home", "mode": "must_do" },
+          { "activityType": "carry_water", "startMin": 540, "endMin": 600, "locationRef": "well_side", "mode": "soft_do" },
+          { "activityType": "forage_small", "startMin": 660, "endMin": 780, "locationRef": "village_path", "mode": "soft_do" },
+          { "activityType": "mend_clothes", "startMin": 900, "endMin": 1020, "locationRef": "hunter_house_yard", "mode": "soft_do" },
+          { "activityType": "cook_food", "startMin": 1020, "endMin": 1140, "locationRef": "home", "mode": "must_do" }
+        ]
+      },
+      "activityProfile": {
+        "primary": ["cook_food", "mend_clothes", "forage_small", "process_game"],
+        "secondary": ["barter_food", "visit_well"],
+        "facilityUse": ["well", "stove"]
+      },
+      "socialProfile": {
+        "closeTo": ["npc_hunter", "npc_merchants_wife"],
+        "tradeWith": ["npc_inn_cook_owner", "npc_merchants_wife", "player"],
+        "chatTopics": ["家里够不够吃", "猎物处理", "布料和药草"]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": ["猎人晚归", "家里断粮", "锅里没火"],
+        "comforts": ["猎物带回", "缝补顺手", "有人帮忙打水"]
+      },
+      "storyHooks": ["猎物加工线", "家务物资线", "担心丈夫的情绪线"]
+    }
+  ]
+}

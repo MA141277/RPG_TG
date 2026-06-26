@@ -1,0 +1,587 @@
+{
+  "schemaVersion": 1,
+  "npcs": [
+    {
+      "npcId": "npc.taiping.leader_residence.1",
+      "anchors": {
+        "home": "house:1",
+        "work": "zyz.taiping_leader_residence:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "将领府邸",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_leader_residence:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.temple.1",
+      "anchors": {
+        "home": "house:2",
+        "work": "zyz.taiping_temple:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "寺庙",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_temple:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.home.1",
+      "anchors": {
+        "home": "house:3",
+        "work": "zyz.home_taiping:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "自宅",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.home_taiping:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.keep.1",
+      "anchors": {
+        "home": "house:4",
+        "work": "zyz.taiping_keep:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "帅府",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_keep:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.keep.2",
+      "anchors": {
+        "home": "house:4",
+        "work": "zyz.taiping_keep:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "帅府",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_keep:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.tea_house.1",
+      "anchors": {
+        "home": "house:5",
+        "work": "zyz.taiping_tea_house:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "茶馆",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_tea_house:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.market.1",
+      "anchors": {
+        "home": "house:6",
+        "work": "zyz.taiping_market:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "货栈",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_market:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.grain_shop.1",
+      "anchors": {
+        "home": "house:7",
+        "work": "zyz.taiping_grain_shop:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "粮铺",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_grain_shop:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.medicine_house.1",
+      "anchors": {
+        "home": "house:8",
+        "work": "zyz.taiping_medicine_house:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "药铺",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_medicine_house:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    },
+    {
+      "npcId": "npc.taiping.inn.1",
+      "anchors": {
+        "home": "house:9",
+        "work": "zyz.taiping_inn:front",
+        "social": [
+          "town-square"
+        ],
+        "boundary": []
+      },
+      "dailyPattern": {
+        "archetype": "客栈",
+        "wakeMin": 360,
+        "sleepMin": 1260,
+        "defaultBlocks": [
+          {
+            "activityType": "standby",
+            "startMin": 360,
+            "endMin": 1260,
+            "locationRef": "zyz.taiping_inn:front",
+            "mode": "soft_do",
+            "wanderRadius": 4,
+            "arrivalSlackMin": 8,
+            "note": "stand near mapped house"
+          }
+        ]
+      },
+      "activityProfile": {
+        "primary": [
+          "standby"
+        ],
+        "secondary": [
+          "chat"
+        ],
+        "facilityUse": []
+      },
+      "socialProfile": {
+        "closeTo": [],
+        "tradeWith": [],
+        "chatTopics": [
+          "军情",
+          "市井"
+        ]
+      },
+      "emotionBias": {
+        "baselineMood": 0,
+        "stressors": [],
+        "comforts": []
+      },
+      "storyHooks": []
+    }
+  ],
+  "locationRefs": {
+    "town-square": {
+      "wx": 0,
+      "wy": 0,
+      "radius": 14
+    },
+    "zyz.taiping_leader_residence:front": {
+      "wx": 0,
+      "wy": -92,
+      "radius": 8,
+      "houseId": "house.taiping.leader_residence",
+      "sceneObjectId": "zyz.taiping_leader_residence"
+    },
+    "zyz.taiping_temple:front": {
+      "wx": 86,
+      "wy": -52,
+      "radius": 8,
+      "houseId": "house.taiping.temple",
+      "sceneObjectId": "zyz.taiping_temple"
+    },
+    "zyz.home_taiping:front": {
+      "wx": 42,
+      "wy": 86,
+      "radius": 8,
+      "houseId": "home.taiping",
+      "sceneObjectId": "zyz.home_taiping"
+    },
+    "zyz.taiping_keep:front": {
+      "wx": -58,
+      "wy": -56,
+      "radius": 8,
+      "houseId": "house.taiping.keep",
+      "sceneObjectId": "zyz.taiping_keep"
+    },
+    "zyz.taiping_tea_house:front": {
+      "wx": -58,
+      "wy": 54,
+      "radius": 8,
+      "houseId": "house.taiping.tea_house",
+      "sceneObjectId": "zyz.taiping_tea_house"
+    },
+    "zyz.taiping_market:front": {
+      "wx": -58,
+      "wy": -8,
+      "radius": 8,
+      "houseId": "house.taiping.market",
+      "sceneObjectId": "zyz.taiping_market"
+    },
+    "zyz.taiping_grain_shop:front": {
+      "wx": 58,
+      "wy": -8,
+      "radius": 8,
+      "houseId": "house.taiping.grain_shop",
+      "sceneObjectId": "zyz.taiping_grain_shop"
+    },
+    "zyz.taiping_medicine_house:front": {
+      "wx": -42,
+      "wy": 86,
+      "radius": 8,
+      "houseId": "house.taiping.medicine_house",
+      "sceneObjectId": "zyz.taiping_medicine_house"
+    },
+    "zyz.taiping_inn:front": {
+      "wx": 58,
+      "wy": 54,
+      "radius": 8,
+      "houseId": "house.taiping.inn",
+      "sceneObjectId": "zyz.taiping_inn"
+    }
+  },
+  "activityResolvers": {},
+  "facilities": {}
+}

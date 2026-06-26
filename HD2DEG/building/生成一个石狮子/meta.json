@@ -1,0 +1,52 @@
+{
+  "id": "生成一个石狮子",
+  "kind": "building",
+  "title": "生成一个石狮子",
+  "prompt": "生成一个石狮子",
+  "tags": [],
+  "createdAt": "2026-04-13T21:36:59+08:00",
+  "updatedAt": "2026-06-11T16:55:00+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 160,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": false
+  },
+  "geometry": {
+    "method": "depth-ortho-voxel-v1",
+    "depthMap": "building/生成一个石狮子/depthmap.png",
+    "depthMaps": {
+      "front": "building/生成一个石狮子/depth-front.png",
+      "side": "building/生成一个石狮子/depth-side.png",
+      "top": "building/生成一个石狮子/depth-top.png"
+    },
+    "depthConvention": {
+      "near": "white"
+    },
+    "voxel": {
+      "targetLongest": 160,
+      "shellOnly": true,
+      "fillMode": "surface-shell",
+      "surfaceThickness": 2,
+      "supportRadius": 2,
+      "strictOrthographicSupport": true
+    }
+  },
+  "files": {
+    "front": "building/生成一个石狮子/front.png",
+    "side": "building/生成一个石狮子/side.png",
+    "top": "building/生成一个石狮子/top.png",
+    "preview": "building/生成一个石狮子/preview.png",
+    "previewProcessed": "building/生成一个石狮子/preview-processed.png",
+    "normalMap": "building/生成一个石狮子/normalmap.png",
+    "normalFront": "building/生成一个石狮子/normal-front.png",
+    "normalSide": "building/生成一个石狮子/normal-side.png",
+    "normalTop": "building/生成一个石狮子/normal-top.png",
+    "depthMap": "building/生成一个石狮子/depthmap.png",
+    "depthFront": "building/生成一个石狮子/depth-front.png",
+    "depthSide": "building/生成一个石狮子/depth-side.png",
+    "depthTop": "building/生成一个石狮子/depth-top.png"
+  }
+}

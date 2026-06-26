@@ -1,0 +1,34 @@
+{
+  "id": "中国风像素建筑-粮食店",
+  "kind": "building",
+  "title": "中国风像素建筑，粮食店",
+  "prompt": "中国风像素建筑，粮食店",
+  "tags": [
+    "facility",
+    "container"
+  ],
+  "widthTiles": 14,
+  "drawRoad": false,
+  "facilityProfile": {
+    "actionLabel": "储粮",
+    "summary": "用于存放和管理粮食类物品。"
+  },
+  "createdAt": "2026-06-01T12:57:05+08:00",
+  "updatedAt": "2026-06-01T12:57:05+08:00",
+  "sourceModel": "gemini-3-pro-image-preview",
+  "imageSize": "1024x1024",
+  "voxelOptions": {
+    "targetLongest": 105,
+    "shellOnly": true,
+    "frontPriority": false,
+    "pruneTopColorMismatch": true,
+    "maskSmooth": false
+  },
+  "files": {
+    "front": "building/中国风像素建筑-粮食店/front.png",
+    "side": "building/中国风像素建筑-粮食店/side.png",
+    "top": "building/中国风像素建筑-粮食店/top.png",
+    "preview": "building/中国风像素建筑-粮食店/preview.png",
+    "previewProcessed": "building/中国风像素建筑-粮食店/preview-processed.png"
+  }
+}

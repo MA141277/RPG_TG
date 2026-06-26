@@ -1,0 +1,21 @@
+{
+  "total": 252,
+  "playableNpcCandidates": 252,
+  "leaderResidenceCandidates": 0,
+  "bySource": {
+    "historyHeading": 252
+  },
+  "byConfidence": {
+    "medium": 252
+  },
+  "byImportance": {
+    "notable": 92,
+    "ordinary": 160
+  },
+  "topFactions": [
+    {
+      "label": "待分类",
+      "count": 252
+    }
+  ]
+}

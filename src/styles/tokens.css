@@ -1,3 +1,9 @@
+@font-face {
+  font-family: "Zhuque Fangsong";
+  src: url("../font/朱雀仿宋0.212/ZhuqueFangsong-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   --color-ink-strong: #1a1814;
   --color-ink: #2c2924;
@@ -8,8 +14,8 @@
   --color-border: #6a4c2a;
   --color-shadow: rgb(28 17 9 / 24%);
   --color-mask: rgb(11 8 5 / 48%);
-  --font-ui: "Noto Serif SC", "Source Han Serif SC", serif;
-  --font-title: "STKaiti", "KaiTi", serif;
+  --font-ui: "Zhuque Fangsong", "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-title: "Zhuque Fangsong", "STKaiti", "KaiTi", serif;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -25,4 +31,7 @@
   --z-scene-overlay: 200;
   --duration-fast: 160ms;
   --duration-mid: 280ms;
+  --game-width: 1600px;
+  --game-height: 900px;
+  --game-scale: 1;
 }
