@@ -16,10 +16,7 @@ type MainUiFlowOptions = {
     saveData: SaveDataResult
   ): void;
   onStartScenarioPack?(scenarioPack: ScenarioPackSummary): void | Promise<void>;
-  onImportScenarioPackText?(
-    fileName: string,
-    text: string
-  ): void | Promise<void>;
+  onImportScenarioPackFiles?(files: File[]): void | Promise<void>;
   loadSaveData(): Promise<SaveDataResult> | SaveDataResult;
   getAppState(): AppState;
 };

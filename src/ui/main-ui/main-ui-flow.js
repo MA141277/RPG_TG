@@ -165,7 +165,7 @@ export class MainUiFlow {
     this.onStartGame = options.onStartGame;
     this.onContinueGame = options.onContinueGame;
     this.onStartScenarioPack = options.onStartScenarioPack;
-    this.onImportScenarioPackText = options.onImportScenarioPackText;
+    this.onImportScenarioPackFiles = options.onImportScenarioPackFiles;
     this.loadSaveData = options.loadSaveData;
     this.getAppState = options.getAppState;
     this.selectedCharacterId = this.characters[0]?.id ?? null;
@@ -335,7 +335,7 @@ export class MainUiFlow {
             <button type="button" class="c-main-ui-json-text-button" data-main-ui-action="import-scenario-file">
               导入 JSON
             </button>
-            <input class="c-main-ui-scenario-file-input" type="file" accept="application/json,.json" data-main-ui-scenario-file hidden>
+            <input class="c-main-ui-scenario-file-input" type="file" accept="application/json,.json" data-main-ui-scenario-file webkitdirectory directory multiple hidden>
           </div>
         </div>
       </section>
@@ -653,13 +653,13 @@ export class MainUiFlow {
       return;
     }
 
-    const file = target.files?.[0];
+    const files = Array.from(target.files ?? []);
     target.value = "";
-    if (file == null) {
+    if (files.length === 0) {
       return;
     }
 
-    await this.onImportScenarioPackText?.(file.name, await file.text());
+    await this.onImportScenarioPackFiles?.(files);
   }
 
   scheduleCharacterDetailTransitionCleanup() {

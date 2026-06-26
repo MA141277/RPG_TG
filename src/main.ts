@@ -107,7 +107,7 @@ import {
 import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
 import {
   loadScenarioPackFromUrl,
-  parseScenarioPackText,
+  loadScenarioPackFromFiles,
 } from "./application/scenario/scenario-pack-loader";
 import {
   advanceActivityQteMarker,
@@ -454,7 +454,7 @@ const mainUiFlow = new MainUiFlow({
   onStartGame: startMainGameWithLoading,
   onContinueGame: startContinueGameWithLoading,
   onStartScenarioPack: startScenarioPackWithLoading,
-  onImportScenarioPackText: startScenarioPackTextWithLoading,
+  onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
   loadSaveData,
   getAppState: () => appState,
 });
@@ -1451,14 +1451,22 @@ async function startScenarioPackWithLoading(
   }
 }
 
-function startScenarioPackTextWithLoading(fileName: string, text: string): void {
+async function startScenarioPackFilesWithLoading(
+  files: File[]
+): Promise<void> {
+  const importLabel =
+    files.find((file) => file.name === "pack.json")?.name ??
+    files[0]?.name ??
+    "scenario-pack";
+
   try {
-    startLoadedScenarioPackWithLoading(parseScenarioPackText(text));
+    const loadedScenarioPack = await loadScenarioPackFromFiles(files);
+    startLoadedScenarioPackWithLoading(loadedScenarioPack);
   } catch (error) {
     window.alert(
       error instanceof Error
-        ? `JSON 开局读取失败（${fileName}）：${error.message}`
-        : `JSON 开局读取失败（${fileName}）。`
+        ? `JSON 开局读取失败（${importLabel}）：${error.message}`
+        : `JSON 开局读取失败（${importLabel}）。`
     );
   }
 }

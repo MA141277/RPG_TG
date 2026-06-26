@@ -337,6 +337,45 @@ function findForbiddenProductionSourceReferences(forbiddenPatterns) {
   });
 }
 
+function collectFilePaths(rootPath) {
+  const entries = fs.readdirSync(rootPath, { withFileTypes: true });
+
+  return entries.flatMap((entry) => {
+    const entryPath = path.join(rootPath, entry.name);
+
+    if (entry.isDirectory()) {
+      return collectFilePaths(entryPath);
+    }
+
+    if (entry.isFile()) {
+      return [entryPath];
+    }
+
+    return [];
+  });
+}
+
+function createImportedScenarioPackFilesFromDisk(packRoot, packFolderName) {
+  return collectFilePaths(packRoot).map((filePath) => {
+    const fileName = path.basename(filePath);
+    const relativePath = path
+      .relative(packRoot, filePath)
+      .replaceAll(path.sep, "/");
+    const file = new File([fs.readFileSync(filePath)], fileName, {
+      type: fileName.endsWith(".json")
+        ? "application/json"
+        : "application/octet-stream",
+    });
+
+    Object.defineProperty(file, "webkitRelativePath", {
+      configurable: true,
+      value: `${packFolderName}/${relativePath}`,
+    });
+
+    return file;
+  });
+}
+
 test.before(async () => {
   await withLocalJsonFileFetch(async () => {
     await loadDefaultRuntimeContent();
@@ -1398,6 +1437,120 @@ test(
     } finally {
       global.fetch = originalFetch;
     }
+  }
+);
+
+test(
+  "scenario pack loader accepts browser root-relative manifest urls for built-in JSON starts",
+  async () => {
+    const {
+      loadScenarioPackFromUrl,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const packRoot = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang"
+    );
+    const manifestUrl = "/scenario-packs/zhuyuanzhang/pack.json";
+    const packBaseUrl =
+      "https://example.test/scenario-packs/zhuyuanzhang/";
+    const originalFetch = global.fetch;
+    const originalWindow = global.window;
+
+    global.window = {
+      location: {
+        href: "https://example.test/game",
+      },
+    };
+
+    global.fetch = async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+      if (url === manifestUrl) {
+        return new Response(fs.readFileSync(path.join(packRoot, "pack.json"), "utf8"), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      const relativePath = url.startsWith(packBaseUrl)
+        ? url.slice(packBaseUrl.length)
+        : null;
+
+      assert.notEqual(relativePath, null, `Unexpected fetch url ${url}`);
+      const localPath = path.join(packRoot, relativePath.replaceAll("/", path.sep));
+
+      if (!fs.existsSync(localPath)) {
+        return new Response(null, { status: 404 });
+      }
+
+      return new Response(fs.readFileSync(localPath, "utf8"), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    };
+
+    try {
+      const pack = await loadScenarioPackFromUrl(manifestUrl);
+
+      assert.equal(pack.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+      assert.equal(pack.scenarioProfile.id, "scenario.zhu_yuanzhang.monk_opening");
+      assert.equal(
+        pack.maps.some(
+          (map) =>
+            map.primaryImageUrl === `${packBaseUrl}assets/maps/HD.png`
+        ),
+        true
+      );
+    } finally {
+      global.fetch = originalFetch;
+      global.window = originalWindow;
+    }
+  }
+);
+
+test(
+  "scenario pack loader can hydrate a manifest-driven imported pack directory",
+  async () => {
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const packRoot = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang"
+    );
+    const importedFiles = createImportedScenarioPackFilesFromDisk(
+      packRoot,
+      "zhuyuanzhang"
+    );
+
+    const pack = await loadScenarioPackFromFiles(importedFiles);
+
+    assert.equal(pack.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+    assert.equal(
+      pack.scenarioProfile.id,
+      "scenario.zhu_yuanzhang.monk_opening"
+    );
+    assert.equal(
+      pack.characters.some((character) => character.id === "char.player"),
+      true
+    );
+    assert.equal(
+      pack.maps.some(
+        (map) =>
+          typeof map.primaryImageUrl === "string" &&
+          !map.primaryImageUrl.startsWith("./assets/")
+      ),
+      true
+    );
   }
 );
 
