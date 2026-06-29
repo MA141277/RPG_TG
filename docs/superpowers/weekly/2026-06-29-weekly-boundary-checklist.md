@@ -20,19 +20,21 @@
 ## Adapter Boundaries
 
 - [x] `src/core/adapters/legacy-main-adapter.ts`
-- [ ] Legacy story, house, and interactive adapter seams remain to be defined in later child plans.
+- [x] Legacy house and interactive adapter seams are now defined in Child 4 batch 1, but remain transitional rather than stable end-state boundaries.
 
 ## Missing Contracts
 
 - [x] Event runtime concrete contracts are implemented in production code.
+- [x] Interactive runtime concrete contracts now exist in production code.
 - [ ] Task runtime concrete contracts are not yet implemented in production code.
-- [ ] House-module bridge contracts for the future core runtime are not yet formalized.
+- [ ] House-module bridge contracts are partially implemented through runtime bridge wrappers, but are not yet part of the shared runtime-router/runtime-dispatch contract surface.
 - [x] Save migration hardening contracts exist in production code.
 - [x] Scene handoff contracts now exist in production code.
 
 ## Remaining `main.ts` Coupling
 
 - [x] Boot composition
+- [x] Covered interactive launch/action ownership for city-begging, activity-qte, and story-battle now routes through core seams
 - [ ] Navigation and view switching logic
 - [ ] Runtime dispatch ownership
 - [ ] Concrete content activation

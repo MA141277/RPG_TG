@@ -7781,3 +7781,43 @@ test("scene runtime accepts an activated event handoff", async () => {
 
   assert.match(source, /runSceneFromEvent/);
 });
+
+test("main.ts no longer imports application house-runtime directly for production ownership", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /application\/house\/house-runtime/);
+  assert.match(mainSource, /legacy-house-adapter|core\/runtime\/house-runtime/);
+});
+
+test("interactive runtime exports launch and action seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /createLaunchInteractiveRequest/);
+  assert.match(source, /runInteractiveRuntime/);
+});
+
+test("core house runtime bridge exports enter leave and dispatch seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /enterHouseThroughRuntime/);
+  assert.match(source, /leaveHouseThroughRuntime/);
+  assert.match(source, /dispatchHouseRuntimeRequest/);
+});
+
+test("main.ts routes covered interactive flows through core runtime instead of direct feature branching", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /runInteractiveRuntime/);
+});
