@@ -10,11 +10,11 @@ If a real flow cannot be described clearly, that area is still a black box.
 
 ## Current Coverage Status
 
-- Real implemented flows captured: `7`
+- Real implemented flows captured: `8`
 - Planned target flows captured: `0`
 - Acceptance status:
 - current batch requirement satisfied
-- add more runtime-owned flows after Child 4 begins extracting interactive entry
+- add more runtime-owned flows after Child 4 decides whether interactive requests also join the shared router/dispatch line
 
 ## Flow 1: Current Game Boot Flow
 
@@ -139,3 +139,20 @@ city-enter confirmation -> createEnterCityRequest() -> runNavigationRuntime() ->
 
 - This is the first real runtime-owned navigation/time/event entry flow under `src/core/runtime`, even though the implementation still wraps legacy application services behind the seam.
 - The next extraction target should be interactive launch ownership, not another persistence pass.
+
+## Flow 8: Real Child 4 Interactive Launch And Action Handoff
+
+### Narrative
+
+Child 4 batch 1 now proves that covered interactive flows no longer need `src/main.ts` to import `application/house/house-runtime` or interactive helpers directly. `src/main.ts` creates a typed interactive launch or action request, `src/core/runtime/interactive-runtime.ts` receives it, and the new core runtime seam delegates through the legacy interactive adapter while keeping ownership of the entry surface under `src/core`.
+
+### Call Chain
+
+```text
+UI/house event in main.ts -> createLaunchInteractiveRequest() or createInteractiveActionRequest() -> runInteractiveRuntime() -> legacy-interactive-adapter.ts -> city-begging/activity-qte/story-battle legacy helper -> updated app state + optional house re-entry
+```
+
+### Notes
+
+- This is an entry-seam extraction, not a full gameplay migration; the underlying minigame and story-battle logic still runs through legacy adapters.
+- The remaining Child 4 question is whether these interactive requests should next be recognized by `runtime-router.ts` and `runtime-dispatch.ts` rather than only by dedicated bridge helpers.

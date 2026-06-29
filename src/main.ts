@@ -32,13 +32,9 @@ import {
 import type { AppState } from "./application/app-shell";
 import {
   CITY_BEGGING_DURATION_DAYS,
-  createCityBeggingMiniGameState,
   getCityBeggingMiniGameCompletionResult,
   getCityBeggingMiniGameStatus,
   isCityBeggingMiniGamePlaying,
-  applyCityBeggingMiniGameCompletion,
-  setCityBeggingMiniGamePointer,
-  updateCityBeggingMiniGameState,
 } from "./application/minigames/city-begging-minigame";
 import { convertHouseActivityDaysToSegments } from "./application/house/house-activity-costs";
 import {
@@ -47,10 +43,6 @@ import {
   type CityMenuPanelId,
 } from "./application/city-menu/city-menu";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
-import {
-  createHouseRuntime,
-  type HouseRuntime,
-} from "./application/house/house-runtime";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   canAffordActivityCost,
@@ -74,7 +66,6 @@ import {
   startStoryEventById,
   triggerStoryEvents,
 } from "./application/story/story-runtime";
-import { dispatchStoryBattleAction } from "./application/story-battle/story-battle-runtime";
 import {
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
@@ -127,10 +118,20 @@ import {
   loadScenarioPackFromFiles,
 } from "./application/scenario/scenario-pack-loader";
 import {
-  advanceActivityQteMarker,
   clearActivityResult,
-  stopActivityQte,
 } from "./application/activity/activity-qte-runtime";
+import {
+  createHouseRuntimeBridge,
+  dispatchHouseRuntimeRequest,
+  enterHouseThroughRuntime,
+  leaveHouseThroughRuntime,
+  type HouseRuntimeBridge,
+} from "./core/runtime/house-runtime";
+import {
+  createInteractiveActionRequest,
+  createLaunchInteractiveRequest,
+  runInteractiveRuntime,
+} from "./core/runtime/interactive-runtime";
 import type { ActivityDefinition } from "./domain/activity";
 import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
@@ -494,7 +495,7 @@ let activeLoadingScreenElement: HTMLElement | null = null;
 let activeLoadingTheme: LoadingTheme | null = null;
 const mapAutoAdvanceHandles: Record<string, number> = {};
 
-let houseRuntime: HouseRuntime = createHouseRuntimeInstance();
+let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
@@ -724,22 +725,24 @@ function stopCityBeggingMiniGameLoop(): void {
 }
 
 function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
-  const completion = applyCityBeggingMiniGameCompletion(
-    appState.gameState,
-    appState.characterDefinitions,
-    currentPlayerCharacterId,
-    result
-  );
   const previousGameState = appState.gameState;
+  const completion = runInteractiveRuntime({
+    appState,
+    request: createInteractiveActionRequest(
+      "interactive.city-begging.complete",
+      { result }
+    ),
+    playerCharacterId: currentPlayerCharacterId,
+  });
   appState = {
-    ...appState,
+    ...completion.appState,
     gameState: runTimeRuntime({
-      state: completion.state,
+      state: completion.appState.gameState,
       request: createAdvanceTimeSegmentsRequest(
         convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
       ),
     }).state,
-    characterDefinitions: completion.characterDefinitions,
+    beggingMiniGameState: null,
   };
   syncCouncilPriorityAfterGameStateChange(previousGameState);
   window.onBeggingGameComplete?.(result);
@@ -1044,13 +1047,13 @@ function syncCityBeggingMiniGamePointer(clientX: number): void {
 
   const normalizedX = (clientX - rect.left) / rect.width;
   const pointerX = normalizedX * canvas.width;
-  appState = {
-    ...appState,
-    beggingMiniGameState: setCityBeggingMiniGamePointer(
-      currentState,
-      pointerX
+  appState = runInteractiveRuntime({
+    appState,
+    request: createInteractiveActionRequest(
+      "interactive.city-begging.pointer",
+      { pointerX }
     ),
-  };
+  }).appState;
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
 }
 
@@ -1061,14 +1064,17 @@ function tickCityBeggingMiniGame(timestamp: number): void {
     return;
   }
 
-  const nextState = updateCityBeggingMiniGameState(currentState, timestamp);
+  const nextAppState = runInteractiveRuntime({
+    appState,
+    request: createInteractiveActionRequest("interactive.city-begging.tick", {
+      now: timestamp,
+    }),
+  }).appState;
+  const nextState = nextAppState.beggingMiniGameState ?? currentState;
   const shouldRerender =
     getCityBeggingMiniGameStatus(nextState) !==
     getCityBeggingMiniGameStatus(currentState);
-  appState = {
-    ...appState,
-    beggingMiniGameState: nextState,
-  };
+  appState = nextAppState;
 
   if (shouldRerender) {
     renderApp();
@@ -1161,17 +1167,22 @@ function openBeggingMiniGame(): void {
   }
 
   stopCityBeggingMiniGameLoop();
-  appState = {
-    ...closeCityMenu(closeCityDirectory(appState)),
-    locationDialogueState: null,
-    beggingMiniGameState: createCityBeggingMiniGameState(performance.now()),
-  };
+  appState = runInteractiveRuntime({
+    appState: {
+      ...closeCityMenu(closeCityDirectory(appState)),
+      locationDialogueState: null,
+    },
+    request: createLaunchInteractiveRequest(
+      "interactive.city-begging.launch",
+      { now: performance.now() }
+    ),
+  }).appState;
   renderApp();
   startCityBeggingMiniGameLoop();
 }
 
-function createHouseRuntimeInstance(): HouseRuntime {
-  return createHouseRuntime({
+function createHouseRuntimeInstance(): HouseRuntimeBridge {
+  return createHouseRuntimeBridge({
     getAppState: () => appState,
     setAppState: (nextAppState) => {
       appState = nextAppState;
@@ -1255,10 +1266,10 @@ function syncActivityQteLoop(): void {
       return;
     }
 
-    appState = {
-      ...appState,
-      gameState: advanceActivityQteMarker(appState.gameState),
-    };
+    appState = runInteractiveRuntime({
+      appState,
+      request: createInteractiveActionRequest("interactive.activity-qte.tick"),
+    }).appState;
 
     if (!syncRenderedActivityQteMarker()) {
       renderApp();
@@ -1272,33 +1283,22 @@ function stopCurrentActivityQte(): void {
     return;
   }
 
-  const activityDefinition = activeActivityDefinitionsById[session.activityId];
-  if (activityDefinition == null) {
+  if (activeActivityDefinitionsById[session.activityId] == null) {
     stopActivityQteLoop();
-    appState = {
-      ...appState,
-      gameState: {
-        ...appState.gameState,
-        runtime: {
-          ...appState.gameState.runtime,
-          activitySession: null,
-        },
-      },
-    };
+    appState = runInteractiveRuntime({
+      appState,
+      request: createInteractiveActionRequest("interactive.activity-qte.stop"),
+      activityDefinitionsById: activeActivityDefinitionsById,
+    }).appState;
     renderApp();
     return;
   }
 
-  const result = stopActivityQte(
-    appState.gameState,
-    activityDefinition,
-    appState.characterDefinitions
-  );
-  appState = {
-    ...appState,
-    gameState: result.state,
-    characterDefinitions: result.characterDefinitions,
-  };
+  appState = runInteractiveRuntime({
+    appState,
+    request: createInteractiveActionRequest("interactive.activity-qte.stop"),
+    activityDefinitionsById: activeActivityDefinitionsById,
+  }).appState;
   renderApp();
 }
 
@@ -1485,16 +1485,18 @@ function chooseCurrentStoryOption(choiceId: string): void {
 }
 
 function dispatchCurrentStoryBattleAction(actionId: string): void {
-  const result = dispatchStoryBattleAction(appState.gameState, actionId, {
+  const result = runInteractiveRuntime({
+    appState,
+    request: createInteractiveActionRequest(
+      "interactive.story-battle.action",
+      { battleActionId: actionId }
+    ),
     textEntriesById,
   });
-  appState = {
-    ...appState,
-    gameState: result.state,
-  };
+  appState = result.appState;
 
   if (result.enterHouseId != null) {
-    houseRuntime.enterHouseById(result.enterHouseId);
+    enterHouseThroughRuntime(houseRuntime, result.enterHouseId);
     return;
   }
 
@@ -2127,7 +2129,7 @@ function enterMappedCity3dHouseBySceneObjectId(
     return;
   }
 
-  houseRuntime.enterHouseById(mappedHouse.houseId);
+  enterHouseThroughRuntime(houseRuntime, mappedHouse.houseId);
 }
 
 window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
@@ -2695,7 +2697,7 @@ appElement.addEventListener("input", (event) => {
 
   const fieldId = targetElement.dataset.houseField;
   if (fieldId != null) {
-    houseRuntime.dispatchCurrentHouseRequest({
+    dispatchHouseRuntimeRequest(houseRuntime, {
       type: "field",
       fieldId,
       value: targetElement.value,
@@ -2785,7 +2787,7 @@ appElement.addEventListener("pointerdown", (event) => {
       actionId: pointerHouseActionId,
       timestamp: window.performance.now(),
     };
-    houseRuntime.dispatchCurrentHouseRequest({
+    dispatchHouseRuntimeRequest(houseRuntime, {
       type: "action",
       actionId: pointerHouseActionId,
     });
@@ -3018,7 +3020,7 @@ appElement.addEventListener("pointerup", (event) => {
     return;
   }
   suppressHouseClickUntilMs = window.performance.now() + 250;
-  houseRuntime.dispatchCurrentHouseRequest({
+  dispatchHouseRuntimeRequest(houseRuntime, {
     type: "action",
     actionId: `${dragState.root.dataset.houseDropActionPrefix}${dragState.payload}:${beforeId ?? "end"}`,
   });
@@ -3134,7 +3136,7 @@ appElement.addEventListener("drop", (event) => {
     return;
   }
   event.preventDefault();
-  houseRuntime.dispatchCurrentHouseRequest({
+  dispatchHouseRuntimeRequest(houseRuntime, {
     type: "action",
     actionId: `${actionPrefix}${payload}:${before}`,
   });
@@ -3585,7 +3587,7 @@ appElement.addEventListener("click", (event) => {
           },
         },
       };
-      houseRuntime.enterHouseById(targetHouseId);
+      enterHouseThroughRuntime(houseRuntime, targetHouseId);
     }
     return;
   }
@@ -3659,7 +3661,7 @@ appElement.addEventListener("click", (event) => {
         event.stopPropagation();
         return;
       }
-      houseRuntime.dispatchCurrentHouseRequest({
+      dispatchHouseRuntimeRequest(houseRuntime, {
         type: "action",
         actionId,
       });
@@ -3671,7 +3673,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='leave-house']"
   );
   if (leaveHouseButton != null) {
-    houseRuntime.leaveCurrentHouse();
+    leaveHouseThroughRuntime(houseRuntime);
     return;
   }
 
@@ -3690,7 +3692,7 @@ appElement.addEventListener("click", (event) => {
         return;
       }
 
-      houseRuntime.enterHouseById(houseId);
+      enterHouseThroughRuntime(houseRuntime, houseId);
     }
     return;
   }

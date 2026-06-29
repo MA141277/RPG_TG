@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
-- Last Updated: `2026-06-29`
-- Current Focus: `Formal Child 4 plan authored. The next execution target is the first interactive runtime slice: establish contracts/adapters and move the first covered house and interactive launch paths behind core runtime ownership.`
-- Next Step: `Start Task 1 Step 1 after queue promotion, then proceed task-by-task without pulling presenter/render scope into this child.`
-- Verification: `Not run as part of this doc-only change`
-- Notes: `This is Child Plan 4 under the mod-first engine runtime extraction roadmap. It owns Interaction Runtime and the House Runtime integration seam only. It must not absorb Child 5 presenter/render work or full Task Runtime extraction.`
+- Status: `in-progress`
+- Last Updated: `2026-06-30`
+- Current Focus: `The first Child 4 implementation slice is now landed in the isolated worktree: src/core/contracts/interactive-runtime.ts plus legacy house/interactive adapters and core runtime bridge files exist, main.ts no longer imports application/house/house-runtime directly, and covered city-begging/activity-qte/story-battle entry now routes through runInteractiveRuntime() / house bridge seams.`
+- Next Step: `Keep the first bridge slice in place, explicitly defer runtime-router/runtime-dispatch integration until the shared RuntimeRequest/CoreGameState -> RuntimeResult contract is widened for appState + house re-entry semantics, and continue Child 4 from the next additive seam batch instead of forcing that contract rewrite into the current slice.`
+- Verification: `2026-06-30: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This is Child Plan 4 under the mod-first engine runtime extraction roadmap. It owns Interaction Runtime and the House Runtime integration seam only. It must not absorb Child 5 presenter/render work or full Task Runtime extraction. The first production cutover now removes direct application house runtime imports from main.ts and routes covered house/city-begging/activity-qte/story-battle entry through core-owned wrapper seams while still delegating behavior to legacy adapters. Shared runtime-router/runtime-dispatch integration is intentionally deferred for now because the current shared dispatch contract still assumes CoreGameState -> RuntimeResult, while the new interactive bridge paths currently return richer appState plus optional house re-entry semantics.`
 
 ## Progress Log
 
@@ -23,6 +23,18 @@
   - Summary: `Formal Child 4 implementation plan authored from the runtime subsystem spec, weekly architecture report, and the current house/minigame/battle coupling points in src/main.ts and src/application/house/house-runtime.ts.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Begin Task 1 Step 1 when Child 4 becomes the active weekly execution target.`
+- 2026-06-30
+  - Summary: `Completed Task 1 in the isolated worktree by reconciling the actual starting ownership: Child 1/3 runtime seams are present, src/main.ts still imports createHouseRuntime()/HouseRuntime directly, createHouseRuntimeInstance() still owns production house runtime construction, city-begging state creation/update/completion is still main-local, activity-qte advance/stop is still main-local, and story-battle action handling still enters through direct dispatchStoryBattleAction() calls.`
+  - Verification: `npm test`
+  - Next: `Begin Task 2 by adding failing source-guard and runtime seam tests for house ownership and covered interactive flow routing.`
+- 2026-06-30
+  - Summary: `Completed the first Child 4 red-green implementation batch in the isolated worktree: Task 2 failing source-guard and seam tests were added and confirmed red; Task 3 introduced src/core/contracts/interactive-runtime.ts plus legacy-house-adapter.ts and legacy-interactive-adapter.ts; Task 4 introduced src/core/runtime/interactive-runtime.ts and house-runtime.ts; and Task 5 rerouted covered house/city-begging/activity-qte/story-battle entry in main.ts through the new core seams while preserving current behavior through legacy delegation.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build`
+  - Next: `Record the shared-dispatch deferral explicitly, sync parent/weekly/visibility docs for this in-progress Child 4 batch, then continue only with later additive seam work that does not widen the shared dispatch contract prematurely.`
+- 2026-06-30
+  - Summary: `Task 4 Step 3 and Step 4 are explicitly deferred rather than silently skipped. The current shared runtime-router/runtime-dispatch line still operates on RuntimeRequest plus CoreGameState -> RuntimeResult, while the new Child 4 interactive seam currently needs application-level appState mutation plus optional house re-entry output. Forcing those flows into the existing shared dispatcher in this slice would widen core contracts and effectively turn this child into a broader runtime-result redesign.`
+  - Verification: `Design/documentation decision only; production code remains validated by the 2026-06-30 Child 4 batch commands`
+  - Next: `Keep the current bridge seam as the accepted first production cutover, and revisit shared-dispatch integration only after a dedicated contract-widening decision is approved.`
 
 ---
 
@@ -114,6 +126,23 @@ This child plan does not include:
 
 These files may be extended only to make Interaction Runtime and House Runtime integration visible to the already-owned runtime boundary.
 
+### Reconciled Starting Ownership Gaps
+
+- Current house runtime owner:
+  - `src/main.ts` imports `createHouseRuntime` / `HouseRuntime`, stores a module-level `houseRuntime`, and constructs production ownership through `createHouseRuntimeInstance()`.
+- Current activity QTE launch owner:
+  - `src/main.ts` still owns `stopActivityQteLoop()`, `syncActivityQteLoop()`, `advanceActivityQteMarker(...)`, and `stopActivityQte(...)` entry/control flow.
+- Current city begging minigame launch owner:
+  - `src/main.ts` still owns `createCityBeggingMiniGameState(...)`, pointer updates, frame-loop updates, and completion application for the city-begging session.
+- Current story-battle action owner:
+  - `src/main.ts` still calls `dispatchStoryBattleAction(...)` directly and performs result-specific house re-entry handling.
+
+### Child 4 Non-Overlap Reconfirmation
+
+- Child 4 owns runtime integration only.
+- Child 4 does not own presenter/render cutover.
+- Child 4 does not own save/load cutover.
+
 ## Required Verification Gate
 
 For every production-code task in this plan, record at minimum:
@@ -151,7 +180,7 @@ If a command is skipped, record the reason in `Progress Log` before marking rela
 - Read: `src/application/app-shell.ts`
 - Modify: `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
 
-- [ ] **Step 1: Confirm inherited runtime seams**
+- [x] **Step 1: Confirm inherited runtime seams**
 
 Verify and record:
 
@@ -160,7 +189,7 @@ Verify and record:
 - `src/main.ts` still constructs the application house runtime directly
 - covered interactive flows still enter from `main.ts`
 
-- [ ] **Step 2: Record exact Child 4 ownership gaps**
+- [x] **Step 2: Record exact Child 4 ownership gaps**
 
 Write the current starting gaps into this plan's notes or log:
 
@@ -169,7 +198,7 @@ Write the current starting gaps into this plan's notes or log:
 - current city begging minigame launch owner
 - current story-battle action owner
 
-- [ ] **Step 3: Confirm non-overlap rules**
+- [x] **Step 3: Confirm non-overlap rules**
 
 Record explicitly that Child 4:
 
@@ -182,7 +211,7 @@ Record explicitly that Child 4:
 **Files:**
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add a failing source-guard test for house runtime ownership**
+- [x] **Step 1: Add a failing source-guard test for house runtime ownership**
 
 Add a test shaped like:
 
@@ -198,7 +227,7 @@ test("main.ts no longer imports application house-runtime directly for productio
 });
 ```
 
-- [ ] **Step 2: Add failing seam tests for interactive runtime files**
+- [x] **Step 2: Add failing seam tests for interactive runtime files**
 
 Add tests shaped like:
 
@@ -225,7 +254,7 @@ test("core house runtime bridge exports enter leave and dispatch seams", () => {
 });
 ```
 
-- [ ] **Step 3: Add a failing source-guard test for battle/minigame ownership**
+- [x] **Step 3: Add a failing source-guard test for battle/minigame ownership**
 
 Add a test shaped like:
 
@@ -240,7 +269,7 @@ test("main.ts routes covered interactive flows through core runtime instead of d
 });
 ```
 
-- [ ] **Step 4: Run focused tests and confirm failure**
+- [x] **Step 4: Run focused tests and confirm failure**
 
 Run:
 
@@ -263,7 +292,7 @@ Expected:
 - Modify if needed: `src/core/contracts/runtime-result.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add the interactive runtime contract**
+- [x] **Step 1: Add the interactive runtime contract**
 
 Create `src/core/contracts/interactive-runtime.ts` with a shape like:
 
@@ -283,11 +312,11 @@ export type ActiveInteractiveRuntimeSession = {
 };
 ```
 
-- [ ] **Step 2: Add the legacy house adapter**
+- [x] **Step 2: Add the legacy house adapter**
 
 Create `src/core/adapters/legacy-house-adapter.ts` with a narrow bridge that wraps the existing house runtime ownership behind an adapter function instead of exporting application ownership directly to `main.ts`.
 
-- [ ] **Step 3: Add the legacy interactive adapter**
+- [x] **Step 3: Add the legacy interactive adapter**
 
 Create `src/core/adapters/legacy-interactive-adapter.ts` with narrow adapter functions for:
 
@@ -295,7 +324,7 @@ Create `src/core/adapters/legacy-interactive-adapter.ts` with narrow adapter fun
 - city begging minigame launch/advance/complete
 - story battle launch/action/finish
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -319,7 +348,7 @@ Expected:
 - Modify if needed: `src/core/runtime/runtime-context.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add interactive request factories and runtime entry**
+- [x] **Step 1: Add interactive request factories and runtime entry**
 
 Create `src/core/runtime/interactive-runtime.ts` with seams shaped like:
 
@@ -340,7 +369,7 @@ export function runInteractiveRuntime(/* ... */) {
 }
 ```
 
-- [ ] **Step 2: Add the house runtime bridge**
+- [x] **Step 2: Add the house runtime bridge**
 
 Create `src/core/runtime/house-runtime.ts` with seams shaped like:
 
@@ -354,13 +383,17 @@ These functions must own the production entry seam even if they still delegate t
 
 - [ ] **Step 3: Extend runtime router ownership**
 
+Deferred note: `Explicitly deferred on 2026-06-30. The current shared router only recognizes RuntimeRequest -> RuntimeResult over CoreGameState, while the new interactive seam still carries application-level appState and house re-entry semantics. Folding that into runtime-router.ts in this slice would widen Child 4 into a shared result-contract redesign.`
+
 Update `runtime-router.ts` so the router can recognize the covered Child 4 request ids and delegate to the new house/interactive runtime seams.
 
 - [ ] **Step 4: Keep dispatch ownership centralized**
 
+Deferred note: `Explicitly deferred on 2026-06-30 for the same contract reason as Step 3. runtime-dispatch.ts remains the shared CoreGameState dispatcher today; the new bridge helpers are accepted as a first production cutover until a later contract-widening decision is made.`
+
 Update `runtime-dispatch.ts` only additively so Child 4 entry still flows through the existing dispatch ownership rather than inventing another executor.
 
-- [ ] **Step 5: Run focused verification**
+- [x] **Step 5: Run focused verification**
 
 Run:
 
@@ -373,7 +406,7 @@ Expected:
 
 - seam tests pass
 
-- [ ] **Step 6: Run full verification**
+- [x] **Step 6: Run full verification**
 
 Run:
 
@@ -403,7 +436,7 @@ git commit -m "feat: add core interaction runtime and house bridge seams"
 - Modify if needed: `src/core/contracts/runtime-result.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Remove direct application house-runtime ownership from main**
+- [x] **Step 1: Remove direct application house-runtime ownership from main**
 
 Replace direct production ownership shaped like:
 
@@ -416,7 +449,7 @@ import {
 
 with the core seam or legacy adapter path introduced by Child 4.
 
-- [ ] **Step 2: Route covered interactive launches through core runtime**
+- [x] **Step 2: Route covered interactive launches through core runtime**
 
 Update `main.ts` so:
 
@@ -424,13 +457,13 @@ Update `main.ts` so:
 - activity QTE session lifecycle is entered through the core interaction path
 - story-battle action handling enters via the core interaction path
 
-- [ ] **Step 3: Keep browser-only loops in main**
+- [x] **Step 3: Keep browser-only loops in main**
 
 It is acceptable for `main.ts` to still hold browser-only intervals and DOM hooks during this child.
 
 It is not acceptable for `main.ts` to remain the decision-maker for covered interactive session ownership.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -443,7 +476,7 @@ Expected:
 
 - source-guard tests pass
 
-- [ ] **Step 5: Run full verification**
+- [x] **Step 5: Run full verification**
 
 Run:
 
@@ -473,7 +506,7 @@ git commit -m "refactor: route house and interaction entry through core runtime"
 - Modify: `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Update this child plan state**
+- [x] **Step 1: Update this child plan state**
 
 Update:
 
@@ -481,7 +514,7 @@ Update:
 - `Progress Log`
 - task checkboxes
 
-- [ ] **Step 2: Sync parent and weekly orchestration**
+- [x] **Step 2: Sync parent and weekly orchestration**
 
 Update:
 
@@ -489,7 +522,7 @@ Update:
 - weekly status board
 - weekly queue state
 
-- [ ] **Step 3: Record change log**
+- [x] **Step 3: Record change log**
 
 Add a concise entry summarizing:
 
@@ -519,10 +552,10 @@ Add a concise entry summarizing:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Parent plan synchronized
-- [ ] Weekly orchestration synchronized
-- [ ] Verification recorded
-- [ ] Change log updated
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Parent plan synchronized
+- [x] Weekly orchestration synchronized
+- [x] Verification recorded
+- [x] Change log updated

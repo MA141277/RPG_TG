@@ -11,11 +11,11 @@
 ## Execution State
 
 - Status: `in-progress`
-- Last Updated: `2026-06-29`
-- Current Focus: `Child 3 is complete and the formal Child 4 / Child 5 child-plan files now exist. Child 4 is the next executable weekly target: it should move house / interactive / minigame / battle entry toward core runtime ownership before Child 5 begins presenter/render decoupling.`
-- Next Step: `Start Child 4 from its formal child plan, then keep the visibility companion/artifact bundle in lockstep with that execution batch. Child 5 remains queued behind Child 4 completion.`
-- Verification: `Child 3 closeout: npm run lint:plans; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "navigation external entry ids|typed day-start request|candidate selection and activation seams|activated event handoff"; npm run typecheck; npm test; npm run build`
-- Notes: `This weekly plan governs current execution order. Active Child 3 implementation completed on branch codex/child3-nav after being seeded from the validated dev working tree state and receiving one targeted baseline sync for the temple-house module plus zhuyuanzhang text entries. The weekly visibility companion and the eight linked weekly artifact files have now been refreshed again against real implementation. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+- Last Updated: `2026-06-30`
+- Current Focus: `Child 4 is now the active weekly target in an isolated worktree. Its first implementation slice landed a core-owned interactive runtime seam plus house bridge wrappers, and covered city-begging/activity-qte/story-battle entry in src/main.ts now routes through those seams instead of direct application-house ownership.`
+- Next Step: `Keep Child 4 active, refresh the visibility companion/artifact bundle against this first interactive-runtime batch, and treat shared runtime-router/runtime-dispatch integration as an explicit follow-up decision instead of silently expanding the current slice. Child 5 remains queued behind Child 4 completion.`
+- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This weekly plan governs current execution order. Active Child 4 implementation is running on branch codex/child4-interactive-runtime after dev was pushed to origin and the isolated worktree was seeded from the validated dev state with a shared node_modules junction. The weekly visibility companion and the eight linked weekly artifact files are being refreshed again against this first Child 4 implementation batch. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
 
@@ -75,6 +75,10 @@
   - Summary: `Authored the formal Child 4 and Child 5 plan files plus their supporting specs. Queue state is now explicit: Child 4 is the next executable weekly target, while Child 5 is queued behind Child 4 so presentation work does not stabilize against the current mixed interaction ownership.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 4 from docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md and sync weekly visibility artifacts after the first Child 4 batch.`
+- 2026-06-30
+  - Summary: `Executed the first Child 4 batch in an isolated worktree: src/core/runtime gained interactive-runtime.ts and house-runtime.ts, src/core/adapters gained legacy house/interactive adapter files, covered city-begging/activity-qte/story-battle entry in src/main.ts now flows through those core seams, and the weekly artifact bundle has been refreshed to describe the new interactive-runtime ownership picture.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Keep Child 4 active, record the shared-dispatch follow-up explicitly in the child plan, and do not promote Child 5 until Child 4 completes.`
 
 ---
 
@@ -149,19 +153,19 @@ These outputs are part of the weekly acceptance gate even though their detailed 
 
 - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
   - Role: active queue controller
-  - Resume point: `Start Child 4 after Child 3 integration and synchronize weekly status after that next work batch.`
+  - Resume point: `Continue Child 4 after its first implementation batch and synchronize weekly status again after the next interactive-runtime work batch.`
 
 - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
   - Role: active weekly visibility companion
-  - Resume point: `After the next Child 4 work batch, update the weekly artifact bundle and summarize the interactive runtime delta.`
-
-### Not Started
+  - Resume point: `After the next Child 4 work batch, refresh the artifact bundle again and summarize any shared-dispatch delta.`
 
 - `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
-  - Role: planned Child 4
+  - Role: active Child 4
   - Primary subsystem boundary: `Interaction Runtime`, `House Runtime integration seam`
   - Depends on: Child 1 completed and Child 3 completed
-  - Resume point: `Start Task 1 Step 1.`
+  - Resume point: `Resume after the first implementation slice with the shared-dispatch follow-up explicitly documented.`
+
+### Not Started
 
 - `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
   - Role: planned Child 5
@@ -211,7 +215,7 @@ These outputs are part of the weekly acceptance gate even though their detailed 
 
 - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
   - Current file status: `in-progress`
-  - Reason: orchestration parent is active and synchronized through Child 3, but remains outside the executable child queue because concrete code work belongs to child plans
+  - Reason: orchestration parent is active and synchronized through the first Child 4 implementation batch, but remains outside the executable child queue because concrete code work belongs to child plans
 
 ## Execution Queue
 

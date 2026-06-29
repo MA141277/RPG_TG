@@ -13,11 +13,11 @@
 ## Execution State
 
 - Status: `in-progress`
-- Last Updated: `2026-06-29`
-- Current Focus: `Child 3 is complete, and the formal Child 4 / Child 5 plan files now exist. Child 4 is the next executable child: it owns Interaction Runtime plus the House Runtime integration seam and should remove direct interactive orchestration from src/main.ts before Child 5 begins presenter/render decoupling.`
-- Next Step: `Start Child 4 from its own formal plan, then keep Child 5 queued behind Child 4 completion so presenter work stabilizes against the post-interaction runtime boundary.`
-- Verification: `Child 3 closeout: npm run lint:plans; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "navigation external entry ids|typed day-start request|candidate selection and activation seams|activated event handoff"; npm run typecheck; npm test; npm run build`
-- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, and Child 3 completed on branch codex/child3-nav. Commit batching remains deferred so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Last Updated: `2026-06-30`
+- Current Focus: `Child 4 is now in progress in the isolated worktree. Its first implementation slice landed a formal interactive runtime contract plus legacy house/interactive adapters and core bridge files, and covered city-begging/activity-qte/story-battle entry in src/main.ts now routes through those core seams instead of directly importing application/house/house-runtime.`
+- Next Step: `Continue Child 4 from its own formal plan with the runtime-router/runtime-dispatch decision now made explicit: keep the new bridge seams in place for this slice, record shared-dispatch integration as a follow-up contract decision, and keep Child 5 queued behind Child 4 completion so presenter work stabilizes against the post-interaction runtime boundary.`
+- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, Child 3 completed on branch codex/child3-nav, and Child 4 is now executing on branch codex/child4-interactive-runtime in its own isolated worktree. Commit batching remains per-child so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -65,6 +65,10 @@
   - Summary: `Authored the formal Child 4 and Child 5 implementation plan files plus their supporting specs. Child 4 is now the active next child for Interaction Runtime and House Runtime integration; Child 5 remains formally queued behind Child 4 so presenter/render boundaries do not lock against the current mixed interaction ownership.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 4 from docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md, then promote Child 5 only after Child 4 completes.`
+- 2026-06-30
+  - Summary: `Child 4 has started in its isolated worktree. The first red-green batch introduced src/core/contracts/interactive-runtime.ts, legacy house/interactive adapters, and core house/interactive runtime bridge files, then rerouted covered city-begging/activity-qte/story-battle entry in src/main.ts through those seams while preserving current behavior behind legacy delegation.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Keep Child 4 active, document the shared-dispatch follow-up explicitly in the child plan, and do not promote Child 5 until Child 4 reaches its acceptance gate.`
 
 ## Why This Plan Exists
 
@@ -451,7 +455,7 @@ This child covers:
   - `Interaction Runtime`
   - `House Runtime` integration seam where house-owned interactions delegate into shared runtime
 
-- [ ] **Step 2: Verify Child 4 dependencies**
+- [x] **Step 2: Verify Child 4 dependencies**
 
 Confirm:
 

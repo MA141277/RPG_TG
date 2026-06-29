@@ -11,11 +11,11 @@
 ## Execution State
 
 - Status: `in-progress`
-- Last Updated: `2026-06-29`
-- Current Focus: `The Child 3 navigation/time/event batch is now reflected in the artifact bundle: src/core/runtime owns navigation/time request factories plus event/scene seams, and the weekly visibility state now shows runtime-owned entry extraction instead of a purely legacy trigger path.`
-- Next Step: `After the next Child 4 interactive runtime batch, refresh the same artifact bundle again so the visibility docs track unified interactive dispatch beyond today's navigation/time/event seams.`
-- Verification: `Child 3 closeout: npm run lint:plans; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "navigation external entry ids|typed day-start request|candidate selection and activation seams|activated event handoff"; npm run typecheck; npm test; npm run build`
-- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle now includes navigation/time request factories, event candidate selection, and the first scene handoff seam on top of the completed Child 1 and Child 2 boundaries.`
+- Last Updated: `2026-06-30`
+- Current Focus: `The first Child 4 interactive-runtime batch is now reflected in the artifact bundle: src/core/runtime owns new house/interactive bridge seams, src/core/adapters contains legacy house/interactive compatibility adapters, and the weekly visibility state now shows covered city-begging/activity-qte/story-battle entry moving through core runtime ownership instead of direct application-house imports in src/main.ts.`
+- Next Step: `After the next Child 4 interactive-runtime batch, refresh the same artifact bundle again so the visibility docs track any shared runtime-router/runtime-dispatch change beyond today's bridge-and-adapter cutover.`
+- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle now includes the Child 3 navigation/time/event seams plus the first Child 4 interactive-runtime bridge layer under src/core/runtime and src/core/adapters.`
 
 ## Progress Log
 
@@ -51,6 +51,10 @@
   - Summary: `Updated the weekly artifact bundle after Child 3 closeout so it reflects runtime-owned entry extraction: src/core/runtime now includes navigation, time, event, and scene seam files, and the flow/module artifacts describe typed runtime request factories plus the first event-to-scene handoff path.`
   - Verification: `Child 3 closeout: npm run lint:plans; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "navigation external entry ids|typed day-start request|candidate selection and activation seams|activated event handoff"; npm run typecheck; npm test; npm run build`
   - Next: `After Child 4 begins, refresh the same artifact bundle with interactive runtime and house/minigame handoff details.`
+- 2026-06-30
+  - Summary: `Updated the weekly artifact bundle after the first Child 4 batch so it reflects the new interactive runtime layer: src/core/contracts/interactive-runtime.ts exists, src/core/runtime now includes interactive-runtime.ts plus house-runtime.ts, src/core/adapters now includes legacy-house-adapter.ts and legacy-interactive-adapter.ts, and the flow/module artifacts describe covered city-begging/activity-qte/story-battle entry through those new seams.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `After the next Child 4 batch, refresh the same artifact bundle again if runtime-router/runtime-dispatch ownership changes or additional interactive flows move behind the core seam.`
 
 ---
 

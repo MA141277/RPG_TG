@@ -8,23 +8,22 @@
 
 **Primary Child Plan(s):**
 
-- `docs/superpowers/plans/2026-06-29-navigation-time-event-runtime-extraction-plan.md`
+- `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
 
 **Queued Next Child Plan(s):**
 
-- `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
 - `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
 
 ## Weekly Summary
 
 - This week is focused on making the `mod-first` engine/runtime extraction executable and legible.
 - Child 1, Child 2, and Child 3 are now complete in isolated worktrees.
-- Child 4 is the next queued follow-up workstream after runtime entry extraction.
+- Child 4 is now in progress in its own isolated worktree, and its first batch landed the initial interactive-runtime bridge under `src/core`.
 - The visibility bundle exists so the same week also produces readable module and control-flow outputs.
 
 ## Active Focus
 
-- Child 4 preparation after Child 3 moved navigation/time/event entry behind the first real runtime seam under `src/core/runtime`.
+- Continue Child 4 after the first interactive-runtime batch moved covered house/minigame/story-battle entry behind new `src/core/runtime` and `src/core/adapters` seams.
 
 ## Artifact Index
 
@@ -45,9 +44,12 @@
 
 ## Verification Summary
 
+- `npm run build:test`: `PASS`
+- `node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"`: `PASS`
 - `npm run typecheck`: `PASS`
 - `npm test`: `PASS`
 - `npm run build`: `PASS`
+- `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
 
@@ -62,11 +64,12 @@
 - Child 1 Task 5 landed `src/core/adapters/legacy-main-adapter.ts` and routed `src/main.ts` through that seam.
 - Child 2 landed `src/core/save/save-migrations.ts`, `save-loader.ts`, and `save-writer.ts`, proving legacy save normalization, explicit missing-mod rejection, and payload-preserving round-trip behavior.
 - Child 3 landed `src/core/runtime/navigation-runtime.ts`, `time-runtime.ts`, `event-runtime.ts`, `scene-runtime.ts`, and related seam files, proving typed runtime request entry for navigation/time plus the first event-to-scene handoff path.
+- Child 4 batch 1 landed `src/core/contracts/interactive-runtime.ts`, `src/core/runtime/interactive-runtime.ts`, `src/core/runtime/house-runtime.ts`, and legacy house/interactive adapter files, then rerouted covered city-begging/activity-qte/story-battle entry in `src/main.ts` through those new seams.
 
 ### Deferred
 
-- Commit batching is still deferred because Task 1 and Task 2 changes are now being executed in the isolated worktree and have not yet been split into clean staged groups.
-- Child 4 interactive runtime integration and Child 5 presenter/render work remain queued follow-up tasks.
+- Child 4 is not closed yet; shared runtime-router/runtime-dispatch integration remains an explicit follow-up decision inside the active child plan.
+- Child 5 presenter/render work remains queued behind Child 4 completion.
 
 ### Blockers
 
@@ -75,8 +78,8 @@
 ## Next Week Input
 
 - Highest-priority module to refine:
-  - `src/application/house/*`
+  - `src/core/runtime`
 - Why it is next:
-  - Navigation/time/event entry is now under the first runtime seam, so the next bottleneck is house-owned interactive launch paths that still bypass a unified interactive runtime.
+  - The first interactive-runtime bridge now exists, so the next bottleneck is deciding how far Child 4 should pull house/interactive ownership into the shared router/dispatch line instead of leaving dedicated bridge helpers as a parallel path.
 - Category:
-  - `needs-migration`
+  - `needs-hardening`

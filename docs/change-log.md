@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-30 Interactive Runtime Bridge Extraction
+
+### Added
+- 新增 `src/core/contracts/interactive-runtime.ts`，为受控交互运行态补出统一的 kind/source/session 基础类型。
+- 新增 `src/core/runtime/interactive-runtime.ts` 与 `src/core/runtime/house-runtime.ts`，提供交互启动/动作请求与 house runtime 进出/派发的 core bridge 入口。
+- 新增 `src/core/adapters/legacy-house-adapter.ts` 与 `src/core/adapters/legacy-interactive-adapter.ts`，把当前 house runtime、city-begging、activity-qte、story-battle 的旧实现包进过渡适配层。
+
+### Changed
+- `src/main.ts` 不再直接导入 `application/house/house-runtime`，已覆盖的 house / city-begging / activity-qte / story-battle 入口改为先走 `src/core/runtime` 的桥接层。
+- 已覆盖的交互 launch/action 入口现在先经过 `createLaunchInteractiveRequest()` / `createInteractiveActionRequest()` 和 `runInteractiveRuntime()`，而不是由 `main.ts` 直接组装并调用旧 helper。
+
+### Impact
+- 项目现在具备了第一层 production 级 `Interaction Runtime` / `House Runtime` bridge seam，后续可以继续把交互请求并入统一 runtime-router/runtime-dispatch，逐步减少 `main.ts` 作为并行交互控制器的职责，而不必立即重写现有小游戏和剧情战实现。
+
 ## 2026-06-29 Save Migration Hardening
 
 ### Added
