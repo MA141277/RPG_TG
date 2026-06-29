@@ -3,34 +3,9 @@ import type {
   MedicineHouseHerbDefinition,
   MedicineHousePreparedMedicineEffect,
 } from "../../domain/medicine-house";
+import * as medicineHouseContentJson from "../scenario-packs/zhuyuanzhang/house-content/medicine-house-content.json";
 
-export const medicineHouseDoctorProfile = {
-  actorId: "char.kulan_medicine_doctor",
-  name: "陈郎中",
-  title: "坐堂医师",
-  personality: "沉稳",
-  specialty: "医术",
-  favorability: 0,
-} as const;
-
-export const medicineHouseDialoguePool = [
-  "近来风寒病人不少。",
-  "穷人最怕生病。",
-  "药能救人，也能害人。",
-  "如今药材越来越难采了。",
-] as const;
-
-export const medicineHouseGreetingLines = [
-  "（放下药秤，朝你点了点头）",
-  "（示意你上前说话）",
-] as const;
-
-export const medicineHouseHealService = {
-  cost: 50,
-  fatigueRecovery: 30,
-} as const;
-
-export type MedicineHousePreparedMedicineDefinition = {
+type MedicineHousePreparedMedicineDefinition = {
   id: string;
   name: string;
   type: "heal" | "fatigue" | "detox";
@@ -38,90 +13,51 @@ export type MedicineHousePreparedMedicineDefinition = {
   effect: MedicineHousePreparedMedicineEffect;
 };
 
-export const medicineHousePreparedMedicines: MedicineHousePreparedMedicineDefinition[] =
-  [
-    {
-      id: "medicine_heal_001",
-      name: "金创药",
-      type: "heal",
-      price: 80,
-      effect: { hp: 30 },
-    },
-    {
-      id: "medicine_fatigue_001",
-      name: "安神汤",
-      type: "fatigue",
-      price: 60,
-      effect: { fatigue: 20 },
-    },
-    {
-      id: "medicine_poison_001",
-      name: "解毒丸",
-      type: "detox",
-      price: 120,
-      effect: { poison: -25 },
-    },
-  ];
-
-export const medicineHouseHerbCatalog: MedicineHouseHerbDefinition[] = [
-  { id: "herb_ai_cao", name: "艾草", cold: 0, heat: 2, poison: 0, heal: 1 },
-  { id: "herb_huang_lian", name: "黄连", cold: 3, heat: 0, poison: 1, heal: 2 },
-  { id: "herb_sheng_jiang", name: "生姜", cold: 0, heat: 2, poison: 0, heal: 1 },
-  { id: "herb_bo_he", name: "薄荷", cold: 2, heat: 0, poison: 0, heal: 1 },
-  { id: "herb_dang_gui", name: "当归", cold: 0, heat: 1, poison: 0, heal: 3 },
-  { id: "herb_xing_ren", name: "杏仁", cold: 1, heat: 0, poison: 0, heal: 2 },
-  { id: "herb_gan_cao", name: "甘草", cold: 0, heat: 0, poison: -1, heal: 2 },
-  { id: "herb_wu_tou", name: "乌头", cold: 0, heat: 1, poison: 3, heal: 4 },
-];
-
-export const medicineHouseAilmentTargets: CompoundingSessionTarget[] = [
-  {
-    ailmentId: "wind_cold",
-    ailmentName: "风寒",
-    coldRequired: 2,
-    healRequired: 5,
-    maxPoison: 1,
-  },
-  {
-    ailmentId: "inner_heat",
-    ailmentName: "内热",
-    coldRequired: -2,
-    healRequired: 4,
-    maxPoison: 1,
-  },
-  {
-    ailmentId: "trauma",
-    ailmentName: "外伤",
-    coldRequired: 0,
-    healRequired: 6,
-    maxPoison: 0,
-  },
-  {
-    ailmentId: "damp_toxin",
-    ailmentName: "湿毒",
-    coldRequired: 1,
-    healRequired: 5,
-    maxPoison: 2,
-  },
-  {
-    ailmentId: "miasma",
-    ailmentName: "瘴气",
-    coldRequired: 2,
-    healRequired: 7,
-    maxPoison: 1,
-  },
-];
-
-export const medicineHouseCompoundingBaseTurns = 5;
-export const medicineHouseCompoundingBaseDurationSec = 45;
-
-export const medicineHouseCompoundingGradeRewards: Record<
-  "S" | "A" | "B" | "C" | "D",
-  { medicine: number; relationship: number }
-> = {
-  S: { medicine: 3, relationship: 3 },
-  A: { medicine: 2, relationship: 2 },
-  B: { medicine: 1, relationship: 1 },
-  C: { medicine: 0, relationship: 1 },
-  D: { medicine: 0, relationship: -1 },
+type MedicineHouseContent = {
+  medicineHouseDoctorProfile: {
+    actorId: string;
+    name: string;
+    title: string;
+    personality: string;
+    specialty: string;
+    favorability: number;
+  };
+  medicineHouseDialogueTextIds: string[];
+  medicineHouseGreetingTextIds: string[];
+  medicineHouseOpenTextIds: string[];
+  medicineHouseHealService: {
+    cost: number;
+    fatigueRecovery: number;
+  };
+  medicineHousePreparedMedicines: MedicineHousePreparedMedicineDefinition[];
+  medicineHouseHerbCatalog: MedicineHouseHerbDefinition[];
+  medicineHouseAilmentTargets: CompoundingSessionTarget[];
+  medicineHouseCompoundingBaseTurns: number;
+  medicineHouseCompoundingBaseDurationSec: number;
+  medicineHouseCompoundingGradeRewards: Record<
+    "S" | "A" | "B" | "C" | "D",
+    { medicine: number; relationship: number }
+  >;
 };
+
+const medicineHouseContent =
+  ((medicineHouseContentJson as { default?: MedicineHouseContent }).default ??
+    medicineHouseContentJson) as MedicineHouseContent;
+
+export const medicineHouseDoctorProfile = medicineHouseContent.medicineHouseDoctorProfile;
+export const medicineHouseDialogueTextIds = medicineHouseContent.medicineHouseDialogueTextIds;
+export const medicineHouseGreetingTextIds = medicineHouseContent.medicineHouseGreetingTextIds;
+export const medicineHouseOpenTextIds = medicineHouseContent.medicineHouseOpenTextIds;
+export const medicineHouseHealService = medicineHouseContent.medicineHouseHealService;
+export const medicineHousePreparedMedicines =
+  medicineHouseContent.medicineHousePreparedMedicines;
+export const medicineHouseHerbCatalog = medicineHouseContent.medicineHouseHerbCatalog;
+export const medicineHouseAilmentTargets = medicineHouseContent.medicineHouseAilmentTargets;
+export const medicineHouseCompoundingBaseTurns =
+  medicineHouseContent.medicineHouseCompoundingBaseTurns;
+export const medicineHouseCompoundingBaseDurationSec =
+  medicineHouseContent.medicineHouseCompoundingBaseDurationSec;
+export const medicineHouseCompoundingGradeRewards =
+  medicineHouseContent.medicineHouseCompoundingGradeRewards;
+
+export type { MedicineHousePreparedMedicineDefinition };

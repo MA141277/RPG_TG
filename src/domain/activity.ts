@@ -22,6 +22,13 @@ export type ActivityDefinition = {
   label: string;
   handlerId: ActivityHandlerId;
   fallbackHandlerId?: ActivityHandlerId;
+  houseModuleId?: "temple-house" | "keep-house";
+  taskId?: string;
+  missionId?: string;
+  titleTextId?: string;
+  briefingTextId?: string;
+  orderLineTextIds?: string[];
+  keepMinTier?: "runner" | "officer" | "commander";
   staminaCost?: number;
   timeAdvanceCost?: number;
   qte?: ActivityQteTuning;

@@ -1,41 +1,29 @@
 import type { TavernWorkOffer } from "../../domain/tavern";
+import * as tavernContentJson from "../scenario-packs/zhuyuanzhang/house-content/tavern-content.json";
 
-export const tavernBossProfile = {
-  actorId: "char.kulan_innkeeper",
-  name: "酒馆老板",
-  title: "酒馆老板",
-  specialty: "门路",
+type TavernContent = {
+  tavernBossProfile: {
+    actorId: string;
+    name: string;
+    title: string;
+    specialty: string;
+  };
+  tavernBossGreetingTextIds: string[];
+  tavernBossOpenTextIds: string[];
+  tavernDrinkPrice: number;
+  tavernDefaultWager: number;
+  tavernWagerStep: number;
+  tavernWorkOffers: TavernWorkOffer[];
 };
 
-export const tavernDrinkPrice = 100;
-export const tavernDefaultWager = 100;
-export const tavernWagerStep = 50;
+const tavernContent =
+  ((tavernContentJson as { default?: TavernContent }).default ??
+    tavernContentJson) as TavernContent;
 
-export const tavernWorkOffers: TavernWorkOffer[] = [
-  {
-    id: "offer.kulan.wash_dishes",
-    type: "dishwashing",
-    title: "刷盘子",
-    description: "到后厨帮忙清洗碗碟，手脚利落就能多拿些工钱。",
-    rewardText: "最高 70 文",
-    maxRewardGold: 70,
-    canStartImmediately: true,
-  },
-  {
-    id: "offer.kulan.supply_run",
-    type: "random-event",
-    title: "跑腿采买",
-    description: "替酒馆跑一趟采买，把短缺的酒食带回来。",
-    rewardText: "事件接口预留",
-    maxRewardGold: 80,
-  },
-  {
-    id: "offer.kulan.caravan_escort",
-    type: "random-event",
-    title: "护送商队",
-    description: "替熟客护送一段短程商队，后续可接入随机事件和战斗判定。",
-    rewardText: "事件接口预留",
-    maxRewardGold: 120,
-    minFame: 45,
-  },
-];
+export const tavernBossProfile = tavernContent.tavernBossProfile;
+export const tavernBossGreetingTextIds = tavernContent.tavernBossGreetingTextIds;
+export const tavernBossOpenTextIds = tavernContent.tavernBossOpenTextIds;
+export const tavernDrinkPrice = tavernContent.tavernDrinkPrice;
+export const tavernDefaultWager = tavernContent.tavernDefaultWager;
+export const tavernWagerStep = tavernContent.tavernWagerStep;
+export const tavernWorkOffers = tavernContent.tavernWorkOffers;

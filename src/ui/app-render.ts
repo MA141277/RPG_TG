@@ -438,6 +438,7 @@ function renderStage(
         houseDefinition: activeHouse,
         playerCharacterId: input.playerCharacterId,
         sessionState: input.appState.gameState.ui.houseSession?.state ?? null,
+        textEntriesById: input.textEntriesById,
       });
 
       return renderHouseModuleView(

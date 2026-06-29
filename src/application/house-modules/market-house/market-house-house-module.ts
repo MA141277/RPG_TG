@@ -1,12 +1,13 @@
 import {
-  marketHouseBossOpenLines,
+  marketHouseBossOpenTextIds,
   marketHouseFixedBoss,
-  marketHouseGeneralRumors,
-  marketHouseGreetingLines,
-  marketHouseGuestOpenLineBySpecialty,
+  marketHouseGeneralRumorTextIds,
+  marketHouseGreetingTextIds,
+  marketHouseGuestOpenTextIdsByActorId,
+  marketHouseInvestigationSpecialtyTextIdByActorId,
   marketHouseRandomNpcPool,
-  marketHouseRumorsByCategory,
-  marketHouseSmallTalkLines,
+  marketHouseRumorTextIdsByCategory,
+  marketHouseSmallTalkTextIds,
   type MarketHouseActorContent,
 } from "../../../content/houses/market-house-content";
 import { globalGoodsPool } from "../../../content/markets/global-goods-pool";
@@ -46,6 +47,7 @@ import type {
 import { assertExists } from "../../../shared/assert";
 import { pickRandom, randomInt } from "../../../shared/random";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import { ensureShopMarketData, readShopMarketData } from "../../markets/market-refresh-system";
 import { createInitialMarketHouseSessionState } from "./market-house-session-state";
 
@@ -523,15 +525,86 @@ function createViewSnapshot(
   };
 }
 
-function getActorOpenLines(actor: MarketHouseActor): string[] {
+function getMarketTextEntries(
+  textEntriesById?: Record<string, string>
+): Record<string, string> {
+  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
+}
+
+function resolveMarketText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  fallback?: string
+): string {
+  return resolveTextEntry(
+    textEntriesById,
+    textId,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function resolveMarketTemplateText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  values: Record<string, string | number | boolean | null | undefined>,
+  fallback?: string
+): string {
+  return resolveTextTemplateEntry(
+    textEntriesById,
+    textId,
+    values,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function resolveMarketTextLines(
+  textEntriesById: Record<string, string>,
+  textIds: readonly string[]
+): string[] {
+  return textIds.map((textId) => resolveMarketText(textEntriesById, textId));
+}
+
+function pickRandomResolvedMarketText(
+  textEntriesById: Record<string, string>,
+  textIds: readonly string[]
+): string {
+  const textId = pickRandom(textIds);
+  return resolveMarketText(textEntriesById, textId);
+}
+
+function getInitialMarketHouseDialogueLines(
+  textEntriesById?: Record<string, string>
+): string[] {
+  return resolveMarketTextLines(
+    getMarketTextEntries(textEntriesById),
+    marketHouseGreetingTextIds
+  );
+}
+
+function getActorOpenLines(
+  actor: MarketHouseActor,
+  textEntriesById?: Record<string, string>
+): string[] {
+  const entries = getMarketTextEntries(textEntriesById);
   if (actor.isFixedHost) {
-    return [...marketHouseBossOpenLines];
+    return resolveMarketTextLines(entries, marketHouseBossOpenTextIds);
+  }
+
+  const textIds = marketHouseGuestOpenTextIdsByActorId[actor.id];
+  if (textIds != null) {
+    return resolveMarketTextLines(entries, textIds);
   }
 
   return [
-    marketHouseGuestOpenLineBySpecialty[actor.specialty] ??
-      "（端起茶盏）像是在等你先挑话头。",
-    `“我这一路专做${actor.specialty}买卖，消息多少知道一点。”`,
+    resolveMarketText(
+      entries,
+      "runtime.zhu_yuanzhang.market_house.guest_open.default.001"
+    ),
+    resolveMarketTemplateText(
+      entries,
+      "runtime.zhu_yuanzhang.market_house.guest_open.default.002",
+      { specialty: actor.specialty }
+    ),
   ];
 }
 
@@ -734,30 +807,46 @@ function applyActionOutcome(
 function pickInvestigationMessage(
   actor: MarketHouseActor,
   cityDefinition: CityDefinition,
-  displayedGoods: MarketHouseGoodsSnapshot[]
+  displayedGoods: MarketHouseGoodsSnapshot[],
+  textEntriesById?: Record<string, string>
 ): string {
+  const entries = getMarketTextEntries(textEntriesById);
   const focusGoods = displayedGoods[0]?.goodDefinition ?? null;
-  const rumorPool =
+  const rumorTextIds =
     focusGoods == null
-      ? marketHouseGeneralRumors
-      : marketHouseRumorsByCategory[focusGoods.category] ?? marketHouseGeneralRumors;
-
-  const specialtyLine =
-    actor.specialty === "外地见闻"
-      ? "（压低声音）外地货最近走得比本地货快。"
-      : actor.specialty === "药材"
-        ? "（提醒你）山路一断，药材价就容易往上跳。"
-        : actor.specialty === "书画"
-          ? "真正的高价，不在货本身，而在遇见识货的人。"
-          : actor.specialty === "丝绸"
-            ? "（眯着眼笑）富城最舍得为绸缎出价。"
-            : "（敲了敲账板）示意你多看差价。";
+      ? marketHouseGeneralRumorTextIds
+      : marketHouseRumorTextIdsByCategory[focusGoods.category] ??
+        marketHouseGeneralRumorTextIds;
+  const specialDemandList =
+    cityDefinition.specialDemand.length > 0
+      ? cityDefinition.specialDemand.join(" / ")
+      : "无";
+  const specialtyTextId =
+    marketHouseInvestigationSpecialtyTextIdByActorId[actor.id] ??
+    "runtime.zhu_yuanzhang.market_house.investigate.specialty.default";
 
   return [
-    `${cityDefinition.name}繁荣 ${cityDefinition.prosperity}，风险 ${cityDefinition.danger}。`,
-    `城中偏好：${cityDefinition.specialDemand.join(" / ") || "无"}`,
-    pickRandom(rumorPool),
-    specialtyLine,
+    resolveMarketTemplateText(
+      entries,
+      "runtime.zhu_yuanzhang.market_house.investigate.city.001",
+      {
+        cityName: cityDefinition.name,
+        prosperity: cityDefinition.prosperity,
+        danger: cityDefinition.danger,
+      }
+    ),
+    resolveMarketTemplateText(
+      entries,
+      "runtime.zhu_yuanzhang.market_house.investigate.city.002",
+      {
+        cityName: cityDefinition.name,
+        specialDemandList,
+      }
+    ),
+    pickRandomResolvedMarketText(entries, rumorTextIds),
+    resolveMarketTemplateText(entries, specialtyTextId, {
+      specialty: actor.specialty,
+    }),
   ].join("\n");
 }
 
@@ -910,7 +999,7 @@ function handleAction(
       {
         selectedActorId: marketHouseFixedBoss.id,
         dialoguePhase: "open",
-        dialogueLines: [...marketHouseBossOpenLines],
+        dialogueLines: getActorOpenLines(marketHouseFixedBoss, input.textEntriesById),
         overlay: null,
       }
     );
@@ -959,7 +1048,7 @@ function handleAction(
       {
         selectedActorId: actor.id,
         dialoguePhase: "open",
-        dialogueLines: getActorOpenLines(actor),
+        dialogueLines: getActorOpenLines(actor, input.textEntriesById),
         overlay: null,
       }
     );
@@ -975,7 +1064,10 @@ function handleAction(
       inventoryChange: [],
       relationshipChange: 1,
       timeCost: 1,
-      marketMessage: pickRandom(marketHouseSmallTalkLines),
+      marketMessage: pickRandomResolvedMarketText(
+        getMarketTextEntries(input.textEntriesById),
+        marketHouseSmallTalkTextIds
+      ),
     };
     const mutation = applyActionOutcome(input, selectedActor, outcome);
 
@@ -989,10 +1081,17 @@ function handleAction(
         {
           dialoguePhase: "open",
           dialogueLines: [outcome.marketMessage],
-          overlay: createAlertOverlay("闲谈", [
-            outcome.marketMessage,
-            ...formatOutcomeSummary(outcome),
-          ], "success"),
+          overlay: createAlertOverlay(
+            resolveMarketText(
+              getMarketTextEntries(input.textEntriesById),
+              "runtime.zhu_yuanzhang.market_house.small_talk.overlay.title"
+            ),
+            [
+              outcome.marketMessage,
+              ...formatOutcomeSummary(outcome),
+            ],
+            "success"
+          ),
         }
       ),
       timeAdvanceCost: outcome.timeCost,
@@ -1008,7 +1107,8 @@ function handleAction(
       marketMessage: pickInvestigationMessage(
         selectedActor,
         snapshot.cityDefinition,
-        snapshot.displayedGoods
+        snapshot.displayedGoods,
+        input.textEntriesById
       ),
     };
     const mutation = applyActionOutcome(input, selectedActor, outcome);
@@ -1021,7 +1121,14 @@ function handleAction(
         },
         sessionState,
         {
-          overlay: createAlertOverlay("调查行情", outcome.marketMessage.split("\n"), "info"),
+          overlay: createAlertOverlay(
+            resolveMarketText(
+              getMarketTextEntries(input.textEntriesById),
+              "runtime.zhu_yuanzhang.market_house.investigate.overlay.title"
+            ),
+            outcome.marketMessage.split("\n"),
+            "info"
+          ),
         }
       ),
       timeAdvanceCost: outcome.timeCost,
@@ -1301,7 +1408,7 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
       sessionState: createInitialMarketHouseSessionState(
         runtime.guestActorIds,
         marketHouseFixedBoss.id,
-        [...marketHouseGreetingLines]
+        getInitialMarketHouseDialogueLines(input.textEntriesById)
       ),
     };
   },
@@ -1326,7 +1433,7 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
       createInitialMarketHouseSessionState(
         runtime.guestActorIds,
         marketHouseFixedBoss.id,
-        [...marketHouseGreetingLines]
+        getInitialMarketHouseDialogueLines(input.textEntriesById)
       );
     const snapshot = createViewSnapshot(runtime.state, input.houseDefinition, sessionState);
     const playerCharacter = getPlayerCharacter(input.characterDefinitions, input.playerCharacterId);

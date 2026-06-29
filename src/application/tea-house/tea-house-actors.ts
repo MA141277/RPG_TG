@@ -48,8 +48,8 @@ export function createTeaHouseBossActor(
       ),
       teaHouseBossProfile.favorability
     ),
-    dialoguePool: [...teaHouseBossProfile.dialoguePool],
-    intelPool: [...teaHouseBossProfile.intelPool],
+    dialoguePool: [],
+    intelPool: [],
     isFixedHost: true,
   };
 }

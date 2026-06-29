@@ -5,6 +5,7 @@ import type {
   StoryBattleUnit,
 } from "../../domain/story-battle";
 import { KEEP_HOUSE_VARIABLE_KEYS } from "../../domain/keep-house";
+import { resolveTextEntry } from "../content/text-resolution";
 import { formatCouncilStatusText } from "../time/time-progression";
 
 export type StoryBattleActionResult = {
@@ -12,16 +13,37 @@ export type StoryBattleActionResult = {
   enterHouseId: string | null;
 };
 
+export type StoryBattleTextContext = {
+  textEntriesById?: Record<string, string> | undefined;
+};
+
+function getStoryBattleText(
+  context: StoryBattleTextContext,
+  textId: string | undefined,
+  fallback: string
+): string {
+  return resolveTextEntry(context.textEntriesById ?? {}, textId, fallback);
+}
+
 export function createSundeyaRescueBattleSession(
-  completion: StoryBattleCompletion
+  completion: StoryBattleCompletion,
+  context: StoryBattleTextContext = {}
 ): NonNullable<ActiveStoryBattleSession> {
   const units: StoryBattleUnit[] = [
     {
       id: "unit.player.vanguard",
-      name: "朱重八本队",
+      name: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.player_vanguard.name",
+        "朱重八本队"
+      ),
       side: "player",
       controller: "player",
-      role: "亲兵小队",
+      role: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.player_vanguard.role",
+        "亲兵小队"
+      ),
       x: 1,
       y: 3,
       strength: 320,
@@ -30,10 +52,18 @@ export function createSundeyaRescueBattleSession(
     },
     {
       id: "unit.guo.center",
-      name: "郭子兴中军",
+      name: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.guo_center.name",
+        "郭子兴中军"
+      ),
       side: "ally",
       controller: "npc",
-      role: "救援主力",
+      role: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.guo_center.role",
+        "救援主力"
+      ),
       x: 1,
       y: 1,
       strength: 540,
@@ -42,10 +72,18 @@ export function createSundeyaRescueBattleSession(
     },
     {
       id: "unit.tanghe.left",
-      name: "汤和队",
+      name: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.tanghe_left.name",
+        "汤和队"
+      ),
       side: "ally",
       controller: "npc",
-      role: "左翼接应",
+      role: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.tanghe_left.role",
+        "左翼接应"
+      ),
       x: 0,
       y: 2,
       strength: 360,
@@ -54,10 +92,18 @@ export function createSundeyaRescueBattleSession(
     },
     {
       id: "unit.xuda.right",
-      name: "徐达队",
+      name: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.xuda_right.name",
+        "徐达队"
+      ),
       side: "ally",
       controller: "npc",
-      role: "右翼接应",
+      role: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.xuda_right.role",
+        "右翼接应"
+      ),
       x: 2,
       y: 2,
       strength: 350,
@@ -66,10 +112,18 @@ export function createSundeyaRescueBattleSession(
     },
     {
       id: "unit.sundeya.trapped",
-      name: "孙德崖残队",
+      name: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.sundeya_trapped.name",
+        "孙德崖残队"
+      ),
       side: "ally",
       controller: "npc",
-      role: "被围友军",
+      role: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.sundeya_trapped.role",
+        "被围友军"
+      ),
       x: 3,
       y: 2,
       strength: 180,
@@ -78,10 +132,18 @@ export function createSundeyaRescueBattleSession(
     },
     {
       id: "unit.yuan.north",
-      name: "元军北哨",
+      name: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.yuan_north.name",
+        "元军北哨"
+      ),
       side: "enemy",
       controller: "npc",
-      role: "围困部队",
+      role: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.yuan_north.role",
+        "围困部队"
+      ),
       x: 3,
       y: 1,
       strength: 260,
@@ -90,10 +152,18 @@ export function createSundeyaRescueBattleSession(
     },
     {
       id: "unit.yuan.front",
-      name: "元军前锋",
+      name: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.yuan_front.name",
+        "元军前锋"
+      ),
       side: "enemy",
       controller: "npc",
-      role: "围困部队",
+      role: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.yuan_front.role",
+        "围困部队"
+      ),
       x: 4,
       y: 2,
       strength: 310,
@@ -102,10 +172,18 @@ export function createSundeyaRescueBattleSession(
     },
     {
       id: "unit.yuan.south",
-      name: "元军南哨",
+      name: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.yuan_south.name",
+        "元军南哨"
+      ),
       side: "enemy",
       controller: "npc",
-      role: "围困部队",
+      role: getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.unit.yuan_south.role",
+        "围困部队"
+      ),
       x: 3,
       y: 3,
       strength: 240,
@@ -116,12 +194,32 @@ export function createSundeyaRescueBattleSession(
 
   return {
     battleId: "story.zhu_yuanzhang.sundeya-rescue",
-    title: "救援孙德崖",
-    objective: "主角本队突入前方缺口，配合郭子兴诸队解开三面围困。",
+    title: getStoryBattleText(
+      context,
+      "battle.story.zhu_yuanzhang.sundeya_rescue.title",
+      "救援孙德崖"
+    ),
+    objective: getStoryBattleText(
+      context,
+      "battle.story.zhu_yuanzhang.sundeya_rescue.objective",
+      "主角本队突入前方缺口，配合郭子兴诸队解开三面围困。"
+    ),
     summaryLines: [
-      "孙德崖一队在前方被三支元军围住，兵力已折损过半。",
-      "郭子兴率中军压上，汤和与徐达分走两翼；玩家只指挥朱重八本队，其余友军由 NPC 自动推进。",
-      "本战目标不是全歼，而是打穿缺口、救出被围友军。",
+      getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.summary.001",
+        "孙德崖一队在前方被三支元军围住，兵力已折损过半。"
+      ),
+      getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.summary.002",
+        "郭子兴率中军压上，汤和与徐达分走两翼；玩家只指挥朱重八本队，其余友军由 NPC 自动推进。"
+      ),
+      getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.summary.003",
+        "本战目标不是全歼，而是打穿缺口、救出被围友军。"
+      ),
     ],
     playerUnitId: "unit.player.vanguard",
     rescuedUnitId: "unit.sundeya.trapped",
@@ -129,10 +227,27 @@ export function createSundeyaRescueBattleSession(
     phase: "embedded-running",
     units,
     logLines: [
-      "元军三队围住孙德崖残队，郭子兴令诸队前压。",
-      "朱重八作为新入营亲兵，只能先带本队抢占前方缺口。",
+      getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.log.opening.001",
+        "元军三队围住孙德崖残队，郭子兴令诸队前压。"
+      ),
+      getStoryBattleText(
+        context,
+        "battle.story.zhu_yuanzhang.sundeya_rescue.log.opening.002",
+        "朱重八作为新入营亲兵，只能先带本队抢占前方缺口。"
+      ),
     ],
-    completion,
+    completion: {
+      ...completion,
+      mainMissionText:
+        completion.mainMissionText ??
+        getStoryBattleText(
+          context,
+          "battle.story.zhu_yuanzhang.sundeya_rescue.main_mission.post_battle",
+          "战后评定"
+        ),
+    },
   };
 }
 
@@ -154,7 +269,8 @@ export function startStoryBattle(
 
 export function dispatchStoryBattleAction(
   state: GameState,
-  actionId: string
+  actionId: string,
+  context: StoryBattleTextContext = {}
 ): StoryBattleActionResult {
   const session = state.storyBattle;
   if (session == null) {
@@ -181,7 +297,13 @@ export function dispatchStoryBattleAction(
       ui: {
         ...state.ui,
         currentView: completion.enterHouseId == null ? "scene" : "house",
-        mainHouseMissionText: completion.mainMissionText ?? "战后评定",
+        mainHouseMissionText:
+          completion.mainMissionText ??
+          getStoryBattleText(
+            context,
+            "battle.story.zhu_yuanzhang.sundeya_rescue.main_mission.post_battle",
+            "战后评定"
+          ),
         reviewDateText: formatCouncilStatusText(0),
       },
       runtime: {
@@ -223,7 +345,11 @@ export function dispatchStoryBattleAction(
           ),
           logLines: [
             ...session.logLines,
-            "朱重八本队向前突入，卡住南侧元军，给友军合围让出通道。",
+            getStoryBattleText(
+              context,
+              "battle.story.zhu_yuanzhang.sundeya_rescue.log.advance.001",
+              "朱重八本队向前突入，卡住南侧元军，给友军合围让出通道。"
+            ),
           ],
         },
       },
@@ -257,8 +383,16 @@ export function dispatchStoryBattleAction(
           units: nextUnits,
           logLines: [
             ...session.logLines,
-            "郭子兴中军压住正面，汤和、徐达两翼接应，三支元军被迫退散。",
-            "孙德崖残队脱出包围，战后诸队回帅府听候评定。",
+            getStoryBattleText(
+              context,
+              "battle.story.zhu_yuanzhang.sundeya_rescue.log.victory.001",
+              "郭子兴中军压住正面，汤和、徐达两翼接应，三支元军被迫退散。"
+            ),
+            getStoryBattleText(
+              context,
+              "battle.story.zhu_yuanzhang.sundeya_rescue.log.victory.002",
+              "孙德崖残队脱出包围，战后诸队回帅府听候评定。"
+            ),
           ],
         },
       },
@@ -283,7 +417,13 @@ export function dispatchStoryBattleAction(
       ui: {
         ...state.ui,
         currentView: completion.enterHouseId == null ? "scene" : "house",
-        mainHouseMissionText: completion.mainMissionText ?? "战后评定",
+        mainHouseMissionText:
+          completion.mainMissionText ??
+          getStoryBattleText(
+            context,
+            "battle.story.zhu_yuanzhang.sundeya_rescue.main_mission.post_battle",
+            "战后评定"
+          ),
         reviewDateText: formatCouncilStatusText(0),
       },
       runtime: {

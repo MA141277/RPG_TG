@@ -124,6 +124,9 @@ const {
   dispatchStoryBattleAction,
   startStoryBattle,
 } = require("../.test-dist/application/story-battle/story-battle-runtime.js");
+const {
+  runStoryCallback,
+} = require("../.test-dist/application/story/story-callbacks.js");
 const { startEvent } = require("../.test-dist/application/events/event-runner.js");
 const {
   runSceneUntilPause,
@@ -294,6 +297,37 @@ function loadCurrentViteConfigModule() {
   loadedModule._compile(transpiled.outputText, sourceFilePath);
 
   return loadedModule.exports;
+}
+
+function getTypeScriptDiagnosticsForFile(relativeFilePath) {
+  const configPath = path.join(process.cwd(), "tsconfig.json");
+  const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+  if (configFile.error) {
+    throw new Error(ts.flattenDiagnosticMessageText(configFile.error.messageText, "\n"));
+  }
+
+  const parsedConfig = ts.parseJsonConfigFileContent(
+    configFile.config,
+    ts.sys,
+    process.cwd(),
+    undefined,
+    configPath
+  );
+  const program = ts.createProgram({
+    rootNames: parsedConfig.fileNames,
+    options: parsedConfig.options,
+  });
+  const targetPath = path
+    .resolve(process.cwd(), relativeFilePath)
+    .replaceAll("\\", "/");
+
+  return ts
+    .getPreEmitDiagnostics(program)
+    .filter(
+      (diagnostic) =>
+        diagnostic.file?.fileName.replaceAll("\\", "/") === targetPath
+    )
+    .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
 }
 
 function collectTypeScriptSourceFiles(rootPath) {
@@ -625,6 +659,190 @@ test("scene view resolves narration dialogue and choice text through text ids", 
   assert.deepEqual(
     resolved.options.map((option) => option.label),
     ["接受", "拒绝"]
+  );
+});
+
+test("text resolution interpolates template entries with named variables", () => {
+  const {
+    resolveTextTemplateEntry,
+  } = require("../.test-dist/application/content/text-resolution.js");
+
+  const textEntriesById = {
+    "runtime.test.reminder":
+      "先去{targetHouseName}把评定应下，这一趟{activityLabel}至少要 {durationDays} 天。",
+  };
+
+  const resolved = resolveTextTemplateEntry(
+    textEntriesById,
+    "runtime.test.reminder",
+    {
+      targetHouseName: "皇觉寺",
+      activityLabel: "远途化缘",
+      durationDays: 5,
+    }
+  );
+
+  assert.equal(
+    resolved,
+    "先去皇觉寺把评定应下，这一趟远途化缘至少要 5 天。"
+  );
+});
+
+test("zhuyuanzhang pack text entries provide extracted main runtime copy ids", () => {
+  const textEntriesById = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/content/scenario-packs/zhuyuanzhang/text-entries.json"
+      ),
+      "utf8"
+    )
+  );
+
+  [
+    "runtime.zhu_yuanzhang.prototype.main_mission.temple_review",
+    "runtime.zhu_yuanzhang.council_arrival.temple.001",
+    "runtime.zhu_yuanzhang.council_arrival.keep.001",
+    "runtime.zhu_yuanzhang.council_refusal.temple.001",
+    "runtime.zhu_yuanzhang.council_refusal.keep.001",
+    "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.001",
+    "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.001",
+    "runtime.zhu_yuanzhang.haozhou_shortage.001",
+    "runtime.zhu_yuanzhang.haozhou_shortage.advance_hint",
+    "runtime.zhu_yuanzhang.begging_stamina_refusal.001",
+    "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
+    "runtime.zhu_yuanzhang.begging_stamina_refusal.advance_hint",
+    "runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging",
+    "runtime.zhu_yuanzhang.main_mission.haozhou_return",
+    "runtime.zhu_yuanzhang.main_mission.guo_zixing_keep",
+    "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review",
+    "runtime.zhu_yuanzhang.player.biography.guo_zixing_camp",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.title",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.log.victory.002",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.unit.player_vanguard.name",
+  ].forEach((textId) => {
+    assert.equal(typeof textEntriesById[textId], "string", `Missing text entry ${textId}`);
+  });
+});
+
+test("zhuyuanzhang pack stamina refusal entries interpolate the activity cost", () => {
+  const {
+    resolveTextTemplateEntry,
+  } = require("../.test-dist/application/content/text-resolution.js");
+
+  const textEntriesById = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/content/scenario-packs/zhuyuanzhang/text-entries.json"
+      ),
+      "utf8"
+    )
+  );
+
+  const resolved = resolveTextTemplateEntry(
+    textEntriesById,
+    "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
+    {
+      requiredStamina: 8,
+    }
+  );
+
+  assert.equal(
+    resolved,
+    "先回去歇息，体力缓到 8 点，再出门也不迟。"
+  );
+});
+
+test("main.ts stays free of TypeScript diagnostics for runtime text wiring", () => {
+  assert.deepEqual(getTypeScriptDiagnosticsForFile("src/main.ts"), []);
+});
+
+test("runtime zhuyuanzhang text ids in main.ts do not keep inline fallback prose", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const forbiddenStrings = [
+    "前往评定会场",
+    "前往皇觉寺听候住持训示",
+    "评定日期已到，先去${priorityHouse.name}听候方丈安排。",
+    "寺中知客僧已经在前殿等你了，别再误了时辰。",
+    "评定日期已到，速去${priorityHouse.name}应评。",
+    "门前亲兵已经来催，你该先把这一轮评定办完。",
+    "今日是寺中评定，先去${priorityHouse?.name ?? \"皇觉寺\"}听候安排。",
+    "其他去处都先放下，评定要紧。",
+    "今日该去${priorityHouse?.name ?? \"帅府\"}参加评定。",
+    "别处都先不用跑，先把评定办完。",
+    "（上前提醒你）评定日期已到，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。",
+    "先去${targetName}把评定应下，回来再说这桩事。",
+    "（上前提醒你）离评定只剩 ${remainingDays} 天，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。",
+    "门前亲兵催道：“评定日期已到，这趟${activityLabel}至少要 ${durationDays} 天，眼下抽不开身。”",
+    "“先去${targetName}应评，别把时辰误了。”",
+    "门前亲兵催道：“离评定只剩 ${remainingDays} 天，这趟${activityLabel}至少要 ${durationDays} 天，眼下抽不开身。”",
+    "濠州近来断粮得厉害，沿街托钵也讨不出几把米来。",
+    "住持早已吩咐过，这一轮别把时日耗在城里，还是往颍州方向走，外地才更有指望。",
+    "改去北路",
+    "（隔着人群唤住了你）你这会儿脚步都虚了，就别再硬撑着出去化缘。",
+    "先回去歇息，体力缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再出门也不迟。",
+    "先去休息",
+    "返濠州听候盘查",
+    "第一章·淮西托钵",
+  ];
+  const matchedStrings = forbiddenStrings.filter((entry) => source.includes(entry));
+
+  assert.deepEqual(
+    matchedStrings,
+    [],
+    `Expected main.ts to stop carrying inline runtime fallback prose for zhuyuanzhang ids. Matched ${matchedStrings.length} string(s).`
+  );
+});
+
+test("story callback resolves guo zixing camp copy from text entries", () => {
+  const result = runStoryCallback(
+    "story.zhu_yuanzhang.join-guo-zixing-camp",
+    undefined,
+    {
+      state: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      textEntriesById: {
+        "runtime.zhu_yuanzhang.main_mission.guo_zixing_keep": "转去帅府待命",
+        "runtime.zhu_yuanzhang.player.title.guo_zixing_camp": "帐前亲兵",
+        "runtime.zhu_yuanzhang.player.occupation.guo_zixing_camp": "郭营近卫",
+        "runtime.zhu_yuanzhang.player.affiliation.guo_zixing_camp": "濠州义军",
+        "runtime.zhu_yuanzhang.player.biography.guo_zixing_camp":
+          "你被编入郭营近侧，先从亲兵杂务做起。",
+      },
+    }
+  );
+
+  const playerCharacter = getPlayerCharacter(result.characterDefinitions);
+  assert.equal(result.state.ui.mainHouseMissionText, "转去帅府待命");
+  assert.equal(playerCharacter.title, "帐前亲兵");
+  assert.equal(playerCharacter.occupation, "郭营近卫");
+  assert.equal(playerCharacter.affiliationLabel, "濠州义军");
+  assert.equal(
+    playerCharacter.biography,
+    "你被编入郭营近侧，先从亲兵杂务做起。"
+  );
+});
+
+test("story callbacks do not keep inline fallback prose for guo zixing camp runtime copy", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-callbacks.ts"),
+    "utf8"
+  );
+  const forbiddenStrings = [
+    "前往帅府听候差遣",
+    "亲兵",
+    "郭子兴部亲兵",
+    "濠州郭子兴集团",
+    "你已被郭子兴留置左右，暂从亲兵与粮道杂务做起，开始真正卷入濠州红巾军的秩序之中。",
+    "战后帅府评定",
+  ];
+  const matchedStrings = forbiddenStrings.filter((entry) => source.includes(entry));
+
+  assert.deepEqual(
+    matchedStrings,
+    [],
+    `Expected story-callbacks.ts to stop carrying inline runtime fallback prose for zhuyuanzhang ids. Matched ${matchedStrings.length} string(s).`
   );
 });
 
@@ -1930,6 +2148,262 @@ test("keep house starts review meeting at countdown zero and resets to 60 after 
   assert.equal(assignedResult.sessionState?.overlay?.type, "alert");
 });
 
+test("keep house review copy resolves from text entries during strategy and assignment flow", () => {
+  const state = createBaseState();
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.keep.review.intro.001": "自定义评定开场一。",
+    "runtime.zhu_yuanzhang.keep.review.intro.002": "自定义评定开场二。",
+    "runtime.zhu_yuanzhang.keep.review.praise.none.001": "无人立功，自定义警示。",
+    "runtime.zhu_yuanzhang.keep.review.praise.header.001": "主帅先翻阅功簿。",
+    "runtime.zhu_yuanzhang.keep.review.praise.rank.001":
+      "首功记在{entryName}身上，共{contribution}点。",
+    "runtime.zhu_yuanzhang.keep.review.praise.rank.002":
+      "次功记在{entryName}身上，共{contribution}点。",
+    "runtime.zhu_yuanzhang.keep.review.strategy.001": "自定义军议开场。",
+    "runtime.zhu_yuanzhang.keep.review.assign.001": "{playerName}出列听令。",
+    "runtime.zhu_yuanzhang.keep.review.assign.002":
+      "当前可领差事：{availableTaskList}。",
+    "runtime.zhu_yuanzhang.keep.review.assign.003": "领命后立即出发。",
+    "runtime.zhu_yuanzhang.keep.review.assignment.order.001":
+      "军令已下：{taskTitle}。",
+    "runtime.zhu_yuanzhang.keep.review.assignment.overlay.title": "自定义军令下达",
+    "runtime.zhu_yuanzhang.keep.review.assignment.overlay.001":
+      "先办：{taskBriefing}",
+    "runtime.zhu_yuanzhang.keep.review.assignment.overlay.002":
+      "自定义提示：评定倒计时重置为 60 天。",
+    "test.keep.task.grain.title": "自定义采办军粮",
+    "test.keep.task.grain.briefing": "先去自定义粮道点验军粮。",
+    "test.keep.task.grain.order.001": "先核对仓册，再放行运粮。",
+    "test.keep.task.grain.order.002": "今日只准按自定义粮道规程办事。",
+  };
+  const activityDefinitionsById = {
+    "activity.test.keep.grain-procurement": {
+      id: "activity.test.keep.grain-procurement",
+      label: "grain procurement test",
+      handlerId: "generic.qte",
+      houseModuleId: "keep-house",
+      taskId: "grain-procurement",
+      missionId: "mission.keep.grain-procurement",
+      titleTextId: "test.keep.task.grain.title",
+      briefingTextId: "test.keep.task.grain.briefing",
+      orderLineTextIds: [
+        "test.keep.task.grain.order.001",
+        "test.keep.task.grain.order.002",
+      ],
+      keepMinTier: "runner",
+    },
+  };
+  const enterResult = keepHouseHouseModule.enter({
+    gameState: {
+      ...state,
+      runtime: {
+        ...state.runtime,
+        variables: {
+          ...state.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  assert.deepEqual(enterResult.sessionState?.dialogueLines, [
+    "自定义评定开场一。",
+    "自定义评定开场二。",
+  ]);
+
+  const contributionResult = keepHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  const praiseResult = keepHouseHouseModule.dispatch({
+    gameState: contributionResult.gameState,
+    characterDefinitions: contributionResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: contributionResult.sessionState,
+    request: { type: "action", actionId: "close-alert" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  assert.equal(
+    praiseResult.sessionState?.dialogueLines[0],
+    "主帅先翻阅功簿。"
+  );
+
+  const strategyResult = keepHouseHouseModule.dispatch({
+    gameState: praiseResult.gameState,
+    characterDefinitions: praiseResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: praiseResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  assert.equal(
+    strategyResult.sessionState?.dialogueLines[0],
+    "自定义军议开场。"
+  );
+
+  const assignTaskResult = keepHouseHouseModule.dispatch({
+    gameState: strategyResult.gameState,
+    characterDefinitions: strategyResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: strategyResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  assert.deepEqual(assignTaskResult.sessionState?.dialogueLines, [
+    "朱元璋出列听令。",
+    "当前可领差事：自定义采办军粮。",
+    "领命后立即出发。",
+  ]);
+
+  const assignedResult = keepHouseHouseModule.dispatch({
+    gameState: assignTaskResult.gameState,
+    characterDefinitions: assignTaskResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: assignTaskResult.sessionState,
+    request: { type: "action", actionId: "assign-keep-task:grain-procurement" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+
+  assert.deepEqual(assignedResult.sessionState?.dialogueLines, [
+    "先核对仓册，再放行运粮。",
+    "今日只准按自定义粮道规程办事。",
+    "军令已下：自定义采办军粮。",
+  ]);
+  assert.equal(assignedResult.sessionState?.overlay?.title, "自定义军令下达");
+  assert.deepEqual(assignedResult.sessionState?.overlay?.paragraphs, [
+    "先办：先去自定义粮道点验军粮。",
+    "自定义提示：评定倒计时重置为 60 天。",
+  ]);
+});
+
+test("keep house audience and late-review copy resolves from text entries", () => {
+  const audienceTextEntries = {
+    "runtime.zhu_yuanzhang.keep.audience.greeting.001": "自定义觐见招呼一。",
+    "runtime.zhu_yuanzhang.keep.audience.greeting.002": "自定义觐见招呼二。",
+    "runtime.zhu_yuanzhang.keep.audience.open.001": "自定义觐见开口一。",
+    "runtime.zhu_yuanzhang.keep.audience.open.002": "自定义觐见开口二。",
+  };
+  const audienceEnterResult = keepHouseHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 30),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    textEntriesById: audienceTextEntries,
+  });
+
+  assert.deepEqual(audienceEnterResult.sessionState?.dialogueLines, [
+    "自定义觐见招呼一。",
+    "自定义觐见招呼二。",
+  ]);
+
+  const audienceOpenResult = keepHouseHouseModule.dispatch({
+    gameState: audienceEnterResult.gameState,
+    characterDefinitions: audienceEnterResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: audienceEnterResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+    textEntriesById: audienceTextEntries,
+  });
+
+  assert.deepEqual(audienceOpenResult.sessionState?.dialogueLines, [
+    "自定义觐见开口一。",
+    "自定义觐见开口二。",
+  ]);
+
+  const lateMeetingTextEntries = {
+    "runtime.zhu_yuanzhang.keep.review.late.light.001": "自定义轻度迟到一。",
+    "runtime.zhu_yuanzhang.keep.review.late.light.002": "自定义轻度迟到 {lateDays} 天。",
+    "runtime.zhu_yuanzhang.keep.review.late.light.003":
+      "自定义轻度扣除 {contributionPenalty} 点。",
+  };
+  const lateMeetingEnterResult = keepHouseHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), -2),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    textEntriesById: lateMeetingTextEntries,
+  });
+
+  assert.deepEqual(lateMeetingEnterResult.sessionState?.dialogueLines, [
+    "自定义轻度迟到一。",
+    "自定义轻度迟到 2 天。",
+    "自定义轻度扣除 4 点。",
+  ]);
+
+  const expelledTextEntries = {
+    "runtime.zhu_yuanzhang.keep.review.expulsion.001": "自定义逐出开场。",
+    "runtime.zhu_yuanzhang.keep.review.expulsion.002": "自定义逐出迟到 {lateDays} 天。",
+    "runtime.zhu_yuanzhang.keep.review.expulsion.003":
+      "自定义逐出扣除 {contributionPenalty} 点。",
+    "runtime.zhu_yuanzhang.keep.review.late.heavy.001": "自定义逐出开场。",
+    "runtime.zhu_yuanzhang.keep.review.late.heavy.002": "自定义逐出迟到 {lateDays} 天。",
+    "runtime.zhu_yuanzhang.keep.review.late.heavy.003":
+      "自定义逐出扣除 {contributionPenalty} 点。",
+  };
+  const expelledEnterResult = keepHouseHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), -6),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    textEntriesById: expelledTextEntries,
+  });
+
+  assert.deepEqual(expelledEnterResult.sessionState?.dialogueLines, [
+    "自定义逐出开场。",
+    "自定义逐出迟到 6 天。",
+    "自定义逐出扣除 12 点。",
+  ]);
+});
+
+test("keep house review module no longer keeps core assignment prose inline", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/keep-house/keep-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const forbiddenStrings = [
+    "（抬了抬手）示意你上前。",
+    "“有话就说，军中事务不喜拖沓。”",
+    "（翻着案上的军报）仍分出神来看了你一眼。",
+    "“军情、粮道、市面，凡是看见的，都可以报上来。”",
+    "（端坐主位）厅中诸将已经依次列坐。",
+    "“评定已到，今日先报功过，再定今后的方针与差事。”",
+    "（冷冷看了你一眼）堂中气氛一下子沉了下去。",
+    "“评定拖了{lateDays}天才来，军中不养散漫之人。”",
+    "“功劳先削去{contributionPenalty}点。从今日起，你不再算我营中之人。”",
+    "郭子兴展开舆图，手指城中仓廪与市集。",
+    "自己选一件，领了就立刻去办。",
+    "“${taskDefinition.title}这件事，就由你去办。”",
+    "本次评定结束，下一次评定倒计时已重置为 60 天。",
+  ];
+
+  assert.deepEqual(
+    forbiddenStrings.filter((entry) => source.includes(entry)),
+    []
+  );
+});
+
 test("story-stage access keeps leader residence entry visible in monk stage", () => {
   const monkState = createMonkStageState();
   const monkCharacters = createPrototypeCharactersForStoryStage(
@@ -2290,6 +2764,464 @@ test("temple house review only selects work direction and daily actions start te
       "close-temple-work-menu",
     ]
   );
+});
+
+test("temple house review copy resolves from text entries during work-plan assignment", () => {
+  const monkState = createMonkStageState();
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.temple.review.intro.001": "自定义寺评开场一。",
+    "runtime.zhu_yuanzhang.temple.review.intro.002": "自定义寺评开场二。",
+    "runtime.zhu_yuanzhang.temple.review.assignment.indoor.001": "自定义寺内差事说明一。",
+    "runtime.zhu_yuanzhang.temple.review.assignment.indoor.002": "自定义寺内差事说明二。",
+    "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title": "自定义本轮差事已定",
+    "runtime.zhu_yuanzhang.temple.review.assignment.overlay.indoor.001":
+      "自定义寺内帮忙总结。",
+    "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001":
+      "自定义寺中评定结束提示。",
+    "test.temple.task.copy.title": "自定义抄录经卷",
+    "test.temple.task.copy.briefing": "今日先按自定义经卷目录抄录。",
+    "test.temple.task.copy.order.001": "先净手，再依自定义次序展卷。",
+    "test.temple.task.copy.order.002": "抄完后把自定义册页送回偏殿。",
+  };
+  const activityDefinitionsById = {
+    "activity.test.temple.copy-scripture": {
+      id: "activity.test.temple.copy-scripture",
+      label: "copy scripture test",
+      handlerId: "generic.qte",
+      houseModuleId: "temple-house",
+      taskId: "copy-scripture",
+      missionId: "mission.temple.copy-scripture",
+      titleTextId: "test.temple.task.copy.title",
+      briefingTextId: "test.temple.task.copy.briefing",
+      orderLineTextIds: [
+        "test.temple.task.copy.order.001",
+        "test.temple.task.copy.order.002",
+      ],
+    },
+    "activity.test.temple.sweep-courtyard": {
+      id: "activity.test.temple.sweep-courtyard",
+      label: "sweep courtyard test",
+      handlerId: "generic.qte",
+      houseModuleId: "temple-house",
+      taskId: "sweep-courtyard",
+      missionId: "mission.temple.sweep-courtyard",
+      titleTextId: "test.temple.task.copy.title",
+      briefingTextId: "test.temple.task.copy.briefing",
+      orderLineTextIds: [
+        "test.temple.task.copy.order.001",
+        "test.temple.task.copy.order.002",
+      ],
+    },
+    "activity.test.temple.carry-water": {
+      id: "activity.test.temple.carry-water",
+      label: "carry water test",
+      handlerId: "generic.qte",
+      houseModuleId: "temple-house",
+      taskId: "carry-water",
+      missionId: "mission.temple.carry-water",
+      titleTextId: "test.temple.task.copy.title",
+      briefingTextId: "test.temple.task.copy.briefing",
+      orderLineTextIds: [
+        "test.temple.task.copy.order.001",
+        "test.temple.task.copy.order.002",
+      ],
+    },
+  };
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...monkState,
+      runtime: {
+        ...monkState.runtime,
+        variables: {
+          ...monkState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  assert.deepEqual(enterResult.sessionState?.dialogueLines, [
+    "自定义寺评开场一。",
+    "自定义寺评开场二。",
+  ]);
+
+  const contributionResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  const praiseResult = templeHouseHouseModule.dispatch({
+    gameState: contributionResult.gameState,
+    characterDefinitions: contributionResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: contributionResult.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  const policyResult = templeHouseHouseModule.dispatch({
+    gameState: praiseResult.gameState,
+    characterDefinitions: praiseResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: praiseResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  const assignDutyResult = templeHouseHouseModule.dispatch({
+    gameState: policyResult.gameState,
+    characterDefinitions: policyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: policyResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+
+  const assignedResult = templeHouseHouseModule.dispatch({
+    gameState: assignDutyResult.gameState,
+    characterDefinitions: assignDutyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignDutyResult.sessionState,
+    request: { type: "action", actionId: "select-review-work:temple-help" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+
+  assert.deepEqual(assignedResult.sessionState?.dialogueLines, [
+    "自定义寺内差事说明一。",
+    "自定义寺内差事说明二。",
+  ]);
+  assert.equal(assignedResult.sessionState?.overlay?.title, "自定义本轮差事已定");
+  assert.deepEqual(assignedResult.sessionState?.overlay?.paragraphs, [
+    "自定义寺内帮忙总结。",
+    "自定义寺中评定结束提示。",
+  ]);
+
+  const reopenResult = templeHouseHouseModule.dispatch({
+    gameState: assignedResult.gameState,
+    characterDefinitions: assignedResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...assignedResult.sessionState,
+      overlay: null,
+      dialoguePhase: "open",
+      dailyActionPanel: "work",
+    },
+    request: { type: "action", actionId: "assign-temple-task:copy-scripture" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+
+  assert.equal(reopenResult.sessionState?.overlay?.type, "activity-confirm");
+  assert.deepEqual(reopenResult.sessionState?.overlay?.paragraphs.slice(0, 3), [
+    "今日先按自定义经卷目录抄录。",
+    "先净手，再依自定义次序展卷。",
+    "抄完后把自定义册页送回偏殿。",
+  ]);
+});
+
+test("temple house greeting, open, beg-alms assignment, and leave refusal resolve from text entries", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const greetingTextEntries = {
+    "runtime.zhu_yuanzhang.temple.greeting.001": "自定义寺门招呼一。",
+    "runtime.zhu_yuanzhang.temple.greeting.002": "自定义寺门招呼二。",
+    "runtime.zhu_yuanzhang.temple.open.001": "自定义住持开口一。",
+    "runtime.zhu_yuanzhang.temple.open.002": "自定义住持开口二。",
+  };
+  const audienceState = withCouncilInDays(createMonkStageState(), 30);
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: audienceState,
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    textEntriesById: greetingTextEntries,
+  });
+
+  assert.deepEqual(enterResult.sessionState?.dialogueLines, [
+    "自定义寺门招呼一。",
+    "自定义寺门招呼二。",
+  ]);
+
+  const openResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-abbot-dialogue" },
+    textEntriesById: greetingTextEntries,
+  });
+
+  assert.deepEqual(openResult.sessionState?.dialogueLines, [
+    "自定义住持开口一。",
+    "自定义住持开口二。",
+  ]);
+
+  const begAlmsTextEntries = {
+    "runtime.zhu_yuanzhang.temple.review.intro.001": "自定义寺评开场甲。",
+    "runtime.zhu_yuanzhang.temple.review.intro.002": "自定义寺评开场乙。",
+    "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title": "自定义化缘安排",
+    "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001": "自定义评定结束提示。",
+    "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.default.001":
+      "自定义化缘说明一。",
+    "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.default.002":
+      "自定义化缘说明二。",
+    "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.default.001":
+      "自定义化缘总结。",
+    "runtime.zhu_yuanzhang.temple.leave_refusal.001": "自定义离寺拦截。",
+  };
+  const begAlmsState = {
+    ...createMonkStageState(),
+    runtime: {
+      ...createMonkStageState().runtime,
+      flags: {
+        ...createMonkStageState().runtime.flags,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+      },
+      variables: {
+        ...createMonkStageState().runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
+      },
+    },
+  };
+  const reviewEnterResult = templeHouseHouseModule.enter({
+    gameState: begAlmsState,
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    textEntriesById: begAlmsTextEntries,
+  });
+  const contributionResult = templeHouseHouseModule.dispatch({
+    gameState: reviewEnterResult.gameState,
+    characterDefinitions: reviewEnterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: reviewEnterResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    textEntriesById: begAlmsTextEntries,
+  });
+  const praiseResult = templeHouseHouseModule.dispatch({
+    gameState: contributionResult.gameState,
+    characterDefinitions: contributionResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: contributionResult.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+    textEntriesById: begAlmsTextEntries,
+  });
+  const policyResult = templeHouseHouseModule.dispatch({
+    gameState: praiseResult.gameState,
+    characterDefinitions: praiseResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: praiseResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    textEntriesById: begAlmsTextEntries,
+  });
+  const assignDutyResult = templeHouseHouseModule.dispatch({
+    gameState: policyResult.gameState,
+    characterDefinitions: policyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: policyResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    textEntriesById: begAlmsTextEntries,
+  });
+  const assignedResult = templeHouseHouseModule.dispatch({
+    gameState: assignDutyResult.gameState,
+    characterDefinitions: assignDutyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignDutyResult.sessionState,
+    request: { type: "action", actionId: "select-review-work:beg-alms" },
+    textEntriesById: begAlmsTextEntries,
+  });
+
+  assert.deepEqual(assignedResult.sessionState?.dialogueLines, [
+    "自定义化缘说明一。",
+    "自定义化缘说明二。",
+  ]);
+  assert.equal(assignedResult.sessionState?.overlay?.title, "自定义化缘安排");
+  assert.deepEqual(assignedResult.sessionState?.overlay?.paragraphs, [
+    "自定义化缘总结。",
+    "自定义评定结束提示。",
+  ]);
+
+  const leaveResult = templeHouseHouseModule.leave({
+    gameState: assignedResult.gameState,
+    characterDefinitions: assignedResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignedResult.sessionState,
+    textEntriesById: begAlmsTextEntries,
+  });
+
+  assert.deepEqual(leaveResult.sessionState?.dialogueOverride?.textLines, [
+    "自定义离寺拦截。",
+  ]);
+});
+
+test("temple house rest summary resolves from text entries", () => {
+  const monkCharacters = withPlayerStamina(
+    createPrototypeCharactersForStoryStage(
+      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+    ),
+    60
+  );
+  const baseState = withCouncilInDays(createMonkStageState(), 30);
+  const state = {
+    ...baseState,
+    currentHouseId: templeHouse.id,
+    runtime: {
+      ...baseState.runtime,
+      flags: {
+        ...baseState.runtime.flags,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+      },
+      variables: {
+        ...baseState.runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+        [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+      },
+    },
+  };
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.temple.rest.summary.days.001":
+      "自定义寺中休息 {daysRested} 天，恢复 {totalRecovered} 体力。",
+    "runtime.zhu_yuanzhang.temple.rest.summary.current.001":
+      "自定义寺中当前体力 {stamina}。",
+    "runtime.zhu_yuanzhang.temple.rest.summary.normal.001": "自定义寺中静养总结。",
+  };
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const openResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-abbot-dialogue" },
+    textEntriesById,
+  });
+  const restMenuResult = templeHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "open-temple-rest-menu" },
+    textEntriesById,
+  });
+  const restResult = templeHouseHouseModule.dispatch({
+    gameState: restMenuResult.gameState,
+    characterDefinitions: restMenuResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: restMenuResult.sessionState,
+    request: { type: "action", actionId: "temple-rest-one-day" },
+    textEntriesById,
+  });
+
+  const autoAdvanceEffect = restResult.sideEffects?.find(
+    (sideEffect) => sideEffect.type === "start-map-auto-advance"
+  );
+  assert.ok(autoAdvanceEffect);
+  assert.equal(autoAdvanceEffect.completion?.type, "restore-house-session");
+  assert.deepEqual(autoAdvanceEffect.completion?.houseSession?.state.overlay?.paragraphs, [
+    "自定义寺中休息 1 天，恢复 12 体力。",
+    "自定义寺中当前体力 72。",
+    "自定义寺中静养总结。",
+  ]);
+});
+
+test("temple house review module no longer keeps core assignment prose inline", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/temple-house/temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const forbiddenStrings = [
+    "（山门风声微动）住持那边已经知道你到了。",
+    "“先在寺里安下心，有事再来回禀。”",
+    "（抬眼看了看你）像是在等你先开口。",
+    "“寺中缺人手，院外也缺口粮。你若有话，现在便说。”",
+    "（住持在殿前坐定）寺中诸僧与挂单人都已候在一旁。",
+    "“这一轮先看各人做了多少事，再定接下来该守院中还是出外求粮。”",
+    "这一轮评定里，方丈还不准你离寺化缘。",
+    "先在寺内帮忙积攒贡献，等满三十后再说。",
+    "这一轮评定，先以寺内帮忙为主。",
+    "评定到此为止，回到寺中事务里，再挑具体杂务去做。",
+    "这一轮既准你外出化缘，就别再把脚步困在院里了。",
+    "离寺后照着化缘的路数去做，得了米面便尽快带回寺中。",
+    "既然答应了主持，就先不要离开寺院吧。",
+    "“${taskDefinition.title}这份寺务，就由你去办。”",
+    "本次寺中评定结束，下次评定倒计时已重置为 30 天。",
+  ];
+
+  assert.deepEqual(
+    forbiddenStrings.filter((entry) => source.includes(entry)),
+    []
+  );
+});
+
+test("temple and keep house content files no longer author pack task definitions", () => {
+  const templeContentSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),
+    "utf8"
+  );
+  const keepContentSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/houses/keep-house-content.ts"),
+    "utf8"
+  );
+
+  assert.deepEqual(
+    [
+      "mission.temple.copy-scripture",
+      "mission.temple.sweep-courtyard",
+      "mission.temple.carry-water",
+      "mission.temple.beg-alms",
+      "mission.temple.relief-refugees",
+      "mission.keep.grain-procurement",
+      "mission.keep.market-inspection",
+      "mission.keep.militia-drill",
+    ].filter(
+      (entry) =>
+        templeContentSource.includes(entry) || keepContentSource.includes(entry)
+    ),
+    []
+  );
+  assert.equal(templeContentSource.trim(), "export {};");
 });
 
 test("temple house blocks leaving during first review with player dialogue", () => {
@@ -2822,6 +3754,67 @@ test("home house rest-until-council stops at configured council date", () => {
   );
 });
 
+test("home house rest summary resolves from text entries", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.home.rest.summary.days.001": "自定义居家静养 {daysRested} 日。",
+    "runtime.zhu_yuanzhang.home.rest.summary.recovery.001":
+      "自定义恢复 HP {recoveredHp} / 疲劳 {recoveredFatigue}。",
+    "runtime.zhu_yuanzhang.home.rest.summary.current.001":
+      "自定义当前体力 {stamina}，HP {currentHp}/{maxHp}。",
+    "runtime.zhu_yuanzhang.home.rest.summary.normal.001": "自定义静养总结。",
+  };
+  const enterResult = homeHouseHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 30),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: homeHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const preparedCharacters = enterResult.characterDefinitions.map((characterDefinition) =>
+    characterDefinition.id !== playerCharacterId
+      ? characterDefinition
+      : {
+          ...characterDefinition,
+          stamina: 40,
+        }
+  );
+  const preparedState = {
+    ...enterResult.gameState,
+    runtime: {
+      ...enterResult.gameState.runtime,
+      variables: {
+        ...enterResult.gameState.runtime.variables,
+        [HOME_HOUSE_VARIABLE_KEYS.hp]: 50,
+        [HOME_HOUSE_VARIABLE_KEYS.maxHp]: 100,
+        [HOME_HOUSE_VARIABLE_KEYS.fatigue]: 40,
+        [HOME_HOUSE_VARIABLE_KEYS.maxFatigue]: 100,
+      },
+    },
+  };
+
+  const restResult = homeHouseHouseModule.dispatch({
+    gameState: preparedState,
+    characterDefinitions: preparedCharacters,
+    houseDefinition: homeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "rest-one-day" },
+    textEntriesById,
+  });
+
+  const autoAdvanceEffect = restResult.sideEffects?.find(
+    (sideEffect) => sideEffect.type === "start-map-auto-advance"
+  );
+  assert.ok(autoAdvanceEffect);
+  assert.equal(autoAdvanceEffect.completion?.type, "restore-house-session");
+  assert.deepEqual(autoAdvanceEffect.completion?.houseSession?.state.overlay?.paragraphs, [
+    "自定义居家静养 1 日。",
+    "自定义恢复 HP 10 / 疲劳 12。",
+    "自定义当前体力 52，HP 60/100。",
+    "自定义静养总结。",
+  ]);
+});
+
 test("grain shop trade overlay reads buy and sell price from unified city market", () => {
   const enterResult = grainShopHouseModule.enter({
     gameState: createBaseState(),
@@ -2862,6 +3855,159 @@ test("grain shop trade overlay reads buy and sell price from unified city market
     openBuy.sessionState.overlay.grainPrice >= openSell.sessionState.overlay.grainPrice,
     true
   );
+});
+
+test("grain shop greeting and investigate copy resolve from text entries", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.grain_shop.greeting.001": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.002": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.003": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.004": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.default.001": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.002": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.003": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.004": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_market.rumor.001": "自定义粮市传闻。",
+    "runtime.zhu_yuanzhang.grain_market.rumor.002": "自定义粮市传闻。",
+    "runtime.zhu_yuanzhang.grain_market.rumor.003": "自定义粮市传闻。",
+    "runtime.zhu_yuanzhang.grain_market.rumor.004": "自定义粮市传闻。",
+    "runtime.zhu_yuanzhang.grain_market.investigate.high": "自定义粮价看涨。",
+    "runtime.zhu_yuanzhang.grain_market.investigate.low": "自定义粮价走低。",
+    "runtime.zhu_yuanzhang.grain_market.investigate.neutral": "自定义粮价平稳。",
+  };
+
+  const enterResult = grainShopHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  assert.equal(enterResult.sessionState?.npcGreeting, "自定义粮铺招呼一。");
+  assert.equal(enterResult.sessionState?.npcDefaultLine, "自定义粮铺常规招呼。");
+
+  const investigateResult = grainShopHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "investigate" },
+    textEntriesById,
+  });
+
+  assert.equal(investigateResult.sessionState?.overlay?.type, "alert");
+  const investigatedPrice =
+    enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.grainPrice];
+  const expectedInvestigateLine =
+    investigatedPrice > 130
+      ? "自定义粮价看涨。"
+      : investigatedPrice < 100
+        ? "自定义粮价走低。"
+        : "自定义粮价平稳。";
+  assert.deepEqual(investigateResult.sessionState?.overlay?.paragraphs, [
+    expectedInvestigateLine,
+    "传闻：自定义粮市传闻。",
+    `当前粮价约为每石 ${investigatedPrice} 文。`,
+  ]);
+});
+
+test("grain market and grain shop content no longer keep core greeting and rumor prose inline", () => {
+  const grainMarketSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/grain-shop/grain-market.ts"),
+    "utf8"
+  );
+  const grainShopContentSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/houses/grain-shop-content.ts"),
+    "utf8"
+  );
+
+  assert.deepEqual(
+    [
+      "近来粮价怕是要涨。",
+      "粮价还算平稳。",
+      "濠州粮价上涨。",
+      "做生意，算盘得快。",
+    ].filter(
+      (entry) =>
+        grainMarketSource.includes(entry) || grainShopContentSource.includes(entry)
+    ),
+    []
+  );
+});
+
+test("grain shop council-date refusal and sold-out copy resolve from text entries", () => {
+  const blockedEntries = {
+    "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.title":
+      "自定义时日不够",
+    "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.001":
+      "自定义掌柜把账册按回去了。",
+    "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.002":
+      "自定义评定已到，这轮账要占 {durationDays} 天。",
+    "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.003":
+      "自定义先去评定后再来。",
+  };
+  const blockedEnter = grainShopHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 0),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    textEntriesById: blockedEntries,
+  });
+  const blockedResult = grainShopHouseModule.dispatch({
+    gameState: blockedEnter.gameState,
+    characterDefinitions: blockedEnter.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: blockedEnter.sessionState,
+    request: { type: "action", actionId: "accounting" },
+    textEntriesById: blockedEntries,
+  });
+  assert.equal(blockedResult.sessionState?.overlay?.title, "自定义时日不够");
+  assert.deepEqual(blockedResult.sessionState?.overlay?.paragraphs, [
+    "自定义掌柜把账册按回去了。",
+    "自定义评定已到，这轮账要占 10 天。",
+    "自定义先去评定后再来。",
+  ]);
+
+  const soldOutEntries = {
+    "runtime.zhu_yuanzhang.grain_shop.sold_out.title": "自定义今日无米可买",
+    "runtime.zhu_yuanzhang.grain_shop.sold_out.001": "自定义濠州断粮。",
+    "runtime.zhu_yuanzhang.grain_shop.sold_out.002": "自定义去外地碰碰运气。",
+  };
+  const soldOutState = {
+    ...createBaseState(),
+    runtime: {
+      ...createBaseState().runtime,
+      variables: {
+        ...createBaseState().runtime.variables,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
+          ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
+      },
+    },
+  };
+  const soldOutEnter = grainShopHouseModule.enter({
+    gameState: soldOutState,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    textEntriesById: soldOutEntries,
+  });
+  const soldOutResult = grainShopHouseModule.dispatch({
+    gameState: soldOutEnter.gameState,
+    characterDefinitions: soldOutEnter.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: soldOutEnter.sessionState,
+    request: { type: "action", actionId: "buy" },
+    textEntriesById: soldOutEntries,
+  });
+  assert.equal(soldOutResult.sessionState?.overlay?.title, "自定义今日无米可买");
+  assert.deepEqual(soldOutResult.sessionState?.overlay?.paragraphs, [
+    "自定义濠州断粮。",
+    "自定义去外地碰碰运气。",
+  ]);
 });
 
 test("market house enters through module registry and ensures unified city shop data", () => {
@@ -3003,6 +4149,141 @@ test("market house follows greeting open idle rhythm with fixed boss and guest r
   assert.equal(idleViewModel.dialogue, null);
   assert.equal(idleViewModel.standbyRoster.length >= 2, true);
   assert.equal(idleViewModel.actionContainer, null);
+});
+
+test("market house copy resolves from text entries for greeting, open, small talk, and investigate", async () => {
+  const state = ensureCityNpcPoolsForCurrentDay(
+    createBaseState(),
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.market_house.greeting.001": "自定义货栈开场一。",
+    "runtime.zhu_yuanzhang.market_house.greeting.002": "自定义货栈开场二。",
+    "runtime.zhu_yuanzhang.market_house.boss_open.001": "自定义掌柜开场一。",
+    "runtime.zhu_yuanzhang.market_house.boss_open.002": "自定义掌柜开场二。",
+    "runtime.zhu_yuanzhang.market_house.small_talk.001": "自定义货栈闲谈。",
+    "runtime.zhu_yuanzhang.market_house.small_talk.002": "自定义货栈闲谈。",
+    "runtime.zhu_yuanzhang.market_house.small_talk.003": "自定义货栈闲谈。",
+    "runtime.zhu_yuanzhang.market_house.small_talk.004": "自定义货栈闲谈。",
+    "runtime.zhu_yuanzhang.market_house.investigate.city.001":
+      "{cityName}繁荣 {prosperity}，风险 {danger}。",
+    "runtime.zhu_yuanzhang.market_house.investigate.city.002":
+      "城中偏好：{specialDemandList}",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.general.001": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.grain.001": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.grain.002": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.medicine.001": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.medicine.002": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.silk.001": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.silk.002": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.arms.001": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.arms.002": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.horses.001": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.horses.002": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.special.001": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.special.002": "自定义货栈传闻。",
+    "runtime.zhu_yuanzhang.market_house.investigate.specialty.trade": "自定义货栈行规。",
+    "runtime.zhu_yuanzhang.market_house.investigate.overlay.title": "自定义调查行情",
+    "runtime.zhu_yuanzhang.market_house.small_talk.overlay.title": "自定义闲谈",
+  };
+
+  const enterResult = marketHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  assert.deepEqual(enterResult.sessionState?.dialogueLines, [
+    "自定义货栈开场一。",
+    "自定义货栈开场二。",
+  ]);
+
+  const openResult = marketHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(openResult.sessionState?.dialogueLines, [
+    "自定义掌柜开场一。",
+    "自定义掌柜开场二。",
+  ]);
+
+  const smallTalkResult = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "small-talk" },
+    textEntriesById,
+  });
+
+  assert.equal(smallTalkResult.sessionState?.overlay?.title, "自定义闲谈");
+  assert.equal(
+    smallTalkResult.sessionState?.overlay?.paragraphs[0],
+    "自定义货栈闲谈。"
+  );
+
+  const investigateResult = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "investigate-market" },
+    textEntriesById,
+  });
+  const runtimeContent = await loadDefaultRuntimeContent();
+  const marketCity = runtimeContent.cities.find(
+    (cityDefinition) => cityDefinition.id === marketHouse.cityId
+  );
+
+  assert.ok(marketCity);
+
+  assert.equal(investigateResult.sessionState?.overlay?.title, "自定义调查行情");
+  assert.deepEqual(investigateResult.sessionState?.overlay?.paragraphs, [
+    `${marketCity.name}繁荣 ${marketCity.prosperity}，风险 ${marketCity.danger}。`,
+    `城中偏好：${marketCity.specialDemand.join(" / ") || "无"}`,
+    "自定义货栈传闻。",
+    "自定义货栈行规。",
+  ]);
+});
+
+test("market house runtime and content no longer keep core greeting rumor prose inline", () => {
+  const marketHouseRuntimeSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/market-house/market-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const marketHouseContentSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/houses/market-house-content.ts"),
+    "utf8"
+  );
+
+  assert.deepEqual(
+    [
+      "货栈刚开门，南来北往的货都在这里。想跑商，先看准价。",
+      "想买想卖都行，先把价看明白，商路上吃亏的都是心急人。",
+      "真正的高价，不在货本身，而在遇见识货的人。",
+      "最近粮价不太稳定。",
+      "最近生意不好做。",
+    ].filter(
+      (entry) =>
+        marketHouseRuntimeSource.includes(entry) ||
+        marketHouseContentSource.includes(entry)
+    ),
+    []
+  );
 });
 
 test("market house can open trade overlay and execute buy flow", () => {
@@ -3382,6 +4663,148 @@ test("tea house follows greeting open idle rhythm like grain shop", () => {
   assert.equal(idleViewModel.dialogue, null);
   assert.equal(idleViewModel.standbyRoster.length > 0, true);
   assert.equal(idleViewModel.actionContainer, null);
+});
+
+test("tea house copy resolves from text entries for greeting talk inquire and stamina refusal", () => {
+  const state = ensureCityNpcPoolsForCurrentDay(
+    createBaseState(),
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.tea_house.greeting.fixed.001": "自定义茶馆迎客。",
+    "runtime.zhu_yuanzhang.tea_house.open.fixed.001": "自定义茶馆开场。",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.001": "自定义茶馆闲谈。",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.002": "自定义茶馆闲谈。",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.003": "自定义茶馆闲谈。",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.004": "自定义茶馆闲谈。",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.005": "自定义茶馆闲谈。",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.001": "自定义茶馆消息。",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.002": "自定义茶馆消息。",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.003": "自定义茶馆消息。",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.004": "自定义茶馆消息。",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.005": "自定义茶馆消息。",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.006": "自定义茶馆消息。",
+    "runtime.zhu_yuanzhang.tea_house.talk.overlay.title": "自定义闲谈",
+    "runtime.zhu_yuanzhang.tea_house.talk.extra_intel": "自定义闲谈额外情报。",
+    "runtime.zhu_yuanzhang.tea_house.inquire.dialogue.001": "（压低声音）{intelLine}",
+    "runtime.zhu_yuanzhang.tea_house.inquire.overlay.title": "自定义打听",
+    "runtime.zhu_yuanzhang.tea_house.inquire.overlay.001": "自定义打听结果。",
+    "runtime.zhu_yuanzhang.tea_house.debate.low_stamina.title": "自定义先缓口气",
+    "runtime.zhu_yuanzhang.tea_house.debate.low_stamina.001": "自定义茶馆体力不足。",
+    "runtime.zhu_yuanzhang.tea_house.debate.low_stamina.002":
+      "体力至少恢复到 {requiredStamina} 点。",
+  };
+
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  assert.deepEqual(enterResult.sessionState?.dialogueLines, ["自定义茶馆迎客。"]);
+
+  const openResult = teaHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(openResult.sessionState?.dialogueLines, ["自定义茶馆开场。"]);
+
+  const talkResult = teaHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "talk" },
+    textEntriesById,
+  });
+
+  assert.equal(talkResult.sessionState?.overlay?.title, "自定义闲谈");
+  assert.equal(talkResult.sessionState?.overlay?.paragraphs[0], "自定义茶馆闲谈。");
+
+  const inquireResult = teaHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "inquire" },
+    textEntriesById,
+  });
+
+  assert.equal(inquireResult.sessionState?.overlay?.title, "自定义打听");
+  assert.deepEqual(inquireResult.sessionState?.overlay?.paragraphs.slice(0, 2), [
+    "（压低声音）自定义茶馆消息。",
+    "自定义打听结果。",
+  ]);
+
+  const lowStaminaCharacters = withPlayerStamina(
+    prototypeCharacters,
+    ACTIVITY_COMPLETION_STAMINA_COST - 1
+  );
+  const lowStaminaEnter = teaHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: lowStaminaCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  const lowStaminaResult = teaHouseHouseModule.dispatch({
+    gameState: lowStaminaEnter.gameState,
+    characterDefinitions: lowStaminaEnter.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: {
+      ...lowStaminaEnter.sessionState,
+      dialoguePhase: "open",
+    },
+    request: { type: "action", actionId: "start-debate" },
+    textEntriesById,
+  });
+
+  assert.equal(lowStaminaResult.sessionState?.overlay?.title, "自定义先缓口气");
+  assert.deepEqual(lowStaminaResult.sessionState?.overlay?.paragraphs, [
+    "自定义茶馆体力不足。",
+    `体力至少恢复到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点。`,
+  ]);
+});
+
+test("tea house runtime and content no longer keep core greeting rumor prose inline", () => {
+  const teaHouseRuntimeSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/tea-house/tea-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const teaHouseContentSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/houses/tea-house-content.ts"),
+    "utf8"
+  );
+
+  assert.deepEqual(
+    [
+      "最近城里不太安稳。",
+      "濠州粮价上涨。",
+      "（笑着抬手）请你入座。",
+      "这会儿还没什么新鲜消息。",
+      "（放下茶盏）示意你出题。",
+    ].filter(
+      (entry) =>
+        teaHouseRuntimeSource.includes(entry) || teaHouseContentSource.includes(entry)
+    ),
+    []
+  );
 });
 
 test("tea house debate resolves counters and timeout penalty", () => {
@@ -4307,6 +5730,618 @@ test("tavern gamble completed player skips later betting and draw actions", () =
   assert.equal(drawSkipped.players[0].playedGroups.length, 2);
 });
 
+test("tavern copy resolves from text entries for greeting open and low stamina refusal", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.tavern.greeting.001": "自定义酒馆迎客。",
+    "runtime.zhu_yuanzhang.tavern.open.001": "自定义酒馆开场。",
+    "runtime.zhu_yuanzhang.tavern.open.002": "自定义酒馆重开。",
+    "runtime.zhu_yuanzhang.tavern.low_stamina.title": "自定义先去休息",
+    "runtime.zhu_yuanzhang.tavern.low_stamina.001":
+      "自定义体力不足：{actionLabel}。",
+    "runtime.zhu_yuanzhang.tavern.low_stamina.002":
+      "体力至少回到 {requiredStamina} 点。",
+  };
+
+  const enterResult = tavernHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 200),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  assert.deepEqual(enterResult.sessionState?.dialogueLines, ["自定义酒馆迎客。"]);
+
+  const openResult = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(openResult.sessionState?.dialogueLines, ["自定义酒馆开场。"]);
+
+  const reopenResult = tavernHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...openResult.sessionState,
+      dialoguePhase: "idle",
+    },
+    request: { type: "action", actionId: "open-boss-dialogue" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(reopenResult.sessionState?.dialogueLines, ["自定义酒馆重开。"]);
+
+  const lowStaminaCharacters = withPlayerStamina(
+    prototypeCharacters,
+    ACTIVITY_COMPLETION_STAMINA_COST - 1
+  );
+  const lowStaminaEnter = tavernHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 200),
+    characterDefinitions: lowStaminaCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const openWork = tavernHouseModule.dispatch({
+    gameState: lowStaminaEnter.gameState,
+    characterDefinitions: lowStaminaEnter.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: lowStaminaEnter.sessionState,
+    request: { type: "action", actionId: "open-work" },
+    textEntriesById,
+  });
+  const openAccept = tavernHouseModule.dispatch({
+    gameState: openWork.gameState,
+    characterDefinitions: openWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openWork.sessionState,
+    request: { type: "action", actionId: "open-work-accept" },
+    textEntriesById,
+  });
+  const lowStaminaResult = tavernHouseModule.dispatch({
+    gameState: openAccept.gameState,
+    characterDefinitions: openAccept.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openAccept.sessionState,
+    request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
+    textEntriesById,
+  });
+
+  assert.equal(
+    lowStaminaResult.sessionState?.overlay?.title,
+    "自定义先去休息"
+  );
+  assert.deepEqual(lowStaminaResult.sessionState?.overlay?.paragraphs, [
+    "自定义体力不足：接活。",
+    `体力至少回到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点。`,
+  ]);
+});
+
+test("tavern runtime and content no longer keep core greeting and stamina prose inline", () => {
+  const tavernRuntimeSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/tavern/tavern-house-module.ts"
+    ),
+    "utf8"
+  );
+  const tavernContentSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/houses/tavern-content.ts"),
+    "utf8"
+  );
+
+  assert.deepEqual(
+    [
+      "（抬眼看了你一眼）要找活、喝酒，还是上桌赌两把？",
+      "（把算盘往旁边一拨）说吧，你今天想干什么？",
+      "（站在柜后看着你）酒、活、赌，三样都明码标价。",
+      "（摆了摆手）你这会儿脚下都发虚，还想",
+    ].filter(
+      (entry) =>
+        tavernRuntimeSource.includes(entry) || tavernContentSource.includes(entry)
+    ),
+    []
+  );
+});
+
+test("tavern copy resolves from text entries for capacity drink gamble and insufficient wager", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.tavern.work.capacity.title": "自定义接活上限",
+    "runtime.zhu_yuanzhang.tavern.work.capacity.001":
+      "最多同时接 {capacity} 个任务。",
+    "runtime.zhu_yuanzhang.tavern.work.capacity.002": "名声更高再来。",
+    "runtime.zhu_yuanzhang.tavern.drink.result.title": "自定义喝酒",
+    "runtime.zhu_yuanzhang.tavern.drink.result.dialogue.001": "自定义斟酒。",
+    "runtime.zhu_yuanzhang.tavern.drink.result.dialogue.002": "自定义松快。",
+    "runtime.zhu_yuanzhang.tavern.drink.result.001": "自定义花费 {price} 文。",
+    "runtime.zhu_yuanzhang.tavern.drink.result.002": "自定义喝酒结算。",
+    "runtime.zhu_yuanzhang.tavern.gamble.start.001": "自定义坐上赌桌。",
+    "runtime.zhu_yuanzhang.tavern.gamble.start.002": "自定义赌局开场。",
+    "runtime.zhu_yuanzhang.tavern.gamble.settlement.title": "自定义赌局结算",
+    "runtime.zhu_yuanzhang.tavern.gamble.settlement.dialogue.loss":
+      "自定义本局净输 {amount} 文。",
+    "runtime.zhu_yuanzhang.tavern.gamble.settlement.dialogue.win":
+      "自定义本局净赚 {amount} 文。",
+    "runtime.zhu_yuanzhang.tavern.gamble.settlement.001": "自定义底池 {pot} 文。",
+    "runtime.zhu_yuanzhang.tavern.gamble.settlement.delta.loss":
+      "自定义金钱变化 {delta} 文。",
+    "runtime.zhu_yuanzhang.tavern.gamble.settlement.delta.win":
+      "自定义金钱变化 +{delta} 文。",
+    "runtime.zhu_yuanzhang.tavern.gamble.settlement.002":
+      "自定义体力 -{requiredStamina}",
+    "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.title":
+      "自定义赌本不够",
+    "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.001":
+      "自定义至少要有 {minimumWager} 文。",
+    "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.002":
+      "自定义临到上桌钱不够。",
+  };
+
+  const lowFameCharacters = prototypeCharacters.map((characterDefinition) =>
+    characterDefinition.id === playerCharacterId
+      ? {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            fame: 0,
+          },
+        }
+      : characterDefinition
+  );
+  const capacityEnterResult = tavernHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 200),
+    characterDefinitions: lowFameCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  const openWork = tavernHouseModule.dispatch({
+    gameState: capacityEnterResult.gameState,
+    characterDefinitions: capacityEnterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: capacityEnterResult.sessionState,
+    request: { type: "action", actionId: "open-work" },
+    textEntriesById,
+  });
+  const openAccept = tavernHouseModule.dispatch({
+    gameState: openWork.gameState,
+    characterDefinitions: openWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openWork.sessionState,
+    request: { type: "action", actionId: "open-work-accept" },
+    textEntriesById,
+  });
+  const acceptWork = tavernHouseModule.dispatch({
+    gameState: openAccept.gameState,
+    characterDefinitions: openAccept.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openAccept.sessionState,
+    request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
+    textEntriesById,
+  });
+  const confirmedWork = tavernHouseModule.dispatch({
+    gameState: acceptWork.gameState,
+    characterDefinitions: acceptWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: acceptWork.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-start-work:offer.kulan.wash_dishes",
+    },
+    textEntriesById,
+  });
+  const overCapacity = tavernHouseModule.dispatch({
+    gameState: confirmedWork.gameState,
+    characterDefinitions: confirmedWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...confirmedWork.sessionState,
+      overlay: null,
+      workPanelMode: "accept",
+      dialoguePhase: "open",
+    },
+    request: { type: "action", actionId: "accept-work:offer.kulan.supply_run" },
+    textEntriesById,
+  });
+
+  assert.equal(overCapacity.sessionState?.overlay?.title, "自定义接活上限");
+  assert.deepEqual(overCapacity.sessionState?.overlay?.paragraphs, [
+    "最多同时接 1 个任务。",
+    "名声更高再来。",
+  ]);
+
+  const enterResult = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  const openDrink = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "order-drink" },
+    textEntriesById,
+  });
+  const confirmDrink = tavernHouseModule.dispatch({
+    gameState: openDrink.gameState,
+    characterDefinitions: openDrink.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openDrink.sessionState,
+    request: { type: "action", actionId: "confirm-drink" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(confirmDrink.sessionState?.dialogueLines, [
+    "自定义斟酒。",
+    "自定义松快。",
+  ]);
+  assert.equal(confirmDrink.sessionState?.overlay?.title, "自定义喝酒");
+  assert.deepEqual(confirmDrink.sessionState?.overlay?.paragraphs, [
+    "自定义花费 100 文。",
+    "自定义喝酒结算。",
+  ]);
+
+  const openGamble = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-gamble" },
+    textEntriesById,
+  });
+  const selectShortGamble = tavernHouseModule.dispatch({
+    gameState: openGamble.gameState,
+    characterDefinitions: openGamble.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openGamble.sessionState,
+    request: { type: "action", actionId: "select-gamble-variant:short" },
+    textEntriesById,
+  });
+  const startGamble = tavernHouseModule.dispatch({
+    gameState: selectShortGamble.gameState,
+    characterDefinitions: selectShortGamble.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...selectShortGamble.sessionState,
+      currentWager: 100,
+    },
+    request: { type: "action", actionId: "confirm-gamble" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(startGamble.sessionState?.dialogueLines, [
+    "自定义坐上赌桌。",
+    "自定义赌局开场。",
+  ]);
+
+  const settleGamble = tavernHouseModule.dispatch({
+    gameState: startGamble.gameState,
+    characterDefinitions: startGamble.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: startGamble.sessionState,
+    request: { type: "action", actionId: "gamble-settle" },
+    textEntriesById,
+  });
+
+  assert.equal(settleGamble.sessionState?.overlay?.title, "自定义赌局结算");
+  assert.equal(
+    settleGamble.sessionState?.overlay?.paragraphs[0],
+    "自定义底池 30 文。"
+  );
+  assert.equal(
+    settleGamble.sessionState?.overlay?.paragraphs[1]?.startsWith("自定义金钱变化 "),
+    true
+  );
+  assert.equal(
+    settleGamble.sessionState?.overlay?.paragraphs[2],
+    `自定义体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`
+  );
+  assert.equal(settleGamble.sessionState?.dialogueLines?.[0], "牌局已结。");
+  assert.equal(
+    settleGamble.sessionState?.dialogueLines?.[1]?.startsWith("自定义本局净"),
+    true
+  );
+
+  const poorCharacters = prototypeCharacters.map((characterDefinition) =>
+    characterDefinition.id === playerCharacterId
+      ? {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold: 40,
+          },
+        }
+      : characterDefinition
+  );
+  const poorEnter = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: poorCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const poorOpenGamble = tavernHouseModule.dispatch({
+    gameState: poorEnter.gameState,
+    characterDefinitions: poorEnter.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: poorEnter.sessionState,
+    request: { type: "action", actionId: "open-gamble" },
+    textEntriesById,
+  });
+
+  assert.equal(
+    poorOpenGamble.sessionState?.overlay?.title,
+    "自定义赌本不够"
+  );
+  assert.deepEqual(poorOpenGamble.sessionState?.overlay?.paragraphs, [
+    "自定义至少要有 50 文。",
+    "自定义临到上桌钱不够。",
+  ]);
+});
+
+test("tavern runtime no longer keeps drink gamble and work-capacity prose inline", () => {
+  const tavernRuntimeSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/tavern/tavern-house-module.ts"
+    ),
+    "utf8"
+  );
+
+  assert.deepEqual(
+    [
+      "你当前最多能同时接",
+      "名声高了以后，老板才会把更多活交给你。",
+      "当前先按单次喝酒状态结算。",
+      "你坐上赌桌。",
+      "四轮下注、摸打、碰杠之后摊牌比番。",
+      "赌局结算",
+      "赌本不够",
+    ].filter((entry) => tavernRuntimeSource.includes(entry)),
+    []
+  );
+});
+
+test("tavern copy resolves from text entries for work panel and drink prompts", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.tavern.work.main.001": "自定义活计面板。",
+    "runtime.zhu_yuanzhang.tavern.work.main.002": "自定义接取或提交说明。",
+    "runtime.zhu_yuanzhang.tavern.work.accept.available.001":
+      "自定义当前还能接的活。",
+    "runtime.zhu_yuanzhang.tavern.work.accept.available.002":
+      "自定义前期只接一个。",
+    "runtime.zhu_yuanzhang.tavern.work.submit.empty.001": "自定义提交空状态。",
+    "runtime.zhu_yuanzhang.tavern.work.submit.empty.002":
+      "自定义还没有接下的活。",
+    "runtime.zhu_yuanzhang.tavern.drink.confirm.title": "自定义点酒",
+    "runtime.zhu_yuanzhang.tavern.drink.confirm.001": "自定义敲酒坛。",
+    "runtime.zhu_yuanzhang.tavern.drink.confirm.002":
+      "自定义买酒 {price} 文。",
+    "runtime.zhu_yuanzhang.tavern.drink.insufficient_money.title":
+      "自定义钱不够",
+    "runtime.zhu_yuanzhang.tavern.drink.insufficient_money.001":
+      "自定义摸钱袋。",
+    "runtime.zhu_yuanzhang.tavern.drink.insufficient_money.002":
+      "自定义现在喝不起。",
+  };
+
+  const enterResult = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  const openWork = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-work" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(openWork.sessionState?.dialogueLines, [
+    "自定义活计面板。",
+    "自定义接取或提交说明。",
+  ]);
+
+  const openAccept = tavernHouseModule.dispatch({
+    gameState: openWork.gameState,
+    characterDefinitions: openWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openWork.sessionState,
+    request: { type: "action", actionId: "open-work-accept" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(openAccept.sessionState?.dialogueLines, [
+    "自定义当前还能接的活。",
+    "自定义前期只接一个。",
+  ]);
+
+  const openSubmit = tavernHouseModule.dispatch({
+    gameState: openWork.gameState,
+    characterDefinitions: openWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openWork.sessionState,
+    request: { type: "action", actionId: "open-work-submit" },
+    textEntriesById,
+  });
+
+  assert.deepEqual(openSubmit.sessionState?.dialogueLines, [
+    "自定义提交空状态。",
+    "自定义还没有接下的活。",
+  ]);
+
+  const openDrink = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "order-drink" },
+    textEntriesById,
+  });
+
+  assert.equal(openDrink.sessionState?.overlay?.title, "自定义点酒");
+  assert.deepEqual(openDrink.sessionState?.overlay?.paragraphs, [
+    "自定义敲酒坛。",
+    "自定义买酒 100 文。",
+  ]);
+
+  const poorCharacters = prototypeCharacters.map((characterDefinition) =>
+    characterDefinition.id === playerCharacterId
+      ? {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold: 10,
+          },
+        }
+      : characterDefinition
+  );
+  const poorEnter = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: poorCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const poorOpenDrink = tavernHouseModule.dispatch({
+    gameState: poorEnter.gameState,
+    characterDefinitions: poorEnter.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: poorEnter.sessionState,
+    request: { type: "action", actionId: "order-drink" },
+    textEntriesById,
+  });
+  const poorConfirmDrink = tavernHouseModule.dispatch({
+    gameState: poorOpenDrink.gameState,
+    characterDefinitions: poorOpenDrink.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: poorOpenDrink.sessionState,
+    request: { type: "action", actionId: "confirm-drink" },
+    textEntriesById,
+  });
+
+  assert.equal(
+    poorConfirmDrink.sessionState?.overlay?.title,
+    "自定义钱不够"
+  );
+  assert.deepEqual(poorConfirmDrink.sessionState?.overlay?.paragraphs, [
+    "自定义摸钱袋。",
+    "自定义现在喝不起。",
+  ]);
+});
+
+test("tavern work council-date refusal resolves from text entries", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.title": "自定义时日不够",
+    "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.expired.001":
+      "自定义酒馆评定已到，{offerTitle} 要占 {durationDays} 天。",
+    "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.expired.002":
+      "自定义先去评定。",
+  };
+  const enterResult = tavernHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 0),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const openWork = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-work" },
+    textEntriesById,
+  });
+  const openAccept = tavernHouseModule.dispatch({
+    gameState: openWork.gameState,
+    characterDefinitions: openWork.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openWork.sessionState,
+    request: { type: "action", actionId: "open-work-accept" },
+    textEntriesById,
+  });
+  const result = tavernHouseModule.dispatch({
+    gameState: openAccept.gameState,
+    characterDefinitions: openAccept.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openAccept.sessionState,
+    request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
+    textEntriesById,
+  });
+
+  assert.equal(result.sessionState?.overlay?.title, "自定义时日不够");
+  assert.deepEqual(result.sessionState?.overlay?.paragraphs, [
+    "自定义酒馆评定已到，刷盘子 要占 3 天。",
+    "自定义先去评定。",
+  ]);
+});
+
+test("tavern runtime no longer keeps work-panel and drink prompt prose inline", () => {
+  const tavernRuntimeSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/tavern/tavern-house-module.ts"
+    ),
+    "utf8"
+  );
+
+  assert.deepEqual(
+    [
+      "（把活计牌翻了出来）",
+      "你可以先接取，也可以提交已经接下的活。",
+      "这些是当前酒馆还能接的活。",
+      "前期只能接一个主命以外的任务，名声高了才会放宽。",
+      "你在这家酒馆还没有接下的活。",
+      "点一杯酒",
+      "这一杯酒你现在还喝不起。",
+    ].filter((entry) => tavernRuntimeSource.includes(entry)),
+    []
+  );
+});
+
 test("tavern work flow accepts dishwashing qte and submits with confirmation", () => {
   const state = withCouncilInDays(createBaseState(), 30);
   const startingStamina = getPlayerCharacter(prototypeCharacters).stamina;
@@ -4750,6 +6785,190 @@ test("medicine house heal and buy update fatigue inventory and gold", () => {
   );
 });
 
+test("medicine house copy resolves from text entries for greeting talk heal and compounding refusal", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.medicine_house.greeting.001": "自定义药铺迎客。",
+    "runtime.zhu_yuanzhang.medicine_house.greeting.002": "自定义药铺迎客。",
+    "runtime.zhu_yuanzhang.medicine_house.dialogue.001": "自定义药铺闲谈。",
+    "runtime.zhu_yuanzhang.medicine_house.dialogue.002": "自定义药铺闲谈。",
+    "runtime.zhu_yuanzhang.medicine_house.dialogue.003": "自定义药铺闲谈。",
+    "runtime.zhu_yuanzhang.medicine_house.dialogue.004": "自定义药铺闲谈。",
+    "runtime.zhu_yuanzhang.medicine_house.talk.overlay.title": "自定义药铺闲谈",
+    "runtime.zhu_yuanzhang.medicine_house.heal.overlay.title": "自定义疗伤",
+    "runtime.zhu_yuanzhang.medicine_house.heal.001": "自定义疗伤文案。",
+    "runtime.zhu_yuanzhang.medicine_house.heal.002": "收费 {cost} 文。",
+    "runtime.zhu_yuanzhang.medicine_house.compounding.low_stamina.title": "自定义先去歇息",
+    "runtime.zhu_yuanzhang.medicine_house.compounding.low_stamina.001": "自定义配药体力不足。",
+    "runtime.zhu_yuanzhang.medicine_house.compounding.low_stamina.002":
+      "体力至少恢复到 {requiredStamina} 点。",
+  };
+  const richCharacters = prototypeCharacters.map((characterDefinition) =>
+    characterDefinition.id === playerCharacterId
+      ? {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold: 300,
+          },
+        }
+      : characterDefinition
+  );
+  const enterResult = medicineHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: richCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  assert.equal(enterResult.sessionState?.npcGreeting, "自定义药铺迎客。");
+
+  const openResult = medicineHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: richCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+
+  const talkResult = medicineHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: richCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "talk" },
+    textEntriesById,
+  });
+
+  assert.equal(talkResult.sessionState?.overlay?.title, "自定义药铺闲谈");
+  assert.equal(
+    talkResult.sessionState?.overlay?.paragraphs[0],
+    "自定义药铺闲谈。"
+  );
+
+  const healResult = medicineHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: richCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "heal" },
+    textEntriesById,
+  });
+
+  assert.equal(healResult.sessionState?.overlay?.title, "自定义疗伤");
+  assert.deepEqual(healResult.sessionState?.overlay?.paragraphs.slice(0, 2), [
+    "自定义疗伤文案。",
+    `收费 ${50} 文。`,
+  ]);
+
+  const lowStaminaCharacters = withPlayerStamina(
+    prototypeCharacters,
+    ACTIVITY_COMPLETION_STAMINA_COST - 1
+  );
+  const lowStaminaEnter = medicineHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: lowStaminaCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const lowStaminaOpen = medicineHouseHouseModule.dispatch({
+    gameState: lowStaminaEnter.gameState,
+    characterDefinitions: lowStaminaEnter.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: lowStaminaEnter.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+  const lowStaminaResult = medicineHouseHouseModule.dispatch({
+    gameState: lowStaminaOpen.gameState,
+    characterDefinitions: lowStaminaOpen.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: lowStaminaOpen.sessionState,
+    request: { type: "action", actionId: "start-compounding" },
+    textEntriesById,
+  });
+
+  assert.equal(
+    lowStaminaResult.sessionState?.overlay?.title,
+    "自定义先去歇息"
+  );
+  assert.deepEqual(lowStaminaResult.sessionState?.overlay?.paragraphs, [
+    "自定义配药体力不足。",
+    `体力至少恢复到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点。`,
+  ]);
+});
+
+test("medicine house council-date refusal resolves from text entries", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.title":
+      "自定义时日不够",
+    "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.expired.001":
+      "自定义药铺评定已到，这炉药要占 {durationDays} 天。",
+    "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.expired.002":
+      "自定义先去评定再来。",
+  };
+  const enterResult = medicineHouseHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 0),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const openResult = medicineHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      dialoguePhase: "open",
+    },
+    request: { type: "action", actionId: "start-compounding" },
+    textEntriesById,
+  });
+
+  assert.equal(openResult.sessionState?.overlay?.title, "自定义时日不够");
+  assert.deepEqual(openResult.sessionState?.overlay?.paragraphs, [
+    "自定义药铺评定已到，这炉药要占 10 天。",
+    "自定义先去评定再来。",
+  ]);
+});
+
+test("medicine house runtime and content no longer keep core greeting and heal prose inline", () => {
+  const medicineHouseRuntimeSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/medicine-house/medicine-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const medicineHouseContentSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/houses/medicine-house-content.ts"),
+    "utf8"
+  );
+
+  assert.deepEqual(
+    [
+      "近来风寒病人不少。",
+      "（放下药秤，朝你点了点头）",
+      "（为你把脉施针）你的气色渐渐平复。",
+      "（按住药杵，皱起眉）你这会儿气息不稳，硬要配药，只会把药性配岔了。",
+    ].filter(
+      (entry) =>
+        medicineHouseRuntimeSource.includes(entry) ||
+        medicineHouseContentSource.includes(entry)
+    ),
+    []
+  );
+});
+
 test("medicine compounding is blocked when stamina is below activity cost", () => {
   const lowStaminaCharacters = withPlayerStamina(
     prototypeCharacters,
@@ -5094,6 +7313,80 @@ test("story battle rescue flow opens battle demo scenario and returns to keep re
     finishResult.state.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
     0
   );
+});
+
+test("story battle rescue copy resolves from text entries across session and actions", () => {
+  const completion = {
+    completedFlagKey:
+      ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted,
+    winFlagKey: ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon,
+    battleIdVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
+    resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
+    enterHouseId: keepHouse.id,
+  };
+  const textEntriesById = {
+    "battle.story.zhu_yuanzhang.sundeya_rescue.title": "夜袭解围",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.objective": "撕开缺口并接应友军。",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.summary.001": "摘要一",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.summary.002": "摘要二",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.summary.003": "摘要三",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.log.opening.001": "开场一",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.log.opening.002": "开场二",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.log.advance.001": "推进日志",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.log.victory.001": "胜利一",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.log.victory.002": "胜利二",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.main_mission.post_battle":
+      "回府复命",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.unit.player_vanguard.name":
+      "先锋亲兵",
+    "battle.story.zhu_yuanzhang.sundeya_rescue.unit.player_vanguard.role":
+      "破阵队",
+  };
+
+  const session = createSundeyaRescueBattleSession(completion, {
+    textEntriesById,
+  });
+  assert.equal(session.title, "夜袭解围");
+  assert.equal(session.objective, "撕开缺口并接应友军。");
+  assert.deepEqual(session.summaryLines, ["摘要一", "摘要二", "摘要三"]);
+  assert.deepEqual(session.logLines, ["开场一", "开场二"]);
+  assert.equal(session.units[0].name, "先锋亲兵");
+  assert.equal(session.units[0].role, "破阵队");
+  assert.equal(session.completion.mainMissionText, "回府复命");
+
+  const playerAdvanceState = {
+    ...createBaseState(),
+    storyBattle: {
+      ...session,
+      phase: "awaiting-player-order",
+    },
+  };
+  const advanceResult = dispatchStoryBattleAction(
+    playerAdvanceState,
+    "player-advance",
+    { textEntriesById }
+  );
+  assert.equal(
+    advanceResult.state.storyBattle?.logLines.at(-1),
+    "推进日志"
+  );
+
+  const npcResolveResult = dispatchStoryBattleAction(
+    advanceResult.state,
+    "npc-resolve",
+    { textEntriesById }
+  );
+  assert.deepEqual(
+    npcResolveResult.state.storyBattle?.logLines.slice(-2),
+    ["胜利一", "胜利二"]
+  );
+
+  const finishResult = dispatchStoryBattleAction(
+    npcResolveResult.state,
+    "finish",
+    { textEntriesById }
+  );
+  assert.equal(finishResult.state.ui.mainHouseMissionText, "回府复命");
 });
 
 test("medicine compounding grades targets by closeness", () => {

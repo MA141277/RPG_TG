@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-26 Standalone Static Service Script
+
+### Added
+- 新增 Windows 独立服务管理脚本 `scripts/standalone-service.ps1`，支持 `start / stop / restart / status`，可在后台启动构建后的静态站点服务。
+- 新增便捷包装脚本 `scripts/start-standalone-service.ps1`，用于一条命令启动独立服务。
+
+### Changed
+- README 增补独立后台服务启动说明、默认地址和运行时日志目录说明。
+
+### Impact
+- 现在可以不占用前台终端运行构建后的项目，便于局域网演示、临时部署和手工验收。
+
 ## 2026-06-18 JSON Scenario Pack Entry
 
 ### Added

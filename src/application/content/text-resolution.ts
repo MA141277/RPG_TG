@@ -4,6 +4,11 @@ export type TextResolutionContext = {
   textEntriesById: Record<string, string>;
 };
 
+export type TextTemplateValues = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
+
 export function resolveTextEntry(
   textEntriesById: Record<string, string>,
   textId?: string,
@@ -18,6 +23,20 @@ export function resolveTextEntry(
   }
 
   return textId ?? "";
+}
+
+export function resolveTextTemplateEntry(
+  textEntriesById: Record<string, string>,
+  textId: string | undefined,
+  values: TextTemplateValues,
+  fallback?: string
+): string {
+  const template = resolveTextEntry(textEntriesById, textId, fallback);
+
+  return template.replace(/\{([a-zA-Z0-9_.-]+)\}/g, (match, key: string) => {
+    const value = values[key];
+    return value == null ? match : String(value);
+  });
 }
 
 export function resolveChoiceOptionText(

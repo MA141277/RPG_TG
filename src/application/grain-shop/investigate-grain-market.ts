@@ -21,7 +21,8 @@ export type InvestigateGrainMarketResult = {
 export function investigateGrainMarket(
   state: GameState,
   characterDefinitions: CharacterDefinition[],
-  playerCharacterId: string
+  playerCharacterId: string,
+  textEntriesById?: Record<string, string>
 ): InvestigateGrainMarketResult {
   const marketQuote = getQuotedGrainPrice(state);
   const playerCharacter = characterDefinitions.find(
@@ -39,8 +40,8 @@ export function investigateGrainMarket(
       state: nextState,
       characterDefinitions,
     },
-    dialogue: getInvestigateDialogue(snapshot.grainPrice),
-    rumor: pickMarketRumor(),
+    dialogue: getInvestigateDialogue(snapshot.grainPrice, textEntriesById),
+    rumor: pickMarketRumor(textEntriesById),
     grainPrice: snapshot.grainPrice,
   };
 }

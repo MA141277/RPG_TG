@@ -1,4 +1,5 @@
 import type { CharacterDefinition, CharacterId } from "./character";
+import type { ActivityDefinition } from "./activity";
 import type { GameState } from "./game-state";
 import type { HouseDefinition } from "./house";
 import type { HomeHouseSessionState } from "./house-modules/home-house-session";
@@ -482,6 +483,8 @@ export type HouseModuleBaseInput<ModuleId extends HouseModuleId = HouseModuleId>
   houseDefinition: HouseDefinition;
   playerCharacterId: CharacterId;
   sessionState: HouseModuleSessionState<ModuleId> | null;
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  textEntriesById?: Record<string, string> | undefined;
 };
 
 export type HouseModuleEnterInput<ModuleId extends HouseModuleId = HouseModuleId> =

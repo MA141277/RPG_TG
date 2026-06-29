@@ -33,6 +33,8 @@ import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   canAffordActivityCost,
 } from "../../player/player-stamina";
+import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import { assertExists } from "../../../shared/assert";
 import { createInitialGrainShopSessionState } from "./grain-shop-session-state";
 
@@ -57,6 +59,38 @@ function getPlayerCharacter(
 
 function getPlayerArithmeticSkill(playerCharacter: CharacterDefinition): number {
   return Math.max(1, playerCharacter.skills?.arithmetic ?? 1);
+}
+
+function getGrainShopTextEntries(
+  textEntriesById?: Record<string, string>
+): Record<string, string> {
+  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
+}
+
+function resolveGrainShopText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  fallback?: string
+): string {
+  return resolveTextEntry(
+    textEntriesById,
+    textId,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function resolveGrainShopTemplateText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  values: Record<string, string | number | boolean | null | undefined>,
+  fallback?: string
+): string {
+  return resolveTextTemplateEntry(
+    textEntriesById,
+    textId,
+    values,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
 }
 
 function createTransitionResult(
@@ -305,32 +339,69 @@ function createActivityConfirmOverlay(
 }
 
 function createCouncilTimeInsufficientOverlay(
+  textEntriesById: Record<string, string> | undefined,
   durationDays: number,
   remainingDays: number
 ): GrainShopSessionState["overlay"] {
+  const entries = getGrainShopTextEntries(textEntriesById);
   return toAlertOverlay(
-    "时日不够",
+    resolveGrainShopText(
+      entries,
+      "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.title"
+    ),
     remainingDays <= 0
       ? [
-          "粮铺掌柜把账册按回柜上，抬眼看了看你。",
-          `“评定日期已到，这轮账少说也要 ${durationDays} 天，眼下动不得。”`,
-          "“先去把评定应下，回头再来拨算盘。”",
+          resolveGrainShopText(
+            entries,
+            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.001"
+          ),
+          resolveGrainShopTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.002",
+            { durationDays }
+          ),
+          resolveGrainShopText(
+            entries,
+            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.003"
+          ),
         ]
       : [
-          "粮铺掌柜把账册按回柜上，抬眼看了看你。",
-          `“离评定只剩 ${remainingDays} 天，这轮账少说也要 ${durationDays} 天，眼下已经来不及了。”`,
-          "“先去把评定应下，回头再来拨算盘。”",
+          resolveGrainShopText(
+            entries,
+            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.soon.001"
+          ),
+          resolveGrainShopTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.soon.002",
+            { remainingDays, durationDays }
+          ),
+          resolveGrainShopText(
+            entries,
+            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.soon.003"
+          ),
         ],
     "warning"
   );
 }
 
-function createGrainSoldOutOverlay(): GrainShopSessionState["overlay"] {
+function createGrainSoldOutOverlay(
+  textEntriesById?: Record<string, string>
+): GrainShopSessionState["overlay"] {
+  const entries = getGrainShopTextEntries(textEntriesById);
   return toAlertOverlay(
-    "今日无米可买",
+    resolveGrainShopText(
+      entries,
+      "runtime.zhu_yuanzhang.grain_shop.sold_out.title"
+    ),
     [
-      "粮铺掌柜摊了摊手：“濠州这一阵闹得太凶，店里剩下的几袋米早被熟客和军中先订走了。”",
-      "“你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。”",
+      resolveGrainShopText(
+        entries,
+        "runtime.zhu_yuanzhang.grain_shop.sold_out.001"
+      ),
+      resolveGrainShopText(
+        entries,
+        "runtime.zhu_yuanzhang.grain_shop.sold_out.002"
+      ),
     ],
     "warning"
   );
@@ -355,7 +426,11 @@ function startAccountingMinigame(
     return withOverlay(
       input,
       sessionState,
-      createCouncilTimeInsufficientOverlay(durationDays, remainingDays)
+      createCouncilTimeInsufficientOverlay(
+        input.textEntriesById,
+        durationDays,
+        remainingDays
+      )
     );
   }
 
@@ -401,7 +476,11 @@ function handleAction(
       return withDialoguePhase(input, sessionState, "idle");
     case "buy":
       if (isHaozhouShortageDuringBeggingJourney(input.gameState)) {
-        return withOverlay(input, sessionState, createGrainSoldOutOverlay());
+        return withOverlay(
+          input,
+          sessionState,
+          createGrainSoldOutOverlay(input.textEntriesById)
+        );
       }
       return openTradeOverlay(input, sessionState, "buy");
     case "sell":
@@ -417,7 +496,8 @@ function handleAction(
       const result = investigateGrainMarket(
         input.gameState,
         input.characterDefinitions,
-        input.playerCharacterId
+        input.playerCharacterId,
+        input.textEntriesById
       );
       return {
         ...withOverlay(
@@ -445,7 +525,11 @@ function handleAction(
         overlay.mode === "buy" &&
         isHaozhouShortageDuringBeggingJourney(input.gameState)
       ) {
-        return withOverlay(input, sessionState, createGrainSoldOutOverlay());
+        return withOverlay(
+          input,
+          sessionState,
+          createGrainSoldOutOverlay(input.textEntriesById)
+        );
       }
 
       const tradeResult = executeGrainTrade(
@@ -522,7 +606,11 @@ function handleAction(
         return withOverlay(
           input,
           sessionState,
-          createCouncilTimeInsufficientOverlay(durationDays, remainingDays)
+          createCouncilTimeInsufficientOverlay(
+            input.textEntriesById,
+            durationDays,
+            remainingDays
+          )
         );
       }
 
@@ -680,7 +768,10 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
     return {
       gameState: initResult.state,
       characterDefinitions: initResult.characterDefinitions,
-      sessionState: createInitialGrainShopSessionState(pickNpcGreeting(), pickNpcDefaultLine()),
+      sessionState: createInitialGrainShopSessionState(
+        pickNpcGreeting(input.textEntriesById),
+        pickNpcDefaultLine(input.textEntriesById)
+      ),
       sideEffects: [{ type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID }],
     };
   },

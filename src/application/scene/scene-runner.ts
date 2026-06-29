@@ -13,6 +13,7 @@ export type SceneRunnerContext = {
   eventDefinitionsById: Record<string, EventDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   characterDefinitions: CharacterDefinition[];
+  textEntriesById?: Record<string, string> | undefined;
 };
 
 export type SceneStepResult = {
@@ -126,6 +127,7 @@ export function runSceneUntilPause(
       const callbackResult = runStoryCallback(currentAction.handlerId, currentAction.payload, {
         state: nextState,
         characterDefinitions: nextCharacterDefinitions,
+        textEntriesById: context.textEntriesById,
       });
       nextState = incrementSceneCursor(callbackResult.state);
       nextCharacterDefinitions = callbackResult.characterDefinitions;

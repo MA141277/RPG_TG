@@ -36,6 +36,11 @@ import {
   getCouncilStatusText,
 } from "../../time/time-progression";
 import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
+import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import {
+  resolveTextEntry,
+  resolveTextTemplateEntry,
+} from "../../content/text-resolution";
 import { assertExists } from "../../../shared/assert";
 import { createInitialHomeHouseSessionState } from "./home-house-session-state";
 
@@ -52,6 +57,36 @@ type HomeRestSummary = {
   stoppedAtCouncilDate: boolean;
   snapshots: MapAutoAdvanceSnapshot[];
 };
+
+function getHomeTextEntries(
+  textEntriesById?: Record<string, string>
+): Record<string, string> {
+  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
+}
+
+function resolveHomeText(
+  textEntriesById: Record<string, string> | undefined,
+  textId: string
+): string {
+  return resolveTextEntry(
+    getHomeTextEntries(textEntriesById),
+    textId,
+    `MISSING_TEXT:${textId}`
+  );
+}
+
+function resolveHomeTemplateText(
+  textEntriesById: Record<string, string> | undefined,
+  textId: string,
+  values: Record<string, string | number | boolean | null | undefined>
+): string {
+  return resolveTextTemplateEntry(
+    getHomeTextEntries(textEntriesById),
+    textId,
+    values,
+    `MISSING_TEXT:${textId}`
+  );
+}
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -109,7 +144,6 @@ function formatTimeOfDay(timeOfDay: TimeOfDay): string {
       return timeOfDay;
   }
 }
-
 function calculateRecovery(current: number, max: number, base: number, ratio: number): number {
   if (current >= max) {
     return 0;
@@ -135,34 +169,73 @@ function createAlertOverlay(
   };
 }
 
-function getRestInterruptParagraph(reason: HomeRestInterruptionReason): string {
+function getRestInterruptParagraph(
+  reason: HomeRestInterruptionReason,
+  textEntriesById?: Record<string, string>
+): string {
   switch (reason) {
     case "event":
-      return "宅中静养途中有事件打断，只得先停下休息。";
+      return resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.rest_interrupt.event.001"
+      );
     case "forced-plot":
-      return "外头忽然传来强制剧情的动静，无法继续安心静养。";
+      return resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.rest_interrupt.forced_plot.001"
+      );
     case "war-summons":
-      return "军中召集忽至，休息被迫中断。";
+      return resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.rest_interrupt.war_summons.001"
+      );
     case "council-date":
-      return "评定日期已到，继续躺着也该起身准备了。";
+      return resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.rest_interrupt.council_date.001"
+      );
     default:
-      return "休息被打断。";
+      return resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.rest_interrupt.default.001"
+      );
   }
 }
 
-function getCouncilLateChoiceParagraphs(state: GameState): string[] {
+function getCouncilLateChoiceParagraphs(
+  state: GameState,
+  textEntriesById?: Record<string, string>
+): string[] {
   if (getCouncilPriorityHouseModuleId(state) === "temple-house") {
     return [
-      "评定日期已到。你现在可以立刻去前殿听候方丈安排，也可以先不去。",
-      "若在评定后的五天内赶到，会被斥责并扣掉寺中贡献。",
-      "若拖得更久，贡献会扣得更多，住持也会当众严词训斥你。",
+      resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.council.late_choice.temple.001"
+      ),
+      resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.council.late_choice.temple.002"
+      ),
+      resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.council.late_choice.temple.003"
+      ),
     ];
   }
 
   return [
-    "评定日期已到。你现在可以立刻赶去帅府，也可以先不去。",
-    "若在评定后的五天内赶到，会被申斥并扣掉贡献。",
-    "若拖得更久，处罚会更重，严重时还可能被逐出当前阵营。",
+    resolveHomeText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.home.council.late_choice.keep.001"
+    ),
+    resolveHomeText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.home.council.late_choice.keep.002"
+    ),
+    resolveHomeText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.home.council.late_choice.keep.003"
+    ),
   ];
 }
 
@@ -451,7 +524,8 @@ function withSessionState(
 function createRestResultOverlay(
   summary: HomeRestSummary,
   title: string,
-  playerCharacterId: string
+  playerCharacterId: string,
+  textEntriesById?: Record<string, string>
 ): NonNullable<HomeHouseOverlayState> {
   const playerCharacter = getPlayerCharacter(
     summary.characterDefinitions,
@@ -466,10 +540,15 @@ function createRestResultOverlay(
   if (summary.daysRested <= 0) {
     const paragraphs =
       summary.interruptedReason == null
-        ? ["今日本就无需继续静养。"]
+        ? [
+            resolveHomeText(
+              textEntriesById,
+              "runtime.zhu_yuanzhang.home.rest.summary.none.001"
+            ),
+          ]
         : summary.interruptedReason === "council-date"
-          ? getCouncilLateChoiceParagraphs(summary.state)
-          : [getRestInterruptParagraph(summary.interruptedReason)];
+          ? getCouncilLateChoiceParagraphs(summary.state, textEntriesById)
+          : [getRestInterruptParagraph(summary.interruptedReason, textEntriesById)];
     return createAlertOverlay(
       title,
       paragraphs,
@@ -478,18 +557,42 @@ function createRestResultOverlay(
   }
 
   const paragraphs = [
-    `在自宅中静养了 ${summary.daysRested} 日。`,
-    `HP 恢复 ${summary.recoveredHp}，疲劳恢复 ${summary.recoveredFatigue}。`,
-    `当前体力 ${playerCharacter.stamina}，当前 HP ${currentHp} / ${maxHp}。`,
+    resolveHomeTemplateText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.home.rest.summary.days.001",
+      { daysRested: summary.daysRested }
+    ),
+    resolveHomeTemplateText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.home.rest.summary.recovery.001",
+      {
+        recoveredHp: summary.recoveredHp,
+        recoveredFatigue: summary.recoveredFatigue,
+      }
+    ),
+    resolveHomeTemplateText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.home.rest.summary.current.001",
+      {
+        stamina: playerCharacter.stamina,
+        currentHp,
+        maxHp,
+      }
+    ),
   ];
 
   if (summary.interruptedReason != null) {
-    paragraphs.push(getRestInterruptParagraph(summary.interruptedReason));
+    paragraphs.push(getRestInterruptParagraph(summary.interruptedReason, textEntriesById));
     if (summary.interruptedReason === "council-date") {
-      paragraphs.push(...getCouncilLateChoiceParagraphs(summary.state));
+      paragraphs.push(...getCouncilLateChoiceParagraphs(summary.state, textEntriesById));
     }
   } else {
-    paragraphs.push("身体恢复了些许，疲劳也慢慢消退。");
+    paragraphs.push(
+      resolveHomeText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.home.rest.summary.normal.001"
+      )
+    );
   }
 
   return createAlertOverlay(
@@ -503,7 +606,8 @@ function createHomeRestCompletionSession(
   sessionState: HomeHouseSessionState,
   summary: HomeRestSummary,
   title: string,
-  playerCharacterId: string
+  playerCharacterId: string,
+  textEntriesById?: Record<string, string>
 ): ActiveHouseModuleSession {
   return {
     moduleId: "home-house",
@@ -511,7 +615,7 @@ function createHomeRestCompletionSession(
       ...sessionState,
       mode: "main",
       descriptionLines: homeHouseMainLines,
-      overlay: createRestResultOverlay(summary, title, playerCharacterId),
+      overlay: createRestResultOverlay(summary, title, playerCharacterId, textEntriesById),
     },
   };
 }
@@ -542,7 +646,8 @@ function createHomeRestAutoAdvanceResult(
             sessionState,
             summary,
             title,
-            input.playerCharacterId
+            input.playerCharacterId,
+            input.textEntriesById
           ),
         },
       },
@@ -596,7 +701,6 @@ function createInventoryParagraphs(state: GameState): string[] {
     (item) => `${item.name} x${item.ownedCount} / ${item.kindText}`
   );
 }
-
 function handleAction(
   input: HouseModuleDispatchInput<"home-house">,
   sessionState: HomeHouseSessionState | null
@@ -651,7 +755,14 @@ function handleAction(
       characterDefinitions: input.characterDefinitions,
       sessionState: {
         ...sessionState,
-        overlay: createAlertOverlay("当前状态", createStatusParagraphs(ensuredState, input.characterDefinitions, input.playerCharacterId)),
+        overlay: createAlertOverlay(
+          "当前状态",
+          createStatusParagraphs(
+            ensuredState,
+            input.characterDefinitions,
+            input.playerCharacterId
+          )
+        ),
       },
     };
   }
@@ -756,7 +867,11 @@ function handleAction(
         },
         sessionState,
         {
-          overlay: createAlertOverlay("休息天数无效", ["请输入 1 到 99 之间的天数。"], "warning"),
+          overlay: createAlertOverlay(
+            "休息天数无效",
+            ["请输入 1 到 99 之间的天数。"],
+            "warning"
+          ),
         }
       );
     }
@@ -786,7 +901,6 @@ function handleAction(
     }
   );
 }
-
 function handleField(
   input: HouseModuleDispatchInput<"home-house">,
   sessionState: HomeHouseSessionState | null

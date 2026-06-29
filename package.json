@@ -16,7 +16,7 @@
     "spine:replace-pieces": "node tools/replace-faxian-spine-pieces.mjs",
     "serve:prod": "node scripts/serve-static.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
-    "test": "npm run build:test && node --test tests/robustness.test.cjs",
+    "test": "npm run build:test && node --test tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint:ts": "eslint .",
     "lint:css": "stylelint \"src/styles/**/*.css\"",

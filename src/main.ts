@@ -58,6 +58,7 @@ import {
 import {
   advanceGameStateOneDay,
   advanceGameStateTimeSegments,
+  formatCouncilStatusText,
   readCalendarDateNumber,
 } from "./application/time/time-progression";
 import {
@@ -91,6 +92,10 @@ import {
   createActiveGameContent,
   type ActiveGameContent,
 } from "./application/content/active-game-content";
+import {
+  resolveTextEntry,
+  resolveTextTemplateEntry,
+} from "./application/content/text-resolution";
 import { loadDefaultRuntimeContent } from "./application/content/default-runtime-content";
 import {
   createPrototypeCharactersForStoryStage,
@@ -330,6 +335,18 @@ let cityNameById: Record<string, string> = createCityNameById(cityDefinitions);
 let houseNameById: Record<string, string> = createHouseNameById(houseDefinitions);
 let characterNameById: Record<string, string> = activeGameContent.characterNameById;
 
+function getRuntimeText(textId: string, fallback?: string): string {
+  return resolveTextEntry(textEntriesById, textId, fallback);
+}
+
+function getRuntimeTemplateText(
+  textId: string,
+  values: Record<string, string | number | boolean | null | undefined>,
+  fallback?: string
+): string {
+  return resolveTextTemplateEntry(textEntriesById, textId, values, fallback);
+}
+
 function syncActiveGameContent(nextContent: ActiveGameContent): void {
   activeGameContent = nextContent;
   activeMapDefinitions = nextContent.maps;
@@ -490,8 +507,10 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
         month: 1,
         day: 1,
         pinnedCharacterId: playerCharacterId,
-        reviewDateText: "距离评定 40 天",
-        mainHouseMissionText: "前往评定会场",
+        reviewDateText: formatCouncilStatusText(40),
+        mainHouseMissionText: getRuntimeText(
+          "runtime.zhu_yuanzhang.prototype.main_mission.review_hall",
+        ),
         cards: {
           ownedCardIds: cardDefinitions.map((cardDefinition) => cardDefinition.id),
           selectedCardId: cardDefinitions[0]?.id ?? null,
@@ -550,11 +569,13 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
         ...nextAppState.gameState.ui,
         reviewDateText:
           storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? "今日评定"
+            ? formatCouncilStatusText(0)
             : nextAppState.gameState.ui.reviewDateText,
         mainHouseMissionText:
           storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? "前往皇觉寺听候住持训示"
+            ? getRuntimeText(
+                "runtime.zhu_yuanzhang.prototype.main_mission.temple_review"
+              )
             : nextAppState.gameState.ui.mainHouseMissionText,
       },
       runtime: {
@@ -707,6 +728,7 @@ function triggerStoryEventsForTiming(
       eventDefinitionsById: activeStoryEventDefinitionsById,
       sceneDefinitionsById: activeStorySceneDefinitionsById,
       activityDefinitionsById: activeActivityDefinitionsById,
+      textEntriesById,
     },
     buildStoryTriggerInput(timing, state)
   );
@@ -744,12 +766,22 @@ function createCouncilArrivalDialogue(
     (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard");
   const defaultTextLines = isTempleReview
     ? [
-        `评定日期已到，先去${priorityHouse.name}听候方丈安排。`,
-        "寺中知客僧已经在前殿等你了，别再误了时辰。",
+        getRuntimeTemplateText(
+          "runtime.zhu_yuanzhang.council_arrival.temple.001",
+          { targetHouseName: priorityHouse.name }
+        ),
+        getRuntimeText(
+          "runtime.zhu_yuanzhang.council_arrival.temple.002"
+        ),
       ]
     : [
-        `评定日期已到，速去${priorityHouse.name}应评。`,
-        "门前亲兵已经来催，你该先把这一轮评定办完。",
+        getRuntimeTemplateText(
+          "runtime.zhu_yuanzhang.council_arrival.keep.001",
+          { targetHouseName: priorityHouse.name }
+        ),
+        getRuntimeText(
+          "runtime.zhu_yuanzhang.council_arrival.keep.002"
+        ),
       ];
 
   return {
@@ -816,12 +848,22 @@ function showCouncilPriorityRefusal(): void {
         (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
       textLines: isTempleReview
         ? [
-            `今日是寺中评定，先去${priorityHouse?.name ?? "皇觉寺"}听候安排。`,
-            "其他去处都先放下，评定要紧。",
+            getRuntimeTemplateText(
+              "runtime.zhu_yuanzhang.council_refusal.temple.001",
+              { targetHouseName: priorityHouse?.name ?? "皇觉寺" }
+            ),
+            getRuntimeText(
+              "runtime.zhu_yuanzhang.council_refusal.temple.002"
+            ),
           ]
         : [
-            `今日该去${priorityHouse?.name ?? "帅府"}参加评定。`,
-            "别处都先不用跑，先把评定办完。",
+            getRuntimeTemplateText(
+              "runtime.zhu_yuanzhang.council_refusal.keep.001",
+              { targetHouseName: priorityHouse?.name ?? "帅府" }
+            ),
+            getRuntimeText(
+              "runtime.zhu_yuanzhang.council_refusal.keep.002"
+            ),
           ],
       advanceHintText: priorityHouse == null ? "知道了" : `前往${priorityHouse.name}`,
     },
@@ -849,21 +891,45 @@ function showCouncilInsufficientTimeRefusal(
       textLines: isTempleReview
         ? remainingDays <= 0
           ? [
-              `（上前提醒你）评定日期已到，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。`,
-              `先去${targetName}把评定应下，回来再说这桩事。`,
+              getRuntimeTemplateText(
+                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.001",
+                { activityLabel, durationDays }
+              ),
+              getRuntimeTemplateText(
+                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.002",
+                { targetHouseName: targetName }
+              ),
             ]
           : [
-              `（上前提醒你）离评定只剩 ${remainingDays} 天，这一趟${activityLabel}至少要 ${durationDays} 天，眼下已经来不及了。`,
-              `先去${targetName}把评定应下，回来再说这桩事。`,
+              getRuntimeTemplateText(
+                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.001",
+                { remainingDays, activityLabel, durationDays }
+              ),
+              getRuntimeTemplateText(
+                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.002",
+                { targetHouseName: targetName }
+              ),
             ]
         : remainingDays <= 0
           ? [
-              `门前亲兵催道：“评定日期已到，这趟${activityLabel}至少要 ${durationDays} 天，眼下抽不开身。”`,
-              `“先去${targetName}应评，别把时辰误了。”`,
+              getRuntimeTemplateText(
+                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.001",
+                { activityLabel, durationDays }
+              ),
+              getRuntimeTemplateText(
+                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.002",
+                { targetHouseName: targetName }
+              ),
             ]
           : [
-              `门前亲兵催道：“离评定只剩 ${remainingDays} 天，这趟${activityLabel}至少要 ${durationDays} 天，眼下抽不开身。”`,
-              `“先去${targetName}应评，别把时辰误了。”`,
+              getRuntimeTemplateText(
+                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.001",
+                { remainingDays, activityLabel, durationDays }
+              ),
+              getRuntimeTemplateText(
+                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.002",
+                { targetHouseName: targetName }
+              ),
             ],
       advanceHintText: "知道了",
     },
@@ -990,10 +1056,16 @@ function openBeggingMiniGame(): void {
         type: "house-access-refusal",
         speakerCharacterId: "char.kulan_temple_abbot",
         textLines: [
-          "濠州近来断粮得厉害，沿街托钵也讨不出几把米来。",
-          "住持早已吩咐过，这一轮别把时日耗在城里，还是往颍州方向走，外地才更有指望。",
+          getRuntimeText(
+            "runtime.zhu_yuanzhang.haozhou_shortage.001"
+          ),
+          getRuntimeText(
+            "runtime.zhu_yuanzhang.haozhou_shortage.002"
+          ),
         ],
-        advanceHintText: "改去北路",
+        advanceHintText: getRuntimeText(
+          "runtime.zhu_yuanzhang.haozhou_shortage.advance_hint"
+        ),
       },
       beggingMiniGameState: null,
     };
@@ -1009,10 +1081,19 @@ function openBeggingMiniGame(): void {
         type: "house-access-refusal",
         speakerCharacterId: "char.kulan_temple_abbot",
         textLines: [
-          "（隔着人群唤住了你）你这会儿脚步都虚了，就别再硬撑着出去化缘。",
-          `先回去歇息，体力缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再出门也不迟。`,
+          getRuntimeText(
+            "runtime.zhu_yuanzhang.begging_stamina_refusal.001"
+          ),
+          getRuntimeTemplateText(
+            "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
+            {
+              requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST,
+            }
+          ),
         ],
-        advanceHintText: "先去休息",
+        advanceHintText: getRuntimeText(
+          "runtime.zhu_yuanzhang.begging_stamina_refusal.advance_hint"
+        ),
       },
       beggingMiniGameState: null,
     };
@@ -1055,6 +1136,7 @@ function createHouseRuntimeInstance(): HouseRuntime {
     eventDefinitionsById: activeStoryEventDefinitionsById,
     sceneDefinitionsById: activeStorySceneDefinitionsById,
     activityDefinitionsById: activeActivityDefinitionsById,
+    textEntriesById,
   });
 }
 
@@ -1308,6 +1390,7 @@ function advanceCurrentStoryScene(): void {
       eventDefinitionsById: activeStoryEventDefinitionsById,
       sceneDefinitionsById: activeStorySceneDefinitionsById,
       activityDefinitionsById: activeActivityDefinitionsById,
+      textEntriesById,
     }
   );
 
@@ -1336,6 +1419,7 @@ function chooseCurrentStoryOption(choiceId: string): void {
       eventDefinitionsById: activeStoryEventDefinitionsById,
       sceneDefinitionsById: activeStorySceneDefinitionsById,
       activityDefinitionsById: activeActivityDefinitionsById,
+      textEntriesById,
     },
     selectedOption
   );
@@ -1349,7 +1433,9 @@ function chooseCurrentStoryOption(choiceId: string): void {
 }
 
 function dispatchCurrentStoryBattleAction(actionId: string): void {
-  const result = dispatchStoryBattleAction(appState.gameState, actionId);
+  const result = dispatchStoryBattleAction(appState.gameState, actionId, {
+    textEntriesById,
+  });
   appState = {
     ...appState,
     gameState: result.state,
@@ -1652,6 +1738,7 @@ function createScenarioPackAppState(
         eventDefinitionsById: activeStoryEventDefinitionsById,
         sceneDefinitionsById: activeStorySceneDefinitionsById,
         activityDefinitionsById: activeActivityDefinitionsById,
+        textEntriesById,
       },
       profile.entryEventId
     );
@@ -1697,7 +1784,9 @@ function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
         currentView: "city",
         overlayView: null,
         houseSession: null,
-        mainHouseMissionText: "返濠州听候盘查",
+        mainHouseMissionText: getRuntimeText(
+          "runtime.zhu_yuanzhang.main_mission.haozhou_return"
+        ),
       },
       runtime: {
         ...baseState.gameState.runtime,
@@ -1746,6 +1835,7 @@ function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
       eventDefinitionsById: activeStoryEventDefinitionsById,
       sceneDefinitionsById: activeStorySceneDefinitionsById,
       activityDefinitionsById: activeActivityDefinitionsById,
+      textEntriesById,
     },
     "event.story.zhu_yuanzhang.haozhou_return_encounter"
   );
@@ -4083,7 +4173,9 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
 
   hasStartedInitialCampaignMapDebugAnimation = true;
   initialCampaignMapDebugAnimationStartTime = null;
-  showMapIntroOverlay("第一章·淮西托钵");
+  showMapIntroOverlay(
+    getRuntimeText("runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging")
+  );
 
   const animate = (timestamp: number) => {
     if (initialCampaignMapDebugAnimationStartTime == null) {
@@ -4189,7 +4281,9 @@ function syncMapIntroOverlay(): void {
   if (activeMapIntroOverlay != null && !appRoot.contains(activeMapIntroOverlay)) {
     activeMapIntroOverlay = null;
     if (isInitialCampaignMapDebugAnimating()) {
-      showMapIntroOverlay("第一章·淮西托钵");
+      showMapIntroOverlay(
+        getRuntimeText("runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging")
+      );
     }
   }
 }

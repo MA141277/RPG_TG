@@ -36,6 +36,7 @@ type HouseRuntimeDependencies = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  textEntriesById?: Record<string, string> | undefined;
   syncCouncilPriorityAfterGameStateChange(
     previousGameState: GameState,
     councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
@@ -118,6 +119,8 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
       houseDefinition: activeHouse,
       playerCharacterId: dependencies.playerCharacterId,
       sessionState: appState.gameState.ui.houseSession?.state ?? null,
+      activityDefinitionsById: dependencies.activityDefinitionsById,
+      textEntriesById: dependencies.textEntriesById,
       request,
     });
 
@@ -253,6 +256,8 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         characterDefinitions: nextAppState.characterDefinitions,
         houseDefinition,
         playerCharacterId: dependencies.playerCharacterId,
+        activityDefinitionsById: dependencies.activityDefinitionsById,
+        textEntriesById: dependencies.textEntriesById,
       });
       applyHouseModuleResult(houseDefinition, moduleId, result);
     }
@@ -266,6 +271,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         eventDefinitionsById: dependencies.eventDefinitionsById,
         sceneDefinitionsById: dependencies.sceneDefinitionsById,
         activityDefinitionsById: dependencies.activityDefinitionsById,
+        textEntriesById: dependencies.textEntriesById,
       },
       {
         timing: "house-enter",
@@ -297,6 +303,8 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         houseDefinition: activeHouse,
         playerCharacterId: dependencies.playerCharacterId,
         sessionState: appState.gameState.ui.houseSession?.state ?? null,
+        activityDefinitionsById: dependencies.activityDefinitionsById,
+        textEntriesById: dependencies.textEntriesById,
       });
       const councilTriggered = applyHouseModuleResult(
         activeHouse,

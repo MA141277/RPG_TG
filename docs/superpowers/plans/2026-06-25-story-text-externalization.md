@@ -8,6 +8,22 @@
 
 **Tech Stack:** TypeScript, Vite, Node test runner, existing content-pack loader/runtime pipeline.
 
+## Execution State
+
+- Status: `unknown`
+- Last Updated: `2026-06-26`
+- Current Focus: `Inspect completed checkboxes and current code state before resuming.`
+- Next Step: `Resume from the first unchecked checkbox.`
+- Verification: `Check latest progress entry and rerun required commands before continuing.`
+- Notes: `Historical progress before this tracking block may be incomplete.`
+
+## Progress Log
+
+- 2026-06-26
+  - Summary: `Added standardized progress-tracking sections to this plan.`
+  - Verification: `Not run as part of this doc-only change`
+  - Next: `Resume from the first unchecked checkbox.`
+
 ---
 
 ### Task 1: Add failing tests for text catalog support

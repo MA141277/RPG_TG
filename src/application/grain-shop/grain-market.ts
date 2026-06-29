@@ -1,7 +1,7 @@
 import {
-  grainShopMarketRumors,
-  grainShopNpcDefaultLines,
-  grainShopNpcGreetings,
+  grainShopMarketRumorTextIds,
+  grainShopNpcDefaultLineTextIds,
+  grainShopNpcGreetingTextIds,
 } from "../../content/houses/grain-shop-content";
 import { globalGoodsPool } from "../../content/markets/global-goods-pool";
 import type { CityDefinition } from "../../domain/city";
@@ -11,31 +11,71 @@ import type { TradeGoodDefinition } from "../../domain/trade-good";
 import { assertExists } from "../../shared/assert";
 import { pickRandom } from "../../shared/random";
 import { defaultRuntimeContent } from "../content/default-runtime-content";
+import { resolveTextEntry } from "../content/text-resolution";
 import { ensureShopMarketData } from "../markets/market-refresh-system";
 import { selectCurrentCity } from "../selectors/select-current-city";
 
 const PREFERRED_GRAIN_GOOD_IDS = ["rice", "wheat", "millet", "soybean", "salt"] as const;
 
-export function pickNpcGreeting(): string {
-  return pickRandom(grainShopNpcGreetings);
+function getGrainMarketTextEntries(
+  textEntriesById?: Record<string, string>
+): Record<string, string> {
+  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
 }
 
-export function pickNpcDefaultLine(): string {
-  return pickRandom(grainShopNpcDefaultLines);
+function pickResolvedText(
+  textEntriesById: Record<string, string>,
+  textIds: string[]
+): string {
+  const textId = pickRandom(textIds);
+  return resolveTextEntry(textEntriesById, textId, `MISSING_TEXT:${textId}`);
 }
 
-export function pickMarketRumor(): string {
-  return pickRandom(grainShopMarketRumors);
+export function pickNpcGreeting(textEntriesById?: Record<string, string>): string {
+  return pickResolvedText(
+    getGrainMarketTextEntries(textEntriesById),
+    grainShopNpcGreetingTextIds
+  );
 }
 
-export function getInvestigateDialogue(price: number): string {
+export function pickNpcDefaultLine(textEntriesById?: Record<string, string>): string {
+  return pickResolvedText(
+    getGrainMarketTextEntries(textEntriesById),
+    grainShopNpcDefaultLineTextIds
+  );
+}
+
+export function pickMarketRumor(textEntriesById?: Record<string, string>): string {
+  return pickResolvedText(
+    getGrainMarketTextEntries(textEntriesById),
+    grainShopMarketRumorTextIds
+  );
+}
+
+export function getInvestigateDialogue(
+  price: number,
+  textEntriesById?: Record<string, string>
+): string {
+  const entries = getGrainMarketTextEntries(textEntriesById);
   if (price > 130) {
-    return "近来粮价怕是要涨。";
+    return resolveTextEntry(
+      entries,
+      "runtime.zhu_yuanzhang.grain_market.investigate.high",
+      "MISSING_TEXT:runtime.zhu_yuanzhang.grain_market.investigate.high"
+    );
   }
   if (price < 100) {
-    return "如今粮路通畅，价倒是便宜。";
+    return resolveTextEntry(
+      entries,
+      "runtime.zhu_yuanzhang.grain_market.investigate.low",
+      "MISSING_TEXT:runtime.zhu_yuanzhang.grain_market.investigate.low"
+    );
   }
-  return "粮价还算平稳。";
+  return resolveTextEntry(
+    entries,
+    "runtime.zhu_yuanzhang.grain_market.investigate.neutral",
+    "MISSING_TEXT:runtime.zhu_yuanzhang.grain_market.investigate.neutral"
+  );
 }
 
 export function getTradeTotal(grainPrice: number, quantity: number): number {
