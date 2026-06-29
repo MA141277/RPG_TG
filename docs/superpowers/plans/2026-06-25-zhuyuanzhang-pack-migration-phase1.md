@@ -42,3 +42,8 @@ Phase 1 does not yet migrate:
 - `historical-characters`
 - `historical-city-rosters`
 - full `prototype-world` derivatives such as all city npc pools and all house refusal rules
+
+## Completion Checklist
+
+- [ ] Reconcile this legacy phase-1 plan against the current repository state
+- [ ] Mark superseded scope explicitly if later plans have replaced the remaining work

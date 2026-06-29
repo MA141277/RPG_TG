@@ -3616,6 +3616,135 @@ test("temple house daily flow resolves fortune and donation through unified stat
   assert.equal(donatedResult.sessionState?.overlay?.type, "alert");
 });
 
+test("temple house status labels, fortune, and begging submit overlay resolve from text entries", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.temple.scene.monk.subtitle": "自定义皇觉寺副标题。",
+    "runtime.zhu_yuanzhang.temple.status.eyebrow": "自定义寺院眉题。",
+    "runtime.zhu_yuanzhang.temple.status.title.monk": "自定义寺中标题。",
+    "runtime.zhu_yuanzhang.temple.status.subtitle.daily": "自定义住持接待副标题。",
+    "runtime.zhu_yuanzhang.temple.status.metric.abbot": "自定义住持称呼",
+    "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.default.label": "自定义外出化缘",
+    "runtime.zhu_yuanzhang.temple.fortune.upper.title": "自定义上签",
+    "runtime.zhu_yuanzhang.temple.fortune.upper.001": "自定义求签首句。",
+    "runtime.zhu_yuanzhang.temple.fortune.upper.monk.002": "自定义寺门外应验句。",
+    "runtime.zhu_yuanzhang.temple.begging_food.submit.title": "自定义提交化缘粮食",
+    "runtime.zhu_yuanzhang.temple.begging_food.submit.001": "自定义交粮说明一。",
+    "runtime.zhu_yuanzhang.temple.begging_food.submit.002": "自定义交粮说明二。",
+  };
+  const gameState = withCouncilInDays(
+    {
+      ...createMonkStageState(),
+      calendar: {
+        ...createMonkStageState().calendar,
+        day: 2,
+      },
+      runtime: {
+        ...createMonkStageState().runtime,
+        flags: {
+          ...createMonkStageState().runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+        },
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "beg-alms",
+          [PLAYER_GRAIN_RUNTIME_KEYS.quantityDou]: 12,
+        },
+      },
+    },
+    30
+  );
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  ).map((characterDefinition) =>
+    characterDefinition.id !== playerCharacterId
+      ? characterDefinition
+      : {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            fame: 0,
+          },
+        }
+  );
+  const enterResult = templeHouseHouseModule.enter({
+    gameState,
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    textEntriesById,
+  });
+
+  assert.equal(viewModel.sceneSubtitle, "自定义皇觉寺副标题。");
+  assert.equal(viewModel.statusCard?.eyebrow, "自定义寺院眉题。");
+  assert.equal(viewModel.statusCard?.title, "自定义寺中标题。");
+  assert.equal(viewModel.statusCard?.metrics[0]?.label, "自定义住持称呼");
+  assert.equal(
+    viewModel.statusCard?.metrics.find((metric) => metric.label === "当前差事")
+      ?.value,
+    "自定义外出化缘"
+  );
+
+  const openResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-abbot-dialogue" },
+    textEntriesById,
+  });
+  const fortuneResult = templeHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "ask-fortune" },
+    textEntriesById,
+  });
+
+  assert.equal(fortuneResult.sessionState?.overlay?.title, "自定义上签");
+  assert.deepEqual(fortuneResult.sessionState?.overlay?.paragraphs, [
+    "自定义求签首句。",
+    "自定义寺门外应验句。",
+  ]);
+
+  const submitOverlayResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "submit-temple-begging-food" },
+    textEntriesById,
+  });
+  const submitOverlayViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: submitOverlayResult.gameState,
+    characterDefinitions: submitOverlayResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: submitOverlayResult.sessionState,
+    textEntriesById,
+  });
+
+  assert.equal(submitOverlayViewModel.overlay?.title, "自定义提交化缘粮食");
+  assert.deepEqual(submitOverlayViewModel.overlay?.paragraphs, [
+    "自定义交粮说明一。",
+    "自定义交粮说明二。",
+  ]);
+});
+
 test("home house rest-one-day advances date, restores hp and fatigue, and resets morning", () => {
   const enterResult = homeHouseHouseModule.enter({
     gameState: createBaseState(),
@@ -7411,4 +7540,244 @@ test("medicine compounding grades targets by closeness", () => {
   );
 
   assert.equal(perfect.grade, "S");
+});
+
+test("core contracts export the boundary types", async () => {
+  const contracts = require("../.test-dist/core/contracts/mod-manifest.js");
+  assert.equal(typeof contracts, "object");
+});
+
+test("runtime request contract supports action tick and external variants", async () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-request.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /type: "action"/);
+  assert.match(source, /type: "tick"/);
+  assert.match(source, /type: "external"/);
+});
+
+test("engine bootstrap builds a session from a selected mod id and registry", async () => {
+  const { createEngineSession } = require("../.test-dist/core/engine/engine-factory.js");
+  const session = createEngineSession({
+    selectedMod: {
+      id: "builtin.default",
+      version: "1.0.0",
+      title: "Default",
+      entryContentPackIds: [],
+    },
+    registry: {
+      mods: {},
+      content: {},
+    },
+  });
+
+  assert.equal(session.state.engine.selectedModId, "builtin.default");
+});
+
+test("runtime dispatch settles effects after routing", async () => {
+  const { dispatchRuntimeRequest } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+  const result = dispatchRuntimeRequest({
+    state: {
+      engine: {
+        selectedModId: "builtin.default",
+        version: "1.0.0",
+        currentView: "map",
+      },
+      runtime: {
+        flags: {},
+        variables: {},
+        activeEventId: null,
+        activeTaskIds: [],
+      },
+      modState: {},
+    },
+    request: { type: "action", actionId: "test" },
+    context: {
+      routeRequest() {
+        return {
+          state: {
+            engine: {
+              selectedModId: "builtin.default",
+              version: "1.0.0",
+              currentView: "map",
+            },
+            runtime: {
+              flags: {},
+              variables: {},
+              activeEventId: null,
+              activeTaskIds: [],
+            },
+            modState: {},
+          },
+          effects: [{ type: "setFlag", key: "booted", value: true }],
+        };
+      },
+    },
+  });
+
+  assert.equal(result.state.runtime.flags.booted, true);
+});
+
+test("save envelope preserves selected mod id and mod state payload", async () => {
+  const { createSaveEnvelope } = require("../.test-dist/core/save/save-envelope.js");
+  const envelope = createSaveEnvelope({
+    version: "1.0.0",
+    state: {
+      engine: {
+        selectedModId: "builtin.default",
+        version: "1.0.0",
+        currentView: "map",
+      },
+      runtime: {
+        flags: {},
+        variables: {},
+        activeEventId: null,
+        activeTaskIds: [],
+      },
+      modState: { "builtin.default": { foo: 1 } },
+    },
+  });
+
+  assert.equal(envelope.selectedModId, "builtin.default");
+  assert.deepEqual(envelope.modState["builtin.default"], { foo: 1 });
+});
+
+test("main.ts delegates boot through legacy-main-adapter", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /legacy-main-adapter/);
+});
+
+test("loadSaveEnvelope normalizes a legacy save into the current envelope", async () => {
+  const { loadSaveEnvelope } = require("../.test-dist/core/save/save-loader.js");
+  const normalized = loadSaveEnvelope(
+    {
+      version: "0.9.0",
+      selectedModId: "builtin.default",
+      state: {
+        flags: { started: true },
+        variables: { stage: 1 },
+      },
+    },
+    { availableModIds: ["builtin.default"] }
+  );
+
+  assert.equal(normalized.selectedModId, "builtin.default");
+  assert.equal(normalized.engineState.selectedModId, "builtin.default");
+  assert.equal(normalized.runtimeState.flags.started, true);
+  assert.equal(normalized.runtimeState.variables.stage, 1);
+});
+
+test("loadSaveEnvelope rejects a missing selected mod id", async () => {
+  const { loadSaveEnvelope } = require("../.test-dist/core/save/save-loader.js");
+
+  assert.throws(() =>
+    loadSaveEnvelope(
+      {
+        version: "1.0.0",
+        selectedModId: "missing.mod",
+        engineState: {
+          selectedModId: "missing.mod",
+          version: "1.0.0",
+          currentView: "map",
+        },
+        runtimeState: {
+          flags: {},
+          variables: {},
+          activeEventId: null,
+          activeTaskIds: [],
+        },
+        modState: {},
+      },
+      { availableModIds: ["builtin.default"] }
+    )
+  );
+});
+
+test("serializeSaveEnvelope preserves unknown mod payload after load", async () => {
+  const { loadSaveEnvelope } = require("../.test-dist/core/save/save-loader.js");
+  const { serializeSaveEnvelope } = require("../.test-dist/core/save/save-writer.js");
+  const loaded = loadSaveEnvelope(
+    {
+      version: "1.0.0",
+      selectedModId: "builtin.default",
+      engineState: {
+        selectedModId: "builtin.default",
+        version: "1.0.0",
+        currentView: "map",
+      },
+      runtimeState: {
+        flags: {},
+        variables: {},
+        activeEventId: null,
+        activeTaskIds: [],
+      },
+      modState: {
+        "builtin.default": { foo: 1 },
+        "unknown.mod": { nested: { keep: true } },
+      },
+    },
+    { availableModIds: ["builtin.default"] }
+  );
+
+  const serialized = serializeSaveEnvelope(loaded);
+  const parsed = JSON.parse(serialized);
+  assert.deepEqual(parsed.modState["unknown.mod"], { nested: { keep: true } });
+});
+
+test("save migration upgrades legacy runtime state to the current envelope version", async () => {
+  const { migrateSaveEnvelope } = require("../.test-dist/core/save/save-migrations.js");
+  const migrated = migrateSaveEnvelope({
+    version: "0.8.0",
+    selectedModId: "builtin.default",
+    state: {
+      flags: { started: true },
+    },
+  });
+
+  assert.equal(migrated.version, "1.0.0");
+  assert.equal(migrated.runtimeState.flags.started, true);
+});
+
+test("runtime request contract supports navigation external entry ids", async () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/navigation-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /createEnterCityRequest/);
+  assert.match(source, /createEnterHouseRequest/);
+});
+
+test("time runtime creates a typed day-start request", async () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/time-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /createDayStartRequest/);
+});
+
+test("event runtime exports candidate selection and activation seams", async () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /selectEventCandidate/);
+  assert.match(source, /activateEvent/);
+});
+
+test("scene runtime accepts an activated event handoff", async () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /runSceneFromEvent/);
 });

@@ -2,6 +2,36 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-29 Save Migration Hardening
+
+### Added
+- 新增 `src/core/save/save-migrations.ts`，为旧存档到当前 `SaveEnvelope` 的归一化提供确定性的迁移入口。
+- 新增 `src/core/save/save-loader.ts`，在读取时统一执行迁移并校验 `selectedModId` 是否仍然可用。
+- 新增 `src/core/save/save-writer.ts`，为当前标准化后的引擎存档提供统一序列化出口。
+
+### Changed
+- `src/core/save/save-envelope.ts` 补出当前 envelope 版本常量，使 loader / migration / writer 能围绕同一版本边界工作。
+- 存档读取现在支持旧形态 `state.flags/state.variables` 迁移到 `runtimeState`，并在缺失 `engineState` 时补出默认引擎态。
+- 存档读取不再静默接受缺失的 `selectedModId`；当所选 mod 不可用时，会显式抛错而不是带着损坏状态继续运行。
+- 标准化后的存档写回路径会保留未知 mod 的 `modState` 负载，不会因为核心运行时不理解字段含义而丢失数据。
+
+### Impact
+- `src/core/save` 已从“最小 envelope seam”推进到“可迁移、可校验、可回写”的 persistence boundary，后续 Child 3/4/5 可以建立在这个稳定读写合同之上，而不必再回头发明新的存档形状。
+
+## 2026-06-29 Core Engine Runtime Boundary
+
+### Added
+- 新增首批 `src/core` 边界文件：`contracts`、`engine`、`runtime`、`save` 与 `adapters/legacy-main-adapter.ts`，把 mod manifest、EngineSession、RuntimeRequest/Result、Effect、SaveEnvelope 等最小运行时契约落到生产代码目录。
+- 新增 `src/core/registry/mod-registry.ts` 与 `src/core/registry/content-registry.ts`，让引擎启动可以通过选中的 mod id 和 registry 进入统一 bootstrap seam。
+
+### Changed
+- 增加 runtime dispatch 与 effect settlement 接缝，首条 routed request 已由 `src/core/runtime` 接管并回写 `CoreGameState`。
+- 增加最小 `SaveEnvelope` 契约，保存层现在有了可继续硬化的 engine/modState 边界。
+- `src/main.ts` 新增 `legacy-main-adapter` handoff seam，默认启动流程会先经过 `src/core` bootstrap，再继续沿用现有主运行时逻辑。
+
+### Impact
+- 项目第一次具备了面向 mod-first 改造的生产级 `src/core` 入口边界，后续可以在不继续扩大 `main.ts` 架构职责的前提下，逐步拆分 navigation、event/task、interactive module、save hardening 和 UI presenter。
+
 ## 2026-06-26 Standalone Static Service Script
 
 ### Added
@@ -910,6 +940,21 @@
 - `ScenarioPackDefinition` now accepts optional `cities` and `houses` arrays, so a JSON start pack can materialize world entities instead of only swapping character/event/scene/activity data.
 - Added shared `GameState.runtime.activitySession` plus a reusable `generic.qte` activity session runner. Scene `start-activity` now opens an interactive QTE overlay and settles configured outcome effects only after the player clicks through the rounds.
 - Liu Bang's JSON opening pack now defines `city.pei_county` and starts Liu Bang, Xiao He, and Lu Wan in that city.
+
+## 2026-06-29 Navigation Time Event Runtime Extraction
+
+### Added
+- 在 `src/core/contracts/` 新增 `event-runtime.ts` 与 `scene-runtime.ts`，明确 Child 3 的事件候选、事件激活、scene handoff、task action、task signal 这些过渡期合同。
+- 在 `src/core/runtime/` 新增 `navigation-runtime.ts`、`time-runtime.ts`、`event-runtime.ts`、`event-candidate-selector.ts`、`event-condition-evaluator.ts`、`event-activation.ts`、`scene-runtime.ts`、`scene-session.ts`、`scene-choice-resolution.ts`，把导航入口、时间推进入口、事件候选选择、事件激活、scene 会话接力拆成独立 seam。
+
+### Changed
+- `src/main.ts` 不再在对应入口点直接内联 `enterCity()`、`advanceGameStateOneDay()`、`advanceGameStateTimeSegments()` 和 `triggerStoryEvents()` 作为唯一控制路径，而是先创建 typed runtime request，再经由 Child 3 的 runtime wrapper 进入导航、时间、事件、scene seam。
+- `src/core/contracts/runtime-request.ts` 的 `tick` 请求现在支持可选 `payload`，以便时间推进 seam 携带段数等最小 runtime 输入。
+- `src/core/contracts/runtime-result.ts` 现在可以携带 `scene`、`taskActions` 与 `taskSignals`，为后续 Task Runtime / Interactive Runtime 抽离预留统一返回通道。
+
+### Impact
+- Child 3 让 `main.ts` 第一次从“直接控制导航/时间/剧情触发”转成“创建 request 并交给 runtime seam”，后续 Child 4 可以在这个基础上继续把 interactive/minigame/story-battle 接到统一 runtime。
+- 事件系统和 scene 系统现在已经有第一层明确的 core-runtime 接缝，但仍然是过渡实现：具体剧情播放和任务状态机还没有被完全抽离，后续要继续通过 Child 4/后续 task runtime work 收口。
 
 ### Changed
 - Runtime city and house registries in `main.ts` are now resettable and scenario-pack aware, rather than fixed startup constants.

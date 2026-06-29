@@ -54,7 +54,7 @@ Treat a match as out of scope when it belongs to:
 
 ### P1: Runtime consumers that still own `zhuyuanzhang` pack prose
 
-- `src/application/house-modules/temple-house/temple-house-house-module.ts`
+- none in the reviewed houses-only scope
 
 ## Explicitly Out of Scope for This Pass
 
@@ -80,5 +80,5 @@ For this houses-only pass, success means:
 - This file is the canonical reviewed remainder list for the houses-only migration pass.
 - The inventory is intentionally scoped, not a whole-repository content audit.
 - `market-house`, `tea-house`, and `leader-residence` still contain inline Chinese UI or generic interaction text, but they are not currently flagged by the targeted `zhuyuanzhang` pack-term scan.
-- The only reviewed pack-specific runtime remainder in this pass is `temple-house-house-module.ts`.
+- The reviewed houses-only pack-specific remainder inventory is now zero.
 - If this file and the houses-only spec disagree, update both together before resuming implementation.

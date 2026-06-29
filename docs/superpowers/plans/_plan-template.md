@@ -11,7 +11,7 @@
 ## Execution State
 
 - Status: `not-started`
-- Last Updated: `YYYY-MM-DD`
+- Last Updated: `2000-01-01`
 - Current Focus: `Not started.`
 - Next Step: `Start at Task 1 Step 1.`
 - Verification: `Not run`
@@ -19,7 +19,7 @@
 
 ## Progress Log
 
-- YYYY-MM-DD
+- 2000-01-01
   - Summary: `Plan created.`
   - Verification: `Not run`
   - Next: `Start at Task 1 Step 1.`

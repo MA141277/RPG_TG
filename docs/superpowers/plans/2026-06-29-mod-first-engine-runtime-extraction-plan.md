@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Extract the current game loop into a reusable engine/runtime so any future mod can plug into a stable boot, state, navigation, interaction, and save contract without editing core orchestration files.
+**Goal:** Extract the current game loop into a reusable engine/runtime so any future mod can plug into stable boot, state, navigation, interaction, and save seams without editing core orchestration files.
 
-**Architecture:** Split the project into four layers: `engine kernel`, `runtime services`, `adapter/presenter`, and `mod content packs`. The engine becomes responsible for lifecycle, state mutation, registries, and module dispatch; runtime services host navigation, interaction, time, and settlement; UI renders view models only; mods provide JSON/content/config plus optional registered behavior modules through declared capabilities.
+**Architecture:** Split the project into five layers rooted at `src/core`, `src/application`, `src/ui`, `src/modding`, and `src/content`. `src/core` owns engine boot, runtime dispatch, registries, effect settlement, and the minimal save/state boundary; later child plans deepen save hardening, navigation, interaction, and presentation decoupling on top of that seam. `src/application` hosts migration-era gameplay services and adapters; `src/ui` remains the rendering consumer; `src/modding` and `src/content` stay downstream of the extracted runtime boundary.
 
 **Tech Stack:** TypeScript, Vite, Node test runner (`tests/robustness.test.cjs`), existing content-pack system, shared domain state, registry-based runtime modules
 
@@ -12,12 +12,55 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `in-progress`
 - Last Updated: `2026-06-29`
-- Current Focus: `Plan only. No runtime refactor executed by this document.`
-- Next Step: `Approve this master plan, then produce the first child task plan for kernel/boot extraction.`
-- Verification: `Not run`
-- Notes: `This is the parent plan for a mod-first refactor. Child subsystem task plans should be derived from it before code changes begin.`
+- Current Focus: `Child 3 is complete in the isolated worktree: src/core/runtime now owns the first navigation/time request factories, event candidate activation seam, and scene handoff seam on top of the Child 1 runtime boundary and Child 2 save boundary.`
+- Next Step: `Promote Child 4 interactive runtime integration as the next executable child plan after Child 3 review/merge, while keeping Child 5 and Child 6 queued behind their dependency gates.`
+- Verification: `Child 3 closeout: npm run lint:plans; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "navigation external entry ids|typed day-start request|candidate selection and activation seams|activated event handoff"; npm run typecheck; npm test; npm run build`
+- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, and Child 3 completed on branch codex/child3-nav. Commit batching remains deferred so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
+
+## Progress Log
+
+- 2026-06-29
+  - Summary: `Parent orchestration plan created to sequence the mod-first engine runtime extraction.`
+  - Verification: `Not run as part of this doc-only change`
+  - Next: `Execute Child Plan 1, then sync this parent plan before starting another child plan.`
+- 2026-06-29
+  - Summary: `Parent orchestration wording tightened so Child 1 owns only the first core boundary plus minimal save seam, and Child 2 exclusively owns save hardening.`
+  - Verification: `Not run as part of this doc-only change`
+  - Next: `Execute Child Plan 1 using the narrowed boundary-first scope, then keep Child 2 as the follow-up save hardening workstream.`
+- 2026-06-29
+  - Summary: `Authored the formal Child 3 plan and aligned it with the event-task-scene collaboration spec so Child 3 now owns navigation/time trigger entry, event activation, and scene handoff without absorbing full task runtime extraction.`
+  - Verification: `Not run as part of this doc-only change`
+  - Next: `Keep Child 1 as the active next execution target; use Child 3 only after Child 1 and Child 2 dependency rules are satisfied.`
+- 2026-06-29
+  - Summary: `Clarified that any Child 2 waiver for Child 3 must be recorded in both parent and weekly logs, and aligned Child 3 contract examples with Child 1 runtime-request ownership.`
+  - Verification: `Not run as part of this doc-only change`
+  - Next: `Execute Child 1 first; only consider Child 3 ahead of Child 2 if a recorded waiver is added to both orchestration logs with explicit reason.`
+- 2026-06-29
+  - Summary: `Child 1 execution has started and completed Task 1 Steps 1-4: src/core/contracts landed, a minimal engine-registry type placeholder was introduced, and the test-build whitelist was expanded so src/core is compiled into .test-dist.`
+  - Verification: `Child 1 Task 1: npm run typecheck; npm test; npm run build`
+  - Next: `Continue Child 1 with Task 2 engine-session composition; do not advance to Child 2 before Child 1 reaches its full acceptance gate.`
+- 2026-06-29
+  - Summary: `Child 1 Task 2 is now complete in the isolated worktree: src/core/engine and the real registry typing were introduced, proving the first selected-mod-to-session bootstrap seam on top of the Task 1 contracts.`
+  - Verification: `Child 1 Task 2: npm run typecheck; npm test; npm run build`
+  - Next: `Continue Child 1 with Task 3 runtime dispatch and effect settlement; do not advance to Child 2 before Child 1 reaches its full acceptance gate.`
+- 2026-06-29
+  - Summary: `Child 1 Task 3 is now complete in the isolated worktree: src/core/runtime exists, effect settlement is applied after routing, and the first runtime-owned state transition seam is validated.`
+  - Verification: `Child 1 Task 3: npm run typecheck; npm test; npm run build`
+  - Next: `Continue Child 1 with Task 4 save-envelope work; do not advance to Child 2 before Child 1 reaches its full acceptance gate.`
+- 2026-06-29
+  - Summary: `Child 1 closeout is complete in the isolated worktree: Task 4 added src/core/save/save-envelope.ts, Task 5 routed src/main.ts through src/core/adapters/legacy-main-adapter.ts, and the first production-safe core boundary now spans boot, runtime dispatch, save identity, and legacy handoff.`
+  - Verification: `Child 1 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "main.ts delegates boot through legacy-main-adapter"; npm run typecheck; npm test; npm run build`
+  - Next: `Use Child 2 as the next executable plan for save hardening after Child 1 review/merge; keep Child 3+ queued behind their documented dependency rules.`
+- 2026-06-29
+  - Summary: `Child 2 closeout is complete in the isolated worktree: src/core/save now includes save-migrations.ts, save-loader.ts, and save-writer.ts, legacy save normalization is covered by regression tests, missing selected mods now fail explicitly, and mod-owned payload survives round-trip serialization.`
+  - Verification: `Child 2 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes|missing selected mod|payload after load|save migration upgrades"; npm run typecheck; npm test; npm run build`
+  - Next: `Use Child 3 as the next executable plan after Child 2 review/merge; keep Child 4 and Child 5 queued behind their documented dependency rules.`
+- 2026-06-29
+  - Summary: `Child 3 closeout is complete in the isolated worktree: src/core/runtime now includes dedicated navigation/time/event/scene seam files, runtime-result carries scene/task metadata, and main.ts routes real city-entry, timed advancement, and event-trigger entry through those new runtime wrappers instead of owning those trigger paths inline.`
+  - Verification: `Child 3 closeout: npm run lint:plans; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "navigation external entry ids|typed day-start request|candidate selection and activation seams|activated event handoff"; npm run typecheck; npm test; npm run build`
+  - Next: `Use Child 4 as the next executable plan after Child 3 review/merge; keep Child 5 and Child 6 queued behind their documented dependency rules.`
 
 ## Why This Plan Exists
 
@@ -37,7 +80,7 @@ This plan covers:
 - boot/runtime extraction
 - engine/service boundaries
 - registry-driven module loading
-- save schema separation
+- minimal save boundary plus later save hardening
 - navigation and interaction runtime separation
 - capability-based mod integration
 - migration of the current built-in game into the new structure
@@ -53,17 +96,17 @@ Those belong in child plans after the engine seams are in place.
 
 ## Target Layering
 
-### Layer 1: Engine Kernel
+### Layer 1: Core
 
 Owns:
 
-- app boot
-- active mod selection
+- stable contracts
+- engine boot
+- runtime dispatch
 - registry composition
-- game state creation
-- save/load migration
+- minimal save/state boundary, with deeper load hardening in later child plans
+- mod activation
 - effect settlement pipeline
-- module dispatch entrypoints
 
 Must not own:
 
@@ -72,27 +115,33 @@ Must not own:
 - concrete battle/minigame internals
 - direct DOM rendering logic
 
-### Layer 2: Runtime Services
+### Layer 2: Application
 
 Owns:
 
-- navigation runtime
-- scene/city/house entry orchestration
-- interactive runtime
-- story trigger runtime
-- time progression runtime
-- economy/task settlement helpers
+- gameplay/domain services during migration
+- adapters from legacy feature modules into core contracts
+- presenter assembly from runtime data into render models
 
-### Layer 3: Adapter / Presenter
+### Layer 3: UI
 
 Owns:
 
-- transforming engine state into UI view models
-- browser input mapping
-- overlay/full-screen presentation routing
-- asset and text resolution for display
+- layout rendering
+- screen routing
+- reusable player-facing components
+- theme resolution
 
-### Layer 4: Mods / Content Packs
+### Layer 4: Modding
+
+Owns:
+
+- authoring presets
+- schema validators
+- starter templates
+- examples for creators
+
+### Layer 5: Content
 
 Owns:
 
@@ -133,22 +182,29 @@ Owns:
 
 ### New Files / Directories Expected
 
-- `src/engine/boot/engine-bootstrap.ts`
-- `src/engine/boot/engine-context.ts`
-- `src/engine/kernel/game-engine.ts`
-- `src/engine/kernel/engine-registry.ts`
-- `src/engine/kernel/engine-capabilities.ts`
-- `src/engine/runtime/runtime-dispatch.ts`
-- `src/engine/runtime/runtime-settlement.ts`
-- `src/engine/save/save-contract.ts`
-- `src/engine/save/save-migrations.ts`
-- `src/engine/mods/mod-manifest.ts`
-- `src/engine/mods/mod-registry.ts`
-- `src/engine/mods/mod-loader.ts`
+- `src/core/contracts/*`
+- `src/core/engine/engine-bootstrap.ts`
+- `src/core/engine/engine-factory.ts`
+- `src/core/engine/engine-session.ts`
+- `src/core/engine/engine-capability-guard.ts`
+- `src/core/engine/engine-mod-activation.ts`
+- `src/core/runtime/runtime-dispatch.ts`
+- `src/core/runtime/runtime-router.ts`
+- `src/core/runtime/runtime-settlement.ts`
+- `src/core/runtime/runtime-context.ts`
+- `src/core/registry/engine-registry.ts`
+- `src/core/registry/mod-registry.ts`
+- `src/core/mods/mod-loader.ts`
+- `src/core/mods/mod-activation.ts`
+- `src/core/mods/mod-content-index.ts`
+- `src/core/save/save-envelope.ts`
+- `src/core/save/save-migrations.ts`
+- `src/core/adapters/legacy-main-adapter.ts`
 - `src/application/navigation/navigation-runtime.ts`
 - `src/application/presenter/app-presenter.ts`
-- `src/application/presenter/view-models.ts`
-- `docs/superpowers/specs/2026-06-29-mod-first-engine-runtime-extraction-design.md`
+- `src/ui/layout-renderer.ts`
+- `docs/superpowers/specs/2026-06-29-engine-runtime-boundary-design.md`
+- `docs/superpowers/plans/2026-06-29-engine-runtime-boundary-plan.md`
 - `docs/change-log.md`
 
 ## Architectural Rules
@@ -159,237 +215,381 @@ Owns:
 - Capability declarations must decide which services a mod is allowed to use.
 - Interaction modules, house modules, and story modules must all integrate through registries, not through direct `import` branches in the bootstrap layer.
 
-## Task 1: Freeze the Core Runtime Boundary
+## Parent Execution Rules
+
+- This file is an orchestration plan only.
+- Do not implement production code directly from this parent plan.
+- Concrete file edits, test commands, and checkbox execution must live in child plans.
+- After any child plan work batch, update both:
+  - the child plan's `Execution State` and `Progress Log`
+  - this parent plan's `Execution State` and `Progress Log`
+- Do not start a child plan whose dependencies are not satisfied.
+- If a child plan is missing, create it before starting code work for that scope.
+- Runtime subsystem boundaries are governed by `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`.
+
+### Task 1: Execute Child 1 Boundary Plan
 
 **Files:**
-- Modify: `src/main.ts`
-- Modify: `src/domain/game-state.ts`
-- Modify: `src/application/state/create-initial-state.ts`
-- Modify: `tests/robustness.test.cjs`
-- Create: `docs/superpowers/specs/2026-06-29-mod-first-engine-runtime-extraction-design.md`
+- Read: `docs/superpowers/specs/2026-06-29-engine-runtime-boundary-design.md`
+- Read: `docs/superpowers/plans/2026-06-29-engine-runtime-boundary-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 
-- [ ] Define the engine-owned state boundary.
-  Deliverable: identify which fields in `GameState` are `core runtime`, `feature runtime`, and `mod-owned runtime`.
-- [ ] Add regression tests that assert engine boot can create state without importing a concrete scenario entry module.
-  Verification target: a focused boot test passes using only a stub registry and empty mod.
-- [ ] Write the companion design doc for the engine boundary before moving runtime code.
-  Required sections: boot contract, registry contract, save contract, capability contract, presenter boundary.
-- [ ] Reduce `main.ts` responsibilities into an explicit checklist.
-  Required buckets: boot, input wiring, render loop, navigation dispatch, interaction dispatch, content sync.
-- [ ] Record freeze rules for shared files likely to conflict with other Codex threads.
+- [x] **Step 1: Verify Child 1 is the active execution entry**
 
-**Exit condition:** the repository has an approved engine-boundary design and failing tests that describe the future bootstrap path.
+Confirm:
 
-## Task 2: Extract Engine Boot and Registry Composition
+- `docs/superpowers/specs/2026-06-29-engine-runtime-boundary-design.md` is approved
+- `docs/superpowers/plans/2026-06-29-engine-runtime-boundary-plan.md` exists
+- no later child plan starts before Child 1 reaches its acceptance gate
 
-**Files:**
-- Create: `src/engine/boot/engine-bootstrap.ts`
-- Create: `src/engine/boot/engine-context.ts`
-- Create: `src/engine/kernel/engine-registry.ts`
-- Create: `src/engine/mods/mod-registry.ts`
-- Modify: `src/main.ts`
-- Modify: `tests/robustness.test.cjs`
+- [x] **Step 2: Execute Child 1 from its own checklist**
 
-- [ ] Create an engine bootstrap entry that accepts a registry and selected mod id instead of importing a built-in scenario directly.
-- [ ] Move content-pack activation behind bootstrap composition.
-  Existing source to reuse: `src/application/content/active-game-content.ts`.
-- [ ] Add tests for:
-  - boot with built-in default mod
-  - boot with empty stub mod
-  - boot failure when requested capability is missing
-- [ ] Keep browser startup behavior unchanged by making `main.ts` call the bootstrap layer rather than re-implement it.
-- [ ] Document the bootstrap API in the change log once it stabilizes.
+Run all implementation work from:
 
-**Exit condition:** startup no longer depends on hardcoded content imports in `main.ts`; the engine can boot from a registry-composed mod selection.
+```text
+docs/superpowers/plans/2026-06-29-engine-runtime-boundary-plan.md
+```
 
-## Task 3: Separate Save Contract From Runtime Implementation
+Do not execute code directly from this parent file.
 
-**Files:**
-- Create: `src/engine/save/save-contract.ts`
-- Create: `src/engine/save/save-migrations.ts`
-- Modify: `src/domain/game-state.ts`
-- Modify: `src/application/state/create-initial-state.ts`
-- Modify: `tests/robustness.test.cjs`
+- [x] **Step 3: Sync parent status after Child 1 work**
 
-- [ ] Define a save envelope with:
-  - engine version
-  - selected mod id
-  - core runtime state
-  - mod-owned state payload
-  - migration metadata
-- [ ] Add migration hooks so future mod schema upgrades do not require rewriting the engine save loader.
-- [ ] Add tests for:
-  - loading an old save into the new envelope
-  - rejecting a save for a missing mod
-  - preserving unknown mod payload through engine round-trip
-- [ ] Keep current saves readable during transition, even if they are normalized on next save.
+Update this parent file:
 
-**Exit condition:** save/load becomes an engine feature with explicit versioning, not a byproduct of the current runtime object shape.
+- `Execution State`
+- `Progress Log`
+- child completion markers in the completion checklist
 
-## Task 4: Extract Runtime Dispatch Services
+- [x] **Step 4: Verify Child 1 exit condition**
+
+Confirm:
+
+- Child 1 is marked `completed`
+- `src/core` bootstrap seam exists
+- runtime dispatch and effect settlement seam exists
+- minimal `SaveEnvelope` seam exists
+- `main.ts` has an explicit handoff into the new core boundary
+
+### Task 2: Reconcile Child 2 Save Migration Hardening Plan
 
 **Files:**
-- Create: `src/engine/runtime/runtime-dispatch.ts`
-- Create: `src/engine/runtime/runtime-settlement.ts`
-- Create: `src/application/navigation/navigation-runtime.ts`
-- Modify: `src/application/navigation/`
-- Modify: `src/application/time/`
-- Modify: `src/application/events/`
-- Modify: `src/main.ts`
-- Modify: `tests/robustness.test.cjs`
+- Modify: `docs/superpowers/plans/2026-06-29-save-migration-hardening-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+- Read: `docs/superpowers/plans/2026-06-29-engine-runtime-boundary-plan.md`
 
-- [ ] Move navigation actions behind a dedicated runtime service.
-  Target: map, city, house, and scene transitions stop being decided inline in `main.ts`.
-- [ ] Move time advancement and effect settlement behind shared runtime dispatch.
-- [ ] Introduce a single dispatch surface for:
-  - UI action input
-  - timer/tick input
-  - external callback input
-- [ ] Add regression tests that prove the same dispatch entry can advance time, switch views, and trigger runtime effects without UI knowledge.
-- [ ] Keep the old behavior stable by preserving current action ids and routing semantics during the first extraction pass.
+- [x] **Step 1: Confirm the remaining save scope after Child 1**
 
-**Exit condition:** `main.ts` delegates navigation/time/event mutation to runtime services instead of owning those mutations directly.
+Child 2 must not duplicate Child 1.
 
-## Task 5: Fold Interactive Runtime Into the Engine Plan
+Its scope is limited to:
 
-**Files:**
-- Modify: `docs/superpowers/plans/2026-06-26-interactive-module-modularization-task-plan.md`
-- Create or Modify: `src/application/interactive/`
-- Modify: `src/application/minigames/`
-- Modify: `src/application/story-battle/`
-- Modify: `src/application/house-modules/`
-- Modify: `tests/robustness.test.cjs`
+- old-save normalization
+- migration sequencing
+- backward compatibility checks
+- mod-owned payload preservation hardening
+- loader/writer behavior
+- load-time selected mod validation
+- runtime subsystem boundary:
+  - `Save / Load Runtime`
+  - `State Sync Runtime`
 
-- [ ] Treat the interactive-module migration as a child workstream of this engine/runtime plan, not as a parallel architecture.
-- [ ] Keep one authoritative runtime session channel for standalone interactions.
-- [ ] Require all future minigame and story-battle launches to go through engine runtime dispatch after the registry phase lands.
-- [ ] Update the older interactive plan if its file map or sequencing conflicts with the engine bootstrap extraction.
-- [ ] Add a source guard that fails if `main.ts` regains module-specific minigame or battle orchestration.
+It must not re-define the initial `SaveEnvelope` contract already introduced by Child 1.
 
-**Exit condition:** the previously planned interactive runtime becomes a service under the new engine, not an isolated subsystem.
+- [x] **Step 2: Reconcile the Child 2 plan with the narrowed Child 1 boundary**
 
-## Task 6: Extract Presenter and Rendering Adapters
+Update:
 
-**Files:**
-- Create: `src/application/presenter/app-presenter.ts`
-- Create: `src/application/presenter/view-models.ts`
-- Modify: `src/ui/app-render.ts`
-- Modify: `src/ui/views/`
-- Modify: `src/main.ts`
-- Modify: `tests/robustness.test.cjs`
+```text
+docs/superpowers/plans/2026-06-29-save-migration-hardening-plan.md
+```
 
-- [ ] Introduce a presenter layer that maps engine state to view models.
-- [ ] Stop letting `app-render` inspect raw runtime objects with feature-specific assumptions.
-- [ ] Route overlay/full-screen/embedded interactive display through presenter output instead of direct runtime branching.
-- [ ] Add tests for presenter output stability on:
-  - map view
-  - city view
-  - house view
-  - interactive view
-  - story battle view
-- [ ] Keep current DOM structure stable where practical so the visual layer does not need a wholesale rewrite during engine extraction.
+Ensure it states:
 
-**Exit condition:** UI becomes a consumer of presenter output, reducing coupling between browser rendering and engine/runtime state.
+- Child 1 owns only the minimal envelope seam
+- Child 2 owns `save-loader`, `save-writer`, `save-migrations`, normalization, and selected-mod validation
+- Child 2 does not absorb presenter, navigation, or mod activation responsibilities
 
-## Task 7: Formalize the Mod Contract
+- [x] **Step 3: Update parent orchestration metadata**
+
+Record in this parent file:
+
+- Child 2 exists
+- Child 2 depends on Child 1 completed
+- Child 2 covers migration hardening only
+- Child 2 owns loader/writer/migration behavior after the Child 1 seam
+- Child 2 primary subsystem boundary is:
+  - `Save / Load Runtime`
+  - `State Sync Runtime`
+
+- [x] **Step 4: Verify Child 2 is ready to execute**
+
+Confirm:
+
+- Child 2 plan file exists
+- Child 2 no longer overlaps Child 1 save-envelope scope
+- Child 2 now owns all non-minimal save hardening responsibilities
+
+### Task 3: Execute Child 2 Save Migration Hardening
 
 **Files:**
-- Create: `src/engine/mods/mod-manifest.ts`
-- Create: `src/engine/mods/mod-loader.ts`
-- Modify: `src/domain/content-pack.ts`
-- Modify: `src/domain/scenario-pack.ts`
-- Modify: `src/application/content/active-game-content.ts`
-- Modify: `tests/robustness.test.cjs`
+- Read: `docs/superpowers/plans/2026-06-29-save-migration-hardening-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 
-- [ ] Define a `GameModManifest` that declares:
-  - mod id
-  - version
-  - entry content pack ids
-  - required capabilities
-  - optional registered runtime modules
-  - save compatibility rules
-- [ ] Make the loader validate capability requirements before activation.
-- [ ] Keep current built-in content loadable by wrapping it as the first-party default mod.
-- [ ] Add tests for:
-  - valid mod manifest activation
-  - duplicate id rejection
-  - missing capability rejection
-  - incompatible save version rejection
-- [ ] Document how future JSON mods register content and runtime hooks without editing engine bootstrap files.
+- [x] **Step 1: Verify Child 2 dependencies**
 
-**Exit condition:** the project has a real mod contract, not just "JSON files happen to load".
+Confirm:
 
-## Task 8: Migrate the Current Built-In Campaign To the New Engine Shell
+- Child 1 is completed
+- core state boundary from Child 1 is stable enough for save hardening
+- minimal `SaveEnvelope` seam from Child 1 is present
 
-**Files:**
-- Modify: `src/content/`
-- Modify: `src/application/content/active-game-content.ts`
-- Modify: `src/main.ts`
-- Modify: `tests/robustness.test.cjs`
-- Modify: `docs/change-log.md`
+- [x] **Step 2: Execute Child 2 from its own checklist**
 
-- [ ] Repackage the current built-in experience as the default first-party mod.
-- [ ] Keep current start flow and browser experience unchanged for the user.
-- [ ] Verify boot, save/load, navigation, house entry, and one interactive path all work through the new engine shell.
-- [ ] Add a smoke test matrix that covers:
-  - default mod boot
-  - map to city to house navigation
-  - one story callback path
-  - one minigame path
-  - save and reload
-- [ ] Record remaining hardcoded content debt that still blocks full external JSON migration.
+Run all implementation work from:
 
-**Exit condition:** the existing game becomes the first consumer of the extracted engine/runtime rather than the engine itself.
+```text
+docs/superpowers/plans/2026-06-29-save-migration-hardening-plan.md
+```
 
-## Task 9: Cleanup, Compatibility Removal, and Documentation
+- [x] **Step 3: Sync parent status after Child 2 work**
+
+Update this parent file:
+
+- `Execution State`
+- `Progress Log`
+- completion checklist
+
+- [x] **Step 4: Verify Child 2 exit condition**
+
+Confirm:
+
+- migration entrypoints exist
+- load-time selected-mod validation exists
+- mod payload round-trip is covered
+- current save path remains readable during transition
+- Child 2 is marked `completed`
+
+### Task 4: Reconcile And Execute Child 3 Navigation Time Event Extraction
 
 **Files:**
-- Modify: `src/main.ts`
-- Modify: `src/ui/app-render.ts`
-- Modify: `src/domain/game-state.ts`
-- Modify: `docs/change-log.md`
-- Modify: `docs/superpowers/plans/2026-06-26-interactive-module-modularization-plan.md`
-- Modify: `docs/superpowers/plans/2026-06-26-interactive-module-modularization-task-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-navigation-time-event-runtime-extraction-plan.md`
+- Read: `docs/superpowers/specs/2026-06-29-event-task-scene-runtime-collaboration-spec.md`
+- Read: `docs/superpowers/plans/2026-06-29-engine-runtime-boundary-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 
-- [ ] Remove temporary compatibility shims only after all boot/runtime paths are covered by tests.
-- [ ] Update older modularization plans so they reference the engine-first sequence.
-- [ ] Add source guard tests that reject new direct concrete-module imports in `main.ts`.
-- [ ] Update the change log with engine extraction milestones and remaining mod migration debt.
-- [ ] Freeze new architectural rules for future contributors.
+- [x] **Step 1: Reconcile Child 3 against the approved collaboration spec**
 
-**Exit condition:** the engine-first structure is the default development path and old bootstrap shortcuts are explicitly disallowed.
+Update:
 
-## Recommended Child Plans
+```text
+docs/superpowers/plans/2026-06-29-navigation-time-event-runtime-extraction-plan.md
+```
 
-This parent plan is too broad to execute safely in one pass. Before code changes, split execution into these child task plans:
+Ensure it states:
 
-1. `kernel-boot-registry-extraction`
-2. `save-contract-and-migration-envelope`
-3. `navigation-time-event-runtime-extraction`
-4. `interactive-runtime-integration-under-engine`
-5. `presenter-render-decoupling`
-6. `mod-manifest-loader-and-default-mod-migration`
+- runtime dispatch ownership for navigation and time trigger entry
+- event candidate filtering and activation
+- first scene handoff seam
+- task action and task signal seams only
+- runtime subsystem boundary:
+  - `Navigation Runtime`
+  - `Time Runtime`
+  - `Event Runtime`
+  - `Scene Runtime` handoff seam where required
+
+Ensure it does not claim:
+
+- full `Task / Mission Runtime`
+- interactive runtime
+- presenter/render cutover
+
+- [x] **Step 2: Verify Child 3 dependencies**
+
+Confirm:
+
+- Child 1 is completed
+- Child 2 is completed, or a Child 2 waiver is recorded in both this parent plan and the weekly plan with explicit reason before Child 3 begins
+
+- [x] **Step 3: Execute Child 3 from its own checklist**
+
+Run all implementation work from the Child 3 plan file.
+
+- [x] **Step 4: Verify Child 3 exit condition and sync parent log**
+
+Confirm:
+
+- `main.ts` no longer owns primary navigation/time/event mutations inline
+- event activation can hand off into a scene seam
+- task action and task signal seams exist without full task runtime extraction
+- Child 3 is marked `completed`
+- parent log is updated
+
+### Task 5: Author And Execute Child 4 Interactive Runtime Integration
+
+**Files:**
+- Create: `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+
+- [ ] **Step 1: Author Child 4 interactive runtime plan**
+
+Create:
+
+```text
+docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md
+```
+
+This child covers:
+
+- minigame launch routing
+- story-battle launch routing
+- removal of parallel interactive orchestration paths
+- runtime subsystem boundary:
+  - `Interaction Runtime`
+  - `House Runtime` integration seam where house-owned interactions delegate into shared runtime
+
+- [ ] **Step 2: Verify Child 4 dependencies**
+
+Confirm:
+
+- Child 1 completed
+- Child 3 completed
+
+- [ ] **Step 3: Execute Child 4 from its own checklist**
+
+Run all implementation work from the Child 4 plan file, not from this parent file.
+
+- [ ] **Step 4: Verify Child 4 exit condition and sync parent log**
+
+Confirm:
+
+- interactive runtime is core-dispatched rather than parallel architecture
+- Child 4 is marked `completed`
+- parent log is updated
+
+### Task 6: Author And Execute Child 5 Presenter Render Decoupling
+
+**Files:**
+- Create: `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+
+- [ ] **Step 1: Author Child 5 presenter render decoupling plan**
+
+Create:
+
+```text
+docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md
+```
+
+This child covers:
+
+- full presenter-output adoption
+- `app-render` decoupling
+- schema-driven layout rendering cutover
+- runtime subsystem boundary:
+  - `Presentation Bridge Runtime`
+
+- [ ] **Step 2: Verify Child 5 dependencies**
+
+Confirm:
+
+- Child 5 depends on Child 1 and Child 3 completed
+
+- [ ] **Step 3: Execute Child 5 from its own checklist**
+
+Run all implementation work from the Child 5 plan file, not from this parent file.
+
+- [ ] **Step 4: Verify Child 5 exit condition and sync parent log**
+
+Confirm:
+
+- `app-render` consumes presenter output instead of raw runtime assumptions
+- Child 5 is marked `completed`
+
+### Task 7: Author And Execute Child 6 Default Mod Migration
+
+**Files:**
+- Create: `docs/superpowers/plans/2026-06-29-mod-manifest-loader-and-default-mod-migration-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+
+- [ ] **Step 1: Author Child 6**
+
+Create:
+
+```text
+docs/superpowers/plans/2026-06-29-mod-manifest-loader-and-default-mod-migration-plan.md
+```
+
+Scope:
+
+- first-party default mod
+- capability validation
+- builtin campaign migration onto extracted engine/runtime
+- runtime subsystem boundary:
+  - `Boot Runtime`
+  - `Save / Load Runtime` compatibility seam
+  - `State Sync Runtime` compatibility seam
+
+- [ ] **Step 2: Verify Child 6 dependencies**
+
+Confirm:
+
+- Child 1 completed
+- Child 2 completed
+- Child 3 completed
+- Child 5 completed
+
+- [ ] **Step 3: Execute Child 6 from its own checklist**
+
+Run all implementation work from the Child 6 plan file.
+
+- [ ] **Step 4: Close the parent orchestration plan**
+
+Confirm:
+
+- built-in game runs as first-party mod on top of extracted engine/runtime
+- all required child plans are marked `completed`
+- parent `Execution State` and `Progress Log` reflect the final orchestration state
+
+## Parent Acceptance Gate
+
+Do not mark this parent plan `completed` until:
+
+- all required child plans exist
+- all required child plans are marked `completed`
+- no unresolved `P0` or `P1` remains in any child plan still within scope
+- the latest parent `Progress Log` records the final orchestration state
+
+## Blocker And Escalation Rules
+
+- If a child plan hits a `P0`, stop lower-priority child work and record the blocker in both the child and parent logs.
+- If a child plan hits a `P1`, do not mark that child `completed` and do not start any dependent child plan.
+- If a child plan is blocked by missing design or missing file ownership, author or revise the required child/spec doc before resuming code work.
+- If parallel worktree conflicts are detected on shared files, defer to the child plan conflict rules and record the decision here.
 
 ## Parallel Collaboration Rules
 
-- Do not execute `Task 1`, `Task 2`, `Task 4`, `Task 6`, or `Task 9` in the same worktree as another Codex thread editing `src/main.ts`, `src/domain/game-state.ts`, `src/ui/app-render.ts`, or `tests/robustness.test.cjs`.
+- Do not execute Child 1, Child 3, Child 4, or Child 5 in the same worktree as another Codex thread editing `src/main.ts`, `src/domain/game-state.ts`, `src/ui/app-render.ts`, or `tests/robustness.test.cjs`.
 - Documentation-only updates are safe in the current worktree.
-- After `engine-registry.ts` and `save-contract.ts` stabilize, treat them as frozen contracts; later tasks should conform rather than opportunistically redesign them.
+- After `src/core/contracts/` and `src/core/registry/engine-registry.ts` stabilize, treat them as frozen contracts; later tasks should conform rather than opportunistically redesign them.
 - The interactive-module migration should not proceed past adapter-only cleanup until the engine bootstrap and runtime dispatch seams are merged.
 
 ## Success Criteria
 
 - The engine can boot from a selected mod registry entry instead of a hardcoded scenario import path.
 - `main.ts` becomes a thin browser/bootstrap adapter rather than a gameplay orchestrator.
-- Save files explicitly separate engine schema from mod payload.
-- Navigation, time, events, and interactive modules dispatch through reusable runtime services.
+- Save files explicitly separate engine schema from mod payload through a minimal envelope plus hardened migration path.
+- Navigation, time, events, and interactive modules dispatch through reusable `src/core/runtime` services.
 - The current built-in campaign runs as the first-party default mod on top of the extracted engine shell.
 - New mods can declare capabilities and content without editing engine bootstrap files.
 
 ## Completion Checklist
 
-- [ ] Parent plan approved
-- [ ] Child plans created
+- [x] Parent orchestration state updated
+- [x] Child 1 completed
+- [x] Child 2 authored and completed
+- [x] Child 3 authored and completed
+- [ ] Child 4 authored and completed
+- [ ] Child 5 authored and completed
+- [ ] Child 6 authored and completed
 - [ ] Shared-file conflict policy acknowledged
-- [ ] Execution worktree strategy chosen
-- [ ] First child plan selected for implementation
+- [ ] Final orchestration verification recorded

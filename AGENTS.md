@@ -83,3 +83,21 @@ In short:
 - prefer extraction over duplication
 - prefer reusable systems over temporary patches
 - prefer genre-proven design over ad hoc invention
+
+## Superpowers Plan Governance
+
+For work tracked under `docs/superpowers/plans/`:
+
+1. New plan files must follow `docs/superpowers/plans/_plan-template.md`.
+2. Plan structure and lifecycle rules must follow `docs/superpowers/specs/plan-governance-spec.md`.
+3. Before resuming a plan, inspect:
+   - `Execution State`
+   - latest `Progress Log`
+   - first unchecked checkbox
+4. After each completed work batch, update:
+   - checkbox state
+   - `Execution State`
+   - `Progress Log`
+5. Do not mark a plan `completed` if required verification has not passed.
+6. Do not leave a `blocked` plan without recording the blocker in `Progress Log`.
+7. When creating or materially restructuring a plan, run `npm run lint:plans`.

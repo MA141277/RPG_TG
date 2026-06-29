@@ -10,11 +10,13 @@ const guardedTargets = [
   "src/content/houses/home-house-content.ts",
   "src/content/houses/keep-house-content.ts",
   "src/content/houses/medicine-house-content.ts",
+  "src/content/houses/temple-house-content.ts",
   "src/content/houses/tavern-content.ts",
   "src/application/house-modules/home-house/home-house-house-module.ts",
   "src/application/house-modules/keep-house/keep-house-house-module.ts",
   "src/application/house-modules/grain-shop/grain-shop-house-module.ts",
   "src/application/house-modules/medicine-house/medicine-house-house-module.ts",
+  "src/application/house-modules/temple-house/temple-house-house-module.ts",
   "src/application/house-modules/tavern/tavern-house-module.ts",
 ];
 

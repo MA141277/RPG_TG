@@ -8,6 +8,7 @@
     "verbatimModuleSyntax": false
   },
   "include": [
+    "src/core/**/*.ts",
     "src/application/**/*.ts",
     "src/domain/**/*.ts",
     "src/shared/**/*.ts",

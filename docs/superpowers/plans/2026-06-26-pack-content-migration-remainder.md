@@ -2,11 +2,27 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Finish the houses-only `zhuyuanzhang` zero-out pass by migrating the remaining pack-authored scenario content out of direct house runtime consumers into scenario-pack JSON.
+**Goal:** Keep the houses-only `zhuyuanzhang` zero-out pass at zero by preserving scenario-pack ownership and preventing regressions in direct house runtime consumers.
 
 **Architecture:** Treat `src/content/scenario-packs/zhuyuanzhang` as the only authoring home for house-related scenario prose and structured house content. Keep `src/content/houses/**` as adapters only, and keep cleaned runtime house modules from regressing back into inline pack prose.
 
 **Tech Stack:** TypeScript, Vite, JSON scenario-pack loader, CommonJS tests, PowerShell, ripgrep
+
+## Execution State
+
+- Status: `unknown`
+- Last Updated: `2026-06-29`
+- Current Focus: `Inspect completed checkboxes and current code state before resuming.`
+- Next Step: `Resume from the first unchecked checkbox.`
+- Verification: `Check latest progress entry and rerun required commands before continuing.`
+- Notes: `Historical progress before this tracking block may be incomplete.`
+
+## Progress Log
+
+- 2026-06-29
+  - Summary: `Added standardized progress-tracking sections to this plan.`
+  - Verification: `Not run as part of this doc-only change`
+  - Next: `Resume from the first unchecked checkbox.`
 
 ---
 
@@ -15,10 +31,6 @@
 This plan covers only the houses-only remainder inventory in `docs/hardcoded-text-audit.md`. It excludes map, prototype-world, historical-character, story, city-menu, story-battle, and boot-path work.
 
 ## File Structure Map
-
-### Remaining direct runtime house consumer
-
-- Modify: `src/application/house-modules/temple-house/temple-house-house-module.ts`
 
 ### Canonical pack targets
 
@@ -34,8 +46,7 @@ This plan covers only the houses-only remainder inventory in `docs/hardcoded-tex
 ## Execution Order
 
 1. Refresh docs and freeze the narrowed remaining boundary
-2. Migrate the remaining direct runtime consumer
-3. Keep permanent boundary guards for the cleaned house files
+2. Keep permanent boundary guards for the cleaned house files
 
 ### Task 1: Refresh Docs and Freeze the Narrowed Boundary
 
@@ -71,69 +82,10 @@ These modules are already migrated and must stay clean:
 - `src/application/house-modules/keep-house/keep-house-house-module.ts`
 - `src/application/house-modules/grain-shop/grain-shop-house-module.ts`
 - `src/application/house-modules/medicine-house/medicine-house-house-module.ts`
+- `src/application/house-modules/temple-house/temple-house-house-module.ts`
 - `src/application/house-modules/tavern/tavern-house-module.ts`
 
-### Task 2: Migrate the Remaining Temple Runtime Consumer
-
-**Files:**
-- Modify: `src/application/house-modules/temple-house/temple-house-house-module.ts`
-- Modify: `src/content/scenario-packs/zhuyuanzhang/text-entries.json`
-- Test: `tests/robustness.test.cjs`
-
-- [ ] **Step 1: Add failing regression tests for remaining temple runtime prose**
-
-Use assertions shaped like:
-
-```js
-assert.equal(
-  lateTempleReview.dialogueLines[0],
-  "评定日期已到。你现在可以立刻去前殿听候方丈安排，也可以先不去。"
-);
-assert.equal(
-  templeBeggingPrompt.dialogueLines[0],
-  "住持已把这一轮差事定为远途化缘，你先往颍州方向走，在外地城镇求粮。"
-);
-```
-
-- [ ] **Step 2: Run the targeted suite and confirm the remaining temple runtime still embeds literals**
-
-Run:
-
-```bash
-npm test -- --runInBand robustness
-```
-
-Expected:
-
-- FAIL or expose that required temple runtime prose is still authored inline
-
-- [ ] **Step 3: Replace each remaining literal with text-id lookup and add the prose to pack entries**
-
-Target runtime pattern:
-
-```ts
-return resolveTextEntry(
-  input.textEntriesById ?? {},
-  "runtime.zhu_yuanzhang.temple.review.late.prompt.001",
-  "MISSING_TEXT:runtime.zhu_yuanzhang.temple.review.late.prompt.001"
-);
-```
-
-- [ ] **Step 4: Verify**
-
-Run:
-
-```bash
-npm run typecheck
-npm test -- --runInBand robustness
-```
-
-Expected:
-
-- temple runtime flows still render and advance
-- the remaining temple scenario prose now resolves through pack text ids
-
-### Task 3: Keep Strict Boundary Guards for Cleaned Scope
+### Task 2: Keep Strict Boundary Guards for Cleaned Scope
 
 **Files:**
 - Create: `tests/hardcoded-scenario-pack-boundary.test.cjs`
@@ -192,7 +144,7 @@ Expected:
 
 - no reviewed `src/content/houses/**` file remains the canonical authoring source for `zhuyuanzhang` house content
 - no cleaned runtime consumer reintroduces pack-specific house prose inline
-- `temple-house-house-module.ts` is the only remaining reviewed runtime remainder until Task 2 is finished
+- no reviewed runtime remainder remains in the houses-only pack-specific scope
 - `docs/hardcoded-text-audit.md`, the spec, and this plan stay aligned
 - `npm run typecheck` and `npm test` pass
 

@@ -56,8 +56,6 @@ import {
   canAffordActivityCost,
 } from "./application/player/player-stamina";
 import {
-  advanceGameStateOneDay,
-  advanceGameStateTimeSegments,
   formatCouncilStatusText,
   readCalendarDateNumber,
 } from "./application/time/time-progression";
@@ -82,7 +80,6 @@ import {
   isHouseVisibleForStoryStage,
   selectHouseEntryAccess,
 } from "./application/story/story-stage-access";
-import { enterCity } from "./application/navigation/enter-city";
 import {
   travelToCoordinate,
   type GridCoordinate,
@@ -97,6 +94,21 @@ import {
   resolveTextTemplateEntry,
 } from "./application/content/text-resolution";
 import { loadDefaultRuntimeContent } from "./application/content/default-runtime-content";
+import { bootstrapLegacyMain } from "./core/adapters/legacy-main-adapter";
+import {
+  createEnterCityRequest,
+  runNavigationRuntime,
+} from "./core/runtime/navigation-runtime";
+import {
+  createAdvanceTimeSegmentsRequest,
+  createDayStartRequest,
+  runTimeRuntime,
+} from "./core/runtime/time-runtime";
+import {
+  createEventTriggerRequest,
+  runEventRuntime,
+} from "./core/runtime/event-runtime";
+import { runSceneFromEvent } from "./core/runtime/scene-runtime";
 import {
   createPrototypeCharactersForStoryStage,
 } from "./content/prototype-world";
@@ -135,6 +147,7 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "./domain/scenario-pack";
+import type { EngineRegistry } from "./core/registry/engine-registry";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -243,6 +256,7 @@ if (uiOverlayElement == null) {
 
 const appRoot = appElement;
 const defaultPlayerCharacterId = "char.player";
+const builtinDefaultModId = "builtin.default";
 const selectableCharacterIds = [
   "char.player",
   "char.kulan_xu_da",
@@ -251,6 +265,23 @@ const selectableCharacterIds = [
 ] as const;
 const baseGameContentPack = await createBaseGameContentPack();
 await loadDefaultRuntimeContent();
+const legacyEngineRegistry: EngineRegistry = {
+  mods: {
+    [builtinDefaultModId]: {
+      id: builtinDefaultModId,
+      version: "1.0.0",
+      title: "Default Builtin Mod",
+      entryContentPackIds: [],
+    },
+  },
+  content: {
+    [builtinDefaultModId]: baseGameContentPack,
+  },
+};
+const legacyEngineSession = bootstrapLegacyMain({
+  selectedModId: builtinDefaultModId,
+  registry: legacyEngineRegistry,
+});
 
 function createCityCoordinatesById(
   definitions: CityDefinition[],
@@ -310,6 +341,7 @@ function getCurrentMapDefinition(): MapDefinition | null {
   );
 }
 
+void legacyEngineSession;
 let activeGameContent: ActiveGameContent = createActiveGameContent(baseGameContentPack);
 let activeMapDefinitions: MapDefinition[] = activeGameContent.maps;
 let activeMapDefinitionById: Record<string, MapDefinition> =
@@ -701,10 +733,12 @@ function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
   const previousGameState = appState.gameState;
   appState = {
     ...appState,
-    gameState: advanceGameStateTimeSegments(
-      completion.state,
-      convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
-    ),
+    gameState: runTimeRuntime({
+      state: completion.state,
+      request: createAdvanceTimeSegmentsRequest(
+        convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
+      ),
+    }).state,
     characterDefinitions: completion.characterDefinitions,
   };
   syncCouncilPriorityAfterGameStateChange(previousGameState);
@@ -719,19 +753,34 @@ function triggerStoryEventsForTiming(
   state: GameState;
   characterDefinitions: CharacterDefinition[];
 } {
-  return triggerStoryEvents(
-    {
-      state,
-      characterDefinitions,
-    },
-    {
-      eventDefinitionsById: activeStoryEventDefinitionsById,
-      sceneDefinitionsById: activeStorySceneDefinitionsById,
-      activityDefinitionsById: activeActivityDefinitionsById,
-      textEntriesById,
-    },
-    buildStoryTriggerInput(timing, state)
-  );
+  const eventRuntimeResult = runEventRuntime({
+    request: createEventTriggerRequest(`story.${timing}`),
+    state,
+    characterDefinitions,
+    eventDefinitionsById: activeStoryEventDefinitionsById,
+    triggerInput: buildStoryTriggerInput(timing, state),
+  });
+
+  if (eventRuntimeResult.activation?.sceneId == null) {
+    return {
+      state: eventRuntimeResult.state,
+      characterDefinitions: eventRuntimeResult.characterDefinitions,
+    };
+  }
+
+  const sceneRuntimeResult = runSceneFromEvent({
+    state: eventRuntimeResult.state,
+    characterDefinitions: eventRuntimeResult.characterDefinitions,
+    sceneDefinitionsById: activeStorySceneDefinitionsById,
+    eventDefinitionsById: activeStoryEventDefinitionsById,
+    activityDefinitionsById: activeActivityDefinitionsById,
+    textEntriesById,
+  });
+
+  return {
+    state: sceneRuntimeResult.state,
+    characterDefinitions: sceneRuntimeResult.characterDefinitions,
+  };
 }
 
 function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
@@ -1362,7 +1411,10 @@ function startMapAutoAdvance(input: {
     const previousGameState = appState.gameState;
     appState = {
       ...appState,
-      gameState: advanceGameStateOneDay(appState.gameState),
+      gameState: runTimeRuntime({
+        state: appState.gameState,
+        request: createDayStartRequest(),
+      }).state,
     };
     const councilArrived =
       !hasReachedCouncilDate(previousGameState) &&
@@ -3748,7 +3800,10 @@ function handleModalConfirm() {
         campaignTravelState: null,
         modalState: shouldEnterCity ? pendingEnterCityState : null,
         locationDialogueState: null,
-        gameState: advanceGameStateTimeSegments(appState.gameState, 1),
+        gameState: runTimeRuntime({
+          state: appState.gameState,
+          request: createAdvanceTimeSegmentsRequest(1),
+        }).state,
       };
       if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
         renderApp();
@@ -3758,7 +3813,10 @@ function handleModalConfirm() {
   }
 
   houseRuntime.clearAllHouseIntervals();
-  const enteredCityState = enterCity(appState.gameState, appState.modalState.cityId);
+  const enteredCityState = runNavigationRuntime({
+    state: appState.gameState,
+    request: createEnterCityRequest(appState.modalState.cityId),
+  }).state;
   const storyResult = triggerStoryEventsForTiming(
     "city-enter",
     enteredCityState,
@@ -3860,7 +3918,10 @@ function startCampaignTravel(
       campaignTravelState: null,
       modalState: shouldEnterCity ? pendingEnterCityState : null,
       locationDialogueState: null,
-      gameState: advanceGameStateTimeSegments(appState.gameState, 1),
+      gameState: runTimeRuntime({
+        state: appState.gameState,
+        request: createAdvanceTimeSegmentsRequest(1),
+      }).state,
     };
     if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
       renderApp();

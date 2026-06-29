@@ -1,0 +1,355 @@
+# Mod-First Runtime Subsystems Spec
+
+## 1. Goal
+
+This spec defines the target runtime subsystem decomposition for the mod-first engine/runtime extraction roadmap.
+
+The target is to ensure child plans split work along stable runtime responsibilities instead of ad hoc feature buckets.
+
+## 2. Scope
+
+This spec applies to:
+
+- `src/core/**`
+- runtime-facing seams in `src/application/**`
+- child plans under the mod-first engine/runtime extraction roadmap
+
+This spec does not define concrete layout rendering details or scenario content format beyond the runtime boundary required to host them.
+
+## 3. Core Runtime Flow
+
+All runtime-facing systems should converge on this shape:
+
+`request -> runtime routing -> subsystem handling -> effect settlement -> state update -> presenter output`
+
+Rules:
+
+- feature modules must not mutate shared top-level runtime state directly
+- runtime subsystems should emit typed state transitions or typed effects
+- effect settlement should remain centralized
+- presenter output should remain downstream of runtime state
+
+## 4. Runtime Subsystem Inventory
+
+### 4.1 Boot Runtime
+
+Owns:
+
+- engine bootstrap
+- selected mod resolution
+- registry composition
+- initial state construction
+
+Must not own:
+
+- feature-specific navigation policy
+- concrete house/story/minigame internals
+
+Primary seams:
+
+- `src/core/engine/**`
+- `src/core/registry/**`
+- `src/core/mods/**`
+
+### 4.2 Navigation Runtime
+
+Owns:
+
+- map/city/house/scene/view transitions
+- navigation request validation
+- runtime-side view-state switching
+
+Must not own:
+
+- dialogue sequencing
+- direct UI rendering
+
+Primary seams:
+
+- `src/core/runtime/**`
+- `src/application/navigation/**`
+
+### 4.3 Event Runtime
+
+Owns:
+
+- event trigger evaluation
+- event activation and exit
+- external event callbacks entering runtime dispatch
+
+Must not own:
+
+- direct DOM concerns
+- full mission/task ownership if handled by task runtime
+
+Primary seams:
+
+- `src/core/runtime/**`
+- `src/application/events/**`
+- `src/application/story/**`
+
+### 4.4 Scene Runtime
+
+Owns:
+
+- scene progression
+- action sequencing
+- dialogue/narration/choice execution at runtime level
+
+Must not own:
+
+- wider event policy
+- rendering implementation
+
+Primary seams:
+
+- `src/core/runtime/**`
+- `src/application/scene/**`
+
+### 4.5 Task / Mission Runtime
+
+Owns:
+
+- task creation
+- task advancement
+- task completion/failure
+- mission state synchronization into shared runtime state
+
+Must not own:
+
+- scenario prose authoring
+- direct boot-path branching
+
+Primary seams:
+
+- `src/core/runtime/**`
+- mission/task services in `src/application/**`
+
+### 4.6 Interaction Runtime
+
+Owns:
+
+- standalone interaction session lifecycle
+- minigame launch/exit contract
+- story-battle launch/exit contract
+- shared interaction session channel in runtime state
+
+Must not own:
+
+- house entry gating
+- navigation ownership outside interaction lifecycle
+
+Primary seams:
+
+- `src/core/runtime/**`
+- `src/application/interactive/**`
+- adapters from `minigames` and `story-battle`
+
+### 4.7 House Runtime
+
+Owns:
+
+- special-house session lifecycle
+- coordination between house modules and shared runtime
+- house-level entry/exit and session-state handoff
+
+Relationship:
+
+- house runtime is a domain subsystem built on top of shared runtime dispatch and, where appropriate, interaction runtime
+
+Primary seams:
+
+- `src/application/house/**`
+- `src/application/house-modules/**`
+
+### 4.8 Time Runtime
+
+Owns:
+
+- calendar advancement
+- time-of-day changes
+- tick-driven progression
+- time-based runtime requests
+
+Must not own:
+
+- feature-specific side effects beyond typed effect emission
+
+Primary seams:
+
+- `src/core/runtime/**`
+- `src/application/time/**`
+
+### 4.9 Effect Settlement Runtime
+
+Owns:
+
+- centralized application of typed effects
+- flag/variable/task/time/view/economy/inventory state updates from effect payloads
+
+Must not own:
+
+- feature-specific routing decisions before effects are emitted
+
+Primary seams:
+
+- `src/core/runtime/runtime-settlement.ts`
+
+### 4.10 State Sync Runtime
+
+Owns:
+
+- reconciliation between subsystem output and shared runtime state
+- preserving stable shared state boundaries
+- isolating mod-owned payload
+
+Relationship:
+
+- this may remain partially implicit during early extraction, but child plans should treat it as a real runtime responsibility
+
+### 4.11 Save / Load Runtime
+
+Owns:
+
+- save envelope
+- load path
+- migration hooks
+- selected mod id persistence
+- mod-owned payload round-trip
+
+Must not own:
+
+- unrelated feature policy
+
+Primary seams:
+
+- `src/core/save/**`
+
+### 4.12 Presentation Bridge Runtime
+
+Owns:
+
+- transforming runtime state into presenter-facing output
+- supplying schema-driven view data to UI rendering
+
+Must not own:
+
+- direct DOM mutation
+- gameplay state mutation
+
+Primary seams:
+
+- `src/application/presenter/**`
+- `src/ui/layout-renderer.ts`
+
+## 5. Subsystem State Ownership
+
+Shared core runtime state should distinguish at least:
+
+- engine state
+- runtime state
+- mod-owned state payload
+
+Runtime state should gradually expose typed slots for:
+
+- navigation/view
+- active event/scene
+- task/mission progress
+- interactive session
+- calendar/time
+- flags/variables
+
+Persistent gameplay changes must flow back through unified runtime structures or typed effect settlement.
+
+## 6. Child Plan Boundary Mapping
+
+### Child 1: `2026-06-29-engine-runtime-boundary-plan.md`
+
+Primary subsystem coverage:
+
+- Boot Runtime
+- Effect Settlement Runtime
+- State Sync Runtime
+- Save / Load Runtime (first seam only)
+
+### Child 2: `2026-06-29-save-migration-hardening-plan.md`
+
+Primary subsystem coverage:
+
+- Save / Load Runtime
+- State Sync Runtime
+
+Secondary dependency:
+
+- Boot Runtime state boundary established by Child 1
+- minimal `SaveEnvelope` seam established by Child 1
+
+### Child 3: `2026-06-29-navigation-time-event-runtime-extraction-plan.md`
+
+Primary subsystem coverage:
+
+- Navigation Runtime
+- Time Runtime
+- Event Runtime
+- Scene Runtime handoff seam where required
+
+Secondary dependency:
+
+- Effect Settlement Runtime from Child 1
+- Save / Load Runtime stability from Child 2 unless parent orchestration explicitly waives it
+
+Scope guard:
+
+- Child 3 may reserve task action and task signal seams
+- Child 3 must not claim the full `Task / Mission Runtime`
+
+### Child 4: `2026-06-29-interactive-runtime-integration-under-core-plan.md`
+
+Primary subsystem coverage:
+
+- Interaction Runtime
+- House Runtime integration seam where house-owned interactions delegate into shared runtime
+
+Secondary dependency:
+
+- Navigation Runtime and Event Runtime from Child 3
+
+### Child 5: `2026-06-29-presenter-render-decoupling-plan.md`
+
+Primary subsystem coverage:
+
+- Presentation Bridge Runtime
+
+Secondary dependency:
+
+- Navigation Runtime and Interaction Runtime outputs stable enough to present
+
+### Child 6: `2026-06-29-mod-manifest-loader-and-default-mod-migration-plan.md`
+
+Primary subsystem coverage:
+
+- Boot Runtime
+- Save / Load Runtime compatibility seam
+- State Sync Runtime compatibility seam
+
+Secondary dependency:
+
+- downstream compatibility with Navigation, Interaction, and Presentation Bridge runtimes
+
+## 7. Planning Rules For Future Child Plans
+
+When authoring a new child plan:
+
+- state which runtime subsystems it primarily owns
+- state which runtime subsystems it depends on
+- state which runtime subsystems it must not redesign
+- avoid mixing more than one primary subsystem family unless the child plan exists to define their interface seam
+
+## 8. Acceptance Implication
+
+No child plan should be marked complete if it achieves local refactoring but leaves its mapped runtime subsystem without:
+
+- a clear owner
+- a stable entry seam
+- a stable verification path
+- a documented relationship to the surrounding runtime pipeline

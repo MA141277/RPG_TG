@@ -10,6 +10,8 @@ This directory stores project-local operating docs for agentic implementation.
 These files are not runtime code and are not automatically executed by the game.
 They are repository-local instructions for developers and agents.
 
+The governing rules for plan structure, acceptance, and bug handling live in [specs/plan-governance-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/plan-governance-spec.md).
+
 ## How To Execute A Plan
 
 1. Pick a file under `docs/superpowers/plans/`.
@@ -22,6 +24,7 @@ They are repository-local instructions for developers and agents.
    - `Execution State`
    - `Progress Log`
 7. Run the listed verification commands and record the result.
+8. Run `npm run lint:plans` after creating or materially restructuring a plan.
 
 ## How To Know Current Progress
 
@@ -64,3 +67,25 @@ Without these updates, the plan cannot be resumed reliably.
 ## Template
 
 Use [plans/_plan-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/_plan-template.md) for new plans.
+
+For queue-level weekly coordination, use:
+
+- [specs/weekly-orchestration-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/weekly-orchestration-spec.md)
+- [plans/2026-06-29-weekly-orchestration-plan.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md)
+
+## Validation
+
+Use:
+
+```bash
+npm run lint:plans
+```
+
+This structural lint checks:
+
+- required sections
+- required `Execution State` fields
+- allowed `Status` values
+- existence of checkbox steps
+
+It does not prove the plan is semantically correct. Human or agent review is still required.
