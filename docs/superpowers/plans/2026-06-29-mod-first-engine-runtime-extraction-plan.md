@@ -14,8 +14,8 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-06-29`
-- Current Focus: `Child 3 is complete in the isolated worktree: src/core/runtime now owns the first navigation/time request factories, event candidate activation seam, and scene handoff seam on top of the Child 1 runtime boundary and Child 2 save boundary.`
-- Next Step: `Promote Child 4 interactive runtime integration as the next executable child plan after Child 3 review/merge, while keeping Child 5 and Child 6 queued behind their dependency gates.`
+- Current Focus: `Child 3 is complete, and the formal Child 4 / Child 5 plan files now exist. Child 4 is the next executable child: it owns Interaction Runtime plus the House Runtime integration seam and should remove direct interactive orchestration from src/main.ts before Child 5 begins presenter/render decoupling.`
+- Next Step: `Start Child 4 from its own formal plan, then keep Child 5 queued behind Child 4 completion so presenter work stabilizes against the post-interaction runtime boundary.`
 - Verification: `Child 3 closeout: npm run lint:plans; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "navigation external entry ids|typed day-start request|candidate selection and activation seams|activated event handoff"; npm run typecheck; npm test; npm run build`
 - Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, and Child 3 completed on branch codex/child3-nav. Commit batching remains deferred so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
@@ -61,6 +61,10 @@
   - Summary: `Child 3 closeout is complete in the isolated worktree: src/core/runtime now includes dedicated navigation/time/event/scene seam files, runtime-result carries scene/task metadata, and main.ts routes real city-entry, timed advancement, and event-trigger entry through those new runtime wrappers instead of owning those trigger paths inline.`
   - Verification: `Child 3 closeout: npm run lint:plans; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "navigation external entry ids|typed day-start request|candidate selection and activation seams|activated event handoff"; npm run typecheck; npm test; npm run build`
   - Next: `Use Child 4 as the next executable plan after Child 3 review/merge; keep Child 5 and Child 6 queued behind their documented dependency rules.`
+- 2026-06-29
+  - Summary: `Authored the formal Child 4 and Child 5 implementation plan files plus their supporting specs. Child 4 is now the active next child for Interaction Runtime and House Runtime integration; Child 5 remains formally queued behind Child 4 so presenter/render boundaries do not lock against the current mixed interaction ownership.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 4 from docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md, then promote Child 5 only after Child 4 completes.`
 
 ## Why This Plan Exists
 
@@ -430,7 +434,7 @@ Confirm:
 - Create: `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
 - Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 
-- [ ] **Step 1: Author Child 4 interactive runtime plan**
+- [x] **Step 1: Author Child 4 interactive runtime plan**
 
 Create:
 
@@ -472,7 +476,7 @@ Confirm:
 - Create: `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
 - Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 
-- [ ] **Step 1: Author Child 5 presenter render decoupling plan**
+- [x] **Step 1: Author Child 5 presenter render decoupling plan**
 
 Create:
 
@@ -492,7 +496,9 @@ This child covers:
 
 Confirm:
 
-- Child 5 depends on Child 1 and Child 3 completed
+- Child 5 depends on Child 1 completed
+- Child 5 depends on Child 3 completed
+- Child 5 depends on Child 4 completed
 
 - [ ] **Step 3: Execute Child 5 from its own checklist**
 
