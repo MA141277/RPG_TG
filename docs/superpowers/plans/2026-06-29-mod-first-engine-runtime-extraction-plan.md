@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-06-30`
-- Current Focus: `Child 4 is now in progress in the isolated worktree. Its first implementation slice landed a formal interactive runtime contract plus legacy house/interactive adapters and core bridge files, and covered city-begging/activity-qte/story-battle entry in src/main.ts now routes through those core seams instead of directly importing application/house/house-runtime.`
-- Next Step: `Continue Child 4 from its own formal plan with the runtime-router/runtime-dispatch decision now made explicit: keep the new bridge seams in place for this slice, record shared-dispatch integration as a follow-up contract decision, and keep Child 5 queued behind Child 4 completion so presenter work stabilizes against the post-interaction runtime boundary.`
-- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, Child 3 completed on branch codex/child3-nav, and Child 4 is now executing on branch codex/child4-interactive-runtime in its own isolated worktree. Commit batching remains per-child so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Current Focus: `Child 4 is now completed on the approved minimum RuntimeState carrier slice. The next executable orchestration target is Child 5 presenter/render decoupling, which can now start against the stabilized post-interaction runtime boundary.`
+- Next Step: `Start Child 5 from its own checklist. Keep Child 4 convergence rules as weekly-governed future follow-up rather than reopening Child 4 implicitly.`
+- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, Child 3 completed on branch codex/child3-nav, and Child 4 is now executing on branch codex/child4-runtime-state in its own isolated worktree. Commit batching remains per-child so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -69,6 +69,18 @@
   - Summary: `Child 4 has started in its isolated worktree. The first red-green batch introduced src/core/contracts/interactive-runtime.ts, legacy house/interactive adapters, and core house/interactive runtime bridge files, then rerouted covered city-begging/activity-qte/story-battle entry in src/main.ts through those seams while preserving current behavior behind legacy delegation.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Keep Child 4 active, document the shared-dispatch follow-up explicitly in the child plan, and do not promote Child 5 until Child 4 reaches its acceptance gate.`
+- 2026-06-30
+  - Summary: `Child 4 planning was realigned after reconciling the actual type boundary inside the isolated worktree. The minimum unified RuntimeState slice now uses the current application-layer GameState as RuntimeState.core instead of forcing an immediate move onto Child 1 CoreGameState, while characterDefinitions remains separate compatibility carriage and Child 5 stays queued behind Child 4 completion.`
+  - Verification: `npm test; npm run lint:plans`
+  - Next: `Resume Child 4 at Task 8 Step 1 on the GameState-based minimum carrier, then sync parent/weekly/visibility after the next implementation batch.`
+- 2026-06-30
+  - Summary: `Child 4 batch 2 is now complete in the isolated worktree. The child introduced src/core/contracts/runtime-state.ts, widened RuntimeResult plus the shared router/dispatch/settlement line to RuntimeState, kept RuntimeState.core on the current domain GameState, kept characterDefinitions on additive compatibility carriage, and proved at least one covered interactive path can return through dispatchRuntimeRequest() without promoting Child 4 onto Child 1 CoreGameState.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Re-evaluate Child 4 exit conditions on the landed minimum carrier slice before promoting Child 5.`
+- 2026-06-30
+  - Summary: `Completed the Child 4 exit review and advanced parent orchestration. Child 4 satisfies its approved exit condition on the minimum RuntimeState carrier, so the parent queue now promotes Child 5 as the next executable child while keeping characterDefinitions/CoreGameState convergence as separately governed future work.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime|runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Start Child 5 from docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md.`
 
 ## Why This Plan Exists
 
@@ -462,15 +474,15 @@ Confirm:
 - Child 1 completed
 - Child 3 completed
 
-- [ ] **Step 3: Execute Child 4 from its own checklist**
+- [x] **Step 3: Execute Child 4 from its own checklist**
 
-Run all implementation work from the Child 4 plan file, not from this parent file.
+Run all implementation work from the Child 4 plan file, not from this parent file. The active minimum landing must follow the corrected Child 4 spec/weekly alignment: `RuntimeState.core` is the current domain `GameState` for this slice, while `characterDefinitions` and Child 1 `CoreGameState` convergence remain deferred.
 
-- [ ] **Step 4: Verify Child 4 exit condition and sync parent log**
+- [x] **Step 4: Verify Child 4 exit condition and sync parent log**
 
 Confirm:
 
-- interactive runtime is core-dispatched rather than parallel architecture
+- interactive runtime is unified under the approved minimum shared runtime carrier rather than a permanent parallel architecture
 - Child 4 is marked `completed`
 - parent log is updated
 
@@ -496,7 +508,7 @@ This child covers:
 - runtime subsystem boundary:
   - `Presentation Bridge Runtime`
 
-- [ ] **Step 2: Verify Child 5 dependencies**
+- [x] **Step 2: Verify Child 5 dependencies**
 
 Confirm:
 
@@ -598,7 +610,7 @@ Do not mark this parent plan `completed` until:
 - [x] Child 1 completed
 - [x] Child 2 authored and completed
 - [x] Child 3 authored and completed
-- [ ] Child 4 authored and completed
+- [x] Child 4 authored and completed
 - [ ] Child 5 authored and completed
 - [ ] Child 6 authored and completed
 - [ ] Shared-file conflict policy acknowledged

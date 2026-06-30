@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-06-30`
-- Current Focus: `Child 4 is now the active weekly target in an isolated worktree. Its first implementation slice landed a core-owned interactive runtime seam plus house bridge wrappers, and covered city-begging/activity-qte/story-battle entry in src/main.ts now routes through those seams instead of direct application-house ownership.`
-- Next Step: `Keep Child 4 active, refresh the visibility companion/artifact bundle against this first interactive-runtime batch, and treat shared runtime-router/runtime-dispatch integration as an explicit follow-up decision instead of silently expanding the current slice. Child 5 remains queued behind Child 4 completion.`
-- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This weekly plan governs current execution order. Active Child 4 implementation is running on branch codex/child4-interactive-runtime after dev was pushed to origin and the isolated worktree was seeded from the validated dev state with a shared node_modules junction. The weekly visibility companion and the eight linked weekly artifact files are being refreshed again against this first Child 4 implementation batch. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+- Current Focus: `Child 4 has now been closed on the approved minimum RuntimeState carrier slice. The active weekly target is therefore no longer a Child 4 continuation batch; the queue is now ready to hand off to Child 5 presenter/render decoupling with Child 4's promotion gate rules preserved as follow-up governance rather than as an open blocker.`
+- Next Step: `Start Child 5 from Task 1 Step 1. Keep the Child 4 convergence gate unchanged while Child 5 proceeds: characterDefinitions must remain outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first.`
+- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This weekly plan governs current execution order. Active Child 4 implementation is running on branch codex/child4-runtime-state after dev was pushed to origin and the isolated worktree was seeded from the validated dev state with a shared node_modules junction. The weekly visibility companion and the eight linked weekly artifact files are being refreshed again against the landed minimum RuntimeState carrier batch. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
 
@@ -79,6 +79,18 @@
   - Summary: `Executed the first Child 4 batch in an isolated worktree: src/core/runtime gained interactive-runtime.ts and house-runtime.ts, src/core/adapters gained legacy house/interactive adapter files, covered city-begging/activity-qte/story-battle entry in src/main.ts now flows through those core seams, and the weekly artifact bundle has been refreshed to describe the new interactive-runtime ownership picture.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Keep Child 4 active, record the shared-dispatch follow-up explicitly in the child plan, and do not promote Child 5 until Child 4 completes.`
+- 2026-06-30
+  - Summary: `Realigned weekly governance after reconciling the actual type boundary in the Child 4 worktree. The active widening target is now a minimum carrier over the current application-layer GameState: RuntimeState.core maps the existing domain GameState, RuntimeState.app carries beggingMiniGameState/autoAdvanceState/cityDirectoryState/locationDialogueState, RuntimeState.view stays empty, and both characterDefinitions plus Child 1 CoreGameState convergence remain deferred behind a later weekly promotion gate.`
+  - Verification: `npm test; npm run lint:plans`
+  - Next: `Resume Child 4 at the GameState-based minimum carrier implementation steps, sync child/weekly/visibility after each implementation batch, and recheck Child 4 exit plus Child 5 start conditions before any queue promotion.`
+- 2026-06-30
+  - Summary: `Executed the second Child 4 batch in the isolated worktree and synchronized weekly governance around the landed minimum carrier. src/core/contracts/runtime-state.ts now defines the minimum RuntimeState shape, runtime-result/router/dispatch/settlement now route over RuntimeState, interactive-runtime now returns RuntimeResult.state plus RuntimeResult.interactive with characterDefinitions kept on an additive compatibility path, and main.ts now proves at least one covered interactive path can re-enter through dispatchRuntimeRequest() without merging characterDefinitions into RuntimeState.core.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Use the synced child/weekly/visibility state to re-evaluate whether Child 4 can close on the minimum carrier slice. If it cannot, continue only with wider shared-dispatch coverage and signal normalization before revisiting any convergence gate.`
+- 2026-06-30
+  - Summary: `Completed the Child 4 exit/start-condition recheck and advanced the weekly queue legally. Child 4 satisfies its approved exit condition on the minimum RuntimeState carrier, Child 5's dependency gate is now satisfied, and the weekly controller now promotes Child 5 as the next executable child without reopening the characterDefinitions convergence decision.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime|runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Start Child 5 from docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md Task 1 Step 1.`
 
 ---
 
@@ -99,6 +111,8 @@ Legacy plans outside the active queue remain in reconciliation scope until expli
 - Do not execute production code from the weekly visibility companion.
 - Only one implementation child plan may be `in-progress` at a time unless this weekly plan is explicitly updated to allow parallel work.
 - Do not start any dependent child plan before its prerequisite child plan is `completed`.
+- If an active child's execution boundary, landing scope, or convergence target changes, update the governing spec, the active child plan, and this weekly plan before continuing implementation.
+- If a new defer rule, promotion rule, or convergence condition affects more than one child plan, record it in this weekly plan before treating it as active governance.
 - A dependency waiver is valid only if:
   - the waived dependency and affected queue item are named explicitly
   - the reason is recorded in both this weekly plan's `Progress Log` and the parent orchestration plan's `Progress Log`
@@ -110,8 +124,22 @@ Legacy plans outside the active queue remain in reconciliation scope until expli
   - this weekly plan's `Plan Status Board`
   - this weekly plan's `Progress Log`
   - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
+- Treat the child-plan, weekly orchestration plan, and weekly visibility companion as one synchronization set after every implementation batch; do not leave one of the three stale.
 - If a child plan hits `P0` or `P1`, do not advance the queue until the blocker rule allows it.
+- Before promoting or starting the next child, recheck the active child's exit condition and the next child's start condition against the latest child log plus this weekly plan.
 - Runtime subsystem boundaries for active queue items are governed by `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`.
+
+## Iteration Direction Governance
+
+- Child 4 currently converges on the minimum unified `RuntimeState` carrier only. For this weekly iteration, `RuntimeState.core` must stay limited to the current application-layer `GameState`; `characterDefinitions` must not be merged into `RuntimeState.core`.
+- Child 4 also must not be forced onto Child 1 `src/core/contracts/core-state.ts` `CoreGameState` during the current slice. That is a separate convergence step, not part of the minimum landing.
+- `characterDefinitions` may be promoted into `RuntimeState.core`, or Child 4 may be promoted beyond domain `GameState` carriage toward Child 1 `CoreGameState`, only after the weekly promotion gate is satisfied and the resulting boundary update is written back into the Child 4 spec, the Child 4 plan, and this weekly plan before implementation resumes.
+- Promotion gate for those convergence steps:
+  - shared dispatch coverage has expanded beyond the first minimum carrier slice
+  - shared `RuntimeResult.interactive` signaling is already normalized enough that the extra convergence step is isolated and reviewable
+  - the active child plan and this weekly plan both state why the new convergence step is lower risk than keeping compatibility carriage in place
+  - any affected downstream child start/exit conditions are updated before promotion
+- Child 4 completion does not require either `characterDefinitions` inside `RuntimeState.core` or convergence onto Child 1 `CoreGameState`. Child 4 may complete on the minimum carrier slice if its own exit condition is satisfied.
 
 ## Weekly Visibility Companion
 
@@ -149,21 +177,19 @@ These outputs are part of the weekly acceptance gate even though their detailed 
   - Role: Child 3 navigation/time trigger entry, event activation, and scene handoff workstream
   - Resume point: `Completed`
 
+- `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
+  - Role: Child 4
+  - Resume point: `Completed on the approved minimum RuntimeState carrier slice.`
+
 ### In Progress
 
 - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
   - Role: active queue controller
-  - Resume point: `Continue Child 4 after its first implementation batch and synchronize weekly status again after the next interactive-runtime work batch.`
+  - Resume point: `Start Child 5 from Task 1 Step 1.`
 
 - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
   - Role: active weekly visibility companion
-  - Resume point: `After the next Child 4 work batch, refresh the artifact bundle again and summarize any shared-dispatch delta.`
-
-- `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
-  - Role: active Child 4
-  - Primary subsystem boundary: `Interaction Runtime`, `House Runtime integration seam`
-  - Depends on: Child 1 completed and Child 3 completed
-  - Resume point: `Resume after the first implementation slice with the shared-dispatch follow-up explicitly documented.`
+  - Resume point: `Refresh the artifact bundle after the first Child 5 batch.`
 
 ### Not Started
 
@@ -171,7 +197,7 @@ These outputs are part of the weekly acceptance gate even though their detailed 
   - Role: planned Child 5
   - Primary subsystem boundary: `Presentation Bridge Runtime`
   - Depends on: Child 1 completed, Child 3 completed, and Child 4 completed
-  - Resume point: `Wait for Child 4 completion, then start Task 1 Step 1.`
+  - Resume point: `Start Task 1 Step 1. Dependency gate is satisfied.`
 
 - `docs/superpowers/plans/2026-06-29-mod-manifest-loader-and-default-mod-migration-plan.md`
   - Role: planned Child 6
@@ -253,18 +279,23 @@ These outputs are part of the weekly acceptance gate even though their detailed 
       - task action and task signal seams exist without full task-runtime extraction
 
 4. `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
-   - Queue status: `not-started`
+   - Queue status: `completed`
    - Primary subsystem boundary: `Interaction Runtime`, `House Runtime integration seam`
    - Depends on: Queue Item 1 completed and Queue Item 3 completed
    - Start condition: satisfied
    - Exit condition:
-     - interactive runtime is integrated under core dispatch
+     - interactive runtime is integrated under the shared runtime state/result path for the approved minimum carrier slice
+     - `RuntimeResult.state` and `RuntimeResult.interactive` are unified for the approved Child 4 scope
+     - `RuntimeState.core` remains the current domain `GameState` unless a later weekly promotion gate explicitly records a different convergence step first
+     - `characterDefinitions` remains outside `RuntimeState.core` unless the weekly promotion gate is explicitly satisfied and recorded first
+   - Promotion rule:
+     - Child 4 completion does not require converging either `characterDefinitions` or Child 1 `CoreGameState` into the current minimum carrier
 
 5. `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
    - Queue status: `not-started`
    - Primary subsystem boundary: `Presentation Bridge Runtime`
    - Depends on: Queue Item 1 completed and Queue Item 4 completed
-   - Start condition: Child 4 completed and child plan file already authored
+   - Start condition: satisfied
    - Exit condition:
      - `app-render` consumes presenter output and layout schema seams
 

@@ -26,22 +26,24 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `src/core/runtime`
+  - `src/application/presenter`
 - Reason:
-  - Child 4 batch 1 already introduced house and interactive bridge seams, so the next bottleneck is making those seams fit the shared runtime routing model instead of leaving dedicated bridge helpers as a parallel dispatch path.
+  - Child 4 is now complete on the approved minimum RuntimeState carrier, so the next bottleneck shifts to presenter output: render-time gameplay selection still lives in `src/ui/app-render.ts` and `src/main.ts`, and Child 5 is now the next legal queue item.
 - Category:
-  - `needs-hardening`
+  - `needs-contract`
 
 ## Non-Selected Candidates
 
 - `src/core/engine`
   - Now implemented as a provisional seam; further changes should be validation-driven rather than open-ended redesign.
 - `src/main.ts`
-  - Still the largest black box, but Child 4 batch 1 already shrank direct interactive ownership; the next step is to keep shrinking it through runtime consolidation rather than reopening bootstrap or persistence first.
+  - Still the largest black box, but the next planned reduction is now render-input assembly through Child 5 rather than another Child 4 runtime slice.
 - `src/core/registry`
   - Important, but registry composition should stay thin until runtime and adapter seams prove what else is truly needed.
 - `src/core/runtime`
-  - This is now the recommended next split because Child 4 already touched it and the remaining question is specifically about unified routing ownership.
+  - Important follow-up area, but no longer the next legal queue item because Child 4 is complete and Child 5 now owns the next approved boundary move.
+- `src/application/presenter`
+  - This is now the recommended next split because Child 5 is unblocked and the render path still lacks a real presenter-output contract.
 - `src/core/save`
   - Loader/writer/migration ownership now exists; further changes should be consumer-driven rather than another save-shape redesign.
 - `src/application/house/*`

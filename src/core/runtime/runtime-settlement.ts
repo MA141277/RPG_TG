@@ -1,19 +1,22 @@
-import type { CoreGameState } from "../contracts/core-state";
 import type { Effect } from "../contracts/effect";
+import type { RuntimeState } from "../contracts/runtime-state";
 
 export function applyEffects(
-  state: CoreGameState,
+  state: RuntimeState,
   effects: Effect[]
-): CoreGameState {
+): RuntimeState {
   return effects.reduce((current, effect) => {
     if (effect.type === "setFlag") {
       return {
         ...current,
-        runtime: {
-          ...current.runtime,
-          flags: {
-            ...current.runtime.flags,
-            [effect.key]: effect.value,
+        core: {
+          ...current.core,
+          runtime: {
+            ...current.core.runtime,
+            flags: {
+              ...current.core.runtime.flags,
+              [effect.key]: effect.value,
+            },
           },
         },
       };
@@ -22,16 +25,19 @@ export function applyEffects(
     if (effect.type === "setVariable") {
       return {
         ...current,
-        runtime: {
-          ...current.runtime,
-          variables: {
-            ...current.runtime.variables,
-            [effect.key]: effect.value,
+        core: {
+          ...current.core,
+          runtime: {
+            ...current.core.runtime,
+            variables: {
+              ...current.core.runtime.variables,
+              [effect.key]: effect.value,
+            },
           },
         },
       };
     }
-
+    
     return current;
   }, state);
 }
