@@ -2,20 +2,20 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move house-driven interaction, minigame launch, and story-battle launch under `src/core/runtime` so `src/main.ts` stops directly owning those interactive session lifecycles and house integration gains a formal core seam.
+**Goal:** Move house-driven interaction, minigame launch, and story-battle launch under `src/core/runtime`, then widen the shared runtime state/result interface through the minimum unified RuntimeState carrier so covered interactive flows can rejoin the shared dispatch path without forcing premature state-model convergence.
 
-**Architecture:** Build this child on top of Child 1 and Child 3 without reopening save or presenter scope. Introduce a narrow `Interaction Runtime` plus `House Runtime` integration seam under `src/core/runtime/**`, keep current house modules and interactive feature runtimes behind explicit legacy adapters, and reduce `main.ts` to browser events, request creation, and render coordination only for the covered interaction flows.
+**Architecture:** Build this child on top of Child 1 and Child 3 without reopening save or presenter scope. Slice 1 already introduced a narrow `Interaction Runtime` plus `House Runtime` integration seam under `src/core/runtime/**`. Slice 2 now widens shared runtime through a minimum `RuntimeState -> RuntimeResult` carrier: `RuntimeState.core` remains the current application-layer `GameState`, `RuntimeState.app` carries only the Child 4 dispatch-critical app fields, `RuntimeState.view` stays empty, and both `characterDefinitions` plus Child 1 `CoreGameState` convergence remain deferred until a later weekly promotion gate explicitly approves them.
 
 **Tech Stack:** TypeScript, Vite, Node test runner via `tests/robustness.test.cjs`, existing `src/application/house/**`, `src/application/activity/**`, `src/application/minigames/**`, `src/application/story-battle/**`, repository plan governance
 
 ## Execution State
 
-- Status: `in-progress`
+- Status: `completed`
 - Last Updated: `2026-06-30`
-- Current Focus: `The first Child 4 implementation slice is now landed in the isolated worktree: src/core/contracts/interactive-runtime.ts plus legacy house/interactive adapters and core runtime bridge files exist, main.ts no longer imports application/house/house-runtime directly, and covered city-begging/activity-qte/story-battle entry now routes through runInteractiveRuntime() / house bridge seams.`
-- Next Step: `Keep the first bridge slice in place, explicitly defer runtime-router/runtime-dispatch integration until the shared RuntimeRequest/CoreGameState -> RuntimeResult contract is widened for appState + house re-entry semantics, and continue Child 4 from the next additive seam batch instead of forcing that contract rewrite into the current slice.`
-- Verification: `2026-06-30: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This is Child Plan 4 under the mod-first engine runtime extraction roadmap. It owns Interaction Runtime and the House Runtime integration seam only. It must not absorb Child 5 presenter/render work or full Task Runtime extraction. The first production cutover now removes direct application house runtime imports from main.ts and routes covered house/city-begging/activity-qte/story-battle entry through core-owned wrapper seams while still delegating behavior to legacy adapters. Shared runtime-router/runtime-dispatch integration is intentionally deferred for now because the current shared dispatch contract still assumes CoreGameState -> RuntimeResult, while the new interactive bridge paths currently return richer appState plus optional house re-entry semantics.`
+- Current Focus: `Child 4 is now closed on the approved minimum RuntimeState carrier slice. The exit review confirmed that covered interaction flows enter through core-owned seams, RuntimeResult.state plus RuntimeResult.interactive are unified for the approved Child 4 scope, RuntimeState.core remains the current domain GameState, and characterDefinitions remains outside RuntimeState.core under the weekly promotion gate.`
+- Next Step: `Completed. Any future follow-up must start as a new planned iteration from the weekly queue rather than by reopening this child implicitly.`
+- Verification: `2026-06-30: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This is Child Plan 4 under the mod-first engine runtime extraction roadmap. It owns Interaction Runtime and the House Runtime integration seam only. It must not absorb Child 5 presenter/render work or full Task Runtime extraction. Slice 1 already removed direct application house runtime imports from main.ts and routed covered house/city-begging/activity-qte/story-battle entry through core-owned wrapper seams while still delegating behavior to legacy adapters. Slice 2 intentionally upgrades the shared runtime state/result interface through a minimum carrier only; RuntimeState.core is the current domain GameState for this child, while characterDefinitions and any move toward Child 1 CoreGameState remain later convergence work guarded by the weekly plan.`
 
 ## Progress Log
 
@@ -35,6 +35,22 @@
   - Summary: `Task 4 Step 3 and Step 4 are explicitly deferred rather than silently skipped. The current shared runtime-router/runtime-dispatch line still operates on RuntimeRequest plus CoreGameState -> RuntimeResult, while the new Child 4 interactive seam currently needs application-level appState mutation plus optional house re-entry output. Forcing those flows into the existing shared dispatcher in this slice would widen core contracts and effectively turn this child into a broader runtime-result redesign.`
   - Verification: `Design/documentation decision only; production code remains validated by the 2026-06-30 Child 4 batch commands`
   - Next: `Keep the current bridge seam as the accepted first production cutover, and revisit shared-dispatch integration only after a dedicated contract-widening decision is approved.`
+- 2026-06-30
+  - Summary: `The next Child 4 slice is now formally designed and queued in this plan: instead of keeping shared dispatch widening deferred indefinitely, the child will introduce a unified RuntimeState interface, widen RuntimeResult.state, and pull covered interactive flows back toward the shared runtime-router/runtime-dispatch path through a minimum landing slice.`
+  - Verification: `Design/documentation update only`
+  - Next: `Execute Task 7 when Child 4 resumes implementation.`
+- 2026-06-30
+  - Summary: `Refined Child 4 scope again after reconciling the actual type boundary. The minimum unified runtime state slice now uses the current application-layer GameState as RuntimeState.core, keeps RuntimeState.app limited to beggingMiniGameState/autoAdvanceState/cityDirectoryState/locationDialogueState, keeps RuntimeState.view empty, and explicitly defers both characterDefinitions convergence plus any move onto Child 1 CoreGameState.`
+  - Verification: `npm test; npm run lint:plans`
+  - Next: `Resume at Task 8 Step 1 with the GameState-based minimum carrier, then keep characterDefinitions and Child 1 CoreGameState alignment on independent compatibility paths until a later weekly promotion gate is satisfied.`
+- 2026-06-30
+  - Summary: `Completed the second Child 4 red-green implementation batch in the isolated worktree. Task 7 added and confirmed the minimum carrier red tests, Task 8 introduced src/core/contracts/runtime-state.ts and widened RuntimeResult.state plus RuntimeResult.interactive to the shared RuntimeState carrier, Task 9 widened runtime-router.ts/runtime-dispatch.ts/runtime-settlement.ts to route over RuntimeState while keeping characterDefinitions on an independent compatibility path, and Task 10 updated interactive-runtime.ts plus main.ts so covered interactive flows now return RuntimeResult.state/RuntimeResult.interactive and at least the story-battle action path re-enters through dispatchRuntimeRequest().`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build`
+  - Next: `Sync parent/weekly/visibility governance, record the weekly promotion gate as the only future path for characterDefinitions convergence, then re-evaluate whether Child 4 can close on the minimum carrier slice or needs one more shared-dispatch coverage batch.`
+- 2026-06-30
+  - Summary: `Completed the Child 4 exit review against the landed minimum carrier slice. The approved Child 4 exit conditions are satisfied without promoting characterDefinitions into RuntimeState.core and without forcing convergence onto Child 1 CoreGameState, so this child is now formally closed on the minimum RuntimeState carrier.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime|runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Promote Child 5 as the next executable weekly target.`
 
 ---
 
@@ -76,6 +92,7 @@ This child plan includes:
   - city begging minigame runtime
   - story battle runtime
 - first production cutover away from direct interactive orchestration in `src/main.ts`
+- the minimum shared-runtime contract widening needed to unify covered interactive state/result ownership without moving Child 4 onto Child 1 `CoreGameState`
 
 This child plan does not include:
 
@@ -84,6 +101,7 @@ This child plan does not include:
 - full save/load cutover
 - full task-state machine extraction
 - full schema-driven layout rendering
+- full minigame directory migration
 
 ## File Map
 
@@ -104,15 +122,18 @@ This child plan does not include:
 - `src/core/contracts/runtime-request.ts`
   - Extend request ids only if Child 4 launch/action requests require additive coverage.
 - `src/core/contracts/runtime-result.ts`
-  - Extend result carriage only if covered interaction flows need additive output.
+  - Widen result carriage from Child 1 `CoreGameState` to the Child 4 minimum `RuntimeState`.
+- `src/core/contracts/runtime-state.ts`
+  - Introduce the minimum unified runtime state shape used by shared dispatch.
 - `tests/robustness.test.cjs`
-  - Add source-guard and runtime seam regression tests for Child 4.
+  - Add source-guard, unified-state, and shared-dispatch regression tests for Child 4.
 - `docs/change-log.md`
   - Record the interaction runtime cutover outcome once it lands.
 
 ### New Files To Create
 
 - `src/core/contracts/interactive-runtime.ts`
+- `src/core/contracts/runtime-state.ts`
 - `src/core/runtime/interactive-runtime.ts`
 - `src/core/runtime/house-runtime.ts`
 - `src/core/adapters/legacy-house-adapter.ts`
@@ -123,8 +144,12 @@ This child plan does not include:
 - `src/core/runtime/runtime-dispatch.ts`
 - `src/core/runtime/runtime-router.ts`
 - `src/core/runtime/runtime-context.ts`
+- `src/core/runtime/navigation-runtime.ts`
+- `src/core/runtime/time-runtime.ts`
+- `src/core/runtime/event-runtime.ts`
+- `src/core/runtime/scene-runtime.ts`
 
-These files may be extended only to make Interaction Runtime and House Runtime integration visible to the already-owned runtime boundary.
+These files may be extended only to make the minimum unified `RuntimeState` dispatch visible to the already-owned runtime boundary.
 
 ### Reconciled Starting Ownership Gaps
 
@@ -164,7 +189,7 @@ If a command is skipped, record the reason in `Progress Log` before marking rela
   - build failure, type failure, white screen, broken house entry, broken battle launch, broken minigame launch, unrecoverable interactive dead loop
   - Rule: stop later tasks in this child plan until resolved
 - `P1`
-  - `main.ts` still owns covered interactive launch paths, house runtime seam is not real, covered interaction exits corrupt state, battle or minigame cannot return cleanly
+  - `main.ts` still owns covered interactive launch paths, house runtime seam is not real, covered interaction exits corrupt state, battle or minigame cannot return cleanly, or the minimum widened runtime state breaks Child 1/3 dispatch seams
   - Rule: do not mark the affected task complete and do not mark this child `completed`
 - `P2`
   - additive typing cleanup, transitional duplication, minor adapter friction
@@ -498,7 +523,7 @@ git add src/main.ts src/application/app-shell.ts src/core/contracts/runtime-resu
 git commit -m "refactor: route house and interaction entry through core runtime"
 ```
 
-## Task 6: Sync Orchestration And Close Child 4
+## Task 6: Sync Orchestration After Slice 1
 
 **Files:**
 - Modify: `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
@@ -530,25 +555,384 @@ Add a concise entry summarizing:
 - house runtime production entry moved behind a core seam
 - covered interactive launch/action flows no longer owned directly by `src/main.ts`
 
+## Task 7: Define The Minimum Unified Runtime State Slice With Failing Tests
+
+**Files:**
+- Read: `src/application/app-shell.ts`
+- Read: `src/core/contracts/runtime-request.ts`
+- Read: `src/core/contracts/runtime-result.ts`
+- Modify: `tests/robustness.test.cjs`
+- Modify: `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
+
+- [x] **Step 1: Add a failing source test for RuntimeState contract**
+
+Add a test shaped like:
+
+```js
+test("runtime state contract exports core app and view partitions", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-state.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeState/);
+  assert.match(source, /core:/);
+  assert.match(source, /app:/);
+  assert.match(source, /view:/);
+});
+```
+
+- [x] **Step 2: Add a failing source test for unified RuntimeResult.state**
+
+Add a test shaped like:
+
+```js
+test("runtime result state is widened to RuntimeState", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /import type \\{ RuntimeState \\}/);
+  assert.match(source, /state: RuntimeState/);
+});
+```
+
+- [x] **Step 3: Add a failing source test for shared dispatch using RuntimeState**
+
+Add a test shaped like:
+
+```js
+test("shared runtime dispatch routes RuntimeState instead of CoreGameState only", () => {
+  const dispatchSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+  const routerSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-router.ts"),
+    "utf8"
+  );
+
+  assert.match(dispatchSource, /RuntimeState/);
+  assert.match(routerSource, /RuntimeState/);
+});
+```
+
+- [x] **Step 4: Add a failing source test for interactive runtime returning RuntimeResult**
+
+Add a test shaped like:
+
+```js
+test("interactive runtime returns shared RuntimeResult instead of private appState result", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /RuntimeResult/);
+  assert.doesNotMatch(source, /type InteractiveRuntimeResult = \\{[\\s\\S]*appState:/);
+});
+```
+
+- [x] **Step 5: Run focused tests and confirm failure**
+
+Run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"
+```
+
+Expected:
+
+- tests fail because the minimum unified runtime state/result contract has not been implemented yet
+
+## Task 8: Introduce RuntimeState And Widen RuntimeResult
+
+**Files:**
+- Create: `src/core/contracts/runtime-state.ts`
+- Modify: `src/core/contracts/runtime-result.ts`
+- Modify if needed: `src/application/app-shell.ts`
+- Test: `tests/robustness.test.cjs`
+
+- [x] **Step 1: Add the RuntimeState contract**
+
+Create `src/core/contracts/runtime-state.ts` with a shape like:
+
+```ts
+import type { AppState } from "../../application/app-shell";
+import type { GameState } from "../../domain/game-state";
+
+export type RuntimeCoreState = GameState;
+
+export type RuntimeAppState = Pick<
+  AppState,
+  | "beggingMiniGameState"
+  | "autoAdvanceState"
+  | "cityDirectoryState"
+  | "locationDialogueState"
+>;
+
+export type RuntimeViewState = {};
+
+export type RuntimeState = {
+  core: RuntimeCoreState;
+  app: RuntimeAppState;
+  view: RuntimeViewState;
+};
+```
+
+This step must not move `characterDefinitions` into `RuntimeState.core`, and it must not reinterpret `RuntimeState.core` as Child 1 `src/core/contracts/core-state.ts` `CoreGameState`.
+
+- [x] **Step 2: Widen RuntimeResult.state**
+
+Update `src/core/contracts/runtime-result.ts` so it imports `RuntimeState` and changes:
+
+```ts
+state: CoreGameState;
+```
+
+to:
+
+```ts
+state: RuntimeState;
+```
+
+and add only the additive interactive signal channel needed for this slice, shaped like:
+
+```ts
+export type RuntimeInteractiveSignal =
+  | { type: "reenter-house"; houseId: string }
+  | { type: "none" };
+```
+
+- [x] **Step 3: Run focused verification**
+
+Run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState"
+```
+
+Expected:
+
+- `PASS`
+
+## Task 9: Upgrade Shared Dispatch To The Minimum RuntimeState Carrier
+
+**Files:**
+- Modify: `src/core/runtime/runtime-router.ts`
+- Modify: `src/core/runtime/runtime-dispatch.ts`
+- Modify if needed: `src/core/runtime/runtime-context.ts`
+- Modify if needed: `src/core/runtime/navigation-runtime.ts`
+- Modify if needed: `src/core/runtime/time-runtime.ts`
+- Modify if needed: `src/core/runtime/event-runtime.ts`
+- Modify if needed: `src/core/runtime/scene-runtime.ts`
+- Test: `tests/robustness.test.cjs`
+
+- [x] **Step 1: Widen runtime router input**
+
+Update `src/core/runtime/runtime-router.ts` so it uses:
+
+```ts
+import type { RuntimeState } from "../contracts/runtime-state";
+```
+
+and routes:
+
+```ts
+state: RuntimeState;
+```
+
+- [x] **Step 2: Widen runtime dispatch input/output**
+
+Update `src/core/runtime/runtime-dispatch.ts` so it accepts and returns `RuntimeState`-based `RuntimeResult`, while keeping `applyEffects(...)` as an additive compatibility step rather than redesigning settlement in this slice.
+
+- [x] **Step 3: Keep Child 3 seams compatible through RuntimeState.core**
+
+Where navigation/time/event/scene runtime helpers still expect the old game-rule state, adapt them additively so they read and write through:
+
+```ts
+input.state.core
+```
+
+for domain `GameState`, and keep `characterDefinitions` flowing through an independent compatibility parameter or context path instead of broadening `RuntimeState.core` in this iteration.
+
+- [x] **Step 4: Run focused verification**
+
+Run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "shared runtime dispatch routes RuntimeState instead of CoreGameState only"
+```
+
+Expected:
+
+- `PASS`
+
+## Task 10: Return Covered Interactive Flows Through Shared Runtime Result Carriers
+
+**Files:**
+- Modify: `src/core/runtime/interactive-runtime.ts`
+- Modify: `src/core/runtime/house-runtime.ts`
+- Modify: `src/main.ts`
+- Modify if needed: `src/core/contracts/interactive-runtime.ts`
+- Test: `tests/robustness.test.cjs`
+
+- [x] **Step 1: Remove the private InteractiveRuntimeResult shape**
+
+Update `src/core/runtime/interactive-runtime.ts` so it returns `RuntimeResult` instead of:
+
+```ts
+type InteractiveRuntimeResult = {
+  appState: AppState;
+  enterHouseId: string | null;
+};
+```
+
+- [x] **Step 2: Return unified state plus interactive signals**
+
+Covered interactive flows should now return:
+
+```ts
+{
+  state: nextRuntimeState,
+  effects: [],
+  interactive: { type: "reenter-house", houseId }
+}
+```
+
+or:
+
+```ts
+interactive: { type: "none" }
+```
+
+instead of private `enterHouseId` carriage.
+
+- [x] **Step 3: Route at least one covered interactive path through shared dispatch while preserving additive compatibility carriage for the remaining paths**
+
+Update `src/main.ts` so at least one covered flow, preferably city begging or story battle action, follows this shape:
+
+```ts
+const result = dispatchRuntimeRequest({
+  state: runtimeState,
+  request,
+  context: { routeRequest }
+});
+```
+
+and then applies only browser-shell follow-up/render coordination.
+
+- [x] **Step 4: Run focused verification**
+
+Run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"
+```
+
+Expected:
+
+- `PASS`
+
+- [x] **Step 5: Run full verification**
+
+Run:
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
+
+Expected:
+
+- current gameplay still compiles
+- Child 1/3 runtime seams still pass
+- covered interactive flows now return through shared runtime result ownership without requiring either `characterDefinitions` or Child 1 `CoreGameState` inside `RuntimeState.core`
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/core/contracts/runtime-state.ts src/core/contracts/runtime-result.ts src/core/runtime/runtime-router.ts src/core/runtime/runtime-dispatch.ts src/core/runtime/runtime-context.ts src/core/runtime/navigation-runtime.ts src/core/runtime/time-runtime.ts src/core/runtime/event-runtime.ts src/core/runtime/scene-runtime.ts src/core/runtime/interactive-runtime.ts src/core/runtime/house-runtime.ts src/main.ts tests/robustness.test.cjs
+git commit -m "refactor: unify runtime state for interactive dispatch"
+```
+
+## Task 11: Sync Orchestration And Record The Next Iteration Route
+
+**Files:**
+- Modify: `docs/superpowers/specs/2026-06-29-interactive-runtime-integration-spec.md`
+- Modify: `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
+- Modify: `docs/change-log.md`
+
+- [x] **Step 1: Update child plan execution state**
+
+Update:
+
+- `Execution State`
+- `Progress Log`
+- new task checkboxes
+
+- [x] **Step 2: Sync parent and weekly orchestration**
+
+Update:
+
+- parent orchestration progress
+- weekly queue state
+- weekly promotion gate establishment for any future `characterDefinitions` or Child 1 `CoreGameState` convergence
+- weekly visibility focus
+
+- [x] **Step 3: Record the next iteration route**
+
+Write explicitly that the next iteration after this minimum landing slice should:
+
+- normalize more interactive flows through shared dispatch
+- formalize house re-entry/session closeout as shared runtime signals
+- treat the weekly promotion gate as the only path that can later move `characterDefinitions` into `RuntimeState.core`
+- treat Child 1 `CoreGameState` convergence as a separate future follow-up unless that gate is explicitly satisfied
+- stabilize the minigame dispatch interface before directory migration
+
+- [x] **Step 4: Run documentation verification**
+
+Run:
+
+```bash
+npm run lint:plans
+```
+
+Expected:
+
+- `PASS`
+
 ## Success Criteria
 
 - covered house/interactivity flows now enter through core runtime ownership
 - `src/main.ts` no longer directly owns application house-runtime construction
 - activity QTE and story-battle launch/action have core runtime entry seams
+- Child 4 completion does not depend on moving onto Child 1 `CoreGameState`
 - Child 4 does not absorb presenter/render or full task-runtime scope
 
 ## Self-Review
 
 - Spec coverage:
-  - interaction runtime ownership is covered by Tasks 3-5
-  - house runtime integration seam is covered by Tasks 3-5
-  - `main.ts` reduction for covered flows is covered by Task 5
-  - orchestration sync is covered by Task 6
+  - interaction runtime ownership is covered by Tasks 3-5 and 10
+  - house runtime integration seam is covered by Tasks 3-5 and 10
+  - unified runtime state/result widening is covered by Tasks 7-10
+  - `main.ts` reduction for covered flows is covered by Tasks 5 and 10
+  - orchestration sync is covered by Tasks 6 and 11
 - Placeholder scan:
   - no `TBD`, `TODO`, or "implement later" placeholders remain
   - all tasks list exact file paths and commands
 - Type consistency:
-  - `runInteractiveRuntime`, `enterHouseThroughRuntime`, `leaveHouseThroughRuntime`, and `dispatchHouseRuntimeRequest` are named consistently throughout
+  - `RuntimeState`, `RuntimeResult`, `runInteractiveRuntime`, `enterHouseThroughRuntime`, `leaveHouseThroughRuntime`, and `dispatchHouseRuntimeRequest` are named consistently throughout
+  - `RuntimeState.core` is consistently treated as the current domain `GameState`, not Child 1 `CoreGameState`
 
 ## Completion Checklist
 
@@ -559,3 +943,4 @@ Add a concise entry summarizing:
 - [x] Weekly orchestration synchronized
 - [x] Verification recorded
 - [x] Change log updated
+- [x] Next iteration route recorded

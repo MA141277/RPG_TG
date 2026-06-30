@@ -1,6 +1,6 @@
-import type { CoreGameState } from "./core-state";
 import type { Effect } from "./effect";
 import type { NavigationTarget } from "./navigation";
+import type { RuntimeState } from "./runtime-state";
 
 export type RuntimeTaskSignal = {
   type: string;
@@ -12,8 +12,12 @@ export type RuntimeTaskAction = {
   taskId: string;
 };
 
+export type RuntimeInteractiveSignal =
+  | { type: "reenter-house"; houseId: string }
+  | { type: "none" };
+
 export type RuntimeResult = {
-  state: CoreGameState;
+  state: RuntimeState;
   effects: Effect[];
   navigation?: NavigationTarget | null;
   scene?:
@@ -24,4 +28,5 @@ export type RuntimeResult = {
     | null;
   taskActions?: RuntimeTaskAction[];
   taskSignals?: RuntimeTaskSignal[];
+  interactive?: RuntimeInteractiveSignal | null;
 };

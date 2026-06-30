@@ -1,14 +1,14 @@
-import type { CoreGameState } from "../contracts/core-state";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
+import type { RuntimeState } from "../contracts/runtime-state";
 import { applyEffects } from "./runtime-settlement";
 
 export function dispatchRuntimeRequest(input: {
-  state: CoreGameState;
+  state: RuntimeState;
   request: RuntimeRequest;
   context: {
     routeRequest: (input: {
-      state: CoreGameState;
+      state: RuntimeState;
       request: RuntimeRequest;
     }) => RuntimeResult;
   };

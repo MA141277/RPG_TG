@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-30 Minimum Unified RuntimeState Carrier
+
+### Added
+- 新增 `src/core/contracts/runtime-state.ts`，为 Child 4 的最小统一运行态补出 `RuntimeState.core`、`RuntimeState.app` 与 `RuntimeState.view` 三段式 carrier。
+
+### Changed
+- `src/core/contracts/runtime-result.ts`、`src/core/runtime/runtime-router.ts`、`src/core/runtime/runtime-dispatch.ts` 与 `src/core/runtime/runtime-settlement.ts` 现在围绕 `RuntimeState` 工作，而不是继续把 Child 4 卡在 Child 1 的 `CoreGameState` 形状上。
+- `src/core/runtime/interactive-runtime.ts` 不再返回私有 `{ appState, enterHouseId }` 结果，而是返回共享 `RuntimeResult.state` 与 `RuntimeResult.interactive`；`src/main.ts` 至少已有一条覆盖中的 story-battle action 路径通过 `dispatchRuntimeRequest()` 回到共享 runtime line。
+- `characterDefinitions` 本轮继续走独立兼容参数，不并入 `RuntimeState.core`；是否后续提升为 convergence step，改由 weekly promotion gate 决定。
+
+### Impact
+- Child 4 现在已经具备最小统一 runtime state/result carrier，后续可以先继续扩大 shared dispatch 覆盖和统一 signal，再决定是否需要更高成本的 `characterDefinitions` 或 Child 1 `CoreGameState` convergence。
+
 ## 2026-06-30 Interactive Runtime Bridge Extraction
 
 ### Added

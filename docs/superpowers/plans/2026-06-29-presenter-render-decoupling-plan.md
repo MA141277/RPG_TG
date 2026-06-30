@@ -11,9 +11,9 @@
 ## Execution State
 
 - Status: `not-started`
-- Last Updated: `2026-06-29`
-- Current Focus: `Formal Child 5 plan authored. This child remains queued behind Child 4 so presenter boundaries stabilize against the post-interaction runtime shape rather than against the current mixed ownership state.`
-- Next Step: `Wait for Child 4 completion, then start Task 1 Step 1 and move view-selection logic into presenter modules before touching render HTML branches.`
+- Last Updated: `2026-06-30`
+- Current Focus: `Formal Child 5 plan remains not-started, but its dependency gate is now satisfied because Child 4 has closed on the approved minimum RuntimeState carrier. This child is now the next legal weekly execution target.`
+- Next Step: `Start Task 1 Step 1 and move view-selection logic into presenter modules before touching render HTML branches.`
 - Verification: `Not run as part of this doc-only change`
 - Notes: `This is Child Plan 5 under the mod-first engine runtime extraction roadmap. It owns Presentation Bridge Runtime only and must not absorb Child 4 interaction extraction or save/runtime closure work.`
 
@@ -23,6 +23,10 @@
   - Summary: `Formal Child 5 implementation plan authored from the runtime subsystem spec, weekly architecture report, and the current coupling points inside src/ui/app-render.ts and src/main.ts render input assembly.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Begin Task 1 Step 1 only after Child 4 is completed and presenter inputs can stabilize against the new interaction/runtime seam.`
+- 2026-06-30
+  - Summary: `Child 5 dependency gate is now satisfied. Child 4 completed on the approved minimum RuntimeState carrier slice, so presenter/render decoupling can start against the stabilized post-interaction runtime boundary rather than the earlier mixed-ownership state.`
+  - Verification: `Child 4 exit review: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime|runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run typecheck; npm test; npm run build`
+  - Next: `Begin Task 1 Step 1 when Child 5 becomes the active implementation child.`
 
 ---
 

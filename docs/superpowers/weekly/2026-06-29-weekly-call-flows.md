@@ -10,11 +10,11 @@ If a real flow cannot be described clearly, that area is still a black box.
 
 ## Current Coverage Status
 
-- Real implemented flows captured: `8`
+- Real implemented flows captured: `9`
 - Planned target flows captured: `0`
 - Acceptance status:
 - current batch requirement satisfied
-- add more runtime-owned flows after Child 4 decides whether interactive requests also join the shared router/dispatch line
+- add more runtime-owned flows after Child 4 exit review decides whether the landed minimum carrier needs one more shared-dispatch expansion batch
 
 ## Flow 1: Current Game Boot Flow
 
@@ -155,4 +155,21 @@ UI/house event in main.ts -> createLaunchInteractiveRequest() or createInteracti
 ### Notes
 
 - This is an entry-seam extraction, not a full gameplay migration; the underlying minigame and story-battle logic still runs through legacy adapters.
-- The remaining Child 4 question is whether these interactive requests should next be recognized by `runtime-router.ts` and `runtime-dispatch.ts` rather than only by dedicated bridge helpers.
+- Child 4 batch 2 widened the returned carriage to `RuntimeResult.state` plus `RuntimeResult.interactive`, but not every covered path uses shared dispatch yet.
+
+## Flow 9: Real Child 4 Minimum RuntimeState Shared Dispatch Reentry
+
+### Narrative
+
+Child 4 batch 2 now proves that at least one covered interactive path can rejoin the shared runtime line on the landed minimum carrier. `src/main.ts` creates the interactive action request, `dispatchRuntimeRequest()` routes over `RuntimeState`, `runInteractiveRuntime()` returns shared `RuntimeResult` carriage, effect settlement writes through `state.core.runtime`, and browser-only follow-up remains in `main.ts`.
+
+### Call Chain
+
+```text
+story-battle action in main.ts -> createInteractiveActionRequest() -> dispatchRuntimeRequest() -> routeRequest() -> runInteractiveRuntime() -> RuntimeResult.state/interactive -> applyInteractiveRuntimeResult() -> optional reenter-house follow-up
+```
+
+### Notes
+
+- `RuntimeState.core` remains the current domain `GameState`, `RuntimeState.app` remains the minimum four-field app carrier, and `RuntimeState.view` remains `{}` in this flow.
+- `characterDefinitions` still travels on additive compatibility carriage for this batch; moving it into `RuntimeState.core` remains gated by weekly promotion rules rather than implied by this flow.

@@ -1,8 +1,9 @@
-import type { AppState } from "../../application/app-shell";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
 import type { RuntimeRequest } from "../contracts/runtime-request";
+import type { RuntimeResult } from "../contracts/runtime-result";
+import type { RuntimeState } from "../contracts/runtime-state";
 import {
   applyLegacyCityBeggingCompletion,
   createLegacyCityBeggingSession,
@@ -13,9 +14,8 @@ import {
   updateLegacyCityBeggingPointer,
 } from "../adapters/legacy-interactive-adapter";
 
-type InteractiveRuntimeResult = {
-  appState: AppState;
-  enterHouseId: string | null;
+export type InteractiveRuntimeOutput = RuntimeResult & {
+  characterDefinitions?: CharacterDefinition[];
 };
 
 export function createLaunchInteractiveRequest(
@@ -41,67 +41,89 @@ export function createInteractiveActionRequest(
 }
 
 export function runInteractiveRuntime(input: {
-  appState: AppState;
+  state: RuntimeState;
   request: RuntimeRequest;
+  characterDefinitions: CharacterDefinition[];
   playerCharacterId?: string;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string> | undefined;
-}): InteractiveRuntimeResult {
+}): InteractiveRuntimeOutput {
   if (
     input.request.type === "external" &&
     input.request.eventId === "interactive.city-begging.launch"
   ) {
     const now = input.request.payload?.now;
     return {
-      appState: {
-        ...input.appState,
-        beggingMiniGameState: createLegacyCityBeggingSession(
-          typeof now === "number" ? now : performance.now()
-        ),
+      state: {
+        ...input.state,
+        app: {
+          ...input.state.app,
+          beggingMiniGameState: createLegacyCityBeggingSession(
+            typeof now === "number" ? now : performance.now()
+          ),
+        },
       },
-      enterHouseId: null,
+      effects: [],
+      interactive: { type: "none" },
     };
   }
 
   if (input.request.type !== "action") {
     return {
-      appState: input.appState,
-      enterHouseId: null,
+      state: input.state,
+      effects: [],
+      interactive: { type: "none" },
     };
   }
 
   if (input.request.actionId === "interactive.city-begging.pointer") {
-    const currentState = input.appState.beggingMiniGameState;
+    const currentState = input.state.app.beggingMiniGameState;
     const pointerX = input.request.payload?.pointerX;
     if (currentState == null || typeof pointerX !== "number") {
-      return { appState: input.appState, enterHouseId: null };
+      return {
+        state: input.state,
+        effects: [],
+        interactive: { type: "none" },
+      };
     }
 
     return {
-      appState: {
-        ...input.appState,
-        beggingMiniGameState: updateLegacyCityBeggingPointer(
-          currentState,
-          pointerX
-        ),
+      state: {
+        ...input.state,
+        app: {
+          ...input.state.app,
+          beggingMiniGameState: updateLegacyCityBeggingPointer(
+            currentState,
+            pointerX
+          ),
+        },
       },
-      enterHouseId: null,
+      effects: [],
+      interactive: { type: "none" },
     };
   }
 
   if (input.request.actionId === "interactive.city-begging.tick") {
-    const currentState = input.appState.beggingMiniGameState;
+    const currentState = input.state.app.beggingMiniGameState;
     const now = input.request.payload?.now;
     if (currentState == null || typeof now !== "number") {
-      return { appState: input.appState, enterHouseId: null };
+      return {
+        state: input.state,
+        effects: [],
+        interactive: { type: "none" },
+      };
     }
 
     return {
-      appState: {
-        ...input.appState,
-        beggingMiniGameState: tickLegacyCityBeggingSession(currentState, now),
+      state: {
+        ...input.state,
+        app: {
+          ...input.state.app,
+          beggingMiniGameState: tickLegacyCityBeggingSession(currentState, now),
+        },
       },
-      enterHouseId: null,
+      effects: [],
+      interactive: { type: "none" },
     };
   }
 
@@ -112,38 +134,44 @@ export function runInteractiveRuntime(input: {
       result == null ||
       typeof result !== "object"
     ) {
-      return { appState: input.appState, enterHouseId: null };
+      return {
+        state: input.state,
+        effects: [],
+        interactive: { type: "none" },
+      };
     }
 
     const completion = applyLegacyCityBeggingCompletion({
-      state: input.appState.gameState,
-      characterDefinitions: input.appState.characterDefinitions,
+      state: input.state.core,
+      characterDefinitions: input.characterDefinitions,
       playerCharacterId: input.playerCharacterId,
       result: result as CityBeggingGameCompletionResult,
     });
 
     return {
-      appState: {
-        ...input.appState,
-        gameState: completion.state,
-        characterDefinitions: completion.characterDefinitions,
+      state: {
+        ...input.state,
+        core: completion.state,
       },
-      enterHouseId: null,
+      characterDefinitions: completion.characterDefinitions,
+      effects: [],
+      interactive: { type: "none" },
     };
   }
 
   if (input.request.actionId === "interactive.activity-qte.tick") {
     return {
-      appState: {
-        ...input.appState,
-        gameState: tickLegacyActivityQte(input.appState.gameState),
+      state: {
+        ...input.state,
+        core: tickLegacyActivityQte(input.state.core),
       },
-      enterHouseId: null,
+      effects: [],
+      interactive: { type: "none" },
     };
   }
 
   if (input.request.actionId === "interactive.activity-qte.stop") {
-    const session = input.appState.gameState.runtime.activitySession;
+    const session = input.state.core.runtime.activitySession;
     const activityId =
       session?.type === "qte-bar" ? session.activityId : null;
     const activityDefinition =
@@ -153,44 +181,50 @@ export function runInteractiveRuntime(input: {
 
     if (activityDefinition == null) {
       return {
-        appState: {
-          ...input.appState,
-          gameState: {
-            ...input.appState.gameState,
+        state: {
+          ...input.state,
+          core: {
+            ...input.state.core,
             runtime: {
-              ...input.appState.gameState.runtime,
+              ...input.state.core.runtime,
               activitySession: null,
             },
           },
         },
-        enterHouseId: null,
+        effects: [],
+        interactive: { type: "none" },
       };
     }
 
     const completion = stopLegacyActivityQte({
-      state: input.appState.gameState,
+      state: input.state.core,
       activityDefinition,
-      characterDefinitions: input.appState.characterDefinitions,
+      characterDefinitions: input.characterDefinitions,
     });
 
     return {
-      appState: {
-        ...input.appState,
-        gameState: completion.state,
-        characterDefinitions: completion.characterDefinitions,
+      state: {
+        ...input.state,
+        core: completion.state,
       },
-      enterHouseId: null,
+      characterDefinitions: completion.characterDefinitions,
+      effects: [],
+      interactive: { type: "none" },
     };
   }
 
   if (input.request.actionId === "interactive.story-battle.action") {
     const battleActionId = input.request.payload?.battleActionId;
     if (typeof battleActionId !== "string") {
-      return { appState: input.appState, enterHouseId: null };
+      return {
+        state: input.state,
+        effects: [],
+        interactive: { type: "none" },
+      };
     }
 
     const result = dispatchLegacyStoryBattleAction(
-      input.appState.gameState,
+      input.state.core,
       battleActionId,
       {
         textEntriesById: input.textEntriesById,
@@ -198,16 +232,21 @@ export function runInteractiveRuntime(input: {
     );
 
     return {
-      appState: {
-        ...input.appState,
-        gameState: result.state,
+      state: {
+        ...input.state,
+        core: result.state,
       },
-      enterHouseId: result.enterHouseId,
+      effects: [],
+      interactive:
+        result.enterHouseId == null
+          ? { type: "none" }
+          : { type: "reenter-house", houseId: result.enterHouseId },
     };
   }
 
   return {
-    appState: input.appState,
-    enterHouseId: null,
+    state: input.state,
+    effects: [],
+    interactive: { type: "none" },
   };
 }

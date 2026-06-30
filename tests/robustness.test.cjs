@@ -7580,36 +7580,164 @@ test("runtime dispatch settles effects after routing", async () => {
   const { dispatchRuntimeRequest } = require("../.test-dist/core/runtime/runtime-dispatch.js");
   const result = dispatchRuntimeRequest({
     state: {
-      engine: {
-        selectedModId: "builtin.default",
-        version: "1.0.0",
-        currentView: "map",
+      core: {
+        world: {
+          currentMapId: "map.test",
+          currentCityId: "city.test",
+          currentHouseId: null,
+          timeOfDay: "morning",
+          schedule: {
+            councilDate: {
+              year: 1567,
+              month: 1,
+              day: 1,
+            },
+          },
+        },
+        player: {
+          characterId: playerCharacterId,
+        },
+        calendar: {
+          chapterId: "chapter.prototype",
+          year: 1567,
+          month: 1,
+          day: 1,
+        },
+        scene: {
+          activeEventId: null,
+          activeSceneId: null,
+          cursor: 0,
+          status: "idle",
+        },
+        storyBattle: null,
+        ui: {
+          visiblePanels: ["player-card"],
+          pinnedCharacterId: playerCharacterId,
+          activeMissionId: null,
+          reviewDateText: "test",
+          mainHouseMissionText: "test",
+          overlayView: null,
+          cardLibraryFilter: "all",
+          valuableLibraryFilter: "all",
+          valuableLibrarySortKey: "name",
+          valuableLibrarySortDirection: "asc",
+          houseSession: null,
+          currentView: "map",
+        },
+        missions: {
+          activeMissionId: null,
+          completedMissionIds: [],
+        },
+        cards: {
+          ownedCardIds: [],
+          selectedCardId: null,
+        },
+        valuables: {
+          items: [],
+          selectedItemId: null,
+          equippedWeaponSet: {
+            swordId: null,
+            armorId: null,
+          },
+        },
+        runtime: {
+          flags: {},
+          variables: {},
+          cityNpcPools: {},
+          cityMarkets: {},
+          activitySession: null,
+          eventHistory: {},
+        },
       },
-      runtime: {
-        flags: {},
-        variables: {},
-        activeEventId: null,
-        activeTaskIds: [],
+      app: {
+        beggingMiniGameState: null,
+        autoAdvanceState: null,
+        cityDirectoryState: null,
+        locationDialogueState: null,
       },
-      modState: {},
+      view: {},
     },
     request: { type: "action", actionId: "test" },
     context: {
       routeRequest() {
         return {
           state: {
-            engine: {
-              selectedModId: "builtin.default",
-              version: "1.0.0",
-              currentView: "map",
+            core: {
+              world: {
+                currentMapId: "map.test",
+                currentCityId: "city.test",
+                currentHouseId: null,
+                timeOfDay: "morning",
+                schedule: {
+                  councilDate: {
+                    year: 1567,
+                    month: 1,
+                    day: 1,
+                  },
+                },
+              },
+              player: {
+                characterId: playerCharacterId,
+              },
+              calendar: {
+                chapterId: "chapter.prototype",
+                year: 1567,
+                month: 1,
+                day: 1,
+              },
+              scene: {
+                activeEventId: null,
+                activeSceneId: null,
+                cursor: 0,
+                status: "idle",
+              },
+              storyBattle: null,
+              ui: {
+                visiblePanels: ["player-card"],
+                pinnedCharacterId: playerCharacterId,
+                activeMissionId: null,
+                reviewDateText: "test",
+                mainHouseMissionText: "test",
+                overlayView: null,
+                cardLibraryFilter: "all",
+                valuableLibraryFilter: "all",
+                valuableLibrarySortKey: "name",
+                valuableLibrarySortDirection: "asc",
+                houseSession: null,
+                currentView: "map",
+              },
+              missions: {
+                activeMissionId: null,
+                completedMissionIds: [],
+              },
+              cards: {
+                ownedCardIds: [],
+                selectedCardId: null,
+              },
+              valuables: {
+                items: [],
+                selectedItemId: null,
+                equippedWeaponSet: {
+                  swordId: null,
+                  armorId: null,
+                },
+              },
+              runtime: {
+                flags: {},
+                variables: {},
+                cityNpcPools: {},
+                cityMarkets: {},
+                activitySession: null,
+                eventHistory: {},
+              },
             },
-            runtime: {
-              flags: {},
-              variables: {},
-              activeEventId: null,
-              activeTaskIds: [],
+            app: {
+              beggingMiniGameState: null,
+              autoAdvanceState: null,
+              cityDirectoryState: null,
+              locationDialogueState: null,
             },
-            modState: {},
+            view: {},
           },
           effects: [{ type: "setFlag", key: "booted", value: true }],
         };
@@ -7617,7 +7745,7 @@ test("runtime dispatch settles effects after routing", async () => {
     },
   });
 
-  assert.equal(result.state.runtime.flags.booted, true);
+  assert.equal(result.state.core.runtime.flags.booted, true);
 });
 
 test("save envelope preserves selected mod id and mod state payload", async () => {
@@ -7820,4 +7948,50 @@ test("main.ts routes covered interactive flows through core runtime instead of d
   );
 
   assert.match(mainSource, /runInteractiveRuntime/);
+});
+
+test("runtime state contract exports core app and view partitions", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-state.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeState/);
+  assert.match(source, /core:/);
+  assert.match(source, /app:/);
+  assert.match(source, /view:/);
+});
+
+test("runtime result state is widened to RuntimeState", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /import type \{ RuntimeState \}/);
+  assert.match(source, /state: RuntimeState/);
+});
+
+test("shared runtime dispatch routes RuntimeState instead of CoreGameState only", () => {
+  const dispatchSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+  const routerSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-router.ts"),
+    "utf8"
+  );
+
+  assert.match(dispatchSource, /RuntimeState/);
+  assert.match(routerSource, /RuntimeState/);
+});
+
+test("interactive runtime returns shared RuntimeResult instead of private appState result", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /RuntimeResult/);
+  assert.doesNotMatch(source, /type InteractiveRuntimeResult = \{[\s\S]*appState:/);
 });

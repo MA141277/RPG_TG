@@ -15,9 +15,9 @@ It must show:
 
 ## Architecture Summary
 
-- This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, and then started Child 4 by landing the first interactive-runtime bridge layer under `src/core`.
-- The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/legacy-main-adapter.ts`, `src/core/adapters/legacy-house-adapter.ts`, and `src/core/adapters/legacy-interactive-adapter.ts` now exist as concrete boundary slices with read/write persistence plus first-pass navigation and covered interactive entry behavior.
-- The immediate next target is still Child 4, but now at a narrower question: whether the new interactive bridge seams should also join the shared `runtime-router.ts` / `runtime-dispatch.ts` line before Child 5 begins presenter/render decoupling.
+- This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, then advanced Child 4 through both its first interactive bridge slice and its second minimum RuntimeState/shared-dispatch slice.
+- The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/legacy-main-adapter.ts`, `src/core/adapters/legacy-house-adapter.ts`, and `src/core/adapters/legacy-interactive-adapter.ts` now exist as concrete boundary slices with read/write persistence plus first-pass navigation and covered interactive entry plus minimum shared-dispatch return behavior.
+- The immediate next target is still Child 4 exit review: decide whether the landed minimum carrier is sufficient for completion or whether one more runtime-only batch is needed to expand shared-dispatch coverage and normalize interactive signals before Child 5 begins presenter/render decoupling.
 
 ## Module Diagram
 
@@ -26,9 +26,9 @@ flowchart LR
     UI["UI / Browser Layer"] --> MAIN["src/main.ts"]
     MAIN --> APP["application/* legacy runtime ownership"]
     APP --> UIR["ui/app-render.ts"]
-    COREC["src/core/contracts (implemented)"] --> CORER["src/core/registry/engine-registry.ts (minimal)"]
+    COREC["src/core/contracts (implemented + RuntimeState)"] --> CORER["src/core/registry/engine-registry.ts (minimal)"]
     CORER --> COREE["src/core/engine (implemented)"]
-    COREE --> CORERT["src/core/runtime (implemented + Child 3/4 entry seams)"]
+    COREE --> CORERT["src/core/runtime (implemented + Child 3/4 seams + minimum carrier)"]
     COREE --> CORES["src/core/save (implemented + hardened)"]
     MAIN --> ADAPTER["src/core/adapters/legacy-main-adapter.ts (implemented)"]
     ADAPTER --> COREE
@@ -53,14 +53,14 @@ flowchart LR
 - `src/core/runtime/*` as the first real runtime-owned transition slice
 - `src/core/save/*` as the first real persistence boundary slice with migration, validation, and writer ownership
 - `src/core/adapters/legacy-main-adapter.ts` as the first production `main.ts -> core` handoff seam
-- `src/core/contracts/interactive-runtime.ts`, `src/core/runtime/interactive-runtime.ts`, and `src/core/runtime/house-runtime.ts` as the first production interactive-runtime and house-bridge slices
+- `src/core/contracts/interactive-runtime.ts`, `src/core/contracts/runtime-state.ts`, `src/core/runtime/interactive-runtime.ts`, and `src/core/runtime/house-runtime.ts` as the first production interactive-runtime and minimum RuntimeState carrier slices
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` as transitional compatibility seams for Child 4
 
 ## Approved Target Modules
 
 - The intended `src/core` directory ownership model at the design/spec level
 - Child 3 navigation/time/event extraction behind the new core runtime boundary
-- Child 4 interactive runtime integration after Child 3, with its first execution batch now landed
+- Child 4 interactive runtime integration after Child 3, with its first two execution batches now landed
 - Later presenter/layout extraction after runtime entry ownership improves
 
 ## Temporary Adapters
@@ -108,16 +108,17 @@ flowchart TD
     G --> H["paused or settled scene state"]
 ```
 
-## Flow Diagram 4: Real Child 4 Interactive Runtime Bridge
+## Flow Diagram 4: Real Child 4 Minimum RuntimeState Reentry
 
 ```mermaid
 flowchart TD
-    A["House or minigame action in main.ts"] --> B["createLaunchInteractiveRequest() or createInteractiveActionRequest()"]
-    B --> C["runInteractiveRuntime()"]
-    C --> D["legacy-interactive-adapter.ts"]
-    D --> E["city-begging / activity-qte / story-battle legacy helper"]
-    E --> F["updated app state"]
-    F --> G["optional house re-entry through house-runtime.ts bridge"]
+    A["story-battle action in main.ts"] --> B["createInteractiveActionRequest()"]
+    B --> C["dispatchRuntimeRequest()"]
+    C --> D["routeRequest()"]
+    D --> E["runInteractiveRuntime()"]
+    E --> F["RuntimeResult.state / interactive"]
+    F --> G["applyInteractiveRuntimeResult()"]
+    G --> H["optional reenter-house follow-up"]
 ```
 
 ## Architecture Delta This Week
@@ -137,11 +138,14 @@ flowchart TD
 - Routed real city-entry, timed advancement, and trigger-driven event entry paths in `src/main.ts` through Child 3 runtime seams instead of keeping those paths fully inline.
 - Landed `src/core/contracts/interactive-runtime.ts`, `src/core/runtime/interactive-runtime.ts`, `src/core/runtime/house-runtime.ts`, `src/core/adapters/legacy-house-adapter.ts`, and `src/core/adapters/legacy-interactive-adapter.ts`.
 - Routed covered city-begging, activity-qte, and story-battle launch/action entry in `src/main.ts` through the new Child 4 runtime seams instead of direct application-house construction and direct helper imports.
+- Landed `src/core/contracts/runtime-state.ts` and widened `src/core/contracts/runtime-result.ts`, `src/core/runtime/runtime-router.ts`, `src/core/runtime/runtime-dispatch.ts`, and `src/core/runtime/runtime-settlement.ts` to the minimum RuntimeState carrier.
+- Updated `src/core/runtime/interactive-runtime.ts` and `src/main.ts` so at least one covered interactive path now returns through shared dispatch on the minimum carrier while `characterDefinitions` remains on additive compatibility carriage.
 
 ## Architecture Risks
 
 - `src/main.ts` is still the dominant production black box.
 - `src/core` is only partially implemented, so the current architecture remains largely legacy-owned above the new boundary.
 - The new contracts, engine seam, runtime seam, save seam, and adapter seams are still intentionally narrow even though persistence is hardened, Child 3 entry seams are validated, and Child 4 bridge seams now cover selected interactive flows.
-- Child 4 has not yet decided to widen the shared `runtime-router.ts` / `runtime-dispatch.ts` contract, so runtime ownership is still split between common dispatch and dedicated bridge helpers.
+- Child 4 has already widened the shared `runtime-router.ts` / `runtime-dispatch.ts` contract to `RuntimeState`, but runtime ownership is still split between common dispatch and dedicated bridge helpers across the remaining interactive surface.
+- `characterDefinitions` is intentionally not part of `RuntimeState.core` in the current landing, so future convergence is still gated by weekly promotion rules rather than implied by the new carrier.
 - Presenter and layout seams are still conceptual until later child plans land.
