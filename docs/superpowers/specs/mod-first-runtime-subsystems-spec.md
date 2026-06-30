@@ -133,7 +133,7 @@ Must not own:
 
 Primary seams:
 
-- `src/core/runtime/**`
+- `src/core/runtime/task-runtime.ts`
 - `src/core/contracts/task-runtime.ts`
 - mission/task services in `src/application/**`
 
@@ -377,7 +377,8 @@ Secondary dependency:
 
 - Child 3 task action / task signal seams
 - Child 4 shared `RuntimeState` / `RuntimeResult` carrier
-- Child 5 remains the next executable child before Child 6 starts production code
+- Child 5 completed before Child 6 started production code
+- Child 6 completed the first formal Task Runtime contract/lifecycle/progression seam
 
 ### Child 7: `2026-06-30-mod-runtime-plan.md`
 
@@ -389,7 +390,7 @@ Secondary dependency:
 
 - Boot Runtime seams from Child 1
 - Save / Load Runtime compatibility from Child 2
-- Child 5 and Child 6 remain ahead of Child 7 in the current weekly queue unless governance explicitly defers them first
+- Child 5 and Child 6 are completed; Child 7 is now the next executable weekly queue item
 
 ### Child 8: `2026-06-30-state-sync-runtime-plan.md`
 

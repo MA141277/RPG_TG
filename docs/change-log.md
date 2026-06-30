@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-01 Task Runtime
+
+### Added
+- 新增 `src/core/contracts/task-runtime.ts`，定义 `TaskDefinition`、`TaskInstance`、`TaskRuntimeState`、`TaskAction`、`TaskSignal`、`TaskUpdate` 与 `TaskRuntimeResult`。
+- 新增 `src/core/runtime/task-runtime.ts`，提供 `startTask()`、`applyTaskAction()`、`applyTaskSignal()` 与首版 signal-driven progression。
+
+### Changed
+- `src/core/contracts/runtime-result.ts` 现在可携带 `taskUpdates`，同时保留 legacy `RuntimeTaskAction` / `RuntimeTaskSignal` 兼容形态。
+
+### Impact
+- Task lifecycle 和 signal progression 已有 formal runtime owner；Task Runtime 返回 task updates、effects 与 follow-up signals，但不应用 effects，也不接管 Event、Scene、Interaction、Time、Save/Load 或 Presentation 边界。
+
 ## 2026-06-30 Presenter Output Render Decoupling
 
 ### Added

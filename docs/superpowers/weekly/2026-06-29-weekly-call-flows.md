@@ -10,11 +10,11 @@ If a real flow cannot be described clearly, that area is still a black box.
 
 ## Current Coverage Status
 
-- Real implemented flows captured: `10`
+- Real implemented flows captured: `11`
 - Planned target flows captured: `0`
 - Acceptance status:
 - current batch requirement satisfied
-- presenter/render flow captured after Child 5 closeout
+- task runtime flow captured after Child 6 closeout
 
 ## Flow 1: Current Game Boot Flow
 
@@ -190,3 +190,20 @@ renderApp() in main.ts -> createAppPresenterOutput() -> stage-presenters.ts / ov
 
 - `src/ui/app-render.ts` no longer imports `getHouseModule`, `isCityEntryVisibleForStoryStage`, or `selectCityNpcSummariesForHouse` directly.
 - This is presentation projection only; gameplay mutation, interaction runtime ownership, save/load, and task progression remain outside Child 5.
+
+## Flow 11: Real Child 6 Task Runtime Signal Progression Flow
+
+### Narrative
+
+Child 6 now proves that task lifecycle and signal-driven progression have a formal runtime owner under `src/core`. A registered `TaskDefinition` can be started into `TaskRuntimeState`, duplicate active starts are ignored deterministically, one `TaskSignal` can advance multiple active tasks, terminal failed/completed tasks stay closed, and returned effects remain unapplied until shared settlement handles them.
+
+### Call Chain
+
+```text
+registered TaskDefinition index -> applyTaskAction(start) -> TaskRuntimeState.instancesByTaskId -> TaskSignal -> applyTaskSignal() -> taskUpdates + returned effects + follow-up signals -> later shared runtime settlement
+```
+
+### Notes
+
+- `Task Runtime` consumes registered definitions; it does not import content packs directly.
+- `Task Runtime` does not own event activation, scene sessions, interaction sessions, time advancement, save/load IO, presenter output, or effect application.

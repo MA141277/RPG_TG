@@ -8,11 +8,10 @@
 
 **Primary Child Plan(s):**
 
-- `docs/superpowers/plans/2026-06-30-task-runtime-plan.md`
+- `docs/superpowers/plans/2026-06-30-mod-runtime-plan.md`
 
 **Queued Next Child Plan(s):**
 
-- `docs/superpowers/plans/2026-06-30-mod-runtime-plan.md`
 - `docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md`
 
 ## Weekly Summary
@@ -21,11 +20,12 @@
 - Child 1, Child 2, and Child 3 are now complete in isolated worktrees.
 - Child 4 is now complete in its isolated worktree, with its first two batches landing both the initial interactive-runtime bridge and the minimum RuntimeState/shared-dispatch carrier under `src/core`.
 - Child 5 is now complete: `src/application/presenter` owns presenter output, `src/main.ts` assembles render input through `createAppPresenterOutput()`, and `src/ui/app-render.ts` consumes presenter output instead of importing gameplay selection helpers directly.
+- Child 6 is now complete: `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts` own formal Task Runtime contracts, minimum lifecycle, signal-driven progression, and taskUpdates/effects/signals result output.
 - The five-core-artifact visibility bundle exists so the same week also produces readable module, control-flow, split-review, architecture, and change-impact outputs.
 
 ## Active Focus
 
-- Start Child 6 Task Runtime now that Child 5 has completed the presentation bridge dependency.
+- Start Child 7 Mod Runtime now that Child 6 has completed the task runtime dependency.
 
 ## Artifact Index
 
@@ -55,6 +55,7 @@ The old files may remain as historical references, but they are no longer indepe
 - `node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"`: `PASS`
 - `node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"`: `PASS`
 - `node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"`: `PASS`
+- `node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"`: `PASS`
 - `npm run typecheck`: `PASS`
 - `npm test`: `PASS`
 - `npm run build`: `PASS`
@@ -76,13 +77,14 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 4 batch 1 landed `src/core/contracts/interactive-runtime.ts`, `src/core/runtime/interactive-runtime.ts`, `src/core/runtime/house-runtime.ts`, and legacy house/interactive adapter files, then rerouted covered city-begging/activity-qte/story-battle entry in `src/main.ts` through those new seams.
 - Child 4 batch 2 landed `src/core/contracts/runtime-state.ts`, widened `RuntimeResult` plus the shared router/dispatch/settlement line to `RuntimeState`, kept `RuntimeState.core` on the current domain `GameState`, and proved at least one covered interactive path can return through `dispatchRuntimeRequest()` without merging `characterDefinitions` into `RuntimeState.core`.
 - Child 5 landed `src/application/presenter/presenter-output.ts`, `app-presenter.ts`, `stage-presenters.ts`, and `overlay-presenters.ts`; `src/main.ts` now creates presenter output before rendering; `src/ui/app-render.ts` no longer imports `getHouseModule`, `isCityEntryVisibleForStoryStage`, or `selectCityNpcSummariesForHouse` directly.
+- Child 6 landed `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts`; Task Runtime now supports start/action/signal entrypoints, duplicate active start guard, terminal failed/completed guard, multiple active task progression from one signal, and returned taskUpdates/effects/signals without applying effects.
 
 ### Deferred
 
 - Child 4 is now closed on the approved minimum RuntimeState carrier.
 - Child 5 presenter/render work is now closed on the first presenter output bridge.
-- Child 6 Task Runtime is now the next executable child.
-- Child 7 Mod Runtime is formally queued behind Child 6.
+- Child 6 Task Runtime is now closed on the first formal contract/lifecycle/progression slice.
+- Child 7 Mod Runtime is now the next executable child.
 - Child 8 StateSync Runtime is formally queued behind Child 7.
 
 ### Blockers
@@ -96,16 +98,17 @@ The old files may remain as historical references, but they are no longer indepe
 | `weekly governance` | Parent, child, weekly, visibility, and closeout sync state are explicit. | `none` | Keep closeout sync mandatory before future queue promotions. |
 | `src/core/contracts` | Introduce and widen shared contracts through `RuntimeState`, `RuntimeResult`, and interactive signals. | `contained`: `characterDefinitions` could not safely merge into `RuntimeState.core` yet. | Keep `characterDefinitions` deferred behind the weekly promotion gate. |
 | `src/core/runtime` | Move navigation/time/event/scene and covered interaction entry behind core seams. | `contained`: some interactive paths still use dedicated bridge helpers instead of one final router shape. | Hold stable during Child 5; revisit through a later runtime-consolidation child only if needed. |
+| `src/core/runtime/task-runtime.ts` | Introduce formal task lifecycle and signal progression ownership. | `contained`: no task UI, authoring DSL, or custom evaluator plugin yet. | Keep stable while Child 7 extracts Mod Runtime activation boundaries. |
 | `src/core/save` | Harden loader/writer/migration behavior. | `none` | Keep shape stable until real save/load callers require more. |
-| `src/main.ts` | Shrink black-box ownership through core adapters, runtime seams, and presenter assembly. | `contained`: browser shell and many runtime event handlers remain in main. | Start Child 6 Task Runtime without reopening presenter scope. |
-| `src/application/presenter` | Introduce a real presenter output bridge for stage, overlay, HUD, scene, and house render selection. | `contained`: layout renderer remains future work. | Keep stable while Child 6 extracts task runtime. |
+| `src/main.ts` | Shrink black-box ownership through core adapters, runtime seams, presenter assembly, and task runtime ownership. | `contained`: browser shell and many runtime event handlers remain in main. | Start Child 7 Mod Runtime without reopening task or presenter scope. |
+| `src/application/presenter` | Introduce a real presenter output bridge for stage, overlay, HUD, scene, and house render selection. | `contained`: layout renderer remains future work. | Keep stable while Child 7 extracts mod runtime. |
 | `src/ui/app-render.ts` | Reduce app render to presenter output consumption plus existing renderer calls. | `none` | Do not move gameplay selection back into UI. |
 
 ## Next Week Input
 
 - Highest-priority module to refine:
-  - `Task Runtime`
+  - `Mod Runtime`
 - Why it is next:
-  - Child 5 has closed the presentation dependency, so the next queue item is the already-authored Child 6 Task Runtime plan.
+  - Child 6 has closed the task runtime dependency, so the next queue item is the already-authored Child 7 Mod Runtime plan.
 - Category:
   - `next-executable-child`

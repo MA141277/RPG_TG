@@ -15,9 +15,9 @@ It must show:
 
 ## Architecture Summary
 
-- This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, advanced Child 4 through interactive/runtime carrier slices, and completed Child 5 presenter/render decoupling.
-- The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/*`, and `src/application/presenter` now exist as concrete boundary slices with read/write persistence, first-pass navigation, covered interactive entry, minimum shared-dispatch return behavior, and presenter-output render selection.
-- The immediate next target is Child 6 Task Runtime: Child 5 has completed the presentation bridge dependency, so the next planned reduction is formal task state/lifecycle/progression ownership without reopening presenter/render scope.
+- This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, advanced Child 4 through interactive/runtime carrier slices, completed Child 5 presenter/render decoupling, and completed Child 6 Task Runtime.
+- The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/*`, `src/application/presenter`, and `src/core/runtime/task-runtime.ts` now exist as concrete boundary slices with read/write persistence, first-pass navigation, covered interactive entry, minimum shared-dispatch return behavior, presenter-output render selection, and formal task lifecycle/progression ownership.
+- The immediate next target is Child 7 Mod Runtime: Child 6 has completed the task runtime dependency, so the next planned reduction is formal mod activation/startup ownership without reopening task or presenter/render scope.
 
 ## Module Diagram
 
@@ -36,6 +36,7 @@ flowchart LR
     ADAPTER --> COREE
     MAIN --> CORERT
     RSBRIDGE --> CORERT
+    CORERT --> TASKRT["task-runtime.ts (implemented Child 6)"]
     CORERT --> HOUCERT["house-runtime.ts bridge"]
     CORERT --> INTRT["interactive-runtime.ts bridge"]
     HOUCERT --> HOUSEAD["legacy-house-adapter.ts"]
@@ -59,6 +60,7 @@ flowchart LR
 - `src/core/contracts/interactive-runtime.ts`, `src/core/contracts/runtime-state.ts`, `src/core/runtime/interactive-runtime.ts`, and `src/core/runtime/house-runtime.ts` as the first production interactive-runtime and minimum RuntimeState carrier slices
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` as transitional compatibility seams for Child 4
 - `src/application/presenter/*` as the first production presentation bridge slice for presenter output, stage selection, overlay/HUD projection, and render-time house/city/scene selection
+- `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts` as the first production Task Runtime slice for task contracts, lifecycle, action handling, signal-driven progression, and task runtime result output
 
 ## Approved Target Modules
 
@@ -66,14 +68,15 @@ flowchart LR
 - Child 3 navigation/time/event extraction behind the new core runtime boundary
 - Child 4 interactive runtime integration after Child 3, completed on the approved minimum RuntimeState carrier
 - Child 5 presenter/render extraction, completed on the first presenter-output bridge
-- Child 6 Task Runtime extraction, now unlocked as the next legal queue item
+- Child 6 Task Runtime extraction, completed on the first formal contract/lifecycle/progression slice
+- Child 7 Mod Runtime extraction, now unlocked as the next legal queue item
 
 ## Temporary Adapters
 
 - `src/core/adapters/legacy-main-adapter.ts` is now implemented as a temporary bridge
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` are now implemented as temporary bridges
 - Legacy interactive gameplay logic still lives behind those adapters
-- Child 7 `Mod Runtime` and Child 8 `StateSync Runtime` remain formal queued architecture slices behind Child 6.
+- Child 8 `StateSync Runtime` remains a formal queued architecture slice behind Child 7.
 
 ## Flow Diagram 1: Current Boot And Render Flow
 
@@ -145,6 +148,21 @@ flowchart TD
     I --> J["Player Screen"]
 ```
 
+## Flow Diagram 6: Real Child 6 Task Signal Progression
+
+```mermaid
+flowchart TD
+    A["Registered TaskDefinition index"] --> B["applyTaskAction(start)"]
+    B --> C["TaskRuntimeState.instancesByTaskId"]
+    D["TaskSignal from scene/event/interaction/time producer"] --> E["applyTaskSignal()"]
+    C --> E
+    E --> F["update matching active task progress"]
+    F --> G["TaskUpdate[]"]
+    F --> H["returned effects[]"]
+    F --> I["returned signals[]"]
+    H --> J["shared runtime settlement applies effects later"]
+```
+
 ## Architecture Delta This Week
 
 - Added a formal parent plan, child boundary plan, weekly orchestration plan, and visibility companion relationship.
@@ -168,6 +186,7 @@ flowchart TD
 - Landed `src/application/presenter/presenter-output.ts`, `app-presenter.ts`, `stage-presenters.ts`, and `overlay-presenters.ts` so presentation projection has a production seam.
 - Updated `src/main.ts` to call `createAppPresenterOutput()` before rendering.
 - Updated `src/ui/app-render.ts` so stage/overlay/HUD render decisions consume presenter output and no longer import gameplay selection helpers directly.
+- Landed `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts` so Task Runtime owns minimum task lifecycle and signal-driven progression without absorbing effect settlement, event activation, scene sessions, interaction sessions, time advancement, save/load IO, or presentation.
 
 ## Architecture Risks
 
@@ -177,3 +196,4 @@ flowchart TD
 - Child 4 has already widened the shared `runtime-router.ts` / `runtime-dispatch.ts` contract to `RuntimeState`, but runtime ownership is still split between common dispatch and dedicated bridge helpers across the remaining interactive surface.
 - `characterDefinitions` is intentionally not part of `RuntimeState.core` in the current landing, so future convergence is still gated by weekly promotion rules rather than implied by the new carrier.
 - The presenter seam is now real but still provisional; full layout renderer/schema work remains future scope.
+- The Task Runtime seam is now real but intentionally first-slice only; task UI, complete authoring DSL, and mod custom evaluator plugins remain future scope.

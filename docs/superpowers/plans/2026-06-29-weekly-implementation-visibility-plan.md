@@ -11,10 +11,10 @@
 ## Execution State
 
 - Status: `in-progress`
-- Last Updated: `2026-06-30`
-- Current Focus: `The five-core-artifact weekly bundle now reflects completed Child 5 presenter/render decoupling. Visibility records src/application/presenter as the new presentation bridge seam and promotes Child 6 Task Runtime as the next executable child.`
-- Next Step: `Refresh the five core artifacts after the first Child 6 batch so visibility tracks Task Runtime contracts and signal-driven progression ownership.`
-- Verification: `Child 5 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Last Updated: `2026-07-01`
+- Current Focus: `The five-core-artifact weekly bundle now reflects completed Child 6 Task Runtime. Visibility records src/core/contracts/task-runtime.ts and src/core/runtime/task-runtime.ts as the new task lifecycle/progression seam and promotes Child 7 Mod Runtime as the next executable child.`
+- Next Step: `Refresh the five core artifacts after the first Child 7 batch so visibility tracks Mod Runtime activation ownership.`
+- Verification: `Child 6 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review.`
 
 ## Progress Log
@@ -75,6 +75,10 @@
   - Summary: `Updated the five-core-artifact weekly bundle after Child 5 closeout. The bundle now records src/application/presenter as the provisional presentation bridge, src/ui/app-render.ts as a presenter-output consumer, src/main.ts as the presenter assembly caller, and Child 6 Task Runtime as the next executable child.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Update the five core artifacts again after the first Child 6 Task Runtime batch lands.`
+- 2026-07-01
+  - Summary: `Updated the five-core-artifact weekly bundle after Child 6 closeout. The bundle now records formal Task Runtime contracts, minimum lifecycle/action/signal entrypoints, one-signal-to-many-active-tasks progression, terminal failed task handling, and Child 7 Mod Runtime as the next executable child.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Run npm run lint:plans, then update the five core artifacts again after the first Child 7 Mod Runtime batch lands.`
 
 ---
 
@@ -83,7 +87,7 @@
 - Weekly orchestration controller:
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Active next child plan:
-  - `docs/superpowers/plans/2026-06-30-task-runtime-plan.md`
+  - `docs/superpowers/plans/2026-06-30-mod-runtime-plan.md`
 - Parent orchestration plan:
   - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 

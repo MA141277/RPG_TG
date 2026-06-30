@@ -13,11 +13,11 @@
 ## Execution State
 
 - Status: `in-progress`
-- Last Updated: `2026-06-30`
-- Current Focus: `Child 5 presenter/render decoupling is completed. Child 6 Task Runtime is now the next executable orchestration target, Child 7 remains queued behind Child 6, and Child 8 remains queued behind Child 7.`
-- Next Step: `Start Child 6 from docs/superpowers/plans/2026-06-30-task-runtime-plan.md Task 1 Step 1 after this closeout commit; keep Child 7 queued behind Child 6 and Child 8 queued behind Child 7.`
-- Verification: `Child 5 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1, Child 2, Child 3, Child 4, and Child 5 are completed. Child 6 is formally queued as Task Runtime and is now the next executable child. Child 7 is formally queued as Mod Runtime. Child 8 is formally queued as StateSync Runtime. The older default-mod migration direction is superseded by the broader Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Last Updated: `2026-07-01`
+- Current Focus: `Child 6 Task Runtime is completed. Child 7 Mod Runtime is now the next executable orchestration target, and Child 8 remains queued behind Child 7.`
+- Next Step: `Start Child 7 from docs/superpowers/plans/2026-06-30-mod-runtime-plan.md Task 1 Step 1 after the Child 6 closeout commit; keep Child 8 queued behind Child 7.`
+- Verification: `Child 6 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1, Child 2, Child 3, Child 4, Child 5, and Child 6 are completed. Child 7 is formally queued as Mod Runtime and is now the next executable child. Child 8 is formally queued as StateSync Runtime. The older default-mod migration direction is superseded by the broader Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -101,6 +101,10 @@
   - Summary: `Completed Child 5 presenter/render decoupling. src/application/presenter now provides presenter output contracts plus app/stage/overlay presenter modules, src/main.ts creates presenter output before rendering, and src/ui/app-render.ts consumes presenter-selected stage/overlay/HUD data instead of importing gameplay selection helpers directly.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Start Child 6 from docs/superpowers/plans/2026-06-30-task-runtime-plan.md Task 1 Step 1.`
+- 2026-07-01
+  - Summary: `Completed Child 6 Task Runtime. The repository now has formal task runtime contracts and a minimum runtime for task creation, action handling, signal-driven progression, duplicate active guard, terminal failed/completed guard, and unified taskUpdates/effects/signals output without applying effects.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Run Child 6 closeout sync and npm run lint:plans, then start Child 7 from docs/superpowers/plans/2026-06-30-mod-runtime-plan.md Task 1 Step 1.`
 
 ## Why This Plan Exists
 
@@ -589,7 +593,7 @@ Out of scope:
 - task UI/presenter
 - full mod activation/capability/dependency
 
-- [ ] **Step 2: Verify Child 6 dependencies**
+- [x] **Step 2: Verify Child 6 dependencies**
 
 Confirm:
 
@@ -599,11 +603,11 @@ Confirm:
 - Child 5 completed
   - or Child 5 explicitly deferred by updated weekly and parent governance before Child 6 starts production code
 
-- [ ] **Step 3: Execute Child 6 from its own checklist**
+- [x] **Step 3: Execute Child 6 from its own checklist**
 
 Run all implementation work from the Child 6 plan file, not from this parent file.
 
-- [ ] **Step 4: Verify Child 6 exit condition and sync parent log**
+- [x] **Step 4: Verify Child 6 exit condition and sync parent log**
 
 Confirm:
 
@@ -785,10 +789,10 @@ Do not mark this parent plan `completed` until:
 - [x] Child 4 authored and completed
 - [x] Child 5 authored and completed
 - [x] Child 6 Task Runtime spec and plan authored
-- [ ] Child 6 completed
+- [x] Child 6 completed
 - [x] Child 7 Mod Runtime spec and plan authored
 - [ ] Child 7 completed
 - [x] Child 8 StateSync Runtime spec and plan authored
 - [ ] Child 8 completed
-- [ ] Shared-file conflict policy acknowledged
+- [x] Shared-file conflict policy acknowledged
 - [ ] Final orchestration verification recorded

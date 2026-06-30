@@ -8024,3 +8024,180 @@ test("main.ts assembles render input through application presenter output", () =
 
   assert.match(source, /createAppPresenterOutput/);
 });
+
+test("task runtime contract exports definition instance state action signal and result seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/task-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type TaskDefinition/);
+  assert.match(source, /export type TaskInstance/);
+  assert.match(source, /export type TaskRuntimeState/);
+  assert.match(source, /export type TaskAction/);
+  assert.match(source, /export type TaskSignal/);
+  assert.match(source, /export type TaskUpdate/);
+  assert.match(source, /export type TaskRuntimeResult/);
+});
+
+test("task runtime exports lifecycle and signal progression entrypoints", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/task-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /startTask/);
+  assert.match(source, /applyTaskAction/);
+  assert.match(source, /applyTaskSignal/);
+});
+
+test("task runtime starts one instance per task id and rejects duplicate active start", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/task-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /instancesByTaskId/);
+  assert.match(source, /duplicate-active-task/);
+});
+
+test("task runtime broadcasts one signal to multiple active tasks", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/task-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /applyTaskSignal/);
+  assert.match(source, /Object\.values\(state\.instancesByTaskId\)/);
+});
+
+test("task runtime treats failed tasks as terminal", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/task-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /failed-is-terminal/);
+});
+
+test("task runtime result carries task updates effects and signals without applying effects", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/task-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /taskUpdates/);
+  assert.match(source, /effects/);
+  assert.match(source, /signals/);
+});
+
+test("task runtime progresses active tasks from one broadcast signal without applying effects", () => {
+  const {
+    applyTaskAction,
+    applyTaskSignal,
+    createEmptyTaskRuntimeState,
+  } = require("../.test-dist/core/runtime/task-runtime.js");
+
+  const definitionsById = {
+    "meet-scholar": {
+      id: "meet-scholar",
+      title: "Meet Scholar",
+      objectives: [{ id: "meet", target: 1, signalType: "npc-met" }],
+      onCompleteEffects: [{ type: "setFlag", key: "task.meet.done", value: true }],
+    },
+    "report-scholar": {
+      id: "report-scholar",
+      title: "Report Scholar",
+      objectives: [{ id: "report", target: 1, signalType: "npc-met" }],
+      onCompleteEffects: [{ type: "setFlag", key: "task.report.done", value: true }],
+    },
+  };
+
+  let state = createEmptyTaskRuntimeState("2026-07-01T00:00:00.000Z");
+  state = applyTaskAction({
+    state,
+    definitionsById,
+    action: {
+      type: "start",
+      taskId: "meet-scholar",
+      occurredAt: "2026-07-01T00:01:00.000Z",
+    },
+  }).state;
+  state = applyTaskAction({
+    state,
+    definitionsById,
+    action: {
+      type: "start",
+      taskId: "report-scholar",
+      occurredAt: "2026-07-01T00:02:00.000Z",
+    },
+  }).state;
+
+  const result = applyTaskSignal({
+    state,
+    definitionsById,
+    signal: {
+      type: "npc-met",
+      source: "scene-runtime",
+      occurredAt: "2026-07-01T00:03:00.000Z",
+    },
+  });
+
+  assert.equal(result.state.instancesByTaskId["meet-scholar"].status, "completed");
+  assert.equal(result.state.instancesByTaskId["report-scholar"].status, "completed");
+  assert.deepEqual(result.state.completedTaskIds, [
+    "meet-scholar",
+    "report-scholar",
+  ]);
+  assert.equal(result.taskUpdates.filter((update) => update.type === "completed").length, 2);
+  assert.deepEqual(result.effects, [
+    { type: "setFlag", key: "task.meet.done", value: true },
+    { type: "setFlag", key: "task.report.done", value: true },
+  ]);
+  assert.deepEqual(result.signals, []);
+});
+
+test("task runtime applies signal-only failure conditions without objective progress", () => {
+  const {
+    applyTaskAction,
+    applyTaskSignal,
+    createEmptyTaskRuntimeState,
+  } = require("../.test-dist/core/runtime/task-runtime.js");
+
+  const definitionsById = {
+    "timed-report": {
+      id: "timed-report",
+      title: "Timed Report",
+      objectives: [{ id: "report", target: 1, signalType: "report-submitted" }],
+      failureConditions: [{ type: "signal", signalType: "deadline-missed" }],
+      onFailEffects: [{ type: "setFlag", key: "task.report.failed", value: true }],
+    },
+  };
+
+  let state = createEmptyTaskRuntimeState("2026-07-01T00:00:00.000Z");
+  state = applyTaskAction({
+    state,
+    definitionsById,
+    action: {
+      type: "start",
+      taskId: "timed-report",
+      occurredAt: "2026-07-01T00:01:00.000Z",
+    },
+  }).state;
+
+  const result = applyTaskSignal({
+    state,
+    definitionsById,
+    signal: {
+      type: "deadline-missed",
+      source: "time-runtime",
+      occurredAt: "2026-07-02T00:00:00.000Z",
+    },
+  });
+
+  assert.equal(result.state.instancesByTaskId["timed-report"].status, "failed");
+  assert.deepEqual(result.state.failedTaskIds, ["timed-report"]);
+  assert.deepEqual(result.effects, [
+    { type: "setFlag", key: "task.report.failed", value: true },
+  ]);
+});

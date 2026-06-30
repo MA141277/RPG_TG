@@ -1,6 +1,6 @@
 # Task Runtime Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Promote the existing task action and task signal seams into a formal `Task Runtime` with contracts, lifecycle state, signal-driven progression, and unified runtime results.
 
@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `not-started`
-- Last Updated: `2026-06-30`
-- Current Focus: `Formal Child 6 plan is authored for Task Runtime, but Child 5 remains the next executable child. This plan must not start production code until Child 5 is completed or explicitly deferred by weekly governance.`
-- Next Step: `After Child 5 closes or is formally deferred, start Task 1 Step 1 by reconciling the existing taskActions/taskSignals seams against the Child 6 spec.`
-- Verification: `npm run lint:plans`
+- Status: `completed`
+- Last Updated: `2026-07-01`
+- Current Focus: `Child 6 Task Runtime is completed on the first formal contract, lifecycle, and signal-driven progression slice.`
+- Next Step: `After closeout sync and commit, start Child 7 from docs/superpowers/plans/2026-06-30-mod-runtime-plan.md Task 1 Step 1.`
+- Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This is Child Plan 6 under the mod-first engine runtime extraction roadmap. Runtime-layer naming is Task. Mission remains content/presentation wording only. The older default-mod migration direction is no longer Child 6 and must be treated as a later candidate child.`
 
 ## Progress Log
@@ -23,6 +23,14 @@
   - Summary: `Formal Child 6 Task Runtime implementation plan authored and queued behind Child 5. Scope is limited to task contracts, lifecycle, signal-driven progression, and unified runtime results.`
   - Verification: `npm run lint:plans`
   - Next: `Keep Child 5 as the next executable child; start Child 6 Task 1 Step 1 only after Child 5 closes or weekly governance explicitly defers Child 5.`
+- 2026-07-01
+  - Summary: `Started Child 6 after confirming the non-child worktree is clean and Child 5 is completed. Task 1 reconciliation confirmed that RuntimeResult currently exposes RuntimeTaskAction/RuntimeTaskSignal, Event Runtime still owns trigger selection/candidate activation/startEvent flow, and Scene Runtime still owns runSceneFromEvent plus scene session creation.`
+  - Verification: `npm test`
+  - Next: `Add failing Task Runtime contract, runtime export, lifecycle, signal broadcast, terminal failure, and unified-result tests before creating production Task Runtime files.`
+- 2026-07-01
+  - Summary: `Completed Child 6 implementation. Added Task Runtime contracts, a minimum task runtime with start/apply action/apply signal entrypoints, duplicate active task handling, terminal failed/completed guards, built-in condition evaluation, signal-driven progression for multiple active tasks, taskUpdates/effects/signals result output, and RuntimeResult taskUpdates compatibility.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Sync weekly, parent, runtime subsystem spec, change log, and five core weekly artifacts, then run npm run lint:plans before committing.`
 
 ---
 
@@ -34,7 +42,7 @@
 - Runtime subsystem authority: `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`
 - Child 3 plan with reserved task seams: `docs/superpowers/plans/2026-06-29-navigation-time-event-runtime-extraction-plan.md`
 - Child 4 plan with shared runtime carrier: `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
-- Child 5 plan that remains next executable: `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
+- Completed Child 5 presenter/render plan: `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
 
 ## Parent Alignment
 
@@ -42,14 +50,15 @@
 - Primary subsystem boundary:
   - `Task Runtime`
 - Queue rule:
-  - Child 5 remains the current next executable child.
-  - Child 6 is formally authored and queued behind Child 5.
+  - Child 5 is completed.
+- Child 6 is completed.
+- Child 7 is the next executable child and Child 8 remains queued behind Child 7.
   - Child 6 must not reoccupy the older default-mod migration placeholder scope.
 - Dependency gate:
   - Child 1 must be completed.
   - Child 3 must be completed.
   - Child 4 must be completed.
-  - Child 5 must be completed or explicitly deferred by updated weekly and parent governance before Child 6 starts production code.
+  - Child 5 is completed, so the Child 6 production-code gate was satisfied.
 
 ## Scope
 
@@ -144,7 +153,7 @@ For targeted task-runtime work, also record:
 - Read: `src/core/runtime/scene-runtime.ts`
 - Modify: `docs/superpowers/plans/2026-06-30-task-runtime-plan.md`
 
-- [ ] **Step 1: Confirm existing task seam names**
+- [x] **Step 1: Confirm existing task seam names**
 
 Record that the current shared result contract exposes:
 
@@ -162,24 +171,24 @@ export type RuntimeTaskAction = {
 
 and that Child 6 must either preserve compatibility aliases or migrate them intentionally to the new `TaskAction` and `TaskSignal` contracts.
 
-- [ ] **Step 2: Confirm non-overlap with Event Runtime**
+- [x] **Step 2: Confirm non-overlap with Event Runtime**
 
 Record that `src/core/runtime/event-runtime.ts` still owns trigger selection and activation, and Child 6 must not move `selectTriggeredEvents`, `selectEventCandidate`, `canActivateEvent`, or `startEvent` into task runtime code.
 
-- [ ] **Step 3: Confirm non-overlap with Scene Runtime**
+- [x] **Step 3: Confirm non-overlap with Scene Runtime**
 
 Record that `src/core/runtime/scene-runtime.ts` still owns `runSceneFromEvent` and scene session creation, and Child 6 may only consume task signals emitted by scene runtime.
 
-- [ ] **Step 4: Record queue guard**
+- [x] **Step 4: Record queue guard**
 
-Update this plan's latest progress entry if needed so it still says Child 5 is the next executable child and Child 6 is queued behind it.
+Update this plan's latest progress entry so it records the current queue guard: Child 5 and Child 6 are completed, Child 7 is next executable, and Child 8 remains queued behind Child 7.
 
 ## Task 2: Add Failing Task Runtime Seam And Boundary Tests
 
 **Files:**
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add a failing contract export test**
+- [x] **Step 1: Add a failing contract export test**
 
 Add this red test:
 
@@ -200,7 +209,7 @@ test("task runtime contract exports definition instance state action signal and 
 });
 ```
 
-- [ ] **Step 2: Add a failing runtime export test**
+- [x] **Step 2: Add a failing runtime export test**
 
 Add this red test:
 
@@ -217,7 +226,7 @@ test("task runtime exports lifecycle and signal progression entrypoints", () => 
 });
 ```
 
-- [ ] **Step 3: Add failing behavior tests for lifecycle and concurrency**
+- [x] **Step 3: Add failing behavior tests for lifecycle and concurrency**
 
 Add tests with these exact names:
 
@@ -252,7 +261,7 @@ test("task runtime treats failed tasks as terminal", () => {
 });
 ```
 
-- [ ] **Step 4: Add a failing unified result test**
+- [x] **Step 4: Add a failing unified result test**
 
 Add this red test:
 
@@ -269,7 +278,7 @@ test("task runtime result carries task updates effects and signals without apply
 });
 ```
 
-- [ ] **Step 5: Run focused tests and confirm failure**
+- [x] **Step 5: Run focused tests and confirm failure**
 
 Run:
 
@@ -289,7 +298,7 @@ Expected:
 - Modify: `src/core/contracts/runtime-result.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Create task runtime contracts**
+- [x] **Step 1: Create task runtime contracts**
 
 Create `src/core/contracts/task-runtime.ts` with exported types for:
 
@@ -373,11 +382,11 @@ export type TaskRuntimeResult = {
 };
 ```
 
-- [ ] **Step 2: Keep compatibility with existing runtime result names**
+- [x] **Step 2: Keep compatibility with existing runtime result names**
 
 Update `src/core/contracts/runtime-result.ts` so existing `RuntimeTaskAction` and `RuntimeTaskSignal` callers remain compatible while the new Task Runtime contracts become the formal source of task semantics.
 
-- [ ] **Step 3: Run focused contract verification**
+- [x] **Step 3: Run focused contract verification**
 
 Run:
 
@@ -397,7 +406,7 @@ Expected:
 - Optional Create: `src/core/runtime/task-definition-registry.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add definition lookup helper if needed**
+- [x] **Step 1: Add definition lookup helper if needed**
 
 If a helper is needed, create `src/core/runtime/task-definition-registry.ts` with a pure indexed lookup:
 
@@ -414,7 +423,7 @@ export function getTaskDefinition(
 }
 ```
 
-- [ ] **Step 2: Implement startTask**
+- [x] **Step 2: Implement startTask**
 
 Create `src/core/runtime/task-runtime.ts` with `startTask()` that:
 
@@ -424,7 +433,7 @@ Create `src/core/runtime/task-runtime.ts` with `startTask()` that:
 - returns `TaskRuntimeResult`
 - emits `onStartEffects` without applying them
 
-- [ ] **Step 3: Implement applyTaskAction**
+- [x] **Step 3: Implement applyTaskAction**
 
 Add `applyTaskAction()` handling:
 
@@ -434,7 +443,7 @@ Add `applyTaskAction()` handling:
 
 Use the marker comment `// failed-is-terminal` near the guard that prevents reopening failed tasks so the boundary test remains explicit.
 
-- [ ] **Step 4: Run lifecycle-focused verification**
+- [x] **Step 4: Run lifecycle-focused verification**
 
 Run:
 
@@ -455,7 +464,7 @@ Expected:
 - Optional Create: `src/core/runtime/task-progression.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add built-in condition evaluator**
+- [x] **Step 1: Add built-in condition evaluator**
 
 If split out, create `src/core/runtime/task-condition-evaluator.ts` with pure evaluation for:
 
@@ -467,11 +476,11 @@ If split out, create `src/core/runtime/task-condition-evaluator.ts` with pure ev
 
 Do not add a custom mod evaluator plugin hook in Child 6.
 
-- [ ] **Step 2: Add task progression helper**
+- [x] **Step 2: Add task progression helper**
 
 If split out, create `src/core/runtime/task-progression.ts` to update objective counters when a `TaskSignal.type` matches a `TaskObjectiveDefinition.signalType`.
 
-- [ ] **Step 3: Implement applyTaskSignal**
+- [x] **Step 3: Implement applyTaskSignal**
 
 Update `src/core/runtime/task-runtime.ts` so `applyTaskSignal()`:
 
@@ -480,7 +489,7 @@ Update `src/core/runtime/task-runtime.ts` so `applyTaskSignal()`:
 - leaves completed and failed tasks unchanged
 - returns one `TaskRuntimeResult` containing all `taskUpdates`, `effects`, and follow-up `signals`
 
-- [ ] **Step 4: Run signal-focused verification**
+- [x] **Step 4: Run signal-focused verification**
 
 Run:
 
@@ -501,7 +510,7 @@ Expected:
 - Modify: `src/core/runtime/task-runtime.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Align TaskRuntimeResult with RuntimeResult**
+- [x] **Step 1: Align TaskRuntimeResult with RuntimeResult**
 
 Ensure `TaskRuntimeResult` carries:
 
@@ -512,11 +521,11 @@ Ensure `TaskRuntimeResult` carries:
 
 and that `RuntimeResult` can carry task updates without a side channel.
 
-- [ ] **Step 2: Keep effect application outside task runtime**
+- [x] **Step 2: Keep effect application outside task runtime**
 
 Verify `src/core/runtime/task-runtime.ts` returns effect arrays but does not import or call shared settlement code such as `settleRuntimeEffects`.
 
-- [ ] **Step 3: Run focused result verification**
+- [x] **Step 3: Run focused result verification**
 
 Run:
 
@@ -529,7 +538,7 @@ Expected:
 
 - unified result test passes.
 
-- [ ] **Step 4: Run full implementation verification**
+- [x] **Step 4: Run full implementation verification**
 
 Run:
 
@@ -554,7 +563,7 @@ Expected:
 - Modify: `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Update this child plan state**
+- [x] **Step 1: Update this child plan state**
 
 Update:
 
@@ -563,7 +572,7 @@ Update:
 - `Progress Log`
 - verification summary
 
-- [ ] **Step 2: Sync weekly orchestration**
+- [x] **Step 2: Sync weekly orchestration**
 
 Update the weekly plan so:
 
@@ -571,7 +580,7 @@ Update the weekly plan so:
 - the next executable child is selected after closeout sync
 - the five core weekly artifacts are reviewed if queue promotion follows
 
-- [ ] **Step 3: Sync parent orchestration**
+- [x] **Step 3: Sync parent orchestration**
 
 Update the parent plan so:
 
@@ -579,7 +588,7 @@ Update the parent plan so:
 - no old default-mod migration wording occupies the Child 6 slot
 - any future default-mod migration child remains only a later candidate until separately spec'd and planned
 
-- [ ] **Step 4: Record change log**
+- [x] **Step 4: Record change log**
 
 Add a concise entry to `docs/change-log.md` after production code lands:
 
@@ -587,7 +596,7 @@ Add a concise entry to `docs/change-log.md` after production code lands:
 - Added formal Task Runtime contracts and minimum lifecycle/progression runtime under `src/core`, keeping Mission as content/presentation wording only.
 ```
 
-- [ ] **Step 5: Run plan lint**
+- [x] **Step 5: Run plan lint**
 
 Run:
 
@@ -628,11 +637,11 @@ Expected:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Parent plan synchronized
-- [ ] Weekly orchestration synchronized
-- [ ] Runtime subsystem spec synchronized
-- [ ] Verification recorded
-- [ ] Change log updated after production code lands
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Parent plan synchronized
+- [x] Weekly orchestration synchronized
+- [x] Runtime subsystem spec synchronized
+- [x] Verification recorded
+- [x] Change log updated after production code lands
