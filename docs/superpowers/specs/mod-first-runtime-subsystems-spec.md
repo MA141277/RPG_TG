@@ -207,17 +207,22 @@ Primary seams:
 
 - `src/core/runtime/runtime-settlement.ts`
 
-### 4.10 State Sync Runtime
+### 4.10 StateSync Runtime
 
 Owns:
 
 - reconciliation between subsystem output and shared runtime state
 - preserving stable shared state boundaries
 - isolating mod-owned payload
+- canonical runtime-state authority
+- runtime/app/save/presentation synchronization
+- trigger-based hydration, normalization, reconstruction, and pre-save preparation
 
 Relationship:
 
-- this may remain partially implicit during early extraction, but child plans should treat it as a real runtime responsibility
+- this was partially implicit during early extraction
+- Child 8 formalizes this as `StateSync Runtime`
+- it is a state-boundary runtime, not gameplay dispatch, save IO, mod activation, or presentation ownership
 
 ### 4.11 Save / Load Runtime
 
@@ -307,7 +312,7 @@ Primary subsystem coverage:
 
 - Boot Runtime
 - Effect Settlement Runtime
-- State Sync Runtime
+- StateSync Runtime
 - Save / Load Runtime (first seam only)
 
 ### Child 2: `2026-06-29-save-migration-hardening-plan.md`
@@ -315,7 +320,7 @@ Primary subsystem coverage:
 Primary subsystem coverage:
 
 - Save / Load Runtime
-- State Sync Runtime
+- StateSync Runtime
 
 Secondary dependency:
 
@@ -385,6 +390,18 @@ Secondary dependency:
 - Boot Runtime seams from Child 1
 - Save / Load Runtime compatibility from Child 2
 - Child 5 and Child 6 remain ahead of Child 7 in the current weekly queue unless governance explicitly defers them first
+
+### Child 8: `2026-06-30-state-sync-runtime-plan.md`
+
+Primary subsystem coverage:
+
+- StateSync Runtime
+
+Secondary dependency:
+
+- Save / Load Runtime compatibility from Child 2
+- Child 4 minimum `RuntimeState` / `RuntimeResult` carrier
+- Child 5, Child 6, and Child 7 remain ahead of Child 8 in the current weekly queue unless governance explicitly defers them first
 
 ## 7. Planning Rules For Future Child Plans
 

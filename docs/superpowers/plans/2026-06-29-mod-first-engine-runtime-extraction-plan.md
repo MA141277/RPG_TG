@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-06-30`
-- Current Focus: `Child 4 is now completed on the approved minimum RuntimeState carrier slice. Child 5 presenter/render decoupling remains the next executable orchestration target, Child 6 is formally authored as Task Runtime, and Child 7 is now formally authored as the queued Mod Runtime child.`
-- Next Step: `Start Child 5 from its own checklist. Keep Child 6 queued behind Child 5, keep Child 7 queued behind Child 6, and keep Child 4 convergence rules as weekly-governed future follow-up rather than reopening Child 4 implicitly.`
-- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Current doc-only Child 6 and Child 7 authoring batch: npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, Child 3 completed on branch codex/child3-nav, and Child 4 is now completed on the approved minimum RuntimeState carrier slice. Child 5 is unlocked as the next executable child but remains not-started until its own checklist begins. Child 6 is formally queued as Task Runtime. Child 7 is formally queued as Mod Runtime and must not displace Child 5 or Child 6. The older default-mod migration direction is now superseded by the broader Child 7 Mod Runtime scope. Commit batching remains per-child so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Current Focus: `Child 4 is now completed on the approved minimum RuntimeState carrier slice. Child 5 presenter/render decoupling remains the next executable orchestration target, Child 6 is formally authored as Task Runtime, Child 7 is formally authored as Mod Runtime, and Child 8 is now formally authored as the queued StateSync Runtime child.`
+- Next Step: `Start Child 5 from its own checklist. Keep Child 6 queued behind Child 5, keep Child 7 queued behind Child 6, keep Child 8 queued behind Child 7, and keep Child 4 convergence rules as weekly-governed future follow-up rather than reopening Child 4 implicitly.`
+- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Current doc-only Child 6, Child 7, and Child 8 authoring batch: npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, Child 3 completed on branch codex/child3-nav, and Child 4 is now completed on the approved minimum RuntimeState carrier slice. Child 5 is unlocked as the next executable child but remains not-started until its own checklist begins. Child 6 is formally queued as Task Runtime. Child 7 is formally queued as Mod Runtime. Child 8 is formally queued as StateSync Runtime and must not displace Child 5, Child 6, or Child 7. The older default-mod migration direction is now superseded by the broader Child 7 Mod Runtime scope. Commit batching remains per-child so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -93,6 +93,10 @@
   - Summary: `Completed the required post-Child-6 review for an additional child, created formal Child 7 Mod Runtime spec and plan, and queued that work behind Child 6 without changing Child 5's status as the next executable child.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 5 from docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md; keep Child 6 queued behind it and Child 7 queued behind Child 6.`
+- 2026-06-30
+  - Summary: `Created formal Child 8 StateSync Runtime spec and plan from the approved state-sync checklist, and queued that work behind Child 7 without changing Child 5's status as the next executable child.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 5 from docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md; keep Child 6 queued behind it, Child 7 queued behind Child 6, and Child 8 queued behind Child 7.`
 
 ## Why This Plan Exists
 
@@ -326,7 +330,7 @@ Its scope is limited to:
 - load-time selected mod validation
 - runtime subsystem boundary:
   - `Save / Load Runtime`
-  - `State Sync Runtime`
+  - `StateSync Runtime`
 
 It must not re-define the initial `SaveEnvelope` contract already introduced by Child 1.
 
@@ -354,7 +358,7 @@ Record in this parent file:
 - Child 2 owns loader/writer/migration behavior after the Child 1 seam
 - Child 2 primary subsystem boundary is:
   - `Save / Load Runtime`
-  - `State Sync Runtime`
+  - `StateSync Runtime`
 
 - [x] **Step 4: Verify Child 2 is ready to execute**
 
@@ -664,7 +668,68 @@ Confirm:
 - Mod Runtime does not absorb content assembly, save/load IO, or gameplay execution ownership
 - Child 7 is marked `completed`
 
-### Task 9: Close the parent orchestration plan
+### Task 9: Author And Execute Child 8 StateSync Runtime
+
+**Files:**
+- Create: `docs/superpowers/specs/2026-06-30-state-sync-runtime-spec.md`
+- Create: `docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+
+- [x] **Step 1: Author Child 8 StateSync Runtime spec and plan**
+
+Create:
+
+```text
+docs/superpowers/specs/2026-06-30-state-sync-runtime-spec.md
+docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md
+```
+
+Scope:
+
+- canonical runtime-state authority
+- runtime/app/save/presentation source-of-truth boundary
+- trigger-based state synchronization
+- hydration, normalization, reconstruction, and write-back coordination
+- runtime subsystem boundary:
+  - `StateSync Runtime`
+
+Out of scope:
+
+- gameplay runtime dispatch
+- task/event/story progression
+- UI rendering
+- save file IO
+- mod parsing or activation
+
+- [ ] **Step 2: Verify Child 8 dependencies**
+
+Confirm:
+
+- Child 2 completed
+- Child 4 completed
+- Child 5 completed
+  - or Child 5 explicitly deferred by updated weekly and parent governance before Child 8 starts production code
+- Child 6 completed
+  - or Child 6 explicitly deferred by updated weekly and parent governance before Child 8 starts production code
+- Child 7 completed
+  - or Child 7 explicitly deferred by updated weekly and parent governance before Child 8 starts production code
+
+- [ ] **Step 3: Execute Child 8 from its own checklist**
+
+Run all implementation work from the Child 8 plan file, not from this parent file.
+
+- [ ] **Step 4: Verify Child 8 exit condition and sync parent log**
+
+Confirm:
+
+- canonical runtime state authority is defined
+- runtime/app/save/presentation boundaries are explicit
+- mandatory sync triggers exist
+- `src/main.ts` state-bridge migration boundary is recorded
+- StateSync Runtime does not absorb gameplay dispatch, save IO, mod activation, or presentation ownership
+- Child 8 is marked `completed`
+
+### Task 10: Close the parent orchestration plan
 
 Confirm:
 
@@ -690,7 +755,7 @@ Do not mark this parent plan `completed` until:
 
 ## Parallel Collaboration Rules
 
-- Do not execute Child 1, Child 3, Child 4, Child 5, Child 6, or Child 7 in the same worktree as another Codex thread editing `src/main.ts`, `src/domain/game-state.ts`, `src/ui/app-render.ts`, `src/core/contracts/runtime-result.ts`, `src/core/contracts/mod-manifest.ts`, or `tests/robustness.test.cjs`.
+- Do not execute Child 1, Child 3, Child 4, Child 5, Child 6, Child 7, or Child 8 in the same worktree as another Codex thread editing `src/main.ts`, `src/domain/game-state.ts`, `src/ui/app-render.ts`, `src/core/contracts/runtime-result.ts`, `src/core/contracts/runtime-state.ts`, `src/core/contracts/mod-manifest.ts`, or `tests/robustness.test.cjs`.
 - Documentation-only updates are safe in the current worktree.
 - After `src/core/contracts/` and `src/core/registry/engine-registry.ts` stabilize, treat them as frozen contracts; later tasks should conform rather than opportunistically redesign them.
 - The interactive-module migration should not proceed past adapter-only cleanup until the engine bootstrap and runtime dispatch seams are merged.
@@ -703,6 +768,7 @@ Do not mark this parent plan `completed` until:
 - Navigation, time, events, and interactive modules dispatch through reusable `src/core/runtime` services.
 - Task lifecycle and signal-driven task progression run through a formal `Task Runtime`.
 - Mod-related startup and restore activation flow through a formal `Mod Runtime`.
+- Canonical runtime, app bridge, save snapshot, and presentation input synchronization flow through a formal `StateSync Runtime`.
 - The current built-in campaign runs as the first-party default mod on top of the extracted engine shell.
 - New mods can declare capabilities and content without editing engine bootstrap files.
 
@@ -718,5 +784,7 @@ Do not mark this parent plan `completed` until:
 - [ ] Child 6 completed
 - [x] Child 7 Mod Runtime spec and plan authored
 - [ ] Child 7 completed
+- [x] Child 8 StateSync Runtime spec and plan authored
+- [ ] Child 8 completed
 - [ ] Shared-file conflict policy acknowledged
 - [ ] Final orchestration verification recorded

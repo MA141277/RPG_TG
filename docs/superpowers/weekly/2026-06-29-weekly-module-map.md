@@ -70,6 +70,7 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [ ] Full minigame dispatch interface.
 - [ ] Presenter output contracts.
 - [ ] Full `Mod Runtime` activation / capability / dependency contracts; this work is now formally queued as Child 7 rather than only a generic future backlog item.
+- [ ] Full `StateSync Runtime` canonical state and trigger-based sync contracts; this work is now formally queued as Child 8 behind Child 7.
 
 ### Remaining `main.ts` Coupling
 
