@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `not-started`
-- Last Updated: `2026-06-30`
-- Current Focus: `Formal Child 7 plan is authored for Mod Runtime, but Child 5 remains the next executable child and Child 6 remains queued ahead of this plan.`
-- Next Step: `After Child 5 and Child 6 close or are formally deferred by updated weekly and parent governance, start Task 1 Step 1 by reconciling the current startup, import, and restore branches against the Child 7 spec.`
-- Verification: `npm run lint:plans`
+- Status: `completed`
+- Last Updated: `2026-07-01`
+- Current Focus: `Child 7 Mod Runtime is completed. Formal contracts, source normalization/loading/parsing seams, dependency/capability guards, atomic activation, startup adapter, and restore-time selected-mod re-activation are in production code.`
+- Next Step: `Start Child 8 from docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md Task 1 Step 1 after committing the Child 7 closeout batch.`
+- Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This is Child Plan 7 under the mod-first engine/runtime extraction roadmap. The public subsystem name is Mod Runtime. Loader, parser, dependency, capability, and adapter seams may exist internally, but they do not become separate child runtimes.`
 
 ## Progress Log
@@ -23,6 +23,14 @@
   - Summary: `Formal Child 7 Mod Runtime implementation plan authored and queued behind Child 6. Scope is limited to discovery/load/parse/select/activate plus restore-time re-activation and startup handoff, without absorbing content assembly, save/load IO, or gameplay runtime execution.`
   - Verification: `npm run lint:plans`
   - Next: `Keep Child 5 as the next executable child, keep Child 6 queued behind it, and start Child 7 only after those queue gates are satisfied or explicitly deferred by updated governance.`
+- 2026-07-01
+  - Summary: `Started Child 7 after Child 5 and Child 6 were completed. The preflight confirmed main.ts still owned builtin/file/url startup branching, engine bootstrap still consumed raw selectedModId, and save loading still performs structural selected-mod validation rather than restore-time activation. Added the required Mod Runtime red tests and confirmed they failed before production implementation.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly" (expected failure before implementation)`
+  - Next: `Implement the Mod Runtime contracts, runtime modules, adapter, startup bridge, and restore seam.`
+- 2026-07-01
+  - Summary: `Completed Child 7 Mod Runtime. src/core/contracts/mod-runtime.ts, src/core/mods/*, and src/core/adapters/mod-runtime-main-adapter.ts now provide source descriptors, loaded/activated mod contracts, runtime state, request/failure/result seams, source normalization/loading/parsing, dependency and capability validation, atomic activation with rollback, and a legacy bootstrap adapter. src/main.ts now activates builtin, file-imported, url-imported, and saved selected mods through Mod Runtime before downstream startup/content assembly, while content assembly, save/load IO, gameplay runtimes, UI, and presenter work remain outside Mod Runtime ownership.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Start Child 8 from docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md Task 1 Step 1 after committing the Child 7 closeout batch.`
 
 ---
 
@@ -45,11 +53,12 @@
 - Secondary subsystem relationships:
   - consumes Boot Runtime and registry seams from Child 1
   - depends on Save / Load Runtime compatibility from Child 2
-  - must not leapfrog Child 5 or Child 6 without an explicit defer decision recorded in weekly and parent governance
+  - completed after Child 5 and Child 6 were closed
 - Queue rule:
-  - Child 5 remains the current next executable child.
-  - Child 6 remains formally queued behind Child 5.
-  - Child 7 is authored but remains queued behind Child 6 unless later governance explicitly updates that order first.
+  - Child 5 is completed.
+  - Child 6 is completed.
+  - Child 7 is completed.
+  - Child 8 StateSync Runtime remains queued behind this closeout and becomes the next executable child only after weekly/parent/artifact synchronization.
 
 ## Scope
 
@@ -162,19 +171,19 @@ For targeted Mod Runtime work, also record:
 - Read: `src/core/save/save-loader.ts`
 - Modify: `docs/superpowers/plans/2026-06-30-mod-runtime-plan.md`
 
-- [ ] **Step 1: Confirm current startup ownership**
+- [x] **Step 1: Confirm current startup ownership**
 
 Record that `src/main.ts` still owns builtin startup plus imported file/url branching and that Child 7 must extract mod-related parse/activate decisions without claiming menu, render, or gameplay execution ownership.
 
-- [ ] **Step 2: Confirm current bootstrap seam**
+- [x] **Step 2: Confirm current bootstrap seam**
 
 Record that `src/core/engine/engine-bootstrap.ts` currently selects a mod by raw `selectedModId`, so Child 7 must either widen bootstrap input or provide an adapter that maps `ModActivationResult` back into the current bootstrap contract during v1.
 
-- [ ] **Step 3: Confirm current save/load relationship**
+- [x] **Step 3: Confirm current save/load relationship**
 
 Record that `src/core/save/save-loader.ts` still validates `selectedModId` structurally, and Child 7 must add restore-time re-activation without moving save envelope parsing or migration into Mod Runtime.
 
-- [ ] **Step 4: Record queue guard**
+- [x] **Step 4: Record queue guard**
 
 Update this plan's latest progress entry if needed so it still says Child 5 is next, Child 6 is ahead of Child 7, and Child 7 must not start production code until those queue gates are satisfied or explicitly deferred by updated weekly and parent governance.
 
@@ -183,7 +192,7 @@ Update this plan's latest progress entry if needed so it still says Child 5 is n
 **Files:**
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add a failing contract export test**
+- [x] **Step 1: Add a failing contract export test**
 
 Add this red test:
 
@@ -204,7 +213,7 @@ test("mod runtime contract exports source state request activation and failure s
 });
 ```
 
-- [ ] **Step 2: Add a failing source-normalization test**
+- [x] **Step 2: Add a failing source-normalization test**
 
 Add this red test:
 
@@ -222,7 +231,7 @@ test("mod runtime normalizes builtin file and url sources through one source reg
 });
 ```
 
-- [ ] **Step 3: Add a failing activation-transaction test**
+- [x] **Step 3: Add a failing activation-transaction test**
 
 Add this red test:
 
@@ -239,7 +248,7 @@ test("mod runtime activation is atomic and leaves no partial active mod on failu
 });
 ```
 
-- [ ] **Step 4: Add failing adapter and restore tests**
+- [x] **Step 4: Add failing adapter and restore tests**
 
 Add these red tests:
 
@@ -265,7 +274,7 @@ test("save restore re-activates selected mod through mod runtime", () => {
 });
 ```
 
-- [ ] **Step 5: Add a failing boundary-guard test**
+- [x] **Step 5: Add a failing boundary-guard test**
 
 Add this red test:
 
@@ -282,7 +291,7 @@ test("mod runtime does not absorb content assembly or gameplay execution ownersh
 });
 ```
 
-- [ ] **Step 6: Run focused tests and confirm failure**
+- [x] **Step 6: Run focused tests and confirm failure**
 
 Run:
 
@@ -303,7 +312,7 @@ Expected:
 - Modify: `src/core/registry/mod-registry.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Expand manifest contract to support Child 7 validation**
+- [x] **Step 1: Expand manifest contract to support Child 7 validation**
 
 Update `src/core/contracts/mod-manifest.ts` so the manifest can state at least:
 
@@ -327,7 +336,7 @@ export type GameModManifest = {
 };
 ```
 
-- [ ] **Step 2: Create formal Mod Runtime contracts**
+- [x] **Step 2: Create formal Mod Runtime contracts**
 
 Create `src/core/contracts/mod-runtime.ts` with exported types for:
 
@@ -401,11 +410,11 @@ export type ModActivationResult =
   | { ok: false; state: ModRuntimeState; failure: ModRuntimeFailure };
 ```
 
-- [ ] **Step 3: Align registry ownership**
+- [x] **Step 3: Align registry ownership**
 
 Update `src/core/registry/mod-registry.ts` so builtin registry data remains the authoritative builtin source catalog while Child 7 runtime state can build `availableModsById` on top of it without duplicating manifest ownership.
 
-- [ ] **Step 4: Run focused contract verification**
+- [x] **Step 4: Run focused contract verification**
 
 Run:
 
@@ -427,7 +436,7 @@ Expected:
 - Modify: `src/core/mods/mod-runtime.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement source normalization**
+- [x] **Step 1: Implement source normalization**
 
 Create `src/core/mods/mod-source-registry.ts` with a pure source normalizer:
 
@@ -441,7 +450,7 @@ export function normalizeModSource(input: ModSourceDescriptor): ModSourceDescrip
 
 The real implementation must normalize builtin, file, and url inputs into one internal source shape instead of branching ad hoc in `src/main.ts`.
 
-- [ ] **Step 2: Implement loading seam**
+- [x] **Step 2: Implement loading seam**
 
 Create `src/core/mods/mod-source-loader.ts` with a loader entry such as:
 
@@ -457,7 +466,7 @@ export async function loadModSource(
 
 The finished implementation must distinguish source retrieval from parsing.
 
-- [ ] **Step 3: Implement parser seam**
+- [x] **Step 3: Implement parser seam**
 
 Create `src/core/mods/mod-parser.ts` with a parser entry such as:
 
@@ -475,7 +484,7 @@ export function parseModManifest(input: unknown): GameModManifest {
 
 The finished implementation must classify parse failures as `parse-failed` instead of falling back silently.
 
-- [ ] **Step 4: Run source-focused verification**
+- [x] **Step 4: Run source-focused verification**
 
 Run:
 
@@ -498,15 +507,15 @@ Expected:
 - Modify: `src/core/engine/engine-factory.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement dependency and conflict validation**
+- [x] **Step 1: Implement dependency and conflict validation**
 
 Create `src/core/mods/mod-dependency-resolver.ts` with a pure validator that can return `dependency-missing` or `dependency-conflict` without entering boot/content assembly code.
 
-- [ ] **Step 2: Implement capability validation**
+- [x] **Step 2: Implement capability validation**
 
 Create `src/core/mods/mod-capability-guard.ts` with a pure validator that can return `capability-rejected` without attempting sandboxing or gameplay execution.
 
-- [ ] **Step 3: Implement `runModRuntime()`**
+- [x] **Step 3: Implement `runModRuntime()`**
 
 Create `src/core/mods/mod-runtime.ts` with an orchestration entrypoint that:
 
@@ -520,11 +529,11 @@ Create `src/core/mods/mod-runtime.ts` with an orchestration entrypoint that:
 
 Include an explicit `rollback` path or marker so the atomic activation guard remains testable.
 
-- [ ] **Step 4: Keep bootstrap downstream of activation**
+- [x] **Step 4: Keep bootstrap downstream of activation**
 
 Update `src/core/engine/engine-bootstrap.ts` and `src/core/engine/engine-factory.ts` so engine boot consumes the activated-mod handoff or its adapter output, rather than recreating parse/activate decisions inline.
 
-- [ ] **Step 5: Run activation-focused verification**
+- [x] **Step 5: Run activation-focused verification**
 
 Run:
 
@@ -545,7 +554,7 @@ Expected:
 - Modify: `src/core/engine/engine-bootstrap.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement startup adapter**
+- [x] **Step 1: Implement startup adapter**
 
 Create `src/core/adapters/mod-runtime-main-adapter.ts` with a function such as:
 
@@ -565,15 +574,15 @@ export function toLegacyBootstrapInput(result: ModActivationResult) {
 
 The finished adapter must let current startup consume one unified activation result while bootstrap remains transitional.
 
-- [ ] **Step 2: Route builtin/file/url startup decisions through the adapter**
+- [x] **Step 2: Route builtin/file/url startup decisions through the adapter**
 
 Update `src/main.ts` so builtin default startup, file import startup, and url import startup all call the Child 7 seam before content assembly or engine bootstrap proceeds.
 
-- [ ] **Step 3: Keep content assembly outside Mod Runtime**
+- [x] **Step 3: Keep content assembly outside Mod Runtime**
 
 Verify that content install/reset and final `ActiveGameContent` assembly stay outside `src/core/mods/mod-runtime.ts`, with only normalized activation handoff crossing the seam.
 
-- [ ] **Step 4: Run startup-focused verification**
+- [x] **Step 4: Run startup-focused verification**
 
 Run:
 
@@ -595,7 +604,7 @@ Expected:
 - Modify: `src/core/mods/mod-runtime.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Define restore input and failure typing**
+- [x] **Step 1: Define restore input and failure typing**
 
 Extend `src/core/contracts/mod-runtime.ts` if needed so restore flow has explicit input and failure contracts, for example:
 
@@ -608,15 +617,15 @@ export type SaveRestoreInput = {
 export type RestoreFailure = ModRuntimeFailure;
 ```
 
-- [ ] **Step 2: Keep save loading structural**
+- [x] **Step 2: Keep save loading structural**
 
 Update `src/core/save/save-loader.ts` so it still owns envelope validation and migration output, but no longer acts as the final authority for restore-time active-mod recreation.
 
-- [ ] **Step 3: Re-activate saved mod through Child 7**
+- [x] **Step 3: Re-activate saved mod through Child 7**
 
 Update `src/main.ts` restore flow so the saved `selectedModId` must pass back through Mod Runtime before downstream bootstrap resumes. Do not add automatic builtin fallback.
 
-- [ ] **Step 4: Run restore-focused verification**
+- [x] **Step 4: Run restore-focused verification**
 
 Run:
 
@@ -638,7 +647,7 @@ Expected:
 - Modify: `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Run full implementation verification**
+- [x] **Step 1: Run full implementation verification**
 
 Run:
 
@@ -654,7 +663,7 @@ Expected:
 - full test suite passes
 - production build passes
 
-- [ ] **Step 2: Update this child plan state**
+- [x] **Step 2: Update this child plan state**
 
 Update:
 
@@ -663,7 +672,7 @@ Update:
 - `Progress Log`
 - verification summary
 
-- [ ] **Step 3: Sync weekly orchestration**
+- [x] **Step 3: Sync weekly orchestration**
 
 Update the weekly plan so:
 
@@ -671,7 +680,7 @@ Update the weekly plan so:
 - any next executable child remains correct
 - queue promotion does not occur unless Child 7 actually satisfies its own acceptance gate
 
-- [ ] **Step 4: Sync parent orchestration and subsystem mapping**
+- [x] **Step 4: Sync parent orchestration and subsystem mapping**
 
 Update the parent plan and runtime-subsystems spec so:
 
@@ -679,7 +688,7 @@ Update the parent plan and runtime-subsystems spec so:
 - Mod Runtime remains a distinct subsystem from Boot Runtime, Save / Load Runtime, and Presentation Bridge Runtime
 - no old default-mod placeholder wording reappears as Child 7 scope
 
-- [ ] **Step 5: Record change log**
+- [x] **Step 5: Record change log**
 
 Add a concise entry to `docs/change-log.md` after production code lands:
 
@@ -687,7 +696,7 @@ Add a concise entry to `docs/change-log.md` after production code lands:
 - Added formal Mod Runtime contracts and startup activation seams under `src/core`, normalizing builtin/file/url startup plus restore-time mod re-activation behind one activation handoff.
 ```
 
-- [ ] **Step 6: Run plan lint**
+- [x] **Step 6: Run plan lint**
 
 Run:
 
@@ -727,11 +736,11 @@ Expected:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Parent plan synchronized
-- [ ] Weekly orchestration synchronized
-- [ ] Runtime subsystem spec synchronized
-- [ ] Verification recorded
-- [ ] Change log updated after production code lands
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Parent plan synchronized
+- [x] Weekly orchestration synchronized
+- [x] Runtime subsystem spec synchronized
+- [x] Verification recorded
+- [x] Change log updated after production code lands

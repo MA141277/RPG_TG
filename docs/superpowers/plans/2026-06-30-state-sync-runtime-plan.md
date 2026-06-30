@@ -11,9 +11,9 @@
 ## Execution State
 
 - Status: `not-started`
-- Last Updated: `2026-06-30`
-- Current Focus: `Formal Child 8 plan is authored for StateSync Runtime, but Child 5 remains the next executable child, Child 6 remains queued behind Child 5, and Child 7 remains queued behind Child 6.`
-- Next Step: `After Child 5, Child 6, and Child 7 close or are formally deferred by updated weekly and parent governance, start Task 1 Step 1 by reconciling current RuntimeState, AppState, save, and presentation bridge ownership against the Child 8 spec.`
+- Last Updated: `2026-07-01`
+- Current Focus: `Formal Child 8 plan is authored for StateSync Runtime. Child 5, Child 6, and Child 7 are completed, so Child 8 is now the next executable child.`
+- Next Step: `Start Task 1 Step 1 by reconciling current RuntimeState, AppState, save, and presentation bridge ownership against the Child 8 spec.`
 - Verification: `npm run lint:plans`
 - Notes: `This is Child Plan 8 under the mod-first engine/runtime extraction roadmap. It owns synchronization, normalization, hydration, reconstruction, and write-back coordination only. It must not become gameplay dispatch, save IO, mod activation, presenter, or feature-specific orchestration.`
 
@@ -23,6 +23,10 @@
   - Summary: `Formal Child 8 StateSync Runtime implementation plan authored and queued behind Child 7. Scope is limited to state authority, trigger-based sync, canonical runtime state, app/save/presentation bridges, and main.ts state-bridge migration boundaries.`
   - Verification: `npm run lint:plans`
   - Next: `Keep Child 5 as the next executable child, keep Child 6 queued behind it, keep Child 7 queued behind Child 6, and start Child 8 only after those queue gates are satisfied or explicitly deferred by updated governance.`
+- 2026-07-01
+  - Summary: `Child 7 Mod Runtime closeout completed and weekly/parent/artifact state now promotes Child 8 StateSync Runtime as the next executable child.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Start Task 1 Step 1.`
 
 ---
 
@@ -50,10 +54,10 @@
   - should run after Child 6 so task state slice ownership is clearer, unless weekly governance explicitly defers Child 6
   - should run after Child 7 so mod activation rebuild ownership is clearer, unless weekly governance explicitly defers Child 7
 - Queue rule:
-  - Child 5 remains the current next executable child.
-  - Child 6 remains queued behind Child 5.
-  - Child 7 remains queued behind Child 6.
-  - Child 8 is authored but remains queued behind Child 7 unless later governance explicitly updates that order first.
+  - Child 5 is completed.
+  - Child 6 is completed.
+  - Child 7 is completed.
+  - Child 8 is now the next executable child.
 
 ## Scope
 

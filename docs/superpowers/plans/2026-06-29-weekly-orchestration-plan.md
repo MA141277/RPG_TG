@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 6 Task Runtime is completed; Child 7 Mod Runtime is now the next executable child, and Child 8 remains queued behind Child 7.`
-- Next Step: `Start Child 7 from docs/superpowers/plans/2026-06-30-mod-runtime-plan.md Task 1 Step 1 after this Child 6 closeout sync and commit. Keep Child 8 queued behind Child 7, and do not create or promote any child beyond Child 8 until another runtime/module/artifact review is completed. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first.`
-- Verification: `Child 6 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is formally queued as Mod Runtime and is now next executable, and Child 8 is formally queued as StateSync Runtime. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+- Current Focus: `Child 7 Mod Runtime is completed; Child 8 StateSync Runtime is now the next executable child.`
+- Next Step: `Start Child 8 from docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md Task 1 Step 1 after committing the Child 7 closeout batch. Do not create or promote any child beyond Child 8 until another runtime/module/artifact review is completed. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first.`
+- Verification: `Child 7 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, and Child 8 is formally queued as StateSync Runtime and is now next executable. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
 
@@ -123,6 +123,10 @@
   - Summary: `Completed Child 6 Task Runtime. src/core/contracts/task-runtime.ts now defines TaskDefinition, TaskInstance, TaskRuntimeState, TaskAction, TaskSignal, TaskUpdate, and TaskRuntimeResult; src/core/runtime/task-runtime.ts now owns minimum task creation, duplicate active start handling, terminal failed/completed guards, signal-driven progression across multiple active tasks, and returned taskUpdates/effects/signals without applying effects. RuntimeResult now carries taskUpdates while preserving legacy task action/signal compatibility.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Run Child 6 closeout artifact sync and npm run lint:plans, then start Child 7 from docs/superpowers/plans/2026-06-30-mod-runtime-plan.md Task 1 Step 1 after the closeout commit.`
+- 2026-07-01
+  - Summary: `Completed Child 7 Mod Runtime. The repository now has formal mod runtime contracts, source normalization/loading/parsing seams, dependency and capability guards, atomic activation with rollback, a main adapter, and startup/restore calls from src/main.ts through Mod Runtime for builtin, file-imported, url-imported, and saved selected mods. Content assembly, save/load IO, gameplay runtimes, UI, and presenter work remain outside Mod Runtime ownership.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Run Child 7 closeout artifact sync, then start Child 8 from docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md Task 1 Step 1 after the closeout commit.`
 
 ---
 
@@ -145,7 +149,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - 优先收敛 Shared Runtime / Runtime Dispatch / Router / Interaction Runtime / House Runtime integration seam / Shared Runtime State carrier。
 - 保持当前功能兼容现有状态，不要求本周完成全量迁移。
 - 通过计划文档、五份核心 weekly artifact、边界说明降低项目黑盒程度。
-- 当前队列口径：Child 4 已完成，Child 5 已完成 presenter/render decoupling，Child 6 已完成 Task Runtime 首版抽离，Child 7 Mod Runtime 是 next executable child，Child 8 StateSync Runtime 仍排在 Child 7 后；Child 8 之外的新增 child 必须先复盘再决定是否拆出独立 spec + plan。
+- 当前队列口径：Child 4 已完成，Child 5 已完成 presenter/render decoupling，Child 6 已完成 Task Runtime 首版抽离，Child 7 已完成 Mod Runtime 首版抽离，Child 8 StateSync Runtime 是 next executable child；Child 8 之外的新增 child 必须先复盘再决定是否拆出独立 spec + plan。
 
 ## Weekly Focus Modules
 
@@ -220,7 +224,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - `Minigame Runtime / Dispatch Interface`: covered activity-qte/city-begging/story-battle 路径已有 bridge，统一 dispatch interface 尚未正式化。
 - `Task Runtime`: Child 6 是首版最小可协同 runtime，尚未接入完整 task authoring DSL、UI/presenter 或 mod 自定义 evaluator 插件。
 - `Presentation / Render Bridge`: Child 5 已完成首版 presenter output bridge；当前为 provisional bridge，layout renderer 仍未正式化。
-- `Mod Runtime`: engine registry/boot seam 已有，Child 7 spec/plan 已正式创建并成为下一个可执行 child，但完整 activation/capability/dependency 生产代码尚未开始。
+- `Mod Runtime`: Child 7 已完成首版 formal runtime seam，包含 source normalization/loading/parsing、activation result handoff、capability/dependency guard、atomic rollback、main adapter，以及 builtin/file/url/restore selected-mod activation 接入；后续更完整的 capability/dependency 系统仍是 later hardening。
 - `StateSync Runtime`: save hardening 已有兼容基础；Child 8 spec/plan 已正式创建，但统一 canonical state sync 生产代码尚未开始。
 - `mod content loading / content-pack module`: 现有 content-pack 可用，但尚未完全迁入 mod-first loader/capability 体系。
 
@@ -228,7 +232,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 
 - 完整 `Minigame Runtime / Dispatch Interface`。
 - 完整 `Presentation / Render Bridge` layout/schema 代码切换。
-- 完整 `Mod Runtime`、capability、dependency 体系；Child 7 已成为下一个可执行 child，但生产代码尚未开始。
+- 完整 `Mod Runtime`、capability、dependency 体系；Child 7 已完成首版 activation/startup seam，但更完整的 capability/dependency policy、hot reload、sandboxing 和 authoring tooling 仍非本周目标。
 - 完整 `StateSync Runtime` 抽离；Child 8 已排队但生产代码尚未开始。
 - 完整 `mod schema` 与全量 mod 数据迁移。
 - `characterDefinitions -> RuntimeState.core` 收敛；当前明确 deferred。
@@ -258,7 +262,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - 不要求本周完成全量 mod 数据迁移。
 - 不要求本周完成 `characterDefinitions -> RuntimeState.core`。
 - 不要求本周完成完整 task UI、authoring DSL 或 mod 自定义 evaluator 插件；Child 6 只落地首版 Task Runtime contract/lifecycle/progression。
-- 不要求本周完成完整 mod loader / activation / capability / dependency 体系；Child 7 负责下一步正式执行。
+- 不要求本周完成完整 mod loader / activation / capability / dependency 体系；Child 7 已完成首版 activation/startup seam，完整 capability/dependency policy、sandboxing 和 hot reload 仍留给后续评估。
 - 不要求本周定义最终完整版 mod schema。
 
 ## Weekly Deliverables
@@ -270,7 +274,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - 各模块当前状态分类：已拆分 / 部分拆分 / 兼容桥接 / 未开始。
 - 当前已拆 / 未拆模块列表。
 - call flow / runtime flow 更新入口说明。
-- Child 6 Task Runtime 完成记录，以及 Child 7 是否可解锁为 next executable 的 closeout 判断记录。
+- Child 7 Mod Runtime 完成记录，以及 Child 8 是否可解锁为 next executable 的 closeout 判断记录。
 - visibility companion / five-core-artifact bundle 同步结果。
 
 ## Weekly Acceptance Criteria
@@ -282,13 +286,13 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - `main.ts` 黑盒编排继续收缩。
 - 现有功能保持兼容，不出现明显回退。
 - 文档、plan、visibility artifacts 同步。
-- Child 6 已按既有 spec/plan 完成，不扩展到 Event/Scene/Interaction/Time/Presentation/Mod Activation 边界之外；Child 7 是下一个可执行 child，Child 8 不抢占 Child 7。
+- Child 7 已按既有 spec/plan 完成，不扩展到 content assembly、save/load IO、gameplay runtime execution、UI/menu/loading-screen、hot reload 或 sandboxing 边界之外；Child 8 是下一个可执行 child。
 
 ## Next-Week Unlock Conditions
 
-- Child 6 已完成，可按 closeout sync 结果解锁 Child 7。
-- Child 7 已正式定义为 Mod Runtime，并成为当前 next executable child。
-- Child 8 已正式定义为 StateSync Runtime，并排在 Child 7 之后。
+- Child 6 已完成，并已通过 closeout sync 解锁并完成 Child 7。
+- Child 7 已正式定义为 Mod Runtime，并已完成首版 activation/startup seam。
+- Child 8 已正式定义为 StateSync Runtime，并成为当前 next executable child。
 - Child 8 之外，如果 shared runtime carrier、runtime dispatch 边界、模块成熟度和五份核心 artifact 状态稳定，则允许评估：
   - `characterDefinitions` 是否进入 shared carrier
   - `minigame dispatch interface`
@@ -304,8 +308,8 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 
 - Child 5 presenter/render decoupling is completed from its existing spec and plan.
 - Child 6 Task Runtime has now been completed from its existing spec and plan.
-- The required review has now also been completed for one additional child, so Child 7 Mod Runtime may exist as the next executable child behind completed Child 6.
-- The required review has now also been completed for one additional state-boundary child, so Child 8 StateSync Runtime may exist as a formal queued child behind Child 7.
+- The required review was completed for Child 7, and Child 7 Mod Runtime has now completed its first activation/startup seam.
+- The required review has also been completed for one additional state-boundary child, so Child 8 StateSync Runtime may now exist as the next executable child behind completed Child 7.
 - Any new child after Child 8 must begin with a review of:
   - the five core weekly artifacts
   - current runtime/module maturity
@@ -430,29 +434,27 @@ The five core outputs are part of the weekly acceptance gate even though their d
   - Role: Child 6 Task Runtime
   - Resume point: `Completed on the first formal Task Runtime contract, lifecycle, and signal progression slice.`
 
+- `docs/superpowers/plans/2026-06-30-mod-runtime-plan.md`
+  - Role: Child 7 Mod Runtime
+  - Resume point: `Completed on the first formal Mod Runtime activation/startup seam.`
+
 ### In Progress
 
 - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
   - Role: active queue controller
-  - Resume point: `Start Child 7 from Task 1 Step 1 after Child 6 closeout commit.`
+  - Resume point: `Start Child 8 from Task 1 Step 1 after Child 7 closeout commit.`
 
 - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
   - Role: active weekly visibility companion
-  - Resume point: `Refresh the five core artifacts after the first Child 7 batch.`
+  - Resume point: `Refresh the five core artifacts after the first Child 8 batch.`
 
 ### Not Started
 
-- `docs/superpowers/plans/2026-06-30-mod-runtime-plan.md`
-  - Role: next executable Child 7
-  - Primary subsystem boundary: `Mod Runtime`
-  - Depends on: Child 1 completed, Child 2 completed, Child 5 completed, and Child 6 completed
-  - Resume point: `Start Task 1 Step 1. Dependency gate is satisfied after Child 6 closeout sync.`
-
 - `docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md`
-  - Role: planned Child 8
+  - Role: next executable Child 8
   - Primary subsystem boundary: `StateSync Runtime`
   - Depends on: Child 2 completed, Child 4 completed, Child 5 completed or explicitly deferred by updated weekly governance, Child 6 completed or explicitly deferred by updated weekly governance, and Child 7 completed or explicitly deferred by updated weekly governance
-  - Resume point: `Start Task 1 Step 1 only after Child 5, Child 6, and Child 7 close or are formally deferred.`
+  - Resume point: `Start Task 1 Step 1. Dependency gate is satisfied.`
 
 ### Future Candidates
 
@@ -494,7 +496,7 @@ The five core outputs are part of the weekly acceptance gate even though their d
 
 - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
   - Current file status: `in-progress`
-  - Reason: orchestration parent is active and synchronized through Child 6 closeout, Child 7 Mod Runtime next-executable promotion, and Child 8 StateSync Runtime authoring, but remains outside the executable child queue because concrete code work belongs to child plans
+  - Reason: orchestration parent is active and synchronized through Child 7 Mod Runtime completion and Child 8 StateSync Runtime next-executable promotion, but remains outside the executable child queue because concrete code work belongs to child plans
 
 ## Execution Queue
 
@@ -566,10 +568,10 @@ The five core outputs are part of the weekly acceptance gate even though their d
       - task runtime returns taskUpdates, effects, and signals without applying effects
 
 7. `docs/superpowers/plans/2026-06-30-mod-runtime-plan.md`
-   - Queue status: `not-started`
+   - Queue status: `completed`
    - Primary subsystem boundary: `Mod Runtime`
    - Depends on: Queue Item 1 completed, Queue Item 2 completed, Queue Item 5 completed, and Queue Item 6 completed
-   - Start condition: satisfied after Child 6 closeout sync; start Child 7 Task 1 Step 1 from the child plan
+   - Start condition: satisfied after Child 6 closeout sync
    - Exit condition:
       - builtin, file, and url startup paths converge on a formal Mod Runtime seam
       - restore-time selected-mod activation runs through Mod Runtime
@@ -580,7 +582,7 @@ The five core outputs are part of the weekly acceptance gate even though their d
    - Queue status: `not-started`
    - Primary subsystem boundary: `StateSync Runtime`
    - Depends on: Queue Item 2 completed, Queue Item 4 completed, and Queue Items 5, 6, and 7 completed or explicitly deferred by updated weekly governance
-   - Start condition: Child 5, Child 6, and Child 7 are closed or formally deferred, then start Child 8 Task 1 Step 1 from the child plan
+   - Start condition: Child 5, Child 6, and Child 7 are closed; start Child 8 Task 1 Step 1 from the child plan after closeout sync
    - Exit condition:
       - canonical runtime state authority is defined
       - runtime/app/save/presentation source-of-truth rules are explicit

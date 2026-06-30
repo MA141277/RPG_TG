@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `The five-core-artifact weekly bundle now reflects completed Child 6 Task Runtime. Visibility records src/core/contracts/task-runtime.ts and src/core/runtime/task-runtime.ts as the new task lifecycle/progression seam and promotes Child 7 Mod Runtime as the next executable child.`
-- Next Step: `Refresh the five core artifacts after the first Child 7 batch so visibility tracks Mod Runtime activation ownership.`
-- Verification: `Child 6 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Current Focus: `The five-core-artifact weekly bundle now reflects completed Child 7 Mod Runtime. Visibility records src/core/contracts/mod-runtime.ts, src/core/mods/*, src/core/adapters/mod-runtime-main-adapter.ts, and the src/main.ts startup/restore calls through Mod Runtime.`
+- Next Step: `Refresh the five core artifacts after the first Child 8 StateSync Runtime batch so visibility tracks canonical state sync ownership.`
+- Verification: `Child 7 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review.`
 
 ## Progress Log
@@ -79,6 +79,10 @@
   - Summary: `Updated the five-core-artifact weekly bundle after Child 6 closeout. The bundle now records formal Task Runtime contracts, minimum lifecycle/action/signal entrypoints, one-signal-to-many-active-tasks progression, terminal failed task handling, and Child 7 Mod Runtime as the next executable child.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Run npm run lint:plans, then update the five core artifacts again after the first Child 7 Mod Runtime batch lands.`
+- 2026-07-01
+  - Summary: `Updated the five-core-artifact weekly bundle after Child 7 closeout. The bundle now records formal Mod Runtime contracts, source normalization/loading/parsing, dependency and capability guards, atomic activation rollback, the main adapter, and builtin/file/url/restore selected-mod activation through Mod Runtime. Child 8 StateSync Runtime is now the next executable child.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Run npm run lint:plans, then update the five core artifacts again after the first Child 8 StateSync Runtime batch lands.`
 
 ---
 

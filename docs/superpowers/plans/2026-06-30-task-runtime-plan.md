@@ -13,7 +13,7 @@
 - Status: `completed`
 - Last Updated: `2026-07-01`
 - Current Focus: `Child 6 Task Runtime is completed on the first formal contract, lifecycle, and signal-driven progression slice.`
-- Next Step: `After closeout sync and commit, start Child 7 from docs/superpowers/plans/2026-06-30-mod-runtime-plan.md Task 1 Step 1.`
+- Next Step: `Child 7 is completed; the current weekly queue now starts Child 8 from docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md Task 1 Step 1.`
 - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This is Child Plan 6 under the mod-first engine runtime extraction roadmap. Runtime-layer naming is Task. Mission remains content/presentation wording only. The older default-mod migration direction is no longer Child 6 and must be treated as a later candidate child.`
 
@@ -52,7 +52,8 @@
 - Queue rule:
   - Child 5 is completed.
 - Child 6 is completed.
-- Child 7 is the next executable child and Child 8 remains queued behind Child 7.
+- Child 7 is completed.
+- Child 8 is now the next executable child.
   - Child 6 must not reoccupy the older default-mod migration placeholder scope.
 - Dependency gate:
   - Child 1 must be completed.
@@ -181,7 +182,7 @@ Record that `src/core/runtime/scene-runtime.ts` still owns `runSceneFromEvent` a
 
 - [x] **Step 4: Record queue guard**
 
-Update this plan's latest progress entry so it records the current queue guard: Child 5 and Child 6 are completed, Child 7 is next executable, and Child 8 remains queued behind Child 7.
+Update this plan's latest progress entry so it records the queue guard that was current when Child 6 closed: Child 5 and Child 6 were completed, Child 7 became next executable, and Child 8 remained queued behind Child 7.
 
 ## Task 2: Add Failing Task Runtime Seam And Boundary Tests
 

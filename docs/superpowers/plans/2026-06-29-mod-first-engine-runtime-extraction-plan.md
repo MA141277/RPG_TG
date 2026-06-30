@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 6 Task Runtime is completed. Child 7 Mod Runtime is now the next executable orchestration target, and Child 8 remains queued behind Child 7.`
-- Next Step: `Start Child 7 from docs/superpowers/plans/2026-06-30-mod-runtime-plan.md Task 1 Step 1 after the Child 6 closeout commit; keep Child 8 queued behind Child 7.`
-- Verification: `Child 6 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1, Child 2, Child 3, Child 4, Child 5, and Child 6 are completed. Child 7 is formally queued as Mod Runtime and is now the next executable child. Child 8 is formally queued as StateSync Runtime. The older default-mod migration direction is superseded by the broader Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Current Focus: `Child 7 Mod Runtime is completed. Child 8 StateSync Runtime is now the next executable orchestration target.`
+- Next Step: `Start Child 8 from docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md Task 1 Step 1 after committing the Child 7 closeout batch.`
+- Verification: `Child 7 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1, Child 2, Child 3, Child 4, Child 5, Child 6, and Child 7 are completed. Child 8 is formally queued as StateSync Runtime and is now the next executable child. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -105,6 +105,10 @@
   - Summary: `Completed Child 6 Task Runtime. The repository now has formal task runtime contracts and a minimum runtime for task creation, action handling, signal-driven progression, duplicate active guard, terminal failed/completed guard, and unified taskUpdates/effects/signals output without applying effects.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Run Child 6 closeout sync and npm run lint:plans, then start Child 7 from docs/superpowers/plans/2026-06-30-mod-runtime-plan.md Task 1 Step 1.`
+- 2026-07-01
+  - Summary: `Completed Child 7 Mod Runtime. Formal mod runtime contracts, source normalization/loading/parsing seams, dependency and capability guards, atomic activation with rollback, a main adapter, and builtin/file/url/restore selected-mod activation now exist under src/core and src/main.ts.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Run Child 7 closeout sync and npm run lint:plans, then start Child 8 from docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md Task 1 Step 1.`
 
 ## Why This Plan Exists
 
@@ -651,7 +655,7 @@ Out of scope:
 - UI/menu/loading-screen implementation
 - hot reload or sandboxing
 
-- [ ] **Step 2: Verify Child 7 dependencies**
+- [x] **Step 2: Verify Child 7 dependencies**
 
 Confirm:
 
@@ -662,11 +666,11 @@ Confirm:
 - Child 6 completed
   - or Child 6 explicitly deferred by updated weekly and parent governance before Child 7 starts production code
 
-- [ ] **Step 3: Execute Child 7 from its own checklist**
+- [x] **Step 3: Execute Child 7 from its own checklist**
 
 Run all implementation work from the Child 7 plan file, not from this parent file.
 
-- [ ] **Step 4: Verify Child 7 exit condition and sync parent log**
+- [x] **Step 4: Verify Child 7 exit condition and sync parent log**
 
 Confirm:
 
@@ -791,7 +795,7 @@ Do not mark this parent plan `completed` until:
 - [x] Child 6 Task Runtime spec and plan authored
 - [x] Child 6 completed
 - [x] Child 7 Mod Runtime spec and plan authored
-- [ ] Child 7 completed
+- [x] Child 7 completed
 - [x] Child 8 StateSync Runtime spec and plan authored
 - [ ] Child 8 completed
 - [x] Shared-file conflict policy acknowledged

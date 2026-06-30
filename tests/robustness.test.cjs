@@ -8201,3 +8201,72 @@ test("task runtime applies signal-only failure conditions without objective prog
     { type: "setFlag", key: "task.report.failed", value: true },
   ]);
 });
+
+test("mod runtime contract exports source state request activation and failure seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/mod-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type ModSourceKind/);
+  assert.match(source, /export type LoadedMod/);
+  assert.match(source, /export type ActivatedMod/);
+  assert.match(source, /export type ModRuntimeState/);
+  assert.match(source, /export type ModRuntimeRequest/);
+  assert.match(source, /export type ModActivationResult/);
+  assert.match(source, /export type ModRuntimeFailure/);
+});
+
+test("mod runtime normalizes builtin file and url sources through one source registry seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/mods/mod-source-registry.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /builtin/);
+  assert.match(source, /file/);
+  assert.match(source, /url/);
+  assert.match(source, /normalizeModSource/);
+});
+
+test("mod runtime activation is atomic and leaves no partial active mod on failure", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/mods/mod-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /activation-failed/);
+  assert.match(source, /previousActiveModId/);
+  assert.match(source, /rollback/);
+});
+
+test("mod runtime main adapter lets startup consume one unified activation result", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/adapters/mod-runtime-main-adapter.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /ModActivationResult/);
+  assert.match(source, /toLegacyBootstrapInput/);
+});
+
+test("save restore re-activates selected mod through mod runtime", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.match(source, /restore/i);
+  assert.match(source, /runModRuntime|activateSavedMod|restoreModFromSave/);
+});
+
+test("mod runtime does not absorb content assembly or gameplay execution ownership", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/mods/mod-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /ActiveGameContent/);
+  assert.doesNotMatch(source, /renderApp/);
+  assert.doesNotMatch(
+    source,
+    /runEventRuntime|runSceneFromEvent|runInteractiveRuntime/
+  );
+});

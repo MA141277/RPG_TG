@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-01 Mod Runtime
+
+### Added
+- 新增 `src/core/contracts/mod-runtime.ts`，定义 `ModSourceDescriptor`、`LoadedMod`、`ActivatedMod`、`ModRuntimeState`、`ModRuntimeRequest`、`ModRuntimeFailure` 与 `ModActivationResult`。
+- 新增 `src/core/mods/*` 首版 Mod Runtime seam，覆盖 source normalization/loading/parsing、dependency/capability validation 与 atomic activation rollback。
+- 新增 `src/core/adapters/mod-runtime-main-adapter.ts`，把 `ModActivationResult` 转为当前 bootstrap/content assembly 可消费的兼容输入。
+
+### Changed
+- `src/main.ts` 的 builtin、file import、url import 与 restore selected-mod activation 现在先经过 Mod Runtime，再继续走现有 content assembly / bootstrap 路径。
+- `src/core/contracts/mod-manifest.ts` 增加 `schemaVersion`、dependency/conflict/capability 和 default start 字段，供 Mod Runtime validation 与 startup handoff 使用。
+
+### Impact
+- Mod activation/startup 已有 formal runtime owner；Child 7 不接管最终内容合成、save/load IO、gameplay runtime execution、UI/menu/loading-screen、hot reload 或 sandboxing。
+
 ## 2026-07-01 Task Runtime
 
 ### Added

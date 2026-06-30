@@ -10,11 +10,12 @@ If a real flow cannot be described clearly, that area is still a black box.
 
 ## Current Coverage Status
 
-- Real implemented flows captured: `11`
+- Real implemented flows captured: `12`
 - Planned target flows captured: `0`
 - Acceptance status:
 - current batch requirement satisfied
 - task runtime flow captured after Child 6 closeout
+- mod runtime activation flow captured after Child 7 closeout
 
 ## Flow 1: Current Game Boot Flow
 
@@ -207,3 +208,21 @@ registered TaskDefinition index -> applyTaskAction(start) -> TaskRuntimeState.in
 
 - `Task Runtime` consumes registered definitions; it does not import content packs directly.
 - `Task Runtime` does not own event activation, scene sessions, interaction sessions, time advancement, save/load IO, presenter output, or effect application.
+
+## Flow 12: Real Child 7 Mod Runtime Activation Handoff
+
+### Narrative
+
+Child 7 now proves that builtin, file-imported, url-imported, and restore-time selected-mod activation can enter one formal Mod Runtime seam before downstream startup continues. `src/main.ts` still owns browser loading flow and final content/app-state assembly, but mod source normalization, loaded/activated mod contracts, validation, atomic activation, and legacy bootstrap handoff now live under `src/core`.
+
+### Call Chain
+
+```text
+builtin/file/url/restore selected-mod intent -> createLoadedModFromManifest() or createLoadedModFromScenarioPack() -> runModRuntime() -> dependency/capability validation -> atomic activation result -> toLegacyBootstrapInput() -> existing content assembly / bootstrap continuation
+```
+
+### Notes
+
+- `Mod Runtime` returns a `ModActivationResult` with either `ActivatedMod` or typed failure; startup does not silently fallback on activation failure.
+- `src/core/mods/mod-runtime.ts` does not import final content assembly, UI rendering, or gameplay runtime execution.
+- Save/load still owns save envelope parsing and migration; restore-time selected-mod re-activation is routed back through Mod Runtime.

@@ -12,12 +12,13 @@ If a module cannot be summarized here, it is still acting like a black box.
 
 | Module | Status | Responsibility | Inputs | Outputs | Depends On | Depended On By | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `src/main.ts` | `legacy` | Current browser bootstrap shell plus remaining legacy gameplay orchestration root. | UI/browser events, content activation, runtime actions. | App boot, presenter assembly, render loop, runtime transitions. | `application/*`, `ui/*`, `src/core/adapters/legacy-main-adapter.ts`, `src/core/runtime/*`, content modules. | Entire runtime today. | Boot composition now hands through the adapter seam, Child 3 moved real navigation/time/event entry through runtime wrappers, Child 4 moved covered interactive entry/return through core seams, and Child 5 moved render-input assembly through `createAppPresenterOutput()`. Browser/runtime event handling remains legacy-held. |
-| `src/core/contracts` | `official` | Shared boundary for mod manifest, runtime state/result, effects, navigation, engine context typing, minimum interactive carrier, and Task Runtime contracts. | Boundary spec, Child 1 Tasks 1-5, Child 4 batch 2, Child 6. | Typed engine/runtime contracts under `src/core/contracts/*`, including `task-runtime.ts`. | Boundary spec, registry typing. | `core/engine`, `core/runtime`, `core/save`, adapters, later presenter/UI seams. | Validated this week by selected-mod bootstrap, runtime dispatch, save envelope, main handoff, RuntimeState, and Task Runtime contract tests. |
+| `src/main.ts` | `legacy` | Current browser bootstrap shell plus remaining legacy gameplay orchestration root. | UI/browser events, Mod Runtime activation handoff, content activation, runtime actions. | App boot, presenter assembly, render loop, runtime transitions. | `application/*`, `ui/*`, `src/core/adapters/legacy-main-adapter.ts`, `src/core/adapters/mod-runtime-main-adapter.ts`, `src/core/mods/mod-runtime.ts`, `src/core/runtime/*`, content modules. | Entire runtime today. | Boot composition now hands through the adapter seam, Child 3 moved real navigation/time/event entry through runtime wrappers, Child 4 moved covered interactive entry/return through core seams, Child 5 moved render-input assembly through `createAppPresenterOutput()`, and Child 7 moved builtin/file/url/restore selected-mod activation through Mod Runtime. Browser/runtime event handling remains legacy-held. |
+| `src/core/contracts` | `official` | Shared boundary for mod manifest, mod runtime, runtime state/result, effects, navigation, engine context typing, minimum interactive carrier, and Task Runtime contracts. | Boundary spec, Child 1 Tasks 1-5, Child 4 batch 2, Child 6, Child 7. | Typed engine/runtime contracts under `src/core/contracts/*`, including `task-runtime.ts` and `mod-runtime.ts`. | Boundary spec, registry typing. | `core/engine`, `core/runtime`, `core/mods`, `core/save`, adapters, later presenter/UI seams. | Validated this week by selected-mod bootstrap, runtime dispatch, save envelope, main handoff, RuntimeState, Task Runtime, and Mod Runtime contract tests. |
 | `src/core/registry` | `provisional` | Typed registry ownership seam for mods and content. | Child 1 Tasks 1-2. | `engine-registry.ts`, `mod-registry.ts`, `content-registry.ts`. | `src/core/contracts`. | `src/core/engine`; future `src/core/runtime`. | Registry composition is still thin, but it now models selected mods explicitly instead of using `unknown`. |
 | `src/core/engine` | `provisional` | Compose a selected mod and EngineRegistry into the first EngineSession state shell. | `GameModManifest`, `EngineRegistry`. | `EngineSession`, bootstrap helper. | `core/contracts`, `core/registry`. | `core/runtime`, `core/save`, `core/adapters/legacy-main-adapter`. | Implemented and now validated end-to-end through the adapter seam, but still intentionally minimal. |
 | `src/core/runtime` | `provisional` | Own typed runtime request entry for navigation/time plus transitional event, scene, house, covered interactive launch/action seams, and the first formal Task Runtime lifecycle/progression seam over the minimum RuntimeState carrier. | `RuntimeRequest`, `RuntimeState`, task definitions/actions/signals, route callback output, trigger inputs, legacy house/interactive adapter dependencies. | Settled `RuntimeResult`, task runtime results, effect-applied runtime state, runtime wrapper results for navigation/time/event/scene entry, and bridge-level interactive/house handoff results. | `core/contracts`, registries, engine session, `src/core/adapters/*`, `application/navigation/*`, `application/time/*`, `application/events/*`, `application/scene/*`. | `src/main.ts`; future interactive/event/task/navigation runtime services. | Expanded this week by Child 3, Child 4, and Child 6. It now includes minimum RuntimeState/shared-dispatch carrier plus `task-runtime.ts`, but still bridges into legacy gameplay services and does not yet cover every interactive path through one final routing shape. |
 | `src/core/runtime/task-runtime.ts` | `official` | Own minimum task creation, explicit task actions, signal-driven progression, duplicate active task guard, terminal failed/completed guard, and task runtime result output. | Registered `TaskDefinition` records, `TaskRuntimeState`, `TaskAction`, `TaskSignal`. | `TaskRuntimeResult` with updated state, `taskUpdates`, returned `effects`, and follow-up `signals`. | `src/core/contracts/task-runtime.ts`, `src/core/contracts/effect.ts`. | Future event/scene/interaction/time producers and shared runtime settlement. | Child 6 first version supports built-in standard condition types only; it does not own event activation, scene/interaction sessions, time advancement, save/load IO, presenter output, or effect application. |
+| `src/core/mods` | `official` | Own the first formal Mod Runtime activation/startup seam: source normalization/loading/parsing, dependency and capability validation, atomic activation, and unified activation handoff. | `ModSourceDescriptor`, `LoadedMod`, `ModRuntimeState`, `ModRuntimeRequest`, scenario-pack or builtin source payloads. | `ModActivationResult`, `ActivatedMod`, startup profile, normalized content sources, typed failures. | `src/core/contracts/mod-runtime.ts`, `src/core/contracts/mod-manifest.ts`, `src/core/adapters/mod-runtime-main-adapter.ts`. | `src/main.ts`, engine/bootstrap handoff, future StateSync and content assembly consumers. | Child 7 first version does not own final content assembly, save/load IO, gameplay runtime execution, UI/menu/loading-screen flow, hot reload, sandboxing, or authoring tools. |
 | `src/core/save` | `official` | Persistence boundary for envelope creation, legacy-save normalization, selected-mod validation, and payload-preserving serialization. | `CoreGameState`, save version, legacy save-like records, available mod ids. | `SaveEnvelope`, migrated envelopes, serialized save payloads. | `core/contracts`. | Future app-level save/load callers and state-sync flows. | Hardened this week by Child 2 without redefining Child 1's initial envelope shape. |
 | `src/core/adapters` | `adapter` | Temporary compatibility seam from old runtime root into new `core` boundary. | Legacy main/runtime paths, house runtime creation, interactive minigame/story-battle helpers. | Handoff seams into core bootstrap and transitional runtime bridges. | `src/main.ts`, `core/engine`, `core/runtime`. | `src/main.ts`, `src/core/runtime`. | `legacy-main-adapter.ts`, `legacy-house-adapter.ts`, and `legacy-interactive-adapter.ts` now exist and should stay thin while later children peel more logic out of `main.ts` and application-owned runtime services. |
 | `src/application/presenter` | `provisional` | Present application/runtime state as render-facing presenter output. | `AppState`, content definitions, house/city/story lookup data. | Stage presenter output, overlay/HUD state, scene action/choice output, house render selection. | existing application services, domain definitions, house module registry. | `src/main.ts`, `ui/app-render.ts`, future layout bridge. | Landed by Child 5 with `presenter-output.ts`, `app-presenter.ts`, `stage-presenters.ts`, and `overlay-presenters.ts`; it now owns render-time gameplay selection formerly inside `app-render.ts`. |
@@ -45,6 +46,7 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Weekly orchestration and weekly visibility companion roles.
 - [x] Child 4 closeout state: completed on the approved minimum RuntimeState carrier.
 - [x] Child 6 closeout state: completed on the first formal Task Runtime contract/lifecycle/progression slice.
+- [x] Child 7 closeout state: completed on the first formal Mod Runtime activation/startup seam.
 
 ### Provisional Boundaries
 
@@ -52,6 +54,7 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] `src/core/registry/engine-registry.ts`
 - [x] `src/core/engine`
 - [x] `src/core/runtime`
+- [x] `src/core/mods`
 - [x] `src/core/save`
 - [x] `src/application/presenter`
 - [ ] `src/ui/layout-renderer.ts`
@@ -59,6 +62,7 @@ If a module cannot be summarized here, it is still acting like a black box.
 ### Adapter Boundaries
 
 - [x] `src/core/adapters/legacy-main-adapter.ts`
+- [x] `src/core/adapters/mod-runtime-main-adapter.ts`
 - [x] `src/core/adapters/legacy-house-adapter.ts`
 - [x] `src/core/adapters/legacy-interactive-adapter.ts`
 - [x] Minimum `RuntimeState` carrier exists, but remains a provisional runtime boundary rather than final convergence onto Child 1 `CoreGameState`.
@@ -71,8 +75,8 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] First formal Task Runtime contracts exist; `Mission` remains content/presentation wording only.
 - [ ] Full minigame dispatch interface.
 - [x] Presenter output contracts.
-- [ ] Full `Mod Runtime` activation / capability / dependency contracts; this work is now formally queued as Child 7 rather than only a generic future backlog item.
-- [ ] Full `StateSync Runtime` canonical state and trigger-based sync contracts; this work is now formally queued as Child 8 behind Child 7.
+- [x] First formal `Mod Runtime` activation / capability / dependency contracts exist; deeper policy, sandboxing, hot reload, and authoring tooling remain future hardening.
+- [ ] Full `StateSync Runtime` canonical state and trigger-based sync contracts; this work is now the next executable Child 8.
 
 ### Remaining `main.ts` Coupling
 
@@ -80,6 +84,7 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Covered interactive launch/action ownership now routes through core seams.
 - [x] At least one covered interactive return path now routes through shared runtime dispatch.
 - [ ] Concrete content activation.
+- [x] Mod activation for builtin, file-imported, url-imported, and saved selected-mod startup now routes through Mod Runtime before content assembly.
 - [x] Render-input presenter assembly.
 - [ ] Browser-only runtime follow-up and view switching.
 

@@ -390,7 +390,7 @@ Secondary dependency:
 
 - Boot Runtime seams from Child 1
 - Save / Load Runtime compatibility from Child 2
-- Child 5 and Child 6 are completed; Child 7 is now the next executable weekly queue item
+- Child 5 and Child 6 are completed; Child 7 is completed on the first Mod Runtime activation/startup seam
 
 ### Child 8: `2026-06-30-state-sync-runtime-plan.md`
 
@@ -402,7 +402,7 @@ Secondary dependency:
 
 - Save / Load Runtime compatibility from Child 2
 - Child 4 minimum `RuntimeState` / `RuntimeResult` carrier
-- Child 5, Child 6, and Child 7 remain ahead of Child 8 in the current weekly queue unless governance explicitly defers them first
+- Child 5, Child 6, and Child 7 are completed; Child 8 is now the next executable weekly queue item
 
 ## 7. Planning Rules For Future Child Plans
 
