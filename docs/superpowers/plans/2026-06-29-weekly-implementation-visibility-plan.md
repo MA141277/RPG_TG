@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-06-30`
-- Current Focus: `The five-core-artifact weekly bundle now reflects a completed Child 4 and an unlocked Child 5. Visibility remains anchored on the landed minimum RuntimeState carrier, but the next planned refinement now shifts from Child 4 runtime closure to Child 5 presenter/render decoupling.`
-- Next Step: `Refresh the five core artifacts after the first Child 5 batch so visibility tracks presenter-output and app-render ownership changes.`
-- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Current Focus: `The five-core-artifact weekly bundle now reflects completed Child 5 presenter/render decoupling. Visibility records src/application/presenter as the new presentation bridge seam and promotes Child 6 Task Runtime as the next executable child.`
+- Next Step: `Refresh the five core artifacts after the first Child 6 batch so visibility tracks Task Runtime contracts and signal-driven progression ownership.`
+- Verification: `Child 5 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review.`
 
 ## Progress Log
@@ -71,6 +71,10 @@
   - Summary: `Aligned this companion with the new closeout sync rule and simplified the weekly artifact bundle from eight independently governed artifacts to five core artifacts.`
   - Verification: `npm run lint:plans`
   - Next: `Update the five core artifacts again after the first Child 5 batch lands.`
+- 2026-06-30
+  - Summary: `Updated the five-core-artifact weekly bundle after Child 5 closeout. The bundle now records src/application/presenter as the provisional presentation bridge, src/ui/app-render.ts as a presenter-output consumer, src/main.ts as the presenter assembly caller, and Child 6 Task Runtime as the next executable child.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Update the five core artifacts again after the first Child 6 Task Runtime batch lands.`
 
 ---
 
@@ -79,7 +83,7 @@
 - Weekly orchestration controller:
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Active next child plan:
-  - `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
+  - `docs/superpowers/plans/2026-06-30-task-runtime-plan.md`
 - Parent orchestration plan:
   - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 

@@ -15,9 +15,9 @@ It must show:
 
 ## Architecture Summary
 
-- This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, then advanced Child 4 through both its first interactive bridge slice and its second minimum RuntimeState/shared-dispatch slice.
-- The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/legacy-main-adapter.ts`, `src/core/adapters/legacy-house-adapter.ts`, and `src/core/adapters/legacy-interactive-adapter.ts` now exist as concrete boundary slices with read/write persistence plus first-pass navigation and covered interactive entry plus minimum shared-dispatch return behavior.
-- The immediate next target is Child 5 presenter/render decoupling: Child 4 has completed on the landed minimum carrier, so the next planned reduction is presenter-output and `app-render` ownership without reopening the `characterDefinitions` convergence decision.
+- This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, advanced Child 4 through interactive/runtime carrier slices, and completed Child 5 presenter/render decoupling.
+- The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/*`, and `src/application/presenter` now exist as concrete boundary slices with read/write persistence, first-pass navigation, covered interactive entry, minimum shared-dispatch return behavior, and presenter-output render selection.
+- The immediate next target is Child 6 Task Runtime: Child 5 has completed the presentation bridge dependency, so the next planned reduction is formal task state/lifecycle/progression ownership without reopening presenter/render scope.
 
 ## Module Diagram
 
@@ -25,7 +25,8 @@ It must show:
 flowchart LR
     UI["UI / Browser Layer"] --> MAIN["src/main.ts"]
     MAIN --> APP["application/* legacy runtime ownership"]
-    APP --> UIR["ui/app-render.ts"]
+    APP --> PRESENTER["application/presenter (implemented Child 5)"]
+    PRESENTER --> UIR["ui/app-render.ts"]
     MAIN -. current bridge .-> RSBRIDGE["RuntimeState <-> AppState bridge"]
     COREC["src/core/contracts (implemented + RuntimeState)"] --> CORER["src/core/registry/engine-registry.ts (minimal)"]
     CORER --> COREE["src/core/engine (implemented)"]
@@ -40,8 +41,8 @@ flowchart LR
     HOUCERT --> HOUSEAD["legacy-house-adapter.ts"]
     INTRT --> INTAD["legacy-interactive-adapter.ts"]
     CORERT --> NAVRT["navigation/time/event/scene wrappers"]
-    MAIN -. Child 5 planned projection .-> PRESENTER["application/presenter"]
-    PRESENTER -. planned render input .-> UIR
+    MAIN --> PRESENTER
+    PRESENTER --> UIR
     PRESENTER -. later planned seam .-> UIL["ui/layout-renderer.ts"]
     TESTS["tests/robustness.test.cjs"] --> COREC
 ```
@@ -57,20 +58,22 @@ flowchart LR
 - `src/core/adapters/legacy-main-adapter.ts` as the first production `main.ts -> core` handoff seam
 - `src/core/contracts/interactive-runtime.ts`, `src/core/contracts/runtime-state.ts`, `src/core/runtime/interactive-runtime.ts`, and `src/core/runtime/house-runtime.ts` as the first production interactive-runtime and minimum RuntimeState carrier slices
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` as transitional compatibility seams for Child 4
+- `src/application/presenter/*` as the first production presentation bridge slice for presenter output, stage selection, overlay/HUD projection, and render-time house/city/scene selection
 
 ## Approved Target Modules
 
 - The intended `src/core` directory ownership model at the design/spec level
 - Child 3 navigation/time/event extraction behind the new core runtime boundary
 - Child 4 interactive runtime integration after Child 3, completed on the approved minimum RuntimeState carrier
-- Child 5 presenter/layout extraction, now unlocked as the next legal queue item
+- Child 5 presenter/render extraction, completed on the first presenter-output bridge
+- Child 6 Task Runtime extraction, now unlocked as the next legal queue item
 
 ## Temporary Adapters
 
 - `src/core/adapters/legacy-main-adapter.ts` is now implemented as a temporary bridge
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` are now implemented as temporary bridges
 - Legacy interactive gameplay logic still lives behind those adapters
-- Child 6 `Task Runtime`, Child 7 `Mod Runtime`, and Child 8 `StateSync Runtime` now exist as formal queued architecture slices, but none is the current executable queue item while Child 5 remains next.
+- Child 7 `Mod Runtime` and Child 8 `StateSync Runtime` remain formal queued architecture slices behind Child 6.
 
 ## Flow Diagram 1: Current Boot And Render Flow
 
@@ -82,8 +85,9 @@ flowchart TD
     D --> E["EngineSession"]
     E --> F["Content Activation / State Setup"]
     F --> G["Core runtime seams for completed Child 3/4 paths"]
-    G --> H["Remaining legacy runtime/render orchestration"]
-    H --> I["ui/app-render.ts"]
+    G --> H["Remaining legacy runtime orchestration"]
+    H --> P["createAppPresenterOutput()"]
+    P --> I["ui/app-render.ts"]
     I --> J["Player Screen"]
 ```
 
@@ -125,6 +129,22 @@ flowchart TD
     G --> H["optional reenter-house follow-up"]
 ```
 
+## Flow Diagram 5: Real Child 5 Presenter Output Render Path
+
+```mermaid
+flowchart TD
+    A["renderApp() in main.ts"] --> B["createAppPresenterOutput()"]
+    B --> C["stage-presenters.ts"]
+    B --> D["overlay-presenters.ts"]
+    C --> E["AppPresenterOutput.stage"]
+    D --> F["AppPresenterOutput.overlay"]
+    E --> G["renderAppMarkup()"]
+    F --> G
+    G --> H["ui/app-render.ts"]
+    H --> I["existing view renderers"]
+    I --> J["Player Screen"]
+```
+
 ## Architecture Delta This Week
 
 - Added a formal parent plan, child boundary plan, weekly orchestration plan, and visibility companion relationship.
@@ -145,6 +165,9 @@ flowchart TD
 - Routed covered city-begging, activity-qte, and story-battle launch/action entry in `src/main.ts` through the new Child 4 runtime seams instead of direct application-house construction and direct helper imports.
 - Landed `src/core/contracts/runtime-state.ts` and widened `src/core/contracts/runtime-result.ts`, `src/core/runtime/runtime-router.ts`, `src/core/runtime/runtime-dispatch.ts`, and `src/core/runtime/runtime-settlement.ts` to the minimum RuntimeState carrier.
 - Updated `src/core/runtime/interactive-runtime.ts` and `src/main.ts` so at least one covered interactive path now returns through shared dispatch on the minimum carrier while `characterDefinitions` remains on additive compatibility carriage.
+- Landed `src/application/presenter/presenter-output.ts`, `app-presenter.ts`, `stage-presenters.ts`, and `overlay-presenters.ts` so presentation projection has a production seam.
+- Updated `src/main.ts` to call `createAppPresenterOutput()` before rendering.
+- Updated `src/ui/app-render.ts` so stage/overlay/HUD render decisions consume presenter output and no longer import gameplay selection helpers directly.
 
 ## Architecture Risks
 
@@ -153,4 +176,4 @@ flowchart TD
 - The new contracts, engine seam, runtime seam, save seam, and adapter seams are still intentionally narrow even though persistence is hardened, Child 3 entry seams are validated, and Child 4 bridge seams now cover selected interactive flows.
 - Child 4 has already widened the shared `runtime-router.ts` / `runtime-dispatch.ts` contract to `RuntimeState`, but runtime ownership is still split between common dispatch and dedicated bridge helpers across the remaining interactive surface.
 - `characterDefinitions` is intentionally not part of `RuntimeState.core` in the current landing, so future convergence is still gated by weekly promotion rules rather than implied by the new carrier.
-- Presenter and layout seams are still conceptual until later child plans land.
+- The presenter seam is now real but still provisional; full layout renderer/schema work remains future scope.

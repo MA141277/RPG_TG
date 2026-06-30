@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-06-30`
-- Current Focus: `Child 4 is now completed on the approved minimum RuntimeState carrier slice. Child 5 presenter/render decoupling remains the next executable orchestration target, Child 6 is formally authored as Task Runtime, Child 7 is formally authored as Mod Runtime, and Child 8 is now formally authored as the queued StateSync Runtime child.`
-- Next Step: `Start Child 5 from its own checklist. Keep Child 6 queued behind Child 5, keep Child 7 queued behind Child 6, keep Child 8 queued behind Child 7, and keep Child 4 convergence rules as weekly-governed future follow-up rather than reopening Child 4 implicitly.`
-- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Current doc-only Child 6, Child 7, and Child 8 authoring batch: npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, Child 3 completed on branch codex/child3-nav, and Child 4 is now completed on the approved minimum RuntimeState carrier slice. Child 5 is unlocked as the next executable child but remains not-started until its own checklist begins. Child 6 is formally queued as Task Runtime. Child 7 is formally queued as Mod Runtime. Child 8 is formally queued as StateSync Runtime and must not displace Child 5, Child 6, or Child 7. The older default-mod migration direction is now superseded by the broader Child 7 Mod Runtime scope. Commit batching remains per-child so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Current Focus: `Child 5 presenter/render decoupling is completed. Child 6 Task Runtime is now the next executable orchestration target, Child 7 remains queued behind Child 6, and Child 8 remains queued behind Child 7.`
+- Next Step: `Start Child 6 from docs/superpowers/plans/2026-06-30-task-runtime-plan.md Task 1 Step 1 after this closeout commit; keep Child 7 queued behind Child 6 and Child 8 queued behind Child 7.`
+- Verification: `Child 5 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1, Child 2, Child 3, Child 4, and Child 5 are completed. Child 6 is formally queued as Task Runtime and is now the next executable child. Child 7 is formally queued as Mod Runtime. Child 8 is formally queued as StateSync Runtime. The older default-mod migration direction is superseded by the broader Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -97,6 +97,10 @@
   - Summary: `Created formal Child 8 StateSync Runtime spec and plan from the approved state-sync checklist, and queued that work behind Child 7 without changing Child 5's status as the next executable child.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 5 from docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md; keep Child 6 queued behind it, Child 7 queued behind Child 6, and Child 8 queued behind Child 7.`
+- 2026-06-30
+  - Summary: `Completed Child 5 presenter/render decoupling. src/application/presenter now provides presenter output contracts plus app/stage/overlay presenter modules, src/main.ts creates presenter output before rendering, and src/ui/app-render.ts consumes presenter-selected stage/overlay/HUD data instead of importing gameplay selection helpers directly.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Start Child 6 from docs/superpowers/plans/2026-06-30-task-runtime-plan.md Task 1 Step 1.`
 
 ## Why This Plan Exists
 
@@ -523,7 +527,7 @@ This child covers:
 
 - full presenter-output adoption
 - `app-render` decoupling
-- schema-driven layout rendering cutover
+- first presenter-output bridge for later layout rendering
 - runtime subsystem boundary:
   - `Presentation Bridge Runtime`
 
@@ -535,11 +539,11 @@ Confirm:
 - Child 5 depends on Child 3 completed
 - Child 5 depends on Child 4 completed
 
-- [ ] **Step 3: Execute Child 5 from its own checklist**
+- [x] **Step 3: Execute Child 5 from its own checklist**
 
 Run all implementation work from the Child 5 plan file, not from this parent file.
 
-- [ ] **Step 4: Verify Child 5 exit condition and sync parent log**
+- [x] **Step 4: Verify Child 5 exit condition and sync parent log**
 
 Confirm:
 
@@ -779,7 +783,7 @@ Do not mark this parent plan `completed` until:
 - [x] Child 2 authored and completed
 - [x] Child 3 authored and completed
 - [x] Child 4 authored and completed
-- [ ] Child 5 authored and completed
+- [x] Child 5 authored and completed
 - [x] Child 6 Task Runtime spec and plan authored
 - [ ] Child 6 completed
 - [x] Child 7 Mod Runtime spec and plan authored

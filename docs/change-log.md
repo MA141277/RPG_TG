@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-06-30 Presenter Output Render Decoupling
+
+### Added
+- 新增 `src/application/presenter/presenter-output.ts`、`app-presenter.ts`、`stage-presenters.ts` 与 `overlay-presenters.ts`，形成首版 `Presentation Bridge Runtime` / presenter output seam。
+
+### Changed
+- `src/main.ts` 现在在调用 `renderAppMarkup()` 前先组装 `createAppPresenterOutput()`，不再在 render 入参里内联组装 scene action / choice options。
+- `src/ui/app-render.ts` 改为消费 `presenterOutput` 中的 stage、overlay、HUD 和 scene 选择结果，不再直接导入 `getHouseModule`、`isCityEntryVisibleForStoryStage` 或 `selectCityNpcSummariesForHouse`。
+
+### Impact
+- render-time gameplay selection 已从 UI renderer 移到 application presenter 层，`app-render.ts` 更接近纯渲染消费端；后续 Task Runtime、Mod Runtime 与 StateSync Runtime 可以在不重新扩大 presenter/render 边界的前提下继续推进。
+
 ## 2026-06-30 Minimum Unified RuntimeState Carrier
 
 ### Added

@@ -10,11 +10,11 @@ If a real flow cannot be described clearly, that area is still a black box.
 
 ## Current Coverage Status
 
-- Real implemented flows captured: `9`
+- Real implemented flows captured: `10`
 - Planned target flows captured: `0`
 - Acceptance status:
 - current batch requirement satisfied
-- add presenter/render flow after the first Child 5 batch lands
+- presenter/render flow captured after Child 5 closeout
 
 ## Flow 1: Current Game Boot Flow
 
@@ -25,7 +25,7 @@ The current app still boots from `src/main.ts`, but Child 1 Task 5 now inserts a
 ### Call Chain
 
 ```text
-Browser load -> src/main.ts -> bootstrapLegacyMain() -> bootstrapEngine() -> EngineSession -> content activation + state creation -> runtime orchestration -> ui/app-render -> player-visible screen
+Browser load -> src/main.ts -> bootstrapLegacyMain() -> bootstrapEngine() -> EngineSession -> content activation + state creation -> runtime orchestration -> createAppPresenterOutput() -> ui/app-render -> player-visible screen
 ```
 
 ### Notes
@@ -173,3 +173,20 @@ story-battle action in main.ts -> createInteractiveActionRequest() -> dispatchRu
 
 - `RuntimeState.core` remains the current domain `GameState`, `RuntimeState.app` remains the minimum four-field app carrier, and `RuntimeState.view` remains `{}` in this flow.
 - `characterDefinitions` still travels on additive compatibility carriage for this batch; moving it into `RuntimeState.core` remains gated by weekly promotion rules rather than implied by this flow.
+
+## Flow 10: Real Child 5 Presenter Output Render Flow
+
+### Narrative
+
+Child 5 now proves that render-time gameplay selection can move out of `src/ui/app-render.ts`. `src/main.ts` assembles a presenter input, `src/application/presenter/app-presenter.ts` composes stage and overlay presenter output, stage presenters own house/module lookup plus city/story visibility filtering, and `src/ui/app-render.ts` consumes the presenter-selected data while continuing to reuse existing view renderers.
+
+### Call Chain
+
+```text
+renderApp() in main.ts -> createAppPresenterOutput() -> stage-presenters.ts / overlay-presenters.ts -> AppPresenterOutput -> renderAppMarkup() -> ui/app-render.ts -> existing view renderers -> player-visible screen
+```
+
+### Notes
+
+- `src/ui/app-render.ts` no longer imports `getHouseModule`, `isCityEntryVisibleForStoryStage`, or `selectCityNpcSummariesForHouse` directly.
+- This is presentation projection only; gameplay mutation, interaction runtime ownership, save/load, and task progression remain outside Child 5.

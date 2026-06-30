@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-06-30`
-- Current Focus: `Formal Child 5 plan remains not-started, but its dependency gate is now satisfied because Child 4 has closed on the approved minimum RuntimeState carrier. This child is now the next legal weekly execution target.`
-- Next Step: `Start Task 1 Step 1 and move view-selection logic into presenter modules before touching render HTML branches.`
-- Verification: `Not run as part of this doc-only change`
+- Current Focus: `Child 5 is completed. src/application/presenter now owns the presenter output seam, src/ui/app-render.ts consumes presenterOutput for stage/overlay/HUD selection, and src/main.ts assembles render input through createAppPresenterOutput().`
+- Next Step: `Promote Child 6 Task Runtime as the next executable weekly child after closeout sync is committed.`
+- Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This is Child Plan 5 under the mod-first engine runtime extraction roadmap. It owns Presentation Bridge Runtime only and must not absorb Child 4 interaction extraction or save/runtime closure work.`
 
 ## Progress Log
@@ -27,6 +27,14 @@
   - Summary: `Child 5 dependency gate is now satisfied. Child 4 completed on the approved minimum RuntimeState carrier slice, so presenter/render decoupling can start against the stabilized post-interaction runtime boundary rather than the earlier mixed-ownership state.`
   - Verification: `Child 4 exit review: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime|runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run typecheck; npm test; npm run build`
   - Next: `Begin Task 1 Step 1 when Child 5 becomes the active implementation child.`
+- 2026-06-30
+  - Summary: `Started Child 5 and completed Task 1 scope reconciliation. src/ui/app-render.ts still imports getHouseModule, story-stage visibility selectors, and selectCityNpcSummariesForHouse; renderStage still owns active view, house/module, city visibility, overlay, modal, dialogue, HUD, and scene input selection; src/main.ts still calls getCurrentSceneAction/getCurrentChoiceOptions inline during render assembly.`
+  - Verification: `rg -n "getHouseModule|isCityEntryVisibleForStoryStage|selectCityNpcSummariesForHouse|renderAppMarkup|currentSceneAction|currentSceneChoiceOptions" src/ui/app-render.ts src/main.ts`
+  - Next: `Add the Task 2 red source-guard tests and verify they fail before introducing presenter production code.`
+- 2026-06-30
+  - Summary: `Completed Child 5. Added presenter output contracts and app/stage/overlay presenter modules, moved house/module lookup, city/story visibility filtering, fallback house NPC selection, scene action/choice selection, overlay state, and HUD visibility behind presenter output, and reduced src/ui/app-render.ts to presenter consumption plus existing renderer calls.`
+  - Verification: `RED: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output" failed with 3 expected tests. GREEN: same focused command passed. Full: npm run typecheck; npm test; npm run build; npm run lint:plans.`
+  - Next: `Child 6 Task Runtime is the next executable child after weekly and parent closeout sync.`
 
 ---
 
@@ -136,7 +144,7 @@ For targeted presenter tasks, also record:
 - Read: `src/main.ts`
 - Modify: `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
 
-- [ ] **Step 1: Confirm current render coupling**
+- [x] **Step 1: Confirm current render coupling**
 
 Verify and record that `src/ui/app-render.ts` still performs:
 
@@ -145,11 +153,22 @@ Verify and record that `src/ui/app-render.ts` still performs:
 - story-stage visibility filtering
 - overlay selection
 
-- [ ] **Step 2: Confirm Child 4 dependency**
+Current review result:
+
+- `renderStage()` in `src/ui/app-render.ts` still selects active stages from `appState.gameState.ui.currentView`.
+- `src/ui/app-render.ts` still imports and calls `getHouseModule()` for module-backed house rendering.
+- `src/ui/app-render.ts` still imports and calls `isHouseVisibleForStoryStage()` and `isCityEntryVisibleForStoryStage()` for city/house eligibility filtering.
+- `src/ui/app-render.ts` still imports and calls `selectCityNpcSummariesForHouse()` for fallback house view-model projection.
+- `renderOverlay()`, `renderModal()`, `renderLocationDialogue()`, and the HUD decision still derive presentation choices inside the render file.
+- `src/main.ts` still passes `currentSceneAction: getCurrentSceneAction(...)` and `currentSceneChoiceOptions: getCurrentChoiceOptions(...)` directly into `renderAppMarkup()`.
+
+- [x] **Step 2: Confirm Child 4 dependency**
 
 Record explicitly that Child 5 waits for Child 4 because presenter output must bind to the post-interaction runtime seam.
 
-- [ ] **Step 3: Record non-overlap rules**
+Child 4 is completed on the approved minimum `RuntimeState` carrier slice. Child 5 can now bind presenter output to the stabilized post-interaction runtime/app state bridge without reopening Child 4 interaction extraction or the deferred `characterDefinitions` convergence gate.
+
+- [x] **Step 3: Record non-overlap rules**
 
 Record explicitly that Child 5:
 
@@ -157,12 +176,18 @@ Record explicitly that Child 5:
 - does not own runtime mutation
 - does not own interaction extraction
 
+Non-overlap rule for this child:
+
+- Child 5 owns render-time projection and presenter output only.
+- Child 5 must not mutate gameplay state, settle runtime effects, move interaction session ownership, or change save/load behavior.
+- Child 5 may pass existing state into presenter modules, but any state transition must remain in existing runtime/application paths.
+
 ## Task 2: Add Failing Source-Guard And Presenter Tests
 
 **Files:**
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add a failing source-guard test for app-render imports**
+- [x] **Step 1: Add a failing source-guard test for app-render imports**
 
 Add a test shaped like:
 
@@ -179,7 +204,7 @@ test("ui/app-render.ts no longer imports gameplay selection helpers directly", (
 });
 ```
 
-- [ ] **Step 2: Add a failing presenter seam test**
+- [x] **Step 2: Add a failing presenter seam test**
 
 Add a test shaped like:
 
@@ -194,7 +219,7 @@ test("application presenter exports a top-level presenter output seam", () => {
 });
 ```
 
-- [ ] **Step 3: Add a failing source-guard test for main render assembly**
+- [x] **Step 3: Add a failing source-guard test for main render assembly**
 
 Add a test shaped like:
 
@@ -209,7 +234,7 @@ test("main.ts assembles render input through application presenter output", () =
 });
 ```
 
-- [ ] **Step 4: Run focused tests and confirm failure**
+- [x] **Step 4: Run focused tests and confirm failure**
 
 Run:
 
@@ -231,7 +256,7 @@ Expected:
 - Create: `src/application/presenter/overlay-presenters.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add presenter output contracts**
+- [x] **Step 1: Add presenter output contracts**
 
 Create `src/application/presenter/presenter-output.ts` with a narrow output shape for:
 
@@ -241,7 +266,7 @@ Create `src/application/presenter/presenter-output.ts` with a narrow output shap
 - location dialogue
 - HUD
 
-- [ ] **Step 2: Add top-level app presenter**
+- [x] **Step 2: Add top-level app presenter**
 
 Create `src/application/presenter/app-presenter.ts` with a seam shaped like:
 
@@ -251,7 +276,7 @@ export function createAppPresenterOutput(/* ... */) {
 }
 ```
 
-- [ ] **Step 3: Add stage and overlay presenter helpers**
+- [x] **Step 3: Add stage and overlay presenter helpers**
 
 Create:
 
@@ -260,7 +285,7 @@ Create:
 
 These files must own the gameplay-dependent selection that currently lives in `ui/app-render.ts`.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -280,7 +305,7 @@ Expected:
 - Modify: `src/main.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Update main.ts to call presenter assembly**
+- [x] **Step 1: Update main.ts to call presenter assembly**
 
 Replace render-input assembly shaped like:
 
@@ -295,7 +320,7 @@ renderAppMarkup({
 
 with a presenter-driven seam that first creates presenter output and then passes that to the renderer.
 
-- [ ] **Step 2: Reduce ui/app-render.ts to presenter consumption**
+- [x] **Step 2: Reduce ui/app-render.ts to presenter consumption**
 
 Update `src/ui/app-render.ts` so it no longer directly imports or uses gameplay selection helpers for:
 
@@ -303,11 +328,11 @@ Update `src/ui/app-render.ts` so it no longer directly imports or uses gameplay 
 - story-stage visibility checks
 - city-NPC house selection
 
-- [ ] **Step 3: Keep current view renderers but narrow their inputs**
+- [x] **Step 3: Keep current view renderers but narrow their inputs**
 
 Reuse existing renderers, but feed them from presenter-selected inputs rather than from raw state plus helper lookups.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -320,7 +345,7 @@ Expected:
 
 - source-guard tests pass
 
-- [ ] **Step 5: Run full verification**
+- [x] **Step 5: Run full verification**
 
 Run:
 
@@ -335,7 +360,7 @@ Expected:
 - current render path still compiles and builds
 - current player flows remain renderable
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/application/presenter/presenter-output.ts src/application/presenter/app-presenter.ts src/application/presenter/stage-presenters.ts src/application/presenter/overlay-presenters.ts src/ui/app-render.ts src/main.ts tests/robustness.test.cjs
@@ -350,7 +375,7 @@ git commit -m "refactor: move render selection into application presenters"
 - Modify: `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Update this child plan state**
+- [x] **Step 1: Update this child plan state**
 
 Update:
 
@@ -358,7 +383,7 @@ Update:
 - `Progress Log`
 - task checkboxes
 
-- [ ] **Step 2: Sync parent and weekly orchestration**
+- [x] **Step 2: Sync parent and weekly orchestration**
 
 Update:
 
@@ -366,7 +391,7 @@ Update:
 - weekly status board
 - weekly queue state
 
-- [ ] **Step 3: Record change log**
+- [x] **Step 3: Record change log**
 
 Add a concise entry summarizing:
 
@@ -396,10 +421,10 @@ Add a concise entry summarizing:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Parent plan synchronized
-- [ ] Weekly orchestration synchronized
-- [ ] Verification recorded
-- [ ] Change log updated
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Parent plan synchronized
+- [x] Weekly orchestration synchronized
+- [x] Verification recorded
+- [x] Change log updated

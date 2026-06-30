@@ -42,6 +42,7 @@ import {
   isPlayerMonkIdentity,
   type CityMenuPanelId,
 } from "./application/city-menu/city-menu";
+import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
@@ -62,7 +63,6 @@ import {
   buildStoryTriggerInput,
   chooseStorySceneOption,
   getCurrentChoiceOptions,
-  getCurrentSceneAction,
   startStoryEventById,
   triggerStoryEvents,
 } from "./application/story/story-runtime";
@@ -4167,6 +4167,19 @@ function renderApp() {
     appState.gameState.ui.currentView === "map"
       ? captureCampaignTerrainCanvases(appRoot)
       : null;
+  const presenterOutput = createAppPresenterOutput({
+    appState,
+    playerCharacterId: currentPlayerCharacterId,
+    cityDefinition: currentCityDefinition,
+    cityDefinitions,
+    houseDefinitions,
+    cityEntries,
+    cityNpcPoolDefinitions,
+    cityNameById,
+    textEntriesById,
+    citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
+    sceneDefinitionsById: activeStorySceneDefinitionsById,
+  });
 
   appRoot.innerHTML = renderAppMarkup({
     appState,
@@ -4187,15 +4200,7 @@ function renderApp() {
     citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
     historicalCharacters,
     historicalCityRosters,
-    currentSceneAction: getCurrentSceneAction(
-      appState.gameState,
-      activeStorySceneDefinitionsById
-    ),
-    currentSceneChoiceOptions: getCurrentChoiceOptions(
-      appState.gameState,
-      activeStorySceneDefinitionsById
-    ),
-    sceneDefinitionsById: activeStorySceneDefinitionsById,
+    presenterOutput,
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   startInitialCampaignMapDebugAnimationIfNeeded();

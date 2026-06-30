@@ -1,20 +1,14 @@
-import { selectCityNpcSummariesForHouse } from "../application/city-npcs/select-city-npcs-for-house";
-import { getHouseModule } from "../application/house-modules/house-module-registry";
-import {
-  isCityEntryVisibleForStoryStage,
-  isHouseVisibleForStoryStage,
-} from "../application/story/story-stage-access";
 import type {
   AppLocationDialogueState,
   AppState,
   AppModalState,
 } from "../application/app-shell";
+import type { AppPresenterOutput } from "../application/presenter/presenter-output";
 import {
   resolveCharacterAvatarImageUrl,
   resolveCharacterPortraitImageUrl,
 } from "./portrait-assets";
 import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
-import type { ActionNode, ChoiceOption, SceneDefinition } from "../domain/action";
 import type { CardDefinition } from "../domain/card";
 import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
@@ -70,22 +64,8 @@ export type AppRenderInput = {
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
-  currentSceneAction?: ActionNode | null;
-  currentSceneChoiceOptions?: ChoiceOption[];
-  sceneDefinitionsById?: Record<string, SceneDefinition>;
+  presenterOutput: AppPresenterOutput;
 };
-
-function getActiveHouseDefinition(
-  appState: AppState,
-  houseDefinitions: HouseDefinition[]
-): HouseDefinition | null {
-  return (
-    houseDefinitions.find(
-      (houseDefinition) =>
-        houseDefinition.id === appState.gameState.world.currentHouseId
-    ) ?? null
-  );
-}
 
 function getPlayerCharacter(
   appState: AppState,
@@ -172,7 +152,7 @@ function buildCharacterDetailOptions(
 }
 
 function renderOverlay(input: AppRenderInput, playerCharacter: CharacterDefinition): string {
-  const overlayView = input.appState.gameState.ui.overlayView;
+  const overlayView = input.presenterOutput.overlay.overlayView;
 
   if (overlayView === "detail") {
     return renderCharacterDetailView(
@@ -362,22 +342,15 @@ function renderStage(
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
 ): string {
-  const currentView = input.appState.gameState.ui.currentView;
-  const activeHouse = getActiveHouseDefinition(input.appState, input.houseDefinitions);
-  const cityDefinitions = input.cityDefinitions ?? [input.cityDefinition];
-  const activeCityDefinition =
-    cityDefinitions.find(
-      (cityDefinition) =>
-        cityDefinition.id === input.appState.gameState.world.currentCityId
-    ) ?? input.cityDefinition;
+  const { stage } = input.presenterOutput;
 
-  if (currentView === "map") {
+  if (stage.type === "map") {
     const mapViewModelInput: Parameters<typeof createMapViewModel>[0] = {
       mapDefinition: input.mapDefinition,
       playerCoordinate: input.appState.playerCoordinate,
       playerFacingDegrees: input.appState.campaignActorState.facingDegrees,
       playerIsMoving: input.appState.campaignActorState.isMoving,
-      cityDefinitions,
+      cityDefinitions: stage.cityDefinitions,
       cityCoordinatesById: input.cityCoordinatesById,
     };
     const mapViewModel = createMapViewModel(mapViewModelInput);
@@ -385,78 +358,39 @@ function renderStage(
     return renderMapView(mapViewModel);
   }
 
-  if (currentView === "city") {
-    const cityHouseIds = new Set(activeCityDefinition.houseIds);
-    const activeCityHouseDefinitions = input.houseDefinitions.filter(
-      (houseDefinition) => {
-        if (
-          !(
-            houseDefinition.cityId === activeCityDefinition.id ||
-            cityHouseIds.has(houseDefinition.id)
-          )
-        ) {
-          return false;
-        }
-
-        return isHouseVisibleForStoryStage(
-          input.appState.gameState,
-          input.appState.characterDefinitions,
-          houseDefinition
-        );
-      }
-    );
-    const activeCityEntries = input.cityEntries.filter(
-      (cityEntry) =>
-        cityEntry.cityId === activeCityDefinition.id &&
-        isCityEntryVisibleForStoryStage(input.appState.gameState, cityEntry)
-    );
-
+  if (stage.type === "city") {
     return renderCityView(
-      activeCityDefinition,
+      stage.activeCityDefinition,
       playerCharacter,
-      activeCityHouseDefinitions,
-      activeCityEntries,
+      stage.activeCityHouseDefinitions,
+      stage.activeCityEntries,
       input.appState.cityMenuState,
       input.appState.cityDirectoryState,
-      input.citySceneMappingsByCityId?.[activeCityDefinition.id] ?? null
+      stage.citySceneMapping
     );
   }
 
-  if (currentView === "city-3d") {
+  if (stage.type === "city-3d") {
     return renderCity3dView(
-      activeCityDefinition,
-      input.citySceneMappingsByCityId?.[activeCityDefinition.id] ?? null
+      stage.activeCityDefinition,
+      stage.citySceneMapping
     );
   }
 
-  if (currentView === "house" && activeHouse != null) {
-    if (activeHouse.moduleId != null) {
-      const houseModule = getHouseModule(activeHouse.moduleId);
-      const houseViewModel = houseModule.selectViewModel({
-        gameState: input.appState.gameState,
-        characterDefinitions: input.appState.characterDefinitions,
-        houseDefinition: activeHouse,
-        playerCharacterId: input.playerCharacterId,
-        sessionState: input.appState.gameState.ui.houseSession?.state ?? null,
-        textEntriesById: input.textEntriesById,
-      });
-
+  if (stage.type === "house") {
+    if (stage.moduleViewModel != null) {
       return renderHouseModuleView(
         withResolvedHousePortraits(
-          houseViewModel,
+          stage.moduleViewModel,
           input.appState.characterDefinitions
         )
       );
     }
 
     const houseViewModel = createHouseViewModel(
-      activeHouse,
+      stage.activeHouse,
       input.appState.characterDefinitions,
-      selectCityNpcSummariesForHouse(
-        input.appState.gameState,
-        activeHouse,
-        input.cityNpcPoolDefinitions
-      )
+      stage.cityNpcSummaries
     );
 
     return `
@@ -494,19 +428,19 @@ function renderStage(
     `;
   }
 
-  if (currentView === "scene") {
+  if (stage.type === "scene") {
     return renderSceneView({
-      currentAction: input.currentSceneAction ?? null,
+      currentAction: stage.currentSceneAction,
       activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
-      choiceOptions: input.currentSceneChoiceOptions ?? [],
+      choiceOptions: stage.currentSceneChoiceOptions,
       ...(input.textEntriesById == null
         ? {}
         : { textEntriesById: input.textEntriesById }),
     });
   }
 
-  if (currentView === "battle") {
+  if (stage.type === "battle") {
     return renderStoryBattleView(input.appState.gameState.storyBattle);
   }
 
@@ -518,23 +452,11 @@ export function renderApp(input: AppRenderInput): string {
     input.appState,
     input.playerCharacterId
   );
-  const isSceneActive =
-    input.appState.gameState.ui.currentView === "scene" ||
-    input.appState.gameState.scene.activeSceneId != null;
-  const isBeggingMiniGameActive = input.appState.beggingMiniGameState != null;
-  const shouldShowGlobalHud =
-    input.appState.gameState.ui.currentView !== "house" &&
-    input.appState.gameState.ui.currentView !== "battle" &&
-    !isSceneActive &&
-    !isBeggingMiniGameActive;
-  const locationText =
-    input.cityNameById[input.appState.gameState.world.currentCityId] ??
-    input.cityDefinition.name;
   const playerPanelModel = createGlobalPlayerPanelModel(
     playerCharacter,
     input.appState.gameState,
     null,
-    locationText
+    input.presenterOutput.overlay.locationText
   );
   const stageMarkup = renderStage(input, playerCharacter);
 
@@ -546,9 +468,9 @@ export function renderApp(input: AppRenderInput): string {
             <main class="l-stage">
               ${stageMarkup}
               <div class="l-overlay-ui">
-                ${renderCampaignTravelBanner(input.appState.campaignTravelState)}
+                ${renderCampaignTravelBanner(input.presenterOutput.overlay.campaignTravelState)}
                 ${
-                  shouldShowGlobalHud
+                  input.presenterOutput.overlay.shouldShowGlobalHud
                     ? renderGlobalPlayerPanel(
                         playerPanelModel,
                         input.appState.uiLayouts["global-hud"]
@@ -558,11 +480,11 @@ export function renderApp(input: AppRenderInput): string {
               </div>
             </main>
             ${renderLocationDialogue(
-              input.appState.locationDialogueState,
+              input.presenterOutput.overlay.locationDialogueState,
               input.appState.characterDefinitions
             )}
             ${renderModal(
-              input.appState.modalState,
+              input.presenterOutput.overlay.modalState,
               input.cityPortraits
             )}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}

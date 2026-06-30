@@ -7995,3 +7995,32 @@ test("interactive runtime returns shared RuntimeResult instead of private appSta
   assert.match(source, /RuntimeResult/);
   assert.doesNotMatch(source, /type InteractiveRuntimeResult = \{[\s\S]*appState:/);
 });
+
+test("ui/app-render.ts no longer imports gameplay selection helpers directly", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /getHouseModule/);
+  assert.doesNotMatch(source, /isCityEntryVisibleForStoryStage/);
+  assert.doesNotMatch(source, /selectCityNpcSummariesForHouse/);
+});
+
+test("application presenter exports a top-level presenter output seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/app-presenter.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /createAppPresenterOutput/);
+});
+
+test("main.ts assembles render input through application presenter output", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /createAppPresenterOutput/);
+});
