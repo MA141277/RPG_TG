@@ -14,7 +14,7 @@ If a real flow cannot be described clearly, that area is still a black box.
 - Planned target flows captured: `0`
 - Acceptance status:
 - current batch requirement satisfied
-- add more runtime-owned flows after Child 4 exit review decides whether the landed minimum carrier needs one more shared-dispatch expansion batch
+- add presenter/render flow after the first Child 5 batch lands
 
 ## Flow 1: Current Game Boot Flow
 
@@ -166,7 +166,7 @@ Child 4 batch 2 now proves that at least one covered interactive path can rejoin
 ### Call Chain
 
 ```text
-story-battle action in main.ts -> createInteractiveActionRequest() -> dispatchRuntimeRequest() -> routeRequest() -> runInteractiveRuntime() -> RuntimeResult.state/interactive -> applyInteractiveRuntimeResult() -> optional reenter-house follow-up
+story-battle action in main.ts -> createInteractiveActionRequest() -> dispatchRuntimeRequest() -> routeRequest() -> runInteractiveRuntime() -> RuntimeResult.state/interactive -> applyInteractiveRuntimeState() -> optional reenter-house follow-up
 ```
 
 ### Notes

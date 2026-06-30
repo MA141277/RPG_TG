@@ -2,7 +2,7 @@
 
 > **For agentic workers:** Use this file as the visibility companion to the weekly orchestration plan. Do not execute production code directly from this file. Update it after each child-plan work batch so the repository becomes less of a black box week over week.
 
-**Goal:** Make this week's implementation work legible by forcing synchronized visibility outputs: module map, boundary checklist, backlog, call flows, change impact, next split review, and an architecture report with module and control-flow diagrams.
+**Goal:** Make this week's implementation work legible by forcing synchronized visibility outputs through five core artifacts: review index, module map, call flows, next split review, and an architecture report with module and control-flow diagrams.
 
 **Architecture:** Treat this file as the documentation companion to `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`. Child plans still drive code execution. This file only governs weekly observability and understanding artifacts so implementation progress also produces a readable system map.
 
@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-06-30`
-- Current Focus: `The weekly artifact bundle now reflects a completed Child 4 and an unlocked Child 5. Visibility remains anchored on the landed minimum RuntimeState carrier, but the next planned refinement now shifts from Child 4 runtime closure to Child 5 presenter/render decoupling.`
-- Next Step: `Refresh the artifact bundle after the first Child 5 batch so visibility tracks presenter-output and app-render ownership changes.`
+- Current Focus: `The five-core-artifact weekly bundle now reflects a completed Child 4 and an unlocked Child 5. Visibility remains anchored on the landed minimum RuntimeState carrier, but the next planned refinement now shifts from Child 4 runtime closure to Child 5 presenter/render decoupling.`
+- Next Step: `Refresh the five core artifacts after the first Child 5 batch so visibility tracks presenter-output and app-render ownership changes.`
 - Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle now includes the Child 3 navigation/time/event seams, the first Child 4 bridge layer under src/core/runtime and src/core/adapters, and the landed minimum RuntimeState/shared-dispatch carrier batch under src/core/contracts/runtime-state.ts and the widened runtime result path.`
+- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review.`
 
 ## Progress Log
 
@@ -63,6 +63,14 @@
   - Summary: `Completed the weekly visibility-side queue review after Child 4 exit confirmation. The artifact bundle remains accurate for the landed minimum RuntimeState carrier, Child 4 is now treated as completed rather than merely in progress, and Child 5 is now the next visible execution target.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime|runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Update the artifact bundle again after the first Child 5 batch lands.`
+- 2026-06-30
+  - Summary: `Synchronized the companion relationship section with the current queue state after weekly plan expansion. Active next child now points to Child 5 instead of the completed Child 4 plan.`
+  - Verification: `npm run lint:plans`
+  - Next: `Update the artifact bundle again after the first Child 5 batch lands.`
+- 2026-06-30
+  - Summary: `Aligned this companion with the new closeout sync rule and simplified the weekly artifact bundle from eight independently governed artifacts to five core artifacts.`
+  - Verification: `npm run lint:plans`
+  - Next: `Update the five core artifacts again after the first Child 5 batch lands.`
 
 ---
 
@@ -71,7 +79,7 @@
 - Weekly orchestration controller:
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Active next child plan:
-  - `docs/superpowers/plans/2026-06-29-interactive-runtime-integration-under-core-plan.md`
+  - `docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md`
 - Parent orchestration plan:
   - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 
@@ -81,6 +89,7 @@
 - Update this file after every child-plan work batch that changes production code or architecture-relevant docs.
 - Do not mark the weekly orchestration plan `completed` until this companion is also complete.
 - Every linked weekly artifact must use the same week date.
+- On child closeout, review every core artifact for stale queue wording before the next child is treated as formally unlocked.
 - The architecture report must contain at least:
   - one module diagram
   - two real flow diagrams
@@ -91,39 +100,36 @@
   - `docs/superpowers/weekly/2026-06-29-weekly-review-index.md`
 - Module map:
   - `docs/superpowers/weekly/2026-06-29-weekly-module-map.md`
-- Boundary checklist:
-  - `docs/superpowers/weekly/2026-06-29-weekly-boundary-checklist.md`
-- Module backlog:
-  - `docs/superpowers/weekly/2026-06-29-weekly-module-backlog.md`
 - Call flows:
   - `docs/superpowers/weekly/2026-06-29-weekly-call-flows.md`
-- Change impact:
-  - `docs/superpowers/weekly/2026-06-29-weekly-change-impact.md`
 - Next split review:
   - `docs/superpowers/weekly/2026-06-29-weekly-next-split-review.md`
 - Architecture report:
   - `docs/superpowers/weekly/2026-06-29-weekly-architecture-report.md`
 
+Merged ownership:
+
+- `docs/superpowers/weekly/2026-06-29-weekly-boundary-checklist.md` -> module map
+- `docs/superpowers/weekly/2026-06-29-weekly-change-impact.md` -> review index
+- `docs/superpowers/weekly/2026-06-29-weekly-module-backlog.md` -> next split review
+
+These three merged files are retained for historical reference only. They are not independent weekly acceptance-gate deliverables, and closeout sync does not require maintaining them as separate files.
+
 ## Visibility Deliverables
 
 - [x] Weekly review index created or updated
 - [x] Module map created or updated
-- [x] Boundary checklist created or updated
-- [x] Module backlog created or updated
 - [x] At least two real call flows captured
-- [x] Change impact record created or updated
 - [x] Next split review created or updated
 - [x] Architecture report created or updated
+- [x] Closeout queue-state wording reviewed across the five core artifacts
 
 ## Task 1: Synchronize Weekly Artifact Bundle
 
 **Files:**
 - Create or Modify: `docs/superpowers/weekly/2026-06-29-weekly-review-index.md`
 - Create or Modify: `docs/superpowers/weekly/2026-06-29-weekly-module-map.md`
-- Create or Modify: `docs/superpowers/weekly/2026-06-29-weekly-boundary-checklist.md`
-- Create or Modify: `docs/superpowers/weekly/2026-06-29-weekly-module-backlog.md`
 - Create or Modify: `docs/superpowers/weekly/2026-06-29-weekly-call-flows.md`
-- Create or Modify: `docs/superpowers/weekly/2026-06-29-weekly-change-impact.md`
 - Create or Modify: `docs/superpowers/weekly/2026-06-29-weekly-next-split-review.md`
 - Create or Modify: `docs/superpowers/weekly/2026-06-29-weekly-architecture-report.md`
 
@@ -141,8 +147,7 @@ Read:
 Update at minimum:
 
 - module map
-- boundary checklist
-- change impact
+- review index
 - next split review
 
 - [x] **Step 3: Update the flow and architecture artifacts**
@@ -158,27 +163,30 @@ Update:
 
 Record:
 
-- all linked weekly artifact paths
+- all linked core weekly artifact paths
 - verification summary from the active child plan
 - the next module most likely to require refinement
+- closeout queue-state review result
 
 - [x] **Step 5: Record visibility verification**
 
 Verification for this companion is satisfied when:
 
-- all linked files exist or are updated for the week
+- all five core linked files exist or are updated for the week
 - the architecture report contains the required diagrams
-- the weekly review index links to every artifact
+- the weekly review index links to every core artifact
 - the call-flow file contains at least two real implemented flows, not one real flow plus one planned target flow
+- stale queue-state wording has been checked for active child, next executable child, queue state, `Next Step`, resume point, `next target`, and `currently active`
 
 ## Acceptance Gate
 
 Do not mark this companion `completed` until:
 
 - all required visibility deliverables are checked
-- the weekly review index links to every artifact
+- the weekly review index links to every core artifact
 - at least two real call flows are captured
 - the architecture report contains one module diagram and two real flow diagrams
+- closeout queue-state wording is synchronized across the five core artifacts
 - the latest `Progress Log` records the weekly visibility outcome
 
 ## Completion Checklist
@@ -186,5 +194,6 @@ Do not mark this companion `completed` until:
 - [x] Visibility deliverables updated
 - [x] `Execution State` updated
 - [x] `Progress Log` updated
-- [x] Weekly artifact bundle linked and present
+- [x] Five core weekly artifacts linked and present
 - [x] Architecture report diagram requirements satisfied
+- [x] Closeout queue-state review scope recorded

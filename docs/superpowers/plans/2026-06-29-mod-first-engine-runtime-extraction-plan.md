@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-06-30`
-- Current Focus: `Child 4 is now completed on the approved minimum RuntimeState carrier slice. The next executable orchestration target is Child 5 presenter/render decoupling, which can now start against the stabilized post-interaction runtime boundary.`
-- Next Step: `Start Child 5 from its own checklist. Keep Child 4 convergence rules as weekly-governed future follow-up rather than reopening Child 4 implicitly.`
-- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, Child 3 completed on branch codex/child3-nav, and Child 4 is now executing on branch codex/child4-runtime-state in its own isolated worktree. Commit batching remains per-child so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Current Focus: `Child 4 is now completed on the approved minimum RuntimeState carrier slice. Child 5 presenter/render decoupling remains the next executable orchestration target, and Child 6 is now formally authored as Task Runtime rather than the older default-mod migration placeholder.`
+- Next Step: `Start Child 5 from its own checklist. Keep Child 6 queued behind Child 5, and keep Child 4 convergence rules as weekly-governed future follow-up rather than reopening Child 4 implicitly.`
+- Verification: `Child 4 batch 1: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Child 4 batch 2: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime returns shared RuntimeResult|covered interactive flows through core runtime"; npm run typecheck; npm test; npm run build; npm run lint:plans. Current doc-only Child 6 authoring batch: npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1 completed on branch codex/child1-task2, Child 2 completed on branch codex/child2-save, Child 3 completed on branch codex/child3-nav, and Child 4 is now completed on the approved minimum RuntimeState carrier slice. Child 5 is unlocked as the next executable child but remains not-started until its own checklist begins. Child 6 is formally queued as Task Runtime and must not displace Child 5. The older default-mod migration direction is now only a later candidate child. Commit batching remains per-child so the isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -81,6 +81,14 @@
   - Summary: `Completed the Child 4 exit review and advanced parent orchestration. Child 4 satisfies its approved exit condition on the minimum RuntimeState carrier, so the parent queue now promotes Child 5 as the next executable child while keeping characterDefinitions/CoreGameState convergence as separately governed future work.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "application house-runtime directly|interactive runtime exports launch and action seams|core house runtime bridge exports enter leave and dispatch seams|covered interactive flows through core runtime|runtime state contract exports core app and view partitions|runtime result state is widened to RuntimeState|shared runtime dispatch routes RuntimeState instead of CoreGameState only|interactive runtime returns shared RuntimeResult"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Start Child 5 from docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md.`
+- 2026-06-30
+  - Summary: `Synchronized stale parent-plan notes after the weekly controller was expanded. The parent now consistently states that Child 4 is completed and Child 5 is unlocked but not-started.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 5 from docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md.`
+- 2026-06-30
+  - Summary: `Created formal Child 6 Task Runtime spec and plan, replaced the old Child 6 default-mod migration placeholder, and kept Child 5 as the next executable child.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 5 from docs/superpowers/plans/2026-06-29-presenter-render-decoupling-plan.md; keep docs/superpowers/plans/2026-06-30-task-runtime-plan.md queued behind it.`
 
 ## Why This Plan Exists
 
@@ -102,6 +110,7 @@ This plan covers:
 - registry-driven module loading
 - minimal save boundary plus later save hardening
 - navigation and interaction runtime separation
+- task runtime lifecycle and progression extraction
 - capability-based mod integration
 - migration of the current built-in game into the new structure
 
@@ -212,6 +221,8 @@ Owns:
 - `src/core/runtime/runtime-router.ts`
 - `src/core/runtime/runtime-settlement.ts`
 - `src/core/runtime/runtime-context.ts`
+- `src/core/contracts/task-runtime.ts`
+- `src/core/runtime/task-runtime.ts`
 - `src/core/registry/engine-registry.ts`
 - `src/core/registry/mod-registry.ts`
 - `src/core/mods/mod-loader.ts`
@@ -419,7 +430,7 @@ Ensure it states:
 
 Ensure it does not claim:
 
-- full `Task / Mission Runtime`
+- full `Task Runtime`
 - interactive runtime
 - presenter/render cutover
 
@@ -527,44 +538,82 @@ Confirm:
 - `app-render` consumes presenter output instead of raw runtime assumptions
 - Child 5 is marked `completed`
 
-### Task 7: Author And Execute Child 6 Default Mod Migration
+### Task 7: Author And Execute Child 6 Task Runtime
 
 **Files:**
-- Create: `docs/superpowers/plans/2026-06-29-mod-manifest-loader-and-default-mod-migration-plan.md`
+- Create: `docs/superpowers/specs/2026-06-30-task-runtime-spec.md`
+- Create: `docs/superpowers/plans/2026-06-30-task-runtime-plan.md`
 - Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 
-- [ ] **Step 1: Author Child 6**
+- [x] **Step 1: Author Child 6 Task Runtime spec and plan**
 
 Create:
 
 ```text
-docs/superpowers/plans/2026-06-29-mod-manifest-loader-and-default-mod-migration-plan.md
+docs/superpowers/specs/2026-06-30-task-runtime-spec.md
+docs/superpowers/plans/2026-06-30-task-runtime-plan.md
 ```
 
 Scope:
 
-- first-party default mod
-- capability validation
-- builtin campaign migration onto extracted engine/runtime
+- formal Task Runtime contracts
+- task lifecycle state machine
+- signal-driven task progression
+- task updates, effects, and follow-up signals through shared runtime result
 - runtime subsystem boundary:
-  - `Boot Runtime`
-  - `Save / Load Runtime` compatibility seam
-  - `State Sync Runtime` compatibility seam
+  - `Task Runtime`
+
+Naming rule:
+
+- runtime layer uses `Task`
+- `Mission` remains content/presentation wording only
+
+Out of scope:
+
+- Event Runtime candidate selection and activation
+- Scene Runtime sessions
+- Interaction Runtime sessions
+- Time Runtime advancement
+- task UI/presenter
+- full mod activation/capability/dependency
 
 - [ ] **Step 2: Verify Child 6 dependencies**
 
 Confirm:
 
 - Child 1 completed
-- Child 2 completed
 - Child 3 completed
+- Child 4 completed
 - Child 5 completed
+  - or Child 5 explicitly deferred by updated weekly and parent governance before Child 6 starts production code
 
 - [ ] **Step 3: Execute Child 6 from its own checklist**
 
-Run all implementation work from the Child 6 plan file.
+Run all implementation work from the Child 6 plan file, not from this parent file.
 
-- [ ] **Step 4: Close the parent orchestration plan**
+- [ ] **Step 4: Verify Child 6 exit condition and sync parent log**
+
+Confirm:
+
+- `TaskDefinition`, `TaskInstance`, and `TaskRuntimeState` contracts exist
+- minimum task lifecycle exists
+- signal-driven progression supports multiple active tasks
+- failed tasks are terminal
+- Task Runtime returns task updates, effects, and signals without applying effects
+- Child 6 is marked `completed`
+
+### Future Candidate: Default Mod Migration
+
+The previous `mod-manifest-loader-and-default-mod-migration` direction no longer occupies Child 6.
+
+It may be reconsidered as a later child only after:
+
+- Child 5 presenter/render decoupling is completed or formally deferred
+- Child 6 Task Runtime is completed or formally deferred
+- weekly and parent orchestration assign a new child number
+- a dedicated spec and plan are authored
+
+- [ ] **Step 5: Close the parent orchestration plan**
 
 Confirm:
 
@@ -590,7 +639,7 @@ Do not mark this parent plan `completed` until:
 
 ## Parallel Collaboration Rules
 
-- Do not execute Child 1, Child 3, Child 4, or Child 5 in the same worktree as another Codex thread editing `src/main.ts`, `src/domain/game-state.ts`, `src/ui/app-render.ts`, or `tests/robustness.test.cjs`.
+- Do not execute Child 1, Child 3, Child 4, Child 5, or Child 6 in the same worktree as another Codex thread editing `src/main.ts`, `src/domain/game-state.ts`, `src/ui/app-render.ts`, `src/core/contracts/runtime-result.ts`, or `tests/robustness.test.cjs`.
 - Documentation-only updates are safe in the current worktree.
 - After `src/core/contracts/` and `src/core/registry/engine-registry.ts` stabilize, treat them as frozen contracts; later tasks should conform rather than opportunistically redesign them.
 - The interactive-module migration should not proceed past adapter-only cleanup until the engine bootstrap and runtime dispatch seams are merged.
@@ -601,6 +650,7 @@ Do not mark this parent plan `completed` until:
 - `main.ts` becomes a thin browser/bootstrap adapter rather than a gameplay orchestrator.
 - Save files explicitly separate engine schema from mod payload through a minimal envelope plus hardened migration path.
 - Navigation, time, events, and interactive modules dispatch through reusable `src/core/runtime` services.
+- Task lifecycle and signal-driven task progression run through a formal `Task Runtime`.
 - The current built-in campaign runs as the first-party default mod on top of the extracted engine shell.
 - New mods can declare capabilities and content without editing engine bootstrap files.
 
@@ -612,6 +662,7 @@ Do not mark this parent plan `completed` until:
 - [x] Child 3 authored and completed
 - [x] Child 4 authored and completed
 - [ ] Child 5 authored and completed
-- [ ] Child 6 authored and completed
+- [x] Child 6 Task Runtime spec and plan authored
+- [ ] Child 6 completed
 - [ ] Shared-file conflict policy acknowledged
 - [ ] Final orchestration verification recorded

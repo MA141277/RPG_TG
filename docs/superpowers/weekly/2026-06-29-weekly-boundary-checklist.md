@@ -2,6 +2,16 @@
 
 **Week Of:** `2026-06-29`
 
+## Merged Artifact Notice
+
+This file is retained as a historical reference only.
+
+Active boundary-checklist ownership has moved into:
+
+- `docs/superpowers/weekly/2026-06-29-weekly-module-map.md`
+
+Do not treat this file as an independent weekly acceptance artifact after the five-core-artifact consolidation.
+
 ## Stable Boundaries
 
 - [x] Parent plan and child plan orchestration boundary is stable enough to start Child 1.

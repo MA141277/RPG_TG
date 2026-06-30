@@ -106,23 +106,35 @@ Primary seams:
 - `src/core/runtime/**`
 - `src/application/scene/**`
 
-### 4.5 Task / Mission Runtime
+### 4.5 Task Runtime
+
+Naming rule:
+
+- runtime-layer naming uses `Task`
+- `Mission` is allowed only as content-layer or presentation-layer wording
 
 Owns:
 
 - task creation
 - task advancement
 - task completion/failure
-- mission state synchronization into shared runtime state
+- task state synchronization into shared runtime state
+- signal-driven task progression
 
 Must not own:
 
 - scenario prose authoring
 - direct boot-path branching
+- event candidate selection or activation
+- scene session state
+- interaction session state
+- time advancement
+- task UI/presenter output
 
 Primary seams:
 
 - `src/core/runtime/**`
+- `src/core/contracts/task-runtime.ts`
 - mission/task services in `src/application/**`
 
 ### 4.6 Interaction Runtime
@@ -301,7 +313,7 @@ Secondary dependency:
 Scope guard:
 
 - Child 3 may reserve task action and task signal seams
-- Child 3 must not claim the full `Task / Mission Runtime`
+- Child 3 must not claim the full `Task Runtime`
 
 ### Child 4: `2026-06-29-interactive-runtime-integration-under-core-plan.md`
 
@@ -324,17 +336,22 @@ Secondary dependency:
 
 - Navigation Runtime and Interaction Runtime outputs stable enough to present
 
-### Child 6: `2026-06-29-mod-manifest-loader-and-default-mod-migration-plan.md`
+### Child 6: `2026-06-30-task-runtime-plan.md`
 
 Primary subsystem coverage:
 
-- Boot Runtime
-- Save / Load Runtime compatibility seam
-- State Sync Runtime compatibility seam
+- Task Runtime
 
 Secondary dependency:
 
-- downstream compatibility with Navigation, Interaction, and Presentation Bridge runtimes
+- Child 3 task action / task signal seams
+- Child 4 shared `RuntimeState` / `RuntimeResult` carrier
+- Child 5 remains the next executable child before Child 6 starts production code
+
+Later candidate, not Child 6:
+
+- `mod-manifest-loader-and-default-mod-migration`
+- Primary subsystem coverage would be Boot Runtime, Save / Load Runtime compatibility, and State Sync Runtime compatibility after a separate spec and plan are authored.
 
 ## 7. Planning Rules For Future Child Plans
 

@@ -18,9 +18,9 @@ If a module cannot be summarized here, it is still acting like a black box.
 | `src/core/engine` | `provisional` | Compose a selected mod and EngineRegistry into the first EngineSession state shell. | `GameModManifest`, `EngineRegistry`. | `EngineSession`, bootstrap helper. | `core/contracts`, `core/registry`. | `core/runtime`, `core/save`, `core/adapters/legacy-main-adapter`. | Implemented and now validated end-to-end through the adapter seam, but still intentionally minimal. |
 | `src/core/runtime` | `provisional` | Own typed runtime request entry for navigation/time plus transitional event, scene, house, and covered interactive launch/action seams over the minimum RuntimeState carrier. | `RuntimeRequest`, `RuntimeState`, route callback output, trigger inputs, legacy house/interactive adapter dependencies. | Settled `RuntimeResult`, effect-applied runtime state, runtime wrapper results for navigation/time/event/scene entry, and bridge-level interactive/house handoff results. | `core/contracts`, registries, engine session, `src/core/adapters/*`, `application/navigation/*`, `application/time/*`, `application/events/*`, `application/scene/*`. | `src/main.ts`; future interactive/event/task/navigation runtime services. | Expanded this week by Child 3, Child 4 batch 1, and Child 4 batch 2. It now includes the minimum RuntimeState/shared-dispatch carrier, but still bridges into legacy gameplay services and does not yet cover every interactive path through one final routing shape. |
 | `src/core/save` | `official` | Persistence boundary for envelope creation, legacy-save normalization, selected-mod validation, and payload-preserving serialization. | `CoreGameState`, save version, legacy save-like records, available mod ids. | `SaveEnvelope`, migrated envelopes, serialized save payloads. | `core/contracts`. | Future app-level save/load callers and state-sync flows. | Hardened this week by Child 2 without redefining Child 1's initial envelope shape. |
-| `src/core/adapters` | `adapter` | Temporary compatibility seam from old runtime root into new `core` boundary. | Legacy main/runtime paths, house runtime creation, interactive minigame/story-battle helpers. | Handoff seams into core bootstrap and transitional runtime bridges. | `src/main.ts`, `core/engine`, `core/runtime`, `application/presenter`. | `src/main.ts`, `src/core/runtime`. | `legacy-main-adapter.ts`, `legacy-house-adapter.ts`, and `legacy-interactive-adapter.ts` now exist and should stay thin while later children peel more logic out of `main.ts` and application-owned runtime services. |
-| `src/application/presenter` | `provisional` | Present core/runtime state as renderable schema-driven outputs. | Core game state, runtime view data. | Presenter output for UI. | `core/contracts`, existing runtime data. | `ui/app-render.ts`, `ui/layout-renderer.ts`. | First seam only; full decoupling deferred. |
-| `src/ui/layout-renderer.ts` | `provisional` | Schema-driven layout rendering seam for player-facing UI. | Presenter output, layout schemas. | Renderable layout output. | `core/contracts/presenter`, layout schema. | `ui/app-render.ts`. | Planned but not yet in production control path. |
+| `src/core/adapters` | `adapter` | Temporary compatibility seam from old runtime root into new `core` boundary. | Legacy main/runtime paths, house runtime creation, interactive minigame/story-battle helpers. | Handoff seams into core bootstrap and transitional runtime bridges. | `src/main.ts`, `core/engine`, `core/runtime`. | `src/main.ts`, `src/core/runtime`. | `legacy-main-adapter.ts`, `legacy-house-adapter.ts`, and `legacy-interactive-adapter.ts` now exist and should stay thin while later children peel more logic out of `main.ts` and application-owned runtime services. |
+| `src/application/presenter` | `planned` | Present core/runtime state as renderable schema-driven outputs. | Core game state, runtime view data. | Presenter output for UI. | `core/contracts`, existing runtime data. | `ui/app-render.ts`, future layout bridge. | Child 5 is unlocked but not started; presenter files do not exist yet. |
+| `src/ui/layout-renderer.ts` | `planned` | Schema-driven layout rendering seam for player-facing UI. | Presenter output, layout schemas. | Renderable layout output. | presenter output, layout schema. | `ui/app-render.ts`. | Planned but not yet in production control path. |
 | `docs/superpowers/plans/*` | `official` | Execution governance and implementation sequencing. | Specs, user decisions, repo state. | Plans, progress, resume points. | `docs/superpowers/specs/*`. | Human/Codex execution flow. | Now includes parent, child, weekly, and visibility companion layers. |
 
 ## Status Legend
@@ -31,8 +31,54 @@ If a module cannot be summarized here, it is still acting like a black box.
   - transition-only compatibility seam
 - `provisional`
   - likely to change after more integration
+- `planned`
+  - approved target boundary, not yet implemented
 - `legacy`
   - old module not yet migrated into the current boundary
+
+## Boundary Checklist
+
+### Stable Boundaries
+
+- [x] Parent plan and child plan orchestration boundary.
+- [x] Weekly orchestration and weekly visibility companion roles.
+- [x] Child 4 closeout state: completed on the approved minimum RuntimeState carrier.
+
+### Provisional Boundaries
+
+- [x] `src/core/contracts`
+- [x] `src/core/registry/engine-registry.ts`
+- [x] `src/core/engine`
+- [x] `src/core/runtime`
+- [x] `src/core/save`
+- [ ] `src/application/presenter`
+- [ ] `src/ui/layout-renderer.ts`
+
+### Adapter Boundaries
+
+- [x] `src/core/adapters/legacy-main-adapter.ts`
+- [x] `src/core/adapters/legacy-house-adapter.ts`
+- [x] `src/core/adapters/legacy-interactive-adapter.ts`
+- [x] Minimum `RuntimeState` carrier exists, but remains a provisional runtime boundary rather than final convergence onto Child 1 `CoreGameState`.
+
+### Missing Contracts
+
+- [x] Event runtime concrete contracts exist.
+- [x] Interactive runtime concrete contracts exist.
+- [x] Minimum `RuntimeState` and widened `RuntimeResult` contracts exist.
+- [ ] Full task runtime / mission runtime contracts.
+- [ ] Full minigame dispatch interface.
+- [ ] Presenter output contracts.
+- [ ] Full mod activation / capability / dependency contracts.
+
+### Remaining `main.ts` Coupling
+
+- [x] Boot composition now hands through `legacy-main-adapter`.
+- [x] Covered interactive launch/action ownership now routes through core seams.
+- [x] At least one covered interactive return path now routes through shared runtime dispatch.
+- [ ] Concrete content activation.
+- [ ] Render orchestration.
+- [ ] Browser-only runtime follow-up and view switching.
 
 ## Questions Raised This Week
 
@@ -40,4 +86,4 @@ If a module cannot be summarized here, it is still acting like a black box.
 - How thin can `src/main.ts` become in Child 1 without forcing premature feature migration?
 - Which remaining interactive and house-owned launch paths still bypass the new Child 4 bridge seams or the widened shared-dispatch line?
 - Should `EngineRegistry` keep only abstract lookup tables in `src/core`, with concrete content/module assembly remaining outside `core` during migration?
-- Is the landed minimum RuntimeState/shared-dispatch carrier sufficient for Child 4 exit, or does `src/core/runtime` still need one more batch of shared-dispatch coverage and signal normalization before Child 5 can start?
+- During Child 5, which render-time selections belong in `src/application/presenter` before any layout renderer boundary is introduced?

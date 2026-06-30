@@ -19,7 +19,7 @@
 - This week is focused on making the `mod-first` engine/runtime extraction executable and legible.
 - Child 1, Child 2, and Child 3 are now complete in isolated worktrees.
 - Child 4 is now complete in its isolated worktree, with its first two batches landing both the initial interactive-runtime bridge and the minimum RuntimeState/shared-dispatch carrier under `src/core`.
-- The visibility bundle exists so the same week also produces readable module and control-flow outputs.
+- The five-core-artifact visibility bundle exists so the same week also produces readable module, control-flow, split-review, architecture, and change-impact outputs.
 
 ## Active Focus
 
@@ -27,20 +27,24 @@
 
 ## Artifact Index
 
+- Review index and change impact summary:
+  - `docs/superpowers/weekly/2026-06-29-weekly-review-index.md`
 - Module map:
   - `docs/superpowers/weekly/2026-06-29-weekly-module-map.md`
-- Boundary checklist:
-  - `docs/superpowers/weekly/2026-06-29-weekly-boundary-checklist.md`
-- Module backlog:
-  - `docs/superpowers/weekly/2026-06-29-weekly-module-backlog.md`
 - Call flows:
   - `docs/superpowers/weekly/2026-06-29-weekly-call-flows.md`
-- Change impact:
-  - `docs/superpowers/weekly/2026-06-29-weekly-change-impact.md`
 - Next split review:
   - `docs/superpowers/weekly/2026-06-29-weekly-next-split-review.md`
 - Architecture report:
   - `docs/superpowers/weekly/2026-06-29-weekly-architecture-report.md`
+
+## Merged Artifact Ownership
+
+- `weekly-boundary-checklist` is now covered by `weekly-module-map`.
+- `weekly-change-impact` is now covered by this review index.
+- `weekly-module-backlog` is now covered by `weekly-next-split-review`.
+
+The old files may remain as historical references, but they are no longer independent weekly acceptance artifacts.
 
 ## Verification Summary
 
@@ -77,6 +81,16 @@
 ### Blockers
 
 - None recorded yet in the weekly visibility scope.
+
+## Change Impact Summary
+
+| Change Area | Intended Impact | Unexpected Impact | Follow-Up Needed |
+| --- | --- | --- | --- |
+| `weekly governance` | Parent, child, weekly, visibility, and closeout sync state are explicit. | `none` | Keep closeout sync mandatory before future queue promotions. |
+| `src/core/contracts` | Introduce and widen shared contracts through `RuntimeState`, `RuntimeResult`, and interactive signals. | `contained`: `characterDefinitions` could not safely merge into `RuntimeState.core` yet. | Keep `characterDefinitions` deferred behind the weekly promotion gate. |
+| `src/core/runtime` | Move navigation/time/event/scene and covered interaction entry behind core seams. | `contained`: some interactive paths still use dedicated bridge helpers instead of one final router shape. | Hold stable during Child 5; revisit through a later runtime-consolidation child only if needed. |
+| `src/core/save` | Harden loader/writer/migration behavior. | `none` | Keep shape stable until real save/load callers require more. |
+| `src/main.ts` | Shrink black-box ownership through core adapters and runtime seams. | `expected`: render orchestration and browser follow-up remain. | Start Child 5 presenter/render decoupling. |
 
 ## Next Week Input
 
