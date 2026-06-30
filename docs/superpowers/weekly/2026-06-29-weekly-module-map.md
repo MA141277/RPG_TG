@@ -69,7 +69,7 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [ ] Full task runtime / mission runtime contracts.
 - [ ] Full minigame dispatch interface.
 - [ ] Presenter output contracts.
-- [ ] Full mod activation / capability / dependency contracts.
+- [ ] Full `Mod Runtime` activation / capability / dependency contracts; this work is now formally queued as Child 7 rather than only a generic future backlog item.
 
 ### Remaining `main.ts` Coupling
 

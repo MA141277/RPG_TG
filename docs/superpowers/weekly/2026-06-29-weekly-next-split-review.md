@@ -42,6 +42,8 @@ Do not decide the next split only from intuition.
   - Important, but registry composition should stay thin until runtime and adapter seams prove what else is truly needed.
 - `src/core/runtime`
   - Important follow-up area, but no longer the next legal queue item because Child 4 is complete and Child 5 now owns the next approved boundary move.
+- `src/core/mods/*`
+  - Important follow-up area, but no longer an untracked candidate because Child 7 Mod Runtime is now formally queued behind Child 6 rather than being eligible to bypass Child 5.
 - `src/application/presenter`
   - This is now the recommended next split because Child 5 is unblocked and the render path still lacks a real presenter-output contract.
 - `src/core/save`
@@ -57,6 +59,7 @@ Do not decide the next split only from intuition.
 | `src/core/runtime` | `needs-hardening` | Child 3/4 seams exist, but one final routing shape does not cover every interactive surface yet. | `P2` | Keep stable during Child 5; revisit through a planned runtime-consolidation child if it becomes the next bottleneck. |
 | `src/core/save` | `needs-migration` | Save boundary is hardened, but app-level callers still need to consume it directly. | `P1` | Keep stable until real save/load caller work resumes. |
 | `src/application/presenter` | `needs-contract` | Presenter seam exists only at planning level; Child 5 is now unblocked. | `P1` | Start Child 5 and introduce presenter output contracts. |
+| `src/core/mods/*` | `needs-contract` | A full Mod Runtime boundary is now specified as Child 7, but production code has not started and the queue still requires Child 5 then Child 6 first. | `P2` | Keep the scope stable in docs, then start only after Child 5 and Child 6 close or are formally deferred. |
 | `src/ui/app-render.ts` | `needs-migration` | Still owns render-time gameplay selection and helper imports. | `P1` | Move selection behind presenter output in Child 5. |
 | `src/ui/layout-renderer.ts` | `needs-contract` | Schema-driven layout seam is planned only. | `P2` | Let Child 5 establish presenter output first. |
 | `src/application/house/*` | `needs-adapter` | House behavior still runs through legacy runtime delegation behind the Child 4 bridge. | `P2` | Hold steady during Child 5; revisit only through a planned runtime follow-up. |

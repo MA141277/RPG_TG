@@ -70,6 +70,7 @@ flowchart LR
 - `src/core/adapters/legacy-main-adapter.ts` is now implemented as a temporary bridge
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` are now implemented as temporary bridges
 - Legacy interactive gameplay logic still lives behind those adapters
+- Child 6 `Task Runtime` and Child 7 `Mod Runtime` now exist as formal queued architecture slices, but neither is the current executable queue item while Child 5 remains next.
 
 ## Flow Diagram 1: Current Boot And Render Flow
 

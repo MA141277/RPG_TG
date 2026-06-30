@@ -254,6 +254,32 @@ Primary seams:
 - `src/application/presenter/**`
 - `src/ui/layout-renderer.ts`
 
+### 4.13 Mod Runtime
+
+Owns:
+
+- mod source discovery
+- mod loading and parsing
+- mod selection
+- dependency/conflict validation
+- capability validation
+- activation handoff for startup and restore-time flows
+- normalized active-mod output for downstream bootstrap
+
+Must not own:
+
+- final content assembly
+- app-state construction
+- save/load IO
+- gameplay runtime execution
+- UI/menu/loading-screen implementation
+
+Primary seams:
+
+- `src/core/contracts/mod-runtime.ts`
+- `src/core/mods/**`
+- `src/core/adapters/mod-runtime-main-adapter.ts`
+
 ## 5. Subsystem State Ownership
 
 Shared core runtime state should distinguish at least:
@@ -348,10 +374,17 @@ Secondary dependency:
 - Child 4 shared `RuntimeState` / `RuntimeResult` carrier
 - Child 5 remains the next executable child before Child 6 starts production code
 
-Later candidate, not Child 6:
+### Child 7: `2026-06-30-mod-runtime-plan.md`
 
-- `mod-manifest-loader-and-default-mod-migration`
-- Primary subsystem coverage would be Boot Runtime, Save / Load Runtime compatibility, and State Sync Runtime compatibility after a separate spec and plan are authored.
+Primary subsystem coverage:
+
+- Mod Runtime
+
+Secondary dependency:
+
+- Boot Runtime seams from Child 1
+- Save / Load Runtime compatibility from Child 2
+- Child 5 and Child 6 remain ahead of Child 7 in the current weekly queue unless governance explicitly defers them first
 
 ## 7. Planning Rules For Future Child Plans
 

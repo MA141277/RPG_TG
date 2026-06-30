@@ -12,7 +12,8 @@
 
 **Queued Next Child Plan(s):**
 
-- `None currently queued ahead of the active next child`
+- `docs/superpowers/plans/2026-06-30-task-runtime-plan.md`
+- `docs/superpowers/plans/2026-06-30-mod-runtime-plan.md`
 
 ## Weekly Summary
 
@@ -77,6 +78,8 @@ The old files may remain as historical references, but they are no longer indepe
 
 - Child 4 is now closed on the approved minimum RuntimeState carrier.
 - Child 5 presenter/render work is now the next executable child rather than a blocked queue item.
+- Child 6 Task Runtime is formally queued behind Child 5.
+- Child 7 Mod Runtime is formally queued behind Child 6.
 
 ### Blockers
 
