@@ -15,9 +15,9 @@ It must show:
 
 ## Architecture Summary
 
-- This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, advanced Child 4 through interactive/runtime carrier slices, completed Child 5 presenter/render decoupling, completed Child 6 Task Runtime, and completed Child 7 Mod Runtime.
-- The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/*`, `src/core/mods/*`, `src/application/presenter`, and `src/core/runtime/task-runtime.ts` now exist as concrete boundary slices with read/write persistence, first-pass navigation, covered interactive entry, minimum shared-dispatch return behavior, presenter-output render selection, formal task lifecycle/progression ownership, and formal mod activation/startup ownership.
-- The immediate next target is Child 8 StateSync Runtime: Child 7 has completed the mod runtime dependency, so the next planned reduction is canonical runtime/app/save/presentation synchronization without reopening mod, task, or presenter/render scope.
+- This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, advanced Child 4 through interactive/runtime carrier slices, completed Child 5 presenter/render decoupling, completed Child 6 Task Runtime, completed Child 7 Mod Runtime, and completed Child 8 StateSync Runtime.
+- The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/*`, `src/core/mods/*`, `src/core/runtime/state-sync-*`, `src/application/presenter`, and `src/core/runtime/task-runtime.ts` now exist as concrete boundary slices with read/write persistence, first-pass navigation, covered interactive entry, minimum shared-dispatch return behavior, presenter-output render selection, formal task lifecycle/progression ownership, formal mod activation/startup ownership, and formal state synchronization ownership.
+- No child beyond Child 8 is currently promoted. The next reduction should come from a fresh runtime/module/artifact review rather than automatic queue expansion.
 
 ## Module Diagram
 
@@ -45,6 +45,8 @@ flowchart LR
     MAIN --> MODRT["src/core/mods (implemented Child 7)"]
     MODRT --> MODAD["mod-runtime-main-adapter.ts"]
     MODAD --> ADAPTER
+    CORERT --> SSRT["state-sync-* (implemented Child 8)"]
+    RSBRIDGE --> SSRT
     MAIN --> PRESENTER
     PRESENTER --> UIR
     PRESENTER -. later planned seam .-> UIL["ui/layout-renderer.ts"]
@@ -65,6 +67,7 @@ flowchart LR
 - `src/application/presenter/*` as the first production presentation bridge slice for presenter output, stage selection, overlay/HUD projection, and render-time house/city/scene selection
 - `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts` as the first production Task Runtime slice for task contracts, lifecycle, action handling, signal-driven progression, and task runtime result output
 - `src/core/contracts/mod-runtime.ts`, `src/core/mods/*`, and `src/core/adapters/mod-runtime-main-adapter.ts` as the first production Mod Runtime slice for source normalization/loading/parsing, dependency/capability validation, atomic activation, typed failures, and unified activation handoff
+- `src/core/contracts/state-sync-runtime.ts` and `src/core/runtime/state-sync-*` as the first production StateSync Runtime slice for canonical runtime state, app bridge, save snapshot, presentation input, mandatory triggers, syncState, and bridge-period helper migration
 
 ## Approved Target Modules
 
@@ -74,14 +77,14 @@ flowchart LR
 - Child 5 presenter/render extraction, completed on the first presenter-output bridge
 - Child 6 Task Runtime extraction, completed on the first formal contract/lifecycle/progression slice
 - Child 7 Mod Runtime extraction, completed on the first activation/startup seam
-- Child 8 StateSync Runtime extraction, now unlocked as the next legal queue item
+- Child 8 StateSync Runtime extraction, completed on the first formal canonical boundary slice
 
 ## Temporary Adapters
 
 - `src/core/adapters/legacy-main-adapter.ts` is now implemented as a temporary bridge
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` are now implemented as temporary bridges
 - Legacy interactive gameplay logic still lives behind those adapters
-- Child 8 `StateSync Runtime` is now the formal next executable architecture slice after Child 7.
+- No Child 9 is currently promoted; future splits require a fresh review.
 
 ## Flow Diagram 1: Current Boot And Render Flow
 
@@ -182,6 +185,24 @@ flowchart TD
     H --> I["existing content assembly / bootstrap continuation"]
 ```
 
+## Flow Diagram 8: Real Child 8 StateSync Runtime Boundary
+
+```mermaid
+flowchart TD
+    A["StateSyncTrigger"] --> B["syncState()"]
+    B --> C["hydrate / normalize"]
+    B --> D["app bridge sync"]
+    B --> E["pre-save snapshot"]
+    B --> F["mod activation rebuild"]
+    B --> G["presentation input preparation"]
+    C --> H["StateSyncResult"]
+    D --> H
+    E --> H
+    F --> H
+    G --> H
+    H --> I["caller keeps gameplay / IO / render ownership"]
+```
+
 ## Architecture Delta This Week
 
 - Added a formal parent plan, child boundary plan, weekly orchestration plan, and visibility companion relationship.
@@ -208,6 +229,8 @@ flowchart TD
 - Landed `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts` so Task Runtime owns minimum task lifecycle and signal-driven progression without absorbing effect settlement, event activation, scene sessions, interaction sessions, time advancement, save/load IO, or presentation.
 - Landed `src/core/contracts/mod-runtime.ts`, `src/core/mods/mod-source-registry.ts`, `mod-source-loader.ts`, `mod-parser.ts`, `mod-dependency-resolver.ts`, `mod-capability-guard.ts`, `mod-runtime.ts`, and `src/core/adapters/mod-runtime-main-adapter.ts` so Mod Runtime owns source normalization/loading/parsing, typed activation requests/results/failures, dependency/capability validation, atomic activation rollback, and unified startup handoff without absorbing content assembly, save/load IO, gameplay runtimes, UI, or presenter work.
 - Updated `src/main.ts` so builtin, file-imported, url-imported, and restore-time selected-mod activation calls pass through Mod Runtime before existing content assembly and bootstrap continuation.
+- Landed `src/core/contracts/state-sync-runtime.ts` plus `src/core/runtime/state-sync-*` so StateSync Runtime owns canonical runtime state, app bridge, save snapshot, presentation input, mandatory triggers, syncState, validation, normalization, hydration, pre-save preparation, mod rebuild, and presentation input preparation without absorbing gameplay dispatch, save IO, Mod Runtime activation, or rendering.
+- Moved bridge-period interactive RuntimeState creation/write-back helpers out of `src/main.ts` and behind the StateSync runtime boundary.
 
 ## Architecture Risks
 
@@ -219,4 +242,4 @@ flowchart TD
 - The presenter seam is now real but still provisional; full layout renderer/schema work remains future scope.
 - The Task Runtime seam is now real but intentionally first-slice only; task UI, complete authoring DSL, and mod custom evaluator plugins remain future scope.
 - The Mod Runtime seam is now real but intentionally first-slice only; full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy remain future scope.
-- State synchronization across runtime/app/save/presentation remains provisional until Child 8 lands.
+- State synchronization now has a first formal StateSync Runtime boundary, but deeper save IO integration, runtime dispatch auto-commit integration, and full legacy state migration remain future scope.

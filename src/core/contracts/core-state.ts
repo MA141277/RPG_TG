@@ -6,12 +6,14 @@ export type EngineState = {
   currentView: ViewName;
 };
 
-export type RuntimeState = {
+export type CoreStateRuntimeSlice = {
   flags: Record<string, boolean>;
   variables: Record<string, string | number>;
   activeEventId: string | null;
   activeTaskIds: string[];
 };
+
+export type RuntimeState = CoreStateRuntimeSlice;
 
 export type CoreGameState = {
   engine: EngineState;

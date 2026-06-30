@@ -18,3 +18,5 @@ export type RuntimeState = {
   app: RuntimeAppState;
   view: RuntimeViewState;
 };
+
+export type LegacyBridgeRuntimeState = RuntimeState;

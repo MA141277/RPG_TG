@@ -10,12 +10,13 @@ If a real flow cannot be described clearly, that area is still a black box.
 
 ## Current Coverage Status
 
-- Real implemented flows captured: `12`
+- Real implemented flows captured: `13`
 - Planned target flows captured: `0`
 - Acceptance status:
 - current batch requirement satisfied
 - task runtime flow captured after Child 6 closeout
 - mod runtime activation flow captured after Child 7 closeout
+- state sync runtime flow captured after Child 8 closeout
 
 ## Flow 1: Current Game Boot Flow
 
@@ -226,3 +227,20 @@ builtin/file/url/restore selected-mod intent -> createLoadedModFromManifest() or
 - `Mod Runtime` returns a `ModActivationResult` with either `ActivatedMod` or typed failure; startup does not silently fallback on activation failure.
 - `src/core/mods/mod-runtime.ts` does not import final content assembly, UI rendering, or gameplay runtime execution.
 - Save/load still owns save envelope parsing and migration; restore-time selected-mod re-activation is routed back through Mod Runtime.
+
+## Flow 13: Real Child 8 StateSync Runtime Boundary Flow
+
+### Narrative
+
+Child 8 now proves that canonical runtime/app/save/presentation state synchronization has a formal owner under `src/core`. `src/main.ts` no longer declares the bridge-period interactive RuntimeState creation and write-back helpers directly; those helpers now live behind the StateSync runtime boundary while the new `syncState()` entrypoint coordinates canonical state normalization, save snapshot preparation, session/app bridge sync, mod activation rebuild, and presentation input preparation without taking over gameplay dispatch, save IO, Mod Runtime activation, or rendering.
+
+### Call Chain
+
+```text
+runtime/app/save/presentation sync trigger -> syncState() -> hydrate/normalize or mod rebuild -> optional app bridge / save snapshot / presentation input -> StateSyncResult -> existing caller continues owning gameplay, IO, or rendering
+```
+
+### Notes
+
+- `StateSync Runtime` owns synchronization and canonical boundary shaping only; it does not run task/event/story progression.
+- `src/core/runtime/state-sync-runtime.ts` exposes one small public `syncState()` entrypoint and delegates internal work to focused helper modules.

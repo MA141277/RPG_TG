@@ -141,6 +141,11 @@ import {
   runInteractiveRuntime,
 } from "./core/runtime/interactive-runtime";
 import { dispatchRuntimeRequest } from "./core/runtime/runtime-dispatch";
+import {
+  applyInteractiveRuntimeResult,
+  applyInteractiveRuntimeState,
+  createInteractiveRuntimeState,
+} from "./core/runtime/state-sync-runtime";
 import type { GameModManifest } from "./core/contracts/mod-manifest";
 import type {
   LoadedMod,
@@ -148,7 +153,6 @@ import type {
   ModRuntimeState,
   ModSourceDescriptor,
 } from "./core/contracts/mod-runtime";
-import type { RuntimeState } from "./core/contracts/runtime-state";
 import type { ActivityDefinition } from "./domain/activity";
 import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
@@ -533,47 +537,6 @@ let activeLoadingTheme: LoadingTheme | null = null;
 const mapAutoAdvanceHandles: Record<string, number> = {};
 
 let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
-function createInteractiveRuntimeState(state: AppState): RuntimeState {
-  return {
-    core: state.gameState,
-    app: {
-      beggingMiniGameState: state.beggingMiniGameState,
-      autoAdvanceState: state.autoAdvanceState,
-      cityDirectoryState: state.cityDirectoryState,
-      locationDialogueState: state.locationDialogueState,
-    },
-    view: {},
-  };
-}
-
-function applyInteractiveRuntimeState(
-  state: AppState,
-  runtimeState: RuntimeState,
-  characterDefinitions?: CharacterDefinition[]
-): AppState {
-  return {
-    ...state,
-    gameState: runtimeState.core,
-    beggingMiniGameState: runtimeState.app.beggingMiniGameState,
-    autoAdvanceState: runtimeState.app.autoAdvanceState,
-    cityDirectoryState: runtimeState.app.cityDirectoryState,
-    locationDialogueState: runtimeState.app.locationDialogueState,
-    ...(characterDefinitions == null
-      ? {}
-      : { characterDefinitions }),
-  };
-}
-
-function applyInteractiveRuntimeResult(
-  state: AppState,
-  result: InteractiveRuntimeOutput
-): AppState {
-  return applyInteractiveRuntimeState(
-    state,
-    result.state,
-    result.characterDefinitions
-  );
-}
 
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({

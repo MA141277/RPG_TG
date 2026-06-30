@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-01`
-- Current Focus: `Formal Child 8 plan is authored for StateSync Runtime. Child 5, Child 6, and Child 7 are completed, so Child 8 is now the next executable child.`
-- Next Step: `Start Task 1 Step 1 by reconciling current RuntimeState, AppState, save, and presentation bridge ownership against the Child 8 spec.`
-- Verification: `npm run lint:plans`
+- Current Focus: `Child 8 StateSync Runtime is completed on the first canonical state boundary slice. src/core/contracts/state-sync-runtime.ts defines CanonicalRuntimeState, app/save/presentation boundaries, mandatory triggers, StateSyncResult, and StateSyncRuntime; src/core/runtime/state-sync-* owns syncState plus hydration, normalization, app bridge, pre-save, mod rebuild, presentation input, and validation helpers.`
+- Next Step: `Do not promote a Child 9 automatically. Review runtime/module/artifact state first, then create a new spec and plan only for a justified next child.`
+- Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This is Child Plan 8 under the mod-first engine/runtime extraction roadmap. It owns synchronization, normalization, hydration, reconstruction, and write-back coordination only. It must not become gameplay dispatch, save IO, mod activation, presenter, or feature-specific orchestration.`
 
 ## Progress Log
@@ -27,6 +27,14 @@
   - Summary: `Child 7 Mod Runtime closeout completed and weekly/parent/artifact state now promotes Child 8 StateSync Runtime as the next executable child.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Start Task 1 Step 1.`
+- 2026-07-01
+  - Summary: `Completed Task 1 reconciliation. runtime-state.ts currently exports RuntimeState as a bridge carrier built from GameState plus Pick<AppState>; core-state.ts also exports a separate RuntimeState for core flags/variables/events/tasks; main.ts still creates RuntimeState from AppState, applies RuntimeState back into AppState, writes back post-interactive results, reconstructs scenario app state, and holds the placeholder save-loading/pre-save seam.`
+  - Verification: `Repository inspection of src/core/contracts/runtime-state.ts, src/core/contracts/core-state.ts, src/core/contracts/runtime-result.ts, src/core/save/save-loader.ts, src/core/save/save-writer.ts, and src/main.ts`
+  - Next: `Add failing StateSync contract, trigger, runtime entrypoint, and main.ts boundary tests.`
+- 2026-07-01
+  - Summary: `Completed Child 8 StateSync Runtime. Added formal StateSync contracts, mandatory sync triggers, a small syncState entrypoint, dedicated helper modules for validation, normalization, hydration, app bridge sync, pre-save snapshot preparation, mod activation rebuild, and presentation input preparation, plus bridge-period aliases for legacy RuntimeState shapes. Moved the current interactive RuntimeState creation/write-back helpers out of src/main.ts and behind the StateSync runtime boundary without moving DOM, render, loading-screen, save IO, Mod Runtime, task/event/story progression, or gameplay dispatch ownership.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build`
+  - Next: `Sync weekly, parent, runtime subsystem spec, change log, and five core weekly artifacts, then run npm run lint:plans before committing.`
 
 ---
 
@@ -57,7 +65,7 @@
   - Child 5 is completed.
   - Child 6 is completed.
   - Child 7 is completed.
-  - Child 8 is now the next executable child.
+  - Child 8 is completed; no child beyond Child 8 is currently promoted.
 
 ## Scope
 
@@ -178,15 +186,15 @@ For targeted StateSync work, also record:
 - Read: `src/main.ts`
 - Modify: `docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md`
 
-- [ ] **Step 1: Record current RuntimeState ambiguity**
+- [x] **Step 1: Record current RuntimeState ambiguity**
 
 Record that `src/core/contracts/runtime-state.ts` defines the Child 4 minimum runtime carrier and that `src/core/contracts/core-state.ts` also defines a different `RuntimeState` name. Child 8 must make the canonical state name explicit as `CanonicalRuntimeState` and rename or alias legacy bridge-period shapes.
 
-- [ ] **Step 2: Record current AppState dependency direction**
+- [x] **Step 2: Record current AppState dependency direction**
 
 Record that current runtime bridge code depends on application shell state through `Pick<AppState>`. Child 8 must reverse the target authority direction so app/save/presentation depend on canonical runtime state instead of runtime contracts depending on host shell state.
 
-- [ ] **Step 3: Record current main.ts bridge responsibilities**
+- [x] **Step 3: Record current main.ts bridge responsibilities**
 
 Record the current bridge responsibilities in `src/main.ts`:
 
@@ -196,16 +204,16 @@ Record the current bridge responsibilities in `src/main.ts`:
 - scenario boot/restart reconstruction
 - pre-save or future save normalization hooks
 
-- [ ] **Step 4: Record queue guard**
+- [x] **Step 4: Record queue guard**
 
-Update this plan's latest progress entry if needed so it still says Child 5 is next, Child 6 and Child 7 are ahead of Child 8, and Child 8 must not start production code until those queue gates are satisfied or explicitly deferred by updated weekly and parent governance.
+Update this plan's latest progress entry if needed so it says Child 5, Child 6, and Child 7 are completed, Child 8 is the next executable child, and no child after Child 8 may be promoted before another runtime/module/artifact review.
 
 ## Task 2: Add Failing StateSync Contract And Boundary Tests
 
 **Files:**
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add a failing contract export test**
+- [x] **Step 1: Add a failing contract export test**
 
 Add this red test:
 
@@ -226,7 +234,7 @@ test("state sync runtime contract exports canonical app save presentation trigge
 });
 ```
 
-- [ ] **Step 2: Add a failing mandatory trigger test**
+- [x] **Step 2: Add a failing mandatory trigger test**
 
 Add this red test:
 
@@ -250,7 +258,7 @@ test("state sync trigger contract includes all mandatory sync points", () => {
 });
 ```
 
-- [ ] **Step 3: Add a failing runtime export test**
+- [x] **Step 3: Add a failing runtime export test**
 
 Add this red test:
 
@@ -269,7 +277,7 @@ test("state sync runtime exports one small sync entrypoint", () => {
 });
 ```
 
-- [ ] **Step 4: Add a failing main.ts source guard**
+- [x] **Step 4: Add a failing main.ts source guard**
 
 Add this red test:
 
@@ -287,7 +295,7 @@ test("main.ts does not add new feature-specific state sync branches after state 
 
 This test is expected to fail at first because current bridge helpers still live in `src/main.ts`.
 
-- [ ] **Step 5: Run focused tests and confirm failure**
+- [x] **Step 5: Run focused tests and confirm failure**
 
 Run:
 
@@ -307,7 +315,7 @@ Expected:
 - Modify: `src/core/contracts/runtime-state.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Create state sync contracts**
+- [x] **Step 1: Create state sync contracts**
 
 Create `src/core/contracts/state-sync-runtime.ts` with exported types for the canonical state boundary. If Child 5, Child 6, or Child 7 have not yet introduced concrete slice state types, define explicit bridge-period aliases first so the contract is self-contained and typecheckable:
 
@@ -376,7 +384,7 @@ export interface StateSyncRuntime {
 }
 ```
 
-- [ ] **Step 2: Rename or alias bridge-period RuntimeState**
+- [x] **Step 2: Rename or alias bridge-period RuntimeState**
 
 Update `src/core/contracts/runtime-state.ts` so the current Child 4 carrier is explicitly named as bridge-period state, for example:
 
@@ -392,7 +400,7 @@ export type RuntimeState = BridgeRuntimeState;
 
 The alias may remain temporarily, but the file must document that `CanonicalRuntimeState` is the future authority.
 
-- [ ] **Step 3: Run focused contract verification**
+- [x] **Step 3: Run focused contract verification**
 
 Run:
 
@@ -412,7 +420,7 @@ Expected:
 - Create: `src/core/runtime/state-sync-validation.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add consistency validation helper**
+- [x] **Step 1: Add consistency validation helper**
 
 Create `src/core/runtime/state-sync-validation.ts` with pure validation helpers:
 
@@ -446,7 +454,7 @@ export function validateCanonicalRuntimeState(
 }
 ```
 
-- [ ] **Step 2: Add syncState entrypoint**
+- [x] **Step 2: Add syncState entrypoint**
 
 Create `src/core/runtime/state-sync-runtime.ts` with one public entrypoint:
 
@@ -461,7 +469,7 @@ export function syncState(
 
 The public entrypoint must handle all mandatory triggers and must not call task/event/render/save IO functions.
 
-- [ ] **Step 3: Run focused runtime verification**
+- [x] **Step 3: Run focused runtime verification**
 
 Run:
 
@@ -484,23 +492,23 @@ Expected:
 - Modify: `src/core/runtime/state-sync-runtime.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add hydrate helper**
+- [x] **Step 1: Add hydrate helper**
 
 Create `src/core/runtime/state-sync-hydration.ts` with `hydrateFromSave()` that maps `SaveState.runtime` into `CanonicalRuntimeState` and returns warnings for recoverable optional fields.
 
-- [ ] **Step 2: Add normalization helper**
+- [x] **Step 2: Add normalization helper**
 
 Create `src/core/runtime/state-sync-normalization.ts` with `normalizeRuntimeState()` that ensures required top-level slices exist or returns a hard failure before callers continue.
 
-- [ ] **Step 3: Add app bridge helper**
+- [x] **Step 3: Add app bridge helper**
 
 Create `src/core/runtime/state-sync-app-bridge.ts` with `syncAppState()` that creates `AppStateBridge` from `CanonicalRuntimeState` without defining gameplay truth in app state.
 
-- [ ] **Step 4: Add prepare-save helper**
+- [x] **Step 4: Add prepare-save helper**
 
 Create `src/core/runtime/state-sync-save.ts` with `prepareSaveState()` that returns `SaveState` without writing to disk.
 
-- [ ] **Step 5: Wire helpers into syncState**
+- [x] **Step 5: Wire helpers into syncState**
 
 Update `syncState()` so:
 
@@ -518,15 +526,15 @@ Update `syncState()` so:
 - Modify: `src/core/runtime/state-sync-runtime.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add mod activation rebuild helper**
+- [x] **Step 1: Add mod activation rebuild helper**
 
 Create `src/core/runtime/state-sync-mod-rebuild.ts` with `rebuildAfterModActivation()` that initializes or validates `modules[modId]` after a `mod-activated` trigger.
 
-- [ ] **Step 2: Keep mod activation ownership outside StateSync**
+- [x] **Step 2: Keep mod activation ownership outside StateSync**
 
 Verify `state-sync-mod-rebuild.ts` does not parse manifests, resolve dependencies, or select active mods. It only completes canonical state after Mod Runtime activation.
 
-- [ ] **Step 3: Add presentation input preparation if needed**
+- [x] **Step 3: Add presentation input preparation if needed**
 
 If presentation input needs a helper, add it as an internal helper or contract function that returns `PresentationInput` from `CanonicalRuntimeState` plus `AppStateBridge`. Do not render HTML and do not import UI renderers.
 
@@ -537,19 +545,19 @@ If presentation input needs a helper, add it as an internal helper or contract f
 - Modify: `tests/robustness.test.cjs`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Replace createInteractiveRuntimeState bridge**
+- [x] **Step 1: Replace createInteractiveRuntimeState bridge**
 
 Move the current bridge logic shaped like `createInteractiveRuntimeState(appState)` behind StateSync-owned helper calls or an adapter that consumes canonical runtime/app bridge contracts.
 
-- [ ] **Step 2: Replace applyInteractiveRuntimeState bridge**
+- [x] **Step 2: Replace applyInteractiveRuntimeState bridge**
 
 Move the current bridge logic shaped like `applyInteractiveRuntimeState(appState, runtimeState)` behind StateSync-owned write-back coordination.
 
-- [ ] **Step 3: Keep browser and render concerns in main.ts**
+- [x] **Step 3: Keep browser and render concerns in main.ts**
 
 Do not move DOM event listeners, loading screen behavior, direct render orchestration, or raw input listeners as part of Child 8.
 
-- [ ] **Step 4: Run focused main.ts guard**
+- [x] **Step 4: Run focused main.ts guard**
 
 Run:
 
@@ -571,7 +579,7 @@ Expected:
 - Modify: `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Run full implementation verification**
+- [x] **Step 1: Run full implementation verification**
 
 Run:
 
@@ -587,7 +595,7 @@ Expected:
 - full test suite passes
 - production build passes
 
-- [ ] **Step 2: Update this child plan state**
+- [x] **Step 2: Update this child plan state**
 
 Update:
 
@@ -596,7 +604,7 @@ Update:
 - `Progress Log`
 - verification summary
 
-- [ ] **Step 3: Sync weekly orchestration**
+- [x] **Step 3: Sync weekly orchestration**
 
 Update the weekly plan so:
 
@@ -604,7 +612,7 @@ Update the weekly plan so:
 - queue promotion does not occur unless Child 8 actually satisfies its own acceptance gate
 - any next child beyond Child 8 requires a fresh review and spec/plan update
 
-- [ ] **Step 4: Sync parent orchestration**
+- [x] **Step 4: Sync parent orchestration**
 
 Update the parent plan so:
 
@@ -612,7 +620,7 @@ Update the parent plan so:
 - StateSync remains a state-boundary runtime, not a gameplay dispatcher
 - final parent closure still waits for all required children
 
-- [ ] **Step 5: Record change log**
+- [x] **Step 5: Record change log**
 
 Add a concise entry to `docs/change-log.md` after production code lands:
 
@@ -620,7 +628,7 @@ Add a concise entry to `docs/change-log.md` after production code lands:
 - Added formal StateSync Runtime contracts and trigger-based state synchronization boundaries for canonical runtime, app bridge, save snapshot, and presentation input.
 ```
 
-- [ ] **Step 6: Run plan lint**
+- [x] **Step 6: Run plan lint**
 
 Run:
 
@@ -661,11 +669,11 @@ Expected:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Parent plan synchronized
-- [ ] Weekly orchestration synchronized
-- [ ] Runtime subsystem spec synchronized
-- [ ] Verification recorded
-- [ ] Change log updated after production code lands
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Parent plan synchronized
+- [x] Weekly orchestration synchronized
+- [x] Runtime subsystem spec synchronized
+- [x] Verification recorded
+- [x] Change log updated after production code lands

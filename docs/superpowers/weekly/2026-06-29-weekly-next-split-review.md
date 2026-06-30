@@ -21,7 +21,7 @@ Do not decide the next split only from intuition.
 | `src/ui/app-render.ts` | `partial` | `partial` | `indirect` | `yes` | `partial` | `medium` |
 | `Task Runtime` | `partial` | `partial` | `indirect` | `no` | `partial` | `medium` |
 | `Mod Runtime` | `partial` | `partial` | `indirect` | `no` | `partial` | `medium` |
-| `StateSync Runtime` | `yes` | `yes` | `indirect` | `no` | `yes` | `high` |
+| `StateSync Runtime` | `partial` | `partial` | `indirect` | `no` | `partial` | `medium` |
 | `src/application/navigation/*` | `partial` | `partial` | `indirect` | `no` | `partial` | `medium` |
 | `src/application/house/*` | `yes` | `partial` | `indirect` | `yes` | `yes` | `medium` |
 | `src/application/story-battle/*` | `yes` | `partial` | `indirect` | `yes` | `yes` | `medium` |
@@ -29,26 +29,26 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `StateSync Runtime`
+  - `TBD after review`
 - Reason:
-  - Child 7 is complete, so the next legal queue item is the already-authored Child 8 StateSync Runtime. Current state synchronization across runtime/app/save/presentation remains provisional and should now be promoted without reopening Mod Runtime, Task Runtime, or presenter/render scope.
+  - Child 8 StateSync Runtime is complete, so there is no automatic next executable child. The next split must come from a fresh review of runtime/module maturity, remaining main.ts coupling, and weekly artifact state.
 - Category:
-  - `next-executable-child`
+  - `review-required`
 
 ## Non-Selected Candidates
 
 - `src/core/engine`
   - Now implemented as a provisional seam; further changes should be validation-driven rather than open-ended redesign.
 - `src/main.ts`
-  - Still the largest black box, but Child 7 has already moved mod activation/startup ownership into Mod Runtime. The next planned reduction is state sync ownership through Child 8.
+  - Still the largest black box, but Child 7 moved mod activation/startup ownership into Mod Runtime and Child 8 moved bridge-period state sync helpers into StateSync. Further reduction should be reviewed before becoming a child.
 - `src/core/registry`
   - Important, but registry composition should stay thin until runtime and adapter seams prove what else is truly needed.
 - `src/core/runtime`
-  - Important follow-up area; Child 6 narrowed task progression ownership, Child 7 narrowed mod activation/startup ownership, and Child 8 now targets state sync rather than broad runtime consolidation.
+  - Important follow-up area; Child 6 narrowed task progression ownership, Child 7 narrowed mod activation/startup ownership, and Child 8 narrowed state sync ownership. Broad runtime consolidation still needs a separate review.
 - `src/core/mods/*`
   - Child 7 has landed the first Mod Runtime activation/startup seam. Deeper capability/dependency policy, hot reload, sandboxing, and authoring tools remain future work, but they do not block Child 8.
 - `src/core/runtime/state-sync-*`
-  - Important follow-up area and now the next executable child through Child 8 StateSync Runtime.
+  - Child 8 has landed the first StateSync Runtime canonical boundary. Deeper save IO integration, runtime dispatch auto-commit integration, and full legacy migration remain future work.
 - `src/application/presenter`
   - Child 5 has introduced the first presenter output contract; deeper layout/presenter hardening should wait until StateSync boundaries are stable.
 - `src/core/save`
@@ -66,7 +66,7 @@ Do not decide the next split only from intuition.
 | `src/application/presenter` | `provisional` | Presenter output exists, but full layout schema and final view-model cleanup are still later work. | `P2` | Hold stable during Child 8; avoid expanding presenter scope. |
 | `Task Runtime` | `landed-first-slice` | Formal TaskDefinition, TaskInstance, lifecycle, and signal-driven progression now exist, but task UI/authoring DSL/custom evaluator plugins are later work. | `P2` | Keep stable during Child 8; do not expand task runtime scope while state sync is being extracted. |
 | `src/core/mods/*` | `landed-first-slice` | Formal Mod Runtime activation/startup seam now exists, but full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy are later work. | `P2` | Keep stable during Child 8; do not expand mod runtime scope while state sync is being extracted. |
-| `src/core/runtime/state-sync-*` | `needs-contract` | A full StateSync Runtime boundary is now specified as Child 8, but production code has not started. | `P1` | Start Child 8 from its own plan. |
+| `src/core/runtime/state-sync-*` | `landed-first-slice` | Formal StateSync contracts, triggers, syncState, and helper modules now exist, but deeper integration remains future work. | `P2` | Review before deciding whether a follow-up child is justified. |
 | `src/ui/app-render.ts` | `provisional` | It now consumes presenter output, but still owns markup composition and should not absorb new gameplay selection. | `P2` | Keep stable during Child 8; revisit only for layout renderer work. |
 | `src/ui/layout-renderer.ts` | `needs-contract` | Schema-driven layout seam is planned only. | `P2` | Let Child 5 establish presenter output first. |
 | `src/application/house/*` | `needs-adapter` | House behavior still runs through legacy runtime delegation behind the Child 4 bridge. | `P2` | Hold steady during Child 5; revisit only through a planned runtime follow-up. |

@@ -8,7 +8,7 @@
 
 **Primary Child Plan(s):**
 
-- `docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md`
+- None currently promoted beyond completed Child 8.
 
 **Queued Next Child Plan(s):**
 
@@ -22,11 +22,12 @@
 - Child 5 is now complete: `src/application/presenter` owns presenter output, `src/main.ts` assembles render input through `createAppPresenterOutput()`, and `src/ui/app-render.ts` consumes presenter output instead of importing gameplay selection helpers directly.
 - Child 6 is now complete: `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts` own formal Task Runtime contracts, minimum lifecycle, signal-driven progression, and taskUpdates/effects/signals result output.
 - Child 7 is now complete: `src/core/contracts/mod-runtime.ts`, `src/core/mods/*`, and `src/core/adapters/mod-runtime-main-adapter.ts` own the first formal Mod Runtime activation/startup seam, and `src/main.ts` routes builtin, file, url, and restore selected-mod activation through it.
+- Child 8 is now complete: `src/core/contracts/state-sync-runtime.ts` and `src/core/runtime/state-sync-*` own the first formal StateSync Runtime canonical boundary, mandatory triggers, syncState entrypoint, state helper modules, and bridge-period main.ts state helper migration.
 - The five-core-artifact visibility bundle exists so the same week also produces readable module, control-flow, split-review, architecture, and change-impact outputs.
 
 ## Active Focus
 
-- Start Child 8 StateSync Runtime now that Child 7 has completed the mod runtime dependency.
+- No child beyond Child 8 is currently promoted; review runtime/module/artifact state before authoring any next child.
 
 ## Artifact Index
 
@@ -58,6 +59,7 @@ The old files may remain as historical references, but they are no longer indepe
 - `node --test tests/robustness.test.cjs --test-name-pattern "no longer imports gameplay selection helpers directly|top-level presenter output seam|assembles render input through application presenter output"`: `PASS`
 - `node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract exports|task runtime exports lifecycle|starts one instance per task id|broadcasts one signal|failed tasks as terminal|task runtime result carries|progresses active tasks|signal-only failure conditions"`: `PASS`
 - `node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"`: `PASS`
+- `node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"`: `PASS`
 - `npm run typecheck`: `PASS`
 - `npm test`: `PASS`
 - `npm run build`: `PASS`
@@ -81,6 +83,7 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 5 landed `src/application/presenter/presenter-output.ts`, `app-presenter.ts`, `stage-presenters.ts`, and `overlay-presenters.ts`; `src/main.ts` now creates presenter output before rendering; `src/ui/app-render.ts` no longer imports `getHouseModule`, `isCityEntryVisibleForStoryStage`, or `selectCityNpcSummariesForHouse` directly.
 - Child 6 landed `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts`; Task Runtime now supports start/action/signal entrypoints, duplicate active start guard, terminal failed/completed guard, multiple active task progression from one signal, and returned taskUpdates/effects/signals without applying effects.
 - Child 7 landed `src/core/contracts/mod-runtime.ts`, `src/core/mods/mod-source-registry.ts`, `mod-source-loader.ts`, `mod-parser.ts`, `mod-dependency-resolver.ts`, `mod-capability-guard.ts`, `mod-runtime.ts`, and `src/core/adapters/mod-runtime-main-adapter.ts`; Mod Runtime now supports source descriptors, loaded/activated mod contracts, source normalization/loading/parsing, dependency/capability validation, atomic activation rollback, unified activation handoff, and builtin/file/url/restore activation calls from `src/main.ts`.
+- Child 8 landed `src/core/contracts/state-sync-runtime.ts`, `src/core/runtime/state-sync-runtime.ts`, validation, normalization, hydration, app-bridge, save, mod-rebuild, and presentation helper modules; StateSync Runtime now defines canonical runtime state authority, app/save/presentation boundaries, mandatory triggers, and a small syncState entrypoint while moving bridge-period RuntimeState helpers out of `src/main.ts`.
 
 ### Deferred
 
@@ -88,7 +91,7 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 5 presenter/render work is now closed on the first presenter output bridge.
 - Child 6 Task Runtime is now closed on the first formal contract/lifecycle/progression slice.
 - Child 7 Mod Runtime is now closed on the first formal activation/startup seam.
-- Child 8 StateSync Runtime is now the next executable child.
+- Child 8 StateSync Runtime is now closed on the first formal canonical boundary slice.
 
 ### Blockers
 
@@ -103,16 +106,17 @@ The old files may remain as historical references, but they are no longer indepe
 | `src/core/runtime` | Move navigation/time/event/scene and covered interaction entry behind core seams. | `contained`: some interactive paths still use dedicated bridge helpers instead of one final router shape. | Hold stable during Child 5; revisit through a later runtime-consolidation child only if needed. |
 | `src/core/runtime/task-runtime.ts` | Introduce formal task lifecycle and signal progression ownership. | `contained`: no task UI, authoring DSL, or custom evaluator plugin yet. | Keep stable while Child 8 extracts StateSync boundaries. |
 | `src/core/mods` | Introduce formal Mod Runtime activation/startup ownership. | `contained`: full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy are still future work. | Keep stable while Child 8 extracts StateSync boundaries. |
+| `src/core/runtime/state-sync-*` | Introduce canonical runtime/app/save/presentation synchronization ownership. | `contained`: full save IO integration, runtime dispatch auto-commit integration, and full legacy migration remain future work. | Review before deciding whether a follow-up child is justified. |
 | `src/core/save` | Harden loader/writer/migration behavior. | `none` | Keep shape stable while Child 8 formalizes state sync around the existing save/load boundary. |
-| `src/main.ts` | Shrink black-box ownership through core adapters, runtime seams, presenter assembly, task runtime ownership, and Mod Runtime activation calls. | `contained`: browser shell and many runtime event handlers remain in main. | Start Child 8 StateSync Runtime without reopening mod/task/presenter scope. |
+| `src/main.ts` | Shrink black-box ownership through core adapters, runtime seams, presenter assembly, task runtime ownership, Mod Runtime activation calls, and StateSync bridge helper extraction. | `contained`: browser shell and many runtime event handlers remain in main. | Review remaining coupling before authoring another child. |
 | `src/application/presenter` | Introduce a real presenter output bridge for stage, overlay, HUD, scene, and house render selection. | `contained`: layout renderer remains future work. | Keep stable while Child 8 extracts state sync. |
 | `src/ui/app-render.ts` | Reduce app render to presenter output consumption plus existing renderer calls. | `none` | Do not move gameplay selection back into UI. |
 
 ## Next Week Input
 
 - Highest-priority module to refine:
-  - `StateSync Runtime`
+  - `TBD after review`
 - Why it is next:
-  - Child 7 has closed the mod runtime dependency, so the next queue item is the already-authored Child 8 StateSync Runtime plan.
+  - Child 8 has closed the current planned queue. Any next child must come from a fresh runtime/module/artifact review rather than automatic promotion.
 - Category:
-  - `next-executable-child`
+  - `review-required`

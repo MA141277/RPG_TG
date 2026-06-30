@@ -402,7 +402,7 @@ Secondary dependency:
 
 - Save / Load Runtime compatibility from Child 2
 - Child 4 minimum `RuntimeState` / `RuntimeResult` carrier
-- Child 5, Child 6, and Child 7 are completed; Child 8 is now the next executable weekly queue item
+- Child 5, Child 6, and Child 7 are completed; Child 8 is completed on the first formal StateSync Runtime canonical boundary
 
 ## 7. Planning Rules For Future Child Plans
 

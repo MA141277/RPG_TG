@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-01 StateSync Runtime
+
+### Added
+- 新增 `src/core/contracts/state-sync-runtime.ts`，定义 `CanonicalRuntimeState`、`AppStateBridge`、`SaveState`、`PresentationInput`、`StateSyncTrigger`、`StateSyncResult` 与 `StateSyncRuntime`。
+- 新增 `src/core/runtime/state-sync-*` 首版 StateSync Runtime seam，覆盖 validation、normalization、hydration、app bridge、pre-save snapshot、mod activation rebuild 与 presentation input preparation。
+
+### Changed
+- `src/main.ts` 不再直接声明 interactive RuntimeState creation/write-back helpers；这些 bridge-period helpers 已移入 StateSync runtime boundary。
+- `src/core/contracts/runtime-state.ts` 和 `src/core/contracts/core-state.ts` 增加 legacy/bridge-period alias，避免继续把旧 `RuntimeState` 名称误认为 canonical authority。
+
+### Impact
+- StateSync Runtime 已有 formal runtime owner；Child 8 不接管 gameplay dispatch、save IO、mod activation、presenter/render 或 feature-specific business logic。
+
 ## 2026-07-01 Mod Runtime
 
 ### Added

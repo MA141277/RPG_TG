@@ -8270,3 +8270,59 @@ test("mod runtime does not absorb content assembly or gameplay execution ownersh
     /runEventRuntime|runSceneFromEvent|runInteractiveRuntime/
   );
 });
+
+test("state sync runtime contract exports canonical app save presentation trigger and result seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type CanonicalRuntimeState/);
+  assert.match(source, /export type AppStateBridge/);
+  assert.match(source, /export type SaveState/);
+  assert.match(source, /export type PresentationInput/);
+  assert.match(source, /export type StateSyncTrigger/);
+  assert.match(source, /export type StateSyncResult/);
+  assert.match(source, /export interface StateSyncRuntime/);
+});
+
+test("state sync trigger contract includes all mandatory sync points", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  for (const trigger of [
+    "boot",
+    "load",
+    "runtime-commit",
+    "mod-activated",
+    "session-rebuild",
+    "pre-save",
+  ]) {
+    assert.match(source, new RegExp(`type: "${trigger}"`));
+  }
+});
+
+test("state sync runtime exports one small sync entrypoint", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export function syncState/);
+  assert.doesNotMatch(source, /runTask/);
+  assert.doesNotMatch(source, /activateEvent/);
+  assert.doesNotMatch(source, /renderApp/);
+  assert.doesNotMatch(source, /writeSave/);
+});
+
+test("main.ts does not add new feature-specific state sync branches after state sync runtime exists", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /function createInteractiveRuntimeState/);
+  assert.doesNotMatch(source, /function applyInteractiveRuntimeState/);
+});
