@@ -272,11 +272,24 @@ Primary seams:
   - executes only against the frozen Child 10 baseline
   - must not absorb boot/mod/save/presenter/UI/resource planning work
 
+### Child 12: UI Contract Reserve
+
+- primary coverage:
+  - future UI layout/interface reserve seams
+  - pack UI split-table reserve
+  - asset layering reserve
+- queue role:
+  - remains the immediate post-Child-11 child in execution order
+  - exists to reserve later UI/layout direction without changing the current runtime ownerization path
+  - its closeout unlocks Child 13
+
+
 ### Child 13: Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit
 
 - primary coverage:
   - remaining runtime-owned follow-up and reentry paths that still sit outside shared dispatch after Child 11
 - scope guard:
+  - starts only after Child 11 and Child 12 complete
   - only for already-covered runtime families
   - not Child 11 primary-path backfill
   - no new public contract family

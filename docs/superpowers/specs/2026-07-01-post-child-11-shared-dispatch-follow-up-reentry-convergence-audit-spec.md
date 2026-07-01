@@ -13,7 +13,7 @@ Child 13 exists to audit the remaining runtime-owned follow-up and reentry paths
 - One-line responsibility:
   - classify the remaining post-Child-11 follow-up and reentry paths, then converge every in-scope path onto shared dispatch without reopening frozen Child 9/10/11 surfaces
 - Architecture position:
-  - the preferred post-Child-11 runtime continuation child, queued before the preserved Child 12 UI reserve work
+  - the locked post-Child-12 runtime continuation child, unlocked only after the Child 12 UI layout/interface-reserve child completes
 - Primary target areas:
   - shared dispatch convergence
   - runtime-owned follow-up path audit

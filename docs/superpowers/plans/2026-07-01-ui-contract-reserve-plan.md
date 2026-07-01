@@ -12,17 +12,17 @@
 
 - Status: `not-started`
 - Last Updated: `2026-07-01`
-- Current Focus: `Queued as a preserved reserve child behind the current runtime continuation queue. No production implementation batch has started.`
-- Next Step: `Start Task 1 Step 1 only after Child 11 and Child 13 are completed or explicitly bypassed, and weekly governance explicitly unlocks Child 12.`
+- Current Focus: `Queued as the immediate post-Child-11 UI layout/interface-reserve child. No production implementation batch has started.`
+- Next Step: `Start Task 1 Step 1 only after Child 11 completes and weekly governance explicitly unlocks Child 12.`
 - Verification: `Plan authored only: npm run lint:plans`
 - Notes: `Child 12 must stay additive. Do not change current src/main.ts render entry, current layout editor behavior, or current default pack runtime path while implementing this plan.`
 
 ## Progress Log
 
 - 2026-07-01
-  - Summary: `Plan created and queued as a preserved later reserve child for additive UI contract reserve work behind the current runtime continuation queue.`
+  - Summary: `Plan created and queued as the immediate post-Child-11 UI layout/interface-reserve child for additive UI contract reserve work.`
   - Verification: `npm run lint:plans`
-  - Next: `Wait for Child 11 and Child 13 resolution plus a weekly unlock before starting Task 1 Step 1.`
+  - Next: `Wait for Child 11 completion and a weekly unlock before starting Task 1 Step 1.`
 
 ---
 
@@ -43,7 +43,7 @@
   - must remain additive to the existing `UiLayout` and layout editor path
   - may prepare later UI override and Editor work, but must not enable either during this child
 - Queue rule:
-  - Child 12 is not executable until Child 11 completes, Child 13 convergence review is resolved, and a later weekly review explicitly unlocks Child 12.
+  - Child 12 is not executable until Child 11 completes and a later weekly review explicitly unlocks Child 12; Child 12 completion then unlocks Child 13.
 
 ## Scope
 

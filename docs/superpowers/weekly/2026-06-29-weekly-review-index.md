@@ -131,6 +131,6 @@ The old files may remain as historical references, but they are no longer indepe
 - Category:
   - `Child 11 implementation`
 - Queued follow-up after the next child:
-  - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit is now recorded as the preferred post-Child-11 runtime continuation candidate, while Child 12 UI Contract Reserve remains preserved as a later reserve child.`
+  - `Child 12 UI Contract Reserve remains the immediate UI layout/interface-reserve follow-up behind Child 11, while Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit stays locked behind Child 12.`
 - Unlock dependency after that:
-  - `Child 13 still requires Child 11 completion plus a post-Child-11 unlock review before implementation may start. Child 12 remains locked behind Child 13 resolution or explicit bypass plus a later weekly unlock review.`
+  - `Child 13 still requires Child 11 completion, Child 12 completion, and a later unlock review before implementation may start.`

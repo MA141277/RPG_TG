@@ -319,15 +319,15 @@ Child 9 completed -> execute Child 10 review plan -> finalize runtime-ownerizati
 
 ### Narrative
 
-Child 13 is not a generic continuation and not a silent Child 11 backfill. Its unlock path begins only after Child 11 completes, then reviews the remaining runtime-owned follow-up and reentry paths, classifies them into Bucket A, Bucket B, or Bucket C, and only unlocks Child 13 if real Bucket A convergence work exists. Child 12 remains preserved as a later UI reserve child and must not bypass this runtime continuation step.
+Child 13 is not a generic continuation and not a silent Child 11 backfill. Its unlock path begins only after Child 11 completes and the Child 12 UI layout/interface-reserve child closes. Only then does governance review the remaining runtime-owned follow-up and reentry paths, classify them into Bucket A, Bucket B, or Bucket C, and unlock Child 13 if real Bucket A convergence work exists.
 
 ### Call Chain
 
 ```text
-Child 11 completed -> post-Child-11 review -> classify remaining paths into Bucket A/B/C -> unlock Child 13 only if Bucket A exists -> execute Child 13 -> revisit Child 12 later
+Child 11 completed -> execute Child 12 UI layout/interface-reserve child -> Child 12 closeout -> later review classifies remaining paths into Bucket A/B/C -> unlock Child 13 only if Bucket A exists -> execute Child 13
 ```
 
 ### Notes
 
 - This flow exists to prevent Child 13 from degenerating into Child 11 backfill.
-- This flow also prevents Child 12 UI reserve work from preempting unresolved runtime convergence inside already-owned runtime families.
+- This flow also preserves the user's required queue order: Child 12 stays ahead of Child 13 as the UI layout/interface-reserve child and does not alter the current runtime direction.

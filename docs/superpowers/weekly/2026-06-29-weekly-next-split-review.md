@@ -35,9 +35,9 @@ Do not decide the next split only from intuition.
 - Category:
   - `Child 11 implementation`
 - Queued follow-up:
-  - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit is now queued as the preferred runtime continuation candidate behind Child 11.`
+  - `Child 12 UI Contract Reserve remains queued immediately behind Child 11 as the UI layout/interface-reserve follow-up child.`
 - Locked follow-up:
-  - `Child 12 UI Contract Reserve remains preserved as a later reserve child and stays locked until Child 11 completes, Child 13 is resolved or explicitly bypassed, and a later weekly review explicitly unlocks it.`
+  - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit remains locked until Child 11 completes, Child 12 completes, and a later weekly review explicitly unlocks it.`
 
 ## Non-Selected Candidates
 
@@ -68,9 +68,9 @@ Do not decide the next split only from intuition.
 | `Child 9 Runtime Contract Hardening` | `completed` | The contract-hardening child has landed all four approved shared contract baselines and closed without absorbing ownerization work. | `P1` | Treat as the completed prerequisite for Child 10 and avoid reopening it without a new baseline decision. |
 | `Child 10 Runtime Ownerization Review And Baseline` | `completed` | The review child has finalized owner vs bridge status, adapter disposition, main.ts coupling, and Child 11 execution controls. | `P1` | Treat as the controlling baseline for Child 11 and do not reopen it casually. |
 | `Child 11 Sub-Runtime Ownerization Implementation` | `not-started` | The implementation child is now formally unlocked, with its own spec and plan authored against the finalized Child 10 baseline. | `P1` | Start from the Child 11 implementation plan and keep it inside the frozen Child 9/10 surfaces. |
-| `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit` | `future-candidate` | The runtime continuation child is now authored formally, but it cannot start until Child 11 completes and a post-Child-11 review confirms real Bucket A convergence work exists. | `P1` | Treat as the preferred post-Child-11 runtime continuation and do not silently collapse it into Child 11 or Child 12. |
-| `Child 12 UI Contract Reserve` | `future-candidate` | The reserve child is preserved for later UI/resource boundary work and should not preempt the current runtime continuation queue. | `P2` | Keep preserved until Child 13 is resolved or explicitly bypassed, then revisit through weekly governance. |
-| `src/core/runtime` | `needs-hardening` | Child 3/4 seams exist, Child 11 is the active ownerization child, and Child 13 is now queued to absorb any remaining in-family follow-up/reentry convergence that still stays outside shared dispatch. | `P2` | Keep Child 11 active first, then use Child 13 only if post-Child-11 review confirms real Bucket A remainder. |
+| `Child 12 UI Contract Reserve` | `future-candidate` | The UI layout/interface-reserve child remains next in queue after Child 11 and exists to preserve the future UI/resource boundary direction without changing the current runtime path. | `P2` | Complete Child 12 first, then use its closeout to unlock Child 13. |
+| `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit` | `future-candidate` | The runtime continuation child is authored formally, but it cannot start until Child 11 completes, Child 12 completes, and a later review confirms real Bucket A convergence work exists. | `P1` | Treat as the locked follow-up after Child 12 and do not silently collapse it into Child 11. |
+| `src/core/runtime` | `needs-hardening` | Child 3/4 seams exist, Child 11 is the active ownerization child, and Child 13 is the later locked follow-up for any remaining in-family follow-up/reentry convergence. | `P2` | Keep Child 11 active first, complete Child 12, then use Child 13 only if later review confirms real Bucket A remainder. |
 | `src/core/save` | `needs-migration` | Save boundary is hardened, but app-level callers still need to consume it directly. | `P1` | Keep stable until real save/load caller work resumes. |
 | `src/application/presenter` | `provisional` | Presenter output exists, but full layout schema and final view-model cleanup are still later work. | `P2` | Hold stable during Child 9; avoid expanding presenter scope. |
 | `Task Runtime` | `landed-first-slice` | Formal TaskDefinition, TaskInstance, lifecycle, and signal-driven progression now exist, but task UI/authoring DSL/custom evaluator plugins are later work. | `P2` | Keep stable during Child 9; do not expand task runtime scope while contract hardening is being extracted. |

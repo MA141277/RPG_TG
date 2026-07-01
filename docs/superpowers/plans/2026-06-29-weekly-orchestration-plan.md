@@ -12,8 +12,8 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring plus weekly unlock sync are complete, Child 11 is now the next executable ownerization child, and Child 13 is queued as the preferred post-Child-11 runtime continuation candidate.`
-- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md Task 1 Step 1. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first, and do not unlock Child 12 ahead of Child 13 without explicit weekly governance.`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring plus weekly unlock sync are complete, Child 11 is now the next executable ownerization child, Child 12 remains the immediate UI layout/interface-reserve follow-up, and Child 13 stays locked behind Child 12.`
+- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md Task 1 Step 1. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first, and keep Child 12 ahead of Child 13 in execution order.`
 - Verification: `Child 11 authoring + unlock sync: npm run lint:plans`
 - Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is now complete on the runtime ownerization review/baseline artifact, and Child 11 is now formally unlocked because its spec/plan exist against the finalized baseline and weekly unlock sync is recorded. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, baseline, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
@@ -168,9 +168,9 @@
   - Verification: `npm run lint:plans`
   - Next: `Keep Child 11 as the active next executable child. Revisit Child 12 only after Child 11 completion and a later weekly unlock review.`
 - 2026-07-01
-  - Summary: `Authored the formal Child 13 post-Child-11 convergence-audit spec and plan, preserved Child 12 as a later UI/resource reserve child, and updated the queue so Child 13 is now the preferred runtime continuation candidate behind active Child 11.`
+  - Summary: `Authored the formal Child 13 post-Child-11 convergence-audit spec and plan, but kept Child 12 in the original UI layout/interface-reserve queue slot immediately after Child 11.`
   - Verification: `npm run lint:plans`
-  - Next: `Keep Child 11 as the active next executable child. After Child 11 completes, review Child 13 before any Child 12 reserve work is unlocked.`
+  - Next: `Keep Child 11 as the active next executable child. After Child 11 completes, complete Child 12 first and use its closeout to unlock Child 13.`
 
 ---
 
@@ -511,13 +511,13 @@ The five core outputs are part of the weekly acceptance gate even though their d
 
 ### Future Candidates
 
-- `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
-  - Role: Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit
-  - Resume point: `Queued behind Child 11 as the preferred runtime continuation. Unlock only after Child 11 completes and a post-Child-11 review confirms Bucket A convergence work exists.`
-
 - `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
   - Role: Child 12 UI Contract Reserve
-  - Resume point: `Preserved as a later reserve child. Do not start until Child 11 completes, Child 13 is resolved or explicitly bypassed, and a later weekly review explicitly unlocks Child 12.`
+  - Resume point: `Queued immediately behind Child 11 as the UI layout/interface-reserve child. Complete it first, then unlock Child 13.`
+
+- `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
+  - Role: Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit
+  - Resume point: `Locked behind Child 12. Unlock only after Child 11 completes, Child 12 completes, and a later weekly review confirms Bucket A convergence work exists.`
 
 ### Blocked
 
@@ -685,29 +685,29 @@ The five core outputs are part of the weekly acceptance gate even though their d
         - effect settlement is aligned with the approved shared runtime path
         - Child 11 does not absorb boot/mod/save/presenter/UI/resource planning work
 
-12. `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
-   - Queue status: `future-candidate`
-   - Primary subsystem boundary: `Shared dispatch convergence`, `Runtime-owned follow-up / reentry convergence audit`
-   - Depends on: Queue Item 11 completed and a recorded post-Child-11 review/unlock
-   - Start condition: Child 11 completed, weekly governance explicitly unlocks Child 13, and the post-Child-11 review confirms Bucket A convergence work exists without reopening Child 11 completion scope
-   - Exit condition:
-      - every remaining reviewed path is classified into Bucket A, Bucket B, or Bucket C
-      - every Bucket A path converges through shared dispatch
-      - `src/main.ts` no longer owns Bucket A follow-up or reentry branching
-      - no same-type Bucket A path is intentionally deferred
-      - Child 13 does not become Child 11 backfill or new-boundary ownerization
-
-13. `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
+12. `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
    - Queue status: `future-candidate`
    - Primary subsystem boundary: `Future UI Contract Reserve`, `Pack UI split-table reserve`, `Asset layering reserve`, `Executor / future Editor boundary reserve`
-   - Depends on: Queue Item 12 completed or explicitly bypassed, plus a recorded later weekly review/unlock
-   - Start condition: Child 11 completed, Child 13 is resolved or explicitly bypassed, weekly governance explicitly unlocks Child 12, and Child 12 implementation stays additive without reopening current runtime ownerization scope
+   - Depends on: Queue Item 11 completed and a recorded post-Child-11 review/unlock
+   - Start condition: Child 11 completed, weekly governance explicitly unlocks Child 12, and Child 12 implementation stays additive without reopening current runtime ownerization scope
    - Exit condition:
       - formal future UI contract reserve exists under `src/domain/ui/**`
       - optional pack UI reserve fields and loader support exist without forcing current packs to migrate
       - asset layering rules are explicit and additive
       - current default runtime/render/layout-editor behavior remains unchanged
       - Child 12 does not enable Editor mode or absorb current renderer/runtime redesign
+
+13. `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
+   - Queue status: `future-candidate`
+   - Primary subsystem boundary: `Shared dispatch convergence`, `Runtime-owned follow-up / reentry convergence audit`
+   - Depends on: Queue Item 12 completed and a recorded later Child 13 review/unlock
+   - Start condition: Child 11 completed, Child 12 completed, weekly governance explicitly unlocks Child 13, and the later review confirms Bucket A convergence work exists without reopening Child 11 completion scope
+   - Exit condition:
+      - every remaining reviewed path is classified into Bucket A, Bucket B, or Bucket C
+      - every Bucket A path converges through shared dispatch
+      - `src/main.ts` no longer owns Bucket A follow-up or reentry branching
+      - no same-type Bucket A path is intentionally deferred
+      - Child 13 does not become Child 11 backfill or new-boundary ownerization
 
 ## Verification Policy
 

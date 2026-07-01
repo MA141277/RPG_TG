@@ -4,7 +4,7 @@
 
 **Goal:** Audit all remaining post-Child-11 covered runtime-owned follow-up and reentry paths, classify them into Bucket A/B/C, and converge every Bucket A path through shared dispatch in one child.
 
-**Architecture:** Child 13 starts only after Child 11 completes validly. It first classifies all remaining follow-up/reentry paths across the already-approved runtime family, then lands every Bucket A convergence path in the same child while explicitly recording any Bucket B Child-11-backfill findings or Bucket C new-boundary follow-ups. The child is a convergence audit, not a silent Child 11 extension and not a new contract-design child.
+**Architecture:** Child 13 starts only after Child 11 completes validly and Child 12 closes as the UI layout/interface-reserve unlock child. It first classifies all remaining follow-up/reentry paths across the already-approved runtime family, then lands every Bucket A convergence path in the same child while explicitly recording any Bucket B Child-11-backfill findings or Bucket C new-boundary follow-ups. The child is a convergence audit, not a silent Child 11 extension and not a new contract-design child.
 
 **Tech Stack:** TypeScript, Node test runner (`tests/robustness.test.cjs`), Vite build, current runtime dispatch/router/interactive/house/settlement seams, `npm run typecheck`, `npm test`, `npm run build`, `npm run lint:plans`
 
@@ -12,17 +12,17 @@
 
 - Status: `not-started`
 - Last Updated: `2026-07-01`
-- Current Focus: `Queued behind Child 11 as the preferred runtime continuation. No production implementation batch has started.`
-- Next Step: `Start Task 1 Step 1 only after Child 11 completes and weekly governance explicitly unlocks Child 13.`
+- Current Focus: `Locked behind Child 12 UI layout/interface-reserve closeout. No production implementation batch has started.`
+- Next Step: `Start Task 1 Step 1 only after Child 11 and Child 12 complete and weekly governance explicitly unlocks Child 13.`
 - Verification: `Plan authored only: npm run lint:plans`
 - Notes: `Child 13 must classify every remaining path before implementation. Do not treat Child 13 as silent Child 11 backfill, and do not use it to open a new runtime family or UI/layout scope.`
 
 ## Progress Log
 
 - 2026-07-01
-  - Summary: `Plan created and queued as Child 13 behind Child 11, while preserving Child 12 as a later reserve child.`
+  - Summary: `Plan created as the locked Child 13 follow-up behind the Child 12 UI layout/interface-reserve child.`
   - Verification: `npm run lint:plans`
-  - Next: `Wait for Child 11 completion and a weekly unlock review before starting Task 1 Step 1.`
+  - Next: `Wait for Child 11 completion, Child 12 closeout, and a weekly unlock review before starting Task 1 Step 1.`
 
 ---
 
@@ -45,10 +45,10 @@
   - `Runtime-owned follow-up / reentry convergence audit`
 - Secondary subsystem relationships:
   - must start only after Child 11 validly completes
-  - must preserve Child 12 as a later UI/resource reserve child
+  - must remain locked until Child 12 completes as the UI layout/interface-reserve child
   - must not reopen Child 9/10/11 contract and baseline scope
 - Queue rule:
-  - Child 13 is not executable until Child 11 completes and a later weekly review explicitly unlocks Child 13.
+  - Child 13 is not executable until Child 11 and Child 12 complete and a later weekly review explicitly unlocks Child 13.
 
 ## Scope
 
@@ -104,7 +104,7 @@ This child plan does not include:
 - `docs/superpowers/weekly/2026-06-29-weekly-call-flows.md`
   - Record the Child 11 closeout to Child 13 unlock flow and any landed real convergence flow.
 - `docs/superpowers/weekly/2026-06-29-weekly-next-split-review.md`
-  - Record Child 13 as the preferred post-Child-11 runtime continuation.
+  - Record Child 13 as the locked runtime follow-up unlocked by Child 12 closeout.
 - `docs/superpowers/weekly/2026-06-29-weekly-architecture-report.md`
   - Keep the approved-target queue and convergence narrative synchronized.
 

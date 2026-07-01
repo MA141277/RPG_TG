@@ -14,8 +14,8 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring is complete, Child 11 is now the next executable ownerization child, and Child 13 is formally queued as the preferred post-Child-11 runtime continuation.`
-- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md before Child 13 or the preserved Child 12 reserve work is considered.`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring is complete, Child 11 is now the next executable ownerization child, Child 12 remains the immediate UI layout/interface-reserve follow-up, and Child 13 stays locked behind Child 12.`
+- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md before the Child 12 UI layout/interface-reserve child and later Child 13 follow-up are considered.`
 - Verification: `Child 10 closeout parent sync: npm run lint:plans`
 
 - 2026-07-01
@@ -147,9 +147,9 @@
   - Verification: `npm run lint:plans`
   - Next: `Start Child 11 from its own implementation plan.`
 - 2026-07-01
-  - Summary: `Authored the formal Child 13 convergence-audit spec and plan, preserved Child 12 as a later UI/resource reserve child, and recorded Child 13 as the preferred post-Child-11 runtime continuation candidate.`
+  - Summary: `Authored the formal Child 13 convergence-audit spec and plan, while keeping Child 12 in its original UI layout/interface-reserve queue slot ahead of Child 13.`
   - Verification: `npm run lint:plans`
-  - Next: `Keep Child 11 as the active executable child. Review Child 13 only after Child 11 closeout confirms a valid post-Child-11 convergence unlock.`
+  - Next: `Keep Child 11 as the active executable child. Complete Child 12 first, then review and unlock Child 13.`
 
 ## Why This Plan Exists
 
@@ -931,7 +931,7 @@ Confirm:
 
 - [x] **Step 1: Author Child 13 spec and plan**
 
-Create the Child 13 convergence-audit spec and plan while preserving Child 12 as a later reserve child.
+Create the Child 13 convergence-audit spec and plan while keeping Child 12 as the immediate UI layout/interface-reserve child ahead of it.
 
 - [ ] **Step 2: Verify Child 13 dependencies**
 
@@ -939,8 +939,9 @@ Confirm:
 
 - Child 11 completed
 - Child 11 closeout sync recorded
+- Child 12 completed as the UI layout/interface-reserve unlock child
 - Child 13 spec and plan exist
-- weekly and parent plans both record Child 13 as the preferred post-Child-11 runtime continuation candidate
+- weekly and parent plans both record Child 13 as the locked follow-up after Child 12
 
 - [ ] **Step 3: Execute Child 13 from its own checklist**
 
