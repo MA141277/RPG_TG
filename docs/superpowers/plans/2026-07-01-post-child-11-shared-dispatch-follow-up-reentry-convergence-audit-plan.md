@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 12 is now completed and weekly closeout sync has explicitly unlocked Child 13 as the next executable child. No production implementation batch has started yet.`
-- Next Step: `When implementation resumes, start Task 1 Step 1 from this plan and classify all remaining post-Child-11 follow-up/reentry paths before converging any Bucket A path.`
-- Verification: `Child 12 closeout unlock sync: npm run lint:plans`
-- Notes: `Child 13 must classify every remaining path before implementation. Do not treat Child 13 as silent Child 11 backfill, and do not use it to open a new runtime family or UI/layout scope.`
+- Current Focus: `Child 13 is completed. The remaining in-scope post-Child-11 Bucket A path was the story-battle action -> reenter-house follow-up still branched inline in src/main.ts, and that path now converges through houseRuntime.applyInteractiveFollowUp() under the shared dispatch line.`
+- Next Step: `Do not resume Child 13. Any later runtime continuation work now requires a fresh weekly review plus new spec/plan authoring rather than another same-type Bucket A follow-up child.`
+- Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `Classification record: Bucket A = the remaining covered story-battle action -> reenter-house follow-up in dispatchCurrentStoryBattleAction(), where main.ts still owned the inline reentry branch before this child. Bucket B = none discovered in the remaining post-Child-11 covered-path audit. Bucket C = none discovered in the remaining post-Child-11 follow-up/reentry audit; direct launch or browser-entry flows remain outside Child 13 because they are not same-type runtime-owned follow-up/reentry continuations.`
 
 ## Progress Log
 
@@ -27,6 +27,10 @@
   - Summary: `Child 12 closeout and weekly governance sync are complete. Child 13 is now unlocked as the next executable child, but remains not-started until resumed from this plan.`
   - Verification: `npm run lint:plans`
   - Next: `Start Task 1 Step 1 from this plan when implementation resumes.`
+- 2026-07-02
+  - Summary: `Completed Child 13. The remaining post-Child-11 covered-path audit found one Bucket A path: the story-battle action -> reenter-house follow-up still handled inline in src/main.ts after dispatch returned. No Bucket B Child-11-backfill issue and no Bucket C new-boundary follow-up was discovered in the remaining in-scope audit. Child 13 added red-to-green regression coverage, moved the reentry handling behind houseRuntime.applyInteractiveFollowUp(), and synchronized weekly closeout state.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `No active queued child remains in the current weekly set; require a fresh weekly review before authoring any later continuation child.`
 
 ---
 
@@ -136,20 +140,20 @@ Do not mark Child 13 complete until all of these have passed:
 - Read: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
 - Read: `docs/superpowers/specs/2026-07-01-sub-runtime-ownerization-implementation-spec.md`
 
-- [ ] **Step 1: Enumerate all remaining post-Child-11 follow-up and reentry paths**
+- [x] **Step 1: Enumerate all remaining post-Child-11 follow-up and reentry paths**
 
 Write an explicit audit list that names each remaining path and its current owner.
 
-- [ ] **Step 2: Write failing classification-driven regression coverage**
+- [x] **Step 2: Write failing classification-driven regression coverage**
 
 Add targeted tests in `tests/robustness.test.cjs` that expose the expected Child 13 Bucket A convergence targets and protect against silent Bucket B/C absorption.
 
-- [ ] **Step 3: Run the targeted red tests**
+- [x] **Step 3: Run the targeted red tests**
 
 Run: `node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"`
 Expected: `FAIL` on at least one named remaining Bucket A convergence target before implementation.
 
-- [ ] **Step 4: Record Bucket A, Bucket B, and Bucket C explicitly in the child plan log**
+- [x] **Step 4: Record Bucket A, Bucket B, and Bucket C explicitly in the child plan log**
 
 Update this plan's `Progress Log` and `Execution State` notes so later batches have one explicit source of truth for the classification result.
 
@@ -163,20 +167,20 @@ Update this plan's `Progress Log` and `Execution State` notes so later batches h
 - Modify: `src/core/runtime/house-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Route the first Bucket A path through shared dispatch**
+- [x] **Step 1: Route the first Bucket A path through shared dispatch**
 
 Implement the minimum production change so the first classified Bucket A follow-up or reentry path no longer remains shell-owned in `src/main.ts`.
 
-- [ ] **Step 2: Run targeted tests for the first converged path**
+- [x] **Step 2: Run targeted tests for the first converged path**
 
 Run: `node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"`
 Expected: the first Bucket A case now passes while any remaining unimplemented Bucket A cases still fail.
 
-- [ ] **Step 3: Converge the remaining Bucket A paths**
+- [x] **Step 3: Converge the remaining Bucket A paths**
 
 Complete the rest of the Bucket A follow-up and reentry moves so all same-type in-scope paths now rejoin the existing shared dispatch line.
 
-- [ ] **Step 4: Re-run targeted tests for full Bucket A coverage**
+- [x] **Step 4: Re-run targeted tests for full Bucket A coverage**
 
 Run: `node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"`
 Expected: all targeted Child 13 convergence tests pass.
@@ -191,15 +195,15 @@ Expected: all targeted Child 13 convergence tests pass.
 - Modify: `src/core/runtime/house-runtime.ts`
 - Modify: `src/main.ts`
 
-- [ ] **Step 1: Remove residual shell-owned Bucket A branch logic from `src/main.ts`**
+- [x] **Step 1: Remove residual shell-owned Bucket A branch logic from `src/main.ts`**
 
 Reduce `src/main.ts` to browser-shell responsibilities only for the converged Child 13 paths.
 
-- [ ] **Step 2: Keep settlement and router semantics aligned**
+- [x] **Step 2: Keep settlement and router semantics aligned**
 
 Adjust the minimum settlement/router behavior required so the converged Bucket A paths stay on the approved request -> route -> runtime -> settlement line.
 
-- [ ] **Step 3: Run build-time and typed verification**
+- [x] **Step 3: Run build-time and typed verification**
 
 Run: `npm run build:test && npm run typecheck`
 Expected: `PASS`
@@ -216,28 +220,28 @@ Expected: `PASS`
 - Modify: `docs/superpowers/weekly/2026-06-29-weekly-next-split-review.md`
 - Modify: `docs/superpowers/weekly/2026-06-29-weekly-architecture-report.md`
 
-- [ ] **Step 1: Record the Child 13 convergence landing in the change log**
+- [x] **Step 1: Record the Child 13 convergence landing in the change log**
 
 Document which Bucket A paths were converged and which paths remained Bucket B or Bucket C.
 
-- [ ] **Step 2: Record Child 13 execution outcome**
+- [x] **Step 2: Record Child 13 execution outcome**
 
 Update this plan's `Execution State` and `Progress Log` with the completed audit/classification/convergence result.
 
-- [ ] **Step 3: Sync weekly queue truth**
+- [x] **Step 3: Sync weekly queue truth**
 
 Update weekly controller and visibility docs so Child 13 no longer appears as a queued future candidate after closeout.
 
-- [ ] **Step 4: Run full verification**
+- [x] **Step 4: Run full verification**
 
 Run: `npm test && npm run build && npm run lint:plans`
 Expected: `PASS`
 
 ## Completion Checklist
 
-- [ ] Every remaining reviewed path is explicitly classified into Bucket A, Bucket B, or Bucket C
-- [ ] Every Bucket A path now converges through shared dispatch
-- [ ] `src/main.ts` no longer owns Bucket A follow-up or reentry branching
-- [ ] No same-type Bucket A path is intentionally deferred to a later child
-- [ ] Bucket B and Bucket C items are explicitly recorded rather than silently absorbed
-- [ ] Weekly/governance docs reflect Child 13 queue truth and final outcome
+- [x] Every remaining reviewed path is explicitly classified into Bucket A, Bucket B, or Bucket C
+- [x] Every Bucket A path now converges through shared dispatch
+- [x] `src/main.ts` no longer owns Bucket A follow-up or reentry branching
+- [x] No same-type Bucket A path is intentionally deferred to a later child
+- [x] Bucket B and Bucket C items are explicitly recorded rather than silently absorbed
+- [x] Weekly/governance docs reflect Child 13 queue truth and final outcome

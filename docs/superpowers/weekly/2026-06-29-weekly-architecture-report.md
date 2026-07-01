@@ -20,7 +20,7 @@ It must show:
 - Child 9 Runtime Contract Hardening is now completed on all four approved shared contract baselines.
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the formal post-Child-9 review gate and controlling baseline artifact.
 - Child 11 Sub-Runtime Ownerization Implementation is now completed: Task 1 landed the minimum shared-dispatch follow-up convergence for the covered story-battle reentry path, Task 2 landed covered interactive ownerization for the city-begging path, Task 3 landed covered house ownerization for the grain-shop path, and Task 4 aligned the covered advanceTime settlement path before closeout.
-- Child 12 UI Contract Reserve is now completed on the additive UI reserve landing, and Child 13 is now the next executable runtime convergence-audit child.
+- Child 12 UI Contract Reserve is now completed on the additive UI reserve landing, and Child 13 is now completed on the remaining same-type shared-dispatch reentry closeout with no Bucket B/C remainder in the in-scope audit.
 
 ## Module Diagram
 
@@ -85,7 +85,7 @@ flowchart LR
 - Child 10 Runtime Ownerization Review And Baseline, now completed as the required pre-implementation review/baseline child after Child 9
 - Child 11 Sub-Runtime Ownerization Implementation, now the completed follow-up ownerization child for the approved covered runtime slices
 - Child 12 UI Contract Reserve, now completed on the additive UI layout/interface-reserve landing after Child 11
-- Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit, now the next executable runtime continuation child after Child 12
+- Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit, now the completed runtime continuation closeout child after Child 12
 
 ## Temporary Adapters
 
@@ -146,9 +146,9 @@ flowchart TD
     C --> D["RuntimeRouter.route()"]
     D --> E["runInteractiveRuntime()"]
     E --> F["settleRuntimeEffects()"]
-    F --> G["handleInteractive() follow-up hook"]
-    G --> H["apply RuntimeResult.state to AppState"]
-    H --> I["house runtime reentry"]
+    F --> G["RuntimeFollowUpContext.handleInteractive()"]
+    G --> H["houseRuntime.applyInteractiveFollowUp()"]
+    H --> I["apply RuntimeResult.state to AppState"]
 ```
 
 ## Flow Diagram 5: Real Child 5 Presenter Output Render Path
@@ -247,6 +247,7 @@ flowchart TD
 - Landed Child 11 Task 2 covered interactive ownerization by moving the city-begging launch/action/follow-up lifecycle into `src/core/runtime/interactive-runtime.ts`, removing the city-begging lifecycle wrappers from `src/core/adapters/legacy-interactive-adapter.ts`, and deleting the covered city-begging completion-time advance/cleanup branch from `src/main.ts`.
 - Landed Child 11 Task 3 covered house ownerization by moving the grain-shop enter/action/leave lifecycle into `src/core/runtime/house-runtime.ts`, reducing `src/core/adapters/legacy-house-adapter.ts` to a compatibility placeholder, and removing the covered house lifecycle's dependency on a legacy adapter-owned dispatch helper.
 - Landed Child 11 Task 4 covered settlement alignment by routing the covered interactive and house advanceTime effects through `src/core/runtime/runtime-settlement.ts`, extending the settlement emitter contract for `house-runtime`, and removing the remaining direct covered time-advance calls from `interactive-runtime.ts` and `house-runtime.ts`.
+- Landed Child 13 closeout by classifying the remaining in-scope audit as Bucket A = one story-battle -> reenter-house follow-up path, Bucket B = none, Bucket C = none, then moving that remaining inline reentry branch out of `src/main.ts` and into `src/core/runtime/house-runtime.ts` via `houseRuntime.applyInteractiveFollowUp()`.
 
 ## Architecture Risks
 

@@ -35,7 +35,7 @@
 - Child 10 Runtime Ownerization Review And Baseline is now completed on the finalized owner/bridge baseline.
 - Child 11 Sub-Runtime Ownerization Implementation is now completed.
 - Child 12 UI Contract Reserve is now completed.
-- Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit is now the next executable child.
+- Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit is now completed, and no active queued child remains in the weekly set.
 
 ## Artifact Index
 
@@ -75,6 +75,7 @@ The old files may remain as historical references, but they are no longer indepe
 - `node --test tests/robustness.test.cjs --test-name-pattern "shared dispatch consumes the hardened runtime router contract|runtime dispatch settles effects after routing|covered shared runtime reentry is runtime-owned"`: `PASS`
 - `node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime exports launch and action seams|interactive runtime contract exports launch action exit and result seams|covered interactive flow is runtime-owned"`: `PASS`
 - `node --test tests/robustness.test.cjs --test-name-pattern "house runtime request contract exports enter leave and dispatch variants|core house runtime bridge exports enter leave and dispatch seams|covered house flow is runtime-owned"`: `PASS`
+- `node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"`: `PASS`
 - `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
@@ -102,6 +103,7 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 11 Task 3 landed covered house ownerization for grain-shop: `src/core/runtime/house-runtime.ts` now owns enter, dispatch, leave, session mutation, and covered house side-effect handling for that path; `src/core/adapters/legacy-house-adapter.ts` is reduced to a compatibility placeholder; and the covered house lifecycle no longer routes through a legacy adapter-owned dispatch helper.
 - Child 11 Task 4 landed covered settlement alignment: `src/core/runtime/runtime-settlement.ts` now owns the covered advanceTime application path for interactive and house slices, `src/core/contracts/effect-settlement.ts` now records `house-runtime` as a covered emitter, and Child 11 has closed on the approved runtime-owned slices.
 - Child 12 landed `src/domain/ui/*`, `src/application/ui/*`, and `src/content/ui/*`, plus additive `ContentPackDefinition` / content-pack loader reserve fields and protection tests proving the reserve path stays inactive by default.
+- Child 13 landed the remaining same-type shared-dispatch reentry closeout: the story-battle action -> reenter-house follow-up no longer branches inline in `src/main.ts`, `src/core/runtime/house-runtime.ts` now owns the converged `applyInteractiveFollowUp()` bridge path, and the remaining in-scope audit closed with Bucket A = one path, Bucket B = none, Bucket C = none.
 
 ### Deferred
 
@@ -112,7 +114,7 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 8 StateSync Runtime is now closed on the first formal canonical boundary slice.
 - Child 9 Runtime Contract Hardening is now completed; RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and House Runtime Request baselines all exist.
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the controlling baseline child.
-- Child 11 Sub-Runtime Ownerization Implementation is now completed, Child 12 UI Contract Reserve is now completed, and Child 13 is now the next executable child.
+- Child 11 Sub-Runtime Ownerization Implementation, Child 12 UI Contract Reserve, and Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit are now all completed in the active weekly queue.
 
 ### Blockers
 
@@ -124,24 +126,24 @@ The old files may remain as historical references, but they are no longer indepe
 | --- | --- | --- | --- |
 | `weekly governance` | Parent, child, weekly, visibility, and closeout sync state are explicit. | `none` | Keep closeout sync mandatory before future queue promotions. |
 | `src/core/contracts` | Introduce and widen shared contracts through `RuntimeState`, `RuntimeResult`, and interactive signals. | `contained`: `characterDefinitions` could not safely merge into `RuntimeState.core` yet. | Keep `characterDefinitions` deferred behind the weekly promotion gate. |
-| `src/core/runtime` | Move navigation/time/event/scene and covered interaction entry behind core seams. | `contained`: Child 11 has now closed its approved ownerization slices, and Child 12 has finished the additive UI reserve landing without reopening them; broader runtime-family convergence is still intentionally deferred beyond the completed covered follow-up, interactive, house, and settlement paths. | Keep Child 11 and Child 12 closed, then resume the remaining runtime follow-up work through Child 13. |
+| `src/core/runtime` | Move navigation/time/event/scene and covered interaction entry behind core seams. | `contained`: Child 11 closed its approved ownerization slices, Child 12 finished the additive UI reserve landing without reopening them, and Child 13 closed the remaining same-type in-scope shared-dispatch reentry path without discovering Bucket B/C remainder. | Require a fresh weekly review before opening any later runtime continuation child. |
 | `src/core/runtime/task-runtime.ts` | Introduce formal task lifecycle and signal progression ownership. | `contained`: no task UI, authoring DSL, or custom evaluator plugin yet. | Keep stable while Child 8 extracts StateSync boundaries. |
 | `src/core/mods` | Introduce formal Mod Runtime activation/startup ownership. | `contained`: full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy are still future work. | Keep stable while Child 8 extracts StateSync boundaries. |
 | `src/core/runtime/state-sync-*` | Introduce canonical runtime/app/save/presentation synchronization ownership. | `contained`: full save IO integration, runtime dispatch auto-commit integration, and full legacy migration remain future work. | Review before deciding whether a follow-up child is justified. |
 | `src/core/save` | Harden loader/writer/migration behavior. | `none` | Keep shape stable while Child 8 formalizes state sync around the existing save/load boundary. |
-| `src/main.ts` | Shrink black-box ownership through core adapters, runtime seams, presenter assembly, task runtime ownership, Mod Runtime activation calls, and StateSync bridge helper extraction. | `contained`: the covered story-battle reentry branch, covered city-begging completion-time advance/cleanup branch, and covered grain-shop direct time-cost application are now off the main-owned/runtime-bridge direct path, and Child 12 kept the reserve landing disconnected from `main.ts`; many browser-shell event handlers still remain in main. | Keep the current main.ts reductions stable and resume remaining runtime-family convergence only through Child 13. |
+| `src/main.ts` | Shrink black-box ownership through core adapters, runtime seams, presenter assembly, task runtime ownership, Mod Runtime activation calls, and StateSync bridge helper extraction. | `contained`: the covered story-battle reentry branch, covered city-begging completion-time advance/cleanup branch, and covered grain-shop direct time-cost application are now off the main-owned/runtime-bridge direct path, and Child 12 kept the reserve landing disconnected from `main.ts`; many browser-shell event handlers still remain in main. | Keep the current main.ts reductions stable; any later same-family reduction now requires a fresh weekly review rather than another Child 13-style remainder. |
 | `src/application/presenter` | Introduce a real presenter output bridge for stage, overlay, HUD, scene, and house render selection. | `contained`: layout renderer remains future work. | Keep stable while Child 8 extracts state sync. |
 | `src/ui/app-render.ts` | Reduce app render to presenter output consumption plus existing renderer calls. | `none` | Do not move gameplay selection back into UI. |
 
 ## Next Week Input
 
 - Highest-priority module to refine:
-  - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit`
+  - `No active queued child is currently recorded after Child 13 closeout.`
 - Why it is next:
-  - Child 11 and Child 12 are both completed, so the next remaining queued runtime continuation work is the explicit Child 13 convergence audit rather than a silent reopen of either closed child.
+  - The active weekly queue is closed; future continuation work now needs a fresh weekly review instead of inheriting Child 13's scope.
 - Category:
-  - `Child 13 active implementation queue`
+  - `post-Child-13 review gate`
 - Queued follow-up after the next child:
-  - `No later queued child is currently recorded in the active weekly set after Child 13.`
+  - `None. A later child must be newly reviewed and authored first.`
 - Unlock dependency after that:
   - `Any child after Child 13 still requires a fresh weekly review, explicit spec/plan authoring, and queue-governance updates before implementation may start.`

@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `in-progress`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `The visibility bundle now reflects that Child 12 is completed on the additive UI contract reserve landing and that Child 13 is the next executable child.`
-- Next Step: `Keep the five core artifacts aligned until Child 13 starts from its own plan or queue governance changes again.`
-- Verification: `Child 12 closeout visibility sync: npm run lint:plans`
-- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 12 is now visibly complete because the additive UI contract reserve, pack split-table reserve, builtin reserve content, and inactive-by-default protection have all landed without changing the active runtime/render/layout-editor path.`
+- Current Focus: `The visibility bundle now reflects Child 13 closeout: the remaining in-scope story-battle -> reenter-house Bucket A path is converged under houseRuntime.applyInteractiveFollowUp(), Child 13 is completed, and no active queued child remains in the weekly set.`
+- Next Step: `Do not resume this visibility companion for another child from the current weekly set. Any later continuation work requires a fresh weekly review and new queue-governance updates first.`
+- Verification: `Child 13 closeout visibility sync: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle remains governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 13 closed with one Bucket A path and no discovered Bucket B/C remainder in the remaining in-scope audit.`
 
 ## Progress Log
 
@@ -67,6 +67,10 @@
   - Summary: `Completed the Child 12 closeout visibility sync. The five weekly artifacts now treat Child 12 as completed on the additive UI reserve landing and Child 13 as the next executable child rather than a locked follow-up.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "ui contract modules export the reserve contract families|ui asset resolver prefers higher-priority layered aliases|ui reserve registry returns builtin-only defaults when no overrides exist|builtin ui reserve content covers the current layout-editor targets|content pack definition accepts optional ui reserve fields|content pack loader ignores missing optional ui reserve files|main runtime path does not import the ui reserve registry yet|existing layout editor target registry still stays on the current ui-layout path"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Keep the same artifact bundle aligned until Child 13 starts from its own plan or queue governance changes again.`
+- 2026-07-02
+  - Summary: `Completed the Child 13 closeout visibility sync. The five weekly artifacts now record that the remaining in-scope story-battle -> reenter-house Bucket A path no longer branches inline in src/main.ts, that houseRuntime.applyInteractiveFollowUp() owns the converged follow-up, and that no active queued child remains after Child 13.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Require a fresh weekly review before opening any later continuation child.`
 
 - 2026-06-29
   - Summary: `Visibility companion created and linked to the weekly orchestration flow.`
@@ -160,7 +164,7 @@
 - Weekly orchestration controller:
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Active next child plan:
-  - `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
+  - `No active queued child is currently recorded after Child 13 closeout.`
 - Locked follow-up child:
   - `No additional locked follow-up child is currently recorded after Child 13 unlock.`
 - Parent orchestration plan:

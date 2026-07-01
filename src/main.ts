@@ -1526,7 +1526,6 @@ function chooseCurrentStoryOption(choiceId: string): void {
 }
 
 function dispatchCurrentStoryBattleAction(actionId: string): void {
-  let followUpRendered = false;
   const result = dispatchRuntimeRequest({
     state: createInteractiveRuntimeState(appState),
     request: createInteractiveActionRequest(
@@ -1544,20 +1543,12 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
           }),
       },
       followUp: {
-        handleInteractive: ({ interactive }) => {
-          enterHouseThroughRuntime(houseRuntime, interactive.houseId);
-          followUpRendered = true;
-          return createInteractiveRuntimeState(appState);
-        },
+        handleInteractive: ({ interactive }) =>
+          houseRuntime.applyInteractiveFollowUp(interactive),
       },
     },
   });
   appState = applyInteractiveRuntimeState(appState, result.state);
-
-  if (followUpRendered) {
-    return;
-  }
-
   renderApp();
 }
 

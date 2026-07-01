@@ -169,19 +169,19 @@ UI/house event in main.ts -> createLaunchInteractiveRequest() or createInteracti
 
 ### Narrative
 
-Child 11 Task 1 now proves that the covered story-battle reentry path no longer needs a post-dispatch branch in `src/main.ts`. `src/main.ts` creates the interactive action request, `dispatchRuntimeRequest()` routes over `RuntimeState`, the hardened router seam returns shared `RuntimeResult` carriage, effect settlement writes through `state.core.runtime`, and the new typed follow-up hook settles the covered `reenter-house` continuation before state is written back.
+Child 11 Task 1 established the typed shared follow-up contract, and Child 13 closes the remaining same-type inline shell remainder for that path. `src/main.ts` creates the interactive action request, `dispatchRuntimeRequest()` routes over `RuntimeState`, the hardened router seam returns shared `RuntimeResult` carriage, effect settlement writes through `state.core.runtime`, and the follow-up now settles the covered `reenter-house` continuation by delegating to `houseRuntime.applyInteractiveFollowUp()` before state is written back.
 
 ### Call Chain
 
 ```text
-story-battle action in main.ts -> createInteractiveActionRequest() -> dispatchRuntimeRequest() -> RuntimeRouter.route() -> runInteractiveRuntime() -> settleRuntimeEffects() -> handleInteractive() follow-up hook -> applyInteractiveRuntimeState() -> house runtime reentry
+story-battle action in main.ts -> createInteractiveActionRequest() -> dispatchRuntimeRequest() -> RuntimeRouter.route() -> runInteractiveRuntime() -> settleRuntimeEffects() -> RuntimeFollowUpContext.handleInteractive() -> houseRuntime.applyInteractiveFollowUp() -> applyInteractiveRuntimeState()
 ```
 
 ### Notes
 
 - `RuntimeState.core` remains the current domain `GameState`, `RuntimeState.app` remains the minimum four-field app carrier, and `RuntimeState.view` remains `{}` in this flow.
 - `characterDefinitions` still travels on additive compatibility carriage for this batch; moving it into `RuntimeState.core` remains gated by weekly promotion rules rather than implied by this flow.
-- This is still only the minimum shared-dispatch convergence slice. Interactive ownerization and house ownerization remain separate Child 11 tasks.
+- Child 13 confirms that no same-type Bucket A remainder remains for this covered shared-dispatch reentry family.
 
 ## Flow 9A: Real Child 11 Task 2 Covered Interactive Ownerization
 
@@ -376,16 +376,16 @@ Child 9 completed -> execute Child 10 review plan -> finalize runtime-ownerizati
 
 ### Narrative
 
-Child 13 is not a generic continuation and not a silent Child 11 backfill. Its unlock path begins only after Child 11 completes and the Child 12 UI layout/interface-reserve child closes. The current weekly state has now satisfied that prerequisite, so the next controlled step is to resume Child 13 itself, classify the remaining runtime-owned follow-up and reentry paths into Bucket A, Bucket B, or Bucket C, and converge only the Bucket A set.
+Child 13 was not a generic continuation and not a silent Child 11 backfill. Its unlock path began only after Child 11 completed and the Child 12 UI layout/interface-reserve child closed. That control flow is now complete: Child 13 classified the remaining in-scope audit as Bucket A = one story-battle -> reenter-house follow-up path, Bucket B = none, Bucket C = none, then converged the Bucket A path and closed the active weekly queue.
 
 ### Call Chain
 
 ```text
-Child 11 completed -> execute Child 12 UI layout/interface-reserve child -> Child 12 closeout -> weekly unlock review confirms Bucket A convergence work exists -> Child 13 becomes executable -> execute Child 13
+Child 11 completed -> execute Child 12 UI layout/interface-reserve child -> Child 12 closeout -> weekly unlock review confirms Bucket A convergence work exists -> Child 13 classifies remaining paths -> Child 13 converges the remaining Bucket A path -> active weekly queue closes
 ```
 
 ### Notes
 
 - This flow exists to prevent Child 13 from degenerating into Child 11 backfill.
 - This flow also preserves the user's required queue order: Child 12 stays ahead of Child 13 as the UI layout/interface-reserve child and does not alter the current runtime direction.
-- Current weekly state: Child 12 closeout is complete, so only the Child 13 execution step remains on this flow.
+- Current weekly state: Child 13 is completed, so no active queued child remains on this flow.

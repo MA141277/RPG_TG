@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `in-progress`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 12 is now completed on the additive UI contract reserve landing. Child 13 is now the next executable child, while Child 11 remains closed and Child 12 must not be reopened as runtime-ownerization backfill.`
-- Next Step: `When implementation resumes, start Child 13 from docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md, keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step, and do not reopen Child 12's additive-only scope.`
-- Verification: `Child 12 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "ui contract modules export the reserve contract families|ui asset resolver prefers higher-priority layered aliases|ui reserve registry returns builtin-only defaults when no overrides exist|builtin ui reserve content covers the current layout-editor targets|content pack definition accepts optional ui reserve fields|content pack loader ignores missing optional ui reserve files|main runtime path does not import the ui reserve registry yet|existing layout editor target registry still stays on the current ui-layout path"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the runtime ownerization review/baseline artifact, and Child 11 is now complete on the approved ownerization slices without reopening the frozen Child 9/10 surfaces. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, baseline, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+- Current Focus: `Child 13 is now completed. The remaining in-scope Bucket A path was the story-battle action -> reenter-house follow-up still branched inline in src/main.ts, and that path now converges through houseRuntime.applyInteractiveFollowUp() without reopening Child 11 or Child 12 scope.`
+- Next Step: `Do not resume another executable child from this weekly queue. Any later continuation work now requires a fresh weekly review, explicit spec/plan authoring, and queue-governance updates before implementation starts.`
+- Verification: `Child 13 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This weekly plan governed the current execution order and that queue is now closed. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the runtime ownerization review/baseline artifact, Child 11 is complete on the approved ownerization slices, Child 12 is complete on the additive UI contract reserve landing, and Child 13 is complete on the remaining same-type shared-dispatch follow-up/reentry convergence audit. Bucket A = one remaining covered story-battle -> reenter-house follow-up path; Bucket B = none; Bucket C = none in the remaining in-scope audit. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the governing docs first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
 
@@ -195,6 +195,10 @@
   - Summary: `Completed Child 12 closeout and weekly queue sync. Formal UI contract reserve types, additive UI reserve seams, builtin reserve content, optional pack UI split-table support, and inactive-by-default protection are now landed; Child 12 is now closed and Child 13 is explicitly unlocked as the next executable child.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "ui contract modules export the reserve contract families|ui asset resolver prefers higher-priority layered aliases|ui reserve registry returns builtin-only defaults when no overrides exist|builtin ui reserve content covers the current layout-editor targets|content pack definition accepts optional ui reserve fields|content pack loader ignores missing optional ui reserve files|main runtime path does not import the ui reserve registry yet|existing layout editor target registry still stays on the current ui-layout path"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `When implementation resumes, start Child 13 from its own plan and keep Child 12 closed.`
+- 2026-07-02
+  - Summary: `Completed Child 13 and closed the active weekly queue. The remaining in-scope post-Child-11 audit found one Bucket A path: the story-battle action -> reenter-house follow-up still handled inline in src/main.ts after shared dispatch returned. Child 13 added red-to-green regression coverage, moved that follow-up behind houseRuntime.applyInteractiveFollowUp(), recorded no Bucket B backfill and no Bucket C new-boundary remainder, and synchronized the five-core weekly artifacts to a no-active-child state.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `No active queued child remains in this weekly set. Require a fresh weekly review before authoring any later continuation child.`
 
 ---
 
@@ -483,7 +487,7 @@ The five core outputs are part of the weekly acceptance gate even though their d
 
 ## Plan Status Board
 
-### Completed
+### Queue Closeout
 
 - `docs/superpowers/plans/2026-06-29-save-migration-hardening-plan.md`
   - Role: Child 2 save normalization, loader/writer/migration, and selected-mod validation workstream
@@ -519,13 +523,19 @@ The five core outputs are part of the weekly acceptance gate even though their d
 
 ### In Progress
 
+- `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+  - Role: parent direction/spec inventory plan
+  - Resume point: `Parent planning context remains available, but the active weekly executable child queue is now closed after Child 13.`
+
+### Completed
+
 - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
   - Role: active queue controller
-  - Resume point: `Child 11 is completed. Do not resume it; when implementation resumes, start Child 12 from its own plan.`
+  - Resume point: `Completed. Child 13 closed the last active queued child in this weekly set; require a fresh weekly review before opening another child.`
 
 - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
   - Role: active weekly visibility companion
-  - Resume point: `Keep the five core artifacts aligned with Child 12 completed and Child 13 next.`
+  - Resume point: `Completed. The five core artifacts now record Child 13 closeout and no active queued child remains.`
 
 - `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
   - Role: Child 11 Sub-Runtime Ownerization Implementation
@@ -535,11 +545,13 @@ The five core outputs are part of the weekly acceptance gate even though their d
   - Role: Child 12 UI Contract Reserve
   - Resume point: `Completed on the additive UI contract reserve landing. Child 13 unlock is now recorded separately.`
 
-### Not Started
-
 - `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
   - Role: Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit
-  - Resume point: `Unlocked as the next executable child. Start Task 1 Step 1 from its own plan when implementation resumes.`
+  - Resume point: `Completed. Bucket A converged the remaining story-battle -> reenter-house follow-up; Bucket B and Bucket C were both empty in the remaining in-scope audit.`
+
+### Not Started
+
+- None currently recorded in the active weekly queue.
 
 ### Blocked
 

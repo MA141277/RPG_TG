@@ -8017,6 +8017,20 @@ test("covered shared runtime reentry is runtime-owned", async () => {
   assert.deepEqual(result.interactive, { type: "none" });
 });
 
+test("child 13 shared dispatch follow-up no longer branches on reenter-house in main.ts", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /followUpRendered/);
+  assert.doesNotMatch(
+    source,
+    /enterHouseThroughRuntime\(houseRuntime, interactive\.houseId\)/
+  );
+  assert.match(source, /houseRuntime\.applyInteractiveFollowUp\(interactive\)/);
+});
+
 test("save envelope preserves selected mod id and mod state payload", async () => {
   const { createSaveEnvelope } = require("../.test-dist/core/save/save-envelope.js");
   const envelope = createSaveEnvelope({
@@ -8615,6 +8629,72 @@ test("covered house flow is runtime-owned", () => {
   );
   assert.doesNotMatch(adapterSource, /createHouseRuntime/);
   assert.doesNotMatch(adapterSource, /enterHouseById|leaveCurrentHouse|dispatchCurrentHouseRequest/);
+});
+
+test("child 13 house runtime bridge owns reenter-house follow-up", () => {
+  const { createHouseRuntimeBridge } = require("../.test-dist/core/runtime/house-runtime.js");
+
+  const baseState = createBaseState();
+  let appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentHouseId: null,
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "city",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  let renderCount = 0;
+
+  const runtime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {
+      renderCount += 1;
+    },
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: prototypeHouses,
+    playerCharacterId,
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+
+  const runtimeState = runtime.applyInteractiveFollowUp({
+    type: "reenter-house",
+    houseId: grainShopHouse.id,
+  });
+
+  assert.equal(appState.gameState.world.currentHouseId, grainShopHouse.id);
+  assert.equal(appState.gameState.ui.currentView, "house");
+  assert.equal(appState.gameState.ui.houseSession?.moduleId, "grain-shop");
+  assert.equal(runtimeState.core.world.currentHouseId, grainShopHouse.id);
+  assert.equal(runtimeState.core.ui.currentView, "house");
+  assert.equal(renderCount, 0);
 });
 
 test("main.ts routes covered interactive flows through core runtime instead of direct feature branching", () => {

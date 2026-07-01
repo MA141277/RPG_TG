@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-02 Child 13 Shared Dispatch Reentry Convergence
+
+### Added
+- 新增 Child 13 回归测试，明确要求 `src/main.ts` 不再内联处理 `reenter-house` follow-up，且 `HouseRuntimeBridge` 必须能直接接管该 shared-dispatch reentry 收口路径。
+
+### Changed
+- `src/core/runtime/house-runtime.ts` 现在导出 `applyInteractiveFollowUp()` bridge seam，可在不额外触发浏览器层 render 分支的前提下，把 `reenter-house` follow-up 直接收口到 house runtime 自身。
+- `src/main.ts` 的 `dispatchCurrentStoryBattleAction()` 不再自己判断 `interactive.houseId` 或维护 `followUpRendered` 分支；story-battle action 的剩余 Bucket A reentry 路径现在通过 shared dispatch follow-up -> `houseRuntime.applyInteractiveFollowUp()` 完成。
+- `tests/robustness.test.cjs` 新增 Child 13 red-to-green coverage，锁定 `main.ts` 的 branch removal 和 `HouseRuntimeBridge` 的 reentry ownership。
+
+### Impact
+- Child 13 已完成：剩余同类 post-Child-11 Bucket A follow-up/reentry 路径已全部收口到 shared dispatch line 下，不再留下新的同类 Bucket A remainder。
+- 本次审计没有发现 Bucket B 的 Child 11 backfill 问题，也没有发现 Bucket C 的新边界 follow-up；后续若还要继续 runtime continuation，必须先经过新的 weekly review/spec/plan，而不是继续扩写 Child 13。
+
 ## 2026-07-02 UI Contract Reserve
 
 ### Added

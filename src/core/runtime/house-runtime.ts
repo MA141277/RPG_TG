@@ -21,6 +21,9 @@ import type {
   HouseRuntimeRequest,
   HouseRuntimeSessionRequest,
 } from "../contracts/house-runtime";
+import type { RuntimeInteractiveSignal } from "../contracts/runtime-result";
+import type { RuntimeState } from "../contracts/runtime-state";
+import { createInteractiveRuntimeState } from "./state-sync-runtime";
 import { settleRuntimeEffects } from "./runtime-settlement";
 
 export type HouseRuntimeDependencies = {
@@ -50,6 +53,9 @@ export type HouseRuntimeDependencies = {
 
 export type HouseRuntimeBridge = {
   dispatch(request: HouseRuntimeRequest): void;
+  applyInteractiveFollowUp(
+    interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>
+  ): RuntimeState;
   applyMapAutoAdvanceCompletion(
     completion: HouseMapAutoAdvanceCompletion
   ): void;
@@ -240,7 +246,12 @@ export function createHouseRuntimeBridge(
     });
   }
 
-  function enterHouseById(houseId: string): void {
+  function enterHouseById(
+    houseId: string,
+    options?: {
+      render?: boolean;
+    }
+  ): void {
     const houseDefinition = dependencies.houseDefinitions.find(
       (candidateHouse) => candidateHouse.id === houseId
     );
@@ -308,7 +319,9 @@ export function createHouseRuntimeBridge(
       });
     }
 
-    dependencies.renderApp();
+    if (options?.render !== false) {
+      dependencies.renderApp();
+    }
   }
 
   function leaveCurrentHouse(): void {
@@ -405,8 +418,19 @@ export function createHouseRuntimeBridge(
     dispatchCurrentHouseRequest(request.request);
   }
 
+  function applyInteractiveFollowUp(
+    interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>
+  ): RuntimeState {
+    if (interactive.type === "reenter-house") {
+      enterHouseById(interactive.houseId, { render: false });
+    }
+
+    return createInteractiveRuntimeState(dependencies.getAppState());
+  }
+
   return {
     dispatch,
+    applyInteractiveFollowUp,
     applyMapAutoAdvanceCompletion,
     clearAllHouseIntervals,
   };
