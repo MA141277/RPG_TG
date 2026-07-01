@@ -53,6 +53,8 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Child 7 closeout state: completed on the first formal Mod Runtime activation/startup seam.
 - [x] Child 8 closeout state: completed on the first formal StateSync Runtime canonical boundary slice.
 - [x] Child 9 queue state: defined as Runtime Contract Hardening and limited to contract closure, not ownerization.
+- [x] Child 10 queue state: defined as Runtime Ownerization Review And Baseline and limited to review/baseline governance, not production ownerization.
+- [x] Child 11 queue state: reserved as the locked ownerization implementation child and not executable until Child 10 baseline completion plus Child 11 spec/plan authoring.
 
 ### Provisional Boundaries
 
@@ -98,6 +100,13 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [ ] Child 9 must not remove legacy house/interactive adapters as part of the contract child.
 - [ ] Child 9 must not expand into UI/layout/presenter or resource-planning work.
 - [ ] Child 9 must not ownerize `Interactive Runtime` or `House Runtime`.
+
+### Child 10 And Child 11 Queue Guard
+
+- [x] Child 10 exists to classify owner vs bridge runtime maturity, adapter disposition, and `main.ts` coupling before implementation resumes.
+- [x] Child 10 must finalize the controlling baseline at `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`.
+- [x] Child 11 is allowed to target shared dispatch convergence, Interaction Runtime ownerization, House Runtime ownerization, and Effect Settlement alignment only after Child 10 unlocks it.
+- [x] Child 11 must not be treated as executable from weekly artifacts alone; it remains locked until the weekly plan explicitly records the unlock.
 
 ### Remaining `main.ts` Coupling
 

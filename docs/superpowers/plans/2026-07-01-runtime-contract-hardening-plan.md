@@ -15,7 +15,7 @@
 - Current Focus: `Child 9 Runtime Contract Hardening is authored and promoted as the next executable child, but implementation has not started.`
 - Next Step: `Start Task 1 Step 1 after queue closeout sync confirms Child 9 as the active child.`
 - Verification: `Not run`
-- Notes: `This is a contract-hardening child only. It must not absorb sub-runtime ownerization, adapter removal, UI/layout work, or resource planning. Child 10 remains blocked on Child 9 closeout plus a new preflight review.`
+- Notes: `This is a contract-hardening child only. It must not absorb sub-runtime ownerization, adapter removal, UI/layout work, or resource planning. Child 10 is already authored as the next review/baseline child, but it must not start until Child 9 closeout promotes it.`
 
 ## Progress Log
 
@@ -50,7 +50,7 @@
 - Queue rule:
   - Child 8 is completed.
   - Child 9 is the next executable child.
-  - Child 10 must not be promoted until Child 9 closes and a new preflight review is recorded.
+  - Child 10 is already authored and queued, but it must not be promoted until Child 9 closes and queue sync records the handoff.
 
 ## Scope
 
@@ -312,7 +312,7 @@ Log exactly which shared contracts were hardened, which bridges remain, and whic
 
 - [ ] **Step 2: Sync queue state**
 
-Update weekly and parent plans so Child 9 is marked `completed` only after verification passes, and do not promote Child 10 automatically without a new preflight review.
+Update weekly and parent plans so Child 9 is marked `completed` only after verification passes, and promote Child 10 only through the recorded queue sync that already references the authored Child 10 baseline/spec/plan set.
 
 - [ ] **Step 3: Run required closeout verification**
 

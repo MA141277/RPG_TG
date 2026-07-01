@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 8 StateSync Runtime is completed, and Child 9 Runtime Contract Hardening is now defined as the next executable child.`
-- Next Step: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1.`
-- Verification: `Child 9 planning sync: npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1, Child 2, Child 3, Child 4, Child 5, Child 6, Child 7, and Child 8 are completed, and Child 9 is now defined as the contract-hardening child that precedes later sub-runtime ownerization. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Current Focus: `Child 8 StateSync Runtime is completed, Child 9 Runtime Contract Hardening remains the next executable child, and Child 10 plus Child 11 are now formally scheduled behind it.`
+- Next Step: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1, then execute Child 10 before unlocking Child 11.`
+- Verification: `Child 10/11 parent planning sync: npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1 through Child 8 are completed, Child 9 is the active next executable contract-hardening child, Child 10 is the formal runtime-ownerization review/baseline child, and Child 11 is the locked sub-runtime ownerization implementation child. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -117,6 +117,10 @@
   - Summary: `Completed the required post-Child-8 review and created formal Child 9 Runtime Contract Hardening spec and plan. Child 9 scope is limited to typed RuntimeRequest/Router, formal Interactive/Minigame Dispatch, formal Effect Settlement, and minimum House Runtime Request contracts, so later sub-runtime ownerization can proceed on a stable contract baseline.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1.`
+- 2026-07-01
+  - Summary: `Created formal Child 10 Runtime Ownerization Review And Baseline spec/plan plus the controlling Child 10 baseline document, and reserved Child 11 as the locked sub-runtime ownerization implementation child behind that baseline.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep Child 9 as the only executable next child. After Child 9 closes, execute Child 10 and do not unlock Child 11 until the Child 10 baseline completes and Child 11 spec/plan exist.`
 
 ## Why This Plan Exists
 
@@ -749,7 +753,146 @@ Confirm:
 - StateSync Runtime does not absorb gameplay dispatch, save IO, mod activation, or presentation ownership
 - Child 8 is marked `completed`
 
-### Task 10: Close the parent orchestration plan
+### Task 10: Author And Execute Child 9 Runtime Contract Hardening
+
+**Files:**
+- Create: `docs/superpowers/specs/2026-07-01-runtime-contract-hardening-spec.md`
+- Create: `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+
+- [x] **Step 1: Author Child 9 Runtime Contract Hardening spec and plan**
+
+Create:
+
+```text
+docs/superpowers/specs/2026-07-01-runtime-contract-hardening-spec.md
+docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md
+```
+
+Scope:
+
+- typed `RuntimeRequest / Router` contract hardening
+- formal `Interactive / Minigame Dispatch` contract hardening
+- formal `Effect Settlement` contract hardening
+- minimum core-owned `House Runtime Request` contract hardening
+
+Out of scope:
+
+- runtime ownerization
+- adapter removal
+- UI/layout/presenter work
+- resource planning
+
+- [x] **Step 2: Verify Child 9 dependencies**
+
+Confirm:
+
+- Child 8 completed
+- required post-Child-8 review completed
+- weekly and parent plans both record Child 9 as the next executable child
+
+- [ ] **Step 3: Execute Child 9 from its own checklist**
+
+Run all implementation work from the Child 9 plan file, not from this parent file.
+
+- [ ] **Step 4: Verify Child 9 exit condition and sync parent log**
+
+Confirm:
+
+- typed shared `RuntimeRequest / Router` contract baseline exists
+- formal `Interactive / Minigame Dispatch` contract baseline exists
+- formal `Effect Settlement` contract baseline exists
+- minimum `House Runtime Request` contract baseline exists
+- Child 9 is marked `completed`
+
+### Task 11: Author And Execute Child 10 Runtime Ownerization Review And Baseline
+
+**Files:**
+- Create: `docs/superpowers/specs/2026-07-01-runtime-ownerization-review-spec.md`
+- Create: `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
+- Create: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+
+- [x] **Step 1: Author Child 10 spec, plan, and baseline artifact**
+
+Create:
+
+```text
+docs/superpowers/specs/2026-07-01-runtime-ownerization-review-spec.md
+docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md
+docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md
+```
+
+Scope:
+
+- runtime owner vs bridge classification
+- bridge/adapter disposition review
+- `src/main.ts` coupling review
+- Child 11 execution-boundary freeze
+- Child 11 unlock baseline
+
+Out of scope:
+
+- production runtime ownerization
+- adapter removal in code
+- UI/layout/presenter work
+- resource planning
+
+- [ ] **Step 2: Verify Child 10 dependencies**
+
+Confirm:
+
+- Child 9 completed
+- Child 9 closeout sync recorded
+- weekly and parent plans both promote Child 10 as the active next child
+
+- [ ] **Step 3: Execute Child 10 from its own checklist**
+
+Run all implementation work from the Child 10 plan file, not from this parent file.
+
+- [ ] **Step 4: Verify Child 10 exit condition and sync parent log**
+
+Confirm:
+
+- Child 10 baseline is finalized
+- Child 11 execution boundary is explicit
+- Child 11 forbidden changes, verification mapping, and residual debt are explicit
+- Child 10 is marked `completed`
+
+### Task 12: Author And Execute Child 11 Sub-Runtime Ownerization Implementation
+
+**Files:**
+- Create: `Child 11 spec and plan once Child 10 unlocks them`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+
+- [ ] **Step 1: Author Child 11 spec and plan against the Child 10 baseline**
+
+Create the Child 11 implementation spec and plan only after Child 10 completes and the weekly plan explicitly records the unlock.
+
+- [ ] **Step 2: Verify Child 11 dependencies**
+
+Confirm:
+
+- Child 10 completed
+- Child 10 closeout sync recorded
+- Child 11 spec and plan exist
+- weekly and parent plans both record Child 11 as unlocked
+
+- [ ] **Step 3: Execute Child 11 from its own checklist**
+
+Run all implementation work from the Child 11 plan file, not from this parent file.
+
+- [ ] **Step 4: Verify Child 11 exit condition and sync parent log**
+
+Confirm:
+
+- covered shared dispatch entry converges on the approved runtime path
+- covered interactive flows are runtime-owned
+- covered house flows are runtime-owned
+- effect settlement alignment matches the approved shared path
+- Child 11 is marked `completed`
+
+### Task 13: Close the parent orchestration plan
 
 Confirm:
 
@@ -807,5 +950,12 @@ Do not mark this parent plan `completed` until:
 - [x] Child 8 StateSync Runtime spec and plan authored
 - [x] Child 8 completed
 - [x] Child 9 Runtime Contract Hardening spec and plan authored
+- [ ] Child 9 completed
+- [x] Child 10 Runtime Ownerization Review And Baseline spec and plan authored
+- [x] Child 10 baseline unlock document authored
+- [ ] Child 10 completed
+- [x] Child 11 reserved in queue as a locked follow-up child
+- [ ] Child 11 spec and plan authored
+- [ ] Child 11 completed
 - [x] Shared-file conflict policy acknowledged
 - [x] Final orchestration verification recorded

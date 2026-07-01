@@ -34,6 +34,10 @@ Do not decide the next split only from intuition.
   - The required post-Child-8 review is complete. Child 9 Runtime Contract Hardening is now the next executable child and should harden the minimum shared contracts before later sub-runtime ownerization.
 - Category:
   - `Child 9 queued`
+- Queued follow-up:
+  - `Child 10 Runtime Ownerization Review And Baseline` is already authored and should execute immediately after Child 9 closeout.
+- Locked follow-up:
+  - `Child 11 Sub-Runtime Ownerization Implementation` remains blocked until the Child 10 baseline is complete and Child 11 spec/plan are authored.
 
 ## Non-Selected Candidates
 
@@ -62,6 +66,8 @@ Do not decide the next split only from intuition.
 | --- | --- | --- | --- | --- |
 | `src/core/contracts` | `needs-hardening` | Contracts are consumed by boot, runtime dispatch, save envelope, and adapter handoff, but remain intentionally minimal. | `P1` | Harden only when a later child proves a real new requirement. |
 | `Child 9 Runtime Contract Hardening` | `queued` | The next child is now defined but not started; it covers typed RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and minimum House Runtime Request contracts only. | `P1` | Execute Child 9 from its spec and plan without expanding into ownerization work. |
+| `Child 10 Runtime Ownerization Review And Baseline` | `queued` | The follow-up review child is now authored; it must classify runtime ownership, freeze Child 11 boundaries, and finalize the unlock baseline after Child 9 closes. | `P1` | Execute Child 10 immediately after Child 9 closeout and do not skip the baseline step. |
+| `Child 11 Sub-Runtime Ownerization Implementation` | `locked` | The implementation child is now reserved but must not start until Child 10 baseline completion plus Child 11 spec/plan authoring. | `P1` | Keep locked until Child 10 delivers the controlling baseline and weekly governance explicitly unlocks it. |
 | `src/core/runtime` | `needs-hardening` | Child 3/4 seams exist, but one final routing shape does not cover every interactive surface yet. | `P2` | Keep stable during Child 9 except where contract hardening directly requires alignment. |
 | `src/core/save` | `needs-migration` | Save boundary is hardened, but app-level callers still need to consume it directly. | `P1` | Keep stable until real save/load caller work resumes. |
 | `src/application/presenter` | `provisional` | Presenter output exists, but full layout schema and final view-model cleanup are still later work. | `P2` | Hold stable during Child 9; avoid expanding presenter scope. |

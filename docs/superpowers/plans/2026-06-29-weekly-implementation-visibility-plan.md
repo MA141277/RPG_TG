@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `The five-core-artifact weekly bundle now reflects completed Child 8 StateSync Runtime plus the formal promotion of Child 9 Runtime Contract Hardening as the next executable child.`
-- Next Step: `Refresh the five core artifacts so they point to Child 9 as the active next child and reflect the new contract-hardening queue state.`
-- Verification: `Child 9 planning sync: npm run lint:plans`
-- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review.`
+- Current Focus: `The five-core-artifact weekly bundle now reflects Child 9 as the active next child, Child 10 as the queued runtime-ownerization baseline child, and Child 11 as the locked follow-up implementation child.`
+- Next Step: `Keep the five core artifacts aligned with the Child 9 -> Child 10 -> Child 11 queue truth and prevent any artifact from implying that Child 11 is already executable.`
+- Verification: `Child 10/11 visibility sync: npm run lint:plans`
+- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 11 must remain visibly locked until the Child 10 baseline is complete.`
 
 ## Progress Log
 
@@ -95,6 +95,10 @@
   - Summary: `Enhanced the weekly module map and call-flow artifacts for Child 9 preflight. The module map now marks Child 9's direct touch surface and explicit boundary guards, and the call-flow artifact now captures the real shared request->router->settlement line, the current interactive dispatch bridge, and the current house-runtime bridge so contract hardening can iterate against actual flows instead of only type-level targets.`
   - Verification: `npm run lint:plans`
   - Next: `Use these artifact additions as the visibility baseline when Child 9 implementation starts.`
+- 2026-07-01
+  - Summary: `Synchronized the visibility companion with the newly authored Child 10 and queued Child 11 state. The weekly artifacts now need to preserve one queue truth: Child 9 is executable, Child 10 is queued as the review/baseline child, and Child 11 is locked behind Child 10 completion plus Child 11 spec/plan authoring.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep review index, next split review, architecture report, and any later queue wording aligned with the Child 9 -> Child 10 -> Child 11 sequence.`
 
 ---
 
@@ -104,6 +108,10 @@
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Active next child plan:
   - `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
+- Queued next child plan:
+  - `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
+- Locked follow-up child:
+  - `Child 11 Sub-Runtime Ownerization Implementation`
 - Parent orchestration plan:
   - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 

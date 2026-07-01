@@ -425,6 +425,44 @@ Scope guard:
 - Child 9 may harden shared request/router typing and public dispatch contracts
 - Child 9 must not absorb Interactive Runtime ownerization, House Runtime ownerization, UI/layout work, or resource planning
 
+### Child 10: `2026-07-01-runtime-ownerization-review-plan.md`
+
+Primary subsystem coverage:
+
+- Runtime ownerization review / baseline governance
+- Current runtime owner vs bridge classification
+- Child 11 execution boundary freeze surface
+
+Secondary dependency:
+
+- Child 9 contract hardening baseline is authored first
+- Child 10 does not ownerize production runtime code; it records the execution baseline for later ownerization
+
+Scope guard:
+
+- Child 10 may classify current runtime maturity, bridge/adapter disposition, and `src/main.ts` coupling
+- Child 10 may define Child 11 batch order, forbidden changes, verification mapping, and unlock rules
+- Child 10 must not absorb adapter removal in production code, UI/layout work, or resource planning
+
+### Child 11: `reserved ownerization child`
+
+Primary subsystem coverage:
+
+- Shared dispatch convergence for covered paths
+- Interaction Runtime ownerization
+- House Runtime ownerization
+- Effect Settlement Runtime alignment along the approved shared path
+
+Secondary dependency:
+
+- Child 10 baseline must be complete
+- Child 11 spec and plan must be authored against the Child 10 baseline before code work starts
+
+Scope guard:
+
+- Child 11 may ownerize only the seams explicitly approved by the Child 10 baseline
+- Child 11 must not reopen `RuntimeState` carrier convergence, boot/content assembly, Mod Runtime, Save / Load Runtime, StateSync Runtime, Presentation Bridge Runtime, UI/layout work, or resource planning without a new baseline revision
+
 ## 7. Planning Rules For Future Child Plans
 
 When authoring a new child plan:

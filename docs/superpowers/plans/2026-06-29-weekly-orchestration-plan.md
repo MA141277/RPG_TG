@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 8 StateSync Runtime is completed, and Child 9 Runtime Contract Hardening is now defined as the next executable child.`
+- Current Focus: `Child 8 StateSync Runtime is completed, Child 9 Runtime Contract Hardening remains the next executable child, and Child 10 plus Child 11 are now formally queued behind it.`
 - Next Step: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first.`
-- Verification: `Child 9 planning sync: npm run lint:plans`
-- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, and Child 9 is now defined as the runtime-contract hardening child. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+- Verification: `Child 10/11 planning sync: npm run lint:plans`
+- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is the active next executable contract-hardening child, Child 10 is the formal runtime-ownerization review/baseline child, and Child 11 is the locked sub-runtime ownerization implementation child. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, baseline, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
 
@@ -135,6 +135,10 @@
   - Summary: `Completed the required post-Child-8 review and created formal Child 9 Runtime Contract Hardening spec and plan. Child 9 scope is limited to typed RuntimeRequest/Router, formal Interactive/Minigame Dispatch, formal Effect Settlement, and minimum House Runtime Request contracts; Child 10 ownerization remains blocked behind Child 9 closeout and a later preflight review.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1.`
+- 2026-07-01
+  - Summary: `Created formal Child 10 Runtime Ownerization Review And Baseline spec/plan, upgraded the Child 10 baseline document into the controlling unlock artifact, and scheduled Child 11 as the locked sub-runtime ownerization implementation child behind Child 10.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep Child 9 as the only executable next child. After Child 9 closes, execute Child 10 and do not unlock Child 11 until the Child 10 baseline is complete and Child 11 spec/plan are authored against it.`
 
 ---
 
@@ -157,7 +161,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - 优先收敛 Shared Runtime / Runtime Dispatch / Router / Interaction Runtime / House Runtime integration seam / Shared Runtime State carrier。
 - 保持当前功能兼容现有状态，不要求本周完成全量迁移。
 - 通过计划文档、五份核心 weekly artifact、边界说明降低项目黑盒程度。
-- 当前队列口径：Child 4 已完成，Child 5 已完成 presenter/render decoupling，Child 6 已完成 Task Runtime 首版抽离，Child 7 已完成 Mod Runtime 首版抽离，Child 8 已完成 StateSync Runtime 首版 canonical boundary，Child 9 已正式定义为 Runtime Contract Hardening；Child 10 及之后的新增 child 仍必须先复盘再决定是否拆出独立 spec + plan。
+- 当前队列口径：Child 4 已完成，Child 5 已完成 presenter/render decoupling，Child 6 已完成 Task Runtime 首版抽离，Child 7 已完成 Mod Runtime 首版抽离，Child 8 已完成 StateSync Runtime 首版 canonical boundary，Child 9 已正式定义为 Runtime Contract Hardening，Child 10 已正式定义为 Runtime Ownerization Review And Baseline，Child 11 已作为锁定中的 ownerization 实施 child 编排进队列；Child 11 之后如需新增 child，仍必须先复盘再决定是否拆出独立 spec + plan。
 
 ## Weekly Focus Modules
 
@@ -319,7 +323,9 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - The required review was completed for Child 7, and Child 7 Mod Runtime has now completed its first activation/startup seam.
 - The required review was completed for the state-boundary child, and Child 8 StateSync Runtime has now completed its first canonical boundary slice.
 - The required review was completed for Child 9, and Child 9 Runtime Contract Hardening is now the next executable child.
-- Any new child after Child 9 must begin with a review of:
+- The required review was completed for Child 10, and Child 10 Runtime Ownerization Review And Baseline is now the formal post-Child-9 review child.
+- Child 11 Sub-Runtime Ownerization Implementation is now reserved in the queue, but it remains locked behind Child 10 baseline completion plus Child 11 spec/plan authoring.
+- Any new child after Child 11 must begin with a review of:
   - the five core weekly artifacts
   - current runtime/module maturity
   - current `src/main.ts` coupling
@@ -327,7 +333,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
   - unresolved promotion gates such as `characterDefinitions`
 - Only after that review may the weekly controller decide which module deserves an independent child.
 - A new child must then get its own spec and plan before production code work starts.
-- Do not treat Child 7, Child 8, or Child 9 authoring as permission to batch-create additional immature children just because their modules are listed in the weekly inventory.
+- Do not treat Child 7, Child 8, Child 9, or Child 10 authoring as permission to batch-create additional immature children just because their modules are listed in the weekly inventory.
 ## Weekly Constraints
 
 - Execute concrete code changes from child plans only.
@@ -451,23 +457,31 @@ The five core outputs are part of the weekly acceptance gate even though their d
 
 - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
   - Role: active queue controller
-  - Resume point: `Review the five core artifacts before creating or promoting any child beyond Child 8.`
+  - Resume point: `Start Child 9, then use Child 10 to finalize the runtime-ownerization baseline before unlocking Child 11.`
 
 - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
   - Role: active weekly visibility companion
-  - Resume point: `Refresh the five core artifacts after the first Child 8 batch.`
+  - Resume point: `Refresh the five core artifacts after the next active child batch, starting with Child 9.`
 
 ### Not Started
 
-- `docs/superpowers/plans/2026-06-30-state-sync-runtime-plan.md`
-  - Role: completed Child 8
-  - Primary subsystem boundary: `StateSync Runtime`
-  - Depends on: Child 2 completed, Child 4 completed, Child 5 completed or explicitly deferred by updated weekly governance, Child 6 completed or explicitly deferred by updated weekly governance, and Child 7 completed or explicitly deferred by updated weekly governance
-  - Resume point: `Completed. Do not use this item to promote a follow-up child without a fresh review.`
+- `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
+  - Role: Child 9 Runtime Contract Hardening
+  - Primary subsystem boundary: `Shared Runtime contract layer`
+  - Depends on: Child 8 completed and recorded post-Child-8 review
+  - Resume point: `Start Task 1 Step 1. Child 9 remains the only executable next child.`
+
+- `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
+  - Role: Child 10 Runtime Ownerization Review And Baseline
+  - Primary subsystem boundary: `Runtime ownerization review / baseline governance`
+  - Depends on: Child 9 completed
+  - Resume point: `Do not start until Child 9 closes; then execute Child 10 to finalize docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md.`
 
 ### Future Candidates
 
-- None currently recorded beyond Child 8.
+- `Child 11 Sub-Runtime Ownerization Implementation`
+  - Current file status: `locked`
+  - Reason: queued behind Child 10, but cannot start until the Child 10 baseline completes and Child 11 spec/plan are authored against that baseline.
 
 ### Blocked
 
@@ -609,6 +623,31 @@ The five core outputs are part of the weekly acceptance gate even though their d
       - formal `Effect Settlement` contract baseline exists
       - minimum `House Runtime Request` contract baseline exists
       - Child 9 does not absorb runtime ownerization, UI/layout work, or resource planning
+
+10. `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
+   - Queue status: `not-started`
+   - Primary subsystem boundary: `Runtime ownerization review / baseline governance`
+   - Depends on: Queue Item 9 completed and Child 9 closeout sync recorded
+   - Start condition: satisfied only after Child 9 completes and the queue promotes Child 10 as the active review child
+   - Exit condition:
+      - `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md` is finalized as the Child 11 unlock artifact
+      - current runtime owner vs bridge status is explicit
+      - bridge/adapter disposition is explicit
+      - `src/main.ts` coupling for Child 11 is explicit
+      - Child 11 batch order, forbidden changes, verification mapping, and residual debt are explicit
+      - Child 10 does not absorb production ownerization, UI/layout work, or resource planning
+
+11. `Child 11 Sub-Runtime Ownerization Implementation`
+   - Queue status: `candidate-locked`
+   - Primary subsystem boundary: `Shared dispatch convergence`, `Interaction Runtime ownerization`, `House Runtime ownerization`, `Effect Settlement alignment`
+   - Depends on: Queue Item 10 completed, Child 10 closeout sync recorded, and Child 11 spec/plan authored against the Child 10 baseline
+   - Start condition: satisfied only after Child 10 completes, the weekly plan explicitly records Child 11 as unlocked, and Child 11 spec/plan exist
+   - Exit condition:
+      - covered shared runtime entry converges on dispatch/router ownership
+      - covered interactive flows are runtime-owned with any retained adapter reduced to an explicitly justified thin seam
+      - covered house flows are runtime-owned with any retained adapter reduced to an explicitly justified thin seam
+      - effect settlement is aligned with the approved shared runtime path
+      - Child 11 does not absorb boot/mod/save/presenter/UI/resource planning work
 
 ## Verification Policy
 
