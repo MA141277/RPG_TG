@@ -302,12 +302,12 @@ house enter/leave/or module request -> enterHouseThroughRuntime() / leaveHouseTh
 
 ### Narrative
 
-Child 10 is a governance child rather than a production-code child. Its closeout path now freezes runtime maturity, owner vs bridge status, adapter disposition, `src/main.ts` coupling, and Child 11 execution controls in one baseline document. Child 11 remains locked until that baseline is referenced by authored Child 11 spec/plan documents and the weekly queue explicitly records the unlock.
+Child 10 is a governance child rather than a production-code child. Its closeout path freezes runtime maturity, owner vs bridge status, adapter disposition, `src/main.ts` coupling, and Child 11 execution controls in one baseline document. That baseline is now referenced by authored Child 11 spec/plan documents, and the weekly queue now records Child 11 as executable.
 
 ### Call Chain
 
 ```text
-Child 9 completed -> execute Child 10 review plan -> finalize runtime-ownerization baseline -> author Child 11 spec/plan against baseline -> weekly unlock sync -> Child 11 becomes executable
+Child 9 completed -> execute Child 10 review plan -> finalize runtime-ownerization baseline -> author Child 11 spec/plan against baseline -> weekly unlock sync -> Child 11 becomes executable -> start Child 11 from its own plan
 ```
 
 ### Notes

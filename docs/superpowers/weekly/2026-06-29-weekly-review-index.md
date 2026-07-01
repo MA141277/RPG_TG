@@ -8,11 +8,11 @@
 
 **Primary Child Plan(s):**
 
-- `None currently executable; Child 10 closeout is complete and the queue is waiting for Child 11 spec/plan authoring`
+- `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
 
 **Queued Next Child Plan(s):**
 
-- `Child 11 Sub-Runtime Ownerization Implementation` (`locked` until Child 11 spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync records the unlock)
+- `None currently queued ahead of Child 11 in the active weekly queue`
 
 ## Weekly Summary
 
@@ -25,15 +25,15 @@
 - Child 8 is now complete: `src/core/contracts/state-sync-runtime.ts` and `src/core/runtime/state-sync-*` own the first formal StateSync Runtime canonical boundary, mandatory triggers, syncState entrypoint, state helper modules, and bridge-period main.ts state helper migration.
 - Child 9 is now complete: `docs/superpowers/specs/2026-07-01-runtime-contract-hardening-spec.md` and `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md` now govern a completed shared-contract baseline for typed RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and minimum House Runtime Request hardening.
 - Child 10 is now completed: `docs/superpowers/specs/2026-07-01-runtime-ownerization-review-spec.md`, `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`, and `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md` now form the finalized post-Child-9 review/baseline package that freezes Child 11 execution boundaries.
-- Child 11 remains reserved in queue state as the locked sub-runtime ownerization implementation child, and it is still not executable until Child 11 spec/plan authoring plus weekly unlock sync land.
+- Child 11 now has a formal spec and plan at `docs/superpowers/specs/2026-07-01-sub-runtime-ownerization-implementation-spec.md` and `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`, and weekly unlock sync now records it as the next executable child.
 - The five-core-artifact visibility bundle exists so the same week also produces readable module, control-flow, split-review, architecture, and change-impact outputs.
 
 ## Active Focus
 
 - Child 9 Runtime Contract Hardening is now completed.
 - Child 10 Runtime Ownerization Review And Baseline is now completed on the finalized owner/bridge baseline.
-- No production ownerization child is executable yet.
-- Child 11 Sub-Runtime Ownerization Implementation remains locked until Child 11 spec/plan are authored against the finalized baseline and weekly unlock sync records the unlock.
+- Child 11 Sub-Runtime Ownerization Implementation is now the next executable child.
+- Child 11 is unlocked and not-started; implementation must begin from its own plan rather than from queue prose.
 
 ## Artifact Index
 
@@ -101,7 +101,7 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 8 StateSync Runtime is now closed on the first formal canonical boundary slice.
 - Child 9 Runtime Contract Hardening is now completed; RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and House Runtime Request baselines all exist.
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the controlling baseline child.
-- Child 11 Sub-Runtime Ownerization Implementation is still recorded as a locked follow-up child and is not yet executable.
+- Child 11 Sub-Runtime Ownerization Implementation is now recorded as unlocked and not-started.
 
 ### Blockers
 
@@ -125,12 +125,12 @@ The old files may remain as historical references, but they are no longer indepe
 ## Next Week Input
 
 - Highest-priority module to refine:
-  - `Child 11 spec/plan authoring against the finalized Child 10 baseline`
-- Why it is next:
-  - Child 10 is now complete, so the next controlled step is to author Child 11 spec/plan against the frozen baseline before any ownerization code starts.
-- Category:
-  - `Child 11 authoring gate`
-- Queued follow-up after the next child:
   - `Child 11 Sub-Runtime Ownerization Implementation`
+- Why it is next:
+  - Child 10 is complete, Child 11 spec/plan authoring is complete, and the next controlled step is to execute Child 11 against the frozen baseline without reopening it.
+- Category:
+  - `Child 11 implementation`
+- Queued follow-up after the next child:
+  - `None currently recorded beyond Child 11 in the active weekly queue`
 - Unlock dependency after that:
-  - `Child 11` stays locked until Child 11 spec/plan authoring is complete and weekly unlock sync records the unlock.
+  - `Any child after Child 11 still requires a fresh review before a new spec/plan pair is authored.`

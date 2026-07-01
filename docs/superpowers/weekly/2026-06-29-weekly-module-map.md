@@ -54,7 +54,7 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Child 8 closeout state: completed on the first formal StateSync Runtime canonical boundary slice.
 - [x] Child 9 queue state: completed as Runtime Contract Hardening, still limited to contract closure and not ownerization.
 - [x] Child 10 queue state: completed as Runtime Ownerization Review And Baseline and still limited to review/baseline governance, not production ownerization.
-- [x] Child 11 queue state: reserved as the locked ownerization implementation child and not executable until Child 11 spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync records the unlock.
+- [x] Child 11 queue state: unlocked and not-started, with formal spec/plan files authored against the finalized Child 10 baseline.
 
 ### Provisional Boundaries
 
@@ -105,8 +105,8 @@ If a module cannot be summarized here, it is still acting like a black box.
 
 - [x] Child 10 exists to classify owner vs bridge runtime maturity, adapter disposition, and `main.ts` coupling before implementation resumes.
 - [x] Child 10 has finalized the controlling baseline at `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`.
-- [x] Child 11 is allowed to target shared dispatch convergence, Interaction Runtime ownerization, House Runtime ownerization, and Effect Settlement alignment only after Child 11 spec/plan are authored against that baseline and the weekly plan records the unlock.
-- [x] Child 11 must not be treated as executable from weekly artifacts alone; it remains locked until the weekly plan explicitly records the unlock.
+- [x] Child 11 is allowed to target shared dispatch convergence, Interaction Runtime ownerization, House Runtime ownerization, and Effect Settlement alignment only because Child 11 spec/plan are now authored against that baseline and the weekly plan records the unlock.
+- [x] Child 11 must execute from its own implementation plan and must not treat weekly artifacts as a substitute for the frozen baseline or child-plan checklist.
 
 ### Remaining `main.ts` Coupling
 

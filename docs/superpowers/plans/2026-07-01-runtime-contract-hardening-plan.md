@@ -13,7 +13,7 @@
 - Status: `completed`
 - Last Updated: `2026-07-01`
 - Current Focus: `Child 9 closeout is complete. All four shared contract baselines are now landed and verified without promoting this child into runtime ownerization.`
-- Next Step: `Promote Child 10 Runtime Ownerization Review And Baseline as the next executable child and keep Child 11 locked behind the Child 10 baseline.`
+- Next Step: `Child 10 is complete and Child 11 is now unlocked. Begin Child 11 from its own implementation plan when ownerization code work starts.`
 - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `Child 9 hardened contracts only. Legacy house and interactive adapters remain in place by design, and ownerization work is explicitly deferred to Child 10 / Child 11.`
 

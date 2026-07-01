@@ -29,15 +29,15 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `Child 11 spec/plan authoring against the finalized Child 10 baseline`
+  - `Child 11 Sub-Runtime Ownerization Implementation`
 - Reason:
-  - Child 10 is now complete. The next controlled split is to author the Child 11 implementation spec/plan against the frozen baseline before any runtime ownerization code resumes.
+  - Child 10 is complete, Child 11 spec/plan authoring is complete, and the next controlled split is to execute Child 11 against the frozen baseline without reopening scope.
 - Category:
-  - `Child 11 authoring gate`
+  - `Child 11 implementation`
 - Queued follow-up:
-  - `Child 11 Sub-Runtime Ownerization Implementation` stays queued behind its own baseline-backed spec/plan authoring.
+  - `No later child is queued yet; Child 11 now owns the next implementation slot directly.`
 - Locked follow-up:
-  - `Child 11 Sub-Runtime Ownerization Implementation` remains blocked until Child 11 spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync records the unlock.
+  - `None currently recorded. Any post-Child-11 split still requires a fresh review first.`
 
 ## Non-Selected Candidates
 
@@ -67,7 +67,7 @@ Do not decide the next split only from intuition.
 | `src/core/contracts` | `needs-hardening` | Contracts are consumed by boot, runtime dispatch, save envelope, and adapter handoff, but remain intentionally minimal. | `P1` | Harden only when a later child proves a real new requirement. |
 | `Child 9 Runtime Contract Hardening` | `completed` | The contract-hardening child has landed all four approved shared contract baselines and closed without absorbing ownerization work. | `P1` | Treat as the completed prerequisite for Child 10 and avoid reopening it without a new baseline decision. |
 | `Child 10 Runtime Ownerization Review And Baseline` | `completed` | The review child has finalized owner vs bridge status, adapter disposition, main.ts coupling, and Child 11 execution controls. | `P1` | Treat as the controlling baseline for Child 11 and do not reopen it casually. |
-| `Child 11 Sub-Runtime Ownerization Implementation` | `locked` | The implementation child remains reserved and must not start until Child 11 spec/plan are authored against the finalized Child 10 baseline. | `P1` | Author Child 11 spec/plan first, then record the weekly unlock before starting implementation. |
+| `Child 11 Sub-Runtime Ownerization Implementation` | `not-started` | The implementation child is now formally unlocked, with its own spec and plan authored against the finalized Child 10 baseline. | `P1` | Start from the Child 11 implementation plan and keep it inside the frozen Child 9/10 surfaces. |
 | `src/core/runtime` | `needs-hardening` | Child 3/4 seams exist, but one final routing shape does not cover every interactive surface yet. | `P2` | Keep stable during Child 9 except where contract hardening directly requires alignment. |
 | `src/core/save` | `needs-migration` | Save boundary is hardened, but app-level callers still need to consume it directly. | `P1` | Keep stable until real save/load caller work resumes. |
 | `src/application/presenter` | `provisional` | Presenter output exists, but full layout schema and final view-model cleanup are still later work. | `P2` | Hold stable during Child 9; avoid expanding presenter scope. |

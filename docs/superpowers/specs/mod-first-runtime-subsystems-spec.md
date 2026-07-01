@@ -446,7 +446,7 @@ Scope guard:
 - Child 10 may define Child 11 batch order, forbidden changes, verification mapping, and unlock rules
 - Child 10 must not absorb adapter removal in production code, UI/layout work, or resource planning
 
-### Child 11: `reserved ownerization child`
+### Child 11: `2026-07-01-sub-runtime-ownerization-implementation-plan.md`
 
 Primary subsystem coverage:
 
@@ -459,6 +459,7 @@ Secondary dependency:
 
 - Child 10 baseline must be complete
 - Child 11 spec and plan must be authored against the Child 10 baseline before code work starts
+- Child 11 is now formally unlocked as the next executable implementation child after that authoring and weekly unlock sync
 
 Scope guard:
 

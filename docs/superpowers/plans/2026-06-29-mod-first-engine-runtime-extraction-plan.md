@@ -14,8 +14,8 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, and Child 11 remains locked until its spec/plan are authored against the finalized baseline.`
-- Next Step: `Author Child 11 spec and plan against docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md before any Child 11 ownerization code work begins.`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring is complete, and Child 11 is now the next executable ownerization child.`
+- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md before any later child is considered.`
 - Verification: `Child 10 closeout parent sync: npm run lint:plans`
 
 - 2026-07-01
@@ -30,7 +30,7 @@
   - Summary: `Completed Child 9 closeout. RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and House Runtime Request baselines now exist as shared contracts, while adapter removal and runtime ownerization remain deferred to Child 10 / Child 11.`
   - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Execute Child 10 Runtime Ownerization Review And Baseline before any Child 11 implementation work.`
-- Notes: `This remains an orchestration-only parent plan. Child 1 through Child 8 are completed, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the finalized runtime-ownerization review/baseline artifact, and Child 11 remains the locked sub-runtime ownerization implementation child until its spec/plan are authored and queue unlock sync records it as executable. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Notes: `This remains an orchestration-only parent plan. Child 1 through Child 8 are completed, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the finalized runtime-ownerization review/baseline artifact, and Child 11 is now the unlocked sub-runtime ownerization implementation child because its spec/plan exist and queue unlock sync records it as executable. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -142,6 +142,10 @@
   - Summary: `Completed Child 10. The finalized baseline now records runtime owner vs bridge maturity, adapter keep/remove disposition, main.ts coupling limits, and the exact Child 11 execution boundary while keeping Child 11 locked until its spec/plan are authored against that baseline.`
   - Verification: `npm run lint:plans`
   - Next: `Author Child 11 spec and plan against the finalized baseline before any Child 11 implementation work starts.`
+- 2026-07-01
+  - Summary: `Authored the formal Child 11 implementation spec and plan, synchronized the parent and weekly queue state, and promoted Child 11 from locked candidate to the next executable child without reopening the frozen baseline.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 11 from its own implementation plan.`
 
 ## Why This Plan Exists
 
@@ -883,14 +887,15 @@ Confirm:
 ### Task 12: Author And Execute Child 11 Sub-Runtime Ownerization Implementation
 
 **Files:**
-- Create: `Child 11 spec and plan once Child 10 unlocks them`
+- Create: `docs/superpowers/specs/2026-07-01-sub-runtime-ownerization-implementation-spec.md`
+- Create: `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
 - Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 
-- [ ] **Step 1: Author Child 11 spec and plan against the Child 10 baseline**
+- [x] **Step 1: Author Child 11 spec and plan against the Child 10 baseline**
 
-Create the Child 11 implementation spec and plan only after Child 10 completes and the weekly plan explicitly records the unlock.
+Create the Child 11 implementation spec and plan after Child 10 completes and then use weekly unlock sync to promote Child 11 into executable queue state.
 
-- [ ] **Step 2: Verify Child 11 dependencies**
+- [x] **Step 2: Verify Child 11 dependencies**
 
 Confirm:
 
@@ -975,8 +980,8 @@ Do not mark this parent plan `completed` until:
 - [x] Child 10 Runtime Ownerization Review And Baseline spec and plan authored
 - [x] Child 10 baseline unlock document authored
 - [x] Child 10 completed
-- [x] Child 11 reserved in queue as a locked follow-up child
-- [ ] Child 11 spec and plan authored
+- [x] Child 11 reserved in queue as a locked follow-up child before unlock
+- [x] Child 11 spec and plan authored
 - [ ] Child 11 completed
 - [x] Shared-file conflict policy acknowledged
 - [x] Final orchestration verification recorded

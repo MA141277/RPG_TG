@@ -12,8 +12,8 @@
 
 - Status: `completed`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is finalized as a completed governance child. Child 11 remains locked because its spec/plan are not yet authored against the baseline.`
-- Next Step: `Author Child 11 spec and plan against docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md, then record the weekly unlock before any production ownerization code starts.`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline remains finalized as a completed governance child. Its baseline is now consumed by the authored Child 11 spec/plan set and the recorded weekly unlock sync.`
+- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md when production ownerization work begins.`
 - Verification: `npm run lint:plans`
 - Notes: `This child stayed document-governance only. It finalized runtime maturity, owner/bridge classification, adapter disposition, main.ts coupling, and Child 11 execution controls without absorbing production ownerization, adapter removal in code, UI/presenter work, resource planning, or boot/content assembly redesign.`
 
@@ -27,6 +27,10 @@
   - Summary: `Completed Child 10. The runtime ownerization baseline is now finalized, owner vs bridge status is explicit, adapter disposition and main.ts coupling are frozen for Child 11, and weekly governance now records Child 10 as completed while Child 11 remains locked pending spec/plan authoring.`
   - Verification: `npm run lint:plans`
   - Next: `Author Child 11 spec and plan against the finalized Child 10 baseline before any ownerization code work starts.`
+- 2026-07-01
+  - Summary: `Child 11 spec and plan were authored against the finalized Child 10 baseline, and weekly unlock sync now records Child 11 as the next executable implementation child without reopening the baseline.`
+  - Verification: `npm run lint:plans`
+  - Next: `Begin Child 11 from its own implementation plan when code work starts.`
 
 ---
 

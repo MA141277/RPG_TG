@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is now completed, and the queue is intentionally holding Child 11 in locked state until its spec/plan are authored against the finalized baseline.`
-- Next Step: `Author Child 11 spec and plan against docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md, then record the weekly unlock before any Child 11 production ownerization code starts. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first.`
-- Verification: `Child 10 closeout: npm run lint:plans`
-- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is now complete on the runtime ownerization review/baseline artifact, and Child 11 remains locked until Child 11 spec/plan exist and weekly unlock sync records it as executable. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, baseline, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring plus weekly unlock sync are complete, and Child 11 is now the next executable ownerization child.`
+- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md Task 1 Step 1. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first.`
+- Verification: `Child 11 authoring + unlock sync: npm run lint:plans`
+- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is now complete on the runtime ownerization review/baseline artifact, and Child 11 is now formally unlocked because its spec/plan exist against the finalized baseline and weekly unlock sync is recorded. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, baseline, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
 
@@ -159,6 +159,10 @@
   - Summary: `Completed Child 10. The runtime ownerization baseline is finalized, current owner vs bridge status is now explicit, adapter disposition and main.ts coupling are frozen for Child 11, and Child 11 remains locked until its spec/plan are authored against that baseline.`
   - Verification: `npm run lint:plans`
   - Next: `Author Child 11 spec and plan against the finalized baseline, then record the weekly unlock before any Child 11 implementation work starts.`
+- 2026-07-01
+  - Summary: `Authored the formal Child 11 implementation spec and plan against the finalized Child 10 baseline, completed the weekly unlock sync, and promoted Child 11 from locked candidate state to the next executable child.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md Task 1 Step 1.`
 
 ---
 
@@ -344,7 +348,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - The required review was completed for the state-boundary child, and Child 8 StateSync Runtime has now completed its first canonical boundary slice.
 - The required review was completed for Child 9, and Child 9 Runtime Contract Hardening is now the next executable child.
 - The required review was completed for Child 10, and Child 10 Runtime Ownerization Review And Baseline is now the formal post-Child-9 review child.
-- Child 11 Sub-Runtime Ownerization Implementation is now reserved in the queue, but it remains locked until Child 11 spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync records the unlock.
+- Child 11 Sub-Runtime Ownerization Implementation now has a formal spec and plan, and weekly unlock sync records it as the next executable child rather than a locked candidate.
 - Any new child after Child 11 must begin with a review of:
   - the five core weekly artifacts
   - current runtime/module maturity
@@ -477,27 +481,29 @@ The five core outputs are part of the weekly acceptance gate even though their d
   - Role: Child 9 Runtime Contract Hardening
   - Resume point: `Completed. Child 9 closeout sync and verification are recorded.`
 
-- `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
+  - `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
   - Role: Child 10 Runtime Ownerization Review And Baseline
-  - Resume point: `Completed on the finalized owner/bridge baseline. Child 11 remains locked until its spec/plan are authored against that baseline.`
+  - Resume point: `Completed on the finalized owner/bridge baseline. Child 11 spec/plan authoring and unlock sync are now complete.`
 
 ### In Progress
 
 - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
   - Role: active queue controller
-  - Resume point: `Child 9 is completed. Use Child 10 to finalize the runtime-ownerization baseline before unlocking Child 11.`
+  - Resume point: `Child 11 is unlocked and not started. Resume from its own plan Task 1 Step 1.`
 
 - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
   - Role: active weekly visibility companion
-  - Resume point: `Refresh the five core artifacts after Child 10 produces the runtime-ownerization baseline.`
+  - Resume point: `Refresh the five core artifacts after Child 11 unlock sync or after the first Child 11 implementation batch lands.`
 
 ### Not Started
 
+- `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
+  - Role: Child 11 Sub-Runtime Ownerization Implementation
+  - Resume point: `Start Task 1 Step 1 on shared dispatch convergence.`
+
 ### Future Candidates
 
-- `Child 11 Sub-Runtime Ownerization Implementation`
-  - Current file status: `locked`
-  - Reason: Child 10 is now complete, but Child 11 cannot start until Child 11 spec/plan are authored against the finalized baseline and weekly unlock sync explicitly records the unlock.
+- None currently recorded beyond Child 11 in the active weekly queue.
 
 ### Blocked
 
@@ -654,10 +660,10 @@ The five core outputs are part of the weekly acceptance gate even though their d
       - Child 10 does not absorb production ownerization, UI/layout work, or resource planning
 
 11. `Child 11 Sub-Runtime Ownerization Implementation`
-   - Queue status: `candidate-locked`
+   - Queue status: `not-started`
    - Primary subsystem boundary: `Shared dispatch convergence`, `Interaction Runtime ownerization`, `House Runtime ownerization`, `Effect Settlement alignment`
    - Depends on: Queue Item 10 completed, Child 10 closeout sync recorded, and Child 11 spec/plan authored against the Child 10 baseline
-   - Start condition: satisfied only after Child 10 completes, the weekly plan explicitly records Child 11 as unlocked, and Child 11 spec/plan exist
+   - Start condition: satisfied; Child 10 is complete, Child 11 spec/plan now exist, and the weekly plan explicitly records Child 11 as unlocked
    - Exit condition:
       - covered shared runtime entry converges on dispatch/router ownership
       - covered interactive flows are runtime-owned with any retained adapter reduced to an explicitly justified thin seam

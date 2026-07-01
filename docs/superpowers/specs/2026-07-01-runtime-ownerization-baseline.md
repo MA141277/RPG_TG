@@ -10,7 +10,7 @@
 
 **Baseline Status:** `finalized`
 
-**Current Child 11 Status:** `locked until Child 11 spec/plan are authored against this baseline and weekly unlock sync records the unlock`
+**Current Child 11 Status:** `unlocked; Child 11 spec/plan are authored against this baseline and weekly queue sync now records Child 11 as executable`
 
 **Related Child 10 Spec:** `docs/superpowers/specs/2026-07-01-runtime-ownerization-review-spec.md`
 
@@ -325,7 +325,7 @@ Child 10 closeout and Child 11 unlock must review and, when needed, update:
 
 ## 22. Unlock Rule And Current Status
 
-As of Child 10 closeout, this baseline is finalized, but Child 11 is still intentionally locked. The remaining unlock work is Child 11 spec/plan authoring plus the explicit weekly unlock sync that records Child 11 as executable.
+As of the Child 11 authoring and weekly unlock sync batch, this baseline remains finalized and its unlock conditions are now satisfied. Child 11 is therefore executable, but still constrained by this baseline as the controlling ownerization boundary.
 
 Child 11 is unlocked only when all of the following are true:
 
@@ -339,8 +339,8 @@ Child 11 is unlocked only when all of the following are true:
 - [x] Child 11 verification mapping is explicit
 - [x] Child 11 accepted residual debt is explicit
 - [x] weekly plan records Child 10 complete
-- [ ] Child 11 spec and plan are authored against this baseline
-- [ ] weekly queue sync explicitly records Child 11 as unlocked
+- [x] Child 11 spec and plan are authored against this baseline
+- [x] weekly queue sync explicitly records Child 11 as unlocked
 
 ## 23. Done-Enough Exit Condition
 
