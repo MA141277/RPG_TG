@@ -2,6 +2,23 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-02 UI Contract Reserve
+
+### Added
+- 新增 `src/domain/ui/*` 未来 UI contract reserve 类型：`screen-schema`、`screen-layout`、`screen-skin`、`asset-catalog` 与组合后的 `ui-screen-contract`。
+- 新增 `src/application/ui/*` 纯 UI reserve seam：validator、layout/skin resolver、asset layered alias resolver 与 builtin registry。
+- 新增 `src/content/ui/*` builtin reserve 数据，覆盖当前 layout editor 的四个 screen target，并提供 alias-based UI asset catalog。
+
+### Changed
+- `src/domain/content-pack.ts` 增加可选 `uiScreenSchemas`、`uiLayouts`、`uiSkins`、`uiAssetCatalogs` reserve 字段。
+- `src/application/content/content-pack-loader.ts` 以加法方式支持对应的 optional UI split-table file keys，不要求现有 pack 提供这些文件。
+- `tests/robustness.test.cjs` 增加 UI contract reserve、builtin reserve seed、optional pack UI reserve、以及 inactive-by-default 保护测试。
+- `tsconfig.test.json` 现在覆盖 `src/content/ui/**/*.ts`，使 Child 12 reserve 模块进入测试编译；同时避免把依赖 `import.meta.glob` 的现有 layout-editor runtime 文件误纳入 CommonJS 测试构建。
+
+### Impact
+- Child 12 已完成：future UI contract reserve、pack UI split-table reserve 与 explicit asset layering rules 均已落地，但当前 `src/main.ts`、现有 layout editor 路径和默认 runtime/render 行为保持不变。
+- 这次落地没有启用 Editor mode，也没有把 reserve registry 接进当前生产运行时；后续 UI override / schema-driven renderer 工作仍需新的 child 明确接手。
+
 ## 2026-07-01 Runtime Contract Hardening
 
 ### Added

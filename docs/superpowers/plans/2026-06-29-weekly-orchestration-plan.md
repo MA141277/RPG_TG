@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 11 is completed on the approved shared follow-up, covered interactive, covered house, and covered settlement slices. Child 12 is now the immediate next executable UI layout/interface-reserve child, and Child 13 remains locked behind Child 12.`
-- Next Step: `Start Child 12 from docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md instead of reopening Child 11, keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step, and keep Child 12 ahead of Child 13 in execution order.`
-- Verification: `Child 11 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "effect settlement contract exports emitter applier input and result seams|runtime dispatch settles effects after routing|covered settlement path stays on shared runtime ownership"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Current Focus: `Child 12 is now completed on the additive UI contract reserve landing. Child 13 is now the next executable child, while Child 11 remains closed and Child 12 must not be reopened as runtime-ownerization backfill.`
+- Next Step: `When implementation resumes, start Child 13 from docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md, keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step, and do not reopen Child 12's additive-only scope.`
+- Verification: `Child 12 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "ui contract modules export the reserve contract families|ui asset resolver prefers higher-priority layered aliases|ui reserve registry returns builtin-only defaults when no overrides exist|builtin ui reserve content covers the current layout-editor targets|content pack definition accepts optional ui reserve fields|content pack loader ignores missing optional ui reserve files|main runtime path does not import the ui reserve registry yet|existing layout editor target registry still stays on the current ui-layout path"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the runtime ownerization review/baseline artifact, and Child 11 is now complete on the approved ownerization slices without reopening the frozen Child 9/10 surfaces. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, baseline, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
@@ -191,6 +191,10 @@
   - Summary: `Reconciled stale post-Child-11 queue wording across the weekly controller. Child 11 is now consistently treated as completed, Child 12 is now recorded as the immediate next executable child rather than a future candidate, and Child 13 remains the locked follow-up after Child 12.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 12 from its own plan when implementation resumes.`
+- 2026-07-02
+  - Summary: `Completed Child 12 closeout and weekly queue sync. Formal UI contract reserve types, additive UI reserve seams, builtin reserve content, optional pack UI split-table support, and inactive-by-default protection are now landed; Child 12 is now closed and Child 13 is explicitly unlocked as the next executable child.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "ui contract modules export the reserve contract families|ui asset resolver prefers higher-priority layered aliases|ui reserve registry returns builtin-only defaults when no overrides exist|builtin ui reserve content covers the current layout-editor targets|content pack definition accepts optional ui reserve fields|content pack loader ignores missing optional ui reserve files|main runtime path does not import the ui reserve registry yet|existing layout editor target registry still stays on the current ui-layout path"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `When implementation resumes, start Child 13 from its own plan and keep Child 12 closed.`
 
 ---
 
@@ -521,23 +525,21 @@ The five core outputs are part of the weekly acceptance gate even though their d
 
 - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
   - Role: active weekly visibility companion
-  - Resume point: `Keep the five core artifacts aligned with Child 11 completed and Child 12 queued next.`
+  - Resume point: `Keep the five core artifacts aligned with Child 12 completed and Child 13 next.`
 
 - `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
   - Role: Child 11 Sub-Runtime Ownerization Implementation
   - Resume point: `Completed. Covered shared follow-up, covered interactive, covered house, and covered settlement ownerization slices are all landed.`
 
-### Not Started
-
 - `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
   - Role: Child 12 UI Contract Reserve
-  - Resume point: `Immediate next executable child. Start Task 1 Step 1 from its own plan.`
+  - Resume point: `Completed on the additive UI contract reserve landing. Child 13 unlock is now recorded separately.`
 
-### Future Candidates
+### Not Started
 
 - `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
   - Role: Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit
-  - Resume point: `Locked behind Child 12. Unlock only after Child 11 completes, Child 12 completes, and a later weekly review confirms Bucket A convergence work exists.`
+  - Resume point: `Unlocked as the next executable child. Start Task 1 Step 1 from its own plan when implementation resumes.`
 
 ### Blocked
 
@@ -709,10 +711,10 @@ The five core outputs are part of the weekly acceptance gate even though their d
         - Task 4 covered settlement alignment is completed and Child 11 closeout is recorded
 
 12. `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
-   - Queue status: `not-started`
+   - Queue status: `completed`
    - Primary subsystem boundary: `Future UI Contract Reserve`, `Pack UI split-table reserve`, `Asset layering reserve`, `Executor / future Editor boundary reserve`
    - Depends on: Queue Item 11 completed and the recorded Child 11 closeout sync that promotes Child 12 into the executable queue
-   - Start condition: satisfied; Child 11 is completed, weekly governance now records Child 12 as the immediate next executable child, and Child 12 implementation stays additive without reopening current runtime ownerization scope
+   - Start condition: satisfied; Child 11 is completed, weekly governance promoted Child 12 into the executable queue, and Child 12 implementation stayed additive without reopening current runtime ownerization scope
    - Exit condition:
       - formal future UI contract reserve exists under `src/domain/ui/**`
       - optional pack UI reserve fields and loader support exist without forcing current packs to migrate
@@ -721,10 +723,10 @@ The five core outputs are part of the weekly acceptance gate even though their d
       - Child 12 does not enable Editor mode or absorb current renderer/runtime redesign
 
 13. `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
-   - Queue status: `future-candidate`
+   - Queue status: `not-started`
    - Primary subsystem boundary: `Shared dispatch convergence`, `Runtime-owned follow-up / reentry convergence audit`
    - Depends on: Queue Item 12 completed and a recorded later Child 13 review/unlock
-   - Start condition: Child 11 completed, Child 12 completed, weekly governance explicitly unlocks Child 13, and the later review confirms Bucket A convergence work exists without reopening Child 11 completion scope
+   - Start condition: satisfied; Child 11 completed, Child 12 completed, weekly governance now explicitly unlocks Child 13, and the later review baseline already records Bucket A convergence work without reopening Child 11 completion scope
    - Exit condition:
       - every remaining reviewed path is classified into Bucket A, Bucket B, or Bucket C
       - every Bucket A path converges through shared dispatch

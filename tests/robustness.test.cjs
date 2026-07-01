@@ -1591,6 +1591,163 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   }
 });
 
+test("ui contract modules export the reserve contract families", async () => {
+  const schema = await import("../.test-dist/domain/ui/screen-schema.js");
+  const layout = await import("../.test-dist/domain/ui/screen-layout.js");
+  const skin = await import("../.test-dist/domain/ui/screen-skin.js");
+  const assets = await import("../.test-dist/domain/ui/asset-catalog.js");
+  const contract = await import("../.test-dist/domain/ui/ui-screen-contract.js");
+
+  assert.equal(typeof schema.isScreenSchemaComponentKind, "function");
+  assert.equal(typeof layout.isScreenLayoutPreset, "function");
+  assert.equal(typeof skin.isScreenSkinPreset, "function");
+  assert.equal(typeof assets.isUiAssetCatalog, "function");
+  assert.equal(typeof contract.createEmptyResolvedScreenContract, "function");
+});
+
+test("ui asset resolver prefers higher-priority layered aliases", async () => {
+  const { resolveUiAssetAlias } = await import(
+    "../.test-dist/application/ui/ui-asset-resolver.js"
+  );
+
+  const resolved = resolveUiAssetAlias("ui.button.start.default", {
+    builtin: { "ui.button.start.default": "/builtin/start.png" },
+    pack: { "ui.button.start.default": "/pack/start.png" },
+    mod: { "ui.button.start.default": "/mod/start.png" },
+    user: { "ui.button.start.default": "/user/start.png" },
+  });
+
+  assert.equal(resolved?.url, "/user/start.png");
+});
+
+test(
+  "ui reserve registry returns builtin-only defaults when no overrides exist",
+  async () => {
+    const { createUiContractRegistry } = await import(
+      "../.test-dist/application/ui/ui-contract-registry.js"
+    );
+
+    const registry = createUiContractRegistry({
+      builtinSchemasById: {
+        "global-hud": { id: "global-hud", version: 1, components: [] },
+      },
+      builtinLayoutsById: {
+        "global-hud": {
+          screenId: "global-hud",
+          version: 1,
+          canvas: { width: 1600, height: 900 },
+          components: [],
+        },
+      },
+      builtinSkinsById: {
+        "global-hud": {
+          screenId: "global-hud",
+          version: 1,
+          themeId: "builtin",
+          components: [],
+        },
+      },
+      builtinAssetCatalogs: [],
+    });
+
+    assert.equal(registry.getSchema("global-hud")?.id, "global-hud");
+  }
+);
+
+test("builtin ui reserve content covers the current layout-editor targets", async () => {
+  const { builtinScreenSchemasById } = await import(
+    "../.test-dist/content/ui/screen-schemas/builtin-screen-schemas.js"
+  );
+  const { builtinLayoutPresetsById } = await import(
+    "../.test-dist/content/ui/layout-presets/builtin-layout-presets.js"
+  );
+  const { builtinSkinPresetsById } = await import(
+    "../.test-dist/content/ui/skin-presets/builtin-skin-presets.js"
+  );
+
+  for (const targetId of [
+    "global-hud",
+    "start-screen",
+    "character-select-screen",
+    "character-detail-screen",
+  ]) {
+    assert.equal(typeof builtinScreenSchemasById[targetId], "object");
+    assert.equal(typeof builtinLayoutPresetsById[targetId], "object");
+    assert.equal(typeof builtinSkinPresetsById[targetId], "object");
+  }
+});
+
+test("content pack definition accepts optional ui reserve fields", async () => {
+  const source = await fs.promises.readFile(
+    path.join(process.cwd(), "src", "domain", "content-pack.ts"),
+    "utf8"
+  );
+
+  assert.equal(source.includes("uiScreenSchemas"), true);
+  assert.equal(source.includes("uiLayouts"), true);
+  assert.equal(source.includes("uiSkins"), true);
+  assert.equal(source.includes("uiAssetCatalogs"), true);
+});
+
+test("content pack loader ignores missing optional ui reserve files", async () => {
+  const { loadContentPackFromManifestText } = await import(
+    "../.test-dist/application/content/content-pack-loader.js"
+  );
+  const originalFetch = global.fetch;
+
+  global.fetch = async () => ({
+    ok: true,
+    json: async () => [],
+  });
+
+  try {
+    const pack = await loadContentPackFromManifestText(
+      JSON.stringify({
+        schemaVersion: 1,
+        id: "pack.test",
+        title: "Pack Test",
+        files: { maps: "maps.json" },
+      }),
+      "file:///virtual/pack.json"
+    );
+
+    assert.equal(pack.id, "pack.test");
+    assert.equal(pack.uiScreenSchemas == null, true);
+    assert.equal(pack.uiLayouts == null, true);
+    assert.equal(pack.uiSkins == null, true);
+    assert.equal(pack.uiAssetCatalogs == null, true);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("main runtime path does not import the ui reserve registry yet", async () => {
+  const source = await fs.promises.readFile(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.equal(source.includes("./application/ui/ui-contract-registry"), false);
+});
+
+test(
+  "existing layout editor target registry still stays on the current ui-layout path",
+  async () => {
+    const source = await fs.promises.readFile(
+      path.join(
+        process.cwd(),
+        "src",
+        "application",
+        "layout-editor",
+        "layout-editor-target-registry.ts"
+      ),
+      "utf8"
+    );
+
+    assert.equal(source.includes("../../domain/ui-layout"), true);
+  }
+);
+
 test(
   "scenario pack loader resolves zhuyuanzhang manifest map asset urls on the real startup path",
   async () => {

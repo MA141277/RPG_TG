@@ -55,8 +55,8 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Child 9 queue state: completed as Runtime Contract Hardening, still limited to contract closure and not ownerization.
 - [x] Child 10 queue state: completed as Runtime Ownerization Review And Baseline and still limited to review/baseline governance, not production ownerization.
 - [x] Child 11 queue state: completed on covered shared follow-up, covered interactive, covered house, and covered settlement ownerization for the approved slices.
-- [x] Child 12 queue state: unlocked as the immediate post-Child-11 UI layout/interface-reserve child and now the next executable child.
-- [x] Child 13 queue state: locked behind Child 12 as the later runtime convergence-audit child.
+- [x] Child 12 queue state: completed on the additive UI layout/interface-reserve landing.
+- [x] Child 13 queue state: unlocked as the next executable runtime convergence-audit child after Child 12.
 
 ### Provisional Boundaries
 
@@ -110,8 +110,8 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Child 11 is allowed to target shared dispatch convergence, Interaction Runtime ownerization, House Runtime ownerization, and Effect Settlement alignment only because Child 11 spec/plan are now authored against that baseline and the weekly plan records the unlock.
 - [x] Child 11 must execute from its own implementation plan and must not treat weekly artifacts as a substitute for the frozen baseline or child-plan checklist.
 - [x] Child 11 is now completed and must not be silently reopened as Child 12 or Child 13 backfill.
-- [x] Child 12 remains ahead of Child 13 in execution order as the UI layout/interface-reserve child.
-- [x] Child 13 is allowed only after Child 11 and Child 12 complete, and only to converge remaining runtime-owned follow-up and reentry paths for already-covered runtime families.
+- [x] Child 12 remains closed as the UI layout/interface-reserve child and must not be reused as runtime-ownerization backfill.
+- [x] Child 13 is now allowed because Child 11 and Child 12 are complete, and it remains limited to converging remaining runtime-owned follow-up and reentry paths for already-covered runtime families.
 
 ### Remaining `main.ts` Coupling
 

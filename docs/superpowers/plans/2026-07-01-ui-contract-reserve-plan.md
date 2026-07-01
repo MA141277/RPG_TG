@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 11 closeout sync now records this as the immediate next executable UI layout/interface-reserve child. No production implementation batch has started yet.`
-- Next Step: `Start Task 1 Step 1 from this plan. Keep the work additive and do not bypass Child 12 to unlock Child 13 early.`
-- Verification: `Queue-state reconciliation: npm run lint:plans`
+- Current Focus: `Child 12 is completed. Formal UI contract reserve types, additive UI reserve resolvers, builtin reserve content, optional pack UI split-table support, and inactive-by-default protection are all landed without changing the active runtime/render/layout-editor path.`
+- Next Step: `Keep this child closed. Weekly closeout sync now records Child 13 as the next executable child, but do not start it from this plan.`
+- Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "ui contract modules export the reserve contract families|ui asset resolver prefers higher-priority layered aliases|ui reserve registry returns builtin-only defaults when no overrides exist|builtin ui reserve content covers the current layout-editor targets|content pack definition accepts optional ui reserve fields|content pack loader ignores missing optional ui reserve files|main runtime path does not import the ui reserve registry yet|existing layout editor target registry still stays on the current ui-layout path"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `Child 12 must stay additive. Do not change current src/main.ts render entry, current layout editor behavior, or current default pack runtime path while implementing this plan.`
 
 ## Progress Log
@@ -27,6 +27,10 @@
   - Summary: `Reconciled Child 12 queue state after Child 11 closeout. Weekly, parent, and visibility governance now treat Child 12 as the immediate next executable child, while Child 13 remains locked behind Child 12 completion and a later review.`
   - Verification: `npm run lint:plans`
   - Next: `Start Task 1 Step 1 from this plan without reopening Child 11 scope.`
+- 2026-07-02
+  - Summary: `Completed Child 12. Added formal src/domain/ui reserve contracts, additive src/application/ui validators/resolvers/registry, builtin src/content/ui reserve seeds for the current layout-editor targets, optional content-pack UI split-table fields/file keys, and protection tests proving the reserve path remains inactive by default.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "ui contract modules export the reserve contract families|ui asset resolver prefers higher-priority layered aliases|ui reserve registry returns builtin-only defaults when no overrides exist|builtin ui reserve content covers the current layout-editor targets|content pack definition accepts optional ui reserve fields|content pack loader ignores missing optional ui reserve files|main runtime path does not import the ui reserve registry yet|existing layout editor target registry still stays on the current ui-layout path"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Keep Child 12 closed. Child 13 may now be treated as the next executable child only through its own plan and weekly unlock wording.`
 
 ---
 
@@ -126,7 +130,7 @@ This child plan does not include:
 - Create: `src/domain/ui/ui-screen-contract.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Write the failing contract-export tests**
+- [x] **Step 1: Write the failing contract-export tests**
 
 Add tests like:
 
@@ -146,7 +150,7 @@ test("ui contract modules export the reserve contract families", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the targeted red tests**
+- [x] **Step 2: Run the targeted red tests**
 
 Run:
 
@@ -159,7 +163,7 @@ Expected:
 
 - the new targeted test fails because the new modules do not exist yet
 
-- [ ] **Step 3: Implement the minimal contract modules**
+- [x] **Step 3: Implement the minimal contract modules**
 
 Create reserve modules with minimal guards and helpers, for example:
 
@@ -200,7 +204,7 @@ export function isScreenSchemaComponentKind(
 }
 ```
 
-- [ ] **Step 4: Re-run the targeted contract tests**
+- [x] **Step 4: Re-run the targeted contract tests**
 
 Run:
 
@@ -213,7 +217,7 @@ Expected:
 
 - the targeted contract-export test passes
 
-- [ ] **Step 5: Run the full verification gate for Task 1**
+- [x] **Step 5: Run the full verification gate for Task 1**
 
 Run:
 
@@ -238,7 +242,7 @@ Expected:
 - Modify: `tests/robustness.test.cjs`
 - Read: `src/domain/ui/*.ts`
 
-- [ ] **Step 1: Write the failing reserve resolver tests**
+- [x] **Step 1: Write the failing reserve resolver tests**
 
 Add tests like:
 
@@ -274,7 +278,7 @@ test("ui reserve registry returns builtin-only defaults when no overrides exist"
 });
 ```
 
-- [ ] **Step 2: Run the targeted red tests**
+- [x] **Step 2: Run the targeted red tests**
 
 Run:
 
@@ -287,7 +291,7 @@ Expected:
 
 - the new resolver/registry tests fail before implementation
 
-- [ ] **Step 3: Implement the pure reserve seams**
+- [x] **Step 3: Implement the pure reserve seams**
 
 Implement pure helpers, for example:
 
@@ -313,7 +317,7 @@ export function resolveUiAssetAlias(
 }
 ```
 
-- [ ] **Step 4: Re-run the targeted reserve seam tests**
+- [x] **Step 4: Re-run the targeted reserve seam tests**
 
 Run:
 
@@ -326,7 +330,7 @@ Expected:
 
 - all targeted resolver/registry tests pass
 
-- [ ] **Step 5: Run the full verification gate for Task 2**
+- [x] **Step 5: Run the full verification gate for Task 2**
 
 Run:
 
@@ -351,7 +355,7 @@ Expected:
 - Read: `src/domain/ui-layout.ts`
 - Read: `src/content/layout-editor-presets.ts`
 
-- [ ] **Step 1: Write the failing builtin reserve seed tests**
+- [x] **Step 1: Write the failing builtin reserve seed tests**
 
 Add tests like:
 
@@ -380,7 +384,7 @@ test("builtin ui reserve content covers the current layout-editor targets", asyn
 });
 ```
 
-- [ ] **Step 2: Run the targeted red tests**
+- [x] **Step 2: Run the targeted red tests**
 
 Run:
 
@@ -393,7 +397,7 @@ Expected:
 
 - the builtin reserve-content coverage test fails before implementation
 
-- [ ] **Step 3: Implement builtin reserve seed modules**
+- [x] **Step 3: Implement builtin reserve seed modules**
 
 Seed reserve data from existing layout-editor defaults, for example:
 
@@ -417,7 +421,7 @@ Keep the seed additive:
 - do not delete `src/content/layout-editor-presets.ts`
 - do not wire these new builtin reserve modules into `src/main.ts`
 
-- [ ] **Step 4: Re-run the targeted builtin reserve tests**
+- [x] **Step 4: Re-run the targeted builtin reserve tests**
 
 Run:
 
@@ -430,7 +434,7 @@ Expected:
 
 - the builtin reserve-content coverage test passes
 
-- [ ] **Step 5: Run the full verification gate for Task 3**
+- [x] **Step 5: Run the full verification gate for Task 3**
 
 Run:
 
@@ -451,7 +455,7 @@ Expected:
 - Modify: `src/application/content/content-pack-loader.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Write the failing backward-compatible loader tests**
+- [x] **Step 1: Write the failing backward-compatible loader tests**
 
 Add tests like:
 
@@ -507,7 +511,7 @@ test("content pack loader ignores missing optional ui reserve files", async () =
 });
 ```
 
-- [ ] **Step 2: Run the targeted red tests**
+- [x] **Step 2: Run the targeted red tests**
 
 Run:
 
@@ -520,7 +524,7 @@ Expected:
 
 - the new optional-ui-field tests fail before implementation
 
-- [ ] **Step 3: Implement the additive pack reserve support**
+- [x] **Step 3: Implement the additive pack reserve support**
 
 Add optional fields only, for example:
 
@@ -557,7 +561,7 @@ Do not:
 - require these files
 - change current runtime consumers to read them
 
-- [ ] **Step 4: Re-run the targeted pack reserve tests**
+- [x] **Step 4: Re-run the targeted pack reserve tests**
 
 Run:
 
@@ -570,7 +574,7 @@ Expected:
 
 - all targeted optional-field tests pass
 
-- [ ] **Step 5: Run the full verification gate for Task 4**
+- [x] **Step 5: Run the full verification gate for Task 4**
 
 Run:
 
@@ -592,7 +596,7 @@ Expected:
 - Read: `src/content/layout-editor-presets.ts`
 - Read: `src/application/layout-editor/layout-editor-target-registry.ts`
 
-- [ ] **Step 1: Write the failing default-path protection tests**
+- [x] **Step 1: Write the failing default-path protection tests**
 
 Add tests like:
 
@@ -622,7 +626,7 @@ test("existing layout editor target registry still stays on the current ui-layou
 });
 ```
 
-- [ ] **Step 2: Run the targeted red tests**
+- [x] **Step 2: Run the targeted red tests**
 
 Run:
 
@@ -635,7 +639,7 @@ Expected:
 
 - both protection tests pass before the inactive-by-default closeout, proving the active runtime path is still disconnected from the reserve modules
 
-- [ ] **Step 3: Complete the inactive-by-default reserve landing**
+- [x] **Step 3: Complete the inactive-by-default reserve landing**
 
 Ensure the new reserve files remain disconnected from the active runtime path:
 
@@ -646,7 +650,7 @@ Ensure the new reserve files remain disconnected from the active runtime path:
 
 If any new code path accidentally connected the reserve modules into active runtime behavior, remove that connection now.
 
-- [ ] **Step 4: Re-run the targeted protection tests**
+- [x] **Step 4: Re-run the targeted protection tests**
 
 Run:
 
@@ -659,7 +663,7 @@ Expected:
 
 - both protection tests pass
 
-- [ ] **Step 5: Run the full verification gate for Task 5**
+- [x] **Step 5: Run the full verification gate for Task 5**
 
 Run:
 
@@ -680,7 +684,7 @@ Expected:
 - Modify: `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
 - Modify: `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 
-- [ ] **Step 1: Record the Child 12 reserve landing in the change log**
+- [x] **Step 1: Record the Child 12 reserve landing in the change log**
 
 Add a new dated entry summarizing:
 
@@ -689,11 +693,11 @@ Add a new dated entry summarizing:
 - builtin reserve content seeding
 - inactive-by-default protection
 
-- [ ] **Step 2: Record Child 12 execution outcome**
+- [x] **Step 2: Record Child 12 execution outcome**
 
 Update this plan's `Execution State`, `Progress Log`, and checkbox state only after all production verification passes.
 
-- [ ] **Step 3: Run the required queue/governance verification**
+- [x] **Step 3: Run the required queue/governance verification**
 
 Run:
 
@@ -705,7 +709,7 @@ Expected:
 
 - plan-governance checks pass
 
-- [ ] **Step 4: Confirm Child 12 exit criteria in the weekly docs**
+- [x] **Step 4: Confirm Child 12 exit criteria in the weekly docs**
 
 Record that:
 
@@ -717,7 +721,7 @@ Record that:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

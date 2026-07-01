@@ -20,7 +20,7 @@ It must show:
 - Child 9 Runtime Contract Hardening is now completed on all four approved shared contract baselines.
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the formal post-Child-9 review gate and controlling baseline artifact.
 - Child 11 Sub-Runtime Ownerization Implementation is now completed: Task 1 landed the minimum shared-dispatch follow-up convergence for the covered story-battle reentry path, Task 2 landed covered interactive ownerization for the city-begging path, Task 3 landed covered house ownerization for the grain-shop path, and Task 4 aligned the covered advanceTime settlement path before closeout.
-- Child 12 UI Contract Reserve is now the immediate next executable UI layout/interface-reserve child after Child 11, while Child 13 stays locked behind Child 12 as the later runtime convergence audit.
+- Child 12 UI Contract Reserve is now completed on the additive UI reserve landing, and Child 13 is now the next executable runtime convergence-audit child.
 
 ## Module Diagram
 
@@ -84,8 +84,8 @@ flowchart LR
 - Child 9 Runtime Contract Hardening, now completed as the shared contract-hardening baseline before later ownerization
 - Child 10 Runtime Ownerization Review And Baseline, now completed as the required pre-implementation review/baseline child after Child 9
 - Child 11 Sub-Runtime Ownerization Implementation, now the completed follow-up ownerization child for the approved covered runtime slices
-- Child 12 UI Contract Reserve, now the next executable UI layout/interface-reserve child after Child 11
-- Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit, now the locked later runtime continuation child after Child 12
+- Child 12 UI Contract Reserve, now completed on the additive UI layout/interface-reserve landing after Child 11
+- Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit, now the next executable runtime continuation child after Child 12
 
 ## Temporary Adapters
 
