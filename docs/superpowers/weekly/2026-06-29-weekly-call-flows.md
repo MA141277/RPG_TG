@@ -10,13 +10,14 @@ If a real flow cannot be described clearly, that area is still a black box.
 
 ## Current Coverage Status
 
-- Real implemented flows captured: `13`
+- Real implemented flows captured: `16`
 - Planned target flows captured: `0`
 - Acceptance status:
 - current batch requirement satisfied
 - task runtime flow captured after Child 6 closeout
 - mod runtime activation flow captured after Child 7 closeout
 - state sync runtime flow captured after Child 8 closeout
+- Child 9 preflight contract-hardening flows captured
 
 ## Flow 1: Current Game Boot Flow
 
@@ -244,3 +245,54 @@ runtime/app/save/presentation sync trigger -> syncState() -> hydrate/normalize o
 
 - `StateSync Runtime` owns synchronization and canonical boundary shaping only; it does not run task/event/story progression.
 - `src/core/runtime/state-sync-runtime.ts` exposes one small public `syncState()` entrypoint and delegates internal work to focused helper modules.
+
+## Flow 14: Current Shared Runtime Request To Router To Settlement Line
+
+### Narrative
+
+This is the first current production line that Child 9 will harden rather than redesign. Shared runtime input enters through `RuntimeRequest`, dispatch calls the routed callback, and settlement applies returned effects before the caller continues. The seam is real, but the request/router language is still intentionally minimal and is therefore the first Child 9 hardening target.
+
+### Call Chain
+
+```text
+RuntimeRequest -> dispatchRuntimeRequest() -> routeRequest() -> RuntimeResult -> applyEffects() -> settled RuntimeResult.state
+```
+
+### Notes
+
+- This is a real current seam, not a planned one.
+- Child 9 should harden the request/router contract at this seam without turning the child into shared-runtime ownerization.
+
+## Flow 15: Current Interactive Dispatch Through The Bridge Runtime
+
+### Narrative
+
+The current covered interactive path already runs through the core runtime seam, but the public interactive dispatch language is still only partially formalized. `main.ts` or a house-triggered caller creates an interactive launch/action request, `src/core/runtime/interactive-runtime.ts` accepts it, and the bridge delegates into the legacy interactive adapter for minigame or story-battle behavior. This is the real flow Child 9 must formalize as one dispatch contract.
+
+### Call Chain
+
+```text
+interactive intent -> createLaunchInteractiveRequest() or createInteractiveActionRequest() -> runInteractiveRuntime() -> legacy-interactive-adapter.ts -> activity-qte/city-begging/story-battle legacy implementation -> RuntimeResult
+```
+
+### Notes
+
+- The business logic still runs behind adapters, which is acceptable for Child 9.
+- Child 9 should harden launch/action/exit and minigame dispatch language here, not remove the adapters.
+
+## Flow 16: Current House Runtime Request Through The Bridge Adapter
+
+### Narrative
+
+The current house seam is already routed through `src/core/runtime/house-runtime.ts`, but the public request shape still leaks the domain `HouseModuleRequest` into the core-owned public surface. The runtime bridge delegates `enter`, `leave`, and current-session dispatch into the legacy adapter. This is the exact current flow Child 9 must narrow behind a core-owned request contract.
+
+### Call Chain
+
+```text
+house enter/leave/or module request -> enterHouseThroughRuntime() / leaveHouseThroughRuntime() / dispatchHouseRuntimeRequest() -> legacy-house-adapter.ts -> application/house/* -> current house session result
+```
+
+### Notes
+
+- This is the current compatibility bridge, not the target owner model.
+- Child 9 should replace the public request vocabulary at this seam, while leaving actual house business logic in place for a later child.

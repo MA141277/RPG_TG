@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `The five-core-artifact weekly bundle now reflects completed Child 8 StateSync Runtime. Visibility records src/core/contracts/state-sync-runtime.ts, src/core/runtime/state-sync-*, the legacy RuntimeState aliases, and the src/main.ts bridge helper migration into StateSync ownership.`
-- Next Step: `Do not refresh for a new child until the weekly controller completes a fresh runtime/module/artifact review and creates an explicit next spec and plan.`
-- Verification: `Child 8 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Current Focus: `The five-core-artifact weekly bundle now reflects completed Child 8 StateSync Runtime plus the formal promotion of Child 9 Runtime Contract Hardening as the next executable child.`
+- Next Step: `Refresh the five core artifacts so they point to Child 9 as the active next child and reflect the new contract-hardening queue state.`
+- Verification: `Child 9 planning sync: npm run lint:plans`
 - Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review.`
 
 ## Progress Log
@@ -84,9 +84,17 @@
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Run npm run lint:plans, then update the five core artifacts again after the first Child 8 StateSync Runtime batch lands.`
 - 2026-07-01
-  - Summary: `Updated the five-core-artifact weekly bundle after Child 8 closeout. The bundle now records formal StateSync contracts, mandatory triggers, syncState, validation/normalization/hydration/app-bridge/pre-save/mod-rebuild/presentation helper modules, bridge-period RuntimeState aliases, and src/main.ts no longer declaring the interactive RuntimeState bridge helpers directly. No child beyond Child 8 is currently promoted.`
+  - Summary: `Updated the five-core-artifact weekly bundle after Child 8 closeout. At that closeout point, the bundle recorded formal StateSync contracts, mandatory triggers, syncState, validation/normalization/hydration/app-bridge/pre-save/mod-rebuild/presentation helper modules, bridge-period RuntimeState aliases, and src/main.ts no longer declaring the interactive RuntimeState bridge helpers directly.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Run a fresh runtime/module/artifact review before creating or promoting any child beyond Child 8.`
+- 2026-07-01
+  - Summary: `Completed the required post-Child-8 review and synchronized the visibility companion to the new queue truth. The five core artifacts now need to reflect Child 9 Runtime Contract Hardening as the next executable child instead of treating the queue as open-ended after Child 8.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep the review index, next split review, architecture report, and subsystem mapping aligned with Child 9 until implementation starts.`
+- 2026-07-01
+  - Summary: `Enhanced the weekly module map and call-flow artifacts for Child 9 preflight. The module map now marks Child 9's direct touch surface and explicit boundary guards, and the call-flow artifact now captures the real shared request->router->settlement line, the current interactive dispatch bridge, and the current house-runtime bridge so contract hardening can iterate against actual flows instead of only type-level targets.`
+  - Verification: `npm run lint:plans`
+  - Next: `Use these artifact additions as the visibility baseline when Child 9 implementation starts.`
 
 ---
 
@@ -95,7 +103,7 @@
 - Weekly orchestration controller:
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Active next child plan:
-  - `None currently promoted beyond completed Child 8.`
+  - `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
 - Parent orchestration plan:
   - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 

@@ -404,6 +404,27 @@ Secondary dependency:
 - Child 4 minimum `RuntimeState` / `RuntimeResult` carrier
 - Child 5, Child 6, and Child 7 are completed; Child 8 is completed on the first formal StateSync Runtime canonical boundary
 
+### Child 9: `2026-07-01-runtime-contract-hardening-plan.md`
+
+Primary subsystem coverage:
+
+- Shared Runtime contract layer
+- Runtime Dispatch / Router contract seam
+- Interaction Runtime public dispatch contract seam
+- Effect Settlement Runtime contract seam
+- House Runtime public request seam
+
+Secondary dependency:
+
+- Child 4 bridge-period Interaction Runtime and House Runtime seams already exist
+- Child 8 canonical StateSync boundary is completed
+- Child 9 hardens contracts only; it does not claim runtime ownerization
+
+Scope guard:
+
+- Child 9 may harden shared request/router typing and public dispatch contracts
+- Child 9 must not absorb Interactive Runtime ownerization, House Runtime ownerization, UI/layout work, or resource planning
+
 ## 7. Planning Rules For Future Child Plans
 
 When authoring a new child plan:

@@ -53,7 +53,8 @@
   - Child 5 is completed.
 - Child 6 is completed.
 - Child 7 is completed.
-- Child 8 is completed; no child beyond Child 8 is currently promoted.
+- Child 8 is completed.
+- Child 9 Runtime Contract Hardening is now the next executable child.
   - Child 6 must not reoccupy the older default-mod migration placeholder scope.
 - Dependency gate:
   - Child 1 must be completed.

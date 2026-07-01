@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 8 StateSync Runtime is completed. No child beyond Child 8 is currently promoted.`
-- Next Step: `Review runtime/module/artifact state before creating or promoting any Child 9.`
-- Verification: `Child 8 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1, Child 2, Child 3, Child 4, Child 5, Child 6, Child 7, and Child 8 are completed. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Current Focus: `Child 8 StateSync Runtime is completed, and Child 9 Runtime Contract Hardening is now defined as the next executable child.`
+- Next Step: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1.`
+- Verification: `Child 9 planning sync: npm run lint:plans`
+- Notes: `This remains an orchestration-only parent plan. Child 1, Child 2, Child 3, Child 4, Child 5, Child 6, Child 7, and Child 8 are completed, and Child 9 is now defined as the contract-hardening child that precedes later sub-runtime ownerization. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -113,6 +113,10 @@
   - Summary: `Completed Child 8 StateSync Runtime. Formal StateSync contracts, mandatory triggers, syncState, validation, normalization, hydration, app bridge, pre-save snapshot, mod rebuild, and presentation input helper modules now exist under src/core, and src/main.ts no longer declares the interactive RuntimeState bridge helpers directly.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Do not promote Child 9 until a fresh runtime/module/artifact review creates an explicit spec and plan.`
+- 2026-07-01
+  - Summary: `Completed the required post-Child-8 review and created formal Child 9 Runtime Contract Hardening spec and plan. Child 9 scope is limited to typed RuntimeRequest/Router, formal Interactive/Minigame Dispatch, formal Effect Settlement, and minimum House Runtime Request contracts, so later sub-runtime ownerization can proceed on a stable contract baseline.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1.`
 
 ## Why This Plan Exists
 
@@ -802,5 +806,6 @@ Do not mark this parent plan `completed` until:
 - [x] Child 7 completed
 - [x] Child 8 StateSync Runtime spec and plan authored
 - [x] Child 8 completed
+- [x] Child 9 Runtime Contract Hardening spec and plan authored
 - [x] Shared-file conflict policy acknowledged
 - [x] Final orchestration verification recorded

@@ -13,7 +13,7 @@
 - Status: `completed`
 - Last Updated: `2026-07-01`
 - Current Focus: `Child 8 StateSync Runtime is completed on the first canonical state boundary slice. src/core/contracts/state-sync-runtime.ts defines CanonicalRuntimeState, app/save/presentation boundaries, mandatory triggers, StateSyncResult, and StateSyncRuntime; src/core/runtime/state-sync-* owns syncState plus hydration, normalization, app bridge, pre-save, mod rebuild, presentation input, and validation helpers.`
-- Next Step: `Do not promote a Child 9 automatically. Review runtime/module/artifact state first, then create a new spec and plan only for a justified next child.`
+- Next Step: `Child 9 Runtime Contract Hardening is now the next executable child; continue follow-up work from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md.`
 - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This is Child Plan 8 under the mod-first engine/runtime extraction roadmap. It owns synchronization, normalization, hydration, reconstruction, and write-back coordination only. It must not become gameplay dispatch, save IO, mod activation, presenter, or feature-specific orchestration.`
 
@@ -65,7 +65,8 @@
   - Child 5 is completed.
   - Child 6 is completed.
   - Child 7 is completed.
-  - Child 8 is completed; no child beyond Child 8 is currently promoted.
+  - Child 8 is completed.
+  - Child 9 Runtime Contract Hardening is now the next executable child.
 
 ## Scope
 

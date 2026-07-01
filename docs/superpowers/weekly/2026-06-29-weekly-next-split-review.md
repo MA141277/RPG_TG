@@ -29,11 +29,11 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `TBD after review`
+  - `src/core/contracts`
 - Reason:
-  - Child 8 StateSync Runtime is complete, so there is no automatic next executable child. The next split must come from a fresh review of runtime/module maturity, remaining main.ts coupling, and weekly artifact state.
+  - The required post-Child-8 review is complete. Child 9 Runtime Contract Hardening is now the next executable child and should harden the minimum shared contracts before later sub-runtime ownerization.
 - Category:
-  - `review-required`
+  - `Child 9 queued`
 
 ## Non-Selected Candidates
 
@@ -61,15 +61,16 @@ Do not decide the next split only from intuition.
 | Module | Current Status | Why It Is Not Done | Blocking Risk | Suggested Next Action |
 | --- | --- | --- | --- | --- |
 | `src/core/contracts` | `needs-hardening` | Contracts are consumed by boot, runtime dispatch, save envelope, and adapter handoff, but remain intentionally minimal. | `P1` | Harden only when a later child proves a real new requirement. |
-| `src/core/runtime` | `needs-hardening` | Child 3/4 seams exist, but one final routing shape does not cover every interactive surface yet. | `P2` | Keep stable during Child 5; revisit through a planned runtime-consolidation child if it becomes the next bottleneck. |
+| `Child 9 Runtime Contract Hardening` | `queued` | The next child is now defined but not started; it covers typed RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and minimum House Runtime Request contracts only. | `P1` | Execute Child 9 from its spec and plan without expanding into ownerization work. |
+| `src/core/runtime` | `needs-hardening` | Child 3/4 seams exist, but one final routing shape does not cover every interactive surface yet. | `P2` | Keep stable during Child 9 except where contract hardening directly requires alignment. |
 | `src/core/save` | `needs-migration` | Save boundary is hardened, but app-level callers still need to consume it directly. | `P1` | Keep stable until real save/load caller work resumes. |
-| `src/application/presenter` | `provisional` | Presenter output exists, but full layout schema and final view-model cleanup are still later work. | `P2` | Hold stable during Child 8; avoid expanding presenter scope. |
-| `Task Runtime` | `landed-first-slice` | Formal TaskDefinition, TaskInstance, lifecycle, and signal-driven progression now exist, but task UI/authoring DSL/custom evaluator plugins are later work. | `P2` | Keep stable during Child 8; do not expand task runtime scope while state sync is being extracted. |
-| `src/core/mods/*` | `landed-first-slice` | Formal Mod Runtime activation/startup seam now exists, but full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy are later work. | `P2` | Keep stable during Child 8; do not expand mod runtime scope while state sync is being extracted. |
+| `src/application/presenter` | `provisional` | Presenter output exists, but full layout schema and final view-model cleanup are still later work. | `P2` | Hold stable during Child 9; avoid expanding presenter scope. |
+| `Task Runtime` | `landed-first-slice` | Formal TaskDefinition, TaskInstance, lifecycle, and signal-driven progression now exist, but task UI/authoring DSL/custom evaluator plugins are later work. | `P2` | Keep stable during Child 9; do not expand task runtime scope while contract hardening is being extracted. |
+| `src/core/mods/*` | `landed-first-slice` | Formal Mod Runtime activation/startup seam now exists, but full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy are later work. | `P2` | Keep stable during Child 9; do not expand mod runtime scope while contract hardening is being extracted. |
 | `src/core/runtime/state-sync-*` | `landed-first-slice` | Formal StateSync contracts, triggers, syncState, and helper modules now exist, but deeper integration remains future work. | `P2` | Review before deciding whether a follow-up child is justified. |
-| `src/ui/app-render.ts` | `provisional` | It now consumes presenter output, but still owns markup composition and should not absorb new gameplay selection. | `P2` | Keep stable during Child 8; revisit only for layout renderer work. |
+| `src/ui/app-render.ts` | `provisional` | It now consumes presenter output, but still owns markup composition and should not absorb new gameplay selection. | `P2` | Keep stable during Child 9; revisit only for layout renderer work. |
 | `src/ui/layout-renderer.ts` | `needs-contract` | Schema-driven layout seam is planned only. | `P2` | Let Child 5 establish presenter output first. |
-| `src/application/house/*` | `needs-adapter` | House behavior still runs through legacy runtime delegation behind the Child 4 bridge. | `P2` | Hold steady during Child 5; revisit only through a planned runtime follow-up. |
+| `src/application/house/*` | `needs-adapter` | House behavior still runs through legacy runtime delegation behind the Child 4 bridge. | `P2` | Hold steady during Child 9; only expose the minimum core-owned request seam required by the contract child. |
 
 ## Deprioritized Items
 

@@ -13,7 +13,7 @@
 - Status: `completed`
 - Last Updated: `2026-07-01`
 - Current Focus: `Child 7 Mod Runtime is completed. Formal contracts, source normalization/loading/parsing seams, dependency/capability guards, atomic activation, startup adapter, and restore-time selected-mod re-activation are in production code.`
-- Next Step: `Child 8 is completed; no child beyond Child 8 is currently promoted. Review runtime/module/artifact state before creating a follow-up child.`
+- Next Step: `Child 8 is completed, and Child 9 Runtime Contract Hardening is now the next executable child.`
 - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This is Child Plan 7 under the mod-first engine/runtime extraction roadmap. The public subsystem name is Mod Runtime. Loader, parser, dependency, capability, and adapter seams may exist internally, but they do not become separate child runtimes.`
 
@@ -30,7 +30,7 @@
 - 2026-07-01
   - Summary: `Completed Child 7 Mod Runtime. src/core/contracts/mod-runtime.ts, src/core/mods/*, and src/core/adapters/mod-runtime-main-adapter.ts now provide source descriptors, loaded/activated mod contracts, runtime state, request/failure/result seams, source normalization/loading/parsing, dependency and capability validation, atomic activation with rollback, and a legacy bootstrap adapter. src/main.ts now activates builtin, file-imported, url-imported, and saved selected mods through Mod Runtime before downstream startup/content assembly, while content assembly, save/load IO, gameplay runtimes, UI, and presenter work remain outside Mod Runtime ownership.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "mod runtime contract exports|mod runtime normalizes builtin file and url sources|mod runtime activation is atomic|mod runtime main adapter lets startup consume|save restore re-activates selected mod|mod runtime does not absorb content assembly"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-  - Next: `Child 8 is completed; review runtime/module/artifact state before creating a follow-up child.`
+  - Next: `Child 8 is completed, and Child 9 Runtime Contract Hardening is now the next executable child.`
 
 ---
 

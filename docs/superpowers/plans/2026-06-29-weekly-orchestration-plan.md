@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 8 StateSync Runtime is completed; no child beyond Child 8 is currently promoted.`
-- Next Step: `Run closeout sync across the five core weekly artifacts, then review runtime/module/artifact state before creating or promoting any Child 9. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first.`
-- Verification: `Child 8 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build; npm run lint:plans`
-- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, and Child 8 is complete on the first formal StateSync Runtime canonical boundary. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+- Current Focus: `Child 8 StateSync Runtime is completed, and Child 9 Runtime Contract Hardening is now defined as the next executable child.`
+- Next Step: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first.`
+- Verification: `Child 9 planning sync: npm run lint:plans`
+- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, and Child 9 is now defined as the runtime-contract hardening child. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
 
@@ -131,6 +131,10 @@
   - Summary: `Completed Child 8 StateSync Runtime. src/core/contracts/state-sync-runtime.ts now defines CanonicalRuntimeState, AppStateBridge, SaveState, PresentationInput, StateSyncTrigger, StateSyncResult, StateSyncContext, and StateSyncRuntime; src/core/runtime/state-sync-* now owns syncState plus validation, normalization, hydration, app bridge sync, pre-save snapshot preparation, mod activation rebuild, and presentation input preparation. src/main.ts no longer declares the interactive RuntimeState bridge helpers directly.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "state sync runtime contract exports|state sync trigger contract includes|state sync runtime exports one small sync entrypoint|main.ts does not add new feature-specific state sync branches"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Do not promote any child beyond Child 8 until a fresh runtime/module/artifact review creates an explicit next spec and plan.`
+- 2026-07-01
+  - Summary: `Completed the required post-Child-8 review and created formal Child 9 Runtime Contract Hardening spec and plan. Child 9 scope is limited to typed RuntimeRequest/Router, formal Interactive/Minigame Dispatch, formal Effect Settlement, and minimum House Runtime Request contracts; Child 10 ownerization remains blocked behind Child 9 closeout and a later preflight review.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1.`
 
 ---
 
@@ -153,7 +157,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - 优先收敛 Shared Runtime / Runtime Dispatch / Router / Interaction Runtime / House Runtime integration seam / Shared Runtime State carrier。
 - 保持当前功能兼容现有状态，不要求本周完成全量迁移。
 - 通过计划文档、五份核心 weekly artifact、边界说明降低项目黑盒程度。
-- 当前队列口径：Child 4 已完成，Child 5 已完成 presenter/render decoupling，Child 6 已完成 Task Runtime 首版抽离，Child 7 已完成 Mod Runtime 首版抽离，Child 8 已完成 StateSync Runtime 首版 canonical boundary；Child 8 之外的新增 child 必须先复盘再决定是否拆出独立 spec + plan。
+- 当前队列口径：Child 4 已完成，Child 5 已完成 presenter/render decoupling，Child 6 已完成 Task Runtime 首版抽离，Child 7 已完成 Mod Runtime 首版抽离，Child 8 已完成 StateSync Runtime 首版 canonical boundary，Child 9 已正式定义为 Runtime Contract Hardening；Child 10 及之后的新增 child 仍必须先复盘再决定是否拆出独立 spec + plan。
 
 ## Weekly Focus Modules
 
@@ -314,7 +318,8 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - Child 6 Task Runtime has now been completed from its existing spec and plan.
 - The required review was completed for Child 7, and Child 7 Mod Runtime has now completed its first activation/startup seam.
 - The required review was completed for the state-boundary child, and Child 8 StateSync Runtime has now completed its first canonical boundary slice.
-- Any new child after Child 8 must begin with a review of:
+- The required review was completed for Child 9, and Child 9 Runtime Contract Hardening is now the next executable child.
+- Any new child after Child 9 must begin with a review of:
   - the five core weekly artifacts
   - current runtime/module maturity
   - current `src/main.ts` coupling
@@ -322,7 +327,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
   - unresolved promotion gates such as `characterDefinitions`
 - Only after that review may the weekly controller decide which module deserves an independent child.
 - A new child must then get its own spec and plan before production code work starts.
-- Do not treat Child 7 or Child 8 authoring as permission to batch-create additional immature children just because their modules are listed in the weekly inventory.
+- Do not treat Child 7, Child 8, or Child 9 authoring as permission to batch-create additional immature children just because their modules are listed in the weekly inventory.
 ## Weekly Constraints
 
 - Execute concrete code changes from child plans only.
@@ -592,6 +597,18 @@ The five core outputs are part of the weekly acceptance gate even though their d
       - runtime/app/save/presentation source-of-truth rules are explicit
       - mandatory sync triggers exist
       - StateSync does not absorb gameplay dispatch, save IO, mod activation, or presentation ownership
+
+9. `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
+   - Queue status: `not-started`
+   - Primary subsystem boundary: `Shared Runtime contract layer`
+   - Depends on: Queue Item 8 completed and a recorded post-Child-8 review
+   - Start condition: satisfied after Child 8 closeout review created the Child 9 spec and plan
+   - Exit condition:
+      - typed `RuntimeRequest / Router` contract baseline exists
+      - formal `Interactive / Minigame Dispatch` contract baseline exists
+      - formal `Effect Settlement` contract baseline exists
+      - minimum `House Runtime Request` contract baseline exists
+      - Child 9 does not absorb runtime ownerization, UI/layout work, or resource planning
 
 ## Verification Policy
 

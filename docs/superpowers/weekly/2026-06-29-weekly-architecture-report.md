@@ -17,7 +17,7 @@ It must show:
 
 - This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, advanced Child 4 through interactive/runtime carrier slices, completed Child 5 presenter/render decoupling, completed Child 6 Task Runtime, completed Child 7 Mod Runtime, and completed Child 8 StateSync Runtime.
 - The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/*`, `src/core/mods/*`, `src/core/runtime/state-sync-*`, `src/application/presenter`, and `src/core/runtime/task-runtime.ts` now exist as concrete boundary slices with read/write persistence, first-pass navigation, covered interactive entry, minimum shared-dispatch return behavior, presenter-output render selection, formal task lifecycle/progression ownership, formal mod activation/startup ownership, and formal state synchronization ownership.
-- No child beyond Child 8 is currently promoted. The next reduction should come from a fresh runtime/module/artifact review rather than automatic queue expansion.
+- Child 9 Runtime Contract Hardening is now defined as the next executable child. The next reduction after Child 9 should still come from a fresh runtime/module/artifact review rather than automatic queue expansion.
 
 ## Module Diagram
 
@@ -78,13 +78,14 @@ flowchart LR
 - Child 6 Task Runtime extraction, completed on the first formal contract/lifecycle/progression slice
 - Child 7 Mod Runtime extraction, completed on the first activation/startup seam
 - Child 8 StateSync Runtime extraction, completed on the first formal canonical boundary slice
+- Child 9 Runtime Contract Hardening, now defined as the next executable child for shared contract hardening before later ownerization
 
 ## Temporary Adapters
 
 - `src/core/adapters/legacy-main-adapter.ts` is now implemented as a temporary bridge
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` are now implemented as temporary bridges
 - Legacy interactive gameplay logic still lives behind those adapters
-- No Child 9 is currently promoted; future splits require a fresh review.
+- Child 9 is now promoted as the next executable contract-hardening child; those adapters remain in place until a later ownerization child removes or narrows them.
 
 ## Flow Diagram 1: Current Boot And Render Flow
 
