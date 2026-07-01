@@ -8,11 +8,11 @@
 
 **Primary Child Plan(s):**
 
-- `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
-
-**Queued Next Child Plan(s):**
-
 - `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
+
+**Locked Follow-Up Child Plan(s):**
+
+- `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
 
 ## Weekly Summary
 
@@ -33,7 +33,7 @@
 - Child 9 Runtime Contract Hardening is now completed.
 - Child 10 Runtime Ownerization Review And Baseline is now completed on the finalized owner/bridge baseline.
 - Child 11 Sub-Runtime Ownerization Implementation is now completed.
-- Child 12 UI Contract Reserve is now the immediate queued follow-up child, while Child 13 remains locked behind Child 12.
+- Child 12 UI Contract Reserve is now the immediate next executable child, while Child 13 remains locked behind Child 12.
 
 ## Artifact Index
 
@@ -108,7 +108,7 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 8 StateSync Runtime is now closed on the first formal canonical boundary slice.
 - Child 9 Runtime Contract Hardening is now completed; RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and House Runtime Request baselines all exist.
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the controlling baseline child.
-- Child 11 Sub-Runtime Ownerization Implementation is now completed, and Child 12 UI Contract Reserve is the queued follow-up while Child 13 remains locked.
+- Child 11 Sub-Runtime Ownerization Implementation is now completed, and Child 12 UI Contract Reserve is now the next executable child while Child 13 remains locked.
 
 ### Blockers
 
@@ -132,12 +132,12 @@ The old files may remain as historical references, but they are no longer indepe
 ## Next Week Input
 
 - Highest-priority module to refine:
-  - `Child 11 Sub-Runtime Ownerization Implementation`
+  - `Child 12 UI Contract Reserve`
 - Why it is next:
-  - Child 11 is completed against the frozen baseline, so the next queued child remains Child 12 rather than another ad hoc Child 11 extension or Child 13 bypass.
+  - Child 11 is completed against the frozen baseline, so Child 12 is now the immediate next executable child rather than another ad hoc Child 11 extension or a Child 13 bypass.
 - Category:
-  - `Child 12 queue governance`
+  - `Child 12 active implementation queue`
 - Queued follow-up after the next child:
-  - `Child 12 UI Contract Reserve remains the immediate UI layout/interface-reserve follow-up behind completed Child 11, while Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit stays locked behind Child 12.`
+  - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit remains locked behind Child 12 and becomes eligible only after Child 12 completes plus a later unlock review.`
 - Unlock dependency after that:
   - `Child 13 still requires Child 11 completion, Child 12 completion, and a later unlock review before implementation may start.`

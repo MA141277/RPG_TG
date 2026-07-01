@@ -55,7 +55,7 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Child 9 queue state: completed as Runtime Contract Hardening, still limited to contract closure and not ownerization.
 - [x] Child 10 queue state: completed as Runtime Ownerization Review And Baseline and still limited to review/baseline governance, not production ownerization.
 - [x] Child 11 queue state: completed on covered shared follow-up, covered interactive, covered house, and covered settlement ownerization for the approved slices.
-- [x] Child 12 queue state: queued as the immediate post-Child-11 UI layout/interface-reserve child.
+- [x] Child 12 queue state: unlocked as the immediate post-Child-11 UI layout/interface-reserve child and now the next executable child.
 - [x] Child 13 queue state: locked behind Child 12 as the later runtime convergence-audit child.
 
 ### Provisional Boundaries

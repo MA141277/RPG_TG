@@ -11,9 +11,9 @@
 ## Execution State
 
 - Status: `in-progress`
-- Last Updated: `2026-07-01`
-- Current Focus: `The visibility bundle now reflects that Child 11 is completed on the approved ownerization slices, Child 12 remains queued as the immediate UI layout/interface-reserve follow-up, and Child 13 remains locked behind Child 12.`
-- Next Step: `Keep the five core artifacts aligned with Child 11 completed until Child 12 is explicitly resumed from its own plan or queue governance changes again.`
+- Last Updated: `2026-07-02`
+- Current Focus: `The visibility bundle now reflects that Child 11 is completed on the approved ownerization slices, Child 12 is the immediate next executable UI layout/interface-reserve child, and Child 13 remains locked behind Child 12.`
+- Next Step: `Keep the five core artifacts aligned until Child 12 starts from its own plan or queue governance changes again.`
 - Verification: `Child 11 closeout visibility sync: npm run lint:plans`
 - Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 11 is now visibly complete because the covered shared follow-up, interactive, house, and settlement slices have all landed against the finalized Child 10 baseline.`
 
@@ -59,6 +59,10 @@
   - Summary: `Updated the visibility companion after Child 11 closeout. The weekly artifacts now record that the covered shared follow-up path is dispatch-owned, the covered city-begging lifecycle is runtime-owned, the covered grain-shop lifecycle is runtime-owned, the covered advanceTime settlement path is explicit under runtime-settlement.ts, Child 11 is completed, Child 12 remains queued next, and Child 13 remains locked behind Child 12.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "effect settlement contract exports emitter applier input and result seams|runtime dispatch settles effects after routing|covered settlement path stays on shared runtime ownership"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Keep the same artifact bundle aligned until Child 12 is explicitly resumed or queue governance changes again.`
+- 2026-07-02
+  - Summary: `Reconciled stale post-Child-11 queue wording in the visibility companion and linked weekly artifacts. Child 12 is now described consistently as the immediate next executable child, while Child 13 remains the locked later follow-up.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep the same artifact bundle aligned until Child 12 starts from its own plan or queue governance changes again.`
 
 - 2026-06-29
   - Summary: `Visibility companion created and linked to the weekly orchestration flow.`
@@ -152,11 +156,9 @@
 - Weekly orchestration controller:
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Active next child plan:
-  - `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
-- Queued next child plan:
   - `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
 - Locked follow-up child:
-  - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit remains locked until Child 11 completes, Child 12 completes, and a later weekly review explicitly unlocks Child 13.`
+  - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit remains locked until Child 12 completes and a later weekly review explicitly unlocks Child 13.`
 - Parent orchestration plan:
   - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 

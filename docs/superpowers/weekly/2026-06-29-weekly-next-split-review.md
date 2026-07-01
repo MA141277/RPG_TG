@@ -31,11 +31,11 @@ Do not decide the next split only from intuition.
 - Module:
   - `Child 12 UI Contract Reserve`
 - Reason:
-  - Child 11 is completed against the frozen baseline, so the next queued child remains Child 12 rather than another ad hoc Child 11 extension or a Child 13 bypass.
+  - Child 11 is completed against the frozen baseline, so Child 12 is now the immediate next executable child rather than another ad hoc Child 11 extension or a Child 13 bypass.
 - Category:
   - `Child 12 queue governance`
 - Queued follow-up:
-  - `Child 12 UI Contract Reserve remains the immediate UI layout/interface-reserve follow-up behind completed Child 11.`
+  - `Child 12 UI Contract Reserve is now the immediate next executable UI layout/interface-reserve child behind completed Child 11.`
 - Locked follow-up:
   - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit remains locked until Child 12 completes and a later weekly review explicitly unlocks it.`
 
@@ -68,7 +68,7 @@ Do not decide the next split only from intuition.
 | `Child 9 Runtime Contract Hardening` | `completed` | The contract-hardening child has landed all four approved shared contract baselines and closed without absorbing ownerization work. | `P1` | Treat as the completed prerequisite for Child 10 and avoid reopening it without a new baseline decision. |
 | `Child 10 Runtime Ownerization Review And Baseline` | `completed` | The review child has finalized owner vs bridge status, adapter disposition, main.ts coupling, and Child 11 execution controls. | `P1` | Treat as the controlling baseline for Child 11 and do not reopen it casually. |
 | `Child 11 Sub-Runtime Ownerization Implementation` | `completed` | The implementation child has completed the approved covered shared follow-up, interactive, house, and settlement ownerization slices against the finalized Child 10 baseline. | `P1` | Keep closed unless a later governance review authors a new child. |
-| `Child 12 UI Contract Reserve` | `queued-next` | The UI layout/interface-reserve child now remains first in queue after completed Child 11 and exists to preserve the future UI/resource boundary direction without changing the completed runtime ownerization slice. | `P2` | Start Child 12 from its own plan when execution resumes, then use its closeout to unlock Child 13. |
+| `Child 12 UI Contract Reserve` | `not-started` | The UI layout/interface-reserve child is now the immediate next executable child after completed Child 11 and exists to preserve the future UI/resource boundary direction without changing the completed runtime ownerization slice. | `P2` | Start Child 12 from its own plan when execution resumes, then use its closeout to unlock Child 13. |
 | `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit` | `future-candidate` | The runtime continuation child is authored formally, but it still cannot start until Child 12 completes and a later review confirms real Bucket A convergence work exists. | `P1` | Treat as the locked follow-up after Child 12 and do not silently collapse it into completed Child 11. |
 | `src/core/runtime` | `needs-hardening` | Child 3/4 seams exist and Child 11 has now landed the approved covered follow-up, interactive, house, and settlement runtime-owned slices, but broader runtime-family convergence is still intentionally deferred. | `P2` | Keep Child 11 closed, execute Child 12 first, then use Child 13 only if later review confirms real Bucket A remainder. |
 | `src/core/save` | `needs-migration` | Save boundary is hardened, but app-level callers still need to consume it directly. | `P1` | Keep stable until real save/load caller work resumes. |

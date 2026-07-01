@@ -13,9 +13,9 @@
 ## Execution State
 
 - Status: `in-progress`
-- Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring is complete, Child 11 is now the next executable ownerization child, Child 12 remains the immediate UI layout/interface-reserve follow-up, and Child 13 stays locked behind Child 12.`
-- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md before the Child 12 UI layout/interface-reserve child and later Child 13 follow-up are considered.`
+- Last Updated: `2026-07-02`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 is now completed on its approved ownerization slices, Child 12 is the immediate next executable UI layout/interface-reserve child, and Child 13 stays locked behind Child 12.`
+- Next Step: `Start Child 12 from docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md before the later Child 13 follow-up is considered.`
 - Verification: `Child 10 closeout parent sync: npm run lint:plans`
 
 - 2026-07-01
@@ -30,7 +30,7 @@
   - Summary: `Completed Child 9 closeout. RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and House Runtime Request baselines now exist as shared contracts, while adapter removal and runtime ownerization remain deferred to Child 10 / Child 11.`
   - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `Execute Child 10 Runtime Ownerization Review And Baseline before any Child 11 implementation work.`
-- Notes: `This remains an orchestration-only parent plan. Child 1 through Child 8 are completed, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the finalized runtime-ownerization review/baseline artifact, and Child 11 is now the unlocked sub-runtime ownerization implementation child because its spec/plan exist and queue unlock sync records it as executable. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Notes: `This remains an orchestration-only parent plan. Child 1 through Child 8 are completed, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the finalized runtime-ownerization review/baseline artifact, Child 11 is complete on the approved shared follow-up, covered interactive, covered house, and covered settlement ownerization slices, and Child 12 is now the immediate next executable child. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -150,6 +150,10 @@
   - Summary: `Authored the formal Child 13 convergence-audit spec and plan, while keeping Child 12 in its original UI layout/interface-reserve queue slot ahead of Child 13.`
   - Verification: `npm run lint:plans`
   - Next: `Keep Child 11 as the active executable child. Complete Child 12 first, then review and unlock Child 13.`
+- 2026-07-02
+  - Summary: `Reconciled stale post-Child-11 queue wording in the parent orchestration plan. Child 11 is now consistently recorded as completed, Child 12 is now the immediate next executable child, and Child 13 remains locked until Child 12 completes and later review unlocks it.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 12 from its own plan and do not reopen Child 11 scope.`
 
 ## Why This Plan Exists
 
@@ -908,11 +912,11 @@ Confirm:
 - Child 11 spec and plan exist
 - weekly and parent plans both record Child 11 as unlocked
 
-- [ ] **Step 3: Execute Child 11 from its own checklist**
+- [x] **Step 3: Execute Child 11 from its own checklist**
 
 Run all implementation work from the Child 11 plan file, not from this parent file.
 
-- [ ] **Step 4: Verify Child 11 exit condition and sync parent log**
+- [x] **Step 4: Verify Child 11 exit condition and sync parent log**
 
 Confirm:
 
@@ -1020,7 +1024,7 @@ Do not mark this parent plan `completed` until:
 - [x] Child 10 completed
 - [x] Child 11 reserved in queue as a locked follow-up child before unlock
 - [x] Child 11 spec and plan authored
-- [ ] Child 11 completed
+- [x] Child 11 completed
 - [x] Child 13 spec and plan authored
 - [ ] Child 13 completed
 - [x] Shared-file conflict policy acknowledged

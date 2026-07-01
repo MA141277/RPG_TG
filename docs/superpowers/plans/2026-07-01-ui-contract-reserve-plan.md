@@ -11,10 +11,10 @@
 ## Execution State
 
 - Status: `not-started`
-- Last Updated: `2026-07-01`
-- Current Focus: `Queued as the immediate post-Child-11 UI layout/interface-reserve child. No production implementation batch has started.`
-- Next Step: `Start Task 1 Step 1 only after Child 11 completes and weekly governance explicitly unlocks Child 12.`
-- Verification: `Plan authored only: npm run lint:plans`
+- Last Updated: `2026-07-02`
+- Current Focus: `Child 11 closeout sync now records this as the immediate next executable UI layout/interface-reserve child. No production implementation batch has started yet.`
+- Next Step: `Start Task 1 Step 1 from this plan. Keep the work additive and do not bypass Child 12 to unlock Child 13 early.`
+- Verification: `Queue-state reconciliation: npm run lint:plans`
 - Notes: `Child 12 must stay additive. Do not change current src/main.ts render entry, current layout editor behavior, or current default pack runtime path while implementing this plan.`
 
 ## Progress Log
@@ -23,6 +23,10 @@
   - Summary: `Plan created and queued as the immediate post-Child-11 UI layout/interface-reserve child for additive UI contract reserve work.`
   - Verification: `npm run lint:plans`
   - Next: `Wait for Child 11 completion and a weekly unlock before starting Task 1 Step 1.`
+- 2026-07-02
+  - Summary: `Reconciled Child 12 queue state after Child 11 closeout. Weekly, parent, and visibility governance now treat Child 12 as the immediate next executable child, while Child 13 remains locked behind Child 12 completion and a later review.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Task 1 Step 1 from this plan without reopening Child 11 scope.`
 
 ---
 
@@ -43,7 +47,7 @@
   - must remain additive to the existing `UiLayout` and layout editor path
   - may prepare later UI override and Editor work, but must not enable either during this child
 - Queue rule:
-  - Child 12 is not executable until Child 11 completes and a later weekly review explicitly unlocks Child 12; Child 12 completion then unlocks Child 13.
+  - Child 12 is now executable because Child 11 is completed and weekly closeout sync records Child 12 as the immediate next child; Child 12 completion then unlocks Child 13 for a later review gate.
 
 ## Scope
 
