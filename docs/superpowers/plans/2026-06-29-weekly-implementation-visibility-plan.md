@@ -134,9 +134,9 @@
 - Active next child plan:
   - `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
 - Queued next child plan:
-  - `None currently queued ahead of Child 11 in the active weekly queue`
+  - `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
 - Locked follow-up child:
-  - `None currently recorded`
+  - `Child 12 UI Contract Reserve is recorded as a future candidate only. It remains locked until Child 11 completes and a later weekly review explicitly unlocks it.`
 - Parent orchestration plan:
   - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 

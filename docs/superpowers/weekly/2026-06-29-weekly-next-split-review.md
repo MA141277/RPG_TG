@@ -35,9 +35,9 @@ Do not decide the next split only from intuition.
 - Category:
   - `Child 11 implementation`
 - Queued follow-up:
-  - `No later child is queued yet; Child 11 now owns the next implementation slot directly.`
+  - `Child 12 UI Contract Reserve is now queued as a future candidate behind Child 11, but Child 11 still owns the next implementation slot directly.`
 - Locked follow-up:
-  - `None currently recorded. Any post-Child-11 split still requires a fresh review first.`
+  - `Child 12 is recorded but remains locked until Child 11 completes and a later weekly review explicitly unlocks it. Any post-Child-12 split still requires a fresh review first.`
 
 ## Non-Selected Candidates
 

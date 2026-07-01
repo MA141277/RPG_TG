@@ -163,6 +163,10 @@
   - Summary: `Authored the formal Child 11 implementation spec and plan against the finalized Child 10 baseline, completed the weekly unlock sync, and promoted Child 11 from locked candidate state to the next executable child.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md Task 1 Step 1.`
+- 2026-07-01
+  - Summary: `Reviewed the future UI/resource direction after the current runtime queue and authored Child 12 UI Contract Reserve as a future queued child. Child 11 remains the next executable child; Child 12 is recorded only as a later candidate and does not change the current ownerization execution order.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep Child 11 as the active next executable child. Revisit Child 12 only after Child 11 completion and a later weekly unlock review.`
 
 ---
 
@@ -503,7 +507,9 @@ The five core outputs are part of the weekly acceptance gate even though their d
 
 ### Future Candidates
 
-- None currently recorded beyond Child 11 in the active weekly queue.
+- `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
+  - Role: Child 12 UI Contract Reserve
+  - Resume point: `Queued behind Child 11. Do not start until Child 11 completes and a later weekly review explicitly unlocks Child 12.`
 
 ### Blocked
 
@@ -665,11 +671,23 @@ The five core outputs are part of the weekly acceptance gate even though their d
    - Depends on: Queue Item 10 completed, Child 10 closeout sync recorded, and Child 11 spec/plan authored against the Child 10 baseline
    - Start condition: satisfied; Child 10 is complete, Child 11 spec/plan now exist, and the weekly plan explicitly records Child 11 as unlocked
    - Exit condition:
-      - covered shared runtime entry converges on dispatch/router ownership
-      - covered interactive flows are runtime-owned with any retained adapter reduced to an explicitly justified thin seam
-      - covered house flows are runtime-owned with any retained adapter reduced to an explicitly justified thin seam
-      - effect settlement is aligned with the approved shared runtime path
-      - Child 11 does not absorb boot/mod/save/presenter/UI/resource planning work
+        - covered shared runtime entry converges on dispatch/router ownership
+        - covered interactive flows are runtime-owned with any retained adapter reduced to an explicitly justified thin seam
+        - covered house flows are runtime-owned with any retained adapter reduced to an explicitly justified thin seam
+        - effect settlement is aligned with the approved shared runtime path
+        - Child 11 does not absorb boot/mod/save/presenter/UI/resource planning work
+
+12. `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
+   - Queue status: `future-candidate`
+   - Primary subsystem boundary: `Future UI Contract Reserve`, `Pack UI split-table reserve`, `Asset layering reserve`, `Executor / future Editor boundary reserve`
+   - Depends on: Queue Item 11 completed and a recorded post-Child-11 review/unlock
+   - Start condition: Child 11 completed, weekly governance explicitly unlocks Child 12, and Child 12 implementation stays additive without reopening current runtime ownerization scope
+   - Exit condition:
+      - formal future UI contract reserve exists under `src/domain/ui/**`
+      - optional pack UI reserve fields and loader support exist without forcing current packs to migrate
+      - asset layering rules are explicit and additive
+      - current default runtime/render/layout-editor behavior remains unchanged
+      - Child 12 does not enable Editor mode or absorb current renderer/runtime redesign
 
 ## Verification Policy
 

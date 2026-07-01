@@ -131,6 +131,6 @@ The old files may remain as historical references, but they are no longer indepe
 - Category:
   - `Child 11 implementation`
 - Queued follow-up after the next child:
-  - `None currently recorded beyond Child 11 in the active weekly queue`
+  - `Child 12 UI Contract Reserve is now recorded as a future candidate behind Child 11 in the active weekly queue.`
 - Unlock dependency after that:
-  - `Any child after Child 11 still requires a fresh review before a new spec/plan pair is authored.`
+  - `Child 12 still requires Child 11 completion plus a later weekly unlock review before implementation may start. Any child after Child 12 still requires a fresh review before a new spec/plan pair is authored.`
