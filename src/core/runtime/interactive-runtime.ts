@@ -1,6 +1,16 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
+import {
+  convertHouseActivityDaysToSegments,
+} from "../../application/house/house-activity-costs";
+import {
+  applyCityBeggingMiniGameCompletion,
+  createCityBeggingMiniGameState,
+  CITY_BEGGING_DURATION_DAYS,
+  setCityBeggingMiniGamePointer,
+  updateCityBeggingMiniGameState,
+} from "../../application/minigames/city-begging-minigame";
 import type {
   ActiveInteractiveRuntimeSession,
   InteractiveActionRequest,
@@ -11,14 +21,11 @@ import type {
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
-  applyLegacyCityBeggingCompletion,
-  createLegacyCityBeggingSession,
   dispatchLegacyStoryBattleAction,
   stopLegacyActivityQte,
   tickLegacyActivityQte,
-  tickLegacyCityBeggingSession,
-  updateLegacyCityBeggingPointer,
 } from "../adapters/legacy-interactive-adapter";
+import { settleRuntimeEffects } from "./runtime-settlement";
 
 export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
   characterDefinitions?: CharacterDefinition[];
@@ -77,7 +84,7 @@ export function runInteractiveRuntime(input: {
         ...input.state,
         app: {
           ...input.state.app,
-          beggingMiniGameState: createLegacyCityBeggingSession(
+          beggingMiniGameState: createCityBeggingMiniGameState(
             typeof now === "number" ? now : performance.now()
           ),
         },
@@ -132,7 +139,7 @@ export function runInteractiveRuntime(input: {
         ...input.state,
         app: {
           ...input.state.app,
-          beggingMiniGameState: updateLegacyCityBeggingPointer(
+          beggingMiniGameState: setCityBeggingMiniGamePointer(
             currentState,
             pointerX
           ),
@@ -161,7 +168,7 @@ export function runInteractiveRuntime(input: {
         ...input.state,
         app: {
           ...input.state.app,
-          beggingMiniGameState: tickLegacyCityBeggingSession(currentState, now),
+          beggingMiniGameState: updateCityBeggingMiniGameState(currentState, now),
         },
       },
       effects: [],
@@ -188,18 +195,36 @@ export function runInteractiveRuntime(input: {
       };
     }
 
-    const completion = applyLegacyCityBeggingCompletion({
-      state: input.state.core,
-      characterDefinitions: input.characterDefinitions,
-      playerCharacterId: input.playerCharacterId,
-      result: result as CityBeggingGameCompletionResult,
-    });
-
-    return {
+    const completion = applyCityBeggingMiniGameCompletion(
+      input.state.core,
+      input.characterDefinitions,
+      input.playerCharacterId,
+      result as CityBeggingGameCompletionResult
+    );
+    const settledState = settleRuntimeEffects({
       state: {
         ...input.state,
         core: completion.state,
+        app: {
+          ...input.state.app,
+          beggingMiniGameState: null,
+        },
       },
+      effects: [
+        {
+          type: "advanceTime",
+          days:
+            convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS) === 0
+              ? 0
+              : CITY_BEGGING_DURATION_DAYS,
+        },
+      ],
+      emittedBy: "interactive-runtime",
+      appliedBy: "runtime-settlement",
+    }).state;
+
+    return {
+      state: settledState,
       characterDefinitions: completion.characterDefinitions,
       effects: [],
       session: null,

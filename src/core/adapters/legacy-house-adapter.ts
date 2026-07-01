@@ -1,15 +1,3 @@
-import {
-  createHouseRuntime,
-  type HouseRuntime,
-} from "../../application/house/house-runtime";
-
-export type LegacyHouseRuntimeAdapter = HouseRuntime;
-export type LegacyHouseRuntimeDependencies = Parameters<
-  typeof createHouseRuntime
->[0];
-
-export function createLegacyHouseRuntimeAdapter(
-  dependencies: LegacyHouseRuntimeDependencies
-): LegacyHouseRuntimeAdapter {
-  return createHouseRuntime(dependencies);
-}
+// Retained as a compatibility placeholder while covered house runtime ownership
+// moves into src/core/runtime/house-runtime.ts.
+export {};

@@ -7788,6 +7788,78 @@ test("runtime dispatch settles effects after routing", async () => {
   assert.equal(result.state.core.runtime.flags.booted, true);
 });
 
+test("covered shared runtime reentry is runtime-owned", async () => {
+  const { dispatchRuntimeRequest } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+  const baseState = createBaseState();
+  const handledInteractive = [];
+
+  const result = dispatchRuntimeRequest({
+    state: {
+      core: baseState,
+      app: {
+        beggingMiniGameState: null,
+        autoAdvanceState: null,
+        cityDirectoryState: null,
+        locationDialogueState: null,
+      },
+      view: {},
+    },
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "interactive.story-battle.action",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [
+            {
+              type: "setFlag",
+              key: "flag.runtime.reentry",
+              value: true,
+            },
+          ],
+          interactive: {
+            type: "reenter-house",
+            houseId: homeHouse.id,
+          },
+        }),
+      },
+      followUp: {
+        handleInteractive: ({ state, interactive }) => {
+          handledInteractive.push(interactive.type);
+
+          if (interactive.type !== "reenter-house") {
+            return state;
+          }
+
+          return {
+            ...state,
+            core: {
+              ...state.core,
+              world: {
+                ...state.core.world,
+                currentHouseId: interactive.houseId,
+              },
+              ui: {
+                ...state.core.ui,
+                currentView: "house",
+              },
+            },
+          };
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(handledInteractive, ["reenter-house"]);
+  assert.equal(result.state.core.runtime.flags["flag.runtime.reentry"], true);
+  assert.equal(result.state.core.world.currentHouseId, homeHouse.id);
+  assert.equal(result.state.core.ui.currentView, "house");
+  assert.deepEqual(result.interactive, { type: "none" });
+});
+
 test("save envelope preserves selected mod id and mod state payload", async () => {
   const { createSaveEnvelope } = require("../.test-dist/core/save/save-envelope.js");
   const envelope = createSaveEnvelope({
@@ -7984,6 +8056,90 @@ test("interactive runtime contract exports launch action exit and result seams",
   assert.match(source, /session: ActiveInteractiveRuntimeSession \| null/);
 });
 
+test("covered interactive flow is runtime-owned", () => {
+  const {
+    CITY_BEGGING_DURATION_DAYS,
+    applyCityBeggingMiniGameCompletion,
+    createCityBeggingMiniGameState,
+  } = require("../.test-dist/application/minigames/city-begging-minigame.js");
+  const {
+    convertHouseActivityDaysToSegments,
+  } = require("../.test-dist/application/house/house-activity-costs.js");
+  const {
+    createInteractiveActionRequest,
+    runInteractiveRuntime,
+  } = require("../.test-dist/core/runtime/interactive-runtime.js");
+  const {
+    createAdvanceTimeSegmentsRequest,
+    runTimeRuntime,
+  } = require("../.test-dist/core/runtime/time-runtime.js");
+
+  const completionResult = {
+    foodGain: 3,
+    goldGain: 7,
+    maxCombo: 5,
+    success: true,
+  };
+  const baseState = createBaseState();
+  const appliedCompletion = applyCityBeggingMiniGameCompletion(
+    baseState,
+    prototypeCharacters,
+    playerCharacterId,
+    completionResult
+  );
+  const expectedGameState = runTimeRuntime({
+    state: appliedCompletion.state,
+    request: createAdvanceTimeSegmentsRequest(
+      convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
+    ),
+  }).state;
+  const runtimeResult = runInteractiveRuntime({
+    state: {
+      core: baseState,
+      app: {
+        beggingMiniGameState: createCityBeggingMiniGameState(0),
+        autoAdvanceState: null,
+        cityDirectoryState: null,
+        locationDialogueState: null,
+      },
+      view: {},
+    },
+    request: createInteractiveActionRequest(
+      "interactive.city-begging.complete",
+      { result: completionResult }
+    ),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const adapterSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/adapters/legacy-interactive-adapter.ts"),
+    "utf8"
+  );
+  const onBeggingGameCompleteBlock = mainSource.match(
+    /function onBeggingGameComplete[\s\S]*?\n}\n/
+  )?.[0] ?? "";
+
+  assert.equal(runtimeResult.state.app.beggingMiniGameState, null);
+  assert.deepEqual(runtimeResult.state.core.calendar, expectedGameState.calendar);
+  assert.equal(
+    runtimeResult.state.core.world.timeOfDay,
+    expectedGameState.world.timeOfDay
+  );
+  assert.equal(
+    getPlayerCharacter(runtimeResult.characterDefinitions).stats.gold,
+    getPlayerCharacter(appliedCompletion.characterDefinitions).stats.gold
+  );
+  assert.doesNotMatch(onBeggingGameCompleteBlock, /runTimeRuntime\(/);
+  assert.doesNotMatch(adapterSource, /applyLegacyCityBeggingCompletion/);
+  assert.doesNotMatch(adapterSource, /createLegacyCityBeggingSession/);
+  assert.doesNotMatch(adapterSource, /updateLegacyCityBeggingPointer/);
+  assert.doesNotMatch(adapterSource, /tickLegacyCityBeggingSession/);
+});
+
 test("minigame dispatch contract converges covered flows through one interactive request normalizer", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
@@ -8026,6 +8182,150 @@ test("runtime settlement uses explicit contract and reports unsupported effect k
   assert.doesNotMatch(source, /runTask|activateEvent|renderApp|writeSave/);
 });
 
+test("covered settlement path stays on shared runtime ownership", () => {
+  const {
+    CITY_BEGGING_DURATION_DAYS,
+    applyCityBeggingMiniGameCompletion,
+    createCityBeggingMiniGameState,
+  } = require("../.test-dist/application/minigames/city-begging-minigame.js");
+  const {
+    convertHouseActivityDaysToSegments,
+  } = require("../.test-dist/application/house/house-activity-costs.js");
+  const {
+    createInteractiveActionRequest,
+    runInteractiveRuntime,
+  } = require("../.test-dist/core/runtime/interactive-runtime.js");
+  const {
+    createAdvanceTimeSegmentsRequest,
+    runTimeRuntime,
+  } = require("../.test-dist/core/runtime/time-runtime.js");
+  const {
+    createHouseRuntimeBridge,
+    dispatchHouseRuntimeRequest,
+    enterHouseThroughRuntime,
+  } = require("../.test-dist/core/runtime/house-runtime.js");
+
+  const completionResult = {
+    foodGain: 3,
+    goldGain: 7,
+    maxCombo: 5,
+    success: true,
+  };
+  const baseState = createBaseState();
+  const appliedCompletion = applyCityBeggingMiniGameCompletion(
+    baseState,
+    prototypeCharacters,
+    playerCharacterId,
+    completionResult
+  );
+  const expectedInteractiveState = runTimeRuntime({
+    state: appliedCompletion.state,
+    request: createAdvanceTimeSegmentsRequest(
+      convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
+    ),
+  }).state;
+  const interactiveResult = runInteractiveRuntime({
+    state: {
+      core: baseState,
+      app: {
+        beggingMiniGameState: createCityBeggingMiniGameState(0),
+        autoAdvanceState: null,
+        cityDirectoryState: null,
+        locationDialogueState: null,
+      },
+      view: {},
+    },
+    request: createInteractiveActionRequest(
+      "interactive.city-begging.complete",
+      { result: completionResult }
+    ),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  let appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentHouseId: null,
+        timeOfDay: "morning",
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "city",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  const houseRuntime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {},
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: prototypeHouses,
+    playerCharacterId,
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+  const interactiveSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+  const houseRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+  const settlementSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-settlement.ts"),
+    "utf8"
+  );
+
+  enterHouseThroughRuntime(houseRuntime, grainShopHouse.id);
+  dispatchHouseRuntimeRequest(houseRuntime, {
+    type: "action",
+    actionId: "advance-greeting",
+  });
+  dispatchHouseRuntimeRequest(houseRuntime, {
+    type: "action",
+    actionId: "investigate",
+  });
+
+  assert.deepEqual(
+    interactiveResult.state.core.calendar,
+    expectedInteractiveState.calendar
+  );
+  assert.equal(
+    interactiveResult.state.core.world.timeOfDay,
+    expectedInteractiveState.world.timeOfDay
+  );
+  assert.equal(appState.gameState.world.timeOfDay, "afternoon");
+  assert.equal(appState.gameState.ui.houseSession?.state?.overlay?.type, "alert");
+  assert.match(settlementSource, /effect\.type === "advanceTime"/);
+  assert.doesNotMatch(interactiveSource, /runTimeRuntime\(/);
+  assert.doesNotMatch(houseRuntimeSource, /advanceGameStateTimeSegments\(/);
+});
+
 test("house runtime request contract exports enter leave and dispatch variants", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/house-runtime.ts"),
@@ -8060,6 +8360,104 @@ test("core house runtime bridge exports enter leave and dispatch seams", () => {
   assert.match(source, /enterHouseThroughRuntime/);
   assert.match(source, /leaveHouseThroughRuntime/);
   assert.match(source, /dispatchHouseRuntimeRequest/);
+});
+
+test("covered house flow is runtime-owned", () => {
+  const {
+    createHouseRuntimeBridge,
+    dispatchHouseRuntimeRequest,
+    enterHouseThroughRuntime,
+    leaveHouseThroughRuntime,
+  } = require("../.test-dist/core/runtime/house-runtime.js");
+
+  const baseState = createBaseState();
+  let appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentHouseId: null,
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "city",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  let renderCount = 0;
+
+  const runtime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {
+      renderCount += 1;
+    },
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: prototypeHouses,
+    playerCharacterId,
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+  const houseRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+  const adapterSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/adapters/legacy-house-adapter.ts"),
+    "utf8"
+  );
+
+  enterHouseThroughRuntime(runtime, grainShopHouse.id);
+  assert.equal(appState.gameState.world.currentHouseId, grainShopHouse.id);
+  assert.equal(appState.gameState.ui.currentView, "house");
+  assert.equal(appState.gameState.ui.houseSession?.moduleId, "grain-shop");
+  assert.equal(
+    appState.gameState.ui.houseSession?.state?.dialoguePhase,
+    "greeting"
+  );
+
+  dispatchHouseRuntimeRequest(runtime, {
+    type: "action",
+    actionId: "advance-greeting",
+  });
+  assert.equal(
+    appState.gameState.ui.houseSession?.state?.dialoguePhase,
+    "open"
+  );
+
+  leaveHouseThroughRuntime(runtime);
+  assert.equal(appState.gameState.world.currentHouseId, null);
+  assert.equal(appState.gameState.ui.currentView, "city");
+  assert.equal(appState.gameState.ui.houseSession, null);
+  assert.equal(renderCount, 3);
+
+  assert.doesNotMatch(
+    houseRuntimeSource,
+    /createLegacyHouseRuntimeAdapter|LegacyHouseRuntimeAdapter|dispatchLegacyHouseRuntimeRequest/
+  );
+  assert.doesNotMatch(adapterSource, /createHouseRuntime/);
+  assert.doesNotMatch(adapterSource, /enterHouseById|leaveCurrentHouse|dispatchCurrentHouseRequest/);
 });
 
 test("main.ts routes covered interactive flows through core runtime instead of direct feature branching", () => {

@@ -19,7 +19,7 @@ It must show:
 - The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/*`, `src/core/mods/*`, `src/core/runtime/state-sync-*`, `src/application/presenter`, and `src/core/runtime/task-runtime.ts` now exist as concrete boundary slices with read/write persistence, first-pass navigation, covered interactive entry, minimum shared-dispatch return behavior, presenter-output render selection, formal task lifecycle/progression ownership, formal mod activation/startup ownership, and formal state synchronization ownership.
 - Child 9 Runtime Contract Hardening is now completed on all four approved shared contract baselines.
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the formal post-Child-9 review gate and controlling baseline artifact.
-- Child 11 Sub-Runtime Ownerization Implementation now has a formal spec/plan set and is unlocked as the next executable child, but no production ownerization batch has started yet.
+- Child 11 Sub-Runtime Ownerization Implementation is now completed: Task 1 landed the minimum shared-dispatch follow-up convergence for the covered story-battle reentry path, Task 2 landed covered interactive ownerization for the city-begging path, Task 3 landed covered house ownerization for the grain-shop path, and Task 4 aligned the covered advanceTime settlement path before closeout.
 - Child 12 UI Contract Reserve remains the immediate UI layout/interface-reserve child after Child 11, while Child 13 stays locked behind Child 12 as the later runtime convergence audit.
 
 ## Module Diagram
@@ -83,7 +83,7 @@ flowchart LR
 - Child 8 StateSync Runtime extraction, completed on the first formal canonical boundary slice
 - Child 9 Runtime Contract Hardening, now completed as the shared contract-hardening baseline before later ownerization
 - Child 10 Runtime Ownerization Review And Baseline, now completed as the required pre-implementation review/baseline child after Child 9
-- Child 11 Sub-Runtime Ownerization Implementation, now the unlocked and not-started follow-up ownerization child
+- Child 11 Sub-Runtime Ownerization Implementation, now the completed follow-up ownerization child for the approved covered runtime slices
 - Child 12 UI Contract Reserve, now the queued UI layout/interface-reserve follow-up child after Child 11
 - Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit, now the locked later runtime continuation child after Child 12
 
@@ -94,7 +94,7 @@ flowchart LR
 - Legacy interactive gameplay logic still lives behind those adapters
 - Child 9 is now closed, and those adapters intentionally remain in place after Child 9 because ownerization is deferred.
 - Child 10 has now finalized which adapters are retained through Child 11 and which are targeted for removal inside Child 11.
-- Child 11 is the first executable child that may remove or narrow the interactive/house adapters, and it must now do so from its own baseline-backed implementation plan.
+- Child 11 was the first executable child allowed to remove or narrow the interactive/house adapters; Task 1 narrowed shared follow-up ownership, Task 2 narrowed the interactive adapter by removing the covered city-begging lifecycle wrappers, Task 3 reduced the house adapter to a compatibility placeholder for the covered grain-shop lifecycle, and Task 4 aligned the covered advanceTime settlement path under runtime-settlement.ts.
 
 ## Flow Diagram 1: Current Boot And Render Flow
 
@@ -137,17 +137,18 @@ flowchart TD
     G --> H["paused or settled scene state"]
 ```
 
-## Flow Diagram 4: Real Child 4 Minimum RuntimeState Reentry
+## Flow Diagram 4: Real Child 11 Task 1 Shared Dispatch Reentry Follow-Up
 
 ```mermaid
 flowchart TD
     A["story-battle action in main.ts"] --> B["createInteractiveActionRequest()"]
     B --> C["dispatchRuntimeRequest()"]
-    C --> D["routeRequest()"]
+    C --> D["RuntimeRouter.route()"]
     D --> E["runInteractiveRuntime()"]
-    E --> F["RuntimeResult.state / interactive"]
-    F --> G["apply RuntimeResult.state to AppState"]
-    G --> H["optional reenter-house follow-up"]
+    E --> F["settleRuntimeEffects()"]
+    F --> G["handleInteractive() follow-up hook"]
+    G --> H["apply RuntimeResult.state to AppState"]
+    H --> I["house runtime reentry"]
 ```
 
 ## Flow Diagram 5: Real Child 5 Presenter Output Render Path
@@ -242,6 +243,10 @@ flowchart TD
 - Landed `src/core/contracts/state-sync-runtime.ts` plus `src/core/runtime/state-sync-*` so StateSync Runtime owns canonical runtime state, app bridge, save snapshot, presentation input, mandatory triggers, syncState, validation, normalization, hydration, pre-save preparation, mod rebuild, and presentation input preparation without absorbing gameplay dispatch, save IO, Mod Runtime activation, or rendering.
 - Moved bridge-period interactive RuntimeState creation/write-back helpers out of `src/main.ts` and behind the StateSync runtime boundary.
 - Finalized the Child 10 runtime ownerization baseline so owner vs bridge maturity, adapter disposition, main.ts coupling, and Child 11 execution controls are now frozen in governance docs before further ownerization work.
+- Landed Child 11 Task 1 shared dispatch convergence by adding a typed runtime follow-up contract under `src/core/runtime/runtime-router.ts`, moving the covered story-battle reentry continuation into `src/core/runtime/runtime-dispatch.ts`, and removing the covered post-dispatch reenter-house branch from `src/main.ts`.
+- Landed Child 11 Task 2 covered interactive ownerization by moving the city-begging launch/action/follow-up lifecycle into `src/core/runtime/interactive-runtime.ts`, removing the city-begging lifecycle wrappers from `src/core/adapters/legacy-interactive-adapter.ts`, and deleting the covered city-begging completion-time advance/cleanup branch from `src/main.ts`.
+- Landed Child 11 Task 3 covered house ownerization by moving the grain-shop enter/action/leave lifecycle into `src/core/runtime/house-runtime.ts`, reducing `src/core/adapters/legacy-house-adapter.ts` to a compatibility placeholder, and removing the covered house lifecycle's dependency on a legacy adapter-owned dispatch helper.
+- Landed Child 11 Task 4 covered settlement alignment by routing the covered interactive and house advanceTime effects through `src/core/runtime/runtime-settlement.ts`, extending the settlement emitter contract for `house-runtime`, and removing the remaining direct covered time-advance calls from `interactive-runtime.ts` and `house-runtime.ts`.
 
 ## Architecture Risks
 
@@ -254,4 +259,5 @@ flowchart TD
 - The Task Runtime seam is now real but intentionally first-slice only; task UI, complete authoring DSL, and mod custom evaluator plugins remain future scope.
 - The Mod Runtime seam is now real but intentionally first-slice only; full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy remain future scope.
 - State synchronization now has a first formal StateSync Runtime boundary, but deeper save IO integration, runtime dispatch auto-commit integration, and full legacy state migration remain future scope.
-- Child 10 baseline is now frozen, and Child 11 authoring plus weekly unlock sync are complete, so the next ownerization step is constrained by governance rather than open-ended exploration.
+- Child 10 baseline is now frozen, and Child 11 is already in progress, so the next ownerization steps remain constrained by governance rather than open-ended exploration.
+- Child 11 has now proven one covered shared follow-up path, one covered interactive lifecycle, one covered house lifecycle, and the covered advanceTime settlement path can all live under the approved runtime-owned slices, but broader runtime-family convergence is still intentionally deferred.

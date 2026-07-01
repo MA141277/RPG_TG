@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring plus weekly unlock sync are complete, Child 11 is now the next executable ownerization child, Child 12 remains the immediate UI layout/interface-reserve follow-up, and Child 13 stays locked behind Child 12.`
-- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md Task 1 Step 1. Keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step through updated spec/child/weekly docs first, and keep Child 12 ahead of Child 13 in execution order.`
-- Verification: `Child 11 authoring + unlock sync: npm run lint:plans`
-- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is now complete on the runtime ownerization review/baseline artifact, and Child 11 is now formally unlocked because its spec/plan exist against the finalized baseline and weekly unlock sync is recorded. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, baseline, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+- Current Focus: `Child 11 is now completed. Its approved implementation scope closed on covered shared follow-up ownership, covered city-begging interactive ownership, covered grain-shop house ownership, and explicit covered advanceTime settlement alignment; Child 12 remains the immediate UI layout/interface-reserve follow-up, and Child 13 stays locked behind Child 12.`
+- Next Step: `Keep Child 11 closed. If execution resumes later, start Child 12 from docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md instead of reopening Child 11, keep characterDefinitions outside RuntimeState.core unless a later weekly promotion explicitly reopens that convergence step, and keep Child 12 ahead of Child 13 in execution order.`
+- Verification: `Child 11 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "effect settlement contract exports emitter applier input and result seams|runtime dispatch settles effects after routing|covered settlement path stays on shared runtime ownership"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This weekly plan governs current execution order. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the runtime ownerization review/baseline artifact, and Child 11 is now complete on the approved ownerization slices without reopening the frozen Child 9/10 surfaces. The older default-mod migration placeholder is superseded by the broader Child 7 Mod Runtime scope. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the child spec, child plan, baseline, and this weekly plan first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
 
 ## Progress Log
 
@@ -171,6 +171,22 @@
   - Summary: `Authored the formal Child 13 post-Child-11 convergence-audit spec and plan, but kept Child 12 in the original UI layout/interface-reserve queue slot immediately after Child 11.`
   - Verification: `npm run lint:plans`
   - Next: `Keep Child 11 as the active next executable child. After Child 11 completes, complete Child 12 first and use its closeout to unlock Child 13.`
+- 2026-07-01
+  - Summary: `Started Child 11 and completed Task 1 shared dispatch convergence. tests/robustness.test.cjs now proves covered shared runtime reentry is runtime-owned, src/core/runtime/runtime-dispatch.ts now owns the covered follow-up hook on top of the hardened router seam, src/core/runtime/runtime-router.ts now defines the typed follow-up contract, and src/main.ts no longer branches on the covered story-battle reenter-house result after dispatch returns.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "shared dispatch consumes the hardened runtime router contract|runtime dispatch settles effects after routing|covered shared runtime reentry is runtime-owned"; npm run typecheck; npm test; npm run build`
+  - Next: `Continue Child 11 from Task 2 Step 1 and keep Child 12 locked behind Child 11 completion.`
+- 2026-07-01
+  - Summary: `Completed Child 11 Task 2 interactive ownerization on the covered city-begging path. src/core/runtime/interactive-runtime.ts now owns launch, pointer/tick, completion follow-up, time advance, and session cleanup for that covered flow; src/core/adapters/legacy-interactive-adapter.ts has been narrowed by removing the city-begging lifecycle wrappers; and src/main.ts no longer performs the covered city-begging completion-time advance/cleanup branch directly.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime exports launch and action seams|interactive runtime contract exports launch action exit and result seams|covered interactive flow is runtime-owned"; npm run typecheck; npm test; npm run build`
+  - Next: `Continue Child 11 from Task 3 Step 1 and keep Child 12 locked behind Child 11 completion.`
+- 2026-07-01
+  - Summary: `Completed Child 11 Task 3 house ownerization on the covered grain-shop path. src/core/runtime/house-runtime.ts now owns enter, dispatch, leave, session mutation, and covered house side-effect handling for that flow; src/core/adapters/legacy-house-adapter.ts has been reduced to a compatibility placeholder; and the covered house lifecycle no longer routes through a legacy adapter-owned dispatch helper.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "house runtime request contract exports enter leave and dispatch variants|core house runtime bridge exports enter leave and dispatch seams|covered house flow is runtime-owned"; npm run typecheck; npm test; npm run build`
+  - Next: `Continue Child 11 from Task 4 Step 1 and keep Child 12 locked behind Child 11 completion.`
+- 2026-07-01
+  - Summary: `Completed Child 11 Task 4 and Child 11 closeout. src/core/runtime/runtime-settlement.ts now owns the covered advanceTime settlement path used by both interactive-runtime.ts and house-runtime.ts, the covered city-begging completion path no longer calls runTimeRuntime(), the covered grain-shop path no longer applies time progression through a direct advanceGameStateTimeSegments() call, and weekly governance now records Child 11 as completed while Child 12 remains the immediate queued follow-up and Child 13 stays locked behind Child 12.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "effect settlement contract exports emitter applier input and result seams|runtime dispatch settles effects after routing|covered settlement path stays on shared runtime ownership"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Keep Child 11 closed. When implementation resumes, start Child 12 and do not bypass it to unlock Child 13.`
 
 ---
 
@@ -497,17 +513,17 @@ The five core outputs are part of the weekly acceptance gate even though their d
 
 - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
   - Role: active queue controller
-  - Resume point: `Child 11 is unlocked and not started. Resume from its own plan Task 1 Step 1.`
+  - Resume point: `Child 11 is completed. Do not resume it; when implementation resumes, start Child 12 from its own plan.`
 
 - `docs/superpowers/plans/2026-06-29-weekly-implementation-visibility-plan.md`
   - Role: active weekly visibility companion
-  - Resume point: `Refresh the five core artifacts after Child 11 unlock sync or after the first Child 11 implementation batch lands.`
-
-### Not Started
+  - Resume point: `Keep the five core artifacts aligned with Child 11 completed and Child 12 queued next.`
 
 - `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
   - Role: Child 11 Sub-Runtime Ownerization Implementation
-  - Resume point: `Start Task 1 Step 1 on shared dispatch convergence.`
+  - Resume point: `Completed. Covered shared follow-up, covered interactive, covered house, and covered settlement ownerization slices are all landed.`
+
+### Not Started
 
 ### Future Candidates
 
@@ -649,7 +665,7 @@ The five core outputs are part of the weekly acceptance gate even though their d
       - StateSync does not absorb gameplay dispatch, save IO, mod activation, or presentation ownership
 
 9. `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
-   - Queue status: `not-started`
+   - Queue status: `in-progress`
    - Primary subsystem boundary: `Shared Runtime contract layer`
    - Depends on: Queue Item 8 completed and a recorded post-Child-8 review
    - Start condition: satisfied after Child 8 closeout review created the Child 9 spec and plan
@@ -684,6 +700,9 @@ The five core outputs are part of the weekly acceptance gate even though their d
         - covered house flows are runtime-owned with any retained adapter reduced to an explicitly justified thin seam
         - effect settlement is aligned with the approved shared runtime path
         - Child 11 does not absorb boot/mod/save/presenter/UI/resource planning work
+   - Current progress:
+        - Task 1 completed on shared dispatch convergence for the covered story-battle reentry path
+        - Task 4 covered settlement alignment is completed and Child 11 closeout is recorded
 
 12. `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
    - Queue status: `future-candidate`

@@ -12,12 +12,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 11 spec/plan authoring and weekly unlock sync are complete. The next legal implementation step is Task 1 Step 1 on shared dispatch convergence.`
-- Next Step: `Start Task 1 Step 1 and keep Child 11 inside the frozen Child 9/10 surfaces.`
-- Verification: `Plan authored and queue unlocked: npm run lint:plans`
-- Notes: `This plan must not reopen RuntimeRequest, RuntimeState carrier convergence, Interactive Runtime public contracts, House Runtime request contracts, or Effect Settlement public ownership. Boot/mod/save/presenter/UI/resource-planning work stays out of scope.`
+- Current Focus: `Child 11 closeout is complete. The covered shared follow-up path, covered city-begging interactive lifecycle, covered grain-shop house lifecycle, and covered advanceTime settlement path are now explicitly aligned under the approved core runtime ownership slices, while legacy-house-adapter.ts remains only as a thin compatibility placeholder.`
+- Next Step: `Do not reopen Child 11 scope. Child 12 remains the immediate queued UI layout/interface-reserve follow-up, and Child 13 stays locked behind Child 12 plus a later unlock review.`
+- Verification: `Task 4 and closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "effect settlement contract exports emitter applier input and result seams|runtime dispatch settles effects after routing|covered settlement path stays on shared runtime ownership"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `This child is now complete and must not reopen RuntimeRequest, RuntimeState carrier convergence, Interactive Runtime public contracts, House Runtime request contracts, or Effect Settlement public ownership. Boot/mod/save/presenter/UI/resource-planning work stayed out of scope. The retained legacy house adapter shell is intentionally compatibility-only after the covered house lifecycle moved under runtime ownership.`
 
 ## Progress Log
 
@@ -25,6 +25,26 @@
   - Summary: `Plan created from the finalized Child 10 runtime-ownerization baseline. Child 11 is now the next executable child, but no production implementation batch has started yet.`
   - Verification: `npm run lint:plans`
   - Next: `Start Task 1 Step 1.`
+- 2026-07-01
+  - Summary: `Completed Task 1 shared dispatch convergence. tests/robustness.test.cjs now proves covered shared runtime reentry is runtime-owned, src/core/runtime/runtime-dispatch.ts now owns the covered follow-up hook on top of the hardened router seam, src/core/runtime/runtime-router.ts now defines the typed follow-up contract, and src/main.ts no longer branches on the covered story-battle reenter-house result after dispatch returns.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "shared dispatch consumes the hardened runtime router contract|runtime dispatch settles effects after routing|covered shared runtime reentry is runtime-owned"; npm run typecheck; npm test; npm run build`
+  - Next: `Start Task 2 Step 1 on covered interactive ownerization.`
+- 2026-07-01
+  - Summary: `Completed Task 2 interactive ownerization on the covered city-begging path. tests/robustness.test.cjs now proves that launch, pointer/tick, completion follow-up, time advance, and session cleanup are runtime-owned under src/core/runtime/interactive-runtime.ts, src/core/adapters/legacy-interactive-adapter.ts no longer carries the city-begging lifecycle wrappers, and src/main.ts no longer performs the covered city-begging completion-time advance/cleanup branch itself.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime exports launch and action seams|interactive runtime contract exports launch action exit and result seams|covered interactive flow is runtime-owned"; npm run typecheck; npm test; npm run build`
+  - Next: `Start Task 3 Step 1 on covered house ownerization.`
+- 2026-07-01
+  - Summary: `Completed Task 3 house ownerization on the covered grain-shop path. tests/robustness.test.cjs now proves that enter, dispatch, and leave for the covered grain-shop lifecycle are runtime-owned under src/core/runtime/house-runtime.ts, src/core/adapters/legacy-house-adapter.ts is reduced to a compatibility placeholder, and the covered house flow no longer routes those lifecycle steps through a legacy adapter-owned dispatch helper.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "house runtime request contract exports enter leave and dispatch variants|core house runtime bridge exports enter leave and dispatch seams|covered house flow is runtime-owned"; npm run typecheck; npm test; npm run build`
+  - Next: `Start Task 4 Step 1 on covered settlement alignment.`
+- 2026-07-01
+  - Summary: `Completed Task 4 covered settlement alignment. tests/robustness.test.cjs now proves that the covered city-begging and covered grain-shop paths both settle time advancement through src/core/runtime/runtime-settlement.ts, interactive-runtime.ts no longer calls runTimeRuntime() for the covered completion path, house-runtime.ts no longer applies covered time costs through a direct advanceGameStateTimeSegments() call, and effect-settlement.ts now records house-runtime as an explicit covered emitter.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "effect settlement contract exports emitter applier input and result seams|runtime dispatch settles effects after routing|covered settlement path stays on shared runtime ownership"; npm run typecheck; npm test; npm run build`
+  - Next: `Start Task 5 Step 1 and close Child 11 only through the required governance sync.`
+- 2026-07-01
+  - Summary: `Completed Child 11 closeout and governance sync. Weekly orchestration, visibility, review-index, module-map, call-flow, next-split, and architecture artifacts now agree that Child 11 is complete on shared follow-up, covered interactive, covered house, and covered settlement ownerization for the approved slices; Child 12 remains the immediate queued follow-up; and Child 13 remains locked behind Child 12 plus a later unlock review.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep Child 11 closed. When execution is explicitly resumed on a new child, start Child 12 from its own plan instead of reopening this child.`
 
 ---
 
@@ -159,11 +179,11 @@ Queue/governance sync batches must also record:
 - Modify: `src/main.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add failing regression tests for covered shared dispatch convergence**
+- [x] **Step 1: Add failing regression tests for covered shared dispatch convergence**
 
 Write red tests that prove covered shared runtime entry and reentry still depend on ad hoc shell orchestration today.
 
-- [ ] **Step 2: Run the targeted red tests**
+- [x] **Step 2: Run the targeted red tests**
 
 Run:
 
@@ -177,11 +197,11 @@ Expected:
 - existing Child 9 contract tests still pass
 - the new covered reentry/ownerization assertion fails before implementation
 
-- [ ] **Step 3: Implement the minimum shared dispatch convergence**
+- [x] **Step 3: Implement the minimum shared dispatch convergence**
 
 Reduce covered-path `src/main.ts` orchestration by moving approved request/follow-up handling behind `runtime-dispatch.ts` and `runtime-router.ts` without widening the Child 9 request families.
 
-- [ ] **Step 4: Re-run the targeted shared dispatch tests**
+- [x] **Step 4: Re-run the targeted shared dispatch tests**
 
 Run:
 
@@ -194,7 +214,7 @@ Expected:
 
 - all targeted shared dispatch tests pass
 
-- [ ] **Step 5: Run the full verification gate for Task 1**
+- [x] **Step 5: Run the full verification gate for Task 1**
 
 Run:
 
@@ -217,11 +237,11 @@ Expected:
 - Modify: `src/main.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add failing regression tests for interactive ownerization**
+- [x] **Step 1: Add failing regression tests for interactive ownerization**
 
 Write red tests for one covered interactive launch/action/follow-up path that still depends on adapter-owned lifecycle control.
 
-- [ ] **Step 2: Run the targeted interactive red tests**
+- [x] **Step 2: Run the targeted interactive red tests**
 
 Run:
 
@@ -235,11 +255,11 @@ Expected:
 - contract-shape tests still pass
 - the new runtime-owned flow assertion fails before implementation
 
-- [ ] **Step 3: Implement interactive runtime ownerization**
+- [x] **Step 3: Implement interactive runtime ownerization**
 
 Move the covered launch/action/exit/follow-up lifecycle under `src/core/runtime/interactive-runtime.ts` and reduce `legacy-interactive-adapter.ts` to the thinnest compatibility seam still required by scope.
 
-- [ ] **Step 4: Re-run the targeted interactive tests**
+- [x] **Step 4: Re-run the targeted interactive tests**
 
 Run:
 
@@ -252,7 +272,7 @@ Expected:
 
 - all targeted interactive tests pass
 
-- [ ] **Step 5: Run the full verification gate for Task 2**
+- [x] **Step 5: Run the full verification gate for Task 2**
 
 Run:
 
@@ -275,11 +295,11 @@ Expected:
 - Modify: `src/main.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add failing regression tests for house ownerization**
+- [x] **Step 1: Add failing regression tests for house ownerization**
 
 Write red tests for one covered house enter/action/leave path that still depends on adapter-backed lifecycle control.
 
-- [ ] **Step 2: Run the targeted house red tests**
+- [x] **Step 2: Run the targeted house red tests**
 
 Run:
 
@@ -293,11 +313,11 @@ Expected:
 - contract-shape tests still pass
 - the new runtime-owned house flow assertion fails before implementation
 
-- [ ] **Step 3: Implement house runtime ownerization**
+- [x] **Step 3: Implement house runtime ownerization**
 
 Move the covered enter/dispatch/leave/follow-up lifecycle under `src/core/runtime/house-runtime.ts` and reduce `legacy-house-adapter.ts` to the thinnest compatibility seam still required by scope.
 
-- [ ] **Step 4: Re-run the targeted house tests**
+- [x] **Step 4: Re-run the targeted house tests**
 
 Run:
 
@@ -310,7 +330,7 @@ Expected:
 
 - all targeted house tests pass
 
-- [ ] **Step 5: Run the full verification gate for Task 3**
+- [x] **Step 5: Run the full verification gate for Task 3**
 
 Run:
 
@@ -334,11 +354,11 @@ Expected:
 - Modify: `src/core/runtime/house-runtime.ts`
 - Test: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add failing regression tests for covered settlement alignment**
+- [x] **Step 1: Add failing regression tests for covered settlement alignment**
 
 Write red tests that prove covered interactive/house/shared runtime paths still settle effects through mixed or unclear ownership.
 
-- [ ] **Step 2: Run the targeted settlement red tests**
+- [x] **Step 2: Run the targeted settlement red tests**
 
 Run:
 
@@ -352,11 +372,11 @@ Expected:
 - contract-shape tests still pass
 - the new covered settlement alignment assertion fails before implementation
 
-- [ ] **Step 3: Implement the minimum settlement alignment**
+- [x] **Step 3: Implement the minimum settlement alignment**
 
 Align covered shared/interactive/house effect application with `runtime-settlement.ts` while keeping settlement separate from feature routing ownership.
 
-- [ ] **Step 4: Re-run the targeted settlement tests**
+- [x] **Step 4: Re-run the targeted settlement tests**
 
 Run:
 
@@ -369,7 +389,7 @@ Expected:
 
 - all targeted settlement tests pass
 
-- [ ] **Step 5: Run the full verification gate for Task 4**
+- [x] **Step 5: Run the full verification gate for Task 4**
 
 Run:
 
@@ -395,11 +415,11 @@ Expected:
 - Modify: `docs/superpowers/weekly/2026-06-29-weekly-next-split-review.md`
 - Modify: `docs/superpowers/weekly/2026-06-29-weekly-architecture-report.md`
 
-- [ ] **Step 1: Record Child 11 implementation outcome**
+- [x] **Step 1: Record Child 11 implementation outcome**
 
 Update `Execution State`, `Progress Log`, retained adapter/residual debt notes, and completion wording only after all production verification passes.
 
-- [ ] **Step 2: Run the required queue/governance verification**
+- [x] **Step 2: Run the required queue/governance verification**
 
 Run:
 
@@ -412,7 +432,7 @@ Expected:
 - plan-governance checks pass
 - weekly/visibility/child wording stays structurally valid
 
-- [ ] **Step 3: Confirm Child 11 exit criteria in the weekly docs**
+- [x] **Step 3: Confirm Child 11 exit criteria in the weekly docs**
 
 Record that:
 
@@ -424,7 +444,7 @@ Record that:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

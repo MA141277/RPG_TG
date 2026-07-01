@@ -4,6 +4,8 @@ import type {
   EffectSettlementResult,
 } from "../contracts/effect-settlement";
 import type { RuntimeState } from "../contracts/runtime-state";
+import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
+import { advanceGameStateTimeSegments } from "../../application/time/time-progression";
 
 export function applyEffects(
   state: RuntimeState,
@@ -57,6 +59,19 @@ export function settleRuntimeEffects(
             },
           },
         },
+      };
+      settledEffects.push(effect);
+      continue;
+    }
+
+    if (effect.type === "advanceTime") {
+      const totalSegments =
+        Math.max(0, Math.floor(effect.days ?? 0)) *
+          HOUSE_ACTIVITY_SEGMENTS_PER_DAY +
+        Math.max(0, Math.floor(effect.hours ?? 0));
+      nextState = {
+        ...nextState,
+        core: advanceGameStateTimeSegments(nextState.core, totalSegments),
       };
       settledEffects.push(effect);
       continue;

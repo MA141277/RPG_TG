@@ -4,6 +4,7 @@ import type { RuntimeState } from "./runtime-state";
 export type EffectEmitter =
   | "runtime-router"
   | "interactive-runtime"
+  | "house-runtime"
   | "task-runtime"
   | "event-runtime"
   | "scene-runtime"

@@ -19,6 +19,10 @@ If a real flow cannot be described clearly, that area is still a black box.
 - state sync runtime flow captured after Child 8 closeout
 - Child 9 preflight contract-hardening flows captured
 - Child 10 baseline-governance flow captured after Child 10 closeout
+- Child 11 Task 1 shared-dispatch follow-up flow captured
+- Child 11 Task 2 covered interactive ownerization flow captured
+- Child 11 Task 3 covered house ownerization flow captured
+- Child 11 Task 4 covered settlement alignment flow captured
 
 ## Flow 1: Current Game Boot Flow
 
@@ -90,7 +94,7 @@ RuntimeRequest -> dispatchRuntimeRequest() -> context.routeRequest() -> RuntimeR
 
 ### Notes
 
-- Current settlement handles the first two effect types that mutate core runtime state directly: `setFlag` and `setVariable`.
+- Current settlement now handles `setFlag`, `setVariable`, and the covered `advanceTime` path used by the approved Child 11 interactive/house slices.
 - Additional effect types remain intentionally deferred until later child-plan slices prove they belong here.
 
 ## Flow 5: Real Child 1 Save Envelope Flow
@@ -161,22 +165,75 @@ UI/house event in main.ts -> createLaunchInteractiveRequest() or createInteracti
 - This is an entry-seam extraction, not a full gameplay migration; the underlying minigame and story-battle logic still runs through legacy adapters.
 - Child 4 batch 2 widened the returned carriage to `RuntimeResult.state` plus `RuntimeResult.interactive`, but not every covered path uses shared dispatch yet.
 
-## Flow 9: Real Child 4 Minimum RuntimeState Shared Dispatch Reentry
+## Flow 9: Real Child 11 Task 1 Shared Dispatch Reentry Follow-Up
 
 ### Narrative
 
-Child 4 batch 2 now proves that at least one covered interactive path can rejoin the shared runtime line on the landed minimum carrier. `src/main.ts` creates the interactive action request, `dispatchRuntimeRequest()` routes over `RuntimeState`, `runInteractiveRuntime()` returns shared `RuntimeResult` carriage, effect settlement writes through `state.core.runtime`, and browser-only follow-up remains in `main.ts`.
+Child 11 Task 1 now proves that the covered story-battle reentry path no longer needs a post-dispatch branch in `src/main.ts`. `src/main.ts` creates the interactive action request, `dispatchRuntimeRequest()` routes over `RuntimeState`, the hardened router seam returns shared `RuntimeResult` carriage, effect settlement writes through `state.core.runtime`, and the new typed follow-up hook settles the covered `reenter-house` continuation before state is written back.
 
 ### Call Chain
 
 ```text
-story-battle action in main.ts -> createInteractiveActionRequest() -> dispatchRuntimeRequest() -> routeRequest() -> runInteractiveRuntime() -> RuntimeResult.state/interactive -> applyInteractiveRuntimeState() -> optional reenter-house follow-up
+story-battle action in main.ts -> createInteractiveActionRequest() -> dispatchRuntimeRequest() -> RuntimeRouter.route() -> runInteractiveRuntime() -> settleRuntimeEffects() -> handleInteractive() follow-up hook -> applyInteractiveRuntimeState() -> house runtime reentry
 ```
 
 ### Notes
 
 - `RuntimeState.core` remains the current domain `GameState`, `RuntimeState.app` remains the minimum four-field app carrier, and `RuntimeState.view` remains `{}` in this flow.
 - `characterDefinitions` still travels on additive compatibility carriage for this batch; moving it into `RuntimeState.core` remains gated by weekly promotion rules rather than implied by this flow.
+- This is still only the minimum shared-dispatch convergence slice. Interactive ownerization and house ownerization remain separate Child 11 tasks.
+
+## Flow 9A: Real Child 11 Task 2 Covered Interactive Ownerization
+
+### Narrative
+
+Child 11 Task 2 now proves that one covered interactive lifecycle no longer needs adapter-owned launch/action/follow-up control. `src/main.ts` still emits the city-begging launch and complete requests, but `src/core/runtime/interactive-runtime.ts` now creates the session, advances pointer/tick state, applies the completion payload, settles the covered time advance through `src/core/runtime/runtime-settlement.ts`, and clears the minigame session before the result is written back.
+
+### Call Chain
+
+```text
+city-begging launch/complete in main.ts -> createInteractiveLaunchRequest()/createInteractiveActionRequest() -> dispatchRuntimeRequest() -> RuntimeRouter.route() -> runInteractiveRuntime() -> create/update/apply city-begging state + settleRuntimeEffects() advanceTime follow-up -> applyInteractiveRuntimeResult() in main.ts
+```
+
+### Notes
+
+- `src/core/adapters/legacy-interactive-adapter.ts` no longer carries the city-begging lifecycle wrappers after this batch; only the still-out-of-scope compatibility helpers remain there.
+- `src/main.ts` no longer performs the covered city-begging completion-time advance or session cleanup branch directly.
+- This flow is now paired with Task 4 settlement alignment; broader runtime-family convergence is still deferred beyond the completed covered slice.
+
+## Flow 9B: Real Child 11 Task 3 Covered House Ownerization
+
+### Narrative
+
+Child 11 Task 3 now proves that one covered house lifecycle no longer needs adapter-owned enter/dispatch/leave control. `src/main.ts` still enters and leaves houses through the same core runtime seam, but `src/core/runtime/house-runtime.ts` now owns the covered grain-shop session bootstrap, action dispatch, leave handling, story-on-enter trigger, and covered house side-effect processing directly, with the covered time cost now settled through `runtime-settlement.ts`.
+
+### Call Chain
+
+```text
+grain-shop enter/action/leave in main.ts -> enterHouseThroughRuntime()/dispatchHouseRuntimeRequest()/leaveHouseThroughRuntime() -> HouseRuntimeBridge.dispatch() -> core house-runtime enter/dispatch/leave handlers -> house module transition + settleRuntimeEffects() covered advanceTime -> renderApp()
+```
+
+### Notes
+
+- `src/core/adapters/legacy-house-adapter.ts` is now only a compatibility placeholder after this batch; the covered grain-shop lifecycle no longer routes through an adapter-owned dispatch helper.
+- This flow is now paired with Task 4 settlement alignment; broader runtime-family convergence is still deferred beyond the completed covered slice.
+
+## Flow 9C: Real Child 11 Task 4 Covered Settlement Alignment
+
+### Narrative
+
+Child 11 Task 4 now proves that the covered runtime-owned slices do not keep split time-advance ownership. `src/core/runtime/interactive-runtime.ts` and `src/core/runtime/house-runtime.ts` both emit covered `advanceTime` effects, `src/core/runtime/runtime-settlement.ts` now applies that effect through the shared time-progression helper, and the covered city-begging plus grain-shop flows no longer need direct feature-owned time advancement calls.
+
+### Call Chain
+
+```text
+covered interactive/house result -> settleRuntimeEffects() -> advanceTime effect -> advanceGameStateTimeSegments() through runtime-settlement.ts -> settled RuntimeState.core/runtime -> main.ts/app write-back
+```
+
+### Notes
+
+- `src/core/contracts/effect-settlement.ts` now records `house-runtime` as a covered emitter for this path.
+- This closes the approved Child 11 settlement slice only; later runtime-family convergence must still pass through Child 12 queue governance and the locked Child 13 review gate.
 
 ## Flow 10: Real Child 5 Presenter Output Render Flow
 

@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `The visibility bundle now needs to reflect that Child 11 is the next executable child, Child 12 is the queued UI layout/interface-reserve follow-up, and Child 13 remains locked behind Child 12.`
-- Next Step: `Keep the five core artifacts aligned with Child 11 unlocked and not-started, Child 12 queued, and Child 13 locked until the first Child 11 implementation batch lands.`
-- Verification: `Child 11 unlock visibility sync: npm run lint:plans`
-- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 11 is now visibly unlocked because its spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync is recorded.`
+- Current Focus: `The visibility bundle now reflects that Child 11 is completed on the approved ownerization slices, Child 12 remains queued as the immediate UI layout/interface-reserve follow-up, and Child 13 remains locked behind Child 12.`
+- Next Step: `Keep the five core artifacts aligned with Child 11 completed until Child 12 is explicitly resumed from its own plan or queue governance changes again.`
+- Verification: `Child 11 closeout visibility sync: npm run lint:plans`
+- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 11 is now visibly complete because the covered shared follow-up, interactive, house, and settlement slices have all landed against the finalized Child 10 baseline.`
 
 ## Progress Log
 
@@ -43,6 +43,22 @@
   - Summary: `Updated the visibility companion after Child 13 spec/plan authoring and queue clarification. The weekly artifacts now keep one queue truth: Child 11 is active next, Child 12 remains the immediate UI layout/interface-reserve follow-up, and Child 13 stays locked until Child 12 completes.`
   - Verification: `npm run lint:plans`
   - Next: `Keep the same artifact bundle aligned until Child 11 completes or queue governance changes again.`
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 11 Task 1. The weekly artifacts now record Child 11 as actively in progress, show that covered shared runtime reentry is now dispatch-owned for the story-battle -> reenter-house path, and keep Child 12 queued plus Child 13 locked.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "shared dispatch consumes the hardened runtime router contract|runtime dispatch settles effects after routing|covered shared runtime reentry is runtime-owned"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Keep the same artifact bundle aligned until Child 11 Task 2 lands or queue governance changes again.`
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 11 Task 2. The weekly artifacts now record that the covered city-begging launch/action/follow-up path is runtime-owned under src/core/runtime/interactive-runtime.ts, that legacy-interactive-adapter.ts has been narrowed for this path, and that Child 11 Task 3 is now the next legal implementation step while Child 12 stays queued and Child 13 stays locked.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime exports launch and action seams|interactive runtime contract exports launch action exit and result seams|covered interactive flow is runtime-owned"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Keep the same artifact bundle aligned until Child 11 Task 3 lands or queue governance changes again.`
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 11 Task 3. The weekly artifacts now record that the covered grain-shop enter/action/leave path is runtime-owned under src/core/runtime/house-runtime.ts, that legacy-house-adapter.ts has been reduced to a compatibility placeholder for this slice, and that Child 11 Task 4 is now the next legal implementation step while Child 12 stays queued and Child 13 stays locked.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "house runtime request contract exports enter leave and dispatch variants|core house runtime bridge exports enter leave and dispatch seams|covered house flow is runtime-owned"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Keep the same artifact bundle aligned until Child 11 Task 4 lands or queue governance changes again.`
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 11 closeout. The weekly artifacts now record that the covered shared follow-up path is dispatch-owned, the covered city-begging lifecycle is runtime-owned, the covered grain-shop lifecycle is runtime-owned, the covered advanceTime settlement path is explicit under runtime-settlement.ts, Child 11 is completed, Child 12 remains queued next, and Child 13 remains locked behind Child 12.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "effect settlement contract exports emitter applier input and result seams|runtime dispatch settles effects after routing|covered settlement path stays on shared runtime ownership"; npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Keep the same artifact bundle aligned until Child 12 is explicitly resumed or queue governance changes again.`
 
 - 2026-06-29
   - Summary: `Visibility companion created and linked to the weekly orchestration flow.`

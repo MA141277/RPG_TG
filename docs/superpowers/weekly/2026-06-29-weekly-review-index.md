@@ -12,7 +12,7 @@
 
 **Queued Next Child Plan(s):**
 
-- `None currently queued ahead of Child 11 in the active weekly queue`
+- `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
 
 ## Weekly Summary
 
@@ -25,15 +25,15 @@
 - Child 8 is now complete: `src/core/contracts/state-sync-runtime.ts` and `src/core/runtime/state-sync-*` own the first formal StateSync Runtime canonical boundary, mandatory triggers, syncState entrypoint, state helper modules, and bridge-period main.ts state helper migration.
 - Child 9 is now complete: `docs/superpowers/specs/2026-07-01-runtime-contract-hardening-spec.md` and `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md` now govern a completed shared-contract baseline for typed RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and minimum House Runtime Request hardening.
 - Child 10 is now completed: `docs/superpowers/specs/2026-07-01-runtime-ownerization-review-spec.md`, `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`, and `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md` now form the finalized post-Child-9 review/baseline package that freezes Child 11 execution boundaries.
-- Child 11 now has a formal spec and plan at `docs/superpowers/specs/2026-07-01-sub-runtime-ownerization-implementation-spec.md` and `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`, and weekly unlock sync now records it as the next executable child.
+- Child 11 now has a formal spec and plan at `docs/superpowers/specs/2026-07-01-sub-runtime-ownerization-implementation-spec.md` and `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`; Task 1 landed the minimum shared-dispatch follow-up convergence for the covered story-battle reentry path, Task 2 landed covered interactive ownerization for the city-begging path, Task 3 landed covered house ownerization for the grain-shop path, and Task 4 aligned the covered advanceTime settlement path before Child 11 closeout completed.
 - The five-core-artifact visibility bundle exists so the same week also produces readable module, control-flow, split-review, architecture, and change-impact outputs.
 
 ## Active Focus
 
 - Child 9 Runtime Contract Hardening is now completed.
 - Child 10 Runtime Ownerization Review And Baseline is now completed on the finalized owner/bridge baseline.
-- Child 11 Sub-Runtime Ownerization Implementation is now the next executable child.
-- Child 11 is unlocked and not-started; implementation must begin from its own plan rather than from queue prose.
+- Child 11 Sub-Runtime Ownerization Implementation is now completed.
+- Child 12 UI Contract Reserve is now the immediate queued follow-up child, while Child 13 remains locked behind Child 12.
 
 ## Artifact Index
 
@@ -69,6 +69,9 @@ The old files may remain as historical references, but they are no longer indepe
 - `npm run typecheck`: `PASS`
 - `npm test`: `PASS`
 - `npm run build`: `PASS`
+- `node --test tests/robustness.test.cjs --test-name-pattern "shared dispatch consumes the hardened runtime router contract|runtime dispatch settles effects after routing|covered shared runtime reentry is runtime-owned"`: `PASS`
+- `node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime exports launch and action seams|interactive runtime contract exports launch action exit and result seams|covered interactive flow is runtime-owned"`: `PASS`
+- `node --test tests/robustness.test.cjs --test-name-pattern "house runtime request contract exports enter leave and dispatch variants|core house runtime bridge exports enter leave and dispatch seams|covered house flow is runtime-owned"`: `PASS`
 - `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
@@ -91,6 +94,10 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 7 landed `src/core/contracts/mod-runtime.ts`, `src/core/mods/mod-source-registry.ts`, `mod-source-loader.ts`, `mod-parser.ts`, `mod-dependency-resolver.ts`, `mod-capability-guard.ts`, `mod-runtime.ts`, and `src/core/adapters/mod-runtime-main-adapter.ts`; Mod Runtime now supports source descriptors, loaded/activated mod contracts, source normalization/loading/parsing, dependency/capability validation, atomic activation rollback, unified activation handoff, and builtin/file/url/restore activation calls from `src/main.ts`.
 - Child 8 landed `src/core/contracts/state-sync-runtime.ts`, `src/core/runtime/state-sync-runtime.ts`, validation, normalization, hydration, app-bridge, save, mod-rebuild, and presentation helper modules; StateSync Runtime now defines canonical runtime state authority, app/save/presentation boundaries, mandatory triggers, and a small syncState entrypoint while moving bridge-period RuntimeState helpers out of `src/main.ts`.
 - Child 9 is now fully executed and closed, converting runtime contract hardening from a queued slice into a completed shared baseline ahead of ownerization review.
+- Child 11 Task 1 landed `tests/robustness.test.cjs` coverage for runtime-owned reentry, added a typed follow-up contract under `src/core/runtime/runtime-router.ts`, moved covered shared follow-up handling into `src/core/runtime/runtime-dispatch.ts`, and removed the covered `result.interactive?.type === "reenter-house"` branch from `src/main.ts`.
+- Child 11 Task 2 landed covered interactive ownerization for city-begging: `src/core/runtime/interactive-runtime.ts` now owns launch, pointer/tick, completion follow-up, time advance, and session cleanup for that path; `src/core/adapters/legacy-interactive-adapter.ts` no longer carries the city-begging lifecycle wrappers; and `src/main.ts` no longer performs the covered city-begging completion-time advance/cleanup branch directly.
+- Child 11 Task 3 landed covered house ownerization for grain-shop: `src/core/runtime/house-runtime.ts` now owns enter, dispatch, leave, session mutation, and covered house side-effect handling for that path; `src/core/adapters/legacy-house-adapter.ts` is reduced to a compatibility placeholder; and the covered house lifecycle no longer routes through a legacy adapter-owned dispatch helper.
+- Child 11 Task 4 landed covered settlement alignment: `src/core/runtime/runtime-settlement.ts` now owns the covered advanceTime application path for interactive and house slices, `src/core/contracts/effect-settlement.ts` now records `house-runtime` as a covered emitter, and Child 11 has closed on the approved runtime-owned slices.
 
 ### Deferred
 
@@ -101,7 +108,7 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 8 StateSync Runtime is now closed on the first formal canonical boundary slice.
 - Child 9 Runtime Contract Hardening is now completed; RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and House Runtime Request baselines all exist.
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the controlling baseline child.
-- Child 11 Sub-Runtime Ownerization Implementation is now recorded as unlocked and not-started.
+- Child 11 Sub-Runtime Ownerization Implementation is now completed, and Child 12 UI Contract Reserve is the queued follow-up while Child 13 remains locked.
 
 ### Blockers
 
@@ -113,12 +120,12 @@ The old files may remain as historical references, but they are no longer indepe
 | --- | --- | --- | --- |
 | `weekly governance` | Parent, child, weekly, visibility, and closeout sync state are explicit. | `none` | Keep closeout sync mandatory before future queue promotions. |
 | `src/core/contracts` | Introduce and widen shared contracts through `RuntimeState`, `RuntimeResult`, and interactive signals. | `contained`: `characterDefinitions` could not safely merge into `RuntimeState.core` yet. | Keep `characterDefinitions` deferred behind the weekly promotion gate. |
-| `src/core/runtime` | Move navigation/time/event/scene and covered interaction entry behind core seams. | `contained`: some interactive paths still use dedicated bridge helpers instead of one final router shape. | Hold stable during Child 5; revisit through a later runtime-consolidation child only if needed. |
+| `src/core/runtime` | Move navigation/time/event/scene and covered interaction entry behind core seams. | `contained`: Child 11 has now closed its approved ownerization slices, but broader runtime-family convergence is intentionally deferred beyond the completed covered follow-up, interactive, house, and settlement paths. | Keep Child 11 closed, then evaluate later runtime follow-up work through Child 12 queue governance and the later Child 13 review gate. |
 | `src/core/runtime/task-runtime.ts` | Introduce formal task lifecycle and signal progression ownership. | `contained`: no task UI, authoring DSL, or custom evaluator plugin yet. | Keep stable while Child 8 extracts StateSync boundaries. |
 | `src/core/mods` | Introduce formal Mod Runtime activation/startup ownership. | `contained`: full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy are still future work. | Keep stable while Child 8 extracts StateSync boundaries. |
 | `src/core/runtime/state-sync-*` | Introduce canonical runtime/app/save/presentation synchronization ownership. | `contained`: full save IO integration, runtime dispatch auto-commit integration, and full legacy migration remain future work. | Review before deciding whether a follow-up child is justified. |
 | `src/core/save` | Harden loader/writer/migration behavior. | `none` | Keep shape stable while Child 8 formalizes state sync around the existing save/load boundary. |
-| `src/main.ts` | Shrink black-box ownership through core adapters, runtime seams, presenter assembly, task runtime ownership, Mod Runtime activation calls, and StateSync bridge helper extraction. | `contained`: browser shell and many runtime event handlers remain in main. | Review remaining coupling before authoring another child. |
+| `src/main.ts` | Shrink black-box ownership through core adapters, runtime seams, presenter assembly, task runtime ownership, Mod Runtime activation calls, and StateSync bridge helper extraction. | `contained`: the covered story-battle reentry branch, covered city-begging completion-time advance/cleanup branch, and covered grain-shop direct time-cost application are now off the main-owned/runtime-bridge direct path, but many browser-shell event handlers still remain in main. | Keep the current main.ts reductions stable and do not bypass Child 12 to reopen runtime ownerization ad hoc. |
 | `src/application/presenter` | Introduce a real presenter output bridge for stage, overlay, HUD, scene, and house render selection. | `contained`: layout renderer remains future work. | Keep stable while Child 8 extracts state sync. |
 | `src/ui/app-render.ts` | Reduce app render to presenter output consumption plus existing renderer calls. | `none` | Do not move gameplay selection back into UI. |
 
@@ -127,10 +134,10 @@ The old files may remain as historical references, but they are no longer indepe
 - Highest-priority module to refine:
   - `Child 11 Sub-Runtime Ownerization Implementation`
 - Why it is next:
-  - Child 10 is complete, Child 11 spec/plan authoring is complete, and the next controlled step is to execute Child 11 against the frozen baseline without reopening it.
+  - Child 11 is completed against the frozen baseline, so the next queued child remains Child 12 rather than another ad hoc Child 11 extension or Child 13 bypass.
 - Category:
-  - `Child 11 implementation`
+  - `Child 12 queue governance`
 - Queued follow-up after the next child:
-  - `Child 12 UI Contract Reserve remains the immediate UI layout/interface-reserve follow-up behind Child 11, while Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit stays locked behind Child 12.`
+  - `Child 12 UI Contract Reserve remains the immediate UI layout/interface-reserve follow-up behind completed Child 11, while Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit stays locked behind Child 12.`
 - Unlock dependency after that:
   - `Child 13 still requires Child 11 completion, Child 12 completion, and a later unlock review before implementation may start.`

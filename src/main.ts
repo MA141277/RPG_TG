@@ -36,7 +36,6 @@ import {
   getCityBeggingMiniGameStatus,
   isCityBeggingMiniGamePlaying,
 } from "./application/minigames/city-begging-minigame";
-import { convertHouseActivityDaysToSegments } from "./application/house/house-activity-costs";
 import {
   createCityMenuState,
   isPlayerMonkIdentity,
@@ -777,16 +776,7 @@ function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
     characterDefinitions: appState.characterDefinitions,
     playerCharacterId: currentPlayerCharacterId,
   });
-  appState = {
-    ...applyInteractiveRuntimeResult(appState, completion),
-    gameState: runTimeRuntime({
-      state: completion.state.core,
-      request: createAdvanceTimeSegmentsRequest(
-        convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
-      ),
-    }).state,
-    beggingMiniGameState: null,
-  };
+  appState = applyInteractiveRuntimeResult(appState, completion);
   syncCouncilPriorityAfterGameStateChange(previousGameState);
   window.onBeggingGameComplete?.(result);
 }
@@ -1536,6 +1526,7 @@ function chooseCurrentStoryOption(choiceId: string): void {
 }
 
 function dispatchCurrentStoryBattleAction(actionId: string): void {
+  let followUpRendered = false;
   const result = dispatchRuntimeRequest({
     state: createInteractiveRuntimeState(appState),
     request: createInteractiveActionRequest(
@@ -1552,12 +1543,18 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
             textEntriesById,
           }),
       },
+      followUp: {
+        handleInteractive: ({ interactive }) => {
+          enterHouseThroughRuntime(houseRuntime, interactive.houseId);
+          followUpRendered = true;
+          return createInteractiveRuntimeState(appState);
+        },
+      },
     },
   });
   appState = applyInteractiveRuntimeState(appState, result.state);
 
-  if (result.interactive?.type === "reenter-house") {
-    enterHouseThroughRuntime(houseRuntime, result.interactive.houseId);
+  if (followUpRendered) {
     return;
   }
 
