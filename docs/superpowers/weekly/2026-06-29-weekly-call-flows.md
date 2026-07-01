@@ -18,6 +18,7 @@ If a real flow cannot be described clearly, that area is still a black box.
 - mod runtime activation flow captured after Child 7 closeout
 - state sync runtime flow captured after Child 8 closeout
 - Child 9 preflight contract-hardening flows captured
+- Child 10 baseline-governance flow captured after Child 10 closeout
 
 ## Flow 1: Current Game Boot Flow
 
@@ -296,3 +297,20 @@ house enter/leave/or module request -> enterHouseThroughRuntime() / leaveHouseTh
 
 - This is the current compatibility bridge, not the target owner model.
 - Child 9 should replace the public request vocabulary at this seam, while leaving actual house business logic in place for a later child.
+
+## Flow 17: Child 10 Baseline-To-Child 11 Unlock Governance Flow
+
+### Narrative
+
+Child 10 is a governance child rather than a production-code child. Its closeout path now freezes runtime maturity, owner vs bridge status, adapter disposition, `src/main.ts` coupling, and Child 11 execution controls in one baseline document. Child 11 remains locked until that baseline is referenced by authored Child 11 spec/plan documents and the weekly queue explicitly records the unlock.
+
+### Call Chain
+
+```text
+Child 9 completed -> execute Child 10 review plan -> finalize runtime-ownerization baseline -> author Child 11 spec/plan against baseline -> weekly unlock sync -> Child 11 becomes executable
+```
+
+### Notes
+
+- This is a real governance flow in the current repository, not a hypothetical future process.
+- It exists to prevent Child 11 from reopening owner/bridge classification, adapter disposition, or `main.ts` coupling ad hoc during implementation.

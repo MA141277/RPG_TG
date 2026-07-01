@@ -14,10 +14,23 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 8 StateSync Runtime is completed, Child 9 Runtime Contract Hardening remains the next executable child, and Child 10 plus Child 11 are now formally scheduled behind it.`
-- Next Step: `Start Child 9 from docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md Task 1 Step 1, then execute Child 10 before unlocking Child 11.`
-- Verification: `Child 10/11 parent planning sync: npm run lint:plans`
-- Notes: `This remains an orchestration-only parent plan. Child 1 through Child 8 are completed, Child 9 is the active next executable contract-hardening child, Child 10 is the formal runtime-ownerization review/baseline child, and Child 11 is the locked sub-runtime ownerization implementation child. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, and Child 11 remains locked until its spec/plan are authored against the finalized baseline.`
+- Next Step: `Author Child 11 spec and plan against docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md before any Child 11 ownerization code work begins.`
+- Verification: `Child 10 closeout parent sync: npm run lint:plans`
+
+- 2026-07-01
+  - Summary: `Completed Child 9 Task 2 on the shared runtime seam. Typed RuntimeRequest families, the formal RuntimeRouter seam, and router-aligned dispatch are now in place as contract work only; ownerization remains deferred.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime request contract|runtime router contract|shared dispatch"; npm run lint:plans`
+  - Next: `Continue Child 9 with Task 3 Interactive / Minigame Dispatch contract red tests.`
+- 2026-07-01
+  - Summary: `Completed Child 9 Task 3 on the interactive boundary. Launch/action/exit contracts, the formal interactive result/session seam, and one covered-flow normalizer now exist while legacy minigame and story-battle business logic stays adapter-backed.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime contract|minigame dispatch contract"; npm run lint:plans`
+  - Next: `Continue Child 9 with Task 4 Effect Settlement contract red tests.`
+- 2026-07-01
+  - Summary: `Completed Child 9 closeout. RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and House Runtime Request baselines now exist as shared contracts, while adapter removal and runtime ownerization remain deferred to Child 10 / Child 11.`
+  - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Execute Child 10 Runtime Ownerization Review And Baseline before any Child 11 implementation work.`
+- Notes: `This remains an orchestration-only parent plan. Child 1 through Child 8 are completed, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the finalized runtime-ownerization review/baseline artifact, and Child 11 remains the locked sub-runtime ownerization implementation child until its spec/plan are authored and queue unlock sync records it as executable. The older default-mod migration direction is superseded by the broader completed Child 7 Mod Runtime scope. Commit batching remains per-child so isolated slices can be reviewed and integrated cleanly before later children proceed.`
 
 ## Progress Log
 
@@ -121,6 +134,14 @@
   - Summary: `Created formal Child 10 Runtime Ownerization Review And Baseline spec/plan plus the controlling Child 10 baseline document, and reserved Child 11 as the locked sub-runtime ownerization implementation child behind that baseline.`
   - Verification: `npm run lint:plans`
   - Next: `Keep Child 9 as the only executable next child. After Child 9 closes, execute Child 10 and do not unlock Child 11 until the Child 10 baseline completes and Child 11 spec/plan exist.`
+- 2026-07-01
+  - Summary: `Started Child 9 implementation by completing the contract-gap reconciliation batch. The active child plan now records explicit deficiencies for RuntimeRequest/Router, interactive dispatch, effect settlement, and house runtime request exposure, which narrows the next implementation batch to red tests instead of further scope discovery.`
+  - Verification: `npm run lint:plans`
+  - Next: `Continue Child 9 at Task 2 Step 1 and add failing shared RuntimeRequest / Router tests.`
+- 2026-07-01
+  - Summary: `Completed Child 10. The finalized baseline now records runtime owner vs bridge maturity, adapter keep/remove disposition, main.ts coupling limits, and the exact Child 11 execution boundary while keeping Child 11 locked until its spec/plan are authored against that baseline.`
+  - Verification: `npm run lint:plans`
+  - Next: `Author Child 11 spec and plan against the finalized baseline before any Child 11 implementation work starts.`
 
 ## Why This Plan Exists
 
@@ -791,11 +812,11 @@ Confirm:
 - required post-Child-8 review completed
 - weekly and parent plans both record Child 9 as the next executable child
 
-- [ ] **Step 3: Execute Child 9 from its own checklist**
+- [x] **Step 3: Execute Child 9 from its own checklist**
 
 Run all implementation work from the Child 9 plan file, not from this parent file.
 
-- [ ] **Step 4: Verify Child 9 exit condition and sync parent log**
+- [x] **Step 4: Verify Child 9 exit condition and sync parent log**
 
 Confirm:
 
@@ -838,7 +859,7 @@ Out of scope:
 - UI/layout/presenter work
 - resource planning
 
-- [ ] **Step 2: Verify Child 10 dependencies**
+- [x] **Step 2: Verify Child 10 dependencies**
 
 Confirm:
 
@@ -846,11 +867,11 @@ Confirm:
 - Child 9 closeout sync recorded
 - weekly and parent plans both promote Child 10 as the active next child
 
-- [ ] **Step 3: Execute Child 10 from its own checklist**
+- [x] **Step 3: Execute Child 10 from its own checklist**
 
 Run all implementation work from the Child 10 plan file, not from this parent file.
 
-- [ ] **Step 4: Verify Child 10 exit condition and sync parent log**
+- [x] **Step 4: Verify Child 10 exit condition and sync parent log**
 
 Confirm:
 
@@ -950,10 +971,10 @@ Do not mark this parent plan `completed` until:
 - [x] Child 8 StateSync Runtime spec and plan authored
 - [x] Child 8 completed
 - [x] Child 9 Runtime Contract Hardening spec and plan authored
-- [ ] Child 9 completed
+- [x] Child 9 completed
 - [x] Child 10 Runtime Ownerization Review And Baseline spec and plan authored
 - [x] Child 10 baseline unlock document authored
-- [ ] Child 10 completed
+- [x] Child 10 completed
 - [x] Child 11 reserved in queue as a locked follow-up child
 - [ ] Child 11 spec and plan authored
 - [ ] Child 11 completed

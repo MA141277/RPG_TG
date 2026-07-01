@@ -11,6 +11,7 @@ type TimeRuntimeResult = {
 
 export function createDayStartRequest(): RuntimeRequest {
   return {
+    family: "tick",
     type: "tick",
     tickId: "time.day-start",
   };
@@ -18,6 +19,7 @@ export function createDayStartRequest(): RuntimeRequest {
 
 export function createAdvanceTimeSegmentsRequest(segments: number): RuntimeRequest {
   return {
+    family: "tick",
     type: "tick",
     tickId: "time.advance-segments",
     payload: { segments },

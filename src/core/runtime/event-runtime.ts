@@ -24,6 +24,7 @@ type EventRuntimeResult = {
 
 export function createEventTriggerRequest(triggerId: string): RuntimeRequest {
   return {
+    family: "external",
     type: "external",
     eventId: triggerId,
   };

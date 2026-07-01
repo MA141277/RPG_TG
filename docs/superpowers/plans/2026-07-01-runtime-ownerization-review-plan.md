@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is authored as the post-Child-9 review child, but execution cannot start until Child 9 closes and the queue promotes Child 10.`
-- Next Step: `After Child 9 completion, start Task 1 Step 1 and finalize the baseline from docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md.`
-- Verification: `Not run`
-- Notes: `This is a document-governance child only. It must not absorb production ownerization, adapter removal in code, UI/presenter work, resource planning, or boot/content assembly redesign. Child 11 remains locked until this plan completes and weekly docs reflect that unlock.`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is finalized as a completed governance child. Child 11 remains locked because its spec/plan are not yet authored against the baseline.`
+- Next Step: `Author Child 11 spec and plan against docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md, then record the weekly unlock before any production ownerization code starts.`
+- Verification: `npm run lint:plans`
+- Notes: `This child stayed document-governance only. It finalized runtime maturity, owner/bridge classification, adapter disposition, main.ts coupling, and Child 11 execution controls without absorbing production ownerization, adapter removal in code, UI/presenter work, resource planning, or boot/content assembly redesign.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Child 10 Runtime Ownerization Review And Baseline plan authored. The plan is limited to finalizing runtime maturity, owner/bridge classification, adapter disposition, main.ts coupling, Child 11 execution controls, and weekly queue sync.`
   - Verification: `npm run lint:plans`
   - Next: `Wait for Child 9 closeout, then start Task 1 Step 1.`
+- 2026-07-01
+  - Summary: `Completed Child 10. The runtime ownerization baseline is now finalized, owner vs bridge status is explicit, adapter disposition and main.ts coupling are frozen for Child 11, and weekly governance now records Child 10 as completed while Child 11 remains locked pending spec/plan authoring.`
+  - Verification: `npm run lint:plans`
+  - Next: `Author Child 11 spec and plan against the finalized Child 10 baseline before any ownerization code work starts.`
 
 ---
 
@@ -125,36 +129,42 @@ when no stronger automated check exists.
 - Read: `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`
 - Modify: `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
 
-- [ ] **Step 1: Confirm Child 10 remains a review child**
+- [x] **Step 1: Confirm Child 10 remains a review child**
 
 Record that Child 10 exists to freeze Child 11 boundaries and not to ownerize runtime code directly.
 
-- [ ] **Step 2: Confirm the runtime inventory is sufficient**
+- [x] **Step 2: Confirm the runtime inventory is sufficient**
 
 Record that the current runtime inventory is enough to support mod-first architecture and that Child 10 does not invent new top-level runtimes.
 
-- [ ] **Step 3: Confirm Child 11 target seams**
+- [x] **Step 3: Confirm Child 11 target seams**
 
 Record that Child 11 is primarily about shared dispatch convergence, interactive runtime ownerization, house runtime ownerization, and effect-settlement alignment.
+
+### Task 1 Findings
+
+- Child 10 remains a review/baseline child only; production ownerization stays deferred to Child 11.
+- The current runtime inventory is sufficient for the approved mod-first direction; Child 10 does not invent any new top-level runtime.
+- Child 11 is now frozen to four implementation targets only: shared dispatch convergence, interactive runtime ownerization, house runtime ownerization, and effect-settlement alignment.
 
 ## Task 2: Finalize Runtime / Contract / Adapter Baseline
 
 **Files:**
 - Modify: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
 
-- [ ] **Step 1: Finalize runtime maturity classification**
+- [x] **Step 1: Finalize runtime maturity classification**
 
 Complete the runtime inventory so each promoted runtime is marked with explicit owner/bridge maturity and current production owner status.
 
-- [ ] **Step 2: Finalize contract freeze surface**
+- [x] **Step 2: Finalize contract freeze surface**
 
 Complete the baseline sections that define which contract surfaces Child 11 may use but may not casually reopen.
 
-- [ ] **Step 3: Finalize bridge/adapter disposition**
+- [x] **Step 3: Finalize bridge/adapter disposition**
 
 Complete the baseline so each bridge or adapter is marked `remove`, `keep-through-Child-11`, or `defer-beyond-Child-11`, with a reason.
 
-- [ ] **Step 4: Finalize `src/main.ts` coupling audit**
+- [x] **Step 4: Finalize `src/main.ts` coupling audit**
 
 Complete the baseline so Child 11 can distinguish browser-shell responsibilities from runtime responsibilities.
 
@@ -163,19 +173,19 @@ Complete the baseline so Child 11 can distinguish browser-shell responsibilities
 **Files:**
 - Modify: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
 
-- [ ] **Step 1: Finalize Child 11 execution boundary**
+- [x] **Step 1: Finalize Child 11 execution boundary**
 
 State which modules and seams Child 11 may change, and which adjacent concerns remain frozen.
 
-- [ ] **Step 2: Finalize Child 11 batch order and exit gates**
+- [x] **Step 2: Finalize Child 11 batch order and exit gates**
 
 Define the implementation sequence Child 11 must follow and the per-batch completion signal for each stage.
 
-- [ ] **Step 3: Finalize Child 11 forbidden changes**
+- [x] **Step 3: Finalize Child 11 forbidden changes**
 
 State which kinds of scope growth are prohibited unless the baseline and weekly plan are both revised first.
 
-- [ ] **Step 4: Finalize verification mapping and residual debt**
+- [x] **Step 4: Finalize verification mapping and residual debt**
 
 State the checks, example flows, retained bridges, and accepted residual debt that bound Child 11 execution.
 
@@ -186,15 +196,15 @@ State the checks, example flows, retained bridges, and accepted residual debt th
 - Modify: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
 - Modify: `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
 
-- [ ] **Step 1: Record Child 10 as the post-Child-9 review child**
+- [x] **Step 1: Record Child 10 as the post-Child-9 review child**
 
 Update weekly status wording so Child 10 exists as a formal queued child rather than an implied future review.
 
-- [ ] **Step 2: Record Child 11 as the locked implementation child**
+- [x] **Step 2: Record Child 11 as the locked implementation child**
 
 Update weekly queue wording so Child 11 is scheduled but cannot start until Child 10 baseline completion and Child 11 spec/plan authoring both occur.
 
-- [ ] **Step 3: Sync unlock wording**
+- [x] **Step 3: Sync unlock wording**
 
 Ensure the weekly plan, Child 10 baseline, and this plan use the same unlock condition for Child 11.
 
@@ -205,11 +215,11 @@ Ensure the weekly plan, Child 10 baseline, and this plan use the same unlock con
 - Modify: `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Modify: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
 
-- [ ] **Step 1: Record final Child 10 output**
+- [x] **Step 1: Record final Child 10 output**
 
 Log the final baseline status, the Child 11 unlock decision, and any retained residual debt.
 
-- [ ] **Step 2: Run required verification**
+- [x] **Step 2: Run required verification**
 
 Run:
 
@@ -224,7 +234,7 @@ Expected:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

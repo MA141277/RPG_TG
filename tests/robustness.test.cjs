@@ -7558,6 +7558,44 @@ test("runtime request contract supports action tick and external variants", asyn
   assert.match(source, /type: "external"/);
 });
 
+test("runtime request contract exports typed request families for shared routing", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-request.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeRequestFamily =/);
+  assert.match(source, /export type ActionRuntimeRequest =/);
+  assert.match(source, /family: "action"/);
+  assert.match(source, /export type TickRuntimeRequest =/);
+  assert.match(source, /family: "tick"/);
+  assert.match(source, /export type ExternalRuntimeRequest =/);
+  assert.match(source, /family: "external"/);
+});
+
+test("runtime router contract exports a formal routing seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-router.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeRouteInput =/);
+  assert.match(source, /export interface RuntimeRouter/);
+  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeResult/);
+});
+
+test("shared dispatch consumes the hardened runtime router contract", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /import type \{ RuntimeRouter \}/);
+  assert.match(source, /router: RuntimeRouter/);
+  assert.match(source, /input\.context\.router\.route\(/);
+  assert.doesNotMatch(source, /routeRequest:/);
+});
+
 test("engine bootstrap builds a session from a selected mod id and registry", async () => {
   const { createEngineSession } = require("../.test-dist/core/engine/engine-factory.js");
   const session = createEngineSession({
@@ -7657,10 +7695,11 @@ test("runtime dispatch settles effects after routing", async () => {
       },
       view: {},
     },
-    request: { type: "action", actionId: "test" },
+    request: { family: "action", type: "action", actionId: "test" },
     context: {
-      routeRequest() {
-        return {
+      router: {
+        route() {
+          return {
           state: {
             core: {
               world: {
@@ -7741,6 +7780,7 @@ test("runtime dispatch settles effects after routing", async () => {
           },
           effects: [{ type: "setFlag", key: "booted", value: true }],
         };
+        },
       },
     },
   });
@@ -7928,6 +7968,87 @@ test("interactive runtime exports launch and action seams", () => {
 
   assert.match(source, /createLaunchInteractiveRequest/);
   assert.match(source, /runInteractiveRuntime/);
+});
+
+test("interactive runtime contract exports launch action exit and result seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/interactive-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type LaunchInteractiveRequest =/);
+  assert.match(source, /export type InteractiveActionRequest =/);
+  assert.match(source, /export type ExitInteractiveRequest =/);
+  assert.match(source, /export type InteractiveRuntimeRequest =/);
+  assert.match(source, /export type InteractiveRuntimeResult =/);
+  assert.match(source, /session: ActiveInteractiveRuntimeSession \| null/);
+});
+
+test("minigame dispatch contract converges covered flows through one interactive request normalizer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /createExitInteractiveRequest/);
+  assert.match(source, /toInteractiveRuntimeRequest/);
+  assert.match(source, /InteractiveRuntimeRequest/);
+  assert.match(source, /InteractiveRuntimeResult/);
+  assert.match(source, /activity-qte/);
+  assert.match(source, /city-begging/);
+  assert.match(source, /story-battle/);
+});
+
+test("effect settlement contract exports emitter applier input and result seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/effect-settlement.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type EffectEmitter =/);
+  assert.match(source, /export type EffectSettlementApplier =/);
+  assert.match(source, /export type EffectSettlementInput =/);
+  assert.match(source, /export type EffectSettlementResult =/);
+  assert.match(source, /unsupportedEffects:/);
+  assert.match(source, /warnings:/);
+});
+
+test("runtime settlement uses explicit contract and reports unsupported effect kinds", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-settlement.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /import type \{[\s\S]*EffectSettlementInput[\s\S]*EffectSettlementResult[\s\S]*\}/);
+  assert.match(source, /export function settleRuntimeEffects/);
+  assert.match(source, /unsupportedEffects/);
+  assert.match(source, /warnings/);
+  assert.doesNotMatch(source, /runTask|activateEvent|renderApp|writeSave/);
+});
+
+test("house runtime request contract exports enter leave and dispatch variants", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type HouseRuntimeSessionRequest =/);
+  assert.match(source, /export type EnterHouseRuntimeRequest =/);
+  assert.match(source, /export type LeaveHouseRuntimeRequest =/);
+  assert.match(source, /export type DispatchHouseRuntimeRequest =/);
+  assert.match(source, /export type HouseRuntimeRequest =/);
+});
+
+test("house runtime bridge consumes core-owned request contract instead of domain request leakage", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /import type \{[\s\S]*HouseRuntimeRequest[\s\S]*\} from "\.\.\/contracts\/house-runtime"/);
+  assert.match(source, /dispatchHouseRuntimeRequest/);
+  assert.doesNotMatch(source, /import type \{ HouseModuleRequest \} from "\.\.\/\.\.\/domain\/house-module"/);
+  assert.doesNotMatch(source, /request: HouseModuleRequest/);
 });
 
 test("core house runtime bridge exports enter leave and dispatch seams", () => {

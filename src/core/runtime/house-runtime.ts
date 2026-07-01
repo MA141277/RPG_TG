@@ -1,32 +1,76 @@
-import type { HouseModuleRequest } from "../../domain/house-module";
+import type {
+  HouseRuntimeRequest,
+  HouseRuntimeSessionRequest,
+} from "../contracts/house-runtime";
 import {
   createLegacyHouseRuntimeAdapter,
   type LegacyHouseRuntimeAdapter,
   type LegacyHouseRuntimeDependencies,
 } from "../adapters/legacy-house-adapter";
 
-export type HouseRuntimeBridge = LegacyHouseRuntimeAdapter;
+export type HouseRuntimeBridge = {
+  dispatch(request: HouseRuntimeRequest): void;
+  applyMapAutoAdvanceCompletion: LegacyHouseRuntimeAdapter["applyMapAutoAdvanceCompletion"];
+  clearAllHouseIntervals: LegacyHouseRuntimeAdapter["clearAllHouseIntervals"];
+};
 
 export function createHouseRuntimeBridge(
   dependencies: LegacyHouseRuntimeDependencies
 ): HouseRuntimeBridge {
-  return createLegacyHouseRuntimeAdapter(dependencies);
+  const runtime = createLegacyHouseRuntimeAdapter(dependencies);
+
+  return {
+    dispatch(request: HouseRuntimeRequest): void {
+      dispatchLegacyHouseRuntimeRequest(runtime, request);
+    },
+    applyMapAutoAdvanceCompletion(completion): void {
+      runtime.applyMapAutoAdvanceCompletion(completion);
+    },
+    clearAllHouseIntervals(): void {
+      runtime.clearAllHouseIntervals();
+    },
+  };
 }
 
 export function enterHouseThroughRuntime(
   runtime: HouseRuntimeBridge,
   houseId: string
 ): void {
-  runtime.enterHouseById(houseId);
+  runtime.dispatch({
+    type: "enter",
+    houseId,
+  });
 }
 
 export function leaveHouseThroughRuntime(runtime: HouseRuntimeBridge): void {
-  runtime.leaveCurrentHouse();
+  runtime.dispatch({
+    type: "leave",
+  });
 }
 
 export function dispatchHouseRuntimeRequest(
   runtime: HouseRuntimeBridge,
-  request: HouseModuleRequest
+  request: HouseRuntimeSessionRequest
 ): void {
-  runtime.dispatchCurrentHouseRequest(request);
+  runtime.dispatch({
+    type: "dispatch",
+    request,
+  });
+}
+
+function dispatchLegacyHouseRuntimeRequest(
+  runtime: LegacyHouseRuntimeAdapter,
+  request: HouseRuntimeRequest
+): void {
+  if (request.type === "enter") {
+    runtime.enterHouseById(request.houseId);
+    return;
+  }
+
+  if (request.type === "leave") {
+    runtime.leaveCurrentHouse();
+    return;
+  }
+
+  runtime.dispatchCurrentHouseRequest(request.request);
 }

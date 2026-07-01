@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 9 Runtime Contract Hardening is authored and promoted as the next executable child, but implementation has not started.`
-- Next Step: `Start Task 1 Step 1 after queue closeout sync confirms Child 9 as the active child.`
-- Verification: `Not run`
-- Notes: `This is a contract-hardening child only. It must not absorb sub-runtime ownerization, adapter removal, UI/layout work, or resource planning. Child 10 is already authored as the next review/baseline child, but it must not start until Child 9 closeout promotes it.`
+- Current Focus: `Child 9 closeout is complete. All four shared contract baselines are now landed and verified without promoting this child into runtime ownerization.`
+- Next Step: `Promote Child 10 Runtime Ownerization Review And Baseline as the next executable child and keep Child 11 locked behind the Child 10 baseline.`
+- Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `Child 9 hardened contracts only. Legacy house and interactive adapters remain in place by design, and ownerization work is explicitly deferred to Child 10 / Child 11.`
 
 ## Progress Log
 
@@ -23,6 +23,30 @@
   - Summary: `Child 9 Runtime Contract Hardening plan authored from the approved four-part contract checklist. Scope is limited to typed RuntimeRequest/Router, formal Interactive/Minigame Dispatch, formal Effect Settlement, and minimum House Runtime Request contracts.`
   - Verification: `npm run lint:plans`
   - Next: `Start Task 1 Step 1 once weekly and parent queue state both confirm Child 9 as the active next child.`
+- 2026-07-01
+  - Summary: `Started Child 9 execution. Task 1 gap reconciliation now records the current request/router, interactive dispatch, effect-settlement, and house-request deficiencies directly in the plan so follow-up implementation work does not rely on implied context.`
+  - Verification: `Pending doc-sync verification`
+  - Next: `Start Task 2 Step 1 and add failing RuntimeRequest / Router contract tests.`
+- 2026-07-01
+  - Summary: `Completed Child 9 Task 2. The shared runtime seam now exports typed RuntimeRequest families, exposes a formal RuntimeRouter routing seam, and makes dispatch consume that router contract instead of the previous inline routeRequest callback.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime request contract|runtime router contract|shared dispatch"`
+  - Next: `Start Task 3 Step 1 and add failing Interactive / Minigame Dispatch contract tests.`
+- 2026-07-01
+  - Summary: `Completed Child 9 Task 3. Interactive Runtime now has explicit launch/action/exit request contracts, a formal result/session handoff shape, and one request normalizer that converges activity-qte, city-begging, and story-battle on the same public dispatch language while keeping legacy business logic in adapters.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime contract|minigame dispatch contract"`
+  - Next: `Start Task 4 Step 1 and add failing Effect Settlement contract tests.`
+- 2026-07-01
+  - Summary: `Completed Child 9 Task 4. Effect Settlement now has an explicit contract seam for emitted/applied ownership, settlement input/output, and unsupported-effect reporting; runtime dispatch now consumes that formal settlement entrypoint instead of a bare helper.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "effect settlement contract|runtime settlement"`
+  - Next: `Start Task 5 Step 1 and add failing House Runtime Request contract tests.`
+- 2026-07-01
+  - Summary: `Completed Child 9 Task 5. House Runtime now exposes a core-owned public request seam for enter/leave/current-session dispatch while preserving bridge-period compatibility through the legacy adapter and keeping compatibility-only helper methods available to main.ts.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "house runtime request contract|house runtime bridge|main.ts stays free of TypeScript diagnostics for runtime text wiring"`
+  - Next: `Run Child 9 closeout sync and promote Child 10 only after full verification passes.`
+- 2026-07-01
+  - Summary: `Closed Child 9. The typed RuntimeRequest/Router contract, formal Interactive/Minigame Dispatch contract, formal Effect Settlement contract, and minimum core-owned House Runtime Request contract are all landed, verified, and recorded in queue governance.`
+  - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Execute Child 10 Runtime Ownerization Review And Baseline as the newly unlocked next child.`
 
 ---
 
@@ -148,7 +172,7 @@ For targeted contract work, also record:
 - Read: `src/core/runtime/house-runtime.ts`
 - Modify: `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
 
-- [ ] **Step 1: Record current shared request/router gaps**
+- [x] **Step 1: Record current shared request/router gaps**
 
 Record the current minimum seams:
 
@@ -158,36 +182,83 @@ Record the current minimum seams:
 
 State explicitly which current request families must be formalized in Child 9 and which later request families remain out of scope.
 
-- [ ] **Step 2: Record current interactive/minigame contract gaps**
+- [x] **Step 2: Record current interactive/minigame contract gaps**
 
 Record that the current interactive contract mainly identifies runtime kind and source, but does not yet formalize launch/action/exit/minigame dispatch as one public contract.
 
-- [ ] **Step 3: Record current effect settlement gaps**
+- [x] **Step 3: Record current effect settlement gaps**
 
 Record that the current `Effect` union and `applyEffects()` implementation are still a first-slice seam and that settlement ownership/input/output must be formalized without absorbing unrelated runtime ownership.
 
-- [ ] **Step 4: Record current house runtime request gap**
+- [x] **Step 4: Record current house runtime request gap**
 
 Record that the current core house runtime public request still inherits domain `HouseModuleRequest` instead of a core-owned request contract.
+
+### Task 1 Findings
+
+#### Shared Request / Router Gap Snapshot
+
+- `src/core/contracts/runtime-request.ts` currently exports only three broad shapes:
+  - `action`
+  - `tick`
+  - `external`
+- all three still rely on loose `payload?: Record<string, unknown>` carriage
+- typed request families for covered shared-runtime traffic do not yet exist
+- `src/core/runtime/runtime-router.ts` still exports only a function alias over `{ state, request } -> RuntimeResult`
+- no hardened router contract object or typed route-family identity exists yet
+- Child 9 must formalize the shared request language for covered runtime traffic only
+- later request families outside the covered shared, interactive, settlement, and house seams remain out of scope for this child
+
+#### Interactive Dispatch Gap Snapshot
+
+- `src/core/contracts/interactive-runtime.ts` currently exposes:
+  - `InteractiveRuntimeKind`
+  - `InteractiveRuntimeSource`
+  - `ActiveInteractiveRuntimeSession`
+- it does not yet define:
+  - launch request shape
+  - action request shape
+  - exit request shape
+  - unified minigame dispatch envelope
+  - explicit result / follow-up handoff shape
+- the current contract identifies the session, but not the full public dispatch language
+
+#### Effect Settlement Gap Snapshot
+
+- `src/core/contracts/effect.ts` defines only the value union
+- `src/core/runtime/runtime-settlement.ts` currently exposes only `applyEffects(state, effects)`
+- the implementation only handles:
+  - `setFlag`
+  - `setVariable`
+- other declared effect kinds such as `changeMoney` and `advanceTime` are not settled there yet
+- settlement ownership, settlement return contract, and unsupported-effect posture are not yet explicit
+
+#### House Runtime Request Gap Snapshot
+
+- `src/core/runtime/house-runtime.ts` still imports and re-exports the public request seam through domain `HouseModuleRequest`
+- the current public API still treats house request dispatch as:
+  - `dispatchHouseRuntimeRequest(runtime, request: HouseModuleRequest)`
+- `enter`, `leave`, and current-session dispatch do exist as distinct functions, but they are not yet backed by a core-owned request contract surface
+- Child 9 must move the public request vocabulary into `src/core/contracts` while preserving bridge-period adapter compatibility
 
 ## Task 2: Add Failing Contract Tests For The Shared Request / Router Seam
 
 **Files:**
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add a failing RuntimeRequest contract export test**
+- [x] **Step 1: Add a failing RuntimeRequest contract export test**
 
 Add a red test that proves Child 9 exports explicit typed request families for the covered shared runtime paths and does not rely only on one generic payload carrier.
 
-- [ ] **Step 2: Add a failing router contract test**
+- [x] **Step 2: Add a failing router contract test**
 
 Add a red test that proves a formal router contract exists for shared runtime dispatch rather than only an inline function type alias.
 
-- [ ] **Step 3: Add a failing shared dispatch alignment test**
+- [x] **Step 3: Add a failing shared dispatch alignment test**
 
 Add a red test that proves `dispatchRuntimeRequest()` consumes the hardened router/request contract instead of bypassing it.
 
-- [ ] **Step 4: Run focused tests and confirm failure**
+- [x] **Step 4: Run focused tests and confirm failure**
 
 Run:
 
@@ -207,19 +278,19 @@ Expected:
 - Modify: `src/core/runtime/interactive-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Introduce explicit interactive request/result types**
+- [x] **Step 1: Introduce explicit interactive request/result types**
 
 Define the formal launch/action/exit contract and the minimum result shape needed by the shared runtime path.
 
-- [ ] **Step 2: Fold covered minigame paths into one dispatch envelope**
+- [x] **Step 2: Fold covered minigame paths into one dispatch envelope**
 
 Make `activity-qte`, `city-begging`, and `story-battle` converge on the same public interactive dispatch language while preserving compatibility behavior behind that seam.
 
-- [ ] **Step 3: Keep interactive business logic out of the contract layer**
+- [x] **Step 3: Keep interactive business logic out of the contract layer**
 
 Ensure the contract defines dispatch language and session/result shape only. Concrete minigame logic remains outside this child.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -240,19 +311,19 @@ Expected:
 - Modify: `src/core/runtime/runtime-settlement.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Define settlement input/output ownership**
+- [x] **Step 1: Define settlement input/output ownership**
 
 Make the settlement contract explicit about who emits effects, who applies them, and what settlement returns.
 
-- [ ] **Step 2: Preserve shared settlement scope**
+- [x] **Step 2: Preserve shared settlement scope**
 
 Keep task progression, event selection, scene ownership, interaction ownership, and save IO outside the settlement contract.
 
-- [ ] **Step 3: Align runtime-settlement implementation entrypoint**
+- [x] **Step 3: Align runtime-settlement implementation entrypoint**
 
 Update the public settlement entrypoint so it conforms to the hardened contract without expanding scope.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -272,19 +343,19 @@ Expected:
 - Modify: `src/core/runtime/house-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Introduce core-owned house runtime request types**
+- [x] **Step 1: Introduce core-owned house runtime request types**
 
 Define the minimum request contract needed for `enter`, `leave`, and current-session dispatch without exposing concrete house business logic as the shared public boundary.
 
-- [ ] **Step 2: Preserve bridge-period compatibility**
+- [x] **Step 2: Preserve bridge-period compatibility**
 
 Keep the current legacy house adapter usable behind the new core-owned request contract.
 
-- [ ] **Step 3: Prevent domain contract leakage**
+- [x] **Step 3: Prevent domain contract leakage**
 
 Ensure `src/core/runtime/house-runtime.ts` no longer exposes the domain `HouseModuleRequest` as the primary shared public request surface.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -306,15 +377,15 @@ Expected:
 - Modify: `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Record final Child 9 landing scope**
+- [x] **Step 1: Record final Child 9 landing scope**
 
 Log exactly which shared contracts were hardened, which bridges remain, and which ownerization work is explicitly deferred to Child 10.
 
-- [ ] **Step 2: Sync queue state**
+- [x] **Step 2: Sync queue state**
 
 Update weekly and parent plans so Child 9 is marked `completed` only after verification passes, and promote Child 10 only through the recorded queue sync that already references the authored Child 10 baseline/spec/plan set.
 
-- [ ] **Step 3: Run required closeout verification**
+- [x] **Step 3: Run required closeout verification**
 
 Run:
 
@@ -331,7 +402,7 @@ Expected:
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

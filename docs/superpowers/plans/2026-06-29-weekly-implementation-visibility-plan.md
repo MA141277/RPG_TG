@@ -12,12 +12,29 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `The five-core-artifact weekly bundle now reflects Child 9 as the active next child, Child 10 as the queued runtime-ownerization baseline child, and Child 11 as the locked follow-up implementation child.`
-- Next Step: `Keep the five core artifacts aligned with the Child 9 -> Child 10 -> Child 11 queue truth and prevent any artifact from implying that Child 11 is already executable.`
-- Verification: `Child 10/11 visibility sync: npm run lint:plans`
-- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 11 must remain visibly locked until the Child 10 baseline is complete.`
+- Current Focus: `The visibility bundle now needs to reflect that Child 10 is completed and Child 11 remains locked pending Child 11 spec/plan authoring plus weekly unlock sync.`
+- Next Step: `Keep the five core artifacts aligned with Child 10 completed, no active executable ownerization child yet, and Child 11 still locked behind baseline-backed spec/plan authoring.`
+- Verification: `Child 10 closeout visibility sync: npm run lint:plans`
+- Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 11 must remain visibly locked until its spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync records the unlock.`
 
 ## Progress Log
+
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 9 Task 2 so the weekly artifact bundle now reflects that shared RuntimeRequest / Router hardening has landed and that Interactive / Minigame Dispatch contract work is the next controlled slice.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime request contract|runtime router contract|shared dispatch"; npm run lint:plans`
+  - Next: `Refresh the same artifact bundle again after Child 9 Task 3 changes the public interactive contract surface.`
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 9 Task 3 so the weekly artifact bundle now records the formal interactive runtime contract surface and the unified dispatch normalizer as landed boundaries.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "interactive runtime contract|minigame dispatch contract"; npm run lint:plans`
+  - Next: `Refresh the same artifact bundle again after Child 9 Task 4 formalizes the Effect Settlement seam.`
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 9 closeout. The weekly artifacts now need to present Child 9 as completed on four shared contract baselines, Child 10 as the next executable review/baseline child, and Child 11 as still locked.`
+  - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Refresh the same artifact bundle again after Child 10 produces the runtime-ownerization baseline.`
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 10 closeout. The weekly artifacts now record Child 10 as completed on the finalized ownerization baseline and keep Child 11 visibly locked until Child 11 spec/plan authoring and weekly unlock sync occur.`
+  - Verification: `npm run lint:plans`
+  - Next: `When Child 11 spec/plan are authored, refresh the same artifact bundle again before any Child 11 implementation starts.`
 
 - 2026-06-29
   - Summary: `Visibility companion created and linked to the weekly orchestration flow.`
@@ -99,6 +116,10 @@
   - Summary: `Synchronized the visibility companion with the newly authored Child 10 and queued Child 11 state. The weekly artifacts now need to preserve one queue truth: Child 9 is executable, Child 10 is queued as the review/baseline child, and Child 11 is locked behind Child 10 completion plus Child 11 spec/plan authoring.`
   - Verification: `npm run lint:plans`
   - Next: `Keep review index, next split review, architecture report, and any later queue wording aligned with the Child 9 -> Child 10 -> Child 11 sequence.`
+- 2026-07-01
+  - Summary: `Started visibility sync for active Child 9 execution. The current queue truth is now stronger than queued/not-started wording: Child 9 is in progress on Task 1/Task 2 handoff, while Child 10 stays queued and Child 11 stays locked.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep the five weekly artifacts aligned with Child 9 in-progress state until the next production-code batch lands.`
 
 ---
 
@@ -107,9 +128,9 @@
 - Weekly orchestration controller:
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 - Active next child plan:
-  - `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
+  - `None currently executable; Child 10 closeout is complete and Child 11 remains locked`
 - Queued next child plan:
-  - `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
+  - `Child 11 spec/plan authoring against the finalized Child 10 baseline`
 - Locked follow-up child:
   - `Child 11 Sub-Runtime Ownerization Implementation`
 - Parent orchestration plan:

@@ -424,6 +424,7 @@ Scope guard:
 
 - Child 9 may harden shared request/router typing and public dispatch contracts
 - Child 9 must not absorb Interactive Runtime ownerization, House Runtime ownerization, UI/layout work, or resource planning
+- Child 9 is now completed on the four approved shared contract baselines and serves as the prerequisite baseline for Child 10.
 
 ### Child 10: `2026-07-01-runtime-ownerization-review-plan.md`
 
@@ -436,6 +437,7 @@ Primary subsystem coverage:
 Secondary dependency:
 
 - Child 9 contract hardening baseline is authored first
+- Child 9 contract hardening baseline is now completed and verified
 - Child 10 does not ownerize production runtime code; it records the execution baseline for later ownerization
 
 Scope guard:

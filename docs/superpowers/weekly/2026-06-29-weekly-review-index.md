@@ -8,12 +8,11 @@
 
 **Primary Child Plan(s):**
 
-- `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md`
+- `None currently executable; Child 10 closeout is complete and the queue is waiting for Child 11 spec/plan authoring`
 
 **Queued Next Child Plan(s):**
 
-- `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
-- `Child 11 Sub-Runtime Ownerization Implementation` (`locked` until Child 10 baseline completion plus Child 11 spec/plan authoring)
+- `Child 11 Sub-Runtime Ownerization Implementation` (`locked` until Child 11 spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync records the unlock)
 
 ## Weekly Summary
 
@@ -24,16 +23,17 @@
 - Child 6 is now complete: `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts` own formal Task Runtime contracts, minimum lifecycle, signal-driven progression, and taskUpdates/effects/signals result output.
 - Child 7 is now complete: `src/core/contracts/mod-runtime.ts`, `src/core/mods/*`, and `src/core/adapters/mod-runtime-main-adapter.ts` own the first formal Mod Runtime activation/startup seam, and `src/main.ts` routes builtin, file, url, and restore selected-mod activation through it.
 - Child 8 is now complete: `src/core/contracts/state-sync-runtime.ts` and `src/core/runtime/state-sync-*` own the first formal StateSync Runtime canonical boundary, mandatory triggers, syncState entrypoint, state helper modules, and bridge-period main.ts state helper migration.
-- Child 9 is now defined: `docs/superpowers/specs/2026-07-01-runtime-contract-hardening-spec.md` and `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md` now formalize the next executable child for typed RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and minimum House Runtime Request hardening.
-- Child 10 is now defined: `docs/superpowers/specs/2026-07-01-runtime-ownerization-review-spec.md`, `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`, and `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md` now formalize the post-Child-9 review/baseline child that freezes Child 11 execution boundaries.
-- Child 11 is now reserved in queue state as the locked sub-runtime ownerization implementation child, but it is not yet executable.
+- Child 9 is now complete: `docs/superpowers/specs/2026-07-01-runtime-contract-hardening-spec.md` and `docs/superpowers/plans/2026-07-01-runtime-contract-hardening-plan.md` now govern a completed shared-contract baseline for typed RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and minimum House Runtime Request hardening.
+- Child 10 is now completed: `docs/superpowers/specs/2026-07-01-runtime-ownerization-review-spec.md`, `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`, and `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md` now form the finalized post-Child-9 review/baseline package that freezes Child 11 execution boundaries.
+- Child 11 remains reserved in queue state as the locked sub-runtime ownerization implementation child, and it is still not executable until Child 11 spec/plan authoring plus weekly unlock sync land.
 - The five-core-artifact visibility bundle exists so the same week also produces readable module, control-flow, split-review, architecture, and change-impact outputs.
 
 ## Active Focus
 
-- Child 9 Runtime Contract Hardening remains the next executable child.
-- Child 10 Runtime Ownerization Review And Baseline is already authored and queued behind Child 9.
-- Child 11 Sub-Runtime Ownerization Implementation is reserved but remains locked until Child 10 baseline completion plus Child 11 spec/plan authoring.
+- Child 9 Runtime Contract Hardening is now completed.
+- Child 10 Runtime Ownerization Review And Baseline is now completed on the finalized owner/bridge baseline.
+- No production ownerization child is executable yet.
+- Child 11 Sub-Runtime Ownerization Implementation remains locked until Child 11 spec/plan are authored against the finalized baseline and weekly unlock sync records the unlock.
 
 ## Artifact Index
 
@@ -90,7 +90,7 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 6 landed `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts`; Task Runtime now supports start/action/signal entrypoints, duplicate active start guard, terminal failed/completed guard, multiple active task progression from one signal, and returned taskUpdates/effects/signals without applying effects.
 - Child 7 landed `src/core/contracts/mod-runtime.ts`, `src/core/mods/mod-source-registry.ts`, `mod-source-loader.ts`, `mod-parser.ts`, `mod-dependency-resolver.ts`, `mod-capability-guard.ts`, `mod-runtime.ts`, and `src/core/adapters/mod-runtime-main-adapter.ts`; Mod Runtime now supports source descriptors, loaded/activated mod contracts, source normalization/loading/parsing, dependency/capability validation, atomic activation rollback, unified activation handoff, and builtin/file/url/restore activation calls from `src/main.ts`.
 - Child 8 landed `src/core/contracts/state-sync-runtime.ts`, `src/core/runtime/state-sync-runtime.ts`, validation, normalization, hydration, app-bridge, save, mod-rebuild, and presentation helper modules; StateSync Runtime now defines canonical runtime state authority, app/save/presentation boundaries, mandatory triggers, and a small syncState entrypoint while moving bridge-period RuntimeState helpers out of `src/main.ts`.
-- Child 9 spec and plan are now authored, making runtime contract hardening the next queued implementation slice instead of leaving the queue open-ended after Child 8.
+- Child 9 is now fully executed and closed, converting runtime contract hardening from a queued slice into a completed shared baseline ahead of ownerization review.
 
 ### Deferred
 
@@ -99,9 +99,9 @@ The old files may remain as historical references, but they are no longer indepe
 - Child 6 Task Runtime is now closed on the first formal contract/lifecycle/progression slice.
 - Child 7 Mod Runtime is now closed on the first formal activation/startup seam.
 - Child 8 StateSync Runtime is now closed on the first formal canonical boundary slice.
-- Child 9 Runtime Contract Hardening is now defined as the next executable child and remains not-started.
-- Child 10 Runtime Ownerization Review And Baseline is now authored and queued, but remains not-started until Child 9 closes.
-- Child 11 Sub-Runtime Ownerization Implementation is now recorded as a locked follow-up child and is not yet executable.
+- Child 9 Runtime Contract Hardening is now completed; RuntimeRequest/Router, Interactive/Minigame Dispatch, Effect Settlement, and House Runtime Request baselines all exist.
+- Child 10 Runtime Ownerization Review And Baseline is now completed as the controlling baseline child.
+- Child 11 Sub-Runtime Ownerization Implementation is still recorded as a locked follow-up child and is not yet executable.
 
 ### Blockers
 
@@ -125,12 +125,12 @@ The old files may remain as historical references, but they are no longer indepe
 ## Next Week Input
 
 - Highest-priority module to refine:
-  - `src/core/contracts`
+  - `Child 11 spec/plan authoring against the finalized Child 10 baseline`
 - Why it is next:
-  - The required post-Child-8 review has completed, and Child 9 now targets the minimum contract hardening needed before later sub-runtime ownerization.
+  - Child 10 is now complete, so the next controlled step is to author Child 11 spec/plan against the frozen baseline before any ownerization code starts.
 - Category:
-  - `Child 9 queued`
+  - `Child 11 authoring gate`
 - Queued follow-up after the next child:
-  - `Child 10 Runtime Ownerization Review And Baseline`
+  - `Child 11 Sub-Runtime Ownerization Implementation`
 - Unlock dependency after that:
-  - `Child 11` stays locked until Child 10 baseline completion plus Child 11 spec/plan authoring.
+  - `Child 11` stays locked until Child 11 spec/plan authoring is complete and weekly unlock sync records the unlock.

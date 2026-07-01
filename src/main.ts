@@ -1543,13 +1543,15 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
       { battleActionId: actionId }
     ),
     context: {
-      routeRequest: ({ state, request }) =>
-        runInteractiveRuntime({
-          state,
-          request,
-          characterDefinitions: appState.characterDefinitions,
-          textEntriesById,
-        }),
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            textEntriesById,
+          }),
+      },
     },
   });
   appState = applyInteractiveRuntimeState(appState, result.state);

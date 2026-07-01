@@ -2,6 +2,22 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-01 Runtime Contract Hardening
+
+### Added
+- 新增 `src/core/contracts/effect-settlement.ts`，定义 effect settlement 的 emitter/applier、输入、输出、unsupported-effects 与 warnings seam。
+- 新增 `src/core/contracts/house-runtime.ts`，定义 house runtime 的 core-owned `enter / leave / dispatch` request contract。
+
+### Changed
+- `src/core/contracts/runtime-request.ts` 现在导出显式 typed request families；`src/core/runtime/runtime-router.ts` 由函数别名升级为正式 router seam；`src/core/runtime/runtime-dispatch.ts` 改为通过 formal router 和 formal settlement entrypoint 工作。
+- `src/core/contracts/interactive-runtime.ts` 与 `src/core/runtime/interactive-runtime.ts` 现在定义 launch/action/exit/result/session seam，并通过一个 normalizer 统一覆盖 `activity-qte`、`city-begging`、`story-battle` 的公开 dispatch 语言。
+- `src/core/runtime/runtime-settlement.ts` 现在显式报告 settled/unsupported effects 和 warnings，而不是静默忽略未覆盖 effect kinds。
+- `src/core/runtime/house-runtime.ts` 不再把 domain `HouseModuleRequest` 作为 shared public contract 暴露；legacy adapter 仍在内部兼容层保留。
+
+### Impact
+- Child 9 已完成 shared contract baseline：后续 ownerization 可以围绕正式的 request/router、interactive dispatch、effect settlement 和 house runtime request seams 进行，而不必再依赖隐式 bridge 行为。
+- Child 9 没有移除 legacy house/interactive adapters，也没有吸收 UI/layout 或 runtime ownerization 工作；这些明确递延到 Child 10 / Child 11。
+
 ## 2026-07-01 StateSync Runtime
 
 ### Added

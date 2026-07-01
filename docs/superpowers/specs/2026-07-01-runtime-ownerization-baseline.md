@@ -8,6 +8,10 @@
 
 **Unlocks:** `Child 11 Sub-Runtime Ownerization Implementation`
 
+**Baseline Status:** `finalized`
+
+**Current Child 11 Status:** `locked until Child 11 spec/plan are authored against this baseline and weekly unlock sync records the unlock`
+
 **Related Child 10 Spec:** `docs/superpowers/specs/2026-07-01-runtime-ownerization-review-spec.md`
 
 **Related Child 10 Plan:** `docs/superpowers/plans/2026-07-01-runtime-ownerization-review-plan.md`
@@ -134,8 +138,8 @@ Use these labels consistently throughout this baseline:
 | --- | --- | --- | --- | --- |
 | `src/core/adapters/legacy-main-adapter.ts` | `adapter` | boot handoff from `src/main.ts` into core boot/runtime startup | `keep-through-Child-11` | Child 11 must not absorb boot/content assembly redesign. |
 | `src/core/adapters/mod-runtime-main-adapter.ts` | `adapter` | compatibility seam between Mod Runtime activation and startup continuation | `keep-through-Child-11` | Not part of Child 11 runtime ownerization scope. |
-| `src/core/adapters/legacy-interactive-adapter.ts` | `adapter` | compatibility seam from core interactive runtime into legacy minigame/story-battle implementation | `target-remove-or-thin` | Child 11 should reduce this seam to owner-owned dispatch, or leave only a thin compatibility shell explicitly justified in the closeout. |
-| `src/core/adapters/legacy-house-adapter.ts` | `adapter` | compatibility seam from core house runtime into legacy house implementation | `target-remove-or-thin` | Child 11 should reduce this seam to owner-owned house lifecycle, or leave only a thin compatibility shell explicitly justified in the closeout. |
+| `src/core/adapters/legacy-interactive-adapter.ts` | `adapter` | compatibility seam from core interactive runtime into legacy minigame/story-battle implementation | `remove-in-Child-11` | Covered interactive flows should converge on runtime-owned dispatch. If a full delete would cross a frozen boundary, Child 11 may retain only a thin compatibility shell and must record that residual debt explicitly in closeout. |
+| `src/core/adapters/legacy-house-adapter.ts` | `adapter` | compatibility seam from core house runtime into legacy house implementation | `remove-in-Child-11` | Covered house flows should converge on runtime-owned lifecycle control. If a full delete would cross a frozen boundary, Child 11 may retain only a thin compatibility shell and must record that residual debt explicitly in closeout. |
 
 ## 8. Adapter Disposition Criteria
 
@@ -319,21 +323,24 @@ Child 10 closeout and Child 11 unlock must review and, when needed, update:
 - `docs/superpowers/weekly/2026-06-29-weekly-next-split-review.md`
 - `docs/superpowers/weekly/2026-06-29-weekly-architecture-report.md`
 
-## 22. Unlock Rule
+## 22. Unlock Rule And Current Status
+
+As of Child 10 closeout, this baseline is finalized, but Child 11 is still intentionally locked. The remaining unlock work is Child 11 spec/plan authoring plus the explicit weekly unlock sync that records Child 11 as executable.
 
 Child 11 is unlocked only when all of the following are true:
 
-- [ ] runtime maturity classification is finalized
-- [ ] formal owner vs bridge status is explicit
-- [ ] bridge/adapter disposition is explicit
-- [ ] `src/main.ts` coupling audit is explicit
-- [ ] Child 11 execution boundary is explicit
-- [ ] Child 11 batch order and exit gates are explicit
-- [ ] Child 11 forbidden changes are explicit
-- [ ] Child 11 verification mapping is explicit
-- [ ] Child 11 accepted residual debt is explicit
-- [ ] weekly plan records Child 10 complete and Child 11 unlocked
+- [x] runtime maturity classification is finalized
+- [x] formal owner vs bridge status is explicit
+- [x] bridge/adapter disposition is explicit
+- [x] `src/main.ts` coupling audit is explicit
+- [x] Child 11 execution boundary is explicit
+- [x] Child 11 batch order and exit gates are explicit
+- [x] Child 11 forbidden changes are explicit
+- [x] Child 11 verification mapping is explicit
+- [x] Child 11 accepted residual debt is explicit
+- [x] weekly plan records Child 10 complete
 - [ ] Child 11 spec and plan are authored against this baseline
+- [ ] weekly queue sync explicitly records Child 11 as unlocked
 
 ## 23. Done-Enough Exit Condition
 
@@ -348,20 +355,20 @@ If any of those answers remain open-ended, Child 10 is not complete.
 
 ## 24. Verification Record
 
-- `Not run as part of this doc-only governance change`
+- `npm run lint:plans`
 
 ## 25. Completion Checklist
 
-- [ ] Runtime classification criteria finalized
-- [ ] Runtime inventory finalized
-- [ ] Owner vs bridge summary finalized
-- [ ] Contract freeze surface finalized
-- [ ] Bridge/adapter inventory finalized
-- [ ] `src/main.ts` coupling audit finalized
-- [ ] Child 11 execution boundary finalized
-- [ ] Child 11 batch order finalized
-- [ ] Child 11 forbidden changes finalized
-- [ ] Child 11 verification mapping finalized
-- [ ] Child 11 residual debt list finalized
-- [ ] Unlock checklist completed
-- [ ] Weekly artifact sync completed
+- [x] Runtime classification criteria finalized
+- [x] Runtime inventory finalized
+- [x] Owner vs bridge summary finalized
+- [x] Contract freeze surface finalized
+- [x] Bridge/adapter inventory finalized
+- [x] `src/main.ts` coupling audit finalized
+- [x] Child 11 execution boundary finalized
+- [x] Child 11 batch order finalized
+- [x] Child 11 forbidden changes finalized
+- [x] Child 11 verification mapping finalized
+- [x] Child 11 residual debt list finalized
+- [x] Unlock checklist completed as far as Child 10 output can complete it
+- [x] Weekly artifact sync completed

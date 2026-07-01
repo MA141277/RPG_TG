@@ -17,9 +17,9 @@ It must show:
 
 - This week established the first production-safe `src/core` boundary, hardened its persistence layer, moved the first real navigation/time/event entry paths behind `src/core/runtime`, advanced Child 4 through interactive/runtime carrier slices, completed Child 5 presenter/render decoupling, completed Child 6 Task Runtime, completed Child 7 Mod Runtime, and completed Child 8 StateSync Runtime.
 - The current production runtime is still centered on `src/main.ts`, but `src/core/contracts`, `src/core/engine`, `src/core/runtime`, `src/core/save`, `src/core/adapters/*`, `src/core/mods/*`, `src/core/runtime/state-sync-*`, `src/application/presenter`, and `src/core/runtime/task-runtime.ts` now exist as concrete boundary slices with read/write persistence, first-pass navigation, covered interactive entry, minimum shared-dispatch return behavior, presenter-output render selection, formal task lifecycle/progression ownership, formal mod activation/startup ownership, and formal state synchronization ownership.
-- Child 9 Runtime Contract Hardening is now defined as the next executable child.
-- Child 10 Runtime Ownerization Review And Baseline is now authored as the formal post-Child-9 review child.
-- Child 11 Sub-Runtime Ownerization Implementation is now reserved in queue state, but remains locked until Child 10 completes and Child 11 spec/plan are authored against the Child 10 baseline.
+- Child 9 Runtime Contract Hardening is now completed on all four approved shared contract baselines.
+- Child 10 Runtime Ownerization Review And Baseline is now completed as the formal post-Child-9 review gate and controlling baseline artifact.
+- Child 11 Sub-Runtime Ownerization Implementation remains reserved in queue state and locked until Child 11 spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync records the unlock.
 
 ## Module Diagram
 
@@ -80,8 +80,8 @@ flowchart LR
 - Child 6 Task Runtime extraction, completed on the first formal contract/lifecycle/progression slice
 - Child 7 Mod Runtime extraction, completed on the first activation/startup seam
 - Child 8 StateSync Runtime extraction, completed on the first formal canonical boundary slice
-- Child 9 Runtime Contract Hardening, now defined as the next executable child for shared contract hardening before later ownerization
-- Child 10 Runtime Ownerization Review And Baseline, now defined as the required pre-implementation review/baseline child after Child 9
+- Child 9 Runtime Contract Hardening, now completed as the shared contract-hardening baseline before later ownerization
+- Child 10 Runtime Ownerization Review And Baseline, now completed as the required pre-implementation review/baseline child after Child 9
 - Child 11 Sub-Runtime Ownerization Implementation, now reserved as the locked follow-up ownerization child
 
 ## Temporary Adapters
@@ -89,9 +89,9 @@ flowchart LR
 - `src/core/adapters/legacy-main-adapter.ts` is now implemented as a temporary bridge
 - `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` are now implemented as temporary bridges
 - Legacy interactive gameplay logic still lives behind those adapters
-- Child 9 is now promoted as the next executable contract-hardening child; those adapters remain in place through Child 9.
-- Child 10 now exists to classify which adapters are retained and which become Child 11 ownerization targets.
-- Child 11 is the first queued child that may remove or narrow the interactive/house adapters, and even then only inside the frozen Child 10 baseline.
+- Child 9 is now closed, and those adapters intentionally remain in place after Child 9 because ownerization is deferred.
+- Child 10 has now finalized which adapters are retained through Child 11 and which are targeted for removal inside Child 11.
+- Child 11 is the first queued child that may remove or narrow the interactive/house adapters, and even then only after its own spec/plan are authored against the frozen Child 10 baseline.
 
 ## Flow Diagram 1: Current Boot And Render Flow
 
@@ -238,6 +238,7 @@ flowchart TD
 - Updated `src/main.ts` so builtin, file-imported, url-imported, and restore-time selected-mod activation calls pass through Mod Runtime before existing content assembly and bootstrap continuation.
 - Landed `src/core/contracts/state-sync-runtime.ts` plus `src/core/runtime/state-sync-*` so StateSync Runtime owns canonical runtime state, app bridge, save snapshot, presentation input, mandatory triggers, syncState, validation, normalization, hydration, pre-save preparation, mod rebuild, and presentation input preparation without absorbing gameplay dispatch, save IO, Mod Runtime activation, or rendering.
 - Moved bridge-period interactive RuntimeState creation/write-back helpers out of `src/main.ts` and behind the StateSync runtime boundary.
+- Finalized the Child 10 runtime ownerization baseline so owner vs bridge maturity, adapter disposition, main.ts coupling, and Child 11 execution controls are now frozen in governance docs before further ownerization work.
 
 ## Architecture Risks
 
@@ -250,3 +251,4 @@ flowchart TD
 - The Task Runtime seam is now real but intentionally first-slice only; task UI, complete authoring DSL, and mod custom evaluator plugins remain future scope.
 - The Mod Runtime seam is now real but intentionally first-slice only; full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy remain future scope.
 - State synchronization now has a first formal StateSync Runtime boundary, but deeper save IO integration, runtime dispatch auto-commit integration, and full legacy state migration remain future scope.
+- Child 10 baseline is now frozen, so the next ownerization step is constrained by governance rather than open-ended exploration; Child 11 code work must still wait for Child 11 spec/plan authoring and weekly unlock sync.

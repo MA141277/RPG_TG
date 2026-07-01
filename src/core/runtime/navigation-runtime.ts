@@ -13,6 +13,7 @@ type NavigationRuntimeResult = {
 
 export function createEnterCityRequest(cityId: string): RuntimeRequest {
   return {
+    family: "external",
     type: "external",
     eventId: "navigation.enter-city",
     payload: { cityId },
@@ -21,6 +22,7 @@ export function createEnterCityRequest(cityId: string): RuntimeRequest {
 
 export function createEnterHouseRequest(houseId: string): RuntimeRequest {
   return {
+    family: "external",
     type: "external",
     eventId: "navigation.enter-house",
     payload: { houseId },

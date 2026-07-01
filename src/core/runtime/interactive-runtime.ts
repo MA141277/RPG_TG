@@ -1,8 +1,14 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
+import type {
+  ActiveInteractiveRuntimeSession,
+  InteractiveActionRequest,
+  InteractiveRuntimeKind,
+  InteractiveRuntimeRequest,
+  InteractiveRuntimeResult,
+} from "../contracts/interactive-runtime";
 import type { RuntimeRequest } from "../contracts/runtime-request";
-import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
   applyLegacyCityBeggingCompletion,
@@ -14,7 +20,7 @@ import {
   updateLegacyCityBeggingPointer,
 } from "../adapters/legacy-interactive-adapter";
 
-export type InteractiveRuntimeOutput = RuntimeResult & {
+export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
   characterDefinitions?: CharacterDefinition[];
 };
 
@@ -23,8 +29,21 @@ export function createLaunchInteractiveRequest(
   payload?: Record<string, unknown>
 ): RuntimeRequest {
   return {
+    family: "external",
     type: "external",
     eventId: interactiveId,
+    ...(payload == null ? {} : { payload }),
+  };
+}
+
+export function createExitInteractiveRequest(
+  kind: InteractiveRuntimeKind,
+  payload?: Record<string, unknown>
+): RuntimeRequest {
+  return {
+    family: "action",
+    type: "action",
+    actionId: `interactive.${kind}.exit`,
     ...(payload == null ? {} : { payload }),
   };
 }
@@ -34,6 +53,7 @@ export function createInteractiveActionRequest(
   payload?: Record<string, unknown>
 ): RuntimeRequest {
   return {
+    family: "action",
     type: "action",
     actionId,
     ...(payload == null ? {} : { payload }),
@@ -48,11 +68,10 @@ export function runInteractiveRuntime(input: {
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string> | undefined;
 }): InteractiveRuntimeOutput {
-  if (
-    input.request.type === "external" &&
-    input.request.eventId === "interactive.city-begging.launch"
-  ) {
-    const now = input.request.payload?.now;
+  const request = toInteractiveRuntimeRequest(input.request);
+
+  if (request?.phase === "launch" && request.kind === "city-begging") {
+    const now = request.payload?.now;
     return {
       state: {
         ...input.state,
@@ -64,25 +83,46 @@ export function runInteractiveRuntime(input: {
         },
       },
       effects: [],
+      session: createInteractiveSession(request),
       interactive: { type: "none" },
     };
   }
 
-  if (input.request.type !== "action") {
+  if (request == null) {
     return {
       state: input.state,
       effects: [],
+      session: getActiveInteractiveSession(input.state, null),
       interactive: { type: "none" },
     };
   }
 
-  if (input.request.actionId === "interactive.city-begging.pointer") {
+  if (request.phase === "exit") {
+    return {
+      state: exitInteractiveState(input.state, request.kind),
+      effects: [],
+      session: null,
+      interactive: { type: "none" },
+    };
+  }
+
+  if (request.phase !== "action") {
+    return {
+      state: input.state,
+      effects: [],
+      session: getActiveInteractiveSession(input.state, request.kind),
+      interactive: { type: "none" },
+    };
+  }
+
+  if (request.kind === "city-begging" && request.actionId === "interactive.city-begging.pointer") {
     const currentState = input.state.app.beggingMiniGameState;
-    const pointerX = input.request.payload?.pointerX;
+    const pointerX = request.payload?.pointerX;
     if (currentState == null || typeof pointerX !== "number") {
       return {
         state: input.state,
         effects: [],
+        session: getActiveInteractiveSession(input.state, request.kind),
         interactive: { type: "none" },
       };
     }
@@ -99,17 +139,19 @@ export function runInteractiveRuntime(input: {
         },
       },
       effects: [],
+      session: getActiveInteractiveSession(input.state, request.kind),
       interactive: { type: "none" },
     };
   }
 
-  if (input.request.actionId === "interactive.city-begging.tick") {
+  if (request.kind === "city-begging" && request.actionId === "interactive.city-begging.tick") {
     const currentState = input.state.app.beggingMiniGameState;
-    const now = input.request.payload?.now;
+    const now = request.payload?.now;
     if (currentState == null || typeof now !== "number") {
       return {
         state: input.state,
         effects: [],
+        session: getActiveInteractiveSession(input.state, request.kind),
         interactive: { type: "none" },
       };
     }
@@ -123,12 +165,16 @@ export function runInteractiveRuntime(input: {
         },
       },
       effects: [],
+      session: getActiveInteractiveSession(input.state, request.kind),
       interactive: { type: "none" },
     };
   }
 
-  if (input.request.actionId === "interactive.city-begging.complete") {
-    const result = input.request.payload?.result;
+  if (
+    request.kind === "city-begging" &&
+    request.actionId === "interactive.city-begging.complete"
+  ) {
+    const result = request.payload?.result;
     if (
       input.playerCharacterId == null ||
       result == null ||
@@ -137,6 +183,7 @@ export function runInteractiveRuntime(input: {
       return {
         state: input.state,
         effects: [],
+        session: getActiveInteractiveSession(input.state, request.kind),
         interactive: { type: "none" },
       };
     }
@@ -155,22 +202,24 @@ export function runInteractiveRuntime(input: {
       },
       characterDefinitions: completion.characterDefinitions,
       effects: [],
+      session: null,
       interactive: { type: "none" },
     };
   }
 
-  if (input.request.actionId === "interactive.activity-qte.tick") {
+  if (request.kind === "activity-qte" && request.actionId === "interactive.activity-qte.tick") {
     return {
       state: {
         ...input.state,
         core: tickLegacyActivityQte(input.state.core),
       },
       effects: [],
+      session: getActiveInteractiveSession(input.state, request.kind),
       interactive: { type: "none" },
     };
   }
 
-  if (input.request.actionId === "interactive.activity-qte.stop") {
+  if (request.kind === "activity-qte" && request.actionId === "interactive.activity-qte.stop") {
     const session = input.state.core.runtime.activitySession;
     const activityId =
       session?.type === "qte-bar" ? session.activityId : null;
@@ -192,6 +241,7 @@ export function runInteractiveRuntime(input: {
           },
         },
         effects: [],
+        session: null,
         interactive: { type: "none" },
       };
     }
@@ -209,16 +259,21 @@ export function runInteractiveRuntime(input: {
       },
       characterDefinitions: completion.characterDefinitions,
       effects: [],
+      session: null,
       interactive: { type: "none" },
     };
   }
 
-  if (input.request.actionId === "interactive.story-battle.action") {
-    const battleActionId = input.request.payload?.battleActionId;
+  if (
+    request.kind === "story-battle" &&
+    request.actionId === "interactive.story-battle.action"
+  ) {
+    const battleActionId = request.payload?.battleActionId;
     if (typeof battleActionId !== "string") {
       return {
         state: input.state,
         effects: [],
+        session: getActiveInteractiveSession(input.state, request.kind),
         interactive: { type: "none" },
       };
     }
@@ -237,6 +292,13 @@ export function runInteractiveRuntime(input: {
         core: result.state,
       },
       effects: [],
+      session: getActiveInteractiveSession(
+        {
+          ...input.state,
+          core: result.state,
+        },
+        request.kind
+      ),
       interactive:
         result.enterHouseId == null
           ? { type: "none" }
@@ -247,6 +309,166 @@ export function runInteractiveRuntime(input: {
   return {
     state: input.state,
     effects: [],
+    session: getActiveInteractiveSession(input.state, request.kind),
     interactive: { type: "none" },
+  };
+}
+
+export function toInteractiveRuntimeRequest(
+  request: RuntimeRequest
+): InteractiveRuntimeRequest | null {
+  if (request.type === "external") {
+    const launchKind = resolveLaunchKind(request.eventId);
+    if (launchKind == null) {
+      return null;
+    }
+
+    return {
+      phase: "launch",
+      kind: launchKind,
+      interactiveId: request.eventId,
+      source: { type: "external", id: request.eventId },
+      ...(request.payload == null ? {} : { payload: request.payload }),
+    };
+  }
+
+  if (request.type !== "action") {
+    return null;
+  }
+
+  const kind = resolveActionKind(request.actionId);
+  if (kind == null) {
+    return null;
+  }
+
+  if (request.actionId === `interactive.${kind}.exit`) {
+    return {
+      phase: "exit",
+      kind,
+      sessionId: createInteractiveSessionId(kind),
+      ...(request.payload == null ? {} : { payload: request.payload }),
+    };
+  }
+
+  const actionRequest: InteractiveActionRequest = {
+    phase: "action",
+    kind,
+    sessionId: createInteractiveSessionId(kind),
+    actionId: request.actionId,
+    ...(request.payload == null ? {} : { payload: request.payload }),
+  };
+  return actionRequest;
+}
+
+function resolveLaunchKind(
+  interactiveId: string
+): InteractiveRuntimeKind | null {
+  if (interactiveId === "interactive.city-begging.launch") {
+    return "city-begging";
+  }
+
+  return null;
+}
+
+function resolveActionKind(actionId: string): InteractiveRuntimeKind | null {
+  if (actionId.startsWith("interactive.activity-qte.")) {
+    return "activity-qte";
+  }
+
+  if (actionId.startsWith("interactive.city-begging.")) {
+    return "city-begging";
+  }
+
+  if (actionId.startsWith("interactive.story-battle.")) {
+    return "story-battle";
+  }
+
+  return null;
+}
+
+function createInteractiveSession(
+  request: Extract<InteractiveRuntimeRequest, { phase: "launch" }>
+): ActiveInteractiveRuntimeSession {
+  return {
+    kind: request.kind,
+    sessionId: createInteractiveSessionId(request.kind),
+    source: request.source,
+  };
+}
+
+function createInteractiveSessionId(kind: InteractiveRuntimeKind): string {
+  return `interactive.${kind}`;
+}
+
+function getActiveInteractiveSession(
+  state: RuntimeState,
+  kind: InteractiveRuntimeKind | null
+): ActiveInteractiveRuntimeSession | null {
+  if (kind === "city-begging" && state.app.beggingMiniGameState != null) {
+    return {
+      kind,
+      sessionId: createInteractiveSessionId(kind),
+      source: { type: "external", id: "interactive.city-begging.launch" },
+    };
+  }
+
+  if (kind === "activity-qte" && state.core.runtime.activitySession?.type === "qte-bar") {
+    return {
+      kind,
+      sessionId: createInteractiveSessionId(kind),
+      source: {
+        type: "scene",
+        sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      },
+    };
+  }
+
+  if (kind === "story-battle" && state.core.storyBattle != null) {
+    return {
+      kind,
+      sessionId: createInteractiveSessionId(kind),
+      source: {
+        type: "scene",
+        sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      },
+    };
+  }
+
+  return null;
+}
+
+function exitInteractiveState(
+  state: RuntimeState,
+  kind: InteractiveRuntimeKind
+): RuntimeState {
+  if (kind === "city-begging") {
+    return {
+      ...state,
+      app: {
+        ...state.app,
+        beggingMiniGameState: null,
+      },
+    };
+  }
+
+  if (kind === "activity-qte") {
+    return {
+      ...state,
+      core: {
+        ...state.core,
+        runtime: {
+          ...state.core.runtime,
+          activitySession: null,
+        },
+      },
+    };
+  }
+
+  return {
+    ...state,
+    core: {
+      ...state.core,
+      storyBattle: null,
+    },
   };
 }
