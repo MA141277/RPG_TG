@@ -14,8 +14,8 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring is complete, and Child 11 is now the next executable ownerization child.`
-- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md before any later child is considered.`
+- Current Focus: `Child 10 Runtime Ownerization Review And Baseline is completed, Child 11 spec/plan authoring is complete, Child 11 is now the next executable ownerization child, and Child 13 is formally queued as the preferred post-Child-11 runtime continuation.`
+- Next Step: `Start Child 11 from docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md before Child 13 or the preserved Child 12 reserve work is considered.`
 - Verification: `Child 10 closeout parent sync: npm run lint:plans`
 
 - 2026-07-01
@@ -146,6 +146,10 @@
   - Summary: `Authored the formal Child 11 implementation spec and plan, synchronized the parent and weekly queue state, and promoted Child 11 from locked candidate to the next executable child without reopening the frozen baseline.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 11 from its own implementation plan.`
+- 2026-07-01
+  - Summary: `Authored the formal Child 13 convergence-audit spec and plan, preserved Child 12 as a later UI/resource reserve child, and recorded Child 13 as the preferred post-Child-11 runtime continuation candidate.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep Child 11 as the active executable child. Review Child 13 only after Child 11 closeout confirms a valid post-Child-11 convergence unlock.`
 
 ## Why This Plan Exists
 
@@ -918,7 +922,40 @@ Confirm:
 - effect settlement alignment matches the approved shared path
 - Child 11 is marked `completed`
 
-### Task 13: Close the parent orchestration plan
+### Task 13: Author And Execute Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit
+
+**Files:**
+- Create: `docs/superpowers/specs/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-spec.md`
+- Create: `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
+- Modify: `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
+
+- [x] **Step 1: Author Child 13 spec and plan**
+
+Create the Child 13 convergence-audit spec and plan while preserving Child 12 as a later reserve child.
+
+- [ ] **Step 2: Verify Child 13 dependencies**
+
+Confirm:
+
+- Child 11 completed
+- Child 11 closeout sync recorded
+- Child 13 spec and plan exist
+- weekly and parent plans both record Child 13 as the preferred post-Child-11 runtime continuation candidate
+
+- [ ] **Step 3: Execute Child 13 from its own checklist**
+
+Run all implementation work from the Child 13 plan file, not from this parent file.
+
+- [ ] **Step 4: Verify Child 13 exit condition and sync parent log**
+
+Confirm:
+
+- every remaining reviewed path is classified into Bucket A, Bucket B, or Bucket C
+- every Bucket A path converges through shared dispatch
+- `src/main.ts` no longer owns Bucket A follow-up or reentry branching
+- Child 13 is marked `completed`
+
+### Task 14: Close the parent orchestration plan
 
 Confirm:
 
@@ -983,5 +1020,7 @@ Do not mark this parent plan `completed` until:
 - [x] Child 11 reserved in queue as a locked follow-up child before unlock
 - [x] Child 11 spec and plan authored
 - [ ] Child 11 completed
+- [x] Child 13 spec and plan authored
+- [ ] Child 13 completed
 - [x] Shared-file conflict policy acknowledged
 - [x] Final orchestration verification recorded

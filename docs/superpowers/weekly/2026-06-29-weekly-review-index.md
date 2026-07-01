@@ -131,6 +131,6 @@ The old files may remain as historical references, but they are no longer indepe
 - Category:
   - `Child 11 implementation`
 - Queued follow-up after the next child:
-  - `Child 12 UI Contract Reserve is now recorded as a future candidate behind Child 11 in the active weekly queue.`
+  - `Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit is now recorded as the preferred post-Child-11 runtime continuation candidate, while Child 12 UI Contract Reserve remains preserved as a later reserve child.`
 - Unlock dependency after that:
-  - `Child 12 still requires Child 11 completion plus a later weekly unlock review before implementation may start. Any child after Child 12 still requires a fresh review before a new spec/plan pair is authored.`
+  - `Child 13 still requires Child 11 completion plus a post-Child-11 unlock review before implementation may start. Child 12 remains locked behind Child 13 resolution or explicit bypass plus a later weekly unlock review.`

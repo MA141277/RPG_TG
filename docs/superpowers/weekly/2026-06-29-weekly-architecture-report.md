@@ -20,6 +20,7 @@ It must show:
 - Child 9 Runtime Contract Hardening is now completed on all four approved shared contract baselines.
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the formal post-Child-9 review gate and controlling baseline artifact.
 - Child 11 Sub-Runtime Ownerization Implementation now has a formal spec/plan set and is unlocked as the next executable child, but no production ownerization batch has started yet.
+- Child 12 UI Contract Reserve remains preserved as a later reserve child, while Child 13 is now queued as the preferred post-Child-11 runtime convergence audit.
 
 ## Module Diagram
 
@@ -83,6 +84,7 @@ flowchart LR
 - Child 9 Runtime Contract Hardening, now completed as the shared contract-hardening baseline before later ownerization
 - Child 10 Runtime Ownerization Review And Baseline, now completed as the required pre-implementation review/baseline child after Child 9
 - Child 11 Sub-Runtime Ownerization Implementation, now the unlocked and not-started follow-up ownerization child
+- Child 13 Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit, now the queued next runtime continuation candidate after Child 11
 
 ## Temporary Adapters
 

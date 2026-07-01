@@ -13,7 +13,7 @@ Child 12 exists to reserve the future UI contract, pack UI table, and resource-l
 - One-line responsibility:
   - reserve formal UI contract, pack UI split-table, and asset-layering seams without enabling Editor mode or changing the current runtime/render entry path
 - Architecture position:
-  - first post-Child-11 future UI/resource child after the current runtime ownerization queue
+  - future UI/resource reserve child after the current runtime ownerization and post-Child-11 runtime convergence queue
 - Primary target areas:
   - formal UI contract typing
   - pack UI split-table reserve
@@ -180,7 +180,9 @@ Child 12 must preserve these runtime guarantees:
 - current builtin screen rendering still works without any new UI contract consumer
 - current layout editor path still works through the existing `UiLayout` path
 - current pack and mod manifests remain valid without any UI reserve fields
-- current weekly executable child remains Child 11 until Child 11 completes and a later weekly review unlocks Child 12
+- current weekly executable child remains Child 11 until Child 11 completes
+- Child 13 is the preferred post-Child-11 runtime continuation child and must be reviewed before Child 12 is unlocked
+- Child 12 remains a preserved reserve child until Child 11 and Child 13 are resolved or explicitly bypassed by weekly governance
 
 ## 10. Reserve Contract Direction
 
@@ -302,7 +304,7 @@ Child 12 is acceptable only if:
 - `houses` remains distinct from `cities`
 - current runtime behavior remains unchanged by default
 - current layout editor path remains on the existing flow
-- Child 12 is queued after Child 11 rather than inserted into the current executable slot
+- Child 12 remains preserved after the current runtime continuation queue rather than inserted into the immediate post-Child-11 executable slot
 
 ## 15. Verification Requirements
 

@@ -314,3 +314,20 @@ Child 9 completed -> execute Child 10 review plan -> finalize runtime-ownerizati
 
 - This is a real governance flow in the current repository, not a hypothetical future process.
 - It exists to prevent Child 11 from reopening owner/bridge classification, adapter disposition, or `main.ts` coupling ad hoc during implementation.
+
+## Flow 18: Child 11 Closeout-To-Child 13 Convergence Review Flow
+
+### Narrative
+
+Child 13 is not a generic continuation and not a silent Child 11 backfill. Its unlock path begins only after Child 11 completes, then reviews the remaining runtime-owned follow-up and reentry paths, classifies them into Bucket A, Bucket B, or Bucket C, and only unlocks Child 13 if real Bucket A convergence work exists. Child 12 remains preserved as a later UI reserve child and must not bypass this runtime continuation step.
+
+### Call Chain
+
+```text
+Child 11 completed -> post-Child-11 review -> classify remaining paths into Bucket A/B/C -> unlock Child 13 only if Bucket A exists -> execute Child 13 -> revisit Child 12 later
+```
+
+### Notes
+
+- This flow exists to prevent Child 13 from degenerating into Child 11 backfill.
+- This flow also prevents Child 12 UI reserve work from preempting unresolved runtime convergence inside already-owned runtime families.

@@ -259,6 +259,30 @@ Primary seams:
 - `src/application/presenter/**`
 - `src/ui/layout-renderer.ts`
 
+## 5. Child Queue Direction
+
+### Child 11: Sub-Runtime Ownerization Implementation
+
+- primary coverage:
+  - shared dispatch convergence
+  - Interaction Runtime ownerization
+  - House Runtime ownerization
+  - Effect Settlement alignment
+- guardrails:
+  - executes only against the frozen Child 10 baseline
+  - must not absorb boot/mod/save/presenter/UI/resource planning work
+
+### Child 13: Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit
+
+- primary coverage:
+  - remaining runtime-owned follow-up and reentry paths that still sit outside shared dispatch after Child 11
+- scope guard:
+  - only for already-covered runtime families
+  - not Child 11 primary-path backfill
+  - no new public contract family
+  - no new top-level runtime owner
+  - no UI/layout/resource reserve work
+
 ### 4.13 Mod Runtime
 
 Owns:

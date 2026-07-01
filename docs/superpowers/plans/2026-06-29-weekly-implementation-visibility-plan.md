@@ -12,8 +12,8 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-01`
-- Current Focus: `The visibility bundle now needs to reflect that Child 10 is completed, Child 11 spec/plan authoring is complete, and Child 11 is unlocked as the next executable child.`
-- Next Step: `Keep the five core artifacts aligned with Child 11 unlocked and not-started until the first Child 11 implementation batch lands.`
+- Current Focus: `The visibility bundle now needs to reflect that Child 11 is the next executable child, Child 13 is the queued post-Child-11 runtime continuation candidate, and Child 12 remains preserved as a later reserve child.`
+- Next Step: `Keep the five core artifacts aligned with Child 11 unlocked and not-started, Child 13 queued, and Child 12 preserved until the first Child 11 implementation batch lands.`
 - Verification: `Child 11 unlock visibility sync: npm run lint:plans`
 - Notes: `This file is not a code execution plan. It is a required visibility companion for the weekly orchestration plan. The weekly artifact bundle is now governed as five core artifacts. Boundary checklist ownership lives in the module map, change impact ownership lives in the review index, and module backlog ownership lives in the next split review. Child 11 is now visibly unlocked because its spec/plan are authored against the finalized Child 10 baseline and weekly unlock sync is recorded.`
 
@@ -39,6 +39,10 @@
   - Summary: `Updated the visibility companion after Child 11 spec/plan authoring and weekly unlock sync. The weekly artifacts now record Child 11 as unlocked and not-started rather than locked behind an authoring gate.`
   - Verification: `npm run lint:plans`
   - Next: `Keep the same artifact bundle aligned until the first Child 11 implementation batch lands.`
+- 2026-07-01
+  - Summary: `Updated the visibility companion after Child 13 spec/plan authoring. The weekly artifacts now keep one queue truth: Child 11 is active next, Child 13 is the preferred runtime continuation candidate, and Child 12 remains preserved as a later reserve child.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep the same artifact bundle aligned until Child 11 completes or queue governance changes again.`
 
 - 2026-06-29
   - Summary: `Visibility companion created and linked to the weekly orchestration flow.`
@@ -134,9 +138,9 @@
 - Active next child plan:
   - `docs/superpowers/plans/2026-07-01-sub-runtime-ownerization-implementation-plan.md`
 - Queued next child plan:
-  - `docs/superpowers/plans/2026-07-01-ui-contract-reserve-plan.md`
+  - `docs/superpowers/plans/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-plan.md`
 - Locked follow-up child:
-  - `Child 12 UI Contract Reserve is recorded as a future candidate only. It remains locked until Child 11 completes and a later weekly review explicitly unlocks it.`
+  - `Child 12 UI Contract Reserve is preserved as a later reserve child. It remains locked until Child 11 completes, Child 13 is resolved or explicitly bypassed, and a later weekly review explicitly unlocks Child 12.`
 - Parent orchestration plan:
   - `docs/superpowers/plans/2026-06-29-mod-first-engine-runtime-extraction-plan.md`
 

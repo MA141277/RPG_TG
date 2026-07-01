@@ -55,6 +55,8 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Child 9 queue state: completed as Runtime Contract Hardening, still limited to contract closure and not ownerization.
 - [x] Child 10 queue state: completed as Runtime Ownerization Review And Baseline and still limited to review/baseline governance, not production ownerization.
 - [x] Child 11 queue state: unlocked and not-started, with formal spec/plan files authored against the finalized Child 10 baseline.
+- [x] Child 13 queue state: queued as the preferred post-Child-11 runtime convergence-audit child.
+- [x] Child 12 queue state: preserved as a later UI reserve child behind the current runtime continuation queue.
 
 ### Provisional Boundaries
 
@@ -107,6 +109,8 @@ If a module cannot be summarized here, it is still acting like a black box.
 - [x] Child 10 has finalized the controlling baseline at `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`.
 - [x] Child 11 is allowed to target shared dispatch convergence, Interaction Runtime ownerization, House Runtime ownerization, and Effect Settlement alignment only because Child 11 spec/plan are now authored against that baseline and the weekly plan records the unlock.
 - [x] Child 11 must execute from its own implementation plan and must not treat weekly artifacts as a substitute for the frozen baseline or child-plan checklist.
+- [x] Child 13 is allowed only to converge remaining runtime-owned follow-up and reentry paths for already-covered runtime families after Child 11 completes.
+- [x] Child 12 must not bypass Child 13 unless weekly governance records an explicit dependency bypass.
 
 ### Remaining `main.ts` Coupling
 
