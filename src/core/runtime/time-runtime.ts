@@ -4,6 +4,8 @@ import {
 } from "../../application/time/time-progression";
 import type { GameState } from "../../domain/game-state";
 import type { RuntimeRequest } from "../contracts/runtime-request";
+import type { RuntimeResult } from "../contracts/runtime-result";
+import type { RuntimeState } from "../contracts/runtime-state";
 
 type TimeRuntimeResult = {
   state: GameState;
@@ -51,4 +53,22 @@ export function runTimeRuntime(input: {
   }
 
   return { state: input.state };
+}
+
+export function routeTimeRuntime(input: {
+  state: RuntimeState;
+  request: RuntimeRequest;
+}): RuntimeResult {
+  const result = runTimeRuntime({
+    state: input.state.core,
+    request: input.request,
+  });
+
+  return {
+    state: {
+      ...input.state,
+      core: result.state,
+    },
+    effects: [],
+  };
 }

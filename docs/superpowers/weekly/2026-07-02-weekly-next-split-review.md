@@ -28,7 +28,7 @@ Do not decide the next split only from intuition.
 - Category:
   - `needs-convergence`
 - Queue status:
-  - `queued spec awaiting Child 15 closeout and later baseline recheck`
+  - `queued spec awaiting post-Child-15 baseline recheck`
 - Immediate queued follow-up:
   - `none beyond the current recommendation`
 - Locked later follow-up:
@@ -37,8 +37,8 @@ Do not decide the next split only from intuition.
 ## Non-Selected Candidates
 
 - `Child 15 Navigation + Time Runtime Convergence`
-  - Already active in this set and therefore no longer a later split candidate.
+  - Already completed in this set and therefore no longer a later split candidate.
 - `Child 16 Event + Scene Handoff Convergence`
-  - Remains queued because it is now the immediate follow-up after Child 15.
+  - Remains queued because Child 15 closed without absorbing its boundary, but promotion still requires an explicit recheck.
 - `src/main.ts`
-  - Still the largest black box, but while Child 15 is active the next safe later reduction after it should be Child 16's event/scene boundary rather than another broad `main.ts` sweep.
+  - Still the largest black box, but after Child 15 the next safe reduction should still be Child 16's event/scene boundary rather than another broad `main.ts` sweep.

@@ -6,10 +6,11 @@
 
 **Active Child Plan:**
 
-- `docs/superpowers/plans/2026-07-02-child-15-navigation-time-runtime-convergence-plan.md`
+- `None currently`
 
 **Latest Completed Child Plan:**
 
+- `docs/superpowers/plans/2026-07-02-child-15-navigation-time-runtime-convergence-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-14-interactive-remaining-legacy-convergence-plan.md`
 
 **Queued Child Specs:**
@@ -19,14 +20,14 @@
 ## Weekly Summary
 
 - A fresh weekly continuation set is now opened after the closed Child 13 queue.
-- `Child 15 Navigation + Time Runtime Convergence` is now the active executable child after a narrowed baseline recheck.
-- `Child 14 Interactive Remaining Legacy Convergence` is completed and kept as queue history for this set.
-- `Child 16 Event + Scene Handoff Convergence` is now the immediate queued follow-up.
+- `Child 15 Navigation + Time Runtime Convergence` is completed after converging the covered enter-city/day-start/advance-segments entry paths onto shared runtime dispatch.
+- The weekly set is temporarily between active children while `Child 16 Event + Scene Handoff Convergence` waits for a post-Child-15 baseline recheck.
+- `Child 14 Interactive Remaining Legacy Convergence` remains preserved as earlier queue history for this set.
 - There is no additional locked child in this weekly set right now.
 
 ## Active Focus
 
-- Child 15 Task 1 audit against the narrowed post-Child-14 baseline
+- Child 16 baseline recheck against the post-Child-15 code and artifact baseline
 
 ## Artifact Index
 
@@ -48,7 +49,7 @@ Merged ownership note:
 ## Verification Summary
 
 - Child 14 closeout verification: `PASS`
-- Child 15 promotion batch implementation verification: `NOT RUN AS PART OF THIS DOC-ONLY CHANGE`
+- Child 15 closeout verification: `PASS`
 - `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
@@ -59,14 +60,13 @@ Merged ownership note:
 - Child 14 formal spec and plan authored
 - Child 14 production convergence completed and verified
 - Child 15 formal spec authored
-- Child 15 promoted to active and executable plan authored
+- Child 15 promoted, implemented, and verified
 - Child 16 formal spec authored
-- fresh `2026-07-02` artifact bundle authored and synchronized after Child 14 closeout
+- fresh `2026-07-02` artifact bundle authored and synchronized through Child 15 closeout
 
 ### Deferred
 
-- Child 15 production implementation has not started yet
-- Child 16 remains queued and not executable until Child 15 closes and later weekly promotion occurs
+- Child 16 remains queued and not executable until its baseline recheck is recorded and weekly promotion occurs
 
 ### Blockers
 
@@ -77,8 +77,8 @@ Merged ownership note:
 Interpret this as input to later continuation, not as automatic permission to append a new executable child into a closed weekly plan.
 
 - Highest-priority module to refine:
-  - `src/core/runtime/navigation-runtime.ts` + `src/core/runtime/time-runtime.ts`
+  - `src/core/runtime/event-runtime.ts` + `src/core/runtime/scene-runtime.ts`
 - Why it is next:
-  - Child 15 is now the active narrowed convergence child for the remaining covered enter-city/day-start/advance-segments mixed entry debt
+  - Child 15 closed without absorbing event/scene handoff, so the next reviewable boundary is the still-separated event-to-scene production line
 - Category:
   - `needs-convergence`

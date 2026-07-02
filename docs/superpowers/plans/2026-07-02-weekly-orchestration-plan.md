@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 15 is now the active executable child after a narrowed post-Child-14 baseline recheck. Child 16 is the queued next promotion candidate and there is no additional locked child in this set right now.`
-- Next Step: `Start docs/superpowers/plans/2026-07-02-child-15-navigation-time-runtime-convergence-plan.md Task 1 Step 1.`
-- Verification: `Promotion / plan-authoring batch only: npm run lint:plans`
-- Notes: `Do not reopen the closed 2026-06-29 queue. Child 15 was promoted only after baseline recheck recorded a narrowed scope: covered enter-city navigation plus covered day-start/advance-segments time entry.`
+- Current Focus: `Child 15 is completed and preserved as queue history. The weekly set is temporarily between active children: Child 16 remains queued and is the next promotion candidate after a post-Child-15 baseline recheck.`
+- Next Step: `Recheck docs/superpowers/specs/2026-07-02-child-16-event-scene-handoff-convergence-spec.md against the post-Child-15 code/artifact baseline before any promotion decision.`
+- Verification: `Child 15 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|time runtime|progression"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+- Notes: `Do not reopen the closed 2026-06-29 queue. Child 16 is still queued only; it does not become executable until the baseline recheck is recorded and promotion is explicit.`
 
 ## Progress Log
 
@@ -33,6 +33,10 @@
   - Summary: `Completed the Child 15 baseline recheck and recorded the result as narrowed, not unchanged. The covered execution target is now limited to enter-city navigation plus day-start/advance-segments time entry. Child 15 is promoted to active, its executable plan is authored, and Child 16 moves forward from locked to queued as the next follow-up candidate.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 15 Task 1 Step 1.`
+- 2026-07-02
+  - Summary: `Completed Child 15. The covered enter-city navigation path and covered day-start / advance-segments time paths now route through shared runtime dispatch using routeNavigationRuntime() and routeTimeRuntime(), with bounded shell-only residue explicitly limited to city-enter story triggering and council-priority follow-up. Child 15 moves to completed history, the weekly set temporarily has no active child, and Child 16 remains queued pending baseline recheck.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|time runtime|progression"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `Run Child 16 baseline recheck before any promotion or replacement decision.`
 
 ---
 
@@ -73,13 +77,13 @@ Transition note:
 
 ### Slot 1: Active Child
 
-- Child: `Child 15 Navigation + Time Runtime Convergence`
+- Child: `None currently`
 - Queue status: `active`
-- Spec: `docs/superpowers/specs/2026-07-02-child-15-navigation-time-runtime-convergence-spec.md`
-- Plan: `docs/superpowers/plans/2026-07-02-child-15-navigation-time-runtime-convergence-plan.md`
-- Primary boundary: `Navigation Runtime` + `Time Runtime` mixed entry reduction, narrowed to covered `enter-city`, `day-start`, and `advance-segments` production paths
-- Depends on: `Child 14 completed and the 2026-07-02 artifact bundle updated.`
-- Resume point: `Start Task 1 Step 1.`
+- Spec: `Not applicable`
+- Plan: `Not applicable`
+- Primary boundary: `No active executable child until Child 16 baseline recheck is recorded.`
+- Depends on: `Not applicable`
+- Resume point: `Run the queued-child baseline recheck before any promotion.`
 
 ### Slot 2: Queued Child
 
@@ -89,7 +93,7 @@ Transition note:
 - Plan: `Not authored until promotion`
 - Primary boundary: `Event Runtime` + `Scene Runtime` covered handoff convergence
 - Depends on: `Child 15 completed and the 2026-07-02 artifact bundle updated.`
-- Promotion note: `Promote only after baseline recheck confirms Child 15 did not absorb or reorder this scope.`
+- Promotion note: `Promote only after baseline recheck confirms the post-Child-15 baseline still leaves event/scene handoff as the next reviewable boundary.`
 
 ### Slot 3: Locked Child
 

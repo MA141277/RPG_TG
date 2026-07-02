@@ -16,6 +16,21 @@
 - Child 14 已完成：remaining same-type covered interactive legacy tails 已从 adapter/shell 侧收口到 runtime owner line，后续 weekly continuation 不需要再把 interactive family 作为下一优先收敛边界。
 - 当前后续 priority 已转向 Child 15 的 navigation/time mixed entry convergence；Child 16 仍保留为 event/scene handoff 的锁定后续项。
 
+## 2026-07-02 Child 15 Navigation + Time Runtime Convergence
+
+### Added
+- 新增 Child 15 回归测试，明确要求 `src/main.ts` 在 covered `enter-city`、`day-start`、`advance-segments` 生产路径上不再直接调用 `runNavigationRuntime()` / `runTimeRuntime()`，而必须通过 shared `dispatchRuntimeRequest()` 收口。
+
+### Changed
+- `src/core/runtime/navigation-runtime.ts` 新增 `routeNavigationRuntime()`，把 navigation runtime 接入 shared `RuntimeState` / `RuntimeResult` dispatch 语言。
+- `src/core/runtime/time-runtime.ts` 新增 `routeTimeRuntime()`，把 covered 时间推进入口接入 shared `RuntimeState` / `RuntimeResult` dispatch 语言。
+- `src/core/runtime/state-sync-runtime.ts` 新增通用 bridge helper：`createRuntimeBridgeState()`、`applyRuntimeBridgeState()` 与 `applyRuntimeBridgeResult()`；原 interactive helper 改为委托给这些通用桥接函数。
+- `src/main.ts` 的 covered `enter-city`、`day-start` 与 `advance-segments` 入口已改为 shared dispatch + runtime bridge write-back，不再直接把 shell 绑定到 navigation/time helper。
+
+### Impact
+- Child 15 已完成：covered navigation/time mixed entry 已收口到 shared runtime dispatch line，`src/main.ts` 只保留 bounded shell residue：`triggerStoryEventsForTiming("city-enter")` 与 `syncCouncilPriorityAfterGameStateChange()`。
+- 下一个应审查的边界不再是同类 navigation/time 入口，而是 Child 16 的 event/scene handoff；是否还需要进一步处理 bounded residue，必须在 Child 16 baseline recheck 后再决定。
+
 ## 2026-07-02 Child 13 Shared Dispatch Reentry Convergence
 
 ### Added

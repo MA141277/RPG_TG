@@ -27,7 +27,7 @@ export type RuntimeResultBridgeInput = {
   characterDefinitions?: unknown;
 };
 
-export function createInteractiveRuntimeState(
+export function createRuntimeBridgeState(
   state: RuntimeStateBridgeInput
 ): LegacyBridgeRuntimeState {
   return {
@@ -42,7 +42,7 @@ export function createInteractiveRuntimeState(
   };
 }
 
-export function applyInteractiveRuntimeState<
+export function applyRuntimeBridgeState<
   TAppState extends RuntimeStateBridgeInput,
 >(
   state: TAppState,
@@ -62,14 +62,36 @@ export function applyInteractiveRuntimeState<
   } as TAppState;
 }
 
-export function applyInteractiveRuntimeResult<
+export function applyRuntimeBridgeResult<
   TAppState extends RuntimeStateBridgeInput,
 >(state: TAppState, result: RuntimeResultBridgeInput): TAppState {
-  return applyInteractiveRuntimeState(
+  return applyRuntimeBridgeState(
     state,
     result.state,
     result.characterDefinitions
   );
+}
+
+export function createInteractiveRuntimeState(
+  state: RuntimeStateBridgeInput
+): LegacyBridgeRuntimeState {
+  return createRuntimeBridgeState(state);
+}
+
+export function applyInteractiveRuntimeState<
+  TAppState extends RuntimeStateBridgeInput,
+>(
+  state: TAppState,
+  runtimeState: LegacyBridgeRuntimeState,
+  characterDefinitions?: unknown
+): TAppState {
+  return applyRuntimeBridgeState(state, runtimeState, characterDefinitions);
+}
+
+export function applyInteractiveRuntimeResult<
+  TAppState extends RuntimeStateBridgeInput,
+>(state: TAppState, result: RuntimeResultBridgeInput): TAppState {
+  return applyRuntimeBridgeResult(state, result);
 }
 
 export function syncState(

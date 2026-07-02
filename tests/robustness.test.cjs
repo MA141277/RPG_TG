@@ -8352,6 +8352,56 @@ test("child 14 activity qte result close routes through interactive runtime exit
   assert.match(closeActivityResultBlock, /runInteractiveRuntime/);
 });
 
+test("child 15 covered enter-city path routes through shared runtime dispatch instead of direct runNavigationRuntime helper", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const handleModalConfirmBlock = source.match(
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+  )?.[0] ?? "";
+
+  assert.doesNotMatch(handleModalConfirmBlock, /runNavigationRuntime\(/);
+  assert.match(handleModalConfirmBlock, /dispatchRuntimeRequest\(/);
+  assert.match(handleModalConfirmBlock, /createEnterCityRequest\(/);
+  assert.match(handleModalConfirmBlock, /triggerStoryEventsForTiming\(\s*"city-enter"/);
+});
+
+test("child 15 covered day-start path routes through shared runtime dispatch instead of direct runTimeRuntime helper", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const startMapAutoAdvanceBlock = source.match(
+    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
+  )?.[0] ?? "";
+
+  assert.doesNotMatch(startMapAutoAdvanceBlock, /runTimeRuntime\(/);
+  assert.match(startMapAutoAdvanceBlock, /dispatchRuntimeRequest\(/);
+  assert.match(startMapAutoAdvanceBlock, /createDayStartRequest\(/);
+  assert.match(startMapAutoAdvanceBlock, /syncCouncilPriorityAfterGameStateChange\(/);
+});
+
+test("child 15 covered advance-segments travel paths route through shared runtime dispatch instead of direct runTimeRuntime helper", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const handleModalConfirmBlock = source.match(
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+  )?.[0] ?? "";
+  const startCampaignTravelBlock = source.match(
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+  )?.[0] ?? "";
+
+  assert.doesNotMatch(handleModalConfirmBlock, /runTimeRuntime\(/);
+  assert.doesNotMatch(startCampaignTravelBlock, /runTimeRuntime\(/);
+  assert.match(handleModalConfirmBlock, /createAdvanceTimeSegmentsRequest\(1\)/);
+  assert.match(startCampaignTravelBlock, /createAdvanceTimeSegmentsRequest\(1\)/);
+  assert.match(handleModalConfirmBlock, /dispatchRuntimeRequest\(/);
+  assert.match(startCampaignTravelBlock, /dispatchRuntimeRequest\(/);
+});
+
 test("effect settlement contract exports emitter applier input and result seams", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/effect-settlement.ts"),

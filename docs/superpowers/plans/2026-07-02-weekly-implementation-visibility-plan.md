@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-02`
-- Current Focus: `The 2026-07-02 visibility bundle now reflects Child 15 promotion. Child 15 is active, Child 16 is queued, and there is no additional locked child in this set right now.`
-- Next Step: `Keep the same artifact bundle aligned after each Child 15 implementation batch.`
-- Verification: `Child 15 promotion visibility sync: npm run lint:plans`
+- Current Focus: `The 2026-07-02 visibility bundle now reflects Child 15 closeout. Child 15 is completed history, there is temporarily no active child, and Child 16 remains queued pending baseline recheck.`
+- Next Step: `Keep the artifact bundle synchronized while the set is between active children, then refresh it again once Child 16 is rechecked or promoted.`
+- Verification: `Child 15 closeout visibility sync: npm run lint:plans`
 - Notes: `This file is not a code execution plan. It is the visibility companion for the 2026-07-02 weekly orchestration plan and must keep queue truth synchronized whenever the active child changes.`
 
 ## Progress Log
@@ -39,6 +39,10 @@
   - Summary: `Updated the visibility bundle after the Child 15 baseline recheck and promotion. Child 15 is now the active executable child with a narrowed enter-city/day-start/advance-segments boundary, Child 16 is now the queued follow-up, and Child 14 is preserved as completed history.`
   - Verification: `npm run lint:plans`
   - Next: `Refresh the same artifact bundle after the first Child 15 implementation batch lands.`
+- 2026-07-02
+  - Summary: `Updated the visibility bundle after Child 15 closeout. The artifact bundle now records the converged navigation/time entry ownership, the bounded shell residue that intentionally remains outside Child 15, Child 15 as completed history, and Child 16 as the only queued follow-up while the weekly set temporarily has no active child.`
+  - Verification: `npm run lint:plans`
+  - Next: `Refresh the same artifact bundle only after Child 16 baseline recheck or promotion changes queue truth.`
 
 ---
 

@@ -88,12 +88,12 @@ import { bootstrapLegacyMain } from "./core/adapters/legacy-main-adapter";
 import { toLegacyBootstrapInput } from "./core/adapters/mod-runtime-main-adapter";
 import {
   createEnterCityRequest,
-  runNavigationRuntime,
+  routeNavigationRuntime,
 } from "./core/runtime/navigation-runtime";
 import {
   createAdvanceTimeSegmentsRequest,
   createDayStartRequest,
-  runTimeRuntime,
+  routeTimeRuntime,
 } from "./core/runtime/time-runtime";
 import {
   createEventTriggerRequest,
@@ -139,8 +139,10 @@ import {
 } from "./core/runtime/interactive-runtime";
 import { dispatchRuntimeRequest } from "./core/runtime/runtime-dispatch";
 import {
+  applyRuntimeBridgeState,
   applyInteractiveRuntimeResult,
   applyInteractiveRuntimeState,
+  createRuntimeBridgeState,
   createInteractiveRuntimeState,
 } from "./core/runtime/state-sync-runtime";
 import type { GameModManifest } from "./core/contracts/mod-manifest";
@@ -1449,13 +1451,16 @@ function startMapAutoAdvance(input: {
     }
 
     const previousGameState = appState.gameState;
-    appState = {
-      ...appState,
-      gameState: runTimeRuntime({
-        state: appState.gameState,
-        request: createDayStartRequest(),
-      }).state,
-    };
+    const runtimeResult = dispatchRuntimeRequest({
+      state: createRuntimeBridgeState(appState),
+      request: createDayStartRequest(),
+      context: {
+        router: {
+          route: ({ state, request }) => routeTimeRuntime({ state, request }),
+        },
+      },
+    });
+    appState = applyRuntimeBridgeState(appState, runtimeResult.state);
     const councilArrived =
       !hasReachedCouncilDate(previousGameState) &&
       hasReachedCouncilDate(appState.gameState);
@@ -3954,16 +3959,22 @@ function handleModalConfirm() {
         appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
         appState.campaignTravelState.targetCoordinate.y === nextCoordinate.y;
       const previousGameState = appState.gameState;
-      appState = {
+      const nextAppState = {
         ...appState,
         campaignTravelState: null,
         modalState: shouldEnterCity ? pendingEnterCityState : null,
         locationDialogueState: null,
-        gameState: runTimeRuntime({
-          state: appState.gameState,
-          request: createAdvanceTimeSegmentsRequest(1),
-        }).state,
       };
+      const runtimeResult = dispatchRuntimeRequest({
+        state: createRuntimeBridgeState(nextAppState),
+        request: createAdvanceTimeSegmentsRequest(1),
+        context: {
+          router: {
+            route: ({ state, request }) => routeTimeRuntime({ state, request }),
+          },
+        },
+      });
+      appState = applyRuntimeBridgeState(nextAppState, runtimeResult.state);
       if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
         renderApp();
       }
@@ -3972,13 +3983,18 @@ function handleModalConfirm() {
   }
 
   houseRuntime.clearAllHouseIntervals();
-  const enteredCityState = runNavigationRuntime({
-    state: appState.gameState,
+  const runtimeResult = dispatchRuntimeRequest({
+    state: createRuntimeBridgeState(appState),
     request: createEnterCityRequest(appState.modalState.cityId),
-  }).state;
+    context: {
+      router: {
+        route: ({ state, request }) => routeNavigationRuntime({ state, request }),
+      },
+    },
+  });
   const storyResult = triggerStoryEventsForTiming(
     "city-enter",
-    enteredCityState,
+    runtimeResult.state.core,
     appState.characterDefinitions
   );
   appState = {
@@ -4072,16 +4088,22 @@ function startCampaignTravel(
       activeTravelState.targetCoordinate.x === nextCoordinate.x &&
       activeTravelState.targetCoordinate.y === nextCoordinate.y;
     const previousGameState = appState.gameState;
-    appState = {
+    const nextAppState = {
       ...appState,
       campaignTravelState: null,
       modalState: shouldEnterCity ? pendingEnterCityState : null,
       locationDialogueState: null,
-      gameState: runTimeRuntime({
-        state: appState.gameState,
-        request: createAdvanceTimeSegmentsRequest(1),
-      }).state,
     };
+    const runtimeResult = dispatchRuntimeRequest({
+      state: createRuntimeBridgeState(nextAppState),
+      request: createAdvanceTimeSegmentsRequest(1),
+      context: {
+        router: {
+          route: ({ state, request }) => routeTimeRuntime({ state, request }),
+        },
+      },
+    });
+    appState = applyRuntimeBridgeState(nextAppState, runtimeResult.state);
     if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
       renderApp();
     }

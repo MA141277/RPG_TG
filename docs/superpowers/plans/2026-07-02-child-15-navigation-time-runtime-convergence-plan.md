@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 15 is now promoted from queued to active after a narrowed baseline recheck. No production batch has started yet.`
-- Next Step: `Start Task 1 Step 1 and enumerate the remaining covered enter-city/day-start/advance-segments mixed entry tails before writing red tests.`
-- Verification: `Not run as part of this promotion/plan-authoring batch`
-- Notes: `This plan is authored against the post-Child-14 baseline. Child 16 remains outside this active plan and must not be absorbed.`
+- Current Focus: `Child 15 is closed. The covered enter-city, day-start, and advance-segments production entries now route through shared runtime dispatch, while bounded story-trigger and council-priority follow-up residue remains explicitly outside this child.`
+- Next Step: `No further execution inside Child 15. Recheck Child 16 against the post-Child-15 baseline before any promotion decision.`
+- Verification: `node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|time runtime|progression"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+- Notes: `Child 15 stayed inside its narrowed boundary. It did not reopen interactive scope and did not absorb event/scene handoff convergence.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Child 15 baseline recheck completed after Child 14 closeout and the result is narrowed rather than unchanged. The active executable scope is now limited to the concrete covered navigation/time mixed-entry paths still present in src/main.ts: enter-city navigation, day-start progression, and campaign-move advance-segments progression. Child 15 is promoted to active and this executable plan is authored against that narrowed baseline.`
   - Verification: `npm run lint:plans`
   - Next: `Start Task 1 Step 1.`
+- 2026-07-02
+  - Summary: `Completed Child 15 against the narrowed baseline. The remaining covered enter-city, day-start, and advance-segments production entries in src/main.ts were audited, red tests were added first, and the production paths now route through dispatchRuntimeRequest() with routeNavigationRuntime() / routeTimeRuntime() plus the shared runtime bridge helpers in state-sync-runtime.ts. main.ts keeps only bounded shell follow-up residue: triggerStoryEventsForTiming("city-enter") after navigation entry and syncCouncilPriorityAfterGameStateChange() after covered time progression.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|time runtime|progression"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `Keep Child 16 queued until its own baseline recheck is recorded.`
 
 ---
 
@@ -88,7 +92,7 @@
 - `docs/superpowers/weekly/2026-07-02-weekly-call-flows.md`
   - Record the current pre-Child-15 navigation/time baseline and later converged flow.
 - `docs/superpowers/weekly/2026-07-02-weekly-next-split-review.md`
-  - Keep Child 16 in queued follow-up status while Child 15 is active.
+  - Keep Child 16 in queued follow-up status until explicit later promotion occurs.
 - `docs/superpowers/weekly/2026-07-02-weekly-architecture-report.md`
   - Keep runtime maturity and queue state synchronized.
 - `docs/change-log.md`
@@ -122,15 +126,15 @@
 - Read: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Enumerate the remaining covered navigation/time mixed entry tails**
+- [x] **Step 1: Enumerate the remaining covered navigation/time mixed entry tails**
 
 Record the exact covered `enter-city`, `day-start`, and `advance-segments` production tails that still depend on direct shell-owned orchestration in `src/main.ts`.
 
-- [ ] **Step 2: Add failing regression tests for the narrowed Child 15 boundary**
+- [x] **Step 2: Add failing regression tests for the narrowed Child 15 boundary**
 
 Write red tests that prove the covered navigation/time entry paths are not yet fully runtime-owned.
 
-- [ ] **Step 3: Run the targeted red tests**
+- [x] **Step 3: Run the targeted red tests**
 
 Run:
 
@@ -142,7 +146,7 @@ Expected:
 
 - at least one named covered navigation/time ownership tail fails before implementation
 
-- [ ] **Step 4: Record the audit result in the plan state**
+- [x] **Step 4: Record the audit result in the plan state**
 
 Update this plan's `Execution State` and `Progress Log` with the enumerated remaining paths before moving into implementation.
 
@@ -153,11 +157,11 @@ Update this plan's `Execution State` and `Progress Log` with the enumerated rema
 - Modify: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement the minimum covered `enter-city` navigation convergence**
+- [x] **Step 1: Implement the minimum covered `enter-city` navigation convergence**
 
 Move the covered `enter-city` production entry onto a clearer runtime-owned line and reduce the direct shell-owned navigation orchestration in `src/main.ts`.
 
-- [ ] **Step 2: Re-run the targeted navigation tests**
+- [x] **Step 2: Re-run the targeted navigation tests**
 
 Run:
 
@@ -169,7 +173,7 @@ Expected:
 
 - the covered navigation ownership tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 2**
+- [x] **Step 3: Run the full verification gate for Task 2**
 
 Run:
 
@@ -190,11 +194,11 @@ Expected:
 - Modify: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement the minimum covered time-entry convergence**
+- [x] **Step 1: Implement the minimum covered time-entry convergence**
 
 Move the covered `day-start` and `advance-segments` production entries onto a clearer runtime-owned line and reduce the direct shell-owned time orchestration in `src/main.ts`.
 
-- [ ] **Step 2: Re-run the targeted time tests**
+- [x] **Step 2: Re-run the targeted time tests**
 
 Run:
 
@@ -206,7 +210,7 @@ Expected:
 
 - the covered time ownership tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 3**
+- [x] **Step 3: Run the full verification gate for Task 3**
 
 Run:
 
@@ -234,15 +238,15 @@ Expected:
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-architecture-report.md`
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Reduce retained shell-only progression residue for the covered paths**
+- [x] **Step 1: Reduce retained shell-only progression residue for the covered paths**
 
 Keep only shell-facing input/output duties in `src/main.ts` for the covered Child 15 paths and explicitly record any bounded residue that must remain outside Child 15.
 
-- [ ] **Step 2: Update weekly artifacts and queue truth**
+- [x] **Step 2: Update weekly artifacts and queue truth**
 
 Record Child 15 outcome, verification state, and the current Child 16 queue status across the `2026-07-02` artifact bundle.
 
-- [ ] **Step 3: Run governance verification**
+- [x] **Step 3: Run governance verification**
 
 Run:
 
@@ -256,19 +260,19 @@ Expected:
 
 ## Exit Check
 
-- [ ] covered `enter-city` navigation entry ownership is runtime-owned
-- [ ] covered `day-start` time entry ownership is runtime-owned
-- [ ] covered `advance-segments` time entry ownership is runtime-owned
-- [ ] `src/main.ts` keeps only shell-facing duties on the covered Child 15 paths
-- [ ] Child 15 does not reopen interactive scope
-- [ ] Child 15 does not absorb event/scene handoff convergence
-- [ ] targeted regression coverage passes
-- [ ] weekly artifacts are updated
-- [ ] weekly queue state is updated
+- [x] covered `enter-city` navigation entry ownership is runtime-owned
+- [x] covered `day-start` time entry ownership is runtime-owned
+- [x] covered `advance-segments` time entry ownership is runtime-owned
+- [x] `src/main.ts` keeps only shell-facing duties on the covered Child 15 paths
+- [x] Child 15 does not reopen interactive scope
+- [x] Child 15 does not absorb event/scene handoff convergence
+- [x] targeted regression coverage passes
+- [x] weekly artifacts are updated
+- [x] weekly queue state is updated
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

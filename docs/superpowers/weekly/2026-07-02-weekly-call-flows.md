@@ -8,38 +8,39 @@ Capture at least two real user-visible flows in the current architecture.
 
 If a real flow cannot be described clearly, that area is still a black box.
 
-## Flow 1: Current Covered `enter-city` Navigation Baseline
+## Flow 1: Covered `enter-city` Navigation After Child 15
 
 ### Narrative
 
-The current production line for the covered `enter-city` path still enters `navigation-runtime.ts` directly from `src/main.ts`, then immediately returns to shell-owned orchestration for city-enter story triggering. This is the narrowed navigation baseline that Child 15 is allowed to converge.
+The covered `enter-city` production line now enters the shared runtime dispatch path first. `src/main.ts` no longer calls `runNavigationRuntime()` directly on this covered entry. The bounded residue that remains outside Child 15 is the city-enter story trigger handoff after the runtime-owned navigation step has already completed.
 
 ### Call Chain
 
 ```text
-UI -> src/main.ts confirmTravelOrEnterCity path -> createEnterCityRequest() -> runNavigationRuntime() -> triggerStoryEventsForTiming("city-enter") -> appState write-back -> renderApp()
+UI -> src/main.ts confirmTravelOrEnterCity path -> createEnterCityRequest() -> dispatchRuntimeRequest() -> routeNavigationRuntime() -> runtime bridge state write-back -> triggerStoryEventsForTiming("city-enter") -> renderApp()
 ```
 
 ### Notes
 
-- `triggerStoryEventsForTiming("city-enter")` remains out of Child 15 scope except where the covered navigation entry still needs less shell-side stitching.
+- `triggerStoryEventsForTiming("city-enter")` remains intentionally outside Child 15 and is now the clearer handoff seam for Child 16 review.
 
-## Flow 2: Current Covered `day-start` / `advance-segments` Time Baseline
+## Flow 2: Covered `day-start` / `advance-segments` Time After Child 15
 
 ### Narrative
 
-The current production line for covered time progression still calls `runTimeRuntime()` directly in `src/main.ts` and then performs council-priority shell follow-up checks outside the time runtime seam. This is the narrowed time baseline that Child 15 is allowed to converge.
+The covered time progression lines now route through shared runtime dispatch first. `src/main.ts` no longer calls `runTimeRuntime()` directly on the covered `day-start` and `advance-segments` entries. The bounded residue that remains outside Child 15 is the council-priority follow-up after runtime-owned time progression settles.
 
 ### Call Chain
 
 ```text
-UI / auto-advance callback -> src/main.ts -> createDayStartRequest() or createAdvanceTimeSegmentsRequest() -> runTimeRuntime() -> syncCouncilPriorityAfterGameStateChange() -> renderApp() or follow-up interruption
+UI / auto-advance callback -> src/main.ts -> createDayStartRequest() or createAdvanceTimeSegmentsRequest() -> dispatchRuntimeRequest() -> routeTimeRuntime() -> runtime bridge state write-back -> syncCouncilPriorityAfterGameStateChange() -> renderApp() or follow-up interruption
 ```
 
 ### Notes
 
-- Child 15 may reduce the minimum shell follow-up stitching required for these covered time paths, but it must not widen into broader event/scene control.
+- Child 15 completed the covered time-entry convergence without widening into event/scene control. The retained council-priority follow-up is explicit bounded residue rather than hidden mixed entry.
 
 ## Additional Flows
 
-- Child 14's interactive convergence remains accepted and should not be reopened while Child 15 is active.
+- Child 14's interactive convergence remains accepted and should not be reopened while the set moves to Child 16 baseline recheck.
+- Child 15 is now completed and should not be reopened for the bounded event/scene-facing residue it intentionally left behind.
