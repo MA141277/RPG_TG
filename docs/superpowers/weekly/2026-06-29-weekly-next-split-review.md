@@ -34,10 +34,95 @@ Do not decide the next split only from intuition.
   - Child 11, Child 12, and Child 13 are now all completed, so the active weekly queue is closed and future continuation work needs a fresh review instead of inheriting Child 13 scope.
 - Category:
   - `post-Child-13 review gate`
+- Recommended candidate order:
+  - `1. Interactive Remaining Legacy Convergence`
+  - `2. Navigation + Time Runtime Convergence`
+  - `3. Event + Scene Handoff Convergence`
+- Ordering rationale:
+  - `Interactive Remaining Legacy Convergence` should stay first because the remaining `legacy-interactive-adapter.ts` debt is the narrowest and clearest ownerization residue.
+  - `Navigation + Time Runtime Convergence` should stay second because it addresses the shared progression-layer mixed entry pattern without dragging story handoff into scope.
+  - `Event + Scene Handoff Convergence` should stay last because it has the highest risk of silently expanding into broader story-flow redesign.
 - Queued follow-up:
   - `None. Any later child must be newly reviewed and authored before implementation starts.`
 - Locked follow-up:
   - `No additional locked follow-up child is currently recorded after Child 13 closeout.`
+- Unlock rule:
+  - `None of the three candidate children below is currently unlocked. A fresh weekly review, an explicit promotion decision, and a dedicated spec/plan pair are all required before execution.`
+
+## Candidate Continuation Children
+
+1. `Interactive Remaining Legacy Convergence`
+   - Focus:
+     - converge the remaining `activity-qte` and `story-battle` interactive lifecycle paths under `src/core/runtime/interactive-runtime.ts`
+   - In scope:
+     - covered launch / action / exit / completion follow-up ownership
+     - reduction of `legacy-interactive-adapter.ts` to justified compatibility residue
+     - removal of covered interactive cleanup / follow-up branches from `src/main.ts`
+   - Out of scope:
+     - navigation/time/event/scene convergence
+     - runtime contract-family expansion
+     - house business redesign
+   - Entry conditions:
+     - governance promotes it as the next executable child
+     - Child 11 / Child 13 closeout remains accepted and unreopened
+     - no unresolved `P0` / `P1` regression exists on the covered interactive ownerized paths
+   - Exit signal:
+     - covered `activity-qte` and `story-battle` lifecycles are runtime-owned on the approved production line
+     - `src/main.ts` no longer carries the covered interactive cleanup / follow-up tails
+   - Verification baseline:
+     - targeted `tests/robustness.test.cjs` coverage for the remaining interactive tails
+     - `npm run typecheck`
+     - `npm test`
+     - `npm run build`
+
+2. `Navigation + Time Runtime Convergence`
+   - Focus:
+     - reduce direct `src/main.ts` coordination around `runNavigationRuntime()` and `runTimeRuntime()`
+   - In scope:
+     - covered navigation entry convergence
+     - covered time progression entry convergence
+     - reduction of shell-owned progression orchestration on the covered paths
+   - Out of scope:
+     - event/scene handoff redesign
+     - interactive legacy cleanup
+     - boot/startup or UI/presenter work
+   - Entry conditions:
+     - `Interactive Remaining Legacy Convergence` is complete, or governance records a justified reorder decision
+     - governance promotes it as the next executable child
+     - remaining debt is confirmed to be navigation/time mixed entry debt rather than event/scene handoff debt
+   - Exit signal:
+     - covered navigation and time entry no longer depend on direct shell orchestration in `src/main.ts`
+     - the convergence does not reopen event/scene handoff scope
+   - Verification baseline:
+     - targeted `tests/robustness.test.cjs` coverage for covered navigation/time progression paths
+     - `npm run typecheck`
+     - `npm test`
+     - `npm run build`
+
+3. `Event + Scene Handoff Convergence`
+   - Focus:
+     - converge the remaining mixed control between `runEventRuntime()` and `runSceneFromEvent()`
+   - In scope:
+     - covered event activation ownership cleanup
+     - covered event -> scene handoff convergence
+     - reduction of shell-side story handoff branches in `src/main.ts`
+   - Out of scope:
+     - story-system redesign
+     - navigation/time convergence
+     - interactive legacy convergence
+   - Entry conditions:
+     - `Navigation + Time Runtime Convergence` is complete, or governance records a justified reorder decision
+     - governance promotes it as the next executable child
+     - remaining debt is confirmed to be ownership/handoff debt rather than missing content logic
+   - Exit signal:
+     - covered event activation no longer needs shell-side stitching
+     - covered scene continuation no longer depends on ad hoc `src/main.ts` orchestration
+     - event -> scene handoff is explicit and runtime-owned on the covered line
+   - Verification baseline:
+     - targeted `tests/robustness.test.cjs` coverage for covered event activation, scene continuation, and handoff paths
+     - `npm run typecheck`
+     - `npm test`
+     - `npm run build`
 
 ## Non-Selected Candidates
 
