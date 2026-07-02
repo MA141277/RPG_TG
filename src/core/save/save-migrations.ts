@@ -22,10 +22,7 @@ function migrateEngineState(
 ): CoreGameState["engine"] {
   if (isRecord(input.engineState)) {
     return {
-      selectedModId:
-        typeof input.engineState.selectedModId === "string"
-          ? input.engineState.selectedModId
-          : selectedModId,
+      selectedModId,
       version:
         typeof input.engineState.version === "string"
           ? input.engineState.version

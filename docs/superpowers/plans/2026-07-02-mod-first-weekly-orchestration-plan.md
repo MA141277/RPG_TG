@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 21 is now completed history. The set temporarily has no active child while Child 22 waits for a fresh post-Child-21 baseline recheck.`
-- Next Step: `Recheck Child 22 before deciding whether to promote the end-to-end mod-first closure child.`
-- Verification: `Child 19 closeout batch: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract|task contribution|task runtime load|task runtime signal|task runtime action|active game content indexes merged task definitions|createInitialState seeds runtime task state|runtime dispatch settles routed task actions and signals|main.ts keeps covered runtime commits supplied with active task definitions" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 20 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 21 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected" + npm run typecheck + npm test + npm run build + npm run lint:plans`
-- Notes: `Do not append work into the closed docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md. This fresh set stays open, but it currently has no active executable child until Child 22 is rechecked and promoted.`
+- Current Focus: `Child 22 is now the active executable child. Batch 1 has narrowed the work to shared startup bootstrap and selected-mod restore parity; later source persistence closure remains open.`
+- Next Step: `Continue Child 22 without reopening lower-level contract work.`
+- Verification: `Child 19 closeout batch: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract|task contribution|task runtime load|task runtime signal|task runtime action|active game content indexes merged task definitions|createInitialState seeds runtime task state|runtime dispatch settles routed task actions and signals|main.ts keeps covered runtime commits supplied with active task definitions" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 20 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 21 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 22 batch 1: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup" + npm run typecheck + npm test + npm run build`
+- Notes: `Do not append work into the closed docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md. This fresh set stays open with Child 22 as the current active child.`
 
 ## Progress Log
 
@@ -57,6 +57,10 @@
   - Summary: `Ran the fresh post-Child-20 baseline recheck, promoted Child 21 to active execution, narrowed it to manifest/runtime/registry install policy, and then completed it. Mod activation now installs and validates one unified gameplay contribution registry instead of returning only manifest/source metadata.`
   - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
   - Next: `Recheck Child 22 only when ready to open the end-to-end closure boundary.`
+- 2026-07-02
+  - Summary: `Ran the fresh post-Child-21 baseline recheck, promoted Child 22 to active execution, and completed the first narrowed closure batch. Startup now shares one activated-session bootstrap seam across builtin/imported flows, and save restore no longer lets continue overwrite a restored selected mod by re-entering builtin startup.`
+  - Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup"` + `npm run typecheck` + `npm test` + `npm run build`
+  - Next: `Keep Child 22 active and continue with later source persistence and resumed runtime-state closure work.`
 
 ---
 
@@ -94,19 +98,19 @@ Status meaning:
 
 ### Slot 1: Active Child
 
-- Child: `None currently`
+- Child: `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
 - Queue status: `active`
-- Primary boundary: `No active executable child while Child 22 still requires a fresh post-Child-21 baseline recheck.`
-- Depends on: `Not applicable`
-- Resume point: `Promote Child 22 or explicitly close the set.`
+- Primary boundary: `End-to-end mod-first runtime closure is now the active child, currently narrowed to shared startup bootstrap and selected-mod restore parity.`
+- Depends on: `Child 21 completed`
+- Resume point: `Continue Child 22 Task 3 and later closure work.`
 
 ### Slot 2: Queued Child
 
-- Child: `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
+- Child: `None currently`
 - Queue status: `queued`
-- Primary boundary: `End-to-end mod-first runtime closure is the next roadmap candidate, but it is not executable until a fresh baseline recheck confirms Child 21 left no narrower blocker behind.`
-- Depends on: `Child 21 closeout plus fresh baseline recheck`
-- Promotion note: `Do not auto-promote Child 22 in this batch. Recheck first.`
+- Primary boundary: `No queued child is currently recorded behind the active Child 22 closure boundary.`
+- Depends on: `Not applicable`
+- Promotion note: `Do not append a new queued child until Child 22 is either completed or explicitly narrowed again by review.`
 
 ### Slot 3: Locked Child
 

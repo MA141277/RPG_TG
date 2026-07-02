@@ -26,10 +26,10 @@ It must show:
 ## Current Queue State
 
 - Weekly queue status: `open`
-- Active executable child: `none currently`
-- Immediate queued follow-up: `Child 22 End-to-End Mod-First Runtime Closure`
+- Active executable child: `Child 22 End-to-End Mod-First Runtime Closure`
+- Immediate queued follow-up: `none currently`
 - Locked follow-up child: `none currently`
-- Planning rule: `Child 21 is closed. Recheck Child 22 before promoting any new active child.`
+- Planning rule: `Child 22 is active. Keep later work inside this closure boundary until it either completes or is explicitly re-narrowed by review.`
 
 ## Runtime / Content Maturity Snapshot
 
@@ -40,7 +40,7 @@ It must show:
 | `Task Runtime` | `covered-ownerized` | task lifecycle seams exist, active content now indexes task definitions, unified game state persists task state, and shared dispatch settles typed task outputs | no full task DSL/editor or generalized contribution registry exists yet | `Child 20` later only if house work exposes new task boundary pressure |
 | `House Runtime` | `covered-ownerized` | covered house lifecycle, reentry, and shared registration lookup are runtime-owned | end-to-end startup/save/restore closure still sits above the new seam | `Child 22` later |
 | `Gameplay Contribution Registry` | `covered-ownerized` | mod manifest declarations and activated-mod output now share one installed contribution registry across navigation/event/scene/task/house families | builtin/imported/save-restore paths do not yet prove full parity through that registry | `Child 22` later |
-| `Mod-First End-To-End Closure` | `not-started` | builtin/file/url activation exists in slices | builtin startup, imported content, save restore, and runtime play do not yet prove full parity | `Child 22` later |
+| `Mod-First End-To-End Closure` | `in-progress` | builtin/file/url activation now shares a first shared startup bootstrap seam and save migration preserves selected mod identity more strictly | imported mod source persistence and true resumed runtime-state parity still do not prove full closure | `Child 22` active |
 
 ## Module Diagram
 
@@ -142,6 +142,8 @@ flowchart TD
 - Completed Child 20 by adding `src/core/registry/house-module-registry.ts`, migrating covered runtime/presenter/renderer lookup onto it, and synchronizing the special-house interface contract with that shared seam.
 - Rechecked Child 21 after Child 20 closeout, promoted it to active execution, and narrowed the active debt to manifest/runtime contribution install policy rather than full closure work.
 - Completed Child 21 by adding `src/core/contracts/gameplay-contribution.ts`, extending manifest/runtime contracts, and installing validated gameplay contribution registries during mod activation.
+- Rechecked Child 22 after Child 21 closeout, promoted it to active execution, and narrowed the first closure batch to shared startup bootstrap plus selected-mod restore parity.
+- Completed Child 22 batch 1 by normalizing engine selectedModId during save migration and converging builtin/imported/restore startup onto one activated-session bootstrap seam in `src/main.ts`.
 
 ## Architecture Risks
 
@@ -154,4 +156,4 @@ flowchart TD
 
 - `Child 22 End-to-End Mod-First Runtime Closure`
 
-This remains the next roadmap candidate only and is not yet an active child in this fresh set.
+This is now the active closure child in this fresh set.

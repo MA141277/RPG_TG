@@ -143,3 +143,20 @@ mod manifest/raw content -> parseModManifest() -> runModRuntime() -> createActiv
 
 - Child 21 is complete for manifest/runtime contribution install policy.
 - The next open problem is no longer contribution contract shape; it is whether Child 22 can make builtin startup, imported-pack activation, and save restore all consume this same installed registry path end-to-end.
+
+## Flow 9: Shared Activated Session Bootstrap After Child 22 Batch 1
+
+### Narrative
+
+Builtin startup, imported scenario-pack startup, and continue/restore now all converge through one activated-session bootstrap seam. The seam consumes a mod activation result, synchronizes active content from the activated source, and only then builds the next app session.
+
+### Call Chain
+
+```text
+runModRuntime()/restoreModFromSave() -> ModActivationResult -> applyActivatedModSession() -> syncActivatedContentSource() -> createPrototypeAppState()/createScenarioPackAppState() -> renderApp()
+```
+
+### Notes
+
+- Child 22 batch 1 is complete for startup bootstrap parity and selected-mod restore overwrite removal.
+- The next open problem is no longer whether startup paths share one seam; it is how save/load will persist imported mod source identity and resumed runtime state across a fresh page load.

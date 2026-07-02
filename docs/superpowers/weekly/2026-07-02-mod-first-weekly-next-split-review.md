@@ -23,15 +23,15 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `Child 22 End-to-End Mod-First Runtime Closure`
+  - `Child 22 End-to-End Mod-First Runtime Closure (active)`
 - Reason:
-  - Child 21 is now completed, so the next remaining roadmap boundary shifts to builtin/imported/save-restore parity after a fresh baseline recheck.
+  - Child 22 is already active. The next immediate refinement stays inside the same closure child and should target source persistence plus true resumed runtime-state parity.
 - Category:
   - `end-to-end runtime closure`
 - Queue status:
-  - `queued pending baseline recheck`
+  - `active`
 - Immediate queued follow-up:
-  - `Child 22 End-to-End Mod-First Runtime Closure`
+  - `None currently`
 - Locked later follow-up:
   - `None currently`
 

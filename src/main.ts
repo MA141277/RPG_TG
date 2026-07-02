@@ -1718,6 +1718,60 @@ async function restoreModFromSave(
   return activateSavedMod(saveData.selectedModId, "restore:saved-mod");
 }
 
+function readActivatedContentSource(
+  activationResult: ModActivationResult
+): ScenarioPackDefinition | typeof baseGameContentPack | null {
+  if (!activationResult.ok) {
+    return null;
+  }
+
+  const primarySource = activationResult.activatedMod.normalizedContentSources[0];
+  if (primarySource == null || typeof primarySource !== "object") {
+    return null;
+  }
+
+  return primarySource as ScenarioPackDefinition | typeof baseGameContentPack;
+}
+
+function isScenarioPackSource(
+  value: ScenarioPackDefinition | typeof baseGameContentPack | null
+): value is ScenarioPackDefinition {
+  return value != null && "scenarioProfile" in value;
+}
+
+function syncActivatedContentSource(activationResult: ModActivationResult): void {
+  const activatedContentSource = readActivatedContentSource(activationResult);
+  if (
+    activatedContentSource == null ||
+    activatedContentSource.id === baseGameContentPack.id
+  ) {
+    syncActiveGameContent(createActiveGameContent(baseGameContentPack));
+    return;
+  }
+
+  syncActiveGameContent(
+    createActiveGameContent(baseGameContentPack, activatedContentSource)
+  );
+}
+
+function applyActivatedModSession(input: {
+  activationResult: ModActivationResult;
+  fallbackPlayerCharacterId: string;
+  createAppState(playerCharacterId: string): AppState;
+}): void {
+  const bootstrapInput = toLegacyBootstrapInput(input.activationResult);
+  resetMainGameRuntime();
+  syncActivatedContentSource(input.activationResult);
+  currentPlayerCharacterId =
+    bootstrapInput.startupProfile.playerCharacterId ??
+    input.fallbackPlayerCharacterId;
+  appState = input.createAppState(currentPlayerCharacterId);
+  houseRuntime = createHouseRuntimeInstance();
+  setGameVisibility(true);
+  mainUiFlow.hide();
+  renderApp();
+}
+
 function showStartupError(error: unknown): void {
   window.alert(
     error instanceof Error ? error.message : "Startup failed."
@@ -1730,11 +1784,76 @@ function loadSaveData(): SaveDataResult {
 }
 
 function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): void {
-  void restoreModFromSave(loadSaveData())
-    .then(() =>
-      startMainGameWithLoading(selectedCharacter, "haozhou-return-encounter")
-    )
+  const saveData = loadSaveData();
+  if (saveData?.selectedModId == null) {
+    startMainGameWithLoading(selectedCharacter, "haozhou-return-encounter");
+    return;
+  }
+
+  void startRestoredGameWithLoading(selectedCharacter, saveData)
     .catch(showStartupError);
+}
+
+function startRestoredGameWithLoading(
+  selectedCharacter: CharacterDefinition,
+  saveData: SaveDataResult
+): Promise<void> {
+  const requestId = beginLoadingScreen();
+
+  return simulateLoadingProgress((progress) => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    setActiveLoadingProgress(progress);
+  })
+    .then(async () => {
+      if (requestId !== loadingScreenRequestId) {
+        return;
+      }
+
+      const activationResult = await restoreModFromSave(saveData);
+      if (activationResult == null) {
+        await startMainGame(selectedCharacter, "haozhou-return-encounter");
+      } else {
+        await startRestoredGame(selectedCharacter, saveData, activationResult);
+      }
+      endLoadingScreen(requestId);
+    })
+    .catch((error: unknown) => {
+      endLoadingScreen(requestId);
+      throw error;
+    });
+}
+
+async function startRestoredGame(
+  selectedCharacter: CharacterDefinition,
+  saveData: SaveDataResult,
+  activationResult: ModActivationResult
+): Promise<void> {
+  const activatedContentSource = readActivatedContentSource(activationResult);
+
+  if (isScenarioPackSource(activatedContentSource)) {
+    applyActivatedModSession({
+      activationResult,
+      fallbackPlayerCharacterId:
+        saveData?.selectedCharacterId ??
+        activatedContentSource.scenarioProfile.playerCharacterId ??
+        selectedCharacter.id,
+      createAppState: () => createScenarioPackAppState(activatedContentSource),
+    });
+    return;
+  }
+
+  applyActivatedModSession({
+    activationResult,
+    fallbackPlayerCharacterId:
+      saveData?.selectedCharacterId ?? selectedCharacter.id,
+    createAppState: (playerCharacterId) =>
+      createHaozhouReturnEncounterAppState(
+        createPrototypeAppState(playerCharacterId)
+      ),
+  });
 }
 
 function startMainGameWithLoading(
@@ -1769,19 +1888,16 @@ async function startMainGame(
   const activationResult = await activateBuiltinDefaultMod(
     `startup:builtin:${startupScenario}`
   );
-  const bootstrapInput = toLegacyBootstrapInput(activationResult);
-  resetMainGameRuntime();
-  resetActiveScenarioContent();
-  currentPlayerCharacterId =
-    bootstrapInput.startupProfile.playerCharacterId ?? selectedCharacter.id;
-  appState = createPrototypeAppState(currentPlayerCharacterId);
-  if (startupScenario === "haozhou-return-encounter") {
-    appState = createHaozhouReturnEncounterAppState(appState);
-  }
-  houseRuntime = createHouseRuntimeInstance();
-  setGameVisibility(true);
-  mainUiFlow.hide();
-  renderApp();
+  applyActivatedModSession({
+    activationResult,
+    fallbackPlayerCharacterId: selectedCharacter.id,
+    createAppState: (playerCharacterId) => {
+      const nextAppState = createPrototypeAppState(playerCharacterId);
+      return startupScenario === "haozhou-return-encounter"
+        ? createHaozhouReturnEncounterAppState(nextAppState)
+        : nextAppState;
+    },
+  });
 }
 
 async function startScenarioPackWithLoading(
@@ -1861,36 +1977,11 @@ async function startLoadedScenarioPack(
     source,
     `startup:${source.kind}:${scenarioPack.id}`
   );
-  const bootstrapInput = toLegacyBootstrapInput(activationResult);
-  resetMainGameRuntime();
-  resetActiveScenarioContent();
-  installScenarioPackContent(scenarioPack);
-  currentPlayerCharacterId =
-    bootstrapInput.startupProfile.playerCharacterId ??
-    scenarioPack.scenarioProfile.playerCharacterId;
-  appState = createScenarioPackAppState(scenarioPack);
-  houseRuntime = createHouseRuntimeInstance();
-  setGameVisibility(true);
-  mainUiFlow.hide();
-  renderApp();
-}
-
-function resetActiveScenarioContent(): void {
-  syncActiveGameContent(createActiveGameContent(baseGameContentPack));
-}
-
-function resetActiveWorldContent(): void {
-  syncActiveGameContent(createActiveGameContent(baseGameContentPack));
-}
-
-function installScenarioPackContent(scenarioPack: ScenarioPackDefinition): void {
-  syncActiveGameContent(createActiveGameContent(baseGameContentPack, scenarioPack));
-}
-
-function installScenarioPackWorldContent(
-  scenarioPack: ScenarioPackDefinition
-): void {
-  syncActiveGameContent(createActiveGameContent(baseGameContentPack, scenarioPack));
+  applyActivatedModSession({
+    activationResult,
+    fallbackPlayerCharacterId: scenarioPack.scenarioProfile.playerCharacterId,
+    createAppState: () => createScenarioPackAppState(scenarioPack),
+  });
 }
 
 function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {

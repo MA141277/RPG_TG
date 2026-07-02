@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `in-progress`
 - Last Updated: `2026-07-02`
-- Current Focus: `Pre-authored plan only. Await fresh weekly promotion before execution.`
-- Next Step: `Promote Child 22 only after Child 21 closeout and baseline recheck.`
-- Verification: `Not run as part of this doc-only change`
-- Notes: `Child 22 is the closure child for the roadmap; do not pull lower-level contract work back into it.`
+- Current Focus: `Batch 1 is closing builtin/imported startup parity and save selected-mod restore parity without reopening lower-level contribution contract work.`
+- Next Step: `Continue Child 22 with real save/source persistence and resumed runtime-state closure after the shared startup bootstrap batch.`
+- Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup"` + `npm run typecheck` + `npm test` + `npm run build`
+- Notes: `Child 22 is active now. Imported mod source persistence across a fresh page load is still incomplete, so this first batch stays narrowed to startup/bootstrap and save selected-mod parity.`
 
 ## Progress Log
 
@@ -23,6 +23,14 @@
   - Summary: `Plan created from the mod-first unified contract roadmap. Child 22 remains non-executable until the next weekly set promotes it after Child 21.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Recheck builtin activation, imported-pack activation, save restore, and runtime presentation paths after Child 21 closes.`
+- 2026-07-02
+  - Summary: `Ran the fresh post-Child-21 baseline recheck and promoted Child 22 to active execution. The recheck narrowed the first executable batch to three concrete gaps: save migration allowed engine selectedModId to drift from envelope selectedModId, builtin/imported startup did not share one activated-session bootstrap helper, and continue/restore could still overwrite a restored mod by re-entering builtin startup.`
+  - Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup"`
+  - Next: `Implement the shared activated-session bootstrap seam and close the selected-mod restore overwrite path before attempting deeper save/source persistence.`
+- 2026-07-02
+  - Summary: `Completed Child 22 batch 1. Save migration now normalizes engine selectedModId to the envelope value, builtin/imported startup now share one activated-session bootstrap helper, and continue/restore no longer re-enters builtin startup after a successful mod restore.`
+  - Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup"` + `npm run typecheck` + `npm test` + `npm run build`
+  - Next: `Keep Child 22 active for later source persistence and resumed runtime-state closure work.`
 
 ---
 
@@ -112,15 +120,15 @@
 - Read: `src/core/save/save-envelope.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Enumerate the remaining builtin-vs-imported-vs-restored parity gaps**
+- [x] **Step 1: Enumerate the remaining builtin-vs-imported-vs-restored parity gaps**
 
 Record the exact places where one source path still bypasses the unified runtime path.
 
-- [ ] **Step 2: Add failing end-to-end regression tests**
+- [x] **Step 2: Add failing end-to-end regression tests**
 
 Write red tests that prove one shared mod-first runtime flow is not yet fully closed.
 
-- [ ] **Step 3: Run the targeted red tests**
+- [x] **Step 3: Run the targeted red tests**
 
 Run:
 
@@ -132,7 +140,7 @@ Expected:
 
 - at least one end-to-end closure guard fails before implementation
 
-- [ ] **Step 4: Record the audit result in plan state**
+- [x] **Step 4: Record the audit result in plan state**
 
 Update `Execution State` and `Progress Log` with the enumerated end-to-end baseline.
 
@@ -146,11 +154,11 @@ Update `Execution State` and `Progress Log` with the enumerated end-to-end basel
 - Modify: `src/application/scenario/scenario-pack-loader.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Remove any remaining builtin-only or imported-only activation shortcuts**
+- [x] **Step 1: Remove any remaining builtin-only or imported-only activation shortcuts**
 
 Keep source differences only in discovery/loading, not in activation/runtime ownership.
 
-- [ ] **Step 2: Re-run the targeted activation tests**
+- [x] **Step 2: Re-run the targeted activation tests**
 
 Run:
 
@@ -162,7 +170,7 @@ Expected:
 
 - builtin and imported activation parity tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 2**
+- [x] **Step 3: Run the full verification gate for Task 2**
 
 Run:
 

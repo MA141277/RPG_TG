@@ -9083,6 +9083,32 @@ test("mod house registration removes core runtime dependence on the application 
   );
 });
 
+test("loadSaveEnvelope normalizes engine selected mod id to the envelope selected mod id", async () => {
+  const { loadSaveEnvelope } = require("../.test-dist/core/save/save-loader.js");
+  const normalized = loadSaveEnvelope(
+    {
+      version: "1.0.0",
+      selectedModId: "builtin.default",
+      engineState: {
+        selectedModId: "mod.mismatched",
+        version: "1.0.0",
+        currentView: "map",
+      },
+      runtimeState: {
+        flags: {},
+        variables: {},
+        activeEventId: null,
+        activeTaskIds: [],
+      },
+      modState: {},
+    },
+    { availableModIds: ["builtin.default"] }
+  );
+
+  assert.equal(normalized.selectedModId, "builtin.default");
+  assert.equal(normalized.engineState.selectedModId, "builtin.default");
+});
+
 test("mod house registration removes presenter dependence on the application static registry", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/application/presenter/stage-presenters.ts"),
@@ -9605,6 +9631,31 @@ test("save restore re-activates selected mod through mod runtime", () => {
 
   assert.match(source, /restore/i);
   assert.match(source, /runModRuntime|activateSavedMod|restoreModFromSave/);
+});
+
+test("child 22 continue path does not overwrite a restored mod by re-entering builtin startup", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const continueBlock = source.match(
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\n}\n/
+  )?.[0] ?? "";
+
+  assert.match(continueBlock, /loadSaveData\(\)/);
+  assert.match(continueBlock, /startRestoredGameWithLoading|startActivatedGameWithLoading/);
+  assert.doesNotMatch(
+    continueBlock,
+    /restoreModFromSave\(loadSaveData\(\)\)\s*\.then\(\s*\(\)\s*=>\s*startMainGameWithLoading\(/
+  );
+});
+
+test("child 22 builtin and imported startup paths share one activated session bootstrap helper", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  assert.match(source, /function applyActivatedModSession|function startActivatedGameSession/);
+  const helperUsageCount = (
+    source.match(/applyActivatedModSession\(|startActivatedGameSession\(/g) ?? []
+  ).length;
+
+  assert.ok(helperUsageCount >= 3);
+  assert.doesNotMatch(source, /installScenarioPackContent\(scenarioPack\)/);
 });
 
 test("mod runtime does not absorb content assembly or gameplay execution ownership", () => {
