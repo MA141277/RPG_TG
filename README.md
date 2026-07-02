@@ -38,6 +38,26 @@ Default local production-style URL:
 http://127.0.0.1:8080
 ```
 
+## Git Commit Summary Rule
+
+This repository requires every commit message to include a `Summary:` section in the body.
+
+Enable the repository hooks once per clone:
+
+```powershell
+npm run git:install-hooks
+```
+
+Valid commit message example:
+
+```text
+feat: add hook-based commit summary enforcement
+
+Summary:
+- add repository-managed commit-msg hook
+- document setup in README
+```
+
 ## Standalone Background Service
 
 If you want the built game to run as a separate background process on Windows, use:
