@@ -160,3 +160,20 @@ runModRuntime()/restoreModFromSave() -> ModActivationResult -> applyActivatedMod
 
 - Child 22 batch 1 is complete for startup bootstrap parity and selected-mod restore overwrite removal.
 - The next open problem is no longer whether startup paths share one seam; it is how save/load will persist imported mod source identity and resumed runtime state across a fresh page load.
+
+## Flow 10: Fresh Restore Source Reload After Child 22 Batch 2
+
+### Narrative
+
+Saved builtin and imported mods now persist `selectedModSource` in the save envelope, and the restore path can re-enter mod runtime from that persisted source after a fresh page load instead of assuming imported mods still exist in `availableModsById`.
+
+### Call Chain
+
+```text
+createSaveEnvelope() -> selectedModSource persisted in save envelope -> loadSaveEnvelope()/migrateSaveEnvelope() -> startContinueGameWithLoading() -> restoreModFromSave() -> activateSavedModSource()/runModRuntime() -> applyActivatedModSession()
+```
+
+### Notes
+
+- Child 22 is now complete for save/source persistence and fresh restore source reload parity.
+- The remaining next-step question is no longer inside this same closure boundary; any further continuation now requires a fresh weekly review.

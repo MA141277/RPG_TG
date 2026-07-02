@@ -6,10 +6,11 @@
 
 **Active Child Plan:**
 
-- `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
+- `None currently`
 
 **Latest Completed Child Plan:**
 
+- `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-21-unified-gameplay-contribution-registry-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-20-house-runtime-mod-registration-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-19-task-runtime-mod-contract-plan.md`
@@ -30,11 +31,11 @@
 - `Child 19 Task Runtime Mod Contract` is now completed after converging shared task contribution loading, active task-definition lookup, unified task-state storage, and shared runtime task settlement.
 - `Child 20 House Runtime Mod Registration` is now completed after converging builtin house module/renderer lookup onto one shared registration seam.
 - `Child 21 Unified Gameplay Contribution Registry` is now completed after converging mod manifest declarations, activation output, and installed contribution validation onto one shared contract family.
-- `Child 22 End-to-End Mod-First Runtime Closure` is now the active child. Batch 1 has already converged shared startup bootstrap and selected-mod restore parity, but full save/source persistence closure remains open.
+- `Child 22 End-to-End Mod-First Runtime Closure` is now completed after converging shared startup bootstrap, save/source persistence, and fresh restore source reload parity.
 
 ## Active Focus
 
-- Child 22 is the current active focus. The next governance action is to continue its later save/source persistence closure work without reopening lower-level contract seams.
+- This weekly set has no active child now. The next governance action is a fresh weekly review if new roadmap work is needed.
 
 ## Artifact Index
 
@@ -62,6 +63,7 @@ Merged ownership note:
 - Child 20 closeout verification: `PASS`
 - Child 21 closeout verification: `PASS`
 - Child 22 batch 1 verification: `PASS`
+- Child 22 batch 2 verification: `PASS`
 - `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
@@ -95,11 +97,13 @@ Merged ownership note:
 - shared activated-session bootstrap landed under `src/main.ts`
 - save migration now normalizes engine selectedModId to envelope selectedModId
 - Child 22 batch 1 verification passed
+- Child 22 batch 2 completed selectedModSource persistence and fresh restore source reload parity
+- Child 22 closeout verification passed
+- weekly set closeout completed
 
 ### In Progress
 
-- Child 22 remains active
-- later source persistence and resumed runtime-state closure work remain open
+- None currently
 
 ### Deferred
 
@@ -114,8 +118,8 @@ Merged ownership note:
 Interpret this as input to later continuation, not as automatic permission to append extra executable children beyond the controlled queue.
 
 - Highest-priority module to refine:
-  - `src/main.ts`, `src/core/save/save-loader.ts`, `src/core/save/save-envelope.ts`, and mod source persistence around `mod-runtime`
+  - `Fresh weekly review required`
 - Why it is next:
-  - Child 22 is already active, and the next remaining closure debt is preserving imported mod source/runtime state across a fresh restore path
+  - The visible queue is fully consumed; any later work needs a new review rather than another in-set child append
 - Category:
-  - `end-to-end mod-first runtime closure`
+  - `fresh continuation decision`

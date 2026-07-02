@@ -8349,6 +8349,11 @@ test("save envelope preserves selected mod id and mod state payload", async () =
   const { createSaveEnvelope } = require("../.test-dist/core/save/save-envelope.js");
   const envelope = createSaveEnvelope({
     version: "1.0.0",
+    selectedModSource: {
+      kind: "url",
+      name: "Imported Pack",
+      url: "https://example.com/mods/imported-pack.json",
+    },
     state: {
       engine: {
         selectedModId: "builtin.default",
@@ -8366,6 +8371,11 @@ test("save envelope preserves selected mod id and mod state payload", async () =
   });
 
   assert.equal(envelope.selectedModId, "builtin.default");
+  assert.deepEqual(envelope.selectedModSource, {
+    kind: "url",
+    name: "Imported Pack",
+    url: "https://example.com/mods/imported-pack.json",
+  });
   assert.deepEqual(envelope.modState["builtin.default"], { foo: 1 });
 });
 
@@ -8394,6 +8404,10 @@ test("loadSaveEnvelope normalizes a legacy save into the current envelope", asyn
 
   assert.equal(normalized.selectedModId, "builtin.default");
   assert.equal(normalized.engineState.selectedModId, "builtin.default");
+  assert.deepEqual(normalized.selectedModSource, {
+    kind: "builtin",
+    modId: "builtin.default",
+  });
   assert.equal(normalized.runtimeState.flags.started, true);
   assert.equal(normalized.runtimeState.variables.stage, 1);
 });
@@ -8431,6 +8445,11 @@ test("serializeSaveEnvelope preserves unknown mod payload after load", async () 
     {
       version: "1.0.0",
       selectedModId: "builtin.default",
+      selectedModSource: {
+        kind: "file",
+        name: "Imported Pack",
+        filePath: "mods/imported-pack/pack.json",
+      },
       engineState: {
         selectedModId: "builtin.default",
         version: "1.0.0",
@@ -8452,6 +8471,11 @@ test("serializeSaveEnvelope preserves unknown mod payload after load", async () 
 
   const serialized = serializeSaveEnvelope(loaded);
   const parsed = JSON.parse(serialized);
+  assert.deepEqual(parsed.selectedModSource, {
+    kind: "file",
+    name: "Imported Pack",
+    filePath: "mods/imported-pack/pack.json",
+  });
   assert.deepEqual(parsed.modState["unknown.mod"], { nested: { keep: true } });
 });
 
@@ -9109,6 +9133,46 @@ test("loadSaveEnvelope normalizes engine selected mod id to the envelope selecte
   assert.equal(normalized.engineState.selectedModId, "builtin.default");
 });
 
+test("loadSaveEnvelope preserves imported mod source descriptors for restore", async () => {
+  const { loadSaveEnvelope } = require("../.test-dist/core/save/save-loader.js");
+  const normalized = loadSaveEnvelope(
+    {
+      version: "1.0.0",
+      selectedModId: "scenario.imported",
+      selectedModSource: {
+        kind: "url",
+        name: "Imported Scenario",
+        url: "https://example.com/mods/scenario.imported.json",
+      },
+      engineState: {
+        selectedModId: "scenario.imported",
+        version: "1.0.0",
+        currentView: "map",
+      },
+      runtimeState: {
+        flags: {},
+        variables: { chapter: 2 },
+        activeEventId: "event.imported-start",
+        activeTaskIds: ["task.imported"],
+      },
+      modState: {
+        "scenario.imported": {
+          checkpoint: "city-entry",
+        },
+      },
+    },
+    { availableModIds: ["builtin.default"] }
+  );
+
+  assert.deepEqual(normalized.selectedModSource, {
+    kind: "url",
+    name: "Imported Scenario",
+    url: "https://example.com/mods/scenario.imported.json",
+  });
+  assert.equal(normalized.runtimeState.activeEventId, "event.imported-start");
+  assert.deepEqual(normalized.runtimeState.activeTaskIds, ["task.imported"]);
+});
+
 test("mod house registration removes presenter dependence on the application static registry", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/application/presenter/stage-presenters.ts"),
@@ -9631,6 +9695,24 @@ test("save restore re-activates selected mod through mod runtime", () => {
 
   assert.match(source, /restore/i);
   assert.match(source, /runModRuntime|activateSavedMod|restoreModFromSave/);
+});
+
+test("child 22 restore path can reload imported mod sources after a fresh page load", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const restoreBlock = source.match(
+    /async function restoreModFromSave\([\s\S]*?\n}\n/
+  )?.[0] ?? "";
+
+  assert.match(source, /selectedModSource/);
+  assert.match(restoreBlock, /selectedModSource/);
+  assert.match(
+    restoreBlock,
+    /if \(saveData\.selectedModSource != null\) \{[\s\S]*activateSavedModSource/
+  );
+  assert.match(
+    source,
+    /function activateSavedModSource|mod\.load-(builtin|file|url)|kind === "builtin"|kind === "file"|kind === "url"/
+  );
 });
 
 test("child 22 continue path does not overwrite a restored mod by re-entering builtin startup", () => {

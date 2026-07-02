@@ -23,13 +23,13 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `Child 22 End-to-End Mod-First Runtime Closure (active)`
+  - `Fresh weekly review required`
 - Reason:
-  - Child 22 is already active. The next immediate refinement stays inside the same closure child and should target source persistence plus true resumed runtime-state parity.
+  - Child 22 is completed and the visible queue is closed. Do not auto-append another same-type child into this weekly set.
 - Category:
-  - `end-to-end runtime closure`
+  - `fresh continuation decision`
 - Queue status:
-  - `active`
+  - `completed`
 - Immediate queued follow-up:
   - `None currently`
 - Locked later follow-up:
@@ -47,3 +47,5 @@ Do not decide the next split only from intuition.
   - It is now completed and should remain queue history rather than absorb end-to-end startup/save/restore closure work.
 - `src/core/registry/content-registry.ts`
   - It is no longer placeholder-grade, but registry typing alone is not the next highest-risk boundary after Child 21 closeout.
+- `Child 22 End-to-End Mod-First Runtime Closure`
+  - It is now completed and should remain closed history rather than keep absorbing same-type save/restore follow-up.

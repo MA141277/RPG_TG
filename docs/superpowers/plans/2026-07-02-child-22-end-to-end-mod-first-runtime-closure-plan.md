@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `in-progress`
-- Last Updated: `2026-07-02`
-- Current Focus: `Batch 1 is closing builtin/imported startup parity and save selected-mod restore parity without reopening lower-level contribution contract work.`
-- Next Step: `Continue Child 22 with real save/source persistence and resumed runtime-state closure after the shared startup bootstrap batch.`
-- Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup"` + `npm run typecheck` + `npm test` + `npm run build`
-- Notes: `Child 22 is active now. Imported mod source persistence across a fresh page load is still incomplete, so this first batch stays narrowed to startup/bootstrap and save selected-mod parity.`
+- Status: `completed`
+- Last Updated: `2026-07-03`
+- Current Focus: `Child 22 closeout completed after save/source persistence, fresh restore source reload, and full verification passed without reopening lower-level contract work.`
+- Next Step: `No further executable step remains inside Child 22. Any later work must start from a fresh weekly review rather than append another same-type closure batch.`
+- Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "save envelope preserves selected mod id|loadSaveEnvelope normalizes a legacy save into the current envelope|serializeSaveEnvelope preserves unknown mod payload after load|loadSaveEnvelope preserves imported mod source descriptors for restore|child 22 restore path can reload imported mod sources after a fresh page load"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+- Notes: `Child 22 now records selectedModSource in the save envelope, restores imported file/url sources after a fresh page load, and keeps the covered runtime spine on the shared mod-first path.`
 
 ## Progress Log
 
@@ -31,6 +31,10 @@
   - Summary: `Completed Child 22 batch 1. Save migration now normalizes engine selectedModId to the envelope value, builtin/imported startup now share one activated-session bootstrap helper, and continue/restore no longer re-enters builtin startup after a successful mod restore.`
   - Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup"` + `npm run typecheck` + `npm test` + `npm run build`
   - Next: `Keep Child 22 active for later source persistence and resumed runtime-state closure work.`
+- 2026-07-03
+  - Summary: `Completed Child 22 batch 2 and closed the child. Save envelope round-trip now persists selectedModSource, legacy builtin saves normalize to a builtin source descriptor, imported file/url saves preserve restorable source identity, and restore now reloads the saved source through mod runtime instead of assuming imported mods still exist in memory after a fresh page load.`
+  - Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "save envelope preserves selected mod id|loadSaveEnvelope normalizes a legacy save into the current envelope|serializeSaveEnvelope preserves unknown mod payload after load|loadSaveEnvelope preserves imported mod source descriptors for restore|child 22 restore path can reload imported mod sources after a fresh page load"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `Close the weekly set and require a fresh review before opening any later roadmap continuation.`
 
 ---
 
@@ -39,7 +43,7 @@
 - Primary spec:
   - `docs/superpowers/specs/2026-07-02-mod-first-unified-contract-roadmap-design.md`
 - Weekly set plan:
-  - `To be authored by the next fresh weekly review. Promote only after Child 21 closes.`
+  - `docs/superpowers/plans/2026-07-02-mod-first-weekly-orchestration-plan.md`
 
 ## Baseline Recheck
 
@@ -194,11 +198,11 @@ Expected:
 - Modify: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Preserve one shared runtime path through save, restore, and resumed play**
+- [x] **Step 1: Preserve one shared runtime path through save, restore, and resumed play**
 
 Verify that selected mod id, mod-owned payload, and activated contributions survive round-trip and resume correctly.
 
-- [ ] **Step 2: Re-run the targeted closure tests**
+- [x] **Step 2: Re-run the targeted closure tests**
 
 Run:
 
@@ -210,7 +214,7 @@ Expected:
 
 - end-to-end closure tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 3**
+- [x] **Step 3: Run the full verification gate for Task 3**
 
 Run:
 
@@ -230,11 +234,11 @@ Expected:
 - Modify: `docs/change-log.md`
 - Modify: `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
 
-- [ ] **Step 1: Record the final mod-first closure boundary**
+- [x] **Step 1: Record the final mod-first closure boundary**
 
 Document the verified end-to-end runtime flow and any later tooling/editor follow-up that remains outside the roadmap.
 
-- [ ] **Step 2: Run governance verification**
+- [x] **Step 2: Run governance verification**
 
 Run:
 
@@ -248,15 +252,15 @@ Expected:
 
 ## Exit Check
 
-- [ ] Builtin content and imported mods share the same activation path after source loading.
-- [ ] Save and restore preserve selected mod identity and mod-owned payload through the unified path.
-- [ ] Covered runtime play paths for map/city/event/scene/task/house remain on the unified runtime spine.
-- [ ] `src/main.ts` remains browser shell plus startup/render orchestration rather than gameplay ownership center.
-- [ ] Targeted regression coverage passes.
+- [x] Builtin content and imported mods share the same activation path after source loading.
+- [x] Save and restore preserve selected mod identity and mod-owned payload through the unified path.
+- [x] Covered runtime play paths for map/city/event/scene/task/house remain on the unified runtime spine.
+- [x] `src/main.ts` remains browser shell plus startup/render orchestration rather than gameplay ownership center.
+- [x] Targeted regression coverage passes.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

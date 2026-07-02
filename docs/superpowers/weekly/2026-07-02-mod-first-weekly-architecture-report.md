@@ -17,19 +17,21 @@ It must show:
 
 - The earlier `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md` is closed after Child 14, Child 15, and Child 16 and remains historical truth only.
 - A fresh mod-first continuation set is now opened under `docs/superpowers/plans/2026-07-02-mod-first-weekly-orchestration-plan.md`.
+- That fresh mod-first continuation set is now completed after Child 22 closes the visible roadmap queue.
 - The current production architecture has formal first-slice seams for navigation, time, event, scene, task, house, mod activation, and gameplay contribution installation, and Child 21 has now converged manifest/runtime contribution ownership through one shared seam.
 - Child 17 is now completed after converging the covered direct-import consumers onto the shared pack-content access seam.
 - Child 18 is now completed after converging covered dispatch entry and covered interactive write-back onto the shared runtime commit seam.
 - Child 19 is now completed after converging content-pack/scenario-pack task contribution loading, active task-definition lookup, unified task-state storage, and shared runtime task settlement.
 - Child 21 is now completed after converging manifest declarations, activated-mod output, and contribution install validation onto one shared gameplay contribution contract family.
+- Child 22 is now completed after converging shared startup bootstrap, save/source persistence, and fresh restore source reload parity into the end-to-end closure path.
 
 ## Current Queue State
 
-- Weekly queue status: `open`
-- Active executable child: `Child 22 End-to-End Mod-First Runtime Closure`
+- Weekly queue status: `closed`
+- Active executable child: `none currently`
 - Immediate queued follow-up: `none currently`
 - Locked follow-up child: `none currently`
-- Planning rule: `Child 22 is active. Keep later work inside this closure boundary until it either completes or is explicitly re-narrowed by review.`
+- Planning rule: `Do not append new executable work into this closed set. Start from a fresh weekly review if later roadmap continuation is needed.`
 
 ## Runtime / Content Maturity Snapshot
 
@@ -39,8 +41,8 @@ It must show:
 | `Runtime Spine` | `covered-ownerized` | dispatch/router/sub-runtime seams exist across covered runtime families and covered main.ts dispatch/write-back paths now share commitRuntimeRequest() | `src/main.ts` still owns shell-facing follow-up/render decisions outside the shared commit seam | `Child 19` later only if task work exposes new spine pressure |
 | `Task Runtime` | `covered-ownerized` | task lifecycle seams exist, active content now indexes task definitions, unified game state persists task state, and shared dispatch settles typed task outputs | no full task DSL/editor or generalized contribution registry exists yet | `Child 20` later only if house work exposes new task boundary pressure |
 | `House Runtime` | `covered-ownerized` | covered house lifecycle, reentry, and shared registration lookup are runtime-owned | end-to-end startup/save/restore closure still sits above the new seam | `Child 22` later |
-| `Gameplay Contribution Registry` | `covered-ownerized` | mod manifest declarations and activated-mod output now share one installed contribution registry across navigation/event/scene/task/house families | builtin/imported/save-restore paths do not yet prove full parity through that registry | `Child 22` later |
-| `Mod-First End-To-End Closure` | `in-progress` | builtin/file/url activation now shares a first shared startup bootstrap seam and save migration preserves selected mod identity more strictly | imported mod source persistence and true resumed runtime-state parity still do not prove full closure | `Child 22` active |
+| `Gameplay Contribution Registry` | `covered-ownerized` | mod manifest declarations and activated-mod output now share one installed contribution registry across navigation/event/scene/task/house families | end-to-end parity is now verified through Child 22, but any later redesign should prove it is a new problem type | `fresh weekly review only if a new boundary appears` |
+| `Mod-First End-To-End Closure` | `covered-ownerized` | builtin/file/url activation, save envelope persistence, fresh restore source reload, and covered runtime spine now share one verified closure boundary | no additional same-type debt remains inside this weekly set | `fresh weekly review only if a new problem type appears` |
 
 ## Module Diagram
 
@@ -80,7 +82,7 @@ flowchart LR
 - `src/application/house-modules/house-module-registry.ts` is now only a wrapper over the shared core house registration seam
 - `src/core/registry/mod-registry.ts` remains intentionally simple and does not yet prove end-to-end builtin/imported parity by itself
 - `src/main.ts` remains the dominant shell/orchestration file above the new seams, but its covered runtime bridge create/apply write-back glue is now removed
-- `src/main.ts` still dominates startup and many shell-facing decisions even though task settlement ownership is now below it
+- `src/main.ts` still dominates startup and many shell-facing decisions even after restore-by-source parity is complete
 
 ## Flow Diagram 1: Builtin Startup Path Before Child 17
 
@@ -144,16 +146,18 @@ flowchart TD
 - Completed Child 21 by adding `src/core/contracts/gameplay-contribution.ts`, extending manifest/runtime contracts, and installing validated gameplay contribution registries during mod activation.
 - Rechecked Child 22 after Child 21 closeout, promoted it to active execution, and narrowed the first closure batch to shared startup bootstrap plus selected-mod restore parity.
 - Completed Child 22 batch 1 by normalizing engine selectedModId during save migration and converging builtin/imported/restore startup onto one activated-session bootstrap seam in `src/main.ts`.
+- Completed Child 22 batch 2 by persisting `selectedModSource` in the save envelope, normalizing builtin source descriptors during migration, and reloading imported file/url sources through mod runtime during restore.
+- Closed the fresh mod-first weekly set after Child 22 completed and the visible queue was fully consumed.
 
 ## Architecture Risks
 
 - `src/main.ts` is still the dominant production black box above the new seams.
 - The new pack-content access seam still hardcodes the builtin default pack behind one adapter and is not yet a true active-pack selector.
-- Builtin startup, imported-pack activation, and save restore still do not prove full parity through the new contribution registry.
-- If Child 22 bypasses the activation-installed contribution registry and reintroduces builtin-only startup shortcuts, the mod-first closure target will remain incomplete.
+- Later continuation should resist reopening the same save/restore problem type inside this closed set; any next split should prove it is a different boundary.
+- If a future split reintroduces builtin-only startup shortcuts above the activation-installed contribution registry, it would regress the now-closed Child 22 parity line.
 
 ## Candidate Post-Queue Splits
 
-- `Child 22 End-to-End Mod-First Runtime Closure`
+- `None inside this closed set`
 
-This is now the active closure child in this fresh set.
+Any later split must start from a fresh weekly review.

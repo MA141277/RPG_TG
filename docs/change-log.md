@@ -21,12 +21,14 @@
 
 ### Changed
 - `src/core/save/save-migrations.ts` 现在会把 `engineState.selectedModId` 归一到 envelope 的 `selectedModId`，避免读档后 engine/runtime 对当前激活 mod 的身份判断继续分叉。
+- `src/core/save/save-envelope.ts`、`src/core/save/save-migrations.ts` 与 `src/core/save/save-loader.ts` 现在会持久化并恢复 `selectedModSource`，对 builtin save 自动补齐 builtin source，对 imported file/url save 保留可恢复的 source descriptor，而不是只保存 `selectedModId`。
 - `src/main.ts` 新增 shared activated-session bootstrap helper，并让 builtin startup、scenario-pack startup、以及 continue/restore 路径都通过同一条 activation-result -> active-content sync -> app-state bootstrap 线路进入会话。
 - `src/main.ts` 的 continue 流程不再在 restore 之后重新覆盖回 builtin startup；当存在已保存的 `selectedModId` 时，它现在优先走 restore-first 的 loading/startup 路径。
+- `src/main.ts` 的 restore 路径现在会在 fresh page load 后优先按 `selectedModSource` 重新 load builtin/file/url mod source，而不是假定 imported mod 仍然残留在内存里的 `availableModsById` 中。
 
 ### Impact
-- Child 22 当前批次已把“restore 先成功、然后又被 builtin startup 覆盖掉”的高风险闭环缺口收掉，也让 builtin/imported startup 至少先共享同一条 activated-session bootstrap seam。
-- imported mod 的跨刷新 source persistence 仍未完成，因此 Child 22 还不能标 completed；后续应继续围绕 save envelope/source persistence 和真正 resumed runtime state 闭环推进。
+- Child 22 现已完成：builtin startup、imported activation、save envelope、fresh restore 以及 covered runtime spine 现在组成一条更完整的 mod-first closure path，不再要求 imported mod restore 依赖旧内存中的 activation residue。
+- 这轮没有继续扩到 editor/tooling/UI redesign；后续如果还要继续拆分，只能通过新的 weekly review 打开不同问题类型，而不是继续在 Child 22 上追加同类闭环 work。
 
 ## 2026-07-02 Child 20 House Runtime Mod Registration
 

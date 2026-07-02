@@ -6,18 +6,18 @@
 
 **Goal:** Govern the first mod-first continuation set through the post-Child-21 promotion point so later end-to-end closure work can be rechecked without reopening the closed runtime-handoff queue.
 
-**Architecture:** The earlier `2026-07-02` weekly set is closed historical truth only. This fresh mod-first set starts from the roadmap in `docs/superpowers/specs/2026-07-02-mod-first-unified-contract-roadmap-design.md`, moved through Child 17, Child 18, Child 19, Child 20, and Child 21, and now returns to no active executable child while Child 22 waits for a fresh post-Child-21 baseline recheck.
+**Architecture:** The earlier `2026-07-02` weekly set is closed historical truth only. This fresh mod-first set starts from the roadmap in `docs/superpowers/specs/2026-07-02-mod-first-unified-contract-roadmap-design.md`, moved through Child 17, Child 18, Child 19, Child 20, Child 21, and Child 22, and now closes after the roadmap closure child is completed.
 
 **Tech Stack:** Markdown governance docs, TypeScript repository tasks, `npm run lint:plans`, child-plan verification commands, weekly artifact bundle under `docs/superpowers/weekly/2026-07-02-mod-first-*`
 
 ## Execution State
 
-- Status: `in-progress`
-- Last Updated: `2026-07-02`
-- Current Focus: `Child 22 is now the active executable child. Batch 1 has narrowed the work to shared startup bootstrap and selected-mod restore parity; later source persistence closure remains open.`
-- Next Step: `Continue Child 22 without reopening lower-level contract work.`
-- Verification: `Child 19 closeout batch: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract|task contribution|task runtime load|task runtime signal|task runtime action|active game content indexes merged task definitions|createInitialState seeds runtime task state|runtime dispatch settles routed task actions and signals|main.ts keeps covered runtime commits supplied with active task definitions" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 20 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 21 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 22 batch 1: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup" + npm run typecheck + npm test + npm run build`
-- Notes: `Do not append work into the closed docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md. This fresh set stays open with Child 22 as the current active child.`
+- Status: `completed`
+- Last Updated: `2026-07-03`
+- Current Focus: `Weekly set closeout completed. Child 22 closed the roadmap closure boundary by adding save/source persistence and fresh restore source reload parity.`
+- Next Step: `Do not append another executable child into this set. Any later roadmap continuation must begin from a fresh weekly review.`
+- Verification: `Child 19 closeout batch: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract|task contribution|task runtime load|task runtime signal|task runtime action|active game content indexes merged task definitions|createInitialState seeds runtime task state|runtime dispatch settles routed task actions and signals|main.ts keeps covered runtime commits supplied with active task definitions" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 20 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 21 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 22 batch 1: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup" + npm run typecheck + npm test + npm run build; Child 22 batch 2: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "save envelope preserves selected mod id|loadSaveEnvelope normalizes a legacy save into the current envelope|serializeSaveEnvelope preserves unknown mod payload after load|loadSaveEnvelope preserves imported mod source descriptors for restore|child 22 restore path can reload imported mod sources after a fresh page load" + npm run typecheck + npm test + npm run build + npm run lint:plans`
+- Notes: `This fresh set is now closed. Do not reopen it for same-type closure work.`
 
 ## Progress Log
 
@@ -61,6 +61,10 @@
   - Summary: `Ran the fresh post-Child-21 baseline recheck, promoted Child 22 to active execution, and completed the first narrowed closure batch. Startup now shares one activated-session bootstrap seam across builtin/imported flows, and save restore no longer lets continue overwrite a restored selected mod by re-entering builtin startup.`
   - Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "loadSaveEnvelope normalizes engine selected mod id|child 22 continue path|child 22 builtin and imported startup"` + `npm run typecheck` + `npm test` + `npm run build`
   - Next: `Keep Child 22 active and continue with later source persistence and resumed runtime-state closure work.`
+- 2026-07-03
+  - Summary: `Completed Child 22 and closed this fresh mod-first weekly set. Save envelope now preserves selectedModSource, fresh restore can reload imported file/url sources through mod runtime, and the final roadmap closure boundary no longer depends on imported mods still being present in in-memory runtime state.`
+  - Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "save envelope preserves selected mod id|loadSaveEnvelope normalizes a legacy save into the current envelope|serializeSaveEnvelope preserves unknown mod payload after load|loadSaveEnvelope preserves imported mod source descriptors for restore|child 22 restore path can reload imported mod sources after a fresh page load"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `Require a fresh weekly review before any later roadmap continuation.`
 
 ---
 
@@ -98,27 +102,27 @@ Status meaning:
 
 ### Slot 1: Active Child
 
-- Child: `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
-- Queue status: `active`
-- Primary boundary: `End-to-end mod-first runtime closure is now the active child, currently narrowed to shared startup bootstrap and selected-mod restore parity.`
-- Depends on: `Child 21 completed`
-- Resume point: `Continue Child 22 Task 3 and later closure work.`
+- Child: `None currently`
+- Queue status: `completed`
+- Primary boundary: `Child 22 closed the final visible roadmap boundary in this set, so no active child remains.`
+- Depends on: `Child 22 completed`
+- Resume point: `Do not resume this set; require a fresh weekly review.`
 
 ### Slot 2: Queued Child
 
 - Child: `None currently`
 - Queue status: `queued`
-- Primary boundary: `No queued child is currently recorded behind the active Child 22 closure boundary.`
+- Primary boundary: `No queued child remains because the visible queue has been fully consumed.`
 - Depends on: `Not applicable`
-- Promotion note: `Do not append a new queued child until Child 22 is either completed or explicitly narrowed again by review.`
+- Promotion note: `Do not append a new queued child into a completed set.`
 
 ### Slot 3: Locked Child
 
 - Child: `None currently`
 - Queue status: `locked`
-- Primary boundary: `No additional locked child is recorded in this set until Child 22 is rechecked.`
+- Primary boundary: `No additional locked child remains after weekly closeout.`
 - Depends on: `Not applicable`
-- Promotion note: `Do not append a new locked child without a fresh review outcome.`
+- Promotion note: `Do not append a new locked child without opening a fresh weekly set.`
 
 ## Promotion Rule
 

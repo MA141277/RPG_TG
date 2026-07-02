@@ -1,4 +1,5 @@
 import type { CoreGameState } from "../contracts/core-state";
+import type { ModSourceDescriptor } from "../contracts/mod-runtime";
 import {
   CURRENT_SAVE_ENVELOPE_VERSION,
   type SaveEnvelope,
@@ -14,6 +15,54 @@ function readSelectedModId(input: SaveRecord): string {
   return typeof input.selectedModId === "string"
     ? input.selectedModId
     : "builtin.default";
+}
+
+function migrateSelectedModSource(
+  input: SaveRecord,
+  selectedModId: string
+): ModSourceDescriptor | null {
+  const source = input.selectedModSource;
+  if (!isRecord(source) || typeof source.kind !== "string") {
+    return selectedModId.startsWith("builtin.")
+      ? {
+          kind: "builtin",
+          modId: selectedModId,
+        }
+      : null;
+  }
+
+  if (source.kind === "builtin") {
+    return {
+      kind: "builtin",
+      modId: selectedModId,
+    };
+  }
+
+  if (
+    source.kind === "file" &&
+    typeof source.name === "string" &&
+    typeof source.filePath === "string"
+  ) {
+    return {
+      kind: "file",
+      name: source.name,
+      filePath: source.filePath,
+    };
+  }
+
+  if (
+    source.kind === "url" &&
+    typeof source.name === "string" &&
+    typeof source.url === "string"
+  ) {
+    return {
+      kind: "url",
+      name: source.name,
+      url: source.url,
+    };
+  }
+
+  return null;
 }
 
 function migrateEngineState(
@@ -90,6 +139,7 @@ export function migrateSaveEnvelope(input: SaveRecord): SaveEnvelope {
   return {
     version: CURRENT_SAVE_ENVELOPE_VERSION,
     selectedModId,
+    selectedModSource: migrateSelectedModSource(input, selectedModId),
     engineState: migrateEngineState(input, selectedModId),
     runtimeState: migrateRuntimeState(input),
     modState: migrateModState(input),

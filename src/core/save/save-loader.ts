@@ -7,7 +7,14 @@ export function loadSaveEnvelope(
 ): SaveEnvelope {
   const migrated = migrateSaveEnvelope(envelope);
 
-  if (!input.availableModIds.includes(migrated.selectedModId)) {
+  const canRestoreFromSource =
+    migrated.selectedModSource != null &&
+    migrated.selectedModSource.kind !== "builtin";
+
+  if (
+    !canRestoreFromSource &&
+    !input.availableModIds.includes(migrated.selectedModId)
+  ) {
     throw new Error(`Missing selected mod: ${migrated.selectedModId}`);
   }
 

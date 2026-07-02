@@ -248,6 +248,7 @@ type CampaignMapDebugState = {
 type SaveDataResult = {
   selectedCharacterId?: string | null;
   selectedModId?: string | null;
+  selectedModSource?: ModSourceDescriptor | null;
 } | null;
 
 type BackgroundMusicMode = "opening" | "in-game";
@@ -1708,11 +1709,51 @@ async function activateSavedMod(
   return result;
 }
 
+async function activateSavedModSource(
+  source: ModSourceDescriptor,
+  requestId: string
+): Promise<ModActivationResult> {
+  const request =
+    source.kind === "builtin"
+      ? {
+          type: "mod.load-builtin" as const,
+          requestId,
+          modId: source.modId,
+        }
+      : source.kind === "file"
+        ? {
+            type: "mod.load-file" as const,
+            requestId,
+            name: source.name,
+            filePath: source.filePath,
+          }
+        : {
+            type: "mod.load-url" as const,
+            requestId,
+            name: source.name,
+            url: source.url,
+          };
+  const result = await runModRuntime({
+    state: modRuntimeState,
+    request,
+  });
+  modRuntimeState = result.state;
+  toLegacyBootstrapInput(result);
+  return result;
+}
+
 async function restoreModFromSave(
   saveData: SaveDataResult
 ): Promise<ModActivationResult | null> {
   if (saveData?.selectedModId == null) {
     return null;
+  }
+
+  if (saveData.selectedModSource != null) {
+    return activateSavedModSource(
+      saveData.selectedModSource,
+      "restore:saved-mod"
+    );
   }
 
   return activateSavedMod(saveData.selectedModId, "restore:saved-mod");
