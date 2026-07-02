@@ -22,13 +22,13 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `Child 16 Event + Scene Handoff Convergence`
+  - `None currently in the closed 2026-07-02 set`
 - Reason:
-  - once Child 15 closes, the next different problem type should be the still-separated event/scene handoff boundary rather than more same-type navigation/time cleanup
+  - Child 16 is completed; a later candidate should be recorded only by a fresh weekly review if a different remaining problem type is still worth extracting
 - Category:
-  - `needs-convergence`
+  - `set-closed`
 - Queue status:
-  - `queued spec awaiting post-Child-15 baseline recheck`
+  - `no later split recorded in this set`
 - Immediate queued follow-up:
   - `none beyond the current recommendation`
 - Locked later follow-up:
@@ -39,6 +39,6 @@ Do not decide the next split only from intuition.
 - `Child 15 Navigation + Time Runtime Convergence`
   - Already completed in this set and therefore no longer a later split candidate.
 - `Child 16 Event + Scene Handoff Convergence`
-  - Remains queued because Child 15 closed without absorbing its boundary, but promotion still requires an explicit recheck.
+  - Already completed in this set and therefore no longer a later split candidate.
 - `src/main.ts`
-  - Still the largest black box, but after Child 15 the next safe reduction should still be Child 16's event/scene boundary rather than another broad `main.ts` sweep.
+  - Still the largest black box, but the closed 2026-07-02 set no longer justifies inventing another child here without a fresh review.

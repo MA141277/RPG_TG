@@ -59,7 +59,6 @@ import {
 } from "./application/time/council-priority";
 import {
   advanceStorySceneStep,
-  buildStoryTriggerInput,
   chooseStorySceneOption,
   getCurrentChoiceOptions,
   startStoryEventById,
@@ -96,10 +95,8 @@ import {
   routeTimeRuntime,
 } from "./core/runtime/time-runtime";
 import {
-  createEventTriggerRequest,
-  runEventRuntime,
 } from "./core/runtime/event-runtime";
-import { runSceneFromEvent } from "./core/runtime/scene-runtime";
+import { runStoryTriggerRuntime } from "./core/runtime/scene-runtime";
 import {
   createPrototypeCharactersForStoryStage,
 } from "./content/prototype-world";
@@ -789,33 +786,19 @@ function triggerStoryEventsForTiming(
   state: GameState;
   characterDefinitions: CharacterDefinition[];
 } {
-  const eventRuntimeResult = runEventRuntime({
-    request: createEventTriggerRequest(`story.${timing}`),
+  const storyRuntimeResult = runStoryTriggerRuntime({
+    timing,
     state,
     characterDefinitions,
     eventDefinitionsById: activeStoryEventDefinitionsById,
-    triggerInput: buildStoryTriggerInput(timing, state),
-  });
-
-  if (eventRuntimeResult.activation?.sceneId == null) {
-    return {
-      state: eventRuntimeResult.state,
-      characterDefinitions: eventRuntimeResult.characterDefinitions,
-    };
-  }
-
-  const sceneRuntimeResult = runSceneFromEvent({
-    state: eventRuntimeResult.state,
-    characterDefinitions: eventRuntimeResult.characterDefinitions,
     sceneDefinitionsById: activeStorySceneDefinitionsById,
-    eventDefinitionsById: activeStoryEventDefinitionsById,
     activityDefinitionsById: activeActivityDefinitionsById,
     textEntriesById,
   });
 
   return {
-    state: sceneRuntimeResult.state,
-    characterDefinitions: sceneRuntimeResult.characterDefinitions,
+    state: storyRuntimeResult.state,
+    characterDefinitions: storyRuntimeResult.characterDefinitions,
   };
 }
 

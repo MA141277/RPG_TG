@@ -4,20 +4,20 @@
 
 **Week Of:** `2026-07-02`
 
-**Goal:** Keep the fresh post-Child-13 continuation set open through `Child 15 Navigation + Time Runtime Convergence` after accepted Child 14 closeout, while preserving `Child 16 Event + Scene Handoff Convergence` as the next queued follow-up behind it.
+**Goal:** Close the fresh post-Child-13 continuation set after accepted Child 16 closeout, while preserving queue truth and preventing silent overflow into a new same-type child.
 
-**Architecture:** The `2026-06-29` weekly queue is closed and remains historical truth only. This fresh set now treats accepted Child 14 as completed history, promotes Child 15 to the active executable child after a narrowed baseline recheck, keeps Child 16 as the immediate queued follow-up, and relies on the `2026-07-02` weekly artifact bundle to keep queue truth readable.
+**Architecture:** The `2026-06-29` weekly queue is closed and remains historical truth only. This fresh set now treats accepted Child 14, Child 15, and Child 16 as completed history, consumes the visible queue, and closes without auto-creating another child. The `2026-07-02` weekly artifact bundle remains the closeout truth for this set.
 
 **Tech Stack:** Markdown plan governance, TypeScript repository tasks, `npm run lint:plans`, child-plan verification commands, weekly artifact bundle under `docs/superpowers/weekly/2026-07-02-*`
 
 ## Execution State
 
-- Status: `in-progress`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 15 is completed and preserved as queue history. The weekly set is temporarily between active children: Child 16 remains queued and is the next promotion candidate after a post-Child-15 baseline recheck.`
-- Next Step: `Recheck docs/superpowers/specs/2026-07-02-child-16-event-scene-handoff-convergence-spec.md against the post-Child-15 code/artifact baseline before any promotion decision.`
-- Verification: `Child 15 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|time runtime|progression"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
-- Notes: `Do not reopen the closed 2026-06-29 queue. Child 16 is still queued only; it does not become executable until the baseline recheck is recorded and promotion is explicit.`
+- Current Focus: `The 2026-07-02 weekly set is closed. Child 16 is completed history, there is no active child, and no additional queued child remains in this set.`
+- Next Step: `Start a fresh weekly review only if a later continuation is still needed.`
+- Verification: `Child 16 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "child 16|event runtime|scene runtime|story trigger"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+- Notes: `Do not reopen the closed 2026-06-29 queue or append a new child into this now-closed 2026-07-02 set.`
 
 ## Progress Log
 
@@ -37,6 +37,14 @@
   - Summary: `Completed Child 15. The covered enter-city navigation path and covered day-start / advance-segments time paths now route through shared runtime dispatch using routeNavigationRuntime() and routeTimeRuntime(), with bounded shell-only residue explicitly limited to city-enter story triggering and council-priority follow-up. Child 15 moves to completed history, the weekly set temporarily has no active child, and Child 16 remains queued pending baseline recheck.`
   - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|time runtime|progression"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
   - Next: `Run Child 16 baseline recheck before any promotion or replacement decision.`
+- 2026-07-02
+  - Summary: `Completed the Child 16 baseline recheck and recorded the result as narrowed, not unchanged. The covered execution target is now limited to the triggerStoryEventsForTiming() production line with the current city-enter and indoor-screen-shown call sites. Child 16 is promoted to active, its executable plan is authored, and the weekly set leaves no additional queued child behind it right now.`
+  - Verification: `npm run lint:plans`
+  - Next: `Start Child 16 Task 1 Step 1.`
+- 2026-07-02
+  - Summary: `Completed Child 16 and closed the 2026-07-02 weekly set. The covered city-enter and indoor-screen-shown story trigger paths now route through one runtime-owned runStoryTriggerRuntime() seam, Child 16 moves to completed history, no later queued child is recorded in this set, and the queue is consumed rather than silently extended.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "child 16|event runtime|scene runtime|story trigger"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `Use a fresh weekly review if another different problem type still needs continuation.`
 
 ---
 
@@ -44,15 +52,15 @@
 
 ### In Scope
 
-- `Child 15` execution under its formal plan
+- `Child 16` closeout under its formal plan
 - queue truth for active child vs queued spec vs completed history
-- `2026-07-02` weekly artifact bundle updates that reflect Child 15 progress or closeout
+- `2026-07-02` weekly artifact bundle updates that reflect Child 16 closeout and weekly-set closure
 
 ### Out Of Scope
 
 - reopening the closed `2026-06-29` queue
-- treating `Child 16` as executable before explicit promotion
-- widening Child 15 beyond its narrowed enter-city/day-start/advance-segments boundary
+- widening Child 16 beyond its narrowed triggerStoryEventsForTiming() boundary
+- auto-creating a new queued child before Child 16 proves whether same-type residue remains
 - boot/startup, save/load, presenter/UI, or unrelated runtime redesign
 
 ## Queue
@@ -81,19 +89,19 @@ Transition note:
 - Queue status: `active`
 - Spec: `Not applicable`
 - Plan: `Not applicable`
-- Primary boundary: `No active executable child until Child 16 baseline recheck is recorded.`
+- Primary boundary: `No active executable child. This weekly set is closed.`
 - Depends on: `Not applicable`
-- Resume point: `Run the queued-child baseline recheck before any promotion.`
+- Resume point: `Not applicable.`
 
 ### Slot 2: Queued Child
 
-- Child: `Child 16 Event + Scene Handoff Convergence`
+- Child: `None currently`
 - Queue status: `queued`
-- Spec: `docs/superpowers/specs/2026-07-02-child-16-event-scene-handoff-convergence-spec.md`
-- Plan: `Not authored until promotion`
-- Primary boundary: `Event Runtime` + `Scene Runtime` covered handoff convergence
-- Depends on: `Child 15 completed and the 2026-07-02 artifact bundle updated.`
-- Promotion note: `Promote only after baseline recheck confirms the post-Child-15 baseline still leaves event/scene handoff as the next reviewable boundary.`
+- Spec: `None`
+- Plan: `Not applicable`
+- Primary boundary: `No queued child is recorded until Child 16 proves whether another later problem type exists.`
+- Depends on: `Not applicable`
+- Promotion note: `If Child 16 leaves a later child, record it explicitly only after Child 16 closeout or blocker review.`
 
 ### Slot 3: Locked Child
 

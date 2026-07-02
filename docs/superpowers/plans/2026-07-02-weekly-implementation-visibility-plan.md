@@ -2,7 +2,7 @@
 
 > **For agentic workers:** Use this file as the visibility companion to the fresh `2026-07-02` weekly orchestration plan. Do not execute production code directly from this file. Update it after each child-plan work batch so the repository becomes less of a black box.
 
-**Goal:** Make the fresh continuation set legible by keeping one synchronized visibility bundle through Child 15 promotion and execution, while preserving the distinction between the active executable child, the immediate queued follow-up, and completed queue history.
+**Goal:** Make the fresh continuation set legible by keeping one synchronized visibility bundle through Child 16 closeout and weekly-set closure, while preserving the distinction between active work, queued follow-up, and completed queue history until the set is consumed.
 
 **Architecture:** Treat this file as the documentation companion to `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`. Child plans still drive code execution. This file governs the fresh `2026-07-02` artifact bundle only and keeps queue truth synchronized across review index, module map, call flows, next split review, and architecture report.
 
@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `in-progress`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `The 2026-07-02 visibility bundle now reflects Child 15 closeout. Child 15 is completed history, there is temporarily no active child, and Child 16 remains queued pending baseline recheck.`
-- Next Step: `Keep the artifact bundle synchronized while the set is between active children, then refresh it again once Child 16 is rechecked or promoted.`
-- Verification: `Child 15 closeout visibility sync: npm run lint:plans`
+- Current Focus: `The 2026-07-02 visibility bundle now reflects Child 16 closeout and weekly-set closure. Child 16 is completed history, there is no active child, and no queued child remains in this set.`
+- Next Step: `No further visibility sync is needed for this set unless the closeout is corrected.`
+- Verification: `Child 16 closeout visibility sync: npm run lint:plans`
 - Notes: `This file is not a code execution plan. It is the visibility companion for the 2026-07-02 weekly orchestration plan and must keep queue truth synchronized whenever the active child changes.`
 
 ## Progress Log
@@ -43,6 +43,14 @@
   - Summary: `Updated the visibility bundle after Child 15 closeout. The artifact bundle now records the converged navigation/time entry ownership, the bounded shell residue that intentionally remains outside Child 15, Child 15 as completed history, and Child 16 as the only queued follow-up while the weekly set temporarily has no active child.`
   - Verification: `npm run lint:plans`
   - Next: `Refresh the same artifact bundle only after Child 16 baseline recheck or promotion changes queue truth.`
+- 2026-07-02
+  - Summary: `Updated the visibility bundle after the Child 16 baseline recheck and promotion. Child 16 is now the active executable child with a narrowed triggerStoryEventsForTiming() boundary, Child 15 is preserved as completed history, and there is no additional queued child recorded behind Child 16 right now.`
+  - Verification: `npm run lint:plans`
+  - Next: `Refresh the same artifact bundle after the first Child 16 implementation batch lands.`
+- 2026-07-02
+  - Summary: `Updated the visibility bundle after Child 16 closeout and weekly-set closure. The artifact bundle now records the converged story-trigger handoff seam, Child 16 as the latest completed history, and the absence of any active or queued child in the closed 2026-07-02 set.`
+  - Verification: `npm run lint:plans`
+  - Next: `Use a fresh visibility bundle only if a later weekly set is opened.`
 
 ---
 

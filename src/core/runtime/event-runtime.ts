@@ -1,10 +1,11 @@
+import { buildStoryTriggerInput } from "../../application/story/story-runtime";
 import { startEvent } from "../../application/events/event-runner";
 import {
   selectTriggeredEvents,
   type TriggerEvaluatorContext,
 } from "../../application/events/trigger-evaluator";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition } from "../../domain/event";
+import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type {
   EventRuntimeCandidate,
@@ -15,7 +16,7 @@ import { activateEvent, type ActivatedEvent } from "./event-activation";
 import { selectEventCandidate } from "./event-candidate-selector";
 import { canActivateEvent } from "./event-condition-evaluator";
 
-type EventRuntimeResult = {
+export type EventRuntimeResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
   activation: ActivatedEvent | null;
@@ -84,6 +85,21 @@ export function runEventRuntime(input: EventRuntimeInput): EventRuntimeResult {
     activation,
     candidate,
   };
+}
+
+export function runStoryEventRuntime(input: {
+  timing: EventTriggerTiming;
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  eventDefinitionsById: Record<string, EventDefinition>;
+}): EventRuntimeResult {
+  return runEventRuntime({
+    request: createEventTriggerRequest(`story.${input.timing}`),
+    state: input.state,
+    characterDefinitions: input.characterDefinitions,
+    eventDefinitionsById: input.eventDefinitionsById,
+    triggerInput: buildStoryTriggerInput(input.timing, input.state),
+  });
 }
 
 function toEventRuntimeCandidate(

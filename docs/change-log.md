@@ -31,6 +31,20 @@
 - Child 15 已完成：covered navigation/time mixed entry 已收口到 shared runtime dispatch line，`src/main.ts` 只保留 bounded shell residue：`triggerStoryEventsForTiming("city-enter")` 与 `syncCouncilPriorityAfterGameStateChange()`。
 - 下一个应审查的边界不再是同类 navigation/time 入口，而是 Child 16 的 event/scene handoff；是否还需要进一步处理 bounded residue，必须在 Child 16 baseline recheck 后再决定。
 
+## 2026-07-02 Child 16 Event + Scene Handoff Convergence
+
+### Added
+- 新增 Child 16 回归测试，明确要求 `src/main.ts` 的 covered `triggerStoryEventsForTiming()` helper 不再直接 stitch `runEventRuntime()` 与 `runSceneFromEvent()`，同时锁定 covered `city-enter` 与 `indoor-screen-shown` 路径继续通过同一条 shared story-trigger seam 收口。
+
+### Changed
+- `src/core/runtime/event-runtime.ts` 新增 `runStoryEventRuntime()`，把基于 `EventTriggerTiming` 的 story trigger request 和 trigger input 组装收口到 event runtime 内。
+- `src/core/runtime/scene-runtime.ts` 新增 `runStoryTriggerRuntime()`，把 covered story trigger 的 event activation 与 event -> scene handoff 串接收口到 runtime family 内，而不是继续由 `src/main.ts` 手工拼接。
+- `src/main.ts` 的 `triggerStoryEventsForTiming()` 现在只调用 `runStoryTriggerRuntime()` 并做结果写回，不再自己直接调用 `runEventRuntime()` / `runSceneFromEvent()`。
+
+### Impact
+- Child 16 已完成：covered `city-enter` 与 `indoor-screen-shown` story handoff 已收口到一个 runtime-owned seam；本周这条 same-type event/scene handoff debt 不再保留 queued child。
+- `2026-07-02` weekly set 已消费完 visible queue 并关闭。后续如果还要继续抽取，必须以新的 weekly review 重新证明它是不同的问题类型，而不是继续追加同类 child。
+
 ## 2026-07-02 Child 13 Shared Dispatch Reentry Convergence
 
 ### Added

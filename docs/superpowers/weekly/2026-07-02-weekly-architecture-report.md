@@ -16,19 +16,19 @@ It must show:
 ## Architecture Summary
 
 - The prior `2026-06-29` weekly queue is closed after Child 13 and remains historical truth only.
-- A fresh `2026-07-02` continuation set was opened, `Child 14 Interactive Remaining Legacy Convergence` is completed inside that set, and `Child 15 Navigation + Time Runtime Convergence` is now also completed.
-- The current production architecture still centers on `src/main.ts`, but the covered navigation/time entry points no longer use direct shell-to-helper calls; the remaining mixed-entry debt now concentrates more clearly on event/scene handoff plus bounded follow-up residue.
-- The weekly set is temporarily between active children. `Child 16 Event + Scene Handoff Convergence` is the immediate queued follow-up pending baseline recheck.
+- A fresh `2026-07-02` continuation set was opened, `Child 14 Interactive Remaining Legacy Convergence`, `Child 15 Navigation + Time Runtime Convergence`, and `Child 16 Event + Scene Handoff Convergence` are all completed inside that set.
+- The current production architecture still centers on `src/main.ts`, but the covered navigation/time entry points and the covered story-trigger handoff line no longer use direct shell-to-helper stitching.
+- The 2026-07-02 weekly set is closed because the visible queue was consumed without leaving another same-type child behind.
 - There is no additional locked child in this set right now.
 
 ## Current Queue State
 
-- Weekly queue status: `open`
+- Weekly queue status: `closed`
 - Active executable child: `none currently`
-- Latest completed child in this set: `Child 15 Navigation + Time Runtime Convergence`
-- Immediate queued follow-up: `Child 16 Event + Scene Handoff Convergence`
+- Latest completed child in this set: `Child 16 Event + Scene Handoff Convergence`
+- Immediate queued follow-up: `none currently`
 - Locked follow-up child: `none currently`
-- Planning rule: `No queued child becomes executable automatically. Child 16 remains queued until its post-Child-15 baseline recheck is recorded and governance promotes it explicitly.`
+- Planning rule: `No new child may be appended into this closed set. Later continuation requires a fresh weekly review and a new weekly orchestration plan.`
 
 ## Runtime Maturity Snapshot
 
@@ -36,10 +36,10 @@ It must show:
 | --- | --- | --- | --- | --- |
 | `Interaction Runtime` | `covered-ownerized` | covered `city-begging`, `activity-qte`, and `story-battle` lifecycles are runtime-owned under `src/core/runtime/interactive-runtime.ts` | only placeholder-level historical residue remains in `legacy-interactive-adapter.ts`; no same-type covered lifecycle debt remains queued | none currently required |
 | `House Runtime` | `owner-first-slice` | covered grain-shop lifecycle and covered follow-up reentry are runtime-owned | broader house business stays application-owned by design | none currently required |
-| `Navigation Runtime` | `partial-owner` | typed runtime seam exists and the covered `enter-city` production entry now routes through shared runtime dispatch | bounded city-enter story-trigger follow-up still remains in `src/main.ts` | `Child 16 Event + Scene Handoff Convergence` |
-| `Time Runtime` | `partial-owner` | typed time requests exist and the covered `day-start` / `advance-segments` production entries now route through shared runtime dispatch | bounded council-priority follow-up still remains in `src/main.ts` | `later recheck only if Child 16 does not absorb it` |
-| `Event Runtime` | `partial-owner` | typed trigger/activation seam exists | mixed shell/runtime story control still remains | `Child 16 Event + Scene Handoff Convergence` |
-| `Scene Runtime` | `partial-owner` | event-to-scene seam exists | scene handoff is not yet centralized on one production line | `Child 16 Event + Scene Handoff Convergence` |
+| `Navigation Runtime` | `partial-owner` | typed runtime seam exists and the covered `enter-city` production entry now routes through shared runtime dispatch | bounded city-enter story-trigger follow-up is no longer shell-stitched event/scene debt; any further extraction would need a fresh review as a different problem type | none currently required |
+| `Time Runtime` | `partial-owner` | typed time requests exist and the covered `day-start` / `advance-segments` production entries now route through shared runtime dispatch | bounded council-priority follow-up still remains in `src/main.ts` and would require a fresh review to justify later extraction | none currently required |
+| `Event Runtime` | `partial-owner` | typed trigger/activation seam exists and covered story-trigger activation now routes through `runStoryEventRuntime()` | any later trigger-family expansion would be a different problem type, not the same covered handoff debt | none currently required |
+| `Scene Runtime` | `partial-owner` | event-to-scene seam exists and covered story-trigger handoff now routes through `runStoryTriggerRuntime()` | any later scene-family continuation would need a fresh weekly review to prove it is a different problem type | none currently required |
 
 ## Module Diagram
 
@@ -71,28 +71,26 @@ flowchart LR
 - `src/core/adapters/legacy-interactive-adapter.ts` now remains only as a historical placeholder file rather than an active covered-path owner
 - `src/core/adapters/legacy-house-adapter.ts` remains only as a compatibility placeholder rather than an active business owner
 
-## Flow Diagram 1: Covered `enter-city` Navigation After Child 15
+## Flow Diagram 1: Covered `city-enter` Story Handoff After Child 16
 
 ```mermaid
 flowchart TD
     A["travel confirm / enter-city confirm"] --> B["createEnterCityRequest()"]
     B --> C["dispatchRuntimeRequest()"]
     C --> D["routeNavigationRuntime()"]
-    D --> E["runtime bridge state write-back"]
-    E --> F["triggerStoryEventsForTiming('city-enter')"]
+    D --> E["triggerStoryEventsForTiming('city-enter')"]
+    E --> F["runStoryTriggerRuntime()"]
     F --> G["renderApp()"]
 ```
 
-## Flow Diagram 2: Covered `day-start` / `advance-segments` Time After Child 15
+## Flow Diagram 2: Covered `indoor-screen-shown` Story Handoff After Child 16
 
 ```mermaid
 flowchart TD
-    A["auto-advance or campaign move step"] --> B["createDayStartRequest() / createAdvanceTimeSegmentsRequest()"]
-    B --> C["dispatchRuntimeRequest()"]
-    C --> D["routeTimeRuntime()"]
-    D --> E["runtime bridge state write-back"]
-    E --> F["syncCouncilPriorityAfterGameStateChange()"]
-    F --> G["renderApp() or follow-up interruption"]
+    A["house view shown with no active scene"] --> B["syncPassiveStoryTriggers()"]
+    B --> C["triggerStoryEventsForTiming('indoor-screen-shown')"]
+    C --> D["runStoryTriggerRuntime()"]
+    D --> E["appState write-back if state changed"]
 ```
 
 ## Architecture Delta This Week
@@ -105,30 +103,18 @@ flowchart TD
 - Completed the Child 15 baseline recheck and recorded the result as narrowed to the covered `enter-city`, `day-start`, and `advance-segments` production paths.
 - Landed Child 15 by routing the covered `enter-city`, `day-start`, and `advance-segments` production entries through shared runtime dispatch plus runtime bridge state helpers.
 - Kept only bounded shell residue outside Child 15: city-enter story triggering and council-priority follow-up.
-- Moved Child 15 into completed history and left Child 16 queued pending baseline recheck.
+- Completed the Child 16 baseline recheck and recorded the result as narrowed to the current `triggerStoryEventsForTiming()` production line with `city-enter` and `indoor-screen-shown` call sites.
+- Landed Child 16 by routing the covered story-trigger activation and event-to-scene handoff through `runStoryTriggerRuntime()`.
+- Closed the 2026-07-02 set after the visible queue was consumed.
 
 ## Architecture Risks
 
 - `src/main.ts` is still the dominant production black box above the new boundary.
-- event/scene handoff is now the clearest next ownerization debt.
-- If Child 16 absorbs unrelated time/state-sync cleanup, the new weekly set will again lose its reviewable boundary.
+- If a later continuation is still needed, it must be justified as a different problem type rather than reopening finished same-type children.
+- The bounded council-priority follow-up remains outside this closed set and should not be auto-promoted without fresh review.
 
 ## Candidate Post-Queue Splits
 
-These are continuation candidates only. They are not unlocked children unless weekly governance explicitly promotes them.
+No later child is recorded inside this closed set.
 
-1. `Child 16 Event + Scene Handoff Convergence`
-   - Primary target:
-     - remaining mixed control between `runEventRuntime()` and `runSceneFromEvent()`
-   - Reason to split independently:
-     - Child 15 closed without absorbing this boundary, so event/scene handoff remains the next distinct problem type
-   - Do not mix with:
-     - additional navigation/time cleanup unless the baseline recheck proves it is inseparable
-
-2. `Possible post-Child-15 same-type remainder only if explicitly recorded`
-   - Primary target:
-     - any residual covered navigation/time residue that a later baseline recheck explicitly proves cannot be consumed by Child 16
-   - Reason to split independently:
-     - prevent silent overflow from Child 15 into Child 16
-   - Do not mix with:
-     - event/scene handoff convergence
+If later continuation is still needed, it must begin from a fresh weekly review and identify a different problem type than the completed Child 14 / Child 15 / Child 16 sequence.

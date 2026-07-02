@@ -8,39 +8,40 @@ Capture at least two real user-visible flows in the current architecture.
 
 If a real flow cannot be described clearly, that area is still a black box.
 
-## Flow 1: Covered `enter-city` Navigation After Child 15
+## Flow 1: Covered `city-enter` Story Handoff After Child 16
 
 ### Narrative
 
-The covered `enter-city` production line now enters the shared runtime dispatch path first. `src/main.ts` no longer calls `runNavigationRuntime()` directly on this covered entry. The bounded residue that remains outside Child 15 is the city-enter story trigger handoff after the runtime-owned navigation step has already completed.
+The covered `city-enter` production line now enters the shared runtime dispatch path for navigation first, then passes through the shared story-trigger seam. `src/main.ts` no longer stitches `runEventRuntime()` and `runSceneFromEvent()` directly for this covered handoff.
 
 ### Call Chain
 
 ```text
-UI -> src/main.ts confirmTravelOrEnterCity path -> createEnterCityRequest() -> dispatchRuntimeRequest() -> routeNavigationRuntime() -> runtime bridge state write-back -> triggerStoryEventsForTiming("city-enter") -> renderApp()
+UI -> src/main.ts confirmTravelOrEnterCity path -> createEnterCityRequest() -> dispatchRuntimeRequest() -> routeNavigationRuntime() -> triggerStoryEventsForTiming("city-enter") -> runStoryTriggerRuntime() -> appState write-back -> renderApp()
 ```
 
 ### Notes
 
-- `triggerStoryEventsForTiming("city-enter")` remains intentionally outside Child 15 and is now the clearer handoff seam for Child 16 review.
+- Child 16 is complete for this covered path: navigation entry stays converged and story handoff now uses one runtime-owned seam.
 
-## Flow 2: Covered `day-start` / `advance-segments` Time After Child 15
+## Flow 2: Covered `indoor-screen-shown` Story Handoff After Child 16
 
 ### Narrative
 
-The covered time progression lines now route through shared runtime dispatch first. `src/main.ts` no longer calls `runTimeRuntime()` directly on the covered `day-start` and `advance-segments` entries. The bounded residue that remains outside Child 15 is the council-priority follow-up after runtime-owned time progression settles.
+The covered passive indoor story-trigger line still starts from `src/main.ts`, but the event activation and scene handoff inside that trigger now pass through the shared story-trigger seam rather than direct shell stitching.
 
 ### Call Chain
 
 ```text
-UI / auto-advance callback -> src/main.ts -> createDayStartRequest() or createAdvanceTimeSegmentsRequest() -> dispatchRuntimeRequest() -> routeTimeRuntime() -> runtime bridge state write-back -> syncCouncilPriorityAfterGameStateChange() -> renderApp() or follow-up interruption
+UI / passive house sync -> src/main.ts syncPassiveStoryTriggers() -> triggerStoryEventsForTiming("indoor-screen-shown") -> runStoryTriggerRuntime() -> appState write-back
 ```
 
 ### Notes
 
-- Child 15 completed the covered time-entry convergence without widening into event/scene control. The retained council-priority follow-up is explicit bounded residue rather than hidden mixed entry.
+- Child 16 is complete for this passive path: the remaining shell role is only the call site and state write-back, not event/scene stitching.
 
 ## Additional Flows
 
-- Child 14's interactive convergence remains accepted and should not be reopened while the set moves to Child 16 baseline recheck.
-- Child 15 is now completed and should not be reopened for the bounded event/scene-facing residue it intentionally left behind.
+- Child 14's interactive convergence remains accepted and closed.
+- Child 15's navigation/time convergence remains accepted and closed.
+- Child 16's story-trigger convergence is now accepted and closed.

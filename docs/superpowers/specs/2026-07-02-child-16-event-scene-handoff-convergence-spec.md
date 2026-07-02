@@ -2,7 +2,7 @@
 
 ## 1. Goal
 
-Define the formal `Child 16` boundary for the locked later follow-up child behind `Child 15` in the fresh `2026-07-02` weekly continuation set.
+Define the formal `Child 16` boundary for the active executable child that follows completed `Child 15` in the fresh `2026-07-02` weekly continuation set.
 
 Child 16 exists to converge the remaining mixed shell orchestration between `runEventRuntime()` and `runSceneFromEvent()` so covered event activation and scene handoff follow one explicit runtime-owned production line.
 
@@ -13,7 +13,7 @@ Child 16 exists to converge the remaining mixed shell orchestration between `run
 - One-line responsibility:
   - converge the remaining covered event activation and event-to-scene handoff ownership without reopening navigation/time convergence or inventing a new story system
 - Architecture position:
-  - locked later follow-up child behind Child 15 in the fresh `2026-07-02` weekly continuation set
+  - active executable child after the post-Child-15 baseline recheck in the fresh `2026-07-02` weekly continuation set
 - Primary target areas:
   - `Event Runtime` activation ownership cleanup
   - `Scene Runtime` handoff ownership cleanup
@@ -40,6 +40,11 @@ The next unresolved problem type is expected to be the story handoff line:
 - event activation still cooperates with shell-side control on some covered paths
 - scene continuation is not yet centralized under one runtime-owned production line
 - `src/main.ts` still carries story handoff stitching that belongs to the event/scene runtime family
+
+The baseline recheck after Child 15 narrows this child further. The concrete covered production line is now the shell-owned `triggerStoryEventsForTiming()` chain in `src/main.ts`, with the currently observed covered call sites limited to:
+
+- `triggerStoryEventsForTiming("city-enter")` after the converged navigation entry
+- `triggerStoryEventsForTiming("indoor-screen-shown")` inside passive indoor trigger sync
 
 Without Child 16:
 
@@ -71,6 +76,7 @@ Minimum requirements:
 - covered event activation no longer depends on direct shell-side stitching
 - the convergence stays inside the approved event runtime family
 - Child 16 does not reopen navigation/time progression ownership
+- the narrowed covered activation line is limited to the current `triggerStoryEventsForTiming()` production path rather than every historical timing family
 
 ### 6.2 Covered Event -> Scene Handoff Convergence
 
@@ -81,6 +87,7 @@ Minimum requirements:
 - covered scene continuation no longer depends on ad hoc `src/main.ts` orchestration
 - event -> scene handoff is explicit and runtime-owned on the covered line
 - the convergence stays inside the approved scene runtime family
+- the narrowed covered scene handoff line is limited to scene activation launched from the current `triggerStoryEventsForTiming()` production path
 
 ### 6.3 Story Handoff Shell Reduction
 
@@ -122,14 +129,14 @@ Child 16 does not include:
 
 ## 9. Queue Position And Unlock Rule
 
-Child 16 is a formal locked later follow-up child, not an active executable child and not an immediate queued follow-up.
+Child 16 is the formal active executable child after the Child 15 closeout sync and Child 16 baseline recheck.
 
 Child 16 may start only when all of these are true:
 
 - Child 14 is completed
 - Child 15 is completed
 - Child 15 closeout sync is recorded in the active weekly plan and fresh artifact bundle
-- weekly governance explicitly promotes Child 16 from `locked` to `active executable child`
+- weekly governance explicitly records the Child 16 baseline recheck result and promotes Child 16 from `queued` to `active executable child`
 
 ## 10. Batch Sequence
 

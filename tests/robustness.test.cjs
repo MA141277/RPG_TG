@@ -8402,6 +8402,51 @@ test("child 15 covered advance-segments travel paths route through shared runtim
   assert.match(startCampaignTravelBlock, /dispatchRuntimeRequest\(/);
 });
 
+test("child 16 story trigger helper routes through one runtime-owned seam instead of direct event and scene stitching", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const triggerStoryEventsBlock = source.match(
+    /function triggerStoryEventsForTiming\([\s\S]*?\r?\n}\r?\n\r?\nfunction getCouncilPriorityHouseDefinition/
+  )?.[0] ?? "";
+
+  assert.doesNotMatch(triggerStoryEventsBlock, /runEventRuntime\(/);
+  assert.doesNotMatch(triggerStoryEventsBlock, /runSceneFromEvent\(/);
+  assert.match(triggerStoryEventsBlock, /runStoryTriggerRuntime\(/);
+});
+
+test("child 16 covered city-enter story handoff stays on the shared trigger seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const handleModalConfirmBlock = source.match(
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+  )?.[0] ?? "";
+
+  assert.match(handleModalConfirmBlock, /triggerStoryEventsForTiming\(\s*"city-enter"/);
+  assert.doesNotMatch(handleModalConfirmBlock, /runEventRuntime\(/);
+  assert.doesNotMatch(handleModalConfirmBlock, /runSceneFromEvent\(/);
+});
+
+test("child 16 covered indoor-screen-shown story handoff stays on the shared trigger seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const syncPassiveStoryTriggersBlock = source.match(
+    /function syncPassiveStoryTriggers\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction syncGameViewport/
+  )?.[0] ?? "";
+
+  assert.match(
+    syncPassiveStoryTriggersBlock,
+    /triggerStoryEventsForTiming\(\s*"indoor-screen-shown"/
+  );
+  assert.doesNotMatch(syncPassiveStoryTriggersBlock, /runEventRuntime\(/);
+  assert.doesNotMatch(syncPassiveStoryTriggersBlock, /runSceneFromEvent\(/);
+});
+
 test("effect settlement contract exports emitter applier input and result seams", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/effect-settlement.ts"),
