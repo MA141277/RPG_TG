@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-03 Child 23 Main Startup Orchestration Extraction
+
+### Added
+- 新增 `src/application/startup/startup-session-coordinator.ts`，把 builtin startup、continue/restore、以及 scenario import/start 的 request/result contract 收口到一个显式 coordinator seam，并为 `main.ts` 提供统一的 startup session bootstrap surface。
+- 新增 Child 23 ownership 回归测试，锁定 startup coordinator 模块必须存在、`main.ts` 必须改为委托 `runStartupSessionCoordinator()`、以及 Child 22 的 continue/restore/bootstrap parity guard 不能在这轮抽离中退化。
+
+### Changed
+- `src/main.ts` 现已把 startup-family 的主决策树从本地 helper 中抽离出来：builtin startup、continue、restore、scenario summary import、scenario file import 都改为通过 `runStartupSessionCoordinator()` 解析 activation/bootstrap，再由 `main.ts` 只负责 loading shell 和最终 session 应用。
+- `src/main.ts` 的 activated-session bootstrap helper 现已收口为直接消费 coordinator 返回的 `playerCharacterId + appState + activationResult`，不再在多个 startup entry 函数里各自拼装 fallback player/app-state 逻辑。
+- `tests/robustness.test.cjs` 现已把 Child 22 的 continue guard 放宽到允许 direct coordinator delegation，确保新的 startup owner line 不会被旧 helper 名称绑定住。
+
+### Impact
+- Child 23 已把 `startup / continue / restore / scenario import` 的 primary orchestration owner 从 `src/main.ts` 挪到独立 coordinator seam，同时保持 `renderApp()`、runtime settlement、`MainUiFlow` 和后续 runtime follow-up 边界不变。
+- 这轮没有继续扩张到 render orchestration redesign、save contract 新族、或更大的 `main.ts` thin-shell 改造；若还要继续拆主入口，必须从新的 weekly review 重新证明是不同问题类型。
+
 ## 2026-07-02 Child 21 Unified Gameplay Contribution Registry
 
 ### Added

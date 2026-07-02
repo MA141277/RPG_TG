@@ -6,11 +6,11 @@
 
 **Active Child Plan:**
 
-- `docs/superpowers/plans/2026-07-03-child-23-main-startup-orchestration-extraction-plan.md`
+- `None currently`
 
 **Latest Completed Child Plan:**
 
-- `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
+- `docs/superpowers/plans/2026-07-03-child-23-main-startup-orchestration-extraction-plan.md`
 
 **Queued Child Plans:**
 
@@ -19,13 +19,13 @@
 ## Weekly Summary
 
 - The earlier `2026-07-02` mod-first set is closed historical truth only.
-- A fresh `2026-07-03` weekly set is now opened for one new problem type: startup-family orchestration extraction from `src/main.ts`.
-- `Child 23 Main Startup Orchestration Extraction` is now the only active executable child.
-- No queued or locked child is opened behind it.
+- The `2026-07-03` weekly set stayed narrow and closed after one problem type: startup-family orchestration extraction from `src/main.ts`.
+- `Child 23 Main Startup Orchestration Extraction` completed without opening a queued or locked follow-up child.
+- The set now closes instead of extending into render orchestration, runtime follow-up, or `MainUiFlow` redesign.
 
 ## Active Focus
 
-- Child 23 is the current active focus. The next governance action is to execute it without widening the boundary into render orchestration, runtime follow-up, or `MainUiFlow` redesign.
+- No active child remains in this weekly set. Any later `main.ts` continuation must begin from a fresh weekly review and prove it is a different problem type.
 
 ## Artifact Index
 
@@ -41,6 +41,7 @@
 ## Verification Summary
 
 - Fresh weekly set opening verification: `PASS`
+- Child 23 implementation verification: `PASS`
 - `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
@@ -51,10 +52,11 @@
 - Child 23 active plan authored
 - fresh `2026-07-03-main-startup` artifact bundle authored
 
-### In Progress
+### Completed
 
-- Child 23 remains not-started
-- no later child is queued yet
+- Child 23 extracted startup-family orchestration into `src/application/startup/startup-session-coordinator.ts`
+- `src/main.ts` now delegates builtin startup, continue, restore, and scenario import/start through one coordinator seam
+- no later child was opened in this weekly set
 
 ### Deferred
 
@@ -69,6 +71,6 @@
 - Highest-priority module to refine:
   - `src/main.ts`
 - Why it is next:
-  - startup-family orchestration remains the clearest remaining black box that can be extracted without reopening closed render/runtime boundaries
+  - if later work still wants to thin `main.ts`, it must first prove the remaining debt is not the already-closed startup-family boundary
 - Category:
-  - `startup-family orchestration extraction`
+  - `fresh-review required`

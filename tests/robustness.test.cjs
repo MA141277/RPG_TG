@@ -9722,7 +9722,10 @@ test("child 22 continue path does not overwrite a restored mod by re-entering bu
   )?.[0] ?? "";
 
   assert.match(continueBlock, /loadSaveData\(\)/);
-  assert.match(continueBlock, /startRestoredGameWithLoading|startActivatedGameWithLoading/);
+  assert.match(
+    continueBlock,
+    /startRestoredGameWithLoading|startActivatedGameWithLoading|runStartupSessionCoordinator/
+  );
   assert.doesNotMatch(
     continueBlock,
     /restoreModFromSave\(loadSaveData\(\)\)\s*\.then\(\s*\(\)\s*=>\s*startMainGameWithLoading\(/
@@ -9738,6 +9741,44 @@ test("child 22 builtin and imported startup paths share one activated session bo
 
   assert.ok(helperUsageCount >= 3);
   assert.doesNotMatch(source, /installScenarioPackContent\(scenarioPack\)/);
+});
+
+test("child 23 startup coordinator module exists with a narrow request/result seam", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src/application/startup/startup-session-coordinator.ts"
+  );
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+  const source = fs.readFileSync(coordinatorPath, "utf8");
+  assert.match(source, /export type StartupSessionRequest =/);
+  assert.match(source, /export type StartupSessionResult =/);
+  assert.match(source, /export async function runStartupSessionCoordinator\(/);
+});
+
+test("child 23 main startup extraction delegates startup-family orchestration to the coordinator", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.match(
+    source,
+    /startup-session-coordinator|runStartupSessionCoordinator/
+  );
+  const coordinatorUsageCount = (
+    source.match(/runStartupSessionCoordinator\(/g) ?? []
+  ).length;
+  assert.ok(coordinatorUsageCount >= 3);
+  assert.doesNotMatch(
+    source,
+    /const activationResult = await activateBuiltinDefaultMod\(/
+  );
+  assert.doesNotMatch(
+    source,
+    /const activationResult = await restoreModFromSave\(saveData\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /const loadedScenarioPack = await loadScenarioPackFromUrl\(scenarioPack\.url\);/
+  );
 });
 
 test("mod runtime does not absorb content assembly or gameplay execution ownership", () => {

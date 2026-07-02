@@ -83,6 +83,12 @@ import {
   resolveTextTemplateEntry,
 } from "./application/content/text-resolution";
 import { loadDefaultRuntimeContent } from "./application/content/default-runtime-content";
+import {
+  runStartupSessionCoordinator,
+  type StartupSaveData,
+  type StartupScenario,
+  type StartupSessionBootstrap,
+} from "./application/startup/startup-session-coordinator";
 import { bootstrapLegacyMain } from "./core/adapters/legacy-main-adapter";
 import { toLegacyBootstrapInput } from "./core/adapters/mod-runtime-main-adapter";
 import {
@@ -110,10 +116,6 @@ import {
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
 import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
-import {
-  loadScenarioPackFromUrl,
-  loadScenarioPackFromFiles,
-} from "./application/scenario/scenario-pack-loader";
 import {
   createEmptyModRuntimeState,
   createLoadedModFromManifest,
@@ -245,14 +247,7 @@ type CampaignMapDebugState = {
   offsetY: number;
 };
 
-type SaveDataResult = {
-  selectedCharacterId?: string | null;
-  selectedModId?: string | null;
-  selectedModSource?: ModSourceDescriptor | null;
-} | null;
-
 type BackgroundMusicMode = "opening" | "in-game";
-type StartupScenario = "default" | "haozhou-return-encounter";
 
 type CampaignMoveAnimationState = {
   frameId: number | null;
@@ -1743,7 +1738,7 @@ async function activateSavedModSource(
 }
 
 async function restoreModFromSave(
-  saveData: SaveDataResult
+  saveData: StartupSaveData
 ): Promise<ModActivationResult | null> {
   if (saveData?.selectedModId == null) {
     return null;
@@ -1774,12 +1769,6 @@ function readActivatedContentSource(
   return primarySource as ScenarioPackDefinition | typeof baseGameContentPack;
 }
 
-function isScenarioPackSource(
-  value: ScenarioPackDefinition | typeof baseGameContentPack | null
-): value is ScenarioPackDefinition {
-  return value != null && "scenarioProfile" in value;
-}
-
 function syncActivatedContentSource(activationResult: ModActivationResult): void {
   const activatedContentSource = readActivatedContentSource(activationResult);
   if (
@@ -1797,16 +1786,14 @@ function syncActivatedContentSource(activationResult: ModActivationResult): void
 
 function applyActivatedModSession(input: {
   activationResult: ModActivationResult;
-  fallbackPlayerCharacterId: string;
-  createAppState(playerCharacterId: string): AppState;
+  playerCharacterId: string;
+  appState: AppState;
 }): void {
-  const bootstrapInput = toLegacyBootstrapInput(input.activationResult);
+  toLegacyBootstrapInput(input.activationResult);
   resetMainGameRuntime();
   syncActivatedContentSource(input.activationResult);
-  currentPlayerCharacterId =
-    bootstrapInput.startupProfile.playerCharacterId ??
-    input.fallbackPlayerCharacterId;
-  appState = input.createAppState(currentPlayerCharacterId);
+  currentPlayerCharacterId = input.playerCharacterId;
+  appState = input.appState;
   houseRuntime = createHouseRuntimeInstance();
   setGameVisibility(true);
   mainUiFlow.hide();
@@ -1819,25 +1806,68 @@ function showStartupError(error: unknown): void {
   );
 }
 
-function loadSaveData(): SaveDataResult {
+function loadSaveData(): StartupSaveData {
   // Placeholder for future save loading integration.
   return null;
 }
 
-function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): void {
-  const saveData = loadSaveData();
-  if (saveData?.selectedModId == null) {
-    startMainGameWithLoading(selectedCharacter, "haozhou-return-encounter");
-    return;
+const startupSessionCoordinatorDeps = {
+  activateBuiltinDefaultMod,
+  restoreModFromSave,
+  activateScenarioPackMod,
+  createPrototypeAppState,
+  createHaozhouReturnEncounterAppState,
+  createScenarioPackAppState,
+};
+
+function unwrapStartupSession(
+  result: Awaited<ReturnType<typeof runStartupSessionCoordinator>>
+): StartupSessionBootstrap {
+  if (!result.ok) {
+    throw result.error;
   }
 
-  void startRestoredGameWithLoading(selectedCharacter, saveData)
-    .catch(showStartupError);
+  return result.session;
+}
+
+function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): void {
+  const saveData = loadSaveData();
+  const requestId = beginLoadingScreen();
+
+  simulateLoadingProgress((progress) => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    setActiveLoadingProgress(progress);
+  })
+    .then(async () => {
+      if (requestId !== loadingScreenRequestId) {
+        return;
+      }
+
+      const startupSession = unwrapStartupSession(
+        await runStartupSessionCoordinator(
+          {
+            type: "continue",
+            selectedCharacter,
+            saveData,
+          },
+          startupSessionCoordinatorDeps
+        )
+      );
+      applyActivatedModSession(startupSession);
+      endLoadingScreen(requestId);
+    })
+    .catch((error: unknown) => {
+      endLoadingScreen(requestId);
+      showStartupError(error);
+    });
 }
 
 function startRestoredGameWithLoading(
   selectedCharacter: CharacterDefinition,
-  saveData: SaveDataResult
+  saveData: StartupSaveData
 ): Promise<void> {
   const requestId = beginLoadingScreen();
 
@@ -1853,48 +1883,23 @@ function startRestoredGameWithLoading(
         return;
       }
 
-      const activationResult = await restoreModFromSave(saveData);
-      if (activationResult == null) {
-        await startMainGame(selectedCharacter, "haozhou-return-encounter");
-      } else {
-        await startRestoredGame(selectedCharacter, saveData, activationResult);
-      }
+      const startupSession = unwrapStartupSession(
+        await runStartupSessionCoordinator(
+          {
+            type: "restore",
+            selectedCharacter,
+            saveData,
+          },
+          startupSessionCoordinatorDeps
+        )
+      );
+      applyActivatedModSession(startupSession);
       endLoadingScreen(requestId);
     })
     .catch((error: unknown) => {
       endLoadingScreen(requestId);
-      throw error;
+      showStartupError(error);
     });
-}
-
-async function startRestoredGame(
-  selectedCharacter: CharacterDefinition,
-  saveData: SaveDataResult,
-  activationResult: ModActivationResult
-): Promise<void> {
-  const activatedContentSource = readActivatedContentSource(activationResult);
-
-  if (isScenarioPackSource(activatedContentSource)) {
-    applyActivatedModSession({
-      activationResult,
-      fallbackPlayerCharacterId:
-        saveData?.selectedCharacterId ??
-        activatedContentSource.scenarioProfile.playerCharacterId ??
-        selectedCharacter.id,
-      createAppState: () => createScenarioPackAppState(activatedContentSource),
-    });
-    return;
-  }
-
-  applyActivatedModSession({
-    activationResult,
-    fallbackPlayerCharacterId:
-      saveData?.selectedCharacterId ?? selectedCharacter.id,
-    createAppState: (playerCharacterId) =>
-      createHaozhouReturnEncounterAppState(
-        createPrototypeAppState(playerCharacterId)
-      ),
-  });
 }
 
 function startMainGameWithLoading(
@@ -1914,7 +1919,17 @@ function startMainGameWithLoading(
       return;
     }
 
-    await startMainGame(selectedCharacter, startupScenario);
+    const startupSession = unwrapStartupSession(
+      await runStartupSessionCoordinator(
+        {
+          type: "builtin",
+          selectedCharacter,
+          startupScenario,
+        },
+        startupSessionCoordinatorDeps
+      )
+    );
+    applyActivatedModSession(startupSession);
     endLoadingScreen(requestId);
   }).catch((error: unknown) => {
     endLoadingScreen(requestId);
@@ -1922,22 +1937,36 @@ function startMainGameWithLoading(
   });
 }
 
-async function startMainGame(
-  selectedCharacter: CharacterDefinition,
-  startupScenario: StartupScenario = "default"
+function runScenarioPackStartupRequestWithLoading(
+  request:
+    | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
+    | { type: "scenario-files"; files: File[] }
 ): Promise<void> {
-  const activationResult = await activateBuiltinDefaultMod(
-    `startup:builtin:${startupScenario}`
-  );
-  applyActivatedModSession({
-    activationResult,
-    fallbackPlayerCharacterId: selectedCharacter.id,
-    createAppState: (playerCharacterId) => {
-      const nextAppState = createPrototypeAppState(playerCharacterId);
-      return startupScenario === "haozhou-return-encounter"
-        ? createHaozhouReturnEncounterAppState(nextAppState)
-        : nextAppState;
-    },
+  const requestId = beginLoadingScreen();
+
+  return simulateLoadingProgress((progress) => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    setActiveLoadingProgress(progress);
+  }).then(async () => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    const startupSession = unwrapStartupSession(
+      await runStartupSessionCoordinator(request, startupSessionCoordinatorDeps)
+    );
+    applyActivatedModSession(startupSession);
+    endLoadingScreen(requestId);
+  }).catch((error) => {
+    endLoadingScreen(requestId);
+    window.alert(
+      error instanceof Error
+        ? `JSON 寮€灞€璇诲彇澶辫触锛?{error.message}`
+        : "JSON 寮€灞€璇诲彇澶辫触銆?"
+    );
   });
 }
 
@@ -1945,11 +1974,9 @@ async function startScenarioPackWithLoading(
   scenarioPack: ScenarioPackSummary
 ): Promise<void> {
   try {
-    const loadedScenarioPack = await loadScenarioPackFromUrl(scenarioPack.url);
-    startLoadedScenarioPackWithLoading(loadedScenarioPack, {
-      kind: "url",
-      name: scenarioPack.title,
-      url: scenarioPack.url,
+    return runScenarioPackStartupRequestWithLoading({
+      type: "scenario-summary",
+      scenarioPack,
     });
   } catch (error) {
     window.alert(
@@ -1969,11 +1996,9 @@ async function startScenarioPackFilesWithLoading(
     "scenario-pack";
 
   try {
-    const loadedScenarioPack = await loadScenarioPackFromFiles(files);
-    startLoadedScenarioPackWithLoading(loadedScenarioPack, {
-      kind: "file",
-      name: importLabel,
-      filePath: importLabel,
+    return runScenarioPackStartupRequestWithLoading({
+      type: "scenario-files",
+      files,
     });
   } catch (error) {
     window.alert(
@@ -1982,47 +2007,6 @@ async function startScenarioPackFilesWithLoading(
         : `JSON 开局读取失败（${importLabel}）。`
     );
   }
-}
-
-function startLoadedScenarioPackWithLoading(
-  scenarioPack: ScenarioPackDefinition,
-  source: ModSourceDescriptor
-): void {
-  const requestId = beginLoadingScreen();
-
-  simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress);
-  }).then(async () => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    await startLoadedScenarioPack(scenarioPack, source);
-    endLoadingScreen(requestId);
-  }).catch((error: unknown) => {
-    endLoadingScreen(requestId);
-    showStartupError(error);
-  });
-}
-
-async function startLoadedScenarioPack(
-  scenarioPack: ScenarioPackDefinition,
-  source: ModSourceDescriptor
-): Promise<void> {
-  const activationResult = await activateScenarioPackMod(
-    scenarioPack,
-    source,
-    `startup:${source.kind}:${scenarioPack.id}`
-  );
-  applyActivatedModSession({
-    activationResult,
-    fallbackPlayerCharacterId: scenarioPack.scenarioProfile.playerCharacterId,
-    createAppState: () => createScenarioPackAppState(scenarioPack),
-  });
 }
 
 function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {

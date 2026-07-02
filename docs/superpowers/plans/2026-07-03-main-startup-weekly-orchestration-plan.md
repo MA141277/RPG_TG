@@ -12,11 +12,11 @@
 
 ## Execution State
 
-- Status: `in-progress`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Fresh weekly set opened. Child 23 is the only active executable child and has not started implementation yet.`
-- Next Step: `Start Child 23 Task 1 Step 1.`
-- Verification: `npm run lint:plans`
+- Current Focus: `Completed.`
+- Next Step: `This weekly set is closed; any later main.ts continuation must begin from a fresh weekly review.`
+- Verification: `2026-07-03: npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 23 startup coordinator|child 23 main startup extraction|child 22 continue path|child 22 restore path|child 22 builtin and imported startup" (pass); npm run typecheck (pass); npm test (pass); npm run build (pass); npm run lint:plans (pass)`
 - Notes: `This set must not pre-queue later children. Any work beyond startup-family orchestration requires a fresh review after Child 23 closes.`
 
 ## Progress Log
@@ -25,6 +25,14 @@
   - Summary: `Opened a fresh weekly set after the closed Child 22 mod-first closure work. The new active boundary is startup-family orchestration extraction from main.ts, and the queue is intentionally capped at one active child with no queued or locked follow-up.`
   - Verification: `npm run lint:plans`
   - Next: `Start Child 23 Task 1 Step 1.`
+- 2026-07-03
+  - Summary: `Child 23 extracted startup / continue / restore / scenario import orchestration into src/application/startup/startup-session-coordinator.ts, and main.ts now consumes one coordinator seam while keeping render and runtime-settlement ownership unchanged. No additional same-boundary child was opened, so this weekly set is ready to close after governance verification.`
+  - Verification: `npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 23 startup coordinator|child 23 main startup extraction|child 22 continue path|child 22 restore path|child 22 builtin and imported startup" (pass); npm run typecheck (pass); npm test (pass); npm run build (pass)`
+  - Next: `Run npm run lint:plans and close the weekly set.`
+- 2026-07-03
+  - Summary: `Governance verification passed and the weekly set is now closed. Child 23 is recorded as completed, the weekly review index is synchronized, and no queued or locked same-boundary child remains.`
+  - Verification: `npm run lint:plans (pass)`
+  - Next: `Closed.`
 
 ---
 
@@ -79,10 +87,10 @@ Status meaning:
 ### Slot 1: Active Child
 
 - Child: `docs/superpowers/plans/2026-07-03-child-23-main-startup-orchestration-extraction-plan.md`
-- Queue status: `active`
+- Queue status: `completed`
 - Primary boundary: `Extract startup / continue / restore / scenario import orchestration from main.ts into one coordinator seam.`
 - Depends on: `2026-07-03-main-startup-orchestration-extraction-design.md`
-- Resume point: `Start Task 1 Step 1.`
+- Resume point: `Closed.`
 
 ### Slot 2: Queued Child
 
@@ -170,9 +178,9 @@ Do not mark this weekly plan `completed` until:
 
 ## Completion Checklist
 
-- [ ] Queue state updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
-- [ ] Weekly review index updated
-- [ ] Required visibility deliverables linked and present
+- [x] Queue state updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
+- [x] Weekly review index updated
+- [x] Required visibility deliverables linked and present

@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Not started.`
-- Next Step: `Start Task 1 Step 1.`
-- Verification: `Not run`
+- Current Focus: `Completed.`
+- Next Step: `No further Child 23 work remains; any later main.ts continuation requires a fresh weekly review.`
+- Verification: `2026-07-03: npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 23 startup coordinator|child 23 main startup extraction|child 22 continue path|child 22 restore path|child 22 builtin and imported startup" (pass); npm run typecheck (pass); npm test (pass); npm run build (pass); npm run lint:plans (pass)`
 - Notes: `This child is invalid if it expands into render orchestration, runtime follow-up, MainUiFlow redesign, or a new save-contract family.`
 
 ## Progress Log
@@ -23,6 +23,18 @@
   - Summary: `Plan created from the approved startup orchestration extraction spec. Child 23 is the only active child in the new weekly set and has not started implementation yet.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Start Task 1 Step 1.`
+- 2026-07-03
+  - Summary: `Rechecked the narrowed Child 23 baseline. main.ts still directly owns startup-family orchestration through startContinueGameWithLoading(), startRestoredGameWithLoading(), startMainGameWithLoading(), startLoadedScenarioPackWithLoading(), plus restoreModFromSave(), activateSavedModSource(), syncActivatedContentSource(), and applyActivatedModSession(). Added RED ownership regressions proving the dedicated startup coordinator seam does not exist yet and that main.ts still owns the startup-family decision tree.`
+  - Verification: `npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 23 startup coordinator|child 23 main startup extraction|child 22 continue path|child 22 restore path|child 22 builtin and imported startup" (expected fail: child 23 startup coordinator module exists with a narrow request/result seam; child 23 main startup extraction delegates startup-family orchestration to the coordinator)`
+  - Next: `Start Task 2 Step 1 by creating the startup-session coordinator module.`
+- 2026-07-03
+  - Summary: `Implemented src/application/startup/startup-session-coordinator.ts, rewired builtin startup, continue, restore, and scenario import/start entry paths in main.ts to delegate through one coordinator seam, and kept render/session-commit ownership in main.ts. Updated Child 22 continue coverage so the guard follows direct coordinator delegation instead of a specific local helper name.`
+  - Verification: `npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 23 startup coordinator|child 23 main startup extraction|child 22 continue path|child 22 restore path|child 22 builtin and imported startup" (pass); npm run typecheck (pass); npm test (pass); npm run build (pass)`
+  - Next: `Run npm run lint:plans and close Child 23 governance.`
+- 2026-07-03
+  - Summary: `Governance closeout completed. change-log, child plan, weekly plan, and weekly review index now record Child 23 as a closed startup-family extraction, with no queued same-boundary follow-up child.`
+  - Verification: `npm run lint:plans (pass)`
+  - Next: `Closed.`
 
 ---
 
@@ -99,11 +111,11 @@
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/superpowers/plans/2026-07-03-child-23-main-startup-orchestration-extraction-plan.md`
 
-- [ ] **Step 1: Enumerate the current startup-family entry owners**
+- [x] **Step 1: Enumerate the current startup-family entry owners**
 
 Record the exact `main.ts` functions that still own builtin startup, continue, restore, and scenario import/start decision trees.
 
-- [ ] **Step 2: Add failing ownership regressions**
+- [x] **Step 2: Add failing ownership regressions**
 
 Add red tests that prove:
 
@@ -111,7 +123,7 @@ Add red tests that prove:
 - a dedicated startup coordinator module does not yet exist
 - Child 22 parity behaviors remain the baseline guardrails
 
-- [ ] **Step 3: Run the targeted red tests**
+- [x] **Step 3: Run the targeted red tests**
 
 Run:
 
@@ -124,7 +136,7 @@ Expected:
 
 - at least one new Child 23 ownership guard fails before implementation
 
-- [ ] **Step 4: Record the recheck result in plan state**
+- [x] **Step 4: Record the recheck result in plan state**
 
 Update `Execution State` and `Progress Log` with the narrowed startup-family baseline.
 
@@ -134,11 +146,11 @@ Update `Execution State` and `Progress Log` with the narrowed startup-family bas
 - Create: `src/application/startup/startup-session-coordinator.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add the coordinator module and narrow request/result surface**
+- [x] **Step 1: Add the coordinator module and narrow request/result surface**
 
 Create one startup coordinator module that owns builtin/imported/restored startup-family routing and returns a bootstrap result consumable by `main.ts`.
 
-- [ ] **Step 2: Re-run the targeted startup-coordinator tests**
+- [x] **Step 2: Re-run the targeted startup-coordinator tests**
 
 Run:
 
@@ -158,15 +170,15 @@ Expected:
 - Modify: `src/application/startup/startup-session-coordinator.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Move startup-family entry routing out of `main.ts`**
+- [x] **Step 1: Move startup-family entry routing out of `main.ts`**
 
 Rewire builtin startup, continue, restore, and scenario import/start entry points so `main.ts` delegates their orchestration to the coordinator instead of branching directly.
 
-- [ ] **Step 2: Keep startup-bound bootstrap helpers aligned without changing render ownership**
+- [x] **Step 2: Keep startup-bound bootstrap helpers aligned without changing render ownership**
 
 Consolidate any remaining startup-bound active-content sync or session bootstrap helpers needed by the coordinator, but stop short of altering `renderApp()` or runtime settlement semantics.
 
-- [ ] **Step 3: Re-run the targeted green tests**
+- [x] **Step 3: Re-run the targeted green tests**
 
 Run:
 
@@ -180,7 +192,7 @@ Expected:
 - Child 23 ownership tests pass
 - Child 22 parity tests remain green
 
-- [ ] **Step 4: Run the full verification gate**
+- [x] **Step 4: Run the full verification gate**
 
 Run:
 
@@ -201,11 +213,11 @@ Expected:
 - Modify: `docs/superpowers/plans/2026-07-03-child-23-main-startup-orchestration-extraction-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-03-main-startup-weekly-orchestration-plan.md`
 
-- [ ] **Step 1: Record the Child 23 boundary outcome**
+- [x] **Step 1: Record the Child 23 boundary outcome**
 
 Document that startup-family orchestration moved out of `main.ts` and that render/follow-up ownership remained outside scope.
 
-- [ ] **Step 2: Run governance verification**
+- [x] **Step 2: Run governance verification**
 
 Run:
 
@@ -219,15 +231,15 @@ Expected:
 
 ## Exit Check
 
-- [ ] `src/main.ts` no longer directly owns the primary orchestration for `startup / continue / restore / scenario import`.
-- [ ] builtin, imported, and restored startup-family paths converge through one coordinator seam.
-- [ ] startup-bound active-content sync and session bootstrap usage are no longer scattered across multiple `main.ts` entry functions.
-- [ ] `renderApp()` main path and runtime commit/settlement semantics remain unchanged.
-- [ ] Targeted regression coverage passes.
+- [x] `src/main.ts` no longer directly owns the primary orchestration for `startup / continue / restore / scenario import`.
+- [x] builtin, imported, and restored startup-family paths converge through one coordinator seam.
+- [x] startup-bound active-content sync and session bootstrap usage are no longer scattered across multiple `main.ts` entry functions.
+- [x] `renderApp()` main path and runtime commit/settlement semantics remain unchanged.
+- [x] Targeted regression coverage passes.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
