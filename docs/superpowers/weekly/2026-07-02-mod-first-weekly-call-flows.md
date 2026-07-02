@@ -109,3 +109,20 @@ runtime request -> router/sub-runtime -> routed taskActions/taskSignals -> dispa
 
 - Child 19 is complete for this shared task-runtime execution seam.
 - The remaining next-step problem is no longer task settlement ownership; it is later house/runtime registration work under Child 20.
+
+## Flow 7: Shared House Registration After Child 20
+
+### Narrative
+
+Builtin house module and renderer bindings now assemble through one shared registration seam. Covered house runtime, presenter lookup, and view rendering no longer each keep their own builtin-static table.
+
+### Call Chain
+
+```text
+builtin house module/render registrations -> createBuiltinHouseModuleRegistry() -> src/core/registry/house-module-registry.ts -> getModule()/getRenderer() -> house runtime / stage presenter / house view renderer
+```
+
+### Notes
+
+- Child 20 is complete for this shared house registration seam.
+- The next open problem is no longer house module lookup ownership; it is whether Child 21 should unify the remaining gameplay contribution registries around the same installation model.

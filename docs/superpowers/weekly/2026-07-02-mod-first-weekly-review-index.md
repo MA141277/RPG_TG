@@ -10,6 +10,7 @@
 
 **Latest Completed Child Plan:**
 
+- `docs/superpowers/plans/2026-07-02-child-20-house-runtime-mod-registration-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-19-task-runtime-mod-contract-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-18-runtime-spine-unification-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-17-pack-content-decoupling-plan.md`
@@ -17,7 +18,7 @@
 
 **Queued Child Plans:**
 
-- `docs/superpowers/plans/2026-07-02-child-20-house-runtime-mod-registration-plan.md`
+- `docs/superpowers/plans/2026-07-02-child-21-unified-gameplay-contribution-registry-plan.md`
 
 ## Weekly Summary
 
@@ -26,12 +27,13 @@
 - `Child 17 Pack Content Decoupling` is now completed after converging the covered direct-import consumers onto the shared pack-content access seam.
 - `Child 18 Runtime Spine Unification` is now completed after converging covered dispatch entry and covered interactive write-back onto the shared runtime commit seam.
 - `Child 19 Task Runtime Mod Contract` is now completed after converging shared task contribution loading, active task-definition lookup, unified task-state storage, and shared runtime task settlement.
-- `Child 20 House Runtime Mod Registration` is now the immediate queued candidate, but still requires a fresh post-Child-19 baseline recheck before promotion.
-- `Child 20` through `Child 22` remain roadmap candidates only and are not part of the visible queue in this set.
+- `Child 20 House Runtime Mod Registration` is now completed after converging builtin house module/renderer lookup onto one shared registration seam.
+- `Child 21` is now the immediate queued candidate, but it still requires a fresh post-Child-20 baseline recheck before promotion.
+- `Child 22` remains the locked later follow-up.
 
 ## Active Focus
 
-- No active child currently. The next governance action is whether Child 20 still survives unchanged after a fresh post-Child-19 baseline recheck.
+- No active child currently. The next governance action is whether Child 21 still survives unchanged after a fresh post-Child-20 baseline recheck.
 
 ## Artifact Index
 
@@ -56,6 +58,7 @@ Merged ownership note:
 - Child 17 closeout verification: `PASS`
 - Child 18 closeout verification: `PASS`
 - Child 19 closeout verification: `PASS`
+- Child 20 closeout verification: `PASS`
 - `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
@@ -78,15 +81,19 @@ Merged ownership note:
 - shared runtime commit seam added under `state-sync-runtime`
 - covered `main.ts` runtime entry and covered interactive write-back paths migrated off repeated manual bridge create/apply glue
 - Child 18 verification passed
+- Child 20 promoted after baseline recheck
+- shared house registration seam added under `src/core/registry/house-module-registry.ts`
+- covered house runtime, presenter lookup, and renderer lookup migrated off builtin-static tables
+- Child 20 verification passed
 
 ### In Progress
 
 - no active child currently
-- Child 20 remains queued pending a fresh baseline recheck
+- Child 21 remains queued pending a fresh baseline recheck
 
 ### Deferred
 
-- Child 21 and Child 22 remain later roadmap candidates and require later review
+- Child 22 remains locked behind the queued Child 21 boundary
 
 ### Blockers
 
@@ -97,8 +104,8 @@ Merged ownership note:
 Interpret this as input to later continuation, not as automatic permission to append extra executable children beyond the controlled queue.
 
 - Highest-priority module to refine:
-  - `src/core/contracts/task-runtime.ts` and `src/core/runtime/task-runtime.ts`
+  - `src/core/registry/content-registry.ts`, `src/core/registry/mod-registry.ts`, and `src/core/mods/mod-runtime.ts`
 - Why it is next:
-  - Child 19 is closed, so the next review boundary shifts to house runtime registration rather than further task-runtime expansion
+  - Child 20 is closed, so the next review boundary shifts to unified gameplay contribution registration rather than further house-registry widening
 - Category:
-  - `house runtime mod registration`
+  - `unified gameplay contribution registry`

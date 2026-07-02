@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `Pre-authored plan only. Await fresh weekly promotion before execution.`
-- Next Step: `Promote Child 20 only after Child 19 closeout and baseline recheck.`
-- Verification: `Not run as part of this doc-only change`
-- Notes: `If Child 20 changes shared house interfaces or registry shape, update docs/special-house-interface.md and docs/change-log.md together.`
+- Current Focus: `Child 20 is closed. Shared house registration now converges through one core-owned seam for builtin module and renderer lookup.`
+- Next Step: `Run a fresh Child 21 baseline recheck before promoting the unified gameplay contribution registry child.`
+- Verification: `node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+- Notes: `Shared house interfaces and registry shape were synchronized in docs/special-house-interface.md and docs/change-log.md as required.`
 
 ## Progress Log
 
@@ -23,6 +23,14 @@
   - Summary: `Plan created from the mod-first unified contract roadmap. Child 20 remains non-executable until the next weekly set promotes it after Child 19.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Recheck the builtin house module registry and special-house interface assumptions after Child 19 closes.`
+- 2026-07-02
+  - Summary: `Ran the fresh post-Child-19 baseline recheck and promoted Child 20 to active execution. The next debt is narrower than the original draft: a builtin-static house registry still leaks into core runtime ownership, presenter module-view selection, and house renderer lookup. Task 1 also added targeted red tests that fail exactly on the missing shared registration seam and unsynchronized special-house registry contract.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry"`
+  - Next: `Implement the shared house registration seam under core ownership and re-run the targeted registration tests.`
+- 2026-07-02
+  - Summary: `Completed Child 20. Builtin house module and renderer bindings now assemble through src/core/registry/house-module-registry.ts, covered house runtime/presenter/view lookup consume that shared seam, and the special-house interface contract now explicitly requires builtin and mod-owned houses to share one registration path.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `Keep Child 21 queued until a fresh baseline recheck decides whether its registry scope stays unchanged after Child 20.`
 
 ---
 
@@ -116,15 +124,15 @@
 - Read: `src/core/runtime/house-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Enumerate builtin-only registry assumptions and shared contract gaps**
+- [x] **Step 1: Enumerate builtin-only registry assumptions and shared contract gaps**
 
 Record which assumptions still prevent house modules from being registered through a mod-facing path.
 
-- [ ] **Step 2: Add failing regression tests for static registry assumptions**
+- [x] **Step 2: Add failing regression tests for static registry assumptions**
 
 Write red tests that prove house runtime and renderer lookup are still builtin-static before implementation.
 
-- [ ] **Step 3: Run the targeted red tests**
+- [x] **Step 3: Run the targeted red tests**
 
 Run:
 
@@ -136,7 +144,7 @@ Expected:
 
 - at least one house-registration guard fails before implementation
 
-- [ ] **Step 4: Record the audit result in plan state**
+- [x] **Step 4: Record the audit result in plan state**
 
 Update `Execution State` and `Progress Log` with the enumerated house-registration baseline.
 
@@ -149,11 +157,11 @@ Update `Execution State` and `Progress Log` with the enumerated house-registrati
 - Create: `src/core/registry/house-module-registry.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add additive registration structures for house modules and renderers**
+- [x] **Step 1: Add additive registration structures for house modules and renderers**
 
 Keep builtin house modules working while introducing a later mod-populatable registry surface.
 
-- [ ] **Step 2: Re-run the targeted registration tests**
+- [x] **Step 2: Re-run the targeted registration tests**
 
 Run:
 
@@ -165,7 +173,7 @@ Expected:
 
 - house registration tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 2**
+- [x] **Step 3: Run the full verification gate for Task 2**
 
 Run:
 
@@ -188,11 +196,11 @@ Expected:
 - Modify: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Resolve covered house runtime and renderer lookup through the new registry**
+- [x] **Step 1: Resolve covered house runtime and renderer lookup through the new registry**
 
 Keep `src/main.ts` on stable generic house wiring only.
 
-- [ ] **Step 2: Re-run the targeted house-runtime tests**
+- [x] **Step 2: Re-run the targeted house-runtime tests**
 
 Run:
 
@@ -204,7 +212,7 @@ Expected:
 
 - covered house runtime tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 3**
+- [x] **Step 3: Run the full verification gate for Task 3**
 
 Run:
 
@@ -225,11 +233,11 @@ Expected:
 - Modify: `docs/change-log.md`
 - Modify: `docs/superpowers/plans/2026-07-02-child-20-house-runtime-mod-registration-plan.md`
 
-- [ ] **Step 1: Update the shared house interface documentation**
+- [x] **Step 1: Update the shared house interface documentation**
 
 Reflect the final registration/runtime session shape and keep the acceptance checklist accurate.
 
-- [ ] **Step 2: Run governance verification**
+- [x] **Step 2: Run governance verification**
 
 Run:
 
@@ -243,15 +251,15 @@ Expected:
 
 ## Exit Check
 
-- [ ] House module registration no longer depends on a builtin-only static registry.
-- [ ] Covered house runtime lookup uses the shared registration seam.
-- [ ] `src/main.ts` does not gain house-specific business branches.
-- [ ] `docs/special-house-interface.md` and `docs/change-log.md` are synchronized with the shared contract change.
-- [ ] Targeted regression coverage passes.
+- [x] House module registration no longer depends on a builtin-only static registry.
+- [x] Covered house runtime lookup uses the shared registration seam.
+- [x] `src/main.ts` does not gain house-specific business branches.
+- [x] `docs/special-house-interface.md` and `docs/change-log.md` are synchronized with the shared contract change.
+- [x] Targeted regression coverage passes.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

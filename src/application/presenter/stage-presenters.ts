@@ -1,5 +1,4 @@
 import { selectCityNpcSummariesForHouse } from "../city-npcs/select-city-npcs-for-house";
-import { getHouseModule } from "../house-modules/house-module-registry";
 import {
   getCurrentChoiceOptions,
   getCurrentSceneAction,
@@ -15,6 +14,10 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../domain/house";
+import {
+  builtinHouseModuleRegistry,
+  type HouseModuleRegistry,
+} from "../../core/registry/house-module-registry";
 import type { AppPresenterStageOutput } from "./presenter-output";
 
 export type StagePresenterInput = {
@@ -28,6 +31,7 @@ export type StagePresenterInput = {
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   sceneDefinitionsById?: Record<string, SceneDefinition>;
+  houseModuleRegistry?: HouseModuleRegistry;
 };
 
 function selectActiveHouseDefinition(
@@ -45,6 +49,8 @@ function selectActiveHouseDefinition(
 export function createStagePresenterOutput(
   input: StagePresenterInput
 ): AppPresenterStageOutput {
+  const houseModuleRegistry =
+    input.houseModuleRegistry ?? builtinHouseModuleRegistry;
   const currentView = input.appState.gameState.ui.currentView;
   const cityDefinitions = input.cityDefinitions ?? [input.cityDefinition];
   const activeCityDefinition =
@@ -113,11 +119,14 @@ export function createStagePresenterOutput(
     }
 
     if (activeHouse.moduleId != null) {
-      const houseModule = getHouseModule(activeHouse.moduleId);
+      const houseModule = houseModuleRegistry.getModule(activeHouse.moduleId);
       return {
         type: "house",
         activeHouse,
-        moduleViewModel: houseModule.selectViewModel({
+        moduleViewModel:
+          houseModule == null
+            ? null
+            : houseModule.selectViewModel({
           gameState: input.appState.gameState,
           characterDefinitions: input.appState.characterDefinitions,
           houseDefinition: activeHouse,
@@ -161,4 +170,3 @@ export function createStagePresenterOutput(
 
   return { type: "empty" };
 }
-

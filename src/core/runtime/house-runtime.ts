@@ -1,4 +1,3 @@
-import { getHouseModule } from "../../application/house-modules/house-module-registry";
 import type { AppState } from "../../application/app-shell";
 import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
 import { triggerStoryEvents } from "../../application/story/story-runtime";
@@ -17,6 +16,10 @@ import type {
 } from "../../domain/house-module";
 import type { SceneDefinition } from "../../domain/action";
 import { assertExists } from "../../shared/assert";
+import {
+  builtinHouseModuleRegistry,
+  type HouseModuleRegistry,
+} from "../registry/house-module-registry";
 import type {
   HouseRuntimeRequest,
   HouseRuntimeSessionRequest,
@@ -45,6 +48,7 @@ export type HouseRuntimeDependencies = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
+  houseModuleRegistry?: HouseModuleRegistry | undefined;
   syncCouncilPriorityAfterGameStateChange(
     previousGameState: GameState,
     councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
@@ -66,6 +70,8 @@ export function createHouseRuntimeBridge(
   dependencies: HouseRuntimeDependencies
 ): HouseRuntimeBridge {
   const intervalHandles: Record<string, number> = {};
+  const houseModuleRegistry =
+    dependencies.houseModuleRegistry ?? builtinHouseModuleRegistry;
 
   function getActiveHouseDefinition(): HouseDefinition | null {
     const appState = dependencies.getAppState();
@@ -166,7 +172,11 @@ export function createHouseRuntimeBridge(
     }
 
     const appState = dependencies.getAppState();
-    const houseModule = getHouseModule(moduleId);
+    const houseModule = houseModuleRegistry.getModule(moduleId);
+    assertExists(
+      houseModule,
+      `House module "${moduleId}" is not registered for runtime dispatch.`
+    );
     const result = houseModule.dispatch({
       gameState: appState.gameState,
       characterDefinitions: appState.characterDefinitions,
@@ -280,7 +290,11 @@ export function createHouseRuntimeBridge(
     const moduleId = houseDefinition.moduleId;
     if (moduleId != null) {
       const nextAppState = dependencies.getAppState();
-      const houseModule = getHouseModule(moduleId);
+      const houseModule = houseModuleRegistry.getModule(moduleId);
+      assertExists(
+        houseModule,
+        `House module "${moduleId}" is not registered for house entry.`
+      );
       const result = houseModule.enter({
         gameState: nextAppState.gameState,
         characterDefinitions: nextAppState.characterDefinitions,
@@ -328,7 +342,11 @@ export function createHouseRuntimeBridge(
     const activeHouse = getActiveHouseDefinition();
     if (activeHouse?.moduleId != null) {
       const appState = dependencies.getAppState();
-      const houseModule = getHouseModule(activeHouse.moduleId);
+      const houseModule = houseModuleRegistry.getModule(activeHouse.moduleId);
+      assertExists(
+        houseModule,
+        `House module "${activeHouse.moduleId}" is not registered for house leave.`
+      );
       const result = houseModule.leave({
         gameState: appState.gameState,
         characterDefinitions: appState.characterDefinitions,

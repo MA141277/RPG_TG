@@ -1,33 +1,28 @@
-import type { HouseModuleId, HouseModuleViewModel } from "../../../domain/house-module";
-import { renderHomeHouseView } from "./home-house-view";
-import { renderGrainShopHouseView } from "./grain-shop-house-view";
-import { renderKeepHouseView } from "./keep-house-view";
-import { renderLeaderResidenceHouseView } from "./leader-residence-house-view";
-import { renderMarketHouseView } from "./market-house-view";
-import { renderTavernHouseView } from "./tavern-house-view";
-import { renderMedicineHouseHouseView } from "./medicine-house-house-view";
-import { renderTempleHouseView } from "./temple-house-view";
-import { renderTeaHouseHouseView } from "./tea-house-house-view";
-
-export type HouseModuleViewRenderer = (
-  viewModel: HouseModuleViewModel
-) => string;
-
-export const houseModuleViewRegistry: Record<
+import type {
   HouseModuleId,
-  HouseModuleViewRenderer
-> = {
-  "home-house": renderHomeHouseView,
-  "keep-house": renderKeepHouseView,
-  "leader-residence": renderLeaderResidenceHouseView,
-  "grain-shop": renderGrainShopHouseView,
-  "market-house": renderMarketHouseView,
-  "medicine-house": renderMedicineHouseHouseView,
-  "temple-house": renderTempleHouseView,
-  tavern: renderTavernHouseView,
-  "tea-house": renderTeaHouseHouseView,
-};
+  HouseModuleViewModel,
+  HouseModuleViewRenderer,
+} from "../../../domain/house-module";
+import {
+  builtinHouseModuleRegistry,
+  type HouseModuleRegistry,
+} from "../../../core/registry/house-module-registry";
 
-export function renderHouseModuleView(viewModel: HouseModuleViewModel): string {
-  return houseModuleViewRegistry[viewModel.moduleId](viewModel);
+export function getHouseModuleRenderer(
+  moduleId: HouseModuleId,
+  registry: HouseModuleRegistry = builtinHouseModuleRegistry
+): HouseModuleViewRenderer {
+  const render = registry.getRenderer(moduleId);
+  if (render == null) {
+    throw new Error(`House renderer "${moduleId}" is not registered.`);
+  }
+
+  return render;
+}
+
+export function renderHouseModuleView(
+  viewModel: HouseModuleViewModel,
+  registry: HouseModuleRegistry = builtinHouseModuleRegistry
+): string {
+  return getHouseModuleRenderer(viewModel.moduleId, registry)(viewModel);
 }

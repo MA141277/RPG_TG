@@ -2,6 +2,23 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-02 Child 20 House Runtime Mod Registration
+
+### Added
+- 新增 `src/core/registry/house-module-registry.ts`，定义共享 `HouseModuleRegistration` / `HouseModuleRegistry` seam，并提供 builtin fallback registry 装配点。
+- 新增 `src/application/house-modules/builtin-house-module-registrations.ts` 与 `src/ui/views/house/builtin-house-module-renderers.ts`，把 builtin house module 与 renderer 贡献改为通过共享 registration seam 装配，而不是由 runtime / presenter / view 各自维护静态表。
+- 新增 Child 20 定向回归测试，锁定 shared house registry seam、core runtime / presenter / renderer lookup 不再依赖 application 静态 registry，以及 `docs/special-house-interface.md` 必须明确 builtin 与 mod-owned house 共用同一条 registration path。
+
+### Changed
+- `src/core/runtime/house-runtime.ts` 与 `src/application/house/house-runtime.ts` 现已通过共享 `HouseModuleRegistry` 解析 house module，并支持后续以依赖注入方式替换 builtin registry。
+- `src/application/presenter/stage-presenters.ts` 现已通过共享 `HouseModuleRegistry` 解析 house module view-model，而不再直接依赖 `src/application/house-modules/house-module-registry.ts`。
+- `src/ui/views/house/house-module-view-registry.ts` 现已通过共享 `HouseModuleRegistry` 解析 renderer，而不再保留本地静态 renderer 表。
+- `docs/special-house-interface.md` 现已明确：builtin houses 与 mod-owned houses 必须通过同一条 shared registration seam 进入 runtime / presenter / renderer 路径。
+
+### Impact
+- Child 20 当前批次已完成基线复核和 shared registry seam 首次落地；house runtime owner line 不再被 builtin application registry 直接绑定。
+- 后续 Child 20 剩余工作应继续停留在 house registration boundary 内，避免把这轮实现扩张成 Child 21 的 generalized gameplay contribution registry redesign。
+
 ## 2026-07-02 Unified Minigame Contract Spec
 
 ### Added

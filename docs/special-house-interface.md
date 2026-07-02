@@ -23,6 +23,7 @@ The goal is:
 - no house-specific state globals
 - no hidden mutations to unrelated player data
 - no UI markup generated inside `application`
+- builtin houses and mod-owned houses enter through the same shared registration seam
 - future houses can be added by following the same module contract
 
 ## Layer Split
@@ -42,6 +43,12 @@ Do not place special-house business logic in:
 - `shared/*`
 
 except for stable registry wiring.
+
+Registry wiring rules:
+
+- the shared registration seam may assemble builtin and mod-owned house contributions
+- builtin fallback registrations may exist, but they must still be expressed through the same shared registration seam
+- core runtime, presenter lookup, and house renderer lookup must not each keep their own unrelated static table
 
 ## Required Domain Contract
 
@@ -457,39 +464,43 @@ Rules:
 
 ## Registry Pattern
 
-Use a registry to bind module ids to behavior.
+Use one shared registration seam to bind module ids to behavior and rendering.
+
+Builtin and mod-owned houses must both contribute through the same seam.
+
+Recommended shared registration shape:
+
+```ts
+type HouseModuleRegistration = {
+  moduleId: HouseModuleId;
+  module?: HouseModuleDefinition;
+  render?: HouseModuleViewRenderer;
+};
+
+type HouseModuleRegistry = {
+  register(registration: HouseModuleRegistration): void;
+  getModule(moduleId: HouseModuleId): HouseModuleDefinition | null;
+  getRenderer(moduleId: HouseModuleId): HouseModuleViewRenderer | null;
+};
+```
+
+Rules:
+
+- builtin fallback registrations may be preloaded into the shared registration seam
+- later mod-owned houses must add to the same seam instead of introducing a second registry path
+- runtime ownership, presenter lookup, and renderer lookup must all consume the same shared registration seam
+- `src/main.ts` may pass a shared registry dependency through stable wiring, but it must not author house-specific registration branches
 
 Example:
 
 ```ts
-export const houseModuleRegistry: Record<HouseModuleId, HouseModuleDefinition> = {
-  "home-house": homeHouseHouseModule,
-  "grain-shop": grainShopHouseModule,
-  "keep-house": keepHouseHouseModule,
-  "leader-residence": leaderResidenceHouseModule,
-  "market-house": marketHouseHouseModule,
-  "temple-house": templeHouseHouseModule,
-  tavern: tavernHouseModule,
-  "tea-house": teaHouseHouseModule,
-};
-```
+const houseModuleRegistry = createBuiltinHouseModuleRegistry();
 
-UI renderers should follow the same rule:
-
-```ts
-export const houseModuleViewRegistry: Record<
-  HouseModuleId,
-  (viewModel: HouseModuleViewModel) => string
-> = {
-  "home-house": renderHomeHouseView,
-  "grain-shop": renderGrainShopHouseView,
-  "keep-house": renderKeepHouseView,
-  "leader-residence": renderLeaderResidenceHouseView,
-  "market-house": renderMarketHouseView,
-  "temple-house": renderTempleHouseView,
-  tavern: renderTavernHouseView,
-  "tea-house": renderTeaHouseHouseView,
-};
+houseModuleRegistry.register({
+  moduleId: "grain-shop",
+  module: grainShopHouseModule,
+  render: renderGrainShopHouseView,
+});
 ```
 
 The app should:
@@ -497,9 +508,9 @@ The app should:
 1. read `currentHouseId`
 2. find `HouseDefinition`
 3. read `moduleId`
-4. resolve registry entry
+4. resolve the shared registration seam
 5. call generic module lifecycle methods
-6. resolve the registered renderer for the returned view model
+6. resolve the registered renderer for the returned view model through the same seam
 
 If a city entry first opens a directory, that directory should still resolve to a stable target house id and then continue through the same registry path.
 
@@ -553,6 +564,7 @@ A new house implementation is acceptable only if all are true:
 
 - `main.ts` contains no house-specific business branch
 - house behavior is resolved through `moduleId` + registry
+- builtin and mod-owned houses share one registration seam
 - application layer returns structured data, not HTML
 - persistent changes are written through unified state
 - entering house does not reset player base stats

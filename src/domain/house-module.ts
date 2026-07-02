@@ -477,6 +477,10 @@ export type HouseModuleViewModel = {
   leaveAction: HouseActionViewModel;
 };
 
+export type HouseModuleViewRenderer = (
+  viewModel: HouseModuleViewModel
+) => string;
+
 export type HouseModuleBaseInput<ModuleId extends HouseModuleId = HouseModuleId> = {
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];

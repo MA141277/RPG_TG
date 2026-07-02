@@ -9051,6 +9051,72 @@ test("core house runtime bridge exports enter leave and dispatch seams", () => {
   assert.match(source, /dispatchHouseRuntimeRequest/);
 });
 
+test("house module registry exposes a shared registration seam for mod-owned modules", () => {
+  const registryPath = path.join(
+    process.cwd(),
+    "src/core/registry/house-module-registry.ts"
+  );
+
+  assert.ok(
+    fs.existsSync(registryPath),
+    "Expected a shared house registry seam under src/core/registry."
+  );
+
+  const source = fs.readFileSync(registryPath, "utf8");
+
+  assert.match(source, /export type HouseModuleRegistration/);
+  assert.match(source, /export type HouseModuleRegistry/);
+  assert.match(source, /createHouseModuleRegistry/);
+  assert.match(source, /createBuiltinHouseModuleRegistry/);
+});
+
+test("mod house registration removes core runtime dependence on the application static registry", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /HouseModuleRegistry|houseModuleRegistry/);
+  assert.doesNotMatch(
+    source,
+    /from "\.\.\/\.\.\/application\/house-modules\/house-module-registry"/
+  );
+});
+
+test("mod house registration removes presenter dependence on the application static registry", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/stage-presenters.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /HouseModuleRegistry|houseModuleRegistry/);
+  assert.doesNotMatch(
+    source,
+    /from "\.\.\/house-modules\/house-module-registry"/
+  );
+});
+
+test("house renderer registry resolves renderers through the shared registration seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/house/house-module-view-registry.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /HouseModuleRegistry|createBuiltinHouseModuleRegistry|getHouseModuleRenderer/);
+  assert.doesNotMatch(source, /export const houseModuleViewRegistry: Record/);
+});
+
+test("special house interface documents builtin and mod-owned registration through one seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "docs/special-house-interface.md"),
+    "utf8"
+  );
+
+  assert.match(source, /builtin/i);
+  assert.match(source, /mod-owned|mod-facing/i);
+  assert.match(source, /shared registration seam/i);
+});
+
 test("covered house flow is runtime-owned", () => {
   const {
     createHouseRuntimeBridge,
