@@ -17,6 +17,19 @@ It must show:
 
 - Replace with a short summary of what the architecture looks like at the end of the week.
 
+## Current Queue State
+
+- Weekly queue status: `Replace with open / closed / review-prep / similar explicit state.`
+- Active executable child: `Replace with the current child id or none.`
+- Locked follow-up child: `Replace with the current locked follow-up or none.`
+- Planning rule: `Replace with whether later candidate work is only architectural context or an unlocked executable child.`
+
+## Runtime Maturity Snapshot
+
+| Runtime / Boundary | Current Maturity | Current Production Role | Remaining Debt | Candidate Follow-Up |
+| --- | --- | --- | --- | --- |
+| `Runtime name` | `formal-owner / owner-first-slice / partial-owner / bridge / adapter-only` | `what it owns today` | `what still remains mixed or deferred` | `candidate next split or none` |
+
 ## Module Diagram
 
 ```mermaid
@@ -66,3 +79,15 @@ flowchart TD
 ## Architecture Risks
 
 - Replace with the parts still acting like black boxes.
+
+## Candidate Post-Queue Splits
+
+These are architecture candidates only. They are not unlocked children and must not be executed without a fresh weekly review plus new spec/plan authoring.
+
+1. `Replace with candidate split`
+   - Primary target:
+     - `...`
+   - Reason to split independently:
+     - `...`
+   - Do not mix with:
+     - `...`

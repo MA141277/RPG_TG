@@ -2,7 +2,7 @@
 
 **Week Of:** `YYYY-MM-DD`
 
-**Weekly Plan:** `docs/superpowers/plans/YYYY-MM-DD-weekly-plan.md`
+**Weekly Plan:** `docs/superpowers/plans/YYYY-MM-DD-weekly-orchestration-plan.md`
 
 **Primary Child Plan(s):**
 
@@ -20,18 +20,18 @@
 
 - Module map:
   - `docs/superpowers/weekly/YYYY-MM-DD-weekly-module-map.md`
-- Boundary checklist:
-  - `docs/superpowers/weekly/YYYY-MM-DD-weekly-boundary-checklist.md`
-- Module backlog:
-  - `docs/superpowers/weekly/YYYY-MM-DD-weekly-module-backlog.md`
 - Call flows:
   - `docs/superpowers/weekly/YYYY-MM-DD-weekly-call-flows.md`
-- Change impact:
-  - `docs/superpowers/weekly/YYYY-MM-DD-weekly-change-impact.md`
 - Next split review:
   - `docs/superpowers/weekly/YYYY-MM-DD-weekly-next-split-review.md`
 - Architecture report:
   - `docs/superpowers/weekly/YYYY-MM-DD-weekly-architecture-report.md`
+
+Merged ownership note:
+
+- boundary checklist ownership lives in `weekly-module-map`
+- change impact ownership lives in this review index
+- module backlog ownership lives in `weekly-next-split-review`
 
 ## Verification Summary
 
@@ -54,6 +54,8 @@
 - Replace with any `P0` / `P1` / `P2` blockers.
 
 ## Next Week Input
+
+Interpret this as input to the next weekly set, not as automatic permission to append a new executable child into the closed weekly plan.
 
 - Highest-priority module to refine:
   - `module-name`

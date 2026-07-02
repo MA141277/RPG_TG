@@ -1,5 +1,7 @@
 # Weekly Boundary Checklist
 
+> **Historical Template:** Boundary checklist ownership is now folded into `weekly-module-map` for the active five-artifact weekly bundle. Do not create this file for new weekly sets unless governance explicitly reactivates the legacy artifact scheme.
+
 **Week Of:** `YYYY-MM-DD`
 
 ## Stable Boundaries

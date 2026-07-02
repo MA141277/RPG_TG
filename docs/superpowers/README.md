@@ -73,6 +73,13 @@ For queue-level weekly coordination, use:
 - [specs/weekly-orchestration-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/weekly-orchestration-spec.md)
 - [plans/2026-06-29-weekly-orchestration-plan.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md)
 
+Interpretation note:
+
+- one weekly orchestration plan represents one governed weekly set / iteration set
+- it is not only a calendar-week container
+- the same natural week may contain multiple weekly sets if an earlier set closes and later continuation requires a fresh review
+- once a weekly set is closed, open a new weekly orchestration plan for later executable children instead of appending them to the closed one
+
 ## Validation
 
 Use:

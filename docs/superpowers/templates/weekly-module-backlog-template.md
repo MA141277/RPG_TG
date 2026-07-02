@@ -1,5 +1,7 @@
 # Weekly Module Backlog
 
+> **Historical Template:** Module backlog ownership is now folded into `weekly-next-split-review` for the active five-artifact weekly bundle. Do not create this file for new weekly sets unless governance explicitly reactivates the legacy artifact scheme.
+
 **Week Of:** `YYYY-MM-DD`
 
 ## Status Categories

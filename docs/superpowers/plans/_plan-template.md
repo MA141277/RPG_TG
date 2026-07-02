@@ -17,6 +17,26 @@
 - Verification: `Not run`
 - Notes: `Update this block after every work batch.`
 
+## Current Iteration Phase
+
+- Iteration label: `Replace with the governing iteration label when this plan participates in a weekly queue or later continuation set.`
+- Current phase: `Replace with one concrete phase such as planning, active execution, closeout, or review-prep.`
+- Entry trigger: `Replace with the condition that allowed this plan or queue item to become active.`
+- Exit trigger: `Replace with the condition that moves this plan or queue item into closeout, promotion, or archival.`
+
+## Post-Queue Continuation Rules
+
+Use this section when the plan governs a queue, review/baseline child, or later continuation work. Remove it only if the plan is clearly a one-off implementation plan with no queue-governance role.
+
+- Candidate work recorded in architecture or review docs does not count as unlocked execution scope.
+- A later child or continuation batch must not start until governance explicitly records it as executable.
+- Once the queue is closed and the plan is marked `completed`, do not append a new executable child into the same set; open a new weekly/continuation plan instead.
+- Keep queue depth explicit when relevant:
+  - one `active executable child`
+  - one `immediate queued follow-up`
+  - one `locked follow-up child`
+- If a continuation item is only residual cleanup, record it as debt/backlog instead of automatically creating a new child.
+
 ## Progress Log
 
 - 2000-01-01

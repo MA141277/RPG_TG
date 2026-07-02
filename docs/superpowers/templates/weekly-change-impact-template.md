@@ -1,5 +1,7 @@
 # Weekly Change Impact Record
 
+> **Historical Template:** Change impact ownership is now folded into `weekly-review-index` for the active five-artifact weekly bundle. Do not create this file for new weekly sets unless governance explicitly reactivates the legacy artifact scheme.
+
 **Week Of:** `YYYY-MM-DD`
 
 ## Purpose

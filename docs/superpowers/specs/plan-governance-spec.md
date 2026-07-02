@@ -38,6 +38,8 @@ Recommended additional sections:
 - `Verification`
 - `Completion Checklist`
 - links to related specs
+- `Current Iteration Phase` for weekly/queue-governance plans
+- `Post-Queue Continuation Rules` for weekly/queue-governance plans
 
 ## 4. Execution State Contract
 
@@ -65,6 +67,28 @@ Rules:
 - `Last Updated` must use `YYYY-MM-DD`
 - `completed` may be used only when acceptance gates are satisfied
 - `blocked` may be used only when the blocking condition is recorded in `Progress Log`
+
+For weekly plans, queue-governance plans, and review/baseline plans that control later promotion:
+
+- `Execution State` should also make the current iteration/phase explicit when the queue is no longer in ordinary active execution
+- if the current queue is closed, `Next Step` must say that a fresh weekly review/spec/plan cycle is required before later continuation work starts
+
+## 4.1 Iteration / Phase Declaration
+
+Plans that govern a weekly queue, continuation queue, or review/baseline unlock flow should declare the current iteration/phase explicitly.
+
+Recommended fields:
+
+- `Iteration label`
+- `Current phase`
+- `Entry trigger`
+- `Exit trigger`
+
+Purpose:
+
+- make it clear whether the plan is in active execution, queue closeout, review preparation, or a later continuation phase
+- prevent later work from being treated as an implicit extension of a closed queue
+- keep historical progress readable without inferring phase from long progress logs alone
 
 ## 5. Progress Log Contract
 
@@ -168,6 +192,11 @@ A plan may be marked `completed` only when:
 - no unresolved `P0` or `P1` remains within the plan scope
 - the latest `Progress Log` entry records the completion state
 
+For weekly/queue-governance plans:
+
+- `completed` may still mean the queue itself is closed even if later candidate work exists outside the queue
+- candidate later work must not be described as unlocked or executable unless governance explicitly promotes it
+
 ## 10. Resume Rules
 
 When resuming a plan, use this priority order:
@@ -178,6 +207,26 @@ When resuming a plan, use this priority order:
 4. actual codebase state, if docs are stale
 
 If these disagree, update the plan before continuing new implementation.
+
+## 10.1 Candidate vs Unlocked Rule
+
+When a plan governs a queue or later continuation:
+
+- an `architecture candidate`, `next split candidate`, or backlog item is not executable work
+- only an item explicitly recorded by governance as the `next executable child` or equivalent may start implementation
+- if a queue has been closed, any later continuation must begin with a fresh review plus explicit spec/plan authoring before code work resumes
+
+## 10.2 Queue Depth Control
+
+Weekly/queue-governance plans should keep future queue depth controlled unless a stronger written reason exists.
+
+Recommended maximum visible depth:
+
+- one `active executable child`
+- one `immediate queued follow-up`
+- one `locked follow-up child`
+
+Anything beyond that should remain in architecture review, backlog, or candidate status until promoted by a later review.
 
 ## 11. Repository Enforcement
 

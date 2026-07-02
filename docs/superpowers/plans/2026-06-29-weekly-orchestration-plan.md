@@ -2,9 +2,9 @@
 
 > **For agentic workers:** Use this file as the queue-level controller for the week's implementation plans. Execute concrete code work from child plans only. Update both the child plan and this weekly orchestration plan after each work batch.
 
-**Goal:** Govern this week's repository plan execution so child plans run in the correct order, active work is visible, pending work is queued, and interrupted work can resume from a single weekly source of truth.
+**Goal:** Govern this week's repository plan execution so child plans run in the correct order, active work is visible, pending work is queued, interrupted work can resume from a single weekly source of truth, and the post-Child-13 queue closeout state is explicit before any later continuation work opens a new weekly set.
 
-**Architecture:** Use one weekly parent plan to orchestrate plan sequencing and one weekly visibility companion to force de-black-box outputs. Keep concrete implementation in child plans. Reconcile inherited legacy plans separately from the active weekly queue so historical ambiguity does not corrupt the execution order of current work.
+**Architecture:** Use one weekly parent plan to orchestrate plan sequencing and one weekly visibility companion to force de-black-box outputs. Keep concrete implementation in child plans. Reconcile inherited legacy plans separately from the active weekly queue so historical ambiguity does not corrupt the execution order of current work. After Child 13 closeout, keep this file as the authoritative record that the current queue is closed and that any later continuation must begin as a newly reviewed iteration rather than as an implicit extension of the closed queue.
 
 **Tech Stack:** Markdown plan governance, TypeScript repository tasks, `npm run lint:plans`, child-plan verification commands
 
@@ -16,6 +16,58 @@
 - Next Step: `Do not resume another executable child from this weekly queue. Any later continuation work now requires a fresh weekly review, explicit spec/plan authoring, and queue-governance updates before implementation starts.`
 - Verification: `Child 13 closeout: npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"; npm run typecheck; npm test; npm run build; npm run lint:plans`
 - Notes: `This weekly plan governed the current execution order and that queue is now closed. Child 4 is complete on the approved minimum RuntimeState carrier, Child 5 is complete on the presenter output bridge, Child 6 is complete on the formal Task Runtime contract/lifecycle/progression slice, Child 7 is complete on the formal Mod Runtime activation/startup seam, Child 8 is complete on the first formal StateSync Runtime canonical boundary, Child 9 is complete on the shared contract-hardening baseline, Child 10 is complete on the runtime ownerization review/baseline artifact, Child 11 is complete on the approved ownerization slices, Child 12 is complete on the additive UI contract reserve landing, and Child 13 is complete on the remaining same-type shared-dispatch follow-up/reentry convergence audit. Bucket A = one remaining covered story-battle -> reenter-house follow-up path; Bucket B = none; Bucket C = none in the remaining in-scope audit. characterDefinitions remains outside RuntimeState.core unless a later weekly promotion gate updates the governing docs first. Several older plans still have inherited or uncertain state and remain in reconciliation scope until individually reviewed.`
+
+## Current Iteration Phase
+
+- Iteration label: `engine-first / runtime-first foundation iteration`
+- Current phase: `queue closeout and next-iteration review preparation`
+- Completed in this iteration:
+  - `Child 4` minimum RuntimeState carrier + interactive integration under core
+  - `Child 5` presenter/render decoupling
+  - `Child 6` Task Runtime first slice
+  - `Child 7` Mod Runtime first slice
+  - `Child 8` StateSync Runtime first canonical boundary
+  - `Child 9` shared runtime contract hardening
+  - `Child 10` runtime ownerization review / baseline
+  - `Child 11` approved sub-runtime ownerization slices
+  - `Child 12` additive UI contract reserve
+  - `Child 13` remaining same-type shared-dispatch follow-up / reentry closeout
+- Current iteration outcome:
+  - the active weekly queue is closed
+  - no executable child remains in this weekly set
+  - the repository is no longer blocked on missing runtime contracts; the remaining issue is controlled continuation decomposition for later ownerization work
+- Next iteration entry trigger:
+  - a fresh weekly review is written
+  - the new iteration states its own concrete goal and boundary
+  - any newly proposed child has explicit spec/plan authoring and queue-governance updates before implementation starts
+
+## Post-Queue Continuation Goals
+
+The next weekly iteration must treat governance work as controlled continuation, not as automatic queue growth.
+
+- 改造目标 1: keep the weekly plan as the single source of truth for which child is executable, which child is only a candidate, and which work remains outside the queue
+- 改造目标 2: separate `architecture candidate` from `unlocked child` so architecture-report follow-up ideas are not mistaken for implementation permission
+- 改造目标 3: make the current iteration/phase explicit so later work can distinguish `closed queue`, `review/prep`, and `active execution` states without relying on historical inference
+- 改造目标 4: prevent infinite child splitting by requiring every new child to justify why it is a separate reviewable boundary instead of residual cleanup inside the current closeout
+- 改造目标 5: keep later runtime continuation decomposed by subsystem boundary and verification gate, rather than reopening one large undifferentiated ownerization program
+
+## Post-Queue Continuation Rules
+
+These rules apply after the current weekly queue closeout.
+
+- No later continuation child may be treated as executable until a fresh weekly review records it as the next executable child.
+- Recording a candidate next split in `weekly-architecture-report.md` does not unlock that work.
+- A later child may be authored only if it has:
+  - one primary subsystem boundary
+  - one primary verification story
+  - a clear reason it should not remain as residual debt or architecture backlog
+- A later child must not be created merely because the previous child discovered adjacent cleanup.
+- In a future weekly set, keep queue depth controlled:
+  - at most one `active executable child`
+  - at most one `immediate queued follow-up`
+  - at most one `locked follow-up child`
+  - anything beyond that stays in architecture review/backlog until promoted by a later weekly review
+- If a candidate continuation would mix `interactive legacy cleanup`, `navigation/time convergence`, and `event/scene handoff convergence` into one child, stop and split it before queue promotion.
 
 ## Progress Log
 
@@ -199,6 +251,10 @@
   - Summary: `Completed Child 13 and closed the active weekly queue. The remaining in-scope post-Child-11 audit found one Bucket A path: the story-battle action -> reenter-house follow-up still handled inline in src/main.ts after shared dispatch returned. Child 13 added red-to-green regression coverage, moved that follow-up behind houseRuntime.applyInteractiveFollowUp(), recorded no Bucket B backfill and no Bucket C new-boundary remainder, and synchronized the five-core weekly artifacts to a no-active-child state.`
   - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "child 13|follow-up|reentry|shared dispatch"; npm run typecheck; npm test; npm run build; npm run lint:plans`
   - Next: `No active queued child remains in this weekly set. Require a fresh weekly review before authoring any later continuation child.`
+- 2026-07-02
+  - Summary: `Completed the post-closeout governance audit for the current weekly set. README, weekly orchestration/governance specs, shared plan templates, weekly visibility templates, and the active weekly architecture/report artifacts were rechecked against the new weekly-set rule: a closed queue may record candidate continuation work, but it must not append a new executable child without a fresh weekly review and new orchestration-plan authoring. Template sync is now complete, and the only remaining legacy references are intentional historical-template notes for boundary checklist, change impact, and module backlog ownership.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep this weekly plan as the closeout record for the finished weekly set; if later continuation is approved, start from a fresh weekly review and a new weekly orchestration plan rather than extending this closed queue.`
 
 ---
 

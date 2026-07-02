@@ -10,6 +10,7 @@ The target is to make weekly planning:
 - explicit about execution order and dependency rules
 - resumable after Codex or developer interruptions
 - compatible with the repository-wide `plan-governance-spec`
+- explicit about when one weekly set is closed and when later work requires a new weekly set instead of appending to the old one
 
 ## 2. Scope
 
@@ -25,6 +26,12 @@ Instead:
 
 - the weekly orchestration plan governs plan-to-plan sequencing
 - each child plan still governs its own implementation steps
+
+Interpretation rule:
+
+- one weekly orchestration plan represents one governed weekly set / iteration set
+- it is not merely a calendar-week note file
+- the same natural week may contain more than one weekly set if an earlier set closes and later continuation needs a fresh review
 
 ## 3. Weekly Orchestration Role
 
@@ -43,6 +50,7 @@ It must not:
 - replace the concrete checkbox execution of child plans
 - hide implementation state inside prose only
 - mark a child plan completed if the child plan itself is not updated
+- reopen a closed weekly set by silently appending new executable children without a fresh review/promotion cycle
 
 ## 4. Required Weekly Sections
 
@@ -66,6 +74,8 @@ Recommended additional sections:
 - `## Blocker Rules`
 - `## Verification Policy`
 - `## Notes`
+- `## Current Iteration Phase`
+- `## Post-Queue Continuation Rules`
 
 ## 5. Weekly Plan Status Model
 
@@ -125,6 +135,22 @@ Rules:
 - only one queue item should be the active `in-progress` implementation target at a time unless the weekly plan explicitly allows parallel work
 - a dependent plan must not start before its prerequisites are complete
 - if a queue item does not yet have a child plan file, the child plan file must be authored before code execution begins for that scope
+- once the weekly set has been closed and the weekly orchestration plan is marked `completed`, do not append another executable child to that same set
+- any later continuation after queue closeout must begin through a fresh weekly review and a new weekly orchestration plan or explicitly superseding weekly set
+
+## 7.1 Queue Closeout And New Set Rule
+
+When a weekly orchestration plan reaches queue closeout:
+
+- the plan may remain as the authoritative record of that closed set
+- it must not be reused as the live controller for newly executable children
+- later continuation work must open a new weekly set with its own queue state, entry goal, and promotion rules
+
+Clarifications:
+
+- a natural calendar week does not force all work into one weekly orchestration plan
+- if Child A through Child N are complete and the queue is closed on Tuesday, later work started on Wednesday should still open a new weekly set rather than reopening the old one
+- architecture candidates or backlog items may still be recorded in the closed set, but they are not executable children
 
 ## 8. Resume Rules
 
@@ -147,6 +173,11 @@ If weekly plan state and child plan state disagree:
 4. weekly execution queue
 
 Then update the weekly plan before doing more code work.
+
+If the weekly plan is already marked `completed` and no active queue item remains:
+
+- do not resume by appending a new executable child into that file
+- instead, start from a fresh weekly review and create the next weekly orchestration plan for the new set
 
 ## 9. Verification Policy
 
@@ -186,6 +217,11 @@ A weekly orchestration plan may be marked `completed` only when:
 - no unresolved `P0` or `P1` remains in weekly scope
 - child plans and weekly status board agree
 - the latest weekly `Progress Log` records the weekly outcome
+
+After a weekly orchestration plan is marked `completed`:
+
+- it may still record explanatory notes, reconciliation notes, or architecture candidates
+- it must not become the active execution controller again unless a higher-level governance document explicitly supersedes the closeout rule
 
 ## 12. Relationship To Repository Governance
 

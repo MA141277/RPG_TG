@@ -21,6 +21,32 @@ It must show:
 - Child 10 Runtime Ownerization Review And Baseline is now completed as the formal post-Child-9 review gate and controlling baseline artifact.
 - Child 11 Sub-Runtime Ownerization Implementation is now completed: Task 1 landed the minimum shared-dispatch follow-up convergence for the covered story-battle reentry path, Task 2 landed covered interactive ownerization for the city-begging path, Task 3 landed covered house ownerization for the grain-shop path, and Task 4 aligned the covered advanceTime settlement path before closeout.
 - Child 12 UI Contract Reserve is now completed on the additive UI reserve landing, and Child 13 is now completed on the remaining same-type shared-dispatch reentry closeout with no Bucket B/C remainder in the in-scope audit.
+- The active weekly queue is now closed. No executable child remains in the current weekly set, and any later runtime continuation must begin with a fresh weekly review plus new spec/plan authoring instead of reopening Child 11 or extending Child 13 by default.
+
+## Current Queue State
+
+- Weekly queue status: `closed after Child 13`
+- Active executable child: `none`
+- Locked follow-up child: `none currently recorded`
+- Planning rule: use this report to record remaining architecture debt and candidate next splits, but do not treat any candidate below as unlocked implementation scope until weekly governance explicitly promotes it.
+
+## Runtime Maturity Snapshot
+
+| Runtime / Boundary | Current Maturity | Current Production Role | Remaining Debt | Candidate Follow-Up |
+| --- | --- | --- | --- | --- |
+| `Boot Runtime` | `partial-owner` | `src/core/engine/**` owns the formal seam, but `legacy-main-adapter.ts` still fronts production boot handoff | boot/content assembly still enters through shell-driven startup | separate later review only if boot/startup becomes the priority |
+| `Navigation Runtime` | `partial-owner` | typed runtime seam exists and covered city-enter path runs through it | `src/main.ts` still directly coordinates parts of navigation/travel flow | candidate child: `Navigation + Time Runtime Convergence` |
+| `Time Runtime` | `partial-owner` | typed time requests exist and selected day-start / advance paths use them | direct `runTimeRuntime()` calls still exist in `src/main.ts` and remain shell-coordinated | candidate child: `Navigation + Time Runtime Convergence` |
+| `Event Runtime` | `partial-owner` | typed trigger/activation seam exists | story/event flow still cooperates with mixed shell control | candidate child: `Event + Scene Handoff Convergence` |
+| `Scene Runtime` | `partial-owner` | event-to-scene seam exists | scene handoff is not yet centralized under one runtime-owned production line | candidate child: `Event + Scene Handoff Convergence` |
+| `Interaction Runtime` | `owner-first-slice` | covered city-begging lifecycle is runtime-owned under `src/core/runtime/interactive-runtime.ts` | `activity-qte` and `story-battle` still use narrowed legacy adapter paths | candidate child: `Interactive Remaining Legacy Convergence` |
+| `House Runtime` | `owner-first-slice` | covered grain-shop lifecycle and covered reentry follow-up now live under `src/core/runtime/house-runtime.ts` | broader house business remains application-owned by design; retained work is no longer the main ownerization blocker | no immediate child required unless house scope is explicitly widened later |
+| `Effect Settlement Runtime` | `owner-first-slice` | covered interactive + house advanceTime settlement is aligned under `runtime-settlement.ts` | broader non-covered settlement convergence remains deferred | revisit only if a later child exposes new settlement inconsistency |
+| `Task Runtime` | `owner-first-slice` | formal lifecycle/progression seam exists | first-slice limitations remain, but not a current ownerization blocker | no current follow-up |
+| `StateSync Runtime` | `owner-first-slice` | canonical runtime/app/save/presentation sync seam exists | deeper integration remains deferred | no current follow-up |
+| `Save / Load Runtime` | `owner-first-slice` | migration/validation/writer ownership is formal | some consumer-side legacy remains | no current follow-up |
+| `Presentation Bridge Runtime` | `owner-first-slice` | presenter output seam is real | full layout/schema renderer remains deferred | no current follow-up |
+| `Mod Runtime` | `owner-first-slice` | activation/startup seam is formal | tooling/hot reload/sandboxing remain deferred | no current follow-up |
 
 ## Module Diagram
 
@@ -40,11 +66,11 @@ flowchart LR
     MAIN --> CORERT
     RSBRIDGE --> CORERT
     CORERT --> TASKRT["task-runtime.ts (implemented Child 6)"]
-    CORERT --> HOUCERT["house-runtime.ts bridge"]
-    CORERT --> INTRT["interactive-runtime.ts bridge"]
-    HOUCERT --> HOUSEAD["legacy-house-adapter.ts"]
-    INTRT --> INTAD["legacy-interactive-adapter.ts"]
-    CORERT --> NAVRT["navigation/time/event/scene wrappers"]
+    CORERT --> HOUCERT["house-runtime.ts (covered ownerized lifecycle)"]
+    CORERT --> INTRT["interactive-runtime.ts (covered ownerized slice + legacy tails)"]
+    HOUCERT --> HOUSEAD["legacy-house-adapter.ts (compatibility placeholder)"]
+    INTRT --> INTAD["legacy-interactive-adapter.ts (narrowed legacy seam)"]
+    CORERT --> NAVRT["navigation/time/event/scene partial-owner seams"]
     MAIN --> MODRT["src/core/mods (implemented Child 7)"]
     MODRT --> MODAD["mod-runtime-main-adapter.ts"]
     MODAD --> ADAPTER
@@ -90,11 +116,10 @@ flowchart LR
 ## Temporary Adapters
 
 - `src/core/adapters/legacy-main-adapter.ts` is now implemented as a temporary bridge
-- `src/core/adapters/legacy-house-adapter.ts` and `src/core/adapters/legacy-interactive-adapter.ts` are now implemented as temporary bridges
-- Legacy interactive gameplay logic still lives behind those adapters
-- Child 9 is now closed, and those adapters intentionally remain in place after Child 9 because ownerization is deferred.
-- Child 10 has now finalized which adapters are retained through Child 11 and which are targeted for removal inside Child 11.
-- Child 11 was the first executable child allowed to remove or narrow the interactive/house adapters; Task 1 narrowed shared follow-up ownership, Task 2 narrowed the interactive adapter by removing the covered city-begging lifecycle wrappers, Task 3 reduced the house adapter to a compatibility placeholder for the covered grain-shop lifecycle, and Task 4 aligned the covered advanceTime settlement path under runtime-settlement.ts.
+- `src/core/adapters/legacy-interactive-adapter.ts` still exists as a narrowed compatibility seam for the remaining non-ownerized interactive paths, primarily `activity-qte` and `story-battle`
+- `src/core/adapters/legacy-house-adapter.ts` is no longer an active business bridge; it is retained only as a compatibility placeholder after the covered grain-shop lifecycle moved under `src/core/runtime/house-runtime.ts`
+- Child 10 finalized which adapters could be narrowed inside Child 11 without reopening frozen contracts
+- Child 11 and Child 13 completed the approved adapter and reentry reductions for the covered slices, so the remaining adapter debt is now concentrated mainly in the interactive family rather than spread across both interactive and house seams
 
 ## Flow Diagram 1: Current Boot And Render Flow
 
@@ -249,16 +274,35 @@ flowchart TD
 - Landed Child 11 Task 4 covered settlement alignment by routing the covered interactive and house advanceTime effects through `src/core/runtime/runtime-settlement.ts`, extending the settlement emitter contract for `house-runtime`, and removing the remaining direct covered time-advance calls from `interactive-runtime.ts` and `house-runtime.ts`.
 - Landed Child 13 closeout by classifying the remaining in-scope audit as Bucket A = one story-battle -> reenter-house follow-up path, Bucket B = none, Bucket C = none, then moving that remaining inline reentry branch out of `src/main.ts` and into `src/core/runtime/house-runtime.ts` via `houseRuntime.applyInteractiveFollowUp()`.
 
+## Candidate Post-Queue Splits
+
+These are architecture candidates only. They are not unlocked children and must not be executed without a fresh weekly review plus new spec/plan authoring.
+
+1. `Interactive Remaining Legacy Convergence`
+   - Primary target: the remaining `activity-qte` and `story-battle` paths still routed through `legacy-interactive-adapter.ts`
+   - Reason to split independently: this is the clearest remaining bridge-period debt inside the interaction family and can be verified with focused lifecycle regressions
+   - Do not mix with: navigation/time/event/scene entry convergence, boot/startup, UI, or broader carrier redesign
+
+2. `Navigation + Time Runtime Convergence`
+   - Primary target: direct `src/main.ts` coordination around `runNavigationRuntime()` and `runTimeRuntime()` entry paths
+   - Reason to split independently: these two seams share the same mixed shell/runtime entry pattern and can be converged without dragging event/scene story handoff into scope
+   - Do not mix with: event/scene orchestration redesign or interactive legacy cleanup
+
+3. `Event + Scene Handoff Convergence`
+   - Primary target: the remaining mixed control around `runEventRuntime()` and `runSceneFromEvent()` story handoff
+   - Reason to split independently: this path is structurally different from interactive or navigation/time work and has the highest risk of silently expanding into story-flow redesign if not isolated
+   - Do not mix with: navigation/time cleanup, interactive cleanup, or new story system work
+
 ## Architecture Risks
 
 - `src/main.ts` is still the dominant production black box.
 - `src/core` is only partially implemented, so the current architecture remains largely legacy-owned above the new boundary.
 - The new contracts, engine seam, runtime seam, save seam, and adapter seams are still intentionally narrow even though persistence is hardened, Child 3 entry seams are validated, and Child 4 bridge seams now cover selected interactive flows.
-- Child 4 has already widened the shared `runtime-router.ts` / `runtime-dispatch.ts` contract to `RuntimeState`, but runtime ownership is still split between common dispatch and dedicated bridge helpers across the remaining interactive surface.
+- Child 4 has already widened the shared `runtime-router.ts` / `runtime-dispatch.ts` contract to `RuntimeState`, but runtime ownership is still split between common dispatch and dedicated bridge helpers across the remaining non-covered interactive surface.
 - `characterDefinitions` is intentionally not part of `RuntimeState.core` in the current landing, so future convergence is still gated by weekly promotion rules rather than implied by the new carrier.
 - The presenter seam is now real but still provisional; full layout renderer/schema work remains future scope.
 - The Task Runtime seam is now real but intentionally first-slice only; task UI, complete authoring DSL, and mod custom evaluator plugins remain future scope.
 - The Mod Runtime seam is now real but intentionally first-slice only; full hot reload, sandboxing, authoring tools, and deeper capability/dependency policy remain future scope.
 - State synchronization now has a first formal StateSync Runtime boundary, but deeper save IO integration, runtime dispatch auto-commit integration, and full legacy state migration remain future scope.
-- Child 10 baseline is now frozen, and Child 11 is already in progress, so the next ownerization steps remain constrained by governance rather than open-ended exploration.
-- Child 11 has now proven one covered shared follow-up path, one covered interactive lifecycle, one covered house lifecycle, and the covered advanceTime settlement path can all live under the approved runtime-owned slices, but broader runtime-family convergence is still intentionally deferred.
+- Child 10 baseline and Child 11/13 closeout now prove that covered shared follow-up, covered interactive, covered house, and covered settlement slices can live under runtime ownership without reopening the frozen shared contract layer, but broader runtime-family convergence is still intentionally deferred.
+- The next runtime continuation decision is now a decomposition risk rather than a missing-contract risk: if a later child mixes interactive legacy cleanup with navigation/time/event/scene convergence, it is likely to grow beyond one reviewable boundary.
