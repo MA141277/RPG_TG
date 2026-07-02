@@ -1,5 +1,5 @@
 import type { TradeGoodCategory } from "../../domain/trade-good";
-import * as marketHouseContentJson from "../scenario-packs/zhuyuanzhang/house-content/market-house-content.json";
+import { defaultMarketHouseContent } from "../pack-content-access";
 
 export type MarketHouseActorContent = {
   id: string;
@@ -23,9 +23,7 @@ type MarketHouseContent = {
   marketHouseInvestigationSpecialtyTextIdByActorId: Record<string, string>;
 };
 
-const marketHouseContent =
-  ((marketHouseContentJson as { default?: MarketHouseContent }).default ??
-    marketHouseContentJson) as MarketHouseContent;
+const marketHouseContent = defaultMarketHouseContent as MarketHouseContent;
 
 export const marketHouseFixedBoss = marketHouseContent.marketHouseFixedBoss;
 export const marketHouseRandomNpcPool = marketHouseContent.marketHouseRandomNpcPool;

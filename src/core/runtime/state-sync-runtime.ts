@@ -4,7 +4,12 @@ import type {
   StateSyncResult,
   StateSyncTrigger,
 } from "../contracts/state-sync-runtime";
+import type { RuntimeRequest } from "../contracts/runtime-request";
+import type { RuntimeResult } from "../contracts/runtime-result";
+import type { TaskDefinition } from "../contracts/task-runtime";
 import type { RuntimeState as LegacyBridgeRuntimeState } from "../contracts/runtime-state";
+import type { RuntimeFollowUpContext, RuntimeRouter } from "./runtime-router";
+import { dispatchRuntimeRequest } from "./runtime-dispatch";
 import { syncAppState } from "./state-sync-app-bridge";
 import { hydrateFromSave } from "./state-sync-hydration";
 import { rebuildAfterModActivation } from "./state-sync-mod-rebuild";
@@ -25,6 +30,21 @@ export type RuntimeStateBridgeInput = {
 export type RuntimeResultBridgeInput = {
   state: LegacyBridgeRuntimeState;
   characterDefinitions?: unknown;
+};
+
+export type RuntimeCommitInput<TAppState extends RuntimeStateBridgeInput> = {
+  state: TAppState;
+  request: RuntimeRequest;
+  context: {
+    router: RuntimeRouter;
+    followUp?: RuntimeFollowUpContext;
+    taskDefinitionsById?: Record<string, TaskDefinition>;
+  };
+};
+
+export type RuntimeCommitResult<TAppState extends RuntimeStateBridgeInput> = {
+  state: TAppState;
+  runtimeResult: RuntimeResult;
 };
 
 export function createRuntimeBridgeState(
@@ -92,6 +112,21 @@ export function applyInteractiveRuntimeResult<
   TAppState extends RuntimeStateBridgeInput,
 >(state: TAppState, result: RuntimeResultBridgeInput): TAppState {
   return applyRuntimeBridgeResult(state, result);
+}
+
+export function commitRuntimeRequest<
+  TAppState extends RuntimeStateBridgeInput,
+>(input: RuntimeCommitInput<TAppState>): RuntimeCommitResult<TAppState> {
+  const runtimeResult = dispatchRuntimeRequest({
+    state: createRuntimeBridgeState(input.state),
+    request: input.request,
+    context: input.context,
+  });
+
+  return {
+    state: applyRuntimeBridgeState(input.state, runtimeResult.state),
+    runtimeResult,
+  };
 }
 
 export function syncState(

@@ -1,5 +1,5 @@
 import type { TeaHouseTopicCard } from "../../domain/tea-house";
-import * as teaHouseContentJson from "../scenario-packs/zhuyuanzhang/house-content/tea-house-content.json";
+import { defaultTeaHouseContent } from "../pack-content-access";
 
 type TeaHouseContent = {
   teaHouseBossProfile: {
@@ -22,9 +22,7 @@ type TeaHouseContent = {
   teaHousePersonalityTopicWeights: Record<string, Record<TeaHouseTopicCard, number>>;
 };
 
-const teaHouseContent =
-  ((teaHouseContentJson as { default?: TeaHouseContent }).default ??
-    teaHouseContentJson) as TeaHouseContent;
+const teaHouseContent = defaultTeaHouseContent as TeaHouseContent;
 
 export const teaHouseBossProfile = teaHouseContent.teaHouseBossProfile;
 export const teaHouseBossGreetingTextIds = teaHouseContent.teaHouseBossGreetingTextIds;

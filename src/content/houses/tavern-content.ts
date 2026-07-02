@@ -1,5 +1,5 @@
 import type { TavernWorkOffer } from "../../domain/tavern";
-import * as tavernContentJson from "../scenario-packs/zhuyuanzhang/house-content/tavern-content.json";
+import { defaultTavernContent } from "../pack-content-access";
 
 type TavernContent = {
   tavernBossProfile: {
@@ -16,9 +16,7 @@ type TavernContent = {
   tavernWorkOffers: TavernWorkOffer[];
 };
 
-const tavernContent =
-  ((tavernContentJson as { default?: TavernContent }).default ??
-    tavernContentJson) as TavernContent;
+const tavernContent = defaultTavernContent as TavernContent;
 
 export const tavernBossProfile = tavernContent.tavernBossProfile;
 export const tavernBossGreetingTextIds = tavernContent.tavernBossGreetingTextIds;

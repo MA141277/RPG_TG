@@ -2,8 +2,10 @@ import {
   keepHouseDefaultContributions,
   keepHouseDefaultStrategy,
 } from "../../../content/houses/keep-house-content";
-import * as defaultZhuyuanzhangActivitiesModule from "../../../content/scenario-packs/zhuyuanzhang/activities.json";
-import * as defaultZhuyuanzhangTextEntriesModule from "../../../content/scenario-packs/zhuyuanzhang/text-entries.json";
+import {
+  defaultPackActivities,
+  defaultPackTextEntries,
+} from "../../content/pack-content-access";
 import type { ActivityDefinition } from "../../../domain/activity";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
@@ -42,24 +44,10 @@ import {
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
-function unwrapJsonModule<T>(moduleValue: unknown): T {
-  if (
-    moduleValue != null &&
-    typeof moduleValue === "object" &&
-    "default" in moduleValue
-  ) {
-    return (moduleValue as { default: T }).default;
-  }
 
-  return moduleValue as T;
-}
-
-const defaultZhuyuanzhangActivities = unwrapJsonModule<ActivityDefinition[]>(
-  defaultZhuyuanzhangActivitiesModule
-);
-const defaultZhuyuanzhangTextEntries = unwrapJsonModule<Record<string, string>>(
-  defaultZhuyuanzhangTextEntriesModule
-);
+const defaultZhuyuanzhangActivities =
+  defaultPackActivities as ActivityDefinition[];
+const defaultZhuyuanzhangTextEntries = defaultPackTextEntries;
 const defaultKeepActivityDefinitionsById = Object.fromEntries(
   defaultZhuyuanzhangActivities.map((activityDefinition) => [
     activityDefinition.id,

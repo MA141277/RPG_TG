@@ -1,4 +1,4 @@
-import * as homeHouseContentJson from "../scenario-packs/zhuyuanzhang/house-content/home-house-content.json";
+import { defaultHomeHouseContent } from "../pack-content-access";
 
 type HomeHouseContent = {
   homeHouseIntroLines: string[];
@@ -13,9 +13,7 @@ type HomeHouseContent = {
   };
 };
 
-const homeHouseContent =
-  ((homeHouseContentJson as { default?: HomeHouseContent }).default ??
-    homeHouseContentJson) as HomeHouseContent;
+const homeHouseContent = defaultHomeHouseContent as HomeHouseContent;
 
 export const homeHouseIntroLines = homeHouseContent.homeHouseIntroLines;
 export const homeHouseMainLines = homeHouseContent.homeHouseMainLines;

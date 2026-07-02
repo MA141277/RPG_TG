@@ -2,7 +2,68 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-02 Unified Minigame Contract Spec
+
+### Added
+- 新增仓库级 spec：[docs/superpowers/specs/2026-07-02-unified-minigame-contract-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-02-unified-minigame-contract-spec.md)，统一定义小游戏的 registry、launch、session、command、presenter、result、settlement 与 owner handoff contract。
+
+### Changed
+- 明确后续小游戏工作不再视为 house-local 或 overlay-local 约定，而是统一纳入仓库级 runtime/presenter/settlement 边界。
+- 明确现有 `activity-qte`、`city-begging`、`grain-accounting` 与 `medicine-compounding` 的渐进迁移顺序，以及“完成后必须回到正确 owner/session”的硬性要求。
+
+### Impact
+- 后续新增或改造小游戏时，启动、渲染、结算与回跳将有统一 contract 可依，不再继续把接线逻辑扩散到 `main.ts`、house module 或局部 overlay 分支中。
+- 这份 spec 为后续 implementation plan 提供了正式边界；下一步应基于该 spec 写可执行迁移计划，而不是直接散点重构。
+
+## 2026-07-02 Child 19 Task Runtime Mod Contract
+
+### Added
+- 新增 Child 19 回归测试，明确要求 `src/domain/content-pack.ts` 暴露可选 `tasks` contribution surface，`src/application/content/content-pack-loader.ts` 能从 shared manifest path 加载 `tasks.json`，并且 `src/application/scenario/scenario-pack-loader.ts` 把 `tasks` 视为正式可校验的 optional split-table。
+
+### Changed
+- `src/domain/content-pack.ts` 现已增加 `tasks?: TaskDefinition[]`，使 content-pack / scenario-pack 都能通过同一条 pack contract 携带 task definitions。
+- `src/application/content/content-pack-loader.ts` 现已把 `tasks` 纳入 shared `CONTENT_PACK_FILE_KEYS`，使 manifest-driven content pack 可以加法式加载 task contribution，而不影响不提供该文件的旧 pack。
+- `src/application/scenario/scenario-pack-loader.ts` 现已显式声明 `tasks?: string` manifest file slot，并在 parse 阶段校验 `tasks` 必须是数组，避免 scenario pack 对 task contribution 继续停留在隐式透传状态。
+- `src/application/content/active-game-content.ts` 现已把 task definitions 纳入 active content assembly，导出 `taskDefinitions` 与 `taskDefinitionsById`，使已激活 pack 的 task contribution 能进入统一 lookup surface。
+- `src/domain/game-state.ts` 与 `src/application/state/create-initial-state.ts` 现已把 `TaskRuntimeState` 落入 `gameState.runtime.tasks`，让任务运行态通过统一游戏状态结构保存，而不是停留在外部临时容器。
+- `src/core/runtime/runtime-dispatch.ts` 现已新增 shared task settlement pass：当 routed runtime result 返回 `taskActions` / `taskSignals` 且 commit context 提供 `taskDefinitionsById` 时，dispatch 会调用 task runtime、写回 `gameState.runtime.tasks`、合并 `taskUpdates`，并继续通过 runtime settlement 应用 task effects。
+- `src/main.ts` 现已维护 active task definition 索引，并为 covered runtime commit context 提供该索引，使 shared runtime dispatch 具备消费已激活 task contributions 的注册面。
+
+### Impact
+- Child 19 已完成：task definitions 现在可以通过 shared pack contract 声明、进入 active content lookup、并由 shared runtime dispatch 通过 typed task actions/signals 驱动 task runtime progression。
+- 这次收口没有重开 house registration、general contribution registry、或完整 task authoring DSL；后续边界应转向 Child 20 的 house runtime mod registration baseline recheck，而不是把 Child 19 扩成更大的 registry redesign。
+
 ## 2026-07-02 Child 14 Interactive Remaining Legacy Convergence
+
+## 2026-07-02 Child 17 Pack Content Decoupling
+
+## 2026-07-02 Child 18 Runtime Spine Unification
+
+### Added
+- 新增 Child 18 回归测试，明确要求 `src/core/runtime/state-sync-runtime.ts` 导出共享 `commitRuntimeRequest()`，并要求 `src/main.ts` 的 covered `day-start`、`advance-segments`、`enter-city`、`story-battle`、`city-begging` 与 `activity-qte` 路径不再手工重复 runtime bridge create/apply write-back。
+
+### Changed
+- `src/core/runtime/state-sync-runtime.ts` 新增 `commitRuntimeRequest()`，把 `createRuntimeBridgeState()` -> `dispatchRuntimeRequest()` -> `applyRuntimeBridgeState()` 这一条 shared runtime commit 链收口为一个正式 helper。
+- `src/main.ts` 的 covered `day-start`、`advance-segments`、`enter-city` 与 `story-battle` dispatch 路径，现已统一通过 `commitRuntimeRequest()` 提交 runtime request，而不再各自手写 bridge create/apply glue。
+- `src/main.ts` 的 covered `city-begging` 与 `activity-qte` interactive write-back 路径，也已统一改为通过 `commitRuntimeRequest()` 提交到 interactive runtime route，不再直接组合 `createInteractiveRuntimeState()` / `applyInteractiveRuntimeResult()`。
+
+### Impact
+- Child 18 已完成：covered runtime entry 与 covered interactive write-back 现在共享一条更明确的 commit spine，`src/main.ts` 在这些路径上不再持有重复的 runtime bridge write-back 逻辑。
+- 这次收敛没有吸收 task contract、house registration、manifest/registry policy redesign；下一个后续项应回到 Child 19 的 task-runtime mod-facing baseline recheck，而不是继续扩张 Child 18 边界。
+
+### Added
+- 新增 Child 17 回归测试，明确要求 `src/content/story/index.ts`、`src/content/houses/*.ts`、以及 covered `keep-house` / `temple-house` house module 消费端不再直接 hard-import `scenario-packs/zhuyuanzhang/**`。
+- 新增 `src/content/pack-content-access.ts`，把默认 builtin `zhuyuanzhang` pack 的 story / house-content / activities / text JSON 读取集中到一个共享内容访问接缝。
+- 新增 `src/application/content/pack-content-access.ts`，给 application 层消费端提供 pack-content access re-export seam。
+
+### Changed
+- `src/content/story/index.ts` 现在通过 `src/content/pack-content-access.ts` 获取默认 story events/scenes/text entries，不再直接导入 `zhuyuanzhang` pack 文件。
+- `src/content/houses/home-house-content.ts`、`grain-shop-content.ts`、`keep-house-content.ts`、`market-house-content.ts`、`medicine-house-content.ts`、`tavern-content.ts` 与 `tea-house-content.ts` 现在通过共享 pack-content access seam 读取默认 house content，不再各自直接导入 `zhuyuanzhang` house-content JSON。
+- `src/application/house-modules/keep-house/keep-house-house-module.ts` 与 `src/application/house-modules/temple-house/temple-house-house-module.ts` 现在通过共享 pack-content access seam 读取默认 activities / text entries，不再直接导入 `zhuyuanzhang` pack 表。
+
+### Impact
+- Child 17 已完成：covered production consumers 不再通过 scenario-specific 源码路径直接读取 `zhuyuanzhang` pack 内容，后续 mod-first 工作可以建立在共享 content access seam 上，而不是继续扩散 direct-import coupling。
+- 这次收敛没有重开 Child 15/16 的 runtime handoff 设计，也没有改动 task/house/registry 的共享 contract 边界；下一个后续项应回到 Child 18 的 runtime spine baseline recheck。
 
 ### Added
 - 新增 Child 14 回归测试，明确要求 `src/core/runtime/interactive-runtime.ts` 不再依赖 `legacy-interactive-adapter.ts` 持有 covered `activity-qte` / `story-battle` 生命周期，并要求 `src/main.ts` 关闭 `activity-qte` 结果面板时必须通过 `createExitInteractiveRequest("activity-qte")` 回到 interactive runtime。

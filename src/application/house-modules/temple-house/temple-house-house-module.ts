@@ -1,5 +1,7 @@
-﻿import * as defaultZhuyuanzhangActivitiesModule from "../../../content/scenario-packs/zhuyuanzhang/activities.json";
-import * as defaultZhuyuanzhangTextEntriesModule from "../../../content/scenario-packs/zhuyuanzhang/text-entries.json";
+﻿import {
+  defaultPackActivities,
+  defaultPackTextEntries,
+} from "../../content/pack-content-access";
 import type { ActivityDefinition } from "../../../domain/activity";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
@@ -101,24 +103,9 @@ const TEMPLE_REST_MAX_DAYS = 99;
 const TEMPLE_REST_BASE_RECOVERY = 12;
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
 
-function unwrapJsonModule<T>(moduleValue: unknown): T {
-  if (
-    moduleValue != null &&
-    typeof moduleValue === "object" &&
-    "default" in moduleValue
-  ) {
-    return (moduleValue as { default: T }).default;
-  }
-
-  return moduleValue as T;
-}
-
-const defaultZhuyuanzhangActivities = unwrapJsonModule<ActivityDefinition[]>(
-  defaultZhuyuanzhangActivitiesModule
-);
-const defaultZhuyuanzhangTextEntries = unwrapJsonModule<Record<string, string>>(
-  defaultZhuyuanzhangTextEntriesModule
-);
+const defaultZhuyuanzhangActivities =
+  defaultPackActivities as ActivityDefinition[];
+const defaultZhuyuanzhangTextEntries = defaultPackTextEntries;
 
 function getTempleTextEntries(
   textEntriesById?: Record<string, string>

@@ -3,7 +3,7 @@ import type {
   MedicineHouseHerbDefinition,
   MedicineHousePreparedMedicineEffect,
 } from "../../domain/medicine-house";
-import * as medicineHouseContentJson from "../scenario-packs/zhuyuanzhang/house-content/medicine-house-content.json";
+import { defaultMedicineHouseContent } from "../pack-content-access";
 
 type MedicineHousePreparedMedicineDefinition = {
   id: string;
@@ -40,9 +40,7 @@ type MedicineHouseContent = {
   >;
 };
 
-const medicineHouseContent =
-  ((medicineHouseContentJson as { default?: MedicineHouseContent }).default ??
-    medicineHouseContentJson) as MedicineHouseContent;
+const medicineHouseContent = defaultMedicineHouseContent as MedicineHouseContent;
 
 export const medicineHouseDoctorProfile = medicineHouseContent.medicineHouseDoctorProfile;
 export const medicineHouseDialogueTextIds = medicineHouseContent.medicineHouseDialogueTextIds;

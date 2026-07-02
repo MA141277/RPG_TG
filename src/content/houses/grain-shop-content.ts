@@ -1,5 +1,5 @@
 import type { AccountingGrade, AccountingGradeReward } from "../../domain/grain-shop";
-import * as grainShopContentJson from "../scenario-packs/zhuyuanzhang/house-content/grain-shop-content.json";
+import { defaultGrainShopContent } from "../pack-content-access";
 
 type GrainShopContent = {
   grainShopNpcGreetingTextIds: string[];
@@ -17,9 +17,7 @@ type GrainShopContent = {
   accountingMaxWrongAnswers: number;
 };
 
-const grainShopContent =
-  ((grainShopContentJson as { default?: GrainShopContent }).default ??
-    grainShopContentJson) as GrainShopContent;
+const grainShopContent = defaultGrainShopContent as GrainShopContent;
 
 export const grainShopNpcGreetingTextIds = grainShopContent.grainShopNpcGreetingTextIds;
 export const grainShopNpcDefaultLineTextIds = grainShopContent.grainShopNpcDefaultLineTextIds;

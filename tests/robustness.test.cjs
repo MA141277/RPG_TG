@@ -630,6 +630,67 @@ test("active game content indexes pack text entries by id", () => {
   assert.equal(content.textEntriesById["scene.test.choice.001"], "接受");
 });
 
+test("active game content indexes merged task definitions by id", () => {
+  const content = createActiveGameContent(
+    {
+      schemaVersion: 1,
+      id: "pack.base.tasks",
+      title: "Base Tasks",
+      textEntries: {},
+      scenes: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      tasks: [
+        {
+          id: "task.base",
+          title: "Base Task",
+          objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    },
+    {
+      schemaVersion: 1,
+      id: "pack.override.tasks",
+      title: "Override Tasks",
+      textEntries: {},
+      scenes: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      tasks: [
+        {
+          id: "task.override",
+          title: "Override Task",
+          objectives: [{ id: "visit", target: 1, signalType: "city.entered" }],
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    }
+  );
+
+  assert.deepEqual(
+    content.taskDefinitions.map((taskDefinition) => taskDefinition.id),
+    ["task.base", "task.override"]
+  );
+  assert.equal(content.taskDefinitionsById["task.base"].title, "Base Task");
+  assert.equal(
+    content.taskDefinitionsById["task.override"].objectives[0].signalType,
+    "city.entered"
+  );
+});
+
 test("scene view resolves narration dialogue and choice text through text ids", () => {
   const {
     resolveActionNodeText,
@@ -1321,6 +1382,68 @@ test("base game content pack is sourced from the shared content-pack loader", as
   });
 });
 
+test("story content registry does not hard-import zhuyuanzhang pack tables", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "story", "index.ts"),
+    "utf8"
+  );
+
+  assert.equal(
+    source.includes("scenario-packs/zhuyuanzhang"),
+    false,
+    "Expected src/content/story/index.ts to stop hard-importing zhuyuanzhang pack tables."
+  );
+});
+
+test("house content registry does not hard-import zhuyuanzhang house content tables", () => {
+  const houseContentRoot = path.join(process.cwd(), "src", "content", "houses");
+  const houseContentFiles = fs
+    .readdirSync(houseContentRoot)
+    .filter((fileName) => fileName.endsWith(".ts"));
+
+  const hardImportFiles = houseContentFiles.filter((fileName) => {
+    const source = fs.readFileSync(path.join(houseContentRoot, fileName), "utf8");
+    return source.includes("scenario-packs/zhuyuanzhang");
+  });
+
+  assert.deepEqual(
+    hardImportFiles,
+    [],
+    `Expected src/content/houses/*.ts to stop hard-importing zhuyuanzhang pack tables, but found: ${hardImportFiles.join(", ")}`
+  );
+});
+
+test("pack content access consumers do not hard-import zhuyuanzhang activities or text tables", () => {
+  const files = [
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "keep-house",
+      "keep-house-house-module.ts"
+    ),
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+  ];
+
+  const hardImportFiles = files.filter((filePath) =>
+    fs.readFileSync(filePath, "utf8").includes("scenario-packs/zhuyuanzhang")
+  );
+
+  assert.deepEqual(
+    hardImportFiles.map((filePath) => path.basename(filePath)),
+    [],
+    `Expected covered house modules to stop hard-importing zhuyuanzhang activities/text tables, but found: ${hardImportFiles.join(", ")}`
+  );
+});
+
 test("zhuyuanzhang scenario pack manifest includes pack-local city and access tables", () => {
   const packRoot = path.join(
     process.cwd(),
@@ -1689,6 +1812,16 @@ test("content pack definition accepts optional ui reserve fields", async () => {
   assert.equal(source.includes("uiAssetCatalogs"), true);
 });
 
+test("content pack definition accepts optional task contribution fields", async () => {
+  const source = await fs.promises.readFile(
+    path.join(process.cwd(), "src", "domain", "content-pack.ts"),
+    "utf8"
+  );
+
+  assert.equal(source.includes('import type { TaskDefinition }'), true);
+  assert.equal(source.includes("tasks?: TaskDefinition[];"), true);
+});
+
 test("content pack loader ignores missing optional ui reserve files", async () => {
   const { loadContentPackFromManifestText } = await import(
     "../.test-dist/application/content/content-pack-loader.js"
@@ -1716,6 +1849,58 @@ test("content pack loader ignores missing optional ui reserve files", async () =
     assert.equal(pack.uiLayouts == null, true);
     assert.equal(pack.uiSkins == null, true);
     assert.equal(pack.uiAssetCatalogs == null, true);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("content pack loader hydrates optional task contribution files", async () => {
+  const { loadContentPackFromManifestText } = await import(
+    "../.test-dist/application/content/content-pack-loader.js"
+  );
+  const originalFetch = global.fetch;
+  const expectedTasks = [
+    {
+      id: "task.pack-test",
+      title: "Pack Test Task",
+      objectives: [
+        {
+          id: "report",
+          target: 1,
+          signalType: "scene.reported",
+        },
+      ],
+    },
+  ];
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input.url;
+
+    if (url.endsWith("/tasks.json")) {
+      return {
+        ok: true,
+        json: async () => expectedTasks,
+      };
+    }
+
+    return {
+      ok: true,
+      json: async () => [],
+    };
+  };
+
+  try {
+    const pack = await loadContentPackFromManifestText(
+      JSON.stringify({
+        schemaVersion: 1,
+        id: "pack.test",
+        title: "Pack Test",
+        files: { tasks: "tasks.json" },
+      }),
+      "file:///virtual/pack.json"
+    );
+
+    assert.deepEqual(pack.tasks, expectedTasks);
   } finally {
     global.fetch = originalFetch;
   }
@@ -1812,6 +1997,26 @@ test(
     } finally {
       global.fetch = originalFetch;
     }
+  }
+);
+
+test(
+  "scenario pack loader reserves optional task contribution manifest and validation seams",
+  async () => {
+    const source = await fs.promises.readFile(
+      path.join(
+        process.cwd(),
+        "src",
+        "application",
+        "scenario",
+        "scenario-pack-loader.ts"
+      ),
+      "utf8"
+    );
+
+    assert.equal(source.includes("tasks?: string;"), true);
+    assert.match(source, /value\.tasks != null/);
+    assert.match(source, /assertArray\(value\.tasks, "scenario tasks"\)/);
   }
 );
 
@@ -7945,6 +8150,115 @@ test("runtime dispatch settles effects after routing", async () => {
   assert.equal(result.state.core.runtime.flags.booted, true);
 });
 
+test("createInitialState seeds runtime task state through the unified game state", () => {
+  const state = createInitialState({
+    currentMapId: "map.test",
+    currentCityId: "city.test",
+    currentHouseId: null,
+    playerCharacterId,
+    chapterId: "chapter.prototype",
+    year: 1567,
+    month: 1,
+    day: 1,
+    pinnedCharacterId: playerCharacterId,
+    reviewDateText: "test",
+    mainHouseMissionText: "test",
+    cards: {
+      ownedCardIds: [],
+      selectedCardId: null,
+    },
+    valuables: {
+      items: [],
+      selectedItemId: null,
+      equippedWeaponSet: {
+        swordId: null,
+        armorId: null,
+      },
+    },
+  });
+
+  assert.deepEqual(state.runtime.tasks, {
+    instancesByTaskId: {},
+    completedTaskIds: [],
+    failedTaskIds: [],
+    updatedAt: "",
+  });
+});
+
+test("runtime dispatch settles routed task actions and signals into unified task state", async () => {
+  const { dispatchRuntimeRequest } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+  const state = createBaseState();
+
+  const result = dispatchRuntimeRequest({
+    state: {
+      core: state,
+      app: {
+        beggingMiniGameState: null,
+        autoAdvanceState: null,
+        cityDirectoryState: null,
+        locationDialogueState: null,
+      },
+      view: {},
+    },
+    request: { family: "action", type: "action", actionId: "test.task-runtime" },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [],
+          taskActions: [
+            {
+              type: "start",
+              taskId: "task.runtime.test",
+              occurredAt: "2026-07-02T08:00:00.000Z",
+              source: "event-runtime",
+            },
+          ],
+          taskSignals: [
+            {
+              type: "scene.reported",
+              source: "scene-runtime",
+              occurredAt: "2026-07-02T08:05:00.000Z",
+            },
+          ],
+        }),
+      },
+      taskDefinitionsById: {
+        "task.runtime.test": {
+          id: "task.runtime.test",
+          title: "Runtime Test Task",
+          objectives: [
+            { id: "report", target: 1, signalType: "scene.reported" },
+          ],
+          onCompleteEffects: [
+            {
+              type: "setFlag",
+              key: "task.runtime.test.completed",
+              value: true,
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  assert.equal(
+    result.state.core.runtime.tasks.instancesByTaskId["task.runtime.test"].status,
+    "completed"
+  );
+  assert.deepEqual(result.state.core.runtime.tasks.completedTaskIds, [
+    "task.runtime.test",
+  ]);
+  assert.equal(
+    result.state.core.runtime.flags["task.runtime.test.completed"],
+    true
+  );
+  assert.deepEqual(
+    result.taskUpdates.map((update) => update.type),
+    ["started", "completed"]
+  );
+});
+
 test("covered shared runtime reentry is runtime-owned", async () => {
   const { dispatchRuntimeRequest } = require("../.test-dist/core/runtime/runtime-dispatch.js");
   const baseState = createBaseState();
@@ -8362,7 +8676,7 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
   )?.[0] ?? "";
 
   assert.doesNotMatch(handleModalConfirmBlock, /runNavigationRuntime\(/);
-  assert.match(handleModalConfirmBlock, /dispatchRuntimeRequest\(/);
+  assert.match(handleModalConfirmBlock, /commitRuntimeRequest\(/);
   assert.match(handleModalConfirmBlock, /createEnterCityRequest\(/);
   assert.match(handleModalConfirmBlock, /triggerStoryEventsForTiming\(\s*"city-enter"/);
 });
@@ -8377,7 +8691,7 @@ test("child 15 covered day-start path routes through shared runtime dispatch ins
   )?.[0] ?? "";
 
   assert.doesNotMatch(startMapAutoAdvanceBlock, /runTimeRuntime\(/);
-  assert.match(startMapAutoAdvanceBlock, /dispatchRuntimeRequest\(/);
+  assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
   assert.match(startMapAutoAdvanceBlock, /createDayStartRequest\(/);
   assert.match(startMapAutoAdvanceBlock, /syncCouncilPriorityAfterGameStateChange\(/);
 });
@@ -8398,8 +8712,8 @@ test("child 15 covered advance-segments travel paths route through shared runtim
   assert.doesNotMatch(startCampaignTravelBlock, /runTimeRuntime\(/);
   assert.match(handleModalConfirmBlock, /createAdvanceTimeSegmentsRequest\(1\)/);
   assert.match(startCampaignTravelBlock, /createAdvanceTimeSegmentsRequest\(1\)/);
-  assert.match(handleModalConfirmBlock, /dispatchRuntimeRequest\(/);
-  assert.match(startCampaignTravelBlock, /dispatchRuntimeRequest\(/);
+  assert.match(handleModalConfirmBlock, /commitRuntimeRequest\(/);
+  assert.match(startCampaignTravelBlock, /commitRuntimeRequest\(/);
 });
 
 test("child 16 story trigger helper routes through one runtime-owned seam instead of direct event and scene stitching", () => {
@@ -8472,6 +8786,89 @@ test("runtime settlement uses explicit contract and reports unsupported effect k
   assert.match(source, /unsupportedEffects/);
   assert.match(source, /warnings/);
   assert.doesNotMatch(source, /runTask|activateEvent|renderApp|writeSave/);
+});
+
+test("runtime spine commit helper is exported from state sync runtime", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /import \{ dispatchRuntimeRequest \} from "\.\/runtime-dispatch"/);
+  assert.match(source, /export function commitRuntimeRequest/);
+  assert.match(source, /createRuntimeBridgeState/);
+  assert.match(source, /applyRuntimeBridgeState/);
+});
+
+test("main runtime orchestration uses shared runtime commit helper for covered dispatch paths", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const startMapAutoAdvanceBlock = source.match(
+    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
+  )?.[0] ?? "";
+  const dispatchCurrentStoryBattleActionBlock = source.match(
+    /function dispatchCurrentStoryBattleAction\(actionId: string\): void \{[\s\S]*?\r?\n}\r?\n\r?\ntype BattleDemoResultMessage/
+  )?.[0] ?? "";
+  const handleModalConfirmBlock = source.match(
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+  )?.[0] ?? "";
+  const startCampaignTravelBlock = source.match(
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+  )?.[0] ?? "";
+
+  assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
+  assert.match(dispatchCurrentStoryBattleActionBlock, /commitRuntimeRequest\(/);
+  assert.match(handleModalConfirmBlock, /commitRuntimeRequest\(/);
+  assert.match(startCampaignTravelBlock, /commitRuntimeRequest\(/);
+
+  assert.doesNotMatch(startMapAutoAdvanceBlock, /createRuntimeBridgeState\(/);
+  assert.doesNotMatch(startMapAutoAdvanceBlock, /applyRuntimeBridgeState\(/);
+  assert.doesNotMatch(dispatchCurrentStoryBattleActionBlock, /createInteractiveRuntimeState\(/);
+  assert.doesNotMatch(dispatchCurrentStoryBattleActionBlock, /applyInteractiveRuntimeState\(/);
+  assert.doesNotMatch(handleModalConfirmBlock, /createRuntimeBridgeState\(/);
+  assert.doesNotMatch(handleModalConfirmBlock, /applyRuntimeBridgeState\(/);
+  assert.doesNotMatch(startCampaignTravelBlock, /createRuntimeBridgeState\(/);
+  assert.doesNotMatch(startCampaignTravelBlock, /applyRuntimeBridgeState\(/);
+});
+
+test("interactive covered main write-back paths use shared runtime commit helper", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const onBeggingGameCompleteBlock = source.match(
+    /function onBeggingGameComplete[\s\S]*?\n}\n/
+  )?.[0] ?? "";
+  const syncCityBeggingMiniGamePointerBlock = source.match(
+    /function syncCityBeggingMiniGamePointer\(clientX: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction tickCityBeggingMiniGame/
+  )?.[0] ?? "";
+  const tickCityBeggingMiniGameBlock = source.match(
+    /function tickCityBeggingMiniGame\(timestamp: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startCityBeggingMiniGameLoop/
+  )?.[0] ?? "";
+  const openBeggingMiniGameBlock = source.match(
+    /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
+  )?.[0] ?? "";
+  const stopCurrentActivityQteBlock = source.match(
+    /function stopCurrentActivityQte\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction closeCurrentActivityResult/
+  )?.[0] ?? "";
+  const closeCurrentActivityResultBlock = source.match(
+    /function closeCurrentActivityResult\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startMapAutoAdvance/
+  )?.[0] ?? "";
+
+  for (const block of [
+    onBeggingGameCompleteBlock,
+    syncCityBeggingMiniGamePointerBlock,
+    tickCityBeggingMiniGameBlock,
+    openBeggingMiniGameBlock,
+    stopCurrentActivityQteBlock,
+    closeCurrentActivityResultBlock,
+  ]) {
+    assert.match(block, /commitRuntimeRequest\(/);
+    assert.doesNotMatch(block, /createInteractiveRuntimeState\(/);
+    assert.doesNotMatch(block, /applyInteractiveRuntimeResult\(/);
+  }
 });
 
 test("covered settlement path stays on shared runtime ownership", () => {
@@ -8915,6 +9312,16 @@ test("task runtime contract exports definition instance state action signal and 
   assert.match(source, /export type TaskSignal/);
   assert.match(source, /export type TaskUpdate/);
   assert.match(source, /export type TaskRuntimeResult/);
+});
+
+test("main.ts keeps covered runtime commits supplied with active task definitions", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /let activeTaskDefinitionsById:/);
+  assert.match(source, /taskDefinitionsById:\s*activeTaskDefinitionsById/);
 });
 
 test("task runtime exports lifecycle and signal progression entrypoints", () => {

@@ -134,14 +134,14 @@ import {
   type InteractiveRuntimeOutput,
   runInteractiveRuntime,
 } from "./core/runtime/interactive-runtime";
-import { dispatchRuntimeRequest } from "./core/runtime/runtime-dispatch";
 import {
-  applyRuntimeBridgeState,
-  applyInteractiveRuntimeResult,
-  applyInteractiveRuntimeState,
+  commitRuntimeRequest,
   createRuntimeBridgeState,
-  createInteractiveRuntimeState,
 } from "./core/runtime/state-sync-runtime";
+import type {
+  RuntimeFollowUpContext,
+  RuntimeRouter,
+} from "./core/runtime/runtime-router";
 import type { GameModManifest } from "./core/contracts/mod-manifest";
 import type {
   LoadedMod,
@@ -441,6 +441,7 @@ function syncActiveGameContent(nextContent: ActiveGameContent): void {
   characterNameById = nextContent.characterNameById;
   activeStoryEventDefinitionsById = nextContent.eventDefinitionsById;
   activeStorySceneDefinitionsById = nextContent.sceneDefinitionsById;
+  activeTaskDefinitionsById = nextContent.taskDefinitionsById;
   activeActivityDefinitionsById = nextContent.activityDefinitionsById;
 }
 
@@ -460,8 +461,21 @@ let activeStoryEventDefinitionsById: Record<string, EventDefinition> =
   activeGameContent.eventDefinitionsById;
 let activeStorySceneDefinitionsById: Record<string, SceneDefinition> =
   activeGameContent.sceneDefinitionsById;
+let activeTaskDefinitionsById: ActiveGameContent["taskDefinitionsById"] =
+  activeGameContent.taskDefinitionsById;
 let activeActivityDefinitionsById: Record<string, ActivityDefinition> =
   activeGameContent.activityDefinitionsById;
+
+function createRuntimeCommitContext(input: {
+  router: RuntimeRouter;
+  followUp?: RuntimeFollowUpContext;
+}) {
+  return {
+    router: input.router,
+    ...(input.followUp == null ? {} : { followUp: input.followUp }),
+    taskDefinitionsById: activeTaskDefinitionsById,
+  };
+}
 
 let appState: AppState = createPrototypeAppState(currentPlayerCharacterId);
 let campaignMapDebugState: CampaignMapDebugState = {
@@ -764,16 +778,25 @@ function stopCityBeggingMiniGameLoop(): void {
 
 function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
   const previousGameState = appState.gameState;
-  const completion = runInteractiveRuntime({
-    state: createInteractiveRuntimeState(appState),
+  const completion = commitRuntimeRequest({
+    state: appState,
     request: createInteractiveActionRequest(
       "interactive.city-begging.complete",
       { result }
     ),
-    characterDefinitions: appState.characterDefinitions,
-    playerCharacterId: currentPlayerCharacterId,
+    context: createRuntimeCommitContext({
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            playerCharacterId: currentPlayerCharacterId,
+          }),
+      },
+    }),
   });
-  appState = applyInteractiveRuntimeResult(appState, completion);
+  appState = completion.state;
   syncCouncilPriorityAfterGameStateChange(previousGameState);
   window.onBeggingGameComplete?.(result);
 }
@@ -1063,14 +1086,23 @@ function syncCityBeggingMiniGamePointer(clientX: number): void {
 
   const normalizedX = (clientX - rect.left) / rect.width;
   const pointerX = normalizedX * canvas.width;
-  appState = applyInteractiveRuntimeResult(appState, runInteractiveRuntime({
-    state: createInteractiveRuntimeState(appState),
+  appState = commitRuntimeRequest({
+    state: appState,
     request: createInteractiveActionRequest(
       "interactive.city-begging.pointer",
       { pointerX }
     ),
-    characterDefinitions: appState.characterDefinitions,
-  }));
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+          }),
+      },
+    },
+  }).state;
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
 }
 
@@ -1081,14 +1113,23 @@ function tickCityBeggingMiniGame(timestamp: number): void {
     return;
   }
 
-  const nextResult = runInteractiveRuntime({
-    state: createInteractiveRuntimeState(appState),
+  const nextResult = commitRuntimeRequest({
+    state: appState,
     request: createInteractiveActionRequest("interactive.city-begging.tick", {
       now: timestamp,
     }),
-    characterDefinitions: appState.characterDefinitions,
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+          }),
+      },
+    },
   });
-  const nextAppState = applyInteractiveRuntimeResult(appState, nextResult);
+  const nextAppState = nextResult.state;
   const nextState = nextAppState.beggingMiniGameState ?? currentState;
   const shouldRerender =
     getCityBeggingMiniGameStatus(nextState) !==
@@ -1190,14 +1231,23 @@ function openBeggingMiniGame(): void {
     ...closeCityMenu(closeCityDirectory(appState)),
     locationDialogueState: null,
   };
-  appState = applyInteractiveRuntimeResult(launchState, runInteractiveRuntime({
-    state: createInteractiveRuntimeState(launchState),
-    characterDefinitions: launchState.characterDefinitions,
+  appState = commitRuntimeRequest({
+    state: launchState,
     request: createLaunchInteractiveRequest(
       "interactive.city-begging.launch",
       { now: performance.now() }
     ),
-  }));
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: launchState.characterDefinitions,
+          }),
+      },
+    },
+  }).state;
   renderApp();
   startCityBeggingMiniGameLoop();
 }
@@ -1287,11 +1337,20 @@ function syncActivityQteLoop(): void {
       return;
     }
 
-    appState = applyInteractiveRuntimeResult(appState, runInteractiveRuntime({
-      state: createInteractiveRuntimeState(appState),
+    appState = commitRuntimeRequest({
+      state: appState,
       request: createInteractiveActionRequest("interactive.activity-qte.tick"),
-      characterDefinitions: appState.characterDefinitions,
-    }));
+      context: {
+        router: {
+          route: ({ state, request }) =>
+            runInteractiveRuntime({
+              state,
+              request,
+              characterDefinitions: appState.characterDefinitions,
+            }),
+        },
+      },
+    }).state;
 
     if (!syncRenderedActivityQteMarker()) {
       renderApp();
@@ -1307,31 +1366,58 @@ function stopCurrentActivityQte(): void {
 
   if (activeActivityDefinitionsById[session.activityId] == null) {
     stopActivityQteLoop();
-    appState = applyInteractiveRuntimeResult(appState, runInteractiveRuntime({
-      state: createInteractiveRuntimeState(appState),
+    appState = commitRuntimeRequest({
+      state: appState,
       request: createInteractiveActionRequest("interactive.activity-qte.stop"),
-      characterDefinitions: appState.characterDefinitions,
-      activityDefinitionsById: activeActivityDefinitionsById,
-    }));
+      context: {
+        router: {
+          route: ({ state, request }) =>
+            runInteractiveRuntime({
+              state,
+              request,
+              characterDefinitions: appState.characterDefinitions,
+              activityDefinitionsById: activeActivityDefinitionsById,
+            }),
+        },
+      },
+    }).state;
     renderApp();
     return;
   }
 
-  appState = applyInteractiveRuntimeResult(appState, runInteractiveRuntime({
-    state: createInteractiveRuntimeState(appState),
+  appState = commitRuntimeRequest({
+    state: appState,
     request: createInteractiveActionRequest("interactive.activity-qte.stop"),
-    characterDefinitions: appState.characterDefinitions,
-    activityDefinitionsById: activeActivityDefinitionsById,
-  }));
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            activityDefinitionsById: activeActivityDefinitionsById,
+          }),
+      },
+    },
+  }).state;
   renderApp();
 }
 
 function closeCurrentActivityResult(): void {
-  appState = applyInteractiveRuntimeResult(appState, runInteractiveRuntime({
-    state: createInteractiveRuntimeState(appState),
+  appState = commitRuntimeRequest({
+    state: appState,
     request: createExitInteractiveRequest("activity-qte"),
-    characterDefinitions: appState.characterDefinitions,
-  }));
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+          }),
+      },
+    },
+  }).state;
   renderApp();
 }
 
@@ -1434,8 +1520,8 @@ function startMapAutoAdvance(input: {
     }
 
     const previousGameState = appState.gameState;
-    const runtimeResult = dispatchRuntimeRequest({
-      state: createRuntimeBridgeState(appState),
+    const runtimeCommit = commitRuntimeRequest({
+      state: appState,
       request: createDayStartRequest(),
       context: {
         router: {
@@ -1443,7 +1529,7 @@ function startMapAutoAdvance(input: {
         },
       },
     });
-    appState = applyRuntimeBridgeState(appState, runtimeResult.state);
+    appState = runtimeCommit.state;
     const councilArrived =
       !hasReachedCouncilDate(previousGameState) &&
       hasReachedCouncilDate(appState.gameState);
@@ -1513,8 +1599,8 @@ function chooseCurrentStoryOption(choiceId: string): void {
 }
 
 function dispatchCurrentStoryBattleAction(actionId: string): void {
-  const result = dispatchRuntimeRequest({
-    state: createInteractiveRuntimeState(appState),
+  const result = commitRuntimeRequest({
+    state: appState,
     request: createInteractiveActionRequest(
       "interactive.story-battle.action",
       { battleActionId: actionId }
@@ -1535,7 +1621,7 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
       },
     },
   });
-  appState = applyInteractiveRuntimeState(appState, result.state);
+  appState = result.state;
   renderApp();
 }
 
@@ -3948,8 +4034,8 @@ function handleModalConfirm() {
         modalState: shouldEnterCity ? pendingEnterCityState : null,
         locationDialogueState: null,
       };
-      const runtimeResult = dispatchRuntimeRequest({
-        state: createRuntimeBridgeState(nextAppState),
+      const runtimeCommit = commitRuntimeRequest({
+        state: nextAppState,
         request: createAdvanceTimeSegmentsRequest(1),
         context: {
           router: {
@@ -3957,7 +4043,7 @@ function handleModalConfirm() {
           },
         },
       });
-      appState = applyRuntimeBridgeState(nextAppState, runtimeResult.state);
+      appState = runtimeCommit.state;
       if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
         renderApp();
       }
@@ -3966,8 +4052,8 @@ function handleModalConfirm() {
   }
 
   houseRuntime.clearAllHouseIntervals();
-  const runtimeResult = dispatchRuntimeRequest({
-    state: createRuntimeBridgeState(appState),
+  const runtimeCommit = commitRuntimeRequest({
+    state: appState,
     request: createEnterCityRequest(appState.modalState.cityId),
     context: {
       router: {
@@ -3977,7 +4063,7 @@ function handleModalConfirm() {
   });
   const storyResult = triggerStoryEventsForTiming(
     "city-enter",
-    runtimeResult.state.core,
+    runtimeCommit.runtimeResult.state.core,
     appState.characterDefinitions
   );
   appState = {
@@ -4077,8 +4163,8 @@ function startCampaignTravel(
       modalState: shouldEnterCity ? pendingEnterCityState : null,
       locationDialogueState: null,
     };
-    const runtimeResult = dispatchRuntimeRequest({
-      state: createRuntimeBridgeState(nextAppState),
+    const runtimeCommit = commitRuntimeRequest({
+      state: nextAppState,
       request: createAdvanceTimeSegmentsRequest(1),
       context: {
         router: {
@@ -4086,7 +4172,7 @@ function startCampaignTravel(
         },
       },
     });
-    appState = applyRuntimeBridgeState(nextAppState, runtimeResult.state);
+    appState = runtimeCommit.state;
     if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
       renderApp();
     }

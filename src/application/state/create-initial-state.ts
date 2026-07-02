@@ -1,6 +1,7 @@
 import type { CardInventory } from "../../domain/card";
 import type { GameState } from "../../domain/game-state";
 import type { ValuableItemInventory } from "../../domain/valuable-item";
+import type { TaskRuntimeState } from "../../core/contracts/task-runtime";
 
 export type InitialStateInput = {
   currentMapId: string;
@@ -22,6 +23,15 @@ export type InitialStateInput = {
   timeOfDay?: GameState["world"]["timeOfDay"];
   councilDate?: GameState["world"]["schedule"]["councilDate"];
 };
+
+function createInitialTaskRuntimeState(): TaskRuntimeState {
+  return {
+    instancesByTaskId: {},
+    completedTaskIds: [],
+    failedTaskIds: [],
+    updatedAt: "",
+  };
+}
 
 export function createInitialState(input: InitialStateInput): GameState {
   return {
@@ -78,6 +88,7 @@ export function createInitialState(input: InitialStateInput): GameState {
     runtime: {
       flags: {},
       variables: {},
+      tasks: createInitialTaskRuntimeState(),
       cityNpcPools: {},
       cityMarkets: {},
       activitySession: null,

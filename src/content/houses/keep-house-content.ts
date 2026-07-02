@@ -1,5 +1,5 @@
 import type { KeepHouseContributionDefinition } from "../../domain/keep-house";
-import * as keepHouseContentJson from "../scenario-packs/zhuyuanzhang/house-content/keep-house-content.json";
+import { defaultKeepHouseContent } from "../pack-content-access";
 
 type KeepHouseContent = {
   keepHouseDefaultStrategy: {
@@ -9,9 +9,7 @@ type KeepHouseContent = {
   keepHouseDefaultContributions: KeepHouseContributionDefinition[];
 };
 
-const keepHouseContent =
-  ((keepHouseContentJson as { default?: KeepHouseContent }).default ??
-    keepHouseContentJson) as KeepHouseContent;
+const keepHouseContent = defaultKeepHouseContent as KeepHouseContent;
 
 export const keepHouseDefaultStrategy = keepHouseContent.keepHouseDefaultStrategy;
 export const keepHouseDefaultContributions = keepHouseContent.keepHouseDefaultContributions;

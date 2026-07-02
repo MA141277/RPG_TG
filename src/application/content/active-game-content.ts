@@ -13,6 +13,7 @@ import type {
 } from "../../domain/historical-character";
 import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house";
 import type { MapDefinition, MapNode } from "../../domain/map";
+import type { TaskDefinition } from "../../core/contracts/task-runtime";
 import type { ValuableItemDefinition } from "../../domain/valuable-item";
 
 type Identified = { id: string };
@@ -37,6 +38,8 @@ export type ActiveGameContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitions: SceneDefinition[];
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  taskDefinitions: TaskDefinition[];
+  taskDefinitionsById: Record<string, TaskDefinition>;
   activityDefinitions: ActivityDefinition[];
   activityDefinitionsById: Record<string, ActivityDefinition>;
   cards: CardDefinition[];
@@ -65,6 +68,7 @@ export function createActiveGameContent(
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const sceneDefinitions = resolvedPack.scenes ?? [];
+  const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
   const cards = resolvedPack.cards ?? [];
   const valuables = resolvedPack.valuables ?? [];
@@ -113,6 +117,10 @@ export function createActiveGameContent(
     sceneDefinitionsById: Object.fromEntries(
       sceneDefinitions.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
     ),
+    taskDefinitions,
+    taskDefinitionsById: Object.fromEntries(
+      taskDefinitions.map((taskDefinition) => [taskDefinition.id, taskDefinition])
+    ),
     activityDefinitions,
     activityDefinitionsById: Object.fromEntries(
       activityDefinitions.map((activityDefinition) => [activityDefinition.id, activityDefinition])
@@ -149,6 +157,7 @@ export function mergeContentPacks(
     characters: mergeById(basePack.characters ?? [], overridePack.characters ?? []),
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
+    tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
@@ -188,6 +197,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     characters: pack.characters ?? [],
     events: pack.events ?? [],
     scenes: pack.scenes ?? [],
+    tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
