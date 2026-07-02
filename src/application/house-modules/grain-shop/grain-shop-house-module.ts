@@ -312,14 +312,12 @@ function createCouncilTimeInsufficientOverlay(
     "时日不够",
     remainingDays <= 0
       ? [
-          "粮铺掌柜把账册按回柜上，抬眼看了看你。",
-          `“评定日期已到，这轮账少说也要 ${durationDays} 天，眼下动不得。”`,
-          "“先去把评定应下，回头再来拨算盘。”",
+          `（把账册按回柜上，抬眼看了看你）评定日期已到，这轮账少说也要 ${durationDays} 天，眼下动不得。`,
+          "先去把评定应下，回头再来拨算盘。",
         ]
       : [
-          "粮铺掌柜把账册按回柜上，抬眼看了看你。",
-          `“离评定只剩 ${remainingDays} 天，这轮账少说也要 ${durationDays} 天，眼下已经来不及了。”`,
-          "“先去把评定应下，回头再来拨算盘。”",
+          `（把账册按回柜上，抬眼看了看你）离评定只剩 ${remainingDays} 天，这轮账少说也要 ${durationDays} 天，眼下已经来不及了。`,
+          "先去把评定应下，回头再来拨算盘。",
         ],
     "warning"
   );
@@ -329,8 +327,8 @@ function createGrainSoldOutOverlay(): GrainShopSessionState["overlay"] {
   return toAlertOverlay(
     "今日无米可买",
     [
-      "粮铺掌柜摊了摊手：“濠州这一阵闹得太凶，店里剩下的几袋米早被熟客和军中先订走了。”",
-      "“你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。”",
+      "（摊了摊手）濠州这一阵闹得太凶，店里剩下的几袋米早被熟客和军中先订走了。",
+      "你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。",
     ],
     "warning"
   );
@@ -503,8 +501,8 @@ function handleAction(
           toAlertOverlay(
             "先歇一歇",
             [
-              "粮铺掌柜抬手按住了账册：“你这会儿眼都发花，再算下去只会把账越算越乱。”",
-              `“先去缓口气，攒够 ${ACTIVITY_COMPLETION_STAMINA_COST} 点体力，再回来拨算盘。”`,
+              "（抬手按住了账册）你这会儿眼都发花，再算下去只会把账越算越乱。",
+              `先去缓口气，攒够 ${ACTIVITY_COMPLETION_STAMINA_COST} 点体力，再回来拨算盘。`,
             ],
             "warning"
           )
@@ -530,8 +528,7 @@ function handleAction(
         input,
         sessionState,
         createActivityConfirmOverlay("帮忙算账", [
-          "粮铺掌柜把账册推到了你面前。",
-          `“照你现在的算术底子，这一轮账真要细细理顺，少说也得耗上 ${durationDays} 天。”`,
+          `（把账册推到了你面前）照你现在的算术底子，这一轮账真要细细理顺，少说也得耗上 ${durationDays} 天。`,
           formatHouseActivityCostLine(durationDays),
         ], CONFIRM_START_ACCOUNTING_ACTION_ID)
       );

@@ -3,6 +3,8 @@ import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  base: "./",
+  appType: "mpa",
   plugins: [
     {
       name: "spine-editor-json-save",
@@ -64,7 +66,10 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
-      input: resolve(__dirname, "index.html"),
+      input: {
+        main: resolve(__dirname, "index.html"),
+        battleDemo: resolve(__dirname, "prototypes/battle-demo/index.html"),
+      },
     },
   },
 });

@@ -83,3 +83,15 @@ In short:
 - prefer extraction over duplication
 - prefer reusable systems over temporary patches
 - prefer genre-proven design over ad hoc invention
+
+## Spine Plugin Trigger
+
+If the user says "启动spine插件", "启动 Spine 插件", "打开骨骼绑定工具", or asks to start the spine/binding editor, use the project skill:
+
+- `.codex/skills/start-spine-plugin/SKILL.md`
+
+The tool and collaboration rules are documented in:
+
+- `docs/spine-plugin.md`
+
+Do not treat this as house work. Start the dev server if needed and explain the tool's save rules, especially that new piece images must live under `src/faxian/leg/` and JSON stores `leg:` references rather than image bytes.

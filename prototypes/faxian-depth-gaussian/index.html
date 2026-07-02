@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Faxian Depth Gaussian Splat</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0e1014;
+        --panel: #181d24;
+        --panel-2: #222936;
+        --text: #eef2f6;
+        --muted: #9aa7b8;
+        --line: #343c49;
+        --accent: #e2b84a;
+        --blue: #70b7ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        min-height: 100vh;
+      }
+
+      .stage {
+        position: relative;
+        min-height: 100vh;
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          #080a0d;
+        background-size: 34px 34px;
+      }
+
+      #splatCanvas {
+        display: block;
+        width: 100%;
+        height: 100vh;
+        cursor: grab;
+      }
+
+      #splatCanvas.is-dragging {
+        cursor: grabbing;
+      }
+
+      .hud {
+        position: absolute;
+        left: 18px;
+        top: 18px;
+        display: grid;
+        gap: 6px;
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 6px;
+        background: rgba(12, 15, 20, 0.72);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        backdrop-filter: blur(8px);
+      }
+
+      .hud strong {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        min-height: 100vh;
+        padding: 22px;
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: 0;
+      }
+
+      .note {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .controls {
+        display: grid;
+        gap: 14px;
+      }
+
+      label,
+      .control-block {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .row,
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .checkbox-row {
+        min-height: 34px;
+      }
+
+      output {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--blue);
+      }
+
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--blue);
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: var(--blue);
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .stats {
+        margin-top: auto;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 920px) {
+        body {
+          overflow: auto;
+        }
+
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        #splatCanvas {
+          height: 66vh;
+        }
+
+        .sidebar {
+          min-height: auto;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="stage">
+        <canvas id="splatCanvas" aria-label="Depth Gaussian splat viewer"></canvas>
+        <div class="hud">
+          <strong>Depth Gaussian Splat</strong>
+          <span id="hudStatus">Loading depth and texture...</span>
+          <span>Drag: rotate / Wheel: zoom</span>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div>
+          <h1>深度高斯喷射</h1>
+          <p class="note">从 depth.png 取高度，从 tietu.png 取颜色，按像素采样生成高斯 splat 点云。</p>
+        </div>
+
+        <div class="controls">
+          <label>
+            <span class="row">采样步长 <output id="sampleStepValue">5</output></span>
+            <input id="sampleStep" type="range" min="3" max="14" step="1" value="5" />
+          </label>
+
+          <label>
+            <span class="row">背景裁切 <output id="depthCutoffValue">0.02</output></span>
+            <input id="depthCutoff" type="range" min="0" max="0.3" step="0.005" value="0.02" />
+          </label>
+
+          <label>
+            <span class="row">深度强度 <output id="depthScaleValue">0.86</output></span>
+            <input id="depthScale" type="range" min="0" max="2.2" step="0.01" value="0.86" />
+          </label>
+
+          <label>
+            <span class="row">高斯半径 <output id="pointSizeValue">12</output></span>
+            <input id="pointSize" type="range" min="2" max="34" step="1" value="12" />
+          </label>
+
+          <label>
+            <span class="row">不透明度 <output id="opacityValue">0.82</output></span>
+            <input id="opacity" type="range" min="0.05" max="1" step="0.01" value="0.82" />
+          </label>
+
+          <label>
+            <span class="row">喷射进度 <output id="sprayValue">1.00</output></span>
+            <input id="spray" type="range" min="0" max="1" step="0.01" value="1" />
+          </label>
+
+          <label>
+            <span class="row">喷射扩散 <output id="scatterValue">0.42</output></span>
+            <input id="scatter" type="range" min="0" max="1.5" step="0.01" value="0.42" />
+          </label>
+
+          <label>
+            <span class="row">视角缩放 <output id="zoomValue">1.08</output></span>
+            <input id="zoom" type="range" min="0.45" max="2.6" step="0.01" value="1.08" />
+          </label>
+
+          <label class="checkbox-row">
+            <span>自动旋转</span>
+            <input id="autoRotate" type="checkbox" checked />
+          </label>
+
+          <label class="checkbox-row">
+            <span>反转深度</span>
+            <input id="invertDepth" type="checkbox" />
+          </label>
+
+          <div class="button-row">
+            <button id="rebuild" type="button">重建点云</button>
+            <button id="resetView" type="button">重置视角</button>
+          </div>
+        </div>
+
+        <p class="stats" id="stats">等待资源...</p>
+      </aside>
+    </main>
+
+    <script type="module">
+      const depthPath = "../../src/faxian/leg/depth.png";
+      const texturePath = "../../src/faxian/leg/tietu.png";
+      const canvas = document.querySelector("#splatCanvas");
+      const hudStatus = document.querySelector("#hudStatus");
+      const stats = document.querySelector("#stats");
+      const controls = {
+        sampleStep: document.querySelector("#sampleStep"),
+        depthCutoff: document.querySelector("#depthCutoff"),
+        depthScale: document.querySelector("#depthScale"),
+        pointSize: document.querySelector("#pointSize"),
+        opacity: document.querySelector("#opacity"),
+        spray: document.querySelector("#spray"),
+        scatter: document.querySelector("#scatter"),
+        zoom: document.querySelector("#zoom"),
+        autoRotate: document.querySelector("#autoRotate"),
+        invertDepth: document.querySelector("#invertDepth"),
+        rebuild: document.querySelector("#rebuild"),
+        resetView: document.querySelector("#resetView"),
+      };
+      const outputs = {
+        sampleStep: document.querySelector("#sampleStepValue"),
+        depthCutoff: document.querySelector("#depthCutoffValue"),
+        depthScale: document.querySelector("#depthScaleValue"),
+        pointSize: document.querySelector("#pointSizeValue"),
+        opacity: document.querySelector("#opacityValue"),
+        spray: document.querySelector("#sprayValue"),
+        scatter: document.querySelector("#scatterValue"),
+        zoom: document.querySelector("#zoomValue"),
+      };
+
+      const vertexShader = `
+        attribute vec3 aPosition;
+        attribute vec4 aColor;
+        attribute vec3 aSeed;
+        uniform mat4 uMatrix;
+        uniform float uPointSize;
+        uniform float uDepthScale;
+        uniform float uSpray;
+        uniform float uScatter;
+        uniform float uTime;
+        varying vec4 vColor;
+        varying float vDepth;
+
+        float easeOutCubic(float t) {
+          float p = 1.0 - t;
+          return 1.0 - p * p * p;
+        }
+
+        void main() {
+          float depth = aPosition.z;
+          vec3 target = vec3(aPosition.xy, (depth - 0.5) * uDepthScale);
+          vec3 origin = vec3(aPosition.xy * 0.18, -1.25 - aSeed.z * 0.75);
+          vec3 burst = vec3(
+            (aSeed.x - 0.5) * uScatter,
+            (aSeed.y - 0.5) * uScatter,
+            (aSeed.z - 0.5) * uScatter * 1.35
+          );
+          float progress = easeOutCubic(clamp(uSpray, 0.0, 1.0));
+          vec3 position = mix(origin + burst, target, progress);
+          position.xy += (1.0 - progress) * burst.xy * sin(uTime * 2.2 + aSeed.z * 6.2831) * 0.08;
+
+          vec4 clip = uMatrix * vec4(position, 1.0);
+          gl_Position = clip;
+          float perspectiveSize = uPointSize * (0.68 + depth * 0.72) / max(clip.w, 0.25);
+          gl_PointSize = perspectiveSize;
+          vColor = aColor;
+          vDepth = depth;
+        }
+      `;
+
+      const fragmentShader = `
+        precision mediump float;
+        uniform float uOpacity;
+        varying vec4 vColor;
+        varying float vDepth;
+
+        void main() {
+          vec2 p = gl_PointCoord * 2.0 - 1.0;
+          float radius = dot(p, p);
+          if (radius > 1.0) {
+            discard;
+          }
+          float alpha = exp(-radius * 3.25) * uOpacity * vColor.a;
+          vec3 color = vColor.rgb * (0.78 + vDepth * 0.34);
+          gl_FragColor = vec4(color, alpha);
+        }
+      `;
+
+      const state = {
+        imageWidth: 1,
+        imageHeight: 1,
+        pointCount: 0,
+        yaw: -0.18,
+        pitch: -0.08,
+        zoom: 1.08,
+        dragging: false,
+        lastPointer: { x: 0, y: 0 },
+        vertexBuffer: null,
+        colorBuffer: null,
+        seedBuffer: null,
+        startedAt: performance.now(),
+      };
+
+      const gl = canvas.getContext("webgl", {
+        antialias: true,
+        alpha: false,
+        preserveDrawingBuffer: true,
+      });
+
+      if (!gl) {
+        throw new Error("WebGL is not available.");
+      }
+
+      const program = createProgram(gl, vertexShader, fragmentShader);
+      const locations = {
+        position: gl.getAttribLocation(program, "aPosition"),
+        color: gl.getAttribLocation(program, "aColor"),
+        seed: gl.getAttribLocation(program, "aSeed"),
+        matrix: gl.getUniformLocation(program, "uMatrix"),
+        pointSize: gl.getUniformLocation(program, "uPointSize"),
+        depthScale: gl.getUniformLocation(program, "uDepthScale"),
+        spray: gl.getUniformLocation(program, "uSpray"),
+        scatter: gl.getUniformLocation(program, "uScatter"),
+        time: gl.getUniformLocation(program, "uTime"),
+        opacity: gl.getUniformLocation(program, "uOpacity"),
+      };
+
+      for (const [key, location] of Object.entries(locations)) {
+        if (location == null || location === -1) {
+          throw new Error(`Missing WebGL location: ${key}`);
+        }
+      }
+
+      gl.useProgram(program);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthMask(false);
+      gl.clearColor(0.025, 0.03, 0.04, 1);
+
+      const [depthImage, textureImage] = await Promise.all([
+        loadImage(depthPath),
+        loadImage(texturePath),
+      ]);
+      const depthData = imageDataFrom(depthImage);
+      const textureData = imageDataFrom(textureImage);
+
+      state.imageWidth = depthData.width;
+      state.imageHeight = depthData.height;
+      rebuildPointCloud();
+      updateOutputs();
+      requestAnimationFrame(render);
+
+      for (const key of ["depthScale", "pointSize", "opacity", "spray", "scatter", "zoom"]) {
+        controls[key].addEventListener("input", () => {
+          if (key === "zoom") {
+            state.zoom = Number.parseFloat(controls.zoom.value);
+          }
+          updateOutputs();
+        });
+      }
+
+      for (const key of ["sampleStep", "depthCutoff"]) {
+        controls[key].addEventListener("input", updateOutputs);
+        controls[key].addEventListener("change", rebuildPointCloud);
+      }
+
+      controls.invertDepth.addEventListener("change", rebuildPointCloud);
+      controls.rebuild.addEventListener("click", rebuildPointCloud);
+      controls.resetView.addEventListener("click", () => {
+        state.yaw = -0.18;
+        state.pitch = -0.08;
+        state.zoom = 1.08;
+        controls.zoom.value = String(state.zoom);
+        updateOutputs();
+      });
+
+      canvas.addEventListener("pointerdown", (event) => {
+        state.dragging = true;
+        state.lastPointer = { x: event.clientX, y: event.clientY };
+        canvas.classList.add("is-dragging");
+        canvas.setPointerCapture(event.pointerId);
+      });
+
+      canvas.addEventListener("pointermove", (event) => {
+        if (!state.dragging) {
+          return;
+        }
+        const dx = event.clientX - state.lastPointer.x;
+        const dy = event.clientY - state.lastPointer.y;
+        state.lastPointer = { x: event.clientX, y: event.clientY };
+        state.yaw += dx * 0.006;
+        state.pitch = clamp(state.pitch + dy * 0.005, -1.12, 1.12);
+      });
+
+      canvas.addEventListener("pointerup", (event) => {
+        state.dragging = false;
+        canvas.classList.remove("is-dragging");
+        canvas.releasePointerCapture(event.pointerId);
+      });
+
+      canvas.addEventListener(
+        "wheel",
+        (event) => {
+          event.preventDefault();
+          state.zoom = clamp(state.zoom * (event.deltaY < 0 ? 1.07 : 1 / 1.07), 0.45, 2.6);
+          controls.zoom.value = String(state.zoom.toFixed(2));
+          updateOutputs();
+        },
+        { passive: false },
+      );
+
+      function rebuildPointCloud() {
+        const step = Number.parseInt(controls.sampleStep.value, 10);
+        const cutoff = Number.parseFloat(controls.depthCutoff.value);
+        const invertDepth = controls.invertDepth.checked;
+        const imageAspect = depthData.width / depthData.height;
+        const positions = [];
+        const colors = [];
+        const seeds = [];
+
+        for (let y = 0; y < depthData.height; y += step) {
+          for (let x = 0; x < depthData.width; x += step) {
+            const depthIndex = (y * depthData.width + x) * 4;
+            let depth = luminance(depthData.data, depthIndex) / 255;
+            if (invertDepth) {
+              depth = 1 - depth;
+            }
+            if (depth <= cutoff) {
+              continue;
+            }
+
+            const textureX = Math.min(textureData.width - 1, Math.round((x / depthData.width) * textureData.width));
+            const textureY = Math.min(textureData.height - 1, Math.round((y / depthData.height) * textureData.height));
+            const colorIndex = (textureY * textureData.width + textureX) * 4;
+            const alpha = textureData.data[colorIndex + 3] / 255;
+            if (alpha <= 0.03) {
+              continue;
+            }
+
+            const nx = (x / (depthData.width - 1) - 0.5) * imageAspect * 2;
+            const ny = (0.5 - y / (depthData.height - 1)) * 2;
+            positions.push(nx, ny, depth);
+            colors.push(
+              textureData.data[colorIndex] / 255,
+              textureData.data[colorIndex + 1] / 255,
+              textureData.data[colorIndex + 2] / 255,
+              alpha,
+            );
+            seeds.push(hash01(x, y, 11), hash01(x, y, 37), hash01(x, y, 71));
+          }
+        }
+
+        state.pointCount = positions.length / 3;
+        uploadBuffer("vertexBuffer", locations.position, new Float32Array(positions), 3);
+        uploadBuffer("colorBuffer", locations.color, new Float32Array(colors), 4);
+        uploadBuffer("seedBuffer", locations.seed, new Float32Array(seeds), 3);
+        hudStatus.textContent = `${state.pointCount.toLocaleString()} splats`;
+        stats.textContent =
+          `depth.png ${depthData.width} x ${depthData.height}\n` +
+          `tietu.png ${textureData.width} x ${textureData.height}\n` +
+          `当前点数 ${state.pointCount.toLocaleString()}，采样步长 ${step}`;
+      }
+
+      function uploadBuffer(key, location, data, size) {
+        if (state[key]) {
+          gl.deleteBuffer(state[key]);
+        }
+        const buffer = gl.createBuffer();
+        if (!buffer) {
+          throw new Error("Failed to create WebGL buffer.");
+        }
+        state[key] = buffer;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+      }
+
+      function render(now) {
+        resizeCanvas();
+        const time = (now - state.startedAt) / 1000;
+        if (controls.autoRotate.checked && !state.dragging) {
+          state.yaw += 0.0026;
+        }
+
+        const aspect = canvas.width / Math.max(canvas.height, 1);
+        const projection = perspective(Math.PI / 4.8, aspect, 0.01, 20);
+        const view = multiply(
+          translation(0, 0, -3.35 / state.zoom),
+          multiply(rotationX(state.pitch), rotationY(state.yaw)),
+        );
+        const matrix = multiply(projection, view);
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.useProgram(program);
+        gl.uniformMatrix4fv(locations.matrix, false, matrix);
+        gl.uniform1f(locations.pointSize, Number.parseFloat(controls.pointSize.value));
+        gl.uniform1f(locations.depthScale, Number.parseFloat(controls.depthScale.value));
+        gl.uniform1f(locations.spray, Number.parseFloat(controls.spray.value));
+        gl.uniform1f(locations.scatter, Number.parseFloat(controls.scatter.value));
+        gl.uniform1f(locations.time, time);
+        gl.uniform1f(locations.opacity, Number.parseFloat(controls.opacity.value));
+        gl.drawArrays(gl.POINTS, 0, state.pointCount);
+        requestAnimationFrame(render);
+      }
+
+      function updateOutputs() {
+        outputs.sampleStep.value = controls.sampleStep.value;
+        outputs.depthCutoff.value = Number.parseFloat(controls.depthCutoff.value).toFixed(3);
+        outputs.depthScale.value = Number.parseFloat(controls.depthScale.value).toFixed(2);
+        outputs.pointSize.value = controls.pointSize.value;
+        outputs.opacity.value = Number.parseFloat(controls.opacity.value).toFixed(2);
+        outputs.spray.value = Number.parseFloat(controls.spray.value).toFixed(2);
+        outputs.scatter.value = Number.parseFloat(controls.scatter.value).toFixed(2);
+        outputs.zoom.value = Number.parseFloat(controls.zoom.value).toFixed(2);
+      }
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error(`Cannot load ${src}`));
+          image.src = src;
+        });
+      }
+
+      function imageDataFrom(image) {
+        const scratch = document.createElement("canvas");
+        scratch.width = image.naturalWidth;
+        scratch.height = image.naturalHeight;
+        const context = scratch.getContext("2d", { willReadFrequently: true });
+        if (!context) {
+          throw new Error("Cannot read image pixels.");
+        }
+        context.drawImage(image, 0, 0);
+        return context.getImageData(0, 0, scratch.width, scratch.height);
+      }
+
+      function luminance(data, index) {
+        return data[index] * 0.2126 + data[index + 1] * 0.7152 + data[index + 2] * 0.0722;
+      }
+
+      function hash01(x, y, salt) {
+        const value = Math.sin(x * 12.9898 + y * 78.233 + salt * 37.719) * 43758.5453;
+        return value - Math.floor(value);
+      }
+
+      function resizeCanvas() {
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.max(1, Math.round(canvas.clientWidth * pixelRatio));
+        const height = Math.max(1, Math.round(canvas.clientHeight * pixelRatio));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+      }
+
+      function compileShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        if (!shader) {
+          throw new Error("Failed to allocate shader.");
+        }
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          const message = gl.getShaderInfoLog(shader) || "Shader compile failed.";
+          gl.deleteShader(shader);
+          throw new Error(message);
+        }
+        return shader;
+      }
+
+      function createProgram(gl, vertexSource, fragmentSource) {
+        const program = gl.createProgram();
+        if (!program) {
+          throw new Error("Failed to allocate WebGL program.");
+        }
+        const vertex = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+        const fragment = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+        gl.attachShader(program, vertex);
+        gl.attachShader(program, fragment);
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          const message = gl.getProgramInfoLog(program) || "Program link failed.";
+          gl.deleteProgram(program);
+          throw new Error(message);
+        }
+        gl.deleteShader(vertex);
+        gl.deleteShader(fragment);
+        return program;
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function perspective(fov, aspect, near, far) {
+        const f = 1 / Math.tan(fov / 2);
+        const range = 1 / (near - far);
+        return new Float32Array([
+          f / aspect, 0, 0, 0,
+          0, f, 0, 0,
+          0, 0, (near + far) * range, -1,
+          0, 0, near * far * range * 2, 0,
+        ]);
+      }
+
+      function translation(x, y, z) {
+        return new Float32Array([
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          x, y, z, 1,
+        ]);
+      }
+
+      function rotationX(angle) {
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+        return new Float32Array([
+          1, 0, 0, 0,
+          0, c, s, 0,
+          0, -s, c, 0,
+          0, 0, 0, 1,
+        ]);
+      }
+
+      function rotationY(angle) {
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+        return new Float32Array([
+          c, 0, -s, 0,
+          0, 1, 0, 0,
+          s, 0, c, 0,
+          0, 0, 0, 1,
+        ]);
+      }
+
+      function multiply(left, right) {
+        const result = new Float32Array(16);
+        for (let row = 0; row < 4; row += 1) {
+          for (let column = 0; column < 4; column += 1) {
+            result[column * 4 + row] =
+              left[row] * right[column * 4] +
+              left[4 + row] * right[column * 4 + 1] +
+              left[8 + row] * right[column * 4 + 2] +
+              left[12 + row] * right[column * 4 + 3];
+          }
+        }
+        return result;
+      }
+    </script>
+  </body>
+</html>

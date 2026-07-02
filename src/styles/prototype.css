@@ -622,6 +622,7 @@
 
 .c-campaign-map-debug__actions {
   display: flex;
+  align-items: stretch;
   gap: 6px;
 }
 
@@ -636,9 +637,87 @@
   cursor: pointer;
 }
 
+.c-campaign-map-debug__scale-field {
+  display: grid;
+  grid-template-columns: auto 72px;
+  align-items: center;
+  gap: 5px;
+  min-width: 118px;
+  border: 1px solid rgb(239 216 150 / 38%);
+  border-radius: 4px;
+  padding: 3px 6px;
+  background: rgb(5 10 11 / 42%);
+  color: rgb(226 232 217 / 76%);
+  font-size: 0.72rem;
+}
+
+.c-campaign-map-debug__scale-field input {
+  width: 72px;
+  min-width: 0;
+  border: 1px solid rgb(239 216 150 / 42%);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: #fff8df;
+  background: rgb(13 18 18 / 88%);
+  font: inherit;
+}
+
+.c-campaign-map-debug__scale-field input:focus {
+  outline: 1px solid rgb(255 235 170 / 82%);
+  outline-offset: 1px;
+}
+
 .c-campaign-map-debug__actions button:hover {
   border-color: rgb(255 235 170 / 84%);
   background: linear-gradient(180deg, rgb(112 88 42 / 96%), rgb(51 59 49 / 96%));
+}
+
+.c-campaign-map-debug__terrain-style {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgb(239 216 150 / 28%);
+}
+
+.c-campaign-map-debug__terrain-style label {
+  display: grid;
+  grid-template-columns: 82px minmax(120px, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: rgb(226 232 217 / 78%);
+  font-size: 0.72rem;
+}
+
+.c-campaign-map-debug__terrain-style strong {
+  color: #fff8df;
+  font-weight: 700;
+}
+
+.c-campaign-map-debug__terrain-style input[type="range"] {
+  width: 100%;
+  accent-color: #e7c967;
+}
+
+.c-campaign-map-debug__terrain-style button {
+  justify-self: end;
+  border: 1px solid rgb(239 216 150 / 42%);
+  border-radius: 4px;
+  padding: 3px 8px;
+  color: #fff8df;
+  background: rgb(13 18 18 / 88%);
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.c-campaign-map-debug__terrain-style button:hover {
+  border-color: rgb(255 235 170 / 84%);
+}
+
+.c-campaign-map-debug__terrain-style [data-campaign-city-mesh-copy-status] {
+  justify-self: end;
+  color: rgb(226 232 217 / 72%);
+  font-size: 0.68rem;
 }
 
 .c-map-intro-overlay {

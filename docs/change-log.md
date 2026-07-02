@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-02 Spine Plugin Workflow Contract
+
+### Added
+- 新增 `docs/spine-plugin.md`，记录 Spine 节点时间轴/绑定管理工具的启动方式、绑定编辑规则、物块图片来源和 JSON 保存交接规则。
+- 新增项目内 Codex skill `.codex/skills/start-spine-plugin/SKILL.md`，用于在用户输入“启动spine插件”等请求时自动启动 `tools/spine-node-timeline-editor.html` 对应的 Vite 服务并说明用法。
+
+### Changed
+- `AGENTS.md` 新增 Spine 插件触发规则，明确该请求不属于 house work，优先使用项目内 skill。
+- Spine 工具协作约定收口为：新增物块图片必须位于 `src/faxian/leg/`，JSON 保存 `leg:` 图片引用和绑定数据，不再把新上传图片内嵌为 base64。
+
+### Impact
+- 后续拉取仓库的 Codex 会话可以通过“启动spine插件”进入固定启动流程。
+- 复制/导出 JSON 适合提交给 Codex 修改骨骼、绑定、物块变换和动作数据；图片文件本体仍由项目目录管理。
+
 ## 2026-06-18 JSON Scenario Pack Entry
 
 ### Added
