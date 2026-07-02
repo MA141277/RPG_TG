@@ -2,7 +2,7 @@
 
 > **For agentic workers:** Use this file as the visibility companion to the fresh `2026-07-02` weekly orchestration plan. Do not execute production code directly from this file. Update it after each child-plan work batch so the repository becomes less of a black box.
 
-**Goal:** Make the fresh continuation set legible by keeping one synchronized visibility bundle for `Child 14`, while preserving the distinction between the active executable child, the immediate queued follow-up, and the locked later follow-up.
+**Goal:** Make the fresh continuation set legible by keeping one synchronized visibility bundle through Child 15 promotion and execution, while preserving the distinction between the active executable child, the immediate queued follow-up, and completed queue history.
 
 **Architecture:** Treat this file as the documentation companion to `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`. Child plans still drive code execution. This file governs the fresh `2026-07-02` artifact bundle only and keeps queue truth synchronized across review index, module map, call flows, next split review, and architecture report.
 
@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-02`
-- Current Focus: `The fresh 2026-07-02 visibility bundle now records Child 14 as the active executable child, Child 15 as the immediate queued follow-up, and Child 16 as the locked later follow-up.`
-- Next Step: `Keep the 2026-07-02 artifact bundle aligned after each Child 14 implementation batch.`
-- Verification: `Initial fresh-weekly-set visibility authoring: npm run lint:plans`
-- Notes: `This file is not a code execution plan. It is a required visibility companion for the fresh 2026-07-02 weekly orchestration plan.`
+- Current Focus: `The 2026-07-02 visibility bundle now reflects Child 15 promotion. Child 15 is active, Child 16 is queued, and there is no additional locked child in this set right now.`
+- Next Step: `Keep the same artifact bundle aligned after each Child 15 implementation batch.`
+- Verification: `Child 15 promotion visibility sync: npm run lint:plans`
+- Notes: `This file is not a code execution plan. It is the visibility companion for the 2026-07-02 weekly orchestration plan and must keep queue truth synchronized whenever the active child changes.`
 
 ## Progress Log
 
@@ -24,13 +24,21 @@
   - Verification: `npm run lint:plans`
   - Next: `Refresh the same artifact bundle after the first Child 14 implementation batch lands.`
 - 2026-07-02
-  - Summary: `Updated the fresh visibility bundle after formal Child 15 spec/plan authoring. The fresh queue truth is now stricter: Child 14 is active, Child 15 is the immediate queued follow-up, and Child 16 remains the locked later follow-up.`
+  - Summary: `Updated the fresh visibility bundle after formal Child 15 spec authoring. The fresh queue truth is now stricter: Child 14 is active, Child 15 is the immediate queued follow-up, and Child 16 remains the locked later follow-up.`
   - Verification: `npm run lint:plans`
   - Next: `Keep the same artifact bundle aligned while Child 14 remains the only executable child.`
 - 2026-07-02
-  - Summary: `Updated the fresh visibility bundle after formal Child 16 spec/plan authoring. The fresh queue now has the full three-level truth recorded explicitly: Child 14 active, Child 15 queued, Child 16 locked.`
+  - Summary: `Updated the fresh visibility bundle after formal Child 16 spec authoring. The fresh queue now has the full three-level truth recorded explicitly: Child 14 active, Child 15 queued, Child 16 locked.`
   - Verification: `npm run lint:plans`
   - Next: `Keep the same artifact bundle aligned while Child 14 remains the only executable child.`
+- 2026-07-02
+  - Summary: `Updated the visibility bundle after Child 14 closeout. The interactive family now records runtime-owned covered activity-qte and story-battle paths, Child 14 is preserved as completed queue history, and the weekly set temporarily has no active child while Child 15 waits for baseline recheck.`
+  - Verification: `npm run lint:plans`
+  - Next: `Refresh the same artifact bundle again only after Child 15 promotion or weekly-set closeout.`
+- 2026-07-02
+  - Summary: `Updated the visibility bundle after the Child 15 baseline recheck and promotion. Child 15 is now the active executable child with a narrowed enter-city/day-start/advance-segments boundary, Child 16 is now the queued follow-up, and Child 14 is preserved as completed history.`
+  - Verification: `npm run lint:plans`
+  - Next: `Refresh the same artifact bundle after the first Child 15 implementation batch lands.`
 
 ---
 
@@ -38,22 +46,22 @@
 
 - Weekly orchestration controller:
   - `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
-- Active next child plan:
-  - `docs/superpowers/plans/2026-07-02-child-14-interactive-remaining-legacy-convergence-plan.md`
-- Immediate queued follow-up child:
+- Active child plan:
   - `docs/superpowers/plans/2026-07-02-child-15-navigation-time-runtime-convergence-plan.md`
-- Locked later follow-up child:
-  - `Child 16 Event + Scene Handoff Convergence`
+- Immediate queued follow-up child:
+  - `docs/superpowers/specs/2026-07-02-child-16-event-scene-handoff-convergence-spec.md`
+- Latest completed child plan:
+  - `docs/superpowers/plans/2026-07-02-child-14-interactive-remaining-legacy-convergence-plan.md`
 - Previous closed weekly controller:
   - `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
 
 ## Companion Rules
 
 - Do not execute production code directly from this file.
-- Update this file after every Child 14 work batch that changes production code or architecture-relevant docs.
+- Update this file after every Child 15 work batch that changes production code or architecture-relevant docs.
 - Do not mark the fresh weekly orchestration plan `completed` until this companion is also complete.
 - Every linked weekly artifact must use the same week date.
-- If Child 14 closes, review every core artifact for stale queue wording before promoting any later child.
+- If Child 15 closes, review every core artifact for stale queue wording before promoting any later child.
 - The architecture report must contain at least:
   - one module diagram
   - two real flow diagrams
@@ -97,7 +105,7 @@ Merged ownership:
 
 - [x] **Step 1: Record the fresh queue truth**
 
-Link the fresh weekly plan and record that Child 14 is active, Child 15 is queued, and Child 16 remains locked.
+Link the fresh weekly plan and record the current queue truth for the active child, the immediate queued follow-up, and any retained completed/locked history.
 
 - [x] **Step 2: Capture the current module and flow baseline**
 

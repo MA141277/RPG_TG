@@ -34,12 +34,18 @@ Every plan file must include these sections in markdown:
 
 Recommended additional sections:
 
+- `Based On Spec`
+- `Baseline Recheck`
+- `Implementation Scope`
 - `File Map`
-- `Verification`
+- `Verification Plan`
+- `Exit Check`
 - `Completion Checklist`
 - links to related specs
-- `Current Iteration Phase` for weekly/queue-governance plans
-- `Post-Queue Continuation Rules` for weekly/queue-governance plans
+- `Queue` for weekly-set plans
+- `Promotion Rule` for weekly-set plans
+- `Close Rule` for weekly-set plans
+- `Current Iteration Phase` and `Post-Queue Continuation Rules` only for extended queue/baseline documents that need extra phase narration
 
 ## 4. Execution State Contract
 
@@ -73,7 +79,35 @@ For weekly plans, queue-governance plans, and review/baseline plans that control
 - `Execution State` should also make the current iteration/phase explicit when the queue is no longer in ordinary active execution
 - if the current queue is closed, `Next Step` must say that a fresh weekly review/spec/plan cycle is required before later continuation work starts
 
-## 4.1 Iteration / Phase Declaration
+## 4.1 Plan Types And Promotion Discipline
+
+This repository now uses three distinct governance artifacts:
+
+- `queued child spec`
+  - lives under `docs/superpowers/specs/`
+  - locks boundary, goal, out-of-scope, exit conditions, and verification story
+  - is not executable by itself
+- `active child plan`
+  - lives under `docs/superpowers/plans/`
+  - is the only executable child document
+  - must conform to this plan-governance spec
+- `weekly set plan`
+  - lives under `docs/superpowers/plans/`
+  - controls the current queue and promotion order
+  - may reference queued children that do not yet have plan files
+
+Promotion rules:
+
+- only one child may be `active` at a time unless a stronger written reason explicitly allows parallelism
+- a queued child must not receive code execution until it is promoted by the weekly set plan
+- when a queued child is promoted, governance must first perform a baseline recheck against the latest code and weekly artifacts
+- after baseline recheck, the queued child must be recorded as one of:
+  - `unchanged`
+  - `narrowed`
+  - `superseded`
+- if a queued child becomes `superseded`, do not automatically create a replacement child in the same work batch
+
+## 4.2 Iteration / Phase Declaration
 
 Plans that govern a weekly queue, continuation queue, or review/baseline unlock flow should declare the current iteration/phase explicitly.
 
@@ -196,6 +230,7 @@ For weekly/queue-governance plans:
 
 - `completed` may still mean the queue itself is closed even if later candidate work exists outside the queue
 - candidate later work must not be described as unlocked or executable unless governance explicitly promotes it
+- queued child specs may remain in the closed record as candidates, but they must not be treated as active plans until a later weekly set promotes them
 
 ## 10. Resume Rules
 
@@ -214,6 +249,7 @@ When a plan governs a queue or later continuation:
 
 - an `architecture candidate`, `next split candidate`, or backlog item is not executable work
 - only an item explicitly recorded by governance as the `next executable child` or equivalent may start implementation
+- a queued child spec is still non-executable until promotion plus active-plan authoring happen
 - if a queue has been closed, any later continuation must begin with a fresh review plus explicit spec/plan authoring before code work resumes
 
 ## 10.2 Queue Depth Control

@@ -124,9 +124,6 @@ import {
   runModRuntime,
 } from "./core/mods/mod-runtime";
 import {
-  clearActivityResult,
-} from "./application/activity/activity-qte-runtime";
-import {
   createHouseRuntimeBridge,
   dispatchHouseRuntimeRequest,
   enterHouseThroughRuntime,
@@ -134,6 +131,7 @@ import {
   type HouseRuntimeBridge,
 } from "./core/runtime/house-runtime";
 import {
+  createExitInteractiveRequest,
   createInteractiveActionRequest,
   createLaunchInteractiveRequest,
   type InteractiveRuntimeOutput,
@@ -1344,10 +1342,11 @@ function stopCurrentActivityQte(): void {
 }
 
 function closeCurrentActivityResult(): void {
-  appState = {
-    ...appState,
-    gameState: clearActivityResult(appState.gameState),
-  };
+  appState = applyInteractiveRuntimeResult(appState, runInteractiveRuntime({
+    state: createInteractiveRuntimeState(appState),
+    request: createExitInteractiveRequest("activity-qte"),
+    characterDefinitions: appState.characterDefinitions,
+  }));
   renderApp();
 }
 

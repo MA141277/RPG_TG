@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace this line with the concrete outcome.
+**Goal:** Replace this line with the concrete active-child outcome.
 
-**Architecture:** Replace this line with the target design and constraints.
+**Architecture:** Replace this line with the target boundary and constraints for the active child.
 
-**Tech Stack:** Replace this line with the relevant stack.
+**Tech Stack:** Replace this line with the relevant stack, commands, and verification tools.
 
 ## Execution State
 
@@ -17,26 +17,6 @@
 - Verification: `Not run`
 - Notes: `Update this block after every work batch.`
 
-## Current Iteration Phase
-
-- Iteration label: `Replace with the governing iteration label when this plan participates in a weekly queue or later continuation set.`
-- Current phase: `Replace with one concrete phase such as planning, active execution, closeout, or review-prep.`
-- Entry trigger: `Replace with the condition that allowed this plan or queue item to become active.`
-- Exit trigger: `Replace with the condition that moves this plan or queue item into closeout, promotion, or archival.`
-
-## Post-Queue Continuation Rules
-
-Use this section when the plan governs a queue, review/baseline child, or later continuation work. Remove it only if the plan is clearly a one-off implementation plan with no queue-governance role.
-
-- Candidate work recorded in architecture or review docs does not count as unlocked execution scope.
-- A later child or continuation batch must not start until governance explicitly records it as executable.
-- Once the queue is closed and the plan is marked `completed`, do not append a new executable child into the same set; open a new weekly/continuation plan instead.
-- Keep queue depth explicit when relevant:
-  - one `active executable child`
-  - one `immediate queued follow-up`
-  - one `locked follow-up child`
-- If a continuation item is only residual cleanup, record it as debt/backlog instead of automatically creating a new child.
-
 ## Progress Log
 
 - 2000-01-01
@@ -45,6 +25,30 @@ Use this section when the plan governs a queue, review/baseline child, or later 
   - Next: `Start at Task 1 Step 1.`
 
 ---
+
+## Based On Spec
+
+- Primary spec:
+  - `docs/superpowers/specs/...`
+- Weekly set plan:
+  - `docs/superpowers/plans/...`
+
+## Baseline Recheck
+
+- Recheck result: `unchanged`
+- Notes:
+  - `Replace with what changed since the spec was written.`
+  - `Replace with any scope narrowing decided before execution starts.`
+
+## Implementation Scope
+
+### In Scope
+
+- Replace with the concrete ownership or boundary work that will be executed now.
+
+### Still Out Of Scope
+
+- Replace with adjacent areas that must remain outside this active child.
 
 ## File Map
 
@@ -62,6 +66,15 @@ Use this section when the plan governs a queue, review/baseline child, or later 
 - `path/to/file`
   - Why it exists.
 
+## Verification Plan
+
+- Targeted verification:
+  - `Replace with the primary regression / contract / ownership proof.`
+- Required commands:
+  - `npm run typecheck`
+  - `npm test`
+  - `npm run build`
+
 ## Task 1: Replace With Real Task Name
 
 **Files:**
@@ -72,17 +85,31 @@ Use this section when the plan governs a queue, review/baseline child, or later 
 
 Describe the exact implementation action.
 
-- [ ] **Step 2: Add the verification step**
+- [ ] **Step 2: Update weekly artifacts if the owned boundary moved**
+
+Record the required artifact updates for this child closeout or intermediate sync.
+
+- [ ] **Step 3: Add the verification step**
 
 Run:
 
 ```bash
 npm run typecheck
+npm test
+npm run build
 ```
 
 Expected:
 
 - `PASS`
+
+## Exit Check
+
+- [ ] `Exit condition 1 from the child spec is satisfied.`
+- [ ] `Exit condition 2 from the child spec is satisfied.`
+- [ ] `Exit condition 3 from the child spec is satisfied.`
+- [ ] Weekly artifact sync is updated if boundary state changed.
+- [ ] Weekly queue state is updated.
 
 ## Completion Checklist
 

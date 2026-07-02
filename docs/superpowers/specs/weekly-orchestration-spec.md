@@ -2,12 +2,12 @@
 
 ## 1. Goal
 
-This spec defines how a weekly orchestration plan governs multiple implementation plans under `docs/superpowers/plans/`.
+This spec defines how a weekly orchestration plan governs one lightweight weekly set under `docs/superpowers/plans/`.
 
-The target is to make weekly planning:
+The target is to make weekly-set planning:
 
-- explicit about which plans are completed, in progress, pending, blocked, or unknown
-- explicit about execution order and dependency rules
+- explicit about execution order and child promotion rules
+- light enough to stay readable while execution is moving
 - resumable after Codex or developer interruptions
 - compatible with the repository-wide `plan-governance-spec`
 - explicit about when one weekly set is closed and when later work requires a new weekly set instead of appending to the old one
@@ -24,8 +24,9 @@ This spec does not replace the per-plan rules in:
 
 Instead:
 
-- the weekly orchestration plan governs plan-to-plan sequencing
-- each child plan still governs its own implementation steps
+- the weekly orchestration plan governs queue order, promotion, and closeout
+- each active child plan still governs its own implementation steps
+- queued children stay as specs until promoted
 
 Interpretation rule:
 
@@ -39,17 +40,16 @@ A weekly orchestration plan is a parent coordination artifact.
 
 It must:
 
-- list the plans in scope for the week
-- record each plan's orchestration status
-- define queue order and dependency rules
-- define what to do when a plan is blocked
+- define the weekly-set goal and boundary
+- record the current visible child queue
+- say which child is active, queued, or locked
+- define promotion and closeout rules
 - define how to resume after interruption
 
 It must not:
 
-- replace the concrete checkbox execution of child plans
-- hide implementation state inside prose only
-- mark a child plan completed if the child plan itself is not updated
+- replace the checkbox execution of the active child plan
+- treat queued child specs as executable plans
 - reopen a closed weekly set by silently appending new executable children without a fresh review/promotion cycle
 
 ## 4. Required Weekly Sections
@@ -62,83 +62,110 @@ Every weekly orchestration plan must include:
 - `Tech Stack`
 - `## Execution State`
 - `## Progress Log`
-- `## Weekly Goal`
-- `## Weekly Constraints`
-- `## Plan Status Board`
-- `## Execution Queue`
-- `## Resume Rules`
+- `## Weekly Scope`
+- `## Queue`
+- `## Promotion Rule`
+- `## Close Rule`
 - `## Acceptance Gate`
 
 Recommended additional sections:
 
+- `## Weekly Deliverables`
+- `## Deliverable Files`
 - `## Blocker Rules`
 - `## Verification Policy`
 - `## Notes`
-- `## Current Iteration Phase`
-- `## Post-Queue Continuation Rules`
 
-## 5. Weekly Plan Status Model
+## 5. Queue Model
 
-Each tracked plan in the weekly orchestration file must use one of these status values:
+The weekly set queue should stay intentionally shallow.
 
-- `completed`
-- `in-progress`
-- `not-started`
-- `blocked`
-- `unknown`
+Recommended maximum visible depth:
 
-Definitions:
+- one `active child`
+- one `queued follow-up child`
+- one `locked follow-up child`
 
-- `completed`
-  - the child plan is marked complete in its own file and its acceptance gate is satisfied
-- `in-progress`
-  - the child plan has active execution this week or is the current active queue item
-- `not-started`
-  - the child plan is approved for this queue but execution has not begun
-- `blocked`
-  - the child plan cannot continue until a recorded blocker is resolved
-- `unknown`
-  - historical or inherited plan state has not yet been reconciled against current codebase reality
+Anything beyond that should remain in architecture review, backlog, or candidate status outside the active weekly set.
 
-## 6. Status Board Contract
+Each queue slot should record:
 
-The weekly orchestration plan must maintain a `Plan Status Board` grouped by status:
-
-- `Completed`
-- `In Progress`
-- `Not Started`
-- `Blocked`
-- `Needs Reconciliation`
-
-Each listed plan entry should contain:
-
-- plan path or plan id
-- owner scope or short description
+- child id or short child name
+- spec path
+- queue status
+- primary boundary
 - dependency note
-- current resume point or blocker
+- promotion note
 
-## 7. Execution Queue Rules
+If the slot is `active`, also record:
 
-The weekly orchestration plan must define a queue in execution order.
-
-For each queue item, record:
-
-- sequence number
 - plan path
-- status
-- depends on
-- start condition
-- exit condition
+- current execution focus or resume point
+
+Allowed queue status values:
+
+- `active`
+- `queued`
+- `locked`
+- `completed`
+- `blocked`
+- `superseded`
+
+Status meaning rule:
+
+- `active`
+  - the child is executable now and must have both spec and plan
+- `queued`
+  - the child is the next promotion candidate after the current active child closes
+  - it may stay spec-only until promotion
+  - missing a plan does not make it `locked`
+- `locked`
+  - the child is recorded inside the same weekly set, but it is not the next promotion candidate yet
+  - it may stay spec-only until later governance promotion
+- `completed`
+  - the child finished inside this weekly set and remains recorded as historical queue truth
+  - a completed child is not executable again unless a later review explicitly reopens the same boundary
+- `blocked`
+  - the child cannot continue yet because a recorded blocker prevents safe progress
+  - lower-priority dependent queue items must obey the blocker rules
+
+## 6. Child Document Rules
 
 Rules:
 
-- only one queue item should be the active `in-progress` implementation target at a time unless the weekly plan explicitly allows parallel work
-- a dependent plan must not start before its prerequisites are complete
-- if a queue item does not yet have a child plan file, the child plan file must be authored before code execution begins for that scope
-- once the weekly set has been closed and the weekly orchestration plan is marked `completed`, do not append another executable child to that same set
-- any later continuation after queue closeout must begin through a fresh weekly review and a new weekly orchestration plan or explicitly superseding weekly set
+- the current `active` child must have both a spec and a plan
+- a `queued` or `locked` child may exist with a spec only
+- a queued child plan is authored only after that child is promoted to `active`
+- queued child specs must already define:
+  - one primary boundary
+  - one problem statement
+  - one expected outcome
+  - explicit out-of-scope constraints
+  - exit conditions
+  - verification story
+  - promotion recheck expectations
 
-## 7.1 Queue Closeout And New Set Rule
+## 7. Promotion And Baseline Recheck
+
+When the active child completes:
+
+1. update the relevant weekly artifacts
+2. recheck the next queued child spec against the new code and artifact baseline
+3. record one of these results:
+   - `unchanged`
+   - `narrowed`
+   - `superseded`
+4. only after that recheck may the next child be promoted to `active`
+5. only after promotion may its executable plan be authored
+
+Rules:
+
+- after the prior `active` child completes and before the next child is promoted, the weekly set may temporarily have no `active` child
+- a queued child must not be executed mechanically just because it was listed earlier
+- promotion must be explicit in the weekly set plan
+- if a child becomes `superseded`, do not auto-insert a replacement child into the same weekly set without a separate review decision
+
+## 8. Queue Closeout And New Set Rule
 
 When a weekly orchestration plan reaches queue closeout:
 
@@ -152,34 +179,30 @@ Clarifications:
 - if Child A through Child N are complete and the queue is closed on Tuesday, later work started on Wednesday should still open a new weekly set rather than reopening the old one
 - architecture candidates or backlog items may still be recorded in the closed set, but they are not executable children
 
-## 8. Resume Rules
+## 9. Resume Rules
 
 When resuming weekly execution:
 
 1. open the weekly orchestration plan
 2. inspect `Execution State`
 3. inspect the latest weekly `Progress Log`
-4. inspect the `In Progress` group in the status board
-5. if no child plan is `in-progress`, choose the first queue item with:
-   - `status = not-started`
-   - all dependencies satisfied
-6. then open that child plan and resume according to `plan-governance-spec`
+4. inspect the `Queue`
+5. if a child is already `active`, open that child plan and resume according to `plan-governance-spec`
+6. if no child is `active`, inspect the first queued child whose dependencies are satisfied
+7. perform baseline recheck before plan authoring or execution
+8. if the recheck passes, promote that child and author its active plan before code work starts
 
-If weekly plan state and child plan state disagree:
+Resume clarification:
 
-1. child plan actual state
-2. latest weekly `Progress Log`
-3. weekly status board
-4. weekly execution queue
-
-Then update the weekly plan before doing more code work.
+- if the latest completed child is already marked `completed`, do not keep treating it as the active execution target
+- the next execution step is either explicit promotion of the queued child or explicit closeout of the weekly set
 
 If the weekly plan is already marked `completed` and no active queue item remains:
 
 - do not resume by appending a new executable child into that file
 - instead, start from a fresh weekly review and create the next weekly orchestration plan for the new set
 
-## 9. Verification Policy
+## 10. Verification Policy
 
 Weekly orchestration is not a replacement for child verification.
 
@@ -189,18 +212,13 @@ Rules:
 - the weekly plan must summarize whether the active child passed or failed verification
 - weekly progress updates must reference the child verification outcome
 
-Recommended weekly summary wording:
-
-- `Child 1 verification passed: npm run typecheck, npm test, npm run build`
-- `Child 2 blocked by P1; do not advance queue`
-
-## 10. Blocker Rules
+## 11. Blocker Rules
 
 If a child plan enters `blocked`:
 
 - update the child plan first
-- then update the weekly plan status board
-- move the queue item to `Blocked`
+- then update the weekly plan queue entry
+- move the queue item to `blocked`
 - record the blocker in weekly `Progress Log`
 
 Queue advancement rules:
@@ -209,13 +227,14 @@ Queue advancement rules:
 - unresolved `P1` blocks dependent queue items
 - `P2` may be deferred only if explicitly logged and if the next queue item does not depend on the unresolved area
 
-## 11. Acceptance Gate
+## 12. Acceptance Gate
 
 A weekly orchestration plan may be marked `completed` only when:
 
-- every required queue item for the week is `completed`
+- the intended weekly-set goal is complete, or the set is explicitly closed with no remaining executable child
 - no unresolved `P0` or `P1` remains in weekly scope
-- child plans and weekly status board agree
+- the active child plan state and weekly queue state agree
+- required weekly artifacts are updated for the latest active-child completion or defer decision
 - the latest weekly `Progress Log` records the weekly outcome
 
 After a weekly orchestration plan is marked `completed`:
@@ -223,7 +242,7 @@ After a weekly orchestration plan is marked `completed`:
 - it may still record explanatory notes, reconciliation notes, or architecture candidates
 - it must not become the active execution controller again unless a higher-level governance document explicitly supersedes the closeout rule
 
-## 12. Relationship To Repository Governance
+## 13. Relationship To Repository Governance
 
 Weekly orchestration plans must conform to:
 
@@ -231,4 +250,4 @@ Weekly orchestration plans must conform to:
 - `AGENTS.md`
 - `docs/superpowers/README.md`
 
-The weekly orchestration spec adds queue-level governance on top of the base plan structure.
+The weekly orchestration spec adds lightweight queue-level governance on top of the base plan structure.

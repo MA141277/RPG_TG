@@ -8,54 +8,45 @@
 
 **Tech Stack:** TypeScript, Node test runner (`tests/robustness.test.cjs`), existing interactive/runtime dispatch seams, `npm run typecheck`, `npm test`, `npm run build`, `npm run lint:plans`
 
----
-
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 14 is authored and unlocked as the active executable child in the fresh 2026-07-02 weekly continuation set, but no production implementation batch has started yet.`
-- Next Step: `Start Task 1 Step 1 and enumerate the remaining covered activity-qte and story-battle legacy interactive tails before writing red tests.`
-- Verification: `Not run`
-- Notes: `Child 14 must stay on remaining interactive legacy convergence only. Child 15 Navigation + Time Runtime Convergence and Child 16 Event + Scene Handoff Convergence remain candidate follow-ups outside this plan.`
+- Current Focus: `Child 14 closeout is complete. The remaining next governance step is outside this plan: recheck Child 15 against the updated baseline before any later promotion.`
+- Next Step: `No further execution in this child plan. Keep the result as the accepted Child 14 baseline and let weekly governance decide whether to promote Child 15 or close the set.`
+- Verification: `node --test tests/robustness.test.cjs --test-name-pattern "child 14|activity qte result close|legacy adapter-owned qte|interactive request normalizer"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+- Notes: `Child 14 stayed inside remaining interactive legacy convergence only. Child 15 Navigation + Time Runtime Convergence and Child 16 Event + Scene Handoff Convergence remain outside this completed plan.`
 
 ## Progress Log
 
 - 2026-07-02
-  - Summary: `Child 14 formal spec and plan authored, and the fresh 2026-07-02 weekly continuation set now records Child 14 as the active executable child after the closed Child 13 queue.`
+  - Summary: `Child 14 formal spec and active plan authored, and the fresh 2026-07-02 weekly continuation set now records Child 14 as the active executable child after the closed Child 13 queue.`
   - Verification: `npm run lint:plans`
   - Next: `Start Task 1 Step 1.`
+- 2026-07-02
+  - Summary: `Audited the remaining covered interactive tails and confirmed the last same-type ownership residue was narrow: interactive-runtime still imported legacy adapter helpers for activity-qte tick/stop and story-battle action dispatch, while src/main.ts still cleared the activity-qte result overlay through a shell-owned clearActivityResult tail. Added red regression tests first, then converged those paths into src/core/runtime/interactive-runtime.ts, reduced legacy-interactive-adapter.ts to placeholder-only residue, and routed activity-qte result close through createExitInteractiveRequest("activity-qte").`
+  - Verification: `npm run build:test` + `node --test tests/robustness.test.cjs --test-name-pattern "child 14|activity qte result close|legacy adapter-owned qte|interactive request normalizer"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `No next execution inside Child 14. Weekly governance should now recheck Child 15 before any promotion.`
 
 ---
 
-## Source Documents
+## Based On Spec
 
-- Child 14 spec: `docs/superpowers/specs/2026-07-02-child-14-interactive-remaining-legacy-convergence-spec.md`
-- Fresh weekly controller: `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
-- Fresh weekly visibility companion: `docs/superpowers/plans/2026-07-02-weekly-implementation-visibility-plan.md`
-- Child 10 ownerization baseline: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
-- Child 11 implementation spec: `docs/superpowers/specs/2026-07-01-sub-runtime-ownerization-implementation-spec.md`
-- Child 13 convergence spec: `docs/superpowers/specs/2026-07-01-post-child-11-shared-dispatch-follow-up-reentry-convergence-audit-spec.md`
-- Runtime subsystem authority: `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`
+- Primary spec:
+  - `docs/superpowers/specs/2026-07-02-child-14-interactive-remaining-legacy-convergence-spec.md`
+- Weekly set plan:
+  - `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
 
-## Parent Alignment
+## Baseline Recheck
 
-- This file is `Child Plan 14` in the fresh `2026-07-02` weekly continuation set.
-- Primary subsystem boundary:
-  - `Interaction Runtime`
-  - `legacy-interactive-adapter` reduction
-  - covered interactive cleanup / follow-up reduction in `src/main.ts`
-- Secondary subsystem relationships:
-  - consumes the finalized Child 10 ownerization baseline
-  - must not reopen Child 11 / Child 13 accepted conclusions
-  - must leave navigation/time and event/scene continuation for later children
-- Queue rule:
-  - Child 14 is the active executable child in the new weekly set.
-  - Any later child still requires its own spec/plan authoring and explicit queue promotion before implementation starts.
+- Recheck result: `unchanged`
+- Notes:
+  - `Child 13 closeout remains accepted and the remaining same-type interactive debt is still concentrated on activity-qte + story-battle lifecycle ownership.`
+  - `Child 15 Navigation + Time Runtime Convergence and Child 16 Event + Scene Handoff Convergence remain outside this plan and stay spec-only until later promotion.`
 
-## Scope
+## Implementation Scope
 
-This child plan includes:
+### In Scope
 
 - audit of the remaining covered `activity-qte` and `story-battle` legacy interactive tails
 - targeted red-to-green regression coverage for those tails
@@ -65,7 +56,7 @@ This child plan includes:
 - covered `src/main.ts` cleanup / follow-up reduction
 - required weekly/governance closeout sync
 
-This child plan does not include:
+### Still Out Of Scope
 
 - navigation/time convergence
 - event/scene handoff convergence
@@ -75,7 +66,7 @@ This child plan does not include:
 
 ## File Map
 
-### Existing Files To Modify
+### Existing files to modify
 
 - `src/core/runtime/interactive-runtime.ts`
   - Move the remaining covered interactive lifecycle ownership under the runtime owner line.
@@ -89,8 +80,6 @@ This child plan does not include:
   - Record execution state, progress, and closeout.
 - `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
   - Sync Child 14 execution state and queue truth.
-- `docs/superpowers/plans/2026-07-02-weekly-implementation-visibility-plan.md`
-  - Sync artifact-bundle expectations for Child 14.
 - `docs/superpowers/weekly/2026-07-02-weekly-review-index.md`
   - Record Child 14 verification and queue state.
 - `docs/superpowers/weekly/2026-07-02-weekly-module-map.md`
@@ -104,7 +93,7 @@ This child plan does not include:
 - `docs/change-log.md`
   - Record the Child 14 landing once implementation completes.
 
-### Existing Files To Read
+### Existing files to read
 
 - `src/core/runtime/runtime-dispatch.ts`
 - `src/core/runtime/runtime-router.ts`
@@ -113,30 +102,14 @@ This child plan does not include:
 - `src/application/minigames/city-begging-minigame.ts`
 - `src/application/story-battle/story-battle-runtime.ts`
 
-## Required Verification Gate
+## Verification Plan
 
-Every production batch in this plan must record:
-
-- targeted `node --test tests/robustness.test.cjs --test-name-pattern "...activity-qte...|...story-battle...|...interactive..."`
-- `npm run typecheck`
-- `npm test`
-- `npm run build`
-
-Queue/governance sync batches must also record:
-
-- `npm run lint:plans`
-
-## Bug And Blocker Gate
-
-- `P0`
-  - broken covered interactive path, no valid replacement for removed adapter-owned lifecycle control, or build/type/test failure
-  - Rule: stop implementation and reconcile code plus queue docs before proceeding.
-- `P1`
-  - boundary drift into navigation/time/event/scene, or reopening frozen Child 10/11/13 decisions without governance revision
-  - Rule: do not mark the affected task complete and do not mark this child `completed`.
-- `P2`
-  - optional naming cleanup or extra adapter thinning outside the covered lifecycle seam
-  - Rule: may be deferred only if recorded in `Progress Log`.
+- Targeted verification:
+  - `node --test tests/robustness.test.cjs --test-name-pattern "activity-qte|story-battle|interactive"`
+- Required commands:
+  - `npm run typecheck`
+  - `npm test`
+  - `npm run build`
 
 ## Task 1: Audit Remaining Covered Interactive Legacy Tails
 
@@ -149,15 +122,15 @@ Queue/governance sync batches must also record:
 - Read: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Enumerate the remaining covered interactive lifecycle tails**
+- [x] **Step 1: Enumerate the remaining covered interactive lifecycle tails**
 
 Record the exact `activity-qte` and `story-battle` launch / action / exit / completion tails that are still adapter-owned or shell-owned today.
 
-- [ ] **Step 2: Add failing regression tests for the remaining covered tails**
+- [x] **Step 2: Add failing regression tests for the remaining covered tails**
 
 Write red tests that prove the covered `activity-qte` and `story-battle` lifecycle tails are not yet fully runtime-owned.
 
-- [ ] **Step 3: Run the targeted red tests**
+- [x] **Step 3: Run the targeted red tests**
 
 Run:
 
@@ -169,7 +142,7 @@ Expected:
 
 - at least one named remaining covered tail fails before implementation
 
-- [ ] **Step 4: Record the audit result in the plan state**
+- [x] **Step 4: Record the audit result in the plan state**
 
 Update this plan's `Execution State` and `Progress Log` with the enumerated remaining paths before moving into implementation.
 
@@ -181,11 +154,11 @@ Update this plan's `Execution State` and `Progress Log` with the enumerated rema
 - Modify: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement the minimum `activity-qte` runtime convergence**
+- [x] **Step 1: Implement the minimum `activity-qte` runtime convergence**
 
 Move the covered `activity-qte` launch / action / exit / completion lifecycle under `interactive-runtime.ts` and reduce adapter ownership for that path.
 
-- [ ] **Step 2: Re-run the targeted `activity-qte` tests**
+- [x] **Step 2: Re-run the targeted `activity-qte` tests**
 
 Run:
 
@@ -197,7 +170,7 @@ Expected:
 
 - the covered `activity-qte` ownership tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 2**
+- [x] **Step 3: Run the full verification gate for Task 2**
 
 Run:
 
@@ -219,11 +192,11 @@ Expected:
 - Modify: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement the minimum `story-battle` runtime convergence**
+- [x] **Step 1: Implement the minimum `story-battle` runtime convergence**
 
-Move the covered `story-battle` launch / action / exit / completion lifecycle under `interactive-runtime.ts` and reduce adapter ownership for that path.
+Move the covered `story-battle` launch / action / exit / completion lifecycle under `interactive-runtime.ts` and remove the covered shell-owned cleanup / follow-up tail from `src/main.ts`.
 
-- [ ] **Step 2: Re-run the targeted `story-battle` tests**
+- [x] **Step 2: Re-run the targeted `story-battle` tests**
 
 Run:
 
@@ -235,7 +208,7 @@ Expected:
 
 - the covered `story-battle` ownership tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 3**
+- [x] **Step 3: Run the full verification gate for Task 3**
 
 Run:
 
@@ -247,32 +220,31 @@ npm run build
 
 Expected:
 
-- all commands pass with no regression to already accepted Child 11 / Child 13 paths
+- all commands pass without reopening unrelated runtime-family failures
 
-## Task 4: Reduce Residual Adapter / Shell Ownership And Close Out Child 14
+## Task 4: Reduce Adapter Residue And Close Out Governance
 
 **Files:**
 - Modify: `src/core/adapters/legacy-interactive-adapter.ts`
 - Modify: `src/main.ts`
-- Modify: `docs/change-log.md`
 - Modify: `docs/superpowers/plans/2026-07-02-child-14-interactive-remaining-legacy-convergence-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
-- Modify: `docs/superpowers/plans/2026-07-02-weekly-implementation-visibility-plan.md`
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-review-index.md`
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-module-map.md`
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-call-flows.md`
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-next-split-review.md`
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-architecture-report.md`
+- Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Reduce the retained covered adapter/shell residue**
+- [x] **Step 1: Reduce retained adapter and shell residue for the covered paths**
 
-Ensure the covered paths are no longer lifecycle-owned by `legacy-interactive-adapter.ts` or shell-owned cleanup in `src/main.ts`.
+Keep only justified compatibility glue in `legacy-interactive-adapter.ts` after the covered runtime-owned paths land.
 
-- [ ] **Step 2: Record Child 14 implementation outcome**
+- [x] **Step 2: Update weekly artifacts and queue truth**
 
-Update `Execution State`, `Progress Log`, retained residue notes, and completion wording only after production verification passes.
+Record Child 14 outcome, verification state, and the current Child 15 / Child 16 queue status across the `2026-07-02` artifact bundle.
 
-- [ ] **Step 3: Run the queue/governance verification**
+- [x] **Step 3: Run governance verification**
 
 Run:
 
@@ -282,21 +254,22 @@ npm run lint:plans
 
 Expected:
 
-- plan-governance checks pass
-- weekly/governance wording stays structurally valid
+- `Superpowers plan lint passed`
 
-- [ ] **Step 4: Sync Child 14 exit truth into weekly docs**
+## Exit Check
 
-Record that:
-
-- covered `activity-qte` lifecycle is runtime-owned
-- covered `story-battle` lifecycle is runtime-owned
-- retained `legacy-interactive-adapter.ts` code is compatibility-only if any remains
-- Child 15 remains the highest-priority candidate follow-up and Child 16 remains later candidate work
+- [x] covered `activity-qte` lifecycle ownership is runtime-owned
+- [x] covered `story-battle` lifecycle ownership is runtime-owned
+- [x] `src/main.ts` no longer carries the covered interactive cleanup / follow-up tails
+- [x] `legacy-interactive-adapter.ts` is reduced to justified compatibility-only residue or no longer owns the covered paths
+- [x] Child 14 does not reopen navigation/time/event/scene scope
+- [x] targeted regression coverage passes
+- [x] weekly artifacts are updated
+- [x] weekly queue state is updated
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

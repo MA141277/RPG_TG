@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-02 Child 14 Interactive Remaining Legacy Convergence
+
+### Added
+- 新增 Child 14 回归测试，明确要求 `src/core/runtime/interactive-runtime.ts` 不再依赖 `legacy-interactive-adapter.ts` 持有 covered `activity-qte` / `story-battle` 生命周期，并要求 `src/main.ts` 关闭 `activity-qte` 结果面板时必须通过 `createExitInteractiveRequest("activity-qte")` 回到 interactive runtime。
+
+### Changed
+- `src/core/runtime/interactive-runtime.ts` 现在直接调用 `advanceActivityQteMarker()`、`stopActivityQte()` 与 `dispatchStoryBattleAction()`，不再通过 legacy interactive adapter 持有 covered `activity-qte` tick/stop 和 `story-battle` action dispatch ownership。
+- `src/main.ts` 的 `closeCurrentActivityResult()` 不再直接调用 `clearActivityResult()`；该关闭路径现在通过 interactive runtime exit request 完成。
+- `src/core/adapters/legacy-interactive-adapter.ts` 已降为历史占位文件，不再作为 covered 生产路径的实际 owner。
+
+### Impact
+- Child 14 已完成：remaining same-type covered interactive legacy tails 已从 adapter/shell 侧收口到 runtime owner line，后续 weekly continuation 不需要再把 interactive family 作为下一优先收敛边界。
+- 当前后续 priority 已转向 Child 15 的 navigation/time mixed entry convergence；Child 16 仍保留为 event/scene handoff 的锁定后续项。
+
 ## 2026-07-02 Child 13 Shared Dispatch Reentry Convergence
 
 ### Added

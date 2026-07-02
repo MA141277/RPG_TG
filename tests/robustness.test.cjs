@@ -8326,6 +8326,32 @@ test("minigame dispatch contract converges covered flows through one interactive
   assert.match(source, /story-battle/);
 });
 
+test("child 14 interactive runtime no longer depends on legacy adapter-owned qte or story-battle ownership", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /legacy-interactive-adapter/);
+  assert.doesNotMatch(source, /tickLegacyActivityQte/);
+  assert.doesNotMatch(source, /stopLegacyActivityQte/);
+  assert.doesNotMatch(source, /dispatchLegacyStoryBattleAction/);
+});
+
+test("child 14 activity qte result close routes through interactive runtime exit instead of direct clearActivityResult helper", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const closeActivityResultBlock = source.match(
+    /function closeCurrentActivityResult\(\)[\s\S]*?\n}\n/
+  )?.[0] ?? "";
+
+  assert.doesNotMatch(source, /clearActivityResult/);
+  assert.match(closeActivityResultBlock, /createExitInteractiveRequest\("activity-qte"\)/);
+  assert.match(closeActivityResultBlock, /runInteractiveRuntime/);
+});
+
 test("effect settlement contract exports emitter applier input and result seams", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/effect-settlement.ts"),

@@ -12,9 +12,9 @@ Do not decide the next split only from intuition.
 
 | Module | More Than One Responsibility | No Stable Contract | Still Touches `main.ts` | Requires UI-Coupled Verification | Mods Cannot Consume Cleanly | Priority |
 | --- | --- | --- | --- | --- | --- | --- |
-| `src/core/runtime/interactive-runtime.ts` | `partial` | `no` | `indirect` | `no` | `partial` | `high` |
-| `src/core/runtime/navigation-runtime.ts` | `partial` | `no` | `indirect` | `no` | `partial` | `medium` |
-| `src/core/runtime/time-runtime.ts` | `partial` | `no` | `indirect` | `no` | `partial` | `medium` |
+| `src/core/runtime/interactive-runtime.ts` | `partial` | `no` | `indirect` | `no` | `partial` | `medium` |
+| `src/core/runtime/navigation-runtime.ts` | `partial` | `no` | `indirect` | `no` | `partial` | `high` |
+| `src/core/runtime/time-runtime.ts` | `partial` | `no` | `indirect` | `no` | `partial` | `high` |
 | `src/core/runtime/event-runtime.ts` | `partial` | `no` | `indirect` | `no` | `partial` | `medium` |
 | `src/core/runtime/scene-runtime.ts` | `partial` | `no` | `indirect` | `no` | `partial` | `medium` |
 | `src/main.ts` | `yes` | `partial` | `yes` | `yes` | `yes` | `high` |
@@ -22,23 +22,23 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `Child 14 Interactive Remaining Legacy Convergence`
-- Reason:
-  - the remaining `legacy-interactive-adapter.ts` debt is the narrowest unresolved ownerization residue after Child 13 and has the clearest reviewable boundary
-- Category:
-  - `needs-boundary`
-- Queue status:
-  - `active executable child in the fresh 2026-07-02 weekly set`
-- Immediate queued follow-up:
-  - `Child 15 Navigation + Time Runtime Convergence`
-- Locked later follow-up:
   - `Child 16 Event + Scene Handoff Convergence`
+- Reason:
+  - once Child 15 closes, the next different problem type should be the still-separated event/scene handoff boundary rather than more same-type navigation/time cleanup
+- Category:
+  - `needs-convergence`
+- Queue status:
+  - `queued spec awaiting Child 15 closeout and later baseline recheck`
+- Immediate queued follow-up:
+  - `none beyond the current recommendation`
+- Locked later follow-up:
+  - `none currently recorded`
 
 ## Non-Selected Candidates
 
 - `Child 15 Navigation + Time Runtime Convergence`
-  - Now formally queued as the immediate follow-up, but still not executable while Child 14 remains open.
+  - Already active in this set and therefore no longer a later split candidate.
 - `Child 16 Event + Scene Handoff Convergence`
-  - Remains the locked later follow-up because it has the highest risk of expanding into broader story-flow redesign.
+  - Remains queued because it is now the immediate follow-up after Child 15.
 - `src/main.ts`
-  - Still the largest black box, but the next safe reduction is Child 14's interactive tail cleanup rather than another broad `main.ts` sweep.
+  - Still the largest black box, but while Child 15 is active the next safe later reduction after it should be Child 16's event/scene boundary rather than another broad `main.ts` sweep.

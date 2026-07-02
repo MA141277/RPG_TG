@@ -3,16 +3,16 @@
 This directory stores project-local operating docs for agentic implementation.
 
 - `specs/`
-  - Architecture targets, boundaries, and format rules.
+  - Architecture targets, queued-child specs, and format rules.
 - `plans/`
-  - Executable task breakdowns with checkbox tracking and resume metadata.
+  - Active child plans and weekly-set queue controllers with checkbox tracking and resume metadata.
 
 These files are not runtime code and are not automatically executed by the game.
 They are repository-local instructions for developers and agents.
 
 The governing rules for plan structure, acceptance, and bug handling live in [specs/plan-governance-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/plan-governance-spec.md).
 
-## How To Execute A Plan
+## How To Execute An Active Child Plan
 
 1. Pick a file under `docs/superpowers/plans/`.
 2. Read any linked spec or architecture doc first.
@@ -64,9 +64,37 @@ At the end of each work batch:
 
 Without these updates, the plan cannot be resumed reliably.
 
-## Template
+## Weekly Set Workflow
 
-Use [plans/_plan-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/_plan-template.md) for new plans.
+Use one lightweight weekly set to control one short queue of continuation work.
+
+Recommended flow:
+
+1. Create one weekly set plan.
+2. Author up to three child specs under `docs/superpowers/specs/`.
+3. Author a detailed plan only for the current `active child`.
+4. Execute the active child and update artifacts.
+5. Recheck the next queued child spec against the new baseline.
+6. If the queued child is still valid, promote it and author its active plan.
+7. Close the weekly set when the goal is reached, the visible queue is consumed, or no queued child remains executable.
+
+Rules:
+
+- only one child may be `active` at a time
+- a queued child spec does not authorize implementation by itself
+- queued children may stay as `unchanged`, become `narrowed`, or become `superseded` after baseline recheck
+- once a weekly set is closed, later execution must start from a fresh weekly review and a new weekly set plan
+
+## Templates
+
+Use these canonical templates:
+
+- Active child plan:
+  - [plans/_plan-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/_plan-template.md)
+- Weekly set queue controller:
+  - [templates/weekly-plan-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/templates/weekly-plan-template.md)
+- Queued child spec:
+  - [templates/queued-child-spec-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/templates/queued-child-spec-template.md)
 
 For queue-level weekly coordination, use:
 

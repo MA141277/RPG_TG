@@ -2,186 +2,167 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Reduce direct `src/main.ts` orchestration around covered navigation and time progression entry paths so they converge on clearer runtime-owned control under `navigation-runtime.ts` and `time-runtime.ts`.
+**Goal:** Converge the remaining covered `navigation.enter-city`, `time.day-start`, and `time.advance-segments` mixed entry paths so they become runtime-owned under `src/core/runtime/navigation-runtime.ts` and `src/core/runtime/time-runtime.ts`, with `src/main.ts` retaining only shell-facing input/output and bounded post-entry follow-up duties.
 
-**Architecture:** Child 15 is a formal queued follow-up child in the fresh `2026-07-02` weekly continuation set. It must not start while Child 14 remains active. Once promoted later, it must stay on one progression-layer problem type only: audit covered navigation/time mixed entry paths first, converge navigation second, converge time third, then reduce retained shell residue and close out fourth. Child 15 must not absorb interactive legacy cleanup or event/scene handoff redesign.
+**Architecture:** Child 15 is the new active executable child in the fresh `2026-07-02` weekly continuation set after accepted Child 14 closeout. The baseline recheck narrows this child to the concrete covered progression entries still visible in production today: the navigation side is limited to the covered `enter-city` path, and the time side is limited to the covered `day-start` plus campaign-move `advance-segments` paths together with the minimum council-priority follow-up reduction required for those entries. Child 15 must not reopen the interactive family and must not absorb event activation or scene handoff redesign.
 
-**Tech Stack:** TypeScript, Node test runner (`tests/robustness.test.cjs`), current navigation/time runtime seams, `npm run typecheck`, `npm test`, `npm run build`, `npm run lint:plans`
-
----
+**Tech Stack:** TypeScript, Node test runner (`tests/robustness.test.cjs`), existing navigation/time runtime seams, `npm run typecheck`, `npm test`, `npm run build`, `npm run lint:plans`
 
 ## Execution State
 
 - Status: `not-started`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 15 is authored as the immediate queued follow-up behind Child 14 in the fresh 2026-07-02 weekly continuation set, but it is not executable yet.`
-- Next Step: `Do not start Child 15 while Child 14 remains open. Wait for Child 14 completion, closeout sync, and explicit weekly promotion before starting Task 1 Step 1.`
-- Verification: `Not run`
-- Notes: `Child 15 is queued only. Child 14 remains the sole active executable child, and Child 16 remains the locked later follow-up child.`
+- Current Focus: `Child 15 is now promoted from queued to active after a narrowed baseline recheck. No production batch has started yet.`
+- Next Step: `Start Task 1 Step 1 and enumerate the remaining covered enter-city/day-start/advance-segments mixed entry tails before writing red tests.`
+- Verification: `Not run as part of this promotion/plan-authoring batch`
+- Notes: `This plan is authored against the post-Child-14 baseline. Child 16 remains outside this active plan and must not be absorbed.`
 
 ## Progress Log
 
 - 2026-07-02
-  - Summary: `Child 15 formal spec and plan authored. The fresh 2026-07-02 weekly continuation set now records Child 15 as the immediate queued follow-up behind Child 14, but Child 15 remains not-started and not executable.`
+  - Summary: `Child 15 baseline recheck completed after Child 14 closeout and the result is narrowed rather than unchanged. The active executable scope is now limited to the concrete covered navigation/time mixed-entry paths still present in src/main.ts: enter-city navigation, day-start progression, and campaign-move advance-segments progression. Child 15 is promoted to active and this executable plan is authored against that narrowed baseline.`
   - Verification: `npm run lint:plans`
-  - Next: `Wait for Child 14 closeout and explicit queue promotion before starting Task 1 Step 1.`
+  - Next: `Start Task 1 Step 1.`
 
 ---
 
-## Source Documents
+## Based On Spec
 
-- Child 15 spec: `docs/superpowers/specs/2026-07-02-child-15-navigation-time-runtime-convergence-spec.md`
-- Fresh weekly controller: `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
-- Fresh weekly visibility companion: `docs/superpowers/plans/2026-07-02-weekly-implementation-visibility-plan.md`
-- Child 14 spec: `docs/superpowers/specs/2026-07-02-child-14-interactive-remaining-legacy-convergence-spec.md`
-- Child 10 ownerization baseline: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
-- Runtime subsystem authority: `docs/superpowers/specs/mod-first-runtime-subsystems-spec.md`
+- Primary spec:
+  - `docs/superpowers/specs/2026-07-02-child-15-navigation-time-runtime-convergence-spec.md`
+- Weekly set plan:
+  - `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
 
-## Parent Alignment
+## Baseline Recheck
 
-- This file is `Child Plan 15` in the fresh `2026-07-02` weekly continuation set.
-- Primary subsystem boundary:
-  - `Navigation Runtime`
-  - `Time Runtime`
-  - covered progression-layer shell reduction in `src/main.ts`
-- Secondary subsystem relationships:
-  - must wait for Child 14 to complete
-  - must not absorb event/scene handoff convergence
-  - keeps Child 16 as the later locked follow-up
-- Queue rule:
-  - Child 15 is the immediate queued follow-up, not an active executable child.
-  - Child 15 may start only after explicit weekly promotion.
+- Recheck result: `narrowed`
+- Notes:
+  - `The covered navigation target is now the concrete enter-city line in src/main.ts. Covered house entry is already handled outside this child's boundary and should not be pulled back into Child 15.`
+  - `The covered time target is now the concrete day-start and campaign-move advance-segments entry lines together with the minimum council-priority follow-up reduction those paths still require.`
+  - `The city-enter story trigger handoff remains outside this child except where Child 15 must reduce shell-side stitching enough to keep navigation/time entry ownership reviewable.`
 
-## Scope
+## Implementation Scope
 
-This child plan includes:
+### In Scope
 
-- audit of the remaining covered navigation/time mixed entry paths
-- targeted red-to-green regression coverage for those paths
-- covered navigation entry convergence
-- covered time entry convergence
-- covered shell-owned progression residue reduction
+- audit of the remaining covered `enter-city`, `day-start`, and `advance-segments` mixed entry tails
+- targeted red-to-green regression coverage for those covered progression paths
+- covered `enter-city` navigation entry convergence
+- covered `day-start` and `advance-segments` time entry convergence
+- minimum shared progression follow-up reduction needed for the covered navigation/time paths
 - required weekly/governance closeout sync
 
-This child plan does not include:
+### Still Out Of Scope
 
 - interactive legacy cleanup
-- event/scene handoff convergence
-- boot/startup, save/load, mod, presenter, UI, or StateSync redesign
+- house runtime redesign
+- event activation redesign
+- scene handoff redesign
 - new runtime contract families
-- broader story-flow redesign
+- broader settlement redesign
+- boot/startup, save/load, mod, presenter, UI, or StateSync redesign
+- story-system redesign
 
 ## File Map
 
-### Existing Files To Modify
+### Existing files to modify
 
 - `src/core/runtime/navigation-runtime.ts`
-  - Converge covered navigation entry ownership under the runtime owner line.
+  - Converge the covered `enter-city` production entry on a clearer runtime-owned line.
 - `src/core/runtime/time-runtime.ts`
-  - Converge covered time entry ownership under the runtime owner line.
+  - Converge the covered `day-start` and `advance-segments` production entries on a clearer runtime-owned line.
 - `src/main.ts`
-  - Remove covered shell-owned navigation/time orchestration branches.
+  - Reduce the remaining shell-owned navigation/time orchestration for the covered paths.
 - `tests/robustness.test.cjs`
-  - Add red-to-green regression coverage for the covered navigation/time mixed entry paths.
+  - Add red-to-green regression coverage for the narrowed Child 15 ownership boundary.
 - `docs/superpowers/plans/2026-07-02-child-15-navigation-time-runtime-convergence-plan.md`
   - Record execution state, progress, and closeout.
 - `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
-  - Sync Child 15 queued/promoted state and queue truth.
+  - Sync Child 15 promotion state and queue truth.
 - `docs/superpowers/plans/2026-07-02-weekly-implementation-visibility-plan.md`
-  - Sync artifact-bundle expectations for Child 15 once it becomes active later.
+  - Keep the visibility companion aligned once Child 15 work starts or closes.
 - `docs/superpowers/weekly/2026-07-02-weekly-review-index.md`
-  - Record Child 15 queue state and later verification summary.
+  - Record Child 15 promotion, verification, and queue state.
+- `docs/superpowers/weekly/2026-07-02-weekly-module-map.md`
+  - Record the narrowed navigation/time owner targets.
+- `docs/superpowers/weekly/2026-07-02-weekly-call-flows.md`
+  - Record the current pre-Child-15 navigation/time baseline and later converged flow.
 - `docs/superpowers/weekly/2026-07-02-weekly-next-split-review.md`
-  - Keep Child 15 as queued and Child 16 as locked until later promotion.
+  - Keep Child 16 in queued follow-up status while Child 15 is active.
 - `docs/superpowers/weekly/2026-07-02-weekly-architecture-report.md`
-  - Keep the runtime maturity and queue state synchronized.
+  - Keep runtime maturity and queue state synchronized.
 - `docs/change-log.md`
   - Record the Child 15 landing once implementation completes.
 
-### Existing Files To Read
+### Existing files to read
 
+- `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
 - `src/core/runtime/runtime-dispatch.ts`
 - `src/core/runtime/runtime-router.ts`
 - `src/core/runtime/runtime-settlement.ts`
 - `src/core/runtime/event-runtime.ts`
 - `src/core/runtime/scene-runtime.ts`
 
-## Required Verification Gate
+## Verification Plan
 
-Every production batch in this plan must record:
+- Targeted verification:
+  - `node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|time runtime|progression"`
+- Required commands:
+  - `npm run typecheck`
+  - `npm test`
+  - `npm run build`
 
-- targeted `node --test tests/robustness.test.cjs --test-name-pattern "...navigation...|...time...|...progression..."`
-- `npm run typecheck`
-- `npm test`
-- `npm run build`
-
-Queue/governance sync batches must also record:
-
-- `npm run lint:plans`
-
-## Bug And Blocker Gate
-
-- `P0`
-  - broken covered navigation/time path, no valid replacement for removed shell-owned orchestration, or build/type/test failure
-  - Rule: stop implementation and reconcile code plus queue docs before proceeding.
-- `P1`
-  - boundary drift into interactive legacy cleanup or event/scene convergence, or Child 15 starting before Child 14 closes
-  - Rule: do not mark the affected task complete and do not mark this child `completed`.
-- `P2`
-  - optional naming cleanup or extra shell thinning outside the covered progression seam
-  - Rule: may be deferred only if recorded in `Progress Log`.
-
-## Task 1: Audit Remaining Covered Navigation/Time Mixed Entry Paths
+## Task 1: Audit Narrowed Navigation/Time Mixed Entry Tails
 
 **Files:**
 - Read: `docs/superpowers/specs/2026-07-02-child-15-navigation-time-runtime-convergence-spec.md`
-- Read: `docs/superpowers/specs/2026-07-02-child-14-interactive-remaining-legacy-convergence-spec.md`
+- Read: `docs/superpowers/specs/2026-07-01-runtime-ownerization-baseline.md`
 - Read: `src/core/runtime/navigation-runtime.ts`
 - Read: `src/core/runtime/time-runtime.ts`
 - Read: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Enumerate the remaining covered navigation/time mixed entry paths**
+- [ ] **Step 1: Enumerate the remaining covered navigation/time mixed entry tails**
 
-Record the exact covered navigation and time progression paths that remain shell-owned today.
+Record the exact covered `enter-city`, `day-start`, and `advance-segments` production tails that still depend on direct shell-owned orchestration in `src/main.ts`.
 
-- [ ] **Step 2: Add failing regression tests for the remaining covered paths**
+- [ ] **Step 2: Add failing regression tests for the narrowed Child 15 boundary**
 
-Write red tests that prove those covered navigation/time entry paths are not yet fully runtime-owned.
+Write red tests that prove the covered navigation/time entry paths are not yet fully runtime-owned.
 
 - [ ] **Step 3: Run the targeted red tests**
 
 Run:
 
 ```bash
-node --test tests/robustness.test.cjs --test-name-pattern "navigation|time|progression"
+node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|time runtime|progression"
 ```
 
 Expected:
 
-- at least one named remaining covered path fails before implementation
+- at least one named covered navigation/time ownership tail fails before implementation
 
 - [ ] **Step 4: Record the audit result in the plan state**
 
-Update this plan's `Execution State` and `Progress Log` with the enumerated remaining paths before implementation starts.
+Update this plan's `Execution State` and `Progress Log` with the enumerated remaining paths before moving into implementation.
 
-## Task 2: Converge Covered Navigation Entry Ownership
+## Task 2: Converge Covered `enter-city` Navigation Entry Ownership
 
 **Files:**
 - Modify: `src/core/runtime/navigation-runtime.ts`
 - Modify: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement the minimum covered navigation convergence**
+- [ ] **Step 1: Implement the minimum covered `enter-city` navigation convergence**
 
-Move the covered navigation entry orchestration under `navigation-runtime.ts` and reduce shell ownership for that path.
+Move the covered `enter-city` production entry onto a clearer runtime-owned line and reduce the direct shell-owned navigation orchestration in `src/main.ts`.
 
 - [ ] **Step 2: Re-run the targeted navigation tests**
 
 Run:
 
 ```bash
-node --test tests/robustness.test.cjs --test-name-pattern "navigation|progression"
+node --test tests/robustness.test.cjs --test-name-pattern "child 15|navigation runtime|enter-city|progression"
 ```
 
 Expected:
@@ -202,23 +183,23 @@ Expected:
 
 - all commands pass without reopening unrelated runtime-family failures
 
-## Task 3: Converge Covered Time Entry Ownership
+## Task 3: Converge Covered `day-start` And `advance-segments` Time Entry Ownership
 
 **Files:**
 - Modify: `src/core/runtime/time-runtime.ts`
 - Modify: `src/main.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Implement the minimum covered time convergence**
+- [ ] **Step 1: Implement the minimum covered time-entry convergence**
 
-Move the covered time entry orchestration under `time-runtime.ts` and reduce shell ownership for that path.
+Move the covered `day-start` and `advance-segments` production entries onto a clearer runtime-owned line and reduce the direct shell-owned time orchestration in `src/main.ts`.
 
 - [ ] **Step 2: Re-run the targeted time tests**
 
 Run:
 
 ```bash
-node --test tests/robustness.test.cjs --test-name-pattern "time|progression"
+node --test tests/robustness.test.cjs --test-name-pattern "child 15|time runtime|day-start|advance-segments|progression"
 ```
 
 Expected:
@@ -237,29 +218,31 @@ npm run build
 
 Expected:
 
-- all commands pass with no regression to already accepted runtime slices
+- all commands pass without reopening unrelated runtime-family failures
 
-## Task 4: Reduce Residual Shell Ownership And Close Out Child 15
+## Task 4: Reduce Shell Progression Residue And Close Out Governance
 
 **Files:**
 - Modify: `src/main.ts`
-- Modify: `docs/change-log.md`
 - Modify: `docs/superpowers/plans/2026-07-02-child-15-navigation-time-runtime-convergence-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-02-weekly-implementation-visibility-plan.md`
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-review-index.md`
+- Modify: `docs/superpowers/weekly/2026-07-02-weekly-module-map.md`
+- Modify: `docs/superpowers/weekly/2026-07-02-weekly-call-flows.md`
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-next-split-review.md`
 - Modify: `docs/superpowers/weekly/2026-07-02-weekly-architecture-report.md`
+- Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Reduce the retained covered shell residue**
+- [ ] **Step 1: Reduce retained shell-only progression residue for the covered paths**
 
-Ensure the covered navigation/time paths are no longer shell-owned on the converged line.
+Keep only shell-facing input/output duties in `src/main.ts` for the covered Child 15 paths and explicitly record any bounded residue that must remain outside Child 15.
 
-- [ ] **Step 2: Record Child 15 implementation outcome**
+- [ ] **Step 2: Update weekly artifacts and queue truth**
 
-Update `Execution State`, `Progress Log`, retained residue notes, and completion wording only after production verification passes.
+Record Child 15 outcome, verification state, and the current Child 16 queue status across the `2026-07-02` artifact bundle.
 
-- [ ] **Step 3: Run the queue/governance verification**
+- [ ] **Step 3: Run governance verification**
 
 Run:
 
@@ -269,16 +252,19 @@ npm run lint:plans
 
 Expected:
 
-- plan-governance checks pass
-- weekly/governance wording stays structurally valid
+- `Superpowers plan lint passed`
 
-- [ ] **Step 4: Sync Child 15 exit truth into weekly docs**
+## Exit Check
 
-Record that:
-
-- covered navigation entry is runtime-owned
-- covered time entry is runtime-owned
-- Child 16 becomes the next highest-priority continuation child if still justified
+- [ ] covered `enter-city` navigation entry ownership is runtime-owned
+- [ ] covered `day-start` time entry ownership is runtime-owned
+- [ ] covered `advance-segments` time entry ownership is runtime-owned
+- [ ] `src/main.ts` keeps only shell-facing duties on the covered Child 15 paths
+- [ ] Child 15 does not reopen interactive scope
+- [ ] Child 15 does not absorb event/scene handoff convergence
+- [ ] targeted regression coverage passes
+- [ ] weekly artifacts are updated
+- [ ] weekly queue state is updated
 
 ## Completion Checklist
 

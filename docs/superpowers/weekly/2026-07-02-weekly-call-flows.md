@@ -8,38 +8,38 @@ Capture at least two real user-visible flows in the current architecture.
 
 If a real flow cannot be described clearly, that area is still a black box.
 
-## Flow 1: Covered Story-Battle Action Reentry
+## Flow 1: Current Covered `enter-city` Navigation Baseline
 
 ### Narrative
 
-The current production line for the covered story-battle action path already re-enters runtime-owned follow-up through the shared dispatch line and `houseRuntime.applyInteractiveFollowUp()`. This is the accepted post-Child-13 baseline that Child 14 must not reopen.
+The current production line for the covered `enter-city` path still enters `navigation-runtime.ts` directly from `src/main.ts`, then immediately returns to shell-owned orchestration for city-enter story triggering. This is the narrowed navigation baseline that Child 15 is allowed to converge.
 
 ### Call Chain
 
 ```text
-UI -> src/main.ts dispatchCurrentStoryBattleAction() -> createInteractiveActionRequest() -> dispatchRuntimeRequest() -> RuntimeRouter.route() -> runInteractiveRuntime() -> settleRuntimeEffects() -> RuntimeFollowUpContext.handleInteractive() -> houseRuntime.applyInteractiveFollowUp() -> RuntimeResult.state applied in src/main.ts
+UI -> src/main.ts confirmTravelOrEnterCity path -> createEnterCityRequest() -> runNavigationRuntime() -> triggerStoryEventsForTiming("city-enter") -> appState write-back -> renderApp()
 ```
 
 ### Notes
 
-- This path is already converged and is not the target of Child 14 except where residual interactive lifecycle ownership is still adapter-owned.
+- `triggerStoryEventsForTiming("city-enter")` remains out of Child 15 scope except where the covered navigation entry still needs less shell-side stitching.
 
-## Flow 2: Covered City-Begging Interactive Lifecycle
+## Flow 2: Current Covered `day-start` / `advance-segments` Time Baseline
 
 ### Narrative
 
-The covered city-begging path is the current proof that interactive lifecycle ownership can live under `interactive-runtime.ts`. Child 14 should use this as the nearest runtime-owned reference pattern when converging the remaining `activity-qte` and `story-battle` tails.
+The current production line for covered time progression still calls `runTimeRuntime()` directly in `src/main.ts` and then performs council-priority shell follow-up checks outside the time runtime seam. This is the narrowed time baseline that Child 15 is allowed to converge.
 
 ### Call Chain
 
 ```text
-UI -> src/main.ts -> createLaunchInteractiveRequest() -> dispatchRuntimeRequest() -> RuntimeRouter.route() -> runInteractiveRuntime() -> runtime-owned city-begging lifecycle -> settleRuntimeEffects() -> RuntimeResult.state / RuntimeResult.interactive -> src/main.ts applies result
+UI / auto-advance callback -> src/main.ts -> createDayStartRequest() or createAdvanceTimeSegmentsRequest() -> runTimeRuntime() -> syncCouncilPriorityAfterGameStateChange() -> renderApp() or follow-up interruption
 ```
 
 ### Notes
 
-- City-begging is already ownerized and should not be reopened by Child 14.
+- Child 15 may reduce the minimum shell follow-up stitching required for these covered time paths, but it must not widen into broader event/scene control.
 
 ## Additional Flows
 
-- Future Child 14 updates should add a real `activity-qte` converged flow here once the first implementation batch lands.
+- Child 14's interactive convergence remains accepted and should not be reopened while Child 15 is active.

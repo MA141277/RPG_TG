@@ -1,6 +1,6 @@
 # Weekly Orchestration Plan
 
-> **Purpose:** Use this template to govern one weekly set / iteration set of implementation work. A weekly orchestration plan is a queue controller, not just a calendar-week note. It is not complete unless both implementation deliverables and visibility deliverables are finished.
+> **Purpose:** Use this template to govern one lightweight weekly set / iteration set. It should stay small enough to answer only four questions: what this set is trying to finish, which child is active now, which child is next, and when this set must close.
 
 **Week Of:** `YYYY-MM-DD`
 
@@ -19,77 +19,114 @@
 - Verification: `Not run`
 - Notes: `Update this block after every work batch.`
 
-## Current Iteration Phase
-
-- Iteration label: `Replace with the governing iteration label.`
-- Current phase: `Replace with one concrete phase such as planning, active execution, closeout, or review-prep.`
-- Entry trigger: `Replace with the condition that allowed this weekly set to open.`
-- Exit trigger: `Replace with the condition that closes this weekly set and forces a fresh weekly review before later continuation starts.`
-
-## Post-Queue Continuation Rules
-
-- Candidate work recorded in architecture or review docs does not count as unlocked execution scope.
-- A later child must not start until governance explicitly records it as executable.
-- Once this weekly set is closed and the weekly plan is marked `completed`, do not append a new executable child into the same file; open a new weekly orchestration plan instead.
-- Keep queue depth explicit when relevant:
-  - one `active executable child`
-  - one `immediate queued follow-up`
-  - one `locked follow-up child`
-
 ## Progress Log
 
 - 2000-01-01
-  - Summary: `Weekly plan created.`
+  - Summary: `Weekly set created.`
   - Verification: `Not run`
-  - Next: `Start Task 1 Step 1.`
+  - Next: `Author or resume the active child plan.`
 
 ---
-
-## Weekly Goal
-
-- Replace with the governing narrative for this weekly set.
-- Example:
-  - `Close the currently approved runtime continuation queue without reopening frozen contract scope.`
 
 ## Weekly Scope
 
 ### In Scope
 
-- Replace with the concrete systems to touch this week.
+- Replace with the concrete boundary family this set is allowed to advance.
 
 ### Out Of Scope
 
-- Replace with the systems explicitly deferred this week.
+- Replace with the adjacent areas that must not be absorbed into this set.
 
-## Weekly Constraints
+## Queue
 
-- Only one implementation child plan may be `in-progress` at a time unless the weekly plan explicitly allows parallel work.
-- Any production-code task must record:
-  - `npm run typecheck`
-  - `npm test`
-  - `npm run build`
-- Doc-only batches must explicitly say: `Not run as part of this doc-only change`.
-- The weekly set is not complete until the visibility deliverables are updated.
-- The same natural week may contain more than one weekly set if an earlier set closes and later continuation requires a fresh review.
+Keep the visible queue intentionally shallow. Recommended maximum:
+
+- one `active child`
+- one `queued child`
+- one `locked child`
+
+Status meaning:
+
+- `active`: executable now, must have both spec and plan
+- `queued`: next promotion candidate, may stay spec-only until promotion
+- `locked`: recorded in this set but not yet the next promotion candidate, may stay spec-only until later promotion
+- `completed`: closed inside this set and kept only as queue history
+- `blocked`: cannot continue until the recorded blocker is cleared
+
+Transition note:
+
+- after the prior `active` child closes and before the next child is promoted, this weekly set may temporarily have no `active` child
+
+### Slot 1: Active Child
+
+- Child: `Child A`
+- Queue status: `active`
+- Spec: `docs/superpowers/specs/...`
+- Plan: `docs/superpowers/plans/...`
+- Primary boundary: `Replace with the active boundary.`
+- Depends on: `none` or `Replace with the required prerequisite.`
+- Resume point: `Replace with the current plan focus or next step.`
+
+### Slot 2: Queued Child
+
+- Child: `Child B`
+- Queue status: `queued`
+- Spec: `docs/superpowers/specs/...`
+- Plan: `Not authored until promotion`
+- Primary boundary: `Replace with the queued boundary.`
+- Depends on: `Child A completed and artifact sync updated.`
+- Promotion note: `Promote only after baseline recheck against the latest artifact bundle.`
+
+### Slot 3: Locked Child
+
+- Child: `Child C`
+- Queue status: `locked`
+- Spec: `docs/superpowers/specs/...`
+- Plan: `Not authored until promotion`
+- Primary boundary: `Replace with the locked follow-up boundary.`
+- Depends on: `Child B completed and artifact sync updated.`
+- Promotion note: `Keep locked until the prior child closes and governance rechecks the baseline.`
+
+## Promotion Rule
+
+When the active child closes:
+
+1. update the weekly artifact bundle
+2. recheck the next queued child spec against the latest code + artifact baseline
+3. record one result:
+   - `unchanged`
+   - `narrowed`
+   - `superseded`
+4. only then promote the next child to `active`
+5. only after promotion author that child's executable plan
+
+If the recheck result is `superseded`, do not auto-create a replacement child inside the same work batch.
+
+If the prior active child is already marked `completed`, do not keep treating it as active just to avoid an empty slot.
+
+## Close Rule
+
+Close this weekly set when any of these becomes true:
+
+- the set goal is achieved
+- the visible queue has been consumed
+- no remaining queued child is still executable after baseline recheck
+
+After closeout:
+
+- candidate work may stay recorded in artifacts
+- no new executable child may be appended into this same weekly set
+- later execution must start from a fresh weekly review and a new weekly orchestration plan
 
 ## Weekly Deliverables
 
-### Implementation Deliverables
-
-- [ ] Child plan or implementation plan for the active workstream is updated
-- [ ] Production code changes for this week are complete
-- [ ] `npm run typecheck`
-- [ ] `npm test`
-- [ ] `npm run build`
-
-### Visibility Deliverables
-
-- [ ] Module map updated
-- [ ] At least two real call-flow samples updated
-- [ ] Next split review updated
-- [ ] Architecture report with module diagram and flow diagrams updated
-- [ ] Weekly review index updated
-- [ ] Merged artifact ownership is synchronized across the five core artifacts
+- [ ] Active child plan exists and matches the current active queue slot
+- [ ] Active child closeout or defer decision is reflected in weekly artifacts
+- [ ] Weekly review index is updated
+- [ ] Weekly module map is updated if boundary ownership changed
+- [ ] Weekly architecture report is updated if queue state or maturity state changed
+- [ ] Verification status is recorded for the active child
 
 ## Deliverable Files
 
@@ -110,137 +147,32 @@ Merged ownership:
 - change impact ownership lives in `weekly-review-index`
 - module backlog ownership lives in `weekly-next-split-review`
 
-## File Map
-
-### Existing Files To Modify
-
-- `path/to/file`
-  - Why it changes this week.
-
-### New Files To Create
-
-- `path/to/file`
-  - Why it exists this week.
-
 ## Verification Policy
 
-- Child plans still own their own detailed verification commands.
-- This weekly plan should summarize whether the active child passed or failed verification.
-- Doc-only weekly-governance batches may record:
-  - `Not run as part of this doc-only change`
+- The active child plan owns detailed verification commands.
+- This weekly plan only summarizes whether the active child verification passed, failed, or was not run.
+- Doc-only governance batches may record `Not run as part of this doc-only change`.
 
 ## Blocker Rules
 
 - If the active child hits `P0`, stop lower-priority queue execution and record the blocker here.
 - If the active child hits `P1`, do not promote dependent queue items.
-- `P2` may be deferred only if explicitly recorded and the next queue item does not depend on the unresolved area.
-
-## Plan Status Board
-
-### Completed
-
-- `path/to/completed-plan.md`
-  - Role: `Replace with the completed child or supporting role.`
-  - Resume point: `Completed.`
-
-### In Progress
-
-- `path/to/active-plan.md`
-  - Role: `Replace with the active child or supporting role.`
-  - Resume point: `Start Task N Step M.`
-
-### Not Started
-
-- `path/to/queued-plan.md`
-  - Role: `Replace with the queued child or supporting role.`
-  - Resume point: `Queued behind the active child.`
-
-### Blocked
-
-- `path/to/blocked-plan.md`
-  - Role: `Replace with the blocked child or supporting role.`
-  - Resume point: `Blocked by ...`
-
-### Needs Reconciliation
-
-- `path/to/legacy-plan.md`
-  - Current file status: `unknown`
-  - Reason: `Replace with why this item is not yet trustworthy enough to enter the active queue.`
-
-## Execution Queue
-
-1. `path/to/queue-item-plan.md`
-   - Queue status: `not-started`
-   - Primary subsystem boundary: `Replace with the main owned boundary for this child.`
-   - Depends on: `Replace with dependency conditions.`
-   - Start condition: `Replace with the queue unlock condition.`
-   - Exit condition:
-      - `Replace with concrete queue-level completion gates.`
-
-## Resume Rules
-
-When resuming weekly work:
-
-1. read this weekly plan's `Execution State`
-2. read the latest weekly `Progress Log`
-3. inspect the `In Progress` and `Not Started` groups in `Plan Status Board`
-4. if no child implementation plan is `in-progress`, choose the first queue item whose dependencies are satisfied
-5. then open that child plan and resume according to `plan-governance-spec`
-
-If this weekly plan is already `completed` and no active queue item remains:
-
-- do not append a new executable child into this file
-- open a new weekly orchestration plan for the next weekly set instead
-
-## Task 1: Replace With Real Task Name
-
-**Files:**
-- Modify: `path/to/file`
-- Read: `path/to/related-file`
-
-- [ ] **Step 1: Implement the concrete change**
-
-Describe the exact implementation action.
-
-- [ ] **Step 2: Update the visibility outputs for this task**
-
-Record at minimum:
-
-- module map changes
-- call-flow changes
-- next split review changes
-- architecture/report changes when boundary state or queue state moved
-
-- [ ] **Step 3: Run the verification gate**
-
-Run:
-
-```bash
-npm run typecheck
-npm test
-npm run build
-```
-
-Expected:
-
-- `PASS`
+- `P2` may be deferred only if explicitly recorded and if the next promotion does not depend on the unresolved area.
 
 ## Acceptance Gate
 
 Do not mark this weekly plan `completed` until:
 
-- all required implementation deliverables are complete
-- all required visibility deliverables are complete
+- the set goal is complete or the queue is explicitly closed with no remaining executable child
 - no unresolved `P0` or `P1` remains in weekly scope
-- the weekly review index links to every updated weekly artifact
-- queue closeout wording is synchronized across the five core artifacts
+- the active child result and queue state are synchronized across the weekly artifacts
 - the latest `Progress Log` records the weekly outcome
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
+- [ ] Queue state updated
 - [ ] `Execution State` updated
 - [ ] `Progress Log` updated
 - [ ] Verification recorded
 - [ ] Weekly review index updated
-- [ ] Visibility deliverables linked and present
+- [ ] Required visibility deliverables linked and present

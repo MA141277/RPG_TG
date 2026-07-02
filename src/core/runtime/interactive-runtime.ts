@@ -2,6 +2,10 @@ import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
 import {
+  advanceActivityQteMarker,
+  stopActivityQte,
+} from "../../application/activity/activity-qte-runtime";
+import {
   convertHouseActivityDaysToSegments,
 } from "../../application/house/house-activity-costs";
 import {
@@ -11,6 +15,9 @@ import {
   setCityBeggingMiniGamePointer,
   updateCityBeggingMiniGameState,
 } from "../../application/minigames/city-begging-minigame";
+import {
+  dispatchStoryBattleAction,
+} from "../../application/story-battle/story-battle-runtime";
 import type {
   ActiveInteractiveRuntimeSession,
   InteractiveActionRequest,
@@ -20,11 +27,6 @@ import type {
 } from "../contracts/interactive-runtime";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
-import {
-  dispatchLegacyStoryBattleAction,
-  stopLegacyActivityQte,
-  tickLegacyActivityQte,
-} from "../adapters/legacy-interactive-adapter";
 import { settleRuntimeEffects } from "./runtime-settlement";
 
 export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
@@ -236,7 +238,7 @@ export function runInteractiveRuntime(input: {
     return {
       state: {
         ...input.state,
-        core: tickLegacyActivityQte(input.state.core),
+        core: advanceActivityQteMarker(input.state.core),
       },
       effects: [],
       session: getActiveInteractiveSession(input.state, request.kind),
@@ -271,11 +273,11 @@ export function runInteractiveRuntime(input: {
       };
     }
 
-    const completion = stopLegacyActivityQte({
-      state: input.state.core,
+    const completion = stopActivityQte(
+      input.state.core,
       activityDefinition,
-      characterDefinitions: input.characterDefinitions,
-    });
+      input.characterDefinitions
+    );
 
     return {
       state: {
@@ -303,7 +305,7 @@ export function runInteractiveRuntime(input: {
       };
     }
 
-    const result = dispatchLegacyStoryBattleAction(
+    const result = dispatchStoryBattleAction(
       input.state.core,
       battleActionId,
       {

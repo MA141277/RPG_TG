@@ -2,11 +2,16 @@
 
 **Week Of:** `YYYY-MM-DD`
 
-**Weekly Plan:** `docs/superpowers/plans/YYYY-MM-DD-weekly-orchestration-plan.md`
+**Weekly Set Plan:** `docs/superpowers/plans/YYYY-MM-DD-weekly-orchestration-plan.md`
 
-**Primary Child Plan(s):**
+**Active Child Plan:**
 
 - `docs/superpowers/plans/...`
+
+**Queued Child Specs:**
+
+- `docs/superpowers/specs/...`
+- `docs/superpowers/specs/...`
 
 ## Weekly Summary
 
