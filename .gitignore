@@ -3,3 +3,4 @@ dist/
 .test-dist/
 .runtime/
 .worktrees/
+dev-server-codex.log

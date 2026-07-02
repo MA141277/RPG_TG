@@ -282,16 +282,67 @@ These are architecture candidates only. They are not unlocked children and must 
    - Primary target: the remaining `activity-qte` and `story-battle` paths still routed through `legacy-interactive-adapter.ts`
    - Reason to split independently: this is the clearest remaining bridge-period debt inside the interaction family and can be verified with focused lifecycle regressions
    - Do not mix with: navigation/time/event/scene entry convergence, boot/startup, UI, or broader carrier redesign
+   - Entry conditions:
+     - weekly governance explicitly promotes this child as the next executable child
+     - Child 11 / Child 13 closeout remains accepted and unreopened
+     - no unresolved `P0` / `P1` regression exists on the covered interactive ownerized paths
+   - Exit conditions:
+     - covered `activity-qte` lifecycle ownership is runtime-owned under `src/core/runtime/interactive-runtime.ts`
+     - covered `story-battle` lifecycle ownership is runtime-owned under `src/core/runtime/interactive-runtime.ts`
+     - `src/main.ts` no longer performs the covered interactive cleanup / follow-up branches
+     - retained `legacy-interactive-adapter.ts` code is reduced to justified compatibility-only residue
+   - Verification focus:
+     - targeted `tests/robustness.test.cjs` coverage for `activity-qte` and `story-battle` launch / action / exit / completion tails
+     - `npm run typecheck`
+     - `npm test`
+     - `npm run build`
 
 2. `Navigation + Time Runtime Convergence`
    - Primary target: direct `src/main.ts` coordination around `runNavigationRuntime()` and `runTimeRuntime()` entry paths
    - Reason to split independently: these two seams share the same mixed shell/runtime entry pattern and can be converged without dragging event/scene story handoff into scope
    - Do not mix with: event/scene orchestration redesign or interactive legacy cleanup
+   - Entry conditions:
+     - `Interactive Remaining Legacy Convergence` is completed, or governance explicitly records a justified reorder decision
+     - weekly governance explicitly promotes this child as the active executable child
+     - remaining navigation/time debt is confirmed to be mixed entry ownership debt rather than event/scene handoff debt
+   - Exit conditions:
+     - covered navigation entry no longer depends on direct shell orchestration in `src/main.ts`
+     - covered time entry no longer depends on direct shell orchestration in `src/main.ts`
+     - `src/main.ts` keeps only shell-facing input/output responsibilities on the covered navigation/time paths
+     - convergence does not reopen event/scene handoff scope
+   - Verification focus:
+     - targeted `tests/robustness.test.cjs` coverage for covered navigation/time entry and progression paths
+     - `npm run typecheck`
+     - `npm test`
+     - `npm run build`
 
 3. `Event + Scene Handoff Convergence`
    - Primary target: the remaining mixed control around `runEventRuntime()` and `runSceneFromEvent()` story handoff
    - Reason to split independently: this path is structurally different from interactive or navigation/time work and has the highest risk of silently expanding into story-flow redesign if not isolated
    - Do not mix with: navigation/time cleanup, interactive cleanup, or new story system work
+   - Entry conditions:
+     - `Navigation + Time Runtime Convergence` is completed, or governance explicitly records a justified reorder decision
+     - weekly governance explicitly promotes this child as the active executable child
+     - remaining event/scene debt is confirmed to be ownership/handoff debt rather than missing content logic
+   - Exit conditions:
+     - covered event activation no longer needs shell-side handoff stitching
+     - covered scene continuation no longer depends on ad hoc `src/main.ts` orchestration
+     - event -> scene handoff is explicit and runtime-owned on the covered production line
+     - convergence does not widen into story-system redesign
+   - Verification focus:
+     - targeted `tests/robustness.test.cjs` coverage for covered event activation, scene continuation, and event -> scene handoff
+     - `npm run typecheck`
+     - `npm test`
+     - `npm run build`
+
+## Candidate Governance Note
+
+- These three items are candidate continuation splits only.
+- None of them is an unlocked child in the current closed weekly queue.
+- Before any of them becomes executable work, governance must complete:
+  - a fresh weekly review
+  - an explicit promotion decision for the next executable child
+  - a dedicated spec and implementation plan under `docs/superpowers/specs/` and `docs/superpowers/plans/`
 
 ## Architecture Risks
 
