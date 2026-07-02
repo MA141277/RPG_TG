@@ -9621,6 +9621,127 @@ test("mod runtime does not absorb content assembly or gameplay execution ownersh
   );
 });
 
+test("gameplay contribution registry contract exports navigation event scene task and house contribution families", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/gameplay-contribution.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type GameplayContributionDeclaration/);
+  assert.match(source, /export type GameplayContributionRegistry/);
+  assert.match(source, /navigation/);
+  assert.match(source, /events/);
+  assert.match(source, /scenes/);
+  assert.match(source, /tasks/);
+  assert.match(source, /houses/);
+});
+
+test("mod manifest contribution contract exposes optional gameplay contributions", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/mod-manifest.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /GameplayContributionDeclaration/);
+  assert.match(source, /gameplayContributions\?:/);
+});
+
+test("mod runtime contribution contract exposes installed gameplay contributions on activated mods", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/mod-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /GameplayContributionRegistry/);
+  assert.match(source, /gameplayContributions:/);
+});
+
+test("mod runtime contribution activation installs unified gameplay contributions from content sources", async () => {
+  const {
+    createEmptyModRuntimeState,
+    createLoadedModFromManifest,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+
+  const loadedMod = createLoadedModFromManifest({
+    source: { kind: "builtin", modId: "mod.test.registry" },
+    manifest: {
+      id: "mod.test.registry",
+      schemaVersion: "1",
+      version: "1.0.0",
+      title: "Registry Test",
+      entryContentPackIds: ["pack.test.registry"],
+      gameplayContributions: {
+        events: ["event.registry.opening"],
+        scenes: ["scene.registry.opening"],
+        tasks: ["task.registry.opening"],
+        houses: ["house.registry.guild"],
+      },
+    },
+    rawContent: {
+      id: "pack.test.registry",
+      title: "Registry Pack",
+      maps: [{ id: "map.registry" }],
+      cities: [{ id: "city.registry", mapId: "map.registry", name: "Registry City", x: 0, y: 0, description: "" }],
+      cityEntries: [{ id: "entry.registry.guild", cityId: "city.registry", label: "Guild", description: "" }],
+      events: [{ id: "event.registry.opening", title: "Opening", trigger: { type: "manual" }, steps: [] }],
+      scenes: [{ id: "scene.registry.opening", title: "Opening Scene", startNodeId: "start", nodes: [{ id: "start", type: "line", text: "start", nextNodeId: null }] }],
+      tasks: [{ id: "task.registry.opening", title: "Opening Task", objectives: [] }],
+      houses: [{
+        id: "house.registry.guild",
+        cityId: "city.registry",
+        name: "Guild Hall",
+        type: "special",
+        characterIds: [],
+        defaultCharacterId: null,
+        moduleId: "keep-house",
+        backAction: { label: "Back", targetView: "city" },
+      }],
+    },
+  });
+
+  const result = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.activate-loaded",
+      requestId: "test:mod-runtime-contributions",
+      loadedMod,
+    },
+    context: {
+      allowedCapabilities: [],
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    return;
+  }
+
+  assert.deepEqual(result.activatedMod.gameplayContributions.contentPackIds, [
+    "pack.test.registry",
+  ]);
+  assert.deepEqual(result.activatedMod.gameplayContributions.navigation, [
+    "map.registry",
+    "city.registry",
+    "entry.registry.guild",
+  ]);
+  assert.deepEqual(result.activatedMod.gameplayContributions.events, [
+    "event.registry.opening",
+  ]);
+  assert.deepEqual(result.activatedMod.gameplayContributions.scenes, [
+    "scene.registry.opening",
+  ]);
+  assert.deepEqual(result.activatedMod.gameplayContributions.tasks, [
+    "task.registry.opening",
+  ]);
+  assert.deepEqual(result.activatedMod.gameplayContributions.houses, [
+    "house.registry.guild",
+  ]);
+  assert.deepEqual(result.activatedMod.gameplayContributions.houseModules, [
+    "keep-house",
+  ]);
+});
+
 test("state sync runtime contract exports canonical app save presentation trigger and result seams", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/state-sync-runtime.ts"),

@@ -1,3 +1,5 @@
+import type { GameplayContributionDeclaration } from "./gameplay-contribution";
+
 export type GameModManifest = {
   id: string;
   schemaVersion: string;
@@ -7,6 +9,7 @@ export type GameModManifest = {
   dependencies?: string[];
   conflictsWith?: string[];
   capabilities?: string[];
+  gameplayContributions?: GameplayContributionDeclaration;
   defaultStart?: {
     playerCharacterId?: string;
     mapId?: string;

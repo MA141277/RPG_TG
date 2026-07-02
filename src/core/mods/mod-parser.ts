@@ -1,4 +1,5 @@
 import type { GameModManifest } from "../contracts/mod-manifest";
+import type { GameplayContributionDeclaration } from "../contracts/gameplay-contribution";
 
 export function parseModManifest(input: unknown): GameModManifest {
   if (input == null || typeof input !== "object" || Array.isArray(input)) {
@@ -22,6 +23,9 @@ export function parseModManifest(input: unknown): GameModManifest {
   const dependencies = readStringArray(candidate.dependencies);
   const conflictsWith = readStringArray(candidate.conflictsWith);
   const capabilities = readStringArray(candidate.capabilities);
+  const gameplayContributions = normalizeGameplayContributions(
+    candidate.gameplayContributions
+  );
   const defaultStart = normalizeDefaultStart(candidate.defaultStart);
 
   return {
@@ -33,7 +37,34 @@ export function parseModManifest(input: unknown): GameModManifest {
     ...(dependencies == null ? {} : { dependencies }),
     ...(conflictsWith == null ? {} : { conflictsWith }),
     ...(capabilities == null ? {} : { capabilities }),
+    ...(gameplayContributions == null ? {} : { gameplayContributions }),
     ...(defaultStart == null ? {} : { defaultStart }),
+  };
+}
+
+function normalizeGameplayContributions(
+  value: unknown
+): GameplayContributionDeclaration | undefined {
+  if (value == null) {
+    return undefined;
+  }
+  if (typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("mod gameplayContributions must be an object.");
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const navigation = readStringArray(candidate.navigation);
+  const events = readStringArray(candidate.events);
+  const scenes = readStringArray(candidate.scenes);
+  const tasks = readStringArray(candidate.tasks);
+  const houses = readStringArray(candidate.houses);
+
+  return {
+    ...(navigation == null ? {} : { navigation }),
+    ...(events == null ? {} : { events }),
+    ...(scenes == null ? {} : { scenes }),
+    ...(tasks == null ? {} : { tasks }),
+    ...(houses == null ? {} : { houses }),
   };
 }
 

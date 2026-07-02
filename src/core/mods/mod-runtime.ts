@@ -8,6 +8,10 @@ import type {
   ModRuntimeState,
   ModSourceDescriptor,
 } from "../contracts/mod-runtime";
+import type {
+  GameplayContributionDeclaration,
+  GameplayContributionRegistry,
+} from "../contracts/gameplay-contribution";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import {
   loadModSource,
@@ -309,11 +313,17 @@ function readActiveLoadedMod(state: ModRuntimeState): LoadedMod | null {
 }
 
 function createActivatedMod(loadedMod: LoadedMod): ActivatedMod {
+  const normalizedContentSources = [loadedMod.rawContent];
+
   return {
     modId: loadedMod.manifest.id,
     manifest: loadedMod.manifest,
-    normalizedContentSources: [loadedMod.rawContent],
+    normalizedContentSources,
     registeredDefinitionIds: loadedMod.manifest.entryContentPackIds,
+    gameplayContributions: installGameplayContributions({
+      manifest: loadedMod.manifest,
+      normalizedContentSources,
+    }),
     startupProfile: {
       ...(loadedMod.manifest.defaultStart?.playerCharacterId == null
         ? {}
@@ -335,4 +345,158 @@ function createActivatedMod(loadedMod: LoadedMod): ActivatedMod {
         : { view: loadedMod.manifest.defaultStart.view }),
     },
   };
+}
+
+type ContributionSource = {
+  id?: unknown;
+  maps?: unknown;
+  cities?: unknown;
+  cityEntries?: unknown;
+  events?: unknown;
+  scenes?: unknown;
+  tasks?: unknown;
+  houses?: unknown;
+};
+
+function installGameplayContributions(input: {
+  manifest: GameModManifest;
+  normalizedContentSources: unknown[];
+}): GameplayContributionRegistry {
+  const sources = input.normalizedContentSources.filter(
+    (source): source is ContributionSource =>
+      source != null && typeof source === "object"
+  );
+  const availableNavigation = uniqueStrings([
+    ...collectRecordIds(sources, "maps"),
+    ...collectRecordIds(sources, "cities"),
+    ...collectRecordIds(sources, "cityEntries"),
+  ]);
+  const availableEvents = uniqueStrings(collectRecordIds(sources, "events"));
+  const availableScenes = uniqueStrings(collectRecordIds(sources, "scenes"));
+  const availableTasks = uniqueStrings(collectRecordIds(sources, "tasks"));
+  const availableHouses = uniqueStrings(collectRecordIds(sources, "houses"));
+  const resolvedHouses = resolveContributionIds({
+    family: "houses",
+    declaredIds: input.manifest.gameplayContributions?.houses,
+    availableIds: availableHouses,
+  });
+
+  return {
+    contentPackIds: uniqueStrings([
+      ...input.manifest.entryContentPackIds,
+      ...sources.flatMap((source) =>
+        typeof source.id === "string" && source.id.trim().length > 0
+          ? [source.id]
+          : []
+      ),
+    ]),
+    navigation: resolveContributionIds({
+      family: "navigation",
+      declaredIds: input.manifest.gameplayContributions?.navigation,
+      availableIds: availableNavigation,
+      fallbackToAvailable: true,
+    }),
+    events: resolveContributionIds({
+      family: "events",
+      declaredIds: input.manifest.gameplayContributions?.events,
+      availableIds: availableEvents,
+    }),
+    scenes: resolveContributionIds({
+      family: "scenes",
+      declaredIds: input.manifest.gameplayContributions?.scenes,
+      availableIds: availableScenes,
+    }),
+    tasks: resolveContributionIds({
+      family: "tasks",
+      declaredIds: input.manifest.gameplayContributions?.tasks,
+      availableIds: availableTasks,
+    }),
+    houses: resolvedHouses,
+    houseModules: collectHouseModuleIds(sources, resolvedHouses),
+  };
+}
+
+function collectRecordIds(
+  sources: readonly ContributionSource[],
+  key: keyof ContributionSource
+): string[] {
+  return sources.flatMap((source) => {
+    const value = source[key];
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value.flatMap((entry) => {
+      if (entry == null || typeof entry !== "object") {
+        return [];
+      }
+
+      const id = (entry as { id?: unknown }).id;
+      return typeof id === "string" && id.trim().length > 0 ? [id] : [];
+    });
+  });
+}
+
+function resolveContributionIds(input: {
+  family: keyof GameplayContributionDeclaration;
+  declaredIds: readonly string[] | undefined;
+  availableIds: readonly string[];
+  fallbackToAvailable?: boolean;
+}): string[] {
+  if (input.declaredIds == null) {
+    return input.fallbackToAvailable === true
+      ? [...input.availableIds]
+      : [];
+  }
+
+  const availableIds = new Set(input.availableIds);
+  const missingIds = input.declaredIds.filter((id) => !availableIds.has(id));
+  if (missingIds.length > 0) {
+    throw new Error(
+      `Mod gameplay contributions declare unknown ${input.family}: ${missingIds.join(", ")}`
+    );
+  }
+
+  return uniqueStrings(input.declaredIds);
+}
+
+function collectHouseModuleIds(
+  sources: readonly ContributionSource[],
+  contributedHouseIds: readonly string[]
+): string[] {
+  if (contributedHouseIds.length === 0) {
+    return [];
+  }
+
+  const contributedHouseIdSet = new Set(contributedHouseIds);
+
+  return uniqueStrings(
+    sources.flatMap((source) => {
+      if (!Array.isArray(source.houses)) {
+        return [];
+      }
+
+      return source.houses.flatMap((house) => {
+        if (house == null || typeof house !== "object") {
+          return [];
+        }
+
+        const record = house as { id?: unknown; moduleId?: unknown };
+        if (
+          typeof record.id !== "string" ||
+          !contributedHouseIdSet.has(record.id) ||
+          typeof record.moduleId !== "string" ||
+          record.moduleId.trim().length === 0
+        ) {
+          return [];
+        }
+
+        return [record.moduleId];
+      });
+    })
+  );
+}
+
+function uniqueStrings(values: readonly string[]): string[] {
+  return Array.from(new Set(values));
 }

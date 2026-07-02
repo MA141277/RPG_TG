@@ -4,9 +4,9 @@
 
 **Week Of:** `2026-07-02`
 
-**Goal:** Govern the first mod-first continuation set through the post-Child-20 promotion point so later contribution-registry work can be rechecked without reopening the closed runtime-handoff queue.
+**Goal:** Govern the first mod-first continuation set through the post-Child-21 promotion point so later end-to-end closure work can be rechecked without reopening the closed runtime-handoff queue.
 
-**Architecture:** The earlier `2026-07-02` weekly set is closed historical truth only. This fresh mod-first set starts from the roadmap in `docs/superpowers/specs/2026-07-02-mod-first-unified-contract-roadmap-design.md`, moved through Child 17, Child 18, Child 19, and Child 20, and now returns to no active executable child while Child 21 waits for a fresh post-Child-20 baseline recheck and Child 22 remains the later locked roadmap candidate.
+**Architecture:** The earlier `2026-07-02` weekly set is closed historical truth only. This fresh mod-first set starts from the roadmap in `docs/superpowers/specs/2026-07-02-mod-first-unified-contract-roadmap-design.md`, moved through Child 17, Child 18, Child 19, Child 20, and Child 21, and now returns to no active executable child while Child 22 waits for a fresh post-Child-21 baseline recheck.
 
 **Tech Stack:** Markdown governance docs, TypeScript repository tasks, `npm run lint:plans`, child-plan verification commands, weekly artifact bundle under `docs/superpowers/weekly/2026-07-02-mod-first-*`
 
@@ -14,10 +14,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-02`
-- Current Focus: `Child 20 is now completed history. The set temporarily has no active child while Child 21 waits for a fresh post-Child-20 baseline recheck.`
-- Next Step: `Recheck Child 21 before deciding whether to promote the unified gameplay contribution registry child.`
-- Verification: `Child 19 closeout batch: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract|task contribution|task runtime load|task runtime signal|task runtime action|active game content indexes merged task definitions|createInitialState seeds runtime task state|runtime dispatch settles routed task actions and signals|main.ts keeps covered runtime commits supplied with active task definitions" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 20 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry" + npm run typecheck + npm test + npm run build + npm run lint:plans`
-- Notes: `Do not append work into the closed docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md. This fresh set stays open, but it currently has no active executable child until Child 21 is rechecked and promoted.`
+- Current Focus: `Child 21 is now completed history. The set temporarily has no active child while Child 22 waits for a fresh post-Child-21 baseline recheck.`
+- Next Step: `Recheck Child 22 before deciding whether to promote the end-to-end mod-first closure child.`
+- Verification: `Child 19 closeout batch: npm run build:test + node --test tests/robustness.test.cjs --test-name-pattern "task runtime contract|task contribution|task runtime load|task runtime signal|task runtime action|active game content indexes merged task definitions|createInitialState seeds runtime task state|runtime dispatch settles routed task actions and signals|main.ts keeps covered runtime commits supplied with active task definitions" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 20 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry" + npm run typecheck + npm test + npm run build + npm run lint:plans; Child 21 closeout batch: node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected" + npm run typecheck + npm test + npm run build + npm run lint:plans`
+- Notes: `Do not append work into the closed docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md. This fresh set stays open, but it currently has no active executable child until Child 22 is rechecked and promoted.`
 
 ## Progress Log
 
@@ -53,6 +53,10 @@
   - Summary: `Completed Child 20. Covered house runtime, presenter, and renderer lookup now consume one core-owned shared house registration seam, while builtin module and renderer bindings are expressed as fallback contributions through that same seam. The set returns to no active child while Child 21 waits for a fresh baseline recheck.`
   - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "house runtime|house module registry|special house interface|mod house registration|house renderer registry"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
   - Next: `Recheck Child 21 only when ready to open the next unified contribution-registry boundary.`
+- 2026-07-02
+  - Summary: `Ran the fresh post-Child-20 baseline recheck, promoted Child 21 to active execution, narrowed it to manifest/runtime/registry install policy, and then completed it. Mod activation now installs and validates one unified gameplay contribution registry instead of returning only manifest/source metadata.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `Recheck Child 22 only when ready to open the end-to-end closure boundary.`
 
 ---
 
@@ -92,25 +96,25 @@ Status meaning:
 
 - Child: `None currently`
 - Queue status: `active`
-- Primary boundary: `No active executable child while Child 21 still requires a fresh post-Child-20 baseline recheck.`
+- Primary boundary: `No active executable child while Child 22 still requires a fresh post-Child-21 baseline recheck.`
 - Depends on: `Not applicable`
-- Resume point: `Promote Child 21 or explicitly close the set.`
+- Resume point: `Promote Child 22 or explicitly close the set.`
 
 ### Slot 2: Queued Child
 
-- Child: `docs/superpowers/plans/2026-07-02-child-21-unified-gameplay-contribution-registry-plan.md`
+- Child: `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
 - Queue status: `queued`
-- Primary boundary: `Unified gameplay contribution registry is the next roadmap candidate, but it is not executable until a fresh baseline recheck confirms Child 20 left no narrower blocker behind.`
-- Depends on: `Child 20 closeout plus fresh baseline recheck`
-- Promotion note: `Do not auto-promote Child 21 in this batch. Recheck first.`
+- Primary boundary: `End-to-end mod-first runtime closure is the next roadmap candidate, but it is not executable until a fresh baseline recheck confirms Child 21 left no narrower blocker behind.`
+- Depends on: `Child 21 closeout plus fresh baseline recheck`
+- Promotion note: `Do not auto-promote Child 22 in this batch. Recheck first.`
 
 ### Slot 3: Locked Child
 
-- Child: `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
+- Child: `None currently`
 - Queue status: `locked`
-- Primary boundary: `End-to-end mod-first runtime closure remains the later roadmap item behind Child 21.`
-- Depends on: `Child 21 review outcome`
-- Promotion note: `Keep Child 22 locked until Child 21 is rechecked and either completed or superseded.`
+- Primary boundary: `No additional locked child is recorded in this set until Child 22 is rechecked.`
+- Depends on: `Not applicable`
+- Promotion note: `Do not append a new locked child without a fresh review outcome.`
 
 ## Promotion Rule
 

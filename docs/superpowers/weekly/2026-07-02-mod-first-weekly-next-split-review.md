@@ -23,17 +23,17 @@ Do not decide the next split only from intuition.
 ## Recommended Next Split
 
 - Module:
-  - `Child 20 House Runtime Mod Registration`
+  - `Child 22 End-to-End Mod-First Runtime Closure`
 - Reason:
-  - Child 20 is now completed, so the next remaining roadmap boundary shifts to unified gameplay contribution registration after a fresh baseline recheck.
+  - Child 21 is now completed, so the next remaining roadmap boundary shifts to builtin/imported/save-restore parity after a fresh baseline recheck.
 - Category:
-  - `house runtime registration follow-up`
+  - `end-to-end runtime closure`
 - Queue status:
   - `queued pending baseline recheck`
 - Immediate queued follow-up:
-  - `Child 21 Unified Gameplay Contribution Registry`
-- Locked later follow-up:
   - `Child 22 End-to-End Mod-First Runtime Closure`
+- Locked later follow-up:
+  - `None currently`
 
 ## Non-Selected Candidates
 
@@ -43,5 +43,7 @@ Do not decide the next split only from intuition.
   - Already completed in this set and should now remain historical truth rather than absorb task-contract work.
 - `Child 20 House Runtime Mod Registration`
   - It is now completed and should remain queue history rather than absorb the next registry boundary.
+- `Child 21 Unified Gameplay Contribution Registry`
+  - It is now completed and should remain queue history rather than absorb end-to-end startup/save/restore closure work.
 - `src/core/registry/content-registry.ts`
-  - Clearly underpowered, but the unified registry problem should not be promoted ahead of the active Child 20 house-registration work.
+  - It is no longer placeholder-grade, but registry typing alone is not the next highest-risk boundary after Child 21 closeout.

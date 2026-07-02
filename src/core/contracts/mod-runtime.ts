@@ -1,4 +1,5 @@
 import type { GameModManifest } from "./mod-manifest";
+import type { GameplayContributionRegistry } from "./gameplay-contribution";
 
 export type ModSourceKind = "builtin" | "file" | "url";
 
@@ -18,6 +19,7 @@ export type ActivatedMod = {
   manifest: GameModManifest;
   normalizedContentSources: unknown[];
   registeredDefinitionIds: string[];
+  gameplayContributions: GameplayContributionRegistry;
   startupProfile: {
     playerCharacterId?: string;
     mapId?: string;

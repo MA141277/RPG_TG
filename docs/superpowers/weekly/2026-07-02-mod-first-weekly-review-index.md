@@ -10,6 +10,7 @@
 
 **Latest Completed Child Plan:**
 
+- `docs/superpowers/plans/2026-07-02-child-21-unified-gameplay-contribution-registry-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-20-house-runtime-mod-registration-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-19-task-runtime-mod-contract-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-18-runtime-spine-unification-plan.md`
@@ -18,7 +19,7 @@
 
 **Queued Child Plans:**
 
-- `docs/superpowers/plans/2026-07-02-child-21-unified-gameplay-contribution-registry-plan.md`
+- `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
 
 ## Weekly Summary
 
@@ -28,12 +29,12 @@
 - `Child 18 Runtime Spine Unification` is now completed after converging covered dispatch entry and covered interactive write-back onto the shared runtime commit seam.
 - `Child 19 Task Runtime Mod Contract` is now completed after converging shared task contribution loading, active task-definition lookup, unified task-state storage, and shared runtime task settlement.
 - `Child 20 House Runtime Mod Registration` is now completed after converging builtin house module/renderer lookup onto one shared registration seam.
-- `Child 21` is now the immediate queued candidate, but it still requires a fresh post-Child-20 baseline recheck before promotion.
-- `Child 22` remains the locked later follow-up.
+- `Child 21 Unified Gameplay Contribution Registry` is now completed after converging mod manifest declarations, activation output, and installed contribution validation onto one shared contract family.
+- `Child 22` is now the immediate queued candidate, but it still requires a fresh post-Child-21 baseline recheck before promotion.
 
 ## Active Focus
 
-- No active child currently. The next governance action is whether Child 21 still survives unchanged after a fresh post-Child-20 baseline recheck.
+- No active child currently. The next governance action is whether Child 22 still survives unchanged after a fresh post-Child-21 baseline recheck.
 
 ## Artifact Index
 
@@ -59,6 +60,7 @@ Merged ownership note:
 - Child 18 closeout verification: `PASS`
 - Child 19 closeout verification: `PASS`
 - Child 20 closeout verification: `PASS`
+- Child 21 closeout verification: `PASS`
 - `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
@@ -85,15 +87,18 @@ Merged ownership note:
 - shared house registration seam added under `src/core/registry/house-module-registry.ts`
 - covered house runtime, presenter lookup, and renderer lookup migrated off builtin-static tables
 - Child 20 verification passed
+- Child 21 promoted after baseline recheck
+- shared gameplay contribution contracts and activation install added under `src/core/contracts/gameplay-contribution.ts` and `src/core/mods/mod-runtime.ts`
+- Child 21 verification passed
 
 ### In Progress
 
 - no active child currently
-- Child 21 remains queued pending a fresh baseline recheck
+- Child 22 remains queued pending a fresh baseline recheck
 
 ### Deferred
 
-- Child 22 remains locked behind the queued Child 21 boundary
+- no additional locked child currently recorded in this set
 
 ### Blockers
 
@@ -104,8 +109,8 @@ Merged ownership note:
 Interpret this as input to later continuation, not as automatic permission to append extra executable children beyond the controlled queue.
 
 - Highest-priority module to refine:
-  - `src/core/registry/content-registry.ts`, `src/core/registry/mod-registry.ts`, and `src/core/mods/mod-runtime.ts`
+  - `src/main.ts`, `src/core/save/save-loader.ts`, `src/core/save/save-envelope.ts`, and `src/application/content/default-runtime-content.ts`
 - Why it is next:
-  - Child 20 is closed, so the next review boundary shifts to unified gameplay contribution registration rather than further house-registry widening
+  - Child 21 is closed, so the next review boundary shifts from contribution install policy to builtin/imported/save-restore end-to-end closure
 - Category:
-  - `unified gameplay contribution registry`
+  - `end-to-end mod-first runtime closure`

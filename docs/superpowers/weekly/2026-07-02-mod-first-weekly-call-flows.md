@@ -126,3 +126,20 @@ builtin house module/render registrations -> createBuiltinHouseModuleRegistry() 
 
 - Child 20 is complete for this shared house registration seam.
 - The next open problem is no longer house module lookup ownership; it is whether Child 21 should unify the remaining gameplay contribution registries around the same installation model.
+
+## Flow 8: Unified Gameplay Contribution Installation After Child 21
+
+### Narrative
+
+When a mod is activated, manifest-declared gameplay contributions now install through one shared activation seam. The activated-mod payload carries validated navigation/event/scene/task/house contribution ids instead of leaving later runtime closure work to rediscover that registry shape.
+
+### Call Chain
+
+```text
+mod manifest/raw content -> parseModManifest() -> runModRuntime() -> createActivatedMod() -> installGameplayContributions() -> ActivatedMod.gameplayContributions -> later startup/save/runtime consumers
+```
+
+### Notes
+
+- Child 21 is complete for manifest/runtime contribution install policy.
+- The next open problem is no longer contribution contract shape; it is whether Child 22 can make builtin startup, imported-pack activation, and save restore all consume this same installed registry path end-to-end.

@@ -17,18 +17,19 @@ It must show:
 
 - The earlier `docs/superpowers/plans/2026-07-02-weekly-orchestration-plan.md` is closed after Child 14, Child 15, and Child 16 and remains historical truth only.
 - A fresh mod-first continuation set is now opened under `docs/superpowers/plans/2026-07-02-mod-first-weekly-orchestration-plan.md`.
-- The current production architecture has formal first-slice seams for navigation, time, event, scene, task, house, and mod activation, and Child 20 has now converged builtin house registration through one shared seam.
+- The current production architecture has formal first-slice seams for navigation, time, event, scene, task, house, mod activation, and gameplay contribution installation, and Child 21 has now converged manifest/runtime contribution ownership through one shared seam.
 - Child 17 is now completed after converging the covered direct-import consumers onto the shared pack-content access seam.
 - Child 18 is now completed after converging covered dispatch entry and covered interactive write-back onto the shared runtime commit seam.
 - Child 19 is now completed after converging content-pack/scenario-pack task contribution loading, active task-definition lookup, unified task-state storage, and shared runtime task settlement.
+- Child 21 is now completed after converging manifest declarations, activated-mod output, and contribution install validation onto one shared gameplay contribution contract family.
 
 ## Current Queue State
 
 - Weekly queue status: `open`
 - Active executable child: `none currently`
-- Immediate queued follow-up: `Child 21 Unified Gameplay Contribution Registry`
-- Locked follow-up child: `Child 22 End-to-End Mod-First Runtime Closure`
-- Planning rule: `Child 20 is closed. Recheck Child 21 before promoting any new active child.`
+- Immediate queued follow-up: `Child 22 End-to-End Mod-First Runtime Closure`
+- Locked follow-up child: `none currently`
+- Planning rule: `Child 21 is closed. Recheck Child 22 before promoting any new active child.`
 
 ## Runtime / Content Maturity Snapshot
 
@@ -37,8 +38,8 @@ It must show:
 | `Content Access` | `covered-ownerized` | covered story, house-content, and keep-house/temple-house fallback consumers now read builtin pack-owned data through the shared pack-content access seam | the seam is still builtin-default rather than a true active-pack selector | `Child 18` later for startup/spine implications |
 | `Runtime Spine` | `covered-ownerized` | dispatch/router/sub-runtime seams exist across covered runtime families and covered main.ts dispatch/write-back paths now share commitRuntimeRequest() | `src/main.ts` still owns shell-facing follow-up/render decisions outside the shared commit seam | `Child 19` later only if task work exposes new spine pressure |
 | `Task Runtime` | `covered-ownerized` | task lifecycle seams exist, active content now indexes task definitions, unified game state persists task state, and shared dispatch settles typed task outputs | no full task DSL/editor or generalized contribution registry exists yet | `Child 20` later only if house work exposes new task boundary pressure |
-| `House Runtime` | `covered-ownerized` | covered house lifecycle, reentry, and shared registration lookup are runtime-owned | no unified gameplay contribution install policy exists yet above the new house seam | `Child 21` later |
-| `Gameplay Contribution Registry` | `placeholder` | only placeholder registry seams exist today | no unified contribution install/validation layer yet | `Child 21` later |
+| `House Runtime` | `covered-ownerized` | covered house lifecycle, reentry, and shared registration lookup are runtime-owned | end-to-end startup/save/restore closure still sits above the new seam | `Child 22` later |
+| `Gameplay Contribution Registry` | `covered-ownerized` | mod manifest declarations and activated-mod output now share one installed contribution registry across navigation/event/scene/task/house families | builtin/imported/save-restore paths do not yet prove full parity through that registry | `Child 22` later |
 | `Mod-First End-To-End Closure` | `not-started` | builtin/file/url activation exists in slices | builtin startup, imported content, save restore, and runtime play do not yet prove full parity | `Child 22` later |
 
 ## Module Diagram
@@ -77,8 +78,7 @@ flowchart LR
 
 - `src/content/pack-content-access.ts` is still a builtin-default adapter rather than a true active-pack selector
 - `src/application/house-modules/house-module-registry.ts` is now only a wrapper over the shared core house registration seam
-- `src/core/registry/content-registry.ts` and `src/core/registry/mod-registry.ts` remain placeholder-grade types ahead of Child 21
-- `src/core/registry/content-registry.ts` remains a placeholder type alias rather than a real contribution registry
+- `src/core/registry/mod-registry.ts` remains intentionally simple and does not yet prove end-to-end builtin/imported parity by itself
 - `src/main.ts` remains the dominant shell/orchestration file above the new seams, but its covered runtime bridge create/apply write-back glue is now removed
 - `src/main.ts` still dominates startup and many shell-facing decisions even though task settlement ownership is now below it
 
@@ -140,18 +140,18 @@ flowchart TD
 - Added active task-definition indexing under `active-game-content`, unified task-state storage under `gameState.runtime.tasks`, and shared task settlement inside `runtime-dispatch`.
 - Rechecked Child 20 after Child 19 closeout, promoted it to active execution, and narrowed the active debt to shared house registration ownership across runtime, presenter, and view lookup.
 - Completed Child 20 by adding `src/core/registry/house-module-registry.ts`, migrating covered runtime/presenter/renderer lookup onto it, and synchronizing the special-house interface contract with that shared seam.
+- Rechecked Child 21 after Child 20 closeout, promoted it to active execution, and narrowed the active debt to manifest/runtime contribution install policy rather than full closure work.
+- Completed Child 21 by adding `src/core/contracts/gameplay-contribution.ts`, extending manifest/runtime contracts, and installing validated gameplay contribution registries during mod activation.
 
 ## Architecture Risks
 
 - `src/main.ts` is still the dominant production black box above the new seams.
 - The new pack-content access seam still hardcodes the builtin default pack behind one adapter and is not yet a true active-pack selector.
-- Placeholder registry seams still leave later mod-facing contribution install underdefined.
-- If Child 21 ignores the new shared house registration seam and invents a parallel contribution install path, it will fragment gameplay contribution ownership again.
+- Builtin startup, imported-pack activation, and save restore still do not prove full parity through the new contribution registry.
+- If Child 22 bypasses the activation-installed contribution registry and reintroduces builtin-only startup shortcuts, the mod-first closure target will remain incomplete.
 
 ## Candidate Post-Queue Splits
 
-- `Child 20 House Runtime Mod Registration`
-- `Child 21 Unified Gameplay Contribution Registry`
 - `Child 22 End-to-End Mod-First Runtime Closure`
 
-These remain roadmap candidates only and are not yet part of the visible queue in this fresh set.
+This remains the next roadmap candidate only and is not yet an active child in this fresh set.

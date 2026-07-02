@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-02`
-- Current Focus: `Pre-authored plan only. Await fresh weekly promotion before execution.`
-- Next Step: `Promote Child 21 only after Child 20 closeout and baseline recheck.`
-- Verification: `Not run as part of this doc-only change`
-- Notes: `This child unifies registry/install policy; it does not own end-to-end runtime closure.`
+- Current Focus: `Completed. Unified gameplay contribution contracts and activation install path are now in place.`
+- Next Step: `Recheck Child 22 against the post-Child-21 baseline before promoting the end-to-end closure child.`
+- Verification: `node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+- Notes: `This child stayed within manifest/runtime/registry install policy and did not absorb final startup/save/render closure.`
 
 ## Progress Log
 
@@ -23,6 +23,14 @@
   - Summary: `Plan created from the mod-first unified contract roadmap. Child 21 remains non-executable until the next weekly set promotes it after Child 20.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Recheck registry placeholders and contribution surfaces after Child 20 closes.`
+- 2026-07-02
+  - Summary: `Ran the fresh post-Child-20 baseline recheck, narrowed Child 21 to manifest -> activated-mod contribution install policy, and added red tests that proved gameplay-contribution contract, manifest surface, runtime output, and activation install were still missing.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected"`
+  - Next: `Implement additive contribution contracts, activation install, and stable registry typing without absorbing Child 22 closure work.`
+- 2026-07-02
+  - Summary: `Completed Child 21. Mod manifest parsing now accepts gameplay contribution declarations, mod activation now installs and validates a unified gameplay contribution registry, and content-registry typing is no longer placeholder-grade.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "gameplay contribution registry|mod manifest contribution|mod runtime contribution|dependency conflict|capability rejected"` + `npm run typecheck` + `npm test` + `npm run build` + `npm run lint:plans`
+  - Next: `Return the weekly set to no active child and recheck Child 22 only when ready to open the end-to-end closure boundary.`
 
 ---
 
@@ -122,15 +130,15 @@
 - Read: `src/core/contracts/mod-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Enumerate the current contribution registry and validation gaps**
+- [x] **Step 1: Enumerate the current contribution registry and validation gaps**
 
 Record what still keeps navigation/event/scene/task/house registration split across placeholder types or static imports.
 
-- [ ] **Step 2: Add failing regression tests for unified contribution validation**
+- [x] **Step 2: Add failing regression tests for unified contribution validation**
 
 Write red tests that prove the current activation path cannot yet validate and expose unified gameplay contributions.
 
-- [ ] **Step 3: Run the targeted red tests**
+- [x] **Step 3: Run the targeted red tests**
 
 Run:
 
@@ -142,7 +150,7 @@ Expected:
 
 - at least one unified-registry guard fails before implementation
 
-- [ ] **Step 4: Record the audit result in plan state**
+- [x] **Step 4: Record the audit result in plan state**
 
 Update `Execution State` and `Progress Log` with the enumerated registry baseline.
 
@@ -156,11 +164,11 @@ Update `Execution State` and `Progress Log` with the enumerated registry baselin
 - Create: `src/core/contracts/gameplay-contribution.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add additive contribution registry types across manifest/runtime/registry seams**
+- [x] **Step 1: Add additive contribution registry types across manifest/runtime/registry seams**
 
 Keep existing builtin activation valid while introducing unified contribution declarations.
 
-- [ ] **Step 2: Re-run the targeted registry tests**
+- [x] **Step 2: Re-run the targeted registry tests**
 
 Run:
 
@@ -172,7 +180,7 @@ Expected:
 
 - unified contribution type and validation tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 2**
+- [x] **Step 3: Run the full verification gate for Task 2**
 
 Run:
 
@@ -197,11 +205,11 @@ Expected:
 - Modify: `src/domain/scenario-pack.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Install validated gameplay contributions into activated-mod output**
+- [x] **Step 1: Install validated gameplay contributions into activated-mod output**
 
 Keep activation atomic and reject invalid contributions before partial install.
 
-- [ ] **Step 2: Re-run the targeted activation tests**
+- [x] **Step 2: Re-run the targeted activation tests**
 
 Run:
 
@@ -213,7 +221,7 @@ Expected:
 
 - unified contribution activation tests pass
 
-- [ ] **Step 3: Run the full verification gate for Task 3**
+- [x] **Step 3: Run the full verification gate for Task 3**
 
 Run:
 
@@ -233,11 +241,11 @@ Expected:
 - Modify: `docs/change-log.md`
 - Modify: `docs/superpowers/plans/2026-07-02-child-21-unified-gameplay-contribution-registry-plan.md`
 
-- [ ] **Step 1: Record the final contribution registry boundary**
+- [x] **Step 1: Record the final contribution registry boundary**
 
 Document which contribution families are now validated/installed through the unified registry and which authoring/tooling concerns remain outside Child 21.
 
-- [ ] **Step 2: Run governance verification**
+- [x] **Step 2: Run governance verification**
 
 Run:
 
@@ -251,15 +259,15 @@ Expected:
 
 ## Exit Check
 
-- [ ] A unified gameplay contribution registry exists across manifest/runtime/registry seams.
-- [ ] Mod activation validates and installs navigation/event/scene/task/house contributions atomically.
-- [ ] Placeholder registry types are replaced or wrapped by stable contribution types.
-- [ ] Child 21 does not absorb final startup/save/render closure.
-- [ ] Targeted regression coverage passes.
+- [x] A unified gameplay contribution registry exists across manifest/runtime/registry seams.
+- [x] Mod activation validates and installs navigation/event/scene/task/house contributions atomically.
+- [x] Placeholder registry types are replaced or wrapped by stable contribution types.
+- [x] Child 21 does not absorb final startup/save/render closure.
+- [x] Targeted regression coverage passes.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

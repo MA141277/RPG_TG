@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-02 Child 21 Unified Gameplay Contribution Registry
+
+### Added
+- 新增 `src/core/contracts/gameplay-contribution.ts`，正式定义 mod-facing `GameplayContributionDeclaration` 与 activation-facing `GameplayContributionRegistry`，把 navigation / event / scene / task / house contribution families 收口到同一组 contract。
+- 新增 Child 21 定向回归测试，锁定 manifest 可声明 `gameplayContributions`、`ActivatedMod` 必须暴露已安装 contribution registry、以及 activation 必须从 content source 安装 navigation / event / scene / task / house / house-module 贡献。
+
+### Changed
+- `src/core/contracts/mod-manifest.ts` 现已允许 mod manifest 显式声明 `gameplayContributions`；`src/core/mods/mod-parser.ts` 会校验并规范化这一字段。
+- `src/core/contracts/mod-runtime.ts` 与 `src/core/mods/mod-runtime.ts` 现已在 activation output 中携带统一 `gameplayContributions`，并在激活时校验声明的 event / scene / task / house ids 必须真实存在于当前 content source 中。
+- `src/core/registry/content-registry.ts` 不再停留在 `Record<string, unknown>` 占位类型，而是收口到稳定的 `ContentPackDefinition` registry typing，避免后续 Child 22 继续建立在 placeholder registry 上。
+
+### Impact
+- Child 21 已完成：mod activation 现在不只返回 manifest/source，还会产出一份经过安装和存在性校验的统一 gameplay contribution registry，后续 Child 22 可以围绕这条 activation output 做 builtin/imported/save-restore 的端到端闭环，而不必再重开 contribution contract 讨论。
+- 本轮没有把 runtime play、save round-trip 或 presenter parity 吞进来；这些仍然属于 Child 22 的 end-to-end closure 边界。
+
 ## 2026-07-02 Child 20 House Runtime Mod Registration
 
 ### Added
