@@ -4411,9 +4411,6 @@ function restoreCampaignTerrainCanvases(
 }
 
 function renderApp() {
-  mainRuntimeOrchestrator.execute({
-    type: "sync-passive-story-triggers",
-  });
   renderAppFrame();
 }
 

@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Queued follow-up; not yet promoted.`
-- Next Step: `Wait for Child 25 completion and baseline recheck before promotion.`
-- Verification: `Not run`
-- Notes: `This child is non-executable until promoted by the continuation weekly set.`
+- Current Focus: `Child 26 is closed. Render is now display-only for passive indoor follow-up, and explicit settlement owners cover house entry / house re-settlement and story-scene settlement.`
+- Next Step: `Wait for a later explicit continuation request before baseline-rechecking Child 27.`
+- Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 16|child 23|child 24|child 25|child 26"`.`
+- Notes: `No unresolved P0/P1 remained in Child 26 scope at close. Render-frame city NPC pool normalization remains outside this child's narrow passive-trigger contract.`
 
 ## Progress Log
 
@@ -23,6 +23,14 @@
   - Summary: `Plan scaffold created from the continuation spec.`
   - Verification: `Not run as part of this doc-only change.`
   - Next: `Promote after Child 25 if scope remains unchanged.`
+- 2026-07-03
+  - Summary: `Baseline recheck completed after Child 25 closure. Scope is narrowed rather than superseded: render still owns passive indoor-screen passive trigger execution through main.ts, while adjacent render-frame city NPC pool normalization remains outside this child's narrow contract.`
+  - Verification: `Baseline inspection only; required commands not run yet.`
+  - Next: `Start Task 1 Step 2 by adding failing render-purity regressions for passive trigger ownership.`
+- 2026-07-03
+  - Summary: `Added Child 26 render-purity regressions first, then moved passive indoor-screen follow-up behind a dedicated narrow helper shared by house-runtime and post-scene settlement. renderApp() no longer executes passive story mutation directly.`
+  - Verification: `npm test -- --test-name-pattern="child 16|child 23|child 24|child 25|child 26"`; `npm run typecheck`; `npm run build`; `npm run lint:plans`.
+  - Next: `Close Child 26 and record Child 27 as the next queued follow-up without promoting it.`
 
 ---
 
@@ -35,10 +43,11 @@
 
 ## Baseline Recheck
 
-- Recheck result: `unchanged`
+- Recheck result: `narrowed`
 - Notes:
-  - `Render purity remains a distinct shell-boundary issue after Child 24.`
-  - `This child should not be promoted until Child 25 stabilizes post-settlement follow-up timing.`
+  - `Render purity remains a distinct shell-boundary issue after Child 25.`
+  - `The active in-scope debt is render-owned passive indoor-screen trigger execution in main.ts -> main-runtime-orchestrator.`
+  - `Render-frame city NPC pool normalization still mutates state, but it is not promoted into this child because the approved contract is narrowly about passive trigger ownerization.`
 
 ## Implementation Scope
 
@@ -95,15 +104,15 @@
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/superpowers/plans/2026-07-03-child-26-render-purity-contract-plan.md`
 
-- [ ] **Step 1: Confirm the remaining render-path mutation points**
+- [x] **Step 1: Confirm the remaining render-path mutation points**
 
 Record where gameplay mutation still occurs in or immediately before render.
 
-- [ ] **Step 2: Add or update targeted render-purity regressions**
+- [x] **Step 2: Add or update targeted render-purity regressions**
 
 Capture the boundary that render must consume settled state only.
 
-- [ ] **Step 3: Update plan state with the baseline result**
+- [x] **Step 3: Update plan state with the baseline result**
 
 Record the verified baseline in `Execution State` and `Progress Log`.
 
@@ -115,15 +124,15 @@ Record the verified baseline in `Execution State` and `Progress Log`.
 - Modify: `src/core/runtime/scene-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Introduce or reuse an explicit non-render owner for passive trigger timing**
+- [x] **Step 1: Introduce or reuse an explicit non-render owner for passive trigger timing**
 
 Do not relocate mutation into presenter or another shell-adjacent helper.
 
-- [ ] **Step 2: Remove the corresponding render-path mutation**
+- [x] **Step 2: Remove the corresponding render-path mutation**
 
 `renderApp()` and adjacent shell render helpers should remain display-only.
 
-- [ ] **Step 3: Re-run the render-purity regressions**
+- [x] **Step 3: Re-run the render-purity regressions**
 
 Confirm passive triggers still occur correctly without render-owned mutation.
 
@@ -133,7 +142,7 @@ Confirm passive triggers still occur correctly without render-owned mutation.
 - Modify: `docs/superpowers/plans/2026-07-03-child-26-render-purity-contract-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-03-main-shell-ownerization-continuation-weekly-orchestration-plan.md`
 
-- [ ] **Step 1: Run required verification**
+- [x] **Step 1: Run required verification**
 
 Run:
 
@@ -146,25 +155,25 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 2: Record any P0/P1 findings before closeout**
+- [x] **Step 2: Record any P0/P1 findings before closeout**
 
 Do not close the plan if unresolved `P0` or `P1` remains in scope.
 
-- [ ] **Step 3: Update weekly queue state**
+- [x] **Step 3: Update weekly queue state**
 
 Record whether Child 27 becomes the next promotable child.
 
 ## Exit Check
 
-- [ ] Render-path gameplay mutation is removed for this child scope.
-- [ ] Passive trigger owner is explicit.
-- [ ] Presenter consumes settled state only.
-- [ ] Weekly artifact sync is updated if boundary state changed.
-- [ ] Weekly queue state is updated.
+- [x] Render-path gameplay mutation is removed for this child scope.
+- [x] Passive trigger owner is explicit.
+- [x] Presenter consumes settled state only.
+- [x] Weekly artifact sync is updated if boundary state changed.
+- [x] Weekly queue state is updated.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

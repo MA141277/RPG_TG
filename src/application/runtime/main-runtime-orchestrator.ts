@@ -5,6 +5,7 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { StartupSessionBootstrap } from "../startup/startup-session-coordinator";
+import { applyIndoorScreenStoryFollowUp } from "./indoor-screen-story-follow-up";
 import {
   advanceStorySceneStep,
   chooseStorySceneOption,
@@ -29,9 +30,6 @@ export type MainRuntimeOrchestratorRequest =
       timing: EventTriggerTiming;
       state: GameState;
       characterDefinitions: CharacterDefinition[];
-    }
-  | {
-      type: "sync-passive-story-triggers";
     };
 
 export type MainRuntimeOrchestratorResult = {
@@ -111,13 +109,17 @@ export function createMainRuntimeOrchestrator(
         dependencies.syncActivatedContentSource(request.session.activationResult);
         dependencies.setPlayerCharacterId(request.session.playerCharacterId);
         const appState = request.session.createAppState();
-        dependencies.setAppState(appState);
+        const nextAppState = applyIndoorScreenStoryFollowUp({
+          appState,
+          content: dependencies.getStoryContent(),
+        });
+        dependencies.setAppState(nextAppState);
         dependencies.recreateHouseRuntime();
         dependencies.setGameVisibility(true);
         dependencies.hideMainUiFlow();
 
         return {
-          appState,
+          appState: nextAppState,
           playerCharacterId: request.session.playerCharacterId,
           didChange: true,
           shouldRender: true,
@@ -142,41 +144,6 @@ export function createMainRuntimeOrchestrator(
         };
       }
 
-      if (request.type === "sync-passive-story-triggers") {
-        const appState = dependencies.getAppState();
-        if (appState.gameState.scene.activeSceneId != null) {
-          return getNoopResult();
-        }
-
-        if (appState.gameState.ui.currentView !== "house") {
-          return getNoopResult();
-        }
-
-        const result = runStoryTiming(
-          "indoor-screen-shown",
-          appState.gameState,
-          appState.characterDefinitions
-        );
-        if (result.gameState === appState.gameState) {
-          return getNoopResult();
-        }
-
-        const nextAppState = {
-          ...appState,
-          gameState: result.gameState,
-          characterDefinitions: result.characterDefinitions,
-        };
-        dependencies.setAppState(nextAppState);
-
-        return {
-          appState: nextAppState,
-          gameState: result.gameState,
-          characterDefinitions: result.characterDefinitions,
-          didChange: true,
-          shouldRender: false,
-        };
-      }
-
       const appState = dependencies.getAppState();
       const storyContent = dependencies.getStoryContent();
 
@@ -193,20 +160,27 @@ export function createMainRuntimeOrchestrator(
             textEntriesById: storyContent.textEntriesById,
           }
         );
-        const nextAppState = {
-          ...appState,
-          gameState: result.state,
-          characterDefinitions: result.characterDefinitions,
-        };
+        const nextAppState = applyIndoorScreenStoryFollowUp({
+          appState: {
+            ...appState,
+            gameState: result.state,
+            characterDefinitions: result.characterDefinitions,
+          },
+          content: storyContent,
+        });
         dependencies.setAppState(nextAppState);
 
         return {
           appState: nextAppState,
-          gameState: result.state,
-          characterDefinitions: result.characterDefinitions,
+          gameState: nextAppState.gameState,
+          characterDefinitions: nextAppState.characterDefinitions,
           didChange: true,
           shouldRender: true,
         };
+      }
+
+      if (request.type !== "choose-story-option") {
+        return getNoopResult();
       }
 
       const selectedOption = getCurrentChoiceOptions(
@@ -230,17 +204,20 @@ export function createMainRuntimeOrchestrator(
         },
         selectedOption
       );
-      const nextAppState = {
-        ...appState,
-        gameState: result.state,
-        characterDefinitions: result.characterDefinitions,
-      };
+      const nextAppState = applyIndoorScreenStoryFollowUp({
+        appState: {
+          ...appState,
+          gameState: result.state,
+          characterDefinitions: result.characterDefinitions,
+        },
+        content: storyContent,
+      });
       dependencies.setAppState(nextAppState);
 
       return {
         appState: nextAppState,
-        gameState: result.state,
-        characterDefinitions: result.characterDefinitions,
+        gameState: nextAppState.gameState,
+        characterDefinitions: nextAppState.characterDefinitions,
         didChange: true,
         shouldRender: true,
       };

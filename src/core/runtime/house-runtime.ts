@@ -1,4 +1,8 @@
 import type { AppState } from "../../application/app-shell";
+import {
+  applyIndoorScreenStoryFollowUp,
+  type IndoorScreenStoryFollowUpContent,
+} from "../../application/runtime/indoor-screen-story-follow-up";
 import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
 import { triggerStoryEvents } from "../../application/story/story-runtime";
 import type { ActivityDefinition } from "../../domain/activity";
@@ -82,6 +86,30 @@ export function createHouseRuntimeBridge(
           houseDefinition.id === appState.gameState.world.currentHouseId
       ) ?? null
     );
+  }
+
+  function getIndoorScreenStoryContent(): IndoorScreenStoryFollowUpContent {
+    return {
+      eventDefinitionsById: dependencies.eventDefinitionsById,
+      sceneDefinitionsById: dependencies.sceneDefinitionsById,
+      ...(dependencies.activityDefinitionsById == null
+        ? {}
+        : { activityDefinitionsById: dependencies.activityDefinitionsById }),
+      ...(dependencies.textEntriesById == null
+        ? {}
+        : { textEntriesById: dependencies.textEntriesById }),
+    };
+  }
+
+  function settleIndoorScreenStoryFollowUp(): void {
+    const nextAppState = applyIndoorScreenStoryFollowUp({
+      appState: dependencies.getAppState(),
+      content: getIndoorScreenStoryContent(),
+    });
+
+    if (nextAppState !== dependencies.getAppState()) {
+      dependencies.setAppState(nextAppState);
+    }
   }
 
   function createActiveHouseSession<ModuleId extends HouseModuleId>(
@@ -193,6 +221,7 @@ export function createHouseRuntimeBridge(
 
     const councilTriggered = applyHouseModuleResult(activeHouse, moduleId, result);
     if (!councilTriggered) {
+      settleIndoorScreenStoryFollowUp();
       dependencies.renderApp();
     }
   }
@@ -336,6 +365,8 @@ export function createHouseRuntimeBridge(
       });
     }
 
+    settleIndoorScreenStoryFollowUp();
+
     if (options?.render !== false) {
       dependencies.renderApp();
     }
@@ -422,6 +453,7 @@ export function createHouseRuntimeBridge(
         },
       },
     });
+    settleIndoorScreenStoryFollowUp();
     dependencies.renderApp();
   }
 

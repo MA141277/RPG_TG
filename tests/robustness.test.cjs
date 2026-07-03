@@ -8785,12 +8785,12 @@ test("child 16 covered indoor-screen-shown story handoff stays on the shared tri
   const source = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/application/runtime/main-runtime-orchestrator.ts"
+      "src/application/runtime/indoor-screen-story-follow-up.ts"
     ),
     "utf8"
   );
 
-  assert.match(source, /sync-passive-story-triggers/);
+  assert.match(source, /applyIndoorScreenStoryFollowUp/);
   assert.match(source, /"indoor-screen-shown"/);
   assert.doesNotMatch(source, /runEventRuntime\(/);
   assert.doesNotMatch(source, /runSceneFromEvent\(/);
@@ -9871,6 +9871,219 @@ test("child 24 passive render trigger extraction removes gameplay mutation from 
     source,
     /function renderApp\(\)[\s\S]*syncPassiveStoryTriggers\(\);[\s\S]*createAppPresenterOutput\(/
   );
+});
+
+test("child 26 renderApp stays display-only and no longer runs passive indoor follow-up", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const renderBlock =
+    source.match(
+      /function renderApp\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction renderAppFrame/
+    )?.[0] ?? "";
+
+  assert.doesNotMatch(renderBlock, /sync-passive-story-triggers/);
+  assert.doesNotMatch(renderBlock, /indoor-screen-shown/);
+});
+
+test("child 26 story scene settlement re-triggers indoor-screen follow-up before render", () => {
+  const {
+    createMainRuntimeOrchestrator,
+  } = require("../.test-dist/application/runtime/main-runtime-orchestrator.js");
+
+  const indoorEvent = {
+    id: "event.test.indoor-screen",
+    chapterId: "chapter.prototype",
+    name: "Indoor follow-up",
+    occurrence: "once",
+    trigger: {
+      timing: "indoor-screen-shown",
+      scope: {
+        cityId: "city.kulan",
+        houseId: grainShopHouse.id,
+      },
+    },
+    conditions: [],
+    entrySceneId: "scene.test.indoor-screen",
+  };
+  const endScene = {
+    id: "scene.test.end-in-house",
+    name: "End in house",
+    actions: [
+      {
+        type: "narration",
+        text: "Scene ending.",
+      },
+    ],
+  };
+  const indoorScene = {
+    id: "scene.test.indoor-screen",
+    name: "Indoor screen follow-up",
+    actions: [
+      {
+        type: "narration",
+        text: "Indoor passive trigger fired.",
+      },
+    ],
+  };
+  let appState = {
+    gameState: {
+      ...createBaseState(),
+      scene: {
+        activeEventId: "event.test.previous",
+        activeSceneId: endScene.id,
+        cursor: 0,
+        status: "playing",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "scene",
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  const orchestrator = createMainRuntimeOrchestrator({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    setPlayerCharacterId: () => {},
+    getStoryContent: () => ({
+      eventDefinitionsById: {
+        [indoorEvent.id]: indoorEvent,
+      },
+      sceneDefinitionsById: {
+        [endScene.id]: endScene,
+        [indoorScene.id]: indoorScene,
+      },
+    }),
+    resetMainGameRuntime: () => {},
+    syncActivatedContentSource: () => {},
+    recreateHouseRuntime: () => {},
+    setGameVisibility: () => {},
+    hideMainUiFlow: () => {},
+  });
+
+  const result = orchestrator.execute({
+    type: "advance-story-scene",
+  });
+
+  assert.equal(result.appState.gameState.scene.activeEventId, indoorEvent.id);
+  assert.equal(result.appState.gameState.scene.activeSceneId, indoorScene.id);
+  assert.equal(result.appState.gameState.ui.currentView, "scene");
+  assert.equal(
+    result.appState.gameState.runtime.eventHistory[indoorEvent.id]?.firedCount,
+    1
+  );
+});
+
+test("child 26 house runtime owns indoor-screen follow-up before render", () => {
+  const {
+    createHouseRuntimeBridge,
+    enterHouseThroughRuntime,
+  } = require("../.test-dist/core/runtime/house-runtime.js");
+
+  const indoorEvent = {
+    id: "event.test.house-indoor-screen",
+    chapterId: "chapter.prototype",
+    name: "Indoor follow-up",
+    occurrence: "once",
+    trigger: {
+      timing: "indoor-screen-shown",
+      scope: {
+        cityId: "city.kulan",
+        houseId: grainShopHouse.id,
+      },
+    },
+    conditions: [],
+    entrySceneId: "scene.test.house-indoor-screen",
+  };
+  const indoorScene = {
+    id: "scene.test.house-indoor-screen",
+    name: "Indoor scene",
+    actions: [
+      {
+        type: "narration",
+        text: "Indoor passive trigger fired.",
+      },
+    ],
+  };
+  const baseState = createBaseState();
+  let appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentHouseId: null,
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "city",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  let renderCount = 0;
+
+  const runtime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {
+      renderCount += 1;
+    },
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: prototypeHouses,
+    playerCharacterId,
+    eventDefinitionsById: {
+      [indoorEvent.id]: indoorEvent,
+    },
+    sceneDefinitionsById: {
+      [indoorScene.id]: indoorScene,
+    },
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+
+  enterHouseThroughRuntime(runtime, grainShopHouse.id);
+
+  assert.equal(appState.gameState.scene.activeEventId, indoorEvent.id);
+  assert.equal(appState.gameState.scene.activeSceneId, indoorScene.id);
+  assert.equal(appState.gameState.ui.currentView, "scene");
+  assert.equal(
+    appState.gameState.runtime.eventHistory[indoorEvent.id]?.firedCount,
+    1
+  );
+  assert.equal(renderCount, 1);
 });
 
 test("child 25 navigation runtime emits explicit entered-city follow-up outcome", () => {

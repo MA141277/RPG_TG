@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-03`
-- Current Focus: `Child 25 is closed; Child 26 is the next executable child but has not been promoted in this batch.`
-- Next Step: `If continuation is requested later, baseline-recheck Child 26 before any implementation and keep Child 27 locked until Child 26 closes.`
-- Verification: `Child 25 verification passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 15|child 16|child 25".`
+- Current Focus: `Child 26 is closed. Child 27 is now the next executable child, Child 28 remains locked, and Child 29 remains candidate-only.`
+- Next Step: `If continuation is requested later, baseline-recheck Child 27 before any implementation and keep Child 28 locked until Child 27 closes.`
+- Verification: `Child 26 verification passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 16|child 23|child 24|child 25|child 26".`
 - Notes: `This queue follows the closed Child 24 set and must not be appended back into the already-completed 2026-07-03 main-runtime ownerization weekly set.`
 
 ## Progress Log
@@ -31,6 +31,14 @@
   - Summary: `Child 25 closed without promoting another child. The covered navigation/time follow-up is now owned by the narrow outcome-driven follow-up contract, Child 26 remains the immediate queued follow-up, Child 27 remains locked, and Child 28-29 remain candidate-only.`
   - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 15|child 16|child 25"`.
   - Next: `Wait for a later explicit continuation request before baseline-rechecking and promoting Child 26.`
+- 2026-07-03
+  - Summary: `Continuation was explicitly requested, so Child 26 was baseline-rechecked and promoted. Result is narrowed rather than superseded: render-owned passive indoor-screen trigger execution remains the active debt, Child 27 becomes the immediate queued follow-up, Child 28 becomes the locked follow-up, and Child 29 stays candidate-only.`
+  - Verification: `Baseline inspection only; Child 26 required commands not run yet.`
+  - Next: `Execute Child 26 Task 1 Step 2 without promoting Child 27.`
+- 2026-07-03
+  - Summary: `Child 26 closed. Passive indoor-screen follow-up now belongs to an explicit narrow helper used by house-runtime and post-scene settlement, renderApp() is display-only for this contract, Child 27 becomes the next executable child, Child 28 stays locked, and Child 29 stays candidate-only.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 16|child 23|child 24|child 25|child 26"`.
+  - Next: `Wait for a later explicit continuation request before baseline-rechecking and promoting Child 27.`
 
 ---
 
@@ -69,28 +77,26 @@
 
 ### Active Executable Child
 
-- `Child 25 - Navigation Time Follow-Up De-Shell`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-25-navigation-time-follow-up-de-shell-plan.md`
-  - Baseline Recheck: `unchanged`
+- `Child 26 - Render Purity Contract`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-26-render-purity-contract-plan.md`
+  - Baseline Recheck: `narrowed`
   - Status: `completed on 2026-07-03`
 
 ### Immediate Queued Follow-Up
 
-- `Child 26 - Render Purity Contract`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-26-render-purity-contract-plan.md`
-  - Promotion Rule: `Promote only after Child 25 closes with no unresolved P0/P1 in scope.`
+- `Child 27 - Startup Story Bootstrap Ownership`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-27-startup-story-bootstrap-ownership-plan.md`
+  - Promotion Rule: `Promote only after Child 26 closes with no unresolved P0/P1 in scope.`
   - Queue State: `next executable child; not promoted in this batch`
 
 ### Locked Follow-Up Child
 
-- `Child 27 - Startup Story Bootstrap Ownership`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-27-startup-story-bootstrap-ownership-plan.md`
-  - Promotion Rule: `Promote only after Child 26 baseline recheck confirms unchanged or narrowed scope.`
+- `Child 28 - Active Content Ownership Convergence`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
+  - Promotion Rule: `Promote only after Child 27 baseline recheck confirms unchanged or narrowed scope.`
 
 ## Candidate Later Work
 
-- `Child 28 - Active Content Ownership Convergence`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
 - `Child 29 - Legacy Startup Seam Retirement`
   - Plan: `docs/superpowers/plans/2026-07-03-child-29-legacy-startup-seam-retirement-plan.md`
 
