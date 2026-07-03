@@ -9781,6 +9781,36 @@ test("child 23 main startup extraction delegates startup-family orchestration to
   );
 });
 
+test("child 23 scenario-pack startup defers app-state bootstrap until after active content sync", () => {
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "startup-session-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    coordinatorSource,
+    /appState:\s*deps\.createScenarioPackAppState\(scenarioPack\)/
+  );
+  assert.match(
+    coordinatorSource,
+    /createAppState:\s*\(\)\s*=>\s*deps\.createScenarioPackAppState\(scenarioPack\)/
+  );
+  assert.match(
+    mainSource,
+    /syncActivatedContentSource\(input\.activationResult\)[\s\S]*appState = input\.createAppState\(\);/
+  );
+});
+
 test("mod runtime does not absorb content assembly or gameplay execution ownership", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/mods/mod-runtime.ts"),

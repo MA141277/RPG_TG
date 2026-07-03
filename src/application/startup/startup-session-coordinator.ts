@@ -49,7 +49,7 @@ export type StartupSessionRequest =
 export type StartupSessionBootstrap = {
   activationResult: ModActivationResult;
   playerCharacterId: string;
-  appState: AppState;
+  createAppState(): AppState;
 };
 
 export type StartupSessionResult =
@@ -136,7 +136,7 @@ async function createBuiltinStartupSession(
   return createStartupSessionResult({
     activationResult,
     playerCharacterId: selectedCharacter.id,
-    appState:
+    createAppState: () =>
       startupScenario === "haozhou-return-encounter"
         ? deps.createHaozhouReturnEncounterAppState(
             deps.createPrototypeAppState(selectedCharacter.id)
@@ -167,7 +167,8 @@ async function createRestoreStartupSession(
         saveData?.selectedCharacterId ??
         activatedContentSource.scenarioProfile.playerCharacterId ??
         selectedCharacter.id,
-      appState: deps.createScenarioPackAppState(activatedContentSource),
+      createAppState: () =>
+        deps.createScenarioPackAppState(activatedContentSource),
     });
   }
 
@@ -176,9 +177,10 @@ async function createRestoreStartupSession(
   return createStartupSessionResult({
     activationResult,
     playerCharacterId,
-    appState: deps.createHaozhouReturnEncounterAppState(
-      deps.createPrototypeAppState(playerCharacterId)
-    ),
+    createAppState: () =>
+      deps.createHaozhouReturnEncounterAppState(
+        deps.createPrototypeAppState(playerCharacterId)
+      ),
   });
 }
 
@@ -231,7 +233,7 @@ async function createLoadedScenarioPackStartupSession(
   return createStartupSessionResult({
     activationResult,
     playerCharacterId: scenarioPack.scenarioProfile.playerCharacterId,
-    appState: deps.createScenarioPackAppState(scenarioPack),
+    createAppState: () => deps.createScenarioPackAppState(scenarioPack),
   });
 }
 

@@ -1787,13 +1787,13 @@ function syncActivatedContentSource(activationResult: ModActivationResult): void
 function applyActivatedModSession(input: {
   activationResult: ModActivationResult;
   playerCharacterId: string;
-  appState: AppState;
+  createAppState(): AppState;
 }): void {
   toLegacyBootstrapInput(input.activationResult);
   resetMainGameRuntime();
   syncActivatedContentSource(input.activationResult);
   currentPlayerCharacterId = input.playerCharacterId;
-  appState = input.appState;
+  appState = input.createAppState();
   houseRuntime = createHouseRuntimeInstance();
   setGameVisibility(true);
   mainUiFlow.hide();
