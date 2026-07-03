@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Locked follow-up; not yet promoted.`
-- Next Step: `Wait for Child 26 completion and baseline recheck before promotion.`
-- Verification: `Not run`
-- Notes: `This child remains locked until the queue promotes it.`
+- Current Focus: `Child 27 is closed. Startup story bootstrap is now owned by explicit startup coordination instead of shell-adjacent builders in main.ts.`
+- Next Step: `Do not promote Child 28 in this batch; wait for a later explicit continuation request and baseline recheck.`
+- Verification: `Passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27".`
+- Notes: `No in-scope P0/P1 remains. The contract stayed narrow: startup-story-bootstrap composes event bootstrap outside main.ts builders, and startup-session-coordinator returns bootstrap-complete createAppState closures for covered startup paths.`
 
 ## Progress Log
 
@@ -23,6 +23,18 @@
   - Summary: `Plan scaffold created from the continuation spec.`
   - Verification: `Not run as part of this doc-only change.`
   - Next: `Promote only after Child 26 recheck confirms unchanged or narrowed scope.`
+- 2026-07-03
+  - Summary: `Baseline recheck completed after Child 26 closure. Scope remains unchanged: startup story bootstrap is still shell-adjacent because createScenarioPackAppState() and createHaozhouReturnEncounterAppState() in main.ts directly start story events before startup output reaches the shell apply seam.`
+  - Verification: `Baseline inspection only; required commands not run yet.`
+  - Next: `Start Task 1 Step 2 by adding failing startup-bootstrap ownership regressions.`
+- 2026-07-03
+  - Summary: `Added Child 27 regressions first, then introduced a narrow startup story bootstrap helper and moved bootstrap composition into startup-session-coordinator. main.ts startup builders now return unbootstrapped base state, while coordinator-issued createAppState closures are bootstrap-complete for builtin and scenario startup paths.`
+  - Verification: `npm test -- --test-name-pattern="child 23|child 27"`.
+  - Next: `Run typecheck/build/lint plus the broader child regression subset, then close Child 27 if no P0/P1 remains.`
+- 2026-07-03
+  - Summary: `Completed Child 27 closeout. Full verification passed, no in-scope P0/P1 remained, and the weekly queue was synced without promoting Child 28 in the same batch.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27"`.
+  - Next: `Wait for a later explicit continuation request before baseline-rechecking Child 28.`
 
 ---
 
@@ -37,8 +49,9 @@
 
 - Recheck result: `unchanged`
 - Notes:
-  - `Startup apply ownership already moved in Child 24, but startup story bootstrap still remains shell-adjacent in specific builder paths.`
-  - `This child should not begin before Child 26 finishes render purity work.`
+  - `Startup apply ownership already moved in Child 24, but startup story bootstrap still remains shell-adjacent in main.ts builder paths.`
+  - `The remaining in-scope debt is direct startStoryEventById(...) usage inside createScenarioPackAppState() and createHaozhouReturnEncounterAppState().`
+  - `Child 26 is already closed, so Child 27 can now execute without promoting Child 28.`
 
 ## Implementation Scope
 
@@ -95,15 +108,15 @@
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/superpowers/plans/2026-07-03-child-27-startup-story-bootstrap-ownership-plan.md`
 
-- [ ] **Step 1: Record the startup builder paths that still own direct story bootstrap**
+- [x] **Step 1: Record the startup builder paths that still own direct story bootstrap**
 
 Document the exact entry points and their remaining shell-adjacent ownership.
 
-- [ ] **Step 2: Add or update startup-bootstrap ownership regressions**
+- [x] **Step 2: Add or update startup-bootstrap ownership regressions**
 
 Capture the boundary that startup output should be bootstrap-complete before shell consumption.
 
-- [ ] **Step 3: Update plan state with the baseline result**
+- [x] **Step 3: Update plan state with the baseline result**
 
 Record the verified baseline in `Execution State` and `Progress Log`.
 
@@ -115,15 +128,15 @@ Record the verified baseline in `Execution State` and `Progress Log`.
 - Modify: `src/application/story/story-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Introduce or reuse an explicit startup/bootstrap owner**
+- [x] **Step 1: Introduce or reuse an explicit startup/bootstrap owner**
 
 Keep builtin, restore, and scenario startup aligned to the same ownership rule.
 
-- [ ] **Step 2: Remove shell-adjacent direct startup story bootstrap**
+- [x] **Step 2: Remove shell-adjacent direct startup story bootstrap**
 
 `src/main.ts` should consume startup output rather than directly starting story events.
 
-- [ ] **Step 3: Re-run the startup-bootstrap regressions**
+- [x] **Step 3: Re-run the startup-bootstrap regressions**
 
 Confirm startup parity remains intact.
 
@@ -133,7 +146,7 @@ Confirm startup parity remains intact.
 - Modify: `docs/superpowers/plans/2026-07-03-child-27-startup-story-bootstrap-ownership-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-03-main-shell-ownerization-continuation-weekly-orchestration-plan.md`
 
-- [ ] **Step 1: Run required verification**
+- [x] **Step 1: Run required verification**
 
 Run:
 
@@ -146,25 +159,25 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 2: Record any P0/P1 findings before closeout**
+- [x] **Step 2: Record any P0/P1 findings before closeout**
 
 Do not close the plan if unresolved `P0` or `P1` remains in scope.
 
-- [ ] **Step 3: Update weekly queue state**
+- [x] **Step 3: Update weekly queue state**
 
 Record whether Child 28 remains candidate-only or is queued in a later cycle.
 
 ## Exit Check
 
-- [ ] `src/main.ts` no longer directly starts startup story events.
-- [ ] Startup bootstrap owner is explicit and documented.
-- [ ] Startup parity remains intact for covered flows.
-- [ ] Weekly artifact sync is updated if boundary state changed.
-- [ ] Weekly queue state is updated.
+- [x] `src/main.ts` no longer directly starts startup story events.
+- [x] Startup bootstrap owner is explicit and documented.
+- [x] Startup parity remains intact for covered flows.
+- [x] Weekly artifact sync is updated if boundary state changed.
+- [x] Weekly queue state is updated.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

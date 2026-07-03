@@ -12,6 +12,7 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "../../domain/scenario-pack";
+import type { StartupStoryBootstrap } from "./startup-story-bootstrap";
 
 export type StartupSaveData = {
   selectedCharacterId?: string | null;
@@ -75,6 +76,10 @@ export type StartupSessionCoordinatorDeps = {
   createPrototypeAppState(playerCharacterId: string): AppState;
   createHaozhouReturnEncounterAppState(appState: AppState): AppState;
   createScenarioPackAppState(scenarioPack: ScenarioPackDefinition): AppState;
+  bootstrapStartupStoryAppState(input: {
+    appState: AppState;
+    bootstrap: StartupStoryBootstrap | null;
+  }): AppState;
 };
 
 export async function runStartupSessionCoordinator(
@@ -136,12 +141,16 @@ async function createBuiltinStartupSession(
   return createStartupSessionResult({
     activationResult,
     playerCharacterId: selectedCharacter.id,
-    createAppState: () =>
-      startupScenario === "haozhou-return-encounter"
-        ? deps.createHaozhouReturnEncounterAppState(
-            deps.createPrototypeAppState(selectedCharacter.id)
-          )
-        : deps.createPrototypeAppState(selectedCharacter.id),
+    createAppState: createStartupAppStateBuilder(
+      () =>
+        startupScenario === "haozhou-return-encounter"
+          ? deps.createHaozhouReturnEncounterAppState(
+              deps.createPrototypeAppState(selectedCharacter.id)
+            )
+          : deps.createPrototypeAppState(selectedCharacter.id),
+      readBuiltinStartupStoryBootstrap(startupScenario),
+      deps
+    ),
   });
 }
 
@@ -167,8 +176,11 @@ async function createRestoreStartupSession(
         saveData?.selectedCharacterId ??
         activatedContentSource.scenarioProfile.playerCharacterId ??
         selectedCharacter.id,
-      createAppState: () =>
-        deps.createScenarioPackAppState(activatedContentSource),
+      createAppState: createStartupAppStateBuilder(
+        () => deps.createScenarioPackAppState(activatedContentSource),
+        readScenarioStartupStoryBootstrap(activatedContentSource),
+        deps
+      ),
     });
   }
 
@@ -177,10 +189,14 @@ async function createRestoreStartupSession(
   return createStartupSessionResult({
     activationResult,
     playerCharacterId,
-    createAppState: () =>
-      deps.createHaozhouReturnEncounterAppState(
-        deps.createPrototypeAppState(playerCharacterId)
-      ),
+    createAppState: createStartupAppStateBuilder(
+      () =>
+        deps.createHaozhouReturnEncounterAppState(
+          deps.createPrototypeAppState(playerCharacterId)
+        ),
+      readBuiltinStartupStoryBootstrap("haozhou-return-encounter"),
+      deps
+    ),
   });
 }
 
@@ -233,8 +249,49 @@ async function createLoadedScenarioPackStartupSession(
   return createStartupSessionResult({
     activationResult,
     playerCharacterId: scenarioPack.scenarioProfile.playerCharacterId,
-    createAppState: () => deps.createScenarioPackAppState(scenarioPack),
+    createAppState: createStartupAppStateBuilder(
+      () => deps.createScenarioPackAppState(scenarioPack),
+      readScenarioStartupStoryBootstrap(scenarioPack),
+      deps
+    ),
   });
+}
+
+function createStartupAppStateBuilder(
+  createBaseAppState: () => AppState,
+  bootstrap: StartupStoryBootstrap | null,
+  deps: StartupSessionCoordinatorDeps
+): () => AppState {
+  return () =>
+    deps.bootstrapStartupStoryAppState({
+      appState: createBaseAppState(),
+      bootstrap,
+    });
+}
+
+function readBuiltinStartupStoryBootstrap(
+  startupScenario: StartupScenario
+): StartupStoryBootstrap | null {
+  if (startupScenario !== "haozhou-return-encounter") {
+    return null;
+  }
+
+  return {
+    eventId: "event.story.zhu_yuanzhang.haozhou_return_encounter",
+    sceneCursor: 4,
+    sceneStatus: "playing",
+  };
+}
+
+function readScenarioStartupStoryBootstrap(
+  scenarioPack: ScenarioPackDefinition
+): StartupStoryBootstrap | null {
+  const entryEventId = scenarioPack.scenarioProfile.entryEventId;
+  return entryEventId == null
+    ? null
+    : {
+        eventId: entryEventId,
+      };
 }
 
 function createStartupSessionResult(

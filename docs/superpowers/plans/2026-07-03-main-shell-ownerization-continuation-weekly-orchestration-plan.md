@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-03`
-- Current Focus: `Child 26 is closed. Child 27 is now the next executable child, Child 28 remains locked, and Child 29 remains candidate-only.`
-- Next Step: `If continuation is requested later, baseline-recheck Child 27 before any implementation and keep Child 28 locked until Child 27 closes.`
-- Verification: `Child 26 verification passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 16|child 23|child 24|child 25|child 26".`
+- Current Focus: `Child 27 is closed. Child 28 is now the next executable child for a later explicit continuation request, and Child 29 remains locked behind that baseline recheck.`
+- Next Step: `Wait for a later explicit continuation request before baseline-rechecking and promoting Child 28.`
+- Verification: `Child 27 closeout passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27".`
 - Notes: `This queue follows the closed Child 24 set and must not be appended back into the already-completed 2026-07-03 main-runtime ownerization weekly set.`
 
 ## Progress Log
@@ -39,6 +39,18 @@
   - Summary: `Child 26 closed. Passive indoor-screen follow-up now belongs to an explicit narrow helper used by house-runtime and post-scene settlement, renderApp() is display-only for this contract, Child 27 becomes the next executable child, Child 28 stays locked, and Child 29 stays candidate-only.`
   - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 16|child 23|child 24|child 25|child 26"`.
   - Next: `Wait for a later explicit continuation request before baseline-rechecking and promoting Child 27.`
+- 2026-07-03
+  - Summary: `Continuation was explicitly requested again, so Child 27 was baseline-rechecked and promoted. Scope remains unchanged: startup story bootstrap still starts directly inside main.ts builder helpers for scenario-pack and haozhou-return startup paths; Child 28 stays locked and Child 29 stays candidate-only.`
+  - Verification: `Baseline inspection only; Child 27 required commands not run yet.`
+  - Next: `Execute Child 27 Task 1 Step 2 without promoting Child 28.`
+- 2026-07-03
+  - Summary: `Child 27 implementation batch moved startup story bootstrap composition into the startup coordinator output seam through a narrow helper. main.ts startup builders now return base state only, while Child 28 remains locked pending Child 27 full verification.`
+  - Verification: `npm test -- --test-name-pattern="child 23|child 27"`.
+  - Next: `Run Child 27 closeout verification before updating queue state again.`
+- 2026-07-03
+  - Summary: `Child 27 closed cleanly. Startup story bootstrap no longer starts directly inside main.ts startup builders, Child 28 becomes the next executable child for a later continuation request, and Child 29 remains locked behind Child 28 baseline recheck.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27"`.
+  - Next: `Do not execute Child 28 in this batch; wait for explicit continuation before its baseline recheck and promotion.`
 
 ---
 
@@ -77,28 +89,25 @@
 
 ### Active Executable Child
 
-- `Child 26 - Render Purity Contract`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-26-render-purity-contract-plan.md`
-  - Baseline Recheck: `narrowed`
-  - Status: `completed on 2026-07-03`
+- `Child 27 - Startup Story Bootstrap Ownership`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-27-startup-story-bootstrap-ownership-plan.md`
+  - Baseline Recheck: `unchanged`
+  - Status: `completed in this batch; no further execution allowed here`
 
 ### Immediate Queued Follow-Up
 
-- `Child 27 - Startup Story Bootstrap Ownership`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-27-startup-story-bootstrap-ownership-plan.md`
-  - Promotion Rule: `Promote only after Child 26 closes with no unresolved P0/P1 in scope.`
-  - Queue State: `next executable child; not promoted in this batch`
+- `Child 28 - Active Content Ownership Convergence`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
+  - Promotion Rule: `Promote only after Child 27 closes with no unresolved P0/P1 in scope.`
+  - Queue State: `next executable child; requires a fresh baseline recheck before promotion in a later batch`
 
 ### Locked Follow-Up Child
 
-- `Child 28 - Active Content Ownership Convergence`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
-  - Promotion Rule: `Promote only after Child 27 baseline recheck confirms unchanged or narrowed scope.`
-
-## Candidate Later Work
-
 - `Child 29 - Legacy Startup Seam Retirement`
   - Plan: `docs/superpowers/plans/2026-07-03-child-29-legacy-startup-seam-retirement-plan.md`
+  - Promotion Rule: `Promote only after Child 28 baseline recheck confirms unchanged or narrowed scope.`
+
+## Candidate Later Work
 
 These remain candidate-only and are not executable in the current queue phase.
 

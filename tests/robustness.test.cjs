@@ -9824,13 +9824,212 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
   );
   assert.match(
     coordinatorSource,
-    /createAppState:\s*\(\)\s*=>\s*deps\.createScenarioPackAppState\(scenarioPack\)/
+    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(scenarioPack\)/
   );
   assert.match(mainSource, /applyActivatedModSession|mainRuntimeOrchestrator/);
   assert.match(
     orchestratorSource,
     /syncActivatedContentSource\(request\.session\.activationResult\)[\s\S]*const appState = request\.session\.createAppState\(\);/
   );
+});
+
+test("child 27 main.ts startup builders no longer directly start story events", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const scenarioPackBlock = source.match(
+    /function createScenarioPackAppState\([\s\S]*?return nextAppState;\r?\n}\r?\n/
+  )?.[0] ?? "";
+  const haozhouBlock = source.match(
+    /function createHaozhouReturnEncounterAppState\([\s\S]*?return nextAppState;\r?\n}\r?\n/
+  )?.[0] ?? "";
+
+  assert.doesNotMatch(scenarioPackBlock, /startStoryEventById\(/);
+  assert.doesNotMatch(haozhouBlock, /startStoryEventById\(/);
+});
+
+test("child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+  const baseState = createBaseState();
+  const createStartupAppState = () => ({
+    gameState: {
+      ...baseState,
+      scene: {
+        ...baseState.scene,
+        activeEventId: null,
+        activeSceneId: null,
+        cursor: 0,
+        status: "idle",
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  });
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [],
+    },
+  };
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "builtin",
+      selectedCharacter: prototypeCharacters[0],
+      startupScenario: "haozhou-return-encounter",
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => null,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: () => createStartupAppState(),
+      createHaozhouReturnEncounterAppState: (appState) => ({
+        ...appState,
+        gameState: {
+          ...appState.gameState,
+          world: {
+            ...appState.gameState.world,
+            currentCityId: "city.kulan",
+            currentHouseId: null,
+          },
+        },
+      }),
+      createScenarioPackAppState: () => createStartupAppState(),
+      bootstrapStartupStoryAppState: ({ appState, bootstrap }) => ({
+        ...appState,
+        gameState: {
+          ...appState.gameState,
+          scene: {
+            ...appState.gameState.scene,
+            activeEventId: bootstrap?.eventId ?? null,
+            activeSceneId: bootstrap == null ? null : "scene.bootstrapped",
+            cursor: bootstrap?.sceneCursor ?? 0,
+            status: bootstrap?.sceneStatus ?? "idle",
+          },
+        },
+      }),
+    }
+  );
+
+  assert.equal(result.ok, true);
+  const startupAppState = result.session.createAppState();
+  assert.equal(
+    startupAppState.gameState.scene.activeEventId,
+    "event.story.zhu_yuanzhang.haozhou_return_encounter"
+  );
+  assert.equal(startupAppState.gameState.scene.cursor, 4);
+  assert.equal(startupAppState.gameState.world.currentCityId, "city.kulan");
+});
+
+test("child 27 restore scenario startup returns bootstrap-complete app state", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+  const baseState = createBaseState();
+  const createStartupAppState = () => ({
+    gameState: {
+      ...baseState,
+      scene: {
+        ...baseState.scene,
+        activeEventId: null,
+        activeSceneId: null,
+        cursor: 0,
+        status: "idle",
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  });
+  const scenarioPack = {
+    id: "scenario.test.bootstrap",
+    title: "Bootstrap Test",
+    scenarioProfile: {
+      id: "scenario.test.bootstrap",
+      playerCharacterId,
+      chapterId: "chapter.prototype",
+      initialLocation: {
+        mapId: prototypeMap.id,
+        cityId: "city.kulan",
+        houseId: null,
+        view: "city",
+      },
+      entryEventId: "event.test.bootstrap-entry",
+    },
+  };
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [scenarioPack],
+    },
+  };
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "restore",
+      selectedCharacter: prototypeCharacters[0],
+      saveData: {
+        selectedModId: scenarioPack.id,
+      },
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => activationResult,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: () => createStartupAppState(),
+      createHaozhouReturnEncounterAppState: (appState) => appState,
+      createScenarioPackAppState: () => createStartupAppState(),
+      bootstrapStartupStoryAppState: ({ appState, bootstrap }) => ({
+        ...appState,
+        gameState: {
+          ...appState.gameState,
+          scene: {
+            ...appState.gameState.scene,
+            activeEventId: bootstrap?.eventId ?? null,
+            activeSceneId: bootstrap == null ? null : "scene.scenario-entry",
+            cursor: bootstrap?.sceneCursor ?? 0,
+            status: bootstrap?.sceneStatus ?? "idle",
+          },
+        },
+      }),
+    }
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.session.playerCharacterId, playerCharacterId);
+  const startupAppState = result.session.createAppState();
+  assert.equal(
+    startupAppState.gameState.scene.activeEventId,
+    "event.test.bootstrap-entry"
+  );
+  assert.equal(startupAppState.gameState.scene.activeSceneId, "scene.scenario-entry");
 });
 
 test("child 24 main runtime orchestrator module exists with a narrow request/result seam", () => {

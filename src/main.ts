@@ -63,9 +63,6 @@ import {
   isCouncilPriorityHouseDefinition,
 } from "./application/time/council-priority";
 import {
-  startStoryEventById,
-} from "./application/story/story-runtime";
-import {
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
   selectHouseEntryAccess,
@@ -90,6 +87,10 @@ import {
   type StartupScenario,
   type StartupSessionBootstrap,
 } from "./application/startup/startup-session-coordinator";
+import {
+  applyStartupStoryBootstrap,
+  type StartupStoryBootstrap,
+} from "./application/startup/startup-story-bootstrap";
 import { bootstrapLegacyMain } from "./core/adapters/legacy-main-adapter";
 import { toLegacyBootstrapInput } from "./core/adapters/mod-runtime-main-adapter";
 import {
@@ -222,7 +223,6 @@ const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
 const ACTIVITY_QTE_INTERVAL_MS = 90;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
-const HAOZHOU_RETURN_ENCOUNTER_SPY_SCENE_CURSOR = 4;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 1,
   offsetX: 0,
@@ -412,6 +412,22 @@ function getRuntimeTemplateText(
   fallback?: string
 ): string {
   return resolveTextTemplateEntry(textEntriesById, textId, values, fallback);
+}
+
+function bootstrapStartupStoryAppState(input: {
+  appState: AppState;
+  bootstrap: StartupStoryBootstrap | null;
+}): AppState {
+  return applyStartupStoryBootstrap({
+    appState: input.appState,
+    bootstrap: input.bootstrap,
+    content: {
+      eventDefinitionsById: activeStoryEventDefinitionsById,
+      sceneDefinitionsById: activeStorySceneDefinitionsById,
+      activityDefinitionsById: activeActivityDefinitionsById,
+      textEntriesById,
+    },
+  });
 }
 
 function syncActiveGameContent(nextContent: ActiveGameContent): void {
@@ -1777,6 +1793,7 @@ const startupSessionCoordinatorDeps = {
   createPrototypeAppState,
   createHaozhouReturnEncounterAppState,
   createScenarioPackAppState,
+  bootstrapStartupStoryAppState,
 };
 
 function unwrapStartupSession(
@@ -2088,28 +2105,6 @@ function createScenarioPackAppState(
     },
   };
 
-  if (profile.entryEventId != null) {
-    const storyResult = startStoryEventById(
-      {
-        state: nextAppState.gameState,
-        characterDefinitions: nextAppState.characterDefinitions,
-      },
-      {
-        eventDefinitionsById: activeStoryEventDefinitionsById,
-        sceneDefinitionsById: activeStorySceneDefinitionsById,
-        activityDefinitionsById: activeActivityDefinitionsById,
-        textEntriesById,
-      },
-      profile.entryEventId
-    );
-
-    nextAppState = {
-      ...nextAppState,
-      gameState: storyResult.state,
-      characterDefinitions: storyResult.characterDefinitions,
-    };
-  }
-
   return nextAppState;
 }
 
@@ -2184,33 +2179,6 @@ function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
     cityDirectoryState: null,
     beggingMiniGameState: null,
     campaignTravelState: null,
-  };
-
-  const storyResult = startStoryEventById(
-    {
-      state: nextAppState.gameState,
-      characterDefinitions: nextAppState.characterDefinitions,
-    },
-    {
-      eventDefinitionsById: activeStoryEventDefinitionsById,
-      sceneDefinitionsById: activeStorySceneDefinitionsById,
-      activityDefinitionsById: activeActivityDefinitionsById,
-      textEntriesById,
-    },
-    "event.story.zhu_yuanzhang.haozhou_return_encounter"
-  );
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: {
-      ...storyResult.state,
-      scene: {
-        ...storyResult.state.scene,
-        cursor: HAOZHOU_RETURN_ENCOUNTER_SPY_SCENE_CURSOR,
-        status: "playing",
-      },
-    },
-    characterDefinitions: storyResult.characterDefinitions,
   };
 
   return nextAppState;
