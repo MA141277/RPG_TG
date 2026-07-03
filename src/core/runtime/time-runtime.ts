@@ -2,13 +2,18 @@ import {
   advanceGameStateOneDay,
   advanceGameStateTimeSegments,
 } from "../../application/time/time-progression";
+import { hasReachedCouncilDate } from "../../application/time/council-priority";
 import type { GameState } from "../../domain/game-state";
 import type { RuntimeRequest } from "../contracts/runtime-request";
-import type { RuntimeResult } from "../contracts/runtime-result";
+import type {
+  RuntimeFollowUpOutcome,
+  RuntimeResult,
+} from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
 
 type TimeRuntimeResult = {
   state: GameState;
+  outcome?: RuntimeFollowUpOutcome | null;
 };
 
 export function createDayStartRequest(): RuntimeRequest {
@@ -37,18 +42,22 @@ export function runTimeRuntime(input: {
   }
 
   if (input.request.tickId === "time.day-start") {
+    const state = advanceGameStateOneDay(input.state);
     return {
-      state: advanceGameStateOneDay(input.state),
+      state,
+      outcome: createTimeOutcome(input.state, state),
     };
   }
 
   if (input.request.tickId === "time.advance-segments") {
     const segments = input.request.payload?.segments;
+    const state = advanceGameStateTimeSegments(
+      input.state,
+      typeof segments === "number" ? segments : 1
+    );
     return {
-      state: advanceGameStateTimeSegments(
-        input.state,
-        typeof segments === "number" ? segments : 1
-      ),
+      state,
+      outcome: createTimeOutcome(input.state, state),
     };
   }
 
@@ -70,5 +79,20 @@ export function routeTimeRuntime(input: {
       core: result.state,
     },
     effects: [],
+    ...(result.outcome == null ? {} : { outcome: result.outcome }),
   };
+}
+
+function createTimeOutcome(
+  previousState: GameState,
+  nextState: GameState
+): RuntimeFollowUpOutcome {
+  if (
+    !hasReachedCouncilDate(previousState) &&
+    hasReachedCouncilDate(nextState)
+  ) {
+    return { type: "time.council-threshold-crossed" };
+  }
+
+  return { type: "time.advanced" };
 }

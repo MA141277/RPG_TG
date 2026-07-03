@@ -7,8 +7,11 @@ export type RuntimeAppState = Pick<
   AppState,
   | "beggingMiniGameState"
   | "autoAdvanceState"
+  | "campaignTravelState"
   | "cityDirectoryState"
+  | "cityMenuState"
   | "locationDialogueState"
+  | "modalState"
 >;
 
 export type RuntimeViewState = {};

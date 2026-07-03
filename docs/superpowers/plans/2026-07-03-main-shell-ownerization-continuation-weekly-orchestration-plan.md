@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-03`
-- Current Focus: `Child 25 is the only active executable child in the continuation queue.`
-- Next Step: `Execute Child 25 baseline recheck and begin Task 1 Step 1 in the active child plan.`
-- Verification: `Not run as part of this doc-only change`
+- Current Focus: `Child 25 is closed; Child 26 is the next executable child but has not been promoted in this batch.`
+- Next Step: `If continuation is requested later, baseline-recheck Child 26 before any implementation and keep Child 27 locked until Child 26 closes.`
+- Verification: `Child 25 verification passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 15|child 16|child 25".`
 - Notes: `This queue follows the closed Child 24 set and must not be appended back into the already-completed 2026-07-03 main-runtime ownerization weekly set.`
 
 ## Progress Log
@@ -23,6 +23,14 @@
   - Summary: `Opened a fresh continuation weekly set after the closed Child 24 queue. Child 25 is active, Child 26 is the immediate queued follow-up, Child 27 is locked, and Child 28-29 remain candidate-only.`
   - Verification: `Not run as part of this doc-only change.`
   - Next: `Start Child 25 Task 1 Step 1.`
+- 2026-07-03
+  - Summary: `Synced Child 25 baseline recheck: scope remains unchanged, and the active debt is still the shell-owned navigation/time follow-up in main.ts. Queue state is unchanged: Child 25 active, Child 26 queued, Child 27 locked, Child 28-29 candidate-only.`
+  - Verification: `Baseline inspection only; required commands not run yet.`
+  - Next: `Continue Child 25 Task 1 Step 2 without promoting another child.`
+- 2026-07-03
+  - Summary: `Child 25 closed without promoting another child. The covered navigation/time follow-up is now owned by the narrow outcome-driven follow-up contract, Child 26 remains the immediate queued follow-up, Child 27 remains locked, and Child 28-29 remain candidate-only.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 15|child 16|child 25"`.
+  - Next: `Wait for a later explicit continuation request before baseline-rechecking and promoting Child 26.`
 
 ---
 
@@ -64,12 +72,14 @@
 - `Child 25 - Navigation Time Follow-Up De-Shell`
   - Plan: `docs/superpowers/plans/2026-07-03-child-25-navigation-time-follow-up-de-shell-plan.md`
   - Baseline Recheck: `unchanged`
+  - Status: `completed on 2026-07-03`
 
 ### Immediate Queued Follow-Up
 
 - `Child 26 - Render Purity Contract`
   - Plan: `docs/superpowers/plans/2026-07-03-child-26-render-purity-contract-plan.md`
   - Promotion Rule: `Promote only after Child 25 closes with no unresolved P0/P1 in scope.`
+  - Queue State: `next executable child; not promoted in this batch`
 
 ### Locked Follow-Up Child
 
@@ -112,15 +122,15 @@ This weekly set may be marked `completed` only when:
 - Modify: `docs/superpowers/plans/2026-07-03-main-shell-ownerization-continuation-weekly-orchestration-plan.md`
 - Read: `docs/superpowers/specs/2026-07-03-main-shell-ownerization-continuation-spec.md`
 
-- [ ] **Step 1: Keep Child 25 as the only active executable child**
+- [x] **Step 1: Keep Child 25 as the only active executable child**
 
 Do not promote another child while Child 25 remains active.
 
-- [ ] **Step 2: Recheck queue state after each completed work batch**
+- [x] **Step 2: Recheck queue state after each completed work batch**
 
 Update `Execution State`, `Progress Log`, and queue labels after each child milestone.
 
-- [ ] **Step 3: Run plan lint after material queue restructuring**
+- [x] **Step 3: Run plan lint after material queue restructuring**
 
 Run:
 
@@ -134,14 +144,14 @@ Expected:
 
 ## Exit Check
 
-- [ ] Active child state is accurate.
-- [ ] Immediate queued follow-up state is accurate.
-- [ ] Locked follow-up state is accurate.
-- [ ] Queue close or continuation rule is recorded.
+- [x] Active child state is accurate.
+- [x] Immediate queued follow-up state is accurate.
+- [x] Locked follow-up state is accurate.
+- [x] Queue close or continuation rule is recorded.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

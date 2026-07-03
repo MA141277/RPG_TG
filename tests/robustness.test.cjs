@@ -8704,7 +8704,7 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
   assert.match(handleModalConfirmBlock, /createEnterCityRequest\(/);
   assert.match(
     handleModalConfirmBlock,
-    /triggerStoryEventsForTiming\(\s*"city-enter"|mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"trigger-story-events"[\s\S]*timing:\s*"city-enter"/
+    /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome\s*\}\)/
   );
 });
 
@@ -8720,7 +8720,7 @@ test("child 15 covered day-start path routes through shared runtime dispatch ins
   assert.doesNotMatch(startMapAutoAdvanceBlock, /runTimeRuntime\(/);
   assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
   assert.match(startMapAutoAdvanceBlock, /createDayStartRequest\(/);
-  assert.match(startMapAutoAdvanceBlock, /syncCouncilPriorityAfterGameStateChange\(/);
+  assert.match(startMapAutoAdvanceBlock, /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>/);
 });
 
 test("child 15 covered advance-segments travel paths route through shared runtime dispatch instead of direct runTimeRuntime helper", () => {
@@ -8744,22 +8744,24 @@ test("child 15 covered advance-segments travel paths route through shared runtim
 });
 
 test("child 16 story trigger helper routes through one runtime-owned seam instead of direct event and scene stitching", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src/main.ts"),
-    "utf8"
-  );
-  const orchestratorSource = fs.readFileSync(
+  const followUpSource = fs.readFileSync(
     path.join(
       process.cwd(),
       "src/application/runtime/main-runtime-orchestrator.ts"
     ),
     "utf8"
   );
+  const navigationFollowUpSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/navigation-time-follow-up.ts"
+    ),
+    "utf8"
+  );
 
-  assert.match(source, /createMainRuntimeOrchestrator|triggerStoryEventsForTiming/);
-  assert.doesNotMatch(orchestratorSource, /runEventRuntime\(/);
-  assert.doesNotMatch(orchestratorSource, /runSceneFromEvent\(/);
-  assert.match(orchestratorSource, /runStoryTriggerRuntime\(/);
+  assert.doesNotMatch(followUpSource, /runEventRuntime\(/);
+  assert.doesNotMatch(followUpSource, /runSceneFromEvent\(/);
+  assert.match(navigationFollowUpSource, /runStoryTriggerRuntime\(/);
 });
 
 test("child 16 covered city-enter story handoff stays on the shared trigger seam", () => {
@@ -8773,7 +8775,7 @@ test("child 16 covered city-enter story handoff stays on the shared trigger seam
 
   assert.match(
     handleModalConfirmBlock,
-    /triggerStoryEventsForTiming\(\s*"city-enter"|mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"trigger-story-events"[\s\S]*timing:\s*"city-enter"/
+    /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome\s*\}\)/
   );
   assert.doesNotMatch(handleModalConfirmBlock, /runEventRuntime\(/);
   assert.doesNotMatch(handleModalConfirmBlock, /runSceneFromEvent\(/);
@@ -9868,6 +9870,93 @@ test("child 24 passive render trigger extraction removes gameplay mutation from 
   assert.doesNotMatch(
     source,
     /function renderApp\(\)[\s\S]*syncPassiveStoryTriggers\(\);[\s\S]*createAppPresenterOutput\(/
+  );
+});
+
+test("child 25 navigation runtime emits explicit entered-city follow-up outcome", () => {
+  const {
+    createEnterCityRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+
+  const result = runNavigationRuntime({
+    state: createBaseState(),
+    request: createEnterCityRequest("city.kulan"),
+  });
+
+  assert.deepEqual(result.outcome, {
+    type: "navigation.entered-city",
+    cityId: "city.kulan",
+  });
+});
+
+test("child 25 time runtime emits explicit council-threshold outcome when day-start crosses the council date", () => {
+  const {
+    createDayStartRequest,
+    runTimeRuntime,
+  } = require("../.test-dist/core/runtime/time-runtime.js");
+
+  const result = runTimeRuntime({
+    state: withCouncilInDays(createBaseState(), 1),
+    request: createDayStartRequest(),
+  });
+
+  assert.equal(result.outcome?.type, "time.council-threshold-crossed");
+});
+
+test("child 25 main.ts no longer hand-stitches covered navigation/time follow-up after runtime settlement", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const handleModalConfirmBlock = source.match(
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+  )?.[0] ?? "";
+  const startCampaignTravelBlock = source.match(
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+  )?.[0] ?? "";
+
+  assert.match(source, /createNavigationTimeFollowUpBridge|navigationTimeFollowUp/);
+  assert.doesNotMatch(
+    handleModalConfirmBlock,
+    /type:\s*"trigger-story-events"[\s\S]*timing:\s*"city-enter"/
+  );
+  assert.doesNotMatch(
+    handleModalConfirmBlock,
+    /syncCouncilPriorityAfterGameStateChange\(previousGameState\)/
+  );
+  assert.doesNotMatch(
+    startCampaignTravelBlock,
+    /syncCouncilPriorityAfterGameStateChange\(previousGameState\)/
+  );
+});
+
+test("child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator", () => {
+  const orchestratorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "runtime",
+      "main-runtime-orchestrator.ts"
+    ),
+    "utf8"
+  );
+  const followUpSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "runtime",
+      "navigation-time-follow-up.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(followUpSource, /navigation\.entered-city/);
+  assert.match(followUpSource, /time\.advanced/);
+  assert.match(followUpSource, /time\.council-threshold-crossed/);
+  assert.match(followUpSource, /timing:\s*"city-enter"/);
+  assert.doesNotMatch(
+    orchestratorSource,
+    /navigation\.entered-city|time\.advanced|time\.council-threshold-crossed/
   );
 });
 

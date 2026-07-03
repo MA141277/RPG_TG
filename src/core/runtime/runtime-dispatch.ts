@@ -51,6 +51,7 @@ export function dispatchRuntimeRequest(input: {
         });
   const followUp = settleRuntimeFollowUp({
     state: settlement.state,
+    outcome: routed.outcome,
     interactive: routed.interactive,
     context: input.context.followUp,
   });
@@ -65,7 +66,11 @@ export function dispatchRuntimeRequest(input: {
             ...taskSettlement.taskUpdates,
           ],
         }),
+    ...(followUp.characterDefinitions === undefined
+      ? {}
+      : { characterDefinitions: followUp.characterDefinitions }),
     state: followUp.state,
+    ...(followUp.outcome === undefined ? {} : { outcome: followUp.outcome }),
     ...(followUp.interactive === undefined
       ? {}
       : { interactive: followUp.interactive }),
@@ -174,28 +179,46 @@ function isTaskRuntimeSignal(
 
 function settleRuntimeFollowUp(input: {
   state: RuntimeState;
+  outcome: RuntimeResult["outcome"];
   interactive: RuntimeResult["interactive"];
   context: RuntimeFollowUpContext | undefined;
 }): {
   state: RuntimeState;
+  characterDefinitions?: unknown;
+  outcome: RuntimeResult["outcome"];
   interactive: RuntimeResult["interactive"];
 } {
+  let state = input.state;
+  let characterDefinitions: unknown;
+  let outcome = input.outcome;
+  let interactive = input.interactive;
+
+  if (outcome != null && input.context?.handleOutcome != null) {
+    const handled = input.context.handleOutcome({
+      state,
+      outcome,
+    });
+    state = handled.state;
+    characterDefinitions = handled.characterDefinitions;
+    outcome = null;
+  }
+
   if (
-    input.interactive == null ||
-    input.interactive.type === "none" ||
-    input.context?.handleInteractive == null
+    interactive != null &&
+    interactive.type !== "none" &&
+    input.context?.handleInteractive != null
   ) {
-    return {
-      state: input.state,
-      interactive: input.interactive,
-    };
+    state = input.context.handleInteractive({
+      state,
+      interactive,
+    });
+    interactive = { type: "none" };
   }
 
   return {
-    state: input.context.handleInteractive({
-      state: input.state,
-      interactive: input.interactive,
-    }),
-    interactive: { type: "none" },
+    state,
+    ...(characterDefinitions === undefined ? {} : { characterDefinitions }),
+    outcome,
+    interactive,
   };
 }

@@ -107,8 +107,11 @@ export function createHouseRuntimeBridge(
         app: {
           beggingMiniGameState: appState.beggingMiniGameState,
           autoAdvanceState: appState.autoAdvanceState,
+          campaignTravelState: appState.campaignTravelState,
           cityDirectoryState: appState.cityDirectoryState,
+          cityMenuState: appState.cityMenuState,
           locationDialogueState: appState.locationDialogueState,
+          modalState: appState.modalState,
         },
         view: {},
       },

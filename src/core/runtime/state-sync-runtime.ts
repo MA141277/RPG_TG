@@ -22,8 +22,11 @@ export type RuntimeStateBridgeInput = {
   gameState: LegacyBridgeRuntimeState["core"];
   beggingMiniGameState: LegacyBridgeRuntimeState["app"]["beggingMiniGameState"];
   autoAdvanceState: LegacyBridgeRuntimeState["app"]["autoAdvanceState"];
+  campaignTravelState: LegacyBridgeRuntimeState["app"]["campaignTravelState"];
   cityDirectoryState: LegacyBridgeRuntimeState["app"]["cityDirectoryState"];
+  cityMenuState: LegacyBridgeRuntimeState["app"]["cityMenuState"];
   locationDialogueState: LegacyBridgeRuntimeState["app"]["locationDialogueState"];
+  modalState: LegacyBridgeRuntimeState["app"]["modalState"];
   characterDefinitions?: unknown;
 };
 
@@ -55,8 +58,11 @@ export function createRuntimeBridgeState(
     app: {
       beggingMiniGameState: state.beggingMiniGameState,
       autoAdvanceState: state.autoAdvanceState,
+      campaignTravelState: state.campaignTravelState,
       cityDirectoryState: state.cityDirectoryState,
+      cityMenuState: state.cityMenuState,
       locationDialogueState: state.locationDialogueState,
+      modalState: state.modalState,
     },
     view: {},
   };
@@ -74,8 +80,11 @@ export function applyRuntimeBridgeState<
     gameState: runtimeState.core,
     beggingMiniGameState: runtimeState.app.beggingMiniGameState,
     autoAdvanceState: runtimeState.app.autoAdvanceState,
+    campaignTravelState: runtimeState.app.campaignTravelState,
     cityDirectoryState: runtimeState.app.cityDirectoryState,
+    cityMenuState: runtimeState.app.cityMenuState,
     locationDialogueState: runtimeState.app.locationDialogueState,
+    modalState: runtimeState.app.modalState,
     ...(characterDefinitions == null
       ? {}
       : { characterDefinitions }),
@@ -124,7 +133,11 @@ export function commitRuntimeRequest<
   });
 
   return {
-    state: applyRuntimeBridgeState(input.state, runtimeResult.state),
+    state: applyRuntimeBridgeState(
+      input.state,
+      runtimeResult.state,
+      runtimeResult.characterDefinitions
+    ),
     runtimeResult,
   };
 }

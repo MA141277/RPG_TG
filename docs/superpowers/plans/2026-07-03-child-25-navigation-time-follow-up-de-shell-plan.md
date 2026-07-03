@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Plan created; work has not started.`
-- Next Step: `Start at Task 1 Step 1.`
-- Verification: `Not run`
-- Notes: `This plan is the active executable child in the continuation weekly set.`
+- Current Focus: `Child 25 closed with navigation/time follow-up owned by the narrow outcome-driven follow-up contract.`
+- Next Step: `No further Child 25 work. Any continuation must start from Child 26 or a fresh governance update.`
+- Verification: `Passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 15|child 16|child 25".`
+- Notes: `Covered navigation/time paths now emit explicit outcomes through core runtime, and src/main.ts no longer hand-stitches the covered post-settlement city-enter or council-priority continuation.`
 
 ## Progress Log
 
@@ -23,6 +23,14 @@
   - Summary: `Plan created from the post-Child-24 continuation spec.`
   - Verification: `Not run as part of this doc-only change.`
   - Next: `Start Task 1 Step 1.`
+- 2026-07-03
+  - Summary: `Baseline recheck confirmed Child 25 scope is unchanged. Recorded the remaining shell-owned follow-up call chains: handleModalConfirm/startCampaignTravel still run createAdvanceTimeSegmentsRequest(1) -> syncCouncilPriorityAfterGameStateChange(previousGameState), and handleModalConfirm still runs createEnterCityRequest(...) -> trigger-story-events(city-enter) in main.ts.`
+  - Verification: `Baseline inspection only; required commands not run yet.`
+  - Next: `Start Task 1 Step 2 by adding targeted ownership regressions before implementation.`
+- 2026-07-03
+  - Summary: `Implemented the narrow navigation/time follow-up owner. Covered navigation runtime now emits navigation.entered-city, covered time runtime emits time.advanced or time.council-threshold-crossed, commitRuntimeRequest settles those outcomes through application/runtime/navigation-time-follow-up.ts, and src/main.ts no longer hand-stitches the covered city-enter or council-priority continuation after settlement.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 15|child 16|child 25"`.
+  - Next: `Child 25 complete; sync weekly queue state without promoting Child 26 in this batch.`
 
 ---
 
@@ -39,6 +47,7 @@
 - Notes:
   - `Child 24 already moved startup apply and covered story-scene progression behind the initial orchestration seam.`
   - `The remaining active debt for this child is shell-owned post-settlement follow-up around covered navigation/time flows.`
+  - `Verified current covered shell-owned follow-up call sites in src/main.ts: createAdvanceTimeSegmentsRequest(1) -> syncCouncilPriorityAfterGameStateChange(previousGameState) in handleModalConfirm/startCampaignTravel, plus createEnterCityRequest(...) -> trigger-story-events(city-enter) in handleModalConfirm.`
 
 ## Implementation Scope
 
@@ -98,19 +107,19 @@
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/superpowers/plans/2026-07-03-child-25-navigation-time-follow-up-de-shell-plan.md`
 
-- [ ] **Step 1: Record the exact covered navigation/time follow-up call sites still owned by `main.ts`**
+- [x] **Step 1: Record the exact covered navigation/time follow-up call sites still owned by `main.ts`**
 
 Document the remaining call chains and the business continuation each one performs.
 
-- [ ] **Step 2: Add or update targeted ownership regressions**
+- [x] **Step 2: Add or update targeted ownership regressions**
 
 Add checks that fail if covered navigation/time follow-up remains shell-owned after extraction.
 
-- [ ] **Step 3: Keep the follow-up contract narrow**
+- [x] **Step 3: Keep the follow-up contract narrow**
 
 Document the produced outcome names, the allowed follow-up consumer, and the write-back path. Do not move cross-domain continuation back into `navigation/time runtime` itself, and do not leave it in `src/main.ts`.
 
-- [ ] **Step 4: Update plan state with the unchanged or narrowed baseline**
+- [x] **Step 4: Update plan state with the unchanged or narrowed baseline**
 
 Record the verified baseline in `Execution State` and `Progress Log`.
 
@@ -122,15 +131,15 @@ Record the verified baseline in `Execution State` and `Progress Log`.
 - Modify: `src/application/runtime/main-runtime-orchestrator.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Introduce or reuse an explicit follow-up owner for covered navigation continuation**
+- [x] **Step 1: Introduce or reuse an explicit follow-up owner for covered navigation continuation**
 
 Keep the contract narrow and avoid creating a second generic orchestration center.
 
-- [ ] **Step 2: Remove the corresponding shell-owned navigation follow-up**
+- [x] **Step 2: Remove the corresponding shell-owned navigation follow-up**
 
 `src/main.ts` should no longer decide the covered continuation after navigation settlement.
 
-- [ ] **Step 3: Re-run the navigation-focused regressions**
+- [x] **Step 3: Re-run the navigation-focused regressions**
 
 Confirm the continuation still happens at the correct timing.
 
@@ -142,15 +151,15 @@ Confirm the continuation still happens at the correct timing.
 - Modify: `src/application/runtime/main-runtime-orchestrator.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Introduce or reuse an explicit follow-up owner for covered time/day-start continuation**
+- [x] **Step 1: Introduce or reuse an explicit follow-up owner for covered time/day-start continuation**
 
 Keep council-priority or related timing logic outside shell-owned sequencing.
 
-- [ ] **Step 2: Remove the corresponding shell-owned time follow-up**
+- [x] **Step 2: Remove the corresponding shell-owned time follow-up**
 
 `src/main.ts` should no longer manually continue business flow after time settlement.
 
-- [ ] **Step 3: Re-run the time-focused regressions**
+- [x] **Step 3: Re-run the time-focused regressions**
 
 Confirm the continuation still happens at the correct timing.
 
@@ -160,7 +169,7 @@ Confirm the continuation still happens at the correct timing.
 - Modify: `docs/superpowers/plans/2026-07-03-child-25-navigation-time-follow-up-de-shell-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-03-main-shell-ownerization-continuation-weekly-orchestration-plan.md`
 
-- [ ] **Step 1: Run required verification**
+- [x] **Step 1: Run required verification**
 
 Run:
 
@@ -173,25 +182,25 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 2: Record any P0/P1 findings before closeout**
+- [x] **Step 2: Record any P0/P1 findings before closeout**
 
 Do not close the plan if unresolved `P0` or `P1` remains in scope.
 
-- [ ] **Step 3: Update weekly queue state**
+- [x] **Step 3: Update weekly queue state**
 
 Record whether Child 26 is now the next executable child.
 
 ## Exit Check
 
-- [ ] `src/main.ts` no longer hand-stitches covered navigation follow-up for this child scope.
-- [ ] `src/main.ts` no longer hand-stitches covered time follow-up for this child scope.
-- [ ] The follow-up owner is explicit and documented.
-- [ ] Weekly artifact sync is updated if boundary state changed.
-- [ ] Weekly queue state is updated.
+- [x] `src/main.ts` no longer hand-stitches covered navigation follow-up for this child scope.
+- [x] `src/main.ts` no longer hand-stitches covered time follow-up for this child scope.
+- [x] The follow-up owner is explicit and documented.
+- [x] Weekly artifact sync is updated if boundary state changed.
+- [x] Weekly queue state is updated.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

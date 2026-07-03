@@ -19,9 +19,15 @@ export type RuntimeInteractiveSignal =
   | { type: "reenter-house"; houseId: string }
   | { type: "none" };
 
+export type RuntimeFollowUpOutcome =
+  | { type: "navigation.entered-city"; cityId: string }
+  | { type: "time.advanced" }
+  | { type: "time.council-threshold-crossed" };
+
 export type RuntimeResult = {
   state: RuntimeState;
   effects: Effect[];
+  characterDefinitions?: unknown;
   navigation?: NavigationTarget | null;
   scene?:
     | {
@@ -32,5 +38,6 @@ export type RuntimeResult = {
   taskActions?: RuntimeTaskAction[];
   taskSignals?: RuntimeTaskSignal[];
   taskUpdates?: TaskUpdate[];
+  outcome?: RuntimeFollowUpOutcome | null;
   interactive?: RuntimeInteractiveSignal | null;
 };

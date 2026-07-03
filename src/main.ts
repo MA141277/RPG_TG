@@ -43,6 +43,10 @@ import {
 } from "./application/city-menu/city-menu";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import {
+  applyCouncilPriorityFollowUp,
+  createNavigationTimeFollowUpBridge,
+} from "./application/runtime/navigation-time-follow-up";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
@@ -133,6 +137,7 @@ import {
   runInteractiveRuntime,
 } from "./core/runtime/interactive-runtime";
 import {
+  applyRuntimeBridgeState,
   commitRuntimeRequest,
   createRuntimeBridgeState,
 } from "./core/runtime/state-sync-runtime";
@@ -563,6 +568,16 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
     mainUiFlow.hide();
   },
 });
+const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
+  getCharacterDefinitions: () => appState.characterDefinitions,
+  getHouseDefinitions: () => houseDefinitions,
+  getStoryContent: () => ({
+    eventDefinitionsById: activeStoryEventDefinitionsById,
+    sceneDefinitionsById: activeStorySceneDefinitionsById,
+    activityDefinitionsById: activeActivityDefinitionsById,
+    textEntriesById,
+  }),
+});
 
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({
@@ -894,26 +909,18 @@ function syncCouncilPriorityAfterGameStateChange(
   previousGameState: GameState,
   councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
 ): boolean {
-  if (
-    hasReachedCouncilDate(previousGameState) ||
-    !hasReachedCouncilDate(appState.gameState)
-  ) {
-    return false;
-  }
-  const targetHouseId = getCouncilPriorityHouseDefinition()?.id ?? null;
-  if (targetHouseId == null) {
+  const followUp = applyCouncilPriorityFollowUp({
+    state: createRuntimeBridgeState(appState),
+    previousGameState,
+    houseDefinitions,
+    textEntriesById,
+    councilArrivalNotice,
+  });
+  if (!followUp.handled) {
     return false;
   }
 
-  clearTransientUiForCouncilTrigger();
-  const councilArrivalDialogue = createCouncilArrivalDialogue(
-    targetHouseId,
-    councilArrivalNotice
-  );
-  appState = {
-    ...appState,
-    locationDialogueState: councilArrivalDialogue,
-  };
+  appState = applyRuntimeBridgeState(appState, followUp.state);
   renderApp();
   return true;
 }
@@ -1508,11 +1515,15 @@ function startMapAutoAdvance(input: {
     const runtimeCommit = commitRuntimeRequest({
       state: appState,
       request: createDayStartRequest(),
-      context: {
+      context: createRuntimeCommitContext({
         router: {
           route: ({ state, request }) => routeTimeRuntime({ state, request }),
         },
-      },
+        followUp: {
+          handleOutcome: ({ state, outcome }) =>
+            navigationTimeFollowUp.applyOutcome({ state, outcome }),
+        },
+      }),
     });
     appState = runtimeCommit.state;
     const councilArrived =
@@ -1523,9 +1534,8 @@ function startMapAutoAdvance(input: {
       houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
       return;
     }
-    if (syncCouncilPriorityAfterGameStateChange(previousGameState)) {
+    if (appState.autoAdvanceState == null) {
       stopMapAutoAdvance(input.intervalId);
-      return;
     }
     renderApp();
   }, input.everyMs);
@@ -4092,7 +4102,6 @@ function handleModalConfirm() {
         appState.campaignTravelState != null &&
         appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
         appState.campaignTravelState.targetCoordinate.y === nextCoordinate.y;
-      const previousGameState = appState.gameState;
       const nextAppState = {
         ...appState,
         campaignTravelState: null,
@@ -4102,44 +4111,42 @@ function handleModalConfirm() {
       const runtimeCommit = commitRuntimeRequest({
         state: nextAppState,
         request: createAdvanceTimeSegmentsRequest(1),
-        context: {
+        context: createRuntimeCommitContext({
           router: {
             route: ({ state, request }) => routeTimeRuntime({ state, request }),
           },
-        },
+          followUp: {
+            handleOutcome: ({ state, outcome }) =>
+              navigationTimeFollowUp.applyOutcome({ state, outcome }),
+          },
+        }),
       });
       appState = runtimeCommit.state;
-      if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
-        renderApp();
-      }
+      renderApp();
     });
     return;
   }
 
   houseRuntime.clearAllHouseIntervals();
-  const runtimeCommit = commitRuntimeRequest({
-    state: appState,
-    request: createEnterCityRequest(appState.modalState.cityId),
-    context: {
-      router: {
-        route: ({ state, request }) => routeNavigationRuntime({ state, request }),
-      },
-    },
-  });
-  const storyResult = mainRuntimeOrchestrator.execute({
-    type: "trigger-story-events",
-    timing: "city-enter",
-    state: runtimeCommit.runtimeResult.state.core,
-    characterDefinitions: appState.characterDefinitions,
-  });
-  appState = {
+  const clearedModalState = {
     ...appState,
-    gameState: storyResult.gameState ?? appState.gameState,
-    characterDefinitions:
-      storyResult.characterDefinitions ?? appState.characterDefinitions,
     modalState: null,
     locationDialogueState: null,
   };
+  const runtimeCommit = commitRuntimeRequest({
+    state: clearedModalState,
+    request: createEnterCityRequest(appState.modalState.cityId),
+    context: createRuntimeCommitContext({
+      router: {
+        route: ({ state, request }) => routeNavigationRuntime({ state, request }),
+      },
+      followUp: {
+        handleOutcome: ({ state, outcome }) =>
+          navigationTimeFollowUp.applyOutcome({ state, outcome }),
+      },
+    }),
+  });
+  appState = runtimeCommit.state;
   renderApp();
 }
 
@@ -4223,7 +4230,6 @@ function startCampaignTravel(
       activeTravelState != null &&
       activeTravelState.targetCoordinate.x === nextCoordinate.x &&
       activeTravelState.targetCoordinate.y === nextCoordinate.y;
-    const previousGameState = appState.gameState;
     const nextAppState = {
       ...appState,
       campaignTravelState: null,
@@ -4233,16 +4239,18 @@ function startCampaignTravel(
     const runtimeCommit = commitRuntimeRequest({
       state: nextAppState,
       request: createAdvanceTimeSegmentsRequest(1),
-      context: {
+      context: createRuntimeCommitContext({
         router: {
           route: ({ state, request }) => routeTimeRuntime({ state, request }),
         },
-      },
+        followUp: {
+          handleOutcome: ({ state, outcome }) =>
+            navigationTimeFollowUp.applyOutcome({ state, outcome }),
+        },
+      }),
     });
     appState = runtimeCommit.state;
-    if (!syncCouncilPriorityAfterGameStateChange(previousGameState)) {
-      renderApp();
-    }
+    renderApp();
   });
 }
 
