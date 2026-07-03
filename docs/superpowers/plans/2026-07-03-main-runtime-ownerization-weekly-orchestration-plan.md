@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Fresh weekly set opened around main.ts runtime orchestration ownerization.`
-- Next Step: `Start Child 24 Task 1 Step 1.`
-- Verification: `2026-07-03: npm run lint:plans (pass)`
-- Notes: `Keep visible queue depth at one active child and zero queued follow-ups until Child 24 proves whether any different problem type remains.`
+- Current Focus: `Completed.`
+- Next Step: `This weekly set is closed; any later main.ts continuation must begin from a fresh weekly review.`
+- Verification: `2026-07-03: npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 24 main runtime orchestrator|child 24 main runtime follow-up ownership|child 24 passive render trigger extraction|child 23 startup coordinator|child 22 continue path|child 22 restore path|child 15 covered enter-city|child 16 story trigger helper|child 16 covered city-enter|child 16 covered indoor-screen-shown|child 23 scenario-pack startup" (pass); npm run typecheck (pass); npm test (pass); npm run build (pass); npm run lint:plans (pass)`
+- Notes: `This set must not pre-queue later children. Any work beyond Child 24 requires a fresh review after this queue closes.`
 
 ## Progress Log
 
@@ -27,6 +27,14 @@
   - Summary: `Weekly set artifacts and Child 24 plan were written, and governance structure passed plan lint. The set remains not-started because no implementation work has begun yet.`
   - Verification: `npm run lint:plans (pass)`
   - Next: `Start Child 24 Task 1 Step 1.`
+- 2026-07-03
+  - Summary: `Child 24 introduced src/application/runtime/main-runtime-orchestrator.ts and moved covered startup session apply, story timing handoff, scene progression, and passive render-time trigger sync out of main.ts local ownership without expanding into presenter/render redesign or contract-family work.`
+  - Verification: `npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 24 main runtime orchestrator|child 24 main runtime follow-up ownership|child 24 passive render trigger extraction|child 23 startup coordinator|child 22 continue path|child 22 restore path|child 15 covered enter-city|child 16 story trigger helper|child 16 covered city-enter|child 16 covered indoor-screen-shown|child 23 scenario-pack startup" (pass); npm run typecheck (pass); npm test (pass); npm run build (pass)`
+  - Next: `Run npm run lint:plans and close the weekly set.`
+- 2026-07-03
+  - Summary: `Governance closeout passed and the weekly set is now closed. Child 24 is recorded as completed, the weekly review index is synchronized, and no queued or locked same-boundary child remains.`
+  - Verification: `npm run lint:plans (pass)`
+  - Next: `Closed.`
 
 ---
 
@@ -85,10 +93,10 @@ Status meaning:
 ### Slot 1: Active Child
 
 - Child: `docs/superpowers/plans/2026-07-03-child-24-main-runtime-orchestration-ownerization-plan.md`
-- Queue status: `active`
+- Queue status: `completed`
 - Primary boundary: `Remove covered runtime-business orchestration ownership from src/main.ts and fix one explicit request -> decision -> follow-up -> write-back chain.`
 - Depends on: `2026-07-03-child-24-main-runtime-orchestration-ownerization-spec.md`
-- Resume point: `Start Task 1 Step 1.`
+- Resume point: `Closed.`
 
 ### Slot 2: Queued Child
 
@@ -176,9 +184,9 @@ Do not mark this weekly plan `completed` until:
 
 ## Completion Checklist
 
-- [ ] Queue state updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
-- [ ] Weekly review index updated
-- [ ] Required visibility deliverables linked and present
+- [x] Queue state updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
+- [x] Weekly review index updated
+- [x] Required visibility deliverables linked and present

@@ -42,6 +42,7 @@ import {
   type CityMenuPanelId,
 } from "./application/city-menu/city-menu";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
+import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
@@ -58,11 +59,7 @@ import {
   isCouncilPriorityHouseDefinition,
 } from "./application/time/council-priority";
 import {
-  advanceStorySceneStep,
-  chooseStorySceneOption,
-  getCurrentChoiceOptions,
   startStoryEventById,
-  triggerStoryEvents,
 } from "./application/story/story-runtime";
 import {
   isCityEntryVisibleForStoryStage,
@@ -102,7 +99,6 @@ import {
 } from "./core/runtime/time-runtime";
 import {
 } from "./core/runtime/event-runtime";
-import { runStoryTriggerRuntime } from "./core/runtime/scene-runtime";
 import {
   createPrototypeCharactersForStoryStage,
 } from "./content/prototype-world";
@@ -159,7 +155,7 @@ import type { CharacterDefinition } from "./domain/character";
 import type { CityBeggingGameCompletionResult } from "./domain/city-begging-minigame";
 import type { CityEntryDefinition } from "./domain/city-entry";
 import type { CityNpcPoolDefinition } from "./domain/city-npc";
-import type { EventDefinition, EventTriggerTiming } from "./domain/event";
+import type { EventDefinition } from "./domain/event";
 import type { HouseDefinition } from "./domain/house";
 import type { HouseModuleTransitionResult } from "./domain/house-module";
 import type { MapDefinition } from "./domain/map";
@@ -543,6 +539,30 @@ let activeLoadingTheme: LoadingTheme | null = null;
 const mapAutoAdvanceHandles: Record<string, number> = {};
 
 let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
+const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
+  getAppState: () => appState,
+  setAppState: (nextAppState) => {
+    appState = nextAppState;
+  },
+  setPlayerCharacterId: (playerCharacterId) => {
+    currentPlayerCharacterId = playerCharacterId;
+  },
+  getStoryContent: () => ({
+    eventDefinitionsById: activeStoryEventDefinitionsById,
+    sceneDefinitionsById: activeStorySceneDefinitionsById,
+    activityDefinitionsById: activeActivityDefinitionsById,
+    textEntriesById,
+  }),
+  resetMainGameRuntime,
+  syncActivatedContentSource,
+  recreateHouseRuntime: () => {
+    houseRuntime = createHouseRuntimeInstance();
+  },
+  setGameVisibility,
+  hideMainUiFlow: () => {
+    mainUiFlow.hide();
+  },
+});
 
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({
@@ -795,30 +815,6 @@ function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
   appState = completion.state;
   syncCouncilPriorityAfterGameStateChange(previousGameState);
   window.onBeggingGameComplete?.(result);
-}
-
-function triggerStoryEventsForTiming(
-  timing: EventTriggerTiming,
-  state: GameState,
-  characterDefinitions: CharacterDefinition[]
-): {
-  state: GameState;
-  characterDefinitions: CharacterDefinition[];
-} {
-  const storyRuntimeResult = runStoryTriggerRuntime({
-    timing,
-    state,
-    characterDefinitions,
-    eventDefinitionsById: activeStoryEventDefinitionsById,
-    sceneDefinitionsById: activeStorySceneDefinitionsById,
-    activityDefinitionsById: activeActivityDefinitionsById,
-    textEntriesById,
-  });
-
-  return {
-    state: storyRuntimeResult.state,
-    characterDefinitions: storyRuntimeResult.characterDefinitions,
-  };
 }
 
 function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
@@ -1267,13 +1263,6 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
   });
 }
 
-function getActiveStoryChoiceOptions() {
-  return getCurrentChoiceOptions(
-    appState.gameState,
-    activeStorySceneDefinitionsById
-  );
-}
-
 function stopMapAutoAdvance(intervalId: string): void {
   const handle = mapAutoAdvanceHandles[intervalId];
   if (handle != null) {
@@ -1543,54 +1532,17 @@ function startMapAutoAdvance(input: {
 }
 
 function advanceCurrentStoryScene(): void {
-  const result = advanceStorySceneStep(
-    {
-      state: appState.gameState,
-      characterDefinitions: appState.characterDefinitions,
-    },
-    {
-      eventDefinitionsById: activeStoryEventDefinitionsById,
-      sceneDefinitionsById: activeStorySceneDefinitionsById,
-      activityDefinitionsById: activeActivityDefinitionsById,
-      textEntriesById,
-    }
-  );
-
-  appState = {
-    ...appState,
-    gameState: result.state,
-    characterDefinitions: result.characterDefinitions,
-  };
+  mainRuntimeOrchestrator.execute({
+    type: "advance-story-scene",
+  });
   renderApp();
 }
 
 function chooseCurrentStoryOption(choiceId: string): void {
-  const selectedOption = getActiveStoryChoiceOptions().find(
-    (choiceOption) => choiceOption.id === choiceId
-  );
-  if (selectedOption == null) {
-    return;
-  }
-
-  const result = chooseStorySceneOption(
-    {
-      state: appState.gameState,
-      characterDefinitions: appState.characterDefinitions,
-    },
-    {
-      eventDefinitionsById: activeStoryEventDefinitionsById,
-      sceneDefinitionsById: activeStorySceneDefinitionsById,
-      activityDefinitionsById: activeActivityDefinitionsById,
-      textEntriesById,
-    },
-    selectedOption
-  );
-
-  appState = {
-    ...appState,
-    gameState: result.state,
-    characterDefinitions: result.characterDefinitions,
-  };
+  mainRuntimeOrchestrator.execute({
+    type: "choose-story-option",
+    choiceId,
+  });
   renderApp();
 }
 
@@ -1790,13 +1742,10 @@ function applyActivatedModSession(input: {
   createAppState(): AppState;
 }): void {
   toLegacyBootstrapInput(input.activationResult);
-  resetMainGameRuntime();
-  syncActivatedContentSource(input.activationResult);
-  currentPlayerCharacterId = input.playerCharacterId;
-  appState = input.createAppState();
-  houseRuntime = createHouseRuntimeInstance();
-  setGameVisibility(true);
-  mainUiFlow.hide();
+  mainRuntimeOrchestrator.execute({
+    type: "apply-startup-session",
+    session: input,
+  });
   renderApp();
 }
 
@@ -4177,15 +4126,17 @@ function handleModalConfirm() {
       },
     },
   });
-  const storyResult = triggerStoryEventsForTiming(
-    "city-enter",
-    runtimeCommit.runtimeResult.state.core,
-    appState.characterDefinitions
-  );
+  const storyResult = mainRuntimeOrchestrator.execute({
+    type: "trigger-story-events",
+    timing: "city-enter",
+    state: runtimeCommit.runtimeResult.state.core,
+    characterDefinitions: appState.characterDefinitions,
+  });
   appState = {
     ...appState,
-    gameState: storyResult.state,
-    characterDefinitions: storyResult.characterDefinitions,
+    gameState: storyResult.gameState ?? appState.gameState,
+    characterDefinitions:
+      storyResult.characterDefinitions ?? appState.characterDefinitions,
     modalState: null,
     locationDialogueState: null,
   };
@@ -4452,6 +4403,13 @@ function restoreCampaignTerrainCanvases(
 }
 
 function renderApp() {
+  mainRuntimeOrchestrator.execute({
+    type: "sync-passive-story-triggers",
+  });
+  renderAppFrame();
+}
+
+function renderAppFrame() {
   appState = {
     ...appState,
     gameState: ensureCityNpcPoolsForCurrentDay(
@@ -4459,7 +4417,6 @@ function renderApp() {
       cityNpcPoolDefinitions
     ),
   };
-  syncPassiveStoryTriggers();
   const currentMapDefinition = getCurrentMapDefinition();
   const currentCityDefinition =
     cityDefinitionById[appState.gameState.world.currentCityId] ?? cityDefinitions[0] ?? null;
@@ -4511,32 +4468,6 @@ function renderApp() {
   syncActivityQteLoop();
   syncCampaignTerrainWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
-}
-
-function syncPassiveStoryTriggers(): void {
-  if (appState.gameState.scene.activeSceneId != null) {
-    return;
-  }
-
-  if (appState.gameState.ui.currentView !== "house") {
-    return;
-  }
-
-  const result = triggerStoryEventsForTiming(
-    "indoor-screen-shown",
-    appState.gameState,
-    appState.characterDefinitions
-  );
-
-  if (result.state === appState.gameState) {
-    return;
-  }
-
-  appState = {
-    ...appState,
-    gameState: result.state,
-    characterDefinitions: result.characterDefinitions,
-  };
 }
 
 function syncGameViewport(): void {

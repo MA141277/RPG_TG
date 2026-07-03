@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Plan created; implementation has not started.`
-- Next Step: `Start Task 1 Step 1.`
-- Verification: `2026-07-03: npm run lint:plans (pass)`
-- Notes: `This child fails if it spreads ownership across multiple unrelated seams or drifts into presenter/render redesign.`
+- Current Focus: `Completed.`
+- Next Step: `No further Child 24 work remains; any later main.ts continuation requires a fresh weekly review.`
+- Verification: `2026-07-03: npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 24 main runtime orchestrator|child 24 main runtime follow-up ownership|child 24 passive render trigger extraction|child 23 startup coordinator|child 22 continue path|child 22 restore path|child 15 covered enter-city|child 16 story trigger helper|child 16 covered city-enter|child 16 covered indoor-screen-shown|child 23 scenario-pack startup" (pass); npm run typecheck (pass); npm test (pass); npm run build (pass); npm run lint:plans (pass)`
+- Notes: `This child stayed inside the ownerization boundary and did not expand into presenter/render redesign, MainUiFlow redesign, or contract-family expansion.`
 
 ## Progress Log
 
@@ -27,6 +27,14 @@
   - Summary: `Plan governance recheck passed. Child 24 remains not-started, but the fresh plan and weekly set now satisfy repository plan-lint rules and are ready for execution.`
   - Verification: `npm run lint:plans (pass)`
   - Next: `Start Task 1 Step 1.`
+- 2026-07-03
+  - Summary: `Rechecked the Child 24 baseline, added RED ownership regressions for startup apply, story/scene follow-up, and passive render trigger ownership, then introduced src/application/runtime/main-runtime-orchestrator.ts and rewired main.ts to delegate those covered business seams through it. Child 15/16/23 structure guards were updated to accept the new orchestrator seam without reopening their already-closed boundaries.`
+  - Verification: `npm run build:test (pass); node --test tests/robustness.test.cjs --test-name-pattern "child 24 main runtime orchestrator|child 24 main runtime follow-up ownership|child 24 passive render trigger extraction|child 23 startup coordinator|child 22 continue path|child 22 restore path|child 15 covered enter-city|child 16 story trigger helper|child 16 covered city-enter|child 16 covered indoor-screen-shown|child 23 scenario-pack startup" (pass); npm run typecheck (pass); npm test (pass); npm run build (pass)`
+  - Next: `Update change-log and weekly artifacts, then run npm run lint:plans for closeout.`
+- 2026-07-03
+  - Summary: `Governance closeout completed. change-log, child plan, and weekly artifacts now record Child 24 as a completed main-runtime ownerization child, with no queued same-boundary follow-up child left in this set.`
+  - Verification: `npm run lint:plans (pass)`
+  - Next: `Closed.`
 
 ---
 
@@ -109,7 +117,7 @@
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/superpowers/plans/2026-07-03-child-24-main-runtime-orchestration-ownerization-plan.md`
 
-- [ ] **Step 1: Enumerate the remaining covered business owners in `main.ts`**
+- [x] **Step 1: Enumerate the remaining covered business owners in `main.ts`**
 
 Record the exact helpers and call chains that still own:
 
@@ -117,7 +125,7 @@ Record the exact helpers and call chains that still own:
 - covered story / event / scene follow-up
 - passive render-time trigger mutation
 
-- [ ] **Step 2: Add failing ownership regressions**
+- [x] **Step 2: Add failing ownership regressions**
 
 Add red tests that prove:
 
@@ -125,7 +133,7 @@ Add red tests that prove:
 - a dedicated main-runtime orchestration module does not yet exist
 - Child 23 startup-coordinator and Child 22 restore/continue parity remain the baseline guards
 
-- [ ] **Step 3: Run the targeted red tests**
+- [x] **Step 3: Run the targeted red tests**
 
 Run:
 
@@ -138,7 +146,7 @@ Expected:
 
 - at least one new Child 24 ownership guard fails before implementation
 
-- [ ] **Step 4: Record the baseline result in plan state**
+- [x] **Step 4: Record the baseline result in plan state**
 
 Update `Execution State` and `Progress Log` with the unchanged or narrowed baseline.
 
@@ -149,7 +157,7 @@ Update `Execution State` and `Progress Log` with the unchanged or narrowed basel
 - Modify: `src/core/runtime/state-sync-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add the orchestration module and narrow contract**
+- [x] **Step 1: Add the orchestration module and narrow contract**
 
 Create one orchestration seam that accepts shell-originated requests and owns:
 
@@ -157,11 +165,11 @@ Create one orchestration seam that accepts shell-originated requests and owns:
 - covered follow-up chaining
 - one documented write-back call path
 
-- [ ] **Step 2: Keep state write-back converged through one sink**
+- [x] **Step 2: Keep state write-back converged through one sink**
 
 If needed, add a narrow helper around `state-sync-runtime.ts`, but do not create a second business write-back owner.
 
-- [ ] **Step 3: Re-run the targeted ownership tests**
+- [x] **Step 3: Re-run the targeted ownership tests**
 
 Run:
 
@@ -182,15 +190,15 @@ Expected:
 - Modify: `src/application/startup/startup-session-coordinator.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Move startup session apply business orchestration out of `main.ts`**
+- [x] **Step 1: Move startup session apply business orchestration out of `main.ts`**
 
 Rewire the startup apply path so `main.ts` consumes a prepared runtime-owned session apply result instead of owning active content sync plus bootstrap sequencing itself.
 
-- [ ] **Step 2: Move covered story / event / scene follow-up behind the new seam**
+- [x] **Step 2: Move covered story / event / scene follow-up behind the new seam**
 
 Rewire covered scene progression, story trigger follow-up, and related covered handoffs so `main.ts` no longer directly owns those business call chains.
 
-- [ ] **Step 3: Re-run targeted green tests**
+- [x] **Step 3: Re-run targeted green tests**
 
 Run:
 
@@ -211,15 +219,15 @@ Expected:
 - Modify: `src/application/runtime/main-runtime-orchestrator.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Extract passive trigger sync from the render pre-pass**
+- [x] **Step 1: Extract passive trigger sync from the render pre-pass**
 
 Move passive gameplay mutation out of `renderApp()` and place it behind an explicit orchestration-owned sync path.
 
-- [ ] **Step 2: Preserve presenter/render semantics**
+- [x] **Step 2: Preserve presenter/render semantics**
 
 Keep `renderApp()` focused on presenter preparation and DOM render scheduling without redesigning presenter output or markup shape.
 
-- [ ] **Step 3: Re-run the full targeted ownership suite**
+- [x] **Step 3: Re-run the full targeted ownership suite**
 
 Run:
 
@@ -233,7 +241,7 @@ Expected:
 - all Child 24 ownership tests pass
 - prior startup/restore guards remain green
 
-- [ ] **Step 4: Run the full verification gate**
+- [x] **Step 4: Run the full verification gate**
 
 Run:
 
@@ -257,7 +265,7 @@ Expected:
 - Modify: `docs/superpowers/weekly/2026-07-03-main-runtime-ownerization-weekly-call-flows.md`
 - Modify: `docs/superpowers/weekly/2026-07-03-main-runtime-ownerization-weekly-architecture-report.md`
 
-- [ ] **Step 1: Record the Child 24 boundary outcome**
+- [x] **Step 1: Record the Child 24 boundary outcome**
 
 Document the fixed ownership answers for:
 
@@ -266,7 +274,7 @@ Document the fixed ownership answers for:
 - follow-up owner
 - state write-back sink
 
-- [ ] **Step 2: Run governance verification**
+- [x] **Step 2: Run governance verification**
 
 Run:
 
@@ -280,16 +288,16 @@ Expected:
 
 ## Exit Check
 
-- [ ] `src/main.ts` no longer directly owns the covered startup session apply business orchestration.`
-- [ ] `src/main.ts` no longer directly owns the covered story / event / scene follow-up chain.`
-- [ ] `renderApp()` no longer mutates gameplay state through passive trigger sync before presenter/render output.`
-- [ ] one explicit orchestration seam exists for covered runtime-business routing and follow-up.`
-- [ ] state write-back still converges through one documented sink.`
-- [ ] Targeted regression coverage passes.`
+- [x] `src/main.ts` no longer directly owns the covered startup session apply business orchestration.`
+- [x] `src/main.ts` no longer directly owns the covered story / event / scene follow-up chain.`
+- [x] `renderApp()` no longer mutates gameplay state through passive trigger sync before presenter/render output.`
+- [x] one explicit orchestration seam exists for covered runtime-business routing and follow-up.`
+- [x] state write-back still converges through one documented sink.`
+- [x] Targeted regression coverage passes.`
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

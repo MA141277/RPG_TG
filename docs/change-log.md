@@ -2,6 +2,22 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-03 Child 24 Main Runtime Orchestration Ownerization
+
+### Added
+- 新增 `src/application/runtime/main-runtime-orchestrator.ts`，为 `main.ts` 提供显式 `MainRuntimeOrchestratorRequest / Result` seam，把 startup session apply、story timing follow-up、scene progression / choice、以及 passive story trigger sync 收口到一个独立 orchestration owner。
+- 新增 Child 24 ownership 回归测试，锁定 `main-runtime-orchestrator` 模块必须存在、`main.ts` 不得继续直接内联 startup apply / scene choice progression / render-time passive trigger 逻辑，并把 Child 15 / 16 / 23 的结构化 guard 放宽到接受新的 orchestrator seam。
+
+### Changed
+- `src/main.ts` 现在通过 `createMainRuntimeOrchestrator()` 委托 covered startup session apply，不再在 `applyActivatedModSession()` 本地持有 `syncActivatedContentSource()` + `createAppState()` + house runtime recreation 这一段业务编排。
+- `src/main.ts` 现在通过 `main-runtime-orchestrator` 委托 covered story / event / scene follow-up：`city-enter` story handoff、scene advance、scene option choice 不再直接调用 `runStoryTriggerRuntime()`、`advanceStorySceneStep()` 或 `chooseStorySceneOption()`。
+- `src/main.ts` 的 `renderApp()` 现已拆成 “显式 orchestration sync + 纯 render frame” 结构；被动 `indoor-screen-shown` story trigger 不再在 presenter pre-pass 中以内联 helper 形式修改 gameplay state。
+- Child 24 没有重开 `state-sync-runtime.ts` 的 covered runtime commit sink；`commitRuntimeRequest()` 仍然是 covered runtime request 的正式 write-back 路径，本轮只把 shell 侧 follow-up owner 从 `main.ts` 移到了新的 orchestrator seam。
+
+### Impact
+- Child 24 已把这轮目标中的 `main.ts` runtime 编排权显式收窄：shell 仍负责输入和 render scheduling，但 covered startup/session apply、story timing follow-up、scene progression、以及 passive trigger sync 已不再由 `main.ts` 直接主导。
+- 这轮没有扩张到 presenter/render redesign、`MainUiFlow` redesign、task/house contract 扩张、或 registry/mod manifest 新族；如果后续还要继续瘦 `main.ts`，必须从 fresh weekly review 重新证明那是不同问题类型。
+
 ## 2026-07-03 Child 23 Main Startup Orchestration Extraction
 
 ### Added

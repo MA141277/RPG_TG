@@ -11,7 +11,7 @@ Use fixed criteria to decide what may happen after Child 24, without allowing sp
 | Module | More Than One Responsibility | No Stable Contract | Still Touches `main.ts` | Requires UI-Coupled Verification | Mods Cannot Consume Cleanly | Priority |
 | --- | --- | --- | --- | --- | --- | --- |
 | `src/main.ts` | `yes` | `partial` | `yes` | `yes` | `indirect` | `high` |
-| `src/application/runtime/main-runtime-orchestrator.ts` | `planned` | `planned` | `direct` | `yes` | `indirect` | `high` |
+| `src/application/runtime/main-runtime-orchestrator.ts` | `partial` | `official` | `direct` | `yes` | `indirect` | `medium` |
 | `src/core/runtime/state-sync-runtime.ts` | `partial` | `official` | `indirect` | `no` | `indirect` | `medium` |
 | `src/ui/main-ui/main-ui-flow.js` | `partial` | `official` | `direct` | `yes` | `indirect` | `medium` |
 | `src/content/pack-content-access.ts` | `partial` | `partial` | `indirect` | `no` | `yes` | `medium` |
@@ -19,13 +19,13 @@ Use fixed criteria to decide what may happen after Child 24, without allowing sp
 ## Recommended Next Split
 
 - Module:
-  - `Child 24 Main Runtime Orchestration Ownerization (active)`
+  - `None inside this set`
 - Reason:
-  - main.ts still owns covered runtime-business orchestration even after startup-family request selection moved out
+  - Child 24 is closed, so this set does not authorize another same-boundary split
 - Category:
-  - `main-shell runtime ownerization`
+  - `fresh-review required`
 - Queue status:
-  - `active`
+  - `closed`
 - Immediate queued follow-up:
   - `None currently`
 - Locked later follow-up:
@@ -34,10 +34,10 @@ Use fixed criteria to decide what may happen after Child 24, without allowing sp
 ## Non-Selected Candidates
 
 - `presenter/render orchestration extraction`
-  - Explicitly out of scope for this set until Child 24 closes and a fresh review proves it is a separate problem type.
+  - Child 24 is already closed; this can only start after a fresh review proves it is a separate problem type.
 - `MainUiFlow redesign`
-  - Explicitly out of scope for this set.
+  - Still explicitly outside the closed Child 24 boundary.
 - `pack-content active selector work`
-  - Still a real candidate later, but not part of the current main-runtime ownerization boundary.
+  - Still a real candidate later, but not part of the closed main-runtime ownerization boundary.
 - `task or house contract expansion`
-  - Must wait until shell runtime-business orchestration ownership is no longer mixed inside `main.ts`.
+  - Must begin from a fresh weekly review rather than piggybacking on the closed Child 24 queue.

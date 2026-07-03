@@ -8702,7 +8702,10 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
   assert.doesNotMatch(handleModalConfirmBlock, /runNavigationRuntime\(/);
   assert.match(handleModalConfirmBlock, /commitRuntimeRequest\(/);
   assert.match(handleModalConfirmBlock, /createEnterCityRequest\(/);
-  assert.match(handleModalConfirmBlock, /triggerStoryEventsForTiming\(\s*"city-enter"/);
+  assert.match(
+    handleModalConfirmBlock,
+    /triggerStoryEventsForTiming\(\s*"city-enter"|mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"trigger-story-events"[\s\S]*timing:\s*"city-enter"/
+  );
 });
 
 test("child 15 covered day-start path routes through shared runtime dispatch instead of direct runTimeRuntime helper", () => {
@@ -8745,13 +8748,18 @@ test("child 16 story trigger helper routes through one runtime-owned seam instea
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
   );
-  const triggerStoryEventsBlock = source.match(
-    /function triggerStoryEventsForTiming\([\s\S]*?\r?\n}\r?\n\r?\nfunction getCouncilPriorityHouseDefinition/
-  )?.[0] ?? "";
+  const orchestratorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/main-runtime-orchestrator.ts"
+    ),
+    "utf8"
+  );
 
-  assert.doesNotMatch(triggerStoryEventsBlock, /runEventRuntime\(/);
-  assert.doesNotMatch(triggerStoryEventsBlock, /runSceneFromEvent\(/);
-  assert.match(triggerStoryEventsBlock, /runStoryTriggerRuntime\(/);
+  assert.match(source, /createMainRuntimeOrchestrator|triggerStoryEventsForTiming/);
+  assert.doesNotMatch(orchestratorSource, /runEventRuntime\(/);
+  assert.doesNotMatch(orchestratorSource, /runSceneFromEvent\(/);
+  assert.match(orchestratorSource, /runStoryTriggerRuntime\(/);
 });
 
 test("child 16 covered city-enter story handoff stays on the shared trigger seam", () => {
@@ -8763,26 +8771,27 @@ test("child 16 covered city-enter story handoff stays on the shared trigger seam
     /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
   )?.[0] ?? "";
 
-  assert.match(handleModalConfirmBlock, /triggerStoryEventsForTiming\(\s*"city-enter"/);
+  assert.match(
+    handleModalConfirmBlock,
+    /triggerStoryEventsForTiming\(\s*"city-enter"|mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"trigger-story-events"[\s\S]*timing:\s*"city-enter"/
+  );
   assert.doesNotMatch(handleModalConfirmBlock, /runEventRuntime\(/);
   assert.doesNotMatch(handleModalConfirmBlock, /runSceneFromEvent\(/);
 });
 
 test("child 16 covered indoor-screen-shown story handoff stays on the shared trigger seam", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/main.ts"),
+    path.join(
+      process.cwd(),
+      "src/application/runtime/main-runtime-orchestrator.ts"
+    ),
     "utf8"
   );
-  const syncPassiveStoryTriggersBlock = source.match(
-    /function syncPassiveStoryTriggers\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction syncGameViewport/
-  )?.[0] ?? "";
 
-  assert.match(
-    syncPassiveStoryTriggersBlock,
-    /triggerStoryEventsForTiming\(\s*"indoor-screen-shown"/
-  );
-  assert.doesNotMatch(syncPassiveStoryTriggersBlock, /runEventRuntime\(/);
-  assert.doesNotMatch(syncPassiveStoryTriggersBlock, /runSceneFromEvent\(/);
+  assert.match(source, /sync-passive-story-triggers/);
+  assert.match(source, /"indoor-screen-shown"/);
+  assert.doesNotMatch(source, /runEventRuntime\(/);
+  assert.doesNotMatch(source, /runSceneFromEvent\(/);
 });
 
 test("effect settlement contract exports emitter applier input and result seams", () => {
@@ -9796,6 +9805,16 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
     path.join(process.cwd(), "src", "main.ts"),
     "utf8"
   );
+  const orchestratorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "runtime",
+      "main-runtime-orchestrator.ts"
+    ),
+    "utf8"
+  );
 
   assert.doesNotMatch(
     coordinatorSource,
@@ -9805,9 +9824,50 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
     coordinatorSource,
     /createAppState:\s*\(\)\s*=>\s*deps\.createScenarioPackAppState\(scenarioPack\)/
   );
+  assert.match(mainSource, /applyActivatedModSession|mainRuntimeOrchestrator/);
   assert.match(
-    mainSource,
-    /syncActivatedContentSource\(input\.activationResult\)[\s\S]*appState = input\.createAppState\(\);/
+    orchestratorSource,
+    /syncActivatedContentSource\(request\.session\.activationResult\)[\s\S]*const appState = request\.session\.createAppState\(\);/
+  );
+});
+
+test("child 24 main runtime orchestrator module exists with a narrow request/result seam", () => {
+  const orchestratorPath = path.join(
+    process.cwd(),
+    "src/application/runtime/main-runtime-orchestrator.ts"
+  );
+
+  assert.equal(fs.existsSync(orchestratorPath), true);
+  const source = fs.readFileSync(orchestratorPath, "utf8");
+  assert.match(source, /export type MainRuntimeOrchestratorRequest =/);
+  assert.match(source, /export type MainRuntimeOrchestratorResult =/);
+  assert.match(source, /export function createMainRuntimeOrchestrator\(/);
+});
+
+test("child 24 main runtime follow-up ownership removes covered business orchestration from main.ts", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.match(source, /main-runtime-orchestrator|createMainRuntimeOrchestrator/);
+  assert.doesNotMatch(
+    source,
+    /function applyActivatedModSession[\s\S]*syncActivatedContentSource\(input\.activationResult\)[\s\S]*appState = input\.createAppState\(\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /function advanceCurrentStoryScene[\s\S]*advanceStorySceneStep\(/
+  );
+  assert.doesNotMatch(
+    source,
+    /function chooseCurrentStoryOption[\s\S]*chooseStorySceneOption\(/
+  );
+});
+
+test("child 24 passive render trigger extraction removes gameplay mutation from renderApp", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.doesNotMatch(
+    source,
+    /function renderApp\(\)[\s\S]*syncPassiveStoryTriggers\(\);[\s\S]*createAppPresenterOutput\(/
   );
 });
 

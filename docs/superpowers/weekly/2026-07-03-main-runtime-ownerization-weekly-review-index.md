@@ -6,10 +6,11 @@
 
 **Active Child Plan:**
 
-- `docs/superpowers/plans/2026-07-03-child-24-main-runtime-orchestration-ownerization-plan.md`
+- `None currently`
 
 **Latest Completed Child Plan:**
 
+- `docs/superpowers/plans/2026-07-03-child-24-main-runtime-orchestration-ownerization-plan.md`
 - `docs/superpowers/plans/2026-07-03-child-23-main-startup-orchestration-extraction-plan.md`
 
 **Queued Child Plans:**
@@ -19,14 +20,13 @@
 ## Weekly Summary
 
 - The earlier `2026-07-03-main-startup` set is closed historical truth only.
-- A fresh weekly set is now opened because `src/main.ts` still owns covered runtime-business orchestration after shell input enters the app.
-- `Child 24 Main Runtime Orchestration Ownerization` is the only executable child in this set.
-- No queued or locked follow-up child is opened at weekly-set start.
+- The fresh weekly set addressed the remaining covered runtime-business orchestration that still sat in `src/main.ts` after Child 23.
+- `Child 24 Main Runtime Orchestration Ownerization` completed and no queued or locked same-boundary follow-up child was opened.
+- The set now closes instead of extending into presenter/render redesign, `MainUiFlow` redesign, or later contract-family work.
 
 ## Active Focus
 
-- Extract covered startup session apply, story/event/scene follow-up, and passive render-time trigger mutation out of `src/main.ts`.
-- Fix one explicit ownership line for request entry, runtime decision owner, follow-up owner, and state write-back sink.
+- No active child remains in this weekly set. Any later `main.ts` continuation must begin from a fresh weekly review and prove it is a different problem type.
 
 ## Artifact Index
 
@@ -42,7 +42,7 @@
 ## Verification Summary
 
 - Fresh weekly set opening verification: `PASS`
-- Child 24 implementation verification: `Not started`
+- Child 24 implementation verification: `PASS`
 - `npm run lint:plans`: `PASS`
 
 ## Weekly Outcome
@@ -55,7 +55,9 @@
 
 ### Completed
 
-- none yet
+- Child 24 introduced `src/application/runtime/main-runtime-orchestrator.ts`
+- `src/main.ts` now delegates covered startup session apply, story timing follow-up, scene progression, and passive render-time trigger sync through the new orchestration seam
+- the weekly queue closed with no same-boundary follow-up child
 
 ### Deferred
 
@@ -70,6 +72,6 @@
 - Highest-priority module to refine:
   - `src/main.ts`
 - Why it is next:
-  - the remaining debt is no longer startup-family request selection; it is the shell still owning covered runtime-business orchestration
+  - if later work still wants to thin `main.ts`, it must first prove the remaining debt is not the already-closed Child 24 ownerization boundary
 - Category:
-  - `active child in progress`
+  - `fresh-review required`

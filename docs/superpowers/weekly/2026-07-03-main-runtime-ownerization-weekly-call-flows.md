@@ -6,62 +6,65 @@
 
 Capture the main-shell runtime-business flows owned by the fresh weekly set.
 
-## Flow 1: Startup Session Apply Before Child 24
+## Flow 1: Startup Session Apply After Child 24
 
 ### Narrative
 
-`Child 23` extracted startup-family request selection, but `main.ts` still owns session apply business orchestration after the coordinator returns.
+`Child 23` still left session apply business orchestration in `main.ts`. Child 24 moves that covered apply path behind `main-runtime-orchestrator`.
 
 ### Call Chain
 
 ```text
-MainUiFlow shell action -> startup-session-coordinator -> main.ts applyActivatedModSession() -> syncActivatedContentSource() -> app-state bootstrap -> house runtime recreation -> render path
+MainUiFlow shell action -> startup-session-coordinator -> main.ts applyActivatedModSession() -> main-runtime-orchestrator(apply-startup-session) -> active content sync -> app-state bootstrap -> house runtime recreation -> render scheduling
 ```
 
-## Flow 2: Covered Navigation / Time Follow-Up Before Child 24
+## Flow 2: Covered Navigation / Time Follow-Up After Child 24
 
 ### Narrative
 
-Covered navigation/time requests already use sub-runtimes, but `main.ts` still stitches follow-up such as story trigger and council handling around those runtime calls.
+Covered navigation/time requests still use shared runtime commit paths, but the covered story timing handoff for `city-enter` no longer calls story runtime helpers directly from `main.ts`.
 
 ### Call Chain
 
 ```text
-shell event -> main.ts commitRuntimeRequest(routeNavigationRuntime/routeTimeRuntime) -> main.ts follow-up chain -> state mutation / render scheduling
+shell event -> main.ts commitRuntimeRequest(routeNavigationRuntime/routeTimeRuntime) -> main-runtime-orchestrator(trigger-story-events when covered) -> state mutation / render scheduling
 ```
 
-## Flow 3: Story / Event / Scene Progression Before Child 24
+## Flow 3: Story / Event / Scene Progression After Child 24
 
 ### Narrative
 
-`main.ts` still directly invokes covered story progression helpers and therefore remains a business owner for scene progression and choice handling.
+Scene progression and story choice handling now enter through shell-local functions in `main.ts`, but the runtime-business decision path is owned by `main-runtime-orchestrator`.
 
 ### Call Chain
 
 ```text
-shell event -> main.ts advanceStorySceneStep()/chooseStorySceneOption()/runStoryTriggerRuntime() -> app-state mutation -> render path
+shell event -> main.ts shell handler -> main-runtime-orchestrator(advance-story-scene / choose-story-option) -> story runtime helper -> app-state mutation -> render scheduling
 ```
 
-## Flow 4: Passive Render-Time Trigger Before Child 24
+## Flow 4: Passive Story Trigger Sync After Child 24
 
 ### Narrative
 
-The current render path still mutates gameplay state through passive trigger sync before presenter output is created.
+Passive `indoor-screen-shown` story trigger sync is no longer embedded inside the pure render frame. `main.ts` now invokes one explicit orchestration sync step before the frame render is built.
 
 ### Call Chain
 
 ```text
-renderApp() -> syncPassiveStoryTriggers() -> state mutation -> createAppPresenterOutput() -> render markup
+render scheduling -> main-runtime-orchestrator(sync-passive-story-triggers) -> renderAppFrame() -> createAppPresenterOutput() -> render markup
 ```
 
-## Flow 5: Target Child 24 End State
+## Flow 5: Fixed Boundary Answers
 
 ### Narrative
 
-After ownerization, `main.ts` should only package shell input, invoke one orchestration seam, and schedule render after orchestration/write-back completes.
+Child 24 fixes the ownerization answers for this weekly set.
 
 ### Call Chain
 
 ```text
-shell input -> main.ts shell entry -> main-runtime-orchestrator -> covered sub-runtime / follow-up -> state-sync write-back sink -> main.ts render scheduling
+request entry: shell input / DOM / MainUiFlow
+runtime decision owner: src/application/runtime/main-runtime-orchestrator.ts
+follow-up owner: main-runtime-orchestrator for covered startup apply, story timing, scene progression, and passive trigger sync
+write-back sink: covered runtime requests still settle through state-sync-runtime commit paths; Child 24 does not fork a second covered runtime commit sink
 ```
