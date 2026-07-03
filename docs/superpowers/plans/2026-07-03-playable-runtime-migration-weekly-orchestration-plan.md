@@ -27,6 +27,10 @@
   - Summary: `Ran governance verification for the new playable-runtime candidate queue. Plan lint passed, so the queue record is structurally valid while remaining non-executable.`
   - Verification: `npm run lint:plans`
   - Next: `Wait for the current active weekly set to close before any Child 30 promotion decision.`
+- 2026-07-03
+  - Summary: `Pre-authored Child 30 through Child 34 as independent future plan files and linked them into the candidate queue without promoting any of them into active execution. The queue remains non-executable while the current main-shell continuation weekly set is still active.`
+  - Verification: `npm run lint:plans`
+  - Next: `Keep all playable-runtime children non-executable until the current active weekly set closes and Child 30 receives a fresh baseline recheck.`
 
 ---
 
@@ -92,6 +96,7 @@ Status meaning:
 ### Slot 2: Queued Child
 
 - `Child 30 - Playable Runtime Skeleton And Integration Registry`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md`
   - Planned boundary:
     - install one unified playable definition registry
     - install one integration-instance identity seam centered on `integrationId`
@@ -103,6 +108,7 @@ Status meaning:
 ### Slot 3: Locked Child
 
 - `Child 31 - Covered Interactive Playables Migration`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md`
   - Planned boundary:
     - migrate `activity-qte`
     - migrate `city-begging`
@@ -115,10 +121,13 @@ Status meaning:
 These remain candidate-only and are not executable in the current queue phase:
 
 - `Child 32 - House-Local Mechanic Promotion`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-32-house-local-mechanic-promotion-plan.md`
   - promote `grain-accounting` and `medicine-compounding` from house-local mechanisms to full playable definitions
 - `Child 33 - Battle-Family Playable Migration`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-33-battle-family-playable-migration-plan.md`
   - migrate `story-battle` into the unified playable registry/runtime while preserving `family: "battle"` semantics
 - `Child 34 - Enforcement And Legacy Path Closeout`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-plan.md`
   - add scaffold/validator/CI enforcement, tighten regression coverage, and delete proven-obsolete direct launch/result branches
 
 ## Child Decomposition Rule
@@ -170,6 +179,7 @@ This weekly set may be marked `completed` only when:
 - [x] Child 30 is defined as the next future promotion candidate
 - [x] Child 31 is defined as the locked follow-up
 - [x] Later candidate-only children are recorded without becoming executable
+- [x] Child 30 through Child 34 have independent future plan files
 - [x] The plan explicitly forbids appending these children into the currently active weekly set
 
 ## Verification Policy

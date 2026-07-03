@@ -98,6 +98,24 @@
 ### Added
 - 新增仓库级 spec：[docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md)，把统一 runtime 的顶层 taxonomy 从 `minigame` 提升为 `playable`，并以 `family: "minigame" | "battle"` 约束具体子类。
 - 新增 candidate-only 的 fresh weekly orchestration 计划：[docs/superpowers/plans/2026-07-03-playable-runtime-migration-weekly-orchestration-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-playable-runtime-migration-weekly-orchestration-plan.md)，为 playable runtime 迁移预先建立独立队列，而不是把该问题类型附着到当前进行中的 `main-shell-ownerization` weekly set 上。
+- 新增未来阶段用的独立 child plan：
+  - [docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md)
+  - [docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md)
+  - [docs/superpowers/plans/2026-07-03-child-32-house-local-mechanic-promotion-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-32-house-local-mechanic-promotion-plan.md)
+  - [docs/superpowers/plans/2026-07-03-child-33-battle-family-playable-migration-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-33-battle-family-playable-migration-plan.md)
+  - [docs/superpowers/plans/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-plan.md)
+- 新增轻量 queued child specs：
+  - [docs/superpowers/specs/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-spec.md)
+  - [docs/superpowers/specs/2026-07-03-child-31-covered-interactive-playables-migration-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-31-covered-interactive-playables-migration-spec.md)
+  - [docs/superpowers/specs/2026-07-03-child-32-house-local-mechanic-promotion-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-32-house-local-mechanic-promotion-spec.md)
+  - [docs/superpowers/specs/2026-07-03-child-33-battle-family-playable-migration-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-33-battle-family-playable-migration-spec.md)
+  - [docs/superpowers/specs/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-spec.md)
+- 新增当前 playable 盘点文档：[docs/superpowers/specs/2026-07-03-playable-current-state-inventory-and-ownership-matrix.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-current-state-inventory-and-ownership-matrix.md)，记录首轮 playable queue 的 current-state ownership matrix 以及未纳入 Child 30-34 的后续 playable-like 候选。
+- 新增四份 playable companion docs：
+  - [docs/superpowers/specs/2026-07-03-playable-naming-and-artifact-conventions.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-naming-and-artifact-conventions.md)
+  - [docs/superpowers/specs/2026-07-03-playable-scaffold-and-validator-io-draft.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-scaffold-and-validator-io-draft.md)
+  - [docs/superpowers/specs/2026-07-03-playable-ai-authoring-protocol.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-ai-authoring-protocol.md)
+  - [docs/superpowers/specs/2026-07-03-playable-test-strategy.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-test-strategy.md)
 
 ### Changed
 - 明确 `story-battle` 现纳入统一 playable runtime 范围，不再被排除在顶层 registry/runtime/presenter/settlement/handoff contract 之外。
@@ -113,6 +131,9 @@
 - 新增 [docs/superpowers/plans/_playable-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/_playable-plan-template.md)，作为后续新增 playable、迁移 legacy playable、以及从 house/scene 流程中剥离 playable 的统一 active-plan 骨架。
 - 在 playable spec 的 follow-up 中明确：后续 playable 相关执行计划应从 `_playable-plan-template.md` 起步，同时仍受通用 `_plan-template.md` 与 `plan-governance-spec.md` 约束。
 - 将 playable runtime 迁移进一步拆成多 child 的阶段式候选队列，而不是预设成一个超大 child：当前 candidate 队列先记录 Child 30（runtime skeleton 与 integration registry）、Child 31（`activity-qte` / `city-begging` 迁移）、以及更后的 Child 32-34 候选阶段。
+- 将 Child 30-34 全部预写成独立 future plan 文件，但明确保持为 non-executable；它们现在只是后续 fresh weekly promotion 的候选执行载体，不改变当前 active weekly set 的执行权。
+- 将 Child 30-34 的计划文档 `Based On Spec` 回补为各自独立 child spec，而不再只引用顶层 playable contract spec，便于后续按 child 做 baseline recheck 与 promote。
+- 为 playable runtime 这条线继续补齐实施前文档：冻结 `playableId / integrationId / triggerId / sessionId` 命名规则，预写 scaffold/validator 命令的输入输出草案，定义 AI 创作时的角色分工与提示协议，并按 Child 30-34 规划测试策略。
 
 ### Impact
 - 后续 runtime 规划和迁移不再围绕“小游戏是否包含战斗”反复分叉，而是统一围绕 playable runtime 展开。
@@ -123,6 +144,8 @@
 - 这份 playable spec 现在不再只回答“该怎么设计”，而是开始回答“触发如何归一、结算如何唯一定位、回跳如何恢复、门禁如何执行”；后续实现 plan 可以直接围绕这些强制节点展开，而不是再次补概念口子。
 - 后续不管是“新增 playable”、还是“把分散在 house / scene / local flow 的玩法剥离出来”，都可以沿同一份 plan 模板落地，减少每次重新定义迁移骨架的成本，也降低 AI/多人协作时的 plan 漂移。
 - 后续 playable runtime 工作现在既不会破坏“同一时间只允许一个 active executable child”的治理规则，也不会因为前置拆分不足而把多个机制问题揉进一个难以验证的大迁移批次。
+- 当前在不触碰 active weekly set 的前提下，playable runtime 这条线已经具备“candidate queue + queued child spec + future child plan + ownership inventory”四层前置文档，后续只需等当前 active set 关闭后从 Child 30 做正式 baseline recheck 即可。
+- 当前这条线又向前补成“candidate queue + queued child spec + future child plan + ownership inventory + naming rules + scaffold/validator I/O draft + AI protocol + test strategy”的前置文档组合；后续 promote 时不需要再从零发明命名、输入输出或 AI 协作规则。
 
 ## 2026-07-02 Child 19 Task Runtime Mod Contract
 
