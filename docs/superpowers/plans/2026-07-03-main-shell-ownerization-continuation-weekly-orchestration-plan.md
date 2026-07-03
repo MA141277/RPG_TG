@@ -12,9 +12,9 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-03`
-- Current Focus: `Child 27 is closed. Child 28 is now the next executable child for a later explicit continuation request, and Child 29 remains locked behind that baseline recheck.`
-- Next Step: `Wait for a later explicit continuation request before baseline-rechecking and promoting Child 28.`
-- Verification: `Child 27 closeout passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27".`
+- Current Focus: `Child 28 is closed. Child 29 is now the next executable child for a later explicit continuation request, and no additional locked child is introduced in this batch.`
+- Next Step: `Wait for a later explicit continuation request before baseline-rechecking and promoting Child 29.`
+- Verification: `Child 28 closeout passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27|child 28".`
 - Notes: `This queue follows the closed Child 24 set and must not be appended back into the already-completed 2026-07-03 main-runtime ownerization weekly set.`
 
 ## Progress Log
@@ -51,6 +51,22 @@
   - Summary: `Child 27 closed cleanly. Startup story bootstrap no longer starts directly inside main.ts startup builders, Child 28 becomes the next executable child for a later continuation request, and Child 29 remains locked behind Child 28 baseline recheck.`
   - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27"`.
   - Next: `Do not execute Child 28 in this batch; wait for explicit continuation before its baseline recheck and promotion.`
+- 2026-07-03
+  - Summary: `Continuation was explicitly requested again, so Child 28 was baseline-rechecked and promoted. Scope remains unchanged: main.ts still owns syncActiveGameContent(), the active-definition top-level write set, and activated-content-source write-back; Child 29 remains locked and non-executable.`
+  - Verification: `Baseline inspection only; Child 28 required commands not run yet.`
+  - Next: `Execute Child 28 Task 1 Step 2 without promoting Child 29.`
+- 2026-07-03
+  - Summary: `Child 28 RED regressions are in place. The expected failures confirm the current debt remains unchanged: contentContext is not yet carried by startup sessions, startup apply still routes through syncActivatedContentSource(), and main.ts still keeps the active-content mirror write set.`
+  - Verification: `npm test -- --test-name-pattern="child 23|child 27|child 28"` (expected Child 28 failures).
+  - Next: `Implement Child 28 without promoting Child 29.`
+- 2026-07-03
+  - Summary: `Child 28 implementation batch moved active content ownership behind an explicit contentContext seam. startup-session-coordinator now emits contentContext, main-runtime-orchestrator applies it before createAppState(), and main.ts now consumes content context instead of synchronizing central active-definition mirrors.`
+  - Verification: `npm test -- --test-name-pattern="child 23|child 27|child 28"`.
+  - Next: `Run Child 28 closeout verification before updating queue state again.`
+- 2026-07-03
+  - Summary: `Child 28 closed cleanly. Active content composition is now startup/mod-owned through contentContext, Child 29 becomes the next executable child for a later continuation request, and no further locked child is introduced in this batch.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27|child 28"`.
+  - Next: `Do not execute Child 29 in this batch; wait for explicit continuation before its baseline recheck and promotion.`
 
 ---
 
@@ -89,23 +105,22 @@
 
 ### Active Executable Child
 
-- `Child 27 - Startup Story Bootstrap Ownership`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-27-startup-story-bootstrap-ownership-plan.md`
+- `Child 28 - Active Content Ownership Convergence`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
   - Baseline Recheck: `unchanged`
   - Status: `completed in this batch; no further execution allowed here`
 
 ### Immediate Queued Follow-Up
 
-- `Child 28 - Active Content Ownership Convergence`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
-  - Promotion Rule: `Promote only after Child 27 closes with no unresolved P0/P1 in scope.`
+- `Child 29 - Legacy Startup Seam Retirement`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-29-legacy-startup-seam-retirement-plan.md`
+  - Promotion Rule: `Promote only after Child 28 closes with no unresolved P0/P1 in scope.`
   - Queue State: `next executable child; requires a fresh baseline recheck before promotion in a later batch`
 
 ### Locked Follow-Up Child
 
-- `Child 29 - Legacy Startup Seam Retirement`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-29-legacy-startup-seam-retirement-plan.md`
-  - Promotion Rule: `Promote only after Child 28 baseline recheck confirms unchanged or narrowed scope.`
+- `None currently`
+  - Promotion Rule: `Do not add a new locked child in this batch; later continuation requires a fresh weekly review if more queue depth is needed.`
 
 ## Candidate Later Work
 

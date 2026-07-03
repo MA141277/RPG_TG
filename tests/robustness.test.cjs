@@ -9487,8 +9487,10 @@ test("main.ts keeps covered runtime commits supplied with active task definition
     "utf8"
   );
 
-  assert.match(source, /let activeTaskDefinitionsById:/);
-  assert.match(source, /taskDefinitionsById:\s*activeTaskDefinitionsById/);
+  assert.match(
+    source,
+    /(taskDefinitionsById:\s*activeContentContext\.taskDefinitionsById|taskDefinitionsById:\s*activeTaskDefinitionsById)/
+  );
 });
 
 test("task runtime exports lifecycle and signal progression entrypoints", () => {
@@ -9829,7 +9831,7 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
   assert.match(mainSource, /applyActivatedModSession|mainRuntimeOrchestrator/);
   assert.match(
     orchestratorSource,
-    /syncActivatedContentSource\(request\.session\.activationResult\)[\s\S]*const appState = request\.session\.createAppState\(\);/
+    /(setActiveContentContext\(request\.session\.contentContext\)|syncActivatedContentSource\(request\.session\.activationResult\))[\s\S]*const appState = request\.session\.createAppState\(\);/
   );
 });
 
@@ -9909,6 +9911,15 @@ test("child 27 startup coordinator exposes bootstrap-complete createAppState for
         },
       }),
       createScenarioPackAppState: () => createStartupAppState(),
+      createStartupContentContext: () => ({
+        packId: "pack.base",
+        storyContent: {
+          eventDefinitionsById: {},
+          sceneDefinitionsById: {},
+          activityDefinitionsById: {},
+          textEntriesById: {},
+        },
+      }),
       bootstrapStartupStoryAppState: ({ appState, bootstrap }) => ({
         ...appState,
         gameState: {
@@ -10006,6 +10017,15 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
       createPrototypeAppState: () => createStartupAppState(),
       createHaozhouReturnEncounterAppState: (appState) => appState,
       createScenarioPackAppState: () => createStartupAppState(),
+      createStartupContentContext: () => ({
+        packId: scenarioPack.id,
+        storyContent: {
+          eventDefinitionsById: {},
+          sceneDefinitionsById: {},
+          activityDefinitionsById: {},
+          textEntriesById: {},
+        },
+      }),
       bootstrapStartupStoryAppState: ({ appState, bootstrap }) => ({
         ...appState,
         gameState: {
@@ -10030,6 +10050,195 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
     "event.test.bootstrap-entry"
   );
   assert.equal(startupAppState.gameState.scene.activeSceneId, "scene.scenario-entry");
+});
+
+test("child 28 main.ts no longer keeps central active-content mirror write state", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.doesNotMatch(source, /function syncActiveGameContent\(/);
+  assert.doesNotMatch(source, /function syncActivatedContentSource\(/);
+  assert.doesNotMatch(source, /let activeMapDefinitions: MapDefinition\[] =/);
+  assert.doesNotMatch(source, /let cityDefinitions: CityDefinition\[] =/);
+  assert.doesNotMatch(source, /let houseDefinitions: HouseDefinition\[] =/);
+  assert.doesNotMatch(source, /let textEntriesById = activeGameContent\.textEntriesById/);
+  assert.match(source, /activeContentContext|contentContext/);
+});
+
+test("child 28 startup coordinator exposes content-context-complete session for builtin startup", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [],
+    },
+  };
+  const contentContext = {
+    packId: "pack.base",
+    storyContent: {
+      eventDefinitionsById: {},
+      sceneDefinitionsById: {},
+      activityDefinitionsById: {},
+      textEntriesById: {},
+    },
+  };
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "builtin",
+      selectedCharacter: prototypeCharacters[0],
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => null,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: () => ({
+        gameState: createBaseState(),
+        characterDefinitions: prototypeCharacters,
+        playerCoordinate: { x: 0, y: 0 },
+        campaignActorState: {
+          facingDegrees: 0,
+          isMoving: false,
+        },
+        campaignTravelState: null,
+        modalState: null,
+        locationDialogueState: null,
+        beggingMiniGameState: null,
+        cityMenuState: null,
+        cityDirectoryState: null,
+        autoAdvanceState: null,
+        uiLayouts: {},
+        layoutEditor: {},
+      }),
+      createHaozhouReturnEncounterAppState: (appState) => appState,
+      createScenarioPackAppState: () => {
+        throw new Error("scenario path should not run");
+      },
+      bootstrapStartupStoryAppState: ({ appState }) => appState,
+      createStartupContentContext: () => contentContext,
+    }
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.session.contentContext, contentContext);
+  assert.equal(result.session.contentContext.packId, "pack.base");
+});
+
+test("child 28 restore scenario startup returns content-context-complete session", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+  const scenarioPack = {
+    id: "scenario.test.content-context",
+    title: "Scenario Context",
+    scenarioProfile: {
+      id: "scenario.test.content-context",
+      playerCharacterId,
+      chapterId: "chapter.prototype",
+      initialLocation: {
+        mapId: prototypeMap.id,
+        cityId: "city.kulan",
+        houseId: null,
+        view: "city",
+      },
+    },
+  };
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [scenarioPack],
+    },
+  };
+  const contentContext = {
+    packId: scenarioPack.id,
+    storyContent: {
+      eventDefinitionsById: {},
+      sceneDefinitionsById: {},
+      activityDefinitionsById: {},
+      textEntriesById: {},
+    },
+  };
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "restore",
+      selectedCharacter: prototypeCharacters[0],
+      saveData: {
+        selectedModId: scenarioPack.id,
+      },
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => activationResult,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: () => ({
+        gameState: createBaseState(),
+        characterDefinitions: prototypeCharacters,
+        playerCoordinate: { x: 0, y: 0 },
+        campaignActorState: {
+          facingDegrees: 0,
+          isMoving: false,
+        },
+        campaignTravelState: null,
+        modalState: null,
+        locationDialogueState: null,
+        beggingMiniGameState: null,
+        cityMenuState: null,
+        cityDirectoryState: null,
+        autoAdvanceState: null,
+        uiLayouts: {},
+        layoutEditor: {},
+      }),
+      createHaozhouReturnEncounterAppState: (appState) => appState,
+      createScenarioPackAppState: () => ({
+        gameState: createBaseState(),
+        characterDefinitions: prototypeCharacters,
+        playerCoordinate: { x: 0, y: 0 },
+        campaignActorState: {
+          facingDegrees: 0,
+          isMoving: false,
+        },
+        campaignTravelState: null,
+        modalState: null,
+        locationDialogueState: null,
+        beggingMiniGameState: null,
+        cityMenuState: null,
+        cityDirectoryState: null,
+        autoAdvanceState: null,
+        uiLayouts: {},
+        layoutEditor: {},
+      }),
+      bootstrapStartupStoryAppState: ({ appState }) => appState,
+      createStartupContentContext: () => contentContext,
+    }
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.session.playerCharacterId, playerCharacterId);
+  assert.equal(result.session.contentContext, contentContext);
+  assert.equal(result.session.contentContext.packId, scenarioPack.id);
+});
+
+test("child 28 startup apply consumes session content context before app state bootstrap", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "runtime",
+      "main-runtime-orchestrator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /syncActivatedContentSource\(request\.session\.activationResult\)/);
+  assert.match(
+    source,
+    /setActiveContentContext\(request\.session\.contentContext\)[\s\S]*const appState = request\.session\.createAppState\(\);/
+  );
 });
 
 test("child 24 main runtime orchestrator module exists with a narrow request/result seam", () => {

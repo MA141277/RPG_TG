@@ -1,4 +1,5 @@
 import type { AppState } from "../app-shell";
+import type { ActiveGameContentContext } from "../content/active-game-content";
 import {
   loadScenarioPackFromFiles,
   loadScenarioPackFromUrl,
@@ -49,6 +50,7 @@ export type StartupSessionRequest =
 
 export type StartupSessionBootstrap = {
   activationResult: ModActivationResult;
+  contentContext: ActiveGameContentContext;
   playerCharacterId: string;
   createAppState(): AppState;
 };
@@ -76,6 +78,9 @@ export type StartupSessionCoordinatorDeps = {
   createPrototypeAppState(playerCharacterId: string): AppState;
   createHaozhouReturnEncounterAppState(appState: AppState): AppState;
   createScenarioPackAppState(scenarioPack: ScenarioPackDefinition): AppState;
+  createStartupContentContext(
+    activationResult: ModActivationResult
+  ): ActiveGameContentContext;
   bootstrapStartupStoryAppState(input: {
     appState: AppState;
     bootstrap: StartupStoryBootstrap | null;
@@ -140,6 +145,7 @@ async function createBuiltinStartupSession(
   );
   return createStartupSessionResult({
     activationResult,
+    contentContext: deps.createStartupContentContext(activationResult),
     playerCharacterId: selectedCharacter.id,
     createAppState: createStartupAppStateBuilder(
       () =>
@@ -172,6 +178,7 @@ async function createRestoreStartupSession(
   if (isScenarioPackSource(activatedContentSource)) {
     return createStartupSessionResult({
       activationResult,
+      contentContext: deps.createStartupContentContext(activationResult),
       playerCharacterId:
         saveData?.selectedCharacterId ??
         activatedContentSource.scenarioProfile.playerCharacterId ??
@@ -188,6 +195,7 @@ async function createRestoreStartupSession(
     saveData?.selectedCharacterId ?? selectedCharacter.id;
   return createStartupSessionResult({
     activationResult,
+    contentContext: deps.createStartupContentContext(activationResult),
     playerCharacterId,
     createAppState: createStartupAppStateBuilder(
       () =>
@@ -248,6 +256,7 @@ async function createLoadedScenarioPackStartupSession(
   );
   return createStartupSessionResult({
     activationResult,
+    contentContext: deps.createStartupContentContext(activationResult),
     playerCharacterId: scenarioPack.scenarioProfile.playerCharacterId,
     createAppState: createStartupAppStateBuilder(
       () => deps.createScenarioPackAppState(scenarioPack),

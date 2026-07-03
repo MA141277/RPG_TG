@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Candidate later work; not yet queued for execution.`
-- Next Step: `Do not promote until earlier continuation children close and a fresh baseline recheck is recorded.`
-- Verification: `Not run`
-- Notes: `This child remains candidate-only under the current queue depth rule.`
+- Current Focus: `Child 28 is closed. Active content composition now flows through an explicit contentContext seam instead of shell-owned mirror synchronization in main.ts.`
+- Next Step: `Do not promote Child 29 in this batch; wait for a later explicit continuation request and baseline recheck.`
+- Verification: `Passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27|child 28".`
+- Notes: `No in-scope P0/P1 remains. Child 28 stayed narrow: startup-session-coordinator emits contentContext, main-runtime-orchestrator applies it before createAppState(), and main.ts now consumes activeContentContext without reintroducing a second registry or broadening Child 29 scope.`
 
 ## Progress Log
 
@@ -23,6 +23,22 @@
   - Summary: `Plan scaffold created from the continuation spec.`
   - Verification: `Not run as part of this doc-only change.`
   - Next: `Revisit in a later weekly review after Child 27 or equivalent startup stabilization.`
+- 2026-07-03
+  - Summary: `Baseline recheck completed after Child 27 closure and explicit continuation request. Scope remains unchanged: main.ts still owns syncActiveGameContent(), the active-definition top-level write set, and the activated-content-source write-back path used during startup session application.`
+  - Verification: `Baseline inspection only; required commands not run yet.`
+  - Next: `Start Task 1 Step 2 by adding failing active-content ownership regressions.`
+- 2026-07-03
+  - Summary: `Added Child 28 regressions first. RED confirmed the current gap: startup-session-coordinator does not yet emit contentContext, main-runtime-orchestrator still applies syncActivatedContentSource(request.session.activationResult), and main.ts still carries the central active-content mirror write set.`
+  - Verification: `npm test -- --test-name-pattern="child 23|child 27|child 28"` (expected Child 28 failures).
+  - Next: `Start Task 2 Step 1 by introducing an explicit startup/mod-owned content context seam.`
+- 2026-07-03
+  - Summary: `Moved active content ownership behind an explicit contentContext seam. startup-session-coordinator now emits contentContext, main-runtime-orchestrator applies session contentContext before createAppState(), and main.ts now consumes activeContentContext instead of synchronizing a shell-owned mirror write set.`
+  - Verification: `npm test -- --test-name-pattern="child 23|child 27|child 28"`.
+  - Next: `Run typecheck/build/lint plus the broader child regression subset, then close Child 28 if no P0/P1 remains.`
+- 2026-07-03
+  - Summary: `Completed Child 28 closeout. Full verification passed, no in-scope P0/P1 remained, and the weekly queue was synced without promoting Child 29 in the same batch.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27|child 28"`.
+  - Next: `Wait for a later explicit continuation request before baseline-rechecking Child 29.`
 
 ---
 
@@ -37,8 +53,9 @@
 
 - Recheck result: `unchanged`
 - Notes:
-  - `main.ts still centrally synchronizes active content definitions.`
-  - `This work should remain candidate-only until startup/bootstrap ownership has stabilized.`
+  - `main.ts still centrally synchronizes active content definitions through syncActiveGameContent() and the corresponding top-level active definition variables.`
+  - `main-runtime-orchestrator still depends on a syncActivatedContentSource() callback, but the actual content write-back remains shell-owned in main.ts.`
+  - `Startup/bootstrap ownership is now stabilized after Child 27 closure, so Child 28 may execute without promoting Child 29.`
 
 ## Implementation Scope
 
@@ -97,15 +114,15 @@
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
 
-- [ ] **Step 1: Record the active-content synchronization still owned by `main.ts`**
+- [x] **Step 1: Record the active-content synchronization still owned by `main.ts`**
 
 Document the central write points and the output shape they currently maintain.
 
-- [ ] **Step 2: Add or update active-content ownership regressions**
+- [x] **Step 2: Add or update active-content ownership regressions**
 
 Capture the boundary that shell should consume content context rather than own it.
 
-- [ ] **Step 3: Update plan state with the baseline result**
+- [x] **Step 3: Update plan state with the baseline result**
 
 Record the verified baseline in `Execution State` and `Progress Log`.
 
@@ -118,15 +135,15 @@ Record the verified baseline in `Execution State` and `Progress Log`.
 - Modify: `src/core/mods/mod-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Introduce or reuse an explicit content composition owner**
+- [x] **Step 1: Introduce or reuse an explicit content composition owner**
 
 Keep builtin and mod activation aligned to the same output shape.
 
-- [ ] **Step 2: Remove central active-content ownership from shell**
+- [x] **Step 2: Remove central active-content ownership from shell**
 
 `src/main.ts` should consume content context rather than writing active definitions directly.
 
-- [ ] **Step 3: Re-run the active-content regressions**
+- [x] **Step 3: Re-run the active-content regressions**
 
 Confirm builtin and mod content activation remain correct.
 
@@ -136,7 +153,7 @@ Confirm builtin and mod content activation remain correct.
 - Modify: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-03-main-shell-ownerization-continuation-weekly-orchestration-plan.md`
 
-- [ ] **Step 1: Run required verification**
+- [x] **Step 1: Run required verification**
 
 Run:
 
@@ -149,25 +166,25 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 2: Record any P0/P1 findings before closeout**
+- [x] **Step 2: Record any P0/P1 findings before closeout**
 
 Do not close the plan if unresolved `P0` or `P1` remains in scope.
 
-- [ ] **Step 3: Update weekly queue state**
+- [x] **Step 3: Update weekly queue state**
 
 Record whether Child 29 remains candidate-only or is promotable in a later cycle.
 
 ## Exit Check
 
-- [ ] `src/main.ts` no longer centrally owns active content synchronization.
-- [ ] Active content owner is explicit and documented.
-- [ ] Builtin and mod content activation converge on one output shape.
-- [ ] Weekly artifact sync is updated if boundary state changed.
-- [ ] Weekly queue state is updated.
+- [x] `src/main.ts` no longer centrally owns active content synchronization.
+- [x] Active content owner is explicit and documented.
+- [x] Builtin and mod content activation converge on one output shape.
+- [x] Weekly artifact sync is updated if boundary state changed.
+- [x] Weekly queue state is updated.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

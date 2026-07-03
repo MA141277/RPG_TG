@@ -1,4 +1,5 @@
 import type { AppState } from "../app-shell";
+import type { ActiveGameContentContext } from "../content/active-game-content";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
 import type { CharacterDefinition } from "../../domain/character";
@@ -52,9 +53,7 @@ export type MainRuntimeOrchestratorDependencies = {
     textEntriesById?: Record<string, string>;
   };
   resetMainGameRuntime(): void;
-  syncActivatedContentSource(
-    activationResult: StartupSessionBootstrap["activationResult"]
-  ): void;
+  setActiveContentContext(contentContext: ActiveGameContentContext): void;
   recreateHouseRuntime(): void;
   setGameVisibility(isVisible: boolean): void;
   hideMainUiFlow(): void;
@@ -106,7 +105,7 @@ export function createMainRuntimeOrchestrator(
     execute(request: MainRuntimeOrchestratorRequest): MainRuntimeOrchestratorResult {
       if (request.type === "apply-startup-session") {
         dependencies.resetMainGameRuntime();
-        dependencies.syncActivatedContentSource(request.session.activationResult);
+        dependencies.setActiveContentContext(request.session.contentContext);
         dependencies.setPlayerCharacterId(request.session.playerCharacterId);
         const appState = request.session.createAppState();
         const nextAppState = applyIndoorScreenStoryFollowUp({
