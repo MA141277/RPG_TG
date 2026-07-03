@@ -11,9 +11,8 @@ import {
   formatCouncilStatusText,
 } from "../time/time-progression";
 import {
-  createSundeyaRescueBattleSession,
-  startStoryBattle,
-} from "../story-battle/story-battle-runtime";
+  launchStoryBattlePlayable,
+} from "../playables/story-battle/story-battle-definition";
 import { resolveTextEntry } from "../content/text-resolution";
 
 type StoryCallbackPayload = Record<string, unknown> | undefined;
@@ -172,9 +171,10 @@ function runStartSundeyaRescueBattleCallback(
   }
 
   return {
-    state: startStoryBattle(
-      runtime.state,
-      createSundeyaRescueBattleSession({
+    state: launchStoryBattlePlayable({
+      state: runtime.state,
+      ownerId: runtime.state.scene.activeSceneId ?? "scene.unknown",
+      completion: {
         completedFlagKey,
         winFlagKey,
         battleIdVariableKey,
@@ -184,10 +184,9 @@ function runStartSundeyaRescueBattleCallback(
           runtime,
           "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
         ),
-      }, {
-        textEntriesById: runtime.textEntriesById,
-      })
-    ),
+      },
+      textEntriesById: runtime.textEntriesById,
+    }),
     characterDefinitions: runtime.characterDefinitions,
   };
 }

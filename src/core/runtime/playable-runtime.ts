@@ -43,6 +43,11 @@ import {
   settleMedicineCompoundingPlayable,
   tickMedicineCompoundingPlayable,
 } from "../../application/playables/medicine-compounding/medicine-compounding-definition";
+import {
+  dispatchStoryBattlePlayableAction,
+  exitStoryBattlePlayable,
+  launchStoryBattlePlayable,
+} from "../../application/playables/story-battle/story-battle-definition";
 import { CITY_BEGGING_DURATION_DAYS } from "../../application/minigames/city-begging-minigame";
 import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
 import {
@@ -213,6 +218,7 @@ export function runPlayableRuntime(input: {
   characterDefinitions: CharacterDefinition[];
   playerCharacterId?: string;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
+  textEntriesById?: Record<string, string> | undefined;
 }): PlayableRuntimeOutput {
   const resolvedRequest = toPlayableRuntimeRequest(input.request);
   if (resolvedRequest == null) {
@@ -290,6 +296,63 @@ export function runPlayableRuntime(input: {
       };
     }
 
+    if (resolvedRequest.launch.launch.playableId === "story-battle") {
+      const completedFlagKey =
+        resolvedRequest.launch.launch.payload?.completedFlagKey;
+      const winFlagKey = resolvedRequest.launch.launch.payload?.winFlagKey;
+      const battleIdVariableKey =
+        resolvedRequest.launch.launch.payload?.battleIdVariableKey;
+      const resultVariableKey =
+        resolvedRequest.launch.launch.payload?.resultVariableKey;
+      if (
+        typeof completedFlagKey !== "string" ||
+        typeof winFlagKey !== "string" ||
+        typeof battleIdVariableKey !== "string" ||
+        typeof resultVariableKey !== "string"
+      ) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "story-battle"),
+        };
+      }
+
+      const nextCoreState = launchStoryBattlePlayable({
+        state: input.state.core,
+        ownerId: resolvedRequest.launch.launch.ownerContext.ownerId,
+        completion: {
+          completedFlagKey,
+          winFlagKey,
+          battleIdVariableKey,
+          resultVariableKey,
+          ...(typeof resolvedRequest.launch.launch.payload?.enterHouseId ===
+          "string"
+            ? { enterHouseId: resolvedRequest.launch.launch.payload.enterHouseId }
+            : {}),
+          ...(typeof resolvedRequest.launch.launch.payload?.mainMissionText ===
+          "string"
+            ? {
+                mainMissionText:
+                  resolvedRequest.launch.launch.payload.mainMissionText,
+              }
+            : {}),
+        },
+        textEntriesById: input.textEntriesById,
+      });
+
+      const nextState = {
+        ...input.state,
+        core: nextCoreState,
+      };
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "story-battle"),
+      };
+    }
+
     return {
       state: input.state,
       effects: [],
@@ -334,6 +397,16 @@ export function runPlayableRuntime(input: {
 
     if (resolvedRequest.playableId === "medicine-compounding") {
       const nextState = exitMedicineCompoundingPlayable(input.state);
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+
+    if (resolvedRequest.playableId === "story-battle") {
+      const nextState = exitStoryBattlePlayable(input.state);
       return {
         state: nextState,
         effects: [],
@@ -634,6 +707,36 @@ export function runPlayableRuntime(input: {
     }
   }
 
+  if (resolvedRequest.playableId === "story-battle") {
+    if (
+      resolvedRequest.action === "battle-action" ||
+      resolvedRequest.action === "action"
+    ) {
+      const battleActionId = resolvedRequest.payload?.battleActionId;
+      if (typeof battleActionId !== "string") {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "story-battle"),
+        };
+      }
+
+      const result = dispatchStoryBattlePlayableAction({
+        state: input.state,
+        battleActionId,
+        textEntriesById: input.textEntriesById,
+      });
+      return {
+        state: result.state,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(result.state, "story-battle"),
+        interactive: result.interactive,
+      };
+    }
+  }
+
   return {
     state: input.state,
     effects: [],
@@ -811,6 +914,16 @@ function getActivePlayableSession(
   if (playableId === "activity-qte" && state.core.runtime.activitySession != null) {
     return createLegacyPlayableSession({
       kind: "activity-qte",
+      source: {
+        type: "scene",
+        sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      },
+    });
+  }
+
+  if (playableId === "story-battle" && state.core.storyBattle != null) {
+    return createLegacyPlayableSession({
+      kind: "story-battle",
       source: {
         type: "scene",
         sceneId: state.core.scene.activeSceneId ?? "scene.unknown",

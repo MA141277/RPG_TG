@@ -135,7 +135,11 @@ import {
   type InteractiveRuntimeOutput,
   runInteractiveRuntime,
 } from "./core/runtime/interactive-runtime";
-import { createLaunchPlayableRequest } from "./core/runtime/playable-runtime";
+import {
+  createLaunchPlayableRequest,
+  createPlayableActionRequest,
+  runPlayableRuntime,
+} from "./core/runtime/playable-runtime";
 import {
   applyRuntimeBridgeState,
   commitRuntimeRequest,
@@ -1480,17 +1484,19 @@ function chooseCurrentStoryOption(choiceId: string): void {
 function dispatchCurrentStoryBattleAction(actionId: string): void {
   const result = commitRuntimeRequest({
     state: appState,
-    request: createInteractiveActionRequest(
-      "interactive.story-battle.action",
-      { battleActionId: actionId }
-    ),
+    request: createPlayableActionRequest("story-battle", "battle-action", {
+      battleActionId: actionId,
+    }),
     context: {
       router: {
         route: ({ state, request }) =>
-          runInteractiveRuntime({
+          runPlayableRuntime({
             state,
             request,
             characterDefinitions: appState.characterDefinitions,
+            ...(currentPlayerCharacterId == null
+              ? {}
+              : { playerCharacterId: currentPlayerCharacterId }),
             textEntriesById: activeContentContext.textEntriesById,
           }),
       },

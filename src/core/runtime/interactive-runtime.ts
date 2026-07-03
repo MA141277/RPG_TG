@@ -1,8 +1,5 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
-import {
-  dispatchStoryBattleAction,
-} from "../../application/story-battle/story-battle-runtime";
 import type {
   ActiveInteractiveRuntimeSession,
   InteractiveActionRequest,
@@ -78,7 +75,11 @@ export function runInteractiveRuntime(input: {
     };
   }
 
-  if (request.kind === "activity-qte" || request.kind === "city-begging") {
+  if (
+    request.kind === "activity-qte" ||
+    request.kind === "city-begging" ||
+    request.kind === "story-battle"
+  ) {
     const playableResult = runPlayableRuntime({
       state: input.state,
       request: input.request,
@@ -89,6 +90,9 @@ export function runInteractiveRuntime(input: {
       ...(input.activityDefinitionsById == null
         ? {}
         : { activityDefinitionsById: input.activityDefinitionsById }),
+      ...(input.textEntriesById == null
+        ? {}
+        : { textEntriesById: input.textEntriesById }),
     });
 
     return {
@@ -103,7 +107,7 @@ export function runInteractiveRuntime(input: {
           : request.phase === "launch"
             ? createInteractiveSession(request)
             : getActiveInteractiveSession(playableResult.state, request.kind),
-      interactive: { type: "none" },
+      interactive: playableResult.interactive ?? { type: "none" },
     };
   }
 
@@ -122,48 +126,6 @@ export function runInteractiveRuntime(input: {
       effects: [],
       session: getActiveInteractiveSession(input.state, request.kind),
       interactive: { type: "none" },
-    };
-  }
-
-  if (
-    request.kind === "story-battle" &&
-    request.actionId === "interactive.story-battle.action"
-  ) {
-    const battleActionId = request.payload?.battleActionId;
-    if (typeof battleActionId !== "string") {
-      return {
-        state: input.state,
-        effects: [],
-        session: getActiveInteractiveSession(input.state, request.kind),
-        interactive: { type: "none" },
-      };
-    }
-
-    const result = dispatchStoryBattleAction(
-      input.state.core,
-      battleActionId,
-      {
-        textEntriesById: input.textEntriesById,
-      }
-    );
-
-    return {
-      state: {
-        ...input.state,
-        core: result.state,
-      },
-      effects: [],
-      session: getActiveInteractiveSession(
-        {
-          ...input.state,
-          core: result.state,
-        },
-        request.kind
-      ),
-      interactive:
-        result.enterHouseId == null
-          ? { type: "none" }
-          : { type: "reenter-house", houseId: result.enterHouseId },
     };
   }
 

@@ -2,6 +2,22 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-03 Child 33 Battle-Family Playable Migration
+
+### Added
+- 新增 `src/application/playables/story-battle/story-battle-definition.ts`，把 `story-battle` 的 battle-family launch、action、exit、settlement 与回返语义包进 shared playable wrapper，而不是继续让 `interactive-runtime` 直接持有 battle 业务。
+- 新增 Child 33 定向回归测试，锁定 story callback 启动 battle 时必须写入 shared `runtime.playableSession`，并要求 story-battle 结算必须通过 playable-runtime 清空该 session 且返回正确的 keep-house reentry。
+
+### Changed
+- `src/application/story/story-callbacks.ts` 现已通过 battle-family playable wrapper 启动 `story-battle`，不再直接把 `storyBattle` 会话启动逻辑当作 story callback 的本地 owner。
+- `src/core/runtime/playable-runtime.ts` 现已接管 `story-battle` 的 action/exit/settlement，并允许 battle-family completion 通过 shared runtime result 发出 `reenter-house` handoff。
+- `src/core/runtime/interactive-runtime.ts` 对 `story-battle` 已收窄为 compatibility delegation layer；legacy `interactive.story-battle.action` 仍可用，但最终 owner 已切到 playable-runtime。
+- `src/main.ts` 的 battle action dispatch 现已通过 `createPlayableActionRequest("story-battle", "battle-action")` 与 `runPlayableRuntime()` 进入 shared playable path，而不再把 `story-battle` 当成 interactive-runtime 专属业务分支。
+
+### Impact
+- 仓库现在已经完成 `activity-qte`、`city-begging`、`grain-accounting`、`medicine-compounding`、`story-battle` 五条既有 playable 路径的统一 runtime proof，并且明确保留了 `story-battle` 的 `family: "battle"` 边界。
+- 后续 playable 迁移只剩 Child 34 的 enforcement / validator / legacy closeout；battle-family 本身不再需要继续停留在 `interactive-runtime` 的直接 owner line 上。
+
 ## 2026-07-03 Child 32 House-Local Mechanic Promotion
 
 ### Added

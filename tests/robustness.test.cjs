@@ -11346,3 +11346,122 @@ test("child 32 medicine compounding settlement clears shared playable session an
   assert.equal(settledResult.sessionState?.overlay?.type, "result");
   assert.equal(settledResult.gameState.runtime.playableSession, null);
 });
+
+test("child 33 story callback launch writes shared playable session into runtime state", () => {
+  const started = runStoryCallback(
+    "story.zhu_yuanzhang.start-sundeya-rescue-battle",
+    {
+      completedFlagKey:
+        ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted,
+      winFlagKey: ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon,
+      battleIdVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
+      resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
+    },
+    {
+      state: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+    }
+  );
+
+  assert.equal(
+    started.state.runtime.playableSession?.playableId,
+    "story-battle"
+  );
+  assert.equal(
+    started.state.runtime.playableSession?.integrationId,
+    "playable.story-battle.scene.default"
+  );
+  assert.equal(started.state.runtime.playableSession?.family, "battle");
+  assert.equal(
+    started.state.runtime.playableSession?.ownerContext.ownerKind,
+    "scene"
+  );
+  assert.equal(
+    started.state.runtime.playableSession?.ownerContext.ownerId,
+    started.state.scene.activeSceneId ?? "scene.unknown"
+  );
+});
+
+test("child 33 playable runtime settlement clears shared story-battle session and emits house reentry", () => {
+  const { createPlayableActionRequest, runPlayableRuntime } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
+  );
+
+  const started = runStoryCallback(
+    "story.zhu_yuanzhang.start-sundeya-rescue-battle",
+    {
+      completedFlagKey:
+        ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted,
+      winFlagKey: ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon,
+      battleIdVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
+      resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
+    },
+    {
+      state: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+    }
+  );
+
+  assert.equal(
+    started.state.runtime.playableSession?.playableId,
+    "story-battle"
+  );
+
+  const settled = runPlayableRuntime({
+    state: createRuntimeState(started.state),
+    request: createPlayableActionRequest("story-battle", "battle-action", {
+      battleActionId: "embedded-victory",
+    }),
+    characterDefinitions: prototypeCharacters,
+  });
+
+  assert.equal(settled.handled, true);
+  assert.equal(settled.state.core.storyBattle, null);
+  assert.equal(settled.state.core.runtime.playableSession, null);
+  assert.deepEqual(settled.interactive, {
+    type: "reenter-house",
+    houseId: keepHouse.id,
+  });
+});
+
+test("child 33 interactive runtime delegates story-battle compatibility actions through playable runtime", () => {
+  const {
+    createInteractiveActionRequest,
+    runInteractiveRuntime,
+  } = require("../.test-dist/core/runtime/interactive-runtime.js");
+
+  const started = runStoryCallback(
+    "story.zhu_yuanzhang.start-sundeya-rescue-battle",
+    {
+      completedFlagKey:
+        ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted,
+      winFlagKey: ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon,
+      battleIdVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
+      resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
+    },
+    {
+      state: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+    }
+  );
+
+  assert.equal(
+    started.state.runtime.playableSession?.playableId,
+    "story-battle"
+  );
+
+  const settled = runInteractiveRuntime({
+    state: createRuntimeState(started.state),
+    request: createInteractiveActionRequest("interactive.story-battle.action", {
+      battleActionId: "embedded-victory",
+    }),
+    characterDefinitions: prototypeCharacters,
+  });
+
+  assert.equal(settled.state.core.storyBattle, null);
+  assert.equal(settled.state.core.runtime.playableSession, null);
+  assert.deepEqual(settled.interactive, {
+    type: "reenter-house",
+    houseId: keepHouse.id,
+  });
+});
