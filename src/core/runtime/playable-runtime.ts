@@ -1,3 +1,7 @@
+import type { ActivityDefinition } from "../../domain/activity";
+import type { CharacterDefinition } from "../../domain/character";
+import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
+import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
   ActivePlayableSession,
@@ -11,6 +15,22 @@ import type {
   PlayableOwnerContext,
   PlayableSettlement,
 } from "../contracts/playable-runtime";
+import type { RuntimeState } from "../contracts/runtime-state";
+import {
+  startActivityQtePlayable,
+  advanceActivityQtePlayable,
+  exitActivityQtePlayable,
+  stopActivityQtePlayable,
+} from "../../application/playables/activity-qte/activity-qte-definition";
+import {
+  completeCityBeggingPlayable,
+  exitCityBeggingPlayable,
+  launchCityBeggingPlayable,
+  tickCityBeggingPlayable,
+  updateCityBeggingPointerPlayable,
+} from "../../application/playables/city-begging/city-begging-definition";
+import { CITY_BEGGING_DURATION_DAYS } from "../../application/minigames/city-begging-minigame";
+import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
 import {
   builtinPlayableDefinitionRegistry,
   type PlayableDefinitionRegistry,
@@ -19,8 +39,15 @@ import {
   builtinPlayableIntegrationRegistry,
   type PlayableIntegrationRegistry,
 } from "../registry/playable-integration-registry";
+import { settleRuntimeEffects } from "./runtime-settlement";
 
 export const PLAYABLE_LAUNCH_EVENT_ID = "playable.launch";
+
+export type PlayableRuntimeOutput = RuntimeResult & {
+  handled: boolean;
+  session: ActivePlayableSession | null;
+  characterDefinitions?: CharacterDefinition[];
+};
 
 type LegacyPlayableKind = "activity-qte" | "city-begging" | "story-battle";
 
@@ -28,6 +55,34 @@ type LegacyInteractiveSource =
   | { type: "house"; houseId: string }
   | { type: "scene"; sceneId: string }
   | { type: "external"; id: string };
+
+type ResolvedPlayableRuntimeRequest =
+  | {
+      phase: "launch";
+      launch: PlayableLaunchResolution & { ok: true };
+    }
+  | {
+      phase: "action";
+      playableId: PlayableId;
+      action: string;
+      payload?: Record<string, unknown>;
+    }
+  | {
+      phase: "exit";
+      playableId: PlayableId;
+      payload?: Record<string, unknown>;
+    };
+
+type ParsedPlayableActionRequest =
+  | {
+      phase: "action";
+      playableId: PlayableId;
+      action: string;
+    }
+  | {
+      phase: "exit";
+      playableId: PlayableId;
+    };
 
 export function createLaunchPlayableRequest(
   playableId: PlayableId,
@@ -52,6 +107,26 @@ export function createLaunchPlayableRequest(
       ...(options.payload == null ? {} : { launchPayload: options.payload }),
     },
   };
+}
+
+export function createPlayableActionRequest(
+  playableId: PlayableId,
+  action: string,
+  payload?: Record<string, unknown>
+): RuntimeRequest {
+  return {
+    family: "action",
+    type: "action",
+    actionId: `playable.${playableId}.${action}`,
+    ...(payload == null ? {} : { payload }),
+  };
+}
+
+export function createExitPlayableRequest(
+  playableId: PlayableId,
+  payload?: Record<string, unknown>
+): RuntimeRequest {
+  return createPlayableActionRequest(playableId, "exit", payload);
 }
 
 export function resolvePlayableLaunchRequest(input: {
@@ -115,6 +190,233 @@ export function resolvePlayableLaunch(input: {
       ownerContext,
       ...(input.launch.payload == null ? {} : { payload: input.launch.payload }),
     },
+  };
+}
+
+export function runPlayableRuntime(input: {
+  state: RuntimeState;
+  request: RuntimeRequest;
+  characterDefinitions: CharacterDefinition[];
+  playerCharacterId?: string;
+  activityDefinitionsById?: Record<string, ActivityDefinition>;
+}): PlayableRuntimeOutput {
+  const resolvedRequest = toPlayableRuntimeRequest(input.request);
+  if (resolvedRequest == null) {
+    return {
+      state: input.state,
+      effects: [],
+      handled: false,
+      session: getActivePlayableSession(input.state, null),
+    };
+  }
+
+  if (resolvedRequest.phase === "launch") {
+    if (resolvedRequest.launch.launch.playableId !== "city-begging") {
+      return {
+        state: input.state,
+        effects: [],
+        handled: false,
+        session: getActivePlayableSession(
+          input.state,
+          resolvedRequest.launch.launch.playableId
+        ),
+      };
+    }
+
+    const now = resolvedRequest.launch.launch.payload?.now;
+    const nextState = launchCityBeggingPlayable({
+      state: input.state,
+      now: typeof now === "number" ? now : performance.now(),
+    });
+
+    return {
+      state: nextState,
+      effects: [],
+      handled: true,
+      session: getActivePlayableSession(nextState, "city-begging"),
+    };
+  }
+
+  if (resolvedRequest.phase === "exit") {
+    if (resolvedRequest.playableId === "activity-qte") {
+      const nextState = exitActivityQtePlayable(input.state);
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+
+    if (resolvedRequest.playableId === "city-begging") {
+      const nextState = exitCityBeggingPlayable(input.state);
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+
+    return {
+      state: input.state,
+      effects: [],
+      handled: false,
+      session: getActivePlayableSession(input.state, resolvedRequest.playableId),
+    };
+  }
+
+  if (resolvedRequest.playableId === "activity-qte") {
+    if (resolvedRequest.action === "tick") {
+      const nextState = advanceActivityQtePlayable(input.state);
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "activity-qte"),
+      };
+    }
+
+    if (resolvedRequest.action === "stop") {
+      const session = input.state.core.runtime.activitySession;
+      const activityId = session?.type === "qte-bar" ? session.activityId : null;
+      const activityDefinition =
+        activityId == null
+          ? null
+          : input.activityDefinitionsById?.[activityId] ?? null;
+
+      if (activityDefinition == null) {
+        return {
+          state: exitActivityQtePlayable(input.state),
+          effects: [],
+          handled: true,
+          session: null,
+        };
+      }
+
+      const completion = stopActivityQtePlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(completion.state, "activity-qte"),
+      };
+    }
+  }
+
+  if (resolvedRequest.playableId === "city-begging") {
+    if (resolvedRequest.action === "pointer") {
+      const pointerX = resolvedRequest.payload?.pointerX;
+      if (typeof pointerX !== "number") {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "city-begging"),
+        };
+      }
+
+      const nextState = updateCityBeggingPointerPlayable({
+        state: input.state,
+        pointerX,
+      });
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "city-begging"),
+      };
+    }
+
+    if (resolvedRequest.action === "tick") {
+      const now = resolvedRequest.payload?.now;
+      if (typeof now !== "number") {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "city-begging"),
+        };
+      }
+
+      const nextState = tickCityBeggingPlayable({
+        state: input.state,
+        now,
+      });
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "city-begging"),
+      };
+    }
+
+    if (resolvedRequest.action === "complete") {
+      const result = resolvedRequest.payload?.result;
+      if (
+        input.playerCharacterId == null ||
+        result == null ||
+        typeof result !== "object"
+      ) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "city-begging"),
+        };
+      }
+
+      const completion = completeCityBeggingPlayable({
+        state: input.state,
+        playerCharacterId: input.playerCharacterId,
+        characterDefinitions: input.characterDefinitions,
+        result: result as CityBeggingGameCompletionResult,
+      });
+      const settledState = settleRuntimeEffects({
+        state: completion.state,
+        effects: [
+          {
+            type: "advanceTime",
+            days:
+              convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS) === 0
+                ? 0
+                : CITY_BEGGING_DURATION_DAYS,
+          },
+        ],
+        emittedBy: "interactive-runtime",
+        appliedBy: "runtime-settlement",
+      }).state;
+
+      return {
+        state: {
+          ...settledState,
+          core: {
+            ...settledState.core,
+            runtime: {
+              ...settledState.core.runtime,
+              playableSession: null,
+            },
+          },
+        },
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+  }
+
+  return {
+    state: input.state,
+    effects: [],
+    handled: false,
+    session: getActivePlayableSession(input.state, resolvedRequest.playableId),
   };
 }
 
@@ -186,6 +488,115 @@ export function createPlayableSettlementShell(input: {
     },
     effects: input.effects ?? [],
   };
+}
+
+function toPlayableRuntimeRequest(
+  request: RuntimeRequest
+): ResolvedPlayableRuntimeRequest | null {
+  if (request.type === "external") {
+    const launch = resolvePlayableLaunchRequest({ request });
+    if (launch == null || !launch.ok) {
+      return null;
+    }
+
+    return {
+      phase: "launch",
+      launch,
+    };
+  }
+
+  if (request.type !== "action") {
+    return null;
+  }
+
+  const playableAction = parsePlayableActionRequest(request.actionId);
+  if (playableAction != null) {
+    return {
+      ...playableAction,
+      ...(request.payload == null ? {} : { payload: request.payload }),
+    };
+  }
+
+  const legacyDefinition = builtinPlayableDefinitionRegistry.matchActionId(
+    request.actionId
+  );
+  if (legacyDefinition == null) {
+    return null;
+  }
+
+  const action = request.actionId.slice(legacyDefinition.commandPrefix.length);
+  if (action === "exit") {
+    return {
+      phase: "exit",
+      playableId: legacyDefinition.id,
+      ...(request.payload == null ? {} : { payload: request.payload }),
+    };
+  }
+
+  return {
+    phase: "action",
+    playableId: legacyDefinition.id,
+    action,
+    ...(request.payload == null ? {} : { payload: request.payload }),
+  };
+}
+
+function parsePlayableActionRequest(
+  actionId: string
+): ParsedPlayableActionRequest | null {
+  const match = /^playable\.([^.]+)\.(.+)$/.exec(actionId);
+  if (match == null) {
+    return null;
+  }
+
+  const playableId = match[1] as PlayableId;
+  const action = match[2];
+  if (action == null) {
+    return null;
+  }
+  if (action === "exit") {
+    return {
+      phase: "exit",
+      playableId,
+    };
+  }
+
+  return {
+    phase: "action",
+    playableId,
+    action,
+  };
+}
+
+function getActivePlayableSession(
+  state: RuntimeState,
+  playableId: PlayableId | null
+): ActivePlayableSession | null {
+  const current = state.core.runtime.playableSession;
+  if (current != null) {
+    if (playableId == null || current.playableId === playableId) {
+      return current;
+    }
+  }
+
+  if (playableId === "city-begging" && state.app.beggingMiniGameState != null) {
+    return createLegacyPlayableSession({
+      kind: "city-begging",
+      source: { type: "external", id: "interactive.city-begging.launch" },
+    });
+  }
+
+  if (playableId === "activity-qte" && state.core.runtime.activitySession != null) {
+    return createLegacyPlayableSession({
+      kind: "activity-qte",
+      source: {
+        type: "scene",
+        sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      },
+    });
+  }
+
+  return playableId == null ? current ?? null : null;
 }
 
 function toPlayableLaunchInput(request: RuntimeRequest): PlayableLaunchInput | null {

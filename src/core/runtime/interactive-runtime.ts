@@ -1,20 +1,5 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
-import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
-import {
-  advanceActivityQteMarker,
-  stopActivityQte,
-} from "../../application/activity/activity-qte-runtime";
-import {
-  convertHouseActivityDaysToSegments,
-} from "../../application/house/house-activity-costs";
-import {
-  applyCityBeggingMiniGameCompletion,
-  createCityBeggingMiniGameState,
-  CITY_BEGGING_DURATION_DAYS,
-  setCityBeggingMiniGamePointer,
-  updateCityBeggingMiniGameState,
-} from "../../application/minigames/city-begging-minigame";
 import {
   dispatchStoryBattleAction,
 } from "../../application/story-battle/story-battle-runtime";
@@ -30,9 +15,9 @@ import type { RuntimeState } from "../contracts/runtime-state";
 import {
   createLegacyPlayableSession,
   resolvePlayableLaunchRequest,
+  runPlayableRuntime,
 } from "./playable-runtime";
 import { builtinPlayableDefinitionRegistry } from "../registry/playable-definition-registry";
-import { settleRuntimeEffects } from "./runtime-settlement";
 
 export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
   characterDefinitions?: CharacterDefinition[];
@@ -84,29 +69,40 @@ export function runInteractiveRuntime(input: {
 }): InteractiveRuntimeOutput {
   const request = toInteractiveRuntimeRequest(input.request);
 
-  if (request?.phase === "launch" && request.kind === "city-begging") {
-    const now = request.payload?.now;
-    return {
-      state: {
-        ...input.state,
-        app: {
-          ...input.state.app,
-          beggingMiniGameState: createCityBeggingMiniGameState(
-            typeof now === "number" ? now : performance.now()
-          ),
-        },
-      },
-      effects: [],
-      session: createInteractiveSession(request),
-      interactive: { type: "none" },
-    };
-  }
-
   if (request == null) {
     return {
       state: input.state,
       effects: [],
       session: getActiveInteractiveSession(input.state, null),
+      interactive: { type: "none" },
+    };
+  }
+
+  if (request.kind === "activity-qte" || request.kind === "city-begging") {
+    const playableResult = runPlayableRuntime({
+      state: input.state,
+      request: input.request,
+      characterDefinitions: input.characterDefinitions,
+      ...(input.playerCharacterId == null
+        ? {}
+        : { playerCharacterId: input.playerCharacterId }),
+      ...(input.activityDefinitionsById == null
+        ? {}
+        : { activityDefinitionsById: input.activityDefinitionsById }),
+    });
+
+    return {
+      state: playableResult.state,
+      ...(playableResult.characterDefinitions == null
+        ? {}
+        : { characterDefinitions: playableResult.characterDefinitions }),
+      effects: playableResult.effects,
+      session:
+        playableResult.session == null
+          ? null
+          : request.phase === "launch"
+            ? createInteractiveSession(request)
+            : getActiveInteractiveSession(playableResult.state, request.kind),
       interactive: { type: "none" },
     };
   }
@@ -125,173 +121,6 @@ export function runInteractiveRuntime(input: {
       state: input.state,
       effects: [],
       session: getActiveInteractiveSession(input.state, request.kind),
-      interactive: { type: "none" },
-    };
-  }
-
-  if (request.kind === "city-begging" && request.actionId === "interactive.city-begging.pointer") {
-    const currentState = input.state.app.beggingMiniGameState;
-    const pointerX = request.payload?.pointerX;
-    if (currentState == null || typeof pointerX !== "number") {
-      return {
-        state: input.state,
-        effects: [],
-        session: getActiveInteractiveSession(input.state, request.kind),
-        interactive: { type: "none" },
-      };
-    }
-
-    return {
-      state: {
-        ...input.state,
-        app: {
-          ...input.state.app,
-          beggingMiniGameState: setCityBeggingMiniGamePointer(
-            currentState,
-            pointerX
-          ),
-        },
-      },
-      effects: [],
-      session: getActiveInteractiveSession(input.state, request.kind),
-      interactive: { type: "none" },
-    };
-  }
-
-  if (request.kind === "city-begging" && request.actionId === "interactive.city-begging.tick") {
-    const currentState = input.state.app.beggingMiniGameState;
-    const now = request.payload?.now;
-    if (currentState == null || typeof now !== "number") {
-      return {
-        state: input.state,
-        effects: [],
-        session: getActiveInteractiveSession(input.state, request.kind),
-        interactive: { type: "none" },
-      };
-    }
-
-    return {
-      state: {
-        ...input.state,
-        app: {
-          ...input.state.app,
-          beggingMiniGameState: updateCityBeggingMiniGameState(currentState, now),
-        },
-      },
-      effects: [],
-      session: getActiveInteractiveSession(input.state, request.kind),
-      interactive: { type: "none" },
-    };
-  }
-
-  if (
-    request.kind === "city-begging" &&
-    request.actionId === "interactive.city-begging.complete"
-  ) {
-    const result = request.payload?.result;
-    if (
-      input.playerCharacterId == null ||
-      result == null ||
-      typeof result !== "object"
-    ) {
-      return {
-        state: input.state,
-        effects: [],
-        session: getActiveInteractiveSession(input.state, request.kind),
-        interactive: { type: "none" },
-      };
-    }
-
-    const completion = applyCityBeggingMiniGameCompletion(
-      input.state.core,
-      input.characterDefinitions,
-      input.playerCharacterId,
-      result as CityBeggingGameCompletionResult
-    );
-    const settledState = settleRuntimeEffects({
-      state: {
-        ...input.state,
-        core: completion.state,
-        app: {
-          ...input.state.app,
-          beggingMiniGameState: null,
-        },
-      },
-      effects: [
-        {
-          type: "advanceTime",
-          days:
-            convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS) === 0
-              ? 0
-              : CITY_BEGGING_DURATION_DAYS,
-        },
-      ],
-      emittedBy: "interactive-runtime",
-      appliedBy: "runtime-settlement",
-    }).state;
-
-    return {
-      state: settledState,
-      characterDefinitions: completion.characterDefinitions,
-      effects: [],
-      session: null,
-      interactive: { type: "none" },
-    };
-  }
-
-  if (request.kind === "activity-qte" && request.actionId === "interactive.activity-qte.tick") {
-    return {
-      state: {
-        ...input.state,
-        core: advanceActivityQteMarker(input.state.core),
-      },
-      effects: [],
-      session: getActiveInteractiveSession(input.state, request.kind),
-      interactive: { type: "none" },
-    };
-  }
-
-  if (request.kind === "activity-qte" && request.actionId === "interactive.activity-qte.stop") {
-    const session = input.state.core.runtime.activitySession;
-    const activityId =
-      session?.type === "qte-bar" ? session.activityId : null;
-    const activityDefinition =
-      activityId == null
-        ? null
-        : input.activityDefinitionsById?.[activityId] ?? null;
-
-    if (activityDefinition == null) {
-      return {
-        state: {
-          ...input.state,
-          core: {
-            ...input.state.core,
-            runtime: {
-              ...input.state.core.runtime,
-              activitySession: null,
-            },
-          },
-        },
-        effects: [],
-        session: null,
-        interactive: { type: "none" },
-      };
-    }
-
-    const completion = stopActivityQte(
-      input.state.core,
-      activityDefinition,
-      input.characterDefinitions
-    );
-
-    return {
-      state: {
-        ...input.state,
-        core: completion.state,
-      },
-      characterDefinitions: completion.characterDefinitions,
-      effects: [],
-      session: null,
       interactive: { type: "none" },
     };
   }

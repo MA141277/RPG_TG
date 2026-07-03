@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Pre-authored future child only. This child remains locked until Child 30 closes and proves the playable runtime skeleton.`
-- Next Step: `Run a fresh baseline recheck after Child 30 closeout and confirm that activity-qte and city-begging are still the safest first concrete migrations.`
-- Verification: `Not run as part of this doc-only change`
-- Notes: `Child 31 should preserve current user-visible behavior and should not absorb grain-accounting, medicine-compounding, or story-battle migration.`
+- Current Focus: `Child 31 is closed. Activity-qte and city-begging now resolve through playable-runtime-owned lifecycle handlers while interactive-runtime remains only as a compatibility adapter for covered action ids.`
+- Next Step: `Run a fresh baseline recheck for Child 32 before promoting house-local mechanic migration.`
+- Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+- Notes: `Child 31 preserved user-visible behavior, did not absorb grain-accounting / medicine-compounding / story-battle, and kept city-begging variant behavior internal. A separate city-begging presenter adapter was not required because the existing view already consumed the preserved feature-local state shape.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Plan created from the unified playable runtime contract spec and candidate queue. Child 31 remains non-executable until Child 30 closes with no unresolved P0/P1 in scope.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Recheck interactive-runtime-covered playable paths after Child 30 closes.`
+- 2026-07-03
+  - Summary: `Completed Child 31 after a fresh baseline recheck. Added a shared playableSession carrier, wrapped activity-qte and city-begging in playable-definition state handlers, routed covered state mutation and settlement through playable-runtime, and reduced interactive-runtime to a compatibility delegation layer for these two playables.`
+  - Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+  - Next: `Keep Child 32 non-executable until a fresh baseline recheck promotes the house-local mechanic migration.`
 
 ---
 
@@ -37,9 +41,10 @@
 
 ## Baseline Recheck
 
-- Recheck result: `unchanged`
+- Recheck result: `narrowed`
 - Notes:
   - `The current covered short-form playables are activity-qte and city-begging under src/core/runtime/interactive-runtime.ts.`
+  - `Child 30 already moved city-begging launch onto playableId-based launch normalization, so Child 31 no longer needed to reopen that specific launch seam.`
   - `City-begging already has dedicated domain/application/view files and internal variants, so it is a meaningful proof of the shared minigame-family contract.`
   - `This child should leave story-battle to the later battle-family child.`
 
@@ -65,24 +70,16 @@
 
 ### Existing files to modify
 
-- `src/main.ts`
-  - Narrow concrete `interactive.activity-qte.*` and `interactive.city-begging.*` launch/result ownership after migration.
-- `src/core/contracts/interactive-runtime.ts`
-  - Keep transitional identifiers aligned while the new playable runtime takes over covered paths.
 - `src/core/runtime/interactive-runtime.ts`
   - Remove or reduce concrete activity-qte and city-begging ownership once the shared playable runtime owns those paths.
-- `src/application/activity/activity-qte-runtime.ts`
-  - Reuse mechanism logic under a new playable definition rather than as a direct runtime owner.
-- `src/application/minigames/city-begging-minigame.ts`
-  - Reuse mechanism logic under a new playable definition.
-- `src/application/minigames/city-begging-village-catching.ts`
-  - Preserve internal variant behavior.
-- `src/application/minigames/city-begging-granary-escort.ts`
-  - Preserve internal variant behavior.
-- `src/ui/views/minigames/city-begging-minigame-view.ts`
-  - Keep feature-specific rendering while consuming the shared presenter path.
-- `src/application/app-shell.ts`
-  - Align overlay/session carriers if the shared playable session replaces direct app-local minigame state.
+- `src/application/activity/activity-runner.ts`
+  - Start generic QTE through the playable definition wrapper so launch ownership is no longer a direct local session write.
+- `src/domain/game-state.ts`
+  - Carry one shared runtime-owned playableSession alongside preserved mechanism-local carriers.
+- `src/application/state/create-initial-state.ts`
+  - Initialize the shared runtime-owned playableSession carrier.
+- `src/core/runtime/playable-runtime.ts`
+  - Own the shared launch/session/action/settlement flow for covered short-form playables.
 - `tests/robustness.test.cjs`
   - Add migration parity regressions for activity-qte and city-begging.
 - `docs/change-log.md`
@@ -103,8 +100,6 @@
   - Playable-definition wrapper around the existing QTE mechanism.
 - `src/application/playables/city-begging/city-begging-definition.ts`
   - Playable-definition wrapper around city-begging lifecycle and result facts.
-- `src/application/playables/city-begging/city-begging-presenter.ts`
-  - Shared presenter mapping if city-begging needs a thin adapter to the new shell.
 
 ## Verification Plan
 
@@ -121,14 +116,14 @@
 **Files:**
 - Modify: `docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md`
 - Read: `src/core/runtime/interactive-runtime.ts`
-- Read: `src/application/activity/activity-qte-runtime.ts`
-- Read: `src/application/minigames/city-begging-minigame.ts`
+- Read: `src/application/activity/activity-runner.ts`
+- Read: `src/core/runtime/playable-runtime.ts`
 
-- [ ] **Step 1: Reconfirm that activity-qte and city-begging are still the next safest migration targets**
+- [x] **Step 1: Reconfirm that activity-qte and city-begging are still the next safest migration targets**
 
 Lock the child boundary after Child 30 closes.
 
-- [ ] **Step 2: Record any narrowed residue**
+- [x] **Step 2: Record any narrowed residue**
 
 If Child 30 already moved some compatibility logic, update this plan before execution.
 
@@ -136,15 +131,17 @@ If Child 30 already moved some compatibility logic, update this plan before exec
 
 **Files:**
 - Create: `src/application/playables/activity-qte/activity-qte-definition.ts`
-- Modify: `src/application/activity/activity-qte-runtime.ts`
+- Modify: `src/application/activity/activity-runner.ts`
+- Modify: `src/application/state/create-initial-state.ts`
+- Modify: `src/domain/game-state.ts`
+- Modify: `src/core/runtime/playable-runtime.ts`
 - Modify: `src/core/runtime/interactive-runtime.ts`
-- Modify: `src/main.ts`
 
-- [ ] **Step 1: Wrap activity-qte mechanism logic in one playable definition**
+- [x] **Step 1: Wrap activity-qte mechanism logic in one playable definition**
 
 Move launch/session/result ownership to the shared playable runtime while reusing the existing QTE mechanism.
 
-- [ ] **Step 2: Keep current closeout behavior compatible**
+- [x] **Step 2: Keep current closeout behavior compatible**
 
 Preserve the covered completion and return flow through the new settlement/handoff path.
 
@@ -152,19 +149,16 @@ Preserve the covered completion and return flow through the new settlement/hando
 
 **Files:**
 - Create: `src/application/playables/city-begging/city-begging-definition.ts`
-- Create: `src/application/playables/city-begging/city-begging-presenter.ts`
-- Modify: `src/application/minigames/city-begging-minigame.ts`
-- Modify: `src/application/minigames/city-begging-village-catching.ts`
-- Modify: `src/application/minigames/city-begging-granary-escort.ts`
-- Modify: `src/ui/views/minigames/city-begging-minigame-view.ts`
+- Modify: `src/application/state/create-initial-state.ts`
+- Modify: `src/domain/game-state.ts`
+- Modify: `src/core/runtime/playable-runtime.ts`
 - Modify: `src/core/runtime/interactive-runtime.ts`
-- Modify: `src/main.ts`
 
-- [ ] **Step 1: Wrap city-begging lifecycle in one playable definition**
+- [x] **Step 1: Wrap city-begging lifecycle in one playable definition**
 
 Preserve its internal variants as playable-local detail rather than new top-level runtime families.
 
-- [ ] **Step 2: Move presentation and result reporting through the shared playable shell**
+- [x] **Step 2: Move presentation and result reporting through the shared playable shell**
 
 Keep the city-begging-specific UI while shifting lifecycle ownership to the new runtime.
 
@@ -174,11 +168,11 @@ Keep the city-begging-specific UI while shifting lifecycle ownership to the new 
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Add red-to-green parity regressions**
+- [x] **Step 1: Add red-to-green parity regressions**
 
 Prove the covered QTE and city-begging flows now resolve through the playable runtime while preserving expected behavior.
 
-- [ ] **Step 2: Run the required verification commands**
+- [x] **Step 2: Run the required verification commands**
 
 Run:
 
@@ -195,15 +189,15 @@ Expected:
 
 ## Exit Check
 
-- [ ] `activity-qte` is owned by the shared playable runtime.
-- [ ] `city-begging` is owned by the shared playable runtime.
-- [ ] Variant behavior remains internal to `city-begging`.
-- [ ] Covered return behavior remains correct.
-- [ ] Shared docs are updated if boundaries changed.
+- [x] `activity-qte` is owned by the shared playable runtime.
+- [x] `city-begging` is owned by the shared playable runtime.
+- [x] Variant behavior remains internal to `city-begging`.
+- [x] Covered return behavior remains correct.
+- [x] Shared docs are updated if boundaries changed.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

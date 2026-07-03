@@ -4,7 +4,7 @@
 
 **Goal:** Drive the phased playable-runtime migration queue from the Child 30 skeleton into later covered/house-local/battle/enforcement children without appending this problem type back into the old `main-shell-ownerization` weekly set.
 
-**Architecture:** The playable-runtime migration remains a separate problem type from the prior `src/main.ts` shell-ownerization queue. It stays split across multiple children so contract skeleton work, short-form covered migration, house-local promotion, battle-family migration, and enforcement closeout do not collapse into one oversized execution batch. Child 30 is now the completed first implementation proof, while Child 31 and later children remain gated by fresh baseline rechecks and explicit promotion.
+**Architecture:** The playable-runtime migration remains a separate problem type from the prior `src/main.ts` shell-ownerization queue. It stays split across multiple children so contract skeleton work, short-form covered migration, house-local promotion, battle-family migration, and enforcement closeout do not collapse into one oversized execution batch. Child 30 and Child 31 are now completed implementation proofs, while Child 32 and later children remain gated by fresh baseline rechecks and explicit promotion.
 
 **Tech Stack:** Markdown governance docs, repository playable spec, plan governance spec, later TypeScript runtime/application/ui/content work, `npm run lint:plans`, child-plan verification commands after promotion.
 
@@ -12,10 +12,10 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-03`
-- Current Focus: `Child 30 is completed and the queue remains open. Child 31 is now the next promotion candidate, while Child 32-34 stay outside the visible executable queue.`
-- Next Step: `Run a fresh baseline recheck and promotion decision for Child 31. Do not open Child 32-34 in the same work batch.`
+- Current Focus: `Child 30 and Child 31 are completed. Child 32 is now the next promotion candidate, Child 33 is the locked follow-up, and Child 34 remains candidate-only.`
+- Next Step: `Run a fresh baseline recheck and promotion decision for Child 32. Do not open Child 34 in the same work batch as Child 32 promotion.`
 - Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
-- Notes: `The prior main-shell continuation weekly set is closed. This queue is now live, but only Child 30 has executed so far.`
+- Notes: `The prior main-shell continuation weekly set is closed. This queue is now live; Child 30 and Child 31 are complete, while Child 32 remains gated behind a fresh baseline recheck and explicit promotion.`
 
 ## Progress Log
 
@@ -35,6 +35,10 @@
   - Summary: `The blocking weekly set is now closed, so Child 30 was baseline-rechecked, promoted, and completed. The repository now has a shared playable contract family, builtin playable definition/integration registries, a launch-normalization runtime seam, and interactive-runtime compatibility wiring. Concrete covered playable migration remains deferred to Child 31.`
   - Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
   - Next: `Keep Child 31 non-executable until a fresh baseline recheck explicitly promotes it.`
+- 2026-07-03
+  - Summary: `Child 31 was baseline-rechecked, promoted, and completed. Activity-qte and city-begging now run through playable-runtime-owned lifecycle handlers with a shared playableSession carrier, while interactive-runtime remains only as a compatibility adapter for covered action ids.`
+  - Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+  - Next: `Keep Child 32 non-executable until a fresh baseline recheck explicitly promotes it.`
 
 ---
 
@@ -55,7 +59,7 @@
 - Notes:
   - `The playable-runtime spec is approved and now includes integrationId, trigger-evaluation ownership, owner-session recovery, and validator/scaffold/CI enforcement boundaries.`
   - `Current repository playable-like surfaces remain split across interactive-runtime-owned covered paths, house-local mechanisms, and battle-adjacent flow ownership, so the problem still exists as a real migration queue.`
-  - `That baseline justified promoting Child 30 once the prior weekly set closed; Child 31 still requires its own fresh recheck before promotion.`
+  - `That original baseline justified promoting Child 30 once the prior weekly set closed. After Child 31 closeout, the next allowed promotion point is Child 32 and it still requires its own fresh recheck.`
 
 ## Weekly Scope
 
@@ -91,42 +95,37 @@ Status meaning:
 
 ### Slot 1: Active / Most Recent Child
 
-- Child: `Child 30 - Playable Runtime Skeleton And Integration Registry`
-- Plan: `docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md`
+- Child: `Child 31 - Covered Interactive Playables Migration`
+- Plan: `docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md`
 - Queue status: `completed`
-- Primary boundary: `Installed the shared playable contract family, builtin definition/integration registries, and launch-normalization runtime seam without migrating concrete playable reducers into the same child.`
-- Depends on: `Fresh baseline recheck after the prior weekly set closed.`
-- Resume point: `History only. Do not reopen Child 30 for concrete covered migration that belongs to Child 31.`
+- Primary boundary: `Migrated activity-qte and city-begging onto playable-runtime-owned lifecycle handlers while preserving user-visible behavior and keeping story-battle out of scope.`
+- Depends on: `Fresh baseline recheck after Child 30 closeout.`
+- Resume point: `History only. Do not reopen Child 31 for house-local mechanics or battle-family migration that belong to later children.`
 
 ### Slot 2: Queued Child
 
-- `Child 31 - Covered Interactive Playables Migration`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md`
+- `Child 32 - House-Local Mechanic Promotion`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-32-house-local-mechanic-promotion-plan.md`
   - Planned boundary:
-    - migrate `activity-qte`
-    - migrate `city-begging`
-    - preserve covered user-visible behavior while moving launch/session/presenter/result/settlement onto the Child 30 skeleton
-  - Promotion rule: `Promote only after a fresh Child 31 baseline recheck confirms unchanged or narrowed scope with no unresolved P0/P1 inherited from Child 30.`
+    - promote `grain-accounting`
+    - promote `medicine-compounding`
+    - move house-local lifecycle/overlay settlement onto the proven playable shell without flattening them into direct house branches again
+  - Promotion rule: `Promote only after a fresh Child 32 baseline recheck confirms unchanged or narrowed scope with no unresolved P0/P1 inherited from Child 31.`
   - Queue state: `queued; non-executable until explicit promotion`
 
 ### Slot 3: Locked Child
 
-- Child: `None currently`
-- Queue status: `empty by rule`
-- Primary boundary: `Do not open Child 32-34 into the visible queue in the same batch that opened and closed Child 30.`
-- Depends on: `Separate weekly governance decision after Child 31 baseline recheck/promotion sequence.`
-- Resume point: `Keep Child 32-34 candidate-only until Child 31 is promoted or a later review explicitly changes queue depth.`
+- Child: `Child 33 - Battle-Family Playable Migration`
+- Plan: `docs/superpowers/plans/2026-07-03-child-33-battle-family-playable-migration-plan.md`
+- Queue status: `locked`
+- Primary boundary: `Move story-battle only after both the shared skeleton and the covered minigame-family migrations are already proven.`
+- Depends on: `Child 32 closes with no unresolved P0/P1 in playable-runtime scope.`
+- Resume point: `Keep Child 33 non-executable until Child 32 closes and a fresh Child 33 baseline recheck confirms unchanged or narrowed scope.`
 
 ## Candidate Later Work
 
 These remain candidate-only and are not executable in the current queue phase:
 
-- `Child 32 - House-Local Mechanic Promotion`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-32-house-local-mechanic-promotion-plan.md`
-  - promote `grain-accounting` and `medicine-compounding` from house-local mechanisms to full playable definitions
-- `Child 33 - Battle-Family Playable Migration`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-33-battle-family-playable-migration-plan.md`
-  - migrate `story-battle` into the unified playable registry/runtime while preserving `family: "battle"` semantics
 - `Child 34 - Enforcement And Legacy Path Closeout`
   - Plan: `docs/superpowers/plans/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-plan.md`
   - add scaffold/validator/CI enforcement, tighten regression coverage, and delete proven-obsolete direct launch/result branches
@@ -150,17 +149,17 @@ Required phase intent:
 
 ## Promotion Rule
 
-When this queue is eventually opened for execution:
+For each future promotion inside this queue:
 
-1. confirm the currently active weekly set is closed
-2. run a fresh baseline recheck against the latest code and docs
-3. record one result for Child 30:
+1. confirm the currently active child is closed and no other weekly set owns the execution slot
+2. run a fresh baseline recheck against the latest code and docs for the next queued child
+3. record one result for that child:
    - `unchanged`
    - `narrowed`
    - `superseded`
-4. only if Child 30 is `unchanged` or `narrowed` may it be promoted to `active`
-5. only after Child 30 closes may Child 31 become the next visible executable child
-6. do not promote Child 32, Child 33, or Child 34 into the visible queue in the same batch that opens Child 30
+4. only if the child is `unchanged` or `narrowed` may it be promoted to `active`
+5. only after the active child closes may the next recorded queued child become the new promotion candidate
+6. do not promote deeper locked or candidate-only children into the visible queue in the same batch that promotes the next queued child
 
 If any child becomes `superseded`, do not auto-create a replacement child in the same work batch.
 
@@ -184,11 +183,14 @@ This weekly set may be marked `completed` only when:
 - [x] The plan explicitly forbids appending these children into the currently active weekly set
 - [x] Child 30 was promoted only after the prior weekly set closed and a fresh baseline recheck stayed unchanged
 - [x] Child 30 completed without auto-promoting Child 32-34 into the visible queue
+- [x] Child 31 was promoted only after Child 30 closeout and a fresh baseline recheck narrowed the remaining scope
+- [x] Child 31 completed without auto-opening Child 34 into the visible queue
 
 ## Verification Policy
 
 - This weekly plan is a governance artifact; runtime/type/test/build verification is recorded on the promoted child plan that executed.
 - Child 30 verification has passed: `npm run typecheck`, `npm test`, `npm run build`, and `npm run lint:plans`.
+- Child 31 verification has passed: `npm run typecheck`, `npm test`, `npm run build`, and `npm run lint:plans`.
 - Future promoted children must record their own verification without treating Child 30 results as a blanket waiver.
 
 ## Task 1: Record And Govern The Queue Opening Through Child 30

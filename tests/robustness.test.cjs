@@ -11054,3 +11054,131 @@ test("child 30 interactive runtime can launch covered playable sessions through 
   assert.equal(result.session?.playable.ownerContext.ownerKind, "external");
   assert.equal(result.state.app.beggingMiniGameState?.variantId, "village-catching");
 });
+
+test("child 31 activity qte launch writes shared playable session into runtime state", () => {
+  const activityDefinition = {
+    id: "activity.test.child31",
+    label: "Child 31 Activity",
+    handlerId: "generic.qte",
+    qte: {
+      totalRounds: 1,
+      requiredSuccesses: 1,
+    },
+  };
+  const eventDefinition = {
+    id: "event.test.child31.activity",
+    chapterId: "chapter.prototype",
+    name: "Child 31 activity event",
+    occurrence: "repeatable",
+    trigger: { timing: "manual" },
+    conditions: [],
+    entrySceneId: "scene.test.child31.activity",
+  };
+  const sceneDefinitionsById = {
+    "scene.test.child31.activity": {
+      id: "scene.test.child31.activity",
+      name: "Child 31 activity scene",
+      actions: [
+        {
+          type: "start-activity",
+          activityId: activityDefinition.id,
+        },
+      ],
+    },
+  };
+
+  const result = runSceneUntilPause(startEvent(createBaseState(), eventDefinition), {
+    sceneDefinitionsById,
+    eventDefinitionsById: {
+      [eventDefinition.id]: eventDefinition,
+    },
+    activityDefinitionsById: {
+      [activityDefinition.id]: activityDefinition,
+    },
+    characterDefinitions: prototypeCharacters,
+  });
+
+  assert.equal(result.state.runtime.playableSession?.playableId, "activity-qte");
+  assert.equal(
+    result.state.runtime.playableSession?.integrationId,
+    "playable.activity-qte.scene.default"
+  );
+  assert.equal(result.state.runtime.playableSession?.ownerContext.ownerKind, "scene");
+});
+
+test("child 31 playable runtime closes activity qte through shared playable session exit", () => {
+  const {
+    createExitPlayableRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const {
+    startActivityQtePlayable,
+  } = require(
+    "../.test-dist/application/playables/activity-qte/activity-qte-definition.js"
+  );
+
+  const activityDefinition = {
+    id: "activity.test.child31.exit",
+    label: "Child 31 Exit Activity",
+    handlerId: "generic.qte",
+    qte: {
+      totalRounds: 1,
+      requiredSuccesses: 1,
+    },
+  };
+  const runtimeState = startActivityQtePlayable({
+    state: createRuntimeState(),
+    activityDefinition,
+    handlerId: "generic.qte",
+  });
+
+  const result = runPlayableRuntime({
+    state: runtimeState,
+    request: createExitPlayableRequest("activity-qte"),
+    characterDefinitions: prototypeCharacters,
+  });
+
+  assert.equal(result.handled, true);
+  assert.equal(result.state.core.runtime.playableSession, null);
+  assert.equal(result.state.core.runtime.activitySession, null);
+});
+
+test("child 31 city-begging completion clears shared playable session after settlement", () => {
+  const { runPlayableRuntime, createLaunchPlayableRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
+  );
+  const { createInteractiveActionRequest } = require(
+    "../.test-dist/core/runtime/interactive-runtime.js"
+  );
+
+  const launched = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { now: 789 },
+    }),
+    characterDefinitions: prototypeCharacters,
+  });
+
+  assert.equal(
+    launched.state.core.runtime.playableSession?.playableId,
+    "city-begging"
+  );
+
+  const completed = runPlayableRuntime({
+    state: launched.state,
+    request: createInteractiveActionRequest("interactive.city-begging.complete", {
+      result: {
+        foodGain: 3,
+        goldGain: 2,
+        maxCombo: 4,
+        success: true,
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  assert.equal(completed.handled, true);
+  assert.equal(completed.state.core.runtime.playableSession, null);
+  assert.equal(completed.state.app.beggingMiniGameState, null);
+});

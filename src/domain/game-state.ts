@@ -13,6 +13,7 @@ import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
 import type { TaskRuntimeState } from "../core/contracts/task-runtime";
+import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
 
 export type ViewName =
   | "map"
@@ -69,6 +70,7 @@ export type GameState = {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
     tasks: TaskRuntimeState;
+    playableSession: ActivePlayableSession | null;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
     cityMarkets: Record<CityId, CityMarketData>;
     activitySession: ActiveActivitySession;

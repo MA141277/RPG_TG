@@ -89,6 +89,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       flags: {},
       variables: {},
       tasks: createInitialTaskRuntimeState(),
+      playableSession: null,
       cityNpcPools: {},
       cityMarkets: {},
       activitySession: null,

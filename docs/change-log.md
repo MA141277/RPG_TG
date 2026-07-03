@@ -2,6 +2,22 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-03 Child 31 Covered Interactive Playables Migration
+
+### Added
+- 新增 `src/application/playables/activity-qte/activity-qte-definition.ts` 与 `src/application/playables/city-begging/city-begging-definition.ts`，把 `activity-qte` 与 `city-begging` 的 launch/session/result state handler 正式包进 shared playable definition wrapper。
+- 在 `src/domain/game-state.ts` 与 `src/application/state/create-initial-state.ts` 增加 shared `runtime.playableSession` carrier，作为 playable-runtime 拥有的统一 active session write-back 路径。
+- 新增 Child 31 定向回归测试，锁定 covered activity-qte launch、activity-qte closeout、以及 city-begging settlement 都必须经过 shared playable session 和 playable-runtime lifecycle。
+
+### Changed
+- `src/application/activity/activity-runner.ts` 现在通过 playable definition wrapper 启动 generic activity QTE，不再直接把 concrete activity session 写进旧路径。
+- `src/core/runtime/playable-runtime.ts` 现已接管 `activity-qte` 与 `city-begging` 的 covered lifecycle mutation、action dispatch、exit closeout 与 city-begging settlement。
+- `src/core/runtime/interactive-runtime.ts` 对 `activity-qte` 和 `city-begging` 已收窄为 compatibility delegation layer；`story-battle` 仍保持原边界，等待后续 battle-family child 处理。
+
+### Impact
+- 仓库现在已经证明 shared playable runtime 不只是 launch skeleton，而是能真实承接短流程 minigame-family 的 session ownership、action routing 与 settlement write-back。
+- `grain-accounting`、`medicine-compounding` 与 `story-battle` 仍未被这轮吞并；后续必须分别按 Child 32 和 Child 33 的边界推进，而不是回头继续扩大 Child 31。
+
 ## 2026-07-03 Child 30 Playable Runtime Skeleton And Integration Registry
 
 ### Added
