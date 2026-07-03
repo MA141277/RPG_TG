@@ -2,6 +2,24 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-03 Child 30 Playable Runtime Skeleton And Integration Registry
+
+### Added
+- 新增 `src/core/contracts/playable-runtime.ts`，正式定义 `playableId / integrationId / ownerContext / launch / session / settlement` 这一组共享 playable skeleton contract。
+- 新增 `src/core/registry/playable-definition-registry.ts` 与 `src/core/registry/playable-integration-registry.ts`，提供 builtin playable definition registry 和 scenario-owned integration-instance registry 的第一版安装面。
+- 新增 `src/core/runtime/playable-runtime.ts`，提供 `createLaunchPlayableRequest()`、`resolvePlayableLaunchRequest()`、legacy compatibility session shell，以及统一的 launch normalization seam。
+- 新增 Child 30 定向回归测试，锁定 playable contract、definition registry、integration ambiguity fail-closed 规则，以及 `interactive-runtime` 可以通过新的 playable launch seam 启动 covered session。
+
+### Changed
+- `src/core/contracts/interactive-runtime.ts` 现已为 active interactive session 补入 `playable` session shell，并要求 launch request 携带经过规范化的 `playableLaunch`。
+- `src/core/runtime/interactive-runtime.ts` 不再只靠硬编码 launch/action branch 识别 covered playables；external launch 现在先经过 playable launch normalization，再回到当前兼容路径执行具体 city-begging/activity/story-battle 行为。
+- `src/main.ts` 已把 city-begging 的启动入口从 concrete `interactive.city-begging.launch` 字符串收窄到 `createLaunchPlayableRequest("city-begging")`，为后续 Child 31 的 covered playable migration 提前建立 playableId-based intake。
+
+### Impact
+- 仓库现在第一次具备了统一 playable runtime 的真实代码骨架，而不再只有文档约束；后续 Child 31-34 可以在这条 skeleton 上继续迁移 covered playables、house-local mechanics 和 `story-battle`。
+- 这轮仍然保持 compatibility-first：具体 reducer/presenter/settlement 逻辑还没有迁到 definition-driven playable modules，避免 Child 30 在同一批里膨胀成全量迁移。
+- 后续若要继续推进 playable runtime，必须先对 Child 31 做 fresh baseline recheck，再显式 promotion，不能直接跳到 Child 32-34 或把 concrete migration 重新塞回 Child 30。
+
 ## 2026-07-03 Child 24 Main Runtime Orchestration Ownerization
 
 ### Added

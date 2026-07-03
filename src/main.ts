@@ -135,6 +135,7 @@ import {
   type InteractiveRuntimeOutput,
   runInteractiveRuntime,
 } from "./core/runtime/interactive-runtime";
+import { createLaunchPlayableRequest } from "./core/runtime/playable-runtime";
 import {
   applyRuntimeBridgeState,
   commitRuntimeRequest,
@@ -1150,10 +1151,9 @@ function openBeggingMiniGame(): void {
   };
   appState = commitRuntimeRequest({
     state: launchState,
-    request: createLaunchInteractiveRequest(
-      "interactive.city-begging.launch",
-      { now: performance.now() }
-    ),
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { now: performance.now() },
+    }),
     context: {
       router: {
         route: ({ state, request }) =>

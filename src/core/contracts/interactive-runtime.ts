@@ -1,4 +1,5 @@
 import type { RuntimeResult } from "./runtime-result";
+import type { ActivePlayableSession, PlayableLaunchRequest } from "./playable-runtime";
 
 export type InteractiveRuntimeKind =
   | "activity-qte"
@@ -14,6 +15,7 @@ export type ActiveInteractiveRuntimeSession = {
   kind: InteractiveRuntimeKind;
   sessionId: string;
   source: InteractiveRuntimeSource;
+  playable: ActivePlayableSession;
 };
 
 export type LaunchInteractiveRequest = {
@@ -21,6 +23,7 @@ export type LaunchInteractiveRequest = {
   kind: InteractiveRuntimeKind;
   interactiveId: string;
   source: InteractiveRuntimeSource;
+  playableLaunch: PlayableLaunchRequest;
   payload?: Record<string, unknown>;
 };
 

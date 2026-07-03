@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Pre-authored future child only. This child remains non-executable until the current active weekly set closes and the playable-runtime queue formally promotes Child 30.`
-- Next Step: `Run a fresh baseline recheck against interactive-runtime, main.ts launch paths, and the approved playable spec before any promotion decision.`
-- Verification: `Not run as part of this doc-only change`
-- Notes: `Child 30 owns the runtime skeleton only. It must not absorb concrete activity-qte/city-begging migration, house-local mechanic promotion, or battle-family migration in the same batch.`
+- Current Focus: `Child 30 is closed. The shared playable contract/registry/runtime skeleton now exists in code while concrete playable migration remains deferred to later children.`
+- Next Step: `Run a fresh baseline recheck for Child 31 before promoting covered playable migration onto the new skeleton.`
+- Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+- Notes: `Child 30 stayed inside skeleton scope. It did not migrate activity-qte/city-begging behavior, promote house-local mechanics, or move story-battle onto definition-driven reducers in the same batch.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Plan created from the unified playable runtime contract spec. Child 30 remains non-executable until the fresh playable-runtime weekly set promotes it after the current active weekly set closes.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Recheck current interactive-runtime and launch ownership before promotion.`
+- 2026-07-03
+  - Summary: `Completed the Child 30 baseline recheck and implementation batch. Added shared playable contracts, builtin playable definition/integration registries, a launch-normalization runtime seam, and interactive-runtime compatibility wiring so covered launch paths can resolve to one integrationId without migrating every playable in the same child. Narrowed main.ts by switching city-begging launch onto playableId-based launch creation while preserving legacy interactive action paths.`
+  - Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+  - Next: `Keep Child 31 non-executable until a fresh baseline recheck promotes covered playable migration onto the new skeleton.`
 
 ---
 
@@ -39,8 +43,8 @@
 
 - Recheck result: `unchanged`
 - Notes:
-  - `The current repository still routes activity-qte, city-begging, and story-battle through src/core/runtime/interactive-runtime.ts rather than one definition-driven playable runtime.`
-  - `main.ts still knows concrete interactive action ids and launch paths, so Child 30 needs a shared runtime skeleton before later children can shrink those branches safely.`
+  - `At promotion time, the current repository still routed activity-qte, city-begging, and story-battle through src/core/runtime/interactive-runtime.ts rather than one definition-driven playable runtime.`
+  - `main.ts still knew concrete interactive action ids and launch paths, so Child 30 needed a shared runtime skeleton before later children could shrink those branches safely.`
   - `House-local accounting and compounding flows remain out of scope for this child.`
 
 ## Implementation Scope
@@ -121,11 +125,11 @@
 - Read: `src/core/contracts/interactive-runtime.ts`
 - Read: `docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md`
 
-- [ ] **Step 1: Recheck the current covered launch/dispatch/return seams**
+- [x] **Step 1: Recheck the current covered launch/dispatch/return seams**
 
 Record the current `activity-qte`, `city-begging`, and `story-battle` launch and result ownership before implementing the new skeleton.
 
-- [ ] **Step 2: Lock the child boundary after baseline recheck**
+- [x] **Step 2: Lock the child boundary after baseline recheck**
 
 Confirm that Child 30 owns only the shared skeleton and not concrete playable migration.
 
@@ -137,15 +141,15 @@ Confirm that Child 30 owns only the shared skeleton and not concrete playable mi
 - Create: `src/core/registry/playable-integration-registry.ts`
 - Modify: `src/domain/game-state.ts`
 
-- [ ] **Step 1: Add the shared playable contract family**
+- [x] **Step 1: Add the shared playable contract family**
 
 Define `PlayableId`, `PlayableFamily`, `PlayableIntegrationId`, owner context, session, command, fact-result, outcome config, and settlement types in one shared contract surface.
 
-- [ ] **Step 2: Add the playable definition registry**
+- [x] **Step 2: Add the playable definition registry**
 
 Install one framework-owned lookup seam for reusable playable mechanics.
 
-- [ ] **Step 3: Add the integration-instance registry**
+- [x] **Step 3: Add the integration-instance registry**
 
 Install one framework-owned lookup seam for scenario-owned `integrationId` records with owner defaults, trigger config, and outcome config.
 
@@ -156,15 +160,15 @@ Install one framework-owned lookup seam for scenario-owned `integrationId` recor
 - Modify: `src/main.ts`
 - Modify: `src/core/runtime/interactive-runtime.ts`
 
-- [ ] **Step 1: Add a shared launch normalization seam**
+- [x] **Step 1: Add a shared launch normalization seam**
 
 Normalize external launch requests to exactly one `integrationId` before session creation.
 
-- [ ] **Step 2: Add the shared runtime session/present/settle ownership seam**
+- [x] **Step 2: Add the shared runtime session/present/settle ownership seam**
 
 Create a runtime entry that can own lifecycle state without requiring all legacy playables to migrate immediately.
 
-- [ ] **Step 3: Preserve compatibility with current interactive-runtime-owned paths**
+- [x] **Step 3: Preserve compatibility with current interactive-runtime-owned paths**
 
 Do not remove or break current covered behavior in this child.
 
@@ -175,15 +179,15 @@ Do not remove or break current covered behavior in this child.
 - Modify: `docs/change-log.md`
 - Modify: `docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md` if implementation reveals a shared contract drift
 
-- [ ] **Step 1: Add red-to-green contract regressions**
+- [x] **Step 1: Add red-to-green contract regressions**
 
 Prove the playable runtime skeleton, registries, and integration normalization seams exist and are wired through one shared owner path.
 
-- [ ] **Step 2: Sync shared artifacts if the implemented skeleton changes shared boundaries**
+- [x] **Step 2: Sync shared artifacts if the implemented skeleton changes shared boundaries**
 
 Update the spec and change log before closeout if the runtime shape moves.
 
-- [ ] **Step 3: Run the required verification commands**
+- [x] **Step 3: Run the required verification commands**
 
 Run:
 
@@ -200,16 +204,16 @@ Expected:
 
 ## Exit Check
 
-- [ ] One shared playable contract family exists.
-- [ ] One playable definition registry exists.
-- [ ] One playable integration-instance registry exists.
-- [ ] The runtime can normalize launch to one `integrationId`.
-- [ ] Current production behavior remains compatible for later migration children.
-- [ ] Shared docs are updated if boundaries changed.
+- [x] One shared playable contract family exists.
+- [x] One playable definition registry exists.
+- [x] One playable integration-instance registry exists.
+- [x] The runtime can normalize launch to one `integrationId`.
+- [x] Current production behavior remains compatible for later migration children.
+- [x] Shared docs are updated if boundaries changed.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

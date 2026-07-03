@@ -235,6 +235,22 @@ function createBaseState() {
   });
 }
 
+function createRuntimeState(coreState = createBaseState()) {
+  return {
+    core: coreState,
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    },
+    view: {},
+  };
+}
+
 function addTestDays(date, days) {
   const currentNumber = date.year * 360 + (date.month - 1) * 30 + date.day;
   const nextNumber = currentNumber + days;
@@ -10879,4 +10895,162 @@ test("main.ts does not add new feature-specific state sync branches after state 
 
   assert.doesNotMatch(source, /function createInteractiveRuntimeState/);
   assert.doesNotMatch(source, /function applyInteractiveRuntimeState/);
+});
+
+test("child 30 playable runtime contract exports unified playable launch session and settlement seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/playable-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type PlayableFamily = "minigame" \| "battle"/);
+  assert.match(source, /export type PlayableDefinition = \{/);
+  assert.match(source, /export type PlayableIntegrationDefinition = \{/);
+  assert.match(source, /export type PlayableLaunchRequest = \{/);
+  assert.match(source, /export type ActivePlayableSession = \{/);
+  assert.match(source, /export type PlayableSettlement = \{/);
+});
+
+test("child 30 playable definition registry installs covered interactive playables with family boundaries", () => {
+  const {
+    builtinPlayableDefinitionRegistry,
+  } = require("../.test-dist/core/registry/playable-definition-registry.js");
+
+  assert.equal(
+    builtinPlayableDefinitionRegistry.get("activity-qte")?.family,
+    "minigame"
+  );
+  assert.equal(
+    builtinPlayableDefinitionRegistry.get("city-begging")?.family,
+    "minigame"
+  );
+  assert.equal(
+    builtinPlayableDefinitionRegistry.get("story-battle")?.family,
+    "battle"
+  );
+  assert.equal(
+    builtinPlayableDefinitionRegistry.matchActionId(
+      "interactive.story-battle.action"
+    )?.id,
+    "story-battle"
+  );
+});
+
+test("child 30 playable launch normalization resolves city-begging by playable id to one integration id", () => {
+  const {
+    createLaunchPlayableRequest,
+    resolvePlayableLaunchRequest,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+
+  const resolution = resolvePlayableLaunchRequest({
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { now: 123 },
+    }),
+  });
+
+  assert.equal(resolution?.ok, true);
+  if (resolution == null || !resolution.ok) {
+    return;
+  }
+
+  assert.equal(
+    resolution.launch.integrationId,
+    "playable.city-begging.external.default"
+  );
+  assert.equal(resolution.launch.family, "minigame");
+  assert.equal(resolution.launch.ownerContext.ownerKind, "external");
+  assert.equal(resolution.launch.ownerContext.returnPolicy, "close-only");
+  assert.deepEqual(resolution.launch.payload, { now: 123 });
+});
+
+test("child 30 playable launch normalization fails closed for ambiguous integrations", () => {
+  const {
+    createPlayableDefinitionRegistry,
+  } = require("../.test-dist/core/registry/playable-definition-registry.js");
+  const {
+    createPlayableIntegrationRegistry,
+  } = require("../.test-dist/core/registry/playable-integration-registry.js");
+  const { resolvePlayableLaunch } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
+  );
+
+  const definitions = createPlayableDefinitionRegistry([
+    {
+      id: "playable.test.ambiguous",
+      family: "minigame",
+      commandPrefix: "interactive.test.ambiguous.",
+    },
+  ]);
+  const integrations = createPlayableIntegrationRegistry([
+    {
+      integrationId: "playable.test.ambiguous.one",
+      playableId: "playable.test.ambiguous",
+      ownerDefaults: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+      trigger: {
+        triggerId: "trigger.test.ambiguous.one",
+        ownerKind: "external",
+        trigger: "manual-launch",
+      },
+      outcomeConfig: {},
+    },
+    {
+      integrationId: "playable.test.ambiguous.two",
+      playableId: "playable.test.ambiguous",
+      ownerDefaults: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+      trigger: {
+        triggerId: "trigger.test.ambiguous.two",
+        ownerKind: "external",
+        trigger: "manual-launch",
+      },
+      outcomeConfig: {},
+    },
+  ]);
+
+  const resolution = resolvePlayableLaunch({
+    launch: {
+      playableId: "playable.test.ambiguous",
+    },
+    definitions,
+    integrations,
+  });
+
+  assert.equal(resolution.ok, false);
+  if (resolution.ok) {
+    return;
+  }
+  assert.equal(resolution.code, "ambiguous-integration");
+});
+
+test("child 30 interactive runtime can launch covered playable sessions through playable runtime normalization", () => {
+  const { runInteractiveRuntime } = require(
+    "../.test-dist/core/runtime/interactive-runtime.js"
+  );
+  const { createLaunchPlayableRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
+  );
+
+  const result = runInteractiveRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { now: 456 },
+    }),
+    characterDefinitions: prototypeCharacters,
+  });
+
+  assert.equal(result.session?.kind, "city-begging");
+  assert.equal(
+    result.session?.playable.integrationId,
+    "playable.city-begging.external.default"
+  );
+  assert.equal(result.session?.playable.family, "minigame");
+  assert.equal(result.session?.playable.ownerContext.ownerKind, "external");
+  assert.equal(result.state.app.beggingMiniGameState?.variantId, "village-catching");
 });

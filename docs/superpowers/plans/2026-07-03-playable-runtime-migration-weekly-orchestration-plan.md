@@ -2,20 +2,20 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute any promoted child task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Pre-author a fresh weekly-set candidate queue for unified playable runtime migration without appending a new executable child into the currently active `main-shell-ownerization` weekly set.
+**Goal:** Drive the phased playable-runtime migration queue from the Child 30 skeleton into later covered/house-local/battle/enforcement children without appending this problem type back into the old `main-shell-ownerization` weekly set.
 
-**Architecture:** This is a different problem type from the current `src/main.ts` shell-ownerization queue. The playable runtime migration must therefore exist as its own fresh weekly orchestration candidate, with no active executable child yet, and with the migration split across multiple children so contract skeleton work, short-form migration, house-local promotion, battle-family migration, and enforcement closeout do not collapse into one oversized execution batch.
+**Architecture:** The playable-runtime migration remains a separate problem type from the prior `src/main.ts` shell-ownerization queue. It stays split across multiple children so contract skeleton work, short-form covered migration, house-local promotion, battle-family migration, and enforcement closeout do not collapse into one oversized execution batch. Child 30 is now the completed first implementation proof, while Child 31 and later children remain gated by fresh baseline rechecks and explicit promotion.
 
 **Tech Stack:** Markdown governance docs, repository playable spec, plan governance spec, later TypeScript runtime/application/ui/content work, `npm run lint:plans`, child-plan verification commands after promotion.
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `in-progress`
 - Last Updated: `2026-07-03`
-- Current Focus: `Candidate-only queue authoring. No playable-runtime child is executable while the current main-shell continuation weekly set still has an active child.`
-- Next Step: `Wait for the current active weekly set to close, then run a fresh baseline recheck and promote Child 30 only if the playable-runtime scope remains unchanged or narrowed.`
-- Verification: `npm run lint:plans`
-- Notes: `This file records the next problem-type queue only. It must not be treated as authorization to start playable-runtime implementation before the current active weekly set closes.`
+- Current Focus: `Child 30 is completed and the queue remains open. Child 31 is now the next promotion candidate, while Child 32-34 stay outside the visible executable queue.`
+- Next Step: `Run a fresh baseline recheck and promotion decision for Child 31. Do not open Child 32-34 in the same work batch.`
+- Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+- Notes: `The prior main-shell continuation weekly set is closed. This queue is now live, but only Child 30 has executed so far.`
 
 ## Progress Log
 
@@ -31,6 +31,10 @@
   - Summary: `Pre-authored Child 30 through Child 34 as independent future plan files and linked them into the candidate queue without promoting any of them into active execution. The queue remains non-executable while the current main-shell continuation weekly set is still active.`
   - Verification: `npm run lint:plans`
   - Next: `Keep all playable-runtime children non-executable until the current active weekly set closes and Child 30 receives a fresh baseline recheck.`
+- 2026-07-03
+  - Summary: `The blocking weekly set is now closed, so Child 30 was baseline-rechecked, promoted, and completed. The repository now has a shared playable contract family, builtin playable definition/integration registries, a launch-normalization runtime seam, and interactive-runtime compatibility wiring. Concrete covered playable migration remains deferred to Child 31.`
+  - Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+  - Next: `Keep Child 31 non-executable until a fresh baseline recheck explicitly promotes it.`
 
 ---
 
@@ -51,7 +55,7 @@
 - Notes:
   - `The playable-runtime spec is approved and now includes integrationId, trigger-evaluation ownership, owner-session recovery, and validator/scaffold/CI enforcement boundaries.`
   - `Current repository playable-like surfaces remain split across interactive-runtime-owned covered paths, house-local mechanisms, and battle-adjacent flow ownership, so the problem still exists as a real migration queue.`
-  - `This queue remains candidate-only because Child 27 is still the active executable child in the current weekly set.`
+  - `That baseline justified promoting Child 30 once the prior weekly set closed; Child 31 still requires its own fresh recheck before promotion.`
 
 ## Weekly Scope
 
@@ -85,27 +89,16 @@ Status meaning:
 - `candidate-only`: named future work that is not yet visible queue depth
 - `completed`: closed inside this set and kept only as history
 
-### Slot 1: Active Child
+### Slot 1: Active / Most Recent Child
 
-- Child: `None currently`
-- Queue status: `queued`
-- Primary boundary: `No playable-runtime child is active yet because the current active execution slot is still owned by the 2026-07-03 main-shell continuation weekly set.`
-- Depends on: `Current active weekly set closes with no unresolved P0/P1 that block later queue opening.`
-- Resume point: `Promote Child 30 only after a fresh baseline recheck confirms unchanged or narrowed scope.`
+- Child: `Child 30 - Playable Runtime Skeleton And Integration Registry`
+- Plan: `docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md`
+- Queue status: `completed`
+- Primary boundary: `Installed the shared playable contract family, builtin definition/integration registries, and launch-normalization runtime seam without migrating concrete playable reducers into the same child.`
+- Depends on: `Fresh baseline recheck after the prior weekly set closed.`
+- Resume point: `History only. Do not reopen Child 30 for concrete covered migration that belongs to Child 31.`
 
 ### Slot 2: Queued Child
-
-- `Child 30 - Playable Runtime Skeleton And Integration Registry`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md`
-  - Planned boundary:
-    - install one unified playable definition registry
-    - install one integration-instance identity seam centered on `integrationId`
-    - normalize launch/session/settlement/handoff contracts through the playable runtime shell
-    - add the minimum trigger-evaluation seam and validation seam needed for later migrations
-  - Promotion rule: `Promote only after the current active weekly set closes and this child baseline recheck records unchanged or narrowed scope.`
-  - Queue state: `queued; non-executable until fresh weekly promotion`
-
-### Slot 3: Locked Child
 
 - `Child 31 - Covered Interactive Playables Migration`
   - Plan: `docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md`
@@ -113,8 +106,16 @@ Status meaning:
     - migrate `activity-qte`
     - migrate `city-begging`
     - preserve covered user-visible behavior while moving launch/session/presenter/result/settlement onto the Child 30 skeleton
-  - Promotion rule: `Promote only after Child 30 closes with no unresolved P0/P1 in playable-runtime scope.`
-  - Queue state: `locked; non-executable until Child 30 closes`
+  - Promotion rule: `Promote only after a fresh Child 31 baseline recheck confirms unchanged or narrowed scope with no unresolved P0/P1 inherited from Child 30.`
+  - Queue state: `queued; non-executable until explicit promotion`
+
+### Slot 3: Locked Child
+
+- Child: `None currently`
+- Queue status: `empty by rule`
+- Primary boundary: `Do not open Child 32-34 into the visible queue in the same batch that opened and closed Child 30.`
+- Depends on: `Separate weekly governance decision after Child 31 baseline recheck/promotion sequence.`
+- Resume point: `Keep Child 32-34 candidate-only until Child 31 is promoted or a later review explicitly changes queue depth.`
 
 ## Candidate Later Work
 
@@ -181,14 +182,16 @@ This weekly set may be marked `completed` only when:
 - [x] Later candidate-only children are recorded without becoming executable
 - [x] Child 30 through Child 34 have independent future plan files
 - [x] The plan explicitly forbids appending these children into the currently active weekly set
+- [x] Child 30 was promoted only after the prior weekly set closed and a fresh baseline recheck stayed unchanged
+- [x] Child 30 completed without auto-promoting Child 32-34 into the visible queue
 
 ## Verification Policy
 
-- This candidate-only weekly plan is a doc-only governance artifact for now.
-- Required runtime/type/test/build verification belongs to the child plan that is eventually promoted.
-- This file should at minimum pass `npm run lint:plans`.
+- This weekly plan is a governance artifact; runtime/type/test/build verification is recorded on the promoted child plan that executed.
+- Child 30 verification has passed: `npm run typecheck`, `npm test`, `npm run build`, and `npm run lint:plans`.
+- Future promoted children must record their own verification without treating Child 30 results as a blanket waiver.
 
-## Task 1: Record The Candidate Queue Without Opening Execution
+## Task 1: Record And Govern The Queue Opening Through Child 30
 
 **Files:**
 - Modify: `docs/superpowers/plans/2026-07-03-playable-runtime-migration-weekly-orchestration-plan.md`
@@ -223,8 +226,8 @@ Expected:
 
 - [x] The playable-runtime queue exists as a fresh weekly-set candidate rather than a new child appended into the wrong active set.
 - [x] The migration is explicitly phased across multiple children.
-- [x] No playable-runtime child is accidentally marked executable yet.
-- [x] The next legal promotion point is explicit.
+- [x] Child 30 was promoted only after the blocking weekly set closed and a fresh baseline recheck stayed unchanged.
+- [x] The next legal promotion point after Child 30 is explicit.
 
 ## Completion Checklist
 

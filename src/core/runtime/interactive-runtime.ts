@@ -27,6 +27,11 @@ import type {
 } from "../contracts/interactive-runtime";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
+import {
+  createLegacyPlayableSession,
+  resolvePlayableLaunchRequest,
+} from "./playable-runtime";
+import { builtinPlayableDefinitionRegistry } from "../registry/playable-definition-registry";
 import { settleRuntimeEffects } from "./runtime-settlement";
 
 export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
@@ -345,16 +350,20 @@ export function toInteractiveRuntimeRequest(
   request: RuntimeRequest
 ): InteractiveRuntimeRequest | null {
   if (request.type === "external") {
-    const launchKind = resolveLaunchKind(request.eventId);
-    if (launchKind == null) {
+    const launch = resolvePlayableLaunchRequest({ request });
+    if (launch == null || !launch.ok) {
+      if (launch == null) {
+        return null;
+      }
       return null;
     }
 
     return {
       phase: "launch",
-      kind: launchKind,
+      kind: resolveLaunchKind(launch.definition.legacyInteractiveKind),
       interactiveId: request.eventId,
       source: { type: "external", id: request.eventId },
+      playableLaunch: launch.launch,
       ...(request.payload == null ? {} : { payload: request.payload }),
     };
   }
@@ -388,25 +397,30 @@ export function toInteractiveRuntimeRequest(
 }
 
 function resolveLaunchKind(
-  interactiveId: string
-): InteractiveRuntimeKind | null {
-  if (interactiveId === "interactive.city-begging.launch") {
-    return "city-begging";
-  }
-
-  return null;
-}
-
-function resolveActionKind(actionId: string): InteractiveRuntimeKind | null {
-  if (actionId.startsWith("interactive.activity-qte.")) {
+  interactiveKind: string | undefined
+): InteractiveRuntimeKind {
+  if (interactiveKind === "activity-qte") {
     return "activity-qte";
   }
 
-  if (actionId.startsWith("interactive.city-begging.")) {
+  if (interactiveKind === "story-battle") {
+    return "story-battle";
+  }
+
+  return "city-begging";
+}
+
+function resolveActionKind(actionId: string): InteractiveRuntimeKind | null {
+  const definition = builtinPlayableDefinitionRegistry.matchActionId(actionId);
+  if (definition?.legacyInteractiveKind === "activity-qte") {
+    return "activity-qte";
+  }
+
+  if (definition?.legacyInteractiveKind === "city-begging") {
     return "city-begging";
   }
 
-  if (actionId.startsWith("interactive.story-battle.")) {
+  if (definition?.legacyInteractiveKind === "story-battle") {
     return "story-battle";
   }
 
@@ -420,6 +434,14 @@ function createInteractiveSession(
     kind: request.kind,
     sessionId: createInteractiveSessionId(request.kind),
     source: request.source,
+    playable: {
+      sessionId: `playable.${request.playableLaunch.playableId}`,
+      playableId: request.playableLaunch.playableId,
+      integrationId: request.playableLaunch.integrationId,
+      family: request.playableLaunch.family,
+      ownerContext: request.playableLaunch.ownerContext,
+      status: "active",
+    },
   };
 }
 
@@ -432,31 +454,82 @@ function getActiveInteractiveSession(
   kind: InteractiveRuntimeKind | null
 ): ActiveInteractiveRuntimeSession | null {
   if (kind === "city-begging" && state.app.beggingMiniGameState != null) {
+    const source = {
+      type: "external" as const,
+      id: "interactive.city-begging.launch",
+    };
     return {
       kind,
       sessionId: createInteractiveSessionId(kind),
-      source: { type: "external", id: "interactive.city-begging.launch" },
+      source,
+      playable: createLegacyPlayableSession({
+        kind,
+        source,
+      }) ?? {
+        sessionId: "playable.city-begging",
+        playableId: "city-begging",
+        integrationId: "playable.city-begging.external.default",
+        family: "minigame",
+        ownerContext: {
+          ownerKind: "external",
+          ownerId: null,
+          returnPolicy: "close-only",
+        },
+        status: "active",
+      },
     };
   }
 
   if (kind === "activity-qte" && state.core.runtime.activitySession?.type === "qte-bar") {
+    const source = {
+      type: "scene" as const,
+      sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+    };
     return {
       kind,
       sessionId: createInteractiveSessionId(kind),
-      source: {
-        type: "scene",
-        sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      source,
+      playable: createLegacyPlayableSession({
+        kind,
+        source,
+      }) ?? {
+        sessionId: "playable.activity-qte",
+        playableId: "activity-qte",
+        integrationId: "playable.activity-qte.scene.default",
+        family: "minigame",
+        ownerContext: {
+          ownerKind: "scene",
+          ownerId: source.sceneId,
+          returnPolicy: "resume-owner",
+        },
+        status: "active",
       },
     };
   }
 
   if (kind === "story-battle" && state.core.storyBattle != null) {
+    const source = {
+      type: "scene" as const,
+      sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+    };
     return {
       kind,
       sessionId: createInteractiveSessionId(kind),
-      source: {
-        type: "scene",
-        sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      source,
+      playable: createLegacyPlayableSession({
+        kind,
+        source,
+      }) ?? {
+        sessionId: "playable.story-battle",
+        playableId: "story-battle",
+        integrationId: "playable.story-battle.scene.default",
+        family: "battle",
+        ownerContext: {
+          ownerKind: "scene",
+          ownerId: source.sceneId,
+          returnPolicy: "reenter-owner",
+        },
+        status: "active",
       },
     };
   }
