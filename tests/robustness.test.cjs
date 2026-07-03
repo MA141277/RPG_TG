@@ -8565,13 +8565,14 @@ test("main.ts no longer imports application house-runtime directly for productio
   assert.match(mainSource, /legacy-house-adapter|core\/runtime\/house-runtime/);
 });
 
-test("interactive runtime exports launch and action seams", () => {
+test("interactive runtime exports action and runtime seams", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
     "utf8"
   );
 
-  assert.match(source, /createLaunchInteractiveRequest/);
+  assert.match(source, /createInteractiveActionRequest/);
+  assert.match(source, /createExitInteractiveRequest/);
   assert.match(source, /runInteractiveRuntime/);
 });
 
@@ -11464,4 +11465,233 @@ test("child 33 interactive runtime delegates story-battle compatibility actions 
     type: "reenter-house",
     houseId: keepHouse.id,
   });
+});
+
+test("child 34 package scripts expose playable scaffold and validation entry points", () => {
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+  );
+
+  assert.equal(
+    packageJson.scripts["scaffold:playable"],
+    "node tools/scaffold-playable.mjs"
+  );
+  assert.equal(
+    packageJson.scripts["scaffold:playable-integration"],
+    "node tools/scaffold-playable-integration.mjs"
+  );
+  assert.equal(
+    packageJson.scripts["validate:playables"],
+    "node tools/validate-playables.mjs"
+  );
+});
+
+test("child 34 playable scaffold writes canonical mechanic and integration artifacts", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-playable-scaffold-")
+  );
+
+  const playableResult = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-playable.mjs"),
+      "--playable-id",
+      "test-playable",
+      "--family",
+      "minigame",
+      "--title",
+      "Test Playable",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(playableResult.status, 0, playableResult.stderr);
+
+  const integrationResult = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-playable-integration.mjs"),
+      "--integration-id",
+      "playable.test-playable.scene.default",
+      "--playable-id",
+      "test-playable",
+      "--owner-kind",
+      "scene",
+      "--owner-id",
+      "scene.test-playable",
+      "--return-policy",
+      "resume-owner",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(integrationResult.status, 0, integrationResult.stderr);
+
+  const mechanicArtifactPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "playables",
+    "test-playable.playable.json"
+  );
+  const integrationArtifactPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "playable-integrations",
+    "playable.test-playable.scene.default.integration.json"
+  );
+
+  assert.equal(fs.existsSync(mechanicArtifactPath), true);
+  assert.equal(fs.existsSync(integrationArtifactPath), true);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        outputRoot,
+        "src",
+        "application",
+        "playables",
+        "test-playable",
+        "test-playable-definition.ts"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(outputRoot, "src", "domain", "playables", "test-playable.ts")
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        outputRoot,
+        "src",
+        "ui",
+        "views",
+        "playables",
+        "test-playable-view.ts"
+      )
+    ),
+    true
+  );
+
+  const mechanicArtifact = JSON.parse(
+    fs.readFileSync(mechanicArtifactPath, "utf8")
+  );
+  const integrationArtifact = JSON.parse(
+    fs.readFileSync(integrationArtifactPath, "utf8")
+  );
+
+  assert.equal(mechanicArtifact.playableId, "test-playable");
+  assert.equal(mechanicArtifact.family, "minigame");
+  assert.equal(integrationArtifact.playableId, "test-playable");
+  assert.equal(
+    integrationArtifact.integrationId,
+    "playable.test-playable.scene.default"
+  );
+});
+
+test("child 34 playable validator accepts scaffolded artifacts and rejects missing outcome config", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-playable-validate-")
+  );
+
+  for (const args of [
+    [
+      path.join(process.cwd(), "tools", "scaffold-playable.mjs"),
+      "--playable-id",
+      "validator-playable",
+      "--family",
+      "battle",
+      "--title",
+      "Validator Playable",
+      "--output-root",
+      outputRoot,
+    ],
+    [
+      path.join(process.cwd(), "tools", "scaffold-playable-integration.mjs"),
+      "--integration-id",
+      "playable.validator-playable.scene.default",
+      "--playable-id",
+      "validator-playable",
+      "--owner-kind",
+      "scene",
+      "--owner-id",
+      "scene.validator",
+      "--return-policy",
+      "reenter-owner",
+      "--output-root",
+      outputRoot,
+    ],
+  ]) {
+    const result = spawnSync(process.execPath, args, { encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+  }
+
+  const validRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-playables.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(validRun.status, 0, validRun.stderr);
+  assert.match(validRun.stdout, /Playable validation passed/);
+
+  const invalidIntegrationPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "playable-integrations",
+    "playable.validator-playable.scene.default.integration.json"
+  );
+  const invalidIntegration = JSON.parse(
+    fs.readFileSync(invalidIntegrationPath, "utf8")
+  );
+  invalidIntegration.outcomeConfig = {};
+  fs.writeFileSync(
+    invalidIntegrationPath,
+    `${JSON.stringify(invalidIntegration, null, 2)}\n`
+  );
+
+  const invalidRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-playables.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(invalidRun.status, 1);
+  assert.match(invalidRun.stderr, /missing outcome conditions/i);
+});
+
+test("child 34 removes only the obsolete interactive launch helper while keeping active compatibility ids", () => {
+  const interactiveRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    interactiveRuntimeSource,
+    /export function createLaunchInteractiveRequest/
+  );
+  assert.match(mainSource, /interactive\.city-begging\.complete/);
+  assert.match(mainSource, /interactive\.activity-qte\.tick/);
+  assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
 });

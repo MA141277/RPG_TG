@@ -131,7 +131,6 @@ import {
 import {
   createExitInteractiveRequest,
   createInteractiveActionRequest,
-  createLaunchInteractiveRequest,
   type InteractiveRuntimeOutput,
   runInteractiveRuntime,
 } from "./core/runtime/interactive-runtime";

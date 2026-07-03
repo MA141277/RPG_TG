@@ -832,6 +832,26 @@ Rules:
 - AI-generated playable work must be judged against the same scaffold and validation surfaces as human-authored work
 - if the repository cannot scaffold or validate a claimed supported playable path, that is a framework gap and must be fixed at the framework layer
 
+Current repository implementation:
+
+- mechanic artifacts live at `src/content/playables/<playableId>.playable.json`
+- integration artifacts live at `src/content/playable-integrations/<integrationId>.integration.json`
+- mechanic scaffolding entrypoint is `npm run scaffold:playable` -> `tools/scaffold-playable.mjs`
+- integration scaffolding entrypoint is `npm run scaffold:playable-integration` -> `tools/scaffold-playable-integration.mjs`
+- validation entrypoint is `npm run validate:playables` -> `tools/validate-playables.mjs`
+- CI enforcement entrypoint is `.github/workflows/validate-playables.yml`
+
+Scaffolded canonical file layout:
+
+- `src/domain/playables/<playableId>.ts`
+- `src/application/playables/<playableId>/<playableId>-definition.ts`
+- `src/application/playables/<playableId>/<playableId>-session.ts`
+- `src/application/playables/<playableId>/<playableId>-presenter.ts`
+- `src/application/playables/<playableId>/<playableId>-metrics.ts`
+- `src/application/playables/<playableId>/<playableId>-settlement.ts`
+- `src/ui/views/playables/<playableId>-view.ts`
+- `src/assets/playables/<playableId>/`
+
 ## 26. Migration Strategy
 
 Migration must be gradual rather than one-shot.

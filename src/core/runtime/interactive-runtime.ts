@@ -20,18 +20,6 @@ export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
   characterDefinitions?: CharacterDefinition[];
 };
 
-export function createLaunchInteractiveRequest(
-  interactiveId: string,
-  payload?: Record<string, unknown>
-): RuntimeRequest {
-  return {
-    family: "external",
-    type: "external",
-    eventId: interactiveId,
-    ...(payload == null ? {} : { payload }),
-  };
-}
-
 export function createExitInteractiveRequest(
   kind: InteractiveRuntimeKind,
   payload?: Record<string, unknown>

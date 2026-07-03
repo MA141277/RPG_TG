@@ -2,6 +2,23 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-03 Child 34 Playable Enforcement And Legacy Closeout
+
+### Added
+- 新增 `tools/scaffold-playable.mjs`、`tools/scaffold-playable-integration.mjs` 与 `tools/validate-playables.mjs`，把新 playable mechanic、scenario/integration artifact 与仓库级 fail-closed 校验收口到统一 CLI。
+- 新增 `.github/workflows/validate-playables.yml`，让 playable artifact 校验在 push / pull request 时进入独立 CI gate。
+- 新增 Child 34 定向回归测试，锁定 `package.json` 必须暴露 `scaffold:playable` / `scaffold:playable-integration` / `validate:playables` 三个入口，并要求 scaffold 产出 canonical artifact 与 validator 能拒绝缺失 outcome 条件的 integration 配置。
+
+### Changed
+- `package.json` 现已提供 `npm run scaffold:playable`、`npm run scaffold:playable-integration` 与 `npm run validate:playables`，后续新增 playable 不再依赖人工分散找目录、文件名或校验入口。
+- `src/core/runtime/interactive-runtime.ts` 删除了已无生产调用方的 `createLaunchInteractiveRequest()` helper；`activity-qte` 与 `city-begging` 的兼容 action id 仍然保留，避免在 Child 34 误删尚未退役的 compatibility seam。
+- `src/main.ts` 与已有 robustness 回归已同步收窄到 Child 34 的真实 closeout 边界：只移除已废弃 launch helper，不把仍活跃的 covered compatibility path 伪装成“已完成迁移”。
+- `docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md` 与 Child 34 / weekly orchestration 计划现已记录仓库实际采用的 artifact 目录、脚手架命令、validator 与 CI gate 路径。
+
+### Impact
+- 仓库现在对 playable 新增和迁移形成了真正闭环：创作者或 AI 不需要再决定“文件放哪、资源放哪、怎么接校验”，而是通过 framework-owned scaffold 进入统一位置，再由 validator/CI 守约。
+- 第一轮 playable-runtime migration queue 至此闭合：`activity-qte`、`city-begging`、`grain-accounting`、`medicine-compounding`、`story-battle` 的统一 runtime proof 已完成，剩余兼容层只保留当前仍在生产路径上有调用方的 action seam。
+
 ## 2026-07-03 Child 33 Battle-Family Playable Migration
 
 ### Added

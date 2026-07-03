@@ -4,18 +4,18 @@
 
 **Goal:** Drive the phased playable-runtime migration queue from the Child 30 skeleton into later covered/house-local/battle/enforcement children without appending this problem type back into the old `main-shell-ownerization` weekly set.
 
-**Architecture:** The playable-runtime migration remains a separate problem type from the prior `src/main.ts` shell-ownerization queue. It stays split across multiple children so contract skeleton work, short-form covered migration, house-local promotion, battle-family migration, and enforcement closeout do not collapse into one oversized execution batch. Child 30 through Child 33 are now completed implementation proofs, while Child 34 remains the final candidate-only enforcement/closeout phase.
+**Architecture:** The playable-runtime migration remains a separate problem type from the prior `src/main.ts` shell-ownerization queue. It stayed split across multiple children so contract skeleton work, short-form covered migration, house-local promotion, battle-family migration, and enforcement closeout did not collapse into one oversized execution batch. Child 30 through Child 34 are now completed implementation proofs, and this weekly set is closed as history.
 
 **Tech Stack:** Markdown governance docs, repository playable spec, plan governance spec, later TypeScript runtime/application/ui/content work, `npm run lint:plans`, child-plan verification commands after promotion.
 
 ## Execution State
 
-- Status: `in-progress`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Child 30 through Child 33 are completed. Child 34 is the only remaining candidate-only closeout phase.`
-- Next Step: `Run a fresh enforcement/legacy residue recheck before deciding whether Child 34 should be promoted or deferred into a later cycle.`
-- Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
-- Notes: `The prior main-shell continuation weekly set is closed. This queue is live; covered interactive, house-local mechanic, and battle-family migration proofs are complete. Only enforcement and legacy closeout remain outside the completed proof line.`
+- Current Focus: `History only. Child 30 through Child 34 are completed and the first playable-runtime migration queue is closed.`
+- Next Step: `If later playable work reopens this problem type, start a fresh weekly cycle instead of appending to this closed set.`
+- Verification: `npm run validate:playables`, `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+- Notes: `Child 34 landed the repository-owned scaffold/validator/CI gate and narrowed legacy cleanup to the single obsolete interactive launch helper, while leaving still-live compatibility action ids explicit.`
 
 ## Progress Log
 
@@ -47,6 +47,10 @@
   - Summary: `Child 33 was baseline-rechecked, promoted, and completed. Story-battle now launches with a shared battle-family playable session, settles through playable-runtime, and leaves interactive-runtime only as a compatibility delegation layer for legacy story-battle action ids.`
   - Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
   - Next: `Keep Child 34 candidate-only until a fresh enforcement/legacy closeout recheck explicitly promotes it.`
+- 2026-07-03
+  - Summary: `Child 34 was baseline-rechecked, narrowed, promoted, and completed. The repository now owns playable scaffolding, integration scaffolding, fail-closed playable validation, and a CI gate, while legacy cleanup stayed conservative and removed only the obsolete interactive launch helper.`
+  - Verification: `npm run validate:playables`, `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+  - Next: `Weekly set closed. Any later playable migration or expansion should open a fresh queue.`
 
 ---
 
@@ -103,20 +107,16 @@ Status meaning:
 
 ### Slot 1: Active / Most Recent Child
 
-- Child: `Child 33 - Battle-Family Playable Migration`
-- Plan: `docs/superpowers/plans/2026-07-03-child-33-battle-family-playable-migration-plan.md`
+- Child: `Child 34 - Enforcement And Legacy Path Closeout`
+- Plan: `docs/superpowers/plans/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-plan.md`
 - Queue status: `completed`
-- Primary boundary: `Migrated story-battle onto playable-runtime-owned battle-family launch/action/settlement handlers while preserving current battle view semantics and reducing interactive-runtime to compatibility delegation.`
-- Depends on: `Fresh baseline recheck after Child 32 closeout.`
-- Resume point: `History only. Do not reopen Child 33 for enforcement/legacy closeout work that belongs to Child 34.`
+- Primary boundary: `Landed playable scaffold/validator/CI enforcement and removed only the obsolete interactive launch helper while keeping still-live compatibility action seams explicit.`
+- Depends on: `Fresh baseline recheck after Child 33 closeout.`
+- Resume point: `History only. Do not reopen this closed queue for later playable expansion work.`
 
 ## Candidate Later Work
 
-These remain candidate-only and are not executable in the current queue phase:
-
-- `Child 34 - Enforcement And Legacy Path Closeout`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-plan.md`
-  - add scaffold/validator/CI enforcement, tighten regression coverage, and delete proven-obsolete direct launch/result branches
+None in this weekly set. Child 34 is completed and the queue is closed.
 
 ## Child Decomposition Rule
 
@@ -177,6 +177,8 @@ This weekly set may be marked `completed` only when:
 - [x] Child 32 completed without auto-opening Child 34 into the visible queue
 - [x] Child 33 was promoted only after Child 32 closeout and a fresh baseline recheck narrowed the remaining battle-family scope
 - [x] Child 33 completed without auto-promoting Child 34 into an active implementation batch
+- [x] Child 34 was promoted only after Child 33 closeout and a fresh baseline recheck narrowed the remaining enforcement and safe-legacy-cleanup scope
+- [x] Child 34 completed and closed the first playable-runtime weekly queue without pretending still-live compatibility action ids were already removable
 
 ## Verification Policy
 
@@ -185,6 +187,7 @@ This weekly set may be marked `completed` only when:
 - Child 31 verification has passed: `npm run typecheck`, `npm test`, `npm run build`, and `npm run lint:plans`.
 - Child 32 verification has passed: `npm run typecheck`, `npm test`, `npm run build`, and `npm run lint:plans`.
 - Child 33 verification has passed: `npm run typecheck`, `npm test`, `npm run build`, and `npm run lint:plans`.
+- Child 34 verification has passed: `npm run validate:playables`, `npm run typecheck`, `npm test`, `npm run build`, and `npm run lint:plans`.
 - Future promoted children must record their own verification without treating Child 30 results as a blanket waiver.
 
 ## Task 1: Record And Govern The Queue Opening Through Child 30
