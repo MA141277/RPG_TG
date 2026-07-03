@@ -364,7 +364,7 @@
 
       .timeline-top {
         display: grid;
-        grid-template-columns: 340px 1fr 300px;
+        grid-template-columns: 280px 1fr 300px;
         border-bottom: 1px solid var(--line);
       }
 
@@ -378,7 +378,6 @@
       }
 
       .transport {
-        gap: 6px;
         border-right: 1px solid var(--line);
       }
 
@@ -390,9 +389,7 @@
       .transport button,
       .timeline-actions button {
         min-width: 34px;
-        padding: 0 6px;
-        font-size: 12px;
-        white-space: nowrap;
+        padding: 0 8px;
       }
 
       .small-input {
@@ -615,6 +612,7 @@
             <div class="button-row">
               <button id="saveActionBtn" class="primary" type="button">保存动作</button>
               <button id="applyIdleToActionBtn" type="button">生成待机</button>
+              <button id="deleteActionBtn" class="danger" type="button">Delete Action</button>
             </div>
             <div id="actionList" class="node-list action-list"></div>
           </section>
@@ -947,7 +945,6 @@
         showSkeletonOverlay: false,
         keyframeSource: "previous",
         keyMoveMode: "single",
-        keyframeClipboard: null,
         actions: [],
         selectedActionId: null,
         customImages: {},
@@ -1036,8 +1033,6 @@
         keySourceStartBtn: document.getElementById("keySourceStartBtn"),
         deleteKeyBtn: document.getElementById("deleteKeyBtn"),
         deleteFrameKeysBtn: document.getElementById("deleteFrameKeysBtn"),
-        copyKeyframeBtn: document.getElementById("copyKeyframeBtn"),
-        pasteKeyframeBtn: document.getElementById("pasteKeyframeBtn"),
         keyMoveModeBtn: document.getElementById("keyMoveModeBtn"),
         snapAllBtn: document.getElementById("snapAllBtn"),
         playBtn: document.getElementById("playBtn"),
@@ -1067,8 +1062,6 @@
         attachmentRotationInput: document.getElementById("attachmentRotationInput"),
         attachmentAlphaInput: document.getElementById("attachmentAlphaInput"),
         attachmentLayerInput: document.getElementById("attachmentLayerInput"),
-        layerUpBtn: document.getElementById("layerUpBtn"),
-        layerDownBtn: document.getElementById("layerDownBtn"),
         attachmentAnchorXInput: document.getElementById("attachmentAnchorXInput"),
         attachmentSegmentsInput: document.getElementById("attachmentSegmentsInput"),
         attachmentReverseInput: document.getElementById("attachmentReverseInput"),
@@ -1087,13 +1080,11 @@
         attachmentHemYInput: document.getElementById("attachmentHemYInput"),
         attachmentHemLengthInput: document.getElementById("attachmentHemLengthInput"),
         attachmentHemAngleInput: document.getElementById("attachmentHemAngleInput"),
-        bindingPanel: document.getElementById("bindingPanel"),
         bindingModeBtn: document.getElementById("bindingModeBtn"),
         weaponImageSelect: document.getElementById("weaponImageSelect"),
         addWeaponBoneBtn: document.getElementById("addWeaponBoneBtn"),
         addRootBoneBtn: document.getElementById("addRootBoneBtn"),
         applyWeaponImageBtn: document.getElementById("applyWeaponImageBtn"),
-        createBowRigBtn: document.getElementById("createBowRigBtn"),
         addBoneFromNodeBtn: document.getElementById("addBoneFromNodeBtn"),
         addFreeBoneBtn: document.getElementById("addFreeBoneBtn"),
         captureBindPoseBtn: document.getElementById("captureBindPoseBtn"),
@@ -1221,272 +1212,8 @@
         return loadImage(canvas.toDataURL("image/png"));
       }
 
-      function imageDataToDataUrl(imageData) {
-        const canvas = document.createElement("canvas");
-        canvas.width = imageData.width;
-        canvas.height = imageData.height;
-        canvas.getContext("2d").putImageData(imageData, 0, 0);
-        return canvas.toDataURL("image/png");
-      }
-
-      function averageOpaqueColorFromImageData(imageData) {
-        let r = 0;
-        let g = 0;
-        let b = 0;
-        let weight = 0;
-        for (let index = 0; index < imageData.width * imageData.height; index += 1) {
-          const alpha = imageData.data[index * 4 + 3];
-          if (alpha < 16) continue;
-          const a = alpha / 255;
-          r += imageData.data[index * 4] * a;
-          g += imageData.data[index * 4 + 1] * a;
-          b += imageData.data[index * 4 + 2] * a;
-          weight += a;
-        }
-        if (weight <= 0) return "#d8d0bf";
-        const toHex = (value) => Math.max(0, Math.min(255, Math.round(value / weight))).toString(16).padStart(2, "0");
-        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-      }
-
       function imageDataOffset(imageData, x, y) {
         return (y * imageData.width + x) * 4;
-      }
-
-      function createOpaqueMask(imageData, alphaThreshold = 16) {
-        const mask = new Uint8Array(imageData.width * imageData.height);
-        for (let index = 0; index < mask.length; index += 1) {
-          mask[index] = imageData.data[index * 4 + 3] >= alphaThreshold ? 1 : 0;
-        }
-        return mask;
-      }
-
-      function maskPixelCount(mask) {
-        let count = 0;
-        for (let index = 0; index < mask.length; index += 1) {
-          count += mask[index] ? 1 : 0;
-        }
-        return count;
-      }
-
-      function computeOpaqueNeighborCounts(mask, width, height) {
-        const counts = new Uint8Array(mask.length);
-        for (let y = 0; y < height; y += 1) {
-          for (let x = 0; x < width; x += 1) {
-            const index = y * width + x;
-            if (!mask[index]) continue;
-            let count = 0;
-            for (let dy = -1; dy <= 1; dy += 1) {
-              const py = y + dy;
-              if (py < 0 || py >= height) continue;
-              for (let dx = -1; dx <= 1; dx += 1) {
-                const px = x + dx;
-                if (px < 0 || px >= width) continue;
-                count += mask[py * width + px] ? 1 : 0;
-              }
-            }
-            counts[index] = count;
-          }
-        }
-        return counts;
-      }
-
-      function computeDistanceToTransparent(mask, width, height) {
-        const distance = new Int16Array(mask.length);
-        distance.fill(-1);
-        const queue = [];
-        let cursor = 0;
-        for (let index = 0; index < mask.length; index += 1) {
-          if (mask[index]) continue;
-          distance[index] = 0;
-          queue.push(index);
-        }
-        while (cursor < queue.length) {
-          const index = queue[cursor++];
-          const x = index % width;
-          const y = Math.floor(index / width);
-          const nextDistance = distance[index] + 1;
-          if (x > 0) {
-            const neighbor = index - 1;
-            if (distance[neighbor] === -1) {
-              distance[neighbor] = nextDistance;
-              queue.push(neighbor);
-            }
-          }
-          if (x < width - 1) {
-            const neighbor = index + 1;
-            if (distance[neighbor] === -1) {
-              distance[neighbor] = nextDistance;
-              queue.push(neighbor);
-            }
-          }
-          if (y > 0) {
-            const neighbor = index - width;
-            if (distance[neighbor] === -1) {
-              distance[neighbor] = nextDistance;
-              queue.push(neighbor);
-            }
-          }
-          if (y < height - 1) {
-            const neighbor = index + width;
-            if (distance[neighbor] === -1) {
-              distance[neighbor] = nextDistance;
-              queue.push(neighbor);
-            }
-          }
-        }
-        return distance;
-      }
-
-      function dilateMask(mask, width, height, steps, limitMask = null) {
-        let current = mask.slice();
-        for (let step = 0; step < steps; step += 1) {
-          const next = current.slice();
-          for (let index = 0; index < current.length; index += 1) {
-            if (!current[index]) continue;
-            const x = index % width;
-            const y = Math.floor(index / width);
-            if (x > 0 && (!limitMask || limitMask[index - 1])) next[index - 1] = 1;
-            if (x < width - 1 && (!limitMask || limitMask[index + 1])) next[index + 1] = 1;
-            if (y > 0 && (!limitMask || limitMask[index - width])) next[index - width] = 1;
-            if (y < height - 1 && (!limitMask || limitMask[index + width])) next[index + width] = 1;
-          }
-          current = next;
-        }
-        return current;
-      }
-
-      function removeSmallMaskRegions(mask, width, height, minPixels) {
-        const result = mask.slice();
-        const seen = new Uint8Array(mask.length);
-        for (let index = 0; index < mask.length; index += 1) {
-          if (!result[index] || seen[index]) continue;
-          const region = [index];
-          seen[index] = 1;
-          for (let cursor = 0; cursor < region.length; cursor += 1) {
-            const current = region[cursor];
-            const x = current % width;
-            const y = Math.floor(current / width);
-            if (x > 0 && result[current - 1] && !seen[current - 1]) {
-              seen[current - 1] = 1;
-              region.push(current - 1);
-            }
-            if (x < width - 1 && result[current + 1] && !seen[current + 1]) {
-              seen[current + 1] = 1;
-              region.push(current + 1);
-            }
-            if (y > 0 && result[current - width] && !seen[current - width]) {
-              seen[current - width] = 1;
-              region.push(current - width);
-            }
-            if (y < height - 1 && result[current + width] && !seen[current + width]) {
-              seen[current + width] = 1;
-              region.push(current + width);
-            }
-          }
-          if (region.length >= minPixels) continue;
-          region.forEach((pixelIndex) => {
-            result[pixelIndex] = 0;
-          });
-        }
-        return result;
-      }
-
-      function maskBounds(mask, width, height) {
-        let minX = width;
-        let minY = height;
-        let maxX = -1;
-        let maxY = -1;
-        let sumX = 0;
-        let sumY = 0;
-        let count = 0;
-        for (let index = 0; index < mask.length; index += 1) {
-          if (!mask[index]) continue;
-          const x = index % width;
-          const y = Math.floor(index / width);
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x);
-          maxY = Math.max(maxY, y);
-          sumX += x;
-          sumY += y;
-          count += 1;
-        }
-        if (!count) return null;
-        return {
-          minX,
-          minY,
-          maxX,
-          maxY,
-          width: maxX - minX + 1,
-          height: maxY - minY + 1,
-          centerX: sumX / count,
-          centerY: sumY / count,
-          count,
-        };
-      }
-
-      function imageDataFromMask(sourceImageData, mask) {
-        const output = new ImageData(sourceImageData.width, sourceImageData.height);
-        for (let index = 0; index < mask.length; index += 1) {
-          if (!mask[index]) continue;
-          const offset = index * 4;
-          output.data[offset] = sourceImageData.data[offset];
-          output.data[offset + 1] = sourceImageData.data[offset + 1];
-          output.data[offset + 2] = sourceImageData.data[offset + 2];
-          output.data[offset + 3] = sourceImageData.data[offset + 3];
-        }
-        return output;
-      }
-
-      function registerGeneratedMaskImage(baseName, suffix, imageData) {
-        const id = `${customImagePrefix}${uid(`bow-${suffix}`)}`;
-        registerCustomImage(id, `${baseName}-${suffix}.png`, imageDataToDataUrl(imageData));
-        return id;
-      }
-
-      function splitBowImageLayers(image) {
-        const sourceImageData = imageToImageData(image);
-        const { width, height } = sourceImageData;
-        const opaqueMask = createOpaqueMask(sourceImageData);
-        const opaqueCount = maskPixelCount(opaqueMask);
-        if (!opaqueCount) throw new Error("Bow image has no opaque pixels");
-        const distanceMap = computeDistanceToTransparent(opaqueMask, width, height);
-        const neighborCounts = computeOpaqueNeighborCounts(opaqueMask, width, height);
-        const bodySeed = new Uint8Array(opaqueMask.length);
-        for (let index = 0; index < opaqueMask.length; index += 1) {
-          if (!opaqueMask[index]) continue;
-          if (distanceMap[index] >= 3 || neighborCounts[index] >= 8) {
-            bodySeed[index] = 1;
-          }
-        }
-        let bodyMask = dilateMask(bodySeed, width, height, 2, opaqueMask);
-        if (maskPixelCount(bodyMask) < opaqueCount * 0.35) {
-          bodyMask = dilateMask(bodySeed, width, height, 3, opaqueMask);
-        }
-        let stringMask = new Uint8Array(opaqueMask.length);
-        for (let index = 0; index < opaqueMask.length; index += 1) {
-          stringMask[index] = opaqueMask[index] && !bodyMask[index] ? 1 : 0;
-        }
-        stringMask = removeSmallMaskRegions(stringMask, width, height, Math.max(12, Math.round(height * 0.015)));
-        if (maskPixelCount(stringMask) < Math.max(24, Math.round(opaqueCount * 0.03))) {
-          throw new Error("Failed to isolate bow string");
-        }
-        stringMask = dilateMask(stringMask, width, height, 2, opaqueMask);
-        for (let index = 0; index < opaqueMask.length; index += 1) {
-          bodyMask[index] = opaqueMask[index] && !stringMask[index] ? 1 : 0;
-        }
-        const bodyStats = maskBounds(bodyMask, width, height);
-        const stringStats = maskBounds(stringMask, width, height);
-        if (!bodyStats || !stringStats) {
-          throw new Error("Failed to split bow body and string");
-        }
-        return {
-          bodyImageData: imageDataFromMask(sourceImageData, bodyMask),
-          stringImageData: imageDataFromMask(sourceImageData, stringMask),
-          bodyStats,
-          stringStats,
-          size: { width, height },
-        };
       }
 
       function estimateMaterialBackground(imageData) {
@@ -1524,18 +1251,8 @@
         const background = estimateMaterialBackground(imageData);
         const count = width * height;
         const edgeBackground = new Uint8Array(count);
-        const candidateBackground = new Uint8Array(count);
-        const strongBackground = new Uint8Array(count);
         const queue = [];
         let cursor = 0;
-
-        function backgroundDistance(index) {
-          const offset = index * 4;
-          const r = data[offset];
-          const g = data[offset + 1];
-          const b = data[offset + 2];
-          return materialColorDistance(background, r, g, b);
-        }
 
         function isBackground(index) {
           const offset = index * 4;
@@ -1545,21 +1262,8 @@
           const g = data[offset + 1];
           const b = data[offset + 2];
           return (
-            backgroundDistance(index) <= materialReplacementOptions.backgroundTolerance ||
+            materialColorDistance(background, r, g, b) <= materialReplacementOptions.backgroundTolerance ||
             (r >= 235 && g >= 232 && b >= 228)
-          );
-        }
-
-        function isStrongBackground(index) {
-          const offset = index * 4;
-          const alpha = data[offset + 3];
-          if (alpha < 8) return true;
-          const r = data[offset];
-          const g = data[offset + 1];
-          const b = data[offset + 2];
-          return (
-            backgroundDistance(index) <= materialReplacementOptions.backgroundTolerance * 0.65 ||
-            (r >= 244 && g >= 241 && b >= 238)
           );
         }
 
@@ -1569,22 +1273,17 @@
           queue.push(index);
         }
 
-        for (let index = 0; index < count; index += 1) {
-          candidateBackground[index] = isBackground(index) ? 1 : 0;
-          strongBackground[index] = isStrongBackground(index) ? 1 : 0;
-        }
-
         for (let x = 0; x < width; x += 1) {
           const top = x;
           const bottom = (height - 1) * width + x;
-          if (candidateBackground[top]) push(top);
-          if (candidateBackground[bottom]) push(bottom);
+          if (isBackground(top)) push(top);
+          if (isBackground(bottom)) push(bottom);
         }
         for (let y = 0; y < height; y += 1) {
           const left = y * width;
           const right = y * width + width - 1;
-          if (candidateBackground[left]) push(left);
-          if (candidateBackground[right]) push(right);
+          if (isBackground(left)) push(left);
+          if (isBackground(right)) push(right);
         }
 
         while (cursor < queue.length) {
@@ -1597,69 +1296,15 @@
           if (y > 0) neighbors.push(index - width);
           if (y < height - 1) neighbors.push(index + width);
           for (const neighbor of neighbors) {
-            if (!edgeBackground[neighbor] && candidateBackground[neighbor]) {
+            if (!edgeBackground[neighbor] && isBackground(neighbor)) {
               push(neighbor);
             }
           }
         }
 
-        let holeBackground = new Uint8Array(count);
-        const holeSeen = new Uint8Array(count);
-        const minHolePixels = Math.max(24, Math.round(count * 0.00008));
-        for (let index = 0; index < count; index += 1) {
-          if (!strongBackground[index] || edgeBackground[index] || holeSeen[index]) continue;
-          const region = [index];
-          holeSeen[index] = 1;
-          let touchesEdge = false;
-          for (let regionCursor = 0; regionCursor < region.length; regionCursor += 1) {
-            const current = region[regionCursor];
-            const x = current % width;
-            const y = Math.floor(current / width);
-            if (x === 0 || y === 0 || x === width - 1 || y === height - 1) touchesEdge = true;
-            if (x > 0 && strongBackground[current - 1] && !edgeBackground[current - 1] && !holeSeen[current - 1]) {
-              holeSeen[current - 1] = 1;
-              region.push(current - 1);
-            }
-            if (
-              x < width - 1 &&
-              strongBackground[current + 1] &&
-              !edgeBackground[current + 1] &&
-              !holeSeen[current + 1]
-            ) {
-              holeSeen[current + 1] = 1;
-              region.push(current + 1);
-            }
-            if (
-              y > 0 &&
-              strongBackground[current - width] &&
-              !edgeBackground[current - width] &&
-              !holeSeen[current - width]
-            ) {
-              holeSeen[current - width] = 1;
-              region.push(current - width);
-            }
-            if (
-              y < height - 1 &&
-              strongBackground[current + width] &&
-              !edgeBackground[current + width] &&
-              !holeSeen[current + width]
-            ) {
-              holeSeen[current + width] = 1;
-              region.push(current + width);
-            }
-          }
-          if (touchesEdge || region.length < minHolePixels) continue;
-          region.forEach((pixelIndex) => {
-            holeBackground[pixelIndex] = 1;
-          });
-        }
-        if (maskPixelCount(holeBackground)) {
-          holeBackground = dilateMask(holeBackground, width, height, 1, candidateBackground);
-        }
-
         const foreground = new Uint8Array(count);
         for (let index = 0; index < count; index += 1) {
-          foreground[index] = edgeBackground[index] || holeBackground[index] || data[index * 4 + 3] < 8 ? 0 : 1;
+          foreground[index] = edgeBackground[index] || data[index * 4 + 3] < 8 ? 0 : 1;
         }
         return foreground;
       }
@@ -2238,16 +1883,12 @@
 
       function drawAttachment(node) {
         const attachment = node.attachment;
-        if (node.role === "bow-string" && attachment.segments && attachment.chainTo) {
-          drawBowStringAttachment(node, attachment);
-          return;
-        }
         const image = warriorImages[attachment.image];
         if (!image?.complete) return;
         const pose = worldPose(node);
         if (attachment.fullSkin) {
           if (isBindingMode() && attachment.restPart) {
-            drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), attachment.alpha);
+            drawRestPartImage(image, attachment.restPart, attachment.alpha);
             return;
           }
           drawFullSkinAttachment(attachment, image);
@@ -2371,41 +2012,6 @@
         ], attachment.alpha);
       }
 
-      function drawBowStringAttachment(node, attachment) {
-        const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
-        if (!chainNode) return;
-        const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
-        const upperPose = worldPose(node);
-        const lowerPose = worldPose(chainNode);
-        const start = { x: upperPose.worldX, y: upperPose.worldY };
-        const middle = { x: lowerPose.worldX, y: lowerPose.worldY };
-        const end = endPoint(lowerPose);
-        const color = attachment.lineColor || node.color || "#d8d0bf";
-        drawBowStringSegment(start, middle, attachment.width, attachment.alpha, color);
-        drawBowStringSegment(middle, end, lowerAttachment.width || attachment.width, attachment.alpha, color);
-      }
-
-      function drawBowStringSegment(start, end, width, alpha, color) {
-        const stringWidth = Math.max(1.5, Number(width) || 2);
-        ctx.save();
-        setDrawAlpha(alpha);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = stringWidth;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
-        ctx.strokeStyle = "#ffffff66";
-        ctx.lineWidth = Math.max(0.5, stringWidth * 0.28);
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
-        ctx.restore();
-      }
-
       function drawSkinnedAttachment(image, segments, alpha) {
         const cols = 6;
         const rows = 13;
@@ -2433,58 +2039,7 @@
         drawTexturedMesh(image, source, dest, alpha);
       }
 
-      function resolveRestPartTransform(restPart, useCurrentPose = false) {
-        if (!restPart) return null;
-        const parentBoneId = restPart.parentBoneId ? String(restPart.parentBoneId) : null;
-        if (!parentBoneId) return { ...restPart };
-        const parentNode = state.nodes.find((node) => node.id === parentBoneId);
-        if (!parentNode) return { ...restPart };
-        const parentPose = useCurrentPose ? worldPose(parentNode) : restWorldPose(parentNode);
-        const worldPoint = worldFromLocalByParentPose(parentPose, {
-          x: restPart.x || 0,
-          y: restPart.y || 0,
-        });
-        return {
-          ...restPart,
-          x: worldPoint.x,
-          y: worldPoint.y,
-          rotation: (restPart.rotation || 0) + parentPose.worldRotation,
-        };
-      }
-
-      function setResolvedRestPartTransform(restPart, patch, useCurrentPose = false) {
-        if (!restPart) return null;
-        const parentBoneId = restPart.parentBoneId ? String(restPart.parentBoneId) : null;
-        if (!parentBoneId) {
-          return {
-            ...restPart,
-            ...(patch.x !== undefined ? { x: patch.x } : {}),
-            ...(patch.y !== undefined ? { y: patch.y } : {}),
-            ...(patch.scale !== undefined ? { scale: patch.scale } : {}),
-            ...(patch.rotation !== undefined ? { rotation: patch.rotation } : {}),
-          };
-        }
-        const parentNode = state.nodes.find((node) => node.id === parentBoneId);
-        if (!parentNode) return { ...restPart };
-        const parentPose = useCurrentPose ? worldPose(parentNode) : restWorldPose(parentNode);
-        const resolved = resolveRestPartTransform(restPart, useCurrentPose);
-        const nextWorld = {
-          x: patch.x !== undefined ? patch.x : resolved.x,
-          y: patch.y !== undefined ? patch.y : resolved.y,
-          rotation: patch.rotation !== undefined ? patch.rotation : resolved.rotation,
-        };
-        const localPoint = localFromWorldByParentPose(parentPose, nextWorld);
-        return {
-          ...restPart,
-          ...(patch.scale !== undefined ? { scale: patch.scale } : {}),
-          x: localPoint.x,
-          y: localPoint.y,
-          rotation: nextWorld.rotation - parentPose.worldRotation,
-        };
-      }
-
       function drawFullSkinAttachment(attachment, image) {
-        const restPart = resolveRestPartTransform(attachment.restPart, false);
         const segments = (attachment.skinBoneIds || [])
           .map((nodeId) => state.nodes.find((item) => item.id === nodeId))
           .filter(Boolean)
@@ -2498,13 +2053,13 @@
               end: endPoint(pose),
             };
           });
-        if (!restPart) return;
+        if (!attachment.restPart) return;
         if (segments.length === 0) {
-          drawRestPartImage(image, restPart, attachment.alpha);
+          drawRestPartImage(image, attachment.restPart, attachment.alpha);
           return;
         }
 
-        const cols = restPart.partId === "torso" ? 5 : 4;
+        const cols = attachment.restPart.partId === "torso" ? 5 : 4;
         const rows = Math.max(6, segments.length * 5);
         const source = [];
         const dest = [];
@@ -2521,7 +2076,7 @@
             sourceRow.push(sourcePoint);
             destRow.push(
               deformByAttachmentSegments(
-                imagePointToFullSkinRest(sourcePoint, image, restPart),
+                imagePointToFullSkinRest(sourcePoint, image, attachment.restPart),
                 segments,
               ),
             );
@@ -3210,8 +2765,7 @@
       function pieceCenter(piece) {
         const attachment = piece?.attachment;
         if (attachment?.fullSkin && attachment.restPart) {
-          const restPart = resolveRestPartTransform(attachment.restPart, false);
-          return { x: restPart?.x || 0, y: restPart?.y || 0 };
+          return { x: attachment.restPart.x || 0, y: attachment.restPart.y || 0 };
         }
         const corners = pieceCorners(piece) || [];
         if (!corners.length) return { x: 0, y: 0 };
@@ -3242,21 +2796,20 @@
         const image = attachment ? warriorImages[attachment.image] : null;
         if (!attachment || !image?.complete) return null;
         if (attachment.fullSkin && attachment.restPart) {
-          const restPart = resolveRestPartTransform(attachment.restPart, false);
-          const width = image.width * restPart.scale;
-          const height = image.height * restPart.scale;
+          const width = image.width * attachment.restPart.scale;
+          const height = image.height * attachment.restPart.scale;
           const base = [
-            { x: -width * restPart.anchorX, y: -height * restPart.anchorY },
-            { x: width * (1 - restPart.anchorX), y: -height * restPart.anchorY },
-            { x: width * (1 - restPart.anchorX), y: height * (1 - restPart.anchorY) },
-            { x: -width * restPart.anchorX, y: height * (1 - restPart.anchorY) },
+            { x: -width * attachment.restPart.anchorX, y: -height * attachment.restPart.anchorY },
+            { x: width * (1 - attachment.restPart.anchorX), y: -height * attachment.restPart.anchorY },
+            { x: width * (1 - attachment.restPart.anchorX), y: height * (1 - attachment.restPart.anchorY) },
+            { x: -width * attachment.restPart.anchorX, y: height * (1 - attachment.restPart.anchorY) },
           ];
-          const angle = ((restPart.rotation || 0) * Math.PI) / 180;
+          const angle = ((attachment.restPart.rotation || 0) * Math.PI) / 180;
           const cos = Math.cos(angle);
           const sin = Math.sin(angle);
           return base.map((point) => ({
-            x: (restPart.x || 0) + point.x * cos - point.y * sin,
-            y: (restPart.y || 0) + point.x * sin + point.y * cos,
+            x: (attachment.restPart.x || 0) + point.x * cos - point.y * sin,
+            y: (attachment.restPart.y || 0) + point.x * sin + point.y * cos,
           }));
         }
         const pose = worldPose(piece);
@@ -3309,7 +2862,6 @@
       }
 
       function renderAll() {
-        syncAllBowRigs();
         syncCurrentActionFromTimeline();
         renderActionList();
         renderNodeList();
@@ -3488,12 +3040,11 @@
         const attachment = piece?.attachment;
         if (!attachment) return null;
         if (attachment.fullSkin) {
-          const restPart = resolveRestPartTransform(attachment.restPart, false) || attachment.restPart || {};
           return {
-            x: restPart.x || 0,
-            y: restPart.y || 0,
-            scale: restPart.scale || 1,
-            rotation: restPart.rotation || 0,
+            x: attachment.restPart?.x || 0,
+            y: attachment.restPart?.y || 0,
+            scale: attachment.restPart?.scale || 1,
+            rotation: attachment.restPart?.rotation || 0,
           };
         }
         const image = warriorImages[attachment.image];
@@ -3510,8 +3061,8 @@
         const piece = selectedPieceNode();
         if (!piece?.attachment) return;
         if (piece.attachment.fullSkin) {
-          piece.attachment.restPart = setResolvedRestPartTransform(
-            piece.attachment.restPart || {
+          piece.attachment.restPart = {
+            ...(piece.attachment.restPart || {
               partId: piece.id,
               x: 0,
               y: 0,
@@ -3519,16 +3070,12 @@
               rotation: 0,
               anchorX: 0.5,
               anchorY: 0.5,
-              parentBoneId: null,
-            },
-            {
-              ...(patch.x !== undefined ? { x: patch.x } : {}),
-              ...(patch.y !== undefined ? { y: patch.y } : {}),
-              ...(patch.scale !== undefined ? { scale: Math.max(0.01, patch.scale) } : {}),
-              ...(patch.rotation !== undefined ? { rotation: patch.rotation } : {}),
-            },
-            false,
-          );
+            }),
+            ...(patch.x !== undefined ? { x: patch.x } : {}),
+            ...(patch.y !== undefined ? { y: patch.y } : {}),
+            ...(patch.scale !== undefined ? { scale: Math.max(0.01, patch.scale) } : {}),
+            ...(patch.rotation !== undefined ? { rotation: patch.rotation } : {}),
+          };
         } else {
           const image = warriorImages[piece.attachment.image];
           const naturalWidth = Math.max(1, image?.naturalWidth || image?.width || piece.attachment.width || 48);
@@ -3565,12 +3112,10 @@
         });
         if (!node) return;
         const pose = isBindingMode() ? getRestLocalPose(node) : node;
-        const bowNodes = bowRigNodesForNode(node);
-        const bowRig = bowNodes?.control ? ensureBowRigModel(bowNodes.control)?.rig : null;
         el.nodeNameInput.value = node.name;
         el.xInput.value = round(pose.x);
         el.yInput.value = round(pose.y);
-        el.rotationInput.value = round(bowRig?.angle ?? pose.rotation);
+        el.rotationInput.value = round(pose.rotation);
         el.lengthInput.value = round(pose.length);
         el.scaleXInput.value = round(pose.scaleX, 2);
         el.scaleYInput.value = round(pose.scaleY, 2);
@@ -3666,36 +3211,10 @@
         el.attachmentHemYInput.value = round(attachment?.hemY ?? 0.68, 2);
         el.attachmentHemLengthInput.value = round(attachment?.hemLength ?? 0.75, 2);
         el.attachmentHemAngleInput.value = round(attachment?.hemAngle ?? 90);
-        const pieces = pieceNodes()
-          .filter((item) => item.attachment)
-          .sort((a, b) => {
-            const layerDiff = (a.attachment?.layer || 0) - (b.attachment?.layer || 0);
-            if (layerDiff) return layerDiff;
-            return state.nodes.indexOf(a) - state.nodes.indexOf(b);
-          });
-        const selectedIndex = pieces.findIndex((item) => item.id === context.owner?.id);
-        if (el.layerUpBtn) el.layerUpBtn.disabled = !attachment || selectedIndex >= pieces.length - 1;
-        if (el.layerDownBtn) el.layerDownBtn.disabled = !attachment || selectedIndex <= 0;
       }
 
       function renderBindingPanel() {
         if (!el.weaponImageSelect) return;
-        if (!el.createBowRigBtn && el.bindingPanel) {
-          const row = document.createElement("div");
-          row.className = "button-row";
-          const button = document.createElement("button");
-          button.id = "createBowRigBtn";
-          button.type = "button";
-          button.className = "primary";
-          button.textContent = "Create Bow Rig";
-          row.appendChild(button);
-          const anchor = el.bindingPanel.querySelector(".form-grid");
-          if (anchor) {
-            el.bindingPanel.insertBefore(row, anchor);
-            el.createBowRigBtn = button;
-            el.createBowRigBtn.addEventListener("click", createBowRigFromSelectedPiece);
-          }
-        }
         const weapon = selectedWeaponNode();
         const image = weapon?.attachment?.image || "newSword";
         el.weaponImageSelect.value = [...el.weaponImageSelect.options].some((option) => option.value === image)
@@ -3703,9 +3222,6 @@
           : "newSword";
         const piece = selectedPieceNode();
         const transform = piece ? pieceTransform(piece) : null;
-        if (el.createBowRigBtn) {
-          el.createBowRigBtn.disabled = !piece?.attachment?.image;
-        }
         [el.pieceXInput, el.pieceYInput, el.pieceScaleInput, el.pieceRotationInput].forEach((input) => {
           input.disabled = !piece;
         });
@@ -3713,88 +3229,6 @@
         el.pieceYInput.value = round(transform?.y || 0);
         el.pieceScaleInput.value = round(transform?.scale || 1, 2);
         el.pieceRotationInput.value = round(transform?.rotation || 0);
-      }
-
-      function ensureEditorActionButtons() {
-        const actionRow = el.saveActionBtn?.parentElement;
-        if (actionRow && !el.deleteActionBtn) {
-          const button = document.createElement("button");
-          button.id = "deleteActionBtn";
-          button.type = "button";
-          button.className = "danger";
-          button.textContent = "删动作";
-          actionRow.appendChild(button);
-          actionRow.classList.add("three");
-          el.deleteActionBtn = button;
-        }
-        const transport = el.playBtn?.parentElement;
-        if (transport && !el.copyKeyframeBtn) {
-          const button = document.createElement("button");
-          button.id = "copyKeyframeBtn";
-          button.type = "button";
-          button.textContent = "复制帧";
-          transport.appendChild(button);
-          el.copyKeyframeBtn = button;
-        }
-        if (transport && !el.pasteKeyframeBtn) {
-          const button = document.createElement("button");
-          button.id = "pasteKeyframeBtn";
-          button.type = "button";
-          button.textContent = "粘贴帧";
-          transport.appendChild(button);
-          el.pasteKeyframeBtn = button;
-        }
-      }
-
-      function ensureLayerOrderButtons() {
-        const layerField = el.attachmentLayerInput?.parentElement;
-        const layerGrid = layerField?.parentElement;
-        if (layerField && layerGrid && !el.layerUpBtn && !el.layerDownBtn) {
-          const wrapper = document.createElement("div");
-          wrapper.className = "field full";
-          wrapper.id = "layerOrderButtonsWrap";
-          const label = document.createElement("label");
-          label.textContent = "\u56fe\u5c42\u987a\u5e8f";
-          const row = document.createElement("div");
-          row.className = "button-row";
-          row.style.marginTop = "0";
-          const upButton = document.createElement("button");
-          upButton.id = "layerUpBtn";
-          upButton.type = "button";
-          upButton.textContent = "\u4e0a\u79fb\u4e00\u5c42";
-          const downButton = document.createElement("button");
-          downButton.id = "layerDownBtn";
-          downButton.type = "button";
-          downButton.textContent = "\u4e0b\u79fb\u4e00\u5c42";
-          row.appendChild(upButton);
-          row.appendChild(downButton);
-          wrapper.appendChild(label);
-          wrapper.appendChild(row);
-          layerGrid.insertBefore(wrapper, layerField.nextElementSibling);
-          el.layerUpBtn = upButton;
-          el.layerDownBtn = downButton;
-        }
-      }
-
-      function moveSelectedPieceLayer(direction) {
-        const piece = selectedPieceNode();
-        if (!piece?.attachment) return;
-        const pieces = pieceNodes()
-          .filter((node) => node.attachment)
-          .sort((a, b) => {
-            const layerDiff = (a.attachment?.layer || 0) - (b.attachment?.layer || 0);
-            if (layerDiff) return layerDiff;
-            return state.nodes.indexOf(a) - state.nodes.indexOf(b);
-          });
-        const index = pieces.findIndex((node) => node.id === piece.id);
-        if (index === -1) return;
-        const targetIndex = index + direction;
-        if (targetIndex < 0 || targetIndex >= pieces.length) return;
-        const target = pieces[targetIndex];
-        const currentLayer = Number(piece.attachment.layer) || 0;
-        piece.attachment.layer = Number(target.attachment.layer) || 0;
-        target.attachment.layer = currentLayer;
-        renderAll();
       }
 
       function renderTimeline() {
@@ -3915,9 +3349,6 @@
         el.keySourcePrevBtn.disabled = binding;
         el.keySourceNextBtn.disabled = binding;
         el.keySourceStartBtn.disabled = binding;
-        if (el.copyKeyframeBtn) el.copyKeyframeBtn.disabled = binding || !selectedNode();
-        if (el.pasteKeyframeBtn) el.pasteKeyframeBtn.disabled = binding || !state.keyframeClipboard;
-        if (el.deleteActionBtn) el.deleteActionBtn.disabled = state.actions.length <= 1;
       }
 
       function renderJsonPreview() {
@@ -3973,7 +3404,6 @@
           scaleY: Math.max(0.05, Number(node.scaleY) || 1),
           color: /^#[0-9a-f]{6}$/i.test(node.color) ? node.color : "#35b6b4",
           role: String(node.role || node.partId || ""),
-          bowRig: normalizeBowRig(node.bowRig),
           bindPose: normalizeBindPose(node.bindPose || node),
           attachment: normalizeAttachment(node.attachment),
         }));
@@ -4103,7 +3533,6 @@
           rotationOffset: Number(attachment.rotationOffset) || 0,
           offsetX: Number(attachment.offsetX) || 0,
           offsetY: Number(attachment.offsetY) || 0,
-          lineColor: /^#[0-9a-f]{6}$/i.test(String(attachment.lineColor || "")) ? String(attachment.lineColor) : null,
           lower: normalizeSegmentAttachment(attachment.lower),
           fullSkin: Boolean(attachment.fullSkin),
           skinBoneIds: Array.isArray(attachment.skinBoneIds)
@@ -4117,7 +3546,6 @@
                   y: Number(attachment.restPart.y) || 0,
                   scale: Math.max(0.001, Number(attachment.restPart.scale) || 1),
                   rotation: Number(attachment.restPart.rotation) || 0,
-                  parentBoneId: attachment.restPart.parentBoneId ? String(attachment.restPart.parentBoneId) : null,
                   anchorX: Number.isFinite(Number(attachment.restPart.anchorX))
                     ? Number(attachment.restPart.anchorX)
                     : 0.5,
@@ -4148,27 +3576,6 @@
           hemY: clampNumber(attachment.hemY, 0, 1, 0.68),
           hemLength: clampNumber(attachment.hemLength, 0.05, 2, 0.75),
           hemAngle: Number.isFinite(Number(attachment.hemAngle)) ? Number(attachment.hemAngle) : 90,
-        };
-      }
-
-      function normalizeBowRig(bowRig) {
-        if (!bowRig || typeof bowRig !== "object") return null;
-        return {
-          type: String(bowRig.type || ""),
-          centerId: bowRig.centerId ? String(bowRig.centerId) : null,
-          upperId: bowRig.upperId ? String(bowRig.upperId) : null,
-          lowerId: bowRig.lowerId ? String(bowRig.lowerId) : null,
-          stringUpperId: bowRig.stringUpperId ? String(bowRig.stringUpperId) : null,
-          stringLowerId: bowRig.stringLowerId ? String(bowRig.stringLowerId) : null,
-          stringId: bowRig.stringId ? String(bowRig.stringId) : null,
-          maxPull: Math.max(1, Number(bowRig.maxPull) || 60),
-          bodyInfluence: Math.max(0, Number(bowRig.bodyInfluence) || 0.5),
-          angle: Number.isFinite(Number(bowRig.angle)) ? Number(bowRig.angle) : null,
-          upperLength: Math.max(4, Number(bowRig.upperLength) || 4),
-          lowerLength: Math.max(4, Number(bowRig.lowerLength) || 4),
-          controlBaseX: Number.isFinite(Number(bowRig.controlBaseX)) ? Number(bowRig.controlBaseX) : null,
-          controlBaseY: Number.isFinite(Number(bowRig.controlBaseY)) ? Number(bowRig.controlBaseY) : null,
-          pull: Number.isFinite(Number(bowRig.pull)) ? Number(bowRig.pull) : 0,
         };
       }
 
@@ -4261,74 +3668,9 @@
         return false;
       }
 
-      function reparentNodePreserveWorld(node, parentId) {
-        if (!node) return;
-        const nextParentId = parentId || null;
-        const pose = worldPose(node);
-        const parent = nextParentId ? state.nodes.find((item) => item.id === nextParentId) : null;
-        const parentPose = parent ? worldPose(parent) : null;
-        const local = parentPose
-          ? localFromWorldByParentPose(parentPose, { x: pose.worldX, y: pose.worldY })
-          : { x: pose.worldX, y: pose.worldY };
-        node.parentId = nextParentId;
-        node.x = local.x;
-        node.y = local.y;
-        node.rotation = pose.worldRotation - (parentPose?.worldRotation || 0);
-        node.scaleX = (pose.worldScaleX || 1) / (parentPose?.worldScaleX || 1);
-        node.scaleY = (pose.worldScaleY || 1) / (parentPose?.worldScaleY || 1);
-        if (isBindingMode()) {
-          node.bindPose = normalizeBindPose(node);
-          Object.assign(node, node.bindPose);
-        } else {
-          syncKeyAtCurrentFrame(node);
-        }
-      }
-
-      function setBowRigParent(node, parentId) {
-        const nodes = bowRigNodesForNode(node);
-        if (!nodes?.center) return false;
-        ensureBowRigPieceRestPart(nodes);
-        reparentNodePreserveWorld(nodes.center, parentId);
-        [nodes.upper, nodes.lower, nodes.stringUpper, nodes.stringLower, nodes.control].forEach((child) => {
-          if (child?.parentId !== nodes.center.id) {
-            reparentNodePreserveWorld(child, nodes.center.id);
-          }
-        });
-        syncBowRigFromModel(nodes.control);
-        return true;
-      }
-
       function setNodePatch(patch, shouldRender = true) {
         const node = selectedNode();
         if (!node) return;
-        if (patch && Object.prototype.hasOwnProperty.call(patch, "rotation") && isBowRigNode(node)) {
-          const nodes = bowRigNodesForNode(node);
-          if (nodes?.control) {
-            const model = ensureBowRigModel(nodes.control);
-            if (model) {
-              model.rig.angle = Number(patch.rotation) || 0;
-              nodes.control.bowRig = normalizeBowRig(model.rig);
-              syncBowRigFromModel(nodes.control);
-              const remainingPatch = { ...patch };
-              delete remainingPatch.rotation;
-              if (!Object.keys(remainingPatch).length) {
-                if (shouldRender) renderAll();
-                return;
-              }
-              patch = remainingPatch;
-            }
-          }
-        }
-        if (patch && Object.prototype.hasOwnProperty.call(patch, "parentId") && isBowRigNode(node)) {
-          setBowRigParent(node, patch.parentId || null);
-          const remainingPatch = { ...patch };
-          delete remainingPatch.parentId;
-          if (!Object.keys(remainingPatch).length) {
-            if (shouldRender) renderAll();
-            return;
-          }
-          patch = remainingPatch;
-        }
         if (isBindingMode()) {
           const transformKeys = ["x", "y", "rotation", "length", "scaleX", "scaleY"];
           const transformPatch = {};
@@ -4586,7 +3928,23 @@
         action.duration = state.duration;
         action.timelines = cloneTimelines(state.timelines);
         renderAll();
-        await saveProjectJsonFile({ suggestedPath: defaultProjectSavePath() });
+        await saveProjectJsonFile();
+      }
+
+      function selectAction(actionId) {
+        const action = state.actions.find((item) => item.id === actionId);
+        if (!action) return;
+        syncCurrentActionFromTimeline();
+        state.selectedActionId = action.id;
+        state.duration = Math.max(0, Number(action.duration) || 0);
+        state.currentFrame = 0;
+        state.selectedKey = null;
+        state.playing = false;
+        dynamicScarves.clear();
+        state.timelines = cloneTimelines(action.timelines);
+        syncCurrentActionFromTimeline();
+        renderAll();
+        toast(`已切换动作：${action.name}`);
       }
 
       function deleteSelectedAction() {
@@ -4614,56 +3972,6 @@
         renderAll();
         toast(`Deleted action: ${removed?.name || ""}`);
       }
-
-      function copyCurrentFrameKeyframes() {
-        if (isBindingMode()) return;
-        const sourceFrame = Math.round(state.selectedKey?.frame ?? state.currentFrame);
-        state.keyframeClipboard = {
-          frame: sourceFrame,
-          poses: Object.fromEntries(
-            state.nodes.map((node) => [node.id, copyPoseAtFrame(getLocalPose(node, sourceFrame), sourceFrame)]),
-          ),
-        };
-        renderStatus();
-        toast(`Copied frame ${sourceFrame + 1}`);
-      }
-
-      function pasteCopiedKeyframes() {
-        if (isBindingMode()) return;
-        if (!state.keyframeClipboard?.poses) {
-          toast("No copied frame");
-          return;
-        }
-        const targetFrame = Math.round(state.currentFrame);
-        let pasted = 0;
-        state.nodes.forEach((node) => {
-          const pose = state.keyframeClipboard.poses[node.id];
-          if (!pose) return;
-          upsertKeyframe(node, { ...pose, frame: targetFrame });
-          pasted += 1;
-        });
-        state.selectedKey = selectedNode() ? { nodeId: selectedNode().id, frame: targetFrame } : null;
-        syncCurrentActionFromTimeline();
-        renderAll();
-        toast(`Pasted ${pasted} nodes to frame ${targetFrame + 1}`);
-      }
-
-      function selectAction(actionId) {
-        const action = state.actions.find((item) => item.id === actionId);
-        if (!action) return;
-        syncCurrentActionFromTimeline();
-        state.selectedActionId = action.id;
-        state.duration = Math.max(0, Number(action.duration) || 0);
-        state.currentFrame = 0;
-        state.selectedKey = null;
-        state.playing = false;
-        dynamicScarves.clear();
-        state.timelines = cloneTimelines(action.timelines);
-        syncCurrentActionFromTimeline();
-        renderAll();
-        toast(`已切换动作：${action.name}`);
-      }
-
       function frameFromPointer(event, container) {
         const rect = container.getBoundingClientRect();
         const x = event.clientX - rect.left + container.scrollLeft;
@@ -5025,86 +4333,14 @@
         URL.revokeObjectURL(url);
       }
 
-      function sanitizeProjectFileSegment(value, fallback = "spine-project") {
-        const clean = String(value || "")
-          .trim()
-          .replace(/[\\/:*?"<>|]+/g, "-")
-          .replace(/\s+/g, "-")
-          .replace(/-+/g, "-")
-          .replace(/^\.+|\.+$/g, "");
-        return clean || fallback;
-      }
-
-      function defaultProjectSavePath() {
-        const action = selectedAction();
-        const baseName = sanitizeProjectFileSegment(action?.name || state.name || "spine-project");
-        return `src/faxian/leg/${baseName}.json`;
-      }
-
-      function defaultProjectSaveFilename(suggestedPath = defaultProjectSavePath()) {
-        const normalized = String(suggestedPath || defaultProjectSavePath()).replaceAll("\\", "/");
-        const filename = normalized.split("/").pop() || "spine-project.json";
-        return filename.endsWith(".json") ? filename : `${filename}.json`;
-      }
-
-      function promptProjectSavePath(suggestedPath = defaultProjectSavePath()) {
-        const input = window.prompt("Save as path (.json, inside workspace)", suggestedPath);
-        if (input === null) return null;
-        const trimmed = String(input).trim().replaceAll("\\", "/");
-        if (!trimmed) {
-          toast("Save cancelled");
-          return null;
-        }
-        return trimmed.endsWith(".json") ? trimmed : `${trimmed}.json`;
-      }
-
-      async function pickProjectSaveTarget(options = {}) {
-        const suggestedPath = options.suggestedPath || defaultProjectSavePath();
-        if (typeof window.showSaveFilePicker === "function") {
-          try {
-            const handle = await window.showSaveFilePicker({
-              suggestedName: defaultProjectSaveFilename(suggestedPath),
-              types: [
-                {
-                  description: "JSON Files",
-                  accept: {
-                    "application/json": [".json"],
-                  },
-                },
-              ],
-            });
-            return { kind: "file-handle", handle };
-          } catch (error) {
-            if (error?.name === "AbortError") {
-              toast("Save cancelled");
-              return null;
-            }
-            throw error;
-          }
-        }
-        const targetPath = promptProjectSavePath(suggestedPath);
-        if (!targetPath) return null;
-        return { kind: "workspace-path", path: targetPath };
-      }
-
-      async function saveProjectJsonFile(options = {}) {
+      async function saveProjectJsonFile() {
         try {
           const data = projectData();
-          const target = await pickProjectSaveTarget(options);
-          if (!target) return;
-          if (target.kind === "file-handle") {
-            const writable = await target.handle.createWritable();
-            await writable.write(`${JSON.stringify(data, null, 2)}\n`);
-            await writable.close();
-            renderJsonPreview();
-            toast(`Saved to ${target.handle.name || "JSON file"}`);
-            return;
-          }
           const response = await fetch("/api/spine-editor/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              path: target.path,
+              path: "src/faxian/leg/new-version-spine-project.json",
               data,
             }),
           });
@@ -5114,6 +4350,67 @@
           toast(`已保存到 ${result.path || "JSON 文件"}`);
         } catch (error) {
           toast(error.message || "保存 JSON 文件失败");
+        }
+      }
+
+      let projectJsonFileHandle = null;
+
+      function defaultProjectJsonFilename() {
+        const safeName = String(state.name || "spine-project")
+          .trim()
+          .replace(/[\\/:*?"<>|]+/g, "-")
+          .replace(/\s+/g, "-");
+        return `${safeName || "spine-project"}.json`;
+      }
+
+      function downloadJson(data = projectData(), filename = defaultProjectJsonFilename()) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      }
+
+      async function saveProjectJsonWithFilePicker(data, { forcePrompt = false } = {}) {
+        if (typeof window.showSaveFilePicker !== "function") {
+          return null;
+        }
+        const handle =
+          !forcePrompt && projectJsonFileHandle
+            ? projectJsonFileHandle
+            : await window.showSaveFilePicker({
+                suggestedName: defaultProjectJsonFilename(),
+                types: [
+                  {
+                    description: "JSON Files",
+                    accept: { "application/json": [".json"] },
+                  },
+                ],
+              });
+        const writable = await handle.createWritable();
+        await writable.write(`${JSON.stringify(data, null, 2)}\n`);
+        await writable.close();
+        projectJsonFileHandle = handle;
+        return handle.name || defaultProjectJsonFilename();
+      }
+
+      async function saveProjectJsonFile(options = {}) {
+        try {
+          const data = projectData();
+          const pickerName = await saveProjectJsonWithFilePicker(data, options).catch(() => null);
+          renderJsonPreview();
+          if (pickerName) {
+            toast(`Saved to ${pickerName}`);
+            return;
+          }
+          downloadJson(data, defaultProjectJsonFilename());
+          toast("File picker unavailable, JSON downloaded");
+        } catch (error) {
+          toast(error.message || "Save JSON failed");
         }
       }
 
@@ -6639,679 +5936,6 @@
         addPieceFromImage(imageId, cleanName);
       }
 
-      function imagePixelToRestWorld(restPart, imageSize, pixelX, pixelY) {
-        const anchorX = restPart.anchorX ?? 0.5;
-        const anchorY = restPart.anchorY ?? 0.5;
-        const localX = (pixelX - imageSize.width * anchorX) * (restPart.scale || 1);
-        const localY = (pixelY - imageSize.height * anchorY) * (restPart.scale || 1);
-        const angle = ((restPart.rotation || 0) * Math.PI) / 180;
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        return {
-          x: (restPart.x || 0) + localX * cos - localY * sin,
-          y: (restPart.y || 0) + localX * sin + localY * cos,
-        };
-      }
-
-      function localFromWorldByParentPose(parentPose, world) {
-        const anchor = endPoint(parentPose);
-        const dx = world.x - anchor.x;
-        const dy = world.y - anchor.y;
-        const rad = (-parentPose.worldRotation * Math.PI) / 180;
-        return {
-          x: (dx * Math.cos(rad) - dy * Math.sin(rad)) / (parentPose.worldScaleX || 1),
-          y: (dx * Math.sin(rad) + dy * Math.cos(rad)) / (parentPose.worldScaleY || 1),
-        };
-      }
-
-      function worldFromLocalByParentPose(parentPose, local) {
-        const anchor = endPoint(parentPose);
-        const rad = (parentPose.worldRotation * Math.PI) / 180;
-        const px = (local.x || 0) * (parentPose.worldScaleX || 1);
-        const py = (local.y || 0) * (parentPose.worldScaleY || 1);
-        return {
-          x: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
-          y: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
-        };
-      }
-
-      function poseFromNodeAndParent(node, parentPose = null) {
-        if (!parentPose) {
-          return {
-            ...node,
-            worldX: node.x,
-            worldY: node.y,
-            worldRotation: node.rotation,
-            worldScaleX: node.scaleX ?? 1,
-            worldScaleY: node.scaleY ?? 1,
-          };
-        }
-        const anchor = endPoint(parentPose);
-        const rad = (parentPose.worldRotation * Math.PI) / 180;
-        const px = (node.x || 0) * (parentPose.worldScaleX || 1);
-        const py = (node.y || 0) * (parentPose.worldScaleY || 1);
-        return {
-          ...node,
-          worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
-          worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
-          worldRotation: parentPose.worldRotation + (node.rotation || 0),
-          worldScaleX: (parentPose.worldScaleX || 1) * (node.scaleX || 1),
-          worldScaleY: (parentPose.worldScaleY || 1) * (node.scaleY || 1),
-        };
-      }
-
-      function cloneRestPartForPiece(piece) {
-        const source = piece?.attachment?.restPart || {
-          partId: piece?.id || uid("part"),
-          x: piece?.bindPose?.x || 420,
-          y: piece?.bindPose?.y || 330,
-          scale: 1,
-          rotation: 0,
-          anchorX: 0.5,
-          anchorY: 0.5,
-        };
-        return {
-          partId: source.partId,
-          x: source.x || 0,
-          y: source.y || 0,
-          scale: Math.max(0.001, Number(source.scale) || 1),
-          rotation: Number(source.rotation) || 0,
-          anchorX: Number.isFinite(Number(source.anchorX)) ? Number(source.anchorX) : 0.5,
-          anchorY: Number.isFinite(Number(source.anchorY)) ? Number(source.anchorY) : 0.5,
-        };
-      }
-
-      function createBindingBone(name, startWorld, endWorld, color, role = "bow", parentNode = null, parentPose = null) {
-        const id = uniqueNodeId(name);
-        const resolvedParentPose = parentNode ? parentPose || worldPose(parentNode) : null;
-        const localStart = resolvedParentPose
-          ? localFromWorldByParentPose(resolvedParentPose, startWorld)
-          : { x: startWorld.x, y: startWorld.y };
-        const parentRotation = resolvedParentPose?.worldRotation || 0;
-        const parentScaleX = Math.abs(resolvedParentPose?.worldScaleX || 1);
-        const worldRotation = (Math.atan2(endWorld.y - startWorld.y, endWorld.x - startWorld.x) * 180) / Math.PI;
-        const length = Math.max(4, distance(startWorld, endWorld) / Math.max(0.001, parentScaleX));
-        return {
-          id,
-          name,
-          parentId: parentNode?.id || null,
-          x: localStart.x,
-          y: localStart.y,
-          rotation: worldRotation - parentRotation,
-          length,
-          scaleX: 1,
-          scaleY: 1,
-          color,
-          role,
-          bindPose: {
-            x: localStart.x,
-            y: localStart.y,
-            rotation: worldRotation - parentRotation,
-            length,
-            scaleX: 1,
-            scaleY: 1,
-          },
-        };
-      }
-
-      function createGeneratedPieceNode(name, image, restPart, layer, skinBoneIds) {
-        const source = warriorImages[image];
-        const width = Math.max(1, source?.naturalWidth || source?.width || 80);
-        const id = uid("piece");
-        return {
-          id,
-          name,
-          parentId: null,
-          x: restPart.x || 420,
-          y: restPart.y || 330,
-          rotation: 0,
-          length: 4,
-          scaleX: 1,
-          scaleY: 1,
-          color: "#8bd17c",
-          role: "piece",
-          bindPose: { x: restPart.x || 420, y: restPart.y || 330, rotation: 0, length: 4, scaleX: 1, scaleY: 1 },
-          attachment: normalizeAttachment({
-            image,
-            width,
-            alpha: 1,
-            layer,
-            fullSkin: true,
-            skinBoneIds,
-            restPart: {
-              ...restPart,
-              partId: id,
-            },
-          }),
-        };
-      }
-
-      function endLocalFromPose(pose) {
-        const startX = Number(pose?.x) || 0;
-        const startY = Number(pose?.y) || 0;
-        const rotation = ((Number(pose?.rotation) || 0) * Math.PI) / 180;
-        const length = Math.max(4, Number(pose?.length) || 80);
-        return {
-          x: startX + Math.cos(rotation) * length,
-          y: startY + Math.sin(rotation) * length,
-        };
-      }
-
-      function applyNodePose(node, patch, persist = true) {
-        Object.assign(node, patch);
-        poseOverrides.set(node.id, {
-          x: node.x,
-          y: node.y,
-          rotation: node.rotation,
-          length: node.length,
-          scaleX: node.scaleX,
-          scaleY: node.scaleY,
-        });
-        if (persist) {
-          syncKeyAtCurrentFrame(node);
-          drag?.touched?.add(node.id);
-        }
-      }
-
-      function applyBoneBetweenWorldPoints(node, startWorld, endWorld, persist = true) {
-        const parent = node.parentId ? state.nodes.find((item) => item.id === node.parentId) : null;
-        const parentPose = parent ? worldPose(parent) : null;
-        const localStart = parentPose
-          ? localFromWorldByParentPose(parentPose, startWorld)
-          : { x: startWorld.x, y: startWorld.y };
-        const parentRotation = parentPose?.worldRotation || 0;
-        const parentScaleX = Math.abs(parentPose?.worldScaleX || 1);
-        applyNodePose(node, {
-          x: localStart.x,
-          y: localStart.y,
-          rotation: (Math.atan2(endWorld.y - startWorld.y, endWorld.x - startWorld.x) * 180) / Math.PI - parentRotation,
-          length: Math.max(4, distance(startWorld, endWorld) / Math.max(0.001, parentScaleX)),
-        }, persist);
-      }
-
-      function applyChildBoneEndpointFromBind(node, endLocalYDelta) {
-        const bind = normalizeBindPose(node.bindPose || node);
-        const start = { x: bind.x, y: bind.y };
-        const end = endLocalFromPose(bind);
-        const targetEnd = { x: end.x, y: end.y + endLocalYDelta };
-        applyNodePose(node, {
-          x: start.x,
-          y: start.y,
-          rotation: (Math.atan2(targetEnd.y - start.y, targetEnd.x - start.x) * 180) / Math.PI,
-          length: Math.max(4, distance(start, targetEnd)),
-        });
-      }
-
-      function bowRigNodes(node) {
-        const rig = normalizeBowRig(node?.bowRig);
-        if (!rig) return null;
-        const center = state.nodes.find((item) => item.id === rig.centerId);
-        const upper = state.nodes.find((item) => item.id === rig.upperId);
-        const lower = state.nodes.find((item) => item.id === rig.lowerId);
-        const stringUpper =
-          state.nodes.find((item) => item.id === rig.stringUpperId) ||
-          state.nodes.find((item) => item.id === rig.stringId);
-        const stringLower =
-          state.nodes.find((item) => item.id === rig.stringLowerId) ||
-          state.nodes.find((item) => item.id === rig.stringId);
-        if (!center || !upper || !lower || !stringUpper || !stringLower) return null;
-        return { rig, center, upper, lower, stringUpper, stringLower };
-      }
-
-      function bowRigNodesForNode(node) {
-        if (!node) return null;
-        if (isBowStringControlNode(node)) {
-          const direct = bowRigNodes(node);
-          return direct ? { ...direct, control: node } : null;
-        }
-        const control = state.nodes.find((candidate) => {
-          if (!isBowStringControlNode(candidate)) return false;
-          const rig = normalizeBowRig(candidate.bowRig);
-          if (!rig) return false;
-          return [
-            candidate.id,
-            rig.centerId,
-            rig.upperId,
-            rig.lowerId,
-            rig.stringUpperId,
-            rig.stringLowerId,
-            rig.stringId,
-          ].includes(node.id);
-        });
-        if (!control) return null;
-        const resolved = bowRigNodes(control);
-        return resolved ? { ...resolved, control } : null;
-      }
-
-      function isBowRigNode(node) {
-        return Boolean(bowRigNodesForNode(node));
-      }
-
-      function worldBoneLength(pose) {
-        return Math.max(4, distance({ x: pose.worldX, y: pose.worldY }, endPoint(pose)));
-      }
-
-      function projectPointToLength(origin, target, length, fallbackAngle = 0) {
-        const dx = target.x - origin.x;
-        const dy = target.y - origin.y;
-        const current = Math.hypot(dx, dy);
-        if (current <= 0.001) {
-          return {
-            x: origin.x + Math.cos(fallbackAngle) * length,
-            y: origin.y + Math.sin(fallbackAngle) * length,
-          };
-        }
-        const scale = length / current;
-        return {
-          x: origin.x + dx * scale,
-          y: origin.y + dy * scale,
-        };
-      }
-
-      function setNodePoseTransient(node, patch) {
-        Object.assign(node, patch);
-        poseOverrides.set(node.id, {
-          x: node.x,
-          y: node.y,
-          rotation: node.rotation,
-          length: node.length,
-          scaleX: node.scaleX,
-          scaleY: node.scaleY,
-        });
-      }
-
-      function bowCenterWorld(nodes) {
-        return endPoint(worldPose(nodes.center));
-      }
-
-      function bowAxes(angle) {
-        const rad = (angle * Math.PI) / 180;
-        return {
-          body: { x: Math.cos(rad), y: Math.sin(rad) },
-          pull: { x: -Math.sin(rad), y: Math.cos(rad) },
-        };
-      }
-
-      function bowLocalToWorld(centerWorld, angle, local) {
-        const axes = bowAxes(angle);
-        return {
-          x: centerWorld.x + axes.pull.x * (local.x || 0) + axes.body.x * (local.y || 0),
-          y: centerWorld.y + axes.pull.y * (local.x || 0) + axes.body.y * (local.y || 0),
-        };
-      }
-
-      function bowWorldToLocal(centerWorld, angle, world) {
-        const axes = bowAxes(angle);
-        const offset = { x: world.x - centerWorld.x, y: world.y - centerWorld.y };
-        return {
-          x: dotVector(offset, axes.pull),
-          y: dotVector(offset, axes.body),
-        };
-      }
-
-      function ensureBowRigModel(controlNode) {
-        const nodes = bowRigNodes(controlNode);
-        if (!nodes) return null;
-        const { rig, center, upper, lower, control } = nodes;
-        const centerWorld = endPoint(worldPose(center));
-        const upperTip = endPoint(worldPose(upper));
-        const lowerTip = endPoint(worldPose(lower));
-        const controlPose = worldPose(control);
-        const controlPoint = { x: controlPose.worldX, y: controlPose.worldY };
-        if (!Number.isFinite(Number(rig.angle))) {
-          rig.angle = (Math.atan2(upperTip.y - centerWorld.y, upperTip.x - centerWorld.x) * 180) / Math.PI;
-        }
-        if (!Number.isFinite(Number(rig.upperLength)) || rig.upperLength <= 4) {
-          rig.upperLength = Math.max(4, distance(centerWorld, upperTip));
-        }
-        if (!Number.isFinite(Number(rig.lowerLength)) || rig.lowerLength <= 4) {
-          rig.lowerLength = Math.max(4, distance(centerWorld, lowerTip));
-        }
-        if (!Number.isFinite(Number(rig.controlBaseX)) || !Number.isFinite(Number(rig.controlBaseY))) {
-          const local = bowWorldToLocal(centerWorld, rig.angle, controlPoint);
-          rig.controlBaseX = local.x;
-          rig.controlBaseY = local.y;
-        }
-        if (!Number.isFinite(Number(rig.pull))) rig.pull = 0;
-        controlNode.bowRig = normalizeBowRig(rig);
-        return { ...nodes, rig: controlNode.bowRig };
-      }
-
-      function syncBowRigFromModel(controlNode) {
-        const nodes = ensureBowRigModel(controlNode);
-        if (!nodes) return false;
-        const { rig, center, upper, lower, stringUpper, stringLower, control } = nodes;
-        const centerWorld = bowCenterWorld(nodes);
-        const bend = (rig.pull || 0) * rig.bodyInfluence;
-        const upperTip = bowLocalToWorld(centerWorld, rig.angle, { x: bend, y: rig.upperLength });
-        const lowerTip = bowLocalToWorld(centerWorld, rig.angle, { x: bend, y: -rig.lowerLength });
-        const controlPoint = bowLocalToWorld(centerWorld, rig.angle, {
-          x: (rig.controlBaseX || 0) + (rig.pull || 0),
-          y: rig.controlBaseY || 0,
-        });
-        applyBoneBetweenWorldPoints(upper, centerWorld, upperTip, false);
-        applyBoneBetweenWorldPoints(lower, centerWorld, lowerTip, false);
-        applyBoneBetweenWorldPoints(control, centerWorld, controlPoint, false);
-        applyBoneBetweenWorldPoints(stringUpper, upperTip, controlPoint, false);
-        applyBoneBetweenWorldPoints(stringLower, controlPoint, lowerTip, false);
-        return true;
-      }
-
-      function syncAllBowRigs() {
-        state.nodes.filter((node) => isBowStringControlNode(node)).forEach((node) => {
-          syncBowRigFromModel(node);
-        });
-      }
-
-      function moveBowRigRigid(nodes, deltaWorld) {
-        if (!nodes?.center) return false;
-        const centerOrigin = drag?.startPoses?.[nodes.center.id]?.origin || {
-          x: worldPose(nodes.center).worldX,
-          y: worldPose(nodes.center).worldY,
-        };
-        moveBoneRigid(nodes.center, deltaWorld, centerOrigin);
-        syncBowRigFromModel(nodes.control);
-        return true;
-      }
-
-      function findBowRigPiece(nodes) {
-        if (!nodes) return null;
-        return pieceNodes().find((piece) => {
-          const ids = new Set(piece.attachment?.skinBoneIds || []);
-          return ids.has(nodes.upper.id) && ids.has(nodes.lower.id);
-        }) || null;
-      }
-
-      function findLegacyWeaponNodeForBowPiece(piece) {
-        if (!piece?.attachment) return null;
-        const pieceWorldCenter = pieceCenter(piece);
-        const candidates = state.nodes
-          .filter((node) => isWeaponNode(node) && node.id !== piece.id)
-          .map((node) => ({
-            node,
-            distance: distance(pieceWorldCenter, pieceCenter(node)),
-          }))
-          .sort((a, b) => a.distance - b.distance);
-        return candidates[0]?.node || null;
-      }
-
-      function replaceLegacyWeaponNodeWithBowRig(legacyWeapon, centerBone, piece) {
-        if (!legacyWeapon || !centerBone || !piece || legacyWeapon.id === piece.id) return;
-        state.nodes
-          .filter((node) => node.parentId === legacyWeapon.id)
-          .forEach((node) => reparentNodePreserveWorld(node, centerBone.id));
-        if ((state.timelines[legacyWeapon.id] || []).length) {
-          state.timelines[centerBone.id] = cloneTimelineKeys(state.timelines[legacyWeapon.id]);
-        }
-        delete state.timelines[legacyWeapon.id];
-        state.actions.forEach((action) => {
-          if ((action.timelines?.[legacyWeapon.id] || []).length) {
-            action.timelines[centerBone.id] = cloneTimelineKeys(action.timelines[legacyWeapon.id]);
-          }
-          if (action.timelines) delete action.timelines[legacyWeapon.id];
-        });
-        state.nodes.forEach((node) => {
-          if (node.attachment?.skinBoneIds?.includes(legacyWeapon.id)) {
-            node.attachment.skinBoneIds = node.attachment.skinBoneIds
-              .map((id) => (id === legacyWeapon.id ? centerBone.id : id))
-              .filter((id, index, list) => list.indexOf(id) === index);
-          }
-          if (node.attachment?.chainTo === legacyWeapon.id) {
-            node.attachment.chainTo = centerBone.id;
-          }
-        });
-        state.nodes = state.nodes.filter((node) => node.id !== legacyWeapon.id);
-      }
-
-      function ensureBowRigPieceRestPart(nodes) {
-        const piece = findBowRigPiece(nodes);
-        if (!piece?.attachment?.restPart || !nodes?.center) return;
-        const resolved = resolveRestPartTransform(piece.attachment.restPart, false) || piece.attachment.restPart;
-        const centerRest = restWorldPose(nodes.center);
-        const local = localFromWorldByParentPose(centerRest, { x: resolved.x, y: resolved.y });
-        piece.attachment.restPart = {
-          ...piece.attachment.restPart,
-          parentBoneId: nodes.center.id,
-          x: local.x,
-          y: local.y,
-          rotation: (resolved.rotation || 0) - centerRest.worldRotation,
-        };
-      }
-
-      function syncBowRigStringsFromControl(nodes) {
-        return nodes?.control ? syncBowRigFromModel(nodes.control) : false;
-      }
-
-      function moveBowRigBodyTip(nodes, which, targetWorld) {
-        if (!nodes?.control) return false;
-        const model = ensureBowRigModel(nodes.control);
-        if (!model) return false;
-        const centerWorld = bowCenterWorld(model);
-        model.rig.angle = (Math.atan2(targetWorld.y - centerWorld.y, targetWorld.x - centerWorld.x) * 180) / Math.PI;
-        nodes.control.bowRig = normalizeBowRig(model.rig);
-        return syncBowRigFromModel(nodes.control);
-      }
-
-      function handleBowRigDrag(node, dragType, point) {
-        const nodes = bowRigNodesForNode(node);
-        if (!nodes || !["origin", "bone", "end"].includes(dragType)) return false;
-        const deltaWorld = { x: point.x - drag.start.x, y: point.y - drag.start.y };
-        if (node.id === nodes.control.id) {
-          if (isBindingMode()) {
-            const model = ensureBowRigModel(nodes.control);
-            if (!model) return false;
-            const centerWorld = bowCenterWorld(model);
-            const controlLocal = bowWorldToLocal(centerWorld, model.rig.angle, point);
-            model.rig.controlBaseX = controlLocal.x;
-            model.rig.controlBaseY = controlLocal.y;
-            model.rig.pull = 0;
-            nodes.control.bowRig = normalizeBowRig(model.rig);
-            syncBowRigFromModel(nodes.control);
-            return true;
-          }
-          return moveBowStringControl(nodes.control, point);
-        }
-        if (dragType === "bone") return moveBowRigRigid(nodes, deltaWorld);
-        if (node.id === nodes.center.id) return moveBowRigRigid(nodes, deltaWorld);
-        if (node.id === nodes.upper.id) {
-          return dragType === "end" ? moveBowRigBodyTip(nodes, "upper", point) : moveBowRigRigid(nodes, deltaWorld);
-        }
-        if (node.id === nodes.lower.id) {
-          return dragType === "end" ? moveBowRigBodyTip(nodes, "lower", point) : moveBowRigRigid(nodes, deltaWorld);
-        }
-        if (node.id === nodes.stringUpper.id) {
-          return dragType === "origin" ? moveBowRigBodyTip(nodes, "upper", point) : moveBowStringControl(nodes.control, point);
-        }
-        if (node.id === nodes.stringLower.id) {
-          return dragType === "end" ? moveBowRigBodyTip(nodes, "lower", point) : moveBowStringControl(nodes.control, point);
-        }
-        return false;
-      }
-
-      function isBowStringControlNode(node) {
-        return node?.role === "bow-string-control" && node?.bowRig?.type === "string-control";
-      }
-
-      function moveBowStringControl(node, targetWorld) {
-        const nodes = ensureBowRigModel(node);
-        if (!nodes) return false;
-        const centerWorld = bowCenterWorld(nodes);
-        const baseWorld = bowLocalToWorld(centerWorld, nodes.rig.angle, {
-          x: nodes.rig.controlBaseX || 0,
-          y: nodes.rig.controlBaseY || 0,
-        });
-        const pullAxis = bowAxes(nodes.rig.angle).pull;
-        const projected = dotVector(
-          { x: targetWorld.x - baseWorld.x, y: targetWorld.y - baseWorld.y },
-          pullAxis,
-        );
-        nodes.rig.pull = Math.max(-nodes.rig.maxPull, Math.min(nodes.rig.maxPull, projected));
-        node.bowRig = normalizeBowRig(nodes.rig);
-        return syncBowRigFromModel(node);
-      }
-
-      function createBowRigFromSelectedPiece() {
-        if (!isBindingMode()) setWorkspaceMode("binding");
-        const piece = selectedPieceNode();
-        if (!piece?.attachment?.image) {
-          toast("Select a bow piece first");
-          return;
-        }
-        const sourceImage = warriorImages[piece.attachment.image];
-        if (!sourceImage?.complete) {
-          toast("Bow image is still loading");
-          return;
-        }
-        try {
-          const baseName = String(piece.name || "bow").replace(/\s+/g, "_");
-          const split = splitBowImageLayers(sourceImage);
-          const originalLayer = Number(piece.attachment.layer) || 20;
-          const restPart = cloneRestPartForPiece(piece);
-          const legacyWeapon = findLegacyWeaponNodeForBowPiece(piece);
-          const carrier = (() => {
-            if (legacyWeapon?.parentId) {
-              return state.nodes.find((node) => node.id === legacyWeapon.parentId && !node.attachment) || null;
-            }
-            const selected = selectedNode();
-            return selected &&
-              selected.id !== piece.id &&
-              selected.id !== legacyWeapon?.id &&
-              !selected.attachment
-              ? selected
-              : null;
-          })();
-          const carrierPose = carrier ? worldPose(carrier) : null;
-          const centerPoint = imagePixelToRestWorld(restPart, split.size, split.bodyStats.centerX, split.bodyStats.centerY);
-          const upperTip = imagePixelToRestWorld(restPart, split.size, split.bodyStats.centerX, split.bodyStats.minY);
-          const lowerTip = imagePixelToRestWorld(restPart, split.size, split.bodyStats.centerX, split.bodyStats.maxY);
-          const stringCenter = imagePixelToRestWorld(restPart, split.size, split.stringStats.centerX, split.stringStats.centerY);
-          const bowAxis = normalizeVector({
-            x: upperTip.x - centerPoint.x,
-            y: upperTip.y - centerPoint.y,
-          });
-          const anchorLength = Math.max(6, Math.min(18, distance(upperTip, lowerTip) * 0.05));
-          const centerStart = {
-            x: centerPoint.x - bowAxis.x * anchorLength,
-            y: centerPoint.y - bowAxis.y * anchorLength,
-          };
-          const centerBone = createBindingBone(
-            `${baseName}_center`,
-            centerStart,
-            centerPoint,
-            "#d6a15d",
-            "bow-center",
-            carrier,
-            carrierPose,
-          );
-          const centerPose = poseFromNodeAndParent(centerBone, carrierPose);
-          const restPartLocalToCenter = localFromWorldByParentPose(centerPose, {
-            x: restPart.x || 0,
-            y: restPart.y || 0,
-          });
-          const upperBone = createBindingBone(
-            `${baseName}_upper`,
-            centerPoint,
-            upperTip,
-            "#e0b26d",
-            "bow-upper",
-            centerBone,
-            centerPose,
-          );
-          const lowerBone = createBindingBone(
-            `${baseName}_lower`,
-            centerPoint,
-            lowerTip,
-            "#c79258",
-            "bow-lower",
-            centerBone,
-            centerPose,
-          );
-          const stringUpperBone = createBindingBone(
-            `${baseName}_string_upper`,
-            upperTip,
-            stringCenter,
-            "#7ab8ff",
-            "bow-string-upper",
-            centerBone,
-            centerPose,
-          );
-          const stringControl = createBindingBone(
-            `${baseName}_string_center`,
-            stringCenter,
-            {
-              x: stringCenter.x - bowAxis.y * Math.max(10, split.size.width * restPart.scale * 0.1),
-              y: stringCenter.y + bowAxis.x * Math.max(10, split.size.width * restPart.scale * 0.1),
-            },
-            "#7ab8ff",
-            "bow-string-control",
-            centerBone,
-            centerPose,
-          );
-          const stringLowerBone = createBindingBone(
-            `${baseName}_string_lower`,
-            stringCenter,
-            lowerTip,
-            "#7ab8ff",
-            "bow-string-lower",
-            centerBone,
-            centerPose,
-          );
-          stringControl.bowRig = normalizeBowRig({
-            type: "string-control",
-            centerId: centerBone.id,
-            upperId: upperBone.id,
-            lowerId: lowerBone.id,
-            stringUpperId: stringUpperBone.id,
-            stringLowerId: stringLowerBone.id,
-            angle: (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI,
-            upperLength: Math.max(4, distance(centerPoint, upperTip)),
-            lowerLength: Math.max(4, distance(centerPoint, lowerTip)),
-            controlBaseX: bowWorldToLocal(centerPoint, (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI, stringCenter).x,
-            controlBaseY: bowWorldToLocal(centerPoint, (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI, stringCenter).y,
-            pull: 0,
-            maxPull: Math.max(24, split.bodyStats.height * restPart.scale * 1.15),
-            bodyInfluence: 0.5,
-          });
-          state.nodes.push(centerBone, upperBone, lowerBone, stringUpperBone, stringLowerBone, stringControl);
-          state.timelines[centerBone.id] = [];
-          state.timelines[upperBone.id] = [];
-          state.timelines[lowerBone.id] = [];
-          state.timelines[stringUpperBone.id] = [];
-          state.timelines[stringLowerBone.id] = [];
-          state.timelines[stringControl.id] = [];
-
-          piece.name = `${baseName}_rig`;
-          piece.role = "bow-rig";
-          piece.attachment = normalizeAttachment({
-            ...piece.attachment,
-            image: piece.attachment.image,
-            layer: originalLayer,
-            fullSkin: true,
-            segments: false,
-            chainTo: null,
-            lower: null,
-            skinBoneIds: [upperBone.id, lowerBone.id, stringUpperBone.id, stringLowerBone.id],
-            restPart: {
-              ...restPart,
-              parentBoneId: centerBone.id,
-              x: restPartLocalToCenter.x,
-              y: restPartLocalToCenter.y,
-              rotation: (restPart.rotation || 0) - centerPose.worldRotation,
-              partId: piece.id,
-            },
-          });
-          replaceLegacyWeaponNodeWithBowRig(legacyWeapon, centerBone, piece);
-          state.selectedPieceNodeId = piece.id;
-          state.selectedNodeId = stringControl.id;
-          state.selectedKey = null;
-          dynamicScarves.clear();
-          renderAll();
-          toast("Bow rig created");
-        } catch (error) {
-          toast(error instanceof Error ? error.message : String(error));
-        }
-      }
-
       function deleteSelectedPiece() {
         const piece = selectedPieceNode();
         if (!piece) return;
@@ -7367,8 +5991,6 @@
       }
 
       function bindEvents() {
-        ensureEditorActionButtons();
-        ensureLayerOrderButtons();
         window.addEventListener("resize", resizeCanvas);
         el.addNodeBtn.addEventListener("click", () => {
           const parent = selectedNode();
@@ -7422,9 +6044,7 @@
         el.newActionBtn.addEventListener("click", newAction);
         el.saveActionBtn.addEventListener("click", saveCurrentAction);
         el.applyIdleToActionBtn.addEventListener("click", applyIdleAnimation);
-        if (el.deleteActionBtn) el.deleteActionBtn.addEventListener("click", deleteSelectedAction);
-        if (el.layerUpBtn) el.layerUpBtn.addEventListener("click", () => moveSelectedPieceLayer(1));
-        if (el.layerDownBtn) el.layerDownBtn.addEventListener("click", () => moveSelectedPieceLayer(-1));
+        el.deleteActionBtn.addEventListener("click", deleteSelectedAction);
         el.actionNameInput.addEventListener("change", () => {
           const action = selectedAction();
           if (!action) return;
@@ -7432,8 +6052,6 @@
           renderAll();
         });
         el.keyframeBtn.addEventListener("click", () => addKeyframe());
-        if (el.copyKeyframeBtn) el.copyKeyframeBtn.addEventListener("click", copyCurrentFrameKeyframes);
-        if (el.pasteKeyframeBtn) el.pasteKeyframeBtn.addEventListener("click", pasteCopiedKeyframes);
         el.keySourcePrevBtn.addEventListener("click", () => {
           state.keyframeSource = "previous";
           renderStatus();
@@ -7760,7 +6378,7 @@
           if (hit.type === "piece" || hit.type === "piece-scale" || hit.type === "piece-rotate") {
             state.selectedPieceNodeId = hit.node.id;
           }
-          if (isBindingMode() && hit.type === "bone" && !isBowRigNode(hit.node)) {
+          if (isBindingMode() && hit.type === "bone") {
             detachBoneFromParentPreserveWorld(hit.node);
           }
           state.selectedNodeId = hit.node.id;
@@ -7807,15 +6425,6 @@
             return;
           }
           drag.hasMoved = true;
-          if (isBowRigNode(node) && ["origin", "bone", "end"].includes(drag.type)) {
-            handleBowRigDrag(node, drag.type, point);
-            renderProperties();
-            renderTimeline();
-            renderStatus();
-            renderJsonPreview();
-            drawStage();
-            return;
-          }
           if (drag.type === "origin") {
             solveGenericJointDrag(drag.jointId, point);
           }
