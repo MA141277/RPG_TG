@@ -73,7 +73,6 @@ import {
 } from "./application/navigation/travel-to-coordinate";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
-  createActiveGameContentContext,
   createActiveGameContentContextFromModActivation,
   type ActiveGameContentContext,
 } from "./application/content/active-game-content";
@@ -92,8 +91,6 @@ import {
   applyStartupStoryBootstrap,
   type StartupStoryBootstrap,
 } from "./application/startup/startup-story-bootstrap";
-import { bootstrapLegacyMain } from "./core/adapters/legacy-main-adapter";
-import { toLegacyBootstrapInput } from "./core/adapters/mod-runtime-main-adapter";
 import {
   createEnterCityRequest,
   routeNavigationRuntime,
@@ -170,7 +167,6 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "./domain/scenario-pack";
-import type { EngineRegistry } from "./core/registry/engine-registry";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -303,21 +299,9 @@ const builtinStartupActivation = await runModRuntime({
   },
 });
 modRuntimeState = builtinStartupActivation.state;
-const builtinLegacyBootstrapInput = toLegacyBootstrapInput(
-  builtinStartupActivation
-);
-const legacyEngineRegistry: EngineRegistry = {
-  mods: {
-    [builtinDefaultModId]: builtinDefaultModManifest,
-  },
-  content: {
-    [builtinDefaultModId]: baseGameContentPack,
-  },
-};
-const legacyEngineSession = bootstrapLegacyMain({
-  selectedModId: builtinLegacyBootstrapInput.selectedModId,
-  registry: legacyEngineRegistry,
-});
+if (!builtinStartupActivation.ok) {
+  throw new Error(builtinStartupActivation.failure.message);
+}
 
 function getMapDefinitionById(mapId: string): MapDefinition | null {
   return activeContentContext.mapDefinitionById[mapId] ?? null;
@@ -331,9 +315,11 @@ function getCurrentMapDefinition(): MapDefinition | null {
   );
 }
 
-void legacyEngineSession;
 let activeContentContext: ActiveGameContentContext =
-  createActiveGameContentContext(baseGameContentPack);
+  createActiveGameContentContextFromModActivation({
+    basePack: baseGameContentPack,
+    activationResult: builtinStartupActivation,
+  });
 
 function getRuntimeText(textId: string, fallback?: string): string {
   return resolveTextEntry(activeContentContext.textEntriesById, textId, fallback);
@@ -1556,7 +1542,6 @@ async function activateLoadedModForStartup(
     },
   });
   modRuntimeState = result.state;
-  toLegacyBootstrapInput(result);
   return result;
 }
 
@@ -1597,7 +1582,6 @@ async function activateSavedMod(
     },
   });
   modRuntimeState = result.state;
-  toLegacyBootstrapInput(result);
   return result;
 }
 
@@ -1630,7 +1614,6 @@ async function activateSavedModSource(
     request,
   });
   modRuntimeState = result.state;
-  toLegacyBootstrapInput(result);
   return result;
 }
 
@@ -1657,7 +1640,6 @@ function applyActivatedModSession(input: {
   playerCharacterId: string;
   createAppState(): AppState;
 }): void {
-  toLegacyBootstrapInput(input.activationResult);
   mainRuntimeOrchestrator.execute({
     type: "apply-startup-session",
     session: input,

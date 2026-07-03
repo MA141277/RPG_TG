@@ -8379,13 +8379,21 @@ test("save envelope preserves selected mod id and mod state payload", async () =
   assert.deepEqual(envelope.modState["builtin.default"], { foo: 1 });
 });
 
-test("main.ts delegates boot through legacy-main-adapter", () => {
+test("child 29 main.ts primary startup no longer depends on legacy startup adapters", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
   );
 
-  assert.match(mainSource, /legacy-main-adapter/);
+  assert.doesNotMatch(mainSource, /legacy-main-adapter/);
+  assert.doesNotMatch(mainSource, /mod-runtime-main-adapter/);
+  assert.doesNotMatch(mainSource, /bootstrapLegacyMain/);
+  assert.doesNotMatch(mainSource, /toLegacyBootstrapInput/);
+  assert.doesNotMatch(mainSource, /builtinLegacyBootstrapInput|legacyEngineSession/);
+  assert.match(
+    mainSource,
+    /createActiveGameContentContextFromModActivation\(\{[\s\S]*activationResult:\s*builtinStartupActivation/
+  );
 });
 
 test("loadSaveEnvelope normalizes a legacy save into the current envelope", async () => {
@@ -9693,14 +9701,115 @@ test("mod runtime activation is atomic and leaves no partial active mod on failu
   assert.match(source, /rollback/);
 });
 
-test("mod runtime main adapter lets startup consume one unified activation result", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src/core/adapters/mod-runtime-main-adapter.ts"),
-    "utf8"
+test("child 29 startup coordinator keeps builtin and scenario startup on one explicit session contract", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [],
+    },
+  };
+  const contentContext = {
+    packId: "pack.base",
+    storyContent: {
+      eventDefinitionsById: {},
+      sceneDefinitionsById: {},
+      activityDefinitionsById: {},
+      textEntriesById: {},
+    },
+  };
+  const createStartupAppState = () => ({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  });
+  const scenarioPack = {
+    id: "scenario.child29",
+    schemaVersion: 1,
+    title: "Child 29 Scenario",
+    scenarioProfile: {
+      playerCharacterId: "char.player",
+      initialLocation: {
+        mapId: "map.world",
+        cityId: "city.test",
+        houseId: null,
+        view: "map",
+      },
+      entryEventId: "event.scenario.entry",
+    },
+  };
+
+  const deps = {
+    activateBuiltinDefaultMod: async () => activationResult,
+    restoreModFromSave: async (saveData) =>
+      saveData?.selectedModId === "scenario.child29" ? activationResult : null,
+    activateScenarioPackMod: async () => activationResult,
+    createPrototypeAppState: () => createStartupAppState(),
+    createHaozhouReturnEncounterAppState: (appState) => appState,
+    createScenarioPackAppState: () => createStartupAppState(),
+    createStartupContentContext: () => contentContext,
+    bootstrapStartupStoryAppState: ({ appState }) => appState,
+  };
+
+  const builtinResult = await runStartupSessionCoordinator(
+    {
+      type: "builtin",
+      selectedCharacter: prototypeCharacters[0],
+    },
+    deps
+  );
+  const scenarioResult = await runStartupSessionCoordinator(
+    {
+      type: "restore",
+      selectedCharacter: prototypeCharacters[0],
+      saveData: {
+        selectedModId: "scenario.child29",
+        selectedModSource: {
+          kind: "url",
+          name: "Scenario",
+          url: "https://example.com/scenario.json",
+        },
+        selectedCharacterId: "char.player",
+      },
+    },
+    {
+      ...deps,
+      restoreModFromSave: async () => ({
+        ...activationResult,
+        activatedMod: {
+          ...activationResult.activatedMod,
+          normalizedContentSources: [scenarioPack],
+        },
+      }),
+    }
   );
 
-  assert.match(source, /ModActivationResult/);
-  assert.match(source, /toLegacyBootstrapInput/);
+  assert.equal(builtinResult.ok, true);
+  assert.equal(scenarioResult.ok, true);
+  assert.deepEqual(
+    Object.keys(builtinResult.session).sort(),
+    Object.keys(scenarioResult.session).sort()
+  );
+  assert.equal(typeof builtinResult.session.createAppState, "function");
+  assert.equal(typeof scenarioResult.session.createAppState, "function");
+  assert.equal(builtinResult.session.contentContext, contentContext);
+  assert.equal(scenarioResult.session.contentContext, contentContext);
 });
 
 test("save restore re-activates selected mod through mod runtime", () => {

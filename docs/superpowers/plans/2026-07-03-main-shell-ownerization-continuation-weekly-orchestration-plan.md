@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `in-progress`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Child 28 is closed. Child 29 is now the next executable child for a later explicit continuation request, and no additional locked child is introduced in this batch.`
-- Next Step: `Wait for a later explicit continuation request before baseline-rechecking and promoting Child 29.`
-- Verification: `Child 28 closeout passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27|child 28".`
+- Current Focus: `This bounded continuation weekly set is closed after Child 29 completion. No additional executable child remains in queue.`
+- Next Step: `Require a fresh weekly review before any new continuation child is introduced.`
+- Verification: `Child 29 closeout passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 22|child 23|child 27|child 28|child 29".`
 - Notes: `This queue follows the closed Child 24 set and must not be appended back into the already-completed 2026-07-03 main-runtime ownerization weekly set.`
 
 ## Progress Log
@@ -67,6 +67,18 @@
   - Summary: `Child 28 closed cleanly. Active content composition is now startup/mod-owned through contentContext, Child 29 becomes the next executable child for a later continuation request, and no further locked child is introduced in this batch.`
   - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 22|child 23|child 24|child 25|child 26|child 27|child 28"`.
   - Next: `Do not execute Child 29 in this batch; wait for explicit continuation before its baseline recheck and promotion.`
+- 2026-07-03
+  - Summary: `Continuation was explicitly requested again, so Child 29 was baseline-rechecked and promoted. Scope remains unchanged: src/main.ts still routes primary startup through legacy-main-adapter and mod-runtime-main-adapter residue, and no additional locked child is introduced behind Child 29.`
+  - Verification: `Baseline inspection only; Child 29 required commands not run yet.`
+  - Next: `Execute Child 29 Task 1 Step 2 without adding any new continuation child.`
+- 2026-07-03
+  - Summary: `Child 29 implementation batch removed the primary-path legacy startup seam. main.ts no longer imports or calls the legacy startup adapters, builtin startup initializes through the existing ModActivationResult/contentContext contract, and the legacy adapter files were retired instead of being converted into a new shared orchestrator sink.`
+  - Verification: `npm test -- --test-name-pattern="child 29".`
+  - Next: `Run Child 29 closeout verification before closing the weekly continuation queue.`
+- 2026-07-03
+  - Summary: `Child 29 closed cleanly with no in-scope P0/P1 findings, so this bounded continuation weekly queue is complete. No immediate queued or locked child remains; any further shell-continuation work now requires a fresh weekly review instead of auto-promotion.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 22|child 23|child 27|child 28|child 29"`.
+  - Next: `Stop execution for this weekly set. Do not auto-spawn a new continuation child.`
 
 ---
 
@@ -105,17 +117,16 @@
 
 ### Active Executable Child
 
-- `Child 28 - Active Content Ownership Convergence`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-28-active-content-ownership-convergence-plan.md`
+- `Child 29 - Legacy Startup Seam Retirement`
+  - Plan: `docs/superpowers/plans/2026-07-03-child-29-legacy-startup-seam-retirement-plan.md`
   - Baseline Recheck: `unchanged`
   - Status: `completed in this batch; no further execution allowed here`
 
 ### Immediate Queued Follow-Up
 
-- `Child 29 - Legacy Startup Seam Retirement`
-  - Plan: `docs/superpowers/plans/2026-07-03-child-29-legacy-startup-seam-retirement-plan.md`
-  - Promotion Rule: `Promote only after Child 28 closes with no unresolved P0/P1 in scope.`
-  - Queue State: `next executable child; requires a fresh baseline recheck before promotion in a later batch`
+- `None currently`
+  - Promotion Rule: `This weekly set is closed. Any future continuation requires a fresh weekly review rather than queue carry-over.`
+  - Queue State: `empty`
 
 ### Locked Follow-Up Child
 

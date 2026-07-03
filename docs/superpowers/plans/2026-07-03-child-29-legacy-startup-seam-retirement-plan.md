@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Candidate later work; explicitly deferred.`
-- Next Step: `Reassess only after earlier continuation children complete and a fresh baseline recheck confirms readiness.`
-- Verification: `Not run`
-- Notes: `This child must remain late-order work so seam retirement does not mask unresolved upstream ownerization debt.`
+- Current Focus: `Child 29 is closed. The primary startup path is legacy-seam-free and no further execution remains in scope.`
+- Next Step: `None. Start a new governed plan only if a fresh continuation review identifies new shell debt.`
+- Verification: `Passed: npm run typecheck; npm run build; npm run lint:plans; npm test -- --test-name-pattern="child 22|child 23|child 27|child 28|child 29".`
+- Notes: `No unresolved P0/P1 was found in Child 29 scope. The primary startup path now stays on the existing startup/content contract, and no replacement compatibility sink was introduced.`
 
 ## Progress Log
 
@@ -23,6 +23,18 @@
   - Summary: `Plan scaffold created from the continuation spec.`
   - Verification: `Not run as part of this doc-only change.`
   - Next: `Keep deferred until upstream startup and content ownership stabilizes.`
+- 2026-07-03
+  - Summary: `Baseline recheck confirms Child 29 scope remains unchanged. src/main.ts still imports legacy-main-adapter and mod-runtime-main-adapter, creates builtinLegacyBootstrapInput plus legacyEngineSession on the primary startup path, and still calls toLegacyBootstrapInput() from startup activation/apply helpers.`
+  - Verification: `Baseline inspection only; required commands not run yet.`
+  - Next: `Add RED regressions for retiring legacy startup seam participation from the primary path.`
+- 2026-07-03
+  - Summary: `Added Child 29 regressions, removed primary-path imports/calls to legacy-main-adapter and mod-runtime-main-adapter from src/main.ts, initialized builtin startup content through createActiveGameContentContextFromModActivation(), and retired the two legacy adapter files entirely.`
+  - Verification: `npm test -- --test-name-pattern="child 29".`
+  - Next: `Run typecheck/build/lint closeout verification before marking Child 29 complete.`
+- 2026-07-03
+  - Summary: `Closeout verification passed with no in-scope P0/P1 findings. Child 29 is complete: builtin and restored scenario startup remain on the same explicit startup session contract, and the primary path no longer routes through a legacy startup seam.`
+  - Verification: `npm run typecheck`; `npm run build`; `npm run lint:plans`; `npm test -- --test-name-pattern="child 22|child 23|child 27|child 28|child 29"`.
+  - Next: `Close the weekly continuation queue for this bounded set.`
 
 ---
 
@@ -37,8 +49,9 @@
 
 - Recheck result: `unchanged`
 - Notes:
-  - `legacy startup adapters remain migration residue on the primary path`
-  - `this seam is still later-order work rather than the highest-risk active debt`
+  - `src/main.ts` still imports `./core/adapters/legacy-main-adapter` and `./core/adapters/mod-runtime-main-adapter` on the primary startup path`
+  - `src/main.ts` still computes `builtinLegacyBootstrapInput`, bootstraps `legacyEngineSession`, and retains `toLegacyBootstrapInput(...)` calls inside startup activation/apply helpers`
+  - `tests/robustness.test.cjs` still asserts that main.ts delegates boot through legacy-main-adapter, so Child 29 must flip that contract rather than generalize beyond seam retirement`
 
 ## Implementation Scope
 
@@ -100,15 +113,15 @@
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/superpowers/plans/2026-07-03-child-29-legacy-startup-seam-retirement-plan.md`
 
-- [ ] **Step 1: Record the remaining primary-path legacy seam usage**
+- [x] **Step 1: Record the remaining primary-path legacy seam usage**
 
 Document the exact primary-path dependencies and whether any compatibility-only path must remain.
 
-- [ ] **Step 2: Add or update legacy-seam retirement regressions**
+- [x] **Step 2: Add or update legacy-seam retirement regressions**
 
 Capture the boundary that primary startup should no longer route through legacy translation.
 
-- [ ] **Step 3: Update plan state with the baseline result**
+- [x] **Step 3: Update plan state with the baseline result**
 
 Record the verified baseline in `Execution State` and `Progress Log`.
 
@@ -122,15 +135,15 @@ Record the verified baseline in `Execution State` and `Progress Log`.
 - Modify: `src/core/mods/mod-runtime.ts`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Introduce or reuse a legacy-free primary bootstrap contract**
+- [x] **Step 1: Introduce or reuse a legacy-free primary bootstrap contract**
 
 Keep builtin and mod startup aligned to the same primary-path contract.
 
-- [ ] **Step 2: Remove primary-path legacy seam usage**
+- [x] **Step 2: Remove primary-path legacy seam usage**
 
 Any remaining compatibility seam must be explicitly non-primary.
 
-- [ ] **Step 3: Re-run the seam-retirement regressions**
+- [x] **Step 3: Re-run the seam-retirement regressions**
 
 Confirm startup remains correct without legacy primary-path routing.
 
@@ -140,7 +153,7 @@ Confirm startup remains correct without legacy primary-path routing.
 - Modify: `docs/superpowers/plans/2026-07-03-child-29-legacy-startup-seam-retirement-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-03-main-shell-ownerization-continuation-weekly-orchestration-plan.md`
 
-- [ ] **Step 1: Run required verification**
+- [x] **Step 1: Run required verification**
 
 Run:
 
@@ -153,25 +166,25 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 2: Record any P0/P1 findings before closeout**
+- [x] **Step 2: Record any P0/P1 findings before closeout**
 
 Do not close the plan if unresolved `P0` or `P1` remains in scope.
 
-- [ ] **Step 3: Update weekly queue state**
+- [x] **Step 3: Update weekly queue state**
 
 Record whether the continuation queue closes or requires a fresh weekly review.
 
 ## Exit Check
 
-- [ ] Primary startup path no longer depends on legacy startup seam.
-- [ ] Builtin and mod startup share one explicit bootstrap contract.
-- [ ] Any remaining compatibility seam is documented as non-primary.
-- [ ] Weekly artifact sync is updated if boundary state changed.
-- [ ] Weekly queue state is updated.
+- [x] Primary startup path no longer depends on legacy startup seam.
+- [x] Builtin and mod startup share one explicit bootstrap contract.
+- [x] Any remaining compatibility seam is documented as non-primary.
+- [x] Weekly artifact sync is updated if boundary state changed.
+- [x] Weekly queue state is updated.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
