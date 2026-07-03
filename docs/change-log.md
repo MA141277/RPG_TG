@@ -2,6 +2,23 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-03 Child 32 House-Local Mechanic Promotion
+
+### Added
+- 新增 `src/application/playables/house-playable-runtime-bridge.ts`，为 house module 提供 shared `gameState + houseSession -> RuntimeState` 桥接，避免 house-local playable 再造一套独立 runtime carrier。
+- 新增 `src/application/playables/grain-accounting/grain-accounting-definition.ts` 与 `src/application/playables/medicine-compounding/medicine-compounding-definition.ts`，把粮铺算账与药铺配药的 launch/action/tick/settlement 收口到 shared playable definition 层。
+- 新增 Child 32 定向回归测试，锁定 `grain-accounting` 与 `medicine-compounding` 的 launch 必须写入 shared `runtime.playableSession`，settlement 后必须清空该 session 且仍返回正确的 house result overlay。
+
+### Changed
+- `src/core/registry/playable-definition-registry.ts` 与 `src/core/registry/playable-integration-registry.ts` 现已纳入 `grain-accounting` 与 `medicine-compounding`，并为两条 house-owned mechanic 建立正式 `integrationId`。
+- `src/core/runtime/playable-runtime.ts` 现已接管这两个 house-local mechanic 的 launch/action/finish/exit lifecycle，不再只覆盖 covered interactive playables。
+- `src/application/house-modules/grain-shop/grain-shop-house-module.ts` 与 `src/application/house-modules/medicine-house/medicine-house-house-module.ts` 已收窄为 host integration owner：它们继续决定何时触发、何时回到本 house，但具体 mechanic state progression 与 settlement 已委托给 shared playable runtime。
+- `docs/special-house-interface.md` 现已明确：house-owned reusable playables 必须通过 shared playable runtime launch/settlement，而不是继续在单个 house module 内维持永久的私有 mechanic runtime。
+
+### Impact
+- 仓库现在已经证明 shared playable runtime 不只适用于 covered interactive 路径，也能承接 house-local mechanic，而不需要把 `main.ts` 或 house runtime 重新改回 concrete house business owner。
+- `grain-accounting` 与 `medicine-compounding` 迁移完成后，下一条合法 promotion 路径只剩 `story-battle` 的 battle-family child；`Child 34` 仍必须保持 enforcement/legacy closeout 边界，不能被提前打开成 battle migration 的替代品。
+
 ## 2026-07-03 Child 31 Covered Interactive Playables Migration
 
 ### Added

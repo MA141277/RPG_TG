@@ -277,6 +277,14 @@ The module should update its typed session state with structured dialogue or
 overlay data explaining the rejection. The runtime may honor the navigation
 result, but it must not contain house-specific leave reasons.
 
+If a house hosts a reusable playable mechanic:
+
+- the house module may remain the trigger owner and integration owner
+- the playable launch must still resolve through the shared playable runtime contract
+- active mechanic lifecycle, result emission, and settlement must not stay as ad hoc house-local timer branches once a shared playable exists
+- the house session may remain the host shell and return target, but it should recover through typed house session state plus shared playable handoff semantics rather than a second hidden state path
+- do not rebuild a one-off mini runtime in the house module after the repository already has a shared playable runtime
+
 ## State Rules
 
 Persistent state must be stored in unified runtime structures.
@@ -572,6 +580,7 @@ A new house implementation is acceptable only if all are true:
 - timer behavior, if any, runs through `tick` requests plus shared side-effect wiring
 - map-based time skip, if any, runs through shared side-effect wiring instead of entrypoint special cases
 - single-step activity time costs, if any, are returned through shared `timeAdvanceCost` instead of ad hoc `calendar` mutations
+- house-owned reusable playables, if any, launch and settle through the shared playable runtime while keeping the house module as host integration owner
 - `docs/change-log.md` is updated for shared-interface changes
 
 ## Review Checklist

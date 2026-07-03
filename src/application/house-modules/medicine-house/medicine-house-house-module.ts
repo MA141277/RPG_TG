@@ -27,6 +27,12 @@ import {
 } from "../../../domain/medicine-house";
 import { assertExists } from "../../../shared/assert";
 import { pickRandom } from "../../../shared/random";
+import {
+  createExitPlayableRequest,
+  createLaunchPlayableRequest,
+  createPlayableActionRequest,
+  runPlayableRuntime,
+} from "../../../core/runtime/playable-runtime";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import {
@@ -52,6 +58,11 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import {
+  createHousePlayableRuntimeState,
+  readHousePlayableSessionState,
+} from "../../playables/house-playable-runtime-bridge";
+import { getMedicineCompoundingTimeAdvanceCost } from "../../playables/medicine-compounding/medicine-compounding-definition";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialMedicineHouseSessionState } from "./medicine-house-session-state";
 
@@ -135,6 +146,60 @@ function withSessionState(
       ...patch,
     },
     ...(sideEffects == null ? {} : { sideEffects }),
+  };
+}
+
+function runMedicineCompoundingPlayableRequest(
+  input: HouseModuleDispatchInput<"medicine-house">,
+  sessionState: MedicineHouseSessionState | null,
+  request:
+    | ReturnType<typeof createLaunchPlayableRequest>
+    | ReturnType<typeof createPlayableActionRequest>
+    | ReturnType<typeof createExitPlayableRequest>,
+  sideEffects?: HouseModuleTransitionResult<"medicine-house">["sideEffects"]
+): HouseModuleTransitionResult<"medicine-house"> {
+  const runtimeResult = runPlayableRuntime({
+    state: createHousePlayableRuntimeState({
+      gameState: input.gameState,
+      moduleId: "medicine-house",
+      sessionState,
+    }),
+    request,
+    characterDefinitions: input.characterDefinitions,
+    playerCharacterId: input.playerCharacterId,
+  });
+  const nextSessionState = readHousePlayableSessionState(
+    runtimeResult.state,
+    "medicine-house"
+  );
+  const completed =
+    sessionState?.overlay?.type === "compounding" &&
+    nextSessionState?.overlay?.type === "result" &&
+    runtimeResult.state.core.runtime.playableSession == null;
+
+  return {
+    gameState: runtimeResult.state.core,
+    characterDefinitions:
+      runtimeResult.characterDefinitions ?? input.characterDefinitions,
+    sessionState: nextSessionState,
+    ...((sideEffects == null && !completed)
+      ? {}
+      : {
+          sideEffects: [
+            ...(sideEffects ?? []),
+            ...(completed
+              ? [{ type: "stop-interval" as const, intervalId: COMPOUNDING_INTERVAL_ID }]
+              : []),
+          ],
+        }),
+    ...(completed
+      ? {
+          timeAdvanceCost: getMedicineCompoundingTimeAdvanceCost(
+            input.characterDefinitions,
+            input.playerCharacterId
+          ),
+        }
+      : {}),
   };
 }
 
@@ -335,6 +400,17 @@ function finalizeCompounding(
     return createTransitionResult(input, {
       sideEffects: [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }],
     });
+  }
+
+  if (
+    input.gameState.runtime.playableSession?.playableId ===
+    "medicine-compounding"
+  ) {
+    return runMedicineCompoundingPlayableRequest(
+      input,
+      sessionState,
+      createPlayableActionRequest("medicine-compounding", "tick")
+    );
   }
 
   const gradeResult = resolveCompoundingGrade(
@@ -637,23 +713,16 @@ function handleAction(
         });
       }
 
-      const limits = getCompoundingLimits(medicineSkill);
-      const target = pickCompoundingTarget(medicineSkill);
-      const availableHerbs = getAvailableHerbsForSkill(medicineSkill);
-
-      return withSessionState(
+      return runMedicineCompoundingPlayableRequest(
         input,
         sessionState,
-        {
-          overlay: {
-            type: "compounding",
-            target,
-            availableHerbs,
-            selections: [],
-            selectionsLeft: limits.maxTurns,
-            secondsLeft: limits.durationSec,
+        createLaunchPlayableRequest("medicine-compounding", {
+          ownerContext: {
+            ownerKind: "house",
+            ownerId: input.houseDefinition.id,
+            returnPolicy: "resume-owner",
           },
-        },
+        }),
         [
           { type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID },
           {
@@ -676,6 +745,17 @@ function handleAction(
         return createTransitionResult(input);
       }
 
+      if (
+        input.gameState.runtime.playableSession?.playableId ===
+        "medicine-compounding"
+      ) {
+        return runMedicineCompoundingPlayableRequest(
+          input,
+          sessionState,
+          createPlayableActionRequest("medicine-compounding", "clear")
+        );
+      }
+
       const refundedSelections = countCompoundingSelections(overlay.selections);
 
       return withSessionState(input, sessionState, {
@@ -687,6 +767,16 @@ function handleAction(
       });
     }
     case "compound-finish":
+      if (
+        input.gameState.runtime.playableSession?.playableId ===
+        "medicine-compounding"
+      ) {
+        return runMedicineCompoundingPlayableRequest(
+          input,
+          sessionState,
+          createPlayableActionRequest("medicine-compounding", "finish")
+        );
+      }
       return finalizeCompounding(input, sessionState);
     default: {
       if (input.request.actionId.startsWith(BUY_SELECT_ACTION_PREFIX)) {
@@ -709,6 +799,19 @@ function handleAction(
         const overlay = sessionState?.overlay;
         if (overlay?.type !== "compounding" || overlay.selectionsLeft <= 0) {
           return createTransitionResult(input);
+        }
+
+        if (
+          input.gameState.runtime.playableSession?.playableId ===
+          "medicine-compounding"
+        ) {
+          return runMedicineCompoundingPlayableRequest(
+            input,
+            sessionState,
+            createPlayableActionRequest("medicine-compounding", "select-herb", {
+              herbId,
+            })
+          );
         }
 
         const nextSelections = addHerbSelection(overlay.selections, herbId);
@@ -867,8 +970,23 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
     return handleAction(input, input.sessionState);
   },
   leave(input) {
+    const nextGameState =
+      input.gameState.runtime.playableSession?.playableId ===
+      "medicine-compounding"
+        ? runPlayableRuntime({
+            state: createHousePlayableRuntimeState({
+              gameState: input.gameState,
+              moduleId: "medicine-house",
+              sessionState: input.sessionState,
+            }),
+            request: createExitPlayableRequest("medicine-compounding"),
+            characterDefinitions: input.characterDefinitions,
+            playerCharacterId: input.playerCharacterId,
+          }).state.core
+        : input.gameState;
+
     return {
-      gameState: input.gameState,
+      gameState: nextGameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: null,
       sideEffects: [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }],

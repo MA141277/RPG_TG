@@ -11182,3 +11182,167 @@ test("child 31 city-begging completion clears shared playable session after sett
   assert.equal(completed.state.core.runtime.playableSession, null);
   assert.equal(completed.state.app.beggingMiniGameState, null);
 });
+
+test("child 32 grain accounting launch writes shared playable session into runtime state", () => {
+  const startResult = grainShopHouseModule.dispatch({
+    gameState: withCouncilInDays(createStateWithGrainVariables(), 200),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: createInitialGrainShopSessionState("open", "default"),
+    request: { type: "action", actionId: "accounting" },
+  });
+
+  assert.equal(startResult.sessionState?.overlay?.type, "activity-confirm");
+
+  const confirmedResult = grainShopHouseModule.dispatch({
+    gameState: startResult.gameState,
+    characterDefinitions: startResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: startResult.sessionState,
+    request: { type: "action", actionId: "confirm-start-accounting" },
+  });
+
+  assert.equal(confirmedResult.sessionState?.overlay?.type, "minigame");
+  assert.equal(
+    confirmedResult.gameState.runtime.playableSession?.playableId,
+    "grain-accounting"
+  );
+  assert.equal(
+    confirmedResult.gameState.runtime.playableSession?.integrationId,
+    "playable.grain-accounting.house.grain-shop"
+  );
+  assert.equal(
+    confirmedResult.gameState.runtime.playableSession?.ownerContext.ownerKind,
+    "house"
+  );
+});
+
+test("child 32 grain accounting settlement clears shared playable session and keeps grain-shop result overlay", () => {
+  const startResult = grainShopHouseModule.dispatch({
+    gameState: withCouncilInDays(createStateWithGrainVariables(), 200),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: createInitialGrainShopSessionState("open", "default"),
+    request: { type: "action", actionId: "accounting" },
+  });
+  const confirmedResult = grainShopHouseModule.dispatch({
+    gameState: startResult.gameState,
+    characterDefinitions: startResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: startResult.sessionState,
+    request: { type: "action", actionId: "confirm-start-accounting" },
+  });
+
+  const settledResult = grainShopHouseModule.dispatch({
+    gameState: confirmedResult.gameState,
+    characterDefinitions: confirmedResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: {
+      ...confirmedResult.sessionState,
+      overlay:
+        confirmedResult.sessionState?.overlay?.type !== "minigame"
+          ? confirmedResult.sessionState?.overlay
+          : {
+              ...confirmedResult.sessionState.overlay,
+              secondsLeft: 1,
+            },
+    },
+    request: {
+      type: "tick",
+      tickId: "grain-shop-accounting",
+    },
+  });
+
+  assert.equal(settledResult.sessionState?.overlay?.type, "result");
+  assert.equal(settledResult.gameState.runtime.playableSession, null);
+});
+
+test("child 32 medicine compounding launch writes shared playable session into runtime state", () => {
+  const enterResult = medicineHouseHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 200),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const startResult = medicineHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      dialoguePhase: "open",
+    },
+    request: { type: "action", actionId: "start-compounding" },
+  });
+
+  assert.equal(startResult.sessionState?.overlay?.type, "activity-confirm");
+
+  const confirmedResult = medicineHouseHouseModule.dispatch({
+    gameState: startResult.gameState,
+    characterDefinitions: startResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: startResult.sessionState,
+    request: { type: "action", actionId: "confirm-start-compounding" },
+  });
+
+  assert.equal(confirmedResult.sessionState?.overlay?.type, "compounding");
+  assert.equal(
+    confirmedResult.gameState.runtime.playableSession?.playableId,
+    "medicine-compounding"
+  );
+  assert.equal(
+    confirmedResult.gameState.runtime.playableSession?.integrationId,
+    "playable.medicine-compounding.house.medicine-house"
+  );
+  assert.equal(
+    confirmedResult.gameState.runtime.playableSession?.ownerContext.ownerKind,
+    "house"
+  );
+});
+
+test("child 32 medicine compounding settlement clears shared playable session and keeps medicine-house result overlay", () => {
+  const enterResult = medicineHouseHouseModule.enter({
+    gameState: withCouncilInDays(createBaseState(), 200),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const startResult = medicineHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      dialoguePhase: "open",
+    },
+    request: { type: "action", actionId: "start-compounding" },
+  });
+  const confirmedResult = medicineHouseHouseModule.dispatch({
+    gameState: startResult.gameState,
+    characterDefinitions: startResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: startResult.sessionState,
+    request: { type: "action", actionId: "confirm-start-compounding" },
+  });
+
+  const settledResult = medicineHouseHouseModule.dispatch({
+    gameState: confirmedResult.gameState,
+    characterDefinitions: confirmedResult.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: confirmedResult.sessionState,
+    request: { type: "action", actionId: "compound-finish" },
+  });
+
+  assert.equal(settledResult.sessionState?.overlay?.type, "result");
+  assert.equal(settledResult.gameState.runtime.playableSession, null);
+});

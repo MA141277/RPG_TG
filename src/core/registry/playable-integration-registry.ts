@@ -42,6 +42,34 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     outcomeConfig: {},
   },
   {
+    integrationId: "playable.grain-accounting.house.grain-shop",
+    playableId: "grain-accounting",
+    ownerDefaults: {
+      ownerKind: "house",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.grain-accounting.house.grain-shop",
+      ownerKind: "house",
+      trigger: "house-action-accounting",
+    },
+    outcomeConfig: {},
+  },
+  {
+    integrationId: "playable.medicine-compounding.house.medicine-house",
+    playableId: "medicine-compounding",
+    ownerDefaults: {
+      ownerKind: "house",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.medicine-compounding.house.medicine-house",
+      ownerKind: "house",
+      trigger: "house-action-start-compounding",
+    },
+    outcomeConfig: {},
+  },
+  {
     integrationId: "playable.story-battle.scene.default",
     playableId: "story-battle",
     ownerDefaults: {

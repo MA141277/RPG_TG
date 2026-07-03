@@ -29,6 +29,20 @@ import {
   tickCityBeggingPlayable,
   updateCityBeggingPointerPlayable,
 } from "../../application/playables/city-begging/city-begging-definition";
+import {
+  answerGrainAccountingPlayable,
+  exitGrainAccountingPlayable,
+  launchGrainAccountingPlayable,
+  tickGrainAccountingPlayable,
+} from "../../application/playables/grain-accounting/grain-accounting-definition";
+import {
+  clearMedicineCompoundingPlayable,
+  exitMedicineCompoundingPlayable,
+  launchMedicineCompoundingPlayable,
+  selectMedicineCompoundingHerbPlayable,
+  settleMedicineCompoundingPlayable,
+  tickMedicineCompoundingPlayable,
+} from "../../application/playables/medicine-compounding/medicine-compounding-definition";
 import { CITY_BEGGING_DURATION_DAYS } from "../../application/minigames/city-begging-minigame";
 import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
 import {
@@ -211,29 +225,79 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "launch") {
-    if (resolvedRequest.launch.launch.playableId !== "city-begging") {
-      return {
+    if (resolvedRequest.launch.launch.playableId === "city-begging") {
+      const now = resolvedRequest.launch.launch.payload?.now;
+      const nextState = launchCityBeggingPlayable({
         state: input.state,
+        now: typeof now === "number" ? now : performance.now(),
+      });
+
+      return {
+        state: nextState,
         effects: [],
-        handled: false,
-        session: getActivePlayableSession(
-          input.state,
-          resolvedRequest.launch.launch.playableId
-        ),
+        handled: true,
+        session: getActivePlayableSession(nextState, "city-begging"),
       };
     }
 
-    const now = resolvedRequest.launch.launch.payload?.now;
-    const nextState = launchCityBeggingPlayable({
-      state: input.state,
-      now: typeof now === "number" ? now : performance.now(),
-    });
+    if (resolvedRequest.launch.launch.playableId === "grain-accounting") {
+      if (input.playerCharacterId == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "grain-accounting"),
+        };
+      }
+
+      const nextState = launchGrainAccountingPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        playerCharacterId: input.playerCharacterId,
+        ownerId: resolvedRequest.launch.launch.ownerContext.ownerId,
+      });
+
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "grain-accounting"),
+      };
+    }
+
+    if (resolvedRequest.launch.launch.playableId === "medicine-compounding") {
+      if (input.playerCharacterId == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "medicine-compounding"),
+        };
+      }
+
+      const nextState = launchMedicineCompoundingPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        playerCharacterId: input.playerCharacterId,
+        ownerId: resolvedRequest.launch.launch.ownerContext.ownerId,
+      });
+
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "medicine-compounding"),
+      };
+    }
 
     return {
-      state: nextState,
+      state: input.state,
       effects: [],
-      handled: true,
-      session: getActivePlayableSession(nextState, "city-begging"),
+      handled: false,
+      session: getActivePlayableSession(
+        input.state,
+        resolvedRequest.launch.launch.playableId
+      ),
     };
   }
 
@@ -250,6 +314,26 @@ export function runPlayableRuntime(input: {
 
     if (resolvedRequest.playableId === "city-begging") {
       const nextState = exitCityBeggingPlayable(input.state);
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+
+    if (resolvedRequest.playableId === "grain-accounting") {
+      const nextState = exitGrainAccountingPlayable(input.state);
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+
+    if (resolvedRequest.playableId === "medicine-compounding") {
+      const nextState = exitMedicineCompoundingPlayable(input.state);
       return {
         state: nextState,
         effects: [],
@@ -408,6 +492,144 @@ export function runPlayableRuntime(input: {
         effects: [],
         handled: true,
         session: null,
+      };
+    }
+  }
+
+  if (resolvedRequest.playableId === "grain-accounting") {
+    if (input.playerCharacterId == null) {
+      return {
+        state: input.state,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(input.state, "grain-accounting"),
+      };
+    }
+
+    if (resolvedRequest.action === "tick") {
+      const completion = tickGrainAccountingPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        playerCharacterId: input.playerCharacterId,
+      });
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(completion.state, "grain-accounting"),
+      };
+    }
+
+    if (resolvedRequest.action === "answer") {
+      const playerSaysCorrect = resolvedRequest.payload?.playerSaysCorrect;
+      if (typeof playerSaysCorrect !== "boolean") {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "grain-accounting"),
+        };
+      }
+
+      const completion = answerGrainAccountingPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        playerCharacterId: input.playerCharacterId,
+        playerSaysCorrect,
+      });
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(completion.state, "grain-accounting"),
+      };
+    }
+  }
+
+  if (resolvedRequest.playableId === "medicine-compounding") {
+    if (input.playerCharacterId == null) {
+      return {
+        state: input.state,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(input.state, "medicine-compounding"),
+      };
+    }
+
+    if (resolvedRequest.action === "tick") {
+      const completion = tickMedicineCompoundingPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        playerCharacterId: input.playerCharacterId,
+      });
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "medicine-compounding"
+        ),
+      };
+    }
+
+    if (resolvedRequest.action === "clear") {
+      const nextState = clearMedicineCompoundingPlayable(input.state);
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "medicine-compounding"),
+      };
+    }
+
+    if (resolvedRequest.action === "finish") {
+      const completion = settleMedicineCompoundingPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        playerCharacterId: input.playerCharacterId,
+      });
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "medicine-compounding"
+        ),
+      };
+    }
+
+    if (resolvedRequest.action === "select-herb") {
+      const herbId = resolvedRequest.payload?.herbId;
+      if (typeof herbId !== "string" || herbId.length === 0) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "medicine-compounding"),
+        };
+      }
+
+      const completion = selectMedicineCompoundingHerbPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        playerCharacterId: input.playerCharacterId,
+        herbId,
+      });
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "medicine-compounding"
+        ),
       };
     }
   }

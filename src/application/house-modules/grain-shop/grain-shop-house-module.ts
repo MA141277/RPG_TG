@@ -35,7 +35,18 @@ import {
 } from "../../player/player-stamina";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
+import {
+  createExitPlayableRequest,
+  createLaunchPlayableRequest,
+  createPlayableActionRequest,
+  runPlayableRuntime,
+} from "../../../core/runtime/playable-runtime";
 import { assertExists } from "../../../shared/assert";
+import {
+  createHousePlayableRuntimeState,
+  readHousePlayableSessionState,
+} from "../../playables/house-playable-runtime-bridge";
+import { getGrainAccountingTimeAdvanceCost } from "../../playables/grain-accounting/grain-accounting-definition";
 import { createInitialGrainShopSessionState } from "./grain-shop-session-state";
 
 const ACCOUNTING_INTERVAL_ID = "grain-shop-accounting";
@@ -163,6 +174,60 @@ function withOverlay(
   };
 }
 
+function runGrainAccountingPlayableRequest(
+  input: HouseModuleDispatchInput<"grain-shop">,
+  sessionState: GrainShopSessionState | null,
+  request:
+    | ReturnType<typeof createLaunchPlayableRequest>
+    | ReturnType<typeof createPlayableActionRequest>
+    | ReturnType<typeof createExitPlayableRequest>,
+  sideEffects?: HouseModuleTransitionResult<"grain-shop">["sideEffects"]
+): HouseModuleTransitionResult<"grain-shop"> {
+  const runtimeResult = runPlayableRuntime({
+    state: createHousePlayableRuntimeState({
+      gameState: input.gameState,
+      moduleId: "grain-shop",
+      sessionState,
+    }),
+    request,
+    characterDefinitions: input.characterDefinitions,
+    playerCharacterId: input.playerCharacterId,
+  });
+  const nextSessionState = readHousePlayableSessionState(
+    runtimeResult.state,
+    "grain-shop"
+  );
+  const completed =
+    sessionState?.overlay?.type === "minigame" &&
+    nextSessionState?.overlay?.type === "result" &&
+    runtimeResult.state.core.runtime.playableSession == null;
+
+  return {
+    gameState: runtimeResult.state.core,
+    characterDefinitions:
+      runtimeResult.characterDefinitions ?? input.characterDefinitions,
+    sessionState: nextSessionState,
+    ...((sideEffects == null && !completed)
+      ? {}
+      : {
+          sideEffects: [
+            ...(sideEffects ?? []),
+            ...(completed
+              ? [{ type: "stop-interval" as const, intervalId: ACCOUNTING_INTERVAL_ID }]
+              : []),
+          ],
+        }),
+    ...(completed
+      ? {
+          timeAdvanceCost: getGrainAccountingTimeAdvanceCost(
+            input.characterDefinitions,
+            input.playerCharacterId
+          ),
+        }
+      : {}),
+  };
+}
+
 function openTradeOverlay(
   input: Pick<
     HouseModuleDispatchInput<"grain-shop">,
@@ -283,6 +348,14 @@ function handleTick(
     return createTransitionResult(input, {
       sideEffects: [{ type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID }],
     });
+  }
+
+  if (input.gameState.runtime.playableSession?.playableId === "grain-accounting") {
+    return runGrainAccountingPlayableRequest(
+      input,
+      sessionState,
+      createPlayableActionRequest("grain-accounting", "tick")
+    );
   }
 
   const nextSeconds = overlay.secondsLeft - 1;
@@ -434,17 +507,16 @@ function startAccountingMinigame(
     );
   }
 
-  const firstQuestion = generateLedgerQuestion();
-  return withOverlay(
+  return runGrainAccountingPlayableRequest(
     input,
     sessionState,
-    {
-      type: "minigame",
-      score: 0,
-      wrongCount: 0,
-      secondsLeft: accountingGameDurationSec,
-      question: firstQuestion,
-    },
+    createLaunchPlayableRequest("grain-accounting", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: input.houseDefinition.id,
+        returnPolicy: "resume-owner",
+      },
+    }),
     [
       { type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID },
       {
@@ -633,6 +705,16 @@ function handleAction(
         return createTransitionResult(input);
       }
 
+      if (input.gameState.runtime.playableSession?.playableId === "grain-accounting") {
+        return runGrainAccountingPlayableRequest(
+          input,
+          sessionState,
+          createPlayableActionRequest("grain-accounting", "answer", {
+            playerSaysCorrect: input.request.actionId === "ledger-correct",
+          })
+        );
+      }
+
       const playerSaysCorrect = input.request.actionId === "ledger-correct";
       const isCorrect = isLedgerAnswerCorrect(overlay.question, playerSaysCorrect);
       const nextScore = isCorrect ? overlay.score + 1 : overlay.score;
@@ -789,8 +871,22 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
     return handleAction(input, sessionState);
   },
   leave(input) {
+    const nextGameState =
+      input.gameState.runtime.playableSession?.playableId === "grain-accounting"
+        ? runPlayableRuntime({
+            state: createHousePlayableRuntimeState({
+              gameState: input.gameState,
+              moduleId: "grain-shop",
+              sessionState: input.sessionState,
+            }),
+            request: createExitPlayableRequest("grain-accounting"),
+            characterDefinitions: input.characterDefinitions,
+            playerCharacterId: input.playerCharacterId,
+          }).state.core
+        : input.gameState;
+
     return {
-      gameState: input.gameState,
+      gameState: nextGameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: null,
       sideEffects: [{ type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID }],

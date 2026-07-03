@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `completed`
 - Last Updated: `2026-07-03`
-- Current Focus: `Pre-authored future child only. This child remains candidate-only until Child 31 closes and the queue later promotes house-local mechanic migration.`
-- Next Step: `Recheck grain-shop and medicine-house ownership after Child 31 closes and confirm that the shared playable shell can now absorb house-local mechanics safely.`
-- Verification: `Not run as part of this doc-only change`
-- Notes: `Child 32 must keep house-specific narrative and menu ownership in house modules while moving the mechanics themselves into the shared playable family.`
+- Current Focus: `Child 32 is closed. Grain-accounting and medicine-compounding now launch and settle through shared playable-runtime house integrations while grain-shop and medicine-house remain the host trigger/return owners.`
+- Next Step: `Run a fresh baseline recheck for Child 33 before promoting story-battle migration.`
+- Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+- Notes: `Child 32 preserved current house UIs and action ids, so the migration stayed inside runtime/application boundaries without forcing a house-view redesign.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Plan created for the later house-local mechanic promotion phase. Child 32 remains non-executable until the earlier playable skeleton and covered minigame migrations close.`
   - Verification: `Not run as part of this doc-only change`
   - Next: `Recheck house-local mechanic ownership after Child 31.`
+- 2026-07-03
+  - Summary: `Completed Child 32 after a fresh baseline recheck. Added house-to-playable runtime bridging, promoted grain-accounting and medicine-compounding into shared playable definitions, registered both integrations, and reduced the host house modules to trigger/return owners that delegate lifecycle and settlement into playable-runtime.`
+  - Verification: `npm run lint:plans`, `npm run typecheck`, `npm test`, `npm run build`
+  - Next: `Keep Child 33 non-executable until a fresh baseline recheck promotes the battle-family migration.`
 
 ---
 
@@ -39,11 +43,11 @@
 
 ## Baseline Recheck
 
-- Recheck result: `unchanged`
+- Recheck result: `narrowed`
 - Notes:
-  - `grain-accounting` currently lives under src/application/grain-shop/accounting-minigame.ts and is still launched/settled through grain-shop house-local flow ownership.`
-  - `medicine-compounding` currently lives under src/application/medicine-house/compounding-minigame.ts and is still rendered as a medicine-house overlay.`
-  - `This child must keep house interface rules intact and must not push house-specific business into main.ts.`
+  - `Child 31 already proved the shared playable shell and shared playableSession carrier, so Child 32 no longer needed to reopen top-level runtime skeleton questions.`
+  - `The remaining migration surface was narrowed to two house-local mechanics: grain-accounting under grain-shop and medicine-compounding under medicine-house.`
+  - `This child still had to keep house interface rules intact and avoid pushing any house-specific business back into main.ts.`
 
 ## Implementation Scope
 
@@ -69,22 +73,16 @@
 
 - `docs/special-house-interface.md`
   - Update only if the shared house-to-playable launch or return contract changes.
-- `src/application/grain-shop/accounting-minigame.ts`
-  - Reuse accounting mechanism logic under a new playable definition.
-- `src/application/grain-shop/apply-accounting-reward.ts`
-  - Reduce or relocate mechanism-local reward assumptions once outcome config owns story settlement.
 - `src/application/house-modules/grain-shop/grain-shop-house-module.ts`
   - Convert house-local launch and result handling to the shared playable runtime path.
-- `src/ui/views/house/grain-shop-house-view.ts`
-  - Keep host-house UI compatible while the mechanic becomes a shared playable.
-- `src/application/medicine-house/compounding-minigame.ts`
-  - Reuse compounding mechanism logic under a new playable definition.
 - `src/application/house-modules/medicine-house/medicine-house-house-module.ts`
   - Convert house-local launch and result handling to the shared playable runtime path.
-- `src/ui/views/house/medicine-house-house-view.ts`
-  - Keep host-house UI compatible while the mechanic becomes a shared playable.
-- `src/domain/house-module.ts`
-  - Align overlay/session types if the house contract must reference the shared playable runtime instead of house-local overlays.
+- `src/core/registry/playable-definition-registry.ts`
+  - Register the two new house-local playable definitions.
+- `src/core/registry/playable-integration-registry.ts`
+  - Register the two new house-owned integration ids.
+- `src/core/runtime/playable-runtime.ts`
+  - Own the shared launch/action/tick/finish/exit flow for the promoted house-local playables.
 - `tests/robustness.test.cjs`
   - Add parity regressions for accounting and compounding migration.
 - `docs/change-log.md`
@@ -98,6 +96,7 @@
 - `src/domain/medicine-house.ts`
 - `src/domain/house-modules/grain-shop-session.ts`
 - `src/domain/house-modules/medicine-house-session.ts`
+- `src/core/runtime/playable-runtime.ts`
 
 ### New files to create
 
@@ -105,6 +104,8 @@
   - Playable-definition wrapper around the accounting mechanism.
 - `src/application/playables/medicine-compounding/medicine-compounding-definition.ts`
   - Playable-definition wrapper around the compounding mechanism.
+- `src/application/playables/house-playable-runtime-bridge.ts`
+  - Shared bridge for house-session-backed playable runtime dispatch.
 
 ## Verification Plan
 
@@ -124,11 +125,11 @@
 - Read: `src/application/house-modules/medicine-house/medicine-house-house-module.ts`
 - Read: `docs/special-house-interface.md`
 
-- [ ] **Step 1: Reconfirm the current grain-shop and medicine-house mechanic boundaries**
+- [x] **Step 1: Reconfirm the current grain-shop and medicine-house mechanic boundaries**
 
 Lock what remains house-owned and what must move into the shared playable runtime.
 
-- [ ] **Step 2: Confirm the house contract impact before execution**
+- [x] **Step 2: Confirm the house contract impact before execution**
 
 If shared launch/return semantics change, plan the required doc sync before code work starts.
 
@@ -141,11 +142,11 @@ If shared launch/return semantics change, plan the required doc sync before code
 - Modify: `src/application/house-modules/grain-shop/grain-shop-house-module.ts`
 - Modify: `src/ui/views/house/grain-shop-house-view.ts`
 
-- [ ] **Step 1: Wrap the accounting mechanism in one playable definition**
+- [x] **Step 1: Wrap the accounting mechanism in one playable definition**
 
 Move mechanic lifecycle and fact-result emission behind the shared playable shell.
 
-- [ ] **Step 2: Move settlement ownership out of house-local reward branches**
+- [x] **Step 2: Move settlement ownership out of house-local reward branches**
 
 Keep scenario/house semantics in integration config or host integration logic rather than in the mechanic reducer.
 
@@ -157,11 +158,11 @@ Keep scenario/house semantics in integration config or host integration logic ra
 - Modify: `src/application/house-modules/medicine-house/medicine-house-house-module.ts`
 - Modify: `src/ui/views/house/medicine-house-house-view.ts`
 
-- [ ] **Step 1: Wrap the compounding mechanism in one playable definition**
+- [x] **Step 1: Wrap the compounding mechanism in one playable definition**
 
 Move mechanic lifecycle and fact-result emission behind the shared playable shell.
 
-- [ ] **Step 2: Keep house return behavior correct**
+- [x] **Step 2: Keep house return behavior correct**
 
 Ensure completion returns to the correct medicine-house session or reentry path through formal handoff.
 
@@ -172,11 +173,11 @@ Ensure completion returns to the correct medicine-house session or reentry path 
 - Modify: `docs/special-house-interface.md` if shared boundaries moved
 - Modify: `docs/change-log.md`
 
-- [ ] **Step 1: Add red-to-green parity regressions**
+- [x] **Step 1: Add red-to-green parity regressions**
 
 Prove both mechanics became shared playables while their host houses still recover correctly.
 
-- [ ] **Step 2: Run the required verification commands**
+- [x] **Step 2: Run the required verification commands**
 
 Run:
 
@@ -193,15 +194,15 @@ Expected:
 
 ## Exit Check
 
-- [ ] `grain-accounting` is a shared playable rather than a house-local mechanic owner.
-- [ ] `medicine-compounding` is a shared playable rather than a house-local mechanic owner.
-- [ ] Host houses still return to the correct owner/session.
-- [ ] `docs/special-house-interface.md` is updated if shared launch/return boundaries changed.
-- [ ] Shared docs are updated if boundaries changed.
+- [x] `grain-accounting` is a shared playable rather than a house-local mechanic owner.
+- [x] `medicine-compounding` is a shared playable rather than a house-local mechanic owner.
+- [x] Host houses still return to the correct owner/session.
+- [x] `docs/special-house-interface.md` is updated if shared launch/return boundaries changed.
+- [x] Shared docs are updated if boundaries changed.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
