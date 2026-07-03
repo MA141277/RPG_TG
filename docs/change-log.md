@@ -86,10 +86,43 @@
 ### Changed
 - 明确后续小游戏工作不再视为 house-local 或 overlay-local 约定，而是统一纳入仓库级 runtime/presenter/settlement 边界。
 - 明确现有 `activity-qte`、`city-begging`、`grain-accounting` 与 `medicine-compounding` 的渐进迁移顺序，以及“完成后必须回到正确 owner/session”的硬性要求。
+- 明确 `story-battle` 不属于这套小游戏 taxonomy；它必须与小游戏 registry/runtime 作为并列 interactive family 区分，而不是被收进统一小游戏注册面。
 
 ### Impact
 - 后续新增或改造小游戏时，启动、渲染、结算与回跳将有统一 contract 可依，不再继续把接线逻辑扩散到 `main.ts`、house module 或局部 overlay 分支中。
 - 这份 spec 为后续 implementation plan 提供了正式边界；下一步应基于该 spec 写可执行迁移计划，而不是直接散点重构。
+- 后续若整理 `story-battle`，应单独走 battle/combat 方向的 spec，而不是复用本小游戏 spec 直接改名套用。
+
+## 2026-07-03 Unified Playable Runtime Contract Spec
+
+### Added
+- 新增仓库级 spec：[docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md)，把统一 runtime 的顶层 taxonomy 从 `minigame` 提升为 `playable`，并以 `family: "minigame" | "battle"` 约束具体子类。
+- 新增 candidate-only 的 fresh weekly orchestration 计划：[docs/superpowers/plans/2026-07-03-playable-runtime-migration-weekly-orchestration-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-playable-runtime-migration-weekly-orchestration-plan.md)，为 playable runtime 迁移预先建立独立队列，而不是把该问题类型附着到当前进行中的 `main-shell-ownerization` weekly set 上。
+
+### Changed
+- 明确 `story-battle` 现纳入统一 playable runtime 范围，不再被排除在顶层 registry/runtime/presenter/settlement/handoff contract 之外。
+- 明确 `story-battle` 必须保留 `family: "battle"` 的边界，不能为了统一 runtime 而被压平成普通小游戏语义。
+- 将 [docs/superpowers/specs/2026-07-02-unified-minigame-contract-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-02-unified-minigame-contract-spec.md) 降为 superseded 历史文档。
+- 为 playable spec 补充“创作者责任边界”和“统一接入/目录归位/资源放置规则”，明确后续新增 playable 时，内容作者只关心玩法内容，不负责工程接线与资源管理策略。
+- 将 playable spec 的结果模型进一步收紧为“玩法产出 fact result，剧本/集成层提供 outcome config，runtime 按配置判断胜负/取消并发放奖励”，避免把剧情语义硬编码回 playable 机制层。
+- 为 playable spec 补充“缺失配置语义”规则，明确触发信息、owner 信息、outcome 条件缺失时必须 fail-closed，而奖励和 handoff 仅在文档明确允许时才可走显式 fallback。
+- 继续将 playable spec 从“原则性 contract”收紧为“可执行闭环 contract”：新增 `integrationId` 这一层 scenario-owned playable use-site identity，明确同一 `playableId` 被多处复用时，触发、结算、奖励与回跳都必须绑定到唯一 integration instance。
+- 为 playable spec 新增 trigger evaluation contract，明确“触发由谁配置”之外，还要求 framework-owned trigger evaluator 负责把命中的 trigger 规约为唯一的 `integrationId + playableId + ownerContext` launch request。
+- 为 playable spec 新增 owner session recovery contract，明确 `sessionToken` 的签发、恢复、失效和 fallback 语义，防止统一结算后再次退回到 view/shell 猜测回跳目标。
+- 为 playable spec 新增 scaffold / validator / CI enforcement 要求，明确该 spec 后续必须通过脚手架、schema/typed validator 和 CI 门禁执行，而不是只靠文档约定。
+- 新增 [docs/superpowers/plans/_playable-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/_playable-plan-template.md)，作为后续新增 playable、迁移 legacy playable、以及从 house/scene 流程中剥离 playable 的统一 active-plan 骨架。
+- 在 playable spec 的 follow-up 中明确：后续 playable 相关执行计划应从 `_playable-plan-template.md` 起步，同时仍受通用 `_plan-template.md` 与 `plan-governance-spec.md` 约束。
+- 将 playable runtime 迁移进一步拆成多 child 的阶段式候选队列，而不是预设成一个超大 child：当前 candidate 队列先记录 Child 30（runtime skeleton 与 integration registry）、Child 31（`activity-qte` / `city-begging` 迁移）、以及更后的 Child 32-34 候选阶段。
+
+### Impact
+- 后续 runtime 规划和迁移不再围绕“小游戏是否包含战斗”反复分叉，而是统一围绕 playable runtime 展开。
+- 后续实现 plan 需要以 playable registry/runtime 为主线，同时对 `minigame` 与 `battle` 两类保留不同内部语义与 presenter/layout 约束。
+- 后续若框架仍要求新增玩法的人手动决定代码目录、资产归位、注册点或 glue 路径，应视为 framework 缺口，而不是让内容创作者承担该复杂度。
+- 后续同一 playable 可以被不同剧本以不同胜负条件、奖励和回跳方式复用，机制实现与剧本结算配置不再强耦合。
+- 后续 runtime / editor / validator 在面对缺失配置时不能再各自猜默认行为，必须遵守 spec 里定义的 fail-closed 与 explicit fallback 规则。
+- 这份 playable spec 现在不再只回答“该怎么设计”，而是开始回答“触发如何归一、结算如何唯一定位、回跳如何恢复、门禁如何执行”；后续实现 plan 可以直接围绕这些强制节点展开，而不是再次补概念口子。
+- 后续不管是“新增 playable”、还是“把分散在 house / scene / local flow 的玩法剥离出来”，都可以沿同一份 plan 模板落地，减少每次重新定义迁移骨架的成本，也降低 AI/多人协作时的 plan 漂移。
+- 后续 playable runtime 工作现在既不会破坏“同一时间只允许一个 active executable child”的治理规则，也不会因为前置拆分不足而把多个机制问题揉进一个难以验证的大迁移批次。
 
 ## 2026-07-02 Child 19 Task Runtime Mod Contract
 
