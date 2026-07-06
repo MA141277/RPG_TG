@@ -1,5 +1,4 @@
-import { builtinHouseModuleRegistrations } from "../../application/house-modules/builtin-house-module-registrations";
-import { builtinHouseRendererRegistrations } from "../../ui/views/house/builtin-house-module-renderers";
+import { builtinHouseModuleContributions } from "./builtin-house-module-contributions";
 import {
   createHouseModuleRegistry,
   type HouseModuleRegistry,
@@ -8,11 +7,9 @@ import {
 export function installBuiltinHouseModuleRegistrations(
   registry: HouseModuleRegistry
 ): void {
-  [...builtinHouseModuleRegistrations, ...builtinHouseRendererRegistrations].forEach(
-    (registration) => {
-      registry.register(registration);
-    }
-  );
+  builtinHouseModuleContributions.forEach((registration) => {
+    registry.register(registration);
+  });
 }
 
 export function createBuiltinHouseModuleRegistry(): HouseModuleRegistry {

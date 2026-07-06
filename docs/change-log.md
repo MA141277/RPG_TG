@@ -1575,3 +1575,19 @@
 ### Impact
 - 皇觉寺获得了与自宅接近的“歇脚 -> 恢复体力 -> 等待评定”节奏，但没有把自宅私有 `var.home.*` 恢复数据直接硬绑到寺庙模块。
 - 2026-06-04：体力不足时，禁止开始会消耗体力的内置小游戏与工作流程，并在城市场景、粮行算账、药铺配药、茶馆舌战、酒馆接活/交活、寺庙寺务/化缘交粮入口统一改为 NPC 劝玩家先休息后再来。
+## 2026-07-06 Phase 3 Authoring Entrypoints
+
+### Added
+- Added `tools/scaffold-scenario-pack.mjs` and `tools/validate-scenario-packs.mjs` plus package-script entrypoints so scenario-pack authoring has a repository-owned scaffold and validation path.
+- Added a fail-closed default-pack authoring contract: `validate-scenario-packs` now rejects `src/content/pack-content-access.ts` when its scenario-pack imports drift away from the catalog's default scenario-pack entry.
+- Added `src/core/registry/builtin-house-module-contributions.ts` so builtin house module and renderer wiring now enter the shared registry seam through one contribution list.
+
+### Changed
+- The builtin house registry installer no longer merges two separate static arrays for module and renderer registration.
+- `docs/special-house-interface.md` now explicitly requires builtin house seed wiring to live in one shared contribution list instead of split module/render tables.
+- Blueprint closeout truth for Phase 3 authoring now records `queue.authoring-entrypoint-and-fail-closed-closure` as closed, returns the target to `promotion-review` with no active queue, and explicitly rejects promotion of `queue.framework-scaffold-and-template-closure` on current evidence.
+
+### Impact
+- Scenario-pack/default-pack authoring no longer depends on undocumented manual catalog and adapter glue alone; authors now have a scaffold path and a fail-closed validator.
+- Builtin house authoring has a clearer next seam: new registry wiring can be expressed through one contribution record instead of two disconnected edits.
+- Current Phase 3 residue is limited to accepted compatibility residue and later target-level review, so further queue promotion now requires fresh evidence instead of silently continuing the same authoring queue.

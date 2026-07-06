@@ -4,10 +4,10 @@
 
 - queue_id: `queue.authoring-entrypoint-and-fail-closed-closure`
 - belongs_to_target: `target.project-complete-modularization`
-- status: `active`
+- status: `done`
 - queue_class: `conditional`
-- active_task: `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure`
-- next_task: `task.authoring-entrypoint-and-fail-closed-closure.house-family-authoring-entrypoint-closure`
+- active_task: `none`
+- next_task: `none`
 - allowed_task_states:
   - `candidate`
   - `queued`
@@ -74,15 +74,15 @@ This queue does not cover:
 
 ### Execution State
 
-- Status: `in-progress`
-- Last Updated: `2026-07-06`
-- Current Focus: `The target-level Phase 3 audit confirmed that playable authoring already has scaffold and validator entrypoints, but scenario-pack/default-pack/house-family authoring still relies on manual directory, catalog, builtin adapter, and registration edits with no shared fail-closed authoring path.`
+- Status: `done`
+- Last Updated: `2026-07-07`
+- Current Focus: `The queue is now closed. Scenario-pack/default-pack authoring, builtin house authoring, and the shared fail-closed policy split are recorded as landed framework-owned or fail-closed coverage, legacy builtin manifests remain accepted compatibility residue, and no fresh evidence justifies queue.framework-scaffold-and-template-closure.`
 - Active Task:
-  - `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure`
+  - `none`
 - Next Step:
-  - `Define the first bounded implementation slice that removes manual scenario-pack/default-pack authoring glue and adds an explicit fail-closed entrypoint or validator seam.`
+  - `Return to the current target plan and hold promotion review there. Do not reopen this queue or promote queue.framework-scaffold-and-template-closure unless fresh evidence proves a still-live same-family authoring gap outside the closed Phase 3 coverage.`
 - Verification:
-  - `Fresh source audit across package scripts, tools/, scenario-pack loader/catalog loader, pack-content-access, house registries, and robustness coverage.`
+  - `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
 - Notes:
   - `Playable scaffold/validator/CI is now treated as landed Phase 3 evidence, not the first blocker.`
 
@@ -101,10 +101,10 @@ This queue does not cover:
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.authoring-entrypoint-and-fail-closed-closure.baseline-reconcile` | `done` | `Freeze the current authoring baseline and classify which families already have framework-owned entrypoints versus which still depend on manual glue.` | `none` | `Closed by classifying playable as landed evidence and scenario-pack/default-pack/house-family authoring as the first justified blocker set.` |
-| `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure` | `active` | `Close the manual scenario-pack catalog/manifest/default-pack authoring path by introducing a framework-owned entrypoint or validator story.` | `task.authoring-entrypoint-and-fail-closed-closure.baseline-reconcile` | `First active task because current scenario-pack/default-pack authoring still depends on manual directory, catalog, and builtin adapter glue.` |
-| `task.authoring-entrypoint-and-fail-closed-closure.house-family-authoring-entrypoint-closure` | `queued` | `Reduce builtin house-family authoring from manual registration and renderer edits to an explicit shared authoring seam or recorded fail-closed policy.` | `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure` | `Defer until scenario/default-pack authoring direction is explicit.` |
-| `task.authoring-entrypoint-and-fail-closed-closure.shared-fail-closed-policy-closeout` | `queued` | `Close the remaining validator/template/fail-closed policy residue that still leaves same-family authoring underspecified.` | `task.authoring-entrypoint-and-fail-closed-closure.house-family-authoring-entrypoint-closure` | `Only execute after concrete authoring entrypoint slices are narrowed.` |
-| `task.authoring-entrypoint-and-fail-closed-closure.queue-closeout` | `queued` | `Re-evaluate whether Phase 3 authoring closure is satisfied or whether a narrower follow-up queue is still needed.` | `task.authoring-entrypoint-and-fail-closed-closure.shared-fail-closed-policy-closeout` | `Close only after queue evidence can explain same-family authoring without manual glue.` |
+| `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure` | `done` | `Close the manual scenario-pack catalog/manifest/default-pack authoring path by introducing a framework-owned entrypoint or validator story.` | `task.authoring-entrypoint-and-fail-closed-closure.baseline-reconcile` | `Closed after scenario-pack scaffold/validator entrypoints landed and default-pack adapter drift became fail-closed against the default catalog entry.` |
+| `task.authoring-entrypoint-and-fail-closed-closure.house-family-authoring-entrypoint-closure` | `done` | `Reduce builtin house-family authoring from manual registration and renderer edits to an explicit shared authoring seam or recorded fail-closed policy.` | `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure` | `Closed after builtin house module and renderer wiring moved to one shared contribution list and the split static seed files were retired.` |
+| `task.authoring-entrypoint-and-fail-closed-closure.shared-fail-closed-policy-closeout` | `done` | `Close the remaining validator/template/fail-closed policy residue that still leaves same-family authoring underspecified.` | `task.authoring-entrypoint-and-fail-closed-closure.house-family-authoring-entrypoint-closure` | `Closed after the queue recorded explicit framework-owned families, accepted compatibility residue, and the no-new-code-seam conclusion for the current task boundary.` |
+| `task.authoring-entrypoint-and-fail-closed-closure.queue-closeout` | `active` | `Re-evaluate whether Phase 3 authoring closure is satisfied or whether a narrower follow-up queue is still needed.` | `task.authoring-entrypoint-and-fail-closed-closure.shared-fail-closed-policy-closeout` | `Now active because the task-local residue is reduced to closeout judgment rather than another implementation slice.` |
 
 ### Task Definitions
 
@@ -170,7 +170,7 @@ This queue does not cover:
 ##### Control Block
 
 - task_id: `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure`
-- state: `active`
+- state: `done`
 - task_type: `execution`
 - depends_on:
   - `task.authoring-entrypoint-and-fail-closed-closure.baseline-reconcile`
@@ -226,7 +226,7 @@ This queue does not cover:
 ##### Control Block
 
 - task_id: `task.authoring-entrypoint-and-fail-closed-closure.house-family-authoring-entrypoint-closure`
-- state: `queued`
+- state: `done`
 - task_type: `execution`
 - depends_on:
   - `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure`
@@ -239,8 +239,7 @@ This queue does not cover:
   - `docs/special-house-interface.md`
   - `tests/robustness.test.cjs`
 - must_inspect:
-  - `src/application/house-modules/builtin-house-module-registrations.ts`
-  - `src/ui/views/house/builtin-house-module-renderers.ts`
+  - `src/core/registry/builtin-house-module-contributions.ts`
   - `src/core/registry/builtin-house-module-registry.ts`
   - `docs/special-house-interface.md`
   - `tests/robustness.test.cjs`
@@ -278,7 +277,7 @@ This queue does not cover:
 ##### Control Block
 
 - task_id: `task.authoring-entrypoint-and-fail-closed-closure.shared-fail-closed-policy-closeout`
-- state: `queued`
+- state: `done`
 - task_type: `execution`
 - depends_on:
   - `task.authoring-entrypoint-and-fail-closed-closure.house-family-authoring-entrypoint-closure`
@@ -321,13 +320,35 @@ This queue does not cover:
   - `Close the remaining Phase 3 validator/template/fail-closed policy residue without inflating the queue into unrelated tooling work.`
 - Failure mode:
   - `Do not turn the queue into generic tooling cleanup; only close the policy seams that still block same-family modular authoring acceptance.`
+- framework_owned_families:
+  - `playable authoring is already repository-owned through scaffold-playable, scaffold-playable-integration, validate-playables, package scripts, and robustness coverage`
+  - `scenario-pack authoring is repository-owned for new Phase 3 packs through scaffold-scenario-pack, validate-scenario-packs, package scripts, and the phase-3-canonical-v1 manifest template`
+  - `default-pack drift now fails closed against the single default scenario-pack catalog entry instead of relying on undocumented adapter edits`
+  - `builtin house authoring now enters through one builtin-house-module-contributions seed instead of split module and renderer registration files`
+- accepted_residue:
+  - `legacy builtin scenario-pack manifests that predate phase-3-canonical-v1 stay on an explicit compatibility path and are not treated as an immediate migration blocker inside this task`
+  - `the current task still owes documentation truth that explains this compatibility split without promoting a broader scaffold-and-template queue`
+- remaining_task_residue:
+  - `document the current family classification cleanly enough that Phase 3 authoring truth no longer depends on implied history or remembered rationale`
+  - `the current task boundary no longer shows a new package/tools/tests code seam that would justify another implementation slice before documentation truth is finished`
+
+###### Authoring Classification Matrix
+
+| Family | Current classification | Evidence inside current task scope | Why it does not justify a new queue right now |
+| --- | --- | --- | --- |
+| `playable authoring` | `framework-owned` | `package.json` exposes playable scaffold/validation scripts; tools/ and robustness coverage already fail closed for the covered playable path | `No fresh evidence shows another playable family outside the landed runtime/scaffold coverage.` |
+| `scenario-pack authoring for new Phase 3 packs` | `framework-owned` | `scaffold-scenario-pack`, `validate-scenario-packs`, package scripts, and `phase-3-canonical-v1` manifest enforcement now define the covered path | `The covered same-family path already enters through repository-owned entrypoints instead of undocumented directory/catalog glue.` |
+| `default-pack drift control` | `fail-closed framework policy` | `validate-scenario-packs` now rejects divergence between `pack-content-access.ts` and the single default scenario-pack catalog entry | `This is now a bounded policy seam, not an open authoring capability gap.` |
+| `builtin house authoring` | `framework-owned` | `builtin-house-module-contributions.ts` collapsed module/renderer wiring into one shared builtin contribution seed and robustness coverage locks that rule` | `The split static seed edits that justified the earlier blocker are already retired.` |
+| `legacy builtin scenario-pack manifests before phase-3-canonical-v1` | `accepted compatibility residue` | `validator coverage explicitly preserves the legacy manifest path and target/queue records classify it as accepted compatibility residue` | `Legacy compatibility residue alone does not prove a fresh framework-scaffold blocker and does not expand the current task into retroactive migration.` |
+| `remaining Phase 3 blocker` | `documentation truth only` | `Current queue/target/blueprint records now agree that no additional package/tools/tests code seam remains inside the task boundary` | `Without fresh evidence of another live seam, the next work is explanation and disposition, not new implementation.` |
 
 #### `task.authoring-entrypoint-and-fail-closed-closure.queue-closeout`
 
 ##### Control Block
 
 - task_id: `task.authoring-entrypoint-and-fail-closed-closure.queue-closeout`
-- state: `queued`
+- state: `done`
 - task_type: `closeout`
 - depends_on:
   - `task.authoring-entrypoint-and-fail-closed-closure.shared-fail-closed-policy-closeout`
@@ -373,11 +394,11 @@ This queue does not cover:
 ## Next Executable Task
 
 - Task ID:
-  - `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure`
+  - `none`
 - Required action before promotion:
-  - `Use the baseline record to narrow the first scenario/default-pack authoring slice, then implement only the smallest shared entrypoint or fail-closed seam that changes the authoring story.`
+  - `Queue is closed. Resume from the target plan and promote a later queue only if fresh target-level evidence proves another still-live blocker.`
 - Expected output:
-  - `A bounded implementation plan or landed change set that removes manual scenario/default-pack authoring glue from the first covered family.`
+  - `A target-level promotion review instead of renewed execution inside this closed queue.`
 
 ## Candidate Backlog
 
@@ -396,18 +417,20 @@ This queue does not cover:
 ## Closeout Decision
 
 - queue_id: `queue.authoring-entrypoint-and-fail-closed-closure`
-- closeout_status: `in-progress`
-- verification_status: `source-audit-only`
+- closeout_status: `done`
+- verification_status: `passed`
 - residue_remaining: `yes`
 - residue_classification:
-  - `current-phase-blocker`
+  - `accepted-compatibility-residue`
+  - `later-target-promotion-review`
 - next_queue_recommendation: `none`
-- promotion_justified: `true`
+- promotion_justified: `false`
 - evidence:
-  - `package scripts only expose playable scaffold and validation entrypoints`
-  - `scenario-pack authoring still depends on manual catalog and manifest assembly`
-  - `pack-content-access still hardwires builtin zhuyuanzhang default content adapters`
-  - `builtin house authoring still requires manual registration and renderer array edits`
+  - `package scripts, scaffold tooling, validator tooling, and robustness coverage now provide repository-owned or fail-closed authoring paths for the currently-live Phase 3 families`
+  - `the explicit authoring classification matrix records playable authoring, scaffolded Phase 3 scenario-pack authoring, default-pack drift control, and builtin house authoring as framework-owned or fail-closed coverage`
+  - `legacy builtin scenario-pack manifests that predate phase-3-canonical-v1 are explicitly recorded as accepted compatibility residue rather than as a fresh blocker`
+  - `the final active-task boundary recheck found no new shared fail-closed code seam in package.json, tools/, or tests/robustness.test.cjs`
+  - `document pointers now close the queue without promoting queue.framework-scaffold-and-template-closure`
 
 ## State Transition Rules
 
@@ -422,3 +445,31 @@ This queue does not cover:
   - Summary: `Queue created and promoted after the Phase 3 target audit confirmed that playable authoring already has scaffold/validator/CI coverage, but scenario-pack/default-pack/house-family authoring still depends on manual multi-point glue with no shared fail-closed entrypoint.`
   - Verification: `Fresh source audit across package scripts, tools/, scenario-pack loader/catalog loader, pack-content-access, house registries, and robustness coverage`
   - Next: `Resume the active queue from scenario-pack-and-default-pack-entrypoint-closure.`
+- 2026-07-06
+  - Summary: `Closed scenario-pack-and-default-pack-entrypoint-closure after landing scenario-pack scaffold and validation tools, wiring them into package scripts, adding robustness coverage, and making default-pack adapter drift fail closed against the default catalog entry.`
+  - Verification: `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
+  - Next: `Resume the active queue from house-family-authoring-entrypoint-closure.`
+- 2026-07-06
+  - Summary: `Closed house-family-authoring-entrypoint-closure after builtin house registry seeding moved to one contribution list, the old split registration files were removed, and the house interface contract recorded the one-record builtin seed rule.`
+  - Verification: `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
+  - Next: `Resume the active queue from shared-fail-closed-policy-closeout.`
+- 2026-07-06
+  - Summary: `Advanced shared-fail-closed-policy-closeout by introducing a canonical scenario-pack authoring contract for scaffolded Phase 3 manifests and making validator coverage fail closed on missing canonical file entries, while explicitly leaving legacy builtin manifests on the accepted compatibility path instead of forcing immediate migration.`
+  - Verification: `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
+  - Next: `Keep the active queue on shared-fail-closed-policy-closeout and classify the remaining documentation/template residue without promoting queue-closeout yet.`
+- 2026-07-06
+  - Summary: `Locked the policy split with regression coverage: scaffolded Phase 3 scenario-pack manifests now carry the canonical authoringTemplate marker, and validator tests explicitly preserve legacy builtin manifests as accepted compatibility residue instead of treating them as undocumented drift.`
+  - Verification: `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
+  - Next: `Keep the active queue on shared-fail-closed-policy-closeout and finish task-local documentation truth for framework-owned families versus accepted residue.`
+- 2026-07-07
+  - Summary: `Rechecked the active task boundary across package.json, tools/, and robustness coverage and found no additional shared fail-closed code seam after the canonical scenario-pack contract and builtin house single-seed wiring landed. The remaining residue is documentation truth only inside the current task scope.`
+  - Verification: `Targeted source-path recheck plus npm test and node tools/validate-scenario-packs.mjs`
+  - Next: `Keep the active queue on shared-fail-closed-policy-closeout and finish documenting the no-new-code-seam conclusion without promoting queue-closeout yet.`
+- 2026-07-07
+  - Summary: `Closed shared-fail-closed-policy-closeout after the queue recorded explicit framework-owned authoring coverage, accepted compatibility residue, and the no-new-code-seam conclusion, and promoted queue-closeout as the new active task.`
+  - Verification: `Document consistency check plus npm test and node tools/validate-scenario-packs.mjs`
+  - Next: `Run queue-closeout and decide whether Phase 3 authoring closure is now satisfied without promoting a narrower follow-up queue.`
+- 2026-07-07
+  - Summary: `Closed the queue after queue-closeout concluded that current Phase 3 authoring truth is coherent: scaffolded scenario-pack/default-pack and builtin house authoring are already covered by framework-owned or fail-closed seams, legacy builtin manifests remain accepted compatibility residue, and no fresh evidence justifies queue.framework-scaffold-and-template-closure.`
+  - Verification: `Document consistency check plus npm test`
+  - Next: `Return to the target plan in promotion-review with no active queue and require fresh evidence before any later queue promotion.`

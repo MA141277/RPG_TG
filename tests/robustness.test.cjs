@@ -9311,6 +9311,34 @@ test("builtin house registry seed is installed through an explicit builtin regis
   assert.match(source, /builtinHouseModuleRegistry/);
 });
 
+test("builtin house registry seed keeps module and renderer wiring in one builtin contribution list", () => {
+  const builtinRegistryPath = path.join(
+    process.cwd(),
+    "src/core/registry/builtin-house-module-registry.ts"
+  );
+  const builtinContributionsPath = path.join(
+    process.cwd(),
+    "src",
+    "core",
+    "registry",
+    "builtin-house-module-contributions.ts"
+  );
+
+  assert.equal(fs.existsSync(builtinContributionsPath), true);
+
+  const registrySource = fs.readFileSync(builtinRegistryPath, "utf8");
+  const contributionsSource = fs.readFileSync(
+    builtinContributionsPath,
+    "utf8"
+  );
+
+  assert.match(registrySource, /builtinHouseModuleContributions/);
+  assert.doesNotMatch(registrySource, /builtinHouseModuleRegistrations/);
+  assert.doesNotMatch(registrySource, /builtinHouseRendererRegistrations/);
+  assert.match(contributionsSource, /module:/);
+  assert.match(contributionsSource, /render:/);
+});
+
 test("mod house registration removes core runtime dependence on the application static registry", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
@@ -12619,4 +12647,346 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.match(mainSource, /interactive\.city-begging\.complete/);
   assert.match(mainSource, /interactive\.activity-qte\.tick/);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
+});
+
+test("phase 3 package scripts expose scenario-pack scaffold and validation entry points", () => {
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+  );
+
+  assert.equal(
+    packageJson.scripts["scaffold:scenario-pack"],
+    "node tools/scaffold-scenario-pack.mjs"
+  );
+  assert.equal(
+    packageJson.scripts["validate:scenario-packs"],
+    "node tools/validate-scenario-packs.mjs"
+  );
+});
+
+test("phase 3 scenario-pack scaffold writes canonical manifest files and catalog entry", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-scenario-pack-scaffold-")
+  );
+
+  const scaffoldResult = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-scenario-pack.mjs"),
+      "--pack-id",
+      "scenario-pack.test.authoring",
+      "--directory-name",
+      "test-authoring-pack",
+      "--title",
+      "Test Authoring Pack",
+      "--player-character-id",
+      "char.player",
+      "--chapter-id",
+      "chapter.test-authoring",
+      "--map-id",
+      "map.test-authoring",
+      "--city-id",
+      "city.test-authoring",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(scaffoldResult.status, 0, scaffoldResult.stderr);
+
+  const catalogPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "scenario-packs",
+    "catalog.json"
+  );
+  const manifestPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "scenario-packs",
+    "test-authoring-pack",
+    "pack.json"
+  );
+
+  assert.equal(fs.existsSync(catalogPath), true);
+  assert.equal(fs.existsSync(manifestPath), true);
+
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  assert.equal(catalog.length, 1);
+  assert.equal(catalog[0]?.id, "scenario-pack.test.authoring");
+  assert.equal(catalog[0]?.manifestPath, "./test-authoring-pack/pack.json");
+
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert.equal(manifest.kind, "scenario-pack");
+  assert.equal(manifest.id, "scenario-pack.test.authoring");
+  assert.equal(manifest.authoringTemplate, "phase-3-canonical-v1");
+  assert.equal(manifest.files.scenarioProfile, "./scenario-profile.json");
+  assert.equal(manifest.files.characters, "./characters.json");
+  assert.equal(manifest.files.events, "./events.json");
+  assert.equal(manifest.files.scenes, "./scenes.json");
+  assert.equal(manifest.files.textEntries, "./text-entries.json");
+  assert.equal(manifest.files.activities, "./activities.json");
+
+  for (const fileName of [
+    "scenario-profile.json",
+    "characters.json",
+    "cities.json",
+    "houses.json",
+    "maps.json",
+    "city-entries.json",
+    "events.json",
+    "scenes.json",
+    "tasks.json",
+    "activities.json",
+    "text-entries.json",
+  ]) {
+    assert.equal(
+      fs.existsSync(
+        path.join(
+          outputRoot,
+          "src",
+          "content",
+          "scenario-packs",
+          "test-authoring-pack",
+          fileName
+        )
+      ),
+      true,
+      `Expected scaffolded file ${fileName} to exist`
+    );
+  }
+});
+
+test("phase 3 scenario-pack validator accepts scaffolded artifacts and rejects default-pack contract drift", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-scenario-pack-validate-")
+  );
+
+  const scaffoldResult = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-scenario-pack.mjs"),
+      "--pack-id",
+      "scenario-pack.test.default",
+      "--directory-name",
+      "test-default-pack",
+      "--title",
+      "Test Default Pack",
+      "--player-character-id",
+      "char.player",
+      "--chapter-id",
+      "chapter.test-default",
+      "--map-id",
+      "map.test-default",
+      "--city-id",
+      "city.test-default",
+      "--is-default",
+      "true",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(scaffoldResult.status, 0, scaffoldResult.stderr);
+
+  const packContentAccessPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "pack-content-access.ts"
+  );
+  fs.mkdirSync(path.dirname(packContentAccessPath), { recursive: true });
+  fs.writeFileSync(
+    packContentAccessPath,
+    [
+      'import * as defaultScenarioActivitiesModule from "./scenario-packs/test-default-pack/activities.json";',
+      'import * as defaultScenarioTextEntriesModule from "./scenario-packs/test-default-pack/text-entries.json";',
+      "",
+      "export const defaultPackActivities = defaultScenarioActivitiesModule;",
+      "export const defaultPackTextEntries = defaultScenarioTextEntriesModule;",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  const validRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-scenario-packs.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(validRun.status, 0, validRun.stderr);
+  assert.match(validRun.stdout, /Scenario pack validation passed/);
+
+  fs.writeFileSync(
+    packContentAccessPath,
+    [
+      'import * as defaultScenarioActivitiesModule from "./scenario-packs/non-default-pack/activities.json";',
+      'import * as defaultScenarioTextEntriesModule from "./scenario-packs/non-default-pack/text-entries.json";',
+      "",
+      "export const defaultPackActivities = defaultScenarioActivitiesModule;",
+      "export const defaultPackTextEntries = defaultScenarioTextEntriesModule;",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  const invalidRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-scenario-packs.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(invalidRun.status, 1);
+  assert.match(invalidRun.stderr, /default pack authoring contract/i);
+});
+
+test("phase 3 scenario-pack validator rejects missing canonical manifest file entries", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-scenario-pack-canonical-")
+  );
+
+  const scaffoldResult = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-scenario-pack.mjs"),
+      "--pack-id",
+      "scenario-pack.test.canonical",
+      "--directory-name",
+      "test-canonical-pack",
+      "--title",
+      "Test Canonical Pack",
+      "--player-character-id",
+      "char.player",
+      "--chapter-id",
+      "chapter.test-canonical",
+      "--map-id",
+      "map.test-canonical",
+      "--city-id",
+      "city.test-canonical",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(scaffoldResult.status, 0, scaffoldResult.stderr);
+
+  const manifestPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "scenario-packs",
+    "test-canonical-pack",
+    "pack.json"
+  );
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  delete manifest.files.activities;
+  delete manifest.files.textEntries;
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+  const invalidRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-scenario-packs.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(invalidRun.status, 1);
+  assert.match(invalidRun.stderr, /manifest files\.activities is required/i);
+  assert.match(invalidRun.stderr, /manifest files\.textEntries is required/i);
+});
+
+test("phase 3 scenario-pack validator keeps legacy builtin manifests on the accepted compatibility path", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-scenario-pack-legacy-")
+  );
+
+  const scenarioPacksRoot = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "scenario-packs"
+  );
+  const packRoot = path.join(scenarioPacksRoot, "legacy-pack");
+  fs.mkdirSync(packRoot, { recursive: true });
+  fs.writeFileSync(
+    path.join(scenarioPacksRoot, "catalog.json"),
+    `${JSON.stringify(
+      [
+        {
+          id: "scenario-pack.test.legacy",
+          title: "Legacy Pack",
+          manifestPath: "./legacy-pack/pack.json",
+        },
+      ],
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(packRoot, "pack.json"),
+    `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.test.legacy",
+        title: "Legacy Pack",
+        files: {
+          scenarioProfile: "scenario-profile.json",
+          characters: "characters.json",
+          events: "events.json",
+          scenes: "scenes.json",
+          activities: "activities.json",
+          textEntries: "text-entries.json",
+        },
+      },
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
+
+  for (const fileName of [
+    "scenario-profile.json",
+    "characters.json",
+    "events.json",
+    "scenes.json",
+    "activities.json",
+    "text-entries.json",
+  ]) {
+    fs.writeFileSync(path.join(packRoot, fileName), "{}\n", "utf8");
+  }
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-scenario-packs.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Scenario pack validation passed/i);
 });
