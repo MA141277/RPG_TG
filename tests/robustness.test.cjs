@@ -1859,9 +1859,12 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /surfaceRipple/);
   assert.match(terrainFragmentSource, /waveCrest/);
   assert.match(terrainFragmentSource, /waveTrough/);
-  assert.match(terrainFragmentSource, /return crest \* 1\.62 - trough \* 0\.34/);
-  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.18\), 2\.6, 32\.0/);
-  assert.match(terrainFragmentSource, /vec2\(0\.92, 0\.38\), 4\.8, 62\.0/);
+  assert.match(terrainFragmentSource, /slowFlow/);
+  assert.match(terrainFragmentSource, /surfaceFlow/);
+  assert.match(terrainFragmentSource, /return crest \* 0\.86 - trough \* 0\.16/);
+  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.16\), 2\.4, 24\.0, 0\.020/);
+  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.14\), 4\.2, 36\.0, 0\.014/);
+  assert.doesNotMatch(terrainFragmentSource, /vec2\(0\.92, 0\.38\), 4\.8, 62\.0/);
   assert.match(terrainFragmentSource, /boundaryNoise/);
   assert.match(terrainFragmentSource, /fineBoundaryNoise/);
   assert.match(terrainFragmentSource, /bandJitter/);

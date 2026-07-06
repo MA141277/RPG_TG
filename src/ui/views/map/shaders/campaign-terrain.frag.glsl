@@ -208,7 +208,7 @@ float sampleNoiseWaterRipple(
   vec2 normal = vec2(-tangent.y, tangent.x);
   vec2 anisotropicUv = vec2(
     dot(uv, tangent) * longScale + uTimeSeconds * speed,
-    dot(uv, normal) * narrowScale - uTimeSeconds * speed * 0.43
+    dot(uv, normal) * narrowScale - uTimeSeconds * speed * 0.12
   );
   vec3 longNoise = texture2D(uWaterTexture, anisotropicUv).rgb;
   vec3 shiftedNoise = texture2D(
@@ -224,10 +224,10 @@ float sampleNoiseWaterRipple(
     longNoise.g * 0.22 +
     shiftedNoise.b * 0.22 +
     broadNoise.g * 0.10;
-  float crest = smoothstep(0.48, 0.76, streak);
-  float trough = 1.0 - smoothstep(0.18, 0.42, streak);
+  float crest = smoothstep(0.56, 0.86, streak);
+  float trough = 1.0 - smoothstep(0.18, 0.44, streak);
 
-  return crest * 1.62 - trough * 0.34;
+  return crest * 0.86 - trough * 0.16;
 }
 
 vec3 getAnimatedWaterColor(
@@ -239,11 +239,13 @@ vec3 getAnimatedWaterColor(
   float nearShore = shoreBands.x;
   float shallowSea = shoreBands.y;
   float middleSea = shoreBands.z;
-  vec3 broadNoise = texture2D(uWaterTexture, uv * 3.6 + vec2(uTimeSeconds * 0.010, -uTimeSeconds * 0.007)).rgb;
-  vec3 boundaryNoise = texture2D(uWaterTexture, uv * 8.5 + vec2(-uTimeSeconds * 0.006, uTimeSeconds * 0.004)).rgb;
-  vec3 fineBoundaryNoise = texture2D(uWaterTexture, uv * 15.0 + vec2(uTimeSeconds * 0.004, uTimeSeconds * 0.005)).rgb;
-  vec3 surfaceNoise = texture2D(uWaterTexture, uv * 18.0 + vec2(uTimeSeconds * 0.020, -uTimeSeconds * 0.014)).rgb;
-  vec3 surfaceNoiseShifted = texture2D(uWaterTexture, uv * 31.0 + vec2(-uTimeSeconds * 0.012, uTimeSeconds * 0.018)).rgb;
+  vec2 slowFlow = vec2(uTimeSeconds * 0.004, -uTimeSeconds * 0.0015);
+  vec2 surfaceFlow = vec2(uTimeSeconds * 0.008, -uTimeSeconds * 0.003);
+  vec3 broadNoise = texture2D(uWaterTexture, uv * 3.6 + slowFlow).rgb;
+  vec3 boundaryNoise = texture2D(uWaterTexture, uv * 8.5 + slowFlow * 0.72).rgb;
+  vec3 fineBoundaryNoise = texture2D(uWaterTexture, uv * 15.0 + slowFlow * 0.48).rgb;
+  vec3 surfaceNoise = texture2D(uWaterTexture, uv * 16.0 + surfaceFlow).rgb;
+  vec3 surfaceNoiseShifted = texture2D(uWaterTexture, uv * 27.0 + surfaceFlow * 0.64 + vec2(0.19, -0.07)).rgb;
   float bandJitter =
     (broadNoise.r - 0.5) * 0.34 +
     (boundaryNoise.g - 0.5) * 0.24 +
@@ -251,15 +253,15 @@ vec3 getAnimatedWaterColor(
   float nearShoreBand = smoothstep(0.16, 0.92, nearShore + bandJitter * 0.92);
   float shallowSeaBand = smoothstep(0.00, 0.60, shallowSea + bandJitter * 0.88) * (1.0 - nearShoreBand * 0.30);
   float middleSeaBand = smoothstep(0.00, 0.72, middleSea + bandJitter * 0.74) * (1.0 - nearShoreBand * 0.56) * (1.0 - shallowSeaBand * 0.24);
-  float ripple = sampleNoiseWaterRipple(uv, vec2(1.0, 0.18), 2.6, 32.0, 0.055);
-  float fineRipple = sampleNoiseWaterRipple(uv + vec2(0.17, -0.09), vec2(0.92, 0.38), 4.8, 62.0, 0.038) * 0.62;
-  float wave = ripple + fineRipple + (broadNoise.b - 0.5) * 0.16;
+  float ripple = sampleNoiseWaterRipple(uv, vec2(1.0, 0.16), 2.4, 24.0, 0.020);
+  float fineRipple = sampleNoiseWaterRipple(uv + vec2(0.17, -0.09), vec2(1.0, 0.14), 4.2, 36.0, 0.014) * 0.24;
+  float wave = ripple + fineRipple + (broadNoise.b - 0.5) * 0.06;
   float surfaceRipple =
-    (surfaceNoise.r - surfaceNoise.g) * 0.28 +
-    (surfaceNoiseShifted.b - 0.5) * 0.16;
-  float waveCrest = smoothstep(0.04, 0.42, wave + surfaceRipple * 0.42);
-  float waveTrough = smoothstep(0.04, 0.42, -wave);
-  float vein = smoothstep(0.30, 0.76, broadNoise.r * 0.56 + surfaceNoise.g * 0.24 + waveCrest * 0.42);
+    (surfaceNoise.r - surfaceNoise.g) * 0.11 +
+    (surfaceNoiseShifted.b - 0.5) * 0.06;
+  float waveCrest = smoothstep(0.10, 0.58, wave + surfaceRipple * 0.22);
+  float waveTrough = smoothstep(0.10, 0.58, -wave);
+  float vein = smoothstep(0.34, 0.80, broadNoise.r * 0.58 + surfaceNoise.g * 0.24 + waveCrest * 0.18);
   float bandLight = nearShoreBand * 0.68 + shallowSeaBand * 0.42 + middleSeaBand * 0.26;
   float shoreLight = bandLight * smoothstep(0.10, 0.50, abs(wave) + boundaryNoise.b * 0.18);
   vec3 deepWater = vec3(0.045, 0.18, 0.42);
@@ -272,10 +274,10 @@ vec3 getAnimatedWaterColor(
   animatedColor = mix(animatedColor, shallowSeaWater, shallowSeaBand * 0.82);
   animatedColor = mix(animatedColor, nearShoreWater, nearShoreBand * 0.86);
 
-  animatedColor += vec3(0.22, 0.34, 0.38) * waveCrest;
-  animatedColor -= vec3(0.07, 0.11, 0.13) * waveTrough;
-  animatedColor += vec3(wave) * 0.16;
-  animatedColor += vec3(0.14, 0.22, 0.24) * surfaceRipple;
+  animatedColor += vec3(0.10, 0.17, 0.19) * waveCrest;
+  animatedColor -= vec3(0.035, 0.060, 0.075) * waveTrough;
+  animatedColor += vec3(wave) * 0.07;
+  animatedColor += vec3(0.055, 0.090, 0.100) * surfaceRipple;
   animatedColor += vec3(0.060, 0.105, 0.090) * vein;
   animatedColor += vec3(0.16, 0.26, 0.17) * shoreLight;
 
