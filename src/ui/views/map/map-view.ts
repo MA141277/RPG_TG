@@ -54,6 +54,7 @@ export type MapViewModel = {
   heightmapImageUrl: string | null;
   hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
+  waterTextureImageUrl: string | null;
   cityDepthMeshAssetUrl: string | null;
   cityDepthTextureUrl: string | null;
   cityDepthMeshCoordinate: {
@@ -140,6 +141,9 @@ export function createMapViewModel(input: {
       input.mapDefinition.layers?.find((layer) => layer.id === "map_material_texture")
         ?.imageUrl ??
       null,
+    waterTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_water_noise")
+        ?.imageUrl ?? null,
     cityDepthMeshAssetUrl,
     cityDepthTextureUrl,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
@@ -401,6 +405,7 @@ function renderCampaignMapVisualLayer(
           data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
           ${cityDepthMeshAttributes}
           aria-label="${model.mapName} terrain"
         ></canvas>

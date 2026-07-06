@@ -68,6 +68,7 @@ import {
   selectHouseEntryAccess,
 } from "./application/story/story-stage-access";
 import {
+  createPassableHexTravelPath,
   travelToCoordinate,
   type GridCoordinate,
 } from "./application/navigation/travel-to-coordinate";
@@ -204,6 +205,8 @@ import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
   DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
+  getCampaignTerrainTravelGrid,
+  isCampaignTerrainUvPassable,
   resolveCampaignTerrainUvFromClientPosition,
   requestCampaignTerrainRender,
   setCampaignTerrainCamera,
@@ -3962,6 +3965,11 @@ appElement.addEventListener("click", (event) => {
     if (clickTarget == null || coordinateSpace == null) {
       return;
     }
+    if (
+      isCampaignTerrainUvPassable(campaignMap, clickTarget.u, clickTarget.v) !== true
+    ) {
+      return;
+    }
 
     startCampaignTravel(
       {
@@ -3980,10 +3988,11 @@ function handleModalConfirm() {
   }
 
   if (appState.modalState.type === "travel-confirm") {
-    const nextCoordinate = travelToCoordinate(
-      appState.playerCoordinate,
-      appState.modalState.targetCoordinate
-    );
+    const travelPath = createCampaignTravelPath(appState.modalState.targetCoordinate);
+    if (travelPath == null) {
+      return;
+    }
+    const nextCoordinate = getLastTravelPathCoordinate(travelPath);
     const reachedCityDefinition =
       appState.modalState.cityId == null
         ? null
@@ -3998,11 +4007,13 @@ function handleModalConfirm() {
           }
         : null;
 
-    const previousCoordinate = appState.playerCoordinate;
+    const travelRequestId = campaignTravelRequestId + 1;
+    campaignTravelRequestId = travelRequestId;
+    stopCampaignMoveAnimation();
     appState = {
       ...appState,
       campaignTravelState: {
-        targetCoordinate: appState.modalState.targetCoordinate,
+        targetCoordinate: nextCoordinate,
         cityId: appState.modalState.cityId,
         cityName: appState.modalState.cityName,
       },
@@ -4010,7 +4021,14 @@ function handleModalConfirm() {
       locationDialogueState: null,
     };
     renderApp();
-    void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+    void animateCampaignMovePath(
+      travelPath,
+      () => campaignTravelRequestId === travelRequestId
+    ).then(() => {
+      if (campaignTravelRequestId !== travelRequestId) {
+        return;
+      }
+
       const shouldEnterCity =
         appState.campaignTravelState != null &&
         appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
@@ -4105,7 +4123,11 @@ function startCampaignTravel(
   cityId: string | null,
   cityName: string | null
 ): void {
-  const nextCoordinate = travelToCoordinate(appState.playerCoordinate, targetCoordinate);
+  const travelPath = createCampaignTravelPath(targetCoordinate);
+  if (travelPath == null) {
+    return;
+  }
+  const nextCoordinate = getLastTravelPathCoordinate(travelPath);
   const reachedCityDefinition =
     cityId == null ? null : activeContentContext.cityDefinitionById[cityId] ?? null;
   const pendingEnterCityState =
@@ -4116,7 +4138,6 @@ function startCampaignTravel(
           cityName: reachedCityDefinition.name,
         }
       : null;
-  const previousCoordinate = appState.playerCoordinate;
   const travelRequestId = campaignTravelRequestId + 1;
   campaignTravelRequestId = travelRequestId;
   stopCampaignMoveAnimation();
@@ -4133,7 +4154,10 @@ function startCampaignTravel(
   };
   renderApp();
 
-  void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+  void animateCampaignMovePath(
+    travelPath,
+    () => campaignTravelRequestId === travelRequestId
+  ).then(() => {
     if (campaignTravelRequestId !== travelRequestId) {
       return;
     }
@@ -4165,6 +4189,65 @@ function startCampaignTravel(
     appState = runtimeCommit.state;
     renderApp();
   });
+}
+
+function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordinate[] | null {
+  const nextCoordinate = travelToCoordinate(appState.playerCoordinate, targetCoordinate);
+  const currentMapDefinition = getCurrentMapDefinition();
+
+  if (
+    currentMapDefinition?.mode !== "campaign" ||
+    currentMapDefinition.coordinateSpace == null
+  ) {
+    return [appState.playerCoordinate, nextCoordinate];
+  }
+
+  const travelGrid = getCampaignTerrainTravelGrid(appRoot);
+  if (travelGrid == null) {
+    return null;
+  }
+
+  return createPassableHexTravelPath({
+    currentCoordinate: appState.playerCoordinate,
+    targetCoordinate: nextCoordinate,
+    coordinateSpace: currentMapDefinition.coordinateSpace,
+    travelGrid,
+  });
+}
+
+function getLastTravelPathCoordinate(path: GridCoordinate[]): GridCoordinate {
+  return path[path.length - 1] ?? appState.playerCoordinate;
+}
+
+async function animateCampaignMovePath(
+  path: GridCoordinate[],
+  shouldContinue: () => boolean
+): Promise<void> {
+  if (path.length <= 1) {
+    syncCampaignActorRuntimeState(
+      getLastTravelPathCoordinate(path),
+      appState.campaignActorState.facingDegrees,
+      false
+    );
+    renderApp();
+    return;
+  }
+
+  for (let index = 1; index < path.length; index += 1) {
+    if (!shouldContinue()) {
+      return;
+    }
+
+    const from = path[index - 1] ?? appState.playerCoordinate;
+    const to = path[index] ?? from;
+    await animateCampaignMove(from, to);
+  }
+
+  syncCampaignActorRuntimeState(
+    getLastTravelPathCoordinate(path),
+    appState.campaignActorState.facingDegrees,
+    false
+  );
 }
 
 function animateCampaignMove(

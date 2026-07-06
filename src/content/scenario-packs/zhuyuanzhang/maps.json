@@ -7672,6 +7672,14 @@
         "imageUrl": "./assets/maps/yuanmo-map-ground-types.png"
       },
       {
+        "id": "map_water_noise",
+        "label": "Water noise texture",
+        "width": 512,
+        "height": 512,
+        "description": "tileable ancient-map water ripple noise",
+        "imageUrl": "./assets/maps/yuanmo-water-noise.png"
+      },
+      {
         "id": "map_trade_routes",
         "label": "Trade routes",
         "width": 509,

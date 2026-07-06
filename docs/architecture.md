@@ -154,9 +154,16 @@ GlobalUI
 - 当前所在城市
 - 相邻城市
 - 移动消耗
+- 大地图连续坐标到六边形路径的转换
 - 点击城池进入
 
 地图不要直接知道某个角色说什么，这属于 scene 层。
+
+大地图移动必须由 `src/application/navigation/travel-to-coordinate.ts` 生成路径。UI 点击层只提供目标坐标，主运行时按路径分段播放；不要在视图层或 `main.ts` 临时改回起点到终点的直线插值。
+
+Campaign 地图的水域/陆地通行性来自当前地图的地形资产。`campaign-terrain-webgl.ts` 从 `map_heights` 图层采样出 passable hex 网格，navigation 层只消费这份网格做寻路；不要在 gameplay 代码里手写某张地图的水格坐标。
+
+Campaign 地图的水体视觉来自可选 `map_water_noise` 图层。该图层是纯表现资产：`map-view.ts` 只把它作为 terrain canvas 的 `data-map-water-texture-url` 传给 WebGL renderer，`campaign-terrain-webgl.ts` 只加载一次并在 fragment shader 中用 `uTimeSeconds` 滚动采样。近岸浅绿效果由 shader 对 `map_ground_types` 的相邻 hex 材质采样得出，不改变点击、投影、通行性或 navigation 路径模型。
 
 ### 全局栏目
 

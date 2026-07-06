@@ -2,6 +2,37 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-06 Campaign Water Shader Texture
+
+### Added
+- 新增统一水体噪声贴图 `map_water_noise`，内置元末地图与朱元璋 scenario pack 都通过地图 layer 引用同一类 512x512 可平铺 PNG 资产。
+- 大地图 WebGL terrain shader 新增 `uWaterTexture` 与 `uTimeSeconds`，水面在 fragment shader 中使用同一张水纹贴图双层滚动采样，形成轻微动态水纹。
+- 新增回归测试，锁定 scenario pack 水纹资产路径、内置地图水纹 layer，以及 renderer 的统一水纹 texture/time uniform 契约。
+
+### Changed
+- 大地图水体颜色现在会依据周围六边形材质采样计算近岸程度：靠近陆地的水体更浅、更绿，深水保持偏蓝。
+- 水体视觉仍只属于渲染层；水格不可点击、不可踏足、寻路避水继续由 `map_heights` passable hex 网格与 navigation 层负责。
+
+### Impact
+- 设计侧可通过 `map_water_noise` 替换水纹资产来调整大地图水体质感；运行时不会为单个水格生成独立贴图，避免引入逐格资源开销。
+
+## 2026-07-06 Campaign Hex Travel Path
+
+### Added
+- `src/application/navigation/travel-to-coordinate.ts` 新增 campaign 坐标到六边形路径的纯逻辑转换：点击目标会先映射到与 WebGL 地形一致的 axial hex 坐标，再生成相邻 hex 路径。
+- 新增回归测试，锁定 campaign 长距离移动必须产出多步相邻六边形路径，而不是只返回起点和终点。
+- 新增基于 `map_heights` 图层的 passable hex 网格：水域 hex 不进入通行集合，navigation 层通过 A* 在可通行 hex 上避开水格。
+- 新增回归测试，锁定被阻塞的水格不会出现在路径中，且水面目标会被判定为不可达。
+
+### Changed
+- `src/main.ts` 的大地图点击移动改为按路径分段播放，保留原有取消、到达城市确认与移动后推进 1 个时段的行为。
+- 大地图空地点击现在会先检查目标 hex 是否可通行；水格点击不会发起旅行。城市/标记移动也会通过同一 passable grid 校验，避免角色踏上水面。
+- `docs/architecture.md` 明确：UI 点击层只提交目标坐标，地图路径必须由 application navigation 层生成，不能在视图层或主入口重新实现直线插值。
+- `docs/architecture.md` 明确：campaign 地图通行性必须来自地形资产采样，不要在 gameplay 代码里手写水格坐标。
+
+### Impact
+- 当前大地图点击寻路会沿六边形格逐段移动并避开水域；后续接入道路、山地等通行成本时，可以继续扩展同一个 navigation 路径生成模块。
+
 ## 2026-07-06 Fail-Closed Progress-Driven Governance Spec
 
 ### Added

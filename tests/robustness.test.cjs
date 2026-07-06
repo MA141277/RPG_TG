@@ -84,6 +84,14 @@ const {
   selectHouseEntryAccess,
 } = require("../.test-dist/application/story/story-stage-access.js");
 const {
+  areHexNeighbors,
+  coordinateToRoundedHex,
+  createHexTravelPath,
+  createPassableHexTravelPath,
+  getHexKey,
+  hexToCoordinate,
+} = require("../.test-dist/application/navigation/travel-to-coordinate.js");
+const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
 const {
@@ -1645,6 +1653,17 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
     yuanmoCampaignMap.layers.some((layer) => "imageAssetId" in layer),
     false
   );
+  const waterNoiseLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_water_noise"
+  );
+
+  assert.ok(waterNoiseLayer);
+  assert.equal(waterNoiseLayer.width, 512);
+  assert.equal(waterNoiseLayer.height, 512);
+  assert.equal(
+    waterNoiseLayer.imageUrl,
+    "./assets/maps/yuanmo-water-noise.png"
+  );
 
   [
     yuanmoCampaignMap.primaryImageUrl,
@@ -1725,9 +1744,53 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
       ),
       true
     );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_water_noise")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/yuanmo-water-noise.png`
+    );
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test("built-in yuanmo campaign map declares shared water noise texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "yuanmo-water-noise.png"
+  );
+
+  assert.match(source, /yuanmo-water-noise\.png/);
+  assert.match(source, /"id": "map_water_noise"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("campaign terrain WebGL shader uses shared animated water texture", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /waterTextureUrl: string \| null/);
+  assert.match(source, /uniform sampler2D uWaterTexture/);
+  assert.match(source, /uniform float uTimeSeconds/);
+  assert.match(source, /getShoreAmount/);
+  assert.match(source, /wrapS: gl\.REPEAT/);
+  assert.match(source, /requestRender\("dynamic"\)/);
 });
 
 test("ui contract modules export the reserve contract families", async () => {
@@ -11694,4 +11757,87 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.match(mainSource, /interactive\.city-begging\.complete/);
   assert.match(mainSource, /interactive\.activity-qte\.tick/);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
+});
+
+test("campaign coordinate travel builds a multi-step adjacent hex path", () => {
+  const coordinateSpace = { width: 509, height: 451 };
+  const currentCoordinate = { x: 334, y: 318 };
+  const targetCoordinate = { x: 281, y: 325 };
+  const path = createHexTravelPath({
+    currentCoordinate,
+    targetCoordinate,
+    coordinateSpace,
+  });
+
+  assert.ok(path.length > 2);
+  assert.deepEqual(path[0], currentCoordinate);
+  assert.deepEqual(path[path.length - 1], targetCoordinate);
+
+  const hexPath = path.map((coordinate) =>
+    coordinateToRoundedHex(coordinate, coordinateSpace)
+  );
+  for (let index = 1; index < hexPath.length; index += 1) {
+    const previous = hexPath[index - 1];
+    const next = hexPath[index];
+    assert.ok(
+      areHexNeighbors(previous, next),
+      `Expected ${JSON.stringify(previous)} and ${JSON.stringify(next)} to be adjacent hexes`
+    );
+  }
+});
+
+test("campaign coordinate travel avoids blocked water hexes", () => {
+  const coordinateSpace = { width: 120, height: 120 };
+  const startHex = { x: 0, y: 0 };
+  const blockedHex = { x: 1, y: 0 };
+  const targetHex = { x: 2, y: 0 };
+  const passableHexKeys = new Set();
+  for (let y = -2; y <= 2; y += 1) {
+    for (let x = -2; x <= 3; x += 1) {
+      const hex = { x, y };
+      if (getHexKey(hex) !== getHexKey(blockedHex)) {
+        passableHexKeys.add(getHexKey(hex));
+      }
+    }
+  }
+
+  const path = createPassableHexTravelPath({
+    currentCoordinate: hexToCoordinate(startHex, coordinateSpace),
+    targetCoordinate: hexToCoordinate(targetHex, coordinateSpace),
+    coordinateSpace,
+    travelGrid: {
+      passableHexKeys,
+      bounds: { minX: -2, maxX: 3, minY: -2, maxY: 2 },
+    },
+  });
+
+  assert.notEqual(path, null);
+  const hexPath = path.map((coordinate) =>
+    coordinateToRoundedHex(coordinate, coordinateSpace)
+  );
+  assert.equal(
+    hexPath.some((hex) => getHexKey(hex) === getHexKey(blockedHex)),
+    false
+  );
+  assert.ok(hexPath.length > 3);
+  for (let index = 1; index < hexPath.length; index += 1) {
+    assert.ok(areHexNeighbors(hexPath[index - 1], hexPath[index]));
+  }
+});
+
+test("campaign coordinate travel rejects blocked water destinations", () => {
+  const coordinateSpace = { width: 120, height: 120 };
+  const startHex = { x: 0, y: 0 };
+  const targetHex = { x: 1, y: 0 };
+  const path = createPassableHexTravelPath({
+    currentCoordinate: hexToCoordinate(startHex, coordinateSpace),
+    targetCoordinate: hexToCoordinate(targetHex, coordinateSpace),
+    coordinateSpace,
+    travelGrid: {
+      passableHexKeys: new Set([getHexKey(startHex)]),
+      bounds: { minX: -1, maxX: 1, minY: -1, maxY: 1 },
+    },
+  });
+
+  assert.equal(path, null);
 });
