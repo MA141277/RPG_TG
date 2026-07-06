@@ -8,12 +8,45 @@ type CampaignTerrainInput = {
 
 type MeshData = {
   vertices: Float32Array;
-  indices: Uint16Array;
+  indices: Uint32Array;
 };
 
 type ActorMeshData = {
   vertices: Float32Array;
   indices: Uint16Array;
+};
+
+type CityDepthMeshData = {
+  vertices: Float32Array;
+  indices: Uint32Array;
+};
+
+type CityDepthMeshAsset = {
+  positions: Float32Array;
+  normals: Float32Array;
+  uvs: Float32Array;
+  indices: Uint32Array;
+  textureImage: HTMLImageElement;
+  u: number;
+  v: number;
+  minHeight: number;
+};
+
+type CityDepthMeshAssetJson = {
+  format: string;
+  positions: number[];
+  normals: number[];
+  uvs: number[];
+  indices: number[];
+};
+
+export type CampaignCityDepthMeshTransform = {
+  rotationDegrees: number;
+  pitchDegrees: number;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  lift: number;
 };
 
 type ActorBoneAsset = {
@@ -61,17 +94,53 @@ type ActorAnimationPose = {
 
 type Mat4 = Float32Array;
 
-const GRID_COLUMNS = 128;
-const GRID_ROWS = 96;
-const HEIGHT_SCALE = 0.27;
+const GRID_COLUMNS = 768;
+const GRID_ROWS = 680;
+const HEIGHT_SCALE = 0.0675;
 const TERRAIN_SCALE = 1.46;
 const CAMERA_TILT_RADIANS = -0.82;
 const CAMERA_BASE_DISTANCE = 2.72;
 const CAMERA_OFFSET_UNIT = 0.0032;
+const CAMERA_REFERENCE_SCALE = 15;
 const FOV_RADIANS = 38 * Math.PI / 180;
 const ACTOR_REFERENCE_CAMERA_SCALE = 40;
 const ACTOR_MODEL_BASE_SCALE = 0.011;
 const ACTOR_MODEL_FACING_OFFSET_RADIANS = Math.PI / 2;
+const HEX_TERRAIN_SCALE = 138;
+const HEX_MAP_ASPECT = 1.1285;
+const HEX_ELEVATION_LEVELS = 8;
+const HEX_WATER_HEIGHT_THRESHOLD = 0.005;
+const HEX_WALL_HEIGHT_EPSILON = 0.01;
+const GRASS_TEXTURE_DETAIL = 1.15;
+const GRASS_AMBIENT_LIGHT = 0.58;
+const CITY_DEPTH_MESH_WORLD_SCALE = 0.035;
+const CITY_DEPTH_MESH_HEIGHT_SCALE = 0.034;
+const CITY_DEPTH_MESH_BASE_LIFT = 0.0015;
+const CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE = 2 / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE);
+const CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE = 2 / HEX_TERRAIN_SCALE;
+export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
+  rotationDegrees: 0,
+  pitchDegrees: 0,
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+  lift: 0,
+};
+export type CampaignTerrainStyle = {
+  saturation: number;
+  brightness: number;
+  brightnessOffset: number;
+  shadeMin: number;
+  shadeMax: number;
+};
+
+export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
+  saturation: 1,
+  brightness: 1,
+  brightnessOffset: 0,
+  shadeMin: 1,
+  shadeMax: 1,
+};
 const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
 
 type CampaignTerrainCamera = {
@@ -106,6 +175,7 @@ type CampaignActorData = {
 };
 
 const activeRenderers = new Map<HTMLCanvasElement, CampaignTerrainRenderer>();
+const pendingRendererCanvases = new Set<HTMLCanvasElement>();
 
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
@@ -190,13 +260,18 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
       activeRenderers.delete(canvas);
     }
   }
+  for (const canvas of Array.from(pendingRendererCanvases)) {
+    if (!nextCanvasSet.has(canvas) || !canvas.isConnected) {
+      pendingRendererCanvases.delete(canvas);
+    }
+  }
 
   if (canvases.length === 0) {
     return;
   }
 
   for (const canvas of canvases) {
-    if (activeRenderers.has(canvas)) {
+    if (activeRenderers.has(canvas) || pendingRendererCanvases.has(canvas)) {
       continue;
     }
 
@@ -205,10 +280,15 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
     const materialUrl = canvas.dataset.mapMaterialUrl;
     const renderMode =
       canvas.dataset.campaignMapActorLayer === "true" ? "actor" : "terrain";
-    if (textureUrl == null || heightUrl == null || materialUrl == null) {
+    if (
+      textureUrl == null ||
+      heightUrl == null ||
+      materialUrl == null
+    ) {
       continue;
     }
 
+    pendingRendererCanvases.add(canvas);
     void initCampaignTerrainWebGl({
       canvas,
       textureUrl,
@@ -222,11 +302,14 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
       }
 
       activeRenderers.set(canvas, renderer);
+      canvas.classList.remove("has-error");
       canvas.classList.add("is-ready");
       canvas.classList.toggle("has-actor-model", renderer.hasActorAsset);
     }).catch((error: unknown) => {
       console.error("Failed to render campaign terrain WebGL map.", error);
       canvas.classList.add("has-error");
+    }).finally(() => {
+      pendingRendererCanvases.delete(canvas);
     });
   }
 }
@@ -245,25 +328,38 @@ async function initCampaignTerrainWebGl(
     throw new Error("This browser does not support WebGL.");
   }
 
-  const derivativesExtension = gl.getExtension("OES_standard_derivatives");
-  if (derivativesExtension == null) {
-    throw new Error("This browser does not support terrain derivative shading.");
-  }
-
   const actorAssetPromise = shouldRenderActorInThisCanvas
     ? loadCampaignActorAsset(input.canvas).catch((error: unknown) => {
       console.error("Failed to load campaign actor asset.", error);
       return null;
     })
     : Promise.resolve(null);
-  const [textureImage, heightImage, materialImage, actorAsset] = await Promise.all([
+  const cityDepthAssetPromise = renderTerrain
+    ? loadCampaignCityDepthMeshAsset(input.canvas).catch((error: unknown) => {
+      console.error("Failed to load campaign city depth mesh asset.", error);
+      return null;
+    })
+    : Promise.resolve(null);
+  const [textureImage, heightImage, materialImage, actorAsset, cityDepthAsset] = await Promise.all([
     loadImage(input.textureUrl),
     loadImage(input.heightUrl),
     loadImage(input.materialUrl),
     actorAssetPromise,
+    cityDepthAssetPromise,
   ]);
-  const heightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
-  const mesh = createTerrainMesh(heightSamples, GRID_COLUMNS, GRID_ROWS);
+  const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
+  const heightSamples = createHexLayeredHeightSamples(
+    baseHeightSamples,
+    GRID_COLUMNS,
+    GRID_ROWS
+  );
+  const mesh = renderTerrain
+    ? createHexLayeredTerrainMesh(
+      heightSamples,
+      GRID_COLUMNS,
+      GRID_ROWS
+    )
+    : null;
   const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
   const actorProgram = createProgram(gl, actorVertexShaderSource, actorFragmentShaderSource);
   const positionLocation = gl.getAttribLocation(program, "aPosition");
@@ -271,7 +367,14 @@ async function initCampaignTerrainWebGl(
   const matrixLocation = gl.getUniformLocation(program, "uMatrix");
   const textureLocation = gl.getUniformLocation(program, "uTexture");
   const materialTextureLocation = gl.getUniformLocation(program, "uMaterialTexture");
-  const lightLocation = gl.getUniformLocation(program, "uLight");
+  const landTextureColorAdjustLocation = gl.getUniformLocation(
+    program,
+    "uLandTextureColorAdjust"
+  );
+  const landTextureShadeRangeLocation = gl.getUniformLocation(
+    program,
+    "uLandTextureShadeRange"
+  );
   const actorPositionLocation = gl.getAttribLocation(actorProgram, "aPosition");
   const actorNormalLocation = gl.getAttribLocation(actorProgram, "aNormal");
   const actorUvLocation = gl.getAttribLocation(actorProgram, "aUv");
@@ -283,6 +386,8 @@ async function initCampaignTerrainWebGl(
   const indexBuffer = gl.createBuffer();
   const actorVertexBuffer = gl.createBuffer();
   const actorIndexBuffer = gl.createBuffer();
+  const cityDepthVertexBuffer = gl.createBuffer();
+  const cityDepthIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
   const materialTexture = createTexture(gl, materialImage);
   const actorTexture =
@@ -292,33 +397,63 @@ async function initCampaignTerrainWebGl(
         wrapS: gl.REPEAT,
         wrapT: gl.REPEAT,
       });
+  const cityDepthTexture =
+    cityDepthAsset == null ? null : createTexture(gl, cityDepthAsset.textureImage);
 
-  if (
-    positionLocation < 0 ||
-    uvLocation < 0 ||
-    matrixLocation == null ||
-    textureLocation == null ||
-    materialTextureLocation == null ||
-    lightLocation == null ||
-    actorPositionLocation < 0 ||
-    actorNormalLocation < 0 ||
-    actorUvLocation < 0 ||
-    actorMatrixLocation == null ||
-    actorLightLocation == null ||
-    actorTextureLocation == null ||
-    actorTintLocation == null ||
-    vertexBuffer == null ||
-    indexBuffer == null ||
-    actorVertexBuffer == null ||
-    actorIndexBuffer == null
-  ) {
-    throw new Error("Failed to initialize campaign terrain WebGL resources.");
+  const missingResources = [
+    positionLocation < 0 ? "aPosition" : null,
+    uvLocation < 0 ? "aUv" : null,
+    matrixLocation == null ? "uMatrix" : null,
+    textureLocation == null ? "uTexture" : null,
+    materialTextureLocation == null ? "uMaterialTexture" : null,
+    landTextureColorAdjustLocation == null ? "uLandTextureColorAdjust" : null,
+    landTextureShadeRangeLocation == null ? "uLandTextureShadeRange" : null,
+    actorPositionLocation < 0 ? "actor.aPosition" : null,
+    actorNormalLocation < 0 ? "actor.aNormal" : null,
+    actorUvLocation < 0 ? "actor.aUv" : null,
+    actorMatrixLocation == null ? "actor.uMatrix" : null,
+    actorLightLocation == null ? "actor.uLight" : null,
+    actorTextureLocation == null ? "actor.uTexture" : null,
+    actorTintLocation == null ? "actor.uTint" : null,
+    vertexBuffer == null ? "terrain.vertexBuffer" : null,
+    indexBuffer == null ? "terrain.indexBuffer" : null,
+    actorVertexBuffer == null ? "actor.vertexBuffer" : null,
+    actorIndexBuffer == null ? "actor.indexBuffer" : null,
+    cityDepthVertexBuffer == null ? "cityDepth.vertexBuffer" : null,
+    cityDepthIndexBuffer == null ? "cityDepth.indexBuffer" : null,
+  ].filter((resource): resource is string => resource != null);
+  if (missingResources.length > 0) {
+    throw new Error(
+      `Failed to initialize campaign terrain WebGL resources: ${missingResources.join(", ")}.`
+    );
   }
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.STATIC_DRAW);
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
+  if (mesh != null) {
+    const uintIndicesExtension = gl.getExtension("OES_element_index_uint");
+    if (uintIndicesExtension == null) {
+      throw new Error("This browser cannot draw the campaign terrain mesh.");
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
+  }
+  let cityDepthMesh =
+    cityDepthAsset == null
+      ? null
+      : createCityDepthMesh(
+        cityDepthAsset,
+        heightSamples,
+        GRID_COLUMNS,
+        GRID_ROWS,
+        readCampaignCityDepthMeshTransform(input.canvas)
+      );
+  if (cityDepthMesh != null) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, cityDepthVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, cityDepthMesh.vertices, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cityDepthIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cityDepthMesh.indices, gl.STATIC_DRAW);
+  }
   gl.enable(gl.DEPTH_TEST);
   gl.disable(gl.CULL_FACE);
   const projectionInput: CampaignTerrainProjectionInput = {
@@ -330,10 +465,10 @@ async function initCampaignTerrainWebGl(
 
   let frameId: number | null = null;
   let isDisposed = false;
-  let shouldAnimate = false;
   let hasPendingRender = false;
   let projectedPointsNeedSync = true;
   let lastActorSignature = "";
+  let lastCityDepthMeshSignature = "";
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
   const render = () => {
@@ -355,7 +490,7 @@ async function initCampaignTerrainWebGl(
     gl.clearColor(renderTerrain ? 0.02 : 0, renderTerrain ? 0.04 : 0, renderTerrain ? 0.04 : 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    if (renderTerrain) {
+    if (renderTerrain && mesh != null) {
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -365,7 +500,18 @@ async function initCampaignTerrainWebGl(
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, materialTexture);
       gl.uniform1i(materialTextureLocation, 1);
-      gl.uniform3f(lightLocation, -0.92, 0.28, 0.36);
+      const terrainStyle = readCampaignTerrainStyle(input.canvas);
+      gl.uniform3f(
+        landTextureColorAdjustLocation,
+        terrainStyle.saturation,
+        terrainStyle.brightness,
+        terrainStyle.brightnessOffset
+      );
+      gl.uniform2f(
+        landTextureShadeRangeLocation,
+        terrainStyle.shadeMin,
+        terrainStyle.shadeMax
+      );
       gl.uniformMatrix4fv(
         matrixLocation,
         false,
@@ -384,7 +530,72 @@ async function initCampaignTerrainWebGl(
         stride,
         3 * Float32Array.BYTES_PER_ELEMENT
       );
-      gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_INT, 0);
+    }
+
+    if (renderTerrain && cityDepthAsset != null && cityDepthTexture != null) {
+      const cityDepthMeshTransform = readCampaignCityDepthMeshTransform(input.canvas);
+      const cityDepthMeshSignature = getCampaignCityDepthMeshTransformSignature(
+        cityDepthMeshTransform
+      );
+      if (cityDepthMesh == null || cityDepthMeshSignature !== lastCityDepthMeshSignature) {
+        cityDepthMesh = createCityDepthMesh(
+          cityDepthAsset,
+          heightSamples,
+          GRID_COLUMNS,
+          GRID_ROWS,
+          cityDepthMeshTransform
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, cityDepthVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, cityDepthMesh.vertices, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cityDepthIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cityDepthMesh.indices, gl.STATIC_DRAW);
+        lastCityDepthMeshSignature = cityDepthMeshSignature;
+      }
+      gl.useProgram(actorProgram);
+      gl.bindBuffer(gl.ARRAY_BUFFER, cityDepthVertexBuffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cityDepthIndexBuffer);
+      const cityDepthStride = 8 * Float32Array.BYTES_PER_ELEMENT;
+      gl.enableVertexAttribArray(actorPositionLocation);
+      gl.vertexAttribPointer(
+        actorPositionLocation,
+        3,
+        gl.FLOAT,
+        false,
+        cityDepthStride,
+        0
+      );
+      gl.enableVertexAttribArray(actorNormalLocation);
+      gl.vertexAttribPointer(
+        actorNormalLocation,
+        3,
+        gl.FLOAT,
+        false,
+        cityDepthStride,
+        3 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(actorUvLocation);
+      gl.vertexAttribPointer(
+        actorUvLocation,
+        2,
+        gl.FLOAT,
+        false,
+        cityDepthStride,
+        6 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.uniformMatrix4fv(
+        actorMatrixLocation,
+        false,
+        createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1))
+      );
+      gl.uniform3f(actorLightLocation, -0.58, 0.52, 0.62);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, cityDepthTexture);
+      gl.uniform1i(actorTextureLocation, 0);
+      gl.uniform3f(actorTintLocation, 1, 1, 1);
+      gl.disable(gl.CULL_FACE);
+      gl.depthMask(true);
+      gl.drawElements(gl.TRIANGLES, cityDepthMesh.indices.length, gl.UNSIGNED_INT, 0);
     }
 
     const actor = readCampaignActorData(input.canvas);
@@ -399,7 +610,6 @@ async function initCampaignTerrainWebGl(
         projectedPointsNeedSync = true;
         lastActorSignature = actorSignature;
       }
-      shouldAnimate = true;
       const actorHeight = sampleHeightAt(heightSamples, GRID_COLUMNS, GRID_ROWS, actor.u, actor.v);
       const actorMesh = createActorMesh(
         actor,
@@ -455,7 +665,6 @@ async function initCampaignTerrainWebGl(
       gl.drawElements(gl.TRIANGLES, actorMesh.indices.length, gl.UNSIGNED_SHORT, 0);
       gl.disable(gl.CULL_FACE);
     } else {
-      shouldAnimate = false;
       if (lastActorSignature !== "") {
         projectedPointsNeedSync = true;
         lastActorSignature = "";
@@ -465,10 +674,6 @@ async function initCampaignTerrainWebGl(
     if (renderTerrain && projectedPointsNeedSync) {
       syncProjectedPoints(projectionInput);
       projectedPointsNeedSync = false;
-    }
-
-    if (shouldAnimate) {
-      requestRender("dynamic");
     }
   };
 
@@ -511,10 +716,15 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(indexBuffer);
       gl.deleteBuffer(actorVertexBuffer);
       gl.deleteBuffer(actorIndexBuffer);
+      gl.deleteBuffer(cityDepthVertexBuffer);
+      gl.deleteBuffer(cityDepthIndexBuffer);
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
       if (actorTexture != null) {
         gl.deleteTexture(actorTexture);
+      }
+      if (cityDepthTexture != null) {
+        gl.deleteTexture(cityDepthTexture);
       }
       gl.deleteProgram(program);
       gl.deleteProgram(actorProgram);
@@ -632,6 +842,157 @@ async function loadCampaignActorAsset(
   };
 }
 
+async function loadCampaignCityDepthMeshAsset(
+  canvas: HTMLCanvasElement
+): Promise<CityDepthMeshAsset | null> {
+  const meshUrl = canvas.dataset.campaignCityMeshUrl;
+  const textureUrl = canvas.dataset.campaignCityTextureUrl;
+  const u = Number(canvas.dataset.campaignCityU);
+  const v = Number(canvas.dataset.campaignCityV);
+  if (
+    meshUrl == null ||
+    textureUrl == null ||
+    !Number.isFinite(u) ||
+    !Number.isFinite(v)
+  ) {
+    return null;
+  }
+
+  const [asset, textureImage] = await Promise.all([
+    loadJson<CityDepthMeshAssetJson>(meshUrl),
+    loadImage(textureUrl),
+  ]);
+  if (asset.format !== "city-depth-mesh-lowpoly-v1") {
+    throw new Error(`Unsupported city depth mesh format "${asset.format}".`);
+  }
+  if (
+    asset.positions.length % 3 !== 0 ||
+    asset.normals.length !== asset.positions.length ||
+    asset.uvs.length !== (asset.positions.length / 3) * 2 ||
+    asset.indices.length % 3 !== 0
+  ) {
+    throw new Error("City depth mesh asset arrays are inconsistent.");
+  }
+
+  let minHeight = Number.POSITIVE_INFINITY;
+  for (let index = 1; index < asset.positions.length; index += 3) {
+    minHeight = Math.min(minHeight, asset.positions[index] ?? minHeight);
+  }
+
+  return {
+    positions: new Float32Array(asset.positions),
+    normals: new Float32Array(asset.normals),
+    uvs: new Float32Array(asset.uvs),
+    indices: new Uint32Array(asset.indices),
+    textureImage,
+    u: clamp(u, 0, 1),
+    v: clamp(v, 0, 1),
+    minHeight: Number.isFinite(minHeight) ? minHeight : 0,
+  };
+}
+
+function createCityDepthMesh(
+  asset: CityDepthMeshAsset,
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  transform: CampaignCityDepthMeshTransform
+): CityDepthMeshData {
+  const snappedCenter = snapTerrainUvToHexCenter(asset.u, asset.v);
+  const terrainHeight = sampleHeightAt(
+    heights,
+    columns,
+    rows,
+    snappedCenter.u,
+    snappedCenter.v
+  );
+  const center = createTerrainWorldPoint(
+    snappedCenter.u,
+    snappedCenter.v,
+    terrainHeight
+  );
+  const centerX =
+    center[0] + transform.offsetX * CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE;
+  const centerY =
+    center[1] - transform.offsetY * CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE;
+  const vertices = new Float32Array((asset.positions.length / 3) * 8);
+  const rotation = transform.rotationDegrees * Math.PI / 180;
+  const rotationCos = Math.cos(rotation);
+  const rotationSin = Math.sin(rotation);
+  const pitch = transform.pitchDegrees * Math.PI / 180;
+  const pitchCos = Math.cos(pitch);
+  const pitchSin = Math.sin(pitch);
+  const horizontalScale = CITY_DEPTH_MESH_WORLD_SCALE * transform.scale;
+  const verticalScale = CITY_DEPTH_MESH_HEIGHT_SCALE * transform.scale;
+
+  for (let vertexIndex = 0; vertexIndex < asset.positions.length / 3; vertexIndex += 1) {
+    const positionOffset = vertexIndex * 3;
+    const uvOffset = vertexIndex * 2;
+    const outputOffset = vertexIndex * 8;
+    const localX = asset.positions[positionOffset] ?? 0;
+    const localHeight = asset.positions[positionOffset + 1] ?? asset.minHeight;
+    const localY = asset.positions[positionOffset + 2] ?? 0;
+    const localZ = localHeight - asset.minHeight;
+    const pitchedY =
+      localY * horizontalScale * pitchCos - localZ * verticalScale * pitchSin;
+    const pitchedZ =
+      localY * horizontalScale * pitchSin + localZ * verticalScale * pitchCos;
+    const rotatedX = localX * horizontalScale * rotationCos - pitchedY * rotationSin;
+    const rotatedY = localX * horizontalScale * rotationSin + pitchedY * rotationCos;
+    const normalX = asset.normals[positionOffset] ?? 0;
+    const normalHeight = asset.normals[positionOffset + 1] ?? 1;
+    const normalY = asset.normals[positionOffset + 2] ?? 0;
+    const pitchedNormalY = normalY * pitchCos - normalHeight * pitchSin;
+    const pitchedNormalZ = normalY * pitchSin + normalHeight * pitchCos;
+    const rotatedNormalX = normalX * rotationCos - pitchedNormalY * rotationSin;
+    const rotatedNormalY = normalX * rotationSin + pitchedNormalY * rotationCos;
+    const worldNormal = normalizeVector3([
+      rotatedNormalX,
+      -rotatedNormalY,
+      pitchedNormalZ,
+    ]);
+
+    vertices[outputOffset] = centerX + rotatedX;
+    vertices[outputOffset + 1] = centerY - rotatedY;
+    vertices[outputOffset + 2] =
+      center[2] +
+      CITY_DEPTH_MESH_BASE_LIFT +
+      transform.lift +
+      pitchedZ;
+    vertices[outputOffset + 3] = worldNormal[0];
+    vertices[outputOffset + 4] = worldNormal[1];
+    vertices[outputOffset + 5] = worldNormal[2];
+    vertices[outputOffset + 6] = asset.uvs[uvOffset] ?? 0;
+    vertices[outputOffset + 7] = asset.uvs[uvOffset + 1] ?? 0;
+  }
+
+  return {
+    vertices,
+    indices: asset.indices,
+  };
+}
+
+function snapTerrainUvToHexCenter(u: number, v: number): { u: number; v: number } {
+  const point = terrainUvToHexPoint(u, v);
+  const cell = pixelToRoundedHex(point.x, point.y);
+  const center = hexToPixel(cell.x, cell.y);
+
+  return {
+    u: hexPointToTerrainU(center.x),
+    v: hexPointToTerrainV(center.y),
+  };
+}
+
+function normalizeVector3(input: [number, number, number]): [number, number, number] {
+  const length = Math.hypot(input[0], input[1], input[2]) || 1;
+
+  return [
+    input[0] / length,
+    input[1] / length,
+    input[2] / length,
+  ];
+}
+
 function sampleHeightImage(
   image: HTMLImageElement,
   columns: number,
@@ -659,6 +1020,35 @@ function sampleHeightImage(
   }
 
   return heights;
+}
+
+function hexToPixel(x: number, y: number): { x: number; y: number } {
+  return {
+    x: Math.sqrt(3) * (x + y * 0.5),
+    y: 1.5 * y,
+  };
+}
+
+function pixelToRoundedHex(x: number, y: number): { x: number; y: number } {
+  const axialX = 0.5773503 * x - 0.3333333 * y;
+  const axialY = 0.6666667 * y;
+  const axialZ = -axialX - axialY;
+  let roundedX = Math.floor(axialX + 0.5);
+  let roundedY = Math.floor(axialY + 0.5);
+  let roundedZ = Math.floor(axialZ + 0.5);
+  const diffX = Math.abs(roundedX - axialX);
+  const diffY = Math.abs(roundedY - axialY);
+  const diffZ = Math.abs(roundedZ - axialZ);
+
+  if (diffX > diffY && diffX > diffZ) {
+    roundedX = -roundedY - roundedZ;
+  } else if (diffY > diffZ) {
+    roundedY = -roundedX - roundedZ;
+  } else {
+    roundedZ = -roundedX - roundedY;
+  }
+
+  return { x: roundedX, y: roundedY };
 }
 
 function getHeightFromHeightmapColor(red: number, green: number, blue: number): number {
@@ -768,6 +1158,111 @@ function readCampaignActorData(canvas: HTMLCanvasElement): CampaignActorData | n
     idleAnimationUrl: playerElement.dataset.campaignPlayerIdleAnimationUrl ?? null,
     walkAnimationUrl: playerElement.dataset.campaignPlayerWalkAnimationUrl ?? null,
   };
+}
+
+function readCampaignTerrainStyle(canvas: HTMLCanvasElement): CampaignTerrainStyle {
+  return {
+    saturation: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureSaturation,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.saturation,
+      0,
+      3
+    ),
+    brightness: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureBrightness,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.brightness,
+      0,
+      3
+    ),
+    brightnessOffset: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureBrightnessOffset,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.brightnessOffset,
+      -0.5,
+      0.5
+    ),
+    shadeMin: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureShadeMin,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.shadeMin,
+      0,
+      2
+    ),
+    shadeMax: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureShadeMax,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.shadeMax,
+      0,
+      2
+    ),
+  };
+}
+
+function readCampaignCityDepthMeshTransform(
+  canvas: HTMLCanvasElement
+): CampaignCityDepthMeshTransform {
+  return {
+    rotationDegrees: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityRotation,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.rotationDegrees,
+      -180,
+      180
+    ),
+    pitchDegrees: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityPitch,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.pitchDegrees,
+      -90,
+      90
+    ),
+    scale: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityScale,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.scale,
+      0.1,
+      6
+    ),
+    offsetX: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityOffsetX,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.offsetX,
+      -1,
+      1
+    ),
+    offsetY: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityOffsetY,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.offsetY,
+      -1,
+      1
+    ),
+    lift: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityLift,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.lift,
+      -0.08,
+      0.16
+    ),
+  };
+}
+
+function getCampaignCityDepthMeshTransformSignature(
+  transform: CampaignCityDepthMeshTransform
+): string {
+  return [
+    transform.rotationDegrees.toFixed(3),
+    transform.pitchDegrees.toFixed(3),
+    transform.scale.toFixed(3),
+    transform.offsetX.toFixed(3),
+    transform.offsetY.toFixed(3),
+    transform.lift.toFixed(4),
+  ].join("|");
+}
+
+function readFiniteDatasetNumber(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsedValue, min), max);
 }
 
 function createActorMesh(
@@ -1015,62 +1510,227 @@ function nlerpQuaternion(
   ]);
 }
 
-function createTerrainMesh(
+function createHexLayeredHeightSamples(
+  heights: Float32Array,
+  columns: number,
+  rows: number
+): Float32Array {
+  const layeredHeights = new Float32Array(heights.length);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const hexPoint = terrainUvToHexPoint(u, v);
+      const hexCell = pixelToRoundedHex(hexPoint.x, hexPoint.y);
+      const hexCenter = hexToPixel(hexCell.x, hexCell.y);
+      const centerU = hexPointToTerrainU(hexCenter.x);
+      const centerV = hexPointToTerrainV(hexCenter.y);
+      const centerHeight = sampleHeightAt(heights, columns, rows, centerU, centerV);
+      layeredHeights[y * columns + x] = quantizeHexElevation(centerHeight);
+    }
+  }
+
+  return layeredHeights;
+}
+
+function createHexLayeredTerrainMesh(
   heights: Float32Array,
   columns: number,
   rows: number
 ): MeshData {
-  const vertices = new Float32Array(columns * rows * 5);
+  const vertices: number[] = [];
   const indices: number[] = [];
+  const hexCells = getTerrainHexCells();
+  const heightByCellKey = new Map<string, number>();
 
-  for (let y = 0; y < rows; y += 1) {
-    for (let x = 0; x < columns; x += 1) {
-      const index = y * columns + x;
-      const offset = index * 5;
-      const u = x / Math.max(columns - 1, 1);
-      const v = y / Math.max(rows - 1, 1);
-      const height = heights[index] ?? 0;
-
-      vertices[offset] = (u - 0.5) * 2;
-      vertices[offset + 1] = (0.5 - v) * 2;
-      vertices[offset + 2] = height * HEIGHT_SCALE;
-      vertices[offset + 3] = u;
-      vertices[offset + 4] = v;
-    }
+  for (const cell of hexCells) {
+    const center = hexToPixel(cell.x, cell.y);
+    const height = sampleHeightAt(
+      heights,
+      columns,
+      rows,
+      hexPointToTerrainU(center.x),
+      hexPointToTerrainV(center.y)
+    );
+    heightByCellKey.set(getHexCellKey(cell.x, cell.y), height);
   }
 
-  for (let y = 0; y < rows - 1; y += 1) {
-    for (let x = 0; x < columns - 1; x += 1) {
-      const topLeft = y * columns + x;
-      const topRight = topLeft + 1;
-      const bottomLeft = topLeft + columns;
-      const bottomRight = bottomLeft + 1;
-      indices.push(topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight);
+  for (const cell of hexCells) {
+    const center = hexToPixel(cell.x, cell.y);
+    const height = heightByCellKey.get(getHexCellKey(cell.x, cell.y)) ?? 0;
+    const centerVertexIndex = addHexTerrainVertex(vertices, center.x, center.y, height);
+    const cornerVertexIndices = HEX_CORNER_OFFSETS.map((corner) =>
+      addHexTerrainVertex(vertices, center.x + corner.x, center.y + corner.y, height)
+    );
+
+    for (let cornerIndex = 0; cornerIndex < cornerVertexIndices.length; cornerIndex += 1) {
+      const nextCornerIndex = (cornerIndex + 1) % cornerVertexIndices.length;
+      indices.push(
+        centerVertexIndex,
+        cornerVertexIndices[nextCornerIndex] ?? centerVertexIndex,
+        cornerVertexIndices[cornerIndex] ?? centerVertexIndex
+      );
+    }
+
+    for (let edgeIndex = 0; edgeIndex < HEX_NEIGHBOR_DIRECTIONS.length; edgeIndex += 1) {
+      const neighbor = HEX_NEIGHBOR_DIRECTIONS[edgeIndex] ?? { x: 0, y: 0 };
+      const neighborHeight =
+        heightByCellKey.get(getHexCellKey(cell.x + neighbor.x, cell.y + neighbor.y)) ??
+        0;
+      if (height <= neighborHeight + HEX_WALL_HEIGHT_EPSILON) {
+        continue;
+      }
+
+      const firstCorner = HEX_CORNER_OFFSETS[edgeIndex] ?? HEX_CORNER_OFFSETS[0];
+      const secondCorner =
+        HEX_CORNER_OFFSETS[(edgeIndex + 1) % HEX_CORNER_OFFSETS.length] ??
+        HEX_CORNER_OFFSETS[0];
+      addHexTerrainWall(
+        vertices,
+        indices,
+        center.x + firstCorner.x,
+        center.y + firstCorner.y,
+        center.x + secondCorner.x,
+        center.y + secondCorner.y,
+        height,
+        neighborHeight
+      );
     }
   }
 
   return {
-    vertices,
-    indices: new Uint16Array(indices),
+    vertices: new Float32Array(vertices),
+    indices: new Uint32Array(indices),
   };
 }
 
-function rotateAroundXAxis(
-  y: number,
-  z: number,
-  angle: number
-): { y: number; z: number } {
-  const cosine = Math.cos(angle);
-  const sine = Math.sin(angle);
+const HEX_CORNER_OFFSETS = [
+  { x: 0, y: -1 },
+  { x: Math.sqrt(3) / 2, y: -0.5 },
+  { x: Math.sqrt(3) / 2, y: 0.5 },
+  { x: 0, y: 1 },
+  { x: -Math.sqrt(3) / 2, y: 0.5 },
+  { x: -Math.sqrt(3) / 2, y: -0.5 },
+] as const;
+
+const HEX_NEIGHBOR_DIRECTIONS = [
+  { x: 0, y: -1 },
+  { x: 1, y: -1 },
+  { x: 1, y: 0 },
+  { x: 0, y: 1 },
+  { x: -1, y: 1 },
+  { x: -1, y: 0 },
+] as const;
+
+function getTerrainHexCells(): Array<{ x: number; y: number }> {
+  const mapMinX = -HEX_MAP_ASPECT * HEX_TERRAIN_SCALE * 0.5;
+  const mapMaxX = HEX_MAP_ASPECT * HEX_TERRAIN_SCALE * 0.5;
+  const mapMinY = -HEX_TERRAIN_SCALE * 0.5;
+  const mapMaxY = HEX_TERRAIN_SCALE * 0.5;
+  const axialBounds = [
+    pixelToRoundedHex(mapMinX, mapMinY),
+    pixelToRoundedHex(mapMaxX, mapMinY),
+    pixelToRoundedHex(mapMinX, mapMaxY),
+    pixelToRoundedHex(mapMaxX, mapMaxY),
+  ];
+  const minX = Math.min(...axialBounds.map((cell) => cell.x)) - 2;
+  const maxX = Math.max(...axialBounds.map((cell) => cell.x)) + 2;
+  const minY = Math.min(...axialBounds.map((cell) => cell.y)) - 2;
+  const maxY = Math.max(...axialBounds.map((cell) => cell.y)) + 2;
+  const cells: Array<{ x: number; y: number }> = [];
+
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      const center = hexToPixel(x, y);
+      if (
+        center.x < mapMinX - Math.sqrt(3) ||
+        center.x > mapMaxX + Math.sqrt(3) ||
+        center.y < mapMinY - 1 ||
+        center.y > mapMaxY + 1
+      ) {
+        continue;
+      }
+      cells.push({ x, y });
+    }
+  }
+
+  return cells;
+}
+
+function addHexTerrainWall(
+  vertices: number[],
+  indices: number[],
+  firstX: number,
+  firstY: number,
+  secondX: number,
+  secondY: number,
+  topHeight: number,
+  bottomHeight: number
+): void {
+  const topFirst = addHexTerrainVertex(vertices, firstX, firstY, topHeight);
+  const topSecond = addHexTerrainVertex(vertices, secondX, secondY, topHeight);
+  const bottomFirst = addHexTerrainVertex(vertices, firstX, firstY, bottomHeight);
+  const bottomSecond = addHexTerrainVertex(vertices, secondX, secondY, bottomHeight);
+
+  indices.push(topFirst, bottomFirst, topSecond, topSecond, bottomFirst, bottomSecond);
+}
+
+function addHexTerrainVertex(
+  vertices: number[],
+  hexPointX: number,
+  hexPointY: number,
+  height: number
+): number {
+  const u = hexPointToTerrainU(hexPointX);
+  const v = hexPointToTerrainV(hexPointY);
+  const vertexIndex = vertices.length / 5;
+  vertices.push(
+    (u - 0.5) * 2,
+    (0.5 - v) * 2,
+    height * HEIGHT_SCALE,
+    u,
+    v
+  );
+
+  return vertexIndex;
+}
+
+function terrainUvToHexPoint(u: number, v: number): { x: number; y: number } {
   return {
-    y: y * cosine - z * sine,
-    z: y * sine + z * cosine,
+    x: (u - 0.5) * HEX_MAP_ASPECT * HEX_TERRAIN_SCALE,
+    y: (v - 0.5) * HEX_TERRAIN_SCALE,
   };
+}
+
+function hexPointToTerrainU(x: number): number {
+  return clamp(x / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE) + 0.5, 0, 1);
+}
+
+function hexPointToTerrainV(y: number): number {
+  return clamp(y / HEX_TERRAIN_SCALE + 0.5, 0, 1);
+}
+
+function getHexCellKey(x: number, y: number): string {
+  return `${x},${y}`;
+}
+
+function quantizeHexElevation(height: number): number {
+  if (height <= HEX_WATER_HEIGHT_THRESHOLD) {
+    return 0;
+  }
+
+  const level = Math.max(
+    1,
+    Math.round(clamp(height, 0, 1) * (HEX_ELEVATION_LEVELS - 1))
+  );
+
+  return level / (HEX_ELEVATION_LEVELS - 1);
 }
 
 function createTexture(
   gl: WebGLRenderingContext,
-  image: HTMLImageElement,
+  image: TexImageSource,
   options?: {
     wrapS?: number;
     wrapT?: number;
@@ -1113,18 +1773,23 @@ function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): void {
 
 function createTerrainMatrix(aspectRatio: number): Mat4 {
   const safeScale = Math.max(currentCamera.scale, 0.1);
+  const screenScale = safeScale / CAMERA_REFERENCE_SCALE;
   const projection = createPerspectiveMatrix(FOV_RADIANS, aspectRatio, 0.1, 20);
   const translation = createTranslationMatrix(
-    currentCamera.offsetX * CAMERA_OFFSET_UNIT / safeScale,
-    -currentCamera.offsetY * CAMERA_OFFSET_UNIT / safeScale,
-    -CAMERA_BASE_DISTANCE / safeScale
+    currentCamera.offsetX * CAMERA_OFFSET_UNIT / CAMERA_REFERENCE_SCALE / screenScale,
+    -currentCamera.offsetY * CAMERA_OFFSET_UNIT / CAMERA_REFERENCE_SCALE / screenScale,
+    -CAMERA_BASE_DISTANCE / CAMERA_REFERENCE_SCALE
   );
   const tilt = createRotationXMatrix(CAMERA_TILT_RADIANS);
   const scale = createScaleMatrix(TERRAIN_SCALE, TERRAIN_SCALE, 1);
+  const screenZoom = createScaleMatrix(screenScale, screenScale, 1);
 
   return multiplyMatrices(
-    projection,
-    multiplyMatrices(translation, multiplyMatrices(tilt, scale))
+    screenZoom,
+    multiplyMatrices(
+      projection,
+      multiplyMatrices(translation, multiplyMatrices(tilt, scale))
+    )
   );
 }
 
@@ -1408,31 +2073,14 @@ const vertexShaderSource = `
 `;
 
 const fragmentShaderSource = `
-  #extension GL_OES_standard_derivatives : enable
   precision mediump float;
   uniform sampler2D uTexture;
   uniform sampler2D uMaterialTexture;
-  uniform vec3 uLight;
+  uniform vec3 uLandTextureColorAdjust;
+  uniform vec2 uLandTextureShadeRange;
   varying vec2 vUv;
   varying float vHeight;
   varying vec2 vTerrainPosition;
-
-  float hash(vec2 point) {
-    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453);
-  }
-
-  float valueNoise(vec2 point) {
-    vec2 cell = floor(point);
-    vec2 local = fract(point);
-    vec2 smoothLocal = local * local * (3.0 - 2.0 * local);
-
-    float a = hash(cell);
-    float b = hash(cell + vec2(1.0, 0.0));
-    float c = hash(cell + vec2(0.0, 1.0));
-    float d = hash(cell + vec2(1.0, 1.0));
-
-    return mix(mix(a, b, smoothLocal.x), mix(c, d, smoothLocal.x), smoothLocal.y);
-  }
 
   float colorDistance(vec3 left, vec3 right) {
     return distance(left, right);
@@ -1442,52 +2090,150 @@ const fragmentShaderSource = `
     return 1.0 - smoothstep(0.0, radius, colorDistance(material, target));
   }
 
+  float hash(vec2 point) {
+    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453);
+  }
+
+  float getWaterAmount(vec3 terrainType) {
+    return
+      step(0.22, terrainType.r) *
+      (1.0 - step(0.12, terrainType.g)) *
+      (1.0 - step(0.12, terrainType.b));
+  }
+
+  vec2 hexToPixel(vec2 hex) {
+    return vec2(
+      1.7320508 * (hex.x + hex.y * 0.5),
+      1.5 * hex.y
+    );
+  }
+
+  vec3 cubeRound(vec3 cube) {
+    vec3 rounded = floor(cube + 0.5);
+    vec3 difference = abs(rounded - cube);
+
+    if (difference.x > difference.y && difference.x > difference.z) {
+      rounded.x = -rounded.y - rounded.z;
+    } else if (difference.y > difference.z) {
+      rounded.y = -rounded.x - rounded.z;
+    } else {
+      rounded.z = -rounded.x - rounded.y;
+    }
+
+    return rounded;
+  }
+
+  vec2 pixelToRoundedHex(vec2 point) {
+    vec2 axial = vec2(
+      0.5773503 * point.x - 0.3333333 * point.y,
+      0.6666667 * point.y
+    );
+    vec3 cube = vec3(axial.x, axial.y, -axial.x - axial.y);
+    vec3 roundedCube = cubeRound(cube);
+
+    return roundedCube.xy;
+  }
+
+  float getHexGridLine(vec2 point, vec2 cell) {
+    vec2 center = hexToPixel(cell);
+    float centerDistance = length(point - center);
+    float neighborDistance = 1000.0;
+
+    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(1.0, 0.0))));
+    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 0.0))));
+    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(0.0, 1.0))));
+    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(0.0, -1.0))));
+    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(1.0, -1.0))));
+    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 1.0))));
+
+    float boundaryDistance = abs(neighborDistance - centerDistance);
+    float lineWidth = 0.026;
+
+    return 1.0 - smoothstep(0.0, lineWidth, boundaryDistance);
+  }
+
+  vec2 getHexAtlasUv(vec2 point, vec2 cell) {
+    const float tileCount = 4.0;
+    vec2 localPoint = point - hexToPixel(cell);
+    vec2 localUv = clamp(
+      vec2(localPoint.x / 1.7320508 + 0.5, localPoint.y / 2.0 + 0.5),
+      0.0,
+      1.0
+    );
+    float tileIndex = floor(hash(cell) * 16.0);
+    vec2 tile = vec2(mod(tileIndex, tileCount), floor(tileIndex / tileCount));
+
+    return (tile + localUv) / tileCount;
+  }
+
+  vec3 getHexTerrainColor(vec3 terrainType) {
+    float water = getWaterAmount(terrainType);
+    float plain =
+      step(0.22, terrainType.g) *
+      step(terrainType.r, 0.45) *
+      (1.0 - water);
+    float coast =
+      step(0.36, terrainType.b) *
+      step(0.30, terrainType.g) *
+      (1.0 - water);
+    float mountain =
+      max(
+        materialWeight(terrainType, vec3(0.38, 0.25, 0.25), 0.22),
+        materialWeight(terrainType, vec3(0.50, 0.50, 0.25), 0.24)
+      ) * (1.0 - water) * (1.0 - plain);
+
+    vec3 color = vec3(0.39, 0.52, 0.27);
+    color = mix(color, vec3(0.18, 0.55, 0.26), plain);
+    color = mix(color, vec3(0.44, 0.38, 0.25), mountain);
+    color = mix(color, vec3(0.24, 0.64, 0.52), coast * (1.0 - plain));
+    color = mix(color, vec3(0.10, 0.35, 0.72), water);
+
+    return color;
+  }
+
+  vec3 boostLandTextureColor(vec3 color) {
+    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    vec3 saturated = mix(vec3(luma), color, uLandTextureColorAdjust.x);
+
+    return clamp(
+      saturated * uLandTextureColorAdjust.y + vec3(uLandTextureColorAdjust.z),
+      0.0,
+      1.0
+    );
+  }
+
   void main() {
-    vec4 base = texture2D(uTexture, vUv);
-    vec3 material = texture2D(uMaterialTexture, vUv).rgb;
-    vec3 detail = texture2D(uMaterialTexture, vUv * 2.35).rgb;
+    const float hexScale = ${HEX_TERRAIN_SCALE.toFixed(1)};
+    const float mapAspect = ${HEX_MAP_ASPECT.toFixed(4)};
+    vec2 hexPoint = vec2((vUv.x - 0.5) * mapAspect, vUv.y - 0.5) * hexScale;
+    vec2 hexCell = pixelToRoundedHex(hexPoint);
+    vec2 hexCenter = hexToPixel(hexCell);
+    vec2 hexUv = vec2(
+      hexCenter.x / (hexScale * mapAspect) + 0.5,
+      hexCenter.y / hexScale + 0.5
+    );
+    vec2 atlasUv = getHexAtlasUv(hexPoint, hexCell);
+    vec4 base = texture2D(uTexture, atlasUv);
+    vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
+    vec3 terrainColor = getHexTerrainColor(material);
+    float water = getWaterAmount(material);
+    float shade = clamp(${GRASS_AMBIENT_LIGHT.toFixed(2)} + vHeight * 0.16, 0.50, 1.08);
     float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
-    float detailLuma = dot(detail, vec3(0.2126, 0.7152, 0.0722));
-    float detailGrain = (detailLuma - 0.5) * 0.12;
-    float water = step(0.1, material.b - max(material.r, material.g) * 0.72) * step(0.22, material.b);
-    float forest = max(
-      materialWeight(material, vec3(0.05, 0.30, 0.08), 0.30),
-      materialWeight(material, vec3(0.10, 0.42, 0.12), 0.34)
+    vec3 landTexture = boostLandTextureColor(base.rgb);
+    float landTextureLuma = dot(landTexture, vec3(0.2126, 0.7152, 0.0722));
+    landTexture = clamp(
+      mix(vec3(landTextureLuma), landTexture, ${GRASS_TEXTURE_DETAIL.toFixed(2)}),
+      0.0,
+      1.0
     );
-    float denseForest = forest * smoothstep(0.08, 0.34, material.g - max(material.r, material.b));
-    float mountain = max(
-      materialWeight(material, vec3(0.38, 0.30, 0.22), 0.32),
-      materialWeight(material, vec3(0.48, 0.46, 0.42), 0.36)
-    );
-    float sand = max(
-      materialWeight(material, vec3(0.72, 0.62, 0.28), 0.36),
-      materialWeight(material, vec3(0.78, 0.70, 0.42), 0.38)
-    );
-    float plain = clamp(1.0 - max(max(water, forest), max(mountain, sand)), 0.0, 1.0);
-    vec2 gradient = vec2(dFdx(vHeight), dFdy(vHeight)) * 5.8;
-    vec3 normal = normalize(vec3(-gradient.x, -gradient.y, 0.62));
-    float directionalLight = max(dot(normal, normalize(uLight)), 0.0);
-    float sideShadow = clamp(0.62 + directionalLight * 0.42, 0.5, 1.06);
-    float ridgeShadow = clamp(1.0 - length(gradient) * mix(1.35, 1.85, mountain), 0.6, 1.0);
-    float grain = valueNoise(vTerrainPosition * mix(48.0, 118.0, mountain)) * mix(0.03, 0.085, mountain + forest);
-    float fineGrain = valueNoise(vTerrainPosition * 168.0) * mix(0.014, 0.042, mountain + forest);
-    float shade = sideShadow + vHeight * 0.1;
-    vec3 color = base.rgb * shade * ridgeShadow;
-    vec3 tint =
-      plain * vec3(0.86, 1.10, 0.66) +
-      forest * vec3(0.22, 1.08, 0.24) +
-      mountain * vec3(0.58, 0.53, 0.44) +
-      sand * vec3(1.30, 1.10, 0.58) +
-      water * vec3(0.34, 0.62, 1.22);
-    color *= mix(vec3(1.0), tint, 0.9);
-    color *= 1.0 - forest * 0.08 - mountain * 0.22 + sand * 0.04;
-    color *= 1.0 + detailGrain;
-    color += vec3(grain + fineGrain);
-    color = mix(color, color * vec3(0.48, 0.78, 0.42), denseForest * 0.72);
-    color = mix(color, base.rgb * vec3(0.36, 0.62, 1.06) * shade, water * 0.82);
-    color = mix(color, color * mix(vec3(0.58, 0.96, 0.52), vec3(0.78, 1.30, 0.62), materialLuma), forest * 0.42);
-    color = mix(color, color * mix(vec3(0.58), vec3(1.28), materialLuma), mountain * 0.34);
-    color = mix(color, color * mix(vec3(0.86, 0.76, 0.46), vec3(1.22, 1.08, 0.66), materialLuma), sand * 0.34);
+    float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, shade);
+    vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
+    vec3 waterColor = terrainColor * shade;
+    vec3 color = mix(landColor, waterColor, water);
+
+    float border = getHexGridLine(hexPoint, hexCell);
+    color = mix(color, vec3(0.0), border * 0.34);
+
     gl_FragColor = vec4(color, 1.0);
   }
 `;

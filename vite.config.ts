@@ -110,6 +110,8 @@ function getMimeType(filePath: string): string {
 }
 
 export default defineConfig({
+  base: "./",
+  appType: "mpa",
   plugins: [
     createScenarioPackPublishPlugin(),
     {
@@ -185,7 +187,10 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
-      input: resolve(__dirname, "index.html"),
+      input: {
+        main: resolve(__dirname, "index.html"),
+        battleDemo: resolve(__dirname, "prototypes/battle-demo/index.html"),
+      },
     },
   },
 });

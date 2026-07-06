@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Normal Point Cloud To Mesh</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101317;
+        --panel: #191f27;
+        --panel-2: #222a34;
+        --text: #eef2f6;
+        --muted: #9aa7b8;
+        --line: #384252;
+        --accent: #72d48a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        min-height: 100vh;
+      }
+
+      .stage {
+        position: relative;
+        min-height: 100vh;
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          #080b0e;
+        background-size: 34px 34px;
+      }
+
+      #preview {
+        display: block;
+        width: 100%;
+        height: 100vh;
+      }
+
+      .hud {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        display: grid;
+        gap: 4px;
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 6px;
+        background: rgba(10, 13, 17, 0.74);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        backdrop-filter: blur(8px);
+      }
+
+      .hud strong {
+        color: var(--text);
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 100vh;
+        padding: 18px;
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 720;
+      }
+
+      .note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .panel {
+        display: grid;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel-2);
+      }
+
+      .panel-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .tile-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .tile {
+        position: relative;
+        display: grid;
+        place-items: center;
+        aspect-ratio: 1;
+        padding: 0;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 5px;
+        background: #0e1217;
+        cursor: pointer;
+      }
+
+      .tile.is-selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(114, 212, 138, 0.2);
+      }
+
+      .tile canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .tile span {
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        padding: 1px 4px;
+        border-radius: 3px;
+        background: rgba(0, 0, 0, 0.58);
+        color: #fff;
+        font-size: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      input[type="range"] {
+        width: 100%;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .swatch {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .swatch canvas {
+        width: 100%;
+        aspect-ratio: 1;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 5px;
+        background: #0b0f13;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="stage">
+        <canvas id="preview"></canvas>
+        <div class="hud" id="hud">
+          <strong>4x4 UV tile</strong>
+          <span>loading...</span>
+        </div>
+      </section>
+      <aside class="sidebar">
+        <div>
+          <h1>gassuv normal mesh</h1>
+          <p class="note">tietu.png and gassuv.png are both cut into matching 4x4 tiles. The selected gassuv normal tile is converted into a depth map, then triangulated into a textured mesh.</p>
+        </div>
+        <section class="panel">
+          <div class="panel-title">
+            <span>Tile</span>
+            <strong id="tileLabel">0,0</strong>
+          </div>
+          <div class="tile-grid" id="tileGrid"></div>
+        </section>
+        <section class="panel">
+          <label>
+            <span class="row"><span>Sample step</span><output id="sampleStepValue">8</output></span>
+            <input id="sampleStep" type="range" min="4" max="18" step="1" value="8" />
+          </label>
+          <label>
+            <span class="row"><span>Height scale</span><output id="heightScaleValue">0.62</output></span>
+            <input id="heightScale" type="range" min="0.05" max="1.8" step="0.01" value="0.62" />
+          </label>
+          <label>
+            <span class="row"><span>Normal to depth</span><output id="normalBendValue">0.55</output></span>
+            <input id="normalBend" type="range" min="0" max="1.5" step="0.01" value="0.55" />
+          </label>
+          <label>
+            <span class="row"><span>Smoothing</span><output id="smoothingValue">2</output></span>
+            <input id="smoothing" type="range" min="0" max="8" step="1" value="2" />
+          </label>
+        </section>
+        <section class="panel">
+          <div class="swatches">
+            <div class="swatch">
+              <span>tietu tile</span>
+              <canvas id="textureTile" width="160" height="160"></canvas>
+            </div>
+            <div class="swatch">
+              <span>gassuv tile</span>
+              <canvas id="normalTile" width="160" height="160"></canvas>
+            </div>
+            <div class="swatch">
+              <span>depth map</span>
+              <canvas id="depthTile" width="160" height="160"></canvas>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <script>
+      const textureCandidates = ["../../tietu.png", "/tietu.png", "../tietu.png", "./tietu.png"];
+      const normalCandidates = ["../../gassuv.png", "/gassuv.png", "../gassuv.png", "./gassuv.png"];
+      const TILE_COLUMNS = 4;
+      const TILE_ROWS = 4;
+      const preview = document.querySelector("#preview");
+      const ctx = preview.getContext("2d");
+      const tileGrid = document.querySelector("#tileGrid");
+      const tileLabel = document.querySelector("#tileLabel");
+      const hud = document.querySelector("#hud");
+      const textureTile = document.querySelector("#textureTile");
+      const normalTile = document.querySelector("#normalTile");
+      const depthTile = document.querySelector("#depthTile");
+      const textureTileCtx = textureTile.getContext("2d");
+      const normalTileCtx = normalTile.getContext("2d");
+      const depthTileCtx = depthTile.getContext("2d");
+      const controls = {
+        sampleStep: document.querySelector("#sampleStep"),
+        heightScale: document.querySelector("#heightScale"),
+        normalBend: document.querySelector("#normalBend"),
+        smoothing: document.querySelector("#smoothing"),
+      };
+      const outputs = {
+        sampleStep: document.querySelector("#sampleStepValue"),
+        heightScale: document.querySelector("#heightScaleValue"),
+        normalBend: document.querySelector("#normalBendValue"),
+        smoothing: document.querySelector("#smoothingValue"),
+      };
+
+      const state = {
+        textureImage: null,
+        normalImage: null,
+        textureData: null,
+        normalData: null,
+        texturePath: "",
+        normalPath: "",
+        selectedTile: 0,
+        mesh: {
+          points: [],
+          triangles: [],
+          depth: new Float32Array(),
+          columns: 0,
+          rows: 0,
+        },
+      };
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error(`Failed to load ${src}`));
+          image.src = src;
+        });
+      }
+
+      async function loadFirstImage(candidates, label) {
+        const errors = [];
+        for (const candidate of candidates) {
+          try {
+            const image = await loadImage(candidate);
+            return { image, src: candidate };
+          } catch (error) {
+            errors.push(candidate);
+          }
+        }
+
+        throw new Error(`Failed to load ${label}. Tried: ${errors.join(", ")}`);
+      }
+
+      function imageDataFrom(image) {
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const imageCtx = canvas.getContext("2d", { willReadFrequently: true });
+        imageCtx.drawImage(image, 0, 0);
+        return imageCtx.getImageData(0, 0, canvas.width, canvas.height);
+      }
+
+      function tileRect(tileIndex, data) {
+        const column = tileIndex % TILE_COLUMNS;
+        const row = Math.floor(tileIndex / TILE_COLUMNS);
+        const width = Math.floor(data.width / TILE_COLUMNS);
+        const height = Math.floor(data.height / TILE_ROWS);
+        return { column, row, x: column * width, y: row * height, width, height };
+      }
+
+      function readPixel(data, x, y) {
+        const safeX = Math.max(0, Math.min(data.width - 1, Math.round(x)));
+        const safeY = Math.max(0, Math.min(data.height - 1, Math.round(y)));
+        const offset = (safeY * data.width + safeX) * 4;
+        return [
+          data.data[offset] / 255,
+          data.data[offset + 1] / 255,
+          data.data[offset + 2] / 255,
+          data.data[offset + 3] / 255,
+        ];
+      }
+
+      function createTileButtons() {
+        tileGrid.innerHTML = "";
+        for (let index = 0; index < TILE_COLUMNS * TILE_ROWS; index += 1) {
+          const button = document.createElement("button");
+          const canvas = document.createElement("canvas");
+          const label = document.createElement("span");
+          canvas.width = 96;
+          canvas.height = 96;
+          label.textContent = String(index + 1);
+          button.className = "tile";
+          button.type = "button";
+          button.append(canvas, label);
+          button.addEventListener("click", () => {
+            state.selectedTile = index;
+            rebuild();
+          });
+          tileGrid.append(button);
+        }
+      }
+
+      function drawTileCanvases() {
+        const textureRect = tileRect(state.selectedTile, state.textureData);
+        const normalRect = tileRect(state.selectedTile, state.normalData);
+        textureTileCtx.clearRect(0, 0, textureTile.width, textureTile.height);
+        normalTileCtx.clearRect(0, 0, normalTile.width, normalTile.height);
+        textureTileCtx.drawImage(
+          state.textureImage,
+          textureRect.x,
+          textureRect.y,
+          textureRect.width,
+          textureRect.height,
+          0,
+          0,
+          textureTile.width,
+          textureTile.height
+        );
+        normalTileCtx.drawImage(
+          state.normalImage,
+          normalRect.x,
+          normalRect.y,
+          normalRect.width,
+          normalRect.height,
+          0,
+          0,
+          normalTile.width,
+          normalTile.height
+        );
+
+        Array.from(tileGrid.children).forEach((button, index) => {
+          button.classList.toggle("is-selected", index === state.selectedTile);
+          const canvas = button.querySelector("canvas");
+          const buttonCtx = canvas.getContext("2d");
+          const rect = tileRect(index, state.textureData);
+          buttonCtx.clearRect(0, 0, canvas.width, canvas.height);
+          buttonCtx.drawImage(state.textureImage, rect.x, rect.y, rect.width, rect.height, 0, 0, canvas.width, canvas.height);
+        });
+      }
+
+      function rebuild() {
+        updateOutputs();
+        drawTileCanvases();
+        const textureRect = tileRect(state.selectedTile, state.textureData);
+        const normalRect = tileRect(state.selectedTile, state.normalData);
+        const sampleStep = Number.parseInt(controls.sampleStep.value, 10);
+        const heightScale = Number.parseFloat(controls.heightScale.value);
+        const normalInfluence = Number.parseFloat(controls.normalBend.value);
+        const smoothingPasses = Number.parseInt(controls.smoothing.value, 10);
+        state.mesh = buildNormalMesh(
+          textureRect,
+          normalRect,
+          sampleStep,
+          heightScale,
+          normalInfluence,
+          smoothingPasses
+        );
+        drawDepthMap();
+        render();
+      }
+
+      function buildNormalMesh(
+        textureRect,
+        normalRect,
+        sampleStep,
+        heightScale,
+        normalInfluence,
+        smoothingPasses
+      ) {
+        const columns = Math.max(3, Math.floor(textureRect.width / sampleStep) + 1);
+        const rows = Math.max(3, Math.floor(textureRect.height / sampleStep) + 1);
+        const count = columns * rows;
+        const slopesX = new Float32Array(count);
+        const slopesZ = new Float32Array(count);
+        const colors = new Array(count);
+        const normals = new Array(count);
+
+        for (let row = 0; row < rows; row += 1) {
+          const v = row / (rows - 1);
+          for (let column = 0; column < columns; column += 1) {
+            const u = column / (columns - 1);
+            const index = row * columns + column;
+            const texturePixel = readPixel(
+              state.textureData,
+              textureRect.x + u * (textureRect.width - 1),
+              textureRect.y + v * (textureRect.height - 1)
+            );
+            const normalPixel = readPixel(
+              state.normalData,
+              normalRect.x + u * (normalRect.width - 1),
+              normalRect.y + v * (normalRect.height - 1)
+            );
+            const normal = decodeNormal(normalPixel);
+            const safeZ = Math.max(Math.abs(normal.z), 0.12);
+            slopesX[index] = (-normal.x / safeZ) * normalInfluence;
+            slopesZ[index] = (normal.y / safeZ) * normalInfluence;
+            colors[index] = texturePixel;
+            normals[index] = normal;
+          }
+        }
+
+        let heights = normalSlopesToDepthMap(slopesX, slopesZ, columns, rows);
+        heights = smoothHeights(heights, columns, rows, smoothingPasses);
+        normalizeHeights(heights, heightScale);
+
+        const points = [];
+        for (let row = 0; row < rows; row += 1) {
+          const v = row / (rows - 1);
+          for (let column = 0; column < columns; column += 1) {
+            const u = column / (columns - 1);
+            const index = row * columns + column;
+            points.push({
+              x: u - 0.5,
+              y: heights[index],
+              z: v - 0.5,
+              u,
+              v,
+              color: colors[index],
+              normal: normals[index],
+            });
+          }
+        }
+
+        const triangles = [];
+        for (let row = 0; row < rows - 1; row += 1) {
+          for (let column = 0; column < columns - 1; column += 1) {
+            const topLeft = row * columns + column;
+            const topRight = topLeft + 1;
+            const bottomLeft = topLeft + columns;
+            const bottomRight = bottomLeft + 1;
+            triangles.push([topLeft, bottomLeft, topRight]);
+            triangles.push([topRight, bottomLeft, bottomRight]);
+          }
+        }
+
+        return { points, triangles, depth: heights, columns, rows };
+      }
+
+      function drawDepthMap() {
+        const { depth, columns, rows } = state.mesh;
+        depthTileCtx.clearRect(0, 0, depthTile.width, depthTile.height);
+        if (!depth.length || columns < 1 || rows < 1) {
+          return;
+        }
+
+        const imageData = depthTileCtx.createImageData(depthTile.width, depthTile.height);
+        let min = Number.POSITIVE_INFINITY;
+        let max = Number.NEGATIVE_INFINITY;
+        for (const value of depth) {
+          min = Math.min(min, value);
+          max = Math.max(max, value);
+        }
+        const range = Math.max(max - min, 0.0001);
+
+        for (let y = 0; y < depthTile.height; y += 1) {
+          const row = Math.min(rows - 1, Math.floor((y / depthTile.height) * rows));
+          for (let x = 0; x < depthTile.width; x += 1) {
+            const column = Math.min(columns - 1, Math.floor((x / depthTile.width) * columns));
+            const depthValue = (depth[row * columns + column] - min) / range;
+            const shade = Math.round(depthValue * 255);
+            const offset = (y * depthTile.width + x) * 4;
+            imageData.data[offset] = shade;
+            imageData.data[offset + 1] = shade;
+            imageData.data[offset + 2] = shade;
+            imageData.data[offset + 3] = 255;
+          }
+        }
+
+        depthTileCtx.putImageData(imageData, 0, 0);
+      }
+
+      function normalSlopesToDepthMap(slopesX, slopesZ, columns, rows) {
+        const count = columns * rows;
+        const stepX = 1 / Math.max(columns - 1, 1);
+        const stepZ = 1 / Math.max(rows - 1, 1);
+        let depth = new Float32Array(count);
+        let next = new Float32Array(count);
+        const iterations = 420;
+
+        for (let iteration = 0; iteration < iterations; iteration += 1) {
+          for (let row = 0; row < rows; row += 1) {
+            for (let column = 0; column < columns; column += 1) {
+              const index = row * columns + column;
+              let total = 0;
+              let sources = 0;
+
+              if (column > 0) {
+                const left = index - 1;
+                total += depth[left] + slopesX[left] * stepX;
+                sources += 1;
+              }
+
+              if (column < columns - 1) {
+                const right = index + 1;
+                total += depth[right] - slopesX[index] * stepX;
+                sources += 1;
+              }
+
+              if (row > 0) {
+                const up = index - columns;
+                total += depth[up] + slopesZ[up] * stepZ;
+                sources += 1;
+              }
+
+              if (row < rows - 1) {
+                const down = index + columns;
+                total += depth[down] - slopesZ[index] * stepZ;
+                sources += 1;
+              }
+
+              next[index] = total / Math.max(sources, 1);
+            }
+          }
+
+          let mean = 0;
+          for (let index = 0; index < count; index += 1) {
+            mean += next[index];
+          }
+          mean /= count;
+          for (let index = 0; index < count; index += 1) {
+            next[index] -= mean;
+          }
+
+          const swap = depth;
+          depth = next;
+          next = swap;
+        }
+
+        return depth;
+      }
+
+      function decodeNormal(pixel) {
+        const x = pixel[0] * 2 - 1;
+        const y = -(pixel[1] * 2 - 1);
+        const z = pixel[2] * 2 - 1;
+        const length = Math.hypot(x, y, z) || 1;
+        return { x: x / length, y: y / length, z: z / length };
+      }
+
+      function smoothHeights(source, columns, rows, passes) {
+        let current = source;
+        for (let pass = 0; pass < passes; pass += 1) {
+          const next = new Float32Array(current.length);
+          for (let row = 0; row < rows; row += 1) {
+            for (let column = 0; column < columns; column += 1) {
+              let total = 0;
+              let weight = 0;
+              for (let dy = -1; dy <= 1; dy += 1) {
+                for (let dx = -1; dx <= 1; dx += 1) {
+                  const sampleColumn = column + dx;
+                  const sampleRow = row + dy;
+                  if (
+                    sampleColumn < 0 ||
+                    sampleRow < 0 ||
+                    sampleColumn >= columns ||
+                    sampleRow >= rows
+                  ) {
+                    continue;
+                  }
+                  const sampleWeight = dx === 0 && dy === 0 ? 4 : 1;
+                  total += current[sampleRow * columns + sampleColumn] * sampleWeight;
+                  weight += sampleWeight;
+                }
+              }
+              next[row * columns + column] = total / Math.max(weight, 1);
+            }
+          }
+          current = next;
+        }
+        return current;
+      }
+
+      function normalizeHeights(heights, heightScale) {
+        let min = Number.POSITIVE_INFINITY;
+        let max = Number.NEGATIVE_INFINITY;
+        for (const height of heights) {
+          min = Math.min(min, height);
+          max = Math.max(max, height);
+        }
+        const range = Math.max(max - min, 0.0001);
+        for (let index = 0; index < heights.length; index += 1) {
+          heights[index] = ((heights[index] - min) / range - 0.5) * heightScale;
+        }
+      }
+
+      function resizePreview() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const rect = preview.getBoundingClientRect();
+        const width = Math.max(1, Math.floor(rect.width * dpr));
+        const height = Math.max(1, Math.floor(rect.height * dpr));
+        if (preview.width !== width || preview.height !== height) {
+          preview.width = width;
+          preview.height = height;
+        }
+      }
+
+      function project(point, width, height) {
+        const scale = Math.min(width, height) * 0.82;
+        const x = (point.x - point.z) * scale * 0.62 + width * 0.5;
+        const y = (point.x + point.z) * scale * 0.28 - point.y * scale * 0.72 + height * 0.58;
+        return { x, y };
+      }
+
+      function render() {
+        resizePreview();
+        const width = preview.width;
+        const height = preview.height;
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#080b0e";
+        ctx.fillRect(0, 0, width, height);
+
+        const projectedPoints = state.mesh.points.map((point) => ({
+          ...project(point, width, height),
+          source: point,
+        }));
+        const light = normalizeVector({ x: -0.35, y: 0.88, z: 0.32 });
+        const sortedTriangles = state.mesh.triangles
+          .map((indices) => ({
+            indices,
+            depth: indices.reduce(
+              (total, index) => total + state.mesh.points[index].x + state.mesh.points[index].z,
+              0
+            ) / 3,
+          }))
+          .sort((a, b) => a.depth - b.depth);
+
+        for (const triangle of sortedTriangles) {
+          const [aIndex, bIndex, cIndex] = triangle.indices;
+          const a = state.mesh.points[aIndex];
+          const b = state.mesh.points[bIndex];
+          const c = state.mesh.points[cIndex];
+          const pa = projectedPoints[aIndex];
+          const pb = projectedPoints[bIndex];
+          const pc = projectedPoints[cIndex];
+          const normal = faceNormal(a, b, c);
+          const shade = Math.max(0.36, Math.min(1.18, dot(normal, light) * 0.58 + 0.62));
+          const color = averageColor(a.color, b.color, c.color, shade);
+
+          ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.96)`;
+          ctx.beginPath();
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+          ctx.lineTo(pc.x, pc.y);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.lineWidth = Math.max(1, Math.min(width, height) / 900);
+        for (const triangle of sortedTriangles) {
+          const [aIndex, bIndex, cIndex] = triangle.indices;
+          const pa = projectedPoints[aIndex];
+          const pb = projectedPoints[bIndex];
+          const pc = projectedPoints[cIndex];
+          ctx.beginPath();
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+          ctx.lineTo(pc.x, pc.y);
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "rgba(236,255,225,0.42)";
+        const pointRadius = Math.max(1, Math.min(width, height) / 720);
+        for (const point of projectedPoints) {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, pointRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        const row = Math.floor(state.selectedTile / TILE_COLUMNS);
+        const column = state.selectedTile % TILE_COLUMNS;
+        hud.innerHTML = `
+          <strong>tile ${state.selectedTile + 1} / 16</strong>
+          <span>row ${row + 1}, col ${column + 1}</span>
+          <span>${state.mesh.points.length} normal points -> ${state.mesh.triangles.length} mesh triangles</span>
+          <span>${state.texturePath} + ${state.normalPath}</span>
+        `;
+      }
+
+      function subtractVector(a, b) {
+        return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
+      }
+
+      function crossVector(a, b) {
+        return {
+          x: a.y * b.z - a.z * b.y,
+          y: a.z * b.x - a.x * b.z,
+          z: a.x * b.y - a.y * b.x,
+        };
+      }
+
+      function dot(a, b) {
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+      }
+
+      function normalizeVector(vector) {
+        const length = Math.hypot(vector.x, vector.y, vector.z) || 1;
+        return {
+          x: vector.x / length,
+          y: vector.y / length,
+          z: vector.z / length,
+        };
+      }
+
+      function faceNormal(a, b, c) {
+        return normalizeVector(crossVector(subtractVector(b, a), subtractVector(c, a)));
+      }
+
+      function averageColor(a, b, c, shade) {
+        return {
+          r: Math.max(0, Math.min(255, Math.round(((a[0] + b[0] + c[0]) / 3) * 255 * shade))),
+          g: Math.max(0, Math.min(255, Math.round(((a[1] + b[1] + c[1]) / 3) * 255 * shade))),
+          b: Math.max(0, Math.min(255, Math.round(((a[2] + b[2] + c[2]) / 3) * 255 * shade))),
+        };
+      }
+
+      function renderError(message) {
+        resizePreview();
+        const width = preview.width;
+        const height = preview.height;
+        ctx.fillStyle = "#101317";
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = "#eef2f6";
+        ctx.font = "600 28px Segoe UI, Microsoft YaHei, sans-serif";
+        ctx.fillText("asset load failed", 40, 64);
+        ctx.fillStyle = "#9aa7b8";
+        ctx.font = "18px Segoe UI, Microsoft YaHei, sans-serif";
+        const lines = String(message).match(/.{1,72}/g) || [String(message)];
+        lines.slice(0, 8).forEach((line, index) => {
+          ctx.fillText(line, 40, 104 + index * 28);
+        });
+      }
+
+      function updateOutputs() {
+        outputs.sampleStep.value = controls.sampleStep.value;
+        outputs.heightScale.value = Number.parseFloat(controls.heightScale.value).toFixed(2);
+        outputs.normalBend.value = Number.parseFloat(controls.normalBend.value).toFixed(2);
+        outputs.smoothing.value = controls.smoothing.value;
+        const row = Math.floor(state.selectedTile / TILE_COLUMNS);
+        const column = state.selectedTile % TILE_COLUMNS;
+        tileLabel.textContent = `${row + 1},${column + 1}`;
+      }
+
+      async function boot() {
+        createTileButtons();
+        const [textureAsset, normalAsset] = await Promise.all([
+          loadFirstImage(textureCandidates, "tietu.png"),
+          loadFirstImage(normalCandidates, "gassuv.png"),
+        ]);
+        state.textureImage = textureAsset.image;
+        state.normalImage = normalAsset.image;
+        state.texturePath = textureAsset.src;
+        state.normalPath = normalAsset.src;
+        state.textureData = imageDataFrom(textureAsset.image);
+        state.normalData = imageDataFrom(normalAsset.image);
+        for (const control of Object.values(controls)) {
+          control.addEventListener("input", rebuild);
+        }
+        window.addEventListener("resize", render);
+        rebuild();
+      }
+
+      boot().catch((error) => {
+        hud.innerHTML = `<strong>load failed</strong><span>${error.message}</span>`;
+        renderError(error.message);
+        console.error(error);
+      });
+    </script>
+  </body>
+</html>

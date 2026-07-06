@@ -7,6 +7,8 @@ import type {
 } from "../../../domain/historical-character";
 import type { MapDefinition, MapLayer, MapNode, MapStats } from "../../../domain/map";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
+import cityDepthMeshAssetUrl from "../../../3dasset/city1-lowpoly.json?url";
+import cityDepthTextureUrl from "../../../image2mesh/city1.png?url";
 
 type CityMarker = {
   id: string;
@@ -50,7 +52,14 @@ export type MapViewModel = {
   primaryImageUrl: string | null;
   regionOverlayImageUrl: string | null;
   heightmapImageUrl: string | null;
+  hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
+  cityDepthMeshAssetUrl: string | null;
+  cityDepthTextureUrl: string | null;
+  cityDepthMeshCoordinate: {
+    x: number;
+    y: number;
+  } | null;
   campaignMarkers: CampaignMarker[];
   layers: MapLayer[];
   stats: MapStats | null;
@@ -120,9 +129,20 @@ export function createMapViewModel(input: {
     heightmapImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_heights")
         ?.imageUrl ?? null,
+    hexTextureAtlasImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_hex_texture_atlas")
+        ?.imageUrl ??
+      input.mapDefinition.primaryImageUrl ??
+      null,
     materialTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_ground_types")
+        ?.imageUrl ??
       input.mapDefinition.layers?.find((layer) => layer.id === "map_material_texture")
-        ?.imageUrl ?? null,
+        ?.imageUrl ??
+      null,
+    cityDepthMeshAssetUrl,
+    cityDepthTextureUrl,
+    cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
     campaignMarkers: input.mapDefinition.nodes
       .map((node, index) => {
         const nodeId = node.id ?? node.cityId ?? `map-node.${index}`;
@@ -347,31 +367,52 @@ function renderCampaignMapVisualLayer(
     ariaHidden?: boolean;
   }
 ): string {
+  const canRenderWebGlTerrain =
+    model.hexTextureAtlasImageUrl != null &&
+    model.heightmapImageUrl != null &&
+    model.materialTextureImageUrl != null;
+  const cityDepthMeshU =
+    model.cityDepthMeshCoordinate == null
+      ? null
+      : model.cityDepthMeshCoordinate.x / model.coordinateSpace.width;
+  const cityDepthMeshV =
+    model.cityDepthMeshCoordinate == null
+      ? null
+      : 1 - model.cityDepthMeshCoordinate.y / model.coordinateSpace.height;
+  const cityDepthMeshAttributes =
+    model.cityDepthMeshAssetUrl == null ||
+    model.cityDepthTextureUrl == null ||
+    cityDepthMeshU == null ||
+    cityDepthMeshV == null
+      ? ""
+      : `
+          data-campaign-city-mesh-url="${model.cityDepthMeshAssetUrl}"
+          data-campaign-city-texture-url="${model.cityDepthTextureUrl}"
+          data-campaign-city-u="${cityDepthMeshU.toFixed(5)}"
+          data-campaign-city-v="${cityDepthMeshV.toFixed(5)}"
+        `;
   const terrainCanvasMarkup =
-    model.primaryImageUrl == null ||
-    model.heightmapImageUrl == null ||
-    model.materialTextureImageUrl == null
+    !canRenderWebGlTerrain
       ? ""
       : `
         <canvas
           class="c-campaign-map__terrain"
           data-campaign-map-terrain="true"
-          data-map-texture-url="${model.primaryImageUrl}"
+          data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${cityDepthMeshAttributes}
           aria-label="${model.mapName} terrain"
         ></canvas>
       `;
   const actorCanvasMarkup =
     options.includeInteractivePoints &&
-    model.primaryImageUrl != null &&
-    model.heightmapImageUrl != null &&
-    model.materialTextureImageUrl != null
+    canRenderWebGlTerrain
       ? `
         <canvas
           class="c-campaign-map__actor-layer"
           data-campaign-map-actor-layer="true"
-          data-map-texture-url="${model.primaryImageUrl}"
+          data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
           aria-hidden="true"
@@ -380,11 +421,11 @@ function renderCampaignMapVisualLayer(
       : "";
   const terrainEnabledMarkup = options.includeInteractivePoints ? terrainCanvasMarkup : "";
   const imageMarkup =
-    model.primaryImageUrl == null
+    model.primaryImageUrl == null || canRenderWebGlTerrain
       ? ""
       : `<img class="c-campaign-map__image c-campaign-map__image--fallback" src="${model.primaryImageUrl}" alt="${model.mapName}">`;
   const regionOverlayMarkup =
-    model.regionOverlayImageUrl == null
+    model.regionOverlayImageUrl == null || canRenderWebGlTerrain
       ? ""
       : `<img class="c-campaign-map__regions" src="${model.regionOverlayImageUrl}" alt="">`;
   const playerHeightX = model.playerCoordinate.x / model.coordinateSpace.width;
@@ -472,8 +513,70 @@ function renderCampaignMap(model: MapViewModel): string {
           </div>
           <div class="c-campaign-map-debug__actions">
             <button type="button" data-map-debug-action="zoom-out">-</button>
+            <label class="c-campaign-map-debug__scale-field">
+              <span>Zoom</span>
+              <input
+                type="text"
+                inputmode="decimal"
+                value="1.00"
+                data-campaign-map-scale-input
+                aria-label="Map zoom scale"
+              >
+            </label>
             <button type="button" data-map-debug-action="zoom-in">+</button>
             <button type="button" data-map-debug-action="reset">Reset</button>
+          </div>
+          <div class="c-campaign-map-debug__terrain-style">
+            <label>
+              <span>Sat <strong data-campaign-terrain-style-value="saturation">1.00</strong></span>
+              <input type="range" min="0" max="3" step="0.01" value="1.00" data-campaign-terrain-style-field="saturation">
+            </label>
+            <label>
+              <span>Bright <strong data-campaign-terrain-style-value="brightness">1.00</strong></span>
+              <input type="range" min="0" max="3" step="0.01" value="1.00" data-campaign-terrain-style-field="brightness">
+            </label>
+            <label>
+              <span>Lift <strong data-campaign-terrain-style-value="brightnessOffset">0.000</strong></span>
+              <input type="range" min="-0.2" max="0.2" step="0.005" value="0.000" data-campaign-terrain-style-field="brightnessOffset">
+            </label>
+            <label>
+              <span>Shade Min <strong data-campaign-terrain-style-value="shadeMin">1.00</strong></span>
+              <input type="range" min="0" max="2" step="0.01" value="1.00" data-campaign-terrain-style-field="shadeMin">
+            </label>
+            <label>
+              <span>Shade Max <strong data-campaign-terrain-style-value="shadeMax">1.00</strong></span>
+              <input type="range" min="0" max="2" step="0.01" value="1.00" data-campaign-terrain-style-field="shadeMax">
+            </label>
+            <button type="button" data-map-debug-action="terrain-style-reset">Reset Terrain</button>
+          </div>
+          <div class="c-campaign-map-debug__terrain-style">
+            <label>
+              <span>City Rot <strong data-campaign-city-mesh-value="rotationDegrees">0deg</strong></span>
+              <input type="range" min="-180" max="180" step="1" value="0" data-campaign-city-mesh-field="rotationDegrees">
+            </label>
+            <label>
+              <span>City Tilt <strong data-campaign-city-mesh-value="pitchDegrees">0deg</strong></span>
+              <input type="range" min="-90" max="90" step="1" value="0" data-campaign-city-mesh-field="pitchDegrees">
+            </label>
+            <label>
+              <span>City Size <strong data-campaign-city-mesh-value="scale">1.00</strong></span>
+              <input type="range" min="0.1" max="6" step="0.01" value="1" data-campaign-city-mesh-field="scale">
+            </label>
+            <label>
+              <span>Tile X <strong data-campaign-city-mesh-value="offsetX">0.00</strong></span>
+              <input type="range" min="-1" max="1" step="0.01" value="0" data-campaign-city-mesh-field="offsetX">
+            </label>
+            <label>
+              <span>Tile Y <strong data-campaign-city-mesh-value="offsetY">0.00</strong></span>
+              <input type="range" min="-1" max="1" step="0.01" value="0" data-campaign-city-mesh-field="offsetY">
+            </label>
+            <label>
+              <span>City Lift <strong data-campaign-city-mesh-value="lift">0.0000</strong></span>
+              <input type="range" min="-0.08" max="0.16" step="0.001" value="0" data-campaign-city-mesh-field="lift">
+            </label>
+            <button type="button" data-map-debug-action="city-mesh-reset">Reset City</button>
+            <button type="button" data-map-debug-action="city-mesh-copy">Copy Params</button>
+            <span data-campaign-city-mesh-copy-status></span>
           </div>
         </div>
       </div>

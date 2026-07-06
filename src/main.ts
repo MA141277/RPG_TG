@@ -202,20 +202,24 @@ import {
 } from "./ui/loading-screen";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
+  DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
+  DEFAULT_CAMPAIGN_TERRAIN_STYLE,
   resolveCampaignTerrainUvFromClientPosition,
   requestCampaignTerrainRender,
   setCampaignTerrainCamera,
   syncCampaignTerrainWebGl,
+  type CampaignCityDepthMeshTransform,
+  type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 
 const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;
 const MAP_DEBUG_MIN_SCALE = 0.5;
-const MAP_DEBUG_MAX_SCALE = 40;
-const MAP_DEBUG_SCALE_STEP = 0.2;
-const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 5000;
-const LOADING_SCREEN_SIMULATION_DURATION_MS = 1800;
+const MAP_DEBUG_MAX_SCALE = Number.POSITIVE_INFINITY;
+const MAP_DEBUG_SCALE_STEP_RATIO = 1.08;
+const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 250;
+const LOADING_SCREEN_SIMULATION_DURATION_MS = 350;
 const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
 const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
@@ -225,14 +229,14 @@ const ACTIVITY_QTE_INTERVAL_MS = 90;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
-  scale: 1,
-  offsetX: 0,
-  offsetY: 0,
+  scale: 15,
+  offsetX: -1000,
+  offsetY: 1750,
 };
 const TARGET_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
-  scale: 40,
-  offsetX: -5737,
-  offsetY: 4769,
+  scale: 15,
+  offsetX: -1000,
+  offsetY: 1750,
 };
 
 declare global {
@@ -396,12 +400,19 @@ let campaignMapDebugState: CampaignMapDebugState = {
 let campaignMapDebugHomeState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
+let campaignTerrainStyleState: CampaignTerrainStyle = {
+  ...DEFAULT_CAMPAIGN_TERRAIN_STYLE,
+};
+let campaignCityDepthMeshTransformState: CampaignCityDepthMeshTransform = {
+  ...DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
+};
 let hasAppliedInitialCampaignMapDebug = false;
 let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
 let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
 let activeBackgroundMusicMode: BackgroundMusicMode | null = null;
+let campaignMapScaleDraftValue: string | null = null;
 let campaignMapDragState:
   | {
       pointerId: number;
@@ -2753,11 +2764,35 @@ function endLayoutEditorDrag(event: PointerEvent | MouseEvent): boolean {
 }
 
 appElement.addEventListener("input", (event) => {
+  const targetElement = event.target;
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-campaign-map-scale-input")
+  ) {
+    campaignMapScaleDraftValue = targetElement.value;
+    return;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.campaignTerrainStyleField != null
+  ) {
+    handleCampaignTerrainStyleInput(targetElement);
+    return;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.campaignCityMeshField != null
+  ) {
+    handleCampaignCityDepthMeshInput(targetElement);
+    return;
+  }
+
   if (handleLayoutEditorInput(event.target)) {
     return;
   }
 
-  const targetElement = event.target;
   if (
     !(
       targetElement instanceof HTMLInputElement ||
@@ -2864,6 +2899,30 @@ appElement.addEventListener("input", (event) => {
   }
 });
 
+appElement.addEventListener("change", (event) => {
+  const targetElement = event.target;
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-campaign-map-scale-input")
+  ) {
+    handleCampaignMapScaleInput(targetElement, { normalizeInput: true });
+    campaignMapScaleDraftValue = null;
+  }
+});
+
+appElement.addEventListener("keydown", (event) => {
+  const targetElement = event.target;
+  if (
+    event.key === "Enter" &&
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-campaign-map-scale-input")
+  ) {
+    event.preventDefault();
+    handleCampaignMapScaleInput(targetElement, { normalizeInput: true });
+    campaignMapScaleDraftValue = null;
+  }
+});
+
 uiOverlayElement.addEventListener("input", (event) => {
   handleLayoutEditorInput(event.target);
 });
@@ -2917,9 +2976,7 @@ appElement.addEventListener("wheel", (event) => {
 
   event.preventDefault();
   const direction = event.deltaY > 0 ? -1 : 1;
-  zoomCampaignMapAtScreenCenter(
-    campaignMapDebugState.scale + direction * MAP_DEBUG_SCALE_STEP
-  );
+  zoomCampaignMapAtScreenCenter(getSteppedCampaignMapScale(direction));
 });
 
 appElement.addEventListener("pointerdown", (event) => {
@@ -4267,10 +4324,26 @@ function restoreCampaignTerrainCanvases(
 }
 
 function renderApp() {
-  renderAppFrame();
+  const activeScaleInput = document.activeElement;
+  const focusedScaleInput =
+    activeScaleInput instanceof HTMLInputElement &&
+    activeScaleInput.hasAttribute("data-campaign-map-scale-input")
+      ? {
+          value: activeScaleInput.value,
+          selectionStart: activeScaleInput.selectionStart,
+          selectionEnd: activeScaleInput.selectionEnd,
+        }
+      : null;
+  renderAppFrame(focusedScaleInput);
 }
 
-function renderAppFrame() {
+function renderAppFrame(
+  focusedScaleInput: {
+    value: string;
+    selectionStart: number | null;
+    selectionEnd: number | null;
+  } | null = null
+) {
   appState = {
     ...appState,
     gameState: ensureCityNpcPoolsForCurrentDay(
@@ -4327,12 +4400,45 @@ function renderAppFrame() {
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
+  syncCampaignTerrainStyleView();
+  syncCampaignCityDepthMeshTransformView();
+  restoreCampaignMapScaleInputFocus(focusedScaleInput);
   syncMapIntroOverlay();
   syncActivityQteLoop();
   syncCampaignTerrainWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
 }
 
+function restoreCampaignMapScaleInputFocus(
+  focusedScaleInput: {
+    value: string;
+    selectionStart: number | null;
+    selectionEnd: number | null;
+  } | null
+): void {
+  if (focusedScaleInput == null) {
+    return;
+  }
+
+  const scaleInputElement = appRoot.querySelector<HTMLInputElement>(
+    "[data-campaign-map-scale-input]"
+  );
+  if (scaleInputElement == null) {
+    return;
+  }
+
+  scaleInputElement.value = campaignMapScaleDraftValue ?? focusedScaleInput.value;
+  scaleInputElement.focus({ preventScroll: true });
+  if (
+    focusedScaleInput.selectionStart != null &&
+    focusedScaleInput.selectionEnd != null
+  ) {
+    scaleInputElement.setSelectionRange(
+      focusedScaleInput.selectionStart,
+      focusedScaleInput.selectionEnd
+    );
+  }
+}
 function syncGameViewport(): void {
   const scale = Math.min(
     window.innerWidth / GAME_VIEWPORT_WIDTH,
@@ -4370,21 +4476,305 @@ function shouldSuppressPointerDispatchedHouseClick(actionId: string): boolean {
 
 function handleCampaignMapDebugAction(action: string | undefined): void {
   if (action === "zoom-in") {
-    zoomCampaignMapAtScreenCenter(
-      campaignMapDebugState.scale + MAP_DEBUG_SCALE_STEP
-    );
+    zoomCampaignMapAtScreenCenter(getSteppedCampaignMapScale(1));
     return;
   }
 
   if (action === "zoom-out") {
-    zoomCampaignMapAtScreenCenter(
-      campaignMapDebugState.scale - MAP_DEBUG_SCALE_STEP
-    );
+    zoomCampaignMapAtScreenCenter(getSteppedCampaignMapScale(-1));
     return;
   }
 
   if (action === "reset") {
     setCampaignMapDebugState(campaignMapDebugHomeState);
+    return;
+  }
+
+  if (action === "terrain-style-reset") {
+    setCampaignTerrainStyleState(DEFAULT_CAMPAIGN_TERRAIN_STYLE);
+    return;
+  }
+
+  if (action === "city-mesh-reset") {
+    setCampaignCityDepthMeshTransformState(
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM
+    );
+    return;
+  }
+
+  if (action === "city-mesh-copy") {
+    void copyCampaignCityDepthMeshParameters();
+  }
+}
+
+function getSteppedCampaignMapScale(direction: -1 | 1): number {
+  if (direction > 0) {
+    return campaignMapDebugState.scale * MAP_DEBUG_SCALE_STEP_RATIO;
+  }
+
+  return campaignMapDebugState.scale / MAP_DEBUG_SCALE_STEP_RATIO;
+}
+
+function handleCampaignMapScaleInput(
+  inputElement: HTMLInputElement,
+  options: { normalizeInput?: boolean } = {}
+): void {
+  if (inputElement.value.trim() === "") {
+    return;
+  }
+
+  const nextScale = Number(inputElement.value);
+  if (!Number.isFinite(nextScale)) {
+    return;
+  }
+
+  zoomCampaignMapAtScreenCenter(nextScale);
+  if (options.normalizeInput === true) {
+    inputElement.value = campaignMapDebugState.scale.toFixed(2);
+  }
+}
+
+function handleCampaignTerrainStyleInput(inputElement: HTMLInputElement): void {
+  const field = inputElement.dataset.campaignTerrainStyleField;
+  if (!isCampaignTerrainStyleField(field)) {
+    return;
+  }
+
+  const nextValue = Number(inputElement.value);
+  if (!Number.isFinite(nextValue)) {
+    return;
+  }
+
+  setCampaignTerrainStyleState({
+    ...campaignTerrainStyleState,
+    [field]: clampCampaignTerrainStyleValue(field, nextValue),
+  });
+}
+
+function isCampaignTerrainStyleField(
+  field: string | undefined
+): field is keyof CampaignTerrainStyle {
+  return (
+    field === "saturation" ||
+    field === "brightness" ||
+    field === "brightnessOffset" ||
+    field === "shadeMin" ||
+    field === "shadeMax"
+  );
+}
+
+function clampCampaignTerrainStyleValue(
+  field: keyof CampaignTerrainStyle,
+  value: number
+): number {
+  if (field === "brightnessOffset") {
+    return clamp(value, -0.5, 0.5);
+  }
+
+  if (field === "shadeMin" || field === "shadeMax") {
+    return clamp(value, 0, 2);
+  }
+
+  return clamp(value, 0, 3);
+}
+
+function setCampaignTerrainStyleState(nextState: CampaignTerrainStyle): void {
+  const clampedState: CampaignTerrainStyle = {
+    saturation: clampCampaignTerrainStyleValue("saturation", nextState.saturation),
+    brightness: clampCampaignTerrainStyleValue("brightness", nextState.brightness),
+    brightnessOffset: clampCampaignTerrainStyleValue(
+      "brightnessOffset",
+      nextState.brightnessOffset
+    ),
+    shadeMin: clampCampaignTerrainStyleValue("shadeMin", nextState.shadeMin),
+    shadeMax: clampCampaignTerrainStyleValue("shadeMax", nextState.shadeMax),
+  };
+
+  campaignTerrainStyleState = clampedState;
+  syncCampaignTerrainStyleView();
+  requestCampaignTerrainRender("static");
+}
+
+function handleCampaignCityDepthMeshInput(inputElement: HTMLInputElement): void {
+  const field = inputElement.dataset.campaignCityMeshField;
+  if (!isCampaignCityDepthMeshTransformField(field)) {
+    return;
+  }
+
+  const nextValue = Number(inputElement.value);
+  if (!Number.isFinite(nextValue)) {
+    return;
+  }
+
+  setCampaignCityDepthMeshTransformState({
+    ...campaignCityDepthMeshTransformState,
+    [field]: clampCampaignCityDepthMeshTransformValue(field, nextValue),
+  });
+}
+
+function isCampaignCityDepthMeshTransformField(
+  field: string | undefined
+): field is keyof CampaignCityDepthMeshTransform {
+  return (
+    field === "rotationDegrees" ||
+    field === "pitchDegrees" ||
+    field === "scale" ||
+    field === "offsetX" ||
+    field === "offsetY" ||
+    field === "lift"
+  );
+}
+
+function clampCampaignCityDepthMeshTransformValue(
+  field: keyof CampaignCityDepthMeshTransform,
+  value: number
+): number {
+  if (field === "rotationDegrees") {
+    return clamp(value, -180, 180);
+  }
+
+  if (field === "pitchDegrees") {
+    return clamp(value, -90, 90);
+  }
+
+  if (field === "offsetX" || field === "offsetY") {
+    return clamp(value, -1, 1);
+  }
+
+  if (field === "lift") {
+    return clamp(value, -0.08, 0.16);
+  }
+
+  return clamp(value, 0.1, 6);
+}
+
+function setCampaignCityDepthMeshTransformState(
+  nextState: CampaignCityDepthMeshTransform
+): void {
+  campaignCityDepthMeshTransformState = {
+    rotationDegrees: clampCampaignCityDepthMeshTransformValue(
+      "rotationDegrees",
+      nextState.rotationDegrees
+    ),
+    pitchDegrees: clampCampaignCityDepthMeshTransformValue(
+      "pitchDegrees",
+      nextState.pitchDegrees
+    ),
+    scale: clampCampaignCityDepthMeshTransformValue("scale", nextState.scale),
+    offsetX: clampCampaignCityDepthMeshTransformValue(
+      "offsetX",
+      nextState.offsetX
+    ),
+    offsetY: clampCampaignCityDepthMeshTransformValue(
+      "offsetY",
+      nextState.offsetY
+    ),
+    lift: clampCampaignCityDepthMeshTransformValue("lift", nextState.lift),
+  };
+  syncCampaignCityDepthMeshTransformView();
+  requestCampaignTerrainRender("static");
+}
+
+function syncCampaignCityDepthMeshTransformView(): void {
+  const canvases = appRoot.querySelectorAll<HTMLCanvasElement>(
+    "[data-campaign-map-terrain]"
+  );
+  for (const canvas of canvases) {
+    canvas.dataset.campaignCityRotation =
+      campaignCityDepthMeshTransformState.rotationDegrees.toFixed(3);
+    canvas.dataset.campaignCityPitch =
+      campaignCityDepthMeshTransformState.pitchDegrees.toFixed(3);
+    canvas.dataset.campaignCityScale =
+      campaignCityDepthMeshTransformState.scale.toFixed(3);
+    canvas.dataset.campaignCityOffsetX =
+      campaignCityDepthMeshTransformState.offsetX.toFixed(3);
+    canvas.dataset.campaignCityOffsetY =
+      campaignCityDepthMeshTransformState.offsetY.toFixed(3);
+    canvas.dataset.campaignCityLift =
+      campaignCityDepthMeshTransformState.lift.toFixed(4);
+  }
+
+  syncCampaignCityDepthMeshTransformControl(
+    "rotationDegrees",
+    campaignCityDepthMeshTransformState.rotationDegrees
+  );
+  syncCampaignCityDepthMeshTransformControl(
+    "pitchDegrees",
+    campaignCityDepthMeshTransformState.pitchDegrees
+  );
+  syncCampaignCityDepthMeshTransformControl(
+    "scale",
+    campaignCityDepthMeshTransformState.scale
+  );
+  syncCampaignCityDepthMeshTransformControl(
+    "offsetX",
+    campaignCityDepthMeshTransformState.offsetX
+  );
+  syncCampaignCityDepthMeshTransformControl(
+    "offsetY",
+    campaignCityDepthMeshTransformState.offsetY
+  );
+  syncCampaignCityDepthMeshTransformControl(
+    "lift",
+    campaignCityDepthMeshTransformState.lift
+  );
+}
+
+function syncCampaignCityDepthMeshTransformControl(
+  field: keyof CampaignCityDepthMeshTransform,
+  value: number
+): void {
+  const inputElement = appRoot.querySelector<HTMLInputElement>(
+    `[data-campaign-city-mesh-field="${field}"]`
+  );
+  const valueElement = appRoot.querySelector<HTMLElement>(
+    `[data-campaign-city-mesh-value="${field}"]`
+  );
+  const formattedValue =
+    field === "rotationDegrees" || field === "pitchDegrees"
+      ? `${value.toFixed(0)}deg`
+      : field === "lift"
+        ? value.toFixed(4)
+        : field === "offsetX" || field === "offsetY"
+          ? value.toFixed(2)
+        : value.toFixed(2);
+
+  if (inputElement != null && inputElement !== document.activeElement) {
+    inputElement.value = value.toFixed(field === "lift" ? 4 : 3);
+  }
+  if (valueElement != null) {
+    valueElement.textContent = formattedValue;
+  }
+}
+
+async function copyCampaignCityDepthMeshParameters(): Promise<void> {
+  const parameters = {
+    rotationDegrees: Number(
+      campaignCityDepthMeshTransformState.rotationDegrees.toFixed(3)
+    ),
+    pitchDegrees: Number(
+      campaignCityDepthMeshTransformState.pitchDegrees.toFixed(3)
+    ),
+    scale: Number(campaignCityDepthMeshTransformState.scale.toFixed(3)),
+    offsetX: Number(campaignCityDepthMeshTransformState.offsetX.toFixed(3)),
+    offsetY: Number(campaignCityDepthMeshTransformState.offsetY.toFixed(3)),
+    lift: Number(campaignCityDepthMeshTransformState.lift.toFixed(4)),
+  };
+  const text = JSON.stringify(parameters, null, 2);
+  try {
+    await navigator.clipboard.writeText(text);
+    updateCampaignCityDepthMeshCopyStatus("Copied");
+  } catch {
+    updateCampaignCityDepthMeshCopyStatus(text);
+  }
+}
+
+function updateCampaignCityDepthMeshCopyStatus(text: string): void {
+  const statusElement = appRoot.querySelector<HTMLElement>(
+    "[data-campaign-city-mesh-copy-status]"
+  );
+  if (statusElement != null) {
+    statusElement.textContent = text;
   }
 }
 
@@ -4578,14 +4968,76 @@ function syncCampaignMapDebugView(): void {
   const offsetYElement = appRoot.querySelector<HTMLElement>(
     "[data-campaign-map-offset-y]"
   );
+  const scaleInputElement = appRoot.querySelector<HTMLInputElement>(
+    "[data-campaign-map-scale-input]"
+  );
   if (scaleElement != null) {
     scaleElement.textContent = `${campaignMapDebugState.scale.toFixed(2)}x`;
+  }
+  if (
+    scaleInputElement != null &&
+    scaleInputElement !== document.activeElement
+  ) {
+    scaleInputElement.value = campaignMapDebugState.scale.toFixed(2);
   }
   if (offsetXElement != null) {
     offsetXElement.textContent = `${campaignMapDebugState.offsetX}px`;
   }
   if (offsetYElement != null) {
     offsetYElement.textContent = `${campaignMapDebugState.offsetY}px`;
+  }
+}
+
+function syncCampaignTerrainStyleView(): void {
+  const canvases = appRoot.querySelectorAll<HTMLCanvasElement>(
+    "[data-campaign-map-terrain]"
+  );
+  for (const canvas of canvases) {
+    canvas.dataset.mapTextureSaturation =
+      campaignTerrainStyleState.saturation.toFixed(3);
+    canvas.dataset.mapTextureBrightness =
+      campaignTerrainStyleState.brightness.toFixed(3);
+    canvas.dataset.mapTextureBrightnessOffset =
+      campaignTerrainStyleState.brightnessOffset.toFixed(3);
+    canvas.dataset.mapTextureShadeMin =
+      campaignTerrainStyleState.shadeMin.toFixed(3);
+    canvas.dataset.mapTextureShadeMax =
+      campaignTerrainStyleState.shadeMax.toFixed(3);
+  }
+
+  syncCampaignTerrainStyleControl(
+    "saturation",
+    campaignTerrainStyleState.saturation
+  );
+  syncCampaignTerrainStyleControl(
+    "brightness",
+    campaignTerrainStyleState.brightness
+  );
+  syncCampaignTerrainStyleControl(
+    "brightnessOffset",
+    campaignTerrainStyleState.brightnessOffset
+  );
+  syncCampaignTerrainStyleControl("shadeMin", campaignTerrainStyleState.shadeMin);
+  syncCampaignTerrainStyleControl("shadeMax", campaignTerrainStyleState.shadeMax);
+}
+
+function syncCampaignTerrainStyleControl(
+  field: keyof CampaignTerrainStyle,
+  value: number
+): void {
+  const inputElement = appRoot.querySelector<HTMLInputElement>(
+    `[data-campaign-terrain-style-field="${field}"]`
+  );
+  const valueElement = appRoot.querySelector<HTMLElement>(
+    `[data-campaign-terrain-style-value="${field}"]`
+  );
+  const formattedValue = value.toFixed(field === "brightnessOffset" ? 3 : 2);
+
+  if (inputElement != null && inputElement !== document.activeElement) {
+    inputElement.value = value.toFixed(3);
+  }
+  if (valueElement != null) {
+    valueElement.textContent = formattedValue;
   }
 }
 

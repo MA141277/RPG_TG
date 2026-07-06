@@ -4,3 +4,27 @@ dist/
 .runtime/
 .worktrees/
 dev-server-codex.log
+
+# Local build/package outputs
+release/
+
+# Local server and dev logs
+*.log
+
+# Large external/reference checkouts and downloaded mod assets
+map/ZeromaX-s-Playground-master/
+map/yuan mo feng yun lu/
+map/*.mov
+map/*.downloading
+
+# Local/generated editor assets
+HD2DEG/pixel-3d/
+HD2DEG/building/*/depthmap.png
+HD2DEG/building/*/normalmap.png
+HD2DEG/building/*/normal-front.png
+HD2DEG/building/*/normal-side.png
+HD2DEG/building/*/normal-top.png
+
+# Local prototype/export scratch assets
+prototypes/assets/
+tools/noesis-plugins-official/

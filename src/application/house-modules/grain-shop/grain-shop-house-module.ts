@@ -659,8 +659,8 @@ function handleAction(
           toAlertOverlay(
             "先歇一歇",
             [
-              "粮铺掌柜抬手按住了账册：“你这会儿眼都发花，再算下去只会把账越算越乱。”",
-              `“先去缓口气，攒够 ${ACTIVITY_COMPLETION_STAMINA_COST} 点体力，再回来拨算盘。”`,
+              "（抬手按住了账册）你这会儿眼都发花，再算下去只会把账越算越乱。",
+              `先去缓口气，攒够 ${ACTIVITY_COMPLETION_STAMINA_COST} 点体力，再回来拨算盘。`,
             ],
             "warning"
           )
@@ -690,8 +690,7 @@ function handleAction(
         input,
         sessionState,
         createActivityConfirmOverlay("帮忙算账", [
-          "粮铺掌柜把账册推到了你面前。",
-          `“照你现在的算术底子，这一轮账真要细细理顺，少说也得耗上 ${durationDays} 天。”`,
+          `（把账册推到了你面前）照你现在的算术底子，这一轮账真要细细理顺，少说也得耗上 ${durationDays} 天。`,
           formatHouseActivityCostLine(durationDays),
         ], CONFIRM_START_ACCOUNTING_ACTION_ID)
       );

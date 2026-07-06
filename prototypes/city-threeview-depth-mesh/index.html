@@ -1,0 +1,1254 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three-view Depth Mesh Fitter</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0c1110;
+        --panel: #18211d;
+        --panel-2: #222d27;
+        --text: #eef4ef;
+        --muted: #a5b4aa;
+        --line: #37473c;
+        --accent: #74d77c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 430px;
+        min-height: 100vh;
+      }
+
+      .stage {
+        position: relative;
+        min-height: 100vh;
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          #070a08;
+        background-size: 34px 34px;
+      }
+
+      #meshCanvas {
+        display: block;
+        width: 100%;
+        height: 100vh;
+        cursor: grab;
+      }
+
+      #meshCanvas.is-dragging {
+        cursor: grabbing;
+      }
+
+      .hud {
+        position: absolute;
+        left: 18px;
+        top: 18px;
+        display: grid;
+        gap: 5px;
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 6px;
+        background: rgba(8, 12, 10, 0.76);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        backdrop-filter: blur(8px);
+      }
+
+      .hud strong,
+      output {
+        color: var(--text);
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow-y: auto;
+        min-height: 100vh;
+        max-height: 100vh;
+        padding: 18px;
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+        scrollbar-color: var(--accent) rgba(255, 255, 255, 0.08);
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin-bottom: 6px;
+        font-size: 19px;
+      }
+
+      h2 {
+        font-size: 13px;
+      }
+
+      .note,
+      .stats {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .panel,
+      .controls,
+      .view-panel {
+        display: grid;
+        gap: 10px;
+      }
+
+      .panel,
+      .view-panel {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: rgba(34, 45, 39, 0.74);
+      }
+
+      .view-panel {
+        gap: 9px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .row,
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .row.compact {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      input[type="range"],
+      input[type="text"],
+      select {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+
+      input[type="text"],
+      select {
+        min-height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 5px 8px;
+        background: #0d1411;
+        color: var(--text);
+        font: inherit;
+      }
+
+      .checkbox-row {
+        min-height: 28px;
+      }
+
+      .axis-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .mirror-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .mirror-grid label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 28px;
+        padding: 0 7px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        background: #101814;
+      }
+
+      button {
+        min-height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: var(--accent);
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .preview-tile {
+        display: grid;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .preview-tile canvas {
+        width: 100%;
+        aspect-ratio: 1;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 5px;
+        background: #0b100d;
+      }
+
+      .stats {
+        margin-top: auto;
+        white-space: pre-line;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="stage">
+        <canvas id="meshCanvas" aria-label="three-view depth mesh viewer"></canvas>
+        <div class="hud">
+          <strong>Three-view Depth Mesh</strong>
+          <span id="hudStatus">Loading assets...</span>
+          <span>Drag: rotate / Wheel: zoom</span>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div>
+          <h1>三视图深度点云转 Mesh</h1>
+          <p class="note">每个面先独立按原始宽高比例建模，再在同一坐标系里拼贴。位置、XYZ 缩放和镜像都按面独立调整。</p>
+        </div>
+
+        <section class="panel">
+          <label>
+            <span>贴图 / front color</span>
+            <input id="albedoPath" type="text" value="../../HD2DEG/building/生成一个石狮子/front.png" />
+          </label>
+          <label>
+            <span>front depth</span>
+            <input id="frontDepthPath" type="text" value="../../HD2DEG/building/生成一个石狮子/depth-front.png" />
+          </label>
+          <label>
+            <span>side depth</span>
+            <input id="sideDepthPath" type="text" value="../../HD2DEG/building/生成一个石狮子/depth-side.png" />
+          </label>
+          <label>
+            <span>top depth</span>
+            <input id="topDepthPath" type="text" value="../../HD2DEG/building/生成一个石狮子/depth-top.png" />
+          </label>
+          <button id="loadAssets" type="button">Load paths</button>
+        </section>
+
+        <section class="panel">
+          <div class="preview-grid">
+            <div class="preview-tile"><span>front</span><canvas id="frontPreview" width="160" height="160"></canvas></div>
+            <div class="preview-tile"><span>side</span><canvas id="sidePreview" width="160" height="160"></canvas></div>
+            <div class="preview-tile"><span>top</span><canvas id="topPreview" width="160" height="160"></canvas></div>
+            <div class="preview-tile"><span>texture</span><canvas id="albedoPreview" width="160" height="160"></canvas></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <label>
+            <span>查看</span>
+            <select id="viewMode">
+              <option value="composite">拼贴 / composite</option>
+              <option value="front">只看 front mesh</option>
+              <option value="side">只看 side mesh</option>
+              <option value="top">只看 top mesh</option>
+            </select>
+          </label>
+          <label>
+            <span class="row">采样步长 <output id="sampleStepValue">5</output></span>
+            <input id="sampleStep" type="range" min="2" max="18" step="1" value="5" />
+          </label>
+          <label>
+            <span class="row">深度对比 <output id="depthContrastValue">1.00</output></span>
+            <input id="depthContrast" type="range" min="0.2" max="3" step="0.01" value="1" />
+          </label>
+          <label>
+            <span class="row">白底容差 <output id="whiteToleranceValue">18</output></span>
+            <input id="whiteTolerance" type="range" min="0" max="60" step="1" value="18" />
+          </label>
+          <label>
+            <span class="row">黑场空气阈值 <output id="blackAirValue">30</output></span>
+            <input id="blackAir" type="range" min="0" max="80" step="1" value="30" />
+          </label>
+          <label>
+            <span class="row">断面阈值 <output id="maxDepthGapValue">0.24</output></span>
+            <input id="maxDepthGap" type="range" min="0.02" max="0.8" step="0.01" value="0.24" />
+          </label>
+          <label>
+            <span class="row">贴图混合 <output id="textureBlendValue">0.35</output></span>
+            <input id="textureBlend" type="range" min="0" max="1" step="0.01" value="0.35" />
+          </label>
+          <label>
+            <span class="row">点大小 <output id="pointSizeValue">2</output></span>
+            <input id="pointSize" type="range" min="1" max="8" step="1" value="2" />
+          </label>
+          <label>
+            <span class="row">环境光 <output id="ambientValue">0.70</output></span>
+            <input id="ambient" type="range" min="0" max="1" step="0.01" value="0.7" />
+          </label>
+          <label>
+            <span class="row">视角缩放 <output id="zoomValue">1.00</output></span>
+            <input id="zoom" type="range" min="0.45" max="2.8" step="0.01" value="1" />
+          </label>
+          <label class="checkbox-row">
+            <span>显示 mesh</span>
+            <input id="showSurface" type="checkbox" checked />
+          </label>
+          <label class="checkbox-row">
+            <span>显示点云</span>
+            <input id="showPoints" type="checkbox" />
+          </label>
+          <label class="checkbox-row">
+            <span>显示线框</span>
+            <input id="showWire" type="checkbox" checked />
+          </label>
+          <label class="checkbox-row">
+            <span>自动旋转</span>
+            <input id="autoRotate" type="checkbox" checked />
+          </label>
+          <div class="button-row">
+            <button id="rebuild" type="button">Rebuild mesh</button>
+            <button id="resetView" type="button">Reset view</button>
+          </div>
+        </section>
+
+        <section class="view-panel" data-view="front">
+          <h2>front 面</h2>
+          <label>
+            <span class="row">映射强度 <output id="frontStrengthValue">1.00</output></span>
+            <input id="frontStrength" type="range" min="0" max="2.5" step="0.01" value="1" />
+          </label>
+          <div class="axis-grid">
+            <label><span>X</span><input id="frontOffsetX" type="range" min="-1" max="1" step="0.01" value="0" /><output id="frontOffsetXValue">0.00</output></label>
+            <label><span>Y</span><input id="frontOffsetY" type="range" min="-1" max="1" step="0.01" value="0" /><output id="frontOffsetYValue">0.00</output></label>
+            <label><span>Z</span><input id="frontOffsetZ" type="range" min="-1" max="1" step="0.01" value="0" /><output id="frontOffsetZValue">0.00</output></label>
+          </div>
+          <div class="axis-grid">
+            <label><span>Scale X</span><input id="frontScaleX" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="frontScaleXValue">1.00</output></label>
+            <label><span>Scale Y</span><input id="frontScaleY" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="frontScaleYValue">1.00</output></label>
+            <label><span>Scale Z</span><input id="frontScaleZ" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="frontScaleZValue">1.00</output></label>
+          </div>
+          <div class="mirror-grid">
+            <label><span>Mirror X</span><input id="frontMirrorX" type="checkbox" /></label>
+            <label><span>Mirror Y</span><input id="frontMirrorY" type="checkbox" /></label>
+            <label><span>Mirror Z</span><input id="frontMirrorZ" type="checkbox" /></label>
+          </div>
+        </section>
+
+        <section class="view-panel" data-view="side">
+          <h2>side 面</h2>
+          <label>
+            <span class="row">映射强度 <output id="sideStrengthValue">1.00</output></span>
+            <input id="sideStrength" type="range" min="0" max="2.5" step="0.01" value="1" />
+          </label>
+          <div class="axis-grid">
+            <label><span>X</span><input id="sideOffsetX" type="range" min="-1" max="1" step="0.01" value="0" /><output id="sideOffsetXValue">0.00</output></label>
+            <label><span>Y</span><input id="sideOffsetY" type="range" min="-1" max="1" step="0.01" value="0" /><output id="sideOffsetYValue">0.00</output></label>
+            <label><span>Z</span><input id="sideOffsetZ" type="range" min="-1" max="1" step="0.01" value="0" /><output id="sideOffsetZValue">0.00</output></label>
+          </div>
+          <div class="axis-grid">
+            <label><span>Scale X</span><input id="sideScaleX" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="sideScaleXValue">1.00</output></label>
+            <label><span>Scale Y</span><input id="sideScaleY" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="sideScaleYValue">1.00</output></label>
+            <label><span>Scale Z</span><input id="sideScaleZ" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="sideScaleZValue">1.00</output></label>
+          </div>
+          <div class="mirror-grid">
+            <label><span>Mirror X</span><input id="sideMirrorX" type="checkbox" /></label>
+            <label><span>Mirror Y</span><input id="sideMirrorY" type="checkbox" /></label>
+            <label><span>Mirror Z</span><input id="sideMirrorZ" type="checkbox" checked /></label>
+          </div>
+        </section>
+
+        <section class="view-panel" data-view="top">
+          <h2>top 面</h2>
+          <label>
+            <span class="row">映射强度 <output id="topStrengthValue">1.00</output></span>
+            <input id="topStrength" type="range" min="0" max="2.5" step="0.01" value="1" />
+          </label>
+          <div class="axis-grid">
+            <label><span>X</span><input id="topOffsetX" type="range" min="-1" max="1" step="0.01" value="0" /><output id="topOffsetXValue">0.00</output></label>
+            <label><span>Y</span><input id="topOffsetY" type="range" min="-1" max="1" step="0.01" value="0" /><output id="topOffsetYValue">0.00</output></label>
+            <label><span>Z</span><input id="topOffsetZ" type="range" min="-1" max="1" step="0.01" value="0" /><output id="topOffsetZValue">0.00</output></label>
+          </div>
+          <div class="axis-grid">
+            <label><span>Scale X</span><input id="topScaleX" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="topScaleXValue">1.00</output></label>
+            <label><span>Scale Y</span><input id="topScaleY" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="topScaleYValue">1.00</output></label>
+            <label><span>Scale Z</span><input id="topScaleZ" type="range" min="0.1" max="2.5" step="0.01" value="1" /><output id="topScaleZValue">1.00</output></label>
+          </div>
+          <div class="mirror-grid">
+            <label><span>Mirror X</span><input id="topMirrorX" type="checkbox" /></label>
+            <label><span>Mirror Y</span><input id="topMirrorY" type="checkbox" /></label>
+            <label><span>Mirror Z</span><input id="topMirrorZ" type="checkbox" /></label>
+          </div>
+        </section>
+
+        <p class="stats" id="stats">等待资源...</p>
+      </aside>
+    </main>
+
+    <script type="module">
+      const VIEW_NAMES = ["front", "side", "top"];
+      const VIEW_COLORS = {
+        front: [0.92, 0.72, 0.58],
+        side: [0.58, 0.78, 0.96],
+        top: [0.72, 0.94, 0.64],
+      };
+
+      const canvas = document.querySelector("#meshCanvas");
+      const hudStatus = document.querySelector("#hudStatus");
+      const stats = document.querySelector("#stats");
+      const controls = {
+        albedoPath: document.querySelector("#albedoPath"),
+        frontDepthPath: document.querySelector("#frontDepthPath"),
+        sideDepthPath: document.querySelector("#sideDepthPath"),
+        topDepthPath: document.querySelector("#topDepthPath"),
+        loadAssets: document.querySelector("#loadAssets"),
+        viewMode: document.querySelector("#viewMode"),
+        sampleStep: document.querySelector("#sampleStep"),
+        depthContrast: document.querySelector("#depthContrast"),
+        whiteTolerance: document.querySelector("#whiteTolerance"),
+        blackAir: document.querySelector("#blackAir"),
+        maxDepthGap: document.querySelector("#maxDepthGap"),
+        textureBlend: document.querySelector("#textureBlend"),
+        pointSize: document.querySelector("#pointSize"),
+        ambient: document.querySelector("#ambient"),
+        zoom: document.querySelector("#zoom"),
+        showSurface: document.querySelector("#showSurface"),
+        showPoints: document.querySelector("#showPoints"),
+        showWire: document.querySelector("#showWire"),
+        autoRotate: document.querySelector("#autoRotate"),
+        rebuild: document.querySelector("#rebuild"),
+        resetView: document.querySelector("#resetView"),
+      };
+
+      const outputs = {};
+      for (const key of ["sampleStep", "depthContrast", "whiteTolerance", "blackAir", "maxDepthGap", "textureBlend", "pointSize", "ambient", "zoom"]) {
+        outputs[key] = document.querySelector(`#${key}Value`);
+      }
+      for (const view of VIEW_NAMES) {
+        for (const key of ["Strength", "OffsetX", "OffsetY", "OffsetZ", "ScaleX", "ScaleY", "ScaleZ"]) {
+          controls[`${view}${key}`] = document.querySelector(`#${view}${key}`);
+          outputs[`${view}${key}`] = document.querySelector(`#${view}${key}Value`);
+        }
+        for (const key of ["MirrorX", "MirrorY", "MirrorZ"]) {
+          controls[`${view}${key}`] = document.querySelector(`#${view}${key}`);
+        }
+      }
+
+      const previews = {
+        albedo: document.querySelector("#albedoPreview"),
+        front: document.querySelector("#frontPreview"),
+        side: document.querySelector("#sidePreview"),
+        top: document.querySelector("#topPreview"),
+      };
+
+      const vertexShader = `
+        precision mediump float;
+        attribute vec3 aPosition;
+        attribute vec3 aNormal;
+        attribute vec2 aUv;
+        attribute vec3 aColor;
+        uniform mat4 uMatrix;
+        uniform float uPointSize;
+        varying vec3 vNormal;
+        varying vec2 vUv;
+        varying vec3 vColor;
+
+        void main() {
+          gl_Position = uMatrix * vec4(aPosition, 1.0);
+          gl_PointSize = uPointSize;
+          vNormal = aNormal;
+          vUv = aUv;
+          vColor = aColor;
+        }
+      `;
+
+      const fragmentShader = `
+        precision mediump float;
+        uniform sampler2D uTexture;
+        uniform float uAmbient;
+        uniform float uAlpha;
+        uniform float uWire;
+        uniform float uPoints;
+        uniform float uTextureBlend;
+        varying vec3 vNormal;
+        varying vec2 vUv;
+        varying vec3 vColor;
+
+        void main() {
+          if (uPoints > 0.5) {
+            vec2 p = gl_PointCoord * 2.0 - 1.0;
+            if (dot(p, p) > 1.0) discard;
+          }
+          vec3 tex = texture2D(uTexture, clamp(vUv, 0.0, 1.0)).rgb;
+          vec3 color = mix(vColor, tex, uTextureBlend);
+          if (uWire > 0.5) {
+            color = vec3(0.62, 1.0, 0.72);
+          }
+          vec3 lightDirection = normalize(vec3(-0.35, 0.58, 0.72));
+          float light = abs(dot(normalize(vNormal), lightDirection));
+          float shade = clamp(uAmbient + light * (1.0 - uAmbient + 0.25), 0.0, 1.25);
+          gl_FragColor = vec4(color * shade, uAlpha);
+        }
+      `;
+
+      const gl = canvas.getContext("webgl", { antialias: true, alpha: false });
+      if (!gl) {
+        throw new Error("WebGL is not available.");
+      }
+      const uintExtension = gl.getExtension("OES_element_index_uint");
+      if (!uintExtension) {
+        throw new Error("OES_element_index_uint is required.");
+      }
+
+      const program = createProgram(gl, vertexShader, fragmentShader);
+      const locations = {
+        position: gl.getAttribLocation(program, "aPosition"),
+        normal: gl.getAttribLocation(program, "aNormal"),
+        uv: gl.getAttribLocation(program, "aUv"),
+        color: gl.getAttribLocation(program, "aColor"),
+        matrix: gl.getUniformLocation(program, "uMatrix"),
+        texture: gl.getUniformLocation(program, "uTexture"),
+        pointSize: gl.getUniformLocation(program, "uPointSize"),
+        ambient: gl.getUniformLocation(program, "uAmbient"),
+        alpha: gl.getUniformLocation(program, "uAlpha"),
+        wire: gl.getUniformLocation(program, "uWire"),
+        points: gl.getUniformLocation(program, "uPoints"),
+        textureBlend: gl.getUniformLocation(program, "uTextureBlend"),
+      };
+
+      const state = {
+        yaw: -0.62,
+        pitch: 0.88,
+        zoom: 1,
+        dragging: false,
+        lastPointer: { x: 0, y: 0 },
+        albedoImage: null,
+        albedoData: null,
+        frontData: null,
+        sideData: null,
+        topData: null,
+        texture: null,
+        surfaceVertexBuffer: createBuffer(),
+        surfaceNormalBuffer: createBuffer(),
+        surfaceUvBuffer: createBuffer(),
+        surfaceColorBuffer: createBuffer(),
+        surfaceIndexBuffer: createBuffer(),
+        lineIndexBuffer: createBuffer(),
+        pointVertexBuffer: createBuffer(),
+        pointNormalBuffer: createBuffer(),
+        pointUvBuffer: createBuffer(),
+        pointColorBuffer: createBuffer(),
+        surfaceIndexCount: 0,
+        lineIndexCount: 0,
+        pointCount: 0,
+        meshSummaries: {},
+      };
+
+      gl.enable(gl.DEPTH_TEST);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.clearColor(0.025, 0.035, 0.028, 1);
+
+      await loadAssets();
+      requestAnimationFrame(render);
+
+      for (const input of document.querySelectorAll("input[type='range']")) {
+        input.addEventListener("input", () => {
+          updateOutputs();
+          if (input.id !== "zoom" && input.id !== "pointSize" && input.id !== "ambient" && input.id !== "textureBlend") {
+            rebuild();
+          }
+          if (input.id === "zoom") {
+            state.zoom = Number.parseFloat(controls.zoom.value);
+          }
+        });
+      }
+      for (const input of document.querySelectorAll("input[type='checkbox']")) {
+        input.addEventListener("change", () => {
+          if (input.id.includes("Mirror")) {
+            rebuild();
+          }
+        });
+      }
+      controls.viewMode.addEventListener("change", rebuild);
+      controls.rebuild.addEventListener("click", rebuild);
+      controls.loadAssets.addEventListener("click", () => {
+        loadAssets().catch((error) => {
+          hudStatus.textContent = `Load failed: ${error.message}`;
+          console.error(error);
+        });
+      });
+      controls.resetView.addEventListener("click", () => {
+        state.yaw = -0.62;
+        state.pitch = 0.88;
+        state.zoom = 1;
+        controls.zoom.value = "1";
+        updateOutputs();
+      });
+
+      canvas.addEventListener("pointerdown", (event) => {
+        state.dragging = true;
+        state.lastPointer = { x: event.clientX, y: event.clientY };
+        canvas.classList.add("is-dragging");
+        canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener("pointermove", (event) => {
+        if (!state.dragging) return;
+        const dx = event.clientX - state.lastPointer.x;
+        const dy = event.clientY - state.lastPointer.y;
+        state.lastPointer = { x: event.clientX, y: event.clientY };
+        state.yaw += dx * 0.006;
+        state.pitch = clamp(state.pitch + dy * 0.005, 0.18, 1.36);
+      });
+      canvas.addEventListener("pointerup", (event) => {
+        state.dragging = false;
+        canvas.classList.remove("is-dragging");
+        canvas.releasePointerCapture(event.pointerId);
+      });
+      canvas.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        state.zoom = clamp(state.zoom * (event.deltaY < 0 ? 1.07 : 1 / 1.07), 0.45, 2.8);
+        controls.zoom.value = state.zoom.toFixed(2);
+        updateOutputs();
+      }, { passive: false });
+
+      async function loadAssets() {
+        hudStatus.textContent = "Loading assets...";
+        const [albedoImage, frontImage, sideImage, topImage] = await Promise.all([
+          loadImage(controls.albedoPath.value),
+          loadImage(controls.frontDepthPath.value),
+          loadImage(controls.sideDepthPath.value),
+          loadImage(controls.topDepthPath.value),
+        ]);
+        state.albedoImage = albedoImage;
+        state.albedoData = imageDataFrom(albedoImage);
+        state.frontData = imageDataFrom(frontImage);
+        state.sideData = imageDataFrom(sideImage);
+        state.topData = imageDataFrom(topImage);
+        updatePreview(previews.albedo, albedoImage);
+        updatePreview(previews.front, frontImage);
+        updatePreview(previews.side, sideImage);
+        updatePreview(previews.top, topImage);
+        updateTexture(albedoImage);
+        updateOutputs();
+        rebuild();
+      }
+
+      function rebuild() {
+        const mode = controls.viewMode.value;
+        const selectedViews = mode === "composite" ? VIEW_NAMES : [mode];
+        const meshes = selectedViews.map((view) => buildViewMesh(view));
+        const combined = combineMeshes(meshes);
+
+        uploadArray(state.pointVertexBuffer, combined.pointPositions);
+        uploadArray(state.pointNormalBuffer, combined.pointNormals);
+        uploadArray(state.pointUvBuffer, combined.pointUvs);
+        uploadArray(state.pointColorBuffer, combined.pointColors);
+        uploadArray(state.surfaceVertexBuffer, combined.positions);
+        uploadArray(state.surfaceNormalBuffer, combined.normals);
+        uploadArray(state.surfaceUvBuffer, combined.uvs);
+        uploadArray(state.surfaceColorBuffer, combined.colors);
+        uploadIndices(state.surfaceIndexBuffer, combined.indices);
+        uploadIndices(state.lineIndexBuffer, combined.lines);
+
+        state.pointCount = combined.pointPositions.length / 3;
+        state.surfaceIndexCount = combined.indices.length;
+        state.lineIndexCount = combined.lines.length;
+        hudStatus.textContent =
+          `${state.pointCount.toLocaleString()} points / ${(state.surfaceIndexCount / 3).toLocaleString()} faces`;
+        stats.textContent = formatStats(mode, combined);
+      }
+
+      function buildViewMesh(view) {
+        const imageData = state[`${view}Data`];
+        const step = Number.parseInt(controls.sampleStep.value, 10);
+        const whiteTolerance = Number.parseInt(controls.whiteTolerance.value, 10);
+        const blackAir = Number.parseInt(controls.blackAir.value, 10);
+        const contrast = Number.parseFloat(controls.depthContrast.value);
+        const maxDepthGap = Number.parseFloat(controls.maxDepthGap.value);
+        const strength = Number.parseFloat(controls[`${view}Strength`].value);
+        const range = getDepthRange(imageData, step, whiteTolerance, blackAir);
+        const rows = Math.ceil(imageData.height / step);
+        const cols = Math.ceil(imageData.width / step);
+        const lookup = new Int32Array(rows * cols);
+        lookup.fill(-1);
+        const positions = [];
+        const uvs = [];
+        const colors = [];
+        const rawDepths = [];
+        const viewColor = VIEW_COLORS[view];
+        const transform = readViewTransform(view);
+
+        for (let row = 0; row < rows; row += 1) {
+          const y = Math.min(row * step, imageData.height - 1);
+          for (let col = 0; col < cols; col += 1) {
+            const x = Math.min(col * step, imageData.width - 1);
+            if (isAirBackgroundAt(imageData, x, y, whiteTolerance, blackAir)) continue;
+            const u = x / Math.max(imageData.width - 1, 1);
+            const v = y / Math.max(imageData.height - 1, 1);
+            const normalizedDepth = normalizeDepth(luminanceAt(imageData, x, y), range, contrast);
+            const centeredDepth = (normalizedDepth - 0.5) * strength;
+            const base = mapViewPoint(view, imageData, x, y, centeredDepth);
+            const point = applyViewTransform(base, transform);
+            const vertexIndex = positions.length / 3;
+            lookup[row * cols + col] = vertexIndex;
+            positions.push(point.x, point.y, point.z);
+            uvs.push(u, v);
+            colors.push(viewColor[0], viewColor[1], viewColor[2]);
+            rawDepths.push(centeredDepth);
+          }
+        }
+
+        const indices = [];
+        const lines = [];
+        const lineSet = new Set();
+        for (let row = 0; row < rows - 1; row += 1) {
+          for (let col = 0; col < cols - 1; col += 1) {
+            const a = lookup[row * cols + col];
+            const b = lookup[row * cols + col + 1];
+            const c = lookup[(row + 1) * cols + col];
+            const d = lookup[(row + 1) * cols + col + 1];
+            addTriangle(a, c, b, rawDepths, maxDepthGap, indices, lines, lineSet);
+            addTriangle(b, c, d, rawDepths, maxDepthGap, indices, lines, lineSet);
+          }
+        }
+
+        const normals = computeNormals(positions, indices);
+        const pointNormals = computePointNormals(view, positions.length / 3, transform);
+        const summary = {
+          points: positions.length / 3,
+          faces: indices.length / 3,
+          lines: lines.length / 2,
+        };
+        state.meshSummaries[view] = summary;
+        return {
+          view,
+          positions,
+          normals: Array.from(normals),
+          uvs,
+          colors,
+          indices,
+          lines,
+          pointNormals,
+          summary,
+        };
+      }
+
+      function mapViewPoint(view, imageData, x, y, depth) {
+        const maxDimension = Math.max(imageData.width, imageData.height, 1);
+        const px = (x - (imageData.width - 1) * 0.5) / maxDimension;
+        const py = ((imageData.height - 1) * 0.5 - y) / maxDimension;
+        if (view === "front") {
+          return { x: px, y: py, z: depth };
+        }
+        if (view === "side") {
+          return { x: depth, y: py, z: px };
+        }
+        return { x: px, y: depth, z: -py };
+      }
+
+      function readViewTransform(view) {
+        return {
+          offsetX: Number.parseFloat(controls[`${view}OffsetX`].value),
+          offsetY: Number.parseFloat(controls[`${view}OffsetY`].value),
+          offsetZ: Number.parseFloat(controls[`${view}OffsetZ`].value),
+          scaleX: Number.parseFloat(controls[`${view}ScaleX`].value),
+          scaleY: Number.parseFloat(controls[`${view}ScaleY`].value),
+          scaleZ: Number.parseFloat(controls[`${view}ScaleZ`].value),
+          mirrorX: controls[`${view}MirrorX`].checked ? -1 : 1,
+          mirrorY: controls[`${view}MirrorY`].checked ? -1 : 1,
+          mirrorZ: controls[`${view}MirrorZ`].checked ? -1 : 1,
+        };
+      }
+
+      function applyViewTransform(point, transform) {
+        return {
+          x: point.x * transform.scaleX * transform.mirrorX + transform.offsetX,
+          y: point.y * transform.scaleY * transform.mirrorY + transform.offsetY,
+          z: point.z * transform.scaleZ * transform.mirrorZ + transform.offsetZ,
+        };
+      }
+
+      function computePointNormals(view, count, transform) {
+        const base = view === "front" ? [0, 0, 1] : view === "side" ? [1, 0, 0] : [0, 1, 0];
+        const normal = [
+          base[0] * transform.mirrorX,
+          base[1] * transform.mirrorY,
+          base[2] * transform.mirrorZ,
+        ];
+        const normals = [];
+        for (let index = 0; index < count; index += 1) {
+          normals.push(normal[0], normal[1], normal[2]);
+        }
+        return normals;
+      }
+
+      function combineMeshes(meshes) {
+        const positions = [];
+        const normals = [];
+        const uvs = [];
+        const colors = [];
+        const indices = [];
+        const lines = [];
+        const pointPositions = [];
+        const pointNormals = [];
+        const pointUvs = [];
+        const pointColors = [];
+        for (const mesh of meshes) {
+          const vertexOffset = positions.length / 3;
+          positions.push(...mesh.positions);
+          normals.push(...mesh.normals);
+          uvs.push(...mesh.uvs);
+          colors.push(...mesh.colors);
+          for (const index of mesh.indices) {
+            indices.push(index + vertexOffset);
+          }
+          for (const index of mesh.lines) {
+            lines.push(index + vertexOffset);
+          }
+          pointPositions.push(...mesh.positions);
+          pointNormals.push(...mesh.pointNormals);
+          pointUvs.push(...mesh.uvs);
+          pointColors.push(...mesh.colors);
+        }
+        return {
+          positions: new Float32Array(positions),
+          normals: new Float32Array(normals),
+          uvs: new Float32Array(uvs),
+          colors: new Float32Array(colors),
+          indices: new Uint32Array(indices),
+          lines: new Uint32Array(lines),
+          pointPositions: new Float32Array(pointPositions),
+          pointNormals: new Float32Array(pointNormals),
+          pointUvs: new Float32Array(pointUvs),
+          pointColors: new Float32Array(pointColors),
+        };
+      }
+
+      function addTriangle(a, b, c, depths, maxDepthGap, indices, lines, lineSet) {
+        if (a < 0 || b < 0 || c < 0) return;
+        const gap = Math.max(
+          Math.abs(depths[a] - depths[b]),
+          Math.abs(depths[b] - depths[c]),
+          Math.abs(depths[c] - depths[a]),
+        );
+        if (gap > maxDepthGap) return;
+        indices.push(a, b, c);
+        addLine(a, b, lines, lineSet);
+        addLine(b, c, lines, lineSet);
+        addLine(c, a, lines, lineSet);
+      }
+
+      function addLine(a, b, lines, lineSet) {
+        const min = Math.min(a, b);
+        const max = Math.max(a, b);
+        const key = `${min}:${max}`;
+        if (lineSet.has(key)) return;
+        lineSet.add(key);
+        lines.push(min, max);
+      }
+
+      function render() {
+        resizeCanvas();
+        if (controls.autoRotate.checked && !state.dragging) {
+          state.yaw += 0.0015;
+        }
+        const matrix = multiply(
+          perspective(Math.PI / 4.7, canvas.width / Math.max(canvas.height, 1), 0.01, 20),
+          multiply(
+            translation(0, -0.02, -3.2 / state.zoom),
+            multiply(rotationX(state.pitch), rotationY(state.yaw)),
+          ),
+        );
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.useProgram(program);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, state.texture);
+        gl.uniform1i(locations.texture, 0);
+        gl.uniformMatrix4fv(locations.matrix, false, matrix);
+        gl.uniform1f(locations.pointSize, Number.parseFloat(controls.pointSize.value));
+        gl.uniform1f(locations.ambient, Number.parseFloat(controls.ambient.value));
+        gl.uniform1f(locations.textureBlend, Number.parseFloat(controls.textureBlend.value));
+
+        if (controls.showSurface.checked && state.surfaceIndexCount > 0) {
+          bindGeometry(state.surfaceVertexBuffer, state.surfaceNormalBuffer, state.surfaceUvBuffer, state.surfaceColorBuffer);
+          gl.depthMask(true);
+          gl.uniform1f(locations.alpha, 0.95);
+          gl.uniform1f(locations.wire, 0);
+          gl.uniform1f(locations.points, 0);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.surfaceIndexBuffer);
+          gl.drawElements(gl.TRIANGLES, state.surfaceIndexCount, gl.UNSIGNED_INT, 0);
+        }
+
+        if (controls.showWire.checked && state.lineIndexCount > 0) {
+          bindGeometry(state.surfaceVertexBuffer, state.surfaceNormalBuffer, state.surfaceUvBuffer, state.surfaceColorBuffer);
+          gl.depthMask(false);
+          gl.uniform1f(locations.alpha, 0.45);
+          gl.uniform1f(locations.wire, 1);
+          gl.uniform1f(locations.points, 0);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.lineIndexBuffer);
+          gl.drawElements(gl.LINES, state.lineIndexCount, gl.UNSIGNED_INT, 0);
+        }
+
+        if (controls.showPoints.checked && state.pointCount > 0) {
+          bindGeometry(state.pointVertexBuffer, state.pointNormalBuffer, state.pointUvBuffer, state.pointColorBuffer);
+          gl.depthMask(false);
+          gl.uniform1f(locations.alpha, 0.85);
+          gl.uniform1f(locations.wire, 0);
+          gl.uniform1f(locations.points, 1);
+          gl.drawArrays(gl.POINTS, 0, state.pointCount);
+        }
+
+        requestAnimationFrame(render);
+      }
+
+      function updateOutputs() {
+        outputs.sampleStep.value = controls.sampleStep.value;
+        outputs.depthContrast.value = Number.parseFloat(controls.depthContrast.value).toFixed(2);
+        outputs.whiteTolerance.value = controls.whiteTolerance.value;
+        outputs.blackAir.value = controls.blackAir.value;
+        outputs.maxDepthGap.value = Number.parseFloat(controls.maxDepthGap.value).toFixed(2);
+        outputs.textureBlend.value = Number.parseFloat(controls.textureBlend.value).toFixed(2);
+        outputs.pointSize.value = controls.pointSize.value;
+        outputs.ambient.value = Number.parseFloat(controls.ambient.value).toFixed(2);
+        outputs.zoom.value = Number.parseFloat(controls.zoom.value).toFixed(2);
+        for (const view of VIEW_NAMES) {
+          outputs[`${view}Strength`].value = Number.parseFloat(controls[`${view}Strength`].value).toFixed(2);
+          for (const axis of ["X", "Y", "Z"]) {
+            outputs[`${view}Offset${axis}`].value = Number.parseFloat(controls[`${view}Offset${axis}`].value).toFixed(2);
+            outputs[`${view}Scale${axis}`].value = Number.parseFloat(controls[`${view}Scale${axis}`].value).toFixed(2);
+          }
+        }
+      }
+
+      function formatStats(mode, combined) {
+        const lines = [
+          `mode ${mode}`,
+          `points ${(combined.pointPositions.length / 3).toLocaleString()}`,
+          `vertices ${(combined.positions.length / 3).toLocaleString()}`,
+          `faces ${(combined.indices.length / 3).toLocaleString()}`,
+          `lines ${(combined.lines.length / 2).toLocaleString()}`,
+        ];
+        for (const view of VIEW_NAMES) {
+          const summary = state.meshSummaries[view] ?? { points: 0, faces: 0, lines: 0 };
+          lines.push(`${view}: ${summary.points.toLocaleString()} points / ${summary.faces.toLocaleString()} faces`);
+        }
+        return lines.join("\n");
+      }
+
+      function getDepthRange(imageData, step, whiteTolerance, blackAir) {
+        let min = Number.POSITIVE_INFINITY;
+        let max = Number.NEGATIVE_INFINITY;
+        for (let y = 0; y < imageData.height; y += step) {
+          for (let x = 0; x < imageData.width; x += step) {
+            if (isAirBackgroundAt(imageData, x, y, whiteTolerance, blackAir)) continue;
+            const value = luminanceAt(imageData, x, y);
+            min = Math.min(min, value);
+            max = Math.max(max, value);
+          }
+        }
+        if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
+          return { min: 0, max: 255 };
+        }
+        return { min, max };
+      }
+
+      function normalizeDepth(value, range, contrast) {
+        const normalized = (value - range.min) / Math.max(range.max - range.min, 0.0001);
+        return clamp((normalized - 0.5) * contrast + 0.5, 0, 1);
+      }
+
+      function luminanceAt(imageData, x, y) {
+        const safeX = clamp(Math.round(x), 0, imageData.width - 1);
+        const safeY = clamp(Math.round(y), 0, imageData.height - 1);
+        const offset = (safeY * imageData.width + safeX) * 4;
+        return (imageData.data[offset] ?? 0) * 0.2126 +
+          (imageData.data[offset + 1] ?? 0) * 0.7152 +
+          (imageData.data[offset + 2] ?? 0) * 0.0722;
+      }
+
+      function isWhiteBackgroundAt(imageData, x, y, tolerance) {
+        const safeX = clamp(Math.round(x), 0, imageData.width - 1);
+        const safeY = clamp(Math.round(y), 0, imageData.height - 1);
+        const offset = (safeY * imageData.width + safeX) * 4;
+        const r = imageData.data[offset] ?? 0;
+        const g = imageData.data[offset + 1] ?? 0;
+        const b = imageData.data[offset + 2] ?? 0;
+        const min = Math.min(r, g, b);
+        const max = Math.max(r, g, b);
+        return min >= 255 - tolerance && max - min <= tolerance;
+      }
+
+      function isBlackAirAt(imageData, x, y, threshold) {
+        if (threshold <= 0) return false;
+        const safeX = clamp(Math.round(x), 0, imageData.width - 1);
+        const safeY = clamp(Math.round(y), 0, imageData.height - 1);
+        const offset = (safeY * imageData.width + safeX) * 4;
+        const r = imageData.data[offset] ?? 0;
+        const g = imageData.data[offset + 1] ?? 0;
+        const b = imageData.data[offset + 2] ?? 0;
+        return Math.max(r, g, b) <= threshold;
+      }
+
+      function isAirBackgroundAt(imageData, x, y, whiteTolerance, blackAir) {
+        return isWhiteBackgroundAt(imageData, x, y, whiteTolerance) || isBlackAirAt(imageData, x, y, blackAir);
+      }
+
+      function computeNormals(positions, indices) {
+        const normals = new Float32Array(positions.length);
+        for (let i = 0; i < indices.length; i += 3) {
+          const ia = indices[i] * 3;
+          const ib = indices[i + 1] * 3;
+          const ic = indices[i + 2] * 3;
+          const ax = positions[ia];
+          const ay = positions[ia + 1];
+          const az = positions[ia + 2];
+          const bx = positions[ib];
+          const by = positions[ib + 1];
+          const bz = positions[ib + 2];
+          const cx = positions[ic];
+          const cy = positions[ic + 1];
+          const cz = positions[ic + 2];
+          const ux = bx - ax;
+          const uy = by - ay;
+          const uz = bz - az;
+          const vx = cx - ax;
+          const vy = cy - ay;
+          const vz = cz - az;
+          const nx = uy * vz - uz * vy;
+          const ny = uz * vx - ux * vz;
+          const nz = ux * vy - uy * vx;
+          for (const offset of [ia, ib, ic]) {
+            normals[offset] += nx;
+            normals[offset + 1] += ny;
+            normals[offset + 2] += nz;
+          }
+        }
+        for (let i = 0; i < normals.length; i += 3) {
+          const length = Math.hypot(normals[i], normals[i + 1], normals[i + 2]) || 1;
+          normals[i] /= length;
+          normals[i + 1] /= length;
+          normals[i + 2] /= length;
+        }
+        return normals;
+      }
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.crossOrigin = "anonymous";
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error(`Cannot load ${src}`));
+          image.src = src;
+        });
+      }
+
+      function imageDataFrom(image) {
+        const source = document.createElement("canvas");
+        source.width = image.naturalWidth || image.width;
+        source.height = image.naturalHeight || image.height;
+        const context = source.getContext("2d", { willReadFrequently: true });
+        context.drawImage(image, 0, 0);
+        return context.getImageData(0, 0, source.width, source.height);
+      }
+
+      function updatePreview(canvas, image) {
+        const context = canvas.getContext("2d");
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+        const width = image.width * scale;
+        const height = image.height * scale;
+        const x = (canvas.width - width) * 0.5;
+        const y = (canvas.height - height) * 0.5;
+        context.drawImage(image, x, y, width, height);
+      }
+
+      function updateTexture(image) {
+        if (!state.texture) {
+          state.texture = gl.createTexture();
+        }
+        gl.bindTexture(gl.TEXTURE_2D, state.texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      }
+
+      function bindGeometry(vertexBuffer, normalBuffer, uvBuffer, colorBuffer) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.enableVertexAttribArray(locations.position);
+        gl.vertexAttribPointer(locations.position, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+        gl.enableVertexAttribArray(locations.normal);
+        gl.vertexAttribPointer(locations.normal, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+        gl.enableVertexAttribArray(locations.uv);
+        gl.vertexAttribPointer(locations.uv, 2, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.enableVertexAttribArray(locations.color);
+        gl.vertexAttribPointer(locations.color, 3, gl.FLOAT, false, 0, 0);
+      }
+
+      function createBuffer() {
+        return gl.createBuffer();
+      }
+
+      function uploadArray(buffer, data) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      }
+
+      function uploadIndices(buffer, data) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      }
+
+      function compileShader(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          throw new Error(gl.getShaderInfoLog(shader) || "Shader compile failed.");
+        }
+        return shader;
+      }
+
+      function createProgram(gl, vertexSource, fragmentSource) {
+        const program = gl.createProgram();
+        const vertex = compileShader(gl.VERTEX_SHADER, vertexSource);
+        const fragment = compileShader(gl.FRAGMENT_SHADER, fragmentSource);
+        gl.attachShader(program, vertex);
+        gl.attachShader(program, fragment);
+        gl.linkProgram(program);
+        gl.deleteShader(vertex);
+        gl.deleteShader(fragment);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          throw new Error(gl.getProgramInfoLog(program) || "Program link failed.");
+        }
+        return program;
+      }
+
+      function resizeCanvas() {
+        const width = Math.max(1, canvas.clientWidth);
+        const height = Math.max(1, canvas.clientHeight);
+        const scale = Math.min(window.devicePixelRatio || 1, 2);
+        const nextWidth = Math.floor(width * scale);
+        const nextHeight = Math.floor(height * scale);
+        if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+          canvas.width = nextWidth;
+          canvas.height = nextHeight;
+        }
+      }
+
+      function perspective(fov, aspect, near, far) {
+        const f = 1 / Math.tan(fov / 2);
+        const nf = 1 / (near - far);
+        return [
+          f / aspect, 0, 0, 0,
+          0, f, 0, 0,
+          0, 0, (far + near) * nf, -1,
+          0, 0, (2 * far * near) * nf, 0,
+        ];
+      }
+
+      function translation(x, y, z) {
+        return [
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          x, y, z, 1,
+        ];
+      }
+
+      function rotationX(angle) {
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+        return [
+          1, 0, 0, 0,
+          0, c, s, 0,
+          0, -s, c, 0,
+          0, 0, 0, 1,
+        ];
+      }
+
+      function rotationY(angle) {
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+        return [
+          c, 0, -s, 0,
+          0, 1, 0, 0,
+          s, 0, c, 0,
+          0, 0, 0, 1,
+        ];
+      }
+
+      function multiply(a, b) {
+        const result = new Array(16).fill(0);
+        for (let row = 0; row < 4; row += 1) {
+          for (let col = 0; col < 4; col += 1) {
+            for (let index = 0; index < 4; index += 1) {
+              result[col * 4 + row] += a[index * 4 + row] * b[col * 4 + index];
+            }
+          }
+        }
+        return result;
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+    </script>
+  </body>
+</html>
