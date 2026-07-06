@@ -1031,24 +1031,37 @@
       position: absolute;
       top: auto;
       bottom: 197px;
-      width: min(430px, 35vw);
+      width: min(380px, 29vw);
       height: min(390px, 48vh);
       min-height: 320px;
       z-index: 2;
       overflow: visible;
     }
-    .formation-side.player { left: clamp(92px, 12vw, 190px); }
-    .formation-side.enemy { right: clamp(92px, 12vw, 190px); }
+    .formation-side.player { left: clamp(120px, 14vw, 240px); }
+    .formation-side.enemy { right: clamp(120px, 14vw, 240px); }
     .formation-side h2 {
-      position: absolute;
-      top: -82px;
-      left: 0;
-      right: 0;
-      font-size: 0.78rem;
+      position: fixed;
+      top: clamp(118px, 17vh, 165px);
+      right: auto;
+      z-index: 8;
+      width: fit-content;
+      max-width: min(330px, 29vw);
+      box-sizing: border-box;
+      margin: 0;
+      padding: 4px 14px;
+      border: 1px solid rgba(201, 162, 39, 0.52);
+      border-radius: 999px;
+      background: rgba(14, 12, 10, 0.48);
+      font-size: clamp(0.72rem, 1vw, 0.86rem);
+      line-height: 1.2;
       color: #f0e4cf;
       text-align: center;
       text-shadow: 0 2px 3px #000;
+      white-space: normal;
+      pointer-events: none;
     }
+    .formation-side.player h2 { left: clamp(120px, 14vw, 240px); }
+    .formation-side.enemy h2 { right: clamp(120px, 14vw, 240px); }
     .formation-grid {
       position: relative;
       width: 100%;
@@ -1234,29 +1247,36 @@
     }
     .battle-sequence h2 {
       position: absolute;
-      left: 20%;
-      bottom: calc(17.8% + 20px);
+      left: 21%;
+      bottom: 16.55%;
       width: 60%;
+      height: 18px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
       color: #111;
-      font-size: 0.9rem;
-      line-height: 1.12;
+      font-size: 0.82rem;
+      line-height: 1;
       text-shadow: 0 1px 0 rgba(255, 239, 188, 0.82), 0 1px 2px rgba(47, 22, 8, 0.28);
+      pointer-events: none;
     }
     .battle-event-list {
       position: absolute;
-      left: 14.8%;
-      bottom: 8.8%;
-      width: 74.2%;
-      height: 7.9%;
+      left: 15.1%;
+      bottom: 8.35%;
+      width: 72.6%;
+      height: 7.55%;
       overflow-y: auto;
       font-size: 0.6rem;
-      line-height: 1.34;
+      line-height: 1.38;
       color: #3a170a;
       text-align: left;
       box-sizing: border-box;
-      padding: 0 16% 0 6px;
+      padding: 2px 15.5% 2px 8px;
       pointer-events: auto;
+      scrollbar-gutter: stable;
       scrollbar-width: thin;
       scrollbar-color: #9F3622 rgba(86, 38, 16, 0.16);
     }
@@ -1272,11 +1292,11 @@
     .battle-event-list .damage { color: #9F3622; font-weight: 700; }
     .battle-sequence button {
       position: absolute;
-      right: 13.8%;
-      bottom: 7.2%;
-      width: 9.8%;
+      right: 14.6%;
+      bottom: 8.05%;
+      width: 8.9%;
       min-height: 26px;
-      max-height: 40px;
+      max-height: 36px;
       padding-top: 3px;
       padding-bottom: 3px;
       pointer-events: auto;
@@ -1309,6 +1329,11 @@
       height: 100%;
       object-fit: contain;
       pointer-events: none;
+    }
+
+    .battle-stage.deploy-pool-empty .deploy-pool-frame,
+    .battle-stage.deploy-pool-empty .deploy-pool {
+      display: none;
     }
 
     body {
@@ -2055,14 +2080,14 @@
   </style>
 </head>
 <body>
-  <div class="battle-stage">
+  <div class="battle-stage deploy-pool-empty">
   <div class="battle-ui-overlays" aria-hidden="true">
     <img src="../../ui/battle/战斗/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png" alt="">
     <img src="../../ui/battle/战斗/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png" alt="">
     <img src="../../ui/battle/战斗/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png" alt="">
     <img src="../../ui/battle/战斗/20260702-195702.png" alt="">
     <img src="../../ui/battle/战斗/20260702-195648.png" alt="">
-    <img src="../../ui/battle/战斗/img_v3_02137_c83b7d73-03ae-4c9f-88dd-36c12f66f68g.png" alt="">
+    <img class="deploy-pool-frame" src="../../ui/battle/战斗/img_v3_02137_c83b7d73-03ae-4c9f-88dd-36c12f66f68g.png" alt="">
     <img src="../../ui/battle/战斗/20260702-195750.png" alt="">
     <img src="../../ui/battle/战斗/20260702-195746.png" alt="">
   </div>
@@ -4314,29 +4339,58 @@
       phase = 'ended';
     }
 
-    const BATTLE_ROW_Y = [38, 64, 90];
+    const BATTLE_ROW_Y = [34, 63, 92];
     const BATTLE_ALLY_SLOTS = {
-      'rear-left': { row: 0, x: 36, z: 10, scale: 0.92, anchor: 'bottom-center' },
-      'rear-center': { row: 0, x: 56, z: 11, scale: 0.92, anchor: 'bottom-center' },
-      'rear-right': { row: 0, x: 76, z: 12, scale: 0.92, anchor: 'bottom-center' },
-      'middle-left': { row: 1, x: 26, z: 20, scale: 0.92, anchor: 'bottom-center' },
-      'middle-center': { row: 1, x: 46, z: 21, scale: 0.92, anchor: 'bottom-center' },
-      'middle-right': { row: 1, x: 66, z: 22, scale: 0.92, anchor: 'bottom-center' },
-      'front-left': { row: 2, x: 16, z: 30, scale: 0.92, anchor: 'bottom-center' },
-      'front-center': { row: 2, x: 36, z: 31, scale: 0.92, anchor: 'bottom-center' },
-      'front-right': { row: 2, x: 56, z: 32, scale: 0.92, anchor: 'bottom-center' },
-    };
-    const BATTLE_ENEMY_SLOTS = {
-      'rear-left': { row: 0, x: 44, z: 10, scale: 0.92, anchor: 'bottom-center' },
-      'rear-center': { row: 0, x: 64, z: 11, scale: 0.92, anchor: 'bottom-center' },
-      'rear-right': { row: 0, x: 84, z: 12, scale: 0.92, anchor: 'bottom-center' },
-      'middle-left': { row: 1, x: 34, z: 20, scale: 0.92, anchor: 'bottom-center' },
-      'middle-center': { row: 1, x: 54, z: 21, scale: 0.92, anchor: 'bottom-center' },
-      'middle-right': { row: 1, x: 74, z: 22, scale: 0.92, anchor: 'bottom-center' },
+      'rear-left': { row: 0, x: 48, z: 10, scale: 0.92, anchor: 'bottom-center' },
+      'rear-center': { row: 0, x: 68, z: 11, scale: 0.92, anchor: 'bottom-center' },
+      'rear-right': { row: 0, x: 88, z: 12, scale: 0.92, anchor: 'bottom-center' },
+      'middle-left': { row: 1, x: 36, z: 20, scale: 0.92, anchor: 'bottom-center' },
+      'middle-center': { row: 1, x: 56, z: 21, scale: 0.92, anchor: 'bottom-center' },
+      'middle-right': { row: 1, x: 76, z: 22, scale: 0.92, anchor: 'bottom-center' },
       'front-left': { row: 2, x: 24, z: 30, scale: 0.92, anchor: 'bottom-center' },
       'front-center': { row: 2, x: 44, z: 31, scale: 0.92, anchor: 'bottom-center' },
       'front-right': { row: 2, x: 64, z: 32, scale: 0.92, anchor: 'bottom-center' },
     };
+    const BATTLE_ENEMY_SLOTS = {
+      'rear-left': { row: 0, x: 12, z: 10, scale: 0.92, anchor: 'bottom-center' },
+      'rear-center': { row: 0, x: 32, z: 11, scale: 0.92, anchor: 'bottom-center' },
+      'rear-right': { row: 0, x: 52, z: 12, scale: 0.92, anchor: 'bottom-center' },
+      'middle-left': { row: 1, x: 24, z: 20, scale: 0.92, anchor: 'bottom-center' },
+      'middle-center': { row: 1, x: 44, z: 21, scale: 0.92, anchor: 'bottom-center' },
+      'middle-right': { row: 1, x: 64, z: 22, scale: 0.92, anchor: 'bottom-center' },
+      'front-left': { row: 2, x: 36, z: 30, scale: 0.92, anchor: 'bottom-center' },
+      'front-center': { row: 2, x: 56, z: 31, scale: 0.92, anchor: 'bottom-center' },
+      'front-right': { row: 2, x: 76, z: 32, scale: 0.92, anchor: 'bottom-center' },
+    };
+    const BATTLE_PRESENTATION_ROWS = [
+      { rowName: 'rear', y: 34, leftCenterX: 78 },
+      { rowName: 'middle', y: 63, leftCenterX: 62 },
+      { rowName: 'front', y: 92, leftCenterX: 46 },
+    ];
+    const BATTLE_PRESENTATION_GAP_X = 18;
+    const BATTLE_PRESENTATION_COL_ORDER = { left: 0, center: 1, right: 2 };
+
+    function getBattlePresentationSlotMeta(slotKey) {
+      const [rowName = 'front', colName = 'center'] = String(slotKey).split('-');
+      const rowIndex = BATTLE_PRESENTATION_ROWS.findIndex(row => row.rowName === rowName);
+      return {
+        rowName,
+        colName,
+        visualRowIndex: rowIndex >= 0 ? rowIndex : 2,
+        stableColIndex: BATTLE_PRESENTATION_COL_ORDER[colName] ?? 1,
+      };
+    }
+
+    function getBattlePresentationPosition(side, visualRowIndex, visualColIndex, rowUnitCount) {
+      const row = BATTLE_PRESENTATION_ROWS[visualRowIndex] || BATTLE_PRESENTATION_ROWS[2];
+      const centeredOffset = (visualColIndex - (rowUnitCount - 1) / 2) * BATTLE_PRESENTATION_GAP_X;
+      const leftX = row.leftCenterX + centeredOffset;
+      return {
+        x: side === 'right' ? 100 - leftX : leftX,
+        y: row.y,
+        z: 10 + visualRowIndex * 10 + visualColIndex,
+      };
+    }
 
     function getBattleSlotPosition(slotKey, mirrorCols = false) {
       const [rowName, colName] = slotKey.split('-');
@@ -4783,8 +4837,16 @@
       return entries;
     }
 
-    function createBattleFormationSlotElement(slotKey, mirrorCols = false) {
-      const pos = getBattleSlotPosition(slotKey, mirrorCols);
+    function createBattleFormationSlotElement(slotKey, visualSide = 'left') {
+      const meta = getBattlePresentationSlotMeta(slotKey);
+      const pos = {
+        ...getBattlePresentationPosition(visualSide, meta.visualRowIndex, meta.stableColIndex, 3),
+        row: meta.visualRowIndex,
+        col: meta.stableColIndex,
+        rowClass: `row-${meta.rowName}`,
+        scale: 0.92,
+        anchor: 'bottom-center',
+      };
       const slot = document.createElement('div');
       slot.className = `formation-slot ${pos.rowClass} empty`;
       slot.dataset.slot = slotKey;
@@ -4834,27 +4896,27 @@
       };
     }
 
-    function initializeBattleFormationGrid(gridId, mirrorCols = false) {
+    function initializeBattleFormationGrid(gridId, visualSide = 'left') {
       const grid = document.getElementById(gridId);
       const slots = new Map();
       if (!grid) {
-        return { root: null, slots, mirrorCols };
+        return { root: null, slots, visualSide };
       }
       grid.innerHTML = '';
       for (const slotKey of FORMATION_SLOT_KEYS) {
-        const entry = createBattleFormationSlotElement(slotKey, mirrorCols);
+        const entry = createBattleFormationSlotElement(slotKey, visualSide);
         slots.set(slotKey, entry);
         grid.appendChild(entry.slot);
       }
-      return { root: grid, slots, mirrorCols };
+      return { root: grid, slots, visualSide };
     }
 
     function ensureBattleFormationViews() {
       if (battleFormationViewState.initialized) {
         return;
       }
-      battleFormationViewState.attacker = initializeBattleFormationGrid('battle-attacker-grid', true);
-      battleFormationViewState.defender = initializeBattleFormationGrid('battle-defender-grid', false);
+      battleFormationViewState.attacker = initializeBattleFormationGrid('battle-attacker-grid', 'left');
+      battleFormationViewState.defender = initializeBattleFormationGrid('battle-defender-grid', 'right');
       battleFormationViewState.initialized = true;
     }
 
@@ -4871,11 +4933,10 @@
       }
       const beforeBySlot = new Map(snapshotBefore.formationMembers.map(member => [member.slotKey, member]));
       const afterBySlot = new Map(snapshotAfter.formationMembers.map(member => [member.slotKey, member]));
+      const slotStates = new Map();
+      const visibleSlotsByRow = BATTLE_PRESENTATION_ROWS.map(() => []);
 
       for (const slotKey of FORMATION_SLOT_KEYS) {
-        const entry = view.slots.get(slotKey);
-        if (!entry) continue;
-
         const before = beforeBySlot.get(slotKey);
         const after = afterBySlot.get(slotKey);
         const current = after || before || null;
@@ -4884,6 +4945,45 @@
           current && current.maxSoldiers > 0
             ? clamp((after ? after.soldiers : 0) / current.maxSoldiers, 0, 1) * 100
             : 0;
+        const meta = getBattlePresentationSlotMeta(slotKey);
+        slotStates.set(slotKey, { before, after, current, loss, hpRatio, meta });
+        if (current) {
+          visibleSlotsByRow[meta.visualRowIndex].push(slotKey);
+        }
+      }
+
+      const presentationBySlot = new Map();
+      visibleSlotsByRow.forEach((slotKeys, visualRowIndex) => {
+        const sortedSlotKeys = [...slotKeys].sort((a, b) => {
+          const aMeta = slotStates.get(a).meta;
+          const bMeta = slotStates.get(b).meta;
+          return aMeta.stableColIndex - bMeta.stableColIndex;
+        });
+        sortedSlotKeys.forEach((slotKey, visualColIndex) => {
+          presentationBySlot.set(
+            slotKey,
+            getBattlePresentationPosition(
+              view.visualSide || 'left',
+              visualRowIndex,
+              visualColIndex,
+              sortedSlotKeys.length
+            )
+          );
+        });
+      });
+
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const entry = view.slots.get(slotKey);
+        if (!entry) continue;
+
+        const state = slotStates.get(slotKey);
+        const { after, current, loss, hpRatio } = state;
+        const presentation = presentationBySlot.get(slotKey);
+        if (presentation) {
+          entry.slot.style.setProperty('--x', String(presentation.x));
+          entry.slot.style.setProperty('--y', String(presentation.y));
+          entry.slot.style.zIndex = String(presentation.z);
+        }
 
         entry.slot.classList.toggle('empty', current == null);
         entry.slot.classList.toggle('fallen', Boolean(after && after.soldiers <= 0));
@@ -5503,8 +5603,8 @@
       const pool = document.getElementById('deploy-pool');
       pool.innerHTML = '';
       const undeployed = units.filter(u => u.side === 'player' && u.x < 0);
+      document.querySelector('.battle-stage')?.classList.toggle('deploy-pool-empty', !undeployed.length);
       if (!undeployed.length) {
-        pool.innerHTML = '<span style="color:var(--muted);font-size:0.72rem;">部署完成 · 点击开始战斗</span>';
         return;
       }
       for (const u of undeployed) {
