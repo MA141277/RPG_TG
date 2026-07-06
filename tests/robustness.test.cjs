@@ -1830,6 +1830,8 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /float openWater = 1\.0/);
   assert.match(terrainFragmentSource, /vec2\(0\.5, -1\.0\)/);
   assert.match(terrainFragmentSource, /vec2\(1\.0, -0\.5\)/);
+  assert.match(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.42/);
+  assert.match(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.78/);
   assert.match(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 2\.85/);
   assert.match(
     terrainFragmentSource,
@@ -1860,6 +1862,8 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /waveCrest/);
   assert.match(terrainFragmentSource, /waveTrough/);
   assert.match(terrainFragmentSource, /slowFlow/);
+  assert.match(terrainFragmentSource, /boundaryFlow/);
+  assert.match(terrainFragmentSource, /boundaryDriftNoise/);
   assert.match(terrainFragmentSource, /surfaceFlow/);
   assert.match(terrainFragmentSource, /return crest \* 0\.86 - trough \* 0\.16/);
   assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.16\), 2\.4, 24\.0, 0\.020/);
@@ -1868,6 +1872,9 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /boundaryNoise/);
   assert.match(terrainFragmentSource, /fineBoundaryNoise/);
   assert.match(terrainFragmentSource, /bandJitter/);
+  assert.match(terrainFragmentSource, /nearShoreJitter/);
+  assert.match(terrainFragmentSource, /smoothstep\(0\.48, 0\.96, nearShore \+ nearShoreJitter\)/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShore \+ bandJitter/);
   assert.match(terrainFragmentSource, /nearShoreBand/);
   assert.match(terrainFragmentSource, /shallowSeaBand/);
   assert.match(terrainFragmentSource, /middleSeaBand/);

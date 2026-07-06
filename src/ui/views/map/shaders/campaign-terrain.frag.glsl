@@ -111,8 +111,8 @@ float sampleContinuousShoreRing(vec2 uv, float radius, float hexScale, float map
 
 vec3 getContinuousShoreBands(vec2 uv, float hexScale, float mapAspect, float water) {
   float nearShore = max(
-    sampleContinuousShoreRing(uv, 0.62, hexScale, mapAspect),
-    sampleContinuousShoreRing(uv, 1.04, hexScale, mapAspect) * 0.72
+    sampleContinuousShoreRing(uv, 0.42, hexScale, mapAspect),
+    sampleContinuousShoreRing(uv, 0.78, hexScale, mapAspect) * 0.40
   );
   float shallowSea = max(
     sampleContinuousShoreRing(uv, 1.58, hexScale, mapAspect),
@@ -123,7 +123,7 @@ vec3 getContinuousShoreBands(vec2 uv, float hexScale, float mapAspect, float wat
     sampleContinuousShoreRing(uv, 4.45, hexScale, mapAspect) * 0.70
   );
 
-  shallowSea = max(shallowSea - nearShore * 0.18, 0.0);
+  shallowSea = max(shallowSea - nearShore * 0.28, 0.0);
   middleSea = max(middleSea - shallowSea * 0.14 - nearShore * 0.10, 0.0);
 
   return clamp(vec3(nearShore, shallowSea, middleSea) * water, 0.0, 1.0);
@@ -240,19 +240,23 @@ vec3 getAnimatedWaterColor(
   float shallowSea = shoreBands.y;
   float middleSea = shoreBands.z;
   vec2 slowFlow = vec2(uTimeSeconds * 0.004, -uTimeSeconds * 0.0015);
+  vec2 boundaryFlow = vec2(uTimeSeconds * 0.010, -uTimeSeconds * 0.004);
   vec2 surfaceFlow = vec2(uTimeSeconds * 0.008, -uTimeSeconds * 0.003);
   vec3 broadNoise = texture2D(uWaterTexture, uv * 3.6 + slowFlow).rgb;
-  vec3 boundaryNoise = texture2D(uWaterTexture, uv * 8.5 + slowFlow * 0.72).rgb;
-  vec3 fineBoundaryNoise = texture2D(uWaterTexture, uv * 15.0 + slowFlow * 0.48).rgb;
+  vec3 boundaryNoise = texture2D(uWaterTexture, uv * 8.5 + boundaryFlow).rgb;
+  vec3 fineBoundaryNoise = texture2D(uWaterTexture, uv * 15.0 + boundaryFlow * 0.58 + vec2(0.11, -0.03)).rgb;
+  vec3 boundaryDriftNoise = texture2D(uWaterTexture, uv * 5.2 + boundaryFlow * 0.34 + vec2(0.27, 0.15)).rgb;
   vec3 surfaceNoise = texture2D(uWaterTexture, uv * 16.0 + surfaceFlow).rgb;
   vec3 surfaceNoiseShifted = texture2D(uWaterTexture, uv * 27.0 + surfaceFlow * 0.64 + vec2(0.19, -0.07)).rgb;
   float bandJitter =
-    (broadNoise.r - 0.5) * 0.34 +
-    (boundaryNoise.g - 0.5) * 0.24 +
-    (fineBoundaryNoise.b - 0.5) * 0.16;
-  float nearShoreBand = smoothstep(0.16, 0.92, nearShore + bandJitter * 0.92);
-  float shallowSeaBand = smoothstep(0.00, 0.60, shallowSea + bandJitter * 0.88) * (1.0 - nearShoreBand * 0.30);
-  float middleSeaBand = smoothstep(0.00, 0.72, middleSea + bandJitter * 0.74) * (1.0 - nearShoreBand * 0.56) * (1.0 - shallowSeaBand * 0.24);
+    (broadNoise.r - 0.5) * 0.18 +
+    (boundaryNoise.g - 0.5) * 0.28 +
+    (fineBoundaryNoise.b - 0.5) * 0.20 +
+    (boundaryDriftNoise.r - 0.5) * 0.16;
+  float nearShoreJitter = (boundaryNoise.b - 0.5) * 0.10;
+  float nearShoreBand = smoothstep(0.48, 0.96, nearShore + nearShoreJitter);
+  float shallowSeaBand = smoothstep(0.00, 0.60, shallowSea + bandJitter * 0.86) * (1.0 - nearShoreBand * 0.36);
+  float middleSeaBand = smoothstep(0.00, 0.72, middleSea + bandJitter * 0.74) * (1.0 - nearShoreBand * 0.52) * (1.0 - shallowSeaBand * 0.24);
   float ripple = sampleNoiseWaterRipple(uv, vec2(1.0, 0.16), 2.4, 24.0, 0.020);
   float fineRipple = sampleNoiseWaterRipple(uv + vec2(0.17, -0.09), vec2(1.0, 0.14), 4.2, 36.0, 0.014) * 0.24;
   float wave = ripple + fineRipple + (broadNoise.b - 0.5) * 0.06;
@@ -262,7 +266,7 @@ vec3 getAnimatedWaterColor(
   float waveCrest = smoothstep(0.10, 0.58, wave + surfaceRipple * 0.22);
   float waveTrough = smoothstep(0.10, 0.58, -wave);
   float vein = smoothstep(0.34, 0.80, broadNoise.r * 0.58 + surfaceNoise.g * 0.24 + waveCrest * 0.18);
-  float bandLight = nearShoreBand * 0.68 + shallowSeaBand * 0.42 + middleSeaBand * 0.26;
+  float bandLight = nearShoreBand * 0.48 + shallowSeaBand * 0.42 + middleSeaBand * 0.26;
   float shoreLight = bandLight * smoothstep(0.10, 0.50, abs(wave) + boundaryNoise.b * 0.18);
   vec3 deepWater = vec3(0.045, 0.18, 0.42);
   vec3 middleSeaWater = vec3(0.070, 0.31, 0.52);
@@ -272,7 +276,7 @@ vec3 getAnimatedWaterColor(
 
   animatedColor = mix(animatedColor, middleSeaWater, middleSeaBand * 0.62);
   animatedColor = mix(animatedColor, shallowSeaWater, shallowSeaBand * 0.82);
-  animatedColor = mix(animatedColor, nearShoreWater, nearShoreBand * 0.86);
+  animatedColor = mix(animatedColor, nearShoreWater, nearShoreBand * 0.72);
 
   animatedColor += vec3(0.10, 0.17, 0.19) * waveCrest;
   animatedColor -= vec3(0.035, 0.060, 0.075) * waveTrough;
