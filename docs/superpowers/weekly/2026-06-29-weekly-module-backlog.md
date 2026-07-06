@@ -1,5 +1,8 @@
 # Weekly Module Backlog
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-06-29`
 
 ## Merged Artifact Notice
@@ -50,3 +53,4 @@ Do not treat this file as an independent weekly acceptance artifact after the fi
 - Full text migration
 - House-specific feature migration
 - Full task-runtime extraction
+

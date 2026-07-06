@@ -1,5 +1,7 @@
 # Weekly Orchestration Plan
 
+> **Historical Template:** Deprecated under `fail-closed progress-driven governance`. Do not create new active work from this template. Keep it only for historical weekly records.
+
 > **Purpose:** Use this template to govern one lightweight weekly set / iteration set. It should stay small enough to answer only four questions: what this set is trying to finish, which child is active now, which child is next, and when this set must close.
 
 **Week Of:** `YYYY-MM-DD`

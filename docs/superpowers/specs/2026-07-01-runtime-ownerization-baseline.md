@@ -1,5 +1,7 @@
 # Runtime Ownerization Baseline
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 > **Purpose:** This document is the Child 10 execution baseline for unlocking `Child 11 Sub-Runtime Ownerization Implementation`. Child 11 must not start production code until this baseline is finalized and referenced by the Child 11 spec and plan.
 
 **Date:** `2026-07-01`

@@ -1,5 +1,8 @@
 # Main Runtime Ownerization Weekly Call Flows
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -68,3 +71,4 @@ runtime decision owner: src/application/runtime/main-runtime-orchestrator.ts
 follow-up owner: main-runtime-orchestrator for covered startup apply, story timing, scene progression, and passive trigger sync
 write-back sink: covered runtime requests still settle through state-sync-runtime commit paths; Child 24 does not fork a second covered runtime commit sink
 ```
+

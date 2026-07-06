@@ -1,5 +1,8 @@
 # Main Shell Ownerization Continuation Weekly Orchestration Plan
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Control the post-Child-24 continuation queue that moves `src/main.ts` toward a pure shell without reopening the closed Child 24 set or allowing unbounded queue growth.
@@ -196,3 +199,4 @@ Expected:
 - [x] `Execution State` updated
 - [x] `Progress Log` updated
 - [x] Verification recorded
+

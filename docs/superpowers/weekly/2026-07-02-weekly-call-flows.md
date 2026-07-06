@@ -1,5 +1,8 @@
 # Weekly Call Flows
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 ## Purpose
@@ -45,3 +48,4 @@ UI / passive house sync -> src/main.ts syncPassiveStoryTriggers() -> triggerStor
 - Child 14's interactive convergence remains accepted and closed.
 - Child 15's navigation/time convergence remains accepted and closed.
 - Child 16's story-trigger convergence is now accepted and closed.
+

@@ -10,19 +10,19 @@
 
 ## Execution State
 
-- Status: `not-started`
+- Status: `waiting`
 - Last Updated: `2000-01-01`
-- Current Focus: `Not started.`
-- Next Step: `Start at Task 1 Step 1.`
+- Current Focus: `Waiting for promotion or start.`
+- Next Step: `Open docs/superpowers/project-progress.md and confirm this playable child is executable.`
 - Verification: `Not run`
-- Notes: `Update this block after every work batch.`
+- Notes: `Use waiting/running/blocked/completed-but-open/closed for new plans.`
 
 ## Progress Log
 
 - 2000-01-01
   - Summary: `Plan created.`
   - Verification: `Not run`
-  - Next: `Start at Task 1 Step 1.`
+  - Next: `Open docs/superpowers/project-progress.md before starting implementation.`
 
 ---
 
@@ -32,8 +32,8 @@
   - `docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md`
 - Plan governance spec:
   - `docs/superpowers/specs/plan-governance-spec.md`
-- Shared plan template:
-  - `docs/superpowers/plans/_plan-template.md`
+- Canonical progress entry:
+  - `docs/superpowers/project-progress.md`
 - Additional host/runtime specs, if touched:
   - `docs/special-house-interface.md`
   - `docs/superpowers/specs/...`
@@ -92,7 +92,7 @@
 - Unrelated `main.ts` slimming outside the playable-owned seam.
 - Unrelated house/module redesign outside the target playable extraction.
 - New scenario pack/editor features unless this plan explicitly owns them.
-- Rewriting multiple unrelated playables in one batch unless the spec and weekly governance explicitly promoted that scope.
+- Rewriting multiple unrelated playables in one batch unless the spec explicitly promotes that scope.
 
 ## Host Ownership Snapshot
 
@@ -245,8 +245,8 @@ Expected:
 - [ ] The correct owner/scene/session return path is provable for this playable.
 - [ ] Mechanic and integration responsibilities remain separated.
 - [ ] Shared docs are updated if cross-module boundaries changed.
-- [ ] Weekly artifact sync is updated if boundary state changed.
-- [ ] Weekly queue state is updated.
+- [ ] Project progress sync is updated if child state changed.
+- [ ] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
@@ -254,3 +254,19 @@ Expected:
 - [ ] `Execution State` updated
 - [ ] `Progress Log` updated
 - [ ] Verification recorded
+
+## Child Closeout
+
+- Closed Child: `Replace when closing.`
+- Parent Task: `Replace when closing.`
+- Parent Stage: `Replace when closing.`
+- Closeout Status: `closed`
+- Project Progress Synced: `yes/no`
+- Next Child: `Replace when closing.`
+- Next Child Status: `waiting/running/blocked/none`
+- Next Required Action: `Replace when closing.`
+- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Owner Document: `Replace when closing.`
+- Push Status: `success/failure/not-pushed`
+- Push Commit: `commit-sha-or-none`
+- Resume From: `Replace when closing.`

@@ -1,6 +1,6 @@
 # Weekly Boundary Checklist
 
-> **Historical Template:** Boundary checklist ownership is now folded into `weekly-module-map` for the active five-artifact weekly bundle. Do not create this file for new weekly sets unless governance explicitly reactivates the legacy artifact scheme.
+> **Historical Template:** Deprecated under `fail-closed progress-driven governance`. Boundary checklist ownership was previously folded into `weekly-module-map` for the old weekly bundle. Do not create new active work from this template.
 
 **Week Of:** `YYYY-MM-DD`
 

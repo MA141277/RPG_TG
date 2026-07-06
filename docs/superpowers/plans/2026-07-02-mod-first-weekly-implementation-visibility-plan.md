@@ -1,5 +1,8 @@
 # Mod-First Weekly Implementation Visibility Companion
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **For agentic workers:** Use this file as the visibility companion to `docs/superpowers/plans/2026-07-02-mod-first-weekly-orchestration-plan.md`. Do not execute production code directly from this file. Update it after each active-child work batch so the repository becomes less of a black box.
 
 **Goal:** Keep the fresh mod-first continuation set legible by synchronizing queue truth, module map, call flows, next split review, and architecture report while Child 17 is active and later children remain queued or locked.
@@ -142,3 +145,4 @@ Do not mark this companion `completed` until:
 - [x] Five core weekly artifacts linked and present
 - [x] Architecture report diagram requirements satisfied
 - [x] Fresh-set queue wording recorded
+

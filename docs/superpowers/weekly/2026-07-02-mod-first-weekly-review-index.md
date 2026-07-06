@@ -1,5 +1,8 @@
 # Mod-First Weekly Review Index
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 **Weekly Set Plan:** `docs/superpowers/plans/2026-07-02-mod-first-weekly-orchestration-plan.md`
@@ -123,3 +126,4 @@ Interpret this as input to later continuation, not as automatic permission to ap
   - The visible queue is fully consumed; any later work needs a new review rather than another in-set child append
 - Category:
   - `fresh continuation decision`
+

@@ -1,5 +1,8 @@
 # Main Runtime Ownerization Weekly Orchestration Plan
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Open one fresh weekly set that removes the remaining covered runtime-business orchestration from `src/main.ts` without reopening the closed startup-family set or expanding into renderer redesign.
@@ -190,3 +193,4 @@ Do not mark this weekly plan `completed` until:
 - [x] Verification recorded
 - [x] Weekly review index updated
 - [x] Required visibility deliverables linked and present
+

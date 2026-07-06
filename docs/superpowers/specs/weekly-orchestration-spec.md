@@ -1,8 +1,10 @@
 # Weekly Orchestration Spec
 
+> **Historical Spec:** Deprecated under `fail-closed progress-driven governance`. Keep only as a record of the retired weekly-governance model. Do not use this spec for new active work.
+
 ## 1. Goal
 
-This spec defines how a weekly orchestration plan governs one lightweight weekly set under `docs/superpowers/plans/`.
+This historical spec defined how a weekly orchestration plan governed one lightweight weekly set under `docs/superpowers/plans/`.
 
 The target is to make weekly-set planning:
 

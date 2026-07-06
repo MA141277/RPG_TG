@@ -1,5 +1,8 @@
 # Weekly Boundary Checklist
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-06-29`
 
 ## Merged Artifact Notice
@@ -59,3 +62,4 @@ Do not treat this file as an independent weekly acceptance artifact after the fi
 2. Which boundaries are still adapter-only?
 3. Which modules still cross layers incorrectly?
 4. Which boundary must be formalized next week?
+
