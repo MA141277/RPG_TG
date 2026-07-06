@@ -82,29 +82,47 @@ float getShoreEdgeContribution(
   vec2 cell,
   vec2 neighborOffset,
   float hexScale,
-  float mapAspect
+  float mapAspect,
+  float falloffWidth
 ) {
   vec2 neighborCell = cell + neighborOffset;
   float neighborWater = getWaterAmountAt(getHexCellUv(neighborCell, hexScale, mapAspect));
   float landNeighbor = 1.0 - neighborWater;
-  float centerDistance = length(point - hexToPixel(cell));
   float neighborDistance = length(point - hexToPixel(neighborCell));
-  float boundaryDistance = abs(neighborDistance - centerDistance);
+  float distanceToLandEdge = max(0.0, neighborDistance - 0.92);
 
-  return landNeighbor * (1.0 - smoothstep(0.04, 0.46, boundaryDistance));
+  return landNeighbor * (1.0 - smoothstep(0.0, falloffWidth, distanceToLandEdge));
 }
 
-float getShoreAmount(vec2 point, vec2 cell, float hexScale, float mapAspect, float water) {
+float getShoreRingAmount(
+  vec2 point,
+  vec2 cell,
+  float hexScale,
+  float mapAspect,
+  float ringRadius,
+  float falloffWidth
+) {
   float shore = 0.0;
 
-  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(1.0, 0.0), hexScale, mapAspect));
-  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(-1.0, 0.0), hexScale, mapAspect));
-  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(0.0, 1.0), hexScale, mapAspect));
-  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(0.0, -1.0), hexScale, mapAspect));
-  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(1.0, -1.0), hexScale, mapAspect));
-  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(-1.0, 1.0), hexScale, mapAspect));
+  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(1.0, 0.0) * ringRadius, hexScale, mapAspect, falloffWidth));
+  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(-1.0, 0.0) * ringRadius, hexScale, mapAspect, falloffWidth));
+  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(0.0, 1.0) * ringRadius, hexScale, mapAspect, falloffWidth));
+  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(0.0, -1.0) * ringRadius, hexScale, mapAspect, falloffWidth));
+  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(1.0, -1.0) * ringRadius, hexScale, mapAspect, falloffWidth));
+  shore = max(shore, getShoreEdgeContribution(point, cell, vec2(-1.0, 1.0) * ringRadius, hexScale, mapAspect, falloffWidth));
 
-  return clamp(shore * water, 0.0, 1.0);
+  return shore;
+}
+
+vec3 getShoreBands(vec2 point, vec2 cell, float hexScale, float mapAspect, float water) {
+  float nearShore = getShoreRingAmount(point, cell, hexScale, mapAspect, 1.0, 1.24);
+  float shallowSea = getShoreRingAmount(point, cell, hexScale, mapAspect, 2.0, 2.60);
+  float deepSea = getShoreRingAmount(point, cell, hexScale, mapAspect, 3.0, 3.90);
+
+  shallowSea = max(shallowSea * 0.78, nearShore * 0.48);
+  deepSea = max(deepSea * 0.44, shallowSea * 0.30);
+
+  return clamp(vec3(nearShore, shallowSea, deepSea) * water, 0.0, 1.0);
 }
 
 float getHexGridLine(vec2 point, vec2 cell) {
@@ -175,29 +193,64 @@ vec3 boostLandTextureColor(vec3 color) {
   );
 }
 
+vec2 getStretchedWaveUv(
+  vec2 uv,
+  vec2 direction,
+  float lengthScale,
+  float widthScale
+) {
+  vec2 tangent = normalize(direction);
+  vec2 normal = vec2(-tangent.y, tangent.x);
+
+  return vec2(dot(uv, tangent) * lengthScale, dot(uv, normal) * widthScale);
+}
+
+vec3 sampleStretchedWaterNoise(vec2 waveUv) {
+  return (
+    texture2D(uWaterTexture, waveUv).rgb +
+    texture2D(uWaterTexture, waveUv + vec2(0.075, 0.0)).rgb +
+    texture2D(uWaterTexture, waveUv - vec2(0.075, 0.0)).rgb
+  ) * 0.3333333;
+}
+
 vec3 getAnimatedWaterColor(
   vec2 uv,
   vec3 fallbackColor,
   float shade,
-  float shore
+  vec3 shoreBands
 ) {
-  vec2 driftA = vec2(uTimeSeconds * 0.045, uTimeSeconds * 0.018);
-  vec2 driftB = vec2(-uTimeSeconds * 0.032, uTimeSeconds * 0.040);
-  vec3 noiseA = texture2D(uWaterTexture, uv * vec2(58.0, 50.0) + driftA).rgb;
-  vec3 noiseB = texture2D(uWaterTexture, uv * vec2(132.0, 116.0) + driftB).rgb;
+  float nearShore = shoreBands.x;
+  float shallowSea = shoreBands.y;
+  float deepSea = shoreBands.z;
+  float nearShoreLine = smoothstep(0.36, 0.88, nearShore);
+  float shallowSeaLine = smoothstep(0.18, 0.62, shallowSea) * (1.0 - nearShoreLine * 0.50);
+  float deepSeaLine = smoothstep(0.08, 0.42, deepSea) * (1.0 - smoothstep(0.34, 0.74, shallowSea));
+  vec2 driftA = vec2(uTimeSeconds * 0.052, uTimeSeconds * 0.020);
+  vec2 driftB = vec2(-uTimeSeconds * 0.038, uTimeSeconds * 0.046);
+  vec2 waveUvA = getStretchedWaveUv(uv, vec2(1.0, 0.28), 18.0, 138.0) + driftA;
+  vec2 waveUvB = getStretchedWaveUv(uv, vec2(-0.42, 1.0), 26.0, 218.0) + driftB;
+  vec3 noiseA = sampleStretchedWaterNoise(waveUvA);
+  vec3 noiseB = sampleStretchedWaterNoise(waveUvB);
   float ripple = (noiseA.r + noiseB.g) * 0.5;
   float wave = ripple * 2.0 - 1.0;
-  float vein = smoothstep(0.42, 0.72, noiseA.b * 0.56 + noiseB.r * 0.44);
-  float fineRipple = smoothstep(0.30, 0.68, abs(noiseA.g - noiseB.b) * 1.85);
-  float shoreLight = shore * smoothstep(0.36, 0.76, ripple);
-  vec3 deepWater = vec3(0.06, 0.23, 0.48);
-  vec3 shallowWater = vec3(0.20, 0.62, 0.47);
-  vec3 animatedColor = mix(deepWater, shallowWater, shore);
+  float vein = smoothstep(0.40, 0.66, noiseA.b * 0.56 + noiseB.r * 0.44);
+  float fineRipple = smoothstep(0.28, 0.60, abs(noiseA.g - noiseB.b) * 1.92);
+  float bandLight = nearShoreLine * 0.85 + shallowSeaLine * 0.48 + deepSeaLine * 0.24;
+  float shoreLight = bandLight * smoothstep(0.32, 0.72, ripple);
+  vec3 deepWater = vec3(0.045, 0.18, 0.42);
+  vec3 deepSeaWater = vec3(0.07, 0.30, 0.48);
+  vec3 shallowSeaWater = vec3(0.13, 0.52, 0.48);
+  vec3 nearShoreWater = vec3(0.28, 0.72, 0.52);
+  vec3 animatedColor = deepWater;
 
-  animatedColor += vec3(wave) * 0.20;
-  animatedColor += vec3(0.070, 0.120, 0.090) * vein;
-  animatedColor += vec3(0.085, 0.135, 0.105) * fineRipple;
-  animatedColor += vec3(0.16, 0.28, 0.18) * shoreLight;
+  animatedColor = mix(animatedColor, deepSeaWater, deepSeaLine * 0.55);
+  animatedColor = mix(animatedColor, shallowSeaWater, shallowSeaLine * 0.70);
+  animatedColor = mix(animatedColor, nearShoreWater, nearShoreLine * 0.88);
+
+  animatedColor += vec3(wave) * 0.22;
+  animatedColor += vec3(0.075, 0.130, 0.095) * vein;
+  animatedColor += vec3(0.090, 0.145, 0.115) * fineRipple;
+  animatedColor += vec3(0.18, 0.31, 0.19) * shoreLight;
 
   return mix(fallbackColor, clamp(animatedColor * shade, 0.0, 1.0), uWaterTextureEnabled);
 }
@@ -213,7 +266,7 @@ void main() {
   vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
   vec3 terrainColor = getHexTerrainColor(material);
   float water = getWaterAmount(material);
-  float shore = getShoreAmount(hexPoint, hexCell, hexScale, mapAspect, water);
+  vec3 shoreBands = getShoreBands(hexPoint, hexCell, hexScale, mapAspect, water);
   float shade = clamp(__GRASS_AMBIENT_LIGHT__ + vHeight * 0.16, 0.50, 1.08);
   float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
   vec3 landTexture = boostLandTextureColor(base.rgb);
@@ -225,7 +278,7 @@ void main() {
   );
   float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, shade);
   vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
-  vec3 waterColor = getAnimatedWaterColor(vUv, terrainColor * shade, shade, shore);
+  vec3 waterColor = getAnimatedWaterColor(vUv, terrainColor * shade, shade, shoreBands);
   vec3 color = mix(landColor, waterColor, water);
 
   float border = getHexGridLine(hexPoint, hexCell);
