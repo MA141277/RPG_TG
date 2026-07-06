@@ -479,24 +479,101 @@ Closed queues remain historical truth:
 - do not rewrite them as if they had never closed
 - if residue invalidates the old conclusion, open a new queue or record a new historical clarification
 
-## 16. Remote Integration Rule
+## 16. Git Integration Rules
 
-Remote integration is part of governance, not optional cleanup.
+Git integration is part of governance, not optional cleanup.
 
-When a queue task batch, queue closeout, or target checkpoint reaches a coherent verified integration point, AI should emit a structured remote integration recommendation that includes:
+### 16.1 Push / Merge Requires A Content Summary
 
-- current branch
+Any push, remote sync, or merge action must be accompanied by a concise content summary.
+
+When a queue task batch, queue closeout, or target checkpoint reaches a coherent verified integration point, AI should emit that content summary before continuing to widen local divergence.
+
+The summary must include:
+
+- branch
+- action type
+- related target
+- related queue
+- related task
+- change summary
+- verification summary
+- next step
+
+Accepted action types include:
+
+- `checkpoint-push`
+- `remote-sync-push`
+- `integration-merge-into-mod-first-dev`
+- `post-merge-closeout`
+
+A push or merge record is incomplete if it does not include a content summary.
+
+The content summary should also make clear:
+
 - whether push is required
-- merge target = `mod-first-dev`
-- integration reason
-- verification evidence
-- continuation action after merge
+- that merge target is `mod-first-dev` when a merge occurs
+- the integration reason
+- the continuation action after merge
 
 If AI continues to stack multiple verified local-only batches, it must explicitly record why integration is deferred.
 
+### 16.2 Merge Into `mod-first-dev` Ends The Current Working Branch Lifecycle By Default
+
+After a working branch has been integrated into the latest `mod-first-dev`, that branch should be treated as complete for that execution round by default.
+
+Do not continue normal implementation on the already-integrated branch unless an explicit exception is recorded.
+
+### 16.3 Post-Merge Work Must Continue From A Fresh Branch
+
+If more implementation is needed after integration, cut a new working branch from the latest `mod-first-dev`.
+
+Required flow:
+
+1. confirm local and remote `mod-first-dev` are aligned
+2. treat the merged branch as completed or closing
+3. create a new working branch from latest `mod-first-dev`
+4. restore execution from current Blueprint truth
+5. continue only the current active queue / task scope unless routing changes
+
+### 16.4 New Branch Naming Rule
+
+New working branches should use:
+
+`mod-first-dev-YYYYMMDD-short-scope`
+
+Example:
+
+`mod-first-dev-20260706-phase3-authoring`
+
+### 16.5 Resume From Control Block Truth, Not Branch Memory
+
+When a fresh branch is created after merge, execution must resume from the current Blueprint Control Blocks, not branch-local memory.
+
+Required resume sequence:
+
+1. read Blueprint Control Block
+2. read current Target Control Block
+3. read current Queue Control Block
+4. read current Task Control Block
+5. confirm active truth
+6. run necessary baseline recheck
+7. continue current active task only
+
+### 16.6 Merge Closeout Must Be Human-Readable
+
+Every integration into `mod-first-dev` must leave a short human-readable closeout note that states:
+
+- what was integrated
+- why it was safe to merge
+- what branch should be used next
+- what the next active execution point is
+
+The closeout note may share the same record as the content summary, but both the structured fields and the human-readable explanation must be present.
+
 ## 17. Acceptance Rules
 
-### 16.1 Queue Task Acceptance
+### 17.1 Queue Task Acceptance
 
 A task may be marked `done` only when:
 
@@ -505,7 +582,7 @@ A task may be marked `done` only when:
 - no unresolved in-scope `P0` or `P1` remains
 - the queue history records the closeout state
 
-### 16.2 Target Acceptance
+### 17.2 Target Acceptance
 
 The current target may be marked `done` only when:
 
