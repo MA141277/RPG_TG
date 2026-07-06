@@ -511,6 +511,12 @@ houseModuleRegistry.register({
 });
 ```
 
+Builtin seed rule:
+
+- keep builtin module and renderer wiring in one contribution list under the shared registry seam
+- do not split builtin authoring across one file for modules and another file for renderers
+- if a builtin house needs new wiring, one contribution record should be enough to register both behavior and rendering
+
 The app should:
 
 1. read `currentHouseId`

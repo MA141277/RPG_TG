@@ -5,17 +5,17 @@
 - blueprint_id: `blueprint.rpg-tg`
 - status: `in-progress`
 - active_target: `target.project-complete-modularization`
-- active_queue: `queue.authoring-entrypoint-and-fail-closed-closure`
-- active_task: `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure`
+- active_queue: `none`
+- active_task: `none`
 - active_phase: `phase.authoring-closure`
-- decision_state: `active-execution`
+- decision_state: `promotion-review`
 - resume_order:
   - `blueprint`
   - `target`
   - `queue`
   - `task`
-- next_step: `Open the active authoring queue and continue task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure.`
-- next_file: `docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md`
+- next_step: `Use the current target plan to decide whether any later-phase queue promotion is actually justified now that Phase 3 authoring closure is closed and queue.framework-scaffold-and-template-closure was not promoted.`
+- next_file: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
 - blocked_by: []
@@ -33,20 +33,20 @@ This file is the single current execution index for repository work under the Bl
 ### Current Status
 
 - Status: `in-progress`
-- Last Updated: `2026-07-06`
-- Current Focus: `The current blueprint has one current target for this period: project complete modularization. Phase 3 authoring closure is now active through authoring-entrypoint-and-fail-closed-closure because scenario-pack/default-pack/house-family authoring still depends on manual multi-point glue.`
+- Last Updated: `2026-07-07`
+- Current Focus: `The current blueprint has one current target for this period: project complete modularization. Phase 3 authoring closure has now closed its active queue after recording landed framework-owned coverage, accepted compatibility residue, and the no-new-code-seam conclusion. The repository is back in target-level promotion-review with no active queue, and queue.framework-scaffold-and-template-closure is not promoted on current evidence.`
 - Current Target Spec:
   - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
 - Current Target Plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - Active Queue:
-  - `queue.authoring-entrypoint-and-fail-closed-closure`
+  - `none`
 - Active Queue Task:
-  - `task.authoring-entrypoint-and-fail-closed-closure.scenario-pack-and-default-pack-entrypoint-closure`
+  - `none`
 - Next Step:
-  - `Resume the active Phase 3 queue from scenario-pack-and-default-pack-entrypoint-closure.`
+  - `Use the current target plan to decide whether any later-phase queue promotion is actually justified now that Phase 3 authoring closure is closed and queue.framework-scaffold-and-template-closure was not promoted.`
 - Verification:
-  - `Current-target Blueprint documents, explicit acceptance rules, and first queue artifacts exist.`
+  - `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
 - Notes:
   - `Blueprint may have multiple targets across different periods, but this period must keep exactly one current target. Add same-period modularization work through queue documents instead.`
 
@@ -83,7 +83,7 @@ This file is the single current execution index for repository work under the Bl
 | `queue.builtin-content-deprivileging-closeout` | `required` | `done` | Remove or explicitly disposition the currently-proven builtin-only production privilege paths blocking the shared mod-facing family claim. | `docs/blueprints/queues/builtin-content-deprivileging-closeout-queue.md` |
 | `queue.unified-contribution-intake-closeout` | `conditional` | `candidate` | Keep as conditional fallback only if a later audit proves a still-live family-specific intake shortcut outside the shared contract and registry seams. | `none` |
 | `queue.playable-family-gap-audit` | `conditional` | `candidate` | Audit whether any still-active playable family remains outside the landed playable runtime foundation. | `none` |
-| `queue.authoring-entrypoint-and-fail-closed-closure` | `conditional` | `active` | Prove that same-family authoring uses framework-owned entrypoints and fails closed. | `docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md` |
+| `queue.authoring-entrypoint-and-fail-closed-closure` | `conditional` | `done` | Historical closeout record for current Phase 3 authoring truth; reopen only if fresh same-family evidence appears. | `docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md` |
 | `queue.framework-scaffold-and-template-closure` | `conditional` | `candidate` | Extend scaffold, validator, template, and CI ownership where modularization acceptance still needs it. | `none` |
 | `queue.ui-runtime-contract-consumption` | `conditional` | `candidate` | Audit whether UI/runtime integration still blocks final modular ownership claims. | `none` |
 | `queue.first-party-mod-acceptance` | `conditional` | `candidate` | Prove builtin content now behaves like first-party mod content on the production path. | `none` |
@@ -184,3 +184,23 @@ This file is the single current execution index for repository work under the Bl
   - Summary: `Promoted authoring-entrypoint-and-fail-closed-closure as the active Phase 3 queue after the authoring audit confirmed that the remaining blocker is framework-owned authoring entrypoints, not runtime intake.`
   - Verification: `Blueprint pointer sync check plus targeted authoring source audit`
   - Next: `Resume the active queue from scenario-pack-and-default-pack-entrypoint-closure.`
+- 2026-07-06
+  - Summary: `Accepted scenario-pack-and-default-pack-entrypoint-closure after package scripts gained scenario-pack scaffold and validation entrypoints, a repository-owned scenario-pack scaffold/validator landed under tools/, and default-pack adapter drift became fail-closed against the default catalog entry.`
+  - Verification: `Blueprint pointer sync check plus npm test, npm run typecheck, and node tools/validate-scenario-packs.mjs`
+  - Next: `Resume the active queue from house-family-authoring-entrypoint-closure without widening beyond builtin house authoring seams.`
+- 2026-07-06
+  - Summary: `Accepted house-family-authoring-entrypoint-closure after builtin house module and renderer wiring moved onto one shared contribution list, the split seed files were retired, and the house interface contract recorded the single-record builtin registration rule.`
+  - Verification: `Blueprint pointer sync check plus npm test, npm run typecheck, and node tools/validate-scenario-packs.mjs`
+  - Next: `Resume the active queue from shared-fail-closed-policy-closeout without reopening new house business or runtime owner lines.`
+- 2026-07-07
+  - Summary: `Advanced shared-fail-closed-policy-closeout by locking scaffolded Phase 3 scenario-pack manifests onto the phase-3-canonical-v1 authoringTemplate marker, preserving legacy builtin manifests as accepted compatibility residue, and narrowing the remaining blocker to task-local documentation truth rather than another framework capability gap.`
+  - Verification: `Blueprint pointer sync check plus npm test, npm run typecheck, and node tools/validate-scenario-packs.mjs`
+  - Next: `Keep the active queue on shared-fail-closed-policy-closeout and finish documenting framework-owned authoring versus accepted compatibility residue without promoting queue-closeout yet.`
+- 2026-07-07
+  - Summary: `Promoted queue-closeout as the new active Phase 3 task after shared-fail-closed-policy-closeout finished with an explicit authoring classification matrix, accepted compatibility residue, and the no-new-code-seam conclusion for the current task boundary.`
+  - Verification: `Blueprint pointer sync check plus document consistency check`
+  - Next: `Run queue-closeout and decide whether Phase 3 authoring can close without promoting queue.framework-scaffold-and-template-closure.`
+- 2026-07-07
+  - Summary: `Closed queue.authoring-entrypoint-and-fail-closed-closure after queue-closeout concluded that current Phase 3 authoring is coherent without promoting queue.framework-scaffold-and-template-closure, and returned the Blueprint to target-level promotion-review with no active queue or task.`
+  - Verification: `Blueprint/target/queue pointer sync check plus npm test`
+  - Next: `Resume from the target plan and only promote a later queue if fresh evidence proves a new still-live blocker.`

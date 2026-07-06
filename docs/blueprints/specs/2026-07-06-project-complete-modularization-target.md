@@ -6,7 +6,7 @@
 - version_label: `mod-first-current-period`
 - status: `in-progress`
 - active_phase: `phase.authoring-closure`
-- active_queue: `queue.authoring-entrypoint-and-fail-closed-closure`
+- active_queue: `none`
 - required_queues:
   - `queue.core-production-integration`
   - `queue.shell-thinning-and-final-ownerization`
@@ -144,11 +144,20 @@ The latest target-level intake audit found that the audited contribution familie
 
 The next target-level decision therefore moved to `Phase 3: Authoring Closure`, and that review has now promoted `queue.authoring-entrypoint-and-fail-closed-closure` because same-family scenario-pack/default-pack/house-family authoring still depends on undocumented manual glue or missing fail-closed framework entrypoints.
 
+Current Phase 3 interpretation after later queue progress:
+
+- playable authoring is treated as landed framework-owned evidence through the existing scaffold, validation, package-script, and robustness-test coverage
+- scaffolded Phase 3 scenario-pack authoring is now treated as landed framework-owned evidence through repository-owned scaffold/validator entrypoints and the `phase-3-canonical-v1` authoring template marker
+- default-pack drift is now treated as fail-closed against the single default scenario-pack catalog entry rather than as an open same-family authoring blocker
+- builtin house authoring is now treated as landed framework-owned evidence through the single builtin contribution seed
+- legacy builtin scenario-pack manifests that predate `phase-3-canonical-v1` are accepted compatibility residue, not by themselves evidence that a broader scaffold-and-template queue must be promoted
+- the remaining Phase 3 blocker is task-local documentation truth: current artifacts must explain which authoring families are framework-owned and which residue is intentionally accepted
+
 ### Dependencies
 
 - Blueprint:
   - `docs/blueprints/blueprint.md`
-- Current active queue:
+- Latest queue closeout record:
   - `docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md`
 - Historical roadmap references:
   - `docs/superpowers/specs/2026-07-02-mod-first-unified-contract-roadmap-design.md`
@@ -207,7 +216,7 @@ Phase pass signal:
 | `queue.builtin-content-deprivileging-closeout` | `required` | `done` | `already completed` | `docs/blueprints/queues/builtin-content-deprivileging-closeout-queue.md` |
 | `queue.unified-contribution-intake-closeout` | `conditional` | `candidate` | `only if fresh review finds family-specific intake shortcuts outside shared contract/registry seams` | `none` |
 | `queue.playable-family-gap-audit` | `conditional` | `candidate` | `only if a still-open playable family gap is proven after foundation review` | `none` |
-| `queue.authoring-entrypoint-and-fail-closed-closure` | `conditional` | `active` | `already promoted after the Phase 3 authoring audit confirmed live manual glue across scenario-pack/default-pack/house-family authoring` | `docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md` |
+| `queue.authoring-entrypoint-and-fail-closed-closure` | `conditional` | `done` | `already closed after the Phase 3 authoring queue proved current same-family authoring is coherent without a narrower follow-up queue` | `docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md` |
 | `queue.framework-scaffold-and-template-closure` | `conditional` | `candidate` | `only if framework entrypoints remain incomplete outside already-closed slices` | `none` |
 | `queue.ui-runtime-contract-consumption` | `conditional` | `candidate` | `only if runtime-facing UI contract consumption still blocks target acceptance` | `none` |
 | `queue.first-party-mod-acceptance` | `conditional` | `candidate` | `only after earlier phases pass and acceptance proof is the remaining question` | `none` |
@@ -319,3 +328,7 @@ The current target may be considered accepted only when all items below are true
   - Summary: `Promoted authoring-entrypoint-and-fail-closed-closure after the Phase 3 audit confirmed that playable tooling is already landed evidence, but scenario-pack/default-pack/house-family authoring still lacks framework-owned entrypoints and fail-closed guards.`
   - Verification: `Target-level authoring source audit plus robustness coverage recheck`
   - Next: `Resume the active Phase 3 queue from scenario-pack-and-default-pack-entrypoint-closure.`
+- 2026-07-07
+  - Summary: `Recorded that queue.authoring-entrypoint-and-fail-closed-closure is now closed: current Phase 3 authoring is treated as coherent on current evidence, queue.framework-scaffold-and-template-closure was not promoted, and the target returns to promotion-review with no active queue.`
+  - Verification: `Target/queue pointer sync check plus npm test`
+  - Next: `Use the target plan to decide whether any later-phase queue is actually justified by fresh evidence.`
