@@ -1826,13 +1826,25 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.doesNotMatch(terrainFragmentSource, /getShoreMiddleAmount/);
   assert.match(terrainFragmentSource, /getContinuousShoreBands/);
   assert.match(terrainFragmentSource, /sampleContinuousShoreRing/);
+  assert.match(terrainFragmentSource, /sampleAnimatedBoundaryDrift/);
   assert.match(terrainFragmentSource, /getHexDirectionUv/);
   assert.match(terrainFragmentSource, /float openWater = 1\.0/);
-  assert.match(terrainFragmentSource, /vec2\(0\.5, -1\.0\)/);
-  assert.match(terrainFragmentSource, /vec2\(1\.0, -0\.5\)/);
-  assert.match(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.42/);
-  assert.match(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.78/);
-  assert.match(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 2\.85/);
+  assert.match(terrainFragmentSource, /vec2\(0\.0, -1\.0\)/);
+  assert.match(terrainFragmentSource, /vec2\(1\.0, -1\.0\)/);
+  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.0\)/);
+  assert.match(terrainFragmentSource, /vec2\(0\.0, 1\.0\)/);
+  assert.match(terrainFragmentSource, /vec2\(-1\.0, 1\.0\)/);
+  assert.match(terrainFragmentSource, /vec2\(-1\.0, 0\.0\)/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(0\.5,/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(-0\.5,/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(1\.0, -0\.5\)/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(-1\.0, 0\.5\)/);
+  assert.match(terrainFragmentSource, /0\.42 \+ nearDrift/);
+  assert.match(terrainFragmentSource, /0\.78 \+ nearDrift \* 0\.78/);
+  assert.match(terrainFragmentSource, /2\.85 \+ shallowDrift \* 0\.86/);
+  assert.match(terrainFragmentSource, /4\.45 \+ middleDrift \* 0\.82/);
+  assert.match(terrainFragmentSource, /nearFlow = vec2\(uTimeSeconds \* 0\.026/);
+  assert.match(terrainFragmentSource, /seaFlow = vec2\(uTimeSeconds \* 0\.018/);
   assert.match(
     terrainFragmentSource,
     /vec3 shoreBands = getContinuousShoreBands\(vUv, hexScale, mapAspect, water\)/
@@ -1865,6 +1877,7 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /boundaryFlow/);
   assert.match(terrainFragmentSource, /boundaryDriftNoise/);
   assert.match(terrainFragmentSource, /surfaceFlow/);
+  assert.match(terrainFragmentSource, /boundaryFlow = vec2\(uTimeSeconds \* 0\.026/);
   assert.match(terrainFragmentSource, /return crest \* 0\.86 - trough \* 0\.16/);
   assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.16\), 2\.4, 24\.0, 0\.020/);
   assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.14\), 4\.2, 36\.0, 0\.014/);
