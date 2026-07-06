@@ -1,5 +1,8 @@
 # Weekly Next Split Review
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 ## Purpose
@@ -42,3 +45,4 @@ Do not decide the next split only from intuition.
   - Already completed in this set and therefore no longer a later split candidate.
 - `src/main.ts`
   - Still the largest black box, but the closed 2026-07-02 set no longer justifies inventing another child here without a fresh review.
+

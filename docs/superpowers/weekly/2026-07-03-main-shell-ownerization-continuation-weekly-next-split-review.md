@@ -1,5 +1,8 @@
 # Main Shell Ownerization Continuation Weekly Next Split Review
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -47,3 +50,4 @@ Use fixed criteria to control what may happen after Child 25 without allowing th
 - Do not promote Child 26 while Child 25 remains active.
 - Do not promote Child 27 until Child 26 is baseline-rechecked.
 - Do not promote Child 28 or Child 29 from this weekly artifact without a fresh review/update.
+

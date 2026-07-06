@@ -1,5 +1,7 @@
 # Child 15 Navigation + Time Runtime Convergence Spec
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 ## 1. Goal
 
 Define the formal `Child 15` boundary for the queued follow-up child behind `Child 14` in the fresh `2026-07-02` weekly continuation set.

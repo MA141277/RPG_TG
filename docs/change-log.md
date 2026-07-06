@@ -63,6 +63,25 @@
 - 后续新出现的 code/content/asset/UI/framework/runtime/authoring 事项，不应再默认归入当前 target 或当前 queue；应先走 classification record，再根据 confidence 与 matched rules 路由到 queue 候选、pipeline 项、未来 target 候选或人工复核。
 - 旧 superpowers 文档仍保留供历史边界和验证脉络参考，但不会再被视为当前执行顺序的权威来源。
 
+## 2026-07-06 Fail-Closed Progress-Driven Governance Spec
+
+### Added
+- 新增仓库级治理 spec：[docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md)，把后续执行模型从 `weekly plan / weekly set / weekly orchestration` 切换为以 `项目进度文档` 为唯一续接真相源的 fail-closed 工作流。
+
+### Changed
+- 明确规定：如果 closeout 不能唯一推出 `next child / next action / next entry document`，则当前 child 或 task 不得标记为 `closed`。
+- 明确规定：child closeout 必须同时满足结构化 closeout、项目进度同步、next child recheck/none、以及远端 push 成功等硬门禁，否则只能停留在 `running`、`blocked` 或 `completed-but-open`。
+- 明确规定：旧 `weekly` 治理文档后续只作为历史记录保留，不再作为当前执行入口或当前队列控制器。
+- `docs/superpowers/specs/plan-governance-spec.md`、`docs/superpowers/README.md`、`docs/superpowers/plans/_plan-template.md`、`docs/superpowers/plans/_playable-plan-template.md`、`AGENTS.md` 与 `tools/lint-superpowers-plans.mjs` 已同步切到新模型，避免 spec、入口说明、模板和结构化校验继续各说各话。
+- 新增 `docs/superpowers/project-progress.md` 与 `docs/superpowers/templates/project-progress-template.md`、`child-closeout-template.md`、`task-closeout-template.md`，把唯一续接真相源与标准 closeout 输出格式正式落库。
+- `docs/superpowers/templates/weekly-*.md` 现已显式标记为历史模板，避免后续再被误当成当前执行入口。
+- `docs/superpowers/specs/weekly-orchestration-spec.md` 已显式降级为历史 spec，避免它继续和新治理 spec 形成并列入口。
+- 第三轮去歧义清扫已为仍保留旧 `weekly` 术语的历史 child plan / design spec 批量补上 `Legacy Governance Context` 头注，明确这些文件只保留技术与历史语境，不再充当现行治理入口。
+
+### Impact
+- 后续治理重构将围绕 `docs/superpowers/project-progress.md`、child plan 模板、closeout 模板与 plan governance spec 展开，而不是继续修补旧 weekly 模型。
+- 这次 spec 为正式弃用 weekly plan 提供了仓库内的第一份主规范，后续 README、模板、lint 约束与历史文档定位都将按它收敛。
+
 ## 2026-07-02 Spine Plugin Workflow Contract
 
 ### Added

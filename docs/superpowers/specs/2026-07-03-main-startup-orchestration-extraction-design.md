@@ -1,5 +1,7 @@
 # Main Startup Orchestration Extraction Design
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 **Goal:** Open a fresh post-Child-22 continuation line that extracts `startup / continue / restore / scenario import` orchestration from `src/main.ts` into one explicit coordinator seam without reopening runtime spine, render orchestration, or other already-closed roadmap boundaries.
 
 ## Why This Needs A Fresh Weekly Review

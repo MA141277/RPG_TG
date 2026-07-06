@@ -1,5 +1,8 @@
 # Mod-First Weekly Architecture Report
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 ## Purpose
@@ -161,3 +164,4 @@ flowchart TD
 - `None inside this closed set`
 
 Any later split must start from a fresh weekly review.
+

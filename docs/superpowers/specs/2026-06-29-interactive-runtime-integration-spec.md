@@ -1,5 +1,7 @@
 # Interactive Runtime Integration Spec
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 ## 1. Goal
 
 This spec defines how the project should move house-driven interaction, minigame launch, and story-battle launch under `src/core/runtime` so `src/main.ts` stops directly owning those session lifecycles.

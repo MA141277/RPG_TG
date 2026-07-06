@@ -1,5 +1,7 @@
 # Weekly Architecture Report
 
+> **Historical Template:** Deprecated under `fail-closed progress-driven governance`. Keep only for historical weekly reports.
+
 **Week Of:** `YYYY-MM-DD`
 
 ## Purpose

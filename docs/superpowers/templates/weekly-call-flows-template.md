@@ -1,5 +1,7 @@
 # Weekly Call Flows
 
+> **Historical Template:** Deprecated under `fail-closed progress-driven governance`. Keep only for historical weekly call-flow records.
+
 **Week Of:** `YYYY-MM-DD`
 
 ## Purpose

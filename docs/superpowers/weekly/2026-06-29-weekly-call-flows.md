@@ -1,5 +1,8 @@
 # Weekly Call Flows
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-06-29`
 
 ## Purpose
@@ -389,3 +392,4 @@ Child 11 completed -> execute Child 12 UI layout/interface-reserve child -> Chil
 - This flow exists to prevent Child 13 from degenerating into Child 11 backfill.
 - This flow also preserves the user's required queue order: Child 12 stays ahead of Child 13 as the UI layout/interface-reserve child and does not alter the current runtime direction.
 - Current weekly state: Child 13 is completed, so no active queued child remains on this flow.
+

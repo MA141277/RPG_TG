@@ -2,27 +2,116 @@
 
 ## 1. Goal
 
-This spec defines the required structure, execution discipline, acceptance gates, and bug-handling rules for files under `docs/superpowers/plans/`.
+This spec defines the required governance model for repository work tracked through `docs/superpowers/`.
 
-The target is to make repository plan files:
+The repository now uses a **fail-closed, progress-driven workflow**.
 
-- executable by humans and agents
-- resumable after interruptions
-- auditable through persistent progress records
-- enforceable through lightweight repository checks
+The strongest rule is:
+
+**If a closeout cannot uniquely determine the next child, the next action, and the next entry document, that closeout is invalid.**
+
+The purpose is to make repository work:
+
+- resumable after interruption
+- unambiguous for a different human or agent
+- auditable through durable structured state
+- fail-closed instead of summary-driven
 
 ## 2. Scope
 
 This spec applies to:
 
-- all implementation plans under `docs/superpowers/plans/`
-- the shared template at `docs/superpowers/plans/_plan-template.md`
+- all executable child plans under `docs/superpowers/plans/`
+- the canonical project progress document at `docs/superpowers/project-progress.md`
+- child closeout and task closeout structure
+- plan templates and closeout templates used for new work
 
-This spec does not define runtime game behavior.
+This spec does not define runtime gameplay behavior.
 
-## 3. Required Plan Sections
+## 3. Canonical Governance Artifacts
 
-Every plan file must include these sections in markdown:
+### 3.1 Project Progress Document
+
+Canonical path:
+
+- `docs/superpowers/project-progress.md`
+
+Role:
+
+- the only allowed resume truth source
+- the only allowed entry document for later continuation
+- the only document allowed to authoritatively state current stage, task, child, and next action
+
+### 3.2 Child Plan
+
+Canonical location:
+
+- `docs/superpowers/plans/*.md`
+
+Role:
+
+- the only executable implementation document
+- owns execution state, progress log, step checklist, and verification
+
+### 3.3 Child Spec
+
+Canonical location:
+
+- `docs/superpowers/specs/*.md`
+
+Role:
+
+- non-executable boundary lock
+- records scope, exit conditions, and expected verification before implementation
+
+### 3.4 Historical Weekly Artifacts
+
+Historical-only examples:
+
+- `docs/superpowers/plans/*weekly*.md`
+- `docs/superpowers/weekly/*.md`
+- `docs/superpowers/templates/weekly-*.md`
+
+Rules:
+
+- old weekly artifacts may remain as repository history
+- they must not be used as the active execution controller
+- no new work may be opened under the weekly governance model
+
+## 4. Single Source Of Truth Rule
+
+The project progress document is the only valid resume truth source.
+
+Every valid child closeout and task closeout must land there.
+
+When resuming work, always do this:
+
+1. open `docs/superpowers/project-progress.md`
+2. read `Current Stage`
+3. read `Current Task`
+4. read `Next Child`
+5. read `Next Required Action`
+6. open the `Next Owner Document`
+
+If those fields do not uniquely determine what to do next, the current governance state is invalid.
+
+## 5. Forbidden Ambiguity
+
+The following states are forbidden:
+
+- natural-language summary without structured state
+- saying “next is Child X” without recording Child X status
+- saying “wait for recheck” without saying who rechecks and from which document to continue
+- marking a child complete while the project progress document is stale
+- saying a next child should start before its plan is updated
+- handing work off before remote push succeeds
+- allowing two documents to both look like the current resume entry
+
+If any of these states exist, the current child or task must not be marked `closed`.
+
+## 6. Required Plan Sections
+
+Every new executable child plan must include:
 
 - title heading (`# ...`)
 - `Goal`
@@ -41,15 +130,13 @@ Recommended additional sections:
 - `Verification Plan`
 - `Exit Check`
 - `Completion Checklist`
-- links to related specs
-- `Queue` for weekly-set plans
-- `Promotion Rule` for weekly-set plans
-- `Close Rule` for weekly-set plans
-- `Current Iteration Phase` and `Post-Queue Continuation Rules` only for extended queue/baseline documents that need extra phase narration
+- `## Child Closeout` when the child closes
 
-## 4. Execution State Contract
+Historical weekly plans may keep older structure, but new plans must not use weekly governance sections as the active control path.
 
-Every plan must contain an `Execution State` block with these fields:
+## 7. Execution State Contract
+
+Every new executable child plan must contain these fields in `Execution State`:
 
 - `Status`
 - `Last Updated`
@@ -58,75 +145,44 @@ Every plan must contain an `Execution State` block with these fields:
 - `Verification`
 - `Notes`
 
-Allowed `Status` values:
+Allowed statuses for new work:
 
-- `not-started`
-- `in-progress`
+- `waiting`
+- `running`
 - `blocked`
-- `completed`
-- `unknown`
+- `completed-but-open`
+- `closed`
+
+Meaning:
+
+- `waiting`
+  - child exists but is not executable yet
+- `running`
+  - current active execution target
+- `blocked`
+  - cannot continue; blocker must be recorded in `Progress Log`
+- `completed-but-open`
+  - work is done but closeout is incomplete
+- `closed`
+  - all closeout gates have passed
 
 Rules:
 
 - `Next Step` must describe a concrete resume point
-- `Verification` must summarize the last known validation state
+- `Verification` must summarize the latest known validation state
 - `Last Updated` must use `YYYY-MM-DD`
-- `completed` may be used only when acceptance gates are satisfied
-- `blocked` may be used only when the blocking condition is recorded in `Progress Log`
+- `closed` may be used only when all child closeout hard gates pass
+- `completed-but-open` must be used when the work is finished but sync / push / structured closeout is still incomplete
 
-For weekly plans, queue-governance plans, and review/baseline plans that control later promotion:
+Legacy note:
 
-- `Execution State` should also make the current iteration/phase explicit when the queue is no longer in ordinary active execution
-- if the current queue is closed, `Next Step` must say that a fresh weekly review/spec/plan cycle is required before later continuation work starts
+- historical plan files may still use older status values such as `not-started`, `in-progress`, `completed`, or `unknown`
+- those values remain tolerated for historical records only
+- new plans must use the new lifecycle states
 
-## 4.1 Plan Types And Promotion Discipline
+## 8. Progress Log Contract
 
-This repository now uses three distinct governance artifacts:
-
-- `queued child spec`
-  - lives under `docs/superpowers/specs/`
-  - locks boundary, goal, out-of-scope, exit conditions, and verification story
-  - is not executable by itself
-- `active child plan`
-  - lives under `docs/superpowers/plans/`
-  - is the only executable child document
-  - must conform to this plan-governance spec
-- `weekly set plan`
-  - lives under `docs/superpowers/plans/`
-  - controls the current queue and promotion order
-  - may reference queued children that do not yet have plan files
-
-Promotion rules:
-
-- only one child may be `active` at a time unless a stronger written reason explicitly allows parallelism
-- a queued child must not receive code execution until it is promoted by the weekly set plan
-- when a queued child is promoted, governance must first perform a baseline recheck against the latest code and weekly artifacts
-- after baseline recheck, the queued child must be recorded as one of:
-  - `unchanged`
-  - `narrowed`
-  - `superseded`
-- if a queued child becomes `superseded`, do not automatically create a replacement child in the same work batch
-
-## 4.2 Iteration / Phase Declaration
-
-Plans that govern a weekly queue, continuation queue, or review/baseline unlock flow should declare the current iteration/phase explicitly.
-
-Recommended fields:
-
-- `Iteration label`
-- `Current phase`
-- `Entry trigger`
-- `Exit trigger`
-
-Purpose:
-
-- make it clear whether the plan is in active execution, queue closeout, review preparation, or a later continuation phase
-- prevent later work from being treated as an implicit extension of a closed queue
-- keep historical progress readable without inferring phase from long progress logs alone
-
-## 5. Progress Log Contract
-
-Every plan must maintain a `## Progress Log` section.
+Every child plan must maintain a `## Progress Log` section.
 
 Each entry must contain:
 
@@ -138,50 +194,154 @@ Each entry must contain:
 Recommended format:
 
 ```md
-- 2026-06-29
-  - Summary: `Implemented shared loader.`
-  - Verification: `npm run typecheck`, `npm run build`
-  - Next: `Start Task 3 Step 1.`
+- 2026-07-06
+  - Summary: `Updated the project progress document and rewrote the child template.`
+  - Verification: `npm run lint:plans`
+  - Next: `Author the next child closeout template.`
 ```
 
 Rules:
 
-- append a new log entry at the end of every work batch
+- append a new entry after every work batch
 - do not silently replace prior log history
-- if work stops because of a blocker, record the blocker in the latest log entry
+- if work stops because of a blocker, record the blocker in the latest entry
 
-## 6. Checkbox Rules
+## 9. Child Closeout Hard Gates
 
-Checkbox steps are the durable task checklist.
+A child may be marked `closed` only when all of these are true:
+
+1. the child plan is updated to `closed`
+2. task/queue state is synchronized in the child-local governance path
+3. the project progress document is updated
+4. the next child plan is already rechecked and updated, or `Next Child` is explicitly `none`
+5. a structured `## Child Closeout` block exists
+6. remote push succeeded
+
+If any item is missing:
+
+- the child must remain `running`, `blocked`, or `completed-but-open`
+- the child must not be marked `closed`
+
+## 10. Standard Child Closeout Block
+
+Every child closeout must include this structure:
+
+```md
+## Child Closeout
+
+- Closed Child: `Child 33`
+- Parent Task: `Task 4`
+- Parent Stage: `Stage 2`
+- Closeout Status: `closed`
+- Project Progress Synced: `yes`
+- Next Child: `Child 34`
+- Next Child Status: `waiting`
+- Next Required Action: `update-plan-and-recheck`
+- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Owner Document: `docs/superpowers/plans/<child-34-plan>.md`
+- Push Status: `success`
+- Push Commit: `commit-sha`
+- Resume From: `Open docs/superpowers/project-progress.md, then update the Child 34 plan.`
+```
+
+If there is no next child:
+
+```md
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `close-task`
+- Next Owner Document: `none`
+```
 
 Rules:
 
-- use `- [ ]` for pending steps
-- use `- [x]` for completed steps
-- do not mark a checkbox complete before the corresponding work and verification are done
-- if historical plans are imported without reliable progress, leave steps unchecked and record uncertainty in `Notes`
+- no field may be omitted
+- no field may be inferred from prose
+- the closeout block must match the project progress document
 
-## 7. Verification Gates
+## 11. Task Closeout Hard Gates
 
-### 7.1 Required Baseline Gate
+A task may be marked `closed` only when:
+
+- the final child closeout is valid
+- the project progress document is synchronized
+- the next task is explicit, or `none`
+- a structured `## Task Closeout` block exists
+- remote push succeeded
+
+Required shape:
+
+```md
+## Task Closeout
+
+- Closed Task: `Task 4`
+- Parent Stage: `Stage 2`
+- Task Closeout Status: `closed`
+- Project Progress Synced: `yes`
+- Next Task: `Task 5`
+- Next Task Status: `waiting`
+- Next Required Action: `update-first-child-plan`
+- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Owner Document: `docs/superpowers/plans/<first-child-plan>.md`
+- Push Status: `success`
+- Push Commit: `commit-sha`
+- Resume From: `Open docs/superpowers/project-progress.md.`
+```
+
+## 12. Required Project Progress Fields
+
+`docs/superpowers/project-progress.md` must include, at minimum:
+
+- `Current Stage`
+- `Current Stage Status`
+- `Current Task`
+- `Current Task Status`
+- `Current Child`
+- `Current Child Status`
+- `Next Child`
+- `Next Child Status`
+- `Next Required Action`
+- `Next Entry Document`
+- `Next Owner Document`
+- `Last Closed Item`
+- `Push Status`
+- `Push Commit`
+- `Resume From`
+
+Rules:
+
+- these fields must be explicit
+- `Next Child` may be `none`
+- `Next Required Action` may never be empty
+- `Next Entry Document` must always be `docs/superpowers/project-progress.md`
+- `Next Owner Document` must identify the next concrete owner doc or `none`
+
+## 13. Next Child Admission Rule
+
+A next child may start only when all of these are true:
+
+- the prior child has a valid structured closeout
+- the project progress document is synchronized
+- the next child plan has already been updated
+- remote push status is `success`
+
+If any of these are missing:
+
+- the next child must remain `waiting`
+- no implementation may start from that child
+
+## 14. Verification Gates
+
+### 14.1 Required Baseline Gate
 
 At minimum, implementation work batches that modify production code should record:
 
 - `npm run typecheck`
 - `npm run build`
 
-If a plan intentionally skips one of these commands, the reason must be recorded in `Progress Log`.
+If one is intentionally skipped, the reason must be recorded.
 
-### 7.2 Feature-Specific Gate
-
-Plans should add targeted checks where relevant, for example:
-
-- tests for loader and parser work
-- story flow regression checks for event/scene work
-- house runtime regression checks for special-house work
-- manual UI flow verification for navigation and interaction work
-
-### 7.3 Documentation-Only Exception
+### 14.2 Documentation-Only Exception
 
 Doc-only batches may record:
 
@@ -189,7 +349,7 @@ Doc-only batches may record:
 
 but must say that explicitly in `Verification`.
 
-## 8. Bug Severity And Handling
+## 15. Bug Severity And Handling
 
 Plans must classify discovered issues using these levels:
 
@@ -200,77 +360,51 @@ Plans must classify discovered issues using these levels:
 - `P2`
   - non-critical UI issue, minor text mismatch, edge-case bug with workaround
 
-Handling rules:
+Rules:
 
-- unresolved `P0` blocks further feature work on lower-priority plans
-- unresolved `P1` prevents the current plan from being marked `completed`
-- `P2` may be deferred only if recorded in `Progress Log`, backlog, or follow-up plan
+- unresolved `P0` blocks lower-priority work
+- unresolved `P1` prevents child closeout
+- `P2` may be deferred only if explicitly recorded
 
-## 9. Acceptance Rules
+## 16. Resume Rules
 
-### 9.1 Step Acceptance
+When resuming a child plan, use this order:
 
-A step is complete only when:
+1. `docs/superpowers/project-progress.md`
+2. latest `Progress Log`
+3. `Execution State.Next Step`
+4. first unchecked checkbox
+5. actual codebase state, if docs are stale
 
-- the corresponding code or docs are changed
-- the checkbox is marked `- [x]`
-- `Execution State` reflects the new state
-- verification is recorded
+If these disagree, update the governing docs before continuing implementation.
 
-### 9.2 Plan Acceptance
+## 17. Historical Weekly Artifact Rule
 
-A plan may be marked `completed` only when:
+Weekly artifacts are not deleted by this spec.
 
-- required checkboxes are complete
-- required verification has passed or documented exceptions were approved
-- no unresolved `P0` or `P1` remains within the plan scope
-- the latest `Progress Log` entry records the completion state
+They remain:
 
-For weekly/queue-governance plans:
+- historical evidence
+- migration context
+- closed-record reference
 
-- `completed` may still mean the queue itself is closed even if later candidate work exists outside the queue
-- candidate later work must not be described as unlocked or executable unless governance explicitly promotes it
-- queued child specs may remain in the closed record as candidates, but they must not be treated as active plans until a later weekly set promotes them
+They are not:
 
-## 10. Resume Rules
+- the current execution entry point
+- the current queue controller
+- permission to open new implementation work
 
-When resuming a plan, use this priority order:
-
-1. latest `Progress Log`
-2. `Execution State.Next Step`
-3. first unchecked checkbox
-4. actual codebase state, if docs are stale
-
-If these disagree, update the plan before continuing new implementation.
-
-## 10.1 Candidate vs Unlocked Rule
-
-When a plan governs a queue or later continuation:
-
-- an `architecture candidate`, `next split candidate`, or backlog item is not executable work
-- only an item explicitly recorded by governance as the `next executable child` or equivalent may start implementation
-- a queued child spec is still non-executable until promotion plus active-plan authoring happen
-- if a queue has been closed, any later continuation must begin with a fresh review plus explicit spec/plan authoring before code work resumes
-
-## 10.2 Queue Depth Control
-
-Weekly/queue-governance plans should keep future queue depth controlled unless a stronger written reason exists.
-
-Recommended maximum visible depth:
-
-- one `active executable child`
-- one `immediate queued follow-up`
-- one `locked follow-up child`
-
-Anything beyond that should remain in architecture review, backlog, or candidate status until promoted by a later review.
-
-## 11. Repository Enforcement
+## 18. Repository Enforcement
 
 Repository enforcement happens through:
 
 - this spec
-- `AGENTS.md` instructions
+- `docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md`
+- `AGENTS.md`
 - `docs/superpowers/README.md`
-- the plan lint script
+- child plan templates
+- project progress template
+- closeout templates
+- `tools/lint-superpowers-plans.mjs`
 
-The plan lint script is structural only. It checks format and required fields, not semantic correctness.
+The lint tool is structural only. It does not prove semantic correctness, but it should reject obviously invalid plan structure where possible.

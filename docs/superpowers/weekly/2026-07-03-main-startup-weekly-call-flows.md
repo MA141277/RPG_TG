@@ -1,5 +1,8 @@
 # Main Startup Weekly Call Flows
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -53,3 +56,4 @@ After extraction, `src/main.ts` should only hand startup-family requests to one 
 ```text
 MainUiFlow shell action -> main.ts shell entry -> startup-session-coordinator -> activation/bootstrap routing -> startup result -> existing render path
 ```
+

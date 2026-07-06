@@ -1,5 +1,8 @@
 # Main Startup Weekly Review Index
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 **Weekly Set Plan:** `docs/superpowers/plans/2026-07-03-main-startup-weekly-orchestration-plan.md`
@@ -74,3 +77,4 @@
   - if later work still wants to thin `main.ts`, it must first prove the remaining debt is not the already-closed startup-family boundary
 - Category:
   - `fresh-review required`
+

@@ -1,5 +1,8 @@
 # Weekly Orchestration Plan
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **For agentic workers:** Use this file as the queue-level controller for the week's implementation plans. Execute concrete code work from child plans only. Update both the child plan and this weekly orchestration plan after each work batch.
 
 **Goal:** Govern this week's repository plan execution so child plans run in the correct order, active work is visible, pending work is queued, interrupted work can resume from a single weekly source of truth, and the post-Child-13 queue closeout state is explicit before any later continuation work opens a new weekly set.
@@ -45,11 +48,11 @@
 
 The next weekly iteration must treat governance work as controlled continuation, not as automatic queue growth.
 
-- 改造目标 1: keep the weekly plan as the single source of truth for which child is executable, which child is only a candidate, and which work remains outside the queue
-- 改造目标 2: separate `architecture candidate` from `unlocked child` so architecture-report follow-up ideas are not mistaken for implementation permission
-- 改造目标 3: make the current iteration/phase explicit so later work can distinguish `closed queue`, `review/prep`, and `active execution` states without relying on historical inference
-- 改造目标 4: prevent infinite child splitting by requiring every new child to justify why it is a separate reviewable boundary instead of residual cleanup inside the current closeout
-- 改造目标 5: keep later runtime continuation decomposed by subsystem boundary and verification gate, rather than reopening one large undifferentiated ownerization program
+- 鏀归€犵洰鏍?1: keep the weekly plan as the single source of truth for which child is executable, which child is only a candidate, and which work remains outside the queue
+- 鏀归€犵洰鏍?2: separate `architecture candidate` from `unlocked child` so architecture-report follow-up ideas are not mistaken for implementation permission
+- 鏀归€犵洰鏍?3: make the current iteration/phase explicit so later work can distinguish `closed queue`, `review/prep`, and `active execution` states without relying on historical inference
+- 鏀归€犵洰鏍?4: prevent infinite child splitting by requiring every new child to justify why it is a separate reviewable boundary instead of residual cleanup inside the current closeout
+- 鏀归€犵洰鏍?5: keep later runtime continuation decomposed by subsystem boundary and verification gate, rather than reopening one large undifferentiated ownerization program
 
 ## Post-Queue Continuation Rules
 
@@ -264,21 +267,10 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 
 ### Long-Term Direction
 
-- 将当前项目逐步改造成以 mod 为主的游戏框架。
-- 让不同游戏内容通过统一的数据、引擎、runtime、模块接口接入。
-- 降低 `src/main.ts` 与单体业务流程的黑盒耦合。
-- 为后续内容迁移、小游戏统一接入、任务系统、事件系统、UI/presenter 解耦提供稳定架构骨架。
-
+- 灏嗗綋鍓嶉」鐩€愭鏀归€犳垚浠?mod 涓轰富鐨勬父鎴忔鏋躲€?- 璁╀笉鍚屾父鎴忓唴瀹归€氳繃缁熶竴鐨勬暟鎹€佸紩鎿庛€乺untime銆佹ā鍧楁帴鍙ｆ帴鍏ャ€?- 闄嶄綆 `src/main.ts` 涓庡崟浣撲笟鍔℃祦绋嬬殑榛戠洅鑰﹀悎銆?- 涓哄悗缁唴瀹硅縼绉汇€佸皬娓告垙缁熶竴鎺ュ叆銆佷换鍔＄郴缁熴€佷簨浠剁郴缁熴€乁I/presenter 瑙ｈ€︽彁渚涚ǔ瀹氭灦鏋勯鏋躲€?
 ### This Week Scope
 
-- 继续按 engine-first / mod-first 路线推进 `src/core` 架构拆分。
-- 本周重点不是完成所有功能模块接入，而是完成核心模块的边界收敛、协同骨架和兼容接点。
-- 本周需要覆盖所有目标子 runtime 与功能模块的盘点、分类、职责划分、边界说明和后续接入顺序。
-- 优先收敛 Shared Runtime / Runtime Dispatch / Router / Interaction Runtime / House Runtime integration seam / Shared Runtime State carrier。
-- 保持当前功能兼容现有状态，不要求本周完成全量迁移。
-- 通过计划文档、五份核心 weekly artifact、边界说明降低项目黑盒程度。
-- 当前队列口径：Child 4 已完成，Child 5 已完成 presenter/render decoupling，Child 6 已完成 Task Runtime 首版抽离，Child 7 已完成 Mod Runtime 首版抽离，Child 8 已完成 StateSync Runtime 首版 canonical boundary，Child 9 已正式定义为 Runtime Contract Hardening，Child 10 已正式定义为 Runtime Ownerization Review And Baseline，Child 11 已作为锁定中的 ownerization 实施 child 编排进队列；Child 11 之后如需新增 child，仍必须先复盘再决定是否拆出独立 spec + plan。
-
+- 缁х画鎸?engine-first / mod-first 璺嚎鎺ㄨ繘 `src/core` 鏋舵瀯鎷嗗垎銆?- 鏈懆閲嶇偣涓嶆槸瀹屾垚鎵€鏈夊姛鑳芥ā鍧楁帴鍏ワ紝鑰屾槸瀹屾垚鏍稿績妯″潡鐨勮竟鐣屾敹鏁涖€佸崗鍚岄鏋跺拰鍏煎鎺ョ偣銆?- 鏈懆闇€瑕佽鐩栨墍鏈夌洰鏍囧瓙 runtime 涓庡姛鑳芥ā鍧楃殑鐩樼偣銆佸垎绫汇€佽亴璐ｅ垝鍒嗐€佽竟鐣岃鏄庡拰鍚庣画鎺ュ叆椤哄簭銆?- 浼樺厛鏀舵暃 Shared Runtime / Runtime Dispatch / Router / Interaction Runtime / House Runtime integration seam / Shared Runtime State carrier銆?- 淇濇寔褰撳墠鍔熻兘鍏煎鐜版湁鐘舵€侊紝涓嶈姹傛湰鍛ㄥ畬鎴愬叏閲忚縼绉汇€?- 閫氳繃璁″垝鏂囨。銆佷簲浠芥牳蹇?weekly artifact銆佽竟鐣岃鏄庨檷浣庨」鐩粦鐩掔▼搴︺€?- 褰撳墠闃熷垪鍙ｅ緞锛欳hild 4 宸插畬鎴愶紝Child 5 宸插畬鎴?presenter/render decoupling锛孋hild 6 宸插畬鎴?Task Runtime 棣栫増鎶界锛孋hild 7 宸插畬鎴?Mod Runtime 棣栫増鎶界锛孋hild 8 宸插畬鎴?StateSync Runtime 棣栫増 canonical boundary锛孋hild 9 宸叉寮忓畾涔変负 Runtime Contract Hardening锛孋hild 10 宸叉寮忓畾涔変负 Runtime Ownerization Review And Baseline锛孋hild 11 宸蹭綔涓洪攣瀹氫腑鐨?ownerization 瀹炴柦 child 缂栨帓杩涢槦鍒楋紱Child 11 涔嬪悗濡傞渶鏂板 child锛屼粛蹇呴』鍏堝鐩樺啀鍐冲畾鏄惁鎷嗗嚭鐙珛 spec + plan銆?
 ## Weekly Focus Modules
 
 - `Engine / Boot Runtime`
@@ -295,8 +287,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - `Effect Settlement Runtime`
 ## Full Runtime And Module Coverage Inventory
 
-本清单是本周必须覆盖和编排的拆分视图，不代表本周必须完成所有代码级抽离。Child 6 closeout 后，Task Runtime 已从“待正式化”提升为已落地的首版 runtime seam。
-
+鏈竻鍗曟槸鏈懆蹇呴』瑕嗙洊鍜岀紪鎺掔殑鎷嗗垎瑙嗗浘锛屼笉浠ｈ〃鏈懆蹇呴』瀹屾垚鎵€鏈変唬鐮佺骇鎶界銆侰hild 6 closeout 鍚庯紝Task Runtime 宸蹭粠鈥滃緟姝ｅ紡鍖栤€濇彁鍗囦负宸茶惤鍦扮殑棣栫増 runtime seam銆?
 ### Target Sub-Runtimes
 
 - `Engine / Boot Runtime`
@@ -321,7 +312,7 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 - `house modules`
 - `minigame modules`
 - `story-battle module`
-- `task module` (`Mission` 仅作为内容层或展示层命名)
+- `task module` (`Mission` 浠呬綔涓哄唴瀹瑰眰鎴栧睍绀哄眰鍛藉悕)
 - `event module`
 - `scene / dialogue module`
 - `UI / layout / presenter module`
@@ -332,103 +323,34 @@ This weekly plan has one governing narrative: move the project toward a `mod-fir
 
 ### Landed
 
-- `Engine / Boot Runtime`: Child 1 已落地第一条 selected-mod bootstrap seam，但还不是完整 mod activation。
-- `Shared Runtime`: Child 1/3/4 已落地最小 shared runtime skeleton；Child 6 继续把 taskUpdates 接入 RuntimeResult。
-- `Runtime Dispatch / Router`: Child 1 已落地，Child 4 已扩到最小 `RuntimeState` carrier。
-- `Effect Settlement Runtime`: Child 1 已落地，Child 4 已接入 `RuntimeState`；Child 6 只返回 task effects，不应用 effects。
-- `Save / Load Runtime`: Child 1/2 已落地 envelope、migration、loader、writer、selected-mod validation。
-- `Navigation Runtime`: Child 3 已落地 typed navigation entry seam。
-- `Time Runtime`: Child 3 已落地 day/time trigger seam。
-- `Event Runtime`: Child 3 已落地 candidate selection and activation seam。
-- `Scene Runtime`: Child 3 已落地 first event-to-scene handoff seam。
-- `Interaction Runtime`: Child 4 已落地 covered interaction entry/action seam 与最小 shared result path。
-- `House Runtime integration seam`: Child 4 已落地 core-owned bridge 与 legacy adapter。
-- `Task Runtime`: Child 6 已落地首版正式 contracts、minimum lifecycle、duplicate active guard、terminal failed/completed guard、signal-driven progression、taskUpdates/effects/signals result seam。
-- `Presentation / Render Bridge`: Child 5 已完成首版 presenter output bridge。
-
+- `Engine / Boot Runtime`: Child 1 宸茶惤鍦扮涓€鏉?selected-mod bootstrap seam锛屼絾杩樹笉鏄畬鏁?mod activation銆?- `Shared Runtime`: Child 1/3/4 宸茶惤鍦版渶灏?shared runtime skeleton锛汣hild 6 缁х画鎶?taskUpdates 鎺ュ叆 RuntimeResult銆?- `Runtime Dispatch / Router`: Child 1 宸茶惤鍦帮紝Child 4 宸叉墿鍒版渶灏?`RuntimeState` carrier銆?- `Effect Settlement Runtime`: Child 1 宸茶惤鍦帮紝Child 4 宸叉帴鍏?`RuntimeState`锛汣hild 6 鍙繑鍥?task effects锛屼笉搴旂敤 effects銆?- `Save / Load Runtime`: Child 1/2 宸茶惤鍦?envelope銆乵igration銆乴oader銆亀riter銆乻elected-mod validation銆?- `Navigation Runtime`: Child 3 宸茶惤鍦?typed navigation entry seam銆?- `Time Runtime`: Child 3 宸茶惤鍦?day/time trigger seam銆?- `Event Runtime`: Child 3 宸茶惤鍦?candidate selection and activation seam銆?- `Scene Runtime`: Child 3 宸茶惤鍦?first event-to-scene handoff seam銆?- `Interaction Runtime`: Child 4 宸茶惤鍦?covered interaction entry/action seam 涓庢渶灏?shared result path銆?- `House Runtime integration seam`: Child 4 宸茶惤鍦?core-owned bridge 涓?legacy adapter銆?- `Task Runtime`: Child 6 宸茶惤鍦伴鐗堟寮?contracts銆乵inimum lifecycle銆乨uplicate active guard銆乼erminal failed/completed guard銆乻ignal-driven progression銆乼askUpdates/effects/signals result seam銆?- `Presentation / Render Bridge`: Child 5 宸插畬鎴愰鐗?presenter output bridge銆?
 ### Partially Landed / Compatibility Bridge
 
-- `House Runtime`: core seam 已有，但具体 house modules 仍主要在 `src/application/house*` 通过 legacy adapter 执行。
-- `Minigame Runtime / Dispatch Interface`: covered activity-qte/city-begging/story-battle 路径已有 bridge，统一 dispatch interface 尚未正式化。
-- `Task Runtime`: Child 6 是首版最小可协同 runtime，尚未接入完整 task authoring DSL、UI/presenter 或 mod 自定义 evaluator 插件。
-- `Presentation / Render Bridge`: Child 5 已完成首版 presenter output bridge；当前为 provisional bridge，layout renderer 仍未正式化。
-- `Mod Runtime`: Child 7 已完成首版 formal runtime seam，包含 source normalization/loading/parsing、activation result handoff、capability/dependency guard、atomic rollback、main adapter，以及 builtin/file/url/restore selected-mod activation 接入；后续更完整的 capability/dependency 系统仍是 later hardening。
-- `StateSync Runtime`: Child 8 已完成首版 formal runtime seam，包含 canonical state contract、mandatory triggers、syncState、hydrate/normalize/app bridge/pre-save/mod rebuild/presentation input helpers，以及 main.ts bridge helper 外移。
-- `mod content loading / content-pack module`: 现有 content-pack 可用，但尚未完全迁入 mod-first loader/capability 体系。
-
+- `House Runtime`: core seam 宸叉湁锛屼絾鍏蜂綋 house modules 浠嶄富瑕佸湪 `src/application/house*` 閫氳繃 legacy adapter 鎵ц銆?- `Minigame Runtime / Dispatch Interface`: covered activity-qte/city-begging/story-battle 璺緞宸叉湁 bridge锛岀粺涓€ dispatch interface 灏氭湭姝ｅ紡鍖栥€?- `Task Runtime`: Child 6 鏄鐗堟渶灏忓彲鍗忓悓 runtime锛屽皻鏈帴鍏ュ畬鏁?task authoring DSL銆乁I/presenter 鎴?mod 鑷畾涔?evaluator 鎻掍欢銆?- `Presentation / Render Bridge`: Child 5 宸插畬鎴愰鐗?presenter output bridge锛涘綋鍓嶄负 provisional bridge锛宭ayout renderer 浠嶆湭姝ｅ紡鍖栥€?- `Mod Runtime`: Child 7 宸插畬鎴愰鐗?formal runtime seam锛屽寘鍚?source normalization/loading/parsing銆乤ctivation result handoff銆乧apability/dependency guard銆乤tomic rollback銆乵ain adapter锛屼互鍙?builtin/file/url/restore selected-mod activation 鎺ュ叆锛涘悗缁洿瀹屾暣鐨?capability/dependency 绯荤粺浠嶆槸 later hardening銆?- `StateSync Runtime`: Child 8 宸插畬鎴愰鐗?formal runtime seam锛屽寘鍚?canonical state contract銆乵andatory triggers銆乻yncState銆乭ydrate/normalize/app bridge/pre-save/mod rebuild/presentation input helpers锛屼互鍙?main.ts bridge helper 澶栫Щ銆?- `mod content loading / content-pack module`: 鐜版湁 content-pack 鍙敤锛屼絾灏氭湭瀹屽叏杩佸叆 mod-first loader/capability 浣撶郴銆?
 ### Missing / Not Formalized
 
-- 完整 `Minigame Runtime / Dispatch Interface`。
-- 完整 `Presentation / Render Bridge` layout/schema 代码切换。
-- 完整 `Mod Runtime`、capability、dependency 体系；Child 7 已完成首版 activation/startup seam，但更完整的 capability/dependency policy、hot reload、sandboxing 和 authoring tooling 仍非本周目标。
-- 更完整的 `StateSync Runtime` hardening；Child 8 已完成首版 canonical boundary，但 deeper save IO integration、runtime dispatch auto-commit integration 和 full legacy state migration 仍是后续工作。
-- 完整 `mod schema` 与全量 mod 数据迁移。
-- `characterDefinitions -> RuntimeState.core` 收敛；当前明确 deferred。
-
+- 瀹屾暣 `Minigame Runtime / Dispatch Interface`銆?- 瀹屾暣 `Presentation / Render Bridge` layout/schema 浠ｇ爜鍒囨崲銆?- 瀹屾暣 `Mod Runtime`銆乧apability銆乨ependency 浣撶郴锛汣hild 7 宸插畬鎴愰鐗?activation/startup seam锛屼絾鏇村畬鏁寸殑 capability/dependency policy銆乭ot reload銆乻andboxing 鍜?authoring tooling 浠嶉潪鏈懆鐩爣銆?- 鏇村畬鏁寸殑 `StateSync Runtime` hardening锛汣hild 8 宸插畬鎴愰鐗?canonical boundary锛屼絾 deeper save IO integration銆乺untime dispatch auto-commit integration 鍜?full legacy state migration 浠嶆槸鍚庣画宸ヤ綔銆?- 瀹屾暣 `mod schema` 涓庡叏閲?mod 鏁版嵁杩佺Щ銆?- `characterDefinitions -> RuntimeState.core` 鏀舵暃锛涘綋鍓嶆槑纭?deferred銆?
 ## Minimum Cooperative Data Structures
 
-本周不要求定义最终完整版领域模型，只要求定义最小可协同数据结构，让已落地 runtime 能共享 state/result/signal 边界并继续兼容现有功能。
-
-- `RuntimeState`: 最小 carrier 已落地；`core` 当前映射 application-layer `GameState`，`app` 只携带 Child 4 dispatch-critical app fields，`view` 暂为空。
-- `RuntimeRequest`: 继续作为 shared dispatch/router 输入请求形状。
-- `RuntimeResult`: 已扩到 `RuntimeState`，并携带 effects、navigation、scene、taskActions/taskSignals、taskUpdates、interactive 等兼容输出。
-- `RuntimeInteractiveSignal`: 已有 `reenter-house` / `none` 的最小 signal。
-- `TaskRuntimeState`: Child 6 已定义 `instancesByTaskId`、`completedTaskIds`、`failedTaskIds`、`updatedAt`。
-- `TaskRuntimeResult`: Child 6 已定义并返回 `state`、`taskUpdates`、`effects`、`signals`；effect 应用仍属于 shared runtime settlement。
-- `Runtime <-> AppState bridge`: 当前通过 `RuntimeState.app` 的最小 pick 与 main/app-shell 兼容桥接；不把完整 AppState 并入 runtime。
-- `Interaction Runtime I/O`: covered launch/action 通过 core runtime seam 与 `RuntimeResult` 返回。
-- `House Runtime integration seam I/O`: house enter/leave/dispatch 通过 core bridge 进入 legacy house adapter。
-- `Runtime Dispatch / Router input-output boundary`: 输入为 `RuntimeState + RuntimeRequest`，输出为 `RuntimeResult`，settlement 只做 additive compatibility。
-- `characterDefinitions deferred strategy`: `characterDefinitions` 继续独立传递，不并入 `RuntimeState.core`；未来是否并入受 weekly promotion gate 约束，必须先更新 child spec、child plan、weekly plan。
-
+鏈懆涓嶈姹傚畾涔夋渶缁堝畬鏁寸増棰嗗煙妯″瀷锛屽彧瑕佹眰瀹氫箟鏈€灏忓彲鍗忓悓鏁版嵁缁撴瀯锛岃宸茶惤鍦?runtime 鑳藉叡浜?state/result/signal 杈圭晫骞剁户缁吋瀹圭幇鏈夊姛鑳姐€?
+- `RuntimeState`: 鏈€灏?carrier 宸茶惤鍦帮紱`core` 褰撳墠鏄犲皠 application-layer `GameState`锛宍app` 鍙惡甯?Child 4 dispatch-critical app fields锛宍view` 鏆備负绌恒€?- `RuntimeRequest`: 缁х画浣滀负 shared dispatch/router 杈撳叆璇锋眰褰㈢姸銆?- `RuntimeResult`: 宸叉墿鍒?`RuntimeState`锛屽苟鎼哄甫 effects銆乶avigation銆乻cene銆乼askActions/taskSignals銆乼askUpdates銆乮nteractive 绛夊吋瀹硅緭鍑恒€?- `RuntimeInteractiveSignal`: 宸叉湁 `reenter-house` / `none` 鐨勬渶灏?signal銆?- `TaskRuntimeState`: Child 6 宸插畾涔?`instancesByTaskId`銆乣completedTaskIds`銆乣failedTaskIds`銆乣updatedAt`銆?- `TaskRuntimeResult`: Child 6 宸插畾涔夊苟杩斿洖 `state`銆乣taskUpdates`銆乣effects`銆乣signals`锛沞ffect 搴旂敤浠嶅睘浜?shared runtime settlement銆?- `Runtime <-> AppState bridge`: 褰撳墠閫氳繃 `RuntimeState.app` 鐨勬渶灏?pick 涓?main/app-shell 鍏煎妗ユ帴锛涗笉鎶婂畬鏁?AppState 骞跺叆 runtime銆?- `Interaction Runtime I/O`: covered launch/action 閫氳繃 core runtime seam 涓?`RuntimeResult` 杩斿洖銆?- `House Runtime integration seam I/O`: house enter/leave/dispatch 閫氳繃 core bridge 杩涘叆 legacy house adapter銆?- `Runtime Dispatch / Router input-output boundary`: 杈撳叆涓?`RuntimeState + RuntimeRequest`锛岃緭鍑轰负 `RuntimeResult`锛宻ettlement 鍙仛 additive compatibility銆?- `characterDefinitions deferred strategy`: `characterDefinitions` 缁х画鐙珛浼犻€掞紝涓嶅苟鍏?`RuntimeState.core`锛涙湭鏉ユ槸鍚﹀苟鍏ュ彈 weekly promotion gate 绾︽潫锛屽繀椤诲厛鏇存柊 child spec銆乧hild plan銆亀eekly plan銆?
 ## Weekly Non-Goals
 
-- 不要求所有功能模块本周全部接入 shared runtime。
-- 不要求所有目标子 runtime 本周全部完成代码级抽离。
-- 不要求本周完成全部小游戏统一调度。
-- 不要求本周完成 presenter/render 的最终 layout/schema 解耦；Child 5 首版 presenter output bridge 已完成，但不得扩展到后续 layout renderer 工作。
-- 不要求本周完成全量 mod 数据迁移。
-- 不要求本周完成 `characterDefinitions -> RuntimeState.core`。
-- 不要求本周完成完整 task UI、authoring DSL 或 mod 自定义 evaluator 插件；Child 6 只落地首版 Task Runtime contract/lifecycle/progression。
-- 不要求本周完成完整 mod loader / activation / capability / dependency 体系；Child 7 已完成首版 activation/startup seam，完整 capability/dependency policy、sandboxing 和 hot reload 仍留给后续评估。
-- 不要求本周定义最终完整版 mod schema。
-
+- 涓嶈姹傛墍鏈夊姛鑳芥ā鍧楁湰鍛ㄥ叏閮ㄦ帴鍏?shared runtime銆?- 涓嶈姹傛墍鏈夌洰鏍囧瓙 runtime 鏈懆鍏ㄩ儴瀹屾垚浠ｇ爜绾ф娊绂汇€?- 涓嶈姹傛湰鍛ㄥ畬鎴愬叏閮ㄥ皬娓告垙缁熶竴璋冨害銆?- 涓嶈姹傛湰鍛ㄥ畬鎴?presenter/render 鐨勬渶缁?layout/schema 瑙ｈ€︼紱Child 5 棣栫増 presenter output bridge 宸插畬鎴愶紝浣嗕笉寰楁墿灞曞埌鍚庣画 layout renderer 宸ヤ綔銆?- 涓嶈姹傛湰鍛ㄥ畬鎴愬叏閲?mod 鏁版嵁杩佺Щ銆?- 涓嶈姹傛湰鍛ㄥ畬鎴?`characterDefinitions -> RuntimeState.core`銆?- 涓嶈姹傛湰鍛ㄥ畬鎴愬畬鏁?task UI銆乤uthoring DSL 鎴?mod 鑷畾涔?evaluator 鎻掍欢锛汣hild 6 鍙惤鍦伴鐗?Task Runtime contract/lifecycle/progression銆?- 涓嶈姹傛湰鍛ㄥ畬鎴愬畬鏁?mod loader / activation / capability / dependency 浣撶郴锛汣hild 7 宸插畬鎴愰鐗?activation/startup seam锛屽畬鏁?capability/dependency policy銆乻andboxing 鍜?hot reload 浠嶇暀缁欏悗缁瘎浼般€?- 涓嶈姹傛湰鍛ㄥ畾涔夋渶缁堝畬鏁寸増 mod schema銆?
 ## Weekly Deliverables
 
-- Child 4 边界收敛后的 spec / plan / weekly governance 同步。
-- shared runtime 与各子 runtime 的边界说明。
-- 全部目标子 runtime 与功能模块的拆分清单。
-- runtime 成熟度分类清单。
-- 各模块当前状态分类：已拆分 / 部分拆分 / 兼容桥接 / 未开始。
-- 当前已拆 / 未拆模块列表。
-- call flow / runtime flow 更新入口说明。
-- Child 8 StateSync Runtime 完成记录，以及 Child 8 之后是否需要新增 child 的复盘判断记录。
-- visibility companion / five-core-artifact bundle 同步结果。
-
+- Child 4 杈圭晫鏀舵暃鍚庣殑 spec / plan / weekly governance 鍚屾銆?- shared runtime 涓庡悇瀛?runtime 鐨勮竟鐣岃鏄庛€?- 鍏ㄩ儴鐩爣瀛?runtime 涓庡姛鑳芥ā鍧楃殑鎷嗗垎娓呭崟銆?- runtime 鎴愮啛搴﹀垎绫绘竻鍗曘€?- 鍚勬ā鍧楀綋鍓嶇姸鎬佸垎绫伙細宸叉媶鍒?/ 閮ㄥ垎鎷嗗垎 / 鍏煎妗ユ帴 / 鏈紑濮嬨€?- 褰撳墠宸叉媶 / 鏈媶妯″潡鍒楄〃銆?- call flow / runtime flow 鏇存柊鍏ュ彛璇存槑銆?- Child 8 StateSync Runtime 瀹屾垚璁板綍锛屼互鍙?Child 8 涔嬪悗鏄惁闇€瑕佹柊澧?child 鐨勫鐩樺垽鏂褰曘€?- visibility companion / five-core-artifact bundle 鍚屾缁撴灉銆?
 ## Weekly Acceptance Criteria
 
-- engine / runtime / 子 runtime 的职责边界可以被明确描述。
-- 全部目标子 runtime 与功能模块的清单、状态、后续推进顺序已明确。
-- shared runtime state/result carrier 已开始收敛，并且 Child 6 已补上 taskUpdates carrier。
-- interaction / house integration / runtime dispatch / task runtime 路径更清晰。
-- `main.ts` 黑盒编排继续收缩。
-- 现有功能保持兼容，不出现明显回退。
-- 文档、plan、visibility artifacts 同步。
-- Child 7 已按既有 spec/plan 完成，不扩展到 content assembly、save/load IO、gameplay runtime execution、UI/menu/loading-screen、hot reload 或 sandboxing 边界之外；Child 8 是下一个可执行 child。
-
+- engine / runtime / 瀛?runtime 鐨勮亴璐ｈ竟鐣屽彲浠ヨ鏄庣‘鎻忚堪銆?- 鍏ㄩ儴鐩爣瀛?runtime 涓庡姛鑳芥ā鍧楃殑娓呭崟銆佺姸鎬併€佸悗缁帹杩涢『搴忓凡鏄庣‘銆?- shared runtime state/result carrier 宸插紑濮嬫敹鏁涳紝骞朵笖 Child 6 宸茶ˉ涓?taskUpdates carrier銆?- interaction / house integration / runtime dispatch / task runtime 璺緞鏇存竻鏅般€?- `main.ts` 榛戠洅缂栨帓缁х画鏀剁缉銆?- 鐜版湁鍔熻兘淇濇寔鍏煎锛屼笉鍑虹幇鏄庢樉鍥為€€銆?- 鏂囨。銆乸lan銆乿isibility artifacts 鍚屾銆?- Child 7 宸叉寜鏃㈡湁 spec/plan 瀹屾垚锛屼笉鎵╁睍鍒?content assembly銆乻ave/load IO銆乬ameplay runtime execution銆乁I/menu/loading-screen銆乭ot reload 鎴?sandboxing 杈圭晫涔嬪锛汣hild 8 鏄笅涓€涓彲鎵ц child銆?
 ## Next-Week Unlock Conditions
 
-- Child 6 已完成，并已通过 closeout sync 解锁并完成 Child 7。
-- Child 7 已正式定义为 Mod Runtime，并已完成首版 activation/startup seam。
-- Child 8 已正式定义为 StateSync Runtime，并成为当前 next executable child。
-- Child 8 之外，如果 shared runtime carrier、runtime dispatch 边界、模块成熟度和五份核心 artifact 状态稳定，则允许评估：
-  - `characterDefinitions` 是否进入 shared carrier
+- Child 6 宸插畬鎴愶紝骞跺凡閫氳繃 closeout sync 瑙ｉ攣骞跺畬鎴?Child 7銆?- Child 7 宸叉寮忓畾涔変负 Mod Runtime锛屽苟宸插畬鎴愰鐗?activation/startup seam銆?- Child 8 宸叉寮忓畾涔変负 StateSync Runtime锛屽苟鎴愪负褰撳墠 next executable child銆?- Child 8 涔嬪锛屽鏋?shared runtime carrier銆乺untime dispatch 杈圭晫銆佹ā鍧楁垚鐔熷害鍜屼簲浠芥牳蹇?artifact 鐘舵€佺ǔ瀹氾紝鍒欏厑璁歌瘎浼帮細
+  - `characterDefinitions` 鏄惁杩涘叆 shared carrier
   - `minigame dispatch interface`
   - `presentation / render bridge`
-  - Child 8 之后是否还需要继续拆分更细粒度的 mod capability / dependency / state-sync follow-up
-- 如果边界仍不稳定，则下周继续先收敛 runtime，不扩新模块。
-- 任何 Child 8 之外的提前解锁或新增 child 都必须先更新：
-  - child spec
+  - Child 8 涔嬪悗鏄惁杩橀渶瑕佺户缁媶鍒嗘洿缁嗙矑搴︾殑 mod capability / dependency / state-sync follow-up
+- 濡傛灉杈圭晫浠嶄笉绋冲畾锛屽垯涓嬪懆缁х画鍏堟敹鏁?runtime锛屼笉鎵╂柊妯″潡銆?- 浠讳綍 Child 8 涔嬪鐨勬彁鍓嶈В閿佹垨鏂板 child 閮藉繀椤诲厛鏇存柊锛?  - child spec
   - child plan
   - weekly plan
 
@@ -856,3 +778,4 @@ Do not mark this weekly plan `completed` until:
 - [x] Weekly `Progress Log` updated
 - [x] Weekly orchestration acceptance re-evaluated
 - [x] Closeout sync rule and five-core-artifact scope recorded
+

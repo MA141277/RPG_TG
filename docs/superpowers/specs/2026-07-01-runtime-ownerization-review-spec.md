@@ -1,5 +1,7 @@
 # Runtime Ownerization Review And Baseline Spec
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 ## 1. Goal
 
 Define the formal `Child 10 Runtime Ownerization Review And Baseline` boundary for the current mod-first engine/runtime roadmap.
