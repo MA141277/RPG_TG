@@ -1,0 +1,96 @@
+import type { PlayableIntegrationDefinition } from "../contracts/playable-runtime";
+import {
+  createPlayableIntegrationRegistry,
+  type PlayableIntegrationRegistry,
+} from "./playable-integration-registry";
+
+const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
+  {
+    integrationId: "playable.city-begging.external.default",
+    playableId: "city-begging",
+    ownerDefaults: {
+      ownerKind: "external",
+      ownerId: null,
+      returnPolicy: "close-only",
+    },
+    trigger: {
+      triggerId: "trigger.playable.city-begging.external.default",
+      ownerKind: "external",
+      trigger: "manual-launch",
+    },
+    outcomeConfig: {},
+  },
+  {
+    integrationId: "playable.activity-qte.scene.default",
+    playableId: "activity-qte",
+    ownerDefaults: {
+      ownerKind: "scene",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.activity-qte.scene.default",
+      ownerKind: "scene",
+      trigger: "legacy-activity-start",
+    },
+    outcomeConfig: {},
+  },
+  {
+    integrationId: "playable.grain-accounting.house.grain-shop",
+    playableId: "grain-accounting",
+    ownerDefaults: {
+      ownerKind: "house",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.grain-accounting.house.grain-shop",
+      ownerKind: "house",
+      trigger: "house-action-accounting",
+    },
+    outcomeConfig: {},
+  },
+  {
+    integrationId: "playable.medicine-compounding.house.medicine-house",
+    playableId: "medicine-compounding",
+    ownerDefaults: {
+      ownerKind: "house",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.medicine-compounding.house.medicine-house",
+      ownerKind: "house",
+      trigger: "house-action-start-compounding",
+    },
+    outcomeConfig: {},
+  },
+  {
+    integrationId: "playable.story-battle.scene.default",
+    playableId: "story-battle",
+    ownerDefaults: {
+      ownerKind: "scene",
+      returnPolicy: "reenter-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.story-battle.scene.default",
+      ownerKind: "scene",
+      trigger: "legacy-story-battle-start",
+    },
+    outcomeConfig: {},
+  },
+];
+
+export function installBuiltinPlayableIntegrations(
+  registry: PlayableIntegrationRegistry
+): void {
+  builtinPlayableIntegrations.forEach((integration) => {
+    registry.register(integration);
+  });
+}
+
+export function createBuiltinPlayableIntegrationRegistry(): PlayableIntegrationRegistry {
+  const registry = createPlayableIntegrationRegistry();
+  installBuiltinPlayableIntegrations(registry);
+  return registry;
+}
+
+export const builtinPlayableIntegrationRegistry =
+  createBuiltinPlayableIntegrationRegistry();

@@ -3,8 +3,6 @@ import type {
   HouseModuleId,
   HouseModuleViewRenderer,
 } from "../../domain/house-module";
-import { builtinHouseModuleRegistrations } from "../../application/house-modules/builtin-house-module-registrations";
-import { builtinHouseRendererRegistrations } from "../../ui/views/house/builtin-house-module-renderers";
 
 export type HouseModuleRegistration = {
   moduleId: HouseModuleId;
@@ -55,12 +53,3 @@ export function createHouseModuleRegistry(
     },
   };
 }
-
-export function createBuiltinHouseModuleRegistry(): HouseModuleRegistry {
-  return createHouseModuleRegistry([
-    ...builtinHouseModuleRegistrations,
-    ...builtinHouseRendererRegistrations,
-  ]);
-}
-
-export const builtinHouseModuleRegistry = createBuiltinHouseModuleRegistry();

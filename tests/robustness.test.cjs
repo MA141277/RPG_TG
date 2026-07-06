@@ -78,6 +78,9 @@ const {
   selectLeaderResidenceOptions,
 } = require("../.test-dist/application/city-entries/select-leader-residence-options.js");
 const {
+  createCityMenuState,
+} = require("../.test-dist/application/city-menu/city-menu.js");
+const {
   canEnterHouseForStoryStage,
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
@@ -427,8 +430,12 @@ function createImportedScenarioPackFilesFromDisk(packRoot, packFolderName) {
 }
 
 test.before(async () => {
+  const {
+    createBaseGameContentPack,
+  } = require("../.test-dist/content/base-game-content-pack.js");
+
   await withLocalJsonFileFetch(async () => {
-    await loadDefaultRuntimeContent();
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
   });
 });
 
@@ -2205,33 +2212,91 @@ test("default runtime content loads from the shared base content pack path", asy
     false,
     "Expected default-runtime-content.ts to stop importing pack JSON tables directly."
   );
+  assert.equal(
+    source.includes("createBaseGameContentPack"),
+    false,
+    "Expected default-runtime-content.ts to stop importing the builtin base-pack loader directly."
+  );
+
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  assert.match(
+    mainSource,
+    /loadDefaultRuntimeContent\(\(\)\s*=>\s*Promise\.resolve\(baseGameContentPack\)\)/,
+    "Expected main.ts to inject the default runtime content pack loader explicitly."
+  );
+
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
 
   const {
     defaultRuntimeContent,
     loadDefaultRuntimeContent,
-  } = require("../.test-dist/application/content/default-runtime-content.js");
+  } = require(defaultRuntimeContentModulePath);
 
   assert.equal(typeof loadDefaultRuntimeContent, "function");
 
-  await withLocalJsonFileFetch(async () => {
-    const content = await loadDefaultRuntimeContent();
+  const content = await loadDefaultRuntimeContent(async () => ({
+    schemaVersion: 1,
+    id: "pack.test.runtime-default",
+    title: "Runtime Default Test Pack",
+    cities: [
+      {
+        id: "city.test.runtime-default",
+        name: "测试城",
+        mapNodeId: "node.test.runtime-default",
+        prosperity: 12,
+        danger: 3,
+        specialDemand: ["粮"],
+        houseIds: [],
+      },
+    ],
+    houses: [
+      {
+        id: "house.test.runtime-default",
+        cityId: "city.test.runtime-default",
+        name: "测试屋",
+      },
+    ],
+    cityNpcPools: [
+      {
+        cityId: "city.test.runtime-default",
+        fixedNpcIds: [],
+        candidateNpcIds: [],
+      },
+    ],
+    textEntries: {
+      "runtime.test.default-content": "default runtime content",
+    },
+  }));
 
-    assert.equal(content, defaultRuntimeContent);
-    assert.equal(
-      defaultRuntimeContent.cities.some((city) => city.id === "city.kulan"),
-      true
-    );
-    assert.equal(
-      defaultRuntimeContent.houses.some(
-        (house) => house.id === "house.kulan.market"
-      ),
-      true
-    );
-    assert.equal(
-      defaultRuntimeContent.cityNpcPools.some((pool) => pool.cityId === "city.kulan"),
-      true
-    );
-  });
+  assert.equal(content, defaultRuntimeContent);
+  assert.equal(
+    defaultRuntimeContent.cities.some(
+      (city) => city.id === "city.test.runtime-default"
+    ),
+    true
+  );
+  assert.equal(
+    defaultRuntimeContent.houses.some(
+      (house) => house.id === "house.test.runtime-default"
+    ),
+    true
+  );
+  assert.equal(
+    defaultRuntimeContent.cityNpcPools.some(
+      (pool) => pool.cityId === "city.test.runtime-default"
+    ),
+    true
+  );
+  assert.equal(
+    defaultRuntimeContent.textEntriesById["runtime.test.default-content"],
+    "default runtime content"
+  );
 });
 
 test("grain trade succeeds for a valid buy and advances runtime state", () => {
@@ -4748,7 +4813,12 @@ test("market house copy resolves from text entries for greeting, open, small tal
     request: { type: "action", actionId: "investigate-market" },
     textEntriesById,
   });
-  const runtimeContent = await loadDefaultRuntimeContent();
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+  const runtimeContent = await loadDefaultRuntimeContent(() =>
+    createBaseGameContentPack()
+  );
   const marketCity = runtimeContent.cities.find(
     (cityDefinition) => cityDefinition.id === marketHouse.cityId
   );
@@ -7974,22 +8044,41 @@ test("shared dispatch consumes the hardened runtime router contract", () => {
   assert.doesNotMatch(source, /routeRequest:/);
 });
 
-test("engine bootstrap builds a session from a selected mod id and registry", async () => {
-  const { createEngineSession } = require("../.test-dist/core/engine/engine-factory.js");
-  const session = createEngineSession({
-    selectedMod: {
-      id: "builtin.default",
-      version: "1.0.0",
-      title: "Default",
-      entryContentPackIds: [],
-    },
-    registry: {
-      mods: {},
-      content: {},
-    },
-  });
+test("core-production-integration retirement leaves no orphaned core engine seam", () => {
+  const engineFiles = [
+    path.join(process.cwd(), "src/core/engine/engine-bootstrap.ts"),
+    path.join(process.cwd(), "src/core/engine/engine-factory.ts"),
+    path.join(process.cwd(), "src/core/engine/engine-session.ts"),
+    path.join(process.cwd(), "src/core/contracts/engine-context.ts"),
+    path.join(process.cwd(), "src/core/runtime/runtime-context.ts"),
+    path.join(process.cwd(), "src/core/registry/engine-registry.ts"),
+  ];
 
-  assert.equal(session.state.engine.selectedModId, "builtin.default");
+  for (const filePath of engineFiles) {
+    assert.equal(
+      fs.existsSync(filePath),
+      false,
+      `Expected orphaned engine seam file to be retired: ${filePath}`
+    );
+  }
+
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const startupCoordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/startup-session-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /core\/engine|engine-bootstrap|engine-factory/);
+  assert.doesNotMatch(
+    startupCoordinatorSource,
+    /core\/engine|engine-bootstrap|engine-factory/
+  );
 });
 
 test("runtime dispatch settles effects after routing", async () => {
@@ -8395,6 +8484,74 @@ test("save envelope preserves selected mod id and mod state payload", async () =
   assert.deepEqual(envelope.modState["builtin.default"], { foo: 1 });
 });
 
+test("browser save record round-trips selected character and mod source through the save envelope", async () => {
+  const {
+    readBrowserSaveRecord,
+    writeBrowserSaveRecord,
+  } = require("../.test-dist/core/save/browser-save-record.js");
+  const storage = {
+    record: new Map(),
+    getItem(key) {
+      return this.record.has(key) ? this.record.get(key) : null;
+    },
+    setItem(key, value) {
+      this.record.set(key, value);
+    },
+  };
+
+  writeBrowserSaveRecord({
+    storage,
+    selectedCharacterId: "char.player",
+    selectedModSource: {
+      kind: "url",
+      name: "Imported Pack",
+      url: "https://example.com/mods/imported-pack.json",
+    },
+    state: {
+      engine: {
+        selectedModId: "builtin.default",
+        version: "1.0.0",
+        currentView: "map",
+      },
+      runtime: {
+        flags: { started: true },
+        variables: { stage: 1 },
+        activeEventId: "event.story.start",
+        activeTaskIds: ["task.main"],
+      },
+      modState: {},
+    },
+  });
+
+  const loaded = readBrowserSaveRecord({
+    storage,
+    availableModIds: ["builtin.default"],
+  });
+
+  assert.equal(loaded?.selectedCharacterId, "char.player");
+  assert.equal(loaded?.selectedModId, "builtin.default");
+  assert.deepEqual(loaded?.selectedModSource, {
+    kind: "url",
+    name: "Imported Pack",
+    url: "https://example.com/mods/imported-pack.json",
+  });
+});
+
+test("save-envelope-cutover main.ts no longer leaves loadSaveData as a placeholder", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /readBrowserSaveRecord/);
+  assert.match(mainSource, /writeBrowserSaveRecord/);
+  assert.match(mainSource, /window\.addEventListener\("beforeunload"/);
+  assert.doesNotMatch(
+    mainSource,
+    /function loadSaveData\(\): StartupSaveData \{\s*\/\/ Placeholder/
+  );
+});
+
 test("child 29 main.ts primary startup no longer depends on legacy startup adapters", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
@@ -8409,6 +8566,10 @@ test("child 29 main.ts primary startup no longer depends on legacy startup adapt
   assert.match(
     mainSource,
     /createActiveGameContentContextFromModActivation\(\{[\s\S]*activationResult:\s*builtinStartupActivation/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /createActiveGameContentContextFromModActivation\(\{[\s\S]*basePack:\s*baseGameContentPack/
   );
 });
 
@@ -9127,7 +9288,27 @@ test("house module registry exposes a shared registration seam for mod-owned mod
   assert.match(source, /export type HouseModuleRegistration/);
   assert.match(source, /export type HouseModuleRegistry/);
   assert.match(source, /createHouseModuleRegistry/);
+  assert.doesNotMatch(source, /createBuiltinHouseModuleRegistry/);
+  assert.doesNotMatch(source, /builtinHouseModuleRegistrations/);
+  assert.doesNotMatch(source, /builtinHouseRendererRegistrations/);
+});
+
+test("builtin house registry seed is installed through an explicit builtin registry module", () => {
+  const builtinRegistryPath = path.join(
+    process.cwd(),
+    "src/core/registry/builtin-house-module-registry.ts"
+  );
+
+  assert.ok(
+    fs.existsSync(builtinRegistryPath),
+    "Expected an explicit builtin house registry installer module under src/core/registry."
+  );
+
+  const source = fs.readFileSync(builtinRegistryPath, "utf8");
+
+  assert.match(source, /installBuiltinHouseModuleRegistrations/);
   assert.match(source, /createBuiltinHouseModuleRegistry/);
+  assert.match(source, /builtinHouseModuleRegistry/);
 });
 
 test("mod house registration removes core runtime dependence on the application static registry", () => {
@@ -9228,7 +9409,7 @@ test("house renderer registry resolves renderers through the shared registration
     "utf8"
   );
 
-  assert.match(source, /HouseModuleRegistry|createBuiltinHouseModuleRegistry|getHouseModuleRenderer/);
+  assert.match(source, /HouseModuleRegistry|builtinHouseModuleRegistry|getHouseModuleRenderer/);
   assert.doesNotMatch(source, /export const houseModuleViewRegistry: Record/);
 });
 
@@ -10707,6 +10888,501 @@ test("child 25 narrow follow-up contract stays outside main.ts and main-runtime-
   );
 });
 
+test("shell thinning city-view transition owner module exists and preserves covered transition cleanup", () => {
+  const transitionModulePath = path.join(
+    process.cwd(),
+    ".test-dist",
+    "application",
+    "runtime",
+    "city-view-transition.js"
+  );
+
+  assert.equal(fs.existsSync(transitionModulePath), true);
+
+  const {
+    applyCityViewTransition,
+  } = require("../.test-dist/application/runtime/city-view-transition.js");
+
+  const baseAppState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.test.current",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "city",
+        overlayView: "cards",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "open",
+          },
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: {
+      score: 3,
+      combo: 1,
+      maxCombo: 1,
+      misses: 0,
+      remainingDays: 1,
+      obstacleTimer: 0,
+      variantId: "village-catching",
+      status: "playing",
+    },
+    cityMenuState: createCityMenuState({
+      cityId: "city.kulan",
+      cityName: "苦兰城",
+      houseOptions: [],
+      cityEntryOptions: [],
+      currentPanelId: "actions",
+      reviewStatusText: "review",
+      availableActionIds: [],
+      monkActionIds: [],
+      canLeaveCity: true,
+    }),
+    cityDirectoryState: {
+      type: "leader-residence",
+      title: "Directory",
+      targetHouseId: "house.test.target",
+      options: [],
+    },
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const leftCity = applyCityViewTransition(baseAppState, {
+    type: "leave-city",
+  });
+  assert.equal(leftCity.beggingMiniGameState, null);
+  assert.equal(leftCity.cityMenuState, null);
+  assert.equal(leftCity.cityDirectoryState, null);
+  assert.equal(leftCity.locationDialogueState, null);
+  assert.equal(leftCity.gameState.world.currentHouseId, null);
+  assert.equal(leftCity.gameState.ui.currentView, "map");
+  assert.equal(leftCity.gameState.ui.overlayView, null);
+  assert.equal(leftCity.gameState.ui.houseSession, null);
+
+  const enteredCity3d = applyCityViewTransition(baseAppState, {
+    type: "enter-city-3d",
+  });
+  assert.equal(enteredCity3d.beggingMiniGameState?.status, "playing");
+  assert.equal(enteredCity3d.cityMenuState, null);
+  assert.equal(enteredCity3d.cityDirectoryState, null);
+  assert.equal(enteredCity3d.locationDialogueState, null);
+  assert.equal(enteredCity3d.gameState.world.currentHouseId, null);
+  assert.equal(enteredCity3d.gameState.ui.currentView, "city-3d");
+  assert.equal(enteredCity3d.gameState.ui.overlayView, null);
+  assert.equal(enteredCity3d.gameState.ui.houseSession, null);
+
+  const leftCity3d = applyCityViewTransition(baseAppState, {
+    type: "leave-city-3d",
+  });
+  assert.notEqual(leftCity3d.cityDirectoryState, null);
+  assert.notEqual(leftCity3d.locationDialogueState, null);
+  assert.equal(leftCity3d.cityMenuState, null);
+  assert.equal(leftCity3d.gameState.world.currentHouseId, null);
+  assert.equal(leftCity3d.gameState.ui.currentView, "city");
+  assert.equal(leftCity3d.gameState.ui.overlayView, null);
+  assert.equal(leftCity3d.gameState.ui.houseSession, null);
+});
+
+test("shell thinning main.ts no longer inlines covered city view transition mutation blocks", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.match(source, /city-view-transition|applyCityViewTransition/);
+  assert.doesNotMatch(
+    source,
+    /const leaveCityButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='leave-city'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "map"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
+  );
+  assert.doesNotMatch(
+    source,
+    /const enterCity3dButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='enter-city-3d'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "city-3d"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
+  );
+  assert.doesNotMatch(
+    source,
+    /const leaveCity3dButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='leave-city-3d'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "city"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
+  );
+});
+
+test("shell thinning campaign travel transition owner module exists and preserves covered travel state cleanup", () => {
+  const transitionModulePath = path.join(
+    process.cwd(),
+    ".test-dist",
+    "application",
+    "runtime",
+    "campaign-travel-transition.js"
+  );
+
+  assert.equal(fs.existsSync(transitionModulePath), true);
+
+  const {
+    applyCampaignTravelStart,
+    applyCampaignTravelCompletion,
+  } = require("../.test-dist/application/runtime/campaign-travel-transition.js");
+
+  const baseAppState = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 90,
+      isMoving: true,
+    },
+    campaignTravelState: null,
+    modalState: {
+      type: "travel-confirm",
+      targetCoordinate: { x: 4, y: 5 },
+      cityId: "city.test.target",
+      cityName: "目标城",
+    },
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const started = applyCampaignTravelStart(baseAppState, {
+    targetCoordinate: { x: 9, y: 10 },
+    cityId: "city.test.target",
+    cityName: "目标城",
+  });
+  assert.deepEqual(started.campaignTravelState, {
+    targetCoordinate: { x: 9, y: 10 },
+    cityId: "city.test.target",
+    cityName: "目标城",
+  });
+  assert.equal(started.modalState, null);
+  assert.equal(started.locationDialogueState, null);
+
+  const completedIntoCity = applyCampaignTravelCompletion(
+    {
+      ...started,
+      campaignTravelState: {
+        targetCoordinate: { x: 9, y: 10 },
+        cityId: "city.test.target",
+        cityName: "目标城",
+      },
+    },
+    {
+      targetCoordinate: { x: 9, y: 10 },
+      pendingEnterCityState: {
+        type: "enter-city-confirm",
+        cityId: "city.test.target",
+        cityName: "目标城",
+      },
+    }
+  );
+  assert.equal(completedIntoCity.campaignTravelState, null);
+  assert.deepEqual(completedIntoCity.modalState, {
+    type: "enter-city-confirm",
+    cityId: "city.test.target",
+    cityName: "目标城",
+  });
+  assert.equal(completedIntoCity.locationDialogueState, null);
+
+  const completedAwayFromCity = applyCampaignTravelCompletion(
+    {
+      ...started,
+      campaignTravelState: {
+        targetCoordinate: { x: 1, y: 1 },
+        cityId: null,
+        cityName: null,
+      },
+    },
+    {
+      targetCoordinate: { x: 9, y: 10 },
+      pendingEnterCityState: {
+        type: "enter-city-confirm",
+        cityId: "city.test.target",
+        cityName: "目标城",
+      },
+    }
+  );
+  assert.equal(completedAwayFromCity.campaignTravelState, null);
+  assert.equal(completedAwayFromCity.modalState, null);
+  assert.equal(completedAwayFromCity.locationDialogueState, null);
+});
+
+test("shell thinning main.ts no longer inlines covered campaign travel transition blocks", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const startCampaignTravelBlock = source.match(
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+  )?.[0] ?? "";
+
+  assert.match(source, /campaign-travel-transition|applyCampaignTravel(Start|Completion)/);
+  assert.doesNotMatch(
+    startCampaignTravelBlock,
+    /appState = \{[\s\S]*campaignTravelState:\s*\{[\s\S]*targetCoordinate:\s*nextCoordinate,[\s\S]*modalState:\s*null,[\s\S]*locationDialogueState:\s*null,[\s\S]*\};/
+  );
+  assert.doesNotMatch(
+    startCampaignTravelBlock,
+    /const nextAppState = \{[\s\S]*campaignTravelState:\s*null,[\s\S]*modalState:\s*shouldEnterCity \? pendingEnterCityState : null,[\s\S]*locationDialogueState:\s*null,[\s\S]*\};/
+  );
+});
+
+test("shell thinning map auto advance transition owner module exists and preserves covered map-shell cleanup", () => {
+  const transitionModulePath = path.join(
+    process.cwd(),
+    ".test-dist",
+    "application",
+    "runtime",
+    "map-auto-advance-transition.js"
+  );
+
+  assert.equal(fs.existsSync(transitionModulePath), true);
+
+  const {
+    applyMapAutoAdvanceStart,
+    applyMapAutoAdvanceSnapshot,
+  } = require("../.test-dist/application/runtime/map-auto-advance-transition.js");
+
+  const baseAppState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.test.current",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "house",
+        overlayView: "cards",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "open",
+          },
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: {
+      targetCoordinate: { x: 2, y: 3 },
+      cityId: "city.test.target",
+      cityName: "目标城",
+    },
+    modalState: {
+      type: "travel-confirm",
+      targetCoordinate: { x: 4, y: 5 },
+      cityId: "city.test.target",
+      cityName: "目标城",
+    },
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: null,
+    cityMenuState: createCityMenuState({
+      cityId: "city.kulan",
+      cityName: "苦兰城",
+      houseOptions: [],
+      cityEntryOptions: [],
+      currentPanelId: "actions",
+      reviewStatusText: "review",
+      availableActionIds: [],
+      monkActionIds: [],
+      canLeaveCity: true,
+    }),
+    cityDirectoryState: {
+      type: "leader-residence",
+      title: "Directory",
+      targetHouseId: "house.test.target",
+      options: [],
+    },
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const started = applyMapAutoAdvanceStart(baseAppState, {
+    intervalId: "auto.test",
+    label: "快进",
+    targetHouseId: "house.test.target",
+    snapshots: [],
+    completion: null,
+  });
+  assert.equal(started.modalState, null);
+  assert.equal(started.locationDialogueState, null);
+  assert.equal(started.cityMenuState, null);
+  assert.equal(started.cityDirectoryState, null);
+  assert.equal(started.campaignTravelState, null);
+  assert.deepEqual(started.autoAdvanceState, {
+    intervalId: "auto.test",
+    label: "快进",
+    targetHouseId: "house.test.target",
+    snapshots: [],
+    completion: null,
+  });
+  assert.equal(started.gameState.world.currentHouseId, null);
+  assert.equal(started.gameState.ui.currentView, "map");
+  assert.equal(started.gameState.ui.overlayView, null);
+  assert.equal(started.gameState.ui.houseSession, null);
+
+  const nextSnapshot = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.snapshot.should-clear",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "city",
+        overlayView: "valuables",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "snapshot",
+          },
+        },
+      },
+    },
+    characterDefinitions: withPlayerStamina(prototypeCharacters, 77),
+  };
+  const afterSnapshot = applyMapAutoAdvanceSnapshot(
+    {
+      ...started,
+      autoAdvanceState: {
+        intervalId: "auto.test",
+        label: "快进",
+        targetHouseId: "house.test.target",
+        snapshots: [nextSnapshot],
+        completion: null,
+      },
+    },
+    {
+      autoAdvanceState: {
+        intervalId: "auto.test",
+        label: "快进",
+        targetHouseId: "house.test.target",
+        snapshots: [nextSnapshot],
+        completion: null,
+      },
+      nextSnapshot,
+      remainingSnapshots: [],
+    }
+  );
+  assert.equal(afterSnapshot.characterDefinitions[0].stamina, 77);
+  assert.equal(afterSnapshot.autoAdvanceState?.snapshots?.length, 0);
+  assert.equal(afterSnapshot.gameState.world.currentHouseId, null);
+  assert.equal(afterSnapshot.gameState.ui.currentView, "map");
+  assert.equal(afterSnapshot.gameState.ui.overlayView, null);
+  assert.equal(afterSnapshot.gameState.ui.houseSession, null);
+});
+
+test("shell thinning main.ts no longer inlines covered map auto advance transition blocks", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const startMapAutoAdvanceBlock = source.match(
+    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
+  )?.[0] ?? "";
+
+  assert.match(source, /map-auto-advance-transition|applyMapAutoAdvance(Start|Snapshot)/);
+  assert.doesNotMatch(
+    startMapAutoAdvanceBlock,
+    /appState = \{[\s\S]*autoAdvanceState:\s*\{[\s\S]*intervalId:\s*input\.intervalId,[\s\S]*targetHouseId:\s*input\.targetHouseId,[\s\S]*currentView:\s*"map"[\s\S]*houseSession:\s*null,[\s\S]*\};/
+  );
+  assert.doesNotMatch(
+    startMapAutoAdvanceBlock,
+    /appState = \{[\s\S]*characterDefinitions:\s*nextSnapshot\.characterDefinitions,[\s\S]*snapshots:\s*remainingSnapshots,[\s\S]*currentView:\s*"map"[\s\S]*houseSession:\s*null,[\s\S]*\};/
+  );
+});
+
+test("shell thinning render prepass owner module exists and preserves city npc refresh before presentation", () => {
+  const prepassModulePath = path.join(
+    process.cwd(),
+    ".test-dist",
+    "application",
+    "runtime",
+    "render-prepass-state.js"
+  );
+
+  assert.equal(fs.existsSync(prepassModulePath), true);
+
+  const {
+    applyRenderPrepassState,
+  } = require("../.test-dist/application/runtime/render-prepass-state.js");
+
+  const baseAppState = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const nextAppState = applyRenderPrepassState(
+    baseAppState,
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+  const expectedGameState = ensureCityNpcPoolsForCurrentDay(
+    baseAppState.gameState,
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+
+  assert.notEqual(nextAppState.gameState, baseAppState.gameState);
+  assert.deepEqual(nextAppState.gameState, expectedGameState);
+});
+
+test("shell thinning renderAppFrame no longer directly mutates app state through ensureCityNpcPoolsForCurrentDay", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const renderAppFrameBlock =
+    source.match(
+      /function renderAppFrame\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncGameViewport/
+    )?.[0] ?? "";
+
+  assert.match(source, /render-prepass-state|applyRenderPrepassState/);
+  assert.doesNotMatch(
+    renderAppFrameBlock,
+    /appState = \{[\s\S]*gameState:\s*ensureCityNpcPoolsForCurrentDay\([\s\S]*\)\s*,[\s\S]*\};/
+  );
+});
+
 test("mod runtime does not absorb content assembly or gameplay execution ownership", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/mods/mod-runtime.ts"),
@@ -10842,6 +11518,213 @@ test("mod runtime contribution activation installs unified gameplay contribution
   ]);
 });
 
+test("mod runtime builtin source loader activates builtin mods from builtinModsById", async () => {
+  const {
+    createEmptyModRuntimeState,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+
+  const result = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.load-builtin",
+      requestId: "test:load-builtin-shared-loader",
+      modId: "builtin.test.loader",
+    },
+    context: {
+      allowedCapabilities: [],
+      builtinModsById: {
+        "builtin.test.loader": {
+          manifest: {
+            id: "builtin.test.loader",
+            schemaVersion: "1",
+            version: "1.0.0",
+            title: "Builtin Loader Test",
+            entryContentPackIds: ["pack.test.loader"],
+          },
+          rawContent: {
+            id: "pack.test.loader",
+            title: "Loader Pack",
+            maps: [],
+            cities: [],
+            cityEntries: [],
+            events: [],
+            scenes: [],
+            tasks: [],
+            houses: [],
+          },
+        },
+      },
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    return;
+  }
+
+  assert.equal(result.activatedMod.modId, "builtin.test.loader");
+  assert.equal(result.activatedMod.manifest.id, "builtin.test.loader");
+  assert.deepEqual(result.activatedMod.registeredDefinitionIds, [
+    "pack.test.loader",
+  ]);
+  assert.deepEqual(result.activatedMod.normalizedContentSources, [
+    {
+      id: "pack.test.loader",
+      title: "Loader Pack",
+      maps: [],
+      cities: [],
+      cityEntries: [],
+      events: [],
+      scenes: [],
+      tasks: [],
+      houses: [],
+    },
+  ]);
+});
+
+test("mod runtime preserves multi-pack normalized content sources for activated mods", async () => {
+  const {
+    createEmptyModRuntimeState,
+    createLoadedModFromManifest,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+
+  const result = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.activate-loaded",
+      requestId: "test:activate-multi-pack",
+      loadedMod: createLoadedModFromManifest({
+        source: { kind: "builtin", modId: "builtin.test.multi-pack" },
+        manifest: {
+          id: "builtin.test.multi-pack",
+          schemaVersion: "1",
+          version: "1.0.0",
+          title: "Multi Pack Test",
+          entryContentPackIds: ["pack.test.base", "pack.test.override"],
+        },
+        rawContent: [
+          {
+            schemaVersion: 1,
+            id: "pack.test.base",
+            title: "Base Pack",
+            cities: [{ id: "city.base", name: "Base City", mapNodeId: null }],
+          },
+          {
+            schemaVersion: 1,
+            id: "pack.test.override",
+            title: "Override Pack",
+            cities: [{ id: "city.override", name: "Override City", mapNodeId: null }],
+          },
+        ],
+      }),
+    },
+    context: {
+      allowedCapabilities: [],
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    return;
+  }
+
+  assert.deepEqual(
+    result.activatedMod.normalizedContentSources.map((source) => source.id),
+    ["pack.test.base", "pack.test.override"]
+  );
+});
+
+test("builtin startup path in main.ts uses the shared builtin mod loader instead of directly constructing a loaded mod", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.match(source, /builtinModsById:\s*builtinModSourceRecordsById/);
+  assert.match(
+    source,
+    /const builtinStartupActivation = await runModRuntime\(\{[\s\S]*type:\s*"mod\.load-builtin"[\s\S]*modId:\s*builtinDefaultModId[\s\S]*context:\s*createModRuntimeContext\(\)[\s\S]*\}\);/
+  );
+  assert.match(
+    source,
+    /async function activateBuiltinDefaultMod\([\s\S]*runModRuntime\(\{[\s\S]*type:\s*"mod\.load-builtin"[\s\S]*modId:\s*builtinDefaultModId[\s\S]*context:\s*createModRuntimeContext\(\)[\s\S]*\}\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /const builtinStartupActivation = await runModRuntime\(\{[\s\S]*type:\s*"mod\.activate-loaded"[\s\S]*createLoadedModFromManifest\(/ 
+  );
+  assert.doesNotMatch(
+    source,
+    /async function activateBuiltinDefaultMod\([\s\S]*createLoadedModFromManifest\(/ 
+  );
+});
+
+test("active game content context can assemble from activationResult sources without external base-pack wiring", () => {
+  const {
+    createActiveGameContentContextFromModActivation,
+  } = require("../.test-dist/application/content/active-game-content.js");
+
+  const context = createActiveGameContentContextFromModActivation({
+    activationResult: {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [
+          {
+            schemaVersion: 1,
+            id: "pack.test.base",
+            title: "Base Pack",
+            cities: [
+              {
+                id: "city.shared",
+                name: "Base City",
+                mapNodeId: null,
+                prosperity: 1,
+                danger: 1,
+                specialDemand: [],
+                houseIds: [],
+              },
+            ],
+            textEntries: {
+              "runtime.test.base": "base text",
+            },
+          },
+          {
+            schemaVersion: 1,
+            id: "pack.test.override",
+            title: "Override Pack",
+            cities: [
+              {
+                id: "city.shared",
+                name: "Override City",
+                mapNodeId: null,
+                prosperity: 5,
+                danger: 2,
+                specialDemand: ["茶"],
+                houseIds: ["house.override"],
+              },
+            ],
+            houses: [
+              {
+                id: "house.override",
+                cityId: "city.shared",
+                name: "Override House",
+              },
+            ],
+            textEntries: {
+              "runtime.test.override": "override text",
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal(context.packId, "pack.test.override");
+  assert.equal(context.cityDefinitionById["city.shared"]?.name, "Override City");
+  assert.equal(context.houseDefinitionById["house.override"]?.name, "Override House");
+  assert.equal(context.textEntriesById["runtime.test.base"], "base text");
+  assert.equal(context.textEntriesById["runtime.test.override"], "override text");
+});
+
 test("state sync runtime contract exports canonical app save presentation trigger and result seams", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/state-sync-runtime.ts"),
@@ -10915,7 +11798,7 @@ test("child 30 playable runtime contract exports unified playable launch session
 test("child 30 playable definition registry installs covered interactive playables with family boundaries", () => {
   const {
     builtinPlayableDefinitionRegistry,
-  } = require("../.test-dist/core/registry/playable-definition-registry.js");
+  } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
 
   assert.equal(
     builtinPlayableDefinitionRegistry.get("activity-qte")?.family,
@@ -10935,6 +11818,48 @@ test("child 30 playable definition registry installs covered interactive playabl
     )?.id,
     "story-battle"
   );
+});
+
+test("playable definition registry stays generic and builtin seed lives in an explicit builtin registry module", () => {
+  const genericSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/registry/playable-definition-registry.ts"),
+    "utf8"
+  );
+  const builtinRegistryPath = path.join(
+    process.cwd(),
+    "src/core/registry/builtin-playable-definition-registry.ts"
+  );
+
+  assert.doesNotMatch(genericSource, /const builtinPlayableDefinitions/);
+  assert.doesNotMatch(genericSource, /createBuiltinPlayableDefinitionRegistry/);
+  assert.doesNotMatch(genericSource, /builtinPlayableDefinitionRegistry/);
+  assert.equal(fs.existsSync(builtinRegistryPath), true);
+
+  const builtinSource = fs.readFileSync(builtinRegistryPath, "utf8");
+  assert.match(builtinSource, /installBuiltinPlayableDefinitions/);
+  assert.match(builtinSource, /createBuiltinPlayableDefinitionRegistry/);
+  assert.match(builtinSource, /builtinPlayableDefinitionRegistry/);
+});
+
+test("playable integration registry stays generic and builtin seed lives in an explicit builtin registry module", () => {
+  const genericSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/registry/playable-integration-registry.ts"),
+    "utf8"
+  );
+  const builtinRegistryPath = path.join(
+    process.cwd(),
+    "src/core/registry/builtin-playable-integration-registry.ts"
+  );
+
+  assert.doesNotMatch(genericSource, /const builtinPlayableIntegrations/);
+  assert.doesNotMatch(genericSource, /createBuiltinPlayableIntegrationRegistry/);
+  assert.doesNotMatch(genericSource, /builtinPlayableIntegrationRegistry/);
+  assert.equal(fs.existsSync(builtinRegistryPath), true);
+
+  const builtinSource = fs.readFileSync(builtinRegistryPath, "utf8");
+  assert.match(builtinSource, /installBuiltinPlayableIntegrations/);
+  assert.match(builtinSource, /createBuiltinPlayableIntegrationRegistry/);
+  assert.match(builtinSource, /builtinPlayableIntegrationRegistry/);
 });
 
 test("child 30 playable launch normalization resolves city-begging by playable id to one integration id", () => {

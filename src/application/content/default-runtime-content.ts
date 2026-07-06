@@ -1,6 +1,6 @@
-import { createBaseGameContentPack } from "../../content/base-game-content-pack";
 import type { CityDefinition } from "../../domain/city";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
+import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { HouseDefinition } from "../../domain/house";
 
 export type DefaultRuntimeContent = {
@@ -19,9 +19,11 @@ export const defaultRuntimeContent: DefaultRuntimeContent = {
 
 let defaultRuntimeContentPromise: Promise<DefaultRuntimeContent> | null = null;
 
-export async function loadDefaultRuntimeContent(): Promise<DefaultRuntimeContent> {
+export async function loadDefaultRuntimeContent(
+  loadPack: () => Promise<ContentPackDefinition>
+): Promise<DefaultRuntimeContent> {
   if (defaultRuntimeContentPromise == null) {
-    defaultRuntimeContentPromise = createBaseGameContentPack().then((pack) => {
+    defaultRuntimeContentPromise = loadPack().then((pack) => {
       defaultRuntimeContent.cities = pack.cities ?? [];
       defaultRuntimeContent.houses = pack.houses ?? [];
       defaultRuntimeContent.cityNpcPools = pack.cityNpcPools ?? [];

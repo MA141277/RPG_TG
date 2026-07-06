@@ -14,7 +14,7 @@ import {
   resolvePlayableLaunchRequest,
   runPlayableRuntime,
 } from "./playable-runtime";
-import { builtinPlayableDefinitionRegistry } from "../registry/playable-definition-registry";
+import { builtinPlayableDefinitionRegistry } from "../registry/builtin-playable-definition-registry";
 
 export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
   characterDefinitions?: CharacterDefinition[];

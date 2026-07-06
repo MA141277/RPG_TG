@@ -5,6 +5,8 @@ import type {
 } from "../../../domain/house-module";
 import {
   builtinHouseModuleRegistry,
+} from "../../../core/registry/builtin-house-module-registry";
+import {
   type HouseModuleRegistry,
 } from "../../../core/registry/house-module-registry";
 

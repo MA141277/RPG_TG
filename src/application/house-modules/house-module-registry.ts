@@ -2,7 +2,7 @@ import type { HouseModuleDefinition, HouseModuleId } from "../../domain/house-mo
 import {
   builtinHouseModuleRegistry,
   createBuiltinHouseModuleRegistry,
-} from "../../core/registry/house-module-registry";
+} from "../../core/registry/builtin-house-module-registry";
 
 export { builtinHouseModuleRegistry, createBuiltinHouseModuleRegistry };
 

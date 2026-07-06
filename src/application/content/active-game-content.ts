@@ -213,15 +213,25 @@ export function createActiveGameContentContext(
 }
 
 export function createActiveGameContentContextFromModActivation(input: {
-  basePack: ContentPackDefinition;
   activationResult: ModActivationResult;
 }): ActiveGameContentContext {
-  const overridePack = readActivatedContentSource(input.activationResult);
-  if (overridePack == null || overridePack.id === input.basePack.id) {
-    return createActiveGameContentContext(input.basePack);
+  const contentSources = readActivatedContentSources(input.activationResult);
+  if (contentSources.length === 0) {
+    throw new Error("Activated mod does not provide any content sources.");
   }
 
-  return createActiveGameContentContext(input.basePack, overridePack);
+  const [basePack, ...overridePacks] = contentSources;
+  if (basePack == null) {
+    throw new Error("Activated mod does not provide a base content source.");
+  }
+
+  const mergedPack = overridePacks.reduce<ContentPackDefinition>(
+    (currentPack, overridePack) =>
+      mergeContentPacks(currentPack, normalizeContentPack(overridePack)),
+    normalizeContentPack(basePack)
+  );
+
+  return createActiveGameContentContext(mergedPack);
 }
 
 export function mergeContentPacks(
@@ -296,19 +306,17 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
   };
 }
 
-function readActivatedContentSource(
+function readActivatedContentSources(
   activationResult: ModActivationResult
-): ScenarioPackDefinition | ContentPackDefinition | null {
+): Array<ScenarioPackDefinition | ContentPackDefinition> {
   if (!activationResult.ok) {
-    return null;
+    return [];
   }
 
-  const primarySource = activationResult.activatedMod.normalizedContentSources[0];
-  if (primarySource == null || typeof primarySource !== "object") {
-    return null;
-  }
-
-  return primarySource as ScenarioPackDefinition | ContentPackDefinition;
+  return activationResult.activatedMod.normalizedContentSources.filter(
+    (source): source is ScenarioPackDefinition | ContentPackDefinition =>
+      source != null && typeof source === "object"
+  );
 }
 
 function createCityCoordinatesById(
