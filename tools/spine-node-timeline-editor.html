@@ -1901,6 +1901,16 @@
           length: patch.length ?? base.length,
           scaleX: patch.scaleX ?? base.scaleX,
           scaleY: patch.scaleY ?? base.scaleY,
+          ...(isBowStringControlNode(node)
+            ? {
+                bowAngle: patch.bowAngle ?? node?.bowRig?.angle ?? 0,
+                bowUpperLength: patch.bowUpperLength ?? node?.bowRig?.upperLength ?? 4,
+                bowLowerLength: patch.bowLowerLength ?? node?.bowRig?.lowerLength ?? 4,
+                bowControlBaseX: patch.bowControlBaseX ?? node?.bowRig?.controlBaseX ?? 0,
+                bowControlBaseY: patch.bowControlBaseY ?? node?.bowRig?.controlBaseY ?? 0,
+                bowPull: patch.bowPull ?? node?.bowRig?.pull ?? 0,
+              }
+            : {}),
         };
       }
 
@@ -1970,27 +1980,40 @@
         return state.workspaceMode === "binding";
       }
 
+      function enrichBowPose(node, pose) {
+        if (!isBowStringControlNode(node)) return pose;
+        return {
+          ...pose,
+          bowAngle: pose?.bowAngle ?? node?.bowRig?.angle ?? 0,
+          bowUpperLength: pose?.bowUpperLength ?? node?.bowRig?.upperLength ?? 4,
+          bowLowerLength: pose?.bowLowerLength ?? node?.bowRig?.lowerLength ?? 4,
+          bowControlBaseX: pose?.bowControlBaseX ?? node?.bowRig?.controlBaseX ?? 0,
+          bowControlBaseY: pose?.bowControlBaseY ?? node?.bowRig?.controlBaseY ?? 0,
+          bowPull: pose?.bowPull ?? node?.bowRig?.pull ?? 0,
+        };
+      }
+
       function getLocalPose(node, frame = state.currentFrame) {
         const override = ignorePoseOverrides ? null : poseOverrides.get(node.id);
-        if (override) return { ...node, ...override };
-        if (isBindingMode()) return getRestLocalPose(node);
+        if (override) return enrichBowPose(node, { ...node, ...override });
+        if (isBindingMode()) return enrichBowPose(node, getRestLocalPose(node));
         const keys = [...(state.timelines[node.id] || [])].sort((a, b) => a.frame - b.frame);
-        if (keys.length === 0) return { ...node };
+        if (keys.length === 0) return enrichBowPose(node, { ...node });
         const exact = keys.find((item) => item.frame === frame);
-        if (exact) return { ...node, ...exact };
-        if (keys.length === 1) return { ...node, ...keys[0] };
+        if (exact) return enrichBowPose(node, { ...node, ...exact });
+        if (keys.length === 1) return enrichBowPose(node, { ...node, ...keys[0] });
         const before = [...keys].reverse().find((item) => item.frame < frame);
         const after = keys.find((item) => item.frame > frame);
-        if (!before) return { ...node, ...keys[0] };
+        if (!before) return enrichBowPose(node, { ...node, ...keys[0] });
         if (!after) {
           const start = keys.find((item) => item.frame === 0) || keys[0];
           const loopEndFrame = state.duration + 1;
           const span = Math.max(1, loopEndFrame - before.frame);
           const t = Math.max(0, Math.min(1, (frame - before.frame) / span));
-          return interpolateLocalPose(node, before, start, t);
+          return enrichBowPose(node, interpolateLocalPose(node, before, start, t));
         }
         const t = (frame - before.frame) / (after.frame - before.frame);
-        return interpolateLocalPose(node, before, after, t);
+        return enrichBowPose(node, interpolateLocalPose(node, before, after, t));
       }
 
       function interpolateLocalPose(node, before, after, t) {
@@ -2002,6 +2025,40 @@
           length: lerp(before.length, after.length, t),
           scaleX: lerp(before.scaleX, after.scaleX, t),
           scaleY: lerp(before.scaleY, after.scaleY, t),
+          ...(isBowStringControlNode(node)
+            ? {
+                bowAngle: lerpAngle(
+                  before.bowAngle ?? node?.bowRig?.angle ?? 0,
+                  after.bowAngle ?? node?.bowRig?.angle ?? 0,
+                  t,
+                ),
+                bowUpperLength: lerp(
+                  before.bowUpperLength ?? node?.bowRig?.upperLength ?? 4,
+                  after.bowUpperLength ?? node?.bowRig?.upperLength ?? 4,
+                  t,
+                ),
+                bowLowerLength: lerp(
+                  before.bowLowerLength ?? node?.bowRig?.lowerLength ?? 4,
+                  after.bowLowerLength ?? node?.bowRig?.lowerLength ?? 4,
+                  t,
+                ),
+                bowControlBaseX: lerp(
+                  before.bowControlBaseX ?? node?.bowRig?.controlBaseX ?? 0,
+                  after.bowControlBaseX ?? node?.bowRig?.controlBaseX ?? 0,
+                  t,
+                ),
+                bowControlBaseY: lerp(
+                  before.bowControlBaseY ?? node?.bowRig?.controlBaseY ?? 0,
+                  after.bowControlBaseY ?? node?.bowRig?.controlBaseY ?? 0,
+                  t,
+                ),
+                bowPull: lerp(
+                  before.bowPull ?? node?.bowRig?.pull ?? 0,
+                  after.bowPull ?? node?.bowRig?.pull ?? 0,
+                  t,
+                ),
+              }
+            : {}),
         };
       }
 
@@ -4066,6 +4123,7 @@
         const result = {};
         if (!timelines || typeof timelines !== "object") return result;
         Object.entries(timelines).forEach(([nodeId, keys]) => {
+          const node = state.nodes.find((item) => item.id === nodeId);
           if (!Array.isArray(keys)) return;
           result[nodeId] = keys
             .map((item) => ({
@@ -4076,6 +4134,30 @@
               length: Math.max(4, Number(item.length) || 80),
               scaleX: Math.max(0.05, Number(item.scaleX) || 1),
               scaleY: Math.max(0.05, Number(item.scaleY) || 1),
+              ...(isBowStringControlNode(node)
+                ? {
+                    bowAngle: Number.isFinite(Number(item.bowAngle)) ? Number(item.bowAngle) : node?.bowRig?.angle ?? 0,
+                    bowUpperLength: Math.max(
+                      4,
+                      Number.isFinite(Number(item.bowUpperLength))
+                        ? Number(item.bowUpperLength)
+                        : node?.bowRig?.upperLength ?? 4,
+                    ),
+                    bowLowerLength: Math.max(
+                      4,
+                      Number.isFinite(Number(item.bowLowerLength))
+                        ? Number(item.bowLowerLength)
+                        : node?.bowRig?.lowerLength ?? 4,
+                    ),
+                    bowControlBaseX: Number.isFinite(Number(item.bowControlBaseX))
+                      ? Number(item.bowControlBaseX)
+                      : node?.bowRig?.controlBaseX ?? 0,
+                    bowControlBaseY: Number.isFinite(Number(item.bowControlBaseY))
+                      ? Number(item.bowControlBaseY)
+                      : node?.bowRig?.controlBaseY ?? 0,
+                    bowPull: Number.isFinite(Number(item.bowPull)) ? Number(item.bowPull) : node?.bowRig?.pull ?? 0,
+                  }
+                : {}),
             }))
             .sort((a, b) => a.frame - b.frame);
         });
@@ -4309,6 +4391,7 @@
               model.rig.angle = Number(patch.rotation) || 0;
               nodes.control.bowRig = normalizeBowRig(model.rig);
               syncBowRigFromModel(nodes.control);
+              persistBowRigKeyframe(nodes.control);
               const remainingPatch = { ...patch };
               delete remainingPatch.rotation;
               if (!Object.keys(remainingPatch).length) {
@@ -4443,7 +4526,23 @@
           length: source.length,
           scaleX: source.scaleX,
           scaleY: source.scaleY,
+          ...(isBowStringControlNode(node)
+            ? {
+                bowAngle: node.bowRig?.angle ?? 0,
+                bowUpperLength: node.bowRig?.upperLength ?? 4,
+                bowLowerLength: node.bowRig?.lowerLength ?? 4,
+                bowControlBaseX: node.bowRig?.controlBaseX ?? 0,
+                bowControlBaseY: node.bowRig?.controlBaseY ?? 0,
+                bowPull: node.bowRig?.pull ?? 0,
+              }
+            : {}),
         };
+      }
+
+      function persistBowRigKeyframe(node) {
+        if (!node || isBindingMode()) return;
+        upsertKeyframe(node, snapshotNode(node));
+        drag?.touched?.add(node.id);
       }
 
       function copyPoseAtFrame(source, frame = state.currentFrame) {
@@ -4455,6 +4554,16 @@
           length: source.length,
           scaleX: source.scaleX,
           scaleY: source.scaleY,
+          ...(source?.bowAngle !== undefined
+            ? {
+                bowAngle: source.bowAngle,
+                bowUpperLength: source.bowUpperLength,
+                bowLowerLength: source.bowLowerLength,
+                bowControlBaseX: source.bowControlBaseX,
+                bowControlBaseY: source.bowControlBaseY,
+                bowPull: source.bowPull,
+              }
+            : {}),
         };
       }
 
@@ -6952,12 +7061,19 @@
       function ensureBowRigModel(controlNode) {
         const nodes = bowRigNodes(controlNode);
         if (!nodes) return null;
-        const { rig, center, upper, lower, control } = nodes;
+        const { rig, center, upper, lower } = nodes;
+        const controlLocal = isBindingMode() ? getRestLocalPose(controlNode) : getLocalPose(controlNode);
         const centerWorld = endPoint(worldPose(center));
         const upperTip = endPoint(worldPose(upper));
         const lowerTip = endPoint(worldPose(lower));
-        const controlPose = worldPose(control);
+        const controlPose = worldPose(controlNode);
         const controlPoint = { x: controlPose.worldX, y: controlPose.worldY };
+        if (controlLocal?.bowAngle !== undefined) rig.angle = controlLocal.bowAngle;
+        if (controlLocal?.bowUpperLength !== undefined) rig.upperLength = controlLocal.bowUpperLength;
+        if (controlLocal?.bowLowerLength !== undefined) rig.lowerLength = controlLocal.bowLowerLength;
+        if (controlLocal?.bowControlBaseX !== undefined) rig.controlBaseX = controlLocal.bowControlBaseX;
+        if (controlLocal?.bowControlBaseY !== undefined) rig.controlBaseY = controlLocal.bowControlBaseY;
+        if (controlLocal?.bowPull !== undefined) rig.pull = controlLocal.bowPull;
         if (!Number.isFinite(Number(rig.angle))) {
           rig.angle = (Math.atan2(upperTip.y - centerWorld.y, upperTip.x - centerWorld.x) * 180) / Math.PI;
         }
@@ -6974,7 +7090,7 @@
         }
         if (!Number.isFinite(Number(rig.pull))) rig.pull = 0;
         controlNode.bowRig = normalizeBowRig(rig);
-        return { ...nodes, rig: controlNode.bowRig };
+        return { ...nodes, rig: controlNode.bowRig, control: controlNode };
       }
 
       function syncBowRigFromModel(controlNode) {
@@ -7011,6 +7127,7 @@
         };
         moveBoneRigid(nodes.center, deltaWorld, centerOrigin);
         syncBowRigFromModel(nodes.control);
+        persistBowRigKeyframe(nodes.control);
         return true;
       }
 
@@ -7089,7 +7206,9 @@
         const centerWorld = bowCenterWorld(model);
         model.rig.angle = (Math.atan2(targetWorld.y - centerWorld.y, targetWorld.x - centerWorld.x) * 180) / Math.PI;
         nodes.control.bowRig = normalizeBowRig(model.rig);
-        return syncBowRigFromModel(nodes.control);
+        syncBowRigFromModel(nodes.control);
+        persistBowRigKeyframe(nodes.control);
+        return true;
       }
 
       function handleBowRigDrag(node, dragType, point) {
@@ -7107,6 +7226,7 @@
             model.rig.pull = 0;
             nodes.control.bowRig = normalizeBowRig(model.rig);
             syncBowRigFromModel(nodes.control);
+            persistBowRigKeyframe(nodes.control);
             return true;
           }
           return moveBowStringControl(nodes.control, point);
@@ -7147,7 +7267,9 @@
         );
         nodes.rig.pull = Math.max(-nodes.rig.maxPull, Math.min(nodes.rig.maxPull, projected));
         node.bowRig = normalizeBowRig(nodes.rig);
-        return syncBowRigFromModel(node);
+        syncBowRigFromModel(node);
+        persistBowRigKeyframe(node);
+        return true;
       }
 
       function createBowRigFromSelectedPiece() {
@@ -7278,7 +7400,7 @@
           state.timelines[lowerBone.id] = [];
           state.timelines[stringUpperBone.id] = [];
           state.timelines[stringLowerBone.id] = [];
-          state.timelines[stringControl.id] = [];
+          state.timelines[stringControl.id] = [snapshotNode(stringControl)];
 
           piece.name = `${baseName}_rig`;
           piece.role = "bow-rig";
