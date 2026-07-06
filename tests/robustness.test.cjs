@@ -1827,16 +1827,37 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /getShoreNearAmount/);
   assert.match(terrainFragmentSource, /getShoreShallowAmount/);
   assert.match(terrainFragmentSource, /getShoreMiddleAmount/);
+  assert.match(terrainFragmentSource, /getSharedHexEdgeShoreContribution/);
+  assert.match(terrainFragmentSource, /distanceToSharedEdge/);
   assert.match(terrainFragmentSource, /getShoreRing2Amount/);
   assert.match(terrainFragmentSource, /getShoreRing3Amount/);
+  assert.match(
+    terrainFragmentSource,
+    /vec2\(0\.0, -1\.0\) \* ringRadius[\s\S]+vec2\(1\.0, -1\.0\) \* ringRadius[\s\S]+vec2\(1\.0, 0\.0\) \* ringRadius/
+  );
+  assert.match(terrainFragmentSource, /vec2\(-2\.0, 2\.0\)/);
+  assert.match(terrainFragmentSource, /vec2\(-3\.0, 3\.0\)/);
   assert.doesNotMatch(terrainFragmentSource, /getStretchedWaveUv/);
   assert.doesNotMatch(terrainFragmentSource, /sampleStretchedWaterNoise/);
   assert.doesNotMatch(terrainFragmentSource, /waveLineA/);
   assert.doesNotMatch(terrainFragmentSource, /waveLineB/);
   assert.doesNotMatch(terrainFragmentSource, /getLongWaterWave/);
-  assert.match(terrainFragmentSource, /getDirectionalWaterRipple/);
-  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.24\), 10\.0, 42\.0/);
-  assert.match(terrainFragmentSource, /vec2\(0\.96, 0\.30\), 18\.0, 70\.0/);
+  assert.doesNotMatch(terrainFragmentSource, /getDirectionalWaterRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /float ridge = sin/);
+  assert.doesNotMatch(terrainFragmentSource, /segmentNoise/);
+  assert.match(terrainFragmentSource, /sampleNoiseWaterRipple/);
+  assert.match(terrainFragmentSource, /anisotropicUv/);
+  assert.match(terrainFragmentSource, /longNoise/);
+  assert.match(terrainFragmentSource, /shiftedNoise/);
+  assert.match(terrainFragmentSource, /surfaceNoise/);
+  assert.match(terrainFragmentSource, /surfaceRipple/);
+  assert.match(terrainFragmentSource, /waveCrest/);
+  assert.match(terrainFragmentSource, /waveTrough/);
+  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.20\), 3\.4, 24\.0/);
+  assert.match(terrainFragmentSource, /vec2\(0\.92, 0\.38\), 5\.2, 42\.0/);
+  assert.match(terrainFragmentSource, /boundaryNoise/);
+  assert.match(terrainFragmentSource, /fineBoundaryNoise/);
+  assert.match(terrainFragmentSource, /bandJitter/);
   assert.match(terrainFragmentSource, /nearShoreBand/);
   assert.match(terrainFragmentSource, /shallowSeaBand/);
   assert.match(terrainFragmentSource, /middleSeaBand/);
