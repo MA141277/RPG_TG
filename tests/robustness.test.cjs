@@ -1772,8 +1772,8 @@ test("built-in yuanmo campaign map declares shared water noise texture layer", (
   assert.equal(fs.existsSync(assetPath), true);
 });
 
-test("campaign terrain WebGL shader uses shared animated water texture", () => {
-  const source = fs.readFileSync(
+test("campaign terrain WebGL shader uses separate shared animated water texture files", () => {
+  const rendererSource = fs.readFileSync(
     path.join(
       process.cwd(),
       "src",
@@ -1784,20 +1784,47 @@ test("campaign terrain WebGL shader uses shared animated water texture", () => {
     ),
     "utf8"
   );
+  const shaderRoot = path.join(
+    process.cwd(),
+    "src",
+    "ui",
+    "views",
+    "map",
+    "shaders"
+  );
+  const terrainFragmentSource = fs.readFileSync(
+    path.join(shaderRoot, "campaign-terrain.frag.glsl"),
+    "utf8"
+  );
 
-  assert.match(source, /waterTextureUrl: string \| null/);
-  assert.match(source, /uniform sampler2D uWaterTexture/);
-  assert.match(source, /uniform float uTimeSeconds/);
+  [
+    "campaign-terrain.vert.glsl",
+    "campaign-terrain.frag.glsl",
+    "campaign-actor.vert.glsl",
+    "campaign-actor.frag.glsl",
+  ].forEach((shaderFileName) => {
+    assert.equal(fs.existsSync(path.join(shaderRoot, shaderFileName)), true);
+  });
+  assert.match(rendererSource, /waterTextureUrl: string \| null/);
+  assert.match(rendererSource, /campaign-terrain\.frag\.glsl\?raw/);
+  assert.match(rendererSource, /createShaderSource\(terrainFragmentShaderRaw/);
+  assert.doesNotMatch(rendererSource, /uniform sampler2D uWaterTexture/);
+  assert.match(terrainFragmentSource, /uniform sampler2D uWaterTexture/);
+  assert.match(terrainFragmentSource, /uniform float uTimeSeconds/);
   assert.match(
-    source,
+    terrainFragmentSource,
     /getShoreAmount\(vec2 point, vec2 cell, float hexScale, float mapAspect, float water\)/
   );
-  assert.match(source, /getShoreEdgeContribution/);
-  assert.doesNotMatch(source, /return clamp\(\(1\.0 - neighborWater\) \* water/);
-  assert.match(source, /uv \* vec2\(44\.0, 38\.0\)/);
-  assert.match(source, /uv \* vec2\(96\.0, 84\.0\)/);
-  assert.match(source, /wrapS: gl\.REPEAT/);
-  assert.match(source, /requestRender\("dynamic"\)/);
+  assert.match(terrainFragmentSource, /getShoreEdgeContribution/);
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /return clamp\(\(1\.0 - neighborWater\) \* water/
+  );
+  assert.match(terrainFragmentSource, /smoothstep\(0\.04, 0\.46, boundaryDistance\)/);
+  assert.match(terrainFragmentSource, /uv \* vec2\(58\.0, 50\.0\)/);
+  assert.match(terrainFragmentSource, /uv \* vec2\(132\.0, 116\.0\)/);
+  assert.match(rendererSource, /wrapS: gl\.REPEAT/);
+  assert.match(rendererSource, /requestRender\("dynamic"\)/);
 });
 
 test("ui contract modules export the reserve contract families", async () => {

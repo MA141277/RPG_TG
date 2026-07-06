@@ -12,6 +12,8 @@
 ### Changed
 - 大地图水体颜色现在会依据周围六边形材质采样计算近岸程度：靠近陆地的水体更浅、更绿，深水保持偏蓝。
 - 近岸浅色不再按完整六边形块整格铺开，而是按当前片元到陆地相邻边的距离形成边缘渐变；水纹噪声采样频率提高，避免水面退化成低频纯色块。
+- 大地图 WebGL shader 已从 `campaign-terrain-webgl.ts` 的内嵌模板字符串拆到 `src/ui/views/map/shaders/*.glsl`；renderer 只负责 raw import 与少量地图常量占位符替换。
+- 浅色近岸边缘范围扩大，水波采样频率、速度和明暗扰动增强，使动态水纹在大地图缩放下更明显。
 - 水体视觉仍只属于渲染层；水格不可点击、不可踏足、寻路避水继续由 `map_heights` passable hex 网格与 navigation 层负责。
 
 ### Impact

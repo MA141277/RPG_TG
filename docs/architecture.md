@@ -165,6 +165,8 @@ Campaign 地图的水域/陆地通行性来自当前地图的地形资产。`cam
 
 Campaign 地图的水体视觉来自可选 `map_water_noise` 图层。该图层是纯表现资产：`map-view.ts` 只把它作为 terrain canvas 的 `data-map-water-texture-url` 传给 WebGL renderer，`campaign-terrain-webgl.ts` 只加载一次并在 fragment shader 中用 `uTimeSeconds` 滚动采样。近岸浅绿效果由 shader 对 `map_ground_types` 的相邻 hex 材质采样得出，不改变点击、投影、通行性或 navigation 路径模型。
 
+Campaign 地图 WebGL shader 源码必须放在 `src/ui/views/map/shaders/*.glsl` 中，并由 renderer 通过 raw import 加载。`campaign-terrain-webgl.ts` 可以替换少量与 TypeScript 常量共享的占位符，但不要再把完整 vertex/fragment shader 作为大型模板字符串内嵌在 renderer 文件里。
+
 ### 全局栏目
 
 常驻 UI 独立建模，不挂在某个页面组件下面：

@@ -1,4 +1,8 @@
 import type { HexTravelGrid } from "../../../application/navigation/travel-to-coordinate";
+import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
+import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
+import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
+import terrainVertexShaderRaw from "./shaders/campaign-terrain.vert.glsl?raw";
 
 type CampaignTerrainInput = {
   canvas: HTMLCanvasElement;
@@ -122,6 +126,17 @@ const CITY_DEPTH_MESH_BASE_LIFT = 0.0015;
 const CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE = 2 / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE);
 const CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE = 2 / HEX_TERRAIN_SCALE;
 const WATER_ANIMATION_FRAME_INTERVAL_MS = 1000 / 24;
+const vertexShaderSource = createShaderSource(terrainVertexShaderRaw, {
+  __HEIGHT_SCALE__: HEIGHT_SCALE.toFixed(2),
+});
+const fragmentShaderSource = createShaderSource(terrainFragmentShaderRaw, {
+  __GRASS_AMBIENT_LIGHT__: GRASS_AMBIENT_LIGHT.toFixed(2),
+  __GRASS_TEXTURE_DETAIL__: GRASS_TEXTURE_DETAIL.toFixed(2),
+  __HEX_MAP_ASPECT__: HEX_MAP_ASPECT.toFixed(4),
+  __HEX_TERRAIN_SCALE__: HEX_TERRAIN_SCALE.toFixed(1),
+});
+const actorVertexShaderSource = actorVertexShaderRaw;
+const actorFragmentShaderSource = actorFragmentShaderRaw;
 export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
   rotationDegrees: 0,
   pitchDegrees: 0,
@@ -2126,6 +2141,16 @@ function createProgram(
   return program;
 }
 
+function createShaderSource(
+  source: string,
+  replacements: Record<string, string>
+): string {
+  return Object.entries(replacements).reduce(
+    (shaderSource, [token, value]) => shaderSource.replaceAll(token, value),
+    source
+  );
+}
+
 function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
   const result = new Float32Array(16);
 
@@ -2197,293 +2222,3 @@ function createScaleMatrix(x: number, y: number, z: number): Mat4 {
     0, 0, 0, 1,
   ]);
 }
-
-const vertexShaderSource = `
-  attribute vec3 aPosition;
-  attribute vec2 aUv;
-  uniform mat4 uMatrix;
-  varying vec2 vUv;
-  varying float vHeight;
-  varying vec2 vTerrainPosition;
-
-  void main() {
-    vUv = aUv;
-    vHeight = aPosition.z / ${HEIGHT_SCALE.toFixed(2)};
-    vTerrainPosition = aPosition.xy;
-    gl_Position = uMatrix * vec4(aPosition, 1.0);
-  }
-`;
-
-const fragmentShaderSource = `
-  precision mediump float;
-  uniform sampler2D uTexture;
-  uniform sampler2D uMaterialTexture;
-  uniform sampler2D uWaterTexture;
-  uniform float uWaterTextureEnabled;
-  uniform float uTimeSeconds;
-  uniform vec3 uLandTextureColorAdjust;
-  uniform vec2 uLandTextureShadeRange;
-  varying vec2 vUv;
-  varying float vHeight;
-  varying vec2 vTerrainPosition;
-
-  float colorDistance(vec3 left, vec3 right) {
-    return distance(left, right);
-  }
-
-  float materialWeight(vec3 material, vec3 target, float radius) {
-    return 1.0 - smoothstep(0.0, radius, colorDistance(material, target));
-  }
-
-  float hash(vec2 point) {
-    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453);
-  }
-
-  float getWaterAmount(vec3 terrainType) {
-    return
-      step(0.22, terrainType.r) *
-      (1.0 - step(0.12, terrainType.g)) *
-      (1.0 - step(0.12, terrainType.b));
-  }
-
-  float getWaterAmountAt(vec2 uv) {
-    vec3 terrainType = texture2D(uMaterialTexture, clamp(uv, 0.0, 1.0)).rgb;
-
-    return getWaterAmount(terrainType);
-  }
-
-  vec2 hexToPixel(vec2 hex) {
-    return vec2(
-      1.7320508 * (hex.x + hex.y * 0.5),
-      1.5 * hex.y
-    );
-  }
-
-  vec3 cubeRound(vec3 cube) {
-    vec3 rounded = floor(cube + 0.5);
-    vec3 difference = abs(rounded - cube);
-
-    if (difference.x > difference.y && difference.x > difference.z) {
-      rounded.x = -rounded.y - rounded.z;
-    } else if (difference.y > difference.z) {
-      rounded.y = -rounded.x - rounded.z;
-    } else {
-      rounded.z = -rounded.x - rounded.y;
-    }
-
-    return rounded;
-  }
-
-  vec2 pixelToRoundedHex(vec2 point) {
-    vec2 axial = vec2(
-      0.5773503 * point.x - 0.3333333 * point.y,
-      0.6666667 * point.y
-    );
-    vec3 cube = vec3(axial.x, axial.y, -axial.x - axial.y);
-    vec3 roundedCube = cubeRound(cube);
-
-    return roundedCube.xy;
-  }
-
-  vec2 getHexCellUv(vec2 cell, float hexScale, float mapAspect) {
-    vec2 center = hexToPixel(cell);
-
-    return vec2(
-      center.x / (hexScale * mapAspect) + 0.5,
-      center.y / hexScale + 0.5
-    );
-  }
-
-  float getShoreEdgeContribution(
-    vec2 point,
-    vec2 cell,
-    vec2 neighborOffset,
-    float hexScale,
-    float mapAspect
-  ) {
-    vec2 neighborCell = cell + neighborOffset;
-    float neighborWater = getWaterAmountAt(getHexCellUv(neighborCell, hexScale, mapAspect));
-    float landNeighbor = 1.0 - neighborWater;
-    float centerDistance = length(point - hexToPixel(cell));
-    float neighborDistance = length(point - hexToPixel(neighborCell));
-    float boundaryDistance = abs(neighborDistance - centerDistance);
-
-    return landNeighbor * (1.0 - smoothstep(0.02, 0.20, boundaryDistance));
-  }
-
-  float getShoreAmount(vec2 point, vec2 cell, float hexScale, float mapAspect, float water) {
-    float shore = 0.0;
-
-    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(1.0, 0.0), hexScale, mapAspect));
-    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(-1.0, 0.0), hexScale, mapAspect));
-    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(0.0, 1.0), hexScale, mapAspect));
-    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(0.0, -1.0), hexScale, mapAspect));
-    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(1.0, -1.0), hexScale, mapAspect));
-    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(-1.0, 1.0), hexScale, mapAspect));
-
-    return clamp(shore * water, 0.0, 1.0);
-  }
-
-  float getHexGridLine(vec2 point, vec2 cell) {
-    vec2 center = hexToPixel(cell);
-    float centerDistance = length(point - center);
-    float neighborDistance = 1000.0;
-
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(1.0, 0.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 0.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(0.0, 1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(0.0, -1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(1.0, -1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 1.0))));
-
-    float boundaryDistance = abs(neighborDistance - centerDistance);
-    float lineWidth = 0.026;
-
-    return 1.0 - smoothstep(0.0, lineWidth, boundaryDistance);
-  }
-
-  vec2 getHexAtlasUv(vec2 point, vec2 cell) {
-    const float tileCount = 4.0;
-    vec2 localPoint = point - hexToPixel(cell);
-    vec2 localUv = clamp(
-      vec2(localPoint.x / 1.7320508 + 0.5, localPoint.y / 2.0 + 0.5),
-      0.0,
-      1.0
-    );
-    float tileIndex = floor(hash(cell) * 16.0);
-    vec2 tile = vec2(mod(tileIndex, tileCount), floor(tileIndex / tileCount));
-
-    return (tile + localUv) / tileCount;
-  }
-
-  vec3 getHexTerrainColor(vec3 terrainType) {
-    float water = getWaterAmount(terrainType);
-    float plain =
-      step(0.22, terrainType.g) *
-      step(terrainType.r, 0.45) *
-      (1.0 - water);
-    float coast =
-      step(0.36, terrainType.b) *
-      step(0.30, terrainType.g) *
-      (1.0 - water);
-    float mountain =
-      max(
-        materialWeight(terrainType, vec3(0.38, 0.25, 0.25), 0.22),
-        materialWeight(terrainType, vec3(0.50, 0.50, 0.25), 0.24)
-      ) * (1.0 - water) * (1.0 - plain);
-
-    vec3 color = vec3(0.39, 0.52, 0.27);
-    color = mix(color, vec3(0.18, 0.55, 0.26), plain);
-    color = mix(color, vec3(0.44, 0.38, 0.25), mountain);
-    color = mix(color, vec3(0.24, 0.64, 0.52), coast * (1.0 - plain));
-    color = mix(color, vec3(0.10, 0.35, 0.72), water);
-
-    return color;
-  }
-
-  vec3 boostLandTextureColor(vec3 color) {
-    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    vec3 saturated = mix(vec3(luma), color, uLandTextureColorAdjust.x);
-
-    return clamp(
-      saturated * uLandTextureColorAdjust.y + vec3(uLandTextureColorAdjust.z),
-      0.0,
-      1.0
-    );
-  }
-
-  vec3 getAnimatedWaterColor(
-    vec2 uv,
-    vec3 fallbackColor,
-    float shade,
-    float shore
-  ) {
-    vec2 driftA = vec2(uTimeSeconds * 0.030, uTimeSeconds * 0.012);
-    vec2 driftB = vec2(-uTimeSeconds * 0.020, uTimeSeconds * 0.026);
-    vec3 noiseA = texture2D(uWaterTexture, uv * vec2(44.0, 38.0) + driftA).rgb;
-    vec3 noiseB = texture2D(uWaterTexture, uv * vec2(96.0, 84.0) + driftB).rgb;
-    float ripple = (noiseA.r + noiseB.g) * 0.5;
-    float vein = smoothstep(0.48, 0.78, noiseA.b * 0.58 + noiseB.r * 0.42);
-    float fineRipple = smoothstep(0.42, 0.76, abs(noiseA.g - noiseB.b) * 1.55);
-    float shoreLight = shore * smoothstep(0.48, 0.82, ripple);
-    vec3 deepWater = vec3(0.07, 0.25, 0.50);
-    vec3 shallowWater = vec3(0.18, 0.58, 0.46);
-    vec3 animatedColor = mix(deepWater, shallowWater, shore * 0.86);
-
-    animatedColor += vec3(ripple - 0.5) * 0.12;
-    animatedColor += vec3(0.045, 0.075, 0.060) * vein;
-    animatedColor += vec3(0.050, 0.085, 0.070) * fineRipple;
-    animatedColor += vec3(0.13, 0.22, 0.15) * shoreLight;
-
-    return mix(fallbackColor, clamp(animatedColor * shade, 0.0, 1.0), uWaterTextureEnabled);
-  }
-
-  void main() {
-    const float hexScale = ${HEX_TERRAIN_SCALE.toFixed(1)};
-    const float mapAspect = ${HEX_MAP_ASPECT.toFixed(4)};
-    vec2 hexPoint = vec2((vUv.x - 0.5) * mapAspect, vUv.y - 0.5) * hexScale;
-    vec2 hexCell = pixelToRoundedHex(hexPoint);
-    vec2 hexUv = getHexCellUv(hexCell, hexScale, mapAspect);
-    vec2 atlasUv = getHexAtlasUv(hexPoint, hexCell);
-    vec4 base = texture2D(uTexture, atlasUv);
-    vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
-    vec3 terrainColor = getHexTerrainColor(material);
-    float water = getWaterAmount(material);
-    float shore = getShoreAmount(hexPoint, hexCell, hexScale, mapAspect, water);
-    float shade = clamp(${GRASS_AMBIENT_LIGHT.toFixed(2)} + vHeight * 0.16, 0.50, 1.08);
-    float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
-    vec3 landTexture = boostLandTextureColor(base.rgb);
-    float landTextureLuma = dot(landTexture, vec3(0.2126, 0.7152, 0.0722));
-    landTexture = clamp(
-      mix(vec3(landTextureLuma), landTexture, ${GRASS_TEXTURE_DETAIL.toFixed(2)}),
-      0.0,
-      1.0
-    );
-    float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, shade);
-    vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
-    vec3 waterColor = getAnimatedWaterColor(vUv, terrainColor * shade, shade, shore);
-    vec3 color = mix(landColor, waterColor, water);
-
-    float border = getHexGridLine(hexPoint, hexCell);
-    color = mix(color, vec3(0.0), border * 0.34);
-
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
-const actorVertexShaderSource = `
-  attribute vec3 aPosition;
-  attribute vec3 aNormal;
-  attribute vec2 aUv;
-  uniform mat4 uMatrix;
-  varying vec3 vNormal;
-  varying vec2 vUv;
-
-  void main() {
-    vNormal = aNormal;
-    vUv = aUv;
-    gl_Position = uMatrix * vec4(aPosition, 1.0);
-  }
-`;
-
-const actorFragmentShaderSource = `
-  precision mediump float;
-  uniform vec3 uLight;
-  uniform sampler2D uTexture;
-  uniform vec3 uTint;
-  varying vec3 vNormal;
-  varying vec2 vUv;
-
-  void main() {
-    vec3 normal = normalize(vNormal);
-    float directionalLight = max(dot(normal, normalize(uLight)), 0.0);
-    float light = 0.42 + directionalLight * 0.58;
-    vec3 rim = vec3(0.16, 0.12, 0.08) * pow(1.0 - max(normal.z, 0.0), 2.0);
-    vec4 base = texture2D(uTexture, vUv);
-    if (base.a < 0.08) {
-      discard;
-    }
-    vec3 color = base.rgb * uTint;
-    gl_FragColor = vec4(color * light + rim, base.a);
-  }
-`;
