@@ -1104,9 +1104,9 @@
       position: relative;
       z-index: 1;
       display: block;
-      width: 156px;
-      height: 220px;
-      margin: -58px auto -18px;
+      width: 340px;
+      height: 380px;
+      margin: -138px auto -22px;
       pointer-events: none;
     }
     .formation-side.enemy .formation-spine-canvas {
@@ -1115,8 +1115,8 @@
     .battle-spine-proxy {
       position: absolute;
       z-index: 6;
-      width: 240px;
-      height: 333px;
+      width: 340px;
+      height: 380px;
       pointer-events: none;
       filter: drop-shadow(0 18px 10px rgba(0,0,0,0.48));
       will-change: transform, left, top;
@@ -2348,7 +2348,7 @@
     let supplyCartClaimSide = null;
     let playerCamp = null, enemyCamp = null;
     let droppedSupplies = [];
-    let battleSpineRendererPromise = null;
+    const battleSpineRendererPromises = new Map();
     let battleSpineIdleRaf = 0;
     let battleSpineLastIdleRender = 0;
     const battleFormationViewState = {
@@ -4357,38 +4357,87 @@
       };
     }
 
+    const BATTLE_SPINE_TROOP_ASSETS = {
+      default: {
+        cacheKey: 'default',
+        projectUrl: '/src/faxian/leg/swordsman/project.json',
+        imageBaseUrl: '../../src/faxian/leg/swordsman/',
+        attackActionNames: ['挥砍'],
+        moveActionIds: ['jump'],
+        moveActionNames: ['跳跃'],
+        renderScaleMultiplier: 1,
+        renderOffsetX: 0,
+        renderOffsetY: 0,
+        stationaryAttack: false,
+        attackImpactRatio: 0.56,
+      },
+      archer: {
+        cacheKey: 'archer',
+        projectUrl: '/src/faxian/leg/archer/project.json',
+        imageBaseUrl: '../../src/faxian/leg/archer/',
+        attackActionNames: ['射击'],
+        moveActionIds: [],
+        moveActionNames: [],
+        materialForegroundImageKeys: ['newSword'],
+        renderScaleMultiplier: 1.67,
+        renderOffsetX: 12,
+        renderOffsetY: 18,
+        stationaryAttack: true,
+        attackImpactRatio: 0.58,
+      },
+    };
+
+    function getBattleSpineTroopAsset(troopType) {
+      return troopType === 'archer'
+        ? BATTLE_SPINE_TROOP_ASSETS.archer
+        : BATTLE_SPINE_TROOP_ASSETS.default;
+    }
+
     class BattleSpineRenderer {
-      constructor(project, images) {
+      constructor(project, images, config = {}) {
         this.project = project;
         this.nodes = project.nodes || [];
         this.images = images;
+        this.config = config;
         this.fps = project.fps || 24;
-        this.idleAction = this.findAction('idle') || project.actions?.[0] || null;
-        this.jumpAction = this.findAction('jump') || this.idleAction;
-        this.slashAction =
-          this.findAction(project.selectedActionId) ||
+        this.idleAction =
+          this.findPreferredAction(config.idleActionIds || ['idle'], config.idleActionNames || ['待机']) ||
+          project.actions?.[0] ||
+          null;
+        this.moveAction =
+          this.findPreferredAction(config.moveActionIds || ['jump'], config.moveActionNames || ['跳跃']) ||
+          this.idleAction;
+        this.attackAction =
+          this.findPreferredAction(
+            [...(config.attackActionIds || []), project.selectedActionId].filter(Boolean),
+            config.attackActionNames || []
+          ) ||
           (project.actions || []).find(action => action.name === '挥砍') ||
-          (project.actions || []).find(action => action.id !== 'idle' && action.id !== 'jump') ||
-          this.jumpAction;
+          (project.actions || []).find(
+            action => action.id !== this.idleAction?.id && action.id !== this.moveAction?.id
+          ) ||
+          this.moveAction ||
+          this.idleAction;
         this.bounds = this.computeBounds();
       }
 
-      static async load() {
+      static async load(config = {}) {
         let project = null;
-        if (window.location.protocol !== 'file:') {
-          const response = await fetch('/src/faxian/leg/new-version-spine-project.json', { cache: 'no-store' });
+        if (window.location.protocol !== 'file:' && config.projectUrl) {
+          const response = await fetch(config.projectUrl, { cache: 'no-store' });
           project = await response.json();
         }
-        project ||= window.RECOVERED_SPINE_PROJECT || null;
+        project ||= config.fallbackProject || window.RECOVERED_SPINE_PROJECT || null;
         if (!project) throw new Error('Missing Spine project data.');
+        const imageBaseUrl = config.imageBaseUrl || '../../src/faxian/leg/';
         const imageSources = {
-          newHead: '../../src/faxian/leg/head.png',
-          newTorso: '../../src/faxian/leg/torso.png',
-          newLeftArm: '../../src/faxian/leg/leftarm.png',
-          newRightArm: '../../src/faxian/leg/rightarm.png',
-          newLeftLeg: '../../src/faxian/leg/leftleg.png',
-          newRightLeg: '../../src/faxian/leg/rightleg%20(1).png',
-          newSword: '../../src/faxian/leg/sword.png',
+          newHead: `${imageBaseUrl}head.png`,
+          newTorso: `${imageBaseUrl}torso.png`,
+          newLeftArm: `${imageBaseUrl}leftarm.png`,
+          newRightArm: `${imageBaseUrl}rightarm.png`,
+          newLeftLeg: `${imageBaseUrl}leftleg.png`,
+          newRightLeg: `${imageBaseUrl}rightleg%20(1).png`,
+          newSword: `${imageBaseUrl}sword.png`,
         };
         const images = {};
         await Promise.all(Object.entries(imageSources).map(([key, src]) => new Promise(resolve => {
@@ -4398,11 +4447,525 @@
           image.src = src;
           images[key] = image;
         })));
-        return new BattleSpineRenderer(project, images);
+        const materialKeys = new Set(config.materialForegroundImageKeys || []);
+        await Promise.all([...materialKeys].map(async (key) => {
+          const image = images[key];
+          if (!image?.complete) return;
+          try {
+            images[key] = await BattleSpineRenderer.normalizeForegroundImage(image);
+          } catch (error) {
+            console.warn('Failed to normalize material foreground image for battle renderer', key, error);
+          }
+        }));
+        return new BattleSpineRenderer(project, images, config);
+      }
+
+      static imageToImageData(image) {
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth || image.width;
+        canvas.height = image.naturalHeight || image.height;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.drawImage(image, 0, 0);
+        return context.getImageData(0, 0, canvas.width, canvas.height);
+      }
+
+      static imageDataToImage(imageData) {
+        const canvas = document.createElement('canvas');
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+        canvas.getContext('2d').putImageData(imageData, 0, 0);
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error('Failed to create image from image data.'));
+          image.src = canvas.toDataURL('image/png');
+        });
+      }
+
+      static materialColorDistance(background, r, g, b) {
+        const dr = r - background[0];
+        const dg = g - background[1];
+        const db = b - background[2];
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+      }
+
+      static estimateMaterialBackground(imageData) {
+        const { width, height, data } = imageData;
+        const samples = [];
+        const push = (x, y) => {
+          const offset = (y * width + x) * 4;
+          if (data[offset + 3] < 8) return;
+          samples.push([data[offset], data[offset + 1], data[offset + 2]]);
+        };
+        for (let x = 0; x < width; x += 1) {
+          push(x, 0);
+          push(x, height - 1);
+        }
+        for (let y = 1; y < height - 1; y += 1) {
+          push(0, y);
+          push(width - 1, y);
+        }
+        if (!samples.length) return [255, 255, 255];
+        return [0, 1, 2].map((channel) => {
+          const sorted = samples.map((sample) => sample[channel]).sort((a, b) => a - b);
+          return sorted[Math.floor(sorted.length / 2)] || 255;
+        });
+      }
+
+      static maskPixelCount(mask) {
+        let count = 0;
+        for (let index = 0; index < mask.length; index += 1) {
+          count += mask[index] ? 1 : 0;
+        }
+        return count;
+      }
+
+      static dilateMask(mask, width, height, steps, limitMask = null) {
+        let current = mask.slice();
+        for (let step = 0; step < steps; step += 1) {
+          const next = current.slice();
+          for (let index = 0; index < current.length; index += 1) {
+            if (!current[index]) continue;
+            const x = index % width;
+            const y = Math.floor(index / width);
+            if (x > 0 && (!limitMask || limitMask[index - 1])) next[index - 1] = 1;
+            if (x < width - 1 && (!limitMask || limitMask[index + 1])) next[index + 1] = 1;
+            if (y > 0 && (!limitMask || limitMask[index - width])) next[index - width] = 1;
+            if (y < height - 1 && (!limitMask || limitMask[index + width])) next[index + width] = 1;
+          }
+          current = next;
+        }
+        return current;
+      }
+
+      static createMaterialForegroundMask(imageData, options = {}) {
+        const backgroundTolerance = Number.isFinite(Number(options.backgroundTolerance))
+          ? Number(options.backgroundTolerance)
+          : 45;
+        const { width, height, data } = imageData;
+        const background = BattleSpineRenderer.estimateMaterialBackground(imageData);
+        const count = width * height;
+        const edgeBackground = new Uint8Array(count);
+        const candidateBackground = new Uint8Array(count);
+        const strongBackground = new Uint8Array(count);
+        const queue = [];
+        let cursor = 0;
+
+        function backgroundDistance(index) {
+          const offset = index * 4;
+          return BattleSpineRenderer.materialColorDistance(
+            background,
+            data[offset],
+            data[offset + 1],
+            data[offset + 2],
+          );
+        }
+
+        function isBackground(index) {
+          const offset = index * 4;
+          const alpha = data[offset + 3];
+          if (alpha < 8) return true;
+          const r = data[offset];
+          const g = data[offset + 1];
+          const b = data[offset + 2];
+          return (
+            backgroundDistance(index) <= backgroundTolerance ||
+            (r >= 235 && g >= 232 && b >= 228)
+          );
+        }
+
+        function isStrongBackground(index) {
+          const offset = index * 4;
+          const alpha = data[offset + 3];
+          if (alpha < 8) return true;
+          const r = data[offset];
+          const g = data[offset + 1];
+          const b = data[offset + 2];
+          return (
+            backgroundDistance(index) <= backgroundTolerance * 0.65 ||
+            (r >= 244 && g >= 241 && b >= 238)
+          );
+        }
+
+        function push(index) {
+          if (edgeBackground[index]) return;
+          edgeBackground[index] = 1;
+          queue.push(index);
+        }
+
+        for (let index = 0; index < count; index += 1) {
+          candidateBackground[index] = isBackground(index) ? 1 : 0;
+          strongBackground[index] = isStrongBackground(index) ? 1 : 0;
+        }
+
+        for (let x = 0; x < width; x += 1) {
+          const top = x;
+          const bottom = (height - 1) * width + x;
+          if (candidateBackground[top]) push(top);
+          if (candidateBackground[bottom]) push(bottom);
+        }
+        for (let y = 0; y < height; y += 1) {
+          const left = y * width;
+          const right = y * width + width - 1;
+          if (candidateBackground[left]) push(left);
+          if (candidateBackground[right]) push(right);
+        }
+
+        while (cursor < queue.length) {
+          const index = queue[cursor++];
+          const x = index % width;
+          const y = Math.floor(index / width);
+          if (x > 0 && !edgeBackground[index - 1] && candidateBackground[index - 1]) push(index - 1);
+          if (x < width - 1 && !edgeBackground[index + 1] && candidateBackground[index + 1]) push(index + 1);
+          if (y > 0 && !edgeBackground[index - width] && candidateBackground[index - width]) push(index - width);
+          if (y < height - 1 && !edgeBackground[index + width] && candidateBackground[index + width]) push(index + width);
+        }
+
+        let holeBackground = new Uint8Array(count);
+        const holeSeen = new Uint8Array(count);
+        const minHolePixels = Math.max(24, Math.round(count * 0.00008));
+        for (let index = 0; index < count; index += 1) {
+          if (!strongBackground[index] || edgeBackground[index] || holeSeen[index]) continue;
+          const region = [index];
+          holeSeen[index] = 1;
+          let touchesEdge = false;
+          for (let regionCursor = 0; regionCursor < region.length; regionCursor += 1) {
+            const current = region[regionCursor];
+            const x = current % width;
+            const y = Math.floor(current / width);
+            if (x === 0 || y === 0 || x === width - 1 || y === height - 1) touchesEdge = true;
+            if (x > 0 && strongBackground[current - 1] && !edgeBackground[current - 1] && !holeSeen[current - 1]) {
+              holeSeen[current - 1] = 1;
+              region.push(current - 1);
+            }
+            if (x < width - 1 && strongBackground[current + 1] && !edgeBackground[current + 1] && !holeSeen[current + 1]) {
+              holeSeen[current + 1] = 1;
+              region.push(current + 1);
+            }
+            if (y > 0 && strongBackground[current - width] && !edgeBackground[current - width] && !holeSeen[current - width]) {
+              holeSeen[current - width] = 1;
+              region.push(current - width);
+            }
+            if (y < height - 1 && strongBackground[current + width] && !edgeBackground[current + width] && !holeSeen[current + width]) {
+              holeSeen[current + width] = 1;
+              region.push(current + width);
+            }
+          }
+          if (touchesEdge || region.length < minHolePixels) continue;
+          region.forEach((pixelIndex) => {
+            holeBackground[pixelIndex] = 1;
+          });
+        }
+        if (BattleSpineRenderer.maskPixelCount(holeBackground)) {
+          holeBackground = BattleSpineRenderer.dilateMask(holeBackground, width, height, 1, candidateBackground);
+        }
+
+        const foreground = new Uint8Array(count);
+        for (let index = 0; index < count; index += 1) {
+          foreground[index] =
+            edgeBackground[index] || holeBackground[index] || data[index * 4 + 3] < 8
+              ? 0
+              : 1;
+        }
+        return foreground;
+      }
+
+      static async normalizeForegroundImage(image, options = {}) {
+        const imageData = BattleSpineRenderer.imageToImageData(image);
+        const foreground = BattleSpineRenderer.createMaterialForegroundMask(imageData, options);
+        const output = new ImageData(imageData.width, imageData.height);
+        for (let index = 0; index < foreground.length; index += 1) {
+          if (!foreground[index]) continue;
+          const offset = index * 4;
+          output.data[offset] = imageData.data[offset];
+          output.data[offset + 1] = imageData.data[offset + 1];
+          output.data[offset + 2] = imageData.data[offset + 2];
+          output.data[offset + 3] = imageData.data[offset + 3];
+        }
+        return BattleSpineRenderer.imageDataToImage(output);
       }
 
       findAction(id) {
         return (this.project.actions || []).find(action => action.id === id) || null;
+      }
+
+      findActionByName(name) {
+        return (this.project.actions || []).find(action => action.name === name) || null;
+      }
+
+      findPreferredAction(ids = [], names = []) {
+        for (const id of ids) {
+          const action = this.findAction(id);
+          if (action) return action;
+        }
+        for (const name of names) {
+          const action = this.findActionByName(name);
+          if (action) return action;
+        }
+        return null;
+      }
+
+      normalizeBowRig(bowRig) {
+        if (!bowRig || typeof bowRig !== 'object') return null;
+        const groupRotation = Number.isFinite(Number(bowRig.groupRotation))
+          ? Number(bowRig.groupRotation)
+          : Number.isFinite(Number(bowRig.angle))
+            ? Number(bowRig.angle)
+            : null;
+        return {
+          type: String(bowRig.type || ''),
+          centerId: bowRig.centerId ? String(bowRig.centerId) : null,
+          upperId: bowRig.upperId ? String(bowRig.upperId) : null,
+          lowerId: bowRig.lowerId ? String(bowRig.lowerId) : null,
+          stringUpperId: bowRig.stringUpperId ? String(bowRig.stringUpperId) : null,
+          stringLowerId: bowRig.stringLowerId ? String(bowRig.stringLowerId) : null,
+          stringId: bowRig.stringId ? String(bowRig.stringId) : null,
+          maxPull: Math.max(1, Number(bowRig.maxPull) || 60),
+          bodyInfluence: Math.max(0, Number(bowRig.bodyInfluence) || 0.5),
+          groupRotation,
+          angle: groupRotation,
+          upperLength: Math.max(4, Number(bowRig.upperLength) || 4),
+          lowerLength: Math.max(4, Number(bowRig.lowerLength) || 4),
+          controlBaseX: Number.isFinite(Number(bowRig.controlBaseX)) ? Number(bowRig.controlBaseX) : null,
+          controlBaseY: Number.isFinite(Number(bowRig.controlBaseY)) ? Number(bowRig.controlBaseY) : null,
+          pull: Number.isFinite(Number(bowRig.pull)) ? Number(bowRig.pull) : 0,
+        };
+      }
+
+      isBowStringControlNode(node) {
+        return node?.role === 'bow-string-control' && node?.bowRig?.type === 'string-control';
+      }
+
+      enrichBowPose(node, pose) {
+        if (!this.isBowStringControlNode(node)) return pose;
+        const rig = this.rigFromBowPose(node, pose);
+        if (!rig) return pose;
+        return {
+          ...pose,
+          bowPoseSerialized: [
+            'bowGroupRotation',
+            'bowAngle',
+            'bowUpperLength',
+            'bowLowerLength',
+            'bowControlBaseX',
+            'bowControlBaseY',
+            'bowPull',
+          ].some((key) => pose && Object.prototype.hasOwnProperty.call(pose, key)),
+          bowGroupRotation: rig.groupRotation,
+          bowAngle: rig.angle,
+          bowUpperLength: rig.upperLength,
+          bowLowerLength: rig.lowerLength,
+          bowControlBaseX: rig.controlBaseX,
+          bowControlBaseY: rig.controlBaseY,
+          bowPull: rig.pull,
+        };
+      }
+
+      rigFromBowPose(node, pose) {
+        if (!this.isBowStringControlNode(node)) return this.normalizeBowRig(node?.bowRig);
+        const base = this.normalizeBowRig(node?.bowRig);
+        if (!base) return null;
+        const groupRotation =
+          pose?.bowGroupRotation ??
+          pose?.bowRig?.groupRotation ??
+          pose?.bowAngle ??
+          pose?.bowRig?.angle ??
+          base.groupRotation ??
+          base.angle;
+        return this.normalizeBowRig({
+          ...base,
+          groupRotation,
+          angle: groupRotation,
+          upperLength: pose?.bowUpperLength ?? pose?.bowRig?.upperLength ?? base.upperLength,
+          lowerLength: pose?.bowLowerLength ?? pose?.bowRig?.lowerLength ?? base.lowerLength,
+          controlBaseX: pose?.bowControlBaseX ?? pose?.bowRig?.controlBaseX ?? base.controlBaseX,
+          controlBaseY: pose?.bowControlBaseY ?? pose?.bowRig?.controlBaseY ?? base.controlBaseY,
+          pull: pose?.bowPull ?? pose?.bowRig?.pull ?? base.pull,
+        });
+      }
+
+      resolveRestPartTransform(restPart) {
+        if (!restPart) return null;
+        const parentBoneId = restPart.parentBoneId ? String(restPart.parentBoneId) : null;
+        if (!parentBoneId) return { ...restPart };
+        const parentNode = this.nodes.find((node) => node.id === parentBoneId);
+        if (!parentNode) return { ...restPart };
+        const parentPose = this.restWorldPose(parentNode);
+        const angle = (parentPose.worldRotation * Math.PI) / 180;
+        const localX = restPart.x || 0;
+        const localY = restPart.y || 0;
+        return {
+          ...restPart,
+          x: parentPose.worldX + localX * Math.cos(angle) - localY * Math.sin(angle),
+          y: parentPose.worldY + localX * Math.sin(angle) + localY * Math.cos(angle),
+          rotation: (restPart.rotation || 0) + parentPose.worldRotation,
+        };
+      }
+
+      isBowRigAttachment(node, attachment) {
+        return node?.role === 'bow-rig' && attachment?.image === 'newSword' && Array.isArray(attachment?.skinBoneIds);
+      }
+
+      getBowRigNodes(controlNode) {
+        const rig = this.normalizeBowRig(controlNode?.bowRig);
+        if (!rig) return null;
+        const center = this.nodes.find((item) => item.id === rig.centerId);
+        const upper = this.nodes.find((item) => item.id === rig.upperId);
+        const lower = this.nodes.find((item) => item.id === rig.lowerId);
+        const stringUpper =
+          this.nodes.find((item) => item.id === rig.stringUpperId) ||
+          this.nodes.find((item) => item.id === rig.stringId);
+        const stringLower =
+          this.nodes.find((item) => item.id === rig.stringLowerId) ||
+          this.nodes.find((item) => item.id === rig.stringId);
+        if (!center || !upper || !lower || !stringUpper || !stringLower) return null;
+        return { rig, center, upper, lower, stringUpper, stringLower, control: controlNode };
+      }
+
+      findBowRigControlForAttachment(attachment) {
+        const ids = new Set(attachment?.skinBoneIds || []);
+        return this.nodes.find((candidate) => {
+          if (!this.isBowStringControlNode(candidate)) return false;
+          const rig = this.normalizeBowRig(candidate.bowRig);
+          if (!rig) return false;
+          return ids.has(rig.upperId) && ids.has(rig.lowerId) && ids.has(rig.stringUpperId) && ids.has(rig.stringLowerId);
+        }) || null;
+      }
+
+      bowAxes(angle) {
+        const rad = (angle * Math.PI) / 180;
+        return {
+          body: { x: Math.cos(rad), y: Math.sin(rad) },
+          pull: { x: -Math.sin(rad), y: Math.cos(rad) },
+        };
+      }
+
+      bowLocalToWorld(centerWorld, angle, local) {
+        const axes = this.bowAxes(angle);
+        return {
+          x: centerWorld.x + axes.pull.x * (local.x || 0) + axes.body.x * (local.y || 0),
+          y: centerWorld.y + axes.pull.y * (local.x || 0) + axes.body.y * (local.y || 0),
+        };
+      }
+
+      bowWorldToLocal(centerWorld, angle, world) {
+        const axes = this.bowAxes(angle);
+        const offset = { x: world.x - centerWorld.x, y: world.y - centerWorld.y };
+        return {
+          x: this.dotVector(offset, axes.pull),
+          y: this.dotVector(offset, axes.body),
+        };
+      }
+
+      bowCenterWorld(nodes, action, frame) {
+        return this.endPoint(this.worldPose(nodes.center, action, frame));
+      }
+
+      computeBowRigFrame(controlNode, action, frame) {
+        const nodes = this.getBowRigNodes(controlNode);
+        if (!nodes) return null;
+        const { center, upper, lower, control } = nodes;
+        const controlLocal = this.getLocalPose(control, action, frame);
+        const rig =
+          (controlLocal?.bowPoseSerialized
+            ? this.rigFromBowPose(control, controlLocal)
+            : this.normalizeBowRig({
+                ...nodes.rig,
+                groupRotation: null,
+                angle: null,
+                upperLength: null,
+                lowerLength: null,
+                controlBaseX: null,
+                controlBaseY: null,
+                pull: 0,
+              })) || nodes.rig;
+        if (!rig) return null;
+        const centerWorld = this.bowCenterWorld(nodes, action, frame);
+        const upperTipCurrent = this.endPoint(this.worldPose(upper, action, frame));
+        const lowerTipCurrent = this.endPoint(this.worldPose(lower, action, frame));
+        const controlPose = this.worldPose(control, action, frame);
+        const controlPointCurrent = { x: controlPose.worldX, y: controlPose.worldY };
+        if (!Number.isFinite(Number(rig.groupRotation))) {
+          rig.groupRotation =
+            (Math.atan2(upperTipCurrent.y - centerWorld.y, upperTipCurrent.x - centerWorld.x) * 180) / Math.PI;
+        }
+        rig.angle = rig.groupRotation;
+        if (!Number.isFinite(Number(rig.upperLength)) || rig.upperLength <= 4) {
+          rig.upperLength = Math.max(4, this.distance(centerWorld, upperTipCurrent));
+        }
+        if (!Number.isFinite(Number(rig.lowerLength)) || rig.lowerLength <= 4) {
+          rig.lowerLength = Math.max(4, this.distance(centerWorld, lowerTipCurrent));
+        }
+        if (!Number.isFinite(Number(rig.controlBaseX)) || !Number.isFinite(Number(rig.controlBaseY))) {
+          const local = this.bowWorldToLocal(centerWorld, rig.groupRotation, controlPointCurrent);
+          rig.controlBaseX = local.x;
+          rig.controlBaseY = local.y;
+        }
+        if (!Number.isFinite(Number(rig.pull))) rig.pull = 0;
+        const bend = (rig.pull || 0) * rig.bodyInfluence;
+        const upperTip = this.bowLocalToWorld(centerWorld, rig.groupRotation, { x: bend, y: rig.upperLength });
+        const lowerTip = this.bowLocalToWorld(centerWorld, rig.groupRotation, { x: bend, y: -rig.lowerLength });
+        const controlPoint = this.bowLocalToWorld(centerWorld, rig.groupRotation, {
+          x: (rig.controlBaseX || 0) + (rig.pull || 0),
+          y: rig.controlBaseY || 0,
+        });
+        return { ...nodes, rig: this.normalizeBowRig(rig), centerWorld, upperTip, lowerTip, controlPoint };
+      }
+
+      bowRigSegments(attachment, action, frame) {
+        const controlNode = this.findBowRigControlForAttachment(attachment);
+        const bowFrame = controlNode ? this.computeBowRigFrame(controlNode, action, frame) : null;
+        if (!bowFrame) return null;
+        const upperRest = this.restWorldPose(bowFrame.upper);
+        const lowerRest = this.restWorldPose(bowFrame.lower);
+        const stringUpperRest = this.restWorldPose(bowFrame.stringUpper);
+        const stringLowerRest = this.restWorldPose(bowFrame.stringLower);
+        return [
+          {
+            restStart: { x: upperRest.worldX, y: upperRest.worldY },
+            restEnd: this.endPoint(upperRest),
+            start: bowFrame.centerWorld,
+            end: bowFrame.upperTip,
+          },
+          {
+            restStart: { x: lowerRest.worldX, y: lowerRest.worldY },
+            restEnd: this.endPoint(lowerRest),
+            start: bowFrame.centerWorld,
+            end: bowFrame.lowerTip,
+          },
+          {
+            restStart: { x: stringUpperRest.worldX, y: stringUpperRest.worldY },
+            restEnd: this.endPoint(stringUpperRest),
+            start: bowFrame.upperTip,
+            end: bowFrame.controlPoint,
+          },
+          {
+            restStart: { x: stringLowerRest.worldX, y: stringLowerRest.worldY },
+            restEnd: this.endPoint(stringLowerRest),
+            start: bowFrame.controlPoint,
+            end: bowFrame.lowerTip,
+          },
+        ];
+      }
+
+      attachmentSegments(node, attachment, action, frame) {
+        if (this.isBowRigAttachment(node, attachment)) {
+          const bowSegments = this.bowRigSegments(attachment, action, frame);
+          if (bowSegments?.length) return bowSegments;
+        }
+        return (attachment.skinBoneIds || [])
+          .map(nodeId => this.nodes.find(item => item.id === nodeId))
+          .filter(Boolean)
+          .map(boneNode => {
+            const pose = this.worldPose(boneNode, action, frame);
+            const rest = this.restWorldPose(boneNode);
+            return {
+              restStart: { x: rest.worldX, y: rest.worldY },
+              restEnd: this.endPoint(rest),
+              start: { x: pose.worldX, y: pose.worldY },
+              end: this.endPoint(pose),
+            };
+          });
       }
 
       computeBounds() {
@@ -4410,7 +4973,7 @@
         for (const node of this.nodes) {
           const attachment = node.attachment;
           const image = this.images[attachment?.image];
-          const restPart = attachment?.restPart;
+          const restPart = this.resolveRestPartTransform(attachment?.restPart);
           if (!image || !restPart) continue;
           const corners = [
             { x: 0, y: 0 },
@@ -4431,14 +4994,19 @@
       }
 
       getAction(actionId) {
-        if (actionId === 'jump') return this.jumpAction;
-        if (actionId === 'slash') return this.slashAction;
-        return this.idleAction;
+        if (actionId === 'move' || actionId === 'jump') return this.moveAction;
+        if (actionId === 'attack' || actionId === 'slash') return this.attackAction;
+        if (actionId === 'idle') return this.idleAction;
+        return this.findAction(actionId) || this.idleAction;
+      }
+
+      getActionFrameCount(actionId) {
+        const action = this.getAction(actionId);
+        return Math.max(1, action?.duration ?? this.project.duration ?? 29);
       }
 
       getActionDurationMs(actionId) {
-        const action = this.getAction(actionId);
-        return (((action?.duration ?? this.project.duration ?? 29) + 1) / this.fps) * 1000;
+        return ((this.getActionFrameCount(actionId) + 1) / this.fps) * 1000;
       }
 
       render(canvas, actionId = 'idle', elapsedMs = 0, options = {}) {
@@ -4458,16 +5026,24 @@
         const duration = Math.max(1, action?.duration ?? this.project.duration ?? 29);
         const rawFrame = (elapsedMs / 1000) * this.fps;
         const frame = options.loop === false ? Math.min(duration, rawFrame) : rawFrame % (duration + 1);
-        const scale = Math.min(rect.width / Math.max(1, this.bounds.width), rect.height / Math.max(1, this.bounds.height)) * 0.94;
-        const padding = 4;
-        const minTranslateX = padding - this.bounds.minX * scale;
-        const maxTranslateX = rect.width - padding - this.bounds.maxX * scale;
-        const minTranslateY = padding - this.bounds.minY * scale;
-        const maxTranslateY = rect.height - padding - this.bounds.maxY * scale;
-        const desiredTranslateX = rect.width / 2 - (this.bounds.minX + this.bounds.width / 2) * scale;
-        const desiredTranslateY = rect.height * 0.58 - (this.bounds.minY + this.bounds.height * 0.52) * scale;
-        const translateX = Math.min(Math.max(desiredTranslateX, minTranslateX), maxTranslateX);
-        const translateY = Math.min(Math.max(desiredTranslateY, minTranslateY), maxTranslateY);
+        const overscanX = Math.max(0, rect.width * 0.27);
+        const overscanY = Math.max(0, rect.height * 0.21);
+        const layoutWidth = Math.max(1, rect.width - overscanX * 2);
+        const layoutHeight = Math.max(1, rect.height - overscanY * 2);
+        const scale = Math.min(
+          layoutWidth / Math.max(1, this.bounds.width),
+          layoutHeight / Math.max(1, this.bounds.height)
+        ) * 0.94 * Math.max(0.1, Number(this.config.renderScaleMultiplier) || 1);
+        const translateX =
+          overscanX +
+          layoutWidth / 2 -
+          (this.bounds.minX + this.bounds.width / 2) * scale +
+          (Number(this.config.renderOffsetX) || 0);
+        const translateY =
+          overscanY +
+          layoutHeight * 0.58 -
+          (this.bounds.minY + this.bounds.height * 0.52) * scale +
+          (Number(this.config.renderOffsetY) || 0);
         ctx.save();
         ctx.translate(translateX, translateY);
         ctx.scale(scale, scale);
@@ -4489,20 +5065,9 @@
       drawAttachment(ctx, node, action, frame) {
         const attachment = node.attachment;
         const image = this.images[attachment.image];
-        if (!image?.complete || !attachment.fullSkin || !attachment.restPart) return;
-        const segments = (attachment.skinBoneIds || [])
-          .map(nodeId => this.nodes.find(item => item.id === nodeId))
-          .filter(Boolean)
-          .map(boneNode => {
-            const pose = this.worldPose(boneNode, action, frame);
-            const rest = this.restWorldPose(boneNode);
-            return {
-              restStart: { x: rest.worldX, y: rest.worldY },
-              restEnd: this.endPoint(rest),
-              start: { x: pose.worldX, y: pose.worldY },
-              end: this.endPoint(pose),
-            };
-          });
+        const restPart = this.resolveRestPartTransform(attachment.restPart);
+        if (!image?.complete || !attachment.fullSkin || !restPart) return;
+        const segments = this.attachmentSegments(node, attachment, action, frame);
         if (!segments.length) return;
         const cols = this.lowDetail ? 3 : attachment.restPart.partId === 'torso' ? 5 : 4;
         const rows = this.lowDetail ? Math.max(4, segments.length * 3) : Math.max(6, segments.length * 5);
@@ -4517,7 +5082,7 @@
             const sourcePoint = { x: image.width * u, y: image.height * v };
             sourceRow.push(sourcePoint);
             destRow.push(this.deformByAttachmentSegments(
-              this.imagePointToFullSkinRest(sourcePoint, image, attachment.restPart),
+              this.imagePointToFullSkinRest(sourcePoint, image, restPart),
               segments,
             ));
           }
@@ -4529,13 +5094,13 @@
 
       getLocalPose(node, action, frame) {
         const keys = [...((action?.timelines || {})[node.id] || [])].sort((a, b) => a.frame - b.frame);
-        if (!keys.length) return { ...node };
+        if (!keys.length) return this.enrichBowPose(node, { ...node });
         const exact = keys.find(item => item.frame === frame);
-        if (exact) return { ...node, ...exact };
-        if (keys.length === 1) return { ...node, ...keys[0] };
+        if (exact) return this.enrichBowPose(node, { ...node, ...exact });
+        if (keys.length === 1) return this.enrichBowPose(node, { ...node, ...keys[0] });
         const before = [...keys].reverse().find(item => item.frame < frame);
         const after = keys.find(item => item.frame > frame);
-        if (!before) return { ...node, ...keys[0] };
+        if (!before) return this.enrichBowPose(node, { ...node, ...keys[0] });
         if (!after) {
           const start = keys.find(item => item.frame === 0) || keys[0];
           const span = Math.max(1, (action?.duration ?? this.project.duration ?? 29) + 1 - before.frame);
@@ -4545,7 +5110,7 @@
       }
 
       interpolateLocalPose(node, before, after, t) {
-        return {
+        const basePose = {
           ...node,
           x: this.lerp(before.x, after.x, t),
           y: this.lerp(before.y, after.y, t),
@@ -4553,6 +5118,28 @@
           length: this.lerp(before.length, after.length, t),
           scaleX: this.lerp(before.scaleX, after.scaleX, t),
           scaleY: this.lerp(before.scaleY, after.scaleY, t),
+        };
+        if (!this.isBowStringControlNode(node)) return basePose;
+        const from = this.enrichBowPose(node, before || {});
+        const to = this.enrichBowPose(node, after || before || {});
+        return {
+          ...basePose,
+          bowPoseSerialized: Boolean(from.bowPoseSerialized || to.bowPoseSerialized),
+          bowGroupRotation: this.lerpAngle(
+            Number(from.bowGroupRotation ?? from.bowAngle) || 0,
+            Number(to.bowGroupRotation ?? to.bowAngle) || 0,
+            t,
+          ),
+          bowAngle: this.lerpAngle(
+            Number(from.bowGroupRotation ?? from.bowAngle) || 0,
+            Number(to.bowGroupRotation ?? to.bowAngle) || 0,
+            t,
+          ),
+          bowUpperLength: this.lerp(Number(from.bowUpperLength) || 4, Number(to.bowUpperLength) || 4, t),
+          bowLowerLength: this.lerp(Number(from.bowLowerLength) || 4, Number(to.bowLowerLength) || 4, t),
+          bowControlBaseX: this.lerp(Number(from.bowControlBaseX) || 0, Number(to.bowControlBaseX) || 0, t),
+          bowControlBaseY: this.lerp(Number(from.bowControlBaseY) || 0, Number(to.bowControlBaseY) || 0, t),
+          bowPull: this.lerp(Number(from.bowPull) || 0, Number(to.bowPull) || 0, t),
         };
       }
 
@@ -4721,14 +5308,18 @@
       dotVector(a, b) { return a.x * b.x + a.y * b.y; }
     }
 
-    function getBattleSpineRenderer() {
-      if (!battleSpineRendererPromise) {
-        battleSpineRendererPromise = BattleSpineRenderer.load().catch(error => {
-          console.warn('Failed to load battle Spine renderer', error);
-          return null;
-        });
+    function getBattleSpineRenderer(troopType = 'infantry') {
+      const asset = getBattleSpineTroopAsset(troopType);
+      if (!battleSpineRendererPromises.has(asset.cacheKey)) {
+        battleSpineRendererPromises.set(
+          asset.cacheKey,
+          BattleSpineRenderer.load(asset).catch(error => {
+            console.warn('Failed to load battle Spine renderer', troopType, error);
+            return null;
+          })
+        );
       }
-      return battleSpineRendererPromise;
+      return battleSpineRendererPromises.get(asset.cacheKey);
     }
 
     function startBattleSpineIdleLoop() {
@@ -4739,24 +5330,25 @@
         const now = performance.now();
         if (now - battleSpineLastIdleRender < 83) return;
         battleSpineLastIdleRender = now;
-        getBattleSpineRenderer().then(renderer => {
-          if (!renderer) return;
-          for (const entry of getBattleSpineCanvasEntries()) {
-            if (
-              entry.slot.classList.contains('empty') ||
-              entry.slot.classList.contains('is-proxying')
-            ) {
-              continue;
-            }
-            const rect = entry.canvas.getBoundingClientRect();
-            if (rect.width <= 0 || rect.height <= 0) continue;
+        for (const entry of getBattleSpineCanvasEntries()) {
+          if (
+            entry.slot.classList.contains('empty') ||
+            entry.slot.classList.contains('is-proxying')
+          ) {
+            continue;
+          }
+          const rect = entry.canvas.getBoundingClientRect();
+          if (rect.width <= 0 || rect.height <= 0) continue;
+          const troopType = entry.canvas.dataset.troopType || 'infantry';
+          getBattleSpineRenderer(troopType).then(renderer => {
+            if (!renderer) return;
             renderer.render(
               entry.canvas,
               entry.canvas.dataset.action || 'idle',
               now + Number(entry.canvas.dataset.phase || 0)
             );
-          }
-        });
+          });
+        }
       };
       battleSpineIdleRaf = window.setInterval(tick, 100);
       tick();
@@ -4890,6 +5482,7 @@
         entry.slot.classList.toggle('striker', active.sourceSlotKey === slotKey);
         entry.slot.classList.toggle('targeted', active.targetSlotKey === slotKey);
         entry.canvas.dataset.action = 'idle';
+        entry.canvas.dataset.troopType = current?.troopType || '';
 
         entry.memberName.textContent =
           current == null
@@ -4911,7 +5504,9 @@
     }
 
     async function playBattleSpineStrike(report, step, onImpact) {
-      const renderer = await getBattleSpineRenderer();
+      const troopType = step.sourceTroopType || 'infantry';
+      const troopAsset = getBattleSpineTroopAsset(troopType);
+      const renderer = await getBattleSpineRenderer(troopType);
       if (!renderer) {
         await sleep(380);
         onImpact?.();
@@ -4952,14 +5547,51 @@
         y: targetRect.top - boxRect.top,
       };
 
-      await animateBattleSpineProxy(proxy, renderer, from, to, 'jump', renderer.getActionDurationMs('jump'), {
-        moveStartFrame: 9,
-        moveEndFrame: 24,
-      });
-      await animateBattleSpineProxy(proxy, renderer, to, to, 'slash', renderer.getActionDurationMs('slash'), {
-        impactFrame: 17,
-        onImpact,
-      });
+      const attackFrameCount = renderer.getActionFrameCount('attack');
+      const attackImpactFrame = Math.max(1, Math.round(attackFrameCount * (troopAsset.attackImpactRatio ?? 0.56)));
+
+      if (troopAsset.stationaryAttack) {
+        await animateBattleSpineProxy(
+          proxy,
+          renderer,
+          from,
+          from,
+          'attack',
+          renderer.getActionDurationMs('attack'),
+          {
+            impactFrame: attackImpactFrame,
+            onImpact,
+          }
+        );
+      } else {
+        const moveFrameCount = renderer.getActionFrameCount('move');
+        const moveStartFrame = Math.max(0, Math.round(moveFrameCount * 0.38));
+        const moveEndFrame = Math.max(moveStartFrame + 1, Math.round(moveFrameCount * 0.88));
+        await animateBattleSpineProxy(
+          proxy,
+          renderer,
+          from,
+          to,
+          'move',
+          renderer.getActionDurationMs('move'),
+          {
+            moveStartFrame,
+            moveEndFrame,
+          }
+        );
+        await animateBattleSpineProxy(
+          proxy,
+          renderer,
+          to,
+          to,
+          'attack',
+          renderer.getActionDurationMs('attack'),
+          {
+            impactFrame: attackImpactFrame,
+            onImpact,
+          }
+        );
+      }
 
       sourceSlot.classList.remove('is-proxying');
       proxy.remove();
