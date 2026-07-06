@@ -22,6 +22,8 @@ import type { SceneDefinition } from "../../domain/action";
 import { assertExists } from "../../shared/assert";
 import {
   builtinHouseModuleRegistry,
+} from "../registry/builtin-house-module-registry";
+import {
   type HouseModuleRegistry,
 } from "../registry/house-module-registry";
 import type {

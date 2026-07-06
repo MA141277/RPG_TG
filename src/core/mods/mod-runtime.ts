@@ -12,6 +12,7 @@ import type {
   GameplayContributionDeclaration,
   GameplayContributionRegistry,
 } from "../contracts/gameplay-contribution";
+import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import {
   loadModSource,
@@ -48,8 +49,15 @@ export function createLoadedModFromManifest(input: {
 export function createLoadedModFromScenarioPack(input: {
   source: ModSourceDescriptor;
   scenarioPack: ScenarioPackDefinition;
+  baseContentPack?: ContentPackDefinition;
 }): LoadedMod {
   const profile = input.scenarioPack.scenarioProfile;
+  const entryContentPackIds = Array.from(
+    new Set([
+      ...(input.baseContentPack == null ? [] : [input.baseContentPack.id]),
+      input.scenarioPack.id,
+    ])
+  );
 
   return createLoadedModFromManifest({
     source: input.source,
@@ -58,7 +66,7 @@ export function createLoadedModFromScenarioPack(input: {
       schemaVersion: String(input.scenarioPack.schemaVersion),
       version: "1.0.0",
       title: input.scenarioPack.title,
-      entryContentPackIds: [input.scenarioPack.id],
+      entryContentPackIds,
       defaultStart: {
         playerCharacterId: profile.playerCharacterId,
         mapId: profile.initialLocation.mapId,
@@ -67,7 +75,10 @@ export function createLoadedModFromScenarioPack(input: {
         view: profile.initialLocation.view,
       },
     },
-    rawContent: input.scenarioPack,
+    rawContent:
+      input.baseContentPack == null
+        ? input.scenarioPack
+        : [input.baseContentPack, input.scenarioPack],
   });
 }
 
@@ -313,7 +324,9 @@ function readActiveLoadedMod(state: ModRuntimeState): LoadedMod | null {
 }
 
 function createActivatedMod(loadedMod: LoadedMod): ActivatedMod {
-  const normalizedContentSources = [loadedMod.rawContent];
+  const normalizedContentSources = Array.isArray(loadedMod.rawContent)
+    ? loadedMod.rawContent
+    : [loadedMod.rawContent];
 
   return {
     modId: loadedMod.manifest.id,

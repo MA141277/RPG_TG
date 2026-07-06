@@ -47,6 +47,16 @@ import {
   applyCouncilPriorityFollowUp,
   createNavigationTimeFollowUpBridge,
 } from "./application/runtime/navigation-time-follow-up";
+import {
+  applyCampaignTravelCompletion,
+  applyCampaignTravelStart,
+} from "./application/runtime/campaign-travel-transition";
+import { applyCityViewTransition } from "./application/runtime/city-view-transition";
+import {
+  applyMapAutoAdvanceSnapshot,
+  applyMapAutoAdvanceStart,
+} from "./application/runtime/map-auto-advance-transition";
+import { applyRenderPrepassState } from "./application/runtime/render-prepass-state";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
@@ -117,10 +127,10 @@ import {
 import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
 import {
   createEmptyModRuntimeState,
-  createLoadedModFromManifest,
   createLoadedModFromScenarioPack,
   runModRuntime,
 } from "./core/mods/mod-runtime";
+import type { BuiltinModSourceRecord } from "./core/mods/mod-source-loader";
 import {
   createHouseRuntimeBridge,
   dispatchHouseRuntimeRequest,
@@ -283,13 +293,6 @@ if (uiOverlayElement == null) {
 const appRoot = appElement;
 const defaultPlayerCharacterId = "char.player";
 const builtinDefaultModId = "builtin.default";
-const builtinDefaultModManifest: GameModManifest = {
-  id: builtinDefaultModId,
-  schemaVersion: "1",
-  version: "1.0.0",
-  title: "Default Builtin Mod",
-  entryContentPackIds: [],
-};
 const selectableCharacterIds = [
   "char.player",
   "char.kulan_xu_da",
@@ -297,19 +300,37 @@ const selectableCharacterIds = [
   "char.kulan_chang_yuchun",
 ] as const;
 const baseGameContentPack = await createBaseGameContentPack();
-await loadDefaultRuntimeContent();
+const builtinDefaultModManifest: GameModManifest = {
+  id: builtinDefaultModId,
+  schemaVersion: "1",
+  version: "1.0.0",
+  title: "Default Builtin Mod",
+  entryContentPackIds: [baseGameContentPack.id],
+};
+const builtinModSourceRecordsById: Record<string, BuiltinModSourceRecord> = {
+  [builtinDefaultModId]: {
+    manifest: builtinDefaultModManifest,
+    rawContent: baseGameContentPack,
+  },
+};
+await loadDefaultRuntimeContent(() => Promise.resolve(baseGameContentPack));
 let modRuntimeState: ModRuntimeState = createEmptyModRuntimeState();
+
+function createModRuntimeContext() {
+  return {
+    allowedCapabilities: [] as const,
+    builtinModsById: builtinModSourceRecordsById,
+  };
+}
+
 const builtinStartupActivation = await runModRuntime({
   state: modRuntimeState,
   request: {
-    type: "mod.activate-loaded",
+    type: "mod.load-builtin",
     requestId: "startup:builtin.default",
-    loadedMod: createLoadedModFromManifest({
-      source: { kind: "builtin", modId: builtinDefaultModId },
-      manifest: builtinDefaultModManifest,
-      rawContent: baseGameContentPack,
-    }),
+    modId: builtinDefaultModId,
   },
+  context: createModRuntimeContext(),
 });
 modRuntimeState = builtinStartupActivation.state;
 if (!builtinStartupActivation.ok) {
@@ -330,7 +351,6 @@ function getCurrentMapDefinition(): MapDefinition | null {
 
 let activeContentContext: ActiveGameContentContext =
   createActiveGameContentContextFromModActivation({
-    basePack: baseGameContentPack,
     activationResult: builtinStartupActivation,
   });
 
@@ -1371,34 +1391,7 @@ function startMapAutoAdvance(input: {
   }
   cancelCampaignTravel();
   houseRuntime.clearAllHouseIntervals();
-  appState = {
-    ...appState,
-    modalState: null,
-    locationDialogueState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    campaignTravelState: null,
-    autoAdvanceState: {
-      intervalId: input.intervalId,
-      label: input.label,
-      targetHouseId: input.targetHouseId,
-      snapshots: input.snapshots ?? null,
-      completion: input.completion ?? null,
-    },
-    gameState: {
-      ...appState.gameState,
-      world: {
-        ...appState.gameState.world,
-        currentHouseId: null,
-      },
-      ui: {
-        ...appState.gameState.ui,
-        currentView: "map",
-        overlayView: null,
-        houseSession: null,
-      },
-    },
-  };
+  appState = applyMapAutoAdvanceStart(appState, input);
   renderApp();
 
   mapAutoAdvanceHandles[input.intervalId] = window.setInterval(() => {
@@ -1420,27 +1413,11 @@ function startMapAutoAdvance(input: {
         return;
       }
 
-      appState = {
-        ...appState,
-        characterDefinitions: nextSnapshot.characterDefinitions,
-        autoAdvanceState: {
-          ...autoAdvanceState,
-          snapshots: remainingSnapshots,
-        },
-        gameState: {
-          ...nextSnapshot.gameState,
-          world: {
-            ...nextSnapshot.gameState.world,
-            currentHouseId: null,
-          },
-          ui: {
-            ...nextSnapshot.gameState.ui,
-            currentView: "map",
-            overlayView: null,
-            houseSession: null,
-          },
-        },
-      };
+      appState = applyMapAutoAdvanceSnapshot(appState, {
+        autoAdvanceState,
+        nextSnapshot,
+        remainingSnapshots,
+      });
 
       if (remainingSnapshots.length === 0) {
         stopMapAutoAdvance(input.intervalId);
@@ -1564,6 +1541,7 @@ async function activateLoadedModForStartup(
       requestId,
       loadedMod,
     },
+    context: createModRuntimeContext(),
   });
   modRuntimeState = result.state;
   return result;
@@ -1572,14 +1550,17 @@ async function activateLoadedModForStartup(
 async function activateBuiltinDefaultMod(
   requestId: string
 ): Promise<ModActivationResult> {
-  return activateLoadedModForStartup(
-    createLoadedModFromManifest({
-      source: { kind: "builtin", modId: builtinDefaultModId },
-      manifest: builtinDefaultModManifest,
-      rawContent: baseGameContentPack,
-    }),
-    requestId
-  );
+  const result = await runModRuntime({
+    state: modRuntimeState,
+    request: {
+      type: "mod.load-builtin",
+      requestId,
+      modId: builtinDefaultModId,
+    },
+    context: createModRuntimeContext(),
+  });
+  modRuntimeState = result.state;
+  return result;
 }
 
 async function activateScenarioPackMod(
@@ -1588,7 +1569,11 @@ async function activateScenarioPackMod(
   requestId: string
 ): Promise<ModActivationResult> {
   return activateLoadedModForStartup(
-    createLoadedModFromScenarioPack({ source, scenarioPack }),
+    createLoadedModFromScenarioPack({
+      source,
+      scenarioPack,
+      baseContentPack: baseGameContentPack,
+    }),
     requestId
   );
 }
@@ -1604,6 +1589,7 @@ async function activateSavedMod(
       requestId,
       modId: selectedModId,
     },
+    context: createModRuntimeContext(),
   });
   modRuntimeState = result.state;
   return result;
@@ -1636,6 +1622,7 @@ async function activateSavedModSource(
   const result = await runModRuntime({
     state: modRuntimeState,
     request,
+    context: createModRuntimeContext(),
   });
   modRuntimeState = result.state;
   return result;
@@ -1782,7 +1769,6 @@ const startupSessionCoordinatorDeps = {
   createScenarioPackAppState,
   createStartupContentContext: (activationResult: ModActivationResult) =>
     createActiveGameContentContextFromModActivation({
-      basePack: baseGameContentPack,
       activationResult,
     }),
   bootstrapStartupStoryAppState,
@@ -3740,26 +3726,9 @@ appElement.addEventListener("click", (event) => {
   if (leaveCityButton != null) {
     houseRuntime.clearAllHouseIntervals();
     stopCityBeggingMiniGameLoop();
-    appState = {
-      ...appState,
-      beggingMiniGameState: null,
-      cityMenuState: null,
-      cityDirectoryState: null,
-      locationDialogueState: null,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "map",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
-    };
+    appState = applyCityViewTransition(appState, {
+      type: "leave-city",
+    });
     renderApp();
     return;
   }
@@ -3777,25 +3746,9 @@ appElement.addEventListener("click", (event) => {
     }
 
     houseRuntime.clearAllHouseIntervals();
-    appState = {
-      ...appState,
-      cityMenuState: null,
-      cityDirectoryState: null,
-      locationDialogueState: null,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "city-3d",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
-    };
+    appState = applyCityViewTransition(appState, {
+      type: "enter-city-3d",
+    });
     renderApp();
     return;
   }
@@ -3804,23 +3757,9 @@ appElement.addEventListener("click", (event) => {
     "[data-action='leave-city-3d']"
   );
   if (leaveCity3dButton != null) {
-    appState = {
-      ...appState,
-      cityMenuState: null,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "city",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
-    };
+    appState = applyCityViewTransition(appState, {
+      type: "leave-city-3d",
+    });
     renderApp();
     return;
   }
@@ -4220,16 +4159,11 @@ function startCampaignTravel(
   campaignTravelRequestId = travelRequestId;
   stopCampaignMoveAnimation();
 
-  appState = {
-    ...appState,
-    campaignTravelState: {
-      targetCoordinate: nextCoordinate,
-      cityId,
-      cityName,
-    },
-    modalState: null,
-    locationDialogueState: null,
-  };
+  appState = applyCampaignTravelStart(appState, {
+    targetCoordinate: nextCoordinate,
+    cityId,
+    cityName,
+  });
   renderApp();
 
   void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
@@ -4237,17 +4171,10 @@ function startCampaignTravel(
       return;
     }
 
-    const activeTravelState = appState.campaignTravelState;
-    const shouldEnterCity =
-      activeTravelState != null &&
-      activeTravelState.targetCoordinate.x === nextCoordinate.x &&
-      activeTravelState.targetCoordinate.y === nextCoordinate.y;
-    const nextAppState = {
-      ...appState,
-      campaignTravelState: null,
-      modalState: shouldEnterCity ? pendingEnterCityState : null,
-      locationDialogueState: null,
-    };
+    const nextAppState = applyCampaignTravelCompletion(appState, {
+      targetCoordinate: nextCoordinate,
+      pendingEnterCityState: pendingEnterCityState,
+    });
     const runtimeCommit = commitRuntimeRequest({
       state: nextAppState,
       request: createAdvanceTimeSegmentsRequest(1),
@@ -4443,13 +4370,10 @@ function renderAppFrame(
     selectionEnd: number | null;
   } | null = null
 ) {
-  appState = {
-    ...appState,
-    gameState: ensureCityNpcPoolsForCurrentDay(
-      appState.gameState,
-      activeContentContext.cityNpcPools
-    ),
-  };
+  appState = applyRenderPrepassState(
+    appState,
+    activeContentContext.cityNpcPools
+  );
   const currentMapDefinition = getCurrentMapDefinition();
   const currentCityDefinition =
     activeContentContext.cityDefinitionById[appState.gameState.world.currentCityId] ??

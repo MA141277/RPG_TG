@@ -52,12 +52,12 @@ import { CITY_BEGGING_DURATION_DAYS } from "../../application/minigames/city-beg
 import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
 import {
   builtinPlayableDefinitionRegistry,
-  type PlayableDefinitionRegistry,
-} from "../registry/playable-definition-registry";
+} from "../registry/builtin-playable-definition-registry";
 import {
   builtinPlayableIntegrationRegistry,
-  type PlayableIntegrationRegistry,
-} from "../registry/playable-integration-registry";
+} from "../registry/builtin-playable-integration-registry";
+import { type PlayableDefinitionRegistry } from "../registry/playable-definition-registry";
+import { type PlayableIntegrationRegistry } from "../registry/playable-integration-registry";
 import { settleRuntimeEffects } from "./runtime-settlement";
 
 export const PLAYABLE_LAUNCH_EVENT_ID = "playable.launch";

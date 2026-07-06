@@ -1,76 +1,67 @@
-# Target Spec Title
+# Target Title
 
-## Goal
+## Control Block
 
-Replace this line with the long-lived current target outcome.
+- target_id: `target.replace-me`
+- version_label: `replace-me`
+- status: `in-progress`
+- active_phase: `phase.replace-me`
+- active_queue: `queue.replace-me | none`
+- required_queues:
+  - `queue.replace-me`
+- conditional_queues: []
+- optional_queues: []
+- historical_queues: []
+- blocked_by: []
+- classification_overrides: []
+- acceptance_gate:
+  - `all_required_queues_done_or_dropped`
+  - `no_active_task_remaining`
+  - `target_acceptance_criteria_passed`
+- promote_next_queue_when:
+  - `active_queue_is_none_or_done`
+  - `fresh_audit_proves_real_blocker`
+  - `promotion_evidence_recorded`
+- close_target_when:
+  - `acceptance_gate_passed`
 
-## Scope
+## Human Context
 
-This target applies to:
+### Goal
 
-- Replace with in-scope item 1.
-- Replace with in-scope item 2.
+Replace with the version delivery goal.
 
-This target does not apply to:
+### Scope
 
-- Replace with out-of-scope item 1.
-- Replace with out-of-scope item 2.
+Replace with what belongs to this target.
 
-## Supersession
+### Non-Goals
 
-- Replace with any historical doc or prior target this spec supersedes.
-- If none, say:
-  - `None.`
+Replace with what must not be pulled into this target.
 
-## Problem Statement
+### Queue Portfolio
 
-Replace this section with the exact repository-level problem this target resolves.
+| Queue ID | Class | State | Promote When | Source |
+| --- | --- | --- | --- | --- |
+| `queue.replace-me` | `required` | `active` | `Replace with promotion rule.` | `docs/blueprints/queues/...` |
 
-## Dependencies
+### Classification Overrides
 
-- Blueprint:
-  - `docs/blueprints/blueprint.md`
-- Queue family:
-  - `docs/blueprints/queues/...`
-- Other dependencies:
-  - `Replace with prerequisite docs or historical references.`
+- `Replace with target-specific routing overrides for current-target-item, queue-candidate, content-pipeline-item, asset-pipeline-item, future-target-candidate, historical-residue, and uncertain-needs-review.`
 
-## In Scope
+### Acceptance Criteria
 
-- Replace with scoped outcome 1.
-- Replace with scoped outcome 2.
+- `Replace with acceptance criterion 1.`
+- `Replace with acceptance criterion 2.`
 
-## Out Of Scope
+### Exit Conditions
 
-- Replace with explicit non-goal 1.
-- Replace with explicit non-goal 2.
+- `Replace with exit condition 1.`
+- `Replace with exit condition 2.`
 
-## Exit Conditions
-
-- Replace with exit condition 1.
-- Replace with exit condition 2.
-- Replace with exit condition 3.
-
-## Verification Story
-
-- Targeted verification:
-  - `Replace with the main proof line.`
-- Required checks:
-  - `Replace with target-level checks.`
-
-## Artifact Expectations
-
-- Spec path:
-  - `docs/blueprints/specs/...`
-- Plan path:
-  - `docs/blueprints/plans/...`
-- Expected child artifacts:
-  - `docs/blueprints/queues/*.md`
-  - `docs/change-log.md`
-
-## Progress Log
+### Progress Log
 
 - 2000-01-01
   - Summary: `Target spec created.`
   - Verification: `Not run`
-  - Next: `Resume through the current target plan and queue set.`
+  - Next: `Replace with the next real action.`

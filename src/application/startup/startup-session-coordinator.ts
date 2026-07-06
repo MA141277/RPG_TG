@@ -326,14 +326,16 @@ function readActivatedContentSource(
     return null;
   }
 
-  const primarySource = activationResult.activatedMod.normalizedContentSources[0];
-  if (primarySource == null || typeof primarySource !== "object") {
-    return null;
-  }
+  const scenarioSource = activationResult.activatedMod.normalizedContentSources.find(
+    (source) =>
+      source != null &&
+      typeof source === "object" &&
+      "scenarioProfile" in source
+  );
 
-  return "scenarioProfile" in primarySource
-    ? (primarySource as ScenarioPackDefinition)
-    : null;
+  return scenarioSource == null
+    ? null
+    : (scenarioSource as ScenarioPackDefinition);
 }
 
 function isScenarioPackSource(
