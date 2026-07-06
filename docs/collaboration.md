@@ -1,5 +1,65 @@
 # 协作规范
 
+## Branch Workflow
+
+自 `2026-07-06` 起，仓库分支协作默认按以下方式执行：
+
+- `mod-first`：稳定集成线，用于保存阶段性可验收结果。
+- `mod-first-dev`：公共开发母线，所有新工作默认从这里拉出。
+- `feature/*`、`ui/*`、`minigame/*`、`art/*`、`content/*`、`fix/*`：个人或专题工作分支。
+
+### 主线职责
+
+- 不直接在 `mod-first` 上做日常开发。
+- `mod-first` 只接收已经在 `mod-first-dev` 上完成验证的一批改动。
+- `mod-first-dev` 允许持续推进结构改造、机制迭代、内容迁移和资源接线。
+
+### 开发起点
+
+- 后续所有新分支统一从 `mod-first-dev` 拉出。
+- 不再从 `dev`、`提交版本`、`rpg-ui` 或其他历史分支拉新工作分支。
+- 如果某个旧分支还有可用内容，只能作为迁移来源，不再作为正式开发基线。
+
+### 推荐命名
+
+- `feature/<name>-<topic>`：程序功能或结构改造
+- `ui/<name>-<topic>`：界面和交互改动
+- `minigame/<name>-<topic>`：小游戏或战斗玩法
+- `art/<name>-<topic>`：美术资源、贴图、立绘、场景素材
+- `content/<name>-<topic>`：剧情、JSON、scenario pack、数据表
+- `fix/<name>-<topic>`：缺陷修复
+
+示例：
+
+- `feature/zhangsan-runtime-refactor`
+- `ui/lisi-battle-panel`
+- `minigame/wangwu-tea-debate`
+- `art/zhaoliu-city-assets`
+- `content/chenqi-scenario-json`
+
+### 合并顺序
+
+默认合并路径如下：
+
+1. 个人或专题分支先合回 `mod-first-dev`
+2. `mod-first-dev` 累积到稳定节点后，再合回 `mod-first`
+
+不建议执行以下路径：
+
+- 个人分支直接合到 `mod-first`
+- 从旧 `dev` 或旧专题分支继续派生新任务
+- 多人长期直接共用 `mod-first-dev` 裸提交而不分支
+
+### 适合直接进入 `mod-first-dev` 的情况
+
+只有非常小且当天能验证完成的改动，才允许直接在 `mod-first-dev` 上处理，例如：
+
+- 文案 typo
+- 明确无冲突的小配置修正
+- 范围极小的热修复
+
+除此之外，默认都应先拉独立分支。
+
 ## 1. 文件职责
 
 - `src/domain/*`：只放类型、枚举、领域辅助函数

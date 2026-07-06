@@ -96,6 +96,14 @@ The tool and collaboration rules are documented in:
 
 Do not treat this as house work. Start the dev server if needed and explain the tool's save rules, especially that new piece images must live under `src/faxian/leg/` and JSON stores `leg:` references rather than image bytes.
 
+## Branch Workflow
+
+For repository branch collaboration, follow `docs/collaboration.md`.
+
+- `mod-first` is the stable integration branch.
+- `mod-first-dev` is the default development base branch.
+- New feature, UI, minigame, art, content, and fix branches should be created from `mod-first-dev`, then merged back into `mod-first-dev` before landing in `mod-first`.
+
 ## Superpowers Plan Governance
 
 For work tracked under `docs/superpowers/plans/`:
