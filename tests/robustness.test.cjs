@@ -1811,26 +1811,33 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.doesNotMatch(rendererSource, /uniform sampler2D uWaterTexture/);
   assert.match(terrainFragmentSource, /uniform sampler2D uWaterTexture/);
   assert.match(terrainFragmentSource, /uniform float uTimeSeconds/);
+  assert.match(terrainFragmentSource, /getHexBoundaryDistance/);
   assert.match(terrainFragmentSource, /getShoreBands/);
   assert.match(
     terrainFragmentSource,
     /getShoreRingAmount\(\s*vec2 point,\s*vec2 cell,\s*float hexScale,\s*float mapAspect,\s*float ringRadius,\s*float falloffWidth\s*\)/
   );
   assert.match(terrainFragmentSource, /getShoreEdgeContribution/);
+  assert.doesNotMatch(terrainFragmentSource, /distanceToLandEdge/);
+  assert.doesNotMatch(terrainFragmentSource, /neighborDistance - 0\.92/);
   assert.doesNotMatch(
     terrainFragmentSource,
     /return clamp\(\(1\.0 - neighborWater\) \* water/
   );
-  assert.match(terrainFragmentSource, /nearShore = getShoreRingAmount\(point, cell, hexScale, mapAspect, 1\.0, 1\.24\)/);
-  assert.match(terrainFragmentSource, /shallowSea = getShoreRingAmount\(point, cell, hexScale, mapAspect, 2\.0, 2\.60\)/);
-  assert.match(terrainFragmentSource, /deepSea = getShoreRingAmount\(point, cell, hexScale, mapAspect, 3\.0, 3\.90\)/);
-  assert.match(terrainFragmentSource, /getStretchedWaveUv/);
-  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.28\), 18\.0, 138\.0/);
-  assert.match(terrainFragmentSource, /vec2\(-0\.42, 1\.0\), 26\.0, 218\.0/);
-  assert.match(terrainFragmentSource, /sampleStretchedWaterNoise/);
+  assert.match(terrainFragmentSource, /getShoreNearAmount/);
+  assert.match(terrainFragmentSource, /getShoreShallowAmount/);
+  assert.match(terrainFragmentSource, /getShoreMiddleAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getStretchedWaveUv/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleStretchedWaterNoise/);
+  assert.match(terrainFragmentSource, /getLongWaterWave/);
+  assert.match(terrainFragmentSource, /waveLineA/);
+  assert.match(terrainFragmentSource, /waveLineB/);
+  assert.match(terrainFragmentSource, /nearShoreBand/);
+  assert.match(terrainFragmentSource, /shallowSeaBand/);
+  assert.match(terrainFragmentSource, /middleSeaBand/);
   assert.match(terrainFragmentSource, /nearShoreWater/);
   assert.match(terrainFragmentSource, /shallowSeaWater/);
-  assert.match(terrainFragmentSource, /deepSeaWater/);
+  assert.match(terrainFragmentSource, /middleSeaWater/);
   assert.match(rendererSource, /wrapS: gl\.REPEAT/);
   assert.match(rendererSource, /requestRender\("dynamic"\)/);
 });
