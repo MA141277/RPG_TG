@@ -1,5 +1,7 @@
 # Weekly Visibility Bundle Checklist
 
+> **Historical Template:** Deprecated under `fail-closed progress-driven governance`. Keep only for historical weekly bundles.
+
 **Week Of:** `YYYY-MM-DD`
 
 ## Required Artifacts

@@ -1,5 +1,8 @@
 # Mod-First Weekly Module Map
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 ## Purpose
@@ -42,3 +45,4 @@ If a module cannot be summarized here, it is still acting like a black box.
 - How far should the shared pack-content access seam remain builtin-default only before later work promotes it into a true active-pack selector?
 - How much builtin startup coupling can remain in `default-runtime-content.ts` before Child 18 needs to treat it as runtime-spine debt?
 - After Child 21, which builtin/imported/save-restore shortcuts still bypass the new activation-installed gameplay contribution registry?
+

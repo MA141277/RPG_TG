@@ -1,5 +1,7 @@
 # Child 14 Interactive Remaining Legacy Convergence Spec
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 ## 1. Goal
 
 Define the formal `Child 14` boundary for the first fresh weekly continuation set after the closed `Child 13` queue.

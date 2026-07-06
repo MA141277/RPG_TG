@@ -1,5 +1,7 @@
 # Weekly Review Index
 
+> **Historical Template:** Deprecated under `fail-closed progress-driven governance`. Do not use this as the active resume entry for new work.
+
 **Week Of:** `YYYY-MM-DD`
 
 **Weekly Set Plan:** `docs/superpowers/plans/YYYY-MM-DD-weekly-orchestration-plan.md`

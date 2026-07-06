@@ -1,5 +1,8 @@
 # Weekly Implementation Visibility Companion
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **For agentic workers:** Use this file as the visibility companion to the weekly orchestration plan. Do not execute production code directly from this file. Update it after each child-plan work batch so the repository becomes less of a black box week over week.
 
 **Goal:** Make this week's implementation work legible by forcing synchronized visibility outputs through five core artifacts: review index, module map, call flows, next split review, and an architecture report with module and control-flow diagrams.
@@ -284,3 +287,4 @@ Do not mark this companion `completed` until:
 - [x] Five core weekly artifacts linked and present
 - [x] Architecture report diagram requirements satisfied
 - [x] Closeout queue-state review scope recorded
+

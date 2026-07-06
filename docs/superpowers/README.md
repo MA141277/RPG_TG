@@ -1,112 +1,109 @@
 # Superpowers Workflow Guide
 
-This directory stores project-local operating docs for agentic implementation.
+This directory stores repository-local governance docs for agentic implementation.
 
 - `specs/`
-  - Architecture targets, queued-child specs, and format rules.
+  - boundary specs, governance rules, and child specs
 - `plans/`
-  - Active child plans and weekly-set queue controllers with checkbox tracking and resume metadata.
+  - executable child plans
+- `templates/`
+  - reusable governance templates
 
-These files are not runtime code and are not automatically executed by the game.
-They are repository-local instructions for developers and agents.
+These files are not runtime code.
+They are repository-local execution instructions for humans and agents.
 
-The governing rules for plan structure, acceptance, and bug handling live in [specs/plan-governance-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/plan-governance-spec.md).
+Primary governance rules live in:
 
-## How To Execute An Active Child Plan
+- [specs/plan-governance-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/plan-governance-spec.md)
+- [specs/2026-07-06-fail-closed-progress-driven-governance-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md)
 
-1. Pick a file under `docs/superpowers/plans/`.
-2. Read any linked spec or architecture doc first.
-3. Check the `Execution State` block.
-4. Start from the `Next Step` line or the first unchecked checkbox.
-5. Implement a small batch of work.
-6. Before stopping, update:
-   - checkboxes
+## Canonical Resume Entry
+
+Always resume from:
+
+- [project-progress.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/project-progress.md)
+
+Do not resume new work from:
+
+- weekly orchestration plans
+- weekly review artifacts
+- architecture reports
+- old queue controller documents
+
+Resume order:
+
+1. open `docs/superpowers/project-progress.md`
+2. read `Current Stage`
+3. read `Current Task`
+4. read `Next Child`
+5. read `Next Required Action`
+6. open the `Next Owner Document`
+
+If these fields do not uniquely determine what to do next, the current governance state is invalid and must be fixed before implementation resumes.
+
+## How To Execute A Child Plan
+
+1. open `docs/superpowers/project-progress.md`
+2. confirm the referenced child is really the next executable child
+3. open the child plan under `docs/superpowers/plans/`
+4. read linked specs first
+5. check `Execution State`
+6. resume from `Next Step` or the first unchecked checkbox
+7. implement a small batch
+8. before stopping, update:
+   - checkbox state
    - `Execution State`
    - `Progress Log`
-7. Run the listed verification commands and record the result.
-8. Run `npm run lint:plans` after creating or materially restructuring a plan.
+9. run listed verification commands
+10. run `npm run lint:plans` after creating or materially restructuring a plan
 
-## How To Know Current Progress
+## Required Closeout Discipline
 
-Use these fields as the source of truth:
+Child closeout is invalid unless all of these are true:
 
-- `Status`
-- `Current Focus`
-- `Next Step`
-- `Progress Log`
+- child plan is updated
+- project progress document is updated
+- next child plan is already rechecked and updated, or `Next Child` is `none`
+- structured closeout block exists
+- remote push succeeded
 
-If the log is stale, fall back to the first unchecked checkbox.
+Without these conditions, a child may only be:
 
-## How To Resume After Codex Stops
+- `waiting`
+- `running`
+- `blocked`
+- `completed-but-open`
 
-1. Open the plan file.
-2. Read `Execution State`.
-3. Read the latest `Progress Log` entry.
-4. Confirm the first unchecked checkbox still matches `Next Step`.
-5. Continue from there.
+It may not be `closed`.
 
-If they disagree, prefer:
+## Canonical Templates
 
-1. latest `Progress Log`
-2. actual codebase state
-3. first unchecked checkbox
-
-## Required Update Discipline
-
-At the end of each work batch:
-
-- mark completed steps with `- [x]`
-- update `Last Updated`
-- update `Current Focus`
-- update `Next Step`
-- append one `Progress Log` entry
-- record verification status or blocker
-
-Without these updates, the plan cannot be resumed reliably.
-
-## Weekly Set Workflow
-
-Use one lightweight weekly set to control one short queue of continuation work.
-
-Recommended flow:
-
-1. Create one weekly set plan.
-2. Author up to three child specs under `docs/superpowers/specs/`.
-3. Author a detailed plan only for the current `active child`.
-4. Execute the active child and update artifacts.
-5. Recheck the next queued child spec against the new baseline.
-6. If the queued child is still valid, promote it and author its active plan.
-7. Close the weekly set when the goal is reached, the visible queue is consumed, or no queued child remains executable.
-
-Rules:
-
-- only one child may be `active` at a time
-- a queued child spec does not authorize implementation by itself
-- queued children may stay as `unchanged`, become `narrowed`, or become `superseded` after baseline recheck
-- once a weekly set is closed, later execution must start from a fresh weekly review and a new weekly set plan
-
-## Templates
-
-Use these canonical templates:
+Use these templates for new work:
 
 - Active child plan:
   - [plans/_plan-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/_plan-template.md)
-- Weekly set queue controller:
-  - [templates/weekly-plan-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/templates/weekly-plan-template.md)
-- Queued child spec:
+- Playable child plan:
+  - [plans/_playable-plan-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/_playable-plan-template.md)
+- Project progress document:
+  - [templates/project-progress-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/templates/project-progress-template.md)
+- Child closeout block:
+  - [templates/child-closeout-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/templates/child-closeout-template.md)
+- Task closeout block:
+  - [templates/task-closeout-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/templates/task-closeout-template.md)
+- Child spec:
   - [templates/queued-child-spec-template.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/templates/queued-child-spec-template.md)
 
-For queue-level weekly coordination, use:
+## Historical Weekly Artifacts
 
-- [specs/weekly-orchestration-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/weekly-orchestration-spec.md)
-- [plans/2026-06-29-weekly-orchestration-plan.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md)
+Weekly artifacts are now historical only.
 
-Interpretation note:
+They may remain in the repository, but they are no longer the active governance entry for new work:
 
-- one weekly orchestration plan represents one governed weekly set / iteration set
-- it is not only a calendar-week container
-- the same natural week may contain multiple weekly sets if an earlier set closes and later continuation requires a fresh review
-- once a weekly set is closed, open a new weekly orchestration plan for later executable children instead of appending them to the closed one
+- `docs/superpowers/plans/*weekly*.md`
+- `docs/superpowers/weekly/*.md`
+- `docs/superpowers/templates/weekly-*.md`
+
+Use them only as historical reference during migration or audit.
 
 ## Validation
 
@@ -116,11 +113,5 @@ Use:
 npm run lint:plans
 ```
 
-This structural lint checks:
-
-- required sections
-- required `Execution State` fields
-- allowed `Status` values
-- existence of checkbox steps
-
-It does not prove the plan is semantically correct. Human or agent review is still required.
+This structural lint checks plan shape, execution-state fields, and basic progress-log format.
+It does not prove that governance semantics are correct; human or agent review is still required.

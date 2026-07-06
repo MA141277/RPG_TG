@@ -1,5 +1,7 @@
 # Weekly Module Map
 
+> **Historical Template:** Deprecated under `fail-closed progress-driven governance`. Keep only for historical weekly module maps.
+
 **Week Of:** `YYYY-MM-DD`
 
 ## Purpose

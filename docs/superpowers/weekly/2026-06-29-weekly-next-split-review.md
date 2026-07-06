@@ -1,5 +1,8 @@
 # Weekly Next Split Review
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-06-29`
 
 ## Purpose
@@ -172,3 +175,4 @@ Do not decide the next split only from intuition.
 - House-specific feature migration
 - Full task UI/authoring DSL/custom evaluator extraction
 - Full Mod Runtime hot reload/sandboxing/authoring tooling
+

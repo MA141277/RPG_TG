@@ -1,5 +1,8 @@
 # Main Shell Ownerization Continuation Weekly Architecture Report
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -62,3 +65,4 @@ At continuation-set opening, the artifact bundle can answer:
 - `None beyond Child 29 inside this set`
 
 Any continuation beyond Child 29 must begin with a fresh weekly review.
+

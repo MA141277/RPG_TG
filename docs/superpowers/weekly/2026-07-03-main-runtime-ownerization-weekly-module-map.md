@@ -1,5 +1,8 @@
 # Main Runtime Ownerization Weekly Module Map
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -23,3 +26,4 @@ This file maps the modules relevant to the fresh main-runtime ownerization set.
 - One orchestration seam was enough for Child 24; no second coordinator or helper family was needed.
 - Passive trigger evaluation moved out of the pure render frame without forcing presenter/render redesign.
 - Later `main.ts` work must start from a fresh review rather than treating this module map as an open queue.
+

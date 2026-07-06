@@ -1,5 +1,7 @@
 # Save Migration Hardening Plan
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 > **For agentic workers:** Use this file to execute Child Plan 2 only after Child Plan 1 is completed. Follow the repository plan governance rules and update both this child plan and its parent/weekly orchestration plans after each work batch.
 
 **Goal:** Harden the post-boundary save path so the minimal `SaveEnvelope` introduced by Child 1 can safely load older shapes, preserve mod-owned payload, reject missing selected mods explicitly, and round-trip back through engine-owned save files without redefining the boundary itself.

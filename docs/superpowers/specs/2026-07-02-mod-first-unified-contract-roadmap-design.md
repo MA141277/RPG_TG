@@ -1,5 +1,7 @@
 # Mod-First Unified Contract Roadmap Design
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 **Goal:** Move the repository from partial runtime ownerization to a mod-first architecture where builtin content and external mods enter the same runtime pipeline through stable contracts rather than scenario-specific glue.
 
 ## Why This Roadmap Exists

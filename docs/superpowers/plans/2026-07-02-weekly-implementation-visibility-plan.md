@@ -1,5 +1,8 @@
 # Weekly Implementation Visibility Companion
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **For agentic workers:** Use this file as the visibility companion to the fresh `2026-07-02` weekly orchestration plan. Do not execute production code directly from this file. Update it after each child-plan work batch so the repository becomes less of a black box.
 
 **Goal:** Make the fresh continuation set legible by keeping one synchronized visibility bundle through Child 16 closeout and weekly-set closure, while preserving the distinction between active work, queued follow-up, and completed queue history until the set is consumed.
@@ -150,3 +153,4 @@ Do not mark this companion `completed` until:
 - [x] Five core weekly artifacts linked and present
 - [x] Architecture report diagram requirements satisfied
 - [x] Fresh-set queue wording recorded
+

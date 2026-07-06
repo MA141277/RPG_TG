@@ -1,5 +1,8 @@
 # Main Startup Weekly Next Split Review
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -38,3 +41,4 @@ Use fixed criteria to decide what may happen after Child 23, without allowing sp
   - Explicitly out of scope for this set.
 - `pack-content active selector work`
   - Still a real candidate later, but not part of the startup-family boundary now.
+

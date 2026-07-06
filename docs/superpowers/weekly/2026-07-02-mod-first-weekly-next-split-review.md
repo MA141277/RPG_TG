@@ -1,5 +1,8 @@
 # Mod-First Weekly Next Split Review
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 ## Purpose
@@ -49,3 +52,4 @@ Do not decide the next split only from intuition.
   - It is no longer placeholder-grade, but registry typing alone is not the next highest-risk boundary after Child 21 closeout.
 - `Child 22 End-to-End Mod-First Runtime Closure`
   - It is now completed and should remain closed history rather than keep absorbing same-type save/restore follow-up.
+

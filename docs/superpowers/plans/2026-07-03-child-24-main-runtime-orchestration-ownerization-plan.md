@@ -1,5 +1,7 @@
 # Child 24 Main Runtime Orchestration Ownerization Plan
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove the remaining covered runtime-business orchestration from `src/main.ts` so shell entry points delegate into one explicit orchestration seam with fixed follow-up ownership and one state write-back sink.

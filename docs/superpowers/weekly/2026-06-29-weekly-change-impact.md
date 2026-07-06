@@ -1,5 +1,8 @@
 # Weekly Change Impact Record
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-06-29`
 
 ## Merged Artifact Notice
@@ -48,3 +51,4 @@ Unexpected impact usually indicates a module that still needs more refinement.
    - The Child 4 minimum-carrier widening was harder than expected because the shared runtime line had to move from Child 1 `CoreGameState` assumptions to `RuntimeState` while still preserving compatibility `characterDefinitions` carriage and effect settlement against `state.core.runtime`.
 3. Which module likely needs a new seam or contract?
    - `src/core/runtime`, because the minimum carrier now exists but the remaining architecture question is whether Child 4 can close on this landing or still needs one more normalized shared-dispatch/signal pass.
+
