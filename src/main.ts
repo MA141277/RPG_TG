@@ -140,6 +140,10 @@ import {
   runPlayableRuntime,
 } from "./core/runtime/playable-runtime";
 import {
+  readBrowserSaveRecord,
+  writeBrowserSaveRecord,
+} from "./core/save/browser-save-record";
+import {
   applyRuntimeBridgeState,
   commitRuntimeRequest,
   createRuntimeBridgeState,
@@ -155,6 +159,7 @@ import type {
   ModRuntimeState,
   ModSourceDescriptor,
 } from "./core/contracts/mod-runtime";
+import type { ViewName as CoreSaveViewName } from "./core/contracts/core-state";
 import type { ActivityDefinition } from "./domain/activity";
 import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
@@ -522,6 +527,9 @@ const mainUiFlow = new MainUiFlow({
 
 syncGameViewport();
 window.addEventListener("resize", syncGameViewport);
+window.addEventListener("beforeunload", () => {
+  persistSaveData();
+});
 setGameVisibility(false);
 mainUiFlow.mount();
 mainUiFlow.showMainMenu();
@@ -1660,6 +1668,7 @@ function applyActivatedModSession(input: {
     type: "apply-startup-session",
     session: input,
   });
+  persistSaveData();
   renderApp();
 }
 
@@ -1670,8 +1679,98 @@ function showStartupError(error: unknown): void {
 }
 
 function loadSaveData(): StartupSaveData {
-  // Placeholder for future save loading integration.
-  return null;
+  return readBrowserSaveRecord({
+    storage: getBrowserStorage(),
+    availableModIds: readAvailableSaveModIds(),
+  });
+}
+
+function persistSaveData(): void {
+  writeBrowserSaveRecord({
+    storage: getBrowserStorage(),
+    selectedCharacterId: currentPlayerCharacterId,
+    selectedModSource: readCurrentSelectedModSource(),
+    state: readCurrentCoreGameStateForSave(),
+  });
+}
+
+function getBrowserStorage(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readAvailableSaveModIds(): string[] {
+  return Array.from(
+    new Set([
+      builtinDefaultModId,
+      ...Object.keys(modRuntimeState.availableModsById),
+      ...(modRuntimeState.activeModId == null ? [] : [modRuntimeState.activeModId]),
+    ])
+  );
+}
+
+function readCurrentSelectedModSource(): ModSourceDescriptor | null {
+  const activeModId = modRuntimeState.activeModId;
+  if (activeModId == null) {
+    return {
+      kind: "builtin",
+      modId: builtinDefaultModId,
+    };
+  }
+
+  return (
+    modRuntimeState.availableModsById[activeModId]?.source ?? {
+      kind: "builtin",
+      modId: activeModId,
+    }
+  );
+}
+
+function readCurrentCoreGameStateForSave() {
+  const activeModId = modRuntimeState.activeModId ?? builtinDefaultModId;
+  const activeLoadedMod = modRuntimeState.availableModsById[activeModId] ?? null;
+
+  return {
+    engine: {
+      selectedModId: activeModId,
+      version:
+        activeLoadedMod?.manifest.version ?? builtinDefaultModManifest.version,
+      currentView: normalizeSaveView(appState.gameState.ui.currentView),
+    },
+    runtime: {
+      flags: { ...appState.gameState.runtime.flags },
+      variables: { ...appState.gameState.runtime.variables },
+      activeEventId: appState.gameState.scene.activeEventId,
+      activeTaskIds: Object.values(
+        appState.gameState.runtime.tasks.instancesByTaskId
+      )
+        .filter((instance) => instance.status === "active")
+        .map((instance) => instance.taskId),
+    },
+    modState: {},
+  };
+}
+
+function normalizeSaveView(
+  view: AppState["gameState"]["ui"]["currentView"]
+): CoreSaveViewName {
+  if (
+    view === "map" ||
+    view === "city" ||
+    view === "house" ||
+    view === "scene"
+  ) {
+    return view;
+  }
+
+  if (view === "city-3d") {
+    return "city";
+  }
+
+  return "interactive";
 }
 
 const startupSessionCoordinatorDeps = {

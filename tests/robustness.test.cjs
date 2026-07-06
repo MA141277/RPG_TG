@@ -7974,22 +7974,41 @@ test("shared dispatch consumes the hardened runtime router contract", () => {
   assert.doesNotMatch(source, /routeRequest:/);
 });
 
-test("engine bootstrap builds a session from a selected mod id and registry", async () => {
-  const { createEngineSession } = require("../.test-dist/core/engine/engine-factory.js");
-  const session = createEngineSession({
-    selectedMod: {
-      id: "builtin.default",
-      version: "1.0.0",
-      title: "Default",
-      entryContentPackIds: [],
-    },
-    registry: {
-      mods: {},
-      content: {},
-    },
-  });
+test("core-production-integration retirement leaves no orphaned core engine seam", () => {
+  const engineFiles = [
+    path.join(process.cwd(), "src/core/engine/engine-bootstrap.ts"),
+    path.join(process.cwd(), "src/core/engine/engine-factory.ts"),
+    path.join(process.cwd(), "src/core/engine/engine-session.ts"),
+    path.join(process.cwd(), "src/core/contracts/engine-context.ts"),
+    path.join(process.cwd(), "src/core/runtime/runtime-context.ts"),
+    path.join(process.cwd(), "src/core/registry/engine-registry.ts"),
+  ];
 
-  assert.equal(session.state.engine.selectedModId, "builtin.default");
+  for (const filePath of engineFiles) {
+    assert.equal(
+      fs.existsSync(filePath),
+      false,
+      `Expected orphaned engine seam file to be retired: ${filePath}`
+    );
+  }
+
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const startupCoordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/startup-session-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /core\/engine|engine-bootstrap|engine-factory/);
+  assert.doesNotMatch(
+    startupCoordinatorSource,
+    /core\/engine|engine-bootstrap|engine-factory/
+  );
 });
 
 test("runtime dispatch settles effects after routing", async () => {
@@ -8393,6 +8412,74 @@ test("save envelope preserves selected mod id and mod state payload", async () =
     url: "https://example.com/mods/imported-pack.json",
   });
   assert.deepEqual(envelope.modState["builtin.default"], { foo: 1 });
+});
+
+test("browser save record round-trips selected character and mod source through the save envelope", async () => {
+  const {
+    readBrowserSaveRecord,
+    writeBrowserSaveRecord,
+  } = require("../.test-dist/core/save/browser-save-record.js");
+  const storage = {
+    record: new Map(),
+    getItem(key) {
+      return this.record.has(key) ? this.record.get(key) : null;
+    },
+    setItem(key, value) {
+      this.record.set(key, value);
+    },
+  };
+
+  writeBrowserSaveRecord({
+    storage,
+    selectedCharacterId: "char.player",
+    selectedModSource: {
+      kind: "url",
+      name: "Imported Pack",
+      url: "https://example.com/mods/imported-pack.json",
+    },
+    state: {
+      engine: {
+        selectedModId: "builtin.default",
+        version: "1.0.0",
+        currentView: "map",
+      },
+      runtime: {
+        flags: { started: true },
+        variables: { stage: 1 },
+        activeEventId: "event.story.start",
+        activeTaskIds: ["task.main"],
+      },
+      modState: {},
+    },
+  });
+
+  const loaded = readBrowserSaveRecord({
+    storage,
+    availableModIds: ["builtin.default"],
+  });
+
+  assert.equal(loaded?.selectedCharacterId, "char.player");
+  assert.equal(loaded?.selectedModId, "builtin.default");
+  assert.deepEqual(loaded?.selectedModSource, {
+    kind: "url",
+    name: "Imported Pack",
+    url: "https://example.com/mods/imported-pack.json",
+  });
+});
+
+test("save-envelope-cutover main.ts no longer leaves loadSaveData as a placeholder", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /readBrowserSaveRecord/);
+  assert.match(mainSource, /writeBrowserSaveRecord/);
+  assert.match(mainSource, /window\.addEventListener\("beforeunload"/);
+  assert.doesNotMatch(
+    mainSource,
+    /function loadSaveData\(\): StartupSaveData \{\s*\/\/ Placeholder/
+  );
 });
 
 test("child 29 main.ts primary startup no longer depends on legacy startup adapters", () => {

@@ -2,6 +2,42 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-06 Blueprint Workflow Spec
+
+### Added
+- 新增 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，正式定义新的 Blueprint 工作流，作为后续仓库治理与执行恢复的唯一新流程来源。
+- 新建 `docs/blueprints/` 目录，作为新工作流的规范根目录，预留 `project-progress.md`、`blueprint.md`、`queues/`、`specs/`、`plans/`、`templates/` 等后续标准位置。
+- 新增 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 作为全局恢复入口，以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md) 作为单一当前 owner 文档。
+- 新增 [docs/blueprints/queues/blueprint-workflow-bootstrap-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/blueprint-workflow-bootstrap-queue.md)，用于把新工作流从规则源文档引导到第一个真实 topic。
+- 新增 [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md)，把当前时期的正式 target 固定为项目“完全 Mod 化”，并显式写入 target 级验收标准。
+- 新增 [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，作为当前时期 target 的 target-level governor。
+- 新增 [docs/blueprints/queues/core-production-integration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/core-production-integration-queue.md)，作为单一 `mod化` target 下的首个真实迭代任务队列。
+- 新增 Blueprint 模板族：
+  - [docs/blueprints/templates/project-progress-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/project-progress-template.md)
+  - [docs/blueprints/templates/blueprint-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/blueprint-template.md)
+  - [docs/blueprints/templates/topic-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/topic-queue-template.md)
+  - [docs/blueprints/templates/target-spec-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-spec-template.md)
+  - [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)
+
+### Changed
+- 明确旧 `docs/superpowers/**` 工作流文档从现在起只作为历史参考，不再作为新执行的主治理入口。
+- 新工作流术语收口为 `project-progress -> blueprint -> target spec -> target plan -> task queue -> execution artifacts`。
+- Blueprint 允许跨不同时期存在多个 target，但同一时期只保留一个 current target；当前时期正式目标固定为项目“完全 Mod 化”，后续同时期迭代事项不再提升为 sibling target，而是进入不同 queue。
+- 可执行单元从 Blueprint target 下沉为 queue task，状态模型固定为：`candidate`、`queued`、`active`、`blocked`、`done`、`dropped`。
+- 当前“完全 Mod 化” target 已补入 phase 级验收框架：`Phase 1 Runtime Closure`、`Phase 2 Contribution Closure`、`Phase 3 Authoring Closure`、`Phase 4 Final Mod-First Acceptance`；phase 只作为 target 内部验收结构，不新增新的治理入口层。
+- 当前 target plan 已为各 queue 家族补入轻量定义卡片，统一记录 `Goal / Promote when / Out of scope / Done when`，避免候选 queue 只有名称而缺少启动与关闭条件。
+- `core-production-integration` queue 已从粗粒度任务列表补强为 task execution contract 结构，为每个正式 task 明确 `Purpose / Must examine / Required output / Done when / Verification / Failure mode`。
+- `core-production-integration` 的 engine owner-line 已按实际代码状态收口为 retirement：删除了未接生产启动流的 `src/core/engine/**` 及其孤立 supporting types，并把回归从“engine skeleton 存在”改为“orphaned engine seam 已退役”。
+- `core-production-integration` 的 save-envelope-cutover 已接出第一条真实浏览器存档链：新增 `src/core/save/browser-save-record.ts`，让 `main.ts` 通过 save envelope 读写 `selectedCharacterId / selectedModId / selectedModSource`，并在 startup-session apply 与 `beforeunload` 时写入浏览器存储。
+- `core-production-integration` 的 runtime-ownership-closeout 已完成：当前不再需要单独提升 `state-sync-and-runtime-canonicalization`，因为 `commitRuntimeRequest() -> dispatchRuntimeRequest()` 仍是覆盖范围内的生产 write-back 主线，而剩余直接 `gameState`/view 切换更接近 shell-thinning residue。
+- `blueprint-workflow-bootstrap` 已从进行中 handoff queue 收口为 `done` 历史记录，当前仓库真实执行入口已经切到“单一 mod 化 target + active queue”模型。
+- `core-production-integration` 已从错误的同时期 sibling target 回收为当前“完全 Mod 化” target 下的首个迭代任务队列。
+
+### Impact
+- 后续新治理文档、恢复入口和执行计划应落在 `docs/blueprints/**`，而不是继续在 `docs/superpowers/**` 中追加新的 weekly/queue 控制器。
+- 仓库当前不再只是“新工作流规则源文档”落地，而是已经有真实当前时期“完全 Mod 化” target、target-level governor、显式 target 验收标准，以及可继续追加的 queue 结构，可从 `docs/blueprints/project-progress.md` 直接恢复执行。
+- 旧 superpowers 文档仍保留供历史边界和验证脉络参考，但不会再被视为当前执行顺序的权威来源。
+
 ## 2026-07-02 Spine Plugin Workflow Contract
 
 ### Added
