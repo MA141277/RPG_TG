@@ -2294,17 +2294,34 @@ const fragmentShaderSource = `
     );
   }
 
-  float getShoreAmount(vec2 cell, float hexScale, float mapAspect, float water) {
-    float neighborWater = 1.0;
+  float getShoreEdgeContribution(
+    vec2 point,
+    vec2 cell,
+    vec2 neighborOffset,
+    float hexScale,
+    float mapAspect
+  ) {
+    vec2 neighborCell = cell + neighborOffset;
+    float neighborWater = getWaterAmountAt(getHexCellUv(neighborCell, hexScale, mapAspect));
+    float landNeighbor = 1.0 - neighborWater;
+    float centerDistance = length(point - hexToPixel(cell));
+    float neighborDistance = length(point - hexToPixel(neighborCell));
+    float boundaryDistance = abs(neighborDistance - centerDistance);
 
-    neighborWater = min(neighborWater, getWaterAmountAt(getHexCellUv(cell + vec2(1.0, 0.0), hexScale, mapAspect)));
-    neighborWater = min(neighborWater, getWaterAmountAt(getHexCellUv(cell + vec2(-1.0, 0.0), hexScale, mapAspect)));
-    neighborWater = min(neighborWater, getWaterAmountAt(getHexCellUv(cell + vec2(0.0, 1.0), hexScale, mapAspect)));
-    neighborWater = min(neighborWater, getWaterAmountAt(getHexCellUv(cell + vec2(0.0, -1.0), hexScale, mapAspect)));
-    neighborWater = min(neighborWater, getWaterAmountAt(getHexCellUv(cell + vec2(1.0, -1.0), hexScale, mapAspect)));
-    neighborWater = min(neighborWater, getWaterAmountAt(getHexCellUv(cell + vec2(-1.0, 1.0), hexScale, mapAspect)));
+    return landNeighbor * (1.0 - smoothstep(0.02, 0.20, boundaryDistance));
+  }
 
-    return clamp((1.0 - neighborWater) * water, 0.0, 1.0);
+  float getShoreAmount(vec2 point, vec2 cell, float hexScale, float mapAspect, float water) {
+    float shore = 0.0;
+
+    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(1.0, 0.0), hexScale, mapAspect));
+    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(-1.0, 0.0), hexScale, mapAspect));
+    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(0.0, 1.0), hexScale, mapAspect));
+    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(0.0, -1.0), hexScale, mapAspect));
+    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(1.0, -1.0), hexScale, mapAspect));
+    shore = max(shore, getShoreEdgeContribution(point, cell, vec2(-1.0, 1.0), hexScale, mapAspect));
+
+    return clamp(shore * water, 0.0, 1.0);
   }
 
   float getHexGridLine(vec2 point, vec2 cell) {
@@ -2381,20 +2398,22 @@ const fragmentShaderSource = `
     float shade,
     float shore
   ) {
-    vec2 driftA = vec2(uTimeSeconds * 0.018, uTimeSeconds * 0.007);
-    vec2 driftB = vec2(-uTimeSeconds * 0.011, uTimeSeconds * 0.014);
-    vec3 noiseA = texture2D(uWaterTexture, uv * vec2(7.0, 6.0) + driftA).rgb;
-    vec3 noiseB = texture2D(uWaterTexture, uv * vec2(17.0, 15.0) + driftB).rgb;
+    vec2 driftA = vec2(uTimeSeconds * 0.030, uTimeSeconds * 0.012);
+    vec2 driftB = vec2(-uTimeSeconds * 0.020, uTimeSeconds * 0.026);
+    vec3 noiseA = texture2D(uWaterTexture, uv * vec2(44.0, 38.0) + driftA).rgb;
+    vec3 noiseB = texture2D(uWaterTexture, uv * vec2(96.0, 84.0) + driftB).rgb;
     float ripple = (noiseA.r + noiseB.g) * 0.5;
-    float vein = smoothstep(0.50, 0.86, noiseA.b * 0.65 + noiseB.r * 0.35);
+    float vein = smoothstep(0.48, 0.78, noiseA.b * 0.58 + noiseB.r * 0.42);
+    float fineRipple = smoothstep(0.42, 0.76, abs(noiseA.g - noiseB.b) * 1.55);
     float shoreLight = shore * smoothstep(0.48, 0.82, ripple);
     vec3 deepWater = vec3(0.07, 0.25, 0.50);
-    vec3 shallowWater = vec3(0.20, 0.55, 0.45);
-    vec3 animatedColor = mix(deepWater, shallowWater, shore * 0.78);
+    vec3 shallowWater = vec3(0.18, 0.58, 0.46);
+    vec3 animatedColor = mix(deepWater, shallowWater, shore * 0.86);
 
-    animatedColor += vec3(ripple - 0.5) * 0.055;
-    animatedColor += vec3(0.03, 0.055, 0.04) * vein;
-    animatedColor += vec3(0.10, 0.18, 0.12) * shoreLight;
+    animatedColor += vec3(ripple - 0.5) * 0.12;
+    animatedColor += vec3(0.045, 0.075, 0.060) * vein;
+    animatedColor += vec3(0.050, 0.085, 0.070) * fineRipple;
+    animatedColor += vec3(0.13, 0.22, 0.15) * shoreLight;
 
     return mix(fallbackColor, clamp(animatedColor * shade, 0.0, 1.0), uWaterTextureEnabled);
   }
@@ -2410,7 +2429,7 @@ const fragmentShaderSource = `
     vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
     vec3 terrainColor = getHexTerrainColor(material);
     float water = getWaterAmount(material);
-    float shore = getShoreAmount(hexCell, hexScale, mapAspect, water);
+    float shore = getShoreAmount(hexPoint, hexCell, hexScale, mapAspect, water);
     float shade = clamp(${GRASS_AMBIENT_LIGHT.toFixed(2)} + vHeight * 0.16, 0.50, 1.08);
     float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
     vec3 landTexture = boostLandTextureColor(base.rgb);

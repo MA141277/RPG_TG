@@ -1788,7 +1788,14 @@ test("campaign terrain WebGL shader uses shared animated water texture", () => {
   assert.match(source, /waterTextureUrl: string \| null/);
   assert.match(source, /uniform sampler2D uWaterTexture/);
   assert.match(source, /uniform float uTimeSeconds/);
-  assert.match(source, /getShoreAmount/);
+  assert.match(
+    source,
+    /getShoreAmount\(vec2 point, vec2 cell, float hexScale, float mapAspect, float water\)/
+  );
+  assert.match(source, /getShoreEdgeContribution/);
+  assert.doesNotMatch(source, /return clamp\(\(1\.0 - neighborWater\) \* water/);
+  assert.match(source, /uv \* vec2\(44\.0, 38\.0\)/);
+  assert.match(source, /uv \* vec2\(96\.0, 84\.0\)/);
   assert.match(source, /wrapS: gl\.REPEAT/);
   assert.match(source, /requestRender\("dynamic"\)/);
 });
