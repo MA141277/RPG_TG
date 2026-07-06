@@ -1645,6 +1645,11 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
     yuanmoCampaignMap.layers.some((layer) => "imageAssetId" in layer),
     false
   );
+  const hexTextureLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_hex_texture_atlas"
+  );
+  assert.ok(hexTextureLayer);
+  assert.equal(hexTextureLayer.imageUrl, "./assets/maps/tietu.png");
 
   [
     yuanmoCampaignMap.primaryImageUrl,
@@ -1724,6 +1729,11 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
         layer.imageUrl.startsWith(`${packBaseUrl}assets/maps/`)
       ),
       true
+    );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_hex_texture_atlas")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/tietu.png`
     );
   } finally {
     global.fetch = originalFetch;
@@ -2009,6 +2019,11 @@ test(
           layer.imageUrl.startsWith(`${packBaseUrl}assets/maps/`)
         ),
         true
+      );
+      assert.equal(
+        yuanmoCampaignMap.layers.find((layer) => layer.id === "map_hex_texture_atlas")
+          ?.imageUrl,
+        `${packBaseUrl}assets/maps/tietu.png`
       );
     } finally {
       global.fetch = originalFetch;

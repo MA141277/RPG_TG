@@ -7,8 +7,8 @@ import type {
 } from "../../../domain/historical-character";
 import type { MapDefinition, MapLayer, MapNode, MapStats } from "../../../domain/map";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
-import cityDepthMeshAssetUrl from "../../../3dasset/city1-lowpoly.json?url";
-import cityDepthTextureUrl from "../../../image2mesh/city1.png?url";
+import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
+import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
 
 type CityMarker = {
   id: string;
