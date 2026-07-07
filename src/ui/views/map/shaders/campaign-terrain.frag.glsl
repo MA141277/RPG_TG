@@ -29,12 +29,6 @@ float getWaterAmount(vec3 terrainType) {
     (1.0 - step(0.12, terrainType.b));
 }
 
-float getWaterAmountAt(vec2 uv) {
-  vec3 terrainType = texture2D(uMaterialTexture, clamp(uv, 0.0, 1.0)).rgb;
-
-  return getWaterAmount(terrainType);
-}
-
 vec2 hexToPixel(vec2 hex) {
   return vec2(
     1.7320508 * (hex.x + hex.y * 0.5),
@@ -77,67 +71,180 @@ vec2 getHexCellUv(vec2 cell, float hexScale, float mapAspect) {
   );
 }
 
-float getLandAmountAtUv(vec2 uv) {
-  return 1.0 - getWaterAmountAt(uv);
+float getWaterAmountAtUv(vec2 uv) {
+  vec3 terrainType = texture2D(
+    uMaterialTexture,
+    clamp(uv, 0.0, 1.0)
+  ).rgb;
+
+  return getWaterAmount(terrainType);
 }
 
-vec2 getHexDirectionUv(vec2 axialOffset, float radius, float hexScale, float mapAspect) {
-  vec2 direction = hexToPixel(axialOffset) * radius;
+float getMapUvInsideAmount(vec2 uv) {
+  return step(0.0, uv.x) *
+    step(uv.x, 1.0) *
+    step(0.0, uv.y) *
+    step(uv.y, 1.0);
+}
+
+float getLandAmountAtUv(vec2 uv) {
+  return (1.0 - getWaterAmountAtUv(uv)) * getMapUvInsideAmount(uv);
+}
+
+float getLandAmountAtCell(vec2 cell, float hexScale, float mapAspect) {
+  return getLandAmountAtUv(getHexCellUv(cell, hexScale, mapAspect));
+}
+
+float getLandFacingShoreFade(
+  vec2 point,
+  vec2 cell,
+  vec2 neighborOffset,
+  float width,
+  float edgeShift
+) {
+  vec2 center = hexToPixel(cell);
+  vec2 neighborCenter = hexToPixel(cell + neighborOffset);
+  float centerDistance = length(point - center);
+  float neighborDistance = length(point - neighborCenter);
+  float edgeDistance = clamp(neighborDistance - centerDistance + edgeShift, 0.0, width);
+
+  return 1.0 - smoothstep(0.0, width, edgeDistance);
+}
+
+vec2 getTerrainUvOffset(
+  vec2 direction,
+  float hexRadius,
+  float hexScale,
+  float mapAspect
+) {
+  vec2 unitDirection = normalize(direction);
 
   return vec2(
-    direction.x / (hexScale * mapAspect),
-    direction.y / hexScale
+    unitDirection.x * hexRadius / (hexScale * mapAspect),
+    unitDirection.y * hexRadius / hexScale
   );
 }
 
-float sampleAnimatedBoundaryDrift(vec2 uv, float scale, vec2 flow, vec2 offset) {
-  vec3 noise = texture2D(uWaterTexture, uv * scale + flow + offset).rgb;
-
-  return noise.r * 0.50 + noise.g * 0.32 + noise.b * 0.18 - 0.5;
+float sampleLandAtDiskOffset(
+  vec2 uv,
+  vec2 diskOffset,
+  float radius,
+  float hexScale,
+  float mapAspect
+) {
+  return getLandAmountAtUv(uv + vec2(
+    diskOffset.x * radius / (hexScale * mapAspect),
+    diskOffset.y * radius / hexScale
+  ));
 }
 
-float sampleContinuousShoreRing(vec2 uv, float radius, float hexScale, float mapAspect) {
-  float openWater = 1.0;
+float sampleSoftLandDisk(
+  vec2 uv,
+  float radius,
+  float hexScale,
+  float mapAspect
+) {
+  float land = 0.0;
+  float weight = 0.0;
 
-  openWater *= 1.0 - getLandAmountAtUv(uv + getHexDirectionUv(vec2(0.0, -1.0), radius, hexScale, mapAspect)) * 0.48;
-  openWater *= 1.0 - getLandAmountAtUv(uv + getHexDirectionUv(vec2(1.0, -1.0), radius, hexScale, mapAspect)) * 0.48;
-  openWater *= 1.0 - getLandAmountAtUv(uv + getHexDirectionUv(vec2(1.0, 0.0), radius, hexScale, mapAspect)) * 0.48;
-  openWater *= 1.0 - getLandAmountAtUv(uv + getHexDirectionUv(vec2(0.0, 1.0), radius, hexScale, mapAspect)) * 0.48;
-  openWater *= 1.0 - getLandAmountAtUv(uv + getHexDirectionUv(vec2(-1.0, 1.0), radius, hexScale, mapAspect)) * 0.48;
-  openWater *= 1.0 - getLandAmountAtUv(uv + getHexDirectionUv(vec2(-1.0, 0.0), radius, hexScale, mapAspect)) * 0.48;
+  land += sampleLandAtDiskOffset(uv, vec2(0.00, 0.00), radius, hexScale, mapAspect) * 0.36;
+  weight += 0.36;
+  land += sampleLandAtDiskOffset(uv, vec2(0.33, 0.12), radius, hexScale, mapAspect) * 0.58;
+  weight += 0.58;
+  land += sampleLandAtDiskOffset(uv, vec2(-0.28, 0.24), radius, hexScale, mapAspect) * 0.58;
+  weight += 0.58;
+  land += sampleLandAtDiskOffset(uv, vec2(0.10, -0.37), radius, hexScale, mapAspect) * 0.58;
+  weight += 0.58;
+  land += sampleLandAtDiskOffset(uv, vec2(-0.42, -0.12), radius, hexScale, mapAspect) * 0.52;
+  weight += 0.52;
+  land += sampleLandAtDiskOffset(uv, vec2(0.47, -0.31), radius, hexScale, mapAspect) * 0.52;
+  weight += 0.52;
+  land += sampleLandAtDiskOffset(uv, vec2(-0.08, 0.55), radius, hexScale, mapAspect) * 0.52;
+  weight += 0.52;
+  land += sampleLandAtDiskOffset(uv, vec2(-0.57, 0.35), radius, hexScale, mapAspect) * 0.46;
+  weight += 0.46;
+  land += sampleLandAtDiskOffset(uv, vec2(0.64, 0.29), radius, hexScale, mapAspect) * 0.46;
+  weight += 0.46;
+  land += sampleLandAtDiskOffset(uv, vec2(0.22, -0.70), radius, hexScale, mapAspect) * 0.46;
+  weight += 0.46;
+  land += sampleLandAtDiskOffset(uv, vec2(-0.72, -0.44), radius, hexScale, mapAspect) * 0.40;
+  weight += 0.40;
+  land += sampleLandAtDiskOffset(uv, vec2(0.78, -0.55), radius, hexScale, mapAspect) * 0.40;
+  weight += 0.40;
+  land += sampleLandAtDiskOffset(uv, vec2(-0.18, 0.86), radius, hexScale, mapAspect) * 0.40;
+  weight += 0.40;
+  land += sampleLandAtDiskOffset(uv, vec2(0.91, 0.03), radius, hexScale, mapAspect) * 0.34;
+  weight += 0.34;
+  land += sampleLandAtDiskOffset(uv, vec2(-0.92, 0.08), radius, hexScale, mapAspect) * 0.34;
+  weight += 0.34;
+  land += sampleLandAtDiskOffset(uv, vec2(0.04, 0.94), radius, hexScale, mapAspect) * 0.34;
+  weight += 0.34;
+  land += sampleLandAtDiskOffset(uv, vec2(-0.05, -0.93), radius, hexScale, mapAspect) * 0.34;
+  weight += 0.34;
 
-  return 1.0 - openWater;
+  return land / weight;
 }
 
-vec3 getContinuousShoreBands(vec2 uv, float hexScale, float mapAspect, float water) {
-  vec2 nearFlow = vec2(uTimeSeconds * 0.026, -uTimeSeconds * 0.012);
-  vec2 seaFlow = vec2(uTimeSeconds * 0.018, -uTimeSeconds * 0.008);
-  float nearDrift =
-    sampleAnimatedBoundaryDrift(uv, 5.4, nearFlow, vec2(0.13, -0.21)) * 0.16 +
-    sampleAnimatedBoundaryDrift(uv, 11.0, nearFlow * 0.72, vec2(-0.31, 0.08)) * 0.06;
-  float shallowDrift =
-    sampleAnimatedBoundaryDrift(uv, 3.8, seaFlow, vec2(0.27, 0.14)) * 0.32 +
-    sampleAnimatedBoundaryDrift(uv, 8.0, seaFlow * 0.64, vec2(-0.12, -0.25)) * 0.14;
-  float middleDrift =
-    sampleAnimatedBoundaryDrift(uv, 2.9, seaFlow * 0.82, vec2(0.41, -0.06)) * 0.42 +
-    sampleAnimatedBoundaryDrift(uv, 6.2, seaFlow * 0.52, vec2(-0.19, 0.33)) * 0.18;
-  float nearShore = max(
-    sampleContinuousShoreRing(uv, max(0.24, 0.42 + nearDrift), hexScale, mapAspect),
-    sampleContinuousShoreRing(uv, max(0.48, 0.78 + nearDrift * 0.78), hexScale, mapAspect) * 0.40
+float getNearShoreTint(
+  vec2 point,
+  vec2 cell,
+  float hexScale,
+  float mapAspect,
+  float water,
+  float edgeShift
+) {
+  float shoreTint = 0.0;
+
+  shoreTint = max(
+    shoreTint,
+    getLandFacingShoreFade(point, cell, vec2(1.0, 0.0), 0.74, edgeShift) *
+      getLandAmountAtCell(cell + vec2(1.0, 0.0), hexScale, mapAspect)
   );
-  float shallowSea = max(
-    sampleContinuousShoreRing(uv, max(1.08, 1.58 + shallowDrift), hexScale, mapAspect),
-    sampleContinuousShoreRing(uv, max(2.12, 2.85 + shallowDrift * 0.86), hexScale, mapAspect) * 0.92
+  shoreTint = max(
+    shoreTint,
+    getLandFacingShoreFade(point, cell, vec2(-1.0, 0.0), 0.74, edgeShift) *
+      getLandAmountAtCell(cell + vec2(-1.0, 0.0), hexScale, mapAspect)
   );
-  float middleSea = max(
-    sampleContinuousShoreRing(uv, max(2.76, 3.55 + middleDrift), hexScale, mapAspect),
-    sampleContinuousShoreRing(uv, max(3.52, 4.45 + middleDrift * 0.82), hexScale, mapAspect) * 0.70
+  shoreTint = max(
+    shoreTint,
+    getLandFacingShoreFade(point, cell, vec2(0.0, 1.0), 0.74, edgeShift) *
+      getLandAmountAtCell(cell + vec2(0.0, 1.0), hexScale, mapAspect)
+  );
+  shoreTint = max(
+    shoreTint,
+    getLandFacingShoreFade(point, cell, vec2(0.0, -1.0), 0.74, edgeShift) *
+      getLandAmountAtCell(cell + vec2(0.0, -1.0), hexScale, mapAspect)
+  );
+  shoreTint = max(
+    shoreTint,
+    getLandFacingShoreFade(point, cell, vec2(1.0, -1.0), 0.74, edgeShift) *
+      getLandAmountAtCell(cell + vec2(1.0, -1.0), hexScale, mapAspect)
+  );
+  shoreTint = max(
+    shoreTint,
+    getLandFacingShoreFade(point, cell, vec2(-1.0, 1.0), 0.74, edgeShift) *
+      getLandAmountAtCell(cell + vec2(-1.0, 1.0), hexScale, mapAspect)
   );
 
-  shallowSea = max(shallowSea - nearShore * 0.28, 0.0);
-  middleSea = max(middleSea - shallowSea * 0.14 - nearShore * 0.10, 0.0);
+  return clamp(shoreTint * water, 0.0, 1.0);
+}
 
-  return clamp(vec3(nearShore, shallowSea, middleSea) * water, 0.0, 1.0);
+float getNearSeaEdgeBand(
+  vec2 uv,
+  float hexScale,
+  float mapAspect,
+  float water,
+  float edgeShift
+) {
+  float roughOuterRadius = max(4.30, 6.10 + edgeShift);
+  float innerLand = sampleSoftLandDisk(uv, 3.20, hexScale, mapAspect);
+  float outerLand = sampleSoftLandDisk(uv, roughOuterRadius, hexScale, mapAspect);
+  float nearSea = max(
+    smoothstep(0.050, 0.135, innerLand),
+    smoothstep(0.055, 0.170, outerLand)
+  );
+
+  return clamp(nearSea * water, 0.0, 1.0);
 }
 
 float getHexGridLine(vec2 point, vec2 cell) {
@@ -208,93 +315,85 @@ vec3 boostLandTextureColor(vec3 color) {
   );
 }
 
-float sampleNoiseWaterRipple(
-  vec2 uv,
-  vec2 direction,
-  float longScale,
-  float narrowScale,
-  float speed
-) {
-  vec2 tangent = normalize(direction);
-  vec2 normal = vec2(-tangent.y, tangent.x);
-  vec2 anisotropicUv = vec2(
-    dot(uv, tangent) * longScale + uTimeSeconds * speed,
-    dot(uv, normal) * narrowScale - uTimeSeconds * speed * 0.12
-  );
-  vec3 longNoise = texture2D(uWaterTexture, anisotropicUv).rgb;
-  vec3 shiftedNoise = texture2D(
+float sampleLayeredWaterFlowNoise(vec2 uv, vec2 flow) {
+  vec3 coarseNoise = texture2D(
     uWaterTexture,
-    anisotropicUv * 1.73 + vec2(0.137, 0.061)
+    uv * 6.4 + flow + vec2(0.17, -0.23)
   ).rgb;
-  vec3 broadNoise = texture2D(
+  vec3 fineNoise = texture2D(
     uWaterTexture,
-    anisotropicUv * vec2(0.42, 0.18) + vec2(0.41, 0.23)
+    uv * 13.5 + flow * 0.73 + vec2(-0.31, 0.12)
   ).rgb;
-  float streak =
-    longNoise.r * 0.46 +
-    longNoise.g * 0.22 +
-    shiftedNoise.b * 0.22 +
-    broadNoise.g * 0.10;
-  float crest = smoothstep(0.56, 0.86, streak);
-  float trough = 1.0 - smoothstep(0.18, 0.44, streak);
 
-  return crest * 0.86 - trough * 0.16;
+  return coarseNoise.r * 0.58 + coarseNoise.g * 0.24 + fineNoise.b * 0.18;
+}
+
+float sampleNearShoreEdgeNoise(vec2 uv) {
+  vec2 flow = vec2(uTimeSeconds * 0.014, -uTimeSeconds * 0.004);
+  vec3 softNoise = texture2D(
+    uWaterTexture,
+    uv * 7.6 + flow + vec2(0.21, -0.14)
+  ).rgb;
+  vec3 fineNoise = texture2D(
+    uWaterTexture,
+    uv * 15.0 + flow * 0.58 + vec2(-0.08, 0.17)
+  ).rgb;
+
+  return clamp((softNoise.g * 0.66 + fineNoise.b * 0.34 - 0.5) * 1.35, -0.5, 0.5);
+}
+
+float sampleNearSeaBoundaryNoise(vec2 uv, vec2 flow) {
+  vec3 coarseNoise = texture2D(
+    uWaterTexture,
+    uv * 3.1 + flow + vec2(-0.11, 0.29)
+  ).rgb;
+  vec3 raggedNoise = texture2D(
+    uWaterTexture,
+    uv * 12.5 + flow * 1.37 + vec2(0.33, -0.16)
+  ).rgb;
+  vec3 tornFiberNoise = texture2D(
+    uWaterTexture,
+    uv * 27.0 - flow * 0.82 + vec2(-0.27, 0.08)
+  ).rgb;
+
+  float broadTear = coarseNoise.b * 0.58 + coarseNoise.g * 0.24 + raggedNoise.r * 0.18;
+  float raggedCuts =
+    (step(0.47, raggedNoise.g) - 0.5) * 0.42 +
+    (step(0.56, tornFiberNoise.b) - 0.5) * 0.30;
+  float raggedEdge = broadTear + raggedCuts + (tornFiberNoise.r - 0.5) * 0.18;
+
+  return clamp((raggedEdge - 0.5) * 1.28 + 0.5, 0.0, 1.0);
 }
 
 vec3 getAnimatedWaterColor(
   vec2 uv,
   vec3 fallbackColor,
   float shade,
-  vec3 shoreBands
+  float nearShoreTint,
+  float nearSeaEdgeBand
 ) {
-  float nearShore = shoreBands.x;
-  float shallowSea = shoreBands.y;
-  float middleSea = shoreBands.z;
-  vec2 slowFlow = vec2(uTimeSeconds * 0.004, -uTimeSeconds * 0.0015);
-  vec2 boundaryFlow = vec2(uTimeSeconds * 0.026, -uTimeSeconds * 0.012);
-  vec2 surfaceFlow = vec2(uTimeSeconds * 0.008, -uTimeSeconds * 0.003);
-  vec3 broadNoise = texture2D(uWaterTexture, uv * 3.6 + slowFlow).rgb;
-  vec3 boundaryNoise = texture2D(uWaterTexture, uv * 8.5 + boundaryFlow).rgb;
-  vec3 fineBoundaryNoise = texture2D(uWaterTexture, uv * 15.0 + boundaryFlow * 0.58 + vec2(0.11, -0.03)).rgb;
-  vec3 boundaryDriftNoise = texture2D(uWaterTexture, uv * 5.2 + boundaryFlow * 0.34 + vec2(0.27, 0.15)).rgb;
-  vec3 surfaceNoise = texture2D(uWaterTexture, uv * 16.0 + surfaceFlow).rgb;
-  vec3 surfaceNoiseShifted = texture2D(uWaterTexture, uv * 27.0 + surfaceFlow * 0.64 + vec2(0.19, -0.07)).rgb;
-  float bandJitter =
-    (broadNoise.r - 0.5) * 0.18 +
-    (boundaryNoise.g - 0.5) * 0.28 +
-    (fineBoundaryNoise.b - 0.5) * 0.20 +
-    (boundaryDriftNoise.r - 0.5) * 0.16;
-  float nearShoreJitter = (boundaryNoise.b - 0.5) * 0.10;
-  float nearShoreBand = smoothstep(0.48, 0.96, nearShore + nearShoreJitter);
-  float shallowSeaBand = smoothstep(0.00, 0.60, shallowSea + bandJitter * 0.86) * (1.0 - nearShoreBand * 0.36);
-  float middleSeaBand = smoothstep(0.00, 0.72, middleSea + bandJitter * 0.74) * (1.0 - nearShoreBand * 0.52) * (1.0 - shallowSeaBand * 0.24);
-  float ripple = sampleNoiseWaterRipple(uv, vec2(1.0, 0.16), 2.4, 24.0, 0.020);
-  float fineRipple = sampleNoiseWaterRipple(uv + vec2(0.17, -0.09), vec2(1.0, 0.14), 4.2, 36.0, 0.014) * 0.24;
-  float wave = ripple + fineRipple + (broadNoise.b - 0.5) * 0.06;
-  float surfaceRipple =
-    (surfaceNoise.r - surfaceNoise.g) * 0.11 +
-    (surfaceNoiseShifted.b - 0.5) * 0.06;
-  float waveCrest = smoothstep(0.10, 0.58, wave + surfaceRipple * 0.22);
-  float waveTrough = smoothstep(0.10, 0.58, -wave);
-  float vein = smoothstep(0.34, 0.80, broadNoise.r * 0.58 + surfaceNoise.g * 0.24 + waveCrest * 0.18);
-  float bandLight = nearShoreBand * 0.48 + shallowSeaBand * 0.42 + middleSeaBand * 0.26;
-  float shoreLight = bandLight * smoothstep(0.10, 0.50, abs(wave) + boundaryNoise.b * 0.18);
-  vec3 deepWater = vec3(0.045, 0.18, 0.42);
-  vec3 middleSeaWater = vec3(0.070, 0.31, 0.52);
-  vec3 shallowSeaWater = vec3(0.120, 0.46, 0.54);
-  vec3 nearShoreWater = vec3(0.240, 0.62, 0.47);
-  vec3 animatedColor = deepWater;
+  vec2 waterFlow = vec2(uTimeSeconds * 0.030, -uTimeSeconds * 0.011);
+  float waterFlowNoise = sampleLayeredWaterFlowNoise(uv, waterFlow);
+  float secondaryWaterFlowNoise = sampleLayeredWaterFlowNoise(
+    uv + vec2(0.37, -0.21),
+    waterFlow * 0.82 + vec2(0.09, 0.04)
+  );
+  float waterFlowHighlight = smoothstep(0.38, 0.76, waterFlowNoise);
+  float waterFlowShadow = 1.0 - smoothstep(0.16, 0.44, waterFlowNoise);
+  float waterFlowWave =
+    (waterFlowNoise - 0.5) * 0.72 +
+    (secondaryWaterFlowNoise - 0.5) * 0.38;
+  vec3 animatedColor = vec3(0.055, 0.23, 0.49);
+  vec3 nearSeaWater = vec3(0.16, 0.52, 0.72);
+  vec3 nearShoreTintWater = vec3(0.24, 0.70, 0.38);
+  float nearSeaAwayFromCoast = nearSeaEdgeBand * (1.0 - nearShoreTint * 0.52);
 
-  animatedColor = mix(animatedColor, middleSeaWater, middleSeaBand * 0.62);
-  animatedColor = mix(animatedColor, shallowSeaWater, shallowSeaBand * 0.82);
-  animatedColor = mix(animatedColor, nearShoreWater, nearShoreBand * 0.72);
+  animatedColor = mix(animatedColor, nearSeaWater, nearSeaAwayFromCoast * 0.78);
+  animatedColor = mix(animatedColor, nearShoreTintWater, nearShoreTint * 0.42);
 
-  animatedColor += vec3(0.10, 0.17, 0.19) * waveCrest;
-  animatedColor -= vec3(0.035, 0.060, 0.075) * waveTrough;
-  animatedColor += vec3(wave) * 0.07;
-  animatedColor += vec3(0.055, 0.090, 0.100) * surfaceRipple;
-  animatedColor += vec3(0.060, 0.105, 0.090) * vein;
-  animatedColor += vec3(0.16, 0.26, 0.17) * shoreLight;
+  animatedColor += vec3(0.18, 0.34, 0.31) * waterFlowHighlight * 0.82;
+  animatedColor -= vec3(0.050, 0.086, 0.090) * waterFlowShadow * 0.78;
+  animatedColor += vec3(waterFlowWave) * 0.16;
 
   return mix(fallbackColor, clamp(animatedColor * shade, 0.0, 1.0), uWaterTextureEnabled);
 }
@@ -310,7 +409,26 @@ void main() {
   vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
   vec3 terrainColor = getHexTerrainColor(material);
   float water = getWaterAmount(material);
-  vec3 shoreBands = getContinuousShoreBands(vUv, hexScale, mapAspect, water);
+  float nearShoreNoise = sampleNearShoreEdgeNoise(vUv);
+  float nearShoreEdgeShift = nearShoreNoise * 0.12;
+  float nearShoreTint = getNearShoreTint(
+    hexPoint,
+    hexCell,
+    hexScale,
+    mapAspect,
+    water,
+    nearShoreEdgeShift
+  );
+  vec2 nearSeaBoundaryFlow = vec2(uTimeSeconds * 0.026, -uTimeSeconds * 0.010);
+  float nearSeaBoundaryNoise = sampleNearSeaBoundaryNoise(vUv, nearSeaBoundaryFlow);
+  float nearSeaBoundaryEdgeShift = (nearSeaBoundaryNoise - 0.5) * 2.10;
+  float nearSeaEdgeBand = getNearSeaEdgeBand(
+    vUv,
+    hexScale,
+    mapAspect,
+    water,
+    nearSeaBoundaryEdgeShift
+  );
   float shade = clamp(__GRASS_AMBIENT_LIGHT__ + vHeight * 0.16, 0.50, 1.08);
   float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
   vec3 landTexture = boostLandTextureColor(base.rgb);
@@ -322,7 +440,13 @@ void main() {
   );
   float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, shade);
   vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
-  vec3 waterColor = getAnimatedWaterColor(vUv, terrainColor * shade, shade, shoreBands);
+  vec3 waterColor = getAnimatedWaterColor(
+    vUv,
+    terrainColor * shade,
+    shade,
+    nearShoreTint,
+    nearSeaEdgeBand
+  );
   vec3 color = mix(landColor, waterColor, water);
 
   float border = getHexGridLine(hexPoint, hexCell);

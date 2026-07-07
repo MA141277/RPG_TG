@@ -5,7 +5,7 @@ import type { CityNpcPoolRuntimeState } from "./city-npc";
 import type { EventId } from "./event";
 import type { HouseId } from "./house";
 import type { CityMarketData } from "./market";
-import type { MapId } from "./map";
+import type { MapExplorationState, MapId } from "./map";
 import type { MissionId } from "./mission";
 import type { ActiveStoryBattleSession } from "./story-battle";
 import type { ActiveActivitySession } from "./activity-session";
@@ -73,6 +73,7 @@ export type GameState = {
     playableSession: ActivePlayableSession | null;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
     cityMarkets: Record<CityId, CityMarketData>;
+    mapExplorationByMapId: Record<MapId, MapExplorationState>;
     activitySession: ActiveActivitySession;
     eventHistory: Record<
       EventId,

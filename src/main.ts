@@ -72,6 +72,10 @@ import {
   travelToCoordinate,
   type GridCoordinate,
 } from "./application/navigation/travel-to-coordinate";
+import {
+  isCampaignMapCoordinateRevealed,
+  revealCampaignMapAroundCoordinate,
+} from "./application/navigation/campaign-map-exploration";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
   createActiveGameContentContextFromModActivation,
@@ -214,6 +218,7 @@ import {
   type CampaignCityDepthMeshTransform,
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
+import { syncCampaignCloudWebGl } from "./ui/views/map/campaign-cloud-webgl";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 
 const GAME_VIEWPORT_WIDTH = 1600;
@@ -331,6 +336,62 @@ let activeContentContext: ActiveGameContentContext =
     basePack: baseGameContentPack,
     activationResult: builtinStartupActivation,
   });
+
+function revealCampaignMapAroundAppCoordinate(
+  state: AppState,
+  coordinate: GridCoordinate,
+  options?: {
+    animateNewHexes?: boolean;
+    revealedAtMs?: number;
+  }
+): AppState {
+  const mapDefinition =
+    getMapDefinitionById(state.gameState.world.currentMapId) ?? null;
+  if (
+    mapDefinition?.mode !== "campaign" ||
+    mapDefinition.coordinateSpace == null
+  ) {
+    return state;
+  }
+
+  const nextGameState = revealCampaignMapAroundCoordinate({
+    state: state.gameState,
+    mapId: mapDefinition.id,
+    coordinate,
+    coordinateSpace: mapDefinition.coordinateSpace,
+    ...(options?.animateNewHexes == null
+      ? {}
+      : { animateNewHexes: options.animateNewHexes }),
+    ...(options?.revealedAtMs == null
+      ? {}
+      : { revealedAtMs: options.revealedAtMs }),
+  });
+  if (nextGameState === state.gameState) {
+    return state;
+  }
+
+  return {
+    ...state,
+    gameState: nextGameState,
+  };
+}
+
+function isCurrentCampaignCoordinateRevealed(coordinate: GridCoordinate): boolean {
+  const mapDefinition = getCurrentMapDefinition();
+  if (
+    mapDefinition?.mode !== "campaign" ||
+    mapDefinition.coordinateSpace == null
+  ) {
+    return true;
+  }
+
+  return isCampaignMapCoordinateRevealed({
+    state: appState.gameState,
+    mapId: mapDefinition.id,
+    coordinate,
+    coordinateSpace: mapDefinition.coordinateSpace,
+  });
+}
 
 function getRuntimeText(textId: string, fallback?: string): string {
   return resolveTextEntry(activeContentContext.textEntriesById, textId, fallback);
@@ -640,7 +701,13 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     },
   };
 
-  return nextAppState;
+  return revealCampaignMapAroundAppCoordinate(
+    nextAppState,
+    nextAppState.playerCoordinate,
+    {
+      animateNewHexes: false,
+    }
+  );
 }
 
 function getCurrentPlayerCharacter(): CharacterDefinition | null {
@@ -2004,7 +2071,13 @@ function createScenarioPackAppState(
     },
   };
 
-  return nextAppState;
+  return revealCampaignMapAroundAppCoordinate(
+    nextAppState,
+    nextAppState.playerCoordinate,
+    {
+      animateNewHexes: false,
+    }
+  );
 }
 
 function mergeCharacterDefinitions(
@@ -3941,6 +4014,9 @@ appElement.addEventListener("click", (event) => {
   if (mapCell != null && appState.gameState.ui.currentView === "map") {
     const xValue = Number(mapCell.dataset.mapX);
     const yValue = Number(mapCell.dataset.mapY);
+    if (!isCurrentCampaignCoordinateRevealed({ x: xValue, y: yValue })) {
+      return;
+    }
     const cityId = mapCell.dataset.cityId || null;
     const mapNodeName = mapCell.dataset.mapNodeName || null;
     const cityName =
@@ -3965,6 +4041,13 @@ appElement.addEventListener("click", (event) => {
     if (clickTarget == null || coordinateSpace == null) {
       return;
     }
+    const targetCoordinate = {
+      x: clickTarget.u * coordinateSpace.width,
+      y: (1 - clickTarget.v) * coordinateSpace.height,
+    };
+    if (!isCurrentCampaignCoordinateRevealed(targetCoordinate)) {
+      return;
+    }
     if (
       isCampaignTerrainUvPassable(campaignMap, clickTarget.u, clickTarget.v) !== true
     ) {
@@ -3972,10 +4055,7 @@ appElement.addEventListener("click", (event) => {
     }
 
     startCampaignTravel(
-      {
-        x: clickTarget.u * coordinateSpace.width,
-        y: (1 - clickTarget.v) * coordinateSpace.height,
-      },
+      targetCoordinate,
       null,
       null
     );
@@ -4201,6 +4281,9 @@ function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordin
   ) {
     return [appState.playerCoordinate, nextCoordinate];
   }
+  if (!isCurrentCampaignCoordinateRevealed(nextCoordinate)) {
+    return null;
+  }
 
   const travelGrid = getCampaignTerrainTravelGrid(appRoot);
   if (travelGrid == null) {
@@ -4325,9 +4408,20 @@ function syncCampaignActorRuntimeState(
   facingDegrees: number,
   isMoving: boolean
 ): void {
-  appState.playerCoordinate = coordinate;
-  appState.campaignActorState.facingDegrees = facingDegrees;
-  appState.campaignActorState.isMoving = isMoving;
+  appState = {
+    ...appState,
+    playerCoordinate: coordinate,
+    campaignActorState: {
+      facingDegrees,
+      isMoving,
+    },
+  };
+  const nextAppState = revealCampaignMapAroundAppCoordinate(appState, coordinate, {
+    animateNewHexes: true,
+  });
+  if (nextAppState !== appState) {
+    appState = nextAppState;
+  }
 }
 
 function syncCampaignActorView(): void {
@@ -4489,6 +4583,7 @@ function renderAppFrame(
   syncMapIntroOverlay();
   syncActivityQteLoop();
   syncCampaignTerrainWebGl(appRoot);
+  syncCampaignCloudWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
 }
 

@@ -92,6 +92,11 @@ const {
   hexToCoordinate,
 } = require("../.test-dist/application/navigation/travel-to-coordinate.js");
 const {
+  getCampaignMapFogViewState,
+  isCampaignMapCoordinateRevealed,
+  revealCampaignMapAroundCoordinate,
+} = require("../.test-dist/application/navigation/campaign-map-exploration.js");
+const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
 const {
@@ -1656,6 +1661,9 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   const waterNoiseLayer = yuanmoCampaignMap.layers.find(
     (layer) => layer.id === "map_water_noise"
   );
+  const fogNoiseLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_fog_noise"
+  );
 
   assert.ok(waterNoiseLayer);
   assert.equal(waterNoiseLayer.width, 512);
@@ -1663,6 +1671,13 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   assert.equal(
     waterNoiseLayer.imageUrl,
     "./assets/maps/yuanmo-water-noise.png"
+  );
+  assert.ok(fogNoiseLayer);
+  assert.equal(fogNoiseLayer.width, 640);
+  assert.equal(fogNoiseLayer.height, 640);
+  assert.equal(
+    fogNoiseLayer.imageUrl,
+    "./assets/maps/yuanmo-fog-noise.png"
   );
 
   [
@@ -1749,6 +1764,11 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
         ?.imageUrl,
       `${packBaseUrl}assets/maps/yuanmo-water-noise.png`
     );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_fog_noise")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/yuanmo-fog-noise.png`
+    );
   } finally {
     global.fetch = originalFetch;
   }
@@ -1769,6 +1789,24 @@ test("built-in yuanmo campaign map declares shared water noise texture layer", (
 
   assert.match(source, /yuanmo-water-noise\.png/);
   assert.match(source, /"id": "map_water_noise"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("built-in yuanmo campaign map declares shared fog noise texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "yuanmo-fog-noise.png"
+  );
+
+  assert.match(source, /yuanmo-fog-noise\.png/);
+  assert.match(source, /"id": "map_fog_noise"/);
   assert.equal(fs.existsSync(assetPath), true);
 });
 
@@ -1824,28 +1862,59 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.doesNotMatch(terrainFragmentSource, /getShoreNearAmount/);
   assert.doesNotMatch(terrainFragmentSource, /getShoreShallowAmount/);
   assert.doesNotMatch(terrainFragmentSource, /getShoreMiddleAmount/);
-  assert.match(terrainFragmentSource, /getContinuousShoreBands/);
-  assert.match(terrainFragmentSource, /sampleContinuousShoreRing/);
-  assert.match(terrainFragmentSource, /sampleAnimatedBoundaryDrift/);
-  assert.match(terrainFragmentSource, /getHexDirectionUv/);
-  assert.match(terrainFragmentSource, /float openWater = 1\.0/);
-  assert.match(terrainFragmentSource, /vec2\(0\.0, -1\.0\)/);
-  assert.match(terrainFragmentSource, /vec2\(1\.0, -1\.0\)/);
-  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.0\)/);
-  assert.match(terrainFragmentSource, /vec2\(0\.0, 1\.0\)/);
-  assert.match(terrainFragmentSource, /vec2\(-1\.0, 1\.0\)/);
-  assert.match(terrainFragmentSource, /vec2\(-1\.0, 0\.0\)/);
+  assert.doesNotMatch(terrainFragmentSource, /getContinuousShoreBands/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleSeaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /getBoundaryEdgeMask/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv/);
+  assert.doesNotMatch(terrainFragmentSource, /float openWater = 1\.0/);
+  assert.match(terrainFragmentSource, /getWaterAmountAtUv/);
+  assert.match(terrainFragmentSource, /getLandAmountAtUv/);
+  assert.match(terrainFragmentSource, /getLandAmountAtCell/);
+  assert.match(terrainFragmentSource, /getLandFacingShoreFade/);
+  assert.match(terrainFragmentSource, /getNearShoreTint/);
+  assert.match(terrainFragmentSource, /getNearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /getTerrainUvOffset/);
+  assert.match(terrainFragmentSource, /getMapUvInsideAmount/);
+  assert.match(terrainFragmentSource, /sampleLandAtDiskOffset/);
+  assert.match(terrainFragmentSource, /sampleSoftLandDisk/);
+  assert.match(terrainFragmentSource, /sampleNearShoreEdgeNoise/);
+  assert.match(terrainFragmentSource, /edgeDistance = clamp\(neighborDistance - centerDistance \+ edgeShift, 0\.0, width\)/);
+  assert.match(terrainFragmentSource, /return 1\.0 - smoothstep\(0\.0, width, edgeDistance\)/);
+  assert.match(terrainFragmentSource, /getLandFacingShoreFade\(point, cell, vec2\(1\.0, 0\.0\), 0\.74, edgeShift\)/);
+  assert.match(terrainFragmentSource, /shoreTint \* water/);
+  assert.match(terrainFragmentSource, /nearSea \* water/);
+  assert.doesNotMatch(terrainFragmentSource, /getNearSeaEdgeContribution/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleLandInDirection/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousLandRing/);
+  assert.doesNotMatch(terrainFragmentSource, /neighborOffset, 6\.10, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /4\.30, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /5\.05, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /getLandAmountAtCell\(cell \+ vec2\(2\.0, 0\.0\), hexScale, mapAspect\) \* 0\.82/);
+  assert.doesNotMatch(terrainFragmentSource, /getLandAmountAtCell\(cell \+ vec2\(3\.0, 0\.0\), hexScale, mapAspect\) \* 0\.62/);
   assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(0\.5,/);
   assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(-0\.5,/);
   assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(1\.0, -0\.5\)/);
   assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(-1\.0, 0\.5\)/);
-  assert.match(terrainFragmentSource, /0\.42 \+ nearDrift/);
-  assert.match(terrainFragmentSource, /0\.78 \+ nearDrift \* 0\.78/);
-  assert.match(terrainFragmentSource, /2\.85 \+ shallowDrift \* 0\.86/);
-  assert.match(terrainFragmentSource, /4\.45 \+ middleDrift \* 0\.82/);
-  assert.match(terrainFragmentSource, /nearFlow = vec2\(uTimeSeconds \* 0\.026/);
-  assert.match(terrainFragmentSource, /seaFlow = vec2\(uTimeSeconds \* 0\.018/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.22/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.40/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 2\.65/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 4\.40/);
+  assert.doesNotMatch(terrainFragmentSource, /nearDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /middleDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, max/);
+  assert.match(terrainFragmentSource, /roughOuterRadius = max\(4\.30, 6\.10 \+ edgeShift\)/);
+  assert.match(terrainFragmentSource, /sampleSoftLandDisk\(uv, roughOuterRadius/);
+  assert.match(terrainFragmentSource, /smoothstep\(0\.055, 0\.170, outerLand\)/);
+  assert.match(terrainFragmentSource, /nearShoreEdgeShift = nearShoreNoise \* 0\.12/);
   assert.match(
+    terrainFragmentSource,
+    /getNearShoreTint\(\s*hexPoint,\s*hexCell,\s*hexScale,\s*mapAspect,\s*water,\s*nearShoreEdgeShift\s*\)/s
+  );
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreTransition =/);
+  assert.match(terrainFragmentSource, /getNearSeaEdgeBand\(\s*vUv,\s*hexScale,\s*mapAspect,\s*water,\s*nearSeaBoundaryEdgeShift/s);
+  assert.doesNotMatch(
     terrainFragmentSource,
     /vec3 shoreBands = getContinuousShoreBands\(vUv, hexScale, mapAspect, water\)/
   );
@@ -1865,37 +1934,166 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.doesNotMatch(terrainFragmentSource, /getDirectionalWaterRipple/);
   assert.doesNotMatch(terrainFragmentSource, /float ridge = sin/);
   assert.doesNotMatch(terrainFragmentSource, /segmentNoise/);
-  assert.match(terrainFragmentSource, /sampleNoiseWaterRipple/);
-  assert.match(terrainFragmentSource, /anisotropicUv/);
-  assert.match(terrainFragmentSource, /longNoise/);
-  assert.match(terrainFragmentSource, /shiftedNoise/);
-  assert.match(terrainFragmentSource, /surfaceNoise/);
-  assert.match(terrainFragmentSource, /surfaceRipple/);
-  assert.match(terrainFragmentSource, /waveCrest/);
-  assert.match(terrainFragmentSource, /waveTrough/);
-  assert.match(terrainFragmentSource, /slowFlow/);
-  assert.match(terrainFragmentSource, /boundaryFlow/);
-  assert.match(terrainFragmentSource, /boundaryDriftNoise/);
-  assert.match(terrainFragmentSource, /surfaceFlow/);
-  assert.match(terrainFragmentSource, /boundaryFlow = vec2\(uTimeSeconds \* 0\.026/);
-  assert.match(terrainFragmentSource, /return crest \* 0\.86 - trough \* 0\.16/);
-  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.16\), 2\.4, 24\.0, 0\.020/);
-  assert.match(terrainFragmentSource, /vec2\(1\.0, 0\.14\), 4\.2, 36\.0, 0\.014/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleNoiseWaterRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /anisotropicUv/);
+  assert.doesNotMatch(terrainFragmentSource, /longNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /waveCrest/);
+  assert.doesNotMatch(terrainFragmentSource, /waveTrough/);
+  assert.match(terrainFragmentSource, /sampleLayeredWaterFlowNoise/);
+  assert.match(terrainFragmentSource, /sampleNearSeaBoundaryNoise/);
+  assert.match(terrainFragmentSource, /coarseNoise/);
+  assert.match(terrainFragmentSource, /fineNoise/);
+  assert.match(terrainFragmentSource, /raggedNoise/);
+  assert.match(terrainFragmentSource, /tornFiberNoise/);
+  assert.match(terrainFragmentSource, /raggedCuts/);
+  assert.match(terrainFragmentSource, /waterFlowNoise/);
+  assert.match(terrainFragmentSource, /secondaryWaterFlowNoise/);
+  assert.match(terrainFragmentSource, /waterFlowHighlight/);
+  assert.match(terrainFragmentSource, /waterFlowShadow/);
+  assert.match(terrainFragmentSource, /waterFlowWave/);
+  assert.match(terrainFragmentSource, /vec3 animatedColor = vec3\(0\.055, 0\.23, 0\.49\)/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryFlow/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryNoise/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryEdgeShift/);
+  assert.match(terrainFragmentSource, /nearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /vec3 nearSeaWater = vec3\(0\.16, 0\.52, 0\.72\)/);
+  assert.match(terrainFragmentSource, /nearSeaAwayFromCoast = nearSeaEdgeBand \* \(1\.0 - nearShoreTint \* 0\.52\)/);
+  assert.match(terrainFragmentSource, /animatedColor = mix\(animatedColor, nearSeaWater, nearSeaAwayFromCoast \* 0\.78\)/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreTransitionWater/);
+  assert.match(terrainFragmentSource, /vec3 nearShoreTintWater = vec3\(0\.24, 0\.70, 0\.38\)/);
+  assert.match(terrainFragmentSource, /animatedColor = mix\(animatedColor, nearShoreTintWater, nearShoreTint \* 0\.42\)/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryEdgeShift = \(nearSeaBoundaryNoise - 0\.5\) \* 2\.10/);
+  assert.match(terrainFragmentSource, /nearSeaEdgeBand = getNearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /nearShoreTint,\s*nearSeaEdgeBand/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreBands/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryFlow/);
+  assert.doesNotMatch(terrainFragmentSource, /staticBandNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /staticShoreLine/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryShift/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBoundaryShift/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryHighlight/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryShadow/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryLineMask/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryFlowNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryFlowNoiseFine/);
+  assert.doesNotMatch(terrainFragmentSource, /animatedBoundaryLine/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreLineMask/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreEdge\s*=/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreLight/);
+  assert.doesNotMatch(terrainFragmentSource, /float vein/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceTexture/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceFlow/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryFlow = vec2\(uTimeSeconds \* 0\.030/);
+  assert.match(terrainFragmentSource, /waterFlow = vec2\(uTimeSeconds \* 0\.030/);
+  assert.match(terrainFragmentSource, /uv \* 6\.4 \+ flow/);
+  assert.match(terrainFragmentSource, /uv \* 13\.5 \+ flow \* 0\.73/);
+  assert.match(terrainFragmentSource, /vec3\(0\.18, 0\.34, 0\.31\) \* waterFlowHighlight \* 0\.82/);
+  assert.match(terrainFragmentSource, /vec3\(waterFlowWave\) \* 0\.16/);
   assert.doesNotMatch(terrainFragmentSource, /vec2\(0\.92, 0\.38\), 4\.8, 62\.0/);
-  assert.match(terrainFragmentSource, /boundaryNoise/);
-  assert.match(terrainFragmentSource, /fineBoundaryNoise/);
-  assert.match(terrainFragmentSource, /bandJitter/);
-  assert.match(terrainFragmentSource, /nearShoreJitter/);
-  assert.match(terrainFragmentSource, /smoothstep\(0\.48, 0\.96, nearShore \+ nearShoreJitter\)/);
-  assert.doesNotMatch(terrainFragmentSource, /nearShore \+ bandJitter/);
-  assert.match(terrainFragmentSource, /nearShoreBand/);
-  assert.match(terrainFragmentSource, /shallowSeaBand/);
-  assert.match(terrainFragmentSource, /middleSeaBand/);
-  assert.match(terrainFragmentSource, /nearShoreWater/);
-  assert.match(terrainFragmentSource, /shallowSeaWater/);
-  assert.match(terrainFragmentSource, /middleSeaWater/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /fineBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /bandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /staticBandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /smoothstep\(0\.74, 0\.96, nearShore\)/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShore \+ staticBandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreBand/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowSeaBand/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBand/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowSeaWater/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaWater/);
   assert.match(rendererSource, /wrapS: gl\.REPEAT/);
   assert.match(rendererSource, /requestRender\("dynamic"\)/);
+});
+
+test("campaign fog exploration stays active without the removed shader renderer", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src", "main.ts"), "utf8");
+  const shaderRoot = path.join(
+    process.cwd(),
+    "src",
+    "ui",
+    "views",
+    "map",
+    "shaders"
+  );
+
+  assert.equal(
+    fs.existsSync(path.join(shaderRoot, "campaign-volumetric-cloud.vert.glsl")),
+    false
+  );
+  assert.equal(
+    fs.existsSync(path.join(shaderRoot, "campaign-volumetric-cloud.frag.glsl")),
+    false
+  );
+  assert.equal(fs.existsSync(path.join(shaderRoot, "campaign-fog.vert.glsl")), false);
+  assert.equal(fs.existsSync(path.join(shaderRoot, "campaign-fog.frag.glsl")), false);
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), "src", "ui", "views", "map", "campaign-fog-webgl.ts")
+    ),
+    false
+  );
+  assert.doesNotMatch(mapViewSource, /data-campaign-map-fog/);
+  assert.doesNotMatch(mapViewSource, /campaign-volumetric-cloud/);
+  assert.doesNotMatch(mainSource, /campaign-fog-webgl/);
+  assert.doesNotMatch(mainSource, /syncCampaignMapFogWebGl/);
+  assert.doesNotMatch(mainSource, /setCampaignMapFogCamera/);
+  assert.match(mainSource, /isCampaignMapCoordinateRevealed/);
+  assert.match(mainSource, /revealCampaignMapAroundCoordinate/);
+});
+
+test("campaign map exploration reveals current hex and one neighbor ring", () => {
+  const coordinateSpace = { width: 509, height: 451 };
+  const startCoordinate = { x: 334, y: 318 };
+  const state = createBaseState();
+  const revealedState = revealCampaignMapAroundCoordinate({
+    state,
+    mapId: "map.yuanmo_campaign",
+    coordinate: startCoordinate,
+    coordinateSpace,
+    revealedAtMs: 1000,
+    animateNewHexes: true,
+  });
+  const startHex = coordinateToRoundedHex(startCoordinate, coordinateSpace);
+  const exploration = getCampaignMapFogViewState(
+    revealedState,
+    "map.yuanmo_campaign"
+  );
+
+  assert.equal(exploration.revealedHexKeys.length, 7);
+  assert.equal(exploration.revealedHexKeys.includes(getHexKey(startHex)), true);
+  assert.equal(
+    isCampaignMapCoordinateRevealed({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: startCoordinate,
+      coordinateSpace,
+    }),
+    true
+  );
+  assert.equal(
+    Object.values(exploration.revealingHexStartedAtMsByKey).every(
+      (startedAtMs) => startedAtMs === 1000
+    ),
+    true
+  );
+  assert.equal(
+    isCampaignMapCoordinateRevealed({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: { x: 5, y: 5 },
+      coordinateSpace,
+    }),
+    false
+  );
 });
 
 test("ui contract modules export the reserve contract families", async () => {

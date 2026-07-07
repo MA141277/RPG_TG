@@ -7680,6 +7680,14 @@
         "imageUrl": "./assets/maps/yuanmo-water-noise.png"
       },
       {
+        "id": "map_fog_noise",
+        "label": "Fog noise texture",
+        "width": 640,
+        "height": 640,
+        "description": "tileable campaign fog noise",
+        "imageUrl": "./assets/maps/yuanmo-fog-noise.png"
+      },
+      {
         "id": "map_trade_routes",
         "label": "Trade routes",
         "width": 509,

@@ -55,6 +55,7 @@ export type MapViewModel = {
   hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
   waterTextureImageUrl: string | null;
+  cloudNoiseTextureImageUrl: string | null;
   cityDepthMeshAssetUrl: string | null;
   cityDepthTextureUrl: string | null;
   cityDepthMeshCoordinate: {
@@ -143,6 +144,9 @@ export function createMapViewModel(input: {
       null,
     waterTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_water_noise")
+        ?.imageUrl ?? null,
+    cloudNoiseTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_fog_noise")
         ?.imageUrl ?? null,
     cityDepthMeshAssetUrl,
     cityDepthTextureUrl,
@@ -298,14 +302,18 @@ function renderCampaignMarkers(model: MapViewModel): string {
       const displayName = getMarkerDisplayName(marker.name);
       const markerName = escapeHtml(marker.name);
       const markerSummary = escapeHtml(marker.summary);
+      const markerPositionStyle = `--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;`;
+      const markerProjectionAttributes = `
+          data-terrain-projected-point="true"
+          data-map-height-u="${heightU.toFixed(5)}"
+          data-map-height-v="${heightV.toFixed(5)}"
+        `;
 
       return `
         <button
           class="c-campaign-marker ${getMarkerClass(marker.kind)}"
-          style="--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;"
-          data-terrain-projected-point="true"
-          data-map-height-u="${heightU.toFixed(5)}"
-          data-map-height-v="${heightV.toFixed(5)}"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
           data-map-x="${marker.x}"
           data-map-y="${marker.y}"
           data-city-id="${marker.cityId ?? ""}"
@@ -315,12 +323,17 @@ function renderCampaignMarkers(model: MapViewModel): string {
         >
           <span class="c-campaign-marker__dot"></span>
           <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
-          <span class="c-campaign-marker__summary">
-            <strong>${markerName}</strong>
-            ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
-            ${renderHistoricalCharacters(marker)}
-          </span>
         </button>
+        <span
+          class="c-campaign-marker__summary"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          aria-hidden="true"
+        >
+          <strong>${markerName}</strong>
+          ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
+          ${renderHistoricalCharacters(marker)}
+        </span>
       `;
     })
     .join("");
@@ -501,6 +514,12 @@ function renderCampaignMap(model: MapViewModel): string {
         ${renderCampaignMapVisualLayer(model, {
           includeInteractivePoints: true,
         })}
+        <canvas
+          class="c-campaign-map__cloud"
+          data-campaign-map-cloud="true"
+          ${model.cloudNoiseTextureImageUrl == null ? "" : `data-map-cloud-noise-url="${model.cloudNoiseTextureImageUrl}"`}
+          aria-hidden="true"
+        ></canvas>
         <div class="c-campaign-map__tiltshift" aria-hidden="true">
           ${renderCampaignMapVisualLayer(model, {
             transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",

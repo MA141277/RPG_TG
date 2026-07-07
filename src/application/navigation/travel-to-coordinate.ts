@@ -277,7 +277,7 @@ function getHexDistance(start: HexCoordinate, target: HexCoordinate): number {
   );
 }
 
-function getHexNeighbors(hex: HexCoordinate): HexCoordinate[] {
+export function getHexNeighbors(hex: HexCoordinate): HexCoordinate[] {
   return HEX_NEIGHBOR_DIRECTIONS.map((direction) => ({
     x: hex.x + direction.x,
     y: hex.y + direction.y,

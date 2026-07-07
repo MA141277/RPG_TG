@@ -1234,7 +1234,16 @@ function syncProjectedPoints(input: {
     point.style.setProperty("--terrain-point-top", "auto");
     point.style.setProperty("--terrain-point-bottom", `${bottom.toFixed(3)}%`);
     point.style.setProperty("--terrain-point-perspective-scale", perspectiveScale.toFixed(3));
-    point.style.zIndex = `${20 + depthLayer}`;
+    if (
+      point.classList.contains("c-campaign-marker") ||
+      point.classList.contains("c-campaign-player")
+    ) {
+      point.style.zIndex = "2";
+    } else if (point.classList.contains("c-campaign-marker__summary")) {
+      point.style.zIndex = "6";
+    } else {
+      point.style.zIndex = `${20 + depthLayer}`;
+    }
   }
 }
 

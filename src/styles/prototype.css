@@ -468,11 +468,9 @@
   inset: 0;
   transform: none;
   transform-origin: center;
-  z-index: 1;
 }
 
 .c-campaign-map__transform--tiltshift {
-  z-index: 1;
   filter: blur(14px) saturate(0.92);
   opacity: 0.92;
   mask-image:
@@ -523,7 +521,7 @@
 }
 
 .c-campaign-map__actor-layer {
-  z-index: 260;
+  z-index: 2;
   display: block;
   pointer-events: none;
 }
@@ -553,6 +551,26 @@
   pointer-events: none;
 }
 
+.c-campaign-map__cloud {
+  position: absolute;
+  inset: -2px;
+  z-index: 3;
+  display: block;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms ease;
+}
+
+.c-campaign-map__cloud.is-ready {
+  opacity: 1;
+}
+
+.c-campaign-map__cloud.has-error {
+  display: none;
+}
+
 .c-campaign-map__tiltshift,
 .c-campaign-map__vignette {
   position: absolute;
@@ -561,12 +579,12 @@
 }
 
 .c-campaign-map__tiltshift {
-  z-index: 8;
+  z-index: 4;
   overflow: hidden;
 }
 
 .c-campaign-map__vignette {
-  z-index: 9;
+  z-index: 4;
   background:
     radial-gradient(
       ellipse at center,
@@ -770,7 +788,7 @@
   left: var(--terrain-point-left, var(--marker-left));
   top: var(--terrain-point-top, auto);
   bottom: var(--terrain-point-bottom, var(--marker-bottom));
-  z-index: 5;
+  z-index: 2;
   display: grid;
   grid-template-columns: 36px max-content;
   gap: 8px;
@@ -796,6 +814,7 @@
 }
 
 .c-campaign-marker:not([data-terrain-projection-ready]),
+.c-campaign-marker__summary:not([data-terrain-projection-ready]),
 .c-campaign-player[data-terrain-projected-point]:not([data-terrain-projection-ready]) {
   opacity: 0;
   pointer-events: none;
@@ -845,8 +864,9 @@
 
 .c-campaign-marker__summary {
   position: absolute;
-  left: calc(16px * var(--map-marker-inverse-scale, 1));
-  bottom: calc(16px * var(--map-marker-inverse-scale, 1));
+  left: var(--terrain-point-left, var(--marker-left));
+  top: var(--terrain-point-top, auto);
+  bottom: var(--terrain-point-bottom, var(--marker-bottom));
   display: none;
   gap: 5px;
   width: max-content;
@@ -862,9 +882,15 @@
   color: #f6ebcc;
   line-height: 1.4;
   text-shadow: none;
-  transform: scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));
+  transform:
+    translate(
+      calc(-2px + var(--terrain-point-offset-x, 0px)),
+      calc(34px + var(--terrain-point-offset-y, 0px))
+    )
+    scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));
   transform-origin: left bottom;
   z-index: 6;
+  pointer-events: none;
 }
 
 .c-campaign-marker__summary strong {
@@ -879,14 +905,14 @@
 }
 
 .c-campaign-marker:hover {
-  z-index: 5;
+  z-index: 2;
 }
 
 .c-campaign-marker:hover .c-campaign-marker__dot {
   transform: scale(calc(var(--map-marker-inverse-scale, 1) * 1.35 / var(--terrain-point-perspective-scale, 1)));
 }
 
-.c-campaign-marker:hover .c-campaign-marker__summary {
+.c-campaign-marker:hover + .c-campaign-marker__summary {
   display: grid;
 }
 
@@ -895,7 +921,7 @@
   left: var(--terrain-point-left, var(--player-left));
   top: var(--terrain-point-top, auto);
   bottom: var(--terrain-point-bottom, var(--player-bottom));
-  z-index: 7;
+  z-index: 2;
   width: 52px;
   height: 88px;
   transform:
