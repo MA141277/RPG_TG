@@ -18,6 +18,8 @@
 - Push Commit: `commit-sha-or-none`
 - Resume From: `Open docs/superpowers/project-progress.md, then continue from the Next Owner Document.`
 
+`Push Commit` must satisfy the repository commit-message rule whenever `Push Status = success`.
+
 ## Progress Log
 
 - 2000-01-01

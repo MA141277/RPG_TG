@@ -14,6 +14,7 @@
 - 按 B 方案继续收紧 Blueprint 真值字段：`project-progress.next_step` 改为枚举 `entry_action`，`target plan.next_legal_action` 改为枚举 `next_action`，并移除 target plan 的 live `Current Decision` 解释区。
 - 将 target spec / target-spec template 的 `Queue Portfolio` 改为 `Queue Contract Portfolio`，移除 `State` / `Source` 这类 runtime / history 混合列，收口为纯 contract 表。
 - 新增 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 `npm run lint:blueprints`，把 Blueprint 一致性检查从“人工遵守”推进到“脚本拒绝漂移”。
+- 新增 [tools/validate-commit-message.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/validate-commit-message.mjs)、[.githooks/commit-msg](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.githooks/commit-msg) 与 [/.github/workflows/validate-commit-messages.yml](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.github/workflows/validate-commit-messages.yml)，把“每次 git 提交都必须带内容概述”从口头要求升级为仓库级 commit-msg / CI 双重门禁。
 - 重写 Blueprint 模板族：
   - [docs/blueprints/templates/project-progress-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/project-progress-template.md)
   - [docs/blueprints/templates/blueprint-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/blueprint-template.md)
@@ -36,6 +37,7 @@
 - 当前恢复执行不再需要从 `change-log`、旧 `docs/superpowers/**` 或关闭 queue 叙事中推断真值。
 - `project-progress` 和 `blueprint` 已移除高漂移 completed registry 与 queue-local truth，live 状态只保留必要入口字段。
 - task 完成后的自动动作、queue/target closeout、人工确认频率限制、以及 `mod-first-dev` 集成闭环都已经进入 Blueprint 规范与 target plan 的显式规则层。
+- 当前仓库级 git 提交也不再允许只有标题没有正文概述；普通 commit 与 merge commit 都必须使用 `<type>: <brief title>` + `Summary:` bullets。
 
 ## 2026-07-06 Blueprint Workflow Spec
 

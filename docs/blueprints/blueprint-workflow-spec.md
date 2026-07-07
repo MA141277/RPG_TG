@@ -438,13 +438,24 @@ Rules:
    - queue closeout
    - target closeout
    - an explicit integration checkpoint
-5. Ordinary task batches must still produce a structured content summary, but they do not automatically require the full merge loop.
-6. After merge into `mod-first-dev`, do not keep developing on the already-integrated branch.
-7. Resume truth comes from the governance docs integrated into `mod-first-dev`, not branch memory.
+5. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
+6. Ordinary task batches must still produce a structured content summary, but they do not automatically require the full merge loop.
+7. Local hook or CI enforcement must reject commit messages that omit the required summary block.
+8. After merge into `mod-first-dev`, do not keep developing on the already-integrated branch.
+9. Resume truth comes from the governance docs integrated into `mod-first-dev`, not branch memory.
 
 ## 14. Commit / Push / Merge Content Summary
 
-Before `commit`, `push`, or `merge`, record a structured content summary containing:
+Every git commit message must contain:
+
+- a subject line in the form `<type>: <brief title>`
+- a blank line
+- a `Summary:` section
+- at least one bullet under `Summary:` that describes the actual landed content
+
+The same rule applies to merge commits. Default one-line merge messages are invalid unless they are rewritten to include the required `Summary:` block.
+
+Before `push` or `merge`, record or reuse a structured content summary containing:
 
 - `branch`
 - `action type`
@@ -456,7 +467,13 @@ Before `commit`, `push`, or `merge`, record a structured content summary contain
 - `docs synced`
 - `next step`
 
-This summary is a governance prerequisite, not optional narration.
+The commit message summary is a governance prerequisite, not optional narration.
+
+Repository enforcement must be available through:
+
+- `tools/validate-commit-message.mjs`
+- `.githooks/commit-msg`
+- `.github/workflows/validate-commit-messages.yml`
 
 ## 15. Drift-Prone Field Reduction
 

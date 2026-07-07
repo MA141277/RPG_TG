@@ -116,6 +116,7 @@ If these fields cannot uniquely identify the next step, the repository is in gov
 The new model explicitly forbids these states:
 
 - natural-language summary without structured state
+- git commits without a structured body summary
 - saying “next is Child X” without recording Child X status
 - saying “wait for recheck” without saying who rechecks and from which document to continue
 - marking a child complete while the project progress document is not updated
@@ -215,6 +216,8 @@ Required shape:
 - Resume From: `Open docs/superpowers/project-progress.md, then update the Child 34 plan.`
 ```
 
+`Push Commit` must reference a commit whose message satisfies the repository commit-message rule: typed subject, blank line, and `Summary:` bullets.
+
 If no next child exists:
 
 ```md
@@ -275,6 +278,8 @@ Required shape:
 - Resume From: `Open docs/superpowers/project-progress.md.`
 ```
 
+`Push Commit` must reference a commit whose message satisfies the repository commit-message rule: typed subject, blank line, and `Summary:` bullets.
+
 If the task has no successor:
 
 - `Next Task: none`
@@ -321,6 +326,7 @@ The repository should enforce this model through:
 - child plan templates
 - project progress template
 - closeout templates
+- `tools/validate-commit-message.mjs`
 - plan lint rules where structurally possible
 
 Minimum enforcement intent:

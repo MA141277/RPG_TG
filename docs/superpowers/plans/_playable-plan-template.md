@@ -270,3 +270,5 @@ Expected:
 - Push Status: `success/failure/not-pushed`
 - Push Commit: `commit-sha-or-none`
 - Resume From: `Replace when closing.`
+
+`Push Commit` must point to a commit message that uses `<type>: <brief title>` plus a `Summary:` section with at least one bullet.

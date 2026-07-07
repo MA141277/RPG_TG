@@ -48,6 +48,22 @@ If a house module changes shared interfaces, runtime session structure, registry
 - `docs/special-house-interface.md`
 - `docs/change-log.md`
 
+## Repository Commit Message Rule
+
+For every git commit in this repository:
+
+1. The commit message must use a typed subject in the form `<type>: <brief title>`.
+2. The message body must contain a `Summary:` section after a blank line.
+3. `Summary:` must contain at least one bullet describing the actual content landed by that commit.
+4. Merge commits are not exempt. They must also carry a real content summary.
+5. Generic one-line messages without body summary are invalid, even if the diff itself is small.
+
+Repository enforcement for this rule lives in:
+
+- `tools/validate-commit-message.mjs`
+- `.githooks/commit-msg`
+- `.github/workflows/validate-commit-messages.yml`
+
 ## Mechanism-First Design Rule
 
 For gameplay loop, progression, review/council flow, timed skip, assignment, minigame, or story-driven system work:

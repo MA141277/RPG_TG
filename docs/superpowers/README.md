@@ -84,6 +84,22 @@ Without these conditions, a child may only be:
 
 It may not be `closed`.
 
+## Repository Commit Message Rule
+
+Every git commit in this repository must use:
+
+- a subject line in the form `<type>: <brief title>`
+- a blank line
+- a `Summary:` section with at least one bullet describing the landed content
+
+Merge commits are not exempt.
+
+Validation entrypoints:
+
+- `npm run lint:commit-msg -- --edit .git/COMMIT_EDITMSG`
+- `.githooks/commit-msg`
+- `.github/workflows/validate-commit-messages.yml`
+
 ## Canonical Templates
 
 Use these templates for new work:
@@ -119,6 +135,7 @@ Use:
 
 ```bash
 npm run lint:plans
+npm run lint:commit-msg -- --edit .git/COMMIT_EDITMSG
 ```
 
 This structural lint checks plan shape, execution-state fields, and basic progress-log format.

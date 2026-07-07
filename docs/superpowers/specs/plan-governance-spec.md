@@ -102,6 +102,7 @@ If those fields do not uniquely determine what to do next, the current governanc
 The following states are forbidden:
 
 - natural-language summary without structured state
+- git commits without a structured body summary
 - saying “next is Child X” without recording Child X status
 - saying “wait for recheck” without saying who rechecks and from which document to continue
 - marking a child complete while the project progress document is stale
@@ -246,6 +247,8 @@ Every child closeout must include this structure:
 - Resume From: `Open docs/superpowers/project-progress.md, then update the Child 34 plan.`
 ```
 
+`Push Commit` must reference a commit whose message satisfies the repository commit-message rule: typed subject, blank line, and `Summary:` bullets.
+
 If there is no next child:
 
 ```md
@@ -289,6 +292,8 @@ Required shape:
 - Push Commit: `commit-sha`
 - Resume From: `Open docs/superpowers/project-progress.md.`
 ```
+
+`Push Commit` must reference a commit whose message satisfies the repository commit-message rule: typed subject, blank line, and `Summary:` bullets.
 
 ## 12. Required Project Progress Fields
 
@@ -407,6 +412,7 @@ Repository enforcement happens through:
 - child plan templates
 - project progress template
 - closeout templates
+- `tools/validate-commit-message.mjs`
 - `tools/lint-superpowers-plans.mjs`
 
 The lint tool is structural only. It does not prove semantic correctness, but it should reject obviously invalid plan structure where possible.

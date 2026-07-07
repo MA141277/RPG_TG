@@ -55,12 +55,13 @@ Optional mirror:
 
 ### Git Integration Loop
 
-1. `Write the structured content summary.`
-2. `Commit the working branch.`
-3. `Push the working branch.`
-4. `Merge into the latest mod-first-dev.`
-5. `Cut a fresh branch from the updated mod-first-dev.`
-6. `Resume from integrated Blueprint truth, not branch-local memory.`
+1. `Draft the commit message as <type>: <brief title> plus a Summary: block with real bullets.`
+2. `Run commit-message validation before commit.`
+3. `Commit the working branch.`
+4. `Push the working branch.`
+5. `Merge into the latest mod-first-dev with the same commit-message summary rule.`
+6. `Cut a fresh branch from the updated mod-first-dev.`
+7. `Resume from integrated Blueprint truth, not branch-local memory.`
 
 Mandatory merge loop triggers:
 
