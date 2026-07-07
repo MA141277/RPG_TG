@@ -63,6 +63,23 @@
 - 后续新出现的 code/content/asset/UI/framework/runtime/authoring 事项，不应再默认归入当前 target 或当前 queue；应先走 classification record，再根据 confidence 与 matched rules 路由到 queue 候选、pipeline 项、未来 target 候选或人工复核。
 - 旧 superpowers 文档仍保留供历史边界和验证脉络参考，但不会再被视为当前执行顺序的权威来源。
 
+## 2026-07-07 Phase 4 Residue Closeout And Acceptance Promotion
+
+### Added
+- 新增 [docs/blueprints/queues/first-party-mod-acceptance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/first-party-mod-acceptance-queue.md)，作为当前 active 的 Phase 4 acceptance-proof queue，用于收口 builtin content 是否已经能被诚实描述为 first-party mod production path。
+
+### Changed
+- [docs/blueprints/queues/historical-residue-disposition-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/historical-residue-disposition-queue.md) 已正式 closeout：shell residue、builtin framework baseline、legacy scenario-pack compatibility residue 与 later-acceptance review 现在统一沉淀为一份关闭记录，不再继续作为 active controller。
+- Blueprint 入口链 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、[docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、当前 target spec/plan 已先后从 `queue.historical-residue-disposition` 切到 `queue.first-party-mod-acceptance`，并在 acceptance proof 写成后继续推进到 `task.first-party-mod-acceptance.queue-closeout`。
+- 当前 target 的 Phase 4 解释也已收口为：残余处置完成，接下来先做 builtin-versus-first-party acceptance baseline，而不是直接跳到 final closeout 或重新打开更早期实现队列。
+- 当前 Phase 4 acceptance-proof 记录也已补齐：共享 builtin loader、activationResult-driven active content assembly、显式 builtin registry seed、UI baseline residue 与 legacy builtin scenario-pack compatibility residue 现在都被写入同一份 acceptance matrix；`queue.first-party-mod-acceptance` 随后已正式 closeout，并把当前 active controller 推进到新建的 [docs/blueprints/queues/final-acceptance-closeout-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/final-acceptance-closeout-queue.md)。
+- `queue.final-acceptance-closeout` 的 baseline-reconcile 现也已完成：target-level recheck 确认 required queues 的 closeout 证据仍然 coherent，且当前剩余工作已收窄为 target-level acceptance writing，而不是重新发现新的实现型 blocker。
+
+### Impact
+- 当前这轮 Phase 4 active work 曾从“历史残余同步”推进到“最终目标验收收口”，并一度进入 `queue.final-acceptance-closeout`。
+- 当前 `queue.final-acceptance-closeout` 现也已正式 closeout：target 级 acceptance-ready 结论已经完成同步，`target.project-complete-modularization` 现已标记为 `done`，Blueprint 入口链也已回到合法的 `no-active-queue` promotion-review 状态。
+- 后续若再出现新的仓库级 modularization 工作，应先回到 classification / promotion-review，而不是继续把工作塞回已经关闭的 final closeout queue。
+
 ## 2026-07-06 Fail-Closed Progress-Driven Governance Spec
 
 ### Added
@@ -1591,3 +1608,16 @@
 - Scenario-pack/default-pack authoring no longer depends on undocumented manual catalog and adapter glue alone; authors now have a scaffold path and a fail-closed validator.
 - Builtin house authoring has a clearer next seam: new registry wiring can be expressed through one contribution record instead of two disconnected edits.
 - Current Phase 3 residue is limited to accepted compatibility residue and later target-level review, so further queue promotion now requires fresh evidence instead of silently continuing the same authoring queue.
+
+## 2026-07-07 Phase 4 Residue Promotion
+
+### Added
+- Added [docs/blueprints/queues/historical-residue-disposition-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/historical-residue-disposition-queue.md) as the first active Phase 4 queue under the current complete-modularization target.
+
+### Changed
+- `docs/blueprints/project-progress.md`, `docs/blueprints/blueprint.md`, the current target plan, and the current target spec now advance from `promotion-review` back into `active-execution` on `queue.historical-residue-disposition`.
+- Current target truth now treats the remaining Phase 4 work as synchronized residue routing rather than another newly-proven implementation blocker by default.
+
+### Impact
+- The repository now has one explicit controller for accepted-history, accepted-framework-baseline, and accepted-compatibility residue instead of leaving those items spread across old queue closeout notes.
+- Later Phase 4 handoff decisions such as `queue.first-party-mod-acceptance` or `queue.final-acceptance-closeout` must now pass through the active residue queue instead of being promoted directly from implicit closeout caveats.

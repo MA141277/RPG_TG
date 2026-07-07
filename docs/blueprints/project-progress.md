@@ -6,7 +6,7 @@
 - status: `in-progress`
 - active_blueprint: `blueprint.rpg-tg`
 - active_target: `target.project-complete-modularization`
-- active_phase: `phase.authoring-closure`
+- active_phase: `phase.final-acceptance`
 - active_queue: `none`
 - active_task: `none`
 - decision_state: `promotion-review`
@@ -20,7 +20,7 @@
   - `queue`
   - `task`
 - next_file: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
-- next_step: `Use the current target plan to decide whether any later-phase queue promotion is actually justified now that Phase 3 authoring closure is closed and queue.framework-scaffold-and-template-closure was not promoted.`
+- next_step: `Current target is closed. Resume only from later target/promotion review if fresh classified work appears.`
 - candidate_queues: []
 - completed_queues:
   - `queue.core-production-integration`
@@ -43,7 +43,7 @@
 
 - Status: `in-progress`
 - Last Updated: `2026-07-07`
-- Current Focus: `The Blueprint workflow now governs one current-period repository target: project complete modularization under mod-first. Phase 3 authoring closure has now closed its active queue after the scenario-pack/default-pack slice, builtin house single-seed closure, canonical scenario-pack template guard, accepted compatibility residue classification, and no-new-code-seam conclusion were all recorded. The repository is back in target-level promotion-review with no active queue, and queue.framework-scaffold-and-template-closure is not promoted on current evidence.`
+- Current Focus: `The Blueprint workflow now governs one current-period repository target: project complete modularization under mod-first, and that current-period target is now closed. There is no active queue or task; future work must re-enter through classification and promotion review.`
 - Active Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Target Spec:
@@ -51,13 +51,13 @@
 - Current Target Plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - Active Phase:
-  - `Phase 3: Authoring Closure`
+  - `Phase 4: Final Mod-First Acceptance`
 - Active Queue:
   - `none`
 - Active Queue Task:
   - `none`
 - Next Step:
-  - `Use the current target plan to decide whether any later-phase queue promotion is actually justified now that Phase 3 authoring closure is closed and queue.framework-scaffold-and-template-closure was not promoted.`
+  - `Resume only from target/promotion review if fresh classified work appears.`
 - Verification:
   - `Blueprint spec, current-target docs, explicit target acceptance rules, bootstrap handoff record, and first modularization queue are present.`
 - Notes:
@@ -80,6 +80,9 @@
 | `shell-thinning-and-final-ownerization` | `done` | `docs/blueprints/queues/shell-thinning-and-final-ownerization-queue.md` | Use as closeout record; keep main.ts shell residue accepted unless a stronger blocker is proven later. |
 | `builtin-content-deprivileging-closeout` | `done` | `docs/blueprints/queues/builtin-content-deprivileging-closeout-queue.md` | Use as closeout record and decide whether a broader contribution-intake queue is actually justified. |
 | `authoring-entrypoint-and-fail-closed-closure` | `done` | `docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md` | Use as closeout record; do not reopen or promote queue.framework-scaffold-and-template-closure without fresh same-family authoring evidence. |
+| `historical-residue-disposition` | `done` | `docs/blueprints/queues/historical-residue-disposition-queue.md` | Use as the closed Phase 4 residue routing record; do not reopen unless residue classification itself becomes incoherent again. |
+| `first-party-mod-acceptance` | `done` | `docs/blueprints/queues/first-party-mod-acceptance-queue.md` | Use as the closed Phase 4 acceptance-proof record; do not reopen unless a fresh blocker disproves the written proof. |
+| `final-acceptance-closeout` | `done` | `docs/blueprints/queues/final-acceptance-closeout-queue.md` | Use as the final closeout record for the current-period modularization target. |
 | `blueprint-workflow-bootstrap` | `done` | `docs/blueprints/queues/blueprint-workflow-bootstrap-queue.md` | Keep as historical workflow bootstrap record only. |
 | `legacy-superpowers-history` | `historical-only` | `docs/superpowers/**` | Use only for reference, not for new execution control. |
 
@@ -185,3 +188,39 @@
   - Summary: `Closed queue.authoring-entrypoint-and-fail-closed-closure after queue-closeout concluded that current Phase 3 authoring is coherent without promoting queue.framework-scaffold-and-template-closure, and returned global execution truth to target-level promotion-review with no active queue or task.`
   - Verification: `Document consistency check plus npm test`
   - Next: `Resume from the target plan and only promote a later queue if fresh evidence proves a new still-live blocker.`
+- 2026-07-07
+  - Summary: `Promoted queue.historical-residue-disposition as the first active Phase 4 queue after a fresh target-level review found that earlier phases are closed, no new implementation blocker is currently proven, but accepted residue still needs one synchronized disposition record before later acceptance work can proceed honestly.`
+  - Verification: `Closed-queue residue audit plus document pointer sync check`
+  - Next: `Resume the active queue from residue-classification-and-routing.`
+- 2026-07-07
+  - Summary: `Advanced the active Phase 4 queue onto queue-closeout after residue-classification-and-routing recorded the explicit residue matrix and named queue.first-party-mod-acceptance as the current recommended handoff.`
+  - Verification: `Document consistency check across the active queue, target plan, target spec, blueprint, and project-progress entries`
+  - Next: `Run queue-closeout and decide whether to promote queue.first-party-mod-acceptance.`
+- 2026-07-07
+  - Summary: `Closed queue.historical-residue-disposition and promoted queue.first-party-mod-acceptance after the synchronized Phase 4 residue record confirmed that no fresh implementation blocker is currently proven and the remaining live question is builtin-versus-first-party production-path acceptance proof.`
+  - Verification: `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries`
+  - Next: `Resume queue.first-party-mod-acceptance from baseline-reconcile.`
+- 2026-07-07
+  - Summary: `Closed task.first-party-mod-acceptance.baseline-reconcile after the source-path audit confirmed that builtin startup, mod activation, and active-content assembly already use shared seams; the remaining Phase 4 work is now explicit production-path acceptance proof rather than blocker escalation.`
+  - Verification: `Targeted source-path audit plus queue/target/blueprint pointer sync`
+  - Next: `Resume queue.first-party-mod-acceptance from production-path-acceptance-proof.`
+- 2026-07-07
+  - Summary: `Closed task.first-party-mod-acceptance.production-path-acceptance-proof after recording the bounded acceptance matrix for shared mod-path behavior versus retained accepted baseline and compatibility residue.`
+  - Verification: `Targeted source-path audit plus document pointer sync`
+  - Next: `Resume queue.first-party-mod-acceptance from queue-closeout.`
+- 2026-07-07
+  - Summary: `Closed queue.first-party-mod-acceptance and promoted queue.final-acceptance-closeout after queue-closeout accepted the written proof as coherent enough for final handoff and did not rediscover a fresh implementation-family blocker.`
+  - Verification: `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries`
+  - Next: `Resume queue.final-acceptance-closeout from baseline-reconcile.`
+- 2026-07-07
+  - Summary: `Closed queue.final-acceptance-closeout baseline-reconcile after the target-level recheck confirmed that required queue evidence is already coherent and the remaining live work is target-level acceptance writing rather than another blocker hunt.`
+  - Verification: `Document consistency check plus targeted source-path recheck on the covered builtin startup, activation, and inventory surfacing seams`
+  - Next: `Resume queue.final-acceptance-closeout from target-acceptance-closeout.`
+- 2026-07-07
+  - Summary: `Closed queue.final-acceptance-closeout target-acceptance-closeout after recording one synchronized acceptance-ready decision: target criteria are satisfied on current evidence with explicit first-party baseline and compatibility disclosures, so the remaining work is final queue/target synchronization.`
+  - Verification: `Document consistency check against the target acceptance criteria and active queue truth`
+  - Next: `Resume queue.final-acceptance-closeout from queue-closeout.`
+- 2026-07-07
+  - Summary: `Closed queue.final-acceptance-closeout and marked target.project-complete-modularization done after queue-closeout confirmed that no active queue/task remains and the target acceptance criteria now pass on synchronized written evidence.`
+  - Verification: `Document consistency check across the closed queue, closed target, blueprint, project-progress, and target plan/spec artifacts`
+  - Next: `Resume only from later target/promotion review if fresh classified work appears.`
