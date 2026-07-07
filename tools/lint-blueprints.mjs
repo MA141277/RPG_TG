@@ -29,6 +29,7 @@ const allowedAdmissionStatuses = new Set([
   "deferred",
   "blocked",
 ]);
+const allowedQueueStatuses = new Set(["active", "blocked", "done", "dropped"]);
 
 export function lintBlueprintDocs(repoRoot = process.cwd()) {
   const failures = [];
@@ -223,7 +224,9 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     text,
     "review_subject_classification"
   );
+  const reviewSubjectId = matchField(text, "review_subject_id");
   const proposedQueueId = matchField(text, "proposed_queue_id");
+  const reviewBasis = matchField(text, "review_basis");
 
   if (!isTemplate && activeQueue === "none" && decisionState === "active-execution") {
     failures.push(
@@ -261,6 +264,17 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   ) {
     failures.push(
       `${relativePath}: ${label} must name proposed_queue_id when review_subject_classification=queue-candidate`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    activeQueue !== "none" &&
+    [reviewSubjectId, reviewSubjectClassification, proposedQueueId, reviewBasis, admissionStatus]
+      .some((value) => value != null && value !== "none")
+  ) {
+    failures.push(
+      `${relativePath}: ${label} must not keep a live admission review subject while active_queue=${activeQueue}`
     );
   }
 }
@@ -329,6 +343,12 @@ function lintQueueDocs(queueDir, failures, repoRoot) {
     const queueStatus = head.match(/^- queue_status: `([^`]+)`/m)?.[1] ?? null;
     const activeTask = head.match(/^- active_task: `([^`]+)`/m)?.[1] ?? null;
 
+    if (queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
+      failures.push(
+        `${relativePath}: queue_status=${queueStatus} is not an allowed queue status`
+      );
+    }
+
     if (queueStatus !== "active" && activeTask != null && activeTask !== "none") {
       failures.push(
         `${relativePath}: queue must not keep active_task=${activeTask} while queue_status=${queueStatus}`
@@ -393,6 +413,63 @@ function lintCrossDocumentConsistency(
       `${relative(repoRoot, projectProgressPath)}: has_active_queue=false conflicts with target plan active_queue=${activeQueue}`
     );
   }
+
+  const blueprintExecutionMode = matchField(blueprintText, "execution_mode");
+  const blueprintAllowParallel = matchField(blueprintText, "allow_parallel");
+  const activeQueueDocs = collectActiveQueueDocs(path.join(repoRoot, "docs", "blueprints", "queues"));
+
+  if (
+    blueprintExecutionMode === "single-active-task" &&
+    blueprintAllowParallel === "false" &&
+    activeQueueDocs.length > 1
+  ) {
+    failures.push(
+      `${relative(repoRoot, blueprintPath)}: single-active-task + allow_parallel=false cannot coexist with multiple active queue docs (${activeQueueDocs.join(", ")})`
+    );
+  }
+
+  if (activeQueue === "none" && activeQueueDocs.length > 0) {
+    failures.push(
+      `${relative(repoRoot, targetPlanPath)}: active_queue=none conflicts with active queue docs (${activeQueueDocs.join(", ")})`
+    );
+  }
+
+  if (activeQueue != null && activeQueue !== "none") {
+    if (activeQueueDocs.length === 0) {
+      failures.push(
+        `${relative(repoRoot, targetPlanPath)}: active_queue=${activeQueue} has no matching active queue doc`
+      );
+    } else if (activeQueueDocs.length > 1 || activeQueueDocs[0] !== activeQueue) {
+      failures.push(
+        `${relative(repoRoot, targetPlanPath)}: active_queue=${activeQueue} conflicts with active queue docs (${activeQueueDocs.join(", ")})`
+      );
+    }
+  }
+}
+
+function collectActiveQueueDocs(queueDir) {
+  if (!fs.existsSync(queueDir)) {
+    return [];
+  }
+
+  const activeQueueIds = [];
+
+  for (const entry of fs.readdirSync(queueDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) {
+      continue;
+    }
+
+    const filePath = path.join(queueDir, entry.name);
+    const text = fs.readFileSync(filePath, "utf8");
+    const queueStatus = matchField(text, "queue_status");
+    const queueId = matchField(text, "queue_id");
+
+    if (queueStatus === "active" && queueId != null) {
+      activeQueueIds.push(queueId);
+    }
+  }
+
+  return activeQueueIds.sort();
 }
 
 function requireFieldValue(text, fieldName, relativePath, failures, failureMessage) {

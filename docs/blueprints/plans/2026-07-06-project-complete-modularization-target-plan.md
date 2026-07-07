@@ -41,7 +41,27 @@
 - Current review subject:
   - `none`
 - Current handoff:
-  - `queue.ui-runtime-contract-consumption is closed; the target is open with no active queue and awaits either same-target admission of fresh work or explicit target closeout.`
+  - `queue.ui-runtime-contract-consumption is closed; the target remains open with no active queue and may still admit additional same-target queues until explicit human target closeout confirmation is written.`
+
+### Queue Admission Startup Rules
+
+1. `Read project-progress -> blueprint -> target plan -> active queue before evaluating a fresh queue item.`
+2. `If an active queue exists, test whether the new item can be absorbed before considering a new queue.`
+3. `If the item becomes queue-candidate, write target-plan review truth before any queue activation or implementation begins.`
+4. `User scope approval remains scope approval only and must not be treated as queue admission.`
+
+### Candidate Recovery Rule
+
+- `Use this target plan's existing queue promotion ledger and prior review fields as the default recovery source for previously recorded queue-candidates.`
+- `Do not restart a full re-audit unless new material evidence invalidates the prior classification or admission basis.`
+
+### Target Lifecycle Rules
+
+- `This target stays open until target closeout is explicitly confirmed and written into target-level truth.`
+- `active_queue = none does not close the target; it only returns the target to idle-open or promotion-review.`
+- `As long as this target remains open, additional same-target queues may still be admitted.`
+- `Only when target acceptance is satisfied and no active queue remains may one explicit target-closeout confirmation be asked.`
+- `If target closeout is not explicitly confirmed, keep the target open and continue using same-target admission review for new queue work.`
 
 ### Queue Closeout Rules
 
@@ -72,6 +92,7 @@ Optional mirror:
 - `If active truth would change and multiple mutually exclusive legal branches exist, one human escalation is allowed.`
 - `Do not treat user scope approval as queue admission.`
 - `Do not ask whether to do closeout, promotion review, or doc sync when they are already the unique next legal step.`
+- `Exception: target closeout still requires explicit human confirmation before target_status changes to done.`
 
 ### Git Integration Loop
 

@@ -55,6 +55,7 @@
 
 - `This target may become done only after acceptance criteria pass, no active queue/task remains, residue is dispositioned, and the target plan records explicit closeout.`
 - `As long as the target remains open and no active queue exists, a new queue may still be admitted through the target plan.`
+- `Open-target status is not inferred away by queue completion; this target remains open until explicit human closeout confirmation is recorded in the target plan.`
 - `Closed queue history is evidence only; it is not permission to treat the target as automatically done.`
 
 ### Archived Interpretation

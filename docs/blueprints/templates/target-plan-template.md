@@ -31,6 +31,32 @@
   - `Target plan admission fields must be written before implementation starts.`
   - `The admitted queue doc must exist before code implementation starts.`
 
+### Target Lifecycle Rules
+
+- `A current open target stays open until target closeout is explicitly confirmed and written into this target plan.`
+- `If active_queue = none, that does not close the target; it only returns the target to promotion-review or idle-open.`
+- `As long as target_status = open, additional same-target queues may still be admitted.`
+- `If no open target exists, target creation becomes the required next governance action before any queue admission or implementation can begin.`
+- `Queue closeout may auto-advance; target closeout must not be inferred from queue completion alone.`
+- `When target acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing target_status to done.`
+
+### Queue Admission Startup Rules
+
+1. `Read project-progress -> blueprint -> target plan -> active queue before touching a fresh queue item.`
+2. `Check whether an active queue already exists.`
+3. `If one exists, decide whether the new item can be absorbed without widening queue scope.`
+4. `Classify the item before any queue creation or implementation.`
+5. `If the item is queue-candidate, write review_subject_id / review_subject_classification / proposed_queue_id / review_basis / admission_status first.`
+6. `Only after target-plan admission sync may a queue doc be created and activated.`
+7. `Only after the admitted queue doc exposes queue_status=active plus a live active_task may implementation start.`
+8. `User scope approval is boundary approval only; it does not replace admission.`
+
+### Candidate Recovery Ledger
+
+| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `item.replace-me` | `queue-candidate` | `queue.replace-me` | `deferred` | `only if new evidence invalidates the old basis or changes queue absorption` | `Use this ledger to resume admission from existing evidence rather than restarting from scratch.` |
+
 ### Queue Promotion Ledger
 
 | Queue ID | Current Disposition | Promote When | Notes |
@@ -57,6 +83,18 @@ Allowed `next_action` values:
 - `write-target-closeout`
 - `resolve-blocker`
 
+### Candidate Recovery Rule
+
+- `If a queue-candidate is already recorded in the target plan or candidate recovery ledger, resume from that record by default.`
+- `Only restart a full re-audit when new material evidence invalidates the prior classification or review basis.`
+- `Do not use prose-only memory as the recovery source when structured admission truth already exists.`
+
+### Single-Active-Queue Rule
+
+- `When execution_mode=single-active-task and allow_parallel=false, an active queue blocks live admission review for a second queue.`
+- `If a fresh item cannot be absorbed by the current active queue, record it as a candidate for later rather than activating a second queue.`
+- `Return to target-level review only after the current active queue closes.`
+
 ### Post-Task Auto-Reconcile
 
 1. `Run verify_with.`
@@ -74,6 +112,7 @@ Allowed `next_action` values:
 - `If only one legal branch exists, do not ask.`
 - `Scope approval does not replace admission.`
 - `Do not ask whether to perform closeout, promotion review, or doc sync when they are already the unique next legal step.`
+- `Exception: target closeout requires explicit human confirmation before target_status changes from open to done.`
 
 ### Git Integration Loop
 

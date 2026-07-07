@@ -217,9 +217,30 @@ Historical sections must not use instruction-like labels such as:
 
 Closed queues, closed targets, historical notes, and `docs/change-log.md` must not contain text that reads like a current execution command.
 
-## 7. Admission Frontload Rules
+## 7. Queue Admission Startup Rules
 
-### 7.1 Mandatory admission before fresh implementation
+### 7.1 Standard startup for a fresh queue item
+
+The first step for a fresh queue-worthy item is not queue creation and not implementation.
+
+The mandatory startup order is:
+
+1. read the current truth chain:
+   - `project-progress`
+   - `blueprint`
+   - current target plan
+   - active queue if one exists
+2. check whether an active queue already exists
+3. decide whether the new item can be absorbed inside that active queue without widening queue scope
+4. classify the item
+5. if classification is `queue-candidate`, return to target-level admission
+6. sync the target plan admission review fields
+7. only after target-level admission sync may the admitted queue doc be created and activated
+8. only after the queue doc exposes `queue_status = active` plus a written `active_task` may implementation begin
+
+If any earlier step is incomplete, the queue startup must stop there.
+
+### 7.2 Mandatory admission before fresh implementation
 
 Any fresh implementation item that is classified as `queue-candidate` must complete target-level admission before implementation starts.
 
@@ -232,19 +253,43 @@ Hard rules:
    - the admitted queue doc does not yet exist and expose active execution truth
 4. A queue-candidate may be discussed, audited, or scoped before admission, but that is not implementation authorization.
 
-### 7.2 Required write order for admission
+### 7.3 No-from-scratch recheck rule
+
+Once a queue-candidate has already been structurally recorded in target-level truth, later handling must resume from that admission record by default rather than restarting a full repository-wide re-audit.
+
+Resume from the recorded admission record when all are true:
+
+1. the candidate identity still matches the recorded `review_subject_id` or an equivalent candidate ledger entry
+2. the previous `review_subject_classification`, `proposed_queue_id`, and `review_basis` still fit the current evidence
+3. no new material evidence invalidates the old admission basis
+
+Only re-open a full recheck when new material evidence:
+
+- invalidates the old classification
+- invalidates the prior admission basis
+- proves the item can now be absorbed by the current active queue
+- proves the item no longer belongs to the current target
+
+### 7.4 Required write order for admission
 
 When a `queue-candidate` is admitted, write truth in this order before implementation:
 
 1. target plan admission review fields
-2. admitted queue doc Control Block
-3. target plan `active_queue` / `decision_state` / `next_action`
-4. blueprint if affected
-5. project-progress if affected
+2. target plan review conclusion sufficient to justify activation
+3. admitted queue doc Control Block
+4. target plan `active_queue` / `decision_state` / `next_action`
+5. blueprint if affected
+6. project-progress if affected
 
 Only after those documents agree may implementation begin.
 
-### 7.3 Scope approval is not admission
+Clarifications:
+
+1. target-plan review sync must happen before queue activation
+2. queue creation must not be used as a substitute for target-level admission review
+3. a queue doc must not expose `queue_status = active` or a live `active_task` before the target plan already carries the matching review subject and basis
+
+### 7.5 Scope approval is not admission
 
 User approval of bounded scope is not equivalent to queue admission.
 
@@ -262,6 +307,22 @@ Phrases such as:
 - `继续推进这个范围`
 
 may authorize scope, but they must not be treated as a substitute for target-plan admission or queue activation.
+
+### 7.6 Single-active-queue restriction
+
+If the Blueprint Control Block says:
+
+- `execution_mode = single-active-task`
+- `allow_parallel = false`
+
+then only one active queue may exist at a time.
+
+Rules:
+
+1. if an active queue already exists, a fresh item must first be tested for absorption into that queue
+2. if the item cannot be absorbed, it may be classified and recorded as a candidate, but it must not be activated as a second queue
+3. the target plan must not keep a live admission review subject while another queue remains active
+4. the agent must wait for current queue closeout and return to target-level review before activating a new queue
 
 ## 8. Classification Trace Rules
 
@@ -313,6 +374,20 @@ If no admission review is active, these fields must explicitly return to `none`.
 
 These fields exist so admission, reject, defer, and block outcomes do not fall back to prose.
 
+### 8.4 Candidate recovery record
+
+The target plan must also keep a structured candidate recovery record for previously reviewed queue-candidates.
+
+This record may live in a ledger table or equivalent structured section, but it must preserve at minimum:
+
+- candidate id
+- last classification
+- proposed queue id
+- latest disposition
+- recheck trigger
+
+The purpose is to allow later sessions to resume from existing admission evidence instead of repeating a from-scratch audit.
+
 ## 9. Target State Model
 
 ### 9.1 `target_status`
@@ -353,7 +428,22 @@ Clarifications:
 2. `active_queue = none` does not authorize fresh implementation.
 3. As long as `target_status = open`, a new queue may still be admitted through `promotion-review`.
 
-### 9.4 State transitions
+### 9.4 Target lifecycle authority
+
+Target lifecycle is explicit governance truth, not an automatic inference from queue status.
+
+Rules:
+
+1. the repository may have at most one current `open` target
+2. if no `open` target exists, target creation is the required next governance act before any new queue admission or implementation may begin
+3. an `open` target remains open until target closeout is explicitly confirmed and written into target-plan truth
+4. an `open` target may continue admitting new same-target queues even after all current queues are closed
+5. queue closeout may be automatic when the next legal step is unique; target closeout may become `closeout-ready`, but it must not become `done` without explicit human confirmation
+6. if target closeout conditions are satisfied and no active queue remains, the agent may ask exactly one closeout confirmation question:
+   - `close current target now, or keep it open for possible additional same-target queue admission`
+7. if the user does not explicitly confirm target closeout, the target stays `open`
+
+### 9.5 State transitions
 
 - `idle-open -> promotion-review`
   - when a fresh review subject must be classified or admitted
@@ -402,11 +492,13 @@ Required task fields:
 Hard queue rules:
 
 1. A queue must not expose an `active_task` unless `queue_status = active`.
-2. A `candidate` queue or non-existent queue must not be used as execution authorization.
+2. A non-existent or unadmitted queue must not be used as execution authorization.
 3. If a queue is `done`, it must not expose:
    - live `active_task`
    - `Resume ...` instructions
    - `Current active task` language
+4. A queue doc must not be created as a substitute for target-level candidate tracking. Candidate tracking belongs in the target plan until queue activation is legal.
+5. If a queue doc exists, it must represent admitted queue truth, not pre-admission speculation.
 
 ## 11. Post-Task Auto-Reconcile And Closeout Auto-Advance
 
@@ -494,6 +586,11 @@ Hard throttle:
    - finish automatic closeout from existing evidence
    - or report `blocked` with the smallest concrete blocker
 
+Target-level exception:
+
+- target closeout confirmation is allowed, and required, when the target is closeout-ready and changing `target_status` to `done` would alter active truth
+- if closeout is not confirmed, resume from the still-open target rather than inferring closure
+
 ## 13. Consistency Checks
 
 At minimum, Blueprint governance must satisfy:
@@ -520,6 +617,11 @@ At minimum, Blueprint governance must satisfy:
 15. a target plan must not review a `queue-candidate` without structured review fields
 16. `admission_status = admitted` must not coexist with `active_queue = none`
 17. a queue must not carry a live `active_task` unless `queue_status = active`
+18. when `execution_mode = single-active-task` and `allow_parallel = false`, an active queue must block simultaneous live admission review for another queue
+19. when the target plan names an `active_queue`, exactly one queue doc must be `queue_status = active` and its `queue_id` must match
+20. when the target plan names `active_queue = none`, no queue doc may remain `queue_status = active`
+21. queue docs must not use `queue_status = candidate`
+22. an open target with `active_queue = none` remains eligible for same-target queue admission until explicit target closeout is written
 
 ## 14. Automated Enforcement
 
@@ -543,9 +645,13 @@ Current Blueprint lint must reject:
   - `review_subject_classification = queue-candidate` while `proposed_queue_id = none`
 - target-spec queue tables that mix contract fields with `State` / `Source`
 - queue Control Blocks that use legacy `status` instead of `queue_status`
+- queue Control Blocks that use `queue_status = candidate`
 - queues with `active_task != none` while `queue_status != active`
 - done queues that still expose live execution labels
 - `has_active_queue = false` paired with a target plan `active_queue != none`
+- target plans that keep a live queue-admission review subject while another active queue already exists
+- repositories where the target plan names one active queue but queue docs expose zero or multiple active queues
+- repositories where a queue doc is `active` while the target plan still says `active_queue = none`
 
 ## 15. Governance Debt Still Requiring Stronger Automation
 
@@ -557,6 +663,9 @@ These remain mandatory future enforcement categories:
 2. reject sessions that complete verification for the active task but stop before queue auto-reconcile / closeout when no blocker exists
 3. detect scope approval being incorrectly treated as admission without structured target-plan review fields changing first
 4. detect conversation-only classification that changes active truth without synchronized governance writes
+5. detect repeated full re-audit of an already recorded queue-candidate when no material recheck trigger exists
+6. detect target closeout being written without explicit human confirmation
+7. detect repositories that drift into zero-open-target or multiple-open-target truth without an explicit target-creation / target-closeout record
 
 Until stronger automation exists, these are still hard workflow rules, not optional guidance.
 
