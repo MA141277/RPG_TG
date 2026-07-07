@@ -3,6 +3,7 @@ import type {
   HouseOverlayViewModel,
   HouseStandbyActorViewModel,
 } from "../../../domain/house-module";
+import { renderSharedDialog } from "../../components/dialog/shared-dialog";
 
 type StandbyRosterOptions = {
   asideClassName?: string;
@@ -29,48 +30,68 @@ type IdleOwnerOptions = {
 export function renderHouseAlertOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "alert" }>
 ): string {
-  return `
-    <div class="c-grain-shop-overlay" data-house-overlay="alert">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
-        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
-        <div class="c-grain-shop-modal__body">
-          ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
-        </div>
-        <div class="c-grain-shop-modal__actions">
-          <button
-            type="button"
-            class="c-button c-grain-shop-button c-grain-shop-button--gold"
-            data-house-action="${overlay.confirmActionId}"
-          >
-            ${overlay.confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
+  return renderSharedDialog({
+    layout: "modal",
+    title: overlay.title,
+    body: overlay.paragraphs,
+    overlayClassName: "c-grain-shop-overlay",
+    overlayAttributes: {
+      "data-house-overlay": "alert",
+    },
+    panelClassName: "c-grain-shop-modal c-grain-shop-skin-panel",
+    titleClassName: "c-grain-shop-modal__title c-grain-shop-nameplate",
+    bodyClassName: "c-grain-shop-modal__body",
+    actionsClassName: "c-grain-shop-modal__actions",
+    actions: [
+      {
+        id: overlay.confirmActionId,
+        label: overlay.confirmLabel,
+        result: "confirm",
+        className: "c-button c-grain-shop-button c-grain-shop-button--gold",
+        attributes: {
+          "data-house-action": overlay.confirmActionId,
+        },
+      },
+    ],
+  });
 }
 
 export function renderHouseConfirmOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
 ): string {
-  return `
-    <div class="c-grain-shop-overlay" data-house-overlay="confirm">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
-        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
-        <div class="c-grain-shop-modal__body">
-          ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
-        </div>
-        <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
-            ${overlay.cancelLabel}
-          </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
-            ${overlay.confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
+  return renderSharedDialog({
+    layout: "modal",
+    title: overlay.title,
+    body: overlay.paragraphs,
+    overlayClassName: "c-grain-shop-overlay",
+    overlayAttributes: {
+      "data-house-overlay": "confirm",
+    },
+    panelClassName: "c-grain-shop-modal c-grain-shop-skin-panel",
+    titleClassName: "c-grain-shop-modal__title c-grain-shop-nameplate",
+    bodyClassName: "c-grain-shop-modal__body",
+    actionsClassName: "c-grain-shop-modal__actions c-grain-shop-modal__actions--split",
+    actions: [
+      {
+        id: overlay.cancelActionId,
+        label: overlay.cancelLabel,
+        result: "cancel",
+        className: "c-button c-grain-shop-button c-grain-shop-button--paper",
+        attributes: {
+          "data-house-action": overlay.cancelActionId,
+        },
+      },
+      {
+        id: overlay.confirmActionId,
+        label: overlay.confirmLabel,
+        result: "confirm",
+        className: "c-button c-grain-shop-button c-grain-shop-button--gold",
+        attributes: {
+          "data-house-action": overlay.confirmActionId,
+        },
+      },
+    ],
+  });
 }
 
 export function renderHouseQuantityConfirmOverlay(
@@ -197,46 +218,44 @@ export function renderHouseDialogue(
     return "";
   }
 
-  const clickable = viewModel.dialogue.advanceActionId != null;
-  const footerClassName = options.footerClassName ?? "c-grain-shop-dialogue";
-  const ariaLabel = options.ariaLabel ?? "对话";
   const isNarration = viewModel.dialogue.mode === "narration";
 
-  return `
-    <footer class="${footerClassName}" aria-label="${ariaLabel}">
-      <div
-        class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
-        ${clickable ? `data-house-action="${viewModel.dialogue.advanceActionId}" role="button" tabindex="0"` : ""}
-      >
-        ${viewModel.dialogue.textLines
-          .map((line) => `<p class="c-grain-shop-dialogue__line">${line}</p>`)
-          .join("")}
-        ${
-          viewModel.dialogue.advanceHintText == null
-            ? ""
-            : `<p class="c-grain-shop-dialogue__hint">${viewModel.dialogue.advanceHintText}</p>`
-        }
-      </div>
-      ${
-        isNarration
-          ? ""
-          : `
-            <div class="c-grain-shop-dialogue__npc">
-              <div class="c-grain-shop-portrait" aria-hidden="true">
-                ${
-                  viewModel.dialogue.portraitImageUrl == null
-                    ? `<span class="c-grain-shop-portrait__art ${viewModel.dialogue.portraitArtClassName ?? ""}"></span>`
-                    : `<img class="c-grain-shop-portrait__image" src="${viewModel.dialogue.portraitImageUrl}" alt="">`
-                }
-              </div>
-              <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-                ${viewModel.dialogue.speakerName ?? ""}
-              </p>
-            </div>
-          `
-      }
-    </footer>
-  `;
+  return renderSharedDialog({
+    layout: "dialogue-card",
+    body: viewModel.dialogue.textLines,
+    hintText: viewModel.dialogue.advanceHintText,
+    ariaLabel: options.ariaLabel ?? "对话",
+    footerClassName: options.footerClassName ?? "c-grain-shop-dialogue",
+    action:
+      viewModel.dialogue.advanceActionId == null
+        ? undefined
+        : {
+            id: viewModel.dialogue.advanceActionId,
+            label: viewModel.dialogue.advanceHintText ?? "继续",
+            result: "action",
+            attributes: {
+              "data-house-action": viewModel.dialogue.advanceActionId,
+            },
+          },
+    speaker:
+      isNarration
+        ? {
+            narration: true,
+          }
+        : {
+            name: viewModel.dialogue.speakerName ?? "",
+            ...(viewModel.dialogue.portraitImageUrl === undefined
+              ? {}
+              : {
+                  portraitImageUrl: viewModel.dialogue.portraitImageUrl,
+                }),
+            ...(viewModel.dialogue.portraitArtClassName == null
+              ? {}
+              : {
+                  portraitArtClassName: viewModel.dialogue.portraitArtClassName,
+                }),
+          },
+  });
 }
 
 export function renderHouseIdleOwner(

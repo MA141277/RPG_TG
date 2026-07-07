@@ -5,16 +5,29 @@ import { fileURLToPath } from "node:url";
 const allowedEntryActions = new Set(["open-next-file", "stop", "blocked"]);
 const allowedTargetNextActions = new Set([
   "classify-fresh-work",
-  "promote-queue",
+  "write-admission-review",
+  "activate-admitted-queue",
+  "resume-active-queue",
+  "auto-reconcile-active-task",
+  "write-queue-closeout",
+  "return-to-promotion-review",
   "write-target-closeout",
-  "return-to-idle-open",
   "resolve-blocker",
 ]);
 const allowedTargetNextDecisions = new Set([
+  "queue-admission-review",
+  "queue-closeout-or-return-to-target-review",
   "same-target-admission-or-target-closeout",
-  "queue-promotion",
   "target-closeout",
   "resolve-blocker",
+]);
+const allowedAdmissionStatuses = new Set([
+  "none",
+  "pending",
+  "admitted",
+  "rejected",
+  "deferred",
+  "blocked",
 ]);
 
 export function lintBlueprintDocs(repoRoot = process.cwd()) {
@@ -23,8 +36,16 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
 
   const projectProgressPath = path.join(blueprintsRoot, "project-progress.md");
   const blueprintPath = path.join(blueprintsRoot, "blueprint.md");
-  const liveTargetSpecPath = path.join(blueprintsRoot, "specs", "2026-07-06-project-complete-modularization-target.md");
-  const liveTargetPlanPath = path.join(blueprintsRoot, "plans", "2026-07-06-project-complete-modularization-target-plan.md");
+  const liveTargetSpecPath = path.join(
+    blueprintsRoot,
+    "specs",
+    "2026-07-06-project-complete-modularization-target.md"
+  );
+  const liveTargetPlanPath = path.join(
+    blueprintsRoot,
+    "plans",
+    "2026-07-06-project-complete-modularization-target-plan.md"
+  );
 
   const targetPlanPath = fs.existsSync(liveTargetPlanPath)
     ? liveTargetPlanPath
@@ -38,15 +59,34 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
   lintTargetPlan(targetPlanPath, failures, repoRoot, "target plan");
   lintTargetSpec(targetSpecPath, failures, repoRoot, "target spec");
   lintQueueDocs(path.join(blueprintsRoot, "queues"), failures, repoRoot);
-  lintTemplate(path.join(blueprintsRoot, "templates", "project-progress-template.md"), failures, repoRoot, lintProjectProgress);
-  lintTemplate(path.join(blueprintsRoot, "templates", "target-plan-template.md"), failures, repoRoot, (filePath, innerFailures) =>
-    lintTargetPlan(filePath, innerFailures, repoRoot, "target-plan template")
+  lintTemplate(
+    path.join(blueprintsRoot, "templates", "project-progress-template.md"),
+    failures,
+    repoRoot,
+    lintProjectProgress
   );
-  lintTemplate(path.join(blueprintsRoot, "templates", "target-spec-template.md"), failures, repoRoot, (filePath, innerFailures) =>
-    lintTargetSpec(filePath, innerFailures, repoRoot, "target-spec template")
+  lintTemplate(
+    path.join(blueprintsRoot, "templates", "target-plan-template.md"),
+    failures,
+    repoRoot,
+    (filePath, innerFailures) =>
+      lintTargetPlan(filePath, innerFailures, repoRoot, "target-plan template")
+  );
+  lintTemplate(
+    path.join(blueprintsRoot, "templates", "target-spec-template.md"),
+    failures,
+    repoRoot,
+    (filePath, innerFailures) =>
+      lintTargetSpec(filePath, innerFailures, repoRoot, "target-spec template")
   );
 
-  lintCrossDocumentConsistency(projectProgressPath, blueprintPath, targetPlanPath, failures, repoRoot);
+  lintCrossDocumentConsistency(
+    projectProgressPath,
+    blueprintPath,
+    targetPlanPath,
+    failures,
+    repoRoot
+  );
 
   return failures;
 }
@@ -68,14 +108,20 @@ function lintProjectProgress(filePath, failures, repoRoot) {
   const relativePath = relative(repoRoot, filePath);
 
   if (/^- next_step:/m.test(text)) {
-    failures.push(`${relativePath}: project-progress must not contain next_step prose mirrors; use entry_action instead`);
+    failures.push(
+      `${relativePath}: project-progress must not contain next_step prose mirrors; use entry_action instead`
+    );
   }
 
   const entryActionMatch = text.match(/^- entry_action: `([^`]+)`/m);
   if (entryActionMatch == null) {
-    failures.push(`${relativePath}: project-progress missing Control Block field "entry_action"`);
+    failures.push(
+      `${relativePath}: project-progress missing Control Block field "entry_action"`
+    );
   } else if (!allowedEntryActions.has(entryActionMatch[1])) {
-    failures.push(`${relativePath}: project-progress entry_action "${entryActionMatch[1]}" is not an allowed enum value`);
+    failures.push(
+      `${relativePath}: project-progress entry_action "${entryActionMatch[1]}" is not an allowed enum value`
+    );
   }
 }
 
@@ -86,9 +132,17 @@ function lintBlueprintIndex(filePath, failures, repoRoot) {
   }
 
   const relativePath = relative(repoRoot, filePath);
-  for (const forbiddenField of ["target_status", "decision_state", "active_queue", "active_task", "completed_targets"]) {
+  for (const forbiddenField of [
+    "target_status",
+    "decision_state",
+    "active_queue",
+    "active_task",
+    "completed_targets",
+  ]) {
     if (new RegExp(`^- ${escapeRegExp(forbiddenField)}:`, "m").test(text)) {
-      failures.push(`${relativePath}: blueprint must not own downstream truth field "${forbiddenField}"`);
+      failures.push(
+        `${relativePath}: blueprint must not own downstream truth field "${forbiddenField}"`
+      );
     }
   }
 }
@@ -100,27 +154,114 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   }
 
   const relativePath = relative(repoRoot, filePath);
+  const isTemplate = relativePath.includes("/templates/");
 
   if (/^- next_legal_action:/m.test(text)) {
-    failures.push(`${relativePath}: ${label} must not contain next_legal_action prose; use next_action enum instead`);
-  }
-
-  const nextActionMatch = text.match(/^- next_action: `([^`]+)`/m);
-  if (nextActionMatch == null) {
-    failures.push(`${relativePath}: ${label} missing Control Block field "next_action"`);
-  } else if (!allowedTargetNextActions.has(nextActionMatch[1])) {
-    failures.push(`${relativePath}: ${label} next_action "${nextActionMatch[1]}" is not an allowed enum value`);
-  }
-
-  const nextDecisionMatch = text.match(/^- next_decision: `([^`]+)`/m);
-  if (nextDecisionMatch == null) {
-    failures.push(`${relativePath}: ${label} missing Control Block field "next_decision"`);
-  } else if (!allowedTargetNextDecisions.has(nextDecisionMatch[1])) {
-    failures.push(`${relativePath}: ${label} next_decision "${nextDecisionMatch[1]}" is not an allowed enum value`);
+    failures.push(
+      `${relativePath}: ${label} must not contain next_legal_action prose; use next_action enum instead`
+    );
   }
 
   if (/^### Current Decision$/m.test(text)) {
-    failures.push(`${relativePath}: ${label} must not keep a Current Decision prose block; Control Block must stand alone`);
+    failures.push(
+      `${relativePath}: ${label} must not keep a Current Decision prose block; Control Block must stand alone`
+    );
+  }
+
+  const nextAction = requireFieldValue(
+    text,
+    "next_action",
+    relativePath,
+    failures,
+    `${label} missing Control Block field "next_action"`
+  );
+  if (!isTemplate && nextAction != null && !allowedTargetNextActions.has(nextAction)) {
+    failures.push(
+      `${relativePath}: ${label} next_action "${nextAction}" is not an allowed enum value`
+    );
+  }
+
+  const nextDecision = requireFieldValue(
+    text,
+    "next_decision",
+    relativePath,
+    failures,
+    `${label} missing Control Block field "next_decision"`
+  );
+  if (!isTemplate && nextDecision != null && !allowedTargetNextDecisions.has(nextDecision)) {
+    failures.push(
+      `${relativePath}: ${label} next_decision "${nextDecision}" is not an allowed enum value`
+    );
+  }
+
+  for (const requiredField of [
+    "review_subject_id",
+    "review_subject_classification",
+    "proposed_queue_id",
+    "review_basis",
+    "admission_status",
+  ]) {
+    requireFieldValue(
+      text,
+      requiredField,
+      relativePath,
+      failures,
+      `${relativePath}: ${label} missing Control Block field "${requiredField}"`
+    );
+  }
+
+  const admissionStatus = matchField(text, "admission_status");
+  if (!isTemplate && admissionStatus != null && !allowedAdmissionStatuses.has(admissionStatus)) {
+    failures.push(
+      `${relativePath}: ${label} admission_status "${admissionStatus}" is not an allowed enum value`
+    );
+  }
+
+  const activeQueue = matchField(text, "active_queue");
+  const decisionState = matchField(text, "decision_state");
+  const reviewSubjectClassification = matchField(
+    text,
+    "review_subject_classification"
+  );
+  const proposedQueueId = matchField(text, "proposed_queue_id");
+
+  if (!isTemplate && activeQueue === "none" && decisionState === "active-execution") {
+    failures.push(
+      `${relativePath}: ${label} cannot keep decision_state=active-execution when active_queue=none`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    activeQueue !== "none" &&
+    activeQueue != null &&
+    decisionState !== "active-execution"
+  ) {
+    failures.push(
+      `${relativePath}: ${label} must keep decision_state=active-execution while an active_queue is named`
+    );
+  }
+
+  if (!isTemplate && nextAction === "resume-active-queue" && activeQueue === "none") {
+    failures.push(
+      `${relativePath}: ${label} cannot use next_action=resume-active-queue while active_queue=none`
+    );
+  }
+
+  if (!isTemplate && admissionStatus === "admitted" && activeQueue === "none") {
+    failures.push(
+      `${relativePath}: ${label} cannot keep admission_status=admitted while active_queue=none`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    reviewSubjectClassification === "queue-candidate" &&
+    (proposedQueueId == null || proposedQueueId === "none")
+  ) {
+    failures.push(
+      `${relativePath}: ${label} must name proposed_queue_id when review_subject_classification=queue-candidate`
+    );
   }
 }
 
@@ -133,15 +274,21 @@ function lintTargetSpec(filePath, failures, repoRoot, label) {
   const relativePath = relative(repoRoot, filePath);
 
   if (/^### Queue Portfolio$/m.test(text)) {
-    failures.push(`${relativePath}: ${label} must use "Queue Contract Portfolio" instead of runtime-style "Queue Portfolio"`);
+    failures.push(
+      `${relativePath}: ${label} must use "Queue Contract Portfolio" instead of runtime-style "Queue Portfolio"`
+    );
   }
 
   if (/^\| Queue ID \| Class \| State \| Promote When \| Source \|$/m.test(text)) {
-    failures.push(`${relativePath}: ${label} Queue Portfolio must not include runtime State/Source columns`);
+    failures.push(
+      `${relativePath}: ${label} Queue Portfolio must not include runtime State/Source columns`
+    );
   }
 
   if (!/^### Queue Contract Portfolio$/m.test(text)) {
-    failures.push(`${relativePath}: ${label} missing "Queue Contract Portfolio" section`);
+    failures.push(
+      `${relativePath}: ${label} missing "Queue Contract Portfolio" section`
+    );
   }
 }
 
@@ -160,18 +307,35 @@ function lintQueueDocs(queueDir, failures, repoRoot) {
     const relativePath = relative(repoRoot, filePath);
     const head = text.split(/\r?\n/u).slice(0, 25).join("\n");
 
-    for (const requiredField of ["queue_status", "closeout_status", "next_effect"]) {
+    for (const requiredField of [
+      "queue_status",
+      "active_task",
+      "closeout_status",
+      "next_effect",
+    ]) {
       if (!new RegExp(`^- ${escapeRegExp(requiredField)}:`, "m").test(head)) {
-        failures.push(`${relativePath}: queue Control Block missing "${requiredField}"`);
+        failures.push(
+          `${relativePath}: queue Control Block missing "${requiredField}"`
+        );
       }
     }
 
     if (/^- status:/m.test(head)) {
-      failures.push(`${relativePath}: queue Control Block must not use legacy status field; use queue_status`);
+      failures.push(
+        `${relativePath}: queue Control Block must not use legacy status field; use queue_status`
+      );
     }
 
-    const queueStatusMatch = head.match(/^- queue_status: `([^`]+)`/m);
-    if (queueStatusMatch?.[1] === "done") {
+    const queueStatus = head.match(/^- queue_status: `([^`]+)`/m)?.[1] ?? null;
+    const activeTask = head.match(/^- active_task: `([^`]+)`/m)?.[1] ?? null;
+
+    if (queueStatus !== "active" && activeTask != null && activeTask !== "none") {
+      failures.push(
+        `${relativePath}: queue must not keep active_task=${activeTask} while queue_status=${queueStatus}`
+      );
+    }
+
+    if (queueStatus === "done") {
       const disallowedPatterns = [
         /^### Execution State$/m,
         /^## Next Executable Task$/m,
@@ -182,15 +346,27 @@ function lintQueueDocs(queueDir, failures, repoRoot) {
       ];
       for (const pattern of disallowedPatterns) {
         if (pattern.test(text)) {
-          failures.push(`${relativePath}: done queue still contains live execution label matching ${pattern}`);
+          failures.push(
+            `${relativePath}: done queue still contains live execution label matching ${pattern}`
+          );
         }
       }
     }
   }
 }
 
-function lintCrossDocumentConsistency(projectProgressPath, blueprintPath, targetPlanPath, failures, repoRoot) {
-  if (!fs.existsSync(projectProgressPath) || !fs.existsSync(blueprintPath) || !fs.existsSync(targetPlanPath)) {
+function lintCrossDocumentConsistency(
+  projectProgressPath,
+  blueprintPath,
+  targetPlanPath,
+  failures,
+  repoRoot
+) {
+  if (
+    !fs.existsSync(projectProgressPath) ||
+    !fs.existsSync(blueprintPath) ||
+    !fs.existsSync(targetPlanPath)
+  ) {
     return;
   }
 
@@ -200,19 +376,40 @@ function lintCrossDocumentConsistency(projectProgressPath, blueprintPath, target
 
   const projectActiveTarget = matchField(projectProgressText, "active_target");
   const blueprintActiveTarget = matchField(blueprintText, "active_target");
-  if (projectActiveTarget != null && blueprintActiveTarget != null && projectActiveTarget !== blueprintActiveTarget) {
-    failures.push(`${relative(repoRoot, projectProgressPath)}: active_target must match blueprint active_target`);
+  if (
+    projectActiveTarget != null &&
+    blueprintActiveTarget != null &&
+    projectActiveTarget !== blueprintActiveTarget
+  ) {
+    failures.push(
+      `${relative(repoRoot, projectProgressPath)}: active_target must match blueprint active_target`
+    );
   }
 
   const hasActiveQueue = matchField(projectProgressText, "has_active_queue");
   const activeQueue = matchField(targetPlanText, "active_queue");
   if (hasActiveQueue === "false" && activeQueue != null && activeQueue !== "none") {
-    failures.push(`${relative(repoRoot, projectProgressPath)}: has_active_queue=false conflicts with target plan active_queue=${activeQueue}`);
+    failures.push(
+      `${relative(repoRoot, projectProgressPath)}: has_active_queue=false conflicts with target plan active_queue=${activeQueue}`
+    );
   }
 }
 
+function requireFieldValue(text, fieldName, relativePath, failures, failureMessage) {
+  const value = matchField(text, fieldName);
+  if (value == null) {
+    failures.push(failureMessage ?? `${relativePath}: missing Control Block field "${fieldName}"`);
+    return null;
+  }
+
+  return value;
+}
+
 function matchField(text, fieldName) {
-  return text.match(new RegExp(`^- ${escapeRegExp(fieldName)}: \`([^\\\`]+)\``, "m"))?.[1] ?? null;
+  return (
+    text.match(new RegExp(`^- ${escapeRegExp(fieldName)}: \`([^\\\`]+)\``, "m"))?.[1] ??
+    null
+  );
 }
 
 function firstMarkdownFile(directoryPath) {
@@ -231,7 +428,7 @@ function firstMarkdownFile(directoryPath) {
 
 function readFileOrFail(filePath, failures, repoRoot) {
   if (filePath == null) {
-    failures.push(`missing required Blueprint document path`);
+    failures.push("missing required Blueprint document path");
     return null;
   }
 
@@ -251,7 +448,10 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   const failures = lintBlueprintDocs();
 
   if (failures.length > 0) {

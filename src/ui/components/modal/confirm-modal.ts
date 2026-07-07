@@ -1,3 +1,8 @@
+import {
+  renderSharedDialog,
+  type SharedDialogAction,
+} from "../dialog/shared-dialog";
+
 export type ConfirmModalConfig = {
   title: string;
   body: string;
@@ -10,37 +15,45 @@ export type ConfirmModalConfig = {
 };
 
 export function renderConfirmModal(config: ConfirmModalConfig): string {
-  return `
-    <div class="c-modal-overlay">
-      <div class="c-confirm-modal c-panel${config.className == null ? "" : ` ${config.className}`}">
-        <div class="c-confirm-modal__content">
-          <p class="c-confirm-modal__eyebrow">${config.eyebrow ?? "确认"}</p>
-          <h2 class="c-confirm-modal__title">${config.title}</h2>
-          <p class="c-confirm-modal__body">${config.body}</p>
-          ${
-            config.portraitLabel == null
-              ? ""
-              : `
-                <div class="c-city-portrait">
-                  ${
-                    config.portraitImageUrl == null
-                      ? ""
-                      : `<img class="c-city-portrait__image" src="${config.portraitImageUrl}" alt="${config.portraitLabel}">`
-                  }
-                  <span class="c-city-portrait__label">${config.portraitLabel}</span>
-                </div>
-              `
-          }
-        </div>
-        <div class="c-confirm-modal__actions">
-          <button class="c-button" data-modal-action="confirm">${config.confirmLabel}</button>
-          ${
-            config.cancelLabel == null
-              ? ""
-              : `<button class="c-button c-button--ghost" data-modal-action="cancel">${config.cancelLabel}</button>`
-          }
-        </div>
-      </div>
-    </div>
-  `;
+  const actions: SharedDialogAction[] = [
+    {
+      id: "confirm",
+      label: config.confirmLabel,
+      result: "confirm",
+      className: "c-button",
+      attributes: {
+        "data-modal-action": "confirm",
+      },
+    },
+    ...(config.cancelLabel == null
+      ? []
+      : [
+          {
+            id: "cancel",
+            label: config.cancelLabel,
+            result: "cancel" as const,
+            className: "c-button c-button--ghost",
+            attributes: {
+              "data-modal-action": "cancel",
+            },
+          },
+        ]),
+  ];
+
+  return renderSharedDialog({
+    layout: "modal",
+    title: config.title,
+    body: [config.body],
+    bodyTag: "p",
+    eyebrow: config.eyebrow ?? "确认",
+    panelClassName: `c-confirm-modal c-panel${config.className == null ? "" : ` ${config.className}`}`,
+    portrait:
+      config.portraitLabel == null
+        ? undefined
+        : {
+            label: config.portraitLabel,
+            imageUrl: config.portraitImageUrl,
+          },
+    actions,
+  });
 }

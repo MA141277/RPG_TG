@@ -37,6 +37,7 @@
 - `Classification is a routing layer, not a live execution controller.`
 - `Current execution truth still comes only from project-progress -> blueprint -> target plan -> active queue -> active task.`
 - `Classification may recommend queue admission, but it cannot create an active queue by itself.`
+- `User scope approval may narrow the candidate boundary, but it cannot create admission truth by itself.`
 
 ### Core Rules
 
@@ -45,6 +46,8 @@
 3. `Do not use change-log, old docs/superpowers/**, or closed queue prose as classification authority unless they are cited as historical evidence only.`
 4. `If active_queue = none, classification returns control to the current target plan for promotion-review or idle-open handling.`
 5. `Low confidence always falls back to uncertain-needs-review unless a stronger written override exists.`
+6. `If classification concludes queue-candidate, fresh implementation must stop until target-plan admission truth and the admitted queue doc both exist.`
+7. `Conversation-only classification that would change active truth is invalid until the target plan is synchronized.`
 
 ### Classification Outputs
 
@@ -154,6 +157,25 @@ Use this structure when classification needs to be recorded explicitly:
   - `can be completed inside an existing pipeline or current queue without widening scope`
 ```
 
+### Target-Plan Review Sync
+
+If a classification result would change active truth, it must be synchronized into the target plan before implementation continues.
+
+Minimum required target-plan fields:
+
+- `review_subject_id`
+- `review_subject_classification`
+- `proposed_queue_id`
+- `review_basis`
+- `admission_status`
+
+Required behavior:
+
+1. `queue-candidate + active_queue = none` must enter target-level admission review before implementation.
+2. `scope approved by user` must be recorded only as boundary approval, not as admission truth.
+3. `admission_status = admitted` requires the queue doc to exist before code implementation starts.
+4. `rejected / deferred / blocked` outcomes must be written into target-plan truth, not left in prose-only replies.
+
 ### Integration Points
 
 - `project-progress` may point to the classification layer, but may not own classification history as live truth.
@@ -162,6 +184,7 @@ Use this structure when classification needs to be recorded explicitly:
 - `target plan` decides whether a classified item becomes a promoted queue.
 - `queue docs` declare which classifications are allowed inside them.
 - `task execution` must stop if a new item is classified incompatibly with queue scope.
+- `task execution` must also stop if a fresh item becomes `queue-candidate` before admission truth is written.
 
 ### Success Condition
 
@@ -169,6 +192,7 @@ This layer is successful only when:
 
 - `most new items can be routed without reopening live governance truth upstream`
 - `queue admission always remains a target-plan decision`
+- `scope approval never masquerades as queue admission`
 - `queue-candidate` defaults to governance escalation rather than human escalation
 - `open + no active queue` remains legal and non-ambiguous
 - `historical residue stays recorded without pretending to be active work`

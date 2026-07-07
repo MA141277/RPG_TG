@@ -746,6 +746,45 @@ test("scene view resolves narration dialogue and choice text through text ids", 
   );
 });
 
+test("shared dialog component module defines canonical dialog result attrs", () => {
+  const sharedDialogPath = path.join(
+    process.cwd(),
+    "src/ui/components/dialog/shared-dialog.ts"
+  );
+
+  assert.ok(fs.existsSync(sharedDialogPath));
+  const sharedDialogSource = fs.readFileSync(sharedDialogPath, "utf8");
+
+  assert.match(sharedDialogSource, /export type SharedDialogAction/);
+  assert.match(sharedDialogSource, /export function renderSharedDialog/);
+  assert.match(sharedDialogSource, /data-dialog-result=/);
+  assert.match(sharedDialogSource, /data-dialog-action-id=/);
+});
+
+test("confirm modal keeps legacy modal actions while delegating structure to shared dialog", () => {
+  const confirmModalSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/components/modal/confirm-modal.ts"),
+    "utf8"
+  );
+
+  assert.match(confirmModalSource, /shared-dialog/);
+  assert.match(confirmModalSource, /data-modal-action/);
+  assert.match(confirmModalSource, /result:\s*"confirm"/);
+  assert.match(confirmModalSource, /result:\s*"cancel"/);
+});
+
+test("scene dialogue card delegates to shared dialog and preserves advance action semantics", () => {
+  const sceneViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/scene/scene-view.ts"),
+    "utf8"
+  );
+
+  assert.match(sceneViewSource, /shared-dialog/);
+  assert.match(sceneViewSource, /data-scene-action/);
+  assert.match(sceneViewSource, /result:\s*"action"/);
+  assert.match(sceneViewSource, /id:\s*options\.advanceActionId/);
+});
+
 test("text resolution interpolates template entries with named variables", () => {
   const {
     resolveTextTemplateEntry,

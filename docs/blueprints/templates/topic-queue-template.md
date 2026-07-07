@@ -35,6 +35,12 @@
 - Target plan:
   - `docs/blueprints/plans/...`
 
+### Admission Preconditions
+
+- `This queue must not be treated as implementation authority until the target plan already records admission truth.`
+- `If this queue is admitted from a fresh queue-candidate, the target plan admission fields must be synchronized before any code implementation starts.`
+- `User scope approval alone must not be treated as queue admission.`
+
 ### Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |

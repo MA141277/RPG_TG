@@ -24,6 +24,7 @@ import type {
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { assertExists } from "../shared/assert";
+import { renderSharedDialog } from "./components/dialog/shared-dialog";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
 import {
   createGlobalPlayerPanelModel,
@@ -234,7 +235,28 @@ function renderLocationDialogue(
   const portraitImageUrl =
     speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
 
-  return `
+  return renderSharedDialog({
+    layout: "dialogue-card",
+    body: dialogueState.textLines,
+    hintText: dialogueState.advanceHintText,
+    ariaLabel: "地点对话",
+    footerClassName: "c-grain-shop-dialogue c-scene-dialogue c-location-dialogue",
+    action: {
+      id: "close-location-dialogue",
+      label: dialogueState.advanceHintText,
+      result: "close",
+      attributes: {
+        "data-action": "close-location-dialogue",
+      },
+    },
+    speaker: {
+      name: speaker?.name ?? dialogueState.speakerCharacterId,
+      portraitImageUrl,
+      portraitImageClassName: "c-location-dialogue__portrait-image",
+    },
+  });
+
+  /*
     <footer class="c-grain-shop-dialogue c-scene-dialogue c-location-dialogue" aria-label="地点对话">
       <div
         class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-grain-shop-dialogue__text--clickable"
@@ -260,7 +282,7 @@ function renderLocationDialogue(
         </p>
       </div>
     </footer>
-  `;
+  */
 }
 
 function withResolvedHousePortraits(

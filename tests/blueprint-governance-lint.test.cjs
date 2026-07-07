@@ -92,6 +92,11 @@ function createFixtureRepo() {
       "- next_action: `classify-fresh-work`",
       "- resume_gate: `idle-open`",
       "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
       "- blocked_by: []",
       "",
     ].join("\n")
@@ -198,6 +203,11 @@ test("blueprint lint rejects target plans that keep Current Decision prose or ne
       "- next_legal_action: `Classify fresh work.`",
       "- resume_gate: `idle-open`",
       "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
       "- blocked_by: []",
       "",
       "## Human Context",
@@ -265,9 +275,14 @@ test("blueprint lint rejects repository entry drift when has_active_queue is fal
       "- active_queue: `queue.test`",
       "- decision_state: `active-execution`",
       "- next_decision: `same-target-admission-or-target-closeout`",
-      "- next_action: `classify-fresh-work`",
-      "- resume_gate: `idle-open`",
+      "- next_action: `resume-active-queue`",
+      "- resume_gate: `open-active-queue`",
       "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
       "- blocked_by: []",
       "",
     ].join("\n")
@@ -277,6 +292,115 @@ test("blueprint lint rejects repository entry drift when has_active_queue is fal
   const failures = lintBlueprintDocs(repoRoot);
 
   assert.match(failures.join("\n"), /has_active_queue.*active_queue/i);
+});
+
+test("blueprint lint rejects active-execution when the target plan has no active queue", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `active-execution`",
+      "- next_decision: `queue-closeout-or-return-to-target-review`",
+      "- next_action: `resume-active-queue`",
+      "- resume_gate: `open-active-queue`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /decision_state=active-execution.*active_queue=none/i);
+  assert.match(failures.join("\n"), /resume-active-queue.*active_queue=none/i);
+});
+
+test("blueprint lint rejects queue-candidate review without a proposed queue id", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `promotion-review`",
+      "- next_decision: `queue-admission-review`",
+      "- next_action: `write-admission-review`",
+      "- resume_gate: `promotion-review`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `item.test`",
+      "- review_subject_classification: `queue-candidate`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `fresh blocker proven`",
+      "- admission_status: `pending`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(
+    failures.join("\n"),
+    /proposed_queue_id.*review_subject_classification=queue-candidate/i
+  );
+});
+
+test("blueprint lint rejects non-active queues that still expose a live active task", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `candidate`",
+      "- queue_class: `required`",
+      "- active_task: `task.test`",
+      "- next_task: `none`",
+      "- closeout_status: `in-progress`",
+      "- next_effect: `none`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /queue must not keep active_task=.*while queue_status=candidate/i);
 });
 
 test("blueprint lint CLI reports success for a valid fixture repository", () => {

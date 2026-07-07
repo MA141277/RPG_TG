@@ -5,6 +5,31 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-07 Blueprint Admission And Closeout Fail-Closed Sealing
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，把以下漏洞提升为硬规则而非建议：
+  - `queue-candidate` 不得在 `active_queue = none` 时跳过 admission 直接进入实现
+  - 用户范围确认不等于 queue admission
+  - 会改变 active truth 的 classification 不得停留在会话 prose，必须结构化写入 target plan
+  - active task 验证通过且下一合法执行点唯一时，不得停在状态汇报，必须自动进入 auto-reconcile / closeout / target-review handoff
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)，新增 admission review 承载字段：
+  - `review_subject_id`
+  - `review_subject_classification`
+  - `proposed_queue_id`
+  - `review_basis`
+  - `admission_status`
+- 更新 [docs/blueprints/templates/topic-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/topic-queue-template.md)，把 queue doc 明确限制为“被 admission 后的执行真值载体”，不再允许 scope approval 直接替代 queue activation。
+- 更新 [docs/blueprints/classification-rule-layer-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/classification-rule-layer-spec.md)，明确 classification layer 只能路由，不能自行授权实现；任何会改变 active truth 的 classification 都必须回写 target plan admission fields。
+- 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，补入 admission review 结构化字段，并将当前下一执行点从单纯 `resume-active-queue` 收口为 `auto-reconcile-active-task`，避免“验证完成却停在汇报”继续漂移。
+- 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，把当前可静态拦截的 admission / closeout 状态矛盾纳入 lint。
+
+### Impact
+- Blueprint 现在对 admission 的最小真值链是 fail-closed 的：没有 target-plan admission truth 和 admitted queue doc，就不能把 fresh `queue-candidate` 当作实现授权。
+- target plan 不再只靠 prose 说明“正在审查什么”；当前 admission 审查对象已经有结构化承载位。
+- “做完了是否继续 closeout / promotion review / 文档同步”这类低价值询问，在唯一合法分支已明确时被正式禁止。
+- 当前 lint 已可直接拒绝多类静态治理短路，但仍把“会话执行顺序本身”的更强自动阻断列为明确治理债务，而不是继续留在口头提醒层。
+
 ## 2026-07-07 Blueprint Governance Model Hardening
 
 ### Changed

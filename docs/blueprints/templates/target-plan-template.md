@@ -8,13 +8,28 @@
 - active_phase: `phase.replace-me`
 - active_queue: `queue.replace-me | none`
 - decision_state: `active-execution | promotion-review | idle-open | blocked`
-- next_decision: `same-target-admission-or-target-closeout`
-- next_action: `classify-fresh-work`
-- resume_gate: `active-queue | promotion-review | idle-open | blocked`
-- promotion_review_result: `promote | reject | defer | block | none`
+- next_decision: `queue-admission-review | queue-closeout-or-return-to-target-review | same-target-admission-or-target-closeout | target-closeout | resolve-blocker`
+- next_action: `classify-fresh-work | write-admission-review | activate-admitted-queue | resume-active-queue | auto-reconcile-active-task | write-queue-closeout | return-to-promotion-review | write-target-closeout | resolve-blocker`
+- resume_gate: `open-active-queue | promotion-review | idle-open | blocked`
+- promotion_review_result: `admit | reject | defer | block | none`
+- review_subject_id: `item.replace-me | none`
+- review_subject_classification: `queue-candidate | current-target-item | uncertain-needs-review | future-target-candidate | none`
+- proposed_queue_id: `queue.replace-me | none`
+- review_basis: `replace-with-written-evidence | none`
+- admission_status: `none | pending | admitted | rejected | deferred | blocked`
 - blocked_by: []
 
 ## Human Context
+
+### Admission Review Record
+
+- Scope approval:
+  - `Record user scope approval here when it exists, but do not treat it as admission.`
+- Admission basis:
+  - `Record the evidence that justifies admit / reject / defer / block.`
+- Required truth sync:
+  - `Target plan admission fields must be written before implementation starts.`
+  - `The admitted queue doc must exist before code implementation starts.`
 
 ### Queue Promotion Ledger
 
@@ -24,17 +39,22 @@
 
 Allowed `next_decision` values:
 
+- `queue-admission-review`
+- `queue-closeout-or-return-to-target-review`
 - `same-target-admission-or-target-closeout`
-- `queue-promotion`
 - `target-closeout`
 - `resolve-blocker`
 
 Allowed `next_action` values:
 
 - `classify-fresh-work`
-- `promote-queue`
+- `write-admission-review`
+- `activate-admitted-queue`
+- `resume-active-queue`
+- `auto-reconcile-active-task`
+- `write-queue-closeout`
+- `return-to-promotion-review`
 - `write-target-closeout`
-- `return-to-idle-open`
 - `resolve-blocker`
 
 ### Post-Task Auto-Reconcile
@@ -44,15 +64,16 @@ Allowed `next_action` values:
 3. `Re-evaluate queue closeout.`
 4. `Scan governance owners.`
 5. `Scan residue.`
-6. `Sync target-level truth if required.`
+6. `If the next legal step is unique, continue directly into closeout or target review.`
 7. `Optionally mirror the result into change-log.`
 
-### Human Confirmation Throttle
+### Human Confirmation Constraint
 
 - `At most one human-confirmation question may be asked per task.`
-- `If the target/queue/task boundary can be resolved from current docs and code, do not ask.`
-- `If an item is uncertain but would not change active truth, record uncertain-needs-review and stop without asking.`
-- `If active truth would change and multiple mutually exclusive legal branches exist, one human escalation is allowed.`
+- `If docs/code can decide, do not ask.`
+- `If only one legal branch exists, do not ask.`
+- `Scope approval does not replace admission.`
+- `Do not ask whether to perform closeout, promotion review, or doc sync when they are already the unique next legal step.`
 
 ### Git Integration Loop
 
@@ -69,21 +90,6 @@ Mandatory merge loop triggers:
 - `queue closeout`
 - `target closeout`
 - `explicit integration checkpoint`
-
-### Queue Closeout Rules
-
-- `next_effect = promote-next-queue`
-- `next_effect = return-to-target-review`
-- `next_effect = block-target`
-
-### State Transition Rules
-
-- `idle-open -> promotion-review`
-- `promotion-review -> active-execution`
-- `promotion-review -> idle-open`
-- `promotion-review -> blocked`
-- `active-execution -> promotion-review`
-- `active-execution -> idle-open`
 
 ### Prior Promotion Record
 

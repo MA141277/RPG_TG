@@ -10,6 +10,7 @@ The model must keep execution truth:
 - single-writer
 - resumable after interruption
 - separated from historical narrative
+- fail-closed against admission and closeout short-circuits
 
 ## 2. Scope
 
@@ -22,6 +23,7 @@ This spec applies to:
 - target plans under `docs/blueprints/plans/`
 - queue docs under `docs/blueprints/queues/`
 - templates under `docs/blueprints/templates/`
+- `tools/lint-blueprints.mjs`
 - `docs/change-log.md` when Blueprint work is historically recorded there
 
 Old `docs/superpowers/**` workflow docs remain historical or legacy-only reference.
@@ -120,6 +122,11 @@ The target plan is the only live governor for:
 - `next_action`
 - `resume_gate`
 - `promotion_review_result`
+- `review_subject_id`
+- `review_subject_classification`
+- `proposed_queue_id`
+- `review_basis`
+- `admission_status`
 - queue promotion / hold / reopen / closeout conclusions
 - target-level closeout decision
 
@@ -170,6 +177,11 @@ The following fields must be structured whenever they are needed:
 - `closeout_status`
 - `next_effect`
 - `promotion_review_result`
+- `review_subject_id`
+- `review_subject_classification`
+- `proposed_queue_id`
+- `review_basis`
+- `admission_status`
 
 ## 6. Live vs Historical Separation
 
@@ -205,9 +217,105 @@ Historical sections must not use instruction-like labels such as:
 
 Closed queues, closed targets, historical notes, and `docs/change-log.md` must not contain text that reads like a current execution command.
 
-## 7. Target State Model
+## 7. Admission Frontload Rules
 
-### 7.1 `target_status`
+### 7.1 Mandatory admission before fresh implementation
+
+Any fresh implementation item that is classified as `queue-candidate` must complete target-level admission before implementation starts.
+
+Hard rules:
+
+1. If `active_queue = none`, no fresh implementation may begin directly.
+2. If classification concludes `queue-candidate`, the agent must return to target-level admission review before code implementation.
+3. The agent must not begin implementation while either of these is still missing:
+   - the target plan Control Block does not yet record the admission review truth
+   - the admitted queue doc does not yet exist and expose active execution truth
+4. A queue-candidate may be discussed, audited, or scoped before admission, but that is not implementation authorization.
+
+### 7.2 Required write order for admission
+
+When a `queue-candidate` is admitted, write truth in this order before implementation:
+
+1. target plan admission review fields
+2. admitted queue doc Control Block
+3. target plan `active_queue` / `decision_state` / `next_action`
+4. blueprint if affected
+5. project-progress if affected
+
+Only after those documents agree may implementation begin.
+
+### 7.3 Scope approval is not admission
+
+User approval of bounded scope is not equivalent to queue admission.
+
+The following must remain distinct:
+
+- `scope approval`
+  - user agrees the proposed boundary is acceptable
+- `admission`
+  - target plan records the review subject, proposed queue, basis, admission result, and active execution truth
+
+Phrases such as:
+
+- `按这个范围做`
+- `可以`
+- `继续推进这个范围`
+
+may authorize scope, but they must not be treated as a substitute for target-plan admission or queue activation.
+
+## 8. Classification Trace Rules
+
+### 8.1 Structured trace is mandatory when active truth changes
+
+Any classification result that changes or may change active truth must be recorded in structured governance truth.
+
+It is illegal to stop at conversation-only conclusions such as:
+
+- `this belongs to queue.x`
+- `this should be current target work`
+- `this needs promotion review`
+
+without syncing the corresponding target plan admission fields.
+
+### 8.2 Required admission-review fields in the target plan
+
+The target plan must structurally carry the current admission review subject through at least:
+
+- `review_subject_id`
+- `review_subject_classification`
+- `proposed_queue_id`
+- `review_basis`
+- `admission_status`
+
+Allowed `admission_status` values:
+
+- `none`
+- `pending`
+- `admitted`
+- `rejected`
+- `deferred`
+- `blocked`
+
+If no admission review is active, these fields must explicitly return to `none`.
+
+### 8.3 Review object semantics
+
+- `review_subject_id`
+  - the item currently under target-level review
+- `review_subject_classification`
+  - the structured classification driving the review
+- `proposed_queue_id`
+  - the queue being considered, or `none`
+- `review_basis`
+  - the evidence basis justifying the review
+- `admission_status`
+  - the current formal disposition of the review subject
+
+These fields exist so admission, reject, defer, and block outcomes do not fall back to prose.
+
+## 9. Target State Model
+
+### 9.1 `target_status`
 
 Allowed values:
 
@@ -215,7 +323,7 @@ Allowed values:
 - `done`
 - `archived`
 
-### 7.2 `decision_state`
+### 9.2 `decision_state`
 
 Allowed values while the target is open:
 
@@ -224,14 +332,14 @@ Allowed values while the target is open:
 - `idle-open`
 - `blocked`
 
-### 7.3 Semantics
+### 9.3 Semantics
 
 - `open + active-execution`
   - an active queue exists under the target
 - `open + promotion-review`
-  - no active queue exists, but a new queue may be promoted under the current target
+  - no active queue exists, and target-level admission or review is live
 - `open + idle-open`
-  - no active queue exists and no immediate promotion is in motion, but the target remains open
+  - no active queue exists and no admission review is live
 - `open + blocked`
   - the target cannot advance until an explicit blocker is resolved
 - `done`
@@ -242,25 +350,25 @@ Allowed values while the target is open:
 Clarifications:
 
 1. `active_queue = none` does not mean the target is `done`.
-2. "All current queues are done" does not mean the target is `done`.
-3. As long as `target_status = open`, a new queue may still be admitted under the target through `promotion-review`.
+2. `active_queue = none` does not authorize fresh implementation.
+3. As long as `target_status = open`, a new queue may still be admitted through `promotion-review`.
 
-### 7.4 State Transitions
+### 9.4 State transitions
 
 - `idle-open -> promotion-review`
-  - when a `queue-candidate` has sufficient evidence and target-level admission is required
+  - when a fresh review subject must be classified or admitted
 - `promotion-review -> active-execution`
-  - when a queue is formally promoted and written into the target plan
+  - when admission is written and the admitted queue becomes active truth
 - `promotion-review -> idle-open`
-  - when review concludes `reject` or `defer` and no queue is admitted
+  - when review concludes `rejected` or `deferred` and no queue is admitted
 - `promotion-review -> blocked`
-  - when target-level decision requires external blocker resolution or explicit user choice
+  - when target-level decision requires an external blocker or a truly mutually exclusive human choice
 - `active-execution -> promotion-review`
-  - when an active queue closes and a target-level admission decision is now pending
+  - when an active queue closes and target-level review is now the only legal next point
 - `active-execution -> idle-open`
-  - when an active queue closes and no admission decision is pending
+  - when an active queue closes and no new review subject is pending
 
-## 8. Queue And Task Model
+## 10. Queue And Task Model
 
 Queue docs must own task truth.
 
@@ -291,39 +399,24 @@ Required task fields:
 - `promote_next_if_done`
 - `stop_if`
 
-If a queue is `done`, it must not expose:
+Hard queue rules:
 
-- live `active_task`
-- `Resume ...` instructions
-- `Current active task` language
+1. A queue must not expose an `active_task` unless `queue_status = active`.
+2. A `candidate` queue or non-existent queue must not be used as execution authorization.
+3. If a queue is `done`, it must not expose:
+   - live `active_task`
+   - `Resume ...` instructions
+   - `Current active task` language
 
-## 9. Classification Escalation Model
+## 11. Post-Task Auto-Reconcile And Closeout Auto-Advance
 
-Classification escalation must be split into:
+### 11.1 Mandatory auto-reconcile
 
-- `governance_escalation`
-- `human_escalation`
-
-Default behavior:
-
-- `queue-candidate`
-  - triggers `governance_escalation`
-  - returns control to the target plan's `promotion-review`
-  - does not automatically trigger a human question
-- `future-target-candidate`
-  - triggers `governance_escalation`
-  - does not automatically trigger a human question
-- `uncertain-needs-review`
-  - if it does not change active truth, it may be recorded and stopped without asking the user
-  - if it would change active truth and multiple mutually exclusive legal branches exist, it may trigger `human_escalation`
-
-## 10. Post-Task Auto-Reconcile
-
-When a task completes, the agent must automatically:
+When an active task completes, the agent must automatically:
 
 1. run the task's verification commands
 2. check `done_when`
-3. decide whether the queue should continue, close, or block
+3. re-evaluate whether the queue should continue, close, or block
 4. scan impacted governance owners, at minimum:
    - `project-progress`
    - `blueprint`
@@ -337,48 +430,33 @@ When a task completes, the agent must automatically:
    - partially synced governance truth
    - out-of-scope leftovers
 6. determine the next legal execution point
-7. optionally update `docs/change-log.md` as a historical mirror if a human-readable summary is warranted
-8. report:
-   - what completed
-   - what rules or behavior changed
-   - what was verified
-   - remaining risk
-   - next legal execution point
 
-Do not end by asking low-value questions such as "continue?", "review docs?", or "check again?".
+### 11.2 Unique-next-step rule
 
-## 11. Closeout Protocol
+If all are true:
 
-### 11.1 task closeout
+- the active task is complete
+- verification passed
+- no blocker remains
+- the next legal execution point is unique
 
-Task closeout must automatically include:
+then the agent must automatically continue into:
 
-- verification
-- residue scan
-- impacted-owner scan
+- task auto-reconcile
 - queue gate re-evaluation
-- result summary
+- queue closeout or target review handoff
 
-### 11.2 queue closeout
+It is illegal to stop at:
 
-Queue closeout must record:
+- status-only reporting
+- `是否继续`
+- `要不要 closeout`
+- `要不要 promotion review`
+- `要不要同步文档`
 
-- `closeout_status`
-- `next_effect`
+when those are already the only legal next step.
 
-Allowed `next_effect` values:
-
-- `promote-next-queue`
-- `return-to-target-review`
-- `block-target`
-
-Queue closeout must not use prose alone to express:
-
-- rejected queue admission
-- deferred queue admission
-- blocked target-level decisions
-
-Those outcomes belong in the target plan's `promotion_review_result`.
+### 11.3 Queue closeout sync order
 
 Queue closeout sync order is fixed:
 
@@ -389,20 +467,7 @@ Queue closeout sync order is fixed:
 5. project-progress
 6. optional `docs/change-log.md` mirror update
 
-### 11.3 target closeout
-
-A target may become `done` only when all are true:
-
-- acceptance criteria pass
-- no active queue remains
-- no active task remains
-- no undispositioned residue remains
-- the target plan records the target closeout decision
-- blueprint and project-progress are synced back to a legal repository entry state
-
-The target must not be marked `done` merely because all existing queues are closed.
-
-## 12. Human Confirmation Throttle
+## 12. Human Confirmation Constraint
 
 Per task, at most one human-confirmation question may be asked.
 
@@ -420,76 +485,16 @@ The decision order is:
 2. if the item is uncertain but does not change active truth, record `uncertain-needs-review` and stop without asking
 3. ask the user only when active truth would change and multiple mutually exclusive legal branches exist
 
-If the one allowed confirmation has already been used, the agent must either:
+Hard throttle:
 
-- finish automatic closeout from existing evidence
-- or report `blocked` with the smallest concrete blocker
+1. If there is only one legal branch, do not ask.
+2. Scope approval questions must not be reused as admission confirmation.
+3. Closeout / promotion-review / doc-sync questions are forbidden when they are already the only legal next step.
+4. If the one allowed confirmation has already been used, the agent must either:
+   - finish automatic closeout from existing evidence
+   - or report `blocked` with the smallest concrete blocker
 
-## 13. Git Integration Rules
-
-Git integration is mandatory governance behavior.
-
-Rules:
-
-1. `mod-first` is the main integration branch.
-2. `mod-first-dev` is the development trunk.
-3. All work happens on a working branch.
-4. The full commit / push / merge / fresh-branch loop is mandatory after:
-   - queue closeout
-   - target closeout
-   - an explicit integration checkpoint
-5. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
-6. Ordinary task batches must still produce a structured content summary, but they do not automatically require the full merge loop.
-7. Local hook or CI enforcement must reject commit messages that omit the required summary block.
-8. After merge into `mod-first-dev`, do not keep developing on the already-integrated branch.
-9. Resume truth comes from the governance docs integrated into `mod-first-dev`, not branch memory.
-
-## 14. Commit / Push / Merge Content Summary
-
-Every git commit message must contain:
-
-- a subject line in the form `<type>: <brief title>`
-- a blank line
-- a `Summary:` section
-- at least one bullet under `Summary:` that describes the actual landed content
-
-The same rule applies to merge commits. Default one-line merge messages are invalid unless they are rewritten to include the required `Summary:` block.
-
-Before `push` or `merge`, record or reuse a structured content summary containing:
-
-- `branch`
-- `action type`
-- `related target`
-- `related queue`
-- `related task`
-- `change summary`
-- `verification summary`
-- `docs synced`
-- `next step`
-
-The commit message summary is a governance prerequisite, not optional narration.
-
-Repository enforcement must be available through:
-
-- `tools/validate-commit-message.mjs`
-- `.githooks/commit-msg`
-- `.github/workflows/validate-commit-messages.yml`
-
-## 15. Drift-Prone Field Reduction
-
-Delete or demote high-drift fields, especially:
-
-- `project-progress.completed_queues`
-- `blueprint.completed_targets`
-- duplicated completed registries
-- any field that can be derived from downstream truth
-
-Principles:
-
-1. If downstream can authoritatively say it, upstream must not duplicate it.
-2. If a field cannot be kept reliably synchronized, it must not be Control Block truth.
-
-## 16. Consistency Checks
+## 13. Consistency Checks
 
 At minimum, Blueprint governance must satisfy:
 
@@ -510,39 +515,117 @@ At minimum, Blueprint governance must satisfy:
 10. target plans must use `next_action`, not `next_legal_action`
 11. target plans and their templates must not keep a live `### Current Decision` block
 12. target specs and their templates must expose queue families through a contract-only portfolio without `State` or `Source` columns
+13. `active_queue = none` must not coexist with `decision_state = active-execution`
+14. `next_action = resume-active-queue` requires a non-`none` `active_queue`
+15. a target plan must not review a `queue-candidate` without structured review fields
+16. `admission_status = admitted` must not coexist with `active_queue = none`
+17. a queue must not carry a live `active_task` unless `queue_status = active`
 
-## 17. Automated Enforcement
+## 14. Automated Enforcement
 
 `npm run lint:blueprints` is the required automated consistency gate for Blueprint governance changes.
 
-At minimum, the Blueprint lint gate must reject:
+Current Blueprint lint must reject:
 
 - `project-progress.next_step`
 - target-plan `next_legal_action`
 - live `### Current Decision` blocks in target plans
+- target-plan documents missing:
+  - `review_subject_id`
+  - `review_subject_classification`
+  - `proposed_queue_id`
+  - `review_basis`
+  - `admission_status`
+- target-plan states where:
+  - `active_queue = none` and `decision_state = active-execution`
+  - `next_action = resume-active-queue` while `active_queue = none`
+  - `admission_status = admitted` while `active_queue = none`
+  - `review_subject_classification = queue-candidate` while `proposed_queue_id = none`
 - target-spec queue tables that mix contract fields with `State` / `Source`
 - queue Control Blocks that use legacy `status` instead of `queue_status`
-- `has_active_queue = false` paired with a target plan `active_queue != none`
+- queues with `active_task != none` while `queue_status != active`
 - done queues that still expose live execution labels
+- `has_active_queue = false` paired with a target plan `active_queue != none`
 
-## 18. Migration Order
+## 15. Governance Debt Still Requiring Stronger Automation
+
+Current lint can catch document-state contradictions, but it still cannot fully prove conversation-order violations.
+
+These remain mandatory future enforcement categories:
+
+1. reject implementation batches that begin while the target plan still shows `active_queue = none` and the reviewed item is an unadmitted `queue-candidate`
+2. reject sessions that complete verification for the active task but stop before queue auto-reconcile / closeout when no blocker exists
+3. detect scope approval being incorrectly treated as admission without structured target-plan review fields changing first
+4. detect conversation-only classification that changes active truth without synchronized governance writes
+
+Until stronger automation exists, these are still hard workflow rules, not optional guidance.
+
+## 16. Session Execution Principle
+
+Blueprint workflow corrections must be performed directly through the session by editing the authoritative docs and syncing `docs/change-log.md`.
+
+Do not require the user to manually paste updated workflow prose into `docs/blueprints/blueprint-workflow-spec.md`.
+
+The only acceptable reason to ask for human choice is:
+
+- multiple mutually exclusive legal branches exist
+- the choice would change active truth
+
+Otherwise the agent must update the governing docs directly.
+
+## 17. Git Integration Rules
+
+Git integration is mandatory governance behavior.
+
+Rules:
+
+1. `mod-first` is the main integration branch.
+2. `mod-first-dev` is the development trunk.
+3. All work happens on a working branch.
+4. The full commit / push / merge / fresh-branch loop is mandatory after:
+   - queue closeout
+   - target closeout
+   - an explicit integration checkpoint
+5. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
+6. Ordinary task batches must still produce a structured content summary, but they do not automatically require the full merge loop.
+7. Local hook or CI enforcement must reject commit messages that omit the required summary block.
+8. After merge into `mod-first-dev`, do not keep developing on the already-integrated branch.
+9. Resume truth comes from the governance docs integrated into `mod-first-dev`, not branch memory.
+
+## 18. Drift-Prone Field Reduction
+
+Delete or demote high-drift fields, especially:
+
+- `project-progress.completed_queues`
+- `blueprint.completed_targets`
+- duplicated completed registries
+- any field that can be derived from downstream truth
+
+Principles:
+
+1. If downstream can authoritatively say it, upstream must not duplicate it.
+2. If a field cannot be kept reliably synchronized, it must not be Control Block truth.
+
+## 19. Migration Order
 
 Blueprint governance migrations must apply changes in this order:
 
 1. rewrite `docs/blueprints/blueprint-workflow-spec.md`
 2. rewrite relevant templates
 3. clean current live docs
-4. remove or demote drift-prone fields
+4. update current automated enforcement where static checks are possible
 5. run consistency checks
-6. report the corrected model, canonical resume chain, and remaining governance debt
+6. sync `docs/change-log.md`
+7. report the corrected model, sealed loopholes, and remaining governance debt
 
-## 19. Success Condition
+## 20. Success Condition
 
 The Blueprint model is successful only when:
 
 - current execution truth can be recovered from Control Blocks alone
+- admission cannot be silently skipped by scope approval alone
 - the next legal action is unambiguous from structured fields
 - target and queue truth each have a single writer
 - historical narrative no longer masquerades as live control
 - `open + no active queue` is supported without fake work
-- task completion automatically rolls through verification, residue scan, doc sync, and gate re-evaluation
+- task completion automatically rolls through verification, residue scan, gate re-evaluation, closeout sync, and target handoff when no blocker remains

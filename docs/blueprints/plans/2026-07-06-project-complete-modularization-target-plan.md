@@ -6,12 +6,17 @@
 - target_id: `target.project-complete-modularization`
 - target_status: `open`
 - active_phase: `phase.final-acceptance`
-- active_queue: `none`
-- decision_state: `idle-open`
-- next_decision: `same-target-admission-or-target-closeout`
-- next_action: `classify-fresh-work`
-- resume_gate: `idle-open`
-- promotion_review_result: `none`
+- active_queue: `queue.ui-runtime-contract-consumption`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-target-review`
+- next_action: `auto-reconcile-active-task`
+- resume_gate: `open-active-queue`
+- promotion_review_result: `admit`
+- review_subject_id: `none`
+- review_subject_classification: `none`
+- proposed_queue_id: `none`
+- review_basis: `none`
+- admission_status: `none`
 - blocked_by: []
 
 ## Human Context
@@ -24,7 +29,17 @@
 | `queue.unified-contribution-intake-closeout` | `candidate` | `only if a fresh intake-path blocker is proven` | `Previously rejected on current evidence.` |
 | `queue.playable-family-gap-audit` | `candidate` | `only if a still-live playable-family gap is proven` | `No active evidence today.` |
 | `queue.framework-scaffold-and-template-closure` | `candidate` | `only if framework-owned authoring coverage is disproven` | `Accepted compatibility residue alone is insufficient.` |
-| `queue.ui-runtime-contract-consumption` | `candidate` | `only if runtime-facing UI contract bypass is proven` | `No active evidence today.` |
+| `queue.ui-runtime-contract-consumption` | `active` | `only if runtime-facing UI contract bypass is proven` | `Admitted on 2026-07-07 after dialog audit proved parallel modal/dialogue implementations and duplicated confirm renderers on the covered production path.` |
+
+### Admission Review Record
+
+- Scope approval:
+  - `The bounded dialog-unification scope was user-approved as scope only.`
+  - `That scope approval is not treated as queue admission truth.`
+- Admission basis:
+  - `queue.ui-runtime-contract-consumption was admitted only after the target plan and queue doc were synchronized with written runtime-facing UI contract bypass evidence.`
+- Current review subject:
+  - `none`
 
 ### Queue Closeout Rules
 
@@ -43,8 +58,9 @@ Optional mirror:
 3. `Re-evaluate whether the queue should continue, close, or block.`
 4. `Scan governance owners: project-progress, blueprint, target spec, target plan, queue doc, and affected shared contracts.`
 5. `Scan residue: tracked leftovers, untracked drafts, unsynced truth, and out-of-scope remains.`
-6. `Sync target-level truth if queue closeout or promotion conditions changed.`
-7. `Optionally mirror the result into change-log if a human-readable summary is warranted.`
+6. `If verification passed and the next legal execution point is unique, continue directly into queue closeout or target-review handoff.`
+7. `Sync target-level truth if queue closeout or promotion conditions changed.`
+8. `Optionally mirror the result into change-log if a human-readable summary is warranted.`
 
 ### Human Confirmation Throttle
 
@@ -52,6 +68,8 @@ Optional mirror:
 - `If the target/queue/task boundary can be resolved from current docs and code, do not ask.`
 - `If an item is uncertain but would not change active truth, record uncertain-needs-review and stop without asking.`
 - `If active truth would change and multiple mutually exclusive legal branches exist, one human escalation is allowed.`
+- `Do not treat user scope approval as queue admission.`
+- `Do not ask whether to do closeout, promotion review, or doc sync when they are already the unique next legal step.`
 
 ### Git Integration Loop
 
@@ -89,3 +107,4 @@ Mandatory merge loop triggers:
 - `2026-07-06: queue.unified-contribution-intake-closeout was rejected on current evidence and remained a conditional fallback only.`
 - `2026-07-06 to 2026-07-07: authoring, residue, acceptance-proof, and final-acceptance queues were closed as bounded queue records rather than target-level truth.`
 - `2026-07-07: target closeout was intentionally pulled back to open + idle-open so same-target queue admission remains legal until explicit target closeout is written.`
+- `2026-07-07: queue.ui-runtime-contract-consumption was admitted after a bounded dialog-component audit proved still-live runtime-facing UI contract bypass on the covered path.`

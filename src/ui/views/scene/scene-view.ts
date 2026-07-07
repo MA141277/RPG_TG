@@ -5,6 +5,7 @@ import {
   resolveActionNodeText,
   resolveChoiceOptionText,
 } from "../../../application/content/text-resolution";
+import { renderSharedDialog } from "../../components/dialog/shared-dialog";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
 type SceneViewInput = {
@@ -58,43 +59,34 @@ function renderSceneDialogueCard(
     portraitArtClassName?: string;
   } = {}
 ): string {
-  const clickable = options.advanceActionId != null;
-
-  return `
-    <footer class="c-grain-shop-dialogue c-scene-dialogue" aria-label="剧情对话">
-      <div
-        class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
-        ${clickable ? `data-scene-action="${options.advanceActionId}" role="button" tabindex="0"` : ""}
-      >
-        ${paragraphs
-          .map((paragraph) => `<p class="c-grain-shop-dialogue__line">${paragraph}</p>`)
-          .join("")}
-        ${
-          clickable
-            ? '<p class="c-grain-shop-dialogue__hint">点击继续</p>'
-            : ""
-        }
-      </div>
-      ${
-        options.narration
-          ? ""
-          : `
-            <div class="c-grain-shop-dialogue__npc">
-              <div class="c-grain-shop-portrait" aria-hidden="true">
-                ${
-                  options.portraitImageUrl == null
-                    ? `<span class="c-grain-shop-portrait__art ${options.portraitArtClassName ?? ""}"></span>`
-                    : `<img class="c-grain-shop-portrait__image" src="${options.portraitImageUrl}" alt="">`
-                }
-              </div>
-              <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-                ${options.speakerName ?? ""}
-              </p>
-            </div>
-          `
-      }
-    </footer>
-  `;
+  return renderSharedDialog({
+    layout: "dialogue-card",
+    body: paragraphs,
+    hintText: options.advanceActionId == null ? null : "点击继续",
+    ariaLabel: "剧情对话",
+    footerClassName: "c-grain-shop-dialogue c-scene-dialogue",
+    action:
+      options.advanceActionId == null
+        ? undefined
+        : {
+            id: options.advanceActionId,
+            label: "点击继续",
+            result: "action",
+            attributes: {
+              "data-scene-action": options.advanceActionId,
+            },
+          },
+    speaker:
+      options.narration
+        ? {
+            narration: true,
+          }
+        : {
+            name: options.speakerName ?? "",
+            portraitImageUrl: options.portraitImageUrl,
+            portraitArtClassName: options.portraitArtClassName,
+          },
+  });
 }
 
 function renderChoiceList(choiceOptions: ChoiceOption[]): string {
@@ -233,10 +225,9 @@ export function renderSceneView(input: SceneViewInput): string {
   if (action.type === "choice") {
     return `
       <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="choice">
-        ${renderSceneDialogueCard(
-          [action.prompt ?? "你要如何回应？"],
-          { narration: true }
-        )}
+        ${renderSceneDialogueCard([action.prompt ?? "你要如何回应？"], {
+          narration: true,
+        })}
         ${renderChoiceList(resolvedChoiceOptions)}
       </section>
       ${activityOverlay}
