@@ -4,11 +4,11 @@
 
 - queue_id: `queue.ui-runtime-contract-consumption`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.ui-runtime-contract-consumption.shared-dialog-component-and-bounded-replacement`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `open`
+- closeout_status: `done`
 - next_effect: `return-to-target-review`
 - allowed_task_states:
   - `candidate`
@@ -75,7 +75,7 @@ This queue does not cover:
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.ui-runtime-contract-consumption.shared-dialog-component-and-bounded-replacement` | `active` | `Extract one bounded shared dialog component with explicit result semantics and replace only the approved dialog call sites without expanding into full overlay unification.` | `none` | `The pre-implementation audit and user approval are already complete; resume directly inside the bounded implementation scope.` |
+| `task.ui-runtime-contract-consumption.shared-dialog-component-and-bounded-replacement` | `done` | `Extract one bounded shared dialog component with explicit result semantics and replace only the approved dialog call sites without expanding into full overlay unification.` | `none` | `Completed on 2026-07-07 with bounded replacements only; no overlay-system or presenter-scope expansion was admitted.` |
 
 ## Task Definitions
 
@@ -84,7 +84,7 @@ This queue does not cover:
 #### Control Block
 
 - task_id: `task.ui-runtime-contract-consumption.shared-dialog-component-and-bounded-replacement`
-- state: `active`
+- state: `done`
 - task_type: `execution`
 - depends_on: []
 - blocked_by: []
@@ -160,3 +160,20 @@ This queue does not cover:
   - `city-begging`
 - Failure mode:
   - `Do not let the shared dialog component become a business-flow controller; callers must keep deciding follow-up actions from the returned or encoded result semantics.`
+
+## Closeout Decision
+
+- Decision: `close-queue`
+- Date: `2026-07-07`
+- Verification status: `passed`
+- Closeout basis:
+  - `The repository-level shared dialog component now exists at src/ui/components/dialog/shared-dialog.ts.`
+  - `Approved replacement points were consumed without expanding into overlay-system, presenter, editor, runtime, or save-structure work.`
+  - `Caller-owned post-close business actions were preserved; the shared component only exposes bounded result semantics.`
+- Verification record:
+  - `npm run build:test`
+  - `node --test tests/robustness.test.cjs tests/blueprint-governance-lint.test.cjs`
+  - `npx tsc -p tsconfig.json --noEmit`
+  - `npm run lint:blueprints`
+- Return effect:
+  - `Return to target-level review with no active queue.`

@@ -5,6 +5,20 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-07 UI Runtime Contract Consumption Queue Closeout
+
+### Changed
+- 同步当前 live Blueprint 真值：
+  - [docs/blueprints/queues/ui-runtime-contract-consumption-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/ui-runtime-contract-consumption-queue.md)
+  - [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)
+  - [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)
+- `queue.ui-runtime-contract-consumption` 已从 `active` 收口为 `done`，其唯一 active task 已标记完成并补入 closeout decision 与 verification record。
+- 当前 target 已从 `active-execution` 返回到 `open + idle-open`，当前无 active queue；下一合法执行点收口为“同 target 的 fresh work admission review 或显式 target closeout”。
+
+### Impact
+- 共享对话框提取与本轮限定替换点不再停留在代码已完成但治理未 closeout 的悬空状态。
+- 后续若继续推进新的 UI 或 modularization 工作，必须重新经过 target-level classification / admission，而不能隐式复用已关闭 queue。
+
 ## 2026-07-07 Blueprint Admission And Closeout Fail-Closed Sealing
 
 ### Changed

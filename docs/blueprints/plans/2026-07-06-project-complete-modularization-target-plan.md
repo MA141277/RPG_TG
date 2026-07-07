@@ -6,12 +6,12 @@
 - target_id: `target.project-complete-modularization`
 - target_status: `open`
 - active_phase: `phase.final-acceptance`
-- active_queue: `queue.ui-runtime-contract-consumption`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-target-review`
-- next_action: `auto-reconcile-active-task`
-- resume_gate: `open-active-queue`
-- promotion_review_result: `admit`
+- active_queue: `none`
+- decision_state: `idle-open`
+- next_decision: `same-target-admission-or-target-closeout`
+- next_action: `classify-fresh-work`
+- resume_gate: `open-target-no-active-queue`
+- promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -29,7 +29,7 @@
 | `queue.unified-contribution-intake-closeout` | `candidate` | `only if a fresh intake-path blocker is proven` | `Previously rejected on current evidence.` |
 | `queue.playable-family-gap-audit` | `candidate` | `only if a still-live playable-family gap is proven` | `No active evidence today.` |
 | `queue.framework-scaffold-and-template-closure` | `candidate` | `only if framework-owned authoring coverage is disproven` | `Accepted compatibility residue alone is insufficient.` |
-| `queue.ui-runtime-contract-consumption` | `active` | `only if runtime-facing UI contract bypass is proven` | `Admitted on 2026-07-07 after dialog audit proved parallel modal/dialogue implementations and duplicated confirm renderers on the covered production path.` |
+| `queue.ui-runtime-contract-consumption` | `closed` | `only if runtime-facing UI contract bypass is proven` | `Closed on 2026-07-07 after the bounded shared-dialog replacement landed and verification passed.` |
 
 ### Admission Review Record
 
@@ -40,6 +40,8 @@
   - `queue.ui-runtime-contract-consumption was admitted only after the target plan and queue doc were synchronized with written runtime-facing UI contract bypass evidence.`
 - Current review subject:
   - `none`
+- Current handoff:
+  - `queue.ui-runtime-contract-consumption is closed; the target is open with no active queue and awaits either same-target admission of fresh work or explicit target closeout.`
 
 ### Queue Closeout Rules
 
@@ -108,3 +110,4 @@ Mandatory merge loop triggers:
 - `2026-07-06 to 2026-07-07: authoring, residue, acceptance-proof, and final-acceptance queues were closed as bounded queue records rather than target-level truth.`
 - `2026-07-07: target closeout was intentionally pulled back to open + idle-open so same-target queue admission remains legal until explicit target closeout is written.`
 - `2026-07-07: queue.ui-runtime-contract-consumption was admitted after a bounded dialog-component audit proved still-live runtime-facing UI contract bypass on the covered path.`
+- `2026-07-07: queue.ui-runtime-contract-consumption was closed after the bounded shared-dialog component landed, approved replacement points were consumed, and verification passed; target state returned to open with no active queue.`

@@ -5,7 +5,7 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_target: `target.project-complete-modularization`
-- has_active_queue: `true`
+- has_active_queue: `false`
 - next_file: `docs/blueprints/blueprint.md`
 - entry_action: `open-next-file`
 
@@ -36,5 +36,5 @@
 
 ### Active Admission Snapshot (2026-07-07)
 
-- `queue.ui-runtime-contract-consumption is now re-admitted under the current modularization target.`
-- `Current active work is bounded to shared dialog-component extraction plus approved same-slice replacement points only.`
+- `queue.ui-runtime-contract-consumption is closed after the bounded shared-dialog replacement and verification record were synchronized into Blueprint truth.`
+- `The current target remains open with no active queue; the next legal entry point is same-target admission review for fresh work or explicit target closeout.`
