@@ -1,6 +1,7 @@
 import "./styles/app.css";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
 import {
+  setLayoutEditorBattleUiValue,
   selectLayoutEditorComponent,
   selectLayoutEditorElement,
   selectLayoutEditorTarget,
@@ -108,12 +109,17 @@ import {
 import { createBaseGameContentPack } from "./content/base-game-content-pack";
 import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
 import {
+  createDefaultBattleUiScreenLayout,
   createDefaultCharacterDetailScreenLayout,
   createDefaultCharacterSelectScreenLayout,
   createDefaultGlobalHudLayout,
   createDefaultStartScreenLayout,
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
+import {
+  createDefaultBattleUiEditorValues,
+  type BattleUiEditorVariableName,
+} from "./domain/battle-ui-editor";
 import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
 import {
   createEmptyModRuntimeState,
@@ -599,6 +605,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
       "start-screen": createDefaultStartScreenLayout(),
       "character-select-screen": createDefaultCharacterSelectScreenLayout(),
       "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
+      "battle-ui-screen": createDefaultBattleUiScreenLayout(),
     },
     layoutEditor: {
       isOpen: false,
@@ -606,6 +613,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
       selectedComponentId: "status-board",
       selectedElementId: null,
       backgroundAssetQuery: "",
+      battleUiValues: createDefaultBattleUiEditorValues(),
     },
   };
 
@@ -1973,6 +1981,7 @@ function createScenarioPackAppState(
       "start-screen": createDefaultStartScreenLayout(),
       "character-select-screen": createDefaultCharacterSelectScreenLayout(),
       "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
+      "battle-ui-screen": createDefaultBattleUiScreenLayout(),
     },
     layoutEditor: {
       isOpen: false,
@@ -1980,6 +1989,7 @@ function createScenarioPackAppState(
       selectedComponentId: "status-board",
       selectedElementId: null,
       backgroundAssetQuery: "",
+      battleUiValues: createDefaultBattleUiEditorValues(),
     },
   };
 
@@ -2371,6 +2381,44 @@ function getSelectedLayout(): UiLayout {
   return appState.uiLayouts[appState.layoutEditor.selectedTargetId];
 }
 
+function getBattleUiEditorPayload(): Record<string, string> {
+  return { ...appState.layoutEditor.battleUiValues };
+}
+
+function postBattleUiEditorConfigToFrame(
+  frame: HTMLIFrameElement | null | undefined
+): void {
+  if (frame?.contentWindow == null) {
+    return;
+  }
+
+  frame.contentWindow.postMessage(
+    {
+      type: "rpg-tg:battle-ui-config",
+      variables: getBattleUiEditorPayload(),
+    },
+    window.location.origin
+  );
+}
+
+function syncEmbeddedBattleUiEditor(): void {
+  const battleFrame =
+    appRoot.querySelector<HTMLIFrameElement>(".c-story-battle__demo-frame");
+  if (battleFrame == null) {
+    return;
+  }
+
+  battleFrame.addEventListener(
+    "load",
+    () => {
+      postBattleUiEditorConfigToFrame(battleFrame);
+    },
+    { once: true }
+  );
+
+  postBattleUiEditorConfigToFrame(battleFrame);
+}
+
 function renderActiveSurface(): void {
   if (uiOverlayElement == null) {
     renderApp();
@@ -2385,12 +2433,18 @@ function renderActiveSurface(): void {
 }
 
 async function copyCurrentLayoutParams(): Promise<void> {
-  const payload = {
-    targetId: appState.layoutEditor.selectedTargetId,
-    selectedComponentId: appState.layoutEditor.selectedComponentId,
-    selectedElementId: appState.layoutEditor.selectedElementId,
-    layout: getSelectedLayout(),
-  };
+  const payload =
+    appState.layoutEditor.selectedTargetId === "battle-ui-screen"
+      ? {
+          targetId: appState.layoutEditor.selectedTargetId,
+          variables: getBattleUiEditorPayload(),
+        }
+      : {
+          targetId: appState.layoutEditor.selectedTargetId,
+          selectedComponentId: appState.layoutEditor.selectedComponentId,
+          selectedElementId: appState.layoutEditor.selectedElementId,
+          layout: getSelectedLayout(),
+        };
   await navigator.clipboard.writeText(`${JSON.stringify(payload, null, 2)}\n`);
 }
 
@@ -2410,6 +2464,19 @@ function handleLayoutEditorInput(targetElement: EventTarget | null): boolean {
   ) {
     appState = setLayoutEditorBackgroundAssetQuery(appState, targetElement.value);
     renderActiveSurface();
+    return true;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.battleUiVar != null
+  ) {
+    appState = setLayoutEditorBattleUiValue(
+      appState,
+      targetElement.dataset.battleUiVar as BattleUiEditorVariableName,
+      targetElement.value
+    );
+    syncEmbeddedBattleUiEditor();
     return true;
   }
 
@@ -2543,10 +2610,12 @@ function handleLayoutEditorClick(targetElement: EventTarget | null): boolean {
       targetId === "global-hud" ||
       targetId === "start-screen" ||
       targetId === "character-select-screen" ||
-      targetId === "character-detail-screen"
+      targetId === "character-detail-screen" ||
+      targetId === "battle-ui-screen"
     ) {
       appState = selectLayoutEditorTarget(appState, targetId as LayoutEditorTargetId);
       renderActiveSurface();
+      syncEmbeddedBattleUiEditor();
     }
     return true;
   }
@@ -4407,6 +4476,7 @@ function renderAppFrame(
   syncActivityQteLoop();
   syncCampaignTerrainWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
+  syncEmbeddedBattleUiEditor();
 }
 
 function restoreCampaignMapScaleInputFocus(

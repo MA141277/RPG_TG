@@ -1,3 +1,5 @@
+import type { BattleUiEditorValues } from "./battle-ui-editor";
+
 export type UiLayoutBackgroundMode =
   | "stretch"
   | "contain"
@@ -43,7 +45,8 @@ export type LayoutEditorTargetId =
   | "global-hud"
   | "start-screen"
   | "character-select-screen"
-  | "character-detail-screen";
+  | "character-detail-screen"
+  | "battle-ui-screen";
 
 export type UiLayout = {
   id: LayoutEditorTargetId;
@@ -71,11 +74,16 @@ export type CharacterDetailScreenLayout = UiLayout & {
   id: "character-detail-screen";
 };
 
+export type BattleUiScreenLayout = UiLayout & {
+  id: "battle-ui-screen";
+};
+
 export type UiLayoutByTargetId = {
   "global-hud": GlobalHudLayout;
   "start-screen": StartScreenLayout;
   "character-select-screen": CharacterSelectScreenLayout;
   "character-detail-screen": CharacterDetailScreenLayout;
+  "battle-ui-screen": BattleUiScreenLayout;
 };
 
 export type LayoutEditorState = {
@@ -84,6 +92,7 @@ export type LayoutEditorState = {
   selectedComponentId: string;
   selectedElementId: string | null;
   backgroundAssetQuery: string;
+  battleUiValues: BattleUiEditorValues;
 };
 
 export type LayoutBackgroundAssetOption = {

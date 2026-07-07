@@ -33,6 +33,113 @@
       --tile-h: calc(32px * var(--page-scale));
       --tile-side: calc(40px * var(--page-scale));
       --battle-cursor-brush: url("../../ui/yuansu/red_brush_cursor_48.png") 3 4, auto;
+      --battle-stage-left: 50%;
+      --battle-stage-top: 50%;
+      --battle-stage-width: min(100vw, 177.7778vh);
+      --battle-stage-height: min(100vh, 56.25vw);
+      --battle-stage-translate-x: -50%;
+      --battle-stage-translate-y: -50%;
+      --battle-header-height: 8.0729%;
+      --battle-header-row-left: 33.4%;
+      --battle-header-row-top: 16%;
+      --battle-header-row-width: 33.2%;
+      --battle-header-row-height: 32%;
+      --battle-header-row-gap: 1.1vw;
+      --battle-header-row-font-size: 0.66rem;
+      --battle-objective-left: 46.25%;
+      --battle-objective-top: 56%;
+      --battle-objective-width: 27%;
+      --battle-objective-font-size: 0.58rem;
+      --battle-objective-line-height: 1.2;
+      --battle-top-side-font-size: 0.55rem;
+      --battle-top-side-column-gap: 0.42vw;
+      --battle-top-side-ally-width: 30.4%;
+      --battle-top-side-ally-padding-left: 7.7%;
+      --battle-top-side-enemy-left: 68.945%;
+      --battle-top-side-enemy-width: 29%;
+      --battle-top-side-enemy-padding-left: 6.25%;
+      --battle-side-name-top: 22%;
+      --battle-side-name-width: 16.9%;
+      --battle-side-name-height: 54%;
+      --battle-side-name-font-size: 0.72rem;
+      --battle-side-name-enemy-width: 17%;
+      --battle-stat-bar-width: 6.3vw;
+      --battle-stat-bar-max-width: 8.6vh;
+      --battle-stat-bar-min-width: 56px;
+      --battle-stat-bar-height: 0.48rem;
+      --battle-board-translate-y: 3.4%;
+      --battle-command-left: -0.05%;
+      --battle-command-top: 16.1458%;
+      --battle-command-width: 14.2578%;
+      --battle-command-height: 67.6215%;
+      --battle-command-padding-top: 4.25%;
+      --battle-command-padding-right: 1.05%;
+      --battle-command-padding-bottom: 1.6%;
+      --battle-command-padding-left: 1.05%;
+      --battle-unit-card-height: 41%;
+      --battle-unit-card-translate-y: -10px;
+      --battle-unit-card-grid-left: 38.65%;
+      --battle-unit-card-grid-gap: 3.5%;
+      --battle-unit-portrait-padding-top: 31%;
+      --battle-unit-portrait-padding-right: 8%;
+      --battle-unit-portrait-padding-bottom: 10%;
+      --battle-unit-portrait-padding-left: 8%;
+      --battle-unit-portrait-translate-y: -14px;
+      --battle-unit-portrait-scale: 1.18;
+      --battle-unit-name-font-size: 0.88rem;
+      --battle-unit-meter-label-width: 40px;
+      --battle-unit-meter-gap: 5px;
+      --battle-unit-stat-offset: 72px;
+      --battle-unit-stat-label-width: 52px;
+      --battle-formation-panel-padding-top: 6.3%;
+      --battle-formation-title-height: 8.4%;
+      --battle-formation-grid-padding-top: 2.2%;
+      --battle-formation-grid-padding-right: 4.6%;
+      --battle-formation-grid-padding-bottom: 7%;
+      --battle-formation-grid-padding-left: 4.6%;
+      --battle-formation-grid-gap: 2.2%;
+      --battle-right-panel-left: 72.6074%;
+      --battle-right-panel-top: 12.5%;
+      --battle-right-panel-width: 27.3438%;
+      --battle-right-panel-height: 19.0972%;
+      --battle-right-panel-padding-top: 2.4%;
+      --battle-right-panel-padding-right: 2.25%;
+      --battle-right-panel-padding-bottom: 1.35%;
+      --battle-right-panel-padding-left: 2.25%;
+      --battle-controls-button-height: 6.1%;
+      --battle-controls-button-font-size: 0.72rem;
+      --battle-start-left: 78.35%;
+      --battle-start-top: 92.52%;
+      --battle-start-width: 9.45%;
+      --battle-end-turn-left: 89.55%;
+      --battle-end-turn-top: 92.46%;
+      --battle-end-turn-width: 9.45%;
+      --battle-deploy-left: 21.35%;
+      --battle-deploy-top: 86.05%;
+      --battle-deploy-width: 54.95%;
+      --battle-deploy-height: 10.25%;
+      --battle-deploy-translate-x: 20px;
+      --battle-deploy-translate-y: 15px;
+      --battle-deploy-gap: 0.55vw;
+      --battle-deploy-padding-top: 0.35%;
+      --battle-deploy-padding-right: 1.05%;
+      --battle-deploy-padding-bottom: 0.35%;
+      --battle-deploy-padding-left: 1.05%;
+      --battle-action-menu-width: 5.36%;
+      --battle-action-menu-height: 14.14%;
+      --battle-action-menu-padding-top: 1.2%;
+      --battle-action-menu-padding-right: 0.35%;
+      --battle-action-menu-padding-bottom: 0.85%;
+      --battle-action-menu-padding-left: 0.35%;
+      --battle-action-menu-gap: 1.5%;
+      --battle-action-hint-width: 72%;
+      --battle-action-hint-height: 12%;
+      --battle-action-hint-margin-top: 20px;
+      --battle-action-hint-font-size: 0.38rem;
+      --battle-action-hint-line-height: 1.15;
+      --battle-action-button-width: 74%;
+      --battle-action-button-height: 16.2%;
+      --battle-action-button-font-size: 0.58rem;
       --battle-popup-frame: url("../../ui/battle/战斗/battle_popup_frame_9slice.png");
       --cell: min(
         calc((100vh - var(--header-h) - var(--deploy-h) - var(--controls-h) - 20px) / 10 - 2px),
@@ -1082,8 +1189,8 @@
     .formation-slot.striker {
       filter: drop-shadow(0 0 18px rgba(255, 225, 122, 0.8)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
     }
-    .formation-side.player .formation-slot.striker { transform: translate(-50%, -100%) translateX(30px) scale(var(--slot-scale, 1)); }
-    .formation-side.enemy .formation-slot.striker { transform: translate(-50%, -100%) translateX(-30px) scale(var(--slot-scale, 1)); }
+    .formation-side.player .formation-slot.striker { transform: translate(-50%, -100%) scale(var(--slot-scale, 1)); }
+    .formation-side.enemy .formation-slot.striker { transform: translate(-50%, -100%) scale(var(--slot-scale, 1)); }
     .formation-slot.targeted {
       filter: drop-shadow(0 0 18px rgba(255, 95, 80, 0.78)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
       animation: hitShake 0.26s ease;
@@ -1100,7 +1207,7 @@
         linear-gradient(180deg, #6fa3d8, #1d3556 58%, #11151d);
       box-shadow: inset 0 0 14px rgba(255,255,255,0.12), 0 12px 0 rgba(0,0,0,0.18);
     }
-    .formation-spine-canvas {
+    .formation-spine-frame {
       position: relative;
       z-index: 1;
       display: block;
@@ -1108,23 +1215,66 @@
       height: 380px;
       margin: -138px auto -22px;
       pointer-events: none;
+      overflow: visible;
+      --spine-bleed-left: 0px;
+      --spine-bleed-right: 0px;
+      --spine-bleed-top: 0px;
+      --spine-bleed-bottom: 0px;
     }
-    .formation-side.enemy .formation-spine-canvas {
+    .formation-spine-canvas {
+      position: absolute;
+      z-index: 1;
+      display: block;
+      left: calc(var(--spine-bleed-left) * -1);
+      top: calc(var(--spine-bleed-top) * -1);
+      width: calc(100% + var(--spine-bleed-left) + var(--spine-bleed-right));
+      height: calc(100% + var(--spine-bleed-top) + var(--spine-bleed-bottom));
+      pointer-events: none;
+    }
+    .formation-side.enemy .formation-spine-frame {
       transform: scaleX(-1);
     }
     .battle-spine-proxy {
       position: absolute;
       z-index: 6;
-      width: 340px;
-      height: 380px;
       pointer-events: none;
       filter: drop-shadow(0 18px 10px rgba(0,0,0,0.48));
       will-change: transform, left, top;
     }
+    .battle-spine-proxy-anchor {
+      position: absolute;
+      width: 0;
+      height: 0;
+      z-index: 6;
+      pointer-events: none;
+      will-change: left, top;
+    }
+    .battle-spine-proxy-slot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 108px;
+      min-height: 194px;
+      border: 0;
+      border-radius: 999px 999px 42px 42px;
+      background: transparent;
+      padding: 0;
+      transform: translate(-50%, -100%) scale(var(--slot-scale, 1));
+      transform-origin: bottom center;
+      filter: drop-shadow(0 14px 8px rgba(0,0,0,0.42));
+      overflow: visible;
+      pointer-events: none;
+    }
+    .battle-spine-proxy-slot .formation-spine-frame {
+      visibility: visible;
+    }
+    .battle-spine-proxy-slot.enemy .formation-spine-frame {
+      transform: scaleX(-1);
+    }
     .battle-spine-proxy.enemy {
       transform: scaleX(-1);
     }
-    .formation-slot.is-proxying .formation-spine-canvas {
+    .formation-slot.is-proxying .formation-spine-frame {
       visibility: hidden;
     }
     .formation-side.enemy .formation-standee {
@@ -1284,11 +1434,11 @@
 
     .battle-stage {
       position: fixed;
-      left: 50%;
-      top: 50%;
-      width: min(100vw, 177.7778vh);
-      height: min(100vh, 56.25vw);
-      transform: translate(-50%, -50%);
+      left: var(--battle-stage-left);
+      top: var(--battle-stage-top);
+      width: var(--battle-stage-width);
+      height: var(--battle-stage-height);
+      transform: translate(var(--battle-stage-translate-x), var(--battle-stage-translate-y));
       overflow: hidden;
       background: var(--bg);
       color: #3d250d;
@@ -1320,7 +1470,7 @@
       left: 0;
       top: 0;
       width: 100%;
-      height: 8.0729%;
+      height: var(--battle-header-height);
       padding: 0;
       border: 0;
       z-index: 6;
@@ -1331,16 +1481,16 @@
 
     .battle-stage .header-row {
       position: absolute;
-      left: 33.4%;
-      top: 16%;
-      width: 33.2%;
-      height: 32%;
+      left: var(--battle-header-row-left);
+      top: var(--battle-header-row-top);
+      width: var(--battle-header-row-width);
+      height: var(--battle-header-row-height);
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 1.1vw;
+      gap: var(--battle-header-row-gap);
       overflow: hidden;
-      font-size: 0.66rem;
+      font-size: var(--battle-header-row-font-size);
     }
 
     .battle-stage header h1 {
@@ -1370,12 +1520,12 @@
 
     .battle-stage .objective-bar {
       position: absolute;
-      left: 46.25%;
-      top: 56%;
-      width: 27%;
+      left: var(--battle-objective-left);
+      top: var(--battle-objective-top);
+      width: var(--battle-objective-width);
       color: #4e3213;
-      font-size: 0.58rem;
-      line-height: 1.2;
+      font-size: var(--battle-objective-font-size);
+      line-height: var(--battle-objective-line-height);
       text-align: left;
       white-space: nowrap;
       overflow: hidden;
@@ -1393,34 +1543,34 @@
       display: grid;
       grid-template-columns: auto 1fr auto 1fr;
       align-items: center;
-      column-gap: 0.42vw;
+      column-gap: var(--battle-top-side-column-gap);
       overflow: hidden;
-      font-size: 0.55rem;
+      font-size: var(--battle-top-side-font-size);
       color: #41290f;
     }
 
     .top-side-info.ally {
       left: 0;
-      width: 30.4%;
-      padding-left: 7.7%;
+      width: var(--battle-top-side-ally-width);
+      padding-left: var(--battle-top-side-ally-padding-left);
     }
 
     .top-side-info.enemy {
-      left: 68.945%;
+      left: var(--battle-top-side-enemy-left);
       right: auto;
-      width: 29%;
-      padding-left: 6.25%;
+      width: var(--battle-top-side-enemy-width);
+      padding-left: var(--battle-top-side-enemy-padding-left);
     }
 
     .top-side-info .side-name {
       position: absolute;
-      top: 22%;
-      width: 16.9%;
-      height: 54%;
+      top: var(--battle-side-name-top);
+      width: var(--battle-side-name-width);
+      height: var(--battle-side-name-height);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.72rem;
+      font-size: var(--battle-side-name-font-size);
       font-weight: 700;
       white-space: nowrap;
       color: #f8e5b2;
@@ -1434,7 +1584,7 @@
 
     .top-side-info.enemy .side-name {
       left: 0;
-      width: 17%;
+      width: var(--battle-side-name-enemy-width);
     }
 
     .top-side-info .stat-label {
@@ -1446,10 +1596,10 @@
 
     .battle-stat-bar {
       position: relative;
-      width: 6.3vw;
-      max-width: 8.6vh;
-      min-width: 56px;
-      height: 0.48rem;
+      width: var(--battle-stat-bar-width);
+      max-width: var(--battle-stat-bar-max-width);
+      min-width: var(--battle-stat-bar-min-width);
+      height: var(--battle-stat-bar-height);
       overflow: hidden;
       background-image: url("../../ui/battle/战斗/20260702-201601.png");
       background-repeat: no-repeat;
@@ -1505,20 +1655,24 @@
     }
 
     .battle-stage #board {
-      transform: translate(0, 3.4%);
+      transform: translate(0, var(--battle-board-translate-y));
     }
 
     .battle-stage .command-panel {
       position: absolute;
-      left: 0;
-      top: 16.1458%;
-      width: 14.2578%;
-      height: 67.6215%;
+      left: var(--battle-command-left);
+      top: var(--battle-command-top);
+      width: var(--battle-command-width);
+      height: var(--battle-command-height);
       z-index: 6;
       display: flex;
       flex-direction: column;
       gap: 0;
-      padding: 4.25% 1.05% 1.6%;
+      padding:
+        var(--battle-command-padding-top)
+        var(--battle-command-padding-right)
+        var(--battle-command-padding-bottom)
+        var(--battle-command-padding-left);
       overflow: visible;
       color: #3d250d;
       text-shadow: 0 1px 0 rgba(255, 242, 191, 0.55);
@@ -1534,10 +1688,10 @@
     }
 
     .battle-stage .unit-card {
-      flex: 0 0 41%;
+      flex: 0 0 var(--battle-unit-card-height);
       min-height: 0;
       overflow: visible;
-      transform: translateY(-10px);
+      transform: translateY(var(--battle-unit-card-translate-y));
     }
 
     .battle-stage .unit-card .panel-title {
@@ -1548,8 +1702,8 @@
       height: 100%;
       padding: 0;
       display: grid;
-      grid-template-columns: 39% 1fr;
-      gap: 3.5%;
+      grid-template-columns: var(--battle-unit-card-grid-left) 1fr;
+      gap: var(--battle-unit-card-grid-gap);
       align-items: start;
       min-height: 0;
       font-size: 0.6rem;
@@ -1566,8 +1720,14 @@
       font-size: 0.56rem;
       font-weight: 700;
       line-height: 1.18;
-      padding: 31% 8% 10%;
-      transform: translateY(-14px) scale(1.18);
+      padding:
+        var(--battle-unit-portrait-padding-top)
+        var(--battle-unit-portrait-padding-right)
+        var(--battle-unit-portrait-padding-bottom)
+        var(--battle-unit-portrait-padding-left);
+      transform:
+        translateY(var(--battle-unit-portrait-translate-y))
+        scale(var(--battle-unit-portrait-scale));
       transform-origin: top center;
       text-align: center;
     }
@@ -1594,7 +1754,7 @@
 
     .battle-stage .unit-summary .name {
       color: #2e1907;
-      font-size: 0.88rem;
+      font-size: var(--battle-unit-name-font-size);
       font-weight: 700;
       line-height: 1.08;
       text-align: left;
@@ -1627,9 +1787,9 @@
 
     .battle-stage .unit-meter {
       display: grid;
-      grid-template-columns: 40px 1fr;
+      grid-template-columns: var(--battle-unit-meter-label-width) 1fr;
       align-items: center;
-      gap: 5px;
+      gap: var(--battle-unit-meter-gap);
       color: #5a3916;
       font-size: 0.5rem;
       line-height: 1.15;
@@ -1668,13 +1828,13 @@
       gap: 6px;
       border-top: 1px solid rgba(122, 82, 29, 0.22);
       padding: 3px 0 0;
-      margin: 0 0 0 -72px;
-      width: calc(100% + 72px);
+      margin: 0 0 0 calc(var(--battle-unit-stat-offset) * -1);
+      width: calc(100% + var(--battle-unit-stat-offset));
       min-width: 0;
     }
 
     .battle-stage .unit-stat-row span {
-      flex: 0 0 52px;
+      flex: 0 0 var(--battle-unit-stat-label-width);
       color: #714f25;
       font-size: 0.5rem;
     }
@@ -1693,13 +1853,13 @@
     .battle-stage .unit-formation-panel {
       flex: 1;
       min-height: 0;
-      padding-top: 6.3%;
+      padding-top: var(--battle-formation-panel-padding-top);
       display: flex;
       flex-direction: column;
     }
 
     .battle-stage .unit-formation-panel .panel-title {
-      height: 8.4%;
+      height: var(--battle-formation-title-height);
       padding: 0;
       border: 0;
       color: #3d250d;
@@ -1710,11 +1870,15 @@
 
     .battle-stage .unit-formation-grid {
       flex: 1;
-      padding: 2.2% 4.6% 7%;
+      padding:
+        var(--battle-formation-grid-padding-top)
+        var(--battle-formation-grid-padding-right)
+        var(--battle-formation-grid-padding-bottom)
+        var(--battle-formation-grid-padding-left);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-auto-rows: 1fr;
-      gap: 2.2%;
+      gap: var(--battle-formation-grid-gap);
       overflow: hidden;
     }
 
@@ -1787,12 +1951,16 @@
 
     .battle-stage .right-panel {
       position: absolute;
-      left: 72.6074%;
-      top: 12.5%;
-      width: 27.3438%;
-      height: 19.0972%;
+      left: var(--battle-right-panel-left);
+      top: var(--battle-right-panel-top);
+      width: var(--battle-right-panel-width);
+      height: var(--battle-right-panel-height);
       z-index: 6;
-      padding: 2.4% 2.25% 1.35%;
+      padding:
+        var(--battle-right-panel-padding-top)
+        var(--battle-right-panel-padding-right)
+        var(--battle-right-panel-padding-bottom)
+        var(--battle-right-panel-padding-left);
       display: block;
       color: #3d250d;
       text-shadow: 0 1px 0 rgba(255, 242, 191, 0.55);
@@ -1878,7 +2046,7 @@
     .battle-stage #btn-start,
     .battle-stage #btn-end-turn {
       position: absolute;
-      height: 6.1%;
+      height: var(--battle-controls-button-height);
       border: 0;
       background: transparent;
       color: #f8e5b2;
@@ -1887,7 +2055,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.72rem;
+      font-size: var(--battle-controls-button-font-size);
       font-weight: 700;
       letter-spacing: 0;
       line-height: 1;
@@ -1896,15 +2064,15 @@
     }
 
     .battle-stage #btn-start {
-      left: 78.35%;
-      top: 92.52%;
-      width: 9.45%;
+      left: var(--battle-start-left);
+      top: var(--battle-start-top);
+      width: var(--battle-start-width);
     }
 
     .battle-stage #btn-end-turn {
-      left: 89.55%;
-      top: 92.46%;
-      width: 9.45%;
+      left: var(--battle-end-turn-left);
+      top: var(--battle-end-turn-top);
+      width: var(--battle-end-turn-width);
     }
 
     .battle-stage #btn-wait,
@@ -1913,17 +2081,21 @@
     }
 
     .battle-stage .deploy-pool {
-      left: 21.35%;
+      left: var(--battle-deploy-left);
       right: auto;
-      top: 86.05%;
-      width: 54.95%;
-      height: 10.25%;
-      transform: translate(20px, 15px);
+      top: var(--battle-deploy-top);
+      width: var(--battle-deploy-width);
+      height: var(--battle-deploy-height);
+      transform: translate(var(--battle-deploy-translate-x), var(--battle-deploy-translate-y));
       z-index: 8;
       display: flex;
-      gap: 0.55vw;
+      gap: var(--battle-deploy-gap);
       align-items: center;
-      padding: 0.35% 1.05%;
+      padding:
+        var(--battle-deploy-padding-top)
+        var(--battle-deploy-padding-right)
+        var(--battle-deploy-padding-bottom)
+        var(--battle-deploy-padding-left);
       background: transparent;
       border: 0;
       border-radius: 0;
@@ -2003,10 +2175,14 @@
     .battle-stage .action-menu {
       z-index: 8;
       min-width: 0;
-      width: 5.36%;
-      height: 14.14%;
-      padding: 1.2% 0.35% 0.85%;
-      gap: 1.5%;
+      width: var(--battle-action-menu-width);
+      height: var(--battle-action-menu-height);
+      padding:
+        var(--battle-action-menu-padding-top)
+        var(--battle-action-menu-padding-right)
+        var(--battle-action-menu-padding-bottom)
+        var(--battle-action-menu-padding-left);
+      gap: var(--battle-action-menu-gap);
       background: url("../../ui/battle/战斗/20260702-195709.png") center / contain no-repeat;
       border: 0;
       border-radius: 0;
@@ -2015,27 +2191,27 @@
     }
 
     .battle-stage .action-menu .hint {
-      width: 72%;
-      height: 12%;
+      width: var(--battle-action-hint-width);
+      height: var(--battle-action-hint-height);
       color: #3d250d;
-      font-size: 0.38rem;
-      line-height: 1.15;
+      font-size: var(--battle-action-hint-font-size);
+      line-height: var(--battle-action-hint-line-height);
       overflow: hidden;
       padding: 0;
-      margin: 20px auto 0;
+      margin: var(--battle-action-hint-margin-top) auto 0;
       text-align: center;
     }
 
     .battle-stage .action-menu button {
-      width: 74%;
-      height: 16.2%;
+      width: var(--battle-action-button-width);
+      height: var(--battle-action-button-height);
       min-height: 0;
       padding: 0;
       margin: 0 auto;
       border: 0;
       border-radius: 0;
       color: #3d250d;
-      font-size: 0.58rem;
+      font-size: var(--battle-action-button-font-size);
       font-weight: 700;
       line-height: 1;
       text-shadow: 0 1px 0 rgba(255, 232, 173, 0.7);
@@ -2098,7 +2274,7 @@
         <div class="unit-card-body" id="unit-card-body"></div>
       </section>
       <section class="unit-formation-panel">
-        <div class="panel-title">编队详情（3x3）</div>
+        <div class="panel-title">编队详情</div>
         <div class="unit-formation-grid" id="unit-formation-grid"></div>
       </section>
     </aside>
@@ -2193,6 +2369,150 @@
 
   <script src="../../tools/spine-new-recovered-project.generated.js"></script>
   <script>
+    const BATTLE_UI_VARIABLES = {
+      "--battle-stage-left": "战斗页整体盒子左定位。",
+      "--battle-stage-top": "战斗页整体盒子上定位。",
+      "--battle-stage-width": "战斗页整体盒子宽度。",
+      "--battle-stage-height": "战斗页整体盒子高度。",
+      "--battle-stage-translate-x": "战斗页整体水平偏移。",
+      "--battle-stage-translate-y": "战斗页整体垂直偏移。",
+      "--battle-header-height": "顶部标题栏高度。",
+      "--battle-header-row-left": "标题信息组左边距。",
+      "--battle-header-row-top": "标题信息组上边距。",
+      "--battle-header-row-width": "标题信息组宽度。",
+      "--battle-header-row-height": "标题信息组高度。",
+      "--battle-header-row-gap": "标题信息组内部间距。",
+      "--battle-objective-left": "目标文本左定位。",
+      "--battle-objective-top": "目标文本上定位。",
+      "--battle-objective-width": "目标文本宽度。",
+      "--battle-top-side-ally-width": "左上我方总览宽度。",
+      "--battle-top-side-enemy-left": "右上敌方总览左定位。",
+      "--battle-top-side-enemy-width": "右上敌方总览宽度。",
+      "--battle-board-translate-y": "棋盘整体纵向偏移。",
+      "--battle-command-left": "左侧单位面板左定位。",
+      "--battle-command-top": "左侧单位面板上定位。",
+      "--battle-command-width": "左侧单位面板宽度。",
+      "--battle-command-height": "左侧单位面板高度。",
+      "--battle-right-panel-left": "右侧日志面板左定位。",
+      "--battle-right-panel-top": "右侧日志面板上定位。",
+      "--battle-right-panel-width": "右侧日志面板宽度。",
+      "--battle-right-panel-height": "右侧日志面板高度。",
+      "--battle-start-left": "开始战斗按钮左定位。",
+      "--battle-start-top": "开始战斗按钮上定位。",
+      "--battle-start-width": "开始战斗按钮宽度。",
+      "--battle-end-turn-left": "结束回合按钮左定位。",
+      "--battle-end-turn-top": "结束回合按钮上定位。",
+      "--battle-end-turn-width": "结束回合按钮宽度。",
+      "--battle-deploy-left": "底部署备条左定位。",
+      "--battle-deploy-top": "底部署备条上定位。",
+      "--battle-deploy-width": "底部署备条宽度。",
+      "--battle-deploy-height": "底部署备条高度。",
+      "--battle-deploy-translate-x": "底部署备条水平微调。",
+      "--battle-deploy-translate-y": "底部署备条垂直微调。",
+      "--battle-action-menu-width": "行动菜单宽度。",
+      "--battle-action-menu-height": "行动菜单高度。",
+    };
+
+    Object.assign(BATTLE_UI_VARIABLES, {
+      "--battle-stage-left": "\u6218\u6597\u9875\u6574\u4f53 left",
+      "--battle-stage-top": "\u6218\u6597\u9875\u6574\u4f53 top",
+      "--battle-stage-width": "\u6218\u6597\u9875\u6574\u4f53 width",
+      "--battle-stage-height": "\u6218\u6597\u9875\u6574\u4f53 height",
+      "--battle-stage-translate-x": "\u6218\u6597\u9875\u6574\u4f53 translateX",
+      "--battle-stage-translate-y": "\u6218\u6597\u9875\u6574\u4f53 translateY",
+      "--battle-header-height": "\u9876\u680f\u9ad8\u5ea6",
+      "--battle-header-row-left": "\u6807\u9898\u7ec4 left",
+      "--battle-header-row-top": "\u6807\u9898\u7ec4 top",
+      "--battle-header-row-width": "\u6807\u9898\u7ec4 width",
+      "--battle-header-row-height": "\u6807\u9898\u7ec4 height",
+      "--battle-header-row-gap": "\u6807\u9898\u7ec4 gap",
+      "--battle-objective-left": "\u76ee\u6807 left",
+      "--battle-objective-top": "\u76ee\u6807 top",
+      "--battle-objective-width": "\u76ee\u6807 width",
+      "--battle-top-side-ally-width": "\u6211\u65b9\u603b\u89c8 width",
+      "--battle-top-side-enemy-left": "\u654c\u65b9\u603b\u89c8 left",
+      "--battle-top-side-enemy-width": "\u654c\u65b9\u603b\u89c8 width",
+      "--battle-board-translate-y": "\u68cb\u76d8 translateY",
+      "--battle-command-left": "\u5de6\u4fa7\u9762\u677f left",
+      "--battle-command-top": "\u5de6\u4fa7\u9762\u677f top",
+      "--battle-command-width": "\u5de6\u4fa7\u9762\u677f width",
+      "--battle-command-height": "\u5de6\u4fa7\u9762\u677f height",
+      "--battle-right-panel-left": "\u53f3\u4fa7\u9762\u677f left",
+      "--battle-right-panel-top": "\u53f3\u4fa7\u9762\u677f top",
+      "--battle-right-panel-width": "\u53f3\u4fa7\u9762\u677f width",
+      "--battle-right-panel-height": "\u53f3\u4fa7\u9762\u677f height",
+      "--battle-start-left": "\u5f00\u59cb\u6218\u6597 left",
+      "--battle-start-top": "\u5f00\u59cb\u6218\u6597 top",
+      "--battle-start-width": "\u5f00\u59cb\u6218\u6597 width",
+      "--battle-end-turn-left": "\u7ed3\u675f\u56de\u5408 left",
+      "--battle-end-turn-top": "\u7ed3\u675f\u56de\u5408 top",
+      "--battle-end-turn-width": "\u7ed3\u675f\u56de\u5408 width",
+      "--battle-deploy-left": "\u90e8\u7f72\u6761 left",
+      "--battle-deploy-top": "\u90e8\u7f72\u6761 top",
+      "--battle-deploy-width": "\u90e8\u7f72\u6761 width",
+      "--battle-deploy-height": "\u90e8\u7f72\u6761 height",
+      "--battle-deploy-translate-x": "\u90e8\u7f72\u6761 translateX",
+      "--battle-deploy-translate-y": "\u90e8\u7f72\u6761 translateY",
+      "--battle-action-menu-width": "\u884c\u52a8\u83dc\u5355 width",
+      "--battle-action-menu-height": "\u884c\u52a8\u83dc\u5355 height",
+    });
+
+    window.BattleUiEditor = {
+      descriptions: BATTLE_UI_VARIABLES,
+      get(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      },
+      set(name, value) {
+        document.documentElement.style.setProperty(name, value);
+      },
+      reset(name) {
+        document.documentElement.style.removeProperty(name);
+      },
+      list() {
+        return Object.entries(BATTLE_UI_VARIABLES).map(([name, effect]) => ({
+          name,
+          value: getComputedStyle(document.documentElement).getPropertyValue(name).trim(),
+          effect,
+        }));
+      },
+    };
+
+    function applyBattleUiVariables(variables) {
+      if (variables == null || typeof variables !== 'object') {
+        return;
+      }
+
+      Object.entries(variables).forEach(([name, value]) => {
+        if (typeof value !== 'string') {
+          return;
+        }
+
+        if (value.trim().length === 0) {
+          document.documentElement.style.removeProperty(name);
+          return;
+        }
+
+        document.documentElement.style.setProperty(name, value);
+      });
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      const data = event.data;
+      if (
+        data == null ||
+        typeof data !== 'object' ||
+        data.type !== 'rpg-tg:battle-ui-config'
+      ) {
+        return;
+      }
+
+      applyBattleUiVariables(data.variables);
+    });
+
     const COLS = 12, ROWS = 10;
     const PLAYER_DEPLOY_ROWS = [7, 8, 9];
     const ENEMY_DEPLOY_ROWS = [0, 1, 2];
@@ -4314,46 +4634,35 @@
       phase = 'ended';
     }
 
-    const BATTLE_ROW_Y = [38, 64, 90];
-    const BATTLE_ALLY_SLOTS = {
-      'rear-left': { row: 0, x: 36, z: 10, scale: 0.92, anchor: 'bottom-center' },
-      'rear-center': { row: 0, x: 56, z: 11, scale: 0.92, anchor: 'bottom-center' },
-      'rear-right': { row: 0, x: 76, z: 12, scale: 0.92, anchor: 'bottom-center' },
-      'middle-left': { row: 1, x: 26, z: 20, scale: 0.92, anchor: 'bottom-center' },
-      'middle-center': { row: 1, x: 46, z: 21, scale: 0.92, anchor: 'bottom-center' },
-      'middle-right': { row: 1, x: 66, z: 22, scale: 0.92, anchor: 'bottom-center' },
-      'front-left': { row: 2, x: 16, z: 30, scale: 0.92, anchor: 'bottom-center' },
-      'front-center': { row: 2, x: 36, z: 31, scale: 0.92, anchor: 'bottom-center' },
-      'front-right': { row: 2, x: 56, z: 32, scale: 0.92, anchor: 'bottom-center' },
-    };
-    const BATTLE_ENEMY_SLOTS = {
-      'rear-left': { row: 0, x: 44, z: 10, scale: 0.92, anchor: 'bottom-center' },
-      'rear-center': { row: 0, x: 64, z: 11, scale: 0.92, anchor: 'bottom-center' },
-      'rear-right': { row: 0, x: 84, z: 12, scale: 0.92, anchor: 'bottom-center' },
-      'middle-left': { row: 1, x: 34, z: 20, scale: 0.92, anchor: 'bottom-center' },
-      'middle-center': { row: 1, x: 54, z: 21, scale: 0.92, anchor: 'bottom-center' },
-      'middle-right': { row: 1, x: 74, z: 22, scale: 0.92, anchor: 'bottom-center' },
-      'front-left': { row: 2, x: 24, z: 30, scale: 0.92, anchor: 'bottom-center' },
-      'front-center': { row: 2, x: 44, z: 31, scale: 0.92, anchor: 'bottom-center' },
-      'front-right': { row: 2, x: 64, z: 32, scale: 0.92, anchor: 'bottom-center' },
+    const BATTLE_FORMATION_BASELINE_Y = 88;
+    const BATTLE_PLAYER_FRONT_X = 100;
+    const BATTLE_ENEMY_FRONT_X = 0;
+    const BATTLE_RANK_HORIZONTAL_STEP = 33;
+    const BATTLE_FILE_DIAGONAL_STEP = {
+      x: 11,
+      y: 14,
     };
 
     function getBattleSlotPosition(slotKey, mirrorCols = false) {
       const [rowName, colName] = slotKey.split('-');
       const colMap = { left: 0, center: 1, right: 2 };
-      const slotConfig = (mirrorCols ? BATTLE_ALLY_SLOTS : BATTLE_ENEMY_SLOTS)[slotKey] ||
-        BATTLE_ALLY_SLOTS[slotKey] ||
-        { row: 1, x: 50, z: 10, scale: 0.92, anchor: 'bottom-center' };
-      const row = Math.max(0, Math.min(2, slotConfig.row));
+      const rankIndex = rowName === 'front' ? 0 : rowName === 'middle' ? 1 : 2;
+      const formationFile = colMap[colName] ?? 0;
+      const frontX = mirrorCols ? BATTLE_PLAYER_FRONT_X : BATTLE_ENEMY_FRONT_X;
+      const x =
+        frontX +
+        (mirrorCols ? -1 : 1) *
+          (rankIndex * BATTLE_RANK_HORIZONTAL_STEP + formationFile * BATTLE_FILE_DIAGONAL_STEP.x);
+      const y = BATTLE_FORMATION_BASELINE_Y - formationFile * BATTLE_FILE_DIAGONAL_STEP.y;
       return {
-        row,
-        col: colMap[colName] ?? 0,
+        row: rankIndex,
+        col: formationFile,
         rowClass: `row-${rowName}`,
-        x: slotConfig.x,
-        y: BATTLE_ROW_Y[row],
-        z: slotConfig.z,
-        scale: slotConfig.scale,
-        anchor: slotConfig.anchor,
+        x,
+        y,
+        z: 100 + Math.round(y * 10) + (mirrorCols ? 2 - formationFile : formationFile),
+        scale: 0.92,
+        anchor: 'bottom-center',
       };
     }
 
@@ -4366,7 +4675,15 @@
         moveActionIds: ['jump'],
         moveActionNames: ['跳跃'],
         renderScaleMultiplier: 1,
-        renderOffsetX: 0,
+        renderOffsetX: -16,
+        renderOffsetXBySide: {
+          player: -120,
+          enemy: 85,
+        },
+        renderOffsetYBySide: {
+          player: -30,
+          enemy: -30,
+        },
         renderOffsetY: 0,
         stationaryAttack: false,
         attackImpactRatio: 0.56,
@@ -4379,9 +4696,17 @@
         moveActionIds: [],
         moveActionNames: [],
         materialForegroundImageKeys: ['newSword'],
-        renderScaleMultiplier: 1.67,
-        renderOffsetX: 12,
-        renderOffsetY: 18,
+        renderScaleMultiplier: 1.84,
+        renderOffsetX: -34,
+        renderOffsetXBySide: {
+          player: -150,
+          enemy: 68,
+        },
+        renderOffsetYBySide: {
+          player: 57,
+          enemy: 57,
+        },
+        renderOffsetY: 80,
         stationaryAttack: true,
         attackImpactRatio: 0.58,
       },
@@ -4391,6 +4716,57 @@
       return troopType === 'archer'
         ? BATTLE_SPINE_TROOP_ASSETS.archer
         : BATTLE_SPINE_TROOP_ASSETS.default;
+    }
+
+    const BATTLE_SPINE_LOGICAL_BOX = Object.freeze({
+      width: 340,
+      height: 380,
+    });
+    const BATTLE_SPINE_OVERSCAN = Object.freeze({
+      left: 132,
+      right: 132,
+      top: 120,
+      bottom: 108,
+    });
+
+    function getBattleSpineCanvasMetrics() {
+      return {
+        logicalWidth: BATTLE_SPINE_LOGICAL_BOX.width,
+        logicalHeight: BATTLE_SPINE_LOGICAL_BOX.height,
+        bleedLeft: BATTLE_SPINE_OVERSCAN.left,
+        bleedRight: BATTLE_SPINE_OVERSCAN.right,
+        bleedTop: BATTLE_SPINE_OVERSCAN.top,
+        bleedBottom: BATTLE_SPINE_OVERSCAN.bottom,
+      };
+    }
+
+    function configureBattleSpineCanvasMetrics(canvas) {
+      const metrics = getBattleSpineCanvasMetrics();
+      if (!canvas) {
+        return metrics;
+      }
+
+      canvas.dataset.logicalWidth = String(metrics.logicalWidth);
+      canvas.dataset.logicalHeight = String(metrics.logicalHeight);
+      canvas.dataset.bleedLeft = String(metrics.bleedLeft);
+      canvas.dataset.bleedRight = String(metrics.bleedRight);
+      canvas.dataset.bleedTop = String(metrics.bleedTop);
+      canvas.dataset.bleedBottom = String(metrics.bleedBottom);
+
+      const actualWidth = metrics.logicalWidth + metrics.bleedLeft + metrics.bleedRight;
+      const actualHeight = metrics.logicalHeight + metrics.bleedTop + metrics.bleedBottom;
+      canvas.style.width = `${actualWidth}px`;
+      canvas.style.height = `${actualHeight}px`;
+
+      const frame = canvas.closest('.formation-spine-frame');
+      if (frame) {
+        frame.style.setProperty('--spine-bleed-left', `${metrics.bleedLeft}px`);
+        frame.style.setProperty('--spine-bleed-right', `${metrics.bleedRight}px`);
+        frame.style.setProperty('--spine-bleed-top', `${metrics.bleedTop}px`);
+        frame.style.setProperty('--spine-bleed-bottom', `${metrics.bleedBottom}px`);
+      }
+
+      return metrics;
     }
 
     class BattleSpineRenderer {
@@ -5011,6 +5387,10 @@
 
       render(canvas, actionId = 'idle', elapsedMs = 0, options = {}) {
         const rect = canvas.getBoundingClientRect();
+        const logicalWidth = Math.max(1, Number(canvas.dataset.logicalWidth) || rect.width);
+        const logicalHeight = Math.max(1, Number(canvas.dataset.logicalHeight) || rect.height);
+        const bleedLeft = Math.max(0, Number(canvas.dataset.bleedLeft) || 0);
+        const bleedTop = Math.max(0, Number(canvas.dataset.bleedTop) || 0);
         const dpr = window.devicePixelRatio || 1;
         const width = Math.max(1, Math.round(rect.width * dpr));
         const height = Math.max(1, Math.round(rect.height * dpr));
@@ -5021,29 +5401,41 @@
         const ctx = canvas.getContext('2d');
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, rect.width, rect.height);
-        this.lowDetail = rect.width < 64 || rect.height < 84;
+        this.lowDetail = logicalWidth < 64 || logicalHeight < 84;
         const action = this.getAction(actionId);
         const duration = Math.max(1, action?.duration ?? this.project.duration ?? 29);
         const rawFrame = (elapsedMs / 1000) * this.fps;
         const frame = options.loop === false ? Math.min(duration, rawFrame) : rawFrame % (duration + 1);
-        const overscanX = Math.max(0, rect.width * 0.27);
-        const overscanY = Math.max(0, rect.height * 0.21);
-        const layoutWidth = Math.max(1, rect.width - overscanX * 2);
-        const layoutHeight = Math.max(1, rect.height - overscanY * 2);
+        const overscanX = Math.max(0, logicalWidth * 0.27);
+        const overscanY = Math.max(0, logicalHeight * 0.21);
+        const layoutWidth = Math.max(1, logicalWidth - overscanX * 2);
+        const layoutHeight = Math.max(1, logicalHeight - overscanY * 2);
         const scale = Math.min(
           layoutWidth / Math.max(1, this.bounds.width),
           layoutHeight / Math.max(1, this.bounds.height)
         ) * 0.94 * Math.max(0.1, Number(this.config.renderScaleMultiplier) || 1);
+        const side = options.side || canvas.dataset.side || '';
+        const baseRenderOffsetX = Number(this.config.renderOffsetX) || 0;
+        const sideRenderOffsetX =
+          side && this.config.renderOffsetXBySide
+            ? Number(this.config.renderOffsetXBySide[side]) || 0
+            : baseRenderOffsetX;
+        const renderOffsetY =
+          side && this.config.renderOffsetYBySide
+            ? Number(this.config.renderOffsetYBySide[side]) || 0
+            : Number(this.config.renderOffsetY) || 0;
         const translateX =
+          bleedLeft +
           overscanX +
           layoutWidth / 2 -
           (this.bounds.minX + this.bounds.width / 2) * scale +
-          (Number(this.config.renderOffsetX) || 0);
+          sideRenderOffsetX;
         const translateY =
+          bleedTop +
           overscanY +
           layoutHeight * 0.58 -
           (this.bounds.minY + this.bounds.height * 0.52) * scale +
-          (Number(this.config.renderOffsetY) || 0);
+          renderOffsetY;
         ctx.save();
         ctx.translate(translateX, translateY);
         ctx.scale(scale, scale);
@@ -5333,7 +5725,8 @@
         for (const entry of getBattleSpineCanvasEntries()) {
           if (
             entry.slot.classList.contains('empty') ||
-            entry.slot.classList.contains('is-proxying')
+            entry.slot.classList.contains('is-proxying') ||
+            entry.canvas.dataset.animating === 'true'
           ) {
             continue;
           }
@@ -5345,7 +5738,8 @@
             renderer.render(
               entry.canvas,
               entry.canvas.dataset.action || 'idle',
-              now + Number(entry.canvas.dataset.phase || 0)
+              now + Number(entry.canvas.dataset.phase || 0),
+              { side: entry.canvas.dataset.side || '' }
             );
           });
         }
@@ -5388,11 +5782,16 @@
       slot.dataset.anchor = pos.anchor || 'bottom-center';
       slot.style.zIndex = String(pos.z);
 
+      const frame = document.createElement('div');
+      frame.className = 'formation-spine-frame';
+
       const canvas = document.createElement('canvas');
       canvas.className = 'formation-spine-canvas';
       canvas.dataset.action = 'idle';
       canvas.dataset.phase = String((pos.row * 137 + pos.col * 83) % 1000);
       canvas.setAttribute('aria-hidden', 'true');
+      frame.appendChild(canvas);
+      configureBattleSpineCanvasMetrics(canvas);
 
       const slotName = document.createElement('div');
       slotName.className = 'slot-name';
@@ -5411,7 +5810,7 @@
       memberLoss.className = 'member-loss';
       memberLoss.hidden = true;
 
-      slot.appendChild(canvas);
+      slot.appendChild(frame);
       slot.appendChild(slotName);
       slot.appendChild(memberName);
       slot.appendChild(memberHp);
@@ -5419,6 +5818,7 @@
 
       return {
         slot,
+        frame,
         canvas,
         memberName,
         memberHpFill,
@@ -5452,6 +5852,7 @@
 
     function clearBattleFormationProxyState() {
       document.querySelectorAll('.battle-spine-proxy').forEach(proxy => proxy.remove());
+      document.querySelectorAll('.battle-spine-proxy-anchor').forEach(proxy => proxy.remove());
       document.querySelectorAll('.formation-slot.is-proxying').forEach(slot => {
         slot.classList.remove('is-proxying');
       });
@@ -5481,8 +5882,11 @@
         entry.slot.classList.toggle('fallen', Boolean(after && after.soldiers <= 0));
         entry.slot.classList.toggle('striker', active.sourceSlotKey === slotKey);
         entry.slot.classList.toggle('targeted', active.targetSlotKey === slotKey);
+        entry.slot.dataset.troopType = current?.troopType || '';
         entry.canvas.dataset.action = 'idle';
         entry.canvas.dataset.troopType = current?.troopType || '';
+        entry.canvas.dataset.side = snapshotAfter.side || snapshotBefore.side || '';
+        configureBattleSpineCanvasMetrics(entry.canvas);
 
         entry.memberName.textContent =
           current == null
@@ -5503,6 +5907,63 @@
       return timelineSide === 'attacker' ? report.attackerBefore : report.defenderBefore;
     }
 
+    function getBattleSlotAnchorPosition(slot, boxRect) {
+      const slotRect = slot?.getBoundingClientRect();
+      if (!slotRect || !boxRect) {
+        return { x: 0, y: 0 };
+      }
+      return {
+        x: slotRect.left - boxRect.left + slotRect.width / 2,
+        y: slotRect.top - boxRect.top + slotRect.height,
+      };
+    }
+
+    function createBattleSpineProxyFromSlot(sourceSlot, box, boxRect, proxySide, troopType) {
+      const proxyAnchor = document.createElement('div');
+      const anchorPosition = getBattleSlotAnchorPosition(sourceSlot, boxRect);
+      proxyAnchor.className = 'battle-spine-proxy-anchor';
+      proxyAnchor.style.left = `${anchorPosition.x}px`;
+      proxyAnchor.style.top = `${anchorPosition.y}px`;
+      proxyAnchor.style.zIndex = sourceSlot.style.zIndex;
+
+      const proxySlot = sourceSlot.cloneNode(true);
+      proxySlot.classList.add('battle-spine-proxy-slot', proxySide);
+      proxySlot.classList.remove('empty', 'fallen', 'striker', 'targeted', 'is-proxying');
+      proxySlot.style.left = '0px';
+      proxySlot.style.top = '0px';
+
+      Array.from(proxySlot.children).forEach((child) => {
+        if (!child.classList.contains('formation-spine-frame')) {
+          child.remove();
+        }
+      });
+
+      const proxyFrame = proxySlot.querySelector('.formation-spine-frame');
+      const proxyCanvas = proxyFrame?.querySelector('.formation-spine-canvas');
+      if (!proxyFrame || !proxyCanvas) {
+        return null;
+      }
+
+      proxyCanvas.width = 0;
+      proxyCanvas.height = 0;
+      proxyCanvas.dataset.side = proxySide;
+      proxyCanvas.dataset.action = 'idle';
+      proxyCanvas.dataset.troopType = troopType;
+      configureBattleSpineCanvasMetrics(proxyCanvas);
+
+      proxySlot.dataset.proxySourceSlot = sourceSlot.dataset.slot || '';
+      proxyAnchor.appendChild(proxySlot);
+      box.appendChild(proxyAnchor);
+
+      return {
+        anchor: proxyAnchor,
+        slot: proxySlot,
+        frame: proxyFrame,
+        canvas: proxyCanvas,
+        position: anchorPosition,
+      };
+    }
+
     async function playBattleSpineStrike(report, step, onImpact) {
       const troopType = step.sourceTroopType || 'infantry';
       const troopAsset = getBattleSpineTroopAsset(troopType);
@@ -5517,53 +5978,44 @@
       const sourceSlot = sourceGrid?.querySelector(`.formation-slot[data-slot="${step.sourceSlotKey}"]`);
       const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
       const sourceCanvas = sourceSlot?.querySelector('.formation-spine-canvas');
-      const targetCanvas = targetSlot?.querySelector('.formation-spine-canvas');
+      const attackFrameCount = renderer.getActionFrameCount('attack');
+      const attackImpactFrame = Math.max(1, Math.round(attackFrameCount * (troopAsset.attackImpactRatio ?? 0.56)));
+
+      const sourceFrame = sourceSlot?.querySelector('.formation-spine-frame');
+      const targetFrame = targetSlot?.querySelector('.formation-spine-frame');
       const box = document.querySelector('.formation-battle-box');
-      if (!sourceCanvas || !targetCanvas || !box) {
+      if (!sourceCanvas || !sourceFrame || !targetFrame || !box) {
         await sleep(380);
         onImpact?.();
         return;
       }
 
       const boxRect = box.getBoundingClientRect();
-      const sourceRect = sourceCanvas.getBoundingClientRect();
-      const targetRect = targetCanvas.getBoundingClientRect();
-      const proxy = document.createElement('canvas');
       const sourceUnit = getBattleTimelineUnit(report, step.sourceSide);
-      proxy.className = `battle-spine-proxy ${sourceUnit.side === 'enemy' ? 'enemy' : 'player'}`;
-      proxy.style.width = `${sourceRect.width}px`;
-      proxy.style.height = `${sourceRect.height}px`;
-      proxy.style.left = `${sourceRect.left - boxRect.left}px`;
-      proxy.style.top = `${sourceRect.top - boxRect.top}px`;
-      box.appendChild(proxy);
+      const proxySide = sourceUnit.side === 'enemy' ? 'enemy' : 'player';
+      const proxyView = createBattleSpineProxyFromSlot(sourceSlot, box, boxRect, proxySide, troopType);
+      if (!proxyView) {
+        await sleep(380);
+        onImpact?.();
+        return;
+      }
+      const proxy = proxyView.canvas;
+      const motionElement = proxyView.anchor;
+      const initialLeft = proxyView.position.x;
+      const initialTop = proxyView.position.y;
+      const targetAnchor = getBattleSlotAnchorPosition(targetSlot, boxRect);
+
       sourceSlot.classList.add('is-proxying');
 
       const from = {
-        x: sourceRect.left - boxRect.left,
-        y: sourceRect.top - boxRect.top,
+        x: initialLeft,
+        y: initialTop,
       };
       const to = {
-        x: targetRect.left - boxRect.left,
-        y: targetRect.top - boxRect.top,
+        x: targetAnchor.x,
+        y: targetAnchor.y,
       };
-
-      const attackFrameCount = renderer.getActionFrameCount('attack');
-      const attackImpactFrame = Math.max(1, Math.round(attackFrameCount * (troopAsset.attackImpactRatio ?? 0.56)));
-
-      if (troopAsset.stationaryAttack) {
-        await animateBattleSpineProxy(
-          proxy,
-          renderer,
-          from,
-          from,
-          'attack',
-          renderer.getActionDurationMs('attack'),
-          {
-            impactFrame: attackImpactFrame,
-            onImpact,
-          }
-        );
-      } else {
+      if (!troopAsset.stationaryAttack) {
         const moveFrameCount = renderer.getActionFrameCount('move');
         const moveStartFrame = Math.max(0, Math.round(moveFrameCount * 0.38));
         const moveEndFrame = Math.max(moveStartFrame + 1, Math.round(moveFrameCount * 0.88));
@@ -5579,28 +6031,29 @@
             moveEndFrame,
           }
         );
-        await animateBattleSpineProxy(
-          proxy,
-          renderer,
-          to,
-          to,
-          'attack',
-          renderer.getActionDurationMs('attack'),
-          {
-            impactFrame: attackImpactFrame,
-            onImpact,
-          }
-        );
       }
+      await animateBattleSpineProxy(
+        proxy,
+        renderer,
+        troopAsset.stationaryAttack ? from : to,
+        troopAsset.stationaryAttack ? from : to,
+        'attack',
+        renderer.getActionDurationMs('attack'),
+        {
+          impactFrame: attackImpactFrame,
+          onImpact,
+        }
+      );
 
       sourceSlot.classList.remove('is-proxying');
-      proxy.remove();
+      motionElement.remove();
     }
 
     function animateBattleSpineProxy(proxy, renderer, from, to, action, duration, movement = {}) {
       return new Promise(resolve => {
         const start = performance.now();
         let impactTriggered = false;
+        const motionElement = proxy.closest('.battle-spine-proxy-anchor') || proxy;
         const frame = now => {
           const t = Math.min(1, (now - start) / duration);
           const elapsedMs = now - start;
@@ -5610,9 +6063,12 @@
           const moveT = movement.moveStartFrame == null
             ? t
             : Math.max(0, Math.min(1, (actionFrame - moveStartFrame) / (moveEndFrame - moveStartFrame)));
-          proxy.style.left = `${from.x + (to.x - from.x) * moveT}px`;
-          proxy.style.top = `${from.y + (to.y - from.y) * moveT}px`;
-          renderer.render(proxy, action, elapsedMs, { loop: false });
+          motionElement.style.left = `${from.x + (to.x - from.x) * moveT}px`;
+          motionElement.style.top = `${from.y + (to.y - from.y) * moveT}px`;
+          renderer.render(proxy, action, elapsedMs, {
+            loop: false,
+            side: proxy.dataset.side || (proxy.classList.contains('enemy') ? 'enemy' : 'player'),
+          });
           if (
             !impactTriggered &&
             movement.impactFrame != null &&
@@ -5629,6 +6085,45 @@
             resolve();
           }
         };
+        requestAnimationFrame(frame);
+      });
+    }
+
+    function animateBattleSpineCanvas(canvas, renderer, action, duration, movement = {}) {
+      return new Promise(resolve => {
+        const start = performance.now();
+        let impactTriggered = false;
+        canvas.dataset.animating = 'true';
+        const side = canvas.dataset.side || '';
+
+        const frame = now => {
+          const t = Math.min(1, (now - start) / duration);
+          const elapsedMs = now - start;
+          const actionFrame = (elapsedMs / 1000) * renderer.fps;
+          renderer.render(canvas, action, elapsedMs, {
+            loop: false,
+            side,
+          });
+          if (
+            !impactTriggered &&
+            movement.impactFrame != null &&
+            actionFrame >= movement.impactFrame
+          ) {
+            impactTriggered = true;
+            movement.onImpact?.();
+          }
+          if (t < 1) {
+            requestAnimationFrame(frame);
+            return;
+          }
+          if (!impactTriggered && movement.impactFrame != null) {
+            movement.onImpact?.();
+          }
+          delete canvas.dataset.animating;
+          canvas.dataset.action = 'idle';
+          resolve();
+        };
+
         requestAnimationFrame(frame);
       });
     }

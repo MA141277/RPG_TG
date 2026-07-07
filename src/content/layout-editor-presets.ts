@@ -1,4 +1,5 @@
 import type {
+  BattleUiScreenLayout,
   CharacterDetailScreenLayout,
   CharacterSelectScreenLayout,
   GlobalHudLayout,
@@ -676,5 +677,17 @@ export function createDefaultCharacterDetailScreenLayout(): CharacterDetailScree
         elements: [],
       }),
     ],
+  };
+}
+
+export function createDefaultBattleUiScreenLayout(): BattleUiScreenLayout {
+  return {
+    id: "battle-ui-screen",
+    label: "\u6218\u6597\u754c\u9762\u8c03\u6574",
+    screenSize: {
+      width: 1600,
+      height: 900,
+    },
+    components: [],
   };
 }

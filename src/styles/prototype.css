@@ -13,6 +13,10 @@
     linear-gradient(180deg, rgb(22 31 38 / 100%), rgb(14 20 28 / 100%));
 }
 
+.l-shell--prototype:has(.view-story-battle--embedded) {
+  background: #090b0a;
+}
+
 .p-global-hud {
   display: flex;
   align-items: flex-start;
