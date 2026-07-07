@@ -19,6 +19,22 @@
 - runtime 默认 playable registries 不再只是隐式引用 builtin registry 常量；激活中的 mod 已经可以显式配置默认 playable 解析面。
 - builtin playable 仍然保留 first-party seed 兼容路径，但它现在属于显式安装机制，而不是 generic runtime 的隐藏兜底。
 
+## 2026-07-07 Zhuyuanzhang Scenario-Pack Integration Support Spec
+
+### Added
+- 新增 Blueprint 支撑规范 [docs/blueprints/specs/2026-07-07-zhuyuanzhang-scenario-pack-integration-support-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-07-zhuyuanzhang-scenario-pack-integration-support-spec.md)，把 `zhuyuanzhang` 在当前 complete-modularization target 下的目标终态正式收口为“一个 canonical scenario-pack，而不是 TS 装配 + 旧资源路径的混合体”。
+- 该规范明确冻结了 `zhuyuanzhang` 的主从表模型：`pack.json` 作为唯一入口主表，`scenario-profile / events / scenes / tasks / maps / cities / houses / characters` 作为主干表，`text-entries / visual-assets / city-portraits / city-entries / activities / house-access-refusal-rules / historical-*` 作为从表或补充映射表。
+- 该规范新增 `visual-assets.json` 作为剧本专属视觉资源总表的目标终态，并要求剧本专属 CG、portrait、house/playable 插图逐步从 legacy 路径迁入 `src/content/scenario-packs/zhuyuanzhang/assets/**`。
+
+### Changed
+- 明确 `zhuyuanzhang` 剧本整合默认遵循“数据驱动 + shared loader seam”原则：`events` 只做触发与路由，`scenes` 只做演出与分支，`tasks` 只做进度状态机，`text-entries` 统一承载文案，`visual-assets` 统一承载剧本专属视觉资源。
+- 明确共享 framework/UI baseline 不是 `zhuyuanzhang` 包内真值，不得为了追求表面自包含而把 layout-editor baseline、共享按钮/面板、或 shared skin 资源并入剧本包。
+- 明确整合验证必须同时覆盖 `pack.json.files`、`textId` / `sceneId` / `taskId` / `eventId` / `assetId` 引用完整性、pack-local asset 存在性、以及迁移后的 source-path audit。
+
+### Impact
+- 后续若要推进 `zhuyuanzhang` 完整剧本包整合，不需要再次从零定义“哪些内容该进包、哪些不能进包、主从表如何拆、如何验收”；当前 Blueprint 已有一份可复用的正式支撑规范。
+- 该规范不会改变当前 active queue truth，也不会取代 target-plan/queue-doc 的 live execution authority；它只为未来同 target queue admission 和实施 closeout 提供稳定边界。
+
 ## 2026-07-07 Target Lifecycle Explicit-Open-Explicit-Close Rule
 
 ### Changed
