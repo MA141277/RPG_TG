@@ -21,7 +21,6 @@ import {
   closeCityDirectory,
   equipValuable,
   openCityMenu,
-  openCityDirectory,
   selectCard,
   selectValuable,
   setCardFilter,
@@ -31,8 +30,6 @@ import {
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
 import {
-  CITY_BEGGING_DURATION_DAYS,
-  getCityBeggingMiniGameCompletionResult,
   getCityBeggingMiniGameStatus,
   isCityBeggingMiniGamePlaying,
 } from "./application/minigames/city-begging-minigame";
@@ -51,23 +48,22 @@ import {
   applyCampaignTravelCompletion,
   applyCampaignTravelStart,
 } from "./application/runtime/campaign-travel-transition";
-import { applyCityViewTransition } from "./application/runtime/city-view-transition";
+import { createCampaignMoveAnimationCoordinator } from "./application/runtime/campaign-move-animation-coordinator";
+import { createCity3dHouseEntryCoordinator } from "./application/runtime/city-3d-house-entry-coordinator";
+import { createCityDirectoryLeaderResidenceCoordinator } from "./application/runtime/city-directory-leader-residence-coordinator";
+import { createCouncilPriorityCityBeggingCoordinator } from "./application/runtime/council-priority-city-begging-coordinator";
+import { createCityHouseTransitionCoordinator } from "./application/runtime/city-house-transition-coordinator";
+import { createHouseDragDropCoordinator } from "./application/runtime/house-drag-drop-coordinator";
 import {
   applyMapAutoAdvanceSnapshot,
   applyMapAutoAdvanceStart,
 } from "./application/runtime/map-auto-advance-transition";
 import { applyRenderPrepassState } from "./application/runtime/render-prepass-state";
-import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
-import {
-  ACTIVITY_COMPLETION_STAMINA_COST,
-  canAffordActivityCost,
-} from "./application/player/player-stamina";
 import {
   formatCouncilStatusText,
   readCalendarDateNumber,
 } from "./application/time/time-progression";
 import {
-  getInsufficientDaysForTimedActivity,
   getCouncilPriorityHouseModuleId,
   hasReachedCouncilDate,
   isCouncilPriorityHouseDefinition,
@@ -97,6 +93,8 @@ import {
   type StartupScenario,
   type StartupSessionBootstrap,
 } from "./application/startup/startup-session-coordinator";
+import { createShellBootLifecycleCoordinator } from "./application/startup/shell-boot-lifecycle-coordinator";
+import { createStartupSessionApplyCoordinator } from "./application/startup/startup-session-apply-coordinator";
 import {
   applyStartupStoryBootstrap,
   type StartupStoryBootstrap,
@@ -193,7 +191,6 @@ import type {
   ValuableLibrarySortKey,
 } from "./domain/global-ui";
 import { KEEP_HOUSE_VARIABLE_KEYS } from "./domain/keep-house";
-import { LEADER_RESIDENCE_VARIABLE_KEYS } from "./domain/leader-residence";
 import type {
   UiLayoutBackgroundMode,
   UiLayout,
@@ -270,15 +267,6 @@ type CampaignMapDebugState = {
 };
 
 type BackgroundMusicMode = "opening" | "in-game";
-
-type CampaignMoveAnimationState = {
-  frameId: number | null;
-  startedAtMs: number;
-  from: GridCoordinate;
-  to: GridCoordinate;
-  durationMs: number;
-  resolve: () => void;
-};
 
 const appElement = document.querySelector<HTMLElement>("#app");
 const uiOverlayElement = document.querySelector<HTMLElement>("#ui-overlay");
@@ -485,7 +473,6 @@ let layoutEditorDragState:
       resizeAxis?: "x" | "y" | "xy";
     }
   | null = null;
-let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
 let cityBeggingMiniGameFrameId: number | null = null;
 let activityQteIntervalHandle: number | null = null;
 let campaignTravelRequestId = 0;
@@ -496,6 +483,121 @@ let activeLoadingTheme: LoadingTheme | null = null;
 const mapAutoAdvanceHandles: Record<string, number> = {};
 
 let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
+const cityHouseTransitionCoordinator = createCityHouseTransitionCoordinator({
+  getAppState: () => appState,
+  setAppState: (nextAppState) => {
+    appState = nextAppState;
+  },
+  renderApp,
+  clearHouseIntervals: () => {
+    houseRuntime.clearAllHouseIntervals();
+  },
+  stopCityBeggingMiniGameLoop,
+  canEnterCity3d: () =>
+    getZhuYuanzhangCitySceneMappingByCityId()[
+      appState.gameState.world.currentCityId
+    ] != null,
+});
+const councilPriorityCityBeggingCoordinator =
+  createCouncilPriorityCityBeggingCoordinator({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp,
+    getCurrentPlayerCharacter,
+    getCouncilPriorityHouseDefinition,
+    getRuntimeText,
+    getRuntimeTemplateText,
+    hasHaozhouShortage: (currentAppState) =>
+      isHaozhouShortageDuringBeggingJourney(currentAppState.gameState),
+    launchCityBeggingPlayable: (launchState, now) =>
+      commitRuntimeRequest({
+        state: launchState,
+        request: createLaunchPlayableRequest("city-begging", {
+          payload: { now },
+        }),
+        context: {
+          router: {
+            route: ({ state, request }) =>
+              runInteractiveRuntime({
+                state,
+                request,
+                characterDefinitions: launchState.characterDefinitions,
+              }),
+          },
+        },
+      }).state,
+    settleCityBeggingResult: (result) => {
+      onBeggingGameComplete(result);
+    },
+    stopCityBeggingMiniGameLoop,
+    startCityBeggingMiniGameLoop,
+    now: () => performance.now(),
+  });
+const cityDirectoryLeaderResidenceCoordinator =
+  createCityDirectoryLeaderResidenceCoordinator({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp,
+    findCityEntry: (cityEntryId, cityId) =>
+      activeContentContext.cityEntries.find(
+        (entryDefinition) =>
+          entryDefinition.id === cityEntryId &&
+          entryDefinition.cityId === cityId
+      ) ?? null,
+    findHouse: (houseId) =>
+      activeContentContext.houses.find(
+        (houseDefinition) => houseDefinition.id === houseId
+      ) ?? null,
+    canOpenHouseFromCity,
+    enterHouse: (houseId) => {
+      enterHouseThroughRuntime(houseRuntime, houseId);
+    },
+    getHistoricalCharacters: () => activeContentContext.historicalCharacters,
+    getHistoricalCharacterIdByCharacterId: () =>
+      activeContentContext.historicalCharacterIdByCharacterId,
+  });
+const city3dHouseEntryCoordinator = createCity3dHouseEntryCoordinator({
+  getAppState: () => appState,
+  getCitySceneMapping: (cityId) =>
+    getZhuYuanzhangCitySceneMappingByCityId()[cityId] ?? null,
+  findHouse: (houseId) =>
+    activeContentContext.houses.find(
+      (houseDefinition) => houseDefinition.id === houseId
+    ) ?? null,
+  canOpenHouseFromCity,
+  enterHouse: (houseId) => {
+    enterHouseThroughRuntime(houseRuntime, houseId);
+  },
+  getWindowOrigin: () => window.location.origin,
+});
+const houseDragDropCoordinator = createHouseDragDropCoordinator({
+  dispatchHouseAction: (actionId) => {
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId,
+    });
+  },
+  renderApp,
+});
+const campaignMoveAnimationCoordinator =
+  createCampaignMoveAnimationCoordinator({
+    getCurrentFacingDegrees: () => appState.campaignActorState.facingDegrees,
+    syncCampaignActorRuntimeState,
+    syncCampaignActorView,
+    renderApp,
+    requestAnimationFrame: (callback) => window.requestAnimationFrame(callback),
+    cancelAnimationFrame: (frameId) => window.cancelAnimationFrame(frameId),
+    now: () => performance.now(),
+    clamp,
+    msPerMapUnit: CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT,
+    minDurationMs: CAMPAIGN_TRAVEL_MIN_DURATION_MS,
+    maxDurationMs: CAMPAIGN_TRAVEL_MAX_DURATION_MS,
+    turnDegreesPerSecond: CAMPAIGN_TURN_DEGREES_PER_SECOND,
+  });
 const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   getAppState: () => appState,
   setAppState: (nextAppState) => {
@@ -520,6 +622,24 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   hideMainUiFlow: () => {
     mainUiFlow.hide();
   },
+});
+const startupSessionApplyCoordinator = createStartupSessionApplyCoordinator({
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+  mainRuntimeOrchestrator,
+  persistSaveData,
+  renderApp,
+});
+const shellBootLifecycleCoordinator = createShellBootLifecycleCoordinator({
+  beginLoadingScreen,
+  isLoadingRequestActive: (requestId) => requestId === loadingScreenRequestId,
+  simulateLoadingProgress,
+  setActiveLoadingProgress,
+  runStartupSession: (request) =>
+    runStartupSessionCoordinator(request, startupSessionCoordinatorDeps),
+  unwrapStartupSession,
+  startupSessionApplyCoordinator,
+  endLoadingScreen,
+  showStartupError,
 });
 const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
   getCharacterDefinitions: () => appState.characterDefinitions,
@@ -888,39 +1008,7 @@ function syncCouncilPriorityAfterGameStateChange(
 }
 
 function showCouncilPriorityRefusal(): void {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  const isTempleReview = priorityHouse?.moduleId === "temple-house";
-
-  appState = {
-    ...appState,
-    locationDialogueState: {
-      type: "house-access-refusal",
-      speakerCharacterId:
-        priorityHouse?.defaultCharacterId ??
-        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
-      textLines: isTempleReview
-        ? [
-            getRuntimeTemplateText(
-              "runtime.zhu_yuanzhang.council_refusal.temple.001",
-              { targetHouseName: priorityHouse?.name ?? "皇觉寺" }
-            ),
-            getRuntimeText(
-              "runtime.zhu_yuanzhang.council_refusal.temple.002"
-            ),
-          ]
-        : [
-            getRuntimeTemplateText(
-              "runtime.zhu_yuanzhang.council_refusal.keep.001",
-              { targetHouseName: priorityHouse?.name ?? "帅府" }
-            ),
-            getRuntimeText(
-              "runtime.zhu_yuanzhang.council_refusal.keep.002"
-            ),
-          ],
-      advanceHintText: priorityHouse == null ? "知道了" : `前往${priorityHouse.name}`,
-    },
-  };
-  renderApp();
+  councilPriorityCityBeggingCoordinator.showCouncilPriorityRefusal();
 }
 
 function showCouncilInsufficientTimeRefusal(
@@ -928,65 +1016,11 @@ function showCouncilInsufficientTimeRefusal(
   durationDays: number,
   remainingDays: number
 ): void {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  const isTempleReview = priorityHouse?.moduleId === "temple-house";
-  const targetName = priorityHouse?.name ?? (isTempleReview ? "皇觉寺" : "帅府");
-
-  appState = {
-    ...closeCityMenu(closeCityDirectory(appState)),
-    beggingMiniGameState: null,
-    locationDialogueState: {
-      type: "house-access-refusal",
-      speakerCharacterId:
-        priorityHouse?.defaultCharacterId ??
-        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
-      textLines: isTempleReview
-        ? remainingDays <= 0
-          ? [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.001",
-                { activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-          : [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.001",
-                { remainingDays, activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-        : remainingDays <= 0
-          ? [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.001",
-                { activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-          : [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.001",
-                { remainingDays, activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.002",
-                { targetHouseName: targetName }
-              ),
-            ],
-      advanceHintText: "知道了",
-    },
-  };
-  renderApp();
+  councilPriorityCityBeggingCoordinator.showCouncilInsufficientTimeRefusal({
+    activityLabel,
+    durationDays,
+    remainingDays,
+  });
 }
 
 function shouldBlockForCouncilPriority(targetHouseDefinition?: HouseDefinition | null): boolean {
@@ -1012,19 +1046,7 @@ function shouldBlockForCouncilPriority(targetHouseDefinition?: HouseDefinition |
 }
 
 function confirmBeggingMiniGameResult(): void {
-  const result = appState.beggingMiniGameState;
-  const completionResult = getCityBeggingMiniGameCompletionResult(result);
-  if (completionResult == null) {
-    return;
-  }
-
-  onBeggingGameComplete(completionResult);
-  stopCityBeggingMiniGameLoop();
-  appState = {
-    ...appState,
-    beggingMiniGameState: null,
-  };
-  renderApp();
+  councilPriorityCityBeggingCoordinator.confirmBeggingMiniGameResult();
 }
 
 function syncCityBeggingMiniGamePointer(clientX: number): void {
@@ -1119,97 +1141,7 @@ function startCityBeggingMiniGameLoop(): void {
 }
 
 function openBeggingMiniGame(): void {
-  const playerCharacter = getCurrentPlayerCharacter();
-  if (playerCharacter == null || !isPlayerMonkIdentity(playerCharacter)) {
-    return;
-  }
-
-  if (isHaozhouShortageDuringBeggingJourney(appState.gameState)) {
-    stopCityBeggingMiniGameLoop();
-    appState = {
-      ...closeCityMenu(closeCityDirectory(appState)),
-      locationDialogueState: {
-        type: "house-access-refusal",
-        speakerCharacterId: "char.kulan_temple_abbot",
-        textLines: [
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.haozhou_shortage.001"
-          ),
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.haozhou_shortage.002"
-          ),
-        ],
-        advanceHintText: getRuntimeText(
-          "runtime.zhu_yuanzhang.haozhou_shortage.advance_hint"
-        ),
-      },
-      beggingMiniGameState: null,
-    };
-    renderApp();
-    return;
-  }
-
-  if (!canAffordActivityCost(playerCharacter)) {
-    stopCityBeggingMiniGameLoop();
-    appState = {
-      ...closeCityMenu(closeCityDirectory(appState)),
-      locationDialogueState: {
-        type: "house-access-refusal",
-        speakerCharacterId: "char.kulan_temple_abbot",
-        textLines: [
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.begging_stamina_refusal.001"
-          ),
-          getRuntimeTemplateText(
-            "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
-            {
-              requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST,
-            }
-          ),
-        ],
-        advanceHintText: getRuntimeText(
-          "runtime.zhu_yuanzhang.begging_stamina_refusal.advance_hint"
-        ),
-      },
-      beggingMiniGameState: null,
-    };
-    renderApp();
-    return;
-  }
-
-  const remainingDays = getInsufficientDaysForTimedActivity(
-    appState.gameState,
-    CITY_BEGGING_DURATION_DAYS
-  );
-  if (remainingDays != null) {
-    stopCityBeggingMiniGameLoop();
-    showCouncilInsufficientTimeRefusal("化缘", CITY_BEGGING_DURATION_DAYS, remainingDays);
-    return;
-  }
-
-  stopCityBeggingMiniGameLoop();
-  const launchState = {
-    ...closeCityMenu(closeCityDirectory(appState)),
-    locationDialogueState: null,
-  };
-  appState = commitRuntimeRequest({
-    state: launchState,
-    request: createLaunchPlayableRequest("city-begging", {
-      payload: { now: performance.now() },
-    }),
-    context: {
-      router: {
-        route: ({ state, request }) =>
-          runInteractiveRuntime({
-            state,
-            request,
-            characterDefinitions: launchState.characterDefinitions,
-          }),
-      },
-    },
-  }).state;
-  renderApp();
-  startCityBeggingMiniGameLoop();
+  councilPriorityCityBeggingCoordinator.openBeggingMiniGame();
 }
 
 function createHouseRuntimeInstance(): HouseRuntimeBridge {
@@ -1646,25 +1578,6 @@ async function restoreModFromSave(
   return activateSavedMod(saveData.selectedModId, "restore:saved-mod");
 }
 
-function applyActivatedModSession(input: {
-  activationResult: ModActivationResult;
-  contentContext: ActiveGameContentContext;
-  playerCharacterId: string;
-  createAppState(): AppState;
-}): void {
-  if (input.activationResult.ok) {
-    configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
-      input.activationResult.activatedMod
-    );
-  }
-  mainRuntimeOrchestrator.execute({
-    type: "apply-startup-session",
-    session: input,
-  });
-  persistSaveData();
-  renderApp();
-}
-
 function showStartupError(error: unknown): void {
   window.alert(
     error instanceof Error ? error.message : "Startup failed."
@@ -1792,108 +1705,29 @@ function unwrapStartupSession(
 
 function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): void {
   const saveData = loadSaveData();
-  const requestId = beginLoadingScreen();
-
-  simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress);
-  })
-    .then(async () => {
-      if (requestId !== loadingScreenRequestId) {
-        return;
-      }
-
-      const startupSession = unwrapStartupSession(
-        await runStartupSessionCoordinator(
-          {
-            type: "continue",
-            selectedCharacter,
-            saveData,
-          },
-          startupSessionCoordinatorDeps
-        )
-      );
-      applyActivatedModSession(startupSession);
-      endLoadingScreen(requestId);
-    })
-    .catch((error: unknown) => {
-      endLoadingScreen(requestId);
-      showStartupError(error);
-    });
+  void shellBootLifecycleCoordinator.startContinue({
+    selectedCharacter,
+    saveData,
+  });
 }
 
 function startRestoredGameWithLoading(
   selectedCharacter: CharacterDefinition,
   saveData: StartupSaveData
 ): Promise<void> {
-  const requestId = beginLoadingScreen();
-
-  return simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress);
-  })
-    .then(async () => {
-      if (requestId !== loadingScreenRequestId) {
-        return;
-      }
-
-      const startupSession = unwrapStartupSession(
-        await runStartupSessionCoordinator(
-          {
-            type: "restore",
-            selectedCharacter,
-            saveData,
-          },
-          startupSessionCoordinatorDeps
-        )
-      );
-      applyActivatedModSession(startupSession);
-      endLoadingScreen(requestId);
-    })
-    .catch((error: unknown) => {
-      endLoadingScreen(requestId);
-      showStartupError(error);
-    });
+  return shellBootLifecycleCoordinator.startRestore({
+    selectedCharacter,
+    saveData,
+  });
 }
 
 function startMainGameWithLoading(
   selectedCharacter: CharacterDefinition,
   startupScenario: StartupScenario = "default"
 ): void {
-  const requestId = beginLoadingScreen();
-
-  simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress);
-  }).then(async () => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    const startupSession = unwrapStartupSession(
-      await runStartupSessionCoordinator(
-        {
-          type: "builtin",
-          selectedCharacter,
-          startupScenario,
-        },
-        startupSessionCoordinatorDeps
-      )
-    );
-    applyActivatedModSession(startupSession);
-    endLoadingScreen(requestId);
-  }).catch((error: unknown) => {
-    endLoadingScreen(requestId);
-    showStartupError(error);
+  void shellBootLifecycleCoordinator.startBuiltin({
+    selectedCharacter,
+    startupScenario,
   });
 }
 
@@ -1902,31 +1736,15 @@ function runScenarioPackStartupRequestWithLoading(
     | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
     | { type: "scenario-files"; files: File[] }
 ): Promise<void> {
-  const requestId = beginLoadingScreen();
-
-  return simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress);
-  }).then(async () => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    const startupSession = unwrapStartupSession(
-      await runStartupSessionCoordinator(request, startupSessionCoordinatorDeps)
-    );
-    applyActivatedModSession(startupSession);
-    endLoadingScreen(requestId);
-  }).catch((error) => {
-    endLoadingScreen(requestId);
-    window.alert(
-      error instanceof Error
+  return shellBootLifecycleCoordinator.startScenarioPackRequest({
+    request,
+    handleError: (error) => {
+      window.alert(
+        error instanceof Error
         ? `JSON 寮€灞€璇诲彇澶辫触锛?{error.message}`
         : "JSON 寮€灞€璇诲彇澶辫触銆?"
-    );
+      );
+    },
   });
 }
 
@@ -2345,52 +2163,10 @@ function canOpenHouseFromCity(houseDefinition: HouseDefinition): boolean {
   }
 
   if (accessResult.refusal != null) {
-    appState = {
-      ...appState,
-      locationDialogueState: {
-        type: "house-access-refusal",
-        speakerCharacterId: accessResult.refusal.speakerCharacterId,
-        textLines: [accessResult.refusal.text],
-        advanceHintText: accessResult.refusal.confirmLabel,
-      },
-    };
-    renderApp();
+    cityHouseTransitionCoordinator.handleHouseAccessRefusal(accessResult.refusal);
   }
 
   return false;
-}
-
-function enterMappedCity3dHouseBySceneObjectId(
-  sceneObjectId: string,
-  requestedHouseId: string | null = null
-): void {
-  const normalizedSceneObjectId = sceneObjectId.trim();
-  if (!normalizedSceneObjectId) {
-    return;
-  }
-
-  const mapping =
-    getZhuYuanzhangCitySceneMappingByCityId()[
-      appState.gameState.world.currentCityId
-    ];
-  const mappedHouse =
-    mapping?.houses.find(
-      (houseMapping) =>
-        houseMapping.sceneObjectId === normalizedSceneObjectId &&
-        (requestedHouseId == null || houseMapping.houseId === requestedHouseId)
-    ) ?? null;
-  if (mappedHouse == null) {
-    return;
-  }
-
-  const houseDefinition = activeContentContext.houses.find(
-    (candidateHouse) => candidateHouse.id === mappedHouse.houseId
-  );
-  if (houseDefinition == null || !canOpenHouseFromCity(houseDefinition)) {
-    return;
-  }
-
-  enterHouseThroughRuntime(houseRuntime, mappedHouse.houseId);
 }
 
 window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
@@ -2398,24 +2174,7 @@ window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
 });
 window.addEventListener("keydown", resumeBackgroundMusicIfNeeded);
 window.addEventListener("message", (event) => {
-  if (event.origin !== window.location.origin) {
-    return;
-  }
-
-  const data = event.data;
-  if (
-    data == null ||
-    typeof data !== "object" ||
-    data.type !== "hd2deg:enter-house" ||
-    typeof data.sceneObjectId !== "string"
-  ) {
-    return;
-  }
-
-  enterMappedCity3dHouseBySceneObjectId(
-    data.sceneObjectId,
-    typeof data.houseId === "string" ? data.houseId : null
-  );
+  city3dHouseEntryCoordinator.handleWindowMessage(event);
 });
 
 function getLayoutEditorDragHandleSelector(): string {
@@ -3316,22 +3075,21 @@ appElement.addEventListener("pointerup", (event) => {
   if (houseTileDragState == null || houseTileDragState.pointerId !== event.pointerId) {
     return;
   }
-  const dragState = houseTileDragState;
-  const didMove = dragState.didMove;
-  const beforeId = dragState.currentBeforeId;
+  const pointerDragState = houseTileDragState;
+  const didMove = pointerDragState.didMove;
+  const beforeId = pointerDragState.currentBeforeId;
   endHouseTileDrag();
   if (!didMove) {
     return;
   }
-  if (beforeId === dragState.restingBeforeId) {
-    return;
-  }
   suppressHouseClickUntilMs = window.performance.now() + 250;
-  dispatchHouseRuntimeRequest(houseRuntime, {
-    type: "action",
-    actionId: `${dragState.root.dataset.houseDropActionPrefix}${dragState.payload}:${beforeId ?? "end"}`,
-  });
-  renderApp();
+  const dragState = {
+    payload: pointerDragState.payload,
+    beforeId,
+    restingBeforeId: pointerDragState.restingBeforeId,
+    root: pointerDragState.root,
+  };
+  houseDragDropCoordinator.submitPointerDrag(dragState);
 });
 
 appElement.addEventListener("pointercancel", () => {
@@ -3439,13 +3197,11 @@ appElement.addEventListener("drop", (event) => {
   const before = dropElement?.dataset.houseDropBefore;
   const actionPrefix = actionRoot?.dataset.houseDropActionPrefix;
   houseDragPayload = null;
-  if (payload == null || before == null || actionPrefix == null) {
-    return;
-  }
   event.preventDefault();
-  dispatchHouseRuntimeRequest(houseRuntime, {
-    type: "action",
-    actionId: `${actionPrefix}${payload}:${before}`,
+  houseDragDropCoordinator.submitHtmlDrop({
+    payload,
+    beforeId: before ?? null,
+    actionPrefix: actionPrefix ?? null,
   });
 });
 
@@ -3730,12 +3486,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='leave-city']"
   );
   if (leaveCityButton != null) {
-    houseRuntime.clearAllHouseIntervals();
-    stopCityBeggingMiniGameLoop();
-    appState = applyCityViewTransition(appState, {
-      type: "leave-city",
-    });
-    renderApp();
+    cityHouseTransitionCoordinator.leaveCity();
     return;
   }
 
@@ -3743,19 +3494,9 @@ appElement.addEventListener("click", (event) => {
     "[data-action='enter-city-3d']"
   );
   if (enterCity3dButton != null) {
-    const mapping =
-      getZhuYuanzhangCitySceneMappingByCityId()[
-        appState.gameState.world.currentCityId
-      ];
-    if (mapping == null) {
+    if (!cityHouseTransitionCoordinator.enterCity3d()) {
       return;
     }
-
-    houseRuntime.clearAllHouseIntervals();
-    appState = applyCityViewTransition(appState, {
-      type: "enter-city-3d",
-    });
-    renderApp();
     return;
   }
 
@@ -3763,10 +3504,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='leave-city-3d']"
   );
   if (leaveCity3dButton != null) {
-    appState = applyCityViewTransition(appState, {
-      type: "leave-city-3d",
-    });
-    renderApp();
+    cityHouseTransitionCoordinator.leaveCity3d();
     return;
   }
 
@@ -3776,7 +3514,7 @@ appElement.addEventListener("click", (event) => {
   if (city3dHouseButton != null) {
     const sceneObjectId = city3dHouseButton.dataset.city3dSceneObjectId;
     if (sceneObjectId != null) {
-      enterMappedCity3dHouseBySceneObjectId(sceneObjectId);
+      city3dHouseEntryCoordinator.handleSceneObjectHouseEntry(sceneObjectId);
     }
     return;
   }
@@ -3786,36 +3524,7 @@ appElement.addEventListener("click", (event) => {
   );
   if (cityEntryButton != null) {
     const cityEntryId = cityEntryButton.dataset.cityEntryId;
-    const cityEntry = activeContentContext.cityEntries.find(
-      (entryDefinition) =>
-        entryDefinition.id === cityEntryId &&
-        entryDefinition.cityId === appState.gameState.world.currentCityId
-    );
-    if (cityEntry?.directoryType === "leader-residence") {
-      const targetHouse = activeContentContext.houses.find(
-        (houseDefinition) => houseDefinition.id === cityEntry.targetHouseId
-      );
-      if (targetHouse == null || !canOpenHouseFromCity(targetHouse)) {
-        return;
-      }
-
-      appState = openCityDirectory(appState, {
-        type: cityEntry.directoryType,
-        title: cityEntry.name,
-        targetHouseId: cityEntry.targetHouseId,
-        options: selectLeaderResidenceOptions(
-          appState.gameState,
-          appState.characterDefinitions,
-          cityEntry,
-          {
-            historicalCharacters: activeContentContext.historicalCharacters,
-            historicalCharacterIdByCharacterId:
-              activeContentContext.historicalCharacterIdByCharacterId,
-          }
-        ),
-      });
-      renderApp();
-    }
+    cityDirectoryLeaderResidenceCoordinator.handleCityEntryClick(cityEntryId);
     return;
   }
 
@@ -3823,33 +3532,9 @@ appElement.addEventListener("click", (event) => {
     "[data-city-directory-character-id]"
   );
   if (cityDirectoryCharacterButton != null && appState.cityDirectoryState != null) {
-        const selectedCharacterId =
+    const selectedCharacterId =
       cityDirectoryCharacterButton.dataset.cityDirectoryCharacterId;
-      if (selectedCharacterId != null) {
-        const targetHouseId = appState.cityDirectoryState.targetHouseId;
-        const targetHouse = activeContentContext.houses.find(
-          (houseDefinition) => houseDefinition.id === targetHouseId
-        );
-        if (targetHouse == null || !canOpenHouseFromCity(targetHouse)) {
-          return;
-        }
-
-        appState = {
-          ...closeCityDirectory(appState),
-          gameState: {
-          ...appState.gameState,
-          runtime: {
-            ...appState.gameState.runtime,
-            variables: {
-              ...appState.gameState.runtime.variables,
-              [LEADER_RESIDENCE_VARIABLE_KEYS.pendingCharacterId]:
-                selectedCharacterId,
-            },
-          },
-        },
-      };
-      enterHouseThroughRuntime(houseRuntime, targetHouseId);
-    }
+    cityDirectoryLeaderResidenceCoordinator.handleCityDirectoryCharacterSelection(selectedCharacterId);
     return;
   }
 
@@ -3941,20 +3626,7 @@ appElement.addEventListener("click", (event) => {
   const houseButton = targetElement.closest<HTMLElement>("[data-house-id]");
   if (houseButton != null) {
     const houseId = houseButton.dataset.houseId;
-    if (houseId != null) {
-      const houseDefinition = activeContentContext.houses.find(
-        (candidateHouse) => candidateHouse.id === houseId
-      );
-      if (houseDefinition == null) {
-        return;
-      }
-
-      if (!canOpenHouseFromCity(houseDefinition)) {
-        return;
-      }
-
-      enterHouseThroughRuntime(houseRuntime, houseId);
-    }
+    cityDirectoryLeaderResidenceCoordinator.enterHouseFromCity(houseId);
     return;
   }
 
@@ -4054,7 +3726,7 @@ function handleModalConfirm() {
       locationDialogueState: null,
     };
     renderApp();
-    void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+    void campaignMoveAnimationCoordinator.animateMove(previousCoordinate, nextCoordinate).then(() => {
       const shouldEnterCity =
         appState.campaignTravelState != null &&
         appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
@@ -4107,30 +3779,16 @@ function handleModalConfirm() {
   renderApp();
 }
 
-function getFacingDegrees(from: GridCoordinate, to: GridCoordinate): number {
-  const deltaX = to.x - from.x;
-  const deltaY = to.y - from.y;
-  if (deltaX === 0 && deltaY === 0) {
-    return appState.campaignActorState.facingDegrees;
-  }
-
-  return Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-}
-
-function stopCampaignMoveAnimation(): void {
-  if (campaignMoveAnimationState?.frameId != null) {
-    window.cancelAnimationFrame(campaignMoveAnimationState.frameId);
-  }
-  campaignMoveAnimationState = null;
-}
-
 function cancelCampaignTravel(): void {
-  if (campaignMoveAnimationState == null && appState.campaignTravelState == null) {
+  if (
+    !campaignMoveAnimationCoordinator.hasActiveAnimation() &&
+    appState.campaignTravelState == null
+  ) {
     return;
   }
 
   campaignTravelRequestId += 1;
-  stopCampaignMoveAnimation();
+  campaignMoveAnimationCoordinator.stopAnimation();
   appState = {
     ...appState,
     campaignTravelState: null,
@@ -4163,7 +3821,7 @@ function startCampaignTravel(
   const previousCoordinate = appState.playerCoordinate;
   const travelRequestId = campaignTravelRequestId + 1;
   campaignTravelRequestId = travelRequestId;
-  stopCampaignMoveAnimation();
+  campaignMoveAnimationCoordinator.stopAnimation();
 
   appState = applyCampaignTravelStart(appState, {
     targetCoordinate: nextCoordinate,
@@ -4172,7 +3830,7 @@ function startCampaignTravel(
   });
   renderApp();
 
-  void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+  void campaignMoveAnimationCoordinator.animateMove(previousCoordinate, nextCoordinate).then(() => {
     if (campaignTravelRequestId !== travelRequestId) {
       return;
     }
@@ -4196,76 +3854,6 @@ function startCampaignTravel(
     });
     appState = runtimeCommit.state;
     renderApp();
-  });
-}
-
-function animateCampaignMove(
-  from: GridCoordinate,
-  to: GridCoordinate
-): Promise<void> {
-  stopCampaignMoveAnimation();
-
-  const deltaX = to.x - from.x;
-  const deltaY = to.y - from.y;
-  const distance = Math.hypot(deltaX, deltaY);
-  const startFacingDegrees = appState.campaignActorState.facingDegrees;
-  const facingDegrees = getFacingDegrees(from, to);
-  if (distance < 0.001) {
-    syncCampaignActorRuntimeState(to, facingDegrees, false);
-    renderApp();
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve) => {
-    const durationMs = Math.max(
-      CAMPAIGN_TRAVEL_MIN_DURATION_MS,
-      Math.min(CAMPAIGN_TRAVEL_MAX_DURATION_MS, distance * CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT)
-    );
-    const facingDelta = getShortestAngleDelta(startFacingDegrees, facingDegrees);
-    const turnDurationMs =
-      Math.abs(facingDelta) < 0.5
-        ? 0
-        : Math.max(180, Math.abs(facingDelta) / CAMPAIGN_TURN_DEGREES_PER_SECOND * 1000);
-    const animationState: CampaignMoveAnimationState = {
-      frameId: null,
-      startedAtMs: performance.now(),
-      from,
-      to,
-      durationMs,
-      resolve,
-    };
-    campaignMoveAnimationState = animationState;
-
-    const tick = (timestamp: number) => {
-      if (campaignMoveAnimationState !== animationState) {
-        resolve();
-        return;
-      }
-
-      const elapsedMs = timestamp - animationState.startedAtMs;
-      const rawProgress = clamp(elapsedMs / animationState.durationMs, 0, 1);
-      const nextCoordinate = {
-        x: animationState.from.x + (animationState.to.x - animationState.from.x) * rawProgress,
-        y: animationState.from.y + (animationState.to.y - animationState.from.y) * rawProgress,
-      };
-      const turnProgress =
-        turnDurationMs <= 0 ? 1 : clamp(elapsedMs / turnDurationMs, 0, 1);
-      const currentFacingDegrees = normalizeDegrees(
-        startFacingDegrees + facingDelta * turnProgress
-      );
-      syncCampaignActorRuntimeState(nextCoordinate, currentFacingDegrees, rawProgress < 1);
-      syncCampaignActorView();
-
-      if (rawProgress >= 1) {
-        campaignMoveAnimationState = null;
-        resolve();
-        return;
-      }
-
-      animationState.frameId = window.requestAnimationFrame(tick);
-    };
-
-    animationState.frameId = window.requestAnimationFrame(tick);
   });
 }
 

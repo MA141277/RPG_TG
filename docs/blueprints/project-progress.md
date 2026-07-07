@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_target: `target.project-complete-modularization`
 - has_active_queue: `false`
-- next_file: `docs/blueprints/blueprint.md`
+- next_file: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -34,7 +34,7 @@
 - `Blueprint governance was rebuilt onto the single-writer model.`
 - `The current target is intentionally open with no active queue, so same-target queue admission remains legal without fabricating placeholder work.`
 
-### Active Admission Snapshot (2026-07-07)
+### Current Review Snapshot (2026-07-08)
 
-- `queue.playable-family-gap-audit is closed after playable contribution truth and activation-configurable default runtime registries were synchronized into Blueprint truth.`
-- `The current target remains open with no active queue; the next legal entry point is same-target admission review for fresh work or explicit target closeout.`
+- `queue.main-shell-and-layout-editor-ownerization is no longer active. Fresh source audit proved that the remaining src/main.ts residue is now limited to accepted pure-shell responsibilities only: DOM root lookup, dependency/coordinator assembly, startup entry registration, top-level browser event registration, lifecycle boot or destroy primitives, and loading-screen primitive helpers.`
+- `The queue's bounded ownerization work is complete on current evidence, but legal queue closeout is blocked because npm test still fails only on the known repository-wide import.meta and ?url asset typing/configuration gap outside this queue slice. Target control therefore returns to promotion review with no active queue, and the next entry document is the target plan rather than the closed-or-blocked queue record alone.`

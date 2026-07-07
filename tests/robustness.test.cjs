@@ -8921,7 +8921,7 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
     "utf8"
   );
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
 
   assert.doesNotMatch(handleModalConfirmBlock, /runNavigationRuntime\(/);
@@ -8954,10 +8954,10 @@ test("child 15 covered advance-segments travel paths route through shared runtim
     "utf8"
   );
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
   )?.[0] ?? "";
 
   assert.doesNotMatch(handleModalConfirmBlock, /runTimeRuntime\(/);
@@ -8995,7 +8995,7 @@ test("child 16 covered city-enter story handoff stays on the shared trigger seam
     "utf8"
   );
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
 
   assert.match(
@@ -9072,10 +9072,10 @@ test("main runtime orchestration uses shared runtime commit helper for covered d
     /function dispatchCurrentStoryBattleAction\(actionId: string\): void \{[\s\S]*?\r?\n}\r?\n\r?\ntype BattleDemoResultMessage/
   )?.[0] ?? "";
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
   )?.[0] ?? "";
 
   assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
@@ -9107,9 +9107,6 @@ test("interactive covered main write-back paths use shared runtime commit helper
   const tickCityBeggingMiniGameBlock = source.match(
     /function tickCityBeggingMiniGame\(timestamp: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startCityBeggingMiniGameLoop/
   )?.[0] ?? "";
-  const openBeggingMiniGameBlock = source.match(
-    /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
-  )?.[0] ?? "";
   const stopCurrentActivityQteBlock = source.match(
     /function stopCurrentActivityQte\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction closeCurrentActivityResult/
   )?.[0] ?? "";
@@ -9121,7 +9118,6 @@ test("interactive covered main write-back paths use shared runtime commit helper
     onBeggingGameCompleteBlock,
     syncCityBeggingMiniGamePointerBlock,
     tickCityBeggingMiniGameBlock,
-    openBeggingMiniGameBlock,
     stopCurrentActivityQteBlock,
     closeCurrentActivityResultBlock,
   ]) {
@@ -10111,7 +10107,7 @@ test("child 22 continue path does not overwrite a restored mod by re-entering bu
   assert.match(continueBlock, /loadSaveData\(\)/);
   assert.match(
     continueBlock,
-    /startRestoredGameWithLoading|startActivatedGameWithLoading|runStartupSessionCoordinator/
+    /startRestoredGameWithLoading|startActivatedGameWithLoading|runStartupSessionCoordinator|shellBootLifecycleCoordinator\.startContinue/
   );
   assert.doesNotMatch(
     continueBlock,
@@ -10121,9 +10117,14 @@ test("child 22 continue path does not overwrite a restored mod by re-entering bu
 
 test("child 22 builtin and imported startup paths share one activated session bootstrap helper", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
-  assert.match(source, /function applyActivatedModSession|function startActivatedGameSession/);
+  assert.match(
+    source,
+    /startup-session-apply-coordinator|createStartupSessionApplyCoordinator|shell-boot-lifecycle-coordinator|createShellBootLifecycleCoordinator/
+  );
   const helperUsageCount = (
-    source.match(/applyActivatedModSession\(|startActivatedGameSession\(/g) ?? []
+    source.match(
+      /shellBootLifecycleCoordinator\.startContinue\(|shellBootLifecycleCoordinator\.startRestore\(|shellBootLifecycleCoordinator\.startBuiltin\(|shellBootLifecycleCoordinator\.startScenarioPackRequest\(|startupSessionApplyCoordinator\.applyStartupSession\(|applyActivatedModSession\(|startActivatedGameSession\(/g
+    ) ?? []
   ).length;
 
   assert.ok(helperUsageCount >= 3);
@@ -10148,10 +10149,12 @@ test("child 23 main startup extraction delegates startup-family orchestration to
 
   assert.match(
     source,
-    /startup-session-coordinator|runStartupSessionCoordinator/
+    /startup-session-coordinator|runStartupSessionCoordinator|shell-boot-lifecycle-coordinator|createShellBootLifecycleCoordinator/
   );
   const coordinatorUsageCount = (
-    source.match(/runStartupSessionCoordinator\(/g) ?? []
+    source.match(
+      /shellBootLifecycleCoordinator\.startContinue\(|shellBootLifecycleCoordinator\.startRestore\(|shellBootLifecycleCoordinator\.startBuiltin\(|shellBootLifecycleCoordinator\.startScenarioPackRequest\(|runStartupSessionCoordinator\(/g
+    ) ?? []
   ).length;
   assert.ok(coordinatorUsageCount >= 3);
   assert.doesNotMatch(
@@ -10202,7 +10205,10 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
     coordinatorSource,
     /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(scenarioPack\)/
   );
-  assert.match(mainSource, /applyActivatedModSession|mainRuntimeOrchestrator/);
+  assert.match(
+    mainSource,
+    /startup-session-apply-coordinator|createStartupSessionApplyCoordinator|mainRuntimeOrchestrator/
+  );
   assert.match(
     orchestratorSource,
     /(setActiveContentContext\(request\.session\.contentContext\)|syncActivatedContentSource\(request\.session\.activationResult\))[\s\S]*const appState = request\.session\.createAppState\(\);/
@@ -10902,10 +10908,10 @@ test("child 25 time runtime emits explicit council-threshold outcome when day-st
 test("child 25 main.ts no longer hand-stitches covered navigation/time follow-up after runtime settlement", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
   )?.[0] ?? "";
 
   assert.match(source, /createNavigationTimeFollowUpBridge|navigationTimeFollowUp/);
@@ -11072,20 +11078,800 @@ test("shell thinning city-view transition owner module exists and preserves cove
 });
 
 test("shell thinning main.ts no longer inlines covered city view transition mutation blocks", () => {
-  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/city-house-transition-coordinator.ts"
+    ),
+    "utf8"
+  );
 
-  assert.match(source, /city-view-transition|applyCityViewTransition/);
+  assert.match(coordinatorSource, /city-view-transition|applyCityViewTransition/);
+  assert.match(
+    mainSource,
+    /city-house-transition-coordinator|createCityHouseTransitionCoordinator/
+  );
   assert.doesNotMatch(
-    source,
+    coordinatorSource,
     /const leaveCityButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='leave-city'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "map"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
   );
   assert.doesNotMatch(
-    source,
+    coordinatorSource,
     /const enterCity3dButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='enter-city-3d'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "city-3d"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
   );
   assert.doesNotMatch(
-    source,
+    coordinatorSource,
     /const leaveCity3dButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='leave-city-3d'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "city"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function canOpenHouseFromCity\(houseDefinition: HouseDefinition\): boolean \{[\s\S]*locationDialogueState:\s*\{[\s\S]*type:\s*"house-access-refusal"[\s\S]*renderApp\(\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a city house transition coordinator seam for city-view transitions and access-refusal flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "city-house-transition-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type CityHouseTransitionCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCityHouseTransitionCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /city-house-transition-coordinator|createCityHouseTransitionCoordinator/
+  );
+  assert.match(mainSource, /cityHouseTransitionCoordinator\.leaveCity\(\)/);
+  assert.match(mainSource, /cityHouseTransitionCoordinator\.enterCity3d\(\)/);
+  assert.match(mainSource, /cityHouseTransitionCoordinator\.leaveCity3d\(\)/);
+  assert.match(
+    mainSource,
+    /cityHouseTransitionCoordinator\.handleHouseAccessRefusal\(accessResult\.refusal\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /\[data-action='leave-city'][\s\S]*applyCityViewTransition\([\s\S]*renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /\[data-action='enter-city-3d'][\s\S]*applyCityViewTransition\([\s\S]*renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /\[data-action='leave-city-3d'][\s\S]*applyCityViewTransition\([\s\S]*renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function canOpenHouseFromCity\(houseDefinition: HouseDefinition\): boolean \{[\s\S]*locationDialogueState:\s*\{[\s\S]*type:\s*"house-access-refusal"[\s\S]*renderApp\(\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered council-priority and city-begging mutation blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/council-priority-city-begging-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const showCouncilPriorityRefusalBlock = mainSource.match(
+    /function showCouncilPriorityRefusal\(\): void \{[\s\S]*?\r?\n}\r?\n/
+  )?.[0] ?? "";
+  const showCouncilInsufficientTimeRefusalBlock = mainSource.match(
+    /function showCouncilInsufficientTimeRefusal\([\s\S]*?\r?\n}\r?\n/
+  )?.[0] ?? "";
+  const confirmBeggingMiniGameResultBlock = mainSource.match(
+    /function confirmBeggingMiniGameResult\(\): void \{[\s\S]*?\r?\n}\r?\n/
+  )?.[0] ?? "";
+  const openBeggingMiniGameBlock = mainSource.match(
+    /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /council-priority-city-begging-coordinator|createCouncilPriorityCityBeggingCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /CITY_BEGGING_DURATION_DAYS|getCityBeggingMiniGameCompletionResult|launchCityBeggingPlayable/
+  );
+  assert.doesNotMatch(
+    showCouncilPriorityRefusalBlock,
+    /type:\s*"house-access-refusal"|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    showCouncilInsufficientTimeRefusalBlock,
+    /type:\s*"house-access-refusal"|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    confirmBeggingMiniGameResultBlock,
+    /onBeggingGameComplete\(completionResult\)|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    openBeggingMiniGameBlock,
+    /createLaunchPlayableRequest\("city-begging"|renderApp\(\)|startCityBeggingMiniGameLoop\(\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a council priority city begging coordinator seam for refusal and playable launch result flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "council-priority-city-begging-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type CouncilPriorityCityBeggingCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCouncilPriorityCityBeggingCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /council-priority-city-begging-coordinator|createCouncilPriorityCityBeggingCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.showCouncilPriorityRefusal\(\)/
+  );
+  assert.match(
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.showCouncilInsufficientTimeRefusal\(/
+  );
+  assert.match(
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.openBeggingMiniGame\(\)/
+  );
+  assert.match(
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.confirmBeggingMiniGameResult\(\)/
+  );
+  assert.doesNotMatch(
+    mainSource.match(
+      /function showCouncilPriorityRefusal\(\): void \{[\s\S]*?\r?\n}\r?\n/
+    )?.[0] ?? "",
+    /renderApp\(\)|type:\s*"house-access-refusal"/
+  );
+  assert.doesNotMatch(
+    mainSource.match(
+      /function showCouncilInsufficientTimeRefusal\([\s\S]*?\r?\n}\r?\n/
+    )?.[0] ?? "",
+    /renderApp\(\)|type:\s*"house-access-refusal"/
+  );
+  assert.doesNotMatch(
+    mainSource.match(
+      /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
+    )?.[0] ?? "",
+    /renderApp\(\)|startCityBeggingMiniGameLoop\(\)|createLaunchPlayableRequest\("city-begging"/
+  );
+  assert.doesNotMatch(
+    mainSource.match(
+      /function confirmBeggingMiniGameResult\(\): void \{[\s\S]*?\r?\n}\r?\n/
+    )?.[0] ?? "",
+    /renderApp\(\)|onBeggingGameComplete\(completionResult\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered city-directory and leader-residence entry mutation blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/city-directory-leader-residence-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const cityEntryBlock = mainSource.match(
+    /const cityEntryButton = targetElement\.closest<HTMLElement>\([\s\S]*?\r?\n\s*const cityDirectoryCharacterButton/
+  )?.[0] ?? "";
+  const cityDirectoryCharacterBlock = mainSource.match(
+    /const cityDirectoryCharacterButton = targetElement\.closest<HTMLElement>\([\s\S]*?\r?\n\s*const activityActionButton/
+  )?.[0] ?? "";
+  const houseButtonBlock = mainSource.match(
+    /const houseButton = targetElement\.closest<HTMLElement>\("\[data-house-id\]"\);[\s\S]*?\r?\n\s*const cancelCampaignTravelButton/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /city-directory-leader-residence-coordinator|createCityDirectoryLeaderResidenceCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /openCityDirectory|selectLeaderResidenceOptions|pendingCharacterId|enterHouse/
+  );
+  assert.doesNotMatch(
+    cityEntryBlock,
+    /openCityDirectory\(|selectLeaderResidenceOptions\(|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    cityDirectoryCharacterBlock,
+    /LEADER_RESIDENCE_VARIABLE_KEYS\.pendingCharacterId|enterHouseThroughRuntime\(houseRuntime, targetHouseId\)/
+  );
+  assert.doesNotMatch(
+    houseButtonBlock,
+    /enterHouseThroughRuntime\(houseRuntime, houseId\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a city directory leader residence coordinator seam for directory and related house entry flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "city-directory-leader-residence-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type CityDirectoryLeaderResidenceCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCityDirectoryLeaderResidenceCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /city-directory-leader-residence-coordinator|createCityDirectoryLeaderResidenceCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /cityDirectoryLeaderResidenceCoordinator\.handleCityEntryClick\(cityEntryId\)/
+  );
+  assert.match(
+    mainSource,
+    /cityDirectoryLeaderResidenceCoordinator\.handleCityDirectoryCharacterSelection\(selectedCharacterId\)/
+  );
+  assert.match(
+    mainSource,
+    /cityDirectoryLeaderResidenceCoordinator\.enterHouseFromCity\(houseId\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered mapped city-3d scene-object house entry blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/city-3d-house-entry-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const messageBlock = mainSource.match(
+    /window\.addEventListener\("message", \(event\) => \{[\s\S]*?\r?\n}\);[\s\S]*?\r?\nfunction getLayoutEditorDragHandleSelector/
+  )?.[0] ?? "";
+  const city3dHouseButtonBlock = mainSource.match(
+    /const city3dHouseButton = targetElement\.closest<HTMLElement>\([\s\S]*?\r?\n\s*const cityEntryButton/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /city-3d-house-entry-coordinator|createCity3dHouseEntryCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /sceneObjectId\.trim\(\)|requestedHouseId == null \|\| houseMapping\.houseId === requestedHouseId|canOpenHouseFromCity|enterHouse/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function enterMappedCity3dHouseBySceneObjectId\([\s\S]*?enterHouseThroughRuntime\(houseRuntime, mappedHouse\.houseId\);[\s\S]*?\r?\n}\r?\n/
+  );
+  assert.doesNotMatch(
+    messageBlock,
+    /hd2deg:enter-house|typeof data\.sceneObjectId !== "string"|enterMappedCity3dHouseBySceneObjectId\(/
+  );
+  assert.doesNotMatch(
+    city3dHouseButtonBlock,
+    /enterMappedCity3dHouseBySceneObjectId\(sceneObjectId\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a city-3d house entry coordinator seam for scene-object house entry flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "city-3d-house-entry-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type City3dHouseEntryCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCity3dHouseEntryCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /city-3d-house-entry-coordinator|createCity3dHouseEntryCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /city3dHouseEntryCoordinator\.handleSceneObjectHouseEntry\(sceneObjectId\)/
+  );
+  assert.match(
+    mainSource,
+    /city3dHouseEntryCoordinator\.handleWindowMessage\(event\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered house drag-drop submit blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/house-drag-drop-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const pointerSubmitBlock = mainSource.match(
+    /appElement\.addEventListener\("pointerup", \(event\) => \{[\s\S]*?\r?\n}\);[\s\S]*?\r?\nappElement\.addEventListener\("pointercancel"/
+  )?.[0] ?? "";
+  const dropSubmitBlock = mainSource.match(
+    /appElement\.addEventListener\("drop", \(event\) => \{[\s\S]*?\r?\n}\);[\s\S]*?\r?\nappElement\.addEventListener\("dragend"/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /house-drag-drop-coordinator|createHouseDragDropCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /dispatchHouseAction|actionId: `\$\{actionPrefix\}\$\{payload\}:\$\{beforeId \?\? "end"\}`|renderApp/
+  );
+  assert.doesNotMatch(
+    pointerSubmitBlock,
+    /dispatchHouseRuntimeRequest\(houseRuntime, \{[\s\S]*?actionId: `\$\{dragState\.root\.dataset\.houseDropActionPrefix\}\$\{dragState\.payload\}:\$\{beforeId \?\? "end"\}`[\s\S]*?renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    dropSubmitBlock,
+    /dispatchHouseRuntimeRequest\(houseRuntime, \{[\s\S]*?actionId: `\$\{actionPrefix\}\$\{payload\}:\$\{before\}`/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a house drag-drop coordinator seam for drag submit render flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "house-drag-drop-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type HouseDragDropCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createHouseDragDropCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /house-drag-drop-coordinator|createHouseDragDropCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /houseDragDropCoordinator\.submitPointerDrag\(dragState\)/
+  );
+  assert.match(
+    mainSource,
+    /houseDragDropCoordinator\.submitHtmlDrop\(\{/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered campaign move animation helper blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/campaign-move-animation-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const animationHelperBlock = mainSource.match(
+    /function getFacingDegrees\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
+  )?.[0] ?? "";
+  const startCampaignTravelBlock = mainSource.match(
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /campaign-move-animation-coordinator|createCampaignMoveAnimationCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /Math\.atan2|requestAnimationFrame|cancelAnimationFrame|syncCampaignActorRuntimeState|syncCampaignActorView|renderApp/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /let campaignMoveAnimationState: CampaignMoveAnimationState \| null = null;/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function getFacingDegrees\(|function stopCampaignMoveAnimation\(|function animateCampaignMove\(/
+  );
+  assert.doesNotMatch(
+    animationHelperBlock,
+    /Math\.atan2|requestAnimationFrame|cancelAnimationFrame|syncCampaignActorRuntimeState\(to, facingDegrees, false\)|syncCampaignActorView\(\)|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    startCampaignTravelBlock,
+    /stopCampaignMoveAnimation\(\)|animateCampaignMove\(previousCoordinate, nextCoordinate\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a campaign move animation coordinator seam for animation lifecycle render flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "campaign-move-animation-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type CampaignMoveAnimationCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCampaignMoveAnimationCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /campaign-move-animation-coordinator|createCampaignMoveAnimationCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /campaignMoveAnimationCoordinator\.hasActiveAnimation\(\)/
+  );
+  assert.match(
+    mainSource,
+    /campaignMoveAnimationCoordinator\.stopAnimation\(\)/
+  );
+  assert.match(
+    mainSource,
+    /campaignMoveAnimationCoordinator\.animateMove\(previousCoordinate, nextCoordinate\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered startup session apply wiring blocks", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "startup-session-apply-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const continueBlock = mainSource.match(
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startRestoredGameWithLoading/
+  )?.[0] ?? "";
+  const restoreBlock = mainSource.match(
+    /function startRestoredGameWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nfunction startMainGameWithLoading/
+  )?.[0] ?? "";
+  const builtinBlock = mainSource.match(
+    /function startMainGameWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nfunction runScenarioPackStartupRequestWithLoading/
+  )?.[0] ?? "";
+  const scenarioPackBlock = mainSource.match(
+    /function runScenarioPackStartupRequestWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nasync function startScenarioPackWithLoading/
+  )?.[0] ?? "";
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+  assert.match(
+    mainSource,
+    /startup-session-apply-coordinator|createStartupSessionApplyCoordinator/
+  );
+  assert.doesNotMatch(mainSource, /function applyActivatedModSession\(/);
+  assert.doesNotMatch(
+    mainSource,
+    /configureDefaultPlayableRuntimeRegistriesFromActivatedMod\(input\.activationResult\.activatedMod\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"apply-startup-session"/
+  );
+  assert.doesNotMatch(
+    continueBlock,
+    /persistSaveData\(\)|renderApp\(\)|applyActivatedModSession\(startupSession\)/
+  );
+  assert.doesNotMatch(
+    restoreBlock,
+    /persistSaveData\(\)|renderApp\(\)|applyActivatedModSession\(startupSession\)/
+  );
+  assert.doesNotMatch(
+    builtinBlock,
+    /persistSaveData\(\)|renderApp\(\)|applyActivatedModSession\(startupSession\)/
+  );
+  assert.doesNotMatch(
+    scenarioPackBlock,
+    /persistSaveData\(\)|renderApp\(\)|applyActivatedModSession\(startupSession\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a startup session apply coordinator seam for startup success apply persist render flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "startup-session-apply-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type StartupSessionApplyCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createStartupSessionApplyCoordinator\(/
+  );
+  assert.match(
+    coordinatorSource,
+    /mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"apply-startup-session"/
+  );
+  assert.match(coordinatorSource, /persistSaveData\(\)/);
+  assert.match(coordinatorSource, /renderApp\(\)/);
+  assert.match(
+    mainSource,
+    /startup-session-apply-coordinator|createStartupSessionApplyCoordinator/
+  );
+
+  const applyUsageCount = (
+    mainSource.match(
+      /startupSessionApplyCoordinator\.applyStartupSession\(|shellBootLifecycleCoordinator\.startContinue\(|shellBootLifecycleCoordinator\.startRestore\(|shellBootLifecycleCoordinator\.startBuiltin\(|shellBootLifecycleCoordinator\.startScenarioPackRequest\(/g
+    ) ?? []
+  ).length;
+  assert.ok(applyUsageCount >= 4);
+});
+
+test("shell thinning main.ts no longer inlines covered shell-side boot lifecycle assembly blocks", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "shell-boot-lifecycle-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const continueBlock = mainSource.match(
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startRestoredGameWithLoading/
+  )?.[0] ?? "";
+  const restoreBlock = mainSource.match(
+    /function startRestoredGameWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nfunction startMainGameWithLoading/
+  )?.[0] ?? "";
+  const builtinBlock = mainSource.match(
+    /function startMainGameWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nfunction runScenarioPackStartupRequestWithLoading/
+  )?.[0] ?? "";
+  const scenarioPackBlock = mainSource.match(
+    /function runScenarioPackStartupRequestWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nasync function startScenarioPackWithLoading/
+  )?.[0] ?? "";
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+  assert.match(
+    mainSource,
+    /shell-boot-lifecycle-coordinator|createShellBootLifecycleCoordinator/
+  );
+  assert.doesNotMatch(
+    continueBlock,
+    /beginLoadingScreen\(\)|simulateLoadingProgress\(|setActiveLoadingProgress\(|endLoadingScreen\(requestId\)|startupSessionApplyCoordinator\.applyStartupSession\(startupSession\)|runStartupSessionCoordinator\(/
+  );
+  assert.doesNotMatch(
+    restoreBlock,
+    /beginLoadingScreen\(\)|simulateLoadingProgress\(|setActiveLoadingProgress\(|endLoadingScreen\(requestId\)|startupSessionApplyCoordinator\.applyStartupSession\(startupSession\)|runStartupSessionCoordinator\(/
+  );
+  assert.doesNotMatch(
+    builtinBlock,
+    /beginLoadingScreen\(\)|simulateLoadingProgress\(|setActiveLoadingProgress\(|endLoadingScreen\(requestId\)|startupSessionApplyCoordinator\.applyStartupSession\(startupSession\)|runStartupSessionCoordinator\(/
+  );
+  assert.doesNotMatch(
+    scenarioPackBlock,
+    /beginLoadingScreen\(\)|simulateLoadingProgress\(|setActiveLoadingProgress\(|endLoadingScreen\(requestId\)|startupSessionApplyCoordinator\.applyStartupSession\(startupSession\)|runStartupSessionCoordinator\(/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a shell boot lifecycle coordinator seam for boot request lifecycle end-loading handoff", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "shell-boot-lifecycle-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type ShellBootLifecycleCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createShellBootLifecycleCoordinator\(/
+  );
+  assert.match(coordinatorSource, /beginLoadingScreen\(\)/);
+  assert.match(coordinatorSource, /simulateLoadingProgress\(/);
+  assert.match(coordinatorSource, /endLoadingScreen\(requestId\)/);
+  assert.match(
+    coordinatorSource,
+    /startupSessionApplyCoordinator\.applyStartupSession\(/
+  );
+  assert.match(
+    mainSource,
+    /shell-boot-lifecycle-coordinator|createShellBootLifecycleCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /shellBootLifecycleCoordinator\.startContinue\(\{[\s\S]*selectedCharacter[\s\S]*saveData/
+  );
+  assert.match(
+    mainSource,
+    /shellBootLifecycleCoordinator\.startRestore\(\{[\s\S]*selectedCharacter[\s\S]*saveData/
+  );
+  assert.match(
+    mainSource,
+    /shellBootLifecycleCoordinator\.startBuiltin\(\{[\s\S]*selectedCharacter[\s\S]*startupScenario/
+  );
+  assert.match(
+    mainSource,
+    /shellBootLifecycleCoordinator\.startScenarioPackRequest\(\{[\s\S]*request[\s\S]*handleError/
+  );
+});
+
+test("fresh source audit keeps main.ts final shell residue within the pure-shell acceptance line", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const domAssemblyBlock =
+    mainSource.match(
+      /const appElement = document\.querySelector<HTMLElement>\("#app"\);[\s\S]*?let modRuntimeState: ModRuntimeState = createEmptyModRuntimeState\(\);/
+    )?.[0] ?? "";
+  const shellAssemblyBlock =
+    mainSource.match(
+      /const startupSessionApplyCoordinator = createStartupSessionApplyCoordinator\([\s\S]*?mainUiFlow\.showMainMenu\(\);/
+    )?.[0] ?? "";
+  const startupWrapperBlock =
+    mainSource.match(
+      /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n\r?\nasync function startScenarioPackFilesWithLoading/
+    )?.[0] ?? "";
+  const loadingPrimitiveBlock =
+    mainSource.match(
+      /function beginLoadingScreen\(\): number \{[\s\S]*?\r?\n}\r?\n\r?\nfunction setGameVisibility/
+    )?.[0] ?? "";
+  const browserLifecycleRegistrationBlock =
+    mainSource.match(
+      /syncGameViewport\(\);[\s\S]*?window\.addEventListener\("message", \(event\) => \{\r?\n  city3dHouseEntryCoordinator\.handleWindowMessage\(event\);\r?\n}\);/
+    )?.[0] ?? "";
+
+  assert.ok(domAssemblyBlock.length > 0);
+  assert.ok(shellAssemblyBlock.length > 0);
+  assert.ok(startupWrapperBlock.length > 0);
+  assert.ok(loadingPrimitiveBlock.length > 0);
+  assert.ok(browserLifecycleRegistrationBlock.length > 0);
+
+  assert.match(domAssemblyBlock, /document\.querySelector<HTMLElement>\("#app"\)/);
+  assert.match(
+    domAssemblyBlock,
+    /document\.querySelector<HTMLElement>\("#ui-overlay"\)/
+  );
+  assert.match(domAssemblyBlock, /throw new Error\("Missing #app mount point\."\)/);
+  assert.match(
+    domAssemblyBlock,
+    /throw new Error\("Missing #ui-overlay mount point\."\)/
+  );
+  assert.match(shellAssemblyBlock, /createStartupSessionApplyCoordinator\(/);
+  assert.match(shellAssemblyBlock, /createShellBootLifecycleCoordinator\(/);
+  assert.match(shellAssemblyBlock, /const mainUiFlow = new MainUiFlow\(/);
+  assert.match(shellAssemblyBlock, /mainUiFlow\.mount\(\)/);
+  assert.match(shellAssemblyBlock, /mainUiFlow\.showMainMenu\(\)/);
+
+  assert.match(browserLifecycleRegistrationBlock, /syncGameViewport\(\)/);
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("resize", syncGameViewport\)/
+  );
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("beforeunload", \(\) => \{\r?\n  persistSaveData\(\);\r?\n}\);/
+  );
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("pointerdown", resumeBackgroundMusicIfNeeded/
+  );
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("keydown", resumeBackgroundMusicIfNeeded\);/
+  );
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("message", \(event\) => \{\r?\n  city3dHouseEntryCoordinator\.handleWindowMessage\(event\);\r?\n}\);/
+  );
+
+  assert.match(
+    startupWrapperBlock,
+    /shellBootLifecycleCoordinator\.startContinue\(\{[\s\S]*selectedCharacter[\s\S]*saveData/
+  );
+  assert.match(
+    startupWrapperBlock,
+    /shellBootLifecycleCoordinator\.startRestore\(\{[\s\S]*selectedCharacter[\s\S]*saveData/
+  );
+  assert.match(
+    startupWrapperBlock,
+    /shellBootLifecycleCoordinator\.startBuiltin\(\{[\s\S]*selectedCharacter[\s\S]*startupScenario/
+  );
+  assert.match(
+    startupWrapperBlock,
+    /shellBootLifecycleCoordinator\.startScenarioPackRequest\(\{[\s\S]*request[\s\S]*handleError/
+  );
+  assert.doesNotMatch(
+    startupWrapperBlock,
+    /runStartupSessionCoordinator\(|startupSessionApplyCoordinator\.applyStartupSession\(|mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"apply-startup-session"|beginLoadingScreen\(\)|simulateLoadingProgress\(|endLoadingScreen\(requestId\)/
+  );
+
+  assert.match(loadingPrimitiveBlock, /selectRandomLoadingTheme\(\)/);
+  assert.match(loadingPrimitiveBlock, /renderLoadingScreen\(0, selectedLoadingTheme\)/);
+  assert.match(loadingPrimitiveBlock, /document\.createElement\("div"\)/);
+  assert.match(loadingPrimitiveBlock, /mainUiFlow\.hide\(\)/);
+  assert.match(loadingPrimitiveBlock, /setLoadingScreenProgress\(/);
+  assert.match(loadingPrimitiveBlock, /window\.requestAnimationFrame\(tick\)/);
+  assert.doesNotMatch(
+    loadingPrimitiveBlock,
+    /runStartupSessionCoordinator\(|startupSessionApplyCoordinator\.applyStartupSession\(|mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"apply-startup-session"|shellBootLifecycleCoordinator\.start(?:Continue|Restore|Builtin|ScenarioPackRequest)\(|persistSaveData\(\)|routeNavigationRuntime\(|routeTimeRuntime\(/
   );
 });
 
@@ -11199,7 +11985,7 @@ test("shell thinning campaign travel transition owner module exists and preserve
 test("shell thinning main.ts no longer inlines covered campaign travel transition blocks", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
   )?.[0] ?? "";
 
   assert.match(source, /campaign-travel-transition|applyCampaignTravel(Start|Completion)/);

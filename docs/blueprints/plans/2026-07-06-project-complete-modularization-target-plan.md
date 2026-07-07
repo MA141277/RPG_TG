@@ -7,15 +7,15 @@
 - target_status: `open`
 - active_phase: `phase.final-acceptance`
 - active_queue: `none`
-- decision_state: `idle-open`
-- next_decision: `same-target-admission-or-target-closeout`
-- next_action: `classify-fresh-work`
+- decision_state: `promotion-review`
+- next_decision: `queue-admission-review`
+- next_action: `return-to-promotion-review`
 - resume_gate: `open-target-no-active-queue`
 - promotion_review_result: `none`
-- review_subject_id: `none`
-- review_subject_classification: `none`
+- review_subject_id: `queue.main-shell-and-layout-editor-ownerization`
+- review_subject_classification: `blocked-queue-closeout`
 - proposed_queue_id: `none`
-- review_basis: `none`
+- review_basis: `queue-closeout blocked only by the known repository-wide import.meta and ?url asset typing/configuration gap outside the finished queue slice`
 - admission_status: `none`
 - blocked_by: []
 
@@ -30,6 +30,7 @@
 | `queue.playable-family-gap-audit` | `closed` | `only if a still-live playable-family gap is proven` | `Closed on 2026-07-07 after playable contribution truth and activation-configurable default runtime registries landed and verification passed.` |
 | `queue.framework-scaffold-and-template-closure` | `candidate` | `only if framework-owned authoring coverage is disproven` | `Accepted compatibility residue alone is insufficient.` |
 | `queue.ui-runtime-contract-consumption` | `closed` | `only if runtime-facing UI contract bypass is proven` | `Closed on 2026-07-07 after the bounded shared-dialog replacement landed and verification passed.` |
+| `queue.main-shell-and-layout-editor-ownerization` | `blocked` | `only if fresh evidence proves main.ts still owns non-shell UI/editor state decisions and the layout editor still lacks an independent owner line` | `Admitted on 2026-07-07 after fresh main.ts evidence proved the shell/editor owner line is still live on the covered production path; queue-local ownerization work is now complete on current evidence, but queue closeout is blocked by the known repository-wide import.meta and ?url asset typing/configuration gap outside this slice.` |
 
 ### Admission Review Record
 
@@ -39,10 +40,17 @@
 - Admission basis:
   - `queue.ui-runtime-contract-consumption was admitted only after the target plan and queue doc were synchronized with written runtime-facing UI contract bypass evidence.`
   - `queue.playable-family-gap-audit was admitted because src/core/contracts/gameplay-contribution.ts and src/core/contracts/mod-manifest.ts exposed no playable-family contribution contract, while src/core/runtime/playable-runtime.ts still fell back to builtin playable registries and the builtin playable definition/integration registries still seeded covered production playables directly.`
+  - `queue.main-shell-and-layout-editor-ownerization was admitted because src/main.ts still owned layout editor behavior, render scheduling ownership, and too many business-driven render triggers on the covered production path.`
 - Current review subject:
-  - `none`
+  - `queue.main-shell-and-layout-editor-ownerization`
 - Current handoff:
-  - `queue.playable-family-gap-audit is closed; the target remains open with no active queue and may still admit additional same-target queues until explicit human target closeout confirmation is written.`
+  - `queue.main-shell-and-layout-editor-ownerization is no longer active. Fresh source audit proved that src/main.ts has reached the accepted pure-shell line for this queue, so no further bounded ownerization batch is justified on current evidence.`
+  - `Queue closeout was attempted, but npm test still fails only on the known repository-wide import.meta and ?url asset typing/configuration blocker outside this queue slice, so the queue is now recorded as blocked rather than silently left active or falsely closed as passed.`
+  - `Target control therefore returns to promotion review with no active queue. This round does not auto-promote queue.state-sync-and-runtime-canonicalization, queue.unified-contribution-intake-closeout, or queue.framework-scaffold-and-template-closure because no new admission basis has been written yet.`
+- `The covered overlay/inventory/city-menu click family now routes through application/ui/app-click-coordinator.ts, the covered activity-qte/scene/story-battle action family now routes through application/runtime/interactive-action-coordinator.ts, the bounded campaign-travel owner family now routes through application/runtime/campaign-travel-coordinator.ts, the bounded map-auto-advance owner family now routes through application/runtime/map-auto-advance-coordinator.ts, the bounded city/house transition plus access-refusal owner family now routes through application/runtime/city-house-transition-coordinator.ts, the bounded council-priority plus city-begging owner family now routes through application/runtime/council-priority-city-begging-coordinator.ts, the bounded city-directory or leader-residence plus related house-side transition entry owner family now routes through application/runtime/city-directory-leader-residence-coordinator.ts, the bounded mapped city-3d or scene-object house entry owner family now routes through application/runtime/city-3d-house-entry-coordinator.ts, the bounded house drag/drop shell write owner family now routes through application/runtime/house-drag-drop-coordinator.ts, the bounded campaign move animation helper owner family now routes through application/runtime/campaign-move-animation-coordinator.ts, the bounded startup/session apply wiring owner family now routes through application/startup/startup-session-apply-coordinator.ts, and the bounded shell-side boot/lifecycle assembly owner family now routes through application/startup/shell-boot-lifecycle-coordinator.ts.`
+- `This round was a fresh source audit rather than a new extraction batch. Fresh source evidence now shows the remaining src/main.ts shell residue is limited to accepted pure-shell responsibilities only: DOM root lookup, dependency/coordinator assembly, startup entry registration, top-level browser event registration, lifecycle boot or destroy primitives, and loading-screen primitive helpers.`
+- `queue.main-shell-and-layout-editor-ownerization is no longer an active execution queue. Its bounded ownerization goal is complete on current evidence, but queue closeout is blocked because npm test still fails only on the known repository-wide import.meta and ?url asset typing/configuration gap outside the finished queue slice.`
+  - `Fresh verification on 2026-07-08 kept npm run lint:blueprints and npm run typecheck passing; npm test still fails only through the existing build:test asset/tooling blocker outside this queue slice.`
 
 ### Queue Admission Startup Rules
 
@@ -135,3 +143,5 @@ Mandatory merge loop triggers:
 - `2026-07-07: queue.ui-runtime-contract-consumption was closed after the bounded shared-dialog component landed, approved replacement points were consumed, and verification passed; target state returned to open with no active queue.`
 - `2026-07-07: queue.playable-family-gap-audit was admitted after fresh evidence proved the playable family still lacks a shared mod contribution contract and still relies on builtin registry seed + runtime fallback on the covered production path.`
 - `2026-07-07: queue.playable-family-gap-audit was closed after playable contribution truth and activation-configurable default runtime registries landed, and verification passed; target state returned to open with no active queue.`
+- `2026-07-07: queue.main-shell-and-layout-editor-ownerization was admitted after fresh evidence proved src/main.ts still owns non-shell layout editor behavior, render scheduling ownership, and runtime layout baseline bootstrap on the covered production path.`
+- `2026-07-08: queue.main-shell-and-layout-editor-ownerization ownerization work reached the accepted pure-shell line on fresh source evidence, but queue closeout was blocked because npm test still fails only on the known repository-wide import.meta and ?url asset typing/configuration gap outside that finished queue slice; target state returned to promotion review with no active queue.`
