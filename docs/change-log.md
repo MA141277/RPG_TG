@@ -23,16 +23,26 @@
 
 ### Added
 - 新增 Blueprint 支撑规范 [docs/blueprints/specs/2026-07-07-zhuyuanzhang-scenario-pack-integration-support-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-07-zhuyuanzhang-scenario-pack-integration-support-spec.md)，把 `zhuyuanzhang` 在当前 complete-modularization target 下的目标终态正式收口为“一个 canonical scenario-pack，而不是 TS 装配 + 旧资源路径的混合体”。
-- 该规范明确冻结了 `zhuyuanzhang` 的主从表模型：`pack.json` 作为唯一入口主表，`scenario-profile / events / scenes / tasks / maps / cities / houses / characters` 作为主干表，`text-entries / visual-assets / city-portraits / city-entries / activities / house-access-refusal-rules / historical-*` 作为从表或补充映射表。
-- 该规范新增 `visual-assets.json` 作为剧本专属视觉资源总表的目标终态，并要求剧本专属 CG、portrait、house/playable 插图逐步从 legacy 路径迁入 `src/content/scenario-packs/zhuyuanzhang/assets/**`。
+- 该规范明确冻结了 `zhuyuanzhang` 的主从表模型：`pack.json` 作为唯一入口主表，`scenario-profile / events / scenes / tasks / maps / cities / houses / characters` 作为当前兼容主干表，`text-entries / city-portraits / city-entries / activities / house-access-refusal-rules / historical-*` 作为从表或补充映射表；`visual-assets` 被降格为共享契约升级后的计划扩展。
+- 该规范把 `visual-assets.json` 明确收口为“共享 scenario-pack/content-pack contract、loader、validator 支持之后才能启用”的后续扩展，并要求剧本专属 CG、portrait、house/playable 插图在迁移时逐步进入 `src/content/scenario-packs/zhuyuanzhang/assets/**`，但在升级前继续走当前运行时支持的字段和映射。
 
 ### Changed
-- 明确 `zhuyuanzhang` 剧本整合默认遵循“数据驱动 + shared loader seam”原则：`events` 只做触发与路由，`scenes` 只做演出与分支，`tasks` 只做进度状态机，`text-entries` 统一承载文案，`visual-assets` 统一承载剧本专属视觉资源。
+- 明确 `zhuyuanzhang` 剧本整合默认遵循“数据驱动 + shared loader seam”原则：`events` 只做触发与路由，`scenes` 只做演出与分支，`tasks` 只做进度状态机；文案与视觉资源改造都必须以当前共享契约能力为上限，超出现状的表或字段必须先走 shared loader seam 升级，不能由剧本包单方面发明。
 - 明确共享 framework/UI baseline 不是 `zhuyuanzhang` 包内真值，不得为了追求表面自包含而把 layout-editor baseline、共享按钮/面板、或 shared skin 资源并入剧本包。
 - 明确整合验证必须同时覆盖 `pack.json.files`、`textId` / `sceneId` / `taskId` / `eventId` / `assetId` 引用完整性、pack-local asset 存在性、以及迁移后的 source-path audit。
 
 ### Impact
 - 后续若要推进 `zhuyuanzhang` 完整剧本包整合，不需要再次从零定义“哪些内容该进包、哪些不能进包、主从表如何拆、如何验收”；当前 Blueprint 已有一份可复用的正式支撑规范。
+
+## 2026-07-07 Shared Contract Upgrade Governance Spec
+
+### Added
+- 新增治理规范 [docs/superpowers/specs/2026-07-07-shared-contract-upgrade-governance-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-07-shared-contract-upgrade-governance-spec.md)，单独冻结 shared `scenario-pack/content-pack` 契约链路的升级顺序、层级责任和验收门槛，并明确它不是 Blueprint/live truth。
+- 该规范把 shared 能力升级固定为 `contract -> loader -> validator -> active-content -> consumer -> pack adoption -> cleanup` 七层链路，防止 pack 侧先偷跑字段、再倒逼 shared runtime 补洞。
+- 该规范把当前最敏感的三类能力 `visualAssets`、任务 `textId`、更丰富的 `scene graph` 收口为 shared 上游 readiness 问题，而不是 `zhuyuanzhang` 包内可自行启用的问题。
+
+### Impact
+- 后续如果要推进 `visual-assets`、任务 `textId`、`rich scene graph` 这类能力，仓库现在已经有一份独立治理文档可直接作为上游升级门槛，不需要再把 pack-level 规划和 shared contract 扩展混写在同一份规范里。
 - 该规范不会改变当前 active queue truth，也不会取代 target-plan/queue-doc 的 live execution authority；它只为未来同 target queue admission 和实施 closeout 提供稳定边界。
 
 ## 2026-07-07 Target Lifecycle Explicit-Open-Explicit-Close Rule
