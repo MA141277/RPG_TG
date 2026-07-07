@@ -4,6 +4,8 @@ export type GameplayContributionDeclaration = {
   scenes?: string[];
   tasks?: string[];
   houses?: string[];
+  playables?: string[];
+  playableIntegrations?: string[];
 };
 
 export type GameplayContributionRegistry = {
@@ -14,4 +16,6 @@ export type GameplayContributionRegistry = {
   tasks: string[];
   houses: string[];
   houseModules: string[];
+  playables: string[];
+  playableIntegrations: string[];
 };

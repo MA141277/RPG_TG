@@ -145,6 +145,7 @@ import {
   runInteractiveRuntime,
 } from "./core/runtime/interactive-runtime";
 import {
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
   createLaunchPlayableRequest,
   createPlayableActionRequest,
   runPlayableRuntime,
@@ -1651,6 +1652,11 @@ function applyActivatedModSession(input: {
   playerCharacterId: string;
   createAppState(): AppState;
 }): void {
+  if (input.activationResult.ok) {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+      input.activationResult.activatedMod
+    );
+  }
   mainRuntimeOrchestrator.execute({
     type: "apply-startup-session",
     session: input,

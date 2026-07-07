@@ -58,6 +58,8 @@ function normalizeGameplayContributions(
   const scenes = readStringArray(candidate.scenes);
   const tasks = readStringArray(candidate.tasks);
   const houses = readStringArray(candidate.houses);
+  const playables = readStringArray(candidate.playables);
+  const playableIntegrations = readStringArray(candidate.playableIntegrations);
 
   return {
     ...(navigation == null ? {} : { navigation }),
@@ -65,6 +67,8 @@ function normalizeGameplayContributions(
     ...(scenes == null ? {} : { scenes }),
     ...(tasks == null ? {} : { tasks }),
     ...(houses == null ? {} : { houses }),
+    ...(playables == null ? {} : { playables }),
+    ...(playableIntegrations == null ? {} : { playableIntegrations }),
   };
 }
 

@@ -50,14 +50,14 @@ import {
 } from "../../application/playables/story-battle/story-battle-definition";
 import { CITY_BEGGING_DURATION_DAYS } from "../../application/minigames/city-begging-minigame";
 import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
-import {
-  builtinPlayableDefinitionRegistry,
-} from "../registry/builtin-playable-definition-registry";
-import {
-  builtinPlayableIntegrationRegistry,
-} from "../registry/builtin-playable-integration-registry";
 import { type PlayableDefinitionRegistry } from "../registry/playable-definition-registry";
 import { type PlayableIntegrationRegistry } from "../registry/playable-integration-registry";
+import {
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+  readDefaultPlayableDefinitionRegistry,
+  readDefaultPlayableIntegrationRegistry,
+  resetDefaultPlayableRuntimeRegistries,
+} from "./playable-runtime-registries";
 import { settleRuntimeEffects } from "./runtime-settlement";
 
 export const PLAYABLE_LAUNCH_EVENT_ID = "playable.launch";
@@ -170,8 +170,9 @@ export function resolvePlayableLaunch(input: {
   definitions?: PlayableDefinitionRegistry | undefined;
   integrations?: PlayableIntegrationRegistry | undefined;
 }): PlayableLaunchResolution {
-  const definitions = input.definitions ?? builtinPlayableDefinitionRegistry;
-  const integrations = input.integrations ?? builtinPlayableIntegrationRegistry;
+  const definitions = input.definitions ?? readDefaultPlayableDefinitionRegistry();
+  const integrations =
+    input.integrations ?? readDefaultPlayableIntegrationRegistry();
 
   const integration = resolveIntegration({
     launch: input.launch,
@@ -768,9 +769,10 @@ export function createLegacyPlayableSession(input: {
   source: LegacyInteractiveSource;
 }): ActivePlayableSession | null {
   const definition =
-    builtinPlayableDefinitionRegistry.getByLegacyInteractiveKind(input.kind);
+    readDefaultPlayableDefinitionRegistry().getByLegacyInteractiveKind(input.kind);
   const integrationId = getLegacyIntegrationId(input.kind);
-  const integration = builtinPlayableIntegrationRegistry.get(integrationId);
+  const integration =
+    readDefaultPlayableIntegrationRegistry().get(integrationId);
 
   if (definition == null || integration == null) {
     return null;
@@ -842,9 +844,8 @@ function toPlayableRuntimeRequest(
     };
   }
 
-  const legacyDefinition = builtinPlayableDefinitionRegistry.matchActionId(
-    request.actionId
-  );
+  const legacyDefinition =
+    readDefaultPlayableDefinitionRegistry().matchActionId(request.actionId);
   if (legacyDefinition == null) {
     return null;
   }
@@ -1155,3 +1156,8 @@ function getLegacyIntegrationId(
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value != null;
 }
+
+export {
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+  resetDefaultPlayableRuntimeRegistries,
+};

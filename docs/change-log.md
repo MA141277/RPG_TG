@@ -5,6 +5,20 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-07 Playable Contribution Runtime Closure
+
+### Changed
+- 扩展 [src/core/contracts/gameplay-contribution.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/gameplay-contribution.ts) 与 [src/core/mods/mod-parser.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/mods/mod-parser.ts)，把 `playables` 与 `playableIntegrations` 提升为正式的 mod gameplay contribution 家族。
+- 更新 [src/core/mods/mod-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/mods/mod-runtime.ts)，让 activated mod 在统一 contribution 安装阶段记录 playable ids / integration ids，而不是只覆盖 navigation / events / scenes / tasks / houses。
+- 新增 [src/core/runtime/playable-runtime-registries.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/playable-runtime-registries.ts)，把默认 playable registry bundle 收口为显式 runtime seam，并允许它从 activated mod 进行配置，同时保留明确的 builtin first-party seed 安装。
+- 更新 [src/core/runtime/playable-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/playable-runtime.ts)、[src/core/runtime/interactive-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/interactive-runtime.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，让 covered playable runtime path 消费 activation-configurable default registries，而不是只依赖隐藏的 builtin registry fallback。
+- 同步关闭 Blueprint queue [docs/blueprints/queues/playable-family-gap-audit-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/playable-family-gap-audit-queue.md)，并把当前 target 返回到 open + no-active-queue 的同 target admission review 状态。
+
+### Impact
+- playable family 现在正式进入统一的 mod contribution truth，后续新增或迁移 playable 时，不必再把它们留在 gameplay contribution contract 之外。
+- runtime 默认 playable registries 不再只是隐式引用 builtin registry 常量；激活中的 mod 已经可以显式配置默认 playable 解析面。
+- builtin playable 仍然保留 first-party seed 兼容路径，但它现在属于显式安装机制，而不是 generic runtime 的隐藏兜底。
+
 ## 2026-07-07 Target Lifecycle Explicit-Open-Explicit-Close Rule
 
 ### Changed

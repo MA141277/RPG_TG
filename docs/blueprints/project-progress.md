@@ -36,5 +36,5 @@
 
 ### Active Admission Snapshot (2026-07-07)
 
-- `queue.ui-runtime-contract-consumption is closed after the bounded shared-dialog replacement and verification record were synchronized into Blueprint truth.`
+- `queue.playable-family-gap-audit is closed after playable contribution truth and activation-configurable default runtime registries were synchronized into Blueprint truth.`
 - `The current target remains open with no active queue; the next legal entry point is same-target admission review for fresh work or explicit target closeout.`

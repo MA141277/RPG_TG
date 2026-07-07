@@ -14,7 +14,7 @@ import {
   resolvePlayableLaunchRequest,
   runPlayableRuntime,
 } from "./playable-runtime";
-import { builtinPlayableDefinitionRegistry } from "../registry/builtin-playable-definition-registry";
+import { readDefaultPlayableDefinitionRegistry } from "./playable-runtime-registries";
 
 export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
   characterDefinitions?: CharacterDefinition[];
@@ -190,7 +190,8 @@ function resolveLaunchKind(
 }
 
 function resolveActionKind(actionId: string): InteractiveRuntimeKind | null {
-  const definition = builtinPlayableDefinitionRegistry.matchActionId(actionId);
+  const definition =
+    readDefaultPlayableDefinitionRegistry().matchActionId(actionId);
   if (definition?.legacyInteractiveKind === "activity-qte") {
     return "activity-qte";
   }

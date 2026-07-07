@@ -11477,6 +11477,8 @@ test("gameplay contribution registry contract exports navigation event scene tas
   assert.match(source, /scenes/);
   assert.match(source, /tasks/);
   assert.match(source, /houses/);
+  assert.match(source, /playables/);
+  assert.match(source, /playableIntegrations/);
 });
 
 test("mod manifest contribution contract exposes optional gameplay contributions", () => {
@@ -11519,6 +11521,10 @@ test("mod runtime contribution activation installs unified gameplay contribution
         scenes: ["scene.registry.opening"],
         tasks: ["task.registry.opening"],
         houses: ["house.registry.guild"],
+        playables: ["playable.registry.training"],
+        playableIntegrations: [
+          "playable.registry.training.external.default",
+        ],
       },
     },
     rawContent: {
@@ -11540,6 +11546,30 @@ test("mod runtime contribution activation installs unified gameplay contribution
         moduleId: "keep-house",
         backAction: { label: "Back", targetView: "city" },
       }],
+      playables: [
+        {
+          id: "playable.registry.training",
+          family: "minigame",
+          commandPrefix: "playable.registry.training.",
+        },
+      ],
+      playableIntegrations: [
+        {
+          integrationId: "playable.registry.training.external.default",
+          playableId: "playable.registry.training",
+          ownerDefaults: {
+            ownerKind: "external",
+            ownerId: null,
+            returnPolicy: "close-only",
+          },
+          trigger: {
+            triggerId: "trigger.playable.registry.training.external.default",
+            ownerKind: "external",
+            trigger: "manual-launch",
+          },
+          outcomeConfig: {},
+        },
+      ],
     },
   });
 
@@ -11583,6 +11613,13 @@ test("mod runtime contribution activation installs unified gameplay contribution
   assert.deepEqual(result.activatedMod.gameplayContributions.houseModules, [
     "keep-house",
   ]);
+  assert.deepEqual(result.activatedMod.gameplayContributions.playables, [
+    "playable.registry.training",
+  ]);
+  assert.deepEqual(
+    result.activatedMod.gameplayContributions.playableIntegrations,
+    ["playable.registry.training.external.default"]
+  );
 });
 
 test("mod runtime builtin source loader activates builtin mods from builtinModsById", async () => {
@@ -11954,6 +11991,103 @@ test("child 30 playable launch normalization resolves city-begging by playable i
   assert.equal(resolution.launch.ownerContext.ownerKind, "external");
   assert.equal(resolution.launch.ownerContext.returnPolicy, "close-only");
   assert.deepEqual(resolution.launch.payload, { now: 123 });
+});
+
+test("playable runtime can configure default registries from activated mod playable contributions", async () => {
+  const {
+    createEmptyModRuntimeState,
+    createLoadedModFromManifest,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+  const {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+    createLaunchPlayableRequest,
+    resetDefaultPlayableRuntimeRegistries,
+    resolvePlayableLaunchRequest,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+
+  const loadedMod = createLoadedModFromManifest({
+    source: { kind: "builtin", modId: "mod.test.playable-runtime" },
+    manifest: {
+      id: "mod.test.playable-runtime",
+      schemaVersion: "1",
+      version: "1.0.0",
+      title: "Playable Runtime Test",
+      entryContentPackIds: ["pack.test.playable-runtime"],
+      gameplayContributions: {
+        playables: ["playable.test.runtime"],
+        playableIntegrations: ["playable.test.runtime.external.default"],
+      },
+    },
+    rawContent: {
+      id: "pack.test.playable-runtime",
+      title: "Playable Runtime Pack",
+      playables: [
+        {
+          id: "playable.test.runtime",
+          family: "minigame",
+          commandPrefix: "playable.test.runtime.",
+        },
+      ],
+      playableIntegrations: [
+        {
+          integrationId: "playable.test.runtime.external.default",
+          playableId: "playable.test.runtime",
+          ownerDefaults: {
+            ownerKind: "external",
+            ownerId: null,
+            returnPolicy: "close-only",
+          },
+          trigger: {
+            triggerId: "trigger.playable.test.runtime.external.default",
+            ownerKind: "external",
+            trigger: "manual-launch",
+          },
+          outcomeConfig: {},
+        },
+      ],
+    },
+  });
+
+  const activationResult = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.activate-loaded",
+      requestId: "test:playable-runtime-default-registries",
+      loadedMod,
+    },
+    context: {
+      allowedCapabilities: [],
+    },
+  });
+
+  assert.equal(activationResult.ok, true);
+  if (!activationResult.ok) {
+    return;
+  }
+
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+    activationResult.activatedMod
+  );
+  try {
+    const resolution = resolvePlayableLaunchRequest({
+      request: createLaunchPlayableRequest("playable.test.runtime"),
+    });
+
+    assert.equal(resolution?.ok, true);
+    if (resolution == null || !resolution.ok) {
+      return;
+    }
+
+    assert.equal(
+      resolution.launch.integrationId,
+      "playable.test.runtime.external.default"
+    );
+    assert.equal(resolution.launch.family, "minigame");
+    assert.equal(resolution.launch.ownerContext.ownerKind, "external");
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
 });
 
 test("child 30 playable launch normalization fails closed for ambiguous integrations", () => {

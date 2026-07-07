@@ -27,7 +27,7 @@
 | --- | --- | --- | --- |
 | `queue.state-sync-and-runtime-canonicalization` | `candidate` | `only if a fresh runtime/state ownership blocker is proven` | `Not currently justified.` |
 | `queue.unified-contribution-intake-closeout` | `candidate` | `only if a fresh intake-path blocker is proven` | `Previously rejected on current evidence.` |
-| `queue.playable-family-gap-audit` | `candidate` | `only if a still-live playable-family gap is proven` | `No active evidence today.` |
+| `queue.playable-family-gap-audit` | `closed` | `only if a still-live playable-family gap is proven` | `Closed on 2026-07-07 after playable contribution truth and activation-configurable default runtime registries landed and verification passed.` |
 | `queue.framework-scaffold-and-template-closure` | `candidate` | `only if framework-owned authoring coverage is disproven` | `Accepted compatibility residue alone is insufficient.` |
 | `queue.ui-runtime-contract-consumption` | `closed` | `only if runtime-facing UI contract bypass is proven` | `Closed on 2026-07-07 after the bounded shared-dialog replacement landed and verification passed.` |
 
@@ -38,10 +38,11 @@
   - `That scope approval is not treated as queue admission truth.`
 - Admission basis:
   - `queue.ui-runtime-contract-consumption was admitted only after the target plan and queue doc were synchronized with written runtime-facing UI contract bypass evidence.`
+  - `queue.playable-family-gap-audit was admitted because src/core/contracts/gameplay-contribution.ts and src/core/contracts/mod-manifest.ts exposed no playable-family contribution contract, while src/core/runtime/playable-runtime.ts still fell back to builtin playable registries and the builtin playable definition/integration registries still seeded covered production playables directly.`
 - Current review subject:
   - `none`
 - Current handoff:
-  - `queue.ui-runtime-contract-consumption is closed; the target remains open with no active queue and may still admit additional same-target queues until explicit human target closeout confirmation is written.`
+  - `queue.playable-family-gap-audit is closed; the target remains open with no active queue and may still admit additional same-target queues until explicit human target closeout confirmation is written.`
 
 ### Queue Admission Startup Rules
 
@@ -132,3 +133,5 @@ Mandatory merge loop triggers:
 - `2026-07-07: target closeout was intentionally pulled back to open + idle-open so same-target queue admission remains legal until explicit target closeout is written.`
 - `2026-07-07: queue.ui-runtime-contract-consumption was admitted after a bounded dialog-component audit proved still-live runtime-facing UI contract bypass on the covered path.`
 - `2026-07-07: queue.ui-runtime-contract-consumption was closed after the bounded shared-dialog component landed, approved replacement points were consumed, and verification passed; target state returned to open with no active queue.`
+- `2026-07-07: queue.playable-family-gap-audit was admitted after fresh evidence proved the playable family still lacks a shared mod contribution contract and still relies on builtin registry seed + runtime fallback on the covered production path.`
+- `2026-07-07: queue.playable-family-gap-audit was closed after playable contribution truth and activation-configurable default runtime registries landed, and verification passed; target state returned to open with no active queue.`
