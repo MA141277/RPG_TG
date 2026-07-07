@@ -4,12 +4,12 @@
 
 - document_role: `target-governor`
 - target_id: `target.project-complete-modularization`
-- status: `in-progress`
-- active_phase: `phase.authoring-closure`
+- status: `done`
+- active_phase: `phase.final-acceptance`
 - active_queue: `none`
 - active_task: `none`
 - decision_state: `promotion-review`
-- next_decision: `review-whether-any-later-queue-is-justified`
+- next_decision: `none`
 - blocked_by: []
 - promotion_gate:
   - `active_queue_is_none_or_done`
@@ -46,8 +46,8 @@ This is the target-level governor for the current `mod-first` completion period.
 
 - Status: `in-progress`
 - Last Updated: `2026-07-07`
-- Current Focus: `The first formal target for this period remains project complete modularization. Phase 3 authoring closure has now closed queue.authoring-entrypoint-and-fail-closed-closure without promoting queue.framework-scaffold-and-template-closure, because the currently-live authoring families are already covered by framework-owned or fail-closed seams and the remaining legacy builtin manifest gap is accepted compatibility residue.`
-- Next Step: `Stay in promotion-review with no active queue and decide whether any later-phase queue is actually justified by fresh target-level evidence.`
+- Current Focus: `The first formal target for this period remains project complete modularization, and that current-period target is now closed. There is no active queue or task; future work must re-enter through classification and promotion review.`
+- Next Step: `Resume only from later target/promotion review if fresh classified work appears.`
 - Verification: `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
 - Notes: `Later periods may define different targets, but same-period modularization tracks should enter as queues under the current target.`
 
@@ -149,6 +149,42 @@ This is the target-level governor for the current `mod-first` completion period.
   - Summary: `Accepted queue-closeout and closed queue.authoring-entrypoint-and-fail-closed-closure after the active queue proved that current Phase 3 authoring is coherent without promoting queue.framework-scaffold-and-template-closure. The target is now back in promotion-review with no active queue or task.`
   - Verification: `Document consistency check plus npm test`
   - Next: `Promote nothing by default. Only start a later queue if fresh target-level evidence is recorded.`
+- 2026-07-07
+  - Summary: `Promoted queue.historical-residue-disposition as the first active Phase 4 queue after the target-level review found that earlier phases are closed, no fresh implementation blocker is currently proven, and the remaining work is synchronized residue routing before later acceptance proof or final closeout can be promoted honestly.`
+  - Verification: `Closed-queue residue audit plus document pointer sync check`
+  - Next: `Resume the active queue from residue-classification-and-routing.`
+- 2026-07-07
+  - Summary: `Advanced queue.historical-residue-disposition onto queue-closeout after the active task recorded the explicit residue disposition matrix and named queue.first-party-mod-acceptance as the current recommended Phase 4 handoff.`
+  - Verification: `Document consistency check across the active queue, target plan, target spec, blueprint, and project-progress entries`
+  - Next: `Run queue-closeout and decide whether to promote queue.first-party-mod-acceptance.`
+- 2026-07-07
+  - Summary: `Accepted queue.historical-residue-disposition closeout and promoted queue.first-party-mod-acceptance after the synchronized residue record confirmed that no fresh implementation blocker is currently proven and the remaining Phase 4 work is bounded acceptance proof.`
+  - Verification: `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries`
+  - Next: `Resume queue.first-party-mod-acceptance from baseline-reconcile.`
+- 2026-07-07
+  - Summary: `Closed task.first-party-mod-acceptance.baseline-reconcile after the targeted source-path audit confirmed that builtin startup uses the shared builtin loader seam, active-content assembly consumes normalized activation content sources, and the remaining Phase 4 work is acceptance proof rather than a fresh implementation blocker.`
+  - Verification: `Targeted source-path audit plus document pointer sync`
+  - Next: `Resume queue.first-party-mod-acceptance from production-path-acceptance-proof.`
+- 2026-07-07
+  - Summary: `Closed task.first-party-mod-acceptance.production-path-acceptance-proof after the queue recorded one explicit acceptance matrix for shared mod-path behavior, retained first-party baseline, and accepted compatibility residue.`
+  - Verification: `Targeted source-path audit plus document pointer sync`
+  - Next: `Resume queue.first-party-mod-acceptance from queue-closeout.`
+- 2026-07-07
+  - Summary: `Accepted queue.first-party-mod-acceptance closeout and promoted queue.final-acceptance-closeout after the written proof established that the remaining work is final target-acceptance reconciliation rather than another implementation-family queue.`
+  - Verification: `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries`
+  - Next: `Resume queue.final-acceptance-closeout from baseline-reconcile.`
+- 2026-07-07
+  - Summary: `Closed queue.final-acceptance-closeout baseline-reconcile after the target-level recheck confirmed that required queue evidence is already coherent, no fresh blocker was rediscovered, and the remaining live work is target-level acceptance writing.`
+  - Verification: `Document consistency check plus targeted source-path recheck on the covered builtin startup, activation, and inventory surfacing seams`
+  - Next: `Resume queue.final-acceptance-closeout from target-acceptance-closeout.`
+- 2026-07-07
+  - Summary: `Closed queue.final-acceptance-closeout target-acceptance-closeout after recording one synchronized acceptance-ready decision: target criteria are satisfied on current evidence with explicit first-party baseline and compatibility disclosures, so the remaining work is final queue/target synchronization.`
+  - Verification: `Document consistency check against the target acceptance criteria and active queue truth`
+  - Next: `Resume queue.final-acceptance-closeout from queue-closeout.`
+- 2026-07-07
+  - Summary: `Closed queue.final-acceptance-closeout and marked target.project-complete-modularization done after final synchronization confirmed that no active queue/task remains and the target acceptance criteria now pass on written evidence.`
+  - Verification: `Document consistency check across the closed queue, closed target, blueprint, project-progress, and target spec`
+  - Next: `Resume only from later target/promotion review if fresh classified work appears.`
 
 ---
 
@@ -195,6 +231,97 @@ This is the target-level governor for the current `mod-first` completion period.
   4. `only then consider queue promotion`
 - Default pause:
   - `If classification returns queue-candidate, future-target-candidate, or uncertain-needs-review, do not begin implementation until governance records the next decision.`
+
+### Classification Record
+
+- item_id: `review.historical-residue-disposition.2026-07-07`
+- item_type: `acceptance-residue`
+- classify_as: `queue-candidate`
+- confidence: `high`
+- matched_rules:
+  - `R2`
+  - `CT2`
+- why:
+  - `Earlier phases are closed and no fresh implementation blocker is currently proven, but the target still carries accepted-history, accepted-framework-baseline, and accepted-compatibility residue across separate queue closeout records with no single synchronized Phase 4 routing note.`
+- escalate_if:
+  - `Promotion opens a bounded Phase 4 queue that classifies residue before first-party acceptance proof or final closeout is promoted.`
+- reject_if:
+  - `A fresh audit proves the remaining work is already pure final acceptance proof with no residue routing drift, or proves a new implementation blocker that belongs to another queue family instead.`
+
+### Promotion Review Decision
+
+- reviewed_queue: `queue.historical-residue-disposition`
+- promotion_justified: `true`
+- decision_reason:
+  - `shell-thinning closeout still records accepted-history and narrow-compatibility residue`
+  - `builtin-content-deprivileging closeout still records accepted-framework-baseline and later-acceptance-review residue`
+  - `authoring-entrypoint-and-fail-closed-closure still records accepted-compatibility-residue and later-target-promotion-review residue`
+  - `the current gap is synchronized Phase 4 residue routing, not another fresh implementation blocker`
+- residue_classification:
+  - `phase-4-controller`
+  - `current-target-item`
+- next_phase: `phase.final-acceptance`
+- promoted_queue: `queue.historical-residue-disposition`
+
+### Classification Record
+
+- item_id: `review.first-party-mod-acceptance.2026-07-07`
+- item_type: `acceptance-proof`
+- classify_as: `queue-candidate`
+- confidence: `high`
+- matched_rules:
+  - `R2`
+  - `CT2`
+- why:
+  - `Historical residue is now synchronized in one closed Phase 4 record, no fresh implementation blocker is currently proven, and the remaining live question is whether builtin content can honestly be described as first-party mod content on the production path.`
+- escalate_if:
+  - `Promotion opens a bounded acceptance-proof queue rather than silently jumping to final target closeout.`
+- reject_if:
+  - `A fresh audit proves the target is already ready for direct final acceptance closeout, or rediscovers a concrete implementation blocker that belongs to another queue family instead.`
+
+### Promotion Review Decision
+
+- reviewed_queue: `queue.first-party-mod-acceptance`
+- promotion_justified: `true`
+- decision_reason:
+  - `queue.historical-residue-disposition now provides one synchronized Phase 4 residue matrix and closes without reopening earlier implementation families`
+  - `builtin default-start framing, accepted framework baseline, and accepted compatibility residue now belong to acceptance proof rather than residue discovery`
+  - `the current evidence does not justify jumping directly to queue.final-acceptance-closeout before the builtin-versus-first-party production-path claim is exercised explicitly`
+- residue_classification:
+  - `queue-candidate`
+  - `phase-4-acceptance-proof`
+- next_phase: `phase.final-acceptance`
+- promoted_queue: `queue.first-party-mod-acceptance`
+
+### Classification Record
+
+- item_id: `review.final-acceptance-closeout.2026-07-07`
+- item_type: `target-closeout`
+- classify_as: `queue-candidate`
+- confidence: `high`
+- matched_rules:
+  - `R2`
+  - `CT2`
+- why:
+  - `queue.first-party-mod-acceptance is now closed with a coherent production-path proof, no fresh implementation blocker was rediscovered, and the remaining live work is target-level acceptance reconciliation rather than another owner-line or authoring capability queue.`
+- escalate_if:
+  - `Promotion opens a bounded final acceptance closeout queue instead of silently marking the target done.`
+- reject_if:
+  - `A fresh audit proves the target can already close with no further queue record, or rediscovery of a concrete blocker requires a different queue family instead.`
+
+### Promotion Review Decision
+
+- reviewed_queue: `queue.final-acceptance-closeout`
+- promotion_justified: `true`
+- decision_reason:
+  - `queue.first-party-mod-acceptance now provides a written proof that covered builtin startup/load/restore and content activation already behave on shared mod-facing production seams`
+  - `the retained first-party baseline and compatibility items are now explicit disclosure material rather than hidden runtime privilege`
+  - `the remaining live work is final target acceptance reconciliation, so promotion should open queue.final-acceptance-closeout instead of pretending the target is already finished`
+- residue_classification:
+  - `queue-candidate`
+  - `phase-4-final-closeout`
+- next_phase: `phase.final-acceptance`
+- promoted_queue: `queue.final-acceptance-closeout`
 
 ### Classification Record
 
@@ -342,6 +469,8 @@ This is the target-level governor for the current `mod-first` completion period.
   - `Demonstrate that builtin content now behaves like first-party mod content rather than privileged framework payload on the production path.`
 - Promote when:
   - `Earlier phases pass and the remaining question is acceptance proof rather than new owner-line implementation work.`
+- Current review status:
+  - `Closed on 2026-07-07 after queue-closeout accepted the written proof as coherent enough for final target-closeout handoff. Use as a closed Phase 4 acceptance-proof record only.`
 
 #### `queue.historical-residue-disposition`
 
@@ -349,6 +478,8 @@ This is the target-level governor for the current `mod-first` completion period.
   - `Classify any remaining modularization residue into accepted history, queued migration, or explicit out-of-scope status.`
 - Promote when:
   - `Earlier phases pass but the repository still has residual seams that must be dispositioned before final closeout.`
+- Current review status:
+  - `Closed on 2026-07-07 after the residue matrix and handoff recommendation were synchronized. Use as the Phase 4 residue routing record only.`
 
 #### `queue.final-acceptance-closeout`
 
@@ -356,6 +487,8 @@ This is the target-level governor for the current `mod-first` completion period.
   - `Close the current-period complete-modularization target with synchronized acceptance records across blueprint, target, queue, and change-log artifacts.`
 - Promote when:
   - `Earlier phases and any required residue disposition work have passed.`
+- Current review status:
+  - `Promoted on 2026-07-07 after queue.first-party-mod-acceptance closed without rediscovering a fresh implementation-family blocker. Resume execution from docs/blueprints/queues/final-acceptance-closeout-queue.md.`
 
 ### Remote Integration Rule
 
