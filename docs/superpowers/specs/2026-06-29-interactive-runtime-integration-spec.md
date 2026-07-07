@@ -1,6 +1,6 @@
 # Interactive Runtime Integration Spec
 
-> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
 
 ## 1. Goal
 
@@ -357,3 +357,4 @@ After the minimum unified-state slice lands, the next iteration should move in t
 3. review the weekly convergence gate and only then decide whether Child 4 should move beyond domain `GameState` carriage or merge `characterDefinitions` into `RuntimeState.core`
 4. define a stable minigame dispatch interface on top of the stabilized shared runtime path
 5. only then start broader minigame directory migration and Child 5 presenter/render decoupling against the stabilized runtime boundary
+

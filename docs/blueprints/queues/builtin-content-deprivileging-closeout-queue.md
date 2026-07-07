@@ -4,10 +4,12 @@
 
 - queue_id: `queue.builtin-content-deprivileging-closeout`
 - belongs_to_target: `target.project-complete-modularization`
-- status: `done`
+- queue_status: `done`
 - queue_class: `required`
 - active_task: `none`
 - next_task: `none`
+- closeout_status: `done`
+- next_effect: `return-to-target-review`
 - allowed_task_states:
   - `candidate`
   - `queued`
@@ -72,14 +74,14 @@ This queue does not cover:
 - Target plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
-### Execution State
+### Closed Review Record
 
 - Status: `done`
 - Last Updated: `2026-07-06`
-- Current Focus: `The queue is now closed. Registry/startup/base-pack consumer privilege was removed or normalized onto shared seams, and the remaining UI reserve/layout baseline was dispositioned as accepted framework baseline because it does not currently enter the main startup/runtime path through ui-contract-registry.`
-- Active Task:
+- Historical Summary: `The queue is now closed. Registry/startup/base-pack consumer privilege was removed or normalized onto shared seams, and the remaining UI reserve/layout baseline was dispositioned as accepted framework baseline because it does not currently enter the main startup/runtime path through ui-contract-registry.`
+- Closed Task:
   - `none`
-- Next Step:
+- Handoff At Closure:
   - `Return to the current target plan and decide whether a new Phase 2 queue such as unified-contribution-intake-closeout is actually justified by fresh intake evidence, or whether builtin privilege work can remain closed until later acceptance review.`
 - Verification:
   - `Fresh source-path audit, targeted builtin/UI reserve regressions, document consistency check, and npm test.`
@@ -99,7 +101,7 @@ This queue does not cover:
   - `builtInScenarioPacks and scenario-pack catalog publication currently read as discovery surface rather than the first builtin privilege blocker, because they do not themselves install runtime capabilities into production ownership paths.`
   - `Closeout direction from baseline-reconcile: tackle registry seeds and startup loader privilege first, then revisit active content and UI consumers only where they still depend on those builtin-specific assumptions.`
 
-### Current Queue
+### Historical Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
@@ -323,16 +325,16 @@ This queue does not cover:
 - Failure mode:
   - `Do not close with a vague "builtin is better now" claim; either prove the remaining production story or record the exact blocker and promote the right later queue.`
 
-## Next Executable Task
+## Historical Handoff Note
 
 - Task ID:
   - `none`
-- Required action before promotion:
-  - `Queue is closed. Resume from the target plan and promote a new queue only if a stronger same-period modularization blocker is proven.`
-- Expected output:
+- Recorded handoff at closure:
+  - `Queue is closed. Return control to the target plan and promote a new queue only if a stronger same-period modularization blocker is proven.`
+- Recorded expected output:
   - `A target-level decision on whether Phase 2 needs unified-contribution-intake-closeout or whether builtin privilege work remains closed pending later acceptance review.`
 
-## Candidate Backlog
+## Historical Candidate Notes
 
 - `task.builtin-content-deprivileging-closeout.ui-framework-baseline-disposition`
   - State:
@@ -389,11 +391,11 @@ This queue does not cover:
 - 2026-07-06
   - Summary: `Promoted builtin-content-deprivileging-closeout as the first formal Phase 2 queue after Phase 1 closed without needing state-sync-and-runtime-canonicalization.`
   - Verification: `Phase review plus builtin privilege source audit`
-  - Next: `Resume task.builtin-content-deprivileging-closeout.baseline-reconcile.`
+  - Next at that time: `Start task.builtin-content-deprivileging-closeout.baseline-reconcile.`
 - 2026-07-06
   - Summary: `Closed baseline-reconcile after classifying builtin house/playable static registry seeds, startup-time direct builtin loaded-mod construction, and the default base-pack bootstrap as the first real contribution-closure blockers, while UI reserve layering remains accepted-for-now framework baseline pending stronger evidence.`
   - Verification: `Fresh source-baseline recheck across core registries, startup coordinator, mod source loader, active content bootstrap, UI contract layers, and main startup wiring`
-  - Next: `Resume task.builtin-content-deprivileging-closeout.builtin-registry-and-loader-audit.`
+  - Next at that time: `Start task.builtin-content-deprivileging-closeout.builtin-registry-and-loader-audit.`
 - 2026-07-06
   - Summary: `Within builtin-registry-and-loader-audit, converged builtin startup activation and builtin save-source reload onto the shared mod.load-builtin loader seam backed by builtinModsById, removing the direct createLoadedModFromManifest startup shortcut from main.ts.`
   - Verification: `npm test`
@@ -401,7 +403,7 @@ This queue does not cover:
 - 2026-07-06
   - Summary: `Closed builtin-registry-and-loader-audit after moving builtin house/playable static seed ownership out of the generic core registries and into explicit builtin registry installer modules, while runtime consumers now read those builtin registries through the shared seam instead of hidden generic seeds.`
   - Verification: `npm test`
-  - Next: `Resume task.builtin-content-deprivileging-closeout.runtime-consumer-deprivileging.`
+  - Next at that time: `Start task.builtin-content-deprivileging-closeout.runtime-consumer-deprivileging.`
 - 2026-07-06
   - Summary: `Advanced runtime-consumer-deprivileging by removing the builtin base-pack self-load from application/content/default-runtime-content.ts and requiring main.ts to inject the current default pack explicitly instead of letting that runtime consumer import the builtin loader on its own.`
   - Verification: `npm test`

@@ -4,78 +4,86 @@
 
 - document_role: `target-governor`
 - target_id: `target.replace-me`
-- status: `in-progress`
+- target_status: `open | done | archived`
 - active_phase: `phase.replace-me`
 - active_queue: `queue.replace-me | none`
-- active_task: `task.replace-me | none`
-- decision_state: `active-execution | promotion-review | blocked`
-- next_decision: `queue.replace-me | none`
+- decision_state: `active-execution | promotion-review | idle-open | blocked`
+- next_decision: `same-target-admission-or-target-closeout`
+- next_action: `classify-fresh-work`
+- resume_gate: `active-queue | promotion-review | idle-open | blocked`
+- promotion_review_result: `promote | reject | defer | block | none`
 - blocked_by: []
-- classification_review_policy:
-  - `new_items_must_be_classified_before_queue_promotion_or_pipeline_routing`
-- promotion_gate:
-  - `active_queue_is_none_or_done`
-  - `fresh_audit_proves_real_blocker`
-  - `promotion_note_written`
-  - `promoted_queue_has_valid_control_block`
-- closeout_gate:
-  - `all_required_queues_done_or_dropped`
-  - `no_active_task_remaining`
-  - `target_acceptance_criteria_passed`
-- remote_integration_policy:
-  - `verified_batch_or_queue_closeout_should_trigger_remote_integration_recommendation`
 
 ## Human Context
 
-### Goal
+### Queue Promotion Ledger
 
-Replace with the target-level sequencing goal.
+| Queue ID | Current Disposition | Promote When | Notes |
+| --- | --- | --- | --- |
+| `queue.replace-me` | `candidate` | `Replace with promotion trigger.` | `Replace with the current note.` |
 
-### Architecture
+Allowed `next_decision` values:
 
-Replace with the target-level boundary and queue promotion approach.
+- `same-target-admission-or-target-closeout`
+- `queue-promotion`
+- `target-closeout`
+- `resolve-blocker`
 
-### Tech Stack
+Allowed `next_action` values:
 
-Replace with the relevant workflow docs and verification tools.
+- `classify-fresh-work`
+- `promote-queue`
+- `write-target-closeout`
+- `return-to-idle-open`
+- `resolve-blocker`
 
-### Execution State
+### Post-Task Auto-Reconcile
 
-- Status: `in-progress`
-- Last Updated: `2000-01-01`
-- Current Focus: `Replace this line with the current focus.`
-- Next Step: `Replace this line with the next target-level action.`
-- Verification: `Replace this line with the latest known verification state.`
-- Notes: `Replace this line with current caveats.`
+1. `Run verify_with.`
+2. `Check done_when.`
+3. `Re-evaluate queue closeout.`
+4. `Scan governance owners.`
+5. `Scan residue.`
+6. `Sync target-level truth if required.`
+7. `Optionally mirror the result into change-log.`
 
-### Queue Policy
+### Human Confirmation Throttle
 
-- There is one current target in the current execution period.
-- Concrete work enters through queue documents.
-- Only one queue task may be `active` repository-wide unless a stronger written reason says otherwise.
-- If `active_queue = none`, resume from promotion review rather than inventing work.
+- `At most one human-confirmation question may be asked per task.`
+- `If the target/queue/task boundary can be resolved from current docs and code, do not ask.`
+- `If an item is uncertain but would not change active truth, record uncertain-needs-review and stop without asking.`
+- `If active truth would change and multiple mutually exclusive legal branches exist, one human escalation is allowed.`
 
-### Classification Review
+### Git Integration Loop
 
-- Rule layer:
-  - `docs/blueprints/classification-rule-layer-spec.md`
-- Promotion review order:
-  1. `classify the new item`
-  2. `check target-specific overrides`
-  3. `route before promotion`
+1. `Write the structured content summary.`
+2. `Commit the working branch.`
+3. `Push the working branch.`
+4. `Merge into the latest mod-first-dev.`
+5. `Cut a fresh branch from the updated mod-first-dev.`
+6. `Resume from integrated Blueprint truth, not branch-local memory.`
 
-### Queue Family Cards
+Mandatory merge loop triggers:
 
-#### `queue.replace-me`
+- `queue closeout`
+- `target closeout`
+- `explicit integration checkpoint`
 
-- Goal:
-  - `Replace with queue role.`
-- Promote when:
-  - `Replace with explicit promote rule.`
+### Queue Closeout Rules
 
-### Progress Log
+- `next_effect = promote-next-queue`
+- `next_effect = return-to-target-review`
+- `next_effect = block-target`
 
-- 2000-01-01
-  - Summary: `Target plan created.`
-  - Verification: `Not run`
-  - Next: `Replace with the next real action.`
+### State Transition Rules
+
+- `idle-open -> promotion-review`
+- `promotion-review -> active-execution`
+- `promotion-review -> idle-open`
+- `promotion-review -> blocked`
+- `active-execution -> promotion-review`
+- `active-execution -> idle-open`
+
+### Prior Promotion Record
+
+- `Replace with a short historical promotion record when needed.`

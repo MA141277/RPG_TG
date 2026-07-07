@@ -1,15 +1,36 @@
 # Core Production Integration Queue
 
-## Phase
+## Control Block
+
+- queue_id: `queue.core-production-integration`
+- belongs_to_target: `target.project-complete-modularization`
+- queue_status: `done`
+- queue_class: `required`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- next_effect: `return-to-target-review`
+- blocked_by: []
+- allowed_item_classifications:
+  - `current-target-item`
+- reject_item_classifications:
+  - `content-pipeline-item`
+  - `asset-pipeline-item`
+  - `future-target-candidate`
+  - `out-of-scope`
+
+## Human Context
+
+### Phase
 
 - Parent phase:
   - `Phase 1: Runtime Closure`
 
-## Queue Goal
+### Queue Goal
 
 Advance the modularization target by closing the still-relevant production integration gaps around engine ownership, save ownership, and runtime ownership.
 
-## Boundary
+### Boundary
 
 This queue covers:
 
@@ -25,28 +46,28 @@ This queue does not cover:
 - full house runtime extraction
 - creating a second Blueprint target
 
-## Parent Target
+### Parent Target
 
 - Target spec:
   - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
 - Target plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
-## Execution State
+### Closed Review Record
 
 - Status: `done`
 - Last Updated: `2026-07-06`
-- Current Focus: `The orphaned core engine seam is retired, the placeholder save owner line is replaced, and runtime-ownership closeout concluded that no separate Phase 1 state-sync canonicalization queue is currently justified.`
-- Active Task:
+- Historical Summary: `The orphaned core engine seam is retired, the placeholder save owner line is replaced, and runtime-ownership closeout concluded that no separate Phase 1 state-sync canonicalization queue is currently justified.`
+- Closed Task:
   - `none`
-- Next Step:
+- Handoff At Closure:
   - `If Phase 1 continues, promote shell-thinning-and-final-ownerization rather than state-sync-and-runtime-canonicalization unless a new production runtime/state blocker is later proven.`
 - Verification:
   - `Engine retirement, save-envelope cutover, runtime ownership audit, targeted source-path review, npm run build:test, and targeted robustness regressions all passed.`
 - Notes:
   - `This queue belongs to the current period's modularization target. It is not a same-period sibling target.`
 
-## Baseline Recheck
+### Baseline Recheck
 
 - Recheck result: `narrowed`
 - Notes:
@@ -60,7 +81,7 @@ This queue does not cover:
   - `The remaining direct gameState mutations found in main.ts are concentrated in shell/view transitions such as leaving city, city-3d view swaps, map auto-advance framing, and render-time city-NPC refresh. Those are better classified as shell-thinning residue than runtime/state canonicalization blockers.`
   - `Closeout decision: do not promote state-sync-and-runtime-canonicalization at this time. If Phase 1 continues, the more justified follow-up queue is shell-thinning-and-final-ownerization.`
 
-## Current Queue
+### Historical Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
@@ -69,7 +90,7 @@ This queue does not cover:
 | `task.core-production-integration.save-envelope-cutover` | `done` | `Route real load/save behavior through the core save envelope APIs.` | `task.core-production-integration.engine-owner-line` | `Closed by replacing placeholder loadSaveData() behavior with browser save-envelope read/write helper wiring and targeted regression proof.` |
 | `task.core-production-integration.runtime-ownership-closeout` | `done` | `Reconfirm commitRuntimeRequest()/dispatchRuntimeRequest() ownership and sync closeout artifacts.` | `task.core-production-integration.save-envelope-cutover` | `Closed with no current justification for state-sync-and-runtime-canonicalization; remaining residue points to shell-thinning instead.` |
 
-## Task Execution Contracts
+## Archived Task Execution Contracts
 
 ### `task.core-production-integration.baseline-reconcile`
 
@@ -147,16 +168,16 @@ This queue does not cover:
 - Failure mode:
   - `Do not close this task with a hand-wavy "mostly better" note; either prove the runtime owner story or record the exact residual blocker and open the right follow-up queue.`
 
-## Next Executable Task
+## Historical Handoff Note
 
 - Task ID:
   - `none`
-- Required action before promotion:
-  - `This queue is closed. Open the target plan and decide whether to promote shell-thinning-and-final-ownerization as the next Phase 1 queue.`
-- Expected output:
+- Recorded handoff at closure:
+  - `This queue is closed. Return control to the target plan and decide whether shell-thinning-and-final-ownerization should become the next Phase 1 queue.`
+- Recorded expected output:
   - `A target-level decision on whether Phase 1 continues through shell-thinning or pauses without a new active queue.`
 
-## Candidate Backlog
+## Historical Candidate Notes
 
 - `task.core-production-integration.bridge-canonicalization`
   - State:
@@ -177,7 +198,7 @@ This queue does not cover:
 - 2026-07-06
   - Summary: `Converted core-production-integration from a mistaken same-period sibling target into the first real queue under the current period's modularization target.`
   - Verification: `Document consistency check plus source-baseline recheck`
-  - Next: `Resume task.core-production-integration.baseline-reconcile.`
+  - Next at that time: `Start task.core-production-integration.baseline-reconcile.`
 - 2026-07-06
   - Summary: `Closed baseline-reconcile after confirming that runtime dispatch is already canonical on the main path, save-envelope seams still lack production cutover, and src/core/engine/** remains an orphaned seam with no current production imports.`
   - Verification: `Fresh source-baseline recheck across main.ts, startup-session-coordinator.ts, state-sync-runtime.ts, src/core/engine/**, src/core/save/**, and robustness tests covering engine/save seams`

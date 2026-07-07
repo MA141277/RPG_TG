@@ -1,6 +1,12 @@
 # Superpowers Workflow Guide
 
-This directory stores repository-local governance docs for agentic implementation.
+This directory stores legacy repository-local governance docs for agentic implementation history.
+
+For current Blueprint-governed work, use:
+
+- [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)
+
+`docs/superpowers/**` is now historical or legacy-domain governance only. It is not the repository-wide live execution entry for Blueprint work.
 
 - `specs/`
   - boundary specs, governance rules, and child specs
@@ -17,13 +23,15 @@ Primary governance rules live in:
 - [specs/plan-governance-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/plan-governance-spec.md)
 - [specs/2026-07-06-fail-closed-progress-driven-governance-spec.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md)
 
-## Canonical Resume Entry
+## Legacy Resume Entry
+
+Only use this section when the work is explicitly still governed inside `docs/superpowers/**`.
 
 Always resume from:
 
 - [project-progress.md](C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/project-progress.md)
 
-Do not resume new work from:
+Do not resume legacy work from:
 
 - weekly orchestration plans
 - weekly review artifacts
@@ -39,7 +47,7 @@ Resume order:
 5. read `Next Required Action`
 6. open the `Next Owner Document`
 
-If these fields do not uniquely determine what to do next, the current governance state is invalid and must be fixed before implementation resumes.
+If these fields do not uniquely determine what to do next, that legacy governance state is invalid and must be fixed before implementation resumes.
 
 ## How To Execute A Child Plan
 

@@ -4,10 +4,12 @@
 
 - queue_id: `queue.authoring-entrypoint-and-fail-closed-closure`
 - belongs_to_target: `target.project-complete-modularization`
-- status: `done`
+- queue_status: `done`
 - queue_class: `conditional`
 - active_task: `none`
 - next_task: `none`
+- closeout_status: `done`
+- next_effect: `return-to-target-review`
 - allowed_task_states:
   - `candidate`
   - `queued`
@@ -72,14 +74,14 @@ This queue does not cover:
 - Target plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
-### Execution State
+### Closed Review Record
 
 - Status: `done`
 - Last Updated: `2026-07-07`
-- Current Focus: `The queue is now closed. Scenario-pack/default-pack authoring, builtin house authoring, and the shared fail-closed policy split are recorded as landed framework-owned or fail-closed coverage, legacy builtin manifests remain accepted compatibility residue, and no fresh evidence justifies queue.framework-scaffold-and-template-closure.`
-- Active Task:
+- Historical Summary: `The queue is now closed. Scenario-pack/default-pack authoring, builtin house authoring, and the shared fail-closed policy split are recorded as landed framework-owned or fail-closed coverage, legacy builtin manifests remain accepted compatibility residue, and no fresh evidence justifies queue.framework-scaffold-and-template-closure.`
+- Closed Task:
   - `none`
-- Next Step:
+- Handoff At Closure:
   - `Return to the current target plan and hold promotion review there. Do not reopen this queue or promote queue.framework-scaffold-and-template-closure unless fresh evidence proves a still-live same-family authoring gap outside the closed Phase 3 coverage.`
 - Verification:
   - `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
@@ -96,7 +98,7 @@ This queue does not cover:
   - `Builtin house authoring still requires manual edits to builtin-house-module-registrations.ts and builtin-house-module-renderers.ts, so adding a same-family builtin house module is not yet fail-closed or scaffold-driven.`
   - `The current blocker is authoring-entrypoint ownership, not contribution intake: the shared runtime seams already exist, but authors still need manual multi-point glue to enter them.`
 
-### Current Queue
+### Historical Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
@@ -391,16 +393,16 @@ This queue does not cover:
 - Failure mode:
   - `Do not close the queue just because documentation exists; it closes only if same-family authoring truth is actually coherent.`
 
-## Next Executable Task
+## Historical Handoff Note
 
 - Task ID:
   - `none`
-- Required action before promotion:
-  - `Queue is closed. Resume from the target plan and promote a later queue only if fresh target-level evidence proves another still-live blocker.`
-- Expected output:
+- Recorded handoff at closure:
+  - `Queue is closed. Return control to the target plan and promote a later queue only if fresh target-level evidence proves another still-live blocker.`
+- Recorded expected output:
   - `A target-level promotion review instead of renewed execution inside this closed queue.`
 
-## Candidate Backlog
+## Historical Candidate Notes
 
 - `task.authoring-entrypoint-and-fail-closed-closure.playable-authoring-recheck`
   - State:
@@ -444,15 +446,15 @@ This queue does not cover:
 - 2026-07-06
   - Summary: `Queue created and promoted after the Phase 3 target audit confirmed that playable authoring already has scaffold/validator/CI coverage, but scenario-pack/default-pack/house-family authoring still depends on manual multi-point glue with no shared fail-closed entrypoint.`
   - Verification: `Fresh source audit across package scripts, tools/, scenario-pack loader/catalog loader, pack-content-access, house registries, and robustness coverage`
-  - Next: `Resume the active queue from scenario-pack-and-default-pack-entrypoint-closure.`
+  - Next at that time: `Start scenario-pack-and-default-pack-entrypoint-closure.`
 - 2026-07-06
   - Summary: `Closed scenario-pack-and-default-pack-entrypoint-closure after landing scenario-pack scaffold and validation tools, wiring them into package scripts, adding robustness coverage, and making default-pack adapter drift fail closed against the default catalog entry.`
   - Verification: `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
-  - Next: `Resume the active queue from house-family-authoring-entrypoint-closure.`
+  - Next at that time: `Start house-family-authoring-entrypoint-closure.`
 - 2026-07-06
   - Summary: `Closed house-family-authoring-entrypoint-closure after builtin house registry seeding moved to one contribution list, the old split registration files were removed, and the house interface contract recorded the one-record builtin seed rule.`
   - Verification: `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
-  - Next: `Resume the active queue from shared-fail-closed-policy-closeout.`
+  - Next at that time: `Start shared-fail-closed-policy-closeout.`
 - 2026-07-06
   - Summary: `Advanced shared-fail-closed-policy-closeout by introducing a canonical scenario-pack authoring contract for scaffolded Phase 3 manifests and making validator coverage fail closed on missing canonical file entries, while explicitly leaving legacy builtin manifests on the accepted compatibility path instead of forcing immediate migration.`
   - Verification: `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`

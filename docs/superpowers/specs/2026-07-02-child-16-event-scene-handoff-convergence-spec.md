@@ -1,6 +1,6 @@
 # Child 16 Event + Scene Handoff Convergence Spec
 
-> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
 
 ## 1. Goal
 
@@ -196,3 +196,4 @@ Child 16 is done enough only when:
 - the remaining later continuation is no longer "event/scene handoff convergence" but a different problem type
 
 If those answers remain ambiguous, Child 16 is not complete.
+

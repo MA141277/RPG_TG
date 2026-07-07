@@ -4,10 +4,12 @@
 
 - queue_id: `queue.final-acceptance-closeout`
 - belongs_to_target: `target.project-complete-modularization`
-- status: `done`
+- queue_status: `done`
 - queue_class: `conditional`
 - active_task: `none`
 - next_task: `none`
+- closeout_status: `done`
+- next_effect: `return-to-target-review`
 - allowed_task_states:
   - `candidate`
   - `queued`
@@ -54,7 +56,7 @@ This queue covers:
 
 - final acceptance baseline reconciliation after `queue.first-party-mod-acceptance` has closed
 - target-level acceptance wording against the target acceptance criteria
-- synchronized closeout records across blueprint, target, queue, and `docs/change-log.md`
+- synchronized closeout records across blueprint, target, queue, and any optional historical mirror such as `docs/change-log.md`
 
 This queue does not cover:
 
@@ -69,37 +71,37 @@ This queue does not cover:
 - Target plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
-### Execution State
+### Closed Review Record
 
 - Status: `done`
 - Last Updated: `2026-07-07`
-- Current Focus: `The target-level acceptance decision is now written and accepted. This queue is closed, and its output is the final closeout record for the current-period modularization target.`
-- Active Task:
+- Historical Summary: `The target-level acceptance decision is now written and accepted. This queue is closed, and its output is the final closeout record for the current-period modularization target.`
+- Closed Task:
   - `none`
-- Next Step:
-  - `Current target is now closed. Resume only from later target/promotion review if fresh classified work appears.`
+- Handoff At Closure:
+  - `Return control to the target plan. This queue is closed evidence only, and the current target is now governed as open + idle-open until explicit target closeout is written.`
 - Verification:
   - `Document consistency check; targeted source-path audit only if baseline drift is rediscovered.`
 - Notes:
-  - `This queue is the only legal controller for target closeout now. Do not reopen earlier queue families without fresh blocker proof.`
+  - `This queue is closed evidence for target closeout. Do not reopen earlier queue families without fresh blocker proof.`
 
 ### Baseline Recheck
 
 - Recheck result: `narrowed`
 - Notes:
-  - `Required queues are already closed, and the current queue is now the only active Phase 4 controller.`
+  - `Required queues are already closed, and no active Phase 4 queue remains.`
   - `Unified production-path evidence remains supported by the closed first-party acceptance queue: builtin startup/load/restore and active-content assembly run on shared mod-facing seams, while scenario inventory surfacing stays explicit first-party inventory rather than a hidden alternate runtime path.`
   - `Ownership-closure evidence remains supported by the closed Phase 1 queues; the current baseline recheck did not rediscover a fresh shell/runtime owner-line blocker.`
   - `Contract-driven extension evidence remains supported by the closed Phase 2 and Phase 3 queues; retained UI baseline and legacy manifest compatibility remain disclosed residue rather than active proof of a bypassed contract family.`
   - `The remaining live work is no longer baseline discovery; it is target-level acceptance writing with honest disclosure of explicit first-party baseline and accepted compatibility residue.`
 
-### Current Queue
+### Historical Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.final-acceptance-closeout.baseline-reconcile` | `done` | `Freeze the final target-closeout baseline and confirm which acceptance criteria are already satisfied by closed-queue evidence versus which caveats still require explicit disclosure.` | `none` | `Closed after the baseline recheck confirmed that required queue evidence is already coherent and the remaining live work is target-level acceptance writing rather than another blocker hunt.` |
 | `task.final-acceptance-closeout.target-acceptance-closeout` | `done` | `Write the target-level acceptance decision from the synchronized queue evidence and explicit Phase 4 caveats.` | `task.final-acceptance-closeout.baseline-reconcile` | `Closed after the queue recorded one explicit target-level acceptance-ready decision: current criteria are satisfied on written evidence, and the remaining work is final queue/target synchronization rather than another blocker hunt.` |
-| `task.final-acceptance-closeout.queue-closeout` | `done` | `Decide whether the target can close now or whether a fresh blocker must return execution to promotion-review.` | `task.final-acceptance-closeout.target-acceptance-closeout` | `Closed after the queue synchronized the final closeout record and concluded that the current-period modularization target can now be marked done without reopening another queue family.` |
+| `task.final-acceptance-closeout.queue-closeout` | `done` | `Decide whether the target is closeout-ready or whether a fresh blocker must return execution to promotion-review.` | `task.final-acceptance-closeout.target-acceptance-closeout` | `Closed after the queue synchronized the final closeout record and concluded that target-level acceptance-ready evidence is complete without reopening another queue family.` |
 
 ### Task Definitions
 
@@ -267,8 +269,8 @@ This queue does not cover:
   - `target_acceptance_truth_without_written_basis`
   - `reopen_earlier_queues_without_fresh_evidence`
 - done_when:
-  - `the queue records whether the target can now close`
-  - `blueprint, target, queue, and change-log pointers are synchronized on the final outcome`
+  - `the queue records whether target closeout-ready evidence is complete`
+  - `blueprint, target, queue, and any optional historical mirror are synchronized on the final outcome`
 - verify_with:
   - `document_consistency_check`
 - if_blocked:
@@ -287,26 +289,26 @@ This queue does not cover:
 ##### Human Context
 
 - Purpose:
-  - `Finish the final queue honestly: either close the target or record the blocker that returns control to target-level promotion review.`
+  - `Finish the final queue honestly: either write target-closeout-ready evidence or record the blocker that returns control to target-level promotion review.`
 - Failure mode:
   - `Do not leave the queue pseudo-active once the target-level decision is actually known.`
 
 ##### Closeout Finding
 
 - `closeout decision`
-  - `The target can now close. The acceptance-ready decision is already written, no fresh blocker was rediscovered during synchronization, and the remaining caveats are disclosed baseline/residue rather than evidence for another active queue.`
+  - `The target is closeout-ready on written evidence. The acceptance-ready decision is already written, no fresh blocker was rediscovered during synchronization, and the remaining caveats are disclosed baseline/residue rather than evidence for another active queue.`
 - `target status impact`
-  - `queue.final-acceptance-closeout closes as done, and target.project-complete-modularization can now be marked done with no active queue or task remaining.`
+  - `queue.final-acceptance-closeout closes as done, and live target disposition must now be read from the target plan rather than inferred from this closed queue alone.`
 - `what remains true after closeout`
   - `Explicit first-party boot inventory, builtin scenario inventory surfacing, accepted UI baseline, and legacy builtin manifest compatibility remain part of honest historical acceptance wording; they do not keep execution active by themselves.`
 
-## Next Executable Task
+## Historical Handoff Note
 
 - Task ID:
   - `none`
-- Required action before promotion:
+- Recorded handoff at closure:
   - `None. Queue closeout is complete.`
-- Expected output:
+- Recorded expected output:
   - `Use this queue as the final closeout record for the current-period modularization target.`
 
 ## Closeout Decision
@@ -325,30 +327,30 @@ This queue does not cover:
 - evidence:
   - `queue.first-party-mod-acceptance closed with a coherent production-path acceptance proof`
   - `target-acceptance-closeout recorded that acceptance criteria are satisfied on current evidence with explicit first-party baseline and compatibility disclosures`
-  - `queue-closeout did not rediscover a fresh blocker, so the current-period target can now be marked done`
+  - `queue-closeout did not rediscover a fresh blocker, so target-level acceptance-ready evidence remained intact`
 
 ## State Transition Rules
 
 1. A `queued` task becomes `active` only after the prior task records its queue-local truth.
 2. A `blocked` task must record its blocker in the queue.
 3. A `dropped` task must record why it was removed instead of disappearing silently.
-4. A closed queue must either close the target or state clearly which fresh blocker prevented target closeout.
+4. A closed queue must either write target-closeout-ready evidence or state clearly which fresh blocker prevented target closeout.
 
 ## Progress Log
 
 - 2026-07-07
   - Summary: `Promoted queue.final-acceptance-closeout after queue.first-party-mod-acceptance closed with a coherent proof record: covered builtin runtime paths now count as first-party mod-path behavior, and the remaining first-party baseline plus compatibility items are explicitly disclosed rather than treated as hidden runtime privilege.`
   - Verification: `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries`
-  - Next: `Resume the active queue from baseline-reconcile.`
+  - Next at that time: `Start baseline-reconcile.`
 - 2026-07-07
   - Summary: `Closed baseline-reconcile after the final closeout recheck confirmed that required queue evidence remains coherent, no fresh Phase 1-3 blocker was rediscovered, and the remaining live work is target-level acceptance writing with explicit first-party baseline and compatibility disclosures.`
   - Verification: `Document consistency check plus targeted source-path recheck across shared builtin loader, normalized content source assembly, builtin scenario inventory surfacing, and accepted UI baseline references`
-  - Next: `Resume the active queue from target-acceptance-closeout.`
+  - Next at that time: `Start target-acceptance-closeout.`
 - 2026-07-07
   - Summary: `Closed target-acceptance-closeout after recording one synchronized acceptance-ready decision: target criteria are satisfied on current written evidence with explicit first-party baseline and compatibility disclosures, so the remaining work is final queue/target synchronization rather than another blocker hunt.`
   - Verification: `Document consistency check against the acceptance criteria, closed queue evidence, and active queue truth`
-  - Next: `Resume the active queue from queue-closeout.`
+  - Next at that time: `Start queue-closeout.`
 - 2026-07-07
-  - Summary: `Accepted queue-closeout and closed queue.final-acceptance-closeout after synchronization confirmed that the current-period modularization target can now be marked done with no active queue or task remaining.`
+  - Summary: `Accepted queue-closeout and closed queue.final-acceptance-closeout after synchronization confirmed that target-level acceptance-ready evidence was complete and no fresh queue family needed reopening.`
   - Verification: `Document consistency check across the closed queue, closed target, blueprint, project-progress, and target plan/spec artifacts`
-  - Next: `Resume only from later target/promotion review if fresh classified work appears.`
+  - Next at that time: `Return control to target-level review after queue closeout.`

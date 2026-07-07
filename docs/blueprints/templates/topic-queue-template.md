@@ -4,17 +4,12 @@
 
 - queue_id: `queue.replace-me`
 - belongs_to_target: `target.replace-me`
-- status: `active`
+- queue_status: `candidate | active | blocked | done | dropped`
 - queue_class: `required`
-- active_task: `task.replace-me`
-- next_task: `task.replace-me-next`
-- allowed_task_states:
-  - `candidate`
-  - `queued`
-  - `active`
-  - `blocked`
-  - `done`
-  - `dropped`
+- active_task: `task.replace-me | none`
+- next_task: `task.replace-me-next | none`
+- closeout_status: `in-progress | done | blocked`
+- next_effect: `promote-next-queue | return-to-target-review | block-target | none`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -22,34 +17,16 @@
   - `content-pipeline-item`
   - `asset-pipeline-item`
   - `future-target-candidate`
-- promotion_gate:
-  - `baseline_recheck_complete`
-  - `task_dependencies_satisfied`
-- closeout_gate:
-  - `all_required_tasks_done_or_dropped`
-  - `queue_closeout_note_written`
-  - `verification_recorded`
-- promote_next_queue_candidates: []
-- must_not_expand_into:
-  - `Replace with forbidden expansion area.`
 
 ## Human Context
 
-### Queue Goal
+### Queue Explanation
 
-Replace this line with the queue goal.
-
-### Boundary
-
-This queue covers:
-
-- `Replace with in-scope item 1.`
-- `Replace with in-scope item 2.`
-
-This queue does not cover:
-
-- `Replace with out-of-scope item 1.`
-- `Replace with out-of-scope item 2.`
+- Goal:
+  - `Replace with the bounded queue goal.`
+- Forbidden expansions:
+  - `Replace with out-of-scope area 1.`
+  - `Replace with out-of-scope area 2.`
 
 ### Parent Target
 
@@ -58,32 +35,11 @@ This queue does not cover:
 - Target plan:
   - `docs/blueprints/plans/...`
 
-### Execution State
-
-- Status: `in-progress`
-- Last Updated: `2000-01-01`
-- Current Focus: `Replace this line with the current queue focus.`
-- Active Task:
-  - `task....` or `none`
-- Next Step:
-  - `Replace this line with the next queue action.`
-- Verification:
-  - `Replace this line with the latest queue-level verification state.`
-- Notes:
-  - `Replace this line with current queue caveats.`
-
-### Baseline Recheck
-
-- Recheck result: `unchanged`
-- Notes:
-  - `Replace with baseline truth note 1.`
-  - `Replace with baseline truth note 2.`
-
-### Current Queue
+### Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.replace-me` | `active` | `Replace with task summary.` | `none` | `Replace this note.` |
+| `task.replace-me` | `active` | `Replace with task summary.` | `none` | `Replace with task note.` |
 
 ### Task Definitions
 
@@ -93,10 +49,6 @@ This queue does not cover:
 
 - task_id: `task.replace-me`
 - state: `active`
-- task_type: `execution`
-- depends_on: []
-- blocked_by: []
-- priority: `high`
 - scope:
   - `path/or/module/a`
   - `path/or/module/b`
@@ -104,8 +56,8 @@ This queue does not cover:
   - `file-a`
   - `file-b`
 - must_not_change:
-  - `Replace with forbidden expansion 1.`
-  - `Replace with forbidden expansion 2.`
+  - `Replace with forbidden change 1.`
+  - `Replace with forbidden change 2.`
 - done_when:
   - `Replace with done condition 1.`
   - `Replace with done condition 2.`
@@ -113,15 +65,9 @@ This queue does not cover:
   - `command-a`
   - `command-b`
 - if_blocked:
-  - `record blocker in queue`
-  - `do not silently widen task`
+  - `Record blocker in the queue doc.`
+  - `Do not silently widen scope.`
 - promote_next_if_done: `task.replace-me-next`
-- drift_check_required: `true`
-- drift_forbidden_expansions:
-  - `Replace with forbidden drift 1.`
-  - `Replace with forbidden drift 2.`
-- drift_escalate_to:
-  - `queue`
 - stop_if:
   - `condition-a`
   - `condition-b`
@@ -129,54 +75,41 @@ This queue does not cover:
 ##### Human Context
 
 - Purpose:
-  - `Replace with the concrete problem this task solves.`
+  - `Replace with the task purpose.`
 - Failure mode:
   - `Replace with the main failure risk.`
-
-## Next Executable Task
-
-- Task ID:
-  - `task.replace-me`
-- Required action before promotion:
-  - `Replace with explicit promotion or resume instruction.`
-- Expected output:
-  - `Replace with the expected task outcome.`
-
-## Candidate Backlog
-
-- `task.replace-me-candidate`
-  - State:
-    - `candidate`
-  - Reason:
-    - `Replace with the backlog reason.`
-  - Promote when:
-    - `Replace with explicit trigger condition.`
-  - Reject when:
-    - `Replace with explicit rejection condition.`
-  - Required evidence:
-    - `Replace with evidence requirement.`
 
 ## Closeout Decision
 
 - queue_id: `queue.replace-me`
-- closeout_status: `in-progress`
-- verification_status: `not-run`
-- residue_remaining: `unknown`
-- residue_classification: []
-- next_queue_recommendation: `none`
-- promotion_justified: `false`
-- evidence: []
+- closeout_status: `in-progress | done | blocked`
+- verification_status: `passed | partial | blocked`
+- residue_remaining: `yes | no`
+- residue_classification:
+  - `accepted-history`
+- next_queue_recommendation: `queue.replace-me-next | none`
+- promotion_justified: `true | false`
+- evidence:
+  - `Replace with closeout evidence.`
 
-## State Transition Rules
+## Historical Handoff Note
 
-1. A `queued` task becomes `active` only after a baseline recheck.
-2. A `blocked` task must record its blocker in the queue.
-3. A `dropped` task must record why it was removed instead of disappearing silently.
-4. A closed queue must remain historical truth until a new promotion record says otherwise.
+- Task ID:
+  - `none`
+- Recorded handoff at closure:
+  - `Replace with the target-level handoff written at queue closeout.`
+- Recorded expected output:
+  - `Replace with the closed-queue outcome.`
 
-## Progress Log
+## Historical Candidate Notes
 
-- 2000-01-01
-  - Summary: `Queue created.`
-  - Verification: `Not run`
-  - Next: `Replace with the next real action.`
+- `task.replace-me-later`
+  - State:
+    - `candidate`
+  - Reason:
+    - `Replace with why this remains historical candidate residue only.`
+
+### Historical Snapshot (2000-01-01)
+
+- `Replace with queue history only when needed.`
+- `When queue_status becomes done, convert any live-style closeout labels into historical labels such as Closed Review Record, Historical Handoff Note, and Historical Candidate Notes.`

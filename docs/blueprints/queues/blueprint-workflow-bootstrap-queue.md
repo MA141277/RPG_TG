@@ -1,10 +1,31 @@
 # Blueprint Workflow Bootstrap Queue
 
-## Topic Goal
+## Control Block
+
+- queue_id: `queue.blueprint-workflow-bootstrap`
+- belongs_to_target: `target.project-complete-modularization`
+- queue_status: `done`
+- queue_class: `historical`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- next_effect: `return-to-target-review`
+- blocked_by: []
+- allowed_item_classifications:
+  - `historical-residue`
+- reject_item_classifications:
+  - `content-pipeline-item`
+  - `asset-pipeline-item`
+  - `future-target-candidate`
+  - `out-of-scope`
+
+## Human Context
+
+### Topic Goal
 
 Bootstrap the Blueprint workflow into a usable repository governance system, then hand off to the single modularization target plus its first real queue.
 
-## Boundary
+### Boundary
 
 This queue covers:
 
@@ -19,28 +40,28 @@ This queue does not cover:
 - implementation of a runtime/gameplay/system target
 - retroactive full migration of all historical `docs/superpowers/**` files
 
-## Execution State
+### Closed Review Record
 
 - Status: `done`
 - Last Updated: `2026-07-06`
-- Current Focus: `Bootstrap documentation and first-topic handoff are complete. This queue is now historical bootstrap record only.`
-- Active Task:
+- Historical Summary: `Bootstrap documentation and first-topic handoff are complete. This queue is now historical bootstrap record only.`
+- Closed Task:
   - `none`
-- Next Step:
+- Handoff At Closure:
   - `No further execution from this queue unless a separate blueprint-process topic is explicitly opened later.`
 - Verification:
   - `Bootstrap documents, handoff queue, and first real queue artifacts exist.`
 - Notes:
   - `This queue is closed. Use it only as the historical handoff record into core-production-integration.`
 
-## Baseline Recheck
+### Baseline Recheck
 
 - Recheck result: `unchanged`
 - Notes:
   - `The repository had no docs/blueprints/ workflow entry chain before this queue started.`
   - `The old superpowers workflow remains present but should now be treated as historical reference only.`
 
-## Current Queue
+### Historical Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
@@ -48,16 +69,16 @@ This queue does not cover:
 | `task.workflow.bootstrap-entry-docs` | `done` | Create the global entry files and core templates. | `task.workflow.bootstrap-spec` | Completed by creating the initial docs/blueprints/ entry chain. |
 | `task.workflow.first-topic-onboarding` | `done` | Normalize the workflow so each period has one current target and onboard the first real queue under the current period target. | `task.workflow.bootstrap-entry-docs` | Completed by creating the modularization target and reclassifying `core-production-integration` as the first queue under it. |
 
-## Next Executable Task
+## Historical Handoff Note
 
 - Task ID:
   - `none`
-- Required action before promotion:
+- Recorded handoff at closure:
   - `None.`
-- Expected output:
+- Recorded expected output:
   - `None.`
 
-## Candidate Backlog
+## Historical Candidate Notes
 
 - `task.workflow.historical-superpowers-index`
   - State:

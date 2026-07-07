@@ -2,6 +2,41 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+`docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
+它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
+
+## 2026-07-07 Blueprint Governance Model Hardening
+
+### Changed
+- 重写 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，把 Blueprint 恢复链正式收口为 `project-progress -> blueprint -> target plan -> active queue -> active task`，并把 `target plan` / `queue doc` 固定为 target 层与 queue 层的唯一 live governor。
+- 重写 [docs/blueprints/classification-rule-layer-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/classification-rule-layer-spec.md)，让 classification layer 明确依附新的 single-writer Blueprint 模型，只负责路由，不再冒充 live execution controller。
+- 将 P0/P1 Blueprint 约束草案正式落库：Control Block 独占执行真值，`decision_state`/`target_status` 从上游镜像中收口，`promotion_review_result` / `resume_gate` / `next_effect` 等字段改为结构化约束。
+- 按 B 方案继续收紧 Blueprint 真值字段：`project-progress.next_step` 改为枚举 `entry_action`，`target plan.next_legal_action` 改为枚举 `next_action`，并移除 target plan 的 live `Current Decision` 解释区。
+- 将 target spec / target-spec template 的 `Queue Portfolio` 改为 `Queue Contract Portfolio`，移除 `State` / `Source` 这类 runtime / history 混合列，收口为纯 contract 表。
+- 新增 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 `npm run lint:blueprints`，把 Blueprint 一致性检查从“人工遵守”推进到“脚本拒绝漂移”。
+- 重写 Blueprint 模板族：
+  - [docs/blueprints/templates/project-progress-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/project-progress-template.md)
+  - [docs/blueprints/templates/blueprint-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/blueprint-template.md)
+  - [docs/blueprints/templates/target-spec-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-spec-template.md)
+  - [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)
+  - [docs/blueprints/templates/topic-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/topic-queue-template.md)
+- 重写当前 live 文档：
+  - [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)
+  - [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)
+  - [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md)
+  - [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)
+- 当前 modularization target 不再用“所有已知 queue 都关闭”来直接推导 `done`；现改为 `open + idle-open`，使当前 target 在 `active_queue = none` 时仍可通过 promotion-review 接纳新 queue。
+- 清理关闭 queue 文档中的误导性 live/historical 混写：`Current Queue` 改为 `Historical Task Ledger`，关闭记录中的 `Resume ...` 改写为历史性 handoff 描述，不再冒充当前执行指令。
+- `docs/change-log.md` 自身在治理模型中降级为历史镜像层，不再被 Blueprint 规范声明为 promotion / closeout gate。
+- 进一步确认 `docs/change-log.md` 的正式定位为“历史记录 + 人类可读摘要”，并从 Blueprint 正式约束中移除它作为 fixed sync order 强制节点与治理必扫项的角色。
+- 更新 [docs/superpowers/README.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/README.md) 与 [docs/superpowers/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/project-progress.md)，把它们显式标成 Blueprint 之后的 legacy / historical 入口。
+- 批量修正多份 legacy `docs/superpowers/plans/**` 与 `docs/superpowers/specs/**` 顶部的恢复提示，避免单独打开旧文件时仍把 `docs/superpowers/project-progress.md` 误读成当前仓库的默认恢复入口。
+
+### Impact
+- 当前恢复执行不再需要从 `change-log`、旧 `docs/superpowers/**` 或关闭 queue 叙事中推断真值。
+- `project-progress` 和 `blueprint` 已移除高漂移 completed registry 与 queue-local truth，live 状态只保留必要入口字段。
+- task 完成后的自动动作、queue/target closeout、人工确认频率限制、以及 `mod-first-dev` 集成闭环都已经进入 Blueprint 规范与 target plan 的显式规则层。
+
 ## 2026-07-06 Blueprint Workflow Spec
 
 ### Added
