@@ -4,10 +4,12 @@
 
 - queue_id: `queue.shell-thinning-and-final-ownerization`
 - belongs_to_target: `target.project-complete-modularization`
-- status: `done`
+- queue_status: `done`
 - queue_class: `required`
 - active_task: `none`
 - next_task: `none`
+- closeout_status: `done`
+- next_effect: `return-to-target-review`
 - allowed_task_states:
   - `candidate`
   - `queued`
@@ -71,14 +73,14 @@ This queue does not cover:
 - Target plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
-### Execution State
+### Closed Review Record
 
 - Status: `done`
 - Last Updated: `2026-07-06`
-- Current Focus: `Render-prepass ownerization is now closed, and queue closeout concluded that the remaining direct main.ts writes are either shell-owned UI/event orchestration, startup-time assembly, or narrow compatibility residue rather than a live Phase 1 runtime blocker.`
-- Active Task:
+- Historical Summary: `Render-prepass ownerization is now closed, and queue closeout concluded that the remaining direct main.ts writes are either shell-owned UI/event orchestration, startup-time assembly, or narrow compatibility residue rather than a live Phase 1 runtime blocker.`
+- Closed Task:
   - `none`
-- Next Step:
+- Handoff At Closure:
   - `Return to the current target plan and decide whether Phase 1 can hand off to Phase 2 queue promotion. Do not reopen state-sync-and-runtime-canonicalization unless a new production blocker is proven.`
 - Verification:
   - `Targeted shell-thinning regressions, full npm test, and a closeout residue audit of src/main.ts.`
@@ -96,7 +98,7 @@ This queue does not cover:
   - `A direct runtime.variables write for leader-residence pending-character handoff was observed during the baseline, but it is not the first queue-opening hotspot and should be reconsidered only if it blocks a cleaner owner seam during later tasks.`
   - `Current legal queue direction: move unjustified business owner lines out of main.ts, but keep truly shell-owned browser scheduling, DOM wiring, input listeners, and render triggering in place.`
 
-### Current Queue
+### Historical Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
@@ -356,16 +358,16 @@ This queue does not cover:
 - Failure mode:
   - `Do not close with a vague "main.ts is smaller now" claim; either prove the remaining shell boundary or record the exact blocker.`
 
-## Next Executable Task
+## Historical Handoff Note
 
 - Task ID:
   - `none`
-- Required action before promotion:
-  - `Queue is closed. Resume from the target plan and promote a new queue only if a stronger current-period modularization need is proven.`
-- Expected output:
+- Recorded handoff at closure:
+  - `Queue is closed. Return control to the target plan and promote a new queue only if a stronger current-period modularization need is proven.`
+- Recorded expected output:
   - `A target-level decision on the next queue family, not more shell-thinning work by default.`
 
-## Candidate Backlog
+## Historical Candidate Notes
 
 - `task.shell-thinning-and-final-ownerization.startup-builder-ownerization`
   - State:
@@ -422,15 +424,15 @@ This queue does not cover:
 - 2026-07-06
   - Summary: `Created shell-thinning-and-final-ownerization as the next formal Phase 1 queue after core-production-integration closed without needing a separate state-sync canonicalization queue.`
   - Verification: `Queue creation based on the closed runtime ownership audit`
-  - Next: `Resume task.shell-thinning-and-final-ownerization.baseline-reconcile.`
+  - Next at that time: `Start task.shell-thinning-and-final-ownerization.baseline-reconcile.`
 - 2026-07-06
   - Summary: `Closed baseline-reconcile after confirming that the remaining shell residue is best attacked in this order: leave-city / city-3d view transitions first, then travel and auto-advance framing, then any still-live render-prepass write-back.`
   - Verification: `Fresh main.ts hotspot recheck plus scope comparison against main-runtime-orchestrator`
-  - Next: `Resume task.shell-thinning-and-final-ownerization.view-transition-ownerization.`
+  - Next at that time: `Start task.shell-thinning-and-final-ownerization.view-transition-ownerization.`
 - 2026-07-06
   - Summary: `Closed view-transition-ownerization by extracting the covered leave-city / enter-city-3d / leave-city-3d state cleanup into application/runtime/city-view-transition.ts and removing those inline world/ui mutation blocks from main.ts.`
   - Verification: `npm test`
-  - Next: `Resume task.shell-thinning-and-final-ownerization.travel-and-auto-advance-ownerization.`
+  - Next at that time: `Start task.shell-thinning-and-final-ownerization.travel-and-auto-advance-ownerization.`
 - 2026-07-06
   - Summary: `Within travel-and-auto-advance-ownerization, extracted the covered campaign travel start/completion state transitions into application/runtime/campaign-travel-transition.ts and removed those inline app-state blocks from startCampaignTravel().`
   - Verification: `Targeted build:test + shell-thinning/campaign-travel regression`
@@ -438,7 +440,7 @@ This queue does not cover:
 - 2026-07-06
   - Summary: `Closed travel-and-auto-advance-ownerization by extracting the covered map auto-advance start/snapshot state transitions into application/runtime/map-auto-advance-transition.ts, leaving only shell scheduling, runtime commit, and completion handoff in main.ts.`
   - Verification: `npm test`
-  - Next: `Resume task.shell-thinning-and-final-ownerization.render-prepass-ownerization.`
+  - Next at that time: `Start task.shell-thinning-and-final-ownerization.render-prepass-ownerization.`
 - 2026-07-06
   - Summary: `Closed render-prepass-ownerization by extracting the city-NPC refresh write-back from renderAppFrame() into application/runtime/render-prepass-state.ts, leaving the render prepass as an explicit seam instead of a quiet main.ts mutation block.`
   - Verification: `npm test`

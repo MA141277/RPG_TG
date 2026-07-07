@@ -5,8 +5,12 @@
 - layer_id: `classification-layer.rpg-tg`
 - status: `active`
 - applies_to_blueprint: `blueprint.rpg-tg`
-- compatible_with:
-  - `project-progress -> blueprint -> target -> queue -> task -> execution artifacts`
+- canonical_resume_chain:
+  - `project-progress`
+  - `blueprint`
+  - `target-plan`
+  - `active-queue`
+  - `active-task`
 - default_low_confidence_classification: `uncertain-needs-review`
 - classification_outputs:
   - `current-target-item`
@@ -17,48 +21,49 @@
   - `uncertain-needs-review`
   - `historical-residue`
   - `out-of-scope`
-- escalation_required_for:
-  - `queue-candidate`
-  - `future-target-candidate`
-  - `uncertain-needs-review`
-- human_role_mode: `rules_define_and_review_conflicts_only`
+- escalation_types:
+  - `governance_escalation`
+  - `human_escalation`
 
 ## Human Context
 
 ### Goal
 
-Add a classification layer on top of the AI-first Blueprint system so that AI can classify new work items before they are promoted into:
+- `Classify new work before queue admission, target widening, or pipeline routing.`
+- `Protect the single-writer Blueprint model by keeping routing separate from execution truth.`
 
-- current target work
-- future target work
-- queue candidate work
-- content or asset pipeline work
-- uncertain work requiring human review
+### Placement In The Governance Stack
 
-This layer exists to reduce human burden in large-content projects.
+- `Classification is a routing layer, not a live execution controller.`
+- `Current execution truth still comes only from project-progress -> blueprint -> target plan -> active queue -> active task.`
+- `Classification may recommend queue admission, but it cannot create an active queue by itself.`
 
-### Core Principle
+### Core Rules
 
-When a new issue, request, residue item, content addition, asset task, or framework need appears, AI must not immediately guess that it belongs to the current active queue.
-
-AI must first classify it through an explicit rule layer.
+1. `Classify first, route second, promote later.`
+2. `Do not infer current execution truth from classification history.`
+3. `Do not use change-log, old docs/superpowers/**, or closed queue prose as classification authority unless they are cited as historical evidence only.`
+4. `If active_queue = none, classification returns control to the current target plan for promotion-review or idle-open handling.`
+5. `Low confidence always falls back to uncertain-needs-review unless a stronger written override exists.`
 
 ### Classification Outputs
 
-Every new item must be classified into exactly one of these buckets:
-
 - `current-target-item`
-- `future-target-candidate`
+  - `Fits the current target boundary and may affect current-target acceptance, but does not automatically start execution.`
 - `queue-candidate`
+  - `Requires a new bounded execution topic, a new shared capability, a new owner-line closure, or a new acceptance story outside the current queue scope.`
 - `content-pipeline-item`
+  - `Fits existing schema and runtime path and does not require new governance structure.`
 - `asset-pipeline-item`
-- `uncertain-needs-review`
+  - `Fits existing naming/path/contract rules and does not require behavior change.`
+- `future-target-candidate`
+  - `Valuable, but not required for the current target acceptance.`
 - `historical-residue`
-- `out-of-scope`
-
-If AI cannot classify with enough confidence, it must use:
-
+  - `Accepted older structure that should remain recorded but must not silently reactivate execution.`
 - `uncertain-needs-review`
+  - `Evidence is incomplete, rules conflict, or impact is too large to auto-route safely.`
+- `out-of-scope`
+  - `Outside current repository governance.`
 
 ### Classification Rules
 
@@ -113,166 +118,57 @@ If AI cannot classify with enough confidence, it must use:
     - `outside_current_repository_governance_scope`
   classify_as: `out-of-scope`
 
+### Escalation Rules
+
+- `queue-candidate`
+  - `governance_escalation`
+  - `return control to target-plan promotion-review`
+  - `no automatic human question`
+- `future-target-candidate`
+  - `governance_escalation`
+  - `no automatic human question`
+- `uncertain-needs-review`
+  - `record and stop without asking if active truth would not change`
+  - `human_escalation only when active truth would change and multiple mutually exclusive legal branches exist`
+
 ### Classification Record
 
-For each classified item, AI should emit:
+Use this structure when classification needs to be recorded explicitly:
 
 ```md
 ## Classification Record
 
 - item_id: `item.name`
-- item_type: `code|content|asset|ui|framework|runtime|authoring`
+- item_type: `code|content|asset|ui|framework|runtime|authoring|governance`
 - classify_as: `queue-candidate`
 - confidence: `high|medium|low`
 - matched_rules:
   - `R2`
+- escalation_type: `governance_escalation | human_escalation | none`
 - why:
-  - `requires framework capability not currently owned by existing queue`
+  - `requires framework capability not currently owned by an active queue`
 - escalate_if:
   - `changes current target scope`
-  - `needs new queue promotion`
+  - `needs queue admission`
 - reject_if:
-  - `can be completed inside existing pipeline without framework change`
+  - `can be completed inside an existing pipeline or current queue without widening scope`
 ```
-
-### Confidence Rule
-
-AI must always provide confidence:
-
-- `high`
-- `medium`
-- `low`
-
-If confidence is `low`, the item automatically becomes:
-
-- `uncertain-needs-review`
-
-unless a stronger written override rule explicitly allows automatic classification.
-
-### Escalation Rule
-
-Classification alone does not automatically create a queue or target.
-
-The classification layer only answers:
-
-- what kind of item this is
-- which governance layer it most likely belongs to
-
-If an item is classified as:
-
-- `queue-candidate`
-- `future-target-candidate`
-- `uncertain-needs-review`
-
-AI must not automatically begin implementation.
-
-### Content And Asset Handling Rule
-
-#### Content Pipeline Item
-
-Use this when:
-
-- work fits existing framework
-- work uses existing schema
-- work uses existing runtime path
-- work does not require new queue or new target
-- work is primarily data or content authoring
-
-Examples:
-
-- new playable content under existing scaffold
-- filling existing JSON/config content
-- new dialogue/content pack entries under supported path
-
-#### Asset Pipeline Item
-
-Use this when:
-
-- work is asset replacement or asset addition
-- no framework behavior changes are required
-- naming/path rules already exist
-- the task is primarily art or UI resource work
-
-Examples:
-
-- replacing portraits
-- replacing UI images
-- adding art assets under an existing asset contract
-
-### Queue-Candidate Rule
-
-Use `queue-candidate` only when the work requires:
-
-- a new bounded execution topic
-- a new framework capability
-- a new owner-line closure effort
-- a new acceptance story different from current queue scope
-
-This classification must not be used for ordinary content or asset fill-in.
-
-### Current Target Item Rule
-
-Use `current-target-item` only when:
-
-- the work affects completion of the current version target
-- the work fits the current target boundary
-- the work does not require redefining the target itself
-
-If the work would redefine the version goal, it requires target review instead of normal current-target execution.
-
-### Future Target Candidate Rule
-
-Use `future-target-candidate` when:
-
-- the work has real value
-- but it is not required for the current version's acceptance
-- and forcing it into the current target would widen scope improperly
-
-### Historical Residue Rule
-
-Use `historical-residue` when:
-
-- the issue reflects accepted old structure
-- it does not block the current target
-- it should remain recorded but not reactivated automatically
-
-### Uncertain Rule
-
-Use `uncertain-needs-review` when:
-
-- confidence is low
-- multiple rules conflict
-- evidence is incomplete
-- promotion impact is large
-- the item may change target boundary
-
-This is a legal and expected result.
 
 ### Integration Points
 
-- Blueprint may contain classification rule references and default fallback behavior.
-- Target may contain target-specific classification overrides.
-- Queue may declare which classified item kinds are allowed inside it.
-- Task execution must reject items whose classification is incompatible with queue scope.
-
-### Anti-Bloat Rule
-
-The classification layer must reduce governance overhead, not increase it.
-
-It must not require:
-
-- a full new queue for every content item
-- human approval for every asset task
-- rewriting Blueprint for every classified item
-
-Its purpose is triage and routing, not bureaucracy.
+- `project-progress` may point to the classification layer, but may not own classification history as live truth.
+- `blueprint` may point to the authoritative classification rule file.
+- `target spec` may define target-specific overrides.
+- `target plan` decides whether a classified item becomes a promoted queue.
+- `queue docs` declare which classifications are allowed inside them.
+- `task execution` must stop if a new item is classified incompatibly with queue scope.
 
 ### Success Condition
 
-The classification layer is successful only when:
+This layer is successful only when:
 
-- AI can classify most new items automatically
-- humans no longer need to manually boundary-classify every new issue
-- content and asset work can be routed without inflating queue governance
-- only uncertain or high-impact items escalate to human review
-- current target and queue scope become easier to protect in a large-content project
+- `most new items can be routed without reopening live governance truth upstream`
+- `queue admission always remains a target-plan decision`
+- `queue-candidate` defaults to governance escalation rather than human escalation
+- `open + no active queue` remains legal and non-ambiguous
+- `historical residue stays recorded without pretending to be active work`

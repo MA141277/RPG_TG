@@ -1,6 +1,6 @@
 # Post-Child-11 Shared Dispatch Follow-Up / Reentry Convergence Audit Implementation Plan
 
-> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -247,3 +247,4 @@ Expected: `PASS`
 - [x] No same-type Bucket A path is intentionally deferred to a later child
 - [x] Bucket B and Bucket C items are explicitly recorded rather than silently absorbed
 - [x] Weekly/governance docs reflect Child 13 queue truth and final outcome
+

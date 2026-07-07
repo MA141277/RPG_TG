@@ -1,6 +1,6 @@
 # Runtime Ownerization Review And Baseline Spec
 
-> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. Resume governed work from `docs/superpowers/project-progress.md` instead.
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
 
 ## 1. Goal
 
@@ -189,3 +189,4 @@ Child 10 is acceptable only if:
 - the baseline defines Child 11 verification mapping and residual debt handling
 - the weekly plan records Child 10 as the review/baseline child and Child 11 as the locked implementation child
 - Child 10 does not absorb production ownerization or unrelated module redesign
+

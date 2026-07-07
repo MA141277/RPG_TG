@@ -2,9 +2,11 @@
 
 ## 1. Goal
 
-This spec defines the required governance model for repository work tracked through `docs/superpowers/`.
+This spec defines the required governance model only for explicitly resumed legacy work tracked through `docs/superpowers/`.
 
-The repository now uses a **fail-closed, progress-driven workflow**.
+The repository now uses Blueprint governance for current repository work under `docs/blueprints/**`.
+
+`docs/superpowers/**` remains a **fail-closed, progress-driven workflow** only when a legacy superpowers artifact is intentionally reopened.
 
 The strongest rule is:
 
@@ -19,14 +21,14 @@ The purpose is to make repository work:
 
 ## 2. Scope
 
-This spec applies to:
+This spec applies only to:
 
 - all executable child plans under `docs/superpowers/plans/`
 - the canonical project progress document at `docs/superpowers/project-progress.md`
 - child closeout and task closeout structure
 - plan templates and closeout templates used for new work
 
-This spec does not define runtime gameplay behavior.
+This spec does not define Blueprint governance or runtime gameplay behavior.
 
 ## 3. Canonical Governance Artifacts
 
@@ -38,9 +40,9 @@ Canonical path:
 
 Role:
 
-- the only allowed resume truth source
-- the only allowed entry document for later continuation
-- the only document allowed to authoritatively state current stage, task, child, and next action
+- the only allowed resume truth source for legacy `docs/superpowers/**` work
+- the only allowed entry document for later continuation of legacy `docs/superpowers/**` work
+- the only document allowed to authoritatively state current stage, task, child, and next action for legacy `docs/superpowers/**` work
 
 ### 3.2 Child Plan
 
@@ -80,7 +82,7 @@ Rules:
 
 ## 4. Single Source Of Truth Rule
 
-The project progress document is the only valid resume truth source.
+For legacy `docs/superpowers/**` work, the project progress document is the only valid resume truth source.
 
 Every valid child closeout and task closeout must land there.
 

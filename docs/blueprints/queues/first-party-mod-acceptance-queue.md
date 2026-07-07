@@ -4,10 +4,12 @@
 
 - queue_id: `queue.first-party-mod-acceptance`
 - belongs_to_target: `target.project-complete-modularization`
-- status: `done`
+- queue_status: `done`
 - queue_class: `conditional`
 - active_task: `none`
 - next_task: `none`
+- closeout_status: `done`
+- next_effect: `promote-next-queue`
 - allowed_task_states:
   - `candidate`
   - `queued`
@@ -71,15 +73,15 @@ This queue does not cover:
 - Target plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
-### Execution State
+### Closed Review Record
 
 - Status: `done`
 - Last Updated: `2026-07-07`
-- Current Focus: `The acceptance proof is now accepted as coherent enough for final handoff. This queue is closed, and its output is the promotion basis for queue.final-acceptance-closeout rather than another implementation-family reopen.`
-- Active Task:
+- Historical Summary: `The acceptance proof is now accepted as coherent enough for final handoff. This queue is closed, and its output is the promotion basis for queue.final-acceptance-closeout rather than another implementation-family reopen.`
+- Closed Task:
   - `none`
-- Next Step:
-  - `Resume queue.final-acceptance-closeout from baseline-reconcile.`
+- Handoff At Closure:
+  - `Return control to the target plan. At closeout time, the promoted next queue was final-acceptance-closeout starting from baseline-reconcile.`
 - Verification:
   - `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries.`
 - Notes:
@@ -96,7 +98,7 @@ This queue does not cover:
   - `UI reserve/schema/layout registry layering still exists, but main startup/runtime does not consume ui-contract-registry on the covered production path; current ui layout bootstrap still reads explicit layout-editor baseline presets in main.ts, so this remains accepted framework baseline rather than a newly-proven runtime privilege blocker.`
   - `The remaining live question is acceptance framing around builtin default-start behavior, builtin scenario-pack menu surfacing, and accepted compatibility residue; current evidence narrows this to proof-writing rather than another implementation queue.`
 
-### Current Queue
+### Historical Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
@@ -327,13 +329,13 @@ This queue does not cover:
 - `required honesty for next queue`
   - `Final acceptance closeout must still state that first-party boot inventory, builtin scenario inventory surfacing, accepted UI baseline, and legacy builtin manifest compatibility remain disclosed baseline/residue rather than claiming builtin and external mods are identical in every repository-owned framing detail.`
 
-## Next Executable Task
+## Historical Handoff Note
 
 - Task ID:
   - `none`
-- Required action before promotion:
+- Recorded handoff at closure:
   - `None. Queue closeout has already promoted queue.final-acceptance-closeout as the next legal controller.`
-- Expected output:
+- Recorded expected output:
   - `Use this queue as the closed Phase 4 acceptance-proof record.`
 
 ## Closeout Decision
@@ -366,16 +368,16 @@ This queue does not cover:
 - 2026-07-07
   - Summary: `Promoted queue.first-party-mod-acceptance after queue.historical-residue-disposition closed with a synchronized residue matrix and no fresh implementation blocker, leaving builtin-versus-first-party production-path acceptance proof as the remaining live Phase 4 question.`
   - Verification: `Document consistency check across the promotion handoff, new queue record, target plan, target spec, blueprint, and project-progress entries`
-  - Next: `Resume the active queue from baseline-reconcile.`
+  - Next at that time: `Start baseline-reconcile.`
 - 2026-07-07
   - Summary: `Closed baseline-reconcile after the source-path audit confirmed that builtin startup now uses the shared builtin mod loader, active-content assembly consumes activationResult content sources directly, UI reserve layering remains off the covered startup/runtime path, and the remaining Phase 4 work is bounded acceptance proof rather than a fresh implementation blocker.`
   - Verification: `Targeted source-path audit across main.ts, startup-session-coordinator, active-game-content, mod-runtime, builtin registry modules, ui-contract-registry, and robustness coverage`
-  - Next: `Resume the active queue from production-path-acceptance-proof.`
+  - Next at that time: `Start production-path-acceptance-proof.`
 - 2026-07-07
   - Summary: `Closed production-path-acceptance-proof after recording the explicit acceptance matrix: builtin startup/load/restore and active-content assembly now count as same-family mod-path behavior on the covered production line, while builtin default-start framing, builtin scenario inventory surfacing, UI reserve baseline, and legacy builtin manifests remain disclosed baseline or compatibility residue rather than fresh implementation blockers.`
   - Verification: `Targeted source-path audit plus document consistency check across the queue, target plan, blueprint, and project-progress entries`
-  - Next: `Resume the active queue from queue-closeout.`
+  - Next at that time: `Start queue-closeout.`
 - 2026-07-07
   - Summary: `Accepted queue-closeout and closed queue.first-party-mod-acceptance after the written proof established that the remaining first-party baseline and compatibility caveats belong to final disclosure rather than another implementation-family reopen, so the honest next controller is queue.final-acceptance-closeout.`
   - Verification: `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries`
-  - Next: `Resume queue.final-acceptance-closeout from baseline-reconcile.`
+  - Next at that time: `Promote queue.final-acceptance-closeout and start baseline-reconcile.`

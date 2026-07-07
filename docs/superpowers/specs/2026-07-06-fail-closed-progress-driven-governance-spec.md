@@ -2,7 +2,9 @@
 
 ## 1. Goal
 
-Replace the old `weekly plan / weekly set / weekly orchestration` governance model with a fail-closed workflow that does not allow ambiguous continuation.
+Replace the old `weekly plan / weekly set / weekly orchestration` governance model for legacy `docs/superpowers/**` work with a fail-closed workflow that does not allow ambiguous continuation.
+
+Current repository work is governed by Blueprint under `docs/blueprints/**`, not by this spec.
 
 The new model has one hard rule:
 
@@ -17,7 +19,7 @@ This spec exists to make continuation:
 
 ## 2. Model Replacement
 
-This repository formally deprecates the old weekly governance model for all new work.
+This repository formally deprecates the old weekly governance model for all new work and confines this spec to explicitly resumed legacy `docs/superpowers/**` work.
 
 Deprecated as active governance:
 
@@ -32,7 +34,7 @@ Historical-only status:
 - they must not be treated as the current execution controller
 - they must not be used as the authoritative resume entry for new work
 
-New governance model:
+New governance model for legacy `docs/superpowers/**` work:
 
 - one project progress document is the only resume truth source
 - one child plan is the only executable implementation document
@@ -95,7 +97,7 @@ Role after this spec:
 
 ## 4. Single Source Of Truth Rule
 
-The project progress document is the only allowed resume truth source.
+For legacy `docs/superpowers/**` work, the project progress document is the only allowed resume truth source.
 
 Every valid closeout must update it.
 

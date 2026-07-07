@@ -26,10 +26,11 @@
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "test": "npm run build:test && node --test tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint:blueprints": "node tools/lint-blueprints.mjs",
     "lint:plans": "node tools/lint-superpowers-plans.mjs",
     "lint:ts": "eslint .",
     "lint:css": "stylelint \"src/styles/**/*.css\"",
-    "lint": "npm run lint:ts && npm run lint:css"
+    "lint": "npm run lint:blueprints && npm run lint:ts && npm run lint:css"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
