@@ -5,6 +5,49 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-07 Target Lifecycle Explicit-Open-Explicit-Close Rule
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，明确 target 生命周期不再由 queue 完成情况自动推断：
+  - `open target` 在没有 explicit closeout confirmation 前持续保持 open
+  - `active_queue = none` 只表示当前没有 active queue，不表示 target 自动关闭
+  - 只要 target 仍是 `open`，就可以继续增加新的 same-target queue
+  - `target_status` 从 `open` 变到 `done` 前，必须有一次明确的人类关闭确认
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md) 与 [docs/blueprints/templates/target-spec-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-spec-template.md)，把 explicit-open / explicit-close 规则和 “open target 仍可继续 admit 新 queue” 固化为模板默认语义。
+- 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md) 与 [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md)，明确当前 modularization target 在没有 explicit human closeout confirmation 前保持 open，并允许继续承接新的 same-target queue。
+
+### Impact
+- target closeout 不再会被“所有 queue 都做完了”这类流程信号自动推导出来。
+- 以后只要 current target 仍 open，就不需要为了继续同一时期工作而伪造 sibling target；可以直接在同一 target 下增加新的 queue。
+- target closeout 现在从自动流程分支收口为“closeout-ready + 一次人工确认”。
+
+## 2026-07-07 Queue Admission Startup Loop Closure
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，把“新增 Queue 的标准起手流程”正式写成硬规则：
+  - fresh queue item 必须先读取当前真值链
+  - 必须先检查是否已有 active queue 以及能否被当前 queue 吸收
+  - `queue-candidate` 必须先进入 target-level admission，而不是先创建 queue doc 或先开始实现
+  - queue activation 的固定顺序被写死为 `target-plan review sync -> queue doc activation -> target-plan active_queue sync -> implementation`
+  - `execution_mode = single-active-task` 且 `allow_parallel = false` 时，禁止并行激活第二个 active queue
+- 更新 [docs/blueprints/classification-rule-layer-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/classification-rule-layer-spec.md)，明确 `queue-candidate` 的默认去向是 admission，不是 implementation；并补入 recorded candidate 的 recovery rule，要求优先从既有 admission record 恢复。
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)，加入：
+  - admission startup rules
+  - candidate recovery ledger
+  - single-active-queue rule
+- 更新 [docs/blueprints/templates/topic-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/topic-queue-template.md)，去掉 `queue_status = candidate`，明确 queue doc 只承载 admitted queue truth，不再充当 pre-admission candidate 容器。
+- 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，补入 queue admission startup 与 candidate recovery 的当前期恢复规则。
+- 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，把以下低成本可静态拦截项纳入 lint：
+  - queue doc 使用 `queue_status = candidate`
+  - target plan 已写 `active_queue = none`，但 queue doc 已经先变成 `active`
+  - target plan 已命名一个 `active_queue`，但 queue docs 没有唯一匹配的 active queue
+  - active queue 已存在时，target plan 仍保留第二个 live admission review subject
+
+### Impact
+- 新增 queue 不再需要每次从头 full re-audit；只要 candidate 已经被结构化记录，后续默认从 admission record 恢复，只有 material recheck trigger 才允许重开 full audit。
+- “未 admission 先建 queue / 先激活 queue / 先实现”的治理短路被进一步 fail-closed。
+- 用户范围确认与 queue admission 的边界被继续硬化，避免 scope approval 再次漂移成执行授权。
+
 ## 2026-07-07 UI Runtime Contract Consumption Queue Closeout
 
 ### Changed

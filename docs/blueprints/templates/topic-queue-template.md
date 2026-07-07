@@ -4,7 +4,7 @@
 
 - queue_id: `queue.replace-me`
 - belongs_to_target: `target.replace-me`
-- queue_status: `candidate | active | blocked | done | dropped`
+- queue_status: `active | blocked | done | dropped`
 - queue_class: `required`
 - active_task: `task.replace-me | none`
 - next_task: `task.replace-me-next | none`
@@ -37,9 +37,23 @@
 
 ### Admission Preconditions
 
-- `This queue must not be treated as implementation authority until the target plan already records admission truth.`
-- `If this queue is admitted from a fresh queue-candidate, the target plan admission fields must be synchronized before any code implementation starts.`
+- `This queue must not be created or treated as implementation authority until the target plan already records admission review truth.`
+- `This queue must not expose queue_status=active or a live active_task before the target plan admission fields are synchronized.`
+- `If this queue is admitted from a fresh queue-candidate, the target plan admission fields must be synchronized before any queue activation or code implementation starts.`
 - `User scope approval alone must not be treated as queue admission.`
+- `Candidate tracking belongs in the target plan; this queue doc is for admitted queue truth only.`
+
+### Activation Order
+
+1. `Target plan review subject and basis are written first.`
+2. `Target-level admission review concludes before this queue becomes live execution truth.`
+3. `This queue doc is created and synchronized as the queue-level governor.`
+4. `Only then may active_task be exposed and implementation begin.`
+
+### Recovery Rule
+
+- `Do not recreate or reactivate this queue from scratch if the target plan already records its prior admission basis.`
+- `Resume from the target-plan admission record unless new material evidence invalidates that prior basis.`
 
 ### Task Ledger
 

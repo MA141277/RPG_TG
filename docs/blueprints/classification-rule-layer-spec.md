@@ -48,6 +48,8 @@
 5. `Low confidence always falls back to uncertain-needs-review unless a stronger written override exists.`
 6. `If classification concludes queue-candidate, fresh implementation must stop until target-plan admission truth and the admitted queue doc both exist.`
 7. `Conversation-only classification that would change active truth is invalid until the target plan is synchronized.`
+8. `A previously recorded queue-candidate must resume from its admission record by default unless new material evidence invalidates the old basis.`
+9. `If another queue is already active under single-active-task mode, classification may record a fresh candidate but must not activate a second queue.`
 
 ### Classification Outputs
 
@@ -175,6 +177,45 @@ Required behavior:
 2. `scope approved by user` must be recorded only as boundary approval, not as admission truth.
 3. `admission_status = admitted` requires the queue doc to exist before code implementation starts.
 4. `rejected / deferred / blocked` outcomes must be written into target-plan truth, not left in prose-only replies.
+
+### Queue-Candidate Startup Contract
+
+For a fresh queue-candidate, the required startup order is:
+
+1. `read the current truth chain first`
+2. `check whether an active queue already exists`
+3. `test whether the new item can be absorbed into the active queue without widening queue scope`
+4. `classify the item`
+5. `if the result is queue-candidate, return to target-plan admission review`
+6. `sync target-plan review fields before any queue doc is activated`
+7. `activate the queue only after target-plan review truth exists`
+8. `start implementation only after the queue doc exposes active queue truth and a live active task`
+
+Hard implications:
+
+- `queue-candidate` routes into admission, not implementation
+- `queue-candidate + active_queue = none` cannot jump directly into code work
+- `queue-candidate + active_queue != none` cannot open a parallel active queue when Blueprint parallelism is disabled
+- `user scope approval` may narrow the review boundary but cannot create queue admission truth
+
+### Candidate Recovery Rule
+
+If a queue-candidate was already structurally recorded, later sessions must resume from that record by default.
+
+Only perform a full recheck when:
+
+- new material evidence disproves the old classification
+- new material evidence disproves the old review basis
+- the current active queue can now absorb the item without widening scope
+- the item no longer belongs to the current target
+
+Otherwise:
+
+- reuse the recorded `review_subject_id`
+- reuse the recorded `review_subject_classification`
+- reuse the recorded `proposed_queue_id`
+- reuse the recorded `review_basis`
+- continue from the latest written disposition instead of restarting from scratch
 
 ### Integration Points
 
