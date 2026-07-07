@@ -69,10 +69,8 @@ This queue does not cover:
 
 ### Parent Target
 
-- Target spec:
-  - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
-- Target plan:
-  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- Target owner:
+  - `docs/blueprints/targets/2026-07-06-project-complete-modularization-target-v1.md`
 
 ### Closed Review Record
 
@@ -82,7 +80,7 @@ This queue does not cover:
 - Closed Task:
   - `none`
 - Handoff At Closure:
-  - `Return to the current target plan and decide whether a new Phase 2 queue such as unified-contribution-intake-closeout is actually justified by fresh intake evidence, or whether builtin privilege work can remain closed until later acceptance review.`
+  - `Return control to the v1 target and decide whether a new Phase 2 queue such as unified-contribution-intake-closeout is actually justified by fresh intake evidence, or whether builtin privilege work remains closed until later acceptance review.`
 - Verification:
   - `Fresh source-path audit, targeted builtin/UI reserve regressions, document consistency check, and npm test.`
 - Notes:
@@ -330,7 +328,7 @@ This queue does not cover:
 - Task ID:
   - `none`
 - Recorded handoff at closure:
-  - `Queue is closed. Return control to the target plan and promote a new queue only if a stronger same-period modularization blocker is proven.`
+  - `Queue is closed. Return control to the target and promote a new queue only if a stronger same-period modularization blocker is proven.`
 - Recorded expected output:
   - `A target-level decision on whether Phase 2 needs unified-contribution-intake-closeout or whether builtin privilege work remains closed pending later acceptance review.`
 
@@ -419,4 +417,4 @@ This queue does not cover:
 - 2026-07-06
   - Summary: `Closed builtin-content-deprivileging-closeout after the queue closeout audit found that builtin-first-party startup, registry seeding, and covered runtime content bootstrap now route through explicit shared seams, while the remaining builtin default-start and UI baseline questions no longer justify keeping a builtin-only deprivileging queue active.`
   - Verification: `Document consistency check plus npm test`
-  - Next: `Return to the current target plan and decide whether a broader unified-contribution-intake-closeout or later acceptance queue should be promoted next.`
+  - Next: `Return control to the target and decide whether a broader unified-contribution-intake-closeout or later acceptance queue should be promoted next.`

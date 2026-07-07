@@ -68,10 +68,8 @@ This queue does not cover:
 
 ### Parent Target
 
-- Target spec:
-  - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
-- Target plan:
-  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- Target owner:
+  - `docs/blueprints/targets/2026-07-06-project-complete-modularization-target-v1.md`
 
 ### Closed Review Record
 
@@ -81,7 +79,7 @@ This queue does not cover:
 - Closed Task:
   - `none`
 - Handoff At Closure:
-  - `Return control to the current target plan. At closeout time, the recommended next queue was first-party-mod-acceptance starting from baseline-reconcile. Do not reopen this queue unless fresh evidence proves the residue story itself is still incoherent.`
+  - `Return control to the v1 target. At closeout time, the recommended next queue was first-party-mod-acceptance starting from baseline-reconcile. Do not reopen this queue unless fresh evidence proves the residue story itself is still incoherent.`
 - Verification:
   - `Document consistency check against current target, closed queue residue records, and current active pointers.`
 - Notes:
@@ -276,7 +274,7 @@ This queue does not cover:
 - Task ID:
   - `none`
 - Recorded handoff at closure:
-  - `Return control to the target plan. At closeout time, the promoted next queue was first-party-mod-acceptance starting from baseline-reconcile.`
+  - `Return control to the target. At closeout time, the promoted next queue was first-party-mod-acceptance starting from baseline-reconcile.`
 - Recorded expected output:
   - `Use this closed queue as Phase 4 residue evidence; do not reopen it unless fresh residue-classification drift appears.`
 
@@ -329,9 +327,9 @@ This queue does not cover:
   - Next at that time: `Start residue-classification-and-routing.`
 - 2026-07-07
   - Summary: `Closed residue-classification-and-routing after the queue recorded an explicit residue disposition matrix: shell residue now routes as accepted history, builtin UI baseline routes as accepted framework baseline plus later acceptance review, legacy builtin scenario-pack manifests route as accepted compatibility residue, and the current recommended Phase 4 handoff is queue.first-party-mod-acceptance.`
-  - Verification: `Document consistency check across the active queue, target plan, target spec, blueprint, and project-progress entries`
+  - Verification: `Document consistency check across the active queue, target, blueprint, and project-progress entries`
   - Next: `Run queue-closeout and decide whether the queue can now hand off into queue.first-party-mod-acceptance.`
 - 2026-07-07
   - Summary: `Accepted queue-closeout and closed queue.historical-residue-disposition after confirming that the residue matrix is now synchronized, no fresh implementation blocker was rediscovered, and the honest next Phase 4 controller is queue.first-party-mod-acceptance rather than further residue review or direct final closeout.`
-  - Verification: `Document consistency check across the closed queue, promoted queue record, target plan, target spec, blueprint, and project-progress entries`
+  - Verification: `Document consistency check across the closed queue, promoted queue record, target, blueprint, and project-progress entries`
   - Next at that time: `Promote queue.first-party-mod-acceptance and start baseline-reconcile.`

@@ -4,7 +4,7 @@
 
 - blueprint_id: `blueprint.replace-me`
 - active_target: `target.replace-me`
-- active_target_plan: `docs/blueprints/plans/...`
+- active_target_file: `docs/blueprints/targets/...`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -13,20 +13,18 @@
 
 ### Role
 
-- `This file is the Blueprint index and target registry.`
+- `This file is the Blueprint index only. It points to the active target and repository-wide operating rules, but it does not own target or queue-local truth.`
 
 ### Target Registry
 
-| Target ID | Plan | Notes |
+| Target ID | Target | Notes |
 | --- | --- | --- |
-| `target.replace-me` | `docs/blueprints/plans/...` | `Replace with the active target note.` |
+| `target.replace-me` | `docs/blueprints/targets/...` | `Replace with the active target note.` |
 
 ### Routing Layer
 
 - Rule layer:
   - `docs/blueprints/classification-rule-layer-spec.md`
-- Default behavior:
-  - `Classify first, route second, promote later.`
 
 ### Historical Snapshot (2000-01-01)
 

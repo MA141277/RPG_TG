@@ -68,10 +68,8 @@ This queue does not cover:
 
 ### Parent Target
 
-- Target spec:
-  - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
-- Target plan:
-  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- Target owner:
+  - `docs/blueprints/targets/2026-07-06-project-complete-modularization-target-v1.md`
 
 ### Closed Review Record
 
@@ -81,9 +79,9 @@ This queue does not cover:
 - Closed Task:
   - `none`
 - Handoff At Closure:
-  - `Return control to the target plan. At closeout time, the promoted next queue was final-acceptance-closeout starting from baseline-reconcile.`
+  - `Return control to the target. At closeout time, the promoted next queue was final-acceptance-closeout starting from baseline-reconcile.`
 - Verification:
-  - `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries.`
+  - `Document consistency check across the closed queue, promoted queue, target, blueprint, and project-progress entries.`
 - Notes:
   - `Historical residue is now input evidence to this queue, not a separate active controller.`
 
@@ -367,7 +365,7 @@ This queue does not cover:
 
 - 2026-07-07
   - Summary: `Promoted queue.first-party-mod-acceptance after queue.historical-residue-disposition closed with a synchronized residue matrix and no fresh implementation blocker, leaving builtin-versus-first-party production-path acceptance proof as the remaining live Phase 4 question.`
-  - Verification: `Document consistency check across the promotion handoff, new queue record, target plan, target spec, blueprint, and project-progress entries`
+  - Verification: `Document consistency check across the promotion handoff, new queue record, target, blueprint, and project-progress entries`
   - Next at that time: `Start baseline-reconcile.`
 - 2026-07-07
   - Summary: `Closed baseline-reconcile after the source-path audit confirmed that builtin startup now uses the shared builtin mod loader, active-content assembly consumes activationResult content sources directly, UI reserve layering remains off the covered startup/runtime path, and the remaining Phase 4 work is bounded acceptance proof rather than a fresh implementation blocker.`
@@ -375,9 +373,9 @@ This queue does not cover:
   - Next at that time: `Start production-path-acceptance-proof.`
 - 2026-07-07
   - Summary: `Closed production-path-acceptance-proof after recording the explicit acceptance matrix: builtin startup/load/restore and active-content assembly now count as same-family mod-path behavior on the covered production line, while builtin default-start framing, builtin scenario inventory surfacing, UI reserve baseline, and legacy builtin manifests remain disclosed baseline or compatibility residue rather than fresh implementation blockers.`
-  - Verification: `Targeted source-path audit plus document consistency check across the queue, target plan, blueprint, and project-progress entries`
+  - Verification: `Targeted source-path audit plus document consistency check across the queue, target, blueprint, and project-progress entries`
   - Next at that time: `Start queue-closeout.`
 - 2026-07-07
   - Summary: `Accepted queue-closeout and closed queue.first-party-mod-acceptance after the written proof established that the remaining first-party baseline and compatibility caveats belong to final disclosure rather than another implementation-family reopen, so the honest next controller is queue.final-acceptance-closeout.`
-  - Verification: `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries`
+  - Verification: `Document consistency check across the closed queue, promoted queue, target, blueprint, and project-progress entries`
   - Next at that time: `Promote queue.final-acceptance-closeout and start baseline-reconcile.`

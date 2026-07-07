@@ -8,37 +8,22 @@
 
 ## Human Context
 
-### Goal
+### Compatibility Role
 
-- `Replace with the target goal.`
-
-### Scope
-
-- `Replace with in-scope item 1.`
-- `Replace with in-scope item 2.`
-
-### Non-Goals
-
-- `Replace with out-of-scope item 1.`
-- `Replace with out-of-scope item 2.`
+- `This template is a compatibility shell only.`
+- `The canonical target-level live owner should be created from docs/blueprints/templates/target-template.md.`
+- `Do not move execution_queue, candidate_queues, transition_queue, or decision_required back into this spec.`
 
 ### Queue Contract Portfolio
 
-| Queue ID | Class | Contract Role | Admission Rule |
+| Queue ID | Class | Contract Role | Activation Rule |
 | --- | --- | --- | --- |
-| `queue.replace-me` | `required` | `required evidence family` | `Replace with the contract admission rule.` |
+| `queue.replace-me` | `required` | `required evidence family` | `Replace with the contract activation rule.` |
 
-### Acceptance Criteria
+### Compatibility Pointer
 
-- `Replace with acceptance criterion 1.`
-- `Replace with acceptance criterion 2.`
-
-### Target Closeout Contract
-
-- `Target may become done only after acceptance passes, no active queue/task remains, residue is dispositioned, and the target plan records explicit closeout.`
-- `As long as the target remains open and no active queue exists, a new queue may still be admitted through target-plan promotion-review.`
-- `Open-target status is not inferred away by queue completion; the target remains open until explicit human closeout confirmation is recorded in the target plan.`
-- `If no open target exists, a new target must be explicitly created before queue admission or implementation resumes.`
+- v1 live target owner:
+  - `docs/blueprints/targets/...`
 
 ### Archived Interpretation
 

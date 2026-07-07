@@ -14,7 +14,7 @@
 ### Source Of Truth
 
 - Canonical resume chain:
-  - `project-progress -> blueprint -> target plan -> active queue -> active task`
+  - `project-progress -> blueprint -> target -> execution queue`
 - Allowed `entry_action` values:
   - `open-next-file`
   - `stop`
@@ -28,10 +28,10 @@
 
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
-- Current Target Spec:
-  - `docs/blueprints/specs/...`
-- Current Target Plan:
-  - `docs/blueprints/plans/...`
+- Current Target:
+  - `docs/blueprints/targets/...`
+- Current Execution Queue:
+  - `docs/blueprints/queues/... | none`
 
 ### Historical Snapshot (2000-01-01)
 

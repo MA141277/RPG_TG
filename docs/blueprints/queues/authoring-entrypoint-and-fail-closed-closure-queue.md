@@ -69,10 +69,8 @@ This queue does not cover:
 
 ### Parent Target
 
-- Target spec:
-  - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
-- Target plan:
-  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- Target owner:
+  - `docs/blueprints/targets/2026-07-06-project-complete-modularization-target-v1.md`
 
 ### Closed Review Record
 
@@ -82,7 +80,7 @@ This queue does not cover:
 - Closed Task:
   - `none`
 - Handoff At Closure:
-  - `Return to the current target plan and hold promotion review there. Do not reopen this queue or promote queue.framework-scaffold-and-template-closure unless fresh evidence proves a still-live same-family authoring gap outside the closed Phase 3 coverage.`
+  - `Return control to the v1 target and keep this queue closed unless fresh evidence proves a still-live same-family authoring gap outside the closed Phase 3 coverage.`
 - Verification:
   - `npm test; npm run typecheck; node tools/validate-scenario-packs.mjs`
 - Notes:
@@ -398,7 +396,7 @@ This queue does not cover:
 - Task ID:
   - `none`
 - Recorded handoff at closure:
-  - `Queue is closed. Return control to the target plan and promote a later queue only if fresh target-level evidence proves another still-live blocker.`
+  - `Queue is closed. Return control to the target and promote later work only if fresh target-level evidence proves another still-live blocker.`
 - Recorded expected output:
   - `A target-level promotion review instead of renewed execution inside this closed queue.`
 
@@ -474,4 +472,4 @@ This queue does not cover:
 - 2026-07-07
   - Summary: `Closed the queue after queue-closeout concluded that current Phase 3 authoring truth is coherent: scaffolded scenario-pack/default-pack and builtin house authoring are already covered by framework-owned or fail-closed seams, legacy builtin manifests remain accepted compatibility residue, and no fresh evidence justifies queue.framework-scaffold-and-template-closure.`
   - Verification: `Document consistency check plus npm test`
-  - Next: `Return to the target plan in promotion-review with no active queue and require fresh evidence before any later queue promotion.`
+  - Next: `Return control to the target with no active queue and require fresh evidence before any later queue promotion.`
