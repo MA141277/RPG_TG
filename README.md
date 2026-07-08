@@ -10,6 +10,13 @@ Run the game locally with Vite and keep HMR on `localhost`:
 npm run dev:localhost
 ```
 
+If `npm` is not available in the current PowerShell session, use the repository
+launcher instead:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-dev-localhost.ps1
+```
+
 Default local URL:
 
 ```text

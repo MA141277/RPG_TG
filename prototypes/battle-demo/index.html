@@ -125,8 +125,8 @@
       --battle-deploy-padding-right: 1.05%;
       --battle-deploy-padding-bottom: 0.35%;
       --battle-deploy-padding-left: 1.05%;
-      --battle-action-menu-width: 5.36%;
-      --battle-action-menu-height: 14.14%;
+      --battle-action-menu-width: 6.75%;
+      --battle-action-menu-height: 17.7%;
       --battle-action-menu-padding-top: 1.2%;
       --battle-action-menu-padding-right: 0.35%;
       --battle-action-menu-padding-bottom: 0.85%;
@@ -137,9 +137,9 @@
       --battle-action-hint-margin-top: 20px;
       --battle-action-hint-font-size: 0.38rem;
       --battle-action-hint-line-height: 1.15;
-      --battle-action-button-width: 74%;
-      --battle-action-button-height: 16.2%;
-      --battle-action-button-font-size: 0.58rem;
+      --battle-action-button-width: 80%;
+      --battle-action-button-height: 20%;
+      --battle-action-button-font-size: 0.62rem;
       --battle-popup-frame: url("../../ui/battle/战斗/battle_popup_frame_9slice.png");
       --cell: min(
         calc((100vh - var(--header-h) - var(--deploy-h) - var(--controls-h) - 20px) / 10 - 2px),
@@ -192,7 +192,7 @@
       padding: 2px 8px;
       border: 1px solid var(--border);
       border-radius: 4px;
-      font-size: 0.72rem;
+      font-size: 0.96rem;
       background: var(--panel);
       white-space: nowrap;
     }
@@ -200,7 +200,7 @@
     .phase-badge.enemy { border-color: var(--enemy); color: #ff9090; }
 
     .objective-bar {
-      font-size: 0.72rem;
+      font-size: 0.96rem;
       color: var(--accent);
       white-space: nowrap;
       overflow: hidden;
@@ -217,7 +217,7 @@
 
     #turn-info {
       color: var(--muted);
-      font-size: 0.72rem;
+      font-size: 0.96rem;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -708,7 +708,7 @@
     .action-menu.hidden { display: none; }
     .action-menu .hint {
       color: var(--muted);
-      font-size: 0.72rem;
+      font-size: 0.96rem;
       padding: 0 2px 2px;
       white-space: normal;
       line-height: 1.25;
@@ -731,7 +731,7 @@
       padding: 5px 7px;
       border-bottom: 1px solid var(--border);
       color: var(--accent);
-      font-size: 0.72rem;
+      font-size: 0.96rem;
       font-weight: 600;
     }
     .log-panel {
@@ -761,7 +761,7 @@
       line-height: 1.35;
     }
     .morale-log-panel h3 {
-      font-size: 0.72rem;
+      font-size: 0.96rem;
       color: var(--accent);
       margin-bottom: 3px;
       font-weight: 600;
@@ -1194,6 +1194,23 @@
     .formation-slot.targeted {
       filter: drop-shadow(0 0 18px rgba(255, 95, 80, 0.78)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
       animation: hitShake 0.26s ease;
+    }    .formation-slot.hit-flash {
+      animation: hitShake 0.26s ease;
+    }
+                .formation-slot.hit-white-flash {
+      --hit-white-opacity: 0;
+    }
+    .formation-slot.hit-white-flash .formation-spine-frame {
+      filter: none;
+      will-change: translate;
+    }
+    .formation-slot.hit-white-flash .formation-spine-canvas {
+      filter: brightness(0) saturate(0) invert(1);
+      opacity: var(--hit-white-opacity);
+      will-change: opacity, filter;
+    }
+    .formation-spine-frame.hit-model-shake {
+      animation: battleModelHitShake 180ms ease-out;
     }
     .formation-standee {
       position: relative;
@@ -1349,22 +1366,65 @@
     .formation-side.enemy .formation-slot .member-hp-fill {
       background: linear-gradient(90deg, #8f151b, #d84a38);
     }
-    .formation-slot .member-loss {
+            .formation-slot .member-loss {
+      display: none;
+    }
+    .formation-slot .member-damage-popup {
       position: absolute;
       left: 50%;
-      top: 2px;
-      transform: translateX(-50%);
-      color: #ffefe0;
-      background: rgba(180, 35, 35, 0.82);
-      border-radius: 4px;
-      padding: 1px 5px;
-      font-weight: 700;
-      text-shadow: 0 1px 1px #000;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff4eb;
+      font-size: 0.96rem;
+      font-weight: 800;
+      line-height: 1;
+      -webkit-text-stroke: 1.25px rgba(0, 0, 0, 0.96);
+      paint-order: stroke fill;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.95), 0 0 8px rgba(155, 18, 18, 0.48);
+      pointer-events: none;
+      white-space: nowrap;
+      opacity: 0;
+      animation: battleDamagePopup 1050ms ease-out forwards;
+      z-index: 9;
     }
-    @keyframes hitShake {
+        @keyframes hitShake {
       0%, 100% { translate: 0 0; }
       30% { translate: -3px 0; }
       60% { translate: 3px 0; }
+    }
+    @keyframes slotHitFlash {
+      0% { opacity: 0; }
+      35% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+        @keyframes spineHitFlash {
+      0% { opacity: 0; }
+      30% { opacity: 0.88; }
+      100% { opacity: 0; }
+    }
+        @keyframes battleModelHitShake {
+      0%, 100% { translate: 0 0; }
+      20% { translate: -3px 0; }
+      45% { translate: 3px -1px; }
+      70% { translate: -2px 1px; }
+    }
+    @keyframes battleDamagePopup {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(8px) scale(0.86);
+      }
+      9% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0) scale(1);
+      }
+      62% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(-2px) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(-12px) scale(0.96);
+      }
     }
     .battle-sequence {
       position: absolute;
@@ -4319,8 +4379,9 @@
         });
       }
 
-      function runSideRound(sourceUnit, targetUnit, label, isCounter, sourceSide, targetSide) {
+            function runSideRound(sourceUnit, targetUnit, label, isCounter, sourceSide, targetSide) {
         const readyMembers = getBattleReadyMembers(sourceUnit, distance).slice();
+        let meleeStrikeIndex = 0;
         if (!readyMembers.length) {
           pushBattleStep({ type: 'entry', text: `${label}无成员能够出手` });
           return;
@@ -4330,8 +4391,12 @@
         for (const member of readyMembers) {
           if (member.soldiers <= 0 || member.status === 'stunned') continue;
           if (distance > 1 && member.range < distance) continue;
-          const targetMember = chooseFormationTarget(sourceUnit, member, plannedTargetState);
+                    const targetMember = chooseFormationTarget(sourceUnit, member, plannedTargetState);
           if (!targetMember) continue;
+          const troopAsset = getBattleSpineTroopAsset(member.troopType);
+          const delayFrames = troopAsset.stationaryAttack ? null : meleeStrikeIndex * BATTLE_MELEE_STRIKE_STAGGER_FRAMES;
+          const delayOrder = delayFrames ?? randInt(0, 120);
+          if (!troopAsset.stationaryAttack) meleeStrikeIndex += 1;
           const hitRate = 0.76 * getMoraleTier(sourceUnit.morale).hit;
           if (Math.random() > hitRate) {
             plannedStrikes.push({
@@ -4346,7 +4411,9 @@
               targetTroopType: targetMember.troopType,
               hit: false,
               damage: 0,
-              delayMs: randInt(0, 120),
+              delayMs: delayFrames == null ? delayOrder : 0,
+              delayFrames,
+              delayOrder,
             });
             continue;
           }
@@ -4364,7 +4431,9 @@
             typeAdv: result.typeAdv,
             hit: true,
             damage: result.damage,
-            delayMs: randInt(0, 120),
+            delayMs: delayFrames == null ? delayOrder : 0,
+            delayFrames,
+            delayOrder,
           });
         }
 
@@ -4373,7 +4442,7 @@
           return;
         }
 
-        plannedStrikes.sort((a, b) => a.delayMs - b.delayMs);
+        plannedStrikes.sort((a, b) => (a.delayOrder ?? a.delayMs ?? 0) - (b.delayOrder ?? b.delayMs ?? 0));
 
         for (const strike of plannedStrikes) {
           if (sourceUnit.soldiers <= 0 || targetUnit.soldiers <= 0) return;
@@ -4717,6 +4786,8 @@
         ? BATTLE_SPINE_TROOP_ASSETS.archer
         : BATTLE_SPINE_TROOP_ASSETS.default;
     }
+
+    const BATTLE_MELEE_STRIKE_STAGGER_FRAMES = 56;
 
     const BATTLE_SPINE_LOGICAL_BOX = Object.freeze({
       width: 340,
@@ -5979,7 +6050,7 @@
       const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
       const sourceCanvas = sourceSlot?.querySelector('.formation-spine-canvas');
       const attackFrameCount = renderer.getActionFrameCount('attack');
-      const attackImpactFrame = Math.max(1, Math.round(attackFrameCount * (troopAsset.attackImpactRatio ?? 0.56)));
+      const attackPeakFrame = troopType === 'archer' ? 49 : 14;
 
       const sourceFrame = sourceSlot?.querySelector('.formation-spine-frame');
       const targetFrame = targetSlot?.querySelector('.formation-spine-frame');
@@ -6011,14 +6082,19 @@
         x: initialLeft,
         y: initialTop,
       };
+      const landingOffsetX = troopAsset.stationaryAttack
+        ? 0
+        : proxySide === 'enemy'
+          ? 70
+          : -70;
+      const landingScatter = troopAsset.stationaryAttack
+        ? { x: 0, y: 0 }
+        : getBattleRandomLandingOffset(10);
       const to = {
-        x: targetAnchor.x,
-        y: targetAnchor.y,
+        x: targetAnchor.x + landingOffsetX + landingScatter.x,
+        y: targetAnchor.y + landingScatter.y,
       };
       if (!troopAsset.stationaryAttack) {
-        const moveFrameCount = renderer.getActionFrameCount('move');
-        const moveStartFrame = Math.max(0, Math.round(moveFrameCount * 0.38));
-        const moveEndFrame = Math.max(moveStartFrame + 1, Math.round(moveFrameCount * 0.88));
         await animateBattleSpineProxy(
           proxy,
           renderer,
@@ -6027,11 +6103,13 @@
           'move',
           renderer.getActionDurationMs('move'),
           {
-            moveStartFrame,
-            moveEndFrame,
+            moveStartFrame: 7,
+            moveEndFrame: 23,
+            arcHeight: getBattleJumpArcHeight(from, to),
           }
         );
       }
+                                    const attackWhiteFlashStartFrame = Math.max(0, attackPeakFrame - 1);
       await animateBattleSpineProxy(
         proxy,
         renderer,
@@ -6040,8 +6118,17 @@
         'attack',
         renderer.getActionDurationMs('attack'),
         {
-          impactFrame: attackImpactFrame,
-          onImpact,
+          impactFrame: step.hit ? attackPeakFrame : null,
+          onImpact: step.hit
+            ? info => {
+                onImpact?.();
+                queueBattleModelShake(targetSlot, info?.peakAt, info?.frameDurationMs);
+              }
+            : null,
+          effectFrame: step.hit ? attackWhiteFlashStartFrame : null,
+          onEffect: step.hit
+            ? info => queueBattleWhiteFlash(targetSlot, info?.peakAt, info?.frameDurationMs)
+            : null,
         }
       );
 
@@ -6051,8 +6138,16 @@
 
     function animateBattleSpineProxy(proxy, renderer, from, to, action, duration, movement = {}) {
       return new Promise(resolve => {
-        const start = performance.now();
+                const start = performance.now();
+        const frameDurationMs = 1000 / Math.max(1, renderer.fps || 60);
+        const impactPeakAt = movement.impactFrame != null
+          ? start + movement.impactFrame * frameDurationMs
+          : start;
+        const effectPeakAt = movement.impactFrame != null
+          ? impactPeakAt
+          : start + ((movement.effectFrame ?? 0) + 1) * frameDurationMs;
         let impactTriggered = false;
+        let effectTriggered = false;
         const motionElement = proxy.closest('.battle-spine-proxy-anchor') || proxy;
         const frame = now => {
           const t = Math.min(1, (now - start) / duration);
@@ -6063,8 +6158,10 @@
           const moveT = movement.moveStartFrame == null
             ? t
             : Math.max(0, Math.min(1, (actionFrame - moveStartFrame) / (moveEndFrame - moveStartFrame)));
+          const arcHeight = Number(movement.arcHeight) || 0;
+          const arcOffsetY = arcHeight > 0 ? -4 * arcHeight * moveT * (1 - moveT) : 0;
           motionElement.style.left = `${from.x + (to.x - from.x) * moveT}px`;
-          motionElement.style.top = `${from.y + (to.y - from.y) * moveT}px`;
+          motionElement.style.top = `${from.y + (to.y - from.y) * moveT + arcOffsetY}px`;
           renderer.render(proxy, action, elapsedMs, {
             loop: false,
             side: proxy.dataset.side || (proxy.classList.contains('enemy') ? 'enemy' : 'player'),
@@ -6075,12 +6172,23 @@
             actionFrame >= movement.impactFrame
           ) {
             impactTriggered = true;
-            movement.onImpact?.();
+                        movement.onImpact?.({ peakAt: impactPeakAt, frameDurationMs, startAt: start, now });
+          }
+          if (
+            !effectTriggered &&
+            movement.effectFrame != null &&
+            actionFrame >= movement.effectFrame
+          ) {
+            effectTriggered = true;
+            movement.onEffect?.({ peakAt: effectPeakAt, frameDurationMs, startAt: start, now });
           }
           if (t < 1) requestAnimationFrame(frame);
           else {
             if (!impactTriggered && movement.impactFrame != null) {
-              movement.onImpact?.();
+              movement.onImpact?.({ peakAt: impactPeakAt, frameDurationMs, startAt: start, now });
+            }
+            if (!effectTriggered && movement.effectFrame != null) {
+              movement.onEffect?.({ peakAt: effectPeakAt, frameDurationMs, startAt: start, now });
             }
             resolve();
           }
@@ -6089,9 +6197,27 @@
       });
     }
 
-    function animateBattleSpineCanvas(canvas, renderer, action, duration, movement = {}) {
+    function getBattleRandomLandingOffset(radius = 10) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.sqrt(Math.random()) * radius;
+      return {
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance,
+      };
+    }
+
+    function getBattleJumpArcHeight(from, to) {
+      const horizontalDistance = Math.abs((to?.x || 0) - (from?.x || 0));
+      return clamp(horizontalDistance * 0.22, 36, 82);
+    }
+
+        function animateBattleSpineCanvas(canvas, renderer, action, duration, movement = {}) {
       return new Promise(resolve => {
         const start = performance.now();
+        const frameDurationMs = 1000 / Math.max(1, renderer.fps || 60);
+        const impactPeakAt = movement.impactFrame != null
+          ? start + movement.impactFrame * frameDurationMs
+          : start;
         let impactTriggered = false;
         canvas.dataset.animating = 'true';
         const side = canvas.dataset.side || '';
@@ -6110,14 +6236,14 @@
             actionFrame >= movement.impactFrame
           ) {
             impactTriggered = true;
-            movement.onImpact?.();
+            movement.onImpact?.({ peakAt: impactPeakAt, frameDurationMs, startAt: start, now });
           }
           if (t < 1) {
             requestAnimationFrame(frame);
             return;
           }
           if (!impactTriggered && movement.impactFrame != null) {
-            movement.onImpact?.();
+            movement.onImpact?.({ peakAt: impactPeakAt, frameDurationMs, startAt: start, now });
           }
           delete canvas.dataset.animating;
           canvas.dataset.action = 'idle';
@@ -6128,8 +6254,158 @@
       });
     }
 
-    function sleep(ms) {
+        function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+            function triggerBattleHitFlash(slot) {
+      if (!(slot instanceof HTMLElement)) return;
+      slot.classList.remove('targeted', 'hit-flash');
+      void slot.offsetWidth;
+      slot.classList.add('targeted', 'hit-flash');
+      window.setTimeout(() => {
+        slot.classList.remove('targeted', 'hit-flash');
+      }, 260);
+    }
+
+                            const battleWhiteFlashActiveSlots = new Set();
+    let battleWhiteFlashActiveRaf = 0;
+
+    function queueBattleWhiteFlash(slot, peakAt, frameDurationMs = 16) {
+      if (!(slot instanceof HTMLElement)) return;
+      const peakTime = Number(peakAt);
+      const frameMs = Math.max(16, Number(frameDurationMs) || 16);
+      if (!Number.isFinite(peakTime)) return;
+      const events = Array.isArray(slot.__battleWhiteFlashEvents) ? slot.__battleWhiteFlashEvents : [];
+      const lastEvent = events.length ? events[events.length - 1] : null;
+
+      if (lastEvent) {
+        const peakDeltaMs = peakTime - lastEvent.peakAt;
+        if (Math.abs(peakDeltaMs) < frameMs * 0.35) {
+          lastEvent.startAt = Math.min(lastEvent.startAt, peakTime - frameMs);
+          lastEvent.peakAt = Math.max(lastEvent.peakAt, peakTime);
+          lastEvent.endAt = lastEvent.peakAt + frameMs * 2;
+          lastEvent.startIntensity = 0;
+          slot.__battleWhiteFlashEvents = events;
+          battleWhiteFlashActiveSlots.add(slot);
+          if (!battleWhiteFlashActiveRaf) battleWhiteFlashActiveRaf = window.requestAnimationFrame(updateBattleWhiteFlashState);
+          return;
+        }
+        if (peakDeltaMs > 0 && peakDeltaMs < frameMs * 2) {
+          const junctionAt = lastEvent.peakAt + peakDeltaMs / 2;
+          const startIntensity = Math.max(0, 1 - (peakDeltaMs / (frameMs * 2)));
+          lastEvent.endAt = junctionAt;
+          events.push({
+            startAt: junctionAt,
+            peakAt: peakTime,
+            endAt: peakTime + frameMs * 2,
+            startIntensity,
+          });
+          slot.__battleWhiteFlashEvents = events;
+          battleWhiteFlashActiveSlots.add(slot);
+          if (!battleWhiteFlashActiveRaf) battleWhiteFlashActiveRaf = window.requestAnimationFrame(updateBattleWhiteFlashState);
+          return;
+        }
+      }
+
+            events.push({
+        startAt: peakTime - frameMs * 2,
+        peakAt: peakTime,
+        endAt: peakTime + frameMs * 2,
+        startIntensity: 0,
+      });
+      slot.__battleWhiteFlashEvents = events;
+      battleWhiteFlashActiveSlots.add(slot);
+      if (!battleWhiteFlashActiveRaf) battleWhiteFlashActiveRaf = window.requestAnimationFrame(updateBattleWhiteFlashState);
+    }
+
+    function updateBattleWhiteFlashState(now) {
+      battleWhiteFlashActiveRaf = 0;
+      battleWhiteFlashActiveSlots.forEach(slot => {
+        const events = (slot.__battleWhiteFlashEvents || []).filter(event => now < event.endAt);
+        if (!events.length) {
+                    slot.classList.remove('hit-white-flash');
+          slot.style.removeProperty('--hit-white-opacity');
+          delete slot.__battleWhiteFlashEvents;
+          battleWhiteFlashActiveSlots.delete(slot);
+          return;
+        }
+
+        const activeEvent = events[0];
+        let intensity = 0;
+        if (now < activeEvent.startAt) {
+          intensity = 0;
+        } else if (now <= activeEvent.peakAt) {
+          intensity = activeEvent.startIntensity + (1 - activeEvent.startIntensity) * Math.max(0, Math.min(1, (now - activeEvent.startAt) / Math.max(1, activeEvent.peakAt - activeEvent.startAt)));
+        } else {
+          intensity = Math.max(0, Math.min(1, 1 - ((now - activeEvent.peakAt) / Math.max(1, activeEvent.endAt - activeEvent.peakAt))));
+        }
+
+        slot.__battleWhiteFlashEvents = events;
+        slot.classList.add('hit-white-flash');
+        slot.style.setProperty('--hit-white-opacity', String(intensity * 0.68));
+      });
+      if (battleWhiteFlashActiveSlots.size) {
+        battleWhiteFlashActiveRaf = window.requestAnimationFrame(updateBattleWhiteFlashState);
+      }
+    }
+
+    function queueBattleModelShake(slot, peakAt, frameDurationMs = 16) {
+      if (!(slot instanceof HTMLElement)) return;
+      const frame = slot.querySelector('.formation-spine-frame');
+      if (!(frame instanceof HTMLElement)) return;
+      const peakTime = Number(peakAt);
+      const frameMs = Math.max(16, Number(frameDurationMs) || 16);
+      const lastPeakAt = Number(frame.dataset.lastBattleShakePeakAt || 0);
+      if (lastPeakAt && Number.isFinite(peakTime) && Math.abs(peakTime - lastPeakAt) < frameMs * 0.35) {
+        return;
+      }
+      frame.dataset.lastBattleShakePeakAt = String(peakTime || performance.now());
+      if (frame.__battleModelShakeTimeout) {
+        window.clearTimeout(frame.__battleModelShakeTimeout);
+      }
+      frame.classList.remove('hit-model-shake');
+      void frame.offsetWidth;
+      frame.classList.add('hit-model-shake');
+      frame.__battleModelShakeTimeout = window.setTimeout(() => {
+        frame.classList.remove('hit-model-shake');
+        delete frame.__battleModelShakeTimeout;
+      }, 180);
+    }
+
+        function getBattleRandomPopupOffset(radius = 20, lastOffset = null, minDistance = 20) {
+      let attempt = 0;
+      let candidate = null;
+      do {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.sqrt(Math.random()) * radius;
+        candidate = {
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+        };
+        attempt += 1;
+      } while (
+        lastOffset &&
+        attempt < 24 &&
+        Math.hypot(candidate.x - lastOffset.x, candidate.y - lastOffset.y) < minDistance
+      );
+      return candidate;
+    }
+
+    function showBattleDamagePopup(slot, damage) {
+      if (!(slot instanceof HTMLElement)) return;
+      const damageValue = Number(damage) || 0;
+      if (damageValue <= 0) return;
+      const lastOffset = slot.__battleLastDamagePopupOffset || null;
+      const offset = getBattleRandomPopupOffset(20, lastOffset, 20);
+      slot.__battleLastDamagePopupOffset = offset;
+      const popup = document.createElement('div');
+      popup.className = 'member-damage-popup';
+      popup.textContent = `${damageValue}`;
+      popup.style.left = `calc(50% + ${offset.x.toFixed(1)}px)`;
+      popup.style.top = `calc(6% + ${offset.y.toFixed(1)}px)`;
+      slot.appendChild(popup);
+      window.setTimeout(() => popup.remove(), 1100);
     }
 
     function appendBattleEvent(event) {
@@ -6174,17 +6450,28 @@
       document.getElementById('battle-defender-morale').style.width = `${clamp(snapshotByKey[rightKey].morale, 0, 100)}%`;
     }
 
-    async function playFormationStrikeBatch(report, steps, state) {
+        async function playFormationStrikeBatch(report, steps, state) {
       const tasks = steps.map(step => (async () => {
-        if (step.delayMs > 0) await sleep(step.delayMs);
+        let stepDelayMs = Number(step.delayMs) || 0;
+        if ((step.delayFrames || 0) > 0) {
+          const renderer = await getBattleSpineRenderer(step.sourceTroopType || 'infantry');
+          const frameMs = 1000 / Math.max(1, renderer?.fps || 60);
+          stepDelayMs = step.delayFrames * frameMs;
+        }
+        if (stepDelayMs > 0) await sleep(stepDelayMs);
         renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, step);
         let impactApplied = false;
-        const applyImpact = () => {
+                const applyImpact = () => {
           if (impactApplied) return;
           impactApplied = true;
-          state.attackerSnapshot = step.attackerSnapshot;
+                    state.attackerSnapshot = step.attackerSnapshot;
           state.defenderSnapshot = step.defenderSnapshot;
           renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, step.hit ? step : {});
+          if (step.hit && step.damage > 0) {
+            const targetGrid = document.getElementById(getBattleVisualGridId(report, step.targetSide));
+            const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
+            showBattleDamagePopup(targetSlot, step.damage);
+          }
           appendBattleEvent(step);
         };
         await playBattleSpineStrike(report, step, applyImpact);
