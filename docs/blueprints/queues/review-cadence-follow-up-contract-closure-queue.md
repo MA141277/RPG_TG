@@ -10,9 +10,9 @@
 - next_task: `none`
 - closeout_status: `done`
 - next_effect: `return-to-target-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue closeout is written and repository sync is the remaining non-governing follow-up.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Working branch codex/review-cadence-follow-up-execution and remote baseline mod-first-dev were both pushed successfully after queue closeout was written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -282,3 +282,7 @@
   - Summary: `Completed host-consumer-closeout by adding shared review-cycle read helpers plus compatibility refresh, moving home-house, keep-house, and temple-house consumers onto that seam, and closing queue.review-cadence-follow-up-contract-closure back to target review.`
   - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "keep house dismiss turns lord into idle roster actor that can reopen dialogue|temple house only blocks leaving during the first tutorial work period|review cycle helper derives countdown|home house enter refreshes stale review mirrors"; npm run typecheck; npm run lint:blueprints; npm test`
   - Next at this time: `Return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md with no active queue and keep the remaining runtime, package, composition, and cleanup work at target-level candidate review only until a later admission decision selects the next queue.`
+- 2026-07-08
+  - Summary: `Completed the minimum repository sync batch for queue.review-cadence-follow-up-contract-closure after closeout truth was written.`
+  - Verification: `git push -u origin codex/review-cadence-follow-up-execution; git push origin HEAD:mod-first-dev`
+  - Next at this time: `Keep the queue closed as historical evidence only and resume future work from target-level candidate review with no active queue.`
