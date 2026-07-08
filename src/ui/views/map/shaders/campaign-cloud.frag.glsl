@@ -7,6 +7,8 @@ uniform float uTimeSeconds;
 uniform vec3 uMapCamera;
 uniform sampler2D uNoiseTexture;
 uniform sampler2D uRevealTexture;
+uniform sampler2D uPreviousRevealTexture;
+uniform float uRevealTransition;
 
 // Campaign cloud tuning table.
 // Increase CLOUD_SAMPLE_SCALE to show more, smaller cloud groups on screen.
@@ -86,17 +88,22 @@ const float ARTICLE_CLOUD_TILING_A = 1.12;
 const float ARTICLE_CLOUD_TILING_B = 2.34;
 const float ARTICLE_CLOUD_FLOW_A = 0.018;
 const float ARTICLE_CLOUD_FLOW_B = 0.031;
-const float ARTICLE_MASK_DISTORTION_STRENGTH = 0.145;
-const vec2 ARTICLE_MASK_DISTORTION_BIAS = vec2(0.50, 0.48);
+const float ARTICLE_MASK_DISTORTION_STRENGTH = 0.345;
+const vec2 ARTICLE_MASK_DISTORTION_BIAS = vec2(0.60, 0.58);
+const float ARTICLE_EDGE_EROSION_STRENGTH = 0.36;
 const vec3 ARTICLE_EDGE_CLEAR_VALUES = vec3(0.26, 0.84, 1.22);
 const vec3 ARTICLE_CORE_CLEAR_VALUES = vec3(0.94, 0.998, 1.05);
 const vec3 ARTICLE_SHADOW_CLEAR_VALUES = vec3(0.26, 0.86, 1.15);
-const vec2 ARTICLE_SHADOW_OFFSET = vec2(-0.010, -0.016);
+const vec2 ARTICLE_SHADOW_OFFSET = vec2(-0.1, 0);
 const float ARTICLE_SHADOW_ALPHA = 0.08;
 const float ARTICLE_BASE_MIST_ALPHA = 0.24;
 const float ARTICLE_BODY_ALPHA = 1.14;
 const float ARTICLE_RIM_BODY_ALPHA = 0.16;
 const float ARTICLE_INNER_WISP_ALPHA = 0.035;
+const vec2 ARTICLE_AIR_MIST_HOLE_CLEAR_RANGE = vec2(0.62, 0.92);
+const vec2 ARTICLE_ISOLATED_CLOUD_CLEAR_RANGE = vec2(0.88, 0.985);
+const float ARTICLE_REVEAL_DISSOLVE_NOISE = 0.42;
+const float ARTICLE_REVEAL_DISSOLVE_SOFTNESS = 0.18;
 
 float sampleNoiseTexture(vec2 p) {
   vec3 sampleColor = texture2D(uNoiseTexture, fract(p)).rgb;
@@ -661,6 +668,15 @@ vec2 sampleRevealTextureFields(vec2 uv) {
   return vec2(sampleValue.r, sampleValue.g);
 }
 
+vec2 samplePreviousRevealTextureFields(vec2 uv) {
+  vec2 revealUv = vec2(uv.x, 1.0 - uv.y);
+  vec4 sampleValue = texture2D(
+    uPreviousRevealTexture,
+    clamp(revealUv, vec2(0.0), vec2(1.0))
+  );
+  return vec2(sampleValue.r, sampleValue.g);
+}
+
 vec2 sampleRevealFields(vec2 uv) {
   vec2 texel = REVEAL_FIELD_PIXEL_SMOOTHING / max(uResolution, vec2(1.0));
   vec2 center = sampleRevealTextureFields(uv) * 0.40;
@@ -674,6 +690,23 @@ vec2 sampleRevealFields(vec2 uv) {
     sampleRevealTextureFields(uv - texel) +
     sampleRevealTextureFields(uv + vec2(texel.x, -texel.y)) +
     sampleRevealTextureFields(uv + vec2(-texel.x, texel.y));
+
+  return center + axis * 0.10 + diagonal * 0.025;
+}
+
+vec2 samplePreviousRevealFields(vec2 uv) {
+  vec2 texel = REVEAL_FIELD_PIXEL_SMOOTHING / max(uResolution, vec2(1.0));
+  vec2 center = samplePreviousRevealTextureFields(uv) * 0.40;
+  vec2 axis =
+    samplePreviousRevealTextureFields(uv + vec2(texel.x, 0.0)) +
+    samplePreviousRevealTextureFields(uv - vec2(texel.x, 0.0)) +
+    samplePreviousRevealTextureFields(uv + vec2(0.0, texel.y)) +
+    samplePreviousRevealTextureFields(uv - vec2(0.0, texel.y));
+  vec2 diagonal =
+    samplePreviousRevealTextureFields(uv + texel) +
+    samplePreviousRevealTextureFields(uv - texel) +
+    samplePreviousRevealTextureFields(uv + vec2(texel.x, -texel.y)) +
+    samplePreviousRevealTextureFields(uv + vec2(-texel.x, texel.y));
 
   return center + axis * 0.10 + diagonal * 0.025;
 }
@@ -838,6 +871,30 @@ vec3 sampleArticleFlowingCloud(vec2 uv, float time) {
   return vec3(combined, cloudA, detail);
 }
 
+float computeArticleRevealErosion(vec2 uv, float time, vec3 cloudSample) {
+  vec2 viewportSpace = buildViewportSpace(uv);
+  vec2 edgeSpace = buildCloudSpaceWithCameraStrength(
+    viewportSpace,
+    time,
+    REVEAL_EDGE_CAMERA_SCALE_STRENGTH
+  );
+  float flowTime = time * CLOUD_FLOW_SPEED;
+  float broadEdgeCloud = articleCloudNoise(
+    edgeSpace * 1.38 + CLOUD_PRIMARY_FLOW * flowTime * 0.018 + vec2(0.27, 0.61)
+  );
+  float fineEdgeCloud = articleCloudNoise(
+    edgeSpace * 1.52 - CLOUD_UPPER_FLOW * flowTime * 0.021 + vec2(0.79, 0.18)
+  );
+  float edgeResistance =
+    broadEdgeCloud * 0.46 +
+    fineEdgeCloud * 0.24 +
+    billow(fineEdgeCloud) * 0.22 +
+    cloudSample.x * 0.22 +
+    cloudSample.z * 0.08;
+
+  return (edgeResistance - 0.50) * ARTICLE_EDGE_EROSION_STRENGTH;
+}
+
 vec2 computeArticleMaskOffset(vec2 uv, float time, vec3 cloudSample) {
   vec2 viewportSpace = buildViewportSpace(uv);
   vec2 edgeSpace = buildCloudSpaceWithCameraStrength(
@@ -858,28 +915,90 @@ vec2 computeArticleMaskOffset(vec2 uv, float time, vec3 cloudSample) {
   return rawOffset * ARTICLE_MASK_DISTORTION_STRENGTH;
 }
 
+float computeRevealDissolveProgress(vec2 uv, float time, vec3 cloudSample) {
+  if (uRevealTransition >= 0.999) {
+    return 1.0;
+  }
+
+  vec2 viewportSpace = buildViewportSpace(uv);
+  vec2 dissolveSpace = buildCloudSpaceWithCameraStrength(
+    viewportSpace,
+    time,
+    REVEAL_EDGE_CAMERA_SCALE_STRENGTH
+  );
+  float dissolveNoise =
+    articleCloudNoise(dissolveSpace * 1.84 + vec2(0.37, 0.61)) * 0.58 +
+    cloudSample.z * 0.26 +
+    billow(cloudSample.y) * 0.16;
+  float dissolveThreshold =
+    uRevealTransition +
+    (dissolveNoise - 0.5) * ARTICLE_REVEAL_DISSOLVE_NOISE;
+
+  return smoothstep(
+    0.0,
+    ARTICLE_REVEAL_DISSOLVE_SOFTNESS,
+    dissolveThreshold
+  );
+}
+
+vec2 blendRevealFieldsForDissolve(
+  vec2 previousFields,
+  vec2 currentFields,
+  float dissolveProgress
+) {
+  vec2 openingAmount = max(currentFields - previousFields, vec2(0.0));
+  vec2 openingFields = mix(previousFields, currentFields, dissolveProgress);
+
+  return mix(currentFields, openingFields, step(vec2(0.001), openingAmount));
+}
+
+vec2 sampleDissolvedRevealFields(vec2 uv, float dissolveProgress) {
+  return blendRevealFieldsForDissolve(
+    samplePreviousRevealFields(uv),
+    sampleRevealFields(uv),
+    dissolveProgress
+  );
+}
+
 vec4 sampleArticleCloudSea(vec2 uv, float time) {
   vec3 cloudSample = sampleArticleFlowingCloud(uv, time);
   vec2 maskOffset = computeArticleMaskOffset(uv, time, cloudSample);
   vec2 distortedUv = clamp(uv + maskOffset, vec2(0.0), vec2(1.0));
-  vec2 baseFields = sampleRevealFields(uv);
-  vec2 distortedFields = sampleRevealFields(distortedUv);
+  float revealDissolve = computeRevealDissolveProgress(uv, time, cloudSample);
+  vec2 baseFields = sampleDissolvedRevealFields(uv, revealDissolve);
+  vec2 distortedFields = sampleDissolvedRevealFields(
+    distortedUv,
+    revealDissolve
+  );
   float baseClear = baseFields.y;
-  float cloudErosion = (cloudSample.x - 0.50) * 0.30 + (cloudSample.z - 0.50) * 0.08;
+  float cloudErosion = computeArticleRevealErosion(uv, time, cloudSample);
   float edgeClear = clampAndPowValue(
     distortedFields.y - cloudErosion,
     ARTICLE_EDGE_CLEAR_VALUES
   );
   float coreClear = clampAndPowValue(baseClear, ARTICLE_CORE_CLEAR_VALUES);
+  float airMistKeep = 1.0 - smoothstep(
+    ARTICLE_AIR_MIST_HOLE_CLEAR_RANGE.x,
+    ARTICLE_AIR_MIST_HOLE_CLEAR_RANGE.y,
+    baseClear
+  );
+  float isolatedCloudKeep = 1.0 - smoothstep(
+    ARTICLE_ISOLATED_CLOUD_CLEAR_RANGE.x,
+    ARTICLE_ISOLATED_CLOUD_CLEAR_RANGE.y,
+    baseClear
+  );
+  float secondaryLayerKeep = airMistKeep;
   float clearAmount = max(edgeClear, coreClear);
-  float cloudMask = clamp(1.0 - clearAmount, 0.0, 1.0);
+  float cloudMask = clamp(1.0 - clearAmount, 0.0, 1.0) * isolatedCloudKeep;
 
   vec2 shadowUv = clamp(uv + maskOffset + ARTICLE_SHADOW_OFFSET, vec2(0.0), vec2(1.0));
   float shadowClear = clampAndPowValue(
-    sampleRevealFields(shadowUv).y - cloudErosion * 0.62,
+    sampleDissolvedRevealFields(shadowUv, revealDissolve).y - cloudErosion * 0.62,
     ARTICLE_SHADOW_CLEAR_VALUES
   );
-  float shadowMask = clamp(1.0 - max(shadowClear, coreClear), 0.0, 1.0);
+  float shadowMask =
+    clamp(1.0 - max(shadowClear, coreClear), 0.0, 1.0) *
+    secondaryLayerKeep;
   float edgeBand = clamp(distortedFields.x * (1.0 - coreClear), 0.0, 1.0);
   float shallowZone = clamp(distortedFields.x * (1.0 - coreClear), 0.0, 1.0);
   float deepZone = clamp(1.0 - shallowZone, 0.0, 1.0);
@@ -903,11 +1022,13 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
   float bodyAlpha = ARTICLE_BODY_ALPHA * cloudLobe * (0.16 + deepZone * 0.84);
   float rimAlpha = ARTICLE_RIM_BODY_ALPHA * edgeBand * (0.38 + cloudDensity * 0.62);
   float innerWisp =
+    isolatedCloudKeep *
+    secondaryLayerKeep *
     coreClear *
     (1.0 - edgeClear) *
     smoothstep(0.56, 0.86, cloudSample.x + cloudSample.z * 0.12) *
     ARTICLE_INNER_WISP_ALPHA;
-  float alpha = cloudMask * (baseMist + bodyAlpha + rimAlpha) + innerWisp;
+  float alpha = cloudMask * (baseMist * airMistKeep + bodyAlpha + rimAlpha) + innerWisp;
   alpha = clamp(alpha, 0.0, 1.0);
 
   float shadowAlpha =
@@ -946,7 +1067,7 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
     shallowZone,
     sampleOuterCloudBankMask(uv, time)
   );
-  outerPuff.a *= 0.76 + deepZone * 0.72;
+  outerPuff.a *= (0.76 + deepZone * 0.72) * secondaryLayerKeep;
 
   vec3 castShadowColor = vec3(0.58, 0.66, 0.67);
   float baseAlpha = clamp(shadowAlpha + alpha, 0.0, 1.0);

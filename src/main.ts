@@ -68,7 +68,10 @@ import {
   selectHouseEntryAccess,
 } from "./application/story/story-stage-access";
 import {
+  coordinateToRoundedHex,
   createPassableHexTravelPath,
+  hexToCoordinatePolygon,
+  snapCoordinateToHexCenter,
   travelToCoordinate,
   type GridCoordinate,
 } from "./application/navigation/travel-to-coordinate";
@@ -212,6 +215,7 @@ import {
   createCampaignTerrainCameraCenteredOnCoordinate,
   getCampaignTerrainTravelGrid,
   isCampaignTerrainUvPassable,
+  projectCampaignTerrainUvToClientPointAtHeightAnchor,
   resolveCampaignTerrainUvFromClientPosition,
   requestCampaignTerrainRender,
   setCampaignTerrainCamera,
@@ -3180,6 +3184,7 @@ appElement.addEventListener("pointerdown", (event) => {
     startOffsetY: campaignMapDebugState.offsetY,
     didMove: false,
   };
+  hideCampaignHoverHexOutline();
   campaignMap.classList.add("is-dragging");
   campaignMap.setPointerCapture(event.pointerId);
 });
@@ -3194,6 +3199,10 @@ appElement.addEventListener("pointermove", (event) => {
     return;
   }
 
+  if (campaignMapDragState == null) {
+    updateCampaignHoverHexOutline(event);
+  }
+
   if (
     campaignMapDragState == null ||
     campaignMapDragState.pointerId !== event.pointerId
@@ -3201,6 +3210,7 @@ appElement.addEventListener("pointermove", (event) => {
     return;
   }
 
+  hideCampaignHoverHexOutline();
   const deltaX = event.clientX - campaignMapDragState.startClientX;
   const deltaY = event.clientY - campaignMapDragState.startClientY;
   if (Math.abs(deltaX) + Math.abs(deltaY) > 3) {
@@ -3216,6 +3226,7 @@ appElement.addEventListener("pointermove", (event) => {
 
 appElement.addEventListener("pointerup", endCampaignMapDrag);
 appElement.addEventListener("pointercancel", endCampaignMapDrag);
+appElement.addEventListener("pointerleave", hideCampaignHoverHexOutline);
 
 function clearHouseTileDropMarkers(): void {
   appRoot
@@ -4273,8 +4284,19 @@ function startCampaignTravel(
 }
 
 function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordinate[] | null {
-  const nextCoordinate = travelToCoordinate(appState.playerCoordinate, targetCoordinate);
   const currentMapDefinition = getCurrentMapDefinition();
+  const campaignCoordinateSpace =
+    currentMapDefinition?.mode === "campaign"
+      ? currentMapDefinition.coordinateSpace ?? null
+      : null;
+  const snappedTargetCoordinate =
+    campaignCoordinateSpace == null
+      ? targetCoordinate
+      : snapCoordinateToHexCenter(targetCoordinate, campaignCoordinateSpace);
+  const nextCoordinate = travelToCoordinate(
+    appState.playerCoordinate,
+    snappedTargetCoordinate
+  );
 
   if (
     currentMapDefinition?.mode !== "campaign" ||
@@ -4297,6 +4319,134 @@ function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordin
     coordinateSpace: currentMapDefinition.coordinateSpace,
     travelGrid,
   });
+}
+
+function hideCampaignHoverHexOutline(): void {
+  const hoverOutline = appRoot.querySelector<SVGSVGElement>(
+    "[data-campaign-hover-hex='true']"
+  );
+  const polygonElement = hoverOutline?.querySelector<SVGPolygonElement>(
+    "[data-campaign-hover-hex-polygon='true']"
+  );
+  hoverOutline?.setAttribute("hidden", "");
+  polygonElement?.setAttribute("points", "");
+}
+
+function updateCampaignHoverHexOutline(event: PointerEvent): void {
+  if (
+    appState.gameState.ui.currentView !== "map" ||
+    campaignMapDragState != null ||
+    isInitialCampaignMapDebugAnimating()
+  ) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const hitElement = document.elementFromPoint(event.clientX, event.clientY);
+  if (!(hitElement instanceof HTMLElement)) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  if (hitElement.closest(".c-campaign-map-debug") != null) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const campaignMap = hitElement.closest<HTMLElement>(
+    "[data-campaign-map-viewport]"
+  );
+  const currentMapDefinition = getCurrentMapDefinition();
+  const coordinateSpace = currentMapDefinition?.coordinateSpace ?? null;
+  const hoverOutline = campaignMap?.querySelector<SVGSVGElement>(
+    "[data-campaign-hover-hex='true']"
+  );
+  const polygonElement = hoverOutline?.querySelector<SVGPolygonElement>(
+    "[data-campaign-hover-hex-polygon='true']"
+  );
+  if (
+    campaignMap == null ||
+    currentMapDefinition?.mode !== "campaign" ||
+    coordinateSpace == null ||
+    hoverOutline == null ||
+    polygonElement == null
+  ) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const clickTarget = resolveCampaignTerrainUvFromClientPosition(
+    campaignMap,
+    event.clientX,
+    event.clientY
+  );
+  if (clickTarget == null) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const targetCoordinate = {
+    x: clickTarget.u * coordinateSpace.width,
+    y: (1 - clickTarget.v) * coordinateSpace.height,
+  };
+  const hoverHex = coordinateToRoundedHex(targetCoordinate, coordinateSpace);
+  const hoverCenterCoordinate = snapCoordinateToHexCenter(
+    targetCoordinate,
+    coordinateSpace
+  );
+  const hoverCenterU = hoverCenterCoordinate.x / coordinateSpace.width;
+  const hoverCenterV = 1 - hoverCenterCoordinate.y / coordinateSpace.height;
+  if (!isCurrentCampaignCoordinateRevealed(hoverCenterCoordinate)) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+  if (
+    isCampaignTerrainUvPassable(campaignMap, hoverCenterU, hoverCenterV) !== true
+  ) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+  if (createCampaignTravelPath(hoverCenterCoordinate) == null) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const mapRect = campaignMap.getBoundingClientRect();
+  if (mapRect.width <= 0 || mapRect.height <= 0) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const hoverHexPolygon = hexToCoordinatePolygon({
+    hex: hoverHex,
+    coordinateSpace,
+    radiusScale: 1.015,
+  });
+  const points: string[] = [];
+  for (const cornerCoordinate of hoverHexPolygon) {
+    const projectedPoint = projectCampaignTerrainUvToClientPointAtHeightAnchor(
+      campaignMap,
+      cornerCoordinate.x / coordinateSpace.width,
+      1 - cornerCoordinate.y / coordinateSpace.height,
+      hoverCenterU,
+      hoverCenterV
+    );
+    if (projectedPoint == null) {
+      hideCampaignHoverHexOutline();
+      return;
+    }
+
+    points.push(
+      `${(projectedPoint.clientX - mapRect.left).toFixed(2)},${(projectedPoint.clientY - mapRect.top).toFixed(2)}`
+    );
+  }
+
+  hoverOutline.setAttribute(
+    "viewBox",
+    `0 0 ${mapRect.width.toFixed(2)} ${mapRect.height.toFixed(2)}`
+  );
+  polygonElement.setAttribute("points", points.join(" "));
+  hoverOutline.removeAttribute("hidden");
 }
 
 function getLastTravelPathCoordinate(path: GridCoordinate[]): GridCoordinate {
@@ -4527,6 +4677,93 @@ function restoreCampaignTerrainCanvases(
   });
 }
 
+function getCampaignMarkerStableKey(element: HTMLElement): string | null {
+  if (element.dataset.campaignMarkerId != null) {
+    return `marker:${element.dataset.campaignMarkerId}`;
+  }
+  if (element.dataset.campaignMarkerSummaryId != null) {
+    return `summary:${element.dataset.campaignMarkerSummaryId}`;
+  }
+
+  return null;
+}
+
+function captureCampaignMarkerElements(
+  root: ParentNode
+): Map<string, HTMLElement> | null {
+  const markerElements = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      "[data-campaign-marker-id], [data-campaign-marker-summary-id]"
+    )
+  );
+  if (markerElements.length === 0) {
+    return null;
+  }
+
+  const preservedElements = new Map<string, HTMLElement>();
+  for (const markerElement of markerElements) {
+    const stableKey = getCampaignMarkerStableKey(markerElement);
+    if (stableKey != null) {
+      preservedElements.set(stableKey, markerElement);
+    }
+  }
+
+  return preservedElements.size === 0 ? null : preservedElements;
+}
+
+function syncPreservedCampaignMarkerAttributes(
+  preservedElement: HTMLElement,
+  replacementElement: HTMLElement
+): void {
+  const dynamicProjectionAttributes = new Set([
+    "style",
+    "hidden",
+    "data-terrain-projection-ready",
+  ]);
+
+  for (const attribute of Array.from(preservedElement.attributes)) {
+    if (dynamicProjectionAttributes.has(attribute.name)) {
+      continue;
+    }
+    if (!replacementElement.hasAttribute(attribute.name)) {
+      preservedElement.removeAttribute(attribute.name);
+    }
+  }
+
+  for (const attribute of Array.from(replacementElement.attributes)) {
+    if (dynamicProjectionAttributes.has(attribute.name)) {
+      continue;
+    }
+    preservedElement.setAttribute(attribute.name, attribute.value);
+  }
+}
+
+function restoreCampaignMarkerElements(
+  root: ParentNode,
+  preservedElements: Map<string, HTMLElement> | null
+): void {
+  if (preservedElements == null || preservedElements.size === 0) {
+    return;
+  }
+
+  const replacementElements = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      "[data-campaign-marker-id], [data-campaign-marker-summary-id]"
+    )
+  );
+  for (const replacementElement of replacementElements) {
+    const stableKey = getCampaignMarkerStableKey(replacementElement);
+    const preservedElement =
+      stableKey == null ? null : preservedElements.get(stableKey) ?? null;
+    if (preservedElement == null) {
+      continue;
+    }
+
+    syncPreservedCampaignMarkerAttributes(preservedElement, replacementElement);
+    replacementElement.replaceWith(preservedElement);
+  }
+}
+
 function renderApp() {
   const activeScaleInput = document.activeElement;
   const focusedScaleInput =
@@ -4566,6 +4803,10 @@ function renderAppFrame(
     appState.gameState.ui.currentView === "map"
       ? captureCampaignTerrainCanvases(appRoot)
       : null;
+  const preservedCampaignMarkers =
+    appState.gameState.ui.currentView === "map"
+      ? captureCampaignMarkerElements(appRoot)
+      : null;
   const presenterOutput = createAppPresenterOutput({
     appState,
     playerCharacterId: currentPlayerCharacterId,
@@ -4602,6 +4843,7 @@ function renderAppFrame(
     presenterOutput,
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
+  restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
@@ -5135,6 +5377,7 @@ function setCampaignMapDebugState(nextState: CampaignMapDebugState): void {
     offsetX: Math.round(nextState.offsetX),
     offsetY: Math.round(nextState.offsetY),
   };
+  hideCampaignHoverHexOutline();
   syncCampaignMapDebugView();
 }
 
@@ -5280,7 +5523,11 @@ function endCampaignMapDrag(event: PointerEvent): void {
   }
   campaignMap?.classList.remove("is-dragging");
   shouldSuppressNextClickAfterMapDrag = campaignMapDragState.didMove;
+  const shouldUpdateHoverOutline = !campaignMapDragState.didMove;
   campaignMapDragState = null;
+  if (shouldUpdateHoverOutline) {
+    updateCampaignHoverHexOutline(event);
+  }
 }
 
 function clamp(value: number, min: number, max: number): number {

@@ -1,5 +1,6 @@
 import fallbackCloudNoiseTextureUrl from "../../../assets/yuanmo-map/yuanmo-fog-noise.png?url";
 import {
+  hexToCoordinate,
   hexToCoordinatePolygon,
   type CoordinateSpace,
   type HexCoordinate,
@@ -7,13 +8,14 @@ import {
 import {
   getCampaignTerrainCamera,
   getCampaignTerrainProjectionSignature,
-  projectCampaignTerrainUvToClientPoint,
+  projectCampaignTerrainUvToClientPointAtHeightAnchor,
 } from "./campaign-terrain-webgl";
 import cloudFragmentShaderRaw from "./shaders/campaign-cloud.frag.glsl?raw";
 import cloudVertexShaderRaw from "./shaders/campaign-cloud.vert.glsl?raw";
 
 const CLOUD_ANIMATION_FRAME_INTERVAL_MS = 1000 / 24;
 const CLOUD_REVEAL_MASK_MAX_TEXTURE_SIZE = 2048;
+const CLOUD_REVEAL_DISSOLVE_DURATION_MS = 1400;
 
 // Reveal mask tuning table. This canvas stores a soft semantic field, not the
 // final visible edge. The shader erodes this field with cloud noise.
@@ -27,6 +29,7 @@ const CLOUD_REVEAL_FIELD_MAX_DISTANCE_PX = 512;
 type CloudRevealMaskDescriptor = {
   coordinateSpace: CoordinateSpace;
   revealedHexes: HexCoordinate[];
+  revealedHexSignature: string;
   maskWidth: number;
   maskHeight: number;
   signature: string;
@@ -121,9 +124,18 @@ function initCampaignCloudWebGl(
   const mapCameraLocation = gl.getUniformLocation(program, "uMapCamera");
   const noiseTextureLocation = gl.getUniformLocation(program, "uNoiseTexture");
   const revealTextureLocation = gl.getUniformLocation(program, "uRevealTexture");
+  const previousRevealTextureLocation = gl.getUniformLocation(
+    program,
+    "uPreviousRevealTexture"
+  );
+  const revealTransitionLocation = gl.getUniformLocation(program, "uRevealTransition");
   const vertexBuffer = gl.createBuffer();
   const noiseTexture = createPlaceholderTexture(gl);
   const revealTexture = createPlaceholderTexture(gl, new Uint8Array([0, 0, 0, 0]));
+  const previousRevealTexture = createPlaceholderTexture(
+    gl,
+    new Uint8Array([0, 0, 0, 0])
+  );
   const missingResources = [
     positionLocation < 0 ? "aPosition" : null,
     resolutionLocation == null ? "uResolution" : null,
@@ -131,6 +143,8 @@ function initCampaignCloudWebGl(
     mapCameraLocation == null ? "uMapCamera" : null,
     noiseTextureLocation == null ? "uNoiseTexture" : null,
     revealTextureLocation == null ? "uRevealTexture" : null,
+    previousRevealTextureLocation == null ? "uPreviousRevealTexture" : null,
+    revealTransitionLocation == null ? "uRevealTransition" : null,
     vertexBuffer == null ? "vertexBuffer" : null,
   ].filter((resource): resource is string => resource != null);
   if (missingResources.length > 0) {
@@ -161,6 +175,10 @@ function initCampaignCloudWebGl(
   let animationTimeoutId: number | null = null;
   let isDisposed = false;
   let revealMaskSignature = "";
+  let revealHexSignature = "";
+  let previousRevealHexes: HexCoordinate[] | null = null;
+  let transitionRevealHexes: HexCoordinate[] | null = null;
+  let transitionStartMs: number | null = null;
   const animationStartSeconds = performance.now() * 0.001;
 
   function resolveProjectionRoot(): ParentNode {
@@ -190,12 +208,42 @@ function initCampaignCloudWebGl(
       return;
     }
 
-    revealMaskSignature = descriptor.signature;
-    updateTexture(
-      gl,
-      revealTexture,
-      createCloudRevealMaskCanvas(canvas, projectionRoot, descriptor)
+    const currentMaskCanvas = createCloudRevealMaskCanvas(
+      canvas,
+      projectionRoot,
+      descriptor
     );
+    const didRevealSetChange =
+      revealHexSignature !== "" &&
+      descriptor.revealedHexSignature !== revealHexSignature;
+    if (didRevealSetChange && previousRevealHexes != null) {
+      transitionRevealHexes = previousRevealHexes;
+      updateTexture(
+        gl,
+        previousRevealTexture,
+        createCloudRevealMaskCanvas(canvas, projectionRoot, {
+          ...descriptor,
+          revealedHexes: transitionRevealHexes,
+        })
+      );
+      transitionStartMs = performance.now();
+    } else if (transitionStartMs != null && transitionRevealHexes != null) {
+      updateTexture(
+        gl,
+        previousRevealTexture,
+        createCloudRevealMaskCanvas(canvas, projectionRoot, {
+          ...descriptor,
+          revealedHexes: transitionRevealHexes,
+        })
+      );
+    } else if (transitionStartMs == null) {
+      updateTexture(gl, previousRevealTexture, currentMaskCanvas);
+    }
+
+    revealMaskSignature = descriptor.signature;
+    revealHexSignature = descriptor.revealedHexSignature;
+    previousRevealHexes = descriptor.revealedHexes;
+    updateTexture(gl, revealTexture, currentMaskCanvas);
     requestRender();
   }
 
@@ -245,8 +293,29 @@ function initCampaignCloudWebGl(
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, revealTexture);
     gl.uniform1i(revealTextureLocation, 1);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, previousRevealTexture);
+    gl.uniform1i(previousRevealTextureLocation, 2);
+    gl.uniform1f(revealTransitionLocation, resolveRevealTransition());
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     scheduleAnimationRender();
+  }
+
+  function resolveRevealTransition(): number {
+    if (transitionStartMs == null) {
+      return 1;
+    }
+
+    const transition = Math.min(
+      1,
+      (performance.now() - transitionStartMs) / CLOUD_REVEAL_DISSOLVE_DURATION_MS
+    );
+    if (transition >= 1) {
+      transitionStartMs = null;
+      transitionRevealHexes = null;
+    }
+
+    return transition;
   }
 
   function scheduleAnimationRender(): void {
@@ -284,6 +353,7 @@ function initCampaignCloudWebGl(
       gl.deleteBuffer(vertexBuffer);
       gl.deleteTexture(noiseTexture);
       gl.deleteTexture(revealTexture);
+      gl.deleteTexture(previousRevealTexture);
       gl.deleteProgram(program);
     },
   };
@@ -347,18 +417,22 @@ function readCloudRevealMaskDescriptor(
     .map(parseHexKey)
     .filter((hex): hex is HexCoordinate => hex != null);
   const maskSize = resolveRevealMaskTextureSize(canvas);
+  const revealedHexSignature = revealedHexes
+    .map((hex) => `${hex.x},${hex.y}`)
+    .join("|");
   const signature = [
     coordinateSpace.width.toFixed(3),
     coordinateSpace.height.toFixed(3),
     maskSize.width,
     maskSize.height,
     getCampaignTerrainProjectionSignature(projectionRoot),
-    ...revealedHexes.map((hex) => `${hex.x},${hex.y}`),
+    revealedHexSignature,
   ].join("|");
 
   return {
     coordinateSpace,
     revealedHexes,
+    revealedHexSignature,
     maskWidth: maskSize.width,
     maskHeight: maskSize.height,
     signature,
@@ -492,6 +566,10 @@ function buildRevealMaskPolygons(input: {
 }): RevealMaskPolygon[] {
   const polygons: RevealMaskPolygon[] = [];
   for (const hex of input.descriptor.revealedHexes) {
+    const heightAnchorCoordinate = hexToCoordinate(
+      hex,
+      input.descriptor.coordinateSpace
+    );
     const polygon = hexToCoordinatePolygon({
       hex,
       coordinateSpace: input.descriptor.coordinateSpace,
@@ -504,6 +582,7 @@ function buildRevealMaskPolygons(input: {
           projectionRoot: input.projectionRoot,
           descriptor: input.descriptor,
           coordinate: point,
+          heightAnchorCoordinate,
         })
       )
       .filter((point): point is RevealMaskPoint => point != null);
@@ -664,15 +743,25 @@ function projectCoordinateToRevealMaskPoint(input: {
   projectionRoot: ParentNode;
   descriptor: CloudRevealMaskDescriptor;
   coordinate: { x: number; y: number };
+  heightAnchorCoordinate: { x: number; y: number };
 }): { x: number; y: number } | null {
   const u =
     input.coordinate.x / Math.max(input.descriptor.coordinateSpace.width, 1);
   const v =
     1 - input.coordinate.y / Math.max(input.descriptor.coordinateSpace.height, 1);
-  const projectedPoint = projectCampaignTerrainUvToClientPoint(
+  const heightU =
+    input.heightAnchorCoordinate.x /
+    Math.max(input.descriptor.coordinateSpace.width, 1);
+  const heightV =
+    1 -
+    input.heightAnchorCoordinate.y /
+      Math.max(input.descriptor.coordinateSpace.height, 1);
+  const projectedPoint = projectCampaignTerrainUvToClientPointAtHeightAnchor(
     input.projectionRoot,
     u,
-    v
+    v,
+    heightU,
+    heightV
   );
   if (projectedPoint == null || !Number.isFinite(projectedPoint.clientX)) {
     return null;

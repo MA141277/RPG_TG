@@ -354,6 +354,7 @@ function renderCampaignMarkers(model: MapViewModel): string {
           class="c-campaign-marker ${getMarkerClass(marker.kind)}"
           style="${markerPositionStyle}"
           ${markerProjectionAttributes}
+          data-campaign-marker-id="${escapeHtml(marker.id)}"
           data-map-x="${marker.x}"
           data-map-y="${marker.y}"
           data-city-id="${marker.cityId ?? ""}"
@@ -366,6 +367,7 @@ function renderCampaignMarkers(model: MapViewModel): string {
           class="c-campaign-marker__summary"
           style="${markerPositionStyle}"
           ${markerProjectionAttributes}
+          data-campaign-marker-summary-id="${escapeHtml(marker.id)}"
           aria-hidden="true"
           data-map-node-revealed="${marker.isRevealed ? "true" : "false"}"
         >
@@ -562,6 +564,15 @@ function renderCampaignMap(model: MapViewModel): string {
           ${model.cloudNoiseTextureImageUrl == null ? "" : `data-map-cloud-noise-url="${model.cloudNoiseTextureImageUrl}"`}
           aria-hidden="true"
         ></canvas>
+        <svg
+          class="c-campaign-map__hover-hex"
+          data-campaign-hover-hex="true"
+          aria-hidden="true"
+          focusable="false"
+          hidden
+        >
+          <polygon data-campaign-hover-hex-polygon="true" points=""></polygon>
+        </svg>
         <div class="c-campaign-map__tiltshift" aria-hidden="true">
           ${renderCampaignMapVisualLayer(model, {
             transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",

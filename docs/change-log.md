@@ -2,6 +2,27 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-08 Campaign Map Interaction Stability
+
+### Added
+- 大地图新增可踏足 hex 悬浮反馈层：`map-view.ts` 生成 `data-campaign-hover-hex` SVG overlay，`main.ts` 根据当前 terrain 投影、探索状态、地形通行判定和寻路结果绘制白色六边形描边，`prototype.css` 将其放在云层之上且不接管鼠标事件。
+
+### Changed
+- 大地图 marker 和 marker summary 增加稳定 DOM 身份，`renderAppFrame()` 在地图重绘时像保活 terrain / actor / cloud canvas 一样移植旧 marker 节点，并只同步语义属性，保留 terrain 投影产生的位置样式，减少玩家移动结束时城市/建筑标识被销毁重建造成的刷新感。
+- `docs/architecture.md` 同步大地图 marker 保活、可踏足 hex hover 反馈只读寻路结果、以及 hover 描边位于云层上方的层级契约。
+- 云层 reveal mask 新增上一帧探索纹理与 `uRevealTransition` 过渡；新探索格开洞时按云噪声做溶解式切换，避免云层直接消失。
+- 云层 shader 在已探索空洞内进一步衰减全图空气雾层和孤立云团残留，但不改变洞口边缘云壁的语义来源。
+- 大地图通行网格改为按 `map_ground_types` 的水域材质语义生成，和 terrain shader 的陆地/水体渲染判断对齐；`map_heights` 不再负责寻路通行判定，避免低矮陆地被当成水体。
+- 可踏足 hex 悬浮描边改为几何角点投影、高度锚定到当前 hex 中心，避免角点误采邻格高度导致六边形端点翘起或下陷。
+- 云层空洞内的次级残留层同步衰减，减少已探索核心区里额外覆盖整层薄雾或外云团残影。
+- 云层 reveal mask 的 hex 多边形同样改为角点投影、中心高度锚定，避免 mask 轮廓因角点误采邻格高度而变形。
+- 大地图通行性收紧为 terrain shader 同款“hex 中心材质”语义，并直接使用 `map_ground_types` 原始尺寸采样；岸边水格不再因为角点陆地样本被放行。
+- 云洞核心区的 inner wisp、云影与 outer puff 后叠层统一随空气雾层 keep mask 衰减到 0，避免洞内残留独立薄层。
+- 云洞边缘扰动按视觉反馈恢复旧版单向 offset 采样路径，保留此前更强的云墙撕裂和融合效果。
+
+### Impact
+- 玩家移动后地图标识节点保持稳定，地图 hover 反馈只提示当前实际可抵达的已探索陆地 hex；低矮陆地按渲染材质参与寻路，云层开图仍由探索状态驱动，视觉过渡更接近云层被逐步拨开的效果。
+
 ## 2026-07-07 Campaign Viewport Cloud Shader
 
 ### Added

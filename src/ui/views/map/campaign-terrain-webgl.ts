@@ -121,8 +121,6 @@ const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
 const HEX_ELEVATION_LEVELS = 8;
 const HEX_WATER_HEIGHT_THRESHOLD = 0.005;
-const HEX_PASSABLE_HEIGHT_THRESHOLD = 0.0005;
-const HEX_PASSABLE_MIN_LAND_SAMPLES = 2;
 const HEX_WALL_HEIGHT_EPSILON = 0.01;
 const GRASS_TEXTURE_DETAIL = 1.15;
 const GRASS_AMBIENT_LIGHT = 0.58;
@@ -208,6 +206,9 @@ type CampaignTerrainRenderer = {
   projectionInput: {
     canvas: HTMLCanvasElement;
     heights: Float32Array;
+    materialLandMask: Uint8Array;
+    materialColumns: number;
+    materialRows: number;
     columns: number;
     rows: number;
   };
@@ -231,6 +232,9 @@ const pendingRendererCanvases = new Set<HTMLCanvasElement>();
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
   heights: Float32Array;
+  materialLandMask: Uint8Array;
+  materialColumns: number;
+  materialRows: number;
   columns: number;
   rows: number;
 };
@@ -290,6 +294,16 @@ export function projectCampaignTerrainUvToClientPoint(
   u: number,
   v: number
 ): CampaignTerrainClientPoint | null {
+  return projectCampaignTerrainUvToClientPointAtHeightAnchor(root, u, v, u, v);
+}
+
+export function projectCampaignTerrainUvToClientPointAtHeightAnchor(
+  root: ParentNode,
+  u: number,
+  v: number,
+  heightU: number,
+  heightV: number
+): CampaignTerrainClientPoint | null {
   const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
   if (terrainCanvas == null) {
     return null;
@@ -312,8 +326,8 @@ export function projectCampaignTerrainUvToClientPoint(
     renderer.projectionInput.heights,
     renderer.projectionInput.columns,
     renderer.projectionInput.rows,
-    u,
-    v
+    heightU,
+    heightV
   );
   const screenPoint = projectPoint(matrix, createTerrainWorldPoint(u, v, height));
   const normalizedX = (screenPoint.x + 1) / 2;
@@ -389,9 +403,9 @@ export function isCampaignTerrainUvPassable(
   }
 
   return isHexPassableAtUv(
-    renderer.projectionInput.heights,
-    renderer.projectionInput.columns,
-    renderer.projectionInput.rows,
+    renderer.projectionInput.materialLandMask,
+    renderer.projectionInput.materialColumns,
+    renderer.projectionInput.materialRows,
     u,
     v
   );
@@ -525,6 +539,7 @@ async function initCampaignTerrainWebGl(
     cityDepthAssetPromise,
   ]);
   const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
+  const materialLandMask = sampleMaterialLandMask(materialImage);
   const heightSamples = createHexLayeredHeightSamples(
     baseHeightSamples,
     GRID_COLUMNS,
@@ -652,10 +667,17 @@ async function initCampaignTerrainWebGl(
   const projectionInput: CampaignTerrainProjectionInput = {
     canvas: input.canvas,
     heights: heightSamples,
+    materialLandMask: materialLandMask.landMask,
+    materialColumns: materialLandMask.columns,
+    materialRows: materialLandMask.rows,
     columns: GRID_COLUMNS,
     rows: GRID_ROWS,
   };
-  const travelGrid = createHexTravelGrid(heightSamples, GRID_COLUMNS, GRID_ROWS);
+  const travelGrid = createHexTravelGrid(
+    materialLandMask.landMask,
+    materialLandMask.columns,
+    materialLandMask.rows
+  );
 
   let frameId: number | null = null;
   let isDisposed = false;
@@ -1245,6 +1267,40 @@ function sampleHeightImage(
   return heights;
 }
 
+function sampleMaterialLandMask(
+  image: HTMLImageElement
+): { landMask: Uint8Array; columns: number; rows: number } {
+  const columns = Math.max(image.naturalWidth || image.width, 1);
+  const rows = Math.max(image.naturalHeight || image.height, 1);
+  const canvas = document.createElement("canvas");
+  canvas.width = columns;
+  canvas.height = rows;
+
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (context == null) {
+    throw new Error("Failed to create material sampling context.");
+  }
+
+  context.imageSmoothingEnabled = false;
+  context.drawImage(image, 0, 0, columns, rows);
+  const data = context.getImageData(0, 0, columns, rows).data;
+  const landMask = new Uint8Array(columns * rows);
+
+  for (let index = 0; index < landMask.length; index += 1) {
+    const pixelOffset = index * 4;
+    const red = data[pixelOffset] ?? 0;
+    const green = data[pixelOffset + 1] ?? red;
+    const blue = data[pixelOffset + 2] ?? red;
+    landMask[index] = isWaterMaterialColor(red, green, blue) ? 0 : 1;
+  }
+
+  return {
+    landMask,
+    columns,
+    rows,
+  };
+}
+
 function hexToPixel(x: number, y: number): { x: number; y: number } {
   return {
     x: Math.sqrt(3) * (x + y * 0.5),
@@ -1363,8 +1419,29 @@ function sampleHeightAt(
   return heights[y * columns + x] ?? 0;
 }
 
+function sampleLandMaskAt(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): number {
+  if (u < 0 || u > 1 || v < 0 || v > 1) {
+    return 0;
+  }
+
+  const x = Math.min(Math.max(Math.round(u * (columns - 1)), 0), columns - 1);
+  const y = Math.min(Math.max(Math.round(v * (rows - 1)), 0), rows - 1);
+
+  return materialLandMask[y * columns + x] ?? 0;
+}
+
 function isWaterHeightColor(red: number, green: number, blue: number): boolean {
   return blue > 72 && blue > red * 1.35 && blue > green * 1.18;
+}
+
+function isWaterMaterialColor(red: number, green: number, blue: number): boolean {
+  return red >= 56 && green < 31 && blue < 31;
 }
 
 function readCampaignActorData(canvas: HTMLCanvasElement): CampaignActorData | null {
@@ -1767,7 +1844,7 @@ function createHexLayeredHeightSamples(
 }
 
 function createHexTravelGrid(
-  heights: Float32Array,
+  materialLandMask: Uint8Array,
   columns: number,
   rows: number
 ): HexTravelGrid {
@@ -1787,7 +1864,7 @@ function createHexTravelGrid(
     bounds.maxY = Math.max(bounds.maxY, cell.y);
     const center = hexToPixel(cell.x, cell.y);
     if (isHexPassableAtHexPoint(
-      heights,
+      materialLandMask,
       columns,
       rows,
       center
@@ -1997,7 +2074,7 @@ function quantizeHexElevation(height: number): number {
 }
 
 function isHexPassableAtUv(
-  heights: Float32Array,
+  materialLandMask: Uint8Array,
   columns: number,
   rows: number,
   u: number,
@@ -2005,44 +2082,28 @@ function isHexPassableAtUv(
 ): boolean {
   const point = terrainUvToHexPoint(u, v);
   const cell = pixelToRoundedHex(point.x, point.y);
-  return isHexPassableAtHexPoint(heights, columns, rows, hexToPixel(cell.x, cell.y));
+  return isHexPassableAtHexPoint(
+    materialLandMask,
+    columns,
+    rows,
+    hexToPixel(cell.x, cell.y)
+  );
 }
 
 function isHexPassableAtHexPoint(
-  heights: Float32Array,
+  materialLandMask: Uint8Array,
   columns: number,
   rows: number,
   center: { x: number; y: number }
 ): boolean {
-  let landSamples = 0;
-  let centerHeight = 0;
-  const samplePoints = [
-    { x: center.x, y: center.y },
-    ...HEX_CORNER_OFFSETS.map((corner) => ({
-      x: center.x + corner.x * 0.58,
-      y: center.y + corner.y * 0.58,
-    })),
-  ];
-
-  for (const [index, point] of samplePoints.entries()) {
-    const height = sampleHeightAt(
-      heights,
+  return (
+    sampleLandMaskAt(
+      materialLandMask,
       columns,
       rows,
-      hexPointToTerrainU(point.x),
-      hexPointToTerrainV(point.y)
-    );
-    if (index === 0) {
-      centerHeight = height;
-    }
-    if (height > HEX_PASSABLE_HEIGHT_THRESHOLD) {
-      landSamples += 1;
-    }
-  }
-
-  return (
-    centerHeight > HEX_WATER_HEIGHT_THRESHOLD ||
-    landSamples >= HEX_PASSABLE_MIN_LAND_SAMPLES
+      hexPointToTerrainU(center.x),
+      hexPointToTerrainV(center.y)
+    ) > 0
   );
 }
 
