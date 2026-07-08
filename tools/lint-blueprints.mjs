@@ -29,6 +29,25 @@ const allowedAdmissionStatuses = new Set([
   "deferred",
   "blocked",
 ]);
+const allowedIntakeStatuses = new Set([
+  "none",
+  "evaluating",
+  "absorbed",
+  "candidate-recorded",
+  "admission-review",
+]);
+const allowedIntakeResults = new Set([
+  "none",
+  "absorbed-into-active-queue",
+  "queued-as-candidate",
+  "promoted-to-admission",
+  "rejected",
+  "deferred",
+]);
+const allowedIntakeFeedbackModes = new Set([
+  "none",
+  "fixed-receipt",
+]);
 const allowedQueueStatuses = new Set(["active", "blocked", "done", "dropped"]);
 const allowedSyncStatuses = new Set(["pending", "success", "failed"]);
 const allowedSyncScopes = new Set(["branch-push", "baseline-merge", "baseline-push", "none"]);
@@ -62,6 +81,11 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
   lintTargetPlan(targetPlanPath, failures, repoRoot, "target plan");
   lintTargetSpec(targetSpecPath, failures, repoRoot, "target spec");
   lintQueueDocs(path.join(blueprintsRoot, "queues"), failures, repoRoot);
+  lintWorkflowIntakeContract(
+    path.join(blueprintsRoot, "blueprint-workflow-spec.md"),
+    failures,
+    repoRoot
+  );
   lintTemplate(
     path.join(blueprintsRoot, "templates", "project-progress-template.md"),
     failures,
@@ -88,6 +112,19 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
     repoRoot,
     (filePath, innerFailures) =>
       lintQueueDoc(filePath, innerFailures, repoRoot, true)
+  );
+  if (fs.existsSync(liveTargetPlanPath)) {
+    lintTargetPlanOperatorContract(liveTargetPlanPath, failures, repoRoot);
+  }
+  lintTargetPlanOperatorContract(
+    path.join(blueprintsRoot, "templates", "target-plan-template.md"),
+    failures,
+    repoRoot
+  );
+  lintQueueOperatorSnapshotContract(
+    path.join(blueprintsRoot, "templates", "execution-queue-template.md"),
+    failures,
+    repoRoot
   );
 
   lintCrossDocumentConsistency(
@@ -159,6 +196,68 @@ function lintBlueprintIndex(filePath, failures, repoRoot) {
   }
 }
 
+function lintWorkflowIntakeContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/`新需求`/, 'workflow spec must name `新需求` as allowed intake input'],
+    [/`参考治理规范`/, 'workflow spec must name `参考治理规范` as allowed intake input'],
+    [/^### 7\.1\.1 Fixed operator receipt contract$/m, "workflow spec must define the fixed operator receipt contract"],
+    [/处理结果：/, "workflow spec must publish the fixed receipt labels"],
+    [/人工操作：当前不需要 \/ 当前需要确认 xxx/, "workflow spec must require the explicit human-action line"],
+    [/Default intake output must not expose truth-chain detail/i, "workflow spec must hide Blueprint internal analysis by default"],
+  ]);
+}
+
+function lintTargetPlanOperatorContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/^### Operator Intake Contract$/m, "target plan must include an Operator Intake Contract section"],
+    [/`新需求`/, "target plan must limit operator intake to `新需求`"],
+    [/`参考治理规范`/, "target plan must limit operator intake to `参考治理规范`"],
+    [/处理结果：/, "target plan must publish the fixed operator receipt block"],
+    [/当前执行情况：/, "target plan must publish the current-execution receipt block"],
+    [/人工操作：当前不需要 \/ 当前需要确认 xxx/, "target plan must publish the explicit human-action receipt line"],
+    [/默认不向人工暴露真值链细节/u, "target plan must default-hide Blueprint internal analysis"],
+  ]);
+}
+
+function lintQueueOperatorSnapshotContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/^### Operator Snapshot Contract$/m, "execution queue template must include an Operator Snapshot Contract section"],
+    [/当前执行队列.*queue_id/u, "execution queue template must map 当前执行队列 to queue_id"],
+    [/当前任务.*active_task/u, "execution queue template must map 当前任务 to active_task"],
+    [/当前队列目标.*queue_goal/u, "execution queue template must map 当前队列目标 to queue_goal"],
+  ]);
+}
+
 function lintTargetPlan(filePath, failures, repoRoot, label) {
   const text = readFileOrFail(filePath, failures, repoRoot);
   if (text == null) {
@@ -213,6 +312,11 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     "proposed_queue_id",
     "review_basis",
     "admission_status",
+    "intake_status",
+    "intake_item_id",
+    "intake_summary",
+    "intake_result",
+    "intake_feedback_mode",
   ]) {
     requireFieldValue(
       text,
@@ -227,6 +331,34 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   if (!isTemplate && admissionStatus != null && !allowedAdmissionStatuses.has(admissionStatus)) {
     failures.push(
       `${relativePath}: ${label} admission_status "${admissionStatus}" is not an allowed enum value`
+    );
+  }
+
+  const intakeStatus = matchField(text, "intake_status");
+  const intakeItemId = matchField(text, "intake_item_id");
+  const intakeSummary = matchField(text, "intake_summary");
+  const intakeResult = matchField(text, "intake_result");
+  const intakeFeedbackMode = matchField(text, "intake_feedback_mode");
+
+  if (!isTemplate && intakeStatus != null && !allowedIntakeStatuses.has(intakeStatus)) {
+    failures.push(
+      `${relativePath}: ${label} intake_status "${intakeStatus}" is not an allowed enum value`
+    );
+  }
+
+  if (!isTemplate && intakeResult != null && !allowedIntakeResults.has(intakeResult)) {
+    failures.push(
+      `${relativePath}: ${label} intake_result "${intakeResult}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    intakeFeedbackMode != null &&
+    !allowedIntakeFeedbackModes.has(intakeFeedbackMode)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} intake_feedback_mode "${intakeFeedbackMode}" is not an allowed enum value`
     );
   }
 
@@ -298,6 +430,50 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     failures.push(
       `${relativePath}: ${label} blocked_by must not mirror merge conflict or repository sync state as target-level blocker truth`
     );
+  }
+
+  if (
+    !isTemplate &&
+    intakeStatus === "none" &&
+    [intakeItemId, intakeSummary, intakeResult, intakeFeedbackMode].some(
+      (value) => value != null && value !== "none"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} intake_status=none requires intake_item_id/intake_summary/intake_result/intake_feedback_mode to all be none`
+    );
+  }
+
+  if (!isTemplate && intakeStatus != null && intakeStatus !== "none") {
+    if (intakeItemId == null || intakeItemId === "none") {
+      failures.push(
+        `${relativePath}: ${label} must name intake_item_id while intake_status=${intakeStatus}`
+      );
+    }
+
+    if (intakeSummary == null || intakeSummary === "none") {
+      failures.push(
+        `${relativePath}: ${label} must keep intake_summary while intake_status=${intakeStatus}`
+      );
+    }
+
+    if (intakeFeedbackMode == null || intakeFeedbackMode === "none") {
+      failures.push(
+        `${relativePath}: ${label} must keep intake_feedback_mode while intake_status=${intakeStatus}`
+      );
+    }
+
+    if (intakeStatus === "evaluating" && intakeResult !== "none") {
+      failures.push(
+        `${relativePath}: ${label} intake_status=evaluating requires intake_result=none until evaluation resolves`
+      );
+    }
+
+    if (intakeStatus !== "evaluating" && (intakeResult == null || intakeResult === "none")) {
+      failures.push(
+        `${relativePath}: ${label} must keep intake_result while intake_status=${intakeStatus}`
+      );
+    }
   }
 }
 
@@ -377,6 +553,21 @@ function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
   const syncStatus = matchField(head, "sync_status");
   const syncScope = matchField(head, "sync_scope");
   const syncSummary = matchField(head, "sync_summary");
+  const queueSnapshotRequired = isTemplate || queueStatus === "active";
+  const queueSnapshotFields = [
+    "queue_goal",
+    "task_count",
+    "completed_task_count",
+    "remaining_task_count",
+    "active_task_summary",
+    "task_briefs",
+  ];
+  const queueSnapshotValues = Object.fromEntries(
+    queueSnapshotFields.map((fieldName) => [fieldName, matchField(text, fieldName)])
+  );
+  const taskLedgerIds = extractTaskLedgerIds(text);
+  const taskDefinitions = extractTaskDefinitions(text);
+  const taskDefinitionIds = taskDefinitions.map((definition) => definition.taskId);
 
   if (!isTemplate && queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
     failures.push(
@@ -424,6 +615,77 @@ function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
     failures.push(
       `${relativePath}: queue blocked_by must not mirror merge conflict or repository sync state as execution blockers`
     );
+  }
+
+  if (queueSnapshotRequired) {
+    if (!/^### Queue Snapshot$/m.test(text)) {
+      failures.push(
+        `${relativePath}: active queue docs must include a Queue Snapshot section`
+      );
+    }
+
+    for (const fieldName of queueSnapshotFields) {
+      if (!new RegExp(`^- ${escapeRegExp(fieldName)}:`, "m").test(text)) {
+        failures.push(`${relativePath}: Queue Snapshot missing "${fieldName}"`);
+      }
+    }
+  }
+
+  if (
+    queueSnapshotRequired &&
+    queueSnapshotValues.task_count != null &&
+    Number.isFinite(Number(queueSnapshotValues.task_count)) &&
+    Number(queueSnapshotValues.task_count) !== taskLedgerIds.length
+  ) {
+    failures.push(
+      `${relativePath}: Queue Snapshot task_count=${queueSnapshotValues.task_count} does not match Task Ledger count ${taskLedgerIds.length}`
+    );
+  }
+
+  if (queueStatus === "active") {
+    if (activeTask == null || activeTask === "none") {
+      failures.push(`${relativePath}: active queues must expose a non-none active_task`);
+    }
+
+    if (activeTask != null && activeTask !== "none" && !taskLedgerIds.includes(activeTask)) {
+      failures.push(
+        `${relativePath}: active_task=${activeTask} is missing from the queue task ledger`
+      );
+    }
+
+    if (
+      activeTask != null &&
+      activeTask !== "none" &&
+      !taskDefinitionIds.includes(activeTask)
+    ) {
+      failures.push(
+        `${relativePath}: active_task=${activeTask} is missing from task definitions`
+      );
+    }
+  }
+
+  if (queueSnapshotRequired) {
+    for (const taskId of taskLedgerIds) {
+      if (!taskDefinitionIds.includes(taskId)) {
+        failures.push(
+          `${relativePath}: task ledger entry ${taskId} is missing from task definitions`
+        );
+      }
+    }
+
+    for (const definition of taskDefinitions) {
+      if (!definition.hasTaskBrief) {
+        failures.push(
+          `${relativePath}: task definition ${definition.taskId} is missing required task_brief`
+        );
+      }
+
+      if (!definition.hasTaskOutcomeSummary) {
+        failures.push(
+          `${relativePath}: task definition ${definition.taskId} is missing required task_outcome_summary`
+        );
+      }
+    }
   }
 
   if (queueStatus === "done") {
@@ -540,6 +802,52 @@ function collectActiveQueueDocs(queueDir) {
   }
 
   return activeQueueIds.sort();
+}
+
+function requirePatterns(text, relativePath, failures, checks) {
+  for (const [pattern, message] of checks) {
+    if (!pattern.test(text)) {
+      failures.push(`${relativePath}: ${message}`);
+    }
+  }
+}
+
+function extractTaskLedgerIds(text) {
+  const taskIds = [];
+  for (const match of text.matchAll(/^\| `([^`]+)` \|/gm)) {
+    if (match[1].startsWith("task.")) {
+      taskIds.push(match[1]);
+    }
+  }
+
+  return [...new Set(taskIds)];
+}
+
+function extractTaskDefinitions(text) {
+  const definitions = [];
+  const headingMatches = [...text.matchAll(/^#{3,4} `([^`]+)`$/gm)];
+
+  for (let index = 0; index < headingMatches.length; index += 1) {
+    const [, taskId] = headingMatches[index];
+    if (!taskId.startsWith("task.")) {
+      continue;
+    }
+
+    const start = headingMatches[index].index ?? 0;
+    const end =
+      index + 1 < headingMatches.length
+        ? headingMatches[index + 1].index
+        : text.length;
+    const section = text.slice(start, end);
+
+    definitions.push({
+      taskId,
+      hasTaskBrief: /^- task_brief:/m.test(section),
+      hasTaskOutcomeSummary: /^- task_outcome_summary:/m.test(section),
+    });
+  }
+
+  return definitions;
 }
 
 function requireFieldValue(text, fieldName, relativePath, failures, failureMessage) {

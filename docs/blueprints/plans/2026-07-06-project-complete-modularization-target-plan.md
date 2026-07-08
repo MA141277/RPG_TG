@@ -17,6 +17,11 @@
 - proposed_queue_id: `none`
 - review_basis: `none`
 - admission_status: `none`
+- intake_status: `none`
+- intake_item_id: `none`
+- intake_summary: `none`
+- intake_result: `none`
+- intake_feedback_mode: `none`
 - blocked_by: []
 
 ## Human Context
@@ -88,6 +93,41 @@
 
 - `Use this target plan's existing queue promotion ledger and prior review fields as the default recovery source for previously recorded queue-candidates.`
 - `Do not restart a full re-audit unless new material evidence invalidates the prior classification or admission basis.`
+
+### Operator Intake Contract
+
+- Allowed operator intake:
+  - `新需求`
+  - `参考治理规范`
+- Internal-only Blueprint work:
+  - `read project-progress -> blueprint -> target plan -> active queue -> active task`
+  - `attempt active-queue absorption`
+  - `classify and route the intake`
+  - `record candidate truth or admission truth without asking the operator to fill internal fields`
+- Default operator output:
+
+```text
+处理结果：
+- 加入状态：成功 / 失败 / 成功，已加入
+- 加入类型：执行队列 / 候选队列 / 未加入
+- 加入队列：`具体队列ID` / `none`
+
+原因说明：
+- 用 2~4 句话说明为什么进入该队列，或者为什么没有成功加入。
+- 如果没有进入执行队列，要明确说明是因为当前已有 active queue，还是因为它当前只满足候选条件。
+
+当前执行情况：
+- 当前执行队列：`具体队列ID`
+- 当前任务：`具体 task ID`
+- 当前队列目标：一句话说明
+
+下一步：
+- 说明 Blueprint 接下来会如何处理
+- 人工操作：当前不需要 / 当前需要确认 xxx
+```
+
+- Default visibility rule:
+  - `默认不向人工暴露真值链细节、候选全集、Why Not The Others、Human Involvement Boundary、admission 内部字段或排序全过程，除非人工明确要求展开内部分析。`
 
 ### Target Lifecycle Rules
 

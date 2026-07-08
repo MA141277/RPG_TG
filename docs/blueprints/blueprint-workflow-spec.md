@@ -127,6 +127,11 @@ The target plan is the only live governor for:
 - `proposed_queue_id`
 - `review_basis`
 - `admission_status`
+- `intake_status`
+- `intake_item_id`
+- `intake_summary`
+- `intake_result`
+- `intake_feedback_mode`
 - queue promotion / hold / reopen / closeout conclusions
 - target-level closeout decision
 
@@ -140,6 +145,7 @@ The queue doc is the only live governor for:
 - task ordering
 - queue closeout conditions
 - queue-local progress record
+- queue snapshot summary for operator-facing visibility
 - queue-level verification
 - `closeout_status`
 - `next_effect`
@@ -223,6 +229,13 @@ Closed queues, closed targets, historical notes, and `docs/change-log.md` must n
 
 The first step for a fresh queue-worthy item is not queue creation and not implementation.
 
+Plain-language operator requests are valid intake inputs. For fresh queue intake, the operator-facing minimum input is:
+
+- `新需求`
+- `参考治理规范`
+
+Blueprint must internalize the governance mechanics that follow from that input rather than forcing the operator to manually drive `item.xxx`, candidate, review, or admission fields.
+
 The mandatory startup order is:
 
 1. read the current truth chain:
@@ -237,8 +250,40 @@ The mandatory startup order is:
 6. sync the target plan admission review fields
 7. only after target-level admission sync may the admitted queue doc be created and activated
 8. only after the queue doc exposes `queue_status = active` plus a written `active_task` may implementation begin
+9. if implementation does not begin immediately, emit the fixed operator receipt contract rather than exposing Blueprint internal analysis by default
 
 If any earlier step is incomplete, the queue startup must stop there.
+
+### 7.1.1 Fixed operator receipt contract
+
+Unless the operator explicitly asks for internal Blueprint analysis, the default output for fresh intake must be the fixed receipt below and nothing more detailed:
+
+```text
+处理结果：
+- 加入状态：成功 / 失败 / 成功，已加入
+- 加入类型：执行队列 / 候选队列 / 未加入
+- 加入队列：`具体队列ID` / `none`
+
+原因说明：
+- 用 2~4 句话说明为什么进入该队列，或者为什么没有成功加入。
+- 如果没有进入执行队列，要明确说明是因为当前已有 active queue，还是因为它当前只满足候选条件。
+
+当前执行情况：
+- 当前执行队列：`具体队列ID`
+- 当前任务：`具体 task ID`
+- 当前队列目标：一句话说明
+
+下一步：
+- 说明 Blueprint 接下来会如何处理
+- 人工操作：当前不需要 / 当前需要确认 xxx
+```
+
+Hard rules:
+
+1. `当前执行情况` must be derived from live truth, not guessed prose.
+2. The fixed receipt is the default for absorb, candidate-record, and admission-routing outcomes.
+3. Default intake output must not expose truth-chain detail, candidate set, ranking process, `Why Not The Others`, `Human Involvement Boundary`, or raw admission fields.
+4. Those internal details may be expanded only when the operator explicitly asks for Blueprint internal analysis.
 
 ### 7.2 Mandatory admission before fresh implementation
 
@@ -323,6 +368,8 @@ Rules:
 2. if the item cannot be absorbed, it may be classified and recorded as a candidate, but it must not be activated as a second queue
 3. the target plan must not keep a live admission review subject while another queue remains active
 4. the agent must wait for current queue closeout and return to target-level review before activating a new queue
+
+When an active queue exists, the fixed operator receipt must still explain whether the fresh item was absorbed or converged into a candidate queue, and it must include the current queue snapshot needed for operator visibility.
 
 ## 8. Classification Trace Rules
 
@@ -476,10 +523,21 @@ Required queue fields:
 - `closeout_status`
 - `next_effect`
 
+Required queue snapshot fields for active queues:
+
+- `queue_goal`
+- `task_count`
+- `completed_task_count`
+- `remaining_task_count`
+- `active_task_summary`
+- `task_briefs`
+
 Required task fields:
 
 - `task_id`
 - `state`
+- `task_brief`
+- `task_outcome_summary`
 - `scope`
 - `must_inspect`
 - `must_not_change`
@@ -499,6 +557,8 @@ Hard queue rules:
    - `Current active task` language
 4. A queue doc must not be created as a substitute for target-level candidate tracking. Candidate tracking belongs in the target plan until queue activation is legal.
 5. If a queue doc exists, it must represent admitted queue truth, not pre-admission speculation.
+6. If a queue is `active`, it must expose a `Queue Snapshot` that explains queue purpose, task count, active task, and per-task role without creating a second source of executable truth.
+7. `decision-dispatch` is a legal queue-local task shape when an active queue needs human decision, scope trimming, recommendation output, or blocker routing, but it does not replace target-level `promotion-review` and does not create a new resume layer.
 
 ## 11. Post-Task Auto-Reconcile And Closeout Auto-Advance
 
@@ -581,6 +641,8 @@ Do not ask when the answer can be determined from:
 - queue doc
 - codebase state
 - existing docs
+
+If an active queue exists and the question depends on queue progress, emit a queue snapshot before asking.
 
 The decision order is:
 

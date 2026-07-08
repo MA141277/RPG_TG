@@ -73,6 +73,22 @@ This queue does not cover:
 - Target plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
+### Queue Snapshot
+
+- queue_goal: `Recover the pure-shell src/main.ts contract and expose the renewed ownerization queue state in a reusable summary.`
+- task_count: `7`
+- completed_task_count: `4`
+- remaining_task_count: `3`
+- active_task_summary: `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile is re-auditing src/main.ts to freeze the bounded reclosure cut before any renewed ownerization work starts.`
+- task_briefs:
+  - `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile: re-audit current src/main.ts drift and freeze the smallest lawful reclosure cut.`
+  - `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization: remove the bounded non-shell residues named by the reclosure baseline.`
+  - `task.main-shell-and-layout-editor-ownerization.reclosure-closeout: re-run pure-shell closeout review after renewed ownerization and verification.`
+  - `task.main-shell-and-layout-editor-ownerization.baseline-reconcile: historical baseline that froze the original pure-shell acceptance line.`
+  - `task.main-shell-and-layout-editor-ownerization.layout-editor-ownerization: historical extraction of layout editor behavior out of src/main.ts.`
+  - `task.main-shell-and-layout-editor-ownerization.render-and-layout-bootstrap-ownerization: historical extraction of render scheduling and layout bootstrap ownership out of src/main.ts.`
+  - `task.main-shell-and-layout-editor-ownerization.queue-closeout: historical closeout task that later proved stale and triggered this bounded reclosure.`
+
 ### Admission Preconditions
 
 - `This queue is admitted only after the target plan is synchronized with fresh main.ts shell/editor evidence.`
@@ -151,6 +167,10 @@ This queue does not cover:
 
 #### Human Context
 
+- task_brief:
+  - `Re-audit src/main.ts and freeze the smallest lawful reclosure cut before renewed ownerization starts.`
+- task_outcome_summary:
+  - `Current active task; it remains open until queue truth names the exact non-shell residues and the next lawful step.`
 - Purpose:
   - `Reopen the queue on one narrow source-truth check instead of assuming the whole old ownerization batch must be rerun.`
 - Failure mode:
@@ -201,6 +221,10 @@ This queue does not cover:
 
 #### Human Context
 
+- task_brief:
+  - `Remove the bounded non-shell residues confirmed by the reclosure baseline without widening into a broader rewrite.`
+- task_outcome_summary:
+  - `Queued task; it should start only after the reclosure baseline names the renewed owner split.`
 - Purpose:
   - `Recover the pure-shell contract only after the renewed baseline names the smallest lawful ownerization cut.`
 - Failure mode:
@@ -251,6 +275,10 @@ This queue does not cover:
 
 #### Human Context
 
+- task_brief:
+  - `Close the reopened queue only after renewed ownerization and verification prove the fresh drift is gone.`
+- task_outcome_summary:
+  - `Queued closeout task; it should only run after renewed ownerization completes and verification is ready.`
 - Purpose:
   - `Close the reopened queue only after the renewed ownerization work proves the previous drift has been removed.`
 - Failure mode:
@@ -309,6 +337,10 @@ This queue does not cover:
 
 #### Human Context
 
+- task_brief:
+  - `Freeze the original pure-shell acceptance contract and the required owner split before implementation.`
+- task_outcome_summary:
+  - `Done historical baseline task; it recorded the original owner split and acceptance truth for the queue.`
 - Purpose:
   - `Freeze the pure-shell contract and the required owner split before implementation starts moving code.`
 - Failure mode:
@@ -380,6 +412,10 @@ This queue does not cover:
 
 #### Human Context
 
+- task_brief:
+  - `Extract layout editor behavior ownership out of src/main.ts through a dedicated coordinator seam.`
+- task_outcome_summary:
+  - `Done historical implementation task; layout editor input and drag ownership moved into application/layout-editor/layout-editor-coordinator.ts.`
 - Purpose:
   - `Extract the current layout editor behavior owner line without changing the queue boundary.`
 - Failure mode:
@@ -447,6 +483,10 @@ This queue does not cover:
 
 #### Human Context
 
+- task_brief:
+  - `Move render scheduling and layout bootstrap ownership out of src/main.ts after the editor owner line exists.`
+- task_outcome_summary:
+  - `Done historical implementation task; render/bootstrap ownership moved out of src/main.ts, but later drift forced the current bounded reclosure.`
 - Purpose:
   - `Finish the pure-shell extraction by moving render and layout baseline ownership out of main.ts after the editor owner line exists.`
 - Failure mode:
@@ -517,6 +557,10 @@ This queue does not cover:
 
 #### Human Context
 
+- task_brief:
+  - `Verify pure-shell closure and synchronize Blueprint truth before returning to target review.`
+- task_outcome_summary:
+  - `Historical closeout task recorded as blocked/partial on prior evidence and now serves as stale closeout context behind the current reclosure.`
 - Purpose:
   - `Verify that pure-shell closure is real, not cosmetic, and synchronize Blueprint truth before returning to target review.`
 - Failure mode:

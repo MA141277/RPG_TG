@@ -5,6 +5,19 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-08 Blueprint Intake Minimal Input And Fixed Receipt Rule
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，把 fresh queue intake 的人工输入面正式收口为 `新需求 + 参考治理规范`，并明确 Blueprint 必须内部完成真值链读取、active-queue 吸收判断、候选收敛与 admission routing。
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md) 与当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，新增固定 operator receipt 契约，默认输出统一为 `处理结果 / 原因说明 / 当前执行情况 / 下一步` 四段回执，并显式写入 `人工操作：当前不需要 / 当前需要确认 xxx`。
+- 更新 [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)，要求 operator receipt 的 `当前执行情况` 直接取自 `queue_id`、`active_task` 与 `queue_goal`，避免队列可观测性继续依赖会话 prose。
+- 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，把 `intake_feedback_mode` 收口为单一 `fixed-receipt`，并增加对最小人工输入规则、固定回执契约和 operator snapshot contract 的静态校验。
+
+### Impact
+- 人工创建 fresh queue 相关需求时，不再需要手工命名 `item.xxx` 或填写 review/admission 内部字段。
+- Blueprint 对人工的默认反馈不再漂移成长篇内部分析，而是固定返回同一张简洁回执，同时保留队列目标、任务数和当前任务的可见性来源。
+- active queue 存在时，新增需求默认只会被吸收到当前队列或收敛为候选项；并行激活第二个 active queue 仍然被 fail-closed。 
+
 ## 2026-07-07 Playable Contribution Runtime Closure
 
 ### Changed

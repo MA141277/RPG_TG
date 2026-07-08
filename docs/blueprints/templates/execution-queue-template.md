@@ -38,6 +38,23 @@
 - Target plan:
   - `docs/blueprints/plans/...`
 
+### Queue Snapshot
+
+- queue_goal: `Replace with the bounded queue goal in one sentence.`
+- task_count: `1`
+- completed_task_count: `0`
+- remaining_task_count: `1`
+- active_task_summary: `Replace with the current active-task summary.`
+- task_briefs:
+  - `task.replace-me: Replace with a one-line task brief.`
+
+### Operator Snapshot Contract
+
+- `The fixed operator receipt must source 当前执行队列 from queue_id.`
+- `The fixed operator receipt must source 当前任务 from active_task.`
+- `The fixed operator receipt must source 当前队列目标 from queue_goal.`
+- `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
+
 ### Admission Preconditions
 
 - `This queue must not be created or treated as implementation authority until the target plan already records admission review truth.`
@@ -79,6 +96,7 @@
 
 - task_id: `task.replace-me`
 - state: `active`
+- task_kind: `execution | decision-dispatch`
 - scope:
   - `path/or/module/a`
   - `path/or/module/b`
@@ -104,10 +122,19 @@
 
 ##### Human Context
 
+- task_brief:
+  - `Replace with the one-sentence task responsibility.`
+- task_outcome_summary:
+  - `Replace with the expected or current task outcome in one sentence.`
 - Purpose:
   - `Replace with the task purpose.`
 - Failure mode:
   - `Replace with the main failure risk.`
+
+##### Decision-Dispatch Notes
+
+- `If task_kind=decision-dispatch, this task must summarize current queue progress and provide one concise recommendation.`
+- `Default operator output should stay concise and should not dump candidate-set analysis, why-not-the-others detail, or other Blueprint internal reasoning unless the operator explicitly asks for it.`
 
 ## Closeout Decision
 
