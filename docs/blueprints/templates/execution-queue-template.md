@@ -1,4 +1,4 @@
-# Queue Title
+# Execution Queue Template
 
 ## Control Block
 
@@ -10,6 +10,9 @@
 - next_task: `task.replace-me-next | none`
 - closeout_status: `in-progress | done | blocked`
 - next_effect: `promote-next-queue | return-to-target-review | block-target | none`
+- sync_status: `pending | success | failed`
+- sync_scope: `branch-push | baseline-merge | baseline-push | none`
+- sync_summary: `Replace with the latest repository sync result.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -42,6 +45,13 @@
 - `If this queue is admitted from a fresh queue-candidate, the target plan admission fields must be synchronized before any queue activation or code implementation starts.`
 - `User scope approval alone must not be treated as queue admission.`
 - `Candidate tracking belongs in the target plan; this queue doc is for admitted queue truth only.`
+
+### Repository Sync Record Rule
+
+- `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
+- `The queue-local sync record stores only repository sync result; it does not change task, queue, or target truth.`
+- `A blocked queue still allows commit, push, and merge; repository sync is not forbidden just because execution is blocked.`
+- `sync failure must not be copied into blocked_by, queue closeout gates, target closeout gates, or target scheduling truth.`
 
 ### Activation Order
 
@@ -85,7 +95,7 @@
   - `command-a`
   - `command-b`
 - if_blocked:
-  - `Record blocker in the queue doc.`
+  - `Record execution blockers in the queue doc, not repository sync failures.`
   - `Do not silently widen scope.`
 - promote_next_if_done: `task.replace-me-next`
 - stop_if:

@@ -559,6 +559,17 @@ Queue closeout sync order is fixed:
 5. project-progress
 6. optional `docs/change-log.md` mirror update
 
+### 11.4 Task after-state repository sync
+
+After a task reaches a terminal execution state:
+
+1. write the task after-state first
+2. write queue truth and any required target truth second
+3. trigger one minimum repository sync batch third
+4. continue Blueprint scheduling after the sync attempt returns a result
+
+Repository sync success or failure must not rewrite the already-recorded execution conclusion.
+
 ## 12. Human Confirmation Constraint
 
 Per task, at most one human-confirmation question may be asked.
@@ -684,22 +695,26 @@ Otherwise the agent must update the governing docs directly.
 
 ## 17. Git Integration Rules
 
-Git integration is mandatory governance behavior.
+Git integration is mandatory repository sync behavior, but it is non-governing for Blueprint state.
 
 Rules:
 
 1. `mod-first` is the main integration branch.
 2. `mod-first-dev` is the development trunk.
 3. All work happens on a working branch.
-4. The full commit / push / merge / fresh-branch loop is mandatory after:
-   - queue closeout
-   - target closeout
-   - an explicit integration checkpoint
+4. The minimum repository sync batch is commit, push current branch, merge into baseline, and push baseline after each terminal task after-state once the required docs are updated.
 5. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
-6. Ordinary task batches must still produce a structured content summary, but they do not automatically require the full merge loop.
+6. Commit / push / merge are non-governing: they must not change task state, queue state, target state, or target scheduling truth.
 7. Local hook or CI enforcement must reject commit messages that omit the required summary block.
-8. After merge into `mod-first-dev`, do not keep developing on the already-integrated branch.
-9. Resume truth comes from the governance docs integrated into `mod-first-dev`, not branch memory.
+8. Repository sync failure is recorded only as repository sync result in the queue-local sync record.
+9. Repository sync failure must not be rewritten as queue blocker, target blocker, repository/global verification failure, or decision_required.
+10. If repository sync fails, Blueprint scheduling still continues from the written governance docs rather than waiting for success.
+11. Ask the user only when baseline selection is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current target truth cannot decide.
+12. Resume truth comes from the written governance docs, not branch memory.
+13. A merge conflict is part of repository sync, not execution-state governance.
+14. A merge conflict must not rewrite the already-recorded task, queue, or target conclusion.
+15. If current target truth uniquely decides the merge direction, resolve it without asking.
+16. Record merge-conflict outcome only in the queue-local sync record rather than elevating it into target live truth.
 
 ## 18. Drift-Prone Field Reduction
 

@@ -75,7 +75,7 @@
   - admission startup rules
   - candidate recovery ledger
   - single-active-queue rule
-- 更新 [docs/blueprints/templates/topic-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/topic-queue-template.md)，去掉 `queue_status = candidate`，明确 queue doc 只承载 admitted queue truth，不再充当 pre-admission candidate 容器。
+- 更新 [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)，去掉 `queue_status = candidate`，明确 queue doc 只承载 admitted queue truth，不再充当 pre-admission candidate 容器。
 - 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，补入 queue admission startup 与 candidate recovery 的当前期恢复规则。
 - 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，把以下低成本可静态拦截项纳入 lint：
   - queue doc 使用 `queue_status = candidate`
@@ -116,7 +116,7 @@
   - `proposed_queue_id`
   - `review_basis`
   - `admission_status`
-- 更新 [docs/blueprints/templates/topic-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/topic-queue-template.md)，把 queue doc 明确限制为“被 admission 后的执行真值载体”，不再允许 scope approval 直接替代 queue activation。
+- 更新 [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)，把 queue doc 明确限制为“被 admission 后的执行真值载体”，不再允许 scope approval 直接替代 queue activation。
 - 更新 [docs/blueprints/classification-rule-layer-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/classification-rule-layer-spec.md)，明确 classification layer 只能路由，不能自行授权实现；任何会改变 active truth 的 classification 都必须回写 target plan admission fields。
 - 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，补入 admission review 结构化字段，并将当前下一执行点从单纯 `resume-active-queue` 收口为 `auto-reconcile-active-task`，避免“验证完成却停在汇报”继续漂移。
 - 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，把当前可静态拦截的 admission / closeout 状态矛盾纳入 lint。
@@ -142,7 +142,7 @@
   - [docs/blueprints/templates/blueprint-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/blueprint-template.md)
   - [docs/blueprints/templates/target-spec-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-spec-template.md)
   - [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)
-  - [docs/blueprints/templates/topic-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/topic-queue-template.md)
+  - [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)
 - 重写当前 live 文档：
   - [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)
   - [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)
@@ -174,7 +174,7 @@
 - 新增 Blueprint 模板族：
   - [docs/blueprints/templates/project-progress-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/project-progress-template.md)
   - [docs/blueprints/templates/blueprint-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/blueprint-template.md)
-  - [docs/blueprints/templates/topic-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/topic-queue-template.md)
+  - [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)
   - [docs/blueprints/templates/target-spec-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-spec-template.md)
   - [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)
 

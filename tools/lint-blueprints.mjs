@@ -30,6 +30,8 @@ const allowedAdmissionStatuses = new Set([
   "blocked",
 ]);
 const allowedQueueStatuses = new Set(["active", "blocked", "done", "dropped"]);
+const allowedSyncStatuses = new Set(["pending", "success", "failed"]);
+const allowedSyncScopes = new Set(["branch-push", "baseline-merge", "baseline-push", "none"]);
 
 export function lintBlueprintDocs(repoRoot = process.cwd()) {
   const failures = [];
@@ -80,6 +82,13 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
     (filePath, innerFailures) =>
       lintTargetSpec(filePath, innerFailures, repoRoot, "target-spec template")
   );
+  lintTemplate(
+    path.join(blueprintsRoot, "templates", "execution-queue-template.md"),
+    failures,
+    repoRoot,
+    (filePath, innerFailures) =>
+      lintQueueDoc(filePath, innerFailures, repoRoot, true)
+  );
 
   lintCrossDocumentConsistency(
     projectProgressPath,
@@ -107,6 +116,7 @@ function lintProjectProgress(filePath, failures, repoRoot) {
   }
 
   const relativePath = relative(repoRoot, filePath);
+  rejectQueueLocalSyncFields(text, relativePath, failures, "project-progress");
 
   if (/^- next_step:/m.test(text)) {
     failures.push(
@@ -133,6 +143,7 @@ function lintBlueprintIndex(filePath, failures, repoRoot) {
   }
 
   const relativePath = relative(repoRoot, filePath);
+  rejectQueueLocalSyncFields(text, relativePath, failures, "blueprint");
   for (const forbiddenField of [
     "target_status",
     "decision_state",
@@ -156,6 +167,7 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
 
   const relativePath = relative(repoRoot, filePath);
   const isTemplate = relativePath.includes("/templates/");
+  rejectQueueLocalSyncFields(text, relativePath, failures, label);
 
   if (/^- next_legal_action:/m.test(text)) {
     failures.push(
@@ -227,6 +239,7 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   const reviewSubjectId = matchField(text, "review_subject_id");
   const proposedQueueId = matchField(text, "proposed_queue_id");
   const reviewBasis = matchField(text, "review_basis");
+  const blockedByEntries = extractListEntries(text, "blocked_by");
 
   if (!isTemplate && activeQueue === "none" && decisionState === "active-execution") {
     failures.push(
@@ -277,6 +290,15 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
       `${relativePath}: ${label} must not keep a live admission review subject while active_queue=${activeQueue}`
     );
   }
+
+  if (
+    !isTemplate &&
+    blockedByEntries.some((entry) => isRepositorySyncMirror(entry))
+  ) {
+    failures.push(
+      `${relativePath}: ${label} blocked_by must not mirror merge conflict or repository sync state as target-level blocker truth`
+    );
+  }
 }
 
 function lintTargetSpec(filePath, failures, repoRoot, label) {
@@ -286,6 +308,7 @@ function lintTargetSpec(filePath, failures, repoRoot, label) {
   }
 
   const relativePath = relative(repoRoot, filePath);
+  rejectQueueLocalSyncFields(text, relativePath, failures, label);
 
   if (/^### Queue Portfolio$/m.test(text)) {
     failures.push(
@@ -317,59 +340,106 @@ function lintQueueDocs(queueDir, failures, repoRoot) {
     }
 
     const filePath = path.join(queueDir, entry.name);
-    const text = fs.readFileSync(filePath, "utf8");
-    const relativePath = relative(repoRoot, filePath);
-    const head = text.split(/\r?\n/u).slice(0, 25).join("\n");
+    lintQueueDoc(filePath, failures, repoRoot, false);
+  }
+}
 
-    for (const requiredField of [
-      "queue_status",
-      "active_task",
-      "closeout_status",
-      "next_effect",
-    ]) {
-      if (!new RegExp(`^- ${escapeRegExp(requiredField)}:`, "m").test(head)) {
+function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  const head = text.split(/\r?\n/u).slice(0, 35).join("\n");
+
+  for (const requiredField of [
+    "queue_status",
+    "active_task",
+    "closeout_status",
+    "next_effect",
+  ]) {
+    if (!new RegExp(`^- ${escapeRegExp(requiredField)}:`, "m").test(head)) {
+      failures.push(
+        `${relativePath}: queue Control Block missing "${requiredField}"`
+      );
+    }
+  }
+
+  if (/^- status:/m.test(head)) {
+    failures.push(
+      `${relativePath}: queue Control Block must not use legacy status field; use queue_status`
+    );
+  }
+
+  const queueStatus = matchField(head, "queue_status");
+  const activeTask = matchField(head, "active_task");
+  const syncStatus = matchField(head, "sync_status");
+  const syncScope = matchField(head, "sync_scope");
+  const syncSummary = matchField(head, "sync_summary");
+
+  if (!isTemplate && queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
+    failures.push(
+      `${relativePath}: queue_status=${queueStatus} is not an allowed queue status`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueStatus !== "active" &&
+    activeTask != null &&
+    activeTask !== "none"
+  ) {
+    failures.push(
+      `${relativePath}: queue must not keep active_task=${activeTask} while queue_status=${queueStatus}`
+    );
+  }
+
+  if (isTemplate || queueStatus === "active" || queueStatus === "blocked") {
+    for (const fieldName of ["sync_status", "sync_scope", "sync_summary"]) {
+      if (!new RegExp(`^- ${escapeRegExp(fieldName)}:`, "m").test(head)) {
         failures.push(
-          `${relativePath}: queue Control Block missing "${requiredField}"`
+          `${relativePath}: queue Control Block missing repository sync record field "${fieldName}"`
         );
       }
     }
+  }
 
-    if (/^- status:/m.test(head)) {
-      failures.push(
-        `${relativePath}: queue Control Block must not use legacy status field; use queue_status`
-      );
-    }
+  if (!isTemplate && syncStatus != null && !allowedSyncStatuses.has(syncStatus)) {
+    failures.push(
+      `${relativePath}: sync_status=${syncStatus} is not an allowed repository sync status`
+    );
+  }
 
-    const queueStatus = head.match(/^- queue_status: `([^`]+)`/m)?.[1] ?? null;
-    const activeTask = head.match(/^- active_task: `([^`]+)`/m)?.[1] ?? null;
+  if (!isTemplate && syncScope != null && !allowedSyncScopes.has(syncScope)) {
+    failures.push(
+      `${relativePath}: sync_scope=${syncScope} is not an allowed repository sync scope`
+    );
+  }
 
-    if (queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
-      failures.push(
-        `${relativePath}: queue_status=${queueStatus} is not an allowed queue status`
-      );
-    }
+  const blockedByEntries = extractListEntries(head, "blocked_by");
+  if (
+    blockedByEntries.some((entry) => isRepositorySyncMirror(entry))
+  ) {
+    failures.push(
+      `${relativePath}: queue blocked_by must not mirror merge conflict or repository sync state as execution blockers`
+    );
+  }
 
-    if (queueStatus !== "active" && activeTask != null && activeTask !== "none") {
-      failures.push(
-        `${relativePath}: queue must not keep active_task=${activeTask} while queue_status=${queueStatus}`
-      );
-    }
-
-    if (queueStatus === "done") {
-      const disallowedPatterns = [
-        /^### Execution State$/m,
-        /^## Next Executable Task$/m,
-        /^## Candidate Backlog$/m,
-        /Current Focus:/m,
-        /Active Task:/m,
-        /Next Step:/m,
-      ];
-      for (const pattern of disallowedPatterns) {
-        if (pattern.test(text)) {
-          failures.push(
-            `${relativePath}: done queue still contains live execution label matching ${pattern}`
-          );
-        }
+  if (queueStatus === "done") {
+    const disallowedPatterns = [
+      /^### Execution State$/m,
+      /^## Next Executable Task$/m,
+      /^## Candidate Backlog$/m,
+      /Current Focus:/m,
+      /Active Task:/m,
+      /Next Step:/m,
+    ];
+    for (const pattern of disallowedPatterns) {
+      if (pattern.test(text)) {
+        failures.push(
+          `${relativePath}: done queue still contains live execution label matching ${pattern}`
+        );
       }
     }
   }
@@ -486,6 +556,37 @@ function matchField(text, fieldName) {
   return (
     text.match(new RegExp(`^- ${escapeRegExp(fieldName)}: \`([^\\\`]+)\``, "m"))?.[1] ??
     null
+  );
+}
+
+function extractListEntries(text, fieldName) {
+  const match = text.match(
+    new RegExp(`^- ${escapeRegExp(fieldName)}:\\s*\\r?\\n((?:  - .*\\r?\\n?)*)`, "m")
+  );
+  if (match == null || match[1].trim() === "") {
+    return [];
+  }
+
+  return match[1]
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("- "))
+    .map((line) => line.slice(2).replace(/^`|`$/g, ""));
+}
+
+function rejectQueueLocalSyncFields(text, relativePath, failures, label) {
+  for (const fieldName of ["sync_status", "sync_scope", "sync_summary"]) {
+    if (new RegExp(`^- ${escapeRegExp(fieldName)}:`, "m").test(text)) {
+      failures.push(
+        `${relativePath}: ${label} must not mirror queue-local repository sync field "${fieldName}"`
+      );
+    }
+  }
+}
+
+function isRepositorySyncMirror(entry) {
+  return /(repository sync|merge conflict|branch push|baseline merge|baseline push|\bgit\b|\bcommit\b|\bpush\b|\bmerge\b)/i.test(
+    entry
   );
 }
 

@@ -99,11 +99,13 @@ Allowed `next_action` values:
 
 1. `Run verify_with.`
 2. `Check done_when.`
-3. `Re-evaluate queue closeout.`
-4. `Scan governance owners.`
-5. `Scan residue.`
-6. `If the next legal step is unique, continue directly into closeout or target review.`
-7. `Optionally mirror the result into change-log.`
+3. `Write the task after-state, queue truth, and any required target truth before any repository sync begins.`
+4. `Re-evaluate queue closeout.`
+5. `Scan governance owners.`
+6. `Scan residue.`
+7. `Trigger one minimum repository sync batch after the docs are updated.`
+8. `If the next legal step is unique, continue directly into closeout or target review once the sync attempt returns a result.`
+9. `Optionally mirror the result into change-log.`
 
 ### Human Confirmation Constraint
 
@@ -112,23 +114,32 @@ Allowed `next_action` values:
 - `If only one legal branch exists, do not ask.`
 - `Scope approval does not replace admission.`
 - `Do not ask whether to perform closeout, promotion review, or doc sync when they are already the unique next legal step.`
+- `Do not raise decision_required merely because repository sync failed.`
+- `Do not ask about a merge conflict when current target truth already uniquely decides the legal resolution.`
+- `Ask only when the baseline is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current target truth cannot decide alone.`
 - `Exception: target closeout requires explicit human confirmation before target_status changes from open to done.`
 
-### Git Integration Loop
+### Repository Sync Policy
+
+- `Git sync is non-governing.`
+- `commit / push / merge must not change queue truth, target truth, candidate truth, or transition truth.`
+- `push / merge must not become a queue closeout gate.`
+- `push / merge must not become a target closeout gate.`
+- `Task execution conclusions are written first; repository sync runs second.`
+- `A failed sync attempt is recorded only as repository sync result in the queue-local sync record.`
+- `A merge conflict is a repository sync event; it must not rewrite the already-recorded task, queue, or target conclusion.`
+- `If current target truth uniquely decides the merge conflict direction, resolve it without asking.`
+- `Target scheduling must not read sync_status, sync_scope, or sync_summary as live truth.`
+
+### Minimum Repository Sync Batch
 
 1. `Draft the commit message as <type>: <brief title> plus a Summary: block with real bullets.`
 2. `Run commit-message validation before commit.`
 3. `Commit the working branch.`
 4. `Push the working branch.`
-5. `Merge into the latest mod-first-dev with the same commit-message summary rule.`
-6. `Cut a fresh branch from the updated mod-first-dev.`
-7. `Resume from integrated Blueprint truth, not branch-local memory.`
-
-Mandatory merge loop triggers:
-
-- `queue closeout`
-- `target closeout`
-- `explicit integration checkpoint`
+5. `Merge into the latest baseline branch.`
+6. `Push the baseline branch.`
+7. `Resume from the written Blueprint truth after the sync attempt returns success or failure.`
 
 ### Prior Promotion Record
 
