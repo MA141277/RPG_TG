@@ -1,4 +1,8 @@
-import type { HexTravelGrid } from "../../../application/navigation/travel-to-coordinate";
+import type {
+  CoordinateSpace,
+  GridCoordinate,
+  HexTravelGrid,
+} from "../../../application/navigation/travel-to-coordinate";
 import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
 import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
 import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
@@ -117,6 +121,8 @@ const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
 const HEX_ELEVATION_LEVELS = 8;
 const HEX_WATER_HEIGHT_THRESHOLD = 0.005;
+const HEX_PASSABLE_HEIGHT_THRESHOLD = 0.0005;
+const HEX_PASSABLE_MIN_LAND_SAMPLES = 2;
 const HEX_WALL_HEIGHT_EPSILON = 0.01;
 const GRASS_TEXTURE_DETAIL = 1.15;
 const GRASS_AMBIENT_LIGHT = 0.58;
@@ -162,11 +168,36 @@ export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
 };
 const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
 
-type CampaignTerrainCamera = {
+export type CampaignTerrainCamera = {
   scale: number;
   offsetX: number;
   offsetY: number;
 };
+
+export function createCampaignTerrainCameraCenteredOnCoordinate(input: {
+  coordinate: GridCoordinate;
+  coordinateSpace: CoordinateSpace;
+  scale: number;
+}): CampaignTerrainCamera {
+  const safeScale = Math.max(input.scale, 0.1);
+  const u = input.coordinate.x / Math.max(input.coordinateSpace.width, 1);
+  const v = 1 - input.coordinate.y / Math.max(input.coordinateSpace.height, 1);
+  const worldPoint = createTerrainWorldPoint(u, v, 0);
+  const scaledX = worldPoint[0] * TERRAIN_SCALE;
+  const scaledY = worldPoint[1] * TERRAIN_SCALE;
+  const scaledZ = worldPoint[2];
+  const tiltCos = Math.cos(CAMERA_TILT_RADIANS);
+  const tiltSin = Math.sin(CAMERA_TILT_RADIANS);
+  const tiltedY = scaledY * tiltCos - scaledZ * tiltSin;
+  const cameraTranslateX = -scaledX;
+  const cameraTranslateY = -tiltedY;
+
+  return {
+    scale: safeScale,
+    offsetX: Math.round(cameraTranslateX * safeScale / CAMERA_OFFSET_UNIT),
+    offsetY: Math.round(-cameraTranslateY * safeScale / CAMERA_OFFSET_UNIT),
+  };
+}
 
 type CampaignTerrainRenderer = {
   canvas: HTMLCanvasElement;
@@ -209,6 +240,13 @@ export type CampaignTerrainUvPoint = {
   v: number;
 };
 
+export type CampaignTerrainClientPoint = {
+  clientX: number;
+  clientY: number;
+  visible: boolean;
+  w: number;
+};
+
 let currentCamera: CampaignTerrainCamera = {
   scale: 1,
   offsetX: 0,
@@ -226,6 +264,75 @@ export function setCampaignTerrainCamera(camera: CampaignTerrainCamera): void {
   for (const renderer of activeRenderers.values()) {
     renderer.requestRender("static");
   }
+}
+
+export function getCampaignTerrainCamera(): CampaignTerrainCamera {
+  return currentCamera;
+}
+
+export function getCampaignTerrainProjectionSignature(root: ParentNode): string {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  const renderer =
+    terrainCanvas == null ? null : activeRenderers.get(terrainCanvas) ?? null;
+
+  return [
+    renderer == null ? "pending" : "ready",
+    currentCamera.scale.toFixed(4),
+    currentCamera.offsetX.toFixed(1),
+    currentCamera.offsetY.toFixed(1),
+    terrainCanvas?.width ?? 0,
+    terrainCanvas?.height ?? 0,
+  ].join("|");
+}
+
+export function projectCampaignTerrainUvToClientPoint(
+  root: ParentNode,
+  u: number,
+  v: number
+): CampaignTerrainClientPoint | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  const renderer = activeRenderers.get(terrainCanvas);
+  if (renderer == null) {
+    return null;
+  }
+
+  const rect = terrainCanvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  const matrix = createTerrainMatrix(
+    terrainCanvas.width / Math.max(terrainCanvas.height, 1)
+  );
+  const height = sampleHeightAt(
+    renderer.projectionInput.heights,
+    renderer.projectionInput.columns,
+    renderer.projectionInput.rows,
+    u,
+    v
+  );
+  const screenPoint = projectPoint(matrix, createTerrainWorldPoint(u, v, height));
+  const normalizedX = (screenPoint.x + 1) / 2;
+  const normalizedY = (1 - screenPoint.y) / 2;
+  const visible =
+    screenPoint.w > 0 &&
+    screenPoint.z >= -1 &&
+    screenPoint.z <= 1 &&
+    normalizedX >= 0 &&
+    normalizedX <= 1 &&
+    normalizedY >= 0 &&
+    normalizedY <= 1;
+
+  return {
+    clientX: rect.left + normalizedX * rect.width,
+    clientY: rect.top + normalizedY * rect.height,
+    visible,
+    w: screenPoint.w,
+  };
 }
 
 export function resolveCampaignTerrainUvFromClientPosition(
@@ -281,16 +388,13 @@ export function isCampaignTerrainUvPassable(
     return null;
   }
 
-  const snapped = snapTerrainUvToHexCenter(u, v);
-  const height = sampleHeightAt(
+  return isHexPassableAtUv(
     renderer.projectionInput.heights,
     renderer.projectionInput.columns,
     renderer.projectionInput.rows,
-    snapped.u,
-    snapped.v
+    u,
+    v
   );
-
-  return height > HEX_WATER_HEIGHT_THRESHOLD;
 }
 
 export function getCampaignTerrainTravelGrid(root: ParentNode): HexTravelGrid | null {
@@ -1682,14 +1786,12 @@ function createHexTravelGrid(
     bounds.minY = Math.min(bounds.minY, cell.y);
     bounds.maxY = Math.max(bounds.maxY, cell.y);
     const center = hexToPixel(cell.x, cell.y);
-    const height = sampleHeightAt(
+    if (isHexPassableAtHexPoint(
       heights,
       columns,
       rows,
-      hexPointToTerrainU(center.x),
-      hexPointToTerrainV(center.y)
-    );
-    if (height > HEX_WATER_HEIGHT_THRESHOLD) {
+      center
+    )) {
       passableHexKeys.add(getHexCellKey(cell.x, cell.y));
     }
   }
@@ -1892,6 +1994,56 @@ function quantizeHexElevation(height: number): number {
   );
 
   return level / (HEX_ELEVATION_LEVELS - 1);
+}
+
+function isHexPassableAtUv(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): boolean {
+  const point = terrainUvToHexPoint(u, v);
+  const cell = pixelToRoundedHex(point.x, point.y);
+  return isHexPassableAtHexPoint(heights, columns, rows, hexToPixel(cell.x, cell.y));
+}
+
+function isHexPassableAtHexPoint(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  center: { x: number; y: number }
+): boolean {
+  let landSamples = 0;
+  let centerHeight = 0;
+  const samplePoints = [
+    { x: center.x, y: center.y },
+    ...HEX_CORNER_OFFSETS.map((corner) => ({
+      x: center.x + corner.x * 0.58,
+      y: center.y + corner.y * 0.58,
+    })),
+  ];
+
+  for (const [index, point] of samplePoints.entries()) {
+    const height = sampleHeightAt(
+      heights,
+      columns,
+      rows,
+      hexPointToTerrainU(point.x),
+      hexPointToTerrainV(point.y)
+    );
+    if (index === 0) {
+      centerHeight = height;
+    }
+    if (height > HEX_PASSABLE_HEIGHT_THRESHOLD) {
+      landSamples += 1;
+    }
+  }
+
+  return (
+    centerHeight > HEX_WATER_HEIGHT_THRESHOLD ||
+    landSamples >= HEX_PASSABLE_MIN_LAND_SAMPLES
+  );
 }
 
 function createTexture(

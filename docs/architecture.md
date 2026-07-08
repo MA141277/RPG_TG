@@ -163,11 +163,11 @@ GlobalUI
 
 Campaign 地图的水域/陆地通行性来自当前地图的地形资产。`campaign-terrain-webgl.ts` 从 `map_heights` 图层采样出 passable hex 网格，navigation 层只消费这份网格做寻路；不要在 gameplay 代码里手写某张地图的水格坐标。
 
-Campaign 地图的水体视觉来自可选 `map_water_noise` 图层。该图层是纯表现资产：`map-view.ts` 只把它作为 terrain canvas 的 `data-map-water-texture-url` 传给 WebGL renderer，`campaign-terrain-webgl.ts` 只加载一次并在 fragment shader 中用 `uTimeSeconds` 滚动采样。近岸浅绿效果由 shader 对 `map_ground_types` 的相邻 hex 材质采样得出，不改变点击、投影、通行性或 navigation 路径模型。
+Campaign 地图的水体视觉来自可选 `map_water_noise` 图层。该图层是纯表现资产：`map-view.ts` 只把它作为 terrain canvas 的 `data-map-water-texture-url` 传给 WebGL renderer；水体表现不得改变点击、投影、通行性或 navigation 路径模型。
 
-Campaign 地图的迷雾探索状态来自 `runtime.mapExplorationByMapId`，未探索 hex 的点击屏蔽必须在应用交互层完成，和水格通行检查保持独立。当前活动云雾视觉是视口级 `campaign-cloud-webgl.ts` overlay：`data-campaign-map-cloud` canvas 只覆盖 `c-campaign-map` 地图视口，不跟随地图 transform，不读取或修改探索状态。该云层应压在地图底图、建筑点本体、玩家 DOM sprite 和 actor canvas 之上，但不得覆盖悬浮建筑详情、地图 debug 控件、全局 UI 或确认 modal；因此 marker 详情必须作为独立 overlay 层渲染，不能重新塞回 marker button 内部。`campaign-terrain-webgl.ts` 的投影同步在写入 `data-terrain-projected-point` 的屏幕位置时也必须保留这条层级契约：marker 本体与玩家固定在云层下方，marker 悬浮详情固定在云层上方，不得再用通用深度排序把所有投影点抬到云层之上。该 shader 使用 `campaign-cloud.vert.glsl` 与 `campaign-cloud.frag.glsl` 生成慢速动态气象层；云体形状和细节必须来自地图内容层 `map_fog_noise` 的贴图采样，不得使用 Worley/胞体噪声或程序 FBM 造成多边形、格状或规则单元纹路。云层不得用独立薄雾或边缘淡出补视口四周，必须由云体采样本身覆盖完整视口。`map_fog_noise` 在这里只作为纯视觉噪声贴图，不代表探索状态；后续若重新实现探索迷雾视觉，必须继续把视觉层与探索状态分开：探索状态只提供 reveal mask 和点击屏蔽，shader 不得修改地形高度、水体材质、通行网格或寻路结果。
+Campaign 地图的迷雾探索状态来自 `runtime.mapExplorationByMapId`。未探索 hex 的点击屏蔽、marker 交互屏蔽必须在应用交互层完成，和水格通行检查保持独立；视觉云雾 renderer 只能消费探索状态生成遮罩，不得修改探索、寻路、地形高度、水体材质或通行网格。`campaign-terrain-webgl.ts` 负责地形投影、相机、通行网格和投影点同步；`campaign-cloud-webgl.ts` 负责视口级云雾 overlay，并通过 `campaign-terrain-webgl.ts` 的只读投影 helper 对齐累计已探索 hex。地图重绘时必须保留 terrain、actor、cloud canvas 并同步新 markup 的 `data-*` 属性，避免移动或探索状态更新导致 WebGL program、贴图或动画时间重建。层级契约是：地图底图、建筑点本体、玩家 DOM sprite 和 actor canvas 在云层下方；marker 悬浮详情、地图 debug 控件、全局 UI 和确认 modal 在云层上方。视觉算法细节属于 renderer 源码和 changelog，不应写入架构文档。
 
-Campaign 地图 WebGL shader 源码必须放在 `src/ui/views/map/shaders/*.glsl` 中，并由 renderer 通过 raw import 加载。`campaign-terrain-webgl.ts` 可以替换少量与 TypeScript 常量共享的占位符，但不要再把完整 vertex/fragment shader 作为大型模板字符串内嵌在 renderer 文件里。
+Campaign 地图 WebGL renderer 的 GPU 程序资源应放在 `src/ui/views/map/shaders/*.glsl` 中，并由 renderer 通过 raw import 加载；不要把大型 GPU 程序作为模板字符串内嵌在 TypeScript renderer 文件里。
 
 ### 全局栏目
 

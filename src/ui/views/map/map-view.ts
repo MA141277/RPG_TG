@@ -1,11 +1,21 @@
-import type { GridCoordinate } from "../../../application/navigation/travel-to-coordinate";
+import {
+  coordinateToRoundedHex,
+  getHexKey,
+  type GridCoordinate,
+} from "../../../application/navigation/travel-to-coordinate";
 import type { CityDefinition } from "../../../domain/city";
 import { campaignUnitAssets } from "../../../content/yuanmo-strat-unit-assets";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
 } from "../../../domain/historical-character";
-import type { MapDefinition, MapLayer, MapNode, MapStats } from "../../../domain/map";
+import type {
+  MapDefinition,
+  MapExplorationState,
+  MapLayer,
+  MapNode,
+  MapStats,
+} from "../../../domain/map";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
 import cityDepthMeshAssetUrl from "../../../3dasset/city1-lowpoly.json?url";
 import cityDepthTextureUrl from "../../../image2mesh/city1.png?url";
@@ -25,6 +35,7 @@ type CampaignMarker = {
   y: number;
   kind: NonNullable<MapNode["kind"]>;
   summary: string;
+  isRevealed: boolean;
   historicalCharacters: {
     primary: string[];
     secondary: string[];
@@ -56,6 +67,7 @@ export type MapViewModel = {
   materialTextureImageUrl: string | null;
   waterTextureImageUrl: string | null;
   cloudNoiseTextureImageUrl: string | null;
+  revealedHexKeys: string[];
   cityDepthMeshAssetUrl: string | null;
   cityDepthTextureUrl: string | null;
   cityDepthMeshCoordinate: {
@@ -76,6 +88,7 @@ export function createMapViewModel(input: {
   cityCoordinatesById: Record<string, GridCoordinate>;
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
+  mapExplorationState?: MapExplorationState | null;
 }): MapViewModel {
   const mode = input.mapDefinition.mode ?? "grid";
   const historicalCharacterNameById = Object.fromEntries(
@@ -95,6 +108,7 @@ export function createMapViewModel(input: {
         cityDefinition.id,
       ])
   );
+  const revealedHexKeySet = new Set(input.mapExplorationState?.revealedHexKeys ?? []);
 
   return {
     mode,
@@ -148,6 +162,9 @@ export function createMapViewModel(input: {
     cloudNoiseTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_fog_noise")
         ?.imageUrl ?? null,
+    revealedHexKeys: Array.from(
+      new Set(input.mapExplorationState?.revealedHexKeys ?? [])
+    ).sort(),
     cityDepthMeshAssetUrl,
     cityDepthTextureUrl,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
@@ -171,6 +188,17 @@ export function createMapViewModel(input: {
           y: node.y,
           kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
           summary: node.summary ?? "",
+          isRevealed: revealedHexKeySet.has(
+            getHexKey(
+              coordinateToRoundedHex(
+                { x: node.x, y: node.y },
+                input.mapDefinition.coordinateSpace ?? {
+                  width: input.mapDefinition.size ?? 1,
+                  height: input.mapDefinition.size ?? 1,
+                }
+              )
+            )
+          ),
           historicalCharacters:
             roster == null
               ? null
@@ -303,6 +331,18 @@ function renderCampaignMarkers(model: MapViewModel): string {
       const markerName = escapeHtml(marker.name);
       const markerSummary = escapeHtml(marker.summary);
       const markerPositionStyle = `--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;`;
+      const markerInteractionAttributes = marker.isRevealed
+        ? `
+          data-map-node-id="${marker.id}"
+          data-map-node-name="${markerName}"
+          title="${markerName} (${marker.x}, ${marker.y})"
+        `
+        : `
+          disabled
+          aria-hidden="true"
+          tabindex="-1"
+          data-map-node-revealed="false"
+        `;
       const markerProjectionAttributes = `
           data-terrain-projected-point="true"
           data-map-height-u="${heightU.toFixed(5)}"
@@ -317,9 +357,7 @@ function renderCampaignMarkers(model: MapViewModel): string {
           data-map-x="${marker.x}"
           data-map-y="${marker.y}"
           data-city-id="${marker.cityId ?? ""}"
-          data-map-node-id="${marker.id}"
-          data-map-node-name="${markerName}"
-          title="${markerName} (${marker.x}, ${marker.y})"
+          ${markerInteractionAttributes}
         >
           <span class="c-campaign-marker__dot"></span>
           <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
@@ -329,6 +367,7 @@ function renderCampaignMarkers(model: MapViewModel): string {
           style="${markerPositionStyle}"
           ${markerProjectionAttributes}
           aria-hidden="true"
+          data-map-node-revealed="${marker.isRevealed ? "true" : "false"}"
         >
           <strong>${markerName}</strong>
           ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
@@ -517,6 +556,9 @@ function renderCampaignMap(model: MapViewModel): string {
         <canvas
           class="c-campaign-map__cloud"
           data-campaign-map-cloud="true"
+          data-map-coordinate-width="${model.coordinateSpace.width}"
+          data-map-coordinate-height="${model.coordinateSpace.height}"
+          data-map-revealed-hex-keys="${escapeHtml(model.revealedHexKeys.join(" "))}"
           ${model.cloudNoiseTextureImageUrl == null ? "" : `data-map-cloud-noise-url="${model.cloudNoiseTextureImageUrl}"`}
           aria-hidden="true"
         ></canvas>

@@ -352,6 +352,10 @@ function renderStage(
       playerIsMoving: input.appState.campaignActorState.isMoving,
       cityDefinitions: stage.cityDefinitions,
       cityCoordinatesById: input.cityCoordinatesById,
+      mapExplorationState:
+        input.appState.gameState.runtime.mapExplorationByMapId[
+          input.mapDefinition.id
+        ] ?? null,
     };
     const mapViewModel = createMapViewModel(mapViewModelInput);
 

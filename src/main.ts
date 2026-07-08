@@ -209,6 +209,7 @@ import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
   DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
+  createCampaignTerrainCameraCenteredOnCoordinate,
   getCampaignTerrainTravelGrid,
   isCampaignTerrainUvPassable,
   resolveCampaignTerrainUvFromClientPosition,
@@ -237,14 +238,14 @@ const ACTIVITY_QTE_INTERVAL_MS = 90;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
-  scale: 15,
-  offsetX: -1000,
-  offsetY: 1750,
+  scale: 40,
+  offsetX: 0,
+  offsetY: 0,
 };
 const TARGET_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
-  scale: 15,
-  offsetX: -1000,
-  offsetY: 1750,
+  scale: 40,
+  offsetX: 0,
+  offsetY: 0,
 };
 
 declare global {
@@ -4467,10 +4468,35 @@ function captureCampaignTerrainCanvases(
 ): HTMLCanvasElement[] | null {
   const canvases = Array.from(
     root.querySelectorAll<HTMLCanvasElement>(
-      "[data-campaign-map-terrain], [data-campaign-map-actor-layer]"
+      "[data-campaign-map-terrain], [data-campaign-map-actor-layer], [data-campaign-map-cloud]"
     )
   );
   return canvases.length === 0 ? null : canvases;
+}
+
+function syncPreservedCanvasAttributes(
+  preservedCanvas: HTMLCanvasElement,
+  replacementCanvas: HTMLCanvasElement
+): void {
+  for (const attribute of Array.from(preservedCanvas.attributes)) {
+    if (
+      attribute.name.startsWith("data-") ||
+      attribute.name === "aria-label" ||
+      attribute.name === "aria-hidden"
+    ) {
+      preservedCanvas.removeAttribute(attribute.name);
+    }
+  }
+
+  for (const attribute of Array.from(replacementCanvas.attributes)) {
+    if (
+      attribute.name.startsWith("data-") ||
+      attribute.name === "aria-label" ||
+      attribute.name === "aria-hidden"
+    ) {
+      preservedCanvas.setAttribute(attribute.name, attribute.value);
+    }
+  }
 }
 
 function restoreCampaignTerrainCanvases(
@@ -4483,7 +4509,7 @@ function restoreCampaignTerrainCanvases(
 
   const replacementCanvases = Array.from(
     root.querySelectorAll<HTMLCanvasElement>(
-      "[data-campaign-map-terrain], [data-campaign-map-actor-layer]"
+      "[data-campaign-map-terrain], [data-campaign-map-actor-layer], [data-campaign-map-cloud]"
     )
   );
   if (replacementCanvases.length !== preservedCanvases.length) {
@@ -4496,6 +4522,7 @@ function restoreCampaignTerrainCanvases(
       return;
     }
 
+    syncPreservedCanvasAttributes(preservedCanvas, replacementCanvas);
     replacementCanvas.replaceWith(preservedCanvas);
   });
 }
@@ -4967,6 +4994,10 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
 
   hasStartedInitialCampaignMapDebugAnimation = true;
   initialCampaignMapDebugAnimationStartTime = null;
+  const mapHomeState = createCurrentCampaignMapHomeDebugState();
+  campaignMapDebugState = { ...mapHomeState };
+  campaignMapDebugHomeState = { ...mapHomeState };
+  syncCampaignMapDebugView();
   showMapIntroOverlay(
     getRuntimeText("runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging")
   );
@@ -5003,23 +5034,23 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
 }
 
 function interpolateCampaignMapDebugState(progress: number): CampaignMapDebugState {
+  void progress;
   return {
-    scale:
-      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.scale +
-      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.scale -
-        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.scale) *
-        progress,
-    offsetX:
-      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetX +
-      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.offsetX -
-        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetX) *
-        progress,
-    offsetY:
-      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetY +
-      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.offsetY -
-        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetY) *
-        progress,
+    ...campaignMapDebugHomeState,
   };
+}
+
+function createCurrentCampaignMapHomeDebugState(): CampaignMapDebugState {
+  const mapDefinition = getCurrentMapDefinition();
+  if (mapDefinition?.mode !== "campaign" || mapDefinition.coordinateSpace == null) {
+    return { ...TARGET_CAMPAIGN_MAP_DEBUG_STATE };
+  }
+
+  return createCampaignTerrainCameraCenteredOnCoordinate({
+    coordinate: appState.playerCoordinate,
+    coordinateSpace: mapDefinition.coordinateSpace,
+    scale: TARGET_CAMPAIGN_MAP_DEBUG_STATE.scale,
+  });
 }
 
 function isInitialCampaignMapDebugAnimating(): boolean {

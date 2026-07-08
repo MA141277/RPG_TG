@@ -820,6 +820,11 @@
   pointer-events: none;
 }
 
+.c-campaign-marker[data-map-node-revealed="false"],
+.c-campaign-marker__summary[data-map-node-revealed="false"] {
+  pointer-events: none;
+}
+
 .c-campaign-marker[hidden],
 .c-campaign-player[hidden] {
   display: none !important;

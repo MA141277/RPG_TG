@@ -27,6 +27,14 @@ export type HexTravelGrid = {
 
 const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
+const HEX_CORNER_OFFSETS = [
+  { x: 0, y: -1 },
+  { x: Math.sqrt(3) / 2, y: -0.5 },
+  { x: Math.sqrt(3) / 2, y: 0.5 },
+  { x: 0, y: 1 },
+  { x: -Math.sqrt(3) / 2, y: 0.5 },
+  { x: -Math.sqrt(3) / 2, y: -0.5 },
+] as const;
 const HEX_NEIGHBOR_DIRECTIONS = [
   { x: 0, y: -1 },
   { x: 1, y: -1 },
@@ -141,6 +149,32 @@ export function hexToCoordinate(
   coordinateSpace: CoordinateSpace
 ): GridCoordinate {
   const point = hexToPixel(hex);
+  return hexTerrainPointToCoordinate(point, coordinateSpace);
+}
+
+export function hexToCoordinatePolygon(input: {
+  hex: HexCoordinate;
+  coordinateSpace: CoordinateSpace;
+  radiusScale?: number;
+}): GridCoordinate[] {
+  const center = hexToPixel(input.hex);
+  const radiusScale = input.radiusScale ?? 1;
+
+  return HEX_CORNER_OFFSETS.map((corner) =>
+    hexTerrainPointToCoordinate(
+      {
+        x: center.x + corner.x * radiusScale,
+        y: center.y + corner.y * radiusScale,
+      },
+      input.coordinateSpace
+    )
+  );
+}
+
+function hexTerrainPointToCoordinate(
+  point: GridCoordinate,
+  coordinateSpace: CoordinateSpace
+): GridCoordinate {
   const u = clamp(point.x / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE) + 0.5, 0, 1);
   const terrainV = clamp(point.y / HEX_TERRAIN_SCALE + 0.5, 0, 1);
 
