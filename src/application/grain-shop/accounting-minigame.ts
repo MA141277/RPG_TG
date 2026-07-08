@@ -3,7 +3,7 @@ import type {
   AccountingGradeReward,
   LedgerQuestion,
 } from "../../domain/grain-shop";
-import { accountingGradeRewards } from "../../content/houses/grain-shop-content";
+import { getGrainShopContentDefaults } from "../house-modules/grain-shop/grain-shop-content-defaults";
 import { randomInt } from "../../shared/random";
 
 export function generateLedgerQuestion(): LedgerQuestion {
@@ -48,6 +48,7 @@ export function resolveAccountingGrade(score: number): AccountingGrade {
 export function getAccountingGradeReward(
   grade: AccountingGrade
 ): AccountingGradeReward {
+  const { accountingGradeRewards } = getGrainShopContentDefaults();
   return accountingGradeRewards[grade];
 }
 

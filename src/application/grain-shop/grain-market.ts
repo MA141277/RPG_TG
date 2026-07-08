@@ -1,8 +1,3 @@
-import {
-  grainShopMarketRumorTextIds,
-  grainShopNpcDefaultLineTextIds,
-  grainShopNpcGreetingTextIds,
-} from "../../content/houses/grain-shop-content";
 import { globalGoodsPool } from "../../content/markets/global-goods-pool";
 import type { CityDefinition } from "../../domain/city";
 import type { GameState } from "../../domain/game-state";
@@ -12,6 +7,7 @@ import { assertExists } from "../../shared/assert";
 import { pickRandom } from "../../shared/random";
 import { defaultRuntimeContent } from "../content/default-runtime-content";
 import { resolveTextEntry } from "../content/text-resolution";
+import { getGrainShopContentDefaults } from "../house-modules/grain-shop/grain-shop-content-defaults";
 import { ensureShopMarketData } from "../markets/market-refresh-system";
 import { selectCurrentCity } from "../selectors/select-current-city";
 
@@ -32,6 +28,7 @@ function pickResolvedText(
 }
 
 export function pickNpcGreeting(textEntriesById?: Record<string, string>): string {
+  const { grainShopNpcGreetingTextIds } = getGrainShopContentDefaults();
   return pickResolvedText(
     getGrainMarketTextEntries(textEntriesById),
     grainShopNpcGreetingTextIds
@@ -39,6 +36,7 @@ export function pickNpcGreeting(textEntriesById?: Record<string, string>): strin
 }
 
 export function pickNpcDefaultLine(textEntriesById?: Record<string, string>): string {
+  const { grainShopNpcDefaultLineTextIds } = getGrainShopContentDefaults();
   return pickResolvedText(
     getGrainMarketTextEntries(textEntriesById),
     grainShopNpcDefaultLineTextIds
@@ -46,6 +44,7 @@ export function pickNpcDefaultLine(textEntriesById?: Record<string, string>): st
 }
 
 export function pickMarketRumor(textEntriesById?: Record<string, string>): string {
+  const { grainShopMarketRumorTextIds } = getGrainShopContentDefaults();
   return pickResolvedText(
     getGrainMarketTextEntries(textEntriesById),
     grainShopMarketRumorTextIds

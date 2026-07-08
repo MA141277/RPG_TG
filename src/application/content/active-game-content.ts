@@ -18,6 +18,10 @@ import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import type { TaskDefinition } from "../../core/contracts/task-runtime";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import type { ValuableItemDefinition } from "../../domain/valuable-item";
+import {
+  mergeHouseModuleDefaults,
+  type HouseModuleDefaults,
+} from "./house-module-defaults";
 
 type Identified = { id: string };
 
@@ -49,6 +53,7 @@ export type ActiveGameContent = {
   valuables: ValuableItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
   houseAccessRefusalRules: HouseAccessRefusalRule[];
+  houseModuleDefaults: HouseModuleDefaults;
   cityPortraits: Record<string, string>;
   historicalCharacterIdByCharacterId: Record<string, string>;
   historicalCharacters: HistoricalCharacterRecord[];
@@ -67,6 +72,7 @@ export type ActiveGameContentContext = {
   cityEntries: CityEntryDefinition[];
   cards: CardDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
+  houseModuleDefaults: HouseModuleDefaults;
   historicalCharacters: HistoricalCharacterRecord[];
   historicalCityRosters: HistoricalCityRoster[];
   historicalCharacterIdByCharacterId: Record<string, string>;
@@ -162,6 +168,10 @@ export function createActiveGameContent(
     valuables,
     cityNpcPools,
     houseAccessRefusalRules,
+    houseModuleDefaults: mergeHouseModuleDefaults(
+      undefined,
+      resolvedPack.houseModuleDefaults
+    ),
     cityPortraits: { ...(resolvedPack.cityPortraits ?? {}) },
     historicalCharacterIdByCharacterId: {
       ...(resolvedPack.historicalCharacterIdByCharacterId ?? {}),
@@ -189,6 +199,7 @@ export function createActiveGameContentContext(
     cityEntries: gameContent.cityEntries,
     cards: gameContent.cards,
     cityNpcPools: gameContent.cityNpcPools,
+    houseModuleDefaults: gameContent.houseModuleDefaults,
     historicalCharacters: gameContent.historicalCharacters,
     historicalCityRosters: gameContent.historicalCityRosters,
     historicalCharacterIdByCharacterId:
@@ -262,6 +273,10 @@ export function mergeContentPacks(
       basePack.houseAccessRefusalRules ?? [],
       overridePack.houseAccessRefusalRules ?? []
     ),
+    houseModuleDefaults: mergeHouseModuleDefaults(
+      basePack.houseModuleDefaults,
+      overridePack.houseModuleDefaults
+    ),
     cityPortraits: {
       ...(basePack.cityPortraits ?? {}),
       ...(overridePack.cityPortraits ?? {}),
@@ -299,6 +314,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     valuables: pack.valuables ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],
     houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
+    houseModuleDefaults: mergeHouseModuleDefaults(undefined, pack.houseModuleDefaults),
     cityPortraits: pack.cityPortraits ?? {},
     historicalCharacterIdByCharacterId: pack.historicalCharacterIdByCharacterId ?? {},
     historicalCharacters: pack.historicalCharacters ?? [],

@@ -1,4 +1,3 @@
-import { homeHouseIntroLines, homeHouseMainLines, homeHouseRecoveryTuning, homeHouseRestMenuLines } from "../../../content/houses/home-house-content";
 import type { CharacterDefinition } from "../../../domain/character";
 import type {
   CalendarDate,
@@ -37,6 +36,7 @@ import {
 } from "../../time/time-progression";
 import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { getHouseModuleDefaults } from "../../content/house-module-defaults";
 import {
   resolveTextEntry,
   resolveTextTemplateEntry,
@@ -46,6 +46,32 @@ import { createInitialHomeHouseSessionState } from "./home-house-session-state";
 
 const REST_DAYS_FIELD_ID = "home-house-rest-days";
 const HOME_REST_AUTO_ADVANCE_INTERVAL_ID = "home-house-rest-auto-advance";
+
+type HomeHouseContentDefaults = {
+  homeHouseIntroLines: string[];
+  homeHouseMainLines: string[];
+  homeHouseRestMenuLines: string[];
+  homeHouseRecoveryTuning: {
+    hpBase: number;
+    hpRatio: number;
+    fatigueBase: number;
+    fatigueRatio: number;
+    customRestMaxDays: number;
+  };
+};
+
+const FALLBACK_HOME_HOUSE_CONTENT: HomeHouseContentDefaults = {
+  homeHouseIntroLines: [],
+  homeHouseMainLines: [],
+  homeHouseRestMenuLines: [],
+  homeHouseRecoveryTuning: {
+    hpBase: 10,
+    hpRatio: 0.15,
+    fatigueBase: 12,
+    fatigueRatio: 0.18,
+    customRestMaxDays: 99,
+  },
+};
 
 type HomeRestSummary = {
   state: GameState;
@@ -57,6 +83,15 @@ type HomeRestSummary = {
   stoppedAtCouncilDate: boolean;
   snapshots: MapAutoAdvanceSnapshot[];
 };
+
+function getHomeHouseContentDefaults(): HomeHouseContentDefaults {
+  return (
+    getHouseModuleDefaults<HomeHouseContentDefaults>(
+      defaultRuntimeContent.houseModuleDefaults,
+      "home-house"
+    ) ?? FALLBACK_HOME_HOUSE_CONTENT
+  );
+}
 
 function getHomeTextEntries(
   textEntriesById?: Record<string, string>
@@ -341,8 +376,8 @@ function advanceRestOneDay(
     calculateRecovery(
       currentHp,
       maxHp,
-      homeHouseRecoveryTuning.hpBase,
-      homeHouseRecoveryTuning.hpRatio
+      getHomeHouseContentDefaults().homeHouseRecoveryTuning.hpBase,
+      getHomeHouseContentDefaults().homeHouseRecoveryTuning.hpRatio
     )
   );
   const recoveredFatigue = Math.min(
@@ -350,8 +385,8 @@ function advanceRestOneDay(
     calculateRecovery(
       currentFatigue,
       maxFatigue,
-      homeHouseRecoveryTuning.fatigueBase,
-      homeHouseRecoveryTuning.fatigueRatio
+      getHomeHouseContentDefaults().homeHouseRecoveryTuning.fatigueBase,
+      getHomeHouseContentDefaults().homeHouseRecoveryTuning.fatigueRatio
     )
   );
   const nextHp = clamp(currentHp + recoveredHp, 0, maxHp);
@@ -614,7 +649,7 @@ function createHomeRestCompletionSession(
     state: {
       ...sessionState,
       mode: "main",
-      descriptionLines: homeHouseMainLines,
+      descriptionLines: getHomeHouseContentDefaults().homeHouseMainLines,
       overlay: createRestResultOverlay(summary, title, playerCharacterId, textEntriesById),
     },
   };
@@ -719,7 +754,7 @@ function handleAction(
       sessionState: {
         ...sessionState,
         mode: "rest-menu",
-        descriptionLines: homeHouseRestMenuLines,
+        descriptionLines: getHomeHouseContentDefaults().homeHouseRestMenuLines,
         overlay: null,
       },
     };
@@ -732,7 +767,7 @@ function handleAction(
       sessionState: {
         ...sessionState,
         mode: "main",
-        descriptionLines: homeHouseMainLines,
+        descriptionLines: getHomeHouseContentDefaults().homeHouseMainLines,
         overlay: null,
       },
     };
@@ -876,7 +911,11 @@ function handleAction(
       );
     }
 
-    const days = clamp(parsedDays, 1, homeHouseRecoveryTuning.customRestMaxDays);
+    const days = clamp(
+      parsedDays,
+      1,
+      getHomeHouseContentDefaults().homeHouseRecoveryTuning.customRestMaxDays
+    );
     const summary = runRestPlan(
       ensuredState,
       input.characterDefinitions,
@@ -1000,7 +1039,10 @@ export const homeHouseHouseModule: HouseModuleDefinition<"home-house"> = {
     return {
       gameState: nextState,
       characterDefinitions: input.characterDefinitions,
-      sessionState: createInitialHomeHouseSessionState("main", homeHouseIntroLines),
+      sessionState: createInitialHomeHouseSessionState(
+        "main",
+        getHomeHouseContentDefaults().homeHouseIntroLines
+      ),
     };
   },
   dispatch(input) {
@@ -1021,7 +1063,11 @@ export const homeHouseHouseModule: HouseModuleDefinition<"home-house"> = {
     const playerCharacter = getPlayerCharacter(input.characterDefinitions, input.playerCharacterId);
     const ensuredState = ensureHomeRuntimeState(input.gameState, playerCharacter);
     const sessionState =
-      input.sessionState ?? createInitialHomeHouseSessionState("main", homeHouseIntroLines);
+      input.sessionState ??
+      createInitialHomeHouseSessionState(
+        "main",
+        getHomeHouseContentDefaults().homeHouseIntroLines
+      );
     const hp = readNumericVariable(ensuredState, HOME_HOUSE_VARIABLE_KEYS.hp, playerCharacter.stamina);
     const maxHp = readNumericVariable(ensuredState, HOME_HOUSE_VARIABLE_KEYS.maxHp, 100);
     const fatigue = readNumericVariable(

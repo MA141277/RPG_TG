@@ -23,6 +23,18 @@ export type HouseModuleId =
   | "tea-house"
   | "tavern";
 
+export const HOUSE_MODULE_IDS = [
+  "home-house",
+  "keep-house",
+  "leader-residence",
+  "grain-shop",
+  "market-house",
+  "medicine-house",
+  "temple-house",
+  "tea-house",
+  "tavern",
+] as const satisfies readonly HouseModuleId[];
+
 export type HouseModuleRequest =
   | {
       type: "action";

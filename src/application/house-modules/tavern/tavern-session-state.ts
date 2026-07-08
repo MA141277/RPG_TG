@@ -1,6 +1,6 @@
 import type { TavernWorkOffer } from "../../../domain/tavern";
 import type { TavernSessionState } from "../../../domain/house-modules/tavern-session";
-import { tavernDefaultWager } from "../../../content/houses/tavern-content";
+import { getTavernHouseContentDefaults } from "./tavern-house-content-defaults";
 
 export function createInitialTavernSessionState(
   availableOffers: TavernWorkOffer[],
@@ -9,6 +9,8 @@ export function createInitialTavernSessionState(
   dialogueLines: string[],
   dialoguePhase: TavernSessionState["dialoguePhase"] = "greeting"
 ): TavernSessionState {
+  const { tavernDefaultWager } = getTavernHouseContentDefaults();
+
   return {
     availableOffers,
     acceptedOffers,

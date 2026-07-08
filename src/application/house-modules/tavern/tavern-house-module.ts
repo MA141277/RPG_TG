@@ -1,12 +1,3 @@
-﻿import {
-  tavernBossGreetingTextIds,
-  tavernBossOpenTextIds,
-  tavernBossProfile,
-  tavernDefaultWager,
-  tavernDrinkPrice,
-  tavernWagerStep,
-  tavernWorkOffers,
-} from "../../../content/houses/tavern-content";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { GameState } from "../../../domain/game-state";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
@@ -88,6 +79,7 @@ import {
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import { getTavernHouseContentDefaults } from "./tavern-house-content-defaults";
 import { createInitialTavernSessionState } from "./tavern-session-state";
 
 const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
@@ -184,6 +176,34 @@ function pickRandomResolvedTavernText(
   return resolveTavernText(textEntriesById, textId);
 }
 
+function getTavernBossProfile() {
+  return getTavernHouseContentDefaults().tavernBossProfile;
+}
+
+function getTavernBossGreetingTextIds(): string[] {
+  return getTavernHouseContentDefaults().tavernBossGreetingTextIds;
+}
+
+function getTavernBossOpenTextIds(): string[] {
+  return getTavernHouseContentDefaults().tavernBossOpenTextIds;
+}
+
+function getTavernDefaultWager(): number {
+  return getTavernHouseContentDefaults().tavernDefaultWager;
+}
+
+function getTavernDrinkPrice(): number {
+  return getTavernHouseContentDefaults().tavernDrinkPrice;
+}
+
+function getTavernWagerStep(): number {
+  return getTavernHouseContentDefaults().tavernWagerStep;
+}
+
+function getTavernWorkOffers(): TavernWorkOffer[] {
+  return getTavernHouseContentDefaults().tavernWorkOffers;
+}
+
 function createLowStaminaOverlay(
   actionLabel: string,
   textEntriesById?: Record<string, string>
@@ -252,7 +272,9 @@ function withSessionState(
 }
 
 function findWorkOffer(offerId: string): TavernWorkOffer {
-  const offer = tavernWorkOffers.find((candidateOffer) => candidateOffer.id === offerId);
+  const offer = getTavernWorkOffers().find(
+    (candidateOffer) => candidateOffer.id === offerId
+  );
   assertExists(offer, `Tavern work offer not found for id "${offerId}".`);
   return offer;
 }
@@ -260,7 +282,9 @@ function findWorkOffer(offerId: string): TavernWorkOffer {
 function getAcceptedWorkOffers(gameState: GameState, houseId: string): TavernWorkOffer[] {
   const activeIds = getActiveTavernWorkIds(gameState, houseId);
   return activeIds
-    .map((offerId) => tavernWorkOffers.find((offer) => offer.id === offerId) ?? null)
+    .map(
+      (offerId) => getTavernWorkOffers().find((offer) => offer.id === offerId) ?? null
+    )
     .filter((offer): offer is TavernWorkOffer => offer != null);
 }
 
@@ -270,7 +294,7 @@ function getAvailableWorkOffers(
   playerFame: number
 ): TavernWorkOffer[] {
   const activeIds = new Set(getActiveTavernWorkIds(gameState, houseId));
-  return tavernWorkOffers.filter((offer) => {
+  return getTavernWorkOffers().filter((offer) => {
     if (activeIds.has(offer.id)) {
       return false;
     }
@@ -929,6 +953,8 @@ function handleDrinkAction(
     return createTransitionResult(input);
   }
 
+  const tavernDrinkPrice = getTavernDrinkPrice();
+
   if (input.request.actionId === "order-drink") {
     const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
@@ -1042,6 +1068,7 @@ function handleDrinkAction(
 }
 
 function clampWager(wager: number, playerGold: number): number {
+  const tavernWagerStep = getTavernWagerStep();
   const maxAffordable = Math.max(
     tavernWagerStep,
     Math.floor(playerGold / tavernWagerStep) * tavernWagerStep
@@ -1098,7 +1125,7 @@ function resolveGambleSettlement(
     characterDefinitions: goldMutation.characterDefinitions,
     sessionState: {
       ...sessionState,
-      currentWager: tavernDefaultWager,
+      currentWager: getTavernDefaultWager(),
       gambleSession: null,
       dialoguePhase: "open",
       dialogueLines: [
@@ -1257,6 +1284,7 @@ function handleGambleAction(
     input.characterDefinitions,
     input.playerCharacterId
   );
+  const tavernWagerStep = getTavernWagerStep();
 
   if (input.request.actionId === "open-gamble") {
     if (playerCharacter.stats.gold < tavernWagerStep) {
@@ -1311,7 +1339,7 @@ function handleGambleAction(
   );
   if (selectedVariant === "short" || selectedVariant === "long") {
     const currentWager = clampWager(
-      sessionState?.currentWager ?? tavernDefaultWager,
+      sessionState?.currentWager ?? getTavernDefaultWager(),
       playerCharacter.stats.gold
     );
     return withSessionState(input, sessionState, {
@@ -1338,7 +1366,7 @@ function handleGambleAction(
 
   if (input.request.actionId === "decrease-wager") {
     const nextWager = clampWager(
-      (sessionState?.currentWager ?? tavernDefaultWager) - tavernWagerStep,
+      (sessionState?.currentWager ?? getTavernDefaultWager()) - tavernWagerStep,
       playerCharacter.stats.gold
     );
     return withSessionState(input, sessionState, {
@@ -1352,7 +1380,7 @@ function handleGambleAction(
 
   if (input.request.actionId === "increase-wager") {
     const nextWager = clampWager(
-      (sessionState?.currentWager ?? tavernDefaultWager) + tavernWagerStep,
+      (sessionState?.currentWager ?? getTavernDefaultWager()) + tavernWagerStep,
       playerCharacter.stats.gold
     );
     return withSessionState(input, sessionState, {
@@ -1467,7 +1495,7 @@ function handleGambleAction(
   }
 
   const wager = clampWager(
-    sessionState?.currentWager ?? tavernDefaultWager,
+    sessionState?.currentWager ?? getTavernDefaultWager(),
     playerCharacter.stats.gold
   );
 
@@ -1895,6 +1923,7 @@ function createWorkActions(
 export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
   moduleId: "tavern",
   enter(input) {
+    const tavernBossProfile = getTavernBossProfile();
     const playerCharacter = getPlayerCharacter(
       input.characterDefinitions,
       input.playerCharacterId
@@ -1915,7 +1944,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
         [
           pickRandomResolvedTavernText(
             getTavernTextEntries(input.textEntriesById),
-            tavernBossGreetingTextIds
+            getTavernBossGreetingTextIds()
           ),
         ]
       ),
@@ -1941,12 +1970,13 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     }
 
     if (input.request.actionId === "advance-greeting") {
+      const openTextIds = getTavernBossOpenTextIds();
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
         dialogueLines: [
           resolveTavernText(
             getTavernTextEntries(input.textEntriesById),
-            "runtime.zhu_yuanzhang.tavern.open.001"
+            openTextIds[0] ?? "runtime.zhu_yuanzhang.tavern.open.001"
           ),
         ],
       });
@@ -1961,13 +1991,14 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     }
 
     if (input.request.actionId === "open-boss-dialogue") {
+      const openTextIds = getTavernBossOpenTextIds();
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
         workPanelMode: "closed",
         dialogueLines: [
           resolveTavernText(
             getTavernTextEntries(input.textEntriesById),
-            "runtime.zhu_yuanzhang.tavern.open.002"
+            openTextIds[1] ?? openTextIds[0] ?? "runtime.zhu_yuanzhang.tavern.open.002"
           ),
         ],
         overlay: null,
@@ -2046,6 +2077,9 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     };
   },
   selectViewModel(input): HouseModuleViewModel {
+    const tavernBossProfile = getTavernBossProfile();
+    const tavernDrinkPrice = getTavernDrinkPrice();
+    const tavernWagerStep = getTavernWagerStep();
     const playerCharacter = getPlayerCharacter(
       input.characterDefinitions,
       input.playerCharacterId
@@ -2064,7 +2098,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
         [
           pickRandomResolvedTavernText(
             getTavernTextEntries(input.textEntriesById),
-            tavernBossGreetingTextIds
+            getTavernBossGreetingTextIds()
           ),
         ]
       );

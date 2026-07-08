@@ -1,11 +1,9 @@
 import {
-  keepHouseDefaultContributions,
-  keepHouseDefaultStrategy,
-} from "../../../content/houses/keep-house-content";
-import {
   defaultPackActivities,
   defaultPackTextEntries,
-} from "../../content/pack-content-access";
+} from "../../content/default-pack-content";
+import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { getHouseModuleDefaults } from "../../content/house-module-defaults";
 import type { ActivityDefinition } from "../../../domain/activity";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
@@ -25,6 +23,7 @@ import type {
 import {
   getKeepHouseContributionVariableKey,
   KEEP_HOUSE_VARIABLE_KEYS,
+  type KeepHouseContributionDefinition,
   type KeepHouseTaskDefinition,
   type KeepHouseTaskTier,
 } from "../../../domain/keep-house";
@@ -48,12 +47,56 @@ const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
 const defaultZhuyuanzhangActivities =
   defaultPackActivities as ActivityDefinition[];
 const defaultZhuyuanzhangTextEntries = defaultPackTextEntries;
-const defaultKeepActivityDefinitionsById = Object.fromEntries(
-  defaultZhuyuanzhangActivities.map((activityDefinition) => [
-    activityDefinition.id,
-    activityDefinition,
-  ])
-);
+
+type KeepHouseContentDefaults = {
+  keepHouseDefaultStrategy: {
+    titleTextId: string;
+    lineTextIds: string[];
+  };
+  keepHouseDefaultContributions: KeepHouseContributionDefinition[];
+};
+
+const FALLBACK_KEEP_HOUSE_CONTENT: KeepHouseContentDefaults = {
+  keepHouseDefaultStrategy: {
+    titleTextId: "runtime.zhu_yuanzhang.keep.review.strategy.title",
+    lineTextIds: [
+      "runtime.zhu_yuanzhang.keep.review.strategy.001",
+      "runtime.zhu_yuanzhang.keep.review.strategy.002",
+      "runtime.zhu_yuanzhang.keep.review.strategy.003",
+    ],
+  },
+  keepHouseDefaultContributions: [
+    {
+      characterId: "char.kulan_tang_he",
+      contribution: 32,
+    },
+    {
+      characterId: "char.kulan_xu_da",
+      contribution: 27,
+    },
+    {
+      characterId: "char.player",
+      contribution: 11,
+    },
+    {
+      characterId: "char.kulan_chang_yuchun",
+      contribution: 9,
+    },
+    {
+      characterId: "char.kulan_guard",
+      contribution: 6,
+    },
+  ],
+};
+
+function getKeepHouseContentDefaults(): KeepHouseContentDefaults {
+  return (
+    getHouseModuleDefaults<KeepHouseContentDefaults>(
+      defaultRuntimeContent.houseModuleDefaults,
+      "keep-house"
+    ) ?? FALLBACK_KEEP_HOUSE_CONTENT
+  );
+}
 
 function getKeepTextEntries(
   input: {
@@ -91,6 +134,13 @@ function getKeepActivityDefinitionsById(
     activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   }
 ): Record<string, ActivityDefinition> {
+  const defaultKeepActivityDefinitionsById = Object.fromEntries(
+    defaultZhuyuanzhangActivities.map((activityDefinition) => [
+      activityDefinition.id,
+      activityDefinition,
+    ])
+  );
+
   return {
     ...defaultKeepActivityDefinitionsById,
     ...(input.activityDefinitionsById ?? {}),
@@ -120,7 +170,10 @@ function isKeepTaskActivityDefinition(
 }
 
 function resolveKeepDefaultStrategyTitle(textEntriesById: Record<string, string>): string {
-  return resolveKeepText(textEntriesById, keepHouseDefaultStrategy.titleTextId);
+  return resolveKeepText(
+    textEntriesById,
+    getKeepHouseContentDefaults().keepHouseDefaultStrategy.titleTextId
+  );
 }
 
 function resolveKeepTaskDefinition(
@@ -309,7 +362,7 @@ function ensureKeepRuntimeState(
     );
   }
 
-  keepHouseDefaultContributions.forEach((entry) => {
+  getKeepHouseContentDefaults().keepHouseDefaultContributions.forEach((entry) => {
     const key = getKeepHouseContributionVariableKey(entry.characterId);
     if (typeof nextVariables[key] !== "number") {
       nextVariables[key] = entry.contribution;
@@ -637,7 +690,7 @@ function getMeetingPraiseLines(
 }
 
 function getMeetingStrategyLines(textEntriesById: Record<string, string>): string[] {
-  return keepHouseDefaultStrategy.lineTextIds.map((textId) =>
+  return getKeepHouseContentDefaults().keepHouseDefaultStrategy.lineTextIds.map((textId) =>
     resolveKeepText(textEntriesById, textId)
   );
 }

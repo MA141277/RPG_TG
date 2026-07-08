@@ -1,4 +1,3 @@
-import { accountingGameDurationSec, accountingMaxWrongAnswers } from "../../../content/houses/grain-shop-content";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
@@ -47,6 +46,7 @@ import {
   readHousePlayableSessionState,
 } from "../../playables/house-playable-runtime-bridge";
 import { getGrainAccountingTimeAdvanceCost } from "../../playables/grain-accounting/grain-accounting-definition";
+import { getGrainShopContentDefaults } from "./grain-shop-content-defaults";
 import { createInitialGrainShopSessionState } from "./grain-shop-session-state";
 
 const ACCOUNTING_INTERVAL_ID = "grain-shop-accounting";
@@ -699,6 +699,7 @@ function handleAction(
       return startAccountingMinigame(input, sessionState);
     case "ledger-correct":
     case "ledger-wrong": {
+      const { accountingMaxWrongAnswers } = getGrainShopContentDefaults();
       const overlay = sessionState?.overlay;
       if (overlay?.type !== "minigame") {
         return createTransitionResult(input);
@@ -789,7 +790,8 @@ function selectOverlayViewModel(overlay: GrainShopSessionState["overlay"]): Hous
         cancelLabel: overlay.cancelLabel,
         ...(overlay.tone == null ? {} : { tone: overlay.tone }),
       };
-    case "minigame":
+    case "minigame": {
+      const { accountingMaxWrongAnswers } = getGrainShopContentDefaults();
       return {
         type: "minigame",
         title: "帮忙算账",
@@ -804,6 +806,7 @@ function selectOverlayViewModel(overlay: GrainShopSessionState["overlay"]): Hous
         correctActionId: "ledger-correct",
         wrongActionId: "ledger-wrong",
       };
+    }
     case "result": {
       const rewardLines = [
         overlay.reward.math > 0 ? `算术 +${overlay.reward.math}` : overlay.reward.math < 0 ? `算术 ${overlay.reward.math}` : "算术 不变",

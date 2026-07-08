@@ -1,7 +1,7 @@
 ﻿import {
   defaultPackActivities,
   defaultPackTextEntries,
-} from "../../content/pack-content-access";
+} from "../../content/default-pack-content";
 import type { ActivityDefinition } from "../../../domain/activity";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
@@ -164,8 +164,9 @@ function isTempleTaskActivityDefinition(
   );
 }
 
-const defaultTempleTaskActivityDefinitions =
-  defaultZhuyuanzhangActivities.filter(isTempleTaskActivityDefinition);
+function getDefaultTempleTaskActivityDefinitions(): TempleTaskActivityDefinition[] {
+  return defaultZhuyuanzhangActivities.filter(isTempleTaskActivityDefinition);
+}
 
 function getTempleGreetingLines(
   textEntriesById?: Record<string, string>
@@ -339,6 +340,8 @@ function getTempleTaskDefinitions(
   activityDefinitionsById?: Record<string, ActivityDefinition>,
   textEntriesById?: Record<string, string>
 ): TempleHouseTaskDefinition[] {
+  const defaultTempleTaskActivityDefinitions =
+    getDefaultTempleTaskActivityDefinitions();
   const taskActivityDefinitionsById = new Map<
     string,
     TempleTaskActivityDefinition

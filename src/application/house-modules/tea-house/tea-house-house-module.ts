@@ -1,12 +1,3 @@
-import {
-  teaHouseBossDialogueTextIds,
-  teaHouseBossGreetingTextIds,
-  teaHouseBossIntelTextIds,
-  teaHouseBossOpenTextIds,
-  teaHouseBossProfile,
-  teaHouseLowIntelChance,
-  teaHouseTeaCost,
-} from "../../../content/houses/tea-house-content";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
@@ -64,6 +55,7 @@ import {
 } from "../../house/house-activity-costs";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
+import { getTeaHouseContentDefaults } from "./tea-house-content-defaults";
 
 const DEBATE_INTERVAL_ID = "tea-house-debate";
 const MAX_TEA_HOUSE_GUESTS = 2;
@@ -254,6 +246,7 @@ function getSelectedActor(
   cityId: string,
   sessionState: TeaHouseSessionState | null
 ): TeaHouseActor | null {
+  const { teaHouseBossProfile } = getTeaHouseContentDefaults();
   const actors = createTeaHouseActors(gameState, houseId, cityId, sessionState);
   const selectedActorId = sessionState?.selectedActorId ?? teaHouseBossProfile.actorId;
 
@@ -268,6 +261,7 @@ function pickActorDialogueLine(
   actor: TeaHouseActor,
   textEntriesById?: Record<string, string>
 ): string {
+  const { teaHouseBossDialogueTextIds } = getTeaHouseContentDefaults();
   if (actor.isFixedHost) {
     return pickRandomResolvedTeaHouseText(
       getTeaHouseTextEntries(textEntriesById),
@@ -287,6 +281,7 @@ function getActorGreetingLines(
   actor: TeaHouseActor,
   textEntriesById?: Record<string, string>
 ): string[] {
+  const { teaHouseBossGreetingTextIds } = getTeaHouseContentDefaults();
   const entries = getTeaHouseTextEntries(textEntriesById);
   if (actor.isFixedHost) {
     return resolveTeaHouseTextLines(entries, teaHouseBossGreetingTextIds);
@@ -304,6 +299,7 @@ function getActorOpenLines(
   actor: TeaHouseActor,
   textEntriesById?: Record<string, string>
 ): string[] {
+  const { teaHouseBossOpenTextIds } = getTeaHouseContentDefaults();
   const entries = getTeaHouseTextEntries(textEntriesById);
   if (actor.isFixedHost) {
     return resolveTeaHouseTextLines(entries, teaHouseBossOpenTextIds);
@@ -321,6 +317,7 @@ function pickActorIntelLine(
   actor: TeaHouseActor,
   textEntriesById?: Record<string, string>
 ): string {
+  const { teaHouseBossIntelTextIds } = getTeaHouseContentDefaults();
   if (actor.isFixedHost) {
     return pickRandomResolvedTeaHouseText(
       getTeaHouseTextEntries(textEntriesById),
@@ -622,6 +619,7 @@ function resolveDebateTurn(
   );
 
   if (roundResult.outcome != null) {
+    const { teaHouseLowIntelChance } = getTeaHouseContentDefaults();
     const playerCharacter = getPlayerCharacter(
       input.characterDefinitions,
       input.playerCharacterId
@@ -912,6 +910,7 @@ function handleActorAction(
     case "dismiss-dialogue":
       return withDialoguePhase(input, sessionState, "idle");
     case "talk": {
+      const { teaHouseLowIntelChance } = getTeaHouseContentDefaults();
       const intelGain = Math.random() < teaHouseLowIntelChance ? 1 : 0;
       const entries = getTeaHouseTextEntries(input.textEntriesById);
       const line = pickActorDialogueLine(selectedActor, input.textEntriesById);
@@ -945,6 +944,7 @@ function handleActorAction(
       );
     }
     case "serve-tea": {
+      const { teaHouseTeaCost } = getTeaHouseContentDefaults();
       const playerCharacter = getPlayerCharacter(
         input.characterDefinitions,
         input.playerCharacterId
@@ -1141,6 +1141,7 @@ function selectOverlayViewModel(
 export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
   moduleId: "tea-house",
   enter(input) {
+    const { teaHouseBossProfile } = getTeaHouseContentDefaults();
     const guestNpcIds = sampleCityNpcIdsForLocation(
       input.gameState,
       defaultRuntimeContent.cityNpcPools,
@@ -1148,8 +1149,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
       "tea-house",
       MAX_TEA_HOUSE_GUESTS
     );
-    const bossActorId =
-      input.houseDefinition.defaultCharacterId ?? teaHouseBossProfile.actorId;
+    const bossActorId = teaHouseBossProfile.actorId;
     const bossActor = createTeaHouseBossActor(
       input.gameState,
       input.houseDefinition.id
@@ -1182,6 +1182,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
     };
   },
   selectViewModel(input): HouseModuleViewModel {
+    const { teaHouseBossProfile, teaHouseTeaCost } = getTeaHouseContentDefaults();
     const sessionState =
       input.sessionState ??
       createInitialTeaHouseSessionState([], teaHouseBossProfile.actorId, [

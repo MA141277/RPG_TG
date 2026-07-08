@@ -1,4 +1,5 @@
 import { resolveContentPackMapAssetUrls } from "../content/content-pack-loader";
+import { assertHouseModuleDefaults } from "../content/house-module-defaults";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 
 export async function loadScenarioPackFromUrl(
@@ -115,6 +116,12 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.houseAccessRefusalRules != null) {
     assertArray(value.houseAccessRefusalRules, "scenario house access refusal rules");
   }
+  if (value.houseModuleDefaults != null) {
+    assertHouseModuleDefaults(
+      value.houseModuleDefaults,
+      "scenario houseModuleDefaults"
+    );
+  }
   if (value.historicalCharacters != null) {
     assertArray(value.historicalCharacters, "scenario historical characters");
   }
@@ -153,6 +160,7 @@ type ScenarioPackManifestFiles = {
   valuables?: string;
   cityNpcPools?: string;
   houseAccessRefusalRules?: string;
+  houseModuleDefaults?: string;
   historicalCharacters?: string;
   historicalCityRosters?: string;
   cityPortraits?: string;

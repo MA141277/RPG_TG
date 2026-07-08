@@ -1,5 +1,6 @@
 import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { MapDefinition } from "../../domain/map";
+import { assertHouseModuleDefaults } from "./house-module-defaults";
 
 const CONTENT_PACK_FILE_KEYS = [
   "maps",
@@ -16,6 +17,7 @@ const CONTENT_PACK_FILE_KEYS = [
   "valuables",
   "cityNpcPools",
   "houseAccessRefusalRules",
+  "houseModuleDefaults",
   "cityPortraits",
   "historicalCharacters",
   "historicalCityRosters",
@@ -57,7 +59,7 @@ export async function loadContentPackFromManifestText(
     manifestUrl
   );
 
-  return {
+  const pack = {
     schemaVersion: manifest.schemaVersion,
     id: manifest.id,
     title: manifest.title,
@@ -65,6 +67,15 @@ export async function loadContentPackFromManifestText(
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
   };
+
+  if (pack.houseModuleDefaults != null) {
+    assertHouseModuleDefaults(
+      pack.houseModuleDefaults,
+      "content pack houseModuleDefaults"
+    );
+  }
+
+  return pack;
 }
 
 export function resolvePackRelativeUrl(

@@ -96,9 +96,6 @@ const {
   resolveSelectedCardId,
   resolveSelectedValuableId,
 } = require("../.test-dist/application/inventory/inventory-selection.js");
-const {
-  accountingGradeRewards,
-} = require("../.test-dist/content/houses/grain-shop-content.js");
 const { GRAIN_SHOP_VARIABLE_KEYS } = require("../.test-dist/domain/grain-shop.js");
 const { HOME_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/home-house.js");
 const { KEEP_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/keep-house.js");
@@ -712,6 +709,61 @@ test("active game content indexes merged task definitions by id", () => {
     content.taskDefinitionsById["task.override"].objectives[0].signalType,
     "city.entered"
   );
+});
+
+test("active game content merges module-keyed house defaults by module id", () => {
+  const content = createActiveGameContent(
+    {
+      schemaVersion: 1,
+      id: "pack.base.house-defaults",
+      title: "Base House Defaults",
+      textEntries: {},
+      scenes: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      houseModuleDefaults: {
+        "home-house": {
+          preserved: "base",
+          shared: "base",
+        },
+      },
+      activities: [],
+      cards: [],
+      valuables: [],
+    },
+    {
+      schemaVersion: 1,
+      id: "pack.override.house-defaults",
+      title: "Override House Defaults",
+      textEntries: {},
+      scenes: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      houseModuleDefaults: {
+        "home-house": {
+          shared: "override",
+          added: "override",
+        },
+      },
+      activities: [],
+      cards: [],
+      valuables: [],
+    }
+  );
+
+  assert.deepEqual(content.houseModuleDefaults["home-house"], {
+    preserved: "base",
+    shared: "override",
+    added: "override",
+  });
 });
 
 test("scene view resolves narration dialogue and choice text through text ids", () => {
@@ -1444,16 +1496,19 @@ test("base game content pack is sourced from the shared content-pack loader", as
   });
 });
 
-test("story content registry does not hard-import zhuyuanzhang pack tables", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src", "content", "story", "index.ts"),
-    "utf8"
+test("legacy story content registry file is removed after active-content story ownership converges", () => {
+  const storyIndexPath = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "story",
+    "index.ts"
   );
 
   assert.equal(
-    source.includes("scenario-packs/zhuyuanzhang"),
+    fs.existsSync(storyIndexPath),
     false,
-    "Expected src/content/story/index.ts to stop hard-importing zhuyuanzhang pack tables."
+    "Expected src/content/story/index.ts to be removed once story content is served through active-content context."
   );
 });
 
@@ -1884,6 +1939,19 @@ test("content pack definition accepts optional task contribution fields", async 
   assert.equal(source.includes("tasks?: TaskDefinition[];"), true);
 });
 
+test("content pack definition accepts optional houseModuleDefaults field", async () => {
+  const source = await fs.promises.readFile(
+    path.join(process.cwd(), "src", "domain", "content-pack.ts"),
+    "utf8"
+  );
+
+  assert.equal(source.includes('import type { HouseModuleId }'), true);
+  assert.equal(
+    source.includes("houseModuleDefaults?: Partial<Record<HouseModuleId, Record<string, unknown>>>;"),
+    true
+  );
+});
+
 test("content pack loader ignores missing optional ui reserve files", async () => {
   const { loadContentPackFromManifestText } = await import(
     "../.test-dist/application/content/content-pack-loader.js"
@@ -1963,6 +2031,59 @@ test("content pack loader hydrates optional task contribution files", async () =
     );
 
     assert.deepEqual(pack.tasks, expectedTasks);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("content pack loader hydrates optional houseModuleDefaults file", async () => {
+  const { loadContentPackFromManifestText } = await import(
+    "../.test-dist/application/content/content-pack-loader.js"
+  );
+  const originalFetch = global.fetch;
+  const expectedDefaults = {
+    "home-house": {
+      homeHouseIntroLines: ["intro.test"],
+      homeHouseMainLines: ["main.test"],
+      homeHouseRestMenuLines: ["rest.test"],
+      homeHouseRecoveryTuning: {
+        hpBase: 10,
+        hpRatio: 0.15,
+        fatigueBase: 12,
+        fatigueRatio: 0.18,
+        customRestMaxDays: 99,
+      },
+    },
+  };
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input.url;
+
+    if (url.endsWith("/house-module-defaults.json")) {
+      return {
+        ok: true,
+        json: async () => expectedDefaults,
+      };
+    }
+
+    return {
+      ok: true,
+      json: async () => [],
+    };
+  };
+
+  try {
+    const pack = await loadContentPackFromManifestText(
+      JSON.stringify({
+        schemaVersion: 1,
+        id: "pack.test",
+        title: "Pack Test",
+        files: { houseModuleDefaults: "house-module-defaults.json" },
+      }),
+      "file:///virtual/pack.json"
+    );
+
+    assert.deepEqual(pack.houseModuleDefaults, expectedDefaults);
   } finally {
     global.fetch = originalFetch;
   }
@@ -2083,6 +2204,26 @@ test(
 );
 
 test(
+  "scenario pack loader reserves optional houseModuleDefaults manifest and validation seams",
+  async () => {
+    const source = await fs.promises.readFile(
+      path.join(
+        process.cwd(),
+        "src",
+        "application",
+        "scenario",
+        "scenario-pack-loader.ts"
+      ),
+      "utf8"
+    );
+
+    assert.equal(source.includes("houseModuleDefaults?: string;"), true);
+    assert.match(source, /value\.houseModuleDefaults != null/);
+    assert.match(source, /assertHouseModuleDefaults\(/);
+  }
+);
+
+test(
   "scenario pack loader accepts browser root-relative manifest urls for built-in JSON starts",
   async () => {
     const {
@@ -2142,6 +2283,10 @@ test(
 
       assert.equal(pack.id, "scenario-pack.zhu_yuanzhang.monk_opening");
       assert.equal(pack.scenarioProfile.id, "scenario.zhu_yuanzhang.monk_opening");
+      assert.equal(
+        pack.houseModuleDefaults["home-house"].homeHouseRecoveryTuning.customRestMaxDays,
+        99
+      );
       assert.equal(
         pack.maps.some(
           (map) =>
@@ -2308,6 +2453,11 @@ test("default runtime content loads from the shared base content pack path", asy
         candidateNpcIds: [],
       },
     ],
+    houseModuleDefaults: {
+      "home-house": {
+        intro: "default-runtime-home",
+      },
+    },
     textEntries: {
       "runtime.test.default-content": "default runtime content",
     },
@@ -2332,10 +2482,40 @@ test("default runtime content loads from the shared base content pack path", asy
     ),
     true
   );
+  assert.deepEqual(defaultRuntimeContent.houseModuleDefaults["home-house"], {
+    intro: "default-runtime-home",
+  });
   assert.equal(
     defaultRuntimeContent.textEntriesById["runtime.test.default-content"],
     "default runtime content"
   );
+});
+
+test("default runtime content keeps module-keyed house defaults", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
+
+  const {
+    defaultRuntimeContent,
+    loadDefaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+
+  await loadDefaultRuntimeContent(async () => ({
+    schemaVersion: 1,
+    id: "pack.test.runtime-default-house-module-defaults",
+    title: "Runtime Default House Module Defaults",
+    houseModuleDefaults: {
+      "home-house": {
+        intro: "shared-home-default",
+      },
+    },
+  }));
+
+  assert.deepEqual(defaultRuntimeContent.houseModuleDefaults["home-house"], {
+    intro: "shared-home-default",
+  });
 });
 
 test("grain trade succeeds for a valid buy and advances runtime state", () => {
@@ -3677,11 +3857,20 @@ test("temple house review module no longer keeps core assignment prose inline", 
   );
 });
 
-test("temple and keep house content files no longer author pack task definitions", () => {
-  const templeContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),
-    "utf8"
+test("legacy temple house content registry file is removed after temple runtime fallback converges", () => {
+  const templeContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/temple-house-content.ts"
   );
+
+  assert.equal(
+    fs.existsSync(templeContentPath),
+    false,
+    "Expected src/content/houses/temple-house-content.ts to be removed once temple runtime fallback no longer depends on it."
+  );
+});
+
+test("keep house content file no longer authors pack task definitions", () => {
   const keepContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/keep-house-content.ts"),
     "utf8"
@@ -3689,21 +3878,12 @@ test("temple and keep house content files no longer author pack task definitions
 
   assert.deepEqual(
     [
-      "mission.temple.copy-scripture",
-      "mission.temple.sweep-courtyard",
-      "mission.temple.carry-water",
-      "mission.temple.beg-alms",
-      "mission.temple.relief-refugees",
       "mission.keep.grain-procurement",
       "mission.keep.market-inspection",
       "mission.keep.militia-drill",
-    ].filter(
-      (entry) =>
-        templeContentSource.includes(entry) || keepContentSource.includes(entry)
-    ),
+    ].filter((entry) => keepContentSource.includes(entry)),
     []
   );
-  assert.equal(templeContentSource.trim(), "export {};");
 });
 
 test("temple house blocks leaving during first review with player dialogue", () => {
@@ -4426,6 +4606,484 @@ test("home house rest summary resolves from text entries", () => {
   ]);
 });
 
+test("home house reads shared module defaults from runtime content", () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const homeHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/home-house/home-house-house-module.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[homeHouseModulePath];
+
+  const {
+    defaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+  const {
+    homeHouseHouseModule: sharedDefaultHomeHouseModule,
+  } = require(homeHouseModulePath);
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousHomeDefaults = runtimeDefaults["home-house"];
+
+  runtimeDefaults["home-house"] = {
+    homeHouseIntroLines: ["共享居所开场。"],
+    homeHouseMainLines: ["共享居所主菜单。"],
+    homeHouseRestMenuLines: ["共享居所休息菜单。"],
+    homeHouseRecoveryTuning: {
+      hpBase: 6,
+      hpRatio: 0.1,
+      fatigueBase: 8,
+      fatigueRatio: 0.12,
+      customRestMaxDays: 42,
+    },
+  };
+
+  try {
+    const enterResult = sharedDefaultHomeHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: homeHouse,
+      playerCharacterId,
+    });
+
+    assert.deepEqual(enterResult.sessionState?.descriptionLines, ["共享居所开场。"]);
+
+    const restMenuResult = sharedDefaultHomeHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: homeHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: {
+        type: "action",
+        actionId: "open-rest-menu",
+      },
+    });
+
+    assert.deepEqual(restMenuResult.sessionState?.descriptionLines, [
+      "共享居所休息菜单。",
+    ]);
+  } finally {
+    if (previousHomeDefaults == null) {
+      delete runtimeDefaults["home-house"];
+    } else {
+      runtimeDefaults["home-house"] = previousHomeDefaults;
+    }
+  }
+});
+
+test("keep house reads shared module defaults from runtime content", () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const keepHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/keep-house/keep-house-house-module.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[keepHouseModulePath];
+
+  const {
+    defaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+  const {
+    keepHouseHouseModule: sharedDefaultKeepHouseModule,
+  } = require(keepHouseModulePath);
+  const {
+    getKeepHouseContributionVariableKey,
+    KEEP_HOUSE_VARIABLE_KEYS,
+  } = require("../.test-dist/domain/keep-house.js");
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousKeepDefaults = runtimeDefaults["keep-house"];
+  const baseState = createBaseState();
+
+  runtimeDefaults["keep-house"] = {
+    keepHouseDefaultStrategy: {
+      titleTextId: "runtime.test.keep.strategy.title",
+      lineTextIds: ["runtime.test.keep.strategy.line.001"],
+    },
+    keepHouseDefaultContributions: [
+      {
+        characterId: "char.player",
+        contribution: 77,
+      },
+    ],
+  };
+
+  try {
+    const enterResult = sharedDefaultKeepHouseModule.enter({
+      gameState: {
+        ...baseState,
+        runtime: {
+          ...baseState.runtime,
+          variables: {
+            ...baseState.runtime.variables,
+            [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 1,
+          },
+        },
+      },
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: keepHouse,
+      playerCharacterId,
+      textEntriesById: {
+        "runtime.test.keep.strategy.title": "自定义军议方略",
+        "runtime.test.keep.strategy.line.001": "自定义军议台词。",
+      },
+    });
+
+    assert.equal(
+      enterResult.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.currentStrategy],
+      "自定义军议方略"
+    );
+    assert.equal(
+      enterResult.gameState.runtime.variables[
+        getKeepHouseContributionVariableKey("char.player")
+      ],
+      77
+    );
+  } finally {
+    if (previousKeepDefaults == null) {
+      delete runtimeDefaults["keep-house"];
+    } else {
+      runtimeDefaults["keep-house"] = previousKeepDefaults;
+    }
+  }
+});
+
+test("grain shop market text reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const grainShopModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js"
+  );
+  const grainMarketModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/grain-market.js"
+  );
+  const investigateGrainMarketModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/investigate-grain-market.js"
+  );
+  const grainDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-content-defaults.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[grainShopModulePath];
+  delete require.cache[grainMarketModulePath];
+  delete require.cache[investigateGrainMarketModulePath];
+  delete require.cache[grainDefaultsHelperModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    grainShopHouseModule: sharedDefaultGrainShopHouseModule,
+  } = require(grainShopModulePath);
+  const { pickMarketRumor } = require(grainMarketModulePath);
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousGrainDefaults = runtimeDefaults["grain-shop"];
+  const textEntriesById = {
+    "runtime.test.grain_shop.greeting.001": "共享粮铺招呼。",
+    "runtime.test.grain_shop.default.001": "共享粮铺常规招呼。",
+    "runtime.test.grain_shop.rumor.001": "共享粮市风声。",
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["grain-shop"] = {
+      grainShopNpcGreetingTextIds: ["runtime.test.grain_shop.greeting.001"],
+      grainShopNpcDefaultLineTextIds: ["runtime.test.grain_shop.default.001"],
+      grainShopMarketRumorTextIds: ["runtime.test.grain_shop.rumor.001"],
+    };
+
+    const enterResult = sharedDefaultGrainShopHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: grainShopHouse,
+      playerCharacterId,
+      textEntriesById,
+    });
+    const investigateResult = sharedDefaultGrainShopHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: grainShopHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "investigate" },
+      textEntriesById,
+    });
+
+    assert.equal(enterResult.sessionState?.npcGreeting, "共享粮铺招呼。");
+    assert.equal(enterResult.sessionState?.npcDefaultLine, "共享粮铺常规招呼。");
+    assert.equal(pickMarketRumor(textEntriesById), "共享粮市风声。");
+    assert.equal(
+      investigateResult.sessionState?.overlay?.paragraphs?.[1],
+      "传闻：共享粮市风声。"
+    );
+  } finally {
+    if (previousGrainDefaults == null) {
+      delete runtimeDefaults["grain-shop"];
+    } else {
+      runtimeDefaults["grain-shop"] = previousGrainDefaults;
+    }
+  }
+});
+
+test("grain shop session seed reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const grainShopModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js"
+  );
+  const grainSnapshotModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/grain-shop-snapshot.js"
+  );
+  const grainInitSessionModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/init-grain-shop-session.js"
+  );
+  const grainDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-content-defaults.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[grainShopModulePath];
+  delete require.cache[grainSnapshotModulePath];
+  delete require.cache[grainInitSessionModulePath];
+  delete require.cache[grainDefaultsHelperModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    grainShopHouseModule: sharedDefaultGrainShopHouseModule,
+  } = require(grainShopModulePath);
+  const { createGrainShopSnapshot } = require(grainSnapshotModulePath);
+  const { readPlayerGrainDou } = require(
+    "../.test-dist/application/inventory/trade-inventory.js"
+  );
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousGrainDefaults = runtimeDefaults["grain-shop"];
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["grain-shop"] = {
+      ...(runtimeDefaults["grain-shop"] ?? {}),
+      grainShopInitialValues: {
+        money: 999,
+        food: 12,
+        math: 7,
+        relationship: 23,
+        time: 4,
+      },
+    };
+
+    const enterResult = sharedDefaultGrainShopHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: grainShopHouse,
+      playerCharacterId,
+    });
+    const playerCharacter = getPlayerCharacter(enterResult.characterDefinitions);
+    const snapshot = createGrainShopSnapshot(
+      enterResult.gameState,
+      playerCharacter
+    );
+
+    assert.equal(
+      enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
+      23
+    );
+    assert.equal(
+      enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.time],
+      4
+    );
+    assert.equal(
+      enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.food],
+      0
+    );
+    assert.equal(readPlayerGrainDou(enterResult.gameState), 120);
+    assert.equal(snapshot.food, 12);
+    assert.equal(snapshot.relationship, 23);
+    assert.equal(snapshot.time, 4);
+  } finally {
+    if (previousGrainDefaults == null) {
+      delete runtimeDefaults["grain-shop"];
+    } else {
+      runtimeDefaults["grain-shop"] = previousGrainDefaults;
+    }
+  }
+});
+
+test("grain shop accounting family reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const accountingMinigameModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/accounting-minigame.js"
+  );
+  const applyAccountingRewardModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/apply-accounting-reward.js"
+  );
+  const grainShopModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js"
+  );
+  const grainAccountingPlayableModulePath = require.resolve(
+    "../.test-dist/application/playables/grain-accounting/grain-accounting-definition.js"
+  );
+  const grainDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-content-defaults.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[accountingMinigameModulePath];
+  delete require.cache[applyAccountingRewardModulePath];
+  delete require.cache[grainShopModulePath];
+  delete require.cache[grainAccountingPlayableModulePath];
+  delete require.cache[grainDefaultsHelperModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    grainShopHouseModule: sharedDefaultGrainShopHouseModule,
+  } = require(grainShopModulePath);
+  const { getAccountingGradeReward } = require(accountingMinigameModulePath);
+  const {
+    answerGrainAccountingPlayable,
+    launchGrainAccountingPlayable,
+  } = require(grainAccountingPlayableModulePath);
+  const { loadDefaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousGrainDefaults = runtimeDefaults["grain-shop"];
+  const customRewards = {
+    S: { math: 9, money: 90, relationship: 9 },
+    A: { math: 8, money: 80, relationship: 8 },
+    B: { math: 7, money: 70, relationship: 7 },
+    C: { math: 6, money: 60, relationship: 6 },
+    D: { math: 0, money: 7, relationship: 5 },
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["grain-shop"] = {
+      ...(runtimeDefaults["grain-shop"] ?? {}),
+      accountingGradeRewards: customRewards,
+      accountingGameDurationSec: 17,
+      accountingMaxWrongAnswers: 1,
+    };
+
+    assert.deepEqual(getAccountingGradeReward("A"), customRewards.A);
+
+    const launchedPlayable = launchGrainAccountingPlayable({
+      state: {
+        ...createRuntimeState(withCouncilInDays(createStateWithGrainVariables(), 200)),
+        core: {
+          ...createRuntimeState(withCouncilInDays(createStateWithGrainVariables(), 200)).core,
+          ui: {
+            ...createRuntimeState(withCouncilInDays(createStateWithGrainVariables(), 200)).core.ui,
+            houseSession: {
+              moduleId: "grain-shop",
+              state: createInitialGrainShopSessionState("open", "default"),
+            },
+          },
+        },
+      },
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+      ownerId: grainShopHouse.id,
+    });
+
+    assert.equal(
+      launchedPlayable.core.ui.houseSession?.state.overlay?.type,
+      "minigame"
+    );
+    if (launchedPlayable.core.ui.houseSession?.state.overlay?.type !== "minigame") {
+      return;
+    }
+
+    assert.equal(launchedPlayable.core.ui.houseSession.state.overlay.secondsLeft, 17);
+
+    const launchedViewModel = sharedDefaultGrainShopHouseModule.selectViewModel({
+      gameState: launchedPlayable.core,
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: grainShopHouse,
+      playerCharacterId,
+      sessionState: {
+        ...launchedPlayable.core.ui.houseSession.state,
+        overlay: {
+          ...launchedPlayable.core.ui.houseSession.state.overlay,
+          wrongCount: 1,
+        },
+      },
+    });
+    assert.equal(launchedViewModel.overlay?.type, "minigame");
+    assert.equal(launchedViewModel.overlay?.wrongsLeft, 0);
+
+    const answeredPlayable = answerGrainAccountingPlayable({
+      state: {
+        ...launchedPlayable,
+        core: {
+          ...launchedPlayable.core,
+          ui: {
+            ...launchedPlayable.core.ui,
+            houseSession: {
+              moduleId: "grain-shop",
+              state: {
+                ...launchedPlayable.core.ui.houseSession.state,
+                overlay: {
+                  ...launchedPlayable.core.ui.houseSession.state.overlay,
+                  question: {
+                    bought: 10,
+                    sold: 4,
+                    displayedStock: 6,
+                    isLedgerCorrect: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+      playerSaysCorrect: false,
+    });
+
+    const settledOverlay = answeredPlayable.state.core.ui.houseSession?.state.overlay;
+    assert.equal(settledOverlay?.type, "result");
+    if (settledOverlay?.type !== "result") {
+      return;
+    }
+
+    const playerCharacter = getPlayerCharacter(answeredPlayable.characterDefinitions);
+    assert.equal(settledOverlay.grade, "D");
+    assert.equal(playerCharacter.stats.gold, 120 + customRewards.D.money);
+    assert.equal(playerCharacter.skills.arithmetic, 1 + customRewards.D.math);
+    assert.equal(
+      answeredPlayable.state.core.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
+      customRewards.D.relationship
+    );
+  } finally {
+    if (previousGrainDefaults == null) {
+      delete runtimeDefaults["grain-shop"];
+    } else {
+      runtimeDefaults["grain-shop"] = previousGrainDefaults;
+    }
+  }
+});
+
 test("grain shop trade overlay reads buy and sell price from unified city market", () => {
   const enterResult = grainShopHouseModule.enter({
     gameState: createBaseState(),
@@ -4529,8 +5187,11 @@ test("grain market and grain shop content no longer keep core greeting and rumor
     path.join(process.cwd(), "src/application/grain-shop/grain-market.ts"),
     "utf8"
   );
-  const grainShopContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/grain-shop-content.ts"),
+  const grainShopDefaultsSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/grain-shop/grain-shop-content-defaults.ts"
+    ),
     "utf8"
   );
 
@@ -4542,9 +5203,22 @@ test("grain market and grain shop content no longer keep core greeting and rumor
       "做生意，算盘得快。",
     ].filter(
       (entry) =>
-        grainMarketSource.includes(entry) || grainShopContentSource.includes(entry)
+        grainMarketSource.includes(entry) || grainShopDefaultsSource.includes(entry)
     ),
     []
+  );
+});
+
+test("legacy grain-shop content registry file is removed after grain-shop runtime fallback converges", () => {
+  const grainShopContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/grain-shop-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(grainShopContentPath),
+    false,
+    "Expected src/content/houses/grain-shop-content.ts to be removed once grain-shop runtime fallback no longer depends on it."
   );
 });
 
@@ -4881,10 +5555,6 @@ test("market house runtime and content no longer keep core greeting rumor prose 
     ),
     "utf8"
   );
-  const marketHouseContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/market-house-content.ts"),
-    "utf8"
-  );
 
   assert.deepEqual(
     [
@@ -4894,12 +5564,227 @@ test("market house runtime and content no longer keep core greeting rumor prose 
       "最近粮价不太稳定。",
       "最近生意不好做。",
     ].filter(
-      (entry) =>
-        marketHouseRuntimeSource.includes(entry) ||
-        marketHouseContentSource.includes(entry)
+      (entry) => marketHouseRuntimeSource.includes(entry)
     ),
     []
   );
+});
+
+test("legacy market house content registry file is removed after market runtime fallback converges", () => {
+  const marketHouseContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/market-house-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(marketHouseContentPath),
+    false,
+    "Expected src/content/houses/market-house-content.ts to be removed once market runtime fallback no longer depends on it."
+  );
+});
+
+test("market house reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const marketHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/market-house/market-house-house-module.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[marketHouseModulePath];
+
+  const {
+    defaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+  const {
+    marketHouseHouseModule: sharedDefaultMarketHouseModule,
+  } = require(marketHouseModulePath);
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousMarketDefaults = runtimeDefaults["market-house"];
+  const baseState = ensureCityNpcPoolsForCurrentDay(
+    createBaseState(),
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["market-house"] = {
+      marketHouseFixedBoss: {
+        id: "custom_market_boss",
+        name: "自定义掌柜",
+        title: "货栈主人",
+        personality: "谨慎",
+        specialty: "转运",
+        favorability: 3,
+        isFixedHost: true,
+      },
+      marketHouseRandomNpcPool: [
+        {
+          id: "custom_market_guest",
+          name: "自定义客商",
+          title: "远商",
+          personality: "多闻",
+          specialty: "北货",
+          favorability: 2,
+          isFixedHost: false,
+        },
+      ],
+      marketHouseGreetingTextIds: [
+        "runtime.test.market.greeting.001",
+        "runtime.test.market.greeting.002",
+      ],
+      marketHouseBossOpenTextIds: [
+        "runtime.test.market.boss_open.001",
+        "runtime.test.market.boss_open.002",
+      ],
+      marketHouseGuestOpenTextIdsByActorId: {
+        custom_market_guest: [
+          "runtime.test.market.guest_open.001",
+          "runtime.test.market.guest_open.002",
+        ],
+      },
+      marketHouseSmallTalkTextIds: ["runtime.test.market.small_talk.001"],
+      marketHouseRumorTextIdsByCategory: {},
+      marketHouseGeneralRumorTextIds: ["runtime.test.market.rumor.general.001"],
+      marketHouseInvestigationSpecialtyTextIdByActorId: {
+        custom_market_guest: "runtime.test.market.specialty.guest",
+        custom_market_boss: "runtime.test.market.specialty.boss",
+      },
+    };
+    const textEntriesById = {
+      "runtime.test.market.greeting.001": "自定义货栈开场一。",
+      "runtime.test.market.greeting.002": "自定义货栈开场二。",
+      "runtime.test.market.boss_open.001": "自定义掌柜开场一。",
+      "runtime.test.market.boss_open.002": "自定义掌柜开场二。",
+      "runtime.test.market.guest_open.001": "自定义客商开场一。",
+      "runtime.test.market.guest_open.002": "自定义客商开场二。",
+      "runtime.test.market.small_talk.001": "自定义货栈闲谈。",
+      "runtime.test.market.rumor.general.001": "自定义货栈传闻。",
+      "runtime.test.market.specialty.guest": "自定义客商专营：{specialty}。",
+      "runtime.test.market.specialty.boss": "自定义掌柜专营：{specialty}。",
+      "runtime.zhu_yuanzhang.market_house.investigate.city.001":
+        "{cityName}繁荣 {prosperity}，风险 {danger}。",
+      "runtime.zhu_yuanzhang.market_house.investigate.city.002":
+        "城中偏好：{specialDemandList}",
+      "runtime.zhu_yuanzhang.market_house.investigate.overlay.title":
+        "自定义调查行情",
+      "runtime.zhu_yuanzhang.market_house.small_talk.overlay.title": "自定义闲谈",
+      "runtime.zhu_yuanzhang.market_house.guest_open.default.001": "默认客商开场一。",
+      "runtime.zhu_yuanzhang.market_house.guest_open.default.002": "默认客商专营：{specialty}。",
+    };
+
+    const enterResult = sharedDefaultMarketHouseModule.enter({
+      gameState: baseState,
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      textEntriesById,
+    });
+
+    assert.deepEqual(enterResult.sessionState?.dialogueLines, [
+      "自定义货栈开场一。",
+      "自定义货栈开场二。",
+    ]);
+    assert.equal(enterResult.sessionState?.selectedActorId, "custom_market_boss");
+
+    const openResult = sharedDefaultMarketHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "advance-greeting" },
+      textEntriesById,
+    });
+
+    assert.deepEqual(openResult.sessionState?.dialogueLines, [
+      "自定义掌柜开场一。",
+      "自定义掌柜开场二。",
+    ]);
+
+    const idleResult = sharedDefaultMarketHouseModule.dispatch({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: openResult.sessionState,
+      request: { type: "action", actionId: "dismiss-dialogue" },
+      textEntriesById,
+    });
+
+    const idleViewModel = sharedDefaultMarketHouseModule.selectViewModel({
+      gameState: idleResult.gameState,
+      characterDefinitions: idleResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: idleResult.sessionState,
+      textEntriesById,
+    });
+
+    assert.ok(
+      idleViewModel.standbyRoster.some(
+        (entry) =>
+          entry.characterId === "custom_market_guest" &&
+          entry.name === "自定义客商"
+      )
+    );
+
+    const guestOpenResult = sharedDefaultMarketHouseModule.dispatch({
+      gameState: idleResult.gameState,
+      characterDefinitions: idleResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: idleResult.sessionState,
+      request: {
+        type: "action",
+        actionId: "select-market-actor:custom_market_guest",
+      },
+      textEntriesById,
+    });
+
+    assert.deepEqual(guestOpenResult.sessionState?.dialogueLines, [
+      "自定义客商开场一。",
+      "自定义客商开场二。",
+    ]);
+
+    const investigateResult = sharedDefaultMarketHouseModule.dispatch({
+      gameState: guestOpenResult.gameState,
+      characterDefinitions: guestOpenResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: guestOpenResult.sessionState,
+      request: { type: "action", actionId: "investigate-market" },
+      textEntriesById,
+    });
+
+    assert.equal(
+      investigateResult.sessionState?.overlay?.title,
+      "自定义调查行情"
+    );
+    assert.equal(
+      investigateResult.sessionState?.overlay?.paragraphs[2],
+      "自定义货栈传闻。"
+    );
+    assert.equal(
+      investigateResult.sessionState?.overlay?.paragraphs[3],
+      "自定义客商专营：北货。"
+    );
+  } finally {
+    if (previousMarketDefaults == null) {
+      delete runtimeDefaults["market-house"];
+    } else {
+      runtimeDefaults["market-house"] = previousMarketDefaults;
+    }
+  }
 });
 
 test("market house can open trade overlay and execute buy flow", () => {
@@ -5025,7 +5910,11 @@ test("minigame tick settles into result overlay and applies grade reward", () =>
     return;
   }
 
-  const reward = accountingGradeRewards.A;
+  const reward = {
+    math: 2,
+    money: 50,
+    relationship: 2,
+  };
   const playerCharacter = getPlayerCharacter(result.characterDefinitions);
   assert.equal(result.sessionState.overlay.grade, "A");
   assert.equal(playerCharacter.stats.gold, 120 + reward.money);
@@ -5403,8 +6292,11 @@ test("tea house runtime and content no longer keep core greeting rumor prose inl
     ),
     "utf8"
   );
-  const teaHouseContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/tea-house-content.ts"),
+  const teaHouseDefaultsSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/tea-house/tea-house-content-defaults.ts"
+    ),
     "utf8"
   );
 
@@ -5417,9 +6309,22 @@ test("tea house runtime and content no longer keep core greeting rumor prose inl
       "（放下茶盏）示意你出题。",
     ].filter(
       (entry) =>
-        teaHouseRuntimeSource.includes(entry) || teaHouseContentSource.includes(entry)
+        teaHouseRuntimeSource.includes(entry) || teaHouseDefaultsSource.includes(entry)
     ),
     []
+  );
+});
+
+test("legacy tea house content registry file is removed after tea-house runtime fallback converges", () => {
+  const teaHouseContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/tea-house-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(teaHouseContentPath),
+    false,
+    "Expected src/content/houses/tea-house-content.ts to be removed once tea-house runtime fallback no longer depends on it."
   );
 });
 
@@ -6452,10 +7357,6 @@ test("tavern runtime and content no longer keep core greeting and stamina prose 
     ),
     "utf8"
   );
-  const tavernContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/tavern-content.ts"),
-    "utf8"
-  );
 
   assert.deepEqual(
     [
@@ -6463,12 +7364,465 @@ test("tavern runtime and content no longer keep core greeting and stamina prose 
       "（把算盘往旁边一拨）说吧，你今天想干什么？",
       "（站在柜后看着你）酒、活、赌，三样都明码标价。",
       "（摆了摆手）你这会儿脚下都发虚，还想",
-    ].filter(
-      (entry) =>
-        tavernRuntimeSource.includes(entry) || tavernContentSource.includes(entry)
-    ),
+    ].filter((entry) => tavernRuntimeSource.includes(entry)),
     []
   );
+});
+
+test("legacy tavern content registry file is removed after tavern runtime fallback converges", () => {
+  const tavernContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/tavern-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(tavernContentPath),
+    false,
+    "Expected src/content/houses/tavern-content.ts to be removed once tavern runtime fallback no longer depends on it."
+  );
+});
+
+test("tavern reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const tavernSessionStateModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tavern/tavern-session-state.js"
+  );
+  const tavernDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tavern/tavern-house-content-defaults.js"
+  );
+  const tavernHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tavern/tavern-house-module.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[tavernSessionStateModulePath];
+  delete require.cache[tavernDefaultsHelperModulePath];
+  delete require.cache[tavernHouseModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    tavernHouseModule: sharedDefaultTavernHouseModule,
+  } = require(tavernHouseModulePath);
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousTavernDefaults = runtimeDefaults.tavern;
+  const textEntriesById = {
+    "runtime.test.tavern.greeting.001": "自定义酒馆迎客。",
+    "runtime.test.tavern.open.001": "自定义酒馆开场。",
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults.tavern = {
+      tavernBossProfile: {
+        actorId: "char.custom_innkeeper",
+        name: "自定义掌柜",
+        title: "酒肆主人",
+        specialty: "消息",
+      },
+      tavernBossGreetingTextIds: ["runtime.test.tavern.greeting.001"],
+      tavernBossOpenTextIds: ["runtime.test.tavern.open.001"],
+      tavernDrinkPrice: 135,
+      tavernDefaultWager: 240,
+      tavernWagerStep: 80,
+      tavernWorkOffers: [
+        {
+          id: "offer.test.custom_errand",
+          type: "random-event",
+          title: "自定义跑堂",
+          description: "自定义酒馆活计。",
+          rewardText: "自定义报酬",
+          maxRewardGold: 66,
+        },
+      ],
+    };
+
+    const enterResult = sharedDefaultTavernHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      textEntriesById,
+    });
+
+    assert.deepEqual(enterResult.sessionState?.dialogueLines, ["自定义酒馆迎客。"]);
+    assert.equal(enterResult.sessionState?.currentWager, 240);
+
+    const idleViewModel = sharedDefaultTavernHouseModule.selectViewModel({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: {
+        ...enterResult.sessionState,
+        dialoguePhase: "idle",
+      },
+      textEntriesById,
+    });
+
+    assert.equal(idleViewModel.standbyRoster?.[0]?.name, "自定义掌柜");
+    assert.equal(idleViewModel.standbyRoster?.[0]?.title, "酒肆主人");
+
+    const openResult = sharedDefaultTavernHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "advance-greeting" },
+      textEntriesById,
+    });
+
+    assert.deepEqual(openResult.sessionState?.dialogueLines, ["自定义酒馆开场。"]);
+
+    const openDrink = sharedDefaultTavernHouseModule.dispatch({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: openResult.sessionState,
+      request: { type: "action", actionId: "order-drink" },
+      textEntriesById,
+    });
+
+    assert.equal(openDrink.sessionState?.overlay?.price, 135);
+
+    const openWork = sharedDefaultTavernHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "open-work" },
+      textEntriesById,
+    });
+    const openAccept = sharedDefaultTavernHouseModule.dispatch({
+      gameState: openWork.gameState,
+      characterDefinitions: openWork.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: openWork.sessionState,
+      request: { type: "action", actionId: "open-work-accept" },
+      textEntriesById,
+    });
+
+    assert.deepEqual(
+      openAccept.sessionState?.availableOffers.map((offer) => offer.id),
+      ["offer.test.custom_errand"]
+    );
+  } finally {
+    if (previousTavernDefaults == null) {
+      delete runtimeDefaults.tavern;
+    } else {
+      runtimeDefaults.tavern = previousTavernDefaults;
+    }
+  }
+});
+
+test("tea house reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const teaHouseActorsModulePath = require.resolve(
+    "../.test-dist/application/tea-house/tea-house-actors.js"
+  );
+  const teaHouseDebateModulePath = require.resolve(
+    "../.test-dist/application/tea-house/tea-house-debate.js"
+  );
+  const teaHouseDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tea-house/tea-house-content-defaults.js"
+  );
+  const teaHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tea-house/tea-house-house-module.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[teaHouseActorsModulePath];
+  delete require.cache[teaHouseDebateModulePath];
+  delete require.cache[teaHouseDefaultsHelperModulePath];
+  delete require.cache[teaHouseModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const { teaHouseHouseModule: sharedDefaultTeaHouseModule } = require(
+    teaHouseModulePath
+  );
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousTeaHouseDefaults = runtimeDefaults["tea-house"];
+  const previousCityNpcPools = defaultRuntimeContent.cityNpcPools;
+  const textEntriesById = {
+    "runtime.test.tea_house.greeting.fixed.001": "自定义茶馆迎客。",
+    "runtime.test.tea_house.open.fixed.001": "自定义茶馆开场。",
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["tea-house"] = {
+      teaHouseBossProfile: {
+        actorId: "char.custom_tea_boss",
+        name: "自定义茶馆掌柜",
+        title: "茶馆主人",
+        personality: "沉稳",
+        specialty: "人情",
+        favorability: 7,
+      },
+      teaHouseBossGreetingTextIds: ["runtime.test.tea_house.greeting.fixed.001"],
+      teaHouseBossOpenTextIds: ["runtime.test.tea_house.open.fixed.001"],
+      teaHouseBossDialogueTextIds: ["runtime.test.tea_house.open.fixed.001"],
+      teaHouseBossIntelTextIds: ["runtime.test.tea_house.open.fixed.001"],
+      teaHouseTeaCost: 135,
+      teaHouseInitialSpirit: 14,
+      teaHouseTurnTimeLimitSec: 18,
+      teaHouseLowIntelChance: 0,
+      teaHouseTopicCounterMap: {
+        义: "利",
+        利: "名",
+        名: "势",
+        势: "义",
+      },
+      teaHousePersonalityTopicWeights: {
+        沉稳: {
+          义: 1,
+          利: 5,
+          名: 1,
+          势: 1,
+        },
+      },
+    };
+    defaultRuntimeContent.cityNpcPools = [];
+
+    const enterResult = sharedDefaultTeaHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+      houseDefinition: teaHouse,
+      sessionState: null,
+      textEntriesById,
+    });
+    const openResult = sharedDefaultTeaHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      playerCharacterId,
+      houseDefinition: teaHouse,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "advance-greeting" },
+      textEntriesById,
+    });
+    const viewModel = sharedDefaultTeaHouseModule.selectViewModel({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      playerCharacterId,
+      houseDefinition: teaHouse,
+      sessionState: openResult.sessionState,
+      textEntriesById,
+    });
+
+    assert.equal(enterResult.sessionState?.selectedActorId, "char.custom_tea_boss");
+    assert.deepEqual(
+      enterResult.sessionState?.dialogueLines,
+      ["自定义茶馆迎客。"]
+    );
+    assert.equal(viewModel.dialogue?.speakerName, "自定义茶馆掌柜");
+    assert.deepEqual(viewModel.dialogue?.textLines, ["自定义茶馆开场。"]);
+    assert.equal(
+      viewModel.actionContainer?.actions.find((action) => action.id === "serve-tea")
+        ?.disabled,
+      true
+    );
+  } finally {
+    if (previousTeaHouseDefaults === undefined) {
+      delete runtimeDefaults["tea-house"];
+    } else {
+      runtimeDefaults["tea-house"] = previousTeaHouseDefaults;
+    }
+    defaultRuntimeContent.cityNpcPools = previousCityNpcPools;
+  }
+});
+
+test("medicine house reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const medicineCompoundingModulePath = require.resolve(
+    "../.test-dist/application/medicine-house/compounding-minigame.js"
+  );
+  const medicinePlayableModulePath = require.resolve(
+    "../.test-dist/application/playables/medicine-compounding/medicine-compounding-definition.js"
+  );
+  const medicineDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/medicine-house/medicine-house-content-defaults.js"
+  );
+  const medicineHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/medicine-house/medicine-house-house-module.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[medicineCompoundingModulePath];
+  delete require.cache[medicinePlayableModulePath];
+  delete require.cache[medicineDefaultsHelperModulePath];
+  delete require.cache[medicineHouseModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    medicineHouseHouseModule: sharedDefaultMedicineHouseModule,
+  } = require(medicineHouseModulePath);
+  const {
+    getCompoundingLimits,
+    getAvailableHerbsForSkill,
+    pickCompoundingTarget,
+  } = require(medicineCompoundingModulePath);
+  const {
+    getMedicineCompoundingTimeAdvanceCost,
+  } = require(medicinePlayableModulePath);
+  const {
+    convertHouseActivityDaysToSegments,
+    getHouseMinigameDurationDays,
+  } = require("../.test-dist/application/house/house-activity-costs.js");
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousMedicineDefaults = runtimeDefaults["medicine-house"];
+  const textEntriesById = {
+    "runtime.test.medicine.greeting.001": "自定义药铺迎客。",
+    "runtime.test.medicine.open.001": "自定义药铺开场。",
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["medicine-house"] = {
+      medicineHouseDoctorProfile: {
+        actorId: "char.custom_medicine_doctor",
+        name: "自定义坐堂医师",
+        title: "药铺主人",
+        personality: "沉稳",
+        specialty: "医术",
+        favorability: 5,
+      },
+      medicineHouseDialogueTextIds: ["runtime.test.medicine.open.001"],
+      medicineHouseGreetingTextIds: ["runtime.test.medicine.greeting.001"],
+      medicineHouseOpenTextIds: ["runtime.test.medicine.open.001"],
+      medicineHouseHealService: {
+        cost: 135,
+        fatigueRecovery: 22,
+      },
+      medicineHousePreparedMedicines: [
+        {
+          id: "medicine.custom.heal",
+          name: "自定义金创药",
+          type: "heal",
+          price: 77,
+          effect: { hp: 18 },
+        },
+      ],
+      medicineHouseHerbCatalog: [
+        {
+          id: "herb.custom.ginseng",
+          name: "自定义参片",
+          cold: 1,
+          heat: 0,
+          poison: 0,
+          heal: 4,
+        },
+        {
+          id: "herb.custom.ginger",
+          name: "自定义姜片",
+          cold: 0,
+          heat: 2,
+          poison: 0,
+          heal: 1,
+        },
+      ],
+      medicineHouseAilmentTargets: [
+        {
+          ailmentId: "custom_wind_cold",
+          ailmentName: "自定义风寒",
+          coldRequired: 1,
+          healRequired: 4,
+          maxPoison: 0,
+        },
+      ],
+      medicineHouseCompoundingBaseTurns: 3,
+      medicineHouseCompoundingBaseDurationSec: 21,
+      medicineHouseCompoundingGradeRewards: {
+        S: { medicine: 4, relationship: 3 },
+        A: { medicine: 3, relationship: 2 },
+        B: { medicine: 2, relationship: 1 },
+        C: { medicine: 1, relationship: 0 },
+        D: { medicine: 0, relationship: -1 },
+      },
+    };
+
+    const enterResult = sharedDefaultMedicineHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: medicineHouse,
+      playerCharacterId,
+      textEntriesById,
+    });
+    const openResult = sharedDefaultMedicineHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: medicineHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "advance-greeting" },
+      textEntriesById,
+    });
+    const viewModel = sharedDefaultMedicineHouseModule.selectViewModel({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      houseDefinition: medicineHouse,
+      playerCharacterId,
+      sessionState: openResult.sessionState,
+      textEntriesById,
+    });
+
+    assert.deepEqual(enterResult.sessionState?.npcGreeting, "自定义药铺迎客。");
+    assert.equal(viewModel.dialogue?.speakerName, "自定义坐堂医师");
+    assert.deepEqual(viewModel.dialogue?.textLines, ["自定义药铺开场。"]);
+    assert.equal(
+      viewModel.actionContainer?.actions.find((action) => action.id === "heal")?.disabled,
+      true
+    );
+    assert.equal(getCompoundingLimits(0).maxTurns, 3);
+    assert.equal(getCompoundingLimits(0).durationSec, 21);
+    assert.deepEqual(
+      getAvailableHerbsForSkill(0).map((herb) => herb.id),
+      ["herb.custom.ginseng", "herb.custom.ginger"]
+    );
+    assert.equal(pickCompoundingTarget(0).ailmentId, "custom_wind_cold");
+    assert.equal(
+      getMedicineCompoundingTimeAdvanceCost(prototypeCharacters, playerCharacterId),
+      convertHouseActivityDaysToSegments(
+        getHouseMinigameDurationDays(getPlayerCharacter(prototypeCharacters).skills.medicine)
+      )
+    );
+  } finally {
+    if (previousMedicineDefaults === undefined) {
+      delete runtimeDefaults["medicine-house"];
+    } else {
+      runtimeDefaults["medicine-house"] = previousMedicineDefaults;
+    }
+  }
 });
 
 test("tavern copy resolves from text entries for capacity drink gamble and insufficient wager", () => {
@@ -7565,8 +8919,11 @@ test("medicine house runtime and content no longer keep core greeting and heal p
     ),
     "utf8"
   );
-  const medicineHouseContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/medicine-house-content.ts"),
+  const medicineHouseDefaultsSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/medicine-house/medicine-house-content-defaults.ts"
+    ),
     "utf8"
   );
 
@@ -7579,9 +8936,22 @@ test("medicine house runtime and content no longer keep core greeting and heal p
     ].filter(
       (entry) =>
         medicineHouseRuntimeSource.includes(entry) ||
-        medicineHouseContentSource.includes(entry)
+        medicineHouseDefaultsSource.includes(entry)
     ),
     []
+  );
+});
+
+test("legacy medicine house content registry file is removed after medicine-house runtime fallback converges", () => {
+  const medicineHouseContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/medicine-house-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(medicineHouseContentPath),
+    false,
+    "Expected src/content/houses/medicine-house-content.ts to be removed once medicine-house runtime fallback no longer depends on it."
   );
 });
 

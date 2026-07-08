@@ -1,4 +1,3 @@
-import { teaHouseBossProfile } from "../../content/houses/tea-house-content";
 import {
   getCityNpcDefinitionById,
   readCityNpcFavorability,
@@ -8,6 +7,7 @@ import type { GameState } from "../../domain/game-state";
 import {
   getTeaHouseFixedNpcFavorabilityVariableKey,
 } from "../../domain/tea-house";
+import { getTeaHouseContentDefaults } from "../house-modules/tea-house/tea-house-content-defaults";
 
 export type TeaHouseActor = {
   id: string;
@@ -34,6 +34,8 @@ export function createTeaHouseBossActor(
   state: GameState,
   houseId: string
 ): TeaHouseActor {
+  const { teaHouseBossProfile } = getTeaHouseContentDefaults();
+
   return {
     id: teaHouseBossProfile.actorId,
     name: teaHouseBossProfile.name,

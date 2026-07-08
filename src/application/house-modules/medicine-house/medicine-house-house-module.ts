@@ -1,11 +1,3 @@
-import {
-  medicineHouseDialogueTextIds,
-  medicineHouseDoctorProfile,
-  medicineHouseGreetingTextIds,
-  medicineHouseHealService,
-  medicineHouseOpenTextIds,
-  medicineHousePreparedMedicines,
-} from "../../../content/houses/medicine-house-content";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
@@ -34,6 +26,7 @@ import {
   runPlayableRuntime,
 } from "../../../core/runtime/playable-runtime";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { getMedicineHouseContentDefaults } from "./medicine-house-content-defaults";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import {
   addHerbSelection,
@@ -304,6 +297,7 @@ function finalizeInteraction(
   outcome: MedicineHouseActionOutcome,
   tone?: "info" | "success" | "warning"
 ): HouseModuleTransitionResult<"medicine-house"> {
+  const { medicineHouseDoctorProfile } = getMedicineHouseContentDefaults();
   const mutation = applyMedicineHouseOutcome(
     input.gameState,
     input.characterDefinitions,
@@ -395,6 +389,7 @@ function finalizeCompounding(
   input: HouseModuleDispatchInput<"medicine-house">,
   sessionState: MedicineHouseSessionState | null
 ): HouseModuleTransitionResult<"medicine-house"> {
+  const { medicineHouseDoctorProfile } = getMedicineHouseContentDefaults();
   const overlay = sessionState?.overlay;
   if (overlay?.type !== "compounding") {
     return createTransitionResult(input, {
@@ -516,6 +511,11 @@ function handleAction(
   if (input.request.type !== "action") {
     return createTransitionResult(input);
   }
+  const {
+    medicineHouseDialogueTextIds,
+    medicineHouseHealService,
+    medicineHousePreparedMedicines,
+  } = getMedicineHouseContentDefaults();
 
   const playerCharacter = getPlayerCharacter(
     input.characterDefinitions,
@@ -851,6 +851,7 @@ function selectOverlayViewModel(
   overlay: MedicineHouseSessionState["overlay"],
   playerGold: number
 ): HouseOverlayViewModel | null {
+  const { medicineHousePreparedMedicines } = getMedicineHouseContentDefaults();
   if (overlay == null) {
     return null;
   }
@@ -950,6 +951,7 @@ function selectOverlayViewModel(
 export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> = {
   moduleId: "medicine-house",
   enter(input) {
+    const { medicineHouseGreetingTextIds } = getMedicineHouseContentDefaults();
     return {
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
@@ -993,6 +995,12 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
     };
   },
   selectViewModel(input): HouseModuleViewModel {
+    const {
+      medicineHouseDoctorProfile,
+      medicineHouseHealService,
+      medicineHouseOpenTextIds,
+      medicineHousePreparedMedicines,
+    } = getMedicineHouseContentDefaults();
     const sessionState =
       input.sessionState ?? createInitialMedicineHouseSessionState("");
     const playerCharacter = getPlayerCharacter(
@@ -1004,6 +1012,9 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
         (characterDefinition) =>
           characterDefinition.id === medicineHouseDoctorProfile.actorId
       ) ?? null;
+    const doctorCharacterId = npc?.id ?? medicineHouseDoctorProfile.actorId;
+    const doctorName = npc?.name ?? medicineHouseDoctorProfile.name;
+    const doctorTitle = npc?.title ?? medicineHouseDoctorProfile.title;
     const favorability = readNumericVariable(
       input.gameState,
       getMedicineHouseFavorabilityVariableKey(
@@ -1036,23 +1047,23 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
       sceneTitle: input.houseDefinition.name,
       sceneSubtitle: "陈记药铺 / 坐堂问诊",
       standbyRoster:
-        isIdle && npc != null
+        isIdle
           ? [
               {
-                characterId: npc.id,
-                name: npc.name,
-                ...(npc.title == null ? {} : { title: npc.title }),
+                characterId: doctorCharacterId,
+                name: doctorName,
+                ...(doctorTitle == null ? {} : { title: doctorTitle }),
                 actionId: "open-npc-dialogue",
               },
             ]
           : [],
       dialogue:
-        isIdle || npc == null
+        isIdle
           ? null
           : {
               mode: "character",
-              speakerName: npc.name,
-              characterId: npc.id,
+              speakerName: doctorName,
+              characterId: doctorCharacterId,
               position: "right",
               textLines: [
                 isGreeting

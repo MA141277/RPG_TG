@@ -37,6 +37,8 @@
 | `queue.playable-family-gap-audit` | `conditional` | `conditional same-target queue family` | `Admit only if a still-live playable-family gap is proven.` |
 | `queue.authoring-entrypoint-and-fail-closed-closure` | `conditional` | `authoring evidence family` | `Use its closed queue record as current evidence unless a fresh same-family blocker is proven in the target plan.` |
 | `queue.framework-scaffold-and-template-closure` | `conditional` | `conditional same-target queue family` | `Admit only if framework-owned authoring coverage is disproven.` |
+| `queue.zhuyuanzhang-scenario-pack-integration` | `conditional` | `scenario-pack integration family` | `Admit only if fresh evidence proves zhuyuanzhang still depends on pack-private TypeScript assembly, hard-import glue, or legacy pack-exclusive asset paths that can be normalized within the current shared contract surface.` |
+| `queue.shared-contract-upgrade-governance` | `conditional` | `shared contract upgrade family` | `Admit only if fresh evidence proves the current target cannot advance its scenario-pack integration work without a missing shared scenario-pack/content-pack capability.` |
 | `queue.ui-runtime-contract-consumption` | `conditional` | `conditional same-target queue family` | `Admit only if a runtime-facing UI contract bypass is proven.` |
 | `queue.historical-residue-disposition` | `conditional` | `residue evidence family` | `Use its closed queue record as Phase 4 residue evidence unless residue routing drift is freshly proven.` |
 | `queue.first-party-mod-acceptance` | `conditional` | `acceptance-proof evidence family` | `Use its closed queue record as acceptance-proof evidence unless a fresh first-party acceptance blocker is proven.` |

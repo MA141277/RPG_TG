@@ -1,15 +1,3 @@
-import {
-  marketHouseBossOpenTextIds,
-  marketHouseFixedBoss,
-  marketHouseGeneralRumorTextIds,
-  marketHouseGreetingTextIds,
-  marketHouseGuestOpenTextIdsByActorId,
-  marketHouseInvestigationSpecialtyTextIdByActorId,
-  marketHouseRandomNpcPool,
-  marketHouseRumorTextIdsByCategory,
-  marketHouseSmallTalkTextIds,
-  type MarketHouseActorContent,
-} from "../../../content/houses/market-house-content";
 import { globalGoodsPool } from "../../../content/markets/global-goods-pool";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CityDefinition } from "../../../domain/city";
@@ -47,6 +35,7 @@ import type {
 import { assertExists } from "../../../shared/assert";
 import { pickRandom, randomInt } from "../../../shared/random";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { getHouseModuleDefaults } from "../../content/house-module-defaults";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import { ensureShopMarketData, readShopMarketData } from "../../markets/market-refresh-system";
 import { createInitialMarketHouseSessionState } from "./market-house-session-state";
@@ -70,6 +59,28 @@ const MARKET_HOUSE_SOURCE_SHOPS: MarketShopType[] = [
 const SELECT_ACTOR_ACTION_PREFIX = "select-market-actor:";
 const SELECT_TRADE_GOODS_ACTION_PREFIX = "select-market-goods:";
 const TRADE_QUANTITY_FIELD_ID = "market-house-trade-quantity";
+
+type MarketHouseActorContent = {
+  id: string;
+  name: string;
+  title: string;
+  personality: string;
+  specialty: string;
+  favorability: number;
+  isFixedHost: boolean;
+};
+
+type MarketHouseContentDefaults = {
+  marketHouseFixedBoss: MarketHouseActorContent;
+  marketHouseRandomNpcPool: MarketHouseActorContent[];
+  marketHouseGreetingTextIds: string[];
+  marketHouseBossOpenTextIds: string[];
+  marketHouseGuestOpenTextIdsByActorId: Record<string, string[]>;
+  marketHouseSmallTalkTextIds: string[];
+  marketHouseRumorTextIdsByCategory: Partial<Record<TradeGoodCategory, string[]>>;
+  marketHouseGeneralRumorTextIds: string[];
+  marketHouseInvestigationSpecialtyTextIdByActorId: Record<string, string>;
+};
 
 type MarketHouseActor = MarketHouseActorContent & {
   favorability: number;
@@ -95,6 +106,135 @@ type MarketHouseViewSnapshot = {
   refreshAfterDay: number;
   totalOwnedGoods: number;
 };
+
+const FALLBACK_MARKET_HOUSE_CONTENT: MarketHouseContentDefaults = {
+  marketHouseBossOpenTextIds: [
+    "runtime.zhu_yuanzhang.market_house.boss_open.001",
+    "runtime.zhu_yuanzhang.market_house.boss_open.002",
+  ],
+  marketHouseFixedBoss: {
+    id: "shopkeeper_qian",
+    name: "\u94b1\u638c\u67dc",
+    title: "\u8d27\u6808\u8001\u677f",
+    personality: "\u7cbe\u660e",
+    specialty: "\u4ea4\u6613",
+    favorability: 0,
+    isFixedHost: true,
+  },
+  marketHouseGeneralRumorTextIds: [
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.general.001",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.general.002",
+    "runtime.zhu_yuanzhang.market_house.investigate.rumor.general.003",
+  ],
+  marketHouseGreetingTextIds: [
+    "runtime.zhu_yuanzhang.market_house.greeting.001",
+    "runtime.zhu_yuanzhang.market_house.greeting.002",
+  ],
+  marketHouseGuestOpenTextIdsByActorId: {
+    horse_merchant: [
+      "runtime.zhu_yuanzhang.market_house.guest_open.horse_merchant.001",
+      "runtime.zhu_yuanzhang.market_house.guest_open.horse_merchant.002",
+    ],
+    medicine_merchant: [
+      "runtime.zhu_yuanzhang.market_house.guest_open.medicine_merchant.001",
+      "runtime.zhu_yuanzhang.market_house.guest_open.medicine_merchant.002",
+    ],
+    silk_merchant: [
+      "runtime.zhu_yuanzhang.market_house.guest_open.silk_merchant.001",
+      "runtime.zhu_yuanzhang.market_house.guest_open.silk_merchant.002",
+    ],
+    traveler_merchant: [
+      "runtime.zhu_yuanzhang.market_house.guest_open.traveler_merchant.001",
+      "runtime.zhu_yuanzhang.market_house.guest_open.traveler_merchant.002",
+    ],
+  },
+  marketHouseInvestigationSpecialtyTextIdByActorId: {
+    shopkeeper_qian: "runtime.zhu_yuanzhang.market_house.investigate.specialty.trade",
+    horse_merchant: "runtime.zhu_yuanzhang.market_house.investigate.specialty.painting",
+    medicine_merchant: "runtime.zhu_yuanzhang.market_house.investigate.specialty.medicine",
+    silk_merchant: "runtime.zhu_yuanzhang.market_house.investigate.specialty.silk",
+    traveler_merchant: "runtime.zhu_yuanzhang.market_house.investigate.specialty.travel",
+  },
+  marketHouseRandomNpcPool: [
+    {
+      id: "horse_merchant",
+      name: "\u97e9\u4e66\u5546",
+      title: "\u4e66\u753b\u8d27\u8d29",
+      personality: "\u8c6a\u723d",
+      specialty: "\u4e66\u753b",
+      favorability: 0,
+      isFixedHost: false,
+    },
+    {
+      id: "medicine_merchant",
+      name: "\u5b59\u836f\u5546",
+      title: "\u836f\u6750\u5546",
+      personality: "\u8c28\u614e",
+      specialty: "\u836f\u6750",
+      favorability: 0,
+      isFixedHost: false,
+    },
+    {
+      id: "silk_merchant",
+      name: "\u6c88\u8001\u677f",
+      title: "\u4e1d\u5546",
+      personality: "\u5706\u6ed1",
+      specialty: "\u4e1d\u7ef8",
+      favorability: 0,
+      isFixedHost: false,
+    },
+    {
+      id: "traveler_merchant",
+      name: "\u7f57\u884c\u5546",
+      title: "\u884c\u811a\u5546\u4eba",
+      personality: "\u5065\u8c08",
+      specialty: "\u5916\u5730\u89c1\u95fb",
+      favorability: 0,
+      isFixedHost: false,
+    },
+  ],
+  marketHouseRumorTextIdsByCategory: {
+    grain: [
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.grain.001",
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.grain.002",
+    ],
+    medicine: [
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.medicine.001",
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.medicine.002",
+    ],
+    silk: [
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.silk.001",
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.silk.002",
+    ],
+    arms: [
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.arms.001",
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.arms.002",
+    ],
+    horses: [
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.horses.001",
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.horses.002",
+    ],
+    special: [
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.special.001",
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.special.002",
+    ],
+  },
+  marketHouseSmallTalkTextIds: [
+    "runtime.zhu_yuanzhang.market_house.small_talk.001",
+    "runtime.zhu_yuanzhang.market_house.small_talk.002",
+    "runtime.zhu_yuanzhang.market_house.small_talk.003",
+    "runtime.zhu_yuanzhang.market_house.small_talk.004",
+  ],
+};
+
+function getMarketHouseContentDefaults(): MarketHouseContentDefaults {
+  return (
+    getHouseModuleDefaults<MarketHouseContentDefaults>(
+      defaultRuntimeContent.houseModuleDefaults,
+      "market-house"
+    ) ?? FALLBACK_MARKET_HOUSE_CONTENT
+  );
+}
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -288,6 +428,8 @@ function readActorFavorability(
 }
 
 function createActors(state: GameState, houseId: string, guestActorIds: string[]): MarketHouseActor[] {
+  const { marketHouseFixedBoss, marketHouseRandomNpcPool } =
+    getMarketHouseContentDefaults();
   const actors: MarketHouseActor[] = [
     {
       ...marketHouseFixedBoss,
@@ -379,6 +521,7 @@ function ensureMarketHouseRuntime(
     Math.min(randomInt(4, 8), cityEntries.length)
   );
   const nextGoodsIds = selectedEntries.map(({ goodDefinition }) => goodDefinition.id);
+  const { marketHouseRandomNpcPool } = getMarketHouseContentDefaults();
   const nextGuestActorIds = sampleWithoutReplacement(
     marketHouseRandomNpcPool.map((actor) => actor.id),
     Math.min(randomInt(1, 2), marketHouseRandomNpcPool.length)
@@ -492,7 +635,9 @@ function createViewSnapshot(
 ): MarketHouseViewSnapshot {
   const runtime = ensureMarketHouseRuntime(gameState, houseDefinition);
   const actors = createActors(runtime.state, houseDefinition.id, runtime.guestActorIds);
-  const bossFavorability = actors.find((actor) => actor.id === marketHouseFixedBoss.id)?.favorability ?? 0;
+  const marketHouseFixedBoss = getMarketHouseContentDefaults().marketHouseFixedBoss;
+  const bossFavorability =
+    actors.find((actor) => actor.id === marketHouseFixedBoss.id)?.favorability ?? 0;
   const displayedGoods = createGoodsSnapshots(
     runtime.state,
     houseDefinition,
@@ -575,6 +720,7 @@ function pickRandomResolvedMarketText(
 function getInitialMarketHouseDialogueLines(
   textEntriesById?: Record<string, string>
 ): string[] {
+  const { marketHouseGreetingTextIds } = getMarketHouseContentDefaults();
   return resolveMarketTextLines(
     getMarketTextEntries(textEntriesById),
     marketHouseGreetingTextIds
@@ -585,6 +731,10 @@ function getActorOpenLines(
   actor: MarketHouseActor,
   textEntriesById?: Record<string, string>
 ): string[] {
+  const {
+    marketHouseBossOpenTextIds,
+    marketHouseGuestOpenTextIdsByActorId,
+  } = getMarketHouseContentDefaults();
   const entries = getMarketTextEntries(textEntriesById);
   if (actor.isFixedHost) {
     return resolveMarketTextLines(entries, marketHouseBossOpenTextIds);
@@ -714,6 +864,7 @@ function mutateActorFavorability(
   actorId: string,
   delta: number
 ): GameState {
+  const marketHouseFixedBoss = getMarketHouseContentDefaults().marketHouseFixedBoss;
   return withVariable(
     state,
     getMarketHouseFavorabilityVariableKey(houseId, actorId),
@@ -810,6 +961,11 @@ function pickInvestigationMessage(
   displayedGoods: MarketHouseGoodsSnapshot[],
   textEntriesById?: Record<string, string>
 ): string {
+  const {
+    marketHouseGeneralRumorTextIds,
+    marketHouseRumorTextIdsByCategory,
+    marketHouseInvestigationSpecialtyTextIdByActorId,
+  } = getMarketHouseContentDefaults();
   const entries = getMarketTextEntries(textEntriesById);
   const focusGoods = displayedGoods[0]?.goodDefinition ?? null;
   const rumorTextIds =
@@ -988,6 +1144,7 @@ function handleAction(
   const snapshot = createViewSnapshot(input.gameState, input.houseDefinition, sessionState);
   const selectedActor = snapshot.selectedActor;
   const currentOverlay = sessionState?.overlay;
+  const marketHouseFixedBoss = getMarketHouseContentDefaults().marketHouseFixedBoss;
 
   if (input.request.actionId === "advance-greeting") {
     return withSessionState(
@@ -1066,7 +1223,7 @@ function handleAction(
       timeCost: 1,
       marketMessage: pickRandomResolvedMarketText(
         getMarketTextEntries(input.textEntriesById),
-        marketHouseSmallTalkTextIds
+        getMarketHouseContentDefaults().marketHouseSmallTalkTextIds
       ),
     };
     const mutation = applyActionOutcome(input, selectedActor, outcome);
@@ -1401,6 +1558,7 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
   moduleId: "market-house",
   enter(input) {
     const runtime = ensureMarketHouseRuntime(input.gameState, input.houseDefinition);
+    const marketHouseFixedBoss = getMarketHouseContentDefaults().marketHouseFixedBoss;
 
     return {
       gameState: runtime.state,
@@ -1428,6 +1586,7 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
   },
   selectViewModel(input): HouseModuleViewModel {
     const runtime = ensureMarketHouseRuntime(input.gameState, input.houseDefinition);
+    const marketHouseFixedBoss = getMarketHouseContentDefaults().marketHouseFixedBoss;
     const sessionState =
       input.sessionState ??
       createInitialMarketHouseSessionState(

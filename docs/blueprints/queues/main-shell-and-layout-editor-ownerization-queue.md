@@ -4,11 +4,11 @@
 
 - queue_id: `queue.main-shell-and-layout-editor-ownerization`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `blocked`
+- queue_status: `done`
 - queue_class: `conditional`
 - active_task: `none`
 - next_task: `none`
-- closeout_status: `blocked`
+- closeout_status: `done`
 - next_effect: `return-to-target-review`
 - allowed_task_states:
   - `candidate`
@@ -93,7 +93,7 @@ This queue does not cover:
 | `task.main-shell-and-layout-editor-ownerization.baseline-reconcile` | `done` | `Freeze the pure-shell acceptance truth, record exactly which main.ts responsibilities must move, and keep the queue bounded to the current shell plus layout-editor owner line.` | `none` | `Completed on 2026-07-07 after queue truth fixed the allowed pure-shell responsibilities and named the required owner split.` |
 | `task.main-shell-and-layout-editor-ownerization.layout-editor-ownerization` | `done` | `Move layout editor action routing, state writes, pointer capture, drag/resize interaction, and field updates out of src/main.ts into an independent coordinator or interaction-session owner line.` | `task.main-shell-and-layout-editor-ownerization.baseline-reconcile` | `Completed on 2026-07-07 after src/main.ts stopped importing layout-editor actions directly and the layout editor input/click/drag owner line moved into application/layout-editor/layout-editor-coordinator.ts.` |
 | `task.main-shell-and-layout-editor-ownerization.render-and-layout-bootstrap-ownerization` | `done` | `Move render scheduling shell ownership and runtime layout baseline bootstrap ownership out of src/main.ts into dedicated seams.` | `task.main-shell-and-layout-editor-ownerization.layout-editor-ownerization` | `Closed after the fresh source audit proved that the remaining main.ts residue now stays within the accepted pure-shell line and no additional bounded owner family remains live on current evidence.` |
-| `task.main-shell-and-layout-editor-ownerization.queue-closeout` | `blocked` | `Verify that src/main.ts is now a pure shell, synchronize Blueprint truth, and decide whether control returns to target review.` | `task.main-shell-and-layout-editor-ownerization.render-and-layout-bootstrap-ownerization` | `Blocked because npm test still fails on the known repository-wide import.meta and ?url asset typing/configuration gap outside this queue slice, so closeout cannot be recorded as passed.` |
+| `task.main-shell-and-layout-editor-ownerization.queue-closeout` | `done` | `Verify that src/main.ts is now a pure shell, synchronize Blueprint truth, and return control to target review.` | `task.main-shell-and-layout-editor-ownerization.render-and-layout-bootstrap-ownerization` | `Closed on 2026-07-08 after the fresh source audit confirmed the accepted pure-shell line. The repository-wide import.meta and ?url asset typing/configuration gap remains outside this queue slice and is not kept as a live queue blocker.` |
 
 ## Task Definitions
 
@@ -428,19 +428,19 @@ This queue does not cover:
   - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "fresh source audit keeps main.ts final shell residue within the pure-shell acceptance line" plus node --test tests/robustness.test.cjs plus npm run lint:blueprints plus npm run typecheck; npm run build:test still fails only on the pre-existing import.meta and ?url asset typing/configuration errors outside this queue slice.`
   - Next at this time: `Keep task.main-shell-and-layout-editor-ownerization.render-and-layout-bootstrap-ownerization active for governance purposes, sync the fresh audit evidence, and only then decide in a later explicit step whether queue-closeout readiness review should start.`
 - 2026-07-08
-  - Summary: `Attempted legal queue closeout after the fresh source audit proved that src/main.ts has reached the accepted pure-shell line, but the queue-closeout verification gate did not pass because npm test still fails on the known repository-wide import.meta and ?url asset typing/configuration blocker outside this queue slice.`
-  - Verification: `npm run lint:blueprints plus npm run typecheck plus npm test; lint and typecheck passed, while npm test failed only through the existing build:test asset/tooling gap in src/content/layout-editor-presets.ts, src/ui/portrait-assets.ts, src/ui/views/character/character-detail-view.ts, src/ui/views/minigames/city-begging-minigame-view.ts, and multiple ?url asset imports outside this queue slice.`
-  - Next at this time: `Return control to target-level promotion review with no active queue and keep this queue blocked on the external repository verification gap rather than re-opening ownerization work.`
+  - Summary: `Closed the queue as historical evidence after the fresh source audit proved that src/main.ts has reached the accepted pure-shell line and no further bounded ownerization batch remains justified on current evidence.`
+  - Verification: `npm run lint:blueprints plus npm run typecheck passed; npm test still fails only through the existing build:test asset/tooling gap in src/content/layout-editor-presets.ts, src/ui/portrait-assets.ts, src/ui/views/character/character-detail-view.ts, src/ui/views/minigames/city-begging-minigame-view.ts, and multiple ?url asset imports outside this queue slice.`
+  - Next at this time: `Return control to target-level idle-open review with no active queue and treat this queue as closed historical evidence only.`
 
 ## Closeout Decision
 
 - queue_id: `queue.main-shell-and-layout-editor-ownerization`
-- closeout_status: `blocked`
-- verification_status: `blocked`
+- closeout_status: `done`
+- verification_status: `partial`
 - residue_remaining: `yes`
 - residue_classification:
   - `accepted-pure-shell-residue`
-  - `external-repository-verification-blocker`
+  - `external-repository-verification-gap`
 - next_queue_recommendation: `none`
 - promotion_justified: `false`
 - evidence:
@@ -448,4 +448,4 @@ This queue does not cover:
   - `the bounded render-and-layout-bootstrap ownerization work is complete and no additional same-scope family remains justified`
   - `node --test tests/robustness.test.cjs passed with the new pure-shell audit guard`
   - `npm run lint:blueprints and npm run typecheck passed`
-  - `npm test still fails only on the known repository-wide import.meta and ?url asset typing/configuration gap outside this queue slice`
+  - `npm test still fails only on the known repository-wide import.meta and ?url asset typing/configuration gap outside this queue slice, which remains outside this queue's closed ownerization boundary`

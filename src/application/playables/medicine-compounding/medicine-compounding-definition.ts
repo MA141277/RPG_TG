@@ -2,12 +2,12 @@ import type { CharacterDefinition } from "../../../domain/character";
 import type { MedicineHouseActionOutcome } from "../../../domain/medicine-house";
 import type { MedicineHouseSessionState } from "../../../domain/house-modules/medicine-house-session";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
-import { medicineHouseDoctorProfile } from "../../../content/houses/medicine-house-content";
 import { assertExists } from "../../../shared/assert";
 import {
   convertHouseActivityDaysToSegments,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { getMedicineHouseContentDefaults } from "../../house-modules/medicine-house/medicine-house-content-defaults";
 import {
   addHerbSelection,
   getAvailableHerbsForSkill,
@@ -297,6 +297,7 @@ export function settleMedicineCompoundingPlayable(input: {
     timeCost: durationDays,
   };
   const houseId = input.state.core.world.currentHouseId ?? "house.unknown";
+  const { medicineHouseDoctorProfile } = getMedicineHouseContentDefaults();
   const mutation = applyMedicineHouseOutcome(
     input.state.core,
     input.characterDefinitions,
