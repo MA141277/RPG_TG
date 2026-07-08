@@ -65,12 +65,16 @@ import {
 import {
   advanceGameStateOneDay,
   formatCouncilStatusText,
-  getCouncilStatusText,
 } from "../../time/time-progression";
 import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
+import {
+  applyReviewCycleSchedule,
+  getReviewCycleCountdown,
+  syncReviewCycleCompatibilityMirrors,
+} from "../../review/review-cycle";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
 
 const DONATION_AMOUNT = 50;
@@ -1149,14 +1153,11 @@ function ensureTempleRuntimeState(gameState: GameState): GameState {
     nextFlags[ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked] = false;
   }
 
+  const reviewSyncedState = syncReviewCycleCompatibilityMirrors(syncedState);
   return {
-    ...syncedState,
-    ui: {
-      ...syncedState.ui,
-      reviewDateText: getCouncilStatusText(syncedState),
-    },
+    ...reviewSyncedState,
     runtime: {
-      ...syncedState.runtime,
+      ...reviewSyncedState.runtime,
       flags: nextFlags,
       variables: nextVariables,
     },
@@ -1349,7 +1350,7 @@ function shouldBlockTempleLeave(gameState: GameState): boolean {
       gameState,
       ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleWorkLockCompleted
     ) &&
-    readNumericVariable(gameState, KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown, 0) > 0;
+    getReviewCycleCountdown(gameState) > 0;
 
   return (
     isMonkStoryStage(gameState) &&
@@ -1368,7 +1369,7 @@ function completeFirstTempleWorkLockIfReviewArrived(gameState: GameState): GameS
       gameState,
       ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleWorkLockCompleted
     ) ||
-    readNumericVariable(gameState, KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown, 0) > 0
+    getReviewCycleCountdown(gameState) > 0
   ) {
     return gameState;
   }
@@ -1885,62 +1886,58 @@ function submitReviewWorkPlan(
     );
   }
 
+  const reviewMissionText =
+    nextWorkPlan == null
+      ? ""
+      : getTempleWorkPlanLabel(
+          {
+            ...input.gameState,
+            runtime: {
+              ...input.gameState.runtime,
+              flags: {
+                ...input.gameState.runtime.flags,
+                ...(nextWorkPlan === "beg-alms"
+                  ? {
+                      [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+                    }
+                  : {}),
+              },
+              variables: {
+                ...input.gameState.runtime.variables,
+                [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: thirdTempleWeekAssignment
+                  ? ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
+                  : readZhuYuanzhangStoryStage(input.gameState),
+                [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]:
+                  thirdTempleWeekAssignment
+                    ? 3
+                    : fourthTempleWeekAssignment
+                      ? 4
+                      : getTempleWeek(input.gameState),
+              },
+            },
+          },
+          nextWorkPlan,
+          input.textEntriesById
+        );
+  const reviewSyncedState = applyReviewCycleSchedule(input.gameState, {
+    scheduledDate: addDaysToDate(getCurrentDate(input.gameState), 30),
+    missionText: reviewMissionText,
+  });
   const nextState = {
-    ...input.gameState,
-    world: {
-      ...input.gameState.world,
-      schedule: {
-        ...input.gameState.world.schedule,
-        councilDate: addDaysToDate(getCurrentDate(input.gameState), 30),
-      },
-    },
+    ...reviewSyncedState,
     missions: {
-      ...input.gameState.missions,
+      ...reviewSyncedState.missions,
       activeMissionId: workPlan === "beg-alms" ? "mission.temple.beg-alms" : null,
     },
     ui: {
-      ...input.gameState.ui,
+      ...reviewSyncedState.ui,
       activeMissionId:
         nextWorkPlan === "beg-alms" ? "mission.temple.beg-alms" : null,
-      reviewDateText: formatReviewDateText(30),
-      mainHouseMissionText:
-        nextWorkPlan == null
-          ? ""
-          : getTempleWorkPlanLabel(
-              {
-                ...input.gameState,
-                runtime: {
-                  ...input.gameState.runtime,
-                  flags: {
-                    ...input.gameState.runtime.flags,
-                    ...(nextWorkPlan === "beg-alms"
-                      ? {
-                          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
-                        }
-                      : {}),
-                  },
-                  variables: {
-                    ...input.gameState.runtime.variables,
-                    [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: thirdTempleWeekAssignment
-                      ? ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
-                      : readZhuYuanzhangStoryStage(input.gameState),
-                    [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]:
-                      thirdTempleWeekAssignment
-                        ? 3
-                        : fourthTempleWeekAssignment
-                          ? 4
-                          : getTempleWeek(input.gameState),
-                  },
-                },
-              },
-              nextWorkPlan,
-              input.textEntriesById
-            ),
       },
-    runtime: {
-      ...input.gameState.runtime,
+      runtime: {
+      ...reviewSyncedState.runtime,
       flags: {
-        ...input.gameState.runtime.flags,
+        ...reviewSyncedState.runtime.flags,
         [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
         [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
         ...(secondTempleWeekTransition
@@ -1950,7 +1947,7 @@ function submitReviewWorkPlan(
           : {}),
       },
       variables: {
-        ...input.gameState.runtime.variables,
+        ...reviewSyncedState.runtime.variables,
         [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: thirdTempleWeekAssignment
             ? ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
@@ -1961,7 +1958,6 @@ function submitReviewWorkPlan(
               : fourthTempleWeekAssignment
                 ? 4
                 : getTempleWeek(input.gameState),
-        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
         [TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: "",
         [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: nextWorkPlan,
         [TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood]: 0,
@@ -2049,31 +2045,25 @@ function assignTempleTask(
     input.textEntriesById
   );
 
+  const reviewSyncedState = applyReviewCycleSchedule(input.gameState, {
+    scheduledDate: addDaysToDate(getCurrentDate(input.gameState), 30),
+    missionText: taskDefinition.title,
+  });
   const nextState = {
-    ...input.gameState,
-    world: {
-      ...input.gameState.world,
-      schedule: {
-        ...input.gameState.world.schedule,
-        councilDate: addDaysToDate(getCurrentDate(input.gameState), 30),
-      },
-    },
+    ...reviewSyncedState,
     missions: {
-      ...input.gameState.missions,
+      ...reviewSyncedState.missions,
       activeMissionId: taskDefinition.missionId,
     },
     ui: {
-      ...input.gameState.ui,
+      ...reviewSyncedState.ui,
       activeMissionId: taskDefinition.missionId,
-      reviewDateText: formatReviewDateText(30),
-      mainHouseMissionText: taskDefinition.title,
     },
     runtime: {
-      ...input.gameState.runtime,
+      ...reviewSyncedState.runtime,
       variables: {
-        ...input.gameState.runtime.variables,
+        ...reviewSyncedState.runtime.variables,
         [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
-        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
         [TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: taskDefinition.id,
         [TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood]: 0,
         [TEMPLE_HOUSE_VARIABLE_KEYS.beggingLastGrade]: "",
@@ -3614,7 +3604,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
     const selectedWorkPlan = readTempleWorkPlan(nextState);
     const shouldStartMeeting =
       isMonkStoryStage(nextState) &&
-      readNumericVariable(nextState, KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown, 0) <= 0;
+      getReviewCycleCountdown(nextState) <= 0;
 
     const sessionState = shouldStartMeeting
       ? createInitialTempleHouseSessionState(
@@ -3715,11 +3705,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       TEMPLE_HOUSE_VARIABLE_KEYS.donationTotal,
       0
     );
-    const countdown = readNumericVariable(
-      nextState,
-      KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
-      0
-    );
+    const countdown = getReviewCycleCountdown(nextState);
     const contribution = getTempleContribution(nextState);
     const templeWeek = getTempleWeek(nextState);
     const currentWorkPlan =

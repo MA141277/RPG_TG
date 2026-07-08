@@ -25,15 +25,11 @@ import type {
   HomeHouseOverlayState,
   HomeHouseSessionState,
 } from "../../../domain/house-modules/home-house-session";
-import { KEEP_HOUSE_VARIABLE_KEYS } from "../../../domain/keep-house";
 import {
   getCouncilPriorityHouseModuleId,
   hasReachedCouncilDate,
 } from "../../time/council-priority";
-import {
-  advanceGameStateOneDay,
-  getCouncilStatusText,
-} from "../../time/time-progression";
+import { advanceGameStateOneDay } from "../../time/time-progression";
 import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { getHouseModuleDefaults } from "../../content/house-module-defaults";
@@ -41,6 +37,10 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
+import {
+  getReviewCycleStatusText,
+  syncReviewCycleCompatibilityMirrors,
+} from "../../review/review-cycle";
 import { assertExists } from "../../../shared/assert";
 import { createInitialHomeHouseSessionState } from "./home-house-session-state";
 
@@ -278,6 +278,7 @@ function ensureHomeRuntimeState(
   gameState: GameState,
   playerCharacter: CharacterDefinition
 ): GameState {
+  const reviewSyncedState = syncReviewCycleCompatibilityMirrors(gameState);
   const spouseNpcIdVariable = gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.spouseNpcId];
   const spouseSupportActionsVariable =
     gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.spouseSupportActions];
@@ -301,22 +302,18 @@ function ensureHomeRuntimeState(
   );
 
   return {
-    ...gameState,
-    ui: {
-      ...gameState.ui,
-      reviewDateText: getCouncilStatusText(gameState),
-    },
+    ...reviewSyncedState,
     runtime: {
-      ...gameState.runtime,
+      ...reviewSyncedState.runtime,
       flags: {
-        ...gameState.runtime.flags,
+        ...reviewSyncedState.runtime.flags,
         [HOME_HOUSE_FLAG_KEYS.spouseEnabled]:
-          gameState.runtime.flags[HOME_HOUSE_FLAG_KEYS.spouseEnabled] ?? false,
+          reviewSyncedState.runtime.flags[HOME_HOUSE_FLAG_KEYS.spouseEnabled] ?? false,
         [HOME_HOUSE_FLAG_KEYS.guestRoom]:
-          gameState.runtime.flags[HOME_HOUSE_FLAG_KEYS.guestRoom] ?? false,
+          reviewSyncedState.runtime.flags[HOME_HOUSE_FLAG_KEYS.guestRoom] ?? false,
       },
       variables: {
-        ...gameState.runtime.variables,
+        ...reviewSyncedState.runtime.variables,
         [HOME_HOUSE_VARIABLE_KEYS.hp]: currentHp,
         [HOME_HOUSE_VARIABLE_KEYS.maxHp]: maxHp,
         [HOME_HOUSE_VARIABLE_KEYS.fatigue]: currentFatigue,
@@ -397,20 +394,11 @@ function advanceRestOneDay(
   };
   const nextCharacterDefinitions = replaceCharacter(characterDefinitions, nextPlayerCharacter);
   const advancedState = advanceCalendarOneDay(ensuredState);
-  const nextCountdown = readNumericVariable(
-    advancedState,
-    KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
-    0
-  );
-  const stateWithRest: GameState = {
+  const stateWithRest = syncReviewCycleCompatibilityMirrors({
     ...advancedState,
     world: {
       ...advancedState.world,
       timeOfDay: "morning",
-    },
-    ui: {
-      ...advancedState.ui,
-      reviewDateText: getCouncilStatusText(advancedState),
     },
     runtime: {
       ...advancedState.runtime,
@@ -420,10 +408,9 @@ function advanceRestOneDay(
         [HOME_HOUSE_VARIABLE_KEYS.maxHp]: maxHp,
         [HOME_HOUSE_VARIABLE_KEYS.fatigue]: nextFatigue,
         [HOME_HOUSE_VARIABLE_KEYS.maxFatigue]: maxFatigue,
-        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: nextCountdown,
       },
     },
-  };
+  });
 
   return {
     state: stateWithRest,
@@ -1101,7 +1088,7 @@ export const homeHouseHouseModule: HouseModuleDefinition<"home-house"> = {
           { label: "金钱", value: `${playerCharacter.stats.gold} 文` },
           {
             label: "评定",
-            value: getCouncilStatusText(ensuredState),
+            value: getReviewCycleStatusText(ensuredState),
           },
           { label: "宅邸等级", value: `${persistentState.growth.homeLevel}` },
           {

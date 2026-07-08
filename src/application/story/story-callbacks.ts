@@ -6,14 +6,12 @@ import {
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } from "../../domain/zhu-yuanzhang-story";
-import {
-  addDaysToCalendarDate,
-  formatCouncilStatusText,
-} from "../time/time-progression";
+import { addDaysToCalendarDate } from "../time/time-progression";
 import {
   launchStoryBattlePlayable,
 } from "../playables/story-battle/story-battle-definition";
 import { resolveTextEntry } from "../content/text-resolution";
+import { applyReviewCycleSchedule } from "../review/review-cycle";
 
 type StoryCallbackPayload = Record<string, unknown> | undefined;
 
@@ -86,37 +84,35 @@ function runJoinGuoZixingCampCallback(
   runtime: StoryCallbackRuntime
 ): StoryCallbackRuntime {
   const nextCouncilDate = addDaysToCalendarDate(runtime.state.calendar, 60);
+  const reviewSyncedState = applyReviewCycleSchedule(runtime.state, {
+    scheduledDate: nextCouncilDate,
+    missionText: getStoryCallbackText(
+      runtime,
+      "runtime.zhu_yuanzhang.main_mission.guo_zixing_keep"
+    ),
+  });
 
   return {
     state: {
-      ...runtime.state,
+      ...reviewSyncedState,
       world: {
-        ...runtime.state.world,
+        ...reviewSyncedState.world,
         currentHouseId: null,
-        schedule: {
-          councilDate: nextCouncilDate,
-        },
       },
       missions: {
-        ...runtime.state.missions,
+        ...reviewSyncedState.missions,
         activeMissionId: null,
       },
       ui: {
-        ...runtime.state.ui,
+        ...reviewSyncedState.ui,
         activeMissionId: null,
-        reviewDateText: formatCouncilStatusText(60),
-        mainHouseMissionText: getStoryCallbackText(
-          runtime,
-          "runtime.zhu_yuanzhang.main_mission.guo_zixing_keep"
-        ),
       },
       runtime: {
-        ...runtime.state.runtime,
+        ...reviewSyncedState.runtime,
         variables: {
-          ...runtime.state.runtime.variables,
+          ...reviewSyncedState.runtime.variables,
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
             ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
           [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "",
           [TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: "",
           [TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood]: 0,

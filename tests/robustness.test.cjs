@@ -574,6 +574,116 @@ function withCouncilInDays(state, days = 30) {
   };
 }
 
+test("review cycle helper schedules review state and compatibility mirrors together", () => {
+  const { applyReviewCycleSchedule } = require(
+    "../.test-dist/application/review/review-cycle.js"
+  );
+
+  const state = createBaseState();
+  const scheduledDate = addTestDays(state.calendar, 12);
+  const result = applyReviewCycleSchedule(state, {
+    scheduledDate,
+    missionText: "shared-review-task",
+  });
+
+  assert.deepEqual(result.world.schedule.councilDate, scheduledDate);
+  assert.equal(
+    result.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    12
+  );
+  assert.equal(result.ui.reviewDateText, "距离评定 12 天");
+  assert.equal(result.ui.mainHouseMissionText, "shared-review-task");
+});
+
+test("review cycle helper marks review due now without duplicating owner-local writes", () => {
+  const { applyReviewCycleSchedule } = require(
+    "../.test-dist/application/review/review-cycle.js"
+  );
+
+  const state = createBaseState();
+  const result = applyReviewCycleSchedule(state, {
+    scheduledDate: state.calendar,
+    missionText: "战后评定",
+  });
+
+  assert.deepEqual(result.world.schedule.councilDate, state.calendar);
+  assert.equal(
+    result.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    0
+  );
+  assert.equal(result.ui.reviewDateText, "今日评定");
+  assert.equal(result.ui.mainHouseMissionText, "战后评定");
+});
+
+test("review cycle helper derives countdown from canonical schedule even when legacy mirror drifts", () => {
+  const {
+    getReviewCycleCountdown,
+    getReviewCycleStatusText,
+  } = require("../.test-dist/application/review/review-cycle.js");
+
+  const state = {
+    ...createBaseState(),
+    world: {
+      ...createBaseState().world,
+      schedule: {
+        ...createBaseState().world.schedule,
+        councilDate: addTestDays(createBaseState().calendar, 5),
+      },
+    },
+    runtime: {
+      ...createBaseState().runtime,
+      variables: {
+        ...createBaseState().runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 99,
+      },
+    },
+    ui: {
+      ...createBaseState().ui,
+      reviewDateText: "legacy-drift",
+    },
+  };
+
+  assert.equal(getReviewCycleCountdown(state), 5);
+  assert.equal(getReviewCycleStatusText(state), "距离评定 5 天");
+});
+
+test("home house enter refreshes stale review mirrors from canonical review cycle", () => {
+  const state = {
+    ...createBaseState(),
+    world: {
+      ...createBaseState().world,
+      schedule: {
+        ...createBaseState().world.schedule,
+        councilDate: addTestDays(createBaseState().calendar, 7),
+      },
+    },
+    runtime: {
+      ...createBaseState().runtime,
+      variables: {
+        ...createBaseState().runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 42,
+      },
+    },
+    ui: {
+      ...createBaseState().ui,
+      reviewDateText: "stale-review-text",
+    },
+  };
+
+  const result = homeHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+    houseDefinition: homeHouse,
+  });
+
+  assert.equal(
+    result.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    7
+  );
+  assert.equal(result.gameState.ui.reviewDateText, "距离评定 7 天");
+});
+
 function createStateWithGrainVariables() {
   const state = createBaseState();
   return {

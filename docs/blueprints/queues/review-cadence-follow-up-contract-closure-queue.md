@@ -4,15 +4,15 @@
 
 - queue_id: `queue.review-cadence-follow-up-contract-closure`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile`
-- next_task: `task.review-cadence-follow-up-contract-closure.shared-review-contract-extraction`
-- closeout_status: `in-progress`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
 - next_effect: `return-to-target-review`
 - sync_status: `pending`
 - sync_scope: `none`
-- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- sync_summary: `Queue closeout is written and repository sync is the remaining non-governing follow-up.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -44,9 +44,9 @@
 
 - queue_goal: `Unify today's review cadence into one shared review mechanism contract without widening into a broader composition rewrite.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Freeze the smallest lawful first implementation slice for the admitted review cadence queue before queue-local code work starts.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the queue closed after the shared review cycle seam absorbed the covered cadence writers and readers on the live path.`
 - task_briefs:
   - `task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile: freeze the smallest lawful first shared-review slice and confirm the queue boundary still holds on current source truth.`
   - `task.review-cadence-follow-up-contract-closure.shared-review-contract-extraction: land the bounded shared review state and policy seam that replaces fragmented cadence truth writers.`
@@ -86,9 +86,9 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile` | `active` | `Freeze the smallest lawful first implementation slice and confirm the admitted cadence queue still stands on current source truth.` | `none` | `This baseline task guards against silently widening into the broader composition queue before queue-local implementation starts.` |
-| `task.review-cadence-follow-up-contract-closure.shared-review-contract-extraction` | `queued` | `Introduce the bounded shared review state and policy seam and migrate the first covered cadence writers onto it.` | `task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile` | `This is the first execution slice once the active task freezes the lawful cut.` |
-| `task.review-cadence-follow-up-contract-closure.host-consumer-closeout` | `queued` | `Convert host or non-host consumers to the shared review contract, verify the queue, and return control to target review.` | `task.review-cadence-follow-up-contract-closure.shared-review-contract-extraction` | `This task closes the queue only after the shared cadence contract is consumed on the covered path.` |
+| `task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile` | `completed` | `Freeze the smallest lawful first implementation slice and confirm the admitted cadence queue still stands on current source truth.` | `none` | `Completed after the queue froze the first seam as shared review cycle truth plus compatibility mirrors.` |
+| `task.review-cadence-follow-up-contract-closure.shared-review-contract-extraction` | `completed` | `Introduce the bounded shared review state and policy seam and migrate the first covered cadence writers onto it.` | `task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile` | `Completed after the shared review-cycle helper landed and the first covered story callback and story battle writers stopped rewriting cadence fields independently.` |
+| `task.review-cadence-follow-up-contract-closure.host-consumer-closeout` | `completed` | `Convert host or non-host consumers to the shared review contract, verify the queue, and return control to target review.` | `task.review-cadence-follow-up-contract-closure.shared-review-contract-extraction` | `Completed after keep-house, temple-house, and home-house converged on shared review-cycle scheduling and read-side compatibility refresh, and queue verification passed.` |
 
 ### Task Definitions
 
@@ -97,7 +97,7 @@
 ##### Control Block
 
 - task_id: `task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/specs/2026-07-08-review-cadence-follow-up-shared-review-support-spec.md`
@@ -144,18 +144,26 @@
 - task_brief:
   - `Freeze the smallest lawful first shared-review implementation slice before queue-local code work starts.`
 - task_outcome_summary:
-  - `Current active task; it remains open until the queue names the first bounded shared-review seam and confirms the admitted queue boundary still holds.`
+  - `Completed after the queue froze the first bounded shared-review seam as canonical councilDate truth plus synchronized compatibility mirrors.`
 - Purpose:
   - `Prevent the admitted queue from widening into broader composition or runtime cleanup before the first lawful cadence slice is frozen.`
 - Failure mode:
   - `Do not jump into scattered refactors before the queue documents exactly which shared review seam lands first.`
+- Fresh baseline findings:
+  - `The smallest still-shared writer family is not the host rendering layer; it is the review cycle truth plus compatibility mirrors. world.schedule.councilDate remains the only calendar anchor, but time-progression.ts, story-battle-runtime.ts, story-callbacks.ts, keep-house-house-module.ts, temple-house-house-module.ts, and selected stage-start paths in main.ts still each rewrite some combination of councilDate, reviewCountdown, reviewDateText, and mainHouseMissionText directly.`
+  - `navigation-time-follow-up.ts and council-priority-city-begging-coordinator.ts prove that reminder, refusal, and redirect behavior is already runtime-wide, but that policy layer is not the smallest first slice because it depends on a stable shared review-cycle truth source first.`
+  - `home-house-house-module.ts currently consumes review countdown and council-date interruption as a non-host reader; that confirms downstream consumers already depend on the cadence state, but it should stay a later consumer-conversion slice rather than a first-writer extraction target.`
+- Frozen first slice:
+  - `The first lawful implementation slice is to introduce one shared review cycle state-and-mirror seam under domain/application review owners, with councilDate as the canonical schedule anchor and reviewCountdown plus reviewDateText treated as compatibility mirrors derived or synchronized through one helper family.`
+  - `That first slice should centralize the current reset or reschedule writes used by story-battle completion, story callback stage jumps, keep-house post-review assignment, temple-house post-review assignment, and stage-start bootstrap paths, while leaving host-local meeting flow, arrival reminder copy, refusal dialogue copy, and redirect presentation for later queue tasks.`
+  - `mainHouseMissionText should remain a temporary compatibility writeback in the first slice, but only as an explicit review-assignment output routed through the new shared seam instead of being rewritten ad hoc beside every councilDate reset.`
 
 #### `task.review-cadence-follow-up-contract-closure.shared-review-contract-extraction`
 
 ##### Control Block
 
 - task_id: `task.review-cadence-follow-up-contract-closure.shared-review-contract-extraction`
-- state: `queued`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/domain/review/**`
@@ -196,7 +204,7 @@
 - task_brief:
   - `Land the bounded shared review state and policy seam that replaces the fragmented cadence truth writers.`
 - task_outcome_summary:
-  - `Queued task; it starts only after the active baseline task freezes the first lawful implementation slice.`
+  - `Completed after src/application/review/review-cycle.ts landed and the covered story callback plus story battle completion writers moved onto the shared review-cycle seam.`
 - Purpose:
   - `Move the admitted cadence queue from source-backed fragmentation evidence to one reusable shared review contract.`
 - Failure mode:
@@ -207,7 +215,7 @@
 ##### Control Block
 
 - task_id: `task.review-cadence-follow-up-contract-closure.host-consumer-closeout`
-- state: `queued`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/house-modules/keep-house/**`
@@ -246,7 +254,7 @@
 - task_brief:
   - `Convert covered consumers onto the shared review contract and close the queue only after verification and governance sync pass.`
 - task_outcome_summary:
-  - `Queued closeout task; it runs only after the shared review contract is landed on the covered path.`
+  - `Completed after keep-house, temple-house, and home-house converged on the shared review-cycle seam and full verification returned the queue to target review without leaving another live cadence writer on the covered path.`
 - Purpose:
   - `Finish the admitted queue by proving host rendering stays local while cadence truth becomes shared.`
 - Failure mode:
@@ -258,3 +266,19 @@
   - Summary: `Admitted queue.review-cadence-follow-up-contract-closure as the single active queue because the target already records bounded, source-backed review cadence fragmentation and the new support spec now freezes the lawful shared-mechanism boundary.`
   - Verification: `Blueprint target-plan review plus docs/blueprints/specs/2026-07-08-review-cadence-follow-up-shared-review-support-spec.md`
   - Next at this time: `Execute task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile before queue-local implementation starts.`
+- 2026-07-08
+  - Summary: `Started task.review-cadence-follow-up-contract-closure.boundary-baseline-reconcile on execution branch codex/review-cadence-follow-up-execution and froze the first implementation target as the shared review cycle truth plus compatibility-mirror seam, not the broader reminder or host-rendering policy layer.`
+  - Verification: `Fresh source inspection across navigation-time-follow-up.ts, council-priority-city-begging-coordinator.ts, story-battle-runtime.ts, time-progression.ts, keep-house-house-module.ts, home-house-house-module.ts, temple-house-house-module.ts, story-callbacks.ts, game-state.ts, council-priority.ts, and main.ts`
+  - Next at this time: `Keep baseline-reconcile active and convert the frozen first slice into an explicit implementation patch under src/domain/review and src/application/review before promoting the next queue task.`
+- 2026-07-08
+  - Summary: `Completed baseline-reconcile and shared-review-contract-extraction by landing src/application/review/review-cycle.ts, adding review-cycle seam tests, and switching the first covered story callback plus story battle cadence writers onto the shared helper.`
+  - Verification: `npm run lint:blueprints; npm run typecheck; npm test`
+  - Next at this time: `Execute task.review-cadence-follow-up-contract-closure.host-consumer-closeout by converting keep-house, temple-house, home-house, and remaining follow-up consumers onto the shared review-cycle seam before queue closeout.`
+- 2026-07-08
+  - Summary: `Advanced host-consumer-closeout by moving keep-house and temple-house post-review reschedule writers onto applyReviewCycleSchedule, leaving the remaining closeout scope on read-side consumer convergence and queue sync rather than more schedule-mirror rewrites.`
+  - Verification: `npm run typecheck; npm run lint:blueprints; npm test`
+  - Next at this time: `Finish host-consumer-closeout by deciding whether home-house and follow-up readers should stay as compatibility readers or move behind a narrower shared read contract, then close the queue only after repository sync is recorded.`
+- 2026-07-08
+  - Summary: `Completed host-consumer-closeout by adding shared review-cycle read helpers plus compatibility refresh, moving home-house, keep-house, and temple-house consumers onto that seam, and closing queue.review-cadence-follow-up-contract-closure back to target review.`
+  - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "keep house dismiss turns lord into idle roster actor that can reopen dialogue|temple house only blocks leaving during the first tutorial work period|review cycle helper derives countdown|home house enter refreshes stale review mirrors"; npm run typecheck; npm run lint:blueprints; npm test`
+  - Next at this time: `Return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md with no active queue and keep the remaining runtime, package, composition, and cleanup work at target-level candidate review only until a later admission decision selects the next queue.`

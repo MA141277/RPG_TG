@@ -34,12 +34,16 @@ import {
 } from "../../time/council-attendance";
 import {
   formatCouncilStatusText,
-  getCouncilStatusText,
 } from "../../time/time-progression";
 import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
+import {
+  applyReviewCycleSchedule,
+  getReviewCycleCountdown,
+  syncReviewCycleCompatibilityMirrors,
+} from "../../review/review-cycle";
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
@@ -369,18 +373,18 @@ function ensureKeepRuntimeState(
     }
   });
 
+  const reviewSyncedState = syncReviewCycleCompatibilityMirrors(gameState);
   return {
-    ...gameState,
+    ...reviewSyncedState,
     ui: {
-      ...gameState.ui,
-      reviewDateText: getCouncilStatusText(gameState),
+      ...reviewSyncedState.ui,
       mainHouseMissionText:
-        gameState.ui.mainHouseMissionText === "review-hall"
+        reviewSyncedState.ui.mainHouseMissionText === "review-hall"
           ? "report-to-keep"
-          : gameState.ui.mainHouseMissionText,
+          : reviewSyncedState.ui.mainHouseMissionText,
     },
     runtime: {
-      ...gameState.runtime,
+      ...reviewSyncedState.runtime,
       variables: nextVariables,
     },
   };
@@ -613,28 +617,10 @@ function applyKeepLateCouncilAttendancePenalty(
     };
     delete expelledPlayer.clanId;
     nextCharacterDefinitions = replaceCharacter(characterDefinitions, expelledPlayer);
-    nextState = {
-      ...nextState,
-      world: {
-        ...nextState.world,
-        schedule: {
-          ...nextState.world.schedule,
-          councilDate: addDaysToDate(getCurrentDate(nextState), 60),
-        },
-      },
-      ui: {
-        ...nextState.ui,
-        reviewDateText: formatReviewDateText(60),
-        mainHouseMissionText: "grain-procurement",
-      },
-      runtime: {
-        ...nextState.runtime,
-        variables: {
-          ...nextState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
-        },
-      },
-    };
+    nextState = applyReviewCycleSchedule(nextState, {
+      scheduledDate: addDaysToDate(getCurrentDate(nextState), 60),
+      missionText: "grain-procurement",
+    });
   }
 
   return {
@@ -734,30 +720,24 @@ function assignTaskToPlayer(
   taskDefinition: KeepHouseTaskDefinition
 ): HouseModuleTransitionResult<"keep-house"> {
   const textEntriesById = getKeepTextEntries(input);
+  const reviewSyncedState = applyReviewCycleSchedule(input.gameState, {
+    scheduledDate: addDaysToDate(getCurrentDate(input.gameState), 60),
+    missionText: taskDefinition.title,
+  });
   const nextState = {
-    ...input.gameState,
-    world: {
-      ...input.gameState.world,
-      schedule: {
-        ...input.gameState.world.schedule,
-        councilDate: addDaysToDate(getCurrentDate(input.gameState), 60),
-      },
-    },
+    ...reviewSyncedState,
     missions: {
-      ...input.gameState.missions,
+      ...reviewSyncedState.missions,
       activeMissionId: taskDefinition.missionId,
     },
     ui: {
-      ...input.gameState.ui,
+      ...reviewSyncedState.ui,
       activeMissionId: taskDefinition.missionId,
-      reviewDateText: formatReviewDateText(60),
-      mainHouseMissionText: taskDefinition.title,
     },
     runtime: {
-      ...input.gameState.runtime,
+      ...reviewSyncedState.runtime,
       variables: {
-        ...input.gameState.runtime.variables,
-        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
+        ...reviewSyncedState.runtime.variables,
         [KEEP_HOUSE_VARIABLE_KEYS.currentStrategy]:
           resolveKeepDefaultStrategyTitle(textEntriesById),
         [KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: taskDefinition.id,
@@ -967,7 +947,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
     );
     const shouldStartMeeting =
       isPlayersLord(playerCharacter, lordCharacter) &&
-      readNumericVariable(nextState, KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown, 0) <= 0;
+      getReviewCycleCountdown(nextState) <= 0;
 
     const lateExpelled = lateAttendance.resolution?.expelled === true;
     const baseSessionState = shouldStartMeeting
@@ -1052,11 +1032,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       KEEP_HOUSE_VARIABLE_KEYS.currentStrategy,
       resolveKeepDefaultStrategyTitle(getKeepTextEntries(input))
     );
-    const countdown = readNumericVariable(
-      nextState,
-      KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
-      0
-    );
+    const countdown = getReviewCycleCountdown(nextState);
     const availableTasks = getAvailableTasks(input, playerCharacter);
     const assignedTask =
       sessionState.selectedTaskId == null
