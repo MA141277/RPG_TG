@@ -4,15 +4,15 @@
 
 - queue_id: `queue.main-shell-and-layout-editor-ownerization`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `done`
+- queue_status: `active`
 - queue_class: `conditional`
-- active_task: `none`
-- next_task: `none`
-- closeout_status: `done`
+- active_task: `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile`
+- next_task: `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
+- closeout_status: `in-progress`
 - next_effect: `return-to-target-review`
-- sync_status: `failed`
-- sync_scope: `baseline-push`
-- sync_summary: `The latest queue after-state was written as blocked before repository sync ran; the subsequent baseline push failed, so the sync result stays queue-local and does not reopen execution.`
+- sync_status: `pending`
+- sync_scope: `none`
+- sync_summary: `No repository sync has run for the reactivated reclosure queue yet.`
 - allowed_task_states:
   - `candidate`
   - `queued`
@@ -99,10 +99,152 @@ This queue does not cover:
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
+| `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile` | `active` | `Re-audit src/main.ts against the pure-shell acceptance line, freeze the fresh drift evidence, and confirm the smallest lawful reclosure cut before any renewed ownerization work starts.` | `none` | `Admitted on 2026-07-08 after fresh source evidence proved that the prior closeout basis no longer matches current src/main.ts.` |
+| `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization` | `queued` | `Remove the bounded non-shell residues confirmed by the reclosure baseline without widening into a full UI or runtime rewrite.` | `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile` | `Must not start until the reclosure baseline writes the bounded owner split.` |
+| `task.main-shell-and-layout-editor-ownerization.reclosure-closeout` | `queued` | `Re-run pure-shell closeout review and return target control to review only after the renewed ownerization work and verification complete.` | `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization` | `Must not start while the renewed ownerization task is still open.` |
 | `task.main-shell-and-layout-editor-ownerization.baseline-reconcile` | `done` | `Freeze the pure-shell acceptance truth, record exactly which main.ts responsibilities must move, and keep the queue bounded to the current shell plus layout-editor owner line.` | `none` | `Completed on 2026-07-07 after queue truth fixed the allowed pure-shell responsibilities and named the required owner split.` |
 | `task.main-shell-and-layout-editor-ownerization.layout-editor-ownerization` | `done` | `Move layout editor action routing, state writes, pointer capture, drag/resize interaction, and field updates out of src/main.ts into an independent coordinator or interaction-session owner line.` | `task.main-shell-and-layout-editor-ownerization.baseline-reconcile` | `Completed on 2026-07-07 after src/main.ts stopped importing layout-editor actions directly and the layout editor input/click/drag owner line moved into application/layout-editor/layout-editor-coordinator.ts.` |
 | `task.main-shell-and-layout-editor-ownerization.render-and-layout-bootstrap-ownerization` | `done` | `Move render scheduling shell ownership and runtime layout baseline bootstrap ownership out of src/main.ts into dedicated seams.` | `task.main-shell-and-layout-editor-ownerization.layout-editor-ownerization` | `Closed after the fresh source audit proved that the remaining main.ts residue now stays within the accepted pure-shell line and no additional bounded owner family remains live on current evidence.` |
 | `task.main-shell-and-layout-editor-ownerization.queue-closeout` | `done` | `Verify that src/main.ts is now a pure shell, synchronize Blueprint truth, and return control to target review.` | `task.main-shell-and-layout-editor-ownerization.render-and-layout-bootstrap-ownerization` | `Closed on 2026-07-08 after the fresh source audit confirmed the accepted pure-shell line. The repository-wide import.meta and ?url asset typing/configuration gap remains outside this queue slice and is not kept as a live queue blocker.` |
+
+### `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile`
+
+#### Control Block
+
+- task_id: `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile`
+- state: `active`
+- task_type: `baseline-recheck`
+- depends_on: []
+- blocked_by: []
+- priority: `high`
+- scope:
+  - `src/main.ts`
+  - `src/application/layout-editor/**`
+  - `src/application/presenter/**`
+  - `src/application/runtime/render-prepass-state.ts`
+  - `src/ui/app-render.ts`
+  - `docs/blueprints/**`
+  - `tests/robustness.test.cjs`
+- must_inspect:
+  - `src/main.ts`
+  - `docs/blueprints/queues/main-shell-and-layout-editor-ownerization-queue.md`
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+  - `tests/robustness.test.cjs`
+- must_not_change:
+  - `standalone_editor_scope`
+  - `script_editor_scope`
+  - `broad_runtime_state_canonicalization_rewrite`
+  - `new_content_pipeline`
+- done_when:
+  - `The fresh source drift is frozen into one bounded reclosure cut with exact non-shell residues named.`
+  - `The queue truth explicitly states whether the next lawful step is renewed ownerization or direct closeout rejection of the drift claim.`
+  - `No implementation starts before the bounded reclosure owner split is written.`
+- verify_with:
+  - `npm run lint:blueprints`
+  - `rg -n "layout-editor-actions|applyRenderPrepassState|renderApp as renderAppMarkup|function renderApp|function renderAppFrame|appState =" src/main.ts`
+- if_blocked:
+  - `Record the blocker in this queue doc.`
+  - `Return control to target-level review rather than silently widening scope.`
+- promote_next_if_done: `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
+- stop_if:
+  - `Fresh evidence collapses back into accepted pure-shell residue rather than a live owner-line regression.`
+
+#### Human Context
+
+- Purpose:
+  - `Reopen the queue on one narrow source-truth check instead of assuming the whole old ownerization batch must be rerun.`
+- Failure mode:
+  - `Do not jump straight into code movement before the fresh drift is re-bounded under current source truth.`
+
+### `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
+
+#### Control Block
+
+- task_id: `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
+- state: `queued`
+- task_type: `execution`
+- depends_on:
+  - `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile`
+- blocked_by: []
+- priority: `high`
+- scope:
+  - `src/main.ts`
+  - `src/application/**`
+  - `src/ui/**`
+  - `tests/robustness.test.cjs`
+- must_inspect:
+  - `src/main.ts`
+  - `src/application/layout-editor/**`
+  - `src/application/presenter/**`
+  - `tests/robustness.test.cjs`
+- must_not_change:
+  - `standalone_editor_app_scope`
+  - `script_editor_scope`
+  - `full_ui_subsystem_rewrite`
+  - `broad_runtime_state_canonicalization_rewrite`
+- done_when:
+  - `The bounded non-shell residues named by the reclosure baseline are removed from src/main.ts.`
+  - `src/main.ts returns to the accepted pure-shell line under fresh source evidence.`
+- verify_with:
+  - `npm run lint:blueprints`
+  - `npm run typecheck`
+  - `node --test tests/robustness.test.cjs`
+- if_blocked:
+  - `Record the blocker in this queue doc instead of widening the queue silently.`
+- promote_next_if_done: `task.main-shell-and-layout-editor-ownerization.reclosure-closeout`
+- stop_if:
+  - `The required fix expands into a full UI or runtime rewrite instead of one bounded owner-line recovery.`
+
+#### Human Context
+
+- Purpose:
+  - `Recover the pure-shell contract only after the renewed baseline names the smallest lawful ownerization cut.`
+- Failure mode:
+  - `Do not repeat the full historical queue blindly if the fresh drift is narrower than the original ownerization scope.`
+
+### `task.main-shell-and-layout-editor-ownerization.reclosure-closeout`
+
+#### Control Block
+
+- task_id: `task.main-shell-and-layout-editor-ownerization.reclosure-closeout`
+- state: `queued`
+- task_type: `closeout`
+- depends_on:
+  - `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
+- blocked_by: []
+- priority: `medium`
+- scope:
+  - `docs/blueprints/**`
+  - `src/main.ts`
+  - `tests/robustness.test.cjs`
+- must_inspect:
+  - `docs/blueprints/project-progress.md`
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+  - `docs/blueprints/queues/main-shell-and-layout-editor-ownerization-queue.md`
+  - `src/main.ts`
+  - `tests/robustness.test.cjs`
+- must_not_change:
+  - `target_closeout_truth_without_written_basis`
+  - `out_of_scope_editor_product_work`
+- done_when:
+  - `Fresh source evidence proves src/main.ts has returned to the accepted pure-shell line.`
+  - `Queue truth, target truth, and repository entry truth are synchronized before any repository sync.`
+- verify_with:
+  - `npm run lint:blueprints`
+  - `npm run typecheck`
+  - `npm test`
+- if_blocked:
+  - `Record the blocker explicitly rather than leaving the queue floating between active and historical states.`
+- promote_next_if_done: `none`
+- stop_if:
+  - `Required verification has not passed.`
+
+#### Human Context
+
+- Purpose:
+  - `Close the reopened queue only after the renewed ownerization work proves the previous drift has been removed.`
+- Failure mode:
+  - `Do not declare the queue historical again while the fresh reclosure evidence remains unresolved.`
 
 ## Task Definitions
 
@@ -440,8 +582,12 @@ This queue does not cover:
   - Summary: `Closed the queue as historical evidence after the fresh source audit proved that src/main.ts has reached the accepted pure-shell line and no further bounded ownerization batch remains justified on current evidence.`
   - Verification: `npm run lint:blueprints plus npm run typecheck passed; npm test still fails only through the existing build:test asset/tooling gap in src/content/layout-editor-presets.ts, src/ui/portrait-assets.ts, src/ui/views/character/character-detail-view.ts, src/ui/views/minigames/city-begging-minigame-view.ts, and multiple ?url asset imports outside this queue slice.`
   - Next at this time: `Return control to target-level idle-open review with no active queue and treat this queue as closed historical evidence only.`
+- 2026-07-08
+  - Summary: `Reactivated the queue after a new fresh source audit disproved the prior pure-shell closeout basis. src/main.ts again directly imports layout-editor action helpers, applyRenderPrepassState, and ui/app-render markup helpers, still performs large direct appState writes, and still owns layout-editor pointer or drag or resize plus render ownership lines.`
+  - Verification: `Fresh source-path audit across src/main.ts plus npm run lint:blueprints`
+  - Next at this time: `Run task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile before any renewed ownerization implementation.`
 
-## Closeout Decision
+## Historical Closeout Decision
 
 - queue_id: `queue.main-shell-and-layout-editor-ownerization`
 - closeout_status: `done`
