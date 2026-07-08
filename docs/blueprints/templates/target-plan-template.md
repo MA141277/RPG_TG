@@ -17,11 +17,21 @@
 - proposed_queue_id: `queue.replace-me | none`
 - review_basis: `replace-with-written-evidence | none`
 - admission_status: `none | pending | admitted | rejected | deferred | blocked`
+- intake_status: `none | evaluating | absorbed | candidate-recorded | admission-review`
+- intake_item_id: `item.replace-me | none`
+- intake_summary: `replace-with-one-line-intake-summary | none`
+- intake_result: `none | absorbed-into-active-queue | queued-as-candidate | promoted-to-admission | rejected | deferred`
+- intake_feedback_mode: `none | fixed-receipt`
 - blocked_by: []
 
 ## Human Context
 
 ### Admission Review Record
+
+- Intake handling:
+  - `The operator-facing intake surface is limited to 新需求 + 参考治理规范; Blueprint must internalize classification and routing work before asking the operator to manage queue mechanics.`
+  - `Reset intake fields to none once intake handling is durably recorded, unless intake is still actively in progress.`
+  - `Do not require the operator to provide item.xxx, classification, proposed queue id, review basis, or admission fields.`
 
 - Scope approval:
   - `Record user scope approval here when it exists, but do not treat it as admission.`
@@ -50,6 +60,7 @@
 6. `Only after target-plan admission sync may a queue doc be created and activated.`
 7. `Only after the admitted queue doc exposes queue_status=active plus a live active_task may implementation start.`
 8. `User scope approval is boundary approval only; it does not replace admission.`
+9. `When intake does not proceed directly into implementation, return the fixed operator receipt rather than a long Blueprint internal analysis dump.`
 
 ### Candidate Recovery Ledger
 
@@ -94,6 +105,43 @@ Allowed `next_action` values:
 - `When execution_mode=single-active-task and allow_parallel=false, an active queue blocks live admission review for a second queue.`
 - `If a fresh item cannot be absorbed by the current active queue, record it as a candidate for later rather than activating a second queue.`
 - `Return to target-level review only after the current active queue closes.`
+- `If an active queue exists and intake or questioning depends on that queue state, expose a queue snapshot before asking the operator to choose.`
+
+### Operator Intake Contract
+
+- Allowed operator intake:
+  - `新需求`
+  - `参考治理规范`
+- Internal-only Blueprint work:
+  - `read project-progress -> blueprint -> target plan -> active queue -> active task`
+  - `attempt active-queue absorption`
+  - `classify the intake`
+  - `record candidate truth when absorption fails`
+  - `route to target-level admission when admission is justified`
+- Default operator output:
+
+```text
+处理结果：
+- 加入状态：成功 / 失败 / 成功，已加入
+- 加入类型：执行队列 / 候选队列 / 未加入
+- 加入队列：`具体队列ID` / `none`
+
+原因说明：
+- 用 2~4 句话说明为什么进入该队列，或者为什么没有成功加入。
+- 如果没有进入执行队列，要明确说明是因为当前已有 active queue，还是因为它当前只满足候选条件。
+
+当前执行情况：
+- 当前执行队列：`具体队列ID`
+- 当前任务：`具体 task ID`
+- 当前队列目标：一句话说明
+
+下一步：
+- 说明 Blueprint 接下来会如何处理
+- 人工操作：当前不需要 / 当前需要确认 xxx
+```
+
+- Default visibility rule:
+  - `默认不向人工暴露真值链细节、Candidate Review Summary、候选全集、Why Not The Others、Human Involvement Boundary、admission 内部字段或排序全过程，除非人工明确要求展开内部分析。`
 
 ### Post-Task Auto-Reconcile
 

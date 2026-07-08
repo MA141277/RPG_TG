@@ -97,6 +97,11 @@ function createFixtureRepo() {
       "- proposed_queue_id: `none`",
       "- review_basis: `none`",
       "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
       "- blocked_by: []",
       "",
     ].join("\n")
@@ -356,6 +361,11 @@ test("blueprint lint rejects queue-candidate review without a proposed queue id"
       "- proposed_queue_id: `none`",
       "- review_basis: `fresh blocker proven`",
       "- admission_status: `pending`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
       "- blocked_by: []",
       "",
     ].join("\n")
@@ -713,6 +723,11 @@ test("blueprint lint rejects target plans that mirror queue-local repository syn
       "- proposed_queue_id: `none`",
       "- review_basis: `none`",
       "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
       "- sync_status: `failed`",
       "- blocked_by: []",
       "",
@@ -750,6 +765,11 @@ test("blueprint lint rejects target-plan blocked_by entries that mirror merge co
       "- proposed_queue_id: `none`",
       "- review_basis: `none`",
       "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
       "- blocked_by:",
       "  - `merge conflict between branch and baseline`",
       "",
@@ -776,4 +796,625 @@ test("blueprint lint CLI reports success for a valid fixture repository", () => 
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Blueprint lint passed/i);
+});
+
+test("blueprint lint rejects target plans missing intake fields", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `idle-open`",
+      "- next_decision: `same-target-admission-or-target-closeout`",
+      "- next_action: `classify-fresh-work`",
+      "- resume_gate: `idle-open`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /intake_status/i);
+  assert.match(failures.join("\n"), /intake_item_id/i);
+  assert.match(failures.join("\n"), /intake_feedback_mode/i);
+});
+
+test("blueprint lint rejects target plans whose idle intake fields do not reset to none", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `idle-open`",
+      "- next_decision: `same-target-admission-or-target-closeout`",
+      "- next_action: `classify-fresh-work`",
+      "- resume_gate: `idle-open`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `item.test`",
+      "- intake_summary: `Need queue help.`",
+      "- intake_result: `queued-as-candidate`",
+      "- intake_feedback_mode: `fixed-receipt`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /intake_status=none/i);
+});
+
+test("blueprint lint rejects workflow specs that omit the fixed operator receipt contract", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/blueprint-workflow-spec.md",
+    [
+      "# Blueprint Workflow Spec",
+      "",
+      "## 7. Queue Admission Startup Rules",
+      "",
+      "Plain-language operator requests are valid intake inputs.",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /workflow spec.*固定 operator receipt contract|fixed operator receipt contract/i);
+  assert.match(failures.join("\n"), /workflow spec.*`新需求`/i);
+});
+
+test("blueprint lint rejects target-plan templates that omit the operator intake contract", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/templates/target-plan-template.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.replace-me`",
+      "- target_status: `open | done | archived`",
+      "- active_phase: `phase.replace-me`",
+      "- active_queue: `queue.replace-me | none`",
+      "- decision_state: `active-execution | promotion-review | idle-open | blocked`",
+      "- next_decision: `queue-admission-review | queue-closeout-or-return-to-target-review | same-target-admission-or-target-closeout | target-closeout | resolve-blocker`",
+      "- next_action: `classify-fresh-work | write-admission-review | activate-admitted-queue | resume-active-queue | auto-reconcile-active-task | write-queue-closeout | return-to-promotion-review | write-target-closeout | resolve-blocker`",
+      "- resume_gate: `open-active-queue | promotion-review | idle-open | blocked`",
+      "- promotion_review_result: `admit | reject | defer | block | none`",
+      "- review_subject_id: `item.replace-me | none`",
+      "- review_subject_classification: `queue-candidate | current-target-item | uncertain-needs-review | future-target-candidate | none`",
+      "- proposed_queue_id: `queue.replace-me | none`",
+      "- review_basis: `replace-with-written-evidence | none`",
+      "- admission_status: `none | pending | admitted | rejected | deferred | blocked`",
+      "- intake_status: `none | evaluating | absorbed | candidate-recorded | admission-review`",
+      "- intake_item_id: `item.replace-me | none`",
+      "- intake_summary: `replace-with-one-line-intake-summary | none`",
+      "- intake_result: `none | absorbed-into-active-queue | queued-as-candidate | promoted-to-admission | rejected | deferred`",
+      "- intake_feedback_mode: `none | fixed-receipt`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /target plan must include an Operator Intake Contract section/i);
+});
+
+test("blueprint lint rejects execution-queue templates that omit the operator snapshot contract", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/templates/execution-queue-template.md",
+    [
+      "# Execution Queue Template",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.replace-me`",
+      "- belongs_to_target: `target.replace-me`",
+      "- queue_status: `active | blocked | done | dropped`",
+      "- queue_class: `required`",
+      "- active_task: `task.replace-me | none`",
+      "- next_task: `task.replace-me-next | none`",
+      "- closeout_status: `in-progress | done | blocked`",
+      "- next_effect: `promote-next-queue | return-to-target-review | block-target | none`",
+      "- sync_status: `pending | success | failed`",
+      "- sync_scope: `branch-push | baseline-merge | baseline-push | none`",
+      "- sync_summary: `Replace with the latest repository sync result.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `future-target-candidate`",
+      "",
+      "## Human Context",
+      "",
+      "### Queue Snapshot",
+      "",
+      "- queue_goal: `Replace with the bounded queue goal in one sentence.`",
+      "- task_count: `1`",
+      "- completed_task_count: `0`",
+      "- remaining_task_count: `1`",
+      "- active_task_summary: `Replace with the current active-task summary.`",
+      "- task_briefs:",
+      "  - `task.replace-me: Replace with a one-line task brief.`",
+      "",
+      "### Task Ledger",
+      "",
+      "| Task ID | State | Summary | Depends On | Notes |",
+      "| --- | --- | --- | --- | --- |",
+      "| `task.replace-me` | `active` | `Replace with task summary.` | `none` | `Replace with task note.` |",
+      "",
+      "### Task Definitions",
+      "",
+      "#### `task.replace-me`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.replace-me`",
+      "- state: `active`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_brief:",
+      "  - `Replace with the one-sentence task responsibility.`",
+      "- task_outcome_summary:",
+      "  - `Replace with the expected or current task outcome in one sentence.`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /execution queue template must include an Operator Snapshot Contract section/i);
+});
+
+test("workflow spec documents minimal intake input and fixed operator receipt labels", () => {
+  const workflowSpec = fs.readFileSync(
+    path.join(projectRoot, "docs", "blueprints", "blueprint-workflow-spec.md"),
+    "utf8"
+  );
+
+  assert.match(workflowSpec, /`新需求`/u);
+  assert.match(workflowSpec, /`参考治理规范`/u);
+  assert.match(workflowSpec, /^### 7\.1\.1 Fixed operator receipt contract$/m);
+  assert.match(workflowSpec, /处理结果：/u);
+  assert.match(workflowSpec, /人工操作：当前不需要 \/ 当前需要确认 xxx/u);
+});
+
+test("live target plan exposes the fixed operator intake contract", () => {
+  const targetPlan = fs.readFileSync(
+    path.join(
+      projectRoot,
+      "docs",
+      "blueprints",
+      "plans",
+      "2026-07-06-project-complete-modularization-target-plan.md"
+    ),
+    "utf8"
+  );
+
+  assert.match(targetPlan, /^### Operator Intake Contract$/m);
+  assert.match(targetPlan, /处理结果：/u);
+  assert.match(targetPlan, /当前执行情况：/u);
+  assert.match(targetPlan, /人工操作：当前不需要 \/ 当前需要确认 xxx/u);
+});
+
+test("blueprint lint rejects active queues that omit queue snapshot", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/project-progress.md",
+    [
+      "# Project Progress",
+      "",
+      "## Control Block",
+      "",
+      "- entry_id: `project-progress.test`",
+      "- active_blueprint: `blueprint.test`",
+      "- active_target: `target.test`",
+      "- has_active_queue: `true`",
+      "- next_file: `docs/blueprints/queues/test-queue.md`",
+      "- entry_action: `open-next-file`",
+      "",
+    ].join("\n")
+  );
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `queue.test`",
+      "- decision_state: `active-execution`",
+      "- next_decision: `queue-closeout-or-return-to-target-review`",
+      "- next_action: `resume-active-queue`",
+      "- resume_gate: `open-active-queue`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `active`",
+      "- queue_class: `required`",
+      "- active_task: `task.test`",
+      "- next_task: `task.next`",
+      "- closeout_status: `in-progress`",
+      "- next_effect: `return-to-target-review`",
+      "- sync_status: `pending`",
+      "- sync_scope: `none`",
+      "- sync_summary: `No repository sync has run yet.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Active Task Ledger",
+      "",
+      "| Task ID | State | Summary | Depends On | Notes |",
+      "| --- | --- | --- | --- | --- |",
+      "| `task.test` | `active` | `Run the current task.` | `none` | `Current task.` |",
+      "| `task.next` | `queued` | `Run the next task.` | `task.test` | `Next task.` |",
+      "",
+      "### Task Definitions",
+      "",
+      "#### `task.test`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.test`",
+      "- state: `active`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_brief:",
+      "  - `Run the current task.`",
+      "- task_outcome_summary:",
+      "  - `Current task remains open.`",
+      "",
+      "#### `task.next`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.next`",
+      "- state: `queued`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_brief:",
+      "  - `Run the next task.`",
+      "- task_outcome_summary:",
+      "  - `Next task has not started.`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /Queue Snapshot/i);
+});
+
+test("blueprint lint rejects active queues whose task definitions omit task_brief", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/project-progress.md",
+    [
+      "# Project Progress",
+      "",
+      "## Control Block",
+      "",
+      "- entry_id: `project-progress.test`",
+      "- active_blueprint: `blueprint.test`",
+      "- active_target: `target.test`",
+      "- has_active_queue: `true`",
+      "- next_file: `docs/blueprints/queues/test-queue.md`",
+      "- entry_action: `open-next-file`",
+      "",
+    ].join("\n")
+  );
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `queue.test`",
+      "- decision_state: `active-execution`",
+      "- next_decision: `queue-closeout-or-return-to-target-review`",
+      "- next_action: `resume-active-queue`",
+      "- resume_gate: `open-active-queue`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `active`",
+      "- queue_class: `required`",
+      "- active_task: `task.test`",
+      "- next_task: `task.next`",
+      "- closeout_status: `in-progress`",
+      "- next_effect: `return-to-target-review`",
+      "- sync_status: `pending`",
+      "- sync_scope: `none`",
+      "- sync_summary: `No repository sync has run yet.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Queue Snapshot",
+      "",
+      "- queue_goal: `Keep queue visibility explicit.`",
+      "- task_count: `2`",
+      "- completed_task_count: `0`",
+      "- remaining_task_count: `2`",
+      "- active_task_summary: `task.test keeps the queue active.`",
+      "- task_briefs:",
+      "  - `task.test: Run the current task.`",
+      "  - `task.next: Run the next task.`",
+      "",
+      "### Active Task Ledger",
+      "",
+      "| Task ID | State | Summary | Depends On | Notes |",
+      "| --- | --- | --- | --- | --- |",
+      "| `task.test` | `active` | `Run the current task.` | `none` | `Current task.` |",
+      "| `task.next` | `queued` | `Run the next task.` | `task.test` | `Next task.` |",
+      "",
+      "### Task Definitions",
+      "",
+      "#### `task.test`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.test`",
+      "- state: `active`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_outcome_summary:",
+      "  - `Current task remains open.`",
+      "",
+      "#### `task.next`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.next`",
+      "- state: `queued`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_brief:",
+      "  - `Run the next task.`",
+      "- task_outcome_summary:",
+      "  - `Next task has not started.`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /task_brief/i);
+});
+
+test("blueprint lint rejects active queues whose active_task is missing from task definitions", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/project-progress.md",
+    [
+      "# Project Progress",
+      "",
+      "## Control Block",
+      "",
+      "- entry_id: `project-progress.test`",
+      "- active_blueprint: `blueprint.test`",
+      "- active_target: `target.test`",
+      "- has_active_queue: `true`",
+      "- next_file: `docs/blueprints/queues/test-queue.md`",
+      "- entry_action: `open-next-file`",
+      "",
+    ].join("\n")
+  );
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `queue.test`",
+      "- decision_state: `active-execution`",
+      "- next_decision: `queue-closeout-or-return-to-target-review`",
+      "- next_action: `resume-active-queue`",
+      "- resume_gate: `open-active-queue`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `active`",
+      "- queue_class: `required`",
+      "- active_task: `task.test`",
+      "- next_task: `task.next`",
+      "- closeout_status: `in-progress`",
+      "- next_effect: `return-to-target-review`",
+      "- sync_status: `pending`",
+      "- sync_scope: `none`",
+      "- sync_summary: `No repository sync has run yet.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Queue Snapshot",
+      "",
+      "- queue_goal: `Keep queue visibility explicit.`",
+      "- task_count: `2`",
+      "- completed_task_count: `0`",
+      "- remaining_task_count: `2`",
+      "- active_task_summary: `task.test keeps the queue active.`",
+      "- task_briefs:",
+      "  - `task.test: Run the current task.`",
+      "  - `task.next: Run the next task.`",
+      "",
+      "### Active Task Ledger",
+      "",
+      "| Task ID | State | Summary | Depends On | Notes |",
+      "| --- | --- | --- | --- | --- |",
+      "| `task.test` | `active` | `Run the current task.` | `none` | `Current task.` |",
+      "| `task.next` | `queued` | `Run the next task.` | `task.test` | `Next task.` |",
+      "",
+      "### Task Definitions",
+      "",
+      "#### `task.next`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.next`",
+      "- state: `queued`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_brief:",
+      "  - `Run the next task.`",
+      "- task_outcome_summary:",
+      "  - `Next task has not started.`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /active_task=.*task\.test.*task definitions/i);
 });
