@@ -5,6 +5,22 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-08 Review Cadence Shared Mechanism Support Spec
+
+### Added
+- 新增 Blueprint 支撑规范 [docs/blueprints/specs/2026-07-08-review-cadence-follow-up-shared-review-support-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-08-review-cadence-follow-up-shared-review-support-spec.md)，把“今日评定 / today's review”正式收口为当前 `queue.review-cadence-follow-up-contract-closure` 的共享机制设计依据，而不是 keep-house / temple-house 的私有功能补丁。
+- 该规范明确区分三层边界：scenario-pack review 配置层、共享 review 机制层、宿主 house/UI 承载层，并明确当前阶段不通过新增 `review sub-runtime` 来承载此问题。
+- 该规范冻结了统一 review 状态、触发源、visibility policy / review gate / host selector、配置声明边界、模块目录建议、迁移顺序、Blueprint admission 依据与结构性验收标准。
+
+### Changed
+- 更新 [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md)，把 `queue.review-cadence-follow-up-contract-closure` 正式补入 current target 的 `Queue Contract Portfolio`，并把 admission rule 明确绑定到这份新的支撑规范。
+- 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，为既有 `item.review-cadence-follow-up-contract-closure` / `queue.review-cadence-follow-up-contract-closure` 补入 support spec 依据，明确本次设计任务沿用既有 queue candidate，而不是另起新的 same-target queue identity。
+
+### Impact
+- 后续若要推进“今日评定共享机制改造”，不需要再次从零解释为什么它不是单一 house feature，也不需要在 admission 讨论里重新发明 host/state/visibility/config 边界。
+- Blueprint 当前对该问题的治理身份更清晰：它属于既有 `queue.review-cadence-follow-up-contract-closure` 的边界深化，而不是一个重复 candidate。
+- 未来实施时，可以按共享规则 -> 统一状态 -> 触发收敛 -> 宿主适配 -> scenario-pack 数据化的顺序推进，而不是继续把逻辑散落在 house、runtime、time 与 UI 分支中。
+
 ## 2026-07-08 Blueprint Intake Minimal Input And Fixed Receipt Rule
 
 ### Changed
