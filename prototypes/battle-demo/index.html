@@ -1072,6 +1072,20 @@
       min-height: 540px;
       overflow: hidden;
     }
+    .battle-damage-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2000;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .battle-damage-anchor {
+      position: absolute;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+      z-index: 2000;
+    }
     .battle-morale-frame {
       position: absolute;
       inset: 0;
@@ -1193,7 +1207,6 @@
     .formation-side.enemy .formation-slot.striker { transform: translate(-50%, -100%) scale(var(--slot-scale, 1)); }
     .formation-slot.targeted {
       filter: drop-shadow(0 0 18px rgba(255, 95, 80, 0.78)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
-      animation: hitShake 0.26s ease;
     }    .formation-slot.hit-flash {
       animation: hitShake 0.26s ease;
     }
@@ -1369,23 +1382,32 @@
             .formation-slot .member-loss {
       display: none;
     }
-    .formation-slot .member-damage-popup {
+    .formation-battle-box .member-damage-popup {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
+      left: 0;
+      top: 0;
+      transform: translate(-50%, calc(-100% - 18px));
       color: #fff4eb;
-      font-size: 0.96rem;
-      font-weight: 800;
+      font-family: "Noto Serif SC", "SimSun", serif;
+      font-size: 1.14rem;
+      font-weight: 900;
       line-height: 1;
-      -webkit-text-stroke: 1.25px rgba(0, 0, 0, 0.96);
+      letter-spacing: 0.02em;
+      -webkit-text-stroke: 1.35px rgba(0, 0, 0, 0.98);
       paint-order: stroke fill;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.95), 0 0 8px rgba(155, 18, 18, 0.48);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.98), 0 0 8px rgba(155, 18, 18, 0.48);
       pointer-events: none;
       white-space: nowrap;
       opacity: 0;
+      will-change: transform, opacity;
       animation: battleDamagePopup 1050ms ease-out forwards;
-      z-index: 9;
+      z-index: 110;
+    }
+    .formation-battle-box .member-damage-popup.is-miss {
+      color: #f7f1dd;
+      font-size: 0.98rem;
+      letter-spacing: 0.08em;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.98), 0 0 6px rgba(255,255,255,0.12);
     }
         @keyframes hitShake {
       0%, 100% { translate: 0 0; }
@@ -2424,6 +2446,7 @@
         <h2 id="battle-defender-title">防守方</h2>
         <div class="formation-grid" id="battle-defender-grid"></div>
       </section>
+      <div class="battle-damage-layer" id="battle-damage-layer"></div>
     </div>
   </div>
 
@@ -3338,6 +3361,43 @@
         soldiers: unit.soldiers,
         maxSoldiers: unit.maxSoldiers,
         formationMembers: members,
+      };
+    }
+
+    function cloneBattleAnimationSnapshot(snapshot) {
+      return {
+        ...snapshot,
+        formationMembers: snapshot.formationMembers.map(member => ({ ...member })),
+      };
+    }
+
+    function applyBattleAnimationStrike(state, step) {
+      if (!step?.hit || !(step.damage > 0)) {
+        return {
+          attackerSnapshot: state.attackerSnapshot,
+          defenderSnapshot: state.defenderSnapshot,
+        };
+      }
+      const nextAttackerSnapshot = cloneBattleAnimationSnapshot(state.attackerSnapshot);
+      const nextDefenderSnapshot = cloneBattleAnimationSnapshot(state.defenderSnapshot);
+      const targetSnapshot = step.targetSide === 'attacker'
+        ? nextAttackerSnapshot
+        : nextDefenderSnapshot;
+      const targetMember = targetSnapshot.formationMembers.find(member => member.slotKey === step.targetSlotKey);
+      if (!targetMember) {
+        return {
+          attackerSnapshot: nextAttackerSnapshot,
+          defenderSnapshot: nextDefenderSnapshot,
+        };
+      }
+      targetMember.soldiers = Math.max(0, targetMember.soldiers - step.damage);
+      targetSnapshot.soldiers = targetSnapshot.formationMembers.reduce(
+        (total, member) => total + Math.max(0, member.soldiers),
+        0
+      );
+      return {
+        attackerSnapshot: nextAttackerSnapshot,
+        defenderSnapshot: nextDefenderSnapshot,
       };
     }
 
@@ -5989,6 +6049,14 @@
       };
     }
 
+    function getBattleDamageAnchorPosition(slot, layerRect) {
+      const anchor = getBattleSlotAnchorPosition(slot, layerRect);
+      return {
+        x: anchor.x,
+        y: anchor.y - 190,
+      };
+    }
+
     function createBattleSpineProxyFromSlot(sourceSlot, box, boxRect, proxySide, troopType) {
       const proxyAnchor = document.createElement('div');
       const anchorPosition = getBattleSlotAnchorPosition(sourceSlot, boxRect);
@@ -6077,6 +6145,7 @@
       const targetAnchor = getBattleSlotAnchorPosition(targetSlot, boxRect);
 
       sourceSlot.classList.add('is-proxying');
+      proxyView.slot.classList.add('striker');
 
       const from = {
         x: initialLeft,
@@ -6118,13 +6187,13 @@
         'attack',
         renderer.getActionDurationMs('attack'),
         {
-          impactFrame: step.hit ? attackPeakFrame : null,
-          onImpact: step.hit
-            ? info => {
-                onImpact?.();
-                queueBattleModelShake(targetSlot, info?.peakAt, info?.frameDurationMs);
-              }
-            : null,
+          impactFrame: attackPeakFrame,
+          onImpact: info => {
+            onImpact?.();
+            if (step.hit) {
+              queueBattleModelShake(targetSlot, info?.peakAt, info?.frameDurationMs);
+            }
+          },
           effectFrame: step.hit ? attackWhiteFlashStartFrame : null,
           onEffect: step.hit
             ? info => queueBattleWhiteFlash(targetSlot, info?.peakAt, info?.frameDurationMs)
@@ -6373,6 +6442,16 @@
       }, 180);
     }
 
+    function clearBattleModelShakeState() {
+      document.querySelectorAll('.formation-spine-frame.hit-model-shake').forEach(frame => {
+        if (frame.__battleModelShakeTimeout) {
+          window.clearTimeout(frame.__battleModelShakeTimeout);
+          delete frame.__battleModelShakeTimeout;
+        }
+        frame.classList.remove('hit-model-shake');
+      });
+    }
+
         function getBattleRandomPopupOffset(radius = 20, lastOffset = null, minDistance = 20) {
       let attempt = 0;
       let candidate = null;
@@ -6392,20 +6471,38 @@
       return candidate;
     }
 
-    function showBattleDamagePopup(slot, damage) {
+    function showBattleDamagePopup(slot, value) {
       if (!(slot instanceof HTMLElement)) return;
-      const damageValue = Number(damage) || 0;
-      if (damageValue <= 0) return;
+      const popupLayer = document.getElementById('battle-damage-layer')
+        || slot.closest('.formation-battle-box')
+        || slot.closest('.formation-grid')
+        || slot.parentElement;
+      if (!(popupLayer instanceof HTMLElement)) return;
       const lastOffset = slot.__battleLastDamagePopupOffset || null;
       const offset = getBattleRandomPopupOffset(20, lastOffset, 20);
       slot.__battleLastDamagePopupOffset = offset;
+      const layerRect = popupLayer.getBoundingClientRect();
+      const anchorPosition = getBattleDamageAnchorPosition(slot, layerRect);
+      const popupAnchor = document.createElement('div');
+      popupAnchor.className = 'battle-damage-anchor';
+      popupAnchor.style.left = `${anchorPosition.x}px`;
+      popupAnchor.style.top = `${anchorPosition.y}px`;
       const popup = document.createElement('div');
       popup.className = 'member-damage-popup';
-      popup.textContent = `${damageValue}`;
-      popup.style.left = `calc(50% + ${offset.x.toFixed(1)}px)`;
-      popup.style.top = `calc(6% + ${offset.y.toFixed(1)}px)`;
-      slot.appendChild(popup);
-      window.setTimeout(() => popup.remove(), 1100);
+      if (typeof value === 'string') {
+        if (!value.trim()) return;
+        popup.classList.add('is-miss');
+        popup.textContent = value;
+      } else {
+        const damageValue = Number(value) || 0;
+        if (damageValue <= 0) return;
+        popup.textContent = `${damageValue}`;
+      }
+      popup.style.marginLeft = `${offset.x}px`;
+      popup.style.marginTop = `${offset.y}px`;
+      popupAnchor.appendChild(popup);
+      popupLayer.appendChild(popupAnchor);
+      window.setTimeout(() => popupAnchor.remove(), 1100);
     }
 
     function appendBattleEvent(event) {
@@ -6451,6 +6548,7 @@
     }
 
         async function playFormationStrikeBatch(report, steps, state) {
+      clearBattleModelShakeState();
       const tasks = steps.map(step => (async () => {
         let stepDelayMs = Number(step.delayMs) || 0;
         if ((step.delayFrames || 0) > 0) {
@@ -6464,13 +6562,23 @@
                 const applyImpact = () => {
           if (impactApplied) return;
           impactApplied = true;
-                    state.attackerSnapshot = step.attackerSnapshot;
-          state.defenderSnapshot = step.defenderSnapshot;
-          renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, step.hit ? step : {});
+          const nextState = applyBattleAnimationStrike(state, step);
+          state.attackerSnapshot = nextState.attackerSnapshot;
+          state.defenderSnapshot = nextState.defenderSnapshot;
+          renderBattleAnimationState(
+            report,
+            state.attackerSnapshot,
+            state.defenderSnapshot,
+            step.hit
+              ? { targetSide: step.targetSide, targetSlotKey: step.targetSlotKey }
+              : {}
+          );
+          const targetGrid = document.getElementById(getBattleVisualGridId(report, step.targetSide));
+          const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
           if (step.hit && step.damage > 0) {
-            const targetGrid = document.getElementById(getBattleVisualGridId(report, step.targetSide));
-            const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
             showBattleDamagePopup(targetSlot, step.damage);
+          } else if (!step.hit) {
+            showBattleDamagePopup(targetSlot, 'MISS');
           }
           appendBattleEvent(step);
         };
@@ -6478,7 +6586,20 @@
         applyImpact();
       })());
       await Promise.all(tasks);
-      renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot);
+      const lastStep = steps[steps.length - 1];
+      renderBattleAnimationState(
+        report,
+        state.attackerSnapshot,
+        state.defenderSnapshot,
+        lastStep
+          ? {
+              sourceSide: lastStep.sourceSide,
+              sourceSlotKey: lastStep.sourceSlotKey,
+              targetSide: lastStep.targetSide,
+              targetSlotKey: lastStep.targetSlotKey,
+            }
+          : {}
+      );
       await sleep(60);
     }
 
