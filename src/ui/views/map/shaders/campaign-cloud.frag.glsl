@@ -93,9 +93,7 @@ const vec2 ARTICLE_MASK_DISTORTION_BIAS = vec2(0.60, 0.58);
 const float ARTICLE_EDGE_EROSION_STRENGTH = 0.36;
 const vec3 ARTICLE_EDGE_CLEAR_VALUES = vec3(0.26, 0.84, 1.22);
 const vec3 ARTICLE_CORE_CLEAR_VALUES = vec3(0.94, 0.998, 1.05);
-const vec3 ARTICLE_SHADOW_CLEAR_VALUES = vec3(0.26, 0.86, 1.15);
-const vec2 ARTICLE_SHADOW_OFFSET = vec2(-0.1, 0);
-const float ARTICLE_SHADOW_ALPHA = 0.08;
+const float ARTICLE_CORE_CLEAR_EROSION_STRENGTH = 0.42;
 const float ARTICLE_BASE_MIST_ALPHA = 0.24;
 const float ARTICLE_BODY_ALPHA = 1.14;
 const float ARTICLE_RIM_BODY_ALPHA = 0.16;
@@ -972,35 +970,31 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
   );
   float baseClear = baseFields.y;
   float cloudErosion = computeArticleRevealErosion(uv, time, cloudSample);
+  float organicClearField = distortedFields.y - cloudErosion;
   float edgeClear = clampAndPowValue(
-    distortedFields.y - cloudErosion,
+    organicClearField,
     ARTICLE_EDGE_CLEAR_VALUES
   );
-  float coreClear = clampAndPowValue(baseClear, ARTICLE_CORE_CLEAR_VALUES);
+  float coreClear = clampAndPowValue(
+    distortedFields.y - cloudErosion * ARTICLE_CORE_CLEAR_EROSION_STRENGTH,
+    ARTICLE_CORE_CLEAR_VALUES
+  );
   float airMistKeep = 1.0 - smoothstep(
     ARTICLE_AIR_MIST_HOLE_CLEAR_RANGE.x,
     ARTICLE_AIR_MIST_HOLE_CLEAR_RANGE.y,
-    baseClear
+    organicClearField
   );
   float isolatedCloudKeep = 1.0 - smoothstep(
     ARTICLE_ISOLATED_CLOUD_CLEAR_RANGE.x,
     ARTICLE_ISOLATED_CLOUD_CLEAR_RANGE.y,
-    baseClear
+    organicClearField
   );
   float secondaryLayerKeep = airMistKeep;
   float clearAmount = max(edgeClear, coreClear);
   float cloudMask = clamp(1.0 - clearAmount, 0.0, 1.0) * isolatedCloudKeep;
 
-  vec2 shadowUv = clamp(uv + maskOffset + ARTICLE_SHADOW_OFFSET, vec2(0.0), vec2(1.0));
-  float shadowClear = clampAndPowValue(
-    sampleDissolvedRevealFields(shadowUv, revealDissolve).y - cloudErosion * 0.62,
-    ARTICLE_SHADOW_CLEAR_VALUES
-  );
-  float shadowMask =
-    clamp(1.0 - max(shadowClear, coreClear), 0.0, 1.0) *
-    secondaryLayerKeep;
   float edgeBand = clamp(distortedFields.x * (1.0 - coreClear), 0.0, 1.0);
-  float shallowZone = clamp(distortedFields.x * (1.0 - coreClear), 0.0, 1.0);
+  float shallowZone = edgeBand;
   float deepZone = clamp(1.0 - shallowZone, 0.0, 1.0);
 
   float cloudDensity = smoothstep(
@@ -1031,13 +1025,7 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
   float alpha = cloudMask * (baseMist * airMistKeep + bodyAlpha + rimAlpha) + innerWisp;
   alpha = clamp(alpha, 0.0, 1.0);
 
-  float shadowAlpha =
-    shadowMask *
-    ARTICLE_SHADOW_ALPHA *
-    (0.22 + cloudDensity * 0.46 + edgeBand * 0.24) *
-    (1.0 - coreClear);
-  shadowAlpha *= 1.0 - alpha * 0.42;
-  shadowAlpha = clamp(shadowAlpha, 0.0, 0.18);
+  float shadowAlpha = 0.0;
 
   float selfShadow = smoothstep(
     0.24,
