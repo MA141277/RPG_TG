@@ -4,11 +4,11 @@
 
 - queue_id: `queue.main-shell-and-layout-editor-ownerization`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile`
-- next_task: `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
-- closeout_status: `in-progress`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
 - next_effect: `return-to-target-review`
 - sync_status: `pending`
 - sync_scope: `none`
@@ -99,9 +99,9 @@ This queue does not cover:
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile` | `active` | `Re-audit src/main.ts against the pure-shell acceptance line, freeze the fresh drift evidence, and confirm the smallest lawful reclosure cut before any renewed ownerization work starts.` | `none` | `Admitted on 2026-07-08 after fresh source evidence proved that the prior closeout basis no longer matches current src/main.ts.` |
-| `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization` | `queued` | `Remove the bounded non-shell residues confirmed by the reclosure baseline without widening into a full UI or runtime rewrite.` | `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile` | `Must not start until the reclosure baseline writes the bounded owner split.` |
-| `task.main-shell-and-layout-editor-ownerization.reclosure-closeout` | `queued` | `Re-run pure-shell closeout review and return target control to review only after the renewed ownerization work and verification complete.` | `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization` | `Must not start while the renewed ownerization task is still open.` |
+| `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile` | `done` | `Re-audit src/main.ts against the pure-shell acceptance line, freeze the fresh drift evidence, and confirm the smallest lawful reclosure cut before any renewed ownerization work starts.` | `none` | `Fresh 2026-07-08 source audit froze one lawful cut only: repeated layout-editor interaction ownership, render-prepass/render scheduling ownership, and layout baseline bootstrap ownership had drifted back into src/main.ts.` |
+| `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization` | `done` | `Remove the bounded non-shell residues confirmed by the reclosure baseline without widening into a full UI or runtime rewrite.` | `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile` | `Completed on 2026-07-08 after src/main.ts returned the repeated layout-editor owner line to application/layout-editor/layout-editor-coordinator.ts, the render-prepass/render scheduling owner line to application/presenter/app-render-coordinator.ts, and the layout baseline bootstrap owner line to application/layout-editor/layout-editor-bootstrap.ts.` |
+| `task.main-shell-and-layout-editor-ownerization.reclosure-closeout` | `done` | `Re-run pure-shell closeout review and return target control to review only after the renewed ownerization work and verification complete.` | `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization` | `Closed on 2026-07-08 after fresh closeout verification reconfirmed the pure-shell line and showed npm run lint:blueprints, npm run typecheck, and npm test all passing on the current branch.` |
 | `task.main-shell-and-layout-editor-ownerization.baseline-reconcile` | `done` | `Freeze the pure-shell acceptance truth, record exactly which main.ts responsibilities must move, and keep the queue bounded to the current shell plus layout-editor owner line.` | `none` | `Completed on 2026-07-07 after queue truth fixed the allowed pure-shell responsibilities and named the required owner split.` |
 | `task.main-shell-and-layout-editor-ownerization.layout-editor-ownerization` | `done` | `Move layout editor action routing, state writes, pointer capture, drag/resize interaction, and field updates out of src/main.ts into an independent coordinator or interaction-session owner line.` | `task.main-shell-and-layout-editor-ownerization.baseline-reconcile` | `Completed on 2026-07-07 after src/main.ts stopped importing layout-editor actions directly and the layout editor input/click/drag owner line moved into application/layout-editor/layout-editor-coordinator.ts.` |
 | `task.main-shell-and-layout-editor-ownerization.render-and-layout-bootstrap-ownerization` | `done` | `Move render scheduling shell ownership and runtime layout baseline bootstrap ownership out of src/main.ts into dedicated seams.` | `task.main-shell-and-layout-editor-ownerization.layout-editor-ownerization` | `Closed after the fresh source audit proved that the remaining main.ts residue now stays within the accepted pure-shell line and no additional bounded owner family remains live on current evidence.` |
@@ -112,7 +112,7 @@ This queue does not cover:
 #### Control Block
 
 - task_id: `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_type: `baseline-recheck`
 - depends_on: []
 - blocked_by: []
@@ -155,13 +155,17 @@ This queue does not cover:
   - `Reopen the queue on one narrow source-truth check instead of assuming the whole old ownerization batch must be rerun.`
 - Failure mode:
   - `Do not jump straight into code movement before the fresh drift is re-bounded under current source truth.`
+- Reclosure finding:
+  - `Fresh 2026-07-08 source audit proved the prior closeout basis had drifted on one bounded surface only: src/main.ts had reintroduced direct layout-editor action ownership, render-prepass/render scheduling ownership, and layout baseline bootstrap ownership.`
+- Frozen lawful cut:
+  - `The minimum legal recovery slice is only to restore the already-existing seams: application/layout-editor/layout-editor-coordinator.ts, application/presenter/app-render-coordinator.ts, and application/layout-editor/layout-editor-bootstrap.ts.`
 
 ### `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
 
 #### Control Block
 
 - task_id: `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
-- state: `queued`
+- state: `done`
 - task_type: `execution`
 - depends_on:
   - `task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile`
@@ -201,13 +205,19 @@ This queue does not cover:
   - `Recover the pure-shell contract only after the renewed baseline names the smallest lawful ownerization cut.`
 - Failure mode:
   - `Do not repeat the full historical queue blindly if the fresh drift is narrower than the original ownerization scope.`
+- Implementation result:
+  - `src/main.ts no longer imports application/layout-editor/layout-editor-actions.ts, application/runtime/render-prepass-state.ts, ui/app-render renderApp markup helpers, or the layout-editor preset constructors directly.`
+  - `The repeated layout-editor input/click/pointer-drag owner line now routes through application/layout-editor/layout-editor-coordinator.ts from both appElement and uiOverlayElement event handlers.`
+  - `The render-prepass plus render scheduling owner line now routes through application/presenter/app-render-coordinator.ts via renderApp().`
+  - `The runtime layout baseline bootstrap owner line now routes through application/layout-editor/layout-editor-bootstrap.ts via createDefaultLayoutEditorAppState() in both prototype and scenario-pack app-state creation paths.`
+  - `Fresh source evidence therefore returns src/main.ts to the accepted pure-shell line for this bounded queue scope, so the next legal step is reclosure-closeout rather than another implementation slice.`
 
 ### `task.main-shell-and-layout-editor-ownerization.reclosure-closeout`
 
 #### Control Block
 
 - task_id: `task.main-shell-and-layout-editor-ownerization.reclosure-closeout`
-- state: `queued`
+- state: `done`
 - task_type: `closeout`
 - depends_on:
   - `task.main-shell-and-layout-editor-ownerization.reclosure-ownerization`
@@ -245,6 +255,10 @@ This queue does not cover:
   - `Close the reopened queue only after the renewed ownerization work proves the previous drift has been removed.`
 - Failure mode:
   - `Do not declare the queue historical again while the fresh reclosure evidence remains unresolved.`
+- Fresh verification result:
+  - `Fresh source grep still proves that src/main.ts no longer imports layout-editor-actions, applyRenderPrepassState, renderApp markup helpers, or layout-editor preset constructors directly, so the bounded reclosure ownerization cut remains intact on current evidence.`
+  - `Fresh npm run lint:blueprints and npm run typecheck pass, and fresh npm test now passes on the current branch as well.`
+  - `This task is therefore fully closed on current evidence, with no remaining in-scope main.ts residue and no remaining queue-local verification blocker.`
 
 ## Task Definitions
 
@@ -586,16 +600,31 @@ This queue does not cover:
   - Summary: `Reactivated the queue after a new fresh source audit disproved the prior pure-shell closeout basis. src/main.ts again directly imports layout-editor action helpers, applyRenderPrepassState, and ui/app-render markup helpers, still performs large direct appState writes, and still owns layout-editor pointer or drag or resize plus render ownership lines.`
   - Verification: `Fresh source-path audit across src/main.ts plus npm run lint:blueprints`
   - Next at this time: `Run task.main-shell-and-layout-editor-ownerization.reclosure-baseline-reconcile before any renewed ownerization implementation.`
+- 2026-07-08
+  - Summary: `Closed reclosure-baseline-reconcile after freezing one minimum legal recovery cut only: restore the repeated layout-editor interaction owner line, render-prepass/render scheduling owner line, and layout baseline bootstrap owner line behind the already-existing coordinator/bootstrap seams instead of widening scope.`
+  - Verification: `Fresh source audit across src/main.ts, src/application/layout-editor/layout-editor-coordinator.ts, src/application/presenter/app-render-coordinator.ts, src/application/layout-editor/layout-editor-bootstrap.ts, and tests/robustness.test.cjs plus npm run lint:blueprints`
+  - Next at this time: `Execute task.main-shell-and-layout-editor-ownerization.reclosure-ownerization on that bounded cut only.`
+- 2026-07-08
+  - Summary: `Completed reclosure-ownerization after src/main.ts stopped directly owning the repeated layout-editor action/drag family, render-prepass/render scheduling family, and layout baseline bootstrap family. Event routing now delegates through application/layout-editor/layout-editor-coordinator.ts, renderApp() delegates through application/presenter/app-render-coordinator.ts, and prototype/scenario app-state creation now delegates layout defaults through application/layout-editor/layout-editor-bootstrap.ts.`
+  - Verification: `Fresh source grep across src/main.ts plus npm run typecheck`
+  - Next at this time: `Advance the queue to task.main-shell-and-layout-editor-ownerization.reclosure-closeout and verify queue-closeout readiness without opening another implementation slice.`
+- 2026-07-08
+  - Summary: `Attempted reclosure-closeout after the bounded ownerization cut landed. Fresh source grep still shows no in-scope main.ts owner-line regression, and npm run lint:blueprints plus npm run typecheck still pass, but npm test remains blocked before test execution by the known repository-wide build:test asset/tooling gap in src/content/layout-editor-presets.ts and multiple import.meta or ?url-based UI asset modules outside this queue slice.`
+  - Verification: `Fresh source grep across src/main.ts plus npm run lint:blueprints plus npm run typecheck plus npm test`
+  - Next at this time: `Keep queue.main-shell-and-layout-editor-ownerization as the only active queue with task.main-shell-and-layout-editor-ownerization.reclosure-closeout blocked on external repository verification debt rather than reopening implementation scope.`
+- 2026-07-08
+  - Summary: `Re-ran reclosure-closeout verification and closed the reopened queue after the current branch passed the full closeout gate. Fresh source grep still shows no in-scope main.ts owner-line regression, and npm run lint:blueprints plus npm run typecheck plus npm test all pass, so target control returns to promotion-review with no active queue.`
+  - Verification: `Fresh source grep across src/main.ts plus npm run lint:blueprints plus npm run typecheck plus npm test`
+  - Next at this time: `Treat queue.main-shell-and-layout-editor-ownerization as closed historical evidence only and resume at target-level promotion-review.`
 
 ## Historical Closeout Decision
 
 - queue_id: `queue.main-shell-and-layout-editor-ownerization`
 - closeout_status: `done`
-- verification_status: `partial`
+- verification_status: `full`
 - residue_remaining: `yes`
 - residue_classification:
   - `accepted-pure-shell-residue`
-  - `external-repository-verification-gap`
 - next_queue_recommendation: `none`
 - promotion_justified: `false`
 - evidence:
@@ -603,4 +632,4 @@ This queue does not cover:
   - `the bounded render-and-layout-bootstrap ownerization work is complete and no additional same-scope family remains justified`
   - `node --test tests/robustness.test.cjs passed with the new pure-shell audit guard`
   - `npm run lint:blueprints and npm run typecheck passed`
-  - `npm test still fails only on the known repository-wide import.meta and ?url asset typing/configuration gap outside this queue slice, which remains outside this queue's closed ownerization boundary`
+  - `fresh npm test now passes on the current branch as well, so no queue-local verification blocker remains`

@@ -1,21 +1,7 @@
 import "./styles/app.css";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
-import {
-  selectLayoutEditorComponent,
-  selectLayoutEditorElement,
-  selectLayoutEditorTarget,
-  setLayoutEditorBackgroundAsset,
-  setLayoutEditorBackgroundAssetQuery,
-  setLayoutEditorBackgroundMode,
-  setLayoutEditorBackgroundSlice,
-  setLayoutEditorComponentRectField,
-  setLayoutEditorElementRectField,
-  toggleLayoutEditor,
-  updateLayoutEditorComponentPosition,
-  updateLayoutEditorComponentSize,
-  updateLayoutEditorElementPosition,
-  updateLayoutEditorElementSize,
-} from "./application/layout-editor/layout-editor-actions";
+import { createDefaultLayoutEditorAppState } from "./application/layout-editor/layout-editor-bootstrap";
+import { createLayoutEditorCoordinator } from "./application/layout-editor/layout-editor-coordinator";
 import {
   closeCityMenu,
   closeCityDirectory,
@@ -38,7 +24,7 @@ import {
   isPlayerMonkIdentity,
   type CityMenuPanelId,
 } from "./application/city-menu/city-menu";
-import { createAppPresenterOutput } from "./application/presenter/app-presenter";
+import { createAppRenderCoordinator } from "./application/presenter/app-render-coordinator";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
 import {
   applyCouncilPriorityFollowUp,
@@ -58,7 +44,6 @@ import {
   applyMapAutoAdvanceSnapshot,
   applyMapAutoAdvanceStart,
 } from "./application/runtime/map-auto-advance-transition";
-import { applyRenderPrepassState } from "./application/runtime/render-prepass-state";
 import {
   formatCouncilStatusText,
   readCalendarDateNumber,
@@ -115,13 +100,6 @@ import {
 } from "./content/prototype-world";
 import { createBaseGameContentPack } from "./content/base-game-content-pack";
 import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
-import {
-  createDefaultCharacterDetailScreenLayout,
-  createDefaultCharacterSelectScreenLayout,
-  createDefaultGlobalHudLayout,
-  createDefaultStartScreenLayout,
-  globalHudBackgroundOptions,
-} from "./content/layout-editor-presets";
 import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
 import {
   createEmptyModRuntimeState,
@@ -191,12 +169,6 @@ import type {
   ValuableLibrarySortKey,
 } from "./domain/global-ui";
 import { KEEP_HOUSE_VARIABLE_KEYS } from "./domain/keep-house";
-import type {
-  UiLayoutBackgroundMode,
-  UiLayout,
-  UiLayoutRect,
-  LayoutEditorTargetId,
-} from "./domain/ui-layout";
 import type { ValuableItemId } from "./domain/valuable-item";
 import {
   isHaozhouShortageDuringBeggingJourney,
@@ -206,7 +178,6 @@ import {
   type ZhuYuanzhangStoryStage,
 } from "./domain/zhu-yuanzhang-story";
 import { assertExists } from "./shared/assert";
-import { renderApp as renderAppMarkup } from "./ui/app-render";
 import {
   renderLoadingScreen,
   selectRandomLoadingTheme,
@@ -338,6 +309,16 @@ function getCurrentMapDefinition(): MapDefinition | null {
   );
 }
 
+function getCurrentCityDefinition(currentAppState: AppState): CityDefinition | null {
+  return (
+    activeContentContext.cityDefinitionById[
+      currentAppState.gameState.world.currentCityId
+    ] ??
+    activeContentContext.cities[0] ??
+    null
+  );
+}
+
 let activeContentContext: ActiveGameContentContext =
   createActiveGameContentContextFromModActivation({
     activationResult: builtinStartupActivation,
@@ -462,17 +443,6 @@ let houseTileDragState:
     }
   | null = null;
 let suppressHouseClickUntilMs = 0;
-let layoutEditorDragState:
-  | {
-      mode: "component" | "element" | "component-size" | "element-size";
-      componentId: string;
-      elementId: string | null;
-      pointerId: number;
-      startClientX: number;
-      startClientY: number;
-      resizeAxis?: "x" | "y" | "xy";
-    }
-  | null = null;
 let cityBeggingMiniGameFrameId: number | null = null;
 let activityQteIntervalHandle: number | null = null;
 let campaignTravelRequestId = 0;
@@ -665,6 +635,57 @@ const mainUiFlow = new MainUiFlow({
   loadSaveData,
   getAppState: () => appState,
 });
+const appRenderCoordinator = createAppRenderCoordinator({
+  getAppState: () => appState,
+  setAppState: (nextAppState) => {
+    appState = nextAppState;
+  },
+  getAppRoot: () => appRoot,
+  getPlayerCharacterId: () => currentPlayerCharacterId,
+  getActiveContentContext: () => activeContentContext,
+  getCurrentMapDefinition,
+  getCurrentCityDefinition,
+  getCitySceneMappingsByCityId: () => getZhuYuanzhangCitySceneMappingByCityId(),
+  captureCampaignTerrainCanvases,
+  restoreCampaignTerrainCanvases,
+  startInitialCampaignMapDebugAnimationIfNeeded,
+  syncCampaignMapDebugView,
+  syncCampaignTerrainStyleView,
+  syncCampaignCityDepthMeshTransformView,
+  restoreCampaignMapScaleInputFocus,
+  syncMapIntroOverlay,
+  syncActivityQteLoop,
+  syncCampaignTerrainWebGl: (root) => {
+    syncCampaignTerrainWebGl(root);
+  },
+  syncCityBeggingMiniGameOverlay,
+});
+const layoutEditorCoordinator = createLayoutEditorCoordinator({
+  getAppState: () => appState,
+  setAppState: (nextAppState) => {
+    appState = nextAppState;
+  },
+  renderActiveSurface,
+  resolveOpenTargetId: (currentAppState) => {
+    if (currentAppState.gameState.ui.overlayView === "detail") {
+      return "character-detail-screen";
+    }
+
+    if (
+      uiOverlayElement == null ||
+      uiOverlayElement.classList.contains("is-hidden")
+    ) {
+      return currentAppState.layoutEditor.selectedTargetId;
+    }
+
+    return uiOverlayElement.querySelector(".c-main-ui-screen--character-select") !=
+      null
+      ? "character-select-screen"
+      : "start-screen";
+  },
+  writeClipboardText: (text) => navigator.clipboard.writeText(text),
+  queryDragHandle: (selector) => document.querySelector<HTMLElement>(selector),
+});
 
 syncGameViewport();
 window.addEventListener("resize", syncGameViewport);
@@ -743,19 +764,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
-    uiLayouts: {
-      "global-hud": createDefaultGlobalHudLayout(),
-      "start-screen": createDefaultStartScreenLayout(),
-      "character-select-screen": createDefaultCharacterSelectScreenLayout(),
-      "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
-    },
-    layoutEditor: {
-      isOpen: false,
-      selectedTargetId: "global-hud",
-      selectedComponentId: "status-board",
-      selectedElementId: null,
-      backgroundAssetQuery: "",
-    },
+    ...createDefaultLayoutEditorAppState(),
   };
 
   nextAppState = {
@@ -1877,19 +1886,7 @@ function createScenarioPackAppState(
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
-    uiLayouts: {
-      "global-hud": createDefaultGlobalHudLayout(),
-      "start-screen": createDefaultStartScreenLayout(),
-      "character-select-screen": createDefaultCharacterSelectScreenLayout(),
-      "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
-    },
-    layoutEditor: {
-      isOpen: false,
-      selectedTargetId: "global-hud",
-      selectedComponentId: "status-board",
-      selectedElementId: null,
-      backgroundAssetQuery: "",
-    },
+    ...createDefaultLayoutEditorAppState(),
   };
 
   nextAppState = {
@@ -2105,7 +2102,7 @@ function resetMainGameRuntime(): void {
   campaignMapDragState = null;
   shouldSuppressNextClickAfterMapDrag = false;
   cityBeggingMiniGameFrameId = null;
-  layoutEditorDragState = null;
+  layoutEditorCoordinator.cancelDrag();
   hideMapIntroOverlay();
 }
 
@@ -2177,50 +2174,6 @@ window.addEventListener("message", (event) => {
   city3dHouseEntryCoordinator.handleWindowMessage(event);
 });
 
-function getLayoutEditorDragHandleSelector(): string {
-  if (layoutEditorDragState == null) {
-    return "";
-  }
-
-  if (layoutEditorDragState.mode === "component-size") {
-    return `[data-layout-component-resize="${layoutEditorDragState.componentId}"][data-layout-resize-axis="${layoutEditorDragState.resizeAxis}"]`;
-  }
-
-  if (layoutEditorDragState.mode === "element-size") {
-    return `[data-layout-element-resize="${layoutEditorDragState.componentId}:${layoutEditorDragState.elementId}"][data-layout-resize-axis="${layoutEditorDragState.resizeAxis}"]`;
-  }
-
-  return layoutEditorDragState.mode === "component"
-    ? `[data-layout-component-handle="${layoutEditorDragState.componentId}"]`
-    : `[data-layout-element-handle="${layoutEditorDragState.componentId}:${layoutEditorDragState.elementId}"]`;
-}
-
-function getLayoutEditorDragEventId(event: PointerEvent | MouseEvent): number {
-  return "pointerId" in event ? event.pointerId : -1;
-}
-
-function setLayoutEditorPointerCapture(
-  element: HTMLElement,
-  event: PointerEvent | MouseEvent
-): void {
-  if ("pointerId" in event) {
-    element.setPointerCapture(event.pointerId);
-  }
-}
-
-function releaseLayoutEditorPointerCapture(
-  element: HTMLElement,
-  event: PointerEvent | MouseEvent
-): void {
-  if ("pointerId" in event && element.hasPointerCapture(event.pointerId)) {
-    element.releasePointerCapture(event.pointerId);
-  }
-}
-
-function getSelectedLayout(): UiLayout {
-  return appState.uiLayouts[appState.layoutEditor.selectedTargetId];
-}
-
 function renderActiveSurface(): void {
   if (uiOverlayElement == null) {
     renderApp();
@@ -2232,385 +2185,6 @@ function renderActiveSurface(): void {
   }
 
   mainUiFlow.render();
-}
-
-async function copyCurrentLayoutParams(): Promise<void> {
-  const payload = {
-    targetId: appState.layoutEditor.selectedTargetId,
-    selectedComponentId: appState.layoutEditor.selectedComponentId,
-    selectedElementId: appState.layoutEditor.selectedElementId,
-    layout: getSelectedLayout(),
-  };
-  await navigator.clipboard.writeText(`${JSON.stringify(payload, null, 2)}\n`);
-}
-
-function handleLayoutEditorInput(targetElement: EventTarget | null): boolean {
-  if (
-    !(
-      targetElement instanceof HTMLInputElement ||
-      targetElement instanceof HTMLSelectElement
-    )
-  ) {
-    return false;
-  }
-
-  if (
-    targetElement instanceof HTMLInputElement &&
-    targetElement.hasAttribute("data-layout-background-asset-query")
-  ) {
-    appState = setLayoutEditorBackgroundAssetQuery(appState, targetElement.value);
-    renderActiveSurface();
-    return true;
-  }
-
-  const componentId = targetElement.dataset.layoutComponentId;
-  if (componentId == null) {
-    return false;
-  }
-
-  if (
-    targetElement instanceof HTMLSelectElement &&
-    targetElement.hasAttribute("data-layout-background-asset")
-  ) {
-    const selectedAsset = globalHudBackgroundOptions.find(
-      (asset) => asset.id === targetElement.value
-    );
-    if (selectedAsset != null) {
-      appState = setLayoutEditorBackgroundAsset(
-        appState,
-        componentId,
-        selectedAsset
-      );
-      renderActiveSurface();
-    }
-    return true;
-  }
-
-  if (
-    targetElement instanceof HTMLSelectElement &&
-    targetElement.hasAttribute("data-layout-background-mode")
-  ) {
-    appState = setLayoutEditorBackgroundMode(
-      appState,
-      componentId,
-      targetElement.value as UiLayoutBackgroundMode
-    );
-    renderActiveSurface();
-    return true;
-  }
-
-  if (
-    targetElement instanceof HTMLInputElement &&
-    targetElement.dataset.layoutSliceEdge != null
-  ) {
-    appState = setLayoutEditorBackgroundSlice(
-      appState,
-      componentId,
-      targetElement.dataset.layoutSliceEdge as "top" | "right" | "bottom" | "left",
-      Number(targetElement.value)
-    );
-    renderActiveSurface();
-    return true;
-  }
-
-  if (
-    targetElement instanceof HTMLInputElement &&
-    targetElement.dataset.layoutComponentField != null
-  ) {
-    appState = setLayoutEditorComponentRectField(
-      appState,
-      componentId,
-      targetElement.dataset.layoutComponentField as keyof UiLayoutRect,
-      Number(targetElement.value)
-    );
-    renderActiveSurface();
-    return true;
-  }
-
-  if (
-    targetElement instanceof HTMLInputElement &&
-    targetElement.dataset.layoutElementField != null &&
-    targetElement.dataset.layoutElementId != null
-  ) {
-    appState = setLayoutEditorElementRectField(
-      appState,
-      componentId,
-      targetElement.dataset.layoutElementId,
-      targetElement.dataset.layoutElementField as keyof UiLayoutRect,
-      Number(targetElement.value)
-    );
-    renderActiveSurface();
-    return true;
-  }
-
-  return false;
-}
-
-function handleLayoutEditorClick(targetElement: EventTarget | null): boolean {
-  if (!(targetElement instanceof HTMLElement)) {
-    return false;
-  }
-
-  const openLayoutEditorButton = targetElement.closest<HTMLElement>(
-    "[data-action='open-layout-editor']"
-  );
-  if (openLayoutEditorButton != null) {
-    if (uiOverlayElement == null) {
-      return false;
-    }
-    const nextTargetId: LayoutEditorTargetId =
-      appState.gameState.ui.overlayView === "detail"
-        ? "character-detail-screen"
-        : uiOverlayElement.classList.contains("is-hidden")
-          ? appState.layoutEditor.selectedTargetId
-          : uiOverlayElement.querySelector(".c-main-ui-screen--character-select") != null
-            ? "character-select-screen"
-            : "start-screen";
-    appState =
-      nextTargetId === appState.layoutEditor.selectedTargetId
-        ? appState
-        : selectLayoutEditorTarget(appState, nextTargetId);
-    appState = toggleLayoutEditor(appState, true);
-    renderActiveSurface();
-    return true;
-  }
-
-  const closeLayoutEditorButton = targetElement.closest<HTMLElement>(
-    "[data-action='close-layout-editor']"
-  );
-  if (closeLayoutEditorButton != null) {
-    appState = toggleLayoutEditor(appState, false);
-    renderActiveSurface();
-    return true;
-  }
-
-  const layoutTargetButton = targetElement.closest<HTMLElement>(
-    "[data-layout-target-id]"
-  );
-  if (layoutTargetButton != null) {
-    const targetId = layoutTargetButton.dataset.layoutTargetId;
-    if (
-      targetId === "global-hud" ||
-      targetId === "start-screen" ||
-      targetId === "character-select-screen" ||
-      targetId === "character-detail-screen"
-    ) {
-      appState = selectLayoutEditorTarget(appState, targetId as LayoutEditorTargetId);
-      renderActiveSurface();
-    }
-    return true;
-  }
-
-  const layoutElementSelectButton = targetElement.closest<HTMLElement>(
-    "[data-layout-element-select]"
-  );
-  if (layoutElementSelectButton != null) {
-    const value = layoutElementSelectButton.dataset.layoutElementSelect;
-    const [componentId, elementId] = value?.split(":") ?? [];
-    if (componentId != null && elementId != null) {
-      appState = selectLayoutEditorElement(appState, componentId, elementId);
-      renderActiveSurface();
-    }
-    return true;
-  }
-
-  const layoutComponentSelectButton = targetElement.closest<HTMLElement>(
-    "[data-layout-component-select]"
-  );
-  if (layoutComponentSelectButton != null) {
-    const componentId = layoutComponentSelectButton.dataset.layoutComponentSelect;
-    if (componentId != null) {
-      appState = selectLayoutEditorComponent(appState, componentId);
-      renderActiveSurface();
-    }
-    return true;
-  }
-
-  const copyLayoutParamsButton = targetElement.closest<HTMLElement>(
-    "[data-action='copy-layout-params']"
-  );
-  if (copyLayoutParamsButton != null) {
-    void copyCurrentLayoutParams();
-    return true;
-  }
-
-  return false;
-}
-
-function startLayoutEditorDrag(event: PointerEvent | MouseEvent): boolean {
-  const targetElement = event.target;
-  if (!(targetElement instanceof HTMLElement)) {
-    return false;
-  }
-
-  const componentResizeHandle = targetElement.closest<HTMLElement>(
-    "[data-layout-component-resize]"
-  );
-  if (componentResizeHandle != null) {
-    const componentId = componentResizeHandle.dataset.layoutComponentResize;
-    const resizeAxis = componentResizeHandle.dataset.layoutResizeAxis;
-    if (
-      componentId != null &&
-      (resizeAxis === "x" || resizeAxis === "y" || resizeAxis === "xy")
-    ) {
-      event.preventDefault();
-      event.stopPropagation();
-      layoutEditorDragState = {
-        mode: "component-size",
-        componentId,
-        elementId: null,
-        pointerId: getLayoutEditorDragEventId(event),
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        resizeAxis,
-      };
-      setLayoutEditorPointerCapture(componentResizeHandle, event);
-      return true;
-    }
-  }
-
-  const elementResizeHandle = targetElement.closest<HTMLElement>(
-    "[data-layout-element-resize]"
-  );
-  if (elementResizeHandle != null) {
-    const [componentId, elementId] =
-      elementResizeHandle.dataset.layoutElementResize?.split(":") ?? [];
-    const resizeAxis = elementResizeHandle.dataset.layoutResizeAxis;
-    if (
-      componentId != null &&
-      elementId != null &&
-      (resizeAxis === "x" || resizeAxis === "y" || resizeAxis === "xy")
-    ) {
-      event.preventDefault();
-      event.stopPropagation();
-      layoutEditorDragState = {
-        mode: "element-size",
-        componentId,
-        elementId,
-        pointerId: getLayoutEditorDragEventId(event),
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        resizeAxis,
-      };
-      setLayoutEditorPointerCapture(elementResizeHandle, event);
-      return true;
-    }
-  }
-
-  const elementHandle = targetElement.closest<HTMLElement>(
-    "[data-layout-element-handle]"
-  );
-  if (elementHandle != null) {
-    const [componentId, elementId] =
-      elementHandle.dataset.layoutElementHandle?.split(":") ?? [];
-    if (componentId != null && elementId != null) {
-      layoutEditorDragState = {
-        mode: "element",
-        componentId,
-        elementId,
-        pointerId: getLayoutEditorDragEventId(event),
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-      };
-      setLayoutEditorPointerCapture(elementHandle, event);
-      return true;
-    }
-  }
-
-  const componentHandle = targetElement.closest<HTMLElement>(
-    "[data-layout-component-handle]"
-  );
-  if (componentHandle != null) {
-    const componentId = componentHandle.dataset.layoutComponentHandle;
-    if (componentId != null) {
-      layoutEditorDragState = {
-        mode: "component",
-        componentId,
-        elementId: null,
-        pointerId: getLayoutEditorDragEventId(event),
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-      };
-      setLayoutEditorPointerCapture(componentHandle, event);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function moveLayoutEditorDrag(event: PointerEvent | MouseEvent): boolean {
-  if (
-    layoutEditorDragState == null ||
-    layoutEditorDragState.pointerId !== getLayoutEditorDragEventId(event)
-  ) {
-    return false;
-  }
-
-  const deltaX = event.clientX - layoutEditorDragState.startClientX;
-  const deltaY = event.clientY - layoutEditorDragState.startClientY;
-  layoutEditorDragState = {
-    ...layoutEditorDragState,
-    startClientX: event.clientX,
-    startClientY: event.clientY,
-  };
-
-  if (layoutEditorDragState.mode === "component") {
-    appState = updateLayoutEditorComponentPosition(
-      appState,
-      layoutEditorDragState.componentId,
-      deltaX,
-      deltaY
-    );
-  } else if (layoutEditorDragState.mode === "component-size") {
-    appState = updateLayoutEditorComponentSize(
-      appState,
-      layoutEditorDragState.componentId,
-      layoutEditorDragState.resizeAxis ?? "xy",
-      layoutEditorDragState.resizeAxis === "y" ? 0 : deltaX,
-      layoutEditorDragState.resizeAxis === "x" ? 0 : deltaY
-    );
-  } else if (
-    layoutEditorDragState.mode === "element-size" &&
-    layoutEditorDragState.elementId != null
-  ) {
-    appState = updateLayoutEditorElementSize(
-      appState,
-      layoutEditorDragState.componentId,
-      layoutEditorDragState.elementId,
-      layoutEditorDragState.resizeAxis ?? "xy",
-      layoutEditorDragState.resizeAxis === "y" ? 0 : deltaX,
-      layoutEditorDragState.resizeAxis === "x" ? 0 : deltaY
-    );
-  } else if (layoutEditorDragState.elementId != null) {
-    appState = updateLayoutEditorElementPosition(
-      appState,
-      layoutEditorDragState.componentId,
-      layoutEditorDragState.elementId,
-      deltaX,
-      deltaY
-    );
-  }
-
-  renderActiveSurface();
-  return true;
-}
-
-function endLayoutEditorDrag(event: PointerEvent | MouseEvent): boolean {
-  if (
-    layoutEditorDragState == null ||
-    layoutEditorDragState.pointerId !== getLayoutEditorDragEventId(event)
-  ) {
-    return false;
-  }
-
-  const handle =
-    document.querySelector<HTMLElement>(getLayoutEditorDragHandleSelector()) ?? null;
-  if (handle != null) {
-    releaseLayoutEditorPointerCapture(handle, event);
-  }
-  layoutEditorDragState = null;
-  return true;
 }
 
 appElement.addEventListener("input", (event) => {
@@ -2639,7 +2213,7 @@ appElement.addEventListener("input", (event) => {
     return;
   }
 
-  if (handleLayoutEditorInput(event.target)) {
+  if (layoutEditorCoordinator.handleInput(targetElement)) {
     return;
   }
 
@@ -2650,93 +2224,6 @@ appElement.addEventListener("input", (event) => {
     )
   ) {
     return;
-  }
-
-  if (
-    targetElement instanceof HTMLInputElement &&
-    targetElement.hasAttribute("data-layout-background-asset-query")
-  ) {
-    appState = setLayoutEditorBackgroundAssetQuery(appState, targetElement.value);
-    renderApp();
-    return;
-  }
-
-  const componentId = targetElement.dataset.layoutComponentId;
-  if (componentId != null) {
-    if (
-      targetElement instanceof HTMLSelectElement &&
-      targetElement.hasAttribute("data-layout-background-asset")
-    ) {
-      const selectedAsset = globalHudBackgroundOptions.find(
-        (asset) => asset.id === targetElement.value
-      );
-      if (selectedAsset != null) {
-        appState = setLayoutEditorBackgroundAsset(
-          appState,
-          componentId,
-          selectedAsset
-        );
-        renderApp();
-      }
-      return;
-    }
-
-    if (
-      targetElement instanceof HTMLSelectElement &&
-      targetElement.hasAttribute("data-layout-background-mode")
-    ) {
-      appState = setLayoutEditorBackgroundMode(
-        appState,
-        componentId,
-        targetElement.value as UiLayoutBackgroundMode
-      );
-      renderApp();
-      return;
-    }
-
-    if (
-      targetElement instanceof HTMLInputElement &&
-      targetElement.dataset.layoutSliceEdge != null
-    ) {
-      appState = setLayoutEditorBackgroundSlice(
-        appState,
-        componentId,
-        targetElement.dataset.layoutSliceEdge as "top" | "right" | "bottom" | "left",
-        Number(targetElement.value)
-      );
-      renderApp();
-      return;
-    }
-
-    if (
-      targetElement instanceof HTMLInputElement &&
-      targetElement.dataset.layoutComponentField != null
-    ) {
-      appState = setLayoutEditorComponentRectField(
-        appState,
-        componentId,
-        targetElement.dataset.layoutComponentField as keyof UiLayoutRect,
-        Number(targetElement.value)
-      );
-      renderApp();
-      return;
-    }
-
-    if (
-      targetElement instanceof HTMLInputElement &&
-      targetElement.dataset.layoutElementField != null &&
-      targetElement.dataset.layoutElementId != null
-    ) {
-      appState = setLayoutEditorElementRectField(
-        appState,
-        componentId,
-        targetElement.dataset.layoutElementId,
-        targetElement.dataset.layoutElementField as keyof UiLayoutRect,
-        Number(targetElement.value)
-      );
-      renderApp();
-      return;
-    }
   }
 
   const fieldId = targetElement.dataset.houseField;
@@ -2774,41 +2261,39 @@ appElement.addEventListener("keydown", (event) => {
 });
 
 uiOverlayElement.addEventListener("input", (event) => {
-  handleLayoutEditorInput(event.target);
+  layoutEditorCoordinator.handleInput(event.target);
 });
 
 uiOverlayElement.addEventListener("pointerdown", (event) => {
-  startLayoutEditorDrag(event);
+  layoutEditorCoordinator.handlePointerDown(event);
 });
 
 uiOverlayElement.addEventListener("pointermove", (event) => {
-  moveLayoutEditorDrag(event);
+  layoutEditorCoordinator.handlePointerMove(event);
 });
 
 uiOverlayElement.addEventListener("pointerup", (event) => {
-  endLayoutEditorDrag(event);
+  layoutEditorCoordinator.handlePointerUp(event);
 });
 
 uiOverlayElement.addEventListener("pointercancel", (event) => {
-  endLayoutEditorDrag(event);
+  layoutEditorCoordinator.handlePointerUp(event);
 });
 
 uiOverlayElement.addEventListener("mousedown", (event) => {
-  if (layoutEditorDragState == null) {
-    startLayoutEditorDrag(event);
-  }
+  layoutEditorCoordinator.handleMouseDown(event);
 });
 
 uiOverlayElement.addEventListener("mousemove", (event) => {
-  moveLayoutEditorDrag(event);
+  layoutEditorCoordinator.handlePointerMove(event);
 });
 
 uiOverlayElement.addEventListener("mouseup", (event) => {
-  endLayoutEditorDrag(event);
+  layoutEditorCoordinator.handlePointerUp(event);
 });
 
 uiOverlayElement.addEventListener("click", (event) => {
-  handleLayoutEditorClick(event.target);
+  layoutEditorCoordinator.handleClick(event.target);
 });
 
 appElement.addEventListener("wheel", (event) => {
@@ -2830,7 +2315,7 @@ appElement.addEventListener("wheel", (event) => {
 });
 
 appElement.addEventListener("pointerdown", (event) => {
-  if (startLayoutEditorDrag(event)) {
+  if (layoutEditorCoordinator.handlePointerDown(event)) {
     return;
   }
 
@@ -2858,71 +2343,6 @@ appElement.addEventListener("pointerdown", (event) => {
       actionId: pointerHouseActionId,
     });
     return;
-  }
-
-  const componentResizeHandle = targetElement.closest<HTMLElement>(
-    "[data-layout-component-resize]"
-  );
-  if (componentResizeHandle != null) {
-    const componentId = componentResizeHandle.dataset.layoutComponentResize;
-    const resizeAxis = componentResizeHandle.dataset.layoutResizeAxis;
-    if (
-      componentId != null &&
-      (resizeAxis === "x" || resizeAxis === "y" || resizeAxis === "xy")
-    ) {
-      event.preventDefault();
-      event.stopPropagation();
-      layoutEditorDragState = {
-        mode: "component-size",
-        componentId,
-        elementId: null,
-        pointerId: event.pointerId,
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        resizeAxis,
-      };
-      componentResizeHandle.setPointerCapture(event.pointerId);
-      return;
-    }
-  }
-
-  const elementHandle = targetElement.closest<HTMLElement>(
-    "[data-layout-element-handle]"
-  );
-  if (elementHandle != null) {
-    const [componentId, elementId] =
-      elementHandle.dataset.layoutElementHandle?.split(":") ?? [];
-    if (componentId != null && elementId != null) {
-      layoutEditorDragState = {
-        mode: "element",
-        componentId,
-        elementId,
-        pointerId: event.pointerId,
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-      };
-      elementHandle.setPointerCapture(event.pointerId);
-      return;
-    }
-  }
-
-  const componentHandle = targetElement.closest<HTMLElement>(
-    "[data-layout-component-handle]"
-  );
-  if (componentHandle != null) {
-    const componentId = componentHandle.dataset.layoutComponentHandle;
-    if (componentId != null) {
-      layoutEditorDragState = {
-        mode: "component",
-        componentId,
-        elementId: null,
-        pointerId: event.pointerId,
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-      };
-      componentHandle.setPointerCapture(event.pointerId);
-      return;
-    }
   }
 
   if (targetElement.closest(".c-campaign-map-debug") != null) {
@@ -2958,7 +2378,7 @@ appElement.addEventListener("pointerdown", (event) => {
 });
 
 appElement.addEventListener("pointermove", (event) => {
-  if (moveLayoutEditorDrag(event)) {
+  if (layoutEditorCoordinator.handlePointerMove(event)) {
     return;
   }
 
@@ -3226,7 +2646,7 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  if (handleLayoutEditorClick(targetElement)) {
+  if (layoutEditorCoordinator.handleClick(targetElement)) {
     return;
   }
 
@@ -3388,15 +2808,6 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const openLayoutEditorButton = targetElement.closest<HTMLElement>(
-    "[data-action='open-layout-editor']"
-  );
-  if (openLayoutEditorButton != null) {
-    appState = toggleLayoutEditor(appState, true);
-    renderApp();
-    return;
-  }
-
   const closeCityDirectoryButton = targetElement.closest<HTMLElement>(
     "[data-action='close-city-directory']"
   );
@@ -3437,48 +2848,6 @@ appElement.addEventListener("click", (event) => {
     ) {
       openCityMenuPanel(panelId);
     }
-    return;
-  }
-
-  const closeLayoutEditorButton = targetElement.closest<HTMLElement>(
-    "[data-action='close-layout-editor']"
-  );
-  if (closeLayoutEditorButton != null) {
-    appState = toggleLayoutEditor(appState, false);
-    renderApp();
-    return;
-  }
-
-  const layoutElementSelectButton = targetElement.closest<HTMLElement>(
-    "[data-layout-element-select]"
-  );
-  if (layoutElementSelectButton != null) {
-    const value = layoutElementSelectButton.dataset.layoutElementSelect;
-    const [componentId, elementId] = value?.split(":") ?? [];
-    if (componentId != null && elementId != null) {
-      appState = selectLayoutEditorElement(appState, componentId, elementId);
-      renderApp();
-    }
-    return;
-  }
-
-  const layoutComponentSelectButton = targetElement.closest<HTMLElement>(
-    "[data-layout-component-select]"
-  );
-  if (layoutComponentSelectButton != null) {
-    const componentId = layoutComponentSelectButton.dataset.layoutComponentSelect;
-    if (componentId != null) {
-      appState = selectLayoutEditorComponent(appState, componentId);
-      renderApp();
-    }
-    return;
-  }
-
-  const copyLayoutParamsButton = targetElement.closest<HTMLElement>(
-    "[data-action='copy-layout-params']"
-  );
-  if (copyLayoutParamsButton != null) {
-    void copyCurrentLayoutParams();
     return;
   }
 
@@ -3944,86 +3313,7 @@ function restoreCampaignTerrainCanvases(
 }
 
 function renderApp() {
-  const activeScaleInput = document.activeElement;
-  const focusedScaleInput =
-    activeScaleInput instanceof HTMLInputElement &&
-    activeScaleInput.hasAttribute("data-campaign-map-scale-input")
-      ? {
-          value: activeScaleInput.value,
-          selectionStart: activeScaleInput.selectionStart,
-          selectionEnd: activeScaleInput.selectionEnd,
-        }
-      : null;
-  renderAppFrame(focusedScaleInput);
-}
-
-function renderAppFrame(
-  focusedScaleInput: {
-    value: string;
-    selectionStart: number | null;
-    selectionEnd: number | null;
-  } | null = null
-) {
-  appState = applyRenderPrepassState(
-    appState,
-    activeContentContext.cityNpcPools
-  );
-  const currentMapDefinition = getCurrentMapDefinition();
-  const currentCityDefinition =
-    activeContentContext.cityDefinitionById[appState.gameState.world.currentCityId] ??
-    activeContentContext.cities[0] ??
-    null;
-  assertExists(currentMapDefinition, "Missing active map definition for render.");
-  assertExists(currentCityDefinition, "Missing active city definition for render.");
-  const preservedTerrainCanvases =
-    appState.gameState.ui.currentView === "map"
-      ? captureCampaignTerrainCanvases(appRoot)
-      : null;
-  const presenterOutput = createAppPresenterOutput({
-    appState,
-    playerCharacterId: currentPlayerCharacterId,
-    cityDefinition: currentCityDefinition,
-    cityDefinitions: activeContentContext.cities,
-    houseDefinitions: activeContentContext.houses,
-    cityEntries: activeContentContext.cityEntries,
-    cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
-    cityNameById: activeContentContext.cityNameById,
-    textEntriesById: activeContentContext.textEntriesById,
-    citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
-    sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
-  });
-
-  appRoot.innerHTML = renderAppMarkup({
-    appState,
-    playerCharacterId: currentPlayerCharacterId,
-    mapDefinition: currentMapDefinition,
-    cityDefinition: currentCityDefinition,
-    cityDefinitions: activeContentContext.cities,
-    houseDefinitions: activeContentContext.houses,
-    cityEntries: activeContentContext.cityEntries,
-    cardDefinitions: activeContentContext.cards,
-    cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
-    cityCoordinatesById: activeContentContext.cityCoordinatesById,
-    cityNameById: activeContentContext.cityNameById,
-    houseNameById: activeContentContext.houseNameById,
-    characterNameById: activeContentContext.characterNameById,
-    textEntriesById: activeContentContext.textEntriesById,
-    cityPortraits: activeContentContext.cityPortraits,
-    citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
-    historicalCharacters: activeContentContext.historicalCharacters,
-    historicalCityRosters: activeContentContext.historicalCityRosters,
-    presenterOutput,
-  });
-  restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
-  startInitialCampaignMapDebugAnimationIfNeeded();
-  syncCampaignMapDebugView();
-  syncCampaignTerrainStyleView();
-  syncCampaignCityDepthMeshTransformView();
-  restoreCampaignMapScaleInputFocus(focusedScaleInput);
-  syncMapIntroOverlay();
-  syncActivityQteLoop();
-  syncCampaignTerrainWebGl(appRoot);
-  syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
+  appRenderCoordinator.render();
 }
 
 function restoreCampaignMapScaleInputFocus(
@@ -4659,17 +3949,7 @@ function syncCampaignTerrainStyleControl(
 }
 
 function endCampaignMapDrag(event: PointerEvent): void {
-  if (
-    layoutEditorDragState != null &&
-    layoutEditorDragState.pointerId === event.pointerId
-  ) {
-    const handle =
-      appRoot.querySelector<HTMLElement>(getLayoutEditorDragHandleSelector()) ??
-      null;
-    if (handle?.hasPointerCapture(event.pointerId) === true) {
-      handle.releasePointerCapture(event.pointerId);
-    }
-    layoutEditorDragState = null;
+  if (layoutEditorCoordinator.handlePointerUp(event)) {
     return;
   }
 

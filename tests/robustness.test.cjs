@@ -11096,13 +11096,14 @@ test("application presenter exports a top-level presenter output seam", () => {
   assert.match(source, /createAppPresenterOutput/);
 });
 
-test("main.ts assembles render input through application presenter output", () => {
+test("main.ts assembles render input through app-render coordinator seam", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
   );
 
-  assert.match(source, /createAppPresenterOutput/);
+  assert.match(source, /createAppRenderCoordinator/);
+  assert.doesNotMatch(source, /createAppPresenterOutput/);
 });
 
 test("task runtime contract exports definition instance state action signal and result seams", () => {
@@ -13592,18 +13593,19 @@ test("shell thinning render prepass owner module exists and preserves city npc r
   assert.deepEqual(nextAppState.gameState, expectedGameState);
 });
 
-test("shell thinning renderAppFrame no longer directly mutates app state through ensureCityNpcPoolsForCurrentDay", () => {
+test("reclosure ownerization keeps main.ts wired through existing layout-editor, render, and bootstrap seams", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
-  const renderAppFrameBlock =
-    source.match(
-      /function renderAppFrame\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncGameViewport/
-    )?.[0] ?? "";
 
-  assert.match(source, /render-prepass-state|applyRenderPrepassState/);
-  assert.doesNotMatch(
-    renderAppFrameBlock,
-    /appState = \{[\s\S]*gameState:\s*ensureCityNpcPoolsForCurrentDay\([\s\S]*\)\s*,[\s\S]*\};/
-  );
+  assert.match(source, /createLayoutEditorCoordinator/);
+  assert.match(source, /createAppRenderCoordinator/);
+  assert.match(source, /createDefaultLayoutEditorAppState/);
+  assert.doesNotMatch(source, /layout-editor-actions/);
+  assert.doesNotMatch(source, /applyRenderPrepassState/);
+  assert.doesNotMatch(source, /renderApp as renderAppMarkup/);
+  assert.doesNotMatch(source, /content\/layout-editor-presets/);
+  assert.doesNotMatch(source, /function handleLayoutEditorInput\(/);
+  assert.doesNotMatch(source, /function handleLayoutEditorClick\(/);
+  assert.doesNotMatch(source, /function renderAppFrame\(/);
 });
 
 test("mod runtime does not absorb content assembly or gameplay execution ownership", () => {
