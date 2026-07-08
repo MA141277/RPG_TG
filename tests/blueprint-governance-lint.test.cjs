@@ -546,6 +546,222 @@ test("blueprint lint rejects live admission review while another queue is alread
   assert.match(failures.join("\n"), /must not keep a live admission review subject while active_queue=queue.test/i);
 });
 
+test("blueprint lint accepts queue-local repository sync records on blocked queues", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `blocked`",
+      "- queue_class: `required`",
+      "- active_task: `none`",
+      "- next_task: `none`",
+      "- closeout_status: `blocked`",
+      "- next_effect: `return-to-target-review`",
+      "- sync_status: `failed`",
+      "- sync_scope: `baseline-push`",
+      "- sync_summary: `Baseline push failed after the queue state was already written as blocked.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.deepEqual(failures, []);
+});
+
+test("blueprint lint accepts merge-conflict wording inside queue-local sync summary", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `blocked`",
+      "- queue_class: `required`",
+      "- active_task: `none`",
+      "- next_task: `none`",
+      "- closeout_status: `blocked`",
+      "- next_effect: `return-to-target-review`",
+      "- sync_status: `failed`",
+      "- sync_scope: `baseline-merge`",
+      "- sync_summary: `Merge conflict occurred during baseline merge after the queue state was already written as blocked.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.deepEqual(failures, []);
+});
+
+test("blueprint lint rejects active or blocked queue docs that omit repository sync record fields", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `blocked`",
+      "- queue_class: `required`",
+      "- active_task: `none`",
+      "- next_task: `none`",
+      "- closeout_status: `blocked`",
+      "- next_effect: `return-to-target-review`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /repository sync record/i);
+});
+
+test("blueprint lint rejects queue blocked_by entries that mirror merge conflicts as execution blockers", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `blocked`",
+      "- queue_class: `required`",
+      "- active_task: `none`",
+      "- next_task: `none`",
+      "- closeout_status: `blocked`",
+      "- next_effect: `return-to-target-review`",
+      "- sync_status: `failed`",
+      "- sync_scope: `baseline-merge`",
+      "- sync_summary: `Merge conflict occurred during baseline merge after the queue state was already written as blocked.`",
+      "- blocked_by:",
+      "  - `merge conflict between branch and baseline`",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /blocked_by.*merge conflict/i);
+});
+
+test("blueprint lint rejects target plans that mirror queue-local repository sync truth", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `idle-open`",
+      "- next_decision: `same-target-admission-or-target-closeout`",
+      "- next_action: `classify-fresh-work`",
+      "- resume_gate: `idle-open`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- sync_status: `failed`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /target plan.*sync_status/i);
+});
+
+test("blueprint lint rejects target-plan blocked_by entries that mirror merge conflicts as target blockers", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.test`",
+      "- target_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `blocked`",
+      "- next_decision: `resolve-blocker`",
+      "- next_action: `resolve-blocker`",
+      "- resume_gate: `blocked`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- blocked_by:",
+      "  - `merge conflict between branch and baseline`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /target plan.*blocked_by.*merge conflict/i);
+});
+
 test("blueprint lint CLI reports success for a valid fixture repository", () => {
   const repoRoot = createFixtureRepo();
 

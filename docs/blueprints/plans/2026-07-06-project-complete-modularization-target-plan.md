@@ -86,12 +86,14 @@ Optional mirror:
 
 1. `Run verify_with for the completed task.`
 2. `Check done_when.`
-3. `Re-evaluate whether the queue should continue, close, or block.`
-4. `Scan governance owners: project-progress, blueprint, target spec, target plan, queue doc, and affected shared contracts.`
-5. `Scan residue: tracked leftovers, untracked drafts, unsynced truth, and out-of-scope remains.`
-6. `If verification passed and the next legal execution point is unique, continue directly into queue closeout or target-review handoff.`
-7. `Sync target-level truth if queue closeout or promotion conditions changed.`
-8. `Optionally mirror the result into change-log if a human-readable summary is warranted.`
+3. `Write the task after-state, queue truth, and any required target truth before any repository sync begins.`
+4. `Re-evaluate whether the queue should continue, close, or block.`
+5. `Scan governance owners: project-progress, blueprint, target spec, target plan, queue doc, and affected shared contracts.`
+6. `Scan residue: tracked leftovers, untracked drafts, unsynced truth, and out-of-scope remains.`
+7. `Run one minimum repository sync batch after the docs are updated.`
+8. `If the next legal execution point is unique, continue directly into queue closeout or target-review handoff once the sync attempt returns a result.`
+9. `Sync target-level truth if queue closeout or promotion conditions changed.`
+10. `Optionally mirror the result into change-log if a human-readable summary is warranted.`
 
 ### Human Confirmation Throttle
 
@@ -101,23 +103,32 @@ Optional mirror:
 - `If active truth would change and multiple mutually exclusive legal branches exist, one human escalation is allowed.`
 - `Do not treat user scope approval as queue admission.`
 - `Do not ask whether to do closeout, promotion review, or doc sync when they are already the unique next legal step.`
+- `Do not raise decision_required merely because repository sync failed.`
+- `Do not ask about a merge conflict when current target truth already uniquely decides the legal resolution.`
+- `Ask only when the baseline is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current target truth cannot decide alone.`
 - `Exception: target closeout still requires explicit human confirmation before target_status changes to done.`
 
-### Git Integration Loop
+### Repository Sync Policy
+
+- `Git sync is non-governing.`
+- `commit / push / merge must not change queue truth, target truth, candidate truth, or transition truth.`
+- `push / merge must not become a queue closeout gate.`
+- `push / merge must not become a target closeout gate.`
+- `Task execution conclusions are written first; repository sync runs second.`
+- `A failed sync attempt is recorded only as repository sync result in the queue-local sync record.`
+- `A merge conflict is a repository sync event; it must not rewrite the already-recorded task, queue, or target conclusion.`
+- `If current target truth uniquely decides the merge conflict direction, resolve it without asking.`
+- `Target scheduling must not read sync_status, sync_scope, or sync_summary as live truth.`
+
+### Minimum Repository Sync Batch
 
 1. `Draft the commit message as <type>: <brief title> plus a Summary: block with real bullets.`
 2. `Run commit-message validation before commit.`
 3. `Commit the working branch.`
 4. `Push the working branch.`
-5. `Merge into the latest mod-first-dev with the same commit-message summary rule.`
-6. `Cut a fresh branch from the updated mod-first-dev.`
-7. `Resume from integrated Blueprint truth, not branch-local memory.`
-
-Mandatory merge loop triggers:
-
-- `queue closeout`
-- `target closeout`
-- `explicit integration checkpoint`
+5. `Merge into the latest mod-first-dev baseline.`
+6. `Push mod-first-dev baseline.`
+7. `Resume from the written Blueprint truth after the sync attempt returns success or failure.`
 
 ### State Transition Rules
 

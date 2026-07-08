@@ -94,7 +94,7 @@
   - Update to AI-first Target structure and queue classification rules.
 - `docs/blueprints/templates/target-plan-template.md`
   - Update to AI-first target-governor shape that no longer competes with Control Block truth.
-- `docs/blueprints/templates/topic-queue-template.md`
+- `docs/blueprints/templates/execution-queue-template.md`
   - Update to AI-first Queue and Task structure, including drift hooks and closeout decision blocks.
 - `docs/change-log.md`
   - Record the governance refactor and the preservation of current no-active-queue truth.
@@ -254,7 +254,7 @@ Add queue/task-level drift-control fields and stop conditions, but keep them ali
 - Modify: `docs/blueprints/templates/project-progress-template.md`
 - Modify: `docs/blueprints/templates/target-spec-template.md`
 - Modify: `docs/blueprints/templates/target-plan-template.md`
-- Modify: `docs/blueprints/templates/topic-queue-template.md`
+- Modify: `docs/blueprints/templates/execution-queue-template.md`
 
 - [x] **Step 1: Rewrite the workflow spec around AI-first authority**
 

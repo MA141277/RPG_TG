@@ -10,6 +10,9 @@
 - next_task: `none`
 - closeout_status: `blocked`
 - next_effect: `return-to-target-review`
+- sync_status: `failed`
+- sync_scope: `baseline-push`
+- sync_summary: `The latest queue after-state was written as blocked before repository sync ran; the subsequent baseline push failed, so the sync result stays queue-local and does not reopen execution.`
 - allowed_task_states:
   - `candidate`
   - `queued`
@@ -75,6 +78,12 @@ This queue does not cover:
 - `This queue is admitted only after the target plan is synchronized with fresh main.ts shell/editor evidence.`
 - `Single-active-queue mode remains in force; no second queue may be promoted while this queue is active.`
 - `This queue preserves the existing conditional queue families as historical candidates and does not delete or relitigate them without fresher evidence.`
+
+### Repository Sync Record Rule
+
+- `This blocked queue still allows commit, push, and merge after the task after-state is written.`
+- `The sync record above stores only the latest repository sync result; it does not change queue_status, closeout_status, or target scheduling truth.`
+- `Repository sync failure must not be copied into blocked_by because the real blocker remains the known build/test asset typing gap outside this queue slice.`
 
 ### Admission Evidence
 
