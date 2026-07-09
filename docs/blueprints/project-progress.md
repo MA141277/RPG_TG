@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_target: `target.project-complete-modularization`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/prototype-startup-bootstrap-ownerization-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -50,3 +50,4 @@
 - `queue.shared-contract-upgrade-governance and queue.zhuyuanzhang-scenario-pack-integration remain closed historical evidence only; this candidate sync does not reopen them.`
 - `Fresh 2026-07-09 promotion review admits queue.zhuyuanzhang-pack-structure-and-authoring-normalization as the current active queue. Current source truth still shows a bounded package-normalization blocker across src/content/base-game-content-pack.ts, src/content/pack-content-access.ts, src/content/prototype-world.ts, src/main.ts, and src/content/scenario-packs/catalog.json, and the first lawful execution slice is to freeze and then close the hardcoded builtin default-pack binding before reconsidering the broader pack-entry residue.`
 - `Fresh 2026-07-09 queue closeout returns queue.zhuyuanzhang-pack-structure-and-authoring-normalization to closed historical evidence. The bounded queue landed catalog-driven default builtin pack resolution, re-stabilized the browser startup path on absolute manifest URLs, and then concluded via residue review that the remaining pack-content-access fallout is mixed or dead cleanup while prototype-world plus src/main.ts now form a broader prototype-bootstrap residue family. No active queue remains, so control returns to target-level promotion review.`
+- `Fresh 2026-07-09 promotion review admits queue.prototype-startup-bootstrap-ownerization as the current active queue. Current source truth still shows builtin prototype startup bootstrap assembled in src/main.ts even though startup-session-coordinator already exists as the startup owner seam, and the first lawful execution slice is to freeze and then lift the prototype startup app-state builder out of main.ts before re-reviewing the remaining prototype-world residue.`
