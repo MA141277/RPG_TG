@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_target: `target.project-complete-modularization`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/zhuyuanzhang-pack-structure-and-authoring-normalization-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -48,4 +48,4 @@
 - `item.home-keep-fallback-retirement remains current-target candidate-only dead cleanup on current evidence.`
 - `item.zhuyuanzhang-scenario-pack-integration-closeout-sync remains a current-target governance item whose legal action is already executed and done.`
 - `queue.shared-contract-upgrade-governance and queue.zhuyuanzhang-scenario-pack-integration remain closed historical evidence only; this candidate sync does not reopen them.`
-- `The current target has no active queue again. The remaining package, composition, and cleanup items stay at target-level candidate review until a later promotion review admits one bounded next queue.`
+- `Fresh 2026-07-09 promotion review admits queue.zhuyuanzhang-pack-structure-and-authoring-normalization as the current active queue. Current source truth still shows a bounded package-normalization blocker across src/content/base-game-content-pack.ts, src/content/pack-content-access.ts, src/content/prototype-world.ts, src/main.ts, and src/content/scenario-packs/catalog.json, and the first lawful execution slice is to freeze and then close the hardcoded builtin default-pack binding before reconsidering the broader pack-entry residue.`
