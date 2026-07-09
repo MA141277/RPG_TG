@@ -84,6 +84,7 @@ import {
   applyStartupStoryBootstrap,
   type StartupStoryBootstrap,
 } from "./application/startup/startup-story-bootstrap";
+import { createPrototypeStartupAppStateBuilder } from "./application/startup/prototype-startup-app-state";
 import {
   createEnterCityRequest,
   routeNavigationRuntime,
@@ -388,7 +389,17 @@ function createRuntimeCommitContext(input: {
   };
 }
 
-let appState: AppState = createPrototypeAppState(currentPlayerCharacterId);
+const prototypeStartupAppStateBuilder = createPrototypeStartupAppStateBuilder({
+  getActiveContentContext: () => activeContentContext,
+  defaultPlayerCharacterId,
+  createDefaultLayoutEditorAppState,
+  createPrototypeCharactersForStoryStage,
+});
+
+let appState: AppState =
+  prototypeStartupAppStateBuilder.createPrototypeAppState(
+    currentPlayerCharacterId
+  );
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -695,108 +706,6 @@ window.addEventListener("beforeunload", () => {
 setGameVisibility(false);
 mainUiFlow.mount();
 mainUiFlow.showMainMenu();
-
-function createPrototypeAppState(playerCharacterId: string): AppState {
-  const defaultMapDefinition =
-    activeContentContext.mapDefinitionById["map.yuanmo_campaign"] ??
-    activeContentContext.maps[0];
-  const defaultCityDefinition =
-    activeContentContext.cityDefinitionById["city.kulan"] ??
-    activeContentContext.cities[0];
-  assertExists(defaultMapDefinition, "Missing default map definition.");
-  assertExists(defaultCityDefinition, "Missing default city definition.");
-  const storyStage: ZhuYuanzhangStoryStage =
-    playerCharacterId === defaultPlayerCharacterId
-      ? ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-      : ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp;
-  const storyCharacterDefinitions =
-    createPrototypeCharactersForStoryStage(storyStage);
-  let nextAppState: AppState = {
-    gameState: ensureCityNpcPoolsForCurrentDay(
-      createInitialState({
-        currentMapId: defaultMapDefinition.id,
-        currentCityId: defaultCityDefinition.id,
-        currentHouseId: null,
-        playerCharacterId,
-        chapterId: "chapter.prototype",
-        year: 1567,
-        month: 1,
-        day: 1,
-        pinnedCharacterId: playerCharacterId,
-        reviewDateText: formatCouncilStatusText(40),
-        mainHouseMissionText: getRuntimeText(
-          "runtime.zhu_yuanzhang.prototype.main_mission.review_hall",
-        ),
-        cards: {
-          ownedCardIds: activeContentContext.cards.map(
-            (cardDefinition) => cardDefinition.id
-          ),
-          selectedCardId: activeContentContext.cards[0]?.id ?? null,
-        },
-        valuables: {
-          items: activeContentContext.gameContent.valuables,
-          selectedItemId: activeContentContext.gameContent.valuables[0]?.id ?? null,
-          equippedWeaponSet: {
-            swordId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "weapon"
-              )?.id ?? null,
-            armorId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "armor"
-              )?.id ?? null,
-          },
-        },
-        currentView: "map",
-      }),
-      activeContentContext.cityNpcPools
-    ),
-    characterDefinitions: storyCharacterDefinitions,
-    playerCoordinate: defaultMapDefinition.initialPlayerCoordinate ?? { x: 0, y: 0 },
-    campaignActorState: {
-      facingDegrees: 0,
-      isMoving: false,
-    },
-    campaignTravelState: null,
-    modalState: null,
-    locationDialogueState: null,
-    beggingMiniGameState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    autoAdvanceState: null,
-    ...createDefaultLayoutEditorAppState(),
-  };
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: {
-      ...nextAppState.gameState,
-      ui: {
-        ...nextAppState.gameState.ui,
-        reviewDateText:
-          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? formatCouncilStatusText(0)
-            : nextAppState.gameState.ui.reviewDateText,
-        mainHouseMissionText:
-          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? getRuntimeText(
-                "runtime.zhu_yuanzhang.prototype.main_mission.temple_review"
-              )
-            : nextAppState.gameState.ui.mainHouseMissionText,
-      },
-      runtime: {
-        ...nextAppState.gameState.runtime,
-        variables: {
-          ...nextAppState.gameState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: storyStage,
-        },
-      },
-    },
-  };
-
-  return nextAppState;
-}
 
 function getCurrentPlayerCharacter(): CharacterDefinition | null {
   return (
@@ -1698,8 +1607,10 @@ const startupSessionCoordinatorDeps = {
   activateBuiltinDefaultMod,
   restoreModFromSave,
   activateScenarioPackMod,
-  createPrototypeAppState,
-  createHaozhouReturnEncounterAppState,
+  createPrototypeAppState:
+    prototypeStartupAppStateBuilder.createPrototypeAppState,
+  createHaozhouReturnEncounterAppState:
+    prototypeStartupAppStateBuilder.createHaozhouReturnEncounterAppState,
   createScenarioPackAppState,
   createStartupContentContext: (activationResult: ModActivationResult) =>
     createActiveGameContentContextFromModActivation({
@@ -1930,66 +1841,6 @@ function mergeCharacterDefinitions(
     ),
     ...scenarioCharacters,
   ];
-}
-
-function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
-  let nextAppState: AppState = {
-    ...baseState,
-    gameState: {
-      ...baseState.gameState,
-      world: {
-        ...baseState.gameState.world,
-        currentCityId: "city.kulan",
-        currentHouseId: null,
-      },
-      ui: {
-        ...baseState.gameState.ui,
-        currentView: "city",
-        overlayView: null,
-        houseSession: null,
-        mainHouseMissionText: getRuntimeText(
-          "runtime.zhu_yuanzhang.main_mission.haozhou_return"
-        ),
-      },
-      runtime: {
-        ...baseState.gameState.runtime,
-        flags: {
-          ...baseState.gameState.runtime.flags,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.ordinationCompleted]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingTransitionAssigned]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleCompleted]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleWon]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted]: false,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon]: false,
-        },
-        variables: {
-          ...baseState.gameState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
-            ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 4,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId]:
-            "story.zhu_yuanzhang.week4.roadside-bandits",
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult]: "victory",
-        },
-      },
-    },
-    characterDefinitions: createPrototypeCharactersForStoryStage(
-      ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
-    ),
-    modalState: null,
-    locationDialogueState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    beggingMiniGameState: null,
-    campaignTravelState: null,
-  };
-
-  return nextAppState;
 }
 
 function beginLoadingScreen(): number {

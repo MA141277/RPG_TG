@@ -11916,6 +11916,25 @@ test("child 27 main.ts startup builders no longer directly start story events", 
   assert.doesNotMatch(haozhouBlock, /startStoryEventById\(/);
 });
 
+test("prototype startup ownerization moves covered builtin startup builders out of main.ts", () => {
+  const startupBuilderPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "prototype-startup-app-state.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(startupBuilderPath), true);
+  assert.match(
+    mainSource,
+    /prototype-startup-app-state|createPrototypeStartupAppStateBuilder/
+  );
+  assert.doesNotMatch(mainSource, /function createPrototypeAppState\(/);
+  assert.doesNotMatch(mainSource, /function createHaozhouReturnEncounterAppState\(/);
+});
+
 test("child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup", async () => {
   const {
     runStartupSessionCoordinator,
