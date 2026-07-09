@@ -274,6 +274,7 @@ type CampaignMoveAnimationState = {
   from: GridCoordinate;
   to: GridCoordinate;
   durationMs: number;
+  keepMovingAtEnd: boolean;
   resolve: () => void;
 };
 
@@ -4474,7 +4475,7 @@ async function animateCampaignMovePath(
 
     const from = path[index - 1] ?? appState.playerCoordinate;
     const to = path[index] ?? from;
-    await animateCampaignMove(from, to);
+    await animateCampaignMove(from, to, index < path.length - 1);
   }
 
   syncCampaignActorRuntimeState(
@@ -4486,7 +4487,8 @@ async function animateCampaignMovePath(
 
 function animateCampaignMove(
   from: GridCoordinate,
-  to: GridCoordinate
+  to: GridCoordinate,
+  keepMovingAtEnd = false
 ): Promise<void> {
   stopCampaignMoveAnimation();
 
@@ -4517,6 +4519,7 @@ function animateCampaignMove(
       from,
       to,
       durationMs,
+      keepMovingAtEnd,
       resolve,
     };
     campaignMoveAnimationState = animationState;
@@ -4538,7 +4541,11 @@ function animateCampaignMove(
       const currentFacingDegrees = normalizeDegrees(
         startFacingDegrees + facingDelta * turnProgress
       );
-      syncCampaignActorRuntimeState(nextCoordinate, currentFacingDegrees, rawProgress < 1);
+      syncCampaignActorRuntimeState(
+        nextCoordinate,
+        currentFacingDegrees,
+        rawProgress < 1 || animationState.keepMovingAtEnd
+      );
       syncCampaignActorView();
 
       if (rawProgress >= 1) {

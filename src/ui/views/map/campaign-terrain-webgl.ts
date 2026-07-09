@@ -64,17 +64,22 @@ type ActorBoneAsset = {
   name: string;
   parentIndex: number | null;
   localPosition: [number, number, number];
+  localRotation: [number, number, number, number];
 };
 
 type ActorModelAsset = {
   scale: number;
-  localBindPositions: Float32Array;
-  bindNormals: Float32Array;
+  facingOffsetDegrees: number;
+  posturePitchDegrees: number;
+  positions: Float32Array;
+  normals: Float32Array;
   uvs: Float32Array;
   indices: Uint16Array;
   vertexBoneIndices: Uint16Array;
+  vertexBoneInfluenceIndices: Uint16Array;
+  vertexBoneInfluenceWeights: Float32Array;
+  inverseBindMatrices: Float32Array;
   bones: ActorBoneAsset[];
-  bindGlobalPositions: [number, number, number][];
   originOffset: [number, number, number];
   bounds: {
     min: [number, number, number];
@@ -89,6 +94,7 @@ type ActorAnimationClipAsset = {
   numAnimatedBones: number;
   animatedBoneNames: string[];
   rotations: number[][][];
+  localPositions?: number[][][];
   rootPositions: number[][];
   pelvisPositions: number[][];
 };
@@ -98,9 +104,20 @@ type ActorAnimationSetAsset = {
   walk: ActorAnimationClipAsset;
 };
 
+type ActorAnimationClipName = keyof ActorAnimationSetAsset;
+
 type ActorAnimationPose = {
   globalRotations: [number, number, number, number][];
   globalPositions: [number, number, number][];
+};
+
+type ActorAnimationPlaybackState = {
+  activeClipName: ActorAnimationClipName;
+  activeStartedAtMs: number;
+  blendFromClipName: ActorAnimationClipName | null;
+  blendFromStartedAtMs: number;
+  blendStartedAtMs: number;
+  blendDurationMs: number;
 };
 
 type Mat4 = Float32Array;
@@ -117,6 +134,7 @@ const FOV_RADIANS = 38 * Math.PI / 180;
 const ACTOR_REFERENCE_CAMERA_SCALE = 40;
 const ACTOR_MODEL_BASE_SCALE = 0.011;
 const ACTOR_MODEL_FACING_OFFSET_RADIANS = Math.PI / 2;
+const ACTOR_ANIMATION_BLEND_DURATION_MS = 180;
 const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
 const HEX_ELEVATION_LEVELS = 8;
@@ -165,6 +183,12 @@ export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
   shadeMax: 1,
 };
 const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
+const IDENTITY_MATRIX_4 = new Float32Array([
+  1, 0, 0, 0,
+  0, 1, 0, 0,
+  0, 0, 1, 0,
+  0, 0, 0, 1,
+]);
 
 export type CampaignTerrainCamera = {
   scale: number;
@@ -580,6 +604,7 @@ async function initCampaignTerrainWebGl(
   const actorLightLocation = gl.getUniformLocation(actorProgram, "uLight");
   const actorTextureLocation = gl.getUniformLocation(actorProgram, "uTexture");
   const actorTintLocation = gl.getUniformLocation(actorProgram, "uTint");
+  const actorForceOpaqueAlphaLocation = gl.getUniformLocation(actorProgram, "uForceOpaqueAlpha");
   const vertexBuffer = gl.createBuffer();
   const indexBuffer = gl.createBuffer();
   const actorVertexBuffer = gl.createBuffer();
@@ -623,6 +648,7 @@ async function initCampaignTerrainWebGl(
     actorLightLocation == null ? "actor.uLight" : null,
     actorTextureLocation == null ? "actor.uTexture" : null,
     actorTintLocation == null ? "actor.uTint" : null,
+    actorForceOpaqueAlphaLocation == null ? "actor.uForceOpaqueAlpha" : null,
     vertexBuffer == null ? "terrain.vertexBuffer" : null,
     indexBuffer == null ? "terrain.indexBuffer" : null,
     actorVertexBuffer == null ? "actor.vertexBuffer" : null,
@@ -663,6 +689,7 @@ async function initCampaignTerrainWebGl(
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cityDepthMesh.indices, gl.STATIC_DRAW);
   }
   gl.enable(gl.DEPTH_TEST);
+  gl.disable(gl.BLEND);
   gl.disable(gl.CULL_FACE);
   const projectionInput: CampaignTerrainProjectionInput = {
     canvas: input.canvas,
@@ -687,8 +714,10 @@ async function initCampaignTerrainWebGl(
   let lastCityDepthMeshSignature = "";
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
+  const actorAnimationState = createActorAnimationPlaybackState();
   const animatesTerrainWater = renderTerrain && waterTexture != null;
-  let waterAnimationTimeoutId: number | null = null;
+  const animatesActorModel = shouldRenderActorInThisCanvas && actorAsset != null && actorTexture != null;
+  let dynamicAnimationTimeoutId: number | null = null;
   const render = () => {
     if (isDisposed) {
       return;
@@ -816,6 +845,7 @@ async function initCampaignTerrainWebGl(
       gl.bindTexture(gl.TEXTURE_2D, cityDepthTexture);
       gl.uniform1i(actorTextureLocation, 0);
       gl.uniform3f(actorTintLocation, 1, 1, 1);
+      gl.uniform1f(actorForceOpaqueAlphaLocation, 0);
       gl.disable(gl.CULL_FACE);
       gl.depthMask(true);
       gl.drawElements(gl.TRIANGLES, cityDepthMesh.indices.length, gl.UNSIGNED_INT, 0);
@@ -838,7 +868,8 @@ async function initCampaignTerrainWebGl(
         actor,
         actorHeight,
         actorAsset.model,
-        actorAsset.animations
+        actorAsset.animations,
+        actorAnimationState
       );
       gl.useProgram(actorProgram);
       gl.bindBuffer(gl.ARRAY_BUFFER, actorVertexBuffer);
@@ -883,8 +914,8 @@ async function initCampaignTerrainWebGl(
       gl.bindTexture(gl.TEXTURE_2D, actorTexture);
       gl.uniform1i(actorTextureLocation, 0);
       gl.uniform3f(actorTintLocation, 1, 1, 1);
-      gl.enable(gl.CULL_FACE);
-      gl.cullFace(gl.BACK);
+      gl.uniform1f(actorForceOpaqueAlphaLocation, 1);
+      gl.disable(gl.CULL_FACE);
       gl.drawElements(gl.TRIANGLES, actorMesh.indices.length, gl.UNSIGNED_SHORT, 0);
       gl.disable(gl.CULL_FACE);
     } else {
@@ -899,18 +930,18 @@ async function initCampaignTerrainWebGl(
       projectedPointsNeedSync = false;
     }
 
-    if (animatesTerrainWater) {
-      scheduleWaterAnimationRender();
+    if (animatesTerrainWater || animatesActorModel) {
+      scheduleDynamicAnimationRender();
     }
   };
 
-  const scheduleWaterAnimationRender = () => {
-    if (isDisposed || waterAnimationTimeoutId != null || hasPendingRender) {
+  const scheduleDynamicAnimationRender = () => {
+    if (isDisposed || dynamicAnimationTimeoutId != null || hasPendingRender) {
       return;
     }
 
-    waterAnimationTimeoutId = window.setTimeout(() => {
-      waterAnimationTimeoutId = null;
+    dynamicAnimationTimeoutId = window.setTimeout(() => {
+      dynamicAnimationTimeoutId = null;
       requestRender("dynamic");
     }, WATER_ANIMATION_FRAME_INTERVAL_MS);
   };
@@ -949,8 +980,8 @@ async function initCampaignTerrainWebGl(
       if (frameId != null) {
         window.cancelAnimationFrame(frameId);
       }
-      if (waterAnimationTimeoutId != null) {
-        window.clearTimeout(waterAnimationTimeoutId);
+      if (dynamicAnimationTimeoutId != null) {
+        window.clearTimeout(dynamicAnimationTimeoutId);
       }
 
       window.removeEventListener("resize", handleResize);
@@ -1016,16 +1047,22 @@ async function loadCampaignActorAsset(
   const [model, textureImage, idleAnimation, walkAnimation] = await Promise.all([
     loadJson<{
       scale?: number;
+      facingOffsetDegrees?: number;
+      posturePitchDegrees?: number;
       positions: number[];
       normals: number[];
       uvs: number[];
       boneIndices: number[];
+      boneInfluenceIndices?: number[];
+      boneInfluenceWeights?: number[];
+      inverseBindMatrices?: number[];
       indices: number[];
       origin: [number, number, number];
       bones: Array<{
         name: string;
         parentIndex: number | null;
         localPosition: [number, number, number];
+        localRotation?: [number, number, number, number];
       }>;
       bounds: {
         min: [number, number, number];
@@ -1041,42 +1078,46 @@ async function loadCampaignActorAsset(
     name: bone.name,
     parentIndex: bone.parentIndex,
     localPosition: bone.localPosition,
+    localRotation: normalizeQuaternion(bone.localRotation ?? [0, 0, 0, 1]),
   }));
-  const bindGlobalPositions = computeActorGlobalBonePositions(bones);
   const vertexBoneIndices = new Uint16Array(model.boneIndices);
-  const localBindPositions = new Float32Array(model.positions.length);
-  const centeredBindGlobalPositions = bindGlobalPositions.map((position) => ([
-    position[0] - (model.origin[0] ?? 0),
-    position[1] - (model.origin[1] ?? 0),
-    position[2] - (model.origin[2] ?? 0),
-  ] as [number, number, number]));
-
-  for (let vertexIndex = 0; vertexIndex < model.positions.length / 3; vertexIndex += 1) {
-    const positionOffset = vertexIndex * 3;
-    const boneIndex = vertexBoneIndices[vertexIndex] ?? 0;
-    const bindBonePosition = centeredBindGlobalPositions[boneIndex] ?? [0, 0, 0];
-    localBindPositions[positionOffset] = (model.positions[positionOffset] ?? 0) - bindBonePosition[0];
-    localBindPositions[positionOffset + 1] =
-      (model.positions[positionOffset + 1] ?? 0) - bindBonePosition[1];
-    localBindPositions[positionOffset + 2] =
-      (model.positions[positionOffset + 2] ?? 0) - bindBonePosition[2];
-  }
+  const vertexCount = model.positions.length / 3;
+  const vertexBoneInfluenceIndices =
+    model.boneInfluenceIndices != null &&
+      model.boneInfluenceIndices.length === vertexCount * 4
+      ? new Uint16Array(model.boneInfluenceIndices)
+      : createSingleInfluenceIndices(vertexBoneIndices);
+  const vertexBoneInfluenceWeights =
+    model.boneInfluenceWeights != null &&
+      model.boneInfluenceWeights.length === vertexCount * 4
+      ? new Float32Array(model.boneInfluenceWeights)
+      : createSingleInfluenceWeights(vertexCount);
+  const originOffset: [number, number, number] = [
+    -(model.origin[0] ?? 0),
+    -(model.origin[1] ?? 0),
+    -(model.origin[2] ?? 0),
+  ];
+  const inverseBindMatrices =
+    model.inverseBindMatrices != null &&
+      model.inverseBindMatrices.length === bones.length * 16
+      ? new Float32Array(model.inverseBindMatrices)
+      : createFallbackInverseBindMatrices(computeActorGlobalBonePose(bones, originOffset));
 
   return {
     model: {
       scale: model.scale ?? 1,
-      localBindPositions,
-      bindNormals: new Float32Array(model.normals),
+      facingOffsetDegrees: model.facingOffsetDegrees ?? 90,
+      posturePitchDegrees: model.posturePitchDegrees ?? 0,
+      positions: new Float32Array(model.positions),
+      normals: new Float32Array(model.normals),
       uvs: new Float32Array(model.uvs),
       vertexBoneIndices,
+      vertexBoneInfluenceIndices,
+      vertexBoneInfluenceWeights,
+      inverseBindMatrices,
       indices: new Uint16Array(model.indices),
       bones,
-      bindGlobalPositions: centeredBindGlobalPositions,
-      originOffset: [
-        -(model.origin[0] ?? 0),
-        -(model.origin[1] ?? 0),
-        -(model.origin[2] ?? 0),
-      ],
+      originOffset,
       bounds: model.bounds,
     },
     textureImage,
@@ -1578,7 +1619,8 @@ function createActorMesh(
   actor: CampaignActorData,
   height: number,
   model: ActorModelAsset,
-  animations: ActorAnimationSetAsset
+  animations: ActorAnimationSetAsset,
+  animationState: ActorAnimationPlaybackState
 ): ActorMeshData {
   const scaleCompensation = clamp(
     ACTOR_REFERENCE_CAMERA_SCALE / Math.max(currentCamera.scale, 0.0001),
@@ -1587,13 +1629,17 @@ function createActorMesh(
   );
   const angle =
     actor.facingDegrees * Math.PI / 180 +
-    ACTOR_MODEL_FACING_OFFSET_RADIANS;
-  const activeClip = actor.isMoving ? animations.walk : animations.idle;
-  const sampledPose = sampleActorAnimationPose(
-    activeClip,
+    (Number.isFinite(model.facingOffsetDegrees)
+      ? model.facingOffsetDegrees * Math.PI / 180
+      : ACTOR_MODEL_FACING_OFFSET_RADIANS);
+  const timeMs = performance.now();
+  const sampledPose = sampleActorAnimationSetPose(
+    animations,
     model.bones,
     model.originOffset,
-    performance.now()
+    actor.isMoving ? "walk" : "idle",
+    animationState,
+    timeMs
   );
   const center = createTerrainWorldPoint(
     actor.u,
@@ -1601,49 +1647,76 @@ function createActorMesh(
     height
   );
   const scale = ACTOR_MODEL_BASE_SCALE * model.scale * scaleCompensation;
-  const localBindPositions = model.localBindPositions;
-  const bindNormals = model.bindNormals;
+  const positions = model.positions;
+  const normals = model.normals;
+  const vertexBoneInfluenceIndices = model.vertexBoneInfluenceIndices;
+  const vertexBoneInfluenceWeights = model.vertexBoneInfluenceWeights;
+  const poseMatrices = createActorPoseMatrices(sampledPose);
+  const skinMatrices = poseMatrices.map((poseMatrix, boneIndex) =>
+    multiplyMatrices(poseMatrix, readPackedMatrix4(model.inverseBindMatrices, boneIndex))
+  );
   const uvs = model.uvs;
-  const output = new Float32Array((localBindPositions.length / 3) * 8);
+  const vertexCount = model.vertexBoneIndices.length;
+  const output = new Float32Array(vertexCount * 8);
   const facingCos = Math.cos(angle);
   const facingSin = Math.sin(angle);
-  for (let vertexIndex = 0; vertexIndex < localBindPositions.length / 3; vertexIndex += 1) {
+  const posturePitchRadians = model.posturePitchDegrees * Math.PI / 180;
+  for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 1) {
     const positionOffset = vertexIndex * 3;
     const uvOffset = vertexIndex * 2;
     const outputOffset = vertexIndex * 8;
-    const boneIndex = model.vertexBoneIndices[vertexIndex] ?? 0;
-    const boneRotation = sampledPose.globalRotations[boneIndex] ?? IDENTITY_QUATERNION;
-    const bonePosition = sampledPose.globalPositions[boneIndex] ?? [0, 0, 0];
-    const animatedLocalPosition = rotateVectorByQuaternion([
-      (localBindPositions[positionOffset] ?? 0) * scale,
-      (localBindPositions[positionOffset + 1] ?? 0) * scale,
-      (localBindPositions[positionOffset + 2] ?? 0) * scale,
-    ], boneRotation);
-    const animatedActorPosition: [number, number, number] = [
-      bonePosition[0] * scale + animatedLocalPosition[0],
-      bonePosition[1] * scale + animatedLocalPosition[1],
-      bonePosition[2] * scale + animatedLocalPosition[2],
+    const sourcePosition: [number, number, number] = [
+      positions[positionOffset] ?? 0,
+      positions[positionOffset + 1] ?? 0,
+      positions[positionOffset + 2] ?? 0,
     ];
+    const sourceNormal: [number, number, number] = [
+      normals[positionOffset] ?? 0,
+      normals[positionOffset + 1] ?? 0,
+      normals[positionOffset + 2] ?? 1,
+    ];
+    const animatedActorPosition: [number, number, number] = [0, 0, 0];
+    const animatedActorNormal: [number, number, number] = [0, 0, 0];
+    for (let influenceIndex = 0; influenceIndex < 4; influenceIndex += 1) {
+      const packedInfluenceIndex = vertexIndex * 4 + influenceIndex;
+      const influenceWeight = vertexBoneInfluenceWeights[packedInfluenceIndex] ?? 0;
+      if (influenceWeight <= 0.00001) {
+        continue;
+      }
+
+      const boneIndex = vertexBoneInfluenceIndices[packedInfluenceIndex] ?? 0;
+      const skinMatrix = skinMatrices[boneIndex] ?? IDENTITY_MATRIX_4;
+      const animatedLocalPosition = transformPointByMatrix(skinMatrix, sourcePosition);
+      const animatedLocalNormal = transformDirectionByMatrix(skinMatrix, sourceNormal);
+      animatedActorPosition[0] += animatedLocalPosition[0] * influenceWeight;
+      animatedActorPosition[1] += animatedLocalPosition[1] * influenceWeight;
+      animatedActorPosition[2] += animatedLocalPosition[2] * influenceWeight;
+      animatedActorNormal[0] += animatedLocalNormal[0] * influenceWeight;
+      animatedActorNormal[1] += animatedLocalNormal[1] * influenceWeight;
+      animatedActorNormal[2] += animatedLocalNormal[2] * influenceWeight;
+    }
+    animatedActorPosition[0] *= scale;
+    animatedActorPosition[1] *= scale;
+    animatedActorPosition[2] *= scale;
+    const posturedPosition = rotateVectorAroundX(animatedActorPosition, posturePitchRadians);
     const rotatedX =
-      animatedActorPosition[0] * facingCos - animatedActorPosition[1] * facingSin;
+      posturedPosition[0] * facingCos - posturedPosition[1] * facingSin;
     const rotatedY =
-      animatedActorPosition[0] * facingSin + animatedActorPosition[1] * facingCos;
-    const rotatedNormal = rotateVectorByQuaternion([
-      bindNormals[positionOffset] ?? 0,
-      bindNormals[positionOffset + 1] ?? 0,
-      bindNormals[positionOffset + 2] ?? 1,
-    ], boneRotation);
+      posturedPosition[0] * facingSin + posturedPosition[1] * facingCos;
+    const blendedNormal = normalizeVector3(
+      rotateVectorAroundX(animatedActorNormal, posturePitchRadians)
+    );
     const rotatedNormalX =
-      rotatedNormal[0] * facingCos - rotatedNormal[1] * facingSin;
+      blendedNormal[0] * facingCos - blendedNormal[1] * facingSin;
     const rotatedNormalY =
-      rotatedNormal[0] * facingSin + rotatedNormal[1] * facingCos;
+      blendedNormal[0] * facingSin + blendedNormal[1] * facingCos;
 
     output[outputOffset] = center[0] + rotatedX;
     output[outputOffset + 1] = center[1] + rotatedY;
-    output[outputOffset + 2] = center[2] + animatedActorPosition[2];
+    output[outputOffset + 2] = center[2] + posturedPosition[2];
     output[outputOffset + 3] = rotatedNormalX;
     output[outputOffset + 4] = rotatedNormalY;
-    output[outputOffset + 5] = rotatedNormal[2];
+    output[outputOffset + 5] = blendedNormal[2];
     output[outputOffset + 6] = uvs[uvOffset] ?? 0;
     output[outputOffset + 7] = uvs[uvOffset + 1] ?? 0;
   }
@@ -1654,8 +1727,40 @@ function createActorMesh(
   };
 }
 
-function computeActorGlobalBonePositions(bones: ActorBoneAsset[]): [number, number, number][] {
+function createSingleInfluenceIndices(vertexBoneIndices: Uint16Array): Uint16Array {
+  const influenceIndices = new Uint16Array(vertexBoneIndices.length * 4);
+  for (let vertexIndex = 0; vertexIndex < vertexBoneIndices.length; vertexIndex += 1) {
+    influenceIndices[vertexIndex * 4] = vertexBoneIndices[vertexIndex] ?? 0;
+  }
+  return influenceIndices;
+}
+
+function createSingleInfluenceWeights(vertexCount: number): Float32Array {
+  const influenceWeights = new Float32Array(vertexCount * 4);
+  for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 1) {
+    influenceWeights[vertexIndex * 4] = 1;
+  }
+  return influenceWeights;
+}
+
+function createFallbackInverseBindMatrices(bindPose: ActorAnimationPose): Float32Array {
+  const inverseBindMatrices = new Float32Array(bindPose.globalPositions.length * 16);
+  for (let boneIndex = 0; boneIndex < bindPose.globalPositions.length; boneIndex += 1) {
+    const bindMatrix = createTransformMatrixFromQuaternion(
+      bindPose.globalPositions[boneIndex] ?? [0, 0, 0],
+      bindPose.globalRotations[boneIndex] ?? IDENTITY_QUATERNION
+    );
+    inverseBindMatrices.set(invertMatrix4(bindMatrix), boneIndex * 16);
+  }
+  return inverseBindMatrices;
+}
+
+function computeActorGlobalBonePose(
+  bones: ActorBoneAsset[],
+  rootPosition: [number, number, number]
+): ActorAnimationPose {
   const globalPositions = bones.map(() => [0, 0, 0] as [number, number, number]);
+  const globalRotations = bones.map(() => [0, 0, 0, 1] as [number, number, number, number]);
   for (let index = 0; index < bones.length; index += 1) {
     const bone = bones[index];
     if (bone == null) {
@@ -1663,18 +1768,204 @@ function computeActorGlobalBonePositions(bones: ActorBoneAsset[]): [number, numb
     }
 
     if (bone.parentIndex == null) {
-      globalPositions[index] = [...bone.localPosition];
+      globalPositions[index] = [
+        rootPosition[0] + bone.localPosition[0],
+        rootPosition[1] + bone.localPosition[1],
+        rootPosition[2] + bone.localPosition[2],
+      ];
+      globalRotations[index] = bone.localRotation;
       continue;
     }
 
     const parentPosition = globalPositions[bone.parentIndex] ?? [0, 0, 0];
+    const parentRotation = globalRotations[bone.parentIndex] ?? IDENTITY_QUATERNION;
+    const rotatedLocalPosition = rotateVectorByQuaternion(bone.localPosition, parentRotation);
     globalPositions[index] = [
-      parentPosition[0] + bone.localPosition[0],
-      parentPosition[1] + bone.localPosition[1],
-      parentPosition[2] + bone.localPosition[2],
+      parentPosition[0] + rotatedLocalPosition[0],
+      parentPosition[1] + rotatedLocalPosition[1],
+      parentPosition[2] + rotatedLocalPosition[2],
     ];
+    globalRotations[index] = normalizeQuaternion(
+      multiplyQuaternions(parentRotation, bone.localRotation)
+    );
   }
-  return globalPositions;
+  return {
+    globalPositions,
+    globalRotations,
+  };
+}
+
+function createActorPoseMatrices(pose: ActorAnimationPose): Mat4[] {
+  return pose.globalPositions.map((position, index) =>
+    createTransformMatrixFromQuaternion(
+      position,
+      pose.globalRotations[index] ?? IDENTITY_QUATERNION
+    )
+  );
+}
+
+function createActorAnimationPlaybackState(): ActorAnimationPlaybackState {
+  return {
+    activeClipName: "idle",
+    activeStartedAtMs: 0,
+    blendFromClipName: null,
+    blendFromStartedAtMs: 0,
+    blendStartedAtMs: 0,
+    blendDurationMs: ACTOR_ANIMATION_BLEND_DURATION_MS,
+  };
+}
+
+function sampleActorAnimationSetPose(
+  animations: ActorAnimationSetAsset,
+  bones: ActorBoneAsset[],
+  originOffset: [number, number, number],
+  targetClipName: ActorAnimationClipName,
+  playbackState: ActorAnimationPlaybackState,
+  timeMs: number
+): ActorAnimationPose {
+  if (playbackState.activeStartedAtMs <= 0) {
+    playbackState.activeStartedAtMs = timeMs;
+  }
+
+  if (playbackState.activeClipName !== targetClipName) {
+    playbackState.blendFromClipName = playbackState.activeClipName;
+    playbackState.blendFromStartedAtMs = playbackState.activeStartedAtMs;
+    playbackState.blendStartedAtMs = timeMs;
+    playbackState.blendDurationMs = ACTOR_ANIMATION_BLEND_DURATION_MS;
+    playbackState.activeClipName = targetClipName;
+    playbackState.activeStartedAtMs = timeMs;
+  }
+
+  const activePose = sampleActorAnimationPose(
+    animations[playbackState.activeClipName],
+    bones,
+    originOffset,
+    timeMs - playbackState.activeStartedAtMs
+  );
+
+  if (playbackState.blendFromClipName == null) {
+    return activePose;
+  }
+
+  const blendElapsedMs = timeMs - playbackState.blendStartedAtMs;
+  const blendAmount = smoothstep(
+    clamp(blendElapsedMs / Math.max(playbackState.blendDurationMs, 1), 0, 1)
+  );
+  if (blendAmount >= 1) {
+    playbackState.blendFromClipName = null;
+    return activePose;
+  }
+
+  const blendFromPose = sampleActorAnimationPose(
+    animations[playbackState.blendFromClipName],
+    bones,
+    originOffset,
+    timeMs - playbackState.blendFromStartedAtMs
+  );
+
+  return blendActorAnimationPoses(blendFromPose, activePose, blendAmount);
+}
+
+function blendActorAnimationPoses(
+  from: ActorAnimationPose,
+  to: ActorAnimationPose,
+  amount: number
+): ActorAnimationPose {
+  const poseLength = Math.max(from.globalPositions.length, to.globalPositions.length);
+  const globalPositions: [number, number, number][] = [];
+  const globalRotations: [number, number, number, number][] = [];
+
+  for (let index = 0; index < poseLength; index += 1) {
+    globalPositions.push(
+      lerpVector3(
+        from.globalPositions[index] ?? [0, 0, 0],
+        to.globalPositions[index] ?? from.globalPositions[index] ?? [0, 0, 0],
+        amount
+      )
+    );
+    globalRotations.push(
+      nlerpQuaternion(
+        from.globalRotations[index] ?? IDENTITY_QUATERNION,
+        to.globalRotations[index] ?? from.globalRotations[index] ?? IDENTITY_QUATERNION,
+        amount
+      )
+    );
+  }
+
+  return {
+    globalPositions,
+    globalRotations,
+  };
+}
+
+function createTransformMatrixFromQuaternion(
+  position: [number, number, number],
+  rotation: [number, number, number, number]
+): Mat4 {
+  const [x, y, z, w] = normalizeQuaternion(rotation);
+  const xx = x * x;
+  const yy = y * y;
+  const zz = z * z;
+  const xy = x * y;
+  const xz = x * z;
+  const yz = y * z;
+  const wx = w * x;
+  const wy = w * y;
+  const wz = w * z;
+
+  return new Float32Array([
+    1 - 2 * (yy + zz), 2 * (xy + wz), 2 * (xz - wy), 0,
+    2 * (xy - wz), 1 - 2 * (xx + zz), 2 * (yz + wx), 0,
+    2 * (xz + wy), 2 * (yz - wx), 1 - 2 * (xx + yy), 0,
+    position[0], position[1], position[2], 1,
+  ]);
+}
+
+function readPackedMatrix4(matrices: Float32Array, matrixIndex: number): Mat4 {
+  const offset = matrixIndex * 16;
+  if (offset < 0 || offset + 15 >= matrices.length) {
+    return IDENTITY_MATRIX_4;
+  }
+  return new Float32Array(matrices.subarray(offset, offset + 16));
+}
+
+function transformPointByMatrix(
+  matrix: Mat4,
+  point: [number, number, number]
+): [number, number, number] {
+  const [x, y, z] = point;
+  return [
+    readMatrixValue(matrix, 0) * x +
+      readMatrixValue(matrix, 4) * y +
+      readMatrixValue(matrix, 8) * z +
+      readMatrixValue(matrix, 12),
+    readMatrixValue(matrix, 1) * x +
+      readMatrixValue(matrix, 5) * y +
+      readMatrixValue(matrix, 9) * z +
+      readMatrixValue(matrix, 13),
+    readMatrixValue(matrix, 2) * x +
+      readMatrixValue(matrix, 6) * y +
+      readMatrixValue(matrix, 10) * z +
+      readMatrixValue(matrix, 14),
+  ];
+}
+
+function transformDirectionByMatrix(
+  matrix: Mat4,
+  direction: [number, number, number]
+): [number, number, number] {
+  const [x, y, z] = direction;
+  return normalizeVector3([
+    readMatrixValue(matrix, 0) * x +
+      readMatrixValue(matrix, 4) * y +
+      readMatrixValue(matrix, 8) * z,
+    readMatrixValue(matrix, 1) * x +
+      readMatrixValue(matrix, 5) * y +
+      readMatrixValue(matrix, 9) * z,
+    readMatrixValue(matrix, 2) * x +
+      readMatrixValue(matrix, 6) * y +
+      readMatrixValue(matrix, 10) * z,
+  ]);
 }
 
 function sampleActorAnimationPose(
@@ -1711,10 +2002,25 @@ function sampleActorAnimationPose(
     }
 
     const parentIndex = bone.parentIndex ?? 0;
-    const localRotation = sampleClipQuaternion(clip, boneIndex - 1, frameA, frameB, frameMix);
+    const localRotation = sampleClipQuaternion(
+      clip,
+      boneIndex - 1,
+      frameA,
+      frameB,
+      frameMix,
+      bone.localRotation
+    );
+    const localPosition = sampleClipVector3(
+      clip.localPositions,
+      boneIndex - 1,
+      frameA,
+      frameB,
+      frameMix,
+      bone.localPosition
+    );
     const parentRotation = globalRotations[parentIndex] ?? IDENTITY_QUATERNION;
     const parentPosition = globalPositions[parentIndex] ?? [0, 0, 0];
-    const rotatedLocalPosition = rotateVectorByQuaternion(bone.localPosition, parentRotation);
+    const rotatedLocalPosition = rotateVectorByQuaternion(localPosition, parentRotation);
 
     globalRotations[boneIndex] = normalizeQuaternion(
       multiplyQuaternions(parentRotation, localRotation)
@@ -1737,11 +2043,25 @@ function sampleClipQuaternion(
   animatedBoneIndex: number,
   frameA: number,
   frameB: number,
-  frameMix: number
+  frameMix: number,
+  fallback: [number, number, number, number]
 ): [number, number, number, number] {
-  const frameARotation = clip.rotations[frameA]?.[animatedBoneIndex] ?? IDENTITY_QUATERNION;
+  const frameARotation = clip.rotations[frameA]?.[animatedBoneIndex] ?? fallback;
   const frameBRotation = clip.rotations[frameB]?.[animatedBoneIndex] ?? frameARotation;
   return nlerpQuaternion(frameARotation, frameBRotation, frameMix);
+}
+
+function sampleClipVector3(
+  frames: number[][][] | undefined,
+  animatedBoneIndex: number,
+  frameA: number,
+  frameB: number,
+  frameMix: number,
+  fallback: [number, number, number]
+): [number, number, number] {
+  const frameAPosition = frames?.[frameA]?.[animatedBoneIndex] ?? fallback;
+  const frameBPosition = frames?.[frameB]?.[animatedBoneIndex] ?? frameAPosition;
+  return lerpVector3(frameAPosition, frameBPosition, frameMix);
 }
 
 function lerpVector3(
@@ -1785,6 +2105,23 @@ function rotateVectorByQuaternion(
     ix * qw + iw * -qx + iy * -qz - iz * -qy,
     iy * qw + iw * -qy + iz * -qx - ix * -qz,
     iz * qw + iw * -qz + ix * -qy - iy * -qx,
+  ];
+}
+
+function rotateVectorAroundX(
+  vector: [number, number, number],
+  angleRadians: number
+): [number, number, number] {
+  if (Math.abs(angleRadians) <= 0.000001) {
+    return vector;
+  }
+
+  const cosine = Math.cos(angleRadians);
+  const sine = Math.sin(angleRadians);
+  return [
+    vector[0],
+    vector[1] * cosine - vector[2] * sine,
+    vector[1] * sine + vector[2] * cosine,
   ];
 }
 
@@ -2389,12 +2726,106 @@ function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
   return result;
 }
 
+function invertMatrix4(matrix: Mat4): Mat4 {
+  const m: [
+    number, number, number, number,
+    number, number, number, number,
+    number, number, number, number,
+    number, number, number, number,
+  ] = [
+    readMatrixValue(matrix, 0),
+    readMatrixValue(matrix, 1),
+    readMatrixValue(matrix, 2),
+    readMatrixValue(matrix, 3),
+    readMatrixValue(matrix, 4),
+    readMatrixValue(matrix, 5),
+    readMatrixValue(matrix, 6),
+    readMatrixValue(matrix, 7),
+    readMatrixValue(matrix, 8),
+    readMatrixValue(matrix, 9),
+    readMatrixValue(matrix, 10),
+    readMatrixValue(matrix, 11),
+    readMatrixValue(matrix, 12),
+    readMatrixValue(matrix, 13),
+    readMatrixValue(matrix, 14),
+    readMatrixValue(matrix, 15),
+  ];
+  const inverse = new Float32Array(16);
+  inverse[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] -
+    m[9] * m[6] * m[15] + m[9] * m[7] * m[14] +
+    m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
+  inverse[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] +
+    m[8] * m[6] * m[15] - m[8] * m[7] * m[14] -
+    m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
+  inverse[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] -
+    m[8] * m[5] * m[15] + m[8] * m[7] * m[13] +
+    m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
+  inverse[12] = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] +
+    m[8] * m[5] * m[14] - m[8] * m[6] * m[13] -
+    m[12] * m[5] * m[10] + m[12] * m[6] * m[9];
+  inverse[1] = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] +
+    m[9] * m[2] * m[15] - m[9] * m[3] * m[14] -
+    m[13] * m[2] * m[11] + m[13] * m[3] * m[10];
+  inverse[5] = m[0] * m[10] * m[15] - m[0] * m[11] * m[14] -
+    m[8] * m[2] * m[15] + m[8] * m[3] * m[14] +
+    m[12] * m[2] * m[11] - m[12] * m[3] * m[10];
+  inverse[9] = -m[0] * m[9] * m[15] + m[0] * m[11] * m[13] +
+    m[8] * m[1] * m[15] - m[8] * m[3] * m[13] -
+    m[12] * m[1] * m[11] + m[12] * m[3] * m[9];
+  inverse[13] = m[0] * m[9] * m[14] - m[0] * m[10] * m[13] -
+    m[8] * m[1] * m[14] + m[8] * m[2] * m[13] +
+    m[12] * m[1] * m[10] - m[12] * m[2] * m[9];
+  inverse[2] = m[1] * m[6] * m[15] - m[1] * m[7] * m[14] -
+    m[5] * m[2] * m[15] + m[5] * m[3] * m[14] +
+    m[13] * m[2] * m[7] - m[13] * m[3] * m[6];
+  inverse[6] = -m[0] * m[6] * m[15] + m[0] * m[7] * m[14] +
+    m[4] * m[2] * m[15] - m[4] * m[3] * m[14] -
+    m[12] * m[2] * m[7] + m[12] * m[3] * m[6];
+  inverse[10] = m[0] * m[5] * m[15] - m[0] * m[7] * m[13] -
+    m[4] * m[1] * m[15] + m[4] * m[3] * m[13] +
+    m[12] * m[1] * m[7] - m[12] * m[3] * m[5];
+  inverse[14] = -m[0] * m[5] * m[14] + m[0] * m[6] * m[13] +
+    m[4] * m[1] * m[14] - m[4] * m[2] * m[13] -
+    m[12] * m[1] * m[6] + m[12] * m[2] * m[5];
+  inverse[3] = -m[1] * m[6] * m[11] + m[1] * m[7] * m[10] +
+    m[5] * m[2] * m[11] - m[5] * m[3] * m[10] -
+    m[9] * m[2] * m[7] + m[9] * m[3] * m[6];
+  inverse[7] = m[0] * m[6] * m[11] - m[0] * m[7] * m[10] -
+    m[4] * m[2] * m[11] + m[4] * m[3] * m[10] +
+    m[8] * m[2] * m[7] - m[8] * m[3] * m[6];
+  inverse[11] = -m[0] * m[5] * m[11] + m[0] * m[7] * m[9] +
+    m[4] * m[1] * m[11] - m[4] * m[3] * m[9] -
+    m[8] * m[1] * m[7] + m[8] * m[3] * m[5];
+  inverse[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] -
+    m[4] * m[1] * m[10] + m[4] * m[2] * m[9] +
+    m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
+
+  const determinant =
+    m[0] * readMatrixValue(inverse, 0) +
+    m[1] * readMatrixValue(inverse, 4) +
+    m[2] * readMatrixValue(inverse, 8) +
+    m[3] * readMatrixValue(inverse, 12);
+  if (Math.abs(determinant) <= 0.0000001) {
+    return IDENTITY_MATRIX_4;
+  }
+
+  for (let index = 0; index < 16; index += 1) {
+    inverse[index] = readMatrixValue(inverse, index) / determinant;
+  }
+  return inverse;
+}
+
 function readMatrixValue(matrix: Mat4, index: number): number {
   return matrix[index] ?? 0;
 }
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function smoothstep(value: number): number {
+  const clampedValue = clamp(value, 0, 1);
+  return clampedValue * clampedValue * (3 - 2 * clampedValue);
 }
 
 function createPerspectiveMatrix(

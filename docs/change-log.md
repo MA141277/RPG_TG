@@ -2,6 +2,48 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-09 Campaign Player Actor FBX Animation
+
+### Added
+- 新增 `tools/import-campaign-fbx-unit.mjs`，用于将用户提供的二进制 FBX 主角模型导入为现有 campaign actor JSON、贴图和浏览器动画 clip 资产。
+- 新增 `src/assets/yuanmo-unit-animations/zhu-yuanzhang-monk-strat/look_around.json` 与 `run.json`，分别对应主角待机“环顾四周”和地图移动动画。
+
+### Changed
+- `zhu-yuanzhang-monk-strat` 从上一版无动画 OBJ 静态导入替换为 FBX 导入结果：模型资产现在包含 42 根骨骼，并继续使用 `zhu-yuanzhang-monk-strat.jpg` 作为贴图。
+- `campaignUnitAssets.friendly` 改为绑定新的 `look_around` / `run` 动画 clip，不再复用旧 `strat_named_with_army` 动画。
+- 大地图 WebGL actor renderer 移除上一版单根骨骼 OBJ 的程序待机/行走形变；动画表现回到资产 clip 驱动，actor canvas 只负责按当前移动状态播放待机或移动 clip。
+- campaign actor 模型资产新增可选 `facingOffsetDegrees` 与 `posturePitchDegrees` 字段，分别用于修正不同导出源的平面朝向和整体站立姿态；旧资产缺省仍按原 90 度朝向偏移、0 度姿态偏移处理，新 FBX 主角资产使用自身配置。
+- FBX 导入器修正 Skin Cluster 到骨骼模型的连接解析，并输出每顶点最多 4 个骨骼影响权重；大地图 actor runtime 改为按绑定姿态逆变换做 CPU 蒙皮，避免顶点全部绑定到根骨骼导致真实 clip 看起来没有动画。
+- `zhu-yuanzhang-monk-strat` 重新导入为用户确认动画正确的 `tripo_convert_c1796d8e-6bbb-44ae-accb-c7db71cd537d` FBX；当前待机使用 `NlaTrack.001`，移动使用带原始位移的 `NlaTrack` 走路动画，并保留 FBX local translation 通道到 clip 的 `localPositions`。
+- `tools/import-campaign-fbx-unit.mjs` 新增 `--walkRootMotionMode in-place-horizontal` 与 `--walkRootMotionAnchor start|end`，用于把移动 clip 中 `Root` 骨骼的水平 root motion 烘成原地循环；当前 `run.json` 使用末帧锚点，避免地图路径位移和动画自带位移叠加，同时让动画初始位置对齐原始动画结束位置。
+- `tools/import-campaign-fbx-unit.mjs` 新增 `--walkFrameStart` / `--walkFrameEnd` 与 `--walkLoopMode blend-tail` / `--walkLoopBlendFrames`；当前移动 clip 从四步完整 `NlaTrack` 裁剪为 `0..29` 的前两步，并只用 2 帧闭合循环点，避免长尾混合造成“少迈一步”的观感。
+- 大地图 actor runtime 新增 idle / run pose 混合状态，移动开始和停止时会在短时间内衔接旧 clip 与新 clip，而不是按 `isMoving` 立即硬切到另一段骨骼 pose。
+- 大地图路径移动时不再在每个中间 hex 中心把 `isMoving` 短暂切回 `false`；walk clip 会跨连续路径段保持播放，只在整条路径结束或取消移动时停止，避免每格中心重置步态。
+- actor 绘制时对主角模型关闭背面剔除并强制非透明贴图片元为不透明 alpha，减少 FBX 面朝向不一致或贴图 alpha 被合成时造成的发虚、半透明观感；城市深度模型仍保留贴图 alpha。
+- 大地图 WebGL 主角 actor canvas 调回云层下方，和 DOM fallback player、建筑点本体保持同一地图实体层级；hover 描边、marker 详情、debug 控件和全局 UI 仍保持在云层上方。
+- `docs/yuanmo-strat-animation-pipeline.md` 更新为当前 FBX 导入管线说明，并明确 OBJ 导入只适合作为无动画静态兜底。
+
+### Impact
+- 大地图主角（朱元璋）现在由稳定 FBX 离线导入资产驱动，待机和移动动画都来自用户重新导出的模型文件，而不是运行时临时形变。
+- 后续替换同类主角模型时，维护入口是 FBX 源文件、贴图、`tools/import-campaign-fbx-unit.mjs` 的导入参数（包括 `--facingOffsetDegrees` / `--posturePitchDegrees`）和 `src/content/yuanmo-strat-unit-assets.ts` 的资产绑定。
+
+## 2026-07-08 Campaign Player Actor Model
+
+### Added
+- 新增 `zhu-yuanzhang-monk-strat` 大地图主角模型资产：从用户提供的 `OBJ + MTL + JPG` 包导出为当前 WebGL actor JSON 格式，并将贴图重命名为 `zhu-yuanzhang-monk-strat.jpg` 放入 `src/assets/yuanmo-units`。
+- 新增 `tools/import-campaign-obj-unit.mjs`，用于将无骨骼 OBJ 单位导入为现有 campaign actor JSON 结构，包含位置、UV、重建法线、单根骨骼、索引和 manifest 所需统计信息。
+
+### Changed
+- `campaignUnitAssets.friendly` 从旧 `red-turban-strat` 切换到 `zhu-yuanzhang-monk-strat`，使大地图中朱元璋移动时使用新的和尚主角模型；旧红巾战略模型资产保留但不再作为主角默认模型。
+- `docs/yuanmo-strat-animation-pipeline.md` 补充 OBJ 导入路径说明，明确 OBJ 源不携带骨骼或动画 clip，当前导入结果为单根骨骼 actor 资产。
+- 大地图 WebGL actor renderer 对单根骨骼 OBJ 资产新增程序待机/行走形变，并让 actor canvas 自身持续刷新，避免玩家静止时模型停在单帧或移动时没有可见动画。
+- 单根骨骼 OBJ actor 绘制时关闭背面剔除，减少导入模型因面朝向不一致产生的局部缺面或发虚显示。
+- WebGL 主角 actor canvas 在加载成功后提升到云层之上，避免当前已探索位置的玩家模型被云层 overlay 洗成半透明；建筑点本体、地图底图和 DOM fallback player 仍保持在云层下方。
+
+### Impact
+- 大地图主角视觉资产现在由 `src/content/yuanmo-strat-unit-assets.ts` 的 friendly 条目统一指定；后续替换同类 OBJ 模型可以复用导入脚本生成稳定资产。
+- actor canvas 的动态刷新只重绘 WebGL 模型层，不触发地图 marker / summary DOM 重建，也不改变探索、寻路或云层遮罩语义。
+
 ## 2026-07-08 Character Select Ink Feedback
 
 ### Changed
