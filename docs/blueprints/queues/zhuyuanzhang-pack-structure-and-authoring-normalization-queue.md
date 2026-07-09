@@ -202,13 +202,14 @@
 - Completion notes:
   - `src/content/base-game-content-pack.ts now parses the builtin scenario-pack catalog, selects the default entry through getDefaultScenarioPackCatalogEntry, and resolves the manifest URL through resolveCatalogManifestUrl instead of pack-specific constants.`
   - `tests/robustness.test.cjs now guards the covered path by rejecting hardcoded zhuyuanzhang manifest literals in base-game-content-pack.ts while preserving the shared loader behavior proof.`
+  - `A same-day browser startup hotfix kept this task closed by restoring absolute manifest resolution on the browser path through window.location.href, which prevents the covered default-pack binding from regressing into an Invalid base URL startup failure.`
 
 #### `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review`
 
 ##### Control Block
 
 - task_id: `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review`
-- state: `queued`
+- state: `active`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
@@ -271,3 +272,7 @@
   - Summary: `Completed default-builtin-pack-binding-closeout by moving src/content/base-game-content-pack.ts onto catalog-driven default manifest resolution and removing the hardcoded zhuyuanzhang manifest constants from the covered path.`
   - Verification: `node --test --test-name-pattern "base game content pack is sourced from the shared content-pack loader" tests/robustness.test.cjs; npm run lint:blueprints; npm run typecheck; npm test`
   - Next at this time: `Execute task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review to decide whether the remaining residue stays in-queue or returns to target review.`
+- 2026-07-09
+  - Summary: `Patched a same-day browser startup regression on the closed default-pack binding slice by restoring absolute manifest resolution for the browser path in src/content/base-game-content-pack.ts, which removes the Invalid base URL black-screen failure without widening into shared loader contract changes.`
+  - Verification: `node --test --test-name-pattern "base game content pack is sourced from the shared content-pack loader" tests/robustness.test.cjs; npm run typecheck; npm test; in-app browser reload on http://localhost:5173/ shows main menu with no console errors`
+  - Next at this time: `Keep task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review as the active queue task; the next legal step remains a bounded residue review rather than another default-pack implementation cut.`

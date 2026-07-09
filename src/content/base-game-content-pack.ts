@@ -46,10 +46,13 @@ function resolveDefaultBaseGameManifestUrl(): string {
   }
 
   if (typeof window !== "undefined") {
-    return resolveCatalogManifestUrl(
-      SCENARIO_PACK_CATALOG_PUBLIC_URL,
-      defaultBaseGameScenarioPackCatalogEntry.manifestPath
-    );
+    return new URL(
+      resolveCatalogManifestUrl(
+        SCENARIO_PACK_CATALOG_PUBLIC_URL,
+        defaultBaseGameScenarioPackCatalogEntry.manifestPath
+      ),
+      window.location.href
+    ).href;
   }
 
   return resolveDefaultManifestPathWithoutRuntime();

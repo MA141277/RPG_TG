@@ -1567,6 +1567,11 @@ test("base game content pack is sourced from the shared content-pack loader", as
     "Expected base-game-content-pack.ts to resolve the default manifest URL through the shared catalog helper."
   );
   assert.equal(
+    source.includes("window.location.href"),
+    true,
+    "Expected the browser runtime to resolve the default manifest URL against window.location.href."
+  );
+  assert.equal(
     source.includes("scenario-packs/zhuyuanzhang/pack.json"),
     false,
     "Expected base-game-content-pack.ts to stop hardcoding the zhuyuanzhang manifest path."
