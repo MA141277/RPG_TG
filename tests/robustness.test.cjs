@@ -84,6 +84,19 @@ const {
   selectHouseEntryAccess,
 } = require("../.test-dist/application/story/story-stage-access.js");
 const {
+  areHexNeighbors,
+  coordinateToRoundedHex,
+  createHexTravelPath,
+  createPassableHexTravelPath,
+  getHexKey,
+  hexToCoordinate,
+} = require("../.test-dist/application/navigation/travel-to-coordinate.js");
+const {
+  getCampaignMapFogViewState,
+  isCampaignMapCoordinateRevealed,
+  revealCampaignMapAroundCoordinate,
+} = require("../.test-dist/application/navigation/campaign-map-exploration.js");
+const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
 const {
@@ -141,7 +154,10 @@ const {
   sampleScene,
 } = require("../.test-dist/content/sample-scenario.js");
 const {
-  stopActivityQte,
+  adjustActivityFortuneBoardWager,
+  chooseActivityQteCommand,
+  playActivityFortuneBoard,
+  tickActivityFortuneBoard,
 } = require("../.test-dist/application/activity/activity-qte-runtime.js");
 const {
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
@@ -492,62 +508,503 @@ test("scene start-activity action executes registered fallback activity", () => 
   });
 
   assert.equal(result.currentAction?.type, "narration");
-  assert.equal(result.state.runtime.activitySession?.type, "qte-bar");
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
   assert.equal(result.state.runtime.activitySession.activityId, "activity.test.special");
   assert.equal(result.state.runtime.variables["var.test.activity.points"], undefined);
 
-  const firstStop = stopActivityQte(
-    {
-      ...result.state,
-      runtime: {
-        ...result.state.runtime,
-        activitySession: {
-          ...result.state.runtime.activitySession,
-          markerPercent: 45,
-        },
-      },
-    },
-    activityDefinition,
-    prototypeCharacters
-  );
-  const secondStop = stopActivityQte(
-    {
-      ...firstStop.state,
-      runtime: {
-        ...firstStop.state.runtime,
-        activitySession: {
-          ...firstStop.state.runtime.activitySession,
-          markerPercent: 62,
-        },
-      },
-    },
-    activityDefinition,
-    firstStop.characterDefinitions
-  );
-  const thirdStop = stopActivityQte(
-    {
-      ...secondStop.state,
-      runtime: {
-        ...secondStop.state.runtime,
-        activitySession: {
-          ...secondStop.state.runtime.activitySession,
-          markerPercent: 0,
-        },
-      },
-    },
-    activityDefinition,
-    secondStop.characterDefinitions
-  );
+  let settledBoard = {
+    state: result.state,
+    characterDefinitions: prototypeCharacters,
+  };
+  for (let round = 0; round < 10; round += 1) {
+    if (settledBoard.state.runtime.activitySession?.type === "result") {
+      break;
+    }
+    while (
+      settledBoard.state.runtime.activitySession.type === "fortune-board" &&
+      settledBoard.state.runtime.activitySession.wager <
+        Math.min(5, settledBoard.state.runtime.activitySession.remainingPieces)
+    ) {
+      settledBoard = {
+        state: adjustActivityFortuneBoardWager(settledBoard.state, 1),
+        characterDefinitions: settledBoard.characterDefinitions,
+      };
+    }
+    settledBoard = playActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    settledBoard = tickActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    settledBoard = playActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    for (let tick = 0; tick < 100; tick += 1) {
+      settledBoard = tickActivityFortuneBoard(
+        settledBoard.state,
+        activityDefinition,
+        settledBoard.characterDefinitions
+      );
+      if (
+        settledBoard.state.runtime.activitySession?.type === "result" ||
+        (settledBoard.state.runtime.activitySession?.type === "fortune-board" &&
+          settledBoard.state.runtime.activitySession.phase === "ready")
+      ) {
+        break;
+      }
+    }
+  }
 
-  assert.equal(thirdStop.state.runtime.activitySession?.type, "result");
-  assert.equal(thirdStop.state.runtime.flags["flag.test.activity.completed"], true);
+  assert.equal(settledBoard.state.runtime.activitySession?.type, "result");
+  assert.equal(settledBoard.state.runtime.flags["flag.test.activity.completed"], true);
   assert.equal(
-    thirdStop.state.runtime.flags["flag.activity.test.special.completed"],
+    settledBoard.state.runtime.flags["flag.activity.test.special.completed"],
     true
   );
-  assert.equal(thirdStop.state.runtime.variables["var.test.activity.grade"], "success");
-  assert.equal(thirdStop.state.runtime.variables["var.test.activity.points"], 5);
-  assert.equal(thirdStop.state.runtime.variables["var.activity.last_handler"], "generic.qte");
+  assert.equal(settledBoard.state.runtime.variables["var.test.activity.grade"], "success");
+  assert.equal(settledBoard.state.runtime.variables["var.test.activity.points"], 5);
+  assert.equal(settledBoard.state.runtime.variables["var.activity.last_handler"], "generic.qte");
+  assert.ok(settledBoard.state.runtime.activitySession.score >= 5);
+});
+
+test("fortune board refunds wager pieces that cannot fit in the selected column", () => {
+  const activityDefinition = {
+    id: "activity.test.refund",
+    title: "Refund test",
+    description: "Refund overflowing board pieces.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: "plain",
+      selected: column === 0 && row < 3,
+    };
+  });
+  const state = {
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 5,
+        wager: 5,
+        phase: "column-flash",
+        highlightedColumn: 0,
+        selectedColumn: 0,
+        flashTicks: 1,
+        pendingDropCount: 2,
+        scanCellKeys: [],
+        scanCellIndex: 0,
+        highlightedCellKey: null,
+        pickedCellKey: null,
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 0,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  };
+
+  let result = {
+    state,
+    characterDefinitions: [],
+  };
+  for (let tick = 0; tick < 20; tick += 1) {
+    result = tickActivityFortuneBoard(result.state);
+    if (
+      result.state.runtime.activitySession?.type === "fortune-board" &&
+      result.state.runtime.activitySession.phase === "ready"
+    ) {
+      break;
+    }
+  }
+
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.remainingPieces, 3);
+  assert.equal(
+    result.state.runtime.activitySession.board.filter(
+      (cell) => cell.column === 0 && cell.selected
+    ).length,
+    5
+  );
+});
+
+test("fortune board speed command updates tick interval and scanning waits before first highlight", () => {
+  const activityDefinition = {
+    id: "activity.test.speed",
+    title: "Speed test",
+    description: "Speed slider updates the shared board session.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: "plain",
+      selected: false,
+    };
+  });
+  const state = {
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 5,
+        wager: 1,
+        phase: "ready",
+        highlightedColumn: null,
+        selectedColumn: null,
+        flashTicks: 0,
+        pendingDropCount: 0,
+        scanCellKeys: [],
+        scanCellIndex: 0,
+        highlightedCellKey: null,
+        pickedCellKey: null,
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 0,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  };
+
+  const speedResult = chooseActivityQteCommand(
+    state,
+    activityDefinition,
+    [],
+    "speed:300"
+  );
+  assert.equal(speedResult.state.runtime.activitySession?.animationTickMs, 300);
+
+  const playResult = playActivityFortuneBoard(
+    speedResult.state,
+    activityDefinition,
+    []
+  );
+  assert.equal(playResult.state.runtime.activitySession?.phase, "scanning");
+  assert.equal(playResult.state.runtime.activitySession.highlightedColumn, null);
+
+  const firstTick = tickActivityFortuneBoard(playResult.state);
+  assert.equal(firstTick.state.runtime.activitySession?.highlightedColumn, 0);
+});
+
+test("fortune board cell pick flashes twice before settling the selected cell", () => {
+  const activityDefinition = {
+    id: "activity.test.cell-pick-flash",
+    title: "Cell pick flash test",
+    description: "Picked cells flash before settlement.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: "plain",
+      selected: false,
+    };
+  });
+
+  let result = tickActivityFortuneBoard({
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 5,
+        wager: 1,
+        phase: "cell-scan",
+        highlightedColumn: null,
+        selectedColumn: 0,
+        flashTicks: 0,
+        pendingDropCount: 1,
+        scanCellKeys: ["0:0"],
+        scanCellIndex: 0,
+        highlightedCellKey: "0:0",
+        pickedCellKey: null,
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 0,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  });
+
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "cell-pick");
+  assert.equal(result.state.runtime.activitySession.pickedCellKey, "0:0");
+  assert.equal(result.state.runtime.activitySession.flashTicks, 4);
+  assert.equal(result.state.runtime.activitySession.board[0].selected, false);
+
+  result = tickActivityFortuneBoard(result.state);
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "cell-pick");
+  assert.equal(result.state.runtime.activitySession.flashTicks, 3);
+  assert.equal(result.state.runtime.activitySession.board[0].selected, false);
+
+  result = tickActivityFortuneBoard(result.state);
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "cell-pick");
+  assert.equal(result.state.runtime.activitySession.flashTicks, 2);
+  assert.equal(result.state.runtime.activitySession.board[0].selected, false);
+
+  result = tickActivityFortuneBoard(result.state);
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "cell-pick");
+  assert.equal(result.state.runtime.activitySession.flashTicks, 1);
+  assert.equal(result.state.runtime.activitySession.board[0].selected, false);
+
+  result = tickActivityFortuneBoard(result.state);
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.board[0].selected, true);
+});
+
+test("fortune board cell-pick flash does not reuse whole-column flash class", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const sceneViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/scene/scene-view.ts"),
+    "utf8"
+  );
+  const mainFlashClassIndex = mainSource.indexOf('"is-flashing-column"');
+  const sceneFlashClassIndex = sceneViewSource.indexOf('"is-flashing-column"');
+  assert.notEqual(mainFlashClassIndex, -1);
+  assert.notEqual(sceneFlashClassIndex, -1);
+
+  const mainFlashCondition = mainSource.slice(
+    Math.max(0, mainFlashClassIndex - 160),
+    mainFlashClassIndex
+  );
+  const sceneFlashCondition = sceneViewSource.slice(
+    Math.max(0, sceneFlashClassIndex - 220),
+    sceneFlashClassIndex
+  );
+  assert.match(mainFlashCondition, /phase === "column-flash"/);
+  assert.match(sceneFlashCondition, /phase === "column-flash"/);
+});
+
+test("fortune board reroll removes selected kinds from the remaining random pool", () => {
+  const activityDefinition = {
+    id: "activity.test.depleted-pool",
+    title: "Pool depletion test",
+    description: "Selected rare cells leave the later random pool.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: row === 0 && column === 0 ? "resonance" : "plain",
+      selected: row === 0 && column === 0,
+      ...(row === 0 && column === 0 ? { selectedOrder: 1 } : {}),
+    };
+  });
+  board[1] = {
+    row: 0,
+    column: 1,
+    kind: "timing",
+    selected: false,
+  };
+
+  const result = tickActivityFortuneBoard({
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 5,
+        wager: 1,
+        phase: "cell-pick",
+        highlightedColumn: null,
+        selectedColumn: 1,
+        flashTicks: 0,
+        pendingDropCount: 1,
+        scanCellKeys: ["0:1"],
+        scanCellIndex: 0,
+        highlightedCellKey: null,
+        pickedCellKey: "0:1",
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 1,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  });
+
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "ready");
+  assert.equal(
+    result.state.runtime.activitySession.board.filter(
+      (cell) => cell.kind === "resonance"
+    ).length,
+    1
+  );
+  assert.equal(
+    result.state.runtime.activitySession.board.filter(
+      (cell) => cell.kind === "resonance" && cell.selected
+    ).length,
+    1
+  );
+  assert.equal(
+    result.state.runtime.activitySession.board.filter(
+      (cell) => cell.kind === "timing" && !cell.selected
+    ).length,
+    2
+  );
+});
+
+test("fortune board plays final selected flash and reroll before result", () => {
+  const activityDefinition = {
+    id: "activity.test.final-animation",
+    title: "Final animation test",
+    description: "Final selection animates before settlement.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: "plain",
+      selected: false,
+    };
+  });
+
+  let result = tickActivityFortuneBoard({
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 1,
+        wager: 1,
+        phase: "cell-pick",
+        highlightedColumn: null,
+        selectedColumn: 0,
+        flashTicks: 0,
+        pendingDropCount: 1,
+        scanCellKeys: ["0:0"],
+        scanCellIndex: 0,
+        highlightedCellKey: null,
+        pickedCellKey: "0:0",
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 0,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  });
+
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "final-flash");
+  assert.equal(result.state.runtime.activitySession.selectedCellKeys.includes("0:0"), true);
+
+  for (let tick = 0; tick < 4; tick += 1) {
+    result = tickActivityFortuneBoard(result.state);
+  }
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "final-reroll");
+
+  for (let tick = 0; tick < 8; tick += 1) {
+    result = tickActivityFortuneBoard(result.state);
+  }
+  assert.equal(result.state.runtime.activitySession?.type, "result");
 });
 
 function withCouncilInDays(state, days = 30) {
@@ -1648,6 +2105,27 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   const hexTextureLayer = yuanmoCampaignMap.layers.find(
     (layer) => layer.id === "map_hex_texture_atlas"
   );
+  const waterNoiseLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_water_noise"
+  );
+  const fogNoiseLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_fog_noise"
+  );
+
+  assert.ok(waterNoiseLayer);
+  assert.equal(waterNoiseLayer.width, 512);
+  assert.equal(waterNoiseLayer.height, 512);
+  assert.equal(
+    waterNoiseLayer.imageUrl,
+    "./assets/maps/yuanmo-water-noise.png"
+  );
+  assert.ok(fogNoiseLayer);
+  assert.equal(fogNoiseLayer.width, 640);
+  assert.equal(fogNoiseLayer.height, 640);
+  assert.equal(
+    fogNoiseLayer.imageUrl,
+    "./assets/maps/yuanmo-fog-noise.png"
+  );
   assert.ok(hexTextureLayer);
   assert.equal(hexTextureLayer.imageUrl, "./assets/maps/tietu.png");
 
@@ -1735,9 +2213,341 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
         ?.imageUrl,
       `${packBaseUrl}assets/maps/tietu.png`
     );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_water_noise")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/yuanmo-water-noise.png`
+    );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_fog_noise")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/yuanmo-fog-noise.png`
+    );
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test("built-in yuanmo campaign map declares shared water noise texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "yuanmo-water-noise.png"
+  );
+
+  assert.match(source, /yuanmo-water-noise\.png/);
+  assert.match(source, /"id": "map_water_noise"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("built-in yuanmo campaign map declares shared fog noise texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "yuanmo-fog-noise.png"
+  );
+
+  assert.match(source, /yuanmo-fog-noise\.png/);
+  assert.match(source, /"id": "map_fog_noise"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("campaign terrain WebGL shader uses separate shared animated water texture files", () => {
+  const rendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+  const shaderRoot = path.join(
+    process.cwd(),
+    "src",
+    "ui",
+    "views",
+    "map",
+    "shaders"
+  );
+  const terrainFragmentSource = fs.readFileSync(
+    path.join(shaderRoot, "campaign-terrain.frag.glsl"),
+    "utf8"
+  );
+
+  [
+    "campaign-terrain.vert.glsl",
+    "campaign-terrain.frag.glsl",
+    "campaign-actor.vert.glsl",
+    "campaign-actor.frag.glsl",
+  ].forEach((shaderFileName) => {
+    assert.equal(fs.existsSync(path.join(shaderRoot, shaderFileName)), true);
+  });
+  assert.match(rendererSource, /waterTextureUrl: string \| null/);
+  assert.match(rendererSource, /campaign-terrain\.frag\.glsl\?raw/);
+  assert.match(rendererSource, /createShaderSource\(terrainFragmentShaderRaw/);
+  assert.doesNotMatch(rendererSource, /uniform sampler2D uWaterTexture/);
+  assert.match(terrainFragmentSource, /uniform sampler2D uWaterTexture/);
+  assert.match(terrainFragmentSource, /uniform float uTimeSeconds/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexBoundaryDistance/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreBands/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreRingAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreEdgeContribution/);
+  assert.doesNotMatch(terrainFragmentSource, /distanceToLandEdge/);
+  assert.doesNotMatch(terrainFragmentSource, /neighborDistance - 0\.92/);
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /return clamp\(\(1\.0 - neighborWater\) \* water/
+  );
+  assert.doesNotMatch(terrainFragmentSource, /getShoreNearAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreShallowAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreMiddleAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getContinuousShoreBands/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleSeaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /getBoundaryEdgeMask/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv/);
+  assert.doesNotMatch(terrainFragmentSource, /float openWater = 1\.0/);
+  assert.match(terrainFragmentSource, /getWaterAmountAtUv/);
+  assert.match(terrainFragmentSource, /getLandAmountAtUv/);
+  assert.match(terrainFragmentSource, /getLandAmountAtCell/);
+  assert.match(terrainFragmentSource, /getLandFacingShoreFade/);
+  assert.match(terrainFragmentSource, /getNearShoreTint/);
+  assert.match(terrainFragmentSource, /getNearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /getTerrainUvOffset/);
+  assert.match(terrainFragmentSource, /getMapUvInsideAmount/);
+  assert.match(terrainFragmentSource, /sampleLandAtDiskOffset/);
+  assert.match(terrainFragmentSource, /sampleSoftLandDisk/);
+  assert.match(terrainFragmentSource, /sampleNearShoreEdgeNoise/);
+  assert.match(terrainFragmentSource, /edgeDistance = clamp\(neighborDistance - centerDistance \+ edgeShift, 0\.0, width\)/);
+  assert.match(terrainFragmentSource, /return 1\.0 - smoothstep\(0\.0, width, edgeDistance\)/);
+  assert.match(terrainFragmentSource, /getLandFacingShoreFade\(point, cell, vec2\(1\.0, 0\.0\), 0\.74, edgeShift\)/);
+  assert.match(terrainFragmentSource, /shoreTint \* water/);
+  assert.match(terrainFragmentSource, /nearSea \* water/);
+  assert.doesNotMatch(terrainFragmentSource, /getNearSeaEdgeContribution/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleLandInDirection/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousLandRing/);
+  assert.doesNotMatch(terrainFragmentSource, /neighborOffset, 6\.10, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /4\.30, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /5\.05, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /getLandAmountAtCell\(cell \+ vec2\(2\.0, 0\.0\), hexScale, mapAspect\) \* 0\.82/);
+  assert.doesNotMatch(terrainFragmentSource, /getLandAmountAtCell\(cell \+ vec2\(3\.0, 0\.0\), hexScale, mapAspect\) \* 0\.62/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(0\.5,/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(-0\.5,/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(1\.0, -0\.5\)/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(-1\.0, 0\.5\)/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.22/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.40/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 2\.65/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 4\.40/);
+  assert.doesNotMatch(terrainFragmentSource, /nearDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /middleDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, max/);
+  assert.match(terrainFragmentSource, /roughOuterRadius = max\(4\.30, 6\.10 \+ edgeShift\)/);
+  assert.match(terrainFragmentSource, /sampleSoftLandDisk\(uv, roughOuterRadius/);
+  assert.match(terrainFragmentSource, /smoothstep\(0\.055, 0\.170, outerLand\)/);
+  assert.match(terrainFragmentSource, /nearShoreEdgeShift = nearShoreNoise \* 0\.12/);
+  assert.match(
+    terrainFragmentSource,
+    /getNearShoreTint\(\s*hexPoint,\s*hexCell,\s*hexScale,\s*mapAspect,\s*water,\s*nearShoreEdgeShift\s*\)/s
+  );
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreTransition =/);
+  assert.match(terrainFragmentSource, /getNearSeaEdgeBand\(\s*vUv,\s*hexScale,\s*mapAspect,\s*water,\s*nearSeaBoundaryEdgeShift/s);
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /vec3 shoreBands = getContinuousShoreBands\(vUv, hexScale, mapAspect, water\)/
+  );
+  assert.match(
+    terrainFragmentSource,
+    /border \* mix\(0\.34, 0\.025, water\)/
+  );
+  assert.doesNotMatch(terrainFragmentSource, /getSharedHexEdgeShoreContribution/);
+  assert.doesNotMatch(terrainFragmentSource, /distanceToSharedEdge/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreRing2Amount/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreRing3Amount/);
+  assert.doesNotMatch(terrainFragmentSource, /getStretchedWaveUv/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleStretchedWaterNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /waveLineA/);
+  assert.doesNotMatch(terrainFragmentSource, /waveLineB/);
+  assert.doesNotMatch(terrainFragmentSource, /getLongWaterWave/);
+  assert.doesNotMatch(terrainFragmentSource, /getDirectionalWaterRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /float ridge = sin/);
+  assert.doesNotMatch(terrainFragmentSource, /segmentNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleNoiseWaterRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /anisotropicUv/);
+  assert.doesNotMatch(terrainFragmentSource, /longNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /waveCrest/);
+  assert.doesNotMatch(terrainFragmentSource, /waveTrough/);
+  assert.match(terrainFragmentSource, /sampleLayeredWaterFlowNoise/);
+  assert.match(terrainFragmentSource, /sampleNearSeaBoundaryNoise/);
+  assert.match(terrainFragmentSource, /coarseNoise/);
+  assert.match(terrainFragmentSource, /fineNoise/);
+  assert.match(terrainFragmentSource, /raggedNoise/);
+  assert.match(terrainFragmentSource, /tornFiberNoise/);
+  assert.match(terrainFragmentSource, /raggedCuts/);
+  assert.match(terrainFragmentSource, /waterFlowNoise/);
+  assert.match(terrainFragmentSource, /secondaryWaterFlowNoise/);
+  assert.match(terrainFragmentSource, /waterFlowHighlight/);
+  assert.match(terrainFragmentSource, /waterFlowShadow/);
+  assert.match(terrainFragmentSource, /waterFlowWave/);
+  assert.match(terrainFragmentSource, /vec3 animatedColor = vec3\(0\.055, 0\.23, 0\.49\)/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryFlow/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryNoise/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryEdgeShift/);
+  assert.match(terrainFragmentSource, /nearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /vec3 nearSeaWater = vec3\(0\.16, 0\.52, 0\.72\)/);
+  assert.match(terrainFragmentSource, /nearSeaAwayFromCoast = nearSeaEdgeBand \* \(1\.0 - nearShoreTint \* 0\.52\)/);
+  assert.match(terrainFragmentSource, /animatedColor = mix\(animatedColor, nearSeaWater, nearSeaAwayFromCoast \* 0\.78\)/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreTransitionWater/);
+  assert.match(terrainFragmentSource, /vec3 nearShoreTintWater = vec3\(0\.24, 0\.70, 0\.38\)/);
+  assert.match(terrainFragmentSource, /animatedColor = mix\(animatedColor, nearShoreTintWater, nearShoreTint \* 0\.42\)/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryEdgeShift = \(nearSeaBoundaryNoise - 0\.5\) \* 2\.10/);
+  assert.match(terrainFragmentSource, /nearSeaEdgeBand = getNearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /nearShoreTint,\s*nearSeaEdgeBand/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreBands/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryFlow/);
+  assert.doesNotMatch(terrainFragmentSource, /staticBandNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /staticShoreLine/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryShift/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBoundaryShift/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryHighlight/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryShadow/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryLineMask/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryFlowNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryFlowNoiseFine/);
+  assert.doesNotMatch(terrainFragmentSource, /animatedBoundaryLine/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreLineMask/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreEdge\s*=/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreLight/);
+  assert.doesNotMatch(terrainFragmentSource, /float vein/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceTexture/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceFlow/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryFlow = vec2\(uTimeSeconds \* 0\.030/);
+  assert.match(terrainFragmentSource, /waterFlow = vec2\(uTimeSeconds \* 0\.030/);
+  assert.match(terrainFragmentSource, /uv \* 6\.4 \+ flow/);
+  assert.match(terrainFragmentSource, /uv \* 13\.5 \+ flow \* 0\.73/);
+  assert.match(terrainFragmentSource, /vec3\(0\.18, 0\.34, 0\.31\) \* waterFlowHighlight \* 0\.82/);
+  assert.match(terrainFragmentSource, /vec3\(waterFlowWave\) \* 0\.16/);
+  assert.doesNotMatch(terrainFragmentSource, /vec2\(0\.92, 0\.38\), 4\.8, 62\.0/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /fineBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /bandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /staticBandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /smoothstep\(0\.74, 0\.96, nearShore\)/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShore \+ staticBandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreBand/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowSeaBand/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBand/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowSeaWater/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaWater/);
+  assert.match(rendererSource, /wrapS: gl\.REPEAT/);
+  assert.match(rendererSource, /requestRender\("dynamic"\)/);
+});
+
+test("campaign fog exploration stays active without the removed shader renderer", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src", "main.ts"), "utf8");
+  const shaderRoot = path.join(
+    process.cwd(),
+    "src",
+    "ui",
+    "views",
+    "map",
+    "shaders"
+  );
+
+  assert.equal(
+    fs.existsSync(path.join(shaderRoot, "campaign-volumetric-cloud.vert.glsl")),
+    false
+  );
+  assert.equal(
+    fs.existsSync(path.join(shaderRoot, "campaign-volumetric-cloud.frag.glsl")),
+    false
+  );
+  assert.equal(fs.existsSync(path.join(shaderRoot, "campaign-fog.vert.glsl")), false);
+  assert.equal(fs.existsSync(path.join(shaderRoot, "campaign-fog.frag.glsl")), false);
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), "src", "ui", "views", "map", "campaign-fog-webgl.ts")
+    ),
+    false
+  );
+  assert.doesNotMatch(mapViewSource, /data-campaign-map-fog/);
+  assert.doesNotMatch(mapViewSource, /campaign-volumetric-cloud/);
+  assert.doesNotMatch(mainSource, /campaign-fog-webgl/);
+  assert.doesNotMatch(mainSource, /syncCampaignMapFogWebGl/);
+  assert.doesNotMatch(mainSource, /setCampaignMapFogCamera/);
+  assert.match(mainSource, /isCampaignMapCoordinateRevealed/);
+  assert.match(mainSource, /revealCampaignMapAroundCoordinate/);
+});
+
+test("campaign map exploration reveals current hex and one neighbor ring", () => {
+  const coordinateSpace = { width: 509, height: 451 };
+  const startCoordinate = { x: 334, y: 318 };
+  const state = createBaseState();
+  const revealedState = revealCampaignMapAroundCoordinate({
+    state,
+    mapId: "map.yuanmo_campaign",
+    coordinate: startCoordinate,
+    coordinateSpace,
+    revealedAtMs: 1000,
+    animateNewHexes: true,
+  });
+  const startHex = coordinateToRoundedHex(startCoordinate, coordinateSpace);
+  const exploration = getCampaignMapFogViewState(
+    revealedState,
+    "map.yuanmo_campaign"
+  );
+
+  assert.equal(exploration.revealedHexKeys.length, 7);
+  assert.equal(exploration.revealedHexKeys.includes(getHexKey(startHex)), true);
+  assert.equal(
+    isCampaignMapCoordinateRevealed({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: startCoordinate,
+      coordinateSpace,
+    }),
+    true
+  );
+  assert.equal(
+    Object.values(exploration.revealingHexStartedAtMsByKey).every(
+      (startedAtMs) => startedAtMs === 1000
+    ),
+    true
+  );
+  assert.equal(
+    isCampaignMapCoordinateRevealed({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: { x: 5, y: 5 },
+      coordinateSpace,
+    }),
+    false
+  );
 });
 
 test("ui contract modules export the reserve contract families", async () => {
@@ -7705,7 +8515,7 @@ test("temple work reaching contribution threshold starts shared map auto advance
           ...withCouncilInDays(createMonkStageState(), 30).runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
           [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 20,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 25,
         },
       },
     },
@@ -7747,26 +8557,88 @@ test("temple work reaching contribution threshold starts shared map auto advance
       actionId: "confirm-start-temple-task:copy-scripture",
     },
   });
+  assert.equal(confirmedWorkResult.sessionState?.overlay, null);
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.playableSession?.playableId,
+    "activity-qte"
+  );
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.playableSession?.integrationId,
+    "playable.activity-qte.house.temple"
+  );
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.activitySession?.type,
+    "fortune-board"
+  );
 
   let qteResult = confirmedWorkResult;
-  for (let round = 0; round < 3; round += 1) {
+  for (let round = 0; round < 10; round += 1) {
+    if (qteResult.sessionState?.overlay?.type === "result") {
+      break;
+    }
+    while (
+      qteResult.gameState.runtime.activitySession.type === "fortune-board" &&
+      qteResult.gameState.runtime.activitySession.wager <
+        Math.min(5, qteResult.gameState.runtime.activitySession.remainingPieces)
+    ) {
+      qteResult = templeHouseHouseModule.dispatch({
+        gameState: qteResult.gameState,
+        characterDefinitions: qteResult.characterDefinitions,
+        houseDefinition: templeHouse,
+        playerCharacterId,
+        sessionState: qteResult.sessionState,
+        request: {
+          type: "action",
+          actionId: "temple-work-board-wager-plus",
+        },
+      });
+    }
     qteResult = templeHouseHouseModule.dispatch({
       gameState: qteResult.gameState,
       characterDefinitions: qteResult.characterDefinitions,
       houseDefinition: templeHouse,
       playerCharacterId,
-      sessionState: {
-        ...qteResult.sessionState,
-        overlay: {
-          ...qteResult.sessionState.overlay,
-          markerPercent: qteResult.sessionState.overlay.targetStartPercent,
-        },
-      },
-      request: { type: "action", actionId: "temple-work-stop" },
+      sessionState: qteResult.sessionState,
+      request: { type: "action", actionId: "temple-work-board-play" },
     });
+    qteResult = templeHouseHouseModule.dispatch({
+      gameState: qteResult.gameState,
+      characterDefinitions: qteResult.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: qteResult.sessionState,
+      request: { type: "tick", tickId: "temple-house-work-qte" },
+    });
+    qteResult = templeHouseHouseModule.dispatch({
+      gameState: qteResult.gameState,
+      characterDefinitions: qteResult.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: qteResult.sessionState,
+      request: { type: "action", actionId: "temple-work-board-play" },
+    });
+    for (let tick = 0; tick < 100; tick += 1) {
+      qteResult = templeHouseHouseModule.dispatch({
+        gameState: qteResult.gameState,
+        characterDefinitions: qteResult.characterDefinitions,
+        houseDefinition: templeHouse,
+        playerCharacterId,
+        sessionState: qteResult.sessionState,
+        request: { type: "tick", tickId: "temple-house-work-qte" },
+      });
+      if (
+        qteResult.sessionState?.overlay?.type === "result" ||
+        (qteResult.gameState.runtime.activitySession?.type === "fortune-board" &&
+          qteResult.gameState.runtime.activitySession.phase === "ready")
+      ) {
+        break;
+      }
+    }
   }
 
   assert.equal(qteResult.sessionState?.overlay?.type, "result");
+  assert.equal(qteResult.gameState.runtime.playableSession, null);
+  assert.equal(qteResult.gameState.runtime.activitySession, null);
   assert.equal(
     getPlayerCharacter(qteResult.characterDefinitions).stamina,
     startingStamina - ACTIVITY_COMPLETION_STAMINA_COST
@@ -11709,4 +12581,87 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.match(mainSource, /interactive\.city-begging\.complete/);
   assert.match(mainSource, /interactive\.activity-qte\.tick/);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
+});
+
+test("campaign coordinate travel builds a multi-step adjacent hex path", () => {
+  const coordinateSpace = { width: 509, height: 451 };
+  const currentCoordinate = { x: 334, y: 318 };
+  const targetCoordinate = { x: 281, y: 325 };
+  const path = createHexTravelPath({
+    currentCoordinate,
+    targetCoordinate,
+    coordinateSpace,
+  });
+
+  assert.ok(path.length > 2);
+  assert.deepEqual(path[0], currentCoordinate);
+  assert.deepEqual(path[path.length - 1], targetCoordinate);
+
+  const hexPath = path.map((coordinate) =>
+    coordinateToRoundedHex(coordinate, coordinateSpace)
+  );
+  for (let index = 1; index < hexPath.length; index += 1) {
+    const previous = hexPath[index - 1];
+    const next = hexPath[index];
+    assert.ok(
+      areHexNeighbors(previous, next),
+      `Expected ${JSON.stringify(previous)} and ${JSON.stringify(next)} to be adjacent hexes`
+    );
+  }
+});
+
+test("campaign coordinate travel avoids blocked water hexes", () => {
+  const coordinateSpace = { width: 120, height: 120 };
+  const startHex = { x: 0, y: 0 };
+  const blockedHex = { x: 1, y: 0 };
+  const targetHex = { x: 2, y: 0 };
+  const passableHexKeys = new Set();
+  for (let y = -2; y <= 2; y += 1) {
+    for (let x = -2; x <= 3; x += 1) {
+      const hex = { x, y };
+      if (getHexKey(hex) !== getHexKey(blockedHex)) {
+        passableHexKeys.add(getHexKey(hex));
+      }
+    }
+  }
+
+  const path = createPassableHexTravelPath({
+    currentCoordinate: hexToCoordinate(startHex, coordinateSpace),
+    targetCoordinate: hexToCoordinate(targetHex, coordinateSpace),
+    coordinateSpace,
+    travelGrid: {
+      passableHexKeys,
+      bounds: { minX: -2, maxX: 3, minY: -2, maxY: 2 },
+    },
+  });
+
+  assert.notEqual(path, null);
+  const hexPath = path.map((coordinate) =>
+    coordinateToRoundedHex(coordinate, coordinateSpace)
+  );
+  assert.equal(
+    hexPath.some((hex) => getHexKey(hex) === getHexKey(blockedHex)),
+    false
+  );
+  assert.ok(hexPath.length > 3);
+  for (let index = 1; index < hexPath.length; index += 1) {
+    assert.ok(areHexNeighbors(hexPath[index - 1], hexPath[index]));
+  }
+});
+
+test("campaign coordinate travel rejects blocked water destinations", () => {
+  const coordinateSpace = { width: 120, height: 120 };
+  const startHex = { x: 0, y: 0 };
+  const targetHex = { x: 1, y: 0 };
+  const path = createPassableHexTravelPath({
+    currentCoordinate: hexToCoordinate(startHex, coordinateSpace),
+    targetCoordinate: hexToCoordinate(targetHex, coordinateSpace),
+    coordinateSpace,
+    travelGrid: {
+      passableHexKeys: new Set([getHexKey(startHex)]),
+      bounds: { minX: -1, maxX: 1, minY: -1, maxY: 1 },
+    },
+  });
+
+  assert.equal(path, null);
 });

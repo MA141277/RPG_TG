@@ -2,6 +2,229 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-08 Character Select Ink Feedback
+
+### Changed
+- 角色选择界面的墨点反馈从 DOM 矩形边缘采样改为图片 alpha 轮廓采样：`main-ui-flow.js` 会优先读取目标控件自身 CSS 背景图，按当前 `background-size` / `background-position` 计算实际绘制区域，再从透明像素边界提取轮廓点和外法线生成墨点。
+- 角色选择界面初始化时会预热角色卡、书签、翻页按钮、返回按钮和开始按钮的轮廓缓存；无可采样图片或图片尚未加载时仍保留旧矩形采样兜底，避免 UI 反馈完全丢失。
+
+### Impact
+- 玩家在角色选择页悬浮或键盘聚焦控件时，墨点点选效果会贴近 UI 图片自身的不规则轮廓，而不是贴住控件外接方框；视觉资产仍由现有 CSS / 布局编辑器背景图维护。
+
+## 2026-07-08 Campaign Map Interaction Stability
+
+### Added
+- 大地图新增可踏足 hex 悬浮反馈层：`map-view.ts` 生成 `data-campaign-hover-hex` SVG overlay，`main.ts` 根据当前 terrain 投影、探索状态、地形通行判定和寻路结果绘制白色六边形描边，`prototype.css` 将其放在云层之上且不接管鼠标事件。
+
+### Changed
+- 大地图 marker 和 marker summary 增加稳定 DOM 身份，`renderAppFrame()` 在地图重绘时像保活 terrain / actor / cloud canvas 一样移植旧 marker 节点，并只同步语义属性，保留 terrain 投影产生的位置样式，减少玩家移动结束时城市/建筑标识被销毁重建造成的刷新感。
+- `docs/architecture.md` 同步大地图 marker 保活、可踏足 hex hover 反馈只读寻路结果、以及 hover 描边位于云层上方的层级契约。
+- 云层 reveal mask 新增上一帧探索纹理与 `uRevealTransition` 过渡；新探索格开洞时按云噪声做溶解式切换，避免云层直接消失。
+- 云层 shader 在已探索空洞内进一步衰减全图空气雾层和孤立云团残留，但不改变洞口边缘云壁的语义来源。
+- 大地图通行网格改为按 `map_ground_types` 的水域材质语义生成，和 terrain shader 的陆地/水体渲染判断对齐；`map_heights` 不再负责寻路通行判定，避免低矮陆地被当成水体。
+- 可踏足 hex 悬浮描边改为几何角点投影、高度锚定到当前 hex 中心，避免角点误采邻格高度导致六边形端点翘起或下陷。
+- 云层空洞内的次级残留层同步衰减，减少已探索核心区里额外覆盖整层薄雾或外云团残影。
+- 云层 reveal mask 的 hex 多边形同样改为角点投影、中心高度锚定，避免 mask 轮廓因角点误采邻格高度而变形。
+- 大地图通行性收紧为 terrain shader 同款“hex 中心材质”语义，并直接使用 `map_ground_types` 原始尺寸采样；岸边水格不再因为角点陆地样本被放行。
+- 云洞核心区的 inner wisp、云影与 outer puff 后叠层统一随空气雾层 keep mask 衰减到 0，避免洞内残留独立薄层。
+- 云洞边缘扰动按视觉反馈恢复旧版单向 offset 采样路径，保留此前更强的云墙撕裂和融合效果。
+- 云洞流动边缘恢复使用 reveal red 通道浅云层生成 `edgeBand` / `shallowZone` / `rimAlpha`；真正的硬六边形块改为从 raw `baseClear` 迁出，核心清空、空气雾和孤立云残留都改读 offset 后的有机 clear field，避免原始 mask 块作为独立透明度分区显露。
+
+### Impact
+- 玩家移动后地图标识节点保持稳定，地图 hover 反馈只提示当前实际可抵达的已探索陆地 hex；低矮陆地按渲染材质参与寻路，云层开图仍由探索状态驱动，视觉过渡更接近云层被逐步拨开的效果。
+
+## 2026-07-07 Campaign Viewport Cloud Shader
+
+### Added
+- 新增大地图视口级云雾 overlay renderer `src/ui/views/map/campaign-cloud-webgl.ts`，通过独立 `data-campaign-map-cloud` canvas 渲染慢速动态云层。
+- 新增 `campaign-cloud.vert.glsl` 与 `campaign-cloud.frag.glsl`，使用连续程序 FBM、billow 云雾变体与 `map_fog_noise` 轻量贴图扰动生成云体密度、明暗层次和轻微自阴影质感。
+- 新增视口空间探索挖空 reveal mask：`map-view.ts` 将当前地图累计 `revealedHexKeys` 传给云层 canvas，`campaign-cloud-webgl.ts` 生成 `uRevealTexture`，`campaign-cloud.frag.glsl` 用它裁切云层 alpha。
+- `campaign-terrain-webgl.ts` 新增只读投影 helper，将 terrain UV 投影到当前视口 client 坐标；云层 renderer 用它在完整视口云层上对齐地图 hex 挖空。
+- `travel-to-coordinate.ts` 新增 `hexToCoordinatePolygon()`，让探索挖空复用 navigation 的尖顶 axial hex 几何。
+
+### Changed
+- 大地图初始相机改为以玩家当前坐标为屏幕中心，默认缩放改为 40x；地图 reset 会回到同一 home camera。
+- `campaign-terrain-webgl.ts` 新增按地图坐标生成居中相机的 helper，避免 `main.ts` 复制 terrain 投影矩阵细节。
+- 未探索 campaign marker 在 view model 层标记为不可交互，渲染时不再带 `data-map-node-id`，并通过 disabled / pointer-events 屏蔽点击和 hover 详情。
+- campaign 地形通行网格从 hex 中心单点高度判定改为 hex 区域多点采样：中心为明确陆地或区域内有足够陆地样本才可通行，减少低矮陆地被误判为水体导致无法寻路的问题。
+- `docs/architecture.md` 收敛为地图模块责任、数据流和层级契约，不再记录云层 shader 的噪声、距离场、阈值等实现细节。
+- `map-view.ts` 在 `c-campaign-map` 视口内生成云雾 canvas，并把 marker 悬浮详情拆成独立 overlay；`prototype.css` 将云层限制在地图视口中，`pointer-events: none`，层级压过地图建筑点本体，但低于 marker 悬浮详情、debug 控件、全局 UI 和确认 modal。
+- `campaign-terrain-webgl.ts` 的地形投影同步不再给 marker 本体或玩家写入深度排序高层级；marker、玩家 DOM sprite 和 actor canvas 固定在云层下方，只有 marker 悬浮详情固定在云层上方。
+- 云雾 shader 重构为烟雾式密度场：云体主体形状、团块边界、明暗和 reveal 边缘撕裂由连续 FBM、billow 变体与贴图扰动主导，Worley/胞体距离场只保留为低权重团块破碎，不再形成可见细胞纹。
+- 云雾 shader 移除导致屏幕斜向条纹的剪切雾丝层，改用各向同性的细粒度 puff / vapor breakup 扰动补充云面细节；最终 alpha 遮挡表达保持由 shader 末端统一控制。
+- 云雾主密度噪声从单个低频 `coverage` 门控改为三组独立中频 puff field 的加权密度场，低频噪声只参与域扭曲和明暗；避免 `max()` 并集把整屏填成白雾，也避免通过常量保底掩盖采样不均。云层颜色同步调回偏亮白的云体反照率。
+- 云雾密度拆成连续 `overcast` 覆盖层和 `cloudHeightField()` 高度层，屏幕覆盖由连续云幕维持，云团形状不再依赖透明度空洞。
+- 云雾颜色层改为基于高度场梯度的近似法线光照：通过邻近采样估算坡度，再由 `slopeLight`、`ambientOcclusion`、`selfShadow` 和 `cloudHighlight` 生成亮面与软阴影，避免“白底叠黑块”或纯白无结构。
+- 云雾光照继续加入沿光照方向的高度差采样：`upwindHeight` 产生云体投影式软阴影，`downwindHeight` 产生背光侧亮边，让满屏云幕内部出现可读的明暗起伏，而不是只有均匀白色。
+- 云雾 shader 提高高度场细节和阴影动态范围：`microShadow` / `microHighlight` 参与 RGB 细节，阴影色加深但最终 alpha 遮挡表达保持不变。
+- `campaign-cloud.frag.glsl` 顶部新增云层调参表，集中暴露 `CLOUD_SAMPLE_SCALE`、`CLOUD_FLOW_SPEED`、`CLOUD_TEXTURE_SAMPLE_SCALE`、细节/阴影/高光强度、reveal 距离场侵蚀和浅云参数，便于后续直接调整云团大小、噪声采样区域、流速和空洞形态。
+- 云层动态从单纯移动噪声 offset 改为 `buildCloudSpace()` 平流采样坐标：低频风向、缓慢 curl 和 flow warp 共同驱动云体高度场、贴图细节和 reveal 边缘，使整片云层具有连续慢速流动。
+- `campaign-terrain-webgl.ts` 新增只读 `getCampaignTerrainCamera()`，`campaign-cloud-webgl.ts` 每帧将当前地图相机作为 `uMapCamera` 传入云层 shader；云层采样空间按 `offset / scale` 的有效相机平移做弱反向采样偏移、按相机 scale 做部分缩放，保持气象层自身流动的同时响应地图拖拽和缩放，并避免单纯缩放因 offset 同步变化产生额外漂移。
+- 探索空洞从单一 reveal alpha 裁切改为距离场驱动：`campaign-cloud-webgl.ts` 先栅格化已探索尖顶 hex 联合区域，再用边界距离场写入 `uRevealTexture`，shader 只负责用云阻力噪声侵蚀 `clearMask`，不再额外叠加完整云墙环。
+- `campaign-cloud-webgl.ts` 的 reveal mask 不再通过核心/外肩/外圈多层 polygon alpha 与 canvas blur 生成；red 通道改为洞外距离带浅云近场，green 通道改为清空 signed-distance 场，texture alpha 固定为 255 以避免 canvas 预乘 alpha 吃掉语义通道。
+- 云洞外侧浅云近场改为距离场语义：`CLOUD_REVEAL_FIELD_*_RATIO` 根据当前投影 hex 半径生成内清空、外清空和浅云距离带，`REVEAL_SHALLOW_*` 在 shader 中只把它解释为浅云区，外圈之外恢复当前深云层。
+- 浅云层从“深云降透明度 / RGB 染色”改为独立稀疏云体：`sampleShallowCloudLayer()` 使用更高覆盖阈值、更小 puff 采样和自身明暗来生成少量浅云团；主合成在浅云语义区降低深云保留量，再叠加浅云层，避免形成均匀浅白盘或透明度锐减的假过渡。
+- 浅云到深云、浅云到空洞的过渡改为 reveal 语义场与 `cloudResistance` 云阻力共同决定云体替换比例；边界处会按云团/细节噪声破碎，而不是只依赖 smoothstep 圆滑羽化。
+- 修正浅云密度场过稀的问题：浅云层改用更符合当前高度场分布的成云阈值，并新增 `puffPresence` 云团存在场与干区削减场，让浅云区出现少量可见云团，而不是完全无云或只靠 alpha 提亮。
+- 云洞边缘移除独立 `cloudWall` 合成层；边界厚度现在只能来自距离场 clear mask 被云阻力噪声局部侵蚀，以及浅云层对深云层的替换，避免截图中那种预制白色厚环。
+- 云洞 shader 移除低 alpha `discard`，让透明边缘继续走正常 alpha blend，避免在云洞边界重新切出像素级硬边。
+- 云洞边缘从“mask 加少量噪声扰动”改为“开洞压力与云阻力对抗”：`cloudResistance` 由大团块、billow 扇贝状云缘、细节纹理和云丝纹理组成，密云会咬住边界形成残留云壁，薄云才会被打开，确保 reveal 边缘能看到实际噪声轮廓。
+- reveal field 删除外肩半径和 blur 管线，避免 CPU mask 把边界预先抹成圆滑轮廓或同心厚环；自然边缘应主要来自 signed distance 与 shader 云体密度对抗。
+- 云洞内部移除独立丝状残雾层，`inwardWisps` 不再增加洞内透明材质；云壁不再对 RGB 做压暗/染色，只通过较低 alpha 保留边缘厚度，避免云洞边缘发黑。
+- 云层动画时间改为 renderer 启动后的相对秒数，避免直接把过大的 `performance.now()` 传入 mediump fragment shader 导致慢速流动精度下降。
+- 地图重绘时保留云层 canvas，与 terrain/actor canvas 一起从旧 DOM 移植到新 DOM；`campaign-cloud-webgl.ts` 不再因玩家移动重建 WebGL program 或重载噪声贴图，只同步新的 `data-*` 属性和 reveal texture。
+- `campaign-cloud-webgl.ts` 的 reveal mask 投影 root 改为每次同步时动态解析，确保保活 canvas 移植到新地图 DOM 后仍使用当前 viewport 投影。
+- 云层继续保持完整视口 overlay，不移动回地图 transform；探索挖空改为屏幕空间 mask，随 terrain 相机缩放、拖拽、视口尺寸和累计探索集合重新生成。
+- reveal mask 的核心区域完全透明，外侧宽羽化带由 shader 中的云噪声扰动，避免六边形硬边或规则描边感。
+- 修正 reveal mask 的纹理采样方向：离屏 2D canvas 的原点在左上，fragment shader 的屏幕 UV 原点在左下，`campaign-cloud.frag.glsl` 采样 `uRevealTexture` 时翻转 Y 轴，避免挖空区域上下错位。
+- 云雾合成按参考图重新拆成连续底雾、外围厚云团、洞口灰雾和稀疏浅云四个视觉层；底雾只负责基础遮挡和空气感，外围厚云团用低频圆润云包与局部梯度光照生成亮云顶、软阴影和缓慢流动。
+- `campaign-cloud.frag.glsl` 新增 `sampleOuterCloudBankField()`、`sampleOuterPuffCloudLayer()` 和 `sampleApertureHazeLayer()`，让洞口附近不再只靠透明度羽化，而是由云团高度场、浅云距离带和 clear mask 共同决定参考式云洞外缘。
+- `campaign-cloud-webgl.ts` 放宽 reveal 浅云距离场，给已探索区外侧提供更宽的灰雾/浅云承接区；中心清空仍由 green 通道 signed-distance field 控制，地图 UI 点击和寻路语义不变。
+- 按本地专栏文章的 mask 桥接思路重做云洞路径：云层 shader 先用双向流动的云纹理场采样，再把同一份云灰度场用于扰动 reveal mask UV，最后用 `clampAndPowValue()` 分别重映射洞口边缘和核心清空区。
+- 云洞合成新增轻量“投影在前、云体在后”的单 pass 模拟：偏移采样 reveal mask 生成很弱的云体厚度影，但不再形成独立黑色云墙；洞内只保留低强度、由团块噪声触发的零散 wisps，移除完整半透明膜。
+- 浅云距离场从过宽外圈收回到更接近已探索区外 1-2 圈的语义范围，深云区重新由低底雾加高 alpha 团块云主导，避免整屏浅雾导致地图大面积透出或白茫茫一片。
+- `main.ts` 接入 `syncCampaignCloudWebGl()`；云层只作为视觉 renderer 消费探索状态生成透明 mask，不修改点击、寻路、地形高度、水体 shader 或通行网格。
+- `docs/architecture.md` 更新为当前活动的视口云雾 overlay 契约，替换此前“当前不启用云雾 shader renderer”的说明。
+
+### Impact
+- 大地图现在有独立、缓慢动态的视口气象云层，并会在玩家累计探索记录覆盖的 hex 上挖空；现有探索机制已在玩家走过的 hex 及其相邻一圈写入 `revealedHexKeys`，云层 renderer 只消费这个累计结果。
+
+## 2026-07-07 Campaign Fog Shader Removal
+
+### Changed
+- 删除当前云雾 shader 渲染实现：移除 `campaign-fog-webgl.ts`、`campaign-volumetric-cloud.vert.glsl`、`campaign-volumetric-cloud.frag.glsl`，并停止在大地图 markup 中生成 `data-campaign-map-fog` overlay canvas。
+- 保留迷雾探索功能本身：`runtime.mapExplorationByMapId`、进入新 hex 解锁周围一圈、未探索 hex 点击屏蔽和移动路径解锁逻辑继续存在。
+- `map_fog_noise` 内容资产暂时保留为后续视觉重做的资源入口，但当前没有活动 fog shader 消费它。
+
+## 2026-07-07 Campaign Fog Volumetric Cloud Adaptation
+
+### Changed
+- 大地图迷雾 shader 替换为参考式体积云模型：使用原版 procedural `hash3D`/`noise3D`/`fbm`/伪 Worley、44 步吸收式 raymarch、相位光照和 3 步自阴影生成云层质感。
+- 明确“挖空”语义只属于探索可见区域：`revealHole`/`holeSoftness` 由 reveal mask 驱动，用于从云层中扣出已探索地图块和边缘羽化；未探索云层内部不再因为 hollow/noise 露出底图。
+- 删除旧的 `campaign-fog.*.glsl` shader 文件，新增 `campaign-volumetric-cloud.vert.glsl` 与 `campaign-volumetric-cloud.frag.glsl`；`campaign-fog-webgl.ts` 只保留 renderer 职责并导入新的体积云 shader。
+- 迷雾 renderer 从平面 `createFogSheetMesh` 改为 cube volume mesh，并向 shader 传入原版风格的 `u_time`、`u_cameraPosition`、`u_hollowness`、`u_softness`、`u_density`、`u_detail`、`u_absorption` uniforms；大地图 reveal mask 只在最终 alpha 上裁切已探索区域。
+- 修正体积云空间归属：云盒顶点拆分为大地图投影坐标和体积云局部坐标，投影复用 terrain 矩阵并覆盖真实 campaign map 坐标范围，删除相机前方/屏幕空间云块矩阵。
+
+## 2026-07-06 Campaign Fog Shader
+
+### Added
+- 新增统一迷雾噪声贴图 `map_fog_noise`，内置元末地图与朱元璋 scenario pack 都通过地图 layer 引用同一类 640x640 可平铺 PNG 资产。
+- 新增独立大地图迷雾 WebGL overlay renderer 与独立 shader 文件：迷雾覆盖 terrain、城市标记和 actor/player 层，但不覆盖地图 debug UI。
+- 新增 campaign 地图探索状态 `runtime.mapExplorationByMapId`：玩家所在 hex 及一圈邻居会被记录为已探索，新进入的 hex 会记录消散开始时间。
+- 新增回归测试，覆盖迷雾资源 layer、content pack 路径解析、独立 fog shader 管线和探索状态解锁逻辑。
+
+### Changed
+- 大地图点击现在会先检查目标 hex 是否已探索；未探索迷雾格不会触发城市 marker 移动或空地旅行，水格不可点击/不可踏足逻辑保持由通行网格处理。
+- 玩家沿六边形路径移动时会逐步解锁路径中经过的 hex 及其一圈，fog renderer 使用 reveal texture 渲染深雾、浅雾和新格子的慢速消散。
+- 迷雾噪声贴图替换为用户提供的 `640x640` `noise_3.png`，内置地图与朱元璋 scenario pack 的 `map_fog_noise` layer 元数据同步为真实尺寸。
+- 迷雾 renderer 改为单张连续 overlay 雾面，不再加载高度图或按单个 hex 生成雾层 mesh；hex reveal mask 只负责透明洞口、浅雾范围和消散 alpha。
+- 迷雾动态改为持续、缓慢的噪声贴图 UV 平移；即使没有新格子正在消散，雾面也会保持整体漂移，不用明暗闪烁假装动态。
+- 迷雾 shader 的 reveal 边界距离场改为与大地图真实竖向 hex 一致，并增强雾面主体的灰白云层密度和对比，避免远处未知区域像一层过浅白膜。
+- 迷雾云层改为纯白遮挡层：噪声只驱动 alpha 厚薄和云纹，不再给云层混入灰蓝颜色；深雾区域保持高 alpha 以遮挡下方地图内容。
+- 修正迷雾 alpha 合成：浅雾/深雾先各自按云纹计算遮挡强度，再由已探索透明洞口裁切；不再用深雾 mask 乘掉浅雾层，避免整张地图变成几乎不遮挡的白色薄膜。
+- 删除上一版叠加式云雾公式，重建为更直接的纯白云层模型：移动噪声采样只生成 `cloudShape`，再分别映射为未知区高遮挡和边缘浅雾 alpha，降低后续视觉调参复杂度。
+- 按参考图重新实现云雾视觉：fog shader 恢复使用 `map_fog_noise` 与 `uTimeSeconds` 生成缓慢移动的纯白云团；已探索区域由 reveal mask 硬切为完全透明，云雾只在未探索侧和边缘外侧出现。
+- 云雾密度模型曾改为低频云团、中频云卷和高频纤维三层噪声组合；后续体积云版本已移除固定未知区 alpha 底膜，避免读成半透明白膜。
+- 云雾渲染改为参考式体积云模型：fog shader 使用 FBM、伪 Worley、共享噪声贴图、吸收式步进和简化自阴影生成云体；探索区域通过 `revealHole`/`holeSoftness` 从云层中开窗，挖空只服务可见地图区域，不在未探索云体内部打洞。
+- 大地图 renderer 架构继续保持语义分层：水体视觉仍在 terrain shader 内，迷雾作为独立 overlay shader 消费探索状态，不参与寻路、地形高度或水体判断。
+
+### Impact
+- 迷雾状态进入可保存 runtime 数据；旧 runtime 没有 `mapExplorationByMapId` 时按空探索状态兼容处理。
+- 后续可替换 `map_fog_noise` 调整雾面质感；运行时只维护一张 compact reveal mask，不为单个格子生成独立贴图或独立雾面几何。
+
+## 2026-07-06 Campaign Water Shader Texture
+
+### Added
+- 新增统一水体噪声贴图 `map_water_noise`，内置元末地图与朱元璋 scenario pack 都通过地图 layer 引用同一类 512x512 可平铺 PNG 资产。
+- 大地图 WebGL terrain shader 新增 `uWaterTexture` 与 `uTimeSeconds`，水面在 fragment shader 中使用同一张水纹贴图双层滚动采样，形成轻微动态水纹。
+- 新增回归测试，锁定 scenario pack 水纹资产路径、内置地图水纹 layer，以及 renderer 的统一水纹 texture/time uniform 契约。
+
+### Changed
+- 大地图水体颜色现在会依据周围六边形材质采样计算近岸程度：靠近陆地的水体更浅、更绿，深水保持偏蓝。
+- 近岸浅色不再按完整六边形块整格铺开，而是按当前片元到陆地相邻边的距离形成边缘渐变；水纹噪声采样频率提高，避免水面退化成低频纯色块。
+- 大地图 WebGL shader 已从 `campaign-terrain-webgl.ts` 的内嵌模板字符串拆到 `src/ui/views/map/shaders/*.glsl`；renderer 只负责 raw import 与少量地图常量占位符替换。
+- 浅色近岸边缘范围扩大，水波采样频率、速度和明暗扰动增强，使动态水纹在大地图缩放下更明显。
+- 水纹采样改为方向拉伸坐标并沿纹理长轴做轻量平滑，水面纹理从碎噪声改为更长的条状波纹。
+- 近岸浅色改为近岸线、浅海线、深海线三层水色带，并采样更远的陆地邻域，使岸边浅色范围更粗、更有层次。
+- 修正水体 shader 的过度拉伸噪声与圆形近岸扩散：波纹改为连续长波函数，近岸扩散改用 hex 边界距离，并明确保留近岸、浅海、中层水域三段颜色。
+- 海域水体修正为完整 hex ring 采样岸线距离，并移除交叉阈值波线，避免大面积海面出现棋盘格水纹。
+- 水体 shader 移除手写正弦波线，改为统一水体噪声图的方向拉伸多层采样，并增加开放海面的噪声明暗颗粒；近岸第一层改按当前水格到共享 hex 边的距离计算，后续海色边界用更宽的低频噪声扰动过渡。
+- 水体 shader 的海色分层改以连续 UV 上的 12 向软联合岸线采样为主，扩大第二层浅海覆盖范围；水面 hex 网格线强度大幅降低，噪声波纹对比和明暗扰动增强，减少六边形切分导致的块内断裂。
+- 水体 shader 移除了不再参与渲染的旧 hex-ring 岸线函数，避免后续维护时重新把海色分层绑定到单个六边形块。
+- 水体波纹调回慢速、克制的单主方向噪声流：细节层改为同向轻扰动，降低 crest/trough 对比、表面明暗扰动和所有时间偏移速度，避免海面出现过强、过快、交叉流动的观感。
+- 水体海色分界线新增独立慢变噪声漂移；近岸绿色层缩小为一格内的岸边缘效果，避免绿色浅岸带向外海过宽扩散。
+- 水体岸线采样改回与真实大地图六边形 mesh 一致的 6 个邻接方向，移除导致约 30 度错位的半格方向采样；海色分界噪声改为直接扰动岸线采样半径，使浅海/深海边界形状随时间缓慢漂移。
+- 水体 shader 删除海岸线噪声、近岸浅色层和浅海/中海/深海分界噪声，仅保留统一水色上的动态水波噪声；水波改用此前更明显的双层滚动噪声采样，并作为全水域表面动态效果叠加。
+- 水体 shader 新增连续宽近海区：贴陆地的绿色近岸线继续按真实相邻 hex 共享边计算，不参与噪声扰动；浅海/深海的外缘改用连续 UV 多方向岸距采样，并叠加独立 `nearSeaBoundary` 粗糙撕纸状动态噪声，避免外缘被六边形格子切分。
+- 水体浅海外缘采样从固定方向/固定半径的 max 命中改为连续 UV 软采样盘，并让越界 UV 不再计入陆地邻近度，修复远海点阵、射线状浅色碎片和地图边缘异常浅海带。
+- 水体近岸线删除此前的实心绿色线、过渡层和 core 阈值分层，重做为单层偏鲜绿 tint：仍按真实相邻 hex 边生成范围，但从陆地边缘向水中平滑衰减，并加入轻微动态噪声位移，避免锐化描边和硬绿墙。
+- 水体视觉仍只属于渲染层；水格不可点击、不可踏足、寻路避水继续由 `map_heights` passable hex 网格与 navigation 层负责。
+
+### Impact
+- 设计侧可通过 `map_water_noise` 替换水纹资产来调整大地图水体质感；运行时不会为单个水格生成独立贴图，避免引入逐格资源开销。
+
+## 2026-07-06 Campaign Hex Travel Path
+
+### Added
+- `src/application/navigation/travel-to-coordinate.ts` 新增 campaign 坐标到六边形路径的纯逻辑转换：点击目标会先映射到与 WebGL 地形一致的 axial hex 坐标，再生成相邻 hex 路径。
+- 新增回归测试，锁定 campaign 长距离移动必须产出多步相邻六边形路径，而不是只返回起点和终点。
+- 新增基于 `map_heights` 图层的 passable hex 网格：水域 hex 不进入通行集合，navigation 层通过 A* 在可通行 hex 上避开水格。
+- 新增回归测试，锁定被阻塞的水格不会出现在路径中，且水面目标会被判定为不可达。
+
+### Changed
+- `src/main.ts` 的大地图点击移动改为按路径分段播放，保留原有取消、到达城市确认与移动后推进 1 个时段的行为。
+- 大地图空地点击现在会先检查目标 hex 是否可通行；水格点击不会发起旅行。城市/标记移动也会通过同一 passable grid 校验，避免角色踏上水面。
+- `docs/architecture.md` 明确：UI 点击层只提交目标坐标，地图路径必须由 application navigation 层生成，不能在视图层或主入口重新实现直线插值。
+- `docs/architecture.md` 明确：campaign 地图通行性必须来自地形资产采样，不要在 gameplay 代码里手写水格坐标。
+
+### Impact
+- 当前大地图点击寻路会沿六边形格逐段移动并避开水域；后续接入道路、山地等通行成本时，可以继续扩展同一个 navigation 路径生成模块。
+
+## 2026-07-07 Campaign Volumetric Fog Of War
+
+### Added
+- 大地图新增 `runtime.mapExploration` 统一探索状态，用 `revealedHexKeysByMapId` 持久记录各地图已解锁 hex。
+- 新增 campaign hex 坐标工具和地图探索应用层 helper，玩家初始位置与移动落点会解锁脚下及周围一圈六边形。
+- 大地图 WebGL 增加独立 fog canvas/pass，用 reveal mask texture 与分层噪声渲染体积云式战争迷雾；已探索和玩家周围一圈区域保持无云可见。
+
+### Changed
+- 地图 view model 会把当前地图探索状态传给 campaign map，渲染层不再自行决定 gameplay 可见性。
+- campaign terrain canvas 保留逻辑扩展到 fog canvas，并在保留旧 canvas 时同步新的 data 属性，避免移动后 mask 不刷新。
+- fog shader 调整为轻量伪体积云，使用基础形状、细节侵蚀、Beer 吸收和 powder 高光思路；fog mesh 只绘制顶面，避免重新出现六边形侧墙块状云。
+- 当前暂时关闭 fog canvas 输出，保留探索状态、解锁逻辑和 shader 代码，后续可以通过 map view 开关恢复显示。
+
+### Impact
+- 战争迷雾成为共享游戏状态的一部分，后续存档接入后可以自然保存探索进度。
+- 当前实现保留为独立 WebGL 方案，不依赖外部参考工程或 Unity 工具链；后续可单独替换为真正 3D 噪声 texture 或更完整的 ray march。
+
+## 2026-07-07 Generic Activity Fortune Board Minigame
+
+### Added
+- 新增 `fortune-board` activity session contract，用于通用活动 fallback 的 5x5 棋盘落子玩法，保留 `activity-qte` playable id 与 legacy compatibility action seam。
+- 新增 scene activity overlay 的棋盘 UI：开局按 `天时 / 顺意 / 周全 / 灵犀 / 奇闻 / 平` 分布棋格，玩家用左右按钮调整本轮珠数，点击游玩开始列高亮，再次点击选列落子。
+- 新增 `playable.activity-qte.house.temple` integration，使寺庙 house work 可以通过 shared playable runtime 启动同一个 fallback 玩法。
+
+### Changed
+- `generic.qte` 启动路径现在默认创建 `fortune-board` session，不再创建停点式 `qte-bar` session；旧 `qte-bar` 和上一版 `work-sequence` 类型仍保留为兼容路径。
+- `interactive.activity-qte.play` / `wager-minus` / `wager-plus` 现在经 shared playable runtime 推进棋盘扫描、选列、闪烁、落子、重掷和结算。
+- 棋盘结算按被选中格子计算：每格基础 1 分，`天时 / 顺意 / 周全 / 平` 三连分别额外给 10 / 6 / 4 / 1 贡献，`灵犀` 每枚追加 3 枚棋子，`奇闻` 先记录为待补特殊事件。
+- 选列后的动画拆为双闪、逐格高亮、随机定格和单枚落子；列扫描与列内扫描 tick 缩短到 0.5 秒，多枚棋子会重复该流程，列内空间不足时未落下的棋子返还。
+- `fortune-board` session 新增 `animationTickMs`，overlay 新增“间隔”滑条，玩家可在 250-1000ms 内调整列扫描、列内扫描和阶段 tick 速度；寺庙 house-hosted fallback 会同步重启自己的 work interval，避免继续沿用旧的 1000ms。
+- 开始列扫描时不再立刻点亮第一列，而是先进入 scanning 状态并等待下一次 tick 点亮，避免第一次切换视觉上比后续切换更快。
+- 列内扫描现在先确定结果再播表现：2/3 概率正向到目标后停下，1/3 概率继续反向复扫；第二次同样 2/3 概率停下，否则第三次正向必定停在既定目标。
+- 未选中的棋格重掷时改为棋格自身遮罩动画：旧结果柔边矩形在 1 秒内向下移出棋格，每格有 0-1 秒错峰延迟；全部移出后停半秒，新结果再以同样错峰节奏下翻进入；即使新旧品质相同也会按 `rerollCount` 播放，动画结束前不提前显示新格面。
+- 棋盘重掷牌池改为扣除已选棋格后的剩余池：例如 `灵犀` 被选中后后续不再出现，`天时` 被选中一枚后后续池内只剩两枚。
+- 最后一枚棋子选中后不再立即退出，先让所有已选棋格闪烁，再让未选中棋格走一次遮罩重掷动画，之后才返回结算。
+- fortune board overlay tick 现在优先同步既有 DOM 节点的棋格 class、文案和按钮状态，不再为了高亮变化重建包含按钮的整块 HTML。
+- 列内命中的棋格现在会在 `cell-pick` 阶段保留 4 个 tick，并通过 `pickFlashActive` 驱动两次亮起后才结算；重掷遮罩期间父格子会立即移除旧品质 class，旧品质只保留在下滑伪元素中，且伪元素铺满棋格，避免旧格面残留或动画矩形缩水。
+- 寺庙帮忙类工作不再启动 house-local `qte-bar` timer；确认工作后会写入 `runtime.playableSession` / `runtime.activitySession`，由 `activity-qte` playable 推进棋盘玩法，完成后再回到寺庙模块按棋盘分数结算贡献、体力、时间和化缘解锁。
+- `HouseOverlayViewModel` 增加 `fortune-board` 结构化 overlay，供 house view 渲染 shared activity session，不需要把棋盘玩法复制成寺庙私有 overlay state。
+
+### Impact
+- 后续缺少专属 handler 的场景活动会进入新的棋盘落子小游戏，而不是默认停点 QTE。
+- 寺庙工作现在和场景 fallback 共享同一个玩法机制；以后改 `generic.qte` / `activity-qte` 的棋盘规则时，场景 fallback 和寺庙工作会一起受益。
+- 酒馆等其他 house-local `qte-bar` overlay 尚未替换，后续若要替换应继续通过 shared playable handoff 迁移。
+
 ## 2026-07-06 Fail-Closed Progress-Driven Governance Spec
 
 ### Added

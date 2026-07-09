@@ -259,7 +259,11 @@ function getActiveInteractiveSession(
     };
   }
 
-  if (kind === "activity-qte" && state.core.runtime.activitySession?.type === "qte-bar") {
+  if (
+    kind === "activity-qte" &&
+    state.core.runtime.activitySession != null &&
+    state.core.runtime.activitySession.type !== "result"
+  ) {
     const source = {
       type: "scene" as const,
       sceneId: state.core.scene.activeSceneId ?? "scene.unknown",

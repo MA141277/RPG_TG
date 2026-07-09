@@ -1,5 +1,9 @@
 import type { CharacterDefinition, CharacterId } from "./character";
 import type { ActivityDefinition } from "./activity";
+import type {
+  ActivityFortuneBoardCell,
+  ActivityFortuneBoardTripletReward,
+} from "./activity-session";
 import type { GameState } from "./game-state";
 import type { HouseDefinition } from "./house";
 import type { HomeHouseSessionState } from "./house-modules/home-house-session";
@@ -449,6 +453,33 @@ export type HouseOverlayViewModel =
       clearLabel: string;
       finishActionId: string;
       finishLabel: string;
+    }
+  | {
+      type: "fortune-board";
+      title: string;
+      taskLabel: string;
+      board: ActivityFortuneBoardCell[];
+      remainingPieces: number;
+      wager: number;
+      phase: string;
+      highlightedColumn: number | null;
+      selectedColumn: number | null;
+      flashActive: boolean;
+      pickFlashActive: boolean;
+      highlightedCellKey: string | null;
+      pickedCellKey: string | null;
+      selectedCellKeys: string[];
+      score: number;
+      baseScore: number;
+      tripletRewards: ActivityFortuneBoardTripletReward[];
+      resonanceCount: number;
+      rumorCount: number;
+      rerollCount: number;
+      animationTickMs: number;
+      speedFieldId: string;
+      playActionId: string;
+      decreaseWagerActionId: string;
+      increaseWagerActionId: string;
     }
   | {
       type: "qte-bar";

@@ -12,6 +12,7 @@ release/
 *.log
 
 # Large external/reference checkouts and downloaded mod assets
+cloud_tool/
 map/ZeromaX-s-Playground-master/
 map/yuan mo feng yun lu/
 map/*.mov

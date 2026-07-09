@@ -1,8 +1,19 @@
+import type {
+  CoordinateSpace,
+  GridCoordinate,
+  HexTravelGrid,
+} from "../../../application/navigation/travel-to-coordinate";
+import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
+import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
+import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
+import terrainVertexShaderRaw from "./shaders/campaign-terrain.vert.glsl?raw";
+
 type CampaignTerrainInput = {
   canvas: HTMLCanvasElement;
   textureUrl: string;
   heightUrl: string;
   materialUrl: string;
+  waterTextureUrl: string | null;
   renderMode: "terrain" | "actor";
 };
 
@@ -118,6 +129,18 @@ const CITY_DEPTH_MESH_HEIGHT_SCALE = 0.034;
 const CITY_DEPTH_MESH_BASE_LIFT = 0.0015;
 const CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE = 2 / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE);
 const CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE = 2 / HEX_TERRAIN_SCALE;
+const WATER_ANIMATION_FRAME_INTERVAL_MS = 1000 / 24;
+const vertexShaderSource = createShaderSource(terrainVertexShaderRaw, {
+  __HEIGHT_SCALE__: HEIGHT_SCALE.toFixed(2),
+});
+const fragmentShaderSource = createShaderSource(terrainFragmentShaderRaw, {
+  __GRASS_AMBIENT_LIGHT__: GRASS_AMBIENT_LIGHT.toFixed(2),
+  __GRASS_TEXTURE_DETAIL__: GRASS_TEXTURE_DETAIL.toFixed(2),
+  __HEX_MAP_ASPECT__: HEX_MAP_ASPECT.toFixed(4),
+  __HEX_TERRAIN_SCALE__: HEX_TERRAIN_SCALE.toFixed(1),
+});
+const actorVertexShaderSource = actorVertexShaderRaw;
+const actorFragmentShaderSource = actorFragmentShaderRaw;
 export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
   rotationDegrees: 0,
   pitchDegrees: 0,
@@ -143,11 +166,36 @@ export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
 };
 const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
 
-type CampaignTerrainCamera = {
+export type CampaignTerrainCamera = {
   scale: number;
   offsetX: number;
   offsetY: number;
 };
+
+export function createCampaignTerrainCameraCenteredOnCoordinate(input: {
+  coordinate: GridCoordinate;
+  coordinateSpace: CoordinateSpace;
+  scale: number;
+}): CampaignTerrainCamera {
+  const safeScale = Math.max(input.scale, 0.1);
+  const u = input.coordinate.x / Math.max(input.coordinateSpace.width, 1);
+  const v = 1 - input.coordinate.y / Math.max(input.coordinateSpace.height, 1);
+  const worldPoint = createTerrainWorldPoint(u, v, 0);
+  const scaledX = worldPoint[0] * TERRAIN_SCALE;
+  const scaledY = worldPoint[1] * TERRAIN_SCALE;
+  const scaledZ = worldPoint[2];
+  const tiltCos = Math.cos(CAMERA_TILT_RADIANS);
+  const tiltSin = Math.sin(CAMERA_TILT_RADIANS);
+  const tiltedY = scaledY * tiltCos - scaledZ * tiltSin;
+  const cameraTranslateX = -scaledX;
+  const cameraTranslateY = -tiltedY;
+
+  return {
+    scale: safeScale,
+    offsetX: Math.round(cameraTranslateX * safeScale / CAMERA_OFFSET_UNIT),
+    offsetY: Math.round(-cameraTranslateY * safeScale / CAMERA_OFFSET_UNIT),
+  };
+}
 
 type CampaignTerrainRenderer = {
   canvas: HTMLCanvasElement;
@@ -158,9 +206,13 @@ type CampaignTerrainRenderer = {
   projectionInput: {
     canvas: HTMLCanvasElement;
     heights: Float32Array;
+    materialLandMask: Uint8Array;
+    materialColumns: number;
+    materialRows: number;
     columns: number;
     rows: number;
   };
+  travelGrid: HexTravelGrid;
 };
 
 type CampaignActorData = {
@@ -180,6 +232,9 @@ const pendingRendererCanvases = new Set<HTMLCanvasElement>();
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
   heights: Float32Array;
+  materialLandMask: Uint8Array;
+  materialColumns: number;
+  materialRows: number;
   columns: number;
   rows: number;
 };
@@ -187,6 +242,13 @@ type CampaignTerrainProjectionInput = {
 export type CampaignTerrainUvPoint = {
   u: number;
   v: number;
+};
+
+export type CampaignTerrainClientPoint = {
+  clientX: number;
+  clientY: number;
+  visible: boolean;
+  w: number;
 };
 
 let currentCamera: CampaignTerrainCamera = {
@@ -206,6 +268,85 @@ export function setCampaignTerrainCamera(camera: CampaignTerrainCamera): void {
   for (const renderer of activeRenderers.values()) {
     renderer.requestRender("static");
   }
+}
+
+export function getCampaignTerrainCamera(): CampaignTerrainCamera {
+  return currentCamera;
+}
+
+export function getCampaignTerrainProjectionSignature(root: ParentNode): string {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  const renderer =
+    terrainCanvas == null ? null : activeRenderers.get(terrainCanvas) ?? null;
+
+  return [
+    renderer == null ? "pending" : "ready",
+    currentCamera.scale.toFixed(4),
+    currentCamera.offsetX.toFixed(1),
+    currentCamera.offsetY.toFixed(1),
+    terrainCanvas?.width ?? 0,
+    terrainCanvas?.height ?? 0,
+  ].join("|");
+}
+
+export function projectCampaignTerrainUvToClientPoint(
+  root: ParentNode,
+  u: number,
+  v: number
+): CampaignTerrainClientPoint | null {
+  return projectCampaignTerrainUvToClientPointAtHeightAnchor(root, u, v, u, v);
+}
+
+export function projectCampaignTerrainUvToClientPointAtHeightAnchor(
+  root: ParentNode,
+  u: number,
+  v: number,
+  heightU: number,
+  heightV: number
+): CampaignTerrainClientPoint | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  const renderer = activeRenderers.get(terrainCanvas);
+  if (renderer == null) {
+    return null;
+  }
+
+  const rect = terrainCanvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  const matrix = createTerrainMatrix(
+    terrainCanvas.width / Math.max(terrainCanvas.height, 1)
+  );
+  const height = sampleHeightAt(
+    renderer.projectionInput.heights,
+    renderer.projectionInput.columns,
+    renderer.projectionInput.rows,
+    heightU,
+    heightV
+  );
+  const screenPoint = projectPoint(matrix, createTerrainWorldPoint(u, v, height));
+  const normalizedX = (screenPoint.x + 1) / 2;
+  const normalizedY = (1 - screenPoint.y) / 2;
+  const visible =
+    screenPoint.w > 0 &&
+    screenPoint.z >= -1 &&
+    screenPoint.z <= 1 &&
+    normalizedX >= 0 &&
+    normalizedX <= 1 &&
+    normalizedY >= 0 &&
+    normalizedY <= 1;
+
+  return {
+    clientX: rect.left + normalizedX * rect.width,
+    clientY: rect.top + normalizedY * rect.height,
+    visible,
+    w: screenPoint.w,
+  };
 }
 
 export function resolveCampaignTerrainUvFromClientPosition(
@@ -246,6 +387,39 @@ export function resolveCampaignTerrainUvFromClientPosition(
   );
 }
 
+export function isCampaignTerrainUvPassable(
+  root: ParentNode,
+  u: number,
+  v: number
+): boolean | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  const renderer = activeRenderers.get(terrainCanvas);
+  if (renderer == null) {
+    return null;
+  }
+
+  return isHexPassableAtUv(
+    renderer.projectionInput.materialLandMask,
+    renderer.projectionInput.materialColumns,
+    renderer.projectionInput.materialRows,
+    u,
+    v
+  );
+}
+
+export function getCampaignTerrainTravelGrid(root: ParentNode): HexTravelGrid | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  return activeRenderers.get(terrainCanvas)?.travelGrid ?? null;
+}
+
 export function syncCampaignTerrainWebGl(root: ParentNode): void {
   const canvases = Array.from(
     root.querySelectorAll<HTMLCanvasElement>(
@@ -278,6 +452,7 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
     const textureUrl = canvas.dataset.mapTextureUrl;
     const heightUrl = canvas.dataset.mapHeightUrl;
     const materialUrl = canvas.dataset.mapMaterialUrl;
+    const waterTextureUrl = canvas.dataset.mapWaterTextureUrl ?? null;
     const renderMode =
       canvas.dataset.campaignMapActorLayer === "true" ? "actor" : "terrain";
     if (
@@ -294,6 +469,7 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
       textureUrl,
       heightUrl,
       materialUrl,
+      waterTextureUrl,
       renderMode,
     }).then((renderer) => {
       if (!nextCanvasSet.has(canvas) || !canvas.isConnected) {
@@ -340,14 +516,30 @@ async function initCampaignTerrainWebGl(
       return null;
     })
     : Promise.resolve(null);
-  const [textureImage, heightImage, materialImage, actorAsset, cityDepthAsset] = await Promise.all([
+  const waterTextureImagePromise =
+    renderTerrain && input.waterTextureUrl != null
+      ? loadImage(input.waterTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign water texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
+  const [
+    textureImage,
+    heightImage,
+    materialImage,
+    waterTextureImage,
+    actorAsset,
+    cityDepthAsset,
+  ] = await Promise.all([
     loadImage(input.textureUrl),
     loadImage(input.heightUrl),
     loadImage(input.materialUrl),
+    waterTextureImagePromise,
     actorAssetPromise,
     cityDepthAssetPromise,
   ]);
   const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
+  const materialLandMask = sampleMaterialLandMask(materialImage);
   const heightSamples = createHexLayeredHeightSamples(
     baseHeightSamples,
     GRID_COLUMNS,
@@ -367,6 +559,12 @@ async function initCampaignTerrainWebGl(
   const matrixLocation = gl.getUniformLocation(program, "uMatrix");
   const textureLocation = gl.getUniformLocation(program, "uTexture");
   const materialTextureLocation = gl.getUniformLocation(program, "uMaterialTexture");
+  const waterTextureLocation = gl.getUniformLocation(program, "uWaterTexture");
+  const waterTextureEnabledLocation = gl.getUniformLocation(
+    program,
+    "uWaterTextureEnabled"
+  );
+  const timeSecondsLocation = gl.getUniformLocation(program, "uTimeSeconds");
   const landTextureColorAdjustLocation = gl.getUniformLocation(
     program,
     "uLandTextureColorAdjust"
@@ -390,6 +588,13 @@ async function initCampaignTerrainWebGl(
   const cityDepthIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
   const materialTexture = createTexture(gl, materialImage);
+  const waterTexture =
+    waterTextureImage == null
+      ? null
+      : createTexture(gl, waterTextureImage, {
+        wrapS: gl.REPEAT,
+        wrapT: gl.REPEAT,
+      });
   const actorTexture =
     actorAsset?.textureImage == null
       ? null
@@ -406,6 +611,9 @@ async function initCampaignTerrainWebGl(
     matrixLocation == null ? "uMatrix" : null,
     textureLocation == null ? "uTexture" : null,
     materialTextureLocation == null ? "uMaterialTexture" : null,
+    waterTextureLocation == null ? "uWaterTexture" : null,
+    waterTextureEnabledLocation == null ? "uWaterTextureEnabled" : null,
+    timeSecondsLocation == null ? "uTimeSeconds" : null,
     landTextureColorAdjustLocation == null ? "uLandTextureColorAdjust" : null,
     landTextureShadeRangeLocation == null ? "uLandTextureShadeRange" : null,
     actorPositionLocation < 0 ? "actor.aPosition" : null,
@@ -459,9 +667,17 @@ async function initCampaignTerrainWebGl(
   const projectionInput: CampaignTerrainProjectionInput = {
     canvas: input.canvas,
     heights: heightSamples,
+    materialLandMask: materialLandMask.landMask,
+    materialColumns: materialLandMask.columns,
+    materialRows: materialLandMask.rows,
     columns: GRID_COLUMNS,
     rows: GRID_ROWS,
   };
+  const travelGrid = createHexTravelGrid(
+    materialLandMask.landMask,
+    materialLandMask.columns,
+    materialLandMask.rows
+  );
 
   let frameId: number | null = null;
   let isDisposed = false;
@@ -471,6 +687,8 @@ async function initCampaignTerrainWebGl(
   let lastCityDepthMeshSignature = "";
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
+  const animatesTerrainWater = renderTerrain && waterTexture != null;
+  let waterAnimationTimeoutId: number | null = null;
   const render = () => {
     if (isDisposed) {
       return;
@@ -500,6 +718,11 @@ async function initCampaignTerrainWebGl(
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, materialTexture);
       gl.uniform1i(materialTextureLocation, 1);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, waterTexture ?? texture);
+      gl.uniform1i(waterTextureLocation, 2);
+      gl.uniform1f(waterTextureEnabledLocation, waterTexture == null ? 0 : 1);
+      gl.uniform1f(timeSecondsLocation, performance.now() * 0.001);
       const terrainStyle = readCampaignTerrainStyle(input.canvas);
       gl.uniform3f(
         landTextureColorAdjustLocation,
@@ -675,6 +898,21 @@ async function initCampaignTerrainWebGl(
       syncProjectedPoints(projectionInput);
       projectedPointsNeedSync = false;
     }
+
+    if (animatesTerrainWater) {
+      scheduleWaterAnimationRender();
+    }
+  };
+
+  const scheduleWaterAnimationRender = () => {
+    if (isDisposed || waterAnimationTimeoutId != null || hasPendingRender) {
+      return;
+    }
+
+    waterAnimationTimeoutId = window.setTimeout(() => {
+      waterAnimationTimeoutId = null;
+      requestRender("dynamic");
+    }, WATER_ANIMATION_FRAME_INTERVAL_MS);
   };
 
   const requestRender = (reason: "static" | "dynamic" = "dynamic") => {
@@ -705,10 +943,14 @@ async function initCampaignTerrainWebGl(
     requestRender,
     hasActorAsset: actorAsset != null && actorTexture != null,
     projectionInput,
+    travelGrid,
     dispose: () => {
       isDisposed = true;
       if (frameId != null) {
         window.cancelAnimationFrame(frameId);
+      }
+      if (waterAnimationTimeoutId != null) {
+        window.clearTimeout(waterAnimationTimeoutId);
       }
 
       window.removeEventListener("resize", handleResize);
@@ -720,6 +962,9 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(cityDepthIndexBuffer);
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
+      if (waterTexture != null) {
+        gl.deleteTexture(waterTexture);
+      }
       if (actorTexture != null) {
         gl.deleteTexture(actorTexture);
       }
@@ -1022,6 +1267,40 @@ function sampleHeightImage(
   return heights;
 }
 
+function sampleMaterialLandMask(
+  image: HTMLImageElement
+): { landMask: Uint8Array; columns: number; rows: number } {
+  const columns = Math.max(image.naturalWidth || image.width, 1);
+  const rows = Math.max(image.naturalHeight || image.height, 1);
+  const canvas = document.createElement("canvas");
+  canvas.width = columns;
+  canvas.height = rows;
+
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (context == null) {
+    throw new Error("Failed to create material sampling context.");
+  }
+
+  context.imageSmoothingEnabled = false;
+  context.drawImage(image, 0, 0, columns, rows);
+  const data = context.getImageData(0, 0, columns, rows).data;
+  const landMask = new Uint8Array(columns * rows);
+
+  for (let index = 0; index < landMask.length; index += 1) {
+    const pixelOffset = index * 4;
+    const red = data[pixelOffset] ?? 0;
+    const green = data[pixelOffset + 1] ?? red;
+    const blue = data[pixelOffset + 2] ?? red;
+    landMask[index] = isWaterMaterialColor(red, green, blue) ? 0 : 1;
+  }
+
+  return {
+    landMask,
+    columns,
+    rows,
+  };
+}
+
 function hexToPixel(x: number, y: number): { x: number; y: number } {
   return {
     x: Math.sqrt(3) * (x + y * 0.5),
@@ -1115,7 +1394,16 @@ function syncProjectedPoints(input: {
     point.style.setProperty("--terrain-point-top", "auto");
     point.style.setProperty("--terrain-point-bottom", `${bottom.toFixed(3)}%`);
     point.style.setProperty("--terrain-point-perspective-scale", perspectiveScale.toFixed(3));
-    point.style.zIndex = `${20 + depthLayer}`;
+    if (
+      point.classList.contains("c-campaign-marker") ||
+      point.classList.contains("c-campaign-player")
+    ) {
+      point.style.zIndex = "2";
+    } else if (point.classList.contains("c-campaign-marker__summary")) {
+      point.style.zIndex = "6";
+    } else {
+      point.style.zIndex = `${20 + depthLayer}`;
+    }
   }
 }
 
@@ -1131,8 +1419,29 @@ function sampleHeightAt(
   return heights[y * columns + x] ?? 0;
 }
 
+function sampleLandMaskAt(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): number {
+  if (u < 0 || u > 1 || v < 0 || v > 1) {
+    return 0;
+  }
+
+  const x = Math.min(Math.max(Math.round(u * (columns - 1)), 0), columns - 1);
+  const y = Math.min(Math.max(Math.round(v * (rows - 1)), 0), rows - 1);
+
+  return materialLandMask[y * columns + x] ?? 0;
+}
+
 function isWaterHeightColor(red: number, green: number, blue: number): boolean {
   return blue > 72 && blue > red * 1.35 && blue > green * 1.18;
+}
+
+function isWaterMaterialColor(red: number, green: number, blue: number): boolean {
+  return red >= 56 && green < 31 && blue < 31;
 }
 
 function readCampaignActorData(canvas: HTMLCanvasElement): CampaignActorData | null {
@@ -1534,6 +1843,42 @@ function createHexLayeredHeightSamples(
   return layeredHeights;
 }
 
+function createHexTravelGrid(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number
+): HexTravelGrid {
+  const hexCells = getTerrainHexCells();
+  const passableHexKeys = new Set<string>();
+  const bounds = {
+    minX: Number.POSITIVE_INFINITY,
+    maxX: Number.NEGATIVE_INFINITY,
+    minY: Number.POSITIVE_INFINITY,
+    maxY: Number.NEGATIVE_INFINITY,
+  };
+
+  for (const cell of hexCells) {
+    bounds.minX = Math.min(bounds.minX, cell.x);
+    bounds.maxX = Math.max(bounds.maxX, cell.x);
+    bounds.minY = Math.min(bounds.minY, cell.y);
+    bounds.maxY = Math.max(bounds.maxY, cell.y);
+    const center = hexToPixel(cell.x, cell.y);
+    if (isHexPassableAtHexPoint(
+      materialLandMask,
+      columns,
+      rows,
+      center
+    )) {
+      passableHexKeys.add(getHexCellKey(cell.x, cell.y));
+    }
+  }
+
+  return {
+    passableHexKeys,
+    bounds,
+  };
+}
+
 function createHexLayeredTerrainMesh(
   heights: Float32Array,
   columns: number,
@@ -1726,6 +2071,40 @@ function quantizeHexElevation(height: number): number {
   );
 
   return level / (HEX_ELEVATION_LEVELS - 1);
+}
+
+function isHexPassableAtUv(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): boolean {
+  const point = terrainUvToHexPoint(u, v);
+  const cell = pixelToRoundedHex(point.x, point.y);
+  return isHexPassableAtHexPoint(
+    materialLandMask,
+    columns,
+    rows,
+    hexToPixel(cell.x, cell.y)
+  );
+}
+
+function isHexPassableAtHexPoint(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  center: { x: number; y: number }
+): boolean {
+  return (
+    sampleLandMaskAt(
+      materialLandMask,
+      columns,
+      rows,
+      hexPointToTerrainU(center.x),
+      hexPointToTerrainV(center.y)
+    ) > 0
+  );
 }
 
 function createTexture(
@@ -1984,6 +2363,16 @@ function createProgram(
   return program;
 }
 
+function createShaderSource(
+  source: string,
+  replacements: Record<string, string>
+): string {
+  return Object.entries(replacements).reduce(
+    (shaderSource, [token, value]) => shaderSource.replaceAll(token, value),
+    source
+  );
+}
+
 function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
   const result = new Float32Array(16);
 
@@ -2055,222 +2444,3 @@ function createScaleMatrix(x: number, y: number, z: number): Mat4 {
     0, 0, 0, 1,
   ]);
 }
-
-const vertexShaderSource = `
-  attribute vec3 aPosition;
-  attribute vec2 aUv;
-  uniform mat4 uMatrix;
-  varying vec2 vUv;
-  varying float vHeight;
-  varying vec2 vTerrainPosition;
-
-  void main() {
-    vUv = aUv;
-    vHeight = aPosition.z / ${HEIGHT_SCALE.toFixed(2)};
-    vTerrainPosition = aPosition.xy;
-    gl_Position = uMatrix * vec4(aPosition, 1.0);
-  }
-`;
-
-const fragmentShaderSource = `
-  precision mediump float;
-  uniform sampler2D uTexture;
-  uniform sampler2D uMaterialTexture;
-  uniform vec3 uLandTextureColorAdjust;
-  uniform vec2 uLandTextureShadeRange;
-  varying vec2 vUv;
-  varying float vHeight;
-  varying vec2 vTerrainPosition;
-
-  float colorDistance(vec3 left, vec3 right) {
-    return distance(left, right);
-  }
-
-  float materialWeight(vec3 material, vec3 target, float radius) {
-    return 1.0 - smoothstep(0.0, radius, colorDistance(material, target));
-  }
-
-  float hash(vec2 point) {
-    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453);
-  }
-
-  float getWaterAmount(vec3 terrainType) {
-    return
-      step(0.22, terrainType.r) *
-      (1.0 - step(0.12, terrainType.g)) *
-      (1.0 - step(0.12, terrainType.b));
-  }
-
-  vec2 hexToPixel(vec2 hex) {
-    return vec2(
-      1.7320508 * (hex.x + hex.y * 0.5),
-      1.5 * hex.y
-    );
-  }
-
-  vec3 cubeRound(vec3 cube) {
-    vec3 rounded = floor(cube + 0.5);
-    vec3 difference = abs(rounded - cube);
-
-    if (difference.x > difference.y && difference.x > difference.z) {
-      rounded.x = -rounded.y - rounded.z;
-    } else if (difference.y > difference.z) {
-      rounded.y = -rounded.x - rounded.z;
-    } else {
-      rounded.z = -rounded.x - rounded.y;
-    }
-
-    return rounded;
-  }
-
-  vec2 pixelToRoundedHex(vec2 point) {
-    vec2 axial = vec2(
-      0.5773503 * point.x - 0.3333333 * point.y,
-      0.6666667 * point.y
-    );
-    vec3 cube = vec3(axial.x, axial.y, -axial.x - axial.y);
-    vec3 roundedCube = cubeRound(cube);
-
-    return roundedCube.xy;
-  }
-
-  float getHexGridLine(vec2 point, vec2 cell) {
-    vec2 center = hexToPixel(cell);
-    float centerDistance = length(point - center);
-    float neighborDistance = 1000.0;
-
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(1.0, 0.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 0.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(0.0, 1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(0.0, -1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(1.0, -1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 1.0))));
-
-    float boundaryDistance = abs(neighborDistance - centerDistance);
-    float lineWidth = 0.026;
-
-    return 1.0 - smoothstep(0.0, lineWidth, boundaryDistance);
-  }
-
-  vec2 getHexAtlasUv(vec2 point, vec2 cell) {
-    const float tileCount = 4.0;
-    vec2 localPoint = point - hexToPixel(cell);
-    vec2 localUv = clamp(
-      vec2(localPoint.x / 1.7320508 + 0.5, localPoint.y / 2.0 + 0.5),
-      0.0,
-      1.0
-    );
-    float tileIndex = floor(hash(cell) * 16.0);
-    vec2 tile = vec2(mod(tileIndex, tileCount), floor(tileIndex / tileCount));
-
-    return (tile + localUv) / tileCount;
-  }
-
-  vec3 getHexTerrainColor(vec3 terrainType) {
-    float water = getWaterAmount(terrainType);
-    float plain =
-      step(0.22, terrainType.g) *
-      step(terrainType.r, 0.45) *
-      (1.0 - water);
-    float coast =
-      step(0.36, terrainType.b) *
-      step(0.30, terrainType.g) *
-      (1.0 - water);
-    float mountain =
-      max(
-        materialWeight(terrainType, vec3(0.38, 0.25, 0.25), 0.22),
-        materialWeight(terrainType, vec3(0.50, 0.50, 0.25), 0.24)
-      ) * (1.0 - water) * (1.0 - plain);
-
-    vec3 color = vec3(0.39, 0.52, 0.27);
-    color = mix(color, vec3(0.18, 0.55, 0.26), plain);
-    color = mix(color, vec3(0.44, 0.38, 0.25), mountain);
-    color = mix(color, vec3(0.24, 0.64, 0.52), coast * (1.0 - plain));
-    color = mix(color, vec3(0.10, 0.35, 0.72), water);
-
-    return color;
-  }
-
-  vec3 boostLandTextureColor(vec3 color) {
-    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    vec3 saturated = mix(vec3(luma), color, uLandTextureColorAdjust.x);
-
-    return clamp(
-      saturated * uLandTextureColorAdjust.y + vec3(uLandTextureColorAdjust.z),
-      0.0,
-      1.0
-    );
-  }
-
-  void main() {
-    const float hexScale = ${HEX_TERRAIN_SCALE.toFixed(1)};
-    const float mapAspect = ${HEX_MAP_ASPECT.toFixed(4)};
-    vec2 hexPoint = vec2((vUv.x - 0.5) * mapAspect, vUv.y - 0.5) * hexScale;
-    vec2 hexCell = pixelToRoundedHex(hexPoint);
-    vec2 hexCenter = hexToPixel(hexCell);
-    vec2 hexUv = vec2(
-      hexCenter.x / (hexScale * mapAspect) + 0.5,
-      hexCenter.y / hexScale + 0.5
-    );
-    vec2 atlasUv = getHexAtlasUv(hexPoint, hexCell);
-    vec4 base = texture2D(uTexture, atlasUv);
-    vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
-    vec3 terrainColor = getHexTerrainColor(material);
-    float water = getWaterAmount(material);
-    float shade = clamp(${GRASS_AMBIENT_LIGHT.toFixed(2)} + vHeight * 0.16, 0.50, 1.08);
-    float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
-    vec3 landTexture = boostLandTextureColor(base.rgb);
-    float landTextureLuma = dot(landTexture, vec3(0.2126, 0.7152, 0.0722));
-    landTexture = clamp(
-      mix(vec3(landTextureLuma), landTexture, ${GRASS_TEXTURE_DETAIL.toFixed(2)}),
-      0.0,
-      1.0
-    );
-    float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, shade);
-    vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
-    vec3 waterColor = terrainColor * shade;
-    vec3 color = mix(landColor, waterColor, water);
-
-    float border = getHexGridLine(hexPoint, hexCell);
-    color = mix(color, vec3(0.0), border * 0.34);
-
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
-const actorVertexShaderSource = `
-  attribute vec3 aPosition;
-  attribute vec3 aNormal;
-  attribute vec2 aUv;
-  uniform mat4 uMatrix;
-  varying vec3 vNormal;
-  varying vec2 vUv;
-
-  void main() {
-    vNormal = aNormal;
-    vUv = aUv;
-    gl_Position = uMatrix * vec4(aPosition, 1.0);
-  }
-`;
-
-const actorFragmentShaderSource = `
-  precision mediump float;
-  uniform vec3 uLight;
-  uniform sampler2D uTexture;
-  uniform vec3 uTint;
-  varying vec3 vNormal;
-  varying vec2 vUv;
-
-  void main() {
-    vec3 normal = normalize(vNormal);
-    float directionalLight = max(dot(normal, normalize(uLight)), 0.0);
-    float light = 0.42 + directionalLight * 0.58;
-    vec3 rim = vec3(0.16, 0.12, 0.08) * pow(1.0 - max(normal.z, 0.0), 2.0);
-    vec4 base = texture2D(uTexture, vUv);
-    if (base.a < 0.08) {
-      discard;
-    }
-    vec3 color = base.rgb * uTint;
-    gl_FragColor = vec4(color * light + rim, base.a);
-  }
-`;

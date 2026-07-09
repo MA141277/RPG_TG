@@ -9,6 +9,7 @@ import {
   resolveCharacterPortraitImageUrl,
 } from "./portrait-assets";
 import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
+import { getRevealedCampaignHexKeys } from "../application/map/campaign-map-exploration";
 import type { CardDefinition } from "../domain/card";
 import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
@@ -350,8 +351,22 @@ function renderStage(
       playerCoordinate: input.appState.playerCoordinate,
       playerFacingDegrees: input.appState.campaignActorState.facingDegrees,
       playerIsMoving: input.appState.campaignActorState.isMoving,
+      revealedHexKeys: getRevealedCampaignHexKeys(
+        input.appState.gameState,
+        input.mapDefinition.id
+      ),
       cityDefinitions: stage.cityDefinitions,
       cityCoordinatesById: input.cityCoordinatesById,
+      ...(input.historicalCharacters == null
+        ? {}
+        : { historicalCharacters: input.historicalCharacters }),
+      ...(input.historicalCityRosters == null
+        ? {}
+        : { historicalCityRosters: input.historicalCityRosters }),
+      mapExplorationState:
+        input.appState.gameState.runtime.mapExplorationByMapId[
+          input.mapDefinition.id
+        ] ?? null,
     };
     const mapViewModel = createMapViewModel(mapViewModelInput);
 
