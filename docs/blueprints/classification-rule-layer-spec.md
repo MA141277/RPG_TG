@@ -35,7 +35,7 @@
 ### Placement In The Governance Stack
 
 - `Classification is a routing layer, not a live execution controller.`
-- `Current execution truth still comes only from project-progress -> blueprint -> target plan -> active queue -> active task.`
+- `Current execution truth still comes only from project-progress -> blueprint -> version plan -> active queue -> active task.`
 - `Classification may recommend queue admission, but it cannot create an active queue by itself.`
 - `User scope approval may narrow the candidate boundary, but it cannot create admission truth by itself.`
 
@@ -44,17 +44,17 @@
 1. `Classify first, route second, promote later.`
 2. `Do not infer current execution truth from classification history.`
 3. `Do not use change-log, old docs/superpowers/**, or closed queue prose as classification authority unless they are cited as historical evidence only.`
-4. `If active_queue = none, classification returns control to the current target plan for promotion-review or idle-open handling.`
+4. `If active_queue = none, classification returns control to the current version plan for promotion-review or idle-open handling.`
 5. `Low confidence always falls back to uncertain-needs-review unless a stronger written override exists.`
 6. `If classification concludes queue-candidate, fresh implementation must stop until target-plan admission truth and the admitted queue doc both exist.`
-7. `Conversation-only classification that would change active truth is invalid until the target plan is synchronized.`
+7. `Conversation-only classification that would change active truth is invalid until the version plan is synchronized.`
 8. `A previously recorded queue-candidate must resume from its admission record by default unless new material evidence invalidates the old basis.`
 9. `If another queue is already active under single-active-task mode, classification may record a fresh candidate but must not activate a second queue.`
 
 ### Classification Outputs
 
 - `current-target-item`
-  - `Fits the current target boundary and may affect current-target acceptance, but does not automatically start execution.`
+  - `Fits the current version boundary and may affect current-version acceptance, but does not automatically start execution.`
 - `queue-candidate`
   - `Requires a new bounded execution topic, a new shared capability, a new owner-line closure, or a new acceptance story outside the current queue scope.`
 - `content-pipeline-item`
@@ -62,7 +62,7 @@
 - `asset-pipeline-item`
   - `Fits existing naming/path/contract rules and does not require behavior change.`
 - `future-target-candidate`
-  - `Valuable, but not required for the current target acceptance.`
+  - `Valuable, but not required for the current version acceptance.`
 - `historical-residue`
   - `Accepted older structure that should remain recorded but must not silently reactivate execution.`
 - `uncertain-needs-review`
@@ -153,17 +153,17 @@ Use this structure when classification needs to be recorded explicitly:
 - why:
   - `requires framework capability not currently owned by an active queue`
 - escalate_if:
-  - `changes current target scope`
+  - `changes current version scope`
   - `needs queue admission`
 - reject_if:
   - `can be completed inside an existing pipeline or current queue without widening scope`
 ```
 
-### Target-Plan Review Sync
+### Version-Plan Review Sync
 
-If a classification result would change active truth, it must be synchronized into the target plan before implementation continues.
+If a classification result would change active truth, it must be synchronized into the version plan before implementation continues.
 
-Minimum required target-plan fields:
+Minimum required version-plan fields:
 
 - `review_subject_id`
 - `review_subject_classification`
@@ -173,10 +173,10 @@ Minimum required target-plan fields:
 
 Required behavior:
 
-1. `queue-candidate + active_queue = none` must enter target-level admission review before implementation.
+1. `queue-candidate + active_queue = none` must enter version-level admission review before implementation.
 2. `scope approved by user` must be recorded only as boundary approval, not as admission truth.
 3. `admission_status = admitted` requires the queue doc to exist before code implementation starts.
-4. `rejected / deferred / blocked` outcomes must be written into target-plan truth, not left in prose-only replies.
+4. `rejected / deferred / blocked` outcomes must be written into version-plan truth, not left in prose-only replies.
 
 ### Queue-Candidate Startup Contract
 
@@ -187,8 +187,8 @@ For a fresh queue-candidate, the required startup order is:
 3. `test whether the new item can be absorbed into the active queue without widening queue scope`
 4. `classify the item`
 5. `if the result is queue-candidate, return to target-plan admission review`
-6. `sync target-plan review fields before any queue doc is activated`
-7. `activate the queue only after target-plan review truth exists`
+6. `sync version-plan review fields before any queue doc is activated`
+7. `activate the queue only after version-plan review truth exists`
 8. `start implementation only after the queue doc exposes active queue truth and a live active task`
 
 Hard implications:
@@ -207,7 +207,7 @@ Only perform a full recheck when:
 - new material evidence disproves the old classification
 - new material evidence disproves the old review basis
 - the current active queue can now absorb the item without widening scope
-- the item no longer belongs to the current target
+- the item no longer belongs to the current version
 
 Otherwise:
 
@@ -221,8 +221,8 @@ Otherwise:
 
 - `project-progress` may point to the classification layer, but may not own classification history as live truth.
 - `blueprint` may point to the authoritative classification rule file.
-- `target spec` may define target-specific overrides.
-- `target plan` decides whether a classified item becomes a promoted queue.
+- `version spec` may define version-specific overrides.
+- `version plan` decides whether a classified item becomes a promoted queue.
 - `queue docs` declare which classifications are allowed inside them.
 - `task execution` must stop if a new item is classified incompatibly with queue scope.
 - `task execution` must also stop if a fresh item becomes `queue-candidate` before admission truth is written.

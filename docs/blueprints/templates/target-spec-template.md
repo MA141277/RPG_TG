@@ -1,8 +1,8 @@
-# Target Title
+# Version Title
 
 ## Control Block
 
-- target_id: `target.replace-me`
+- version_id: `target.replace-me`
 - version_label: `replace-me`
 - closeout_contract_version: `v1`
 
@@ -10,7 +10,7 @@
 
 ### Goal
 
-- `Replace with the target goal.`
+- `Replace with the version goal.`
 
 ### Scope
 
@@ -33,12 +33,12 @@
 - `Replace with acceptance criterion 1.`
 - `Replace with acceptance criterion 2.`
 
-### Target Closeout Contract
+### Version Closeout Contract
 
-- `Target may become done only after acceptance passes, no active queue/task remains, residue is dispositioned, and the target plan records explicit closeout.`
-- `As long as the target remains open and no active queue exists, a new queue may still be admitted through target-plan promotion-review.`
-- `Open-target status is not inferred away by queue completion; the target remains open until explicit human closeout confirmation is recorded in the target plan.`
-- `If no open target exists, a new target must be explicitly created before queue admission or implementation resumes.`
+- `Version may become done only after acceptance passes, no active queue/task remains, residue is dispositioned, and the version plan records explicit closeout.`
+- `As long as the version remains open and no active queue exists, a new queue may still be admitted through version-plan promotion-review.`
+- `Open-version status is not inferred away by queue completion; the version remains open until explicit human closeout confirmation is recorded in the version plan.`
+- `If no open version exists, a new version must be explicitly created before queue admission or implementation resumes.`
 
 ### Archived Interpretation
 

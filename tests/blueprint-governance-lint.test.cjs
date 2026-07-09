@@ -5,124 +5,40 @@ const os = require("node:os");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { spawnSync } = require("node:child_process");
+const {
+  createGovernanceFixture,
+  writeFixtureFile,
+} = require("./helpers/blueprint-governance-fixtures.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 
 function createFixtureRepo() {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "rpg-tg-blueprint-lint-"));
-  fs.mkdirSync(path.join(repoRoot, "docs", "blueprints", "specs"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "docs", "blueprints", "plans"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "docs", "blueprints", "queues"), { recursive: true });
-  fs.mkdirSync(path.join(repoRoot, "docs", "blueprints", "templates"), { recursive: true });
+  const { repoRoot, activeQueuePath } = createGovernanceFixture({
+    activeQueueId: "none",
+    activeQueuePath: "docs/blueprints/queues/test-queue.md",
+    queueOwnerField: "belongs_to_version",
+    queueStatus: "done",
+  });
 
-  writeFile(
+  writeFixtureFile(
     repoRoot,
-    "docs/blueprints/project-progress.md",
-    [
-      "# Project Progress",
-      "",
-      "## Control Block",
-      "",
-      "- entry_id: `project-progress.test`",
-      "- active_blueprint: `blueprint.test`",
-      "- active_target: `target.test`",
-      "- has_active_queue: `false`",
-      "- next_file: `docs/blueprints/blueprint.md`",
-      "- entry_action: `open-next-file`",
-      "",
-    ].join("\n")
-  );
-
-  writeFile(
-    repoRoot,
-    "docs/blueprints/blueprint.md",
-    [
-      "# Current Blueprint",
-      "",
-      "## Control Block",
-      "",
-      "- blueprint_id: `blueprint.test`",
-      "- active_target: `target.test`",
-      "- active_target_plan: `docs/blueprints/plans/test-target-plan.md`",
-      "- classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`",
-      "- execution_mode: `single-active-task`",
-      "- allow_parallel: `false`",
-      "",
-    ].join("\n")
-  );
-
-  writeFile(
-    repoRoot,
-    "docs/blueprints/specs/test-target.md",
-    [
-      "# Target Title",
-      "",
-      "## Control Block",
-      "",
-      "- target_id: `target.test`",
-      "- version_label: `v1`",
-      "- closeout_contract_version: `v1`",
-      "",
-      "## Human Context",
-      "",
-      "### Queue Contract Portfolio",
-      "",
-      "| Queue ID | Class | Contract Role | Promote When |",
-      "| --- | --- | --- | --- |",
-      "| `queue.test` | `required` | `required evidence family` | `only if a fresh blocker is proven` |",
-      "",
-    ].join("\n")
-  );
-
-  writeFile(
-    repoRoot,
-    "docs/blueprints/plans/test-target-plan.md",
-    [
-      "# Target Plan Title",
-      "",
-      "## Control Block",
-      "",
-      "- document_role: `target-governor`",
-      "- target_id: `target.test`",
-      "- target_status: `open`",
-      "- active_phase: `phase.test`",
-      "- active_queue: `none`",
-      "- decision_state: `idle-open`",
-      "- next_decision: `same-target-admission-or-target-closeout`",
-      "- next_action: `classify-fresh-work`",
-      "- resume_gate: `idle-open`",
-      "- promotion_review_result: `none`",
-      "- review_subject_id: `none`",
-      "- review_subject_classification: `none`",
-      "- proposed_queue_id: `none`",
-      "- review_basis: `none`",
-      "- admission_status: `none`",
-      "- intake_status: `none`",
-      "- intake_item_id: `none`",
-      "- intake_summary: `none`",
-      "- intake_result: `none`",
-      "- intake_feedback_mode: `none`",
-      "- blocked_by: []",
-      "",
-    ].join("\n")
-  );
-
-  writeFile(
-    repoRoot,
-    "docs/blueprints/queues/test-queue.md",
+    activeQueuePath,
     [
       "# Queue Title",
       "",
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `done`",
       "- queue_class: `required`",
       "- active_task: `none`",
       "- next_task: `none`",
       "- closeout_status: `done`",
       "- next_effect: `return-to-target-review`",
+      "- sync_status: `success`",
+      "- sync_scope: `none`",
+      "- sync_summary: `No repository sync action is required for this closed fixture queue.`",
       "- blocked_by: []",
       "- allowed_item_classifications:",
       "  - `current-target-item`",
@@ -142,9 +58,7 @@ function createFixtureRepo() {
 }
 
 function writeFile(repoRoot, relativePath, content) {
-  const absolutePath = path.join(repoRoot, ...relativePath.split("/"));
-  fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
-  fs.writeFileSync(absolutePath, `${content}\n`, "utf8");
+  writeFixtureFile(repoRoot, relativePath, content);
 }
 
 async function loadBlueprintLintModule() {
@@ -162,6 +76,107 @@ test("blueprint lint accepts structured control-block-only resume fields", async
   assert.deepEqual(failures, []);
 });
 
+test("blueprint lint resolves live target plan and spec from blueprint pointers instead of hardcoded filenames", async () => {
+  const {
+    repoRoot,
+    targetPlanPath,
+    targetSpecPath,
+  } = createGovernanceFixture({
+    activeQueueId: "none",
+    targetPlanPath: "docs/blueprints/plans/custom-version-plan.md",
+    targetSpecPath: "docs/blueprints/specs/custom-version-spec.md",
+  });
+
+  writeFixtureFile(
+    repoRoot,
+    "docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md",
+    [
+      "# Wrong Plan",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `target-governor`",
+      "- target_id: `target.wrong`",
+      "- version_status: `open`",
+      "- active_phase: `phase.wrong`",
+      "- active_queue: `queue.wrong`",
+      "- decision_state: `active-execution`",
+      "- next_decision: `queue-closeout-or-return-to-target-review`",
+      "- next_action: `resume-active-queue`",
+      "- resume_gate: `open-active-queue`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- blocked_by: []",
+      "",
+    ].join("\n")
+  );
+
+  writeFixtureFile(
+    repoRoot,
+    "docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md",
+    [
+      "# Wrong Spec",
+      "",
+      "## Control Block",
+      "",
+      "- target_id: `target.wrong`",
+      "- version_label: `v1`",
+      "- closeout_contract_version: `v1`",
+      "",
+      "## Human Context",
+      "",
+      "### Queue Portfolio",
+      "",
+      "| Queue ID | Class | State | Promote When | Source |",
+      "| --- | --- | --- | --- | --- |",
+      "| `queue.wrong` | `required` | `active` | `never` | `wrong` |",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.equal(fs.existsSync(path.join(repoRoot, ...targetPlanPath.split("/"))), true);
+  assert.equal(fs.existsSync(path.join(repoRoot, ...targetSpecPath.split("/"))), true);
+  assert.deepEqual(failures, []);
+});
+
+test("blueprint lint accepts version-only live governance pointers", async () => {
+  const { repoRoot } = createGovernanceFixture({
+    activeQueueId: "none",
+    useVersionTerms: true,
+    targetPlanPath: "docs/blueprints/plans/custom-version-plan.md",
+    targetSpecPath: "docs/blueprints/specs/custom-version-spec.md",
+  });
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.deepEqual(failures, []);
+});
+
+test("blueprint lint rejects legacy target pointer fields in live blueprint docs after version cutover", async () => {
+  const { repoRoot } = createGovernanceFixture({
+    activeQueueId: "none",
+    useVersionTerms: false,
+  });
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /active_target|active_target_plan|active_target_spec/i);
+});
+
 test("blueprint lint rejects project-progress next_step prose mirrors", async () => {
   const repoRoot = createFixtureRepo();
   writeFile(
@@ -174,7 +189,7 @@ test("blueprint lint rejects project-progress next_step prose mirrors", async ()
       "",
       "- entry_id: `project-progress.test`",
       "- active_blueprint: `blueprint.test`",
-      "- active_target: `target.test`",
+      "- active_version: `target.test`",
       "- has_active_queue: `false`",
       "- next_file: `docs/blueprints/blueprint.md`",
       "- next_step: `Open the Blueprint index, then open the current target plan.`",
@@ -188,7 +203,7 @@ test("blueprint lint rejects project-progress next_step prose mirrors", async ()
   assert.match(failures.join("\n"), /project-progress.*next_step/i);
 });
 
-test("blueprint lint rejects target plans that keep Current Decision prose or next_legal_action", async () => {
+test("blueprint lint rejects version plans that keep Current Decision prose or next_legal_action", async () => {
   const repoRoot = createFixtureRepo();
   writeFile(
     repoRoot,
@@ -200,7 +215,7 @@ test("blueprint lint rejects target plans that keep Current Decision prose or ne
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `none`",
       "- decision_state: `idle-open`",
@@ -228,11 +243,11 @@ test("blueprint lint rejects target plans that keep Current Decision prose or ne
   const { lintBlueprintDocs } = await loadBlueprintLintModule();
   const failures = lintBlueprintDocs(repoRoot);
 
-  assert.match(failures.join("\n"), /target plan.*next_legal_action/i);
+  assert.match(failures.join("\n"), /version plan.*next_legal_action/i);
   assert.match(failures.join("\n"), /Current Decision/i);
 });
 
-test("blueprint lint rejects target specs that mix queue contract with runtime state columns", async () => {
+test("blueprint lint rejects version specs that mix queue contract with runtime state columns", async () => {
   const repoRoot = createFixtureRepo();
   writeFile(
     repoRoot,
@@ -260,7 +275,7 @@ test("blueprint lint rejects target specs that mix queue contract with runtime s
   const { lintBlueprintDocs } = await loadBlueprintLintModule();
   const failures = lintBlueprintDocs(repoRoot);
 
-  assert.match(failures.join("\n"), /target spec.*Queue Portfolio.*State/i);
+  assert.match(failures.join("\n"), /version spec.*Queue Portfolio.*State/i);
 });
 
 test("blueprint lint rejects repository entry drift when has_active_queue is false but target plan names an active queue", async () => {
@@ -275,7 +290,7 @@ test("blueprint lint rejects repository entry drift when has_active_queue is fal
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `queue.test`",
       "- decision_state: `active-execution`",
@@ -299,6 +314,127 @@ test("blueprint lint rejects repository entry drift when has_active_queue is fal
   assert.match(failures.join("\n"), /has_active_queue.*active_queue/i);
 });
 
+test("blueprint lint rejects blueprint.md when blueprint_version is missing", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFixtureFile(
+    repoRoot,
+    "docs/blueprints/blueprint.md",
+    [
+      "# Current Blueprint",
+      "",
+      "## Control Block",
+      "",
+      "- blueprint_id: `blueprint.test`",
+      "- active_version: `target.test`",
+      "- active_version_plan: `docs/blueprints/plans/test-target-plan.md`",
+      "- classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`",
+      "- execution_mode: `single-active-task`",
+      "- allow_parallel: `false`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /blueprint_version/i);
+});
+
+test("blueprint lint rejects governed queue docs that still use belongs_to_target", async () => {
+  const { repoRoot } = createGovernanceFixture({
+    activeQueueId: "queue.test",
+    activeQueuePath: "docs/blueprints/queues/test-queue.md",
+    queueOwnerField: "belongs_to_target",
+    queueStatus: "active",
+  });
+  writeFixtureFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_target: `target.test`",
+      "- queue_status: `active`",
+      "- queue_class: `required`",
+      "- active_task: `task.test`",
+      "- next_task: `none`",
+      "- closeout_status: `in-progress`",
+      "- next_effect: `none`",
+      "- sync_status: `pending`",
+      "- sync_scope: `none`",
+      "- sync_summary: `none`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Queue Snapshot",
+      "",
+      "- queue_goal: `Keep the active queue governed by the current target.`",
+      "- task_count: `1`",
+      "- completed_task_count: `0`",
+      "- remaining_task_count: `1`",
+      "- active_task_summary: `Keep the current task visible.`",
+      "- task_briefs:",
+      "  - `task.test: maintain the queue shell.`",
+      "",
+      "### Task Ledger",
+      "",
+      "| Task ID | State | Summary | Depends On | Notes |",
+      "| --- | --- | --- | --- | --- |",
+      "| `task.test` | `active` | `Maintain the queue shell.` | `none` | `Test fixture active task.` |",
+      "",
+      "### Task Definitions",
+      "",
+      "#### `task.test`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.test`",
+      "- state: `active`",
+      "- task_kind: `execution`",
+      "- scope:",
+      "  - `docs/blueprints/queues/test-queue.md`",
+      "- must_inspect:",
+      "  - `docs/blueprints/queues/test-queue.md`",
+      "- must_not_change:",
+      "  - `historical evidence`",
+      "- done_when:",
+      "  - `Queue shell is synchronized.`",
+      "- verify_with:",
+      "  - `npm run lint:blueprints`",
+      "- if_blocked:",
+      "  - `Record the blocker in the queue doc.`",
+      "- promote_next_if_done: `none`",
+      "- stop_if:",
+      "  - `none`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_brief:",
+      "  - `Maintain the queue shell.`",
+      "- task_outcome_summary:",
+      "  - `The queue shell stays synchronized.`",
+      "",
+      "### Closed Review Record",
+      "",
+      "- Status: `in-progress`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /belongs_to_target/i);
+});
+
 test("blueprint lint rejects active-execution when the target plan has no active queue", async () => {
   const repoRoot = createFixtureRepo();
   writeFile(
@@ -311,7 +447,7 @@ test("blueprint lint rejects active-execution when the target plan has no active
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `none`",
       "- decision_state: `active-execution`",
@@ -348,7 +484,7 @@ test("blueprint lint rejects queue-candidate review without a proposed queue id"
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `none`",
       "- decision_state: `promotion-review`",
@@ -391,7 +527,7 @@ test("blueprint lint rejects queue docs that still use candidate status", async 
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `candidate`",
       "- queue_class: `required`",
       "- active_task: `none`",
@@ -424,7 +560,7 @@ test("blueprint lint rejects non-active queues that still expose a live active t
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `blocked`",
       "- queue_class: `required`",
       "- active_task: `task.test`",
@@ -457,7 +593,7 @@ test("blueprint lint rejects active queue docs when target plan still says activ
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `active`",
       "- queue_class: `required`",
       "- active_task: `task.test`",
@@ -491,7 +627,7 @@ test("blueprint lint rejects live admission review while another queue is alread
       "",
       "- entry_id: `project-progress.test`",
       "- active_blueprint: `blueprint.test`",
-      "- active_target: `target.test`",
+      "- active_version: `target.test`",
       "- has_active_queue: `true`",
       "- next_file: `docs/blueprints/blueprint.md`",
       "- entry_action: `open-next-file`",
@@ -508,7 +644,7 @@ test("blueprint lint rejects live admission review while another queue is alread
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `queue.test`",
       "- decision_state: `active-execution`",
@@ -534,7 +670,7 @@ test("blueprint lint rejects live admission review while another queue is alread
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `active`",
       "- queue_class: `required`",
       "- active_task: `task.test`",
@@ -567,7 +703,7 @@ test("blueprint lint accepts queue-local repository sync records on blocked queu
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `blocked`",
       "- queue_class: `required`",
       "- active_task: `none`",
@@ -603,7 +739,7 @@ test("blueprint lint accepts merge-conflict wording inside queue-local sync summ
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `blocked`",
       "- queue_class: `required`",
       "- active_task: `none`",
@@ -639,7 +775,7 @@ test("blueprint lint rejects active or blocked queue docs that omit repository s
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `blocked`",
       "- queue_class: `required`",
       "- active_task: `none`",
@@ -698,7 +834,7 @@ test("blueprint lint rejects queue blocked_by entries that mirror merge conflict
   assert.match(failures.join("\n"), /blocked_by.*merge conflict/i);
 });
 
-test("blueprint lint rejects target plans that mirror queue-local repository sync truth", async () => {
+test("blueprint lint rejects version plans that mirror queue-local repository sync truth", async () => {
   const repoRoot = createFixtureRepo();
   writeFile(
     repoRoot,
@@ -710,7 +846,7 @@ test("blueprint lint rejects target plans that mirror queue-local repository syn
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `none`",
       "- decision_state: `idle-open`",
@@ -737,10 +873,10 @@ test("blueprint lint rejects target plans that mirror queue-local repository syn
   const { lintBlueprintDocs } = await loadBlueprintLintModule();
   const failures = lintBlueprintDocs(repoRoot);
 
-  assert.match(failures.join("\n"), /target plan.*sync_status/i);
+  assert.match(failures.join("\n"), /version plan.*sync_status/i);
 });
 
-test("blueprint lint rejects target-plan blocked_by entries that mirror merge conflicts as target blockers", async () => {
+test("blueprint lint rejects version-plan blocked_by entries that mirror merge conflicts as version blockers", async () => {
   const repoRoot = createFixtureRepo();
   writeFile(
     repoRoot,
@@ -752,7 +888,7 @@ test("blueprint lint rejects target-plan blocked_by entries that mirror merge co
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `none`",
       "- decision_state: `blocked`",
@@ -779,7 +915,7 @@ test("blueprint lint rejects target-plan blocked_by entries that mirror merge co
   const { lintBlueprintDocs } = await loadBlueprintLintModule();
   const failures = lintBlueprintDocs(repoRoot);
 
-  assert.match(failures.join("\n"), /target plan.*blocked_by.*merge conflict/i);
+  assert.match(failures.join("\n"), /version plan.*blocked_by.*merge conflict/i);
 });
 
 test("blueprint lint CLI reports success for a valid fixture repository", () => {
@@ -810,7 +946,7 @@ test("blueprint lint rejects target plans missing intake fields", async () => {
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `none`",
       "- decision_state: `idle-open`",
@@ -848,7 +984,7 @@ test("blueprint lint rejects target plans whose idle intake fields do not reset 
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `none`",
       "- decision_state: `idle-open`",
@@ -896,10 +1032,10 @@ test("blueprint lint rejects workflow specs that omit the fixed operator receipt
   const failures = lintBlueprintDocs(repoRoot);
 
   assert.match(failures.join("\n"), /workflow spec.*固定 operator receipt contract|fixed operator receipt contract/i);
-  assert.match(failures.join("\n"), /workflow spec.*`新需求`/i);
+  assert.match(failures.join("\n"), /workflow spec.*allowed intake input/i);
 });
 
-test("blueprint lint rejects target-plan templates that omit the operator intake contract", async () => {
+test("blueprint lint rejects version-plan templates that omit the operator intake contract", async () => {
   const repoRoot = createFixtureRepo();
   writeFile(
     repoRoot,
@@ -911,7 +1047,7 @@ test("blueprint lint rejects target-plan templates that omit the operator intake
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.replace-me`",
-      "- target_status: `open | done | archived`",
+      "- version_status: `open | done | archived`",
       "- active_phase: `phase.replace-me`",
       "- active_queue: `queue.replace-me | none`",
       "- decision_state: `active-execution | promotion-review | idle-open | blocked`",
@@ -937,7 +1073,7 @@ test("blueprint lint rejects target-plan templates that omit the operator intake
   const { lintBlueprintDocs } = await loadBlueprintLintModule();
   const failures = lintBlueprintDocs(repoRoot);
 
-  assert.match(failures.join("\n"), /target plan must include an Operator Intake Contract section/i);
+  assert.match(failures.join("\n"), /version plan must include an Operator Intake Contract section/i);
 });
 
 test("blueprint lint rejects execution-queue templates that omit the operator snapshot contract", async () => {
@@ -951,7 +1087,7 @@ test("blueprint lint rejects execution-queue templates that omit the operator sn
       "## Control Block",
       "",
       "- queue_id: `queue.replace-me`",
-      "- belongs_to_target: `target.replace-me`",
+      "- belongs_to_version: `target.replace-me`",
       "- queue_status: `active | blocked | done | dropped`",
       "- queue_class: `required`",
       "- active_task: `task.replace-me | none`",
@@ -1016,14 +1152,14 @@ test("workflow spec documents minimal intake input and fixed operator receipt la
     "utf8"
   );
 
-  assert.match(workflowSpec, /`新需求`/u);
-  assert.match(workflowSpec, /`参考治理规范`/u);
+  assert.match(workflowSpec, /\u65b0\u9700\u6c42/u);
+  assert.match(workflowSpec, /\u53c2\u8003\u6cbb\u7406\u89c4\u8303/u);
   assert.match(workflowSpec, /^### 7\.1\.1 Fixed operator receipt contract$/m);
-  assert.match(workflowSpec, /处理结果：/u);
-  assert.match(workflowSpec, /人工操作：当前不需要 \/ 当前需要确认 xxx/u);
+  assert.match(workflowSpec, /\u5904\u7406\u7ed3\u679c\uff1a/u);
+  assert.match(workflowSpec, /\u4eba\u5de5\u64cd\u4f5c\uff1a\u5f53\u524d\u4e0d\u9700\u8981 \/ \u5f53\u524d\u9700\u8981\u786e\u8ba4 xxx/u);
 });
 
-test("live target plan exposes the fixed operator intake contract", () => {
+test("live version plan exposes the fixed operator intake contract", () => {
   const targetPlan = fs.readFileSync(
     path.join(
       projectRoot,
@@ -1036,9 +1172,81 @@ test("live target plan exposes the fixed operator intake contract", () => {
   );
 
   assert.match(targetPlan, /^### Operator Intake Contract$/m);
-  assert.match(targetPlan, /处理结果：/u);
-  assert.match(targetPlan, /当前执行情况：/u);
-  assert.match(targetPlan, /人工操作：当前不需要 \/ 当前需要确认 xxx/u);
+  assert.match(targetPlan, /\u5904\u7406\u7ed3\u679c\uff1a/u);
+  assert.match(targetPlan, /\u5f53\u524d\u6267\u884c\u60c5\u51b5\uff1a/u);
+  assert.match(targetPlan, /\u4eba\u5de5\u64cd\u4f5c\uff1a\u5f53\u524d\u4e0d\u9700\u8981 \/ \u5f53\u524d\u9700\u8981\u786e\u8ba4 xxx/u);
+});
+
+test("workflow spec exposes the version-first resume chain and state model", () => {
+  const workflowSpec = fs.readFileSync(
+    path.join(projectRoot, "docs", "blueprints", "blueprint-workflow-spec.md"),
+    "utf8"
+  );
+
+  assert.match(
+    workflowSpec,
+    /project-progress -> blueprint -> version plan -> active queue -> active task/
+  );
+  assert.match(workflowSpec, /^### 4\.3 version spec$/m);
+  assert.match(workflowSpec, /^## 9\. Version State Model$/m);
+  assert.doesNotMatch(
+    workflowSpec,
+    /project-progress -> blueprint -> target plan -> active queue -> active task/
+  );
+});
+
+test("live version plan exposes version-first control fields and lifecycle wording", () => {
+  const targetPlan = fs.readFileSync(
+    path.join(
+      projectRoot,
+      "docs",
+      "blueprints",
+      "plans",
+      "2026-07-06-project-complete-modularization-target-plan.md"
+    ),
+    "utf8"
+  );
+
+  assert.match(targetPlan, /^- document_role: `version-governor`$/m);
+  assert.match(targetPlan, /^- version_id: `target\.project-complete-modularization`$/m);
+  assert.match(targetPlan, /^- version_status: `open`$/m);
+  assert.match(targetPlan, /^- next_decision: `queue-closeout-or-return-to-version-review`$/m);
+  assert.match(targetPlan, /^- `next_effect = return-to-version-review`$/m);
+  assert.match(targetPlan, /^- `next_effect = block-version`$/m);
+  assert.match(targetPlan, /^### Version Lifecycle Rules$/m);
+  assert.match(
+    targetPlan,
+    /read project-progress -> blueprint -> version plan -> active queue -> active task/
+  );
+  assert.doesNotMatch(targetPlan, /^- target_id:/m);
+  assert.doesNotMatch(targetPlan, /^- target_status:/m);
+  assert.doesNotMatch(targetPlan, /^### Target Lifecycle Rules$/m);
+  assert.doesNotMatch(targetPlan, /^- `next_effect = return-to-target-review`$/m);
+  assert.doesNotMatch(targetPlan, /^- `next_effect = block-target`$/m);
+});
+
+test("execution queue template exposes version-first next_effect guidance and readable operator snapshot labels", () => {
+  const queueTemplate = fs.readFileSync(
+    path.join(
+      projectRoot,
+      "docs",
+      "blueprints",
+      "templates",
+      "execution-queue-template.md"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    queueTemplate,
+    /^- next_effect: `promote-next-queue | return-to-version-review | block-version | none`$/m
+  );
+  assert.match(queueTemplate, /\u5f53\u524d\u6267\u884c\u961f\u5217.*queue_id/u);
+  assert.match(queueTemplate, /\u5f53\u524d\u4efb\u52a1.*active_task/u);
+  assert.match(queueTemplate, /\u5f53\u524d\u961f\u5217\u76ee\u6807.*queue_goal/u);
+  assert.doesNotMatch(queueTemplate, /return-to-target-review/);
+  assert.doesNotMatch(queueTemplate, /block-target/);
+  assert.doesNotMatch(queueTemplate, /\?{4,}/u);
 });
 
 test("blueprint lint rejects active queues that omit queue snapshot", async () => {
@@ -1053,7 +1261,7 @@ test("blueprint lint rejects active queues that omit queue snapshot", async () =
       "",
       "- entry_id: `project-progress.test`",
       "- active_blueprint: `blueprint.test`",
-      "- active_target: `target.test`",
+      "- active_version: `target.test`",
       "- has_active_queue: `true`",
       "- next_file: `docs/blueprints/queues/test-queue.md`",
       "- entry_action: `open-next-file`",
@@ -1070,7 +1278,7 @@ test("blueprint lint rejects active queues that omit queue snapshot", async () =
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `queue.test`",
       "- decision_state: `active-execution`",
@@ -1101,7 +1309,7 @@ test("blueprint lint rejects active queues that omit queue snapshot", async () =
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `active`",
       "- queue_class: `required`",
       "- active_task: `task.test`",
@@ -1177,7 +1385,7 @@ test("blueprint lint rejects active queues whose task definitions omit task_brie
       "",
       "- entry_id: `project-progress.test`",
       "- active_blueprint: `blueprint.test`",
-      "- active_target: `target.test`",
+      "- active_version: `target.test`",
       "- has_active_queue: `true`",
       "- next_file: `docs/blueprints/queues/test-queue.md`",
       "- entry_action: `open-next-file`",
@@ -1194,7 +1402,7 @@ test("blueprint lint rejects active queues whose task definitions omit task_brie
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `queue.test`",
       "- decision_state: `active-execution`",
@@ -1225,7 +1433,7 @@ test("blueprint lint rejects active queues whose task definitions omit task_brie
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `active`",
       "- queue_class: `required`",
       "- active_task: `task.test`",
@@ -1310,7 +1518,7 @@ test("blueprint lint rejects active queues whose active_task is missing from tas
       "",
       "- entry_id: `project-progress.test`",
       "- active_blueprint: `blueprint.test`",
-      "- active_target: `target.test`",
+      "- active_version: `target.test`",
       "- has_active_queue: `true`",
       "- next_file: `docs/blueprints/queues/test-queue.md`",
       "- entry_action: `open-next-file`",
@@ -1327,7 +1535,7 @@ test("blueprint lint rejects active queues whose active_task is missing from tas
       "",
       "- document_role: `target-governor`",
       "- target_id: `target.test`",
-      "- target_status: `open`",
+      "- version_status: `open`",
       "- active_phase: `phase.test`",
       "- active_queue: `queue.test`",
       "- decision_state: `active-execution`",
@@ -1358,7 +1566,7 @@ test("blueprint lint rejects active queues whose active_task is missing from tas
       "## Control Block",
       "",
       "- queue_id: `queue.test`",
-      "- belongs_to_target: `target.test`",
+      "- belongs_to_version: `target.test`",
       "- queue_status: `active`",
       "- queue_class: `required`",
       "- active_task: `task.test`",

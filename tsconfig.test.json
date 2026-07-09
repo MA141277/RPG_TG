@@ -39,6 +39,7 @@
     "src/shared/**/*.ts",
     "src/types/**/*.d.ts",
     "src/vite-env.d.ts",
+    "src/content/base-game-content-pack.ts",
     "src/content/prototype-world.ts",
     "src/content/scenarios/**/*.ts",
     "src/content/scenario-packs/scenario-pack-catalog.ts",

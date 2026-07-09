@@ -4,7 +4,7 @@
 
 - entry_id: `project-progress.replace-me`
 - active_blueprint: `blueprint.replace-me`
-- active_target: `target.replace-me`
+- active_version: `target.replace-me`
 - has_active_queue: `true | false`
 - next_file: `docs/blueprints/blueprint.md`
 - entry_action: `open-next-file`
@@ -14,7 +14,7 @@
 ### Source Of Truth
 
 - Canonical resume chain:
-  - `project-progress -> blueprint -> target plan -> active queue -> active task`
+  - `project-progress -> blueprint -> version plan -> active queue -> active task`
 - Allowed `entry_action` values:
   - `open-next-file`
   - `stop`
@@ -28,11 +28,19 @@
 
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
-- Current Target Spec:
+- Current Version Spec:
   - `docs/blueprints/specs/...`
-- Current Target Plan:
+- Current Version Plan:
   - `docs/blueprints/plans/...`
+- Current Active Queue:
+  - `docs/blueprints/queues/... | none`
 
-### Historical Snapshot (2000-01-01)
+### Live Entry Guardrails
 
-- `Replace with a short historical note when needed.`
+- `This file only states the current resume entry and downstream pointer set.`
+- `Admission history, queue closeout history, and review narrative belong in the version plan, queue docs, or docs/change-log.md rather than here.`
+
+### Historical References
+
+- `docs/change-log.md`
+- `current version plan ledgers`

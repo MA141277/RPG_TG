@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const allowedEntryActions = new Set(["open-next-file", "stop", "blocked"]);
-const allowedTargetNextActions = new Set([
+const allowedVersionNextActions = new Set([
   "classify-fresh-work",
   "write-admission-review",
   "activate-admitted-queue",
@@ -11,14 +11,14 @@ const allowedTargetNextActions = new Set([
   "auto-reconcile-active-task",
   "write-queue-closeout",
   "return-to-promotion-review",
-  "write-target-closeout",
+  "write-version-closeout",
   "resolve-blocker",
 ]);
-const allowedTargetNextDecisions = new Set([
+const allowedVersionNextDecisions = new Set([
   "queue-admission-review",
-  "queue-closeout-or-return-to-target-review",
-  "same-target-admission-or-target-closeout",
-  "target-closeout",
+  "queue-closeout-or-return-to-version-review",
+  "same-version-admission-or-version-closeout",
+  "version-closeout",
   "resolve-blocker",
 ]);
 const allowedAdmissionStatuses = new Set([
@@ -55,31 +55,17 @@ const allowedSyncScopes = new Set(["branch-push", "baseline-merge", "baseline-pu
 export function lintBlueprintDocs(repoRoot = process.cwd()) {
   const failures = [];
   const blueprintsRoot = path.join(repoRoot, "docs", "blueprints");
-
-  const projectProgressPath = path.join(blueprintsRoot, "project-progress.md");
-  const blueprintPath = path.join(blueprintsRoot, "blueprint.md");
-  const liveTargetSpecPath = path.join(
-    blueprintsRoot,
-    "specs",
-    "2026-07-06-project-complete-modularization-target.md"
-  );
-  const liveTargetPlanPath = path.join(
-    blueprintsRoot,
-    "plans",
-    "2026-07-06-project-complete-modularization-target-plan.md"
-  );
-
-  const targetPlanPath = fs.existsSync(liveTargetPlanPath)
-    ? liveTargetPlanPath
-    : firstMarkdownFile(path.join(blueprintsRoot, "plans"));
-  const targetSpecPath = fs.existsSync(liveTargetSpecPath)
-    ? liveTargetSpecPath
-    : firstMarkdownFile(path.join(blueprintsRoot, "specs"));
+  const {
+    projectProgressPath,
+    blueprintPath,
+    targetPlanPath,
+    targetSpecPath,
+  } = resolveLiveTruthPaths(repoRoot, failures);
 
   lintProjectProgress(projectProgressPath, failures, repoRoot);
   lintBlueprintIndex(blueprintPath, failures, repoRoot);
-  lintTargetPlan(targetPlanPath, failures, repoRoot, "target plan");
-  lintTargetSpec(targetSpecPath, failures, repoRoot, "target spec");
+  lintTargetPlan(targetPlanPath, failures, repoRoot, "version plan");
+  lintTargetSpec(targetSpecPath, failures, repoRoot, "version spec");
   lintQueueDocs(path.join(blueprintsRoot, "queues"), failures, repoRoot);
   lintWorkflowIntakeContract(
     path.join(blueprintsRoot, "blueprint-workflow-spec.md"),
@@ -97,14 +83,14 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
     failures,
     repoRoot,
     (filePath, innerFailures) =>
-      lintTargetPlan(filePath, innerFailures, repoRoot, "target-plan template")
+      lintTargetPlan(filePath, innerFailures, repoRoot, "version-plan template")
   );
   lintTemplate(
     path.join(blueprintsRoot, "templates", "target-spec-template.md"),
     failures,
     repoRoot,
     (filePath, innerFailures) =>
-      lintTargetSpec(filePath, innerFailures, repoRoot, "target-spec template")
+      lintTargetSpec(filePath, innerFailures, repoRoot, "version-spec template")
   );
   lintTemplate(
     path.join(blueprintsRoot, "templates", "execution-queue-template.md"),
@@ -113,15 +99,15 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
     (filePath, innerFailures) =>
       lintQueueDoc(filePath, innerFailures, repoRoot, true)
   );
-  if (fs.existsSync(liveTargetPlanPath)) {
-    lintTargetPlanOperatorContract(liveTargetPlanPath, failures, repoRoot);
+  if (targetPlanPath != null && fs.existsSync(targetPlanPath)) {
+    lintTargetPlanOperatorContract(targetPlanPath, failures, repoRoot);
   }
   lintTargetPlanOperatorContract(
     path.join(blueprintsRoot, "templates", "target-plan-template.md"),
     failures,
     repoRoot
   );
-  lintQueueOperatorSnapshotContract(
+  lintReadableQueueOperatorSnapshotContract(
     path.join(blueprintsRoot, "templates", "execution-queue-template.md"),
     failures,
     repoRoot
@@ -136,6 +122,122 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
   );
 
   return failures;
+}
+
+function resolveLiveTruthPaths(repoRoot, failures) {
+  const blueprintsRoot = path.join(repoRoot, "docs", "blueprints");
+  const projectProgressPath = path.join(blueprintsRoot, "project-progress.md");
+  const fallbackBlueprintPath = path.join(blueprintsRoot, "blueprint.md");
+  let blueprintPath = fallbackBlueprintPath;
+  let blueprintText = null;
+
+  if (fs.existsSync(projectProgressPath)) {
+    const projectProgressText = fs.readFileSync(projectProgressPath, "utf8");
+    const nextFileRef = matchField(projectProgressText, "next_file");
+    if (
+      nextFileRef != null &&
+      nextFileRef !== "none" &&
+      nextFileRef.endsWith("/blueprint.md")
+    ) {
+      blueprintPath = path.join(repoRoot, ...nextFileRef.split("/"));
+    }
+  }
+
+  if (fs.existsSync(blueprintPath)) {
+    blueprintText = fs.readFileSync(blueprintPath, "utf8");
+  } else if (fs.existsSync(fallbackBlueprintPath)) {
+    blueprintPath = fallbackBlueprintPath;
+    blueprintText = fs.readFileSync(blueprintPath, "utf8");
+  }
+
+  const activeVersionId = blueprintText == null
+    ? null
+    : matchField(blueprintText, "active_version");
+  const targetPlanPath = resolveBlueprintDocumentPath({
+    repoRoot,
+    blueprintsRoot,
+    blueprintText,
+    fieldNames: ["active_version_plan"],
+    searchDirectory: path.join(blueprintsRoot, "plans"),
+    ownerFieldNames: ["version_id"],
+    ownerId: activeVersionId,
+  });
+  const targetSpecPath = resolveBlueprintDocumentPath({
+    repoRoot,
+    blueprintsRoot,
+    blueprintText,
+    fieldNames: ["active_version_spec"],
+    searchDirectory: path.join(blueprintsRoot, "specs"),
+    ownerFieldNames: ["version_id"],
+    ownerId: activeVersionId,
+  });
+
+  if (blueprintText != null && targetPlanPath == null) {
+    failures.push(
+      `${relative(repoRoot, blueprintPath)}: cannot resolve current version plan from blueprint pointers`
+    );
+  }
+
+  if (blueprintText != null && targetSpecPath == null) {
+    failures.push(
+      `${relative(repoRoot, blueprintPath)}: cannot resolve current version spec from blueprint pointers`
+    );
+  }
+
+  return {
+    projectProgressPath,
+    blueprintPath,
+    targetPlanPath,
+    targetSpecPath,
+  };
+}
+
+function resolveBlueprintDocumentPath({
+  repoRoot,
+  blueprintsRoot,
+  blueprintText,
+  fieldNames,
+  searchDirectory,
+  ownerFieldNames,
+  ownerId,
+}) {
+  if (blueprintText != null) {
+    for (const fieldName of fieldNames) {
+      const ref = matchField(blueprintText, fieldName);
+      if (ref != null && ref !== "none") {
+        return path.join(repoRoot, ...ref.split("/"));
+      }
+    }
+
+    return null;
+  }
+
+  const matchedByOwner = findMarkdownFileByOwnerField(searchDirectory, ownerFieldNames, ownerId);
+  if (matchedByOwner != null) {
+    return matchedByOwner;
+  }
+
+  return firstMarkdownFile(searchDirectory);
+}
+
+function findMarkdownFileByOwnerField(directoryPath, fieldNames, ownerId) {
+  if (ownerId == null || ownerId === "none" || !fs.existsSync(directoryPath)) {
+    return null;
+  }
+
+  for (const entry of fs.readdirSync(directoryPath, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) {
+      continue;
+    }
+
+    const filePath = path.join(directoryPath, entry.name);
+    const text = fs.readFileSync(filePath, "utf8");
+    if (fieldNames.some((fieldName) => matchField(text, fieldName) === ownerId)) {
+      return filePath;
+    }
+  }
+
+  return null;
 }
 
 function lintTemplate(filePath, failures, repoRoot, lintFn) {
@@ -161,6 +263,12 @@ function lintProjectProgress(filePath, failures, repoRoot) {
     );
   }
 
+  if (/^- active_target:/m.test(text)) {
+    failures.push(
+      `${relativePath}: project-progress must not use legacy live pointer field "active_target"; use active_version`
+    );
+  }
+
   const entryActionMatch = text.match(/^- entry_action: `([^`]+)`/m);
   if (entryActionMatch == null) {
     failures.push(
@@ -180,9 +288,48 @@ function lintBlueprintIndex(filePath, failures, repoRoot) {
   }
 
   const relativePath = relative(repoRoot, filePath);
+  requireFieldValue(
+    text,
+    "blueprint_version",
+    relativePath,
+    failures,
+    `${relativePath}: blueprint missing Control Block field "blueprint_version"`
+  );
+  requireFieldValue(
+    text,
+    "active_version",
+    relativePath,
+    failures,
+    `${relativePath}: blueprint missing Control Block field "active_version"`
+  );
+  requireFieldValue(
+    text,
+    "active_version_plan",
+    relativePath,
+    failures,
+    `${relativePath}: blueprint missing Control Block field "active_version_plan"`
+  );
+  requireFieldValue(
+    text,
+    "active_version_spec",
+    relativePath,
+    failures,
+    `${relativePath}: blueprint missing Control Block field "active_version_spec"`
+  );
   rejectQueueLocalSyncFields(text, relativePath, failures, "blueprint");
   for (const forbiddenField of [
-    "target_status",
+    "active_target",
+    "active_target_plan",
+    "active_target_spec",
+  ]) {
+    if (new RegExp(`^- ${escapeRegExp(forbiddenField)}:`, "m").test(text)) {
+      failures.push(
+        `${relativePath}: blueprint must not use legacy live pointer field "${forbiddenField}"; use version terminology`
+      );
+    }
+  }
+  for (const forbiddenField of [
+    "version_status",
     "decision_state",
     "active_queue",
     "active_task",
@@ -208,11 +355,11 @@ function lintWorkflowIntakeContract(filePath, failures, repoRoot) {
 
   const relativePath = relative(repoRoot, filePath);
   requirePatterns(text, relativePath, failures, [
-    [/`新需求`/, 'workflow spec must name `新需求` as allowed intake input'],
-    [/`参考治理规范`/, 'workflow spec must name `参考治理规范` as allowed intake input'],
+    [/\u65b0\u9700\u6c42/u, 'workflow spec must name `???` as allowed intake input'],
+    [/\u53c2\u8003\u6cbb\u7406\u89c4\u8303/u, 'workflow spec must name `??????` as allowed intake input'],
     [/^### 7\.1\.1 Fixed operator receipt contract$/m, "workflow spec must define the fixed operator receipt contract"],
-    [/处理结果：/, "workflow spec must publish the fixed receipt labels"],
-    [/人工操作：当前不需要 \/ 当前需要确认 xxx/, "workflow spec must require the explicit human-action line"],
+    [/\u5904\u7406\u7ed3\u679c\uff1a/u, "workflow spec must publish the fixed receipt labels"],
+    [/\u4eba\u5de5\u64cd\u4f5c\uff1a\u5f53\u524d\u4e0d\u9700\u8981 \/ \u5f53\u524d\u9700\u8981\u786e\u8ba4 xxx/u, "workflow spec must require the explicit human-action line"],
     [/Default intake output must not expose truth-chain detail/i, "workflow spec must hide Blueprint internal analysis by default"],
   ]);
 }
@@ -229,13 +376,13 @@ function lintTargetPlanOperatorContract(filePath, failures, repoRoot) {
 
   const relativePath = relative(repoRoot, filePath);
   requirePatterns(text, relativePath, failures, [
-    [/^### Operator Intake Contract$/m, "target plan must include an Operator Intake Contract section"],
-    [/`新需求`/, "target plan must limit operator intake to `新需求`"],
-    [/`参考治理规范`/, "target plan must limit operator intake to `参考治理规范`"],
-    [/处理结果：/, "target plan must publish the fixed operator receipt block"],
-    [/当前执行情况：/, "target plan must publish the current-execution receipt block"],
-    [/人工操作：当前不需要 \/ 当前需要确认 xxx/, "target plan must publish the explicit human-action receipt line"],
-    [/默认不向人工暴露真值链细节/u, "target plan must default-hide Blueprint internal analysis"],
+    [/^### Operator Intake Contract$/m, "version plan must include an Operator Intake Contract section"],
+    [/\u65b0\u9700\u6c42/u, "version plan must limit operator intake to `???`"],
+    [/\u53c2\u8003\u6cbb\u7406\u89c4\u8303/u, "version plan must limit operator intake to `??????`"],
+    [/\u5904\u7406\u7ed3\u679c\uff1a/u, "version plan must publish the fixed operator receipt block"],
+    [/\u5f53\u524d\u6267\u884c\u60c5\u51b5\uff1a/u, "version plan must publish the current-execution receipt block"],
+    [/\u4eba\u5de5\u64cd\u4f5c\uff1a\u5f53\u524d\u4e0d\u9700\u8981 \/ \u5f53\u524d\u9700\u8981\u786e\u8ba4 xxx/u, "version plan must publish the explicit human-action receipt line"],
+    [/\u9ed8\u8ba4\u4e0d\u5411\u4eba\u5de5\u66b4\u9732\u771f\u503c\u94fe\u7ec6\u8282/u, "version plan must default-hide Blueprint internal analysis"],
   ]);
 }
 
@@ -252,9 +399,28 @@ function lintQueueOperatorSnapshotContract(filePath, failures, repoRoot) {
   const relativePath = relative(repoRoot, filePath);
   requirePatterns(text, relativePath, failures, [
     [/^### Operator Snapshot Contract$/m, "execution queue template must include an Operator Snapshot Contract section"],
-    [/当前执行队列.*queue_id/u, "execution queue template must map 当前执行队列 to queue_id"],
-    [/当前任务.*active_task/u, "execution queue template must map 当前任务 to active_task"],
-    [/当前队列目标.*queue_goal/u, "execution queue template must map 当前队列目标 to queue_goal"],
+    [/\u5f53\u524d\u6267\u884c\u961f\u5217.*queue_id/u, "execution queue template must map ?????? to queue_id"],
+    [/\u5f53\u524d\u4efb\u52a1.*active_task/u, "execution queue template must map ???? to active_task"],
+    [/\u5f53\u524d\u961f\u5217\u76ee\u6807.*queue_goal/u, "execution queue template must map ?????? to queue_goal"],
+  ]);
+}
+
+function lintReadableQueueOperatorSnapshotContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/^### Operator Snapshot Contract$/m, "execution queue template must include an Operator Snapshot Contract section"],
+    [/\u5f53\u524d\u6267\u884c\u961f\u5217.*queue_id/u, "execution queue template must map ?????? to queue_id"],
+    [/\u5f53\u524d\u4efb\u52a1.*active_task/u, "execution queue template must map ???? to active_task"],
+    [/\u5f53\u524d\u961f\u5217\u76ee\u6807.*queue_goal/u, "execution queue template must map ?????? to queue_goal"],
   ]);
 }
 
@@ -280,6 +446,19 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     );
   }
 
+  requireFieldValue(
+    text,
+    "version_status",
+    relativePath,
+    failures,
+    `${relativePath}: ${label} missing Control Block field "version_status"`
+  );
+  if (/^- target_status:/m.test(text)) {
+    failures.push(
+      `${relativePath}: ${label} must not use legacy target_status; use version_status`
+    );
+  }
+
   const nextAction = requireFieldValue(
     text,
     "next_action",
@@ -287,7 +466,7 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     failures,
     `${label} missing Control Block field "next_action"`
   );
-  if (!isTemplate && nextAction != null && !allowedTargetNextActions.has(nextAction)) {
+  if (!isTemplate && nextAction != null && !allowedVersionNextActions.has(nextAction)) {
     failures.push(
       `${relativePath}: ${label} next_action "${nextAction}" is not an allowed enum value`
     );
@@ -300,7 +479,7 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     failures,
     `${label} missing Control Block field "next_decision"`
   );
-  if (!isTemplate && nextDecision != null && !allowedTargetNextDecisions.has(nextDecision)) {
+  if (!isTemplate && nextDecision != null && !allowedVersionNextDecisions.has(nextDecision)) {
     failures.push(
       `${relativePath}: ${label} next_decision "${nextDecision}" is not an allowed enum value`
     );
@@ -428,7 +607,7 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     blockedByEntries.some((entry) => isRepositorySyncMirror(entry))
   ) {
     failures.push(
-      `${relativePath}: ${label} blocked_by must not mirror merge conflict or repository sync state as target-level blocker truth`
+      `${relativePath}: ${label} blocked_by must not mirror merge conflict or repository sync state as version-level blocker truth`
     );
   }
 
@@ -572,6 +751,16 @@ function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
   if (!isTemplate && queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
     failures.push(
       `${relativePath}: queue_status=${queueStatus} is not an allowed queue status`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    /^(active|blocked)$/u.test(queueStatus ?? "") &&
+    /^- belongs_to_target:/m.test(head)
+  ) {
+    failures.push(
+      `${relativePath}: governed queue docs must not use legacy belongs_to_target; use belongs_to_version`
     );
   }
 
@@ -726,15 +915,15 @@ function lintCrossDocumentConsistency(
   const blueprintText = fs.readFileSync(blueprintPath, "utf8");
   const targetPlanText = fs.readFileSync(targetPlanPath, "utf8");
 
-  const projectActiveTarget = matchField(projectProgressText, "active_target");
-  const blueprintActiveTarget = matchField(blueprintText, "active_target");
+  const projectActiveTarget = matchField(projectProgressText, "active_version");
+  const blueprintActiveTarget = matchField(blueprintText, "active_version");
   if (
     projectActiveTarget != null &&
     blueprintActiveTarget != null &&
     projectActiveTarget !== blueprintActiveTarget
   ) {
     failures.push(
-      `${relative(repoRoot, projectProgressPath)}: active_target must match blueprint active_target`
+      `${relative(repoRoot, projectProgressPath)}: active_version must match blueprint active_version`
     );
   }
 

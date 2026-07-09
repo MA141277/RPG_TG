@@ -3,13 +3,13 @@
 ## Control Block
 
 - queue_id: `queue.prototype-startup-bootstrap-ownerization`
-- belongs_to_target: `target.project-complete-modularization`
+- belongs_to_version: `target.project-complete-modularization`
 - queue_status: `done`
 - queue_class: `conditional`
 - active_task: `none`
 - next_task: `none`
 - closeout_status: `done`
-- next_effect: `return-to-target-review`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `none`
 - sync_summary: `No repository sync has run for this newly admitted queue yet.`
@@ -31,11 +31,11 @@
   - `Do not widen this queue into the broader cross-mechanism composition candidate.`
   - `Do not widen this queue into full prototype-world truth extraction, editor work, or cleanup-only residue outside the covered startup seam.`
 
-### Parent Target
+### Parent Version
 
-- Target spec:
+- Version spec:
   - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
-- Target plan:
+- Version plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
 ### Queue Snapshot
@@ -52,33 +52,33 @@
 
 ### Operator Snapshot Contract
 
-- `The fixed operator receipt must source 褰撳墠鎵ц闃熷垪 from queue_id.`
-- `The fixed operator receipt must source 褰撳墠浠诲姟 from active_task.`
-- `The fixed operator receipt must source 褰撳墠闃熷垪鐩爣 from queue_goal.`
+- `The fixed operator receipt must source 当前执行队列 from queue_id.`
+- `The fixed operator receipt must source 当前任务 from active_task.`
+- `The fixed operator receipt must source 当前队列目标 from queue_goal.`
 - `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
 
 ### Admission Preconditions
 
-- `This queue was admitted only after the target plan synchronized the new candidate identity and the fresh 2026-07-09 bounded admission basis.`
+- `This queue was admitted only after the version plan synchronized the new candidate identity and the fresh 2026-07-09 bounded admission basis.`
 - `Single-active-queue mode remains in force; no second queue may be promoted while this queue is active.`
 - `The queue must stay on builtin prototype startup bootstrap ownerization and must not silently absorb broader composition closure or pack-truth extraction that depends on later upstream review.`
 
 ### Repository Sync Record Rule
 
 - `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
-- `The queue-local sync record stores only repository sync result; it does not change task, queue, or target truth.`
-- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or target scheduling truth.`
+- `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
+- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or version scheduling truth.`
 
 ### Activation Order
 
-1. `Target plan admission review concluded before this queue became live execution truth.`
+1. `Version plan admission review concluded before this queue became live execution truth.`
 2. `This queue doc now acts as the queue-level governor for the admitted prototype startup ownerization work.`
 3. `Implementation may begin only through the written active task below.`
 
 ### Recovery Rule
 
 - `Do not recreate or re-audit this queue from scratch while the recorded prototype startup evidence remains valid.`
-- `Resume from this queue doc and the target-plan candidate record unless new material evidence invalidates the admitted basis.`
+- `Resume from this queue doc and the version-plan candidate record unless new material evidence invalidates the admitted basis.`
 
 ### Task Ledger
 
@@ -220,24 +220,24 @@
   - `cleanup-only residue outside the covered prototype family`
 - done_when:
   - `Queue-local truth states whether the remaining prototype residue stays as another bounded in-queue slice or returns to target review for later admission.`
-  - `Queue snapshot, task counts, and target truth are synchronized with that decision before any repository sync batch.`
+  - `Queue snapshot, task counts, and version truth are synchronized with that decision before any repository sync batch.`
   - `The queue does not silently absorb larger prototype-world cleanup without a fresh written boundary.`
 - verify_with:
   - `npm run lint:blueprints`
   - `rg -n "prototype-world|createPrototypeCharactersForStoryStage|createPrototypeAppState" src/content/prototype-world.ts src/main.ts tests/robustness.test.cjs`
 - if_blocked:
   - `Record why the remaining residue cannot be cleanly classified instead of widening the queue without written review.`
-  - `Escalate back to target review if the remaining residue no longer belongs to this admitted queue.`
+  - `Escalate back to version review if the remaining residue no longer belongs to this admitted queue.`
 - promote_next_if_done: `none`
 - stop_if:
-  - `Required queue or target truth is not synchronized.`
+  - `Required queue or version truth is not synchronized.`
 
 ##### Human Context
 
 - task_brief:
   - `Reassess the remaining prototype-world and test-harness residue after the first startup ownerization slice lands.`
 - task_outcome_summary:
-  - `Completed after queue-local review concluded that the remaining residue spans broader prototype-world truth and prototype-heavy test-harness coupling, so the queue returned control to target review rather than widening in place.`
+  - `Completed after queue-local review concluded that the remaining residue spans broader prototype-world truth and prototype-heavy test-harness coupling, so the queue returned control to version review rather than widening in place.`
 - Purpose:
   - `Keep the queue aligned with current evidence after the first implementation slice lands.`
 - Failure mode:
@@ -246,7 +246,7 @@
   - `src/main.ts now injects the startup-layer builder rather than owning the covered builtin prototype app-state assembly directly, but it still imports createPrototypeCharactersForStoryStage from src/content/prototype-world.ts.`
   - `src/application/startup/prototype-startup-app-state.ts now consumes createPrototypeCharactersForStoryStage only as a dependency seam, which means the remaining direct prototype-world coupling is no longer the same ownerization cut that admitted this queue.`
   - `tests/robustness.test.cjs still depends broadly on prototypeCharacters, prototypeHouses, prototypeCityNpcPools, prototypeCards, prototypeValuables, and other large fixture exports from src/content/prototype-world.ts, so the remaining residue is tied to a wider prototype-world truth and test-harness family rather than one smaller same-queue implementation slice.`
-  - `Because the remaining residue no longer exposes one bounded continuation ahead of broader prototype-world extraction, startup bootstrap assumptions, and test-harness decoupling, the correct queue-local decision is return-to-target-review rather than silent queue expansion.`
+  - `Because the remaining residue no longer exposes one bounded continuation ahead of broader prototype-world extraction, startup bootstrap assumptions, and test-harness decoupling, the correct queue-local decision is return-to-version-review rather than silent queue expansion.`
 
 ##### Decision-Dispatch Notes
 
@@ -268,6 +268,6 @@
   - Verification: `node --test --test-name-pattern "prototype startup ownerization moves covered builtin startup builders out of main.ts" tests/robustness.test.cjs; npm run typecheck; npm test`
   - Next at this time: `Execute task.prototype-startup-bootstrap-ownerization.prototype-bootstrap-residue-review to decide whether the remaining prototype-world and test-harness residue stays in-queue or returns to target review.`
 - 2026-07-09
-  - Summary: `Completed prototype-bootstrap-residue-review by concluding that the remaining residue no longer forms one unique same-queue implementation slice. main.ts still depends on createPrototypeCharactersForStoryStage from prototype-world, while tests/robustness.test.cjs still consumes broad prototype-world fixture truth, so control returns to target review instead of widening this queue into broader prototype-world and test-harness work.`
+  - Summary: `Completed prototype-bootstrap-residue-review by concluding that the remaining residue no longer forms one unique same-queue implementation slice. main.ts still depends on createPrototypeCharactersForStoryStage from prototype-world, while tests/robustness.test.cjs still consumes broad prototype-world fixture truth, so control returns to version review instead of widening this queue into broader prototype-world and test-harness work.`
   - Verification: `rg -n "prototype-world|createPrototypeCharactersForStoryStage|createPrototypeAppState" src/content/prototype-world.ts src/main.ts tests/robustness.test.cjs; npm run lint:blueprints`
-  - Next at this time: `Close queue.prototype-startup-bootstrap-ownerization and return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for target-level promotion review with no active queue.`
+  - Next at this time: `Close queue.prototype-startup-bootstrap-ownerization and return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for version-level promotion review with no active queue.`

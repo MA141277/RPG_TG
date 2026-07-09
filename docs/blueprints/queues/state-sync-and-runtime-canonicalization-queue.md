@@ -3,13 +3,13 @@
 ## Control Block
 
 - queue_id: `queue.state-sync-and-runtime-canonicalization`
-- belongs_to_target: `target.project-complete-modularization`
+- belongs_to_version: `target.project-complete-modularization`
 - queue_status: `done`
 - queue_class: `conditional`
 - active_task: `none`
 - next_task: `none`
 - closeout_status: `done`
-- next_effect: `return-to-target-review`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `none`
 - sync_summary: `No repository sync has run for this newly admitted queue yet.`
@@ -31,11 +31,11 @@
   - `Do not widen this queue into consumer-side registry seam closure.`
   - `Do not widen this queue into cross-mechanism composition, package normalization, or adapter cleanup that depends on later upstream work.`
 
-### Parent Target
+### Parent Version
 
-- Target spec:
+- Version spec:
   - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
-- Target plan:
+- Version plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
 ### Queue Snapshot
@@ -52,33 +52,33 @@
 
 ### Operator Snapshot Contract
 
-- `The fixed operator receipt must source 褰撳墠鎵ц闃熷垪 from queue_id.`
-- `The fixed operator receipt must source 褰撳墠浠诲姟 from active_task.`
-- `The fixed operator receipt must source 褰撳墠闃熷垪鐩爣 from queue_goal.`
+- `The fixed operator receipt must source 当前执行队列 from queue_id.`
+- `The fixed operator receipt must source 当前任务 from active_task.`
+- `The fixed operator receipt must source 当前队列目标 from queue_goal.`
 - `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
 
 ### Admission Preconditions
 
-- `This queue was admitted only after the target plan synchronized the existing candidate identity and current bounded admission basis.`
+- `This queue was admitted only after the version plan synchronized the existing candidate identity and current bounded admission basis.`
 - `Single-active-queue mode remains in force; no second queue may be promoted while this queue is active.`
 - `The queue must stay on core runtime canonicalization and must not silently absorb consumer registry imports, broader composition seams, or zhuyuanzhang package normalization.`
 
 ### Repository Sync Record Rule
 
 - `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
-- `The queue-local sync record stores only repository sync result; it does not change task, queue, or target truth.`
-- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or target scheduling truth.`
+- `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
+- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or version scheduling truth.`
 
 ### Activation Order
 
-1. `Target plan admission review concluded before this queue became live execution truth.`
+1. `Version plan admission review concluded before this queue became live execution truth.`
 2. `This queue doc now acts as the queue-level governor for the admitted canonicalization work.`
 3. `Implementation may begin only through the written active task below.`
 
 ### Recovery Rule
 
 - `Do not recreate or re-audit this queue from scratch while the recorded runtime/state evidence remains valid.`
-- `Resume from this queue doc and the target-plan candidate record unless new material evidence invalidates the admitted basis.`
+- `Resume from this queue doc and the version-plan candidate record unless new material evidence invalidates the admitted basis.`
 
 ### Task Ledger
 
@@ -188,7 +188,7 @@
   - `npm run typecheck`
   - `npm test`
 - if_blocked:
-  - `Record the concrete blocker in this queue doc instead of reopening target-level candidate discovery.`
+  - `Record the concrete blocker in this queue doc instead of reopening version-level candidate discovery.`
   - `Do not widen into application consumer rewiring just to force this task through.`
 - promote_next_if_done: `task.state-sync-and-runtime-canonicalization.interactive-compat-closeout`
 - stop_if:
@@ -232,7 +232,7 @@
   - `package normalization and content assembly work`
 - done_when:
   - `Covered core interactive runtime paths no longer depend on legacyInteractiveKind or createLegacyPlayableSession as live canonical compatibility glue.`
-  - `Queue truth, target truth, and verification are synchronized before returning control to target review.`
+  - `Queue truth, version truth, and verification are synchronized before returning control to version review.`
   - `The queue either closes with written evidence or records a concrete blocker without leaving ambiguous live state.`
 - verify_with:
   - `npm run lint:blueprints`

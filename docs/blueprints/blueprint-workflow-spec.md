@@ -1,4 +1,4 @@
-# Blueprint Workflow Spec
+﻿# Blueprint Workflow Spec
 
 ## 1. Goal
 
@@ -19,8 +19,8 @@ This spec applies to:
 - `docs/blueprints/project-progress.md`
 - `docs/blueprints/blueprint.md`
 - `docs/blueprints/classification-rule-layer-spec.md`
-- target specs under `docs/blueprints/specs/`
-- target plans under `docs/blueprints/plans/`
+- version specs under `docs/blueprints/specs/`
+- version plans under `docs/blueprints/plans/`
 - queue docs under `docs/blueprints/queues/`
 - templates under `docs/blueprints/templates/`
 - `tools/lint-blueprints.mjs`
@@ -33,18 +33,18 @@ Old `docs/superpowers/**` workflow docs remain historical or legacy-only referen
 The only legal execution resume chain is:
 
 ```text
-project-progress -> blueprint -> target plan -> active queue -> active task
+project-progress -> blueprint -> version plan -> active queue -> active task
 ```
 
 Rules:
 
 1. `project-progress` is the repository entry document.
-2. `blueprint` is the Blueprint index and target registry.
-3. `target plan` is the only live governor at target level.
+2. `blueprint` is the Blueprint index and version registry.
+3. `version plan` is the only live governor at version level.
 4. `queue doc` is the only live governor at queue level.
-5. `target spec` is a boundary and acceptance contract, not a live execution controller.
+5. `version spec` is a boundary and acceptance contract, not a live execution controller.
 6. `docs/change-log.md`, old `docs/superpowers/**`, closed queues, and prose history must not be used to infer current execution truth.
-7. If `active_queue = none`, resume from the target plan's `resume_gate`.
+7. If `active_queue = none`, resume from the version plan's `resume_gate`.
 8. AI must not invent placeholder queues or placeholder tasks.
 
 ## 4. Single-Writer Truth Model
@@ -55,7 +55,7 @@ Owns only:
 
 - repository resume entry
 - current Blueprint pointer
-- current target pointer
+- current version pointer
 - whether an active queue exists
 - next jump file
 - repository entry action
@@ -63,7 +63,7 @@ Owns only:
 Must not own:
 
 - `decision_state`
-- `target_status`
+- `version_status`
 - queue-local task state
 - queue-local narrative
 - redundant completed queue registries
@@ -73,50 +73,51 @@ Must not own:
 
 Owns only:
 
-- target registry
-- current active target pointer
-- current target plan pointer
+- version registry
+- current active version pointer
+- current version plan pointer
 - classification / routing references
 - repository execution mode
 
 Must not own:
 
 - `decision_state`
-- `target_status`
+- `version_status`
 - active task truth
 - queue-local execution detail
-- live queue truth derivable from the target plan
-- drift-prone completed target registries
+- live queue truth derivable from the version plan
+- drift-prone completed version registries
 
-### 4.3 target spec
+### 4.3 version spec
 
 Owns only:
 
-- target goal
+- version goal
 - scope
 - non-goals
 - acceptance criteria
 - queue portfolio
-- target closeout contract
+- version closeout contract
 
-The target spec queue portfolio must stay contract-only. It must not mirror runtime queue status or queue document source pointers.
+The version spec queue portfolio must stay contract-only. It must not mirror runtime queue status or queue document source pointers.
 
 Must not own:
 
-- `target_status`
+- `version_status`
 - `decision_state`
 - active queue
 - active task
 - current task instructions
 - queue-local execution interpretation
 
-### 4.4 target plan
+### 4.4 version plan
 
-The target plan is the only live governor for:
+The version plan is the only live governor for:
 
-- `target_status`
+- `version_status`
 - `active_phase`
 - `active_queue`
+- `candidate_queue_ids`
 - `decision_state`
 - `next_decision`
 - `next_action`
@@ -133,7 +134,7 @@ The target plan is the only live governor for:
 - `intake_result`
 - `intake_feedback_mode`
 - queue promotion / hold / reopen / closeout conclusions
-- target-level closeout decision
+- version-level closeout decision
 
 ### 4.5 queue doc
 
@@ -218,7 +219,7 @@ Historical sections must not use instruction-like labels such as:
 
 `Resume ...` phrasing is allowed only inside:
 
-- the current active target plan live area
+- the current active version plan live area
 - the current active queue live area
 
 Closed queues, closed targets, historical notes, and `docs/change-log.md` must not contain text that reads like a current execution command.
@@ -241,14 +242,14 @@ The mandatory startup order is:
 1. read the current truth chain:
    - `project-progress`
    - `blueprint`
-   - current target plan
+   - current version plan
    - active queue if one exists
 2. check whether an active queue already exists
 3. decide whether the new item can be absorbed inside that active queue without widening queue scope
 4. classify the item
-5. if classification is `queue-candidate`, return to target-level admission
-6. sync the target plan admission review fields
-7. only after target-level admission sync may the admitted queue doc be created and activated
+5. if classification is `queue-candidate`, return to version-level admission
+6. sync the version plan admission review fields
+7. only after version-level admission sync may the admitted queue doc be created and activated
 8. only after the queue doc exposes `queue_status = active` plus a written `active_task` may implementation begin
 9. if implementation does not begin immediately, emit the fixed operator receipt contract rather than exposing Blueprint internal analysis by default
 
@@ -287,20 +288,20 @@ Hard rules:
 
 ### 7.2 Mandatory admission before fresh implementation
 
-Any fresh implementation item that is classified as `queue-candidate` must complete target-level admission before implementation starts.
+Any fresh implementation item that is classified as `queue-candidate` must complete version-level admission before implementation starts.
 
 Hard rules:
 
 1. If `active_queue = none`, no fresh implementation may begin directly.
-2. If classification concludes `queue-candidate`, the agent must return to target-level admission review before code implementation.
+2. If classification concludes `queue-candidate`, the agent must return to version-level admission review before code implementation.
 3. The agent must not begin implementation while either of these is still missing:
-   - the target plan Control Block does not yet record the admission review truth
+   - the version plan Control Block does not yet record the admission review truth
    - the admitted queue doc does not yet exist and expose active execution truth
 4. A queue-candidate may be discussed, audited, or scoped before admission, but that is not implementation authorization.
 
 ### 7.3 No-from-scratch recheck rule
 
-Once a queue-candidate has already been structurally recorded in target-level truth, later handling must resume from that admission record by default rather than restarting a full repository-wide re-audit.
+Once a queue-candidate has already been structurally recorded in version-level truth, later handling must resume from that admission record by default rather than restarting a full repository-wide re-audit.
 
 Resume from the recorded admission record when all are true:
 
@@ -313,16 +314,16 @@ Only re-open a full recheck when new material evidence:
 - invalidates the old classification
 - invalidates the prior admission basis
 - proves the item can now be absorbed by the current active queue
-- proves the item no longer belongs to the current target
+- proves the item no longer belongs to the current version
 
 ### 7.4 Required write order for admission
 
 When a `queue-candidate` is admitted, write truth in this order before implementation:
 
-1. target plan admission review fields
-2. target plan review conclusion sufficient to justify activation
+1. version plan admission review fields
+2. version plan review conclusion sufficient to justify activation
 3. admitted queue doc Control Block
-4. target plan `active_queue` / `decision_state` / `next_action`
+4. version plan `active_queue` / `decision_state` / `next_action`
 5. blueprint if affected
 6. project-progress if affected
 
@@ -330,9 +331,9 @@ Only after those documents agree may implementation begin.
 
 Clarifications:
 
-1. target-plan review sync must happen before queue activation
-2. queue creation must not be used as a substitute for target-level admission review
-3. a queue doc must not expose `queue_status = active` or a live `active_task` before the target plan already carries the matching review subject and basis
+1. version-plan review sync must happen before queue activation
+2. queue creation must not be used as a substitute for version-level admission review
+3. a queue doc must not expose `queue_status = active` or a live `active_task` before the version plan already carries the matching review subject and basis
 
 ### 7.5 Scope approval is not admission
 
@@ -343,7 +344,7 @@ The following must remain distinct:
 - `scope approval`
   - user agrees the proposed boundary is acceptable
 - `admission`
-  - target plan records the review subject, proposed queue, basis, admission result, and active execution truth
+  - version plan records the review subject, proposed queue, basis, admission result, and active execution truth
 
 Phrases such as:
 
@@ -366,8 +367,8 @@ Rules:
 
 1. if an active queue already exists, a fresh item must first be tested for absorption into that queue
 2. if the item cannot be absorbed, it may be classified and recorded as a candidate, but it must not be activated as a second queue
-3. the target plan must not keep a live admission review subject while another queue remains active
-4. the agent must wait for current queue closeout and return to target-level review before activating a new queue
+3. the version plan must not keep a live admission review subject while another queue remains active
+4. the agent must wait for current queue closeout and return to version-level review before activating a new queue
 
 When an active queue exists, the fixed operator receipt must still explain whether the fresh item was absorbed or converged into a candidate queue, and it must include the current queue snapshot needed for operator visibility.
 
@@ -380,14 +381,14 @@ Any classification result that changes or may change active truth must be record
 It is illegal to stop at conversation-only conclusions such as:
 
 - `this belongs to queue.x`
-- `this should be current target work`
+- `this should be current version work`
 - `this needs promotion review`
 
-without syncing the corresponding target plan admission fields.
+without syncing the corresponding version plan admission fields.
 
-### 8.2 Required admission-review fields in the target plan
+### 8.2 Required admission-review fields in the version plan
 
-The target plan must structurally carry the current admission review subject through at least:
+The version plan must structurally carry the current admission review subject through at least:
 
 - `review_subject_id`
 - `review_subject_classification`
@@ -409,7 +410,7 @@ If no admission review is active, these fields must explicitly return to `none`.
 ### 8.3 Review object semantics
 
 - `review_subject_id`
-  - the item currently under target-level review
+  - the item currently under version-level review
 - `review_subject_classification`
   - the structured classification driving the review
 - `proposed_queue_id`
@@ -423,7 +424,7 @@ These fields exist so admission, reject, defer, and block outcomes do not fall b
 
 ### 8.4 Candidate recovery record
 
-The target plan must also keep a structured candidate recovery record for previously reviewed queue-candidates.
+The version plan must also keep a structured candidate recovery record for previously reviewed queue-candidates.
 
 This record may live in a ledger table or equivalent structured section, but it must preserve at minimum:
 
@@ -435,9 +436,9 @@ This record may live in a ledger table or equivalent structured section, but it 
 
 The purpose is to allow later sessions to resume from existing admission evidence instead of repeating a from-scratch audit.
 
-## 9. Target State Model
+## 9. Version State Model
 
-### 9.1 `target_status`
+### 9.1 `version_status`
 
 Allowed values:
 
@@ -447,7 +448,7 @@ Allowed values:
 
 ### 9.2 `decision_state`
 
-Allowed values while the target is open:
+Allowed values while the version is open:
 
 - `active-execution`
 - `promotion-review`
@@ -457,38 +458,38 @@ Allowed values while the target is open:
 ### 9.3 Semantics
 
 - `open + active-execution`
-  - an active queue exists under the target
+  - an active queue exists under the version
 - `open + promotion-review`
-  - no active queue exists, and target-level admission or review is live
+  - no active queue exists, and version-level admission or review is live
 - `open + idle-open`
   - no active queue exists and no admission review is live
 - `open + blocked`
-  - the target cannot advance until an explicit blocker is resolved
+  - the version cannot advance until an explicit blocker is resolved
 - `done`
-  - the target is formally closed and no new queue may be added under it
+  - the version is formally closed and no new queue may be added under it
 - `archived`
-  - the target is historical only
+  - the version is historical only
 
 Clarifications:
 
-1. `active_queue = none` does not mean the target is `done`.
+1. `active_queue = none` does not mean the version is `done`.
 2. `active_queue = none` does not authorize fresh implementation.
-3. As long as `target_status = open`, a new queue may still be admitted through `promotion-review`.
+3. As long as `version_status = open`, a new queue may still be admitted through `promotion-review`.
 
-### 9.4 Target lifecycle authority
+### 9.4 Version lifecycle authority
 
-Target lifecycle is explicit governance truth, not an automatic inference from queue status.
+Version lifecycle is explicit governance truth, not an automatic inference from queue status.
 
 Rules:
 
-1. the repository may have at most one current `open` target
-2. if no `open` target exists, target creation is the required next governance act before any new queue admission or implementation may begin
-3. an `open` target remains open until target closeout is explicitly confirmed and written into target-plan truth
-4. an `open` target may continue admitting new same-target queues even after all current queues are closed
-5. queue closeout may be automatic when the next legal step is unique; target closeout may become `closeout-ready`, but it must not become `done` without explicit human confirmation
-6. if target closeout conditions are satisfied and no active queue remains, the agent may ask exactly one closeout confirmation question:
-   - `close current target now, or keep it open for possible additional same-target queue admission`
-7. if the user does not explicitly confirm target closeout, the target stays `open`
+1. the repository may have at most one current `open` version
+2. if no `open` version exists, version creation is the required next governance act before any new queue admission or implementation may begin
+3. an `open` version remains open until version closeout is explicitly confirmed and written into version-plan truth
+4. an `open` version may continue admitting new same-version queues even after all current queues are closed
+5. queue closeout may be automatic when the next legal step is unique; version closeout may become `closeout-ready`, but it must not become `done` without explicit human confirmation
+6. if version closeout conditions are satisfied and no active queue remains, the agent may ask exactly one closeout confirmation question:
+   - `close current version now, or keep it open for possible additional same-version queue admission`
+7. if the user does not explicitly confirm version closeout, the version stays `open`
 
 ### 9.5 State transitions
 
@@ -499,9 +500,9 @@ Rules:
 - `promotion-review -> idle-open`
   - when review concludes `rejected` or `deferred` and no queue is admitted
 - `promotion-review -> blocked`
-  - when target-level decision requires an external blocker or a truly mutually exclusive human choice
+  - when version-level decision requires an external blocker or a truly mutually exclusive human choice
 - `active-execution -> promotion-review`
-  - when an active queue closes and target-level review is now the only legal next point
+  - when an active queue closes and version-level review is now the only legal next point
 - `active-execution -> idle-open`
   - when an active queue closes and no new review subject is pending
 
@@ -512,7 +513,7 @@ Queue docs must own task truth.
 Required queue fields:
 
 - `queue_id`
-- `belongs_to_target`
+- `belongs_to_version`
 - `queue_status`
 - `queue_class`
 - `active_task`
@@ -555,10 +556,10 @@ Hard queue rules:
    - live `active_task`
    - `Resume ...` instructions
    - `Current active task` language
-4. A queue doc must not be created as a substitute for target-level candidate tracking. Candidate tracking belongs in the target plan until queue activation is legal.
+4. A queue doc must not be created as a substitute for version-level candidate tracking. Candidate tracking belongs in the version plan until queue activation is legal.
 5. If a queue doc exists, it must represent admitted queue truth, not pre-admission speculation.
 6. If a queue is `active`, it must expose a `Queue Snapshot` that explains queue purpose, task count, active task, and per-task role without creating a second source of executable truth.
-7. `decision-dispatch` is a legal queue-local task shape when an active queue needs human decision, scope trimming, recommendation output, or blocker routing, but it does not replace target-level `promotion-review` and does not create a new resume layer.
+7. `decision-dispatch` is a legal queue-local task shape when an active queue needs human decision, scope trimming, recommendation output, or blocker routing, but it does not replace version-level `promotion-review` and does not create a new resume layer.
 
 ## 11. Post-Task Auto-Reconcile And Closeout Auto-Advance
 
@@ -572,8 +573,8 @@ When an active task completes, the agent must automatically:
 4. scan impacted governance owners, at minimum:
    - `project-progress`
    - `blueprint`
-   - target spec
-   - target plan
+   - version spec
+   - version plan
    - active queue doc
    - any affected shared-interface docs
 5. scan residue, at minimum:
@@ -596,7 +597,7 @@ then the agent must automatically continue into:
 
 - task auto-reconcile
 - queue gate re-evaluation
-- queue closeout or target review handoff
+- queue closeout or version review handoff
 
 It is illegal to stop at:
 
@@ -613,8 +614,8 @@ when those are already the only legal next step.
 Queue closeout sync order is fixed:
 
 1. queue doc
-2. target plan
-3. target spec if affected
+2. version plan
+3. version spec if affected
 4. blueprint if affected
 5. project-progress
 6. optional `docs/change-log.md` mirror update
@@ -624,7 +625,7 @@ Queue closeout sync order is fixed:
 After a task reaches a terminal execution state:
 
 1. write the task after-state first
-2. write queue truth and any required target truth second
+2. write queue truth and any required version truth second
 3. trigger one minimum repository sync batch third
 4. continue Blueprint scheduling after the sync attempt returns a result
 
@@ -637,7 +638,7 @@ Per task, at most one human-confirmation question may be asked.
 Do not ask when the answer can be determined from:
 
 - Control Blocks
-- target plan
+- version plan
 - queue doc
 - codebase state
 - existing docs
@@ -659,20 +660,20 @@ Hard throttle:
    - finish automatic closeout from existing evidence
    - or report `blocked` with the smallest concrete blocker
 
-Target-level exception:
+Version-level exception:
 
-- target closeout confirmation is allowed, and required, when the target is closeout-ready and changing `target_status` to `done` would alter active truth
-- if closeout is not confirmed, resume from the still-open target rather than inferring closure
+- version closeout confirmation is allowed, and required, when the version is closeout-ready and changing `version_status` to `done` would alter active truth
+- if closeout is not confirmed, resume from the still-open version rather than inferring closure
 
 ## 13. Consistency Checks
 
 At minimum, Blueprint governance must satisfy:
 
-1. `project-progress.active_target == blueprint.active_target`
-2. `project-progress.has_active_queue == false` implies the target plan does not name an active queue
-3. `target_status = done` implies:
+1. `project-progress.active_version == blueprint.active_version`
+2. `project-progress.has_active_queue == false` implies the version plan does not name an active queue
+3. `version_status = done` implies:
    - `active_queue = none`
-   - no active task may exist in any queue under that target
+   - no active task may exist in any queue under that version
 4. a `done` queue must not contain:
    - `Resume execution`
    - `Current active task`
@@ -682,19 +683,19 @@ At minimum, Blueprint governance must satisfy:
 7. `open + active_queue = none` is legal and may still admit a new queue
 8. historical sections must not impersonate current control truth
 9. `project-progress` must use `entry_action`, not `next_step`
-10. target plans must use `next_action`, not `next_legal_action`
-11. target plans and their templates must not keep a live `### Current Decision` block
-12. target specs and their templates must expose queue families through a contract-only portfolio without `State` or `Source` columns
+10. version plans must use `next_action`, not `next_legal_action`
+11. version plans and their templates must not keep a live `### Current Decision` block
+12. version specs and their templates must expose queue families through a contract-only portfolio without `State` or `Source` columns
 13. `active_queue = none` must not coexist with `decision_state = active-execution`
 14. `next_action = resume-active-queue` requires a non-`none` `active_queue`
-15. a target plan must not review a `queue-candidate` without structured review fields
+15. a version plan must not review a `queue-candidate` without structured review fields
 16. `admission_status = admitted` must not coexist with `active_queue = none`
 17. a queue must not carry a live `active_task` unless `queue_status = active`
 18. when `execution_mode = single-active-task` and `allow_parallel = false`, an active queue must block simultaneous live admission review for another queue
-19. when the target plan names an `active_queue`, exactly one queue doc must be `queue_status = active` and its `queue_id` must match
-20. when the target plan names `active_queue = none`, no queue doc may remain `queue_status = active`
+19. when the version plan names an `active_queue`, exactly one queue doc must be `queue_status = active` and its `queue_id` must match
+20. when the version plan names `active_queue = none`, no queue doc may remain `queue_status = active`
 21. queue docs must not use `queue_status = candidate`
-22. an open target with `active_queue = none` remains eligible for same-target queue admission until explicit target closeout is written
+22. an open version with `active_queue = none` remains eligible for same-version queue admission until explicit version closeout is written
 
 ## 14. Automated Enforcement
 
@@ -704,27 +705,27 @@ Current Blueprint lint must reject:
 
 - `project-progress.next_step`
 - target-plan `next_legal_action`
-- live `### Current Decision` blocks in target plans
-- target-plan documents missing:
+- live `### Current Decision` blocks in version plans
+- version-plan documents missing:
   - `review_subject_id`
   - `review_subject_classification`
   - `proposed_queue_id`
   - `review_basis`
   - `admission_status`
-- target-plan states where:
+- version-plan states where:
   - `active_queue = none` and `decision_state = active-execution`
   - `next_action = resume-active-queue` while `active_queue = none`
   - `admission_status = admitted` while `active_queue = none`
   - `review_subject_classification = queue-candidate` while `proposed_queue_id = none`
-- target-spec queue tables that mix contract fields with `State` / `Source`
+- version-spec queue tables that mix contract fields with `State` / `Source`
 - queue Control Blocks that use legacy `status` instead of `queue_status`
 - queue Control Blocks that use `queue_status = candidate`
 - queues with `active_task != none` while `queue_status != active`
 - done queues that still expose live execution labels
-- `has_active_queue = false` paired with a target plan `active_queue != none`
-- target plans that keep a live queue-admission review subject while another active queue already exists
-- repositories where the target plan names one active queue but queue docs expose zero or multiple active queues
-- repositories where a queue doc is `active` while the target plan still says `active_queue = none`
+- `has_active_queue = false` paired with a version plan `active_queue != none`
+- version plans that keep a live queue-admission review subject while another active queue already exists
+- repositories where the version plan names one active queue but queue docs expose zero or multiple active queues
+- repositories where a queue doc is `active` while the version plan still says `active_queue = none`
 
 ## 15. Governance Debt Still Requiring Stronger Automation
 
@@ -732,13 +733,13 @@ Current lint can catch document-state contradictions, but it still cannot fully 
 
 These remain mandatory future enforcement categories:
 
-1. reject implementation batches that begin while the target plan still shows `active_queue = none` and the reviewed item is an unadmitted `queue-candidate`
+1. reject implementation batches that begin while the version plan still shows `active_queue = none` and the reviewed item is an unadmitted `queue-candidate`
 2. reject sessions that complete verification for the active task but stop before queue auto-reconcile / closeout when no blocker exists
-3. detect scope approval being incorrectly treated as admission without structured target-plan review fields changing first
+3. detect scope approval being incorrectly treated as admission without structured version-plan review fields changing first
 4. detect conversation-only classification that changes active truth without synchronized governance writes
 5. detect repeated full re-audit of an already recorded queue-candidate when no material recheck trigger exists
-6. detect target closeout being written without explicit human confirmation
-7. detect repositories that drift into zero-open-target or multiple-open-target truth without an explicit target-creation / target-closeout record
+6. detect version closeout being written without explicit human confirmation
+7. detect repositories that drift into zero-open-version or multiple-open-version truth without an explicit version-creation / version-closeout record
 
 Until stronger automation exists, these are still hard workflow rules, not optional guidance.
 
@@ -766,17 +767,17 @@ Rules:
 3. All work happens on a working branch.
 4. The minimum repository sync batch is commit, push current branch, merge into baseline, and push baseline after each terminal task after-state once the required docs are updated.
 5. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
-6. Commit / push / merge are non-governing: they must not change task state, queue state, target state, or target scheduling truth.
+6. Commit / push / merge are non-governing: they must not change task state, queue state, version state, or version scheduling truth.
 7. Local hook or CI enforcement must reject commit messages that omit the required summary block.
 8. Repository sync failure is recorded only as repository sync result in the queue-local sync record.
 9. Repository sync failure must not be rewritten as queue blocker, target blocker, repository/global verification failure, or decision_required.
 10. If repository sync fails, Blueprint scheduling still continues from the written governance docs rather than waiting for success.
-11. Ask the user only when baseline selection is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current target truth cannot decide.
+11. Ask the user only when baseline selection is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide.
 12. Resume truth comes from the written governance docs, not branch memory.
 13. A merge conflict is part of repository sync, not execution-state governance.
 14. A merge conflict must not rewrite the already-recorded task, queue, or target conclusion.
-15. If current target truth uniquely decides the merge direction, resolve it without asking.
-16. Record merge-conflict outcome only in the queue-local sync record rather than elevating it into target live truth.
+15. If current version truth uniquely decides the merge direction, resolve it without asking.
+16. Record merge-conflict outcome only in the queue-local sync record rather than elevating it into version live truth.
 
 ## 18. Drift-Prone Field Reduction
 
@@ -815,3 +816,4 @@ The Blueprint model is successful only when:
 - historical narrative no longer masquerades as live control
 - `open + no active queue` is supported without fake work
 - task completion automatically rolls through verification, residue scan, gate re-evaluation, closeout sync, and target handoff when no blocker remains
+

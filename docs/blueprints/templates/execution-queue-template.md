@@ -3,13 +3,16 @@
 ## Control Block
 
 - queue_id: `queue.replace-me`
-- belongs_to_target: `target.replace-me`
+- belongs_to_version: `target.replace-me`
+- blueprint_version: `2026.07`
+- governance_last_synced_at: `2000-01-01`
+- governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active | blocked | done | dropped`
 - queue_class: `required`
 - active_task: `task.replace-me | none`
 - next_task: `task.replace-me-next | none`
 - closeout_status: `in-progress | done | blocked`
-- next_effect: `promote-next-queue | return-to-target-review | block-target | none`
+- next_effect: `promote-next-queue | return-to-version-review | block-version | none`
 - sync_status: `pending | success | failed`
 - sync_scope: `branch-push | baseline-merge | baseline-push | none`
 - sync_summary: `Replace with the latest repository sync result.`
@@ -31,11 +34,11 @@
   - `Replace with out-of-scope area 1.`
   - `Replace with out-of-scope area 2.`
 
-### Parent Target
+### Parent Version
 
-- Target spec:
+- Version spec:
   - `docs/blueprints/specs/...`
-- Target plan:
+- Version plan:
   - `docs/blueprints/plans/...`
 
 ### Queue Snapshot
@@ -57,30 +60,30 @@
 
 ### Admission Preconditions
 
-- `This queue must not be created or treated as implementation authority until the target plan already records admission review truth.`
-- `This queue must not expose queue_status=active or a live active_task before the target plan admission fields are synchronized.`
-- `If this queue is admitted from a fresh queue-candidate, the target plan admission fields must be synchronized before any queue activation or code implementation starts.`
+- `This queue must not be created or treated as implementation authority until the version plan already records admission review truth.`
+- `This queue must not expose queue_status=active or a live active_task before the version plan admission fields are synchronized.`
+- `If this queue is admitted from a fresh queue-candidate, the version plan admission fields must be synchronized before any queue activation or code implementation starts.`
 - `User scope approval alone must not be treated as queue admission.`
-- `Candidate tracking belongs in the target plan; this queue doc is for admitted queue truth only.`
+- `Candidate tracking belongs in the version plan; this queue doc is for admitted queue truth only.`
 
 ### Repository Sync Record Rule
 
 - `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
-- `The queue-local sync record stores only repository sync result; it does not change task, queue, or target truth.`
+- `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
 - `A blocked queue still allows commit, push, and merge; repository sync is not forbidden just because execution is blocked.`
-- `sync failure must not be copied into blocked_by, queue closeout gates, target closeout gates, or target scheduling truth.`
+- `sync failure must not be copied into blocked_by, queue closeout gates, version closeout gates, or version scheduling truth.`
 
 ### Activation Order
 
-1. `Target plan review subject and basis are written first.`
-2. `Target-level admission review concludes before this queue becomes live execution truth.`
+1. `Version plan review subject and basis are written first.`
+2. `Version-level admission review concludes before this queue becomes live execution truth.`
 3. `This queue doc is created and synchronized as the queue-level governor.`
 4. `Only then may active_task be exposed and implementation begin.`
 
 ### Recovery Rule
 
-- `Do not recreate or reactivate this queue from scratch if the target plan already records its prior admission basis.`
-- `Resume from the target-plan admission record unless new material evidence invalidates that prior basis.`
+- `Do not recreate or reactivate this queue from scratch if the version plan already records its prior admission basis.`
+- `Resume from the version-plan admission record unless new material evidence invalidates that prior basis.`
 
 ### Task Ledger
 
@@ -154,7 +157,7 @@
 - Task ID:
   - `none`
 - Recorded handoff at closure:
-  - `Replace with the target-level handoff written at queue closeout.`
+  - `Replace with the version-level handoff written at queue closeout.`
 - Recorded expected output:
   - `Replace with the closed-queue outcome.`
 

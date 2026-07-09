@@ -3,13 +3,13 @@
 ## Control Block
 
 - queue_id: `queue.review-cadence-follow-up-contract-closure`
-- belongs_to_target: `target.project-complete-modularization`
+- belongs_to_version: `target.project-complete-modularization`
 - queue_status: `done`
 - queue_class: `conditional`
 - active_task: `none`
 - next_task: `none`
 - closeout_status: `done`
-- next_effect: `return-to-target-review`
+- next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `baseline-push`
 - sync_summary: `Working branch codex/review-cadence-follow-up-execution and remote baseline mod-first-dev were both pushed successfully after queue closeout was written.`
@@ -31,11 +31,11 @@
   - `Do not widen this queue into the broader cross-mechanism composition queue.`
   - `Do not create a new review sub-runtime or a runtime-owned page layout controller.`
 
-### Parent Target
+### Parent Version
 
-- Target spec:
+- Version spec:
   - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
-- Target plan:
+- Version plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - Supporting boundary spec:
   - `docs/blueprints/specs/2026-07-08-review-cadence-follow-up-shared-review-support-spec.md`
@@ -54,33 +54,33 @@
 
 ### Operator Snapshot Contract
 
-- `The fixed operator receipt must source 褰撳墠鎵ц闃熷垪 from queue_id.`
-- `The fixed operator receipt must source 褰撳墠浠诲姟 from active_task.`
-- `The fixed operator receipt must source 褰撳墠闃熷垪鐩爣 from queue_goal.`
+- `The fixed operator receipt must source 当前执行队列 from queue_id.`
+- `The fixed operator receipt must source 当前任务 from active_task.`
+- `The fixed operator receipt must source 当前队列目标 from queue_goal.`
 - `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
 
 ### Admission Preconditions
 
-- `This queue was admitted only after the target plan synced the existing candidate identity and current bounded admission basis.`
+- `This queue was admitted only after the version plan synced the existing candidate identity and current bounded admission basis.`
 - `Single-active-queue mode remains in force; no second queue may be promoted while this queue is active.`
 - `The queue must stay on the shared review cadence surface and must not silently absorb broader composition, runtime canonicalization, or scenario-pack normalization work.`
 
 ### Repository Sync Record Rule
 
 - `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
-- `The queue-local sync record stores only repository sync result; it does not change task, queue, or target truth.`
-- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or target scheduling truth.`
+- `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
+- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or version scheduling truth.`
 
 ### Activation Order
 
-1. `Target plan admission review concluded before this queue became live execution truth.`
+1. `Version plan admission review concluded before this queue became live execution truth.`
 2. `This queue doc now acts as the queue-level governor for the admitted cadence work.`
 3. `Implementation may begin only through the written active task below.`
 
 ### Recovery Rule
 
 - `Do not recreate or re-audit this queue from scratch while the recorded cadence evidence and support spec remain valid.`
-- `Resume from this queue doc and the target-plan candidate record unless new material evidence invalidates the admitted basis.`
+- `Resume from this queue doc and the version-plan candidate record unless new material evidence invalidates the admitted basis.`
 
 ### Task Ledger
 
@@ -193,7 +193,7 @@
   - `npm run typecheck`
   - `npm test`
 - if_blocked:
-  - `Record the concrete blocker in this queue doc instead of reopening target-level candidate discovery.`
+  - `Record the concrete blocker in this queue doc instead of reopening version-level candidate discovery.`
   - `Do not widen into host-layout or broader composition rewrites just to force this task through.`
 - promote_next_if_done: `task.review-cadence-follow-up-contract-closure.host-consumer-closeout`
 - stop_if:
@@ -236,7 +236,7 @@
   - `scenario-pack editor work`
 - done_when:
   - `Covered host and non-host consumers now consume shared review cadence decisions instead of owner-local cadence rewrites.`
-  - `Queue truth, target truth, and verification are synchronized before returning control to target review.`
+  - `Queue truth, version truth, and verification are synchronized before returning control to version review.`
   - `The queue either closes with written evidence or records a concrete blocker without leaving ambiguous live state.`
 - verify_with:
   - `npm run lint:blueprints`
@@ -281,8 +281,8 @@
 - 2026-07-08
   - Summary: `Completed host-consumer-closeout by adding shared review-cycle read helpers plus compatibility refresh, moving home-house, keep-house, and temple-house consumers onto that seam, and closing queue.review-cadence-follow-up-contract-closure back to target review.`
   - Verification: `node --test tests/robustness.test.cjs --test-name-pattern "keep house dismiss turns lord into idle roster actor that can reopen dialogue|temple house only blocks leaving during the first tutorial work period|review cycle helper derives countdown|home house enter refreshes stale review mirrors"; npm run typecheck; npm run lint:blueprints; npm test`
-  - Next at this time: `Return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md with no active queue and keep the remaining runtime, package, composition, and cleanup work at target-level candidate review only until a later admission decision selects the next queue.`
+  - Next at this time: `Return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md with no active queue and keep the remaining runtime, package, composition, and cleanup work at version-level candidate review only until a later admission decision selects the next queue.`
 - 2026-07-08
   - Summary: `Completed the minimum repository sync batch for queue.review-cadence-follow-up-contract-closure after closeout truth was written.`
   - Verification: `git push -u origin codex/review-cadence-follow-up-execution; git push origin HEAD:mod-first-dev`
-  - Next at this time: `Keep the queue closed as historical evidence only and resume future work from target-level candidate review with no active queue.`
+  - Next at this time: `Keep the queue closed as historical evidence only and resume future work from version-level candidate review with no active queue.`

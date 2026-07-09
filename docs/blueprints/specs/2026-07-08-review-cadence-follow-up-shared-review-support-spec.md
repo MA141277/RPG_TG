@@ -4,7 +4,7 @@
 
 - spec_id: `spec.review-cadence-follow-up-shared-review`
 - document_role: `supporting-spec`
-- belongs_to_target: `target.project-complete-modularization`
+- belongs_to_version: `target.project-complete-modularization`
 - supports_queue: `queue.review-cadence-follow-up-contract-closure`
 - contract_version: `v1`
 - execution_authority: `none`
@@ -13,10 +13,10 @@
 
 ### Role In Blueprint
 
-- `This document is a target-supporting mechanism contract for queue.review-cadence-follow-up-contract-closure under the current complete-modularization target.`
-- `It does not replace project-progress, blueprint, target-plan, or queue truth.`
+- `This document is a version-supporting mechanism contract for queue.review-cadence-follow-up-contract-closure under the current complete-modularization version.`
+- `It does not replace project-progress, blueprint, version-plan, or queue truth.`
 - `It must not be treated as live execution authority or queue admission by itself.`
-- `Its purpose is to freeze the correct shared-mechanism end state for today's review / 今日评定 so later same-target queue admission, implementation, and verification can reuse one stable boundary instead of rediscovering the mechanism every time.`
+- `Its purpose is to freeze the correct shared-mechanism end state for today's review / 今日评定 so later same-version queue admission, implementation, and verification can reuse one stable boundary instead of rediscovering the mechanism every time.`
 
 ### Goal
 
@@ -67,7 +67,7 @@
 5. `Derived display text must not act as mechanism truth. reviewDateText and mainHouseMissionText may survive only as derived or compatibility fields during migration.`
 6. `Future packs must be able to enable the mechanism by configuration plus one host adapter, not by copying keep-house or temple-house business code.`
 
-### Target Architecture
+### Version Architecture
 
 #### Scenario Configuration Layer
 

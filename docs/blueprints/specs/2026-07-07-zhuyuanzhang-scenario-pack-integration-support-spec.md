@@ -4,7 +4,7 @@
 
 - spec_id: `spec.zhuyuanzhang-scenario-pack-integration`
 - document_role: `supporting-spec`
-- belongs_to_target: `target.project-complete-modularization`
+- belongs_to_version: `target.project-complete-modularization`
 - contract_version: `v1`
 - execution_authority: `none`
 
@@ -12,10 +12,10 @@
 
 ### Role In Blueprint
 
-- `This document is a target-supporting integration contract under the current complete-modularization target.`
-- `It does not replace project-progress, blueprint, target-plan, or queue truth.`
+- `This document is a version-supporting integration contract under the current complete-modularization version.`
+- `It does not replace project-progress, blueprint, version-plan, or queue truth.`
 - `It must not be treated as live execution authority.`
-- `Its purpose is to freeze the correct scenario-pack end state for zhuyuanzhang so later same-target queue admission, implementation, and verification can reuse one stable contract instead of rediscovering the package boundary each time.`
+- `Its purpose is to freeze the correct scenario-pack end state for zhuyuanzhang so later same-version queue admission, implementation, and verification can reuse one stable contract instead of rediscovering the package boundary each time.`
 
 ### Goal
 
@@ -191,7 +191,7 @@ Planned extension after shared-contract upgrade:
 - `Current compatible scene records should continue to own: id, name, and actions.`
 - `Dialogue, narration, and choice copy should resolve through text ids wherever migration has already externalized prose.`
 - `Current package-exclusive image references must stay on fields that the active runtime already understands, or remain on pack-relative paths consumed by existing seams.`
-- `Target shape after shared contract migration: a scene graph with entry node ownership, richer node metadata, and stable visual asset references may replace today's flat actions array.`
+- `Desired shape after shared contract migration: a scene graph with entry node ownership, richer node metadata, and stable visual asset references may replace today's flat actions array.`
 - `scenes.json` is the primary owner for dialogue/story flow; events and tasks may reference scenes, but they must not duplicate scene graphs or action lists.`
 
 #### `tasks.json`
@@ -199,7 +199,7 @@ Planned extension after shared-contract upgrade:
 - `tasks.json` must answer: what progress contract does the player need to satisfy?`
 - `Current compatible shape: keep TaskDefinition-compatible fields so the active runtime can still parse title/description/objective/effect data without a contract fork.`
 - `Current package records should continue to own: id, title, description, objectives, start/completion/failure conditions, and task effects.`
-- `Target shape after shared contract migration: titleTextId/descriptionTextId plus explicit scene/event linkage may replace direct title/description strings once shared task contracts and task consumers are upgraded together.`
+- `Desired shape after shared contract migration: titleTextId/descriptionTextId plus explicit scene/event linkage may replace direct title/description strings once shared task contracts and task consumers are upgraded together.`
 - `tasks.json` must not become a hidden story table; if a task needs story delivery, it should route through events/scenes.`
 
 #### `text-entries.json`

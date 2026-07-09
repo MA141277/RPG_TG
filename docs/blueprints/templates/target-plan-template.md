@@ -1,15 +1,15 @@
-# Target Plan Title
+# Version Plan Title
 
 ## Control Block
 
-- document_role: `target-governor`
-- target_id: `target.replace-me`
-- target_status: `open | done | archived`
+- document_role: `version-governor`
+- version_id: `target.replace-me`
+- version_status: `open | done | archived`
 - active_phase: `phase.replace-me`
 - active_queue: `queue.replace-me | none`
 - decision_state: `active-execution | promotion-review | idle-open | blocked`
-- next_decision: `queue-admission-review | queue-closeout-or-return-to-target-review | same-target-admission-or-target-closeout | target-closeout | resolve-blocker`
-- next_action: `classify-fresh-work | write-admission-review | activate-admitted-queue | resume-active-queue | auto-reconcile-active-task | write-queue-closeout | return-to-promotion-review | write-target-closeout | resolve-blocker`
+- next_decision: `queue-admission-review | queue-closeout-or-return-to-version-review | same-version-admission-or-version-closeout | version-closeout | resolve-blocker`
+- next_action: `classify-fresh-work | write-admission-review | activate-admitted-queue | resume-active-queue | auto-reconcile-active-task | write-queue-closeout | return-to-promotion-review | write-version-closeout | resolve-blocker`
 - resume_gate: `open-active-queue | promotion-review | idle-open | blocked`
 - promotion_review_result: `admit | reject | defer | block | none`
 - review_subject_id: `item.replace-me | none`
@@ -23,13 +23,15 @@
 - intake_result: `none | absorbed-into-active-queue | queued-as-candidate | promoted-to-admission | rejected | deferred`
 - intake_feedback_mode: `none | fixed-receipt`
 - blocked_by: []
+- candidate_queue_ids:
+  - `queue.replace-me`
 
 ## Human Context
 
 ### Admission Review Record
 
 - Intake handling:
-  - `The operator-facing intake surface is limited to 新需求 + 参考治理规范; Blueprint must internalize classification and routing work before asking the operator to manage queue mechanics.`
+  - `The operator-facing intake surface is limited to ??? + ??????. Blueprint must internalize classification and routing work before asking the operator to manage queue mechanics.`
   - `Reset intake fields to none once intake handling is durably recorded, unless intake is still actively in progress.`
   - `Do not require the operator to provide item.xxx, classification, proposed queue id, review basis, or admission fields.`
 
@@ -38,26 +40,26 @@
 - Admission basis:
   - `Record the evidence that justifies admit / reject / defer / block.`
 - Required truth sync:
-  - `Target plan admission fields must be written before implementation starts.`
+  - `Version plan admission fields must be written before implementation starts.`
   - `The admitted queue doc must exist before code implementation starts.`
 
-### Target Lifecycle Rules
+### Version Lifecycle Rules
 
-- `A current open target stays open until target closeout is explicitly confirmed and written into this target plan.`
-- `If active_queue = none, that does not close the target; it only returns the target to promotion-review or idle-open.`
-- `As long as target_status = open, additional same-target queues may still be admitted.`
-- `If no open target exists, target creation becomes the required next governance action before any queue admission or implementation can begin.`
-- `Queue closeout may auto-advance; target closeout must not be inferred from queue completion alone.`
-- `When target acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing target_status to done.`
+- `A current open version stays open until version closeout is explicitly confirmed and written into this version plan.`
+- `If active_queue = none, that does not close the version; it only returns the version to promotion-review or idle-open.`
+- `As long as version_status = open, additional same-version queues may still be admitted.`
+- `If no open version exists, version creation becomes the required next governance action before any queue admission or implementation can begin.`
+- `Queue closeout may auto-advance; version closeout must not be inferred from queue completion alone.`
+- `When version acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing version_status to done.`
 
 ### Queue Admission Startup Rules
 
-1. `Read project-progress -> blueprint -> target plan -> active queue before touching a fresh queue item.`
+1. `Read project-progress -> blueprint -> version plan -> active queue before touching a fresh queue item.`
 2. `Check whether an active queue already exists.`
 3. `If one exists, decide whether the new item can be absorbed without widening queue scope.`
 4. `Classify the item before any queue creation or implementation.`
 5. `If the item is queue-candidate, write review_subject_id / review_subject_classification / proposed_queue_id / review_basis / admission_status first.`
-6. `Only after target-plan admission sync may a queue doc be created and activated.`
+6. `Only after version-plan admission sync may a queue doc be created and activated.`
 7. `Only after the admitted queue doc exposes queue_status=active plus a live active_task may implementation start.`
 8. `User scope approval is boundary approval only; it does not replace admission.`
 9. `When intake does not proceed directly into implementation, return the fixed operator receipt rather than a long Blueprint internal analysis dump.`
@@ -77,9 +79,9 @@
 Allowed `next_decision` values:
 
 - `queue-admission-review`
-- `queue-closeout-or-return-to-target-review`
-- `same-target-admission-or-target-closeout`
-- `target-closeout`
+- `queue-closeout-or-return-to-version-review`
+- `same-version-admission-or-version-closeout`
+- `version-closeout`
 - `resolve-blocker`
 
 Allowed `next_action` values:
@@ -91,12 +93,12 @@ Allowed `next_action` values:
 - `auto-reconcile-active-task`
 - `write-queue-closeout`
 - `return-to-promotion-review`
-- `write-target-closeout`
+- `write-version-closeout`
 - `resolve-blocker`
 
 ### Candidate Recovery Rule
 
-- `If a queue-candidate is already recorded in the target plan or candidate recovery ledger, resume from that record by default.`
+- `If a queue-candidate is already recorded in the version plan or candidate recovery ledger, resume from that record by default.`
 - `Only restart a full re-audit when new material evidence invalidates the prior classification or review basis.`
 - `Do not use prose-only memory as the recovery source when structured admission truth already exists.`
 
@@ -104,7 +106,7 @@ Allowed `next_action` values:
 
 - `When execution_mode=single-active-task and allow_parallel=false, an active queue blocks live admission review for a second queue.`
 - `If a fresh item cannot be absorbed by the current active queue, record it as a candidate for later rather than activating a second queue.`
-- `Return to target-level review only after the current active queue closes.`
+- `Return to version-level review only after the current active queue closes.`
 - `If an active queue exists and intake or questioning depends on that queue state, expose a queue snapshot before asking the operator to choose.`
 
 ### Operator Intake Contract
@@ -113,11 +115,10 @@ Allowed `next_action` values:
   - `新需求`
   - `参考治理规范`
 - Internal-only Blueprint work:
-  - `read project-progress -> blueprint -> target plan -> active queue -> active task`
+  - `read project-progress -> blueprint -> version plan -> active queue -> active task`
   - `attempt active-queue absorption`
-  - `classify the intake`
-  - `record candidate truth when absorption fails`
-  - `route to target-level admission when admission is justified`
+  - `classify and route the intake`
+  - `record candidate truth or admission truth without asking the operator to fill internal fields`
 - Default operator output:
 
 ```text
@@ -141,18 +142,18 @@ Allowed `next_action` values:
 ```
 
 - Default visibility rule:
-  - `默认不向人工暴露真值链细节、Candidate Review Summary、候选全集、Why Not The Others、Human Involvement Boundary、admission 内部字段或排序全过程，除非人工明确要求展开内部分析。`
+  - `默认不向人工暴露真值链细节、候选全集、Why Not The Others、Human Involvement Boundary、admission 内部字段或排序全过程，除非人工明确要求展开内部分析。`
 
-### Post-Task Auto-Reconcile
+### Post-Task Auto-Reconcile### Post-Task Auto-Reconcile### Post-Task Auto-Reconcile
 
 1. `Run verify_with.`
 2. `Check done_when.`
-3. `Write the task after-state, queue truth, and any required target truth before any repository sync begins.`
+3. `Write the task after-state, queue truth, and any required version truth before any repository sync begins.`
 4. `Re-evaluate queue closeout.`
 5. `Scan governance owners.`
 6. `Scan residue.`
 7. `Trigger one minimum repository sync batch after the docs are updated.`
-8. `If the next legal step is unique, continue directly into closeout or target review once the sync attempt returns a result.`
+8. `If the next legal step is unique, continue directly into closeout or version review once the sync attempt returns a result.`
 9. `Optionally mirror the result into change-log.`
 
 ### Human Confirmation Constraint
@@ -163,21 +164,21 @@ Allowed `next_action` values:
 - `Scope approval does not replace admission.`
 - `Do not ask whether to perform closeout, promotion review, or doc sync when they are already the unique next legal step.`
 - `Do not raise decision_required merely because repository sync failed.`
-- `Do not ask about a merge conflict when current target truth already uniquely decides the legal resolution.`
-- `Ask only when the baseline is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current target truth cannot decide alone.`
-- `Exception: target closeout requires explicit human confirmation before target_status changes from open to done.`
+- `Do not ask about a merge conflict when current version truth already uniquely decides the legal resolution.`
+- `Ask only when the baseline is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide alone.`
+- `Exception: version closeout requires explicit human confirmation before version_status changes from open to done.`
 
 ### Repository Sync Policy
 
 - `Git sync is non-governing.`
-- `commit / push / merge must not change queue truth, target truth, candidate truth, or transition truth.`
+- `commit / push / merge must not change queue truth, version truth, candidate truth, or transition truth.`
 - `push / merge must not become a queue closeout gate.`
-- `push / merge must not become a target closeout gate.`
+- `push / merge must not become a version closeout gate.`
 - `Task execution conclusions are written first; repository sync runs second.`
 - `A failed sync attempt is recorded only as repository sync result in the queue-local sync record.`
-- `A merge conflict is a repository sync event; it must not rewrite the already-recorded task, queue, or target conclusion.`
-- `If current target truth uniquely decides the merge conflict direction, resolve it without asking.`
-- `Target scheduling must not read sync_status, sync_scope, or sync_summary as live truth.`
+- `A merge conflict is a repository sync event; it must not rewrite the already-recorded task, queue, or version conclusion.`
+- `If current version truth uniquely decides the merge conflict direction, resolve it without asking.`
+- `Version scheduling must not read sync_status, sync_scope, or sync_summary as live truth.`
 
 ### Minimum Repository Sync Batch
 

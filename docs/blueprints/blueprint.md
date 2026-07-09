@@ -3,8 +3,10 @@
 ## Control Block
 
 - blueprint_id: `blueprint.rpg-tg`
-- active_target: `target.project-complete-modularization`
-- active_target_plan: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- blueprint_version: `2026.07`
+- active_version: `target.project-complete-modularization`
+- active_version_plan: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -13,13 +15,13 @@
 
 ### Role
 
-- `This file is the Blueprint index and target registry.`
+- `This file is the Blueprint index, active version pointer, and version registry.`
 
-### Target Registry
+### Version Registry
 
-| Target ID | Plan | Notes |
-| --- | --- | --- |
-| `target.project-complete-modularization` | `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md` | `Current-period modularization target.` |
+| Version ID | Spec | Plan | Notes |
+| --- | --- | --- | --- |
+| `target.project-complete-modularization` | `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md` | `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md` | `Current-period modularization target.` |
 
 ### Routing Layer
 

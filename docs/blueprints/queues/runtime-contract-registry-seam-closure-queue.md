@@ -3,13 +3,13 @@
 ## Control Block
 
 - queue_id: `queue.runtime-contract-registry-seam-closure`
-- belongs_to_target: `target.project-complete-modularization`
+- belongs_to_version: `target.project-complete-modularization`
 - queue_status: `done`
 - queue_class: `conditional`
 - active_task: `none`
 - next_task: `none`
 - closeout_status: `done`
-- next_effect: `return-to-target-review`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `none`
 - sync_summary: `No repository sync has run for this newly admitted queue yet.`
@@ -31,11 +31,11 @@
   - `Do not widen this queue back into core runtime canonicalization or bridge naming cleanup.`
   - `Do not widen this queue into zhuyuanzhang package normalization, broader composition closure, or dead-adapter deletion beyond the covered consumer seam.`
 
-### Parent Target
+### Parent Version
 
-- Target spec:
+- Version spec:
   - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
-- Target plan:
+- Version plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
 ### Queue Snapshot
@@ -52,33 +52,33 @@
 
 ### Operator Snapshot Contract
 
-- `The fixed operator receipt must source 褰撳墠鎵ц闃熷垪 from queue_id.`
-- `The fixed operator receipt must source 褰撳墠浠诲姟 from active_task.`
-- `The fixed operator receipt must source 褰撳墠闃熷垪鐩爣 from queue_goal.`
+- `The fixed operator receipt must source 当前执行队列 from queue_id.`
+- `The fixed operator receipt must source 当前任务 from active_task.`
+- `The fixed operator receipt must source 当前队列目标 from queue_goal.`
 - `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
 
 ### Admission Preconditions
 
-- `This queue was admitted only after the target plan synchronized the existing candidate identity and current bounded admission basis.`
+- `This queue was admitted only after the version plan synchronized the existing candidate identity and current bounded admission basis.`
 - `Single-active-queue mode remains in force; no second queue may be promoted while this queue is active.`
 - `The queue must stay on application-side runtime or registry seam consumers and must not silently absorb package normalization, broader composition closure, or dead cleanup that depends on later upstream work.`
 
 ### Repository Sync Record Rule
 
 - `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
-- `The queue-local sync record stores only repository sync result; it does not change task, queue, or target truth.`
-- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or target scheduling truth.`
+- `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
+- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or version scheduling truth.`
 
 ### Activation Order
 
-1. `Target plan admission review concluded before this queue became live execution truth.`
+1. `Version plan admission review concluded before this queue became live execution truth.`
 2. `This queue doc now acts as the queue-level governor for the admitted consumer seam work.`
 3. `Implementation may begin only through the written active task below.`
 
 ### Recovery Rule
 
 - `Do not recreate or re-audit this queue from scratch while the recorded consumer-seam evidence remains valid.`
-- `Resume from this queue doc and the target-plan candidate record unless new material evidence invalidates the admitted basis.`
+- `Resume from this queue doc and the version-plan candidate record unless new material evidence invalidates the admitted basis.`
 
 ### Task Ledger
 
@@ -231,7 +231,7 @@
 - done_when:
   - `interactive-action-coordinator no longer imports covered core runtime executors directly on the live application path.`
   - `grain-shop and medicine-house no longer depend on the current ad hoc house-playable bridge plus direct runPlayableRuntime imports as the live consumer seam.`
-  - `Queue truth, target truth, and verification are synchronized before returning control to target review.`
+  - `Queue truth, version truth, and verification are synchronized before returning control to version review.`
 - verify_with:
   - `npm run lint:blueprints`
   - `npm run typecheck`
