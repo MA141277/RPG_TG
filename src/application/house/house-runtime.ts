@@ -15,6 +15,7 @@ import type {
 } from "../../domain/house-module";
 import { triggerStoryEvents } from "../story/story-runtime";
 import { advanceGameStateTimeSegments } from "../time/time-progression";
+import { applyCityViewTransition } from "../runtime/city-view-transition";
 import { assertExists } from "../../shared/assert";
 import {
   builtinHouseModuleRegistry,
@@ -240,22 +241,12 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     clearAllHouseIntervals();
 
     const appState = dependencies.getAppState();
-    dependencies.setAppState({
-      ...appState,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: houseId,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "house",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
-    });
+    dependencies.setAppState(
+      applyCityViewTransition(appState, {
+        type: "enter-house",
+        houseId,
+      })
+    );
 
     const moduleId = houseDefinition.moduleId;
     if (moduleId != null) {
@@ -341,22 +332,11 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     }
 
     const appState = dependencies.getAppState();
-    dependencies.setAppState({
-      ...appState,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "city",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
-    });
+    dependencies.setAppState(
+      applyCityViewTransition(appState, {
+        type: "leave-house",
+      })
+    );
 
     dependencies.renderApp();
   }
@@ -371,22 +351,13 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
 
     clearAllHouseIntervals();
     const appState = dependencies.getAppState();
-    dependencies.setAppState({
-      ...appState,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: completion.houseId,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "house",
-          overlayView: null,
-          houseSession: completion.houseSession,
-        },
-      },
-    });
+    dependencies.setAppState(
+      applyCityViewTransition(appState, {
+        type: "resume-house-session",
+        houseId: completion.houseId,
+        houseSession: completion.houseSession,
+      })
+    );
     dependencies.renderApp();
   }
 

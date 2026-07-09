@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_target: `target.project-complete-modularization`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/cross-mechanism-composition-contract-closure-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -56,3 +56,4 @@
 - `Fresh 2026-07-09 promotion review now admits queue.cross-mechanism-composition-contract-closure as the current active queue. Current source truth still shows cross-mechanism routing and view/dialogue/house/story/battle composition spread across main-runtime-orchestrator, interactive-action-coordinator, city-house-transition-coordinator, house-runtime, story-battle-runtime, and src/main.ts, so the next legal execution point is baseline-reconcile inside the new queue doc.`
 - `Fresh 2026-07-09 queue execution completes baseline-reconcile inside queue.cross-mechanism-composition-contract-closure. The first lawful implementation slice is now frozen as city/house transition composition seam lift, because city-house-transition-coordinator already owns a narrow applyCityViewTransition seam while house-runtime still duplicates direct currentView and overlayView routing on the covered path.`
 - `Fresh 2026-07-09 target review also records item.layout-editor-retirement-and-reference-removal as a new queue-candidate. The layout editor still exists as a live feature across app state, startup bootstrap, rendering, editor modules, presets, styles, docs, and targeted tests, but current Blueprint truth already has queue.cross-mechanism-composition-contract-closure active, so the editor-removal line stays candidate-only until a later promotion review.`
+- `Fresh 2026-07-09 queue closeout returns queue.cross-mechanism-composition-contract-closure to closed historical evidence. The covered city/house transition path now converges on applyCityViewTransition across city-house-transition-coordinator and house-runtime, while the remaining broader composition residue across main-runtime-orchestrator, interactive-action-coordinator, story-battle-runtime, and src/main.ts returns to target-level promotion review instead of widening the queue without a newly frozen next slice. No active queue remains.`

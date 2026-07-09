@@ -4,15 +4,15 @@
 
 - queue_id: `queue.cross-mechanism-composition-contract-closure`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.cross-mechanism-composition-contract-closure.city-house-transition-composition-seam-lift`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
+- closeout_status: `done`
 - next_effect: `none`
 - sync_status: `pending`
 - sync_scope: `none`
-- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- sync_summary: `Queue closeout truth is synchronized locally; minimum repository sync has not run yet for this completed queue.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -42,9 +42,9 @@
 
 - queue_goal: `Freeze the smallest lawful first composition seam so the current cross-mechanism routing residue can move onto one shared contract-driven owner line.`
 - task_count: `2`
-- completed_task_count: `1`
-- remaining_task_count: `1`
-- active_task_summary: `Lift the covered city/house composition path onto one shared application seam so direct view/dialogue routing stops being duplicated across city-house-transition-coordinator and house-runtime.`
+- completed_task_count: `2`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the queue closed after the covered city/house transition path converged on one shared seam and the remaining composition residue returned to target review instead of widening in-queue.`
 - task_briefs:
   - `task.cross-mechanism-composition-contract-closure.baseline-reconcile: freeze the first lawful shared composition seam and confirm this queue remains bounded on current source truth.`
   - `task.cross-mechanism-composition-contract-closure.city-house-transition-composition-seam-lift: move the covered city/house composition path onto one shared seam before tackling the broader story and battle composition owners.`
@@ -84,7 +84,7 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.cross-mechanism-composition-contract-closure.baseline-reconcile` | `completed` | `Freeze the smallest lawful first shared composition seam and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze the first slice as city/house transition composition seam lift instead of a broader multi-owner rewrite.` |
-| `task.cross-mechanism-composition-contract-closure.city-house-transition-composition-seam-lift` | `active` | `Move the covered city/house composition path onto one shared application seam before tackling broader story and battle composition owners.` | `task.cross-mechanism-composition-contract-closure.baseline-reconcile` | `Current active implementation task.` |
+| `task.cross-mechanism-composition-contract-closure.city-house-transition-composition-seam-lift` | `completed` | `Move the covered city/house composition path onto one shared application seam before tackling broader story and battle composition owners.` | `task.cross-mechanism-composition-contract-closure.baseline-reconcile` | `Completed after the covered house-runtime transition writes moved behind applyCityViewTransition and queue-local review returned broader residue to target review.` |
 
 ### Task Definitions
 
@@ -157,7 +157,7 @@
 ##### Control Block
 
 - task_id: `task.cross-mechanism-composition-contract-closure.city-house-transition-composition-seam-lift`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/runtime/city-house-transition-coordinator.ts`
@@ -195,7 +195,7 @@
 - task_brief:
   - `Lift the covered city/house transition composition path onto one shared seam before tackling the broader story and battle composition families.`
 - task_outcome_summary:
-  - `The expected outcome is one shared application seam for covered city/house transition outcomes, leaving broader composition residue for later in-queue work.`
+  - `Completed after the covered city/house transition path converged on applyCityViewTransition, while the remaining broader composition residue returned to target review instead of widening this queue in place.`
 - Purpose:
   - `Close the smallest still-live composition owner line first instead of starting with a queue-wide orchestration rewrite.`
 - Failure mode:
@@ -204,6 +204,11 @@
   - `src/application/runtime/city-house-transition-coordinator.ts already routes city view changes through applyCityViewTransition, which makes it the narrowest existing seam candidate on current evidence.`
   - `src/application/house/house-runtime.ts still writes direct currentView and overlayView outcomes for house entry, house leave, and map-auto-advance completion instead of consuming that same application seam.`
   - `The first implementation cut should reuse or extend the current city-view-transition seam rather than inventing a queue-wide abstraction before the covered city/house path has converged.`
+- Completion notes:
+  - `src/application/runtime/city-view-transition.ts now represents the covered city/house transition outcomes through enter-house, leave-house, and resume-house-session variants in addition to the earlier city-view variants.`
+  - `src/application/house/house-runtime.ts now routes the covered house entry, house leave, and map-auto-advance completion writes through applyCityViewTransition instead of open-coding currentView and overlayView state changes on that path.`
+  - `tests/robustness.test.cjs now guards both the new transition variants and the absence of the covered direct house-runtime writes, which closes the bounded first seam without widening into main-runtime-orchestrator, interactive-action-coordinator, story-battle-runtime, or src/main.ts composition families.`
+  - `Because the remaining composition residue now sits on broader story, battle, interactive-action, and top-level assembly owner lines instead of another already-frozen same-queue city/house seam, the correct after-state is return-to-target-review rather than silent next-task expansion.`
 
 ## Progress Log
 
@@ -215,3 +220,7 @@
   - Summary: `Completed baseline-reconcile by freezing the first lawful implementation slice as city/house transition composition seam lift. Current source truth shows city-house-transition-coordinator already owns one narrow transition seam through applyCityViewTransition, while house-runtime still duplicates direct currentView and overlayView routing for house entry, house leave, and map-auto-advance completion, so this is smaller than reopening main-runtime, interactive-action, and story-battle composition all at once.`
   - Verification: `rg -n "apply-startup-session|advance-story-scene|choose-story-option|trigger-story-events|dispatchCurrentStoryBattleAction|handleHouseAccessRefusal|triggerStoryEvents|applyReviewCycleSchedule|currentView:|overlayView: null|enterHouseThroughRuntime" src/application/runtime/main-runtime-orchestrator.ts src/application/runtime/interactive-action-coordinator.ts src/application/runtime/city-house-transition-coordinator.ts src/application/house/house-runtime.ts src/application/story-battle/story-battle-runtime.ts src/main.ts; npm run lint:blueprints`
   - Next at this time: `Execute task.cross-mechanism-composition-contract-closure.city-house-transition-composition-seam-lift with a failing test first.`
+- 2026-07-09
+  - Summary: `Completed city-house-transition-composition-seam-lift by extending applyCityViewTransition with the covered house transition variants, routing house-runtime through that shared seam for house entry, house leave, and house-session resume, and then returning broader composition residue to target review instead of widening this queue without a newly frozen next slice.`
+  - Verification: `node --test --test-name-pattern "city-house transition seam" tests/robustness.test.cjs; npm run typecheck; npm test; npm run lint:blueprints; rg -n "advanceStoryScene|chooseStoryOption|triggerStoryEvents|dispatchCurrentStoryBattleAction|applyReviewCycleSchedule|currentView:|overlayView: null|locationDialogueState" src/application/runtime/main-runtime-orchestrator.ts src/application/runtime/interactive-action-coordinator.ts src/application/runtime/city-house-transition-coordinator.ts src/application/house/house-runtime.ts src/application/story-battle/story-battle-runtime.ts src/main.ts`
+  - Next at this time: `Return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for target-level promotion review with no active queue.`

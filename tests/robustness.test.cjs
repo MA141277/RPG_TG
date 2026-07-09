@@ -12784,6 +12784,117 @@ test("shell thinning city-view transition owner module exists and preserves cove
   assert.equal(leftCity3d.gameState.ui.houseSession, null);
 });
 
+test("city-house transition seam extends city-view-transition with covered house transition variants", () => {
+  const {
+    applyCityViewTransition,
+  } = require("../.test-dist/application/runtime/city-view-transition.js");
+
+  const baseAppState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.test.current",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "city",
+        overlayView: "cards",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "open",
+          },
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: null,
+    cityMenuState: createCityMenuState({
+      cityId: "city.kulan",
+      cityName: "苦兰城",
+      houseOptions: [],
+      cityEntryOptions: [],
+      currentPanelId: "actions",
+      reviewStatusText: "review",
+      availableActionIds: [],
+      monkActionIds: [],
+      canLeaveCity: true,
+    }),
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const enteredHouse = applyCityViewTransition(baseAppState, {
+    type: "enter-house",
+    houseId: "house.test.next",
+  });
+  assert.equal(enteredHouse.gameState.world.currentHouseId, "house.test.next");
+  assert.equal(enteredHouse.gameState.ui.currentView, "house");
+  assert.equal(enteredHouse.gameState.ui.overlayView, null);
+  assert.equal(enteredHouse.gameState.ui.houseSession, null);
+
+  const leftHouse = applyCityViewTransition(baseAppState, {
+    type: "leave-house",
+  });
+  assert.equal(leftHouse.gameState.world.currentHouseId, null);
+  assert.equal(leftHouse.gameState.ui.currentView, "city");
+  assert.equal(leftHouse.gameState.ui.overlayView, null);
+  assert.equal(leftHouse.gameState.ui.houseSession, null);
+
+  const resumedHouseSession = {
+    moduleId: "grain-shop",
+    state: {
+      mode: "resume",
+    },
+  };
+  const resumedHouse = applyCityViewTransition(baseAppState, {
+    type: "resume-house-session",
+    houseId: "house.test.session",
+    houseSession: resumedHouseSession,
+  });
+  assert.equal(resumedHouse.gameState.world.currentHouseId, "house.test.session");
+  assert.equal(resumedHouse.gameState.ui.currentView, "house");
+  assert.equal(resumedHouse.gameState.ui.overlayView, null);
+  assert.deepEqual(resumedHouse.gameState.ui.houseSession, resumedHouseSession);
+});
+
+test("city-house transition seam keeps covered house-runtime transition writes behind city-view-transition", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/house/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /city-view-transition|applyCityViewTransition/);
+  assert.doesNotMatch(
+    source,
+    /function enterHouseById[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "house"[\s\S]*?overlayView: null[\s\S]*?houseSession: null[\s\S]*?\}\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /function leaveCurrentHouse[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "city"[\s\S]*?overlayView: null[\s\S]*?houseSession: null[\s\S]*?\}\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /function applyMapAutoAdvanceCompletion[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "house"[\s\S]*?overlayView: null[\s\S]*?houseSession: completion\.houseSession[\s\S]*?\}\);/
+  );
+});
+
 test("shell thinning main.ts no longer inlines covered city view transition mutation blocks", () => {
   const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const coordinatorSource = fs.readFileSync(
