@@ -4,11 +4,11 @@
 
 - queue_id: `queue.prototype-startup-bootstrap-ownerization`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.prototype-startup-bootstrap-ownerization.prototype-bootstrap-residue-review`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
+- closeout_status: `done`
 - next_effect: `return-to-target-review`
 - sync_status: `pending`
 - sync_scope: `none`
@@ -42,9 +42,9 @@
 
 - queue_goal: `Move builtin prototype startup bootstrap behind the startup-layer seam before reconsidering the remaining prototype-world and test-harness residue.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Reassess the remaining prototype-world and test-harness residue after the startup ownerization cut landed.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the queue closed after the residue review concluded that the remaining prototype-world and test-harness residue no longer forms one unique same-queue implementation slice on current evidence.`
 - task_briefs:
   - `task.prototype-startup-bootstrap-ownerization.baseline-reconcile: freeze the first lawful prototype startup ownerization slice and confirm this queue remains bounded.`
   - `task.prototype-startup-bootstrap-ownerization.startup-app-state-owner-lift: move the builtin prototype startup app-state builder out of src/main.ts and behind the startup-layer seam.`
@@ -86,7 +86,7 @@
 | --- | --- | --- | --- | --- |
 | `task.prototype-startup-bootstrap-ownerization.baseline-reconcile` | `completed` | `Freeze the smallest lawful prototype startup ownerization slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze the first slice as startup app-state ownerization instead of broader prototype-world extraction.` |
 | `task.prototype-startup-bootstrap-ownerization.startup-app-state-owner-lift` | `completed` | `Move the builtin prototype startup app-state builder out of src/main.ts and behind the startup-layer seam.` | `task.prototype-startup-bootstrap-ownerization.baseline-reconcile` | `Completed after the covered builder moved into src/application/startup/prototype-startup-app-state.ts and verification passed.` |
-| `task.prototype-startup-bootstrap-ownerization.prototype-bootstrap-residue-review` | `active` | `Reassess the remaining prototype-world and test-harness residue after the startup ownerization cut lands.` | `task.prototype-startup-bootstrap-ownerization.startup-app-state-owner-lift` | `Current active review task.` |
+| `task.prototype-startup-bootstrap-ownerization.prototype-bootstrap-residue-review` | `completed` | `Reassess the remaining prototype-world and test-harness residue after the startup ownerization cut lands.` | `task.prototype-startup-bootstrap-ownerization.startup-app-state-owner-lift` | `Completed after the residue review returned control to target review instead of widening this queue into broader prototype-world and test-harness work.` |
 
 ### Task Definitions
 
@@ -200,7 +200,7 @@
 ##### Control Block
 
 - task_id: `task.prototype-startup-bootstrap-ownerization.prototype-bootstrap-residue-review`
-- state: `active`
+- state: `completed`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
@@ -237,11 +237,16 @@
 - task_brief:
   - `Reassess the remaining prototype-world and test-harness residue after the first startup ownerization slice lands.`
 - task_outcome_summary:
-  - `The expected outcome is either a bounded same-queue continuation or a clean return to target review without silent queue expansion.`
+  - `Completed after queue-local review concluded that the remaining residue spans broader prototype-world truth and prototype-heavy test-harness coupling, so the queue returned control to target review rather than widening in place.`
 - Purpose:
   - `Keep the queue aligned with current evidence after the first implementation slice lands.`
 - Failure mode:
   - `Do not auto-absorb broader prototype-world extraction or test-harness rewrites without a fresh queue-local decision.`
+- Completion notes:
+  - `src/main.ts now injects the startup-layer builder rather than owning the covered builtin prototype app-state assembly directly, but it still imports createPrototypeCharactersForStoryStage from src/content/prototype-world.ts.`
+  - `src/application/startup/prototype-startup-app-state.ts now consumes createPrototypeCharactersForStoryStage only as a dependency seam, which means the remaining direct prototype-world coupling is no longer the same ownerization cut that admitted this queue.`
+  - `tests/robustness.test.cjs still depends broadly on prototypeCharacters, prototypeHouses, prototypeCityNpcPools, prototypeCards, prototypeValuables, and other large fixture exports from src/content/prototype-world.ts, so the remaining residue is tied to a wider prototype-world truth and test-harness family rather than one smaller same-queue implementation slice.`
+  - `Because the remaining residue no longer exposes one bounded continuation ahead of broader prototype-world extraction, startup bootstrap assumptions, and test-harness decoupling, the correct queue-local decision is return-to-target-review rather than silent queue expansion.`
 
 ##### Decision-Dispatch Notes
 
@@ -262,3 +267,7 @@
   - Summary: `Completed startup-app-state-owner-lift by moving the covered builtin prototype startup builders into src/application/startup/prototype-startup-app-state.ts and leaving src/main.ts as dependency injection plus startup wiring only on the covered path.`
   - Verification: `node --test --test-name-pattern "prototype startup ownerization moves covered builtin startup builders out of main.ts" tests/robustness.test.cjs; npm run typecheck; npm test`
   - Next at this time: `Execute task.prototype-startup-bootstrap-ownerization.prototype-bootstrap-residue-review to decide whether the remaining prototype-world and test-harness residue stays in-queue or returns to target review.`
+- 2026-07-09
+  - Summary: `Completed prototype-bootstrap-residue-review by concluding that the remaining residue no longer forms one unique same-queue implementation slice. main.ts still depends on createPrototypeCharactersForStoryStage from prototype-world, while tests/robustness.test.cjs still consumes broad prototype-world fixture truth, so control returns to target review instead of widening this queue into broader prototype-world and test-harness work.`
+  - Verification: `rg -n "prototype-world|createPrototypeCharactersForStoryStage|createPrototypeAppState" src/content/prototype-world.ts src/main.ts tests/robustness.test.cjs; npm run lint:blueprints`
+  - Next at this time: `Close queue.prototype-startup-bootstrap-ownerization and return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for target-level promotion review with no active queue.`
