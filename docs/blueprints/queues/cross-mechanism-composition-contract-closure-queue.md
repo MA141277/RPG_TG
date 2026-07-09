@@ -9,10 +9,10 @@
 - active_task: `none`
 - next_task: `none`
 - closeout_status: `done`
-- next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue closeout truth is synchronized locally; minimum repository sync has not run yet for this completed queue.`
+- next_effect: `return-to-target-review`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Working branch codex/review-cadence-follow-up-execution and remote baseline mod-first-dev were both pushed successfully after queue closeout was written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -224,3 +224,7 @@
   - Summary: `Completed city-house-transition-composition-seam-lift by extending applyCityViewTransition with the covered house transition variants, routing house-runtime through that shared seam for house entry, house leave, and house-session resume, and then returning broader composition residue to target review instead of widening this queue without a newly frozen next slice.`
   - Verification: `node --test --test-name-pattern "city-house transition seam" tests/robustness.test.cjs; npm run typecheck; npm test; npm run lint:blueprints; rg -n "advanceStoryScene|chooseStoryOption|triggerStoryEvents|dispatchCurrentStoryBattleAction|applyReviewCycleSchedule|currentView:|overlayView: null|locationDialogueState" src/application/runtime/main-runtime-orchestrator.ts src/application/runtime/interactive-action-coordinator.ts src/application/runtime/city-house-transition-coordinator.ts src/application/house/house-runtime.ts src/application/story-battle/story-battle-runtime.ts src/main.ts`
   - Next at this time: `Return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for target-level promotion review with no active queue.`
+- 2026-07-09
+  - Summary: `Recorded the minimum repository sync batch for the completed queue after closeout truth was already written.`
+  - Verification: `git push origin codex/review-cadence-follow-up-execution; git push origin HEAD:mod-first-dev`
+  - Next at this time: `Keep queue.cross-mechanism-composition-contract-closure as closed historical evidence only and resume future work from target-level promotion review without selecting a new queue yet.`
