@@ -1,7 +1,6 @@
 import "./styles/app.css";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
-import { createDefaultLayoutEditorAppState } from "./application/layout-editor/layout-editor-bootstrap";
-import { createLayoutEditorCoordinator } from "./application/layout-editor/layout-editor-coordinator";
+import { createDefaultUiLayoutAppState } from "./application/layout-editor/layout-editor-bootstrap";
 import {
   closeCityMenu,
   closeCityDirectory,
@@ -392,7 +391,7 @@ function createRuntimeCommitContext(input: {
 const prototypeStartupAppStateBuilder = createPrototypeStartupAppStateBuilder({
   getActiveContentContext: () => activeContentContext,
   defaultPlayerCharacterId,
-  createDefaultLayoutEditorAppState,
+  createDefaultUiLayoutAppState,
   createPrototypeCharactersForStoryStage,
 });
 
@@ -670,32 +669,6 @@ const appRenderCoordinator = createAppRenderCoordinator({
     syncCampaignTerrainWebGl(root);
   },
   syncCityBeggingMiniGameOverlay,
-});
-const layoutEditorCoordinator = createLayoutEditorCoordinator({
-  getAppState: () => appState,
-  setAppState: (nextAppState) => {
-    appState = nextAppState;
-  },
-  renderActiveSurface,
-  resolveOpenTargetId: (currentAppState) => {
-    if (currentAppState.gameState.ui.overlayView === "detail") {
-      return "character-detail-screen";
-    }
-
-    if (
-      uiOverlayElement == null ||
-      uiOverlayElement.classList.contains("is-hidden")
-    ) {
-      return currentAppState.layoutEditor.selectedTargetId;
-    }
-
-    return uiOverlayElement.querySelector(".c-main-ui-screen--character-select") !=
-      null
-      ? "character-select-screen"
-      : "start-screen";
-  },
-  writeClipboardText: (text) => navigator.clipboard.writeText(text),
-  queryDragHandle: (selector) => document.querySelector<HTMLElement>(selector),
 });
 
 syncGameViewport();
@@ -1803,7 +1776,7 @@ function createScenarioPackAppState(
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
-    ...createDefaultLayoutEditorAppState(),
+    ...createDefaultUiLayoutAppState(),
   };
 
   nextAppState = {
@@ -1959,7 +1932,6 @@ function resetMainGameRuntime(): void {
   campaignMapDragState = null;
   shouldSuppressNextClickAfterMapDrag = false;
   cityBeggingMiniGameFrameId = null;
-  layoutEditorCoordinator.cancelDrag();
   hideMapIntroOverlay();
 }
 
@@ -2070,10 +2042,6 @@ appElement.addEventListener("input", (event) => {
     return;
   }
 
-  if (layoutEditorCoordinator.handleInput(targetElement)) {
-    return;
-  }
-
   if (
     !(
       targetElement instanceof HTMLInputElement ||
@@ -2117,42 +2085,6 @@ appElement.addEventListener("keydown", (event) => {
   }
 });
 
-uiOverlayElement.addEventListener("input", (event) => {
-  layoutEditorCoordinator.handleInput(event.target);
-});
-
-uiOverlayElement.addEventListener("pointerdown", (event) => {
-  layoutEditorCoordinator.handlePointerDown(event);
-});
-
-uiOverlayElement.addEventListener("pointermove", (event) => {
-  layoutEditorCoordinator.handlePointerMove(event);
-});
-
-uiOverlayElement.addEventListener("pointerup", (event) => {
-  layoutEditorCoordinator.handlePointerUp(event);
-});
-
-uiOverlayElement.addEventListener("pointercancel", (event) => {
-  layoutEditorCoordinator.handlePointerUp(event);
-});
-
-uiOverlayElement.addEventListener("mousedown", (event) => {
-  layoutEditorCoordinator.handleMouseDown(event);
-});
-
-uiOverlayElement.addEventListener("mousemove", (event) => {
-  layoutEditorCoordinator.handlePointerMove(event);
-});
-
-uiOverlayElement.addEventListener("mouseup", (event) => {
-  layoutEditorCoordinator.handlePointerUp(event);
-});
-
-uiOverlayElement.addEventListener("click", (event) => {
-  layoutEditorCoordinator.handleClick(event.target);
-});
-
 appElement.addEventListener("wheel", (event) => {
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
@@ -2172,10 +2104,6 @@ appElement.addEventListener("wheel", (event) => {
 });
 
 appElement.addEventListener("pointerdown", (event) => {
-  if (layoutEditorCoordinator.handlePointerDown(event)) {
-    return;
-  }
-
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
     return;
@@ -2235,10 +2163,6 @@ appElement.addEventListener("pointerdown", (event) => {
 });
 
 appElement.addEventListener("pointermove", (event) => {
-  if (layoutEditorCoordinator.handlePointerMove(event)) {
-    return;
-  }
-
   if (appState.beggingMiniGameState != null) {
     syncCityBeggingMiniGamePointer(event.clientX);
     return;
@@ -2500,10 +2424,6 @@ appElement.addEventListener("click", (event) => {
 
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
-    return;
-  }
-
-  if (layoutEditorCoordinator.handleClick(targetElement)) {
     return;
   }
 
@@ -3818,10 +3738,6 @@ function syncCampaignTerrainStyleControl(
 }
 
 function endCampaignMapDrag(event: PointerEvent): void {
-  if (layoutEditorCoordinator.handlePointerUp(event)) {
-    return;
-  }
-
   if (
     campaignMapDragState == null ||
     campaignMapDragState.pointerId !== event.pointerId

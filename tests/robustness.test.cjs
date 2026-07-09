@@ -2224,20 +2224,20 @@ test("main runtime path does not import the ui reserve registry yet", async () =
 });
 
 test(
-  "existing layout editor target registry still stays on the current ui-layout path",
+  "layout editor target registry retirement removes the dead registry module",
   async () => {
-    const source = await fs.promises.readFile(
-      path.join(
-        process.cwd(),
-        "src",
-        "application",
-        "layout-editor",
-        "layout-editor-target-registry.ts"
+    assert.equal(
+      fs.existsSync(
+        path.join(
+          process.cwd(),
+          "src",
+          "application",
+          "layout-editor",
+          "layout-editor-target-registry.ts"
+        )
       ),
-      "utf8"
+      false
     );
-
-    assert.equal(source.includes("../../domain/ui-layout"), true);
   }
 );
 
@@ -12784,6 +12784,117 @@ test("shell thinning city-view transition owner module exists and preserves cove
   assert.equal(leftCity3d.gameState.ui.houseSession, null);
 });
 
+test("city-house transition seam extends city-view-transition with covered house transition variants", () => {
+  const {
+    applyCityViewTransition,
+  } = require("../.test-dist/application/runtime/city-view-transition.js");
+
+  const baseAppState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.test.current",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "city",
+        overlayView: "cards",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "open",
+          },
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: null,
+    cityMenuState: createCityMenuState({
+      cityId: "city.kulan",
+      cityName: "苦兰城",
+      houseOptions: [],
+      cityEntryOptions: [],
+      currentPanelId: "actions",
+      reviewStatusText: "review",
+      availableActionIds: [],
+      monkActionIds: [],
+      canLeaveCity: true,
+    }),
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const enteredHouse = applyCityViewTransition(baseAppState, {
+    type: "enter-house",
+    houseId: "house.test.next",
+  });
+  assert.equal(enteredHouse.gameState.world.currentHouseId, "house.test.next");
+  assert.equal(enteredHouse.gameState.ui.currentView, "house");
+  assert.equal(enteredHouse.gameState.ui.overlayView, null);
+  assert.equal(enteredHouse.gameState.ui.houseSession, null);
+
+  const leftHouse = applyCityViewTransition(baseAppState, {
+    type: "leave-house",
+  });
+  assert.equal(leftHouse.gameState.world.currentHouseId, null);
+  assert.equal(leftHouse.gameState.ui.currentView, "city");
+  assert.equal(leftHouse.gameState.ui.overlayView, null);
+  assert.equal(leftHouse.gameState.ui.houseSession, null);
+
+  const resumedHouseSession = {
+    moduleId: "grain-shop",
+    state: {
+      mode: "resume",
+    },
+  };
+  const resumedHouse = applyCityViewTransition(baseAppState, {
+    type: "resume-house-session",
+    houseId: "house.test.session",
+    houseSession: resumedHouseSession,
+  });
+  assert.equal(resumedHouse.gameState.world.currentHouseId, "house.test.session");
+  assert.equal(resumedHouse.gameState.ui.currentView, "house");
+  assert.equal(resumedHouse.gameState.ui.overlayView, null);
+  assert.deepEqual(resumedHouse.gameState.ui.houseSession, resumedHouseSession);
+});
+
+test("city-house transition seam keeps covered house-runtime transition writes behind city-view-transition", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/house/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /city-view-transition|applyCityViewTransition/);
+  assert.doesNotMatch(
+    source,
+    /function enterHouseById[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "house"[\s\S]*?overlayView: null[\s\S]*?houseSession: null[\s\S]*?\}\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /function leaveCurrentHouse[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "city"[\s\S]*?overlayView: null[\s\S]*?houseSession: null[\s\S]*?\}\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /function applyMapAutoAdvanceCompletion[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "house"[\s\S]*?overlayView: null[\s\S]*?houseSession: completion\.houseSession[\s\S]*?\}\);/
+  );
+});
+
 test("shell thinning main.ts no longer inlines covered city view transition mutation blocks", () => {
   const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const coordinatorSource = fs.readFileSync(
@@ -13929,12 +14040,13 @@ test("shell thinning render prepass owner module exists and preserves city npc r
   assert.deepEqual(nextAppState.gameState, expectedGameState);
 });
 
-test("reclosure ownerization keeps main.ts wired through existing layout-editor, render, and bootstrap seams", () => {
+test("reclosure ownerization keeps main.ts on the bootstrap seam after layout-editor retirement", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
 
-  assert.match(source, /createLayoutEditorCoordinator/);
+  assert.doesNotMatch(source, /createLayoutEditorCoordinator/);
+  assert.doesNotMatch(source, /layoutEditorCoordinator/);
   assert.match(source, /createAppRenderCoordinator/);
-  assert.match(source, /createDefaultLayoutEditorAppState/);
+  assert.match(source, /createDefaultUiLayoutAppState/);
   assert.doesNotMatch(source, /layout-editor-actions/);
   assert.doesNotMatch(source, /applyRenderPrepassState/);
   assert.doesNotMatch(source, /renderApp as renderAppMarkup/);
@@ -15742,4 +15854,115 @@ test("phase 3 scenario-pack validator keeps legacy builtin manifests on the acce
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Scenario pack validation passed/i);
+});
+
+test("layout editor live surface retirement removes editor mount from app-render", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /renderLayoutEditor/);
+  assert.match(source, /uiLayouts\["global-hud"\]/);
+});
+
+test("layout editor live surface retirement removes editor coordinator wiring from main.ts", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /createLayoutEditorCoordinator/);
+  assert.doesNotMatch(source, /layoutEditorCoordinator/);
+});
+
+test("layout editor live surface retirement removes character detail editor protocol", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/character/character-detail-view.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    source,
+    /data-layout-component-handle|data-layout-element-handle/
+  );
+  assert.doesNotMatch(
+    source,
+    /c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle/
+  );
+  assert.match(source, /layout\?: CharacterDetailScreenLayout/);
+});
+
+test("layout editor main-ui retirement removes main-ui editor protocol", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const liveBindingsSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/tools/live-layout-bindings.js"),
+    "utf8"
+  );
+  assert.doesNotMatch(mainUiSource, /renderLayoutEditor/);
+  assert.doesNotMatch(mainUiSource, /applyLiveLayoutBindings/);
+  assert.doesNotMatch(mainUiSource, /layoutEditor\.isOpen/);
+  assert.doesNotMatch(
+    liveBindingsSource,
+    /data-layout-component-handle|data-layout-element-handle/
+  );
+  assert.doesNotMatch(
+    liveBindingsSource,
+    /c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle/
+  );
+});
+
+test("layout editor state retirement removes dead editor state and module seams", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const appShellSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/app-shell.ts"),
+    "utf8"
+  );
+  const startupSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/prototype-startup-app-state.ts"
+    ),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/layout-editor/layout-editor-bootstrap.ts"
+    ),
+    "utf8"
+  );
+  const appCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/app.css"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /createDefaultLayoutEditorAppState/);
+  assert.match(mainSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(appShellSource, /LayoutEditorState/);
+  assert.doesNotMatch(appShellSource, /layoutEditor:/);
+  assert.doesNotMatch(startupSource, /createDefaultLayoutEditorAppState/);
+  assert.match(startupSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(bootstrapSource, /layoutEditor/);
+  assert.match(bootstrapSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(appCssSource, /layout-editor\.css/);
+
+  for (const relativePath of [
+    "src/application/layout-editor/layout-editor-actions.ts",
+    "src/application/layout-editor/layout-editor-coordinator.ts",
+    "src/application/layout-editor/layout-editor-target-registry.ts",
+    "src/ui/tools/layout-editor-view.ts",
+  ]) {
+    assert.equal(
+      fs.existsSync(path.join(process.cwd(), relativePath)),
+      false,
+      `${relativePath} should be retired`
+    );
+  }
 });

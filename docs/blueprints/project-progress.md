@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.project-complete-modularization`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/cross-mechanism-composition-contract-closure-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -28,8 +28,6 @@
   - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
-- Current Active Queue:
-  - `docs/blueprints/queues/cross-mechanism-composition-contract-closure-queue.md`
 
 ### Live Entry Guardrails
 

@@ -16,7 +16,7 @@ import { assertExists } from "../../shared/assert";
 type PrototypeStartupAppStateBuilderDependencies = {
   getActiveContentContext(): ActiveGameContentContext;
   defaultPlayerCharacterId: string;
-  createDefaultLayoutEditorAppState(): Pick<AppState, "uiLayouts" | "layoutEditor">;
+  createDefaultUiLayoutAppState(): Pick<AppState, "uiLayouts">;
   createPrototypeCharactersForStoryStage(
     storyStage: ZhuYuanzhangStoryStage
   ): AppState["characterDefinitions"];
@@ -107,7 +107,7 @@ export function createPrototypeStartupAppStateBuilder(
       cityMenuState: null,
       cityDirectoryState: null,
       autoAdvanceState: null,
-      ...dependencies.createDefaultLayoutEditorAppState(),
+      ...dependencies.createDefaultUiLayoutAppState(),
     };
 
     nextAppState = {

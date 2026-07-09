@@ -42,7 +42,6 @@ import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
-import { renderLayoutEditor } from "./tools/layout-editor-view";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
 
@@ -121,7 +120,6 @@ function buildCharacterDetailOptions(
 
   const options: CharacterDetailViewOptions = {
     layout: input.appState.uiLayouts["character-detail-screen"],
-    layoutEditor: input.appState.layoutEditor,
     notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
     stipendText: `${playerCharacter.stats.gold} 文`,
     schoolName: "无",
@@ -511,7 +509,6 @@ export function renderApp(input: AppRenderInput): string {
             )}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             ${renderOverlay(input, playerCharacter)}
-            ${renderLayoutEditor(input.appState)}
           </div>
         </div>
       </div>

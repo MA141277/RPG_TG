@@ -1,8 +1,8 @@
-# Project Complete Modularization Version
+# Project Complete Modularization Target
 
 ## Control Block
 
-- version_id: `target.project-complete-modularization`
+- target_id: `target.project-complete-modularization`
 - version_label: `mod-first-current-period`
 - closeout_contract_version: `v3`
 
@@ -16,13 +16,13 @@
 
 - `production-path modularization work that still affects the current mod-first architecture claim`
 - `same-version queue admission for new owner-line, authoring, acceptance, or residue work that is still proven by fresh evidence`
-- `closeout readiness for the current-period modularization version`
+- `closeout readiness for the current-period modularization target`
 
 ### Non-Goals
 
 - `reopening old docs/superpowers weekly governance as a live workflow`
-- `inventing a new sibling version for same-period modularization work`
-- `using version docs to hold queue-local task truth`
+- `inventing a new sibling target for same-period modularization work`
+- `using target docs to hold queue-local task truth`
 - `treating historical queue closeout notes as current execution instructions`
 
 ### Queue Contract Portfolio
@@ -56,12 +56,12 @@
 - `required queues are closed or intentionally dropped with explicit disposition`
 - `no unresolved in-scope P0 or P1 remains hidden behind historical narrative`
 
-### Version Closeout Contract
+### Target Closeout Contract
 
 - `This version may become done only after acceptance criteria pass, no active queue/task remains, residue is dispositioned, and the version plan records explicit closeout.`
 - `As long as the version remains open and no active queue exists, a new queue may still be admitted through the version plan.`
 - `Open-version status is not inferred away by queue completion; this version remains open until explicit human closeout confirmation is recorded in the version plan.`
-- `Closed queue history is evidence only; it is not permission to treat the version as automatically done.`
+- `Closed queue history is evidence only; it is not permission to treat the target as automatically done.`
 
 ### Archived Interpretation
 
