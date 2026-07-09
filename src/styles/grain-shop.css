@@ -175,53 +175,66 @@
 
 .c-grain-shop-dialogue {
   grid-area: 1 / 1;
-  z-index: 2;
-  align-self: end;
-  display: grid;
-
-  /* 参考 lianghangcankao：对话框与立绘紧贴成一组，靠右排列 */
-  grid-template-columns: minmax(0, min(46vw, 460px)) auto;
-  gap: 0;
-  justify-content: end;
-  align-items: end;
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: block;
   width: 100%;
-  padding: 0 var(--space-2) var(--space-2);
-  padding-left: clamp(150px, 18vw, 200px);
+  height: 100%;
+  padding: 0;
+  pointer-events: none;
+}
 
-  /* 铺满网格用于排版，但不拦截中央功能按钮的点击 */
+.c-grain-shop-dialogue::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  content: "";
+  background-image: url("../../ui/yuansu/对话框/20260708-162747.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
   pointer-events: none;
 }
 
 .c-grain-shop-dialogue.c-location-dialogue {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   z-index: calc(var(--z-global-ui) - 1);
-  grid-template-columns: minmax(360px, 520px) auto;
   color: #2f2319;
 }
 
 .c-grain-shop-dialogue__text,
-.c-grain-shop-dialogue__npc {
+.c-grain-shop-dialogue__text--clickable {
   pointer-events: auto;
 }
 
 .c-grain-shop-dialogue__text {
-  min-height: 88px;
-  padding: var(--space-4) var(--space-5);
+  position: absolute;
+  top: calc(100% * 902 / 1152);
+  left: calc(100% * 440 / 2048);
+  z-index: 5;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
+  width: calc(100% * 1040 / 2048);
+  height: calc(100% * 184 / 1152);
+  min-height: 0;
+  padding: calc(100% * 14 / 1152) calc(100% * 28 / 2048);
+  border: 0;
   background: none;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 14%);
+  box-shadow: none;
+  overflow: hidden;
 }
 
 .c-grain-shop-dialogue__line {
   margin: 0;
-  line-height: 1.7;
-  font-size: 1.02rem;
+  color: #2f2117;
+  font-size: clamp(1rem, 1.22vw, 1.28rem);
+  line-height: 1.72;
+  text-shadow: 0 1px 0 rgb(255 248 228 / 52%);
 }
 
 .c-grain-shop-dialogue__text--clickable {
@@ -234,52 +247,86 @@
 }
 
 .c-grain-shop-dialogue__hint {
-  margin: var(--space-2) 0 0;
-  font-size: 0.85rem;
-  opacity: 0.75;
-  text-align: right;
+  position: absolute;
+  right: calc(100% * 40 / 1220);
+  bottom: calc(100% * 16 / 184);
+  margin: 0;
+  color: #6c4a2a;
+  font-size: clamp(0.78rem, 0.86vw, 0.92rem);
+  opacity: 0.86;
   align-self: flex-end;
+  text-align: right;
 }
 
 .c-grain-shop-dialogue__npc {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  pointer-events: none;
 }
 
-/* 对话时右侧大立绘 */
 .c-grain-shop-portrait {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  width: min(36vw, 300px);
-  min-height: min(50vh, 420px);
+  position: absolute;
+  right: calc(100% * 92 / 2048);
+  bottom: 0;
+  z-index: 2;
+  display: block;
+  width: calc(100% * 390 / 2048);
+  height: calc(100% * 560 / 1152);
   padding: 0;
   background: none;
   box-shadow: none;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .c-grain-shop-portrait__art {
   display: block;
-  flex: 1;
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
   background: center bottom / auto 100% no-repeat var(--grain-shop-shopkeeper-portrait);
 }
 
-.c-grain-shop-portrait__image {
+.c-grain-shop-portrait__image,
+.c-location-dialogue__portrait-image {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: min(50vh, 420px);
+  height: 100%;
+  max-height: none;
   object-fit: contain;
   object-position: center bottom;
 }
 
 .c-grain-shop-portrait__name {
+  position: absolute;
+  top: calc(100% * 883 / 1152);
+  left: calc(100% * 141 / 2048);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% * 276 / 2048);
+  height: calc(100% * 76 / 1152);
+  min-width: 0;
+  min-height: 0;
   margin: 0;
+  padding: 0 calc(100% * 30 / 2048);
+  border: 0;
+  color: #f8e6bb;
+  background-image: url("../../ui/yuansu/对话框/20260708-162820.png");
+  background-repeat: no-repeat;
+  background-position:
+    calc(var(--game-width) * -141 / 2048)
+    calc(var(--game-height) * -883 / 1152);
+  background-size: var(--game-width) var(--game-height);
+  font-family: var(--font-title);
+  font-size: clamp(0.92rem, 1.22vw, 1.28rem);
+  line-height: 1;
   text-align: center;
+  text-shadow: 0 1px 2px rgb(46 18 10 / 78%);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 /* 关闭对话后左侧小头像（与大立绘区分） */

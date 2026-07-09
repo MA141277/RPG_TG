@@ -30,7 +30,6 @@ import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
 } from "./panels/global-player-panel";
-import cityEntryPortraitUrl from "../../ui/card/chengzhengsuoluetu.png?url";
 import { renderCharacterDetailView } from "./views/character/character-detail-view";
 import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderCity3dView } from "./views/city/city-3d-view";
@@ -184,7 +183,9 @@ function renderOverlay(input: AppRenderInput, playerCharacter: CharacterDefiniti
 
 function renderModal(
   modalState: AppModalState,
-  cityPortraits: Record<string, string>
+  cityPortraits: Record<string, string>,
+  mapDefinition: MapDefinition,
+  cityDefinitions: CityDefinition[]
 ): string {
   if (modalState == null) {
     return "";
@@ -208,15 +209,42 @@ function renderModal(
     });
   }
 
+  const mapEntryVisualKind = resolveMapEntryVisualKind(
+    modalState.cityId,
+    mapDefinition,
+    cityDefinitions
+  );
+
   return renderConfirmModal({
     title: `进入 ${modalState.cityName}`,
     body: "人物与城市坐标已经重合，确认后展开城市结构。",
     confirmLabel: "进入城市",
     cancelLabel: "稍后",
-    className: "c-confirm-modal--map-entry",
+    className: `c-confirm-modal--map-entry c-confirm-modal--map-entry-${mapEntryVisualKind}`,
     portraitLabel: cityPortraits[modalState.cityId] ?? modalState.cityName,
-    portraitImageUrl: cityEntryPortraitUrl,
+    portraitImageUrl: null,
   });
+}
+
+function resolveMapEntryVisualKind(
+  cityId: string,
+  mapDefinition: MapDefinition,
+  cityDefinitions: CityDefinition[]
+): "city" | "village" {
+  const cityDefinition = cityDefinitions.find((city) => city.id === cityId);
+  if (
+    cityDefinition?.tags.some((tag) =>
+      ["castle-town", "large-city", "commercial", "market"].includes(tag)
+    )
+  ) {
+    return "city";
+  }
+
+  const mapNode = mapDefinition.nodes.find(
+    (node) => node.id === cityDefinition?.mapNodeId
+  );
+
+  return mapNode?.kind === "settlement" ? "village" : "city";
 }
 
 function renderLocationDialogue(
@@ -500,7 +528,9 @@ export function renderApp(input: AppRenderInput): string {
             )}
             ${renderModal(
               input.presenterOutput.overlay.modalState,
-              input.cityPortraits
+              input.cityPortraits,
+              input.mapDefinition,
+              input.cityDefinitions ?? []
             )}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             ${renderOverlay(input, playerCharacter)}
