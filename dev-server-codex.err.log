@@ -1,0 +1,36 @@
+13:32:12 [vite] Internal server error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts:709:6: ERROR: The symbol "prototypeStartupAppStateBuilder" has already been declared
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts:709:6
+  
+  The symbol "prototypeStartupAppStateBuilder" has already been declared
+  707 |  mainUiFlow.mount();
+  708 |  mainUiFlow.showMainMenu();
+  709 |  const prototypeStartupAppStateBuilder = createPrototypeStartupAppStateBuilder({
+      |        ^
+  710 |    getActiveContentContext: () => activeContentContext,
+  711 |    defaultPlayerCharacterId,
+  
+      at failureErrorWithLog (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+13:32:12 [vite] (client) Pre-transform error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts:709:6: ERROR: The symbol "prototypeStartupAppStateBuilder" has already been declared
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts:709:6
+  
+  The symbol "prototypeStartupAppStateBuilder" has already been declared
+  707 |  mainUiFlow.mount();
+  708 |  mainUiFlow.showMainMenu();
+  709 |  const prototypeStartupAppStateBuilder = createPrototypeStartupAppStateBuilder({
+      |        ^
+  710 |    getActiveContentContext: () => activeContentContext,
+  711 |    defaultPlayerCharacterId,
+  
