@@ -7,12 +7,10 @@ import {
   createExitInteractiveRequest,
   createInteractiveActionRequest,
   runInteractiveRuntime,
-} from "../../core/runtime/interactive-runtime";
-import {
   createPlayableActionRequest,
   runPlayableRuntime,
-} from "../../core/runtime/playable-runtime";
-import { commitRuntimeRequest } from "../../core/runtime/state-sync-runtime";
+  commitRuntimeRequest,
+} from "./runtime-request-seam";
 
 type BattleDemoResultMessage = {
   type: "rpg-tg:battle-demo-result";

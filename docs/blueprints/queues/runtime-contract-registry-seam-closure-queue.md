@@ -4,11 +4,11 @@
 
 - queue_id: `queue.runtime-contract-registry-seam-closure`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
+- closeout_status: `done`
 - next_effect: `return-to-target-review`
 - sync_status: `pending`
 - sync_scope: `none`
@@ -42,9 +42,9 @@
 
 - queue_goal: `Lift covered application consumers onto application-owned runtime and registry seams now that the core runtime canonical path has already closed.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Close the remaining direct core runtime executor and house-playable consumer bypasses now that the first application registry seam cut has landed.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the queue closed after interactive-action-coordinator plus the covered house playable consumers converged on application-owned runtime seams and full verification passed.`
 - task_briefs:
   - `task.runtime-contract-registry-seam-closure.baseline-reconcile: freeze the first lawful consumer-side seam slice and confirm the queue remains bounded.`
   - `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift: move covered application house-module consumers off direct core builtin registry fallback ownership onto an application-owned seam.`
@@ -86,7 +86,7 @@
 | --- | --- | --- | --- | --- |
 | `task.runtime-contract-registry-seam-closure.baseline-reconcile` | `completed` | `Freeze the smallest lawful first consumer-side seam slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze the first slice as application house-module registry fallback closure before the heavier runtime executor and house-playable consumer residue.` |
 | `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift` | `completed` | `Move covered application house-module consumers off direct core builtin registry fallback ownership onto an application-owned seam.` | `task.runtime-contract-registry-seam-closure.baseline-reconcile` | `Completed after house-runtime and stage-presenters converged on the application-owned house-module-registry seam for builtin fallback ownership.` |
-| `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout` | `active` | `Close the remaining direct core runtime executor and house-playable bridge bypasses, verify the queue, and return control to target review.` | `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift` | `Current active closeout task; the remaining residue is now concentrated in interactive-action-coordinator plus covered house playable consumers.` |
+| `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout` | `completed` | `Close the remaining direct core runtime executor and house-playable bridge bypasses, verify the queue, and return control to target review.` | `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift` | `Completed after interactive-action-coordinator moved onto runtime-request-seam and grain-shop plus medicine-house moved onto house-playable-runtime-bridge for covered playable runtime ownership.` |
 
 ### Task Definitions
 
@@ -207,7 +207,7 @@
 ##### Control Block
 
 - task_id: `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/runtime/interactive-action-coordinator.ts`
@@ -248,11 +248,15 @@
 - task_brief:
   - `Close the remaining direct runtime executor and house-playable consumer bypasses, verify the queue, and return control to target review.`
 - task_outcome_summary:
-  - `Current active closeout task; it runs after the first registry seam cut and now owns the remaining direct core runtime executor and house-playable consumer bypass residue.`
+  - `Completed after interactive-action-coordinator stopped importing core runtime executors directly, grain-shop plus medicine-house stopped importing playable-runtime from core directly, and full queue verification passed before returning control to target review.`
 - Purpose:
   - `Finish the admitted queue by proving the covered application consumers no longer bypass the intended runtime or registry seam.`
 - Failure mode:
   - `Do not close the queue while interactive-action-coordinator or covered house playable consumers still reach straight into the core runtime executor path.`
+- Completion notes:
+  - `src/application/runtime/runtime-request-seam.ts now owns the covered application import line for commitRuntimeRequest, runInteractiveRuntime, and runPlayableRuntime on the interactive-action-coordinator path.`
+  - `src/application/playables/house-playable-runtime-bridge.ts now owns the covered house playable import line for playable runtime launch, action, and exit helpers used by grain-shop and medicine-house.`
+  - `tests/robustness.test.cjs now guards all covered application consumer seams against direct core runtime executor ownership.`
 
 ## Progress Log
 
@@ -268,3 +272,7 @@
   - Summary: `Completed house-module-registry-seam-lift by converging house-runtime and stage-presenters on the application-owned house-module-registry seam, which removes direct core builtin registry fallback ownership from the covered application consumers without widening into runtime executor closure.`
   - Verification: `npm run lint:blueprints; npm run typecheck; npm test`
   - Next at this time: `Execute task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout across interactive-action-coordinator plus the covered grain-shop and medicine-house playable consumers.`
+- 2026-07-09
+  - Summary: `Completed runtime-playable-consumer-closeout and closed queue.runtime-contract-registry-seam-closure after interactive-action-coordinator converged on src/application/runtime/runtime-request-seam.ts, grain-shop plus medicine-house converged on src/application/playables/house-playable-runtime-bridge.ts for covered playable runtime ownership, and no new in-queue application residue remained.`
+  - Verification: `npm run lint:blueprints; npm run typecheck; npm test; rg -n "from \"../../core/runtime/interactive-runtime\"|from \"../../core/runtime/playable-runtime\"|from \"../../core/runtime/state-sync-runtime\"|from \"../../../core/runtime/playable-runtime\"" src/application/runtime/interactive-action-coordinator.ts src/application/house-modules/grain-shop/grain-shop-house-module.ts src/application/house-modules/medicine-house/medicine-house-house-module.ts`
+  - Next at this time: `Return control to target review with no active queue; any further work must start from docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md and re-evaluate the remaining candidate queues.`

@@ -11063,6 +11063,47 @@ test("consumer seam queue keeps stage presenters off direct core builtin registr
   assert.match(source, /from "\.\.\/house-modules\/house-module-registry"/);
 });
 
+test("consumer seam queue keeps interactive action coordinator off direct core runtime executor ownership", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/interactive-action-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/core\/runtime\/interactive-runtime"/);
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/core\/runtime\/playable-runtime"/);
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/core\/runtime\/state-sync-runtime"/);
+  assert.match(source, /from "\.\/runtime-request-seam"/);
+});
+
+test("consumer seam queue keeps grain shop off direct core playable runtime ownership", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/grain-shop/grain-shop-house-module.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/\.\.\/core\/runtime\/playable-runtime"/);
+  assert.match(source, /from "\.\.\/\.\.\/playables\/house-playable-runtime-bridge"/);
+});
+
+test("consumer seam queue keeps medicine house off direct core playable runtime ownership", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/medicine-house/medicine-house-house-module.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/\.\.\/core\/runtime\/playable-runtime"/);
+  assert.match(source, /from "\.\.\/\.\.\/playables\/house-playable-runtime-bridge"/);
+});
+
 test("house renderer registry resolves renderers through the shared registration seam", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/ui/views/house/house-module-view-registry.ts"),

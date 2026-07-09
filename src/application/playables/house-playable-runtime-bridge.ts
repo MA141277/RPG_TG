@@ -4,6 +4,12 @@ import type {
   HouseModuleId,
   HouseModuleSessionState,
 } from "../../domain/house-module";
+export {
+  createExitPlayableRequest,
+  createLaunchPlayableRequest,
+  createPlayableActionRequest,
+  runPlayableRuntime,
+} from "../../core/runtime/playable-runtime";
 
 export function createHousePlayableRuntimeState<
   ModuleId extends HouseModuleId,
