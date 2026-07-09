@@ -100,6 +100,25 @@ In short:
 - prefer reusable systems over temporary patches
 - prefer genre-proven design over ad hoc invention
 
+## Playable Governance Trigger
+
+If a user asks to:
+
+- add a new minigame
+- add a new playable
+- modify an existing minigame or playable
+- integrate a playable into a house, scene, task, or external flow
+- change QTE / city-begging / grain-accounting / medicine-compounding / story-battle behavior
+- discuss playable runtime, playable integration, playable settlement, or playable handoff
+
+you must first use:
+
+- `.codex/skills/playable-governance/SKILL.md`
+
+If the playable is hosted inside a house flow, also follow:
+
+- `docs/special-house-interface.md`
+
 ## Spine Plugin Trigger
 
 If the user says "启动spine插件", "启动 Spine 插件", "打开骨骼绑定工具", or asks to start the spine/binding editor, use the project skill:
