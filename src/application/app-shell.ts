@@ -6,7 +6,6 @@ import type {
   MapAutoAdvanceSnapshot,
 } from "../domain/house-module";
 import type {
-  LayoutEditorState,
   UiLayoutByTargetId,
 } from "../domain/ui-layout";
 import type { CityMenuState } from "./city-menu/city-menu";
@@ -80,5 +79,4 @@ export type AppState = {
       }
     | null;
   uiLayouts: UiLayoutByTargetId;
-  layoutEditor: LayoutEditorState;
 };

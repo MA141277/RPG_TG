@@ -2224,20 +2224,20 @@ test("main runtime path does not import the ui reserve registry yet", async () =
 });
 
 test(
-  "existing layout editor target registry still stays on the current ui-layout path",
+  "layout editor target registry retirement removes the dead registry module",
   async () => {
-    const source = await fs.promises.readFile(
-      path.join(
-        process.cwd(),
-        "src",
-        "application",
-        "layout-editor",
-        "layout-editor-target-registry.ts"
+    assert.equal(
+      fs.existsSync(
+        path.join(
+          process.cwd(),
+          "src",
+          "application",
+          "layout-editor",
+          "layout-editor-target-registry.ts"
+        )
       ),
-      "utf8"
+      false
     );
-
-    assert.equal(source.includes("../../domain/ui-layout"), true);
   }
 );
 
@@ -14046,7 +14046,7 @@ test("reclosure ownerization keeps main.ts on the bootstrap seam after layout-ed
   assert.doesNotMatch(source, /createLayoutEditorCoordinator/);
   assert.doesNotMatch(source, /layoutEditorCoordinator/);
   assert.match(source, /createAppRenderCoordinator/);
-  assert.match(source, /createDefaultLayoutEditorAppState/);
+  assert.match(source, /createDefaultUiLayoutAppState/);
   assert.doesNotMatch(source, /layout-editor-actions/);
   assert.doesNotMatch(source, /applyRenderPrepassState/);
   assert.doesNotMatch(source, /renderApp as renderAppMarkup/);
@@ -15891,4 +15891,78 @@ test("layout editor live surface retirement removes character detail editor prot
     /c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle/
   );
   assert.match(source, /layout\?: CharacterDetailScreenLayout/);
+});
+
+test("layout editor main-ui retirement removes main-ui editor protocol", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const liveBindingsSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/tools/live-layout-bindings.js"),
+    "utf8"
+  );
+  assert.doesNotMatch(mainUiSource, /renderLayoutEditor/);
+  assert.doesNotMatch(mainUiSource, /applyLiveLayoutBindings/);
+  assert.doesNotMatch(mainUiSource, /layoutEditor\.isOpen/);
+  assert.doesNotMatch(
+    liveBindingsSource,
+    /data-layout-component-handle|data-layout-element-handle/
+  );
+  assert.doesNotMatch(
+    liveBindingsSource,
+    /c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle/
+  );
+});
+
+test("layout editor state retirement removes dead editor state and module seams", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const appShellSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/app-shell.ts"),
+    "utf8"
+  );
+  const startupSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/prototype-startup-app-state.ts"
+    ),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/layout-editor/layout-editor-bootstrap.ts"
+    ),
+    "utf8"
+  );
+  const appCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/app.css"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /createDefaultLayoutEditorAppState/);
+  assert.match(mainSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(appShellSource, /LayoutEditorState/);
+  assert.doesNotMatch(appShellSource, /layoutEditor:/);
+  assert.doesNotMatch(startupSource, /createDefaultLayoutEditorAppState/);
+  assert.match(startupSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(bootstrapSource, /layoutEditor/);
+  assert.match(bootstrapSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(appCssSource, /layout-editor\.css/);
+
+  for (const relativePath of [
+    "src/application/layout-editor/layout-editor-actions.ts",
+    "src/application/layout-editor/layout-editor-coordinator.ts",
+    "src/application/layout-editor/layout-editor-target-registry.ts",
+    "src/ui/tools/layout-editor-view.ts",
+  ]) {
+    assert.equal(
+      fs.existsSync(path.join(process.cwd(), relativePath)),
+      false,
+      `${relativePath} should be retired`
+    );
+  }
 });

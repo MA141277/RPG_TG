@@ -1,7 +1,6 @@
-import { applyLiveLayoutBindings } from "../tools/live-layout-bindings";
+import { applyStaticLayoutBindings } from "../tools/live-layout-bindings";
 import { mountOpeningBackgroundAnimation } from "./opening-background-animation";
 import { resolveCharacterAvatarImageUrl } from "../portrait-assets";
-import { renderLayoutEditor } from "../tools/layout-editor-view";
 
 const startScreenLayoutBindings = [
   { componentId: "main-menu-content", selector: ".c-main-ui-main-menu__content" },
@@ -247,8 +246,7 @@ export class MainUiFlow {
         : this.currentScreen === "scenario-select"
           ? this.renderScenarioSelect()
           : this.renderCharacterSelect();
-    this.overlayRoot.innerHTML =
-      screenMarkup + renderLayoutEditor(this.getAppState());
+    this.overlayRoot.innerHTML = screenMarkup;
     if (this.currentScreen === "main-menu") {
       this.destroyOpeningBackgroundAnimation = mountOpeningBackgroundAnimation(this.overlayRoot);
       this.syncStartScreenLayout();
@@ -261,20 +259,18 @@ export class MainUiFlow {
 
   syncStartScreenLayout() {
     const appState = this.getAppState();
-    applyLiveLayoutBindings({
+    applyStaticLayoutBindings({
       root: this.overlayRoot,
       layout: appState.uiLayouts["start-screen"],
-      appState,
       bindings: startScreenLayoutBindings,
     });
   }
 
   syncCharacterSelectLayout() {
     const appState = this.getAppState();
-    applyLiveLayoutBindings({
+    applyStaticLayoutBindings({
       root: this.overlayRoot,
       layout: appState.uiLayouts["character-select-screen"],
-      appState,
       bindings: characterSelectLayoutBindings,
     });
   }
@@ -556,13 +552,6 @@ export class MainUiFlow {
 
     const actionElement = target.closest("[data-main-ui-action]");
     if (actionElement == null) {
-      return;
-    }
-
-    if (
-      this.getAppState().layoutEditor.isOpen &&
-      target.closest("[data-layout-component-handle]") != null
-    ) {
       return;
     }
 

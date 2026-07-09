@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_target: `target.project-complete-modularization`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/layout-editor-retirement-and-reference-removal-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -58,3 +58,4 @@
 - `Fresh 2026-07-09 target review also records item.layout-editor-retirement-and-reference-removal as a new queue-candidate. The layout editor still exists as a live feature across app state, startup bootstrap, rendering, editor modules, presets, styles, docs, and targeted tests, but current Blueprint truth already has queue.cross-mechanism-composition-contract-closure active, so the editor-removal line stays candidate-only until a later promotion review.`
 - `Fresh 2026-07-09 queue closeout returns queue.cross-mechanism-composition-contract-closure to closed historical evidence. The covered city/house transition path now converges on applyCityViewTransition across city-house-transition-coordinator and house-runtime, while the remaining broader composition residue across main-runtime-orchestrator, interactive-action-coordinator, story-battle-runtime, and src/main.ts returns to target-level promotion review instead of widening the queue without a newly frozen next slice. No active queue remains.`
 - `Fresh 2026-07-09 promotion review now admits queue.layout-editor-retirement-and-reference-removal as the current active queue. Current source truth still shows the layout editor as a live feature family across app state, startup bootstrap, render flow, editor modules, presets, styles, docs, and targeted tests, and baseline-reconcile freezes the first lawful implementation slice as live editor-surface retirement rather than broader uiLayouts baseline or preset deletion.`
+- `Fresh 2026-07-09 queue closeout returns queue.layout-editor-retirement-and-reference-removal to closed historical evidence. The bounded queue retired the remaining layout editor surfaces, removed dead layoutEditor-state/bootstrap residue and editor-only modules, and then concluded via residue review that the surviving uiLayouts baseline plus preset family belongs to broader target-level review instead of another already-frozen same-queue slice. No active queue remains.`

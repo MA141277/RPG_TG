@@ -4,12 +4,12 @@
 
 - queue_id: `queue.layout-editor-retirement-and-reference-removal`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- next_effect: `none`
+- closeout_status: `done`
+- next_effect: `return-to-target-review`
 - sync_status: `pending`
 - sync_scope: `none`
 - sync_summary: `No repository sync has run for this newly admitted queue yet.`
@@ -43,14 +43,18 @@
 ### Queue Snapshot
 
 - queue_goal: `Retire the live layout editor feature family through bounded slices, starting with the live editor surface rather than broader shared layout-baseline extraction.`
-- task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Reassess whether the remaining uiLayouts or preset or reserve-family residue still belongs to this queue now that the live editor surface is retired.`
+- task_count: `7`
+- completed_task_count: `7`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the queue closed after dead layoutEditor-state cleanup landed and residue review returned the remaining broader uiLayouts baseline and preset family to target review instead of widening in-queue.`
 - task_briefs:
   - `task.layout-editor-retirement-and-reference-removal.baseline-reconcile: freeze the first lawful layout-editor retirement slice and confirm this queue remains bounded on current source truth.`
   - `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement: remove the covered live layout-editor launch or render or interaction surface without deleting the broader shared uiLayouts baseline yet.`
-  - `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review: reassess whether the remaining uiLayouts or preset or reserve-family residue stays in-queue or returns to target review.`
+  - `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review: classify whether the remaining residue still belongs to this queue after the first editor-surface retirement cut.`
+  - `task.layout-editor-retirement-and-reference-removal.main-ui-live-editor-surface-retirement: remove the still-live main-ui editor mount and binding protocol that remained outside the first covered production path.`
+  - `task.layout-editor-retirement-and-reference-removal.post-main-ui-residue-review: classify whether any remaining residue still forms another lawful same-queue cut after the main-ui surface is retired.`
+  - `task.layout-editor-retirement-and-reference-removal.editor-state-and-dead-module-retirement: remove the remaining dead layoutEditor state and editor-only module family while preserving uiLayouts baseline consumption.`
+  - `task.layout-editor-retirement-and-reference-removal.post-editor-state-residue-review: reassess whether any remaining uiLayouts or preset or reserve-family residue still forms another lawful same-queue cut after dead editor-state cleanup.`
 
 ### Operator Snapshot Contract
 
@@ -88,7 +92,11 @@
 | --- | --- | --- | --- | --- |
 | `task.layout-editor-retirement-and-reference-removal.baseline-reconcile` | `completed` | `Freeze the smallest lawful first retirement slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze the first slice as live editor-surface retirement instead of broader uiLayouts or preset baseline deletion.` |
 | `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement` | `completed` | `Remove the covered live layout-editor launch or render or interaction surface without deleting the broader shared uiLayouts baseline yet.` | `task.layout-editor-retirement-and-reference-removal.baseline-reconcile` | `Completed after the production path stopped mounting the editor surface, main.ts dropped coordinator wiring, and character detail views stopped emitting editor-only binding protocol.` |
-| `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review` | `active` | `Reassess the remaining uiLayouts or preset or reserve-family residue after the live editor surface is retired.` | `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement` | `Current decision-dispatch task.` |
+| `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review` | `completed` | `Classify whether the remaining uiLayouts or preset or reserve-family residue still belongs to this queue after the first live editor-surface retirement cut.` | `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement` | `Completed after queue-local residue review proved a still-live main-ui editor surface remains in scope, while broader uiLayouts baseline, preset defaults, and reserve-family cleanup still stay out of the next slice.` |
+| `task.layout-editor-retirement-and-reference-removal.main-ui-live-editor-surface-retirement` | `completed` | `Remove the still-live main-ui editor mount and binding protocol without widening into broader uiLayouts baseline cleanup.` | `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review` | `Completed after main-ui rendering stopped mounting renderLayoutEditor, layout application downgraded to static bindings, and start-screen plus character-select-screen left the live target registry.` |
+| `task.layout-editor-retirement-and-reference-removal.post-main-ui-residue-review` | `completed` | `Classify whether any remaining residue still forms another lawful same-queue cut after the main-ui surface is retired.` | `task.layout-editor-retirement-and-reference-removal.main-ui-live-editor-surface-retirement` | `Completed after queue-local residue review proved no still-live editor surface remains on the covered production path, while layoutEditor state plus editor-only modules remain as a smaller dead-cleanup continuation and uiLayouts baseline cleanup still stays out of scope.` |
+| `task.layout-editor-retirement-and-reference-removal.editor-state-and-dead-module-retirement` | `completed` | `Remove the remaining dead layoutEditor state and editor-only module family while preserving uiLayouts baseline consumption.` | `task.layout-editor-retirement-and-reference-removal.post-main-ui-residue-review` | `Completed after app-state bootstrap dropped layoutEditor, the remaining editor-only module family was deleted, and the uiLayouts baseline stayed intact through the renamed createDefaultUiLayoutAppState seam.` |
+| `task.layout-editor-retirement-and-reference-removal.post-editor-state-residue-review` | `completed` | `Reassess whether any remaining uiLayouts or preset or reserve-family residue still forms another lawful same-queue cut after dead editor-state cleanup.` | `task.layout-editor-retirement-and-reference-removal.editor-state-and-dead-module-retirement` | `Completed after queue-local residue review concluded that the remaining uiLayouts baseline and preset family is broader target-review residue rather than another already-frozen same-queue continuation.` |
 
 ### Task Definitions
 
@@ -214,16 +222,22 @@
 ##### Control Block
 
 - task_id: `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review`
-- state: `active`
+- state: `completed`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
   - `docs/blueprints/queues/layout-editor-retirement-and-reference-removal-queue.md`
+  - `src/ui/main-ui/main-ui-flow.js`
+  - `src/ui/tools/live-layout-bindings.js`
+  - `src/application/layout-editor/layout-editor-target-registry.ts`
   - `src/application/layout-editor/layout-editor-bootstrap.ts`
   - `src/content/layout-editor-presets.ts`
   - `src/domain/content-pack.ts`
   - `tests/**`
 - must_inspect:
+  - `src/ui/main-ui/main-ui-flow.js`
+  - `src/ui/tools/live-layout-bindings.js`
+  - `src/application/layout-editor/layout-editor-target-registry.ts`
   - `src/application/layout-editor/layout-editor-bootstrap.ts`
   - `src/content/layout-editor-presets.ts`
   - `src/domain/content-pack.ts`
@@ -240,6 +254,237 @@
   - `The queue does not silently absorb broader shared UI baseline work without a fresh written boundary.`
 - verify_with:
   - `npm run lint:blueprints`
+  - `rg -n "renderLayoutEditor|applyLiveLayoutBindings|data-layout-component-handle|data-layout-element-handle|c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle|layoutEditor\.isOpen|uiLayouts|layout-editor-presets|ui-contract-registry" src/ui/main-ui/main-ui-flow.js src/ui/tools/live-layout-bindings.js src/application/layout-editor/layout-editor-target-registry.ts src/application/layout-editor/layout-editor-bootstrap.ts src/content/layout-editor-presets.ts src/domain/content-pack.ts tests/robustness.test.cjs`
+- if_blocked:
+  - `Record why the remaining residue cannot be cleanly classified instead of widening the queue without written review.`
+  - `Escalate back to target review if the remaining residue no longer belongs to this admitted queue.`
+- promote_next_if_done: `task.layout-editor-retirement-and-reference-removal.main-ui-live-editor-surface-retirement`
+- stop_if:
+  - `Required queue or target truth is not synchronized.`
+
+##### Human Context
+
+- task_brief:
+  - `Classify whether the remaining residue still belongs to this queue after the first live editor-surface retirement cut.`
+- task_outcome_summary:
+  - `Completed after queue-local review proved that src/ui/main-ui/main-ui-flow.js still mounts renderLayoutEditor and still routes main-ui bindings through applyLiveLayoutBindings, so the queue stays active on one smaller main-ui retirement slice instead of jumping to broader uiLayouts baseline or preset cleanup.`
+- Purpose:
+  - `Keep the queue aligned with current evidence after the first retirement slice lands.`
+- Failure mode:
+  - `Do not auto-absorb broader shared UI baseline extraction without a fresh queue-local decision.`
+- Completion notes:
+  - `src/ui/main-ui/main-ui-flow.js still appends renderLayoutEditor(this.getAppState()) to the main-ui overlay surface and still treats layoutEditor.isOpen as a live interaction gate.`
+  - `src/ui/tools/live-layout-bindings.js still emits data-layout-component-handle or data-layout-element-handle attributes together with main-ui resize handles, which means the remaining residue is not only dormant baseline data.`
+  - `src/application/layout-editor/layout-editor-target-registry.ts still includes start-screen and character-select-screen live targets, so the next lawful same-queue cut is bounded main-ui editor-surface retirement rather than immediate layout bootstrap or preset deletion.`
+  - `src/application/layout-editor/layout-editor-bootstrap.ts, src/content/layout-editor-presets.ts, and src/domain/content-pack.ts still describe broader layout baseline residue, but that broader cleanup remains out of scope for the next active slice.`
+
+#### `task.layout-editor-retirement-and-reference-removal.main-ui-live-editor-surface-retirement`
+
+##### Control Block
+
+- task_id: `task.layout-editor-retirement-and-reference-removal.main-ui-live-editor-surface-retirement`
+- state: `completed`
+- task_kind: `execution`
+- scope:
+  - `src/ui/main-ui/main-ui-flow.js`
+  - `src/ui/tools/live-layout-bindings.js`
+  - `src/application/layout-editor/layout-editor-target-registry.ts`
+  - `tests/**`
+- must_inspect:
+  - `src/ui/main-ui/main-ui-flow.js`
+  - `src/ui/tools/live-layout-bindings.js`
+  - `src/application/layout-editor/layout-editor-target-registry.ts`
+  - `tests/robustness.test.cjs`
+- must_not_change:
+  - `broader uiLayouts bootstrap or preset baseline cleanup`
+  - `reserve-family activation or ui-contract-registry redesign`
+  - `unrelated app-shell or house runtime work`
+- done_when:
+  - `The main-ui path no longer mounts renderLayoutEditor or consumes applyLiveLayoutBindings as a live editor protocol on the covered start-screen or character-select-screen surface.`
+  - `The covered main-ui interaction path no longer depends on layoutEditor.isOpen or editor-only handle attributes for those screens.`
+  - `Verification passes without widening into broader uiLayouts baseline deletion or preset removal.`
+- verify_with:
+  - `node --test --test-name-pattern "layout editor main-ui retirement" tests/robustness.test.cjs`
+  - `npm run typecheck`
+  - `npm test`
+  - `npm run lint:blueprints`
+- if_blocked:
+  - `Record the blocker in this queue doc instead of widening directly into layout bootstrap or preset cleanup.`
+  - `Return to target review only if fresh inspection disproves the main-ui surface as a lawful same-queue slice.`
+- promote_next_if_done: `task.layout-editor-retirement-and-reference-removal.post-main-ui-residue-review`
+- stop_if:
+  - `The required work expands beyond retiring the still-live main-ui editor surface.`
+
+##### Human Context
+
+- task_brief:
+  - `Retire the still-live main-ui editor mount and binding protocol without widening into broader layout-baseline cleanup.`
+- task_outcome_summary:
+  - `Completed after src/ui/main-ui/main-ui-flow.js stopped mounting renderLayoutEditor, downgraded main-ui layout application to static bindings, removed the layoutEditor.isOpen click gate, and src/application/layout-editor/layout-editor-target-registry.ts dropped start-screen plus character-select-screen from the live target set.`
+- Purpose:
+  - `Finish removing still-live editor-only behavior that remained outside the first covered production-path retirement slice.`
+- Failure mode:
+  - `Do not use this slice to silently delete layout baseline state, preset defaults, or reserve-family coverage that has not yet been reclassified.`
+
+#### `task.layout-editor-retirement-and-reference-removal.post-main-ui-residue-review`
+
+##### Control Block
+
+- task_id: `task.layout-editor-retirement-and-reference-removal.post-main-ui-residue-review`
+- state: `completed`
+- task_kind: `decision-dispatch`
+- scope:
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+  - `docs/blueprints/queues/layout-editor-retirement-and-reference-removal-queue.md`
+  - `src/main.ts`
+  - `src/application/app-shell.ts`
+  - `src/application/startup/prototype-startup-app-state.ts`
+  - `src/application/layout-editor/layout-editor-bootstrap.ts`
+  - `src/application/layout-editor/layout-editor-actions.ts`
+  - `src/application/layout-editor/layout-editor-coordinator.ts`
+  - `src/application/layout-editor/layout-editor-target-registry.ts`
+  - `src/ui/tools/layout-editor-view.ts`
+  - `src/application/layout-editor/layout-editor-bootstrap.ts`
+  - `src/content/layout-editor-presets.ts`
+  - `src/domain/content-pack.ts`
+  - `tests/**`
+- must_inspect:
+  - `src/main.ts`
+  - `src/application/app-shell.ts`
+  - `src/application/startup/prototype-startup-app-state.ts`
+  - `src/application/layout-editor/layout-editor-bootstrap.ts`
+  - `src/application/layout-editor/layout-editor-actions.ts`
+  - `src/application/layout-editor/layout-editor-coordinator.ts`
+  - `src/application/layout-editor/layout-editor-target-registry.ts`
+  - `src/ui/tools/layout-editor-view.ts`
+  - `src/content/layout-editor-presets.ts`
+  - `src/domain/content-pack.ts`
+  - `tests/robustness.test.cjs`
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+  - `docs/blueprints/queues/layout-editor-retirement-and-reference-removal-queue.md`
+- must_not_change:
+  - `already-landed editor-surface retirement slices`
+  - `unrelated shared UI framework work`
+  - `target closeout truth`
+- done_when:
+  - `Queue-local truth states whether any remaining uiLayouts or preset or reserve-family residue still forms another lawful same-queue cut or returns to target review.`
+  - `Queue snapshot and target truth are synchronized with that decision before any repository sync batch.`
+  - `The queue does not silently absorb broader shared UI baseline work without a fresh written boundary.`
+- verify_with:
+  - `npm run lint:blueprints`
+  - `rg -n "layout-editor-view|layout-editor-coordinator|layout-editor-actions|layout-editor-target-registry|layoutEditor|uiLayouts|layout-editor-presets|ui-contract-registry" src/main.ts src/application/app-shell.ts src/application/startup/prototype-startup-app-state.ts src/application/layout-editor/layout-editor-bootstrap.ts src/application/layout-editor/layout-editor-actions.ts src/application/layout-editor/layout-editor-coordinator.ts src/application/layout-editor/layout-editor-target-registry.ts src/ui/tools/layout-editor-view.ts src/content/layout-editor-presets.ts src/domain/content-pack.ts tests/robustness.test.cjs`
+- if_blocked:
+  - `Record why the remaining residue cannot be cleanly classified instead of widening the queue without written review.`
+  - `Escalate back to target review if the remaining residue no longer belongs to this admitted queue.`
+- promote_next_if_done: `task.layout-editor-retirement-and-reference-removal.editor-state-and-dead-module-retirement`
+- stop_if:
+  - `Required queue or target truth is not synchronized.`
+
+##### Human Context
+
+- task_brief:
+  - `Classify whether any remaining residue still forms another lawful same-queue cut after the main-ui editor surface is retired.`
+- task_outcome_summary:
+  - `Completed after queue-local review proved no still-live layout editor surface remains on the covered production path, while src/main.ts, src/application/app-shell.ts, src/application/startup/prototype-startup-app-state.ts, and the editor-only layout-editor modules still carry dead layoutEditor-state residue that forms a smaller same-queue cleanup slice than broader uiLayouts baseline or preset removal.`
+- Purpose:
+  - `Prevent the queue from silently widening after the last still-live editor-only surface is removed.`
+- Failure mode:
+  - `Do not auto-absorb baseline cleanup or reserve-family work without a fresh boundary decision.`
+- Completion notes:
+  - `src/main.ts and src/application/startup/prototype-startup-app-state.ts still seed layoutEditor through createDefaultLayoutEditorAppState even though the covered production path no longer mounts or drives the editor surface.`
+  - `src/application/app-shell.ts still exposes layoutEditor in AppState, while src/ui/tools/layout-editor-view.ts, src/application/layout-editor/layout-editor-coordinator.ts, and src/application/layout-editor/layout-editor-actions.ts now appear as editor-only modules without covered production consumers.`
+  - `src/application/layout-editor/layout-editor-bootstrap.ts, src/content/layout-editor-presets.ts, and src/domain/content-pack.ts still carry uiLayouts baseline truth that remains live for non-editor rendering, so deleting that baseline is still broader than the next lawful slice.`
+
+#### `task.layout-editor-retirement-and-reference-removal.editor-state-and-dead-module-retirement`
+
+##### Control Block
+
+- task_id: `task.layout-editor-retirement-and-reference-removal.editor-state-and-dead-module-retirement`
+- state: `completed`
+- task_kind: `execution`
+- scope:
+  - `src/main.ts`
+  - `src/application/app-shell.ts`
+  - `src/application/startup/prototype-startup-app-state.ts`
+  - `src/application/layout-editor/**`
+  - `src/ui/tools/layout-editor-view.ts`
+  - `tests/**`
+- must_inspect:
+  - `src/main.ts`
+  - `src/application/app-shell.ts`
+  - `src/application/startup/prototype-startup-app-state.ts`
+  - `src/application/layout-editor/layout-editor-bootstrap.ts`
+  - `src/application/layout-editor/layout-editor-actions.ts`
+  - `src/application/layout-editor/layout-editor-coordinator.ts`
+  - `src/application/layout-editor/layout-editor-target-registry.ts`
+  - `src/ui/tools/layout-editor-view.ts`
+  - `tests/robustness.test.cjs`
+- must_not_change:
+  - `uiLayouts baseline consumption for global-hud or main-ui or character detail rendering`
+  - `layout preset truth beyond what is strictly required to retire dead editor-only state`
+  - `unrelated runtime or house or reserve-family work`
+- done_when:
+  - `The covered production path no longer seeds or depends on layoutEditor state in app-state bootstrap or app-shell contracts.`
+  - `Dead editor-only modules have no remaining covered production consumers or are removed without widening into uiLayouts baseline deletion.`
+  - `Verification passes without changing non-editor uiLayouts rendering behavior.`
+- verify_with:
+  - `node --test --test-name-pattern "layout editor state retirement" tests/robustness.test.cjs`
+  - `npm run typecheck`
+  - `npm test`
+  - `npm run lint:blueprints`
+- if_blocked:
+  - `Record the blocker in this queue doc instead of widening into uiLayouts baseline cleanup.`
+  - `Return to target review only if fresh inspection disproves dead editor-state cleanup as a lawful same-queue slice.`
+- promote_next_if_done: `task.layout-editor-retirement-and-reference-removal.post-editor-state-residue-review`
+- stop_if:
+  - `The required work expands into broader uiLayouts baseline or preset redesign.`
+
+##### Human Context
+
+- task_brief:
+  - `Retire the remaining dead layoutEditor state and editor-only modules while preserving uiLayouts baseline consumption.`
+- task_outcome_summary:
+  - `Completed after src/main.ts, src/application/app-shell.ts, src/application/startup/prototype-startup-app-state.ts, and src/application/layout-editor/layout-editor-bootstrap.ts dropped layoutEditor-state ownership, createDefaultUiLayoutAppState became the remaining uiLayouts-only bootstrap seam, src/styles/app.css stopped importing layout-editor.css, and the dead editor-only module family was removed without changing non-editor uiLayouts rendering behavior.`
+- Purpose:
+  - `Finish the dead editor-only residue that still remains after the last live editor surface was removed.`
+- Failure mode:
+  - `Do not turn this cleanup slice into broader uiLayouts baseline deletion or preset normalization.`
+- Completion notes:
+  - `src/main.ts and src/application/startup/prototype-startup-app-state.ts now depend on createDefaultUiLayoutAppState instead of createDefaultLayoutEditorAppState.`
+  - `src/application/app-shell.ts and src/domain/ui-layout.ts no longer expose layoutEditor in AppState, while src/application/layout-editor/layout-editor-actions.ts, src/application/layout-editor/layout-editor-coordinator.ts, src/application/layout-editor/layout-editor-target-registry.ts, src/ui/tools/layout-editor-view.ts, and src/styles/layout-editor.css are removed as dead editor-only residue.`
+  - `src/application/layout-editor/layout-editor-bootstrap.ts still remains as the uiLayouts baseline bootstrap seam, which is why the task stops before broader preset or reserve-family cleanup.`
+
+#### `task.layout-editor-retirement-and-reference-removal.post-editor-state-residue-review`
+
+##### Control Block
+
+- task_id: `task.layout-editor-retirement-and-reference-removal.post-editor-state-residue-review`
+- state: `completed`
+- task_kind: `decision-dispatch`
+- scope:
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+  - `docs/blueprints/queues/layout-editor-retirement-and-reference-removal-queue.md`
+  - `src/application/layout-editor/layout-editor-bootstrap.ts`
+  - `src/content/layout-editor-presets.ts`
+  - `src/domain/content-pack.ts`
+  - `tests/**`
+- must_inspect:
+  - `src/application/layout-editor/layout-editor-bootstrap.ts`
+  - `src/content/layout-editor-presets.ts`
+  - `src/domain/content-pack.ts`
+  - `tests/robustness.test.cjs`
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+  - `docs/blueprints/queues/layout-editor-retirement-and-reference-removal-queue.md`
+- must_not_change:
+  - `already-landed editor retirement slices`
+  - `unrelated shared UI framework work`
+  - `target closeout truth`
+- done_when:
+  - `Queue-local truth states whether any remaining uiLayouts or preset or reserve-family residue still forms another lawful same-queue cut or returns to target review.`
+  - `Queue snapshot and target truth are synchronized with that decision before any repository sync batch.`
+  - `The queue does not silently absorb broader shared UI baseline work without a fresh written boundary.`
+- verify_with:
+  - `npm run lint:blueprints`
   - `rg -n "uiLayouts|layoutEditor|layout-editor-presets|ui-contract-registry" src/application/layout-editor/layout-editor-bootstrap.ts src/content/layout-editor-presets.ts src/domain/content-pack.ts tests/robustness.test.cjs`
 - if_blocked:
   - `Record why the remaining residue cannot be cleanly classified instead of widening the queue without written review.`
@@ -251,13 +496,18 @@
 ##### Human Context
 
 - task_brief:
-  - `Reassess whether the remaining layout baseline residue stays in-queue after the live editor surface is retired.`
+  - `Reassess the remaining broader layout-baseline residue after dead editor-state cleanup.`
 - task_outcome_summary:
-  - `The expected outcome is a written queue-local decision about whether uiLayouts or preset or reserve-family residue is still lawful same-queue work.`
+  - `Completed after queue-local review concluded that the remaining uiLayouts baseline, preset, and reserve-family residue in src/application/layout-editor/layout-editor-bootstrap.ts, src/content/layout-editor-presets.ts, and src/domain/content-pack.ts is broader target-review work rather than another already-frozen same-queue continuation.`
 - Purpose:
-  - `Keep the queue aligned with current evidence after the first retirement slice lands.`
+  - `Prevent the queue from silently widening after dead editor-state residue is removed.`
 - Failure mode:
-  - `Do not auto-absorb broader shared UI baseline extraction without a fresh queue-local decision.`
+  - `Do not auto-absorb baseline cleanup or reserve-family work without a fresh boundary decision.`
+- Completion notes:
+  - `Current source truth shows no remaining layoutEditor state or live editor-only module consumers on the covered production path.`
+  - `The surviving residue is now the broader uiLayouts baseline and preset family that still serves non-editor rendering, so this queue must close and return control to target review instead of auto-continuing.`
+- Recommendation:
+  - `Return to target-level idle-open review with no active queue; if later work is needed, admit it as a fresh broader uiLayouts baseline or preset queue rather than reopening this closed editor-retirement queue without new evidence.`
 
 ##### Decision-Dispatch Notes
 
@@ -278,3 +528,23 @@
   - Summary: `Completed live-editor-surface-retirement with source-guard regression coverage and bounded production-path removal. The app shell no longer mounts renderLayoutEditor, main.ts no longer routes covered input through layoutEditorCoordinator, and the character-detail live view no longer emits editor-only binding attributes or resize handles. The remaining queue work is now limited to classifying uiLayouts baseline, layoutEditor state, preset defaults, and reserve-family residue.`
   - Verification: `node --test --test-name-pattern "layout editor live surface retirement" tests/robustness.test.cjs; npm run typecheck; npm test; npm run lint:blueprints; npm run lint:plans`
   - Next at this time: `Execute task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review.`
+- 2026-07-09
+  - Summary: `Completed layout-baseline-residue-review by proving the queue still contains one smaller same-queue cut: src/ui/main-ui/main-ui-flow.js still mounts renderLayoutEditor on the main-ui overlay, applyLiveLayoutBindings still emits editor-only handle protocol for start-screen and character-select-screen, and layout-editor target registration still marks those screens as live editor targets. The queue therefore remains active on bounded main-ui editor-surface retirement instead of jumping to broader uiLayouts baseline, preset, or reserve-family cleanup.`
+  - Verification: `rg -n "renderLayoutEditor|applyLiveLayoutBindings|data-layout-component-handle|data-layout-element-handle|c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle|layoutEditor\.isOpen|uiLayouts|layout-editor-presets|ui-contract-registry" src/ui/main-ui/main-ui-flow.js src/ui/tools/live-layout-bindings.js src/application/layout-editor/layout-editor-target-registry.ts src/application/layout-editor/layout-editor-bootstrap.ts src/content/layout-editor-presets.ts src/domain/content-pack.ts tests/robustness.test.cjs; npm run lint:blueprints`
+  - Next at this time: `Execute task.layout-editor-retirement-and-reference-removal.main-ui-live-editor-surface-retirement.`
+- 2026-07-09
+  - Summary: `Completed main-ui-live-editor-surface-retirement with bounded static-layout preservation. src/ui/main-ui/main-ui-flow.js no longer mounts renderLayoutEditor, main-ui layout application now uses static bindings without editor-only handles or layoutEditor.isOpen gating, and src/application/layout-editor/layout-editor-target-registry.ts no longer keeps start-screen or character-select-screen in the live target set.`
+  - Verification: `node --test --test-name-pattern "layout editor main-ui retirement|layout editor live surface retirement" tests/robustness.test.cjs; npm run typecheck; npm test; npm run lint:blueprints`
+  - Next at this time: `Execute task.layout-editor-retirement-and-reference-removal.post-main-ui-residue-review.`
+- 2026-07-09
+  - Summary: `Completed post-main-ui-residue-review by proving no still-live editor surface remains on the covered production path. The remaining same-queue continuation is now dead layoutEditor-state and editor-only module cleanup across src/main.ts, src/application/app-shell.ts, src/application/startup/prototype-startup-app-state.ts, and the layout-editor module family, while broader uiLayouts baseline and preset cleanup still remain out of scope.`
+  - Verification: `rg -n "layout-editor-view|layout-editor-coordinator|layout-editor-actions|layout-editor-target-registry|layoutEditor|uiLayouts|layout-editor-presets|ui-contract-registry" src/main.ts src/application/app-shell.ts src/application/startup/prototype-startup-app-state.ts src/application/layout-editor/layout-editor-bootstrap.ts src/application/layout-editor/layout-editor-actions.ts src/application/layout-editor/layout-editor-coordinator.ts src/application/layout-editor/layout-editor-target-registry.ts src/ui/tools/layout-editor-view.ts src/content/layout-editor-presets.ts src/domain/content-pack.ts tests/robustness.test.cjs; npm run lint:blueprints`
+  - Next at this time: `Execute task.layout-editor-retirement-and-reference-removal.editor-state-and-dead-module-retirement.`
+- 2026-07-09
+  - Summary: `Completed editor-state-and-dead-module-retirement by removing the remaining layoutEditor bootstrap and AppState residue, renaming the surviving bootstrap seam to createDefaultUiLayoutAppState, deleting the dead editor-only module family and stylesheet, and keeping the non-editor uiLayouts baseline intact on the covered production path.`
+  - Verification: `node --test --test-name-pattern "layout editor state retirement removes dead editor state and module seams|layout editor target registry retirement removes the dead registry module|reclosure ownerization keeps main.ts on the bootstrap seam after layout-editor retirement" tests/robustness.test.cjs; rg -n "layoutEditor|createDefaultLayoutEditorAppState|layout-editor-view|layout-editor-coordinator|layout-editor-actions|layout-editor-target-registry|LayoutEditorState|layout-editor\\.css" src`
+  - Next at this time: `Execute task.layout-editor-retirement-and-reference-removal.post-editor-state-residue-review.`
+- 2026-07-09
+  - Summary: `Completed post-editor-state-residue-review and closed the queue. No remaining layoutEditor state or live editor-only module family survives on the covered production path, while the remaining uiLayouts baseline and preset family now belongs to broader target-level review instead of another already-frozen same-queue slice.`
+  - Verification: `node --test --test-name-pattern "layout editor state retirement|layout editor target registry retirement|layout editor main-ui retirement|layout editor live surface retirement|reclosure ownerization keeps main.ts on the bootstrap seam" tests/robustness.test.cjs; npm run typecheck; npm test; npm run lint:blueprints`
+  - Next at this time: `Treat queue.layout-editor-retirement-and-reference-removal as closed historical evidence only and return control to target-level idle-open review.`

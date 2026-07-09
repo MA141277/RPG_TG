@@ -6,9 +6,9 @@ import {
   createDefaultStartScreenLayout,
 } from "../../content/layout-editor-presets";
 
-export function createDefaultLayoutEditorAppState(): Pick<
+export function createDefaultUiLayoutAppState(): Pick<
   AppState,
-  "uiLayouts" | "layoutEditor"
+  "uiLayouts"
 > {
   return {
     uiLayouts: {
@@ -16,13 +16,6 @@ export function createDefaultLayoutEditorAppState(): Pick<
       "start-screen": createDefaultStartScreenLayout(),
       "character-select-screen": createDefaultCharacterSelectScreenLayout(),
       "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
-    },
-    layoutEditor: {
-      isOpen: false,
-      selectedTargetId: "global-hud",
-      selectedComponentId: "status-board",
-      selectedElementId: null,
-      backgroundAssetQuery: "",
     },
   };
 }

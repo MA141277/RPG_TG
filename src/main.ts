@@ -1,6 +1,6 @@
 import "./styles/app.css";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
-import { createDefaultLayoutEditorAppState } from "./application/layout-editor/layout-editor-bootstrap";
+import { createDefaultUiLayoutAppState } from "./application/layout-editor/layout-editor-bootstrap";
 import {
   closeCityMenu,
   closeCityDirectory,
@@ -391,7 +391,7 @@ function createRuntimeCommitContext(input: {
 const prototypeStartupAppStateBuilder = createPrototypeStartupAppStateBuilder({
   getActiveContentContext: () => activeContentContext,
   defaultPlayerCharacterId,
-  createDefaultLayoutEditorAppState,
+  createDefaultUiLayoutAppState,
   createPrototypeCharactersForStoryStage,
 });
 
@@ -1776,7 +1776,7 @@ function createScenarioPackAppState(
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
-    ...createDefaultLayoutEditorAppState(),
+    ...createDefaultUiLayoutAppState(),
   };
 
   nextAppState = {

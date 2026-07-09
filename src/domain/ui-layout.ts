@@ -78,14 +78,6 @@ export type UiLayoutByTargetId = {
   "character-detail-screen": CharacterDetailScreenLayout;
 };
 
-export type LayoutEditorState = {
-  isOpen: boolean;
-  selectedTargetId: LayoutEditorTargetId;
-  selectedComponentId: string;
-  selectedElementId: string | null;
-  backgroundAssetQuery: string;
-};
-
 export type LayoutBackgroundAssetOption = {
   id: string;
   label: string;
