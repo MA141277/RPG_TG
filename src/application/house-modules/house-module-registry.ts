@@ -3,6 +3,7 @@ import {
   builtinHouseModuleRegistry,
   createBuiltinHouseModuleRegistry,
 } from "../../core/registry/builtin-house-module-registry";
+export type { HouseModuleRegistry } from "../../core/registry/house-module-registry";
 
 export { builtinHouseModuleRegistry, createBuiltinHouseModuleRegistry };
 

@@ -16,10 +16,8 @@ import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../domain/house";
 import {
   builtinHouseModuleRegistry,
-} from "../../core/registry/builtin-house-module-registry";
-import {
   type HouseModuleRegistry,
-} from "../../core/registry/house-module-registry";
+} from "../house-modules/house-module-registry";
 import type { AppPresenterStageOutput } from "./presenter-output";
 
 export type StagePresenterInput = {

@@ -6,8 +6,8 @@
 - belongs_to_target: `target.project-complete-modularization`
 - queue_status: `active`
 - queue_class: `conditional`
-- active_task: `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift`
-- next_task: `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout`
+- active_task: `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout`
+- next_task: `none`
 - closeout_status: `in-progress`
 - next_effect: `return-to-target-review`
 - sync_status: `pending`
@@ -42,9 +42,9 @@
 
 - queue_goal: `Lift covered application consumers onto application-owned runtime and registry seams now that the core runtime canonical path has already closed.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Remove direct core builtin house-module registry fallback ownership from the covered application consumers before touching the heavier playable runtime consumer residue.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Close the remaining direct core runtime executor and house-playable consumer bypasses now that the first application registry seam cut has landed.`
 - task_briefs:
   - `task.runtime-contract-registry-seam-closure.baseline-reconcile: freeze the first lawful consumer-side seam slice and confirm the queue remains bounded.`
   - `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift: move covered application house-module consumers off direct core builtin registry fallback ownership onto an application-owned seam.`
@@ -85,8 +85,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.runtime-contract-registry-seam-closure.baseline-reconcile` | `completed` | `Freeze the smallest lawful first consumer-side seam slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze the first slice as application house-module registry fallback closure before the heavier runtime executor and house-playable consumer residue.` |
-| `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift` | `active` | `Move covered application house-module consumers off direct core builtin registry fallback ownership onto an application-owned seam.` | `task.runtime-contract-registry-seam-closure.baseline-reconcile` | `Current active task; it owns the smallest first implementation cut across application house runtime and presenter consumers.` |
-| `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout` | `queued` | `Close the remaining direct core runtime executor and house-playable bridge bypasses, verify the queue, and return control to target review.` | `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift` | `This closeout task runs only after the first registry seam cut lands and the remaining residue is concentrated in interactive-action-coordinator plus covered house playable consumers.` |
+| `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift` | `completed` | `Move covered application house-module consumers off direct core builtin registry fallback ownership onto an application-owned seam.` | `task.runtime-contract-registry-seam-closure.baseline-reconcile` | `Completed after house-runtime and stage-presenters converged on the application-owned house-module-registry seam for builtin fallback ownership.` |
+| `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout` | `active` | `Close the remaining direct core runtime executor and house-playable bridge bypasses, verify the queue, and return control to target review.` | `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift` | `Current active closeout task; the remaining residue is now concentrated in interactive-action-coordinator plus covered house playable consumers.` |
 
 ### Task Definitions
 
@@ -156,7 +156,7 @@
 ##### Control Block
 
 - task_id: `task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/house/house-runtime.ts`
@@ -193,18 +193,21 @@
 - task_brief:
   - `Lift covered application house-module consumers onto one application-owned registry seam before the heavier runtime executor bypass work begins.`
 - task_outcome_summary:
-  - `Current active task; it owns the smallest first implementation cut across application house runtime and presenter registry fallback ownership.`
+  - `Completed after house-runtime and stage-presenters stopped importing builtinHouseModuleRegistry from core directly and instead resolved the default registry through the application-owned house-module-registry seam.`
 - Purpose:
   - `Reduce direct core builtin registry imports on the application path before the queue tackles runtime executor bypasses.`
 - Failure mode:
   - `Do not widen this first cut into a mixed registry plus playable runtime rewrite.`
+- Completion notes:
+  - `src/application/house/house-runtime.ts and src/application/presenter/stage-presenters.ts now source builtinHouseModuleRegistry and HouseModuleRegistry from src/application/house-modules/house-module-registry.ts instead of direct core registry imports.`
+  - `tests/robustness.test.cjs now guards the application-side seam by asserting these covered consumers stay off direct core builtin registry ownership.`
 
 #### `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout`
 
 ##### Control Block
 
 - task_id: `task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout`
-- state: `queued`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `src/application/runtime/interactive-action-coordinator.ts`
@@ -245,7 +248,7 @@
 - task_brief:
   - `Close the remaining direct runtime executor and house-playable consumer bypasses, verify the queue, and return control to target review.`
 - task_outcome_summary:
-  - `Queued closeout task; it runs only after the first registry seam cut lands on the covered path.`
+  - `Current active closeout task; it runs after the first registry seam cut and now owns the remaining direct core runtime executor and house-playable consumer bypass residue.`
 - Purpose:
   - `Finish the admitted queue by proving the covered application consumers no longer bypass the intended runtime or registry seam.`
 - Failure mode:
@@ -261,3 +264,7 @@
   - Summary: `Completed baseline-reconcile by freezing the first lawful implementation slice as application house-module registry fallback closure in house-runtime and stage-presenters, while leaving direct runtime executor and house-playable bridge bypasses for later in-queue work.`
   - Verification: `rg -n "builtinHouseModuleRegistry|runInteractiveRuntime|runPlayableRuntime|commitRuntimeRequest|house-playable-runtime-bridge" src/application/runtime/interactive-action-coordinator.ts src/application/house/house-runtime.ts src/application/presenter/stage-presenters.ts src/application/house-modules/grain-shop/grain-shop-house-module.ts src/application/house-modules/medicine-house/medicine-house-house-module.ts src/application/playables/house-playable-runtime-bridge.ts; npm run lint:blueprints`
   - Next at this time: `Execute task.runtime-contract-registry-seam-closure.house-module-registry-seam-lift by removing direct core builtin house-module registry fallback ownership from application consumers before touching the runtime executor bypass residue.`
+- 2026-07-09
+  - Summary: `Completed house-module-registry-seam-lift by converging house-runtime and stage-presenters on the application-owned house-module-registry seam, which removes direct core builtin registry fallback ownership from the covered application consumers without widening into runtime executor closure.`
+  - Verification: `npm run lint:blueprints; npm run typecheck; npm test`
+  - Next at this time: `Execute task.runtime-contract-registry-seam-closure.runtime-playable-consumer-closeout across interactive-action-coordinator plus the covered grain-shop and medicine-house playable consumers.`

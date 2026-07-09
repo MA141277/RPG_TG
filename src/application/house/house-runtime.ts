@@ -18,10 +18,8 @@ import { advanceGameStateTimeSegments } from "../time/time-progression";
 import { assertExists } from "../../shared/assert";
 import {
   builtinHouseModuleRegistry,
-} from "../../core/registry/builtin-house-module-registry";
-import {
   type HouseModuleRegistry,
-} from "../../core/registry/house-module-registry";
+} from "../house-modules/house-module-registry";
 
 type HouseRuntimeDependencies = {
   getAppState(): AppState;

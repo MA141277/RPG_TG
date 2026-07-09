@@ -11034,10 +11034,33 @@ test("mod house registration removes presenter dependence on the application sta
   );
 
   assert.match(source, /HouseModuleRegistry|houseModuleRegistry/);
+  assert.match(source, /from "\.\.\/house-modules\/house-module-registry"/);
+});
+
+test("consumer seam queue keeps application house runtime off direct core builtin registry ownership", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/house/house-runtime.ts"),
+    "utf8"
+  );
+
   assert.doesNotMatch(
     source,
-    /from "\.\.\/house-modules\/house-module-registry"/
+    /from "\.\.\/\.\.\/core\/registry\/builtin-house-module-registry"/
   );
+  assert.match(source, /from "\.\.\/house-modules\/house-module-registry"/);
+});
+
+test("consumer seam queue keeps stage presenters off direct core builtin registry ownership", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/stage-presenters.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    source,
+    /from "\.\.\/\.\.\/core\/registry\/builtin-house-module-registry"/
+  );
+  assert.match(source, /from "\.\.\/house-modules\/house-module-registry"/);
 });
 
 test("house renderer registry resolves renderers through the shared registration seam", () => {
