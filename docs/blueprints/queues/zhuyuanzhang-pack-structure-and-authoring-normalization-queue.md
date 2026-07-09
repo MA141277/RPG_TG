@@ -6,8 +6,8 @@
 - belongs_to_target: `target.project-complete-modularization`
 - queue_status: `active`
 - queue_class: `conditional`
-- active_task: `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile`
-- next_task: `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout`
+- active_task: `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review`
+- next_task: `none`
 - closeout_status: `in-progress`
 - next_effect: `return-to-target-review`
 - sync_status: `pending`
@@ -42,9 +42,9 @@
 
 - queue_goal: `Normalize zhuyuanzhang package ownership by removing the hardcoded builtin default-pack binding first, then reassessing the remaining pack-entry residue on current source truth.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Freeze the smallest lawful first slice and confirm the newly admitted queue stays bounded around package normalization before code implementation starts.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Reassess the remaining pack-entry residue after the default-pack binding closure and decide whether this queue continues with another bounded slice or returns to target review.`
 - task_briefs:
   - `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile: freeze the first lawful package-normalization slice and confirm this queue remains bounded.`
   - `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout: remove the hardcoded builtin default-pack binding by consuming existing scenario-pack catalog default truth.`
@@ -84,9 +84,9 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile` | `active` | `Freeze the smallest lawful first package-normalization slice and confirm the admitted queue still stands on current source truth.` | `none` | `Start by proving the hardcoded builtin default-pack binding is the first bounded cut before touching broader pack-entry residue.` |
-| `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout` | `queued` | `Remove the hardcoded builtin default-pack binding by consuming existing builtin scenario-pack catalog default truth.` | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile` | `This is the expected first implementation slice if the queue baseline holds.` |
-| `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review` | `queued` | `Reassess the remaining pack-entry residue and decide whether this queue continues or returns to target review.` | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout` | `Keep the queue bounded after the first slice instead of precommitting to the larger residue family.` |
+| `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile` | `completed` | `Freeze the smallest lawful first package-normalization slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection proved the hardcoded builtin default-pack binding is smaller than the remaining pack-content-access, prototype-world, and startup-entry residue.` |
+| `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout` | `completed` | `Remove the hardcoded builtin default-pack binding by consuming existing builtin scenario-pack catalog default truth.` | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile` | `Completed after base-game-content-pack.ts converged on catalog-driven default resolution and verification passed without widening into broader pack-entry rewrites.` |
+| `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review` | `active` | `Reassess the remaining pack-entry residue and decide whether this queue continues or returns to target review.` | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout` | `This is now the active queue decision-dispatch task.` |
 
 ### Task Definitions
 
@@ -95,7 +95,7 @@
 ##### Control Block
 
 - task_id: `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
@@ -137,18 +137,26 @@
 - task_brief:
   - `Freeze the first lawful package-normalization slice before queue-local code work starts.`
 - task_outcome_summary:
-  - `Expected outcome is a frozen first slice that targets only the builtin default-pack binding, while leaving the larger pack-entry residue for later in-queue review.`
+  - `Completed after queue-local inspection froze the first slice as builtin default-pack binding closure, while leaving pack-content-access, prototype-world, and startup-entry residue for later in-queue review.`
 - Purpose:
   - `Prevent the newly admitted queue from widening into pack-content imports, prototype-world extraction, and startup-assembly cleanup all at once.`
 - Failure mode:
   - `Do not jump into broad pack-entry rewrites before the smaller builtin default-pack binding cut is named and bounded.`
+- Fresh baseline findings:
+  - `src/content/base-game-content-pack.ts still hardcodes zhuyuanzhang pack.json for both the source-tree and published manifest routes, which proves a smaller first package-normalization cut exists before broader pack-entry rewrites.`
+  - `src/content/scenario-packs/catalog.json already marks one builtin default entry through isDefault, and src/application/content/catalog-loader.ts already exposes getDefaultScenarioPackCatalogEntry plus resolveCatalogManifestUrl, so the first slice can consume existing catalog truth instead of introducing a new shared capability.`
+  - `src/content/pack-content-access.ts and src/content/prototype-world.ts still keep broader zhuyuanzhang pack truth outside the canonical package boundary, but both remain larger residue families than the default-pack binding because they touch shared content adapters and prototype startup assembly.`
+  - `src/main.ts still imports createPrototypeCharactersForStoryStage and other zhuyuanzhang-specific startup assumptions, which confirms that startup-entry cleanup remains downstream from the smaller builtin default-pack binding cut.`
+- Frozen first slice:
+  - `The first lawful implementation slice is to stop hardcoding zhuyuanzhang manifest constants in src/content/base-game-content-pack.ts and resolve the builtin default pack through existing scenario-pack catalog default truth.`
+  - `Broader pack-content-access, prototype-world, and startup-entry residue remains in-queue but must not be absorbed into this first implementation cut.`
 
 #### `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout`
 
 ##### Control Block
 
 - task_id: `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout`
-- state: `queued`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/content/base-game-content-pack.ts`
@@ -186,11 +194,14 @@
 - task_brief:
   - `Close the hardcoded builtin default-pack binding before touching broader package-entry residue.`
 - task_outcome_summary:
-  - `Expected outcome is that the builtin default pack resolves through catalog default truth and no longer hardcodes zhuyuanzhang manifest constants on the covered path.`
+  - `Completed after the builtin default pack resolved through scenario-pack catalog default truth and src/content/base-game-content-pack.ts stopped hardcoding zhuyuanzhang manifest constants on the covered path.`
 - Purpose:
   - `Remove the smallest still-live pack-specific binding leak from the shared content-pack path.`
 - Failure mode:
   - `Do not widen this first implementation cut into a mixed default-pack plus pack-entry import rewrite.`
+- Completion notes:
+  - `src/content/base-game-content-pack.ts now parses the builtin scenario-pack catalog, selects the default entry through getDefaultScenarioPackCatalogEntry, and resolves the manifest URL through resolveCatalogManifestUrl instead of pack-specific constants.`
+  - `tests/robustness.test.cjs now guards the covered path by rejecting hardcoded zhuyuanzhang manifest literals in base-game-content-pack.ts while preserving the shared loader behavior proof.`
 
 #### `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review`
 
@@ -252,3 +263,11 @@
   - Summary: `Admitted queue.zhuyuanzhang-pack-structure-and-authoring-normalization as the single active queue because current source truth still shows bounded zhuyuanzhang package-owned defaults leaking outside the canonical scenario-pack boundary, and the hardcoded builtin default-pack binding is the smallest lawful first slice on current evidence.`
   - Verification: `Fresh source inspection across src/content/base-game-content-pack.ts, src/content/pack-content-access.ts, src/content/prototype-world.ts, src/content/scenario-packs/catalog.json, src/content/scenario-packs/scenario-pack-catalog.ts, src/main.ts, and docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
   - Next at this time: `Execute task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile before queue-local implementation starts.`
+- 2026-07-09
+  - Summary: `Completed baseline-reconcile by freezing the first lawful implementation slice as builtin default-pack binding closure in src/content/base-game-content-pack.ts, while leaving pack-content-access, prototype-world, and startup-entry residue for later in-queue review.`
+  - Verification: `rg -n "DEFAULT_BASE_GAME_MANIFEST_PATH|DEFAULT_BASE_GAME_PUBLISHED_MANIFEST_PATH|createBaseGameContentPack|zhuyuanzhang|prototype-world|pack-content-access|isDefault" src/content/base-game-content-pack.ts src/content/pack-content-access.ts src/content/prototype-world.ts src/content/scenario-packs/catalog.json src/content/scenario-packs/scenario-pack-catalog.ts src/main.ts; npm run lint:blueprints`
+  - Next at this time: `Execute task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout with a failing test first.`
+- 2026-07-09
+  - Summary: `Completed default-builtin-pack-binding-closeout by moving src/content/base-game-content-pack.ts onto catalog-driven default manifest resolution and removing the hardcoded zhuyuanzhang manifest constants from the covered path.`
+  - Verification: `node --test --test-name-pattern "base game content pack is sourced from the shared content-pack loader" tests/robustness.test.cjs; npm run lint:blueprints; npm run typecheck; npm test`
+  - Next at this time: `Execute task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review to decide whether the remaining residue stays in-queue or returns to target review.`

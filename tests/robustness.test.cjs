@@ -1557,14 +1557,24 @@ test("base game content pack is sourced from the shared content-pack loader", as
     "Expected base-game-content-pack.ts to delegate to the shared loader."
   );
   assert.equal(
-    source.includes("scenario-packs/zhuyuanzhang/pack.json"),
+    source.includes("getDefaultScenarioPackCatalogEntry"),
     true,
-    "Expected base-game-content-pack.ts to load the fixed zhuyuanzhang manifest path."
+    "Expected base-game-content-pack.ts to resolve the builtin default pack from shared catalog truth."
+  );
+  assert.equal(
+    source.includes("resolveCatalogManifestUrl"),
+    true,
+    "Expected base-game-content-pack.ts to resolve the default manifest URL through the shared catalog helper."
+  );
+  assert.equal(
+    source.includes("scenario-packs/zhuyuanzhang/pack.json"),
+    false,
+    "Expected base-game-content-pack.ts to stop hardcoding the zhuyuanzhang manifest path."
   );
   assert.equal(
     source.includes("/scenario-packs/zhuyuanzhang/pack.json"),
-    true,
-    "Expected the browser runtime to fetch the published scenario-pack route."
+    false,
+    "Expected the browser runtime to stop hardcoding the published zhuyuanzhang manifest route."
   );
   assert.equal(
     source.includes("/src/content/scenario-packs/zhuyuanzhang/pack.json"),
