@@ -1,0 +1,155 @@
+# Cross-Mechanism Composition Contract Closure Queue
+
+## Control Block
+
+- queue_id: `queue.cross-mechanism-composition-contract-closure`
+- belongs_to_target: `target.project-complete-modularization`
+- queue_status: `active`
+- queue_class: `conditional`
+- active_task: `task.cross-mechanism-composition-contract-closure.baseline-reconcile`
+- next_task: `none`
+- closeout_status: `in-progress`
+- next_effect: `none`
+- sync_status: `pending`
+- sync_scope: `none`
+- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- blocked_by: []
+- allowed_item_classifications:
+  - `current-target-item`
+- reject_item_classifications:
+  - `content-pipeline-item`
+  - `asset-pipeline-item`
+  - `future-target-candidate`
+
+## Human Context
+
+### Queue Explanation
+
+- Goal:
+  - `Close the remaining cross-mechanism composition owner line by freezing and then lifting the smallest still-live composition seam instead of letting view/dialogue/house/story/battle routing remain split across multiple runtime owners.`
+- Forbidden expansions:
+  - `Do not widen this queue into prototype-world extraction, package normalization, or startup ownerization residue that already belongs to other closed or candidate families.`
+  - `Do not widen this queue into cleanup-only adapter deletion, broad UI restyling, or generic refactor churn that is not needed to close a shared composition seam.`
+
+### Parent Target
+
+- Target spec:
+  - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
+- Target plan:
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+
+### Queue Snapshot
+
+- queue_goal: `Freeze the smallest lawful first composition seam so the current cross-mechanism routing residue can move onto one shared contract-driven owner line.`
+- task_count: `1`
+- completed_task_count: `0`
+- remaining_task_count: `1`
+- active_task_summary: `Audit the still-live composition owner lines and freeze the smallest lawful first implementation slice before queue-local code work starts.`
+- task_briefs:
+  - `task.cross-mechanism-composition-contract-closure.baseline-reconcile: freeze the first lawful shared composition seam and confirm this queue remains bounded on current source truth.`
+
+### Operator Snapshot Contract
+
+- `The fixed operator receipt must source 褰撳墠鎵ц闃熷垪 from queue_id.`
+- `The fixed operator receipt must source 褰撳墠浠诲姟 from active_task.`
+- `The fixed operator receipt must source 褰撳墠闃熷垪鐩爣 from queue_goal.`
+- `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
+
+### Admission Preconditions
+
+- `This queue was admitted only after the target plan synchronized the existing candidate identity and the fresh 2026-07-09 bounded admission basis.`
+- `Single-active-queue mode remains in force; no second queue may be promoted while this queue is active.`
+- `The queue must stay on cross-mechanism composition ownership and must not silently absorb prototype bootstrap residue, scenario-pack normalization, or cleanup-only deletion work that depends on later target review.`
+
+### Repository Sync Record Rule
+
+- `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
+- `The queue-local sync record stores only repository sync result; it does not change task, queue, or target truth.`
+- `Repository sync failure must not be copied into blocked_by, queue closeout gates, or target scheduling truth.`
+
+### Activation Order
+
+1. `Target plan admission review concluded before this queue became live execution truth.`
+2. `This queue doc now acts as the queue-level governor for the admitted cross-mechanism composition work.`
+3. `Implementation may begin only through the written active task below.`
+
+### Recovery Rule
+
+- `Do not recreate or re-audit this queue from scratch while the recorded composition evidence remains valid.`
+- `Resume from this queue doc and the target-plan candidate record unless new material evidence invalidates the admitted basis.`
+
+### Task Ledger
+
+| Task ID | State | Summary | Depends On | Notes |
+| --- | --- | --- | --- | --- |
+| `task.cross-mechanism-composition-contract-closure.baseline-reconcile` | `active` | `Freeze the smallest lawful first shared composition seam and confirm the admitted queue still stands on current source truth.` | `none` | `Current active review task.` |
+
+### Task Definitions
+
+#### `task.cross-mechanism-composition-contract-closure.baseline-reconcile`
+
+##### Control Block
+
+- task_id: `task.cross-mechanism-composition-contract-closure.baseline-reconcile`
+- state: `active`
+- task_kind: `execution`
+- scope:
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+  - `docs/blueprints/queues/cross-mechanism-composition-contract-closure-queue.md`
+  - `src/application/runtime/main-runtime-orchestrator.ts`
+  - `src/application/runtime/interactive-action-coordinator.ts`
+  - `src/application/runtime/city-house-transition-coordinator.ts`
+  - `src/application/house/house-runtime.ts`
+  - `src/application/story-battle/story-battle-runtime.ts`
+  - `src/main.ts`
+  - `tests/**`
+- must_inspect:
+  - `src/application/runtime/main-runtime-orchestrator.ts`
+  - `src/application/runtime/interactive-action-coordinator.ts`
+  - `src/application/runtime/city-house-transition-coordinator.ts`
+  - `src/application/house/house-runtime.ts`
+  - `src/application/story-battle/story-battle-runtime.ts`
+  - `src/main.ts`
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+- must_not_change:
+  - `prototype-startup residue that belongs to the broader prototype-world family`
+  - `scenario-pack normalization, default-pack binding, or authoring scaffold families`
+  - `cleanup-only adapter deletion that is not required to prove the first composition seam`
+- done_when:
+  - `Queue truth names the smallest lawful first implementation slice that can land under the admitted cross-mechanism composition boundary.`
+  - `Queue-local evidence confirms the first slice is smaller than the remaining broader composition surface and does not silently absorb unrelated queue families.`
+  - `The first composition seam cut is frozen before implementation begins.`
+- verify_with:
+  - `npm run lint:blueprints`
+  - `rg -n "apply-startup-session|advance-story-scene|choose-story-option|trigger-story-events|dispatchCurrentStoryBattleAction|handleHouseAccessRefusal|triggerStoryEvents|applyReviewCycleSchedule|currentView:|overlayView: null|enterHouseThroughRuntime" src/application/runtime/main-runtime-orchestrator.ts src/application/runtime/interactive-action-coordinator.ts src/application/runtime/city-house-transition-coordinator.ts src/application/house/house-runtime.ts src/application/story-battle/story-battle-runtime.ts src/main.ts`
+- if_blocked:
+  - `Record the blocker in this queue doc rather than widening scope silently.`
+  - `Return control to target review only if fresh evidence disproves this queue's admitted basis.`
+- promote_next_if_done: `none`
+- stop_if:
+  - `Fresh inspection proves the remaining work belongs primarily to another queue family instead of a shared composition seam.`
+
+##### Human Context
+
+- task_brief:
+  - `Freeze the first lawful shared composition seam before queue-local implementation begins.`
+- task_outcome_summary:
+  - `The expected outcome is a bounded first implementation slice that closes one still-live composition owner line without widening into unrelated queue families.`
+- Purpose:
+  - `Prevent this admitted queue from jumping straight into a broad multi-owner rewrite before the smallest first seam is named and bounded.`
+- Failure mode:
+  - `Do not treat every remaining view/dialogue/house/story/battle transition as one implementation batch before the first composition seam is frozen.`
+- Fresh baseline findings:
+  - `src/application/runtime/main-runtime-orchestrator.ts still combines startup-session application, story-scene advance, story option choice, and trigger-story-events ownership on one application runtime surface.`
+  - `src/application/runtime/interactive-action-coordinator.ts still combines activity-qte handling, story-scene progression, story-battle playable actions, and follow-up reentry handling on one coordinator surface.`
+  - `src/application/runtime/city-house-transition-coordinator.ts and src/application/house/house-runtime.ts still own direct view/dialogue/house-entry transitions rather than consuming one shared composition outcome contract.`
+  - `src/application/story-battle/story-battle-runtime.ts still writes review scheduling, story battle completion, and scene-or-house return routing directly into the game state, while src/main.ts still assembles and bridges these owners together.`
+- Frozen-first-slice requirement:
+  - `The first lawful implementation slice must be smaller than the whole remaining composition surface and must identify one shared composition seam that can move a covered owner line without reopening startup-ownerization, package normalization, or cleanup-only queues.`
+
+## Progress Log
+
+- 2026-07-09
+  - Summary: `Admitted queue.cross-mechanism-composition-contract-closure as the single active queue because current source truth still shows cross-mechanism routing and view/dialogue/house/story/battle composition spread across main-runtime-orchestrator, interactive-action-coordinator, city-house-transition-coordinator, house-runtime, story-battle-runtime, and src/main.ts with no single shared composition seam.`
+  - Verification: `Fresh source inspection across src/application/runtime/main-runtime-orchestrator.ts, src/application/runtime/interactive-action-coordinator.ts, src/application/runtime/city-house-transition-coordinator.ts, src/application/house/house-runtime.ts, src/application/story-battle/story-battle-runtime.ts, src/main.ts, and docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
+  - Next at this time: `Execute task.cross-mechanism-composition-contract-closure.baseline-reconcile before queue-local implementation starts.`
