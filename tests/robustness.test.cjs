@@ -14040,10 +14040,11 @@ test("shell thinning render prepass owner module exists and preserves city npc r
   assert.deepEqual(nextAppState.gameState, expectedGameState);
 });
 
-test("reclosure ownerization keeps main.ts wired through existing layout-editor, render, and bootstrap seams", () => {
+test("reclosure ownerization keeps main.ts on the bootstrap seam after layout-editor retirement", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
 
-  assert.match(source, /createLayoutEditorCoordinator/);
+  assert.doesNotMatch(source, /createLayoutEditorCoordinator/);
+  assert.doesNotMatch(source, /layoutEditorCoordinator/);
   assert.match(source, /createAppRenderCoordinator/);
   assert.match(source, /createDefaultLayoutEditorAppState/);
   assert.doesNotMatch(source, /layout-editor-actions/);
@@ -15853,4 +15854,41 @@ test("phase 3 scenario-pack validator keeps legacy builtin manifests on the acce
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Scenario pack validation passed/i);
+});
+
+test("layout editor live surface retirement removes editor mount from app-render", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /renderLayoutEditor/);
+  assert.match(source, /uiLayouts\["global-hud"\]/);
+});
+
+test("layout editor live surface retirement removes editor coordinator wiring from main.ts", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /createLayoutEditorCoordinator/);
+  assert.doesNotMatch(source, /layoutEditorCoordinator/);
+});
+
+test("layout editor live surface retirement removes character detail editor protocol", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/character/character-detail-view.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    source,
+    /data-layout-component-handle|data-layout-element-handle/
+  );
+  assert.doesNotMatch(
+    source,
+    /c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle/
+  );
+  assert.match(source, /layout\?: CharacterDetailScreenLayout/);
 });

@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed`
 - Last Updated: `2026-07-09`
-- Current Focus: `Task 1 failing-test design for live layout-editor surface retirement.`
-- Next Step: `Add source-guard regression coverage for app-render, main.ts, and character-detail-view.`
-- Verification: `Blueprint queue admission and baseline-reconcile already pass npm run lint:blueprints and node --test tests/blueprint-governance-lint.test.cjs. Implementation verification has not started yet.`
-- Notes: `This plan executes task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement only. Do not widen into uiLayouts baseline or preset deletion.`
+- Current Focus: `Task 1 complete; queue truth now hands off to layout-baseline-residue-review.`
+- Next Step: `Resume the active queue at task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review without widening this closed implementation slice.`
+- Verification: `node --test --test-name-pattern "layout editor live surface retirement" tests/robustness.test.cjs; npm run typecheck; npm test; npm run lint:blueprints; npm run lint:plans`
+- Notes: `This plan executed only task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement and left uiLayouts baseline, layoutEditor state, and layout-editor-presets residue for queue-local review.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Plan created after the live-editor-surface-retirement design was approved and the active Blueprint queue froze this first implementation slice.`
   - Verification: `Not run`
   - Next: `Write the failing regression test before production code changes.`
+- 2026-07-09
+  - Summary: `Completed live-editor-surface-retirement by adding regression source guards, removing renderLayoutEditor from the covered production shell, deleting layoutEditorCoordinator wiring from main.ts, and stripping editor-only binding protocol and resize handles from the character detail live view while keeping non-editor layout positioning intact.`
+  - Verification: `node --test --test-name-pattern "layout editor live surface retirement" tests/robustness.test.cjs; npm run typecheck; npm test; npm run lint:blueprints; npm run lint:plans`
+  - Next: `Hand queue control to task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review.`
 
 ---
 
@@ -97,7 +101,7 @@
 - Modify: `src/ui/views/character/character-detail-view.ts`
 - Read: `src/ui/tools/layout-editor-view.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add a new source-guard section in `tests/robustness.test.cjs` proving the covered production path no longer exposes the layout editor surface. The test names should be:
 
@@ -134,7 +138,7 @@ test("layout editor live surface retirement removes character detail editor prot
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -147,7 +151,7 @@ Expected:
 - `FAIL`
 - The new tests fail because `app-render.ts`, `main.ts`, and `character-detail-view.ts` still expose the covered editor surface.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Apply the smallest possible production changes:
 
@@ -182,7 +186,7 @@ import { createLayoutEditorCoordinator } from "./application/layout-editor/layou
 // keep layout-based positioning and background rendering intact
 ```
 
-- [ ] **Step 4: Run targeted test to verify it passes**
+- [x] **Step 4: Run targeted test to verify it passes**
 
 Run:
 
@@ -194,7 +198,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Run full verification**
+- [x] **Step 5: Run full verification**
 
 Run:
 
@@ -209,21 +213,21 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 6: Sync progress and queue state**
+- [x] **Step 6: Sync progress and queue state**
 
 Update this plan's `Execution State`, append a `Progress Log` entry, and update `docs/blueprints/queues/layout-editor-retirement-and-reference-removal-queue.md` only if this task reaches a terminal after-state.
 
 ## Exit Check
 
-- [ ] The covered production render path no longer mounts the layout editor.
-- [ ] The live app shell no longer routes the covered path through `layoutEditorCoordinator`.
-- [ ] Covered live views no longer expose editor-only binding protocol.
-- [ ] Non-editor `uiLayouts` baseline consumption remains intact.
-- [ ] Queue-local truth is synchronized if the task reaches a terminal after-state.
+- [x] The covered production render path no longer mounts the layout editor.
+- [x] The live app shell no longer routes the covered path through `layoutEditorCoordinator`.
+- [x] Covered live views no longer expose editor-only binding protocol.
+- [x] Non-editor `uiLayouts` baseline consumption remains intact.
+- [x] Queue-local truth is synchronized if the task reaches a terminal after-state.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

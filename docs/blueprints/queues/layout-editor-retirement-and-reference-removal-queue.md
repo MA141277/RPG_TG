@@ -6,8 +6,8 @@
 - belongs_to_target: `target.project-complete-modularization`
 - queue_status: `active`
 - queue_class: `conditional`
-- active_task: `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement`
-- next_task: `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review`
+- active_task: `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review`
+- next_task: `none`
 - closeout_status: `in-progress`
 - next_effect: `none`
 - sync_status: `pending`
@@ -44,9 +44,9 @@
 
 - queue_goal: `Retire the live layout editor feature family through bounded slices, starting with the live editor surface rather than broader shared layout-baseline extraction.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Retire the covered live layout-editor launch or render or input surface so the production path stops exposing editor behavior before broader baseline residue is reconsidered.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Reassess whether the remaining uiLayouts or preset or reserve-family residue still belongs to this queue now that the live editor surface is retired.`
 - task_briefs:
   - `task.layout-editor-retirement-and-reference-removal.baseline-reconcile: freeze the first lawful layout-editor retirement slice and confirm this queue remains bounded on current source truth.`
   - `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement: remove the covered live layout-editor launch or render or interaction surface without deleting the broader shared uiLayouts baseline yet.`
@@ -87,8 +87,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.layout-editor-retirement-and-reference-removal.baseline-reconcile` | `completed` | `Freeze the smallest lawful first retirement slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze the first slice as live editor-surface retirement instead of broader uiLayouts or preset baseline deletion.` |
-| `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement` | `active` | `Remove the covered live layout-editor launch or render or interaction surface without deleting the broader shared uiLayouts baseline yet.` | `task.layout-editor-retirement-and-reference-removal.baseline-reconcile` | `Current active implementation task.` |
-| `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review` | `pending` | `Reassess the remaining uiLayouts or preset or reserve-family residue after the live editor surface is retired.` | `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement` | `Decision-dispatch task reserved for queue closeout alignment.` |
+| `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement` | `completed` | `Remove the covered live layout-editor launch or render or interaction surface without deleting the broader shared uiLayouts baseline yet.` | `task.layout-editor-retirement-and-reference-removal.baseline-reconcile` | `Completed after the production path stopped mounting the editor surface, main.ts dropped coordinator wiring, and character detail views stopped emitting editor-only binding protocol.` |
+| `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review` | `active` | `Reassess the remaining uiLayouts or preset or reserve-family residue after the live editor surface is retired.` | `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement` | `Current decision-dispatch task.` |
 
 ### Task Definitions
 
@@ -160,7 +160,7 @@
 ##### Control Block
 
 - task_id: `task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/main.ts`
@@ -200,7 +200,7 @@
 - task_brief:
   - `Retire the covered live layout-editor launch or render or interaction surface before broader layout baseline cleanup is reconsidered.`
 - task_outcome_summary:
-  - `The expected outcome is that the production path no longer exposes the live layout-editor feature surface, while shared uiLayouts baseline residue remains for later review.`
+  - `Completed after the production shell stopped mounting renderLayoutEditor, main.ts removed layoutEditorCoordinator wiring, and character-detail views kept layout positioning while dropping editor-only handles and resize affordances.`
 - Purpose:
   - `Remove the still-live editor feature line first instead of starting with broader preset or layout-baseline deletion.`
 - Failure mode:
@@ -214,7 +214,7 @@
 ##### Control Block
 
 - task_id: `task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review`
-- state: `pending`
+- state: `active`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
@@ -274,3 +274,7 @@
   - Summary: `Completed baseline-reconcile by freezing the first lawful implementation slice as live layout-editor surface retirement. Current source truth shows the editor still mounts on the production render path and still wires coordinator input or pointer behavior through src/main.ts, while uiLayouts and preset-backed layout defaults still serve non-editor rendering and therefore remain broader residue for later review.`
   - Verification: `rg -n "createLayoutEditorCoordinator|renderLayoutEditor|open-layout-editor|close-layout-editor|uiLayouts|layoutEditor|layout-editor-presets" src/main.ts src/ui/app-render.ts src/ui/tools/layout-editor-view.ts src/application/layout-editor/layout-editor-bootstrap.ts src/application/layout-editor/layout-editor-coordinator.ts src/content/layout-editor-presets.ts src/ui/views/character/character-detail-view.ts tests/robustness.test.cjs; npm run lint:blueprints`
   - Next at this time: `Execute task.layout-editor-retirement-and-reference-removal.live-editor-surface-retirement with a failing test first.`
+- 2026-07-09
+  - Summary: `Completed live-editor-surface-retirement with source-guard regression coverage and bounded production-path removal. The app shell no longer mounts renderLayoutEditor, main.ts no longer routes covered input through layoutEditorCoordinator, and the character-detail live view no longer emits editor-only binding attributes or resize handles. The remaining queue work is now limited to classifying uiLayouts baseline, layoutEditor state, preset defaults, and reserve-family residue.`
+  - Verification: `node --test --test-name-pattern "layout editor live surface retirement" tests/robustness.test.cjs; npm run typecheck; npm test; npm run lint:blueprints; npm run lint:plans`
+  - Next at this time: `Execute task.layout-editor-retirement-and-reference-removal.layout-baseline-residue-review.`
