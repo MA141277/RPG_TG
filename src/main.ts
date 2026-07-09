@@ -131,9 +131,9 @@ import {
   writeBrowserSaveRecord,
 } from "./core/save/browser-save-record";
 import {
-  applyRuntimeBridgeState,
+  applyRuntimeStateToAppState,
   commitRuntimeRequest,
-  createRuntimeBridgeState,
+  createRuntimeStateFromAppState,
 } from "./core/runtime/state-sync-runtime";
 import type {
   RuntimeFollowUpContext,
@@ -1001,7 +1001,7 @@ function syncCouncilPriorityAfterGameStateChange(
   councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
 ): boolean {
   const followUp = applyCouncilPriorityFollowUp({
-    state: createRuntimeBridgeState(appState),
+    state: createRuntimeStateFromAppState(appState),
     previousGameState,
     houseDefinitions: activeContentContext.houses,
     textEntriesById: activeContentContext.textEntriesById,
@@ -1011,7 +1011,7 @@ function syncCouncilPriorityAfterGameStateChange(
     return false;
   }
 
-  appState = applyRuntimeBridgeState(appState, followUp.state);
+  appState = applyRuntimeStateToAppState(appState, followUp.state);
   renderApp();
   return true;
 }
@@ -1382,8 +1382,10 @@ function startMapAutoAdvance(input: {
           route: ({ state, request }) => routeTimeRuntime({ state, request }),
         },
         followUp: {
-          handleOutcome: ({ state, outcome }) =>
-            navigationTimeFollowUp.applyOutcome({ state, outcome }),
+          handleFollowUp: ({ state, followUp }) =>
+            followUp.type === "reenter-house"
+              ? { state }
+              : navigationTimeFollowUp.applyOutcome({ state, outcome: followUp }),
         },
       }),
     });
@@ -1438,8 +1440,12 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
           }),
       },
       followUp: {
-        handleInteractive: ({ interactive }) =>
-          houseRuntime.applyInteractiveFollowUp(interactive),
+        handleFollowUp: ({ state, followUp }) => ({
+          state:
+            followUp.type === "reenter-house"
+              ? houseRuntime.applyInteractiveFollowUp(followUp)
+              : state,
+        }),
       },
     },
   });
@@ -3114,8 +3120,13 @@ function handleModalConfirm() {
             route: ({ state, request }) => routeTimeRuntime({ state, request }),
           },
           followUp: {
-            handleOutcome: ({ state, outcome }) =>
-              navigationTimeFollowUp.applyOutcome({ state, outcome }),
+            handleFollowUp: ({ state, followUp }) =>
+              followUp.type === "reenter-house"
+                ? { state }
+                : navigationTimeFollowUp.applyOutcome({
+                    state,
+                    outcome: followUp,
+                  }),
           },
         }),
       });
@@ -3139,8 +3150,10 @@ function handleModalConfirm() {
         route: ({ state, request }) => routeNavigationRuntime({ state, request }),
       },
       followUp: {
-        handleOutcome: ({ state, outcome }) =>
-          navigationTimeFollowUp.applyOutcome({ state, outcome }),
+        handleFollowUp: ({ state, followUp }) =>
+          followUp.type === "reenter-house"
+            ? { state }
+            : navigationTimeFollowUp.applyOutcome({ state, outcome: followUp }),
       },
     }),
   });
@@ -3216,8 +3229,13 @@ function startCampaignTravel(
           route: ({ state, request }) => routeTimeRuntime({ state, request }),
         },
         followUp: {
-          handleOutcome: ({ state, outcome }) =>
-            navigationTimeFollowUp.applyOutcome({ state, outcome }),
+          handleFollowUp: ({ state, followUp }) =>
+            followUp.type === "reenter-house"
+              ? { state }
+              : navigationTimeFollowUp.applyOutcome({
+                  state,
+                  outcome: followUp,
+                }),
         },
       }),
     });

@@ -82,6 +82,4 @@ export type TaskRuntimeResult = {
   state: TaskRuntimeState;
   taskUpdates: TaskUpdate[];
   effects: Effect[];
-  signals: TaskSignal[];
 };
-

@@ -53,5 +53,5 @@ export type InteractiveRuntimeHandoff =
 
 export type InteractiveRuntimeResult = RuntimeResult & {
   session: ActiveInteractiveRuntimeSession | null;
-  interactive: InteractiveRuntimeHandoff;
+  followUp: InteractiveRuntimeHandoff;
 };

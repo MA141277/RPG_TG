@@ -13,7 +13,7 @@ import type { RuntimeState } from "../contracts/runtime-state";
 
 type TimeRuntimeResult = {
   state: GameState;
-  outcome?: RuntimeFollowUpOutcome | null;
+  followUp?: RuntimeFollowUpOutcome | null;
 };
 
 export function createDayStartRequest(): RuntimeRequest {
@@ -45,7 +45,7 @@ export function runTimeRuntime(input: {
     const state = advanceGameStateOneDay(input.state);
     return {
       state,
-      outcome: createTimeOutcome(input.state, state),
+      followUp: createTimeOutcome(input.state, state),
     };
   }
 
@@ -57,7 +57,7 @@ export function runTimeRuntime(input: {
     );
     return {
       state,
-      outcome: createTimeOutcome(input.state, state),
+      followUp: createTimeOutcome(input.state, state),
     };
   }
 
@@ -79,7 +79,7 @@ export function routeTimeRuntime(input: {
       core: result.state,
     },
     effects: [],
-    ...(result.outcome == null ? {} : { outcome: result.outcome }),
+    ...(result.followUp == null ? {} : { followUp: result.followUp }),
   };
 }
 

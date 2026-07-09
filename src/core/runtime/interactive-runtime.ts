@@ -10,7 +10,7 @@ import type {
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
-  createLegacyPlayableSession,
+  createInteractivePlayableSession,
   resolvePlayableLaunchRequest,
   runPlayableRuntime,
 } from "./playable-runtime";
@@ -59,7 +59,7 @@ export function runInteractiveRuntime(input: {
       state: input.state,
       effects: [],
       session: getActiveInteractiveSession(input.state, null),
-      interactive: { type: "none" },
+      followUp: { type: "none" },
     };
   }
 
@@ -95,7 +95,7 @@ export function runInteractiveRuntime(input: {
           : request.phase === "launch"
             ? createInteractiveSession(request)
             : getActiveInteractiveSession(playableResult.state, request.kind),
-      interactive: playableResult.interactive ?? { type: "none" },
+      followUp: playableResult.followUp ?? { type: "none" },
     };
   }
 
@@ -104,7 +104,7 @@ export function runInteractiveRuntime(input: {
       state: exitInteractiveState(input.state, request.kind),
       effects: [],
       session: null,
-      interactive: { type: "none" },
+      followUp: { type: "none" },
     };
   }
 
@@ -113,7 +113,7 @@ export function runInteractiveRuntime(input: {
       state: input.state,
       effects: [],
       session: getActiveInteractiveSession(input.state, request.kind),
-      interactive: { type: "none" },
+      followUp: { type: "none" },
     };
   }
 
@@ -121,7 +121,7 @@ export function runInteractiveRuntime(input: {
     state: input.state,
     effects: [],
     session: getActiveInteractiveSession(input.state, request.kind),
-    interactive: { type: "none" },
+    followUp: { type: "none" },
   };
 }
 
@@ -137,9 +137,14 @@ export function toInteractiveRuntimeRequest(
       return null;
     }
 
+    const kind = toInteractiveRuntimeKind(launch.definition.id);
+    if (kind == null) {
+      return null;
+    }
+
     return {
       phase: "launch",
-      kind: resolveLaunchKind(launch.definition.legacyInteractiveKind),
+      kind,
       interactiveId: request.eventId,
       source: { type: "external", id: request.eventId },
       playableLaunch: launch.launch,
@@ -175,36 +180,28 @@ export function toInteractiveRuntimeRequest(
   return actionRequest;
 }
 
-function resolveLaunchKind(
-  interactiveKind: string | undefined
-): InteractiveRuntimeKind {
-  if (interactiveKind === "activity-qte") {
+function toInteractiveRuntimeKind(
+  playableId: string | undefined
+): InteractiveRuntimeKind | null {
+  if (playableId === "activity-qte") {
     return "activity-qte";
   }
 
-  if (interactiveKind === "story-battle") {
+  if (playableId === "city-begging") {
+    return "city-begging";
+  }
+
+  if (playableId === "story-battle") {
     return "story-battle";
   }
 
-  return "city-begging";
+  return null;
 }
 
 function resolveActionKind(actionId: string): InteractiveRuntimeKind | null {
   const definition =
     readDefaultPlayableDefinitionRegistry().matchActionId(actionId);
-  if (definition?.legacyInteractiveKind === "activity-qte") {
-    return "activity-qte";
-  }
-
-  if (definition?.legacyInteractiveKind === "city-begging") {
-    return "city-begging";
-  }
-
-  if (definition?.legacyInteractiveKind === "story-battle") {
-    return "story-battle";
-  }
-
-  return null;
+  return toInteractiveRuntimeKind(definition?.id);
 }
 
 function createInteractiveSession(
@@ -242,8 +239,8 @@ function getActiveInteractiveSession(
       kind,
       sessionId: createInteractiveSessionId(kind),
       source,
-      playable: createLegacyPlayableSession({
-        kind,
+      playable: createInteractivePlayableSession({
+        playableId: kind,
         source,
       }) ?? {
         sessionId: "playable.city-begging",
@@ -269,8 +266,8 @@ function getActiveInteractiveSession(
       kind,
       sessionId: createInteractiveSessionId(kind),
       source,
-      playable: createLegacyPlayableSession({
-        kind,
+      playable: createInteractivePlayableSession({
+        playableId: kind,
         source,
       }) ?? {
         sessionId: "playable.activity-qte",
@@ -296,8 +293,8 @@ function getActiveInteractiveSession(
       kind,
       sessionId: createInteractiveSessionId(kind),
       source,
-      playable: createLegacyPlayableSession({
-        kind,
+      playable: createInteractivePlayableSession({
+        playableId: kind,
         source,
       }) ?? {
         sessionId: "playable.story-battle",

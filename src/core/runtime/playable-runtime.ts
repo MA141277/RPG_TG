@@ -1,7 +1,10 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
-import type { RuntimeResult } from "../contracts/runtime-result";
+import type {
+  RuntimeInteractiveSignal,
+  RuntimeResult,
+} from "../contracts/runtime-result";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
   ActivePlayableSession,
@@ -66,11 +69,12 @@ export type PlayableRuntimeOutput = RuntimeResult & {
   handled: boolean;
   session: ActivePlayableSession | null;
   characterDefinitions?: CharacterDefinition[];
+  followUp?: RuntimeInteractiveSignal | null;
 };
 
-type LegacyPlayableKind = "activity-qte" | "city-begging" | "story-battle";
+type InteractivePlayableId = "activity-qte" | "city-begging" | "story-battle";
 
-type LegacyInteractiveSource =
+type InteractivePlayableSource =
   | { type: "house"; houseId: string }
   | { type: "scene"; sceneId: string }
   | { type: "external"; id: string };
@@ -733,7 +737,7 @@ export function runPlayableRuntime(input: {
         effects: [],
         handled: true,
         session: getActivePlayableSession(result.state, "story-battle"),
-        interactive: result.interactive,
+        followUp: result.followUp,
       };
     }
   }
@@ -764,13 +768,12 @@ export function createPlayableSessionShell(input: {
   };
 }
 
-export function createLegacyPlayableSession(input: {
-  kind: LegacyPlayableKind;
-  source: LegacyInteractiveSource;
+export function createInteractivePlayableSession(input: {
+  playableId: InteractivePlayableId;
+  source: InteractivePlayableSource;
 }): ActivePlayableSession | null {
-  const definition =
-    readDefaultPlayableDefinitionRegistry().getByLegacyInteractiveKind(input.kind);
-  const integrationId = getLegacyIntegrationId(input.kind);
+  const definition = readDefaultPlayableDefinitionRegistry().get(input.playableId);
+  const integrationId = getInteractivePlayableIntegrationId(input.playableId);
   const integration =
     readDefaultPlayableIntegrationRegistry().get(integrationId);
 
@@ -778,8 +781,8 @@ export function createLegacyPlayableSession(input: {
     return null;
   }
 
-  const ownerContext = createLegacyOwnerContext({
-    kind: input.kind,
+  const ownerContext = createInteractiveOwnerContext({
+    playableId: input.playableId,
     source: input.source,
   });
   if (ownerContext == null) {
@@ -906,15 +909,15 @@ function getActivePlayableSession(
   }
 
   if (playableId === "city-begging" && state.app.beggingMiniGameState != null) {
-    return createLegacyPlayableSession({
-      kind: "city-begging",
+    return createInteractivePlayableSession({
+      playableId: "city-begging",
       source: { type: "external", id: "interactive.city-begging.launch" },
     });
   }
 
   if (playableId === "activity-qte" && state.core.runtime.activitySession != null) {
-    return createLegacyPlayableSession({
-      kind: "activity-qte",
+    return createInteractivePlayableSession({
+      playableId: "activity-qte",
       source: {
         type: "scene",
         sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
@@ -923,8 +926,8 @@ function getActivePlayableSession(
   }
 
   if (playableId === "story-battle" && state.core.storyBattle != null) {
-    return createLegacyPlayableSession({
-      kind: "story-battle",
+    return createInteractivePlayableSession({
+      playableId: "story-battle",
       source: {
         type: "scene",
         sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
@@ -1115,11 +1118,11 @@ function normalizeOwnerContext(input: {
   };
 }
 
-function createLegacyOwnerContext(input: {
-  kind: LegacyPlayableKind;
-  source: LegacyInteractiveSource;
+function createInteractiveOwnerContext(input: {
+  playableId: InteractivePlayableId;
+  source: InteractivePlayableSource;
 }): PlayableOwnerContext | null {
-  if (input.kind === "city-begging") {
+  if (input.playableId === "city-begging") {
     return {
       ownerKind: "external",
       ownerId: null,
@@ -1135,18 +1138,18 @@ function createLegacyOwnerContext(input: {
     ownerKind: "scene",
     ownerId: input.source.sceneId,
     returnPolicy:
-      input.kind === "activity-qte" ? "resume-owner" : "reenter-owner",
+      input.playableId === "activity-qte" ? "resume-owner" : "reenter-owner",
   };
 }
 
-function getLegacyIntegrationId(
-  kind: LegacyPlayableKind
+function getInteractivePlayableIntegrationId(
+  playableId: InteractivePlayableId
 ): PlayableIntegrationId {
-  if (kind === "activity-qte") {
+  if (playableId === "activity-qte") {
     return "playable.activity-qte.scene.default";
   }
 
-  if (kind === "story-battle") {
+  if (playableId === "story-battle") {
     return "playable.story-battle.scene.default";
   }
 

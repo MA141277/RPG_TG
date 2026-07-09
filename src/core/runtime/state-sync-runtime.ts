@@ -18,7 +18,7 @@ import { preparePresentationInput } from "./state-sync-presentation";
 import { prepareSaveState } from "./state-sync-save";
 import { validateCanonicalRuntimeState } from "./state-sync-validation";
 
-export type RuntimeStateBridgeInput = {
+export type RuntimeAppStateInput = {
   gameState: LegacyBridgeRuntimeState["core"];
   beggingMiniGameState: LegacyBridgeRuntimeState["app"]["beggingMiniGameState"];
   autoAdvanceState: LegacyBridgeRuntimeState["app"]["autoAdvanceState"];
@@ -30,12 +30,7 @@ export type RuntimeStateBridgeInput = {
   characterDefinitions?: unknown;
 };
 
-export type RuntimeResultBridgeInput = {
-  state: LegacyBridgeRuntimeState;
-  characterDefinitions?: unknown;
-};
-
-export type RuntimeCommitInput<TAppState extends RuntimeStateBridgeInput> = {
+export type RuntimeCommitInput<TAppState extends RuntimeAppStateInput> = {
   state: TAppState;
   request: RuntimeRequest;
   context: {
@@ -45,13 +40,13 @@ export type RuntimeCommitInput<TAppState extends RuntimeStateBridgeInput> = {
   };
 };
 
-export type RuntimeCommitResult<TAppState extends RuntimeStateBridgeInput> = {
+export type RuntimeCommitResult<TAppState extends RuntimeAppStateInput> = {
   state: TAppState;
   runtimeResult: RuntimeResult;
 };
 
-export function createRuntimeBridgeState(
-  state: RuntimeStateBridgeInput
+export function createRuntimeStateFromAppState(
+  state: RuntimeAppStateInput
 ): LegacyBridgeRuntimeState {
   return {
     core: state.gameState,
@@ -68,8 +63,8 @@ export function createRuntimeBridgeState(
   };
 }
 
-export function applyRuntimeBridgeState<
-  TAppState extends RuntimeStateBridgeInput,
+export function applyRuntimeStateToAppState<
+  TAppState extends RuntimeAppStateInput,
 >(
   state: TAppState,
   runtimeState: LegacyBridgeRuntimeState,
@@ -91,49 +86,17 @@ export function applyRuntimeBridgeState<
   } as TAppState;
 }
 
-export function applyRuntimeBridgeResult<
-  TAppState extends RuntimeStateBridgeInput,
->(state: TAppState, result: RuntimeResultBridgeInput): TAppState {
-  return applyRuntimeBridgeState(
-    state,
-    result.state,
-    result.characterDefinitions
-  );
-}
-
-export function createInteractiveRuntimeState(
-  state: RuntimeStateBridgeInput
-): LegacyBridgeRuntimeState {
-  return createRuntimeBridgeState(state);
-}
-
-export function applyInteractiveRuntimeState<
-  TAppState extends RuntimeStateBridgeInput,
->(
-  state: TAppState,
-  runtimeState: LegacyBridgeRuntimeState,
-  characterDefinitions?: unknown
-): TAppState {
-  return applyRuntimeBridgeState(state, runtimeState, characterDefinitions);
-}
-
-export function applyInteractiveRuntimeResult<
-  TAppState extends RuntimeStateBridgeInput,
->(state: TAppState, result: RuntimeResultBridgeInput): TAppState {
-  return applyRuntimeBridgeResult(state, result);
-}
-
 export function commitRuntimeRequest<
-  TAppState extends RuntimeStateBridgeInput,
+  TAppState extends RuntimeAppStateInput,
 >(input: RuntimeCommitInput<TAppState>): RuntimeCommitResult<TAppState> {
   const runtimeResult = dispatchRuntimeRequest({
-    state: createRuntimeBridgeState(input.state),
+    state: createRuntimeStateFromAppState(input.state),
     request: input.request,
     context: input.context,
   });
 
   return {
-    state: applyRuntimeBridgeState(
+    state: applyRuntimeStateToAppState(
       input.state,
       runtimeResult.state,
       runtimeResult.characterDefinitions

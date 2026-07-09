@@ -14,7 +14,7 @@ import type { RuntimeState } from "../contracts/runtime-state";
 type NavigationRuntimeResult = {
   state: GameState;
   navigation: NavigationTarget | null;
-  outcome?: RuntimeFollowUpOutcome | null;
+  followUp?: RuntimeFollowUpOutcome | null;
 };
 
 export function createEnterCityRequest(cityId: string): RuntimeRequest {
@@ -60,7 +60,7 @@ export function runNavigationRuntime(input: {
     return {
       state: enterCity(input.state, cityId),
       navigation: { view: "city", cityId },
-      outcome: {
+      followUp: {
         type: "navigation.entered-city",
         cityId,
       },
@@ -114,7 +114,7 @@ export function routeNavigationRuntime(input: {
       core: result.state,
     },
     effects: [],
-    ...(result.outcome == null ? {} : { outcome: result.outcome }),
+    ...(result.followUp == null ? {} : { followUp: result.followUp }),
     navigation: result.navigation,
   };
 }

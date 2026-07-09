@@ -9547,8 +9547,13 @@ test("runtime router contract exports a formal routing seam", () => {
   );
 
   assert.match(source, /export type RuntimeRouteInput =/);
+  assert.match(source, /export type RuntimeRouteResult = RuntimeResult;/);
+  assert.match(source, /export type RuntimeFollowUpInput =/);
+  assert.match(source, /handleFollowUp\?/);
   assert.match(source, /export interface RuntimeRouter/);
-  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeResult/);
+  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeRouteResult/);
+  assert.doesNotMatch(source, /handleOutcome\?/);
+  assert.doesNotMatch(source, /handleInteractive\?/);
 });
 
 test("shared dispatch consumes the hardened runtime router contract", () => {
@@ -9830,15 +9835,13 @@ test("runtime dispatch settles routed task actions and signals into unified task
         route: ({ state }) => ({
           state,
           effects: [],
-          taskActions: [
+          taskInputs: [
             {
               type: "start",
               taskId: "task.runtime.test",
               occurredAt: "2026-07-02T08:00:00.000Z",
               source: "event-runtime",
             },
-          ],
-          taskSignals: [
             {
               type: "scene.reported",
               source: "scene-runtime",
@@ -9877,10 +9880,63 @@ test("runtime dispatch settles routed task actions and signals into unified task
     result.state.core.runtime.flags["task.runtime.test.completed"],
     true
   );
-  assert.deepEqual(
-    result.taskUpdates.map((update) => update.type),
-    ["started", "completed"]
+  assert.equal("taskUpdates" in result, false);
+});
+
+test("runtime dispatch settles one canonical task input seam instead of parallel action and signal channels", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
   );
+
+  assert.match(source, /taskInputs: routed\.taskInputs/);
+  assert.match(source, /for \(const taskInput of input\.taskInputs \?\? \[\]\)/);
+  assert.doesNotMatch(source, /taskActions: routed\.taskActions/);
+  assert.doesNotMatch(source, /taskSignals: routed\.taskSignals/);
+});
+
+test("runtime router contract keeps task updates out of the pre-settlement route seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-router.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeRouteResult = RuntimeResult;/);
+  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeRouteResult;/);
+});
+
+test("runtime dispatch no longer merges routed task updates before settlement", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /routed\.taskUpdates/);
+  assert.doesNotMatch(source, /taskUpdates: taskSettlement\.taskUpdates/);
+});
+
+test("runtime task settlement no longer accumulates hidden task update receipts after public receipt removal", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /const taskUpdates: TaskRuntimeResult\["taskUpdates"\] = \[\];/);
+  assert.doesNotMatch(source, /taskUpdates\.push/);
+  assert.match(source, /result\.taskUpdates\.length > 0/);
+});
+
+test("runtime dispatch hides post-route multi-stage settlement behind one canonical helper seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /return settleRoutedRuntimeResult\(\{/);
+  assert.match(source, /function settleRoutedRuntimeResult\(input:/);
+  assert.doesNotMatch(source, /const effectSettlement = settleRuntimeEffects\(\{/);
+  assert.doesNotMatch(source, /const taskSettlement = settleRuntimeTasks\(\{/);
+  assert.doesNotMatch(source, /const followUp = settleRuntimeFollowUp\(\{/);
 });
 
 test("covered shared runtime reentry is runtime-owned", async () => {
@@ -9915,31 +9971,33 @@ test("covered shared runtime reentry is runtime-owned", async () => {
               value: true,
             },
           ],
-          interactive: {
+          followUp: {
             type: "reenter-house",
             houseId: homeHouse.id,
           },
         }),
       },
       followUp: {
-        handleInteractive: ({ state, interactive }) => {
-          handledInteractive.push(interactive.type);
+        handleFollowUp: ({ state, followUp }) => {
+          handledInteractive.push(followUp.type);
 
-          if (interactive.type !== "reenter-house") {
-            return state;
+          if (followUp.type !== "reenter-house") {
+            return { state };
           }
 
           return {
-            ...state,
-            core: {
-              ...state.core,
-              world: {
-                ...state.core.world,
-                currentHouseId: interactive.houseId,
-              },
-              ui: {
-                ...state.core.ui,
-                currentView: "house",
+            state: {
+              ...state,
+              core: {
+                ...state.core,
+                world: {
+                  ...state.core.world,
+                  currentHouseId: followUp.houseId,
+                },
+                ui: {
+                  ...state.core.ui,
+                  currentView: "house",
+                },
               },
             },
           };
@@ -9952,7 +10010,7 @@ test("covered shared runtime reentry is runtime-owned", async () => {
   assert.equal(result.state.core.runtime.flags["flag.runtime.reentry"], true);
   assert.equal(result.state.core.world.currentHouseId, homeHouse.id);
   assert.equal(result.state.core.ui.currentView, "house");
-  assert.deepEqual(result.interactive, { type: "none" });
+  assert.deepEqual(result.followUp, { type: "none" });
 });
 
 test("child 13 shared dispatch follow-up no longer branches on reenter-house in main.ts", () => {
@@ -9966,7 +10024,7 @@ test("child 13 shared dispatch follow-up no longer branches on reenter-house in 
     source,
     /enterHouseThroughRuntime\(houseRuntime, interactive\.houseId\)/
   );
-  assert.match(source, /houseRuntime\.applyInteractiveFollowUp\(interactive\)/);
+  assert.match(source, /houseRuntime\.applyInteractiveFollowUp\(followUp\)/);
 });
 
 test("save envelope preserves selected mod id and mod state payload", async () => {
@@ -10381,6 +10439,42 @@ test("child 14 interactive runtime no longer depends on legacy adapter-owned qte
   assert.doesNotMatch(source, /dispatchLegacyStoryBattleAction/);
 });
 
+test("interactive closeout keeps non-interactive playable launches out of interactive runtime normalization", () => {
+  const { runInteractiveRuntime } = require(
+    "../.test-dist/core/runtime/interactive-runtime.js"
+  );
+  const { createLaunchPlayableRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
+  );
+  const state = createBaseState();
+
+  const result = runInteractiveRuntime({
+    state: {
+      core: state,
+      app: {
+        beggingMiniGameState: null,
+        autoAdvanceState: null,
+        cityDirectoryState: null,
+        locationDialogueState: null,
+      },
+      view: {},
+    },
+    request: createLaunchPlayableRequest("grain-accounting", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "house.grain-shop",
+        returnPolicy: "resume-owner",
+      },
+    }),
+    characterDefinitions: [],
+  });
+
+  assert.equal(result.session, null);
+  assert.deepEqual(result.followUp, { type: "none" });
+  assert.equal(result.state.core.runtime.playableSession, null);
+  assert.equal(result.state.app.beggingMiniGameState, null);
+});
+
 test("child 14 activity qte result close routes through interactive runtime exit instead of direct clearActivityResult helper", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
@@ -10409,7 +10503,7 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
   assert.match(handleModalConfirmBlock, /createEnterCityRequest\(/);
   assert.match(
     handleModalConfirmBlock,
-    /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome\s*\}\)/
+    /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome:\s*followUp\s*\}\)/
   );
 });
 
@@ -10425,7 +10519,7 @@ test("child 15 covered day-start path routes through shared runtime dispatch ins
   assert.doesNotMatch(startMapAutoAdvanceBlock, /runTimeRuntime\(/);
   assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
   assert.match(startMapAutoAdvanceBlock, /createDayStartRequest\(/);
-  assert.match(startMapAutoAdvanceBlock, /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>/);
+  assert.match(startMapAutoAdvanceBlock, /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>/);
 });
 
 test("child 15 covered advance-segments travel paths route through shared runtime dispatch instead of direct runTimeRuntime helper", () => {
@@ -10480,7 +10574,7 @@ test("child 16 covered city-enter story handoff stays on the shared trigger seam
 
   assert.match(
     handleModalConfirmBlock,
-    /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome\s*\}\)/
+    /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome:\s*followUp\s*\}\)/
   );
   assert.doesNotMatch(handleModalConfirmBlock, /runEventRuntime\(/);
   assert.doesNotMatch(handleModalConfirmBlock, /runSceneFromEvent\(/);
@@ -10536,8 +10630,8 @@ test("runtime spine commit helper is exported from state sync runtime", () => {
 
   assert.match(source, /import \{ dispatchRuntimeRequest \} from "\.\/runtime-dispatch"/);
   assert.match(source, /export function commitRuntimeRequest/);
-  assert.match(source, /createRuntimeBridgeState/);
-  assert.match(source, /applyRuntimeBridgeState/);
+  assert.match(source, /createRuntimeStateFromAppState/);
+  assert.match(source, /applyRuntimeStateToAppState/);
 });
 
 test("main runtime orchestration uses shared runtime commit helper for covered dispatch paths", () => {
@@ -11152,6 +11246,40 @@ test("runtime state contract exports core app and view partitions", () => {
   assert.match(source, /view:/);
 });
 
+test("runtime result contract collapses follow-up residue into one canonical seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeFollowUp =/);
+  assert.match(source, /followUp\?: RuntimeFollowUp \| null;/);
+  assert.doesNotMatch(source, /outcome\?: RuntimeFollowUpOutcome \| null;/);
+  assert.doesNotMatch(source, /interactive\?: RuntimeInteractiveSignal \| null;/);
+});
+
+test("runtime result contract collapses task input residue into one canonical seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeTaskInput =/);
+  assert.match(source, /taskInputs\?: RuntimeTaskInput\[];/);
+  assert.doesNotMatch(source, /taskActions\?: RuntimeTaskAction\[];/);
+  assert.doesNotMatch(source, /taskSignals\?: RuntimeTaskSignal\[];/);
+});
+
+test("runtime result contract no longer exposes settled task updates as a public receipt", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /import type \{ TaskAction, TaskSignal, TaskUpdate \}/);
+  assert.doesNotMatch(source, /taskUpdates\?: TaskUpdate\[];/);
+});
+
 test("runtime result state is widened to RuntimeState", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
@@ -11283,7 +11411,7 @@ test("task runtime treats failed tasks as terminal", () => {
   assert.match(source, /failed-is-terminal/);
 });
 
-test("task runtime result carries task updates effects and signals without applying effects", () => {
+test("task runtime result carries task updates and effects without a dead signal channel", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/task-runtime.ts"),
     "utf8"
@@ -11291,7 +11419,7 @@ test("task runtime result carries task updates effects and signals without apply
 
   assert.match(source, /taskUpdates/);
   assert.match(source, /effects/);
-  assert.match(source, /signals/);
+  assert.doesNotMatch(source, /signals/);
 });
 
 test("task runtime progresses active tasks from one broadcast signal without applying effects", () => {
@@ -11357,7 +11485,7 @@ test("task runtime progresses active tasks from one broadcast signal without app
     { type: "setFlag", key: "task.meet.done", value: true },
     { type: "setFlag", key: "task.report.done", value: true },
   ]);
-  assert.deepEqual(result.signals, []);
+  assert.equal("signals" in result, false);
 });
 
 test("task runtime applies signal-only failure conditions without objective progress", () => {
@@ -12366,7 +12494,7 @@ test("child 25 navigation runtime emits explicit entered-city follow-up outcome"
     request: createEnterCityRequest("city.kulan"),
   });
 
-  assert.deepEqual(result.outcome, {
+  assert.deepEqual(result.followUp, {
     type: "navigation.entered-city",
     cityId: "city.kulan",
   });
@@ -12383,7 +12511,7 @@ test("child 25 time runtime emits explicit council-threshold outcome when day-st
     request: createDayStartRequest(),
   });
 
-  assert.equal(result.outcome?.type, "time.council-threshold-crossed");
+  assert.equal(result.followUp?.type, "time.council-threshold-crossed");
 });
 
 test("child 25 main.ts no longer hand-stitches covered navigation/time follow-up after runtime settlement", () => {
@@ -14143,6 +14271,68 @@ test("state sync runtime exports one small sync entrypoint", () => {
   assert.doesNotMatch(source, /writeSave/);
 });
 
+test("state sync runtime no longer exports interactive-specific bridge aliases", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /export function createInteractiveRuntimeState/);
+  assert.doesNotMatch(source, /export function applyInteractiveRuntimeState/);
+  assert.doesNotMatch(source, /export function applyInteractiveRuntimeResult/);
+});
+
+test("state sync runtime no longer exports bridge-result-only compatibility helpers", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /export type RuntimeResultBridgeInput/);
+  assert.doesNotMatch(source, /export function applyRuntimeBridgeResult/);
+});
+
+test("state sync runtime exposes canonical app-state runtime helpers instead of bridge helpers", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeAppStateInput/);
+  assert.match(source, /export function createRuntimeStateFromAppState/);
+  assert.match(source, /export function applyRuntimeStateToAppState/);
+  assert.doesNotMatch(source, /export type RuntimeStateBridgeInput/);
+  assert.doesNotMatch(source, /export function createRuntimeBridgeState/);
+  assert.doesNotMatch(source, /export function applyRuntimeBridgeState/);
+});
+
+test("house runtime bridge no longer depends on interactive-specific state sync aliases", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /createInteractiveRuntimeState/);
+});
+
+test("covered runtime consumers no longer depend on bridge-named state sync helpers", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const houseRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /createRuntimeStateFromAppState/);
+  assert.match(mainSource, /applyRuntimeStateToAppState/);
+  assert.doesNotMatch(mainSource, /createRuntimeBridgeState/);
+  assert.doesNotMatch(mainSource, /applyRuntimeBridgeState/);
+  assert.match(houseRuntimeSource, /createRuntimeStateFromAppState/);
+  assert.doesNotMatch(houseRuntimeSource, /createRuntimeBridgeState/);
+});
+
 test("main.ts does not add new feature-specific state sync branches after state sync runtime exists", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
@@ -14165,6 +14355,30 @@ test("child 30 playable runtime contract exports unified playable launch session
   assert.match(source, /export type PlayableLaunchRequest = \{/);
   assert.match(source, /export type ActivePlayableSession = \{/);
   assert.match(source, /export type PlayableSettlement = \{/);
+});
+
+test("interactive closeout removes legacy interactive kind residue from playable contracts and runtime helpers", () => {
+  const playableContractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/playable-runtime.ts"),
+    "utf8"
+  );
+  const registrySource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/registry/playable-definition-registry.ts"),
+    "utf8"
+  );
+  const interactiveRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+  const playableRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(playableContractSource, /legacyInteractiveKind\?: string/);
+  assert.doesNotMatch(registrySource, /getByLegacyInteractiveKind/);
+  assert.doesNotMatch(interactiveRuntimeSource, /legacyInteractiveKind/);
+  assert.doesNotMatch(playableRuntimeSource, /createLegacyPlayableSession/);
 });
 
 test("child 30 playable definition registry installs covered interactive playables with family boundaries", () => {
@@ -14813,7 +15027,7 @@ test("child 33 playable runtime settlement clears shared story-battle session an
   assert.equal(settled.handled, true);
   assert.equal(settled.state.core.storyBattle, null);
   assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.deepEqual(settled.interactive, {
+  assert.deepEqual(settled.followUp, {
     type: "reenter-house",
     houseId: keepHouse.id,
   });
@@ -14855,7 +15069,7 @@ test("child 33 interactive runtime delegates story-battle compatibility actions 
 
   assert.equal(settled.state.core.storyBattle, null);
   assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.deepEqual(settled.interactive, {
+  assert.deepEqual(settled.followUp, {
     type: "reenter-house",
     houseId: keepHouse.id,
   });

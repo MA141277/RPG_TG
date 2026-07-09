@@ -141,8 +141,12 @@ export function createInteractiveActionCoordinator(
             }),
         },
         followUp: {
-          handleInteractive: ({ interactive }) =>
-            dependencies.applyInteractiveFollowUp(interactive),
+          handleFollowUp: ({ state, followUp }) => ({
+            state:
+              followUp.type === "reenter-house"
+                ? dependencies.applyInteractiveFollowUp(followUp)
+                : state,
+          }),
         },
       },
     });

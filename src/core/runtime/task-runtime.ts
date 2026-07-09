@@ -115,7 +115,6 @@ export function startTask(input: TaskRuntimeActionInput): TaskRuntimeResult {
       },
     ],
     effects: [...(definition.onStartEffects ?? [])],
-    signals: [],
   };
 }
 
@@ -288,7 +287,6 @@ export function applyTaskSignal(
     },
     taskUpdates,
     effects,
-    signals: [],
   };
 }
 
@@ -343,7 +341,6 @@ function createIgnoredResult(
       },
     ],
     effects: [],
-    signals: [],
   };
 }
 
@@ -394,7 +391,6 @@ function transitionTask(input: {
       },
     ],
     effects: [...input.effects],
-    signals: [],
   };
 }
 

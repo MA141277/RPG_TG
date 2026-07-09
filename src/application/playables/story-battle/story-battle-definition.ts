@@ -55,7 +55,7 @@ export function dispatchStoryBattlePlayableAction(input: {
   textEntriesById?: Record<string, string> | undefined;
 }): {
   state: RuntimeState;
-  interactive: RuntimeInteractiveSignal;
+  followUp: RuntimeInteractiveSignal;
 } {
   const result = dispatchStoryBattleAction(input.state.core, input.battleActionId, {
     textEntriesById: input.textEntriesById,
@@ -80,7 +80,7 @@ export function dispatchStoryBattlePlayableAction(input: {
       ...input.state,
       core: nextCore,
     },
-    interactive:
+    followUp:
       result.enterHouseId == null
         ? { type: "none" }
         : { type: "reenter-house", houseId: result.enterHouseId },

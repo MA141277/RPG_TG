@@ -50,7 +50,6 @@ export type PlayableDefinition = {
   id: PlayableId;
   family: PlayableFamily;
   commandPrefix: string;
-  legacyInteractiveKind?: string | undefined;
 };
 
 export type PlayableIntegrationDefinition = {
