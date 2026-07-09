@@ -4,11 +4,11 @@
 
 - queue_id: `queue.zhuyuanzhang-pack-structure-and-authoring-normalization`
 - belongs_to_target: `target.project-complete-modularization`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
+- closeout_status: `done`
 - next_effect: `return-to-target-review`
 - sync_status: `pending`
 - sync_scope: `none`
@@ -42,9 +42,9 @@
 
 - queue_goal: `Normalize zhuyuanzhang package ownership by removing the hardcoded builtin default-pack binding first, then reassessing the remaining pack-entry residue on current source truth.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Reassess the remaining pack-entry residue after the default-pack binding closure and decide whether this queue continues with another bounded slice or returns to target review.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the queue closed after the residue review concluded that the remaining package residue no longer forms one unique same-queue implementation slice on current evidence.`
 - task_briefs:
   - `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile: freeze the first lawful package-normalization slice and confirm this queue remains bounded.`
   - `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout: remove the hardcoded builtin default-pack binding by consuming existing scenario-pack catalog default truth.`
@@ -86,7 +86,7 @@
 | --- | --- | --- | --- | --- |
 | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile` | `completed` | `Freeze the smallest lawful first package-normalization slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection proved the hardcoded builtin default-pack binding is smaller than the remaining pack-content-access, prototype-world, and startup-entry residue.` |
 | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout` | `completed` | `Remove the hardcoded builtin default-pack binding by consuming existing builtin scenario-pack catalog default truth.` | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.baseline-reconcile` | `Completed after base-game-content-pack.ts converged on catalog-driven default resolution and verification passed without widening into broader pack-entry rewrites.` |
-| `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review` | `active` | `Reassess the remaining pack-entry residue and decide whether this queue continues or returns to target review.` | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout` | `This is now the active queue decision-dispatch task.` |
+| `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review` | `completed` | `Reassess the remaining pack-entry residue and decide whether this queue continues or returns to target review.` | `task.zhuyuanzhang-pack-structure-and-authoring-normalization.default-builtin-pack-binding-closeout` | `Completed after the residue review returned control to target review instead of widening this queue into mixed cleanup and prototype-bootstrap work.` |
 
 ### Task Definitions
 
@@ -209,7 +209,7 @@
 ##### Control Block
 
 - task_id: `task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review`
-- state: `active`
+- state: `completed`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
@@ -247,11 +247,16 @@
 - task_brief:
   - `Reassess the remaining package-entry residue after the first slice and decide whether this queue continues or returns to target review.`
 - task_outcome_summary:
-  - `Expected outcome is a bounded continuation or structured handoff, not an implicit expansion into all remaining package cleanup.`
+  - `Completed after queue-local review concluded that the remaining residue splits between cleanup-only pack-content-access fallout and a broader prototype-bootstrap family, so the queue returned control to target review rather than widening in place.`
 - Purpose:
   - `Keep the queue aligned with current evidence after the first implementation slice lands.`
 - Failure mode:
   - `Do not auto-absorb prototype-world extraction, pack-content-access rewrites, and startup assembly cleanup without a fresh queue-local decision.`
+- Completion notes:
+  - `src/content/pack-content-access.ts still directly imports zhuyuanzhang activities, events, scenes, text entries, and the home or keep house-content JSON files, but current covered consumers already moved onto src/application/content/default-pack-content.ts and shared houseModuleDefaults reads. On current evidence this remaining direct-import line is now mixed or dead cleanup, not another unique same-queue implementation slice.`
+  - `src/content/houses/home-house-content.ts and src/content/houses/keep-house-content.ts remain as compatibility readers over pack-content-access.ts, which overlaps the already-recorded item.home-keep-fallback-retirement cleanup line instead of justifying a wider continuation of this admitted queue.`
+  - `src/main.ts still imports createPrototypeCharactersForStoryStage from src/content/prototype-world.ts, and prototype-world.ts still serves as a large prototype truth plus test fixture surface. That residue remains broader than the closed default-pack binding slice because it couples startup bootstrap assumptions, pack-owned character truth, and the current prototype-heavy test harness.`
+  - `Because the remaining residue no longer exposes one smaller lawful same-queue cut ahead of target-level cleanup and prototype-bootstrap review, the correct queue-local decision is return-to-target-review rather than silent queue expansion.`
 
 ##### Decision-Dispatch Notes
 
@@ -276,3 +281,7 @@
   - Summary: `Patched a same-day browser startup regression on the closed default-pack binding slice by restoring absolute manifest resolution for the browser path in src/content/base-game-content-pack.ts, which removes the Invalid base URL black-screen failure without widening into shared loader contract changes.`
   - Verification: `node --test --test-name-pattern "base game content pack is sourced from the shared content-pack loader" tests/robustness.test.cjs; npm run typecheck; npm test; in-app browser reload on http://localhost:5173/ shows main menu with no console errors`
   - Next at this time: `Keep task.zhuyuanzhang-pack-structure-and-authoring-normalization.pack-entrypoint-and-authoring-residue-review as the active queue task; the next legal step remains a bounded residue review rather than another default-pack implementation cut.`
+- 2026-07-09
+  - Summary: `Completed pack-entrypoint-and-authoring-residue-review by concluding that the remaining package residue no longer forms one unique same-queue implementation slice. pack-content-access now reads as mixed or dead cleanup overlapping item.home-keep-fallback-retirement, while prototype-world plus main.ts still form a broader prototype-bootstrap residue family that requires later target-level review.`
+  - Verification: `rg -n "zhuyuanzhang|prototype-world|pack-content-access|haozhou|scenario-pack" src/content/pack-content-access.ts src/content/prototype-world.ts src/main.ts; npm run lint:blueprints`
+  - Next at this time: `Close queue.zhuyuanzhang-pack-structure-and-authoring-normalization and return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for target-level promotion review with no active queue.`
