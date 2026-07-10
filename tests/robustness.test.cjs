@@ -2531,10 +2531,21 @@ test("default runtime content loads from the shared base content pack path", asy
     path.join(process.cwd(), "src", "main.ts"),
     "utf8"
   );
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "entry-shell-bootstrap-state.ts"
+    ),
+    "utf8"
+  );
+  assert.match(mainSource, /createEntryShellBootstrapState/);
   assert.match(
-    mainSource,
+    bootstrapSource,
     /loadDefaultRuntimeContent\(\(\)\s*=>\s*Promise\.resolve\(baseGameContentPack\)\)/,
-    "Expected main.ts to inject the default runtime content pack loader explicitly."
+    "Expected entry-shell-bootstrap-state.ts to inject the default runtime content pack loader explicitly."
   );
 
   const defaultRuntimeContentModulePath = require.resolve(
@@ -10149,19 +10160,31 @@ test("child 29 main.ts primary startup no longer depends on legacy startup adapt
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
   );
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "entry-shell-bootstrap-state.ts"
+    ),
+    "utf8"
+  );
 
   assert.doesNotMatch(mainSource, /legacy-main-adapter/);
   assert.doesNotMatch(mainSource, /mod-runtime-main-adapter/);
   assert.doesNotMatch(mainSource, /bootstrapLegacyMain/);
   assert.doesNotMatch(mainSource, /toLegacyBootstrapInput/);
   assert.doesNotMatch(mainSource, /builtinLegacyBootstrapInput|legacyEngineSession/);
-  assert.match(
-    mainSource,
-    /createActiveGameContentContextFromModActivation\(\{[\s\S]*activationResult:\s*builtinStartupActivation/
-  );
   assert.doesNotMatch(
     mainSource,
-    /createActiveGameContentContextFromModActivation\(\{[\s\S]*basePack:\s*baseGameContentPack/
+    /createActiveGameContentContextFromModActivation\(\{/
+  );
+  assert.match(mainSource, /createEntryShellBootstrapState/);
+  assert.match(mainSource, /entryShellBootstrapState\.createStartupContentContext/);
+  assert.match(
+    bootstrapSource,
+    /createActiveGameContentContextFromModActivation\(\{[\s\S]*activationResult/
   );
 });
 
@@ -11770,6 +11793,13 @@ test("save restore re-activates selected mod through mod runtime", () => {
 
 test("child 22 restore path can reload imported mod sources after a fresh page load", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/entry-shell-bootstrap-state.ts"
+    ),
+    "utf8"
+  );
   const restoreBlock = source.match(
     /async function restoreModFromSave\([\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
@@ -11781,7 +11811,7 @@ test("child 22 restore path can reload imported mod sources after a fresh page l
     /if \(saveData\.selectedModSource != null\) \{[\s\S]*activateSavedModSource/
   );
   assert.match(
-    source,
+    bootstrapSource,
     /function activateSavedModSource|mod\.load-(builtin|file|url)|kind === "builtin"|kind === "file"|kind === "url"/
   );
 });
@@ -13597,7 +13627,7 @@ test("fresh source audit keeps main.ts final shell residue within the pure-shell
   const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const domAssemblyBlock =
     mainSource.match(
-      /const appElement = document\.querySelector<HTMLElement>\("#app"\);[\s\S]*?let modRuntimeState: ModRuntimeState = createEmptyModRuntimeState\(\);/
+      /const appElement = document\.querySelector<HTMLElement>\("#app"\);[\s\S]*?const entryShellBootstrapState = await createEntryShellBootstrapState\(\);/
     )?.[0] ?? "";
   const shellAssemblyBlock =
     mainSource.match(
@@ -14346,25 +14376,56 @@ test("mod runtime preserves multi-pack normalized content sources for activated 
   );
 });
 
-test("builtin startup path in main.ts uses the shared builtin mod loader instead of directly constructing a loaded mod", () => {
-  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+test("entry shell bootstrap state ownerization moves startup activation bootstrap state out of main.ts", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/entry-shell-bootstrap-state.ts"
+    ),
+    "utf8"
+  );
 
-  assert.match(source, /builtinModsById:\s*builtinModSourceRecordsById/);
   assert.match(
-    source,
-    /const builtinStartupActivation = await runModRuntime\(\{[\s\S]*type:\s*"mod\.load-builtin"[\s\S]*modId:\s*builtinDefaultModId[\s\S]*context:\s*createModRuntimeContext\(\)[\s\S]*\}\);/
+    mainSource,
+    /createEntryShellBootstrapState/
   );
   assert.match(
-    source,
-    /async function activateBuiltinDefaultMod\([\s\S]*runModRuntime\(\{[\s\S]*type:\s*"mod\.load-builtin"[\s\S]*modId:\s*builtinDefaultModId[\s\S]*context:\s*createModRuntimeContext\(\)[\s\S]*\}\);/
+    mainSource,
+    /const entryShellBootstrapState = await createEntryShellBootstrapState\(\);/
   );
   assert.doesNotMatch(
-    source,
-    /const builtinStartupActivation = await runModRuntime\(\{[\s\S]*type:\s*"mod\.activate-loaded"[\s\S]*createLoadedModFromManifest\(/ 
+    mainSource,
+    /const baseGameContentPack = await createBaseGameContentPack\(\);/
   );
   assert.doesNotMatch(
-    source,
-    /async function activateBuiltinDefaultMod\([\s\S]*createLoadedModFromManifest\(/ 
+    mainSource,
+    /const builtinStartupActivation = await runModRuntime\(\{/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /import \{ createBaseGameContentPack \} from "\.\/content\/base-game-content-pack";/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /import \{ builtInScenarioPacks \} from "\.\/content\/scenario-packs\/scenario-pack-catalog";/
+  );
+  assert.match(
+    bootstrapSource,
+    /export async function createEntryShellBootstrapState\(\)/
+  );
+  assert.match(bootstrapSource, /createBaseGameContentPack/);
+  assert.match(bootstrapSource, /loadDefaultRuntimeContent/);
+  assert.match(bootstrapSource, /builtInScenarioPacks/);
+  assert.match(bootstrapSource, /createEmptyModRuntimeState/);
+  assert.match(bootstrapSource, /createActiveGameContentContextFromModActivation/);
+  assert.match(
+    bootstrapSource,
+    /async function activateBuiltinDefaultMod\([\s\S]*type:\s*"mod\.load-builtin"/
+  );
+  assert.doesNotMatch(
+    bootstrapSource,
+    /async function activateBuiltinDefaultMod\([\s\S]*createLoadedModFromManifest\(/
   );
 });
 

@@ -63,14 +63,13 @@ import {
 } from "./application/navigation/travel-to-coordinate";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
-  createActiveGameContentContextFromModActivation,
   type ActiveGameContentContext,
 } from "./application/content/active-game-content";
 import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "./application/content/text-resolution";
-import { loadDefaultRuntimeContent } from "./application/content/default-runtime-content";
+import { createEntryShellBootstrapState } from "./application/startup/entry-shell-bootstrap-state";
 import {
   runStartupSessionCoordinator,
   type StartupSaveData,
@@ -98,15 +97,7 @@ import {
 import {
   createPrototypeCharactersForStoryStage,
 } from "./content/prototype-world";
-import { createBaseGameContentPack } from "./content/base-game-content-pack";
 import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
-import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
-import {
-  createEmptyModRuntimeState,
-  createLoadedModFromScenarioPack,
-  runModRuntime,
-} from "./core/mods/mod-runtime";
-import type { BuiltinModSourceRecord } from "./core/mods/mod-source-loader";
 import {
   createHouseRuntimeBridge,
   dispatchHouseRuntimeRequest,
@@ -139,11 +130,8 @@ import type {
   RuntimeFollowUpContext,
   RuntimeRouter,
 } from "./core/runtime/runtime-router";
-import type { GameModManifest } from "./core/contracts/mod-manifest";
 import type {
-  LoadedMod,
   ModActivationResult,
-  ModRuntimeState,
   ModSourceDescriptor,
 } from "./core/contracts/mod-runtime";
 import type { ViewName as CoreSaveViewName } from "./core/contracts/core-state";
@@ -252,47 +240,19 @@ if (uiOverlayElement == null) {
 
 const appRoot = appElement;
 const defaultPlayerCharacterId = "char.player";
-const builtinDefaultModId = "builtin.default";
 const selectableCharacterIds = [
   "char.player",
   "char.kulan_xu_da",
   "char.kulan_tang_he",
   "char.kulan_chang_yuchun",
 ] as const;
-const baseGameContentPack = await createBaseGameContentPack();
-const builtinDefaultModManifest: GameModManifest = {
-  id: builtinDefaultModId,
-  schemaVersion: "1",
-  version: "1.0.0",
-  title: "Default Builtin Mod",
-  entryContentPackIds: [baseGameContentPack.id],
-};
-const builtinModSourceRecordsById: Record<string, BuiltinModSourceRecord> = {
-  [builtinDefaultModId]: {
-    manifest: builtinDefaultModManifest,
-    rawContent: baseGameContentPack,
-  },
-};
-await loadDefaultRuntimeContent(() => Promise.resolve(baseGameContentPack));
-let modRuntimeState: ModRuntimeState = createEmptyModRuntimeState();
-
-function createModRuntimeContext() {
-  return {
-    allowedCapabilities: [] as const,
-    builtinModsById: builtinModSourceRecordsById,
-  };
-}
-
-const builtinStartupActivation = await runModRuntime({
-  state: modRuntimeState,
-  request: {
-    type: "mod.load-builtin",
-    requestId: "startup:builtin.default",
-    modId: builtinDefaultModId,
-  },
-  context: createModRuntimeContext(),
-});
-modRuntimeState = builtinStartupActivation.state;
+const entryShellBootstrapState = await createEntryShellBootstrapState();
+const {
+  baseGameContentPack,
+  builtinDefaultModId,
+  builtinDefaultModManifest,
+  builtinStartupActivation,
+} = entryShellBootstrapState;
 if (!builtinStartupActivation.ok) {
   throw new Error(builtinStartupActivation.failure.message);
 }
@@ -320,9 +280,9 @@ function getCurrentCityDefinition(currentAppState: AppState): CityDefinition | n
 }
 
 let activeContentContext: ActiveGameContentContext =
-  createActiveGameContentContextFromModActivation({
-    activationResult: builtinStartupActivation,
-  });
+  entryShellBootstrapState.createStartupContentContext(
+    builtinStartupActivation
+  );
 
 function getRuntimeText(textId: string, fallback?: string): string {
   return resolveTextEntry(activeContentContext.textEntriesById, textId, fallback);
@@ -637,7 +597,7 @@ const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
   characters: selectableCharacters,
-  scenarioPacks: builtInScenarioPacks,
+  scenarioPacks: entryShellBootstrapState.scenarioPacks,
   onStartGame: startMainGameWithLoading,
   onContinueGame: startContinueGameWithLoading,
   onStartScenarioPack: startScenarioPackWithLoading,
@@ -1360,104 +1320,6 @@ function handleBattleDemoResultMessage(message: unknown): void {
   dispatchCurrentStoryBattleAction("embedded-victory");
 }
 
-async function activateLoadedModForStartup(
-  loadedMod: LoadedMod,
-  requestId: string
-): Promise<ModActivationResult> {
-  const result = await runModRuntime({
-    state: modRuntimeState,
-    request: {
-      type: "mod.activate-loaded",
-      requestId,
-      loadedMod,
-    },
-    context: createModRuntimeContext(),
-  });
-  modRuntimeState = result.state;
-  return result;
-}
-
-async function activateBuiltinDefaultMod(
-  requestId: string
-): Promise<ModActivationResult> {
-  const result = await runModRuntime({
-    state: modRuntimeState,
-    request: {
-      type: "mod.load-builtin",
-      requestId,
-      modId: builtinDefaultModId,
-    },
-    context: createModRuntimeContext(),
-  });
-  modRuntimeState = result.state;
-  return result;
-}
-
-async function activateScenarioPackMod(
-  scenarioPack: ScenarioPackDefinition,
-  source: ModSourceDescriptor,
-  requestId: string
-): Promise<ModActivationResult> {
-  return activateLoadedModForStartup(
-    createLoadedModFromScenarioPack({
-      source,
-      scenarioPack,
-      baseContentPack: baseGameContentPack,
-    }),
-    requestId
-  );
-}
-
-async function activateSavedMod(
-  selectedModId: string,
-  requestId: string
-): Promise<ModActivationResult> {
-  const result = await runModRuntime({
-    state: modRuntimeState,
-    request: {
-      type: "mod.activate",
-      requestId,
-      modId: selectedModId,
-    },
-    context: createModRuntimeContext(),
-  });
-  modRuntimeState = result.state;
-  return result;
-}
-
-async function activateSavedModSource(
-  source: ModSourceDescriptor,
-  requestId: string
-): Promise<ModActivationResult> {
-  const request =
-    source.kind === "builtin"
-      ? {
-          type: "mod.load-builtin" as const,
-          requestId,
-          modId: source.modId,
-        }
-      : source.kind === "file"
-        ? {
-            type: "mod.load-file" as const,
-            requestId,
-            name: source.name,
-            filePath: source.filePath,
-          }
-        : {
-            type: "mod.load-url" as const,
-            requestId,
-            name: source.name,
-            url: source.url,
-          };
-  const result = await runModRuntime({
-    state: modRuntimeState,
-    request,
-    context: createModRuntimeContext(),
-  });
-  modRuntimeState = result.state;
-  return result;
-}
-
 async function restoreModFromSave(
   saveData: StartupSaveData
 ): Promise<ModActivationResult | null> {
@@ -1466,13 +1328,16 @@ async function restoreModFromSave(
   }
 
   if (saveData.selectedModSource != null) {
-    return activateSavedModSource(
+    return entryShellBootstrapState.activateSavedModSource(
       saveData.selectedModSource,
       "restore:saved-mod"
     );
   }
 
-  return activateSavedMod(saveData.selectedModId, "restore:saved-mod");
+  return entryShellBootstrapState.activateSavedMod(
+    saveData.selectedModId,
+    "restore:saved-mod"
+  );
 }
 
 function showStartupError(error: unknown): void {
@@ -1506,6 +1371,7 @@ function getBrowserStorage(): Storage | null {
 }
 
 function readAvailableSaveModIds(): string[] {
+  const modRuntimeState = entryShellBootstrapState.getModRuntimeState();
   return Array.from(
     new Set([
       builtinDefaultModId,
@@ -1516,6 +1382,7 @@ function readAvailableSaveModIds(): string[] {
 }
 
 function readCurrentSelectedModSource(): ModSourceDescriptor | null {
+  const modRuntimeState = entryShellBootstrapState.getModRuntimeState();
   const activeModId = modRuntimeState.activeModId;
   if (activeModId == null) {
     return {
@@ -1533,6 +1400,7 @@ function readCurrentSelectedModSource(): ModSourceDescriptor | null {
 }
 
 function readCurrentCoreGameStateForSave() {
+  const modRuntimeState = entryShellBootstrapState.getModRuntimeState();
   const activeModId = modRuntimeState.activeModId ?? builtinDefaultModId;
   const activeLoadedMod = modRuntimeState.availableModsById[activeModId] ?? null;
 
@@ -1577,18 +1445,16 @@ function normalizeSaveView(
 }
 
 const startupSessionCoordinatorDeps = {
-  activateBuiltinDefaultMod,
+  activateBuiltinDefaultMod: entryShellBootstrapState.activateBuiltinDefaultMod,
   restoreModFromSave,
-  activateScenarioPackMod,
+  activateScenarioPackMod: entryShellBootstrapState.activateScenarioPackMod,
   createPrototypeAppState:
     prototypeStartupAppStateBuilder.createPrototypeAppState,
   createHaozhouReturnEncounterAppState:
     prototypeStartupAppStateBuilder.createHaozhouReturnEncounterAppState,
   createScenarioPackAppState,
   createStartupContentContext: (activationResult: ModActivationResult) =>
-    createActiveGameContentContextFromModActivation({
-      activationResult,
-    }),
+    entryShellBootstrapState.createStartupContentContext(activationResult),
   bootstrapStartupStoryAppState,
 };
 
