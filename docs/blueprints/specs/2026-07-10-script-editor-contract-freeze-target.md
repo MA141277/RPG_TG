@@ -178,12 +178,43 @@
 - `Runtime-facing export may preserve only gameplay-relevant fields, stable ids, and runtime-consumable references that the frozen mapping contract explicitly allows.`
 - `If a field exists only to support creator workflow, audit, or unresolved import recovery, it belongs in the editor project and not in runtime pack output.`
 
+### Frozen Shared Condition Expression Model
+
+- `condition_group` is frozen as the single reusable creator-facing condition container shared across event, task, dialogue/scene, menu, and minigame authoring.`
+- `The shared condition core must support boolean grouping through all / any / not composition rather than forcing each host to reinvent grouping semantics.`
+- `The shared primitive family is frozen around current reusable repository evidence: flag/value checks, variable comparisons, event/task progression checks, date/chapter/location checks, character/clan/world-state checks, elapsed-time checks, and signal-based gates where the host can lawfully emit those signals.`
+- `Host-specific trigger timing, trigger scope, objective progress counters, and scene/menu/playable entry ownership are not themselves shared condition primitives; they remain host adapters that attach a host to the shared condition core.`
+- `A host may only extend the shared condition surface through explicit adapter ids or bounded shared primitive upgrades, not by inventing a feature-local condition DSL.`
+
+### Frozen Shared Effect Expression Model
+
+- `effect_bundle` is frozen as the single reusable creator-facing effect container shared across event, task, dialogue/scene, menu, and minigame authoring.`
+- `The shared effect core is frozen around current reusable repository evidence: flag mutation, variable mutation, time advance, runtime-facing task lifecycle actions, money/resource mutation, and bounded character/world patch primitives that already exist as repeatable gameplay outcomes.`
+- `Host-specific launch or settlement mechanics such as scene jumps, event triggering, playable launch ownership, and menu navigation are not shared effect primitives by default; they remain host adapters or downstream runtime-delta candidates.`
+- `Where multiple existing effect contracts already overlap, the shared authoring model must converge on one authoring-side vocabulary and let hosts compile into current runtime consumers rather than letting each host keep separate authoring verbs forever.`
+- `A host may only extend the shared effect surface through explicit adapter ids or bounded shared primitive upgrades, not by inventing a feature-local effect DSL.`
+
+### Frozen Host Reuse And Adapter Boundary
+
+- `event`, `quest/task`, `dialogue/scene`, `menu`, and `minigame` authoring must all reference the same shared condition_group and effect_bundle objects rather than embedding separate host-local rule languages as the default authoring path.`
+- `event` keeps ownership of trigger timing and trigger scope while delegating reusable gate and outcome logic to shared condition/effect objects.`
+- `quest/task` keeps ownership of objective progress, signal collection, and lifecycle checkpoints while delegating reusable start/completion/failure gates and outcome logic to shared condition/effect objects.`
+- `dialogue/scene`, menu, and minigame hosts keep ownership of branch topology, entry/exit hooks, and host presentation or launch semantics while delegating reusable gate and outcome logic to shared condition/effect objects.`
+- `If a host requires behavior that cannot be expressed by the frozen shared primitives plus bounded host adapters, that gap belongs to the later minimum-runtime-contract-change audit rather than becoming an immediate new host-local dialect.`
+
+### Frozen Rule-Dialect Prohibitions
+
+- `Do not let event authoring, task authoring, dialogue/scene authoring, menu authoring, and minigame authoring each grow a separate default condition grammar.`
+- `Do not let those same hosts each grow a separate default effect grammar.`
+- `Do not use current codebase fragmentation such as EventConditionNode, scene/action Condition/Effect, task conditions, or ad hoc callback/custom seams as justification for preserving multiple authoring-side dialects.`
+- `Current runtime or legacy host seams may survive temporarily as compile/export targets or compatibility adapters, but the frozen creator-facing contract is one shared condition/effect family.`
+
 ### Explicit Downstream Routing From This Queue
 
-- `shared condition/effect expression grammar, primitive boundary, and host-specific adapter allowance belong to queue.shared-condition-effect-mechanism-freeze`
 - `minimum required runtime/schema delta classification belongs to queue.minimal-runtime-contract-change-audit`
 - `Any proof that dialogues.json, minigames.json, story-nodes.json, city-menu-items.json, or house-menu-items.json must become runtime-facing tables belongs to the later runtime-delta and compatibility families rather than this mapping queue by itself.`
 - `Compatibility round-trip policy, importer precedence, editor-project persistence shape, runtime-facing export artifact guarantees, and metadata non-leak policy are now frozen on current version truth and must not be silently reopened without fresh evidence.`
+- `Shared condition/effect expression grammar, primitive boundary, host reuse rules, and host-specific adapter allowance are now frozen on current version truth and must not be silently reopened without fresh evidence.`
 - `city/building menu schema shape and any promotion of city_menu_item or building_menu_item into runtime-facing structures remain downstream until mapping work proves they are necessary`
 
 ### Required Decisions
