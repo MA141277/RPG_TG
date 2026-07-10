@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-contract-freeze`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/shared-condition-effect-mechanism-freeze-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/shared-condition-effect-mechanism-freeze-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
