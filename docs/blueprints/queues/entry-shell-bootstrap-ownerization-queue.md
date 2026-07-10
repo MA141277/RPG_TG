@@ -13,9 +13,9 @@
 - next_task: `none`
 - closeout_status: `done`
 - next_effect: `return-to-version-review`
-- sync_status: `failed`
-- sync_scope: `branch-push`
-- sync_summary: `Commit c82510f was created on mod-first-dev after queue closeout preparation, but branch push to origin/mod-first-dev failed twice because the current environment could not reach github.com:443.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commits c82510f and 46172e2 on mod-first-dev were pushed successfully to origin/mod-first-dev after queue closeout was written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
