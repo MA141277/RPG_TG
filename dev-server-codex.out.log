@@ -3,34 +3,7 @@
 > vite --host 0.0.0.0 --port 5173
 
 
-  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m561[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m304[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.105.140:[1m5173[22m/[39m
-[2m16:43:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/yuanmo-water-noise.png[22m
-[2m16:43:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/yuanmo-fog-noise.png[22m
-[2m16:44:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/navigation/travel-to-coordinate.ts[22m
-[2m16:44:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
-[2m16:44:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/game-state.ts[22m
-[2m16:44:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/map.ts[22m
-[2m16:44:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
-[2m16:44:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:44:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
-[2m16:44:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
-[2m16:44:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-terrain-webgl.ts[22m
-[2m16:44:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
-[2m16:46:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/game-state.ts[22m
-[2m16:46:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
-[2m16:49:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
-[2m16:52:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
-[2m16:56:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
-[2m16:56:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:58:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
-[2m16:58:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
-[2m16:59:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-terrain-webgl.ts[22m
-[2m17:02:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
-[2m17:03:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
-[2m17:18:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-cloud-webgl.ts[22m
-[2m17:19:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-cloud.frag.glsl[22m
-[2m19:25:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-cloud.frag.glsl[22m
-[2m19:25:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-cloud.frag.glsl[22m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.137.140:[1m5173[22m/[39m

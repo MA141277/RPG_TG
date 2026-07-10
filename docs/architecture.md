@@ -169,6 +169,17 @@ Campaign 地图的迷雾探索状态来自 `runtime.mapExplorationByMapId`。未
 
 Campaign 地图 WebGL renderer 的 GPU 程序资源应放在 `src/ui/views/map/shaders/*.glsl` 中，并由 renderer 通过 raw import 加载；不要把大型 GPU 程序作为模板字符串内嵌在 TypeScript renderer 文件里。
 
+### 3D Renderer 依赖边界
+
+项目可以使用 `three` 作为 3D / WebGL 表现层基础库，但它只属于 `ui` 渲染边界：
+
+- `three` 只能由 `src/ui/**` 下的 renderer、view 或表现层 helper 直接导入。
+- `content`、`domain`、`application` 和 runtime 模块不得依赖 `three` 类型、对象实例或 scene graph。
+- `THREE.Scene`、`Object3D`、`Mesh.userData`、材质、相机、raycast 命中结果等只能表达画面状态或输入拾取结果，不得成为持久玩法状态来源。
+- 玩法状态、探索、通行、事件、任务、house 会话和资源变化必须继续通过统一 game state / runtime 结构流转。
+- renderer 可以消费 view model、asset URL、camera / viewport 参数和只读 gameplay projection helper，但不得直接修改 gameplay 状态。
+- 现有裸 WebGL 地图 renderer 不要求一次性迁移到 `three`；后续新增 3D 场景、模型、特效、拾取或后处理时，优先在新的 `src/ui/**` renderer 边界内使用 `three`。
+
 ### 全局栏目
 
 常驻 UI 独立建模，不挂在某个页面组件下面：

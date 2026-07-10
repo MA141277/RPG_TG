@@ -2,6 +2,15 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-09 Three.js Renderer Boundary
+
+### Added
+- 新增 `three` 运行时依赖，作为后续 3D / WebGL 表现层基础库。
+- `docs/architecture.md` 记录 3D renderer 依赖边界：`three` 只能直接用于 `src/ui/**` 表现层，不能进入 `content`、`domain`、`application` 或 runtime 模块。
+
+### Impact
+- 后续 3D 场景、模型、特效、拾取和后处理可以复用 three.js 的现成渲染能力；玩法状态、探索、通行、事件、任务、house 会话和资源变化仍必须通过统一 game state / runtime 结构流转，不能藏进 three.js scene graph 或 `Object3D.userData`。
+
 ## 2026-07-08 Character Select Ink Feedback
 
 ### Changed
