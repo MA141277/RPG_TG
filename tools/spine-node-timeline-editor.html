@@ -836,6 +836,39 @@
               <button id="keySourceNextBtn" class="mode-button" type="button">下一关键帧</button>
               <button id="keySourceStartBtn" class="mode-button" type="button">起始帧</button>
             </div>
+            <div id="arrowVisibilityRow" class="button-row" hidden>
+              <button id="arrowShowBtn" type="button">箭矢出现</button>
+              <button id="arrowHideBtn" type="button">箭矢消失</button>
+            </div>
+            <div id="arrowParentRow" class="form-grid" hidden>
+              <div class="field full">
+                <label for="arrowParentSelect">箭矢临时父节点</label>
+                <select id="arrowParentSelect"></select>
+              </div>
+              <div class="field full">
+                <div class="button-row">
+                  <button id="arrowBindParentBtn" type="button">绑定箭矢父节点</button>
+                  <button id="arrowUnbindParentBtn" type="button">解绑箭矢父节点</button>
+                </div>
+              </div>
+            </div>
+            <div id="slashFxVisibilityRow" class="button-row" hidden>
+              <button id="slashFxShowBtn" type="button">刀光出现</button>
+              <button id="slashFxHideBtn" type="button">刀光消失</button>
+              <button id="slashFxActionVisibilityBtn" type="button">本动作隐藏刀光</button>
+            </div>
+            <div id="slashFxParentRow" class="form-grid" hidden>
+              <div class="field full">
+                <label for="slashFxParentSelect">刀光临时父节点</label>
+                <select id="slashFxParentSelect"></select>
+              </div>
+              <div class="field full">
+                <div class="button-row">
+                  <button id="slashFxBindParentBtn" type="button">绑定刀光父节点</button>
+                  <button id="slashFxUnbindParentBtn" type="button">解绑刀光父节点</button>
+                </div>
+              </div>
+            </div>
           </section>
           <section id="bindingPanel" class="panel-section bind-only">
             <div class="panel-title">绑定管理</div>
@@ -933,7 +966,7 @@
       const rowHeight = 30;
       const state = {
         name: "默认",
-        fps: 24,
+        fps: 36,
         duration: 95,
         currentFrame: 0,
         selectedNodeId: "root",
@@ -950,6 +983,11 @@
         keyframeClipboard: null,
         actions: [],
         selectedActionId: null,
+        arrowVisibilityTracks: {},
+        arrowParentTracks: {},
+        slashFxVisibilityTracks: {},
+        slashFxParentTracks: {},
+        slashFxActionHiddenMap: {},
         customImages: {},
         playing: false,
         nodes: [
@@ -1015,6 +1053,64 @@
         },
       };
 
+      const runtimeCache = {
+        pieceNodes: null,
+        nodeById: null,
+        arrowPieceByCarrierId: null,
+        slashFxPieceByCarrierId: null,
+        normalizedArrowVisibilityTracks: new WeakMap(),
+        normalizedArrowParentTracks: new WeakMap(),
+        normalizedSlashFxVisibilityTracks: new WeakMap(),
+        normalizedSlashFxParentTracks: new WeakMap(),
+      };
+
+      function resetRuntimeCaches() {
+        runtimeCache.pieceNodes = null;
+        runtimeCache.nodeById = null;
+        runtimeCache.arrowPieceByCarrierId = null;
+        runtimeCache.slashFxPieceByCarrierId = null;
+      }
+
+      function cachedNodeById(nodeId) {
+        if (!nodeId) return null;
+        if (!runtimeCache.nodeById) {
+          runtimeCache.nodeById = new Map(state.nodes.map((node) => [node.id, node]));
+        }
+        return runtimeCache.nodeById.get(nodeId) || null;
+      }
+
+      function cachedPieceNodes() {
+        if (!runtimeCache.pieceNodes) {
+          runtimeCache.pieceNodes = state.nodes.filter((node) => node.attachment);
+        }
+        return runtimeCache.pieceNodes;
+      }
+
+      function ensureRigPieceCaches() {
+        if (runtimeCache.arrowPieceByCarrierId && runtimeCache.slashFxPieceByCarrierId) return;
+        runtimeCache.arrowPieceByCarrierId = new Map();
+        runtimeCache.slashFxPieceByCarrierId = new Map();
+        cachedPieceNodes().forEach((piece) => {
+          if (piece.role === "arrow-piece") {
+            const carrier = arrowCarrierBoneForPiece(piece);
+            if (carrier) runtimeCache.arrowPieceByCarrierId.set(carrier.id, piece);
+          }
+          if (piece.role === "slash-fx-piece") {
+            const carrier = slashFxCarrierBoneForPiece(piece);
+            if (carrier) runtimeCache.slashFxPieceByCarrierId.set(carrier.id, piece);
+          }
+        });
+      }
+
+      function cachedNormalizedTrack(track, duration, cache, normalizeFn) {
+        if (!Array.isArray(track)) return [];
+        const cached = cache.get(track);
+        if (cached && cached.duration === duration) return cached.value;
+        const value = normalizeFn(track, duration);
+        cache.set(track, { duration, value });
+        return value;
+      }
+
       const el = {
         app: document.querySelector(".app"),
         stage: document.getElementById("stage"),
@@ -1034,6 +1130,21 @@
         keySourcePrevBtn: document.getElementById("keySourcePrevBtn"),
         keySourceNextBtn: document.getElementById("keySourceNextBtn"),
         keySourceStartBtn: document.getElementById("keySourceStartBtn"),
+        arrowVisibilityRow: document.getElementById("arrowVisibilityRow"),
+        arrowShowBtn: document.getElementById("arrowShowBtn"),
+        arrowHideBtn: document.getElementById("arrowHideBtn"),
+        arrowParentRow: document.getElementById("arrowParentRow"),
+        arrowParentSelect: document.getElementById("arrowParentSelect"),
+        arrowBindParentBtn: document.getElementById("arrowBindParentBtn"),
+        arrowUnbindParentBtn: document.getElementById("arrowUnbindParentBtn"),
+        slashFxVisibilityRow: document.getElementById("slashFxVisibilityRow"),
+        slashFxShowBtn: document.getElementById("slashFxShowBtn"),
+        slashFxHideBtn: document.getElementById("slashFxHideBtn"),
+        slashFxActionVisibilityBtn: document.getElementById("slashFxActionVisibilityBtn"),
+        slashFxParentRow: document.getElementById("slashFxParentRow"),
+        slashFxParentSelect: document.getElementById("slashFxParentSelect"),
+        slashFxBindParentBtn: document.getElementById("slashFxBindParentBtn"),
+        slashFxUnbindParentBtn: document.getElementById("slashFxUnbindParentBtn"),
         deleteKeyBtn: document.getElementById("deleteKeyBtn"),
         deleteFrameKeysBtn: document.getElementById("deleteFrameKeysBtn"),
         copyKeyframeBtn: document.getElementById("copyKeyframeBtn"),
@@ -1094,6 +1205,8 @@
         addRootBoneBtn: document.getElementById("addRootBoneBtn"),
         applyWeaponImageBtn: document.getElementById("applyWeaponImageBtn"),
         createBowRigBtn: document.getElementById("createBowRigBtn"),
+        createArrowRigBtn: document.getElementById("createArrowRigBtn"),
+        createSlashFxRigBtn: document.getElementById("createSlashFxRigBtn"),
         addBoneFromNodeBtn: document.getElementById("addBoneFromNodeBtn"),
         addFreeBoneBtn: document.getElementById("addFreeBoneBtn"),
         captureBindPoseBtn: document.getElementById("captureBindPoseBtn"),
@@ -1901,6 +2014,7 @@
           length: patch.length ?? base.length,
           scaleX: patch.scaleX ?? base.scaleX,
           scaleY: patch.scaleY ?? base.scaleY,
+          visible: patch.visible ?? base.visible !== false,
         };
       }
 
@@ -1981,13 +2095,30 @@
         if (keys.length === 1) return BowRigController.enrichPose(node, { ...node, ...keys[0] });
         const before = [...keys].reverse().find((item) => item.frame < frame);
         const after = keys.find((item) => item.frame > frame);
-        if (!before) return BowRigController.enrichPose(node, { ...node, ...keys[0] });
+        if (!before) {
+          return BowRigController.enrichPose(node, {
+            ...node,
+            ...keys[0],
+            visible: node.visible !== false,
+          });
+        }
         if (!after) {
           const start = keys.find((item) => item.frame === 0) || keys[0];
           const loopEndFrame = state.duration + 1;
           const span = Math.max(1, loopEndFrame - before.frame);
           const t = Math.max(0, Math.min(1, (frame - before.frame) / span));
           return interpolateLocalPose(node, before, start, t);
+        }
+        const arrowPiece = arrowPieceForNode(node);
+        const slashFxPiece = slashFxPieceForNode(node);
+        const parentChange =
+          arrowParentChangeBetweenFrames(arrowPiece, before.frame, after.frame) ||
+          slashFxParentChangeBetweenFrames(slashFxPiece, before.frame, after.frame);
+        if (parentChange) {
+          if (frame < parentChange.frame) {
+            return BowRigController.enrichPose(node, { ...node, ...before });
+          }
+          return BowRigController.enrichPose(node, { ...node, ...after });
         }
         const t = (frame - before.frame) / (after.frame - before.frame);
         return interpolateLocalPose(node, before, after, t);
@@ -2002,7 +2133,23 @@
           length: lerp(before.length, after.length, t),
           scaleX: lerp(before.scaleX, after.scaleX, t),
           scaleY: lerp(before.scaleY, after.scaleY, t),
+          visible:
+            typeof before?.visible === "boolean"
+              ? before.visible
+              : typeof after?.visible === "boolean"
+                ? after.visible
+                : node.visible !== false,
         });
+      }
+
+      function isNodeVisibleAtFrame(node, frame = state.currentFrame) {
+        if (!node) return false;
+        if (isBindingMode()) return true;
+        const arrowPiece = arrowPieceForNode(node);
+        if (arrowPiece) return arrowVisibilityAtFrame(arrowPiece, frame);
+        const slashFxPiece = slashFxPieceForNode(node);
+        if (slashFxPiece) return slashFxAlphaAtFrame(slashFxPiece, frame) > 0.001;
+        return true;
       }
 
       function lerp(a, b, t) {
@@ -2019,7 +2166,8 @@
         if (seen.has(node.id)) return getLocalPose(node, frame);
         seen.add(node.id);
         const local = getLocalPose(node, frame);
-        if (!node.parentId) {
+        const effectiveParentId = effectiveParentIdForNode(node, frame);
+        if (!effectiveParentId) {
           return {
             ...local,
             worldX: local.x,
@@ -2029,7 +2177,7 @@
             worldScaleY: local.scaleY,
           };
         }
-        const parent = state.nodes.find((item) => item.id === node.parentId);
+        const parent = cachedNodeById(effectiveParentId);
         if (!parent) {
           return {
             ...local,
@@ -2042,6 +2190,45 @@
         }
         const p = worldPose(parent, frame, seen);
         const anchor = endPoint(p);
+        const worldRotation = p.worldRotation + local.rotation;
+        const worldScaleX = p.worldScaleX * local.scaleX;
+        const worldScaleY = p.worldScaleY * local.scaleY;
+        if (isTempParentBoundArrowCarrier(node, frame)) {
+          const gripLocal = arrowGripLocalForPiece(arrowPieceForNode(node));
+          if (gripLocal) {
+            const gripRad = (worldRotation * Math.PI) / 180;
+            const gripOffsetX =
+              gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
+            const gripOffsetY =
+              gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
+            return {
+              ...local,
+              worldX: anchor.x - gripOffsetX,
+              worldY: anchor.y - gripOffsetY,
+              worldRotation,
+              worldScaleX,
+              worldScaleY,
+            };
+          }
+        }
+        if (isTempParentBoundSlashFxCarrier(node, frame)) {
+          const gripLocal = slashFxGripLocalForPiece(slashFxPieceForNode(node));
+          if (gripLocal) {
+            const gripRad = (worldRotation * Math.PI) / 180;
+            const gripOffsetX =
+              gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
+            const gripOffsetY =
+              gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
+            return {
+              ...local,
+              worldX: anchor.x - gripOffsetX,
+              worldY: anchor.y - gripOffsetY,
+              worldRotation,
+              worldScaleX,
+              worldScaleY,
+            };
+          }
+        }
         const rad = (p.worldRotation * Math.PI) / 180;
         const px = local.x * p.worldScaleX;
         const py = local.y * p.worldScaleY;
@@ -2051,9 +2238,9 @@
           ...local,
           worldX: anchor.x + rotatedX,
           worldY: anchor.y + rotatedY,
-          worldRotation: p.worldRotation + local.rotation,
-          worldScaleX: p.worldScaleX * local.scaleX,
-          worldScaleY: p.worldScaleY * local.scaleY,
+          worldRotation,
+          worldScaleX,
+          worldScaleY,
         };
       }
 
@@ -2100,7 +2287,7 @@
             worldScaleY: local.scaleY,
           };
         }
-        const parent = state.nodes.find((item) => item.id === node.parentId);
+        const parent = cachedNodeById(node.parentId);
         if (!parent) {
           return {
             ...local,
@@ -2146,6 +2333,7 @@
       }
 
       function drawStage() {
+        resetRuntimeCaches();
         const rect = el.stage.getBoundingClientRect();
         ctx.clearRect(0, 0, rect.width, rect.height);
         drawAxes(rect);
@@ -2215,6 +2403,7 @@
       }
 
       function drawBone(node, active) {
+        if (!isNodeVisibleAtFrame(node)) return;
         const pose = worldPose(node);
         const end = endPoint(pose);
         const bowTag = bowDebugLabel(node);
@@ -2262,22 +2451,24 @@
       }
 
       function drawWarriorTextures() {
-        const texturedNodes = state.nodes.filter((node) => node.attachment);
+        const texturedNodes = state.nodes.filter((node) => node.attachment && isNodeVisibleAtFrame(node));
         if (texturedNodes.length === 0) return;
         texturedNodes
           .slice()
           .sort((a, b) => {
             const layerDiff = (a.attachment.layer || 0) - (b.attachment.layer || 0);
             if (layerDiff) return layerDiff;
-            return (a.attachment.alpha || 1) - (b.attachment.alpha || 1);
+            return effectiveAttachmentAlpha(a) - effectiveAttachmentAlpha(b);
           })
           .forEach((node) => drawAttachment(node));
       }
 
       function drawAttachment(node) {
         const attachment = node.attachment;
+        const alpha = effectiveAttachmentAlpha(node);
+        if (alpha <= 0.001) return;
         if (node.role === "bow-string" && attachment.segments && attachment.chainTo) {
-          drawBowStringAttachment(node, attachment);
+          drawBowStringAttachment(node, attachment, alpha);
           return;
         }
         const image = warriorImages[attachment.image];
@@ -2285,18 +2476,18 @@
         const pose = worldPose(node);
         if (attachment.fullSkin) {
           if (isBindingMode() && attachment.restPart) {
-            drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), attachment.alpha);
+            drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), alpha);
             return;
           }
-          drawFullSkinAttachment(attachment, image);
+          drawFullSkinAttachment(attachment, image, alpha);
           return;
         }
         if (attachment.segments && attachment.chainTo) {
-          drawSegmentedAttachment(node, attachment, image);
+          drawSegmentedAttachment(node, attachment, image, alpha);
           return;
         }
         if (attachment.image === "head") {
-          drawHeadAttachment(node, attachment, image);
+          drawHeadAttachment(node, attachment, image, alpha);
           return;
         }
         let start = { x: pose.worldX, y: pose.worldY };
@@ -2322,7 +2513,7 @@
           end,
           attachment.width,
           length,
-          attachment.alpha,
+          alpha,
           attachment.anchorX,
           attachment.rotationOffset,
           attachment.offsetX,
@@ -2365,7 +2556,7 @@
           });
       }
 
-      function drawSegmentedAttachment(node, attachment, image) {
+      function drawSegmentedAttachment(node, attachment, image, alpha = attachment.alpha) {
         const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
         if (!chainNode) return;
         const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
@@ -2406,10 +2597,10 @@
             start: elbow,
             end: hand,
           },
-        ], attachment.alpha);
+        ], alpha);
       }
 
-      function drawBowStringAttachment(node, attachment) {
+      function drawBowStringAttachment(node, attachment, alpha = attachment.alpha) {
         const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
         if (!chainNode) return;
         const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
@@ -2419,8 +2610,8 @@
         const middle = { x: lowerPose.worldX, y: lowerPose.worldY };
         const end = endPoint(lowerPose);
         const color = attachment.lineColor || node.color || "#d8d0bf";
-        drawBowStringSegment(start, middle, attachment.width, attachment.alpha, color);
-        drawBowStringSegment(middle, end, lowerAttachment.width || attachment.width, attachment.alpha, color);
+        drawBowStringSegment(start, middle, attachment.width, alpha, color);
+        drawBowStringSegment(middle, end, lowerAttachment.width || attachment.width, alpha, color);
       }
 
       function drawBowStringSegment(start, end, width, alpha, color) {
@@ -2521,7 +2712,7 @@
         };
       }
 
-      function drawFullSkinAttachment(attachment, image) {
+      function drawFullSkinAttachment(attachment, image, alpha = attachment.alpha) {
         const restPart = resolveRestPartTransform(attachment.restPart, false);
         const segments = (attachment.skinBoneIds || [])
           .map((nodeId) => state.nodes.find((item) => item.id === nodeId))
@@ -2538,7 +2729,7 @@
           });
         if (!restPart) return;
         if (segments.length === 0) {
-          drawRestPartImage(image, restPart, attachment.alpha);
+          drawRestPartImage(image, restPart, alpha);
           return;
         }
 
@@ -2567,7 +2758,7 @@
           source.push(sourceRow);
           dest.push(destRow);
         }
-        drawTexturedMesh(image, source, dest, attachment.alpha);
+        drawTexturedMesh(image, source, dest, alpha);
       }
 
       function drawRestPartImage(image, restPart, alpha = 1) {
@@ -2695,7 +2886,7 @@
         return a.x * b.x + a.y * b.y;
       }
 
-      function drawHeadAttachment(node, attachment, image) {
+      function drawHeadAttachment(node, attachment, image, alpha = attachment.alpha) {
         const pose = worldPose(node);
         const center = {
           x: pose.worldX + attachment.offsetX,
@@ -2730,7 +2921,7 @@
           });
         }
         ctx.save();
-        setDrawAlpha(attachment.alpha);
+        setDrawAlpha(alpha);
         ctx.translate(center.x, center.y);
         ctx.rotate(headAngle);
         if (attachment.scarfEnabled) {
@@ -2751,14 +2942,14 @@
         ctx.restore();
       }
 
-      function drawSpringScarf(node, attachment, image, center, angle, layout) {
+      function drawSpringScarf(node, attachment, image, center, angle, layout, alpha = attachment.alpha) {
         const mesh = buildScarfMesh(center, angle, layout);
         const points = solveGravityMesh(`scarf:${node.id}`, mesh.dest, {
           stiffness: layout.stiffness,
           damping: layout.damping,
           gravity: layout.gravity,
         });
-        drawTexturedMesh(image, mesh.source, points, attachment.alpha);
+        drawTexturedMesh(image, mesh.source, points, alpha);
       }
 
       function solveSpringScarf(nodeId, center, angle, layout) {
@@ -3166,7 +3357,7 @@
 
       function drawTextureHandles(nodes) {
         const selected = state.nodes.find((node) => node.id === state.selectedNodeId);
-        if (!selected) return;
+        if (!selected || !isNodeVisibleAtFrame(selected)) return;
         const pose = worldPose(selected);
         const end = endPoint(pose);
         ctx.save();
@@ -3320,12 +3511,16 @@
       }
 
       function drawParentLink(node) {
-        if (!node.parentId) return;
-        const parent = state.nodes.find((item) => item.id === node.parentId);
-        if (!parent) return;
+        const effectiveParentId = effectiveParentIdForNode(node);
+        if (!effectiveParentId) return;
+        const parent = cachedNodeById(effectiveParentId);
+        if (!parent || !isNodeVisibleAtFrame(node) || !isNodeVisibleAtFrame(parent)) return;
         const parentEnd = endPoint(worldPose(parent));
         const pose = worldPose(node);
-        const gap = Math.hypot(parentEnd.x - pose.worldX, parentEnd.y - pose.worldY);
+        const linkPoint = isTempParentBoundArrowCarrier(node)
+          ? arrowGripWorldPointForNode(node) || { x: pose.worldX, y: pose.worldY }
+          : { x: pose.worldX, y: pose.worldY };
+        const gap = Math.hypot(parentEnd.x - linkPoint.x, parentEnd.y - linkPoint.y);
         if (gap < 0.5) return;
         ctx.save();
         ctx.strokeStyle = "#ffffff55";
@@ -3333,7 +3528,7 @@
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.moveTo(parentEnd.x, parentEnd.y);
-        ctx.lineTo(pose.worldX, pose.worldY);
+        ctx.lineTo(linkPoint.x, linkPoint.y);
         ctx.stroke();
         ctx.restore();
       }
@@ -3347,6 +3542,7 @@
       }
 
       function renderAll() {
+        resetRuntimeCaches();
         if (!drag || drag.type === "key" || !drag.hasMoved) {
           poseOverrides.clear();
         }
@@ -3363,7 +3559,15 @@
         drawStage();
       }
 
+      function renderDragFrame() {
+        resetRuntimeCaches();
+        syncAllBowRigs();
+        renderStatus();
+        drawStage();
+      }
+
       function renderPlaybackFrame() {
+        resetRuntimeCaches();
         poseOverrides.clear();
         syncAllBowRigs();
         renderTimeline();
@@ -3396,13 +3600,14 @@
       function renderNodeList() {
         el.nodeList.innerHTML = "";
         sortedNodes().forEach((node) => {
+          const hiddenTag = isNodeVisibleAtFrame(node) ? "" : ' <span class="node-hidden">(hidden)</span>';
           const button = document.createElement("button");
           button.className = `node-item${node.id === state.selectedNodeId ? " active" : ""}`;
           button.type = "button";
           button.dataset.id = node.id;
           button.innerHTML = `
             <span class="node-depth">${"·".repeat(node.depth)}</span>
-            <span class="node-name">${escapeHtml(node.name)}</span>
+            <span class="node-name">${escapeHtml(node.name)}${hiddenTag}</span>
             <span class="node-color" style="background:${node.color}"></span>
           `;
           button.addEventListener("click", () => {
@@ -3494,7 +3699,7 @@
       }
 
       function pieceNodes() {
-        return state.nodes.filter((node) => node.attachment);
+        return cachedPieceNodes();
       }
 
       function pieceLabel(node) {
@@ -3513,6 +3718,421 @@
 
       function selectedPieceNode() {
         return state.nodes.find((node) => node.id === state.selectedPieceNodeId && node.attachment) || null;
+      }
+
+      function isArrowPieceNode(node) {
+        return Boolean(node?.attachment && node.role === "arrow-piece");
+      }
+
+      function isSlashFxPieceNode(node) {
+        return Boolean(node?.attachment && node.role === "slash-fx-piece");
+      }
+
+      function arrowCarrierBoneForPiece(piece) {
+        const parentBoneId = piece?.attachment?.restPart?.parentBoneId
+          ? String(piece.attachment.restPart.parentBoneId)
+          : null;
+        if (parentBoneId) {
+          const node = cachedNodeById(parentBoneId);
+          return node && !node.attachment ? node : null;
+        }
+        const skinBoneId = piece?.attachment?.skinBoneIds?.[0] ? String(piece.attachment.skinBoneIds[0]) : null;
+        if (skinBoneId) {
+          const node = cachedNodeById(skinBoneId);
+          return node && !node.attachment ? node : null;
+        }
+        return null;
+      }
+
+      function proxyHitForArrowPieceBody(piece) {
+        if (piece?.role !== "arrow-piece") return null;
+        const carrier = arrowCarrierBoneForPiece(piece);
+        if (!carrier) return null;
+        return { type: "arrow-piece-bone", node: carrier, piece };
+      }
+
+      function arrowPieceForNode(node) {
+        if (isArrowPieceNode(node)) return node;
+        if (!node || node.attachment) return null;
+        ensureRigPieceCaches();
+        return runtimeCache.arrowPieceByCarrierId.get(node.id) || null;
+      }
+
+      function selectedArrowPiece() {
+        return arrowPieceForNode(selectedPieceNode()) || arrowPieceForNode(selectedNode()) || null;
+      }
+
+      function slashFxCarrierBoneForPiece(piece) {
+        const parentBoneId = piece?.attachment?.restPart?.parentBoneId
+          ? String(piece.attachment.restPart.parentBoneId)
+          : null;
+        if (parentBoneId) {
+          const node = cachedNodeById(parentBoneId);
+          return node && !node.attachment ? node : null;
+        }
+        const skinBoneId = piece?.attachment?.skinBoneIds?.[0] ? String(piece.attachment.skinBoneIds[0]) : null;
+        if (skinBoneId) {
+          const node = cachedNodeById(skinBoneId);
+          return node && !node.attachment ? node : null;
+        }
+        return null;
+      }
+
+      function proxyHitForSlashFxPieceBody(piece) {
+        if (piece?.role !== "slash-fx-piece") return null;
+        const carrier = slashFxCarrierBoneForPiece(piece);
+        if (!carrier) return null;
+        return { type: "slash-fx-piece-bone", node: carrier, piece };
+      }
+
+      function slashFxPieceForNode(node) {
+        if (isSlashFxPieceNode(node)) return node;
+        if (!node || node.attachment) return null;
+        ensureRigPieceCaches();
+        return runtimeCache.slashFxPieceByCarrierId.get(node.id) || null;
+      }
+
+      function selectedSlashFxPiece() {
+        return slashFxPieceForNode(selectedPieceNode()) || slashFxPieceForNode(selectedNode()) || null;
+      }
+
+      function slashFxRigNodesForPiece(piece) {
+        const bone = slashFxCarrierBoneForPiece(piece);
+        return [bone, piece].filter(Boolean);
+      }
+
+      function slashFxCarrierBone() {
+        const piece = selectedSlashFxPiece();
+        return piece ? slashFxCarrierBoneForPiece(piece) : null;
+      }
+
+      function arrowRigNodesForPiece(piece) {
+        const bone = arrowCarrierBoneForPiece(piece);
+        return [bone, piece].filter(Boolean);
+      }
+
+      function arrowCarrierBone() {
+        const piece = selectedArrowPiece();
+        return piece ? arrowCarrierBoneForPiece(piece) : null;
+      }
+
+      function arrowGripLocalForPiece(piece) {
+        const attachment = piece?.attachment;
+        const restPart = attachment?.restPart;
+        const image = warriorImages[attachment?.image];
+        const width = Math.max(1, image?.naturalWidth || image?.width || 0);
+        const height = Math.max(1, image?.naturalHeight || image?.height || 0);
+        if (!restPart || !width || !height) return null;
+        const candidates =
+          width >= height
+            ? [
+                { x: 0, y: height * 0.5 },
+                { x: width, y: height * 0.5 },
+              ]
+            : [
+                { x: width * 0.5, y: 0 },
+                { x: width * 0.5, y: height },
+              ];
+        let best = null;
+        candidates.forEach((candidate) => {
+          const local = imagePixelToRestWorld(restPart, { width, height }, candidate.x, candidate.y);
+          const distance = Math.hypot(local.x, local.y);
+          if (!best || distance < best.distance) best = { x: local.x, y: local.y, distance };
+        });
+        return best ? { x: best.x, y: best.y } : null;
+      }
+
+      function slashFxGripLocalForPiece(piece) {
+        const attachment = piece?.attachment;
+        const restPart = attachment?.restPart;
+        const image = warriorImages[attachment?.image];
+        const width = Math.max(1, image?.naturalWidth || image?.width || 0);
+        const height = Math.max(1, image?.naturalHeight || image?.height || 0);
+        if (!restPart || !width || !height) return null;
+        const candidates =
+          width >= height
+            ? [
+                { x: 0, y: height * 0.5 },
+                { x: width, y: height * 0.5 },
+              ]
+            : [
+                { x: width * 0.5, y: 0 },
+                { x: width * 0.5, y: height },
+              ];
+        let best = null;
+        candidates.forEach((candidate) => {
+          const local = imagePixelToRestWorld(restPart, { width, height }, candidate.x, candidate.y);
+          const distance = Math.hypot(local.x, local.y);
+          if (!best || distance < best.distance) best = { x: local.x, y: local.y, distance };
+        });
+        return best ? { x: best.x, y: best.y } : null;
+      }
+
+      function arrowGripWorldPointForNode(node, frame = state.currentFrame) {
+        const pose = worldPose(node, frame);
+        if (!pose) return null;
+        const gripLocal = arrowGripLocalForPiece(arrowPieceForNode(node));
+        if (!gripLocal) return { x: pose.worldX, y: pose.worldY };
+        const rad = (pose.worldRotation * Math.PI) / 180;
+        return {
+          x: pose.worldX + gripLocal.x * pose.worldScaleX * Math.cos(rad) - gripLocal.y * pose.worldScaleY * Math.sin(rad),
+          y: pose.worldY + gripLocal.x * pose.worldScaleX * Math.sin(rad) + gripLocal.y * pose.worldScaleY * Math.cos(rad),
+        };
+      }
+
+      function slashFxGripWorldPointForNode(node, frame = state.currentFrame) {
+        const pose = worldPose(node, frame);
+        if (!pose) return null;
+        const gripLocal = slashFxGripLocalForPiece(slashFxPieceForNode(node));
+        if (!gripLocal) return { x: pose.worldX, y: pose.worldY };
+        const rad = (pose.worldRotation * Math.PI) / 180;
+        return {
+          x: pose.worldX + gripLocal.x * pose.worldScaleX * Math.cos(rad) - gripLocal.y * pose.worldScaleY * Math.sin(rad),
+          y: pose.worldY + gripLocal.x * pose.worldScaleX * Math.sin(rad) + gripLocal.y * pose.worldScaleY * Math.cos(rad),
+        };
+      }
+
+      function normalizeArrowVisibilityTrack(track, duration = state.duration) {
+        if (!Array.isArray(track)) return [];
+        return track
+          .map((item) => ({
+            frame: clampFrameToDuration(item.frame, duration),
+            visible: Boolean(item.visible),
+          }))
+          .sort((a, b) => a.frame - b.frame)
+          .filter((item, index, array) => index === array.findIndex((entry) => entry.frame === item.frame));
+      }
+
+      function cloneArrowVisibilityTracks(tracks) {
+        return Object.fromEntries(
+          Object.entries(tracks || {}).map(([pieceId, track]) => [pieceId, normalizeArrowVisibilityTrack(track)]),
+        );
+      }
+
+      function arrowVisibilityTrackForPiece(piece) {
+        return cachedNormalizedTrack(
+          state.arrowVisibilityTracks?.[piece?.id],
+          state.duration,
+          runtimeCache.normalizedArrowVisibilityTracks,
+          normalizeArrowVisibilityTrack,
+        );
+      }
+
+      function normalizeArrowParentTrack(track, duration = state.duration) {
+        if (!Array.isArray(track)) return [];
+        const byFrame = new Map();
+        track.forEach((item) => {
+          byFrame.set(clampFrameToDuration(item.frame, duration), {
+            frame: clampFrameToDuration(item.frame, duration),
+            parentId: item.parentId ? String(item.parentId) : null,
+          });
+        });
+        return [...byFrame.values()].sort((a, b) => a.frame - b.frame);
+      }
+
+      function cloneArrowParentTracks(tracks) {
+        return Object.fromEntries(
+          Object.entries(tracks || {}).map(([pieceId, track]) => [pieceId, normalizeArrowParentTrack(track)]),
+        );
+      }
+
+      function arrowParentTrackForPiece(piece) {
+        return cachedNormalizedTrack(
+          state.arrowParentTracks?.[piece?.id],
+          state.duration,
+          runtimeCache.normalizedArrowParentTracks,
+          normalizeArrowParentTrack,
+        );
+      }
+
+      function normalizeSlashFxVisibilityTrack(track, duration = state.duration) {
+        if (!Array.isArray(track)) return [];
+        return track
+          .map((item) => ({
+            frame: clampFrameToDuration(item.frame, duration),
+            visible: Boolean(item.visible),
+          }))
+          .sort((a, b) => a.frame - b.frame)
+          .filter((item, index, array) => index === array.findIndex((entry) => entry.frame === item.frame));
+      }
+
+      function cloneSlashFxVisibilityTracks(tracks) {
+        return Object.fromEntries(
+          Object.entries(tracks || {}).map(([pieceId, track]) => [pieceId, normalizeSlashFxVisibilityTrack(track)]),
+        );
+      }
+
+      function slashFxVisibilityTrackForPiece(piece) {
+        return cachedNormalizedTrack(
+          state.slashFxVisibilityTracks?.[piece?.id],
+          state.duration,
+          runtimeCache.normalizedSlashFxVisibilityTracks,
+          normalizeSlashFxVisibilityTrack,
+        );
+      }
+
+      function normalizeSlashFxParentTrack(track, duration = state.duration) {
+        if (!Array.isArray(track)) return [];
+        const byFrame = new Map();
+        track.forEach((item) => {
+          const frame = clampFrameToDuration(item.frame, duration);
+          byFrame.set(frame, {
+            frame,
+            parentId: item.parentId ? String(item.parentId) : null,
+          });
+        });
+        return [...byFrame.values()].sort((a, b) => a.frame - b.frame);
+      }
+
+      function cloneSlashFxParentTracks(tracks) {
+        return Object.fromEntries(
+          Object.entries(tracks || {}).map(([pieceId, track]) => [pieceId, normalizeSlashFxParentTrack(track)]),
+        );
+      }
+
+      function cloneSlashFxActionHiddenMap(map) {
+        return Object.fromEntries(
+          Object.entries(map || {}).filter(([pieceId, hidden]) => pieceId && hidden === true).map(([pieceId]) => [pieceId, true]),
+        );
+      }
+
+      function slashFxParentTrackForPiece(piece) {
+        return cachedNormalizedTrack(
+          state.slashFxParentTracks?.[piece?.id],
+          state.duration,
+          runtimeCache.normalizedSlashFxParentTracks,
+          normalizeSlashFxParentTrack,
+        );
+      }
+
+      function isSlashFxHiddenForCurrentAction(piece) {
+        return Boolean(piece?.id && state.slashFxActionHiddenMap?.[piece.id]);
+      }
+
+      function lastTrackEntryAtOrBefore(track, frame) {
+        for (let index = track.length - 1; index >= 0; index -= 1) {
+          if (track[index].frame <= frame) return track[index];
+        }
+        return null;
+      }
+
+      function firstTrackEntryAfter(track, frame) {
+        for (let index = 0; index < track.length; index += 1) {
+          if (track[index].frame > frame) return track[index];
+        }
+        return null;
+      }
+
+      function legacyArrowVisibilityTrackForPiece(piece) {
+        const [bone] = arrowRigNodesForPiece(piece);
+        const pieceTrack = normalizeArrowVisibilityTrack(
+          (state.timelines[piece?.id] || []).filter((item) => typeof item.visible === "boolean"),
+        );
+        if (pieceTrack.length) return pieceTrack;
+        return normalizeArrowVisibilityTrack(
+          (state.timelines[bone?.id] || []).filter((item) => typeof item.visible === "boolean"),
+        );
+      }
+
+      function arrowVisibilityAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return true;
+        const track = arrowVisibilityTrackForPiece(piece);
+        const effectiveTrack = track.length ? track : legacyArrowVisibilityTrackForPiece(piece);
+        if (!effectiveTrack.length) return true;
+        const previous = lastTrackEntryAtOrBefore(effectiveTrack, frame);
+        if (previous) return previous.visible;
+        return !effectiveTrack[0].visible;
+      }
+
+      function arrowParentAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return null;
+        const track = arrowParentTrackForPiece(piece);
+        const previous = lastTrackEntryAtOrBefore(track, frame);
+        return previous?.parentId || null;
+      }
+
+      function arrowParentChangeBetweenFrames(piece, startFrame, endFrame) {
+        if (!piece) return null;
+        return arrowParentTrackForPiece(piece).find((item) => item.frame > startFrame && item.frame <= endFrame) || null;
+      }
+
+      function slashFxVisibilityAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return false;
+        if (isSlashFxHiddenForCurrentAction(piece)) return false;
+        const track = slashFxVisibilityTrackForPiece(piece);
+        if (!track.length) return true;
+        const previous = lastTrackEntryAtOrBefore(track, frame);
+        return previous ? previous.visible : false;
+      }
+
+      function slashFxAlphaAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return 0;
+        if (isSlashFxHiddenForCurrentAction(piece)) return 0;
+        const track = slashFxVisibilityTrackForPiece(piece);
+        if (!track.length) return 1;
+        const appearFadeFrames = 2;
+        const disappearFadeFrames = 5;
+        const previous = lastTrackEntryAtOrBefore(track, frame);
+        if (previous && !previous.visible && frame <= previous.frame + disappearFadeFrames) {
+          const fadeT = Math.max(0, Math.min(1, (frame - previous.frame) / disappearFadeFrames));
+          return 1 - fadeT;
+        }
+        const next = firstTrackEntryAfter(track, frame);
+        if (next && next.visible && frame >= next.frame - appearFadeFrames) {
+          const fadeT = Math.max(0, Math.min(1, (frame - (next.frame - appearFadeFrames)) / appearFadeFrames));
+          return fadeT;
+        }
+        return slashFxVisibilityAtFrame(piece, frame) ? 1 : 0;
+      }
+
+      function slashFxParentAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return null;
+        const track = slashFxParentTrackForPiece(piece);
+        const previous = lastTrackEntryAtOrBefore(track, frame);
+        return previous?.parentId || null;
+      }
+
+      function slashFxParentChangeBetweenFrames(piece, startFrame, endFrame) {
+        if (!piece) return null;
+        return (
+          slashFxParentTrackForPiece(piece).find((item) => item.frame > startFrame && item.frame <= endFrame) || null
+        );
+      }
+
+      function effectiveParentIdForNode(node, frame = state.currentFrame) {
+        if (!node) return null;
+        if (node.attachment) return node.parentId || null;
+        const arrowPiece = arrowPieceForNode(node);
+        if (arrowPiece) return arrowParentAtFrame(arrowPiece, frame);
+        const slashFxPiece = slashFxPieceForNode(node);
+        if (slashFxPiece) return slashFxParentAtFrame(slashFxPiece, frame);
+        return node.parentId || null;
+      }
+
+      function isTempParentBoundArrowCarrier(node, frame = state.currentFrame) {
+        if (!node || node.attachment) return false;
+        const arrowPiece = arrowPieceForNode(node);
+        if (!arrowPiece) return false;
+        return Boolean(arrowParentAtFrame(arrowPiece, frame));
+      }
+
+      function isTempParentBoundSlashFxCarrier(node, frame = state.currentFrame) {
+        if (!node || node.attachment) return false;
+        const slashFxPiece = slashFxPieceForNode(node);
+        if (!slashFxPiece) return false;
+        return Boolean(slashFxParentAtFrame(slashFxPiece, frame));
+      }
+
+      function participatesInGenericJointSolver(node, frame = state.currentFrame) {
+        if (isBowRigNode(node)) return false;
+        return !isTempParentBoundArrowCarrier(node, frame) && !isTempParentBoundSlashFxCarrier(node, frame);
+      }
+
+      function effectiveAttachmentAlpha(node, frame = state.currentFrame) {
+        const baseAlpha = Math.max(0, Math.min(1, Number(node?.attachment?.alpha ?? 1)));
+        const slashFxPiece = slashFxPieceForNode(node);
+        if (slashFxPiece) return baseAlpha * slashFxAlphaAtFrame(slashFxPiece, frame);
+        return baseAlpha;
       }
 
       function boundBoneIdsForPiece(piece) {
@@ -3625,8 +4245,84 @@
         el.scaleYInput.value = round(pose.scaleY, 2);
         el.colorInput.value = node.color;
         renderAttachmentProperties(node);
+        const arrowPiece = selectedArrowPiece();
+        if (el.arrowVisibilityRow) el.arrowVisibilityRow.hidden = !arrowPiece || isBindingMode();
+        if (el.arrowShowBtn) el.arrowShowBtn.disabled = !arrowPiece || isBindingMode();
+        if (el.arrowHideBtn) el.arrowHideBtn.disabled = !arrowPiece || isBindingMode();
+        const carrier = arrowPiece ? arrowCarrierBoneForPiece(arrowPiece) : null;
+        if (el.arrowParentRow) el.arrowParentRow.hidden = !arrowPiece || isBindingMode();
+        if (el.arrowParentSelect) {
+          el.arrowParentSelect.innerHTML = '<option value="">无临时父节点</option>';
+          if (arrowPiece && carrier) {
+            const effectiveParentId = arrowParentAtFrame(arrowPiece);
+            sortedNodes()
+              .filter(
+                (item) =>
+                  !item.attachment &&
+                  item.id !== carrier.id &&
+                  !isDescendant(item.id, carrier.id),
+              )
+              .forEach((item) => {
+                const option = document.createElement("option");
+                option.value = item.id;
+                option.textContent = `${"  ".repeat(item.depth)}${item.name}`;
+                option.selected = item.id === effectiveParentId;
+                el.arrowParentSelect.appendChild(option);
+              });
+          }
+          el.arrowParentSelect.disabled = !arrowPiece || isBindingMode();
+        }
+        if (el.arrowBindParentBtn) {
+          el.arrowBindParentBtn.disabled = !arrowPiece || isBindingMode();
+        }
+        if (el.arrowUnbindParentBtn) {
+          el.arrowUnbindParentBtn.disabled = !arrowPiece || isBindingMode() || !arrowParentAtFrame(arrowPiece);
+        }
 
         el.parentSelect.innerHTML = '<option value="">无</option>';
+        const slashFxPiece = selectedSlashFxPiece();
+        if (el.slashFxVisibilityRow) el.slashFxVisibilityRow.hidden = !slashFxPiece || isBindingMode();
+        if (el.slashFxShowBtn) el.slashFxShowBtn.disabled = !slashFxPiece || isBindingMode();
+        if (el.slashFxHideBtn) el.slashFxHideBtn.disabled = !slashFxPiece || isBindingMode();
+        if (el.slashFxActionVisibilityBtn) {
+          const hiddenForAction = slashFxPiece ? isSlashFxHiddenForCurrentAction(slashFxPiece) : false;
+          el.slashFxActionVisibilityBtn.disabled = !slashFxPiece || isBindingMode();
+          el.slashFxActionVisibilityBtn.textContent = hiddenForAction
+            ? "本动作显示刀光"
+            : "本动作隐藏刀光";
+          el.slashFxActionVisibilityBtn.classList.toggle("active", hiddenForAction);
+        }
+        const slashFxCarrier = slashFxPiece ? slashFxCarrierBoneForPiece(slashFxPiece) : null;
+        if (el.slashFxParentRow) el.slashFxParentRow.hidden = !slashFxPiece || isBindingMode();
+        if (el.slashFxParentSelect) {
+          el.slashFxParentSelect.innerHTML = '<option value="">无临时父节点</option>';
+          if (slashFxPiece && slashFxCarrier) {
+            const effectiveParentId = slashFxParentAtFrame(slashFxPiece);
+            sortedNodes()
+              .filter(
+                (item) =>
+                  !item.attachment &&
+                  item.id !== slashFxCarrier.id &&
+                  !isDescendant(item.id, slashFxCarrier.id),
+              )
+              .forEach((item) => {
+                const option = document.createElement("option");
+                option.value = item.id;
+                option.textContent = `${"  ".repeat(item.depth)}${item.name}`;
+                option.selected = item.id === effectiveParentId;
+                el.slashFxParentSelect.appendChild(option);
+              });
+          }
+          el.slashFxParentSelect.disabled = !slashFxPiece || isBindingMode();
+        }
+        if (el.slashFxBindParentBtn) {
+          el.slashFxBindParentBtn.disabled = !slashFxPiece || isBindingMode();
+        }
+        if (el.slashFxUnbindParentBtn) {
+          el.slashFxUnbindParentBtn.disabled =
+            !slashFxPiece || isBindingMode() || !slashFxParentAtFrame(slashFxPiece);
+        }
+
         sortedNodes()
           .filter((item) => item.id !== node.id && !isDescendant(item.id, node.id))
           .forEach((item) => {
@@ -3729,20 +4425,36 @@
 
       function renderBindingPanel() {
         if (!el.weaponImageSelect) return;
-        if (!el.createBowRigBtn && el.bindingPanel) {
+        if ((!el.createBowRigBtn || !el.createArrowRigBtn || !el.createSlashFxRigBtn) && el.bindingPanel) {
           const row = document.createElement("div");
           row.className = "button-row";
-          const button = document.createElement("button");
-          button.id = "createBowRigBtn";
-          button.type = "button";
-          button.className = "primary";
-          button.textContent = "Create Bow Rig";
-          row.appendChild(button);
+          const bowButton = document.createElement("button");
+          bowButton.id = "createBowRigBtn";
+          bowButton.type = "button";
+          bowButton.className = "primary";
+          bowButton.textContent = "创建弓骨骼";
+          row.appendChild(bowButton);
+          const arrowButton = document.createElement("button");
+          arrowButton.id = "createArrowRigBtn";
+          arrowButton.type = "button";
+          arrowButton.className = "primary";
+          arrowButton.textContent = "创建箭矢骨骼";
+          row.appendChild(arrowButton);
+          const slashFxButton = document.createElement("button");
+          slashFxButton.id = "createSlashFxRigBtn";
+          slashFxButton.type = "button";
+          slashFxButton.className = "primary";
+          slashFxButton.textContent = "创建刀光骨骼";
+          row.appendChild(slashFxButton);
           const anchor = el.bindingPanel.querySelector(".form-grid");
           if (anchor) {
             el.bindingPanel.insertBefore(row, anchor);
-            el.createBowRigBtn = button;
+            el.createBowRigBtn = bowButton;
+            el.createArrowRigBtn = arrowButton;
+            el.createSlashFxRigBtn = slashFxButton;
             el.createBowRigBtn.addEventListener("click", createBowRigFromSelectedPiece);
+            el.createArrowRigBtn.addEventListener("click", promptArrowRigImageFile);
+            el.createSlashFxRigBtn.addEventListener("click", promptSlashFxRigImageFile);
           }
         }
         const weapon = selectedWeaponNode();
@@ -3754,6 +4466,12 @@
         const transform = piece ? pieceTransform(piece) : null;
         if (el.createBowRigBtn) {
           el.createBowRigBtn.disabled = !piece?.attachment?.image;
+        }
+        if (el.createArrowRigBtn) {
+          el.createArrowRigBtn.disabled = false;
+        }
+        if (el.createSlashFxRigBtn) {
+          el.createSlashFxRigBtn.disabled = false;
         }
         [el.pieceXInput, el.pieceYInput, el.pieceScaleInput, el.pieceRotationInput].forEach((input) => {
           input.disabled = !piece;
@@ -3984,12 +4702,22 @@
           customImages: Object.keys(state.customImages || {}).length ? state.customImages : undefined,
           nodes: state.nodes,
           timelines: state.timelines,
+          arrowVisibilityTracks: cloneArrowVisibilityTracks(state.arrowVisibilityTracks),
+          arrowParentTracks: cloneArrowParentTracks(state.arrowParentTracks),
+          slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks),
+          slashFxParentTracks: cloneSlashFxParentTracks(state.slashFxParentTracks),
+          slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap),
           selectedActionId: state.selectedActionId,
           actions: state.actions.map((action) => ({
             id: action.id,
             name: action.name,
             duration: action.duration,
             timelines: cloneTimelines(action.timelines),
+            arrowVisibilityTracks: cloneArrowVisibilityTracks(action.arrowVisibilityTracks),
+            arrowParentTracks: cloneArrowParentTracks(action.arrowParentTracks),
+            slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(action.slashFxVisibilityTracks),
+            slashFxParentTracks: cloneSlashFxParentTracks(action.slashFxParentTracks),
+            slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(action.slashFxActionHiddenMap),
           })),
         };
       }
@@ -4009,6 +4737,11 @@
         state.pendingFreeBoneStart = null;
         state.playing = false;
         dynamicScarves.clear();
+        state.arrowVisibilityTracks = cloneArrowVisibilityTracks(data.arrowVisibilityTracks);
+        state.arrowParentTracks = cloneArrowParentTracks(data.arrowParentTracks);
+        state.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(data.slashFxVisibilityTracks);
+        state.slashFxParentTracks = cloneSlashFxParentTracks(data.slashFxParentTracks);
+        state.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(data.slashFxActionHiddenMap);
         restoreCustomImages(data.customImages);
         state.nodes = data.nodes.map((node) => ({
           id: String(node.id || uid("node")),
@@ -4021,6 +4754,7 @@
           scaleX: Math.max(0.05, Number(node.scaleX) || 1),
           scaleY: Math.max(0.05, Number(node.scaleY) || 1),
           color: /^#[0-9a-f]{6}$/i.test(node.color) ? node.color : "#35b6b4",
+          visible: node.visible !== false,
           role: String(node.role || node.partId || ""),
           bowRig: normalizeBowRig(node.bowRig),
           bindPose: normalizeBindPose(node.bindPose || node),
@@ -4137,6 +4871,11 @@
               name: String(action.name || `动作 ${index + 1}`),
               duration,
               timelines: normalizeTimelineMap(action.timelines || {}, duration),
+              arrowVisibilityTracks: cloneArrowVisibilityTracks(action.arrowVisibilityTracks),
+              arrowParentTracks: cloneArrowParentTracks(action.arrowParentTracks),
+              slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(action.slashFxVisibilityTracks),
+              slashFxParentTracks: cloneSlashFxParentTracks(action.slashFxParentTracks),
+              slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(action.slashFxActionHiddenMap),
             };
           })
           .filter(Boolean);
@@ -4156,6 +4895,7 @@
               length: Math.max(4, Number(item.length) || 80),
               scaleX: Math.max(0.05, Number(item.scaleX) || 1),
               scaleY: Math.max(0.05, Number(item.scaleY) || 1),
+              visible: item.visible !== false,
               ...(Number.isFinite(Number(item.bowGroupRotation))
                 ? { bowGroupRotation: Number(item.bowGroupRotation) }
                 : {}),
@@ -4337,6 +5077,7 @@
             length: source.length,
             scaleX: source.scaleX,
             scaleY: source.scaleY,
+            visible: source.visible !== false,
           };
           const rig = this.rigFromPose(node, source);
           if (!rig) return snap;
@@ -4522,6 +5263,7 @@
               nodes.control.bowRig = normalizeBowRig(model.rig);
               syncBowRigFromModel(nodes.control);
               BowRigController.persistKeyframe(nodes.control);
+              state.selectedKey = { nodeId: nodes.control.id, frame: state.currentFrame };
               const remainingPatch = { ...patch };
               delete remainingPatch.rotation;
               if (!Object.keys(remainingPatch).length) {
@@ -4557,7 +5299,8 @@
           }
         } else {
           Object.assign(node, patch);
-          syncKeyAtCurrentFrame(node);
+          upsertKeyframe(node, snapshotNode(node));
+          state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
           snapshotAllBowRigsAtCurrentFrame();
         }
         if (shouldRender) renderAll();
@@ -4648,13 +5391,24 @@
 
       function snapshotNode(node) {
         const override = poseOverrides.get(node.id);
-        const source = override ? { ...node, ...override } : node;
+        const source = override ? { ...node, ...override } : { ...node };
+        if (!isBindingMode()) {
+          source.visible = getLocalPose(node, state.currentFrame).visible !== false;
+        }
         return BowRigController.snapshot(node, source, state.currentFrame);
       }
 
       function copyPoseAtFrame(source, frame = state.currentFrame) {
         const node = source?.id ? state.nodes.find((item) => item.id === source.id) || source : source;
         return BowRigController.snapshot(node, source, frame);
+      }
+
+      function visibilitySnapshotAtCurrentFrame(node, visible) {
+        return {
+          ...copyPoseAtFrame(getLocalPose(node, state.currentFrame), state.currentFrame),
+          frame: state.currentFrame,
+          visible,
+        };
       }
 
       function sourceSnapshotNode(node) {
@@ -4712,6 +5466,145 @@
         toast(deleted ? `已删除第 ${frame + 1} 帧的 ${deleted} 个关键帧` : `第 ${frame + 1} 帧没有关键帧`);
       }
 
+      function setSelectedArrowVisibilityAtCurrentFrame(visible) {
+        if (isBindingMode()) {
+          toast("箭矢显隐关键帧只能在动画模式下使用");
+          return;
+        }
+        const piece = selectedArrowPiece();
+        const nodes = arrowRigNodesForPiece(piece);
+        if (!nodes.length) {
+          toast("请先选中箭矢骨骼");
+          return;
+        }
+        const track = normalizeArrowVisibilityTrack([
+          ...(state.arrowVisibilityTracks?.[piece.id] || legacyArrowVisibilityTrackForPiece(piece)).filter(
+            (item) => item.frame !== state.currentFrame,
+          ),
+          { frame: state.currentFrame, visible },
+        ]);
+        state.arrowVisibilityTracks[piece.id] = track;
+        state.selectedNodeId = nodes[0].id;
+        state.selectedPieceNodeId = piece?.id || null;
+        state.selectedKey = null;
+        renderAll();
+        toast(`箭矢将从第 ${state.currentFrame + 1} 帧${visible ? "出现" : "消失"}`);
+      }
+
+      function setSelectedArrowParentAtCurrentFrame(parentId) {
+        if (isBindingMode()) {
+          toast("箭矢父节点事件只能在动画模式下使用");
+          return;
+        }
+        const piece = selectedArrowPiece();
+        const bone = arrowCarrierBoneForPiece(piece);
+        if (!piece || !bone) {
+          toast("请先选中箭矢骨骼");
+          return;
+        }
+        if (parentId && parentId === bone.id) {
+          toast("箭矢不能绑定到自身");
+          return;
+        }
+        const currentTrack = normalizeArrowParentTrack(state.arrowParentTracks?.[piece.id]);
+        const previousParentId = arrowParentAtFrame(piece, state.currentFrame);
+        const nextFrame = currentTrack.find((item) => item.frame > state.currentFrame)?.frame ?? Infinity;
+        convertNodeKeysToParentContext(bone, previousParentId, parentId, state.currentFrame, nextFrame);
+        state.arrowParentTracks[piece.id] = normalizeArrowParentTrack([
+          ...currentTrack.filter((item) => item.frame !== state.currentFrame),
+          { frame: state.currentFrame, parentId: parentId || null },
+        ]);
+        state.selectedNodeId = bone.id;
+        state.selectedPieceNodeId = piece.id;
+        state.selectedKey = { nodeId: bone.id, frame: state.currentFrame };
+        renderAll();
+        toast(
+          parentId
+            ? `箭矢将从第 ${state.currentFrame + 1} 帧开始绑定父节点`
+            : `箭矢将从第 ${state.currentFrame + 1} 帧开始解绑父节点`,
+        );
+      }
+
+      function setSelectedSlashFxVisibilityAtCurrentFrame(visible) {
+        if (isBindingMode()) {
+          toast("刀光显隐关键帧只能在动画模式下使用");
+          return;
+        }
+        const piece = selectedSlashFxPiece();
+        const nodes = slashFxRigNodesForPiece(piece);
+        if (!nodes.length) {
+          toast("请先选中刀光骨骼");
+          return;
+        }
+        state.slashFxVisibilityTracks[piece.id] = normalizeSlashFxVisibilityTrack([
+          ...(state.slashFxVisibilityTracks?.[piece.id] || []).filter((item) => item.frame !== state.currentFrame),
+          { frame: state.currentFrame, visible },
+        ]);
+        state.selectedNodeId = nodes[0].id;
+        state.selectedPieceNodeId = piece?.id || null;
+        state.selectedKey = null;
+        renderAll();
+        toast(`刀光将从第 ${state.currentFrame + 1} 帧${visible ? "出现" : "消失"}`);
+      }
+
+      function toggleSelectedSlashFxHiddenForAction() {
+        if (isBindingMode()) {
+          toast("刀光动作显隐开关只能在动画模式下使用");
+          return;
+        }
+        const piece = selectedSlashFxPiece();
+        const nodes = slashFxRigNodesForPiece(piece);
+        if (!nodes.length || !piece) {
+          toast("请先选中刀光骨骼");
+          return;
+        }
+        const nextHidden = !isSlashFxHiddenForCurrentAction(piece);
+        if (nextHidden) {
+          state.slashFxActionHiddenMap[piece.id] = true;
+        } else {
+          delete state.slashFxActionHiddenMap[piece.id];
+        }
+        state.selectedNodeId = nodes[0].id;
+        state.selectedPieceNodeId = piece.id;
+        state.selectedKey = null;
+        renderAll();
+        toast(nextHidden ? "当前动作已隐藏刀光" : "当前动作已恢复刀光显示");
+      }
+
+      function setSelectedSlashFxParentAtCurrentFrame(parentId) {
+        if (isBindingMode()) {
+          toast("刀光父节点事件只能在动画模式下使用");
+          return;
+        }
+        const piece = selectedSlashFxPiece();
+        const bone = slashFxCarrierBoneForPiece(piece);
+        if (!piece || !bone) {
+          toast("请先选中刀光骨骼");
+          return;
+        }
+        if (parentId && parentId === bone.id) {
+          toast("刀光不能绑定到自身");
+          return;
+        }
+        const currentTrack = normalizeSlashFxParentTrack(state.slashFxParentTracks?.[piece.id]);
+        const previousParentId = slashFxParentAtFrame(piece, state.currentFrame);
+        const nextFrame = currentTrack.find((item) => item.frame > state.currentFrame)?.frame ?? Infinity;
+        convertNodeKeysToParentContext(bone, previousParentId, parentId, state.currentFrame, nextFrame);
+        state.slashFxParentTracks[piece.id] = normalizeSlashFxParentTrack([
+          ...currentTrack.filter((item) => item.frame !== state.currentFrame),
+          { frame: state.currentFrame, parentId: parentId || null },
+        ]);
+        state.selectedNodeId = bone.id;
+        state.selectedPieceNodeId = piece.id;
+        state.selectedKey = { nodeId: bone.id, frame: state.currentFrame };
+        renderAll();
+        toast(
+          parentId
+            ? `刀光将从第 ${state.currentFrame + 1} 帧开始绑定父节点`
+            : `刀光将从第 ${state.currentFrame + 1} 帧开始解绑父节点`,
+        );
+      }
+
       function keyDragEntries(nodeId, keyframe, mode = state.keyMoveMode) {
         const sourceFrame = keyframe.frame;
         if (mode !== "all") return [{ nodeId, keyframe, sourceFrame }];
@@ -4732,6 +5625,11 @@
         if (!action) return;
         action.duration = state.duration;
         action.timelines = cloneTimelines(state.timelines);
+        action.arrowVisibilityTracks = cloneArrowVisibilityTracks(state.arrowVisibilityTracks);
+        action.arrowParentTracks = cloneArrowParentTracks(state.arrowParentTracks);
+        action.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks);
+        action.slashFxParentTracks = cloneSlashFxParentTracks(state.slashFxParentTracks);
+        action.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap);
       }
 
       function createActionSnapshot(name, id = uid("action")) {
@@ -4740,6 +5638,11 @@
           name: String(name || "未命名动作"),
           duration: state.duration,
           timelines: cloneTimelines(state.timelines),
+          arrowVisibilityTracks: cloneArrowVisibilityTracks(state.arrowVisibilityTracks),
+          arrowParentTracks: cloneArrowParentTracks(state.arrowParentTracks),
+          slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks),
+          slashFxParentTracks: cloneSlashFxParentTracks(state.slashFxParentTracks),
+          slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap),
         };
       }
 
@@ -4769,6 +5672,11 @@
           name: String(name || suggested),
           duration: state.duration,
           timelines: currentPoseTimelines(),
+          arrowVisibilityTracks: cloneArrowVisibilityTracks(state.arrowVisibilityTracks),
+          arrowParentTracks: cloneArrowParentTracks(state.arrowParentTracks),
+          slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks),
+          slashFxParentTracks: cloneSlashFxParentTracks(state.slashFxParentTracks),
+          slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap),
         };
         state.actions.push(action);
         selectAction(action.id);
@@ -4785,6 +5693,11 @@
         action.name = el.actionNameInput.value.trim() || action.name || "未命名动作";
         action.duration = state.duration;
         action.timelines = cloneTimelines(state.timelines);
+        action.arrowVisibilityTracks = cloneArrowVisibilityTracks(state.arrowVisibilityTracks);
+        action.arrowParentTracks = cloneArrowParentTracks(state.arrowParentTracks);
+        action.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks);
+        action.slashFxParentTracks = cloneSlashFxParentTracks(state.slashFxParentTracks);
+        action.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap);
         renderAll();
         await saveProjectJsonFile({ suggestedPath: defaultProjectSavePath() });
       }
@@ -4811,6 +5724,11 @@
         poseOverrides.clear();
         dynamicScarves.clear();
         state.timelines = cloneTimelines(nextAction.timelines);
+        state.arrowVisibilityTracks = cloneArrowVisibilityTracks(nextAction.arrowVisibilityTracks);
+        state.arrowParentTracks = cloneArrowParentTracks(nextAction.arrowParentTracks);
+        state.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(nextAction.slashFxVisibilityTracks);
+        state.slashFxParentTracks = cloneSlashFxParentTracks(nextAction.slashFxParentTracks);
+        state.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(nextAction.slashFxActionHiddenMap);
         hydrateBowRigTimelineMap(state.timelines);
         syncCurrentActionFromTimeline();
         renderAll();
@@ -4862,6 +5780,11 @@
         poseOverrides.clear();
         dynamicScarves.clear();
         state.timelines = cloneTimelines(action.timelines);
+        state.arrowVisibilityTracks = cloneArrowVisibilityTracks(action.arrowVisibilityTracks);
+        state.arrowParentTracks = cloneArrowParentTracks(action.arrowParentTracks);
+        state.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(action.slashFxVisibilityTracks);
+        state.slashFxParentTracks = cloneSlashFxParentTracks(action.slashFxParentTracks);
+        state.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(action.slashFxActionHiddenMap);
         hydrateBowRigTimelineMap(state.timelines);
         syncCurrentActionFromTimeline();
         renderAll();
@@ -4890,6 +5813,7 @@
         }
         const nodes = sortedNodes().reverse();
         for (const node of nodes) {
+          if (!isNodeVisibleAtFrame(node)) continue;
           const pose = worldPose(node);
           const end = endPoint(pose);
           if (distance(point, end) <= 12) {
@@ -4915,24 +5839,29 @@
 
       function hitTestSelectedPiece(point) {
         const piece = selectedPieceNode();
-        if (!piece) return null;
+        if (!piece || !isNodeVisibleAtFrame(piece)) return null;
         const handles = pieceHandlePoints(piece);
         if (distance(point, handles.rotate) <= 12) return { type: "piece-rotate", node: piece };
         for (const corner of handles.corners) {
           if (distance(point, corner) <= 12) return { type: "piece-scale", node: piece };
         }
         const corners = pieceCorners(piece);
-        if (corners && pointInPolygon(point, corners)) return { type: "piece", node: piece };
+        if (corners && pointInPolygon(point, corners)) {
+          return proxyHitForArrowPieceBody(piece) || proxyHitForSlashFxPieceBody(piece) || { type: "piece", node: piece };
+        }
         return null;
       }
 
       function hitTestPiece(point) {
         const pieces = pieceNodes()
+          .filter((piece) => isNodeVisibleAtFrame(piece))
           .slice()
           .sort((a, b) => (b.attachment?.layer || 0) - (a.attachment?.layer || 0));
         for (const piece of pieces) {
           const corners = pieceCorners(piece);
-          if (corners && pointInPolygon(point, corners)) return { type: "piece", node: piece };
+          if (corners && pointInPolygon(point, corners)) {
+            return proxyHitForArrowPieceBody(piece) || proxyHitForSlashFxPieceBody(piece) || { type: "piece", node: piece };
+          }
         }
         return null;
       }
@@ -4966,6 +5895,7 @@
       }
 
       function hitTestStretchNode(point, node) {
+        if (!isNodeVisibleAtFrame(node)) return null;
         const pose = worldPose(node);
         const end = endPoint(pose);
         if (distance(point, end) <= 14) {
@@ -4978,11 +5908,16 @@
       }
 
       function firstChildOf(parentId) {
-        return sortedNodes().find((node) => node.parentId === parentId) || null;
+        return (
+          sortedNodes().find(
+            (node) => effectiveParentIdForNode(node) === parentId && participatesInGenericJointSolver(node),
+          ) || null
+        );
       }
 
       function startJointId(node) {
-        return node.parentId ? endJointId({ id: node.parentId }) : `base:${node.id}`;
+        const effectiveParentId = effectiveParentIdForNode(node);
+        return effectiveParentId ? endJointId({ id: effectiveParentId }) : `base:${node.id}`;
       }
 
       function endJointId(node) {
@@ -5006,8 +5941,9 @@
       }
 
       function localFromWorld(node, world) {
-        if (!node.parentId) return world;
-        const parent = state.nodes.find((item) => item.id === node.parentId);
+        const effectiveParentId = effectiveParentIdForNode(node);
+        if (!effectiveParentId) return world;
+        const parent = state.nodes.find((item) => item.id === effectiveParentId);
         if (!parent) return world;
         const p = worldPose(parent);
         const anchor = endPoint(p);
@@ -5039,7 +5975,7 @@
       function solveGenericJointDrag(jointId, targetWorld) {
         const positions = captureJointPositions();
         positions[jointId] = { x: targetWorld.x, y: targetWorld.y };
-        const edges = state.nodes.map((node) => ({
+        const edges = state.nodes.filter((node) => participatesInGenericJointSolver(node)).map((node) => ({
           node,
           startId: startJointId(node),
           endId: endJointId(node),
@@ -5081,6 +6017,7 @@
       function captureJointPositions() {
         const positions = {};
         sortedNodes().forEach((node) => {
+          if (!participatesInGenericJointSolver(node)) return;
           const pose = worldPose(node);
           positions[startJointId(node)] = { x: pose.worldX, y: pose.worldY };
           positions[endJointId(node)] = endPoint(pose);
@@ -5090,6 +6027,7 @@
 
       function applySolvedJointPositions(positions) {
         sortedNodes().forEach((node) => {
+          if (!participatesInGenericJointSolver(node)) return;
           const start = positions[startJointId(node)];
           const end = positions[endJointId(node)];
           if (!start || !end) return;
@@ -5332,6 +6270,11 @@
         state.bindingBoneTool = null;
         state.pendingFreeBoneStart = null;
         state.customImages = {};
+        state.arrowVisibilityTracks = {};
+        state.arrowParentTracks = {};
+        state.slashFxVisibilityTracks = {};
+        state.slashFxParentTracks = {};
+        state.slashFxActionHiddenMap = {};
         state.playing = false;
         state.nodes = [
           {
@@ -5681,7 +6624,7 @@
           format: "spine-node-timeline-editor",
           version: 1,
           name: "新版",
-          fps: 24,
+          fps: 36,
           duration: 47,
           nodes,
           timelines: jumpTimelines,
@@ -5785,7 +6728,7 @@
 
       function loadSample() {
         applyProjectData({
-          fps: 24,
+          fps: 36,
           duration: 96,
           nodes: [
             {
@@ -5888,7 +6831,7 @@
             scaleY: 1,
           }));
         applyProjectData({
-          fps: 24,
+          fps: 36,
           duration: 48,
           nodes: [
             {
@@ -6278,7 +7221,7 @@
           scaleY: 1,
         });
         applyProjectData({
-          fps: 24,
+          fps: 36,
           duration: 48,
           nodes: [
             {
@@ -6878,6 +7821,92 @@
           y: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
         };
       }
+
+      function worldPoseFromParentContext(localPose, parentId, frame) {
+        const anchoredLocal = parentId ? { ...localPose, x: 0, y: 0 } : localPose;
+        if (!parentId) {
+          return {
+            ...anchoredLocal,
+            worldX: anchoredLocal.x,
+            worldY: anchoredLocal.y,
+            worldRotation: anchoredLocal.rotation,
+            worldScaleX: anchoredLocal.scaleX,
+            worldScaleY: anchoredLocal.scaleY,
+          };
+        }
+        const parent = state.nodes.find((node) => node.id === parentId);
+        if (!parent) {
+          return {
+            ...anchoredLocal,
+            worldX: anchoredLocal.x,
+            worldY: anchoredLocal.y,
+            worldRotation: anchoredLocal.rotation,
+            worldScaleX: anchoredLocal.scaleX,
+            worldScaleY: anchoredLocal.scaleY,
+          };
+        }
+        const parentPose = worldPose(parent, frame);
+        const worldPoint = worldFromLocalByParentPose(parentPose, anchoredLocal);
+        return {
+          ...anchoredLocal,
+          worldX: worldPoint.x,
+          worldY: worldPoint.y,
+          worldRotation: parentPose.worldRotation + anchoredLocal.rotation,
+          worldScaleX: parentPose.worldScaleX * anchoredLocal.scaleX,
+          worldScaleY: parentPose.worldScaleY * anchoredLocal.scaleY,
+        };
+      }
+
+      function localPoseForParentContext(worldPoseLike, parentId, frame) {
+        if (!parentId) {
+          return {
+            x: worldPoseLike.worldX,
+            y: worldPoseLike.worldY,
+            rotation: worldPoseLike.worldRotation,
+            length: worldPoseLike.length,
+            scaleX: worldPoseLike.worldScaleX,
+            scaleY: worldPoseLike.worldScaleY,
+          };
+        }
+        const parent = state.nodes.find((node) => node.id === parentId);
+        if (!parent) {
+          return {
+            x: worldPoseLike.worldX,
+            y: worldPoseLike.worldY,
+            rotation: worldPoseLike.worldRotation,
+            length: worldPoseLike.length,
+            scaleX: worldPoseLike.worldScaleX,
+            scaleY: worldPoseLike.worldScaleY,
+          };
+        }
+        const parentPose = worldPose(parent, frame);
+        const localPoint = localFromWorldByParentPose(parentPose, {
+          x: worldPoseLike.worldX,
+          y: worldPoseLike.worldY,
+        });
+        return {
+          x: 0,
+          y: 0,
+          rotation: worldPoseLike.worldRotation - parentPose.worldRotation,
+          length: worldPoseLike.length,
+          scaleX: worldPoseLike.worldScaleX / (parentPose.worldScaleX || 1),
+          scaleY: worldPoseLike.worldScaleY / (parentPose.worldScaleY || 1),
+        };
+      }
+
+      function convertNodeKeysToParentContext(node, fromParentId, toParentId, frameStart, frameEndExclusive = Infinity) {
+        const keys = state.timelines[node.id] || [];
+        if (!keys.some((item) => item.frame === frameStart)) {
+          upsertKeyframe(node, copyPoseAtFrame(getLocalPose(node, frameStart), frameStart));
+        }
+        (state.timelines[node.id] || []).forEach((keyframe) => {
+          if (keyframe.frame < frameStart || keyframe.frame >= frameEndExclusive) return;
+          const worldPoseLike = worldPoseFromParentContext(keyframe, fromParentId, keyframe.frame);
+          const localPose = localPoseForParentContext(worldPoseLike, toParentId, keyframe.frame);
+          Object.assign(keyframe, localPose);
+        });
+      }
+
 
       function poseFromNodeAndParent(node, parentPose = null) {
         if (!parentPose) {
@@ -7559,15 +8588,184 @@
           state.selectedKey = null;
           dynamicScarves.clear();
           renderAll();
-          toast("Bow rig created");
+          toast("已创建弓骨骼");
         } catch (error) {
           toast(error instanceof Error ? error.message : String(error));
         }
       }
 
+      function promptArrowRigImageFile() {
+        if (!isBindingMode()) setWorkspaceMode("binding");
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/png,image/jpeg,image/webp";
+        input.addEventListener(
+          "change",
+          async () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            try {
+              await createArrowRigFromFile(file);
+            } catch (error) {
+              toast(error instanceof Error ? error.message : String(error));
+            }
+          },
+          { once: true },
+        );
+        input.click();
+      }
+
+      async function createArrowRigFromFile(file) {
+        const [image, src] = await Promise.all([loadFileImage(file), readFileAsDataUrl(file)]);
+        const customImageId = `${customImagePrefix}arrow-${uid("image")}`;
+        registerCustomImage(customImageId, file.name, src);
+        warriorImages[customImageId] = image;
+        const imageWidth = Math.max(1, image.naturalWidth || image.width || 1);
+        const imageHeight = Math.max(1, image.naturalHeight || image.height || 1);
+        const baseName = String(file.name || "arrow")
+          .replace(/\.[^.]+$/, "")
+          .trim()
+          .replace(/\s+/g, "_") || "arrow";
+        const scale = Math.min(1, 140 / Math.max(imageWidth, imageHeight));
+        const horizontal = imageWidth >= imageHeight;
+        const boneLength = Math.max(12, (horizontal ? imageWidth : imageHeight) * scale);
+        const center = { x: 420, y: 330 };
+        const halfLength = boneLength * 0.5;
+        const startWorld = horizontal
+          ? { x: center.x - halfLength, y: center.y }
+          : { x: center.x, y: center.y - halfLength };
+        const endWorld = horizontal
+          ? { x: center.x + halfLength, y: center.y }
+          : { x: center.x, y: center.y + halfLength };
+        const arrowBone = createBindingBone(
+          `${baseName}_arrow_bone`,
+          startWorld,
+          endWorld,
+          "#d8d2bd",
+          "arrow",
+          null,
+          null,
+        );
+        const arrowPiece = createGeneratedPieceNode(
+          `${baseName}_arrow`,
+          customImageId,
+          {
+            x: -boneLength * 0.5,
+            y: 0,
+            scale,
+            rotation: 0,
+            anchorX: 0.5,
+            anchorY: 0.5,
+            parentBoneId: arrowBone.id,
+          },
+          24 + pieceNodes().length,
+          [arrowBone.id],
+        );
+        arrowPiece.role = "arrow-piece";
+        arrowBone.bindPose = normalizeBindPose(arrowBone);
+        state.nodes.push(arrowBone, arrowPiece);
+        state.timelines[arrowBone.id] = [];
+        state.timelines[arrowPiece.id] = [];
+        state.arrowVisibilityTracks[arrowPiece.id] = [];
+        state.arrowParentTracks[arrowPiece.id] = [];
+        state.selectedPieceNodeId = arrowPiece.id;
+        state.selectedNodeId = arrowBone.id;
+        state.selectedKey = null;
+        dynamicScarves.clear();
+        renderAll();
+        toast("已创建箭矢骨骼");
+      }
+
+      function promptSlashFxRigImageFile() {
+        if (!isBindingMode()) setWorkspaceMode("binding");
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/png,image/jpeg,image/webp";
+        input.addEventListener(
+          "change",
+          async () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            try {
+              await createSlashFxRigFromFile(file);
+            } catch (error) {
+              toast(error instanceof Error ? error.message : String(error));
+            }
+          },
+          { once: true },
+        );
+        input.click();
+      }
+
+      async function createSlashFxRigFromFile(file) {
+        const [image, src] = await Promise.all([loadFileImage(file), readFileAsDataUrl(file)]);
+        const customImageId = `${customImagePrefix}slash-fx-${uid("image")}`;
+        registerCustomImage(customImageId, file.name, src);
+        warriorImages[customImageId] = image;
+        const imageWidth = Math.max(1, image.naturalWidth || image.width || 1);
+        const imageHeight = Math.max(1, image.naturalHeight || image.height || 1);
+        const baseName = String(file.name || "slash_fx")
+          .replace(/\.[^.]+$/, "")
+          .trim()
+          .replace(/\s+/g, "_") || "slash_fx";
+        const scale = Math.min(1.3, 180 / Math.max(imageWidth, imageHeight));
+        const horizontal = imageWidth >= imageHeight;
+        const boneLength = Math.max(12, (horizontal ? imageWidth : imageHeight) * scale);
+        const center = { x: 420, y: 330 };
+        const halfLength = boneLength * 0.5;
+        const startWorld = horizontal
+          ? { x: center.x - halfLength, y: center.y }
+          : { x: center.x, y: center.y - halfLength };
+        const endWorld = horizontal
+          ? { x: center.x + halfLength, y: center.y }
+          : { x: center.x, y: center.y + halfLength };
+        const slashFxBone = createBindingBone(
+          `${baseName}_slash_fx_bone`,
+          startWorld,
+          endWorld,
+          "#f0efe7",
+          "slash-fx",
+          null,
+          null,
+        );
+        const slashFxPiece = createGeneratedPieceNode(
+          `${baseName}_slash_fx`,
+          customImageId,
+          {
+            x: -boneLength * 0.5,
+            y: 0,
+            scale,
+            rotation: 0,
+            anchorX: 0.5,
+            anchorY: 0.5,
+            parentBoneId: slashFxBone.id,
+          },
+          24 + pieceNodes().length,
+          [slashFxBone.id],
+        );
+        slashFxPiece.role = "slash-fx-piece";
+        slashFxBone.bindPose = normalizeBindPose(slashFxBone);
+        state.nodes.push(slashFxBone, slashFxPiece);
+        state.timelines[slashFxBone.id] = [];
+        state.timelines[slashFxPiece.id] = [];
+        state.slashFxVisibilityTracks[slashFxPiece.id] = [];
+        state.slashFxParentTracks[slashFxPiece.id] = [];
+        state.selectedPieceNodeId = slashFxPiece.id;
+        state.selectedNodeId = slashFxBone.id;
+        state.selectedKey = null;
+        dynamicScarves.clear();
+        renderAll();
+        toast("已创建刀光骨骼");
+      }
+
       function deleteSelectedPiece() {
         const piece = selectedPieceNode();
         if (!piece) return;
+        if (piece.role === "arrow-piece") delete state.arrowVisibilityTracks[piece.id];
+        if (piece.role === "arrow-piece") delete state.arrowParentTracks[piece.id];
+        if (piece.role === "slash-fx-piece") delete state.slashFxVisibilityTracks[piece.id];
+        if (piece.role === "slash-fx-piece") delete state.slashFxParentTracks[piece.id];
+        if (piece.role === "slash-fx-piece") delete state.slashFxActionHiddenMap[piece.id];
         if (piece.role === "piece" && !boundBoneIdsForPiece(piece).length) {
           state.nodes = state.nodes.filter((node) => node.id !== piece.id);
           delete state.timelines[piece.id];
@@ -7652,6 +8850,8 @@
         el.deleteNodeBtn.addEventListener("click", () => {
           const node = selectedNode();
           if (!node) return;
+          const arrowPiece = arrowPieceForNode(node);
+          const slashFxPiece = slashFxPieceForNode(node);
           if (state.nodes.length === 1) {
             toast("至少保留一个节点");
             return;
@@ -7666,6 +8866,11 @@
               item.attachment.skinBoneIds = item.attachment.skinBoneIds.filter((id) => id !== node.id);
             }
           });
+          if (arrowPiece?.id) delete state.arrowParentTracks[arrowPiece.id];
+          if (arrowPiece?.id) delete state.arrowVisibilityTracks[arrowPiece.id];
+          if (slashFxPiece?.id) delete state.slashFxParentTracks[slashFxPiece.id];
+          if (slashFxPiece?.id) delete state.slashFxVisibilityTracks[slashFxPiece.id];
+          if (slashFxPiece?.id) delete state.slashFxActionHiddenMap[slashFxPiece.id];
           if (state.selectedPieceNodeId === node.id) state.selectedPieceNodeId = null;
           state.selectedNodeId = state.nodes[0]?.id || null;
           state.selectedKey = null;
@@ -7685,6 +8890,39 @@
           renderAll();
         });
         el.keyframeBtn.addEventListener("click", () => addKeyframe());
+        if (el.arrowShowBtn) el.arrowShowBtn.addEventListener("click", () => setSelectedArrowVisibilityAtCurrentFrame(true));
+        if (el.arrowHideBtn) el.arrowHideBtn.addEventListener("click", () => setSelectedArrowVisibilityAtCurrentFrame(false));
+        if (el.arrowBindParentBtn) {
+          el.arrowBindParentBtn.addEventListener("click", () => {
+            const parentId = el.arrowParentSelect?.value || null;
+            if (!parentId) {
+              toast("请先选择箭矢临时父节点");
+              return;
+            }
+            setSelectedArrowParentAtCurrentFrame(parentId);
+          });
+        }
+        if (el.arrowUnbindParentBtn) {
+          el.arrowUnbindParentBtn.addEventListener("click", () => setSelectedArrowParentAtCurrentFrame(null));
+        }
+        if (el.slashFxShowBtn) el.slashFxShowBtn.addEventListener("click", () => setSelectedSlashFxVisibilityAtCurrentFrame(true));
+        if (el.slashFxHideBtn) el.slashFxHideBtn.addEventListener("click", () => setSelectedSlashFxVisibilityAtCurrentFrame(false));
+        if (el.slashFxActionVisibilityBtn) {
+          el.slashFxActionVisibilityBtn.addEventListener("click", toggleSelectedSlashFxHiddenForAction);
+        }
+        if (el.slashFxBindParentBtn) {
+          el.slashFxBindParentBtn.addEventListener("click", () => {
+            const parentId = el.slashFxParentSelect?.value || null;
+            if (!parentId) {
+              toast("请先选择刀光临时父节点");
+              return;
+            }
+            setSelectedSlashFxParentAtCurrentFrame(parentId);
+          });
+        }
+        if (el.slashFxUnbindParentBtn) {
+          el.slashFxUnbindParentBtn.addEventListener("click", () => setSelectedSlashFxParentAtCurrentFrame(null));
+        }
         if (el.copyKeyframeBtn) el.copyKeyframeBtn.addEventListener("click", copyCurrentFrameKeyframes);
         if (el.pasteKeyframeBtn) el.pasteKeyframeBtn.addEventListener("click", pasteCopiedKeyframes);
         el.keySourcePrevBtn.addEventListener("click", () => {
@@ -8010,6 +9248,9 @@
           if (!hit) return;
           event.preventDefault();
           poseOverrides.clear();
+          if (hit.piece?.id) {
+            state.selectedPieceNodeId = hit.piece.id;
+          }
           if (hit.type === "piece" || hit.type === "piece-scale" || hit.type === "piece-rotate") {
             state.selectedPieceNodeId = hit.node.id;
           }
@@ -8062,17 +9303,13 @@
           drag.hasMoved = true;
           if (isBowRigNode(node) && ["origin", "bone", "end"].includes(drag.type)) {
             handleBowRigDrag(node, drag.type, point);
-            renderProperties();
-            renderTimeline();
-            renderStatus();
-            renderJsonPreview();
-            drawStage();
+            renderDragFrame();
             return;
           }
           if (drag.type === "origin") {
             solveGenericJointDrag(drag.jointId, point);
           }
-          if (drag.type === "bone") {
+          if (drag.type === "bone" || drag.type === "arrow-piece-bone" || drag.type === "slash-fx-piece-bone") {
             moveBoneRigid(
               node,
               { x: point.x - drag.start.x, y: point.y - drag.start.y },
@@ -8094,11 +9331,7 @@
           if (drag.type === "end") {
             solveGenericJointDrag(drag.jointId, point);
           }
-          renderProperties();
-          renderTimeline();
-          renderStatus();
-          renderJsonPreview();
-          drawStage();
+          renderDragFrame();
         };
 
         const endDrag = (event) => {

@@ -117,7 +117,9 @@ import {
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
 import {
+  battleUiEditorVariableDefinitions,
   createDefaultBattleUiEditorValues,
+  type BattleUiEditorValues,
   type BattleUiEditorVariableName,
 } from "./domain/battle-ui-editor";
 import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
@@ -387,6 +389,54 @@ const selectableCharacters = selectableCharacterIds.map((characterId) => {
 });
 
 let currentPlayerCharacterId = defaultPlayerCharacterId;
+const BATTLE_UI_EDITOR_STORAGE_KEY = "rpg_tg_battle_ui_values_v1";
+
+function loadPersistedBattleUiEditorValues(): Partial<BattleUiEditorValues> {
+  try {
+    const raw = window.localStorage.getItem(BATTLE_UI_EDITOR_STORAGE_KEY);
+    if (raw == null) {
+      return {};
+    }
+    const parsed = JSON.parse(raw);
+    if (parsed == null || typeof parsed !== "object") {
+      return {};
+    }
+    const entries = battleUiEditorVariableDefinitions.flatMap((definition) => {
+      const value = (parsed as Record<string, unknown>)[definition.name];
+      return typeof value === "string" ? [[definition.name, value] as const] : [];
+    });
+    return Object.fromEntries(entries) as Partial<BattleUiEditorValues>;
+  } catch {
+    return {};
+  }
+}
+
+function persistBattleUiEditorValues(values: BattleUiEditorValues): void {
+  try {
+    window.localStorage.setItem(
+      BATTLE_UI_EDITOR_STORAGE_KEY,
+      JSON.stringify(values)
+    );
+  } catch {
+    // Ignore storage failures in restricted/private environments.
+  }
+}
+
+function applyPersistedBattleUiEditorValues(appState: AppState): AppState {
+  const persistedValues = loadPersistedBattleUiEditorValues();
+  const mergedValues = {
+    ...appState.layoutEditor.battleUiValues,
+    ...persistedValues,
+  };
+  persistBattleUiEditorValues(mergedValues);
+  return {
+    ...appState,
+    layoutEditor: {
+      ...appState.layoutEditor,
+      battleUiValues: mergedValues,
+    },
+  };
+}
 
 function createRuntimeCommitContext(input: {
   router: RuntimeRouter;
@@ -399,7 +449,9 @@ function createRuntimeCommitContext(input: {
   };
 }
 
-let appState: AppState = createPrototypeAppState(currentPlayerCharacterId);
+let appState: AppState = applyPersistedBattleUiEditorValues(
+  createPrototypeAppState(currentPlayerCharacterId)
+);
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -2476,6 +2528,7 @@ function handleLayoutEditorInput(targetElement: EventTarget | null): boolean {
       targetElement.dataset.battleUiVar as BattleUiEditorVariableName,
       targetElement.value
     );
+    persistBattleUiEditorValues(appState.layoutEditor.battleUiValues);
     syncEmbeddedBattleUiEditor();
     return true;
   }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>棋盘格战斗原型 · 战略验证 Demo</title>
+  <title>妫嬬洏鏍兼垬鏂楀師鍨?鈥?鎴樼暐楠岃瘉 Demo</title>
   <style>
     :root {
       --page-scale: 1.25;
@@ -140,7 +140,7 @@
       --battle-action-button-width: 80%;
       --battle-action-button-height: 20%;
       --battle-action-button-font-size: 0.62rem;
-      --battle-popup-frame: url("../../ui/battle/战斗/battle_popup_frame_9slice.png");
+      --battle-popup-frame: url("../../ui/battle/鎴樻枟/battle_popup_frame_9slice.png");
       --cell: min(
         calc((100vh - var(--header-h) - var(--deploy-h) - var(--controls-h) - 20px) / 10 - 2px),
         calc((100vw - var(--side-w) - 40px) / 12 - 2px),
@@ -1043,7 +1043,7 @@
       padding: 0;
       border: 0;
       border-radius: 0;
-      background: url("../../ui/battle/战斗/20260702-195750(1).png") center / contain no-repeat;
+      background: url("../../ui/battle/鎴樻枟/20260702-195750(1).png") center / contain no-repeat;
       color: #f8e5b2;
       font-size: clamp(0.64rem, 1.05vw, 0.9rem);
       font-weight: 800;
@@ -1086,30 +1086,6 @@
       pointer-events: none;
       z-index: 2000;
     }
-    .battle-impact-effect-anchor {
-      position: absolute;
-      width: 0;
-      height: 0;
-      pointer-events: none;
-      z-index: 2010;
-    }
-    .battle-impact-effect-image {
-      position: absolute;
-      left: 0;
-      top: 0;
-      display: block;
-      width: var(--battle-impact-effect-width, 120px);
-      height: auto;
-      opacity: 0;
-      transform:
-        translate(var(--battle-impact-effect-translate-x, -50%), var(--battle-impact-effect-translate-y, -50%))
-        rotate(var(--battle-impact-effect-rotation, 0deg))
-        scale(var(--battle-impact-effect-scale, 1));
-      transform-origin: var(--battle-impact-effect-transform-origin, center center);
-      pointer-events: none;
-      filter: var(--battle-impact-effect-filter, none);
-      will-change: opacity, transform, filter;
-    }
     .battle-morale-frame {
       position: absolute;
       inset: 0;
@@ -1119,13 +1095,13 @@
       z-index: 3;
       display: block;
       padding: 0;
-      background: url("../../ui/battle/演出/20260703-171157.png") center top / contain no-repeat;
+      background: url("../../ui/battle/婕斿嚭/20260703-171157.png") center top / contain no-repeat;
       border: 0;
       box-shadow: none;
       pointer-events: none;
     }
     .battle-morale-frame::after {
-      content: "MORALE / 士气";
+      content: "MORALE / 澹皵";
       position: absolute;
       left: 50%;
       top: 2.55%;
@@ -1480,7 +1456,7 @@
       transform: none;
       z-index: 4;
       display: block;
-      background: url("../../ui/battle/演出/20260703-171148.png") center bottom / contain no-repeat;
+      background: url("../../ui/battle/婕斿嚭/20260703-171148.png") center bottom / contain no-repeat;
       border: 0;
       box-shadow: none;
       padding: 0;
@@ -1707,7 +1683,7 @@
       min-width: var(--battle-stat-bar-min-width);
       height: var(--battle-stat-bar-height);
       overflow: hidden;
-      background-image: url("../../ui/battle/战斗/20260702-201601.png");
+      background-image: url("../../ui/battle/鎴樻枟/20260702-201601.png");
       background-repeat: no-repeat;
       background-size: 145.558% 1056.881%;
       background-position: 65.211% 50.815%;
@@ -1725,11 +1701,11 @@
     }
 
     .battle-stat-bar .fill.player {
-      background-image: url("../../ui/battle/战斗/20260702-201713.png");
+      background-image: url("../../ui/battle/鎴樻枟/20260702-201713.png");
     }
 
     .battle-stat-bar .fill.enemy {
-      background-image: url("../../ui/battle/战斗/20260702-201718.png");
+      background-image: url("../../ui/battle/鎴樻枟/20260702-201718.png");
     }
 
     .battle-stage main {
@@ -1821,7 +1797,7 @@
       aspect-ratio: 426 / 535;
       min-height: 0;
       border: 0;
-      background: url("../../ui/battle/战斗/20260702-195804.png") center / contain no-repeat;
+      background: url("../../ui/battle/鎴樻枟/20260702-195804.png") center / contain no-repeat;
       color: #4d2f11;
       font-size: 0.56rem;
       font-weight: 700;
@@ -1991,7 +1967,7 @@
     .battle-stage .unit-formation-cell {
       border: 0;
       border-radius: 0;
-      background: url("../../ui/battle/战斗/20260702-195813(1).png") center / contain no-repeat;
+      background: url("../../ui/battle/鎴樻枟/20260702-195813(1).png") center / contain no-repeat;
       color: #2e1907;
       font-size: 0.48rem;
       line-height: 1.16;
@@ -2225,7 +2201,7 @@
       padding: 18px 6px 12px;
       border: 0;
       border-radius: 0;
-      background: url("../../ui/battle/战斗/20260702-195813(1).png") center / contain no-repeat;
+      background: url("../../ui/battle/鎴樻枟/20260702-195813(1).png") center / contain no-repeat;
       color: #2f1a08;
       font-size: 0.46rem;
       font-weight: 800;
@@ -2242,7 +2218,7 @@
     }
 
     .battle-stage .deploy-pool .unit.player {
-      background: url("../../ui/battle/战斗/20260702-195813(1).png") center / contain no-repeat;
+      background: url("../../ui/battle/鎴樻枟/20260702-195813(1).png") center / contain no-repeat;
       border: 0;
       color: #2e1907;
     }
@@ -2289,7 +2265,7 @@
         var(--battle-action-menu-padding-bottom)
         var(--battle-action-menu-padding-left);
       gap: var(--battle-action-menu-gap);
-      background: url("../../ui/battle/战斗/20260702-195709.png") center / contain no-repeat;
+      background: url("../../ui/battle/鎴樻枟/20260702-195709.png") center / contain no-repeat;
       border: 0;
       border-radius: 0;
       box-shadow: none;
@@ -2321,7 +2297,7 @@
       font-weight: 700;
       line-height: 1;
       text-shadow: 0 1px 0 rgba(255, 232, 173, 0.7);
-      background: url("../../ui/battle/战斗/20260702-195736.png") no-repeat;
+      background: url("../../ui/battle/鎴樻枟/20260702-195736.png") no-repeat;
       background-size: 1528.358% 2173.585%;
       background-position: 49.425% 34.486%;
     }
@@ -2329,7 +2305,7 @@
     .battle-stage .action-menu button:hover:not(:disabled),
     .battle-stage .action-menu button:focus-visible {
       color: #2b1707;
-      background-image: url("../../ui/battle/战斗/20260702-195740.png");
+      background-image: url("../../ui/battle/鎴樻枟/20260702-195740.png");
       background-size: 1402.74% 2215.385%;
       background-position: 49.106% 34.455%;
       outline: 0;
@@ -2339,48 +2315,48 @@
 <body>
   <div class="battle-stage">
   <div class="battle-ui-overlays" aria-hidden="true">
-    <img src="../../ui/battle/战斗/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png" alt="">
-    <img src="../../ui/battle/战斗/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png" alt="">
-    <img src="../../ui/battle/战斗/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png" alt="">
-    <img src="../../ui/battle/战斗/20260702-195702.png" alt="">
-    <img src="../../ui/battle/战斗/20260702-195648.png" alt="">
-    <img src="../../ui/battle/战斗/img_v3_02137_c83b7d73-03ae-4c9f-88dd-36c12f66f68g.png" alt="">
-    <img src="../../ui/battle/战斗/20260702-195750.png" alt="">
-    <img src="../../ui/battle/战斗/20260702-195746.png" alt="">
+    <img src="../../ui/battle/鎴樻枟/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png" alt="">
+    <img src="../../ui/battle/鎴樻枟/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png" alt="">
+    <img src="../../ui/battle/鎴樻枟/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png" alt="">
+    <img src="../../ui/battle/鎴樻枟/20260702-195702.png" alt="">
+    <img src="../../ui/battle/鎴樻枟/20260702-195648.png" alt="">
+    <img src="../../ui/battle/鎴樻枟/img_v3_02137_c83b7d73-03ae-4c9f-88dd-36c12f66f68g.png" alt="">
+    <img src="../../ui/battle/鎴樻枟/20260702-195750.png" alt="">
+    <img src="../../ui/battle/鎴樻枟/20260702-195746.png" alt="">
   </div>
   <header>
     <div class="top-side-info ally" id="ally-top-info">
-      <span class="side-name">我方</span>
-      <span class="stat-label" id="ally-soldiers-label">总兵力 0</span>
+      <span class="side-name">鏄?/span>
+      <span class="stat-label" id="ally-soldiers-label">鎬诲叺鍔?鈥?/span>
       <div class="battle-stat-bar"><span class="fill player" id="ally-soldiers-fill"></span></div>
-      <span class="stat-label" id="ally-morale-label">总士气 0</span>
+      <span class="stat-label" id="ally-morale-label">鎬诲＋姘?鈥?/span>
       <div class="battle-stat-bar"><span class="fill player" id="ally-morale-fill"></span></div>
     </div>
     <div class="top-side-info enemy" id="enemy-top-info">
-      <span class="side-name">敌方</span>
-      <span class="stat-label" id="enemy-soldiers-label">总兵力 0</span>
+      <span class="side-name">鍏?/span>
+      <span class="stat-label" id="enemy-soldiers-label">鎬诲叺鍔?鈥?/span>
       <div class="battle-stat-bar"><span class="fill enemy" id="enemy-soldiers-fill"></span></div>
-      <span class="stat-label" id="enemy-morale-label">总士气 0</span>
+      <span class="stat-label" id="enemy-morale-label">鎬诲＋姘?鈥?/span>
       <div class="battle-stat-bar"><span class="fill enemy" id="enemy-morale-fill"></span></div>
     </div>
     <div class="header-row">
-      <h1>棋盘格战斗原型</h1>
-      <span class="phase-badge" id="phase-badge">部署阶段</span>
-      <span class="weather-badge">天气：晴</span>
+      <h1>妫嬬洏鏍兼垬鏂楀師鍨?/h1>
+      <span class="phase-badge" id="phase-badge">閮ㄧ讲闃舵</span>
+      <span class="weather-badge">澶╂皵锛氭櫞</span>
       <span id="turn-info"></span>
     </div>
-    <div class="objective-bar" id="objective-bar">战斗目标：未设定</div>
+    <div class="objective-bar" id="objective-bar">鎴樻枟鐩爣锛氣€?/div>
     <div class="objective-progress" id="objective-progress"></div>
   </header>
 
   <main>
     <aside class="command-panel">
       <section class="unit-card">
-        <div class="panel-title">单位详情</div>
+        <div class="panel-title">鍗曚綅璇︽儏</div>
         <div class="unit-card-body" id="unit-card-body"></div>
       </section>
       <section class="unit-formation-panel">
-        <div class="panel-title">编队详情</div>
+        <div class="panel-title">缂栭槦璇︽儏</div>
         <div class="unit-formation-grid" id="unit-formation-grid"></div>
       </section>
     </aside>
@@ -2389,36 +2365,36 @@
       <div class="deploy-pool" id="deploy-pool"></div>
       <div class="board-wrap"><div id="board"></div></div>
       <div class="controls">
-        <button class="primary" id="btn-start">开始战斗</button>
-        <button id="btn-end-turn" disabled>结束回合</button>
-        <button id="btn-wait" disabled>待机</button>
+        <button class="primary" id="btn-start">寮€濮嬫垬鏂?/button>
+        <button id="btn-end-turn" disabled>缁撴潫鍥炲悎</button>
+        <button id="btn-wait" disabled>寰呮満</button>
         <div class="skill-bar" id="skill-bar"></div>
       </div>
       <div class="action-menu hidden" id="action-menu">
-        <button id="action-wait">待机</button>
-        <button id="action-rally">整顿</button>
-        <button id="action-attack">攻击</button>
-        <button id="action-cancel">撤回</button>
+        <button id="action-wait">寰呮満</button>
+        <button id="action-rally">鏁撮】</button>
+        <button id="action-attack">鏀诲嚮</button>
+        <button id="action-cancel">鎾ゅ洖</button>
       </div>
     </div>
 
     <aside class="right-panel">
       <section class="battle-status-panel">
-        <div class="panel-title">目标 / 战况</div>
+        <div class="panel-title">鐩爣 / 鎴樺喌</div>
         <div class="battle-status-list" id="battle-status-list"></div>
       </section>
       <section class="battle-log-panel">
-        <h3>战报 / 日志</h3>
+        <h3>鎴樻姤 / 鏃ュ織</h3>
         <div class="battle-log-scroll">
           <div class="log-panel" id="log"></div>
           <div class="morale-log-panel">
-            <h3>士气变化</h3>
+            <h3>澹皵鍙樺寲</h3>
             <div id="morale-log"></div>
           </div>
         </div>
       </section>
       <div class="debug-panel">
-        <h2>部队数据</h2>
+        <h2>閮ㄩ槦鏁版嵁</h2>
         <div class="debug-list" id="debug-list"></div>
       </div>
     </aside>
@@ -2427,27 +2403,27 @@
 
   <div class="objective-intro hidden" id="objective-intro">
     <div class="objective-intro-box">
-      <h2 id="objective-intro-title">战斗目标</h2>
+      <h2 id="objective-intro-title">鎴樻枟鐩爣</h2>
       <p id="objective-intro-desc"></p>
-      <button class="primary" id="btn-objective-ok">开始作战</button>
+      <button class="primary" id="btn-objective-ok">寮€濮嬩綔鎴?/button>
     </div>
   </div>
 
   <div class="tutorial-toast hidden" id="tutorial-toast">
     <h3 id="tutorial-title"></h3>
     <p id="tutorial-body"></p>
-    <button class="primary" id="btn-tutorial-close">知道了</button>
+    <button class="primary" id="btn-tutorial-close">鐭ラ亾浜?/button>
   </div>
 
   <div class="overlay-msg hidden" id="overlay">
     <div class="overlay-box">
-      <h2 id="overlay-title">胜利</h2>
+      <h2 id="overlay-title">鑳滃埄</h2>
       <p id="overlay-desc"></p>
       <div class="recap-box hidden" id="recap-box">
-        <h3>本场关键事件</h3>
+        <h3>鏈満鍏抽敭浜嬩欢</h3>
         <ul id="recap-list"></ul>
       </div>
-      <button class="primary" id="btn-restart" style="margin-top: 14px;">重新开始</button>
+      <button class="primary" id="btn-restart" style="margin-top: 14px;">閲嶆柊寮€濮?/button>
     </div>
   </div>
 
@@ -2458,16 +2434,16 @@
         <div class="battle-morale-bar enemy"><div class="battle-morale-fill" id="battle-defender-morale"></div></div>
       </div>
       <section class="formation-side player">
-        <h2 id="battle-attacker-title">攻击方</h2>
+        <h2 id="battle-attacker-title">鏀诲嚮鏂?/h2>
         <div class="formation-grid" id="battle-attacker-grid"></div>
       </section>
       <section class="battle-sequence">
-        <h2 id="battle-sequence-title">编队交战</h2>
+        <h2 id="battle-sequence-title">缂栭槦浜ゆ垬</h2>
         <div class="battle-event-list" id="battle-event-list"></div>
-        <button class="primary" id="battle-close">返回战场</button>
+        <button class="primary" id="battle-close">杩斿洖鎴樺満</button>
       </section>
       <section class="formation-side enemy">
-        <h2 id="battle-defender-title">防守方</h2>
+        <h2 id="battle-defender-title">闃插畧鏂?/h2>
         <div class="formation-grid" id="battle-defender-grid"></div>
       </section>
       <div class="battle-damage-layer" id="battle-damage-layer"></div>
@@ -2475,50 +2451,49 @@
   </div>
 
   <script src="../../tools/spine-new-recovered-project.generated.js"></script>
-  <script src="./spine-runtime-math.js"></script>
   <script>
     const BATTLE_UI_VARIABLES = {
-      "--battle-stage-left": "战斗页整体盒子左定位",
-      "--battle-stage-top": "战斗页整体盒子上定位",
-      "--battle-stage-width": "战斗页整体盒子宽度",
-      "--battle-stage-height": "战斗页整体盒子高度",
-      "--battle-stage-translate-x": "战斗页整体水平偏移",
-      "--battle-stage-translate-y": "战斗页整体垂直偏移",
-      "--battle-header-height": "顶部标题栏高度",
-      "--battle-header-row-left": "标题信息组左边距",
-      "--battle-header-row-top": "标题信息组上边距",
-      "--battle-header-row-width": "标题信息组宽度",
-      "--battle-header-row-height": "标题信息组高度",
-      "--battle-header-row-gap": "标题信息组内部间距",
-      "--battle-objective-left": "目标文本左定位",
-      "--battle-objective-top": "目标文本上定位",
-      "--battle-objective-width": "目标文本宽度",
-      "--battle-top-side-ally-width": "左上我方总览宽度",
-      "--battle-top-side-enemy-left": "右上敌方总览左定位",
-      "--battle-top-side-enemy-width": "右上敌方总览宽度",
-      "--battle-board-translate-y": "棋盘整体纵向偏移",
-      "--battle-command-left": "左侧单位面板左定位",
-      "--battle-command-top": "左侧单位面板上定位",
-      "--battle-command-width": "左侧单位面板宽度",
-      "--battle-command-height": "左侧单位面板高度",
-      "--battle-right-panel-left": "右侧日志面板左定位",
-      "--battle-right-panel-top": "右侧日志面板上定位",
-      "--battle-right-panel-width": "右侧日志面板宽度",
-      "--battle-right-panel-height": "右侧日志面板高度",
-      "--battle-start-left": "开始战斗按钮左定位",
-      "--battle-start-top": "开始战斗按钮上定位",
-      "--battle-start-width": "开始战斗按钮宽度",
-      "--battle-end-turn-left": "结束回合按钮左定位",
-      "--battle-end-turn-top": "结束回合按钮上定位",
-      "--battle-end-turn-width": "结束回合按钮宽度",
-      "--battle-deploy-left": "底部署备条左定位",
-      "--battle-deploy-top": "底部署备条上定位",
-      "--battle-deploy-width": "底部署备条宽度",
-      "--battle-deploy-height": "底部署备条高度",
-      "--battle-deploy-translate-x": "底部署备条水平微调",
-      "--battle-deploy-translate-y": "底部署备条垂直微调",
-      "--battle-action-menu-width": "行动菜单宽度",
-      "--battle-action-menu-height": "行动菜单高度",
+      "--battle-stage-left": "鎴樻枟椤垫暣浣撶洅瀛愬乏瀹氫綅銆?,
+      "--battle-stage-top": "鎴樻枟椤垫暣浣撶洅瀛愪笂瀹氫綅銆?,
+      "--battle-stage-width": "鎴樻枟椤垫暣浣撶洅瀛愬搴︺€?,
+      "--battle-stage-height": "鎴樻枟椤垫暣浣撶洅瀛愰珮搴︺€?,
+      "--battle-stage-translate-x": "鎴樻枟椤垫暣浣撴按骞冲亸绉汇€?,
+      "--battle-stage-translate-y": "鎴樻枟椤垫暣浣撳瀭鐩村亸绉汇€?,
+      "--battle-header-height": "椤堕儴鏍囬鏍忛珮搴︺€?,
+      "--battle-header-row-left": "鏍囬淇℃伅缁勫乏杈硅窛銆?,
+      "--battle-header-row-top": "鏍囬淇℃伅缁勪笂杈硅窛銆?,
+      "--battle-header-row-width": "鏍囬淇℃伅缁勫搴︺€?,
+      "--battle-header-row-height": "鏍囬淇℃伅缁勯珮搴︺€?,
+      "--battle-header-row-gap": "鏍囬淇℃伅缁勫唴閮ㄩ棿璺濄€?,
+      "--battle-objective-left": "鐩爣鏂囨湰宸﹀畾浣嶃€?,
+      "--battle-objective-top": "鐩爣鏂囨湰涓婂畾浣嶃€?,
+      "--battle-objective-width": "鐩爣鏂囨湰瀹藉害銆?,
+      "--battle-top-side-ally-width": "宸︿笂鎴戞柟鎬昏瀹藉害銆?,
+      "--battle-top-side-enemy-left": "鍙充笂鏁屾柟鎬昏宸﹀畾浣嶃€?,
+      "--battle-top-side-enemy-width": "鍙充笂鏁屾柟鎬昏瀹藉害銆?,
+      "--battle-board-translate-y": "妫嬬洏鏁翠綋绾靛悜鍋忕Щ銆?,
+      "--battle-command-left": "宸︿晶鍗曚綅闈㈡澘宸﹀畾浣嶃€?,
+      "--battle-command-top": "宸︿晶鍗曚綅闈㈡澘涓婂畾浣嶃€?,
+      "--battle-command-width": "宸︿晶鍗曚綅闈㈡澘瀹藉害銆?,
+      "--battle-command-height": "宸︿晶鍗曚綅闈㈡澘楂樺害銆?,
+      "--battle-right-panel-left": "鍙充晶鏃ュ織闈㈡澘宸﹀畾浣嶃€?,
+      "--battle-right-panel-top": "鍙充晶鏃ュ織闈㈡澘涓婂畾浣嶃€?,
+      "--battle-right-panel-width": "鍙充晶鏃ュ織闈㈡澘瀹藉害銆?,
+      "--battle-right-panel-height": "鍙充晶鏃ュ織闈㈡澘楂樺害銆?,
+      "--battle-start-left": "寮€濮嬫垬鏂楁寜閽乏瀹氫綅銆?,
+      "--battle-start-top": "寮€濮嬫垬鏂楁寜閽笂瀹氫綅銆?,
+      "--battle-start-width": "寮€濮嬫垬鏂楁寜閽搴︺€?,
+      "--battle-end-turn-left": "缁撴潫鍥炲悎鎸夐挳宸﹀畾浣嶃€?,
+      "--battle-end-turn-top": "缁撴潫鍥炲悎鎸夐挳涓婂畾浣嶃€?,
+      "--battle-end-turn-width": "缁撴潫鍥炲悎鎸夐挳瀹藉害銆?,
+      "--battle-deploy-left": "搴曢儴缃插鏉″乏瀹氫綅銆?,
+      "--battle-deploy-top": "搴曢儴缃插鏉′笂瀹氫綅銆?,
+      "--battle-deploy-width": "搴曢儴缃插鏉″搴︺€?,
+      "--battle-deploy-height": "搴曢儴缃插鏉￠珮搴︺€?,
+      "--battle-deploy-translate-x": "搴曢儴缃插鏉℃按骞冲井璋冦€?,
+      "--battle-deploy-translate-y": "搴曢儴缃插鏉″瀭鐩村井璋冦€?,
+      "--battle-action-menu-width": "琛屽姩鑿滃崟瀹藉害銆?,
+      "--battle-action-menu-height": "琛屽姩鑿滃崟楂樺害銆?,
     };
 
     Object.assign(BATTLE_UI_VARIABLES, {
@@ -2657,54 +2632,54 @@
     };
 
     const TERRAIN = {
-      plain: { label: '平', name: '平原' },
-      forest: { label: '森', name: '森林' },
-      hill: { label: '高', name: '高地' },
-      river: { label: '河', name: '河流' },
-      bridge: { label: '桥', name: '桥梁' },
+      plain: { label: '骞?, name: '骞冲師' },
+      forest: { label: '鏋?, name: '妫灄' },
+      hill: { label: '楂?, name: '楂樺湴' },
+      river: { label: '娌?, name: '娌虫祦' },
+      bridge: { label: '妗?, name: '妗ユ' },
     };
 
     const STRATEGIC = {
-      camp: { label: '营', name: '营寨', desc: '营寨适合恢复，长期据守更有利' },
-      supplyDepot: { label: '仓', name: '粮仓', desc: '夺得粮秣可鼓舞本阵；粮道战中还会派出粮车' },
-      watchTower: { label: '塔', name: '箭塔', desc: '箭塔扩大视野，利于远程控制' },
+      camp: { label: '瀵?, name: '钀ュ', desc: '钀ュ閫傚悎鎭㈠锛岄暱鏈熸嵁瀹堟洿鏈夊埄' },
+      supplyDepot: { label: '绮?, name: '绮粨', desc: '澶哄緱绮В鍙紦鑸炴湰闃碉紱绮亾鎴樹腑杩樹細娲惧嚭绮溅' },
+      watchTower: { label: '濉?, name: '绠', desc: '绠鎵╁ぇ瑙嗛噹锛屽埄浜庤繙绋嬫帶鍦? },
     };
 
     const TERRAIN_HINT = {
-      plain: '平原',
-      forest: '森林适合隐藏',
-      hill: '高地更有利于远程单位',
-      river: '渡河会受阻',
-      bridge: '桥梁是必争通道',
+      plain: '骞冲師',
+      forest: '妫灄閫傚悎闅愯棌',
+      hill: '楂樺湴鏇存湁鍒╀簬杩滅▼鍗曚綅',
+      river: '娓℃渤浼氬彈闃?,
+      bridge: '妗ユ鏄繀浜夐€氶亾',
     };
 
     const TROOP_TYPES = {
-      infantry: { label: '步兵', attack: 50, defense: 50, speed: 30, range: 1 },
-      spear: { label: '长枪', attack: 45, defense: 55, speed: 28, range: 1 },
-      cavalry: { label: '骑兵', attack: 65, defense: 40, speed: 45, range: 1 },
-      archer: { label: '弓兵', attack: 55, defense: 35, speed: 32, range: 3 },
-      gunpowder: { label: '火器', attack: 75, defense: 30, speed: 22, range: 2 },
+      infantry: { label: '姝ュ叺', attack: 50, defense: 50, speed: 30, range: 1 },
+      spear: { label: '闀挎灙', attack: 45, defense: 55, speed: 28, range: 1 },
+      cavalry: { label: '楠戝叺', attack: 65, defense: 40, speed: 45, range: 1 },
+      archer: { label: '寮撳叺', attack: 55, defense: 35, speed: 32, range: 3 },
+      gunpowder: { label: '鐏櫒', attack: 75, defense: 30, speed: 22, range: 2 },
     };
 
     const TYPE_ADVANTAGE = {};
-    const FORMATION_GENERIC_LABEL = '编队';
+    const FORMATION_GENERIC_LABEL = '缂栭槦';
 
     const OBJECTIVES = [
-      { id: 'annihilation', name: '歼灭战', friendlyTitle: '击溃敌军', friendlyDesc: '消灭或击溃全部敌军即可获胜' },
-      { id: 'strongpoint', name: '据点战', friendlyTitle: '占领据点', friendlyDesc: '占领全部战略据点即可获胜' },
-      { id: 'defense', name: '守卫战', friendlyTitle: '守卫阵地', friendlyDesc: '守住高亮中央防区，连续数回合压住敌军即可获胜' },
-      { id: 'assassination', name: '斩首战', friendlyTitle: '阵斩敌将', friendlyDesc: '击败敌军主将即可获胜' },
-      { id: 'supplyTransport', name: '粮道运输战', friendlyTitle: '护送粮车', friendlyDesc: '占领粮仓后护送粮车回营，或击溃敌军' },
+      { id: 'annihilation', name: '姝肩伃鎴?, friendlyTitle: '鍑绘簝鏁屽啗', friendlyDesc: '娑堢伃鎴栧嚮婧冨叏閮ㄦ晫鍐涘嵆鍙幏鑳? },
+      { id: 'strongpoint', name: '鎹偣鎴?, friendlyTitle: '鍗犻鎹偣', friendlyDesc: '鍗犻鍏ㄩ儴鎴樼暐鎹偣鍗冲彲鑾疯儨' },
+      { id: 'defense', name: '瀹堝崼鎴?, friendlyTitle: '瀹堝崼闃靛湴', friendlyDesc: '瀹堜綇楂樹寒涓ぎ闃插尯锛岃繛缁?鍥炲悎鍘嬩綇鏁屽啗鍗冲彲鑾疯儨' },
+      { id: 'assassination', name: '鏂╅鎴?, friendlyTitle: '闃垫柀鏁屽皢', friendlyDesc: '鍑昏触鏁屽啗涓诲皢鍗冲彲鑾疯儨' },
+      { id: 'supplyTransport', name: '绮亾杩愯緭鎴?, friendlyTitle: '鎶ら€佺伯杞?, friendlyDesc: '鍗犻绮粨鍚庢姢閫佺伯杞﹀洖钀ワ紝鎴栧嚮婧冩晫鍐? },
     ];
 
-    /** 剧情战役可配置的标签，系统据此自动挂载教程 */
+    /** 鍓ф儏鎴樺焦鍙厤缃殑鏍囩锛岀郴缁熸嵁姝よ嚜鍔ㄦ寕杞芥暀瀛?*/
     const LESSON_TAG_TIPS = {
-      BridgeBattle: { id: 'lesson_bridge', title: '桥梁', body: '桥梁是河流上的唯一通道。\n控制桥梁，就能截断敌军进退。' },
-      SupplyBattle: { id: 'lesson_supply', title: '粮道', body: '本场战斗围绕粮仓展开。\n占领后需护送粮车回营。' },
-      SupplyTransportBattle: { id: 'lesson_supply_transport', title: '粮道运输', body: '占领粮仓后将立即派出粮车。\n成功将粮食运回营地才能获得胜利。\n保护粮车，拦截敌方运输。' },
-      DefenseBattle: { id: 'lesson_defense', title: '守势', body: '不必急于进攻。\n守住指定区域，撑到时限即可获胜。' },
-      AmbushBattle: { id: 'lesson_ambush', title: '伏击', body: '利用森林隐藏部队，待敌军靠近再出击。' },
-      CommanderBattle: { id: 'lesson_commander', title: '主将', body: '敌军主将带有标记。\n阵斩主将，可沉重打击敌军士气。' },
+      BridgeBattle: { id: 'lesson_bridge', title: '妗ユ', body: '妗ユ鏄渤娴佷笂鐨勫敮涓€閫氶亾銆俓n鎺у埗妗ユ锛屽氨鑳芥埅鏂晫鍐涜繘閫€銆? },
+      SupplyBattle: { id: 'lesson_supply', title: '绮亾', body: '鏈満鎴樻枟鍥寸粫绮粨灞曞紑銆俓n鍗犻鍚庨渶鎶ら€佺伯杞﹀洖钀ャ€? },
+      SupplyTransportBattle: { id: 'lesson_supply_transport', title: '绮亾鎴?, body: '鍗犻绮粨鍚庡皢绔嬪嵆娲惧嚭绮溅銆俓n鎴愬姛灏嗙伯椋熻繍鍥炶惀鍦版墠鑳借幏寰楄儨鍒┿€俓n淇濇姢绮溅锛屾嫤鎴晫鏂硅繍杈撱€? },
+      DefenseBattle: { id: 'lesson_defense', title: '瀹堝娍', body: '涓嶅繀鎬ヤ簬杩涙敾銆俓n瀹堜綇鎸囧畾鍖哄煙锛屾拺鍒版椂闄愬嵆鍙幏鑳溿€? },
+      AmbushBattle: { id: 'lesson_ambush', title: '浼忓嚮', body: '鍒╃敤妫灄闅愯棌閮ㄩ槦锛屽緟鏁屽啗闈犺繎鍐嶅嚭鍑汇€? },
+      CommanderBattle: { id: 'lesson_commander', title: '涓诲皢', body: '鏁屽啗涓诲皢甯︽湁鏍囪銆俓n闃垫柀涓诲皢锛屽彲娌夐噸鎵撳嚮鏁屽啗澹皵銆? },
     };
 
     const SKILL_USES = { inspire: 1 };
@@ -2714,19 +2689,19 @@
       'rear-left', 'rear-center', 'rear-right',
     ];
     const FORMATION_SLOT_LABELS = {
-      'front-left': '前左',
-      'front-center': '前中',
-      'front-right': '前右',
-      'middle-left': '中左',
-      'middle-center': '中中',
-      'middle-right': '中右',
-      'rear-left': '后左',
-      'rear-center': '后中',
-      'rear-right': '后右',
+      'front-left': '鍓嶅乏',
+      'front-center': '鍓嶄腑',
+      'front-right': '鍓嶅彸',
+      'middle-left': '涓乏',
+      'middle-center': '涓腑',
+      'middle-right': '涓彸',
+      'rear-left': '鍚庡乏',
+      'rear-center': '鍚庝腑',
+      'rear-right': '鍚庡彸',
     };
     const FORMATION_TEMPLATES = {
       vanguard: {
-        label: '先锋',
+        label: '鍏堥攱',
         primary: 'infantry',
         slots: [
           ['front-left', 'spear'], ['front-center', 'infantry'], ['front-right', 'spear'],
@@ -2734,7 +2709,7 @@
         ],
       },
       assault: {
-        label: '突击',
+        label: '绐佸嚮',
         primary: 'cavalry',
         slots: [
           ['front-left', 'cavalry'], ['front-center', 'infantry'], ['front-right', 'cavalry'],
@@ -2742,7 +2717,7 @@
         ],
       },
       missile: {
-        label: '射击',
+        label: '灏勫嚮',
         primary: 'archer',
         slots: [
           ['front-left', 'infantry'], ['front-center', 'spear'], ['front-right', 'infantry'],
@@ -2750,7 +2725,7 @@
         ],
       },
       guard: {
-        label: '守备',
+        label: '瀹堝',
         primary: 'spear',
         slots: [
           ['front-left', 'spear'], ['front-center', 'infantry'], ['front-right', 'spear'],
@@ -2758,7 +2733,7 @@
         ],
       },
       mobile: {
-        label: '机动',
+        label: '鏈哄姩',
         primary: 'cavalry',
         slots: [
           ['front-left', 'cavalry'], ['front-right', 'cavalry'],
@@ -2804,16 +2779,16 @@
         lessonTags: ['CommanderBattle', 'AmbushBattle'],
         autoDeployment: true,
         playerUnits: [
-          { name: '朱重八本队', controller: 'player', template: 'vanguard', troopType: 'infantry', soldiers: 360, x: 2, y: 7, morale: 86, general: { name: '朱重八', leadership: 78, strength: 82, intelligence: 73 } },
-          { name: '郭子兴中军', controller: 'npc', template: 'guard', troopType: 'spear', soldiers: 520, x: 4, y: 7, morale: 84, general: { name: '郭子兴', leadership: 84, strength: 68, intelligence: 72 }, isCommander: true },
-          { name: '汤和队', controller: 'npc', template: 'assault', troopType: 'cavalry', soldiers: 380, x: 1, y: 8, morale: 82, general: { name: '汤和', leadership: 76, strength: 77, intelligence: 68 } },
-          { name: '徐达队', controller: 'npc', template: 'missile', troopType: 'archer', soldiers: 360, x: 5, y: 8, morale: 82, general: { name: '徐达', leadership: 82, strength: 76, intelligence: 80 } },
-          { name: '孙德崖残部', controller: 'npc', template: 'guard', troopType: 'spear', soldiers: 180, x: 7, y: 4, morale: 46, general: { name: '孙德崖', leadership: 70, strength: 65, intelligence: 63 } },
+          { name: '鏈遍噸鍏湰闃?, controller: 'player', template: 'vanguard', troopType: 'infantry', soldiers: 360, x: 2, y: 7, morale: 86, general: { name: '鏈遍噸鍏?, leadership: 78, strength: 82, intelligence: 73 } },
+          { name: '閮瓙鍏翠腑鍐?, controller: 'npc', template: 'guard', troopType: 'spear', soldiers: 520, x: 4, y: 7, morale: 84, general: { name: '閮瓙鍏?, leadership: 84, strength: 68, intelligence: 72 }, isCommander: true },
+          { name: '姹ゅ拰闃?, controller: 'npc', template: 'assault', troopType: 'cavalry', soldiers: 380, x: 1, y: 8, morale: 82, general: { name: '姹ゅ拰', leadership: 76, strength: 77, intelligence: 68 } },
+          { name: '寰愯揪闃?, controller: 'npc', template: 'missile', troopType: 'archer', soldiers: 360, x: 5, y: 8, morale: 82, general: { name: '寰愯揪', leadership: 82, strength: 76, intelligence: 80 } },
+          { name: '瀛欏痉宕栨畫闃?, controller: 'npc', template: 'guard', troopType: 'spear', soldiers: 180, x: 7, y: 4, morale: 46, general: { name: '瀛欏痉宕?, leadership: 70, strength: 65, intelligence: 63 } },
         ],
         enemyUnits: [
-          { name: '元军北哨', template: 'mobile', troopType: 'cavalry', soldiers: 280, x: 7, y: 3, morale: 76, general: { name: '元军百户', leadership: 68, strength: 72, intelligence: 56 } },
-          { name: '元军前锋', template: 'vanguard', troopType: 'infantry', soldiers: 340, x: 8, y: 4, morale: 78, general: { name: '元军千户', leadership: 76, strength: 75, intelligence: 61 }, isCommander: true },
-          { name: '元军南哨', template: 'missile', troopType: 'archer', soldiers: 260, x: 7, y: 5, morale: 74, general: { name: '元军弓手头目', leadership: 65, strength: 62, intelligence: 64 } },
+          { name: '鍏冨啗鍖楀摠', template: 'mobile', troopType: 'cavalry', soldiers: 280, x: 7, y: 3, morale: 76, general: { name: '鍏冨啗鐧炬埛', leadership: 68, strength: 72, intelligence: 56 } },
+          { name: '鍏冨啗鍓嶉攱', template: 'vanguard', troopType: 'infantry', soldiers: 340, x: 8, y: 4, morale: 78, general: { name: '鍏冨啗鍗冩埛', leadership: 76, strength: 75, intelligence: 61 }, isCommander: true },
+          { name: '鍏冨啗鍗楀摠', template: 'missile', troopType: 'archer', soldiers: 260, x: 7, y: 5, morale: 74, general: { name: '鍏冨啗寮撴墜澶寸洰', leadership: 65, strength: 62, intelligence: 64 } },
         ],
         strategicPoints: [],
         terrain: [
@@ -2826,22 +2801,22 @@
       },
     };
 
-    // ─── BattleTutorialManager ───────────────────────────────
+    // 鈹€鈹€鈹€ BattleTutorialManager 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     const BattleTutorialManager = (() => {
       const STORAGE_KEY = 'rpg_tg_battle_tutorial_v1';
       const TIPS = {
-        terrain_forest: { title: '森林', body: '部队进入森林后可以隐藏自身。\n非常适合伏击敌军。' },
-        terrain_hill: { title: '高地', body: '高地拥有更好的视野。\n远程单位在高地作战更有优势。' },
-        terrain_river: { title: '河流', body: '渡河会降低部队机动能力。\n请谨慎选择渡河时机。' },
-        point_supplyDepot: { title: '粮仓', body: '占领粮仓后将派出粮车。\n护送粮车返回营地即可获胜。' },
-        supply_cart_spawn: { title: '粮车出发', body: '粮车已出发。\n请护送其返回营地。' },
-        supply_cart_destroyed: { title: '粮车被毁', body: '粮车被摧毁。\n粮食散落在战场上。' },
-        supply_pickup: { title: '粮食夺取', body: '粮食已被重新夺取。\n将从此处继续运输。' },
-        point_camp: { title: '营寨', body: '营寨可以恢复士气。\n适合长期防守。' },
-        point_watchTower: { title: '箭塔', body: '箭塔能够扩大视野范围。\n帮助远程部队控制战场。' },
-        morale_boost: { title: '士气提升', body: '高士气部队战斗能力更强。' },
-        morale_shaken: { title: '部队动摇', body: '低士气会影响战斗表现。' },
-        morale_rout: { title: '部队溃逃', body: '士气崩溃的部队将脱离战场。' },
+        terrain_forest: { title: '妫灄', body: '閮ㄩ槦杩涘叆妫灄鍚庡彲浠ラ殣钘忚嚜韬€俓n闈炲父閫傚悎浼忓嚮鏁屽啗銆? },
+        terrain_hill: { title: '楂樺湴', body: '楂樺湴鎷ユ湁鏇村ソ鐨勮閲庛€俓n杩滅▼鍗曚綅鍦ㄩ珮鍦颁綔鎴樻洿鏈変紭鍔裤€? },
+        terrain_river: { title: '娌虫祦', body: '娓℃渤浼氶檷浣庨儴闃熸満鍔ㄨ兘鍔涖€俓n璇疯皑鎱庨€夋嫨娓℃渤鏃舵満銆? },
+        point_supplyDepot: { title: '绮粨', body: '鍗犻绮粨鍚庡皢娲惧嚭绮溅銆俓n鎶ら€佺伯杞﹁繑鍥炶惀鍦板嵆鍙幏鑳溿€? },
+        supply_cart_spawn: { title: '绮溅鍑哄彂', body: '绮溅宸插嚭鍙戙€俓n璇锋姢閫佸叾杩斿洖钀ュ湴銆? },
+        supply_cart_destroyed: { title: '绮溅琚瘉', body: '绮溅琚懅姣併€俓n绮鏁ｈ惤鍦ㄦ垬鍦轰笂銆? },
+        supply_pickup: { title: '绮澶哄彇', body: '绮宸茶閲嶆柊澶哄彇銆俓n灏嗕粠姝ゅ缁х画杩愯緭銆? },
+        point_camp: { title: '钀ュ', body: '钀ュ鍙互鎭㈠澹皵銆俓n閫傚悎闀挎湡闃插畧銆? },
+        point_watchTower: { title: '绠', body: '绠鑳藉鎵╁ぇ瑙嗛噹鑼冨洿銆俓n甯姪杩滅▼閮ㄩ槦鎺у埗鎴樺満銆? },
+        morale_boost: { title: '澹皵鎻愬崌', body: '楂樺＋姘旈儴闃熸垬鏂楄兘鍔涙洿寮恒€? },
+        morale_shaken: { title: '閮ㄩ槦鍔ㄦ憞', body: '浣庡＋姘斾細褰卞搷鎴樻枟琛ㄧ幇銆? },
+        morale_rout: { title: '閮ㄩ槦婧冮€?, body: '澹皵宕╂簝鐨勯儴闃熷皢鑴辩鎴樺満銆? },
       };
 
       let seen = new Set();
@@ -2941,11 +2916,11 @@
     }
 
     function getMoraleTier(m) {
-      if (m >= 80) return { id: 'high', label: '高昂', atk: 1.12, def: 1.1, hit: 1.1, counter: 1.15 };
-      if (m >= 50) return { id: 'normal', label: '正常', atk: 1, def: 1, hit: 1, counter: 1 };
-      if (m >= 30) return { id: 'shaken', label: '动摇', atk: 0.82, def: 0.88, hit: 0.82, counter: 0.65 };
-      if (m >= 10) return { id: 'chaos', label: '混乱', atk: 0.55, def: 0.72, hit: 0.45, counter: 0.25 };
-      return { id: 'rout', label: '溃逃', atk: 0, def: 0, hit: 0, counter: 0 };
+      if (m >= 80) return { id: 'high', label: '楂樻槀', atk: 1.12, def: 1.1, hit: 1.1, counter: 1.15 };
+      if (m >= 50) return { id: 'normal', label: '姝ｅ父', atk: 1, def: 1, hit: 1, counter: 1 };
+      if (m >= 30) return { id: 'shaken', label: '鍔ㄦ憞', atk: 0.82, def: 0.88, hit: 0.82, counter: 0.65 };
+      if (m >= 10) return { id: 'chaos', label: '娣蜂贡', atk: 0.55, def: 0.72, hit: 0.45, counter: 0.25 };
+      return { id: 'rout', label: '婧冮€?, atk: 0, def: 0, hit: 0, counter: 0 };
     }
 
     function isRout(u) { return u.morale < 10; }
@@ -2960,7 +2935,7 @@
       const newTier = getMoraleTier(unit.morale);
 
       if (delta !== 0 && broadcast) {
-        logMorale(`${unit.name} ${reason}${delta >= 0 ? ` +${delta}` : ` ${delta}`}`);
+        logMorale(`${unit.name} ${reason}${delta >= 0 ? ' 鈫? : ' 鈫?}`);
       }
 
       if (unit.side === 'player') {
@@ -2979,14 +2954,14 @@
     }
 
     function triggerRoutChain(routUnit) {
-      logMorale(`${routUnit.name} 溃逃，波及附近部队`);
-      if (routUnit.side === 'player') addRecap(`${routUnit.name} 士气崩溃`);
-      else addRecap(`敌军 ${routUnit.name} 士气崩溃`);
+      logMorale(`${routUnit.name} 婧冮€冿紝娉㈠強闄勮繎閮ㄩ槦`);
+      if (routUnit.side === 'player') addRecap(`${routUnit.name} 澹皵宕╂簝`);
+      else addRecap(`鏁屽啗 ${routUnit.name} 澹皵宕╂簝`);
       for (const u of units) {
         if (u.side !== routUnit.side || u.id === routUnit.id || u.soldiers <= 0) continue;
         if (manhattan(u.x, u.y, routUnit.x, routUnit.y) <= 2) {
-          changeMorale(u, -5, '友军溃逃波及', false);
-          if (u.side === 'player') logMorale(`${u.name} 受溃逃波及`);
+          changeMorale(u, -5, '鍙嬪啗婧冮€冩尝鍙?, false);
+          if (u.side === 'player') logMorale(`${u.name} 鍙楁簝閫冩尝鍙奰);
         }
       }
     }
@@ -2995,11 +2970,11 @@
       if (!unit.isCommander) return;
       if (unit.commanderFallenReported) return;
       unit.commanderFallenReported = true;
-      const sideLabel = unit.side === 'player' ? '我军' : '敌军';
-      logMorale(`${sideLabel}主将${unit.general.name}阵亡`);
-      if (unit.side === 'enemy') addRecap('敌军主将阵亡');
-      else addRecap('我军主将阵亡');
-      changeMoraleSide(unit.side, -15, '主将阵亡', false);
+      const sideLabel = unit.side === 'player' ? '鎴戝啗' : '鏁屽啗';
+      logMorale(`${sideLabel}涓诲皢${unit.general.name}闃典骸`);
+      if (unit.side === 'enemy') addRecap('鏁屽啗涓诲皢闃典骸');
+      else addRecap('鎴戝啗涓诲皢闃典骸');
+      changeMoraleSide(unit.side, -15, '涓诲皢闃典骸', false);
     }
 
     function getTypeAdv() {
@@ -3035,13 +3010,13 @@
     }
 
     function getDefenseZoneLabel() {
-      return `中央防区（第 ${DEFENSE_ZONE_ROWS[0] + 1}-${DEFENSE_ZONE_ROWS[DEFENSE_ZONE_ROWS.length - 1] + 1} 行高亮区域）`;
+      return `涓ぎ闃插尯锛堢 ${DEFENSE_ZONE_ROWS[0] + 1}-${DEFENSE_ZONE_ROWS[DEFENSE_ZONE_ROWS.length - 1] + 1} 琛岄珮浜尯鍩燂級`;
     }
 
     function getObjectiveDescription(objective) {
       if (!objective) return '';
       if (objective.id === 'defense') {
-        return `${getDefenseZoneLabel()}内至少保有 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队，且敌军不得踏入，连续守住 ${DEFENSE_HOLD_REQUIRED} 回合。`;
+        return `${getDefenseZoneLabel()}鍐呰嚦灏戜繚鏈?${DEFENSE_PLAYER_UNITS_REQUIRED} 鏀湭婧冮€冮儴闃燂紝涓旀晫鍐涗笉寰楄笍鍏ワ紝杩炵画瀹堜綇 ${DEFENSE_HOLD_REQUIRED} 鍥炲悎銆俙;
       }
       return objective.friendlyDesc;
     }
@@ -3104,8 +3079,8 @@
         affected++;
       }
       if (!affected) return;
-      const sideLabel = side === 'player' ? '我军' : '敌军';
-      logMorale(`${sideLabel}${reason}，士气提升`);
+      const sideLabel = side === 'player' ? '鎴戝啗' : '鏁屽啗';
+      logMorale(`${sideLabel}${reason}锛屽＋姘旀彁鍗嘸);
       if (side === 'player') BattleTutorialManager.maybeShow('morale_boost');
     }
 
@@ -3140,7 +3115,7 @@
     function createSupplyCart(side, spawnX, spawnY) {
       return {
         id: uid(),
-        name: side === 'player' ? '我军粮车' : '敌军粮车',
+        name: side === 'player' ? '鎴戝啗绮溅' : '鏁屽啗绮溅',
         troopType: 'supplyCart',
         isSupplyCart: true,
         soldiers: CART_MAX_HP,
@@ -3150,7 +3125,7 @@
         speed: 12,
         range: 0,
         morale: 100,
-        general: { name: '辎重队', leadership: 0, strength: 0, intelligence: 0 },
+        general: { name: '鈥?, leadership: 0, strength: 0, intelligence: 0 },
         side,
         x: spawnX,
         y: spawnY,
@@ -3166,7 +3141,7 @@
       if (!isSupplyTransportBattle()) return;
       if (supplyCartClaimSide != null && supplyCartClaimSide !== side) {
         log(
-          `${side === 'player' ? '我军' : '敌军'}已失去粮车归属，无法再生成粮车`,
+          `${side === 'player' ? '鎴戝啗' : '鏁屽啗'}宸插け鍘荤伯杞﹀綊灞烇紝鏃犳硶鍐嶇敓鎴愮伯杞,
           'system'
         );
         return false;
@@ -3174,33 +3149,33 @@
       if (getAnyCart()) return false;
       const spot = findSpawnNear(originX, originY, side);
       if (!spot) {
-        log(`${side === 'player' ? '我军' : '敌军'}粮车无法出发（无可用空地）`, 'system');
+        log(`${side === 'player' ? '鎴戝啗' : '鏁屽啗'}绮溅鏃犳硶鍑哄彂锛堟棤鍙敤绌哄湴锛塦, 'system');
         return false;
       }
       supplyCartClaimSide = side;
       const cart = createSupplyCart(side, spot.x, spot.y);
       units.push(cart);
-      const label = side === 'player' ? '我军' : '敌军';
+      const label = side === 'player' ? '鎴戝啗' : '鏁屽啗';
       if (fromDepot) {
-        log(`${label}粮车已从粮仓附近出发`, 'skill');
+        log(`${label}绮溅宸蹭粠绮粨闄勮繎鍑哄彂`, 'skill');
       } else {
-        log(`${label}粮车从散落粮食处重新出发`, 'skill');
+        log(`${label}绮溅浠庢暎钀界伯椋熷閲嶆柊鍑哄彂`, 'skill');
       }
       if (side === 'player') {
-        addRecap('粮车已出发');
-        log('粮车已出发。请护送其返回营地。', 'system');
+        addRecap('绮溅宸插嚭鍙?);
+        log('绮溅宸插嚭鍙戙€傝鎶ら€佸叾杩斿洖钀ュ湴銆?, 'system');
         BattleTutorialManager.maybeShow('supply_cart_spawn');
       } else {
-        log('敌军粮车已出发。', 'system');
+        log('鏁屽啗绮溅宸插嚭鍙?, 'system');
       }
       return true;
     }
 
     function destroyCart(cart) {
-      const sideLabel = cart.side === 'player' ? '我军' : '敌军';
-      log(`${sideLabel}粮车被摧毁`, 'damage');
-      log('粮车被摧毁。粮食散落在战场上。', 'system');
-      if (cart.side === 'player') addRecap('我军粮车被摧毁');
+      const sideLabel = cart.side === 'player' ? '鎴戝啗' : '鏁屽啗';
+      log(`${sideLabel}绮溅琚懅姣乣, 'damage');
+      log('绮溅琚懅姣併€傜伯椋熸暎钀藉湪鎴樺満涓娿€?, 'system');
+      if (cart.side === 'player') addRecap('鎴戝啗绮溅琚懅姣?);
       droppedSupplies.push({ x: cart.x, y: cart.y });
       units = units.filter(u => u.id !== cart.id);
       if (cart.side === 'player') BattleTutorialManager.maybeShow('supply_cart_destroyed');
@@ -3214,9 +3189,9 @@
       const spawned = spawnSupplyCart(unit.side, unit.x, unit.y, false);
       if (!spawned) return;
       droppedSupplies.splice(idx, 1);
-      log('粮食已被重新夺取。', 'skill');
-      addRecap(`${unit.side === 'player' ? '我军' : '敌军'}重新夺取散落粮食`);
-      raiseSupplyMorale(unit.side, DROPPED_SUPPLY_MORALE_BONUS, '夺回散落军粮');
+      log('绮宸茶閲嶆柊澶哄彇銆?, 'skill');
+      addRecap(`${unit.side === 'player' ? '鎴戝啗' : '鏁屽啗'}閲嶆柊澶哄彇鏁ｈ惤绮`);
+      raiseSupplyMorale(unit.side, DROPPED_SUPPLY_MORALE_BONUS, '澶哄洖鏁ｈ惤鍐涚伯');
       if (unit.side === 'player') BattleTutorialManager.maybeShow('supply_pickup');
     }
 
@@ -3252,10 +3227,10 @@
         }
         if (isInCampZone(cart.x, cart.y, cart.side)) {
           if (cart.side === 'player') {
-            addRecap('粮车成功运回营地');
-            showOverlay('胜利', '粮食已运回营地！', true);
+            addRecap('绮溅鎴愬姛杩愬洖钀ュ湴');
+            showOverlay('鑳滃埄', '绮宸茶繍鍥炶惀鍦帮紒', true);
           } else {
-            showOverlay('失败', '敌军粮食已运回营地……', false);
+            showOverlay('澶辫触', '鏁屽啗绮宸茶繍鍥炶惀鍦扳€︹€?, false);
           }
           return true;
         }
@@ -3518,13 +3493,13 @@
     function applyMemberDamage(unit, member, damage) {
       member.soldiers = Math.max(0, member.soldiers - damage);
       syncFormationTotals(unit);
-      changeMorale(unit, -Math.max(1, Math.round(damage / unit.maxSoldiers * 35)), '编队战损', false);
+      changeMorale(unit, -Math.max(1, Math.round(damage / unit.maxSoldiers * 35)), '缂栭槦鎴樻崯', false);
       if (unit.soldiers <= 0) onGeneralFallen(unit);
     }
 
     function isOnHill(x, y) { return getTerrain(x, y) === 'hill'; }
 
-    // ─── 地图生成 ───────────────────────────────────────────
+    // 鈹€鈹€鈹€ 鍦板浘鐢熸垚 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function scoreStrategicPoint(type, x, y) {
       if (isStrongpointBattle()) {
         const centerX = (COLS - 1) / 2;
@@ -3762,35 +3737,35 @@
         const defenders = activeUnits('player').filter(u => DEFENSE_ZONE_ROWS.includes(u.y)).length;
         const intruders = activeUnits('enemy').filter(u => DEFENSE_ZONE_ROWS.includes(u.y)).length;
         const remain = Math.max(0, DEFENSE_HOLD_REQUIRED - defenseHoldTurns);
-        return `${getDefenseZoneLabel()} · 守卫进度 ${defenseHoldTurns}/${DEFENSE_HOLD_REQUIRED} · 我军 ${defenders}/${DEFENSE_PLAYER_UNITS_REQUIRED} · 敌军 ${intruders} · 还需${remain}回合`;
+        return `${getDefenseZoneLabel()} 路 瀹堝崼杩涘害 ${defenseHoldTurns}/${DEFENSE_HOLD_REQUIRED} 路 鎴戝啗 ${defenders}/${DEFENSE_PLAYER_UNITS_REQUIRED} 路 鏁屽啗 ${intruders} 路 杩橀渶${remain}鍥炲悎`;
       }
       if (obj.id === 'strongpoint') {
         const owned = strategicPoints.filter(p => p.owner === 'player').length;
-        return `据点进度 ${owned}/${strategicPoints.length}`;
+        return `鎹偣杩涘害 ${owned}/${strategicPoints.length}`;
       }
       if (obj.id === 'supplyTransport') {
         const cart = getCart('player');
         if (cart) {
-          return `粮车生命 ${cart.soldiers}/${cart.maxSoldiers} · 距营地 ${distToCamp(cart)} 格`;
+          return `绮溅鐢熷懡 ${cart.soldiers}/${cart.maxSoldiers} 路 璺濊惀鍦?${distToCamp(cart)} 鏍糮;
         }
         const depot = getSupplyDepot();
-        if (depot?.owner === 'player') return '等待粮车出发或已在途中';
-        if (depot?.captureSide === 'player') return '正在占领粮仓…';
-        if (droppedSupplies.length) return '战场上有散落粮食';
-        return '向粮仓进军并占领';
+        if (depot?.owner === 'player') return '绛夊緟绮溅鍑哄彂鎴栧凡鍦ㄩ€斾腑';
+        if (depot?.captureSide === 'player') return '姝ｅ湪鍗犻绮粨鈥?;
+        if (droppedSupplies.length) return '鎴樺満涓婃湁鏁ｈ惤绮';
+        return '鍚戠伯浠撹繘鍐涘苟鍗犻';
       }
       if (obj.id === 'assassination') {
         const enemyCommander = getCommander('enemy');
         const playerCommander = getCommander('player');
-        if (!enemyCommander) return '敌将已被击败';
+        if (!enemyCommander) return '鏁屽皢宸茶鍑昏触';
         const playerStatus = playerCommander
-          ? `我方主将 ${playerCommander.general.name} ${playerCommander.soldiers}/${playerCommander.maxSoldiers}`
-          : '我方主将未设定';
-        return `敌将 ${enemyCommander.general.name} 仍在阵上 · ${playerStatus}`;
+          ? `鎴戞柟涓诲皢 ${playerCommander.general.name} ${playerCommander.soldiers}/${playerCommander.maxSoldiers}`
+          : '鎴戞柟涓诲皢鏈瀹?;
+        return `鏁屽皢 ${enemyCommander.general.name} 浠嶅湪闃典笂 路 ${playerStatus}`;
       }
       if (obj.id === 'annihilation') {
         const n = activeUnits('enemy').length;
-        return n ? `仍有 ${n} 支敌军可战` : '敌军已无战意';
+        return n ? `浠嶆湁 ${n} 鏀晫鍐涘彲鎴榒 : '鏁屽啗宸叉棤鎴樻剰';
       }
       return '';
     }
@@ -3799,26 +3774,26 @@
       const bar = document.getElementById('objective-bar');
       const prog = document.getElementById('objective-progress');
       if (!battleObjective) {
-        bar.textContent = '战斗目标：未设定';
+        bar.textContent = '鎴樻枟鐩爣锛氣€?;
         prog.textContent = '';
         return;
       }
       bar.textContent = isSupplyTransportBattle()
-        ? `【护送粮车】${battleObjective.friendlyDesc}`
-        : `【${battleObjective.friendlyTitle}】${battleObjective.friendlyDesc}`;
+        ? `銆愭姢閫佺伯杞︺€?{battleObjective.friendlyDesc}`
+        : `銆?{battleObjective.friendlyTitle}銆?{battleObjective.friendlyDesc}`;
       prog.textContent = phase === 'battle' ? getObjectiveProgressText() : '';
       if (isSupplyTransportBattle() && phase === 'battle') {
         const cart = getCart('player');
         const sub = cart
-          ? `当前目标：护送粮车返回营地 · 粮车 ${cart.soldiers}/${cart.maxSoldiers} · 距营地 ${distToCamp(cart)} 格`
-          : '当前目标：护送粮车返回营地';
-        prog.textContent = getObjectiveProgressText() ? `${sub} · ${getObjectiveProgressText()}` : sub;
+          ? `褰撳墠鐩爣锛氭姢閫佺伯杞﹁繑鍥炶惀鍦?路 绮溅 ${cart.soldiers}/${cart.maxSoldiers} 路 璺濊惀鍦?${distToCamp(cart)} 鏍糮
+          : '褰撳墠鐩爣锛氭姢閫佺伯杞﹁繑鍥炶惀鍦?;
+        prog.textContent = getObjectiveProgressText() ? `${sub} 路 ${getObjectiveProgressText()}` : sub;
       }
     }
 
     function showObjectiveIntro() {
       if (!battleObjective) return;
-      document.getElementById('objective-intro-title').textContent = `【${battleObjective.friendlyTitle}】`;
+      document.getElementById('objective-intro-title').textContent = `銆?{battleObjective.friendlyTitle}銆慲;
       document.getElementById('objective-intro-desc').textContent = getObjectiveDescription(battleObjective);
       document.getElementById('objective-intro').classList.remove('hidden');
     }
@@ -3843,9 +3818,9 @@
       }
     }
 
-    // ─── 单位 ───────────────────────────────────────────────
-    const GENERAL_NAMES = ['赵云', '张飞', '关羽', '黄忠', '马超', '张辽', '徐晃', '于禁', '乐进', '李典'];
-    const ENEMY_GENERAL_NAMES = ['夏侯惇', '夏侯渊', '许褚', '典韦', '张郃', '曹仁', '曹洪', '荀彧', '郭嘉', '贾诩'];
+    // 鈹€鈹€鈹€ 鍗曚綅 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+    const GENERAL_NAMES = ['璧典簯', '寮犻', '鍏崇窘', '榛勫繝', '椹秴', '寮犺窘', '寰愭檭', '浜庣', '涔愯繘', '鏉庡吀'];
+    const ENEMY_GENERAL_NAMES = ['澶忎警鎯?, '澶忎警娓?, '璁歌', '鍏搁煢', '寮犻儍', '鏇逛粊', '鏇规椽', '鑽€鏀?, '閮槈', '璐捐'];
 
     function createGeneral(pool) {
       return {
@@ -3960,20 +3935,20 @@
       if (!card || !grid) return;
       const unit = getInspectUnit();
       if (!unit) {
-        card.innerHTML = '<div class="unit-summary">点击单位查看编队</div>';
+        card.innerHTML = '<div class="unit-summary">鐐瑰嚮鍗曚綅鏌ョ湅缂栭槦銆?/div>';
         grid.innerHTML = '';
         return;
       }
 
       const tier = getMoraleTier(unit.morale || 0);
-      const pos = unit.x >= 0 ? `(${unit.x}, ${unit.y})` : '未部署';
-      const sideLabel = unit.side === 'player' ? '我方' : unit.side === 'enemy' ? '敌方' : '中立';
+      const pos = unit.x >= 0 ? `(${unit.x}, ${unit.y})` : '鏈儴缃?;
+      const sideLabel = unit.side === 'player' ? '鎴戞柟' : unit.side === 'enemy' ? '鏁屾柟' : '涓珛';
       const total = unit.maxSoldiers ? `${unit.soldiers}/${unit.maxSoldiers}` : unit.soldiers;
       const soldierPercent = unit.maxSoldiers
         ? Math.max(0, Math.min(100, Math.round(unit.soldiers / unit.maxSoldiers * 100)))
         : 0;
       const moralePercent = Math.max(0, Math.min(100, Math.round(unit.morale || 0)));
-      const actionState = unit.hasActed || unit.hasMoved ? '已行动' : '待命';
+      const actionState = unit.hasActed || unit.hasMoved ? '宸茶鍔? : '寰呭懡';
       const moveText = typeof moveRange === 'function' ? moveRange(unit) : 0;
       const rangeText = unit.range ?? getEffectiveRange(unit);
       card.innerHTML = `
@@ -3983,21 +3958,21 @@
             <div class="name">${escapeHtml(unit.name)}</div>
             <div class="unit-state-pill">${actionState}</div>
           </div>
-          <div class="muted">主将：${escapeHtml(unit.general?.name || unit.name)}${unit.isCommander ? ' · 主帅' : ''}</div>
+          <div class="muted">涓诲皢锛?{escapeHtml(unit.general?.name || unit.name)}${unit.isCommander ? ' 路 涓诲竻' : ''}</div>
           <div class="unit-meter">
-            <span>总兵力</span>
+            <span>鎬诲叺鍔?/span>
             <div class="unit-meter-track"><i class="unit-meter-fill" style="width:${soldierPercent}%"></i></div>
             <strong>${total}</strong>
           </div>
           <div class="unit-meter unit-meter--morale">
-            <span>士气</span>
+            <span>澹皵</span>
             <div class="unit-meter-track"><i class="unit-meter-fill" style="width:${moralePercent}%"></i></div>
             <strong>${unit.morale ?? 0}/100</strong>
           </div>
-          <div class="unit-stat-row"><span>阵型</span><strong>${escapeHtml(getFormationTemplateLabel(unit))}</strong></div>
-          <div class="unit-stat-row"><span>机动/射程</span><strong>${moveText} / ${rangeText}</strong></div>
-          <div class="unit-stat-row"><span>兵种构成</span><strong>${escapeHtml(getFormationCompositionText(unit))}</strong></div>
-          <div class="unit-stat-row"><span>状态</span><strong>${escapeHtml(tier.label)} · ${sideLabel} · ${pos}</strong></div>
+          <div class="unit-stat-row"><span>闃靛瀷</span><strong>${escapeHtml(getFormationTemplateLabel(unit))}</strong></div>
+          <div class="unit-stat-row"><span>鏈哄姩/灏勭▼</span><strong>${moveText} / ${rangeText}</strong></div>
+          <div class="unit-stat-row"><span>鍏电鏋勬垚</span><strong>${escapeHtml(getFormationCompositionText(unit))}</strong></div>
+          <div class="unit-stat-row"><span>鐘舵€?/span><strong>${escapeHtml(tier.label)} 路 ${sideLabel} 路 ${pos}</strong></div>
         </div>
       `;
 
@@ -4005,7 +3980,7 @@
       grid.innerHTML = FORMATION_SLOT_KEYS.map(slotKey => {
         const member = occupiedSlots.get(slotKey);
         if (!member) {
-          return `<div class="unit-formation-cell empty"><div>${escapeHtml(FORMATION_SLOT_LABELS[slotKey])}</div><div>空位</div></div>`;
+          return `<div class="unit-formation-cell empty"><div>${escapeHtml(FORMATION_SLOT_LABELS[slotKey])}</div><div>绌轰綅</div></div>`;
         }
         const pct = member.maxSoldiers ? Math.max(0, Math.round(member.soldiers / member.maxSoldiers * 100)) : 0;
         const classes = ['unit-formation-cell'];
@@ -4015,7 +3990,7 @@
             <div class="slot">${escapeHtml(FORMATION_SLOT_LABELS[slotKey])}</div>
             <div class="troop">${escapeHtml(TROOP_TYPES[member.troopType]?.label || member.troopType)}</div>
             <div class="hp">${member.soldiers}/${member.maxSoldiers}</div>
-            <div class="muted">射程 ${member.range}</div>
+            <div class="muted">灏勭▼ ${member.range}</div>
             <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
           </div>
         `;
@@ -4027,12 +4002,12 @@
       if (!list) return;
       const playerAlive = units.filter(unit => unit.side === 'player' && unit.soldiers > 0 && !unit.isSupplyCart).length;
       const enemyAlive = units.filter(unit => unit.side === 'enemy' && unit.soldiers > 0 && !unit.isSupplyCart).length;
-      const selectedText = selectedUnit ? `${selectedUnit.name} · ${mode || '已选中'}` : '未选择单位';
+      const selectedText = selectedUnit ? `${selectedUnit.name} 路 ${mode || '宸查€変腑'}` : '鏈€夋嫨鍗曚綅';
       list.innerHTML = `
-        <div class="status-item"><div class="label">胜利条件</div><div>${escapeHtml(battleObjective?.friendlyTitle || '未设定')}</div></div>
-        <div class="status-item"><div class="label">当前回合</div><div>${turn === 'player' ? '我方行动' : '敌方行动'}</div></div>
-        <div class="status-item"><div class="label">当前选择</div><div>${escapeHtml(selectedText)}</div></div>
-        <div class="status-item"><div class="label">战场兵力</div><div>我方 ${playerAlive} 支 · 敌方 ${enemyAlive} 支</div></div>
+        <div class="status-item"><div class="label">鑳滃埄鏉′欢</div><div>${escapeHtml(battleObjective?.friendlyTitle || '鏈瀹?)}</div></div>
+        <div class="status-item"><div class="label">褰撳墠鍥炲悎</div><div>${turn === 'player' ? '鎴戞柟琛屽姩' : '鏁屾柟琛屽姩'}</div></div>
+        <div class="status-item"><div class="label">褰撳墠閫夋嫨</div><div>${escapeHtml(selectedText)}</div></div>
+        <div class="status-item"><div class="label">鎴樺満鍏靛姏</div><div>鎴戞柟 ${playerAlive} 闃?路 鏁屾柟 ${enemyAlive} 闃?/div></div>
       `;
     }
 
@@ -4062,8 +4037,8 @@
         const moraleLabel = document.getElementById(`${prefix}-morale-label`);
         const soldiersFill = document.getElementById(`${prefix}-soldiers-fill`);
         const moraleFill = document.getElementById(`${prefix}-morale-fill`);
-        if (soldiersLabel) soldiersLabel.textContent = `总兵力 ${totals.soldiers}`;
-        if (moraleLabel) moraleLabel.textContent = `总士气 ${totals.morale}`;
+        if (soldiersLabel) soldiersLabel.textContent = `鎬诲叺鍔?${totals.soldiers}`;
+        if (moraleLabel) moraleLabel.textContent = `鎬诲＋姘?${totals.morale}`;
         if (soldiersFill) soldiersFill.style.width = `${soldierPct}%`;
         if (moraleFill) moraleFill.style.width = `${moralePct}%`;
       }
@@ -4151,11 +4126,11 @@
       }
 
       return [
-        createUnit('前军一队', 'infantry', 420, 'player', null, { formationTemplate: 'vanguard' }),
-        createUnit('前军二队', 'cavalry', 360, 'player', null, { formationTemplate: 'assault' }),
-        createUnit('前军三队', 'archer', 340, 'player', null, { formationTemplate: 'missile' }),
-        createUnit('中军一队', 'spear', 440, 'player', null, { formationTemplate: 'guard' }),
-        createUnit('中军二队', 'cavalry', 320, 'player', null, { formationTemplate: 'mobile' }),
+        createUnit('鍓嶅啗涓€闃?, 'infantry', 420, 'player', null, { formationTemplate: 'vanguard' }),
+        createUnit('鍓嶅啗浜岄槦', 'cavalry', 360, 'player', null, { formationTemplate: 'assault' }),
+        createUnit('鍓嶅啗涓夐槦', 'archer', 340, 'player', null, { formationTemplate: 'missile' }),
+        createUnit('涓啗涓€闃?, 'spear', 440, 'player', null, { formationTemplate: 'guard' }),
+        createUnit('涓啗浜岄槦', 'cavalry', 320, 'player', null, { formationTemplate: 'mobile' }),
       ];
     }
 
@@ -4168,7 +4143,7 @@
       }
 
       const templates = ['vanguard', 'assault', 'missile', 'guard', 'mobile'];
-      const names = ['曹军先锋', '曹军突击', '曹军射击', '曹军守备', '曹军机动', '曹军偏师'];
+      const names = ['鏇瑰啗鍏堥攱', '鏇瑰啗绐佸嚮', '鏇瑰啗灏勫嚮', '鏇瑰啗瀹堝', '鏇瑰啗鏈哄姩', '鏇瑰啗鍋忓笀'];
       const occupied = new Set();
       const count = randInt(4, 6);
       let commander = null;
@@ -4185,7 +4160,7 @@
 
         const template = templates[randInt(0, templates.length - 1)];
         const u = createUnit(
-          names[i] || '曹军部队',
+          names[i] || '鏇瑰啗閮ㄩ槦',
           FORMATION_TEMPLATES[template].primary,
           randInt(280, 430),
           'enemy',
@@ -4221,7 +4196,7 @@
       if (playerCommander) playerCommander.isCommander = true;
     }
 
-    // ─── 移动 ───────────────────────────────────────────────
+    // 鈹€鈹€鈹€ 绉诲姩 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function computeReachable(unit) {
       const maxDist = moveRange(unit);
       const result = [], visited = new Map();
@@ -4293,7 +4268,7 @@
       if (isRiverTerrain(terrain)) {
         unit.inRiver = true;
         unit.hasActed = true;
-        log(`${unit.name} 进入河流 · 渡河受阻，本回合行动结束`, 'system');
+        log(`${unit.name} 杩涘叆娌虫祦 鈥?娓℃渤鍙楅樆锛屾湰鍥炲悎琛屽姩缁撴潫`, 'system');
       } else {
         unit.inRiver = false;
       }
@@ -4357,7 +4332,7 @@
       }
     }
 
-    // ─── 战斗 ───────────────────────────────────────────────
+    // 鈹€鈹€鈹€ 鎴樻枟 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function calcDamage(attacker, defender) {
       const atkTier = getMoraleTier(attacker.morale);
       const defTier = getMoraleTier(defender.morale);
@@ -4420,7 +4395,7 @@
         if (wasAlive && unit.soldiers <= 0) destroyCart(unit);
         return;
       }
-      changeMorale(unit, -Math.round(amount / unit.maxSoldiers * 35), '战损', false);
+      changeMorale(unit, -Math.round(amount / unit.maxSoldiers * 35), '鎴樻崯', false);
       if (wasAlive && unit.soldiers <= 0) onGeneralFallen(unit);
     }
 
@@ -4428,32 +4403,32 @@
       if (attacker.isSupplyCart) return Promise.resolve();
       if (isRout(attacker)) return Promise.resolve();
       if (isChaos(attacker) && Math.random() < 0.25) {
-        log(`${attacker.name} 混乱中行动失败`, 'system');
+        log(`${attacker.name} 娣蜂贡涓鍔ㄥけ璐, 'system');
         return Promise.resolve();
       }
 
       const result = calcDamage(attacker, defender);
-      const advLabel = result.typeAdv > 1 ? '（克制）' : '';
+      const advLabel = result.typeAdv > 1 ? '锛堝厠鍒讹級' : '';
 
       if (result.chaosFail) {
-        log(`${attacker.name} 混乱中攻击失误`, 'system');
+        log(`${attacker.name} 娣蜂贡涓敾鍑诲け璇痐, 'system');
         attacker.hasActed = true;
         return Promise.resolve();
       }
       if (!result.hit) {
-        log(`${attacker.name} 攻击 ${defender.name}，未命中`, 'system');
+        log(`${attacker.name} 鏀诲嚮 ${defender.name} 鈥?鏈懡涓璥, 'system');
         attacker.hasActed = true;
         return Promise.resolve();
       }
 
-      if (result.hillFirst) log(`${attacker.name} 占高地先手！`, 'skill');
+      if (result.hillFirst) log(`${attacker.name} 鍗犻珮鍦板厛鎵嬶紒`, 'skill');
       applyDamage(defender, result.damage);
       if (result.counter > 0) applyDamage(attacker, result.counter);
 
-      const targetName = defender.isSupplyCart ? '粮车' : defender.name;
-      log(`${attacker.name}发动攻击${advLabel}`, 'skill');
-      log(`  ${targetName} 损失 ${result.damage}${result.counter ? `，${attacker.name} 损失 ${result.counter}` : ''}`, 'damage');
-      changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
+      const targetName = defender.isSupplyCart ? '绮溅' : defender.name;
+      log(`${attacker.name}鍙戝姩鏀诲嚮锛?{advLabel}`, 'skill');
+      log(`  ${targetName} 鎹熷け ${result.damage}${result.counter ? `锛?{attacker.name} 鎹熷け ${result.counter}` : ''}`, 'damage');
+      changeMorale(attacker, -randInt(1, 2), '婵€鎴樻秷鑰?, false);
       return Promise.resolve();
     }
 
@@ -4467,7 +4442,7 @@
 
       if (attacker.isSupplyCart || isRout(attacker)) return Promise.resolve();
       if (isChaos(attacker) && Math.random() < 0.25) {
-        log(`${attacker.name} 混乱中行动失败`, 'system');
+        log(`${attacker.name} 娣蜂贡涓鍔ㄥけ璐, 'system');
         return Promise.resolve();
       }
 
@@ -4490,7 +4465,7 @@
         const readyMembers = sortFormationMembersForBattleOrder(getBattleReadyMembers(sourceUnit, distance));
         let strikeCount = 0;
         if (!readyMembers.length) {
-          pushBattleStep({ type: 'entry', text: `${label}无成员能够出手` });
+          pushBattleStep({ type: 'entry', text: `${label}鏃犳垚鍛樿兘澶熷嚭鎵媊 });
           return;
         }
         for (const member of readyMembers) {
@@ -4500,13 +4475,13 @@
           const targetMember = chooseFormationTarget(sourceUnit, member, targetUnit);
           if (!targetMember) continue;
           strikeCount += 1;
-          const delayMs = randInt(0, BATTLE_RANDOM_ATTACK_DELAY_MAX_MS);
+          const delayMs = randInt(0, 2000);
           const hitRate = 0.76 * getMoraleTier(sourceUnit.morale).hit;
           if (Math.random() > hitRate) {
             pushBattleStep({
               type: 'strike',
               className: 'miss',
-              text: `${label}${TROOP_TYPES[member.troopType].label}攻击落空`,
+              text: `${label}${TROOP_TYPES[member.troopType].label}鏀诲嚮钀界┖`,
               sourceSide,
               targetSide,
               sourceSlotKey: member.slotKey,
@@ -4527,7 +4502,7 @@
           pushBattleStep({
             type: 'strike',
             className: 'damage',
-            text: `${label}${TROOP_TYPES[member.troopType].label}击中${targetUnit.name}${TROOP_TYPES[targetMember.troopType].label}，损失 ${actualDamage}${result.typeAdv > 1 ? '（克制）' : ''}`,
+            text: `${label}${TROOP_TYPES[member.troopType].label}鍑讳腑${targetUnit.name}${TROOP_TYPES[targetMember.troopType].label}锛屾崯澶?${actualDamage}${result.typeAdv > 1 ? '锛堝厠鍒讹級' : ''}`,
             sourceSide,
             targetSide,
             sourceSlotKey: member.slotKey,
@@ -4542,20 +4517,20 @@
         }
 
         if (!strikeCount) {
-          pushBattleStep({ type: 'entry', text: `${label}未形成有效攻击` });
+          pushBattleStep({ type: 'entry', text: `${label}鏈舰鎴愭湁鏁堟敾鍑籤 });
         }
       }
 
       for (let round = 1; round <= 2; round++) {
-        pushBattleStep({ type: 'round', text: `第 ${round} 轮` });
-        runSideRound(attacker, defender, '攻方', false, 'attacker', 'defender');
-        if (defender.soldiers > 0) runSideRound(defender, attacker, '守方还击', true, 'defender', 'attacker');
+        pushBattleStep({ type: 'round', text: `绗?${round} 杞甡 });
+        runSideRound(attacker, defender, '鏀绘柟', false, 'attacker', 'defender');
+        if (defender.soldiers > 0) runSideRound(defender, attacker, '瀹堟柟杩樺嚮锛?, true, 'defender', 'attacker');
       }
 
-      changeMorale(attacker, -randInt(1, 2), '激战消耗', false);
+      changeMorale(attacker, -randInt(1, 2), '婵€鎴樻秷鑰?, false);
 
-      log(`${attacker.name} 与 ${defender.name} 展开编队交战`, 'skill');
-      log(`  ${defender.name} 损失 ${totalDamageToDefender}，${attacker.name} 损失 ${totalDamageToAttacker}`, 'damage');
+      log(`${attacker.name} 涓?${defender.name} 灞曞紑缂栭槦浜ゆ垬`, 'skill');
+      log(`  ${defender.name} 鎹熷け ${totalDamageToDefender}锛?{attacker.name} 鎹熷け ${totalDamageToAttacker}`, 'damage');
       if (defender.soldiers <= 0) onGeneralFallen(defender);
       if (attacker.soldiers <= 0) onGeneralFallen(attacker);
       return showFormationBattleOverlay({
@@ -4568,27 +4543,27 @@
       });
     }
 
-    // ─── 技能 ───────────────────────────────────────────────
+    // 鈹€鈹€鈹€ 鎶€鑳?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function useInspire(caster, target) {
       if (caster.skillUses.inspire <= 0) return;
       const bonus = Math.round(20 * (1 + caster.general.intelligence / 200));
-      changeMorale(target, bonus, '鼓舞');
+      changeMorale(target, bonus, '榧撹垶');
       caster.skillUses.inspire--;
       caster.hasActed = true;
     }
 
-    // ─── 据点 ───────────────────────────────────────────────
+    // 鈹€鈹€鈹€ 鎹偣 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function capturePoint(point, side) {
       point.owner = side;
       point.captureProgress = 0;
       point.captureSide = null;
       const info = STRATEGIC[point.type];
-      log(`【${info.name}】被${side === 'player' ? '我军' : '敌军'}占领！`, 'skill');
+      log(`銆?{info.name}銆戣${side === 'player' ? '鎴戝啗' : '鏁屽啗'}鍗犻锛乣, 'skill');
 
-      if (side === 'player') addRecap(`你占领了${info.name}`);
+      if (side === 'player') addRecap(`浣犲崰棰嗕簡${info.name}`);
 
       if (point.type === 'supplyDepot') {
-        raiseSupplyMorale(side, SUPPLY_CAPTURE_MORALE_BONUS, '夺得粮仓');
+        raiseSupplyMorale(side, SUPPLY_CAPTURE_MORALE_BONUS, '澶哄緱绮粨');
         if (isSupplyTransportBattle()) {
           spawnSupplyCart(side, point.x, point.y, true);
         }
@@ -4625,11 +4600,11 @@
       for (const p of strategicPoints) {
         if (p.owner !== side) continue;
         if (p.type === 'camp') {
-          changeMoraleSide(side, 2, '营寨补给', false);
-          logMorale(`${side === 'player' ? '我军' : '敌军'}据守营寨，士气恢复`);
+          changeMoraleSide(side, 2, '钀ュ琛ョ粰', false);
+          logMorale(`${side === 'player' ? '鎴戝啗' : '鏁屽啗'}鎹畧钀ュ锛屽＋姘旀仮澶峘);
           for (const u of units) {
             if (u.side !== side || u.soldiers <= 0) continue;
-            if (manhattan(u.x, u.y, p.x, p.y) <= 1) changeMorale(u, 3, '营寨附近', false);
+            if (manhattan(u.x, u.y, p.x, p.y) <= 1) changeMorale(u, 3, '钀ュ闄勮繎', false);
           }
         }
       }
@@ -4638,11 +4613,11 @@
     function recoverMorale(side) {
       for (const u of units) {
         if (u.side !== side || u.soldiers <= 0 || isRout(u)) continue;
-        changeMorale(u, Math.round(u.general.leadership / 22), '统率恢复', false);
+        changeMorale(u, Math.round(u.general.leadership / 22), '缁熺巼鎭㈠', false);
       }
     }
 
-    // ─── 溃逃 ───────────────────────────────────────────────
+    // 鈹€鈹€鈹€ 婧冮€?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function processRout() {
       for (const u of units) {
         if (!isRout(u) || u.soldiers <= 0) continue;
@@ -4680,7 +4655,7 @@
       }
     }
 
-    // ─── 胜负 ───────────────────────────────────────────────
+    // 鈹€鈹€鈹€ 鑳滆礋 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function livingUnits(side) {
       return units.filter(u => u.side === side && u.soldiers > 0 && !u.isSupplyCart);
     }
@@ -4704,21 +4679,21 @@
       if (!obj) return null;
 
       if (obj.id === 'supplyTransport' || obj.id === 'annihilation') {
-        if (livingUnits('enemy').length === 0) return { win: true, msg: '敌军全灭。' };
+        if (livingUnits('enemy').length === 0) return { win: true, msg: '鏁屽啗鍏ㄧ伃锛? };
         if (activeUnits('enemy').length === 0) {
-          addRecap('敌军士气崩溃');
-          return { win: true, msg: '敌军全线溃逃！' };
+          addRecap('鏁屽啗澹皵宕╂簝');
+          return { win: true, msg: '鏁屽啗鍏ㄧ嚎婧冮€冿紒' };
         }
       }
       if (obj.id === 'strongpoint' && allPointsOwnedBy('player')) {
-        return { win: true, msg: '全部据点已占领！' };
+        return { win: true, msg: '鍏ㄩ儴鎹偣宸插崰棰嗭紒' };
       }
       if (obj.id === 'assassination') {
         const cmd = getCommander('enemy', true);
-        if (cmd && cmd.soldiers <= 0) return { win: true, msg: '敌军主将已阵斩！' };
+        if (cmd && cmd.soldiers <= 0) return { win: true, msg: '鏁屽啗涓诲皢宸查樀鏂╋紒' };
       }
       if (obj.id === 'defense' && defenseHoldTurns >= DEFENSE_HOLD_REQUIRED) {
-        return { win: true, msg: `成功守住${getDefenseZoneLabel()} ${DEFENSE_HOLD_REQUIRED} 回合！` };
+        return { win: true, msg: `鎴愬姛瀹堜綇${getDefenseZoneLabel()} ${DEFENSE_HOLD_REQUIRED} 鍥炲悎锛乣 };
       }
       return null;
     }
@@ -4727,22 +4702,22 @@
       if (isAssassinationBattle()) {
         const playerCommander = getCommander('player', true);
         if (playerCommander != null && playerCommander.soldiers <= 0) {
-          return { win: false, msg: '我军主将已被阵斩……' };
+          return { win: false, msg: '鎴戝啗涓诲皢宸茶闃垫柀鈥︹€? };
         }
       }
-      if (livingUnits('player').length === 0) return { win: false, msg: '我军全灭……' };
-      if (activeUnits('player').length === 0) return { win: false, msg: '我军全部溃逃……' };
+      if (livingUnits('player').length === 0) return { win: false, msg: '鎴戝啗鍏ㄧ伃鈥︹€? };
+      if (activeUnits('player').length === 0) return { win: false, msg: '鎴戝啗鍏ㄩ儴婧冮€冣€︹€? };
       if (battleObjective?.id === 'defense' && turnCounter > 0 && !playerHoldsDefenseZone()) {
-        return { win: false, msg: `${getDefenseZoneLabel()}失守……` };
+        return { win: false, msg: `${getDefenseZoneLabel()}澶卞畧鈥︹€ };
       }
       return null;
     }
 
     function checkVictory() {
       const win = checkObjectiveWin();
-      if (win) { showOverlay('胜利', win.msg, true); return true; }
+      if (win) { showOverlay('鑳滃埄', win.msg, true); return true; }
       const loss = checkObjectiveLoss();
-      if (loss) { showOverlay('失败', loss.msg, false); return true; }
+      if (loss) { showOverlay('澶辫触', loss.msg, false); return true; }
       return false;
     }
 
@@ -4771,7 +4746,7 @@
       lastBattleResult = { result: isWin ? 'victory' : 'defeat', title, desc };
       const restartButton = document.getElementById('btn-restart');
       if (battleConfig.embedded && restartButton) {
-        restartButton.textContent = isWin ? '返回帅府评定' : '重新挑战';
+        restartButton.textContent = isWin ? '杩斿洖甯呭簻璇勫畾' : '閲嶆柊鎸戞垬';
       }
       phase = 'ended';
     }
@@ -4813,11 +4788,9 @@
         cacheKey: 'default',
         projectUrl: '/src/faxian/leg/swordsman/project.json',
         imageBaseUrl: '../../src/faxian/leg/swordsman/',
-        attackActionNames: ['挥砍'],
+        attackActionNames: ['鎸ョ爫'],
         moveActionIds: ['jump'],
-        moveActionNames: ['跳跃'],
-        materialForegroundImageKeys: [],
-        materialForegroundNormalizeOptions: {},
+        moveActionNames: ['璺宠穬'],
         renderScaleMultiplier: 1,
         renderOffsetX: -16,
         renderOffsetXBySide: {
@@ -4836,15 +4809,10 @@
         cacheKey: 'archer',
         projectUrl: '/src/faxian/leg/archer/project.json',
         imageBaseUrl: '../../src/faxian/leg/archer/',
-        attackActionNames: ['射击'],
+        attackActionNames: ['灏勫嚮'],
         moveActionIds: [],
         moveActionNames: [],
         materialForegroundImageKeys: ['newSword'],
-        materialForegroundNormalizeOptions: {
-          newSword: {
-            removeDarkGuideLine: true,
-          },
-        },
         renderScaleMultiplier: 1.84,
         renderOffsetX: -34,
         renderOffsetXBySide: {
@@ -4868,110 +4836,7 @@
     }
 
     const BATTLE_MELEE_STRIKE_STAGGER_FRAMES = 56;
-    const BATTLE_RANDOM_ATTACK_DELAY_MAX_MS = 500;
-    const BATTLE_TIMELINE_ROUND_PAUSE_MS = 140;
-    const BATTLE_TIMELINE_ENTRY_PAUSE_MS = 100;
-    const BATTLE_NPC_ACTION_PAUSE_MS = 180;
-    const BATTLE_ENEMY_ACTION_PAUSE_MS = 220;
-    const BATTLE_ARCHER_LAUNCH_ANCHOR_PRESET = Object.freeze({
-      localXBySide: {
-        enemy: -0.35,
-        player: 0.65,
-      },
-      launchForwardAdjustBySide: {
-        enemy: 0,
-        player: 0,
-      },
-    });
-    const BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS = Object.freeze({
-      trail: {
-        src: '../../ui/battle/战斗/archer_trail_effect.png',
-        width: 257.6,
-        spawnOffsetX: 50,
-        spawnOffsetY: 70,
-        spawnLocalXBySide: BATTLE_ARCHER_LAUNCH_ANCHOR_PRESET.localXBySide,
-        launchForwardAdjustBySide: BATTLE_ARCHER_LAUNCH_ANCHOR_PRESET.launchForwardAdjustBySide,
-        rotationOffsetDegBySide: {
-          enemy: 15,
-          player: -15,
-        },
-        renderOffsetY: 30,
-        motionDistance: 10,
-        endScale: 1.2,
-      },
-      arrow: {
-        src: '../../ui/battle/战斗/archer_arrow_path_effect.png',
-        width: 220,
-        speedPxPerFrame: 240,
-        screenPadding: 200,
-      },
-      flight: {
-        src: '../../ui/battle/战斗/archer_hit_effect_flight.png',
-        width: 250,
-        angleDeg: 20,
-        startPadding: 180,
-        missEndOffsetDistance: 60,
-        missEndOffsetAngleDeg: 60,
-      },
-      stage1: {
-        src: '../../ui/battle/战斗/archer_hit_effect_stage1.png',
-        width: 250,
-      },
-      stage2: {
-        src: '../../ui/battle/战斗/archer_hit_effect_stage2.png',
-        width: 260,
-      },
-    });
-    const BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS = Object.freeze({
-      trail: {
-        src: '../../ui/battle/战斗/archer_airbreak_effect_v2.png',
-        width: 260,
-        spawnForwardOffsetX: 18,
-        spawnOffsetY: 0,
-        fadeInFrames: 3,
-        holdFrames: 3,
-        fadeOutFrames: 8,
-        motionDistance: 20,
-        endScale: 1.1,
-        rotationDegBySide: {
-          enemy: 180,
-          player: 0,
-        },
-      },
-      arrow: {
-        src: '../../ui/battle/战斗/archer_arrow_flat_effect.png',
-        width: 185,
-        startFrame: 41,
-        vanishFrame: 43,
-        reappearFrame: 47,
-        impactFrame: 49,
-        speedPx: 240,
-        fadeInFrames: 0,
-        fadeOutFrames: 0,
-        rotationDegBySide: {
-          enemy: 0,
-          player: 180,
-        },
-      },
-      stage1: {
-        src: '../../ui/battle/战斗/archer_hit_effect_stage1_v2.png',
-        width: 250,
-        frame: 49,
-        holdFrames: 2,
-        fadeOutFrames: 0,
-      },
-      stage2: {
-        src: '../../ui/battle/战斗/archer_hit_effect_stage2_v2.png',
-        width: 260,
-        frame: 51,
-        holdFrames: 2,
-        fadeOutFrames: 2,
-      },
-    });
     const battleRecentLandingOffsets = [];
-    const battleTimedImageEffectAnchors = new Set();
-    const battleTimedImageEffectPool = [];
-    const BATTLE_TIMED_IMAGE_EFFECT_POOL_LIMIT = 12;
     const BATTLE_SPINE_LOGICAL_BOX = Object.freeze({
       width: 340,
       height: 380,
@@ -5029,20 +4894,20 @@
         this.nodes = project.nodes || [];
         this.images = images;
         this.config = config;
-        this.fps = Number(config.fps) || 36;
+        this.fps = Number(config.fps) || 30;
         this.idleAction =
-          this.findPreferredAction(config.idleActionIds || ['idle'], config.idleActionNames || ['待机']) ||
+          this.findPreferredAction(config.idleActionIds || ['idle'], config.idleActionNames || ['寰呮満']) ||
           project.actions?.[0] ||
           null;
         this.moveAction =
-          this.findPreferredAction(config.moveActionIds || ['jump'], config.moveActionNames || ['跳跃']) ||
+          this.findPreferredAction(config.moveActionIds || ['jump'], config.moveActionNames || ['璺宠穬']) ||
           this.idleAction;
         this.attackAction =
           this.findPreferredAction(
             [...(config.attackActionIds || []), project.selectedActionId].filter(Boolean),
             config.attackActionNames || []
           ) ||
-          (project.actions || []).find(action => action.name === '挥砍') ||
+          (project.actions || []).find(action => action.name === '鎸ョ爫') ||
           (project.actions || []).find(
             action => action.id !== this.idleAction?.id && action.id !== this.moveAction?.id
           ) ||
@@ -5069,14 +4934,6 @@
           newRightLeg: `${imageBaseUrl}rightleg%20(1).png`,
           newSword: `${imageBaseUrl}sword.png`,
         };
-        const projectImageBaseUrl = config.projectUrl
-          ? new URL(config.projectUrl, window.location.href).href
-          : window.location.href;
-        Object.entries(project.customImages || {}).forEach(([key, item]) => {
-          const src = BattleSpineRenderer.resolveImageSource(item?.src, projectImageBaseUrl);
-          if (!src) return;
-          imageSources[key] = src;
-        });
         const images = {};
         await Promise.all(Object.entries(imageSources).map(([key, src]) => new Promise(resolve => {
           const image = new Image();
@@ -5086,27 +4943,16 @@
           images[key] = image;
         })));
         const materialKeys = new Set(config.materialForegroundImageKeys || []);
-        const materialNormalizeOptions = config.materialForegroundNormalizeOptions || {};
         await Promise.all([...materialKeys].map(async (key) => {
           const image = images[key];
           if (!image?.complete) return;
           try {
-            images[key] = await BattleSpineRenderer.normalizeForegroundImage(image, materialNormalizeOptions[key] || {});
+            images[key] = await BattleSpineRenderer.normalizeForegroundImage(image);
           } catch (error) {
             console.warn('Failed to normalize material foreground image for battle renderer', key, error);
           }
         }));
         return new BattleSpineRenderer(project, images, config);
-      }
-
-      static resolveImageSource(src, baseHref = window.location.href) {
-        if (typeof src !== 'string' || !src.trim()) return null;
-        if (/^(data:|blob:|https?:|file:)/i.test(src)) return src;
-        try {
-          return new URL(src, baseHref).href;
-        } catch (_error) {
-          return src;
-        }
       }
 
       static imageToImageData(image) {
@@ -5191,25 +5037,6 @@
         const backgroundTolerance = Number.isFinite(Number(options.backgroundTolerance))
           ? Number(options.backgroundTolerance)
           : 45;
-        const useBrightShortcut = !options.ignoreBrightBackgroundShortcut;
-        const brightBgR = Number.isFinite(Number(options.brightBackgroundR))
-          ? Number(options.brightBackgroundR)
-          : 235;
-        const brightBgG = Number.isFinite(Number(options.brightBackgroundG))
-          ? Number(options.brightBackgroundG)
-          : 232;
-        const brightBgB = Number.isFinite(Number(options.brightBackgroundB))
-          ? Number(options.brightBackgroundB)
-          : 228;
-        const strongBrightBgR = Number.isFinite(Number(options.strongBrightBackgroundR))
-          ? Number(options.strongBrightBackgroundR)
-          : 244;
-        const strongBrightBgG = Number.isFinite(Number(options.strongBrightBackgroundG))
-          ? Number(options.strongBrightBackgroundG)
-          : 241;
-        const strongBrightBgB = Number.isFinite(Number(options.strongBrightBackgroundB))
-          ? Number(options.strongBrightBackgroundB)
-          : 238;
         const { width, height, data } = imageData;
         const background = BattleSpineRenderer.estimateMaterialBackground(imageData);
         const count = width * height;
@@ -5238,7 +5065,7 @@
           const b = data[offset + 2];
           return (
             backgroundDistance(index) <= backgroundTolerance ||
-            (useBrightShortcut && r >= brightBgR && g >= brightBgG && b >= brightBgB)
+            (r >= 235 && g >= 232 && b >= 228)
           );
         }
 
@@ -5251,7 +5078,7 @@
           const b = data[offset + 2];
           return (
             backgroundDistance(index) <= backgroundTolerance * 0.65 ||
-            (useBrightShortcut && r >= strongBrightBgR && g >= strongBrightBgG && b >= strongBrightBgB)
+            (r >= 244 && g >= 241 && b >= 238)
           );
         }
 
@@ -5350,233 +5177,7 @@
           output.data[offset + 2] = imageData.data[offset + 2];
           output.data[offset + 3] = imageData.data[offset + 3];
         }
-        if (options.trimEdgeFringe) {
-          BattleSpineRenderer.trimEdgeFringe(output, imageData, options);
-        }
-        if (options.removeConnectedBackgroundFringe) {
-          BattleSpineRenderer.removeConnectedBackgroundFringe(output, imageData, options);
-        }
-        if (options.removeDarkGuideLine) {
-          BattleSpineRenderer.removeDarkGuideLine(output, options);
-        }
         return BattleSpineRenderer.imageDataToImage(output);
-      }
-
-      static trimEdgeFringe(outputImageData, sourceImageData, options = {}) {
-        const { width, height, data } = outputImageData;
-        const sourceData = sourceImageData?.data || data;
-        const background = BattleSpineRenderer.estimateMaterialBackground(sourceImageData || outputImageData);
-        const fringeDistanceThreshold = Number.isFinite(Number(options.fringeDistanceThreshold))
-          ? Number(options.fringeDistanceThreshold)
-          : 36;
-        const transparentNeighborCount = Number.isFinite(Number(options.fringeTransparentNeighborCount))
-          ? Number(options.fringeTransparentNeighborCount)
-          : 3;
-        const fringeMinBrightness = Number.isFinite(Number(options.fringeMinBrightness))
-          ? Number(options.fringeMinBrightness)
-          : 0;
-        const fringeNeutralThreshold = Number.isFinite(Number(options.fringeNeutralThreshold))
-          ? Number(options.fringeNeutralThreshold)
-          : 255;
-
-        for (let y = 1; y < height - 1; y += 1) {
-          for (let x = 1; x < width - 1; x += 1) {
-            const index = y * width + x;
-            const offset = index * 4;
-            if (data[offset + 3] < 8) continue;
-
-            let transparentNeighbors = 0;
-            for (let ny = -1; ny <= 1; ny += 1) {
-              for (let nx = -1; nx <= 1; nx += 1) {
-                if (nx === 0 && ny === 0) continue;
-                const neighborIndex = ((y + ny) * width + (x + nx)) * 4;
-                if (data[neighborIndex + 3] < 8) transparentNeighbors += 1;
-              }
-            }
-            if (transparentNeighbors < transparentNeighborCount) continue;
-
-            const distance = BattleSpineRenderer.materialColorDistance(
-              background,
-              sourceData[offset],
-              sourceData[offset + 1],
-              sourceData[offset + 2],
-            );
-            if (distance > fringeDistanceThreshold) continue;
-            const r = sourceData[offset];
-            const g = sourceData[offset + 1];
-            const b = sourceData[offset + 2];
-            const brightness = (r + g + b) / 3;
-            const neutralSpread = Math.max(r, g, b) - Math.min(r, g, b);
-            if (brightness < fringeMinBrightness) continue;
-            if (neutralSpread > fringeNeutralThreshold) continue;
-
-            data[offset + 3] = 0;
-          }
-        }
-      }
-
-      static removeConnectedBackgroundFringe(outputImageData, sourceImageData, options = {}) {
-        const { width, height, data } = outputImageData;
-        const sourceData = sourceImageData?.data || data;
-        const background = BattleSpineRenderer.estimateMaterialBackground(sourceImageData || outputImageData);
-        const count = width * height;
-        const seen = new Uint8Array(count);
-        const distanceThreshold = Number.isFinite(Number(options.connectedFringeDistanceThreshold))
-          ? Number(options.connectedFringeDistanceThreshold)
-          : 68;
-        const minBrightness = Number.isFinite(Number(options.connectedFringeMinBrightness))
-          ? Number(options.connectedFringeMinBrightness)
-          : 150;
-        const neutralThreshold = Number.isFinite(Number(options.connectedFringeNeutralThreshold))
-          ? Number(options.connectedFringeNeutralThreshold)
-          : 62;
-        const maxRegionPixels = Number.isFinite(Number(options.connectedFringeMaxRegionPixels))
-          ? Number(options.connectedFringeMaxRegionPixels)
-          : 1400;
-
-        function isTransparent(index) {
-          return data[index * 4 + 3] < 8;
-        }
-
-        function isCandidate(index) {
-          const offset = index * 4;
-          if (data[offset + 3] < 8) return false;
-          const r = sourceData[offset];
-          const g = sourceData[offset + 1];
-          const b = sourceData[offset + 2];
-          const brightness = (r + g + b) / 3;
-          const neutralSpread = Math.max(r, g, b) - Math.min(r, g, b);
-          if (brightness < minBrightness) return false;
-          if (neutralSpread > neutralThreshold) return false;
-          const distance = BattleSpineRenderer.materialColorDistance(background, r, g, b);
-          return distance <= distanceThreshold;
-        }
-
-        function hasTransparentNeighbor(x, y) {
-          for (let ny = -1; ny <= 1; ny += 1) {
-            for (let nx = -1; nx <= 1; nx += 1) {
-              if (nx === 0 && ny === 0) continue;
-              const px = x + nx;
-              const py = y + ny;
-              if (px < 0 || py < 0 || px >= width || py >= height) return true;
-              if (isTransparent(py * width + px)) return true;
-            }
-          }
-          return false;
-        }
-
-        for (let y = 0; y < height; y += 1) {
-          for (let x = 0; x < width; x += 1) {
-            const startIndex = y * width + x;
-            if (seen[startIndex] || !isCandidate(startIndex) || !hasTransparentNeighbor(x, y)) continue;
-
-            const queue = [startIndex];
-            const region = [];
-            seen[startIndex] = 1;
-
-            for (let cursor = 0; cursor < queue.length; cursor += 1) {
-              const current = queue[cursor];
-              region.push(current);
-              if (region.length > maxRegionPixels) break;
-              const cx = current % width;
-              const cy = Math.floor(current / width);
-              for (let ny = -1; ny <= 1; ny += 1) {
-                for (let nx = -1; nx <= 1; nx += 1) {
-                  if (nx === 0 && ny === 0) continue;
-                  const px = cx + nx;
-                  const py = cy + ny;
-                  if (px < 0 || py < 0 || px >= width || py >= height) continue;
-                  const nextIndex = py * width + px;
-                  if (seen[nextIndex] || !isCandidate(nextIndex)) continue;
-                  seen[nextIndex] = 1;
-                  queue.push(nextIndex);
-                }
-              }
-            }
-
-            if (region.length > maxRegionPixels) continue;
-            region.forEach((index) => {
-              data[index * 4 + 3] = 0;
-            });
-          }
-        }
-      }
-
-      static removeDarkGuideLine(imageData, options = {}) {
-        const { width, height, data } = imageData;
-        const count = width * height;
-        const visited = new Uint8Array(count);
-        const alphaThreshold = Number.isFinite(Number(options.guideAlphaThreshold))
-          ? Number(options.guideAlphaThreshold)
-          : 28;
-        const darkThreshold = Number.isFinite(Number(options.guideDarkThreshold))
-          ? Number(options.guideDarkThreshold)
-          : 52;
-        const maxComponentWidth = Number.isFinite(Number(options.guideMaxWidth))
-          ? Number(options.guideMaxWidth)
-          : Math.max(12, Math.round(width * 0.18));
-        const maxComponentX = Number.isFinite(Number(options.guideMaxX))
-          ? Number(options.guideMaxX)
-          : Math.max(18, Math.round(width * 0.24));
-        const minComponentHeight = Number.isFinite(Number(options.guideMinHeight))
-          ? Number(options.guideMinHeight)
-          : Math.max(48, Math.round(height * 0.35));
-
-        function isDarkGuidePixel(index) {
-          const offset = index * 4;
-          const alpha = data[offset + 3];
-          if (alpha < alphaThreshold) return false;
-          const r = data[offset];
-          const g = data[offset + 1];
-          const b = data[offset + 2];
-          return Math.max(r, g, b) <= darkThreshold;
-        }
-
-        for (let index = 0; index < count; index += 1) {
-          if (visited[index] || !isDarkGuidePixel(index)) continue;
-          const queue = [index];
-          const component = [];
-          visited[index] = 1;
-          let minX = width;
-          let maxX = 0;
-          let minY = height;
-          let maxY = 0;
-
-          for (let cursor = 0; cursor < queue.length; cursor += 1) {
-            const current = queue[cursor];
-            component.push(current);
-            const x = current % width;
-            const y = Math.floor(current / width);
-            minX = Math.min(minX, x);
-            maxX = Math.max(maxX, x);
-            minY = Math.min(minY, y);
-            maxY = Math.max(maxY, y);
-
-            const neighbors = [];
-            if (x > 0) neighbors.push(current - 1);
-            if (x < width - 1) neighbors.push(current + 1);
-            if (y > 0) neighbors.push(current - width);
-            if (y < height - 1) neighbors.push(current + width);
-
-            neighbors.forEach((neighbor) => {
-              if (visited[neighbor] || !isDarkGuidePixel(neighbor)) return;
-              visited[neighbor] = 1;
-              queue.push(neighbor);
-            });
-          }
-
-          const componentWidth = maxX - minX + 1;
-          const componentHeight = maxY - minY + 1;
-          const isGuideLine =
-            componentWidth <= maxComponentWidth &&
-            minX <= maxComponentX &&
-            componentHeight >= minComponentHeight;
-
-          if (!isGuideLine) continue;
-          component.forEach((pixelIndex) => {
-            data[pixelIndex * 4 + 3] = 0;
-          });
-        }
       }
 
       findAction(id) {
@@ -5597,351 +5198,6 @@
           if (action) return action;
         }
         return null;
-      }
-
-      clampFrame(frame, duration = this.project.duration ?? 29) {
-        return Math.max(0, Math.min(duration, Math.round(Number(frame) || 0)));
-      }
-
-      normalizeArrowVisibilityTrack(track, duration = this.project.duration ?? 29) {
-        if (!Array.isArray(track)) return [];
-        return track
-          .map((item) => ({
-            frame: this.clampFrame(item?.frame, duration),
-            visible: Boolean(item?.visible),
-          }))
-          .sort((a, b) => a.frame - b.frame)
-          .filter((item, index, array) => index === array.findIndex((entry) => entry.frame === item.frame));
-      }
-
-      normalizeArrowParentTrack(track, duration = this.project.duration ?? 29) {
-        if (!Array.isArray(track)) return [];
-        const byFrame = new Map();
-        track.forEach((item) => {
-          const frame = this.clampFrame(item?.frame, duration);
-          byFrame.set(frame, {
-            frame,
-            parentId: item?.parentId ? String(item.parentId) : null,
-          });
-        });
-        return [...byFrame.values()].sort((a, b) => a.frame - b.frame);
-      }
-
-      getArrowVisibilityTrackMap(action) {
-        const source =
-          action && typeof action.arrowVisibilityTracks === 'object'
-            ? action.arrowVisibilityTracks
-            : this.project.arrowVisibilityTracks;
-        return source && typeof source === 'object' ? source : {};
-      }
-
-      getArrowParentTrackMap(action) {
-        const source =
-          action && typeof action.arrowParentTracks === 'object'
-            ? action.arrowParentTracks
-            : this.project.arrowParentTracks;
-        return source && typeof source === 'object' ? source : {};
-      }
-
-      normalizeSlashFxVisibilityTrack(track, duration = this.project.duration ?? 29) {
-        if (!Array.isArray(track)) return [];
-        return track
-          .map((item) => ({
-            frame: this.clampFrame(item?.frame, duration),
-            visible: Boolean(item?.visible),
-          }))
-          .sort((a, b) => a.frame - b.frame)
-          .filter((item, index, array) => index === array.findIndex((entry) => entry.frame === item.frame));
-      }
-
-      normalizeSlashFxParentTrack(track, duration = this.project.duration ?? 29) {
-        if (!Array.isArray(track)) return [];
-        const byFrame = new Map();
-        track.forEach((item) => {
-          const frame = this.clampFrame(item?.frame, duration);
-          byFrame.set(frame, {
-            frame,
-            parentId: item?.parentId ? String(item.parentId) : null,
-          });
-        });
-        return [...byFrame.values()].sort((a, b) => a.frame - b.frame);
-      }
-
-      getSlashFxVisibilityTrackMap(action) {
-        const source =
-          action && typeof action.slashFxVisibilityTracks === 'object'
-            ? action.slashFxVisibilityTracks
-            : this.project.slashFxVisibilityTracks;
-        return source && typeof source === 'object' ? source : {};
-      }
-
-      getSlashFxParentTrackMap(action) {
-        const source =
-          action && typeof action.slashFxParentTracks === 'object'
-            ? action.slashFxParentTracks
-            : this.project.slashFxParentTracks;
-        return source && typeof source === 'object' ? source : {};
-      }
-
-      getSlashFxActionHiddenMap(action) {
-        const source =
-          action && typeof action.slashFxActionHiddenMap === 'object'
-            ? action.slashFxActionHiddenMap
-            : this.project.slashFxActionHiddenMap;
-        return source && typeof source === 'object' ? source : {};
-      }
-
-      isArrowPieceNode(node) {
-        return Boolean(node?.attachment && node?.role === 'arrow-piece');
-      }
-
-      isSlashFxPieceNode(node) {
-        return Boolean(node?.attachment && node?.role === 'slash-fx-piece');
-      }
-
-      arrowCarrierBoneForPiece(piece) {
-        const parentBoneId = piece?.attachment?.restPart?.parentBoneId
-          ? String(piece.attachment.restPart.parentBoneId)
-          : null;
-        if (parentBoneId) {
-          return this.nodes.find((node) => node.id === parentBoneId && !node.attachment) || null;
-        }
-        const skinBoneId = piece?.attachment?.skinBoneIds?.[0] ? String(piece.attachment.skinBoneIds[0]) : null;
-        if (skinBoneId) {
-          return this.nodes.find((node) => node.id === skinBoneId && !node.attachment) || null;
-        }
-        return null;
-      }
-
-      arrowPieceForNode(node) {
-        if (this.isArrowPieceNode(node)) return node;
-        if (!node || node.attachment) return null;
-        return (
-          this.nodes.find(
-            (piece) => piece.role === 'arrow-piece' && this.arrowCarrierBoneForPiece(piece)?.id === node.id,
-          ) || null
-        );
-      }
-
-      slashFxCarrierBoneForPiece(piece) {
-        const parentBoneId = piece?.attachment?.restPart?.parentBoneId
-          ? String(piece.attachment.restPart.parentBoneId)
-          : null;
-        if (parentBoneId) {
-          return this.nodes.find((node) => node.id === parentBoneId && !node.attachment) || null;
-        }
-        const skinBoneId = piece?.attachment?.skinBoneIds?.[0] ? String(piece.attachment.skinBoneIds[0]) : null;
-        if (skinBoneId) {
-          return this.nodes.find((node) => node.id === skinBoneId && !node.attachment) || null;
-        }
-        return null;
-      }
-
-      slashFxPieceForNode(node) {
-        if (this.isSlashFxPieceNode(node)) return node;
-        if (!node || node.attachment) return null;
-        return (
-          this.nodes.find(
-            (piece) => piece.role === 'slash-fx-piece' && this.slashFxCarrierBoneForPiece(piece)?.id === node.id,
-          ) || null
-        );
-      }
-
-      isSlashFxHiddenForAction(piece, action) {
-        return Boolean(piece?.id && this.getSlashFxActionHiddenMap(action)?.[piece.id]);
-      }
-
-      arrowGripLocalForPiece(piece) {
-        const attachment = piece?.attachment;
-        const restPart = attachment?.restPart;
-        const image = this.images[attachment?.image];
-        const width = Math.max(1, image?.naturalWidth || image?.width || 0);
-        const height = Math.max(1, image?.naturalHeight || image?.height || 0);
-        if (!restPart || !width || !height) return null;
-        const candidates =
-          width >= height
-            ? [
-                { x: 0, y: height * 0.5 },
-                { x: width, y: height * 0.5 },
-              ]
-            : [
-                { x: width * 0.5, y: 0 },
-                { x: width * 0.5, y: height },
-              ];
-        let best = null;
-        candidates.forEach((candidate) => {
-          const local = this.imagePointToFullSkinRest(candidate, image, restPart);
-          const distance = Math.hypot(local.x, local.y);
-          if (!best || distance < best.distance) best = { x: local.x, y: local.y, distance };
-        });
-        return best ? { x: best.x, y: best.y } : null;
-      }
-
-      slashFxGripLocalForPiece(piece) {
-        const attachment = piece?.attachment;
-        const restPart = attachment?.restPart;
-        const image = this.images[attachment?.image];
-        const width = Math.max(1, image?.naturalWidth || image?.width || 0);
-        const height = Math.max(1, image?.naturalHeight || image?.height || 0);
-        if (!restPart || !width || !height) return null;
-        const candidates =
-          width >= height
-            ? [
-                { x: 0, y: height * 0.5 },
-                { x: width, y: height * 0.5 },
-              ]
-            : [
-                { x: width * 0.5, y: 0 },
-                { x: width * 0.5, y: height },
-              ];
-        let best = null;
-        candidates.forEach((candidate) => {
-          const local = this.imagePointToFullSkinRest(candidate, image, restPart);
-          const distance = Math.hypot(local.x, local.y);
-          if (!best || distance < best.distance) best = { x: local.x, y: local.y, distance };
-        });
-        return best ? { x: best.x, y: best.y } : null;
-      }
-
-      legacyArrowVisibilityTrackForPiece(piece, action) {
-        const duration = action?.duration ?? this.project.duration ?? 29;
-        const bone = this.arrowCarrierBoneForPiece(piece);
-        const pieceTrack = this.normalizeArrowVisibilityTrack(
-          ((action?.timelines || {})[piece?.id] || []).filter((item) => typeof item?.visible === 'boolean'),
-          duration,
-        );
-        if (pieceTrack.length) return pieceTrack;
-        return this.normalizeArrowVisibilityTrack(
-          ((action?.timelines || {})[bone?.id] || []).filter((item) => typeof item?.visible === 'boolean'),
-          duration,
-        );
-      }
-
-      arrowVisibilityAtFrame(piece, action, frame) {
-        if (!piece) return true;
-        const duration = action?.duration ?? this.project.duration ?? 29;
-        const track = this.normalizeArrowVisibilityTrack(
-          this.getArrowVisibilityTrackMap(action)?.[piece.id],
-          duration,
-        );
-        const effectiveTrack = track.length ? track : this.legacyArrowVisibilityTrackForPiece(piece, action);
-        if (!effectiveTrack.length) return true;
-        const previous = [...effectiveTrack].reverse().find((item) => item.frame <= frame);
-        if (previous) return previous.visible;
-        return !effectiveTrack[0].visible;
-      }
-
-      arrowParentAtFrame(piece, action, frame) {
-        if (!piece) return null;
-        const duration = action?.duration ?? this.project.duration ?? 29;
-        const track = this.normalizeArrowParentTrack(this.getArrowParentTrackMap(action)?.[piece.id], duration);
-        const previous = [...track].reverse().find((item) => item.frame <= frame);
-        return previous?.parentId || null;
-      }
-
-      arrowParentChangeBetweenFrames(piece, action, startFrame, endFrame) {
-        if (!piece) return null;
-        const duration = action?.duration ?? this.project.duration ?? 29;
-        return (
-          this.normalizeArrowParentTrack(this.getArrowParentTrackMap(action)?.[piece.id], duration).find(
-            (item) => item.frame > startFrame && item.frame <= endFrame,
-          ) || null
-        );
-      }
-
-      slashFxVisibilityAtFrame(piece, action, frame) {
-        if (!piece) return false;
-        if (this.isSlashFxHiddenForAction(piece, action)) return false;
-        const duration = action?.duration ?? this.project.duration ?? 29;
-        const track = this.normalizeSlashFxVisibilityTrack(
-          this.getSlashFxVisibilityTrackMap(action)?.[piece.id],
-          duration,
-        );
-        if (!track.length) return true;
-        const previous = [...track].reverse().find((item) => item.frame <= frame);
-        return previous ? previous.visible : false;
-      }
-
-      slashFxAlphaAtFrame(piece, action, frame) {
-        if (!piece) return 0;
-        if (this.isSlashFxHiddenForAction(piece, action)) return 0;
-        const duration = action?.duration ?? this.project.duration ?? 29;
-        const track = this.normalizeSlashFxVisibilityTrack(
-          this.getSlashFxVisibilityTrackMap(action)?.[piece.id],
-          duration,
-        );
-        if (!track.length) return 1;
-        const appearFadeFrames = 2;
-        const disappearFadeFrames = 5;
-        const previous = [...track].reverse().find((item) => item.frame <= frame);
-        if (previous && !previous.visible && frame <= previous.frame + disappearFadeFrames) {
-          const fadeT = Math.max(0, Math.min(1, (frame - previous.frame) / disappearFadeFrames));
-          return 1 - fadeT;
-        }
-        const next = track.find((item) => item.frame > frame);
-        if (next && next.visible && frame >= next.frame - appearFadeFrames) {
-          const fadeT = Math.max(0, Math.min(1, (frame - (next.frame - appearFadeFrames)) / appearFadeFrames));
-          return fadeT;
-        }
-        return this.slashFxVisibilityAtFrame(piece, action, frame) ? 1 : 0;
-      }
-
-      slashFxParentAtFrame(piece, action, frame) {
-        if (!piece) return null;
-        const duration = action?.duration ?? this.project.duration ?? 29;
-        const track = this.normalizeSlashFxParentTrack(this.getSlashFxParentTrackMap(action)?.[piece.id], duration);
-        const previous = [...track].reverse().find((item) => item.frame <= frame);
-        return previous?.parentId || null;
-      }
-
-      slashFxParentChangeBetweenFrames(piece, action, startFrame, endFrame) {
-        if (!piece) return null;
-        const duration = action?.duration ?? this.project.duration ?? 29;
-        return (
-          this.normalizeSlashFxParentTrack(this.getSlashFxParentTrackMap(action)?.[piece.id], duration).find(
-            (item) => item.frame > startFrame && item.frame <= endFrame,
-          ) || null
-        );
-      }
-
-      effectiveParentIdForNode(node, action, frame) {
-        if (!node) return null;
-        if (node.attachment) return node.parentId || null;
-        const arrowPiece = this.arrowPieceForNode(node);
-        if (arrowPiece) return this.arrowParentAtFrame(arrowPiece, action, frame);
-        const slashFxPiece = this.slashFxPieceForNode(node);
-        if (slashFxPiece) return this.slashFxParentAtFrame(slashFxPiece, action, frame);
-        return node.parentId || null;
-      }
-
-      isTempParentBoundArrowCarrier(node, action, frame) {
-        if (!node || node.attachment) return false;
-        const arrowPiece = this.arrowPieceForNode(node);
-        if (!arrowPiece) return false;
-        return Boolean(this.arrowParentAtFrame(arrowPiece, action, frame));
-      }
-
-      isTempParentBoundSlashFxCarrier(node, action, frame) {
-        if (!node || node.attachment) return false;
-        const slashFxPiece = this.slashFxPieceForNode(node);
-        if (!slashFxPiece) return false;
-        return Boolean(this.slashFxParentAtFrame(slashFxPiece, action, frame));
-      }
-
-      isNodeVisibleAtFrame(node, action, frame) {
-        if (!node) return false;
-        const arrowPiece = this.arrowPieceForNode(node);
-        if (arrowPiece) return this.arrowVisibilityAtFrame(arrowPiece, action, frame);
-        const slashFxPiece = this.slashFxPieceForNode(node);
-        if (slashFxPiece) return this.slashFxAlphaAtFrame(slashFxPiece, action, frame) > 0.001;
-        return node.visible !== false;
-      }
-
-      effectiveAttachmentAlphaForNode(node, action, frame) {
-        const baseAlpha = Math.max(0, Math.min(1, Number(node?.attachment?.alpha ?? 1)));
-        const slashFxPiece = this.slashFxPieceForNode(node);
-        if (slashFxPiece) return baseAlpha * this.slashFxAlphaAtFrame(slashFxPiece, action, frame);
-        return baseAlpha;
       }
 
       normalizeBowRig(bowRig) {
@@ -6030,10 +5286,15 @@
         const parentNode = this.nodes.find((node) => node.id === parentBoneId);
         if (!parentNode) return { ...restPart };
         const parentPose = this.restWorldPose(parentNode);
-        if (window.SpineRuntimeMath?.resolveRestPartWorldTransform) {
-          return window.SpineRuntimeMath.resolveRestPartWorldTransform(parentPose, restPart);
-        }
-        return { ...restPart };
+        const angle = (parentPose.worldRotation * Math.PI) / 180;
+        const localX = restPart.x || 0;
+        const localY = restPart.y || 0;
+        return {
+          ...restPart,
+          x: parentPose.worldX + localX * Math.cos(angle) - localY * Math.sin(angle),
+          y: parentPose.worldY + localX * Math.sin(angle) + localY * Math.cos(angle),
+          rotation: (restPart.rotation || 0) + parentPose.worldRotation,
+        };
       }
 
       isBowRigAttachment(node, attachment) {
@@ -6205,7 +5466,6 @@
       computeBounds() {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         for (const node of this.nodes) {
-          if (node?.role === 'arrow-piece' || node?.role === 'slash-fx-piece') continue;
           const attachment = node.attachment;
           const image = this.images[attachment?.image];
           const restPart = this.resolveRestPartTransform(attachment?.restPart);
@@ -6363,19 +5623,17 @@
 
       drawCharacter(ctx, action, frame) {
         this.nodes
-          .filter(node => node.attachment && this.isNodeVisibleAtFrame(node, action, frame))
+          .filter(node => node.attachment)
           .slice()
           .sort((a, b) => {
             const layerDiff = (a.attachment.layer || 0) - (b.attachment.layer || 0);
-            return layerDiff || this.effectiveAttachmentAlphaForNode(a, action, frame) - this.effectiveAttachmentAlphaForNode(b, action, frame);
+            return layerDiff || (a.attachment.alpha || 1) - (b.attachment.alpha || 1);
           })
           .forEach(node => this.drawAttachment(ctx, node, action, frame));
       }
 
       drawAttachment(ctx, node, action, frame) {
         const attachment = node.attachment;
-        const alpha = this.effectiveAttachmentAlphaForNode(node, action, frame);
-        if (alpha <= 0.001) return;
         const image = this.images[attachment.image];
         const restPart = this.resolveRestPartTransform(attachment.restPart);
         if (!image?.complete || !attachment.fullSkin || !restPart) return;
@@ -6401,7 +5659,7 @@
           source.push(sourceRow);
           dest.push(destRow);
         }
-        this.drawTexturedMesh(ctx, image, source, dest, alpha);
+        this.drawTexturedMesh(ctx, image, source, dest, attachment.alpha);
       }
 
       getLocalPose(node, action, frame) {
@@ -6417,17 +5675,6 @@
           const start = keys.find(item => item.frame === 0) || keys[0];
           const span = Math.max(1, (action?.duration ?? this.project.duration ?? 29) + 1 - before.frame);
           return this.interpolateLocalPose(node, before, start, Math.max(0, Math.min(1, (frame - before.frame) / span)));
-        }
-        const arrowPiece = this.arrowPieceForNode(node);
-        const slashFxPiece = this.slashFxPieceForNode(node);
-        const parentChange =
-          this.arrowParentChangeBetweenFrames(arrowPiece, action, before.frame, after.frame) ||
-          this.slashFxParentChangeBetweenFrames(slashFxPiece, action, before.frame, after.frame);
-        if (parentChange) {
-          if (frame < parentChange.frame) {
-            return this.enrichBowPose(node, { ...node, ...before });
-          }
-          return this.enrichBowPose(node, { ...node, ...after });
         }
         return this.interpolateLocalPose(node, before, after, (frame - before.frame) / (after.frame - before.frame));
       }
@@ -6470,69 +5717,15 @@
         if (seen.has(node.id)) return this.getLocalPose(node, action, frame);
         seen.add(node.id);
         const local = this.getLocalPose(node, action, frame);
-        const effectiveParentId = this.effectiveParentIdForNode(node, action, frame);
-        if (!effectiveParentId) {
-          return {
-            ...local,
-            worldX: local.x,
-            worldY: local.y,
-            worldRotation: local.rotation,
-            worldScaleX: local.scaleX,
-            worldScaleY: local.scaleY,
-          };
+        if (!node.parentId) {
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
         }
-        const parent = this.nodes.find(item => item.id === effectiveParentId);
+        const parent = this.nodes.find(item => item.id === node.parentId);
         if (!parent) {
-          return {
-            ...local,
-            worldX: local.x,
-            worldY: local.y,
-            worldRotation: local.rotation,
-            worldScaleX: local.scaleX,
-            worldScaleY: local.scaleY,
-          };
+          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
         }
         const p = this.worldPose(parent, action, frame, seen);
         const anchor = this.endPoint(p);
-        const worldRotation = p.worldRotation + local.rotation;
-        const worldScaleX = p.worldScaleX * local.scaleX;
-        const worldScaleY = p.worldScaleY * local.scaleY;
-        if (this.isTempParentBoundArrowCarrier(node, action, frame)) {
-          const gripLocal = this.arrowGripLocalForPiece(this.arrowPieceForNode(node));
-          if (gripLocal) {
-            const gripRad = (worldRotation * Math.PI) / 180;
-            const gripOffsetX =
-              gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
-            const gripOffsetY =
-              gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
-            return {
-              ...local,
-              worldX: anchor.x - gripOffsetX,
-              worldY: anchor.y - gripOffsetY,
-              worldRotation,
-              worldScaleX,
-              worldScaleY,
-            };
-          }
-        }
-        if (this.isTempParentBoundSlashFxCarrier(node, action, frame)) {
-          const gripLocal = this.slashFxGripLocalForPiece(this.slashFxPieceForNode(node));
-          if (gripLocal) {
-            const gripRad = (worldRotation * Math.PI) / 180;
-            const gripOffsetX =
-              gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
-            const gripOffsetY =
-              gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
-            return {
-              ...local,
-              worldX: anchor.x - gripOffsetX,
-              worldY: anchor.y - gripOffsetY,
-              worldRotation,
-              worldScaleX,
-              worldScaleY,
-            };
-          }
-        }
         const rad = (p.worldRotation * Math.PI) / 180;
         const px = local.x * p.worldScaleX;
         const py = local.y * p.worldScaleY;
@@ -6540,9 +5733,9 @@
           ...local,
           worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
           worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
-          worldRotation,
-          worldScaleX,
-          worldScaleY,
+          worldRotation: p.worldRotation + local.rotation,
+          worldScaleX: p.worldScaleX * local.scaleX,
+          worldScaleY: p.worldScaleY * local.scaleY,
         };
       }
 
@@ -6843,39 +6036,12 @@
       });
     }
 
-    function normalizeBattleActiveSlotKeys(active, sideKey, fieldPrefix) {
-      const singleKey = active?.[`${fieldPrefix}SlotKey`];
-      const multipleKeys = active?.[`${fieldPrefix}SlotKeys`];
-      const fieldSide = active?.[`${fieldPrefix}Side`];
-      const fieldEntries = Array.isArray(active?.[`${fieldPrefix}s`]) ? active[`${fieldPrefix}s`] : [];
-      const keys = new Set();
-
-      if (fieldSide === sideKey && typeof singleKey === 'string' && singleKey) {
-        keys.add(singleKey);
-      }
-      if (fieldSide === sideKey && Array.isArray(multipleKeys)) {
-        multipleKeys.forEach((slotKey) => {
-          if (typeof slotKey === 'string' && slotKey) keys.add(slotKey);
-        });
-      }
-      fieldEntries.forEach((entry) => {
-        if (entry?.side !== sideKey) return;
-        if (typeof entry.slotKey === 'string' && entry.slotKey) {
-          keys.add(entry.slotKey);
-        }
-      });
-
-      return keys;
-    }
-
     function updateBattleFormationView(view, snapshotBefore, snapshotAfter, active = {}) {
       if (!view?.root) {
         return;
       }
       const beforeBySlot = new Map(snapshotBefore.formationMembers.map(member => [member.slotKey, member]));
       const afterBySlot = new Map(snapshotAfter.formationMembers.map(member => [member.slotKey, member]));
-      const activeSourceSlots = normalizeBattleActiveSlotKeys(active, snapshotAfter.side || snapshotBefore.side || '', 'source');
-      const activeTargetSlots = normalizeBattleActiveSlotKeys(active, snapshotAfter.side || snapshotBefore.side || '', 'target');
 
       for (const slotKey of FORMATION_SLOT_KEYS) {
         const entry = view.slots.get(slotKey);
@@ -6892,8 +6058,8 @@
 
         entry.slot.classList.toggle('empty', current == null);
         entry.slot.classList.toggle('fallen', Boolean(after && after.soldiers <= 0));
-        entry.slot.classList.toggle('striker', activeSourceSlots.has(slotKey));
-        entry.slot.classList.toggle('targeted', activeTargetSlots.has(slotKey));
+        entry.slot.classList.toggle('striker', active.sourceSlotKey === slotKey);
+        entry.slot.classList.toggle('targeted', active.targetSlotKey === slotKey);
         entry.slot.dataset.troopType = current?.troopType || '';
         entry.canvas.dataset.action = 'idle';
         entry.canvas.dataset.troopType = current?.troopType || '';
@@ -7024,7 +6190,6 @@
       const initialLeft = proxyView.position.x;
       const initialTop = proxyView.position.y;
       const targetAnchor = getBattleSlotAnchorPosition(targetSlot, boxRect);
-      const sourceAnchor = getBattleSlotAnchorPosition(sourceSlot, boxRect);
 
       sourceSlot.classList.add('is-proxying');
       proxyView.slot.classList.add('striker');
@@ -7033,7 +6198,18 @@
         x: initialLeft,
         y: initialTop,
       };
-      const to = getBattleLandingTargetPosition(targetAnchor, troopAsset, proxySide);
+      const landingOffsetX = troopAsset.stationaryAttack
+        ? 0
+        : proxySide === 'enemy'
+          ? 70
+          : -70;
+      const landingScatter = troopAsset.stationaryAttack
+        ? { x: 0, y: 0 }
+        : getBattleRandomLandingOffset(50, 40, 2);
+      const to = {
+        x: targetAnchor.x + landingOffsetX + landingScatter.x + (proxySide === 'enemy' ? 30 : -30),
+        y: targetAnchor.y + landingScatter.y,
+      };
       if (!troopAsset.stationaryAttack) {
         await animateBattleSpineProxy(
           proxy,
@@ -7059,23 +6235,6 @@
         renderer.getActionDurationMs('attack'),
         {
           impactFrame: attackPeakFrame,
-          onFrame:
-            troopType === 'archer'
-              ? info => {
-                  if (proxy.__battleArcherEffectsQueued) return;
-                  proxy.__battleArcherEffectsQueued = 'true';
-                  queueBattleArcherAttackEffects({
-                    sourceSlot,
-                    sourceSide: proxySide,
-                    sourceAnchor,
-                    targetAnchor,
-                    targetSlot,
-                    hit: step.hit,
-                    startAt: info.startAt,
-                    frameDurationMs: info.frameDurationMs,
-                  });
-                }
-              : null,
           onImpact: info => {
             onImpact?.();
             if (step.hit) {
@@ -7091,730 +6250,6 @@
 
       sourceSlot.classList.remove('is-proxying');
       motionElement.remove();
-    }
-
-    function getBattleFrameEffectAlphaAtFrame(frame, effectFrame, fadeInFrames = 2, holdFrames = 1, fadeOutFrames = 4) {
-      if (!Number.isFinite(frame) || !Number.isFinite(effectFrame)) return 0;
-      const fadeInStart = effectFrame - Math.max(0, fadeInFrames);
-      if (frame < fadeInStart) return 0;
-      if (frame < effectFrame) {
-        return Math.max(0, Math.min(1, (frame - fadeInStart) / Math.max(1, fadeInFrames)));
-      }
-      const holdEnd = effectFrame + Math.max(0, holdFrames);
-      if (frame < holdEnd) return 1;
-      const fadeOutEnd = holdEnd + Math.max(0, fadeOutFrames);
-      if (frame < fadeOutEnd) {
-        return Math.max(0, Math.min(1, 1 - ((frame - holdEnd) / Math.max(1, fadeOutFrames))));
-      }
-      return 0;
-    }
-
-    function getBattleDirectionalOffset(sourceAnchor, targetAnchor, distance = 20) {
-      const dx = (targetAnchor?.x || 0) - (sourceAnchor?.x || 0);
-      const dy = (targetAnchor?.y || 0) - (sourceAnchor?.y || 0);
-      const length = Math.hypot(dx, dy);
-      if (length <= 0.001) {
-        return { x: distance, y: 0 };
-      }
-      const ratio = distance / length;
-      return {
-        x: dx * ratio,
-        y: dy * ratio,
-      };
-    }
-
-    function getBattleArcherLaunchAnchorPosition(sourceSlot, layerRect, sourceSide, targetAnchor, forwardOffset = 50, upOffset = 70) {
-      const frame = sourceSlot?.querySelector('.formation-spine-frame');
-      const rect = frame?.getBoundingClientRect?.() || sourceSlot?.getBoundingClientRect?.();
-      if (!rect || !layerRect) return { x: 0, y: 0 };
-      const localXRatioBySide = BATTLE_ARCHER_LAUNCH_ANCHOR_PRESET?.localXBySide || {};
-      const localXRatio = Number(localXRatioBySide[sourceSide]);
-      const normalizedLocalX = Number.isFinite(localXRatio) ? localXRatio : 0.5;
-      const upperBodyAnchor = {
-        x: rect.left - layerRect.left + rect.width * normalizedLocalX,
-        y: rect.top - layerRect.top + rect.height * 0.35,
-      };
-      const forward = getBattleDirectionalOffset(upperBodyAnchor, targetAnchor, forwardOffset);
-      const sideAdjustXBySide = BATTLE_ARCHER_LAUNCH_ANCHOR_PRESET?.launchForwardAdjustBySide || {};
-      const sideAdjustX = Number(sideAdjustXBySide[sourceSide]) || 0;
-      const sideForward = getBattleDirectionalOffset(upperBodyAnchor, targetAnchor, sideAdjustX);
-      return {
-        x: upperBodyAnchor.x + forward.x + sideForward.x,
-        y: upperBodyAnchor.y + sideForward.y - upOffset,
-      };
-    }
-
-    function getBattleArcherNominalSlotAnchorPosition(slot, layerRect, sourceSide) {
-      const frame = slot?.querySelector('.formation-spine-frame');
-      const rect = frame?.getBoundingClientRect?.() || slot?.getBoundingClientRect?.();
-      if (!rect || !layerRect) return { x: 0, y: 0 };
-      const localXRatioBySide = BATTLE_ARCHER_LAUNCH_ANCHOR_PRESET?.localXBySide || {};
-      const localXRatio = Number(localXRatioBySide[sourceSide]);
-      const normalizedLocalX = Number.isFinite(localXRatio) ? localXRatio : 0.5;
-      return {
-        x: rect.left - layerRect.left + rect.width * normalizedLocalX,
-        y: rect.top - layerRect.top + rect.height * 0.35,
-      };
-    }
-
-    function getBattlePairedSourceLaneSlot(sourceSlot, targetSlot) {
-      const sourceGrid = sourceSlot?.closest('.formation-grid');
-      const pairedSlotKey = targetSlot?.dataset?.slot || '';
-      if (sourceGrid && pairedSlotKey) {
-        const paired = sourceGrid.querySelector(`.formation-slot[data-slot="${pairedSlotKey}"]`);
-        if (paired) return paired;
-      }
-      return sourceSlot;
-    }
-
-    function projectPointToBattleFixedAngleLine(point, anchor, sourceSide, angleDeg = 60) {
-      const radians = (sourceSide === 'enemy' ? 180 - angleDeg : angleDeg) * Math.PI / 180;
-      const dirX = Math.cos(radians);
-      const dirY = Math.sin(radians);
-      const dx = (point?.x || 0) - (anchor?.x || 0);
-      const dy = (point?.y || 0) - (anchor?.y || 0);
-      const t = dx * dirX + dy * dirY;
-      return {
-        x: (anchor?.x || 0) + dirX * t,
-        y: (anchor?.y || 0) + dirY * t,
-      };
-    }
-
-    function getBattleArcherLineStartPosition(sourceSlot, targetSlot, layerRect, sourceSide, impactAnchor, angleDeg = 60) {
-      const pairedSourceSlot = getBattlePairedSourceLaneSlot(sourceSlot, targetSlot);
-      const nominalAnchor = getBattleArcherNominalSlotAnchorPosition(pairedSourceSlot, layerRect, sourceSide);
-      return projectPointToBattleFixedAngleLine(nominalAnchor, impactAnchor, sourceSide, angleDeg);
-    }
-
-    function getBattleArcherRemoteReservedAttackEffectPlan(hit = false) {
-      const plan = [
-        { kind: 'trail', frame: 41, fadeInFrames: 2, holdFrames: 2, fadeOutFrames: 8 },
-        { kind: 'arrow', frame: 41, fadeInFrames: 2, holdFrames: 0, fadeOutFrames: 2 },
-      ];
-      if (hit) {
-        plan.push(
-          { kind: 'flight', frame: 45, fadeInFrames: 0, holdFrames: 4, fadeOutFrames: 0, motionStartFrame: 45, motionEndFrame: 48 },
-          { kind: 'stage1', frame: 49, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 0 },
-          { kind: 'stage2', frame: 51, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 2 },
-        );
-        return plan;
-      }
-      plan.push(
-        { kind: 'flight', frame: 45, fadeInFrames: 0, holdFrames: 5, fadeOutFrames: 1, motionStartFrame: 45, motionEndFrame: 50 },
-      );
-      return plan;
-    }
-
-    function getBattleArcherActiveAttackEffectPlan(hit = false) {
-      const trail = BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.trail;
-      const arrow = BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.arrow;
-      const plan = [
-        {
-          kind: 'trail',
-          frame: arrow.startFrame,
-          fadeInFrames: trail.fadeInFrames,
-          holdFrames: trail.holdFrames,
-          fadeOutFrames: trail.fadeOutFrames,
-          motionStartFrame: arrow.startFrame,
-          motionEndFrame: arrow.startFrame + trail.holdFrames + trail.fadeOutFrames,
-        },
-        {
-          kind: 'arrow-out',
-          frame: arrow.startFrame,
-          fadeInFrames: arrow.fadeInFrames,
-          holdFrames: Math.max(0, arrow.vanishFrame - arrow.startFrame),
-          fadeOutFrames: arrow.fadeOutFrames,
-          motionStartFrame: arrow.startFrame,
-          motionEndFrame: arrow.vanishFrame,
-        },
-        {
-          kind: 'arrow-in',
-          frame: arrow.reappearFrame,
-          fadeInFrames: arrow.fadeInFrames,
-          holdFrames: Math.max(0, arrow.impactFrame - arrow.reappearFrame),
-          fadeOutFrames: arrow.fadeOutFrames,
-          motionStartFrame: arrow.reappearFrame,
-          motionEndFrame: arrow.impactFrame,
-        },
-      ];
-      if (!hit) {
-        plan.push({
-          kind: 'arrow-miss-tail',
-          frame: arrow.impactFrame,
-          fadeInFrames: 0,
-          holdFrames: 0,
-          fadeOutFrames: 0,
-          motionStartFrame: arrow.impactFrame,
-          motionEndFrame: arrow.impactFrame + 1,
-        });
-        return plan;
-      }
-      plan.push(
-        {
-          kind: 'stage1',
-          frame: BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.stage1.frame,
-          fadeInFrames: 0,
-          holdFrames: BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.stage1.holdFrames,
-          fadeOutFrames: BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.stage1.fadeOutFrames,
-        },
-        {
-          kind: 'stage2',
-          frame: BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.stage2.frame,
-          fadeInFrames: 0,
-          holdFrames: BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.stage2.holdFrames,
-          fadeOutFrames: BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.stage2.fadeOutFrames,
-        },
-      );
-      return plan;
-    }
-
-    function getBattleImpactEffectAnchorPosition(slot, layerRect) {
-      const frame = slot?.querySelector('.formation-spine-frame');
-      const rect = frame?.getBoundingClientRect?.() || slot?.getBoundingClientRect?.();
-      if (!rect || !layerRect) return { x: 0, y: 0 };
-      return {
-        x: rect.left - layerRect.left + rect.width / 2,
-        y: rect.top - layerRect.top + rect.height * 0.46,
-      };
-    }
-
-    function getBattleDirectionAngleDeg(sourceAnchor, targetAnchor) {
-      return Math.atan2((targetAnchor?.y || 0) - (sourceAnchor?.y || 0), (targetAnchor?.x || 0) - (sourceAnchor?.x || 0)) * 180 / Math.PI;
-    }
-
-    function getBattleArcherSideDirection(sourceSide) {
-      return sourceSide === 'enemy' ? -1 : 1;
-    }
-
-    function getBattleArcherTrailRotationDeg(sourceSide, baseAngleDeg = 0) {
-      const rotationOffsetDegBySide = BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS?.trail?.rotationOffsetDegBySide || {};
-      const rotationOffset = Number(rotationOffsetDegBySide[sourceSide]) || 0;
-      return baseAngleDeg + rotationOffset;
-    }
-
-    function getBattleArcherScreenEntryStartPosition(targetPosition, layerRect, sourceSide = 'player', angleDeg = 20, padding = 180) {
-      const endX = Number(targetPosition?.x) || 0;
-      const endY = Number(targetPosition?.y) || 0;
-      const mirroredAngleDeg = sourceSide === 'enemy'
-        ? 180 - angleDeg
-        : angleDeg;
-      const radians = mirroredAngleDeg * Math.PI / 180;
-      const directionX = Math.cos(radians);
-      const directionY = Math.sin(radians);
-      const distances = [];
-      if (directionX > 1e-6) {
-        distances.push((endX + padding) / directionX);
-      }
-      if (directionY > 1e-6) {
-        distances.push((endY + padding) / directionY);
-      }
-      const fallbackDistance = Math.max(
-        Number(layerRect?.width) || 0,
-        Number(layerRect?.height) || 0,
-        padding * 2,
-      );
-      const travelDistance = Math.max(
-        fallbackDistance,
-        ...distances.filter(distance => Number.isFinite(distance) && distance > 0),
-      );
-      return {
-        x: endX - directionX * travelDistance,
-        y: endY - directionY * travelDistance,
-      };
-    }
-
-    function getBattleArcherArrowEffectMotion(sourceSide, startPosition, layerRect, speedPxPerFrame = 120, padding = 200) {
-      const travelAngleDeg = sourceSide === 'enemy' ? 200 : -20;
-      const rotationDeg = travelAngleDeg - 180;
-      const radians = travelAngleDeg * Math.PI / 180;
-      const directionX = Math.cos(radians);
-      const directionY = Math.sin(radians);
-      const startX = Number(startPosition?.x) || 0;
-      const startY = Number(startPosition?.y) || 0;
-      const width = Number(layerRect?.width) || 0;
-      const height = Number(layerRect?.height) || 0;
-      const positiveDistances = [];
-      if (Math.abs(directionX) > 1e-6) {
-        positiveDistances.push((((directionX >= 0 ? width + padding : -padding) - startX) / directionX));
-      }
-      if (Math.abs(directionY) > 1e-6) {
-        positiveDistances.push((((directionY >= 0 ? height + padding : -padding) - startY) / directionY));
-      }
-      const travelDistance = Math.max(
-        padding,
-        Math.min(...positiveDistances.filter(distance => Number.isFinite(distance) && distance > 0)),
-      );
-      return {
-        rotationDeg,
-        motionX: directionX * travelDistance,
-        motionY: directionY * travelDistance,
-        holdFrames: Math.max(1, Math.ceil(travelDistance / Math.max(1, Number(speedPxPerFrame) || 1))),
-      };
-    }
-
-    function createBattleTimedImageEffectAnchor() {
-      const anchor = document.createElement('div');
-      anchor.className = 'battle-impact-effect-anchor';
-      const image = document.createElement('img');
-      image.className = 'battle-impact-effect-image';
-      image.alt = '';
-      anchor.appendChild(image);
-      anchor.__battleEffectImage = image;
-      return anchor;
-    }
-
-    function acquireBattleTimedImageEffectAnchor() {
-      return battleTimedImageEffectPool.pop() || createBattleTimedImageEffectAnchor();
-    }
-
-    function releaseBattleTimedImageEffectAnchor(anchor) {
-      if (!(anchor instanceof HTMLElement)) return;
-      if (anchor.__battleEffectRaf) {
-        window.cancelAnimationFrame(anchor.__battleEffectRaf);
-        delete anchor.__battleEffectRaf;
-      }
-      battleTimedImageEffectAnchors.delete(anchor);
-      anchor.remove();
-      anchor.style.left = '';
-      anchor.style.top = '';
-      const image = anchor.__battleEffectImage || anchor.querySelector('.battle-impact-effect-image');
-      if (image instanceof HTMLElement) {
-        image.removeAttribute('src');
-        image.style.opacity = '0';
-        image.style.removeProperty('--battle-impact-effect-width');
-        image.style.removeProperty('--battle-impact-effect-rotation');
-        image.style.removeProperty('--battle-impact-effect-filter');
-        image.style.removeProperty('--battle-impact-effect-scale');
-        image.style.removeProperty('--battle-impact-effect-transform-origin');
-        image.style.removeProperty('--battle-impact-effect-translate-x');
-        image.style.removeProperty('--battle-impact-effect-translate-y');
-      }
-      if (battleTimedImageEffectPool.length < BATTLE_TIMED_IMAGE_EFFECT_POOL_LIMIT) {
-        battleTimedImageEffectPool.push(anchor);
-      }
-    }
-
-    function clearBattleTimedImageEffects() {
-      Array.from(battleTimedImageEffectAnchors).forEach(releaseBattleTimedImageEffectAnchor);
-    }
-
-    function queueBattleTimedImageEffect({
-      layer,
-      imageSrc,
-      position,
-      rotationDeg = 0,
-      width = 120,
-      filter = 'none',
-      motionX = 0,
-      motionY = 0,
-      startScale = 1,
-      endScale = 1,
-      transformOrigin = 'center center',
-      anchorTranslateX = '-50%',
-      anchorTranslateY = '-50%',
-      motionStartFrame = null,
-      motionEndFrame = null,
-      startAt,
-      frameDurationMs = 16,
-      frame,
-      fadeInFrames = 2,
-      holdFrames = 1,
-      fadeOutFrames = 4,
-    }) {
-      if (!(layer instanceof HTMLElement) || !imageSrc || !position) return;
-      const anchor = acquireBattleTimedImageEffectAnchor();
-      anchor.style.left = `${position.x}px`;
-      anchor.style.top = `${position.y}px`;
-      const image = anchor.__battleEffectImage || anchor.querySelector('.battle-impact-effect-image');
-      if (!(image instanceof HTMLImageElement)) return;
-      image.src = imageSrc;
-      image.style.setProperty('--battle-impact-effect-width', `${width}px`);
-      image.style.setProperty('--battle-impact-effect-rotation', `${rotationDeg}deg`);
-      image.style.setProperty('--battle-impact-effect-filter', filter || 'none');
-      image.style.setProperty('--battle-impact-effect-scale', `${startScale}`);
-      image.style.setProperty('--battle-impact-effect-transform-origin', transformOrigin);
-      image.style.setProperty('--battle-impact-effect-translate-x', anchorTranslateX);
-      image.style.setProperty('--battle-impact-effect-translate-y', anchorTranslateY);
-      layer.appendChild(anchor);
-      battleTimedImageEffectAnchors.add(anchor);
-
-      const frameMs = Math.max(16, Number(frameDurationMs) || 16);
-      const animationStartAt = Number(startAt) || performance.now();
-      const effectFrame = Number(frame) || 0;
-      const visibleStartFrame = effectFrame - Math.max(0, Number(fadeInFrames) || 0);
-      const visibleDurationFrames = Math.max(
-        0.001,
-        (Number(fadeInFrames) || 0) + (Number(holdFrames) || 0) + (Number(fadeOutFrames) || 0),
-      );
-      const effectEndAt = animationStartAt + (effectFrame + holdFrames + fadeOutFrames) * frameMs;
-      const resolvedMotionStartFrame = Number.isFinite(motionStartFrame)
-        ? Number(motionStartFrame)
-        : visibleStartFrame;
-      const resolvedMotionEndFrame = Number.isFinite(motionEndFrame)
-        ? Math.max(resolvedMotionStartFrame + 0.001, Number(motionEndFrame))
-        : visibleStartFrame + visibleDurationFrames;
-
-      const tick = (now) => {
-        const currentFrame = (now - animationStartAt) / frameMs;
-        const alpha = getBattleFrameEffectAlphaAtFrame(
-          currentFrame,
-          effectFrame,
-          fadeInFrames,
-          holdFrames,
-          fadeOutFrames,
-        );
-        const motionProgress = Math.max(
-          0,
-          Math.min(1, (currentFrame - resolvedMotionStartFrame) / Math.max(0.001, resolvedMotionEndFrame - resolvedMotionStartFrame)),
-        );
-        image.style.opacity = String(alpha);
-        anchor.style.left = `${position.x + motionX * motionProgress}px`;
-        anchor.style.top = `${position.y + motionY * motionProgress}px`;
-        image.style.setProperty(
-          '--battle-impact-effect-scale',
-          `${startScale + (endScale - startScale) * motionProgress}`,
-        );
-        if (now < effectEndAt && alpha > 0 || now < effectEndAt) {
-          anchor.__battleEffectRaf = window.requestAnimationFrame(tick);
-          return;
-        }
-        if (anchor.__battleEffectRaf) {
-          window.cancelAnimationFrame(anchor.__battleEffectRaf);
-          delete anchor.__battleEffectRaf;
-        }
-        releaseBattleTimedImageEffectAnchor(anchor);
-      };
-      anchor.__battleEffectRaf = window.requestAnimationFrame(tick);
-    }
-
-    function queueBattleArcherRemoteReservedAttackEffects({ sourceSlot, sourceSide, sourceAnchor, targetAnchor, targetSlot, hit, startAt, frameDurationMs }) {
-      const layer = document.getElementById('battle-damage-layer')
-        || document.querySelector('.formation-battle-box');
-      if (!(layer instanceof HTMLElement)) return;
-      const angleDeg = getBattleDirectionAngleDeg(sourceAnchor, targetAnchor);
-      const layerRect = layer.getBoundingClientRect();
-      const trailPosition = getBattleArcherLaunchAnchorPosition(
-        sourceSlot,
-        layerRect,
-        sourceSide,
-        targetAnchor,
-        BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.trail.spawnOffsetX,
-        BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.trail.spawnOffsetY,
-      );
-      const trailMotion = getBattleDirectionalOffset(
-        sourceAnchor,
-        targetAnchor,
-        BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.trail.motionDistance,
-      );
-      const rawImpactAnchor = getBattleImpactEffectAnchorPosition(targetSlot, layerRect);
-      const playerArcherLineOffsetX = sourceSide === 'player' ? -40 : 0;
-      const baseImpactAnchor = {
-        x: rawImpactAnchor.x - (sourceSide === 'enemy' ? 130 : 50),
-        y: rawImpactAnchor.y,
-      };
-      const impactAnchor = {
-        x: baseImpactAnchor.x + playerArcherLineOffsetX,
-        y: baseImpactAnchor.y,
-      };
-      const laneAngleDeg = 60;
-      const baseFlightStart = getBattleArcherLineStartPosition(
-        sourceSlot,
-        targetSlot,
-        layerRect,
-        sourceSide,
-        baseImpactAnchor,
-        laneAngleDeg,
-      );
-      const flightStart = {
-        x: baseFlightStart.x + playerArcherLineOffsetX,
-        y: baseFlightStart.y,
-      };
-      const missEndOffsetDistance = Number(BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.flight.missEndOffsetDistance) || 60;
-      const missEndOffsetAngleDeg = Number(BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.flight.missEndOffsetAngleDeg) || 60;
-      const missEndRadians = missEndOffsetAngleDeg * Math.PI / 180;
-      const missEndDirectionX = (sourceSide === 'enemy' ? -1 : 1) * Math.cos(missEndRadians);
-      const missEndDirectionY = Math.sin(missEndRadians);
-      const missFlightEnd = {
-        x: impactAnchor.x + missEndDirectionX * missEndOffsetDistance,
-        y: impactAnchor.y + missEndDirectionY * missEndOffsetDistance,
-      };
-      const flightRotationDeg = sourceSide === 'enemy' ? -laneAngleDeg : 180 + laneAngleDeg;
-      getBattleArcherRemoteReservedAttackEffectPlan(hit).forEach(effect => {
-        if (effect.kind === 'trail') {
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.trail.src,
-            position: {
-              x: trailPosition.x,
-              y: trailPosition.y + BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.trail.renderOffsetY,
-            },
-            rotationDeg: getBattleArcherTrailRotationDeg(sourceSide, angleDeg),
-            width: BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.trail.width,
-            motionX: trailMotion.x,
-            motionY: trailMotion.y,
-            startScale: 1,
-            endScale: BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.trail.endScale,
-            anchorTranslateX: '-50%',
-            anchorTranslateY: '-60%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: effect.fadeInFrames,
-            holdFrames: effect.holdFrames,
-            fadeOutFrames: effect.fadeOutFrames,
-          });
-          return;
-        }
-        if (effect.kind === 'arrow') {
-          const arrowMotion = getBattleArcherArrowEffectMotion(
-            sourceSide,
-            trailPosition,
-            layerRect,
-            BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.arrow.speedPxPerFrame,
-            BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.arrow.screenPadding,
-          );
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.arrow.src,
-            position: trailPosition,
-            rotationDeg: arrowMotion.rotationDeg,
-            width: BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.arrow.width,
-            motionX: arrowMotion.motionX,
-            motionY: arrowMotion.motionY,
-            transformOrigin: '100% 50%',
-            anchorTranslateX: '-100%',
-            anchorTranslateY: '-50%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: effect.fadeInFrames,
-            holdFrames: arrowMotion.holdFrames,
-            fadeOutFrames: effect.fadeOutFrames,
-            motionStartFrame: effect.frame,
-            motionEndFrame: effect.frame + arrowMotion.holdFrames,
-          });
-          return;
-        }
-        if (effect.kind === 'flight') {
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.flight.src,
-            position: flightStart,
-            rotationDeg: flightRotationDeg,
-            width: BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.flight.width,
-            motionX: (hit ? impactAnchor.x : missFlightEnd.x) - flightStart.x,
-            motionY: (hit ? impactAnchor.y : missFlightEnd.y) - flightStart.y,
-            startScale: 1,
-            endScale: 1,
-            transformOrigin: '0% 50%',
-            anchorTranslateX: '0%',
-            anchorTranslateY: '-50%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: effect.fadeInFrames,
-            holdFrames: effect.holdFrames,
-            fadeOutFrames: effect.fadeOutFrames,
-            motionStartFrame: effect.motionStartFrame,
-            motionEndFrame: effect.motionEndFrame,
-          });
-          return;
-        }
-        if (effect.kind === 'stage1' || effect.kind === 'stage2') {
-          const stageConfig = effect.kind === 'stage1'
-            ? BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.stage1
-            : BATTLE_ARCHER_REMOTE_RESERVED_EFFECTS.stage2;
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: stageConfig.src,
-            position: impactAnchor,
-            rotationDeg: flightRotationDeg,
-            width: stageConfig.width,
-            transformOrigin: '0% 50%',
-            anchorTranslateX: '0%',
-            anchorTranslateY: '-50%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: effect.fadeInFrames,
-            holdFrames: effect.holdFrames,
-            fadeOutFrames: effect.fadeOutFrames,
-          });
-        }
-      });
-    }
-
-    function queueBattleArcherAttackEffects({ sourceSlot, sourceSide, sourceAnchor, targetAnchor, targetSlot, hit, startAt, frameDurationMs }) {
-      const layer = document.getElementById('battle-damage-layer')
-        || document.querySelector('.formation-battle-box');
-      if (!(layer instanceof HTMLElement)) return;
-      const layerRect = layer.getBoundingClientRect();
-      const sideDirection = getBattleArcherSideDirection(sourceSide);
-      const shotAnchor = getBattleArcherLaunchAnchorPosition(
-        sourceSlot,
-        layerRect,
-        sourceSide,
-        targetAnchor,
-        0,
-        0,
-      );
-      const rawImpactAnchor = getBattleImpactEffectAnchorPosition(targetSlot, layerRect);
-      const impactAnchor = {
-        x: rawImpactAnchor.x - (sourceSide === 'enemy' ? 130 : 90),
-        y: rawImpactAnchor.y,
-      };
-      const trailConfig = BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.trail;
-      const arrowConfig = BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.arrow;
-      const stage1Config = BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.stage1;
-      const stage2Config = BATTLE_ARCHER_REMOTE_ACTIVE_EFFECTS.stage2;
-      const trailPosition = {
-        x: shotAnchor.x + sideDirection * trailConfig.spawnForwardOffsetX,
-        y: shotAnchor.y + trailConfig.spawnOffsetY,
-      };
-      const trailRotationDeg = Number(trailConfig.rotationDegBySide[sourceSide]) || 0;
-      const arrowRotationDeg = Number(arrowConfig.rotationDegBySide[sourceSide]) || 0;
-      const impactRotationDeg = arrowRotationDeg;
-      const arrowOutEndPosition = {
-        x: shotAnchor.x + sideDirection * arrowConfig.speedPx,
-        y: shotAnchor.y,
-      };
-      const arrowInStartPosition = {
-        x: impactAnchor.x - sideDirection * arrowConfig.speedPx,
-        y: impactAnchor.y,
-      };
-      const arrowSegmentFrames = Math.max(1, arrowConfig.impactFrame - arrowConfig.reappearFrame);
-      const arrowSpeedPerFrame = Math.max(1, arrowConfig.speedPx / arrowSegmentFrames);
-      const arrowMissExitPosition = {
-        x: sideDirection > 0 ? layerRect.width + arrowConfig.width : -arrowConfig.width,
-        y: impactAnchor.y,
-      };
-      const arrowMissTailFrames = Math.max(
-        1,
-        Math.ceil(Math.abs(arrowMissExitPosition.x - impactAnchor.x) / arrowSpeedPerFrame),
-      );
-
-      getBattleArcherActiveAttackEffectPlan(hit).forEach(effect => {
-        if (effect.kind === 'trail') {
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: trailConfig.src,
-            position: trailPosition,
-            rotationDeg: trailRotationDeg,
-            width: trailConfig.width,
-            motionX: -sideDirection * trailConfig.motionDistance,
-            motionY: 0,
-            startScale: 1,
-            endScale: trailConfig.endScale,
-            anchorTranslateX: '-50%',
-            anchorTranslateY: '-50%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: effect.fadeInFrames,
-            holdFrames: effect.holdFrames,
-            fadeOutFrames: effect.fadeOutFrames,
-            motionStartFrame: effect.motionStartFrame,
-            motionEndFrame: effect.motionEndFrame,
-          });
-          return;
-        }
-        if (effect.kind === 'arrow-out') {
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: arrowConfig.src,
-            position: shotAnchor,
-            rotationDeg: arrowRotationDeg,
-            width: arrowConfig.width,
-            motionX: arrowOutEndPosition.x - shotAnchor.x,
-            motionY: arrowOutEndPosition.y - shotAnchor.y,
-            startScale: 1,
-            endScale: 1,
-            transformOrigin: '0% 50%',
-            anchorTranslateX: '0%',
-            anchorTranslateY: '-50%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: effect.fadeInFrames,
-            holdFrames: effect.holdFrames,
-            fadeOutFrames: effect.fadeOutFrames,
-            motionStartFrame: effect.motionStartFrame,
-            motionEndFrame: effect.motionEndFrame,
-          });
-          return;
-        }
-        if (effect.kind === 'arrow-in') {
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: arrowConfig.src,
-            position: arrowInStartPosition,
-            rotationDeg: arrowRotationDeg,
-            width: arrowConfig.width,
-            motionX: impactAnchor.x - arrowInStartPosition.x,
-            motionY: impactAnchor.y - arrowInStartPosition.y,
-            startScale: 1,
-            endScale: 1,
-            transformOrigin: '0% 50%',
-            anchorTranslateX: '0%',
-            anchorTranslateY: '-50%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: effect.fadeInFrames,
-            holdFrames: effect.holdFrames,
-            fadeOutFrames: effect.fadeOutFrames,
-            motionStartFrame: effect.motionStartFrame,
-            motionEndFrame: effect.motionEndFrame,
-          });
-          return;
-        }
-        if (effect.kind === 'stage1' || effect.kind === 'stage2') {
-          const stageConfig = effect.kind === 'stage1'
-            ? stage1Config
-            : stage2Config;
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: stageConfig.src,
-            position: impactAnchor,
-            rotationDeg: impactRotationDeg,
-            width: stageConfig.width,
-            transformOrigin: '0% 50%',
-            anchorTranslateX: '0%',
-            anchorTranslateY: '-50%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: effect.fadeInFrames,
-            holdFrames: effect.holdFrames,
-            fadeOutFrames: effect.fadeOutFrames,
-          });
-          return;
-        }
-        if (effect.kind === 'arrow-miss-tail') {
-          queueBattleTimedImageEffect({
-            layer,
-            imageSrc: arrowConfig.src,
-            position: impactAnchor,
-            rotationDeg: arrowRotationDeg,
-            width: arrowConfig.width,
-            motionX: arrowMissExitPosition.x - impactAnchor.x,
-            motionY: 0,
-            startScale: 1,
-            endScale: 1,
-            transformOrigin: '0% 50%',
-            anchorTranslateX: '0%',
-            anchorTranslateY: '-50%',
-            startAt,
-            frameDurationMs,
-            frame: effect.frame,
-            fadeInFrames: 0,
-            holdFrames: arrowMissTailFrames,
-            fadeOutFrames: 0,
-            motionStartFrame: effect.motionStartFrame,
-            motionEndFrame: effect.frame + arrowMissTailFrames,
-          });
-        }
-      });
     }
 
     function animateBattleSpineProxy(proxy, renderer, from, to, action, duration, movement = {}) {
@@ -7894,30 +6329,27 @@
       });
     }
 
-    function getBattleRandomLandingOffset(radius = 20) {
-      const angle = Math.random() * Math.PI * 2;
-      const distance = Math.sqrt(Math.random()) * radius;
-      const candidate = {
-        x: Math.cos(angle) * distance,
-        y: Math.sin(angle) * distance,
-      };
+    function getBattleRandomLandingOffset(radius = 50, minDistance = 40, recentCount = 2) {
+      let attempt = 0;
+      let candidate = { x: 0, y: 0 };
+      const recentOffsets = battleRecentLandingOffsets.slice(-Math.max(0, recentCount));
+      do {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.sqrt(Math.random()) * radius;
+        candidate = {
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+        };
+        attempt += 1;
+      } while (
+        recentOffsets.some(offset => Math.hypot(candidate.x - offset.x, candidate.y - offset.y) < minDistance) &&
+        attempt < 48
+      );
       battleRecentLandingOffsets.push(candidate);
-      if (battleRecentLandingOffsets.length > 8) {
-        battleRecentLandingOffsets.splice(0, battleRecentLandingOffsets.length - 8);
+      if (battleRecentLandingOffsets.length > Math.max(2, recentCount)) {
+        battleRecentLandingOffsets.splice(0, battleRecentLandingOffsets.length - Math.max(2, recentCount));
       }
       return candidate;
-    }
-
-    function getBattleLandingTargetPosition(targetAnchor, troopAsset, proxySide) {
-      if (troopAsset?.stationaryAttack) {
-        return { x: targetAnchor.x, y: targetAnchor.y };
-      }
-      const landingScatter = getBattleRandomLandingOffset(20);
-      const landingBackOffsetX = proxySide === 'enemy' ? 120 : -120;
-      return {
-        x: targetAnchor.x + landingScatter.x + landingBackOffsetX,
-        y: targetAnchor.y + landingScatter.y,
-      };
     }
 
     function getBattleJumpArcHeight(from, to) {
@@ -8171,16 +6603,11 @@
         attacker: attackerSnapshot,
         defender: defenderSnapshot,
       };
-      const getActiveState = key => ({
-        sourceSide: active?.sourceSide,
-        sourceSlotKey: active?.sourceSlotKey,
-        sourceSlotKeys: active?.sourceSlotKeys,
-        sources: active?.sources,
-        targetSide: active?.targetSide,
-        targetSlotKey: active?.targetSlotKey,
-        targetSlotKeys: active?.targetSlotKeys,
-        targets: active?.targets,
-      });
+      const getActiveState = key => active.sourceSide === key
+        ? { sourceSlotKey: active.sourceSlotKey }
+        : active.targetSide === key
+          ? { targetSlotKey: active.targetSlotKey }
+          : {};
       updateBattleFormationView(
         battleFormationViewState.attacker,
         beforeByKey[leftKey],
@@ -8197,41 +6624,9 @@
       document.getElementById('battle-defender-morale').style.width = `${clamp(snapshotByKey[rightKey].morale, 0, 100)}%`;
     }
 
-    function buildBattleBatchActiveState(steps = []) {
-      const sourceEntries = [];
-      const targetEntries = [];
-      const sourceSeen = new Set();
-      const targetSeen = new Set();
-
-      steps.forEach((step) => {
-        if (step?.sourceSide && step?.sourceSlotKey) {
-          const sourceKey = `${step.sourceSide}:${step.sourceSlotKey}`;
-          if (!sourceSeen.has(sourceKey)) {
-            sourceSeen.add(sourceKey);
-            sourceEntries.push({ side: step.sourceSide, slotKey: step.sourceSlotKey });
-          }
-        }
-        if (step?.targetSide && step?.targetSlotKey) {
-          const targetKey = `${step.targetSide}:${step.targetSlotKey}`;
-          if (!targetSeen.has(targetKey)) {
-            targetSeen.add(targetKey);
-            targetEntries.push({ side: step.targetSide, slotKey: step.targetSlotKey });
-          }
-        }
-      });
-
-      return {
-        sources: sourceEntries,
-        targets: targetEntries,
-      };
-    }
-
         async function playFormationStrikeBatch(report, steps, state) {
       clearBattleModelShakeState();
-      clearBattleTimedImageEffects();
       battleRecentLandingOffsets.length = 0;
-      const batchActiveState = buildBattleBatchActiveState(steps);
-      renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, batchActiveState);
       const tasks = steps.map(step => (async () => {
         let stepDelayMs = Number(step.delayMs) || 0;
         if ((step.delayFrames || 0) > 0) {
@@ -8240,7 +6635,7 @@
           stepDelayMs = step.delayFrames * frameMs;
         }
         if (stepDelayMs > 0) await sleep(stepDelayMs);
-        renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, batchActiveState);
+        renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, step);
         let impactApplied = false;
                 const applyImpact = () => {
           if (impactApplied) return;
@@ -8252,7 +6647,9 @@
             report,
             state.attackerSnapshot,
             state.defenderSnapshot,
-            batchActiveState
+            step.hit
+              ? { targetSide: step.targetSide, targetSlotKey: step.targetSlotKey }
+              : {}
           );
           const targetGrid = document.getElementById(getBattleVisualGridId(report, step.targetSide));
           const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
@@ -8287,7 +6684,7 @@
     async function playFormationBattleTimeline(report) {
       const closeBtn = document.getElementById('battle-close');
       closeBtn.disabled = true;
-      closeBtn.textContent = '演出中...';
+      closeBtn.textContent = '婕斿嚭涓?..';
       document.getElementById('battle-event-list').innerHTML = '';
       let attackerSnapshot = report.attackerBefore;
       let defenderSnapshot = report.defenderBefore;
@@ -8298,7 +6695,7 @@
         const step = report.timeline[index];
         if (step.type === 'round' || step.type === 'entry') {
           appendBattleEvent(step);
-          await sleep(step.type === 'round' ? BATTLE_TIMELINE_ROUND_PAUSE_MS : BATTLE_TIMELINE_ENTRY_PAUSE_MS);
+          await sleep(step.type === 'round' ? 260 : 180);
           continue;
         }
         const strikeBatch = [step];
@@ -8318,7 +6715,7 @@
 
       renderBattleAnimationState(report, report.attackerAfter, report.defenderAfter);
       closeBtn.disabled = false;
-      closeBtn.textContent = '返回战场';
+      closeBtn.textContent = '杩斿洖鎴樺満';
       updateUI();
     }
 
@@ -8333,10 +6730,10 @@
       const playerSnapshot = report.attackerBefore.side === 'player' ? report.attackerBefore : report.defenderBefore;
       const enemySnapshot = report.attackerBefore.side === 'enemy' ? report.attackerBefore : report.defenderBefore;
       document.getElementById('battle-attacker-title').textContent =
-        `我方 · ${playerSnapshot.name} · ${playerSnapshot.generalName}`;
+        `鎴戞柟 路 ${playerSnapshot.name} 路 ${playerSnapshot.generalName}`;
       document.getElementById('battle-defender-title').textContent =
-        `敌方 · ${enemySnapshot.name} · ${enemySnapshot.generalName}`;
-      document.getElementById('battle-sequence-title').textContent = `编队交战 · 距离 ${report.distance}`;
+        `鏁屾柟 路 ${enemySnapshot.name} 路 ${enemySnapshot.generalName}`;
+      document.getElementById('battle-sequence-title').textContent = `缂栭槦浜ゆ垬 路 璺濈 ${report.distance}`;
       renderBattleAnimationState(report, report.attackerBefore, report.defenderBefore);
       document.getElementById('formation-battle').classList.remove('hidden');
       startBattleSpineIdleLoop();
@@ -8356,7 +6753,7 @@
       }
     }
 
-    // ─── AI ───────────────────────────────────────────────
+    // 鈹€鈹€鈹€ AI 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function scoreMove(enemy, cell) {
       let score = 0;
       const point = getPointAt(cell.x, cell.y);
@@ -8432,7 +6829,7 @@
         const nearest = Math.min(...enemies.map(enemy => manhattan(cell.x, cell.y, enemy.x, enemy.y)));
         score += Math.max(0, 70 - nearest * 10);
       }
-      const endangered = units.find(unit => unit.name.includes('孙德崖') && unit.soldiers > 0);
+      const endangered = units.find(unit => unit.name.includes('瀛欏痉宕?) && unit.soldiers > 0);
       if (endangered) {
         score += Math.max(0, 30 - manhattan(cell.x, cell.y, endangered.x, endangered.y) * 4);
       }
@@ -8443,7 +6840,7 @@
       const allies = units.filter(u => u.side === 'player' && u.controller === 'npc' && u.soldiers > 0 && !isRout(u));
       if (!allies.length) return false;
 
-      log('——友军行动——', 'system');
+      log('鈥斺€?鍙嬪啗琛屽姩 鈥斺€?, 'system');
       for (const ally of allies) {
         if (checkVictory()) return true;
         ally.hasMoved = false;
@@ -8470,7 +6867,7 @@
 
         renderBoard();
         updateDebug();
-        await sleep(BATTLE_NPC_ACTION_PAUSE_MS);
+        await sleep(300);
       }
 
       processCaptureProgress();
@@ -8481,7 +6878,7 @@
     async function runEnemyTurn() {
       turn = 'enemy';
       updateUI();
-      log('——敌方回合——', 'system');
+      log('鈥斺€?鏁屾柟鍥炲悎 鈥斺€?, 'system');
 
       for (const enemy of units.filter(u => u.side === 'enemy' && u.soldiers > 0 && !isRout(u))) {
         if (checkVictory()) return;
@@ -8514,7 +6911,7 @@
 
         renderBoard();
         updateDebug();
-        await sleep(BATTLE_ENEMY_ACTION_PAUSE_MS);
+        await sleep(350);
       }
 
       processCaptureProgress();
@@ -8526,7 +6923,7 @@
       recoverMorale('enemy');
       turn = 'player';
       resetPlayerTurn();
-      log('——我方回合——', 'system');
+      log('鈥斺€?鎴戞柟鍥炲悎 鈥斺€?, 'system');
       updateUI();
     }
 
@@ -8544,7 +6941,7 @@
       if (battleObjective?.id === 'defense' && playerHoldsDefenseZone()) {
         defenseHoldTurns++;
         updateObjectiveBar();
-        log(`守卫进度 ${defenseHoldTurns}/${DEFENSE_HOLD_REQUIRED} · ${getDefenseZoneLabel()}`, 'system');
+        log(`瀹堝崼杩涘害 ${defenseHoldTurns}/${DEFENSE_HOLD_REQUIRED} 路 ${getDefenseZoneLabel()}`, 'system');
       }
       recoverMorale('player');
       applyStrategicTurnEffects('player');
@@ -8552,7 +6949,7 @@
       clearSelection();
     }
 
-    // ─── 渲染 ───────────────────────────────────────────────
+    // 鈹€鈹€鈹€ 娓叉煋 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     function renderBoard() {
       const board = document.getElementById('board');
       board.innerHTML = '';
@@ -8607,15 +7004,15 @@
           if (cellData?.campZone === 'player') {
             const cm = document.createElement('span');
             cm.className = 'camp-marker';
-            cm.textContent = '我营';
-            cm.title = '我军营地 · 粮车运抵此处获胜';
+            cm.textContent = '鎴戣惀';
+            cm.title = '鎴戝啗钀ュ湴 路 绮溅杩愭姷姝ゅ鑾疯儨';
             cell.appendChild(cm);
           }
           if (cellData?.campZone === 'enemy') {
             const cm = document.createElement('span');
             cm.className = 'camp-marker';
-            cm.textContent = '敌营';
-            cm.title = '敌军营地';
+            cm.textContent = '鏁岃惀';
+            cm.title = '鏁屽啗钀ュ湴';
             cell.appendChild(cm);
           }
 
@@ -8624,7 +7021,7 @@
             const pm = document.createElement('span');
             pm.className = 'point-marker ' + (point.owner === 'player' ? 'player-own' : point.owner === 'enemy' ? 'enemy-own' : 'neutral');
             pm.textContent = STRATEGIC[point.type].label;
-            pm.title = STRATEGIC[point.type].desc + (point.owner !== 'neutral' ? `\n所属：${point.owner === 'player' ? '我军' : '敌军'}` : '');
+            pm.title = STRATEGIC[point.type].desc + (point.owner !== 'neutral' ? `\n鎵€灞烇細${point.owner === 'player' ? '鎴戝啗' : '鏁屽啗'}` : '');
             cell.appendChild(pm);
 
             if (point.captureSide && point.owner !== point.captureSide) {
@@ -8644,8 +7041,8 @@
           if (drop) {
             const de = document.createElement('span');
             de.className = 'dropped-supply';
-            de.textContent = '粮';
-            de.title = '散落粮食 · 任意部队进入可拾取';
+            de.textContent = '绮?;
+            de.title = '鏁ｈ惤绮 路 浠绘剰閮ㄩ槦杩涘叆鍙嬀鍙?;
             cell.appendChild(de);
           }
 
@@ -8683,12 +7080,12 @@
               badge.className = 'commander-badge';
               badge.textContent = isAssassinationBattle()
                 ? military.side === 'enemy'
-                  ? '敌主'
-                  : '我主'
-                : '主';
+                  ? '鏁屼富'
+                  : '鎴戜富'
+                : '涓?;
               ue.appendChild(badge);
             }
-            ue.title = `${military.name} · ${military.general.name}\n兵力 ${military.soldiers}/${military.maxSoldiers} · 士气 ${military.morale}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
+            ue.title = `${military.name} 路 ${military.general.name}\n鍏靛姏 ${military.soldiers}/${military.maxSoldiers} 路 澹皵 ${military.morale}\n${STRATEGIC[point?.type]?.desc || TERRAIN_HINT[terrain] || ''}`;
 
             if (phase === 'deploy' && military.side === 'player' && military.x >= 0) {
               ue.draggable = true;
@@ -8699,11 +7096,11 @@
             const ue = document.createElement('div');
             ue.className = `unit supply-cart ${cart.side}`;
             ue.innerHTML = `
-              <span>粮车</span>
+              <span>绮溅</span>
               <span class="cart-hp">${cart.soldiers}</span>
-              <span class="unit-status">运粮</span>
+              <span class="unit-status">杩愮伯</span>
             `;
-            ue.title = `${cart.name} · 生命 ${cart.soldiers}/${cart.maxSoldiers}\n距营地 ${distToCamp(cart)} 格`;
+            ue.title = `${cart.name} 路 鐢熷懡 ${cart.soldiers}/${cart.maxSoldiers}\n璺濊惀鍦?${distToCamp(cart)} 鏍糮;
             cell.appendChild(ue);
           }
 
@@ -8720,7 +7117,7 @@
       pool.innerHTML = '';
       const undeployed = units.filter(u => u.side === 'player' && u.x < 0);
       if (!undeployed.length) {
-        pool.innerHTML = '<span style="color:var(--muted);font-size:0.72rem;">部署完成 · 点击开始战斗</span>';
+        pool.innerHTML = '<span style="color:var(--muted);font-size:0.72rem;">閮ㄧ讲瀹屾垚 路 鐐瑰嚮寮€濮嬫垬鏂?/span>';
         return;
       }
       for (const u of undeployed) {
@@ -8728,7 +7125,7 @@
         el.className = 'unit player';
         el.draggable = true;
         el.innerHTML = `
-          <span class="unit-caption">${u.name}${u.isCommander ? '·主将' : ''}</span>
+          <span class="unit-caption">${u.name}${u.isCommander ? '路涓诲皢' : ''}</span>
           <span class="unit-caption">${getFormationTemplateLabel(u)}</span>
         `;
         el.title = `${u.general.name}\n${getFormationTemplateLabel(u)}`;
@@ -8746,22 +7143,22 @@
           const el = document.createElement('div');
           el.className = 'debug-unit ' + (u.side === 'player' ? 'player-side' : 'enemy-side');
           el.innerHTML = `
-            <div class="name">${u.name} <span class="type-tag">粮车</span></div>
-            <div>(${u.x},${u.y}) · 生命 ${u.soldiers}/${u.maxSoldiers} · 距营地 ${distToCamp(u)} 格</div>
+            <div class="name">${u.name} <span class="type-tag">绮溅</span></div>
+            <div>(${u.x},${u.y}) 路 鐢熷懡 ${u.soldiers}/${u.maxSoldiers} 路 璺濊惀鍦?${distToCamp(u)} 鏍?/div>
           `;
           list.appendChild(el);
           continue;
         }
         if (u.soldiers <= 0 && phase !== 'deploy') continue;
         const tier = getMoraleTier(u.morale);
-        const pos = u.x >= 0 ? `(${u.x},${u.y})` : '未部署';
+        const pos = u.x >= 0 ? `(${u.x},${u.y})` : '鏈儴缃?;
         const el = document.createElement('div');
         el.className = 'debug-unit ' + (u.side === 'player' ? 'player-side' : 'enemy-side');
         el.innerHTML = `
-          <div class="name">${u.name}${u.isCommander ? ' · 主将' : ''} <span class="type-tag">${getFormationTemplateLabel(u)}</span></div>
-          <div>${pos} · ${u.soldiers} · <span class="unit-status ${tier.id}">${tier.label}</span></div>
+          <div class="name">${u.name}${u.isCommander ? '鈽? : ''} <span class="type-tag">${getFormationTemplateLabel(u)}</span></div>
+          <div>${pos} 路 ${u.soldiers} 路 <span class="unit-status ${tier.id}">${tier.label}</span></div>
           <div class="morale-bar"><div class="morale-fill" style="width:${u.morale}%"></div></div>
-          <div>${u.general.name}${u.inRiver ? ' · 渡河' : ''}</div>
+          <div>${u.general.name}${u.inRiver ? ' 路 娓℃渤' : ''}</div>
           <div>${getFormationTemplateLabel(u)}</div>
         `;
         list.appendChild(el);
@@ -8776,24 +7173,24 @@
       const btnWait = document.getElementById('btn-wait');
 
       if (phase === 'deploy') {
-        badge.textContent = '部署阶段';
+        badge.textContent = '閮ㄧ讲闃舵';
         badge.className = 'phase-badge';
         turnInfo.textContent = isSupplyTransportBattle()
-          ? '占领粮仓 · 护送粮车回营 · 可拦截敌军粮车'
+          ? '鍗犻绮粨 鈫?鎶ら€佺伯杞﹀洖钀?路 鍙嫤鎴晫鍐涚伯杞?
           : battleObjective?.id === 'defense'
-            ? `部署后前往${getDefenseZoneLabel()}`
-            : '拖至底部三排 · 观察据点与地形';
+            ? `閮ㄧ讲鍚庡墠寰€${getDefenseZoneLabel()}`
+            : '鎷栬嚦搴曢儴涓夋帓 路 瑙傚療鎹偣涓庡湴褰?;
         btnStart.disabled = false;
         btnEnd.disabled = true;
         btnWait.disabled = true;
       } else if (phase === 'battle') {
-        badge.textContent = turn === 'player' ? '我方回合' : '敌方回合';
+        badge.textContent = turn === 'player' ? '鎴戞柟鍥炲悎' : '鏁屾柟鍥炲悎';
         badge.className = 'phase-badge ' + turn;
         turnInfo.textContent = turn === 'player'
           ? battleObjective?.id === 'defense'
-            ? `守住${getDefenseZoneLabel()} · 至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 人驻守且敌军不得进入`
-            : '移动、占点、维持士气'
-          : '敌方行动中…';
+            ? `瀹堜綇${getDefenseZoneLabel()} 路 鑷冲皯 ${DEFENSE_PLAYER_UNITS_REQUIRED} 浜洪┗瀹堜笖鏁屽啗涓嶅緱杩涘叆`
+            : '绉诲姩銆佸崰鐐广€佺淮鎸佸＋姘?
+          : '鏁屾柟琛屽姩涓€?;
         btnStart.disabled = true;
         btnEnd.disabled = turn !== 'player';
         btnWait.disabled = turn !== 'player' || !selectedUnit;
@@ -8816,7 +7213,7 @@
       if (phase !== 'battle' || turn !== 'player' || !selectedUnit || selectedUnit.hasActed) return;
       const u = selectedUnit;
       [
-        { id: 'inspire', label: `鼓舞(${u.skillUses.inspire})`, ok: u.skillUses.inspire > 0 },
+        { id: 'inspire', label: `榧撹垶(${u.skillUses.inspire})`, ok: u.skillUses.inspire > 0 },
       ].forEach(s => {
         const btn = document.createElement('button');
         btn.className = 'skill-btn';
@@ -8850,7 +7247,7 @@
       attackBtn.hidden = selectingAttackTarget;
       cancelBtn.hidden = false;
       attackBtn.disabled = attackCount === 0;
-      attackBtn.textContent = mode === 'target-attack' ? '选择目标' : `攻击${attackCount ? `(${attackCount})` : ''}`;
+      attackBtn.textContent = mode === 'target-attack' ? '閫夋嫨鐩爣涓? : `鏀诲嚮${attackCount ? `(${attackCount})` : ''}`;
       menu.classList.remove('hidden');
       positionActionMenu(menu);
     }
@@ -8891,7 +7288,7 @@
         unit.y = from.y;
         unit.inRiver = from.inRiver;
         unit.hasMoved = false;
-        log(`${unit.name} 撤回移动`, 'system');
+        log(`${unit.name} 鎾ゅ洖绉诲姩`, 'system');
       }
       clearSelection();
       return true;
@@ -8904,7 +7301,7 @@
     function selectPlayerUnit(unit) {
       if (!canSelectPlayerUnit(unit)) return false;
       if (isRout(unit)) {
-        log(`${unit.name} 溃逃中`, 'system');
+        log(`${unit.name} 婧冮€冧腑`, 'system');
         return false;
       }
       selectedUnit = unit;
@@ -8969,8 +7366,8 @@
       if (!selectedUnit) return;
       const isAfterMove = Boolean(selectedUnit.movedFrom);
       const moraleGain = isAfterMove ? 8 : 12;
-      changeMorale(selectedUnit, moraleGain, '整顿');
-      log(`${selectedUnit.name} 整顿队伍，士气恢复`, 'heal');
+      changeMorale(selectedUnit, moraleGain, '鏁撮】');
+      log(`${selectedUnit.name} 鏁撮】闃熶紞锛屽＋姘旀仮澶峘, 'heal');
       finishUnitAction(selectedUnit);
       clearSelection();
       updateUI();
@@ -9040,13 +7437,13 @@
 
     function onSkillClick(id) {
       if (!selectedUnit || selectedUnit.hasActed) return;
-      if (id === 'inspire') { mode = 'skill-inspire'; log('选择友军使用【鼓舞】', 'skill'); }
+      if (id === 'inspire') { mode = 'skill-inspire'; log('閫夋嫨鍙嬪啗浣跨敤銆愰紦鑸炪€?, 'skill'); }
     }
 
     function onDeployDrop(x, y) {
       if (phase !== 'deploy' || !dragUnit) return;
-      if (!PLAYER_DEPLOY_ROWS.includes(y)) { log('只能部署在底部三排', 'system'); return; }
-      if (unitAt(x, y)) { log('该格已有部队', 'system'); return; }
+      if (!PLAYER_DEPLOY_ROWS.includes(y)) { log('鍙兘閮ㄧ讲鍦ㄥ簳閮ㄤ笁鎺?, 'system'); return; }
+      if (unitAt(x, y)) { log('璇ユ牸宸叉湁閮ㄩ槦', 'system'); return; }
       dragUnit.x = x; dragUnit.y = y;
       checkApproachTutorials(dragUnit);
       dragUnit = null;
@@ -9055,12 +7452,12 @@
 
     function startBattle() {
       if (!units.some(u => u.side === 'player' && u.x >= 0)) {
-        log('请至少部署一支部队', 'system'); return;
+        log('璇疯嚦灏戦儴缃蹭竴鏀儴闃?, 'system'); return;
       }
       if (isAssassinationBattle()) {
         const playerCommander = getCommander('player', true);
         if (playerCommander && playerCommander.x < 0) {
-          log('斩将战必须先部署我方主将', 'system'); return;
+          log('鏂╁皢鎴樺繀椤诲厛閮ㄧ讲鎴戞柟涓诲皢', 'system'); return;
         }
       }
       showObjectiveIntro();
@@ -9074,8 +7471,8 @@
       resetPlayerTurn();
       BattleTutorialManager.applyLessonTags(battleConfig.lessonTags);
       if (isSupplyTransportBattle()) BattleTutorialManager.maybeShow('lesson_supply_transport');
-      log(`战斗开始：${battleObjective.friendlyTitle}`, 'system');
-      log('——我方回合——', 'system');
+      log(`鎴樻枟寮€濮?鈥?${battleObjective.friendlyTitle}`, 'system');
+      log('鈥斺€?鎴戞柟鍥炲悎 鈥斺€?, 'system');
       updateUI();
     }
 
@@ -9111,13 +7508,13 @@
       document.getElementById('morale-log').innerHTML = '';
       document.getElementById('overlay').classList.add('hidden');
       document.getElementById('recap-box').classList.add('hidden');
-      log('部署部队，观察地图上的据点与地形', 'system');
+      log('閮ㄧ讲閮ㄩ槦锛岃瀵熷湴鍥句笂鐨勬嵁鐐逛笌鍦板舰', 'system');
       if (battleObjective?.id === 'defense') {
-        log(`本局需守住${getDefenseZoneLabel()}：至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队驻守，且敌军不得踏入，连续 ${DEFENSE_HOLD_REQUIRED} 回合。`, 'system');
+        log(`鏈眬闇€瀹堜綇${getDefenseZoneLabel()}锛氳嚦灏?${DEFENSE_PLAYER_UNITS_REQUIRED} 鏀湭婧冮€冮儴闃熼┗瀹堬紝涓旀晫鍐涗笉寰楄笍鍏ワ紝杩炵画 ${DEFENSE_HOLD_REQUIRED} 鍥炲悎銆俙, 'system');
       }
       updateUI();
       if (battleConfig.scenario?.autoDeployment) {
-        log('剧情战役已载入：玩家只可操控朱重八本队，其余友军由 NPC 自动行动。', 'system');
+        log('鍓ф儏鎴樺焦宸茶浇鍏ワ細鐜╁鍙彲鎿嶆帶鏈遍噸鍏湰闃燂紝鍏朵綑鍙嬪啗鐢?NPC 鑷姩琛屽姩銆?, 'system');
         renderBoard();
         renderDeployPool();
         showObjectiveIntro();
@@ -9144,7 +7541,7 @@
     document.getElementById('action-attack').addEventListener('click', () => {
       if (!selectedUnit || !attackable.length) return;
       mode = 'target-attack';
-      log('选择敌方编队进入战斗演出', 'skill');
+      log('閫夋嫨鏁屾柟缂栭槦杩涘叆鎴樻枟婕斿嚭', 'skill');
       updateUI();
     });
     document.getElementById('action-cancel').addEventListener('click', undoPendingMove);
@@ -9170,7 +7567,7 @@
       init(initialBattleConfig || {});
     });
 
-    /** 剧情战役：init({ objectiveId: 'supplyTransport', lessonTags: ['SupplyTransportBattle'] }) */
+    /** 鍓ф儏鎴樺焦锛歩nit({ objectiveId: 'supplyTransport', lessonTags: ['SupplyTransportBattle'] }) */
     window.BattleDemo = { init, BattleTutorialManager, inferLessonTags };
 
     initialBattleConfig = getBattleConfigFromUrl();
@@ -9178,5 +7575,4 @@
   </script>
 </body>
 </html>
-
 

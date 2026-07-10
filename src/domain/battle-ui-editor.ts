@@ -197,6 +197,20 @@ export const battleUiEditorVariableDefinitions: BattleUiEditorVariableDefinition
     defaultValue: "19.0972%",
   },
   {
+    name: "--battle-controls-button-height",
+    label: "\u6309\u94ae height",
+    description: "\u5f00\u59cb\u6218\u6597/\u7ed3\u675f\u56de\u5408\u6309\u94ae\u7684\u9ad8\u5ea6",
+    section: "\u5e95\u90e8\u6309\u94ae",
+    defaultValue: "6.1%",
+  },
+  {
+    name: "--battle-controls-button-font-size",
+    label: "\u6309\u94ae fontSize",
+    description: "\u5f00\u59cb\u6218\u6597/\u7ed3\u675f\u56de\u5408\u6309\u94ae\u6587\u5b57\u5927\u5c0f",
+    section: "\u5e95\u90e8\u6309\u94ae",
+    defaultValue: "0.72rem",
+  },
+  {
     name: "--battle-start-left",
     label: "\u5f00\u59cb\u6218\u6597 left",
     description: "\u5f00\u59cb\u6218\u6597\u6309\u94ae\u7684\u5de6\u4fa7\u5b9a\u4f4d",
