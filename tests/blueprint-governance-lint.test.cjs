@@ -1629,3 +1629,296 @@ test("blueprint lint rejects active queues whose active_task is missing from tas
 
   assert.match(failures.join("\n"), /active_task=.*task\.test.*task definitions/i);
 });
+
+test("blueprint lint rejects queues that claim topic closure while residue remains", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_version: `target.test`",
+      "- queue_status: `done`",
+      "- queue_class: `required`",
+      "- active_task: `none`",
+      "- next_task: `none`",
+      "- closeout_status: `done`",
+      "- execution_closeout_status: `done`",
+      "- topic_closure_status: `closed`",
+      "- closure_basis: `Implementation landed.`",
+      "- residue_remaining: `yes`",
+      "- residue_family: `same-family`",
+      "- residue_routing_status: `auto-routable`",
+      "- next_family_candidate: `queue.follow-up`",
+      "- auto_continue_eligible: `true`",
+      "- next_effect: `return-to-version-review`",
+      "- sync_status: `success`",
+      "- sync_scope: `none`",
+      "- sync_summary: `No repository sync action is required for this closed fixture queue.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Closed Review Record",
+      "",
+      "- Status: `done`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /topic_closure_status=.*closed.*residue_remaining=.*yes/i);
+});
+
+test("blueprint lint rejects same-family queue residue without a named continuation", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_version: `target.test`",
+      "- queue_status: `done`",
+      "- queue_class: `required`",
+      "- active_task: `none`",
+      "- next_task: `none`",
+      "- closeout_status: `done`",
+      "- execution_closeout_status: `done`",
+      "- topic_closure_status: `open-residue`",
+      "- closure_basis: `Implementation landed but residue remains.`",
+      "- residue_remaining: `yes`",
+      "- residue_family: `same-family`",
+      "- residue_routing_status: `auto-routable`",
+      "- next_family_candidate: `none`",
+      "- auto_continue_eligible: `true`",
+      "- next_effect: `return-to-version-review`",
+      "- sync_status: `success`",
+      "- sync_scope: `none`",
+      "- sync_summary: `No repository sync action is required for this closed fixture queue.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Closed Review Record",
+      "",
+      "- Status: `done`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(
+    failures.join("\n"),
+    /residue_family=same-family requires next_family_candidate/i
+  );
+  assert.match(failures.join("\n"), /auto_continue_eligible=.*true.*continuation/i);
+});
+
+test("blueprint lint rejects version plans that route same-family residue without a next lawful queue", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `version-governor`",
+      "- version_id: `target.test`",
+      "- version_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `promotion-review`",
+      "- next_decision: `same-version-admission-or-version-closeout`",
+      "- next_action: `write-admission-review`",
+      "- resume_gate: `promotion-review`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- closure_review_subject: `queue.test`",
+      "- closure_review_status: `routed`",
+      "- residue_candidate_id: `item.residue`",
+      "- residue_candidate_family: `same-family`",
+      "- routing_basis: `Queue closeout proved one residue family.`",
+      "- next_lawful_queue_recommendation: `none`",
+      "- auto_admission_ready: `true`",
+      "- blocked_by: []",
+      "",
+      "## Human Context",
+      "",
+      "### Operator Intake Contract",
+      "",
+      "- Intake surface:",
+      "  - `人工只输入：新需求 + 参考治理规范。`",
+      "- Fixed receipt:",
+      "  - `处理结果：已进入 Blueprint 内部治理。`",
+      "  - `当前执行情况：等待版本层收敛。`",
+      "  - `人工操作：当前不需要 / 当前需要确认 xxx`",
+      "- Default visibility rule:",
+      "  - `默认不向人工暴露真值链细节。`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(
+    failures.join("\n"),
+    /residue_candidate_family=same-family requires next_lawful_queue_recommendation/i
+  );
+});
+
+test("blueprint lint rejects version plans that mark auto admission ready without structured routing truth", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `version-governor`",
+      "- version_id: `target.test`",
+      "- version_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `promotion-review`",
+      "- next_decision: `same-version-admission-or-version-closeout`",
+      "- next_action: `write-admission-review`",
+      "- resume_gate: `promotion-review`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- closure_review_subject: `queue.test`",
+      "- closure_review_status: `routed`",
+      "- residue_candidate_id: `none`",
+      "- residue_candidate_family: `none`",
+      "- routing_basis: `none`",
+      "- next_lawful_queue_recommendation: `none`",
+      "- auto_admission_ready: `true`",
+      "- blocked_by: []",
+      "",
+      "## Human Context",
+      "",
+      "### Operator Intake Contract",
+      "",
+      "- Intake surface:",
+      "  - `人工只输入：新需求 + 参考治理规范。`",
+      "- Fixed receipt:",
+      "  - `处理结果：已进入 Blueprint 内部治理。`",
+      "  - `当前执行情况：等待版本层收敛。`",
+      "  - `人工操作：当前不需要 / 当前需要确认 xxx`",
+      "- Default visibility rule:",
+      "  - `默认不向人工暴露真值链细节。`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(
+    failures.join("\n"),
+    /auto_admission_ready=.*true.*(residue candidate|recommendation)/i
+  );
+});
+
+test("blueprint lint rejects version plans that carry residue routing without the required closure review fields", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `version-governor`",
+      "- version_id: `target.test`",
+      "- version_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `promotion-review`",
+      "- next_decision: `same-version-admission-or-version-closeout`",
+      "- next_action: `write-admission-review`",
+      "- resume_gate: `promotion-review`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- residue_candidate_id: `item.residue`",
+      "- residue_candidate_family: `cross-family`",
+      "- next_lawful_queue_recommendation: `queue.follow-up`",
+      "- auto_admission_ready: `false`",
+      "- blocked_by: []",
+      "",
+      "## Human Context",
+      "",
+      "### Operator Intake Contract",
+      "",
+      "- Intake surface:",
+      "  - `人工只输入：新需求 + 参考治理规范。`",
+      "- Fixed receipt:",
+      "  - `处理结果：已进入 Blueprint 内部治理。`",
+      "  - `当前执行情况：等待版本层收敛。`",
+      "  - `人工操作：当前不需要 / 当前需要确认 xxx`",
+      "- Default visibility rule:",
+      "  - `默认不向人工暴露真值链细节。`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(
+    failures.join("\n"),
+    /closure routing.*(closure_review_subject|closure_review_status|routing_basis)/i
+  );
+});

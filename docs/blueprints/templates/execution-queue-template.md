@@ -12,6 +12,14 @@
 - active_task: `task.replace-me | none`
 - next_task: `task.replace-me-next | none`
 - closeout_status: `in-progress | done | blocked`
+- execution_closeout_status: `done | partial | blocked`
+- topic_closure_status: `closed | open-residue | blocked`
+- closure_basis: `replace-with-structured-closeout-basis`
+- residue_remaining: `yes | no`
+- residue_family: `same-family | cross-family | accepted-residue | none`
+- residue_routing_status: `auto-routable | needs-version-review | needs-human-decision | none`
+- next_family_candidate: `queue.replace-me-next | item.replace-me-next | none`
+- auto_continue_eligible: `true | false`
 - next_effect: `promote-next-queue | return-to-version-review | block-version | none`
 - sync_status: `pending | success | failed`
 - sync_scope: `branch-push | baseline-merge | baseline-push | none`
@@ -57,6 +65,14 @@
 - `The fixed operator receipt must source 当前任务 from active_task.`
 - `The fixed operator receipt must source 当前队列目标 from queue_goal.`
 - `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
+
+### Closeout Judgement Rule
+
+- `Queue execution closeout is not equivalent to true topic closure.`
+- `execution_closeout_status = done means the bounded execution slice landed and verified.`
+- `topic_closure_status = closed is legal only when no still-blocking same-family residue remains inside the queue's bounded topic surface.`
+- `If residue_remaining = yes, classify it as same-family / cross-family / accepted-residue / none before version-level routing continues.`
+- `If residue_family = same-family and one lawful continuation exists, name it in next_family_candidate and allow automatic continuation instead of returning to open-ended human queue selection.`
 
 ### Admission Preconditions
 
@@ -139,20 +155,7 @@
 - `If task_kind=decision-dispatch, this task must summarize current queue progress and provide one concise recommendation.`
 - `Default operator output should stay concise and should not dump candidate-set analysis, why-not-the-others detail, or other Blueprint internal reasoning unless the operator explicitly asks for it.`
 
-## Closeout Decision
-
-- queue_id: `queue.replace-me`
-- closeout_status: `in-progress | done | blocked`
-- verification_status: `passed | partial | blocked`
-- residue_remaining: `yes | no`
-- residue_classification:
-  - `accepted-history`
-- next_queue_recommendation: `queue.replace-me-next | none`
-- promotion_justified: `true | false`
-- evidence:
-  - `Replace with closeout evidence.`
-
-## Historical Handoff Note
+### Historical Handoff Note
 
 - Task ID:
   - `none`
@@ -161,7 +164,7 @@
 - Recorded expected output:
   - `Replace with the closed-queue outcome.`
 
-## Historical Candidate Notes
+### Historical Candidate Notes
 
 - `task.replace-me-later`
   - State:
@@ -172,4 +175,4 @@
 ### Historical Snapshot (2000-01-01)
 
 - `Replace with queue history only when needed.`
-- `When queue_status becomes done, convert any live-style closeout labels into historical labels such as Closed Review Record, Historical Handoff Note, and Historical Candidate Notes.`
+- `When queue_status becomes done, convert any live-style closeout labels into historical labels such as Historical Handoff Note and Historical Candidate Notes.`

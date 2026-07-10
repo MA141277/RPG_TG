@@ -48,9 +48,44 @@ const allowedIntakeFeedbackModes = new Set([
   "none",
   "fixed-receipt",
 ]);
+const allowedClosureReviewStatuses = new Set(["none", "evaluating", "routed", "blocked"]);
+const allowedResidueFamilies = new Set([
+  "same-family",
+  "cross-family",
+  "accepted-residue",
+  "none",
+]);
 const allowedQueueStatuses = new Set(["active", "blocked", "done", "dropped"]);
+const allowedExecutionCloseoutStatuses = new Set(["done", "partial", "blocked"]);
+const allowedTopicClosureStatuses = new Set(["closed", "open-residue", "blocked"]);
+const allowedResidueRoutingStatuses = new Set([
+  "auto-routable",
+  "needs-version-review",
+  "needs-human-decision",
+  "none",
+]);
+const allowedBooleanStrings = new Set(["true", "false"]);
 const allowedSyncStatuses = new Set(["pending", "success", "failed"]);
 const allowedSyncScopes = new Set(["branch-push", "baseline-merge", "baseline-push", "none"]);
+const closureRoutingFields = [
+  "closure_review_subject",
+  "closure_review_status",
+  "residue_candidate_id",
+  "residue_candidate_family",
+  "routing_basis",
+  "next_lawful_queue_recommendation",
+  "auto_admission_ready",
+];
+const queueClosureJudgementFields = [
+  "execution_closeout_status",
+  "topic_closure_status",
+  "closure_basis",
+  "residue_remaining",
+  "residue_family",
+  "residue_routing_status",
+  "next_family_candidate",
+  "auto_continue_eligible",
+];
 
 export function lintBlueprintDocs(repoRoot = process.cwd()) {
   const failures = [];
@@ -506,6 +541,19 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     );
   }
 
+  const closureRoutingValues = Object.fromEntries(
+    closureRoutingFields.map((fieldName) => [
+      fieldName,
+      requireFieldValue(
+        text,
+        fieldName,
+        relativePath,
+        failures,
+        `${relativePath}: ${label} closure routing requires Control Block field "${fieldName}"`
+      ),
+    ])
+  );
+
   const admissionStatus = matchField(text, "admission_status");
   if (!isTemplate && admissionStatus != null && !allowedAdmissionStatuses.has(admissionStatus)) {
     failures.push(
@@ -541,6 +589,40 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     );
   }
 
+  const closureReviewStatus = closureRoutingValues.closure_review_status;
+  const residueCandidateFamily = closureRoutingValues.residue_candidate_family;
+  const autoAdmissionReady = closureRoutingValues.auto_admission_ready;
+
+  if (
+    !isTemplate &&
+    closureReviewStatus != null &&
+    !allowedClosureReviewStatuses.has(closureReviewStatus)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} closure_review_status "${closureReviewStatus}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    residueCandidateFamily != null &&
+    !allowedResidueFamilies.has(residueCandidateFamily)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} residue_candidate_family "${residueCandidateFamily}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    autoAdmissionReady != null &&
+    !allowedBooleanStrings.has(autoAdmissionReady)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} auto_admission_ready "${autoAdmissionReady}" is not an allowed boolean value`
+    );
+  }
+
   const activeQueue = matchField(text, "active_queue");
   const decisionState = matchField(text, "decision_state");
   const reviewSubjectClassification = matchField(
@@ -551,6 +633,19 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   const proposedQueueId = matchField(text, "proposed_queue_id");
   const reviewBasis = matchField(text, "review_basis");
   const blockedByEntries = extractListEntries(text, "blocked_by");
+  const closureReviewSubject = closureRoutingValues.closure_review_subject;
+  const residueCandidateId = closureRoutingValues.residue_candidate_id;
+  const routingBasis = closureRoutingValues.routing_basis;
+  const nextLawfulQueueRecommendation =
+    closureRoutingValues.next_lawful_queue_recommendation;
+  const hasClosureRoutingTruth = [
+    closureReviewSubject,
+    closureReviewStatus,
+    residueCandidateId,
+    residueCandidateFamily,
+    routingBasis,
+    nextLawfulQueueRecommendation,
+  ].some((value) => value != null && value !== "none") || autoAdmissionReady === "true";
 
   if (!isTemplate && activeQueue === "none" && decisionState === "active-execution") {
     failures.push(
@@ -654,6 +749,43 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
       );
     }
   }
+
+  if (
+    !isTemplate &&
+    hasClosureRoutingTruth &&
+    [closureReviewSubject, closureReviewStatus, routingBasis].some(
+      (value) => value == null || value === "none"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} closure routing requires closure_review_subject, closure_review_status, and routing_basis before residue routing can be recorded`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    residueCandidateFamily === "same-family" &&
+    (nextLawfulQueueRecommendation == null || nextLawfulQueueRecommendation === "none")
+  ) {
+    failures.push(
+      `${relativePath}: ${label} residue_candidate_family=same-family requires next_lawful_queue_recommendation to name the next lawful queue`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    autoAdmissionReady === "true" &&
+    (
+      residueCandidateId == null ||
+      residueCandidateId === "none" ||
+      nextLawfulQueueRecommendation == null ||
+      nextLawfulQueueRecommendation === "none"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} auto_admission_ready=true requires a structured residue candidate and recommendation`
+    );
+  }
 }
 
 function lintTargetSpec(filePath, failures, repoRoot, label) {
@@ -744,9 +876,23 @@ function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
   const queueSnapshotValues = Object.fromEntries(
     queueSnapshotFields.map((fieldName) => [fieldName, matchField(text, fieldName)])
   );
+  const queueClosureValues = Object.fromEntries(
+    queueClosureJudgementFields.map((fieldName) => [fieldName, matchField(text, fieldName)])
+  );
   const taskLedgerIds = extractTaskLedgerIds(text);
   const taskDefinitions = extractTaskDefinitions(text);
   const taskDefinitionIds = taskDefinitions.map((definition) => definition.taskId);
+  const closureJudgementInScope =
+    isTemplate ||
+    [
+      "execution_closeout_status",
+      "topic_closure_status",
+      "closure_basis",
+      "residue_family",
+      "residue_routing_status",
+      "next_family_candidate",
+      "auto_continue_eligible",
+    ].some((fieldName) => queueClosureValues[fieldName] != null);
 
   if (!isTemplate && queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
     failures.push(
@@ -803,6 +949,98 @@ function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
   ) {
     failures.push(
       `${relativePath}: queue blocked_by must not mirror merge conflict or repository sync state as execution blockers`
+    );
+  }
+
+  if (closureJudgementInScope) {
+    for (const fieldName of queueClosureJudgementFields) {
+      if (queueClosureValues[fieldName] == null) {
+        failures.push(
+          `${relativePath}: queue closeout judgement requires Control Block field "${fieldName}"`
+        );
+      }
+    }
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.execution_closeout_status != null &&
+    !allowedExecutionCloseoutStatuses.has(queueClosureValues.execution_closeout_status)
+  ) {
+    failures.push(
+      `${relativePath}: execution_closeout_status="${queueClosureValues.execution_closeout_status}" is not an allowed queue closeout value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.topic_closure_status != null &&
+    !allowedTopicClosureStatuses.has(queueClosureValues.topic_closure_status)
+  ) {
+    failures.push(
+      `${relativePath}: topic_closure_status="${queueClosureValues.topic_closure_status}" is not an allowed topic closure value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.residue_family != null &&
+    !allowedResidueFamilies.has(queueClosureValues.residue_family)
+  ) {
+    failures.push(
+      `${relativePath}: residue_family="${queueClosureValues.residue_family}" is not an allowed residue family`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.residue_routing_status != null &&
+    !allowedResidueRoutingStatuses.has(queueClosureValues.residue_routing_status)
+  ) {
+    failures.push(
+      `${relativePath}: residue_routing_status="${queueClosureValues.residue_routing_status}" is not an allowed routing status`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.auto_continue_eligible != null &&
+    !allowedBooleanStrings.has(queueClosureValues.auto_continue_eligible)
+  ) {
+    failures.push(
+      `${relativePath}: auto_continue_eligible="${queueClosureValues.auto_continue_eligible}" is not an allowed boolean value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.topic_closure_status === "closed" &&
+    queueClosureValues.residue_remaining === "yes"
+  ) {
+    failures.push(
+      `${relativePath}: topic_closure_status=closed cannot coexist with residue_remaining=yes`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.residue_family === "same-family" &&
+    (queueClosureValues.next_family_candidate == null ||
+      queueClosureValues.next_family_candidate === "none")
+  ) {
+    failures.push(
+      `${relativePath}: residue_family=same-family requires next_family_candidate to name the continuation`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.auto_continue_eligible === "true" &&
+    (queueClosureValues.next_family_candidate == null ||
+      queueClosureValues.next_family_candidate === "none")
+  ) {
+    failures.push(
+      `${relativePath}: auto_continue_eligible=true requires a named continuation`
     );
   }
 

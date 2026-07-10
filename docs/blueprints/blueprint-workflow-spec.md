@@ -133,6 +133,13 @@ The version plan is the only live governor for:
 - `intake_summary`
 - `intake_result`
 - `intake_feedback_mode`
+- `closure_review_subject`
+- `closure_review_status`
+- `residue_candidate_id`
+- `residue_candidate_family`
+- `routing_basis`
+- `next_lawful_queue_recommendation`
+- `auto_admission_ready`
 - queue promotion / hold / reopen / closeout conclusions
 - version-level closeout decision
 
@@ -149,6 +156,14 @@ The queue doc is the only live governor for:
 - queue snapshot summary for operator-facing visibility
 - queue-level verification
 - `closeout_status`
+- `execution_closeout_status`
+- `topic_closure_status`
+- `closure_basis`
+- `residue_remaining`
+- `residue_family`
+- `residue_routing_status`
+- `next_family_candidate`
+- `auto_continue_eligible`
 - `next_effect`
 
 ### 4.6 `docs/change-log.md`
@@ -189,6 +204,21 @@ The following fields must be structured whenever they are needed:
 - `proposed_queue_id`
 - `review_basis`
 - `admission_status`
+- `closure_review_subject`
+- `closure_review_status`
+- `residue_candidate_id`
+- `residue_candidate_family`
+- `routing_basis`
+- `next_lawful_queue_recommendation`
+- `auto_admission_ready`
+- `execution_closeout_status`
+- `topic_closure_status`
+- `closure_basis`
+- `residue_remaining`
+- `residue_family`
+- `residue_routing_status`
+- `next_family_candidate`
+- `auto_continue_eligible`
 
 ## 6. Live vs Historical Separation
 
@@ -524,6 +554,17 @@ Required queue fields:
 - `closeout_status`
 - `next_effect`
 
+Required queue closeout-judgement fields:
+
+- `execution_closeout_status`
+- `topic_closure_status`
+- `closure_basis`
+- `residue_remaining`
+- `residue_family`
+- `residue_routing_status`
+- `next_family_candidate`
+- `auto_continue_eligible`
+
 Required queue snapshot fields for active queues:
 
 - `queue_goal`
@@ -560,6 +601,9 @@ Hard queue rules:
 5. If a queue doc exists, it must represent admitted queue truth, not pre-admission speculation.
 6. If a queue is `active`, it must expose a `Queue Snapshot` that explains queue purpose, task count, active task, and per-task role without creating a second source of executable truth.
 7. `decision-dispatch` is a legal queue-local task shape when an active queue needs human decision, scope trimming, recommendation output, or blocker routing, but it does not replace version-level `promotion-review` and does not create a new resume layer.
+8. `execution_closeout_status = done` must not by itself imply `topic_closure_status = closed`.
+9. A queue may declare `topic_closure_status = closed` only after queue closeout judgement confirms that no still-blocking same-family residue remains inside the queue's bounded topic surface.
+10. If residue remains after execution closeout, the queue must classify it as `same-family`, `cross-family`, `accepted-residue`, or `none` before version-level routing can conclude.
 
 ## 11. Post-Task Auto-Reconcile And Closeout Auto-Advance
 
@@ -582,7 +626,9 @@ When an active task completes, the agent must automatically:
    - untracked drafts
    - partially synced governance truth
    - out-of-scope leftovers
-6. determine the next legal execution point
+6. determine whether the queue's bounded topic is actually closed or still open with residue
+7. if residue remains, classify it as `same-family`, `cross-family`, `accepted-residue`, or `none`
+8. determine the next legal execution point
 
 ### 11.2 Unique-next-step rule
 
@@ -597,7 +643,8 @@ then the agent must automatically continue into:
 
 - task auto-reconcile
 - queue gate re-evaluation
-- queue closeout or version review handoff
+- queue closeout judgement
+- same-family residue routing or version review handoff
 
 It is illegal to stop at:
 
@@ -609,7 +656,39 @@ It is illegal to stop at:
 
 when those are already the only legal next step.
 
-### 11.3 Queue closeout sync order
+### 11.3 Queue closeout judgement
+
+Queue closeout must distinguish execution completion from real topic closure.
+
+Required rules:
+
+1. `execution_closeout_status = done` means the bounded execution slice landed and verified.
+2. `topic_closure_status = closed` means the bounded topic is actually converged enough to close.
+3. A queue must not use governance completion alone as proof of topic closure.
+4. A queue must not declare `topic_closure_status = closed` while:
+   - `residue_remaining = yes`
+   - or still-blocking same-family residue remains on the covered production path
+5. If execution landed but residue remains, the queue must write:
+   - `execution_closeout_status = done`
+   - `topic_closure_status = open-residue`
+6. Accepted residue is legal only when the queue explicitly records why that residue no longer blocks bounded topic closure.
+
+### 11.4 Same-family residue routing
+
+After queue closeout judgement, Blueprint must continue with residue routing instead of stopping at prose summary.
+
+Rules:
+
+1. If `residue_family = same-family` and the next lawful continuation is unique, Blueprint should:
+   - record the residue as structured continuation truth
+   - write the version-plan routing fields
+   - avoid asking the human which queue should come next
+2. If `residue_family = cross-family`, the residue must return to version-level review instead of staying on the same closure chain automatically.
+3. If `residue_family = accepted-residue`, the queue may still close only when `closure_basis` proves that accepted residue no longer blocks the queue's bounded closure contract.
+4. If multiple lawful continuation routes remain and current docs/code do not uniquely decide between them, Blueprint may escalate to human choice.
+5. If only one lawful continuation exists, Blueprint must not ask.
+
+### 11.5 Queue closeout sync order
 
 Queue closeout sync order is fixed:
 
@@ -620,7 +699,7 @@ Queue closeout sync order is fixed:
 5. project-progress
 6. optional `docs/change-log.md` mirror update
 
-### 11.4 Task after-state repository sync
+### 11.6 Task after-state repository sync
 
 After a task reaches a terminal execution state:
 
@@ -659,6 +738,7 @@ Hard throttle:
 4. If the one allowed confirmation has already been used, the agent must either:
    - finish automatic closeout from existing evidence
    - or report `blocked` with the smallest concrete blocker
+5. If same-family residue routing is uniquely supported by queue closeout and version truth, do not ask the human to choose the next queue.
 
 Version-level exception:
 
@@ -696,6 +776,10 @@ At minimum, Blueprint governance must satisfy:
 20. when the version plan names `active_queue = none`, no queue doc may remain `queue_status = active`
 21. queue docs must not use `queue_status = candidate`
 22. an open version with `active_queue = none` remains eligible for same-version queue admission until explicit version closeout is written
+23. `topic_closure_status = closed` must not coexist with `residue_remaining = yes`
+24. `residue_family = same-family` requires a non-`none` next continuation record
+25. version-level same-family residue routing must not keep `next_lawful_queue_recommendation = none`
+26. `auto_admission_ready = true` requires structured residue continuation truth rather than prose-only closeout notes
 
 ## 14. Automated Enforcement
 
@@ -726,6 +810,13 @@ Current Blueprint lint must reject:
 - version plans that keep a live queue-admission review subject while another active queue already exists
 - repositories where the version plan names one active queue but queue docs expose zero or multiple active queues
 - repositories where a queue doc is `active` while the version plan still says `active_queue = none`
+- queue closeout structures that claim closure without required closeout-judgement fields
+- queues where `topic_closure_status = closed` while `residue_remaining = yes`
+- queues where `residue_family = same-family` while `next_family_candidate = none`
+- queues where `auto_continue_eligible = true` but no continuation target is named
+- version plans that carry closure-routing truth without the required routing fields
+- version plans where `residue_candidate_family = same-family` while `next_lawful_queue_recommendation = none`
+- version plans where `auto_admission_ready = true` without structured residue candidate / recommendation truth
 
 ## 15. Governance Debt Still Requiring Stronger Automation
 
@@ -740,6 +831,9 @@ These remain mandatory future enforcement categories:
 5. detect repeated full re-audit of an already recorded queue-candidate when no material recheck trigger exists
 6. detect version closeout being written without explicit human confirmation
 7. detect repositories that drift into zero-open-version or multiple-open-version truth without an explicit version-creation / version-closeout record
+8. detect queue closeout that stops at prose residue discussion without version-level routing truth
+9. detect sessions that still ask humans to choose the next queue when same-family routing is already unique
+10. detect sessions that still collapse governance completion into topic closure without proving old-structure exit
 
 Until stronger automation exists, these are still hard workflow rules, not optional guidance.
 

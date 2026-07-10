@@ -22,6 +22,13 @@
 - intake_summary: `replace-with-one-line-intake-summary | none`
 - intake_result: `none | absorbed-into-active-queue | queued-as-candidate | promoted-to-admission | rejected | deferred`
 - intake_feedback_mode: `none | fixed-receipt`
+- closure_review_subject: `queue.replace-me | none`
+- closure_review_status: `none | evaluating | routed | blocked`
+- residue_candidate_id: `item.replace-me | none`
+- residue_candidate_family: `same-family | cross-family | accepted-residue | none`
+- routing_basis: `replace-with-written-routing-evidence | none`
+- next_lawful_queue_recommendation: `queue.replace-me | none`
+- auto_admission_ready: `true | false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.replace-me`
@@ -31,7 +38,7 @@
 ### Admission Review Record
 
 - Intake handling:
-  - `The operator-facing intake surface is limited to ??? + ??????. Blueprint must internalize classification and routing work before asking the operator to manage queue mechanics.`
+  - `The operator-facing intake surface is limited to 新需求 + 参考治理规范. Blueprint must internalize classification and routing work before asking the operator to manage queue mechanics.`
   - `Reset intake fields to none once intake handling is durably recorded, unless intake is still actively in progress.`
   - `Do not require the operator to provide item.xxx, classification, proposed queue id, review basis, or admission fields.`
 
@@ -76,6 +83,14 @@
 | --- | --- | --- | --- |
 | `queue.replace-me` | `candidate` | `Replace with promotion trigger.` | `Replace with the current note.` |
 
+### Closure Routing Record
+
+- `Queue closeout residue must be absorbed here after queue-level closeout judgement completes.`
+- `This version plan owns same-family continuation routing truth; it must not create a second resume chain.`
+- `If queue closeout proves one unique same-family continuation, write that continuation here instead of returning to open-ended human queue selection.`
+- `If residue is cross-family or not uniquely routable, return to broader version review instead of pretending same-family continuation is already settled.`
+- `Do not duplicate queue-level implementation evidence here; record routing truth only.`
+
 Allowed `next_decision` values:
 
 - `queue-admission-review`
@@ -101,6 +116,14 @@ Allowed `next_action` values:
 - `If a queue-candidate is already recorded in the version plan or candidate recovery ledger, resume from that record by default.`
 - `Only restart a full re-audit when new material evidence invalidates the prior classification or review basis.`
 - `Do not use prose-only memory as the recovery source when structured admission truth already exists.`
+
+### Closure Judgement And Residue Routing Rule
+
+- `Queue execution closeout is not equivalent to true topic closure.`
+- `Queue docs own execution_closeout_status / topic_closure_status / closure_basis / residue_remaining / residue_family / residue_routing_status / next_family_candidate / auto_continue_eligible.`
+- `This version plan owns closure_review_subject / closure_review_status / residue_candidate_id / residue_candidate_family / routing_basis / next_lawful_queue_recommendation / auto_admission_ready.`
+- `If same-family residue is uniquely routable, write the continuation here and avoid asking the operator which queue should come next.`
+- `If multiple lawful residue continuations remain genuinely unresolved, route to human choice only then.`
 
 ### Single-Active-Queue Rule
 
@@ -144,7 +167,7 @@ Allowed `next_action` values:
 - Default visibility rule:
   - `默认不向人工暴露真值链细节、候选全集、Why Not The Others、Human Involvement Boundary、admission 内部字段或排序全过程，除非人工明确要求展开内部分析。`
 
-### Post-Task Auto-Reconcile### Post-Task Auto-Reconcile### Post-Task Auto-Reconcile
+### Post-Task Auto-Reconcile
 
 1. `Run verify_with.`
 2. `Check done_when.`
@@ -152,9 +175,10 @@ Allowed `next_action` values:
 4. `Re-evaluate queue closeout.`
 5. `Scan governance owners.`
 6. `Scan residue.`
-7. `Trigger one minimum repository sync batch after the docs are updated.`
-8. `If the next legal step is unique, continue directly into closeout or version review once the sync attempt returns a result.`
-9. `Optionally mirror the result into change-log.`
+7. `If queue closeout leaves residue, absorb same-family or cross-family routing truth here before repository sync begins.`
+8. `Trigger one minimum repository sync batch after the docs are updated.`
+9. `If the next legal step is unique, continue directly into closeout, same-family routing, or version review once the sync attempt returns a result.`
+10. `Optionally mirror the result into change-log.`
 
 ### Human Confirmation Constraint
 
@@ -163,6 +187,7 @@ Allowed `next_action` values:
 - `If only one legal branch exists, do not ask.`
 - `Scope approval does not replace admission.`
 - `Do not ask whether to perform closeout, promotion review, or doc sync when they are already the unique next legal step.`
+- `Do not ask which queue should come next when same-family residue routing is already uniquely supported by current closeout truth.`
 - `Do not raise decision_required merely because repository sync failed.`
 - `Do not ask about a merge conflict when current version truth already uniquely decides the legal resolution.`
 - `Ask only when the baseline is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide alone.`
