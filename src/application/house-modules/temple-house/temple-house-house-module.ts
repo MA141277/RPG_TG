@@ -1,7 +1,3 @@
-﻿import {
-  defaultPackActivities,
-  defaultPackTextEntries,
-} from "../../content/default-pack-content";
 import type { ActivityDefinition } from "../../../domain/activity";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
@@ -75,6 +71,12 @@ import {
   getReviewCycleCountdown,
   syncReviewCycleCompatibilityMirrors,
 } from "../../review/review-cycle";
+import {
+  getDefaultTempleTaskActivityDefinitions,
+  isTempleTaskActivityDefinition,
+  getTempleTextEntries,
+  type TempleTaskActivityDefinition,
+} from "./temple-house-active-content";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
 
 const DONATION_AMOUNT = 50;
@@ -107,21 +109,6 @@ const TEMPLE_REST_MAX_DAYS = 99;
 const TEMPLE_REST_BASE_RECOVERY = 12;
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
 
-const defaultZhuyuanzhangActivities =
-  defaultPackActivities as ActivityDefinition[];
-const defaultZhuyuanzhangTextEntries = defaultPackTextEntries;
-
-function getTempleTextEntries(
-  textEntriesById?: Record<string, string>
-): Record<string, string> {
-  return textEntriesById == null
-    ? defaultZhuyuanzhangTextEntries
-    : {
-        ...defaultZhuyuanzhangTextEntries,
-        ...textEntriesById,
-      };
-}
-
 function resolveTempleText(
   textEntriesById: Record<string, string> | undefined,
   textId: string
@@ -144,32 +131,6 @@ function resolveTempleTemplateText(
     values,
     `MISSING_TEXT:${textId}`
   );
-}
-
-type TempleTaskActivityDefinition = ActivityDefinition & {
-  houseModuleId: "temple-house";
-  taskId: string;
-  missionId: string;
-  titleTextId: string;
-  briefingTextId: string;
-  orderLineTextIds: string[];
-};
-
-function isTempleTaskActivityDefinition(
-  activityDefinition: ActivityDefinition
-): activityDefinition is TempleTaskActivityDefinition {
-  return (
-    activityDefinition.houseModuleId === "temple-house" &&
-    typeof activityDefinition.taskId === "string" &&
-    typeof activityDefinition.missionId === "string" &&
-    typeof activityDefinition.titleTextId === "string" &&
-    typeof activityDefinition.briefingTextId === "string" &&
-    Array.isArray(activityDefinition.orderLineTextIds)
-  );
-}
-
-function getDefaultTempleTaskActivityDefinitions(): TempleTaskActivityDefinition[] {
-  return defaultZhuyuanzhangActivities.filter(isTempleTaskActivityDefinition);
 }
 
 function getTempleGreetingLines(

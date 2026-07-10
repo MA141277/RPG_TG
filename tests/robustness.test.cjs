@@ -4006,6 +4006,32 @@ test("legacy temple house content registry file is removed after temple runtime 
   );
 });
 
+test("temple house no longer consumes default pack content through module-top-level fallbacks", () => {
+  const templeHouseSource = fs.readFileSync(
+    "src/application/house-modules/temple-house/temple-house-house-module.ts",
+    "utf8"
+  );
+  const templeHouseActiveContentPath =
+    "src/application/house-modules/temple-house/temple-house-active-content.ts";
+  const templeHouseActiveContentExists = fs.existsSync(templeHouseActiveContentPath);
+  const templeHouseActiveContentSource = templeHouseActiveContentExists
+    ? fs.readFileSync(templeHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(templeHouseActiveContentExists, true);
+  assert.match(templeHouseSource, /from "\.\/temple-house-active-content"/);
+  assert.doesNotMatch(templeHouseSource, /default-pack-content/);
+  assert.doesNotMatch(templeHouseSource, /defaultPackActivities/);
+  assert.doesNotMatch(templeHouseSource, /defaultPackTextEntries/);
+  assert.match(templeHouseActiveContentSource, /defaultPackActivities/);
+  assert.match(templeHouseActiveContentSource, /defaultPackTextEntries/);
+  assert.match(
+    templeHouseActiveContentSource,
+    /getDefaultTempleTaskActivityDefinitions/
+  );
+  assert.match(templeHouseActiveContentSource, /getTempleTextEntries/);
+});
+
 test("keep house content file no longer authors pack task definitions", () => {
   const keepContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/keep-house-content.ts"),
