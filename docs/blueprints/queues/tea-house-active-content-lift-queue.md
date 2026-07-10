@@ -13,9 +13,9 @@
 - next_task: `none`
 - closeout_status: `done`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit da72b58 on mod-first-dev was pushed successfully to origin/mod-first-dev after queue closeout was written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -252,3 +252,7 @@
   - Summary: `Completed tea-house-active-content-residue-review and closed queue.tea-house-active-content-lift after fresh source review confirmed no additional same-queue continuation remains on the admitted tea-house path; remaining temple-house, tavern, medicine-house, grain-shop, and broader runtime-orchestration residues return to version-level review.`
   - Verification: `rg -n "defaultRuntimeContent|defaultPackActivities|defaultPackTextEntries" src/application/house-modules/tea-house src/application/house-modules/temple-house/temple-house-house-module.ts tests/robustness.test.cjs; node tools/lint-blueprints.mjs`
   - Next at this time: `Return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for same-version promotion review.`
+- 2026-07-10
+  - Summary: `Repository sync batch succeeded after queue closeout truth was written; commit da72b58 is now on origin/mod-first-dev and the queue-local sync record is synchronized with that result.`
+  - Verification: `git push origin mod-first-dev`
+  - Next at this time: `Resume same-version promotion review from docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md.`
