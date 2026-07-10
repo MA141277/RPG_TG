@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue closeout truth is now written, but the minimum repository sync batch for the runtime-delta closeout batch has not been recorded yet in this worktree.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `The minimum repository sync batch completed successfully after runtime-delta closeout truth was written: working branch codex/editor-native-authoring-contract-freeze-review now contains commit 1f1f4cf and origin/mod-first-dev now contains merge commit f0aaac5 for the same batch.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -301,3 +301,7 @@
   - Summary: `Completed task.minimal-runtime-contract-change-audit.queue-closeout-and-handoff by closing queue.minimal-runtime-contract-change-audit, confirming that no still-blocking same-family runtime-delta residue remains, and returning the version to closeout-ready state with no active queue.`
   - Verification: `npm run lint:blueprints`
   - Next at this time: `Return control to the version plan with no active queue and require one explicit human closeout confirmation before changing version_status from open to done.`
+- 2026-07-10
+  - Summary: `Completed the minimum repository sync batch for the final runtime-delta closeout after closeout-ready version truth was written. Working branch codex/editor-native-authoring-contract-freeze-review now contains commit 1f1f4cf and origin/mod-first-dev now contains merge commit f0aaac5 for the same batch.`
+  - Verification: `git push; git push origin HEAD:mod-first-dev`
+  - Next at this time: `Keep the version open and ask exactly one human closeout confirmation question before changing version_status from open to done.`
