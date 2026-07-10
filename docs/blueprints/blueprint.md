@@ -16,12 +16,13 @@
 ### Role
 
 - `This file is the Blueprint index, active version pointer, and version registry.`
+- `The active_version* pointers resolve to the latest governed version record even when that version is already closed historical evidence and no open successor exists yet.`
 
 ### Version Registry
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
-| `target.script-editor-contract-freeze` | `docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md` | `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md` | `Current active version for script-editor design and contract freeze only.` |
+| `target.script-editor-contract-freeze` | `docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md` | `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md` | `Closed on 2026-07-10 after explicit human closeout confirmation; no open successor currently exists.` |
 | `target.project-complete-modularization` | `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md` | `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md` | `Closed on 2026-07-10 after current-period modularization closeout.` |
 
 ### Routing Layer
