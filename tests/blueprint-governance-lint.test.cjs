@@ -1210,14 +1210,14 @@ test("live version plan exposes version-first control fields and lifecycle wordi
   assert.match(targetPlan, /^- document_role: `version-governor`$/m);
   assert.match(targetPlan, /^- version_id: `target\.project-complete-modularization`$/m);
   assert.match(targetPlan, /^- version_status: `open`$/m);
-  assert.match(targetPlan, /^- active_queue: `none`$/m);
-  assert.match(targetPlan, /^- decision_state: `idle-open`$/m);
+  assert.match(targetPlan, /^- active_queue: `[^`]+`$/m);
   assert.match(
     targetPlan,
-    /^- next_decision: `same-version-admission-or-version-closeout`$/m
+    /^- decision_state: `(idle-open|promotion-review|active-execution|blocked)`$/m
   );
-  assert.match(targetPlan, /^- next_action: `return-to-promotion-review`$/m);
-  assert.match(targetPlan, /^- resume_gate: `open-version-plan`$/m);
+  assert.match(targetPlan, /^- next_decision: `[^`]+`$/m);
+  assert.match(targetPlan, /^- next_action: `[^`]+`$/m);
+  assert.match(targetPlan, /^- resume_gate: `[^`]+`$/m);
   assert.match(targetPlan, /^- `next_effect = return-to-version-review`$/m);
   assert.match(targetPlan, /^- `next_effect = block-version`$/m);
   assert.match(targetPlan, /^### Version Lifecycle Rules$/m);

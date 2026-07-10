@@ -31,8 +31,6 @@ import {
 } from "../../time/council-priority";
 import { advanceGameStateOneDay } from "../../time/time-progression";
 import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
-import { defaultRuntimeContent } from "../../content/default-runtime-content";
-import { getHouseModuleDefaults } from "../../content/house-module-defaults";
 import {
   resolveTextEntry,
   resolveTextTemplateEntry,
@@ -42,36 +40,14 @@ import {
   syncReviewCycleCompatibilityMirrors,
 } from "../../review/review-cycle";
 import { assertExists } from "../../../shared/assert";
+import {
+  getHomeHouseContentDefaults,
+  getHomeTextEntries,
+} from "./home-house-active-content";
 import { createInitialHomeHouseSessionState } from "./home-house-session-state";
 
 const REST_DAYS_FIELD_ID = "home-house-rest-days";
 const HOME_REST_AUTO_ADVANCE_INTERVAL_ID = "home-house-rest-auto-advance";
-
-type HomeHouseContentDefaults = {
-  homeHouseIntroLines: string[];
-  homeHouseMainLines: string[];
-  homeHouseRestMenuLines: string[];
-  homeHouseRecoveryTuning: {
-    hpBase: number;
-    hpRatio: number;
-    fatigueBase: number;
-    fatigueRatio: number;
-    customRestMaxDays: number;
-  };
-};
-
-const FALLBACK_HOME_HOUSE_CONTENT: HomeHouseContentDefaults = {
-  homeHouseIntroLines: [],
-  homeHouseMainLines: [],
-  homeHouseRestMenuLines: [],
-  homeHouseRecoveryTuning: {
-    hpBase: 10,
-    hpRatio: 0.15,
-    fatigueBase: 12,
-    fatigueRatio: 0.18,
-    customRestMaxDays: 99,
-  },
-};
 
 type HomeRestSummary = {
   state: GameState;
@@ -84,27 +60,12 @@ type HomeRestSummary = {
   snapshots: MapAutoAdvanceSnapshot[];
 };
 
-function getHomeHouseContentDefaults(): HomeHouseContentDefaults {
-  return (
-    getHouseModuleDefaults<HomeHouseContentDefaults>(
-      defaultRuntimeContent.houseModuleDefaults,
-      "home-house"
-    ) ?? FALLBACK_HOME_HOUSE_CONTENT
-  );
-}
-
-function getHomeTextEntries(
-  textEntriesById?: Record<string, string>
-): Record<string, string> {
-  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
-}
-
 function resolveHomeText(
   textEntriesById: Record<string, string> | undefined,
   textId: string
 ): string {
   return resolveTextEntry(
-    getHomeTextEntries(textEntriesById),
+    getHomeTextEntries({ textEntriesById }),
     textId,
     `MISSING_TEXT:${textId}`
   );
@@ -116,7 +77,7 @@ function resolveHomeTemplateText(
   values: Record<string, string | number | boolean | null | undefined>
 ): string {
   return resolveTextTemplateEntry(
-    getHomeTextEntries(textEntriesById),
+    getHomeTextEntries({ textEntriesById }),
     textId,
     values,
     `MISSING_TEXT:${textId}`

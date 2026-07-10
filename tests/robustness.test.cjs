@@ -4746,10 +4746,14 @@ test("home house reads shared module defaults from runtime content", () => {
   const defaultRuntimeContentModulePath = require.resolve(
     "../.test-dist/application/content/default-runtime-content.js"
   );
+  const homeHouseActiveContentModulePath = require.resolve(
+    "../.test-dist/application/house-modules/home-house/home-house-active-content.js"
+  );
   const homeHouseModulePath = require.resolve(
     "../.test-dist/application/house-modules/home-house/home-house-house-module.js"
   );
   delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[homeHouseActiveContentModulePath];
   delete require.cache[homeHouseModulePath];
 
   const {
@@ -4806,6 +4810,28 @@ test("home house reads shared module defaults from runtime content", () => {
       runtimeDefaults["home-house"] = previousHomeDefaults;
     }
   }
+});
+
+test("home house no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const homeHouseSource = fs.readFileSync(
+    "src/application/house-modules/home-house/home-house-house-module.ts",
+    "utf8"
+  );
+  const homeHouseActiveContentPath =
+    "src/application/house-modules/home-house/home-house-active-content.ts";
+  const homeHouseActiveContentExists = fs.existsSync(homeHouseActiveContentPath);
+  const homeHouseActiveContentSource = homeHouseActiveContentExists
+    ? fs.readFileSync(homeHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(homeHouseActiveContentExists, true);
+  assert.match(homeHouseSource, /from "\.\/home-house-active-content"/);
+  assert.doesNotMatch(homeHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(homeHouseSource, /defaultRuntimeContent\.houseModuleDefaults/);
+  assert.doesNotMatch(homeHouseSource, /defaultRuntimeContent\.textEntriesById/);
+  assert.match(homeHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(homeHouseActiveContentSource, /getHomeHouseContentDefaults/);
+  assert.match(homeHouseActiveContentSource, /getHomeTextEntries/);
 });
 
 test("keep house reads shared module defaults from runtime content", () => {

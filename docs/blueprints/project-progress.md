@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/active-content-consumption-closure-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
