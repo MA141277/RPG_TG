@@ -2,17 +2,17 @@
 
 ## Purpose
 
-This document consolidates the current session's conclusions around a creator-facing scenario editor, the existing scenario-pack structure, and the likely implementation path for landing the editor without forcing the runtime pack schema to directly absorb every authoring concern.
+This document consolidates the current direction for a creator-facing scenario editor, the current scenario-pack baseline, and the implementation order required to land the editor without forcing the runtime pack schema to directly absorb every authoring concern.
 
 Status: `Pending`
 
 ## Session Summary
 
-The current direction is not a generic data editor. It is a story-performance-oriented scenario editor for creators, with a clear authoring workflow:
+The target is not a generic data editor. It is a story-performance-oriented scenario editor for creators, with a clear authoring workflow:
 
-`新建 Pack -> 设开局 -> 写事件 -> 写场景 -> 绑文本 -> 校验导出`
+`new pack -> opening setup -> author story content -> bind text and interactions -> validate -> export`
 
-The UI should favor form inputs, pickers, structured panels, and rule composition over code-like authoring surfaces. Titles and primary labels should face creators in Chinese rather than exposing English engineering terminology by default.
+The UI should favor forms, pickers, structured panels, guided steps, and rule composition over code-like authoring surfaces. Primary terminology should face creators in Chinese rather than exposing engineering vocabulary by default.
 
 ## Target Product Shape
 
@@ -21,7 +21,7 @@ The editor should support these authoring domains:
 - `人物`
   - The editor has a single person-editing surface.
   - A person can be configured as `角色` or `NPC`.
-  - Supports creation, base info, portrait, camp/faction, tags, availability, and editor-facing notes.
+  - Supports creation, base info, portrait, faction, tags, availability, and editor-facing notes.
 - `属性系统`
   - Support custom attributes.
   - Support editing existing attributes.
@@ -29,7 +29,7 @@ The editor should support these authoring domains:
 - `事件`
   - Support authoring and sequencing events.
   - Support multiple predefined event types.
-  - Support free rule composition instead of a single hardcoded event template family.
+  - Support reusable rule composition instead of a single hardcoded event template family.
 - `任务`
   - Support task type, trigger condition, completion condition, rewards, failure or timeout handling, and follow-up jumps.
 - `对话`
@@ -40,10 +40,10 @@ The editor should support these authoring domains:
 - `城市`
   - Support city editing.
   - Support city function management.
-  - Support a configurable `Menu` list.
+  - Support a configurable menu list.
 - `建筑`
   - Support building management under cities or other world scopes.
-  - Support a configurable building `Menu` list.
+  - Support a configurable building menu list.
 - `小游戏`
   - Support minigame trigger conditions, rewards, and management.
   - Support creator-side rule composition rather than only selecting one rigid minigame template.
@@ -51,7 +51,7 @@ The editor should support these authoring domains:
   - Support defining story progression, branch routing, prerequisite conditions, and state change effects.
 - `导入导出`
   - Support script import/export and dialogue text import.
-- `校验/试玩`
+- `验证/试玩`
   - Support dependency validation, missing-reference checks, and export readiness checks before pack output.
 
 ## UX Direction
@@ -61,7 +61,7 @@ The expected UI is a guided creation tool rather than a developer console.
 Key direction:
 
 - Use Chinese headings and creator-facing wording.
-- Prefer `表单 + 下拉 + 规则块 + 引导步骤` over raw JSON or code syntax.
+- Prefer form input, selection, structured rule blocks, and guided steps over raw JSON or code syntax.
 - Keep the interface flow-oriented so authors move through one stable path rather than jumping across loosely related panels.
 - Treat the editor as a `剧情演出编辑器`, not only a data-table maintenance tool.
 
@@ -69,11 +69,11 @@ Recommended top-level workflow:
 
 1. `新建 Pack`
 2. `设定开局`
-3. `准备人物/城市/建筑`
+3. `准备人物 / 城市 / 建筑`
 4. `编排事件与任务`
 5. `编写场景与对话`
 6. `绑定小游戏与菜单入口`
-7. `校验`
+7. `验证`
 8. `导出`
 
 ## Current Repository / Pack Baseline
@@ -101,17 +101,11 @@ Based on current repository inspection and discussion:
   - `historicalCharacters`
   - `historicalCityRosters`
   - `historicalCharacterIdByCharacterId`
-- The `zhuyuanzhang` pack folder also contains large pack-local split files such as:
-  - `characters.json`
-  - `houses.json`
-  - `maps.json`
-  - `historical-characters.json`
-  - `text-entries.json`
 - The current pack already carries some shared-runtime evolution:
   - `src/domain/content-pack.ts` includes `tasks?: TaskDefinition[]`
   - `src/domain/content-pack.ts` includes `houseModuleDefaults?: Partial<Record<HouseModuleId, Record<string, unknown>>>`
   - `src/application/scenario/scenario-pack-loader.ts` also supports these fields
-- However, `docs/scenario-pack-unified-format.md` does not yet fully reflect those keys, which means pack documentation and runtime support are currently drifting.
+- `docs/scenario-pack-unified-format.md` does not yet fully reflect those keys, so pack documentation and runtime support are currently drifting.
 
 ## Core Design Conclusion
 
@@ -119,13 +113,13 @@ The editor should not be forced to mirror the runtime pack one-to-one.
 
 Recommended architecture is a three-layer model:
 
-1. `编辑器内部工程模型`
+1. `editor-native authoring model`
    - Rich authoring model for creators.
    - Keeps authoring-only structure such as rule blocks, draft relations, menu composition, dialogue grouping, and editor metadata.
-2. `导出目标 Pack 模型`
+2. `runtime-facing export pack model`
    - Stable runtime-facing pack format for the current game.
    - Keeps runtime naming and compatibility where possible.
-3. `编译 / 导出层`
+3. `compile/export layer`
    - Converts authoring objects into runtime pack tables.
    - Handles flattening, id mapping, validation, and compatibility shims.
 
@@ -134,6 +128,29 @@ This avoids the worst outcome:
 - the editor becomes constrained by runtime table accidents
 - the runtime is polluted by editor-only concepts
 - authors are forced to edit data in runtime-oriented structures that are not natural for creation
+
+## Freeze Direction
+
+Before implementation, the repository should freeze three things in order:
+
+1. `current runtime pack contract`
+   - Document what the current game actually loads and treats as legal pack input.
+   - Resolve drift between code, manifests, validators, and docs.
+2. `editor-native authoring model`
+   - Freeze the creator-facing object model independently from runtime table accidents.
+   - Let creator workflow and authoring semantics lead the editor structure.
+3. `authoring -> runtime mapping contract`
+   - Freeze how each editor object exports into the current runtime-facing pack model.
+   - Only expand runtime pack schema where the mapping cannot be expressed cleanly.
+
+This means the first freeze target is not "new runtime tables by default".
+
+It is:
+
+- authoring concepts
+- compatibility strategy
+- export mapping
+- only then runtime/schema upgrades where required
 
 ## Authoring Model Recommendation
 
@@ -156,16 +173,56 @@ Minimum core objects for the editor-side project model:
 
 Important naming decisions already aligned in discussion:
 
-- The editor-facing concept should be `人物`, not split into separate top-level editors for playable and npc.
+- The editor-facing concept should be `人物`, not split into separate top-level editors for playable and NPC.
 - A `person` can be configured as `角色` or `NPC`.
-- Editor-side `建筑` may still export to runtime `houses.json` in v1 for compatibility.
-- Editor-side `人物` may still export to runtime `characters.json` in v1 for compatibility.
+- Editor-side `building` may still export to runtime `houses.json` in v1 for compatibility.
+- Editor-side `person` may still export to runtime `characters.json` in v1 for compatibility.
+
+## Gap Classification Rule
+
+Not every mismatch between the editor and the current pack should trigger a runtime refactor.
+
+Each mismatch should first be classified into one of these buckets:
+
+### Class A: Authoring-only difference
+
+- The editor can represent the concept cleanly.
+- Export can compile it into the current runtime pack without changing shared contracts.
+- Example shape:
+  - editor-side `person`
+  - exported into current `characters.json`
+  - creator-only notes, draft state, grouping, and editor metadata stay in the editor project only
+
+### Class B: Additive pack/runtime extension
+
+- The concept is valid for the current game, but the current pack contract lacks a stable field or split table.
+- The repository should prefer additive shared-contract growth rather than destructive replacement.
+
+### Class C: Runtime behavior gap
+
+- The mismatch cannot be solved by authoring model plus export mapping alone.
+- Shared runtime contracts, loader support, validator support, or runtime consumers must change.
+
+This classification should happen before adding new split tables or editing runtime consumers.
+
+## Compatibility Direction
+
+The recommended v1 direction is compatibility-first rather than replacement-first.
+
+- Existing scenario packs should be importable into the editor through a compatibility importer.
+- The first export target should stay compatible with the current runtime pack shape where possible.
+- The editor project format may be richer than the runtime pack format.
+- Authoring-only metadata should stay in the editor project and should not automatically leak into runtime pack output.
+
+The preferred v1 loop is:
+
+`import existing pack -> edit in authoring model -> validate -> export compatible runtime pack -> verify in game`
 
 ## Recommended Runtime Pack Additions
 
-If the editor is to cover the agreed scope, the current pack structure likely needs additive expansion rather than destructive replacement.
+If the editor is to cover the agreed scope, the current pack structure may need additive expansion rather than destructive replacement.
 
-Recommended new runtime-facing split tables:
+Recommended candidate runtime-facing split tables:
 
 - `tasks.json`
 - `dialogues.json`
@@ -174,7 +231,7 @@ Recommended new runtime-facing split tables:
 - `city-menu-items.json`
 - `house-menu-items.json`
 
-These additions should be treated as export outputs, not necessarily as the editor's native internal storage shape.
+These additions should be treated as export outputs, not necessarily as the editor's native internal storage shape, and should only be admitted after authoring-model and mapping review proves they are necessary.
 
 ## Suggested Mapping Between Authoring And Runtime
 
@@ -196,6 +253,11 @@ High-level export mapping:
 Cross-cutting rule:
 
 - Conditions and effects should be represented in a shared reusable structure so events, tasks, dialogues, menus, and minigames can all compose them through the same mechanism instead of growing one-off branch formats.
+
+Important limitation:
+
+- High-level mapping is not enough for implementation.
+- The repository still needs an object-level mapping matrix that states, for each authoring object, what exports directly, what stays editor-only, and what requires shared-contract or runtime upgrades.
 
 ## Recommended Editor Modules
 
@@ -223,7 +285,7 @@ The near-finished editor should eventually expose these modules:
   - Story node graph, prerequisite gates, route transitions.
 - `文本导入`
   - Import external text data, review unresolved references, bind to authoring nodes.
-- `校验与导出`
+- `验证与导出`
   - Missing id checks, reference checks, cycle checks, export preview, pack export.
 
 ## Concrete Implementation Direction
@@ -240,15 +302,43 @@ Goals:
 
 Concrete items:
 
-- Update `docs/scenario-pack-unified-format.md`
-- Confirm `tasks` and `houseModuleDefaults` documentation
-- Audit whether current split-table references in `pack.json` are the intended canonical pack entry contract
+- update `docs/scenario-pack-unified-format.md`
+- confirm `tasks` and `houseModuleDefaults` documentation
+- audit whether current split-table references in `pack.json` are the intended canonical pack entry contract
 
-### Phase 1: Additive Pack Schema Extension
+### Phase 1: Freeze Authoring Project Model
 
 Goals:
 
-- Introduce the minimum new runtime tables required by the future editor.
+- Define the editor-native object model independent from runtime pack accidents.
+- Make room for creator workflow, drafts, rule composition, and Chinese UX semantics.
+
+Concrete candidates:
+
+- define `person / city / building / event / quest / dialogue / minigame / story_node`
+- define shared `condition_group` and `effect_bundle`
+- define editor project manifest and editor-only metadata boundaries
+- define which data belongs only to the editor project and which data must survive export
+
+### Phase 2: Freeze Authoring-To-Runtime Mapping
+
+Goals:
+
+- Freeze how each authoring object maps into current runtime pack tables.
+- Decide which mismatches are solved by export mapping, additive schema extension, or runtime refactor.
+
+Concrete candidates:
+
+- write object-level mapping for `person / city / building / event / quest / dialogue / minigame / story_node`
+- classify gaps into `Class A / Class B / Class C`
+- freeze import/export boundary and compatibility policy
+- explicitly decide whether old packs are migrated in place or handled through a compatibility importer
+
+### Phase 3: Additive Pack Schema Extension Only Where Needed
+
+Goals:
+
+- Introduce only the minimum new runtime tables or fields required after mapping review.
 - Avoid breaking the current runtime while making new authoring output legal.
 
 Concrete candidates:
@@ -261,20 +351,7 @@ Concrete candidates:
 - add `house-menu-items.json`
 - extend validator and loader support
 
-### Phase 2: Authoring Project Model
-
-Goals:
-
-- Define the editor-native object model independent from runtime pack accidents.
-- Make room for creator workflow, drafts, rule composition, and Chinese UX semantics.
-
-Concrete candidates:
-
-- define `person / city / building / event / quest / dialogue / minigame / story_node`
-- define shared `condition_group` and `effect_bundle`
-- define editor project manifest and import/export boundaries
-
-### Phase 3: Compile / Export Layer
+### Phase 4: Compile / Export Layer
 
 Goals:
 
@@ -290,7 +367,7 @@ Concrete candidates:
 - minigame and task export adapters
 - validation report generation
 
-### Phase 4: Shared Validator
+### Phase 5: Shared Validator
 
 Goals:
 
@@ -306,7 +383,7 @@ Validation categories:
 - impossible opening configuration
 - task and event graph cycles where disallowed
 
-### Phase 5: Creator UI
+### Phase 6: Creator UI
 
 Goals:
 
@@ -319,7 +396,7 @@ UI priorities:
 3. `事件 / 任务`
 4. `场景 / 对话 / 文本绑定`
 5. `小游戏 / 菜单入口`
-6. `校验 / 导出`
+6. `验证 / 导出`
 
 ## Expected Near-Term Refactor Impact
 
@@ -335,9 +412,11 @@ If the repository follows the direction above, the likely affected areas are:
 The key principle is additive convergence:
 
 - first make runtime contract explicit
-- then make runtime contract extensible
-- then build authoring contract
-- then build export bridge
+- then freeze the authoring contract
+- then freeze the authoring-to-runtime mapping
+- then extend runtime contract only where required
+- then build the export bridge
+- then reuse shared validation
 - only after that push the full editor UI
 
 ## Important Risk Notes
@@ -346,22 +425,29 @@ The key principle is additive convergence:
 - If the runtime pack is expanded without a shared condition/effect mechanism, event, task, dialogue, menu, and minigame rules will likely duplicate each other in incompatible shapes.
 - If `人物` is prematurely split into separate top-level systems for playable and NPC authoring, shared editing concerns will duplicate unnecessarily.
 - If city and building menu systems are not normalized early, later UI and export logic will fragment again.
+- If the repository skips the object-level mapping matrix, implementation will drift back toward runtime-first editing disguised as editor work.
 
 ## Pending Decisions
 
 The following still need explicit freeze decisions before implementation starts:
 
-1. Whether the editor project file is stored as one authoring manifest or multiple split authoring tables.
-2. Whether `场景` and `对话` are exported as separate runtime tables or one combined table with typed sections.
-3. Whether `小游戏` rules are described through a fully generic rule graph, a limited block system, or a hybrid preset-plus-extension model.
-4. Whether city/building menus share one common menu schema with different hosts, or two separate schemas.
-5. Whether old pack tables should be migrated in place or supported through a compatibility importer.
+1. Whether v1 must support `import existing pack -> export compatible pack` as a mandatory round-trip loop.
+2. Whether the editor project file is stored as one authoring manifest or multiple split authoring tables.
+3. Whether `场景` and `对话` are exported as separate runtime tables or one combined table with typed sections.
+4. Whether `小游戏` rules are described through a fully generic rule graph, a limited block system, or a hybrid preset-plus-extension model.
+5. Whether city/building menus share one common menu schema with different hosts, or two separate schemas.
+6. Which current editor/runtime mismatches are `Class A`, `Class B`, or `Class C`.
+7. Whether old pack tables should be migrated in place or supported through a compatibility importer.
 
 ## Recommended Next Step
 
 The next concrete step should be a repo-facing spec that freezes:
 
+- runtime pack contract after current drift cleanup
 - editor-native core object model
+- object-level authoring-to-runtime mapping matrix
+- compatibility import/export strategy
+- gap classification for required runtime changes
 - runtime export tables
 - shared condition/effect contract
 - import/export boundary
