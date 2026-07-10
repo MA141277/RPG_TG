@@ -26,7 +26,6 @@ import {
   pickCompoundingTarget,
   resolveCompoundingGrade,
 } from "../../medicine-house/compounding-minigame";
-import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { getMedicineHouseContentDefaults } from "./medicine-house-content-defaults";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import {
@@ -55,6 +54,7 @@ import {
 } from "../../playables/house-playable-runtime-bridge";
 import { getMedicineCompoundingTimeAdvanceCost } from "../../playables/medicine-compounding/medicine-compounding-definition";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import { getMedicineHouseTextEntries } from "./medicine-house-active-content";
 import { createInitialMedicineHouseSessionState } from "./medicine-house-session-state";
 
 const COMPOUNDING_INTERVAL_ID = "medicine-house-compounding";
@@ -216,12 +216,6 @@ function createAlertOverlay(
     paragraphs,
     ...(tone == null ? {} : { tone }),
   };
-}
-
-function getMedicineHouseTextEntries(
-  textEntriesById?: Record<string, string>
-): Record<string, string> {
-  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
 }
 
 function resolveMedicineHouseText(

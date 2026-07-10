@@ -7981,6 +7981,10 @@ test("medicine house reads shared module defaults from runtime content", async (
   const medicineDefaultsHelperModulePath = require.resolve(
     "../.test-dist/application/house-modules/medicine-house/medicine-house-content-defaults.js"
   );
+  const medicineActiveContentModulePath = path.join(
+    process.cwd(),
+    ".test-dist/application/house-modules/medicine-house/medicine-house-active-content.js"
+  );
   const medicineHouseModulePath = require.resolve(
     "../.test-dist/application/house-modules/medicine-house/medicine-house-house-module.js"
   );
@@ -7989,6 +7993,9 @@ test("medicine house reads shared module defaults from runtime content", async (
   delete require.cache[medicineCompoundingModulePath];
   delete require.cache[medicinePlayableModulePath];
   delete require.cache[medicineDefaultsHelperModulePath];
+  if (fs.existsSync(medicineActiveContentModulePath)) {
+    delete require.cache[medicineActiveContentModulePath];
+  }
   delete require.cache[medicineHouseModulePath];
 
   const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
@@ -8138,6 +8145,31 @@ test("medicine house reads shared module defaults from runtime content", async (
       runtimeDefaults["medicine-house"] = previousMedicineDefaults;
     }
   }
+});
+
+test("medicine house no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const medicineHouseSource = fs.readFileSync(
+    "src/application/house-modules/medicine-house/medicine-house-house-module.ts",
+    "utf8"
+  );
+  const medicineHouseActiveContentPath =
+    "src/application/house-modules/medicine-house/medicine-house-active-content.ts";
+  const medicineHouseActiveContentExists = fs.existsSync(
+    medicineHouseActiveContentPath
+  );
+  const medicineHouseActiveContentSource = medicineHouseActiveContentExists
+    ? fs.readFileSync(medicineHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(medicineHouseActiveContentExists, true);
+  assert.match(medicineHouseSource, /from "\.\/medicine-house-active-content"/);
+  assert.doesNotMatch(medicineHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(
+    medicineHouseSource,
+    /defaultRuntimeContent\.textEntriesById/
+  );
+  assert.match(medicineHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(medicineHouseActiveContentSource, /getMedicineHouseTextEntries/);
 });
 
 test("tavern copy resolves from text entries for capacity drink gamble and insufficient wager", () => {
