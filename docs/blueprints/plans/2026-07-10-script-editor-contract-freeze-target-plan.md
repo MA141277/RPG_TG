@@ -4,14 +4,14 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-contract-freeze`
-- version_status: `open`
+- version_status: `done`
 - active_phase: `phase.version-closeout`
 - active_queue: `none`
 - decision_state: `idle-open`
 - next_decision: `version-closeout`
 - next_action: `write-version-closeout`
-- resume_gate: `idle-open`
-- promotion_review_result: `Closeout-ready acceptance evidence now exists on current version truth: all five bounded contract-freeze queues are closed, no active queue remains, the authoring contract, mapping contract, compatibility policy, shared-rule contract, and minimum runtime delta audit are all explicit, and only one human closeout confirmation remains before version_status may change from open to done.`
+- resume_gate: `closed-version-record`
+- promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -48,9 +48,15 @@
 - Admission conclusion:
   - `queue.minimal-runtime-contract-change-audit was admitted as the final bounded queue for the current version and is now already closed historical evidence.`
 - Current handoff:
-  - `No active queue remains for this version.`
-  - `The current lawful step is one human closeout confirmation: close current version now, or keep it open for possible additional same-version queue admission.`
+  - `Explicit human closeout confirmation on 2026-07-10 closed this version after closeout-ready acceptance evidence had already been written into the version plan.`
+  - `No active queue or same-version admission remains live on current version truth; any later work must begin with explicit new-version creation or an equally explicit version-level reopening decision.`
 - `All five bounded contract-freeze queues now have written closure evidence on current version truth.`
+
+### Version Closeout Record
+
+- `Closeout judgement: closeout-ready acceptance evidence already existed on current version truth because all five bounded contract-freeze queues were closed, no active queue remained, and the authoring, mapping, compatibility, shared-rule, and minimum runtime-delta decisions were all explicit.`
+- `Closeout confirmation: explicit human confirmation to close the current version was received on 2026-07-10, so version_status now changes from open to done.`
+- `Future routing: no additional same-version queue may be admitted after this closeout; any later script-editor follow-up must start from explicit new-version creation or an equally explicit version-level reopen decision.`
 
 ### Queue Promotion Ledger
 
@@ -68,7 +74,7 @@
 | --- | --- | --- | --- | --- |
 | `item.script-editor-contract-freeze-version-open` | `current-target-item` | `none` | `version opened with no live queue` | `The operator explicitly required a Blueprint governance switch that closes target.project-complete-modularization and opens a new version dedicated to script-editor design and contract freeze. This opening intentionally records no live queue and no live candidate set.` |
 | `item.editor-native-authoring-contract-freeze` | `queue-candidate` | `queue.editor-native-authoring-contract-freeze` | `admitted + queue closed` | `The intake explicitly requires one frozen authoring-object contract covering story_pack / person / city / building / event / quest / dialogue / minigame / story_node / text_entry / condition_group / effect_bundle, together with responsibility boundaries, naming constraints, editor-only metadata rules, and a ban on deriving the authoring model directly from the current runtime table shape. That bounded contract is now written in the version spec, so the queue is closed rather than left active.` |
-| `item.authoring-runtime-mapping-contract-freeze` | `queue-candidate` | `queue.authoring-runtime-mapping-contract-freeze` | `admitted + active queue` | `The intake explicitly requires one object-level authoring -> runtime mapping contract that names target runtime tables, direct-export fields, editor-project-only fields, compatibility shim reliance, and the export-vs-shared-contract-upgrade split for each authoring object. That basis remains current after the prior authoring-contract queue closed, so the candidate now becomes the active queue rather than staying pending.` |
+| `item.authoring-runtime-mapping-contract-freeze` | `queue-candidate` | `queue.authoring-runtime-mapping-contract-freeze` | `admitted + queue closed` | `The intake explicitly requires one object-level authoring -> runtime mapping contract that names target runtime tables, direct-export fields, editor-project-only fields, compatibility shim reliance, and the export-vs-shared-contract-upgrade split for each authoring object. That basis became the next smallest lawful cut after the prior authoring-contract queue closed, and the queue is now closed historical evidence rather than still active.` |
 | `item.compatibility-import-export-policy-freeze` | `queue-candidate` | `queue.compatibility-import-export-policy-freeze` | `admitted + queue closed` | `The intake explicitly requires one bounded policy freeze for existing pack import, editor project persistence, runtime-facing export, and the rule that authoring-only metadata must not leak into runtime pack output. That basis became the smallest lawful next cut after the mapping queue closed, and the queue is now closed historical evidence rather than still active.` |
 | `item.shared-condition-effect-mechanism-freeze` | `queue-candidate` | `queue.shared-condition-effect-mechanism-freeze` | `admitted + queue closed` | `The intake explicitly requires one shared condition/effect mechanism boundary reused by event / task / dialogue / menu / minigame authoring and explicitly forbids each domain from growing a separate feature-local rule dialect. That basis became the smallest lawful next cut after the compatibility-policy queue closed, and the queue is now closed historical evidence rather than still active.` |
 | `item.minimal-runtime-contract-change-audit` | `queue-candidate` | `queue.minimal-runtime-contract-change-audit` | `admitted + queue closed` | `The intake explicitly requires one bounded minimum-runtime-change audit covering required / optional / out-of-scope classification and the Class A / B / C mismatch matrix before any runtime/schema expansion or consumer rewrite can be justified for script-editor landing. That basis became the final smallest lawful cut after the shared-rule queue closed, and the queue is now closed historical evidence rather than still active.` |
@@ -100,7 +106,7 @@
 - `queue.compatibility-import-export-policy-freeze is now closed historical evidence: its baseline, policy freeze, and queue closeout tasks are all complete, and it no longer controls current execution.`
 - `queue.shared-condition-effect-mechanism-freeze is now closed historical evidence: its baseline, shared-rule freeze, and queue closeout tasks are all complete, and it no longer controls current execution.`
 - `queue.minimal-runtime-contract-change-audit is now closed historical evidence: its baseline, runtime-delta freeze, and queue closeout tasks are all complete, and it no longer controls current execution.`
-- `The version now has no active queue and is closeout-ready on written source truth, but it must remain open until one explicit human closeout confirmation is recorded.`
+- `The version is now closed historical evidence after explicit human closeout confirmation on 2026-07-10; same-version queue admission is no longer legal without an equally explicit version-level reopen decision.`
 - `Resume from this version plan's recorded candidate ledger unless new material evidence invalidates the bounded split or proves a different smaller lawful queue cut.`
 - `Non-goal work such as main.ts pure shell closure, large sub-runtime refactors, repository-wide hardcoded script migration, full editor UI delivery, or non-essential runtime schema expansion must not be promoted under this version without a future explicit version-boundary change.`
 
@@ -168,3 +174,4 @@
 - `2026-07-10: queue.shared-condition-effect-mechanism-freeze then closed after queue closeout confirmed that the bounded shared-rule topic is converged and that the remaining next lawful work belongs to queue.minimal-runtime-contract-change-audit as the final cross-family continuation under the same open version.`
 - `2026-07-10: the pending admission review for queue.minimal-runtime-contract-change-audit was then concluded internally, the queue was admitted as the final smallest lawful cut, and the queue doc was created so execution could continue without manual operator admission handling.`
 - `2026-07-10: the active runtime-delta queue then completed baseline reconcile, minimum-runtime-delta freeze, and queue closeout, landing the frozen minimum change list plus Class A / B / C classification matrix and returning the version to closeout-ready state with no active queue.`
+- `2026-07-10: explicit human closeout confirmation then closed target.script-editor-contract-freeze, so the version became done historical evidence with no legal same-version queue admission remaining.`

@@ -35,8 +35,9 @@
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
+- `The pointed version is now closed historical evidence; the next lawful governance action is explicit new-version creation before any queue admission or implementation resumes.`
 
 ### Historical References
 
 - `docs/change-log.md` stores the human-readable cross-session history.`
-- `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md` stores the current version's admission history, candidate record, and promotion ledger.
+- `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md` stores the just-closed script-editor contract-freeze version history and closeout record.
