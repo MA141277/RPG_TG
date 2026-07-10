@@ -2,6 +2,7 @@ precision mediump float;
 uniform vec3 uLight;
 uniform sampler2D uTexture;
 uniform vec3 uTint;
+uniform float uForceOpaqueAlpha;
 varying vec3 vNormal;
 varying vec2 vUv;
 
@@ -15,5 +16,6 @@ void main() {
     discard;
   }
   vec3 color = base.rgb * uTint;
-  gl_FragColor = vec4(color * light + rim, base.a);
+  float alpha = uForceOpaqueAlpha > 0.5 ? 1.0 : base.a;
+  gl_FragColor = vec4(color * light + rim, alpha);
 }
