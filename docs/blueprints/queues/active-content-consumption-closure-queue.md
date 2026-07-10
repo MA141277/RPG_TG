@@ -13,9 +13,9 @@
 - next_task: `none`
 - closeout_status: `done`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue closeout truth is written, but no repository sync has run for this closeout yet.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Repository sync batch succeeded on mod-first-dev and the closeout batch is now pushed to origin/mod-first-dev.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
