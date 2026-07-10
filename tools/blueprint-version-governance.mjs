@@ -3,6 +3,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export function runBlueprintVersionGovernance(mode, repoRoot = process.cwd()) {
+  if (mode === "inspect") {
+    return inspectBlueprintWorkflow(repoRoot);
+  }
+
   const context = readGovernanceContext(repoRoot);
   if (!context.ok) {
     return context;
@@ -13,6 +17,15 @@ export function runBlueprintVersionGovernance(mode, repoRoot = process.cwd()) {
   }
 
   return checkGovernedQueues(context);
+}
+
+export function inspectBlueprintWorkflow(repoRoot = process.cwd()) {
+  const context = readGovernanceContext(repoRoot);
+  if (!context.ok) {
+    return context;
+  }
+
+  return inspectBlueprintWorkflowContext(context);
 }
 
 function readGovernanceContext(repoRoot) {
@@ -118,6 +131,98 @@ function syncGovernedQueues(context) {
   };
 }
 
+function inspectBlueprintWorkflowContext(context) {
+  const activeQueueId = matchField(context.activePlanText, "active_queue") ?? "none";
+  const proposedQueueId = matchField(context.activePlanText, "proposed_queue_id") ?? "none";
+  const nextLawfulQueueRecommendation =
+    matchField(context.activePlanText, "next_lawful_queue_recommendation") ?? "none";
+  const autoAdmissionReady = matchField(context.activePlanText, "auto_admission_ready") ?? "false";
+  const residueCandidateFamily =
+    matchField(context.activePlanText, "residue_candidate_family") ?? "none";
+  const closureReviewSubject =
+    matchField(context.activePlanText, "closure_review_subject") ?? "none";
+  const candidateQueueIds = extractListEntries(context.activePlanText, "candidate_queue_ids")
+    .filter((queueId) => queueId.startsWith("queue."))
+    .sort();
+
+  if (activeQueueId !== "none") {
+    const activeQueue = readQueueWorkflowDetails(context.repoRoot, activeQueueId);
+    if (!activeQueue.ok) {
+      return activeQueue;
+    }
+
+    return {
+      ok: true,
+      recommendedAction: "continue-active-queue",
+      humanDecisionRequired: false,
+      humanDecisionReason: null,
+      activeQueue: activeQueue.queue,
+      candidateQueueIds,
+      promotionCandidate: null,
+      nextLawfulQueueRecommendation: "none",
+      residueSourceQueueId: null,
+    };
+  }
+
+  if (
+    autoAdmissionReady === "true" &&
+    residueCandidateFamily === "same-family" &&
+    nextLawfulQueueRecommendation !== "none"
+  ) {
+    return {
+      ok: true,
+      recommendedAction: "auto-route-same-family-residue",
+      humanDecisionRequired: false,
+      humanDecisionReason: null,
+      activeQueue: null,
+      candidateQueueIds,
+      promotionCandidate: null,
+      nextLawfulQueueRecommendation,
+      residueSourceQueueId: closureReviewSubject === "none" ? null : closureReviewSubject,
+    };
+  }
+
+  if (proposedQueueId !== "none") {
+    return {
+      ok: true,
+      recommendedAction: "promote-candidate",
+      humanDecisionRequired: false,
+      humanDecisionReason: null,
+      activeQueue: null,
+      candidateQueueIds,
+      promotionCandidate: { queueId: proposedQueueId },
+      nextLawfulQueueRecommendation: "none",
+      residueSourceQueueId: null,
+    };
+  }
+
+  if (candidateQueueIds.length > 1) {
+    return {
+      ok: true,
+      recommendedAction: "ask-human-routing-decision",
+      humanDecisionRequired: true,
+      humanDecisionReason: `multiple lawful candidate queues remain: ${candidateQueueIds.join(", ")}`,
+      activeQueue: null,
+      candidateQueueIds,
+      promotionCandidate: null,
+      nextLawfulQueueRecommendation: "none",
+      residueSourceQueueId: null,
+    };
+  }
+
+  return {
+    ok: true,
+    recommendedAction: "idle-version-review",
+    humanDecisionRequired: false,
+    humanDecisionReason: null,
+    activeQueue: null,
+    candidateQueueIds,
+    promotionCandidate: null,
+    nextLawfulQueueRecommendation: "none",
+    residueSourceQueueId: null,
+  };
+}
+
 function resolveGovernedQueueRefs(activePlanText) {
   const queueRefs = new Map();
   for (const fieldName of ["active_queue", "proposed_queue_id", "review_subject_id"]) {
@@ -192,6 +297,34 @@ function reconcileQueueGovernanceShell(queueText, context) {
   return updatedText;
 }
 
+function readQueueWorkflowDetails(repoRoot, queueId) {
+  const queuePath = findQueuePath(repoRoot, queueId);
+  if (queuePath == null) {
+    return {
+      ok: false,
+      messages: [`missing queue doc for ${queueId}`],
+    };
+  }
+
+  const queueText = fs.readFileSync(queuePath, "utf8");
+  const taskIds = extractTaskLedgerTaskIds(queueText);
+  const queue = {
+    queueId,
+    queuePath: relative(repoRoot, queuePath),
+    queueStatus: matchField(queueText, "queue_status") ?? "none",
+    activeTask: matchField(queueText, "active_task") ?? "none",
+    nextTask: matchField(queueText, "next_task") ?? "none",
+    closeoutStatus: matchField(queueText, "closeout_status") ?? "none",
+    taskCount: taskIds.length,
+    taskIds,
+  };
+
+  return {
+    ok: true,
+    queue,
+  };
+}
+
 function replaceOrInsertControlField(text, fieldName, replacementLine) {
   const fieldPattern = new RegExp(`^- ${escapeRegExp(fieldName)}:.*$`, "m");
   if (fieldPattern.test(text)) {
@@ -226,6 +359,17 @@ function extractListEntries(text, fieldName) {
     .map((line) => line.trim())
     .filter((line) => line.startsWith("- "))
     .map((line) => line.slice(2).replace(/^`|`$/g, ""));
+}
+
+function extractTaskLedgerTaskIds(text) {
+  const taskIds = [];
+  for (const match of text.matchAll(/^\| `([^`]+)` \|/gm)) {
+    if (match[1].startsWith("task.")) {
+      taskIds.push(match[1]);
+    }
+  }
+
+  return [...new Set(taskIds)];
 }
 
 function relative(repoRoot, targetPath) {

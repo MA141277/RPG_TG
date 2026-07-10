@@ -87,11 +87,18 @@ function writeVersionPlanFixture(
       `- review_basis: \`${reviewBasis}\``,
       `- admission_status: \`${admissionStatus}\``,
       "- intake_status: `none`",
-      "- intake_item_id: `none`",
-      "- intake_summary: `none`",
-      "- intake_result: `none`",
-      "- intake_feedback_mode: `none`",
-      "- blocked_by: []",
+    "- intake_item_id: `none`",
+    "- intake_summary: `none`",
+    "- intake_result: `none`",
+    "- intake_feedback_mode: `none`",
+    "- closure_review_subject: `none`",
+    "- closure_review_status: `none`",
+    "- residue_candidate_id: `none`",
+    "- residue_candidate_family: `none`",
+    "- routing_basis: `none`",
+    "- next_lawful_queue_recommendation: `none`",
+    "- auto_admission_ready: `false`",
+    "- blocked_by: []",
       "- candidate_queue_ids:",
       ...candidateQueueIds.map((queueId) => `  - \`${queueId}\``),
       "",
@@ -211,6 +218,144 @@ function writeQueueFixture(
       "",
     ].join("\n")
   );
+}
+
+function writeMultiTaskQueueFixture(
+  repoRoot,
+  relativePath,
+  {
+    queueId,
+    ownerId = "target.test",
+    blueprintVersion = "2026.07",
+    queueStatus = "active",
+    activeTask,
+    nextTask = "none",
+    closeoutStatus = "in-progress",
+    nextEffect = "none",
+    syncStatus = "pending",
+    syncScope = "none",
+    syncSummary = "No repository sync has run yet.",
+    executionCloseoutStatus = "partial",
+    topicClosureStatus = "open-residue",
+    closureBasis = "Implementation is still in progress.",
+    residueRemaining = "yes",
+    residueFamily = "none",
+    residueRoutingStatus = "none",
+    nextFamilyCandidate = "none",
+    autoContinueEligible = "false",
+    tasks,
+  }
+) {
+  const resolvedTasks = tasks.map((task, index) => ({
+    taskId: task.taskId,
+    state: task.state,
+    summary: task.summary ?? `Task ${index + 1} for ${queueId}.`,
+    dependsOn: task.dependsOn ?? "none",
+    notes: task.notes ?? "Fixture-owned queue task.",
+    taskKind: task.taskKind ?? "execution",
+    outcome: task.outcome ?? `Outcome placeholder for ${task.taskId}.`,
+  }));
+  const completedTaskCount = resolvedTasks.filter((task) => task.state === "done").length;
+  const remainingTaskCount = resolvedTasks.length - completedTaskCount;
+  const queueGoal = `Govern ${queueId} through a multi-task Blueprint workflow.`;
+
+  writeFixtureFile(
+    repoRoot,
+    relativePath,
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      `- queue_id: \`${queueId}\``,
+      `- belongs_to_version: \`${ownerId}\``,
+      `- blueprint_version: \`${blueprintVersion}\``,
+      "- governance_last_synced_at: `2026-07-10`",
+      "- governance_sync_source: `docs/blueprints/blueprint.md`",
+      `- queue_status: \`${queueStatus}\``,
+      "- queue_class: `required`",
+      `- active_task: \`${activeTask}\``,
+      `- next_task: \`${nextTask}\``,
+      `- closeout_status: \`${closeoutStatus}\``,
+      `- execution_closeout_status: \`${executionCloseoutStatus}\``,
+      `- topic_closure_status: \`${topicClosureStatus}\``,
+      `- closure_basis: \`${closureBasis}\``,
+      `- residue_remaining: \`${residueRemaining}\``,
+      `- residue_family: \`${residueFamily}\``,
+      `- residue_routing_status: \`${residueRoutingStatus}\``,
+      `- next_family_candidate: \`${nextFamilyCandidate}\``,
+      `- auto_continue_eligible: \`${autoContinueEligible}\``,
+      `- next_effect: \`${nextEffect}\``,
+      `- sync_status: \`${syncStatus}\``,
+      `- sync_scope: \`${syncScope}\``,
+      `- sync_summary: \`${syncSummary}\``,
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Queue Snapshot",
+      "",
+      `- queue_goal: \`${queueGoal}\``,
+      `- task_count: \`${resolvedTasks.length}\``,
+      `- completed_task_count: \`${completedTaskCount}\``,
+      `- remaining_task_count: \`${remainingTaskCount}\``,
+      `- active_task_summary: \`Current active task is ${activeTask}.\``,
+      "- task_briefs:",
+      ...resolvedTasks.map((task) => `  - \`${task.taskId}: ${task.summary}\``),
+      "",
+      "### Task Ledger",
+      "",
+      "| Task ID | State | Summary | Depends On | Notes |",
+      "| --- | --- | --- | --- | --- |",
+      ...resolvedTasks.map(
+        (task) =>
+          `| \`${task.taskId}\` | \`${task.state}\` | \`${task.summary}\` | \`${task.dependsOn}\` | \`${task.notes}\` |`
+      ),
+      "",
+      "### Task Definitions",
+      "",
+      ...resolvedTasks.flatMap((task) => [
+        `#### \`${task.taskId}\``,
+        "",
+        "##### Control Block",
+        "",
+        `- task_id: \`${task.taskId}\``,
+        `- state: \`${task.state}\``,
+        `- task_kind: \`${task.taskKind}\``,
+        "- scope:",
+        `  - \`${relativePath}\``,
+        "- must_inspect:",
+        `  - \`${relativePath}\``,
+        "- must_not_change:",
+        "  - `historical evidence`",
+        "- done_when:",
+        `  - \`${task.outcome}\``,
+        "- verify_with:",
+        "  - `npm run lint:blueprints`",
+        "- if_blocked:",
+        "  - `Record the blocker in the queue doc.`",
+        "- promote_next_if_done: `none`",
+        "- stop_if:",
+        "  - `none`",
+        "",
+        "##### Human Context",
+        "",
+        "- task_brief:",
+        `  - \`${task.summary}\``,
+        "- task_outcome_summary:",
+        `  - \`${task.outcome}\``,
+        "",
+      ]),
+    ].join("\n")
+  );
+}
+
+function removeFixtureRepo(repoRoot) {
+  fs.rmSync(repoRoot, { recursive: true, force: true });
 }
 
 test("check reports governed active queue when blueprint_version is missing from the queue doc", async () => {
@@ -611,4 +756,217 @@ test("candidate queue can be recorded, promoted, synced, and closed through the 
     runBlueprintVersionGovernance("check", repoRoot),
     { ok: true, messages: ["Blueprint version governance check passed."] }
   );
+});
+
+test("workflow inspection drives isolated end-to-end Blueprint routing with auto-continue and human-decision checkpoints", async (t) => {
+  const {
+    repoRoot,
+    blueprintVersion,
+    targetPlanPath,
+    queueOwnerId,
+  } = createGovernanceFixture({
+    activeQueueId: "none",
+    candidateQueueIds: ["queue.alpha", "queue.beta"],
+  });
+  t.after(() => removeFixtureRepo(repoRoot));
+
+  const { inspectBlueprintWorkflow } = await loadGovernanceTool();
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+
+  writeProjectProgressFixture(repoRoot, {
+    activeVersion: queueOwnerId,
+    hasActiveQueue: false,
+  });
+  writeVersionPlanFixture(repoRoot, targetPlanPath, {
+    versionId: queueOwnerId,
+    activeQueue: "none",
+    decisionState: "promotion-review",
+    nextDecision: "queue-admission-review",
+    nextAction: "write-admission-review",
+    resumeGate: "promotion-review",
+    reviewSubjectId: "item.alpha",
+    reviewSubjectClassification: "queue-candidate",
+    proposedQueueId: "queue.alpha",
+    reviewBasis: "alpha is the smallest lawful queue while beta stays candidate",
+    admissionStatus: "pending",
+    candidateQueueIds: ["queue.alpha", "queue.beta"],
+  });
+  writeQueueFixture(repoRoot, "docs/blueprints/queues/alpha.md", {
+    queueId: "queue.alpha",
+    ownerId: queueOwnerId,
+    blueprintVersion,
+    queueStatus: "blocked",
+    activeTask: "none",
+    closeoutStatus: "blocked",
+    nextEffect: "none",
+    taskState: "queued",
+  });
+  writeQueueFixture(repoRoot, "docs/blueprints/queues/beta.md", {
+    queueId: "queue.beta",
+    ownerId: queueOwnerId,
+    blueprintVersion,
+    queueStatus: "blocked",
+    activeTask: "none",
+    closeoutStatus: "blocked",
+    nextEffect: "none",
+    taskState: "queued",
+  });
+
+  assert.deepEqual(lintBlueprintDocs(repoRoot), []);
+  let result = inspectBlueprintWorkflow(repoRoot);
+  assert.equal(result.ok, true);
+  assert.equal(result.recommendedAction, "promote-candidate");
+  assert.equal(result.humanDecisionRequired, false);
+  assert.equal(result.promotionCandidate.queueId, "queue.alpha");
+  assert.deepEqual(result.candidateQueueIds, ["queue.alpha", "queue.beta"]);
+
+  writeProjectProgressFixture(repoRoot, {
+    activeVersion: queueOwnerId,
+    hasActiveQueue: true,
+  });
+  writeVersionPlanFixture(repoRoot, targetPlanPath, {
+    versionId: queueOwnerId,
+    activeQueue: "queue.alpha",
+    decisionState: "active-execution",
+    nextDecision: "queue-closeout-or-return-to-version-review",
+    nextAction: "resume-active-queue",
+    resumeGate: "open-active-queue",
+    promotionReviewResult: "admit",
+    candidateQueueIds: ["queue.alpha", "queue.beta"],
+  });
+  writeMultiTaskQueueFixture(repoRoot, "docs/blueprints/queues/alpha.md", {
+    queueId: "queue.alpha",
+    ownerId: queueOwnerId,
+    blueprintVersion,
+    queueStatus: "active",
+    activeTask: "task.queue.alpha.audit",
+    nextTask: "task.queue.alpha.impl",
+    tasks: [
+      { taskId: "task.queue.alpha.audit", state: "active", summary: "Audit the queue boundary." },
+      { taskId: "task.queue.alpha.impl", state: "queued", summary: "Implement the bounded slice.", dependsOn: "task.queue.alpha.audit" },
+      { taskId: "task.queue.alpha.verify", state: "queued", summary: "Verify closeout evidence.", dependsOn: "task.queue.alpha.impl" },
+    ],
+  });
+
+  assert.deepEqual(lintBlueprintDocs(repoRoot), []);
+  result = inspectBlueprintWorkflow(repoRoot);
+  assert.equal(result.ok, true);
+  assert.equal(result.recommendedAction, "continue-active-queue");
+  assert.equal(result.humanDecisionRequired, false);
+  assert.equal(result.activeQueue.queueId, "queue.alpha");
+  assert.equal(result.activeQueue.taskCount, 3);
+  assert.equal(result.activeQueue.activeTask, "task.queue.alpha.audit");
+  assert.deepEqual(result.activeQueue.taskIds, [
+    "task.queue.alpha.audit",
+    "task.queue.alpha.impl",
+    "task.queue.alpha.verify",
+  ]);
+
+  writeProjectProgressFixture(repoRoot, {
+    activeVersion: queueOwnerId,
+    hasActiveQueue: false,
+  });
+  writeVersionPlanFixture(repoRoot, targetPlanPath, {
+    versionId: queueOwnerId,
+    activeQueue: "none",
+    decisionState: "promotion-review",
+    nextDecision: "queue-admission-review",
+    nextAction: "write-admission-review",
+    resumeGate: "promotion-review",
+    reviewSubjectId: "item.beta",
+    reviewSubjectClassification: "queue-candidate",
+    proposedQueueId: "queue.beta",
+    reviewBasis: "same-family residue routing proved beta is the unique next queue",
+    admissionStatus: "pending",
+    candidateQueueIds: ["queue.beta"],
+    promotionReviewResult: "none",
+  });
+  writeFixtureFile(
+    repoRoot,
+    targetPlanPath,
+    fs.readFileSync(path.join(repoRoot, ...targetPlanPath.split("/")), "utf8")
+      .replace("- closure_review_subject: `none`", "- closure_review_subject: `queue.alpha`")
+      .replace("- closure_review_status: `none`", "- closure_review_status: `routed`")
+      .replace("- residue_candidate_id: `none`", "- residue_candidate_id: `item.beta`")
+      .replace("- residue_candidate_family: `none`", "- residue_candidate_family: `same-family`")
+      .replace("- routing_basis: `none`", "- routing_basis: `queue alpha closed with one same-family residue path`")
+      .replace("- next_lawful_queue_recommendation: `none`", "- next_lawful_queue_recommendation: `queue.beta`")
+      .replace("- auto_admission_ready: `false`", "- auto_admission_ready: `true`")
+  );
+  writeMultiTaskQueueFixture(repoRoot, "docs/blueprints/queues/alpha.md", {
+    queueId: "queue.alpha",
+    ownerId: queueOwnerId,
+    blueprintVersion,
+    queueStatus: "done",
+    activeTask: "none",
+    nextTask: "none",
+    closeoutStatus: "done",
+    nextEffect: "return-to-version-review",
+    syncStatus: "success",
+    syncSummary: "Queue alpha is closed and routed.",
+    executionCloseoutStatus: "done",
+    topicClosureStatus: "open-residue",
+    closureBasis: "The bounded alpha slice landed but one same-family residue remains.",
+    residueRemaining: "yes",
+    residueFamily: "same-family",
+    residueRoutingStatus: "auto-routable",
+    nextFamilyCandidate: "queue.beta",
+    autoContinueEligible: "true",
+    tasks: [
+      { taskId: "task.queue.alpha.audit", state: "done", summary: "Audit the queue boundary." },
+      { taskId: "task.queue.alpha.impl", state: "done", summary: "Implement the bounded slice.", dependsOn: "task.queue.alpha.audit" },
+      { taskId: "task.queue.alpha.verify", state: "done", summary: "Verify closeout evidence.", dependsOn: "task.queue.alpha.impl" },
+    ],
+  });
+
+  assert.deepEqual(lintBlueprintDocs(repoRoot), []);
+  result = inspectBlueprintWorkflow(repoRoot);
+  assert.equal(result.ok, true);
+  assert.equal(result.recommendedAction, "auto-route-same-family-residue");
+  assert.equal(result.humanDecisionRequired, false);
+  assert.equal(result.nextLawfulQueueRecommendation, "queue.beta");
+  assert.equal(result.residueSourceQueueId, "queue.alpha");
+
+  writeVersionPlanFixture(repoRoot, targetPlanPath, {
+    versionId: queueOwnerId,
+    activeQueue: "none",
+    decisionState: "promotion-review",
+    nextDecision: "queue-admission-review",
+    nextAction: "write-admission-review",
+    resumeGate: "promotion-review",
+    reviewSubjectId: "none",
+    reviewSubjectClassification: "none",
+    proposedQueueId: "none",
+    reviewBasis: "multiple lawful follow-up queues remain",
+    admissionStatus: "none",
+    candidateQueueIds: ["queue.gamma", "queue.delta"],
+  });
+  writeQueueFixture(repoRoot, "docs/blueprints/queues/gamma.md", {
+    queueId: "queue.gamma",
+    ownerId: queueOwnerId,
+    blueprintVersion,
+    queueStatus: "blocked",
+    activeTask: "none",
+    closeoutStatus: "blocked",
+    nextEffect: "none",
+    taskState: "queued",
+  });
+  writeQueueFixture(repoRoot, "docs/blueprints/queues/delta.md", {
+    queueId: "queue.delta",
+    ownerId: queueOwnerId,
+    blueprintVersion,
+    queueStatus: "blocked",
+    activeTask: "none",
+    closeoutStatus: "blocked",
+    nextEffect: "none",
+    taskState: "queued",
+  });
+
+  assert.deepEqual(lintBlueprintDocs(repoRoot), []);
+  result = inspectBlueprintWorkflow(repoRoot);
+  assert.equal(result.ok, true);
+  assert.equal(result.recommendedAction, "ask-human-routing-decision");
+  assert.equal(result.humanDecisionRequired, true);
+  assert.match(result.humanDecisionReason, /multiple lawful candidate queues/i);
+  assert.deepEqual(result.candidateQueueIds, ["queue.delta", "queue.gamma"]);
 });

@@ -5,6 +5,23 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-10 Blueprint Closure Judgement And Residue Routing Upgrade
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/docs/blueprints/blueprint-workflow-spec.md)，把 queue closeout 明确拆分为 `execution_closeout_status` 与 `topic_closure_status` 两层判断，并把 same-family residue routing 收口为 Blueprint 内部默认流程，而不是每次 closeout 后重新退回人工 prose 决策。
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/docs/blueprints/templates/target-plan-template.md) 与当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，新增 version-level closure routing 字段，使 `closure_review_subject / residue_candidate_family / next_lawful_queue_recommendation / auto_admission_ready` 成为结构化治理真值。
+- 更新 [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/docs/blueprints/templates/execution-queue-template.md)，把 queue-level closure judgement 字段收进唯一 `## Control Block`，避免 live truth 再次散落在 `Closeout Decision` 之类的 prose 区域。
+- 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/tools/lint-blueprints.mjs)、[tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/tests/blueprint-governance-lint.test.cjs) 与 [tests/helpers/blueprint-governance-fixtures.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/tests/helpers/blueprint-governance-fixtures.cjs)，把以下 fail-closed 规则纳入自动治理：
+  - `topic_closure_status = closed` 不得与 `residue_remaining = yes` 并存
+  - `residue_family = same-family` 时必须命名后继 continuation
+  - `auto_continue_eligible = true` 与 `auto_admission_ready = true` 都必须绑定结构化 continuation truth
+  - version-level residue routing 缺失 `closure_review_subject / closure_review_status / routing_basis` 时不得成立
+
+### Impact
+- Blueprint 现在能更稳定地区分“queue 执行动作完成”和“主题真实收口完成”，避免仅因治理动作发生就把 topic 误判为 closed。
+- 同一 residue family 的后继步骤默认会在 Blueprint 内部继续路由，只有真的存在多路合法分叉时才需要人工决策。
+- queue / candidate / closeout 的状态表达更接近代码真实完成度，而不是只反映文档同步或治理动作是否发生。
+
 ## 2026-07-08 Review Cadence Shared Mechanism Support Spec
 
 ### Added
