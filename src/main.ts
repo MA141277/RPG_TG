@@ -276,6 +276,13 @@ function getCurrentCityDefinition(currentAppState: AppState): CityDefinition | n
   );
 }
 
+function getActiveCitySceneMappingsByCityId() {
+  return getZhuYuanzhangCitySceneMappingByCityId({
+    cities: activeContentContext.cities,
+    houses: activeContentContext.houses,
+  });
+}
+
 let activeContentContext: ActiveGameContentContext =
   entryShellBootstrapState.createStartupContentContext(
     builtinStartupActivation
@@ -431,9 +438,8 @@ const cityHouseTransitionCoordinator = createCityHouseTransitionCoordinator({
   },
   stopCityBeggingMiniGameLoop,
   canEnterCity3d: () =>
-    getZhuYuanzhangCitySceneMappingByCityId()[
-      appState.gameState.world.currentCityId
-    ] != null,
+    getActiveCitySceneMappingsByCityId()[appState.gameState.world.currentCityId] !=
+    null,
 });
 const councilPriorityCityBeggingCoordinator =
   createCouncilPriorityCityBeggingCoordinator({
@@ -499,8 +505,7 @@ const cityDirectoryLeaderResidenceCoordinator =
   });
 const city3dHouseEntryCoordinator = createCity3dHouseEntryCoordinator({
   getAppState: () => appState,
-  getCitySceneMapping: (cityId) =>
-    getZhuYuanzhangCitySceneMappingByCityId()[cityId] ?? null,
+  getCitySceneMapping: (cityId) => getActiveCitySceneMappingsByCityId()[cityId] ?? null,
   findHouse: (houseId) =>
     activeContentContext.houses.find(
       (houseDefinition) => houseDefinition.id === houseId
@@ -612,7 +617,7 @@ const appRenderCoordinator = createAppRenderCoordinator({
   getActiveContentContext: () => activeContentContext,
   getCurrentMapDefinition,
   getCurrentCityDefinition,
-  getCitySceneMappingsByCityId: () => getZhuYuanzhangCitySceneMappingByCityId(),
+  getCitySceneMappingsByCityId: () => getActiveCitySceneMappingsByCityId(),
   captureCampaignTerrainCanvases,
   restoreCampaignTerrainCanvases,
   startInitialCampaignMapDebugAnimationIfNeeded,

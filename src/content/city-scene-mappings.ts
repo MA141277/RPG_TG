@@ -6,9 +6,13 @@ import type {
   Hd2degAssetRef,
 } from "../domain/city-scene-mapping";
 import type { HouseDefinition } from "../domain/house";
-import { defaultRuntimeContent } from "../application/content/default-runtime-content";
 
 const HD2DEG_SCENE_VERSION = "2026060107";
+
+type CitySceneMappingContent = {
+  cities: CityDefinition[];
+  houses: HouseDefinition[];
+};
 
 const citySlugByCityId: Record<string, string> = {
   "city.kulan": "kulan",
@@ -158,10 +162,13 @@ function createNpcMappings(
   return npcs;
 }
 
-function createCitySceneMapping(cityDefinition: CityDefinition): CitySceneMapping {
+function createCitySceneMapping(
+  cityDefinition: CityDefinition,
+  content: CitySceneMappingContent
+): CitySceneMapping {
   const sceneId = getSceneIdForCity(cityDefinition.id);
   const cityHouseIdSet = new Set(cityDefinition.houseIds);
-  const houseDefinitions = defaultRuntimeContent.houses.filter(
+  const houseDefinitions = content.houses.filter(
     (houseDefinition) =>
       houseDefinition.cityId === cityDefinition.id ||
       cityHouseIdSet.has(houseDefinition.id)
@@ -179,15 +186,24 @@ function createCitySceneMapping(cityDefinition: CityDefinition): CitySceneMappin
   };
 }
 
-export function getZhuYuanzhangCitySceneMappings(): CitySceneMapping[] {
-  return defaultRuntimeContent.cities.map(createCitySceneMapping);
+export function getZhuYuanzhangCitySceneMappings(
+  content: CitySceneMappingContent
+): CitySceneMapping[] {
+  return content.cities.map((cityDefinition) =>
+    createCitySceneMapping(cityDefinition, content)
+  );
 }
 
-export function getZhuYuanzhangCitySceneMappingByCityId(): Record<
+export function getZhuYuanzhangCitySceneMappingByCityId(
+  content: CitySceneMappingContent
+): Record<
   string,
   CitySceneMapping
 > {
   return Object.fromEntries(
-    getZhuYuanzhangCitySceneMappings().map((mapping) => [mapping.cityId, mapping])
+    getZhuYuanzhangCitySceneMappings(content).map((mapping) => [
+      mapping.cityId,
+      mapping,
+    ])
   );
 }

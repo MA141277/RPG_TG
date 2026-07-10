@@ -4911,6 +4911,21 @@ test("keep house no longer consumes default pack content through module-top-leve
   assert.match(keepHouseActiveContentSource, /getKeepHouseContentDefaults/);
 });
 
+test("city scene mappings no longer read default runtime content directly", () => {
+  const citySceneMappingsSource = fs.readFileSync(
+    "src/content/city-scene-mappings.ts",
+    "utf8"
+  );
+  const mainSource = fs.readFileSync("src/main.ts", "utf8");
+
+  assert.doesNotMatch(citySceneMappingsSource, /default-runtime-content/);
+  assert.doesNotMatch(citySceneMappingsSource, /defaultRuntimeContent\.(cities|houses)/);
+  assert.match(citySceneMappingsSource, /getZhuYuanzhangCitySceneMappings\(\s*content:/);
+  assert.match(mainSource, /getZhuYuanzhangCitySceneMappingByCityId\(\s*\{/);
+  assert.match(mainSource, /cities:\s*activeContentContext\.cities/);
+  assert.match(mainSource, /houses:\s*activeContentContext\.houses/);
+});
+
 test("grain shop market text reads shared module defaults from runtime content", async () => {
   const defaultRuntimeContentModulePath = require.resolve(
     "../.test-dist/application/content/default-runtime-content.js"
