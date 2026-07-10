@@ -5,6 +5,17 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-10 Script Editor Freeze Scope Clarification
+
+### Changed
+- 更新 [docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-mainline-20260710/docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md)，把当前 version 的冻结边界明确拆成 `Must Freeze / Required Decisions / Deferred Work / Drift Guards` 四组。
+- 明确当前 version 必须冻结的范围是：`editor-native authoring contract`、`authoring -> runtime mapping contract`、`compatibility / import-export policy`、`shared condition / effect mechanism`、以及 editor 落地所需的最小 runtime/schema delta。
+- 明确当前 version 不承接完整 script-editor UI 交付、页面/组件细节、全仓库 script hardcode 清理、大规模 runtime consumer 重写或与冻结契约无直接关系的 modularization residue。
+
+### Impact
+- 后续 script-editor 相关 queue admission 不再只依赖宽泛 prose，而是要对照这份冻结清单判断事项属于“必须冻结”“需要决策”“暂不处理”还是“禁止漂移”。
+- 这使当前 version 更清楚地表达“先冻结设计/契约，再决定是否进入实现版本”，避免 bounded freeze queue admission 与 editor implementation scope 再次混淆。
+
 ## 2026-07-10 Blueprint Version Switch To Script Editor Contract Freeze
 
 ### Changed

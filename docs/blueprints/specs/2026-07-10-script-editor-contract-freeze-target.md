@@ -20,6 +20,49 @@
 - `freeze one shared condition / effect mechanism boundary reusable across event, task, dialogue, menu, and minigame authoring`
 - `identify and bound the minimum runtime contract changes required for editor landing`
 
+### Must Freeze
+
+- `editor-native authoring contract`
+  - `freeze the named core object set, object responsibilities, ownership boundaries, editor-only metadata rules, and creator-facing naming decisions`
+- `authoring -> runtime mapping contract`
+  - `freeze runtime export destinations, direct-export fields, editor-only fields, compatibility shims, and one object-level mapping matrix`
+- `compatibility / import-export policy`
+  - `freeze existing pack import policy, editor project persistence policy, runtime-facing export policy, and whether compatibility round-trip is mandatory`
+- `shared condition / effect mechanism`
+  - `freeze one reusable condition/effect contract family shared by event, task, dialogue, menu, and minigame authoring instead of feature-local rule formats`
+- `minimum runtime contract changes`
+  - `freeze the minimum required runtime/schema delta for editor landing, including required/optional/out-of-scope separation and an explicit ban on opportunistic runtime modernization`
+
+### Required Decisions
+
+- `whether person remains the single top-level authoring object for both playable-role and NPC configuration`
+- `whether the editor project persists as one authoring manifest or multiple split authoring tables`
+- `whether scene and dialogue export as separate runtime tables or one combined typed runtime table`
+- `whether minigame rule authoring uses a generic graph, a bounded block system, or a hybrid preset-plus-extension model`
+- `whether city/building menu authoring shares one host-parameterized schema or two separate schemas`
+- `whether compatibility round-trip is mandatory: import existing pack -> edit -> export compatible pack`
+- `whether old packs are handled by compatibility importer, migration, or both with explicit precedence`
+- `which mismatches classify as Class A authoring-only difference, Class B additive pack/runtime extension, or Class C runtime behavior gap`
+
+### Deferred Work
+
+- `full script-editor UI delivery`
+- `page layout, component decomposition, interaction polish, and temporary editor wiring`
+- `repository-wide script hardcode migration`
+- `large-scale runtime consumer rewrites or broad sub-runtime refactors`
+- `modularization residue that is not strictly required to freeze the editor contract boundary`
+- `non-essential runtime pack schema expansion beyond the frozen minimum delta list`
+
+### Drift Guards
+
+- `Do not widen this version from design-governed freeze into implementation-governed editor delivery without an explicit future version-boundary change.`
+- `Do not change the authoring model merely because one provisional UI flow or component tree is inconvenient.`
+- `Do not add runtime tables, fields, or loaders before the mapping matrix and mismatch classification justify them.`
+- `Do not let editor-only metadata leak into runtime-facing pack output by convenience.`
+- `Do not let event/task/dialogue/menu/minigame authoring grow separate condition/effect dialects without explicit shared-mechanism approval.`
+- `Do not treat recorded queue families as live candidate truth or admission-ready implementation scope by default.`
+- `Do not absorb shell closure, runtime modernization, or unrelated residue cleanup into this version unless later written evidence proves they are strictly required for the frozen contract boundary.`
+
 ### Non-Goals
 
 - `main.ts pure shell closure by itself`
