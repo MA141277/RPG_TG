@@ -2,6 +2,7 @@ import type { CardInventory } from "../../domain/card";
 import type { GameState } from "../../domain/game-state";
 import type { ValuableItemInventory } from "../../domain/valuable-item";
 import type { TaskRuntimeState } from "../../core/contracts/task-runtime";
+import { createInitialCampaignMapExplorationState } from "../map/campaign-map-exploration";
 
 export type InitialStateInput = {
   currentMapId: string;
@@ -92,7 +93,9 @@ export function createInitialState(input: InitialStateInput): GameState {
       playableSession: null,
       cityNpcPools: {},
       cityMarkets: {},
+      mapExplorationByMapId: {},
       activitySession: null,
+      mapExploration: createInitialCampaignMapExplorationState(),
       eventHistory: {},
     },
   };

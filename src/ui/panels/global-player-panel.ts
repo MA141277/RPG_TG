@@ -1,14 +1,20 @@
 import { resolveCharacterPortraitImageUrl } from "../portrait-assets";
-import { uiLayoutComponentBaseSizeById } from "../../domain/ui-layout";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import type { MissionDefinition } from "../../domain/mission";
-import type {
-  GlobalHudLayout,
-  UiLayoutComponent,
-  UiLayoutElement,
-} from "../../domain/ui-layout";
+import type { GlobalHudLayout, UiLayoutComponent } from "../../domain/ui-layout";
 import { getCouncilStatusText } from "../../application/time/time-progression";
+
+const compactHudAssets = {
+  base: "/ui/yuansu/属性栏/20260706-152826.png",
+  portraitFrame: "/ui/yuansu/属性栏/20260706-172043.png",
+  titlePlate: "/ui/yuansu/属性栏/20260706-152803.png",
+  locationIcon: "/ui/yuansu/属性栏/20260706-152722.png",
+  goldIcon: "/ui/yuansu/属性栏/20260706-152814.png",
+  staminaIcon: "/ui/yuansu/属性栏/20260706-152810.png",
+  prestigeIcon: "/ui/yuansu/属性栏/20260706-152807.png",
+  attributeButton: "/ui/yuansu/属性栏/20260706-152820.png",
+};
 
 export type GlobalPlayerPanelModel = {
   portraitLabel: string;
@@ -37,83 +43,11 @@ function formatTimeOfDayLabel(timeOfDay: GameState["world"]["timeOfDay"]): strin
   }
 }
 
-function getComponentRectStyle(component: UiLayoutComponent): string {
-  return [
-    `left:${component.rect.x}px`,
-    `top:${component.rect.y}px`,
-    `width:${component.rect.width}px`,
-    `height:${component.rect.height}px`,
-  ].join(";");
-}
-
-function getComponentContentStyle(component: UiLayoutComponent): string {
-  const baseSize = uiLayoutComponentBaseSizeById[component.id];
-  if (baseSize == null) {
-    return "width:100%;height:100%;";
-  }
-
-  const scale = component.rect.width / Math.max(baseSize.width, 1);
-  return [
-    `width:${baseSize.width}px`,
-    `height:${baseSize.height}px`,
-    `transform-origin:top left`,
-    `transform:scale(${scale})`,
-  ].join(";");
-}
-
-function getBackgroundStyle(component: UiLayoutComponent): string {
-  const background = component.background;
-  const styleParts: string[] = [];
-
-  if (background != null) {
-    if (background.mode === "nine-slice") {
-      styleParts.push(
-        `border-style:solid`,
-        `border-width:${background.slice.top}px ${background.slice.right}px ${background.slice.bottom}px ${background.slice.left}px`,
-        `border-image-source:url(${background.imageUrl})`,
-        `border-image-slice:${background.slice.top} ${background.slice.right} ${background.slice.bottom} ${background.slice.left} fill`,
-        `border-image-width:${background.slice.top} ${background.slice.right} ${background.slice.bottom} ${background.slice.left}`
-      );
-    } else {
-      const backgroundSize =
-        background.mode === "contain"
-          ? "contain"
-          : background.mode === "cover"
-            ? "cover"
-            : "100% 100%";
-      styleParts.push(
-        `background-image:url(${background.imageUrl})`,
-        `background-repeat:no-repeat`,
-        `background-position:center`,
-        `background-size:${backgroundSize}`
-      );
-    }
-  }
-
-  return styleParts.join(";");
-}
-
-function getElementStyle(element: UiLayoutElement): string {
-  return [
-    `left:${element.rect.x}px`,
-    `top:${element.rect.y}px`,
-    `width:${element.rect.width}px`,
-    `height:${element.rect.height}px`,
-  ].join(";");
-}
-
 function getComponent(
   layout: GlobalHudLayout,
   componentId: string
 ): UiLayoutComponent | null {
   return layout.components.find((component) => component.id === componentId) ?? null;
-}
-
-function getElement(
-  component: UiLayoutComponent | null,
-  elementId: string
-): UiLayoutElement | null {
-  return component?.elements.find((element) => element.id === elementId) ?? null;
 }
 
 export function createGlobalPlayerPanelModel(
@@ -147,109 +81,78 @@ export function renderGlobalPlayerPanel(
   model: GlobalPlayerPanelModel,
   layout: GlobalHudLayout
 ): string {
-  const portraitComponent = getComponent(layout, "portrait-frame");
-  const statusComponent = getComponent(layout, "status-board");
   const taskComponent = getComponent(layout, "task-panel");
-  const portraitLabelElement = getElement(portraitComponent, "portrait-label");
-  const identityElement = getElement(statusComponent, "identity");
-  const goldElement = getElement(statusComponent, "gold");
-  const locationElement = getElement(statusComponent, "location");
-  const staminaElement = getElement(statusComponent, "stamina");
-  const prestigeElement = getElement(statusComponent, "prestige");
-  const reviewItemElement = getElement(taskComponent, "review-item");
-  const missionItemElement = getElement(taskComponent, "mission-item");
+  const taskItems = [
+    {
+      id: "review",
+      label: "评定",
+      value: model.reviewDateText,
+      title: model.reviewDateText,
+    },
+    {
+      id: "mission",
+      label: "当前任务",
+      value: model.mainHouseMissionText,
+      title: model.mainHouseMissionText,
+    },
+  ];
 
   return `
     <section class="p-global-hud">
-      <button class="u-click-layer p-global-status-trigger" data-action="open-player-detail" aria-label="打开角色详情">
-        <div class="p-global-status-layout">
+      <div class="p-global-status-layout" aria-label="人物属性栏">
+        <div class="p-global-status-compact">
+          <img class="p-global-status-compact__layer p-global-status-compact__base" src="${compactHudAssets.base}" alt="" aria-hidden="true">
+          <img class="p-global-status-compact__layer p-global-status-compact__portrait-frame" src="${compactHudAssets.portraitFrame}" alt="" aria-hidden="true">
+          <img class="p-global-status-compact__layer" src="${compactHudAssets.titlePlate}" alt="" aria-hidden="true">
+          <img class="p-global-status-compact__layer" src="${compactHudAssets.locationIcon}" alt="" aria-hidden="true">
+          <img class="p-global-status-compact__layer" src="${compactHudAssets.goldIcon}" alt="" aria-hidden="true">
+          <img class="p-global-status-compact__layer" src="${compactHudAssets.staminaIcon}" alt="" aria-hidden="true">
+          <img class="p-global-status-compact__layer" src="${compactHudAssets.prestigeIcon}" alt="" aria-hidden="true">
+          <img class="p-global-status-compact__layer" src="${compactHudAssets.attributeButton}" alt="" aria-hidden="true">
           ${
-            portraitComponent == null
+            model.portraitImageUrl == null
               ? ""
               : `
-                <div class="p-global-status-bar__portrait p-layout-component" style="${getComponentRectStyle(portraitComponent)}">
-                  <div class="p-layout-component__content" style="${getComponentContentStyle(portraitComponent)}">
-                    <div class="p-global-status-bar__portrait-shell">
-                      ${
-                        model.portraitImageUrl == null
-                          ? ""
-                          : `
-                            <div class="p-global-status-bar__portrait-mask">
-                              <img class="p-global-status-bar__portrait-art" src="${model.portraitImageUrl}" alt="${model.name}">
-                            </div>
-                          `
-                      }
-                      <div class="p-global-status-bar__portrait-frame" style="${getBackgroundStyle(portraitComponent)}"></div>
-                      <span
-                        class="p-global-status-bar__portrait-label"
-                        style="${portraitLabelElement == null ? "" : getElementStyle(portraitLabelElement)}"
-                      >
-                        ${model.portraitLabel}
-                      </span>
-                    </div>
-                  </div>
+                <div class="p-global-status-compact__portrait-mask">
+                  <img class="p-global-status-compact__portrait-art" src="${model.portraitImageUrl}" alt="${model.name}">
                 </div>
               `
           }
-          ${
-            statusComponent == null
-              ? ""
-              : `
-                <div class="p-layout-component" style="${getComponentRectStyle(statusComponent)}">
-                  <div class="p-layout-component__content" style="${getComponentContentStyle(statusComponent)}">
-                    <div class="p-global-status-bar__board" style="${getBackgroundStyle(statusComponent)}">
-                      <div class="p-global-status-bar__identity" style="${identityElement == null ? "" : getElementStyle(identityElement)}">
-                        <strong class="p-global-status-bar__name">${model.name}</strong>
-                        <span class="p-global-status-bar__title">${model.title}</span>
-                        <span class="p-global-status-bar__date">${model.currentDateText}</span>
-                      </div>
-                      <div class="p-global-status-bar__gold" style="${goldElement == null ? "" : getElementStyle(goldElement)}">
-                        <strong class="p-global-status-bar__gold-value">${model.goldText}</strong>
-                      </div>
-                      <div class="p-global-status-bar__location" style="${locationElement == null ? "" : getElementStyle(locationElement)}">
-                        <span class="p-global-status-bar__location-icon">◉</span>
-                        <strong class="p-global-status-bar__location-text">${model.locationText}</strong>
-                      </div>
-                      <div class="p-global-status-bar__stamina" style="${staminaElement == null ? "" : getElementStyle(staminaElement)}">
-                        <span class="p-global-status-bar__stamina-label">体力 ${model.stamina}</span>
-                      </div>
-                      <div class="p-global-status-bar__prestige" style="${prestigeElement == null ? "" : getElementStyle(prestigeElement)}">
-                        <span class="p-global-status-bar__prestige-label">威望</span>
-                        <strong class="p-global-status-bar__prestige-value">${model.fame}</strong>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              `
-          }
+          <strong class="p-global-status-compact__name">${model.name}</strong>
+          <span class="p-global-status-compact__title">${model.title}</span>
+          <strong class="p-global-status-compact__location">${model.locationText}</strong>
+          <strong class="p-global-status-compact__gold">银两 ${model.goldText}</strong>
+          <strong class="p-global-status-compact__stamina">体力 ${model.stamina}</strong>
+          <strong class="p-global-status-compact__prestige">威望 ${model.fame}</strong>
+          <button
+            class="u-click-layer p-global-status-compact__attribute"
+            data-action="open-player-detail"
+            aria-label="打开人物详细属性"
+          ></button>
         </div>
-      </button>
+      </div>
       ${
         taskComponent == null
           ? ""
           : `
-            <div class="p-layout-component" style="${getComponentRectStyle(taskComponent)}">
-              <div class="p-layout-component__content" style="${getComponentContentStyle(taskComponent)}">
-                <div class="p-global-task-panel" style="${getBackgroundStyle(taskComponent)}">
-                  <div class="p-global-task-panel__header"></div>
-                  <div class="p-global-task-panel__items">
-                    <section class="p-global-task-panel__item" style="${reviewItemElement == null ? "" : getElementStyle(reviewItemElement)}">
-                      <span class="p-global-task-panel__label">评定</span>
-                      <strong class="p-global-task-panel__value">${model.reviewDateText}</strong>
-                    </section>
-                    <section
-                      class="p-global-task-panel__item"
-                      title="${model.mainHouseMissionText}"
-                      style="${missionItemElement == null ? "" : getElementStyle(missionItemElement)}"
-                    >
-                      <span class="p-global-task-panel__label">当前任务</span>
-                      <strong class="p-global-task-panel__value">${model.mainHouseMissionText}</strong>
-                    </section>
-                  </div>
-                  <div class="p-global-task-panel__footer"></div>
-                </div>
+            <aside
+              class="p-global-task-panel"
+              aria-label="右侧任务栏"
+              style="--task-item-count:${taskItems.length}"
+            >
+              <div class="p-global-task-panel__items">
+                ${taskItems
+                  .map(
+                    (item) => `
+                      <section class="p-global-task-panel__item" title="${item.title}" data-task-item="${item.id}">
+                        <span class="p-global-task-panel__label">${item.label}</span>
+                        <strong class="p-global-task-panel__value">${item.value}</strong>
+                      </section>
+                    `
+                  )
+                  .join("")}
               </div>
-            </div>
+            </aside>
           `
       }
     </section>

@@ -1,8 +1,19 @@
+import type {
+  CoordinateSpace,
+  GridCoordinate,
+  HexTravelGrid,
+} from "../../../application/navigation/travel-to-coordinate";
+import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
+import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
+import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
+import terrainVertexShaderRaw from "./shaders/campaign-terrain.vert.glsl?raw";
+
 type CampaignTerrainInput = {
   canvas: HTMLCanvasElement;
   textureUrl: string;
   heightUrl: string;
   materialUrl: string;
+  waterTextureUrl: string | null;
   renderMode: "terrain" | "actor";
 };
 
@@ -53,17 +64,22 @@ type ActorBoneAsset = {
   name: string;
   parentIndex: number | null;
   localPosition: [number, number, number];
+  localRotation: [number, number, number, number];
 };
 
 type ActorModelAsset = {
   scale: number;
-  localBindPositions: Float32Array;
-  bindNormals: Float32Array;
+  facingOffsetDegrees: number;
+  posturePitchDegrees: number;
+  positions: Float32Array;
+  normals: Float32Array;
   uvs: Float32Array;
   indices: Uint16Array;
   vertexBoneIndices: Uint16Array;
+  vertexBoneInfluenceIndices: Uint16Array;
+  vertexBoneInfluenceWeights: Float32Array;
+  inverseBindMatrices: Float32Array;
   bones: ActorBoneAsset[];
-  bindGlobalPositions: [number, number, number][];
   originOffset: [number, number, number];
   bounds: {
     min: [number, number, number];
@@ -78,6 +94,7 @@ type ActorAnimationClipAsset = {
   numAnimatedBones: number;
   animatedBoneNames: string[];
   rotations: number[][][];
+  localPositions?: number[][][];
   rootPositions: number[][];
   pelvisPositions: number[][];
 };
@@ -87,9 +104,20 @@ type ActorAnimationSetAsset = {
   walk: ActorAnimationClipAsset;
 };
 
+type ActorAnimationClipName = keyof ActorAnimationSetAsset;
+
 type ActorAnimationPose = {
   globalRotations: [number, number, number, number][];
   globalPositions: [number, number, number][];
+};
+
+type ActorAnimationPlaybackState = {
+  activeClipName: ActorAnimationClipName;
+  activeStartedAtMs: number;
+  blendFromClipName: ActorAnimationClipName | null;
+  blendFromStartedAtMs: number;
+  blendStartedAtMs: number;
+  blendDurationMs: number;
 };
 
 type Mat4 = Float32Array;
@@ -106,6 +134,7 @@ const FOV_RADIANS = 38 * Math.PI / 180;
 const ACTOR_REFERENCE_CAMERA_SCALE = 40;
 const ACTOR_MODEL_BASE_SCALE = 0.011;
 const ACTOR_MODEL_FACING_OFFSET_RADIANS = Math.PI / 2;
+const ACTOR_ANIMATION_BLEND_DURATION_MS = 180;
 const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
 const HEX_ELEVATION_LEVELS = 8;
@@ -118,6 +147,18 @@ const CITY_DEPTH_MESH_HEIGHT_SCALE = 0.034;
 const CITY_DEPTH_MESH_BASE_LIFT = 0.0015;
 const CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE = 2 / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE);
 const CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE = 2 / HEX_TERRAIN_SCALE;
+const WATER_ANIMATION_FRAME_INTERVAL_MS = 1000 / 24;
+const vertexShaderSource = createShaderSource(terrainVertexShaderRaw, {
+  __HEIGHT_SCALE__: HEIGHT_SCALE.toFixed(2),
+});
+const fragmentShaderSource = createShaderSource(terrainFragmentShaderRaw, {
+  __GRASS_AMBIENT_LIGHT__: GRASS_AMBIENT_LIGHT.toFixed(2),
+  __GRASS_TEXTURE_DETAIL__: GRASS_TEXTURE_DETAIL.toFixed(2),
+  __HEX_MAP_ASPECT__: HEX_MAP_ASPECT.toFixed(4),
+  __HEX_TERRAIN_SCALE__: HEX_TERRAIN_SCALE.toFixed(1),
+});
+const actorVertexShaderSource = actorVertexShaderRaw;
+const actorFragmentShaderSource = actorFragmentShaderRaw;
 export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
   rotationDegrees: 0,
   pitchDegrees: 0,
@@ -142,12 +183,43 @@ export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
   shadeMax: 1,
 };
 const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
+const IDENTITY_MATRIX_4 = new Float32Array([
+  1, 0, 0, 0,
+  0, 1, 0, 0,
+  0, 0, 1, 0,
+  0, 0, 0, 1,
+]);
 
-type CampaignTerrainCamera = {
+export type CampaignTerrainCamera = {
   scale: number;
   offsetX: number;
   offsetY: number;
 };
+
+export function createCampaignTerrainCameraCenteredOnCoordinate(input: {
+  coordinate: GridCoordinate;
+  coordinateSpace: CoordinateSpace;
+  scale: number;
+}): CampaignTerrainCamera {
+  const safeScale = Math.max(input.scale, 0.1);
+  const u = input.coordinate.x / Math.max(input.coordinateSpace.width, 1);
+  const v = 1 - input.coordinate.y / Math.max(input.coordinateSpace.height, 1);
+  const worldPoint = createTerrainWorldPoint(u, v, 0);
+  const scaledX = worldPoint[0] * TERRAIN_SCALE;
+  const scaledY = worldPoint[1] * TERRAIN_SCALE;
+  const scaledZ = worldPoint[2];
+  const tiltCos = Math.cos(CAMERA_TILT_RADIANS);
+  const tiltSin = Math.sin(CAMERA_TILT_RADIANS);
+  const tiltedY = scaledY * tiltCos - scaledZ * tiltSin;
+  const cameraTranslateX = -scaledX;
+  const cameraTranslateY = -tiltedY;
+
+  return {
+    scale: safeScale,
+    offsetX: Math.round(cameraTranslateX * safeScale / CAMERA_OFFSET_UNIT),
+    offsetY: Math.round(-cameraTranslateY * safeScale / CAMERA_OFFSET_UNIT),
+  };
+}
 
 type CampaignTerrainRenderer = {
   canvas: HTMLCanvasElement;
@@ -158,9 +230,13 @@ type CampaignTerrainRenderer = {
   projectionInput: {
     canvas: HTMLCanvasElement;
     heights: Float32Array;
+    materialLandMask: Uint8Array;
+    materialColumns: number;
+    materialRows: number;
     columns: number;
     rows: number;
   };
+  travelGrid: HexTravelGrid;
 };
 
 type CampaignActorData = {
@@ -180,6 +256,9 @@ const pendingRendererCanvases = new Set<HTMLCanvasElement>();
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
   heights: Float32Array;
+  materialLandMask: Uint8Array;
+  materialColumns: number;
+  materialRows: number;
   columns: number;
   rows: number;
 };
@@ -187,6 +266,13 @@ type CampaignTerrainProjectionInput = {
 export type CampaignTerrainUvPoint = {
   u: number;
   v: number;
+};
+
+export type CampaignTerrainClientPoint = {
+  clientX: number;
+  clientY: number;
+  visible: boolean;
+  w: number;
 };
 
 let currentCamera: CampaignTerrainCamera = {
@@ -206,6 +292,85 @@ export function setCampaignTerrainCamera(camera: CampaignTerrainCamera): void {
   for (const renderer of activeRenderers.values()) {
     renderer.requestRender("static");
   }
+}
+
+export function getCampaignTerrainCamera(): CampaignTerrainCamera {
+  return currentCamera;
+}
+
+export function getCampaignTerrainProjectionSignature(root: ParentNode): string {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  const renderer =
+    terrainCanvas == null ? null : activeRenderers.get(terrainCanvas) ?? null;
+
+  return [
+    renderer == null ? "pending" : "ready",
+    currentCamera.scale.toFixed(4),
+    currentCamera.offsetX.toFixed(1),
+    currentCamera.offsetY.toFixed(1),
+    terrainCanvas?.width ?? 0,
+    terrainCanvas?.height ?? 0,
+  ].join("|");
+}
+
+export function projectCampaignTerrainUvToClientPoint(
+  root: ParentNode,
+  u: number,
+  v: number
+): CampaignTerrainClientPoint | null {
+  return projectCampaignTerrainUvToClientPointAtHeightAnchor(root, u, v, u, v);
+}
+
+export function projectCampaignTerrainUvToClientPointAtHeightAnchor(
+  root: ParentNode,
+  u: number,
+  v: number,
+  heightU: number,
+  heightV: number
+): CampaignTerrainClientPoint | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  const renderer = activeRenderers.get(terrainCanvas);
+  if (renderer == null) {
+    return null;
+  }
+
+  const rect = terrainCanvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  const matrix = createTerrainMatrix(
+    terrainCanvas.width / Math.max(terrainCanvas.height, 1)
+  );
+  const height = sampleHeightAt(
+    renderer.projectionInput.heights,
+    renderer.projectionInput.columns,
+    renderer.projectionInput.rows,
+    heightU,
+    heightV
+  );
+  const screenPoint = projectPoint(matrix, createTerrainWorldPoint(u, v, height));
+  const normalizedX = (screenPoint.x + 1) / 2;
+  const normalizedY = (1 - screenPoint.y) / 2;
+  const visible =
+    screenPoint.w > 0 &&
+    screenPoint.z >= -1 &&
+    screenPoint.z <= 1 &&
+    normalizedX >= 0 &&
+    normalizedX <= 1 &&
+    normalizedY >= 0 &&
+    normalizedY <= 1;
+
+  return {
+    clientX: rect.left + normalizedX * rect.width,
+    clientY: rect.top + normalizedY * rect.height,
+    visible,
+    w: screenPoint.w,
+  };
 }
 
 export function resolveCampaignTerrainUvFromClientPosition(
@@ -246,6 +411,39 @@ export function resolveCampaignTerrainUvFromClientPosition(
   );
 }
 
+export function isCampaignTerrainUvPassable(
+  root: ParentNode,
+  u: number,
+  v: number
+): boolean | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  const renderer = activeRenderers.get(terrainCanvas);
+  if (renderer == null) {
+    return null;
+  }
+
+  return isHexPassableAtUv(
+    renderer.projectionInput.materialLandMask,
+    renderer.projectionInput.materialColumns,
+    renderer.projectionInput.materialRows,
+    u,
+    v
+  );
+}
+
+export function getCampaignTerrainTravelGrid(root: ParentNode): HexTravelGrid | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  return activeRenderers.get(terrainCanvas)?.travelGrid ?? null;
+}
+
 export function syncCampaignTerrainWebGl(root: ParentNode): void {
   const canvases = Array.from(
     root.querySelectorAll<HTMLCanvasElement>(
@@ -278,6 +476,7 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
     const textureUrl = canvas.dataset.mapTextureUrl;
     const heightUrl = canvas.dataset.mapHeightUrl;
     const materialUrl = canvas.dataset.mapMaterialUrl;
+    const waterTextureUrl = canvas.dataset.mapWaterTextureUrl ?? null;
     const renderMode =
       canvas.dataset.campaignMapActorLayer === "true" ? "actor" : "terrain";
     if (
@@ -294,6 +493,7 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
       textureUrl,
       heightUrl,
       materialUrl,
+      waterTextureUrl,
       renderMode,
     }).then((renderer) => {
       if (!nextCanvasSet.has(canvas) || !canvas.isConnected) {
@@ -340,14 +540,30 @@ async function initCampaignTerrainWebGl(
       return null;
     })
     : Promise.resolve(null);
-  const [textureImage, heightImage, materialImage, actorAsset, cityDepthAsset] = await Promise.all([
+  const waterTextureImagePromise =
+    renderTerrain && input.waterTextureUrl != null
+      ? loadImage(input.waterTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign water texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
+  const [
+    textureImage,
+    heightImage,
+    materialImage,
+    waterTextureImage,
+    actorAsset,
+    cityDepthAsset,
+  ] = await Promise.all([
     loadImage(input.textureUrl),
     loadImage(input.heightUrl),
     loadImage(input.materialUrl),
+    waterTextureImagePromise,
     actorAssetPromise,
     cityDepthAssetPromise,
   ]);
   const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
+  const materialLandMask = sampleMaterialLandMask(materialImage);
   const heightSamples = createHexLayeredHeightSamples(
     baseHeightSamples,
     GRID_COLUMNS,
@@ -367,6 +583,12 @@ async function initCampaignTerrainWebGl(
   const matrixLocation = gl.getUniformLocation(program, "uMatrix");
   const textureLocation = gl.getUniformLocation(program, "uTexture");
   const materialTextureLocation = gl.getUniformLocation(program, "uMaterialTexture");
+  const waterTextureLocation = gl.getUniformLocation(program, "uWaterTexture");
+  const waterTextureEnabledLocation = gl.getUniformLocation(
+    program,
+    "uWaterTextureEnabled"
+  );
+  const timeSecondsLocation = gl.getUniformLocation(program, "uTimeSeconds");
   const landTextureColorAdjustLocation = gl.getUniformLocation(
     program,
     "uLandTextureColorAdjust"
@@ -382,6 +604,7 @@ async function initCampaignTerrainWebGl(
   const actorLightLocation = gl.getUniformLocation(actorProgram, "uLight");
   const actorTextureLocation = gl.getUniformLocation(actorProgram, "uTexture");
   const actorTintLocation = gl.getUniformLocation(actorProgram, "uTint");
+  const actorForceOpaqueAlphaLocation = gl.getUniformLocation(actorProgram, "uForceOpaqueAlpha");
   const vertexBuffer = gl.createBuffer();
   const indexBuffer = gl.createBuffer();
   const actorVertexBuffer = gl.createBuffer();
@@ -390,6 +613,13 @@ async function initCampaignTerrainWebGl(
   const cityDepthIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
   const materialTexture = createTexture(gl, materialImage);
+  const waterTexture =
+    waterTextureImage == null
+      ? null
+      : createTexture(gl, waterTextureImage, {
+        wrapS: gl.REPEAT,
+        wrapT: gl.REPEAT,
+      });
   const actorTexture =
     actorAsset?.textureImage == null
       ? null
@@ -406,6 +636,9 @@ async function initCampaignTerrainWebGl(
     matrixLocation == null ? "uMatrix" : null,
     textureLocation == null ? "uTexture" : null,
     materialTextureLocation == null ? "uMaterialTexture" : null,
+    waterTextureLocation == null ? "uWaterTexture" : null,
+    waterTextureEnabledLocation == null ? "uWaterTextureEnabled" : null,
+    timeSecondsLocation == null ? "uTimeSeconds" : null,
     landTextureColorAdjustLocation == null ? "uLandTextureColorAdjust" : null,
     landTextureShadeRangeLocation == null ? "uLandTextureShadeRange" : null,
     actorPositionLocation < 0 ? "actor.aPosition" : null,
@@ -415,6 +648,7 @@ async function initCampaignTerrainWebGl(
     actorLightLocation == null ? "actor.uLight" : null,
     actorTextureLocation == null ? "actor.uTexture" : null,
     actorTintLocation == null ? "actor.uTint" : null,
+    actorForceOpaqueAlphaLocation == null ? "actor.uForceOpaqueAlpha" : null,
     vertexBuffer == null ? "terrain.vertexBuffer" : null,
     indexBuffer == null ? "terrain.indexBuffer" : null,
     actorVertexBuffer == null ? "actor.vertexBuffer" : null,
@@ -455,13 +689,22 @@ async function initCampaignTerrainWebGl(
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cityDepthMesh.indices, gl.STATIC_DRAW);
   }
   gl.enable(gl.DEPTH_TEST);
+  gl.disable(gl.BLEND);
   gl.disable(gl.CULL_FACE);
   const projectionInput: CampaignTerrainProjectionInput = {
     canvas: input.canvas,
     heights: heightSamples,
+    materialLandMask: materialLandMask.landMask,
+    materialColumns: materialLandMask.columns,
+    materialRows: materialLandMask.rows,
     columns: GRID_COLUMNS,
     rows: GRID_ROWS,
   };
+  const travelGrid = createHexTravelGrid(
+    materialLandMask.landMask,
+    materialLandMask.columns,
+    materialLandMask.rows
+  );
 
   let frameId: number | null = null;
   let isDisposed = false;
@@ -471,6 +714,10 @@ async function initCampaignTerrainWebGl(
   let lastCityDepthMeshSignature = "";
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
+  const actorAnimationState = createActorAnimationPlaybackState();
+  const animatesTerrainWater = renderTerrain && waterTexture != null;
+  const animatesActorModel = shouldRenderActorInThisCanvas && actorAsset != null && actorTexture != null;
+  let dynamicAnimationTimeoutId: number | null = null;
   const render = () => {
     if (isDisposed) {
       return;
@@ -500,6 +747,11 @@ async function initCampaignTerrainWebGl(
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, materialTexture);
       gl.uniform1i(materialTextureLocation, 1);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, waterTexture ?? texture);
+      gl.uniform1i(waterTextureLocation, 2);
+      gl.uniform1f(waterTextureEnabledLocation, waterTexture == null ? 0 : 1);
+      gl.uniform1f(timeSecondsLocation, performance.now() * 0.001);
       const terrainStyle = readCampaignTerrainStyle(input.canvas);
       gl.uniform3f(
         landTextureColorAdjustLocation,
@@ -593,6 +845,7 @@ async function initCampaignTerrainWebGl(
       gl.bindTexture(gl.TEXTURE_2D, cityDepthTexture);
       gl.uniform1i(actorTextureLocation, 0);
       gl.uniform3f(actorTintLocation, 1, 1, 1);
+      gl.uniform1f(actorForceOpaqueAlphaLocation, 0);
       gl.disable(gl.CULL_FACE);
       gl.depthMask(true);
       gl.drawElements(gl.TRIANGLES, cityDepthMesh.indices.length, gl.UNSIGNED_INT, 0);
@@ -615,7 +868,8 @@ async function initCampaignTerrainWebGl(
         actor,
         actorHeight,
         actorAsset.model,
-        actorAsset.animations
+        actorAsset.animations,
+        actorAnimationState
       );
       gl.useProgram(actorProgram);
       gl.bindBuffer(gl.ARRAY_BUFFER, actorVertexBuffer);
@@ -660,8 +914,8 @@ async function initCampaignTerrainWebGl(
       gl.bindTexture(gl.TEXTURE_2D, actorTexture);
       gl.uniform1i(actorTextureLocation, 0);
       gl.uniform3f(actorTintLocation, 1, 1, 1);
-      gl.enable(gl.CULL_FACE);
-      gl.cullFace(gl.BACK);
+      gl.uniform1f(actorForceOpaqueAlphaLocation, 1);
+      gl.disable(gl.CULL_FACE);
       gl.drawElements(gl.TRIANGLES, actorMesh.indices.length, gl.UNSIGNED_SHORT, 0);
       gl.disable(gl.CULL_FACE);
     } else {
@@ -675,6 +929,21 @@ async function initCampaignTerrainWebGl(
       syncProjectedPoints(projectionInput);
       projectedPointsNeedSync = false;
     }
+
+    if (animatesTerrainWater || animatesActorModel) {
+      scheduleDynamicAnimationRender();
+    }
+  };
+
+  const scheduleDynamicAnimationRender = () => {
+    if (isDisposed || dynamicAnimationTimeoutId != null || hasPendingRender) {
+      return;
+    }
+
+    dynamicAnimationTimeoutId = window.setTimeout(() => {
+      dynamicAnimationTimeoutId = null;
+      requestRender("dynamic");
+    }, WATER_ANIMATION_FRAME_INTERVAL_MS);
   };
 
   const requestRender = (reason: "static" | "dynamic" = "dynamic") => {
@@ -705,10 +974,14 @@ async function initCampaignTerrainWebGl(
     requestRender,
     hasActorAsset: actorAsset != null && actorTexture != null,
     projectionInput,
+    travelGrid,
     dispose: () => {
       isDisposed = true;
       if (frameId != null) {
         window.cancelAnimationFrame(frameId);
+      }
+      if (dynamicAnimationTimeoutId != null) {
+        window.clearTimeout(dynamicAnimationTimeoutId);
       }
 
       window.removeEventListener("resize", handleResize);
@@ -720,6 +993,9 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(cityDepthIndexBuffer);
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
+      if (waterTexture != null) {
+        gl.deleteTexture(waterTexture);
+      }
       if (actorTexture != null) {
         gl.deleteTexture(actorTexture);
       }
@@ -771,16 +1047,22 @@ async function loadCampaignActorAsset(
   const [model, textureImage, idleAnimation, walkAnimation] = await Promise.all([
     loadJson<{
       scale?: number;
+      facingOffsetDegrees?: number;
+      posturePitchDegrees?: number;
       positions: number[];
       normals: number[];
       uvs: number[];
       boneIndices: number[];
+      boneInfluenceIndices?: number[];
+      boneInfluenceWeights?: number[];
+      inverseBindMatrices?: number[];
       indices: number[];
       origin: [number, number, number];
       bones: Array<{
         name: string;
         parentIndex: number | null;
         localPosition: [number, number, number];
+        localRotation?: [number, number, number, number];
       }>;
       bounds: {
         min: [number, number, number];
@@ -796,42 +1078,46 @@ async function loadCampaignActorAsset(
     name: bone.name,
     parentIndex: bone.parentIndex,
     localPosition: bone.localPosition,
+    localRotation: normalizeQuaternion(bone.localRotation ?? [0, 0, 0, 1]),
   }));
-  const bindGlobalPositions = computeActorGlobalBonePositions(bones);
   const vertexBoneIndices = new Uint16Array(model.boneIndices);
-  const localBindPositions = new Float32Array(model.positions.length);
-  const centeredBindGlobalPositions = bindGlobalPositions.map((position) => ([
-    position[0] - (model.origin[0] ?? 0),
-    position[1] - (model.origin[1] ?? 0),
-    position[2] - (model.origin[2] ?? 0),
-  ] as [number, number, number]));
-
-  for (let vertexIndex = 0; vertexIndex < model.positions.length / 3; vertexIndex += 1) {
-    const positionOffset = vertexIndex * 3;
-    const boneIndex = vertexBoneIndices[vertexIndex] ?? 0;
-    const bindBonePosition = centeredBindGlobalPositions[boneIndex] ?? [0, 0, 0];
-    localBindPositions[positionOffset] = (model.positions[positionOffset] ?? 0) - bindBonePosition[0];
-    localBindPositions[positionOffset + 1] =
-      (model.positions[positionOffset + 1] ?? 0) - bindBonePosition[1];
-    localBindPositions[positionOffset + 2] =
-      (model.positions[positionOffset + 2] ?? 0) - bindBonePosition[2];
-  }
+  const vertexCount = model.positions.length / 3;
+  const vertexBoneInfluenceIndices =
+    model.boneInfluenceIndices != null &&
+      model.boneInfluenceIndices.length === vertexCount * 4
+      ? new Uint16Array(model.boneInfluenceIndices)
+      : createSingleInfluenceIndices(vertexBoneIndices);
+  const vertexBoneInfluenceWeights =
+    model.boneInfluenceWeights != null &&
+      model.boneInfluenceWeights.length === vertexCount * 4
+      ? new Float32Array(model.boneInfluenceWeights)
+      : createSingleInfluenceWeights(vertexCount);
+  const originOffset: [number, number, number] = [
+    -(model.origin[0] ?? 0),
+    -(model.origin[1] ?? 0),
+    -(model.origin[2] ?? 0),
+  ];
+  const inverseBindMatrices =
+    model.inverseBindMatrices != null &&
+      model.inverseBindMatrices.length === bones.length * 16
+      ? new Float32Array(model.inverseBindMatrices)
+      : createFallbackInverseBindMatrices(computeActorGlobalBonePose(bones, originOffset));
 
   return {
     model: {
       scale: model.scale ?? 1,
-      localBindPositions,
-      bindNormals: new Float32Array(model.normals),
+      facingOffsetDegrees: model.facingOffsetDegrees ?? 90,
+      posturePitchDegrees: model.posturePitchDegrees ?? 0,
+      positions: new Float32Array(model.positions),
+      normals: new Float32Array(model.normals),
       uvs: new Float32Array(model.uvs),
       vertexBoneIndices,
+      vertexBoneInfluenceIndices,
+      vertexBoneInfluenceWeights,
+      inverseBindMatrices,
       indices: new Uint16Array(model.indices),
       bones,
-      bindGlobalPositions: centeredBindGlobalPositions,
-      originOffset: [
-        -(model.origin[0] ?? 0),
-        -(model.origin[1] ?? 0),
-        -(model.origin[2] ?? 0),
-      ],
+      originOffset,
       bounds: model.bounds,
     },
     textureImage,
@@ -1022,6 +1308,40 @@ function sampleHeightImage(
   return heights;
 }
 
+function sampleMaterialLandMask(
+  image: HTMLImageElement
+): { landMask: Uint8Array; columns: number; rows: number } {
+  const columns = Math.max(image.naturalWidth || image.width, 1);
+  const rows = Math.max(image.naturalHeight || image.height, 1);
+  const canvas = document.createElement("canvas");
+  canvas.width = columns;
+  canvas.height = rows;
+
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (context == null) {
+    throw new Error("Failed to create material sampling context.");
+  }
+
+  context.imageSmoothingEnabled = false;
+  context.drawImage(image, 0, 0, columns, rows);
+  const data = context.getImageData(0, 0, columns, rows).data;
+  const landMask = new Uint8Array(columns * rows);
+
+  for (let index = 0; index < landMask.length; index += 1) {
+    const pixelOffset = index * 4;
+    const red = data[pixelOffset] ?? 0;
+    const green = data[pixelOffset + 1] ?? red;
+    const blue = data[pixelOffset + 2] ?? red;
+    landMask[index] = isWaterMaterialColor(red, green, blue) ? 0 : 1;
+  }
+
+  return {
+    landMask,
+    columns,
+    rows,
+  };
+}
+
 function hexToPixel(x: number, y: number): { x: number; y: number } {
   return {
     x: Math.sqrt(3) * (x + y * 0.5),
@@ -1115,7 +1435,16 @@ function syncProjectedPoints(input: {
     point.style.setProperty("--terrain-point-top", "auto");
     point.style.setProperty("--terrain-point-bottom", `${bottom.toFixed(3)}%`);
     point.style.setProperty("--terrain-point-perspective-scale", perspectiveScale.toFixed(3));
-    point.style.zIndex = `${20 + depthLayer}`;
+    if (
+      point.classList.contains("c-campaign-marker") ||
+      point.classList.contains("c-campaign-player")
+    ) {
+      point.style.zIndex = "2";
+    } else if (point.classList.contains("c-campaign-marker__summary")) {
+      point.style.zIndex = "6";
+    } else {
+      point.style.zIndex = `${20 + depthLayer}`;
+    }
   }
 }
 
@@ -1131,8 +1460,29 @@ function sampleHeightAt(
   return heights[y * columns + x] ?? 0;
 }
 
+function sampleLandMaskAt(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): number {
+  if (u < 0 || u > 1 || v < 0 || v > 1) {
+    return 0;
+  }
+
+  const x = Math.min(Math.max(Math.round(u * (columns - 1)), 0), columns - 1);
+  const y = Math.min(Math.max(Math.round(v * (rows - 1)), 0), rows - 1);
+
+  return materialLandMask[y * columns + x] ?? 0;
+}
+
 function isWaterHeightColor(red: number, green: number, blue: number): boolean {
   return blue > 72 && blue > red * 1.35 && blue > green * 1.18;
+}
+
+function isWaterMaterialColor(red: number, green: number, blue: number): boolean {
+  return red >= 56 && green < 31 && blue < 31;
 }
 
 function readCampaignActorData(canvas: HTMLCanvasElement): CampaignActorData | null {
@@ -1269,7 +1619,8 @@ function createActorMesh(
   actor: CampaignActorData,
   height: number,
   model: ActorModelAsset,
-  animations: ActorAnimationSetAsset
+  animations: ActorAnimationSetAsset,
+  animationState: ActorAnimationPlaybackState
 ): ActorMeshData {
   const scaleCompensation = clamp(
     ACTOR_REFERENCE_CAMERA_SCALE / Math.max(currentCamera.scale, 0.0001),
@@ -1278,13 +1629,17 @@ function createActorMesh(
   );
   const angle =
     actor.facingDegrees * Math.PI / 180 +
-    ACTOR_MODEL_FACING_OFFSET_RADIANS;
-  const activeClip = actor.isMoving ? animations.walk : animations.idle;
-  const sampledPose = sampleActorAnimationPose(
-    activeClip,
+    (Number.isFinite(model.facingOffsetDegrees)
+      ? model.facingOffsetDegrees * Math.PI / 180
+      : ACTOR_MODEL_FACING_OFFSET_RADIANS);
+  const timeMs = performance.now();
+  const sampledPose = sampleActorAnimationSetPose(
+    animations,
     model.bones,
     model.originOffset,
-    performance.now()
+    actor.isMoving ? "walk" : "idle",
+    animationState,
+    timeMs
   );
   const center = createTerrainWorldPoint(
     actor.u,
@@ -1292,49 +1647,76 @@ function createActorMesh(
     height
   );
   const scale = ACTOR_MODEL_BASE_SCALE * model.scale * scaleCompensation;
-  const localBindPositions = model.localBindPositions;
-  const bindNormals = model.bindNormals;
+  const positions = model.positions;
+  const normals = model.normals;
+  const vertexBoneInfluenceIndices = model.vertexBoneInfluenceIndices;
+  const vertexBoneInfluenceWeights = model.vertexBoneInfluenceWeights;
+  const poseMatrices = createActorPoseMatrices(sampledPose);
+  const skinMatrices = poseMatrices.map((poseMatrix, boneIndex) =>
+    multiplyMatrices(poseMatrix, readPackedMatrix4(model.inverseBindMatrices, boneIndex))
+  );
   const uvs = model.uvs;
-  const output = new Float32Array((localBindPositions.length / 3) * 8);
+  const vertexCount = model.vertexBoneIndices.length;
+  const output = new Float32Array(vertexCount * 8);
   const facingCos = Math.cos(angle);
   const facingSin = Math.sin(angle);
-  for (let vertexIndex = 0; vertexIndex < localBindPositions.length / 3; vertexIndex += 1) {
+  const posturePitchRadians = model.posturePitchDegrees * Math.PI / 180;
+  for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 1) {
     const positionOffset = vertexIndex * 3;
     const uvOffset = vertexIndex * 2;
     const outputOffset = vertexIndex * 8;
-    const boneIndex = model.vertexBoneIndices[vertexIndex] ?? 0;
-    const boneRotation = sampledPose.globalRotations[boneIndex] ?? IDENTITY_QUATERNION;
-    const bonePosition = sampledPose.globalPositions[boneIndex] ?? [0, 0, 0];
-    const animatedLocalPosition = rotateVectorByQuaternion([
-      (localBindPositions[positionOffset] ?? 0) * scale,
-      (localBindPositions[positionOffset + 1] ?? 0) * scale,
-      (localBindPositions[positionOffset + 2] ?? 0) * scale,
-    ], boneRotation);
-    const animatedActorPosition: [number, number, number] = [
-      bonePosition[0] * scale + animatedLocalPosition[0],
-      bonePosition[1] * scale + animatedLocalPosition[1],
-      bonePosition[2] * scale + animatedLocalPosition[2],
+    const sourcePosition: [number, number, number] = [
+      positions[positionOffset] ?? 0,
+      positions[positionOffset + 1] ?? 0,
+      positions[positionOffset + 2] ?? 0,
     ];
+    const sourceNormal: [number, number, number] = [
+      normals[positionOffset] ?? 0,
+      normals[positionOffset + 1] ?? 0,
+      normals[positionOffset + 2] ?? 1,
+    ];
+    const animatedActorPosition: [number, number, number] = [0, 0, 0];
+    const animatedActorNormal: [number, number, number] = [0, 0, 0];
+    for (let influenceIndex = 0; influenceIndex < 4; influenceIndex += 1) {
+      const packedInfluenceIndex = vertexIndex * 4 + influenceIndex;
+      const influenceWeight = vertexBoneInfluenceWeights[packedInfluenceIndex] ?? 0;
+      if (influenceWeight <= 0.00001) {
+        continue;
+      }
+
+      const boneIndex = vertexBoneInfluenceIndices[packedInfluenceIndex] ?? 0;
+      const skinMatrix = skinMatrices[boneIndex] ?? IDENTITY_MATRIX_4;
+      const animatedLocalPosition = transformPointByMatrix(skinMatrix, sourcePosition);
+      const animatedLocalNormal = transformDirectionByMatrix(skinMatrix, sourceNormal);
+      animatedActorPosition[0] += animatedLocalPosition[0] * influenceWeight;
+      animatedActorPosition[1] += animatedLocalPosition[1] * influenceWeight;
+      animatedActorPosition[2] += animatedLocalPosition[2] * influenceWeight;
+      animatedActorNormal[0] += animatedLocalNormal[0] * influenceWeight;
+      animatedActorNormal[1] += animatedLocalNormal[1] * influenceWeight;
+      animatedActorNormal[2] += animatedLocalNormal[2] * influenceWeight;
+    }
+    animatedActorPosition[0] *= scale;
+    animatedActorPosition[1] *= scale;
+    animatedActorPosition[2] *= scale;
+    const posturedPosition = rotateVectorAroundX(animatedActorPosition, posturePitchRadians);
     const rotatedX =
-      animatedActorPosition[0] * facingCos - animatedActorPosition[1] * facingSin;
+      posturedPosition[0] * facingCos - posturedPosition[1] * facingSin;
     const rotatedY =
-      animatedActorPosition[0] * facingSin + animatedActorPosition[1] * facingCos;
-    const rotatedNormal = rotateVectorByQuaternion([
-      bindNormals[positionOffset] ?? 0,
-      bindNormals[positionOffset + 1] ?? 0,
-      bindNormals[positionOffset + 2] ?? 1,
-    ], boneRotation);
+      posturedPosition[0] * facingSin + posturedPosition[1] * facingCos;
+    const blendedNormal = normalizeVector3(
+      rotateVectorAroundX(animatedActorNormal, posturePitchRadians)
+    );
     const rotatedNormalX =
-      rotatedNormal[0] * facingCos - rotatedNormal[1] * facingSin;
+      blendedNormal[0] * facingCos - blendedNormal[1] * facingSin;
     const rotatedNormalY =
-      rotatedNormal[0] * facingSin + rotatedNormal[1] * facingCos;
+      blendedNormal[0] * facingSin + blendedNormal[1] * facingCos;
 
     output[outputOffset] = center[0] + rotatedX;
     output[outputOffset + 1] = center[1] + rotatedY;
-    output[outputOffset + 2] = center[2] + animatedActorPosition[2];
+    output[outputOffset + 2] = center[2] + posturedPosition[2];
     output[outputOffset + 3] = rotatedNormalX;
     output[outputOffset + 4] = rotatedNormalY;
-    output[outputOffset + 5] = rotatedNormal[2];
+    output[outputOffset + 5] = blendedNormal[2];
     output[outputOffset + 6] = uvs[uvOffset] ?? 0;
     output[outputOffset + 7] = uvs[uvOffset + 1] ?? 0;
   }
@@ -1345,8 +1727,40 @@ function createActorMesh(
   };
 }
 
-function computeActorGlobalBonePositions(bones: ActorBoneAsset[]): [number, number, number][] {
+function createSingleInfluenceIndices(vertexBoneIndices: Uint16Array): Uint16Array {
+  const influenceIndices = new Uint16Array(vertexBoneIndices.length * 4);
+  for (let vertexIndex = 0; vertexIndex < vertexBoneIndices.length; vertexIndex += 1) {
+    influenceIndices[vertexIndex * 4] = vertexBoneIndices[vertexIndex] ?? 0;
+  }
+  return influenceIndices;
+}
+
+function createSingleInfluenceWeights(vertexCount: number): Float32Array {
+  const influenceWeights = new Float32Array(vertexCount * 4);
+  for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 1) {
+    influenceWeights[vertexIndex * 4] = 1;
+  }
+  return influenceWeights;
+}
+
+function createFallbackInverseBindMatrices(bindPose: ActorAnimationPose): Float32Array {
+  const inverseBindMatrices = new Float32Array(bindPose.globalPositions.length * 16);
+  for (let boneIndex = 0; boneIndex < bindPose.globalPositions.length; boneIndex += 1) {
+    const bindMatrix = createTransformMatrixFromQuaternion(
+      bindPose.globalPositions[boneIndex] ?? [0, 0, 0],
+      bindPose.globalRotations[boneIndex] ?? IDENTITY_QUATERNION
+    );
+    inverseBindMatrices.set(invertMatrix4(bindMatrix), boneIndex * 16);
+  }
+  return inverseBindMatrices;
+}
+
+function computeActorGlobalBonePose(
+  bones: ActorBoneAsset[],
+  rootPosition: [number, number, number]
+): ActorAnimationPose {
   const globalPositions = bones.map(() => [0, 0, 0] as [number, number, number]);
+  const globalRotations = bones.map(() => [0, 0, 0, 1] as [number, number, number, number]);
   for (let index = 0; index < bones.length; index += 1) {
     const bone = bones[index];
     if (bone == null) {
@@ -1354,18 +1768,204 @@ function computeActorGlobalBonePositions(bones: ActorBoneAsset[]): [number, numb
     }
 
     if (bone.parentIndex == null) {
-      globalPositions[index] = [...bone.localPosition];
+      globalPositions[index] = [
+        rootPosition[0] + bone.localPosition[0],
+        rootPosition[1] + bone.localPosition[1],
+        rootPosition[2] + bone.localPosition[2],
+      ];
+      globalRotations[index] = bone.localRotation;
       continue;
     }
 
     const parentPosition = globalPositions[bone.parentIndex] ?? [0, 0, 0];
+    const parentRotation = globalRotations[bone.parentIndex] ?? IDENTITY_QUATERNION;
+    const rotatedLocalPosition = rotateVectorByQuaternion(bone.localPosition, parentRotation);
     globalPositions[index] = [
-      parentPosition[0] + bone.localPosition[0],
-      parentPosition[1] + bone.localPosition[1],
-      parentPosition[2] + bone.localPosition[2],
+      parentPosition[0] + rotatedLocalPosition[0],
+      parentPosition[1] + rotatedLocalPosition[1],
+      parentPosition[2] + rotatedLocalPosition[2],
     ];
+    globalRotations[index] = normalizeQuaternion(
+      multiplyQuaternions(parentRotation, bone.localRotation)
+    );
   }
-  return globalPositions;
+  return {
+    globalPositions,
+    globalRotations,
+  };
+}
+
+function createActorPoseMatrices(pose: ActorAnimationPose): Mat4[] {
+  return pose.globalPositions.map((position, index) =>
+    createTransformMatrixFromQuaternion(
+      position,
+      pose.globalRotations[index] ?? IDENTITY_QUATERNION
+    )
+  );
+}
+
+function createActorAnimationPlaybackState(): ActorAnimationPlaybackState {
+  return {
+    activeClipName: "idle",
+    activeStartedAtMs: 0,
+    blendFromClipName: null,
+    blendFromStartedAtMs: 0,
+    blendStartedAtMs: 0,
+    blendDurationMs: ACTOR_ANIMATION_BLEND_DURATION_MS,
+  };
+}
+
+function sampleActorAnimationSetPose(
+  animations: ActorAnimationSetAsset,
+  bones: ActorBoneAsset[],
+  originOffset: [number, number, number],
+  targetClipName: ActorAnimationClipName,
+  playbackState: ActorAnimationPlaybackState,
+  timeMs: number
+): ActorAnimationPose {
+  if (playbackState.activeStartedAtMs <= 0) {
+    playbackState.activeStartedAtMs = timeMs;
+  }
+
+  if (playbackState.activeClipName !== targetClipName) {
+    playbackState.blendFromClipName = playbackState.activeClipName;
+    playbackState.blendFromStartedAtMs = playbackState.activeStartedAtMs;
+    playbackState.blendStartedAtMs = timeMs;
+    playbackState.blendDurationMs = ACTOR_ANIMATION_BLEND_DURATION_MS;
+    playbackState.activeClipName = targetClipName;
+    playbackState.activeStartedAtMs = timeMs;
+  }
+
+  const activePose = sampleActorAnimationPose(
+    animations[playbackState.activeClipName],
+    bones,
+    originOffset,
+    timeMs - playbackState.activeStartedAtMs
+  );
+
+  if (playbackState.blendFromClipName == null) {
+    return activePose;
+  }
+
+  const blendElapsedMs = timeMs - playbackState.blendStartedAtMs;
+  const blendAmount = smoothstep(
+    clamp(blendElapsedMs / Math.max(playbackState.blendDurationMs, 1), 0, 1)
+  );
+  if (blendAmount >= 1) {
+    playbackState.blendFromClipName = null;
+    return activePose;
+  }
+
+  const blendFromPose = sampleActorAnimationPose(
+    animations[playbackState.blendFromClipName],
+    bones,
+    originOffset,
+    timeMs - playbackState.blendFromStartedAtMs
+  );
+
+  return blendActorAnimationPoses(blendFromPose, activePose, blendAmount);
+}
+
+function blendActorAnimationPoses(
+  from: ActorAnimationPose,
+  to: ActorAnimationPose,
+  amount: number
+): ActorAnimationPose {
+  const poseLength = Math.max(from.globalPositions.length, to.globalPositions.length);
+  const globalPositions: [number, number, number][] = [];
+  const globalRotations: [number, number, number, number][] = [];
+
+  for (let index = 0; index < poseLength; index += 1) {
+    globalPositions.push(
+      lerpVector3(
+        from.globalPositions[index] ?? [0, 0, 0],
+        to.globalPositions[index] ?? from.globalPositions[index] ?? [0, 0, 0],
+        amount
+      )
+    );
+    globalRotations.push(
+      nlerpQuaternion(
+        from.globalRotations[index] ?? IDENTITY_QUATERNION,
+        to.globalRotations[index] ?? from.globalRotations[index] ?? IDENTITY_QUATERNION,
+        amount
+      )
+    );
+  }
+
+  return {
+    globalPositions,
+    globalRotations,
+  };
+}
+
+function createTransformMatrixFromQuaternion(
+  position: [number, number, number],
+  rotation: [number, number, number, number]
+): Mat4 {
+  const [x, y, z, w] = normalizeQuaternion(rotation);
+  const xx = x * x;
+  const yy = y * y;
+  const zz = z * z;
+  const xy = x * y;
+  const xz = x * z;
+  const yz = y * z;
+  const wx = w * x;
+  const wy = w * y;
+  const wz = w * z;
+
+  return new Float32Array([
+    1 - 2 * (yy + zz), 2 * (xy + wz), 2 * (xz - wy), 0,
+    2 * (xy - wz), 1 - 2 * (xx + zz), 2 * (yz + wx), 0,
+    2 * (xz + wy), 2 * (yz - wx), 1 - 2 * (xx + yy), 0,
+    position[0], position[1], position[2], 1,
+  ]);
+}
+
+function readPackedMatrix4(matrices: Float32Array, matrixIndex: number): Mat4 {
+  const offset = matrixIndex * 16;
+  if (offset < 0 || offset + 15 >= matrices.length) {
+    return IDENTITY_MATRIX_4;
+  }
+  return new Float32Array(matrices.subarray(offset, offset + 16));
+}
+
+function transformPointByMatrix(
+  matrix: Mat4,
+  point: [number, number, number]
+): [number, number, number] {
+  const [x, y, z] = point;
+  return [
+    readMatrixValue(matrix, 0) * x +
+      readMatrixValue(matrix, 4) * y +
+      readMatrixValue(matrix, 8) * z +
+      readMatrixValue(matrix, 12),
+    readMatrixValue(matrix, 1) * x +
+      readMatrixValue(matrix, 5) * y +
+      readMatrixValue(matrix, 9) * z +
+      readMatrixValue(matrix, 13),
+    readMatrixValue(matrix, 2) * x +
+      readMatrixValue(matrix, 6) * y +
+      readMatrixValue(matrix, 10) * z +
+      readMatrixValue(matrix, 14),
+  ];
+}
+
+function transformDirectionByMatrix(
+  matrix: Mat4,
+  direction: [number, number, number]
+): [number, number, number] {
+  const [x, y, z] = direction;
+  return normalizeVector3([
+    readMatrixValue(matrix, 0) * x +
+      readMatrixValue(matrix, 4) * y +
+      readMatrixValue(matrix, 8) * z,
+    readMatrixValue(matrix, 1) * x +
+      readMatrixValue(matrix, 5) * y +
+      readMatrixValue(matrix, 9) * z,
+    readMatrixValue(matrix, 2) * x +
+      readMatrixValue(matrix, 6) * y +
+      readMatrixValue(matrix, 10) * z,
+  ]);
 }
 
 function sampleActorAnimationPose(
@@ -1402,10 +2002,25 @@ function sampleActorAnimationPose(
     }
 
     const parentIndex = bone.parentIndex ?? 0;
-    const localRotation = sampleClipQuaternion(clip, boneIndex - 1, frameA, frameB, frameMix);
+    const localRotation = sampleClipQuaternion(
+      clip,
+      boneIndex - 1,
+      frameA,
+      frameB,
+      frameMix,
+      bone.localRotation
+    );
+    const localPosition = sampleClipVector3(
+      clip.localPositions,
+      boneIndex - 1,
+      frameA,
+      frameB,
+      frameMix,
+      bone.localPosition
+    );
     const parentRotation = globalRotations[parentIndex] ?? IDENTITY_QUATERNION;
     const parentPosition = globalPositions[parentIndex] ?? [0, 0, 0];
-    const rotatedLocalPosition = rotateVectorByQuaternion(bone.localPosition, parentRotation);
+    const rotatedLocalPosition = rotateVectorByQuaternion(localPosition, parentRotation);
 
     globalRotations[boneIndex] = normalizeQuaternion(
       multiplyQuaternions(parentRotation, localRotation)
@@ -1428,11 +2043,25 @@ function sampleClipQuaternion(
   animatedBoneIndex: number,
   frameA: number,
   frameB: number,
-  frameMix: number
+  frameMix: number,
+  fallback: [number, number, number, number]
 ): [number, number, number, number] {
-  const frameARotation = clip.rotations[frameA]?.[animatedBoneIndex] ?? IDENTITY_QUATERNION;
+  const frameARotation = clip.rotations[frameA]?.[animatedBoneIndex] ?? fallback;
   const frameBRotation = clip.rotations[frameB]?.[animatedBoneIndex] ?? frameARotation;
   return nlerpQuaternion(frameARotation, frameBRotation, frameMix);
+}
+
+function sampleClipVector3(
+  frames: number[][][] | undefined,
+  animatedBoneIndex: number,
+  frameA: number,
+  frameB: number,
+  frameMix: number,
+  fallback: [number, number, number]
+): [number, number, number] {
+  const frameAPosition = frames?.[frameA]?.[animatedBoneIndex] ?? fallback;
+  const frameBPosition = frames?.[frameB]?.[animatedBoneIndex] ?? frameAPosition;
+  return lerpVector3(frameAPosition, frameBPosition, frameMix);
 }
 
 function lerpVector3(
@@ -1476,6 +2105,23 @@ function rotateVectorByQuaternion(
     ix * qw + iw * -qx + iy * -qz - iz * -qy,
     iy * qw + iw * -qy + iz * -qx - ix * -qz,
     iz * qw + iw * -qz + ix * -qy - iy * -qx,
+  ];
+}
+
+function rotateVectorAroundX(
+  vector: [number, number, number],
+  angleRadians: number
+): [number, number, number] {
+  if (Math.abs(angleRadians) <= 0.000001) {
+    return vector;
+  }
+
+  const cosine = Math.cos(angleRadians);
+  const sine = Math.sin(angleRadians);
+  return [
+    vector[0],
+    vector[1] * cosine - vector[2] * sine,
+    vector[1] * sine + vector[2] * cosine,
   ];
 }
 
@@ -1532,6 +2178,42 @@ function createHexLayeredHeightSamples(
   }
 
   return layeredHeights;
+}
+
+function createHexTravelGrid(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number
+): HexTravelGrid {
+  const hexCells = getTerrainHexCells();
+  const passableHexKeys = new Set<string>();
+  const bounds = {
+    minX: Number.POSITIVE_INFINITY,
+    maxX: Number.NEGATIVE_INFINITY,
+    minY: Number.POSITIVE_INFINITY,
+    maxY: Number.NEGATIVE_INFINITY,
+  };
+
+  for (const cell of hexCells) {
+    bounds.minX = Math.min(bounds.minX, cell.x);
+    bounds.maxX = Math.max(bounds.maxX, cell.x);
+    bounds.minY = Math.min(bounds.minY, cell.y);
+    bounds.maxY = Math.max(bounds.maxY, cell.y);
+    const center = hexToPixel(cell.x, cell.y);
+    if (isHexPassableAtHexPoint(
+      materialLandMask,
+      columns,
+      rows,
+      center
+    )) {
+      passableHexKeys.add(getHexCellKey(cell.x, cell.y));
+    }
+  }
+
+  return {
+    passableHexKeys,
+    bounds,
+  };
 }
 
 function createHexLayeredTerrainMesh(
@@ -1726,6 +2408,40 @@ function quantizeHexElevation(height: number): number {
   );
 
   return level / (HEX_ELEVATION_LEVELS - 1);
+}
+
+function isHexPassableAtUv(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): boolean {
+  const point = terrainUvToHexPoint(u, v);
+  const cell = pixelToRoundedHex(point.x, point.y);
+  return isHexPassableAtHexPoint(
+    materialLandMask,
+    columns,
+    rows,
+    hexToPixel(cell.x, cell.y)
+  );
+}
+
+function isHexPassableAtHexPoint(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  center: { x: number; y: number }
+): boolean {
+  return (
+    sampleLandMaskAt(
+      materialLandMask,
+      columns,
+      rows,
+      hexPointToTerrainU(center.x),
+      hexPointToTerrainV(center.y)
+    ) > 0
+  );
 }
 
 function createTexture(
@@ -1984,6 +2700,16 @@ function createProgram(
   return program;
 }
 
+function createShaderSource(
+  source: string,
+  replacements: Record<string, string>
+): string {
+  return Object.entries(replacements).reduce(
+    (shaderSource, [token, value]) => shaderSource.replaceAll(token, value),
+    source
+  );
+}
+
 function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
   const result = new Float32Array(16);
 
@@ -2000,12 +2726,106 @@ function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
   return result;
 }
 
+function invertMatrix4(matrix: Mat4): Mat4 {
+  const m: [
+    number, number, number, number,
+    number, number, number, number,
+    number, number, number, number,
+    number, number, number, number,
+  ] = [
+    readMatrixValue(matrix, 0),
+    readMatrixValue(matrix, 1),
+    readMatrixValue(matrix, 2),
+    readMatrixValue(matrix, 3),
+    readMatrixValue(matrix, 4),
+    readMatrixValue(matrix, 5),
+    readMatrixValue(matrix, 6),
+    readMatrixValue(matrix, 7),
+    readMatrixValue(matrix, 8),
+    readMatrixValue(matrix, 9),
+    readMatrixValue(matrix, 10),
+    readMatrixValue(matrix, 11),
+    readMatrixValue(matrix, 12),
+    readMatrixValue(matrix, 13),
+    readMatrixValue(matrix, 14),
+    readMatrixValue(matrix, 15),
+  ];
+  const inverse = new Float32Array(16);
+  inverse[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] -
+    m[9] * m[6] * m[15] + m[9] * m[7] * m[14] +
+    m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
+  inverse[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] +
+    m[8] * m[6] * m[15] - m[8] * m[7] * m[14] -
+    m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
+  inverse[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] -
+    m[8] * m[5] * m[15] + m[8] * m[7] * m[13] +
+    m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
+  inverse[12] = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] +
+    m[8] * m[5] * m[14] - m[8] * m[6] * m[13] -
+    m[12] * m[5] * m[10] + m[12] * m[6] * m[9];
+  inverse[1] = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] +
+    m[9] * m[2] * m[15] - m[9] * m[3] * m[14] -
+    m[13] * m[2] * m[11] + m[13] * m[3] * m[10];
+  inverse[5] = m[0] * m[10] * m[15] - m[0] * m[11] * m[14] -
+    m[8] * m[2] * m[15] + m[8] * m[3] * m[14] +
+    m[12] * m[2] * m[11] - m[12] * m[3] * m[10];
+  inverse[9] = -m[0] * m[9] * m[15] + m[0] * m[11] * m[13] +
+    m[8] * m[1] * m[15] - m[8] * m[3] * m[13] -
+    m[12] * m[1] * m[11] + m[12] * m[3] * m[9];
+  inverse[13] = m[0] * m[9] * m[14] - m[0] * m[10] * m[13] -
+    m[8] * m[1] * m[14] + m[8] * m[2] * m[13] +
+    m[12] * m[1] * m[10] - m[12] * m[2] * m[9];
+  inverse[2] = m[1] * m[6] * m[15] - m[1] * m[7] * m[14] -
+    m[5] * m[2] * m[15] + m[5] * m[3] * m[14] +
+    m[13] * m[2] * m[7] - m[13] * m[3] * m[6];
+  inverse[6] = -m[0] * m[6] * m[15] + m[0] * m[7] * m[14] +
+    m[4] * m[2] * m[15] - m[4] * m[3] * m[14] -
+    m[12] * m[2] * m[7] + m[12] * m[3] * m[6];
+  inverse[10] = m[0] * m[5] * m[15] - m[0] * m[7] * m[13] -
+    m[4] * m[1] * m[15] + m[4] * m[3] * m[13] +
+    m[12] * m[1] * m[7] - m[12] * m[3] * m[5];
+  inverse[14] = -m[0] * m[5] * m[14] + m[0] * m[6] * m[13] +
+    m[4] * m[1] * m[14] - m[4] * m[2] * m[13] -
+    m[12] * m[1] * m[6] + m[12] * m[2] * m[5];
+  inverse[3] = -m[1] * m[6] * m[11] + m[1] * m[7] * m[10] +
+    m[5] * m[2] * m[11] - m[5] * m[3] * m[10] -
+    m[9] * m[2] * m[7] + m[9] * m[3] * m[6];
+  inverse[7] = m[0] * m[6] * m[11] - m[0] * m[7] * m[10] -
+    m[4] * m[2] * m[11] + m[4] * m[3] * m[10] +
+    m[8] * m[2] * m[7] - m[8] * m[3] * m[6];
+  inverse[11] = -m[0] * m[5] * m[11] + m[0] * m[7] * m[9] +
+    m[4] * m[1] * m[11] - m[4] * m[3] * m[9] -
+    m[8] * m[1] * m[7] + m[8] * m[3] * m[5];
+  inverse[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] -
+    m[4] * m[1] * m[10] + m[4] * m[2] * m[9] +
+    m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
+
+  const determinant =
+    m[0] * readMatrixValue(inverse, 0) +
+    m[1] * readMatrixValue(inverse, 4) +
+    m[2] * readMatrixValue(inverse, 8) +
+    m[3] * readMatrixValue(inverse, 12);
+  if (Math.abs(determinant) <= 0.0000001) {
+    return IDENTITY_MATRIX_4;
+  }
+
+  for (let index = 0; index < 16; index += 1) {
+    inverse[index] = readMatrixValue(inverse, index) / determinant;
+  }
+  return inverse;
+}
+
 function readMatrixValue(matrix: Mat4, index: number): number {
   return matrix[index] ?? 0;
 }
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function smoothstep(value: number): number {
+  const clampedValue = clamp(value, 0, 1);
+  return clampedValue * clampedValue * (3 - 2 * clampedValue);
 }
 
 function createPerspectiveMatrix(
@@ -2055,222 +2875,3 @@ function createScaleMatrix(x: number, y: number, z: number): Mat4 {
     0, 0, 0, 1,
   ]);
 }
-
-const vertexShaderSource = `
-  attribute vec3 aPosition;
-  attribute vec2 aUv;
-  uniform mat4 uMatrix;
-  varying vec2 vUv;
-  varying float vHeight;
-  varying vec2 vTerrainPosition;
-
-  void main() {
-    vUv = aUv;
-    vHeight = aPosition.z / ${HEIGHT_SCALE.toFixed(2)};
-    vTerrainPosition = aPosition.xy;
-    gl_Position = uMatrix * vec4(aPosition, 1.0);
-  }
-`;
-
-const fragmentShaderSource = `
-  precision mediump float;
-  uniform sampler2D uTexture;
-  uniform sampler2D uMaterialTexture;
-  uniform vec3 uLandTextureColorAdjust;
-  uniform vec2 uLandTextureShadeRange;
-  varying vec2 vUv;
-  varying float vHeight;
-  varying vec2 vTerrainPosition;
-
-  float colorDistance(vec3 left, vec3 right) {
-    return distance(left, right);
-  }
-
-  float materialWeight(vec3 material, vec3 target, float radius) {
-    return 1.0 - smoothstep(0.0, radius, colorDistance(material, target));
-  }
-
-  float hash(vec2 point) {
-    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453);
-  }
-
-  float getWaterAmount(vec3 terrainType) {
-    return
-      step(0.22, terrainType.r) *
-      (1.0 - step(0.12, terrainType.g)) *
-      (1.0 - step(0.12, terrainType.b));
-  }
-
-  vec2 hexToPixel(vec2 hex) {
-    return vec2(
-      1.7320508 * (hex.x + hex.y * 0.5),
-      1.5 * hex.y
-    );
-  }
-
-  vec3 cubeRound(vec3 cube) {
-    vec3 rounded = floor(cube + 0.5);
-    vec3 difference = abs(rounded - cube);
-
-    if (difference.x > difference.y && difference.x > difference.z) {
-      rounded.x = -rounded.y - rounded.z;
-    } else if (difference.y > difference.z) {
-      rounded.y = -rounded.x - rounded.z;
-    } else {
-      rounded.z = -rounded.x - rounded.y;
-    }
-
-    return rounded;
-  }
-
-  vec2 pixelToRoundedHex(vec2 point) {
-    vec2 axial = vec2(
-      0.5773503 * point.x - 0.3333333 * point.y,
-      0.6666667 * point.y
-    );
-    vec3 cube = vec3(axial.x, axial.y, -axial.x - axial.y);
-    vec3 roundedCube = cubeRound(cube);
-
-    return roundedCube.xy;
-  }
-
-  float getHexGridLine(vec2 point, vec2 cell) {
-    vec2 center = hexToPixel(cell);
-    float centerDistance = length(point - center);
-    float neighborDistance = 1000.0;
-
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(1.0, 0.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 0.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(0.0, 1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(0.0, -1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(1.0, -1.0))));
-    neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 1.0))));
-
-    float boundaryDistance = abs(neighborDistance - centerDistance);
-    float lineWidth = 0.026;
-
-    return 1.0 - smoothstep(0.0, lineWidth, boundaryDistance);
-  }
-
-  vec2 getHexAtlasUv(vec2 point, vec2 cell) {
-    const float tileCount = 4.0;
-    vec2 localPoint = point - hexToPixel(cell);
-    vec2 localUv = clamp(
-      vec2(localPoint.x / 1.7320508 + 0.5, localPoint.y / 2.0 + 0.5),
-      0.0,
-      1.0
-    );
-    float tileIndex = floor(hash(cell) * 16.0);
-    vec2 tile = vec2(mod(tileIndex, tileCount), floor(tileIndex / tileCount));
-
-    return (tile + localUv) / tileCount;
-  }
-
-  vec3 getHexTerrainColor(vec3 terrainType) {
-    float water = getWaterAmount(terrainType);
-    float plain =
-      step(0.22, terrainType.g) *
-      step(terrainType.r, 0.45) *
-      (1.0 - water);
-    float coast =
-      step(0.36, terrainType.b) *
-      step(0.30, terrainType.g) *
-      (1.0 - water);
-    float mountain =
-      max(
-        materialWeight(terrainType, vec3(0.38, 0.25, 0.25), 0.22),
-        materialWeight(terrainType, vec3(0.50, 0.50, 0.25), 0.24)
-      ) * (1.0 - water) * (1.0 - plain);
-
-    vec3 color = vec3(0.39, 0.52, 0.27);
-    color = mix(color, vec3(0.18, 0.55, 0.26), plain);
-    color = mix(color, vec3(0.44, 0.38, 0.25), mountain);
-    color = mix(color, vec3(0.24, 0.64, 0.52), coast * (1.0 - plain));
-    color = mix(color, vec3(0.10, 0.35, 0.72), water);
-
-    return color;
-  }
-
-  vec3 boostLandTextureColor(vec3 color) {
-    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    vec3 saturated = mix(vec3(luma), color, uLandTextureColorAdjust.x);
-
-    return clamp(
-      saturated * uLandTextureColorAdjust.y + vec3(uLandTextureColorAdjust.z),
-      0.0,
-      1.0
-    );
-  }
-
-  void main() {
-    const float hexScale = ${HEX_TERRAIN_SCALE.toFixed(1)};
-    const float mapAspect = ${HEX_MAP_ASPECT.toFixed(4)};
-    vec2 hexPoint = vec2((vUv.x - 0.5) * mapAspect, vUv.y - 0.5) * hexScale;
-    vec2 hexCell = pixelToRoundedHex(hexPoint);
-    vec2 hexCenter = hexToPixel(hexCell);
-    vec2 hexUv = vec2(
-      hexCenter.x / (hexScale * mapAspect) + 0.5,
-      hexCenter.y / hexScale + 0.5
-    );
-    vec2 atlasUv = getHexAtlasUv(hexPoint, hexCell);
-    vec4 base = texture2D(uTexture, atlasUv);
-    vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
-    vec3 terrainColor = getHexTerrainColor(material);
-    float water = getWaterAmount(material);
-    float shade = clamp(${GRASS_AMBIENT_LIGHT.toFixed(2)} + vHeight * 0.16, 0.50, 1.08);
-    float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
-    vec3 landTexture = boostLandTextureColor(base.rgb);
-    float landTextureLuma = dot(landTexture, vec3(0.2126, 0.7152, 0.0722));
-    landTexture = clamp(
-      mix(vec3(landTextureLuma), landTexture, ${GRASS_TEXTURE_DETAIL.toFixed(2)}),
-      0.0,
-      1.0
-    );
-    float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, shade);
-    vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
-    vec3 waterColor = terrainColor * shade;
-    vec3 color = mix(landColor, waterColor, water);
-
-    float border = getHexGridLine(hexPoint, hexCell);
-    color = mix(color, vec3(0.0), border * 0.34);
-
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
-const actorVertexShaderSource = `
-  attribute vec3 aPosition;
-  attribute vec3 aNormal;
-  attribute vec2 aUv;
-  uniform mat4 uMatrix;
-  varying vec3 vNormal;
-  varying vec2 vUv;
-
-  void main() {
-    vNormal = aNormal;
-    vUv = aUv;
-    gl_Position = uMatrix * vec4(aPosition, 1.0);
-  }
-`;
-
-const actorFragmentShaderSource = `
-  precision mediump float;
-  uniform vec3 uLight;
-  uniform sampler2D uTexture;
-  uniform vec3 uTint;
-  varying vec3 vNormal;
-  varying vec2 vUv;
-
-  void main() {
-    vec3 normal = normalize(vNormal);
-    float directionalLight = max(dot(normal, normalize(uLight)), 0.0);
-    float light = 0.42 + directionalLight * 0.58;
-    vec3 rim = vec3(0.16, 0.12, 0.08) * pow(1.0 - max(normal.z, 0.0), 2.0);
-    vec4 base = texture2D(uTexture, vUv);
-    if (base.a < 0.08) {
-      discard;
-    }
-    vec3 color = base.rgb * uTint;
-    gl_FragColor = vec4(color * light + rim, base.a);
-  }
-`;

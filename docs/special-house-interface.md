@@ -426,6 +426,16 @@ further betting or draw controls without reading private session rules.
 If a module-specific overlay needs extra controls, extend the shared typed contract
 (for example a medicine compounding clear action or a shared QTE bar-stop minigame overlay)
 instead of relying on DOM-only behavior.
+For house-owned activity work that reuses the generic activity playable, expose a structured
+shared activity overlay such as `fortune-board` from the shared activity session rather than
+rebuilding a separate house-local QTE timer. The house module may still own settlement,
+rewards, time cost, and return-to-house result copy after the shared playable emits its result.
+If that shared activity overlay has staged visual phases, expose the phase and stable animation
+version fields as typed data. For example `fortune-board` carries `phase`, highlighted cell ids,
+selected cell ids, flash state fields such as `flashActive` / `pickFlashActive`,
+`rerollCount`, and speed control fields such as `animationTickMs` / `speedFieldId`;
+renderers use those fields to animate current state and must not infer reroll timing from
+button text, DOM order, or whether a visible label changed.
 If one overlay contains a staged interaction
 (for example "select a topic, then confirm"),
 extend the shared overlay contract with the staged control fields first

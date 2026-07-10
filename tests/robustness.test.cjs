@@ -141,6 +141,9 @@ const {
   sampleScene,
 } = require("../.test-dist/content/sample-scenario.js");
 const {
+  adjustActivityFortuneBoardWager,
+  playActivityFortuneBoard,
+  tickActivityFortuneBoard,
   stopActivityQte,
 } = require("../.test-dist/application/activity/activity-qte-runtime.js");
 const {
@@ -496,62 +499,72 @@ test("scene start-activity action executes registered fallback activity", () => 
   });
 
   assert.equal(result.currentAction?.type, "narration");
-  assert.equal(result.state.runtime.activitySession?.type, "qte-bar");
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
   assert.equal(result.state.runtime.activitySession.activityId, "activity.test.special");
   assert.equal(result.state.runtime.variables["var.test.activity.points"], undefined);
 
-  const firstStop = stopActivityQte(
-    {
-      ...result.state,
-      runtime: {
-        ...result.state.runtime,
-        activitySession: {
-          ...result.state.runtime.activitySession,
-          markerPercent: 45,
-        },
-      },
-    },
-    activityDefinition,
-    prototypeCharacters
-  );
-  const secondStop = stopActivityQte(
-    {
-      ...firstStop.state,
-      runtime: {
-        ...firstStop.state.runtime,
-        activitySession: {
-          ...firstStop.state.runtime.activitySession,
-          markerPercent: 62,
-        },
-      },
-    },
-    activityDefinition,
-    firstStop.characterDefinitions
-  );
-  const thirdStop = stopActivityQte(
-    {
-      ...secondStop.state,
-      runtime: {
-        ...secondStop.state.runtime,
-        activitySession: {
-          ...secondStop.state.runtime.activitySession,
-          markerPercent: 0,
-        },
-      },
-    },
-    activityDefinition,
-    secondStop.characterDefinitions
-  );
+  let settledBoard = {
+    state: result.state,
+    characterDefinitions: prototypeCharacters,
+  };
+  for (let round = 0; round < 10; round += 1) {
+    if (settledBoard.state.runtime.activitySession?.type === "result") {
+      break;
+    }
+    while (
+      settledBoard.state.runtime.activitySession.type === "fortune-board" &&
+      settledBoard.state.runtime.activitySession.wager <
+        Math.min(5, settledBoard.state.runtime.activitySession.remainingPieces)
+    ) {
+      settledBoard = {
+        state: adjustActivityFortuneBoardWager(settledBoard.state, 1),
+        characterDefinitions: settledBoard.characterDefinitions,
+      };
+    }
+    settledBoard = playActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    settledBoard = tickActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    settledBoard = playActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    for (let tick = 0; tick < 100; tick += 1) {
+      settledBoard = tickActivityFortuneBoard(
+        settledBoard.state,
+        activityDefinition,
+        settledBoard.characterDefinitions
+      );
+      if (
+        settledBoard.state.runtime.activitySession?.type === "result" ||
+        (settledBoard.state.runtime.activitySession?.type === "fortune-board" &&
+          settledBoard.state.runtime.activitySession.phase === "ready")
+      ) {
+        break;
+      }
+    }
+  }
 
-  assert.equal(thirdStop.state.runtime.activitySession?.type, "result");
-  assert.equal(thirdStop.state.runtime.flags["flag.test.activity.completed"], true);
+  assert.equal(settledBoard.state.runtime.activitySession?.type, "result");
+  assert.equal(settledBoard.state.runtime.flags["flag.test.activity.completed"], true);
   assert.equal(
-    thirdStop.state.runtime.flags["flag.activity.test.special.completed"],
+    settledBoard.state.runtime.flags["flag.activity.test.special.completed"],
     true
   );
-  assert.equal(thirdStop.state.runtime.variables["var.test.activity.grade"], "success");
-  assert.equal(thirdStop.state.runtime.variables["var.test.activity.points"], 5);
-  assert.equal(thirdStop.state.runtime.variables["var.activity.last_handler"], "generic.qte");
+  assert.equal(settledBoard.state.runtime.variables["var.test.activity.grade"], "success");
+  assert.equal(settledBoard.state.runtime.variables["var.test.activity.points"], 5);
+  assert.equal(
+    settledBoard.state.runtime.variables["var.activity.last_handler"],
+    "generic.qte"
+  );
+  assert.ok(settledBoard.state.runtime.activitySession.score >= 5);
 });
 
 function withCouncilInDays(state, days = 30) {
@@ -9558,26 +9571,88 @@ test("temple work reaching contribution threshold starts shared map auto advance
       actionId: "confirm-start-temple-task:copy-scripture",
     },
   });
+  assert.equal(confirmedWorkResult.sessionState?.overlay, null);
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.playableSession?.playableId,
+    "activity-qte"
+  );
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.playableSession?.integrationId,
+    "playable.activity-qte.house.temple"
+  );
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.activitySession?.type,
+    "fortune-board"
+  );
 
   let qteResult = confirmedWorkResult;
-  for (let round = 0; round < 3; round += 1) {
+  for (let round = 0; round < 10; round += 1) {
+    if (qteResult.sessionState?.overlay?.type === "result") {
+      break;
+    }
+    while (
+      qteResult.gameState.runtime.activitySession.type === "fortune-board" &&
+      qteResult.gameState.runtime.activitySession.wager <
+        Math.min(5, qteResult.gameState.runtime.activitySession.remainingPieces)
+    ) {
+      qteResult = templeHouseHouseModule.dispatch({
+        gameState: qteResult.gameState,
+        characterDefinitions: qteResult.characterDefinitions,
+        houseDefinition: templeHouse,
+        playerCharacterId,
+        sessionState: qteResult.sessionState,
+        request: {
+          type: "action",
+          actionId: "temple-work-board-wager-plus",
+        },
+      });
+    }
     qteResult = templeHouseHouseModule.dispatch({
       gameState: qteResult.gameState,
       characterDefinitions: qteResult.characterDefinitions,
       houseDefinition: templeHouse,
       playerCharacterId,
-      sessionState: {
-        ...qteResult.sessionState,
-        overlay: {
-          ...qteResult.sessionState.overlay,
-          markerPercent: qteResult.sessionState.overlay.targetStartPercent,
-        },
-      },
-      request: { type: "action", actionId: "temple-work-stop" },
+      sessionState: qteResult.sessionState,
+      request: { type: "action", actionId: "temple-work-board-play" },
     });
+    qteResult = templeHouseHouseModule.dispatch({
+      gameState: qteResult.gameState,
+      characterDefinitions: qteResult.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: qteResult.sessionState,
+      request: { type: "tick", tickId: "temple-house-work-qte" },
+    });
+    qteResult = templeHouseHouseModule.dispatch({
+      gameState: qteResult.gameState,
+      characterDefinitions: qteResult.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: qteResult.sessionState,
+      request: { type: "action", actionId: "temple-work-board-play" },
+    });
+    for (let tick = 0; tick < 100; tick += 1) {
+      qteResult = templeHouseHouseModule.dispatch({
+        gameState: qteResult.gameState,
+        characterDefinitions: qteResult.characterDefinitions,
+        houseDefinition: templeHouse,
+        playerCharacterId,
+        sessionState: qteResult.sessionState,
+        request: { type: "tick", tickId: "temple-house-work-qte" },
+      });
+      if (
+        qteResult.sessionState?.overlay?.type === "result" ||
+        (qteResult.gameState.runtime.activitySession?.type === "fortune-board" &&
+          qteResult.gameState.runtime.activitySession.phase === "ready")
+      ) {
+        break;
+      }
+    }
   }
 
   assert.equal(qteResult.sessionState?.overlay?.type, "result");
+  assert.equal(qteResult.gameState.runtime.playableSession, null);
+  assert.equal(qteResult.gameState.runtime.activitySession, null);
   assert.equal(
     getPlayerCharacter(qteResult.characterDefinitions).stamina,
     startingStamina - ACTIVITY_COMPLETION_STAMINA_COST

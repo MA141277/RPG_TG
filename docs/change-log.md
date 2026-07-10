@@ -54,6 +54,86 @@
 - 同一 residue family 的后继步骤默认会在 Blueprint 内部继续路由，只有真的存在多路合法分叉时才需要人工决策。
 - queue / candidate / closeout 的状态表达更接近代码真实完成度，而不是只反映文档同步或治理动作是否发生。
 
+## 2026-07-09 Three.js Renderer Boundary
+
+### Added
+- 新增 `three` 运行时依赖，作为后续 3D / WebGL 表现层基础库。
+- `docs/architecture.md` 记录 3D renderer 依赖边界：`three` 只能直接用于 `src/ui/**` 表现层，不能进入 `content`、`domain`、`application` 或 runtime 模块。
+
+### Impact
+- 后续 3D 场景、模型、特效、拾取和后处理可以复用 three.js 的现成渲染能力；玩法状态、探索、通行、事件、任务、house 会话和资源变化仍必须通过统一 game state / runtime 结构流转，不能藏进 three.js scene graph 或 `Object3D.userData`。
+
+## 2026-07-08 Character Select Ink Feedback
+
+### Changed
+- 角色选择界面的墨点反馈从 DOM 矩形边缘采样改为图片 alpha 轮廓采样：`main-ui-flow.js` 会优先读取目标控件自身 CSS 背景图，按当前 `background-size` / `background-position` 计算实际绘制区域，再从透明像素边界提取轮廓点和外法线生成墨点。
+- 角色选择界面初始化时会预热角色卡、书签、翻页按钮、返回按钮和开始按钮的轮廓缓存；无可采样图片或图片尚未加载时仍保留旧矩形采样兜底，避免 UI 反馈完全丢失。
+
+### Impact
+- 玩家在角色选择页悬浮或键盘聚焦控件时，墨点点选效果会贴近 UI 图片自身的不规则轮廓，而不是贴住控件外接方框；视觉资产仍由现有 CSS / 布局编辑器背景图维护。
+
+## 2026-07-08 Campaign Map Interaction Stability
+
+### Added
+- 大地图新增可踏足 hex 悬浮反馈层：`map-view.ts` 生成 `data-campaign-hover-hex` SVG overlay，`main.ts` 根据当前 terrain 投影、探索状态、地形通行判定和寻路结果绘制白色六边形描边，`prototype.css` 将其放在云层之上且不接管鼠标事件。
+
+### Changed
+- 大地图 marker 和 marker summary 增加稳定 DOM 身份，`renderAppFrame()` 在地图重绘时像保活 terrain / actor / cloud canvas 一样移植旧 marker 节点，并只同步语义属性，保留 terrain 投影产生的位置样式，减少玩家移动结束时城市/建筑标识被销毁重建造成的刷新感。
+- `docs/architecture.md` 同步大地图 marker 保活、可踏足 hex hover 反馈只读寻路结果、以及 hover 描边位于云层上方的层级契约。
+- 云层 reveal mask 新增上一帧探索纹理与 `uRevealTransition` 过渡；新探索格开洞时按云噪声做溶解式切换，避免云层直接消失。
+- 云层 shader 在已探索空洞内进一步衰减全图空气雾层和孤立云团残留，但不改变洞口边缘云壁的语义来源。
+- 大地图通行网格改为按 `map_ground_types` 的水域材质语义生成，和 terrain shader 的陆地/水体渲染判断对齐；`map_heights` 不再负责寻路通行判定，避免低矮陆地被当成水体。
+- 可踏足 hex 悬浮描边改为几何角点投影、高度锚定到当前 hex 中心，避免角点误采邻格高度导致六边形端点翘起或下陷。
+- 云层空洞内的次级残留层同步衰减，减少已探索核心区里额外覆盖整层薄雾或外云团残影。
+- 云层 reveal mask 的 hex 多边形同样改为角点投影、中心高度锚定，避免 mask 轮廓因角点误采邻格高度而变形。
+- 大地图通行性收紧为 terrain shader 同款“hex 中心材质”语义，并直接使用 `map_ground_types` 原始尺寸采样；岸边水格不再因为角点陆地样本被放行。
+- 云洞核心区的 inner wisp、云影与 outer puff 后叠层统一随空气雾层 keep mask 衰减到 0，避免洞内残留独立薄层。
+- 云洞边缘扰动按视觉反馈恢复旧版单向 offset 采样路径，保留此前更强的云墙撕裂和融合效果。
+- 云洞流动边缘恢复使用 reveal red 通道浅云层生成 `edgeBand` / `shallowZone` / `rimAlpha`；真正的硬六边形块改为从 raw `baseClear` 迁出，核心清空、空气雾和孤立云残留都改读 offset 后的有机 clear field，避免原始 mask 块作为独立透明度分区显露。
+
+### Impact
+- 玩家移动后地图标识节点保持稳定，地图 hover 反馈只提示当前实际可抵达的已探索陆地 hex；低矮陆地按渲染材质参与寻路，云层开图仍由探索状态驱动，视觉过渡更接近云层被逐步拨开的效果。
+
+## 2026-07-07 Campaign Viewport Cloud Shader
+
+### Added
+- 新增大地图视口级云雾 overlay renderer `src/ui/views/map/campaign-cloud-webgl.ts`，通过独立 `data-campaign-map-cloud` canvas 渲染慢速动态云层。
+- 新增 `campaign-cloud.vert.glsl` 与 `campaign-cloud.frag.glsl`，使用连续程序 FBM、billow 云雾变体与 `map_fog_noise` 轻量贴图扰动生成云体密度、明暗层次和轻微自阴影质感。
+- 新增视口空间探索挖空 reveal mask：`map-view.ts` 将当前地图累计 `revealedHexKeys` 传给云层 canvas，`campaign-cloud-webgl.ts` 生成 `uRevealTexture`，`campaign-cloud.frag.glsl` 用它裁切云层 alpha。
+- `campaign-terrain-webgl.ts` 新增只读投影 helper，将 terrain UV 投影到当前视口 client 坐标；云层 renderer 用它在完整视口云层上对齐地图 hex 挖空。
+- `travel-to-coordinate.ts` 新增 `hexToCoordinatePolygon()`，让探索挖空复用 navigation 的尖顶 axial hex 几何。
+
+### Changed
+- 大地图初始相机改为以玩家当前坐标为屏幕中心，默认缩放改为 40x；地图 reset 会回到同一 home camera。
+- `campaign-terrain-webgl.ts` 新增按地图坐标生成居中相机的 helper，避免 `main.ts` 复制 terrain 投影矩阵细节。
+- 未探索 campaign marker 在 view model 层标记为不可交互，渲染时不再带 `data-map-node-id`，并通过 disabled / pointer-events 屏蔽点击和 hover 详情。
+- campaign 地形通行网格从 hex 中心单点高度判定改为 hex 区域多点采样：中心为明确陆地或区域内有足够陆地样本才可通行，减少低矮陆地被误判为水体导致无法寻路的问题。
+- `docs/architecture.md` 收敛为地图模块责任、数据流和层级契约，不再记录云层 shader 的噪声、距离场、阈值等实现细节。
+- `map-view.ts` 在 `c-campaign-map` 视口内生成云雾 canvas，并把 marker 悬浮详情拆成独立 overlay；`prototype.css` 将云层限制在地图视口中，`pointer-events: none`，层级压过地图建筑点本体，但低于 marker 悬浮详情、debug 控件、全局 UI 和确认 modal。
+- `campaign-terrain-webgl.ts` 的地形投影同步不再给 marker 本体或玩家写入深度排序高层级；marker、玩家 DOM sprite 和 actor canvas 固定在云层下方，只有 marker 悬浮详情固定在云层上方。
+- 云雾 shader 重构为烟雾式密度场：云体主体形状、团块边界、明暗和 reveal 边缘撕裂由连续 FBM、billow 变体与贴图扰动主导，Worley/胞体距离场只保留为低权重团块破碎，不再形成可见细胞纹。
+- 云雾 shader 移除导致屏幕斜向条纹的剪切雾丝层，改用各向同性的细粒度 puff / vapor breakup 扰动补充云面细节；最终 alpha 遮挡表达保持由 shader 末端统一控制。
+- 云雾主密度噪声从单个低频 `coverage` 门控改为三组独立中频 puff field 的加权密度场，低频噪声只参与域扭曲和明暗；避免 `max()` 并集把整屏填成白雾，也避免通过常量保底掩盖采样不均。云层颜色同步调回偏亮白的云体反照率。
+- 云雾密度拆成连续 `overcast` 覆盖层和 `cloudHeightField()` 高度层，屏幕覆盖由连续云幕维持，云团形状不再依赖透明度空洞。
+- 云雾颜色层改为基于高度场梯度的近似法线光照：通过邻近采样估算坡度，再由 `slopeLight`、`ambientOcclusion`、`selfShadow` 和 `cloudHighlight` 生成亮面与软阴影，避免“白底叠黑块”或纯白无结构。
+- 云雾光照继续加入沿光照方向的高度差采样：`upwindHeight` 产生云体投影式软阴影，`downwindHeight` 产生背光侧亮边，让满屏云幕内部出现可读的明暗起伏，而不是只有均匀白色。
+- 云雾 shader 提高高度场细节和阴影动态范围：`microShadow` / `microHighlight` 参与 RGB 细节，阴影色加深但最终 alpha 遮挡表达保持不变。
+- `campaign-cloud.frag.glsl` 顶部新增云层调参表，集中暴露 `CLOUD_SAMPLE_SCALE`、`CLOUD_FLOW_SPEED`、`CLOUD_TEXTURE_SAMPLE_SCALE`、细节/阴影/高光强度、reveal 距离场侵蚀和浅云参数，便于后续直接调整云团大小、噪声采样区域、流速和空洞形态。
+- 云层动态从单纯移动噪声 offset 改为 `buildCloudSpace()` 平流采样坐标：低频风向、缓慢 curl 和 flow warp 共同驱动云体高度场、贴图细节和 reveal 边缘，使整片云层具有连续慢速流动。
+- `campaign-terrain-webgl.ts` 新增只读 `getCampaignTerrainCamera()`，`campaign-cloud-webgl.ts` 每帧将当前地图相机作为 `uMapCamera` 传入云层 shader；云层采样空间按 `offset / scale` 的有效相机平移做弱反向采样偏移、按相机 scale 做部分缩放，保持气象层自身流动的同时响应地图拖拽和缩放，并避免单纯缩放因 offset 同步变化产生额外漂移。
+- 探索空洞从单一 reveal alpha 裁切改为距离场驱动：`campaign-cloud-webgl.ts` 先栅格化已探索尖顶 hex 联合区域，再用边界距离场写入 `uRevealTexture`，shader 只负责用云阻力噪声侵蚀 `clearMask`，不再额外叠加完整云墙环。
+- `campaign-cloud-webgl.ts` 的 reveal mask 不再通过核心/外肩/外圈多层 polygon alpha 与 canvas blur 生成；red 通道改为洞外距离带浅云近场，green 通道改为清空 signed-distance 场，texture alpha 固定为 255 以避免 canvas 预乘 alpha 吃掉语义通道。
+- 云洞外侧浅云近场改为距离场语义：`CLOUD_REVEAL_FIELD_*_RATIO` 根据当前投影 hex 半径生成内清空、外清空和浅云距离带，`REVEAL_SHALLOW_*` 在 shader 中只把它解释为浅云区，外圈之外恢复当前深云层。
+- 浅云层从“深云降透明度 / RGB 染色”改为独立稀疏云体：`sampleShallowCloudLayer()` 使用更高覆盖阈值、更小 puff 采样和自身明暗来生成少量浅云团；主合成在浅云语义区降低深云保留量，再叠加浅云层，避免形成均匀浅白盘或透明度锐减的假过渡。
+- 浅云到深云、浅云到空洞的过渡改为 reveal 语义场与 `cloudResistance` 云阻力共同决定云体替换比例；边界处会按云团/细节噪声破碎，而不是只依赖 smoothstep 圆滑羽化。
+- 修正浅云密度场过稀的问题：浅云层改用更符合当前高度场分布的成云阈值，并新增 `puffPresence` 云团存在场与干区削减场，让浅云区出现少量可见云团，而不是完全无云或只靠 alpha 提亮。
+- 云洞边缘移除独立 `cloudWall` 合成层；边界厚度现在只能来自距离场 clear mask 被云阻力噪声局部侵蚀，以及浅云层对深云层的替换，避免截图中那种预制白色厚环。
+- 云洞 shader 移除低 alpha `discard`，让透明边缘继续走正常 alpha blend，避免在云洞边界重新切出像素级硬边。
+- 云洞边缘从“mask 加少量噪声扰动”改为“开洞压力与云阻力对抗”：`cloudResistance` 由大团块、billow 扇贝状云缘、细节纹理和云丝纹理组成，密云会咬住边界形成残留云壁，薄云才会被打开，确保 reveal 边缘能看到实际噪声轮廓。
+
+### Impact
+- 大地图云层、探索开洞和可踏足反馈的表现不再依赖简单 alpha 蒙版或一次性 DOM 重绘，视觉层和交互层的稳定性更接近持续运行的战役地图系统。
+
 ## 2026-07-08 Review Cadence Shared Mechanism Support Spec
 
 ### Added
