@@ -89,8 +89,8 @@
   - `none`
 - Current handoff:
   - `Fresh 2026-07-10 version-level review promotes queue.active-content-consumption-closure as the single active execution queue because queue.canonical-runtime-state-sync-unification is now closed and current source truth still shows live default-content production dependency residue in keep-house and city-scene-mappings.`
-  - `Queue-local baseline review freezes the first lawful cut as keep-house default-content dependency lift: isolate keep-house from defaultPackActivities/defaultPackTextEntries and direct defaultRuntimeContent.houseModuleDefaults behind one application-owned active-content seam before reconsidering city-scene-mappings or broader defaultRuntimeContent residue.`
-- `The current legal execution path is task.active-content-consumption-closure.keep-house-default-content-dependency-lift inside docs/blueprints/queues/active-content-consumption-closure-queue.md.`
+  - `Queue-local keep-house-default-content-dependency-lift is now complete: keep-house consumes src/application/house-modules/keep-house/keep-house-active-content.ts as the covered seam, and queue control now moves to residue review for the remaining city-scene-mappings defaultRuntimeContent residue.`
+- `The current legal execution path is task.active-content-consumption-closure.active-content-residue-review inside docs/blueprints/queues/active-content-consumption-closure-queue.md.`
 - `The current live candidate set is empty while queue.active-content-consumption-closure remains active.`
 
 ### Queue Admission Startup Rules

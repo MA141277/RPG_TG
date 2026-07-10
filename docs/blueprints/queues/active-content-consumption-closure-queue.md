@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `conditional`
-- active_task: `task.active-content-consumption-closure.keep-house-default-content-dependency-lift`
-- next_task: `task.active-content-consumption-closure.active-content-residue-review`
+- active_task: `task.active-content-consumption-closure.active-content-residue-review`
+- next_task: `none`
 - closeout_status: `in-progress`
 - next_effect: `none`
 - sync_status: `pending`
@@ -44,9 +44,9 @@
 
 - queue_goal: `Lift the covered keep-house and city-scene-mappings production dependency residue off defaultRuntimeContent/defaultPack* behind application-owned active-content seams before reconsidering broader active-content cleanup.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `The current active task moves keep-house off defaultPackActivities/defaultPackTextEntries and direct defaultRuntimeContent.houseModuleDefaults consumption on the covered production path.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `The current active task reassesses whether the remaining city-scene-mappings defaultRuntimeContent residue stays as one bounded same-queue continuation or returns to version review after the keep-house seam landed.`
 - task_briefs:
   - `task.active-content-consumption-closure.baseline-reconcile: freeze the smallest lawful first active-content cleanup slice and confirm the queue remains bounded.`
   - `task.active-content-consumption-closure.keep-house-default-content-dependency-lift: move covered keep-house production defaults behind one application-owned active-content seam.`
@@ -87,8 +87,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.active-content-consumption-closure.baseline-reconcile` | `completed` | `Freeze the smallest lawful first active-content cleanup slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze keep-house default-content dependency lift as the first bounded slice ahead of city-scene-mappings and broader defaultRuntimeContent residue.` |
-| `task.active-content-consumption-closure.keep-house-default-content-dependency-lift` | `active` | `Move covered keep-house production defaults behind one application-owned active-content seam.` | `task.active-content-consumption-closure.baseline-reconcile` | `Active after the first lawful slice was frozen.` |
-| `task.active-content-consumption-closure.active-content-residue-review` | `queued` | `Reassess city-scene-mappings and other remaining defaultRuntimeContent/defaultPack residue after the first keep-house slice lands.` | `task.active-content-consumption-closure.keep-house-default-content-dependency-lift` | `Must not start before the first keep-house slice lands and verification passes.` |
+| `task.active-content-consumption-closure.keep-house-default-content-dependency-lift` | `completed` | `Move covered keep-house production defaults behind one application-owned active-content seam.` | `task.active-content-consumption-closure.baseline-reconcile` | `Completed after keep-house-active-content.ts became the covered default-content seam and verification passed.` |
+| `task.active-content-consumption-closure.active-content-residue-review` | `active` | `Reassess city-scene-mappings and other remaining defaultRuntimeContent/defaultPack residue after the first keep-house slice lands.` | `task.active-content-consumption-closure.keep-house-default-content-dependency-lift` | `Active now that the first keep-house slice has landed and verification passed.` |
 
 ### Task Definitions
 
@@ -154,7 +154,7 @@
 ##### Control Block
 
 - task_id: `task.active-content-consumption-closure.keep-house-default-content-dependency-lift`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/house-modules/keep-house/**`
@@ -193,7 +193,7 @@
 - task_brief:
   - `Lift keep-house production default-content access behind one application-owned active-content seam.`
 - task_outcome_summary:
-  - `When complete, keep-house will stop consuming defaultPackActivities/defaultPackTextEntries and direct defaultRuntimeContent.houseModuleDefaults on the covered path and will instead read one application-owned active-content seam.`
+  - `Completed after keep-house stopped directly importing defaultPackActivities/defaultPackTextEntries and defaultRuntimeContent, and now consumes src/application/house-modules/keep-house/keep-house-active-content.ts as the covered application-owned active-content seam.`
 - Purpose:
   - `Reduce live default-content production dependency inside keep-house before the queue re-evaluates remaining city-scene-mappings and broader active-content residue.`
 - Failure mode:
@@ -204,7 +204,7 @@
 ##### Control Block
 
 - task_id: `task.active-content-consumption-closure.active-content-residue-review`
-- state: `queued`
+- state: `active`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
@@ -262,3 +262,7 @@
   - Summary: `Completed baseline-reconcile by freezing keep-house default-content dependency lift as the first lawful implementation slice, while leaving city-scene-mappings and broader defaultRuntimeContent residue for later in-queue review.`
   - Verification: `rg -n "defaultPackActivities|defaultPackTextEntries|defaultRuntimeContent|houseModuleDefaults" src/application/house-modules/keep-house/keep-house-house-module.ts src/content/city-scene-mappings.ts src/application/content/default-pack-content.ts src/application/content/default-runtime-content.ts src/application/content/active-game-content.ts; node tools/lint-blueprints.mjs`
   - Next at this time: `Execute task.active-content-consumption-closure.keep-house-default-content-dependency-lift with a failing test first.`
+- 2026-07-10
+  - Summary: `Completed keep-house-default-content-dependency-lift by moving keep-house default activity, text, and houseModuleDefaults fallback access behind src/application/house-modules/keep-house/keep-house-active-content.ts, removing direct defaultPack/defaultRuntimeContent imports from the module, and aligning robustness coverage to the new seam.`
+  - Verification: `node --test --test-name-pattern "keep house reads shared module defaults from runtime content|keep house no longer consumes default pack content through module-top-level default runtime fallbacks|keep house review copy resolves from text entries during strategy and assignment flow|keep house audience and late-review copy resolves from text entries" tests/robustness.test.cjs; npm run typecheck; npm test`
+  - Next at this time: `Execute task.active-content-consumption-closure.active-content-residue-review to decide whether city-scene-mappings defaultRuntimeContent residue stays in-queue or returns to version review.`

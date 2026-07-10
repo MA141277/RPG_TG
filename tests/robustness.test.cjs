@@ -4815,8 +4815,12 @@ test("keep house reads shared module defaults from runtime content", () => {
   const keepHouseModulePath = require.resolve(
     "../.test-dist/application/house-modules/keep-house/keep-house-house-module.js"
   );
+  const keepHouseActiveContentModulePath = require.resolve(
+    "../.test-dist/application/house-modules/keep-house/keep-house-active-content.js"
+  );
   delete require.cache[defaultRuntimeContentModulePath];
   delete require.cache[keepHouseModulePath];
+  delete require.cache[keepHouseActiveContentModulePath];
 
   const {
     defaultRuntimeContent,
@@ -4883,6 +4887,28 @@ test("keep house reads shared module defaults from runtime content", () => {
       runtimeDefaults["keep-house"] = previousKeepDefaults;
     }
   }
+});
+
+test("keep house no longer consumes default pack content through module-top-level default runtime fallbacks", () => {
+  const keepHouseSource = fs.readFileSync(
+    "src/application/house-modules/keep-house/keep-house-house-module.ts",
+    "utf8"
+  );
+  const keepHouseActiveContentSource = fs.readFileSync(
+    "src/application/house-modules/keep-house/keep-house-active-content.ts",
+    "utf8"
+  );
+
+  assert.match(keepHouseSource, /from "\.\/keep-house-active-content"/);
+  assert.doesNotMatch(keepHouseSource, /default-pack-content/);
+  assert.doesNotMatch(keepHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(keepHouseSource, /defaultPackActivities/);
+  assert.doesNotMatch(keepHouseSource, /defaultPackTextEntries/);
+  assert.doesNotMatch(keepHouseSource, /defaultRuntimeContent\.houseModuleDefaults/);
+  assert.match(keepHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(keepHouseActiveContentSource, /getKeepHouseTextEntries/);
+  assert.match(keepHouseActiveContentSource, /getKeepHouseActivityDefinitionsById/);
+  assert.match(keepHouseActiveContentSource, /getKeepHouseContentDefaults/);
 });
 
 test("grain shop market text reads shared module defaults from runtime content", async () => {

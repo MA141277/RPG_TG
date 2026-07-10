@@ -1,9 +1,3 @@
-import {
-  defaultPackActivities,
-  defaultPackTextEntries,
-} from "../../content/default-pack-content";
-import { defaultRuntimeContent } from "../../content/default-runtime-content";
-import { getHouseModuleDefaults } from "../../content/house-module-defaults";
 import type { ActivityDefinition } from "../../../domain/activity";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
@@ -44,74 +38,15 @@ import {
   getReviewCycleCountdown,
   syncReviewCycleCompatibilityMirrors,
 } from "../../review/review-cycle";
+import {
+  getKeepHouseActivityDefinitionsById as getKeepActivityDefinitionsById,
+  getKeepHouseContentDefaults,
+  getKeepHouseTextEntries as getKeepTextEntries,
+  type KeepHouseContentDefaults,
+} from "./keep-house-active-content";
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
-
-const defaultZhuyuanzhangActivities =
-  defaultPackActivities as ActivityDefinition[];
-const defaultZhuyuanzhangTextEntries = defaultPackTextEntries;
-
-type KeepHouseContentDefaults = {
-  keepHouseDefaultStrategy: {
-    titleTextId: string;
-    lineTextIds: string[];
-  };
-  keepHouseDefaultContributions: KeepHouseContributionDefinition[];
-};
-
-const FALLBACK_KEEP_HOUSE_CONTENT: KeepHouseContentDefaults = {
-  keepHouseDefaultStrategy: {
-    titleTextId: "runtime.zhu_yuanzhang.keep.review.strategy.title",
-    lineTextIds: [
-      "runtime.zhu_yuanzhang.keep.review.strategy.001",
-      "runtime.zhu_yuanzhang.keep.review.strategy.002",
-      "runtime.zhu_yuanzhang.keep.review.strategy.003",
-    ],
-  },
-  keepHouseDefaultContributions: [
-    {
-      characterId: "char.kulan_tang_he",
-      contribution: 32,
-    },
-    {
-      characterId: "char.kulan_xu_da",
-      contribution: 27,
-    },
-    {
-      characterId: "char.player",
-      contribution: 11,
-    },
-    {
-      characterId: "char.kulan_chang_yuchun",
-      contribution: 9,
-    },
-    {
-      characterId: "char.kulan_guard",
-      contribution: 6,
-    },
-  ],
-};
-
-function getKeepHouseContentDefaults(): KeepHouseContentDefaults {
-  return (
-    getHouseModuleDefaults<KeepHouseContentDefaults>(
-      defaultRuntimeContent.houseModuleDefaults,
-      "keep-house"
-    ) ?? FALLBACK_KEEP_HOUSE_CONTENT
-  );
-}
-
-function getKeepTextEntries(
-  input: {
-    textEntriesById?: Record<string, string> | undefined;
-  }
-): Record<string, string> {
-  return {
-    ...defaultZhuyuanzhangTextEntries,
-    ...(input.textEntriesById ?? {}),
-  };
-}
 
 function resolveKeepText(
   textEntriesById: Record<string, string>,
@@ -131,24 +66,6 @@ function resolveKeepTemplateText(
     values,
     `MISSING_TEXT:${textId}`
   );
-}
-
-function getKeepActivityDefinitionsById(
-  input: {
-    activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  }
-): Record<string, ActivityDefinition> {
-  const defaultKeepActivityDefinitionsById = Object.fromEntries(
-    defaultZhuyuanzhangActivities.map((activityDefinition) => [
-      activityDefinition.id,
-      activityDefinition,
-    ])
-  );
-
-  return {
-    ...defaultKeepActivityDefinitionsById,
-    ...(input.activityDefinitionsById ?? {}),
-  };
 }
 
 function isKeepTaskActivityDefinition(
