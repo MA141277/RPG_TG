@@ -31,6 +31,7 @@
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
+  - `queue.editor-native-authoring-contract-freeze`
 
 ## Human Context
 
@@ -49,13 +50,9 @@
 
 ### Queue Promotion Ledger
 
-| Queue ID | Current Disposition | Promote When | Notes |
-| --- | --- | --- | --- |
-| `queue.editor-native-authoring-contract-freeze` | `recorded-family` | `only if fresh evidence proves the creator-facing authoring object model or lifecycle boundary still lacks one frozen contract cut` | `Recorded at version opening only as a queue family; not yet part of the live candidate set and no queue doc exists.` |
-| `queue.authoring-runtime-mapping-contract-freeze` | `recorded-family` | `only if fresh evidence proves authoring objects still lack one explicit compile/export mapping contract into the runtime-facing pack surface` | `Recorded at version opening only as a queue family; mapping closure must stay contract-first rather than turning into implementation by drift.` |
-| `queue.compatibility-import-export-policy-freeze` | `recorded-family` | `only if fresh evidence proves pack import, editor project persistence, or runtime export policy still lacks one frozen compatibility boundary` | `Recorded at version opening only as a queue family; compatibility work remains policy-level until admission.` |
-| `queue.shared-condition-effect-mechanism-freeze` | `recorded-family` | `only if fresh evidence proves condition/effect authoring still depends on feature-local branching instead of one reusable mechanism contract` | `Recorded at version opening only as a queue family; this queue family exists to prevent event/task/dialogue-specific contract drift.` |
-| `queue.minimal-runtime-contract-change-audit` | `recorded-family` | `only if fresh evidence proves editor landing needs runtime contract changes and the minimum lawful delta remains unbounded` | `Recorded at version opening only as a queue family; runtime deltas must stay minimal and must not widen into general runtime modernization.` |
+- `No live queue candidate or admitted queue is currently recorded for this version.`
+- `The five queue IDs listed in docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md are contract-only portfolio entries, not version-plan candidate truth.`
+- `A future queue may be recorded only after fresh evidence writes item.xxx, review_subject_id, review_subject_classification = queue-candidate, proposed_queue_id, review_basis, and admission_status into this version plan.`
 
 ### Candidate Classification Record
 
@@ -85,8 +82,8 @@
 ### Candidate Recovery Rule Addendum
 
 - `No queue in this version is live candidate truth at version opening time; candidate_queue_ids intentionally remains empty until a later bounded admission review is written.`
-- `editor-native authoring contract freeze, authoring -> runtime mapping freeze, compatibility/import-export policy freeze, shared condition/effect mechanism freeze, and minimum runtime delta audit are all recorded as queue families only at this stage.`
-- `A recorded-family entry in the queue promotion ledger is not the same as live candidate truth and must not be treated as admission-ready by itself.`
+- `The script-editor queue IDs currently exist only in the version spec's Queue Contract Portfolio and not as version-plan candidate truth.`
+- `Do not derive live candidate or admission status from contract-only portfolio entries; wait for fresh evidence and structured admission fields in this version plan.`
 - `Non-goal work such as main.ts pure shell closure, large sub-runtime refactors, repository-wide hardcoded script migration, full editor UI delivery, or non-essential runtime schema expansion must not be promoted under this version without a future explicit version-boundary change.`
 
 ### Operator Intake Contract

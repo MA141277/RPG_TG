@@ -20,6 +20,47 @@
 - `freeze one shared condition / effect mechanism boundary reusable across event, task, dialogue, menu, and minigame authoring`
 - `identify and bound the minimum runtime contract changes required for editor landing`
 
+### Version Deliverables
+
+- `editor-native authoring contract package`
+  - `a frozen core object set covering story_pack / person / city / building / event / quest / dialogue / minigame / story_node / text_entry / condition_group / effect_bundle`
+  - `per-object responsibility boundaries`
+  - `editor-only metadata rules`
+  - `creator-facing naming decisions such as person owning both playable-role and NPC authoring unless a later written decision says otherwise`
+- `authoring -> runtime mapping contract package`
+  - `runtime export destination for each authoring object`
+  - `direct-export field list`
+  - `editor-project-only field list`
+  - `compatibility-shim rules`
+  - `one object-level mapping matrix`
+  - `explicit split between mapping solved in export and mapping that requires shared-contract upgrade`
+- `compatibility / import-export policy package`
+  - `whether import existing pack -> edit -> export compatible pack is mandatory`
+  - `legacy scenario-pack import policy`
+  - `editor project persistence shape`
+  - `runtime-facing export artifact policy`
+  - `rule that authoring-only metadata must not leak into runtime pack output`
+  - `decision on compatibility importer vs migration vs both with explicit precedence`
+- `shared condition / effect mechanism package`
+  - `one shared condition expression model`
+  - `one shared effect expression model`
+  - `reuse rules across event / task / dialogue / menu / minigame`
+  - `shared primitive boundary`
+  - `host-specific adapter allowance boundary`
+  - `explicit prohibition on per-domain feature-local rule dialects`
+- `minimum runtime contract change list`
+  - `the runtime/schema changes actually required for editor landing`
+  - `required / optional / out-of-scope classification for each change`
+  - `additive-extension vs runtime-behavior-gap labeling`
+  - `explicit list of runtime modernization work that this version must not absorb`
+- `gap classification matrix`
+  - `per-mismatch classification into Class A authoring-only difference, Class B additive pack/runtime extension, or Class C runtime behavior gap`
+  - `rule that no new runtime table, field, loader, or consumer rewrite is justified before classification is written`
+- `version-governance output`
+  - `the version plan must continue to show no live candidate, no active queue, and no queue doc until fresh evidence writes a formal queue-candidate admission review`
+  - `future bounded freeze queues must be created only through Blueprint-standard item.xxx + review_subject_id + review_subject_classification = queue-candidate + proposed_queue_id + review_basis + admission_status truth`
+  - `the version must remain design-governed and must not silently widen into implementation-governed editor delivery`
+
 ### Must Freeze
 
 - `editor-native authoring contract`
@@ -60,7 +101,7 @@
 - `Do not add runtime tables, fields, or loaders before the mapping matrix and mismatch classification justify them.`
 - `Do not let editor-only metadata leak into runtime-facing pack output by convenience.`
 - `Do not let event/task/dialogue/menu/minigame authoring grow separate condition/effect dialects without explicit shared-mechanism approval.`
-- `Do not treat recorded queue families as live candidate truth or admission-ready implementation scope by default.`
+- `Do not treat Queue Contract Portfolio entries as live candidate truth or admission-ready implementation scope by default.`
 - `Do not absorb shell closure, runtime modernization, or unrelated residue cleanup into this version unless later written evidence proves they are strictly required for the frozen contract boundary.`
 
 ### Non-Goals
