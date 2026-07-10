@@ -74,9 +74,90 @@
 - `minimum runtime contract changes`
   - `freeze the minimum required runtime/schema delta for editor landing, including required/optional/out-of-scope separation and an explicit ban on opportunistic runtime modernization`
 
+### Frozen Authoring Core Object Set
+
+- `The first bounded authoring-contract freeze covers exactly these top-level creator-facing objects: story_pack / person / city / building / event / quest / dialogue / minigame / story_node / text_entry / condition_group / effect_bundle.`
+- `city_menu_item` and `building_menu_item` are not part of this first frozen core set; they remain downstream structure choices tied to later host-schema and mapping decisions.`
+- `scene` is not a separate frozen editor-native top-level object in this queue; the authoring-side progression owner is story_node, while runtime scene/table form remains downstream to mapping decisions.`
+- `The frozen core set must be treated as creator-facing semantics first, not as a mirror of today's runtime split tables.`
+
+### Frozen Object Responsibility Boundaries
+
+| Object | Frozen Responsibility Boundary | Must Not Absorb In This Queue |
+| --- | --- | --- |
+| `story_pack` | `Owns editor-project identity, opening setup ownership, authoring-wide registries, and cross-object composition boundaries for one authored scenario project.` | `Runtime export table layout, compatibility importer policy, or pack file split implementation.` |
+| `person` | `Owns one creator-facing character authoring surface for both playable-role and NPC configuration, including profile, role mode, availability, tags, relation references, and bindings to authored content by stable ids.` | `A split playable-vs-NPC top-level object model or runtime-only character table accidents.` |
+| `city` | `Owns city metadata, city-level function toggles, local building roster references, and city-host authoring references.` | `Detailed runtime menu serialization or house-level local service behavior.` |
+| `building` | `Owns one creator-facing place/service node under a city or broader world scope, including local open conditions, host bindings, and attached authored content references.` | `Runtime house table shape or city/building menu export policy.` |
+| `event` | `Owns a triggerable authored progression unit, including entry conditions, follow-up references, and effect references through shared authoring objects.` | `A domain-local rule dialect or runtime event executor behavior.` |
+| `quest` | `Owns authored objective lifecycle, including trigger references, completion references, failure or timeout references, and reward/effect references.` | `Runtime task table shape, settlement implementation, or compatibility importer behavior.` |
+| `dialogue` | `Owns conversation structure, speaker participation, branch topology, and text_entry references as one creator-facing conversation object.` | `Runtime scene-vs-dialogue table split decisions or inline runtime text duplication rules.` |
+| `minigame` | `Owns authored playable entry, availability, host attachment, and settlement reference boundaries as one reusable creator-facing playable object.` | `The full minigame rule grammar or shared condition/effect primitive contract.` |
+| `story_node` | `Owns high-level authored progression graph routing, prerequisite gates, and references to event/dialogue/quest/minigame/menu entry surfaces.` | `Runtime scene storage layout or low-level callback orchestration.` |
+| `text_entry` | `Owns display text and stable copy identifiers only.` | `Gameplay state, branching logic, or editor-only note storage.` |
+| `condition_group` | `Owns reusable authoring-level boolean gating references shared across multiple object families.` | `The final shared condition expression grammar or runtime primitive evaluation model.` |
+| `effect_bundle` | `Owns reusable authoring-level outcome/effect references shared across multiple object families.` | `The final shared effect expression grammar or runtime mutation implementation details.` |
+
+### Frozen Creator-Facing Naming Decisions
+
+- `person` remains the single top-level creator-facing object for both playable-role and NPC authoring; the repository must not split them into separate first-class editor object families unless a later written decision explicitly reopens that boundary.
+- `building` remains the creator-facing authoring term even if v1 compatibility export later targets runtime `houses` data.
+- `story_node` is the creator-facing authored progression node for this queue; runtime scene/table layout remains a later mapping concern.
+- `dialogue` remains a distinct creator-facing authoring object even though its eventual runtime export form is still deferred.
+- `condition_group` and `effect_bundle` are frozen as shared cross-domain authoring objects, not as per-feature local fragments.
+
+### Frozen Editor-Only Metadata Rules
+
+- `Author notes, draft status, grouping hints, review markers, unresolved import notes, sort/display order hints, and other editor workflow metadata may exist in the editor project only.`
+- `Editor-only metadata must never be required by runtime consumers, loaders, validators, or runtime-facing pack output.`
+- `Stable authored references must use object ids, not visible labels, notes, or UI-only grouping text.`
+- `Display copy belongs in text_entry or later dedicated text/asset surfaces, not in editor-only metadata fields.`
+- `This queue freezes the metadata boundary only; concrete editor-project persistence shape remains downstream to compatibility / import-export policy work.`
+
+### Frozen Mapping Contract Principles
+
+- `The mapping contract freezes authoring-to-runtime destination families against the current runtime-facing pack surface first: pack.json, scenario-profile.json, characters.json, cities.json, houses.json, events.json, scenes.json, text-entries.json, activities.json, tasks.json, and the already-supported auxiliary mapping files exposed through ContentPackDefinition and scenario-pack loader truth.`
+- `This queue freezes destination names, direct-export boundaries, editor-project-only boundaries, and required compile-step boundaries; it does not itself decide compatibility round-trip policy, importer precedence, or minimum runtime delta landing.`
+- `Where the current runtime already has a canonical destination family, prefer compiling into that family instead of inventing a new runtime table in the mapping queue.`
+- `Candidate additive runtime tables such as dialogues.json, minigames.json, story-nodes.json, city-menu-items.json, and house-menu-items.json remain downstream options only if the mapping matrix proves current destinations cannot carry the frozen authoring semantics cleanly.`
+- `Shared authoring objects such as condition_group and effect_bundle may be routed through host exports, but their canonical runtime expression grammar remains downstream to the shared-condition-effect-mechanism queue.`
+
+### Frozen Object-Level Mapping Matrix
+
+| Authoring Object | Frozen Runtime Export Destination | Direct-Export Boundary | Editor-Project-Only Boundary | Compatibility / Downstream Notes |
+| --- | --- | --- | --- | --- |
+| `story_pack` | `pack.json` + `scenario-profile.json` + `pack.json.files` registry | `Pack id/title/description, opening scenarioProfile fields, and the registry of emitted split tables belong to runtime-facing export.` | `Workspace grouping, review state, author notes, unresolved import markers, and export-draft metadata stay editor-project-only.` | `The exact editor-project persistence shape and import/export round-trip rules stay downstream to compatibility policy freeze.` |
+| `person` | `characters.json` with optional historical mapping support through already-supported historical character files when the authored pack uses them | `Stable character id, role mode, profile fields, authored relations by id, availability, and runtime-facing bindings to scenes/events/tasks/minigames export directly through the character surface.` | `Author notes, grouping tags, draft checkpoints, portrait review hints, and editor-only organization fields stay out of runtime export.` | `Any richer reusable rule grammar for conditions/effects or a reopened person split belongs downstream; historical compatibility precedence stays with compatibility policy.` |
+| `city` | `cities.json` | `Stable city id, display metadata, map linkage, building roster refs, city-level function toggles, and runtime-facing host references export directly.` | `Author annotations, sorting/grouping aids, review status, and map-layout editing metadata stay editor-project-only.` | `City-menu materialization and broader import/export compatibility rules stay downstream.` |
+| `building` | `houses.json` | `Stable building id, city/world linkage, house module id, open gates expressible through current runtime-facing refs, and attached authored content refs export directly.` | `Author notes, editor grouping, design placeholders, and local workflow metadata stay editor-project-only.` | `city_menu_item / building_menu_item materialization and any new host-schema tables remain downstream until later queues justify them.` |
+| `event` | `events.json` | `Stable event id, trigger identity, follow-up refs, host bindings, and runtime-facing condition/effect references that can be carried without inventing a new rule dialect export through the event surface.` | `Draft markers, explanation text, internal review notes, and editor-only categorization stay editor-project-only.` | `Canonical condition/effect grammar and executor semantics stay downstream to shared-rule freeze.` |
+| `quest` | `tasks.json` as the frozen runtime-facing task destination when authored objective lifecycle must survive export | `Stable task id, trigger refs, objective lifecycle fields, completion/failure routing refs, and reward/effect refs that fit the existing task runtime contract export through the task surface.` | `Authoring checklist state, internal design commentary, and editor-only pacing notes stay out of runtime export.` | `Compatibility expectations for packs without tasks.json and any missing runtime task fields stay downstream to compatibility and runtime-delta queues.` |
+| `dialogue` | `scenes.json` plus `text-entries.json` as the default current-runtime mapping | `Branch topology, speaker refs, action ordering, text ids, and next-step refs already representable by the current scene runtime export through scenes + text entries.` | `Outline grouping, conversation review markers, staging notes, and editor-only drafting metadata stay editor-project-only.` | `A separate runtime dialogue table is not frozen here; dialogues.json remains a downstream additive option only if later queues prove scenes.json is insufficient.` |
+| `minigame` | `activities.json` for launch anchors and host-facing playable entry data that can compile into the current runtime/playable seams | `Stable minigame id, availability refs, host attachment refs, entry hooks, and settlement references that can already compile into current activity/playable entry points export through the activity-facing surface.` | `Tuning notes, author presets, debug seeds, and editor-only design scaffolding stay editor-project-only.` | `A dedicated minigames.json table, expanded playable grammar, or broader playable runtime changes remain downstream to playable governance plus runtime-delta review.` |
+| `story_node` | `scenes.json` as the default current-runtime progression container | `Stable node id, entry/next refs, branching topology, and links to event/dialogue/minigame/task surfaces export through compiled scene flow.` | `Canvas layout, graph grouping, review flags, and authoring-only navigation helpers stay editor-project-only.` | `story-nodes.json remains a downstream additive option only if later runtime-delta review proves explicit node records are required.` |
+| `text_entry` | `text-entries.json` | `Stable text id and display copy export directly.` | `Copy review comments, author notes, localization workflow hints, and editor-only grouping stay out of runtime export.` | `Localization pipeline or richer asset/text systems remain downstream.` |
+| `condition_group` | `No standalone runtime table is frozen in this queue; export stays as host-level references or compile-time expansion points only.` | `Only stable ids and host attachment references may cross the mapping boundary at this stage.` | `Author labels, notes, grouping, and incomplete-rule metadata stay editor-project-only.` | `The canonical condition expression grammar and any shared runtime primitive surface stay downstream to queue.shared-condition-effect-mechanism-freeze.` |
+| `effect_bundle` | `No standalone runtime table is frozen in this queue; export stays as host-level references or compile-time expansion points only.` | `Only stable ids and host attachment references may cross the mapping boundary at this stage.` | `Author labels, notes, grouping, and incomplete-rule metadata stay editor-project-only.` | `The canonical effect expression grammar and runtime mutation surface stay downstream to queue.shared-condition-effect-mechanism-freeze.` |
+
+### Frozen Mapping Boundary Rules
+
+- `Direct-export fields are limited to fields that runtime consumers, validators, loaders, or emitted runtime pack files can actually own; author workflow metadata must stay editor-project-only even when it is convenient to serialize.`
+- `dialogue` and `story_node` currently compile into the scene/text-entry family by default because today's runtime and documented pack shape already center on scenes.json plus text-entries.json for flow and text delivery.`
+- `quest` is frozen onto the tasks surface because ContentPackDefinition and scenario-pack loader truth already expose tasks as a runtime-facing family even though the older scenario-pack format doc has not fully caught up.`
+- `minigame` is frozen onto current activity/playable entry seams only as far as current runtime-facing launch anchors can carry it; new runtime playable tables or grammar are not admitted by this queue.`
+- `condition_group` and `effect_bundle` are explicitly prevented from inventing queue-local runtime mini-formats; they may only cross this queue as stable references pending the later shared rule contract.`
+
+### Explicit Downstream Routing From This Queue
+
+- `compatibility round-trip policy, importer precedence, editor-project persistence shape, and runtime-facing export artifact guarantees belong to queue.compatibility-import-export-policy-freeze`
+- `shared condition/effect expression grammar, primitive boundary, and host-specific adapter allowance belong to queue.shared-condition-effect-mechanism-freeze`
+- `minimum required runtime/schema delta classification belongs to queue.minimal-runtime-contract-change-audit`
+- `Any proof that dialogues.json, minigames.json, story-nodes.json, city-menu-items.json, or house-menu-items.json must become runtime-facing tables belongs to the later runtime-delta and compatibility families rather than this mapping queue by itself.`
+- `existing pack import policy, editor project persistence shape, runtime-facing export artifact policy, and compatibility round-trip decisions belong to queue.compatibility-import-export-policy-freeze`
+- `city/building menu schema shape and any promotion of city_menu_item or building_menu_item into runtime-facing structures remain downstream until mapping work proves they are necessary`
+
 ### Required Decisions
 
-- `whether person remains the single top-level authoring object for both playable-role and NPC configuration`
 - `whether the editor project persists as one authoring manifest or multiple split authoring tables`
 - `whether scene and dialogue export as separate runtime tables or one combined typed runtime table`
 - `whether minigame rule authoring uses a generic graph, a bounded block system, or a hybrid preset-plus-extension model`

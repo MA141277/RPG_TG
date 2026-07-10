@@ -6,17 +6,17 @@
 - version_id: `target.script-editor-contract-freeze`
 - version_status: `open`
 - active_phase: `phase.contract-freeze`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `queue-admission-review`
-- next_action: `write-admission-review`
-- resume_gate: `promotion-review`
-- promotion_review_result: `none`
-- review_subject_id: `item.editor-native-authoring-contract-freeze`
-- review_subject_classification: `queue-candidate`
-- proposed_queue_id: `queue.editor-native-authoring-contract-freeze`
-- review_basis: `The current version already records five bounded contract-freeze candidates, and editor-native authoring contract freeze is the smallest lawful first cut because the object model, responsibility boundary, naming rules, and editor-only metadata boundary are upstream to mapping, import/export compatibility policy, and any minimum runtime delta audit. Selecting this queue for admission review narrows the next step without widening into implementation.`
-- admission_status: `pending`
+- active_queue: `queue.authoring-runtime-mapping-contract-freeze`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `write-queue-closeout`
+- resume_gate: `open-active-queue`
+- promotion_review_result: `The pending admission review for queue.authoring-runtime-mapping-contract-freeze is now concluded internally: the prior authoring-contract queue closed with explicit routing into this mapping family, the mapping package is still the next smallest lawful cut, and the version now promotes it as the single active queue.`
+- review_subject_id: `none`
+- review_subject_classification: `none`
+- proposed_queue_id: `none`
+- review_basis: `none`
+- admission_status: `none`
 - intake_status: `none`
 - intake_item_id: `none`
 - intake_summary: `none`
@@ -42,22 +42,22 @@
 ### Admission Review Record
 
 - Scope approval:
-  - `This intake records bounded candidate queues only. No queue is admitted and no implementation work is authorized by this document change.`
+  - `The admitted queue remains bounded to authoring-to-runtime mapping freeze and does not authorize compatibility policy freeze, shared condition/effect contract freeze, minimum runtime delta landing, or editor UI implementation.`
 - Admission basis:
-  - `The current script-editor freeze requirement is broad, but its lawful Blueprint handling is to decompose it into bounded contract-freeze queue-candidates before any one queue is admitted. The first admission review now focuses on editor-native authoring contract freeze because that object-model boundary is upstream to the remaining mapping, compatibility, shared-rule, and minimum-runtime-delta candidates.`
-- Current review subject:
-  - `item.editor-native-authoring-contract-freeze -> queue.editor-native-authoring-contract-freeze`
+  - `The current script-editor freeze requirement remains decomposed into five bounded contract-freeze queues, and authoring-runtime-mapping-contract freeze is now the smallest lawful next execution cut because the creator-facing object model, responsibility boundary, naming rules, and editor-only metadata boundary are already frozen, while runtime export destinations, direct-export fields, editor-project-only fields, compatibility shim boundaries, and the object-level mapping matrix remain explicitly unfrozen.`
+- Admission conclusion:
+  - `queue.authoring-runtime-mapping-contract-freeze is admitted and now acts as the single active queue for the current version.`
 - Current handoff:
-  - `No active queue exists for this version.`
-  - `The current lawful step is to finish the pending admission review for queue.editor-native-authoring-contract-freeze without creating a queue doc or starting implementation.`
+  - `docs/blueprints/queues/authoring-runtime-mapping-contract-freeze-queue.md is now the single active queue for this version.`
+  - `The current lawful step is to execute task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff after baseline reconcile and object-level mapping freeze both landed on written source truth.`
 - `The current live candidate set contains five bounded contract-freeze queues on written source truth.`
 
 ### Queue Promotion Ledger
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.editor-native-authoring-contract-freeze` | `selected-for-admission-review` | `when the pending version-level review concludes that object-model freeze should become the first admitted queue` | `Covers the frozen core object set, per-object responsibility boundary, naming rule, editor-only metadata boundary, and the rule that authoring objects must not be backsolved directly from the current runtime table shape. It is currently the selected first queue candidate because the object model is upstream to the remaining mapping, compatibility, shared-rule, and runtime-delta review candidates.` |
-| `queue.authoring-runtime-mapping-contract-freeze` | `candidate-recorded` | `when version-level review selects authoring-to-runtime export and compile mapping as the smallest lawful next cut` | `Covers runtime export destinations, direct-export fields, editor-project-only fields, compatibility shim dependencies, and the object-level mapping matrix.` |
+| `queue.editor-native-authoring-contract-freeze` | `done` | `only if fresh evidence later disproves the written authoring-contract freeze or proves a new still-open authoring-contract residue inside the same bounded topic surface` | `Closed on 2026-07-10 after the current version spec explicitly froze the creator-facing core object set, per-object responsibility boundaries, naming decisions, editor-only metadata rules, and downstream routing boundaries. The remaining version work now belongs to later mapping, compatibility, shared-rule, or runtime-delta queue families rather than another same-family authoring-contract continuation.` |
+| `queue.authoring-runtime-mapping-contract-freeze` | `admitted + active` | `while the current version still needs one explicit authoring-to-runtime export and compile mapping package` | `Admitted on 2026-07-10 after queue.editor-native-authoring-contract-freeze closed and explicitly routed the remaining smallest lawful work into runtime export destinations, direct-export fields, editor-project-only fields, compatibility shim boundaries, and the object-level mapping matrix.` |
 | `queue.compatibility-import-export-policy-freeze` | `candidate-recorded` | `when version-level review selects existing-pack import, editor-project persistence, and runtime-export policy as the smallest lawful next cut` | `Covers import existing pack -> edit -> export compatibility expectations, legacy scenario-pack handling, editor project persistence shape, runtime-facing export artifact policy, and the non-leak rule for authoring-only metadata.` |
 | `queue.shared-condition-effect-mechanism-freeze` | `candidate-recorded` | `when version-level review selects shared condition/effect expression governance as the smallest lawful next cut` | `Covers the reusable condition/effect contract family for event, task, dialogue, menu, and minigame authoring, including shared primitive boundaries and host-specific adapter limits.` |
 | `queue.minimal-runtime-contract-change-audit` | `candidate-recorded` | `when version-level review selects minimum runtime/schema delta classification as the smallest lawful next cut` | `Covers required / optional / out-of-scope runtime delta review together with the Class A / B / C mismatch classification gate, so no runtime table, field, loader, or consumer rewrite is promoted before the minimum lawful change list is frozen.` |
@@ -67,8 +67,8 @@
 | Item ID | Classification | Proposed Queue | Disposition | Basis |
 | --- | --- | --- | --- | --- |
 | `item.script-editor-contract-freeze-version-open` | `current-target-item` | `none` | `version opened with no live queue` | `The operator explicitly required a Blueprint governance switch that closes target.project-complete-modularization and opens a new version dedicated to script-editor design and contract freeze. This opening intentionally records no live queue and no live candidate set.` |
-| `item.editor-native-authoring-contract-freeze` | `queue-candidate` | `queue.editor-native-authoring-contract-freeze` | `candidate-recorded` | `The intake explicitly requires one frozen authoring-object contract covering story_pack / person / city / building / event / quest / dialogue / minigame / story_node / text_entry / condition_group / effect_bundle, together with responsibility boundaries, naming constraints, editor-only metadata rules, and a ban on deriving the authoring model directly from the current runtime table shape.` |
-| `item.authoring-runtime-mapping-contract-freeze` | `queue-candidate` | `queue.authoring-runtime-mapping-contract-freeze` | `candidate-recorded` | `The intake explicitly requires one object-level authoring -> runtime mapping contract that names target runtime tables, direct-export fields, editor-project-only fields, compatibility shim reliance, and the export-vs-shared-contract-upgrade split for each authoring object.` |
+| `item.editor-native-authoring-contract-freeze` | `queue-candidate` | `queue.editor-native-authoring-contract-freeze` | `admitted + queue closed` | `The intake explicitly requires one frozen authoring-object contract covering story_pack / person / city / building / event / quest / dialogue / minigame / story_node / text_entry / condition_group / effect_bundle, together with responsibility boundaries, naming constraints, editor-only metadata rules, and a ban on deriving the authoring model directly from the current runtime table shape. That bounded contract is now written in the version spec, so the queue is closed rather than left active.` |
+| `item.authoring-runtime-mapping-contract-freeze` | `queue-candidate` | `queue.authoring-runtime-mapping-contract-freeze` | `admitted + active queue` | `The intake explicitly requires one object-level authoring -> runtime mapping contract that names target runtime tables, direct-export fields, editor-project-only fields, compatibility shim reliance, and the export-vs-shared-contract-upgrade split for each authoring object. That basis remains current after the prior authoring-contract queue closed, so the candidate now becomes the active queue rather than staying pending.` |
 | `item.compatibility-import-export-policy-freeze` | `queue-candidate` | `queue.compatibility-import-export-policy-freeze` | `candidate-recorded` | `The intake explicitly requires one bounded policy freeze for existing pack import, editor project persistence, runtime-facing export, and the rule that authoring-only metadata must not leak into runtime pack output.` |
 | `item.shared-condition-effect-mechanism-freeze` | `queue-candidate` | `queue.shared-condition-effect-mechanism-freeze` | `candidate-recorded` | `The intake explicitly requires one shared condition/effect mechanism boundary reused by event / task / dialogue / menu / minigame authoring and explicitly forbids each domain from growing a separate feature-local rule dialect.` |
 | `item.minimal-runtime-contract-change-audit` | `queue-candidate` | `queue.minimal-runtime-contract-change-audit` | `candidate-recorded` | `The intake explicitly requires one bounded minimum-runtime-change audit covering required / optional / out-of-scope classification and the Class A / B / C mismatch matrix before any runtime/schema expansion or consumer rewrite can be justified for script-editor landing.` |
@@ -95,7 +95,9 @@
 ### Candidate Recovery Rule Addendum
 
 - `The 2026-07-10 freeze-prep intake records five bounded queue-candidates in candidate_queue_ids; they are now live candidate truth in this version plan.`
-- `queue.editor-native-authoring-contract-freeze is currently the selected admission-review subject, but it remains pre-admission only: active_queue stays none, no queue doc exists, and implementation is still unauthorized.`
+- `queue.editor-native-authoring-contract-freeze is now closed historical evidence: its boundary baseline, core-object freeze, and queue closeout tasks are all complete, and it no longer controls current execution.`
+- `queue.authoring-runtime-mapping-contract-freeze is now the single active queue for this version; no second queue may be promoted until its bounded mapping-family work is either completed or explicitly routed away by written evidence.`
+- `Within the active mapping queue, baseline-reconcile and object-level-mapping-freeze are now complete on written source truth, so only explicit queue closeout and residue routing remain live.`
 - `Resume from this version plan's recorded candidate ledger unless new material evidence invalidates the bounded split or proves a different smaller lawful queue cut.`
 - `Non-goal work such as main.ts pure shell closure, large sub-runtime refactors, repository-wide hardcoded script migration, full editor UI delivery, or non-essential runtime schema expansion must not be promoted under this version without a future explicit version-boundary change.`
 
@@ -148,4 +150,9 @@
 - `2026-07-10: target.script-editor-contract-freeze was opened as the successor version after target.project-complete-modularization was explicitly closed on human instruction.`
 - `2026-07-10: the version opened with no active queue, no queue doc creation, and no live candidate set because the first required governance action is contract freeze rather than implementation.`
 - `2026-07-10: the current script-editor freeze-prep intake was decomposed into five bounded queue-candidates and recorded in version-plan truth, while active_queue remained none and no queue doc was created because admission review has not yet selected a first execution queue.`
-- `2026-07-10: queue.editor-native-authoring-contract-freeze was selected as the first pending admission-review subject because creator-facing object-model freeze is the smallest lawful upstream cut on current evidence, but the queue remains unadmitted and no queue doc was created.`
+- `2026-07-10: queue.editor-native-authoring-contract-freeze was selected as the first pending admission-review subject because creator-facing object-model freeze is the smallest lawful upstream cut on current evidence.`
+- `2026-07-10: that pending admission review was concluded internally, queue.editor-native-authoring-contract-freeze was admitted, the queue doc was created, active_queue was synchronized, and the first queue task was designated.`
+- `2026-07-10: queue execution then completed boundary-baseline-reconcile and core-object-and-boundary-freeze, so only queue closeout plus residue routing remains live under this queue.`
+- `2026-07-10: queue.editor-native-authoring-contract-freeze then closed after queue closeout confirmed that the bounded authoring-contract topic is converged and that the remaining next lawful work belongs to queue.authoring-runtime-mapping-contract-freeze as a cross-family continuation under the same open version.`
+- `2026-07-10: the pending admission review for queue.authoring-runtime-mapping-contract-freeze was then concluded internally, the queue was admitted as the next smallest lawful cut, and the queue doc was created so execution could continue without manual operator admission handling.`
+- `2026-07-10: the active mapping queue then completed baseline reconcile and object-level mapping freeze, landing the frozen destination-family rules, object-level mapping matrix, and direct-export versus editor-project-only boundaries on the current version spec.`
