@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-contract-freeze`
 - has_active_queue: `true`
-- next_file: `docs/blueprints/queues/authoring-runtime-mapping-contract-freeze-queue.md`
+- next_file: `docs/blueprints/queues/compatibility-import-export-policy-freeze-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/authoring-runtime-mapping-contract-freeze-queue.md`
+  - `docs/blueprints/queues/compatibility-import-export-policy-freeze-queue.md`
 
 ### Live Entry Guardrails
 

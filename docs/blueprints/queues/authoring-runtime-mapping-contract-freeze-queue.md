@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-10`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `This queue is still active. The bounded authoring-to-runtime mapping topic already has its baseline and object-level matrix written, but queue closeout cannot mark true topic closure until same-family mapping residue is reviewed and routed explicitly.`
-- residue_remaining: `yes`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The bounded authoring-to-runtime mapping topic is now converged: the current version spec explicitly names mapping principles, the object-level mapping matrix, direct-export versus editor-project-only boundaries, and downstream routing. The remaining open version work belongs to later compatibility policy, shared-rule, and runtime-delta queue families rather than a still-blocking same-family mapping continuation.`
+- residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `none`
+- next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `baseline-push`
 - sync_summary: `The minimum repository sync batch completed successfully after mapping baseline and object-level freeze truth were written: working branch codex/editor-native-authoring-contract-freeze-review and origin/mod-first-dev now both contain commit 6431a8b.`
@@ -58,9 +58,9 @@
 
 - queue_goal: `Freeze one explicit authoring-to-runtime mapping package covering runtime export destinations, direct-export fields, editor-project-only fields, compatibility shim boundaries, and the object-level mapping matrix for the frozen authoring object family.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `No mapping-writing task remains; queue closeout is now active and must decide whether any same-family mapping residue remains after the frozen object-level matrix landed.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the bounded mapping package is frozen and queue closeout now returns control to version-level review.`
 - task_briefs:
   - `task.authoring-runtime-mapping-contract-freeze.boundary-baseline-reconcile: confirm that the admitted mapping queue is still the next smallest lawful cut and freeze the first bounded mapping-task surface from current repository evidence.`
   - `task.authoring-runtime-mapping-contract-freeze.object-level-mapping-freeze: write the explicit object-level authoring-to-runtime mapping matrix, direct-export boundaries, editor-project-only boundaries, and downstream routing.`
@@ -113,7 +113,7 @@
 | --- | --- | --- | --- | --- |
 | `task.authoring-runtime-mapping-contract-freeze.boundary-baseline-reconcile` | `completed` | `Confirm the admitted mapping queue boundary and freeze the first lawful mapping task slice from current repository truth.` | `none` | `Completed after current version spec, prior authoring-plan guidance, scenario-pack format rules, ContentPackDefinition, and scenario-pack loader truth all confirmed that authoring-to-runtime mapping is still the smallest lawful next cut and that the first mapping slice should freeze destination families plus direct-export/editor-only boundaries before compatibility or runtime-delta work.` |
 | `task.authoring-runtime-mapping-contract-freeze.object-level-mapping-freeze` | `completed` | `Write the explicit object-level authoring-to-runtime mapping matrix and downstream routing boundaries.` | `task.authoring-runtime-mapping-contract-freeze.boundary-baseline-reconcile` | `Completed after the current version spec now explicitly freezes mapping principles, the 12-object mapping matrix, direct-export versus editor-project-only boundaries, and the downstream routing for compatibility, shared-rule, and runtime-delta follow-up.` |
-| `task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff` | `active` | `Verify the queue, route any remaining mapping residue, and return control to version review with explicit queue closeout truth.` | `task.authoring-runtime-mapping-contract-freeze.object-level-mapping-freeze` | `Active now that the bounded mapping package is written and only residue routing plus synchronized closeout truth remain.` |
+| `task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff` | `completed` | `Verify the queue, route any remaining mapping residue, and return control to version review with explicit queue closeout truth.` | `task.authoring-runtime-mapping-contract-freeze.object-level-mapping-freeze` | `Completed after queue closeout confirmed that no still-blocking same-family mapping residue remains and that the next lawful version-level continuation is queue.compatibility-import-export-policy-freeze.` |
 
 ### Task Definitions
 
@@ -238,7 +238,7 @@
 ##### Control Block
 
 - task_id: `task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -271,7 +271,7 @@
 - task_brief:
   - `Close the queue with explicit mapping-family residue routing and hand control back to version review only after governance truth is synchronized.`
 - task_outcome_summary:
-  - `The expected outcome is a closed or explicitly routed mapping queue that leaves no ambiguous active truth in the version plan.`
+  - `Completed after queue closeout confirmed that the bounded mapping topic is closed, no same-family continuation remains, and the next lawful version-level recommendation is queue.compatibility-import-export-policy-freeze.`
 - Purpose:
   - `Finish the queue without letting closeout, residue routing, or repository sync fall back to conversation-only state.`
 - Failure mode:
@@ -295,3 +295,7 @@
   - Summary: `Completed the minimum repository sync batch for the active mapping queue after baseline reconcile and object-level mapping freeze truth were written. Commit 6431a8b is now on working branch codex/editor-native-authoring-contract-freeze-review and on origin/mod-first-dev, while queue closeout remains the only live in-queue task.`
   - Verification: `git push -u origin codex/editor-native-authoring-contract-freeze-review; git push origin HEAD:mod-first-dev`
   - Next at this time: `Keep the queue active and execute task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff from the synchronized queue governor state.`
+- 2026-07-10
+  - Summary: `Completed task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff by closing queue.authoring-runtime-mapping-contract-freeze, confirming that no still-blocking same-family mapping residue remains, and routing current version control to compatibility-policy admission with queue.compatibility-import-export-policy-freeze as the next lawful recommendation.`
+  - Verification: `npm run lint:blueprints`
+  - Next at this time: `Return control to the version plan with no active mapping queue and one explicit next lawful compatibility-policy queue recommendation.`

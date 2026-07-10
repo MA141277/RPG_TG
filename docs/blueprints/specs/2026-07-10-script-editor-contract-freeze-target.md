@@ -147,13 +147,43 @@
 - `minigame` is frozen onto current activity/playable entry seams only as far as current runtime-facing launch anchors can carry it; new runtime playable tables or grammar are not admitted by this queue.`
 - `condition_group` and `effect_bundle` are explicitly prevented from inventing queue-local runtime mini-formats; they may only cross this queue as stable references pending the later shared rule contract.`
 
+### Frozen Compatibility And Import-Export Direction
+
+- `The v1 direction is compatibility-first rather than replacement-first.`
+- `The required creator loop is import existing pack -> edit in authoring model -> validate -> export compatible runtime pack -> verify in game.`
+- `Existing scenario packs must be importable into the editor through a compatibility importer; authoring work must not require destructive in-place migration as the only legal entry path.`
+- `The first runtime-facing export target remains the current manifest-driven runtime pack family where possible: one pack.json entry plus stable split-table keys already recognized by docs/scenario-pack-unified-format.md, ContentPackDefinition, and scenario-pack loader truth.`
+- `The editor project may be richer than the runtime pack, but that richer authoring surface must compile back into the frozen runtime-facing export policy without leaking editor-only metadata.`
+
+### Frozen Editor-Project Persistence Policy
+
+- `The editor project persists as one authoring project manifest plus referenced split authoring tables, not as one monolithic opaque blob and not as a direct mirror of today's runtime pack tables.`
+- `The project manifest owns project identity, authoring-wide settings, and the registry of authoring-side split tables in the same general shape as pack.json owns runtime-facing split-table discovery.`
+- `Authoring-side split tables may carry richer creator metadata, draft state, grouping, review markers, and unresolved import annotations than runtime export is allowed to carry.`
+- `The editor project remains the canonical home for authoring-only metadata, unresolved import residue, and richer creator workflow structure even when export compiles the gameplay subset into current runtime-facing tables.`
+
+### Frozen Runtime-Facing Export Artifact Policy
+
+- `The first required export artifact is a manifest-driven runtime-compatible scenario pack rooted at pack.json with stable file keys and current canonical split-table families.`
+- `Export may omit authoring-only metadata, draft markers, review comments, and unresolved import notes even when those fields exist in the editor project.`
+- `When the mapping contract already targets a current runtime family, export should compile into that family rather than invent a replacement table by convenience.`
+- `Candidate additive export families such as dialogues.json, minigames.json, story-nodes.json, city-menu-items.json, and house-menu-items.json remain downstream options only after later runtime-delta and compatibility evidence proves they are necessary.`
+- `Runtime-facing export remains the game-consumable artifact; the richer editor project is not itself the runtime pack.`
+
+### Frozen Importer Precedence And Metadata Non-Leak Rules
+
+- `Compatibility importer precedence is frozen as importer-first: existing runtime-facing packs must be interpreted into the authoring model through a compatibility importer before editing, rather than requiring immediate source-file migration in place.`
+- `Optional later migration utilities may exist, but they are subordinate to the compatibility importer contract and must not replace it as the only legal v1 path.`
+- `Authoring-only metadata such as notes, draft state, grouping, review markers, unresolved import annotations, and editor workflow hints must not leak into runtime-facing pack output by default.`
+- `Runtime-facing export may preserve only gameplay-relevant fields, stable ids, and runtime-consumable references that the frozen mapping contract explicitly allows.`
+- `If a field exists only to support creator workflow, audit, or unresolved import recovery, it belongs in the editor project and not in runtime pack output.`
+
 ### Explicit Downstream Routing From This Queue
 
-- `compatibility round-trip policy, importer precedence, editor-project persistence shape, and runtime-facing export artifact guarantees belong to queue.compatibility-import-export-policy-freeze`
 - `shared condition/effect expression grammar, primitive boundary, and host-specific adapter allowance belong to queue.shared-condition-effect-mechanism-freeze`
 - `minimum required runtime/schema delta classification belongs to queue.minimal-runtime-contract-change-audit`
 - `Any proof that dialogues.json, minigames.json, story-nodes.json, city-menu-items.json, or house-menu-items.json must become runtime-facing tables belongs to the later runtime-delta and compatibility families rather than this mapping queue by itself.`
-- `existing pack import policy, editor project persistence shape, runtime-facing export artifact policy, and compatibility round-trip decisions belong to queue.compatibility-import-export-policy-freeze`
+- `Compatibility round-trip policy, importer precedence, editor-project persistence shape, runtime-facing export artifact guarantees, and metadata non-leak policy are now frozen on current version truth and must not be silently reopened without fresh evidence.`
 - `city/building menu schema shape and any promotion of city_menu_item or building_menu_item into runtime-facing structures remain downstream until mapping work proves they are necessary`
 
 ### Required Decisions
