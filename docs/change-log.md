@@ -8,12 +8,19 @@
 ## 2026-07-10 Script Editor Freeze Scope Clarification
 
 ### Changed
+- 更新 [docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-mainline-20260710/docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md)，把当前 script-editor freeze 需求正式收口为 5 个 bounded `queue-candidate`，分别对应 authoring contract、mapping contract、compatibility/import-export policy、shared condition/effect mechanism、以及 minimum runtime contract change audit。
+- 将 `candidate_queue_ids` 从空集更新为这 5 个已记录候选队列，并同步补入对应 `item.xxx -> proposed_queue_id` 的 `Candidate Classification Record` 与 `Queue Promotion Ledger`。
+- 在同一份 version plan 中把 `queue.editor-native-authoring-contract-freeze` 选为当前 pending admission review subject，理由是 creator-facing object model / ownership / naming / editor-only metadata 边界位于其余 mapping、compatibility、shared rule、minimum runtime delta 候选之前。
+- 保持 `active_queue = none`、不创建 queue doc，只把当前 version 的下一个 lawful step 收口为“从已记录候选里选择一个进入 same-version admission review”。
 - 更新 [docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-mainline-20260710/docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md)，把当前 version 的冻结边界明确拆成 `Must Freeze / Required Decisions / Deferred Work / Drift Guards` 四组。
 - 在同一份 version spec 中新增 `Version Deliverables`，把当前 version 必须产出的契约成果显式收口为 authoring contract、mapping contract、compat/import-export policy、shared condition/effect mechanism、minimum runtime delta、gap classification matrix，以及 version-governance output 七类交付物。
 - 明确当前 version 必须冻结的范围是：`editor-native authoring contract`、`authoring -> runtime mapping contract`、`compatibility / import-export policy`、`shared condition / effect mechanism`、以及 editor 落地所需的最小 runtime/schema delta。
 - 明确当前 version 不承接完整 script-editor UI 交付、页面/组件细节、全仓库 script hardcode 清理、大规模 runtime consumer 重写或与冻结契约无直接关系的 modularization residue。
 
 ### Impact
+- 当前 version 不再处于“只有 contract portfolio、没有 live candidate”的状态；这 5 个 script-editor freeze queue 已成为正式候选真值，但仍未 admission、未激活、未进入实现。
+- 当前 version 已经完成“先筛选出下一条执行队列”的治理动作，但仍停在 admission review，不会因为这次同步就提前进入 queue activation 或代码实现。
+- 后续 Blueprint 不需要再把同一份需求重新从零拆分，只需从当前 version plan 里记录好的 candidate ledger 恢复，并在其中选择一个 bounded queue 做 admission review。
 - 后续 script-editor 相关 queue admission 不再只依赖宽泛 prose，而是要对照这份冻结清单判断事项属于“必须冻结”“需要决策”“暂不处理”还是“禁止漂移”。
 - 当前 version 现在不只是“要冻结什么”，还明确写出了“最终必须产出什么”，后续 closeout 和 successor version handoff 可以直接对照 deliverables 校验，而不必再从 Scope / Acceptance Criteria 里反推交付物。
 - 这使当前 version 更清楚地表达“先冻结设计/契约，再决定是否进入实现版本”，避免 bounded freeze queue admission 与 editor implementation scope 再次混淆。

@@ -114,6 +114,9 @@
 
 ### Queue Contract Portfolio
 
+- `This portfolio preserves only the lawful queue IDs and contract roles that may be used if a later admission review produces fresh evidence.`
+- `Portfolio presence is not a pending backlog, not a live candidate set, and not queue execution authorization by itself.`
+
 | Queue ID | Class | Contract Role | Admission Rule |
 | --- | --- | --- | --- |
 | `queue.editor-native-authoring-contract-freeze` | `required` | `authoring contract family` | `Admit only if fresh evidence proves the creator-facing editor object model, ownership boundary, or authoring lifecycle still lacks one frozen contract surface.` |
