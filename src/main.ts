@@ -61,6 +61,10 @@ import {
   travelToCoordinate,
   type GridCoordinate,
 } from "./application/navigation/travel-to-coordinate";
+import {
+  isCampaignMapCoordinateRevealed,
+  revealCampaignMapAroundCoordinate,
+} from "./application/navigation/campaign-map-exploration";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
   type ActiveGameContentContext,
@@ -2972,7 +2976,47 @@ function restoreCampaignTerrainCanvases(
   });
 }
 
+function ensureCurrentCampaignMapCoordinateRevealed(): void {
+  const currentMapDefinition = getCurrentMapDefinition();
+  if (currentMapDefinition == null) {
+    return;
+  }
+
+  if ((currentMapDefinition.mode ?? "grid") !== "campaign") {
+    return;
+  }
+
+  const coordinateSpace =
+    currentMapDefinition.coordinateSpace ?? {
+      width: currentMapDefinition.size ?? 1,
+      height: currentMapDefinition.size ?? 1,
+    };
+
+  if (
+    isCampaignMapCoordinateRevealed({
+      state: appState.gameState,
+      mapId: currentMapDefinition.id,
+      coordinate: appState.playerCoordinate,
+      coordinateSpace,
+    })
+  ) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    gameState: revealCampaignMapAroundCoordinate({
+      state: appState.gameState,
+      mapId: currentMapDefinition.id,
+      coordinate: appState.playerCoordinate,
+      coordinateSpace,
+      animateNewHexes: false,
+    }),
+  };
+}
+
 function renderApp() {
+  ensureCurrentCampaignMapCoordinateRevealed();
   appRenderCoordinator.render();
 }
 
