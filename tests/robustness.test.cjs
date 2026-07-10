@@ -7651,6 +7651,10 @@ test("tavern reads shared module defaults from runtime content", async () => {
   const tavernDefaultsHelperModulePath = require.resolve(
     "../.test-dist/application/house-modules/tavern/tavern-house-content-defaults.js"
   );
+  const tavernActiveContentModulePath = path.join(
+    process.cwd(),
+    ".test-dist/application/house-modules/tavern/tavern-active-content.js"
+  );
   const tavernHouseModulePath = require.resolve(
     "../.test-dist/application/house-modules/tavern/tavern-house-module.js"
   );
@@ -7658,6 +7662,9 @@ test("tavern reads shared module defaults from runtime content", async () => {
   delete require.cache[defaultRuntimeContentModulePath];
   delete require.cache[tavernSessionStateModulePath];
   delete require.cache[tavernDefaultsHelperModulePath];
+  if (fs.existsSync(tavernActiveContentModulePath)) {
+    delete require.cache[tavernActiveContentModulePath];
+  }
   delete require.cache[tavernHouseModulePath];
 
   const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
@@ -7784,6 +7791,26 @@ test("tavern reads shared module defaults from runtime content", async () => {
       runtimeDefaults.tavern = previousTavernDefaults;
     }
   }
+});
+
+test("tavern no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const tavernSource = fs.readFileSync(
+    "src/application/house-modules/tavern/tavern-house-module.ts",
+    "utf8"
+  );
+  const tavernActiveContentPath =
+    "src/application/house-modules/tavern/tavern-active-content.ts";
+  const tavernActiveContentExists = fs.existsSync(tavernActiveContentPath);
+  const tavernActiveContentSource = tavernActiveContentExists
+    ? fs.readFileSync(tavernActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(tavernActiveContentExists, true);
+  assert.match(tavernSource, /from "\.\/tavern-active-content"/);
+  assert.doesNotMatch(tavernSource, /default-runtime-content/);
+  assert.doesNotMatch(tavernSource, /defaultRuntimeContent\.textEntriesById/);
+  assert.match(tavernActiveContentSource, /defaultRuntimeContent/);
+  assert.match(tavernActiveContentSource, /getTavernTextEntries/);
 });
 
 test("tea house reads shared module defaults from runtime content", async () => {

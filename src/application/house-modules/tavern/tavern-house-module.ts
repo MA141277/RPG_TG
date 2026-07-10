@@ -19,7 +19,6 @@ import {
   getTavernTimeVariableKey,
   type TavernWorkOffer,
 } from "../../../domain/tavern";
-import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import {
   advanceTavernGambleMeldCountdown,
@@ -79,6 +78,7 @@ import {
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import { getTavernTextEntries } from "./tavern-active-content";
 import { getTavernHouseContentDefaults } from "./tavern-house-content-defaults";
 import { createInitialTavernSessionState } from "./tavern-session-state";
 
@@ -126,12 +126,6 @@ function createAlertOverlay(
     paragraphs,
     ...(tone == null ? {} : { tone }),
   };
-}
-
-function getTavernTextEntries(
-  textEntriesById?: Record<string, string>
-): Record<string, string> {
-  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
 }
 
 function resolveTavernText(
