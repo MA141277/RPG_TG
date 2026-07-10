@@ -209,9 +209,40 @@
 - `Do not use current codebase fragmentation such as EventConditionNode, scene/action Condition/Effect, task conditions, or ad hoc callback/custom seams as justification for preserving multiple authoring-side dialects.`
 - `Current runtime or legacy host seams may survive temporarily as compile/export targets or compatibility adapters, but the frozen creator-facing contract is one shared condition/effect family.`
 
+### Frozen Minimum Runtime Contract Change List
+
+- `Required now`
+  - `One shared authoring-rule compile/adapter seam is required so condition_group and effect_bundle can lower into current event, task, dialogue/scene, menu, and minigame runtime consumers without each host preserving a separate authoring dialect forever.`
+  - `That required change is contract/runtime-behavior scoped, not a mandate to invent new runtime pack tables first.`
+  - `No additional mandatory runtime-facing split table is justified today beyond the already-supported manifest-driven families and optional task support already present in current repository truth.`
+- `Optional only if later implementation evidence proves current contracts insufficient`
+  - `dialogues.json`
+  - `minigames.json`
+  - `story-nodes.json`
+  - `city-menu-items.json`
+  - `house-menu-items.json`
+  - `narrow additive field/table growth for richer task, menu, playable, or shared-rule settlement only where compile/export cannot stay compatible with current runtime truth`
+- `Out of scope for this version`
+  - `destructive replacement of the current scenario-pack format`
+  - `broad runtime modernization or consumer rewrites not strictly required for script-editor landing`
+  - `schema growth admitted only because a richer editor UI would prefer it`
+  - `repository-wide migration work unrelated to the bounded script-editor contract freeze`
+
+### Frozen Gap Classification Matrix
+
+| Mismatch Family | Current Evidence | Classification | Frozen Disposition |
+| --- | --- | --- | --- |
+| `person / city / building / story_pack authoring semantics exceed current runtime naming` | `Current mapping already compiles these objects into characters / cities / houses / pack manifest families while authoring-only metadata stays outside runtime export.` | `Class A` | `Solve in authoring model plus export mapping; no new runtime table or field is justified.` |
+| `dialogue and story_node are creator-facing objects while current runtime still centers on scenes + textEntries` | `Current runtime already has scenes.json plus text-entries.json and the mapping queue froze dialogue/story_node onto that family by default.` | `Class A` | `Keep compatibility-first export onto current scene/text families unless later evidence proves they are insufficient.` |
+| `authoring-only notes, draft state, grouping, review markers, unresolved import residue` | `These are creator workflow concerns, not runtime consumption requirements.` | `Class A` | `Persist only in the editor project; do not leak into runtime-facing export.` |
+| `quest/task authoring requires a runtime-facing task family` | `Current repository truth already supports optional tasks.json through ContentPackDefinition and scenario-pack loader validation.` | `Class A` | `Use the existing task family; no new mandatory task table redesign is justified by current evidence.` |
+| `dedicated runtime tables for dialogue / minigame / story_node / city-menu-item / house-menu-item` | `Authoring plan records them as candidate additive export families, but current compatibility-first freeze does not yet prove they are required.` | `Class B` | `Keep as optional additive candidates only; admit later only if implementation proves existing runtime families cannot carry the semantics cleanly.` |
+| `one reusable shared rule family across event / task / dialogue/scene / menu / minigame` | `Current code still shows multiple host-specific condition/effect contracts such as EventConditionNode, scene/action Condition/Effect, task conditions/signals, and host-local custom/callback seams.` | `Class C` | `Require one shared authoring-rule compile/adapter seam before implementation-governed editor landing.` |
+| `host-local custom/callback/playable/menu adapters that exceed frozen shared primitives` | `Current repository still uses bounded custom/callback and host trigger seams on covered paths.` | `Class C` | `Treat these as runtime-behavior gaps only when shared primitives plus host adapters cannot express them; do not silently expand the shared core without evidence.` |
+
 ### Explicit Downstream Routing From This Queue
 
-- `minimum required runtime/schema delta classification belongs to queue.minimal-runtime-contract-change-audit`
+- `Minimum required runtime/schema delta classification is now frozen on current version truth and must not be silently reopened without fresh evidence.`
 - `Any proof that dialogues.json, minigames.json, story-nodes.json, city-menu-items.json, or house-menu-items.json must become runtime-facing tables belongs to the later runtime-delta and compatibility families rather than this mapping queue by itself.`
 - `Compatibility round-trip policy, importer precedence, editor-project persistence shape, runtime-facing export artifact guarantees, and metadata non-leak policy are now frozen on current version truth and must not be silently reopened without fresh evidence.`
 - `Shared condition/effect expression grammar, primitive boundary, host reuse rules, and host-specific adapter allowance are now frozen on current version truth and must not be silently reopened without fresh evidence.`
