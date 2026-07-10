@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `The minimum repository sync batch completed successfully after mapping baseline and object-level freeze truth were written: working branch codex/editor-native-authoring-contract-freeze-review and origin/mod-first-dev now both contain commit 6431a8b.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -291,3 +291,7 @@
   - Summary: `Completed task.authoring-runtime-mapping-contract-freeze.object-level-mapping-freeze by writing the frozen mapping principles, object-level mapping matrix, direct-export versus editor-project-only rules, and downstream routing boundaries into the current version spec.`
   - Verification: `npm run lint:blueprints`
   - Next at this time: `Keep the queue active and execute task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff by deciding whether any same-family mapping residue remains or whether control should return to version review.`
+- 2026-07-10
+  - Summary: `Completed the minimum repository sync batch for the active mapping queue after baseline reconcile and object-level mapping freeze truth were written. Commit 6431a8b is now on working branch codex/editor-native-authoring-contract-freeze-review and on origin/mod-first-dev, while queue closeout remains the only live in-queue task.`
+  - Verification: `git push -u origin codex/editor-native-authoring-contract-freeze-review; git push origin HEAD:mod-first-dev`
+  - Next at this time: `Keep the queue active and execute task.authoring-runtime-mapping-contract-freeze.queue-closeout-and-handoff from the synchronized queue governor state.`
