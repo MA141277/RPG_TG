@@ -67,3 +67,6 @@
 
 - `Earlier phase queues remain the evidence base for runtime closure, contribution closure, authoring closure, residue routing, and final acceptance writing.`
 - `This version was intentionally returned from premature done-state semantics to open-state governance so same-version queue admission remains legal until explicit version closeout is recorded.`
+- `This version was explicitly closed on 2026-07-10 after closeout review confirmed that required evidence families are already closed historical evidence, no active queue remains, and no live candidate set remains on written source truth.`
+- `The remaining grain-shop helper-family residue plus broader runtime-orchestration and house-session ownerization residue were preserved as post-closeout historical follow-up only and were not silently reopened inside this closed version.`
+- `Script-editor design and contract-freeze work was intentionally routed to successor version target.script-editor-contract-freeze rather than being absorbed into this modularization closeout record.`

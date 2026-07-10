@@ -4,13 +4,13 @@
 
 - document_role: `version-governor`
 - version_id: `target.project-complete-modularization`
-- version_status: `open`
-- active_phase: `phase.final-acceptance`
+- version_status: `done`
+- active_phase: `phase.version-closeout`
 - active_queue: `none`
 - decision_state: `idle-open`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `open-version-plan`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `closed-version-record`
 - promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
@@ -80,6 +80,9 @@
 | `item.medicine-house-active-content-lift` | `queue-candidate` | `queue.medicine-house-active-content-lift` | `admitted + queue closed` | `Fresh source review first showed src/application/house-modules/medicine-house/medicine-house-house-module.ts still read defaultRuntimeContent.textEntriesById directly on the covered production path, while queue.tavern-active-content-lift was already closed and the remaining grain-shop residue already spanned both the house module and grain-market helper. The admitted queue then moved the covered medicine-house read behind one local active-content seam and closed after residue review confirmed no additional same-queue continuation remains on the admitted path.` |
 | `item.legacy-adapter-and-bridge-retirement` | `current-target-item` | `none` | `candidate-only bounded cleanup` | `Fresh 2026-07-08 audit shows mixed residue rather than one admission-ready queue. src/core/adapters/legacy-house-adapter.ts is now dead placeholder residue, but state-sync-app-bridge, house-playable-runtime-bridge, legacyInteractiveKind, createLegacyPlayableSession, and transitional runtime request/result bridge helpers still have live consumers on the covered path. Deletion is therefore not yet a lawful standalone queue admission; it stays as bounded cleanup to revisit after upstream contract and seam work lands.` |
 | `item.home-keep-fallback-retirement` | `current-target-item` | `none` | `candidate-only dead cleanup` | `Fresh source audit shows src/application/house-modules/home-house/home-house-house-module.ts and src/application/house-modules/keep-house/keep-house-house-module.ts now consume shared houseModuleDefaults through defaultRuntimeContent rather than src/content/houses/home-house-content.ts or src/content/houses/keep-house-content.ts. The legacy home or keep fallback TS plus JSON path remains only through src/content/pack-content-access.ts and boundary tests, so current evidence shows dead cleanup residue rather than a live implementation queue or an admission-ready blocker.` |
+| `item.grain-shop-helper-family-cleanup` | `future-target-candidate` | `none` | `historical residue routed out at version closeout` | `Fresh 2026-07-10 closeout review keeps the remaining grain-shop fallback reads as a broader multi-file helper-family residue across src/application/house-modules/grain-shop/grain-shop-house-module.ts and src/application/grain-shop/grain-market.ts rather than one already-admitted continuation. Because the operator explicitly closed this modularization version instead of admitting another same-version queue, that residue is preserved as post-closeout historical follow-up only and is not carried into the successor script-editor contract-freeze version.` |
+| `item.runtime-orchestration-and-house-session-ownerization` | `future-target-candidate` | `none` | `historical residue routed out at version closeout` | `Fresh 2026-07-10 closeout review keeps the remaining repeated commitRuntimeRequest, createHouseRuntimeInstance, createHouseRuntimeBridge, and adjacent house-session owner-line residue in a broader runtime-orchestration family rather than one lawful same-version continuation. That family is therefore routed out of the closed modularization version and not absorbed by the successor script-editor contract-freeze version.` |
+| `item.script-editor-contract-freeze-successor-version` | `future-target-candidate` | `none` | `routed to successor version` | `The operator explicitly required a Blueprint governance switch that closes the current modularization version and opens a successor version dedicated to script-editor design and contract freeze. This topic is intentionally not absorbed into the closed modularization version and is now governed by target.script-editor-contract-freeze.` |
 | `item.zhuyuanzhang-scenario-pack-integration-closeout-sync` | `current-target-item` | `none` | `executed + done` | `Fresh governance audit confirms docs/blueprints/queues/zhuyuanzhang-scenario-pack-integration-queue.md already records task.zhuyuanzhang-scenario-pack-integration.pack-private-content-access-decoupling = done, task.zhuyuanzhang-scenario-pack-integration.queue-closeout = done, queue_status = done, and closeout_status = done. The current legal governance action was queue-closeout synchronization only, and that sync is now already completed with target control returned to promotion-review and no active queue.` |
 
 ### Admission Review Record
@@ -100,9 +103,16 @@
 - Current review subject:
   - `none`
 - Current handoff:
-  - `queue.medicine-house-active-content-lift is now closed after the bounded medicine-house text-entry seam landed and queue-local residue review returned the remaining grain-shop and broader runtime-orchestration residue to version-level review.`
-  - `No active queue remains, so the current legal next step is same-version promotion review or explicit version closeout confirmation under the version lifecycle rules.`
+  - `Explicit human governance instruction on 2026-07-10 closed this version after closeout review confirmed that no active queue and no live candidate set remain on written source truth.`
+  - `The remaining grain-shop helper-family residue plus broader runtime-orchestration and house-session ownerization residue are preserved only as post-closeout historical follow-up and are not carried into the successor script-editor contract-freeze version.`
+  - `Script-editor design and contract-freeze work is intentionally routed to successor version target.script-editor-contract-freeze instead of being absorbed into this closed modularization version.`
 - `The current live candidate set is empty on written source truth.`
+
+### Version Closeout Record
+
+- `Closeout judgement: closeout-ready acceptance evidence already exists through the closed current-period modularization queues, the version has no active queue, and no written live candidate remains that must be admitted before closeout.`
+- `Residue routing: grain-shop helper-family cleanup and broader runtime-orchestration or house-session ownerization remain historical follow-up only after this closeout; they require a future explicit version-level reopening or later reclassification rather than silent carryover.`
+- `Version boundary: script-editor design or contract-freeze work does not continue under target.project-complete-modularization and is instead opened as successor version target.script-editor-contract-freeze.`
 
 ### Queue Admission Startup Rules
 
@@ -126,7 +136,7 @@
 - `queue.temple-house-default-pack-lift is now closed historical evidence, so any later temple-house default-pack follow-up must be re-proven as a new bounded queue rather than silently reopening the closed record.`
 - `queue.tavern-active-content-lift is now closed historical evidence, so any later tavern default-content follow-up must be re-proven as a new bounded queue rather than silently reopening the closed record.`
 - `queue.medicine-house-active-content-lift is now closed historical evidence, so any later medicine-house default-content follow-up must be re-proven as a new bounded queue rather than silently reopening the closed record.`
-- `The remaining grain-shop and broader runtime-orchestration continuations return to same-version promotion review and must each be re-evaluated on fresh bounded evidence before any new promotion.`
+- `After the 2026-07-10 version closeout, the remaining grain-shop helper-family residue plus broader runtime-orchestration and house-session ownerization residue no longer remain same-version promotion subjects; they are historical post-closeout follow-up only until a future explicit version-level reopening or reclassification exists.`
 
 ### Operator Intake Contract
 
@@ -293,3 +303,5 @@ Optional mirror:
 - `2026-07-10: queue.home-house-active-content-lift closed after src/application/house-modules/home-house/home-house-active-content.ts took ownership of the covered home-house default text and module-default fallback access, queue-local residue review confirmed no additional same-queue continuation remains on the admitted home-house path, and version control returned to idle-open review with no active queue.`
 - `2026-07-10: item.market-house-active-content-lift was formally admitted and activated as queue.market-house-active-content-lift because queue.home-house-active-content-lift is now closed, src/application/house-modules/market-house/market-house-house-module.ts still reads defaultRuntimeContent.houseModuleDefaults and defaultRuntimeContent.cities directly on the covered production path, and version-level review froze market-house-default-content-and-city-lift as the smallest lawful next slice ahead of the broader tea-house, temple-house, tavern, medicine-house, grain-shop, and runtime-orchestration residue families.`
 - `2026-07-10: queue.market-house-active-content-lift closed after src/application/house-modules/market-house/market-house-active-content.ts took ownership of the covered market-house default text, module-default, and city-definition fallback access, queue-local residue review confirmed no additional same-queue continuation remains on the admitted market-house path, and version control returned to idle-open review with no active queue.`
+- `2026-07-10: explicit human governance instruction then closed target.project-complete-modularization as done after closeout review confirmed that required evidence families are already closed, no active queue remains, and no live candidate set remains on written source truth; the remaining grain-shop helper-family residue plus broader runtime-orchestration and house-session ownerization residue were routed out as post-closeout historical follow-up rather than admitted into another same-version queue.`
+- `2026-07-10: script-editor design and contract freeze was intentionally opened as successor version target.script-editor-contract-freeze rather than being absorbed into the closed modularization version.`

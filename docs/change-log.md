@@ -5,6 +5,18 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-10 Blueprint Version Switch To Script Editor Contract Freeze
+
+### Changed
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，把 Blueprint 主链从 `target.project-complete-modularization` 切换到新的 `target.script-editor-contract-freeze`。
+- 更新 [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md) 与 [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，把当前 modularization / runtime ownerization / shell closeout 主轴正式写成历史 closeout，并将 grain-shop helper-family residue 与 broader runtime-orchestration / house-session ownerization residue 路由为 post-closeout historical follow-up，而不是继续同 version admission。
+- 新增 [docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md) 与 [docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md)，把新 current version 收口为“剧本编辑器设计 / 契约冻结”，明确只记录 queue family，不创建 queue doc，也不顺带启动实现。
+
+### Impact
+- “剧本编辑器”议题不再继续吸收到旧 modularization version，而是作为一个独立 successor version 处理，避免把 editor 设计冻结和 runtime residue 收口混成同一条治理主线。
+- 新 current version 现在只承载 `editor-native authoring contract`、`authoring -> runtime mapping contract`、`compatibility / import-export policy`、`shared condition / effect mechanism`、以及最小 `runtime contract changes` 的冻结目标，不默认吸纳主程式 shell 化、sub-runtimes 重构、全仓库硬编码迁移或完整 UI 落地。
+- 本次切换没有创建新的 queue 文档，也没有推进任何实现代码改动；Blueprint 主链只完成了 version closeout / version opening 的治理切换。
+
 ## 2026-07-08 Review Cadence Shared Mechanism Support Spec
 
 ### Added
