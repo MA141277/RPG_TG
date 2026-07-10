@@ -13,9 +13,9 @@
 - next_task: `task.canonical-runtime-state-sync-unification.runtime-state-residue-review`
 - closeout_status: `in-progress`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit 0f8210d on mod-first-dev was pushed successfully to origin/mod-first-dev after queue admission and baseline-reconcile truth were written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
