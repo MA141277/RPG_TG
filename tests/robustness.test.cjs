@@ -5790,11 +5790,15 @@ test("market house reads shared module defaults from runtime content", async () 
   const defaultRuntimeContentModulePath = require.resolve(
     "../.test-dist/application/content/default-runtime-content.js"
   );
+  const marketHouseActiveContentModulePath = require.resolve(
+    "../.test-dist/application/house-modules/market-house/market-house-active-content.js"
+  );
   const marketHouseModulePath = require.resolve(
     "../.test-dist/application/house-modules/market-house/market-house-house-module.js"
   );
 
   delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[marketHouseActiveContentModulePath];
   delete require.cache[marketHouseModulePath];
 
   const {
@@ -5988,6 +5992,32 @@ test("market house reads shared module defaults from runtime content", async () 
       runtimeDefaults["market-house"] = previousMarketDefaults;
     }
   }
+});
+
+test("market house no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const marketHouseSource = fs.readFileSync(
+    "src/application/house-modules/market-house/market-house-house-module.ts",
+    "utf8"
+  );
+  const marketHouseActiveContentPath =
+    "src/application/house-modules/market-house/market-house-active-content.ts";
+  const marketHouseActiveContentExists = fs.existsSync(marketHouseActiveContentPath);
+  const marketHouseActiveContentSource = marketHouseActiveContentExists
+    ? fs.readFileSync(marketHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(marketHouseActiveContentExists, true);
+  assert.match(marketHouseSource, /from "\.\/market-house-active-content"/);
+  assert.doesNotMatch(marketHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(
+    marketHouseSource,
+    /defaultRuntimeContent\.houseModuleDefaults/
+  );
+  assert.doesNotMatch(marketHouseSource, /defaultRuntimeContent\.cities/);
+  assert.match(marketHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(marketHouseActiveContentSource, /getMarketHouseContentDefaults/);
+  assert.match(marketHouseActiveContentSource, /getMarketHouseCityDefinition/);
+  assert.match(marketHouseActiveContentSource, /getMarketHouseTextEntries/);
 });
 
 test("market house can open trade overlay and execute buy flow", () => {
