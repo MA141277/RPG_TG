@@ -32,7 +32,7 @@ import type {
 } from "../contracts/house-runtime";
 import type { RuntimeInteractiveSignal } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
-import { createRuntimeStateFromAppState } from "./state-sync-runtime";
+import { stateSyncCoreSeam } from "./state-sync-core-seam";
 import { settleRuntimeEffects } from "./runtime-settlement";
 
 export type HouseRuntimeDependencies = {
@@ -480,7 +480,9 @@ export function createHouseRuntimeBridge(
       enterHouseById(interactive.houseId, { render: false });
     }
 
-    return createRuntimeStateFromAppState(dependencies.getAppState());
+    return stateSyncCoreSeam.createRuntimeStateFromAppState(
+      dependencies.getAppState()
+    );
   }
 
   return {

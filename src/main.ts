@@ -121,11 +121,8 @@ import {
   readBrowserSaveRecord,
   writeBrowserSaveRecord,
 } from "./core/save/browser-save-record";
-import {
-  applyRuntimeStateToAppState,
-  commitRuntimeRequest,
-  createRuntimeStateFromAppState,
-} from "./core/runtime/state-sync-runtime";
+import { commitRuntimeRequest } from "./core/runtime/state-sync-runtime";
+import { stateSyncCoreSeam } from "./core/runtime/state-sync-core-seam";
 import type {
   RuntimeFollowUpContext,
   RuntimeRouter,
@@ -843,7 +840,7 @@ function syncCouncilPriorityAfterGameStateChange(
   councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
 ): boolean {
   const followUp = applyCouncilPriorityFollowUp({
-    state: createRuntimeStateFromAppState(appState),
+    state: stateSyncCoreSeam.createRuntimeStateFromAppState(appState),
     previousGameState,
     houseDefinitions: activeContentContext.houses,
     textEntriesById: activeContentContext.textEntriesById,
@@ -853,7 +850,10 @@ function syncCouncilPriorityAfterGameStateChange(
     return false;
   }
 
-  appState = applyRuntimeStateToAppState(appState, followUp.state);
+  appState = stateSyncCoreSeam.applyRuntimeStateToAppState(
+    appState,
+    followUp.state
+  );
   renderApp();
   return true;
 }

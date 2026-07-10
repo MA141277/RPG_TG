@@ -7,12 +7,12 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-10`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.canonical-runtime-state-sync-unification.state-sync-runtime-truth-chain-lift`
-- next_task: `task.canonical-runtime-state-sync-unification.runtime-state-residue-review`
-- closeout_status: `in-progress`
-- next_effect: `none`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `baseline-push`
 - sync_summary: `Commit 0f8210d on mod-first-dev was pushed successfully to origin/mod-first-dev after queue admission and baseline-reconcile truth were written.`
@@ -45,9 +45,9 @@
 
 - queue_goal: `Lift the remaining state-sync-runtime bridge truth chain behind one canonical core seam before reconsidering broader runtime orchestration and content-consumption residue.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `The current active task lifts the remaining createRuntimeStateFromAppState/applyRuntimeStateToAppState/syncAppState/canonicalFromLegacyRuntimeState truth chain out of the bridge-heavy state-sync-runtime surface and into one canonical core seam.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the queue closed after the state-sync core seam landed and the residue review concluded that the remaining repeated runtime commit assembly plus house-runtime creation residue belongs to broader runtime orchestration and house-session owner lines rather than another already-frozen same-queue cut.`
 - task_briefs:
   - `task.canonical-runtime-state-sync-unification.baseline-reconcile: freeze the smallest lawful first canonical runtime/state truth-chain slice and confirm the queue remains bounded.`
   - `task.canonical-runtime-state-sync-unification.state-sync-runtime-truth-chain-lift: move the remaining bridge-heavy state-sync-runtime truth chain behind one canonical core seam.`
@@ -88,8 +88,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.canonical-runtime-state-sync-unification.baseline-reconcile` | `completed` | `Freeze the smallest lawful first canonical runtime/state truth-chain slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze state-sync-runtime truth-chain unification ahead of downstream runtime orchestration or content-consumption residue.` |
-| `task.canonical-runtime-state-sync-unification.state-sync-runtime-truth-chain-lift` | `active` | `Move the remaining bridge-heavy state-sync-runtime truth chain behind one canonical core seam.` | `task.canonical-runtime-state-sync-unification.baseline-reconcile` | `Active after the first lawful slice was frozen.` |
-| `task.canonical-runtime-state-sync-unification.runtime-state-residue-review` | `queued` | `Reassess the remaining runtime orchestration and downstream residue after the first truth-chain lift lands.` | `task.canonical-runtime-state-sync-unification.state-sync-runtime-truth-chain-lift` | `Must not start before the first truth-chain lift lands and verification passes.` |
+| `task.canonical-runtime-state-sync-unification.state-sync-runtime-truth-chain-lift` | `completed` | `Move the remaining bridge-heavy state-sync-runtime truth chain behind one canonical core seam.` | `task.canonical-runtime-state-sync-unification.baseline-reconcile` | `Completed after src/core/runtime/state-sync-core-seam.ts became the covered canonical owner line and verification passed.` |
+| `task.canonical-runtime-state-sync-unification.runtime-state-residue-review` | `completed` | `Reassess the remaining runtime orchestration and downstream residue after the first truth-chain lift lands.` | `task.canonical-runtime-state-sync-unification.state-sync-runtime-truth-chain-lift` | `Completed after the residue review returned control to version review instead of widening this queue into broader runtime orchestration or house-session work.` |
 
 ### Task Definitions
 
@@ -151,7 +151,7 @@
 ##### Control Block
 
 - task_id: `task.canonical-runtime-state-sync-unification.state-sync-runtime-truth-chain-lift`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/core/runtime/state-sync-runtime.ts`
@@ -191,7 +191,7 @@
 - task_brief:
   - `Lift the remaining bridge-heavy state-sync-runtime truth chain behind one canonical core seam.`
 - task_outcome_summary:
-  - `When complete, the covered core path will stop treating createRuntimeStateFromAppState/applyRuntimeStateToAppState/syncAppState/canonicalFromLegacyRuntimeState as the active multi-helper truth chain and will instead consume one canonical core runtime/state seam.`
+  - `Completed after the covered core path stopped treating createRuntimeStateFromAppState/applyRuntimeStateToAppState/syncAppState/canonicalFromLegacyRuntimeState as the active multi-helper truth chain and now consumes src/core/runtime/state-sync-core-seam.ts as the covered canonical runtime/state seam.`
 - Purpose:
   - `Reduce bridge-heavy state-sync ownership before the queue re-evaluates broader runtime orchestration and downstream cleanup residue.`
 - Failure mode:
@@ -202,7 +202,7 @@
 ##### Control Block
 
 - task_id: `task.canonical-runtime-state-sync-unification.runtime-state-residue-review`
-- state: `queued`
+- state: `completed`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
@@ -239,11 +239,15 @@
 - task_brief:
   - `Reassess the remaining runtime orchestration and downstream residue after the first truth-chain lift lands.`
 - task_outcome_summary:
-  - `This task will decide whether the remaining residue stays as another bounded canonical runtime/state continuation or returns to version review for later queue selection.`
+  - `Completed after queue-local review concluded that the remaining residue spans broader runtime orchestration and house-session owner lines, so the queue returned control to version review rather than widening in place.`
 - Purpose:
   - `Keep the queue aligned with current evidence after the first implementation slice lands.`
 - Failure mode:
   - `Do not auto-absorb broader runtime orchestration ownerization or active-content cleanup without a fresh queue-local decision.`
+- Completion notes:
+  - `src/core/runtime/state-sync-runtime.ts now consumes src/core/runtime/state-sync-core-seam.ts for createRuntimeStateFromAppState, applyRuntimeStateToAppState, hydrateRuntimeState, createPresentationInput, createSaveState, and syncAppState, so the covered bridge-heavy truth chain no longer remains spread across the old helper surface.`
+  - `src/main.ts still carries repeated commitRuntimeRequest callsites across runtime-facing orchestration paths, and it still owns createHouseRuntimeInstance -> createHouseRuntimeBridge session assembly, which is broader runtime orchestration plus house-session residue rather than another canonical runtime/state seam slice.`
+  - `Because the remaining residue now sits on broader runtime orchestration and house-session owner lines instead of the covered state-sync truth chain, the correct queue-local decision is return-to-version-review instead of silently widening this queue into a second broader implementation family.`
 
 ##### Decision-Dispatch Notes
 
@@ -260,3 +264,11 @@
   - Summary: `Completed baseline-reconcile by freezing state-sync-runtime truth-chain unification as the first lawful implementation slice, while leaving broader main.ts runtime orchestration, house-session assembly, and active-content cleanup residue for later review.`
   - Verification: `rg -n "createRuntimeStateFromAppState|applyRuntimeStateToAppState|syncAppState|canonicalFromLegacyRuntimeState" src/core/runtime/state-sync-runtime.ts src/core/runtime/state-sync-app-bridge.ts tests/robustness.test.cjs; node tools/lint-blueprints.mjs`
   - Next at this time: `Execute task.canonical-runtime-state-sync-unification.state-sync-runtime-truth-chain-lift with a failing test first.`
+- 2026-07-10
+  - Summary: `Completed state-sync-runtime-truth-chain-lift by moving the covered app-state and legacy-runtime bridge helpers behind src/core/runtime/state-sync-core-seam.ts, slimming src/core/runtime/state-sync-runtime.ts to the seam consumer, and updating covered runtime consumers plus robustness tests to the new owner line.`
+  - Verification: `node --test --test-name-pattern "runtime spine commit helper is exported from state sync runtime|main runtime orchestration uses shared runtime commit helper for covered dispatch paths|state sync runtime hides app-state canonicalization behind one core seam|covered runtime consumers no longer depend on bridge-named state sync helpers" tests/robustness.test.cjs; npm run typecheck`
+  - Next at this time: `Execute task.canonical-runtime-state-sync-unification.runtime-state-residue-review to decide whether the remaining residue stays in-queue or returns to version review.`
+- 2026-07-10
+  - Summary: `Completed runtime-state-residue-review by concluding that the remaining residue no longer forms one unique same-queue implementation slice. src/main.ts still owns repeated commitRuntimeRequest runtime orchestration and createHouseRuntimeInstance -> createHouseRuntimeBridge session assembly, so control returns to version review instead of widening this queue into broader runtime orchestration and house-session work.`
+  - Verification: `rg -n "createRuntimeStateFromAppState|applyRuntimeStateToAppState|syncAppState|canonicalFromLegacyRuntimeState|commitRuntimeRequest\\(|createHouseRuntimeInstance|createHouseRuntimeBridge" src/core/runtime/state-sync-runtime.ts src/main.ts tests/robustness.test.cjs; node tools/lint-blueprints.mjs`
+  - Next at this time: `Return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for version-level review.`

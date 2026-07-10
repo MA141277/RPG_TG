@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.project-complete-modularization`
 - has_active_queue: `true`
-- next_file: `docs/blueprints/queues/canonical-runtime-state-sync-unification-queue.md`
+- next_file: `docs/blueprints/queues/active-content-consumption-closure-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/canonical-runtime-state-sync-unification-queue.md`
+  - `docs/blueprints/queues/active-content-consumption-closure-queue.md`
 
 ### Live Entry Guardrails
 

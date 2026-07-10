@@ -10668,8 +10668,9 @@ test("runtime spine commit helper is exported from state sync runtime", () => {
 
   assert.match(source, /import \{ dispatchRuntimeRequest \} from "\.\/runtime-dispatch"/);
   assert.match(source, /export function commitRuntimeRequest/);
-  assert.match(source, /createRuntimeStateFromAppState/);
-  assert.match(source, /applyRuntimeStateToAppState/);
+  assert.match(source, /state-sync-core-seam/);
+  assert.match(source, /stateSyncCoreSeam\.createRuntimeStateFromAppState/);
+  assert.match(source, /stateSyncCoreSeam\.applyRuntimeStateToAppState/);
 });
 
 test("main runtime orchestration uses shared runtime commit helper for covered dispatch paths", () => {
@@ -14563,18 +14564,38 @@ test("state sync runtime no longer exports bridge-result-only compatibility help
   assert.doesNotMatch(source, /export function applyRuntimeBridgeResult/);
 });
 
-test("state sync runtime exposes canonical app-state runtime helpers instead of bridge helpers", () => {
-  const source = fs.readFileSync(
+test("state sync runtime hides app-state canonicalization behind one core seam", () => {
+  const runtimeSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
     "utf8"
   );
+  const seamPath = path.join(
+    process.cwd(),
+    "src/core/runtime/state-sync-core-seam.ts"
+  );
 
-  assert.match(source, /export type RuntimeAppStateInput/);
-  assert.match(source, /export function createRuntimeStateFromAppState/);
-  assert.match(source, /export function applyRuntimeStateToAppState/);
-  assert.doesNotMatch(source, /export type RuntimeStateBridgeInput/);
-  assert.doesNotMatch(source, /export function createRuntimeBridgeState/);
-  assert.doesNotMatch(source, /export function applyRuntimeBridgeState/);
+  assert.equal(fs.existsSync(seamPath), true);
+
+  const seamSource = fs.readFileSync(seamPath, "utf8");
+
+  assert.match(runtimeSource, /state-sync-core-seam/);
+  assert.doesNotMatch(runtimeSource, /export type RuntimeAppStateInput/);
+  assert.doesNotMatch(runtimeSource, /export function createRuntimeStateFromAppState/);
+  assert.doesNotMatch(runtimeSource, /export function applyRuntimeStateToAppState/);
+  assert.doesNotMatch(
+    runtimeSource,
+    /function canonicalFromLegacyRuntimeState|const canonicalFromLegacyRuntimeState/
+  );
+  assert.doesNotMatch(runtimeSource, /import \{ syncAppState \} from "\.\/state-sync-app-bridge"/);
+  assert.match(seamSource, /export type RuntimeAppStateInput/);
+  assert.match(seamSource, /export const stateSyncCoreSeam = \{/);
+  assert.match(seamSource, /createRuntimeStateFromAppState/);
+  assert.match(seamSource, /applyRuntimeStateToAppState/);
+  assert.match(seamSource, /canonicalFromLegacyRuntimeState/);
+  assert.match(seamSource, /syncAppState/);
+  assert.doesNotMatch(runtimeSource, /export type RuntimeStateBridgeInput/);
+  assert.doesNotMatch(runtimeSource, /export function createRuntimeBridgeState/);
+  assert.doesNotMatch(runtimeSource, /export function applyRuntimeBridgeState/);
 });
 
 test("house runtime bridge no longer depends on interactive-specific state sync aliases", () => {
@@ -14596,11 +14617,16 @@ test("covered runtime consumers no longer depend on bridge-named state sync help
     "utf8"
   );
 
-  assert.match(mainSource, /createRuntimeStateFromAppState/);
-  assert.match(mainSource, /applyRuntimeStateToAppState/);
+  assert.match(mainSource, /stateSyncCoreSeam/);
+  assert.match(mainSource, /stateSyncCoreSeam\.createRuntimeStateFromAppState/);
+  assert.match(mainSource, /stateSyncCoreSeam\.applyRuntimeStateToAppState/);
   assert.doesNotMatch(mainSource, /createRuntimeBridgeState/);
   assert.doesNotMatch(mainSource, /applyRuntimeBridgeState/);
-  assert.match(houseRuntimeSource, /createRuntimeStateFromAppState/);
+  assert.match(houseRuntimeSource, /stateSyncCoreSeam/);
+  assert.match(
+    houseRuntimeSource,
+    /stateSyncCoreSeam\.createRuntimeStateFromAppState/
+  );
   assert.doesNotMatch(houseRuntimeSource, /createRuntimeBridgeState/);
 });
 
