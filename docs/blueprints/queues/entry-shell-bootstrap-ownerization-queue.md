@@ -7,15 +7,15 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-10`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `conditional`
-- active_task: `task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-residue-review`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- closeout_status: `done`
+- next_effect: `return-to-version-review`
+- sync_status: `failed`
+- sync_scope: `branch-push`
+- sync_summary: `Commit c82510f was created on mod-first-dev after queue closeout preparation, but branch push to origin/mod-first-dev failed twice because the current environment could not reach github.com:443.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -45,9 +45,9 @@
 
 - queue_goal: `Move entry-shell startup activation/bootstrap state behind one application-owned seam before reconsidering repeated runtime commit assembly and house-runtime creation residue.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `The current active task re-checks whether the remaining repeated runtime commit assembly and house-runtime residue stays as one bounded in-queue continuation or returns to version review after the bootstrap seam cut landed.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the queue closed after the residue review concluded that the remaining repeated runtime commit assembly and house-runtime residue no longer forms one unique same-queue implementation slice on current evidence.`
 - task_briefs:
   - `task.entry-shell-bootstrap-ownerization.baseline-reconcile: freeze the smallest lawful first entry-shell/bootstrap ownerization slice and confirm the queue remains bounded.`
   - `task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-state-owner-lift: move startup activation/bootstrap state out of src/main.ts and behind one entry-shell seam.`
@@ -89,7 +89,7 @@
 | --- | --- | --- | --- | --- |
 | `task.entry-shell-bootstrap-ownerization.baseline-reconcile` | `completed` | `Freeze the smallest lawful first entry-shell/bootstrap ownerization slice and confirm the admitted queue still stands on current source truth.` | `none` | `Completed after queue-local inspection froze startup activation/bootstrap state ownerization ahead of repeated runtime commit assembly and house-runtime residue.` |
 | `task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-state-owner-lift` | `completed` | `Move startup activation/bootstrap state out of src/main.ts and behind one application-owned entry-shell seam.` | `task.entry-shell-bootstrap-ownerization.baseline-reconcile` | `Completed after src/application/startup/entry-shell-bootstrap-state.ts took ownership of the covered bootstrap activation state and verification passed.` |
-| `task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-residue-review` | `active` | `Reassess the remaining repeated runtime commit assembly and house-runtime residue after the first bootstrap seam cut lands.` | `task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-state-owner-lift` | `Active now that the first owner-lift slice landed and verification passed.` |
+| `task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-residue-review` | `completed` | `Reassess the remaining repeated runtime commit assembly and house-runtime residue after the first bootstrap seam cut lands.` | `task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-state-owner-lift` | `Completed after the residue review returned control to version review instead of widening this queue into broader runtime orchestration and house-session work.` |
 
 ### Task Definitions
 
@@ -198,7 +198,7 @@
 ##### Control Block
 
 - task_id: `task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-residue-review`
-- state: `active`
+- state: `completed`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
@@ -233,11 +233,15 @@
 - task_brief:
   - `Reassess the remaining repeated runtime commit assembly and house-runtime residue after the first bootstrap seam cut lands.`
 - task_outcome_summary:
-  - `This task will decide whether the remaining residue stays as another bounded entry-shell continuation or returns to version review for later queue selection.`
+  - `Completed after queue-local review concluded that the remaining residue spans broader runtime orchestration and house-session owner lines, so the queue returned control to version review rather than widening in place.`
 - Purpose:
   - `Keep the queue aligned with current evidence after the first implementation slice lands.`
 - Failure mode:
   - `Do not auto-absorb runtime-state bridge cleanup or active-content cleanup without a fresh queue-local decision.`
+- Completion notes:
+  - `src/main.ts still carries repeated commitRuntimeRequest callsites across city-begging launch and settlement, interactive pointer and tick handling, activity-qte loop control, story follow-up, and other runtime-facing orchestration paths rather than one remaining startup bootstrap owner line.`
+  - `src/main.ts also still creates houseRuntime through createHouseRuntimeInstance -> createHouseRuntimeBridge with live dependencies on renderApp, startMapAutoAdvance, stopMapAutoAdvance, activeContentContext story tables, and current player/session state, which is a broader house-session assembly owner line than the admitted startup bootstrap seam.`
+  - `Because the remaining residue now sits on runtime orchestration and house-runtime session assembly rather than the covered startup activation/bootstrap owner line, the correct queue-local decision is return-to-version-review instead of silently widening this queue into a second broader implementation family.`
 
 ##### Decision-Dispatch Notes
 
@@ -258,3 +262,7 @@
   - Summary: `Completed entry-shell-bootstrap-state-owner-lift by moving covered startup activation/bootstrap state into src/application/startup/entry-shell-bootstrap-state.ts, slimming src/main.ts to the bootstrap seam consumer, and aligning robustness plus governance tests to the new owner line.`
   - Verification: `node --test --test-name-pattern "default runtime content loads from the shared base content pack path|child 29 main.ts primary startup no longer depends on legacy startup adapters|child 22 restore path can reload imported mod sources after a fresh page load|fresh source audit keeps main.ts final shell residue within the pure-shell acceptance line|entry shell bootstrap state ownerization moves startup activation bootstrap state out of main.ts" tests/robustness.test.cjs; node --test --test-name-pattern "live version plan exposes version-first control fields and lifecycle wording" tests/blueprint-governance-lint.test.cjs; node tools/blueprint-version-governance.mjs check; node tools/lint-blueprints.mjs; npm run typecheck; npm test`
   - Next at this time: `Execute task.entry-shell-bootstrap-ownerization.entry-shell-bootstrap-residue-review to decide whether repeated runtime commit assembly and house-runtime residue stays in-queue or returns to version review.`
+- 2026-07-10
+  - Summary: `Completed entry-shell-bootstrap-residue-review by concluding that the remaining residue no longer forms one unique same-queue implementation slice. src/main.ts still owns repeated commitRuntimeRequest runtime orchestration and createHouseRuntimeInstance -> createHouseRuntimeBridge session assembly, so control returns to version review instead of widening this queue into broader runtime orchestration and house-session work.`
+  - Verification: `rg -n "commitRuntimeRequest\\(|createHouseRuntimeInstance|createHouseRuntimeBridge" src/main.ts tests/robustness.test.cjs; node tools/blueprint-version-governance.mjs check; node tools/lint-blueprints.mjs`
+  - Next at this time: `Close queue.entry-shell-bootstrap-ownerization and return control to docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md for version-level review with no active queue.`
