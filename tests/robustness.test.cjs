@@ -7764,6 +7764,10 @@ test("tea house reads shared module defaults from runtime content", async () => 
   const defaultRuntimeContentModulePath = require.resolve(
     "../.test-dist/application/content/default-runtime-content.js"
   );
+  const teaHouseActiveContentModulePath = path.join(
+    process.cwd(),
+    ".test-dist/application/house-modules/tea-house/tea-house-active-content.js"
+  );
   const teaHouseActorsModulePath = require.resolve(
     "../.test-dist/application/tea-house/tea-house-actors.js"
   );
@@ -7778,6 +7782,9 @@ test("tea house reads shared module defaults from runtime content", async () => 
   );
 
   delete require.cache[defaultRuntimeContentModulePath];
+  if (fs.existsSync(teaHouseActiveContentModulePath)) {
+    delete require.cache[teaHouseActiveContentModulePath];
+  }
   delete require.cache[teaHouseActorsModulePath];
   delete require.cache[teaHouseDebateModulePath];
   delete require.cache[teaHouseDefaultsHelperModulePath];
@@ -7884,6 +7891,28 @@ test("tea house reads shared module defaults from runtime content", async () => 
     }
     defaultRuntimeContent.cityNpcPools = previousCityNpcPools;
   }
+});
+
+test("tea house no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const teaHouseSource = fs.readFileSync(
+    "src/application/house-modules/tea-house/tea-house-house-module.ts",
+    "utf8"
+  );
+  const teaHouseActiveContentPath =
+    "src/application/house-modules/tea-house/tea-house-active-content.ts";
+  const teaHouseActiveContentExists = fs.existsSync(teaHouseActiveContentPath);
+  const teaHouseActiveContentSource = teaHouseActiveContentExists
+    ? fs.readFileSync(teaHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(teaHouseActiveContentExists, true);
+  assert.match(teaHouseSource, /from "\.\/tea-house-active-content"/);
+  assert.doesNotMatch(teaHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(teaHouseSource, /defaultRuntimeContent\.cityNpcPools/);
+  assert.doesNotMatch(teaHouseSource, /defaultRuntimeContent\.textEntriesById/);
+  assert.match(teaHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(teaHouseActiveContentSource, /getTeaHouseCityNpcPools/);
+  assert.match(teaHouseActiveContentSource, /getTeaHouseTextEntries/);
 });
 
 test("medicine house reads shared module defaults from runtime content", async () => {

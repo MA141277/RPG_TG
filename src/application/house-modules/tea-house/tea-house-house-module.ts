@@ -22,7 +22,6 @@ import {
 } from "../../../domain/tea-house";
 import { assertExists } from "../../../shared/assert";
 import { pickRandom } from "../../../shared/random";
-import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import { sampleCityNpcIdsForLocation } from "../../city-npcs/city-npc-pool-state";
 import {
@@ -54,6 +53,10 @@ import {
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import {
+  getTeaHouseCityNpcPools,
+  getTeaHouseTextEntries,
+} from "./tea-house-active-content";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
 import { getTeaHouseContentDefaults } from "./tea-house-content-defaults";
 
@@ -185,18 +188,12 @@ function createTeaHouseActors(
       ? []
       : createTeaHouseGuestActors(
           gameState,
-          defaultRuntimeContent.cityNpcPools,
+          getTeaHouseCityNpcPools(),
           cityId,
           sessionState.guestNpcIds
         );
 
   return [bossActor, ...guestActors];
-}
-
-function getTeaHouseTextEntries(
-  textEntriesById?: Record<string, string>
-): Record<string, string> {
-  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
 }
 
 function resolveTeaHouseText(
@@ -264,7 +261,7 @@ function pickActorDialogueLine(
   const { teaHouseBossDialogueTextIds } = getTeaHouseContentDefaults();
   if (actor.isFixedHost) {
     return pickRandomResolvedTeaHouseText(
-      getTeaHouseTextEntries(textEntriesById),
+      getTeaHouseTextEntries({ textEntriesById }),
       teaHouseBossDialogueTextIds
     );
   }
@@ -272,7 +269,7 @@ function pickActorDialogueLine(
   return actor.dialoguePool.length > 0
     ? pickRandom(actor.dialoguePool)
     : resolveTeaHouseText(
-        getTeaHouseTextEntries(textEntriesById),
+        getTeaHouseTextEntries({ textEntriesById }),
         "runtime.zhu_yuanzhang.tea_house.dialogue.default"
       );
 }
@@ -282,7 +279,7 @@ function getActorGreetingLines(
   textEntriesById?: Record<string, string>
 ): string[] {
   const { teaHouseBossGreetingTextIds } = getTeaHouseContentDefaults();
-  const entries = getTeaHouseTextEntries(textEntriesById);
+  const entries = getTeaHouseTextEntries({ textEntriesById });
   if (actor.isFixedHost) {
     return resolveTeaHouseTextLines(entries, teaHouseBossGreetingTextIds);
   }
@@ -300,7 +297,7 @@ function getActorOpenLines(
   textEntriesById?: Record<string, string>
 ): string[] {
   const { teaHouseBossOpenTextIds } = getTeaHouseContentDefaults();
-  const entries = getTeaHouseTextEntries(textEntriesById);
+  const entries = getTeaHouseTextEntries({ textEntriesById });
   if (actor.isFixedHost) {
     return resolveTeaHouseTextLines(entries, teaHouseBossOpenTextIds);
   }
@@ -320,7 +317,7 @@ function pickActorIntelLine(
   const { teaHouseBossIntelTextIds } = getTeaHouseContentDefaults();
   if (actor.isFixedHost) {
     return pickRandomResolvedTeaHouseText(
-      getTeaHouseTextEntries(textEntriesById),
+      getTeaHouseTextEntries({ textEntriesById }),
       teaHouseBossIntelTextIds
     );
   }
@@ -328,7 +325,7 @@ function pickActorIntelLine(
   return actor.intelPool.length > 0
     ? pickRandom(actor.intelPool)
     : resolveTeaHouseText(
-        getTeaHouseTextEntries(textEntriesById),
+        getTeaHouseTextEntries({ textEntriesById }),
         "runtime.zhu_yuanzhang.tea_house.intel.default"
       );
 }
@@ -477,7 +474,7 @@ function createCouncilTimeInsufficientOverlay(
   remainingDays: number,
   textEntriesById?: Record<string, string>
 ): TeaHouseOverlayState {
-  const entries = getTeaHouseTextEntries(textEntriesById);
+  const entries = getTeaHouseTextEntries({ textEntriesById });
   return createAlertOverlay(
     resolveTeaHouseText(
       entries,
@@ -857,7 +854,7 @@ function handleActorAction(
       {
         dialogueLines: [
           resolveTeaHouseText(
-            getTeaHouseTextEntries(input.textEntriesById),
+            getTeaHouseTextEntries({ textEntriesById: input.textEntriesById }),
             "runtime.zhu_yuanzhang.tea_house.debate.opening.001"
           ),
         ],
@@ -912,7 +909,7 @@ function handleActorAction(
     case "talk": {
       const { teaHouseLowIntelChance } = getTeaHouseContentDefaults();
       const intelGain = Math.random() < teaHouseLowIntelChance ? 1 : 0;
-      const entries = getTeaHouseTextEntries(input.textEntriesById);
+      const entries = getTeaHouseTextEntries({ textEntriesById: input.textEntriesById });
       const line = pickActorDialogueLine(selectedActor, input.textEntriesById);
       const extraLines =
         intelGain > 0
@@ -982,7 +979,7 @@ function handleActorAction(
       );
     }
     case "inquire": {
-      const entries = getTeaHouseTextEntries(input.textEntriesById);
+      const entries = getTeaHouseTextEntries({ textEntriesById: input.textEntriesById });
       const intelLine = pickActorIntelLine(selectedActor, input.textEntriesById);
       return finalizeInteraction(
         input,
@@ -1021,7 +1018,7 @@ function handleActorAction(
         input.playerCharacterId
       );
       if (!canAffordActivityCost(playerCharacter)) {
-        const entries = getTeaHouseTextEntries(input.textEntriesById);
+        const entries = getTeaHouseTextEntries({ textEntriesById: input.textEntriesById });
         return withSessionState(input, sessionState, {
           overlay: createAlertOverlay(
             resolveTeaHouseText(
@@ -1144,7 +1141,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
     const { teaHouseBossProfile } = getTeaHouseContentDefaults();
     const guestNpcIds = sampleCityNpcIdsForLocation(
       input.gameState,
-      defaultRuntimeContent.cityNpcPools,
+      getTeaHouseCityNpcPools(),
       input.houseDefinition.cityId,
       "tea-house",
       MAX_TEA_HOUSE_GUESTS
