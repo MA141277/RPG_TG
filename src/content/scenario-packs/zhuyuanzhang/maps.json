@@ -7680,6 +7680,22 @@
         "imageUrl": "./assets/maps/yuanmo-map-ground-types.png"
       },
       {
+        "id": "map_grass_texture",
+        "label": "Campaign grass texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "grass.png",
+        "imageUrl": "./assets/maps/campaign-grass-texture.png"
+      },
+      {
+        "id": "map_sand_texture",
+        "label": "Campaign sand texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "sand.png",
+        "imageUrl": "./assets/maps/campaign-sand-texture.png"
+      },
+      {
         "id": "map_water_noise",
         "label": "Water noise texture",
         "width": 512,

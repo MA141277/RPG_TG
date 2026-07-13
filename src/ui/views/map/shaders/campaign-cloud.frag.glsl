@@ -1025,7 +1025,7 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
     outerCloudBankMask,
     outerCloudBankField
   );
-  outerPuff.a *= (0.76 + deepZone * 0.72) * secondaryLayerKeep;
+  outerPuff.a *= (0.76 + deepZone * 0.72) * secondaryLayerKeep * cloudMask;
 
   vec3 castShadowColor = vec3(0.58, 0.66, 0.67);
   float baseAlpha = clamp(shadowAlpha + alpha, 0.0, 1.0);

@@ -161,9 +161,13 @@ GlobalUI
 
 大地图移动必须由 `src/application/navigation/travel-to-coordinate.ts` 生成路径。UI 点击层只提供目标坐标，主运行时按路径分段播放；不要在视图层或 `main.ts` 临时改回起点到终点的直线插值。
 
-Campaign 地图的水域/陆地通行性来自当前地图的地形材质资产。`campaign-terrain-webgl.ts` 按 terrain shader 同源的 `map_ground_types` 水域材质语义生成 passable hex 网格，`map_heights` 只负责高度、投影和地形台阶表现；navigation 层只消费这份通行网格做寻路，不要在 gameplay 代码里手写某张地图的水格坐标或用据点白名单修补通行性。
+Campaign 地图的水域/陆地通行性来自当前地图的地形材质资产。`campaign-terrain-webgl.ts` 按 terrain shader 同源的 `map_ground_types` 水域材质语义生成 passable hex 网格，`map_heights` 只负责连续视觉高度场、地形投影和地图对象贴地高度；navigation 层只消费这份通行网格做寻路，不要在 gameplay 代码里手写某张地图的水格坐标或用据点白名单修补通行性。
 
 Campaign 地图的水体视觉来自可选 `map_water_noise` 图层。该图层是纯表现资产：`map-view.ts` 只把它作为 terrain canvas 的 `data-map-water-texture-url` 传给 WebGL renderer；水体表现不得改变点击、投影、通行性或 navigation 路径模型。
+
+Campaign 地图的陆地表面材质可以通过 `map_grass_texture`、`map_sand_texture` 等纯表现图层传给 terrain shader。此类图层只能影响地表颜色、纹理和海岸过渡表现；陆地/水体语义、寻路、点击、探索和云洞仍必须以 `map_ground_types` 与 runtime 状态为准。
+
+Campaign 地图 camera 的缩放、平移和由缩放派生的俯角都属于 terrain renderer 的表现层参数。`main.ts` 只能同步当前视口调试状态和动画化 camera 输入；gameplay 网格、路径、探索、点击判定和地图数据结构不得依赖当前俯角。
 
 Campaign 地图的迷雾探索状态来自 `runtime.mapExplorationByMapId`。未探索 hex 的点击屏蔽、marker 交互屏蔽必须在应用交互层完成，和水格通行检查保持独立；视觉云雾 renderer 只能消费探索状态生成遮罩，不得修改探索、寻路、地形高度、水体材质或通行网格。`campaign-terrain-webgl.ts` 负责地形投影、相机、通行网格和投影点同步；`campaign-cloud-webgl.ts` 负责视口级云雾 overlay，并通过 `campaign-terrain-webgl.ts` 的只读投影 helper 对齐累计已探索 hex。地图重绘时必须保留 terrain、actor、cloud canvas，并保留带稳定身份的 marker / summary DOM 节点，同时同步新 markup 的语义 `data-*` 属性，避免移动或探索状态更新导致 WebGL program、贴图、动画时间或地图标识节点重建。可踏足 hex 的悬浮描边属于地图视口内的临时表现反馈，只能读取地形投影、探索状态和 navigation 寻路结果，不得写入 gameplay 状态。层级契约是：地图底图、建筑点本体、玩家 DOM sprite 和 actor canvas 在云层下方；可踏足 hex 悬浮描边、marker 悬浮详情、地图 debug 控件、全局 UI 和确认 modal 在云层上方。视觉算法细节属于 renderer 源码和 changelog，不应写入架构文档。
 

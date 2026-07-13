@@ -6,7 +6,7 @@ import {
   type HexCoordinate,
 } from "../../../application/navigation/travel-to-coordinate";
 import {
-  getCampaignTerrainCamera,
+  getCampaignTerrainMapCoupledCamera,
   getCampaignTerrainProjectionSignature,
   projectCampaignTerrainUvToClientPointAtHeightAnchor,
 } from "./campaign-terrain-webgl";
@@ -53,13 +53,39 @@ type CampaignCloudRenderer = {
   dispose: () => void;
 };
 
+type CampaignCloudConsoleCommand = (
+  command?: boolean | "on" | "off" | "toggle" | "status"
+) => {
+  enabled: boolean;
+};
+
 const activeCloudRenderers = new Map<HTMLCanvasElement, CampaignCloudRenderer>();
 const pendingCloudRendererCanvases = new Set<HTMLCanvasElement>();
+let campaignCloudShaderEnabled = true;
+
+declare global {
+  interface Window {
+    rpgCloud?: CampaignCloudConsoleCommand;
+  }
+}
 
 export function syncCampaignCloudWebGl(root: ParentNode): void {
   const canvases = Array.from(
     root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-cloud]")
   );
+  if (!campaignCloudShaderEnabled) {
+    disposeCampaignCloudRenderers();
+    for (const canvas of canvases) {
+      canvas.classList.add("is-disabled");
+      canvas.classList.remove("is-ready");
+    }
+    return;
+  }
+
+  for (const canvas of canvases) {
+    canvas.classList.remove("is-disabled");
+  }
+
   const nextCanvasSet = new Set(canvases);
 
   for (const [canvas, renderer] of activeCloudRenderers.entries()) {
@@ -104,6 +130,49 @@ export function syncCampaignCloudWebGl(root: ParentNode): void {
     }
   }
 }
+
+function setCampaignCloudShaderEnabled(enabled: boolean): { enabled: boolean } {
+  campaignCloudShaderEnabled = enabled;
+  const canvases = Array.from(
+    document.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-cloud]")
+  );
+  if (!enabled) {
+    disposeCampaignCloudRenderers();
+    for (const canvas of canvases) {
+      canvas.classList.add("is-disabled");
+      canvas.classList.remove("is-ready");
+    }
+  } else {
+    for (const canvas of canvases) {
+      canvas.classList.remove("is-disabled");
+    }
+    syncCampaignCloudWebGl(document);
+  }
+
+  return { enabled: campaignCloudShaderEnabled };
+}
+
+function disposeCampaignCloudRenderers(): void {
+  for (const renderer of activeCloudRenderers.values()) {
+    renderer.dispose();
+  }
+  activeCloudRenderers.clear();
+  pendingCloudRendererCanvases.clear();
+}
+
+window.rpgCloud = (command = "status") => {
+  if (command === "toggle") {
+    return setCampaignCloudShaderEnabled(!campaignCloudShaderEnabled);
+  }
+  if (command === "on" || command === true) {
+    return setCampaignCloudShaderEnabled(true);
+  }
+  if (command === "off" || command === false) {
+    return setCampaignCloudShaderEnabled(false);
+  }
+
+  return { enabled: campaignCloudShaderEnabled };
+};
 
 function initCampaignCloudWebGl(
   canvas: HTMLCanvasElement
@@ -282,7 +351,7 @@ function initCampaignCloudWebGl(
       timeSecondsLocation,
       performance.now() * 0.001 - animationStartSeconds
     );
-    const mapCamera = getCampaignTerrainCamera();
+    const mapCamera = getCampaignTerrainMapCoupledCamera();
     gl.uniform3f(
       mapCameraLocation,
       mapCamera.scale,

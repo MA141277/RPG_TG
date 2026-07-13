@@ -2,6 +2,59 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-13 Campaign Map Zoom Camera
+
+### Changed
+- 大地图 terrain camera 的俯角改为由当前缩放 scale 派生：缩小时逐步接近俯视，放大时逐步降低视角形成更贴近地表的观察效果；terrain 投影、shader 法线光照和云层相机耦合继续读取同一份相机参数。
+- 地图滚轮、缩放按钮和缩放输入改为带缓动的相机状态动画；缩放目标 offset 会补偿俯角变化带来的纵向平移比例差异，减少缩放变角时的画面漂移。
+- 地图单步缩放倍率从 `1.08` 调整为 `1.16`，提高鼠标滚轮和缩放按钮的响应幅度。
+
+### Impact
+- 该变更只影响大地图表现层 camera。六边形 gameplay 网格、寻路、点击、探索、通行性、云洞语义和地图数据结构不随当前视角变化。
+
+## 2026-07-13 Campaign Terrain Grass And Beach Materials
+
+### Added
+- 大地图 terrain renderer 新增独立草地/沙地材质输入：`yuanmo-campaign-map.ts` 与朱元璋 scenario pack 的 `maps.json` 都注册 `map_grass_texture` 与 `map_sand_texture` layer，`map-view.ts` 将其传入 terrain canvas，`campaign-terrain-webgl.ts` 作为 WebGL sampler 绑定给 terrain shader。
+- Terrain shader 使用新草地贴图作为陆地主材质；靠近水体的陆地按 `map_ground_types` 邻域采样生成沙滩混合权重，并用噪声打散边界，将沙地材质叠加到陆地边缘形成海岸/湖岸过渡。
+- 沙滩混合从全图最近水体距离改为相邻 hex 共享边的局部沙滩带：只在当前陆地格与相邻水格的边缘生成沙滩，并拆成靠水沉积核心与向内陆羽化的侵蚀边缘；侵蚀噪声沿共享边方向采样，避免变成等宽描边或把内陆湖之间连成长带。
+- 沙滩材质增加独立高频砂粒层：砂粒只调制局部沙滩边缘和沙地颜色，沙滩带宽度同步加宽，避免视觉上退化成平滑描边。
+- 沙滩主混合改为邻水边向陆地延伸的宽沙滩带：取消整格替换，沙滩主体用接近材质切换的方式显示亮黄色沙子贴图，只有外缘保留窄过渡和轻微砂粒粗糙度，避免像半透明覆盖在草地上。
+- 沙滩边缘进一步拆分为沙地核心、沙地外缘和草地干化侵蚀带：相邻水边的沙滩贡献从硬 `max()` 改为柔性并集，草地侧先被干草色与砂粒噪声侵蚀再进入沙地材质，减少相邻沙滩交汇处的硬尖角和纯描边感。
+- 草地侧侵蚀过渡改为真实细沙过渡：在干化草地上用独立高频砂粒 mask 混入沙地贴图；沙滩权重拆成主沙地核心与细沙连接两个通道，主沙地核心按较短的胶囊形共享边生成圆角，细沙连接只参与草地侵蚀过渡，不再把相邻边衔接层抬成亮黄色尖角，也不使用会跨格串联的局部水邻近场。
+- 沙滩沿岸宽度改为运行时可调参数：terrain renderer 默认放大主沙滩与外侧细沙侵蚀带，并新增 `window.rpgTerrainBeach(...)` 控制台命令，可直接调整 `innerRadius`、`outerRadius` 等 shader uniform 后重绘地图。
+- Terrain renderer 增加输入签名：当 terrain canvas 保活但底图、高度图、材质图、草地、沙地或水纹 URL 发生变化时，会 dispose 旧 WebGL renderer 并重新加载贴图，避免地图重绘后仍显示旧材质。
+
+### Impact
+- 沙滩只影响地形视觉材质：水体/陆地通行性、寻路、点击、探索、云洞和地图数据结构仍继续读取原有 `map_ground_types` 与 navigation 网格，不因草地/沙地贴图改变。
+
+## 2026-07-10 Campaign Smooth Terrain Heightfield
+
+### Changed
+- 大地图 terrain renderer 从按 hex 量化的平顶台阶 mesh 改为连续高度场 mesh：`campaign-terrain-webgl.ts` 使用原始 `map_heights` 生成平滑后的视觉高度，并用规则 UV 网格连接顶点，不再为相邻 hex 高差生成竖直墙面。
+- 地形投影、玩家 actor、建筑深度 mesh、marker 和云洞高度锚点统一读取平滑后的视觉高度；双线性高度采样替代最近点高度采样，减少贴地对象随格子高度跳变的问题。
+- Terrain shader 新增地形 normal 传入，用平滑高度产生轻量坡面明暗；默认 hex 格线强度降为淡格线，并将平滑 pass、mesh step、格线强度和坡面明暗作为集中常量保留在 terrain renderer 顶部。
+- 可踏足 hover hex 描边改为沿六边形边缘多段采样，并让每个采样点按自身地形高度投影，避免连续地形上仍显示为悬浮平面六边形。
+- Terrain shader 的坡面明暗拆成方向光、背光侧阴影和陡坡暗部三层，并通过更宽的高度采样半径计算法线；水体只继承弱阴影，避免海面被压黑。
+- Terrain shader 文件改为完整独立 GLSL：`campaign-terrain-webgl.ts` 不再通过 TS 占位符拼接 shader 源码，地形高度缩放、格线强度、坡面阴影等参数改为 WebGL uniforms 传入。
+- 修正坡面阴影不可见的问题：relief 阴影不再混入会被 `shadeMin/shadeMax` 默认值抵消的地形调参 shade，而是作为独立地形光照层叠加到最终地表颜色。
+- 地形坡面方向光改为以当前网页视口中心为光源中心：terrain shader 直接使用 `gl_FragCoord` 与 framebuffer 尺寸计算视口中心光照，地图拖动/缩放时地形从该屏幕空间光源下经过，避免光源固定在地图世界坐标上。
+- 地形视口光源降低默认高度，并将 terrain normal 旋转到当前摄像机/屏幕空间后再参与光照计算，避免屏幕空间光源和地图世界 normal 混用导致光照看起来不与地图平行。
+- 大地图 terrain camera 的平移从摄像机/屏幕平面改为地表平面：矩阵顺序调整为先在地图平面应用 pan，再进入 tilt 和投影，避免拖动地图时出现摄像机平移层与地形层不平行、地图角度像在变化的问题。
+- 地形摄像机拉远并收窄 FOV，确保倾斜后的真实 `map_heights` 地形面完整位于 camera/near plane 前方，避免地图下方因为摄像机过近而被裁剪；连续地形 mesh 仍只覆盖真实地图数据范围，不再做边界延展。
+- 云层 renderer 的相机耦合改为读取 terrain 提供的 map-coupled camera offset，和地表平面 pan 的纵向校正保持一致；同时让 outer puff 后叠层在已开启云洞核心区随 `cloudMask` 衰减到 0，减少摄像机移动到已探索区域上方时的额外遮挡。
+
+### Impact
+- 六边形仍然是 gameplay 网格：水域/陆地通行性、点击屏蔽、探索状态和寻路继续只消费 `map_ground_types` 与 navigation 通行网格，不因视觉高度平滑而改变。
+
+## 2026-07-10 Campaign Cloud Debug Toggle
+
+### Added
+- 新增浏览器控制台调试命令 `rpgCloud(false)` / `rpgCloud(true)` / `rpgCloud("toggle")` / `rpgCloud("status")`，用于运行时关闭、打开或查询大地图云雾 shader overlay。
+
+### Impact
+- 关闭云层时会 dispose 当前 `campaign-cloud-webgl.ts` renderer、停止云层动画帧并隐藏 `data-campaign-map-cloud` canvas；开启时重新同步当前页面云层 canvas。该开关只影响视觉云雾 renderer，不改变探索、寻路、通行、点击或地图 gameplay 状态。
+
 ## 2026-07-09 Three.js Renderer Boundary
 
 ### Added
