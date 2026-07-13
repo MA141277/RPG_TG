@@ -140,6 +140,12 @@
         justify-content: flex-end;
       }
 
+      .toolbar-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
       .toolbar button {
         padding: 0 10px;
       }
@@ -580,6 +586,8 @@
           </div>
         </div>
         <div class="toolbar">
+          <div id="swordsmanFeatureGroup" class="toolbar-group" hidden></div>
+          <div id="archerFeatureGroup" class="toolbar-group" hidden></div>
           <button id="newProjectBtn" type="button">新建</button>
           <button id="importBtn" type="button">导入 JSON</button>
           <button id="exportBtn" type="button">导出 JSON</button>
@@ -964,11 +972,24 @@
     <script>
       const frameWidth = 20;
       const rowHeight = 30;
+      const SPINE_UNIT_CONFIGS = {
+        swordsman: {
+          label: "剑士",
+          projectUrl: "/src/faxian/leg/swordsman/project.json",
+          featureGroups: ["swordsman"],
+        },
+        archer: {
+          label: "弓兵",
+          projectUrl: "/src/faxian/leg/archer/project.json",
+          featureGroups: ["archer"],
+        },
+      };
       const state = {
         name: "默认",
         fps: 36,
         duration: 95,
         currentFrame: 0,
+        currentUnitType: "swordsman",
         selectedNodeId: "root",
         selectedKey: null,
         selectedPieceNodeId: null,
@@ -1230,6 +1251,8 @@
         materialInput: document.getElementById("materialInput"),
         idleAnimationBtn: document.getElementById("idleAnimationBtn"),
         threeQuarterSampleBtn: document.getElementById("threeQuarterSampleBtn"),
+        swordsmanFeatureGroup: document.getElementById("swordsmanFeatureGroup"),
+        archerFeatureGroup: document.getElementById("archerFeatureGroup"),
         viewToggleBtn: document.getElementById("viewToggleBtn"),
         skeletonOverlayBtn: document.getElementById("skeletonOverlayBtn"),
         newProjectBtn: document.getElementById("newProjectBtn"),
@@ -3541,6 +3564,17 @@
         ctx.globalAlpha = Math.max(0, Math.min(1, alpha * drawAlphaMultiplier));
       }
 
+      function getSpineUnitConfig(unitType) {
+        return SPINE_UNIT_CONFIGS[unitType] || SPINE_UNIT_CONFIGS.swordsman;
+      }
+
+      function renderSpineUnitFeatureGroups() {
+        const config = getSpineUnitConfig(state.currentUnitType);
+        const activeGroups = new Set(config.featureGroups || []);
+        el.swordsmanFeatureGroup.hidden = !activeGroups.has("swordsman");
+        el.archerFeatureGroup.hidden = !activeGroups.has("archer");
+      }
+
       function renderAll() {
         resetRuntimeCaches();
         if (!drag || drag.type === "key" || !drag.hasMoved) {
@@ -3548,6 +3582,7 @@
         }
         syncAllBowRigs();
         syncCurrentActionFromTimeline();
+        renderSpineUnitFeatureGroups();
         renderActionList();
         renderNodeList();
         renderPieceList();
@@ -6484,6 +6519,21 @@
           console.warn("Failed to load project JSON", error);
           return null;
         }
+      }
+
+      async function switchSpineUnitContext(unitType) {
+        unitType = SPINE_UNIT_CONFIGS[unitType] ? unitType : "swordsman";
+        const config = getSpineUnitConfig(unitType);
+        const project = await loadProjectJsonFile(config.projectUrl);
+        if (!project) {
+          toast(`Failed to load ${config.label} project.`);
+          return false;
+        }
+        applyProjectData(project);
+        state.currentUnitType = unitType;
+        renderSpineUnitFeatureGroups();
+        renderAll();
+        return true;
       }
 
       async function loadNewVersionSample() {
