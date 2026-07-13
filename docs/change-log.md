@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-13 Campaign Shoreline Visual Erosion
+
+### Added
+- 大地图 terrain shader 新增按单条邻水 hex 共享边计算的岸线视觉形变 mask：陆地靠水边会以低频波浪和高频侵蚀噪声打散原本笔直的六边形水陆分界，并在多条邻水边交汇处做圆角化软并集。
+- `window.rpgTerrainBeach(...)` 调参表新增 `shorelineVisualWaterStrength`、`shorelineEdgeWidth`、`shorelineWaveStrength`、`shorelineWaveFrequency`、`shorelineErosionStrength`、`shorelineErosionFrequency` 和 `shorelineCornerRoundness`，用于调水陆边界形变强度、沿岸粗细、波浪尺度、侵蚀细节和角点圆化。
+
+### Changed
+- 岸线形变噪声从高频直接切割改为平滑 fBm 采样：大尺度波浪负责整体岸线起伏，低强度细节噪声只做边缘侵蚀，减少岸边锯齿和毛刺感。
+
+### Impact
+- 该效果只影响 terrain shader 的最终颜色混合：不改变 `map_ground_types`、寻路、点击、探索、云洞、hover 描边、建筑 marker 或地名投影；水格/陆格 gameplay 语义仍由原始地图数据决定。
+
 ## 2026-07-13 Campaign Map Zoom Camera
 
 ### Changed

@@ -164,6 +164,13 @@ type CampaignTerrainBeachTuning = {
   outerRadius: number;
   fineNoiseTiling: number;
   fineNoiseStrength: number;
+  shorelineVisualWaterStrength: number;
+  shorelineEdgeWidth: number;
+  shorelineWaveStrength: number;
+  shorelineWaveFrequency: number;
+  shorelineErosionStrength: number;
+  shorelineErosionFrequency: number;
+  shorelineCornerRoundness: number;
 };
 
 type CampaignTerrainBeachConsoleCommand = (
@@ -177,6 +184,13 @@ const DEFAULT_TERRAIN_BEACH_TUNING: CampaignTerrainBeachTuning = {
   outerRadius: 2.4,
   fineNoiseTiling: 30,
   fineNoiseStrength: 0.16,
+  shorelineVisualWaterStrength: 0.76,
+  shorelineEdgeWidth: 0.38,
+  shorelineWaveStrength: 0.30,
+  shorelineWaveFrequency: 1.65,
+  shorelineErosionStrength: 0.055,
+  shorelineErosionFrequency: 9,
+  shorelineCornerRoundness: 0.86,
 };
 const SMOOTH_TERRAIN_KERNEL = [
   { x: -1, y: -1, weight: 1 },
@@ -354,6 +368,13 @@ function clampTerrainBeachTuning(
     ),
     fineNoiseTiling: clampNumber(tuning.fineNoiseTiling, 4, 120),
     fineNoiseStrength: clampNumber(tuning.fineNoiseStrength, 0, 0.5),
+    shorelineVisualWaterStrength: clampNumber(tuning.shorelineVisualWaterStrength, 0, 1),
+    shorelineEdgeWidth: clampNumber(tuning.shorelineEdgeWidth, 0.02, 1.2),
+    shorelineWaveStrength: clampNumber(tuning.shorelineWaveStrength, 0, 0.5),
+    shorelineWaveFrequency: clampNumber(tuning.shorelineWaveFrequency, 0.2, 12),
+    shorelineErosionStrength: clampNumber(tuning.shorelineErosionStrength, 0, 0.45),
+    shorelineErosionFrequency: clampNumber(tuning.shorelineErosionFrequency, 2, 80),
+    shorelineCornerRoundness: clampNumber(tuning.shorelineCornerRoundness, 0, 1),
   };
 }
 
@@ -845,6 +866,31 @@ async function initCampaignTerrainWebGl(
     program,
     "uBeachFineNoiseStrength"
   );
+  const shorelineVisualWaterStrengthLocation = gl.getUniformLocation(
+    program,
+    "uShorelineVisualWaterStrength"
+  );
+  const shorelineEdgeWidthLocation = gl.getUniformLocation(program, "uShorelineEdgeWidth");
+  const shorelineWaveStrengthLocation = gl.getUniformLocation(
+    program,
+    "uShorelineWaveStrength"
+  );
+  const shorelineWaveFrequencyLocation = gl.getUniformLocation(
+    program,
+    "uShorelineWaveFrequency"
+  );
+  const shorelineErosionStrengthLocation = gl.getUniformLocation(
+    program,
+    "uShorelineErosionStrength"
+  );
+  const shorelineErosionFrequencyLocation = gl.getUniformLocation(
+    program,
+    "uShorelineErosionFrequency"
+  );
+  const shorelineCornerRoundnessLocation = gl.getUniformLocation(
+    program,
+    "uShorelineCornerRoundness"
+  );
   const actorPositionLocation = gl.getAttribLocation(actorProgram, "aPosition");
   const actorNormalLocation = gl.getAttribLocation(actorProgram, "aNormal");
   const actorUvLocation = gl.getAttribLocation(actorProgram, "aUv");
@@ -918,6 +964,13 @@ async function initCampaignTerrainWebGl(
     beachOuterRadiusLocation == null ? "uBeachOuterRadius" : null,
     beachFineNoiseTilingLocation == null ? "uBeachFineNoiseTiling" : null,
     beachFineNoiseStrengthLocation == null ? "uBeachFineNoiseStrength" : null,
+    shorelineVisualWaterStrengthLocation == null ? "uShorelineVisualWaterStrength" : null,
+    shorelineEdgeWidthLocation == null ? "uShorelineEdgeWidth" : null,
+    shorelineWaveStrengthLocation == null ? "uShorelineWaveStrength" : null,
+    shorelineWaveFrequencyLocation == null ? "uShorelineWaveFrequency" : null,
+    shorelineErosionStrengthLocation == null ? "uShorelineErosionStrength" : null,
+    shorelineErosionFrequencyLocation == null ? "uShorelineErosionFrequency" : null,
+    shorelineCornerRoundnessLocation == null ? "uShorelineCornerRoundness" : null,
     actorPositionLocation < 0 ? "actor.aPosition" : null,
     actorNormalLocation < 0 ? "actor.aNormal" : null,
     actorUvLocation < 0 ? "actor.aUv" : null,
@@ -1085,6 +1138,22 @@ async function initCampaignTerrainWebGl(
       gl.uniform1f(beachOuterRadiusLocation, terrainBeachTuning.outerRadius);
       gl.uniform1f(beachFineNoiseTilingLocation, terrainBeachTuning.fineNoiseTiling);
       gl.uniform1f(beachFineNoiseStrengthLocation, terrainBeachTuning.fineNoiseStrength);
+      gl.uniform1f(
+        shorelineVisualWaterStrengthLocation,
+        terrainBeachTuning.shorelineVisualWaterStrength
+      );
+      gl.uniform1f(shorelineEdgeWidthLocation, terrainBeachTuning.shorelineEdgeWidth);
+      gl.uniform1f(shorelineWaveStrengthLocation, terrainBeachTuning.shorelineWaveStrength);
+      gl.uniform1f(shorelineWaveFrequencyLocation, terrainBeachTuning.shorelineWaveFrequency);
+      gl.uniform1f(
+        shorelineErosionStrengthLocation,
+        terrainBeachTuning.shorelineErosionStrength
+      );
+      gl.uniform1f(
+        shorelineErosionFrequencyLocation,
+        terrainBeachTuning.shorelineErosionFrequency
+      );
+      gl.uniform1f(shorelineCornerRoundnessLocation, terrainBeachTuning.shorelineCornerRoundness);
       gl.uniformMatrix4fv(
         matrixLocation,
         false,

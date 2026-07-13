@@ -28,6 +28,13 @@ uniform float uBeachInnerRadius;
 uniform float uBeachOuterRadius;
 uniform float uBeachFineNoiseTiling;
 uniform float uBeachFineNoiseStrength;
+uniform float uShorelineVisualWaterStrength;
+uniform float uShorelineEdgeWidth;
+uniform float uShorelineWaveStrength;
+uniform float uShorelineWaveFrequency;
+uniform float uShorelineErosionStrength;
+uniform float uShorelineErosionFrequency;
+uniform float uShorelineCornerRoundness;
 varying vec2 vUv;
 varying float vHeight;
 varying vec3 vNormal;
@@ -292,12 +299,177 @@ float valueNoise(vec2 point) {
   );
 }
 
+float smoothValueNoise(vec2 point) {
+  vec2 cell = floor(point);
+  vec2 local = fract(point);
+  vec2 curve = local * local * local * (local * (local * 6.0 - 15.0) + 10.0);
+  float bottomLeft = hash(cell);
+  float bottomRight = hash(cell + vec2(1.0, 0.0));
+  float topLeft = hash(cell + vec2(0.0, 1.0));
+  float topRight = hash(cell + vec2(1.0, 1.0));
+
+  return mix(
+    mix(bottomLeft, bottomRight, curve.x),
+    mix(topLeft, topRight, curve.x),
+    curve.y
+  );
+}
+
+float shorelineFbm(vec2 point) {
+  float first = smoothValueNoise(point);
+  float second = smoothValueNoise(point * 2.03 + vec2(11.7, -4.2));
+  float third = smoothValueNoise(point * 4.11 + vec2(-8.1, 19.4));
+
+  return (first * 0.56 + second * 0.30 + third * 0.14);
+}
+
 float sampleBeachErosionNoise(vec2 uv) {
   float broad = valueNoise(uv * (uBeachFineNoiseTiling * 0.42) + vec2(13.7, 5.1));
   float medium = valueNoise(uv * uBeachFineNoiseTiling + vec2(-4.3, 19.9));
   float fine = valueNoise(uv * (uBeachFineNoiseTiling * 2.15) + vec2(31.2, -7.6));
 
   return broad * 0.52 + medium * 0.33 + fine * 0.15;
+}
+
+float sampleShorelineEdgeNoise(
+  vec2 point,
+  vec2 cell,
+  vec2 neighborOffset,
+  vec2 edgeCenter,
+  vec2 edgeTangent,
+  float landDepth
+) {
+  float seed = hash(cell + neighborOffset * 13.31) * 43.0;
+  vec2 local = point - edgeCenter;
+  float along = dot(local, edgeTangent);
+  float broad = shorelineFbm(vec2(
+    along * uShorelineWaveFrequency + seed,
+    seed * 0.27
+  ));
+  float warp = shorelineFbm(vec2(
+    along * (uShorelineWaveFrequency * 0.72) - seed * 0.18,
+    seed * 0.41
+  ));
+  float detail = shorelineFbm(vec2(
+    along * (uShorelineErosionFrequency * 0.42) + warp * 1.8 + seed * 0.09,
+    landDepth * 1.35 - seed * 0.13
+  ));
+
+  return broad * 0.64 + warp * 0.22 + detail * 0.14;
+}
+
+float getLocalShorelineVisualWater(
+  vec2 point,
+  vec2 cell,
+  vec2 neighborOffset,
+  float hexScale,
+  float mapAspect
+) {
+  float neighborWater = getWaterAmountAtCell(cell + neighborOffset, hexScale, mapAspect);
+  vec2 center = hexToPixel(cell);
+  vec2 neighborCenter = hexToPixel(cell + neighborOffset);
+  vec2 shoreNormal = normalize(neighborCenter - center);
+  vec2 shoreTangent = vec2(-shoreNormal.y, shoreNormal.x);
+  vec2 edgeCenter = (center + neighborCenter) * 0.5;
+  vec2 local = point - edgeCenter;
+  float alongEdge = abs(dot(local, shoreTangent));
+  float landDepth = max(0.0, length(point - neighborCenter) - length(point - center));
+  float edgeNoise = sampleShorelineEdgeNoise(
+    point,
+    cell,
+    neighborOffset,
+    edgeCenter,
+    shoreTangent,
+    landDepth
+  );
+  float broadWave = smoothValueNoise(vec2(
+    alongEdge * uShorelineWaveFrequency + hash(cell + neighborOffset * 5.7) * 17.0,
+    hash(cell - neighborOffset * 3.1) * 9.0
+  ));
+  float fineErosion = shorelineFbm(vec2(
+    alongEdge * uShorelineErosionFrequency * 0.58 + edgeNoise * 1.7,
+    landDepth * 2.4 - hash(cell + neighborOffset * 5.7) * 13.0
+  ));
+  float waveOffset =
+    (edgeNoise - 0.5) * uShorelineWaveStrength * 1.20 +
+    (broadWave - 0.5) * uShorelineWaveStrength * 0.72;
+  float shorelineWidth = max(uShorelineEdgeWidth + waveOffset, 0.01);
+  float capHalfLength = mix(0.46, 0.70, uShorelineCornerRoundness);
+  float endpointDistance = max(alongEdge - capHalfLength, 0.0);
+  float roundedDistance = length(vec2(
+    endpointDistance * mix(3.2, 1.25, uShorelineCornerRoundness),
+    landDepth
+  ));
+  float broadEdge = 1.0 - smoothstep(
+    shorelineWidth * 0.18,
+    shorelineWidth * 1.06,
+    roundedDistance
+  );
+  float erodedDistance =
+    roundedDistance +
+    (0.5 - fineErosion) * uShorelineErosionStrength * 0.72;
+  float tornEdge = 1.0 - smoothstep(
+    shorelineWidth * 0.62,
+    shorelineWidth * 1.22,
+    erodedDistance
+  );
+  float edgeFray = mix(broadEdge, tornEdge, 0.24);
+
+  return clamp(edgeFray * neighborWater, 0.0, 1.0);
+}
+
+float combineShorelineVisualWater(float base, float next) {
+  float softUnion = 1.0 - (1.0 - base) * (1.0 - next);
+
+  return clamp(mix(max(base, next), softUnion, 0.54), 0.0, 1.0);
+}
+
+float getLandShorelineVisualWater(
+  vec2 uv,
+  vec2 point,
+  vec2 cell,
+  float water,
+  float hexScale,
+  float mapAspect
+) {
+  float shorelineWater = 0.0;
+
+  shorelineWater = combineShorelineVisualWater(
+    shorelineWater,
+    getLocalShorelineVisualWater(point, cell, vec2(1.0, 0.0), hexScale, mapAspect)
+  );
+  shorelineWater = combineShorelineVisualWater(
+    shorelineWater,
+    getLocalShorelineVisualWater(point, cell, vec2(-1.0, 0.0), hexScale, mapAspect)
+  );
+  shorelineWater = combineShorelineVisualWater(
+    shorelineWater,
+    getLocalShorelineVisualWater(point, cell, vec2(0.0, 1.0), hexScale, mapAspect)
+  );
+  shorelineWater = combineShorelineVisualWater(
+    shorelineWater,
+    getLocalShorelineVisualWater(point, cell, vec2(0.0, -1.0), hexScale, mapAspect)
+  );
+  shorelineWater = combineShorelineVisualWater(
+    shorelineWater,
+    getLocalShorelineVisualWater(point, cell, vec2(1.0, -1.0), hexScale, mapAspect)
+  );
+  shorelineWater = combineShorelineVisualWater(
+    shorelineWater,
+    getLocalShorelineVisualWater(point, cell, vec2(-1.0, 1.0), hexScale, mapAspect)
+  );
+
+  float mapInterior =
+    smoothstep(0.0, 0.018, uv.x) *
+    smoothstep(0.0, 0.018, uv.y) *
+    smoothstep(0.0, 0.018, 1.0 - uv.x) *
+    smoothstep(0.0, 0.018, 1.0 - uv.y);
+
+  return clamp(
+    shorelineWater * (1.0 - water) * mapInterior * uShorelineVisualWaterStrength,
+    0.0,
+    0.92
+  );
 }
 
 float sampleBeachEdgeErosionNoise(
@@ -640,6 +812,15 @@ void main() {
   vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
   vec3 terrainColor = getHexTerrainColor(material);
   float water = getWaterAmount(material);
+  float shorelineVisualWater = getLandShorelineVisualWater(
+    vUv,
+    hexPoint,
+    hexCell,
+    water,
+    hexScale,
+    mapAspect
+  );
+  float visualWater = clamp(max(water, shorelineVisualWater), 0.0, 1.0);
   float nearShoreNoise = sampleNearShoreEdgeNoise(vUv);
   float nearShoreEdgeShift = nearShoreNoise * 0.12;
   float nearShoreTint = getNearShoreTint(
@@ -681,7 +862,7 @@ void main() {
     backShadow * uTerrainBackShadowStrength -
     steepShadow * uTerrainSteepShadowStrength;
   float waterReliefShade = 1.0 + (reliefShade - 1.0) * uTerrainWaterShadowStrength;
-  float terrainReliefShade = clamp(mix(reliefShade, waterReliefShade, water), 0.48, 1.34);
+  float terrainReliefShade = clamp(mix(reliefShade, waterReliefShade, visualWater), 0.48, 1.34);
   float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
   vec3 grassTexture = boostLandTextureColor(sampleGrassMaterial(vUv));
   float grassTextureLuma = dot(grassTexture, vec3(0.2126, 0.7152, 0.0722));
@@ -758,12 +939,12 @@ void main() {
   vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
   vec3 waterColor = getAnimatedWaterColor(
     vUv,
-    terrainColor * baseShade,
+    mix(terrainColor, vec3(0.10, 0.35, 0.72), shorelineVisualWater) * baseShade,
     baseShade,
     nearShoreTint,
     nearSeaEdgeBand
   );
-  vec3 color = clamp(mix(landColor, waterColor, water) * terrainReliefShade, 0.0, 1.0);
+  vec3 color = clamp(mix(landColor, waterColor, visualWater) * terrainReliefShade, 0.0, 1.0);
 
   float border = getHexGridLine(hexPoint, hexCell);
   color = mix(
