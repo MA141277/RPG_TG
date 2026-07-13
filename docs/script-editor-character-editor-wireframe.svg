@@ -1,0 +1,157 @@
+<svg width="1600" height="980" viewBox="0 0 1600 980" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="980" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5E9D7"/>
+      <stop offset="1" stop-color="#E9D7BC"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FAF2E5"/>
+      <stop offset="1" stop-color="#EFDFC9"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#D79A5B"/>
+      <stop offset="1" stop-color="#C98043"/>
+    </linearGradient>
+    <style>
+      .t { font: 700 24px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #4C3524; }
+      .h1 { font: 700 42px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #402C1D; }
+      .h2 { font: 700 28px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #4A3422; }
+      .h3 { font: 700 20px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #7A5634; }
+      .body { font: 400 18px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #5F4735; }
+      .muted { font: 400 16px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #8E735C; }
+      .small { font: 400 14px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #8E735C; }
+      .btn { font: 700 18px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #FFF8EF; }
+      .btn-soft { font: 700 18px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #5A402C; }
+      .chip { font: 700 15px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #FFF8EF; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="980" fill="url(#bg)"/>
+
+  <text x="56" y="58" class="t">人物编辑态 Wireframe</text>
+
+  <rect x="40" y="84" width="1520" height="86" rx="28" fill="#F8EEDC" stroke="#C7A47B"/>
+  <text x="72" y="136" class="h3">剧本编辑器 / 人物编辑模板</text>
+  <rect x="1020" y="104" width="138" height="46" rx="23" fill="#F0E3D2" stroke="#B88E63"/>
+  <text x="1054" y="133" class="btn-soft">返回列表</text>
+  <rect x="1176" y="104" width="96" height="46" rx="23" fill="#F0E3D2" stroke="#B88E63"/>
+  <text x="1210" y="133" class="btn-soft">保存</text>
+  <rect x="1290" y="104" width="96" height="46" rx="23" fill="#F0E3D2" stroke="#B88E63"/>
+  <text x="1324" y="133" class="btn-soft">校验</text>
+  <rect x="1404" y="98" width="124" height="58" rx="29" fill="url(#accent)"/>
+  <text x="1444" y="134" class="btn">导出</text>
+
+  <rect x="40" y="194" width="174" height="738" rx="30" fill="url(#panel)" stroke="#C7A47B"/>
+  <text x="68" y="242" class="h3">主功能</text>
+  <text x="68" y="270" class="muted">对象类型导航</text>
+
+  <rect x="58" y="304" width="138" height="148" rx="24" fill="#D59A5B" stroke="#B97C42"/>
+  <text x="90" y="372" class="h2">人物</text>
+  <text x="90" y="404" class="body">当前编辑</text>
+
+  <rect x="58" y="470" width="138" height="148" rx="24" fill="#F4E8D7" stroke="#C7A47B"/>
+  <text x="90" y="538" class="h2">城市</text>
+  <text x="90" y="570" class="body">世界节点</text>
+
+  <rect x="58" y="636" width="138" height="148" rx="24" fill="#F4E8D7" stroke="#C7A47B"/>
+  <text x="90" y="704" class="h2">建筑</text>
+  <text x="90" y="736" class="body">地点场景</text>
+
+  <rect x="236" y="194" width="330" height="738" rx="30" fill="url(#panel)" stroke="#C7A47B"/>
+  <text x="266" y="242" class="h3">二级菜单 / 人物列表</text>
+  <text x="266" y="270" class="muted">切换当前人物对象</text>
+  <rect x="266" y="302" width="270" height="48" rx="18" fill="#FCF6EE" stroke="#C7A47B"/>
+  <text x="290" y="333" class="muted">搜索人物 / ID / 标签</text>
+  <rect x="266" y="368" width="126" height="44" rx="22" fill="#F0E3D2" stroke="#B88E63"/>
+  <text x="308" y="397" class="btn-soft">新增人物</text>
+  <rect x="410" y="368" width="126" height="44" rx="22" fill="#D9B39C" stroke="#B67F6E"/>
+  <text x="452" y="397" class="btn-soft">删除人物</text>
+
+  <rect x="266" y="438" width="270" height="112" rx="22" fill="#E9C89C" stroke="#B97C42"/>
+  <text x="292" y="480" class="h3">朱元璋</text>
+  <text x="292" y="512" class="body">主角 / 可操控角色</text>
+  <text x="292" y="538" class="small">char.zhu-yuanzhang</text>
+
+  <rect x="266" y="566" width="270" height="92" rx="22" fill="#F8EEDC" stroke="#C7A47B"/>
+  <text x="292" y="606" class="h3">汤和</text>
+  <text x="292" y="634" class="small">同伴人物</text>
+
+  <rect x="266" y="674" width="270" height="92" rx="22" fill="#F8EEDC" stroke="#C7A47B"/>
+  <text x="292" y="714" class="h3">郭子兴</text>
+  <text x="292" y="742" class="small">势力首领</text>
+
+  <rect x="266" y="782" width="270" height="92" rx="22" fill="#F8EEDC" stroke="#C7A47B"/>
+  <text x="292" y="822" class="h3">马秀英</text>
+  <text x="292" y="850" class="small">关系人物</text>
+
+  <rect x="588" y="194" width="972" height="738" rx="30" fill="url(#panel)" stroke="#C7A47B"/>
+  <text x="622" y="242" class="h3">中央主编辑区</text>
+  <text x="622" y="270" class="muted">上半区固定基础信息，下半区用标签页切换属性与关系</text>
+
+  <text x="622" y="338" class="h1">朱元璋</text>
+  <rect x="832" y="300" width="122" height="40" rx="20" fill="#C9DEC8" stroke="#7FA17B"/>
+  <text x="866" y="326" class="chip">可导出</text>
+  <rect x="970" y="300" width="168" height="40" rx="20" fill="#F0E3D2" stroke="#B88E63"/>
+  <text x="1008" y="326" class="btn-soft">char.zhu-yuanzhang</text>
+
+  <rect x="622" y="366" width="904" height="180" rx="26" fill="#FCF6EE" stroke="#C7A47B"/>
+  <text x="652" y="406" class="h3">基础信息</text>
+  <rect x="652" y="430" width="196" height="82" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="674" y="462" class="small">人物名称</text>
+  <text x="674" y="492" class="body">朱元璋</text>
+  <rect x="868" y="430" width="196" height="82" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="890" y="462" class="small">人物 ID</text>
+  <text x="890" y="492" class="body">char.zhu-yuanzhang</text>
+  <rect x="1084" y="430" width="196" height="82" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="1106" y="462" class="small">身份 / 分类</text>
+  <text x="1106" y="492" class="body">主角 / 可操控</text>
+  <rect x="1300" y="430" width="196" height="82" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="1322" y="462" class="small">默认所在城市</text>
+  <text x="1322" y="492" class="body">濠州</text>
+
+  <rect x="622" y="570" width="904" height="54" rx="22" fill="#F5E9DA" stroke="#C7A47B"/>
+  <rect x="636" y="578" width="154" height="38" rx="19" fill="#D59A5B" stroke="#B97C42"/>
+  <text x="680" y="603" class="btn">核心属性</text>
+  <rect x="804" y="578" width="154" height="38" rx="19" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="848" y="603" class="btn-soft">扩展属性</text>
+  <rect x="972" y="578" width="154" height="38" rx="19" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="1016" y="603" class="btn-soft">关系绑定</text>
+  <rect x="1140" y="578" width="154" height="38" rx="19" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="1184" y="603" class="btn-soft">事件挂载</text>
+
+  <rect x="622" y="646" width="904" height="254" rx="26" fill="#FCF6EE" stroke="#C7A47B"/>
+  <text x="652" y="686" class="h3">核心属性</text>
+  <text x="652" y="714" class="muted">固定人物主属性，优先保证创作效率，不让页面变成纯字段编辑器</text>
+
+  <rect x="652" y="738" width="188" height="64" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="674" y="766" class="small">统率</text>
+  <text x="674" y="792" class="h2">82</text>
+
+  <rect x="856" y="738" width="188" height="64" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="878" y="766" class="small">武力</text>
+  <text x="878" y="792" class="h2">78</text>
+
+  <rect x="1060" y="738" width="188" height="64" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="1082" y="766" class="small">智谋</text>
+  <text x="1082" y="792" class="h2">74</text>
+
+  <rect x="1264" y="738" width="188" height="64" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="1286" y="766" class="small">魅力</text>
+  <text x="1286" y="792" class="h2">81</text>
+
+  <rect x="652" y="820" width="188" height="64" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="674" y="848" class="small">野心</text>
+  <text x="674" y="874" class="h2">69</text>
+
+  <rect x="856" y="820" width="188" height="64" rx="18" fill="#F5E9DA" stroke="#D2B28D"/>
+  <text x="878" y="848" class="small">忠诚</text>
+  <text x="878" y="874" class="h2">88</text>
+
+  <rect x="1060" y="820" width="188" height="64" rx="18" fill="#F0E3D2" stroke="#B88E63"/>
+  <text x="1104" y="858" class="btn-soft">进入扩展属性</text>
+
+  <rect x="1264" y="820" width="188" height="64" rx="18" fill="url(#accent)"/>
+  <text x="1322" y="858" class="btn">保存当前人物</text>
+
+  <text x="56" y="958" class="muted">人物模板重点：基础信息常驻可见，核心属性固定，扩展属性和关系/事件通过下半区标签切换。</text>
+</svg>
