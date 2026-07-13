@@ -123,6 +123,40 @@
 - Blueprint 当前不再停在“等待 minigame-binding queue admission review”的状态；当前 live entry 已经收敛到 `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation`。
 - 接下来的 script-editor PRD 对齐必须先补齐玩法绑定作者面与 bounded settlement 配置首切，不能直接越过到 preview/validation/export queue。
 
+## 2026-07-13 Script Editor Preview Validation Export Queue Closeout
+
+### Changed
+- 更新 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 script-editor 工作台右侧摘要扩成一个按需打开的统一辅助区：补齐结构预览、统一校验列表、问题回跳、以及当前对象的导出落点摘要。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 preview queue 回归，覆盖辅助区模型、linked issue routing、toggle/jump action，以及工作台视图的中文文案与数据属性接缝。
+- 更新 [docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-preview-validation-export-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回 promotion-review。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版统一 preview/validation/export handoff surface：预览与校验不再散落在事件局部 notes 和 export-only diagnostics 里，而是可以在工作台内按需展开并直接回跳到对象家族与对应 tab。
+- `queue.script-editor-prd-preview-validation-export-alignment` 已变为关闭历史证据；当前 live entry 不再停在该 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
+- 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-workbench-ui-visual-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做最终 creator-workbench 视觉收敛 admission review，而不是重开已关闭的 preview/export queue。
+
+## 2026-07-13 Script Editor Minigame Binding Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/minigame-binding-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minigame-binding-authoring.ts)，沉淀玩法绑定作者面的结构化 helper：默认绑定草稿、builtin playable / integration 选项、绑定字段归一化、launch payload 增删改、以及 outcome settlement route 写回。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 `minigames` 从 empty/deferred family 切到 dedicated binding 作者面：工作台现在直接暴露玩法绑定对象树，详情页补齐 `基础信息 / 触发与调用 / 结算与返回 / 引用关系` 结构化分栏，并接入 reverse-reference visibility。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增玩法绑定作者面对齐回归与 helper 归一化回归，并把 minimal workflow 可见 family 断言扩展到 `minigames`。
+- 更新 [docs/blueprints/queues/script-editor-prd-minigame-binding-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-minigame-binding-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-minigame-binding-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回下一条 lawful continuation admission。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版 dedicated 玩法绑定作者面：`minigames` 不再停留在 empty/deferred family，而是具备 bounded playable selection、launch payload、settlement route 与 reverse-reference visibility。
+- `queue.script-editor-prd-minigame-binding-alignment` 已变为关闭历史证据；其 remaining same-family residue 已明确转移到 `queue.script-editor-prd-preview-validation-export-alignment`。
+
+## 2026-07-13 Script Editor Preview Validation Export Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md)，将 `queue.script-editor-prd-preview-validation-export-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 11-12 节的 structure preview、linked validation、以及 export handoff surface，不允许顺手扩张进 final workbench visual redesign 或 shared runtime/schema redesign。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 继续保持在 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“minigame-binding closeout 之后的 version review”状态；当前 live entry 已经收敛到 `task.script-editor-prd-preview-validation-export-alignment.boundary-baseline-reconcile`。
+- 接下来的 script-editor PRD 对齐必须先确认并补齐 preview / validation / export handoff 的 unified auxiliary surface，不能提前跳到最终 creator-first workbench visual convergence。
+
 ### Changed
 - 新增 [docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md)，将 `queue.script-editor-prd-dialogue-event-story-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 7-9 节的剧情/对话/事件 dedicated authoring surface、结构化事件区块、以及 bounded linkage/preview-summary 入口，不允许顺手扩张进 minigame runtime 或 preview/export product 面。
 - 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。

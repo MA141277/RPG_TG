@@ -3086,6 +3086,41 @@ test("script editor workspace shell surfaces export blockers and compatibility r
   );
 });
 
+test("script editor preview queue exposes a unified auxiliary panel with linked issue routing", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events[0].destination = {
+    family: "dialogue",
+    targetId: "dialogue.missing.branch",
+  };
+  project.people[0].dialogueIds = ["dialogue.missing.branch"];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "events",
+      entityId: "event.opening",
+    },
+    auxiliaryPanelOpen: true,
+  });
+
+  assert.equal(workspace.auxiliaryPanel.isOpen, true);
+  assert.equal(workspace.auxiliaryPanel.previewCards.length >= 3, true);
+  assert.equal(workspace.auxiliaryPanel.exportTargets.length >= 1, true);
+  assert.equal(workspace.auxiliaryPanel.summary.blockedCount > 0, true);
+  assert.equal(
+    workspace.auxiliaryPanel.issues.some(
+      (issue) =>
+        issue.targetFamily === "events" &&
+        issue.targetEntityId === "event.opening" &&
+        issue.targetTab === "destination"
+    ),
+    true
+  );
+});
+
 test("script editor PRD workspace view retires English shell chrome copy", () => {
   const workspaceViewSource = fs.readFileSync(
     path.join(
@@ -3097,6 +3132,10 @@ test("script editor PRD workspace view retires English shell chrome copy", () =>
 
   assert.match(workspaceViewSource, /剧本编辑器工作台/);
   assert.match(workspaceViewSource, /校验与导出摘要/);
+  assert.match(workspaceViewSource, /预览与校验辅助区/);
+  assert.match(workspaceViewSource, /统一校验/);
+  assert.match(workspaceViewSource, /data-script-editor-action="toggle-preview-panel"/);
+  assert.match(workspaceViewSource, /data-script-editor-action="jump-to-preview-issue"/);
   assert.doesNotMatch(workspaceViewSource, /Script Editor Shell/);
   assert.doesNotMatch(workspaceViewSource, /Handoff Summary/);
 });
@@ -3197,6 +3236,7 @@ test(
     assert.equal(visibleFamilies.includes("buildings"), true);
     assert.equal(visibleFamilies.includes("textEntries"), true);
     assert.equal(visibleFamilies.includes("dialogues"), true);
+    assert.equal(visibleFamilies.includes("minigames"), true);
     assert.equal(visibleFamilies.includes("storyNodes"), true);
     assert.equal(visibleFamilies.includes("events"), true);
   }
@@ -3466,6 +3506,103 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.deepEqual(normalizedEvent.relations.personIds, ["person.hero"]);
   assert.equal(normalizedEvent.previewSummary.previewNotes, "Preview the event branch.");
 });
+
+test(
+  "script editor minigame binding queue exposes a dedicated binding editor with launch settlement and reference tabs",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const workspaceShellSource = fs.readFileSync(
+      "src/application/script-editor/workspace-shell.ts",
+      "utf8"
+    );
+
+    assert.match(source, /玩法绑定作者面|Minigame Binding/);
+    assert.match(source, /基础信息|触发与调用|结算与返回|引用关系/);
+    assert.match(source, /data-script-editor-action="select-minigame-tab"/);
+    assert.match(source, /"add-minigame-launch-payload-entry"/);
+    assert.match(source, /"add-minigame-outcome-route"/);
+    assert.match(source, /data-script-editor-minigame-field=/);
+    assert.match(source, /data-script-editor-minigame-launch-field=/);
+    assert.match(source, /data-script-editor-minigame-outcome-field=/);
+    assert.match(cssSource, /\.c-script-editor-minigame-editor/);
+    assert.match(cssSource, /\.c-script-editor-minigame-list/);
+    assert.doesNotMatch(workspaceShellSource, /"dialogues", "storyNodes", "minigames"/);
+  }
+);
+
+test(
+  "script editor minigame binding authoring helpers normalize builtin defaults and bounded settlement fields",
+  () => {
+    const {
+      appendScriptEditorMinigameLaunchPayloadEntry,
+      appendScriptEditorMinigameOutcomeRoute,
+      createDefaultScriptEditorMinigameRecord,
+      normalizeScriptEditorMinigameRecord,
+      removeScriptEditorMinigameLaunchPayloadEntry,
+      updateScriptEditorMinigameField,
+      updateScriptEditorMinigameIntegration,
+      updateScriptEditorMinigameLaunchPayloadField,
+      updateScriptEditorMinigameOutcomeRouteField,
+    } = require("../.test-dist/application/script-editor/minigame-binding-authoring.js");
+
+    let record = createDefaultScriptEditorMinigameRecord(0);
+    record = updateScriptEditorMinigameField(record, "title", "市集算盘");
+    record = updateScriptEditorMinigameField(record, "playableId", "grain-accounting");
+    record = updateScriptEditorMinigameIntegration(
+      record,
+      "playable.grain-accounting.house.grain-shop"
+    );
+    record = updateScriptEditorMinigameField(record, "ownerId", "building.grain-shop");
+    record = updateScriptEditorMinigameField(record, "triggerSource", "location-menu");
+    record = appendScriptEditorMinigameLaunchPayloadEntry(record);
+    record = updateScriptEditorMinigameLaunchPayloadField(record, 0, "key", "ledgerId");
+    record = updateScriptEditorMinigameLaunchPayloadField(
+      record,
+      0,
+      "value",
+      "grain.shop.default"
+    );
+    record = appendScriptEditorMinigameOutcomeRoute(record);
+    record = updateScriptEditorMinigameOutcomeRouteField(record, 1, "outcome", "failure");
+    record = updateScriptEditorMinigameOutcomeRouteField(
+      record,
+      1,
+      "handoffPolicy",
+      "close-only"
+    );
+    record = updateScriptEditorMinigameOutcomeRouteField(
+      record,
+      1,
+      "effectHint",
+      "扣除信誉"
+    );
+    record = removeScriptEditorMinigameLaunchPayloadEntry(record, 1);
+
+    const normalized = normalizeScriptEditorMinigameRecord(record);
+
+    assert.equal(normalized.title, "市集算盘");
+    assert.equal(normalized.playableId, "grain-accounting");
+    assert.equal(
+      normalized.integrationId,
+      "playable.grain-accounting.house.grain-shop"
+    );
+    assert.equal(normalized.ownerKind, "house");
+    assert.equal(normalized.returnPolicy, "resume-owner");
+    assert.equal(
+      normalized.triggerId,
+      "trigger.playable.grain-accounting.house.grain-shop"
+    );
+    assert.equal(normalized.launchPayload.length, 1);
+    assert.deepEqual(normalized.launchPayload[0], {
+      key: "ledgerId",
+      value: "grain.shop.default",
+    });
+    assert.equal(normalized.outcomeRoutes[1].outcome, "failure");
+    assert.equal(normalized.outcomeRoutes[1].handoffPolicy, "close-only");
+    assert.equal(normalized.outcomeRoutes[1].effectHint, "扣除信誉");
+  }
+);
 
 test(
   "script editor runtime export fails closed when imported compatibility residue is still unresolved",

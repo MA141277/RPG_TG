@@ -235,6 +235,95 @@
   padding: 16px;
 }
 
+.c-script-editor-shell__handoff-header,
+.c-script-editor-shell__auxiliary-heading,
+.c-script-editor-shell__issue,
+.c-script-editor-shell__export-target {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.c-script-editor-shell__handoff-header,
+.c-script-editor-shell__auxiliary {
+  display: grid;
+  gap: 16px;
+}
+
+.c-script-editor-shell__auxiliary-section {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(226, 196, 142, 0.12);
+}
+
+.c-script-editor-shell__auxiliary-heading {
+  align-items: baseline;
+}
+
+.c-script-editor-shell__auxiliary-heading h3,
+.c-script-editor-shell__issue-copy strong,
+.c-script-editor-shell__export-copy strong,
+.c-script-editor-shell__auxiliary-card h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.c-script-editor-shell__auxiliary-heading span,
+.c-script-editor-shell__export-file {
+  color: rgba(242, 234, 220, 0.62);
+  font-size: 12px;
+}
+
+.c-script-editor-shell__auxiliary-cards,
+.c-script-editor-shell__issue-list,
+.c-script-editor-shell__export-list {
+  display: grid;
+  gap: 10px;
+}
+
+.c-script-editor-shell__auxiliary-card,
+.c-script-editor-shell__issue,
+.c-script-editor-shell__export-target {
+  padding: 14px;
+  border: 1px solid rgba(226, 196, 142, 0.14);
+  border-radius: 14px;
+  background: rgba(22, 18, 14, 0.34);
+}
+
+.c-script-editor-shell__auxiliary-card--warning,
+.c-script-editor-shell__issue--attention,
+.c-script-editor-shell__export-target--deferred {
+  background: rgba(96, 71, 29, 0.3);
+}
+
+.c-script-editor-shell__auxiliary-card--success,
+.c-script-editor-shell__issue--info,
+.c-script-editor-shell__export-target--ready {
+  background: rgba(35, 77, 56, 0.24);
+}
+
+.c-script-editor-shell__issue--blocked,
+.c-script-editor-shell__export-target--blocked {
+  background: rgba(109, 48, 34, 0.36);
+}
+
+.c-script-editor-shell__auxiliary-card p,
+.c-script-editor-shell__issue-copy p,
+.c-script-editor-shell__export-copy p {
+  margin: 8px 0 0;
+  color: rgba(242, 234, 220, 0.74);
+  line-height: 1.6;
+}
+
+.c-script-editor-shell__issue {
+  align-items: flex-start;
+}
+
+.c-script-editor-shell__export-target {
+  align-items: center;
+}
+
 .c-main-ui-screen--script-editor-flow {
   min-height: 100vh;
   padding: 24px;
@@ -662,6 +751,44 @@
   min-height: 140px;
 }
 
+.c-script-editor-minigame-editor {
+  display: grid;
+  gap: 18px;
+}
+
+.c-script-editor-minigame-editor__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.c-script-editor-minigame-editor__tab.is-active {
+  border-color: rgba(226, 196, 142, 0.46);
+  background: rgba(124, 86, 39, 0.5);
+}
+
+.c-script-editor-minigame-panel,
+.c-script-editor-minigame-list,
+.c-script-editor-minigame-list__route {
+  display: grid;
+  gap: 16px;
+}
+
+.c-script-editor-minigame-panel,
+.c-script-editor-minigame-list__route {
+  padding: 18px;
+  border: 1px solid rgba(226, 196, 142, 0.12);
+  border-radius: 18px;
+  background: rgba(49, 36, 25, 0.52);
+}
+
+.c-script-editor-minigame-list__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
 @media (max-width: 1080px) {
   .c-script-editor-shell__body,
   .c-script-editor-shell__workspace,
@@ -708,6 +835,10 @@
   .c-script-editor-project-card__header,
   .c-script-editor-project-card__meta,
   .c-script-editor-project-card__actions,
+  .c-script-editor-shell__handoff-header,
+  .c-script-editor-shell__auxiliary-heading,
+  .c-script-editor-shell__issue,
+  .c-script-editor-shell__export-target,
   .c-script-editor-person-editor__tabs,
   .c-script-editor-person-attributes__header,
   .c-script-editor-person-attributes__item,
@@ -716,11 +847,20 @@
   .c-script-editor-location-menu__toggles,
   .c-script-editor-narrative-editor__tabs,
   .c-script-editor-narrative-panel__header,
-  .c-script-editor-narrative-inline {
+  .c-script-editor-narrative-inline,
+  .c-script-editor-minigame-editor__tabs {
     flex-direction: column;
+  }
+
+  .c-script-editor-minigame-list__item {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .c-script-editor-project-card__meta div {
     min-width: 0;
+  }
+
+  .c-script-editor-shell__export-target {
+    align-items: flex-start;
   }
 }

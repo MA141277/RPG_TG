@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-13`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation`
-- next_task: `task.script-editor-prd-minigame-binding-alignment.queue-closeout-and-handoff`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `This queue is active and has not yet reached closeout judgement.`
+- closure_basis: `The bounded minigame/playable binding slice is landed and verified: the repository now exposes one dedicated configuration-first minigame binding family, bounded launch and settlement authoring, builtin playable/integration defaults, and reverse-reference visibility on top of the closed workbench/project-selection/person-authoring/city-building/dialogue-event-story baseline. Execution for this queue is complete, but the next remaining same-family PRD residue now shifts to preview/validation/export alignment rather than further minigame-binding continuation.`
 - residue_remaining: `yes`
 - residue_family: `same-family`
-- residue_routing_status: `none`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `queue.script-editor-prd-preview-validation-export-alignment`
 - auto_continue_eligible: `false`
-- next_effect: `none`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `none`
 - sync_summary: `No repository sync batch is recorded until queue-local execution and closeout truth are written.`
@@ -55,7 +55,7 @@
 - task_count: `3`
 - completed_task_count: `1`
 - remaining_task_count: `2`
-- active_task_summary: `Implement the bounded minigame/playable binding surface, structured launch/settlement configuration, and bounded cross-object entrypoints on top of the closed workbench/project-selection/person-authoring/city-building/dialogue-event-story baseline.`
+- active_task_summary: `No active task remains; the bounded minigame/playable binding slice closed after the repository gained a dedicated binding authoring surface, bounded launch/settlement configuration, and cross-object linkage visibility with verification.`
 - task_briefs:
   - `task.script-editor-prd-minigame-binding-alignment.boundary-baseline-reconcile: confirm that minigame/playable binding remains the next smallest same-family PRD gap after the closed story/dialogue/event continuation.`
   - `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation: land the bounded minigame/playable binding surface and settlement entrypoints without widening into shared playable runtime contract changes or preview/export product surfaces.`
@@ -105,8 +105,17 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-prd-minigame-binding-alignment.boundary-baseline-reconcile` | `completed` | `Confirm that minigame/playable binding remains the next smallest same-family PRD gap.` | `none` | `Completed on 2026-07-13 after repository inspection confirmed that the object tree already reserves a minigame family, but the current authoring flow still leaves minigames empty, has no dedicated binding surface, and still defers activity/playable import-export assembly to a later queue.` |
-| `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation` | `active` | `Land the bounded minigame/playable binding surface and settlement entrypoints without widening into shared playable runtime contract changes or preview/export product surfaces.` | `task.script-editor-prd-minigame-binding-alignment.boundary-baseline-reconcile` | `Current active task.` |
-| `task.script-editor-prd-minigame-binding-alignment.queue-closeout-and-handoff` | `pending` | `Verify the queue-local minigame-binding slice, classify remaining residue, and hand control to the next lawful PRD queue.` | `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation` | `Becomes active only after implementation verification passes.` |
+| `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation` | `completed` | `Land the bounded minigame/playable binding surface and settlement entrypoints without widening into shared playable runtime contract changes or preview/export product surfaces.` | `task.script-editor-prd-minigame-binding-alignment.boundary-baseline-reconcile` | `Completed on 2026-07-13 after the repository gained a dedicated minigame-binding authoring surface, builtin playable/integration defaults, bounded launch payload and settlement route editing, and reverse-reference visibility without widening into shared runtime contract changes.` |
+| `task.script-editor-prd-minigame-binding-alignment.queue-closeout-and-handoff` | `completed` | `Verify the queue-local minigame-binding slice, classify remaining residue, and hand control to the next lawful PRD queue.` | `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation` | `Completed on 2026-07-13 after verification passed, queue truth was synchronized, and the remaining same-family residue was routed back to version-level promotion review with preview/validation/export recorded as the next lawful candidate.` |
+
+### Historical Handoff Note
+
+- Task ID:
+  - `task.script-editor-prd-minigame-binding-alignment.queue-closeout-and-handoff`
+- Recorded handoff at closure:
+  - `The bounded PRD minigame/playable binding continuation is complete. Return to target.script-editor-prd-alignment version review and evaluate queue.script-editor-prd-preview-validation-export-alignment as the next lawful candidate.`
+- Recorded expected output:
+  - `One dedicated minigame/playable binding baseline now exists as reusable upstream surface for later preview, validation, and export-handoff queues.`
 
 ### Task Definitions
 
@@ -155,7 +164,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -195,14 +204,14 @@
 - task_brief:
   - `Implement the bounded minigame/playable binding and settlement entry slice.`
 - task_outcome_summary:
-  - `Expected outcome: one dedicated minigame/playable binding surface plus bounded launch and settlement configuration on top of the closed workbench/project-selection/person-authoring/city-building/dialogue-event-story baseline.`
+  - `Completed on 2026-07-13 after the repository gained a dedicated minigame-binding authoring surface, builtin playable/integration defaults, bounded launch payload and settlement route editing, and reverse-reference visibility on top of the closed workbench/project-selection/person-authoring/city-building/dialogue-event-story baseline.`
 
 #### `task.script-editor-prd-minigame-binding-alignment.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-prd-minigame-binding-alignment.queue-closeout-and-handoff`
-- state: `pending`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -232,4 +241,4 @@
 - task_brief:
   - `Close the queue only after minigame/playable binding verification and routing truth are synchronized.`
 - task_outcome_summary:
-  - `Pending until the active implementation task finishes and verification confirms the next lawful continuation.`
+  - `Completed on 2026-07-13 after queue truth, version truth, and project-progress truth were synchronized and the remaining same-family residue was routed to preview/validation/export as the next lawful continuation.`

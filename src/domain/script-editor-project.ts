@@ -216,6 +216,53 @@ export type ScriptEditorEventPreviewSummary = {
   validationNotes?: string;
 };
 
+export type ScriptEditorMinigameOwnerKind =
+  | "house"
+  | "scene"
+  | "task"
+  | "external";
+
+export type ScriptEditorMinigameReturnPolicy =
+  | "resume-owner"
+  | "reenter-owner"
+  | "close-only";
+
+export type ScriptEditorMinigameTriggerSource =
+  | "manual"
+  | "dialogue-follow-up"
+  | "event-destination"
+  | "location-menu"
+  | "other";
+
+export type ScriptEditorMinigameOutcome =
+  | "success"
+  | "failure"
+  | "cancelled";
+
+export type ScriptEditorMinigameOutcomeRoute = {
+  id: string;
+  outcome: ScriptEditorMinigameOutcome;
+  handoffPolicy: ScriptEditorMinigameReturnPolicy;
+  summary: string;
+  effectHint: string;
+};
+
+export type ScriptEditorMinigameRecord = ScriptEditorEntityRecord & {
+  title: string;
+  description?: string;
+  playableId?: string;
+  integrationId?: string;
+  ownerKind?: ScriptEditorMinigameOwnerKind;
+  ownerId?: string;
+  returnPolicy?: ScriptEditorMinigameReturnPolicy;
+  triggerId?: string;
+  triggerSource?: ScriptEditorMinigameTriggerSource;
+  triggerEvent?: string;
+  launchPayload?: ScriptEditorKeyValueEntry[];
+  outcomeRoutes?: ScriptEditorMinigameOutcomeRoute[];
+  notes?: string;
+};
+
 export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   title: string;
   description?: string;
@@ -260,7 +307,7 @@ export type ScriptEditorProjectDefinition = {
   events: ScriptEditorEventRecord[];
   quests: ScriptEditorEntityRecord[];
   dialogues: ScriptEditorDialogueRecord[];
-  minigames: ScriptEditorEntityRecord[];
+  minigames: ScriptEditorMinigameRecord[];
   storyNodes: ScriptEditorStoryNodeRecord[];
   textEntries: ScriptEditorTextEntryRecord[];
   conditionGroups: ScriptEditorEntityRecord[];

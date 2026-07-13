@@ -4,6 +4,7 @@ import type {
   ScriptEditorDialogueRecord,
   ScriptEditorEntityRecord,
   ScriptEditorEventRecord,
+  ScriptEditorMinigameRecord,
   ScriptEditorPersonRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorProjectFileKey,
@@ -16,6 +17,7 @@ import {
   createDefaultScriptEditorCityRecord,
 } from "./city-building-authoring";
 import { createDefaultScriptEditorPersonRecord } from "./person-authoring";
+import { createDefaultScriptEditorMinigameRecord } from "./minigame-binding-authoring";
 import {
   createDefaultScriptEditorDialogueRecord,
   createDefaultScriptEditorEventRecord,
@@ -28,6 +30,7 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "cities",
   "buildings",
   "dialogues",
+  "minigames",
   "textEntries",
   "storyNodes",
   "events",
@@ -162,6 +165,7 @@ export function listScriptEditorWorkflowFamilyRecords(
   | ScriptEditorCityRecord[]
   | ScriptEditorBuildingRecord[]
   | ScriptEditorDialogueRecord[]
+  | ScriptEditorMinigameRecord[]
   | ScriptEditorStoryNodeRecord[]
   | ScriptEditorEventRecord[]
   | ScriptEditorEntityRecord[]
@@ -175,6 +179,8 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.buildings;
     case "dialogues":
       return project.dialogues;
+    case "minigames":
+      return project.minigames;
     case "textEntries":
       return project.textEntries;
     case "storyNodes":
@@ -192,6 +198,7 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorCityRecord
   | ScriptEditorBuildingRecord
   | ScriptEditorDialogueRecord
+  | ScriptEditorMinigameRecord
   | ScriptEditorStoryNodeRecord
   | ScriptEditorEventRecord
   | ScriptEditorEntityRecord
@@ -207,6 +214,8 @@ export function createScriptEditorWorkflowRecordDraft(
       return createDefaultScriptEditorBuildingRecord(index) as ScriptEditorBuildingRecord;
     case "dialogues":
       return createDefaultScriptEditorDialogueRecord(index) as ScriptEditorDialogueRecord;
+    case "minigames":
+      return createDefaultScriptEditorMinigameRecord(index) as ScriptEditorMinigameRecord;
     case "textEntries":
       return {
         id: `text.new.${suffix}`,
@@ -227,6 +236,7 @@ export function upsertScriptEditorWorkflowRecord(
     | ScriptEditorCityRecord
     | ScriptEditorBuildingRecord
     | ScriptEditorDialogueRecord
+    | ScriptEditorMinigameRecord
     | ScriptEditorStoryNodeRecord
     | ScriptEditorEventRecord
     | ScriptEditorEntityRecord
@@ -280,6 +290,8 @@ function replaceProjectFamily(
       return { ...project, buildings: nextRecords as ScriptEditorBuildingRecord[] };
     case "dialogues":
       return { ...project, dialogues: nextRecords as ScriptEditorDialogueRecord[] };
+    case "minigames":
+      return { ...project, minigames: nextRecords as ScriptEditorMinigameRecord[] };
     case "textEntries":
       return { ...project, textEntries: nextRecords as ScriptEditorTextEntryRecord[] };
     case "storyNodes":

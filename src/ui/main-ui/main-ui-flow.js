@@ -49,6 +49,23 @@ import {
   updateScriptEditorPersonRelation,
 } from "../../application/script-editor/person-authoring";
 import {
+  appendScriptEditorMinigameLaunchPayloadEntry,
+  appendScriptEditorMinigameOutcomeRoute,
+  listScriptEditorBuiltinMinigameIntegrationOptions,
+  listScriptEditorBuiltinMinigamePlayableOptions,
+  normalizeScriptEditorMinigameRecord,
+  removeScriptEditorMinigameLaunchPayloadEntry,
+  removeScriptEditorMinigameOutcomeRoute,
+  SCRIPT_EDITOR_MINIGAME_OUTCOMES,
+  SCRIPT_EDITOR_MINIGAME_OWNER_KINDS,
+  SCRIPT_EDITOR_MINIGAME_RETURN_POLICIES,
+  SCRIPT_EDITOR_MINIGAME_TRIGGER_SOURCES,
+  updateScriptEditorMinigameField,
+  updateScriptEditorMinigameIntegration,
+  updateScriptEditorMinigameLaunchPayloadField,
+  updateScriptEditorMinigameOutcomeRouteField,
+} from "../../application/script-editor/minigame-binding-authoring";
+import {
   appendScriptEditorDialogueFollowUp,
   appendScriptEditorDialogueNode,
   appendScriptEditorDialogueParticipant,
@@ -285,10 +302,12 @@ export class MainUiFlow {
     this.scriptEditorProjectLibrary = [];
     this.scriptEditorProjectSource = "new";
     this.scriptEditorPendingDeleteProjectId = null;
+    this.scriptEditorAuxiliaryPanelOpen = false;
     this.scriptEditorPersonTab = "profile";
     this.scriptEditorLocationTab = "profile";
     this.scriptEditorNarrativeTab = "profile";
     this.scriptEditorEventTab = "basics";
+    this.scriptEditorMinigameTab = "basics";
   }
 
   mount() {
@@ -569,6 +588,7 @@ export class MainUiFlow {
       project: this.scriptEditorProject,
       selection: this.scriptEditorSelection,
       visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
+      auxiliaryPanelOpen: this.scriptEditorAuxiliaryPanelOpen,
     });
 
     return `
@@ -696,6 +716,10 @@ export class MainUiFlow {
 
     if (family === "events") {
       return this.renderScriptEditorEventEditor(records, selectedRecord);
+    }
+
+    if (family === "minigames") {
+      return this.renderScriptEditorMinigameEditor(records, selectedRecord);
     }
 
     return `
@@ -1475,6 +1499,70 @@ export class MainUiFlow {
     `;
   }
 
+  renderScriptEditorMinigameEditor(records, selectedRecord) {
+    const minigame =
+      selectedRecord == null ? null : normalizeScriptEditorMinigameRecord(selectedRecord);
+
+    return `
+      <div class="c-script-editor-editor-card">
+        <header class="c-script-editor-editor-card__header">
+          <div>
+            <p class="c-script-editor-editor-card__eyebrow">玩法绑定作者面</p>
+            <h2 class="c-script-editor-editor-card__title">Minigame Binding</h2>
+          </div>
+          <div class="c-script-editor-editor-card__actions">
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+              新增玩法绑定
+            </button>
+            <button
+              type="button"
+              class="c-main-ui-json-text-button"
+              data-script-editor-action="remove-record"
+              ${minigame == null ? "disabled" : ""}
+            >
+              删除玩法绑定
+            </button>
+          </div>
+        </header>
+
+        <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
+          <aside class="c-script-editor-record-list c-script-editor-record-list--narrative" aria-label="玩法绑定列表">
+            ${records
+              .map((record) => {
+                const normalizedRecord = normalizeScriptEditorMinigameRecord(record);
+                return `
+                  <button
+                    type="button"
+                    class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                    data-script-editor-record-id="${escapeHtml(record.id)}"
+                  >
+                    <strong>${escapeHtml(normalizedRecord.title)}</strong>
+                    <span>${escapeHtml(normalizedRecord.playableId || record.id)}</span>
+                  </button>
+                `;
+              })
+              .join("")}
+          </aside>
+          <div class="c-script-editor-minigame-editor">
+            ${
+              minigame == null
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个玩法绑定后继续编辑。当前作者面只负责 binding、trigger 和 settlement 配置，不在这里落 playable runtime 机制。</p>`
+                : `
+                  <div class="c-script-editor-minigame-editor__tabs" role="tablist" aria-label="玩法绑定详情分栏">
+                    ${this.renderScriptEditorMinigameTabButton("basics", "基础信息")}
+                    ${this.renderScriptEditorMinigameTabButton("launch", "触发与调用")}
+                    ${this.renderScriptEditorMinigameTabButton("settlement", "结算与返回")}
+                    ${this.renderScriptEditorMinigameTabButton("references", "引用关系")}
+                  </div>
+                  ${this.renderScriptEditorMinigameTabPanel(minigame)}
+                `
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderScriptEditorNarrativeTabButton(tab, label) {
     return `
       <button
@@ -1499,6 +1587,21 @@ export class MainUiFlow {
         data-script-editor-event-tab="${tab}"
         role="tab"
         aria-selected="${this.scriptEditorEventTab === tab ? "true" : "false"}"
+      >
+        ${label}
+      </button>
+    `;
+  }
+
+  renderScriptEditorMinigameTabButton(tab, label) {
+    return `
+      <button
+        type="button"
+        class="c-main-ui-json-text-button c-script-editor-minigame-editor__tab ${this.scriptEditorMinigameTab === tab ? "is-active" : ""}"
+        data-script-editor-action="select-minigame-tab"
+        data-script-editor-minigame-tab="${tab}"
+        role="tab"
+        aria-selected="${this.scriptEditorMinigameTab === tab ? "true" : "false"}"
       >
         ${label}
       </button>
@@ -1848,6 +1951,259 @@ export class MainUiFlow {
         </div>
       </section>
     `;
+  }
+
+  renderScriptEditorMinigameTabPanel(minigame) {
+    if (this.scriptEditorMinigameTab === "launch") {
+      const playableOptions = listScriptEditorBuiltinMinigamePlayableOptions();
+      const integrationOptions = listScriptEditorBuiltinMinigameIntegrationOptions(
+        minigame.playableId
+      );
+      return `
+        <section class="c-script-editor-minigame-panel" aria-label="玩法绑定触发与调用分栏">
+          <div class="c-script-editor-form-grid">
+            <label class="c-script-editor-form-field">
+              <span>Playable ID</span>
+              <select class="c-script-editor-form-field__input" data-script-editor-minigame-field="playableId">
+                ${playableOptions
+                  .map(
+                    (option) => `<option value="${option.id}" ${minigame.playableId === option.id ? "selected" : ""}>${option.label}</option>`
+                  )
+                  .join("")}
+              </select>
+            </label>
+            <label class="c-script-editor-form-field">
+              <span>Integration ID</span>
+              <select class="c-script-editor-form-field__input" data-script-editor-minigame-integration>
+                ${integrationOptions
+                  .map(
+                    (option) => `<option value="${option.integrationId}" ${minigame.integrationId === option.integrationId ? "selected" : ""}>${option.integrationId}</option>`
+                  )
+                  .join("")}
+              </select>
+            </label>
+            <label class="c-script-editor-form-field">
+              <span>Trigger Source</span>
+              <select class="c-script-editor-form-field__input" data-script-editor-minigame-field="triggerSource">
+                ${SCRIPT_EDITOR_MINIGAME_TRIGGER_SOURCES.map(
+                  (triggerSource) => `<option value="${triggerSource}" ${minigame.triggerSource === triggerSource ? "selected" : ""}>${triggerSource}</option>`
+                ).join("")}
+              </select>
+            </label>
+            <label class="c-script-editor-form-field">
+              <span>Trigger ID</span>
+              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.triggerId ?? "")}" data-script-editor-minigame-field="triggerId" />
+            </label>
+            <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+              <span>Trigger Event</span>
+              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.triggerEvent ?? "")}" data-script-editor-minigame-field="triggerEvent" />
+            </label>
+          </div>
+          <section class="c-script-editor-minigame-list">
+            <div class="c-script-editor-narrative-panel__header">
+              <div>
+                <p class="c-script-editor-editor-card__eyebrow">Launch Payload</p>
+                <h3 class="c-script-editor-editor-card__title">Bounded launch payload</h3>
+              </div>
+              <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-minigame-launch-payload-entry">
+                新增 payload
+              </button>
+            </div>
+            ${(minigame.launchPayload ?? [])
+              .map(
+                (entry, index) => `
+                  <div class="c-script-editor-minigame-list__item">
+                    <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.key)}" placeholder="payload.key" data-script-editor-minigame-launch-field="key" data-script-editor-minigame-launch-index="${index}" />
+                    <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.value)}" placeholder="payload.value" data-script-editor-minigame-launch-field="value" data-script-editor-minigame-launch-index="${index}" />
+                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-minigame-launch-payload-entry" data-script-editor-minigame-launch-index="${index}">
+                      删除
+                    </button>
+                  </div>
+                `
+              )
+              .join("")}
+          </section>
+        </section>
+      `;
+    }
+
+    if (this.scriptEditorMinigameTab === "settlement") {
+      return `
+        <section class="c-script-editor-minigame-panel" aria-label="玩法绑定结算与返回分栏">
+          <div class="c-script-editor-form-grid">
+            <label class="c-script-editor-form-field">
+              <span>Owner Kind</span>
+              <select class="c-script-editor-form-field__input" data-script-editor-minigame-field="ownerKind">
+                ${SCRIPT_EDITOR_MINIGAME_OWNER_KINDS.map(
+                  (ownerKind) => `<option value="${ownerKind}" ${minigame.ownerKind === ownerKind ? "selected" : ""}>${ownerKind}</option>`
+                ).join("")}
+              </select>
+            </label>
+            <label class="c-script-editor-form-field">
+              <span>Owner ID</span>
+              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.ownerId ?? "")}" data-script-editor-minigame-field="ownerId" />
+            </label>
+            <label class="c-script-editor-form-field">
+              <span>Default Return Policy</span>
+              <select class="c-script-editor-form-field__input" data-script-editor-minigame-field="returnPolicy">
+                ${SCRIPT_EDITOR_MINIGAME_RETURN_POLICIES.map(
+                  (returnPolicy) => `<option value="${returnPolicy}" ${minigame.returnPolicy === returnPolicy ? "selected" : ""}>${returnPolicy}</option>`
+                ).join("")}
+              </select>
+            </label>
+          </div>
+          <section class="c-script-editor-minigame-list">
+            <div class="c-script-editor-narrative-panel__header">
+              <div>
+                <p class="c-script-editor-editor-card__eyebrow">Settlement</p>
+                <h3 class="c-script-editor-editor-card__title">Outcome routes</h3>
+              </div>
+              <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-minigame-outcome-route">
+                新增 outcome route
+              </button>
+            </div>
+            ${(minigame.outcomeRoutes ?? [])
+              .map(
+                (route, index) => `
+                  <article class="c-script-editor-minigame-list__route">
+                    <div class="c-script-editor-form-grid">
+                      <label class="c-script-editor-form-field">
+                        <span>Route ID</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(route.id)}" data-script-editor-minigame-outcome-field="id" data-script-editor-minigame-outcome-index="${index}" />
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>Outcome</span>
+                        <select class="c-script-editor-form-field__input" data-script-editor-minigame-outcome-field="outcome" data-script-editor-minigame-outcome-index="${index}">
+                          ${SCRIPT_EDITOR_MINIGAME_OUTCOMES.map(
+                            (outcome) => `<option value="${outcome}" ${route.outcome === outcome ? "selected" : ""}>${outcome}</option>`
+                          ).join("")}
+                        </select>
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>Handoff Policy</span>
+                        <select class="c-script-editor-form-field__input" data-script-editor-minigame-outcome-field="handoffPolicy" data-script-editor-minigame-outcome-index="${index}">
+                          ${SCRIPT_EDITOR_MINIGAME_RETURN_POLICIES.map(
+                            (returnPolicy) => `<option value="${returnPolicy}" ${route.handoffPolicy === returnPolicy ? "selected" : ""}>${returnPolicy}</option>`
+                          ).join("")}
+                        </select>
+                      </label>
+                      <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+                        <span>Outcome Summary</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(route.summary)}" data-script-editor-minigame-outcome-field="summary" data-script-editor-minigame-outcome-index="${index}" />
+                      </label>
+                      <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+                        <span>Effect Hint</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(route.effectHint)}" data-script-editor-minigame-outcome-field="effectHint" data-script-editor-minigame-outcome-index="${index}" />
+                      </label>
+                    </div>
+                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-minigame-outcome-route" data-script-editor-minigame-outcome-index="${index}">
+                      删除 outcome route
+                    </button>
+                  </article>
+                `
+              )
+              .join("")}
+          </section>
+        </section>
+      `;
+    }
+
+    if (this.scriptEditorMinigameTab === "references") {
+      const references = this.collectScriptEditorMinigameReferences(minigame.id);
+      return `
+        <section class="c-script-editor-minigame-panel" aria-label="玩法绑定引用关系分栏">
+          <p class="c-script-editor-editor-card__hint">
+            这里展示谁正在调用当前 binding。真正的调用源仍分别在 dialogue、event 和 location menu 作者面维护，避免把跨对象所有权挪进 minigame 本体。
+          </p>
+          <div class="c-script-editor-shell__cards">
+            ${this.renderScriptEditorOverviewCard("引用数", String(references.length), references.length === 0 ? "neutral" : "success")}
+            ${this.renderScriptEditorOverviewCard("当前 playable", minigame.playableId || "未设置", "neutral")}
+            ${this.renderScriptEditorOverviewCard("当前 integration", minigame.integrationId || "未设置", "neutral")}
+          </div>
+          <div class="c-script-editor-minigame-list">
+            ${references.length === 0
+              ? `<p class="c-script-editor-editor-card__hint">当前还没有 dialogue、event 或 location menu 指向这个玩法绑定。</p>`
+              : references
+                  .map(
+                    (reference) => `
+                      <article class="c-script-editor-minigame-list__route">
+                        <strong>${escapeHtml(reference.label)}</strong>
+                        <span>${escapeHtml(reference.summary)}</span>
+                      </article>
+                    `
+                  )
+                  .join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    return `
+      <section class="c-script-editor-minigame-panel" aria-label="玩法绑定基础信息分栏">
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>Binding ID</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.id)}" data-script-editor-minigame-field="id" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>Binding Title</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.title)}" data-script-editor-minigame-field="title" />
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>Description</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-minigame-field="description" spellcheck="false">${escapeHtml(minigame.description ?? "")}</textarea>
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>Notes</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-minigame-field="notes" spellcheck="false">${escapeHtml(minigame.notes ?? "")}</textarea>
+          </label>
+        </div>
+      </section>
+    `;
+  }
+
+  collectScriptEditorMinigameReferences(minigameId) {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    const dialogueRefs = this.scriptEditorProject.dialogues
+      .filter((dialogue) =>
+        (dialogue.followUps ?? []).some(
+          (followUp) =>
+            followUp.targetFamily === "minigame" && followUp.targetId === minigameId
+        )
+      )
+      .map((dialogue) => ({
+        label: `Dialogue · ${dialogue.title || dialogue.id}`,
+        summary: `${dialogue.id} follow-up -> ${minigameId}`,
+      }));
+
+    const eventRefs = this.scriptEditorProject.events
+      .filter(
+        (eventRecord) =>
+          eventRecord.destination?.family === "minigame" &&
+          eventRecord.destination?.targetId === minigameId
+      )
+      .map((eventRecord) => ({
+        label: `Event · ${eventRecord.title || eventRecord.id}`,
+        summary: `${eventRecord.id} destination -> ${minigameId}`,
+      }));
+
+    const locationRefs = [...this.scriptEditorProject.cities, ...this.scriptEditorProject.buildings]
+      .flatMap((location) =>
+        (location.menuEntries ?? [])
+          .filter(
+            (entry) =>
+              entry.targetFamily === "minigame" && entry.targetId === minigameId
+          )
+          .map((entry) => ({
+            label: `Location Menu · ${location.name || location.id}`,
+            summary: `${location.id}:${entry.id} -> ${minigameId}`,
+          }))
+      );
+
+    return [...dialogueRefs, ...eventRefs, ...locationRefs];
   }
 
   renderScriptEditorStringRelationPanel(title, relationKind, entries) {
@@ -2618,6 +2974,64 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-minigame-field]")) {
+      const field = target.dataset.scriptEditorMinigameField;
+      if (
+        [
+          "id",
+          "title",
+          "description",
+          "playableId",
+          "integrationId",
+          "ownerKind",
+          "ownerId",
+          "returnPolicy",
+          "triggerId",
+          "triggerSource",
+          "triggerEvent",
+          "notes",
+        ].includes(field ?? "")
+      ) {
+        this.applyScriptEditorMinigameField(field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-minigame-integration]")) {
+      this.applyScriptEditorMinigameIntegration(target.value);
+      return;
+    }
+
+    if (target.matches("[data-script-editor-minigame-launch-field]")) {
+      const field = target.dataset.scriptEditorMinigameLaunchField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorMinigameLaunchIndex ?? "-1",
+        10
+      );
+      if ((field === "key" || field === "value") && Number.isInteger(index) && index >= 0) {
+        this.applyScriptEditorMinigameLaunchField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-minigame-outcome-field]")) {
+      const field = target.dataset.scriptEditorMinigameOutcomeField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorMinigameOutcomeIndex ?? "-1",
+        10
+      );
+      if (
+        ["id", "outcome", "handoffPolicy", "summary", "effectHint"].includes(
+          field ?? ""
+        ) &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorMinigameOutcomeField(index, field, target.value);
+      }
+      return;
+    }
+
     if (target.matches('[data-script-editor-relation-kind^="story-related-"]')) {
       const relationKind = target.dataset.scriptEditorRelationKind;
       const index = Number.parseInt(target.dataset.scriptEditorRelationIndex ?? "-1", 10);
@@ -2930,6 +3344,8 @@ export class MainUiFlow {
     );
     const narrativeTab = actionElement?.dataset.scriptEditorNarrativeTab ?? null;
     const eventTab = actionElement?.dataset.scriptEditorEventTab ?? null;
+    const minigameTab = actionElement?.dataset.scriptEditorMinigameTab ?? null;
+    const targetTab = actionElement?.dataset.scriptEditorTargetTab ?? null;
     const dialogueNodeIndex = Number.parseInt(
       actionElement?.dataset.scriptEditorDialogueNodeIndex ?? "-1",
       10
@@ -2950,6 +3366,16 @@ export class MainUiFlow {
       actionElement?.dataset.scriptEditorRelationIndex ?? "-1",
       10
     );
+    const minigameLaunchIndex = Number.parseInt(
+      actionElement?.dataset.scriptEditorMinigameLaunchIndex ?? "-1",
+      10
+    );
+    const minigameOutcomeIndex = Number.parseInt(
+      actionElement?.dataset.scriptEditorMinigameOutcomeIndex ?? "-1",
+      10
+    );
+    const targetFamily = actionElement?.dataset.scriptEditorFamily ?? null;
+    const targetEntityId = actionElement?.dataset.scriptEditorEntityId ?? null;
 
     if (action === "new-project") {
       this.scriptEditorProjectSource = "new";
@@ -2958,6 +3384,7 @@ export class MainUiFlow {
         family: "storyPack",
         entityId: null,
       };
+      this.scriptEditorAuxiliaryPanelOpen = false;
       this.scriptEditorProjectDirectoryHandle = null;
       this.scriptEditorExportDirectoryHandle = null;
       this.scriptEditorPendingDeleteProjectId = null;
@@ -3049,6 +3476,18 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "toggle-preview-panel") {
+      this.toggleScriptEditorAuxiliaryPanel();
+      return;
+    }
+
+    if (action === "jump-to-preview-issue") {
+      if (targetFamily != null) {
+        this.jumpToScriptEditorIssue(targetFamily, targetEntityId, targetTab);
+      }
+      return;
+    }
+
     if (action === "add-record") {
       this.addScriptEditorRecord();
       return;
@@ -3136,6 +3575,13 @@ export class MainUiFlow {
     if (action === "select-event-tab") {
       if (eventTab != null) {
         this.selectScriptEditorEventTab(eventTab);
+      }
+      return;
+    }
+
+    if (action === "select-minigame-tab") {
+      if (minigameTab != null) {
+        this.selectScriptEditorMinigameTab(minigameTab);
       }
       return;
     }
@@ -3281,6 +3727,30 @@ export class MainUiFlow {
       }
       return;
     }
+
+    if (action === "add-minigame-launch-payload-entry") {
+      this.addScriptEditorMinigameLaunchPayloadEntry();
+      return;
+    }
+
+    if (action === "remove-minigame-launch-payload-entry") {
+      if (Number.isInteger(minigameLaunchIndex) && minigameLaunchIndex >= 0) {
+        this.removeScriptEditorMinigameLaunchPayloadEntry(minigameLaunchIndex);
+      }
+      return;
+    }
+
+    if (action === "add-minigame-outcome-route") {
+      this.addScriptEditorMinigameOutcomeRoute();
+      return;
+    }
+
+    if (action === "remove-minigame-outcome-route") {
+      if (Number.isInteger(minigameOutcomeIndex) && minigameOutcomeIndex >= 0) {
+        this.removeScriptEditorMinigameOutcomeRoute(minigameOutcomeIndex);
+      }
+      return;
+    }
   }
 
   selectScriptEditorFamily(family, entityId = null) {
@@ -3326,6 +3796,9 @@ export class MainUiFlow {
     if (family === "events") {
       this.scriptEditorEventTab = "basics";
     }
+    if (family === "minigames") {
+      this.scriptEditorMinigameTab = "basics";
+    }
     this.scriptEditorNotice = null;
     this.render();
   }
@@ -3359,6 +3832,9 @@ export class MainUiFlow {
     }
     if (this.scriptEditorSelection.family === "events") {
       this.scriptEditorEventTab = "basics";
+    }
+    if (this.scriptEditorSelection.family === "minigames") {
+      this.scriptEditorMinigameTab = "basics";
     }
     this.scriptEditorNotice = null;
     this.render();
@@ -3429,6 +3905,60 @@ export class MainUiFlow {
     this.render();
   }
 
+  selectScriptEditorMinigameTab(tab) {
+    if (this.scriptEditorSelection.family !== "minigames") {
+      return;
+    }
+
+    if (!["basics", "launch", "settlement", "references"].includes(tab)) {
+      return;
+    }
+
+    this.scriptEditorMinigameTab = tab;
+    this.render();
+  }
+
+  toggleScriptEditorAuxiliaryPanel(forceValue) {
+    this.scriptEditorAuxiliaryPanelOpen =
+      typeof forceValue === "boolean"
+        ? forceValue
+        : !this.scriptEditorAuxiliaryPanelOpen;
+    this.render();
+  }
+
+  jumpToScriptEditorIssue(family, entityId, targetTab = null) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    this.scriptEditorAuxiliaryPanelOpen = true;
+    this.selectScriptEditorFamily(family, entityId);
+
+    if (family === "people" && targetTab != null) {
+      this.selectScriptEditorPersonTab(targetTab);
+      return;
+    }
+
+    if ((family === "cities" || family === "buildings") && targetTab != null) {
+      this.selectScriptEditorLocationTab(targetTab);
+      return;
+    }
+
+    if ((family === "storyNodes" || family === "dialogues") && targetTab != null) {
+      this.selectScriptEditorNarrativeTab(targetTab);
+      return;
+    }
+
+    if (family === "events" && targetTab != null) {
+      this.selectScriptEditorEventTab(targetTab);
+      return;
+    }
+
+    if (family === "minigames" && targetTab != null) {
+      this.selectScriptEditorMinigameTab(targetTab);
+    }
+  }
+
   addScriptEditorRecord() {
     if (
       this.scriptEditorProject == null ||
@@ -3461,6 +3991,9 @@ export class MainUiFlow {
     }
     if (family === "events") {
       this.scriptEditorEventTab = "basics";
+    }
+    if (family === "minigames") {
+      this.scriptEditorMinigameTab = "basics";
     }
     this.scriptEditorNotice = {
       tone: "success",
@@ -4073,6 +4606,94 @@ export class MainUiFlow {
     );
   }
 
+  applyScriptEditorMinigameField(field, value) {
+    const minigame = this.getSelectedScriptEditorMinigame();
+    if (minigame == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorMinigame(
+      updateScriptEditorMinigameField(minigame, field, value)
+    );
+  }
+
+  applyScriptEditorMinigameIntegration(value) {
+    const minigame = this.getSelectedScriptEditorMinigame();
+    if (minigame == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorMinigame(
+      updateScriptEditorMinigameIntegration(minigame, value)
+    );
+  }
+
+  addScriptEditorMinigameLaunchPayloadEntry() {
+    const minigame = this.getSelectedScriptEditorMinigame();
+    if (minigame == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorMinigame(
+      appendScriptEditorMinigameLaunchPayloadEntry(minigame)
+    );
+  }
+
+  removeScriptEditorMinigameLaunchPayloadEntry(index) {
+    const minigame = this.getSelectedScriptEditorMinigame();
+    if (minigame == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorMinigame(
+      removeScriptEditorMinigameLaunchPayloadEntry(minigame, index)
+    );
+  }
+
+  applyScriptEditorMinigameLaunchField(index, field, value) {
+    const minigame = this.getSelectedScriptEditorMinigame();
+    if (minigame == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorMinigame(
+      updateScriptEditorMinigameLaunchPayloadField(minigame, index, field, value)
+    );
+  }
+
+  addScriptEditorMinigameOutcomeRoute() {
+    const minigame = this.getSelectedScriptEditorMinigame();
+    if (minigame == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorMinigame(
+      appendScriptEditorMinigameOutcomeRoute(minigame)
+    );
+  }
+
+  removeScriptEditorMinigameOutcomeRoute(index) {
+    const minigame = this.getSelectedScriptEditorMinigame();
+    if (minigame == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorMinigame(
+      removeScriptEditorMinigameOutcomeRoute(minigame, index)
+    );
+  }
+
+  applyScriptEditorMinigameOutcomeField(index, field, value) {
+    const minigame = this.getSelectedScriptEditorMinigame();
+    if (minigame == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorMinigame(
+      updateScriptEditorMinigameOutcomeRouteField(minigame, index, field, value)
+    );
+  }
+
   applyScriptEditorLocationField(field, value) {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
@@ -4171,6 +4792,7 @@ export class MainUiFlow {
       return;
     }
 
+    this.scriptEditorAuxiliaryPanelOpen = true;
     const diagnostics = validateScriptEditorProjectForRuntimeExport(
       this.scriptEditorProject
     );
@@ -4225,6 +4847,7 @@ export class MainUiFlow {
       return;
     }
 
+    this.scriptEditorAuxiliaryPanelOpen = true;
     try {
       const result = await writeTextFilesWithDirectoryPicker(
         exportScriptEditorProjectToScenarioPackFiles(this.scriptEditorProject),
@@ -4261,6 +4884,7 @@ export class MainUiFlow {
         family: "storyPack",
         entityId: null,
       };
+      this.scriptEditorAuxiliaryPanelOpen = false;
       this.scriptEditorProjectDirectoryHandle = null;
       this.scriptEditorPendingDeleteProjectId = null;
       this.scriptEditorNotice = {
@@ -4288,6 +4912,7 @@ export class MainUiFlow {
         family: "storyPack",
         entityId: null,
       };
+      this.scriptEditorAuxiliaryPanelOpen = false;
       this.scriptEditorExportDirectoryHandle = null;
       this.scriptEditorPendingDeleteProjectId = null;
       this.scriptEditorNotice = {
@@ -4323,6 +4948,8 @@ export class MainUiFlow {
         return "Story Nodes";
       case "events":
         return "Events";
+      case "minigames":
+        return "Minigames";
       default:
         return family;
     }
@@ -4537,6 +5164,42 @@ export class MainUiFlow {
     this.render();
   }
 
+  getSelectedScriptEditorMinigame() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "minigames" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    const selectedMinigame = this.scriptEditorProject.minigames.find(
+      (minigame) => minigame.id === this.scriptEditorSelection.entityId
+    );
+    return selectedMinigame == null
+      ? null
+      : normalizeScriptEditorMinigameRecord(selectedMinigame);
+  }
+
+  replaceSelectedScriptEditorMinigame(nextMinigame) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "minigames" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      minigames: this.scriptEditorProject.minigames.map((minigame) =>
+        minigame.id === this.scriptEditorSelection.entityId ? nextMinigame : minigame
+      ),
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
   resolveScriptEditorStoryRelationField(relationKind) {
     switch (relationKind) {
       case "story-related-people":
@@ -4611,6 +5274,7 @@ export class MainUiFlow {
         entityId: null,
       };
     }
+    this.scriptEditorAuxiliaryPanelOpen = false;
     this.setScreen("script-editor-workspace");
   }
 
@@ -4633,6 +5297,7 @@ export class MainUiFlow {
         family: "storyPack",
         entityId: null,
       };
+      this.scriptEditorAuxiliaryPanelOpen = false;
       this.scriptEditorProjectDirectoryHandle = null;
       this.scriptEditorExportDirectoryHandle = null;
     }

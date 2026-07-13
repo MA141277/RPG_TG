@@ -1,6 +1,9 @@
 import type {
+  ScriptEditorWorkspaceAuxiliaryCard,
+  ScriptEditorWorkspaceExportTarget,
   ScriptEditorWorkspaceInspectorCard,
   ScriptEditorWorkspaceTreeNode,
+  ScriptEditorWorkspaceValidationIssue,
   ScriptEditorWorkspaceViewModel,
 } from "../../../application/script-editor/workspace-shell";
 
@@ -105,7 +108,25 @@ export function renderScriptEditorWorkspaceView(
           </section>
 
           <aside class="c-script-editor-shell__handoff" aria-label="校验与导出摘要">
-            <p class="c-script-editor-shell__handoff-eyebrow">校验与导出摘要</p>
+            <div class="c-script-editor-shell__handoff-header">
+              <div>
+                <p class="c-script-editor-shell__handoff-eyebrow">预览与校验辅助区</p>
+                <p class="c-script-editor-shell__handoff-message">
+                  ${
+                    model.handoffSummary.firstMessage == null
+                      ? "默认不常驻展开；需要时再打开查看结构预览、问题清单和导出落点。"
+                      : escapeHtml(model.handoffSummary.firstMessage)
+                  }
+                </p>
+              </div>
+              <button
+                type="button"
+                class="c-main-ui-json-text-button"
+                data-script-editor-action="toggle-preview-panel"
+              >
+                ${escapeHtml(model.auxiliaryPanel.toggleLabel)}
+              </button>
+            </div>
             <div class="c-script-editor-shell__handoff-grid">
               <article class="c-script-editor-shell__handoff-card">
                 <strong>阻塞数</strong>
@@ -116,13 +137,52 @@ export function renderScriptEditorWorkspaceView(
                 <span>${model.handoffSummary.attentionCount}</span>
               </article>
             </div>
-            <p class="c-script-editor-shell__handoff-message">
-              ${
-                model.handoffSummary.firstMessage == null
-                  ? "当前工作台没有新的导出阻塞，可继续从左侧对象树进入下一步创作。"
-                  : escapeHtml(model.handoffSummary.firstMessage)
-              }
-            </p>
+
+            ${
+              model.auxiliaryPanel.isOpen
+                ? `
+                  <div class="c-script-editor-shell__auxiliary">
+                    <section class="c-script-editor-shell__auxiliary-section">
+                      <header class="c-script-editor-shell__auxiliary-heading">
+                        <h3>结构预览</h3>
+                        <span>与当前选中对象联动</span>
+                      </header>
+                      <div class="c-script-editor-shell__auxiliary-cards">
+                        ${model.auxiliaryPanel.previewCards
+                          .map(renderAuxiliaryCard)
+                          .join("")}
+                      </div>
+                    </section>
+
+                    <section class="c-script-editor-shell__auxiliary-section">
+                      <header class="c-script-editor-shell__auxiliary-heading">
+                        <h3>统一校验</h3>
+                        <span>
+                          阻塞 ${model.auxiliaryPanel.summary.blockedCount}
+                          / 关注 ${model.auxiliaryPanel.summary.attentionCount}
+                          / 提示 ${model.auxiliaryPanel.summary.infoCount}
+                        </span>
+                      </header>
+                      <div class="c-script-editor-shell__issue-list">
+                        ${model.auxiliaryPanel.issues.map(renderValidationIssue).join("")}
+                      </div>
+                    </section>
+
+                    <section class="c-script-editor-shell__auxiliary-section">
+                      <header class="c-script-editor-shell__auxiliary-heading">
+                        <h3>导出落点</h3>
+                        <span>当前对象导出预估</span>
+                      </header>
+                      <div class="c-script-editor-shell__export-list">
+                        ${model.auxiliaryPanel.exportTargets
+                          .map(renderExportTarget)
+                          .join("")}
+                      </div>
+                    </section>
+                  </div>
+                `
+                : ""
+            }
           </aside>
         </main>
       </div>
@@ -150,6 +210,48 @@ function renderInspectorCard(card: ScriptEditorWorkspaceInspectorCard): string {
     <article class="c-script-editor-shell__card c-script-editor-shell__card--${card.tone}">
       <h3>${escapeHtml(card.title)}</h3>
       <p>${escapeHtml(card.body)}</p>
+    </article>
+  `;
+}
+
+function renderAuxiliaryCard(card: ScriptEditorWorkspaceAuxiliaryCard): string {
+  return `
+    <article class="c-script-editor-shell__auxiliary-card c-script-editor-shell__auxiliary-card--${card.tone}">
+      <h3>${escapeHtml(card.title)}</h3>
+      <p>${escapeHtml(card.body)}</p>
+    </article>
+  `;
+}
+
+function renderValidationIssue(issue: ScriptEditorWorkspaceValidationIssue): string {
+  return `
+    <article class="c-script-editor-shell__issue c-script-editor-shell__issue--${issue.severity}">
+      <div class="c-script-editor-shell__issue-copy">
+        <strong>${escapeHtml(issue.title)}</strong>
+        <p>${escapeHtml(issue.message)}</p>
+      </div>
+      <button
+        type="button"
+        class="c-main-ui-json-text-button"
+        data-script-editor-action="jump-to-preview-issue"
+        data-script-editor-family="${issue.targetFamily}"
+        ${issue.targetEntityId == null ? "" : `data-script-editor-entity-id="${escapeHtml(issue.targetEntityId)}"`}
+        ${issue.targetTab == null ? "" : `data-script-editor-target-tab="${escapeHtml(issue.targetTab)}"`}
+      >
+        ${escapeHtml(issue.actionLabel)}
+      </button>
+    </article>
+  `;
+}
+
+function renderExportTarget(target: ScriptEditorWorkspaceExportTarget): string {
+  return `
+    <article class="c-script-editor-shell__export-target c-script-editor-shell__export-target--${target.status}">
+      <div class="c-script-editor-shell__export-copy">
+        <strong>${escapeHtml(target.label)}</strong>
+        <p>${escapeHtml(target.body)}</p>
+      </div>
+      <span class="c-script-editor-shell__export-file">${escapeHtml(target.file)}</span>
     </article>
   `;
 }
