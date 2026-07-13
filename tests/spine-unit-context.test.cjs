@@ -46,3 +46,14 @@ test("Spine editor gates swordsman and archer feature groups by unit context", (
   assert.match(source, /id="archerFeatureGroup"/);
   assert.match(source, /function renderSpineUnitFeatureGroups\(\)/);
 });
+
+test("Spine editor keeps shared controls outside dedicated unit groups", () => {
+  assert.doesNotMatch(source, /id="copyKeyframeBtn"[\s\S]*id="swordsmanFeatureGroup"/);
+  assert.doesNotMatch(source, /id="copyKeyframeBtn"[\s\S]*id="archerFeatureGroup"/);
+});
+
+test("Spine editor renders unit-specific group visibility from currentUnitType", () => {
+  assert.match(source, /function renderSpineUnitFeatureGroups\(\) \{/);
+  assert.match(source, /el\.swordsmanFeatureGroup\.hidden = state\.currentUnitType !== "swordsman";/);
+  assert.match(source, /el\.archerFeatureGroup\.hidden = state\.currentUnitType !== "archer";/);
+});

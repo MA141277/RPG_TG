@@ -590,8 +590,6 @@
           <button id="unitArcherBtn" class="mode-button" type="button">弓兵</button>
         </div>
         <div class="toolbar">
-          <div id="swordsmanFeatureGroup" class="toolbar-group" hidden></div>
-          <div id="archerFeatureGroup" class="toolbar-group" hidden></div>
           <button id="newProjectBtn" type="button">新建</button>
           <button id="importBtn" type="button">导入 JSON</button>
           <button id="exportBtn" type="button">导出 JSON</button>
@@ -848,6 +846,7 @@
               <button id="keySourceNextBtn" class="mode-button" type="button">下一关键帧</button>
               <button id="keySourceStartBtn" class="mode-button" type="button">起始帧</button>
             </div>
+            <div id="archerFeatureGroup" hidden>
             <div id="arrowVisibilityRow" class="button-row" hidden>
               <button id="arrowShowBtn" type="button">箭矢出现</button>
               <button id="arrowHideBtn" type="button">箭矢消失</button>
@@ -864,6 +863,8 @@
                 </div>
               </div>
             </div>
+            </div>
+            <div id="swordsmanFeatureGroup" hidden>
             <div id="slashFxVisibilityRow" class="button-row" hidden>
               <button id="slashFxShowBtn" type="button">刀光出现</button>
               <button id="slashFxHideBtn" type="button">刀光消失</button>
@@ -880,6 +881,7 @@
                   <button id="slashFxUnbindParentBtn" type="button">解绑刀光父节点</button>
                 </div>
               </div>
+            </div>
             </div>
           </section>
           <section id="bindingPanel" class="panel-section bind-only">
@@ -3580,10 +3582,12 @@
       }
 
       function renderSpineUnitFeatureGroups() {
-        const config = getSpineUnitConfig(state.currentUnitType);
-        const activeGroups = new Set(config.featureGroups || []);
-        el.swordsmanFeatureGroup.hidden = !activeGroups.has("swordsman");
-        el.archerFeatureGroup.hidden = !activeGroups.has("archer");
+        if (el.swordsmanFeatureGroup) {
+          el.swordsmanFeatureGroup.hidden = state.currentUnitType !== "swordsman";
+        }
+        if (el.archerFeatureGroup) {
+          el.archerFeatureGroup.hidden = state.currentUnitType !== "archer";
+        }
       }
 
       function renderAll() {
