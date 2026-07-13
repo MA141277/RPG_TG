@@ -83,3 +83,11 @@ Observed result:
 - Verified the same focused test passes after the minimal implementation.
 - Checked that the task did not add selector UI or broader unit-specific behavior beyond the requested skeleton.
 - No additional findings for this batch.
+
+## Commit Info
+
+- `50edb2c` `feat: add spine unit context registry`
+- `321aeea` `feat: add spine unit context registry skeleton`
+- Fresh verification after commits:
+  - `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\spine-unit-context.test.cjs`
+  - Result: 3 passed, 0 failed
