@@ -7,6 +7,19 @@
 
 ## 2026-07-10 Script Editor Freeze Scope Clarification
 
+## 2026-07-13 Script Editor Implementation Version Opening
+
+### Changed
+- 新增 [docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，把新的 successor version 正式定义为 `target.script-editor-implementation`。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 Blueprint live 入口从已关闭的 `target.script-editor-contract-freeze` 切换到新的 implementation version。
+- 新 version 以 `candidate-recorded` 形式预登记了 5 个 implementation queue，但保持 `active_queue = none`，未创建 queue doc，也未启动执行。
+- 在同一份 implementation version plan 中把 `queue.editor-project-load-save-foundation` 选为当前 pending admission review subject，理由是 editor-project persistence 是冻结基线之上的最小上游实现切口。
+
+### Impact
+- Blueprint 当前已经拥有一个正式打开的 successor implementation version，后续 admission 和执行都不再需要回到已关闭的 contract-freeze version 上继续操作。
+- 新 version 的职责被明确限制为“在冻结边界上实现编辑器并跑通链路”，不再把 authoring/mapping/compat/shared-rule/runtime-delta 边界重新混回实现治理。
+- 当前已完成“先筛选出实现版第一条 queue”的治理动作，但仍停在 admission review：没有 queue doc、没有 active queue、也没有启动执行。
+
 ### Changed
 - 更新 [docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-mainline-20260710/docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md)，把当前 script-editor freeze 需求正式收口为 5 个 bounded `queue-candidate`，分别对应 authoring contract、mapping contract、compatibility/import-export policy、shared condition/effect mechanism、以及 minimum runtime contract change audit。
 - 将 `candidate_queue_ids` 从空集更新为这 5 个已记录候选队列，并同步补入对应 `item.xxx -> proposed_queue_id` 的 `Candidate Classification Record` 与 `Queue Promotion Ledger`。

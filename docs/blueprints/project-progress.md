@@ -4,9 +4,9 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.script-editor-contract-freeze`
+- active_version: `target.script-editor-implementation`
 - has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md`
+- next_file: `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -25,9 +25,9 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md`
+  - `docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md`
+  - `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md`
 - Current Active Queue:
   - `none`
 
@@ -35,9 +35,9 @@
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now closed historical evidence; the next lawful governance action is explicit new-version creation before any queue admission or implementation resumes.`
+- `The pointed version is now the live successor implementation version and remains open with no active queue.`
 
 ### Historical References
 
 - `docs/change-log.md` stores the human-readable cross-session history.`
-- `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md` stores the just-closed script-editor contract-freeze version history and closeout record.
+- `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md` stores the current implementation version's admission history, candidate record, and promotion ledger.
