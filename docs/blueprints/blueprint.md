@@ -4,9 +4,9 @@
 
 - blueprint_id: `blueprint.rpg-tg`
 - blueprint_version: `2026.07`
-- active_version: `target.script-editor-implementation`
-- active_version_plan: `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md`
-- active_version_spec: `docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md`
+- active_version: `target.script-editor-prd-alignment`
+- active_version_plan: `docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-13-script-editor-prd-alignment-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -22,6 +22,7 @@
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
+| `target.script-editor-prd-alignment` | `docs/blueprints/specs/2026-07-13-script-editor-prd-alignment-target.md` | `docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md` | `Opened on 2026-07-13 as the live successor version after the bounded implementation baseline closed; this version governs PRD alignment on top of docs/script-editor-prd.md and currently has candidate-recorded queues only with no active queue.` |
 | `target.script-editor-implementation` | `docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md` | `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md` | `Closed on 2026-07-13 after explicit human closeout confirmation; the frozen-baseline implementation path, six bounded implementation queues, first user-visible workflow, and bounded shared-rule compile/export slice are now all historical evidence.` |
 | `target.script-editor-contract-freeze` | `docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md` | `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md` | `Closed on 2026-07-10 after explicit human closeout confirmation; its successor implementation version is also now closed historical evidence.` |
 | `target.project-complete-modularization` | `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md` | `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md` | `Closed on 2026-07-10 after current-period modularization closeout.` |

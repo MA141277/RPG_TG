@@ -27,6 +27,17 @@
 
 ## 2026-07-13 Script Editor Implementation Version Closeout
 
+## 2026-07-13 Script Editor PRD Alignment Version Opening
+
+### Changed
+- 新增 [docs/blueprints/specs/2026-07-13-script-editor-prd-alignment-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-13-script-editor-prd-alignment-target.md)，把新的 successor version 明确定义为“按 [docs/script-editor-prd.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/script-editor-prd.md) 对齐剧本编辑器产品面”的治理主轴，并写清它继承已关闭 implementation baseline、不得静默重开冻结契约、以及必须复用现有 runtime-compatible export path 的边界。
+- 新增 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)，将 `target.script-editor-prd-alignment` 作为 open successor version 建立起来，并记录六条 candidate-recorded PRD alignment queue 族，但暂不 admitted 任何 queue。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，把 live entry 从已关闭的 implementation version 切到新的 PRD alignment version；当前入口没有 active queue，下一步是 version-level admission review。
+
+### Impact
+- 剧本编辑器相关工作现在不再挂在已关闭的 `target.script-editor-implementation` 下面，而是进入一个新的 open successor version。
+- 当前 Blueprint 已明确：下一步不是直接写代码，而是先对 `queue.script-editor-prd-workspace-and-navigation-alignment` 做 admission review，因为 PRD 把工作台本身列为第一优先级。
+
 ### Changed
 - 更新 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将 `target.script-editor-implementation` 从 closeout-ready 的 `open` 正式切换为 `done`，并把 closeout confirmation、future routing、以及最终 prior promotion record 写成 version-level historical truth。
 - 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，把当前 Blueprint 入口说明改成“最新 governed version 已关闭、暂无 open successor”的状态，而不是仍停在 implementation version 的 closeout-ready 描述。
