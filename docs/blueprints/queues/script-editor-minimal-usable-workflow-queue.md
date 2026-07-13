@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync has run for this closed minimal workflow queue yet.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit 3459ad6 on mod-first-dev was pushed successfully to origin/mod-first-dev after this closed minimal workflow queue truth was written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`

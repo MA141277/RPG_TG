@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync has run for this closed script-editor creator-shell queue yet.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit 3459ad6 on mod-first-dev was pushed successfully to origin/mod-first-dev after this closed script-editor creator-shell queue truth was written and staged in the same closeout batch.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
