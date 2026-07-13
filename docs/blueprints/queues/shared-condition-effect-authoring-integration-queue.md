@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue closeout truth is written and awaiting the required repository sync batch for this completed shared-rule queue.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit 0fdd535 on mod-first-dev was pushed successfully to origin/mod-first-dev after this closed shared-rule queue truth was written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
