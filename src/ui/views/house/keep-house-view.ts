@@ -30,8 +30,7 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
   return `
     <section class="c-keep-house-meeting" aria-label="璇勫畾鍒楀腑璇稿皢">
       ${viewModel.standbyRoster
-        .map((actor, index) => {
-          const cardLevel = Math.max(1, 5 - index) as 1 | 2 | 3 | 4 | 5;
+        .map((actor) => {
           const secondaryText =
             actor.title == null
               ? ""
@@ -42,7 +41,6 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
               ${renderHouseCharacterCard(actor, {
                 className: "c-keep-house-seat__card",
                 secondaryText,
-                cardLevel,
               })}
             </article>
           `;

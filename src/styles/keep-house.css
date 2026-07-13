@@ -12,8 +12,8 @@
   inset: 17% 11% 26% 7%;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2.4rem 1.6rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1.7rem 1rem;
   align-content: center;
   justify-items: center;
   pointer-events: none;
@@ -28,7 +28,7 @@
 }
 
 .view-house-keep .c-keep-house-seat__card {
-  width: 168px;
+  width: 128px;
   transition:
     transform var(--duration-fast) ease,
     filter var(--duration-fast) ease;
@@ -84,12 +84,12 @@
 @media (width <= 900px) {
   .view-house-keep .c-keep-house-meeting {
     inset: 12% 4% 30%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.4rem 0.9rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.2rem 0.8rem;
   }
 
   .view-house-keep .c-keep-house-seat__card {
-    width: 136px;
+    width: 112px;
   }
 
   .view-house-keep .c-keep-house-seat__avatar {

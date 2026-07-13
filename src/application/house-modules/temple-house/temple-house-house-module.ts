@@ -3801,6 +3801,10 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
           return {
             characterId: characterDefinition.id,
             name: characterDefinition.name,
+            cardLevel:
+              characterDefinition.id === abbotCharacter.id
+                ? 2
+                : 1,
             ...(sessionState.mode === "daily" &&
             characterDefinition.id === abbotCharacter.id &&
             sessionState.dialoguePhase === "idle"
