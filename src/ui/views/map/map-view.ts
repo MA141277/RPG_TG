@@ -606,6 +606,12 @@ function renderCampaignMap(model: MapViewModel): string {
         >
           <polygon data-campaign-hover-hex-polygon="true" points=""></polygon>
         </svg>
+        <img
+          class="c-campaign-map__shoreline-mask-preview"
+          data-campaign-shoreline-mask-preview="true"
+          alt="Shoreline mask debug preview"
+          hidden
+        >
         <div class="c-campaign-map__tiltshift" aria-hidden="true">
           ${renderCampaignMapVisualLayer(model, {
             transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",
@@ -637,6 +643,10 @@ function renderCampaignMap(model: MapViewModel): string {
             <button type="button" data-map-debug-action="reset">Reset</button>
           </div>
           <div class="c-campaign-map-debug__terrain-style">
+            <label class="c-campaign-map-debug__toggle">
+              <input type="checkbox" data-campaign-shoreline-mask-preview-toggle>
+              <span>Show shoreline mask</span>
+            </label>
             <label>
               <span>Sat <strong data-campaign-terrain-style-value="saturation">1.00</strong></span>
               <input type="range" min="0" max="3" step="0.01" value="1.00" data-campaign-terrain-style-field="saturation">

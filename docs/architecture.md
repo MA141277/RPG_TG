@@ -161,11 +161,15 @@ GlobalUI
 
 大地图移动必须由 `src/application/navigation/travel-to-coordinate.ts` 生成路径。UI 点击层只提供目标坐标，主运行时按路径分段播放；不要在视图层或 `main.ts` 临时改回起点到终点的直线插值。
 
-Campaign 地图的水域/陆地通行性来自当前地图的地形材质资产。`campaign-terrain-webgl.ts` 按 terrain shader 同源的 `map_ground_types` 水域材质语义生成 passable hex 网格，`map_heights` 只负责连续视觉高度场、地形投影和地图对象贴地高度；navigation 层只消费这份通行网格做寻路，不要在 gameplay 代码里手写某张地图的水格坐标或用据点白名单修补通行性。
+Campaign 地图的水域/陆地通行性来自当前地图的地形材质资产。`campaign-terrain-webgl.ts` 必须只维护一套 hex 水陆分类函数：CPU 侧 passable hex 网格和 terrain shader 的最终水陆显示都从原始 `map_ground_types` 读取同一组采样点、同一组颜色阈值、同一个 hex 覆盖阈值，并使用相同的越界样本处理；不得为 shader、寻路、点击或 marker 落点各自实现不同的水陆判断。shoreline mask 只能作为调试预览，不能成为 gameplay、寻路或最终水陆显示的新来源。`map_heights` 只负责连续视觉高度场、地形投影和地图对象贴地高度；navigation 层只消费这份通行网格做寻路，不要在 gameplay 代码里手写某张地图的水格坐标或用据点白名单修补通行性。
 
-Campaign 地图的水体视觉来自可选 `map_water_noise` 图层。该图层是纯表现资产：`map-view.ts` 只把它作为 terrain canvas 的 `data-map-water-texture-url` 传给 WebGL renderer；水体表现不得改变点击、投影、通行性或 navigation 路径模型。
+Campaign 角色静止态坐标也必须消费同一份 passable hex 网格：terrain renderer 就绪后会通知主运行时归一当前静止坐标；地图节点点击、普通地形点击、移动结束和取消移动都必须把目标或静止坐标收束到可通行 hex 中心。移动动画可以在两点之间播放，但不能把非可通行坐标提交为静止的 `playerCoordinate`。
 
-Campaign 地图的陆地表面材质可以通过 `map_grass_texture`、`map_sand_texture` 等纯表现图层传给 terrain shader。此类图层只能影响地表颜色、纹理和海岸过渡表现；陆地/水体语义、寻路、点击、探索和云洞仍必须以 `map_ground_types` 与 runtime 状态为准。
+Campaign 地图的可选 `map_water_noise` 图层只能在已由唯一 hex 分类函数判为水的格子上改变水面纹理表现。该图层不得参与 hex 水陆分类、点击、投影、通行性或 navigation 路径模型。
+
+Campaign 地图的陆地表面材质可以通过 `map_grass_texture`、`map_sand_texture` 等表现图层传给 terrain shader。此类图层只能影响已由唯一 hex 分类函数判为陆地的格子颜色和纹理；水陆分类、寻路、点击、探索和云洞仍必须以 `map_ground_types` 与 runtime 状态为准。
+
+Campaign terrain shader 可以在唯一 hex 分类结果之上生成岸线侵蚀、湿岸、沙滩和近岸水色等表现层。此类表现层只能调制最终颜色、纹理或边缘过渡，不能写回 passable hex 网格，不能替代 `getWaterAmountAtCell`，也不能作为点击、寻路、玩家落点或 marker 投影的新判定来源。
 
 Campaign 地图 camera 的缩放、平移和由缩放派生的俯角都属于 terrain renderer 的表现层参数。`main.ts` 只能同步当前视口调试状态和动画化 camera 输入；gameplay 网格、路径、探索、点击判定和地图数据结构不得依赖当前俯角。
 

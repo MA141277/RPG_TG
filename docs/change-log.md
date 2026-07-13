@@ -5,14 +5,26 @@
 ## 2026-07-13 Campaign Shoreline Visual Erosion
 
 ### Added
-- 大地图 terrain shader 新增按单条邻水 hex 共享边计算的岸线视觉形变 mask：陆地靠水边会以低频波浪和高频侵蚀噪声打散原本笔直的六边形水陆分界，并在多条邻水边交汇处做圆角化软并集。
-- `window.rpgTerrainBeach(...)` 调参表新增 `shorelineVisualWaterStrength`、`shorelineEdgeWidth`、`shorelineWaveStrength`、`shorelineWaveFrequency`、`shorelineErosionStrength`、`shorelineErosionFrequency` 和 `shorelineCornerRoundness`，用于调水陆边界形变强度、沿岸粗细、波浪尺度、侵蚀细节和角点圆化。
+- 大地图 terrain renderer 新增 CPU 侧 shoreline 复合 mask 调试预览：R 通道写入陆水相邻边的岸线形状强度，G/B 通道保留 `map_ground_types` 派生的基础水陆预览信息；该 mask 不再参与 terrain shader 的最终水陆显示。
+- `window.rpgTerrainBeach(...)` 调参表新增 `shorelineEdgeWidth`、`shorelineWaveStrength`、`shorelineWaveFrequency`、`shorelineErosionStrength`、`shorelineErosionFrequency` 和 `shorelineCornerRoundness`，用于调试岸线 mask 的沿岸粗细、波浪尺度、侵蚀细节和角点圆化。
+- 大地图 debug 面板新增 `Show shoreline mask` 勾选项，可显示当前 CPU 生成的 shoreline 调试图：R 表示岸线形状强度，G/B 表示原始 `map_ground_types` 采样预览。
 
 ### Changed
-- 岸线形变噪声从高频直接切割改为平滑 fBm 采样：大尺度波浪负责整体岸线起伏，低强度细节噪声只做边缘侵蚀，减少岸边锯齿和毛刺感。
+- 岸线形变从 fragment shader 内逐 hex 边实时计算改为预生成 mask 贴图：相邻岸边共享同一条链上的连续噪声坐标，减少格子间断点、尖角和各边独立起伏造成的拼接感。
+- 岸线 R 通道只在陆水相邻边附近写入，不携带沙滩、水色、雾或半透明材质分类；运行时修改 `window.rpgTerrainBeach(...)` 的岸线形状参数只会刷新调试预览，不改变最终地图水陆分类。
+- Campaign hex 水陆分类统一为一套 `map_ground_types` footprint 采样规则：CPU passable hex 网格、terrain shader 最终水陆显示、shoreline 调试边界都使用同一组采样点、同一组颜色阈值和同一个覆盖阈值；`342.2, 308.8` 所在 hex `{24,-17}` 现在按同一分类结果判为水格且不可通行。
+- 岸线 mask 写入方式从圆形 stamp 叠加改为沿陆水共享边的有向窄带距离场：噪声仍沿整条 shoreline chain 连续推进，但只向陆地方向侵蚀共享边附近区域，减少多条边同时把小地块整圈淹没成“四周环水”的情况。
+- Terrain shader 不再读取 shoreline mask，也不再把 shoreline 调试图叠加到最终水陆分类；最终颜色、明暗、水纹和格线只消费一份来自唯一 hex 分类函数的 `water` 判定。
+- `map_ground_types` 原始颜色纹理改为 WebGL `NEAREST` 采样：CPU 通行网格与 terrain shader 的水/陆判定都读取离散颜色，不再因 GPU 线性过滤把红色水像素和周边陆地像素插值后误画成陆地。
+- Terrain shader 的水陆判断改为直接读取原始 `map_ground_types` (`uMaterialTexture`) 的颜色分类，与通行网格保持同源输入；shoreline 调试图不再绑定到 shader 的最终水陆分类。
+- Terrain shader 采样 `map_ground_types` 时保持地图原始 UV 方向；最终水陆显示和 CPU 通行网格使用同一套 hex 分类规则。
+- Terrain shader 的 hex 分类采样和 CPU 通行网格统一越界处理：footprint 样本落到地图外时按不可通行样本计入同一覆盖阈值，避免边界 hex 形成另一套分类结果。
+- 修复 hex 世界坐标转地形 UV 时过早 clamp 的问题，越界邻格不再被夹到地图边缘像素继续采样，减少地图边缘错误岸线。
+- Campaign 静止态玩家坐标改为在 terrain renderer 就绪、移动结束、取消移动和发起寻路时统一归一到同一份 passable hex 网格；地图节点点击也先检查目标 hex 是否可通行，避免节点分支绕过普通地形点击的水陆判定。
+- Terrain shader 恢复沿陆水共享边的 fBm 岸线侵蚀表现，`shorelineErosion` 会把陆地边缘切入到最终水面颜色，形成之前的岸线侵蚀形状；它读取新的唯一 hex 分类结果，不写回通行网格，也不改变点击、寻路或玩家落点。
 
 ### Impact
-- 该效果只影响 terrain shader 的最终颜色混合：不改变 `map_ground_types`、寻路、点击、探索、云洞、hover 描边、建筑 marker 或地名投影；水格/陆格 gameplay 语义仍由原始地图数据决定。
+- `map_ground_types` 原始资产不变；寻路、点击、hover 描边、shader 最终水陆显示和静止玩家落点现在统一消费同一套 campaign hex 分类规则。探索、云洞、建筑 marker 和地名投影不参与水陆分类。
 
 ## 2026-07-13 Campaign Map Zoom Camera
 

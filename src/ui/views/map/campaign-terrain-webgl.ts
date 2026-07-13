@@ -142,6 +142,8 @@ const ACTOR_MODEL_FACING_OFFSET_RADIANS = Math.PI / 2;
 const ACTOR_ANIMATION_BLEND_DURATION_MS = 180;
 const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
+const HEX_FOOTPRINT_SAMPLE_RADIUS = 0.62;
+const HEX_WATER_COVERAGE_THRESHOLD = 0.22;
 const SMOOTH_TERRAIN_MESH_STEP = 3;
 const SMOOTH_TERRAIN_PASSES = 2;
 const SMOOTH_TERRAIN_LAND_BLEND = 0.65;
@@ -157,6 +159,8 @@ const TERRAIN_WATER_SHADOW_STRENGTH = 0.12;
 const TERRAIN_CAMERA_LIGHT_HEIGHT = 0.34;
 const TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL = 0.64;
 const TERRAIN_LAND_TEXTURE_TILING = 7.5;
+const SHORELINE_MASK_TEXTURE_SIZE = 1536;
+const SHORELINE_MASK_SEGMENT_PADDING = 0.18;
 type CampaignTerrainBeachTuning = {
   textureTiling: number;
   blendStrength: number;
@@ -164,7 +168,6 @@ type CampaignTerrainBeachTuning = {
   outerRadius: number;
   fineNoiseTiling: number;
   fineNoiseStrength: number;
-  shorelineVisualWaterStrength: number;
   shorelineEdgeWidth: number;
   shorelineWaveStrength: number;
   shorelineWaveFrequency: number;
@@ -184,7 +187,6 @@ const DEFAULT_TERRAIN_BEACH_TUNING: CampaignTerrainBeachTuning = {
   outerRadius: 2.4,
   fineNoiseTiling: 30,
   fineNoiseStrength: 0.16,
-  shorelineVisualWaterStrength: 0.76,
   shorelineEdgeWidth: 0.38,
   shorelineWaveStrength: 0.30,
   shorelineWaveFrequency: 1.65,
@@ -368,7 +370,6 @@ function clampTerrainBeachTuning(
     ),
     fineNoiseTiling: clampNumber(tuning.fineNoiseTiling, 4, 120),
     fineNoiseStrength: clampNumber(tuning.fineNoiseStrength, 0, 0.5),
-    shorelineVisualWaterStrength: clampNumber(tuning.shorelineVisualWaterStrength, 0, 1),
     shorelineEdgeWidth: clampNumber(tuning.shorelineEdgeWidth, 0.02, 1.2),
     shorelineWaveStrength: clampNumber(tuning.shorelineWaveStrength, 0, 0.5),
     shorelineWaveFrequency: clampNumber(tuning.shorelineWaveFrequency, 0.2, 12),
@@ -694,6 +695,11 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
       canvas.classList.remove("has-error");
       canvas.classList.add("is-ready");
       canvas.classList.toggle("has-actor-model", renderer.hasActorAsset);
+      if (input.renderMode === "terrain") {
+        canvas.dispatchEvent(
+          new CustomEvent("campaign-terrain-renderer-ready", { bubbles: true })
+        );
+      }
     }).catch((error: unknown) => {
       console.error("Failed to render campaign terrain WebGL map.", error);
       canvas.classList.add("has-error");
@@ -771,6 +777,14 @@ async function initCampaignTerrainWebGl(
   ]);
   const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
   const materialLandMask = sampleMaterialLandMask(materialImage);
+  let shorelineMaskImage = renderTerrain
+    ? createShorelineMaskImageData(
+      materialLandMask.landMask,
+      materialLandMask.columns,
+      materialLandMask.rows,
+      terrainBeachTuning
+    )
+    : null;
   const heightSamples = createSmoothTerrainHeightSamples(
     baseHeightSamples,
     GRID_COLUMNS,
@@ -866,10 +880,6 @@ async function initCampaignTerrainWebGl(
     program,
     "uBeachFineNoiseStrength"
   );
-  const shorelineVisualWaterStrengthLocation = gl.getUniformLocation(
-    program,
-    "uShorelineVisualWaterStrength"
-  );
   const shorelineEdgeWidthLocation = gl.getUniformLocation(program, "uShorelineEdgeWidth");
   const shorelineWaveStrengthLocation = gl.getUniformLocation(
     program,
@@ -906,7 +916,11 @@ async function initCampaignTerrainWebGl(
   const cityDepthVertexBuffer = gl.createBuffer();
   const cityDepthIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
-  const materialTexture = createTexture(gl, materialImage);
+  const materialTexture = createTexture(gl, materialImage, {
+    minFilter: gl.NEAREST,
+    magFilter: gl.NEAREST,
+  });
+  let shorelineMaskTuningSignature = getShorelineMaskTuningSignature(terrainBeachTuning);
   const grassTexture = createTexture(gl, grassTextureImage ?? textureImage);
   const sandTexture = createTexture(gl, sandTextureImage ?? textureImage);
   const waterTexture =
@@ -964,7 +978,6 @@ async function initCampaignTerrainWebGl(
     beachOuterRadiusLocation == null ? "uBeachOuterRadius" : null,
     beachFineNoiseTilingLocation == null ? "uBeachFineNoiseTiling" : null,
     beachFineNoiseStrengthLocation == null ? "uBeachFineNoiseStrength" : null,
-    shorelineVisualWaterStrengthLocation == null ? "uShorelineVisualWaterStrength" : null,
     shorelineEdgeWidthLocation == null ? "uShorelineEdgeWidth" : null,
     shorelineWaveStrengthLocation == null ? "uShorelineWaveStrength" : null,
     shorelineWaveFrequencyLocation == null ? "uShorelineWaveFrequency" : null,
@@ -1068,6 +1081,22 @@ async function initCampaignTerrainWebGl(
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     if (renderTerrain && mesh != null) {
+      const nextShorelineMaskTuningSignature =
+        getShorelineMaskTuningSignature(terrainBeachTuning);
+      if (nextShorelineMaskTuningSignature !== shorelineMaskTuningSignature) {
+        shorelineMaskImage = createShorelineMaskImageData(
+          materialLandMask.landMask,
+          materialLandMask.columns,
+          materialLandMask.rows,
+          terrainBeachTuning
+        );
+        shorelineMaskTuningSignature = nextShorelineMaskTuningSignature;
+      }
+      syncShorelineMaskDebugPreview(
+        input.canvas,
+        shorelineMaskImage,
+        shorelineMaskTuningSignature
+      );
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -1138,10 +1167,6 @@ async function initCampaignTerrainWebGl(
       gl.uniform1f(beachOuterRadiusLocation, terrainBeachTuning.outerRadius);
       gl.uniform1f(beachFineNoiseTilingLocation, terrainBeachTuning.fineNoiseTiling);
       gl.uniform1f(beachFineNoiseStrengthLocation, terrainBeachTuning.fineNoiseStrength);
-      gl.uniform1f(
-        shorelineVisualWaterStrengthLocation,
-        terrainBeachTuning.shorelineVisualWaterStrength
-      );
       gl.uniform1f(shorelineEdgeWidthLocation, terrainBeachTuning.shorelineEdgeWidth);
       gl.uniform1f(shorelineWaveStrengthLocation, terrainBeachTuning.shorelineWaveStrength);
       gl.uniform1f(shorelineWaveFrequencyLocation, terrainBeachTuning.shorelineWaveFrequency);
@@ -1666,8 +1691,8 @@ function snapTerrainUvToHexCenter(u: number, v: number): { u: number; v: number 
   const center = hexToPixel(cell.x, cell.y);
 
   return {
-    u: hexPointToTerrainU(center.x),
-    v: hexPointToTerrainV(center.y),
+    u: clamp(hexPointToTerrainU(center.x), 0, 1),
+    v: clamp(hexPointToTerrainV(center.y), 0, 1),
   };
 }
 
@@ -1742,6 +1767,508 @@ function sampleMaterialLandMask(
     columns,
     rows,
   };
+}
+
+type ShorelineMaskPoint = {
+  x: number;
+  y: number;
+  key: string;
+};
+
+type ShorelineMaskEdge = {
+  start: ShorelineMaskPoint;
+  end: ShorelineMaskPoint;
+  startKey: string;
+  endKey: string;
+  normalX: number;
+  normalY: number;
+  length: number;
+};
+
+type ShorelineMaskChainSegment = {
+  edge: ShorelineMaskEdge;
+  reversed: boolean;
+};
+
+function createShorelineMaskImageData(
+  materialLandMask: Uint8Array,
+  materialColumns: number,
+  materialRows: number,
+  tuning: CampaignTerrainBeachTuning
+): ImageData {
+  const columns = SHORELINE_MASK_TEXTURE_SIZE;
+  const rows = SHORELINE_MASK_TEXTURE_SIZE;
+  const data = new Uint8ClampedArray(columns * rows * 4);
+  const edges = createShorelineMaskEdges(
+    materialLandMask,
+    materialColumns,
+    materialRows
+  );
+  const chains = createShorelineMaskChains(edges);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const offset = (y * columns + x) * 4;
+      const isLand =
+        sampleLandMaskAt(materialLandMask, materialColumns, materialRows, u, v) > 0;
+      data[offset] = 0;
+      data[offset + 1] = isLand ? 0 : 255;
+      data[offset + 2] = isLand ? 255 : 0;
+      data[offset + 3] = 255;
+    }
+  }
+
+  chains.forEach((chain, chainIndex) => {
+    writeShorelineMaskChain(data, columns, rows, chain, chainIndex, tuning);
+  });
+
+  return new ImageData(data, columns, rows);
+}
+
+function syncShorelineMaskDebugPreview(
+  canvas: HTMLCanvasElement,
+  imageData: ImageData | null,
+  signature: string
+): void {
+  const viewport = canvas.closest<HTMLElement>("[data-campaign-map-viewport]");
+  const previewElement =
+    viewport?.querySelector<HTMLImageElement>(
+      "[data-campaign-shoreline-mask-preview]"
+    ) ?? null;
+  if (previewElement == null) {
+    return;
+  }
+
+  const isEnabled = canvas.dataset.campaignShorelineMaskPreview === "true";
+  previewElement.hidden = !isEnabled;
+  if (!isEnabled || imageData == null) {
+    return;
+  }
+
+  if (
+    previewElement.dataset.campaignShorelineMaskSignature === signature &&
+    previewElement.getAttribute("src") != null
+  ) {
+    return;
+  }
+
+  previewElement.src = createImageDataUrl(imageData);
+  previewElement.dataset.campaignShorelineMaskSignature = signature;
+}
+
+function createImageDataUrl(imageData: ImageData): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
+  const context = canvas.getContext("2d");
+  if (context == null) {
+    return "";
+  }
+
+  context.putImageData(imageData, 0, 0);
+
+  return canvas.toDataURL("image/png");
+}
+
+function createShorelineMaskEdges(
+  materialLandMask: Uint8Array,
+  materialColumns: number,
+  materialRows: number
+): ShorelineMaskEdge[] {
+  const edges: ShorelineMaskEdge[] = [];
+  const neighborOffsets = [
+    { x: 1, y: 0 },
+    { x: -1, y: 0 },
+    { x: 0, y: 1 },
+    { x: 0, y: -1 },
+    { x: 1, y: -1 },
+    { x: -1, y: 1 },
+  ];
+
+  for (const cell of getTerrainHexCells()) {
+    const center = hexToPixel(cell.x, cell.y);
+    const centerU = hexPointToTerrainU(center.x);
+    const centerV = hexPointToTerrainV(center.y);
+    if (
+      !isTerrainUvInside(centerU, centerV) ||
+      !isHexPassableAtHexPoint(materialLandMask, materialColumns, materialRows, center)
+    ) {
+      continue;
+    }
+
+    for (const neighborOffset of neighborOffsets) {
+      const neighbor = {
+        x: cell.x + neighborOffset.x,
+        y: cell.y + neighborOffset.y,
+      };
+      const neighborCenter = hexToPixel(neighbor.x, neighbor.y);
+      const neighborU = hexPointToTerrainU(neighborCenter.x);
+      const neighborV = hexPointToTerrainV(neighborCenter.y);
+      if (
+        !isTerrainUvInside(neighborU, neighborV) ||
+        isHexPassableAtHexPoint(
+          materialLandMask,
+          materialColumns,
+          materialRows,
+          neighborCenter
+        )
+      ) {
+        continue;
+      }
+
+      edges.push(createShorelineMaskEdge(center, neighborCenter));
+    }
+  }
+
+  return edges;
+}
+
+function createShorelineMaskEdge(
+  landCenter: { x: number; y: number },
+  waterCenter: { x: number; y: number }
+): ShorelineMaskEdge {
+  const normal = normalizeVector2({
+    x: waterCenter.x - landCenter.x,
+    y: waterCenter.y - landCenter.y,
+  });
+  const tangent = {
+    x: -normal.y,
+    y: normal.x,
+  };
+  const edgeCenter = {
+    x: (landCenter.x + waterCenter.x) * 0.5,
+    y: (landCenter.y + waterCenter.y) * 0.5,
+  };
+  const start = createShorelineMaskPoint({
+    x: edgeCenter.x - tangent.x * 0.5,
+    y: edgeCenter.y - tangent.y * 0.5,
+  });
+  const end = createShorelineMaskPoint({
+    x: edgeCenter.x + tangent.x * 0.5,
+    y: edgeCenter.y + tangent.y * 0.5,
+  });
+
+  return {
+    start,
+    end,
+    startKey: start.key,
+    endKey: end.key,
+    normalX: normal.x,
+    normalY: normal.y,
+    length: Math.hypot(end.x - start.x, end.y - start.y),
+  };
+}
+
+function createShorelineMaskPoint(point: { x: number; y: number }): ShorelineMaskPoint {
+  return {
+    x: point.x,
+    y: point.y,
+    key: `${point.x.toFixed(4)},${point.y.toFixed(4)}`,
+  };
+}
+
+function createShorelineMaskChains(
+  edges: ShorelineMaskEdge[]
+): ShorelineMaskChainSegment[][] {
+  const endpointEdges = new Map<string, number[]>();
+  const visitedEdges = new Set<number>();
+  const chains: ShorelineMaskChainSegment[][] = [];
+
+  edges.forEach((edge, index) => {
+    addShorelineEndpointEdge(endpointEdges, edge.startKey, index);
+    addShorelineEndpointEdge(endpointEdges, edge.endKey, index);
+  });
+
+  for (let index = 0; index < edges.length; index += 1) {
+    if (visitedEdges.has(index)) {
+      continue;
+    }
+
+    const firstEdge = edges[index];
+    if (firstEdge == null) {
+      continue;
+    }
+    const startKey = chooseShorelineChainStartKey(firstEdge, endpointEdges);
+    const chain = walkShorelineMaskChain(
+      startKey,
+      edges,
+      endpointEdges,
+      visitedEdges
+    );
+    if (chain.length > 0) {
+      chains.push(chain);
+    }
+  }
+
+  return chains;
+}
+
+function addShorelineEndpointEdge(
+  endpointEdges: Map<string, number[]>,
+  key: string,
+  edgeIndex: number
+): void {
+  const edges = endpointEdges.get(key);
+  if (edges == null) {
+    endpointEdges.set(key, [edgeIndex]);
+    return;
+  }
+
+  edges.push(edgeIndex);
+}
+
+function chooseShorelineChainStartKey(
+  edge: ShorelineMaskEdge,
+  endpointEdges: Map<string, number[]>
+): string {
+  const startDegree = endpointEdges.get(edge.startKey)?.length ?? 0;
+  const endDegree = endpointEdges.get(edge.endKey)?.length ?? 0;
+  if (startDegree !== 2) {
+    return edge.startKey;
+  }
+  if (endDegree !== 2) {
+    return edge.endKey;
+  }
+
+  return edge.startKey;
+}
+
+function walkShorelineMaskChain(
+  startKey: string,
+  edges: ShorelineMaskEdge[],
+  endpointEdges: Map<string, number[]>,
+  visitedEdges: Set<number>
+): ShorelineMaskChainSegment[] {
+  const chain: ShorelineMaskChainSegment[] = [];
+  let currentKey = startKey;
+
+  for (let guard = 0; guard < edges.length; guard += 1) {
+    const nextEdgeIndex = (endpointEdges.get(currentKey) ?? []).find(
+      (edgeIndex) => !visitedEdges.has(edgeIndex)
+    );
+    if (nextEdgeIndex == null) {
+      break;
+    }
+
+    const edge = edges[nextEdgeIndex];
+    if (edge == null) {
+      break;
+    }
+    const reversed = edge.endKey === currentKey;
+    visitedEdges.add(nextEdgeIndex);
+    chain.push({ edge, reversed });
+    currentKey = reversed ? edge.startKey : edge.endKey;
+
+    if (currentKey === startKey) {
+      break;
+    }
+  }
+
+  return chain;
+}
+
+function writeShorelineMaskChain(
+  data: Uint8ClampedArray,
+  columns: number,
+  rows: number,
+  chain: ShorelineMaskChainSegment[],
+  chainIndex: number,
+  tuning: CampaignTerrainBeachTuning
+): void {
+  const seed = chainIndex * 17.37 + chain.length * 0.113;
+  let distanceAlongChain = 0;
+  for (const segment of chain) {
+    const from = segment.reversed ? segment.edge.end : segment.edge.start;
+    const to = segment.reversed ? segment.edge.start : segment.edge.end;
+    const segmentLength = Math.max(segment.edge.length, 0.0001);
+    writeShorelineMaskSegment(
+      data,
+      columns,
+      rows,
+      from,
+      to,
+      segment.edge,
+      seed,
+      distanceAlongChain,
+      tuning
+    );
+
+    distanceAlongChain += segmentLength;
+  }
+}
+
+function writeShorelineMaskSegment(
+  data: Uint8ClampedArray,
+  columns: number,
+  rows: number,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  edge: ShorelineMaskEdge,
+  seed: number,
+  distanceAlongChain: number,
+  tuning: CampaignTerrainBeachTuning
+): void {
+  const segmentVector = {
+    x: to.x - from.x,
+    y: to.y - from.y,
+  };
+  const segmentLength = Math.hypot(segmentVector.x, segmentVector.y);
+  if (segmentLength <= 0) {
+    return;
+  }
+
+  const tangent = {
+    x: segmentVector.x / segmentLength,
+    y: segmentVector.y / segmentLength,
+  };
+  const maxWidth =
+    Math.max(tuning.shorelineEdgeWidth, 0) +
+    Math.abs(tuning.shorelineWaveStrength) * 0.85 +
+    Math.abs(tuning.shorelineErosionStrength) * 0.55 +
+    SHORELINE_MASK_SEGMENT_PADDING;
+  const minU = hexPointToTerrainU(Math.min(from.x, to.x) - maxWidth);
+  const maxU = hexPointToTerrainU(Math.max(from.x, to.x) + maxWidth);
+  const minV = hexPointToTerrainV(Math.min(from.y, to.y) - maxWidth);
+  const maxV = hexPointToTerrainV(Math.max(from.y, to.y) + maxWidth);
+  const minX = Math.max(Math.floor(Math.min(minU, maxU) * (columns - 1)), 0);
+  const maxX = Math.min(Math.ceil(Math.max(minU, maxU) * (columns - 1)), columns - 1);
+  const minY = Math.max(Math.floor(Math.min(minV, maxV) * (rows - 1)), 0);
+  const maxY = Math.min(Math.ceil(Math.max(minV, maxV) * (rows - 1)), rows - 1);
+  const capScale = mixNumber(2.25, 0.92, tuning.shorelineCornerRoundness);
+
+  for (let y = minY; y <= maxY; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = minX; x <= maxX; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const point = terrainUvToHexPoint(u, v);
+      const fromToPoint = {
+        x: point.x - from.x,
+        y: point.y - from.y,
+      };
+      const along = fromToPoint.x * tangent.x + fromToPoint.y * tangent.y;
+      const clampedAlong = clamp(along, 0, segmentLength);
+      const edgePoint = {
+        x: from.x + tangent.x * clampedAlong,
+        y: from.y + tangent.y * clampedAlong,
+      };
+      const pointFromEdge = {
+        x: point.x - edgePoint.x,
+        y: point.y - edgePoint.y,
+      };
+      const landDepth = -(
+        pointFromEdge.x * edge.normalX +
+        pointFromEdge.y * edge.normalY
+      );
+      if (landDepth < 0) {
+        continue;
+      }
+
+      const endOverrun = Math.max(-along, along - segmentLength, 0);
+      const distance = distanceAlongChain + clampedAlong;
+      const wave = shorelineMaskFbm(distance * tuning.shorelineWaveFrequency, seed);
+      const erosion = shorelineMaskFbm(
+        distance * tuning.shorelineErosionFrequency * 0.16 + wave * 1.7,
+        seed + 41.0
+      );
+      const width = Math.max(
+        tuning.shorelineEdgeWidth +
+          (wave - 0.5) * tuning.shorelineWaveStrength * 1.20 +
+          (erosion - 0.5) * tuning.shorelineErosionStrength * 0.70,
+        0.035
+      );
+      const shapeDistance = Math.hypot(landDepth, endOverrun * capScale);
+      const strength = clamp(
+        0.78 + (wave - 0.5) * 0.26 + (erosion - 0.5) * 0.18,
+        0.48,
+        1
+      );
+      const amount = (1 - smoothstepRange(width * 0.30, width, shapeDistance)) *
+        strength;
+      if (amount <= 0) {
+        continue;
+      }
+
+      const offset = (y * columns + x) * 4;
+      const current = (data[offset] ?? 0) / 255;
+      const next = 1 - (1 - current) * (1 - amount);
+      const value = Math.round(clamp(next, 0, 1) * 255);
+      data[offset] = value;
+    }
+  }
+}
+
+function getShorelineMaskTuningSignature(tuning: CampaignTerrainBeachTuning): string {
+  return [
+    tuning.shorelineEdgeWidth,
+    tuning.shorelineWaveStrength,
+    tuning.shorelineWaveFrequency,
+    tuning.shorelineErosionStrength,
+    tuning.shorelineErosionFrequency,
+    tuning.shorelineCornerRoundness,
+  ].map((value) => value.toFixed(4)).join("|");
+}
+
+function shorelineMaskFbm(distance: number, seed: number): number {
+  const first = smoothValueNoise2(distance + seed, seed * 0.27);
+  const second = smoothValueNoise2(distance * 2.03 + seed * 0.43, seed * 0.61 - 4.2);
+  const third = smoothValueNoise2(distance * 4.11 - seed * 0.19, seed * 0.13 + 19.4);
+
+  return first * 0.56 + second * 0.30 + third * 0.14;
+}
+
+function smoothValueNoise2(x: number, y: number): number {
+  const cellX = Math.floor(x);
+  const cellY = Math.floor(y);
+  const localX = x - cellX;
+  const localY = y - cellY;
+  const curveX = smootherStep(localX);
+  const curveY = smootherStep(localY);
+  const bottomLeft = hashNumber2(cellX, cellY);
+  const bottomRight = hashNumber2(cellX + 1, cellY);
+  const topLeft = hashNumber2(cellX, cellY + 1);
+  const topRight = hashNumber2(cellX + 1, cellY + 1);
+  const bottom = mixNumber(bottomLeft, bottomRight, curveX);
+  const top = mixNumber(topLeft, topRight, curveX);
+
+  return mixNumber(bottom, top, curveY);
+}
+
+function hashNumber2(x: number, y: number): number {
+  return fract(Math.sin(x * 127.1 + y * 311.7) * 43758.5453);
+}
+
+function smootherStep(value: number): number {
+  const clampedValue = clamp(value, 0, 1);
+
+  return clampedValue * clampedValue * clampedValue *
+    (clampedValue * (clampedValue * 6 - 15) + 10);
+}
+
+function smoothstepRange(edge0: number, edge1: number, value: number): number {
+  return smoothstep((value - edge0) / Math.max(edge1 - edge0, 0.0001));
+}
+
+function mixNumber(from: number, to: number, amount: number): number {
+  return from + (to - from) * amount;
+}
+
+function fract(value: number): number {
+  return value - Math.floor(value);
+}
+
+function normalizeVector2(vector: { x: number; y: number }): { x: number; y: number } {
+  const length = Math.hypot(vector.x, vector.y) || 1;
+
+  return {
+    x: vector.x / length,
+    y: vector.y / length,
+  };
+}
+
+function isTerrainUvInside(u: number, v: number): boolean {
+  return u >= 0 && u <= 1 && v >= 0 && v <= 1;
 }
 
 function hexToPixel(x: number, y: number): { x: number; y: number } {
@@ -2874,11 +3401,11 @@ function terrainUvToHexPoint(u: number, v: number): { x: number; y: number } {
 }
 
 function hexPointToTerrainU(x: number): number {
-  return clamp(x / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE) + 0.5, 0, 1);
+  return x / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE) + 0.5;
 }
 
 function hexPointToTerrainV(y: number): number {
-  return clamp(y / HEX_TERRAIN_SCALE + 0.5, 0, 1);
+  return y / HEX_TERRAIN_SCALE + 0.5;
 }
 
 function getHexCellKey(x: number, y: number): string {
@@ -2908,15 +3435,46 @@ function isHexPassableAtHexPoint(
   rows: number,
   center: { x: number; y: number }
 ): boolean {
-  return (
-    sampleLandMaskAt(
+  return getHexWaterCoverageAtHexPoint(
+    materialLandMask,
+    columns,
+    rows,
+    center
+  ) < HEX_WATER_COVERAGE_THRESHOLD;
+}
+
+function getHexWaterCoverageAtHexPoint(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  center: { x: number; y: number }
+): number {
+  const radius = HEX_FOOTPRINT_SAMPLE_RADIUS;
+  const samples = [
+    { x: 0, y: 0 },
+    { x: 0, y: -radius },
+    { x: 0.8660254 * radius, y: -0.5 * radius },
+    { x: 0.8660254 * radius, y: 0.5 * radius },
+    { x: 0, y: radius },
+    { x: -0.8660254 * radius, y: 0.5 * radius },
+    { x: -0.8660254 * radius, y: -0.5 * radius },
+  ];
+  let waterSamples = 0;
+
+  for (const sample of samples) {
+    const landAmount = sampleLandMaskAt(
       materialLandMask,
       columns,
       rows,
-      hexPointToTerrainU(center.x),
-      hexPointToTerrainV(center.y)
-    ) > 0
-  );
+      hexPointToTerrainU(center.x + sample.x),
+      hexPointToTerrainV(center.y + sample.y)
+    );
+    if (landAmount <= 0) {
+      waterSamples += 1;
+    }
+  }
+
+  return waterSamples / samples.length;
 }
 
 function createTexture(
@@ -2925,6 +3483,8 @@ function createTexture(
   options?: {
     wrapS?: number;
     wrapT?: number;
+    minFilter?: number;
+    magFilter?: number;
   }
 ): WebGLTexture {
   const texture = gl.createTexture();
@@ -2945,8 +3505,8 @@ function createTexture(
     gl.TEXTURE_WRAP_T,
     options?.wrapT ?? gl.CLAMP_TO_EDGE
   );
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, options?.minFilter ?? gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, options?.magFilter ?? gl.LINEAR);
 
   return texture;
 }

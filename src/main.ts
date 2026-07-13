@@ -70,10 +70,13 @@ import {
 import {
   coordinateToRoundedHex,
   createPassableHexTravelPath,
+  getHexKey,
   hexToCoordinatePolygon,
+  hexToCoordinate,
   snapCoordinateToHexCenter,
   travelToCoordinate,
   type GridCoordinate,
+  type HexTravelGrid,
 } from "./application/navigation/travel-to-coordinate";
 import {
   revealCampaignMapHexesForCoordinate,
@@ -492,6 +495,7 @@ let campaignTerrainStyleState: CampaignTerrainStyle = {
 let campaignCityDepthMeshTransformState: CampaignCityDepthMeshTransform = {
   ...DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
 };
+let campaignShorelineMaskPreviewEnabled = false;
 let hasAppliedInitialCampaignMapDebug = false;
 let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
@@ -3412,6 +3416,14 @@ appElement.addEventListener("change", (event) => {
   const targetElement = event.target;
   if (
     targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-campaign-shoreline-mask-preview-toggle")
+  ) {
+    setCampaignShorelineMaskPreviewEnabled(targetElement.checked);
+    return;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
     targetElement.hasAttribute("data-campaign-map-scale-input")
   ) {
     handleCampaignMapScaleInput(targetElement, { normalizeInput: true });
@@ -3430,6 +3442,10 @@ appElement.addEventListener("keydown", (event) => {
     handleCampaignMapScaleInput(targetElement, { normalizeInput: true });
     campaignMapScaleDraftValue = null;
   }
+});
+
+appElement.addEventListener("campaign-terrain-renderer-ready", () => {
+  normalizeCurrentCampaignRestCoordinateIfNeeded();
 });
 
 uiOverlayElement.addEventListener("input", (event) => {
@@ -4482,6 +4498,9 @@ appElement.addEventListener("click", (event) => {
     if (!isCurrentCampaignCoordinateRevealed({ x: xValue, y: yValue })) {
       return;
     }
+    if (!isCurrentCampaignTravelTargetPassable({ x: xValue, y: yValue })) {
+      return;
+    }
     const cityId = mapCell.dataset.cityId || null;
     const mapNodeName = mapCell.dataset.mapNodeName || null;
     const cityName =
@@ -4661,8 +4680,12 @@ function cancelCampaignTravel(): void {
 
   campaignTravelRequestId += 1;
   stopCampaignMoveAnimation();
+  const restedCoordinate = resolveCurrentCampaignRestCoordinate(
+    appState.playerCoordinate
+  );
   appState = {
     ...appState,
+    playerCoordinate: restedCoordinate,
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
@@ -4672,6 +4695,140 @@ function cancelCampaignTravel(): void {
     },
   };
   renderApp();
+}
+
+function isCurrentCampaignTravelTargetPassable(coordinate: GridCoordinate): boolean {
+  const travelContext = getCurrentCampaignTravelContext();
+  if (travelContext == null) {
+    return getCurrentMapDefinition()?.mode !== "campaign";
+  }
+
+  return resolveCampaignPassableHexCenter(
+    coordinate,
+    travelContext.coordinateSpace,
+    travelContext.travelGrid
+  ) != null;
+}
+
+function resolveCurrentCampaignRestCoordinate(coordinate: GridCoordinate): GridCoordinate {
+  const travelContext = getCurrentCampaignTravelContext();
+  if (travelContext == null) {
+    return coordinate;
+  }
+
+  return (
+    resolveCampaignPassableHexCenter(
+      coordinate,
+      travelContext.coordinateSpace,
+      travelContext.travelGrid
+    ) ??
+    resolveNearestCampaignPassableHexCenter(
+      coordinate,
+      travelContext.coordinateSpace,
+      travelContext.travelGrid
+    ) ??
+    coordinate
+  );
+}
+
+function normalizeCurrentCampaignRestCoordinateIfNeeded(): void {
+  if (
+    appState.gameState.ui.currentView !== "map" ||
+    appState.campaignActorState.isMoving
+  ) {
+    return;
+  }
+
+  const nextCoordinate = resolveCurrentCampaignRestCoordinate(appState.playerCoordinate);
+  if (
+    nextCoordinate.x === appState.playerCoordinate.x &&
+    nextCoordinate.y === appState.playerCoordinate.y
+  ) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    playerCoordinate: nextCoordinate,
+  };
+  renderApp();
+}
+
+function getCurrentCampaignTravelContext(): {
+  coordinateSpace: NonNullable<MapDefinition["coordinateSpace"]>;
+  travelGrid: HexTravelGrid;
+} | null {
+  const currentMapDefinition = getCurrentMapDefinition();
+  if (
+    currentMapDefinition?.mode !== "campaign" ||
+    currentMapDefinition.coordinateSpace == null
+  ) {
+    return null;
+  }
+
+  const travelGrid = getCampaignTerrainTravelGrid(appRoot);
+  if (travelGrid == null) {
+    return null;
+  }
+
+  return {
+    coordinateSpace: currentMapDefinition.coordinateSpace,
+    travelGrid,
+  };
+}
+
+function resolveCampaignPassableHexCenter(
+  coordinate: GridCoordinate,
+  coordinateSpace: NonNullable<MapDefinition["coordinateSpace"]>,
+  travelGrid: HexTravelGrid
+): GridCoordinate | null {
+  const hex = coordinateToRoundedHex(coordinate, coordinateSpace);
+  if (!travelGrid.passableHexKeys.has(getHexKey(hex))) {
+    return null;
+  }
+
+  return hexToCoordinate(hex, coordinateSpace);
+}
+
+function resolveNearestCampaignPassableHexCenter(
+  coordinate: GridCoordinate,
+  coordinateSpace: NonNullable<MapDefinition["coordinateSpace"]>,
+  travelGrid: HexTravelGrid
+): GridCoordinate | null {
+  let nearestCoordinate: GridCoordinate | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+
+  for (const hexKey of travelGrid.passableHexKeys) {
+    const hex = parseCampaignHexKey(hexKey);
+    if (hex == null) {
+      continue;
+    }
+
+    const candidate = hexToCoordinate(hex, coordinateSpace);
+    const distance = Math.hypot(
+      candidate.x - coordinate.x,
+      candidate.y - coordinate.y
+    );
+    if (distance >= nearestDistance) {
+      continue;
+    }
+
+    nearestCoordinate = candidate;
+    nearestDistance = distance;
+  }
+
+  return nearestCoordinate;
+}
+
+function parseCampaignHexKey(hexKey: string): { x: number; y: number } | null {
+  const [xText, yText] = hexKey.split(",");
+  const x = Number(xText);
+  const y = Number(yText);
+  if (!Number.isInteger(x) || !Number.isInteger(y)) {
+    return null;
+  }
+
+  return { x, y };
 }
 
 function startCampaignTravel(
@@ -4764,12 +4921,26 @@ function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordin
     currentMapDefinition?.mode === "campaign"
       ? currentMapDefinition.coordinateSpace ?? null
       : null;
+  const travelContext = getCurrentCampaignTravelContext();
   const snappedTargetCoordinate =
-    campaignCoordinateSpace == null
-      ? targetCoordinate
-      : snapCoordinateToHexCenter(targetCoordinate, campaignCoordinateSpace);
+    travelContext == null
+      ? campaignCoordinateSpace == null
+        ? targetCoordinate
+        : snapCoordinateToHexCenter(targetCoordinate, campaignCoordinateSpace)
+      : resolveCampaignPassableHexCenter(
+        targetCoordinate,
+        travelContext.coordinateSpace,
+        travelContext.travelGrid
+      );
+  if (snappedTargetCoordinate == null) {
+    return null;
+  }
+  const currentCoordinate =
+    travelContext == null
+      ? appState.playerCoordinate
+      : resolveCurrentCampaignRestCoordinate(appState.playerCoordinate);
   const nextCoordinate = travelToCoordinate(
-    appState.playerCoordinate,
+    currentCoordinate,
     snappedTargetCoordinate
   );
 
@@ -4783,16 +4954,15 @@ function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordin
     return null;
   }
 
-  const travelGrid = getCampaignTerrainTravelGrid(appRoot);
-  if (travelGrid == null) {
+  if (travelContext == null) {
     return null;
   }
 
   return createPassableHexTravelPath({
-    currentCoordinate: appState.playerCoordinate,
+    currentCoordinate,
     targetCoordinate: nextCoordinate,
     coordinateSpace: currentMapDefinition.coordinateSpace,
-    travelGrid,
+    travelGrid: travelContext.travelGrid,
   });
 }
 
@@ -5065,15 +5235,18 @@ function syncCampaignActorRuntimeState(
   facingDegrees: number,
   isMoving: boolean
 ): void {
+  const nextCoordinate = isMoving
+    ? coordinate
+    : resolveCurrentCampaignRestCoordinate(coordinate);
   appState = {
     ...appState,
-    playerCoordinate: coordinate,
+    playerCoordinate: nextCoordinate,
     campaignActorState: {
       facingDegrees,
       isMoving,
     },
   };
-  const nextAppState = revealCampaignMapAroundAppCoordinate(appState, coordinate, {
+  const nextAppState = revealCampaignMapAroundAppCoordinate(appState, nextCoordinate, {
     animateNewHexes: true,
   });
   if (nextAppState !== appState) {
@@ -5358,6 +5531,7 @@ function renderAppFrame(
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
   syncCampaignCityDepthMeshTransformView();
+  syncCampaignShorelineMaskPreviewView();
   restoreCampaignMapScaleInputFocus(focusedScaleInput);
   syncMapIntroOverlay();
   syncActivityQteLoop();
@@ -5663,6 +5837,36 @@ function setCampaignCityDepthMeshTransformState(
   };
   syncCampaignCityDepthMeshTransformView();
   requestCampaignTerrainRender("static");
+}
+
+function setCampaignShorelineMaskPreviewEnabled(enabled: boolean): void {
+  campaignShorelineMaskPreviewEnabled = enabled;
+  syncCampaignShorelineMaskPreviewView();
+  requestCampaignTerrainRender("static");
+}
+
+function syncCampaignShorelineMaskPreviewView(): void {
+  const toggleElement = appRoot.querySelector<HTMLInputElement>(
+    "[data-campaign-shoreline-mask-preview-toggle]"
+  );
+  if (toggleElement != null) {
+    toggleElement.checked = campaignShorelineMaskPreviewEnabled;
+  }
+
+  const terrainCanvases = appRoot.querySelectorAll<HTMLCanvasElement>(
+    "[data-campaign-map-terrain]"
+  );
+  for (const canvas of terrainCanvases) {
+    canvas.dataset.campaignShorelineMaskPreview =
+      campaignShorelineMaskPreviewEnabled ? "true" : "false";
+  }
+
+  const previewElements = appRoot.querySelectorAll<HTMLImageElement>(
+    "[data-campaign-shoreline-mask-preview]"
+  );
+  for (const previewElement of previewElements) {
+    previewElement.hidden = !campaignShorelineMaskPreviewEnabled;
+  }
 }
 
 function syncCampaignCityDepthMeshTransformView(): void {

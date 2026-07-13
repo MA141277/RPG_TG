@@ -993,6 +993,16 @@
   font-size: 0.72rem;
 }
 
+.c-campaign-map-debug__terrain-style .c-campaign-map-debug__toggle {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.c-campaign-map-debug__toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: #e7c967;
+}
+
 .c-campaign-map-debug__terrain-style strong {
   color: #fff8df;
   font-weight: 700;
@@ -1023,6 +1033,22 @@
   justify-self: end;
   color: rgb(226 232 217 / 72%);
   font-size: 0.68rem;
+}
+
+.c-campaign-map__shoreline-mask-preview {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 22;
+  width: 256px;
+  max-width: min(32vw, 256px);
+  aspect-ratio: 1 / 1;
+  border: 1px solid rgb(239 216 150 / 62%);
+  border-radius: 4px;
+  background: #050a0b;
+  box-shadow: 0 10px 22px rgb(0 0 0 / 34%);
+  image-rendering: auto;
+  pointer-events: none;
 }
 
 .c-map-intro-overlay {
