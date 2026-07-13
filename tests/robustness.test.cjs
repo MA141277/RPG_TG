@@ -476,6 +476,49 @@ function createSampleScriptEditorProjectDefinition() {
   };
 }
 
+function createExportableScriptEditorProjectDefinition() {
+  const project = createSampleScriptEditorProjectDefinition();
+  return {
+    ...project,
+    storyPack: {
+      ...project.storyPack,
+      basePackId: "content-pack.base-game.zhuyuanzhang",
+      scenarioProfile: {
+        id: "scenario.test.script-editor",
+        title: "Test Script Editor Scenario",
+        playerCharacterId: "person.hero",
+        chapterId: "chapter.test.script-editor",
+        initialLocation: {
+          mapId: "map.test.script-editor",
+          cityId: "city.start",
+          houseId: "building.home",
+          view: "city",
+        },
+      },
+    },
+    dialogues: [],
+    minigames: [],
+    storyNodes: [],
+    conditionGroups: [],
+    effectBundles: [],
+  };
+}
+
+function createImportedFilesFromSerializedJsonRecord(fileMap, folderName) {
+  return Object.entries(fileMap).map(([fileName, contents]) => {
+    const file = new File([contents], path.basename(fileName), {
+      type: "application/json",
+    });
+
+    Object.defineProperty(file, "webkitRelativePath", {
+      configurable: true,
+      value: `${folderName}/${fileName.replaceAll("\\", "/")}`,
+    });
+
+    return file;
+  });
+}
+
 function writeScriptEditorProjectFixture(outputRoot) {
   const fixture = createSampleScriptEditorProjectDefinition();
   const projectRoot = path.join(outputRoot, "script-editor-project");
@@ -2620,6 +2663,86 @@ test("script editor project save emits canonical split files", async () => {
   assert.equal(savedStoryPack.id, project.storyPack.id);
   assert.equal(savedPeople[0]?.id, project.people[0]?.id);
 });
+
+test(
+  "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+    const exportedScenarioProfile = JSON.parse(
+      serializedFiles["scenario-profile.json"]
+    );
+    const exportedScenes = JSON.parse(serializedFiles["scenes.json"]);
+    const exportedTextEntries = JSON.parse(serializedFiles["text-entries.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-scenario-pack"
+      )
+    );
+
+    assert.equal(manifest.kind, "scenario-pack");
+    assert.equal(manifest.id, project.storyPack.id);
+    assert.equal(manifest.basePackId, "content-pack.base-game.zhuyuanzhang");
+    assert.equal(manifest.files.scenarioProfile, "./scenario-profile.json");
+    assert.equal(manifest.files.characters, "./characters.json");
+    assert.equal(manifest.files.tasks, "./tasks.json");
+    assert.equal(manifest.files.textEntries, "./text-entries.json");
+    assert.equal(exportedScenarioProfile.id, "scenario.test.script-editor");
+    assert.equal(exportedScenarioProfile.playerCharacterId, "person.hero");
+    assert.deepEqual(exportedScenes, []);
+    assert.equal(exportedTextEntries["text.opening"], "Opening line.");
+    assert.equal(exportedPack.scenarioProfile.id, "scenario.test.script-editor");
+    assert.equal(exportedPack.characters[0]?.id, "person.hero");
+    assert.equal(exportedPack.houses?.[0]?.id, "building.home");
+    assert.equal(exportedPack.tasks?.[0]?.id, "quest.first");
+    assert.equal(exportedPack.textEntries?.["text.opening"], "Opening line.");
+  }
+);
+
+test(
+  "script editor runtime export fails closed on deferred authoring families",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.dialogues = [{ id: "dialogue.unsupported" }];
+    project.minigames = [{ id: "minigame.unsupported" }];
+    project.storyNodes = [{ id: "story-node.unsupported" }];
+    project.conditionGroups = [{ id: "condition.unsupported" }];
+    project.effectBundles = [{ id: "effect.unsupported" }];
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /dialogues|minigames|storyNodes|conditionGroups|effectBundles/i
+    );
+  }
+);
+
+test(
+  "script editor runtime export validator rejects missing opening scenario profile fields",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    delete project.storyPack.scenarioProfile.initialLocation.view;
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /storyPack\.scenarioProfile\.initialLocation\.view/i
+    );
+  }
+);
 
 test(
   "script editor project loader rejects missing canonical manifest file entries",

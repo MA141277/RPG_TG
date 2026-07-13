@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-13`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly`
-- next_task: `task.authoring-runtime-export-pipeline.queue-closeout-and-handoff`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `Queue admitted on 2026-07-13 because the bounded persistence foundation is already closed and export is now the unique smallest lawful implementation continuation. Closeout is not legal until the queue freezes the bounded export slice, lands manifest-driven runtime-pack export plus validator assembly, and verifies that no still-blocking same-family export residue remains inside this topic surface.`
-- residue_remaining: `yes`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The admitted export slice is now converged: the repository can compile a manifest-driven script-editor project into a runtime-compatible scenario pack for the first frozen direct-mapping families, and the export validator now fails closed on deferred dialogue/story-node/minigame/shared-rule families instead of leaking queue-local formats into runtime output. No still-blocking same-family export residue remains inside this bounded queue topic surface, and the remaining version work now belongs to compatibility-import, shared-rule integration, or later UI/product workflow queue families rather than another same-family export continuation.`
+- residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `none`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `none`
 - sync_summary: `No repository sync has run for this newly admitted implementation queue yet.`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Turn the frozen authoring-to-runtime mapping contract into executable runtime-pack export truth without widening into compatibility import, shared-rule integration, or UI workflow.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the bounded runtime-pack export slice and fail-closed validator assembly frozen by the completed boundary reconcile task.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the bounded authoring -> runtime export slice closed after fresh verification and now returns control to version-level promotion review.`
 - task_briefs:
   - `task.authoring-runtime-export-pipeline.boundary-baseline-reconcile: confirm the admitted export boundary and freeze the first lawful implementation slice from current repository evidence.`
   - `task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly: add manifest-driven runtime-pack export plus the bounded validator assembly required by the frozen mapping contract.`
@@ -108,8 +108,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.authoring-runtime-export-pipeline.boundary-baseline-reconcile` | `completed` | `Confirm the admitted export boundary and freeze the first lawful implementation slice from current repository truth.` | `none` | `Completed on 2026-07-13 after repository inspection confirmed that only one bounded first export slice is lawful: manifest-driven runtime-pack export that reuses existing pack families and fails closed on currently unsupported authoring families instead of widening into schema growth or shared-rule work.` |
-| `task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly` | `active` | `Add the manifest-driven runtime-pack export path and the bounded validator assembly required by the frozen mapping contract.` | `task.authoring-runtime-export-pipeline.boundary-baseline-reconcile` | `This task should stay on project -> runtime pack export and validator coverage, not compatibility importer or UI workflow.` |
-| `task.authoring-runtime-export-pipeline.queue-closeout-and-handoff` | `pending` | `Verify the queue-local export slice, classify remaining residue, and hand control back to version review or next same-family continuation.` | `task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly` | `This task must not declare closure until verification and residue routing both have written truth.` |
+| `task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly` | `completed` | `Add the manifest-driven runtime-pack export path and the bounded validator assembly required by the frozen mapping contract.` | `task.authoring-runtime-export-pipeline.boundary-baseline-reconcile` | `Completed after the repository gained one bounded script-editor project -> scenario-pack export seam plus fail-closed validation for deferred authoring families.` |
+| `task.authoring-runtime-export-pipeline.queue-closeout-and-handoff` | `completed` | `Verify the queue-local export slice, classify remaining residue, and hand control back to version review or next same-family continuation.` | `task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly` | `Completed after verification confirmed that no still-blocking same-family export residue remains and that version-level promotion review is again the lawful controller.` |
 
 ### Task Definitions
 
@@ -186,7 +186,7 @@
 ##### Control Block
 
 - task_id: `task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/**`
@@ -228,7 +228,7 @@
 - task_brief:
   - `Implement the bounded authoring -> runtime export path and its validator assembly with failing tests first.`
 - task_outcome_summary:
-  - `Expected outcome: script-editor projects can export runtime-compatible scenario-pack files under the frozen mapping contract with fail-closed validator coverage.`
+  - `Completed after src/application/script-editor/runtime-pack-export.ts landed a bounded script-editor project -> runtime-compatible scenario-pack export seam with manifest/tables for the first direct-mapping slice and explicit fail-closed diagnostics for deferred authoring families.`
 - Purpose:
   - `Turn the frozen mapping contract into executable runtime-pack output so later importer and UI queues can rely on a real export seam.`
 - Failure mode:
@@ -239,7 +239,7 @@
 ##### Control Block
 
 - task_id: `task.authoring-runtime-export-pipeline.queue-closeout-and-handoff`
-- state: `pending`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -272,7 +272,7 @@
 - task_brief:
   - `Close the queue with explicit residue routing and hand control back to version review only after governance truth is synchronized.`
 - task_outcome_summary:
-  - `Expected outcome: export-pipeline closeout either proves the bounded export topic is closed or returns one explicit same-family/cross-family residue route to version review.`
+  - `Completed after queue closeout confirmed that the bounded export topic is closed, no still-blocking same-family export residue remains, and current version control returns to promotion review with compatibility import as the next lawful recommendation to inspect.`
 - Purpose:
   - `Finish the queue without letting export residue or routing fall back to conversation-only state.`
 - Failure mode:
@@ -285,7 +285,7 @@
 - Recorded handoff at closure:
   - `none`
 - Recorded expected output:
-  - `Queue still active.`
+  - `Queue closed on 2026-07-13 and returned control to version-level promotion review.`
 
 ### Historical Candidate Notes
 
@@ -293,7 +293,7 @@
 
 ### Historical Snapshot (2026-07-13)
 
-- `Queue admitted on 2026-07-13 as the single active export implementation queue under target.script-editor-implementation.`
+- `Queue admitted and closed on 2026-07-13 as the bounded export implementation queue under target.script-editor-implementation.`
 
 ## Progress Log
 
@@ -305,3 +305,11 @@
   - Summary: `Completed task.authoring-runtime-export-pipeline.boundary-baseline-reconcile after inspecting the frozen contract, authoring project substrate, runtime pack loader truth, and existing tests. The first lawful export slice is now frozen to canonical runtime-pack manifest/tables that can be emitted without reopening shared-rule or additive schema decisions.`
   - Verification: `npm run lint:blueprints` plus rg inspection over mapping/export keywords in docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md, docs/blueprints/plans/2026-07-09-script-editor-authoring-plan-Pending.md, docs/scenario-pack-unified-format.md, src/domain/script-editor-project.ts, src/application/script-editor/editor-project-save.ts, src/domain/content-pack.ts, src/application/scenario/scenario-pack-loader.ts, and tests/robustness.test.cjs`
   - Next at this time: `Execute task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly and keep the implementation bounded to direct runtime-pack export plus fail-closed validator coverage.`
+- 2026-07-13
+  - Summary: `Completed task.authoring-runtime-export-pipeline.runtime-export-and-validator-assembly by adding src/application/script-editor/runtime-pack-export.ts plus targeted regression coverage that proves bounded direct-family export succeeds and deferred authoring families fail closed instead of leaking queue-local runtime formats.`
+  - Verification: `npm test -- --test-name-pattern "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice|script editor runtime export fails closed on deferred authoring families|script editor runtime export validator rejects missing opening scenario profile fields"`
+  - Next at this time: `Execute task.authoring-runtime-export-pipeline.queue-closeout-and-handoff.`
+- 2026-07-13
+  - Summary: `Completed task.authoring-runtime-export-pipeline.queue-closeout-and-handoff by closing queue.authoring-runtime-export-pipeline, confirming that no still-blocking same-family export residue remains inside the bounded queue topic, and returning control to version-level promotion review with compatibility import as the next lawful recommendation to inspect.`
+  - Verification: `npm run typecheck; npm test; npm run lint:blueprints; npm run lint:plans`
+  - Next at this time: `Resume docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md at version-level promotion review.`

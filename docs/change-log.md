@@ -13,6 +13,19 @@
 
 ## 2026-07-13 Script Editor Export Queue Admission
 
+## 2026-07-13 Script Editor Export Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，落地首个 bounded `script-editor project -> runtime-compatible scenario pack` 导出缝：直接映射 `storyPack -> pack.json/scenario-profile.json`、`people -> characters.json`、`cities -> cities.json`、`buildings -> houses.json`、`events -> events.json`、`quests -> tasks.json`、`textEntries -> text-entries.json`，并补齐运行时必需的空 `scenes.json`。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增导出成功、deferred family fail-closed、以及 opening scenario profile 缺失字段拒绝导出的回归覆盖。
+- 更新 [docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、以及 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，把 `queue.authoring-runtime-export-pipeline` 从 active 收口为 done，并将 live version 入口切回无 active queue 的 promotion-review 状态。
+- 将当前 version-level `next_lawful_queue_recommendation` 写为 `queue.compatibility-import-adapter`，因为 persistence 与 export 这两条上游 seam 已落地，后续可以从 frozen compatibility policy 出发检查 importer 是否成为最小下一切口。
+
+### Impact
+- 当前 script-editor implementation version 已拥有真实的 runtime-pack export handoff：作者项目不再只停留在 load/save substrate，而是可以导出首个 runtime-compatible scenario-pack artifact，并在不支持的 authoring family 上显式 fail closed。
+- `queue.authoring-runtime-export-pipeline` 已变为关闭历史证据；后续恢复入口不再是 queue doc，而是 implementation version plan 的 promotion review。
+- 最小可用 script-editor workflow 的前置条件又向前推进了一步：`save/reopen` 与 `real export` 现在都已具备，接下来只需由 version-level review 判断 compatibility import 或其他候选谁是下一条最小 lawful queue。
+
 ### Changed
 - 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、[docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、以及 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将当前 implementation version 从 `promotion-review` 切换到 `active-execution`，并把 `queue.authoring-runtime-export-pipeline` 设为单一 active queue。
 - 新增 [docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md)，把 queue goal、task ledger、active task、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
