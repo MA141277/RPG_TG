@@ -35,7 +35,8 @@
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the live successor implementation version and currently resumes through version-level promotion review because no active queue remains after the bounded export slice closed.`
+- `The pointed version is now the live successor implementation version and currently has no active queue, so resume must continue from the version plan rather than any closed queue document.`
+- `The latest closeout returned execution from queue.script-editor-minimal-usable-workflow back to version-level promotion review.`
 
 ### Historical References
 

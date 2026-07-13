@@ -1,6 +1,25 @@
 import { applyStaticLayoutBindings } from "../tools/live-layout-bindings";
 import { mountOpeningBackgroundAnimation } from "./opening-background-animation";
 import { resolveCharacterAvatarImageUrl } from "../portrait-assets";
+import {
+  createDefaultScriptEditorProjectDefinition,
+  createScriptEditorWorkflowRecordDraft,
+  getScriptEditorWorkflowVisibleFamilies,
+  isScriptEditorMinimalWorkflowFamily,
+  listScriptEditorWorkflowFamilyRecords,
+  removeScriptEditorWorkflowRecord,
+  updateScriptEditorWorkflowStoryPack,
+  upsertScriptEditorWorkflowRecord,
+} from "../../application/script-editor/minimal-workflow";
+import { loadScriptEditorProjectFromFiles } from "../../application/script-editor/editor-project-loader";
+import { serializeScriptEditorProjectToFiles } from "../../application/script-editor/editor-project-save";
+import {
+  exportScriptEditorProjectToScenarioPackFiles,
+  validateScriptEditorProjectForRuntimeExport,
+} from "../../application/script-editor/runtime-pack-export";
+import { loadScriptEditorProjectFromScenarioPackFiles } from "../../application/script-editor/runtime-pack-import";
+import { createScriptEditorWorkspaceShellViewModel } from "../../application/script-editor/workspace-shell";
+import { renderScriptEditorWorkspaceView } from "../views/script-editor/script-editor-workspace-view";
 
 const startScreenLayoutBindings = [
   { componentId: "main-menu-content", selector: ".c-main-ui-main-menu__content" },
@@ -187,6 +206,14 @@ export class MainUiFlow {
     this.characterDetailTransitionToken = 0;
     this.characterDetailTransitionTimer = 0;
     this.destroyOpeningBackgroundAnimation = null;
+    this.scriptEditorProject = null;
+    this.scriptEditorSelection = {
+      family: "storyPack",
+      entityId: null,
+    };
+    this.scriptEditorNotice = null;
+    this.scriptEditorProjectDirectoryHandle = null;
+    this.scriptEditorExportDirectoryHandle = null;
   }
 
   mount() {
@@ -223,6 +250,10 @@ export class MainUiFlow {
     this.setScreen("character-select");
   }
 
+  showScriptEditorLanding() {
+    this.setScreen("script-editor-landing");
+  }
+
   setScreen(screen) {
     this.currentScreen = screen;
     this.overlayRoot.classList.toggle("is-hidden", screen === "hidden");
@@ -245,7 +276,11 @@ export class MainUiFlow {
         ? this.renderMainMenu()
         : this.currentScreen === "scenario-select"
           ? this.renderScenarioSelect()
-          : this.renderCharacterSelect();
+          : this.currentScreen === "script-editor-landing"
+            ? this.renderScriptEditorLanding()
+            : this.currentScreen === "script-editor-workspace"
+              ? this.renderScriptEditorWorkspace()
+              : this.renderCharacterSelect();
     this.overlayRoot.innerHTML = screenMarkup;
     if (this.currentScreen === "main-menu") {
       this.destroyOpeningBackgroundAnimation = mountOpeningBackgroundAnimation(this.overlayRoot);
@@ -306,6 +341,13 @@ export class MainUiFlow {
           >
             JSON 开局
           </button>
+          <button
+            type="button"
+            class="c-main-ui-json-button c-main-ui-json-button--script-editor"
+            data-main-ui-action="open-script-editor"
+          >
+            剧本编辑器
+          </button>
             </div>
           </div>
         </div>
@@ -354,6 +396,263 @@ export class MainUiFlow {
           读取
         </button>
       </article>
+    `;
+  }
+
+  renderScriptEditorLanding() {
+    const hasSession = this.scriptEditorProject != null;
+
+    return `
+      <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器入口">
+        <div class="c-script-editor-landing">
+          <header class="c-script-editor-landing__header">
+            <p class="c-script-editor-landing__eyebrow">Script Editor</p>
+            <h1 class="c-script-editor-landing__title">Project-first workflow</h1>
+            <p class="c-script-editor-landing__description">
+              Create a project, open an existing editor project, or import a runtime pack into the same workspace flow.
+            </p>
+          </header>
+
+          ${this.renderScriptEditorNotice()}
+
+          <div class="c-script-editor-landing__actions">
+            <button type="button" class="c-main-ui-json-text-button c-main-ui-json-text-button--accent" data-script-editor-action="new-project">
+              新建剧本项目
+            </button>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="open-project">
+              打开剧本项目
+            </button>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="import-pack">
+              导入现有剧本包
+            </button>
+            ${
+              hasSession
+                ? `
+                  <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="continue-session">
+                    继续当前项目
+                  </button>
+                `
+                : ""
+            }
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-menu">
+              返回主菜单
+            </button>
+          </div>
+
+          ${this.renderScriptEditorFileInputs()}
+        </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorWorkspace() {
+    if (this.scriptEditorProject == null) {
+      this.showScriptEditorLanding();
+      return "";
+    }
+
+    const workspace = createScriptEditorWorkspaceShellViewModel({
+      project: this.scriptEditorProject,
+      selection: this.scriptEditorSelection,
+      visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
+    });
+
+    return `
+      <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器工作流">
+        <div class="c-script-editor-workflow__chrome">
+          <div class="c-script-editor-workflow__chrome-actions">
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-menu">
+              返回主菜单
+            </button>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-landing">
+              返回项目入口
+            </button>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="open-project">
+              打开项目
+            </button>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="import-pack">
+              导入剧本包
+            </button>
+          </div>
+          ${this.renderScriptEditorNotice()}
+          ${this.renderScriptEditorFileInputs()}
+        </div>
+
+        ${renderScriptEditorWorkspaceView(workspace)}
+
+        <section class="c-script-editor-workflow__editor" aria-label="最小对象编辑">
+          ${this.renderScriptEditorEditorPanel()}
+        </section>
+      </section>
+    `;
+  }
+
+  renderScriptEditorEditorPanel() {
+    if (this.scriptEditorProject == null) {
+      return "";
+    }
+
+    if (this.scriptEditorSelection.family === "storyPack") {
+      const storyPack = this.scriptEditorProject.storyPack;
+      const scenarioProfile = storyPack.scenarioProfile ?? {};
+      const initialLocation = scenarioProfile.initialLocation ?? {};
+
+      return `
+        <div class="c-script-editor-editor-card">
+          <header class="c-script-editor-editor-card__header">
+            <div>
+              <p class="c-script-editor-editor-card__eyebrow">Project</p>
+              <h2 class="c-script-editor-editor-card__title">项目根信息</h2>
+            </div>
+          </header>
+          <div class="c-script-editor-form-grid">
+            ${this.renderScriptEditorField("project.id", "Project ID", this.scriptEditorProject.id)}
+            ${this.renderScriptEditorField("project.title", "Project Title", this.scriptEditorProject.title)}
+            ${this.renderScriptEditorField("project.description", "Project Description", this.scriptEditorProject.description ?? "")}
+            ${this.renderScriptEditorField("storyPack.id", "Story Pack ID", storyPack.id)}
+            ${this.renderScriptEditorField("storyPack.title", "Story Pack Title", storyPack.title)}
+            ${this.renderScriptEditorField("storyPack.description", "Story Pack Description", storyPack.description ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.id", "Scenario ID", scenarioProfile.id ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.title", "Scenario Title", scenarioProfile.title ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.playerCharacterId", "Player Character ID", scenarioProfile.playerCharacterId ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.chapterId", "Chapter ID", scenarioProfile.chapterId ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.initialLocation.mapId", "Initial Map ID", initialLocation.mapId ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.initialLocation.cityId", "Initial City ID", initialLocation.cityId ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.initialLocation.houseId", "Initial House ID", initialLocation.houseId ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.initialLocation.view", "Initial View", initialLocation.view ?? "")}
+          </div>
+        </div>
+      `;
+    }
+
+    const family = this.scriptEditorSelection.family;
+    const records = listScriptEditorWorkflowFamilyRecords(
+      this.scriptEditorProject,
+      family
+    );
+    const selectedRecord =
+      records.find((record) => record.id === this.scriptEditorSelection.entityId) ??
+      records[0] ??
+      null;
+    const selectedRecordJson =
+      selectedRecord == null ? "{}" : JSON.stringify(selectedRecord, null, 2);
+    const isDeferredFamily = family === "storyNodes";
+
+    return `
+      <div class="c-script-editor-editor-card">
+        <header class="c-script-editor-editor-card__header">
+          <div>
+            <p class="c-script-editor-editor-card__eyebrow">Minimal Object Editor</p>
+            <h2 class="c-script-editor-editor-card__title">${escapeHtml(this.getScriptEditorFamilyLabel(family))}</h2>
+          </div>
+          <div class="c-script-editor-editor-card__actions">
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+              新增
+            </button>
+            <button
+              type="button"
+              class="c-main-ui-json-text-button"
+              data-script-editor-action="remove-record"
+              ${selectedRecord == null ? "disabled" : ""}
+            >
+              删除
+            </button>
+            <button
+              type="button"
+              class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+              data-script-editor-action="apply-record-json"
+              ${selectedRecord == null ? "disabled" : ""}
+            >
+              应用 JSON
+            </button>
+          </div>
+        </header>
+
+        ${
+          isDeferredFamily
+            ? `
+              <p class="c-script-editor-editor-card__hint">
+                Story nodes remain a bounded placeholder family here. Editing is allowed, but runtime export will still fail closed until a later queue lands the compile path.
+              </p>
+            `
+            : ""
+        }
+
+        <div class="c-script-editor-record-layout">
+          <aside class="c-script-editor-record-list" aria-label="对象列表">
+            ${records
+              .map(
+                (record) => `
+                  <button
+                    type="button"
+                    class="c-script-editor-record-list__item ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                    data-script-editor-record-id="${escapeHtml(record.id)}"
+                  >
+                    <strong>${escapeHtml(this.getScriptEditorRecordLabel(record))}</strong>
+                    <span>${escapeHtml(record.id)}</span>
+                  </button>
+                `
+              )
+              .join("")}
+          </aside>
+          <div class="c-script-editor-record-editor">
+            <textarea
+              class="c-script-editor-record-editor__textarea"
+              data-script-editor-record-json
+              spellcheck="false"
+            >${escapeHtml(selectedRecordJson)}</textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderScriptEditorField(field, label, value) {
+    return `
+      <label class="c-script-editor-form-field">
+        <span>${escapeHtml(label)}</span>
+        <input
+          class="c-script-editor-form-field__input"
+          type="text"
+          value="${escapeHtml(value)}"
+          data-script-editor-project-field="${field}"
+        />
+      </label>
+    `;
+  }
+
+  renderScriptEditorNotice() {
+    if (this.scriptEditorNotice == null) {
+      return "";
+    }
+
+    return `
+      <div class="c-script-editor-workflow__notice c-script-editor-workflow__notice--${this.scriptEditorNotice.tone}">
+        ${escapeHtml(this.scriptEditorNotice.message)}
+      </div>
+    `;
+  }
+
+  renderScriptEditorFileInputs() {
+    return `
+      <input
+        type="file"
+        accept="application/json,.json"
+        data-script-editor-project-file
+        webkitdirectory
+        directory
+        multiple
+        hidden
+      >
+      <input
+        type="file"
+        accept="application/json,.json"
+        data-script-editor-pack-file
+        webkitdirectory
+        directory
+        multiple
+        hidden
+      >
     `;
   }
 
@@ -551,83 +850,115 @@ export class MainUiFlow {
     }
 
     const actionElement = target.closest("[data-main-ui-action]");
-    if (actionElement == null) {
-      return;
-    }
+    if (actionElement != null) {
+      const action = actionElement.dataset.mainUiAction;
+      if (action === "open-character-select") {
+        this.showCharacterSelect();
+        return;
+      }
 
-    const action = actionElement.dataset.mainUiAction;
-    if (action === "open-character-select") {
-      this.showCharacterSelect();
-      return;
-    }
+      if (action === "open-json-scenario-select") {
+        this.setScreen("scenario-select");
+        return;
+      }
 
-    if (action === "open-json-scenario-select") {
-      this.setScreen("scenario-select");
-      return;
-    }
+      if (action === "open-script-editor") {
+        this.showScriptEditorLanding();
+        return;
+      }
 
-    if (action === "back-to-menu") {
-      this.showMainMenu();
-      return;
-    }
+      if (action === "back-to-menu") {
+        this.showMainMenu();
+        return;
+      }
 
-    if (action === "select-character") {
-      const characterId = actionElement.dataset.characterId;
-      if (characterId != null) {
-        if (characterId === this.selectedCharacterId) {
+      if (action === "select-character") {
+        const characterId = actionElement.dataset.characterId;
+        if (characterId != null) {
+          if (characterId === this.selectedCharacterId) {
+            return;
+          }
+          this.previousCharacterDetail = this.getSelectedCharacter();
+          this.characterDetailTransitionToken += 1;
+          this.clearCharacterDetailTransitionTimer();
+          this.inkParticleSystem?.stopLoop("selected-character");
+          this.pendingSelectedInkBurstCharacterId = characterId;
+          this.selectedCharacterId = characterId;
+          this.render();
           return;
         }
-        this.previousCharacterDetail = this.getSelectedCharacter();
-        this.characterDetailTransitionToken += 1;
-        this.clearCharacterDetailTransitionTimer();
-        this.inkParticleSystem?.stopLoop("selected-character");
-        this.pendingSelectedInkBurstCharacterId = characterId;
-        this.selectedCharacterId = characterId;
-        this.render();
+        return;
       }
-      return;
-    }
 
-    if (action === "start-adventure") {
-      const selectedCharacter = this.getSelectedCharacter();
-      if (selectedCharacter != null) {
-        this.onStartGame(selectedCharacter);
-      }
-      return;
-    }
-
-    if (action === "start-scenario-pack") {
-      const scenarioPackId = actionElement.dataset.scenarioPackId;
-      const scenarioPack = this.scenarioPacks.find(
-        (candidatePack) => candidatePack.id === scenarioPackId
-      );
-      if (scenarioPack != null) {
-        await this.onStartScenarioPack?.(scenarioPack);
-      }
-      return;
-    }
-
-    if (action === "import-scenario-file") {
-      this.overlayRoot
-        .querySelector("[data-main-ui-scenario-file]")
-        ?.click();
-      return;
-    }
-
-    if (action === "continue-game") {
-      const saveData = await this.loadSaveData();
-      const selectedCharacter =
-        this.getCharacterById(saveData?.selectedCharacterId ?? null) ??
-        this.characters[0] ??
-        null;
-
-      if (selectedCharacter != null) {
-        this.selectedCharacterId = selectedCharacter.id;
-        if (this.onContinueGame != null) {
-          this.onContinueGame(selectedCharacter, saveData ?? null);
-        } else {
+      if (action === "start-adventure") {
+        const selectedCharacter = this.getSelectedCharacter();
+        if (selectedCharacter != null) {
           this.onStartGame(selectedCharacter);
         }
+        return;
+      }
+
+      if (action === "start-scenario-pack") {
+        const scenarioPackId = actionElement.dataset.scenarioPackId;
+        const scenarioPack = this.scenarioPacks.find(
+          (candidatePack) => candidatePack.id === scenarioPackId
+        );
+        if (scenarioPack != null) {
+          await this.onStartScenarioPack?.(scenarioPack);
+        }
+        return;
+      }
+
+      if (action === "import-scenario-file") {
+        this.overlayRoot
+          .querySelector("[data-main-ui-scenario-file]")
+          ?.click();
+        return;
+      }
+
+      if (action === "continue-game") {
+        const saveData = await this.loadSaveData();
+        const selectedCharacter =
+          this.getCharacterById(saveData?.selectedCharacterId ?? null) ??
+          this.characters[0] ??
+          null;
+
+        if (selectedCharacter != null) {
+          this.selectedCharacterId = selectedCharacter.id;
+          if (this.onContinueGame != null) {
+            this.onContinueGame(selectedCharacter, saveData ?? null);
+          } else {
+            this.onStartGame(selectedCharacter);
+          }
+        }
+        return;
+      }
+    }
+
+    const scriptEditorActionElement = target.closest("[data-script-editor-action]");
+    if (scriptEditorActionElement != null) {
+      const action = scriptEditorActionElement.dataset.scriptEditorAction;
+      if (action != null) {
+        await this.handleScriptEditorAction(action);
+      }
+      return;
+    }
+
+    const scriptEditorFamilyElement = target.closest("[data-script-editor-family]");
+    if (scriptEditorFamilyElement != null) {
+      const family = scriptEditorFamilyElement.dataset.scriptEditorFamily;
+      const entityId = scriptEditorFamilyElement.dataset.scriptEditorEntityId ?? null;
+      if (family != null) {
+        this.selectScriptEditorFamily(family, entityId);
+      }
+      return;
+    }
+
+    const scriptEditorRecordElement = target.closest("[data-script-editor-record-id]");
+    if (scriptEditorRecordElement != null) {
+      const recordId = scriptEditorRecordElement.dataset.scriptEditorRecordId;
+      if (recordId != null) {
+        this.selectScriptEditorRecord(recordId);
       }
     }
   }
@@ -638,17 +969,45 @@ export class MainUiFlow {
       return;
     }
 
-    if (!target.matches("[data-main-ui-scenario-file]")) {
+    if (target.matches("[data-main-ui-scenario-file]")) {
+      const files = Array.from(target.files ?? []);
+      target.value = "";
+      if (files.length === 0) {
+        return;
+      }
+
+      await this.onImportScenarioPackFiles?.(files);
       return;
     }
 
-    const files = Array.from(target.files ?? []);
-    target.value = "";
-    if (files.length === 0) {
+    if (target.matches("[data-script-editor-project-file]")) {
+      const files = Array.from(target.files ?? []);
+      target.value = "";
+      if (files.length === 0) {
+        return;
+      }
+
+      await this.handleScriptEditorProjectFileImport(files);
       return;
     }
 
-    await this.onImportScenarioPackFiles?.(files);
+    if (target.matches("[data-script-editor-pack-file]")) {
+      const files = Array.from(target.files ?? []);
+      target.value = "";
+      if (files.length === 0) {
+        return;
+      }
+
+      await this.handleScriptEditorPackImport(files);
+      return;
+    }
+
+    if (target.matches("[data-script-editor-project-field]")) {
+      const field = target.dataset.scriptEditorProjectField;
+      if (field != null) {
+        this.applyScriptEditorProjectField(field, target.value);
+      }
+    }
   }
 
   scheduleCharacterDetailTransitionCleanup() {
@@ -841,6 +1200,636 @@ export class MainUiFlow {
     }
 
     return this.characters.find((character) => character.id === characterId) ?? null;
+  }
+
+  async handleScriptEditorAction(action) {
+    if (action === "new-project") {
+      this.scriptEditorProject = createDefaultScriptEditorProjectDefinition();
+      this.scriptEditorSelection = {
+        family: "storyPack",
+        entityId: null,
+      };
+      this.scriptEditorProjectDirectoryHandle = null;
+      this.scriptEditorExportDirectoryHandle = null;
+      this.scriptEditorNotice = {
+        tone: "success",
+        message: "Created a new script editor project.",
+      };
+      this.setScreen("script-editor-workspace");
+      return;
+    }
+
+    if (action === "open-project") {
+      this.overlayRoot
+        .querySelector("[data-script-editor-project-file]")
+        ?.click();
+      return;
+    }
+
+    if (action === "import-pack") {
+      this.overlayRoot
+        .querySelector("[data-script-editor-pack-file]")
+        ?.click();
+      return;
+    }
+
+    if (action === "continue-session") {
+      if (this.scriptEditorProject != null) {
+        this.scriptEditorNotice = null;
+        this.setScreen("script-editor-workspace");
+      }
+      return;
+    }
+
+    if (action === "back-to-landing") {
+      this.showScriptEditorLanding();
+      return;
+    }
+
+    if (action === "back-to-menu") {
+      this.showMainMenu();
+      return;
+    }
+
+    if (action === "save") {
+      await this.saveScriptEditorProject();
+      return;
+    }
+
+    if (action === "validate") {
+      this.runScriptEditorValidation();
+      return;
+    }
+
+    if (action === "export") {
+      await this.exportScriptEditorProject();
+      return;
+    }
+
+    if (action === "add-record") {
+      this.addScriptEditorRecord();
+      return;
+    }
+
+    if (action === "remove-record") {
+      this.removeScriptEditorRecord();
+      return;
+    }
+
+    if (action === "apply-record-json") {
+      this.applyScriptEditorRecordJson();
+    }
+  }
+
+  selectScriptEditorFamily(family, entityId = null) {
+    if (
+      this.scriptEditorProject == null ||
+      !isScriptEditorMinimalWorkflowFamily(family)
+    ) {
+      return;
+    }
+
+    if (family === "storyPack") {
+      this.scriptEditorSelection = {
+        family,
+        entityId: null,
+      };
+      this.scriptEditorNotice = null;
+      this.render();
+      return;
+    }
+
+    const records = listScriptEditorWorkflowFamilyRecords(
+      this.scriptEditorProject,
+      family
+    );
+    const resolvedEntityId =
+      records.find((record) => record.id === entityId)?.id ??
+      records[0]?.id ??
+      null;
+
+    this.scriptEditorSelection = {
+      family,
+      entityId: resolvedEntityId,
+    };
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  selectScriptEditorRecord(recordId) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family === "storyPack"
+    ) {
+      return;
+    }
+
+    this.scriptEditorSelection = {
+      family: this.scriptEditorSelection.family,
+      entityId: recordId,
+    };
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  addScriptEditorRecord() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family === "storyPack"
+    ) {
+      return;
+    }
+
+    const family = this.scriptEditorSelection.family;
+    const draft = createScriptEditorWorkflowRecordDraft(
+      family,
+      listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family).length
+    );
+
+    this.scriptEditorProject = upsertScriptEditorWorkflowRecord(
+      this.scriptEditorProject,
+      family,
+      draft
+    );
+    this.scriptEditorSelection = {
+      family,
+      entityId: draft.id,
+    };
+    this.scriptEditorNotice = {
+      tone: "success",
+      message: `Added a new ${this.getScriptEditorFamilyLabel(family)} record draft.`,
+    };
+    this.render();
+  }
+
+  removeScriptEditorRecord() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family === "storyPack" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    const family = this.scriptEditorSelection.family;
+    this.scriptEditorProject = removeScriptEditorWorkflowRecord(
+      this.scriptEditorProject,
+      family,
+      this.scriptEditorSelection.entityId
+    );
+    const nextRecords = listScriptEditorWorkflowFamilyRecords(
+      this.scriptEditorProject,
+      family
+    );
+    this.scriptEditorSelection = {
+      family,
+      entityId: nextRecords[0]?.id ?? null,
+    };
+    this.scriptEditorNotice = {
+      tone: "success",
+      message: `Removed the selected ${this.getScriptEditorFamilyLabel(family)} record.`,
+    };
+    this.render();
+  }
+
+  applyScriptEditorRecordJson() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family === "storyPack"
+    ) {
+      return;
+    }
+
+    const textarea = this.overlayRoot.querySelector("[data-script-editor-record-json]");
+    if (!(textarea instanceof globalThis.HTMLTextAreaElement)) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(textarea.value);
+      if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("Record JSON must be a single object.");
+      }
+      if (typeof parsed.id !== "string" || parsed.id.trim().length === 0) {
+        throw new Error("Record JSON must include a non-empty string id.");
+      }
+
+      const family = this.scriptEditorSelection.family;
+      this.scriptEditorProject = upsertScriptEditorWorkflowRecord(
+        this.scriptEditorProject,
+        family,
+        parsed
+      );
+      this.scriptEditorSelection = {
+        family,
+        entityId: parsed.id,
+      };
+      this.scriptEditorNotice = {
+        tone: "success",
+        message: `Applied JSON changes to ${this.getScriptEditorFamilyLabel(family)}:${parsed.id}.`,
+      };
+    } catch (error) {
+      this.scriptEditorNotice = {
+        tone: "warning",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to apply record JSON.",
+      };
+    }
+
+    this.render();
+  }
+
+  applyScriptEditorProjectField(field, value) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    const normalizedValue = value.trim();
+    const scenarioProfile = {
+      ...(this.scriptEditorProject.storyPack.scenarioProfile ?? {}),
+      initialLocation: {
+        ...(this.scriptEditorProject.storyPack.scenarioProfile?.initialLocation ?? {}),
+      },
+    };
+
+    let nextProject = this.scriptEditorProject;
+
+    switch (field) {
+      case "project.id":
+        nextProject = {
+          ...nextProject,
+          id: normalizedValue,
+        };
+        break;
+      case "project.title":
+        nextProject = {
+          ...nextProject,
+          title: value,
+        };
+        break;
+      case "project.description":
+        nextProject = {
+          ...nextProject,
+          description: normalizedValue.length === 0 ? undefined : value,
+        };
+        break;
+      case "storyPack.id":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          id: normalizedValue,
+        });
+        break;
+      case "storyPack.title":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          title: value,
+        });
+        break;
+      case "storyPack.description":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          description: normalizedValue.length === 0 ? undefined : value,
+        });
+        break;
+      case "scenarioProfile.id":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            id: normalizedValue,
+          },
+        });
+        break;
+      case "scenarioProfile.title":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            title: value,
+          },
+        });
+        break;
+      case "scenarioProfile.playerCharacterId":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            playerCharacterId: normalizedValue,
+          },
+        });
+        break;
+      case "scenarioProfile.chapterId":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            chapterId: normalizedValue,
+          },
+        });
+        break;
+      case "scenarioProfile.initialLocation.mapId":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            initialLocation: {
+              ...scenarioProfile.initialLocation,
+              mapId: normalizedValue,
+            },
+          },
+        });
+        break;
+      case "scenarioProfile.initialLocation.cityId":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            initialLocation: {
+              ...scenarioProfile.initialLocation,
+              cityId: normalizedValue,
+            },
+          },
+        });
+        break;
+      case "scenarioProfile.initialLocation.houseId":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            initialLocation: {
+              ...scenarioProfile.initialLocation,
+              houseId: normalizedValue.length === 0 ? null : normalizedValue,
+            },
+          },
+        });
+        break;
+      case "scenarioProfile.initialLocation.view":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            initialLocation: {
+              ...scenarioProfile.initialLocation,
+              view: normalizedValue,
+            },
+          },
+        });
+        break;
+      default:
+        return;
+    }
+
+    this.scriptEditorProject = nextProject;
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  runScriptEditorValidation() {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    const diagnostics = validateScriptEditorProjectForRuntimeExport(
+      this.scriptEditorProject
+    );
+    this.scriptEditorNotice =
+      diagnostics.length === 0
+        ? {
+            tone: "success",
+            message: "Runtime export validation passed for the bounded minimal workflow.",
+          }
+        : {
+            tone: "warning",
+            message: diagnostics[0]?.message ?? "Runtime export validation failed.",
+          };
+    this.render();
+  }
+
+  async saveScriptEditorProject() {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    try {
+      const result = await writeTextFilesWithDirectoryPicker(
+        serializeScriptEditorProjectToFiles(this.scriptEditorProject),
+        {
+          directoryHandle: this.scriptEditorProjectDirectoryHandle,
+          suggestedName: this.scriptEditorProject.id,
+          downloadPrefix: this.scriptEditorProject.id,
+        }
+      );
+      this.scriptEditorProjectDirectoryHandle = result.directoryHandle ?? null;
+      this.scriptEditorNotice = {
+        tone: "success",
+        message:
+          result.mode === "directory"
+            ? "Saved the script editor project to the selected directory."
+            : "Downloaded the script editor project files.",
+      };
+    } catch (error) {
+      this.scriptEditorNotice = {
+        tone: "warning",
+        message:
+          error instanceof Error ? error.message : "Failed to save the script editor project.",
+      };
+    }
+
+    this.render();
+  }
+
+  async exportScriptEditorProject() {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    try {
+      const result = await writeTextFilesWithDirectoryPicker(
+        exportScriptEditorProjectToScenarioPackFiles(this.scriptEditorProject),
+        {
+          directoryHandle: this.scriptEditorExportDirectoryHandle,
+          suggestedName: this.scriptEditorProject.storyPack.id,
+          downloadPrefix: this.scriptEditorProject.storyPack.id,
+        }
+      );
+      this.scriptEditorExportDirectoryHandle = result.directoryHandle ?? null;
+      this.scriptEditorNotice = {
+        tone: "success",
+        message:
+          result.mode === "directory"
+            ? "Exported a runtime-compatible scenario pack."
+            : "Downloaded the runtime pack files.",
+      };
+    } catch (error) {
+      this.scriptEditorNotice = {
+        tone: "warning",
+        message:
+          error instanceof Error ? error.message : "Failed to export the runtime pack.",
+      };
+    }
+
+    this.render();
+  }
+
+  async handleScriptEditorProjectFileImport(files) {
+    try {
+      this.scriptEditorProject = await loadScriptEditorProjectFromFiles(files);
+      this.scriptEditorSelection = {
+        family: "storyPack",
+        entityId: null,
+      };
+      this.scriptEditorProjectDirectoryHandle = null;
+      this.scriptEditorNotice = {
+        tone: "success",
+        message: "Opened the script editor project.",
+      };
+      this.setScreen("script-editor-workspace");
+    } catch (error) {
+      this.scriptEditorNotice = {
+        tone: "warning",
+        message:
+          error instanceof Error ? error.message : "Failed to open the script editor project.",
+      };
+      this.render();
+    }
+  }
+
+  async handleScriptEditorPackImport(files) {
+    try {
+      this.scriptEditorProject = await loadScriptEditorProjectFromScenarioPackFiles(files);
+      this.scriptEditorSelection = {
+        family: "storyPack",
+        entityId: null,
+      };
+      this.scriptEditorExportDirectoryHandle = null;
+      this.scriptEditorNotice = {
+        tone: "success",
+        message: "Imported the runtime pack into the bounded authoring project.",
+      };
+      this.setScreen("script-editor-workspace");
+    } catch (error) {
+      this.scriptEditorNotice = {
+        tone: "warning",
+        message:
+          error instanceof Error ? error.message : "Failed to import the runtime pack.",
+      };
+      this.render();
+    }
+  }
+
+  getScriptEditorFamilyLabel(family) {
+    switch (family) {
+      case "storyPack":
+        return "Story Pack";
+      case "people":
+        return "People";
+      case "textEntries":
+        return "Text Entries";
+      case "storyNodes":
+        return "Story Nodes";
+      case "events":
+        return "Events";
+      default:
+        return family;
+    }
+  }
+
+  getScriptEditorRecordLabel(record) {
+    if (typeof record.name === "string" && record.name.length > 0) {
+      return record.name;
+    }
+    if (typeof record.title === "string" && record.title.length > 0) {
+      return record.title;
+    }
+    if (typeof record.text === "string" && record.text.length > 0) {
+      return record.text.slice(0, 40);
+    }
+    return record.id;
+  }
+}
+
+async function writeTextFilesWithDirectoryPicker(
+  files,
+  options = {}
+) {
+  const directoryPicker =
+    typeof globalThis.showDirectoryPicker === "function"
+      ? globalThis.showDirectoryPicker.bind(globalThis)
+      : typeof globalThis.window?.showDirectoryPicker === "function"
+        ? globalThis.window.showDirectoryPicker.bind(globalThis.window)
+        : null;
+
+  if (options.directoryHandle != null) {
+    await writeTextFilesToDirectory(options.directoryHandle, files);
+    return {
+      mode: "directory",
+      directoryHandle: options.directoryHandle,
+    };
+  }
+
+  if (directoryPicker == null) {
+    triggerFileDownloads(files, options.downloadPrefix);
+    return {
+      mode: "download",
+      directoryHandle: null,
+    };
+  }
+
+  const directoryHandle = await directoryPicker({
+    id: "script-editor-workflow",
+    mode: "readwrite",
+  });
+  await writeTextFilesToDirectory(directoryHandle, files);
+  return {
+    mode: "directory",
+    directoryHandle,
+  };
+}
+
+async function writeTextFilesToDirectory(directoryHandle, files) {
+  for (const [relativePath, content] of Object.entries(files)) {
+    const pathSegments = relativePath.split("/").filter(Boolean);
+    const fileName = pathSegments.pop();
+    if (fileName == null) {
+      continue;
+    }
+
+    let currentDirectoryHandle = directoryHandle;
+    for (const segment of pathSegments) {
+      currentDirectoryHandle = await currentDirectoryHandle.getDirectoryHandle(segment, {
+        create: true,
+      });
+    }
+
+    const fileHandle = await currentDirectoryHandle.getFileHandle(fileName, {
+      create: true,
+    });
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+  }
+}
+
+function triggerFileDownloads(files, downloadPrefix = "script-editor") {
+  for (const [relativePath, content] of Object.entries(files)) {
+    const downloadName = `${downloadPrefix}-${relativePath.replaceAll("/", "__")}`;
+    const link = globalThis.document?.createElement("a");
+    if (link == null) {
+      continue;
+    }
+    const url = globalThis.URL.createObjectURL(
+      new Blob([content], { type: "application/json" })
+    );
+    link.href = url;
+    link.download = downloadName;
+    globalThis.document.body.append(link);
+    link.click();
+    link.remove();
+    globalThis.setTimeout(() => {
+      globalThis.URL.revokeObjectURL(url);
+    }, 0);
   }
 }
 

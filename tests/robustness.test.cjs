@@ -2745,6 +2745,269 @@ test(
 );
 
 test(
+  "script editor compatibility import maps the bounded direct-family runtime pack slice into an authoring project",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        exportScriptEditorProjectToScenarioPackFiles(project),
+        "imported-scenario-pack"
+      )
+    );
+
+    assert.equal(importedProject.kind, "script-editor-project");
+    assert.equal(importedProject.id, project.storyPack.id);
+    assert.equal(importedProject.title, project.storyPack.title);
+    assert.equal(
+      importedProject.storyPack.basePackId,
+      "content-pack.base-game.zhuyuanzhang"
+    );
+    assert.deepEqual(
+      importedProject.storyPack.scenarioProfile,
+      project.storyPack.scenarioProfile
+    );
+    assert.equal(importedProject.people[0]?.id, "person.hero");
+    assert.equal(importedProject.cities[0]?.id, "city.start");
+    assert.equal(importedProject.buildings[0]?.id, "building.home");
+    assert.equal(importedProject.events[0]?.id, "event.opening");
+    assert.equal(importedProject.quests[0]?.id, "quest.first");
+    assert.deepEqual(importedProject.dialogues, []);
+    assert.deepEqual(importedProject.minigames, []);
+    assert.deepEqual(importedProject.storyNodes, []);
+    assert.equal(importedProject.textEntries[0]?.id, "text.opening");
+    assert.equal(importedProject.textEntries[0]?.text, "Opening line.");
+    assert.deepEqual(importedProject.conditionGroups, []);
+    assert.deepEqual(importedProject.effectBundles, []);
+  }
+);
+
+test(
+  "script editor compatibility import preserves unresolved runtime-only families as explicit residue",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+      validateScenarioPackForScriptEditorImport,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+
+    manifest.files.activities = "./activities.json";
+    serializedFiles["pack.json"] = `${JSON.stringify(manifest, null, 2)}\n`;
+    serializedFiles["scenes.json"] = `${JSON.stringify(
+      [{ id: "scene.unsupported.opening", name: "Unsupported Scene" }],
+      null,
+      2
+    )}\n`;
+    serializedFiles["activities.json"] = `${JSON.stringify(
+      [{ id: "activity.unsupported.demo", label: "Unsupported Activity" }],
+      null,
+      2
+    )}\n`;
+
+    const importedFiles = createImportedFilesFromSerializedJsonRecord(
+      serializedFiles,
+      "imported-scenario-pack"
+    );
+    const pack = await loadScenarioPackFromFiles(importedFiles);
+    const diagnostics = validateScenarioPackForScriptEditorImport(pack);
+
+    assert.deepEqual(
+      diagnostics.map((diagnostic) => diagnostic.fieldPath),
+      ["pack.scenes", "pack.activities"]
+    );
+    assert.equal(
+      diagnostics.every((diagnostic) => diagnostic.code === "unsupported-family"),
+      true
+    );
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      importedFiles
+    );
+
+    assert.deepEqual(importedProject.dialogues, []);
+    assert.deepEqual(importedProject.minigames, []);
+    assert.deepEqual(importedProject.storyNodes, []);
+    assert.deepEqual(
+      importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.scenes,
+      [{ id: "scene.unsupported.opening", name: "Unsupported Scene" }]
+    );
+    assert.deepEqual(
+      importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.activities,
+      [{ id: "activity.unsupported.demo", label: "Unsupported Activity" }]
+    );
+    assert.deepEqual(
+      importedProject.storyPack.compatibilityImport?.diagnostics?.map(
+        (diagnostic) => diagnostic.fieldPath
+      ),
+      ["pack.scenes", "pack.activities"]
+    );
+  }
+);
+
+test("script editor workspace shell builds a reusable object-tree scaffold", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "people",
+      entityId: "person.hero",
+    },
+  });
+
+  assert.equal(workspace.selection.family, "people");
+  assert.equal(workspace.selection.entityId, "person.hero");
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "ready");
+  assert.equal(workspace.navigationItems.find((item) => item.id === "authoring")?.isActive, true);
+  assert.equal(
+    workspace.objectTreeGroups[0]?.nodes.some((node) => node.family === "storyPack"),
+    true
+  );
+  assert.equal(workspace.inspector.title, "Hero");
+  assert.match(workspace.inspector.cards[0]?.body ?? "", /id: person\.hero/);
+});
+
+test("script editor workspace shell surfaces export blockers and compatibility residue", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.conditionGroups = [{ id: "condition.unsupported", operator: "all" }];
+  project.storyPack.compatibilityImport = {
+    unresolvedFamilies: {
+      scenes: [{ id: "scene.unsupported.opening" }],
+    },
+  };
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
+  assert.equal(
+    workspace.badges.some((badge) => /兼容残留/.test(badge.label)),
+    true
+  );
+  assert.equal(workspace.handoffSummary.blockedCount > 0, true);
+  assert.equal(workspace.objectTreeGroups[2]?.nodes.some((node) => node.tone === "warning"), true);
+  assert.match(workspace.inspector.cards[1]?.body ?? "", /fail closed|阻塞/i);
+});
+
+test(
+  "script editor minimal workflow seeds an exportable default project and bounded visible families",
+  () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+      getScriptEditorWorkflowVisibleFamilies,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      validateScriptEditorProjectForRuntimeExport,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      createScriptEditorWorkspaceShellViewModel,
+    } = require("../.test-dist/application/script-editor/workspace-shell.js");
+    const project = createDefaultScriptEditorProjectDefinition({
+      idBase: "queue-minimal",
+      title: "Queue Minimal",
+    });
+
+    const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+    const workspace = createScriptEditorWorkspaceShellViewModel({
+      project,
+      visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
+    });
+    const visibleFamilies = workspace.objectTreeGroups.flatMap((group) =>
+      group.nodes.map((node) => node.family)
+    );
+
+    assert.deepEqual(diagnostics, []);
+    assert.equal(visibleFamilies.includes("storyPack"), true);
+    assert.equal(visibleFamilies.includes("people"), true);
+    assert.equal(visibleFamilies.includes("textEntries"), true);
+    assert.equal(visibleFamilies.includes("storyNodes"), true);
+    assert.equal(visibleFamilies.includes("events"), true);
+    assert.equal(visibleFamilies.includes("cities"), false);
+    assert.equal(visibleFamilies.includes("buildings"), false);
+  }
+);
+
+test("script editor minimal workflow record helpers support draft upsert and remove", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+    removeScriptEditorWorkflowRecord,
+    upsertScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  let project = createDefaultScriptEditorProjectDefinition();
+  const draft = createScriptEditorWorkflowRecordDraft("people", project.people.length);
+
+  project = upsertScriptEditorWorkflowRecord(project, "people", draft);
+  assert.equal(project.people.some((record) => record.id === draft.id), true);
+
+  project = upsertScriptEditorWorkflowRecord(project, "people", {
+    ...draft,
+    name: "Updated Person",
+  });
+  assert.equal(
+    project.people.find((record) => record.id === draft.id)?.name,
+    "Updated Person"
+  );
+
+  project = removeScriptEditorWorkflowRecord(project, "people", draft.id);
+  assert.equal(project.people.some((record) => record.id === draft.id), false);
+});
+
+test(
+  "script editor runtime export fails closed when imported compatibility residue is still unresolved",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+
+    manifest.files.scenes = "./scenes.json";
+    serializedFiles["pack.json"] = `${JSON.stringify(manifest, null, 2)}\n`;
+    serializedFiles["scenes.json"] = `${JSON.stringify(
+      [{ id: "scene.unsupported.opening", name: "Unsupported Scene" }],
+      null,
+      2
+    )}\n`;
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "imported-scenario-pack"
+      )
+    );
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(importedProject),
+      /compatibilityImport|pack\.scenes|unresolved/i
+    );
+  }
+);
+
+test(
   "script editor project loader rejects missing canonical manifest file entries",
   async () => {
     const {

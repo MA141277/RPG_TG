@@ -11,23 +11,23 @@
 - next_decision: `same-version-admission-or-version-closeout`
 - next_action: `write-admission-review`
 - resume_gate: `promotion-review`
-- promotion_review_result: `none`
-- review_subject_id: `none`
-- review_subject_classification: `none`
-- proposed_queue_id: `none`
-- review_basis: `none`
-- admission_status: `none`
+- promotion_review_result: `candidate-recorded`
+- review_subject_id: `item.shared-condition-effect-authoring-integration`
+- review_subject_classification: `queue-candidate`
+- proposed_queue_id: `queue.shared-condition-effect-authoring-integration`
+- review_basis: `The first user-visible minimal workflow is now closed historical evidence. The only still-recorded open implementation candidate on current version truth is shared condition/effect authoring integration, so version-level review returns to that queue family as the next lawful recorded continuation.`
+- admission_status: `pending`
 - intake_status: `none`
 - intake_item_id: `none`
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.authoring-runtime-export-pipeline`
+- closure_review_subject: `queue.script-editor-minimal-usable-workflow`
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `The bounded export queue is now closed because the direct-mapping runtime-pack export seam and fail-closed validator assembly both landed. No still-blocking same-family export residue remains inside the admitted queue topic, so control lawfully returns to version-level promotion review. Compatibility import is the next smallest frozen-policy queue family to inspect because the export prerequisite for a real import -> edit -> export loop now exists while shared-rule integration remains a non-unconditional downstream prerequisite on current version truth.`
-- next_lawful_queue_recommendation: `queue.compatibility-import-adapter`
+- routing_basis: `queue.script-editor-minimal-usable-workflow is now closed historical evidence because one bounded first user-visible editor loop landed and verified without leaving still-blocking same-family residue. Remaining implementation work on current recorded candidate truth now routes back to shared condition/effect authoring integration rather than another same-family minimal-workflow continuation.`
+- next_lawful_queue_recommendation: `queue.shared-condition-effect-authoring-integration`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -43,15 +43,15 @@
 ### Admission Review Record
 
 - Scope approval:
-  - `This version remains opened for implementation on top of the frozen script-editor contract baseline, and the export pipeline queue is now closed historical evidence after the bounded first runtime-pack export slice landed.`
+  - `This version remains opened for implementation on top of the frozen script-editor contract baseline, and the bounded minimal usable workflow queue is now closed historical evidence rather than live execution truth.`
 - Admission basis:
-  - `target.script-editor-contract-freeze is already closed historical evidence and now acts as the mandatory frozen baseline for this successor implementation version. queue.editor-project-load-save-foundation and queue.authoring-runtime-export-pipeline have now both landed their bounded persistence/export slices, so the current version returns to promotion review to choose the next lawful queue family on top of those upstream seams.`
+  - `The creator-shell scaffold and project/export/import substrate were sufficient to land one bounded first user-visible workflow, and that loop is now implemented and verified. The remaining recorded implementation work therefore returns to version-level review instead of staying on a minimal-workflow queue.`
 - Admission conclusion:
-  - `queue.authoring-runtime-export-pipeline is now closed historical evidence after the repository gained one bounded script-editor project -> runtime-pack export seam plus fail-closed validation for deferred authoring families.`
+  - `queue.script-editor-minimal-usable-workflow is now closed historical evidence after the first bounded user-visible script-editor loop landed, so no active queue remains on current version truth.`
 - Current handoff:
-  - `No active queue remains for this version right now; control has returned to version-level promotion review.`
-  - `The current lawful step is to resume this version plan, inspect queue.compatibility-import-adapter first as the next lawful recommendation, and decide whether fresh evidence confirms that it is the next smallest admissible cut.`
-- `The current live candidate set contains the first bounded implementation queues on written source truth.`
+  - `No active queue remains after queue.script-editor-minimal-usable-workflow closeout.`
+  - `The current lawful step is to resume version-level promotion review under docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md.`
+  - `queue.shared-condition-effect-authoring-integration is the next lawful recorded queue candidate to inspect on current version truth.`
 
 ### Queue Promotion Ledger
 
@@ -59,9 +59,9 @@
 | --- | --- | --- | --- |
 | `queue.editor-project-load-save-foundation` | `done` | `only if fresh evidence later disproves the landed manifest-driven authoring-project persistence seam or proves a new still-open same-family persistence residue inside the bounded topic surface` | `Closed on 2026-07-13 after the repository gained one script-editor project contract, imported-directory hydration, canonical split-file save output, and bounded validation coverage. The remaining version work now belongs to export, compatibility import, shared-rule integration, or UI workflow queue families rather than another same-family persistence continuation.` |
 | `queue.authoring-runtime-export-pipeline` | `done` | `only if fresh evidence later disproves the landed export seam or proves a new still-open same-family export residue inside the bounded topic surface after closeout` | `Closed on 2026-07-13 after the repository gained one bounded script-editor project -> runtime-compatible scenario-pack export seam, fail-closed validator coverage for deferred authoring families, and fresh verification. The remaining version work now belongs to compatibility import, shared-rule integration, or UI/product workflow queue families rather than another same-family export continuation.` |
-| `queue.compatibility-import-adapter` | `candidate-recorded` | `when version-level review selects existing-pack compatibility import as the smallest lawful next cut` | `Owns compatibility import path according to the frozen import/export policy.` |
-| `queue.shared-condition-effect-authoring-integration` | `candidate-recorded` | `when version-level review selects shared rule authoring/validation integration as the smallest lawful next cut` | `Owns shared condition/effect authoring path on top of the frozen shared-rule contract.` |
-| `queue.script-editor-ui-shell-and-core-workflow` | `candidate-recorded` | `when version-level review selects creator-facing editor shell and reusable editing workspace framing as the smallest lawful next cut` | `Owns the bounded editor-shell layer on top of the frozen baseline: reusable workspace frame, top-level navigation chrome, object-tree shell, and creator-facing layout scaffolding without re-owning persistence, export, compatibility-import, or the full minimal usable product loop.` |
+| `queue.compatibility-import-adapter` | `done` | `only if fresh evidence later disproves the landed compatibility-import seam or proves a new still-open same-family compatibility residue inside the bounded topic surface after closeout` | `Closed on 2026-07-13 after the repository gained one bounded runtime scenario-pack -> script-editor project importer seam, explicit unresolved-runtime residue preservation inside the editor project, and fail-closed runtime export coverage that prevents silent loss while later queues resolve richer authoring semantics.` |
+| `queue.shared-condition-effect-authoring-integration` | `candidate-recorded` | `when version-level review selects shared rule authoring/validation integration as the smallest lawful next cut` | `Owns shared condition/effect authoring path on top of the frozen shared-rule contract and is now the only still-recorded open implementation queue candidate after the first minimal workflow closed.` |
+| `queue.script-editor-ui-shell-and-core-workflow` | `done` | `only if fresh evidence later disproves the landed creator-shell scaffold or proves a new still-open same-family shell residue inside the bounded topic surface after closeout` | `Closed on 2026-07-13 after the repository gained one reusable script-editor workspace shell view-model, creator-facing shell render scaffold, object-tree shell, and handoff summary surface. The remaining version work now belongs to the minimal usable product workflow or later shared-rule/product-facing queues rather than another same-family creator-shell continuation.` |
 | `queue.script-editor-minimal-usable-workflow` | `candidate-recorded` | `when version-level review selects the first user-visible minimal script-editor loop as the smallest lawful next cut after prerequisite seams already exist` | `Owns the bounded minimal usable editor path: main-menu "剧本编辑器" entry, landing page actions, project-first editing flow, minimal object set, validation handoff, and export handoff while consuming rather than re-owning upstream persistence/export/import seams. Admission should wait until the persistence seam is landed, export is landed, compatibility import is either landed or explicitly proven non-blocking for the chosen first loop, and the queue can close on one user-visible workflow rather than broad editor polish.` |
 
 ### Candidate Classification Record
@@ -71,15 +71,15 @@
 | `item.script-editor-implementation-version-open` | `current-target-item` | `none` | `version opened with no active queue` | `The predecessor freeze version is closed, and this successor version now governs implementation on the frozen baseline.` |
 | `item.editor-project-load-save-foundation` | `queue-candidate` | `queue.editor-project-load-save-foundation` | `admitted + queue closed` | `A bounded project load/save and validation foundation is a lawful first implementation cut on top of the frozen authoring contract, and it is now closed historical evidence after the bounded persistence seam landed and verified.` |
 | `item.authoring-runtime-export-pipeline` | `queue-candidate` | `queue.authoring-runtime-export-pipeline` | `admitted + queue closed` | `A bounded export pipeline and validator path was required to make the frozen mapping contract executable, and it is now closed historical evidence after the repository gained one bounded export seam plus fail-closed validator coverage.` |
-| `item.compatibility-import-adapter` | `queue-candidate` | `queue.compatibility-import-adapter` | `candidate-recorded` | `Existing-pack import compatibility must be implemented according to the frozen compatibility/import-export policy.` |
+| `item.compatibility-import-adapter` | `queue-candidate` | `queue.compatibility-import-adapter` | `admitted + queue closed` | `Existing-pack import compatibility was implemented according to the frozen compatibility/import-export policy, and it is now closed historical evidence after direct-family import, unresolved residue preservation, and fail-closed export verification landed.` |
 | `item.shared-condition-effect-authoring-integration` | `queue-candidate` | `queue.shared-condition-effect-authoring-integration` | `candidate-recorded` | `Shared condition/effect authoring must be implemented on the frozen shared-rule baseline rather than through host-local rule dialects.` |
-| `item.script-editor-ui-shell-and-core-workflow` | `queue-candidate` | `queue.script-editor-ui-shell-and-core-workflow` | `candidate-recorded` | `A bounded creator-facing editor shell is required so later workflow-focused queue cuts can land on one reusable workspace frame instead of rebuilding editor chrome inside each product-facing slice.` |
-| `item.script-editor-minimal-usable-workflow` | `queue-candidate` | `queue.script-editor-minimal-usable-workflow` | `candidate-recorded` | `A bounded minimal usable editor loop is required so the repository can expose one user-visible path from the main menu into a script-editor workspace that can create or open a project, edit the minimal object set, validate, and hand off to export without widening into full product polish.` |
+| `item.script-editor-ui-shell-and-core-workflow` | `queue-candidate` | `queue.script-editor-ui-shell-and-core-workflow` | `admitted + queue closed` | `A bounded creator-facing editor shell was required so later workflow-focused queue cuts can land on one reusable workspace frame instead of rebuilding editor chrome inside each product-facing slice, and it is now closed historical evidence after the shell scaffold landed.` |
+| `item.script-editor-minimal-usable-workflow` | `queue-candidate` | `queue.script-editor-minimal-usable-workflow` | `admitted + queue closed` | `A bounded minimal usable editor loop was required so the repository could expose one user-visible path from the main menu into a script-editor workspace that can create or open a project, edit the minimal object set, validate, and hand off to export without widening into full product polish, and it is now closed historical evidence after that loop landed with verification.` |
 
 ### Candidate Scope Notes
 
-- `queue.script-editor-ui-shell-and-core-workflow` remains the narrower creator-shell candidate. It may own reusable workspace framing, navigation chrome, object-tree layout, and editor-page scaffolding, but it must not be treated as the sole owner of the user-visible minimal product loop.`
-- `queue.script-editor-minimal-usable-workflow` remains candidate-recorded only and must not be admitted early while compatibility-import or any required shared-rule prerequisites still lack the implementation evidence required for a minimal usable editor loop.`
+- `queue.script-editor-ui-shell-and-core-workflow` is now closed historical evidence. Its landed shell scaffold may be consumed by later workflow queues, but it must not be retroactively stretched into the sole owner of the user-visible minimal product loop.`
+- `queue.script-editor-minimal-usable-workflow` is now closed historical evidence after the first bounded user-visible editor loop landed and verified; later product-facing work must not silently reopen that queue surface by convenience.`
 - `When queue.script-editor-minimal-usable-workflow is later admitted, the shortest user-visible workflow should be: main-menu "剧本编辑器" entry -> editor landing page with "新建剧本项目 / 打开剧本项目 / 导入现有剧本包" -> project-first workspace shell -> minimal object tree -> validation/export handoff.`
 - `The minimal object tree for queue.script-editor-minimal-usable-workflow should stay bounded to 项目 / 人物 / 文本 / 剧情节点 / 事件, with the default in-editor landing surface on 项目 so new-project, open-project, and import-project flows all converge on one stable first page.`
 - `The creator guidance path inside queue.script-editor-minimal-usable-workflow should stay bounded to 项目 -> 人物 -> 文本 -> 剧情节点 -> 事件 -> 校验 -> 导出, while still allowing direct navigation through the object tree instead of forcing a modal wizard.`
@@ -131,8 +131,8 @@
 
 ### Candidate Recovery Rule Addendum
 
-- `All six first-wave implementation queues remain live candidate truth in this version plan, but no active queue currently exists because queue.authoring-runtime-export-pipeline has now closed.`
-- `queue.editor-project-load-save-foundation and queue.authoring-runtime-export-pipeline are both closed historical evidence; new implementation authority must now come from the next version-level promotion-review decision rather than an already-active queue doc.`
+- `All six first-wave implementation queues remain live candidate truth in this version plan, and no active queue currently exists.`
+- `queue.editor-project-load-save-foundation`, `queue.authoring-runtime-export-pipeline`, `queue.compatibility-import-adapter`, and `queue.script-editor-ui-shell-and-core-workflow` are now closed historical evidence; new implementation authority must come from a later promotion review outcome rather than an already-active queue.`
 - `Resume from this version plan's recorded candidate ledger unless new material evidence invalidates the bounded implementation split or proves a different smaller lawful first cut.`
 - `Any evidence that the frozen baseline is insufficient must route to explicit governance rather than silent implementation drift.`
 
@@ -187,3 +187,8 @@
 - `2026-07-13: queue.editor-project-load-save-foundation then closed after script-editor project contract, manifest hydration, canonical split-file save output, and bounded validation coverage landed with fresh verification; control returned to version-level promotion review with queue.authoring-runtime-export-pipeline selected as the next pending admission-review subject.`
 - `2026-07-13: the pending admission review for queue.authoring-runtime-export-pipeline was then concluded internally, the queue was admitted as the next single active implementation queue, the queue doc was created, and execution moved to export-pipeline baseline reconcile before code implementation continues.`
 - `2026-07-13: queue.authoring-runtime-export-pipeline then closed after the bounded direct-family runtime-pack export seam and fail-closed validator assembly landed with fresh verification; control returned to version-level promotion review with queue.compatibility-import-adapter as the next lawful recommendation to inspect.`
+- `2026-07-13: the pending admission review for queue.compatibility-import-adapter was then concluded internally, the queue was admitted as the next single active implementation queue, the queue doc was created, and execution moved to compatibility-import baseline reconcile before code implementation continues.`
+- `2026-07-13: task.compatibility-import-adapter.direct-family-import-and-compatibility-diagnostics then landed one bounded manifest-driven runtime-pack -> script-editor project importer seam plus explicit unresolved-family diagnostics, and the active queue now advances to queue-closeout-and-handoff for residue classification and synchronized handoff truth.`
+- `2026-07-13: queue.compatibility-import-adapter then closed after unresolved runtime-only families began importing as explicit editor-project compatibility residue and runtime export began failing closed on unresolved imported residue, so control returned to version-level promotion review with no active queue.`
+- `2026-07-13: queue.script-editor-ui-shell-and-core-workflow was then admitted as the narrower creator-shell continuation, landed one reusable workspace shell/object-tree/handoff scaffold on top of the existing project/export/import seams, and then closed as historical evidence with queue.script-editor-minimal-usable-workflow recorded as the next recommended continuation.`
+- `2026-07-13: queue.script-editor-minimal-usable-workflow then landed one bounded first user-visible script-editor loop from main-menu entry through project-first workspace, bounded object editing, and visible save/validate/export handoff, and then closed with no same-family residue; control now returns to version-level promotion review with queue.shared-condition-effect-authoring-integration recorded as the next lawful candidate to inspect.`

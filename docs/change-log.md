@@ -15,6 +15,70 @@
 
 ## 2026-07-13 Script Editor Export Queue Closeout
 
+## 2026-07-13 Script Editor Compatibility Import Queue Closeout
+
+## 2026-07-13 Script Editor UI Shell Queue Closeout
+
+## 2026-07-13 Script Editor Minimal Workflow Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)，把最小可用 workflow 的默认项目模板、可见 family 边界、以及 bounded record draft/upsert/remove helper 收口为单独应用层模块，供主菜单入口工作流直接复用。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `剧本编辑器` 主菜单入口、landing page 的 `新建/打开/导入` 动作、project-first workspace、最小对象编辑、以及 `保存 / 校验 / 导出` handoff 全部接入现有 overlay/action/file-input 流。
+- 更新 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css) 与 [src/styles/app.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/app.css)，补齐 minimal workflow 的入口页、workspace chrome、notice、form grid、record list、以及 JSON editor 样式。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 default minimal workflow project exportability、visible family filtering、以及 bounded record helper 的回归覆盖。
+- 更新 [docs/blueprints/queues/script-editor-minimal-usable-workflow-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-minimal-usable-workflow-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-minimal-usable-workflow` 从 active 收口为 done，并把 live version 入口切回无 active queue 的 promotion review。
+
+### Impact
+- 当前 implementation version 已拥有第一个真正对用户可见的 script-editor workflow，而不是只有 persistence / export / compatibility / creator-shell 基底；用户现在可以从主菜单进入编辑器，创建或打开项目，并在同一路径里完成保存、校验和导出 handoff。
+- `queue.script-editor-minimal-usable-workflow` 已变为关闭历史证据；后续恢复入口不再是 queue doc，而是 implementation version plan 的 promotion review。
+- 当前版本里唯一仍被记录为 open 的实现候选重新回到 `queue.shared-condition-effect-authoring-integration`，后续若要继续扩大 script-editor 可编辑语义，需要先经过 version-level review，而不是在已关闭的 first-loop queue 上继续漂移。
+
+### Changed
+- 新增 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，落地首个 project-backed script-editor workspace shell view-model：在不进入主菜单工作流的前提下，统一汇总对象树分组、选中对象摘要、导出 handoff 状态，以及 compatibility residue 摘要。
+- 新增 [src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts) 与 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，补齐 creator-facing workspace shell、top navigation chrome、object-tree scaffold、inspector cards 与 handoff summary 的壳层表现。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 script-editor workspace shell 的对象树 scaffold 与 export blocker / compatibility residue surfacing 回归覆盖。
+- 新增 [docs/blueprints/queues/script-editor-ui-shell-and-core-workflow-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-ui-shell-and-core-workflow-queue.md)，并同步更新 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-ui-shell-and-core-workflow` 记为完成并把 live version 入口切回无 active queue 的 promotion review。
+
+### Impact
+- 当前 implementation version 已拥有可复用的 script-editor creator shell，而不是只有 persistence / export / import 底层 seam；后续 product-facing workflow 不需要再重建 editor chrome、对象树与 handoff 摘要。
+- `queue.script-editor-ui-shell-and-core-workflow` 已变为关闭历史证据；后续恢复入口重新回到 implementation version plan 的 promotion review。
+- 下一条更大的候选现在可以直接评估 `queue.script-editor-minimal-usable-workflow`，因为 creator-shell 基底已经落地，而 shared-rule/product scope 是否需要进一步前置约束也能在 version-level review 中继续裁定。
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，将 unresolved runtime-only families 从“导入时报错拒绝”推进为“导入时保留到 `storyPack.compatibilityImport` 的 `unresolvedFamilies` 与 `diagnostics`”，让现有 scenario pack 可以进入 editor project 而不丢失原始 runtime payload。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，当 imported compatibility residue 仍未被后续队列解析时，runtime export 会显式 fail closed，避免把保留下来的 runtime-only payload 静默丢出导出结果。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 unresolved runtime-only family residue preservation 与 imported residue export fail-closed 的回归覆盖。
+- 更新 [docs/blueprints/queues/compatibility-import-adapter-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/compatibility-import-adapter-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.compatibility-import-adapter` 从 active 收口为 done，并把 live version 入口切回无 active queue 的 promotion review。
+
+### Impact
+- 当前 implementation version 已满足 compatibility-import queue 的 bounded closeout：现有 runtime scenario pack 可以被非破坏性导入，未解析家族不会丢失，而且在后续 authoring/export 仍未支持前不会被误导出。
+- `queue.compatibility-import-adapter` 已变为关闭历史证据；后续恢复入口不再是 queue doc，而是 implementation version plan 的 promotion review。
+- script-editor 的三条上游 seam 现在都已落地：authoring-project persistence、runtime-pack export、以及 compatibility import。下一条 queue 需要由 version-level review 在 shared-rule / creator-shell / minimal-workflow 候选之间继续裁定。 
+
+## 2026-07-13 Script Editor Compatibility Import Direct Slice
+
+### Changed
+- 新增 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，落地首个 bounded `scenario pack -> script-editor project` compatibility importer：只导入 frozen direct families，并保留 `pack.json` 中的 `basePackId` / `author` / `version` / `tags` 到 `storyPack` 侧元数据。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 direct-family 导入成功与 unresolved runtime-only family fail-closed 诊断回归覆盖。
+- 更新 [docs/blueprints/queues/compatibility-import-adapter-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/compatibility-import-adapter-queue.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将 `task.compatibility-import-adapter.direct-family-import-and-compatibility-diagnostics` 记为完成，并把当前 active task 推进到 queue closeout/handoff。
+
+### Impact
+- 当前 implementation version 已拥有真实的 compatibility-import seam：一个 manifest-driven runtime scenario pack 现在可以被解释成 bounded `ScriptEditorProjectDefinition`，而不是只停留在蓝图契约层。
+- `scenes`、`activities` 以及其他 unresolved runtime-only families 不会再被静默丢弃；当前实现会用显式诊断拒绝导入，为后续 same-family residue routing 提供可验证真值。
+- 当前 live queue 仍是 `queue.compatibility-import-adapter`，但代码实现任务已完成，下一步只剩队列 closeout、残留归类与后续 lawful continuation 的治理同步。 
+
+## 2026-07-13 Script Editor Compatibility Import Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/compatibility-import-adapter-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/compatibility-import-adapter-queue.md)，把 `queue.compatibility-import-adapter` 的 queue goal、task ledger、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、[docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、以及 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将当前 implementation version 从 `promotion-review` 切换回 `active-execution`，并把 `queue.compatibility-import-adapter` 设为单一 active queue。
+- 将当前执行切口明确冻结为“manifest-driven runtime-pack compatibility import + unresolved-family diagnostics”，只承接 scenario-pack -> script-editor project 的 direct-family import 与显式兼容诊断，不提前吸收 export redesign、shared-rule integration 或 creator-facing UI workflow。
+
+### Impact
+- Blueprint 当前不再停在 export queue closeout 之后的 version review；实现版已经重新进入 `active-execution`，恢复入口切到 `task.compatibility-import-adapter.direct-family-import-and-compatibility-diagnostics`。
+- 当前 live queue 已明确先解决“现有 scenario-pack 如何进入 editor project”这个 importer-first 入口，而不是提前把 shared-rule、UI 或第二轮 export 扩张混入同一条执行线。
+- 最小可用 script-editor workflow 的默认 `导入现有剧本包` 前置路径现在已有独立 queue truth，后续兼容导入实现不需要再从会话 prose 重新整理边界。 
+
 ### Changed
 - 新增 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，落地首个 bounded `script-editor project -> runtime-compatible scenario pack` 导出缝：直接映射 `storyPack -> pack.json/scenario-profile.json`、`people -> characters.json`、`cities -> cities.json`、`buildings -> houses.json`、`events -> events.json`、`quests -> tasks.json`、`textEntries -> text-entries.json`，并补齐运行时必需的空 `scenes.json`。
 - 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增导出成功、deferred family fail-closed、以及 opening scenario profile 缺失字段拒绝导出的回归覆盖。

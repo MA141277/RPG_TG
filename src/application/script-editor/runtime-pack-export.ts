@@ -89,6 +89,8 @@ export function validateScriptEditorProjectForRuntimeExport(
     }
   }
 
+  appendCompatibilityImportResidueDiagnostics(project.storyPack, diagnostics);
+
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
   const exportedTextEntries = mapTextEntries(project.textEntries, diagnostics);
 
@@ -374,6 +376,42 @@ function readNullableString(
   }
 
   return value;
+}
+
+function appendCompatibilityImportResidueDiagnostics(
+  storyPack: ScriptEditorStoryPackRecord,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  const compatibilityImport = storyPack["compatibilityImport"];
+  if (
+    compatibilityImport == null ||
+    typeof compatibilityImport !== "object" ||
+    Array.isArray(compatibilityImport)
+  ) {
+    return;
+  }
+
+  const unresolvedFamilies = (compatibilityImport as Record<string, unknown>)[
+    "unresolvedFamilies"
+  ];
+  if (
+    unresolvedFamilies == null ||
+    typeof unresolvedFamilies !== "object" ||
+    Array.isArray(unresolvedFamilies)
+  ) {
+    return;
+  }
+
+  for (const familyKey of Object.keys(
+    unresolvedFamilies as Record<string, unknown>
+  ).sort()) {
+    diagnostics.push({
+      code: "unsupported-family",
+      fieldPath: `project.storyPack.compatibilityImport.unresolvedFamilies.${familyKey}`,
+      message:
+        `Unresolved imported runtime family "${familyKey}" must be resolved or preserved by a later compatibility/export step before runtime export can proceed.`,
+    });
+  }
 }
 
 function formatDiagnostics(

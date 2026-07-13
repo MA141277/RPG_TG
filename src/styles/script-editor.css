@@ -1,0 +1,448 @@
+.c-script-editor-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100vh;
+  padding: 32px;
+  color: #f2eadc;
+  background:
+    radial-gradient(circle at top left, rgba(177, 124, 62, 0.24), transparent 32%),
+    linear-gradient(145deg, #1d1712 0%, #2b2119 45%, #17120f 100%);
+}
+
+.c-script-editor-shell__header {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid rgba(226, 196, 142, 0.22);
+  border-radius: 24px;
+  background: rgba(34, 24, 17, 0.9);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.c-script-editor-shell__eyebrow,
+.c-script-editor-shell__inspector-eyebrow,
+.c-script-editor-shell__handoff-eyebrow {
+  margin: 0;
+  color: #cfa868;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.c-script-editor-shell__title,
+.c-script-editor-shell__inspector-title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.c-script-editor-shell__subtitle,
+.c-script-editor-shell__inspector-description,
+.c-script-editor-shell__handoff-message,
+.c-script-editor-shell__action p,
+.c-script-editor-tree-node__description,
+.c-script-editor-shell__card p {
+  margin: 0;
+  color: rgba(242, 234, 220, 0.76);
+  line-height: 1.6;
+}
+
+.c-script-editor-shell__badges,
+.c-script-editor-shell__nav,
+.c-script-editor-shell__toolbar,
+.c-script-editor-shell__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.c-script-editor-shell__badge,
+.c-script-editor-shell__nav-item,
+.c-script-editor-shell__action,
+.c-script-editor-tree-node,
+.c-script-editor-shell__card,
+.c-script-editor-shell__handoff-card,
+.c-script-editor-shell__inspector,
+.c-script-editor-shell__handoff,
+.c-script-editor-tree-group {
+  border: 1px solid rgba(226, 196, 142, 0.16);
+  border-radius: 18px;
+  background: rgba(62, 44, 29, 0.52);
+}
+
+.c-script-editor-shell__badge {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.c-script-editor-shell__badge--success {
+  background: rgba(49, 98, 68, 0.35);
+}
+
+.c-script-editor-shell__badge--warning {
+  background: rgba(120, 78, 28, 0.45);
+}
+
+.c-script-editor-shell__nav-item {
+  padding: 10px 16px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.c-script-editor-shell__nav-item.is-active,
+.c-script-editor-tree-node.is-selected {
+  border-color: rgba(226, 196, 142, 0.46);
+  background: rgba(124, 86, 39, 0.5);
+}
+
+.c-script-editor-shell__action {
+  flex: 1 1 220px;
+  padding: 16px;
+}
+
+.c-script-editor-shell__action--ready {
+  background: rgba(43, 85, 61, 0.24);
+}
+
+.c-script-editor-shell__action--attention {
+  background: rgba(111, 86, 35, 0.3);
+}
+
+.c-script-editor-shell__action--blocked {
+  background: rgba(105, 46, 33, 0.36);
+}
+
+.c-script-editor-shell__body {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.c-script-editor-shell__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.c-script-editor-tree-group {
+  padding: 16px;
+}
+
+.c-script-editor-tree-group__header h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.c-script-editor-tree-group__nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.c-script-editor-tree-node {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  padding: 12px 14px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.c-script-editor-tree-node--warning {
+  border-color: rgba(199, 145, 67, 0.36);
+}
+
+.c-script-editor-tree-node__label,
+.c-script-editor-shell__handoff-card strong,
+.c-script-editor-shell__card h3,
+.c-script-editor-shell__action strong {
+  font-size: 15px;
+}
+
+.c-script-editor-tree-node__count {
+  color: #e7c88b;
+  font-size: 14px;
+}
+
+.c-script-editor-tree-node__description {
+  grid-column: 1 / -1;
+  font-size: 13px;
+}
+
+.c-script-editor-shell__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+}
+
+.c-script-editor-shell__inspector,
+.c-script-editor-shell__handoff {
+  padding: 24px;
+}
+
+.c-script-editor-shell__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.c-script-editor-shell__stat {
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(22, 18, 14, 0.36);
+}
+
+.c-script-editor-shell__stat dt {
+  margin-bottom: 6px;
+  color: rgba(242, 234, 220, 0.62);
+  font-size: 12px;
+}
+
+.c-script-editor-shell__stat dd,
+.c-script-editor-shell__handoff-card span {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.c-script-editor-shell__card {
+  flex: 1 1 220px;
+  padding: 16px;
+}
+
+.c-script-editor-shell__card--warning {
+  background: rgba(105, 56, 28, 0.34);
+}
+
+.c-script-editor-shell__card--success {
+  background: rgba(32, 76, 54, 0.28);
+}
+
+.c-script-editor-shell__handoff-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.c-script-editor-shell__handoff-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.c-main-ui-screen--script-editor-flow {
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(182, 122, 42, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(14, 11, 9, 0.96), rgba(24, 19, 15, 0.98));
+}
+
+.c-script-editor-landing,
+.c-script-editor-workflow__chrome,
+.c-script-editor-workflow__editor {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.c-script-editor-landing {
+  display: grid;
+  gap: 24px;
+  padding: 32px;
+  border: 1px solid rgba(226, 196, 142, 0.16);
+  border-radius: 28px;
+  background: rgba(32, 23, 16, 0.9);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.c-script-editor-landing__header,
+.c-script-editor-editor-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.c-script-editor-landing__eyebrow,
+.c-script-editor-editor-card__eyebrow {
+  margin: 0 0 10px;
+  color: #d3ac70;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.c-script-editor-landing__title,
+.c-script-editor-editor-card__title {
+  margin: 0;
+  color: #f5ecde;
+  line-height: 1.1;
+}
+
+.c-script-editor-landing__title {
+  font-size: clamp(34px, 5vw, 54px);
+}
+
+.c-script-editor-landing__description,
+.c-script-editor-editor-card__hint {
+  margin: 0;
+  color: rgba(245, 236, 222, 0.76);
+  line-height: 1.7;
+}
+
+.c-script-editor-landing__actions,
+.c-script-editor-workflow__chrome-actions,
+.c-script-editor-editor-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.c-script-editor-workflow__chrome {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.c-script-editor-workflow__editor {
+  margin-top: 24px;
+}
+
+.c-script-editor-workflow__notice {
+  padding: 14px 16px;
+  border: 1px solid rgba(226, 196, 142, 0.2);
+  border-radius: 16px;
+  color: #f5ecde;
+  line-height: 1.6;
+  background: rgba(56, 41, 28, 0.9);
+}
+
+.c-script-editor-workflow__notice--success {
+  border-color: rgba(89, 150, 108, 0.42);
+  background: rgba(34, 78, 49, 0.74);
+}
+
+.c-script-editor-workflow__notice--warning {
+  border-color: rgba(199, 145, 67, 0.42);
+  background: rgba(90, 58, 23, 0.82);
+}
+
+.c-script-editor-editor-card {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid rgba(226, 196, 142, 0.16);
+  border-radius: 24px;
+  background: rgba(32, 23, 16, 0.92);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+
+.c-script-editor-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.c-script-editor-form-field {
+  display: grid;
+  gap: 8px;
+  color: #f5ecde;
+  font-size: 14px;
+}
+
+.c-script-editor-form-field__input,
+.c-script-editor-record-editor__textarea {
+  width: 100%;
+  border: 1px solid rgba(226, 196, 142, 0.18);
+  border-radius: 14px;
+  background: rgba(14, 11, 9, 0.72);
+  color: #f5ecde;
+  font: inherit;
+}
+
+.c-script-editor-form-field__input {
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.c-script-editor-record-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.c-script-editor-record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.c-script-editor-record-list__item {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(226, 196, 142, 0.14);
+  border-radius: 16px;
+  color: #f5ecde;
+  text-align: left;
+  background: rgba(62, 44, 29, 0.45);
+  cursor: pointer;
+}
+
+.c-script-editor-record-list__item.is-selected {
+  border-color: rgba(226, 196, 142, 0.42);
+  background: rgba(124, 86, 39, 0.42);
+}
+
+.c-script-editor-record-list__item span {
+  color: rgba(245, 236, 222, 0.62);
+  font-size: 13px;
+}
+
+.c-script-editor-record-editor__textarea {
+  min-height: 360px;
+  padding: 16px;
+  resize: vertical;
+  line-height: 1.6;
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+}
+
+@media (max-width: 1080px) {
+  .c-script-editor-shell__body,
+  .c-script-editor-shell__workspace,
+  .c-script-editor-record-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .c-script-editor-shell {
+    padding: 18px;
+  }
+
+  .c-script-editor-shell__header,
+  .c-script-editor-shell__inspector,
+  .c-script-editor-shell__handoff,
+  .c-script-editor-tree-group,
+  .c-script-editor-landing,
+  .c-script-editor-editor-card {
+    padding: 18px;
+  }
+
+  .c-script-editor-shell__stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .c-main-ui-screen--script-editor-flow {
+    padding: 16px;
+  }
+
+  .c-script-editor-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
