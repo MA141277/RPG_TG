@@ -3,6 +3,7 @@ import {
   renderHouseActionContainer,
   renderHouseAlertOverlay,
   renderHouseDialogue,
+  renderHouseCharacterCard,
   renderHouseIdleOwner,
   renderHouseLeaveButton,
   renderHouseStandbyRoster,
@@ -29,23 +30,23 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
   return `
     <section class="c-keep-house-meeting" aria-label="璇勫畾鍒楀腑璇稿皢">
       ${viewModel.standbyRoster
-        .map(
-          (actor) => `
+        .map((actor, index) => {
+          const cardLevel = Math.max(1, 5 - index) as 1 | 2 | 3 | 4 | 5;
+          const secondaryText =
+            actor.title == null
+              ? ""
+              : `<span class="c-house-character-card__title">${actor.title}</span>`;
+
+          return `
             <article class="c-keep-house-seat${actor.isSelected ? " is-selected" : ""}">
-              <div class="c-grain-shop-avatar c-keep-house-seat__avatar" aria-hidden="true">
-                <span class="c-grain-shop-avatar__art"></span>
-              </div>
-              <div class="c-keep-house-seat__nameplate">
-                <span class="c-keep-house-seat__name">${actor.name}</span>
-                ${
-                  actor.title == null
-                    ? ""
-                    : `<span class="c-keep-house-seat__title">${actor.title}</span>`
-                }
-              </div>
+              ${renderHouseCharacterCard(actor, {
+                className: "c-keep-house-seat__card",
+                secondaryText,
+                cardLevel,
+              })}
             </article>
-          `
-        )
+          `;
+        })
         .join("")}
     </section>
   `;

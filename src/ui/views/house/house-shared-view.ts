@@ -1,4 +1,5 @@
 import type {
+  HouseCharacterCardLevel,
   HouseModuleViewModel,
   HouseOverlayViewModel,
   HouseStandbyActorViewModel,
@@ -20,18 +21,83 @@ type LeaveButtonOptions = {
   className?: string;
 };
 
+type OverlaySkinOptions = {
+  overlayAttribute?: string;
+  modalClassName?: string;
+};
+
 type IdleOwnerOptions = {
   containerClassName?: string;
   buttonClassName?: string;
   renderSecondaryText?: (actor: HouseStandbyActorViewModel) => string;
 };
 
-export function renderHouseAlertOverlay(
-  overlay: Extract<HouseOverlayViewModel, { type: "alert" }>
+type CharacterCardOptions = {
+  className?: string;
+  secondaryText?: string;
+  cardLevel?: HouseCharacterCardLevel;
+};
+
+function normalizeCardLevel(
+  level: HouseStandbyActorViewModel["cardLevel"]
+): HouseCharacterCardLevel {
+  return level == null ? 1 : level;
+}
+
+export function renderHouseCharacterCard(
+  actor: HouseStandbyActorViewModel,
+  options: CharacterCardOptions = {}
 ): string {
+  const cardLevel = options.cardLevel ?? normalizeCardLevel(actor.cardLevel);
+  const className = options.className == null ? "" : ` ${options.className}`;
+  const secondaryText = options.secondaryText ?? "";
+
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="alert">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+    <article class="c-house-character-card${className}" data-house-card-level="${cardLevel}">
+      <span class="c-house-character-card__banner" aria-hidden="true"></span>
+      <span class="c-house-character-card__ornament" aria-hidden="true"></span>
+      <span class="c-house-character-card__frame" aria-hidden="true"></span>
+      <div class="c-house-character-card__portrait" aria-hidden="true">
+        ${
+          actor.avatarImageUrl == null
+            ? `<span class="c-house-character-card__portrait-art ${actor.avatarArtClassName ?? ""}"></span>`
+            : `<img class="c-house-character-card__portrait-image" src="${actor.avatarImageUrl}" alt="">`
+        }
+      </div>
+      <div class="c-house-character-card__body">
+        <strong class="c-house-character-card__name">${actor.name}</strong>
+        ${secondaryText}
+      </div>
+    </article>
+  `;
+}
+
+export function renderHouseAlertOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "alert" }>,
+  options: OverlaySkinOptions = {}
+): string {
+  const isContributionSettlement =
+    overlay.title.includes("贡献") &&
+    overlay.paragraphs.length > 0 &&
+    overlay.paragraphs.every((paragraph) => paragraph.includes("贡献"));
+  const usesContributionSettlementSkin =
+    isContributionSettlement ||
+    overlay.title === "本轮差事已定" ||
+    overlay.title === "寺务已定";
+  const isAssessmentTaskPopup =
+    overlay.title === "本轮差事已定" || overlay.title === "寺务已定";
+  const overlayVariantAttribute = usesContributionSettlementSkin
+    ? ' data-house-alert-variant="contribution-settlement"'
+    : (options.overlayAttribute ?? "");
+  const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${
+    usesContributionSettlementSkin ? " c-house-contribution-settlement" : ""
+  }${isContributionSettlement ? " c-house-contribution-popup" : ""}${
+    isAssessmentTaskPopup ? " c-house-assessment-task-popup" : ""
+  }${options.modalClassName ?? ""}`;
+
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="alert"${overlayVariantAttribute}>
+      <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -74,11 +140,12 @@ export function renderHouseConfirmOverlay(
 }
 
 export function renderHouseQuantityConfirmOverlay(
-  overlay: Extract<HouseOverlayViewModel, { type: "quantity-confirm" }>
+  overlay: Extract<HouseOverlayViewModel, { type: "quantity-confirm" }>,
+  options: OverlaySkinOptions = {}
 ): string {
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="quantity-confirm">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="quantity-confirm"${options.overlayAttribute ?? ""}>
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel${options.modalClassName ?? ""}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -170,17 +237,7 @@ export function renderHouseStandbyRoster(
               ${actor.actionId == null ? "" : `data-house-action="${actor.actionId}"`}
               aria-label="与 ${actor.name} 交谈"
             >
-              <div class="c-grain-shop-avatar" aria-hidden="true">
-                ${
-                  actor.avatarImageUrl == null
-                    ? `<span class="c-grain-shop-avatar__art ${actor.avatarArtClassName ?? ""}"></span>`
-                    : `<img class="c-grain-shop-avatar__image" src="${actor.avatarImageUrl}" alt="">`
-                }
-              </div>
-              <p class="c-grain-shop-avatar__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-                ${actor.name}
-              </p>
-              ${secondaryText}
+              ${renderHouseCharacterCard(actor, { secondaryText })}
             </button>
           `;
         })
@@ -261,17 +318,10 @@ export function renderHouseIdleOwner(
         ${actor.actionId == null ? "" : `data-house-action="${actor.actionId}"`}
         aria-label="与 ${actor.name} 交谈"
       >
-        <div class="c-grain-shop-portrait" aria-hidden="true">
-          ${
-            actor.portraitImageUrl == null
-              ? `<span class="c-grain-shop-portrait__art ${actor.portraitArtClassName ?? ""}"></span>`
-              : `<img class="c-grain-shop-portrait__image" src="${actor.portraitImageUrl}" alt="">`
-          }
-        </div>
-        <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-          ${actor.name}
-        </p>
-        ${secondaryText}
+        ${renderHouseCharacterCard(actor, {
+          secondaryText,
+          cardLevel: actor.cardLevel ?? 3,
+        })}
       </button>
     </aside>
   `;

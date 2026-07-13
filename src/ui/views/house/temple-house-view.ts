@@ -6,18 +6,35 @@ import {
   renderHouseActionContainer,
   renderHouseAlertOverlay,
   renderHouseDialogue,
+  renderHouseCharacterCard,
   renderHouseIdleOwner,
   renderHouseLeaveButton,
   renderHouseQuantityConfirmOverlay,
   renderHouseStandbyRoster,
 } from "./house-shared-view";
 
+const templePopupOverlayAttribute =
+  ' data-house-overlay-variant="temple-utility-popup"';
+const templePopupModalClassName =
+  " c-house-contribution-settlement c-house-temple-utility-popup";
+
 function renderConfirmOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
 ): string {
+  const isTempleTaskConfirm =
+    overlay.confirmLabel === "现在开始" && overlay.cancelLabel === "稍后再领";
+  const overlayVariantAttribute = isTempleTaskConfirm
+    ? ' data-house-overlay-variant="temple-task-confirm"'
+    : templePopupOverlayAttribute;
+  const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${
+    isTempleTaskConfirm
+      ? " c-house-contribution-settlement c-house-temple-task-confirm"
+      : templePopupModalClassName
+  }`;
+
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="confirm">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="confirm"${overlayVariantAttribute}>
+      <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -95,8 +112,8 @@ function renderRestDaysOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "rest-days" }>
 ): string {
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="rest-days">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="rest-days"${templePopupOverlayAttribute}>
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal${templePopupModalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -130,7 +147,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
   }
 
   if (overlay.type === "alert") {
-    return renderHouseAlertOverlay(overlay);
+    return renderHouseAlertOverlay(overlay, {
+      overlayAttribute: templePopupOverlayAttribute,
+      modalClassName: templePopupModalClassName,
+    });
   }
 
   if (overlay.type === "confirm") {
@@ -138,7 +158,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
   }
 
   if (overlay.type === "quantity-confirm") {
-    return renderHouseQuantityConfirmOverlay(overlay);
+    return renderHouseQuantityConfirmOverlay(overlay, {
+      overlayAttribute: templePopupOverlayAttribute,
+      modalClassName: templePopupModalClassName,
+    });
   }
 
   if (overlay.type === "qte-bar") {
@@ -164,23 +187,23 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
   return `
     <section class="c-keep-house-meeting c-temple-house-meeting" aria-label="寺庙评定席">
       ${viewModel.standbyRoster
-        .map(
-          (actor) => `
+        .map((actor, index) => {
+          const cardLevel = Math.max(1, 5 - index) as 1 | 2 | 3 | 4 | 5;
+          const secondaryText =
+            actor.title == null
+              ? ""
+              : `<span class="c-house-character-card__title">${actor.title}</span>`;
+
+          return `
             <article class="c-keep-house-seat c-temple-house-seat${actor.isSelected ? " is-selected" : ""}">
-              <div class="c-grain-shop-avatar c-keep-house-seat__avatar" aria-hidden="true">
-                <span class="c-grain-shop-avatar__art ${actor.avatarArtClassName ?? ""}"></span>
-              </div>
-              <div class="c-keep-house-seat__nameplate">
-                <span class="c-keep-house-seat__name">${actor.name}</span>
-                ${
-                  actor.title == null
-                    ? ""
-                    : `<span class="c-keep-house-seat__title">${actor.title}</span>`
-                }
-              </div>
+              ${renderHouseCharacterCard(actor, {
+                className: "c-keep-house-seat__card",
+                secondaryText,
+                cardLevel,
+              })}
             </article>
-          `
-        )
+          `;
+        })
         .join("")}
     </section>
   `;

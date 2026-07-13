@@ -155,22 +155,56 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-3);
-  width: min(100%, 226px);
-  padding: 18px 16px 16px;
-  border: 16px solid transparent;
-  border-image-source: url("../../ui/yuansu/1_015_left_mission_panel_1.0.png");
-  border-image-slice: 34 fill;
-  border-image-width: 16px;
-  border-image-repeat: stretch;
-  box-shadow: 0 16px 30px rgb(0 0 0 / 18%);
+  gap: 11px;
+  width: min(34vw, 288px);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  transform: translateY(calc(-9vh + 100px));
   pointer-events: auto;
 }
 
 .c-grain-shop-actions .c-button {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   width: 100%;
+  height: 54px;
+  min-height: 54px;
+  border: 20px solid transparent;
+  border-image-source: url("../../ui/yuansu/选项/20260709-150818_button-inset.png");
+  border-image-slice: 21 28;
+  border-image-width: 20px 28px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  padding: 0 22px;
+  background: #f0e4c3;
+  background-clip: border-box;
+  box-shadow: none;
+  color: #3f2a18;
+  font-family: var(--font-title);
+  font-size: clamp(0.86rem, 1.04vw, 1.04rem);
+  font-weight: 500;
+  line-height: 1;
   justify-content: center;
-  min-height: 52px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.c-grain-shop-actions .c-button.is-selected,
+.c-grain-shop-actions .c-button[aria-selected="true"] {
+  border-image-source: url("../../ui/yuansu/选项/20260709-150804_button-inset.png");
+  background: #793424;
+  color: #f9e9c2;
+  text-shadow: 0 1px 1px rgb(46 18 10 / 62%);
+}
+
+.c-grain-shop-actions .c-button:disabled {
+  background: #f0e4c3;
+  color: #76604a;
+  cursor: not-allowed;
+  filter: grayscale(0.08) brightness(0.96);
 }
 
 .c-grain-shop-dialogue {
@@ -412,39 +446,167 @@
   margin: 0;
 }
 
+.c-house-character-card {
+  --house-card-frame: url("../../ui/yuansu/卡牌/generated/frame-level-1.png");
+  --house-card-banner: url("../../ui/yuansu/卡牌/generated/banner-level-1.png");
+  --house-card-ornament: url("../../ui/yuansu/卡牌/generated/bottom-ornament.png");
+
+  position: relative;
+  width: 144px;
+  aspect-ratio: 820 / 1136;
+  flex: 0 0 auto;
+  color: #3d2b1c;
+  font-family: var(--font-title);
+  text-align: center;
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 20%));
+  transform-origin: center bottom;
+}
+
+.c-house-character-card[data-house-card-level="2"] {
+  --house-card-frame: url("../../ui/yuansu/卡牌/generated/frame-level-2.png");
+  --house-card-banner: url("../../ui/yuansu/卡牌/generated/banner-level-2.png");
+}
+
+.c-house-character-card[data-house-card-level="3"] {
+  --house-card-frame: url("../../ui/yuansu/卡牌/generated/frame-level-3.png");
+  --house-card-banner: url("../../ui/yuansu/卡牌/generated/banner-level-3.png");
+}
+
+.c-house-character-card[data-house-card-level="4"] {
+  --house-card-frame: url("../../ui/yuansu/卡牌/generated/frame-level-4.png");
+  --house-card-banner: url("../../ui/yuansu/卡牌/generated/banner-level-4.png");
+}
+
+.c-house-character-card[data-house-card-level="5"] {
+  --house-card-frame: url("../../ui/yuansu/卡牌/generated/frame-level-5.png");
+  --house-card-banner: url("../../ui/yuansu/卡牌/generated/banner-level-5.png");
+}
+
+.c-house-character-card__banner,
+.c-house-character-card__ornament,
+.c-house-character-card__frame {
+  position: absolute;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.c-house-character-card__banner {
+  top: 0.7%;
+  left: 8.2%;
+  z-index: 5;
+  width: 18.6%;
+  height: 24%;
+  background-image: var(--house-card-banner);
+}
+
+.c-house-character-card__ornament {
+  left: 27.4%;
+  bottom: 8.2%;
+  z-index: 6;
+  width: 45.4%;
+  height: 2.2%;
+  background-image: var(--house-card-ornament);
+}
+
+.c-house-character-card__frame {
+  inset: 0;
+  z-index: 4;
+  background-image: var(--house-card-frame);
+}
+
+.c-house-character-card__portrait {
+  position: absolute;
+  top: 10.5%;
+  left: 13.5%;
+  z-index: 2;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  width: 73%;
+  height: 61.5%;
+}
+
+.c-house-character-card__portrait-image,
+.c-house-character-card__portrait-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.c-house-character-card__portrait-image {
+  object-fit: contain;
+  object-position: center bottom;
+  pointer-events: none;
+  user-select: none;
+}
+
+.c-house-character-card__portrait-art {
+  background: center bottom / contain no-repeat var(--grain-shop-shopkeeper-avatar);
+}
+
+.c-house-character-card__body {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  bottom: 7.8%;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 12.4%;
+  color: #4b3420;
+  line-height: 1.12;
+  text-shadow: 0 1px 0 rgb(255 239 207 / 48%);
+  pointer-events: none;
+}
+
+.c-house-character-card__name {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c-house-character-card__title,
+.c-house-character-card .c-tea-house-npc-idle__title {
+  display: block;
+  max-width: 100%;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #70543b;
+  font-size: 0.62rem;
+  font-weight: 500;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .c-grain-shop-npc-idle {
   position: fixed;
   left: var(--space-4);
   top: 50%;
   z-index: 10;
+  display: grid;
+  gap: 10px;
   transform: translateY(-50%);
   pointer-events: auto;
 }
 
 .c-grain-shop-npc-idle__button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: 12px solid transparent;
-  border-image-source: var(--grain-shop-panel-light);
-  border-image-slice: 18 fill;
-  border-image-width: 12px;
-  border-image-repeat: stretch;
+  display: block;
+  padding: 0;
+  border: 0;
   background: none;
-  box-shadow: 0 8px 20px rgb(0 0 0 / 14%);
+  box-shadow: none;
   cursor: pointer;
   font: inherit;
   color: inherit;
-  transition:
-    border-color var(--duration-fast) ease,
-    box-shadow var(--duration-fast) ease;
-}
-
-.c-grain-shop-npc-idle__button:hover .c-grain-shop-avatar,
-.c-grain-shop-npc-idle__button:focus-visible .c-grain-shop-avatar {
-  filter: brightness(1.06);
 }
 
 .c-grain-shop-idle-owner {
@@ -457,10 +619,7 @@
 }
 
 .c-grain-shop-idle-owner__button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
+  display: block;
   padding: 0;
   border: 0;
   background: none;
@@ -469,9 +628,16 @@
   color: inherit;
 }
 
-.c-grain-shop-idle-owner__button:hover .c-grain-shop-portrait,
-.c-grain-shop-idle-owner__button:focus-visible .c-grain-shop-portrait {
-  filter: brightness(1.06);
+.c-grain-shop-idle-owner .c-house-character-card {
+  width: 168px;
+}
+
+.c-grain-shop-npc-idle__button:hover .c-house-character-card,
+.c-grain-shop-npc-idle__button:focus-visible .c-house-character-card,
+.c-grain-shop-idle-owner__button:hover .c-house-character-card,
+.c-grain-shop-idle-owner__button:focus-visible .c-house-character-card {
+  filter: brightness(1.05) drop-shadow(0 14px 20px rgb(0 0 0 / 24%));
+  transform: translateY(-3px);
 }
 
 .c-grain-shop-leave {
@@ -737,14 +903,6 @@
     filter var(--duration-fast) ease;
 }
 
-.c-grain-shop-accounting__decision:hover,
-.c-grain-shop-accounting__decision:focus-visible,
-.c-grain-shop-accounting__confirm:hover,
-.c-grain-shop-accounting__confirm:focus-visible {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
-}
-
 .c-grain-shop-accounting__decision {
   width: min(13.7vw, 210px);
   aspect-ratio: 210 / 91;
@@ -871,6 +1029,14 @@
   background-image: var(--grain-shop-accounting-confirm);
 }
 
+.c-grain-shop-accounting__decision:hover,
+.c-grain-shop-accounting__decision:focus-visible,
+.c-grain-shop-accounting__confirm:hover,
+.c-grain-shop-accounting__confirm:focus-visible {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
 .c-grain-shop-accounting--result .c-grain-shop-accounting__scroll-content {
   min-height: min(50vh, 500px);
 }
@@ -930,6 +1096,281 @@
 
 .c-grain-shop-modal__actions--split {
   gap: var(--space-3);
+}
+
+.c-grain-shop-overlay[data-house-alert-variant="contribution-settlement"] {
+  align-items: flex-start;
+  padding-top: calc(clamp(132px, 22vh, 206px) + 70px);
+  background: rgb(15 9 5 / 58%);
+}
+
+.c-grain-shop-overlay[data-house-overlay-variant="temple-task-confirm"] {
+  align-items: flex-start;
+  padding-top: calc(clamp(132px, 22vh, 206px) + 70px);
+  background: rgb(15 9 5 / 58%);
+}
+
+.c-grain-shop-overlay[data-house-overlay-variant="temple-utility-popup"] {
+  align-items: flex-start;
+  padding-top: calc(clamp(132px, 22vh, 206px) + 70px);
+  background: rgb(15 9 5 / 58%);
+}
+
+.c-grain-shop-modal.c-house-contribution-settlement {
+  position: relative;
+  box-sizing: border-box;
+  width: min(86vw, 280px);
+  min-height: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 64px 22px 26px;
+  border-image-source: url("../../ui/yuansu/评定/20260709-205114_popup-slice.png");
+  border-image-slice: 64 22 26 22 fill;
+  border-image-width: 64px 22px 26px 22px;
+  border-image-repeat: stretch;
+  padding: 8px 14px 4px;
+  color: #54321b;
+  background: transparent;
+  box-shadow: none;
+  transform: translateY(20px);
+}
+
+.c-house-contribution-settlement .c-grain-shop-modal__title {
+  position: absolute;
+  top: -55px;
+  left: 30px;
+  right: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 32px;
+  min-height: 0;
+  margin: 0;
+  padding: 0 12px 0 10px;
+  color: #f6dfae;
+  font-size: clamp(1rem, 1.18vw, 1.22rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: left;
+  text-shadow: 0 1px 1px rgb(52 14 8 / 70%);
+  background: none;
+}
+
+.c-house-contribution-settlement .c-grain-shop-modal__body {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.c-house-contribution-settlement .c-grain-shop-modal__body p {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/20260709-205119_item-slice.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  padding: 0 8px;
+  color: #5a371d;
+  font-family: var(--font-title);
+  font-size: clamp(0.78rem, 0.88vw, 0.92rem);
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  background: transparent;
+}
+
+.c-house-contribution-settlement .c-grain-shop-modal__actions {
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-right: 4px;
+  transform: translateY(-2px);
+}
+
+.c-house-contribution-settlement .c-grain-shop-modal__actions .c-grain-shop-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 104px;
+  height: 40px;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/20260709-205123_button-clean.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  padding: 0 16px;
+  color: #f7e6ba;
+  font-size: 0.96rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-shadow: 0 1px 1px rgb(57 16 8 / 66%);
+  background: transparent;
+  box-shadow: none;
+}
+
+.c-house-assessment-task-popup .c-grain-shop-modal__body p {
+  justify-content: flex-start;
+  text-align: left;
+  text-indent: 1.4em;
+}
+
+.c-house-contribution-popup .c-grain-shop-modal__body p {
+  justify-content: flex-start;
+  text-align: left;
+  text-indent: 0;
+}
+
+.c-house-temple-task-confirm .c-grain-shop-modal__body p {
+  justify-content: flex-start;
+  text-align: left;
+  text-indent: 1.4em;
+}
+
+.c-house-temple-utility-popup .c-grain-shop-modal__body p {
+  justify-content: flex-start;
+  text-align: left;
+  text-indent: 1.4em;
+}
+
+.c-house-temple-task-confirm .c-grain-shop-modal__body {
+  padding-top: 4px;
+}
+
+.c-house-temple-utility-popup .c-grain-shop-modal__body {
+  padding-top: 4px;
+}
+
+.c-house-temple-utility-popup .c-grain-shop-trade__field {
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  margin: 0;
+  border: 10px solid transparent;
+  border-image-source: url("../../ui/yuansu/评定/20260709-205119_item-slice.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  padding: 4px 8px;
+  color: #5a371d;
+  font-family: var(--font-title);
+  font-size: clamp(0.78rem, 0.88vw, 0.92rem);
+  background: transparent;
+}
+
+.c-house-temple-utility-popup .c-grain-shop-trade__field span {
+  line-height: 1.2;
+}
+
+.c-house-temple-utility-popup .c-grain-shop-trade__field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 4px 8px;
+  color: #4b2d19;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  text-align: center;
+  border: 1px solid rgb(130 86 42 / 34%);
+  background: rgb(255 246 218 / 82%);
+}
+
+.c-house-temple-task-confirm .c-grain-shop-modal__actions {
+  width: 100%;
+  max-width: 100%;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding-right: 0;
+  padding-bottom: 4px;
+}
+
+.c-house-temple-utility-popup .c-grain-shop-modal__actions {
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding-right: 0;
+  padding-bottom: 4px;
+}
+
+.c-house-temple-task-confirm .c-grain-shop-modal__actions .c-grain-shop-button {
+  width: 96px;
+  min-width: 96px;
+  height: 40px;
+  color: #f7e6ba;
+  background: transparent;
+  text-shadow: 0 1px 1px rgb(57 16 8 / 66%);
+}
+
+.c-house-temple-utility-popup .c-grain-shop-modal__actions .c-grain-shop-button {
+  width: 96px;
+  min-width: 96px;
+  height: 40px;
+  padding: 0 6px;
+  color: #f7e6ba;
+  background: transparent;
+  text-shadow: 0 1px 1px rgb(57 16 8 / 66%);
+}
+
+.c-house-temple-task-confirm .c-grain-shop-modal__actions .c-grain-shop-button--paper {
+  border-width: 12px 24px;
+  border-image-source: url("../../ui/yuansu/评定/下载 (2).png");
+  border-image-slice: 22 54 fill;
+  border-image-width: 12px 24px;
+  border-image-repeat: stretch;
+  padding: 0 6px;
+  color: #5b351d;
+  text-shadow: 0 1px 0 rgb(255 232 172 / 42%);
+}
+
+.c-house-temple-utility-popup .c-grain-shop-modal__actions .c-grain-shop-button--paper {
+  border-width: 12px 24px;
+  border-image-source: url("../../ui/yuansu/评定/下载 (2).png");
+  border-image-slice: 22 54 fill;
+  border-image-width: 12px 24px;
+  border-image-repeat: stretch;
+  color: #5b351d;
+  text-shadow: 0 1px 0 rgb(255 232 172 / 42%);
+}
+
+.c-house-temple-task-confirm .c-grain-shop-modal__actions .c-grain-shop-button--gold {
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/20260709-205123_button-clean.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  padding: 0 6px;
+}
+
+.c-house-temple-utility-popup .c-grain-shop-modal__actions .c-grain-shop-button--gold {
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/20260709-205123_button-clean.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
 }
 
 .c-market-house-trade-list {
@@ -1068,12 +1509,12 @@
   text-align: center;
 }
 
-.c-grain-shop-ledger p {
+.c-grain-shop-ledger.c-grain-shop-ledger p {
   margin: 0 0 var(--space-3);
   font-size: 1.1rem;
 }
 
-.c-grain-shop-ledger p:last-child {
+.c-grain-shop-ledger.c-grain-shop-ledger p:last-child {
   margin-bottom: 0;
   font-weight: 700;
   color: var(--color-accent);
@@ -1375,8 +1816,7 @@
 }
 
 .c-medicine-house-herb-card__empty-text {
-  align-self: center;
-  justify-self: center;
+  place-self: center;
   margin-top: 34px;
   font-size: 0.86rem;
   color: rgb(214 184 127 / 62%);
@@ -1422,8 +1862,7 @@
   display: block;
   width: 68%;
   aspect-ratio: 1;
-  justify-self: center;
-  align-self: center;
+  place-self: center;
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
@@ -1525,8 +1964,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px 10px;
-  align-items: center;
-  justify-items: center;
+  place-items: center;
 }
 
 .c-medicine-house-cauldron__token {
@@ -1919,7 +2357,7 @@
   }
 
   .c-grain-shop-actions {
-    width: min(100%, 208px);
+    width: min(78vw, 340px);
   }
 
   .c-grain-shop-game__hud,

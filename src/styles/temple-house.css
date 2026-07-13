@@ -34,9 +34,16 @@
   min-width: 0;
 }
 
-.view-house-temple .c-keep-house-seat.is-selected .c-keep-house-seat__avatar {
-  filter: brightness(1.04);
-  transform: translateY(-4px);
+.view-house-temple .c-keep-house-seat__card {
+  width: 168px;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.view-house-temple .c-keep-house-seat.is-selected .c-keep-house-seat__card {
+  filter: brightness(1.06) drop-shadow(0 16px 24px rgb(0 0 0 / 28%));
+  transform: translateY(-5px);
 }
 
 .view-house-temple .c-keep-house-seat__avatar {
@@ -45,6 +52,11 @@
   transition:
     transform var(--duration-fast) ease,
     filter var(--duration-fast) ease;
+}
+
+.view-house-temple .c-keep-house-seat.is-selected .c-keep-house-seat__avatar {
+  filter: brightness(1.04);
+  transform: translateY(-4px);
 }
 
 .view-house-temple .c-keep-house-seat__nameplate {
@@ -151,9 +163,13 @@
 
 @media (width <= 900px) {
   .view-house-temple .c-keep-house-meeting {
-    inset: 12% 4% 30% 4%;
+    inset: 12% 4% 30%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.4rem 0.9rem;
+  }
+
+  .view-house-temple .c-keep-house-seat__card {
+    width: 136px;
   }
 
   .view-house-temple .c-keep-house-seat__avatar {
