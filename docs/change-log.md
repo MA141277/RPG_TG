@@ -9,6 +9,53 @@
 
 ## 2026-07-13 Script Editor Implementation Version Opening
 
+## 2026-07-13 Script Editor Load Save Queue Admission
+
+## 2026-07-13 Script Editor Export Queue Admission
+
+### Changed
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、[docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、以及 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将当前 implementation version 从 `promotion-review` 切换到 `active-execution`，并把 `queue.authoring-runtime-export-pipeline` 设为单一 active queue。
+- 新增 [docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md)，把 queue goal、task ledger、active task、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
+- 将当前执行切口明确冻结为“authoring -> runtime export pipeline + bounded validator assembly”，只承接 frozen mapping contract 的 runtime-pack export 与 fail-closed validator 组装，不提前吸收 compatibility import、shared-rule integration 或 creator-facing UI workflow。
+
+### Impact
+- Blueprint 当前不再停在 export candidate 的 admission review；实现版已经重新进入 `active-execution`，恢复入口切到 `task.authoring-runtime-export-pipeline.boundary-baseline-reconcile`。
+- 后续 script-editor 实现现在以 queue-level live truth 控制 export 队列，而不是继续停留在 version-level prose review。
+- 当前 active queue 已明确把范围收紧到 export pipeline，本轮不会因 admission 同步而提前把 importer、shared-rule 或 UI 候选混入同一执行线。
+
+## 2026-07-13 Script Editor Minimal Usable Workflow Candidate Clarification
+
+### Changed
+- 更新 [docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将“最小可用剧本编辑器”从原 `queue.script-editor-ui-shell-and-core-workflow` 的范围说明中拆出，新增独立候选 `queue.script-editor-minimal-usable-workflow` / `item.script-editor-minimal-usable-workflow`。
+- 在同一份 version plan 中补入新的 `Candidate Scope Notes`，明确 `queue.script-editor-ui-shell-and-core-workflow` 收窄为可复用 editor shell / workspace framing，而新的 `queue.script-editor-minimal-usable-workflow` 专门承接主界面 `剧本编辑器` 入口、编辑器首页 `新建/打开/导入` 三入口、项目优先的工作区骨架、最小对象树 `项目 / 人物 / 文本 / 剧情节点 / 事件`、以及 `校验 -> 导出` 的最短可用路径。
+- 继续在同一份 version plan 中补入 `Candidate Admission Basis Notes`，将 `queue.script-editor-minimal-usable-workflow` 的 future admission prerequisite、required owned surfaces、minimum acceptance loop、以及 must-not-absorb 边界写成结构化候选依据，避免后续 promote 时再次退回会话 prose 整理。
+
+### Impact
+- “可用的最小剧本编辑器” 现在已经作为独立候选写入当前 implementation version truth，后续恢复时不需要再从会话 prose 重新整理入口、页面、最小对象范围以及最短用户路径。
+- 当前 live admission 仍保持在 `queue.authoring-runtime-export-pipeline`；这次补充只扩展候选真值，不改变当前 pending admission subject，也不会把 editor shell 和最小可用产品闭环继续混成一个过宽候选。
+- 后续若要正式 promote `queue.script-editor-minimal-usable-workflow`，Blueprint 已经拥有更接近 admission review 的结构化依据，可直接从 version truth 继续，而不需要再次让人工重述前置条件和最小闭环定义。
+
+### Changed
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将 `queue.editor-project-load-save-foundation` 从 pending admission review 提升为当前 implementation version 的单一 active queue。
+- 新增 [docs/blueprints/queues/editor-project-load-save-foundation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/editor-project-load-save-foundation-queue.md)，把 queue-goal、task ledger、active task、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
+- 将当前首个执行切口明确冻结为“manifest-driven editor project load/save + validation foundation”，只承接 authoring project manifest、split-table persistence、和 bounded validation，不提前吸收 runtime export、compatibility import、shared-rule integration 或 UI workflow。
+
+### Impact
+- Blueprint 当前不再停在“已有候选、尚未 admission”的状态；实现版已经正式进入 `active-execution`。
+- 后续这条工作流的恢复入口不再是 version-level admission review，而是 active queue 下的 `task.editor-project-load-save-foundation.manifest-load-save-and-validation`。
+- script editor implementation 的第一条执行线被收窄到一个可验证的基础设施切口，后续 export/import/UI 队列将建立在这一层稳定 authoring-project substrate 之上。
+
+### Changed
+- 新增 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts)、以及 [src/application/script-editor/editor-project-save.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-save.ts)，正式落地 script-editor authoring project 的 manifest-driven split-table persistence seam。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 与 [tsconfig.test.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tsconfig.test.json)，为 script-editor project hydration / save-output / manifest validation 增加回归覆盖，并让新 `src/application/script-editor/**` 模块进入 `.test-dist` 测试编译。
+- 更新 [docs/blueprints/queues/editor-project-load-save-foundation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/editor-project-load-save-foundation-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、以及 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，把这条 queue 从 active 收口为 done，并将 live version 返回到无 active queue 的 promotion-review 状态。
+- 将 `queue.authoring-runtime-export-pipeline` 设为当前 pending admission review subject，作为 persistence foundation 之后的下一条 lawful implementation queue。
+
+### Impact
+- 当前 script-editor implementation version 已拥有一个可执行的 authoring-project substrate：project manifest、canonical split-table registry、imported-directory hydration、save serialization、以及 bounded validation 均已具备。
+- `queue.editor-project-load-save-foundation` 已变为关闭历史证据；后续实现不再需要重新发明 editor-project persistence，而是可以在这一层稳定 substrate 之上继续推进 export/import/UI 等下游 queue。
+- Blueprint 当前已从首条 implementation queue 的 active execution 返回到 promotion review，下一步恢复入口重新回到 implementation version plan，而不是停留在已关闭 queue 上。
+
 ### Changed
 - 新增 [docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，把新的 successor version 正式定义为 `target.script-editor-implementation`。
 - 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 Blueprint live 入口从已关闭的 `target.script-editor-contract-freeze` 切换到新的 implementation version。

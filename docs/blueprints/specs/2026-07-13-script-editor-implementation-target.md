@@ -44,6 +44,7 @@
 | `queue.compatibility-import-adapter` | `required` | `compatibility import family` | `Admit only if fresh evidence confirms that existing scenario-pack compatibility import still needs one bounded implementation cut under the frozen compatibility/import-export policy.` |
 | `queue.shared-condition-effect-authoring-integration` | `required` | `shared rule integration family` | `Admit only if fresh evidence confirms that one bounded shared condition/effect authoring and validation integration cut is required under the frozen shared-rule contract.` |
 | `queue.script-editor-ui-shell-and-core-workflow` | `required` | `creator workflow family` | `Admit only if fresh evidence confirms that one bounded creator-facing UI shell and core edit/validate/export workflow cut is the smallest lawful next implementation surface.` |
+| `queue.script-editor-minimal-usable-workflow` | `required` | `minimal usable workflow family` | `Admit only if fresh evidence confirms that one bounded user-visible workflow from the main menu entry into project editing, validation, and export is the smallest lawful next product-facing implementation cut after editor-project persistence and export prerequisites already exist, and without widening into full product polish or unrelated schema/runtime expansion.` |
 
 ### Acceptance Criteria
 

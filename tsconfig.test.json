@@ -28,6 +28,7 @@
     "src/application/runtime/**/*.ts",
     "src/application/scenario/**/*.ts",
     "src/application/scene/**/*.ts",
+    "src/application/script-editor/**/*.ts",
     "src/application/startup/**/*.ts",
     "src/application/state/**/*.ts",
     "src/application/story/**/*.ts",

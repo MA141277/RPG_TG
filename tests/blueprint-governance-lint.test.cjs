@@ -1202,13 +1202,13 @@ test("live version plan exposes version-first control fields and lifecycle wordi
       "docs",
       "blueprints",
       "plans",
-      "2026-07-10-script-editor-contract-freeze-target-plan.md"
+      "2026-07-13-script-editor-implementation-target-plan.md"
     ),
     "utf8"
   );
 
   assert.match(targetPlan, /^- document_role: `version-governor`$/m);
-  assert.match(targetPlan, /^- version_id: `target\.script-editor-contract-freeze`$/m);
+  assert.match(targetPlan, /^- version_id: `target\.script-editor-implementation`$/m);
   assert.match(targetPlan, /^- version_status: `open`$/m);
   assert.match(targetPlan, /^- active_queue: `[^`]+`$/m);
   assert.match(

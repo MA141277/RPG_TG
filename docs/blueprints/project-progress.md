@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-implementation`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,13 +29,13 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the live successor implementation version and remains open with no active queue.`
+- `The pointed version is now the live successor implementation version and currently resumes through queue.authoring-runtime-export-pipeline as the single active queue.`
 
 ### Historical References
 

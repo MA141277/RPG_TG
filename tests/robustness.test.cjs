@@ -429,6 +429,105 @@ function createImportedScenarioPackFilesFromDisk(packRoot, packFolderName) {
   });
 }
 
+function createImportedScriptEditorProjectFilesFromDisk(projectRoot, projectFolderName) {
+  return collectFilePaths(projectRoot).map((filePath) => {
+    const fileName = path.basename(filePath);
+    const relativePath = path
+      .relative(projectRoot, filePath)
+      .replaceAll(path.sep, "/");
+    const file = new File([fs.readFileSync(filePath)], fileName, {
+      type: fileName.endsWith(".json")
+        ? "application/json"
+        : "application/octet-stream",
+    });
+
+    Object.defineProperty(file, "webkitRelativePath", {
+      configurable: true,
+      value: `${projectFolderName}/${relativePath}`,
+    });
+
+    return file;
+  });
+}
+
+function createSampleScriptEditorProjectDefinition() {
+  return {
+    schemaVersion: 1,
+    kind: "script-editor-project",
+    id: "project.test.script-editor",
+    title: "Test Script Editor Project",
+    description: "Bounded load save foundation test project.",
+    storyPack: {
+      id: "story-pack.test.script-editor",
+      title: "Test Story Pack",
+      description: "Authoring-side project root.",
+    },
+    people: [{ id: "person.hero", name: "Hero", role: "playable" }],
+    cities: [{ id: "city.start", name: "Starting City" }],
+    buildings: [{ id: "building.home", cityId: "city.start", name: "Home" }],
+    events: [{ id: "event.opening", title: "Opening Event" }],
+    quests: [{ id: "quest.first", title: "First Quest" }],
+    dialogues: [{ id: "dialogue.opening", title: "Opening Dialogue" }],
+    minigames: [{ id: "minigame.demo", title: "Demo Minigame" }],
+    storyNodes: [{ id: "story-node.opening", title: "Opening Node" }],
+    textEntries: [{ id: "text.opening", text: "Opening line." }],
+    conditionGroups: [{ id: "condition.opening-ready", operator: "all" }],
+    effectBundles: [{ id: "effect.opening-complete", type: "flag-set" }],
+  };
+}
+
+function writeScriptEditorProjectFixture(outputRoot) {
+  const fixture = createSampleScriptEditorProjectDefinition();
+  const projectRoot = path.join(outputRoot, "script-editor-project");
+  fs.mkdirSync(projectRoot, { recursive: true });
+
+  const files = {
+    "project.json": {
+      schemaVersion: 1,
+      kind: "script-editor-project",
+      id: fixture.id,
+      title: fixture.title,
+      description: fixture.description,
+      files: {
+        storyPack: "./story-pack.json",
+        people: "./people.json",
+        cities: "./cities.json",
+        buildings: "./buildings.json",
+        events: "./events.json",
+        quests: "./quests.json",
+        dialogues: "./dialogues.json",
+        minigames: "./minigames.json",
+        storyNodes: "./story-nodes.json",
+        textEntries: "./text-entries.json",
+        conditionGroups: "./condition-groups.json",
+        effectBundles: "./effect-bundles.json",
+      },
+    },
+    "story-pack.json": fixture.storyPack,
+    "people.json": fixture.people,
+    "cities.json": fixture.cities,
+    "buildings.json": fixture.buildings,
+    "events.json": fixture.events,
+    "quests.json": fixture.quests,
+    "dialogues.json": fixture.dialogues,
+    "minigames.json": fixture.minigames,
+    "story-nodes.json": fixture.storyNodes,
+    "text-entries.json": fixture.textEntries,
+    "condition-groups.json": fixture.conditionGroups,
+    "effect-bundles.json": fixture.effectBundles,
+  };
+
+  for (const [fileName, value] of Object.entries(files)) {
+    fs.writeFileSync(
+      path.join(projectRoot, fileName),
+      `${JSON.stringify(value, null, 2)}\n`,
+      "utf8"
+    );
+  }
+
+  return { fixture, projectRoot };
+}
+
 test.before(async () => {
   const {
     createBaseGameContentPack,
@@ -2475,6 +2574,78 @@ test(
           !map.primaryImageUrl.startsWith("./assets/")
       ),
       true
+    );
+  }
+);
+
+test(
+  "script editor project loader can hydrate a manifest-driven imported project directory",
+  async () => {
+    const {
+      loadScriptEditorProjectFromFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    const os = require("node:os");
+    const outputRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "rpg-tg-script-editor-project-")
+    );
+    const { fixture, projectRoot } = writeScriptEditorProjectFixture(outputRoot);
+    const importedFiles = createImportedScriptEditorProjectFilesFromDisk(
+      projectRoot,
+      "script-editor-project"
+    );
+
+    const project = await loadScriptEditorProjectFromFiles(importedFiles);
+
+    assert.equal(project.id, fixture.id);
+    assert.equal(project.storyPack.id, fixture.storyPack.id);
+    assert.equal(project.people[0]?.id, "person.hero");
+    assert.equal(project.textEntries[0]?.text, "Opening line.");
+  }
+);
+
+test("script editor project save emits canonical split files", async () => {
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const project = createSampleScriptEditorProjectDefinition();
+
+  const serializedFiles = serializeScriptEditorProjectToFiles(project);
+  const manifest = JSON.parse(serializedFiles["project.json"]);
+  const savedStoryPack = JSON.parse(serializedFiles["story-pack.json"]);
+  const savedPeople = JSON.parse(serializedFiles["people.json"]);
+
+  assert.equal(manifest.kind, "script-editor-project");
+  assert.equal(manifest.files.storyPack, "./story-pack.json");
+  assert.equal(manifest.files.effectBundles, "./effect-bundles.json");
+  assert.equal(savedStoryPack.id, project.storyPack.id);
+  assert.equal(savedPeople[0]?.id, project.people[0]?.id);
+});
+
+test(
+  "script editor project loader rejects missing canonical manifest file entries",
+  async () => {
+    const {
+      loadScriptEditorProjectFromFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    const os = require("node:os");
+    const outputRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "rpg-tg-script-editor-project-missing-key-")
+    );
+    const { projectRoot } = writeScriptEditorProjectFixture(outputRoot);
+    const manifestPath = path.join(projectRoot, "project.json");
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    delete manifest.files.effectBundles;
+    fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+    await assert.rejects(
+      () =>
+        loadScriptEditorProjectFromFiles(
+          createImportedScriptEditorProjectFilesFromDisk(
+            projectRoot,
+            "script-editor-project"
+          )
+        ),
+      /effectBundles/i
     );
   }
 );

@@ -22,7 +22,7 @@
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
-| `target.script-editor-implementation` | `docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md` | `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md` | `Opened on 2026-07-13 as the live successor implementation version on top of the frozen script-editor contract baseline; no queue is admitted yet.` |
+| `target.script-editor-implementation` | `docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md` | `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md` | `Opened on 2026-07-13 as the live successor implementation version on top of the frozen script-editor contract baseline; queue.authoring-runtime-export-pipeline is now the single active queue.` |
 | `target.script-editor-contract-freeze` | `docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md` | `docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md` | `Closed on 2026-07-10 after explicit human closeout confirmation; no open successor currently exists.` |
 | `target.project-complete-modularization` | `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md` | `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md` | `Closed on 2026-07-10 after current-period modularization closeout.` |
 
