@@ -1,4 +1,576 @@
-[2m14:25:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/core/adapters/legacy-main-adapter.ts (resolved id: C:/RPG_TG/src/core/adapters/legacy-main-adapter.ts) in C:/RPG_TG/src/main.ts. Does the file exist?
-[2m14:25:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/core/adapters/mod-runtime-main-adapter.ts (resolved id: C:/RPG_TG/src/core/adapters/mod-runtime-main-adapter.ts) in C:/RPG_TG/src/main.ts. Does the file exist?
-[2m14:25:36[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/core/adapters/legacy-main-adapter.ts (resolved id: C:/RPG_TG/src/core/adapters/legacy-main-adapter.ts) in C:/RPG_TG/src/main.ts. Does the file exist?
-[2m14:25:36[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/core/adapters/mod-runtime-main-adapter.ts (resolved id: C:/RPG_TG/src/core/adapters/mod-runtime-main-adapter.ts) in C:/RPG_TG/src/main.ts. Does the file exist?
+[2m15:37:25[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:37:25[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:37:25[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:37:25[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:37:25[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:37:26[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:37:26[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:38:21[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:38:21[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:38:21[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:38:21[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:38:21[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+[2m15:38:23[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:38:23[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:38:31[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:38:48[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:38:49[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:39:19[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:39:46[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/liaoyongzhong(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:55:35
+[33m  52 |  import fuYoudeAvatarUrl from "../../ui/npc/fuyoude(touxiang).png?url";
+  53 |  import liaoYongzhongUrl from "../../ui/npc/liaoyongzhong.png?url";
+  54 |  import liaoYongzhongAvatarUrl from "../../ui/npc/liaoyongzhong(touxiang).png?url";
+     |                                      ^
+  55 |  import muYingUrl from "../../ui/npc/muying.png?url";
+  56 |  import muYingAvatarUrl from "../../ui/npc/muying(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 159)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:54:39[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:39[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:39[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:39[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:39[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:41[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 122)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:54:41[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 122)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:54:45[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:45[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:45[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:45[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:45[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+[2m15:54:47[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 121)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m15:54:47[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/npc/zhanggui(touxiang).png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:19:37
+[33m  16 |  import medicineDoctorAvatarUrl from "../../ui/npc/yisheng(touxiang).png?url";
+  17 |  import grainShopkeeperUrl from "../../ui/npc/zhanggui.png?url";
+  18 |  import grainShopkeeperAvatarUrl from "../../ui/npc/zhanggui(touxiang).png?url";
+     |                                        ^
+  19 |  import seniorMonkUrl from "../../ui/npc/shixiong.png?url";
+  20 |  import seniorMonkAvatarUrl from "../../ui/npc/shixiong(touxiang).png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 121)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m16:11:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:36[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 140)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m16:11:36[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 140)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m16:11:36[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:36[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:36[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:36[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:36[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+[2m16:11:37[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 139)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)
+[2m16:11:37[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../../ui/user/20 - touxiang.png?url" from "src/ui/portrait-assets.ts". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/RPG_TG/src/ui/portrait-assets.ts[39m:35:32
+[33m  32 |  import xuDaAvatarUrl from "../../ui/npc/xuda(touxiang).png?url";
+  33 |  import zhuStage20Url from "../../ui/user/20.png?url";
+  34 |  import zhuStage20AvatarUrl from "../../ui/user/20 - touxiang.png?url";
+     |                                   ^
+  35 |  import zhuStage25Url from "../../ui/user/25.png?url";
+  36 |  import zhuStage25AvatarUrl from "../../ui/user/25 - touxiang.png?url";[39m
+      at TransformPluginContext._formatLog (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29019:43)
+      at TransformPluginContext.error (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:29016:14)
+      at normalizeUrl (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27139:18)
+      at async file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27197:32
+      at async Promise.all (index 139)
+      at async TransformPluginContext.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:27165:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:28817:14)
+      at async loadAndTransform (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:22686:26)
+      at async viteTransformMiddleware (file:///C:/RPG_TG/node_modules/vite/dist/node/chunks/config.js:24562:20)

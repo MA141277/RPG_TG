@@ -4,7 +4,6 @@ import {
   renderHouseAlertOverlay,
   renderHouseDialogue,
   renderHouseCharacterCard,
-  renderHouseIdleOwner,
   renderHouseLeaveButton,
   renderHouseStandbyRoster,
   renderHouseStatusCard,
@@ -54,15 +53,6 @@ export function renderKeepHouseView(viewModel: HouseModuleViewModel): string {
   const isMeeting = viewModel.standbyRoster.some(
     (actor) => actor.isSelected != null
   );
-  const idleOwnerActor = isMeeting
-    ? null
-    : viewModel.standbyRoster.find((actor) => actor.actionId != null) ?? null;
-  const sideActors =
-    idleOwnerActor == null
-      ? viewModel.standbyRoster
-      : viewModel.standbyRoster.filter(
-          (actor) => actor.characterId !== idleOwnerActor.characterId
-        );
 
   return `
     <section class="view-house-grain-shop view-house-tea-house view-house-keep" data-house-module="${viewModel.moduleId}">
@@ -71,10 +61,7 @@ export function renderKeepHouseView(viewModel: HouseModuleViewModel): string {
         isMeeting
           ? renderMeetingRoster(viewModel)
           : renderHouseStandbyRoster(
-              {
-                ...viewModel,
-                standbyRoster: sideActors,
-              },
+              viewModel,
               {
                 asideClassName: "c-grain-shop-npc-idle c-tea-house-npc-idle",
                 asideLabel: "甯呭簻浜虹墿",
@@ -90,16 +77,6 @@ export function renderKeepHouseView(viewModel: HouseModuleViewModel): string {
         footerClassName: "c-grain-shop-dialogue c-tea-house-dialogue c-keep-house-dialogue",
         ariaLabel: "主帅训示",
       })}
-      ${
-        isMeeting
-          ? ""
-          : renderHouseIdleOwner(idleOwnerActor, {
-              renderSecondaryText: (actor) =>
-                actor.title == null
-                  ? ""
-                  : `<span class="c-tea-house-npc-idle__title">${actor.title}</span>`,
-            })
-      }
       ${renderHouseLeaveButton(viewModel)}
       ${renderHouseStatusCard(viewModel)}
       ${renderOverlay(viewModel.overlay)}

@@ -204,6 +204,7 @@
 .p-global-status-compact__name,
 .p-global-status-compact__title,
 .p-global-status-compact__location,
+.p-global-status-compact__date,
 .p-global-status-compact__gold,
 .p-global-status-compact__stamina,
 .p-global-status-compact__prestige {
@@ -243,9 +244,30 @@
 .p-global-status-compact__location {
   top: calc(var(--game-height) * 63 / 1152);
   left: calc(var(--game-width) * 177 / 2048);
-  width: calc(var(--game-width) * 250 / 2048);
+  width: calc(var(--game-width) * 86 / 2048);
   color: #f1dcaa;
   font-size: clamp(12px, 1.78cqw, 16px);
+  text-shadow: 0 1px 2px rgb(45 26 12 / 68%);
+}
+
+.p-global-status-compact__date-separator {
+  position: absolute;
+  z-index: 5;
+  top: calc(var(--game-height) * 62 / 1152);
+  left: calc(var(--game-width) * 274 / 2048 - 36px);
+  width: calc(var(--game-width) * 4 / 2048);
+  height: calc(var(--game-height) * 22 / 1152);
+  background: url("../../ui/yuansu/属性栏/下载 (2).png") center / contain no-repeat;
+  pointer-events: none;
+}
+
+.p-global-status-compact__date {
+  top: calc(var(--game-height) * 63 / 1152);
+  left: calc(var(--game-width) * 291 / 2048 - 36px);
+  width: calc(var(--game-width) * 176 / 2048);
+  color: #f1dcaa;
+  font-size: clamp(12px, 1.78cqw, 16px);
+  font-weight: 800;
   text-shadow: 0 1px 2px rgb(45 26 12 / 68%);
 }
 
@@ -1669,6 +1691,8 @@
   --kulan-info-button: url("../../ui/yuansu/1_007_info_button_1.0.png");
   --kulan-function-button: url("../../ui/yuansu/1_008_function_button_1.0.png");
   --kulan-large-button: url("../../ui/yuansu/1_031_large_gold_button_1.0.png");
+  --kulan-menu-button: url("../../ui/yuansu/按钮/generated/city-menu-button-280x74.png");
+  --kulan-return-button: url("../../ui/yuansu/按钮/generated/city-return-button-176x74.png");
   --kulan-nameplate: url("../../ui/yuansu/1_010_red_nameplate_1.0.png");
   position: relative;
   height: 100%;
@@ -1729,7 +1753,7 @@
   color: #f7e5b7;
   font-family: var(--font-title);
   font-size: 1.45rem;
-  background: center / contain no-repeat var(--kulan-large-button);
+  background: center / contain no-repeat var(--kulan-return-button);
   cursor: pointer;
   transition:
     transform var(--duration-fast) ease,
@@ -3497,12 +3521,12 @@
   min-height: 74px;
   width: 100%;
   padding: 0 24px;
-  color: #f7e5b7;
+  color: #4b2815;
   border: 0;
   font-family: var(--font-title);
   font-size: 1.5rem;
   letter-spacing: 0.08em;
-  background: center / 100% 100% no-repeat var(--kulan-large-button);
+  background: center / contain no-repeat var(--kulan-menu-button);
   cursor: pointer;
   transition:
     transform var(--duration-fast) ease,
@@ -3912,7 +3936,7 @@
   color: #f7e5b7;
   font-family: var(--font-title);
   font-size: 1.45rem;
-  background: center / contain no-repeat var(--kulan-large-button);
+  background: center / contain no-repeat var(--kulan-return-button);
   cursor: pointer;
   transition:
     transform var(--duration-fast) ease,

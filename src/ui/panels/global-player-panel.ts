@@ -121,6 +121,8 @@ export function renderGlobalPlayerPanel(
           <strong class="p-global-status-compact__name">${model.name}</strong>
           <span class="p-global-status-compact__title">${model.title}</span>
           <strong class="p-global-status-compact__location">${model.locationText}</strong>
+          <span class="p-global-status-compact__date-separator" aria-hidden="true"></span>
+          <strong class="p-global-status-compact__date">${model.currentDateText}</strong>
           <strong class="p-global-status-compact__gold">银两 ${model.goldText}</strong>
           <strong class="p-global-status-compact__stamina">体力 ${model.stamina}</strong>
           <strong class="p-global-status-compact__prestige">威望 ${model.fame}</strong>

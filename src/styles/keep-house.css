@@ -16,6 +16,7 @@
   gap: 1.7rem 1rem;
   align-content: center;
   justify-items: center;
+  transform: translateY(-100px);
   pointer-events: none;
 }
 
@@ -28,7 +29,7 @@
 }
 
 .view-house-keep .c-keep-house-seat__card {
-  width: 128px;
+  width: 112px;
   transition:
     transform var(--duration-fast) ease,
     filter var(--duration-fast) ease;
@@ -89,7 +90,7 @@
   }
 
   .view-house-keep .c-keep-house-seat__card {
-    width: 112px;
+    width: 100px;
   }
 
   .view-house-keep .c-keep-house-seat__avatar {

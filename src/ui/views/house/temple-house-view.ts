@@ -7,7 +7,6 @@ import {
   renderHouseAlertOverlay,
   renderHouseDialogue,
   renderHouseCharacterCard,
-  renderHouseIdleOwner,
   renderHouseLeaveButton,
   renderHouseQuantityConfirmOverlay,
   renderHouseStandbyRoster,
@@ -211,16 +210,6 @@ export function renderTempleHouseView(viewModel: HouseModuleViewModel): string {
   const isMeeting = viewModel.standbyRoster.some(
     (actor) => actor.isSelected != null
   );
-  const isIdle = viewModel.dialogue == null;
-  const ownerActor =
-    viewModel.standbyRoster.find((actor) => actor.actionId != null) ?? null;
-  const idleOwnerActor = isMeeting || !isIdle ? null : ownerActor;
-  const sideActors =
-    ownerActor == null
-      ? viewModel.standbyRoster
-      : viewModel.standbyRoster.filter(
-          (actor) => actor.characterId !== ownerActor.characterId
-        );
   return `
     <section class="view-house-grain-shop view-house-temple" data-house-module="${viewModel.moduleId}">
       ${renderHouseActionContainer(viewModel)}
@@ -228,10 +217,7 @@ export function renderTempleHouseView(viewModel: HouseModuleViewModel): string {
         isMeeting
           ? renderMeetingRoster(viewModel)
           : renderHouseStandbyRoster(
-              {
-                ...viewModel,
-                standbyRoster: sideActors,
-              },
+              viewModel,
               {
                 asideClassName: "c-grain-shop-npc-idle c-tea-house-npc-idle",
                 asideLabel: "寺中人物",
@@ -246,16 +232,6 @@ export function renderTempleHouseView(viewModel: HouseModuleViewModel): string {
       ${renderHouseDialogue(viewModel, {
         footerClassName: "c-grain-shop-dialogue c-tea-house-dialogue c-temple-house-dialogue",
       })}
-      ${
-        isMeeting || !isIdle
-          ? ""
-          : renderHouseIdleOwner(idleOwnerActor, {
-              renderSecondaryText: (actor) =>
-                actor.title == null
-                  ? ""
-                  : `<span class="c-tea-house-npc-idle__title">${actor.title}</span>`,
-            })
-      }
       ${isMeeting ? "" : renderHouseLeaveButton(viewModel)}
       ${renderOverlay(viewModel.overlay)}
     </section>
