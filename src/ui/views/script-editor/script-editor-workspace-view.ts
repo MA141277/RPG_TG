@@ -1,118 +1,210 @@
 import type {
-  ScriptEditorWorkspaceAuxiliaryCard,
-  ScriptEditorWorkspaceExportTarget,
   ScriptEditorWorkspaceInspectorCard,
+  ScriptEditorWorkspaceTreeGroup,
   ScriptEditorWorkspaceTreeNode,
-  ScriptEditorWorkspaceValidationIssue,
   ScriptEditorWorkspaceViewModel,
 } from "../../../application/script-editor/workspace-shell";
 
 export function renderScriptEditorWorkspaceView(
-  model: ScriptEditorWorkspaceViewModel
+  model: ScriptEditorWorkspaceViewModel,
+  editorMarkup = ""
 ): string {
-  const activeNavigationLabel =
-    model.navigationItems.find((item) => item.isActive)?.label ?? "创作工作台";
+  const { projectNode, sidebarGroups } = splitWorkspaceTreeGroups(model.objectTreeGroups);
+  const embeddedInspector = editorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->");
+  const inspectorHeaderSlot = extractTemplateSlot(
+    editorMarkup,
+    "data-script-editor-inspector-header-slot"
+  );
+  const suppressInspectorText = editorMarkup.includes(
+    "<!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->"
+  );
+  const sanitizedEditorMarkup = editorMarkup
+    .replace("<!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->", "")
+    .replace(inspectorHeaderSlot.fullMatch, "");
+  const inspectorMarkup = renderInspector(model, {
+    compact: embeddedInspector,
+    headerSlot: inspectorHeaderSlot.content,
+    hideHeaderText: suppressInspectorText,
+  });
+  const stageContent = sanitizedEditorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->")
+    ? sanitizedEditorMarkup.replace("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->", inspectorMarkup)
+    : `${inspectorMarkup}${sanitizedEditorMarkup}`;
 
   return `
-    <section class="c-script-editor-shell" aria-label="剧本编辑器工作台">
+    <section class="c-script-editor-shell">
       <header class="c-script-editor-shell__header">
-        <div class="c-script-editor-shell__heading">
-          <p class="c-script-editor-shell__eyebrow">剧本编辑器工作台</p>
-          <h1 class="c-script-editor-shell__title">${escapeHtml(model.title)}</h1>
-          <p class="c-script-editor-shell__subtitle">${escapeHtml(model.subtitle)}</p>
+        <div>
+          <p class="c-script-editor-shell__workbench-title">Script Editor Workbench Wireframe</p>
         </div>
-        <div class="c-script-editor-shell__badges">
-          ${model.badges
-            .map(
-              (badge) => `
-                <span class="c-script-editor-shell__badge c-script-editor-shell__badge--${badge.tone}">
-                  ${escapeHtml(badge.label)}
-                </span>
-              `
-            )
-            .join("")}
+        <div class="c-script-editor-shell__project-strip">
+          <div class="c-script-editor-shell__project-pill">
+            <strong>当前项目：${escapeHtml(model.title)}</strong>
+            <span>${escapeHtml(model.subtitle)}</span>
+          </div>
+          <div class="c-script-editor-shell__toolbar">
+            <button
+              type="button"
+              class="c-script-editor-shell__toolbar-button c-script-editor-shell__toolbar-button--ghost"
+              data-script-editor-action="back-to-landing"
+            >
+              返回列表
+            </button>
+            ${projectNode == null ? "" : renderProjectEntryButton(projectNode)}
+            ${renderToolbarButtons(model)}
+          </div>
         </div>
-        <div class="c-script-editor-shell__toolbar" aria-label="工作台操作">
-          <button
-            type="button"
-            class="c-script-editor-shell__action c-script-editor-shell__action--ghost"
-            data-script-editor-action="back-to-landing"
-          >
-            <strong>返回项目列表</strong>
-            <p>项目选择与导入留在列表页，不再常驻工作台首屏。</p>
-          </button>
-          ${model.toolbarActions
-            .map(
-              (action) => `
-                <button
-                  type="button"
-                  class="c-script-editor-shell__action c-script-editor-shell__action--${action.status}"
-                  data-script-editor-action="${action.id}"
-                >
-                  <strong>${escapeHtml(action.label)}</strong>
-                  <p>${escapeHtml(action.description)}</p>
-                </button>
-              `
-            )
-            .join("")}
-        </div>
-        <nav class="c-script-editor-shell__nav" aria-label="工作台阶段导航">
-          ${model.navigationItems
-            .map(
-              (item) => `
-                <button
-                  type="button"
-                  class="c-script-editor-shell__nav-item ${item.isActive ? "is-active" : ""}"
-                  data-script-editor-nav="${item.id}"
-                >
-                  ${escapeHtml(item.label)}
-                </button>
-              `
-            )
-            .join("")}
-        </nav>
       </header>
 
       <div class="c-script-editor-shell__body">
-        <aside class="c-script-editor-shell__sidebar" aria-label="对象树">
-          <section class="c-script-editor-shell__sidebar-intro">
-            <p class="c-script-editor-shell__sidebar-eyebrow">当前工作域</p>
-            <h2 class="c-script-editor-shell__sidebar-title">${escapeHtml(
-              activeNavigationLabel
-            )}</h2>
-            <p class="c-script-editor-shell__sidebar-description">
-              先切换对象类型，再进入具体实例。项目打开、导入与删除留在列表页处理，不再挤占创作首屏。
-            </p>
-          </section>
-          ${model.objectTreeGroups
-            .map(
-              (group) => `
-                <section class="c-script-editor-tree-group">
-                  <header class="c-script-editor-tree-group__header">
-                    <h2>${escapeHtml(group.label)}</h2>
-                  </header>
-                  <div class="c-script-editor-tree-group__nodes">
-                    ${group.nodes.map(renderTreeNode).join("")}
-                  </div>
-                </section>
-              `
-            )
-            .join("")}
+        <aside class="c-script-editor-shell__sidebar">
+          ${sidebarGroups.map(renderTreeGroup).join("")}
         </aside>
 
         <main class="c-script-editor-shell__workspace">
-          <section class="c-script-editor-shell__inspector">
-            <p class="c-script-editor-shell__inspector-eyebrow">
-              ${escapeHtml(model.inspector.eyebrow)}
-            </p>
-            <h2 class="c-script-editor-shell__inspector-title">
-              ${escapeHtml(model.inspector.title)}
-            </h2>
-            <p class="c-script-editor-shell__inspector-description">
-              ${escapeHtml(model.inspector.description)}
-            </p>
+          <section class="c-script-editor-shell__editor-stage">
+            ${stageContent}
+          </section>
+        </main>
+      </div>
+    </section>
+  `;
+}
+
+function splitWorkspaceTreeGroups(groups: ScriptEditorWorkspaceTreeGroup[]): {
+  projectNode: ScriptEditorWorkspaceTreeNode | null;
+  sidebarGroups: ScriptEditorWorkspaceTreeGroup[];
+} {
+  let projectNode: ScriptEditorWorkspaceTreeNode | null = null;
+
+  const sidebarGroups = groups
+    .map((group) => {
+      const nodes = group.nodes.filter((node) => {
+        if (node.family !== "storyPack") {
+          return true;
+        }
+        if (projectNode == null) {
+          projectNode = node;
+        }
+        return false;
+      });
+
+      return {
+        ...group,
+        nodes,
+      };
+    })
+    .filter((group) => group.nodes.length > 0);
+
+  return { projectNode, sidebarGroups };
+}
+
+function renderToolbarButtons(model: ScriptEditorWorkspaceViewModel): string {
+  return model.toolbarActions
+    .filter((action) => action.id !== "save")
+    .map((action) => {
+      const modifierClass =
+        action.id === "export"
+          ? "c-script-editor-shell__toolbar-button--accent"
+          : "c-script-editor-shell__toolbar-button--outline";
+
+      return `
+        <button
+          type="button"
+          class="c-script-editor-shell__toolbar-button ${modifierClass}"
+          data-script-editor-action="${escapeHtml(action.id)}"
+          aria-label="${escapeHtml(action.description)}"
+          title="${escapeHtml(action.description)}"
+        >
+          ${escapeHtml(action.label)}
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function renderProjectEntryButton(node: ScriptEditorWorkspaceTreeNode): string {
+  const selectedClass = node.isSelected ? " c-script-editor-shell__toolbar-button--selected" : "";
+  const warningClass =
+    node.tone === "warning" ? " c-script-editor-shell__toolbar-button--warning" : "";
+  const entityIdAttribute =
+    node.entityId == null ? "" : ` data-script-editor-entity-id="${escapeHtml(node.entityId)}"`;
+
+  return `
+    <button
+      type="button"
+      class="c-script-editor-shell__toolbar-button c-script-editor-shell__toolbar-button--ghost${selectedClass}${warningClass}"
+      data-script-editor-family="${escapeHtml(node.family)}"${entityIdAttribute}
+    >
+      <strong>${escapeHtml(node.label)}</strong>
+      <span>${escapeHtml(String(node.itemCount))}</span>
+    </button>
+  `;
+}
+
+function renderTreeGroup(group: ScriptEditorWorkspaceTreeGroup): string {
+  return `
+    <section class="c-script-editor-tree-group">
+      <header class="c-script-editor-tree-group__header">
+        <h2>${escapeHtml(group.label)}</h2>
+      </header>
+      <div class="c-script-editor-tree-group__nodes">
+        ${group.nodes.map(renderTreeNode).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderTreeNode(node: ScriptEditorWorkspaceTreeNode): string {
+  const selectedClass = node.isSelected ? " is-selected" : "";
+  const warningClass = node.tone === "warning" ? " c-script-editor-tree-node--warning" : "";
+  const entityIdAttribute =
+    node.entityId == null ? "" : ` data-script-editor-entity-id="${escapeHtml(node.entityId)}"`;
+
+  return `
+    <button
+      type="button"
+      class="c-script-editor-tree-node${selectedClass}${warningClass}"
+      data-script-editor-family="${escapeHtml(node.family)}"${entityIdAttribute}
+    >
+      <strong class="c-script-editor-tree-node__label">${escapeHtml(node.label)}</strong>
+      <span class="c-script-editor-tree-node__count">${escapeHtml(String(node.itemCount))}</span>
+    </button>
+  `;
+}
+
+function renderInspector(
+  model: ScriptEditorWorkspaceViewModel,
+  options: { compact?: boolean; headerSlot?: string; hideHeaderText?: boolean } = {}
+): string {
+  const inspector = model.inspector;
+  const compactClass = options.compact ? " c-script-editor-shell__inspector--compact" : "";
+  const headerTextMarkup = options.hideHeaderText
+    ? ""
+    : `
+        <div>
+          <p class="c-script-editor-shell__inspector-eyebrow">${escapeHtml(inspector.eyebrow)}</p>
+          <h1 class="c-script-editor-shell__inspector-title">${escapeHtml(inspector.title)}</h1>
+        </div>
+      `;
+  const headerSlotMarkup = options.headerSlot?.trim() ?? "";
+  const inspectorDescriptionMarkup =
+    options.hideHeaderText || inspector.description.trim().length === 0
+      ? ""
+      : `<p class="c-script-editor-shell__inspector-description">${escapeHtml(inspector.description)}</p>`;
+
+  return `
+    <section class="c-script-editor-shell__inspector${compactClass}">
+      <div class="c-script-editor-shell__inspector-header">
+        ${headerTextMarkup}
+        ${headerSlotMarkup}
+      </div>
+      ${inspectorDescriptionMarkup}
+      ${
+        options.compact
+          ? ""
+          : `
             <dl class="c-script-editor-shell__stats">
-              ${model.inspector.stats
+              ${inspector.stats
                 .map(
                   (stat) => `
                     <div class="c-script-editor-shell__stat">
@@ -124,161 +216,49 @@ export function renderScriptEditorWorkspaceView(
                 .join("")}
             </dl>
             <div class="c-script-editor-shell__cards">
-              ${model.inspector.cards.map(renderInspectorCard).join("")}
+              ${inspector.cards.map(renderInspectorCard).join("")}
             </div>
-          </section>
-
-          <aside class="c-script-editor-shell__handoff" aria-label="校验与导出摘要">
-            <div class="c-script-editor-shell__handoff-header">
-              <div>
-                <p class="c-script-editor-shell__handoff-eyebrow">预览与校验辅助区</p>
-                <p class="c-script-editor-shell__handoff-message">
-                  ${
-                    model.handoffSummary.firstMessage == null
-                      ? "默认不常驻展开；需要时再打开查看结构预览、问题清单和导出落点。"
-                      : escapeHtml(model.handoffSummary.firstMessage)
-                  }
-                </p>
-              </div>
-              <button
-                type="button"
-                class="c-main-ui-json-text-button"
-                data-script-editor-action="toggle-preview-panel"
-              >
-                ${escapeHtml(model.auxiliaryPanel.toggleLabel)}
-              </button>
-            </div>
-            <div class="c-script-editor-shell__handoff-grid">
-              <article class="c-script-editor-shell__handoff-card">
-                <strong>阻塞数</strong>
-                <span>${model.handoffSummary.blockedCount}</span>
-              </article>
-              <article class="c-script-editor-shell__handoff-card">
-                <strong>关注项</strong>
-                <span>${model.handoffSummary.attentionCount}</span>
-              </article>
-            </div>
-
-            ${
-              model.auxiliaryPanel.isOpen
-                ? `
-                  <div class="c-script-editor-shell__auxiliary">
-                    <section class="c-script-editor-shell__auxiliary-section">
-                      <header class="c-script-editor-shell__auxiliary-heading">
-                        <h3>结构预览</h3>
-                        <span>与当前选中对象联动</span>
-                      </header>
-                      <div class="c-script-editor-shell__auxiliary-cards">
-                        ${model.auxiliaryPanel.previewCards
-                          .map(renderAuxiliaryCard)
-                          .join("")}
-                      </div>
-                    </section>
-
-                    <section class="c-script-editor-shell__auxiliary-section">
-                      <header class="c-script-editor-shell__auxiliary-heading">
-                        <h3>统一校验</h3>
-                        <span>
-                          阻塞 ${model.auxiliaryPanel.summary.blockedCount}
-                          / 关注 ${model.auxiliaryPanel.summary.attentionCount}
-                          / 提示 ${model.auxiliaryPanel.summary.infoCount}
-                        </span>
-                      </header>
-                      <div class="c-script-editor-shell__issue-list">
-                        ${model.auxiliaryPanel.issues.map(renderValidationIssue).join("")}
-                      </div>
-                    </section>
-
-                    <section class="c-script-editor-shell__auxiliary-section">
-                      <header class="c-script-editor-shell__auxiliary-heading">
-                        <h3>导出落点</h3>
-                        <span>当前对象导出预估</span>
-                      </header>
-                      <div class="c-script-editor-shell__export-list">
-                        ${model.auxiliaryPanel.exportTargets
-                          .map(renderExportTarget)
-                          .join("")}
-                      </div>
-                    </section>
-                  </div>
-                `
-                : ""
-            }
-          </aside>
-        </main>
-      </div>
+          `
+      }
     </section>
   `;
 }
 
-function renderTreeNode(node: ScriptEditorWorkspaceTreeNode): string {
-  return `
-    <button
-      type="button"
-      class="c-script-editor-tree-node c-script-editor-tree-node--${node.tone} ${node.isSelected ? "is-selected" : ""}"
-      data-script-editor-family="${node.family}"
-      ${node.entityId == null ? "" : `data-script-editor-entity-id="${escapeHtml(node.entityId)}"`}
-    >
-      <span class="c-script-editor-tree-node__label">${escapeHtml(node.label)}</span>
-      <span class="c-script-editor-tree-node__count">${node.itemCount}</span>
-      <span class="c-script-editor-tree-node__description">${escapeHtml(node.description)}</span>
-    </button>
-  `;
+function extractTemplateSlot(
+  markup: string,
+  attribute: string
+): { fullMatch: string; content: string } {
+  const pattern = new RegExp(
+    `<template\\s+${attribute}\\s*>([\\s\\S]*?)<\\/template>`,
+    "i"
+  );
+  const match = markup.match(pattern);
+
+  if (match == null) {
+    return {
+      fullMatch: "",
+      content: "",
+    };
+  }
+
+  return {
+    fullMatch: match[0],
+    content: match[1] ?? "",
+  };
 }
 
 function renderInspectorCard(card: ScriptEditorWorkspaceInspectorCard): string {
+  const toneClass = ` c-script-editor-shell__card--${card.tone}`;
   return `
-    <article class="c-script-editor-shell__card c-script-editor-shell__card--${card.tone}">
+    <article class="c-script-editor-shell__card${toneClass}">
       <h3>${escapeHtml(card.title)}</h3>
       <p>${escapeHtml(card.body)}</p>
     </article>
   `;
 }
 
-function renderAuxiliaryCard(card: ScriptEditorWorkspaceAuxiliaryCard): string {
-  return `
-    <article class="c-script-editor-shell__auxiliary-card c-script-editor-shell__auxiliary-card--${card.tone}">
-      <h3>${escapeHtml(card.title)}</h3>
-      <p>${escapeHtml(card.body)}</p>
-    </article>
-  `;
-}
-
-function renderValidationIssue(issue: ScriptEditorWorkspaceValidationIssue): string {
-  return `
-    <article class="c-script-editor-shell__issue c-script-editor-shell__issue--${issue.severity}">
-      <div class="c-script-editor-shell__issue-copy">
-        <strong>${escapeHtml(issue.title)}</strong>
-        <p>${escapeHtml(issue.message)}</p>
-      </div>
-      <button
-        type="button"
-        class="c-main-ui-json-text-button"
-        data-script-editor-action="jump-to-preview-issue"
-        data-script-editor-family="${issue.targetFamily}"
-        ${issue.targetEntityId == null ? "" : `data-script-editor-entity-id="${escapeHtml(issue.targetEntityId)}"`}
-        ${issue.targetTab == null ? "" : `data-script-editor-target-tab="${escapeHtml(issue.targetTab)}"`}
-      >
-        ${escapeHtml(issue.actionLabel)}
-      </button>
-    </article>
-  `;
-}
-
-function renderExportTarget(target: ScriptEditorWorkspaceExportTarget): string {
-  return `
-    <article class="c-script-editor-shell__export-target c-script-editor-shell__export-target--${target.status}">
-      <div class="c-script-editor-shell__export-copy">
-        <strong>${escapeHtml(target.label)}</strong>
-        <p>${escapeHtml(target.body)}</p>
-      </div>
-      <span class="c-script-editor-shell__export-file">${escapeHtml(target.file)}</span>
-    </article>
-  `;
-}
-
-function escapeHtml(value: string): string {
-  return value
+function escapeHtml(value: string | number | null | undefined): string {
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")

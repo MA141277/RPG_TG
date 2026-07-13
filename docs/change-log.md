@@ -9,6 +9,24 @@
 
 ## 2026-07-13 Script Editor Implementation Version Opening
 
+## 2026-07-14 Script Editor Person Runtime Attribute Editing Alignment
+
+### Changed
+- 更新 [src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts)，让导入人物 JSON 中的 primitive runtime 字段自动并入 `extendedAttributes`，并在属性编辑、删除时把 `age`、`clanId`、`stats.*`、`skills.*` 等路径同步回写到人物记录，避免它们只停留在只读摘要里。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 与 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，把人物详情顶部的“当前人物 JSON 属性”区域从只读展示改为可直接 `新增 / 编辑 / 删除` 的属性键值编辑器，并移除下方重复的扩展属性编辑块。
+- 继续更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts) 与 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，为人物扩展属性补入创作者可见的 `label`，把导入的 runtime 字段映射成“年龄 / 所属 / 统率 / 武勇 / 智略 / 政务 / 魅力 / 名声”等属性名，并让顶部编辑区只暴露“属性名 + 属性值”，不再直接泄露内部 `key` 路径。
+- 继续更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts) 与 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `cityId / houseId / portraitId / portraitVariantId` 从人物扩展属性里提升为固定人物字段，并在“属性”分栏中改成基于当前项目城市、建筑和现有人物立绘/立绘变体的下拉选择。
+- 继续更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、[src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css) 与 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把人物 JSON 属性区改成固定宽度的 6 列卡片网格，并将每页显示上限收敛为 18 个卡片（3 行），超出部分通过独立的上一页/下一页分页切换显示。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入两类回归：顶部属性区必须暴露现有属性编辑 action，以及导入的 runtime 人物字段必须被吸收到可编辑属性列表并支持值更新/属性删除。
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，将这次人物 runtime 属性并入可编辑属性面的实现事实记录到当前 active visual queue，而不把它误记成新的并行队列。
+
+### Impact
+- 剧本编辑器中的人物详情现在会直接暴露导入角色卡里的 `age`、`clanId`、`stats.leadership`、`stats.martial`、`stats.intelligence`、`stats.politics`、`stats.charm`、`stats.fame` 等 runtime 字段，且可以在同一块区域内直接改值或删属性。
+- 创作者在人物属性编辑区里看到的已经不再是原始 `stats.leadership` 这一类内部路径，而是可编辑的“属性名 + 属性值”形式；内部 `key` 只保留给回写映射使用，不再直接暴露到创作者视图。
+- `cityId / houseId / portraitId / portraitVariantId` 不再混在自由扩展属性列表里，而是回到人物固定属性区并以受控下拉框编辑；其中建筑列表会跟随当前城市过滤，立绘变体下拉会优先读取当前人物已携带的 `portraitVariants` 元数据。
+- 当人物属性过多时，顶部 JSON 属性区现在不会继续无限向下扩张；它会固定成每行 6 张卡片、每页最多 3 行的分页网格，新增属性时也会自动跳转到最后一页。
+- 这次实现仍属于 `queue.script-editor-prd-workbench-ui-visual-alignment` 的同边界 creator-visible field convergence 批次；没有重开已关闭的人物作者面队列，也没有扩张到新的 schema owner。
+
 ## 2026-07-13 Script Editor Load Save Queue Admission
 
 ## 2026-07-13 Script Editor Export Queue Admission
@@ -164,6 +182,48 @@
 ### Impact
 - 用户现在在“人物与世界”等对象工作区看到的将不再是上一个 dark scaffold 阶段的摘要板，而是更接近蓝图要求的 creator-first workbench shell。
 - 当前首切先解决“视觉外壳 + 首屏摘要语义”问题；更深层的字段显隐与高级信息收口仍继续受 `queue.script-editor-prd-workbench-ui-visual-alignment` 约束推进。
+
+## 2026-07-13 Script Editor Workspace Scroll Intake Routing
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md) 与 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，将“剧本编辑器工作区没有滚动条、下方内容不可达”的新问题记录为 `item.script-editor-workspace-scroll-accessibility`，并明确按蓝图规范被当前 active 的 `queue.script-editor-prd-workbench-ui-visual-alignment` 吸收，而不是新建并行候选队列。
+
+### Impact
+- 当前蓝图没有被错误地分叉出第二条同家族工作台队列；滚动可达性问题现在归属于正在进行的 creator-workbench visual queue。
+- 后续若主会话继续推进该 active queue，应在不越出既有视觉/布局边界的前提下，把工作区滚动可达性作为该队列的明确实现义务处理。
+
+## 2026-07-13 Script Editor Advanced System Details Convergence
+
+### Changed
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 与 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，新增共享的 `高级设置与系统信息` 折叠块样式与渲染 helper，并把项目总览、人物、城市/建筑、剧情、对话、事件、玩法绑定等基础页签中的首屏系统字段收口到该折叠层，而不是继续把 `ID` / 挂接标识直接铺在作者首屏。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充 visual-alignment 回归，确保高级系统信息折叠 helper、样式类以及故事/对话/事件/玩法的字段显隐文案继续存在。
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，把这一批实现记录进当前 active task 的队列事实，明确它属于 visual queue 的同一 bounded 首屏字段收敛批次。
+
+### Impact
+- 当前 script-editor 工作台已经不只是 warm-paper 外壳收敛，首屏字段显隐也开始符合 creator-first 要求：创作标题、摘要、描述留在主视图，系统标识转入统一折叠块。
+- 该队列仍未 closeout；剩余工作继续集中在活跃 visual queue，包括工作区滚动可达性和任何尚未完成的同边界视觉/布局清理。
+
+## 2026-07-13 Script Editor Workspace Scroll Recovery
+
+### Changed
+- 更新 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，让 `.c-main-ui-screen--script-editor-flow` 在固定的 main-ui shell 内自己承担纵向滚动：补充 `height: 100%`、`overflow-y: auto`、`overflow-x: hidden` 与 `overscroll-behavior-y: contain`，不再依赖被全局锁死的 `html/body/#app` 页面滚动。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 script-editor 工作区滚动回归，确保 visual-alignment 队列不会再把固定壳中的工作台滚动能力回退掉。
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，把这次滚动修复记入当前 active visual queue 的实现事实，而不是误记成新的并行队列。
+
+### Impact
+- 剧本编辑器现在在现有固定 main-ui/game-frame 约束下恢复了纵向可达性，下方被裁掉的工作台内容可以通过 screen 内滚动继续访问。
+- 这仍然属于 `queue.script-editor-prd-workbench-ui-visual-alignment` 的同边界实现批次；队列尚未 closeout，后续仍需继续完成剩余视觉/布局清理与同步。
+
+## 2026-07-13 Script Editor Central Editor Reflow
+
+### Changed
+- 更新 [src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 与 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，把真实的对象编辑面板从工作台外部下方的独立追加区块收回到 `.c-script-editor-shell__workspace` 的中央主列，并新增 `c-script-editor-shell__editor-stage` 容器，让当前对象详情优先停留在主编辑区顶部，摘要信息退到其下方。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增布局回归，确保 `renderScriptEditorWorkspaceView(workspace, this.renderScriptEditorEditorPanel())` 继续成立，避免详情面板再次被挂回工作台底部。
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，把这次中央编辑列回流记入当前 active visual queue 的实现事实。
+
+### Impact
+- “人物详情”以及同类对象详情不再掉到整个工作台最下面，而是回到符合线框预期的中央主编辑区。
+- 当前布局更接近蓝图中的“左侧导航/对象列表 + 中央主编辑区 + 右侧辅助区”结构，但该 visual queue 仍未 closeout。
 
 ## 2026-07-13 Script Editor Minigame Binding Queue Closeout
 
@@ -2308,3 +2368,17 @@
 ### Impact
 - The repository now has one explicit controller for accepted-history, accepted-framework-baseline, and accepted-compatibility residue instead of leaving those items spread across old queue closeout notes.
 - Later Phase 4 handoff decisions such as `queue.first-party-mod-acceptance` or `queue.final-acceptance-closeout` must now pass through the active residue queue instead of being promoted directly from implicit closeout caveats.
+
+## 2026-07-14 Script Editor Person Attribute Page Stability
+
+### Changed
+- The script editor person-attribute grid now keeps the current page stable after deleting one attribute card instead of immediately backfilling the gap with the next-page card, reducing the false impression that multiple attributes were deleted together.
+- The person attribute block title now uses the creator-facing label `自定义属性` instead of the raw-implementation-oriented `当前人物 JSON 属性`.
+- The person authoring surface no longer renders the redundant `人物作者面 / 人物详情 / 人物工作台 / 亲兵` explanatory label stack around the embedded workbench shell; instead, the tab controls are mounted directly into the compact inspector header band.
+- The people profile form no longer renders the `高级设置与系统信息` foldout, so the first-screen authoring area now transitions directly from the biography field into the custom-attribute block without a dead disclosure row.
+
+### Impact
+- Attribute deletion inside the workbench now behaves closer to human expectation: removing one card only removes that card from the visible page, while later-page content stays on its own page until the creator explicitly navigates.
+- The top-of-sheet wording is now consistent with the current authoring model, which exposes editable custom attributes rather than a raw JSON inspection panel.
+- The person editor header is visually simpler and closer to the approved wireframe rhythm because the creator now sees one active control band instead of duplicated labels plus a separate tab row.
+- The people editor's primary form reads more like a continuous authoring sheet and wastes less vertical space, which better matches the current creator-first workbench layout.

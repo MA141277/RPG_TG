@@ -61,6 +61,13 @@
   - `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation: land the bounded shell/visual convergence, top utility-bar cleanup, and creator-visible summary filtering without reopening closed structural queues.`
   - `task.script-editor-prd-workbench-ui-visual-alignment.queue-closeout-and-handoff: verify the queue-local visual slice, classify any remaining residue, and return control to version-level closeout review.`
 
+### Active Intake Absorption Record
+
+- `2026-07-13: a fresh operator intake reported that the current script-editor workspace shows no scrollbar and clips lower content in the visible workbench.`
+- `Blueprint classification result: absorb into task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation.`
+- `Absorption basis: the defect is a creator-workbench layout/accessibility failure inside the active warm-paper shell convergence queue rather than a new structural authoring scope, runtime/schema issue, or separate same-family continuation queue.`
+- `Operator request for a new candidate queue is therefore rejected under single-active-queue mode; queue.script-editor-prd-workbench-ui-visual-alignment remains the sole lawful execution owner for this issue.`
+
 ### Operator Snapshot Contract
 
 - `The fixed operator receipt must source 当前执行队列 from queue_id.`
@@ -103,7 +110,7 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-prd-workbench-ui-visual-alignment.boundary-baseline-reconcile` | `completed` | `Confirm that creator-first workbench visual convergence remains the next smallest same-family PRD gap.` | `none` | `Completed on 2026-07-13 after repository inspection reconfirmed that the structural queues are all closed, but the workspace still presents a darker scaffold-like shell, still keeps extra non-authoring entry actions near the editor surface, and still exposes more raw ID-centric summaries than the approved creator-first design allows.` |
-| `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation` | `in_progress` | `Land the bounded warm-paper shell convergence, top utility-bar cleanup, and creator-visible summary filtering.` | `task.script-editor-prd-workbench-ui-visual-alignment.boundary-baseline-reconcile` | `In progress on 2026-07-13 while converging the workspace shell toward the approved design-system direction without reopening closed structural authoring scope.` |
+| `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation` | `in_progress` | `Land the bounded warm-paper shell convergence, top utility-bar cleanup, and creator-visible summary filtering.` | `task.script-editor-prd-workbench-ui-visual-alignment.boundary-baseline-reconcile` | `In progress on 2026-07-13 while converging the workspace shell toward the approved design-system direction without reopening closed structural authoring scope; the current landed slice now also hides first-screen system-facing ID fields behind one shared advanced-details pattern across project overview, people, locations, story nodes, dialogues, events, and minigame bindings, restores vertical scrolling by making the script-editor screen own its own overflow inside the fixed main-ui shell, and moves the active editor panel back into the central workspace column instead of appending it below the shell.` |
 | `task.script-editor-prd-workbench-ui-visual-alignment.queue-closeout-and-handoff` | `pending` | `Verify the queue-local visual slice, classify remaining residue, and hand control back to version review.` | `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation` | `Pending until the bounded visual convergence slice and regression verification both pass.` |
 
 ### Task Definitions
@@ -191,6 +198,18 @@
   - `Implement the bounded creator-first workbench shell convergence and first-screen field-visibility cleanup.`
 - task_outcome_summary:
   - `In progress while converging the workbench shell toward the approved creator-first visual direction and reducing first-screen raw ID exposure without reopening closed structural queues.`
+  - `The current bounded implementation batch has already moved the obvious system-facing identifier fields on project overview, people, locations, story nodes, dialogues, events, and minigame bindings behind one shared advanced-details disclosure instead of keeping them exposed on first screen.`
+  - `The active scope now also explicitly owns the workspace-scroll accessibility defect: the current fixed-viewport shell clips lower editor content instead of allowing the creator workspace to reach all visible sections.`
+  - `The current implementation batch restores script-editor vertical reachability by making .c-main-ui-screen--script-editor-flow scroll vertically inside the fixed shell, rather than relying on the globally locked page/body scroll path.`
+  - `The current implementation batch also repairs the main layout hierarchy so the active object editor renders inside the central workspace column, with summary cards falling below it, instead of leaving the real editing surface stranded beneath the entire workbench shell.`
+  - `The current implementation batch now also absorbs runtime-backed person card fields such as age, clanId, and stats.* into the existing editable key/value attribute surface, and upgrades the top-of-editor person JSON block from read-only summary cards into the same live add/edit/delete attribute editor so the creator-facing sheet matches imported character data more closely without reopening the closed person-authoring queue boundary.`
+  - `The current implementation batch now also hides internal runtime key paths from the creator-facing person attribute editor, adds dedicated attribute-name labels for imported fields such as 年龄 / 所属 / 统率, and keeps only 属性名 + 属性值 editable in the top summary block so the workbench no longer leaks raw JSON key semantics into the authoring surface.`
+  - `The current implementation batch now also promotes cityId / houseId / portraitId / portraitVariantId out of the freeform person attribute surface into the fixed profile tab, where they render as bounded dropdown selectors sourced from the current project records and imported portrait-variant metadata, so creator-facing authoring no longer treats these linkage ids as ad hoc text attributes.`
+  - `The current implementation batch now also constrains the person JSON attribute cards into a fixed six-column grid with at most three rows per page, and paginates the surface after eighteen cards so large imported attribute sets no longer stretch the central workbench indefinitely downward.`
+  - `The current implementation batch now also keeps the visible person attribute page stable after deleting one card, so the editor no longer auto-backfills the current page with the next-page attribute and no longer creates the false impression that multiple attributes were removed together.`
+  - `The current implementation batch now also renames the top person-attribute block from raw JSON-oriented wording to creator-facing 自定义属性 copy, aligning the sheet title with the current authoring surface.`
+  - `The current implementation batch now also removes the redundant person-page explanatory labels around the embedded workbench shell, and relocates the person detail tab buttons into the workbench inspector header slot so the active control row occupies the title band directly instead of leaving duplicate creator-facing headings stacked above the form.`
+  - `The current implementation batch now also removes the people profile panel's advanced/system foldout entirely, so the first-screen authoring area no longer leaves a dead disclosure row between the biography field and the custom-attribute block.`
 
 #### `task.script-editor-prd-workbench-ui-visual-alignment.queue-closeout-and-handoff`
 

@@ -260,6 +260,9 @@ const characterSelectLayoutBindings = [
   },
 ];
 
+const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
+const SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE = 18;
+
 export class MainUiFlow {
   constructor(options) {
     this.overlayRoot = options.overlayRoot;
@@ -285,6 +288,9 @@ export class MainUiFlow {
     this.handleChange = (event) => {
       void this.onChange(event);
     };
+    this.handleInput = (event) => {
+      this.onInput(event);
+    };
     this.inkParticleSystem = null;
     this.pendingSelectedInkBurstCharacterId = null;
     this.previousCharacterDetail = null;
@@ -297,6 +303,8 @@ export class MainUiFlow {
       entityId: null,
     };
     this.scriptEditorNotice = null;
+    this.scriptEditorNoticeEntries = [];
+    this.scriptEditorNoticeSequence = 0;
     this.scriptEditorProjectDirectoryHandle = null;
     this.scriptEditorExportDirectoryHandle = null;
     this.scriptEditorProjectLibrary = [];
@@ -308,6 +316,14 @@ export class MainUiFlow {
     this.scriptEditorNarrativeTab = "profile";
     this.scriptEditorEventTab = "basics";
     this.scriptEditorMinigameTab = "basics";
+    this.scriptEditorRecordListPages = {};
+    this.scriptEditorRecordSearch = {
+      people: "",
+    };
+    this.scriptEditorPersonAttributePage = 1;
+    this.scriptEditorPersonAttributeVisibleIndices = null;
+    this.scriptEditorPersonAttributeScrollLeft = 0;
+    this.scriptEditorScrollTop = 0;
   }
 
   mount() {
@@ -316,6 +332,7 @@ export class MainUiFlow {
     this.overlayRoot.addEventListener("mouseover", this.handleHover);
     this.overlayRoot.addEventListener("focusin", this.handleFocus);
     this.overlayRoot.addEventListener("change", this.handleChange);
+    this.overlayRoot.addEventListener("input", this.handleInput);
     this.render();
   }
 
@@ -324,6 +341,7 @@ export class MainUiFlow {
     this.overlayRoot.removeEventListener("mouseover", this.handleHover);
     this.overlayRoot.removeEventListener("focusin", this.handleFocus);
     this.overlayRoot.removeEventListener("change", this.handleChange);
+    this.overlayRoot.removeEventListener("input", this.handleInput);
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
@@ -355,6 +373,7 @@ export class MainUiFlow {
   }
 
   render() {
+    this.captureScriptEditorScrollPosition();
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
@@ -376,6 +395,7 @@ export class MainUiFlow {
               ? this.renderScriptEditorWorkspace()
               : this.renderCharacterSelect();
     this.overlayRoot.innerHTML = screenMarkup;
+    this.restoreScriptEditorScrollPosition();
     if (this.currentScreen === "main-menu") {
       this.destroyOpeningBackgroundAnimation = mountOpeningBackgroundAnimation(this.overlayRoot);
       this.syncStartScreenLayout();
@@ -383,6 +403,38 @@ export class MainUiFlow {
       this.syncCharacterSelectLayout();
       this.setupCharacterSelectInkParticles();
       this.scheduleCharacterDetailTransitionCleanup();
+    }
+  }
+
+  captureScriptEditorScrollPosition() {
+    const scriptEditorScreen = this.overlayRoot.querySelector(
+      ".c-main-ui-screen--script-editor-flow"
+    );
+    if (scriptEditorScreen instanceof globalThis.HTMLElement) {
+      this.scriptEditorScrollTop = scriptEditorScreen.scrollTop;
+    }
+
+    const personAttributeList = this.overlayRoot.querySelector(
+      ".c-script-editor-person-summary__list"
+    );
+    if (personAttributeList instanceof globalThis.HTMLElement) {
+      this.scriptEditorPersonAttributeScrollLeft = personAttributeList.scrollLeft;
+    }
+  }
+
+  restoreScriptEditorScrollPosition() {
+    const scriptEditorScreen = this.overlayRoot.querySelector(
+      ".c-main-ui-screen--script-editor-flow"
+    );
+    if (scriptEditorScreen instanceof globalThis.HTMLElement) {
+      scriptEditorScreen.scrollTop = this.scriptEditorScrollTop;
+    }
+
+    const personAttributeList = this.overlayRoot.querySelector(
+      ".c-script-editor-person-summary__list"
+    );
+    if (personAttributeList instanceof globalThis.HTMLElement) {
+      personAttributeList.scrollLeft = this.scriptEditorPersonAttributeScrollLeft;
     }
   }
 
@@ -593,16 +645,11 @@ export class MainUiFlow {
 
     return `
       <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器工作流">
-        <div class="c-script-editor-workflow__chrome">
-          ${this.renderScriptEditorNotice()}
-          ${this.renderScriptEditorFileInputs()}
-        </div>
-
-        ${renderScriptEditorWorkspaceView(workspace)}
-
-        <section class="c-script-editor-workflow__editor" aria-label="最小对象编辑">
-          ${this.renderScriptEditorEditorPanel()}
-        </section>
+        ${this.renderScriptEditorFileInputs()}
+        ${renderScriptEditorWorkspaceView(
+          workspace,
+          this.renderScriptEditorEditorPanel()
+        )}
       </section>
     `;
   }
@@ -629,6 +676,7 @@ export class MainUiFlow {
               <h2 class="c-script-editor-editor-card__title">项目根信息</h2>
             </div>
           </header>
+          <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
           <div class="c-script-editor-shell__cards c-script-editor-editor-card__overview">
             ${this.renderScriptEditorOverviewCard(
               "项目状态",
@@ -652,21 +700,29 @@ export class MainUiFlow {
             )}
           </div>
           <div class="c-script-editor-form-grid">
-            ${this.renderScriptEditorField("project.id", "项目 ID", this.scriptEditorProject.id)}
             ${this.renderScriptEditorField("project.title", "项目标题", this.scriptEditorProject.title)}
             ${this.renderScriptEditorField("project.description", "项目说明", this.scriptEditorProject.description ?? "")}
-            ${this.renderScriptEditorField("storyPack.id", "剧本包 ID", storyPack.id)}
             ${this.renderScriptEditorField("storyPack.title", "剧本包标题", storyPack.title)}
             ${this.renderScriptEditorField("storyPack.description", "剧本包说明", storyPack.description ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.id", "开场场景 ID", scenarioProfile.id ?? "")}
             ${this.renderScriptEditorField("scenarioProfile.title", "开场场景标题", scenarioProfile.title ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.playerCharacterId", "默认主角 ID", scenarioProfile.playerCharacterId ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.chapterId", "章节 ID", scenarioProfile.chapterId ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.initialLocation.mapId", "初始地图 ID", initialLocation.mapId ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.initialLocation.cityId", "初始城市 ID", initialLocation.cityId ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.initialLocation.houseId", "初始建筑 ID", initialLocation.houseId ?? "")}
             ${this.renderScriptEditorField("scenarioProfile.initialLocation.view", "初始视图", initialLocation.view ?? "")}
           </div>
+          ${this.renderScriptEditorSystemDetails(
+            "高级设置与系统信息",
+            "项目标识、开场目标和底层定位字段默认折叠，避免首屏被工程字段占满。",
+            `
+              <div class="c-script-editor-form-grid">
+                ${this.renderScriptEditorField("project.id", "项目 ID", this.scriptEditorProject.id)}
+                ${this.renderScriptEditorField("storyPack.id", "剧本包 ID", storyPack.id)}
+                ${this.renderScriptEditorField("scenarioProfile.id", "开场场景 ID", scenarioProfile.id ?? "")}
+                ${this.renderScriptEditorField("scenarioProfile.playerCharacterId", "默认主角 ID", scenarioProfile.playerCharacterId ?? "")}
+                ${this.renderScriptEditorField("scenarioProfile.chapterId", "章节 ID", scenarioProfile.chapterId ?? "")}
+                ${this.renderScriptEditorField("scenarioProfile.initialLocation.mapId", "初始地图 ID", initialLocation.mapId ?? "")}
+                ${this.renderScriptEditorField("scenarioProfile.initialLocation.cityId", "初始城市 ID", initialLocation.cityId ?? "")}
+                ${this.renderScriptEditorField("scenarioProfile.initialLocation.houseId", "初始建筑 ID", initialLocation.houseId ?? "")}
+              </div>
+            `
+          )}
         </div>
       `;
     }
@@ -712,21 +768,10 @@ export class MainUiFlow {
       <div class="c-script-editor-editor-card">
         <header class="c-script-editor-editor-card__header">
           <div>
-            <p class="c-script-editor-editor-card__eyebrow">Minimal Object Editor</p>
+            <p class="c-script-editor-editor-card__eyebrow">对象作者面</p>
             <h2 class="c-script-editor-editor-card__title">${escapeHtml(this.getScriptEditorFamilyLabel(family))}</h2>
           </div>
           <div class="c-script-editor-editor-card__actions">
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
-              新增
-            </button>
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="remove-record"
-              ${selectedRecord == null ? "disabled" : ""}
-            >
-              删除
-            </button>
             <button
               type="button"
               class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
@@ -742,30 +787,45 @@ export class MainUiFlow {
           isDeferredFamily
             ? `
               <p class="c-script-editor-editor-card__hint">
-                Story nodes remain a bounded placeholder family here. Editing is allowed, but runtime export will still fail closed until a later queue lands the compile path.
+                剧情节点当前仍是受边界约束的占位作者面。可以继续编辑，但在后续队列补齐编译路径前，运行时导出仍会保持失败关闭。
               </p>
             `
             : ""
         }
 
         <div class="c-script-editor-record-layout">
-          <aside class="c-script-editor-record-list" aria-label="对象列表">
-            ${records
-              .map(
-                (record) => `
-                  <button
-                    type="button"
-                    class="c-script-editor-record-list__item ${record.id === selectedRecord?.id ? "is-selected" : ""}"
-                    data-script-editor-record-id="${escapeHtml(record.id)}"
-                  >
-                    <strong>${escapeHtml(this.getScriptEditorRecordLabel(record))}</strong>
-                    <span>${escapeHtml(record.id)}</span>
-                  </button>
-                `
-              )
-              .join("")}
-          </aside>
+          ${this.renderScriptEditorPaginatedRecordList({
+            family,
+            records,
+            ariaLabel: "对象列表",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${selectedRecord == null ? "disabled" : ""}
+                >
+                  删除
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => `
+              <button
+                type="button"
+                class="c-script-editor-record-list__item ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                data-script-editor-record-id="${escapeHtml(record.id)}"
+              >
+                <strong>${escapeHtml(this.getScriptEditorRecordLabel(record))}</strong>
+                <span>${escapeHtml(record.id)}</span>
+              </button>
+            `,
+          })}
           <div class="c-script-editor-record-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
             <textarea
               class="c-script-editor-record-editor__textarea"
               data-script-editor-record-json
@@ -777,50 +837,253 @@ export class MainUiFlow {
     `;
   }
 
+  getScriptEditorRecordListPage(family) {
+    if (!isScriptEditorMinimalWorkflowFamily(family) || family === "storyPack") {
+      return 1;
+    }
+
+    return this.scriptEditorRecordListPages[family] ?? 1;
+  }
+
+  resetScriptEditorRecordListPages() {
+    this.scriptEditorRecordListPages = {};
+  }
+
+  resetScriptEditorRecordSearch() {
+    this.scriptEditorRecordSearch = {
+      people: "",
+    };
+  }
+
+  resetScriptEditorPersonAttributePage() {
+    this.scriptEditorPersonAttributePage = 1;
+    this.scriptEditorPersonAttributeVisibleIndices = null;
+    this.scriptEditorPersonAttributeScrollLeft = 0;
+  }
+
+  setScriptEditorRecordListPage(family, nextPage) {
+    if (
+      this.scriptEditorProject == null ||
+      !isScriptEditorMinimalWorkflowFamily(family) ||
+      family === "storyPack"
+    ) {
+      return 1;
+    }
+
+    const records = listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family);
+    const totalPages = Math.max(
+      1,
+      Math.ceil(records.length / SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE)
+    );
+    const resolvedPage = Math.min(
+      Math.max(Number.isInteger(nextPage) ? nextPage : 1, 1),
+      totalPages
+    );
+
+    this.scriptEditorRecordListPages = {
+      ...this.scriptEditorRecordListPages,
+      [family]: resolvedPage,
+    };
+
+    return resolvedPage;
+  }
+
+  syncScriptEditorRecordListPageToRecord(family, recordId, records = null) {
+    if (
+      this.scriptEditorProject == null ||
+      !isScriptEditorMinimalWorkflowFamily(family) ||
+      family === "storyPack"
+    ) {
+      return 1;
+    }
+
+    const resolvedRecords =
+      records ?? listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family);
+    const recordIndex = resolvedRecords.findIndex((record) => record.id === recordId);
+
+    if (recordIndex < 0) {
+      return this.setScriptEditorRecordListPage(family, 1);
+    }
+
+    return this.setScriptEditorRecordListPage(
+      family,
+      Math.floor(recordIndex / SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE) + 1
+    );
+  }
+
+  getScriptEditorRecordSearchValue(family) {
+    return this.scriptEditorRecordSearch[family] ?? "";
+  }
+
+  setScriptEditorRecordSearchValue(family, value) {
+    this.scriptEditorRecordSearch = {
+      ...this.scriptEditorRecordSearch,
+      [family]: value,
+    };
+    this.setScriptEditorRecordListPage(family, 1);
+    this.render();
+  }
+
+  filterScriptEditorRecords(family, records) {
+    const searchValue = this.getScriptEditorRecordSearchValue(family).trim().toLowerCase();
+    if (searchValue.length === 0) {
+      return records;
+    }
+
+    if (family === "people") {
+      return records.filter((record) => {
+        const person = normalizeScriptEditorPersonRecord(record);
+        return [
+          person.name,
+          person.id,
+          person.title ?? "",
+          person.occupation ?? "",
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(searchValue);
+      });
+    }
+
+    return records;
+  }
+
+  getScriptEditorPaginatedRecordListState(family, records) {
+    const totalPages = Math.max(
+      1,
+      Math.ceil(records.length / SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE)
+    );
+    const currentPage = Math.min(
+      Math.max(this.getScriptEditorRecordListPage(family), 1),
+      totalPages
+    );
+    const startIndex = (currentPage - 1) * SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE;
+
+    if (this.getScriptEditorRecordListPage(family) !== currentPage) {
+      this.scriptEditorRecordListPages = {
+        ...this.scriptEditorRecordListPages,
+        [family]: currentPage,
+      };
+    }
+
+    return {
+      currentPage,
+      totalPages,
+      visibleRecords: records.slice(
+        startIndex,
+        startIndex + SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE
+      ),
+    };
+  }
+
+  renderScriptEditorRecordPagination(family, currentPage, totalPages) {
+    if (totalPages <= 1) {
+      return "";
+    }
+
+    return `
+      <nav class="c-script-editor-record-pagination" aria-label="${escapeHtml(this.getScriptEditorFamilyLabel(family))} 分页">
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="record-page-prev"
+          ${currentPage <= 1 ? "disabled" : ""}
+        >
+          上一页
+        </button>
+        <span class="c-script-editor-record-pagination__status">第 ${currentPage} / ${totalPages} 页</span>
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="record-page-next"
+          ${currentPage >= totalPages ? "disabled" : ""}
+        >
+          下一页
+        </button>
+      </nav>
+    `;
+  }
+
+  renderScriptEditorPaginatedRecordList({
+    family,
+    records,
+    ariaLabel,
+    modifierClass = "",
+    toolbar = "",
+    renderRecord,
+  }) {
+    const { visibleRecords, currentPage, totalPages } =
+      this.getScriptEditorPaginatedRecordListState(family, records);
+    const listClassName = ["c-script-editor-record-list", modifierClass]
+      .filter((className) => className.length > 0)
+      .join(" ");
+
+    return `
+      <aside class="${listClassName}" aria-label="${escapeHtml(ariaLabel)}">
+        ${toolbar}
+        ${
+          visibleRecords.length === 0
+            ? '<p class="c-script-editor-record-list__empty">暂无可编辑对象。</p>'
+            : visibleRecords.map((record) => renderRecord(record)).join("")
+        }
+        ${this.renderScriptEditorRecordPagination(family, currentPage, totalPages)}
+      </aside>
+    `;
+  }
+
   renderScriptEditorPeopleEditor(records, selectedRecord) {
     const person = selectedRecord == null ? null : normalizeScriptEditorPersonRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("people", records);
 
     return `
       <div class="c-script-editor-editor-card">
-        <header class="c-script-editor-editor-card__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">人物作者面</p>
-            <h2 class="c-script-editor-editor-card__title">人物详情</h2>
-          </div>
-          <div class="c-script-editor-editor-card__actions">
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
-              新增人物
-            </button>
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="remove-record"
-              ${person == null ? "disabled" : ""}
-            >
-              删除人物
-            </button>
-          </div>
-        </header>
-
         <div class="c-script-editor-record-layout c-script-editor-record-layout--people">
-          <aside class="c-script-editor-record-list c-script-editor-record-list--people" aria-label="人物列表">
-            ${records
-              .map((record) => {
-                const normalizedPerson = normalizeScriptEditorPersonRecord(record);
-                return `
-                  <button
-                    type="button"
-                    class="c-script-editor-record-list__item c-script-editor-record-list__item--person ${record.id === selectedRecord?.id ? "is-selected" : ""}"
-                    data-script-editor-record-id="${escapeHtml(record.id)}"
-                  >
-                    <strong>${escapeHtml(normalizedPerson.name)}</strong>
-                    <span>${escapeHtml(this.describeScriptEditorPersonListSummary(normalizedPerson))}</span>
-                  </button>
-                `;
-              })
-              .join("")}
-          </aside>
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "people",
+            records: filteredRecords,
+            ariaLabel: "人物列表",
+            modifierClass: "c-script-editor-record-list--people",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <label class="c-script-editor-record-list__search">
+                  <span>搜索人物</span>
+                  <input
+                    class="c-script-editor-form-field__input"
+                    type="search"
+                    value="${escapeHtml(this.getScriptEditorRecordSearchValue("people"))}"
+                    placeholder="按人物名称 / 身份 / 职位搜索"
+                    data-script-editor-record-search-family="people"
+                  />
+                </label>
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增人物
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${person == null ? "disabled" : ""}
+                >
+                  删除人物
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedPerson = normalizeScriptEditorPersonRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--person ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedPerson.name)}</strong>
+                  <span>${escapeHtml(this.describeScriptEditorPersonListSummary(normalizedPerson))}</span>
+                </button>
+              `;
+            },
+          })}
           <div class="c-script-editor-person-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
             ${
               person == null
                 ? `
@@ -829,13 +1092,12 @@ export class MainUiFlow {
                   </p>
                 `
                 : `
-                  <div class="c-script-editor-person-editor__tabs" role="tablist" aria-label="人物详情分栏">
-                    ${this.renderScriptEditorPersonTabButton("profile", "属性")}
-                    ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
-                    ${this.renderScriptEditorPersonTabButton("trade", "交易")}
-                    ${this.renderScriptEditorPersonTabButton("events", "事件")}
-                  </div>
+                  <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
+                  <template data-script-editor-inspector-header-slot>
+                    ${this.renderScriptEditorPersonTabList()}
+                  </template>
                   ${this.renderScriptEditorPersonTabPanel(person)}
+                  ${this.renderScriptEditorPersonSummaryAttributes(person)}
                 `
             }
           </div>
@@ -857,6 +1119,306 @@ export class MainUiFlow {
         ${label}
       </button>
     `;
+  }
+
+  renderScriptEditorPersonTabList() {
+    return `
+      <div class="c-script-editor-person-editor__tabs" role="tablist" aria-label="人物详情分栏">
+        ${this.renderScriptEditorPersonTabButton("profile", "属性")}
+        ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
+        ${this.renderScriptEditorPersonTabButton("trade", "交易")}
+        ${this.renderScriptEditorPersonTabButton("events", "事件")}
+      </div>
+    `;
+  }
+
+  renderScriptEditorPersonSummaryAttributes(person) {
+    const {
+      currentPage,
+      totalPages,
+      visibleEntries,
+    } = this.getScriptEditorPersonAttributePaginationState(
+      person.extendedAttributes ?? []
+    );
+
+    return `
+      <section class="c-script-editor-person-summary" aria-label="已有属性">
+        <header class="c-script-editor-person-summary__header">
+          <div>
+            <p class="c-script-editor-editor-card__eyebrow">已有属性</p>
+            <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
+          </div>
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-person-attribute">
+            新增属性
+          </button>
+        </header>
+        <div class="c-script-editor-person-summary__list">
+          ${visibleEntries
+            .map(
+              ({ entry, index }) => `
+                <article class="c-script-editor-person-summary__item">
+                  <button
+                    type="button"
+                    class="c-script-editor-person-summary__remove"
+                    data-script-editor-action="remove-person-attribute"
+                    data-script-editor-person-attribute-index="${index}"
+                    aria-label="删除属性"
+                  >
+                    <span aria-hidden="true">−</span>
+                  </button>
+                  <input
+                    class="c-script-editor-form-field__input"
+                    type="text"
+                    value="${escapeHtml(entry.label ?? "")}"
+                    placeholder="属性名"
+                    data-script-editor-person-attribute-field="label"
+                    data-script-editor-person-attribute-index="${index}"
+                  />
+                  <input
+                    class="c-script-editor-form-field__input"
+                    type="text"
+                    value="${escapeHtml(entry.value)}"
+                    placeholder="属性值"
+                    data-script-editor-person-attribute-field="value"
+                    data-script-editor-person-attribute-index="${index}"
+                  />
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+        ${this.renderScriptEditorPersonAttributePagination(currentPage, totalPages)}
+      </section>
+    `;
+  }
+
+  getScriptEditorPersonAttributePaginationState(entries) {
+    const totalPages = Math.max(
+      1,
+      Math.ceil(entries.length / SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE)
+    );
+    const currentPage = Math.min(
+      Math.max(this.scriptEditorPersonAttributePage, 1),
+      totalPages
+    );
+    const pageChanged = this.scriptEditorPersonAttributePage !== currentPage;
+
+    if (pageChanged) {
+      this.scriptEditorPersonAttributePage = currentPage;
+      this.scriptEditorPersonAttributeVisibleIndices = null;
+    }
+
+    const defaultVisibleIndices = Array.from(
+      {
+        length: Math.max(
+          0,
+          Math.min(
+            SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE,
+            entries.length - (currentPage - 1) * SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE
+          )
+        ),
+      },
+      (_, offset) =>
+        (currentPage - 1) * SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE + offset
+    );
+    const visibleIndices =
+      this.scriptEditorPersonAttributeVisibleIndices == null
+        ? defaultVisibleIndices
+        : this.scriptEditorPersonAttributeVisibleIndices.filter(
+            (index) => Number.isInteger(index) && index >= 0 && index < entries.length
+          );
+
+    this.scriptEditorPersonAttributeVisibleIndices = visibleIndices;
+
+    return {
+      currentPage,
+      totalPages,
+      visibleEntries: visibleIndices
+        .map((index) => {
+          const entry = entries[index];
+          if (entry == null) {
+            return null;
+          }
+
+          return {
+            entry,
+            index,
+          };
+        })
+        .filter((entry) => entry != null),
+    };
+  }
+
+  renderScriptEditorPersonAttributePagination(currentPage, totalPages) {
+    if (totalPages <= 1) {
+      return "";
+    }
+
+    return `
+      <nav class="c-script-editor-record-pagination" aria-label="人物 JSON 属性分页">
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="person-attribute-page-prev"
+          ${currentPage <= 1 ? "disabled" : ""}
+        >
+          上一页
+        </button>
+        <span class="c-script-editor-record-pagination__status">第 ${currentPage} / ${totalPages} 页</span>
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="person-attribute-page-next"
+          ${currentPage >= totalPages ? "disabled" : ""}
+        >
+          下一页
+        </button>
+      </nav>
+    `;
+  }
+
+  renderScriptEditorSelectOptions(options, selectedValue, emptyLabel) {
+    const normalizedSelectedValue =
+      typeof selectedValue === "string" ? selectedValue : "";
+    const normalizedOptions = Array.isArray(options) ? options : [];
+    const hasSelectedOption = normalizedOptions.some(
+      (option) => option?.value === normalizedSelectedValue
+    );
+    const fallbackOptions =
+      normalizedSelectedValue.length > 0 && !hasSelectedOption
+        ? [
+            {
+              value: normalizedSelectedValue,
+              label: `当前值：${normalizedSelectedValue}`,
+            },
+          ]
+        : [];
+
+    return [
+      `<option value="">${escapeHtml(emptyLabel)}</option>`,
+      ...fallbackOptions.map(
+        (option) =>
+          `<option value="${escapeHtml(option.value)}" selected>${escapeHtml(option.label)}</option>`
+      ),
+      ...normalizedOptions.map(
+        (option) => `
+          <option
+            value="${escapeHtml(option.value)}"
+            ${option.value === normalizedSelectedValue ? "selected" : ""}
+          >
+            ${escapeHtml(option.label)}
+          </option>
+        `
+      ),
+    ].join("");
+  }
+
+  getScriptEditorPersonCityOptions() {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    return this.scriptEditorProject.cities
+      .map((city) => normalizeScriptEditorCityRecord(city))
+      .map((city) => ({
+        value: city.id,
+        label: `${city.name} (${city.id})`,
+      }));
+  }
+
+  getScriptEditorPersonHouseOptions(cityId) {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    return this.scriptEditorProject.buildings
+      .map((building) => normalizeScriptEditorBuildingRecord(building))
+      .filter((building) => cityId.trim().length === 0 || building.cityId === cityId)
+      .map((building) => ({
+        value: building.id,
+        label: `${building.name} (${building.id})`,
+      }));
+  }
+
+  getScriptEditorPersonPortraitOptions() {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    const optionsByValue = new Map();
+
+    this.scriptEditorProject.people
+      .map((record) => normalizeScriptEditorPersonRecord(record))
+      .forEach((record) => {
+        const portraitId =
+          typeof record.portraitId === "string" ? record.portraitId.trim() : "";
+        if (portraitId.length === 0 || optionsByValue.has(portraitId)) {
+          return;
+        }
+
+        optionsByValue.set(portraitId, {
+          value: portraitId,
+          label: `${portraitId} · ${record.name}`,
+        });
+      });
+
+    return [...optionsByValue.values()];
+  }
+
+  getScriptEditorPersonPortraitVariantOptions(person) {
+    const optionsByValue = new Map();
+    const candidatePeople =
+      this.scriptEditorProject == null ? [] : this.scriptEditorProject.people;
+    const normalizedPortraitId =
+      typeof person?.portraitId === "string" ? person.portraitId.trim() : "";
+
+    [person, ...candidatePeople.map((record) => normalizeScriptEditorPersonRecord(record))]
+      .forEach((candidatePerson) => {
+        const candidatePortraitId =
+          typeof candidatePerson?.portraitId === "string"
+            ? candidatePerson.portraitId.trim()
+            : "";
+        if (
+          candidatePerson !== person &&
+          normalizedPortraitId.length > 0 &&
+          candidatePortraitId.length > 0 &&
+          candidatePortraitId !== normalizedPortraitId
+        ) {
+          return;
+        }
+
+        const portraitVariants = Array.isArray(candidatePerson?.portraitVariants)
+          ? candidatePerson.portraitVariants
+          : [];
+
+        portraitVariants.forEach((variant) => {
+          if (variant == null || typeof variant !== "object") {
+            return;
+          }
+
+          const variantId =
+            typeof variant.id === "string" ? variant.id.trim() : "";
+          if (variantId.length === 0 || optionsByValue.has(variantId)) {
+            return;
+          }
+
+          const variantPortraitId =
+            typeof variant.portraitId === "string" ? variant.portraitId.trim() : "";
+          const label =
+            typeof variant.label === "string" && variant.label.trim().length > 0
+              ? variant.label.trim()
+              : variantId;
+          optionsByValue.set(variantId, {
+            value: variantId,
+            label:
+              variantPortraitId.length > 0
+                ? `${label} (${variantPortraitId})`
+                : label,
+          });
+        });
+      });
+
+    return [...optionsByValue.values()];
   }
 
   renderScriptEditorPersonTabPanel(person) {
@@ -909,13 +1471,15 @@ export class MainUiFlow {
       );
     }
 
+    const cityOptions = this.getScriptEditorPersonCityOptions();
+    const houseOptions = this.getScriptEditorPersonHouseOptions(person.cityId ?? "");
+    const portraitOptions = this.getScriptEditorPersonPortraitOptions();
+    const portraitVariantOptions =
+      this.getScriptEditorPersonPortraitVariantOptions(person);
+
     return `
       <section class="c-script-editor-person-panel" aria-label="属性分栏">
         <div class="c-script-editor-form-grid">
-          <label class="c-script-editor-form-field">
-            <span>人物 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.id)}" data-script-editor-person-field="id" />
-          </label>
           <label class="c-script-editor-form-field">
             <span>人物名称</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.name)}" data-script-editor-person-field="name" />
@@ -935,37 +1499,35 @@ export class MainUiFlow {
             <span>职业/定位</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.occupation ?? "")}" data-script-editor-person-field="occupation" />
           </label>
+          <label class="c-script-editor-form-field">
+            <span>所属城市</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="cityId">
+              ${this.renderScriptEditorSelectOptions(cityOptions, person.cityId ?? "", "未设置所属城市")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>所属建筑</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="houseId">
+              ${this.renderScriptEditorSelectOptions(houseOptions, person.houseId ?? "", "未设置所属建筑")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>立绘 ID</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="portraitId">
+              ${this.renderScriptEditorSelectOptions(portraitOptions, person.portraitId ?? "", "未设置立绘")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>立绘变体</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="portraitVariantId">
+              ${this.renderScriptEditorSelectOptions(portraitVariantOptions, person.portraitVariantId ?? "", "未设置立绘变体")}
+            </select>
+          </label>
           <label class="c-script-editor-form-field c-script-editor-form-field--wide">
             <span>人物简介</span>
             <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-person-field="biography" spellcheck="false">${escapeHtml(person.biography ?? "")}</textarea>
           </label>
         </div>
-        <section class="c-script-editor-person-attributes">
-          <header class="c-script-editor-person-attributes__header">
-            <div>
-              <p class="c-script-editor-editor-card__eyebrow">扩展属性</p>
-              <h3 class="c-script-editor-editor-card__title">固定字段之外的扩展键值对</h3>
-            </div>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-person-attribute">
-              新增属性
-            </button>
-          </header>
-          <div class="c-script-editor-person-attributes__list">
-            ${(person.extendedAttributes ?? [])
-              .map(
-                (entry, index) => `
-                  <div class="c-script-editor-person-attributes__item">
-                    <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.key)}" placeholder="属性键" data-script-editor-person-attribute-field="key" data-script-editor-person-attribute-index="${index}" />
-                    <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.value)}" placeholder="属性值" data-script-editor-person-attribute-field="value" data-script-editor-person-attribute-index="${index}" />
-                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-person-attribute" data-script-editor-person-attribute-index="${index}">
-                      删除
-                    </button>
-                  </div>
-                `
-              )
-              .join("")}
-          </div>
-        </section>
       </section>
     `;
   }
@@ -1016,42 +1578,47 @@ export class MainUiFlow {
             <p class="c-script-editor-editor-card__eyebrow">${isCityFamily ? "城市作者面" : "建筑作者面"}</p>
             <h2 class="c-script-editor-editor-card__title">${isCityFamily ? "城市详情" : "建筑详情"}</h2>
           </div>
-          <div class="c-script-editor-editor-card__actions">
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
-              ${isCityFamily ? "新增城市" : "新增建筑"}
-            </button>
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="remove-record"
-              ${location == null ? "disabled" : ""}
-            >
-              ${isCityFamily ? "删除城市" : "删除建筑"}
-            </button>
-          </div>
         </header>
 
         <div class="c-script-editor-record-layout c-script-editor-record-layout--location">
-          <aside class="c-script-editor-record-list c-script-editor-record-list--location" aria-label="${isCityFamily ? "城市列表" : "建筑列表"}">
-            ${records
-              .map((record) => {
-                const normalizedRecord = isCityFamily
-                  ? normalizeScriptEditorCityRecord(record)
-                  : normalizeScriptEditorBuildingRecord(record);
-                return `
-                  <button
-                    type="button"
-                    class="c-script-editor-record-list__item c-script-editor-record-list__item--location ${record.id === selectedRecord?.id ? "is-selected" : ""}"
-                    data-script-editor-record-id="${escapeHtml(record.id)}"
-                  >
-                    <strong>${escapeHtml(normalizedRecord.name)}</strong>
-                    <span>${escapeHtml(this.describeScriptEditorLocationListSummary(family, normalizedRecord))}</span>
-                  </button>
-                `;
-              })
-              .join("")}
-          </aside>
+          ${this.renderScriptEditorPaginatedRecordList({
+            family,
+            records,
+            ariaLabel: isCityFamily ? "城市列表" : "建筑列表",
+            modifierClass: "c-script-editor-record-list--location",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  ${isCityFamily ? "新增城市" : "新增建筑"}
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${location == null ? "disabled" : ""}
+                >
+                  ${isCityFamily ? "删除城市" : "删除建筑"}
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord = isCityFamily
+                ? normalizeScriptEditorCityRecord(record)
+                : normalizeScriptEditorBuildingRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--location ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedRecord.name)}</strong>
+                  <span>${escapeHtml(this.describeScriptEditorLocationListSummary(family, normalizedRecord))}</span>
+                </button>
+              `;
+            },
+          })}
           <div class="c-script-editor-location-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
             ${
               location == null
                 ? `
@@ -1116,20 +1683,6 @@ export class MainUiFlow {
       <section class="c-script-editor-location-panel" aria-label="${isCityFamily ? "城市基础分栏" : "建筑基础分栏"}">
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
-            <span>${isCityFamily ? "城市 ID" : "建筑 ID"}</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(location.id)}" data-script-editor-location-field="id" />
-          </label>
-          ${
-            isCityFamily
-              ? ""
-              : `
-                <label class="c-script-editor-form-field">
-                  <span>所属城市 ID</span>
-                  <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(location.cityId ?? "")}" data-script-editor-location-field="cityId" />
-                </label>
-              `
-          }
-          <label class="c-script-editor-form-field">
             <span>${isCityFamily ? "城市名称" : "建筑名称"}</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(location.name ?? "")}" data-script-editor-location-field="name" />
           </label>
@@ -1138,6 +1691,30 @@ export class MainUiFlow {
             <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-location-field="description" spellcheck="false">${escapeHtml(location.description ?? "")}</textarea>
           </label>
         </div>
+        ${this.renderScriptEditorSystemDetails(
+          "高级设置与系统信息",
+          isCityFamily
+            ? "城市内部标识默认折叠，主视图只保留创作描述。"
+            : "建筑内部标识与所属城市标识默认折叠，主视图优先展示创作描述。",
+          `
+            <div class="c-script-editor-form-grid">
+              <label class="c-script-editor-form-field">
+                <span>${isCityFamily ? "城市 ID" : "建筑 ID"}</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(location.id)}" data-script-editor-location-field="id" />
+              </label>
+              ${
+                isCityFamily
+                  ? ""
+                  : `
+                    <label class="c-script-editor-form-field">
+                      <span>所属城市 ID</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(location.cityId ?? "")}" data-script-editor-location-field="cityId" />
+                    </label>
+                  `
+              }
+            </div>
+          `
+        )}
       </section>
     `;
   }
@@ -1305,40 +1882,45 @@ export class MainUiFlow {
             <p class="c-script-editor-editor-card__eyebrow">剧情作者面</p>
             <h2 class="c-script-editor-editor-card__title">剧情详情</h2>
           </div>
-          <div class="c-script-editor-editor-card__actions">
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
-              新增剧情
-            </button>
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="remove-record"
-              ${storyNode == null ? "disabled" : ""}
-            >
-              删除剧情
-            </button>
-          </div>
         </header>
 
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
-          <aside class="c-script-editor-record-list c-script-editor-record-list--narrative" aria-label="剧情列表">
-            ${records
-              .map((record) => {
-                const normalizedRecord = normalizeScriptEditorStoryNodeRecord(record);
-                return `
-                  <button
-                    type="button"
-                    class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
-                    data-script-editor-record-id="${escapeHtml(record.id)}"
-                  >
-                    <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                    <span>${escapeHtml(this.describeScriptEditorStoryNodeListSummary(normalizedRecord))}</span>
-                  </button>
-                `;
-              })
-              .join("")}
-          </aside>
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "storyNodes",
+            records,
+            ariaLabel: "剧情列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增剧情
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${storyNode == null ? "disabled" : ""}
+                >
+                  删除剧情
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord = normalizeScriptEditorStoryNodeRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedRecord.title)}</strong>
+                  <span>${escapeHtml(this.describeScriptEditorStoryNodeListSummary(normalizedRecord))}</span>
+                </button>
+              `;
+            },
+          })}
           <div class="c-script-editor-narrative-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
             ${
               storyNode == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个剧情后继续编辑。剧情负责组织人物、对话与事件的归属关系，不在这里承担底层执行逻辑。</p>`
@@ -1368,40 +1950,45 @@ export class MainUiFlow {
             <p class="c-script-editor-editor-card__eyebrow">对话作者面</p>
             <h2 class="c-script-editor-editor-card__title">对话详情</h2>
           </div>
-          <div class="c-script-editor-editor-card__actions">
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
-              新增对话
-            </button>
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="remove-record"
-              ${dialogue == null ? "disabled" : ""}
-            >
-              删除对话
-            </button>
-          </div>
         </header>
 
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
-          <aside class="c-script-editor-record-list c-script-editor-record-list--narrative" aria-label="对话列表">
-            ${records
-              .map((record) => {
-                const normalizedRecord = normalizeScriptEditorDialogueRecord(record);
-                return `
-                  <button
-                    type="button"
-                    class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
-                    data-script-editor-record-id="${escapeHtml(record.id)}"
-                  >
-                    <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                    <span>${escapeHtml(this.describeScriptEditorDialogueListSummary(normalizedRecord))}</span>
-                  </button>
-                `;
-              })
-              .join("")}
-          </aside>
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "dialogues",
+            records,
+            ariaLabel: "对话列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增对话
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${dialogue == null ? "disabled" : ""}
+                >
+                  删除对话
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord = normalizeScriptEditorDialogueRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedRecord.title)}</strong>
+                  <span>${escapeHtml(this.describeScriptEditorDialogueListSummary(normalizedRecord))}</span>
+                </button>
+              `;
+            },
+          })}
           <div class="c-script-editor-narrative-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
             ${
               dialogue == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个对话后继续编辑。当前作者面只负责演出结构、参与人物和后续动作入口，不在这里落 minigame 或 runtime 机制。</p>`
@@ -1431,40 +2018,45 @@ export class MainUiFlow {
             <p class="c-script-editor-editor-card__eyebrow">事件作者面</p>
             <h2 class="c-script-editor-editor-card__title">事件详情</h2>
           </div>
-          <div class="c-script-editor-editor-card__actions">
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
-              新增事件
-            </button>
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="remove-record"
-              ${eventRecord == null ? "disabled" : ""}
-            >
-              删除事件
-            </button>
-          </div>
         </header>
 
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
-          <aside class="c-script-editor-record-list c-script-editor-record-list--narrative" aria-label="事件列表">
-            ${records
-              .map((record) => {
-                const normalizedRecord = normalizeScriptEditorEventRecord(record);
-                return `
-                  <button
-                    type="button"
-                    class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
-                    data-script-editor-record-id="${escapeHtml(record.id)}"
-                  >
-                    <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                    <span>${escapeHtml(this.describeScriptEditorEventListSummary(normalizedRecord))}</span>
-                  </button>
-                `;
-              })
-              .join("")}
-          </aside>
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "events",
+            records,
+            ariaLabel: "事件列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增事件
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${eventRecord == null ? "disabled" : ""}
+                >
+                  删除事件
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord = normalizeScriptEditorEventRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedRecord.title)}</strong>
+                  <span>${escapeHtml(this.describeScriptEditorEventListSummary(normalizedRecord))}</span>
+                </button>
+              `;
+            },
+          })}
           <div class="c-script-editor-narrative-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
             ${
               eventRecord == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个事件后继续编辑。事件页会收口为稳定区块，而不是散乱大表单或分步向导。</p>`
@@ -1496,40 +2088,45 @@ export class MainUiFlow {
             <p class="c-script-editor-editor-card__eyebrow">玩法绑定作者面</p>
             <h2 class="c-script-editor-editor-card__title">Minigame Binding</h2>
           </div>
-          <div class="c-script-editor-editor-card__actions">
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
-              新增玩法绑定
-            </button>
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="remove-record"
-              ${minigame == null ? "disabled" : ""}
-            >
-              删除玩法绑定
-            </button>
-          </div>
         </header>
 
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
-          <aside class="c-script-editor-record-list c-script-editor-record-list--narrative" aria-label="玩法绑定列表">
-            ${records
-              .map((record) => {
-                const normalizedRecord = normalizeScriptEditorMinigameRecord(record);
-                return `
-                  <button
-                    type="button"
-                    class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
-                    data-script-editor-record-id="${escapeHtml(record.id)}"
-                  >
-                    <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                    <span>${escapeHtml(this.describeScriptEditorMinigameListSummary(normalizedRecord))}</span>
-                  </button>
-                `;
-              })
-              .join("")}
-          </aside>
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "minigames",
+            records,
+            ariaLabel: "玩法绑定列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增玩法绑定
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${minigame == null ? "disabled" : ""}
+                >
+                  删除玩法绑定
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord = normalizeScriptEditorMinigameRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedRecord.title)}</strong>
+                  <span>${escapeHtml(this.describeScriptEditorMinigameListSummary(normalizedRecord))}</span>
+                </button>
+              `;
+            },
+          })}
           <div class="c-script-editor-minigame-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
             ${
               minigame == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个玩法绑定后继续编辑。当前作者面只负责 binding、trigger 和 settlement 配置，不在这里落 playable runtime 机制。</p>`
@@ -1624,16 +2221,8 @@ export class MainUiFlow {
       <section class="c-script-editor-narrative-panel" aria-label="剧情基础分栏">
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
-            <span>剧情 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(storyNode.id)}" data-script-editor-story-field="id" />
-          </label>
-          <label class="c-script-editor-form-field">
             <span>剧情标题</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(storyNode.title)}" data-script-editor-story-field="title" />
-          </label>
-          <label class="c-script-editor-form-field">
-            <span>章节 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(storyNode.chapterId ?? "")}" data-script-editor-story-field="chapterId" />
           </label>
           <label class="c-script-editor-form-field">
             <span>推进策略</span>
@@ -1648,6 +2237,22 @@ export class MainUiFlow {
             <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-story-field="summary" spellcheck="false">${escapeHtml(storyNode.summary ?? "")}</textarea>
           </label>
         </div>
+        ${this.renderScriptEditorSystemDetails(
+          "高级设置与系统信息",
+          "剧情内部标识与章节挂接默认折叠，首屏优先展示创作标题、推进方式和摘要。",
+          `
+            <div class="c-script-editor-form-grid">
+              <label class="c-script-editor-form-field">
+                <span>剧情 ID</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(storyNode.id)}" data-script-editor-story-field="id" />
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>章节 ID</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(storyNode.chapterId ?? "")}" data-script-editor-story-field="chapterId" />
+              </label>
+            </div>
+          `
+        )}
       </section>
     `;
   }
@@ -1767,18 +2372,26 @@ export class MainUiFlow {
       <section class="c-script-editor-narrative-panel" aria-label="对话基础分栏">
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
-            <span>对话 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(dialogue.id)}" data-script-editor-dialogue-field="id" />
-          </label>
-          <label class="c-script-editor-form-field">
             <span>对话标题</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(dialogue.title)}" data-script-editor-dialogue-field="title" />
           </label>
-          <label class="c-script-editor-form-field">
-            <span>所属剧情 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(dialogue.storyNodeId ?? "")}" data-script-editor-dialogue-field="storyNodeId" />
-          </label>
         </div>
+        ${this.renderScriptEditorSystemDetails(
+          "高级设置与系统信息",
+          "对话内部标识与所属剧情挂接默认折叠，首屏先保留标题和参与关系。",
+          `
+            <div class="c-script-editor-form-grid">
+              <label class="c-script-editor-form-field">
+                <span>对话 ID</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(dialogue.id)}" data-script-editor-dialogue-field="id" />
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>所属剧情 ID</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(dialogue.storyNodeId ?? "")}" data-script-editor-dialogue-field="storyNodeId" />
+              </label>
+            </div>
+          `
+        )}
         ${this.renderScriptEditorStringRelationPanel("参与人物", "dialogue-participants", dialogue.participantPersonIds ?? [])}
       </section>
     `;
@@ -1911,10 +2524,6 @@ export class MainUiFlow {
       <section class="c-script-editor-narrative-panel" aria-label="事件基础信息分栏">
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
-            <span>事件 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(eventRecord.id)}" data-script-editor-event-field="id" />
-          </label>
-          <label class="c-script-editor-form-field">
             <span>事件标题</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(eventRecord.title)}" data-script-editor-event-field="title" />
           </label>
@@ -1935,6 +2544,18 @@ export class MainUiFlow {
             <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-event-field="description" spellcheck="false">${escapeHtml(eventRecord.description ?? "")}</textarea>
           </label>
         </div>
+        ${this.renderScriptEditorSystemDetails(
+          "高级设置与系统信息",
+          "事件内部标识默认折叠，首屏优先呈现标题、触发时机和创作说明。",
+          `
+            <div class="c-script-editor-form-grid">
+              <label class="c-script-editor-form-field">
+                <span>事件 ID</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(eventRecord.id)}" data-script-editor-event-field="id" />
+              </label>
+            </div>
+          `
+        )}
       </section>
     `;
   }
@@ -1949,7 +2570,7 @@ export class MainUiFlow {
         <section class="c-script-editor-minigame-panel" aria-label="玩法绑定触发与调用分栏">
           <div class="c-script-editor-form-grid">
             <label class="c-script-editor-form-field">
-              <span>Playable ID</span>
+              <span>玩法原型</span>
               <select class="c-script-editor-form-field__input" data-script-editor-minigame-field="playableId">
                 ${playableOptions
                   .map(
@@ -1959,7 +2580,7 @@ export class MainUiFlow {
               </select>
             </label>
             <label class="c-script-editor-form-field">
-              <span>Integration ID</span>
+              <span>接入方案</span>
               <select class="c-script-editor-form-field__input" data-script-editor-minigame-integration>
                 ${integrationOptions
                   .map(
@@ -1969,7 +2590,7 @@ export class MainUiFlow {
               </select>
             </label>
             <label class="c-script-editor-form-field">
-              <span>Trigger Source</span>
+              <span>触发来源</span>
               <select class="c-script-editor-form-field__input" data-script-editor-minigame-field="triggerSource">
                 ${SCRIPT_EDITOR_MINIGAME_TRIGGER_SOURCES.map(
                   (triggerSource) => `<option value="${triggerSource}" ${minigame.triggerSource === triggerSource ? "selected" : ""}>${triggerSource}</option>`
@@ -1977,19 +2598,19 @@ export class MainUiFlow {
               </select>
             </label>
             <label class="c-script-editor-form-field">
-              <span>Trigger ID</span>
+              <span>触发目标 ID</span>
               <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.triggerId ?? "")}" data-script-editor-minigame-field="triggerId" />
             </label>
             <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-              <span>Trigger Event</span>
+              <span>触发事件</span>
               <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.triggerEvent ?? "")}" data-script-editor-minigame-field="triggerEvent" />
             </label>
           </div>
           <section class="c-script-editor-minigame-list">
             <div class="c-script-editor-narrative-panel__header">
               <div>
-                <p class="c-script-editor-editor-card__eyebrow">Launch Payload</p>
-                <h3 class="c-script-editor-editor-card__title">Bounded launch payload</h3>
+                <p class="c-script-editor-editor-card__eyebrow">触发载荷</p>
+                <h3 class="c-script-editor-editor-card__title">受边界约束的启动参数</h3>
               </div>
               <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-minigame-launch-payload-entry">
                 新增 payload
@@ -2018,7 +2639,7 @@ export class MainUiFlow {
         <section class="c-script-editor-minigame-panel" aria-label="玩法绑定结算与返回分栏">
           <div class="c-script-editor-form-grid">
             <label class="c-script-editor-form-field">
-              <span>Owner Kind</span>
+              <span>归属对象类型</span>
               <select class="c-script-editor-form-field__input" data-script-editor-minigame-field="ownerKind">
                 ${SCRIPT_EDITOR_MINIGAME_OWNER_KINDS.map(
                   (ownerKind) => `<option value="${ownerKind}" ${minigame.ownerKind === ownerKind ? "selected" : ""}>${ownerKind}</option>`
@@ -2026,11 +2647,11 @@ export class MainUiFlow {
               </select>
             </label>
             <label class="c-script-editor-form-field">
-              <span>Owner ID</span>
+              <span>归属对象 ID</span>
               <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.ownerId ?? "")}" data-script-editor-minigame-field="ownerId" />
             </label>
             <label class="c-script-editor-form-field">
-              <span>Default Return Policy</span>
+              <span>默认返回策略</span>
               <select class="c-script-editor-form-field__input" data-script-editor-minigame-field="returnPolicy">
                 ${SCRIPT_EDITOR_MINIGAME_RETURN_POLICIES.map(
                   (returnPolicy) => `<option value="${returnPolicy}" ${minigame.returnPolicy === returnPolicy ? "selected" : ""}>${returnPolicy}</option>`
@@ -2041,8 +2662,8 @@ export class MainUiFlow {
           <section class="c-script-editor-minigame-list">
             <div class="c-script-editor-narrative-panel__header">
               <div>
-                <p class="c-script-editor-editor-card__eyebrow">Settlement</p>
-                <h3 class="c-script-editor-editor-card__title">Outcome routes</h3>
+                <p class="c-script-editor-editor-card__eyebrow">结算去向</p>
+                <h3 class="c-script-editor-editor-card__title">结果路由</h3>
               </div>
               <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-minigame-outcome-route">
                 新增 outcome route
@@ -2054,11 +2675,11 @@ export class MainUiFlow {
                   <article class="c-script-editor-minigame-list__route">
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
-                        <span>Route ID</span>
+                        <span>路由 ID</span>
                         <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(route.id)}" data-script-editor-minigame-outcome-field="id" data-script-editor-minigame-outcome-index="${index}" />
                       </label>
                       <label class="c-script-editor-form-field">
-                        <span>Outcome</span>
+                        <span>结果类型</span>
                         <select class="c-script-editor-form-field__input" data-script-editor-minigame-outcome-field="outcome" data-script-editor-minigame-outcome-index="${index}">
                           ${SCRIPT_EDITOR_MINIGAME_OUTCOMES.map(
                             (outcome) => `<option value="${outcome}" ${route.outcome === outcome ? "selected" : ""}>${outcome}</option>`
@@ -2066,7 +2687,7 @@ export class MainUiFlow {
                         </select>
                       </label>
                       <label class="c-script-editor-form-field">
-                        <span>Handoff Policy</span>
+                        <span>交接策略</span>
                         <select class="c-script-editor-form-field__input" data-script-editor-minigame-outcome-field="handoffPolicy" data-script-editor-minigame-outcome-index="${index}">
                           ${SCRIPT_EDITOR_MINIGAME_RETURN_POLICIES.map(
                             (returnPolicy) => `<option value="${returnPolicy}" ${route.handoffPolicy === returnPolicy ? "selected" : ""}>${returnPolicy}</option>`
@@ -2074,11 +2695,11 @@ export class MainUiFlow {
                         </select>
                       </label>
                       <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                        <span>Outcome Summary</span>
+                        <span>结果摘要</span>
                         <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(route.summary)}" data-script-editor-minigame-outcome-field="summary" data-script-editor-minigame-outcome-index="${index}" />
                       </label>
                       <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                        <span>Effect Hint</span>
+                        <span>效果提示</span>
                         <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(route.effectHint)}" data-script-editor-minigame-outcome-field="effectHint" data-script-editor-minigame-outcome-index="${index}" />
                       </label>
                     </div>
@@ -2128,22 +2749,30 @@ export class MainUiFlow {
       <section class="c-script-editor-minigame-panel" aria-label="玩法绑定基础信息分栏">
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
-            <span>Binding ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.id)}" data-script-editor-minigame-field="id" />
-          </label>
-          <label class="c-script-editor-form-field">
-            <span>Binding Title</span>
+            <span>绑定标题</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.title)}" data-script-editor-minigame-field="title" />
           </label>
           <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-            <span>Description</span>
+            <span>说明</span>
             <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-minigame-field="description" spellcheck="false">${escapeHtml(minigame.description ?? "")}</textarea>
           </label>
           <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-            <span>Notes</span>
+            <span>备注</span>
             <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-minigame-field="notes" spellcheck="false">${escapeHtml(minigame.notes ?? "")}</textarea>
           </label>
         </div>
+        ${this.renderScriptEditorSystemDetails(
+          "高级设置与系统信息",
+          "玩法绑定内部标识默认折叠，首屏先保留创作标题、描述与备注。",
+          `
+            <div class="c-script-editor-form-grid">
+              <label class="c-script-editor-form-field">
+                <span>绑定 ID</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(minigame.id)}" data-script-editor-minigame-field="id" />
+              </label>
+            </div>
+          `
+        )}
       </section>
     `;
   }
@@ -2235,6 +2864,18 @@ export class MainUiFlow {
           data-script-editor-project-field="${field}"
         />
       </label>
+    `;
+  }
+
+  renderScriptEditorSystemDetails(title, hint, body) {
+    return `
+      <details class="c-script-editor-system-details">
+        <summary class="c-script-editor-system-details__summary">${escapeHtml(title)}</summary>
+        <div class="c-script-editor-system-details__body">
+          <p class="c-script-editor-editor-card__hint">${escapeHtml(hint)}</p>
+          ${body}
+        </div>
+      </details>
     `;
   }
 
@@ -2333,6 +2974,73 @@ export class MainUiFlow {
         ${escapeHtml(this.scriptEditorNotice.message)}
       </div>
     `;
+  }
+
+  renderScriptEditorNoticeTimeline() {
+    if (this.scriptEditorNoticeEntries.length === 0) {
+      return `
+        <section class="c-script-editor-shell__notice-rail" aria-label="操作记录">
+          <header class="c-script-editor-shell__notice-header">
+            <p class="c-script-editor-shell__handoff-eyebrow">操作记录</p>
+            <span>当前还没有新的工作台提示</span>
+          </header>
+        </section>
+      `;
+    }
+
+    return `
+      <section class="c-script-editor-shell__notice-rail" aria-label="操作记录">
+        <header class="c-script-editor-shell__notice-header">
+          <p class="c-script-editor-shell__handoff-eyebrow">操作记录</p>
+          <span>按最近操作时间排序</span>
+        </header>
+        <div class="c-script-editor-shell__notice-list">
+          ${this.scriptEditorNoticeEntries
+            .map(
+              (entry) => `
+                <article class="c-script-editor-shell__notice-card c-script-editor-shell__notice-card--${entry.tone}">
+                  <div class="c-script-editor-shell__notice-meta">
+                    <strong>${escapeHtml(entry.label)}</strong>
+                    <time datetime="${entry.isoTimestamp}">${entry.timestampLabel}</time>
+                  </div>
+                  <p>${escapeHtml(entry.message)}</p>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  resetScriptEditorNoticeTimeline() {
+    this.scriptEditorNotice = null;
+    this.scriptEditorNoticeEntries = [];
+  }
+
+  recordScriptEditorNotice(notice) {
+    this.scriptEditorNotice = notice;
+    if (notice == null) {
+      return;
+    }
+
+    const createdAt = new Date();
+    this.scriptEditorNoticeEntries = [
+      {
+        id: `script-editor-notice-${++this.scriptEditorNoticeSequence}`,
+        tone: notice.tone,
+        message: notice.message,
+        label: notice.tone === "warning" ? "异常" : "完成",
+        timestampLabel: this.formatScriptEditorNoticeTimestamp(createdAt),
+        isoTimestamp: createdAt.toISOString(),
+      },
+      ...this.scriptEditorNoticeEntries,
+    ].slice(0, 8);
+  }
+
+  formatScriptEditorNoticeTimestamp(value) {
+    const pad = (input) => String(input).padStart(2, "0");
+    return `${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
   }
 
   renderScriptEditorFileInputs() {
@@ -2856,7 +3564,7 @@ export class MainUiFlow {
         target.dataset.scriptEditorPersonAttributeIndex ?? "-1",
         10
       );
-      if ((field === "key" || field === "value") && Number.isInteger(index) && index >= 0) {
+      if ((field === "label" || field === "value") && Number.isInteger(index) && index >= 0) {
         this.applyScriptEditorPersonAttributeField(index, field, target.value);
       }
       return;
@@ -3172,6 +3880,20 @@ export class MainUiFlow {
     }
   }
 
+  onInput(event) {
+    const target = event.target;
+    if (!(target instanceof globalThis.HTMLInputElement)) {
+      return;
+    }
+
+    if (target.matches("[data-script-editor-record-search-family]")) {
+      const family = target.dataset.scriptEditorRecordSearchFamily;
+      if (family != null) {
+        this.setScriptEditorRecordSearchValue(family, target.value);
+      }
+    }
+  }
+
   scheduleCharacterDetailTransitionCleanup() {
     if (this.previousCharacterDetail == null) {
       return;
@@ -3418,6 +4140,8 @@ export class MainUiFlow {
     if (action === "new-project") {
       this.scriptEditorProjectSource = "new";
       this.commitScriptEditorProject(createDefaultScriptEditorProjectDefinition());
+      this.resetScriptEditorRecordListPages();
+      this.resetScriptEditorRecordSearch();
       this.scriptEditorSelection = {
         family: "storyPack",
         entityId: null,
@@ -3426,10 +4150,11 @@ export class MainUiFlow {
       this.scriptEditorProjectDirectoryHandle = null;
       this.scriptEditorExportDirectoryHandle = null;
       this.scriptEditorPendingDeleteProjectId = null;
-      this.scriptEditorNotice = {
+      this.resetScriptEditorNoticeTimeline();
+      this.recordScriptEditorNotice({
         tone: "success",
-        message: "Created a new script editor project.",
-      };
+        message: "已新建剧本项目。",
+      });
       this.setScreen("script-editor-workspace");
       return;
     }
@@ -3541,6 +4266,16 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "record-page-prev") {
+      this.changeScriptEditorRecordListPage(-1);
+      return;
+    }
+
+    if (action === "record-page-next") {
+      this.changeScriptEditorRecordListPage(1);
+      return;
+    }
+
     if (action === "select-person-tab") {
       if (personTab != null) {
         this.selectScriptEditorPersonTab(personTab);
@@ -3550,6 +4285,16 @@ export class MainUiFlow {
 
     if (action === "add-person-attribute") {
       this.addScriptEditorPersonAttribute();
+      return;
+    }
+
+    if (action === "person-attribute-page-prev") {
+      this.changeScriptEditorPersonAttributePage(-1);
+      return;
+    }
+
+    if (action === "person-attribute-page-next") {
+      this.changeScriptEditorPersonAttributePage(1);
       return;
     }
 
@@ -3822,8 +4567,14 @@ export class MainUiFlow {
       family,
       entityId: resolvedEntityId,
     };
+    if (resolvedEntityId == null) {
+      this.setScriptEditorRecordListPage(family, 1);
+    } else {
+      this.syncScriptEditorRecordListPageToRecord(family, resolvedEntityId, records);
+    }
     if (family === "people") {
       this.scriptEditorPersonTab = "profile";
+      this.resetScriptEditorPersonAttributePage();
     }
     if (family === "cities" || family === "buildings") {
       this.scriptEditorLocationTab = "profile";
@@ -3849,32 +4600,62 @@ export class MainUiFlow {
       return;
     }
 
+    const family = this.scriptEditorSelection.family;
+    const records = listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family);
+    if (!records.some((record) => record.id === recordId)) {
+      return;
+    }
+
     this.scriptEditorSelection = {
-      family: this.scriptEditorSelection.family,
+      family,
       entityId: recordId,
     };
-    if (this.scriptEditorSelection.family === "people") {
+    this.syncScriptEditorRecordListPageToRecord(family, recordId, records);
+    if (family === "people") {
       this.scriptEditorPersonTab = "profile";
+      this.resetScriptEditorPersonAttributePage();
     }
-    if (
-      this.scriptEditorSelection.family === "cities" ||
-      this.scriptEditorSelection.family === "buildings"
-    ) {
+    if (family === "cities" || family === "buildings") {
       this.scriptEditorLocationTab = "profile";
     }
-    if (
-      this.scriptEditorSelection.family === "storyNodes" ||
-      this.scriptEditorSelection.family === "dialogues"
-    ) {
+    if (family === "storyNodes" || family === "dialogues") {
       this.scriptEditorNarrativeTab = "profile";
     }
-    if (this.scriptEditorSelection.family === "events") {
+    if (family === "events") {
       this.scriptEditorEventTab = "basics";
     }
-    if (this.scriptEditorSelection.family === "minigames") {
+    if (family === "minigames") {
       this.scriptEditorMinigameTab = "basics";
     }
     this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  changeScriptEditorRecordListPage(delta) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family === "storyPack"
+    ) {
+      return;
+    }
+
+    const family = this.scriptEditorSelection.family;
+    this.setScriptEditorRecordListPage(
+      family,
+      this.getScriptEditorRecordListPage(family) + delta
+    );
+    this.render();
+  }
+
+  goToScriptEditorRecordListPage(page) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family === "storyPack"
+    ) {
+      return;
+    }
+
+    this.setScriptEditorRecordListPage(this.scriptEditorSelection.family, page);
     this.render();
   }
 
@@ -3888,6 +4669,28 @@ export class MainUiFlow {
     }
 
     this.scriptEditorPersonTab = tab;
+    this.render();
+  }
+
+  changeScriptEditorPersonAttributePage(delta) {
+    if (this.scriptEditorSelection.family !== "people") {
+      return;
+    }
+
+    const person = this.getSelectedScriptEditorPerson();
+    const totalPages = Math.max(
+      1,
+      Math.ceil(
+        (person?.extendedAttributes?.length ?? 0) /
+          SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE
+      )
+    );
+    this.scriptEditorPersonAttributePage = Math.min(
+      Math.max(this.scriptEditorPersonAttributePage + delta, 1),
+      totalPages
+    );
+    this.scriptEditorPersonAttributeVisibleIndices = null;
+    this.scriptEditorPersonAttributeScrollLeft = 0;
     this.render();
   }
 
@@ -4014,10 +4817,15 @@ export class MainUiFlow {
     this.commitScriptEditorProject(
       upsertScriptEditorWorkflowRecord(this.scriptEditorProject, family, draft)
     );
+    const nextRecords = listScriptEditorWorkflowFamilyRecords(
+      this.scriptEditorProject,
+      family
+    );
     this.scriptEditorSelection = {
       family,
       entityId: draft.id,
     };
+    this.syncScriptEditorRecordListPageToRecord(family, draft.id, nextRecords);
     if (family === "people") {
       this.scriptEditorPersonTab = "profile";
     }
@@ -4033,10 +4841,10 @@ export class MainUiFlow {
     if (family === "minigames") {
       this.scriptEditorMinigameTab = "basics";
     }
-    this.scriptEditorNotice = {
+    this.recordScriptEditorNotice({
       tone: "success",
-      message: `Added a new ${this.getScriptEditorFamilyLabel(family)} record draft.`,
-    };
+      message: `已新增一条${this.getScriptEditorFamilyLabel(family)}记录草稿。`,
+    });
     this.render();
   }
 
@@ -4065,10 +4873,15 @@ export class MainUiFlow {
       family,
       entityId: nextRecords[0]?.id ?? null,
     };
-    this.scriptEditorNotice = {
+    if (nextRecords[0]?.id != null) {
+      this.syncScriptEditorRecordListPageToRecord(family, nextRecords[0].id, nextRecords);
+    } else {
+      this.setScriptEditorRecordListPage(family, 1);
+    }
+    this.recordScriptEditorNotice({
       tone: "success",
-      message: `Removed the selected ${this.getScriptEditorFamilyLabel(family)} record.`,
-    };
+      message: `已删除当前选中的${this.getScriptEditorFamilyLabel(family)}记录。`,
+    });
     this.render();
   }
 
@@ -4098,22 +4911,27 @@ export class MainUiFlow {
       this.commitScriptEditorProject(
         upsertScriptEditorWorkflowRecord(this.scriptEditorProject, family, parsed)
       );
+      const nextRecords = listScriptEditorWorkflowFamilyRecords(
+        this.scriptEditorProject,
+        family
+      );
       this.scriptEditorSelection = {
         family,
         entityId: parsed.id,
       };
-      this.scriptEditorNotice = {
+      this.syncScriptEditorRecordListPageToRecord(family, parsed.id, nextRecords);
+      this.recordScriptEditorNotice({
         tone: "success",
-        message: `Applied JSON changes to ${this.getScriptEditorFamilyLabel(family)}:${parsed.id}.`,
-      };
+        message: `已将 JSON 修改应用到 ${this.getScriptEditorFamilyLabel(family)}：${parsed.id}。`,
+      });
     } catch (error) {
-      this.scriptEditorNotice = {
+      this.recordScriptEditorNotice({
         tone: "warning",
         message:
           error instanceof Error
             ? error.message
             : "Failed to apply record JSON.",
-      };
+      });
     }
 
     this.render();
@@ -4292,7 +5110,17 @@ export class MainUiFlow {
       return;
     }
 
-    this.replaceSelectedScriptEditorPerson(appendScriptEditorPersonAttribute(person));
+    const nextPerson = appendScriptEditorPersonAttribute(person);
+    this.scriptEditorPersonAttributePage = Math.max(
+      1,
+      Math.ceil(
+        (nextPerson.extendedAttributes?.length ?? 0) /
+          SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE
+      )
+    );
+    this.scriptEditorPersonAttributeVisibleIndices = null;
+    this.scriptEditorPersonAttributeScrollLeft = 0;
+    this.replaceSelectedScriptEditorPerson(nextPerson);
   }
 
   removeScriptEditorPersonAttribute(index) {
@@ -4301,8 +5129,32 @@ export class MainUiFlow {
       return;
     }
 
+    const nextPerson = removeScriptEditorPersonAttribute(person, index);
+    const nextAttributeCount = nextPerson.extendedAttributes?.length ?? 0;
+    const nextTotalPages = Math.max(
+      1,
+      Math.ceil(nextAttributeCount / SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE)
+    );
+
+    if (this.scriptEditorPersonAttributePage > nextTotalPages) {
+      this.scriptEditorPersonAttributePage = nextTotalPages;
+      this.scriptEditorPersonAttributeVisibleIndices = null;
+      this.scriptEditorPersonAttributeScrollLeft = 0;
+    } else if (Array.isArray(this.scriptEditorPersonAttributeVisibleIndices)) {
+      this.scriptEditorPersonAttributeVisibleIndices =
+        this.scriptEditorPersonAttributeVisibleIndices
+          .filter((visibleIndex) => visibleIndex !== index)
+          .map((visibleIndex) =>
+            visibleIndex > index ? visibleIndex - 1 : visibleIndex
+          )
+          .filter(
+            (visibleIndex) =>
+              visibleIndex >= 0 && visibleIndex < nextAttributeCount
+          );
+    }
+
     this.replaceSelectedScriptEditorPerson(
-      removeScriptEditorPersonAttribute(person, index)
+      nextPerson
     );
   }
 
@@ -4834,16 +5686,17 @@ export class MainUiFlow {
     const diagnostics = validateScriptEditorProjectForRuntimeExport(
       this.scriptEditorProject
     );
-    this.scriptEditorNotice =
+    this.recordScriptEditorNotice(
       diagnostics.length === 0
         ? {
             tone: "success",
-            message: "Runtime export validation passed for the bounded minimal workflow.",
+            message: "剧本包导出校验已通过。",
           }
         : {
             tone: "warning",
-            message: diagnostics[0]?.message ?? "Runtime export validation failed.",
-          };
+            message: diagnostics[0]?.message ?? "剧本包导出校验失败。",
+          }
+    );
     this.render();
   }
 
@@ -4862,19 +5715,19 @@ export class MainUiFlow {
         }
       );
       this.scriptEditorProjectDirectoryHandle = result.directoryHandle ?? null;
-      this.scriptEditorNotice = {
+      this.recordScriptEditorNotice({
         tone: "success",
         message:
           result.mode === "directory"
-            ? "Saved the script editor project to the selected directory."
-            : "Downloaded the script editor project files.",
-      };
+            ? "已将剧本项目保存到所选目录。"
+            : "已下载剧本项目文件。",
+      });
     } catch (error) {
-      this.scriptEditorNotice = {
+      this.recordScriptEditorNotice({
         tone: "warning",
         message:
-          error instanceof Error ? error.message : "Failed to save the script editor project.",
-      };
+          error instanceof Error ? error.message : "保存剧本项目失败。",
+      });
     }
 
     this.render();
@@ -4896,19 +5749,19 @@ export class MainUiFlow {
         }
       );
       this.scriptEditorExportDirectoryHandle = result.directoryHandle ?? null;
-      this.scriptEditorNotice = {
+      this.recordScriptEditorNotice({
         tone: "success",
         message:
           result.mode === "directory"
-            ? "Exported a runtime-compatible scenario pack."
-            : "Downloaded the runtime pack files.",
-      };
+            ? "已导出运行时剧本包。"
+            : "已下载运行时剧本包文件。",
+      });
     } catch (error) {
-      this.scriptEditorNotice = {
+      this.recordScriptEditorNotice({
         tone: "warning",
         message:
-          error instanceof Error ? error.message : "Failed to export the runtime pack.",
-      };
+          error instanceof Error ? error.message : "导出运行时剧本包失败。",
+      });
     }
 
     this.render();
@@ -4918,6 +5771,8 @@ export class MainUiFlow {
     try {
       this.scriptEditorProjectSource = "opened";
       this.commitScriptEditorProject(await loadScriptEditorProjectFromFiles(files));
+      this.resetScriptEditorRecordListPages();
+      this.resetScriptEditorRecordSearch();
       this.scriptEditorSelection = {
         family: "storyPack",
         entityId: null,
@@ -4925,17 +5780,18 @@ export class MainUiFlow {
       this.scriptEditorAuxiliaryPanelOpen = false;
       this.scriptEditorProjectDirectoryHandle = null;
       this.scriptEditorPendingDeleteProjectId = null;
-      this.scriptEditorNotice = {
+      this.resetScriptEditorNoticeTimeline();
+      this.recordScriptEditorNotice({
         tone: "success",
-        message: "Opened the script editor project.",
-      };
+        message: "已打开剧本项目。",
+      });
       this.setScreen("script-editor-workspace");
     } catch (error) {
-      this.scriptEditorNotice = {
+      this.recordScriptEditorNotice({
         tone: "warning",
         message:
-          error instanceof Error ? error.message : "Failed to open the script editor project.",
-      };
+          error instanceof Error ? error.message : "打开剧本项目失败。",
+      });
       this.render();
     }
   }
@@ -4946,6 +5802,8 @@ export class MainUiFlow {
       this.commitScriptEditorProject(
         await loadScriptEditorProjectFromScenarioPackFiles(files)
       );
+      this.resetScriptEditorRecordListPages();
+      this.resetScriptEditorRecordSearch();
       this.scriptEditorSelection = {
         family: "storyPack",
         entityId: null,
@@ -4953,17 +5811,14 @@ export class MainUiFlow {
       this.scriptEditorAuxiliaryPanelOpen = false;
       this.scriptEditorExportDirectoryHandle = null;
       this.scriptEditorPendingDeleteProjectId = null;
-      this.scriptEditorNotice = {
-        tone: "success",
-        message: "Imported the runtime pack into the bounded authoring project.",
-      };
+      this.resetScriptEditorNoticeTimeline();
       this.setScreen("script-editor-workspace");
     } catch (error) {
-      this.scriptEditorNotice = {
+      this.recordScriptEditorNotice({
         tone: "warning",
         message:
-          error instanceof Error ? error.message : "Failed to import the runtime pack.",
-      };
+          error instanceof Error ? error.message : "导入运行时剧本包失败。",
+      });
       this.render();
     }
   }
@@ -4971,23 +5826,23 @@ export class MainUiFlow {
   getScriptEditorFamilyLabel(family) {
     switch (family) {
       case "storyPack":
-        return "Story Pack";
+        return "项目";
       case "people":
-        return "People";
+        return "人物";
       case "cities":
-        return "Cities";
+        return "城市";
       case "buildings":
-        return "Buildings";
+        return "建筑";
       case "dialogues":
-        return "Dialogues";
+        return "对话";
       case "textEntries":
-        return "Text Entries";
+        return "文本";
       case "storyNodes":
-        return "Story Nodes";
+        return "剧情节点";
       case "events":
-        return "Events";
+        return "事件";
       case "minigames":
-        return "Minigames";
+        return "玩法";
       default:
         return family;
     }
@@ -5307,6 +6162,10 @@ export class MainUiFlow {
     this.scriptEditorPendingDeleteProjectId = null;
     this.scriptEditorNotice = null;
     if (!isCurrentProject) {
+      this.resetScriptEditorRecordListPages();
+      this.resetScriptEditorRecordSearch();
+      this.resetScriptEditorPersonAttributePage();
+      this.resetScriptEditorNoticeTimeline();
       this.scriptEditorSelection = {
         family: "storyPack",
         entityId: null,
@@ -5331,6 +6190,8 @@ export class MainUiFlow {
     );
     if (this.scriptEditorProject?.id === projectId) {
       this.scriptEditorProject = null;
+      this.resetScriptEditorRecordListPages();
+      this.resetScriptEditorRecordSearch();
       this.scriptEditorSelection = {
         family: "storyPack",
         entityId: null,
@@ -5340,10 +6201,10 @@ export class MainUiFlow {
       this.scriptEditorExportDirectoryHandle = null;
     }
     this.scriptEditorPendingDeleteProjectId = null;
-    this.scriptEditorNotice = {
+    this.recordScriptEditorNotice({
       tone: "success",
-      message: `Removed ${projectEntry.title} from the current project list.`,
-    };
+      message: `已将 ${projectEntry.title} 从当前项目列表移除。`,
+    });
     this.render();
   }
 }

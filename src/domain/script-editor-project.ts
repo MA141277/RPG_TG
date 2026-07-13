@@ -44,6 +44,7 @@ export type ScriptEditorEntityRecord = {
 
 export type ScriptEditorKeyValueEntry = {
   key: string;
+  label?: string | undefined;
   value: string;
 };
 
@@ -96,6 +97,10 @@ export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
   title?: string;
   occupation?: string;
   biography?: string;
+  cityId?: string;
+  houseId?: string;
+  portraitId?: string;
+  portraitVariantId?: string | null | undefined;
   extendedAttributes?: ScriptEditorKeyValueEntry[];
   dialogueIds?: string[];
   eventIds?: string[];

@@ -14,22 +14,21 @@
 
 .c-script-editor-shell__header {
   display: grid;
-  gap: 16px;
-  padding: 24px 26px;
+  gap: 12px;
+  padding: 12px 14px 14px;
   border: 1px solid rgba(145, 111, 72, 0.18);
-  border-radius: 28px;
+  border-radius: 24px;
   background:
     linear-gradient(180deg, rgba(249, 241, 228, 0.96), rgba(239, 224, 201, 0.98)),
     rgba(249, 241, 228, 0.98);
   box-shadow:
-    0 18px 40px rgba(88, 60, 32, 0.12),
+    0 12px 28px rgba(88, 60, 32, 0.09),
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .c-script-editor-shell__eyebrow,
 .c-script-editor-shell__inspector-eyebrow,
-.c-script-editor-shell__handoff-eyebrow,
-.c-script-editor-shell__sidebar-eyebrow {
+.c-script-editor-shell__handoff-eyebrow {
   margin: 0;
   color: #8d683f;
   font-size: 12px;
@@ -37,20 +36,24 @@
   text-transform: uppercase;
 }
 
+.c-script-editor-shell__workbench-title {
+  margin: 0;
+  color: #3b2a1d;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .c-script-editor-shell__title,
-.c-script-editor-shell__inspector-title,
-.c-script-editor-shell__sidebar-title {
+.c-script-editor-shell__inspector-title {
   margin: 0;
   color: #2f1f14;
   font-size: 32px;
   line-height: 1.1;
 }
 
-.c-script-editor-shell__subtitle,
 .c-script-editor-shell__inspector-description,
 .c-script-editor-shell__handoff-message,
-.c-script-editor-shell__sidebar-description,
-.c-script-editor-shell__action p,
 .c-script-editor-tree-node__description,
 .c-script-editor-shell__card p {
   margin: 0;
@@ -67,15 +70,90 @@
   gap: 12px;
 }
 
+.c-script-editor-shell__project-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid rgba(198, 160, 113, 0.72);
+  border-radius: 18px;
+  background: rgba(246, 234, 214, 0.78);
+}
+
+.c-script-editor-shell__project-pill {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: #4c3420;
+  font-size: 13px;
+}
+
+.c-script-editor-shell__project-pill strong {
+  font-weight: 700;
+}
+
+.c-script-editor-shell__project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.c-script-editor-shell__toolbar {
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.c-script-editor-shell__toolbar-button {
+  min-height: 32px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(186, 146, 96, 0.72);
+  color: #4b3423;
+  background: rgba(251, 243, 230, 0.9);
+  font: inherit;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.c-script-editor-shell__toolbar-button--outline,
+.c-script-editor-shell__toolbar-button--ghost,
+.c-script-editor-shell__toolbar-button--accent,
+.c-script-editor-shell__toolbar-button--selected,
+.c-script-editor-shell__toolbar-button--warning {
+  background: rgba(251, 243, 230, 0.9);
+}
+
+.c-script-editor-shell__toolbar-button strong,
+.c-script-editor-shell__toolbar-button span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.c-script-editor-shell__toolbar-button span {
+  color: inherit;
+  font-size: 13px;
+}
+
+.c-script-editor-shell__toolbar-button:hover {
+  filter: brightness(0.98);
+}
+
+.c-script-editor-shell__nav {
+  padding: 14px 16px;
+  border: 1px solid rgba(145, 111, 72, 0.18);
+  border-radius: 22px;
+  background: rgba(249, 241, 228, 0.72);
+}
+
 .c-script-editor-shell__badge,
 .c-script-editor-shell__nav-item,
-.c-script-editor-shell__action,
 .c-script-editor-tree-node,
 .c-script-editor-shell__card,
 .c-script-editor-shell__handoff-card,
 .c-script-editor-shell__inspector,
 .c-script-editor-shell__handoff,
-.c-script-editor-shell__sidebar-intro,
 .c-script-editor-tree-group {
   border: 1px solid rgba(145, 111, 72, 0.16);
   border-radius: 22px;
@@ -112,32 +190,6 @@
   color: #2e1c0f;
 }
 
-.c-script-editor-shell__action {
-  flex: 1 1 210px;
-  display: grid;
-  gap: 8px;
-  padding: 16px;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.c-script-editor-shell__action--ghost {
-  background: rgba(248, 240, 226, 0.92);
-}
-
-.c-script-editor-shell__action--ready {
-  background: rgba(128, 163, 113, 0.18);
-}
-
-.c-script-editor-shell__action--attention {
-  background: rgba(201, 162, 99, 0.18);
-}
-
-.c-script-editor-shell__action--blocked {
-  background: rgba(177, 102, 82, 0.16);
-}
-
 .c-script-editor-shell__body {
   display: grid;
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
@@ -148,18 +200,16 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(145, 111, 72, 0.18);
+  border-radius: 24px;
+  background: rgba(246, 235, 217, 0.74);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-.c-script-editor-shell__sidebar-intro,
 .c-script-editor-shell__inspector,
 .c-script-editor-shell__handoff {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
-}
-
-.c-script-editor-shell__sidebar-intro {
-  display: grid;
-  gap: 10px;
-  padding: 20px;
 }
 
 .c-script-editor-tree-group {
@@ -195,8 +245,7 @@
 
 .c-script-editor-tree-node__label,
 .c-script-editor-shell__handoff-card strong,
-.c-script-editor-shell__card h3,
-.c-script-editor-shell__action strong {
+.c-script-editor-shell__card h3 {
   font-size: 15px;
   color: #2f2014;
 }
@@ -206,20 +255,43 @@
   font-size: 14px;
 }
 
-.c-script-editor-tree-node__description {
-  grid-column: 1 / -1;
-  font-size: 13px;
-}
-
 .c-script-editor-shell__workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
+}
+
+.c-script-editor-shell__editor-stage {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(145, 111, 72, 0.18);
+  border-radius: 24px;
+  background: rgba(246, 235, 217, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
 .c-script-editor-shell__inspector,
 .c-script-editor-shell__handoff {
   padding: 24px;
+}
+
+.c-script-editor-shell__inspector-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 16px;
+  align-items: flex-start;
+}
+
+.c-script-editor-shell__inspector--compact {
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .c-script-editor-shell__stats {
@@ -368,8 +440,12 @@
 }
 
 .c-main-ui-screen--script-editor-flow {
+  height: 100%;
   min-height: 100vh;
   padding: 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   background:
     radial-gradient(circle at top right, rgba(214, 181, 126, 0.26), transparent 28%),
     radial-gradient(circle at top left, rgba(120, 147, 110, 0.1), transparent 24%),
@@ -640,6 +716,33 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(145, 111, 72, 0.18);
+  border-radius: 22px;
+  background: rgba(244, 232, 214, 0.74);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.c-script-editor-record-list__toolbar {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.c-script-editor-record-list__search {
+  display: grid;
+  gap: 8px;
+  color: #5a3c23;
+  font-size: 13px;
+}
+
+.c-script-editor-record-list__empty {
+  margin: 0;
+  padding: 16px 14px;
+  border: 1px dashed rgba(145, 111, 72, 0.22);
+  border-radius: 16px;
+  color: rgba(72, 48, 30, 0.72);
+  background: rgba(255, 248, 238, 0.64);
 }
 
 .c-script-editor-record-list__item {
@@ -676,9 +779,28 @@
   font-size: 13px;
 }
 
+.c-script-editor-record-pagination {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.c-script-editor-record-pagination__button {
+  min-width: 44px;
+}
+
+.c-script-editor-record-pagination__status {
+  color: rgba(72, 48, 30, 0.7);
+  font-size: 13px;
+  text-align: center;
+}
+
 .c-script-editor-person-editor,
 .c-script-editor-person-panel,
 .c-script-editor-person-attributes,
+.c-script-editor-system-details,
 .c-script-editor-location-editor,
 .c-script-editor-location-panel,
 .c-script-editor-location-menu__list,
@@ -687,6 +809,18 @@
 .c-script-editor-narrative-list {
   display: grid;
   gap: 16px;
+}
+
+.c-script-editor-person-editor,
+.c-script-editor-location-editor,
+.c-script-editor-narrative-editor,
+.c-script-editor-minigame-editor,
+.c-script-editor-record-editor {
+  padding: 18px;
+  border: 1px solid rgba(145, 111, 72, 0.18);
+  border-radius: 22px;
+  background: rgba(255, 249, 241, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
 }
 
 .c-script-editor-person-editor__tabs,
@@ -703,6 +837,10 @@
   gap: 12px;
 }
 
+.c-script-editor-shell__inspector-header .c-script-editor-person-editor__tabs {
+  justify-content: flex-end;
+}
+
 .c-script-editor-person-editor__tab.is-active,
 .c-script-editor-location-editor__tab.is-active,
 .c-script-editor-narrative-editor__tab.is-active {
@@ -715,6 +853,117 @@
   border: 1px solid rgba(145, 111, 72, 0.12);
   border-radius: 18px;
   background: rgba(255, 248, 238, 0.76);
+}
+
+.c-script-editor-person-summary {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(145, 111, 72, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 248, 238, 0.76);
+}
+
+.c-script-editor-person-summary__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.c-script-editor-person-summary__list {
+  display: grid;
+  grid-template-columns: repeat(6, 160px);
+  grid-auto-rows: minmax(0, 1fr);
+  justify-content: start;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.c-script-editor-person-summary__item {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 20px 16px 16px;
+  border: 1px solid rgba(145, 111, 72, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 252, 247, 0.92);
+}
+
+.c-script-editor-person-summary__remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: #c84f4f;
+  color: #fff8f4;
+  box-shadow: 0 6px 14px rgba(163, 56, 56, 0.24);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.c-script-editor-person-summary__remove:hover,
+.c-script-editor-person-summary__remove:focus-visible {
+  background: #b53d3d;
+  box-shadow: 0 10px 18px rgba(163, 56, 56, 0.3);
+  transform: translateY(-1px);
+}
+
+.c-script-editor-person-summary__remove:focus-visible {
+  outline: 2px solid rgba(181, 61, 61, 0.28);
+  outline-offset: 2px;
+}
+
+.c-script-editor-person-summary__remove span {
+  transform: translateY(-1px);
+}
+
+.c-script-editor-person-summary__field {
+  display: grid;
+  gap: 4px;
+}
+
+.c-script-editor-person-summary__label {
+  color: rgba(78, 53, 34, 0.62);
+  font-size: 12px;
+}
+
+.c-script-editor-person-summary__key,
+.c-script-editor-person-summary__value {
+  color: #2f2014;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.c-script-editor-system-details {
+  padding: 16px 18px;
+  border: 1px dashed rgba(145, 111, 72, 0.22);
+  border-radius: 18px;
+  background: rgba(250, 245, 237, 0.74);
+}
+
+.c-script-editor-system-details__summary {
+  cursor: pointer;
+  color: #6a4a31;
+  font-weight: 700;
+}
+
+.c-script-editor-system-details__body {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
 }
 
 .c-script-editor-person-attributes__header {
@@ -908,5 +1157,9 @@
 
   .c-script-editor-shell__export-target {
     align-items: flex-start;
+  }
+
+  .c-script-editor-record-pagination {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

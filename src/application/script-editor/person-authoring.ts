@@ -13,6 +13,46 @@ export const SCRIPT_EDITOR_PERSON_TAB_KEYS = [
 export type ScriptEditorPersonTabKey =
   (typeof SCRIPT_EDITOR_PERSON_TAB_KEYS)[number];
 
+const SCRIPT_EDITOR_PERSON_ATTRIBUTE_EXCLUDED_ROOT_KEYS = new Set([
+  "id",
+  "name",
+  "personType",
+  "role",
+  "title",
+  "occupation",
+  "biography",
+  "cityId",
+  "houseId",
+  "portraitId",
+  "portraitVariantId",
+  "portraitVariants",
+  "extendedAttributes",
+  "dialogueIds",
+  "eventIds",
+  "tradeBinding",
+]);
+
+const SCRIPT_EDITOR_PERSON_FIXED_ATTRIBUTE_KEYS = new Set([
+  "cityId",
+  "houseId",
+  "portraitId",
+  "portraitVariantId",
+]);
+
+const SCRIPT_EDITOR_PERSON_ATTRIBUTE_LABELS: Record<string, string> = {
+  age: "年龄",
+  birthYear: "出生年",
+  deathYear: "去世年",
+  clanId: "所属",
+  stamina: "体力",
+  "stats.leadership": "统率",
+  "stats.martial": "武勇",
+  "stats.intelligence": "智略",
+  "stats.politics": "政务",
+  "stats.charm": "魅力",
+  "stats.fame": "名声",
+};
+
 export function normalizeScriptEditorPersonRecord(
   value: Record<string, unknown>
 ): ScriptEditorPersonRecord {
@@ -24,7 +64,8 @@ export function normalizeScriptEditorPersonRecord(
         ? "playable"
         : "support";
 
-  return {
+  return materializeScriptEditorPersonExtendedAttributes({
+    ...value,
     id: readString(value.id, "person.unknown"),
     name: readString(value.name, "未命名人物"),
     personType,
@@ -32,14 +73,23 @@ export function normalizeScriptEditorPersonRecord(
     title: readString(value.title, ""),
     occupation: readString(value.occupation, ""),
     biography: readString(value.biography, ""),
-    extendedAttributes: normalizeKeyValueEntries(value.extendedAttributes),
+    cityId: readString(value.cityId, ""),
+    houseId: readString(value.houseId, ""),
+    portraitId: readString(value.portraitId, ""),
+    portraitVariantId: readString(value.portraitVariantId, ""),
+    extendedAttributes: mergeScriptEditorPersonExtendedAttributes(
+      normalizeKeyValueEntries(value.extendedAttributes),
+      collectScriptEditorPersonImportedAttributes(value)
+    ),
     dialogueIds: normalizeStringArray(value.dialogueIds),
     eventIds: normalizeStringArray(value.eventIds),
     tradeBinding: normalizeTradeBinding(value.tradeBinding),
-  };
+  });
 }
 
-export function createDefaultScriptEditorPersonRecord(index: number): ScriptEditorPersonRecord {
+export function createDefaultScriptEditorPersonRecord(
+  index: number
+): ScriptEditorPersonRecord {
   const suffix = index + 1;
   return {
     id: `person.new.${suffix}`,
@@ -49,6 +99,10 @@ export function createDefaultScriptEditorPersonRecord(index: number): ScriptEdit
     title: "",
     occupation: "",
     biography: "",
+    cityId: "",
+    houseId: "",
+    portraitId: "",
+    portraitVariantId: "",
     extendedAttributes: [],
     dialogueIds: [],
     eventIds: [],
@@ -68,29 +122,66 @@ export function updateScriptEditorPersonField(
 
   switch (field) {
     case "id":
-      return { ...person, id: normalizedValue };
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        id: normalizedValue,
+      });
     case "name":
-      return { ...person, name: value };
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        name: value,
+      });
     case "personType":
-      return {
+      return materializeScriptEditorPersonExtendedAttributes({
         ...person,
         personType: normalizedValue === "角色" ? "角色" : "NPC",
         role: normalizedValue === "角色" ? "playable" : "support",
-      };
+      });
     case "title":
-      return { ...person, title: value };
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        title: value,
+      });
     case "occupation":
-      return { ...person, occupation: value };
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        occupation: value,
+      });
     case "biography":
-      return { ...person, biography: value };
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        biography: value,
+      });
+    case "cityId":
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        cityId: normalizedValue,
+        houseId: "",
+      });
+    case "houseId":
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        houseId: normalizedValue,
+      });
+    case "portraitId":
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        portraitId: normalizedValue,
+        portraitVariantId: "",
+      });
+    case "portraitVariantId":
+      return materializeScriptEditorPersonExtendedAttributes({
+        ...person,
+        portraitVariantId: normalizedValue,
+      });
     case "tradeBinding.entryId":
-      return {
+      return materializeScriptEditorPersonExtendedAttributes({
         ...person,
         tradeBinding: {
           ...normalizeTradeBinding(person.tradeBinding),
           entryId: normalizedValue,
         },
-      };
+      });
     default:
       return person;
   }
@@ -100,34 +191,37 @@ export function toggleScriptEditorPersonTradeEnabled(
   person: ScriptEditorPersonRecord,
   enabled: boolean
 ): ScriptEditorPersonRecord {
-  return {
+  return materializeScriptEditorPersonExtendedAttributes({
     ...person,
     tradeBinding: {
       ...normalizeTradeBinding(person.tradeBinding),
       enabled,
     },
-  };
+  });
 }
 
 export function appendScriptEditorPersonAttribute(
   person: ScriptEditorPersonRecord
 ): ScriptEditorPersonRecord {
-  return {
+  return materializeScriptEditorPersonExtendedAttributes({
     ...person,
-    extendedAttributes: [...normalizeKeyValueEntries(person.extendedAttributes), { key: "", value: "" }],
-  };
+    extendedAttributes: [
+      ...normalizeKeyValueEntries(person.extendedAttributes),
+      { key: "", label: "", value: "" },
+    ],
+  });
 }
 
 export function removeScriptEditorPersonAttribute(
   person: ScriptEditorPersonRecord,
   index: number
 ): ScriptEditorPersonRecord {
-  return {
+  return materializeScriptEditorPersonExtendedAttributes({
     ...person,
     extendedAttributes: normalizeKeyValueEntries(person.extendedAttributes).filter(
       (_, entryIndex) => entryIndex !== index
     ),
-  };
+  });
 }
 
 export function updateScriptEditorPersonAttribute(
@@ -136,13 +230,13 @@ export function updateScriptEditorPersonAttribute(
   field: keyof ScriptEditorKeyValueEntry,
   value: string
 ): ScriptEditorPersonRecord {
-  return {
+  return materializeScriptEditorPersonExtendedAttributes({
     ...person,
     extendedAttributes: normalizeKeyValueEntries(person.extendedAttributes).map(
       (entry, entryIndex) =>
         entryIndex === index ? { ...entry, [field]: value } : entry
     ),
-  };
+  });
 }
 
 export function appendScriptEditorPersonRelation(
@@ -194,6 +288,286 @@ function normalizeTradeBinding(value: unknown) {
   };
 }
 
+function collectScriptEditorPersonImportedAttributes(
+  value: Record<string, unknown>
+): ScriptEditorKeyValueEntry[] {
+  const entries: ScriptEditorKeyValueEntry[] = [];
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    if (SCRIPT_EDITOR_PERSON_ATTRIBUTE_EXCLUDED_ROOT_KEYS.has(key)) {
+      continue;
+    }
+
+    appendScriptEditorPersonImportedAttribute(entries, key, nestedValue);
+  }
+
+  return entries;
+}
+
+function appendScriptEditorPersonImportedAttribute(
+  entries: ScriptEditorKeyValueEntry[],
+  keyPath: string,
+  value: unknown
+): void {
+  if (value == null || Array.isArray(value)) {
+    return;
+  }
+
+  if (typeof value === "object") {
+    for (const [nestedKey, nestedValue] of Object.entries(
+      value as Record<string, unknown>
+    )) {
+      appendScriptEditorPersonImportedAttribute(
+        entries,
+        `${keyPath}.${nestedKey}`,
+        nestedValue
+      );
+    }
+    return;
+  }
+
+  entries.push({
+    key: keyPath,
+    label: getScriptEditorPersonAttributeLabel(keyPath),
+    value: String(value),
+  });
+}
+
+function mergeScriptEditorPersonExtendedAttributes(
+  existing: ScriptEditorKeyValueEntry[],
+  imported: ScriptEditorKeyValueEntry[]
+): ScriptEditorKeyValueEntry[] {
+  const merged = normalizeKeyValueEntries(existing);
+  const existingEntryIndexByKey = new Map<string, number>();
+
+  merged.forEach((entry, index) => {
+    const normalizedKey = entry.key.trim();
+    if (normalizedKey.length === 0) {
+      return;
+    }
+
+    existingEntryIndexByKey.set(normalizedKey, index);
+  });
+
+  for (const entry of imported) {
+    const normalizedKey = entry.key.trim();
+    if (normalizedKey.length === 0) {
+      continue;
+    }
+
+    const existingIndex = existingEntryIndexByKey.get(normalizedKey);
+    if (existingIndex != null) {
+      const existingEntry = merged[existingIndex];
+      if (
+        existingEntry != null &&
+        (existingEntry.label ?? "").trim().length === 0 &&
+        (entry.label ?? "").trim().length > 0
+      ) {
+        merged[existingIndex] = {
+          ...existingEntry,
+          label: entry.label,
+        };
+      }
+      continue;
+    }
+
+    merged.push({
+      key: normalizedKey,
+      label: entry.label,
+      value: entry.value,
+    });
+    existingEntryIndexByKey.set(normalizedKey, merged.length - 1);
+  }
+
+  return merged;
+}
+
+function materializeScriptEditorPersonExtendedAttributes(
+  person: ScriptEditorPersonRecord
+): ScriptEditorPersonRecord {
+  const extendedAttributes = normalizeKeyValueEntries(person.extendedAttributes);
+  const nextPerson = {
+    ...person,
+    extendedAttributes,
+  } as ScriptEditorPersonRecord;
+  const existingLeafEntries = collectScriptEditorPersonImportedAttributes(
+    nextPerson as Record<string, unknown>
+  );
+  const previousValues = new Map(
+    existingLeafEntries.map((entry) => [
+      entry.key,
+      readScriptEditorPersonValueAtPath(
+        nextPerson as Record<string, unknown>,
+        entry.key
+      ),
+    ])
+  );
+
+  for (const entry of existingLeafEntries) {
+    deleteScriptEditorPersonValueAtPath(
+      nextPerson as Record<string, unknown>,
+      entry.key
+    );
+  }
+
+  for (const entry of extendedAttributes) {
+    const normalizedKey = entry.key.trim();
+    if (normalizedKey.length === 0) {
+      continue;
+    }
+
+    const parsedValue = parseScriptEditorPersonAttributeValue(
+      normalizedKey,
+      entry.value,
+      previousValues.get(normalizedKey)
+    );
+    if (parsedValue === undefined) {
+      continue;
+    }
+
+    writeScriptEditorPersonValueAtPath(
+      nextPerson as Record<string, unknown>,
+      normalizedKey,
+      parsedValue
+    );
+  }
+
+  return nextPerson;
+}
+
+function parseScriptEditorPersonAttributeValue(
+  keyPath: string,
+  value: string,
+  previousValue: unknown
+): string | number | boolean | null | undefined {
+  const normalizedValue = value.trim();
+
+  if (
+    typeof previousValue === "number" ||
+    isScriptEditorPersonNumericAttribute(keyPath)
+  ) {
+    if (normalizedValue.length === 0) {
+      return undefined;
+    }
+
+    const numericValue = Number(normalizedValue);
+    return Number.isFinite(numericValue) ? numericValue : value;
+  }
+
+  if (typeof previousValue === "boolean") {
+    if (normalizedValue === "true") {
+      return true;
+    }
+    if (normalizedValue === "false") {
+      return false;
+    }
+  }
+
+  if (previousValue === null && normalizedValue.length === 0) {
+    return null;
+  }
+
+  return value;
+}
+
+function isScriptEditorPersonNumericAttribute(keyPath: string): boolean {
+  return (
+    keyPath === "birthYear" ||
+    keyPath === "deathYear" ||
+    keyPath === "age" ||
+    keyPath === "stamina" ||
+    keyPath.startsWith("stats.") ||
+    keyPath.startsWith("skills.")
+  );
+}
+
+function readScriptEditorPersonValueAtPath(
+  value: Record<string, unknown>,
+  keyPath: string
+): unknown {
+  return keyPath.split(".").reduce<unknown>((currentValue, segment) => {
+    if (
+      currentValue == null ||
+      typeof currentValue !== "object" ||
+      Array.isArray(currentValue)
+    ) {
+      return undefined;
+    }
+
+    return (currentValue as Record<string, unknown>)[segment];
+  }, value);
+}
+
+function writeScriptEditorPersonValueAtPath(
+  target: Record<string, unknown>,
+  keyPath: string,
+  value: unknown
+): void {
+  const segments = keyPath.split(".");
+  let currentTarget: Record<string, unknown> = target;
+
+  for (const segment of segments.slice(0, -1)) {
+    const nextTarget =
+      currentTarget[segment] != null &&
+      typeof currentTarget[segment] === "object" &&
+      !Array.isArray(currentTarget[segment])
+        ? (currentTarget[segment] as Record<string, unknown>)
+        : {};
+    currentTarget[segment] = nextTarget;
+    currentTarget = nextTarget;
+  }
+
+  currentTarget[segments.at(-1) ?? keyPath] = value;
+}
+
+function deleteScriptEditorPersonValueAtPath(
+  target: Record<string, unknown>,
+  keyPath: string
+): void {
+  const segments = keyPath.split(".");
+  const parents: Record<string, unknown>[] = [target];
+  let currentTarget: Record<string, unknown> | null = target;
+
+  for (const segment of segments.slice(0, -1)) {
+    const nextTarget: Record<string, unknown> | null =
+      currentTarget != null &&
+      currentTarget[segment] != null &&
+      typeof currentTarget[segment] === "object" &&
+      !Array.isArray(currentTarget[segment])
+        ? (currentTarget[segment] as Record<string, unknown>)
+        : null;
+    if (nextTarget == null) {
+      return;
+    }
+
+    parents.push(nextTarget);
+    currentTarget = nextTarget;
+  }
+
+  if (currentTarget == null) {
+    return;
+  }
+
+  delete currentTarget[segments.at(-1) ?? keyPath];
+
+  for (let index = segments.length - 2; index >= 0; index -= 1) {
+    const parent = parents[index];
+    const segment = segments[index];
+    if (parent == null || segment == null) {
+      continue;
+    }
+    const nestedValue = parent[segment];
+    if (
+      nestedValue != null &&
+      typeof nestedValue === "object" &&
+      !Array.isArray(nestedValue) &&
+      Object.keys(nestedValue as Record<string, unknown>).length === 0
+    ) {
+      delete parent[segment];
+    }
+  }
+}
+
 function normalizeKeyValueEntries(value: unknown): ScriptEditorKeyValueEntry[] {
   if (!Array.isArray(value)) {
     return [];
@@ -205,8 +579,32 @@ function normalizeKeyValueEntries(value: unknown): ScriptEditorKeyValueEntry[] {
     )
     .map((entry) => ({
       key: readString((entry as Record<string, unknown>).key, ""),
+      label: readString((entry as Record<string, unknown>).label, ""),
       value: readString((entry as Record<string, unknown>).value, ""),
-    }));
+    }))
+    .filter(
+      (entry) => !SCRIPT_EDITOR_PERSON_FIXED_ATTRIBUTE_KEYS.has(entry.key.trim())
+    );
+}
+
+function getScriptEditorPersonAttributeLabel(keyPath: string): string {
+  const mappedLabel = SCRIPT_EDITOR_PERSON_ATTRIBUTE_LABELS[keyPath];
+  if (typeof mappedLabel === "string" && mappedLabel.length > 0) {
+    return mappedLabel;
+  }
+
+  const normalizedPath = keyPath.trim();
+  if (normalizedPath.length === 0) {
+    return "";
+  }
+
+  const leafSegment = normalizedPath.split(".").at(-1) ?? normalizedPath;
+  const spacedLeaf = leafSegment
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim();
+
+  return spacedLeaf.length > 0 ? spacedLeaf : normalizedPath;
 }
 
 function normalizeStringArray(value: unknown): string[] {

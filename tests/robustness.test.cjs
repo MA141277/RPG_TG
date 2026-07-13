@@ -2987,6 +2987,30 @@ test(
   }
 );
 
+test(
+  "script editor compatibility import explains when a project export is passed to the runtime-pack importer",
+  async () => {
+    const {
+      serializeScriptEditorProjectToFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-save.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    await assert.rejects(
+      () =>
+        loadScriptEditorProjectFromScenarioPackFiles(
+          createImportedFilesFromSerializedJsonRecord(
+            serializeScriptEditorProjectToFiles(project),
+            "opened-project"
+          )
+        ),
+      /project\.json exports|runtime pack export|pack\.json/i
+    );
+  }
+);
+
 test("script editor workspace shell builds a reusable object-tree scaffold", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
@@ -3004,7 +3028,7 @@ test("script editor workspace shell builds a reusable object-tree scaffold", () 
   assert.equal(workspace.selection.family, "people");
   assert.equal(workspace.selection.entityId, "person.hero");
   assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "ready");
-  assert.equal(workspace.navigationItems.find((item) => item.id === "authoring")?.isActive, true);
+  assert.deepEqual(workspace.navigationItems, []);
   assert.equal(
     workspace.objectTreeGroups[0]?.nodes.some((node) => node.family === "storyPack"),
     true
@@ -3028,11 +3052,7 @@ test("script editor PRD workspace shell exposes a Chinese-first project overview
     },
   });
 
-  assert.deepEqual(
-    workspace.navigationItems.map((item) => item.label),
-    ["项目总览", "对象导航", "校验导出"]
-  );
-  assert.equal(workspace.navigationItems.find((item) => item.id === "overview")?.isActive, true);
+  assert.deepEqual(workspace.navigationItems, []);
   assert.equal(workspace.inspector.eyebrow, "项目总览");
   assert.deepEqual(
     workspace.inspector.cards.map((card) => card.title),
@@ -3069,10 +3089,7 @@ test("script editor workspace shell surfaces export blockers and compatibility r
   const workspace = createScriptEditorWorkspaceShellViewModel({ project });
 
   assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
-  assert.equal(
-    workspace.badges.some((badge) => /兼容残留/.test(badge.label)),
-    true
-  );
+  assert.deepEqual(workspace.badges.map((badge) => badge.label), [`当前项目：${project.title}`]);
   assert.equal(workspace.handoffSummary.blockedCount > 0, true);
   assert.equal(
     workspace.objectTreeGroups.some((group) =>
@@ -3131,15 +3148,36 @@ test("script editor PRD workspace view retires English shell chrome copy", () =>
     "utf8"
   );
 
-  assert.match(workspaceViewSource, /剧本编辑器工作台/);
-  assert.match(workspaceViewSource, /校验与导出摘要/);
-  assert.match(workspaceViewSource, /预览与校验辅助区/);
-  assert.match(workspaceViewSource, /返回项目列表/);
-  assert.match(workspaceViewSource, /统一校验/);
-  assert.match(workspaceViewSource, /data-script-editor-action="toggle-preview-panel"/);
-  assert.match(workspaceViewSource, /data-script-editor-action="jump-to-preview-issue"/);
+  assert.match(workspaceViewSource, /Script Editor Workbench Wireframe/);
+  assert.match(workspaceViewSource, /返回列表/);
+  assert.match(workspaceViewSource, /c-script-editor-shell__editor-stage/);
+  assert.match(workspaceViewSource, /c-script-editor-tree-group/);
+  assert.match(workspaceViewSource, /c-script-editor-shell__inspector/);
+  assert.match(workspaceViewSource, /renderProjectEntryButton/);
+  assert.match(workspaceViewSource, /c-script-editor-shell__toolbar-button--selected/);
+  assert.match(workspaceViewSource, /splitWorkspaceTreeGroups/);
+  assert.doesNotMatch(workspaceViewSource, /预览与校验辅助区/);
+  assert.doesNotMatch(workspaceViewSource, /校验与导出摘要/);
+  assert.doesNotMatch(workspaceViewSource, /data-script-editor-action="toggle-preview-panel"/);
+  assert.doesNotMatch(workspaceViewSource, /data-script-editor-action="jump-to-preview-issue"/);
+  assert.doesNotMatch(workspaceViewSource, /data-script-editor-nav=/);
+  assert.doesNotMatch(workspaceViewSource, /阻塞数/);
+  assert.doesNotMatch(workspaceViewSource, /关注项/);
   assert.doesNotMatch(workspaceViewSource, /Script Editor Shell/);
   assert.doesNotMatch(workspaceViewSource, /Handoff Summary/);
+});
+
+test("script editor visual alignment queue keeps the editor panel inside the central workspace instead of appending it below the shell", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /renderScriptEditorWorkspaceView\(\s*workspace,\s*this\.renderScriptEditorEditorPanel\(\)\s*\)/
+  );
+  assert.doesNotMatch(mainUiSource, /c-script-editor-workflow__editor/);
 });
 
 test("script editor PRD project overview panel replaces the old Project scaffold copy", () => {
@@ -3183,22 +3221,166 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
+  const workspaceViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    "utf8"
+  );
   const scriptEditorCssSource = fs.readFileSync(
     path.join(process.cwd(), "src/styles/script-editor.css"),
     "utf8"
   );
 
-  assert.match(mainUiSource, /人物作者面/);
-  assert.match(mainUiSource, /人物详情/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /<p class="c-script-editor-editor-card__eyebrow">人物作者面<\/p>/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /<h2 class="c-script-editor-editor-card__title">人物详情<\/h2>/
+  );
   assert.match(mainUiSource, /属性/);
   assert.match(mainUiSource, /对话/);
   assert.match(mainUiSource, /交易/);
   assert.match(mainUiSource, /事件/);
   assert.match(mainUiSource, /data-script-editor-action="select-person-tab"/);
+  assert.match(mainUiSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+  assert.match(mainUiSource, /data-script-editor-inspector-header-slot/);
+  assert.match(mainUiSource, /renderScriptEditorPersonTabList\(\)/);
+  assert.match(workspaceViewSource, /extractTemplateSlot/);
+  assert.match(workspaceViewSource, /hideHeaderText/);
   assert.match(mainUiSource, /"add-person-dialogue-link"/);
   assert.match(mainUiSource, /"add-person-event-link"/);
+  assert.match(mainUiSource, /data-script-editor-record-search-family="people"/);
+  assert.match(mainUiSource, /filterScriptEditorRecords\("people", records\)/);
+  assert.match(
+    mainUiSource,
+    /renderScriptEditorPersonTabPanel\(person\)\}\s*\$\{this\.renderScriptEditorPersonSummaryAttributes\(person\)\}/
+  );
   assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs/);
+  assert.match(scriptEditorCssSource, /c-script-editor-shell__inspector-header/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list__search/);
   assert.match(scriptEditorCssSource, /c-script-editor-person-attributes/);
+});
+
+test("script editor person authoring queue renders current json-backed person attributes in the embedded summary", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /renderScriptEditorPersonSummaryAttributes\(person\)/);
+  assert.match(mainUiSource, /已有属性/);
+  assert.match(mainUiSource, /自定义属性/);
+  assert.match(mainUiSource, /data-script-editor-person-attribute-field="label"/);
+  assert.match(mainUiSource, /data-script-editor-person-attribute-field="value"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-person-attribute-field="key"/);
+  assert.match(mainUiSource, /placeholder="属性名"/);
+  assert.match(mainUiSource, /data-script-editor-action="remove-person-attribute"/);
+  assert.match(mainUiSource, /c-script-editor-person-summary__remove/);
+  assert.match(mainUiSource, /aria-label="删除属性"/);
+  assert.match(mainUiSource, /data-script-editor-action="add-person-attribute"/);
+  assert.match(mainUiSource, /SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE\s*=\s*18/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-page-prev"/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-page-next"/);
+  assert.match(mainUiSource, /person\.extendedAttributes \?\? \[\]/);
+  assert.match(mainUiSource, /data-script-editor-person-field="cityId"/);
+  assert.match(mainUiSource, /data-script-editor-person-field="houseId"/);
+  assert.match(mainUiSource, /data-script-editor-person-field="portraitId"/);
+  assert.match(mainUiSource, /data-script-editor-person-field="portraitVariantId"/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-summary/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-summary__item/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-summary__remove/);
+  assert.match(scriptEditorCssSource, /grid-template-columns:\s*repeat\(6,/);
+});
+
+test("script editor person authoring queue removes the advanced system details foldout from the profile form", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainUiSource, /data-script-editor-person-field="id"/);
+  assert.doesNotMatch(mainUiSource, /<span>人物 ID<\/span>/);
+});
+
+test("script editor visual alignment queue hides system fields behind advanced details panels", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /renderScriptEditorSystemDetails\(title, hint, body\)/);
+  assert.match(mainUiSource, /高级设置与系统信息/);
+  assert.match(mainUiSource, /剧情内部标识与章节挂接默认折叠/);
+  assert.match(mainUiSource, /对话内部标识与所属剧情挂接默认折叠/);
+  assert.match(mainUiSource, /事件内部标识默认折叠/);
+  assert.match(mainUiSource, /玩法绑定内部标识默认折叠/);
+  assert.match(scriptEditorCssSource, /c-script-editor-system-details/);
+  assert.match(scriptEditorCssSource, /c-script-editor-system-details__summary/);
+});
+
+test("script editor visual alignment queue keeps workspace scrolling inside the fixed main-ui shell", () => {
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(scriptEditorCssSource, /\.c-main-ui-screen--script-editor-flow\s*\{/);
+  assert.match(scriptEditorCssSource, /overflow-y:\s*auto;/);
+  assert.match(scriptEditorCssSource, /overscroll-behavior-y:\s*contain;/);
+});
+
+test("script editor visual alignment queue preserves workspace scroll position across rerenders", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /this\.scriptEditorScrollTop = 0;/);
+  assert.match(mainUiSource, /this\.captureScriptEditorScrollPosition\(\);/);
+  assert.match(mainUiSource, /this\.restoreScriptEditorScrollPosition\(\);/);
+  assert.match(mainUiSource, /captureScriptEditorScrollPosition\(\)/);
+  assert.match(mainUiSource, /restoreScriptEditorScrollPosition\(\)/);
+  assert.match(mainUiSource, /scriptEditorScreen\.scrollTop = this\.scriptEditorScrollTop;/);
+});
+
+test("script editor visual alignment queue paginates secondary record lists at six items per page", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE\s*=\s*6/);
+  assert.match(mainUiSource, /renderScriptEditorPaginatedRecordList/);
+  assert.match(mainUiSource, /data-script-editor-action="record-page-prev"/);
+  assert.match(mainUiSource, /data-script-editor-action="record-page-next"/);
+  assert.match(mainUiSource, /changeScriptEditorRecordListPage\(delta\)/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-pagination/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-pagination__status/);
+});
+
+test("script editor visual alignment queue separates sidebar secondary list and editor stage with borders", () => {
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(scriptEditorCssSource, /c-script-editor-shell__sidebar/);
+  assert.match(scriptEditorCssSource, /c-script-editor-shell__editor-stage/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list__toolbar/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-editor/);
 });
 
 test(
@@ -3294,6 +3476,222 @@ test("script editor person authoring helpers normalize trade and relation entry 
   assert.equal(normalized.tradeBinding.enabled, true);
   assert.equal(normalized.tradeBinding.entryId, "trade.market");
   assert.deepEqual(normalized.dialogueIds, ["dialogue.hero.open"]);
+});
+
+test("script editor person authoring helpers absorb imported runtime attributes into editable extended attributes", () => {
+  const {
+    appendScriptEditorPersonAttribute,
+    normalizeScriptEditorPersonRecord,
+    updateScriptEditorPersonAttribute,
+    removeScriptEditorPersonAttribute,
+  } = require("../.test-dist/application/script-editor/person-authoring.js");
+
+  const imported = normalizeScriptEditorPersonRecord({
+    id: "char.player",
+    name: "朱元璋",
+    title: "亲兵",
+    occupation: "军中跑腿",
+    age: 32,
+    clanId: "clan.guo",
+    cityId: "city.kulan",
+    houseId: "house.kulan.keep",
+    portraitId: "portrait.player",
+    portraitVariantId: "stage-20",
+    portraitVariants: [
+      { id: "stage-20", label: "20 岁", portraitId: "portrait.player.stage.20" },
+      { id: "stage-25", label: "25 岁", portraitId: "portrait.player.stage.25" },
+    ],
+    stats: {
+      leadership: 60,
+      martial: 58,
+      intelligence: 55,
+      politics: 42,
+      charm: 51,
+      fame: 8,
+    },
+  });
+
+  const extendedAttributeKeys = imported.extendedAttributes.map((entry) => entry.key);
+  assert.equal(extendedAttributeKeys.includes("age"), true);
+  assert.equal(extendedAttributeKeys.includes("clanId"), true);
+  assert.equal(extendedAttributeKeys.includes("cityId"), false);
+  assert.equal(extendedAttributeKeys.includes("houseId"), false);
+  assert.equal(extendedAttributeKeys.includes("portraitId"), false);
+  assert.equal(extendedAttributeKeys.includes("portraitVariantId"), false);
+  assert.equal(extendedAttributeKeys.includes("stats.leadership"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.martial"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.intelligence"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.politics"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.charm"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.fame"), true);
+  assert.equal(
+    imported.extendedAttributes.find((entry) => entry.key === "age")?.label,
+    "年龄"
+  );
+  assert.equal(
+    imported.extendedAttributes.find((entry) => entry.key === "clanId")?.label,
+    "所属"
+  );
+  assert.equal(
+    imported.extendedAttributes.find((entry) => entry.key === "stats.leadership")?.label,
+    "统率"
+  );
+  assert.equal(imported.cityId, "city.kulan");
+  assert.equal(imported.houseId, "house.kulan.keep");
+  assert.equal(imported.portraitId, "portrait.player");
+  assert.equal(imported.portraitVariantId, "stage-20");
+
+  const leadershipIndex = imported.extendedAttributes.findIndex(
+    (entry) => entry.key === "stats.leadership"
+  );
+  const ageIndex = imported.extendedAttributes.findIndex((entry) => entry.key === "age");
+
+  const updated = updateScriptEditorPersonAttribute(
+    imported,
+    leadershipIndex,
+    "value",
+    "61"
+  );
+  assert.equal(updated.stats.leadership, 61);
+
+  const renamed = updateScriptEditorPersonAttribute(
+    updated,
+    leadershipIndex,
+    "label",
+    "带兵"
+  );
+  assert.equal(renamed.extendedAttributes[leadershipIndex].label, "带兵");
+  assert.equal(renamed.stats.leadership, 61);
+
+  const beforeRemovalKeys = updated.extendedAttributes.map((entry) => entry.key);
+  const removed = removeScriptEditorPersonAttribute(updated, ageIndex);
+  const afterRemovalKeys = removed.extendedAttributes.map((entry) => entry.key);
+  assert.equal(afterRemovalKeys.length, beforeRemovalKeys.length - 1);
+  assert.deepEqual(
+    beforeRemovalKeys.filter((key) => !afterRemovalKeys.includes(key)),
+    ["age"]
+  );
+  assert.equal("age" in removed, false);
+
+  const appended = appendScriptEditorPersonAttribute(removed);
+  const appendedIndex = appended.extendedAttributes.length - 1;
+  const relabeled = updateScriptEditorPersonAttribute(
+    appended,
+    appendedIndex,
+    "label",
+    "忠诚"
+  );
+  const withValue = updateScriptEditorPersonAttribute(
+    relabeled,
+    appendedIndex,
+    "value",
+    "80"
+  );
+  assert.equal(withValue.extendedAttributes[appendedIndex].key, "");
+  assert.equal(withValue.extendedAttributes[appendedIndex].label, "忠诚");
+  assert.equal(withValue.extendedAttributes[appendedIndex].value, "80");
+  assert.equal("忠诚" in withValue, false);
+});
+
+test("script editor person authoring helper delete only removes the targeted nested runtime attribute", () => {
+  const {
+    normalizeScriptEditorPersonRecord,
+    removeScriptEditorPersonAttribute,
+  } = require("../.test-dist/application/script-editor/person-authoring.js");
+
+  const person = normalizeScriptEditorPersonRecord({
+    id: "char.player",
+    name: "朱元璋",
+    birthYear: 1535,
+    age: 32,
+    clanId: "clan.guo",
+    stats: {
+      leadership: 60,
+      martial: 58,
+      intelligence: 55,
+      politics: 42,
+      charm: 51,
+      fame: 8,
+      gold: 120,
+    },
+    stamina: 100,
+    skills: {
+      horse: 3,
+      teppo: 1,
+      navy: 0,
+      archery: 1,
+      martial: 2,
+      military: 2,
+      ashigaru: 2,
+    },
+  });
+
+  const beforeKeys = person.extendedAttributes.map((entry) => entry.key);
+  const fameIndex = person.extendedAttributes.findIndex(
+    (entry) => entry.key === "stats.fame"
+  );
+  const removed = removeScriptEditorPersonAttribute(person, fameIndex);
+  const afterKeys = removed.extendedAttributes.map((entry) => entry.key);
+
+  assert.equal(afterKeys.length, beforeKeys.length - 1);
+  assert.deepEqual(
+    beforeKeys.filter((key) => !afterKeys.includes(key)),
+    ["stats.fame"]
+  );
+  assert.equal(removed.stats.fame, undefined);
+  assert.equal(removed.stats.gold, 120);
+  assert.deepEqual(removed.skills, {
+    horse: 3,
+    teppo: 1,
+    navy: 0,
+    archery: 1,
+    martial: 2,
+    military: 2,
+    ashigaru: 2,
+  });
+});
+
+test("script editor person attribute pagination keeps the current page stable after deleting one card", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorPersonAttributeVisibleIndices = null;/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorPersonAttributeVisibleIndices == null\s*\?\s*defaultVisibleIndices/
+  );
+  assert.match(
+    mainUiSource,
+    /visibleEntries:\s*visibleIndices[\s\S]*?\.map\(\(index\) => \{/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorPersonAttributeVisibleIndices\s*=\s*this\.scriptEditorPersonAttributeVisibleIndices[\s\S]*?\.filter\(\(visibleIndex\) => visibleIndex !== index\)[\s\S]*?visibleIndex > index \? visibleIndex - 1 : visibleIndex/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /visibleEntries:\s*entries\.slice\(\s*startIndex,\s*startIndex \+ SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE\s*\)/
+  );
+});
+
+test("script editor person attribute rerenders preserve the horizontal card scroll position", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /this\.scriptEditorPersonAttributeScrollLeft = 0;/);
+  assert.match(
+    mainUiSource,
+    /const personAttributeList = this\.overlayRoot\.querySelector\(\s*"\.c-script-editor-person-summary__list"/
+  );
+  assert.match(mainUiSource, /this\.scriptEditorPersonAttributeScrollLeft = personAttributeList\.scrollLeft;/);
+  assert.match(mainUiSource, /personAttributeList\.scrollLeft = this\.scriptEditorPersonAttributeScrollLeft;/);
 });
 
 test(

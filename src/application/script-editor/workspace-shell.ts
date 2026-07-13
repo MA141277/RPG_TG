@@ -266,57 +266,22 @@ function createBadges(
   exportDiagnostics: ScriptEditorRuntimeExportDiagnostic[],
   compatibilityResidueCount: number
 ): ScriptEditorWorkspaceBadge[] {
-  const badges: ScriptEditorWorkspaceBadge[] = [
+  void exportDiagnostics;
+  void compatibilityResidueCount;
+
+  return [
     {
       label: `当前项目：${project.title}`,
       tone: "neutral",
     },
-    {
-      label:
-        exportDiagnostics.length === 0
-          ? "导出就绪"
-          : `导出阻塞 ${exportDiagnostics.length}`,
-      tone: exportDiagnostics.length === 0 ? "success" : "warning",
-    },
   ];
-
-  if (compatibilityResidueCount > 0) {
-    badges.push({
-      label: `兼容残留 ${compatibilityResidueCount}`,
-      tone: "warning",
-    });
-  }
-
-  return badges;
 }
 
 function createNavigationItems(
   family: ScriptEditorProjectFileKey
 ): ScriptEditorWorkspaceNavigationItem[] {
-  const activeSection =
-    family === "storyPack"
-      ? "overview"
-      : DEFERRED_SHELL_FAMILIES.has(family)
-        ? "handoff"
-        : "authoring";
-
-  return [
-    {
-      id: "overview",
-      label: "项目总览",
-      isActive: activeSection === "overview",
-    },
-    {
-      id: "authoring",
-      label: "对象导航",
-      isActive: activeSection === "authoring",
-    },
-    {
-      id: "handoff",
-      label: "校验导出",
-      isActive: activeSection === "handoff",
-    },
-  ];
+  void family;
+  return [];
 }
 
 function createToolbarActions(

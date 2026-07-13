@@ -1,6 +1,7 @@
 import { parseScenarioPack } from "../scenario/scenario-pack-loader";
 import { parseScriptEditorProject } from "./editor-project-loader";
 import {
+  SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
   SCRIPT_EDITOR_PROJECT_KIND,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
@@ -223,6 +224,11 @@ export async function loadScriptEditorProjectFromScenarioPackFiles(
   const indexedFiles = indexScenarioPackImportFiles(files);
   const manifestFileEntry = selectScenarioPackManifestFileEntry(indexedFiles);
   if (manifestFileEntry == null) {
+    if (hasScriptEditorProjectManifest(indexedFiles)) {
+      throw new Error(
+        `Imported files contain ${SCRIPT_EDITOR_PROJECT_MANIFEST_FILE}, which is a script editor project export rather than a runtime pack export. Use the project-open flow for project.json exports, or import a runtime pack that contains ${RUNTIME_PACK_MANIFEST_FILE}.`
+      );
+    }
     throw new Error(
       `Imported scenario pack is missing ${RUNTIME_PACK_MANIFEST_FILE}.`
     );
@@ -477,6 +483,16 @@ function indexScenarioPackImportFiles(
       );
       return [relativePath, { file, relativePath }] as const;
     })
+  );
+}
+
+function hasScriptEditorProjectManifest(
+  indexedFiles: Record<string, RuntimePackImportFileEntry>
+): boolean {
+  return Object.values(indexedFiles).some(
+    (entry) =>
+      entry.relativePath.endsWith(`/${SCRIPT_EDITOR_PROJECT_MANIFEST_FILE}`) ||
+      entry.relativePath === SCRIPT_EDITOR_PROJECT_MANIFEST_FILE
   );
 }
 
