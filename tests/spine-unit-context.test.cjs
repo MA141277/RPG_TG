@@ -23,6 +23,24 @@ test("Spine editor switches unit context only after a project load succeeds", ()
   assert.match(source, /state\.currentUnitType = unitType;/);
 });
 
+test("Spine editor exposes top-level swordsman and archer unit buttons", () => {
+  assert.match(source, /id="unitContextToolbar"/);
+  assert.match(source, /id="unitSwordsmanBtn"/);
+  assert.match(source, /id="unitArcherBtn"/);
+  assert.match(source, /currentUnitType:\s*"swordsman"/);
+});
+
+test("Spine editor binds the unit buttons to switchSpineUnitContext", () => {
+  assert.match(
+    source,
+    /el\.unitSwordsmanBtn\.addEventListener\("click", \(\) => switchSpineUnitContext\("swordsman"\)\)/,
+  );
+  assert.match(
+    source,
+    /el\.unitArcherBtn\.addEventListener\("click", \(\) => switchSpineUnitContext\("archer"\)\)/,
+  );
+});
+
 test("Spine editor gates swordsman and archer feature groups by unit context", () => {
   assert.match(source, /id="swordsmanFeatureGroup"/);
   assert.match(source, /id="archerFeatureGroup"/);
