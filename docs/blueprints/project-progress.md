@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-implementation`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,14 +29,14 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the live successor implementation version and currently has no active queue, so resume must continue from the version plan rather than any closed queue document.`
-- `The latest closeout returned execution from queue.script-editor-minimal-usable-workflow back to version-level promotion review.`
+- `The pointed version is now the live successor implementation version and currently has one active queue, so resume must continue from the active queue document rather than re-running version-level promotion review.`
+- `The latest admission moved execution into queue.shared-condition-effect-authoring-integration.`
 
 ### Historical References
 

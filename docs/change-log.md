@@ -21,6 +21,18 @@
 
 ## 2026-07-13 Script Editor Minimal Workflow Queue Closeout
 
+## 2026-07-13 Shared Condition Effect Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md)，把 `queue.shared-condition-effect-authoring-integration` 的 queue goal、task ledger、首条 bounded implementation slice、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将当前 implementation version 从 `promotion-review` 切换回 `active-execution`，并把 `queue.shared-condition-effect-authoring-integration` 设为单一 active queue。
+- 将当前执行切口明确冻结为“shared authoring-rule validator / compiler / export integration”：只承接 `conditionGroups / effectBundles` 的共享 authoring 定义、验证、compile adapter、以及导出接入，不提前吸收 broad UI polish、完整 dialogue/minigame/story-node compile、或 runtime-schema redesign。
+
+### Impact
+- Blueprint 当前不再停在 minimal workflow closeout 之后的 version review；实现版已经重新进入 `active-execution`，恢复入口切到 `task.shared-condition-effect-authoring-integration.shared-rule-compiler-and-export-integration`。
+- 当前 live queue 已明确先解决 `conditionGroups / effectBundles` 从 schema-placeholder 到 shared compile path 的缺口，而不是继续在已关闭的 minimal workflow queue 上扩张能力。
+- 后续 shared-rule 实现会受 queue-level live truth 约束：支持的 bounded host 可以接入 compile/export，未覆盖的 host 仍需显式 fail closed，而不是默默生成新的 feature-local rule dialect。
+
 ### Changed
 - 新增 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)，把最小可用 workflow 的默认项目模板、可见 family 边界、以及 bounded record draft/upsert/remove helper 收口为单独应用层模块，供主菜单入口工作流直接复用。
 - 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `剧本编辑器` 主菜单入口、landing page 的 `新建/打开/导入` 动作、project-first workspace、最小对象编辑、以及 `保存 / 校验 / 导出` handoff 全部接入现有 overlay/action/file-input 流。

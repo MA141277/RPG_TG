@@ -6,28 +6,28 @@
 - version_id: `target.script-editor-implementation`
 - version_status: `open`
 - active_phase: `phase.implementation`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `write-admission-review`
-- resume_gate: `promotion-review`
-- promotion_review_result: `candidate-recorded`
-- review_subject_id: `item.shared-condition-effect-authoring-integration`
-- review_subject_classification: `queue-candidate`
-- proposed_queue_id: `queue.shared-condition-effect-authoring-integration`
-- review_basis: `The first user-visible minimal workflow is now closed historical evidence. The only still-recorded open implementation candidate on current version truth is shared condition/effect authoring integration, so version-level review returns to that queue family as the next lawful recorded continuation.`
-- admission_status: `pending`
+- active_queue: `queue.shared-condition-effect-authoring-integration`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `active-queue`
+- promotion_review_result: `admitted`
+- review_subject_id: `none`
+- review_subject_classification: `none`
+- proposed_queue_id: `none`
+- review_basis: `none`
+- admission_status: `none`
 - intake_status: `none`
 - intake_item_id: `none`
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-minimal-usable-workflow`
-- closure_review_status: `routed`
+- closure_review_subject: `none`
+- closure_review_status: `none`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-minimal-usable-workflow is now closed historical evidence because one bounded first user-visible editor loop landed and verified without leaving still-blocking same-family residue. Remaining implementation work on current recorded candidate truth now routes back to shared condition/effect authoring integration rather than another same-family minimal-workflow continuation.`
-- next_lawful_queue_recommendation: `queue.shared-condition-effect-authoring-integration`
+- routing_basis: `none`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -43,15 +43,15 @@
 ### Admission Review Record
 
 - Scope approval:
-  - `This version remains opened for implementation on top of the frozen script-editor contract baseline, and the bounded minimal usable workflow queue is now closed historical evidence rather than live execution truth.`
+  - `This version remains opened for implementation on top of the frozen script-editor contract baseline, and the shared condition/effect authoring integration queue is now admitted as the single active queue.`
 - Admission basis:
-  - `The creator-shell scaffold and project/export/import substrate were sufficient to land one bounded first user-visible workflow, and that loop is now implemented and verified. The remaining recorded implementation work therefore returns to version-level review instead of staying on a minimal-workflow queue.`
+  - `The first user-visible minimal workflow is now closed historical evidence, and current repository truth still shows one explicit remaining implementation gap: conditionGroups/effectBundles exist in the project schema and creator shell, but runtime export still fails closed on them and no shared validator/compile path lowers them into current runtime consumers. That makes queue.shared-condition-effect-authoring-integration the smallest remaining lawful cut on current source truth.`
 - Admission conclusion:
-  - `queue.script-editor-minimal-usable-workflow is now closed historical evidence after the first bounded user-visible script-editor loop landed, so no active queue remains on current version truth.`
+  - `queue.shared-condition-effect-authoring-integration is admitted as the current single active queue because it is now the only still-recorded open implementation candidate and current code evidence confirms that shared-rule integration remains unimplemented.`
 - Current handoff:
-  - `No active queue remains after queue.script-editor-minimal-usable-workflow closeout.`
-  - `The current lawful step is to resume version-level promotion review under docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md.`
-  - `queue.shared-condition-effect-authoring-integration is the next lawful recorded queue candidate to inspect on current version truth.`
+  - `queue.shared-condition-effect-authoring-integration is now the single active queue for this version.`
+  - `The current lawful step is to resume queue-level execution under docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md.`
+  - `Later queue or version-closeout decisions are deferred until this bounded shared-rule integration queue reaches closeout review.`
 
 ### Queue Promotion Ledger
 
@@ -192,3 +192,4 @@
 - `2026-07-13: queue.compatibility-import-adapter then closed after unresolved runtime-only families began importing as explicit editor-project compatibility residue and runtime export began failing closed on unresolved imported residue, so control returned to version-level promotion review with no active queue.`
 - `2026-07-13: queue.script-editor-ui-shell-and-core-workflow was then admitted as the narrower creator-shell continuation, landed one reusable workspace shell/object-tree/handoff scaffold on top of the existing project/export/import seams, and then closed as historical evidence with queue.script-editor-minimal-usable-workflow recorded as the next recommended continuation.`
 - `2026-07-13: queue.script-editor-minimal-usable-workflow then landed one bounded first user-visible script-editor loop from main-menu entry through project-first workspace, bounded object editing, and visible save/validate/export handoff, and then closed with no same-family residue; control now returns to version-level promotion review with queue.shared-condition-effect-authoring-integration recorded as the next lawful candidate to inspect.`
+- `2026-07-13: the pending admission review for queue.shared-condition-effect-authoring-integration was then concluded internally, the queue was admitted as the next single active implementation queue, the queue doc was created, and execution moved to shared-rule baseline reconcile before validator/compiler/export implementation continues.`
