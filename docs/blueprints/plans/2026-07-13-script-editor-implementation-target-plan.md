@@ -4,13 +4,13 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-implementation`
-- version_status: `open`
+- version_status: `done`
 - active_phase: `phase.version-closeout`
 - active_queue: `none`
 - decision_state: `idle-open`
 - next_decision: `version-closeout`
 - next_action: `write-version-closeout`
-- resume_gate: `idle-open`
+- resume_gate: `closed-version-record`
 - promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
@@ -56,8 +56,8 @@
 ### Version Closeout Record
 
 - `Closeout judgement: closeout-ready acceptance evidence now exists because all six bounded implementation queues are closed, no active queue remains, the repository exposes one bounded user-visible create/open/import -> edit -> validate -> export workflow, and conditionGroups/effectBundles now lower through one reusable shared-rule compile/export path on the admitted bounded slice.`
-- `Closeout confirmation: explicit human closeout confirmation has not yet been received, so version_status remains open even though the next lawful decision is version-closeout.`
-- `Future routing: if human closeout is not confirmed, any same-version continuation must come from fresh evidence rather than from silent reopening of queue.shared-condition-effect-authoring-integration or another closed queue.`
+- `Closeout confirmation: explicit human confirmation to close target.script-editor-implementation was received on 2026-07-13, so version_status now changes from open to done.`
+- `Future routing: no additional same-version queue may be admitted after this closeout; any later script-editor follow-up must start from explicit new-version creation or an equally explicit version-level reopen decision.`
 
 ### Queue Promotion Ledger
 
@@ -200,3 +200,4 @@
 - `2026-07-13: queue.script-editor-minimal-usable-workflow then landed one bounded first user-visible script-editor loop from main-menu entry through project-first workspace, bounded object editing, and visible save/validate/export handoff, and then closed with no same-family residue; control now returns to version-level promotion review with queue.shared-condition-effect-authoring-integration recorded as the next lawful candidate to inspect.`
 - `2026-07-13: the pending admission review for queue.shared-condition-effect-authoring-integration was then concluded internally, the queue was admitted as the next single active implementation queue, the queue doc was created, and execution moved to shared-rule baseline reconcile before validator/compiler/export implementation continues.`
 - `2026-07-13: queue.shared-condition-effect-authoring-integration then closed after the bounded shared-rule task/export slice landed with verification, no same-family continuation remained inside the admitted queue surface, and the implementation version returned to version-closeout readiness with no active queue.`
+- `2026-07-13: explicit human closeout confirmation then closed target.script-editor-implementation, so the version became done historical evidence with no legal same-version queue admission remaining.`

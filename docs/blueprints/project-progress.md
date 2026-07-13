@@ -35,8 +35,8 @@
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the live successor implementation version with no active queue, so resume must continue from the version plan's closeout-ready state rather than from a queue document.`
-- `The latest queue closeout returned control from queue.shared-condition-effect-authoring-integration to version-level closeout review.`
+- `The pointed version is now the latest governed version record even though it is closed historical evidence and no open successor exists yet.`
+- `The latest human action closed target.script-editor-implementation after all six bounded implementation queues had already become done historical evidence.`
 
 ### Historical References
 

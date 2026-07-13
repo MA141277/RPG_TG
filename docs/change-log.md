@@ -25,6 +25,16 @@
 
 ## 2026-07-13 Shared Condition Effect Queue Closeout
 
+## 2026-07-13 Script Editor Implementation Version Closeout
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将 `target.script-editor-implementation` 从 closeout-ready 的 `open` 正式切换为 `done`，并把 closeout confirmation、future routing、以及最终 prior promotion record 写成 version-level historical truth。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，把当前 Blueprint 入口说明改成“最新 governed version 已关闭、暂无 open successor”的状态，而不是仍停在 implementation version 的 closeout-ready 描述。
+
+### Impact
+- `target.script-editor-implementation` 已正式关闭；在当前 Blueprint 下不再允许继续提升同 version queue。
+- 若后续还要推进 script-editor 相关改进，必须先创建新 version，或做一次同等显式的 version-level reopen 决定，而不能直接复用已关闭的 implementation version。 
+
 ### Changed
 - 新增 [src/application/script-editor/shared-rule-compiler.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/shared-rule-compiler.ts)，落地首个 bounded shared-rule compiler：对 `conditionGroups / effectBundles` 建索引、做共享 authoring 校验，并把支持的 task-host 条件/效果 lowering 到当前 `TaskDefinition` 契约。
 - 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让 script-editor runtime export/validation 不再对整个 `conditionGroups / effectBundles` 家族一刀切 fail closed，而是复用 shared-rule compiler 输出 `tasks.json`，同时对缺引用或 unsupported lowering 保持显式阻塞。
