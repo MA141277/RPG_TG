@@ -3010,7 +3010,8 @@ test("script editor workspace shell builds a reusable object-tree scaffold", () 
     true
   );
   assert.equal(workspace.inspector.title, "Hero");
-  assert.match(workspace.inspector.cards[0]?.body ?? "", /id: person\.hero/);
+  assert.doesNotMatch(workspace.inspector.cards[0]?.body ?? "", /id:\s*person\.hero/);
+  assert.match(workspace.inspector.cards[0]?.body ?? "", /Hero|勇者|player/i);
 });
 
 test("script editor PRD workspace shell exposes a Chinese-first project overview", () => {
@@ -3133,6 +3134,7 @@ test("script editor PRD workspace view retires English shell chrome copy", () =>
   assert.match(workspaceViewSource, /剧本编辑器工作台/);
   assert.match(workspaceViewSource, /校验与导出摘要/);
   assert.match(workspaceViewSource, /预览与校验辅助区/);
+  assert.match(workspaceViewSource, /返回项目列表/);
   assert.match(workspaceViewSource, /统一校验/);
   assert.match(workspaceViewSource, /data-script-editor-action="toggle-preview-panel"/);
   assert.match(workspaceViewSource, /data-script-editor-action="jump-to-preview-issue"/);

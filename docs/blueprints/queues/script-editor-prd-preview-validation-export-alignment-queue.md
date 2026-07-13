@@ -21,9 +21,9 @@
 - next_family_candidate: `queue.script-editor-prd-workbench-ui-visual-alignment`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync batch is recorded until queue-local execution and closeout truth are written.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit 04e79e6 on mod-first-dev was pushed successfully to origin/mod-first-dev after the closed preview/validation/export queue truth was written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`

@@ -594,20 +594,6 @@ export class MainUiFlow {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器工作流">
         <div class="c-script-editor-workflow__chrome">
-          <div class="c-script-editor-workflow__chrome-actions">
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-menu">
-              返回主菜单
-            </button>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-landing">
-              返回项目入口
-            </button>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="open-project">
-              打开项目
-            </button>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="import-pack">
-              导入剧本包
-            </button>
-          </div>
           ${this.renderScriptEditorNotice()}
           ${this.renderScriptEditorFileInputs()}
         </div>
@@ -828,7 +814,7 @@ export class MainUiFlow {
                     data-script-editor-record-id="${escapeHtml(record.id)}"
                   >
                     <strong>${escapeHtml(normalizedPerson.name)}</strong>
-                    <span>${escapeHtml(normalizedPerson.personType ?? "NPC")} · ${escapeHtml(record.id)}</span>
+                    <span>${escapeHtml(this.describeScriptEditorPersonListSummary(normalizedPerson))}</span>
                   </button>
                 `;
               })
@@ -1059,7 +1045,7 @@ export class MainUiFlow {
                     data-script-editor-record-id="${escapeHtml(record.id)}"
                   >
                     <strong>${escapeHtml(normalizedRecord.name)}</strong>
-                    <span>${escapeHtml(isCityFamily ? record.id : `${normalizedRecord.cityId} · ${record.id}`)}</span>
+                    <span>${escapeHtml(this.describeScriptEditorLocationListSummary(family, normalizedRecord))}</span>
                   </button>
                 `;
               })
@@ -1346,7 +1332,7 @@ export class MainUiFlow {
                     data-script-editor-record-id="${escapeHtml(record.id)}"
                   >
                     <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                    <span>${escapeHtml((normalizedRecord.chapterId ?? "") || record.id)}</span>
+                    <span>${escapeHtml(this.describeScriptEditorStoryNodeListSummary(normalizedRecord))}</span>
                   </button>
                 `;
               })
@@ -1409,7 +1395,7 @@ export class MainUiFlow {
                     data-script-editor-record-id="${escapeHtml(record.id)}"
                   >
                     <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                    <span>${escapeHtml(record.id)}</span>
+                    <span>${escapeHtml(this.describeScriptEditorDialogueListSummary(normalizedRecord))}</span>
                   </button>
                 `;
               })
@@ -1472,7 +1458,7 @@ export class MainUiFlow {
                     data-script-editor-record-id="${escapeHtml(record.id)}"
                   >
                     <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                    <span>${escapeHtml(normalizedRecord.triggerTiming ?? record.id)}</span>
+                    <span>${escapeHtml(this.describeScriptEditorEventListSummary(normalizedRecord))}</span>
                   </button>
                 `;
               })
@@ -1537,7 +1523,7 @@ export class MainUiFlow {
                     data-script-editor-record-id="${escapeHtml(record.id)}"
                   >
                     <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                    <span>${escapeHtml(normalizedRecord.playableId || record.id)}</span>
+                    <span>${escapeHtml(this.describeScriptEditorMinigameListSummary(normalizedRecord))}</span>
                   </button>
                 `;
               })
@@ -2283,6 +2269,58 @@ export class MainUiFlow {
     return Object.values(unresolvedFamilies).reduce((count, familyEntries) => {
       return count + (Array.isArray(familyEntries) ? familyEntries.length : 0);
     }, 0);
+  }
+
+  describeScriptEditorPersonListSummary(person) {
+    return (
+      [person.personType, person.title, person.occupation]
+        .filter((value) => typeof value === "string" && value.trim().length > 0)
+        .slice(0, 2)
+        .join(" · ") || "待补人物设定"
+    );
+  }
+
+  describeScriptEditorLocationListSummary(family, location) {
+    if (family === "cities") {
+      const description = String(location.description ?? "").trim();
+      return description.length > 0
+        ? description.slice(0, 20)
+        : `菜单 ${location.menuEntries?.length ?? 0} 项`;
+    }
+
+    const summary = [
+      String(location.cityId ?? "").trim(),
+      (location.description ?? "").trim(),
+    ].filter((value) => value.length > 0)[0];
+    return summary?.slice(0, 20) || `入口 ${location.entryBinding ? "已配置" : "待补充"}`;
+  }
+
+  describeScriptEditorStoryNodeListSummary(storyNode) {
+    return (
+      [storyNode.chapterId, storyNode.progressMode]
+        .filter((value) => typeof value === "string" && value.trim().length > 0)
+        .join(" · ") || "待补剧情组织信息"
+    );
+  }
+
+  describeScriptEditorDialogueListSummary(dialogue) {
+    return `参与人物 ${dialogue.participantPersonIds?.length ?? 0} · 节点 ${dialogue.nodes?.length ?? 0}`;
+  }
+
+  describeScriptEditorEventListSummary(eventRecord) {
+    return (
+      [eventRecord.triggerTiming, eventRecord.destination?.family]
+        .filter((value) => typeof value === "string" && value.trim().length > 0)
+        .join(" · ") || "待补事件触发信息"
+    );
+  }
+
+  describeScriptEditorMinigameListSummary(minigame) {
+    return (
+      [minigame.playableId, minigame.triggerSource]
+        .filter((value) => typeof value === "string" && value.trim().length > 0)
+        .join(" · ") || "待补玩法绑定信息"
+    );
   }
 
   renderScriptEditorNotice() {

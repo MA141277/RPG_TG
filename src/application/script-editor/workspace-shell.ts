@@ -268,7 +268,7 @@ function createBadges(
 ): ScriptEditorWorkspaceBadge[] {
   const badges: ScriptEditorWorkspaceBadge[] = [
     {
-      label: `项目 ${project.id}`,
+      label: `当前项目：${project.title}`,
       tone: "neutral",
     },
     {
@@ -463,8 +463,8 @@ function createProjectInspector(
   exportDiagnostics: ScriptEditorRuntimeExportDiagnostic[],
   compatibilityResidueCount: number
 ): ScriptEditorWorkspaceInspector {
-  const scenarioProfileId =
-    readStringField(project.storyPack, "scenarioProfile.id") ?? "none";
+  const scenarioProfileTitle =
+    readStringField(project.storyPack, "scenarioProfile.title") ?? "未填写开场标题";
   const playerCharacterId =
     readStringField(project.storyPack, "scenarioProfile.playerCharacterId") ?? "未设置";
 
@@ -476,12 +476,12 @@ function createProjectInspector(
       "项目总览负责统一回答当前项目是什么、已做到哪里、还卡在哪里，以及下一步该进入哪个作者面。",
     stats: [
       {
-        label: "项目 ID",
-        value: project.id,
+        label: "人物条目",
+        value: String(project.people.length),
       },
       {
-        label: "开场场景",
-        value: scenarioProfileId,
+        label: "世界对象",
+        value: String(project.cities.length + project.buildings.length),
       },
       {
         label: "兼容残留",
@@ -492,7 +492,7 @@ function createProjectInspector(
       {
         id: "project.status",
         title: "项目状态",
-        body: `当前项目 ${project.id} 以 ${scenarioProfileId} 作为开场场景，默认主角为 ${playerCharacterId}。`,
+        body: `当前项目以“${scenarioProfileTitle}”作为开场起点，默认主角为 ${playerCharacterId}。`,
         tone: "success",
       },
       {
@@ -1537,7 +1537,7 @@ function resolveAuthoringTargetFamily(
 }
 
 function describeRecord(record: Record<string, unknown>): string {
-  return readPrimaryLabel(record) ?? "对象已存在，可在后续 PRD 队列中继续细化。";
+  return readPrimarySummary(record) ?? "对象已创建，可继续补齐创作信息。";
 }
 
 function readPrimaryLabel(record: Record<string, unknown>): string {
@@ -1555,13 +1555,32 @@ function createRecordPreview(record: Record<string, unknown>): string {
   const lines = Object.entries(record)
     .filter(([key]) => key !== "id")
     .slice(0, 4)
-    .map(([key, value]) => `${key}: ${formatPreviewValue(value)}`);
+    .map(([key, value]) => `${localizePreviewKey(key)}: ${formatPreviewValue(value)}`);
 
   if (lines.length === 0) {
-    return `id: ${record.id ?? "unknown"}`;
+    return "当前对象尚未填写可供创作参考的摘要字段。";
   }
 
-  return [`id: ${record.id ?? "unknown"}`, ...lines].join(" | ");
+  return lines.join(" | ");
+}
+
+function readPrimarySummary(record: Record<string, unknown>): string | null {
+  for (const key of [
+    "description",
+    "biography",
+    "summary",
+    "title",
+    "name",
+    "label",
+    "text",
+  ]) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+
+  return null;
 }
 
 function formatPreviewValue(value: unknown): string {
@@ -1582,6 +1601,35 @@ function formatPreviewValue(value: unknown): string {
   }
 
   return "empty";
+}
+
+function localizePreviewKey(key: string): string {
+  switch (key) {
+    case "name":
+      return "名称";
+    case "title":
+      return "标题";
+    case "description":
+      return "说明";
+    case "summary":
+      return "摘要";
+    case "biography":
+      return "简介";
+    case "personType":
+      return "人物类型";
+    case "occupation":
+      return "职责";
+    case "cityId":
+      return "所属城市";
+    case "triggerTiming":
+      return "触发时机";
+    case "playableId":
+      return "玩法模板";
+    case "notes":
+      return "备注";
+    default:
+      return key;
+  }
 }
 
 function countCompatibilityResidue(project: ScriptEditorProjectDefinition): number {

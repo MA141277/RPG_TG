@@ -135,6 +135,36 @@
 - `queue.script-editor-prd-preview-validation-export-alignment` 已变为关闭历史证据；当前 live entry 不再停在该 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
 - 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-workbench-ui-visual-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做最终 creator-workbench 视觉收敛 admission review，而不是重开已关闭的 preview/export queue。
 
+## 2026-07-13 Script Editor Preview Validation Export Queue Repository Sync
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md)，将关闭后的 `sync_status` 从 `pending` 补齐为 `done`，并记录提交 `04e79e6` 已成功推送到 `origin/mod-first-dev`。
+
+### Impact
+- 关闭后的 preview queue 现在不再缺少 repository sync 事实，队列关闭记录与远端开发母线状态保持一致。
+- 后续 PRD 队列推进可以直接把 `queue.script-editor-prd-preview-validation-export-alignment` 当作已验证且已同步的历史基线使用。
+
+## 2026-07-13 Script Editor Workbench UI Visual Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，将 `queue.script-editor-prd-workbench-ui-visual-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 creator-first workbench shell convergence、warm-paper 视觉系统、以及首屏 creator-visible summary filtering，不允许顺手扩张回 project-selection 管理或任何已关闭结构队列。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level promotion review 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“preview queue closeout 之后的 version review”状态；当前 live entry 已经收敛到 `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation`。
+- 接下来的 script-editor PRD 对齐必须先完成 creator-first workbench shell 的最终视觉收敛和首屏创作语义清理，不能再回头重开已关闭的结构性队列。
+
+## 2026-07-13 Script Editor Workbench UI Visual First Cut
+
+### Changed
+- 更新 [src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts)、[src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)、以及 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，将工作台首屏从旧的深色 scaffold 摘要壳推进到第一版 warm-paper creator shell：顶部动作收敛为“返回项目列表 + 保存/校验/导出”，工作区不再常驻 open/import/project-entry 按钮，左侧对象区增加当前工作域引导，整体背景与卡片层级切到浅暖纸面方向。
+- 更新 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，把工作台 badge、项目总览统计、以及对象摘要卡从 raw ID 导向调整为 creator-visible copy，减少首屏对 `id`/内部键值的直接暴露。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充 visual queue 首切回归，确认工作台视图已经暴露 `返回项目列表` 动作，且人物摘要卡不再把 raw `id` 作为主摘要文案。
+
+### Impact
+- 用户现在在“人物与世界”等对象工作区看到的将不再是上一个 dark scaffold 阶段的摘要板，而是更接近蓝图要求的 creator-first workbench shell。
+- 当前首切先解决“视觉外壳 + 首屏摘要语义”问题；更深层的字段显隐与高级信息收口仍继续受 `queue.script-editor-prd-workbench-ui-visual-alignment` 约束推进。
+
 ## 2026-07-13 Script Editor Minigame Binding Queue Closeout
 
 ### Changed

@@ -10,6 +10,9 @@ import type {
 export function renderScriptEditorWorkspaceView(
   model: ScriptEditorWorkspaceViewModel
 ): string {
+  const activeNavigationLabel =
+    model.navigationItems.find((item) => item.isActive)?.label ?? "创作工作台";
+
   return `
     <section class="c-script-editor-shell" aria-label="剧本编辑器工作台">
       <header class="c-script-editor-shell__header">
@@ -17,17 +20,41 @@ export function renderScriptEditorWorkspaceView(
           <p class="c-script-editor-shell__eyebrow">剧本编辑器工作台</p>
           <h1 class="c-script-editor-shell__title">${escapeHtml(model.title)}</h1>
           <p class="c-script-editor-shell__subtitle">${escapeHtml(model.subtitle)}</p>
-          <div class="c-script-editor-shell__badges">
-            ${model.badges
-              .map(
-                (badge) => `
-                  <span class="c-script-editor-shell__badge c-script-editor-shell__badge--${badge.tone}">
-                    ${escapeHtml(badge.label)}
-                  </span>
-                `
-              )
-              .join("")}
-          </div>
+        </div>
+        <div class="c-script-editor-shell__badges">
+          ${model.badges
+            .map(
+              (badge) => `
+                <span class="c-script-editor-shell__badge c-script-editor-shell__badge--${badge.tone}">
+                  ${escapeHtml(badge.label)}
+                </span>
+              `
+            )
+            .join("")}
+        </div>
+        <div class="c-script-editor-shell__toolbar" aria-label="工作台操作">
+          <button
+            type="button"
+            class="c-script-editor-shell__action c-script-editor-shell__action--ghost"
+            data-script-editor-action="back-to-landing"
+          >
+            <strong>返回项目列表</strong>
+            <p>项目选择与导入留在列表页，不再常驻工作台首屏。</p>
+          </button>
+          ${model.toolbarActions
+            .map(
+              (action) => `
+                <button
+                  type="button"
+                  class="c-script-editor-shell__action c-script-editor-shell__action--${action.status}"
+                  data-script-editor-action="${action.id}"
+                >
+                  <strong>${escapeHtml(action.label)}</strong>
+                  <p>${escapeHtml(action.description)}</p>
+                </button>
+              `
+            )
+            .join("")}
         </div>
         <nav class="c-script-editor-shell__nav" aria-label="工作台阶段导航">
           ${model.navigationItems
@@ -44,25 +71,19 @@ export function renderScriptEditorWorkspaceView(
             )
             .join("")}
         </nav>
-        <div class="c-script-editor-shell__toolbar" aria-label="工作台操作">
-          ${model.toolbarActions
-            .map(
-              (action) => `
-                <article
-                  class="c-script-editor-shell__action c-script-editor-shell__action--${action.status}"
-                  data-script-editor-action="${action.id}"
-                >
-                  <strong>${escapeHtml(action.label)}</strong>
-                  <p>${escapeHtml(action.description)}</p>
-                </article>
-              `
-            )
-            .join("")}
-        </div>
       </header>
 
       <div class="c-script-editor-shell__body">
         <aside class="c-script-editor-shell__sidebar" aria-label="对象树">
+          <section class="c-script-editor-shell__sidebar-intro">
+            <p class="c-script-editor-shell__sidebar-eyebrow">当前工作域</p>
+            <h2 class="c-script-editor-shell__sidebar-title">${escapeHtml(
+              activeNavigationLabel
+            )}</h2>
+            <p class="c-script-editor-shell__sidebar-description">
+              先切换对象类型，再进入具体实例。项目打开、导入与删除留在列表页处理，不再挤占创作首屏。
+            </p>
+          </section>
           ${model.objectTreeGroups
             .map(
               (group) => `
