@@ -29,6 +29,129 @@
 
 ## 2026-07-13 Script Editor PRD Alignment Version Opening
 
+## 2026-07-13 Script Editor PRD Workspace Queue Admission
+
+## 2026-07-13 Script Editor Project Selection And Responsive Workspace Candidate Recording
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)，将“项目选择/管理与当前项目编辑职责拆分、独立剧本列表页、项目继续编辑/删除、删除确认、工作区多宽度适配”记录为 `item.script-editor-prd-project-selection-and-workspace-layout`，并写入新的候选队列 `queue.script-editor-prd-project-selection-and-workspace-layout-alignment`。
+- 同步 version plan 的 intake 字段、候选队列清单、候选分类记录与历史记录，明确该需求当前只能以 `candidate-recorded` 形式保留，不能在 `queue.script-editor-prd-workspace-and-navigation-alignment` 仍处于 active 时并行提升。
+
+### Impact
+- Blueprint 现在已经把“独立剧本列表页 + 项目管理动作 + 响应式工作台布局”沉淀为正式候选，不会再丢失为会话口头结论。
+- 当前 live execution 仍保持不变：执行入口继续停在 `queue.script-editor-prd-workspace-and-navigation-alignment`，后续只有在该 active queue 收口后，才可按版本级 review 决定是否提升这个新候选。
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-workspace-and-navigation-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workspace-and-navigation-alignment-queue.md)，将 `queue.script-editor-prd-workspace-and-navigation-alignment` 写成当前 live queue truth，并明确它只拥有 PRD 4.x 的工作台、中文导航、项目总览与编辑阶段路由，不得扩张进人物或后续对象家族编辑。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“等待 queue admission review”的空转状态；当前 live entry 已经收敛到 `task.script-editor-prd-workspace-and-navigation-alignment.workspace-and-navigation-implementation`。
+- 接下来的代码改动必须受该 queue 边界约束，只能先补齐 PRD 4.x 的工作台与导航对齐，不能直接越过到人物作者面或更深的对象家族编辑。
+
+## 2026-07-13 Script Editor PRD Workspace Queue Closeout And Same-Family Promotion
+
+## 2026-07-13 Script Editor Project Selection Queue Closeout
+
+## 2026-07-13 Script Editor Person Authoring Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-person-authoring-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-person-authoring-alignment-queue.md)，将 `queue.script-editor-prd-person-authoring-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 5 节的人物统一模型、人物列表/详情、结构化分栏、以及 bounded relation/capability 入口，不允许顺手扩张进城市/建筑或正式对话/事件页。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- 当前 live entry 不再停在 person-authoring 的 version review，而是正式进入 `task.script-editor-prd-person-authoring-alignment.person-authoring-implementation`。
+- 后续 script-editor PRD 对齐必须先在人物作者面内完成统一人物模型与结构化分栏首切，不能越过到城市/建筑/menu 或正式对话/事件页实现。
+
+## 2026-07-13 Script Editor Person Authoring Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts)，沉淀人物作者面的结构化 helper：统一人物记录归一化、默认人物草稿、基础字段更新、扩展属性增删改、对话/事件关联入口，以及交易绑定开关与条目写回。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 `people` 从 generic minimal record 编辑切到 dedicated 人物作者面：人物列表/详情改为专用布局，详情补齐 `属性 / 对话 / 交易 / 事件` 四个结构化分栏，并接入 bounded relation/capability entrypoints。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增人物作者面对齐回归与 helper 归一化回归，覆盖人物详情分栏、bounded relation action id，以及交易绑定与关联列表的结构化写回。
+- 更新 [docs/blueprints/queues/script-editor-prd-person-authoring-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-person-authoring-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-person-authoring-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回 promotion-review。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版 dedicated 人物作者面：`people` 不再停留在 generic JSON/minimal record 编辑，而是具备统一人物模型、结构化详情分栏与 bounded relation/capability 入口。
+- `queue.script-editor-prd-person-authoring-alignment` 已变为关闭历史证据；当前 live entry 不再停在该 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
+- 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-city-building-and-menu-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做城市/建筑/menu 绑定面 admission review，而不是重开已关闭的人物作者面队列。
+
+## 2026-07-13 Script Editor City Building And Menu Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-city-building-and-menu-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-city-building-and-menu-alignment-queue.md)，将 `queue.script-editor-prd-city-building-and-menu-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 6 节的城市/建筑容器关系、menu family 配置、进入条件与进入态分层、以及 building entry binding 面，不允许顺手扩张进正式对话/事件/剧情页。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“等待 city/building queue admission review”的状态；当前 live entry 已经收敛到 `task.script-editor-prd-city-building-and-menu-alignment.city-building-and-menu-implementation`。
+- 接下来的 script-editor PRD 对齐必须先补齐城市/建筑 dedicated authoring surface、menu family 配置、进入态与 entry binding 首切，不能直接越过到正式 dialogue/event/story queue。
+
+## 2026-07-13 Script Editor City Building And Menu Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts)，沉淀城市/建筑作者面的结构化 helper：默认城市/建筑草稿、菜单项增删改、menu target 配置、进入态写回，以及建筑入口挂接字段写回。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 `cities / buildings` 从隐藏或 generic editor 处理切到 dedicated 作者面：工作台现在直接暴露城市/建筑对象树，详情页补齐 `基础 / 菜单 / 进入态 / 入口` 结构化分栏，并接入 menu binding、access state、building entry binding 首切。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增城市/建筑作者面对齐回归与 helper 归一化回归，并将 minimal workflow 可见 family 断言扩展到 `cities / buildings`。
+- 更新 [docs/blueprints/queues/script-editor-prd-city-building-and-menu-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-city-building-and-menu-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-city-building-and-menu-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回 promotion-review。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版 dedicated 城市/建筑作者面：`cities / buildings` 不再停留在隐藏 family 或 generic JSON 编辑，而是具备 menu family 配置、access-state 以及 building entry binding 首切。
+- `queue.script-editor-prd-city-building-and-menu-alignment` 已变为关闭历史证据；当前 live entry 不再停在该 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
+- 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-dialogue-event-story-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做剧情/对话/事件作者面 admission review，而不是重开已关闭的 city/building queue。
+
+## 2026-07-13 Script Editor Dialogue Event Story Queue Admission
+
+## 2026-07-13 Script Editor Dialogue Event Story Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/story-dialogue-event-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts)，沉淀剧情/对话/事件作者面的结构化 helper：默认草稿、字段归一化、剧情关联、对话节点/后续动作、以及事件条件组/去向/关联对象/预览摘要写回。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 `storyNodes / dialogues / events` 从 generic 或 deferred 处理切到 dedicated 作者面：工作台现在直接暴露剧情/对话/事件对象树，详情页补齐剧情 `基础 / 关联 / 摘要`、对话 `基础 / 节点 / 预览`、事件 `基础信息 / 条件 / 去向 / 关联对象 / 预览与校验` 结构化分栏，并把 runtime pack 导入适配到新的 bounded event authoring 记录形态。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增剧情/对话/事件作者面对齐回归与 helper 归一化回归，并把 minimal workflow 断言调整为“family 可见但 dialogue/story export 仍按 bounded policy defer”。
+- 更新 [docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-dialogue-event-story-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回下一条 lawful continuation admission。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版 dedicated 剧情/对话/事件作者面：`storyNodes / dialogues / events` 不再停留在 generic JSON 编辑或 deferred family，而是具备结构化事件区块与 bounded linkage/preview-summary 入口。
+- `queue.script-editor-prd-dialogue-event-story-alignment` 已变为关闭历史证据；其 remaining same-family residue 已明确转移到 `queue.script-editor-prd-minigame-binding-alignment`。
+
+## 2026-07-13 Script Editor Minigame Binding Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-minigame-binding-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-minigame-binding-alignment-queue.md)，将 `queue.script-editor-prd-minigame-binding-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 10 节的 configuration-first minigame/playable binding surface、bounded launch/settlement 配置、以及 cross-object linkage 入口，不允许顺手扩张进 shared playable runtime contract 或 preview/export product 面。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level promotion review 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“等待 minigame-binding queue admission review”的状态；当前 live entry 已经收敛到 `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation`。
+- 接下来的 script-editor PRD 对齐必须先补齐玩法绑定作者面与 bounded settlement 配置首切，不能直接越过到 preview/validation/export queue。
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md)，将 `queue.script-editor-prd-dialogue-event-story-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 7-9 节的剧情/对话/事件 dedicated authoring surface、结构化事件区块、以及 bounded linkage/preview-summary 入口，不允许顺手扩张进 minigame runtime 或 preview/export product 面。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“等待 dialogue/event/story queue admission review”的状态；当前 live entry 已经收敛到 `task.script-editor-prd-dialogue-event-story-alignment.dialogue-event-story-implementation`。
+- 接下来的 script-editor PRD 对齐必须先补齐剧情/对话/事件 dedicated authoring surface 与结构化事件区块首切，不能直接越过到 minigame-binding 或 preview/export queue。
+
+### Changed
+- 更新 [src/application/script-editor/project-workspace-library.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/project-workspace-library.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，为剧本编辑器入口补齐 `项目选择与管理` 面：主入口现在维护 bounded in-memory 项目库，支持按项目 `继续编辑 / 删除项目 / 确认删除`，并将 landing 与项目卡片布局适配到宽/中/窄三档宽度。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增项目库 helper 与项目选择队列回归，覆盖 dedicated project list、continue/delete action id、delete confirmation，以及样式类存在性。
+- 更新 [docs/blueprints/queues/script-editor-prd-project-selection-and-workspace-layout-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-project-selection-and-workspace-layout-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-project-selection-and-workspace-layout-alignment` 从 active 收口为 done，并把 live PRD version 入口切回 promotion-review。
+
+### Impact
+- 当前 PRD alignment version 已经把工作台 first-cut 之后的同家族 gap 收敛完毕：项目选择/管理不再和当前项目编辑混在同一入口态，且工作区/项目卡片已经具备多宽度适配。
+- `queue.script-editor-prd-project-selection-and-workspace-layout-alignment` 已变为关闭历史证据；当前 live entry 不再停在 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
+- 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-person-authoring-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做人设作者面 admission review，而不是重开已关闭的 workbench/project-selection 队列。
+
+### Changed
+- 更新 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts)、以及 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把剧本编辑器工作台推进为 PRD 4.x 对齐的中文工作台：导航改为 `项目总览 / 对象导航 / 校验导出`，总览页补齐项目状态、创作进度、风险与阻塞、下一步建议，`storyPack` 中央编辑区也切成正式项目总览面而不是旧的 `Project` scaffold copy。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，新增 PRD workspace/navigation 对齐回归，并将 live version plan 断言切到当前真实的 `target.script-editor-prd-alignment`。
+- 更新 [docs/blueprints/queues/script-editor-prd-workspace-and-navigation-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workspace-and-navigation-alignment-queue.md)，将 `queue.script-editor-prd-workspace-and-navigation-alignment` 从 active 收口为 `done`，并把剩余 same-family residue 路由到下一条 workbench continuation queue。
+- 新增 [docs/blueprints/queues/script-editor-prd-project-selection-and-workspace-layout-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-project-selection-and-workspace-layout-alignment-queue.md)，并同步更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-project-selection-and-workspace-layout-alignment` 设为当前新的 active queue。
+
+### Impact
+- 当前 PRD alignment version 已经拥有正式的中文工作台和项目总览入口，不再把 script editor 当成 shell + raw JSON scaffold 的延伸。
+- `queue.script-editor-prd-workspace-and-navigation-alignment` 已变为关闭历史证据；其 remaining same-family residue 不再停留在口头说明，而是被明确提升为新的 queue governor。
+- 当前 live entry 已经推进到 `task.script-editor-prd-project-selection-and-workspace-layout-alignment.project-selection-and-layout-implementation`；下一步 workbench 工作应先补脚本列表/项目管理与响应式布局，再进入人物作者面。
+
 ### Changed
 - 新增 [docs/blueprints/specs/2026-07-13-script-editor-prd-alignment-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-13-script-editor-prd-alignment-target.md)，把新的 successor version 明确定义为“按 [docs/script-editor-prd.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/script-editor-prd.md) 对齐剧本编辑器产品面”的治理主轴，并写清它继承已关闭 implementation baseline、不得静默重开冻结契约、以及必须复用现有 runtime-compatible export path 的边界。
 - 新增 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)，将 `target.script-editor-prd-alignment` 作为 open successor version 建立起来，并记录六条 candidate-recorded PRD alignment queue 族，但暂不 admitted 任何 queue。

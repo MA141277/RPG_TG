@@ -153,7 +153,7 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
     title: project.title,
     subtitle:
       project.description ??
-      "当前队列只提供可复用 workspace shell、对象树框架与 handoff 摘要，不落最小可用产品闭环。",
+      "当前工作台已经具备统一导航、对象树和导出交接摘要，可在同一入口继续扩展正式创作面。",
     badges,
     navigationItems: createNavigationItems(selection.family),
     toolbarActions: createToolbarActions(exportDiagnostics),
@@ -218,17 +218,17 @@ function createNavigationItems(
   return [
     {
       id: "overview",
-      label: "概览",
+      label: "项目总览",
       isActive: activeSection === "overview",
     },
     {
       id: "authoring",
-      label: "对象树",
+      label: "对象导航",
       isActive: activeSection === "authoring",
     },
     {
       id: "handoff",
-      label: "交接状态",
+      label: "校验导出",
       isActive: activeSection === "handoff",
     },
   ];
@@ -242,25 +242,25 @@ function createToolbarActions(
       id: "save",
       label: "保存项目",
       status: "ready",
-      description: "复用已落地的 manifest-driven editor-project persistence seam。",
+      description: "复用已落地的 manifest 驱动项目持久化接缝。",
     },
     {
       id: "validate",
-      label: "校验",
+      label: "校验结构",
       status: exportDiagnostics.length === 0 ? "ready" : "attention",
       description:
         exportDiagnostics.length === 0
-          ? "当前 shell 已能汇总 runtime export handoff 是否可达。"
-          : `已发现 ${exportDiagnostics.length} 条 handoff 阻塞，后续 workflow queue 可直接复用。`,
+          ? "当前工作台已确认导出前提完整，可直接继续创作。"
+          : `当前发现 ${exportDiagnostics.length} 项导出前阻塞，需要先处理后再继续交付。`,
     },
     {
       id: "export",
-      label: "导出运行包",
+      label: "导出剧本包",
       status: exportDiagnostics.length === 0 ? "ready" : "blocked",
       description:
         exportDiagnostics.length === 0
-          ? "当前项目已满足 bounded runtime-pack export 的可达前提。"
-          : exportDiagnostics[0]?.message ?? "存在未处理的 runtime export 阻塞。",
+          ? "当前项目满足受限 runtime-pack 导出前提，可以进入导出交接。"
+          : exportDiagnostics[0]?.message ?? "存在尚未处理的导出阻塞。",
     },
   ];
 }
@@ -282,10 +282,7 @@ function createTreeNode(
     family,
     entityId: selection.family === family ? selection.entityId : null,
     label: FAMILY_LABELS[family],
-    description:
-      previewRecord == null
-        ? "当前 family 还没有对象。"
-        : describeRecord(previewRecord),
+    description: previewRecord == null ? "当前家族还没有对象。" : describeRecord(previewRecord),
     itemCount: count,
     isSelected: selection.family === family,
     tone: hasAttention ? "warning" : "neutral",
@@ -309,17 +306,15 @@ function createInspector(
   const selectedRecord = selection.entityId == null
     ? records[0] ?? null
     : records.find((record) => record.id === selection.entityId) ?? records[0] ?? null;
-  const title =
-    selectedRecord == null
-      ? `${FAMILY_LABELS[selection.family]}工作台`
-      : readPrimaryLabel(selectedRecord);
-  const description =
-    selectedRecord == null
-      ? "当前 shell 已提供 family 级对象树占位，但还没有落最小字段编辑。"
-      : `当前只提供 ${FAMILY_LABELS[selection.family]} 的工作台占位与对象摘要，具体字段编辑会在后续 workflow queue 中接上。`;
+  const title = selectedRecord == null
+    ? `${FAMILY_LABELS[selection.family]}工作台`
+    : readPrimaryLabel(selectedRecord);
+  const description = selectedRecord == null
+    ? "当前工作台已经给该家族预留导航位置，但正式字段编辑还未在本队列展开。"
+    : `当前先提供 ${FAMILY_LABELS[selection.family]} 的导航入口与对象摘要，具体深度编辑会在后续对象家族队列中继续落地。`;
 
   return {
-    eyebrow: `${FAMILY_LABELS[selection.family]} · Workspace Scaffold`,
+    eyebrow: `${FAMILY_LABELS[selection.family]}工作台`,
     title,
     description,
     stats: [
@@ -328,12 +323,12 @@ function createInspector(
         value: String(records.length),
       },
       {
-        label: "选中",
+        label: "当前选中",
         value: selectedRecord?.id ?? "none",
       },
       {
-        label: "队列边界",
-        value: DEFERRED_SHELL_FAMILIES.has(selection.family) ? "占位/交接" : "可复用骨架",
+        label: "当前阶段",
+        value: DEFERRED_SHELL_FAMILIES.has(selection.family) ? "占位/交接" : "导航已就绪",
       },
     ],
     cards: selectedRecord == null
@@ -341,7 +336,7 @@ function createInspector(
           {
             id: `empty.${selection.family}`,
             title: "尚无对象",
-            body: "对象树已经为该 family 预留可复用节点，但当前项目里还没有内容可展示。",
+            body: "对象树已经为该家族预留稳定入口，但当前项目里还没有可继续编辑的对象。",
             tone: "neutral",
           },
         ]
@@ -356,9 +351,8 @@ function createInspector(
             id: `handoff.${selection.family}`,
             title: "后续队列交接",
             body: DEFERRED_SHELL_FAMILIES.has(selection.family)
-              ? "该 family 目前只进入 workspace shell 占位，不在本队列中实现专用 authoring grammar 或 runtime compile。"
-              : "该 family 已能在对象树里稳定承载后续最小可用 workflow，不需要再次重建 shell。"
-            ,
+              ? "该家族当前只进入工作台导航和交接范围，不在本队列内实现正式作者语法或 runtime compile。"
+              : "该家族已经可以稳定承接后续 PRD 队列，不需要再次重建工作台壳层。",
             tone: DEFERRED_SHELL_FAMILIES.has(selection.family) ? "warning" : "success",
           },
         ],
@@ -372,20 +366,22 @@ function createProjectInspector(
 ): ScriptEditorWorkspaceInspector {
   const scenarioProfileId =
     readStringField(project.storyPack, "scenarioProfile.id") ?? "none";
+  const playerCharacterId =
+    readStringField(project.storyPack, "scenarioProfile.playerCharacterId") ?? "未设置";
 
   return {
-    eyebrow: "Project Workspace",
+    eyebrow: "项目总览",
     title: project.storyPack.title,
     description:
       project.storyPack.description ??
-      "项目根信息、对象树骨架与 handoff 摘要已经汇聚到同一 workspace shell 中。",
+      "项目总览负责统一回答当前项目是什么、已经做到哪里、还卡在哪里，以及下一步该先进入哪个创作面。",
     stats: [
       {
         label: "项目 ID",
         value: project.id,
       },
       {
-        label: "Scenario",
+        label: "开场场景",
         value: scenarioProfileId,
       },
       {
@@ -395,33 +391,50 @@ function createProjectInspector(
     ],
     cards: [
       {
-        id: "project.workspace.boundary",
-        title: "当前队列交付",
-        body:
-          "本队列只交付可复用 editor shell、对象树布局和 handoff 摘要，不把主菜单入口、新建/打开/导入流程或最小字段编辑混进同一切口。",
+        id: "project.status",
+        title: "项目状态",
+        body: `当前项目 ${project.id} 以 ${scenarioProfileId} 作为开场场景，默认主角为 ${playerCharacterId}。`,
         tone: "success",
       },
       {
-        id: "project.export.handoff",
-        title: exportDiagnostics.length === 0 ? "导出 handoff 已就绪" : "导出 handoff 仍阻塞",
-        body:
-          exportDiagnostics.length === 0
-            ? "当前项目已经满足 bounded runtime export seam 的基础前提，后续 workflow queue 可以直接把 UI 触达接上。"
-            : exportDiagnostics[0]?.message ??
-              "存在仍待后续 workflow / shared-rule queue 解决的 export 阻塞。",
-        tone: exportDiagnostics.length === 0 ? "success" : "warning",
+        id: "project.progress",
+        title: "创作进度",
+        body: `当前已收录人物 ${project.people.length} 条、文本 ${project.textEntries.length} 条、剧情节点 ${project.storyNodes.length} 条、事件 ${project.events.length} 条。`,
+        tone: "neutral",
       },
       {
-        id: "project.compatibility",
-        title: compatibilityResidueCount === 0 ? "无兼容残留" : "存在兼容导入残留",
+        id: "project.risk",
+        title: "风险与阻塞",
+        body: createProjectRiskSummary(exportDiagnostics, compatibilityResidueCount),
+        tone:
+          exportDiagnostics.length === 0 && compatibilityResidueCount === 0
+            ? "success"
+            : "warning",
+      },
+      {
+        id: "project.next-step",
+        title: "下一步建议",
         body:
-          compatibilityResidueCount === 0
-            ? "compatibility-import queue 的显式 residue 机制已被 shell 读取，但当前项目没有未解析残留。"
-            : `storyPack.compatibilityImport 中仍保留 ${compatibilityResidueCount} 个 runtime-only residue，对应的后续解析不能在本队列里偷渡实现。`,
-        tone: compatibilityResidueCount === 0 ? "neutral" : "warning",
+          "继续从左侧对象导航进入正式作者面；当前优先进入人物作者面与关系入口，城市、建筑、菜单与更深剧情编辑保持后续队列处理。",
+        tone: "neutral",
       },
     ],
   };
+}
+
+function createProjectRiskSummary(
+  exportDiagnostics: ReturnType<typeof validateScriptEditorProjectForRuntimeExport>,
+  compatibilityResidueCount: number
+): string {
+  if (exportDiagnostics.length > 0) {
+    return exportDiagnostics[0]?.message ?? "当前仍存在需要先处理的导出阻塞。";
+  }
+
+  if (compatibilityResidueCount > 0) {
+    return `当前没有导出阻塞，但仍有 ${compatibilityResidueCount} 条兼容残留需要后续语义队列承接。`;
+  }
+
+  return "当前没有导出前阻塞，项目可以继续细化对象内容。";
 }
 
 function resolveSelection(
@@ -525,7 +538,7 @@ function getFamilyRecords(
 }
 
 function describeRecord(record: Record<string, unknown>): string {
-  return readPrimaryLabel(record) ?? "已存在对象，可在后续 workflow queue 中继续细化。";
+  return readPrimaryLabel(record) ?? "对象已存在，可在后续 PRD 队列中继续细化。";
 }
 
 function readPrimaryLabel(record: Record<string, unknown>): string {

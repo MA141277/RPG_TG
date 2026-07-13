@@ -2664,6 +2664,50 @@ test("script editor project save emits canonical split files", async () => {
   assert.equal(savedPeople[0]?.id, project.people[0]?.id);
 });
 
+test("script editor project library helpers support upsert find and remove", () => {
+  const {
+    createScriptEditorProjectLibraryEntry,
+    findScriptEditorProjectLibraryEntry,
+    removeScriptEditorProjectLibraryEntry,
+    upsertScriptEditorProjectLibraryEntry,
+  } = require("../.test-dist/application/script-editor/project-workspace-library.js");
+  const firstProject = createExportableScriptEditorProjectDefinition();
+  const secondProject = createExportableScriptEditorProjectDefinition();
+  secondProject.id = "project.second";
+  secondProject.title = "Second Project";
+
+  let entries = [];
+  entries = upsertScriptEditorProjectLibraryEntry(
+    entries,
+    createScriptEditorProjectLibraryEntry(firstProject, "new")
+  );
+  entries = upsertScriptEditorProjectLibraryEntry(
+    entries,
+    createScriptEditorProjectLibraryEntry(secondProject, "opened")
+  );
+
+  assert.deepEqual(entries.map((entry) => entry.projectId), ["project.second", firstProject.id]);
+  assert.equal(findScriptEditorProjectLibraryEntry(entries, "project.second")?.title, "Second Project");
+
+  entries = upsertScriptEditorProjectLibraryEntry(
+    entries,
+    createScriptEditorProjectLibraryEntry(
+      {
+        ...firstProject,
+        title: "Updated First Project",
+      },
+      "imported"
+    )
+  );
+  assert.deepEqual(entries.map((entry) => entry.projectId), [firstProject.id, "project.second"]);
+  assert.equal(findScriptEditorProjectLibraryEntry(entries, firstProject.id)?.source, "imported");
+  assert.equal(findScriptEditorProjectLibraryEntry(entries, firstProject.id)?.title, "Updated First Project");
+
+  entries = removeScriptEditorProjectLibraryEntry(entries, "project.second");
+  assert.deepEqual(entries.map((entry) => entry.projectId), [firstProject.id]);
+  assert.equal(findScriptEditorProjectLibraryEntry(entries, "project.second"), null);
+});
+
 test(
   "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice",
   async () => {
@@ -2969,6 +3013,32 @@ test("script editor workspace shell builds a reusable object-tree scaffold", () 
   assert.match(workspace.inspector.cards[0]?.body ?? "", /id: person\.hero/);
 });
 
+test("script editor PRD workspace shell exposes a Chinese-first project overview", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "storyPack",
+      entityId: null,
+    },
+  });
+
+  assert.deepEqual(
+    workspace.navigationItems.map((item) => item.label),
+    ["项目总览", "对象导航", "校验导出"]
+  );
+  assert.equal(workspace.navigationItems.find((item) => item.id === "overview")?.isActive, true);
+  assert.equal(workspace.inspector.eyebrow, "项目总览");
+  assert.deepEqual(
+    workspace.inspector.cards.map((card) => card.title),
+    ["项目状态", "创作进度", "风险与阻塞", "下一步建议"]
+  );
+});
+
 test("script editor workspace shell surfaces export blockers and compatibility residue", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
@@ -3009,14 +3079,89 @@ test("script editor workspace shell surfaces export blockers and compatibility r
     ),
     true
   );
+  const riskCard = workspace.inspector.cards.find((card) => card.title === "风险与阻塞");
   assert.match(
-    workspace.inspector.cards[1]?.body ?? "",
+    riskCard?.body ?? "",
     /unresolved|fail closed|阻塞/i
   );
 });
 
+test("script editor PRD workspace view retires English shell chrome copy", () => {
+  const workspaceViewSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/ui/views/script-editor/script-editor-workspace-view.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(workspaceViewSource, /剧本编辑器工作台/);
+  assert.match(workspaceViewSource, /校验与导出摘要/);
+  assert.doesNotMatch(workspaceViewSource, /Script Editor Shell/);
+  assert.doesNotMatch(workspaceViewSource, /Handoff Summary/);
+});
+
+test("script editor PRD project overview panel replaces the old Project scaffold copy", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /项目总览/);
+  assert.match(mainUiSource, /项目状态/);
+  assert.match(mainUiSource, /下一步建议/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /<p class="c-script-editor-editor-card__eyebrow">Project<\/p>/
+  );
+});
+
+test("script editor project selection queue exposes dedicated project list and delete flow", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /项目选择与管理/);
+  assert.match(mainUiSource, /继续编辑/);
+  assert.match(mainUiSource, /删除项目/);
+  assert.match(mainUiSource, /确认删除/);
+  assert.match(mainUiSource, /data-script-editor-action="continue-project"/);
+  assert.match(mainUiSource, /data-script-editor-action="request-delete-project"/);
+  assert.match(mainUiSource, /data-script-editor-action="confirm-delete-project"/);
+  assert.match(scriptEditorCssSource, /c-script-editor-project-library/);
+  assert.match(scriptEditorCssSource, /c-script-editor-project-card/);
+});
+
+test("script editor person authoring queue exposes dedicated person detail tabs and bounded relation entrypoints", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /人物作者面/);
+  assert.match(mainUiSource, /人物详情/);
+  assert.match(mainUiSource, /属性/);
+  assert.match(mainUiSource, /对话/);
+  assert.match(mainUiSource, /交易/);
+  assert.match(mainUiSource, /事件/);
+  assert.match(mainUiSource, /data-script-editor-action="select-person-tab"/);
+  assert.match(mainUiSource, /"add-person-dialogue-link"/);
+  assert.match(mainUiSource, /"add-person-event-link"/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-attributes/);
+});
+
 test(
-  "script editor minimal workflow seeds an exportable default project and bounded visible families",
+  "script editor minimal workflow seeds bounded visible families and surfaces deferred export diagnostics",
   () => {
     const {
       createDefaultScriptEditorProjectDefinition,
@@ -3042,14 +3187,18 @@ test(
       group.nodes.map((node) => node.family)
     );
 
-    assert.deepEqual(diagnostics, []);
+    assert.deepEqual(
+      diagnostics.map((diagnostic) => diagnostic.fieldPath),
+      ["project.dialogues", "project.storyNodes"]
+    );
     assert.equal(visibleFamilies.includes("storyPack"), true);
     assert.equal(visibleFamilies.includes("people"), true);
+    assert.equal(visibleFamilies.includes("cities"), true);
+    assert.equal(visibleFamilies.includes("buildings"), true);
     assert.equal(visibleFamilies.includes("textEntries"), true);
+    assert.equal(visibleFamilies.includes("dialogues"), true);
     assert.equal(visibleFamilies.includes("storyNodes"), true);
     assert.equal(visibleFamilies.includes("events"), true);
-    assert.equal(visibleFamilies.includes("cities"), false);
-    assert.equal(visibleFamilies.includes("buildings"), false);
   }
 );
 
@@ -3077,6 +3226,245 @@ test("script editor minimal workflow record helpers support draft upsert and rem
 
   project = removeScriptEditorWorkflowRecord(project, "people", draft.id);
   assert.equal(project.people.some((record) => record.id === draft.id), false);
+});
+
+test("script editor person authoring helpers normalize trade and relation entry fields", () => {
+  const {
+    createDefaultScriptEditorPersonRecord,
+    normalizeScriptEditorPersonRecord,
+    updateScriptEditorPersonField,
+    toggleScriptEditorPersonTradeEnabled,
+    appendScriptEditorPersonRelation,
+    updateScriptEditorPersonRelation,
+  } = require("../.test-dist/application/script-editor/person-authoring.js");
+
+  let person = createDefaultScriptEditorPersonRecord(0);
+  person = updateScriptEditorPersonField(person, "personType", "角色");
+  person = toggleScriptEditorPersonTradeEnabled(person, true);
+  person = updateScriptEditorPersonField(person, "tradeBinding.entryId", "trade.market");
+  person = appendScriptEditorPersonRelation(person, "dialogueIds");
+  person = updateScriptEditorPersonRelation(person, "dialogueIds", 0, "dialogue.hero.open");
+
+  const normalized = normalizeScriptEditorPersonRecord(person);
+
+  assert.equal(normalized.personType, "角色");
+  assert.equal(normalized.role, "playable");
+  assert.equal(normalized.tradeBinding.enabled, true);
+  assert.equal(normalized.tradeBinding.entryId, "trade.market");
+  assert.deepEqual(normalized.dialogueIds, ["dialogue.hero.open"]);
+});
+
+test(
+  "script editor city/building queue exposes dedicated city and building detail tabs and menu access entrypoints",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+
+    assert.match(source, /城市作者面|建筑作者面/);
+    assert.match(source, /城市详情|建筑详情/);
+    assert.match(source, /基础/);
+    assert.match(source, /菜单/);
+    assert.match(source, /进入态/);
+    assert.match(source, /入口/);
+    assert.match(source, /add-location-menu-entry/);
+    assert.match(source, /remove-location-menu-entry/);
+    assert.match(source, /data-script-editor-location-access-field/);
+    assert.match(source, /data-script-editor-building-entry-field/);
+    assert.match(cssSource, /\.c-script-editor-location-editor/);
+    assert.match(cssSource, /\.c-script-editor-location-menu__item/);
+  }
+);
+
+test(
+  "script editor city/building authoring helpers normalize menu access and entry-binding fields",
+  () => {
+    const {
+      createDefaultScriptEditorBuildingRecord,
+      createDefaultScriptEditorCityRecord,
+      normalizeScriptEditorBuildingRecord,
+      updateScriptEditorAccessField,
+      updateScriptEditorBuildingEntryBindingField,
+      updateScriptEditorCityField,
+      updateScriptEditorMenuEntryField,
+      toggleScriptEditorMenuEntryFlag,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    let city = createDefaultScriptEditorCityRecord(0);
+    city = updateScriptEditorCityField(city, "name", "苦兰城");
+    city = updateScriptEditorMenuEntryField(city, 0, "targetFamily", "dialogue");
+    city = updateScriptEditorMenuEntryField(city, 0, "targetId", "dialogue.city.kulan");
+    city = toggleScriptEditorMenuEntryFlag(city, 0, "isEnabled", false);
+    city = updateScriptEditorAccessField(city, "state", "visible-disabled");
+    city = updateScriptEditorAccessField(city, "blockedMessage", "暂未开放");
+
+    let building = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
+    building = updateScriptEditorBuildingEntryBindingField(
+      building,
+      "defaultPersonId",
+      "person.host"
+    );
+    building = updateScriptEditorBuildingEntryBindingField(
+      building,
+      "onEnterEventId",
+      "event.enter.market"
+    );
+
+    const normalizedCity = normalizeScriptEditorBuildingRecord({
+      ...building,
+      id: "building.market",
+      cityId: "city.kulan",
+      name: "市集",
+    });
+
+    assert.equal(city.name, "苦兰城");
+    assert.equal(city.menuEntries[0].targetFamily, "dialogue");
+    assert.equal(city.menuEntries[0].targetId, "dialogue.city.kulan");
+    assert.equal(city.menuEntries[0].isEnabled, false);
+    assert.equal(city.access.state, "visible-disabled");
+    assert.equal(city.access.blockedMessage, "暂未开放");
+    assert.equal(normalizedCity.entryBinding.defaultPersonId, "person.host");
+    assert.equal(normalizedCity.entryBinding.onEnterEventId, "event.enter.market");
+    assert.equal(normalizedCity.cityId, "city.kulan");
+  }
+);
+
+test(
+  "script editor story/dialogue/event queue exposes dedicated narrative tabs and bounded relation entrypoints",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+
+    assert.match(source, /剧情作者面|Story Nodes/);
+    assert.match(source, /对话作者面|Dialogues/);
+    assert.match(source, /事件作者面|Events/);
+    assert.match(source, /基础信息|条件|去向|关联对象|预览与校验/);
+    assert.match(source, /data-script-editor-action="select-narrative-tab"/);
+    assert.match(source, /data-script-editor-action="select-event-tab"/);
+    assert.match(source, /"add-dialogue-node"/);
+    assert.match(source, /"add-dialogue-follow-up"/);
+    assert.match(source, /"add-event-condition-group"/);
+    assert.match(source, /"add-event-related-buildings"/);
+    assert.match(cssSource, /\.c-script-editor-narrative-editor/);
+    assert.match(cssSource, /\.c-script-editor-narrative-panel/);
+    assert.match(cssSource, /\.c-script-editor-narrative-inline/);
+  }
+);
+
+test("script editor story/dialogue/event authoring helpers normalize bounded narrative fields", () => {
+  const {
+    createDefaultScriptEditorDialogueRecord,
+    createDefaultScriptEditorEventRecord,
+    createDefaultScriptEditorStoryNodeRecord,
+    normalizeScriptEditorDialogueRecord,
+    normalizeScriptEditorEventRecord,
+    normalizeScriptEditorStoryNodeRecord,
+    appendScriptEditorDialogueFollowUp,
+    appendScriptEditorDialogueNode,
+    appendScriptEditorDialogueParticipant,
+    appendScriptEditorEventConditionGroup,
+    appendScriptEditorEventConditionItem,
+    appendScriptEditorEventRelationEntry,
+    appendScriptEditorStoryNodeRelation,
+    toggleScriptEditorEventRepeatable,
+    updateScriptEditorDialogueField,
+    updateScriptEditorDialogueFollowUpField,
+    updateScriptEditorDialogueNodeField,
+    updateScriptEditorDialogueParticipant,
+    updateScriptEditorEventConditionGroupMode,
+    updateScriptEditorEventConditionItemField,
+    updateScriptEditorEventDestinationField,
+    updateScriptEditorEventField,
+    updateScriptEditorEventPreviewSummaryField,
+    updateScriptEditorEventRelationField,
+    updateScriptEditorStoryNodeField,
+    updateScriptEditorStoryNodeRelation,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  let storyNode = createDefaultScriptEditorStoryNodeRecord(0);
+  storyNode = updateScriptEditorStoryNodeField(storyNode, "progressMode", "invalid-mode");
+  storyNode = appendScriptEditorStoryNodeRelation(storyNode, "relatedDialogueIds");
+  storyNode = updateScriptEditorStoryNodeRelation(
+    storyNode,
+    "relatedDialogueIds",
+    0,
+    "dialogue.hero.open"
+  );
+  const normalizedStoryNode = normalizeScriptEditorStoryNodeRecord(storyNode);
+
+  let dialogue = createDefaultScriptEditorDialogueRecord(0);
+  dialogue = updateScriptEditorDialogueField(dialogue, "storyNodeId", "story-node.hero");
+  dialogue = appendScriptEditorDialogueParticipant(dialogue);
+  dialogue = updateScriptEditorDialogueParticipant(dialogue, 0, "person.hero");
+  dialogue = appendScriptEditorDialogueNode(dialogue);
+  dialogue = updateScriptEditorDialogueNodeField(dialogue, 1, "nodeType", "choice");
+  dialogue = updateScriptEditorDialogueNodeField(dialogue, 1, "textId", "text.dialogue.choice");
+  dialogue = appendScriptEditorDialogueFollowUp(dialogue);
+  dialogue = updateScriptEditorDialogueFollowUpField(dialogue, 0, "targetFamily", "building");
+  dialogue = updateScriptEditorDialogueFollowUpField(dialogue, 0, "targetId", "building.teahouse");
+  const normalizedDialogue = normalizeScriptEditorDialogueRecord(dialogue);
+
+  let eventRecord = createDefaultScriptEditorEventRecord(0);
+  eventRecord = updateScriptEditorEventField(eventRecord, "triggerTiming", "story-progress");
+  eventRecord = toggleScriptEditorEventRepeatable(eventRecord, true);
+  eventRecord = appendScriptEditorEventConditionGroup(eventRecord);
+  eventRecord = updateScriptEditorEventConditionGroupMode(eventRecord, 1, "any");
+  eventRecord = appendScriptEditorEventConditionItem(eventRecord, 1);
+  eventRecord = updateScriptEditorEventConditionItemField(
+    eventRecord,
+    1,
+    1,
+    "conditionType",
+    "story-node"
+  );
+  eventRecord = updateScriptEditorEventConditionItemField(eventRecord, 1, 1, "operator", "==");
+  eventRecord = updateScriptEditorEventConditionItemField(
+    eventRecord,
+    1,
+    1,
+    "value",
+    "story-node.hero"
+  );
+  eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "event");
+  eventRecord = updateScriptEditorEventDestinationField(
+    eventRecord,
+    "targetId",
+    "event.follow-up"
+  );
+  eventRecord = updateScriptEditorEventRelationField(
+    eventRecord,
+    "storyNodeId",
+    "story-node.hero"
+  );
+  eventRecord = appendScriptEditorEventRelationEntry(eventRecord, "personIds");
+  eventRecord = updateScriptEditorEventRelationField(
+    eventRecord,
+    "personIds",
+    0,
+    "person.hero"
+  );
+  eventRecord = updateScriptEditorEventPreviewSummaryField(
+    eventRecord,
+    "previewNotes",
+    "Preview the event branch."
+  );
+  const normalizedEvent = normalizeScriptEditorEventRecord(eventRecord);
+
+  assert.equal(normalizedStoryNode.progressMode, "block");
+  assert.deepEqual(normalizedStoryNode.relatedDialogueIds, ["dialogue.hero.open"]);
+  assert.equal(normalizedDialogue.storyNodeId, "story-node.hero");
+  assert.equal(normalizedDialogue.participantPersonIds[0], "person.hero");
+  assert.equal(normalizedDialogue.nodes[1].nodeType, "choice");
+  assert.equal(normalizedDialogue.followUps[0].targetFamily, "building");
+  assert.equal(normalizedDialogue.followUps[0].targetId, "building.teahouse");
+  assert.equal(normalizedEvent.triggerTiming, "story-progress");
+  assert.equal(normalizedEvent.repeatable, true);
+  assert.equal(normalizedEvent.conditionGroups[1].mode, "any");
+  assert.equal(normalizedEvent.conditionGroups[1].items[1].conditionType, "story-node");
+  assert.equal(normalizedEvent.destination.family, "event");
+  assert.equal(normalizedEvent.destination.targetId, "event.follow-up");
+  assert.equal(normalizedEvent.relations.storyNodeId, "story-node.hero");
+  assert.deepEqual(normalizedEvent.relations.personIds, ["person.hero"]);
+  assert.equal(normalizedEvent.previewSummary.previewNotes, "Preview the event branch.");
 });
 
 test(

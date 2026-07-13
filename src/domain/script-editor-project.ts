@@ -42,6 +42,191 @@ export type ScriptEditorEntityRecord = {
   [key: string]: unknown;
 };
 
+export type ScriptEditorKeyValueEntry = {
+  key: string;
+  value: string;
+};
+
+export type ScriptEditorPersonTradeBinding = {
+  enabled: boolean;
+  entryId: string;
+};
+
+export type ScriptEditorMenuTargetFamily =
+  | "dialogue"
+  | "event"
+  | "trade"
+  | "minigame"
+  | "info";
+
+export type ScriptEditorMenuEntry = {
+  id: string;
+  label: string;
+  menuFamily: string;
+  targetFamily: ScriptEditorMenuTargetFamily;
+  targetId: string;
+  isVisible: boolean;
+  isEnabled: boolean;
+  disabledHint: string;
+};
+
+export type ScriptEditorAccessState =
+  | "visible-enabled"
+  | "visible-disabled"
+  | "hidden";
+
+export type ScriptEditorAccessRule = {
+  state: ScriptEditorAccessState;
+  blockedMessage: string;
+  blockedSpeaker: string;
+  guidance: string;
+};
+
+export type ScriptEditorBuildingEntryBinding = {
+  defaultPersonId: string;
+  onEnterEventId: string;
+  onLeaveEventId: string;
+  returnTarget: string;
+};
+
+export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
+  name: string;
+  personType?: "NPC" | "角色";
+  role?: string;
+  title?: string;
+  occupation?: string;
+  biography?: string;
+  extendedAttributes?: ScriptEditorKeyValueEntry[];
+  dialogueIds?: string[];
+  eventIds?: string[];
+  tradeBinding?: ScriptEditorPersonTradeBinding;
+};
+
+export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
+  name: string;
+  description?: string;
+  menuEntries?: ScriptEditorMenuEntry[];
+  access?: ScriptEditorAccessRule;
+};
+
+export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
+  cityId: string;
+  name: string;
+  description?: string;
+  menuEntries?: ScriptEditorMenuEntry[];
+  access?: ScriptEditorAccessRule;
+  entryBinding?: ScriptEditorBuildingEntryBinding;
+};
+
+export type ScriptEditorStoryProgressMode =
+  | "block"
+  | "wait"
+  | "force-close";
+
+export type ScriptEditorStoryNodeRecord = ScriptEditorEntityRecord & {
+  title: string;
+  chapterId?: string;
+  summary?: string;
+  progressMode?: ScriptEditorStoryProgressMode;
+  relatedPersonIds?: string[];
+  relatedDialogueIds?: string[];
+  relatedEventIds?: string[];
+};
+
+export type ScriptEditorDialogueNodeType =
+  | "narration"
+  | "dialogue"
+  | "choice";
+
+export type ScriptEditorDialogueFollowUpTargetFamily =
+  | "dialogue"
+  | "event"
+  | "city"
+  | "building"
+  | "minigame";
+
+export type ScriptEditorDialogueNodeRecord = {
+  id: string;
+  nodeType: ScriptEditorDialogueNodeType;
+  speakerPersonId: string;
+  textId: string;
+  nextNodeId: string;
+  choiceTargetNodeId: string;
+};
+
+export type ScriptEditorDialogueFollowUp = {
+  targetFamily: ScriptEditorDialogueFollowUpTargetFamily;
+  targetId: string;
+};
+
+export type ScriptEditorDialogueRecord = ScriptEditorEntityRecord & {
+  title: string;
+  storyNodeId?: string;
+  participantPersonIds?: string[];
+  nodes?: ScriptEditorDialogueNodeRecord[];
+  followUps?: ScriptEditorDialogueFollowUp[];
+};
+
+export type ScriptEditorEventTriggerTiming =
+  | "manual"
+  | "city-enter"
+  | "building-enter"
+  | "dialogue-finished"
+  | "story-progress";
+
+export type ScriptEditorEventConditionGroupMode =
+  | "all"
+  | "any"
+  | "not";
+
+export type ScriptEditorEventConditionItem = {
+  id: string;
+  conditionType: string;
+  operator: string;
+  value: string;
+};
+
+export type ScriptEditorEventConditionGroup = {
+  id: string;
+  mode: ScriptEditorEventConditionGroupMode;
+  items: ScriptEditorEventConditionItem[];
+};
+
+export type ScriptEditorEventDestinationFamily =
+  | "dialogue"
+  | "event"
+  | "city"
+  | "building"
+  | "minigame";
+
+export type ScriptEditorEventDestination = {
+  family: ScriptEditorEventDestinationFamily;
+  targetId: string;
+};
+
+export type ScriptEditorEventRelationRecord = {
+  storyNodeId?: string;
+  personIds?: string[];
+  cityIds?: string[];
+  buildingIds?: string[];
+};
+
+export type ScriptEditorEventPreviewSummary = {
+  previewNotes?: string;
+  validationNotes?: string;
+};
+
+export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
+  title: string;
+  description?: string;
+  triggerTiming?: ScriptEditorEventTriggerTiming;
+  repeatable?: boolean;
+  conditionGroups?: ScriptEditorEventConditionGroup[];
+  destination?: ScriptEditorEventDestination;
+  relations?: ScriptEditorEventRelationRecord;
+  previewSummary?: ScriptEditorEventPreviewSummary;
+};
+
 export type ScriptEditorStoryPackRecord = {
   id: string;
   title: string;
@@ -69,14 +254,14 @@ export type ScriptEditorProjectDefinition = {
   title: string;
   description?: string;
   storyPack: ScriptEditorStoryPackRecord;
-  people: ScriptEditorEntityRecord[];
-  cities: ScriptEditorEntityRecord[];
-  buildings: ScriptEditorEntityRecord[];
-  events: ScriptEditorEntityRecord[];
+  people: ScriptEditorPersonRecord[];
+  cities: ScriptEditorCityRecord[];
+  buildings: ScriptEditorBuildingRecord[];
+  events: ScriptEditorEventRecord[];
   quests: ScriptEditorEntityRecord[];
-  dialogues: ScriptEditorEntityRecord[];
+  dialogues: ScriptEditorDialogueRecord[];
   minigames: ScriptEditorEntityRecord[];
-  storyNodes: ScriptEditorEntityRecord[];
+  storyNodes: ScriptEditorStoryNodeRecord[];
   textEntries: ScriptEditorTextEntryRecord[];
   conditionGroups: ScriptEditorEntityRecord[];
   effectBundles: ScriptEditorEntityRecord[];

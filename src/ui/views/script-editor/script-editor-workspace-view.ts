@@ -11,7 +11,7 @@ export function renderScriptEditorWorkspaceView(
     <section class="c-script-editor-shell" aria-label="剧本编辑器工作台">
       <header class="c-script-editor-shell__header">
         <div class="c-script-editor-shell__heading">
-          <p class="c-script-editor-shell__eyebrow">Script Editor Shell</p>
+          <p class="c-script-editor-shell__eyebrow">剧本编辑器工作台</p>
           <h1 class="c-script-editor-shell__title">${escapeHtml(model.title)}</h1>
           <p class="c-script-editor-shell__subtitle">${escapeHtml(model.subtitle)}</p>
           <div class="c-script-editor-shell__badges">
@@ -26,7 +26,7 @@ export function renderScriptEditorWorkspaceView(
               .join("")}
           </div>
         </div>
-        <nav class="c-script-editor-shell__nav" aria-label="工作台导航">
+        <nav class="c-script-editor-shell__nav" aria-label="工作台阶段导航">
           ${model.navigationItems
             .map(
               (item) => `
@@ -104,8 +104,8 @@ export function renderScriptEditorWorkspaceView(
             </div>
           </section>
 
-          <aside class="c-script-editor-shell__handoff" aria-label="交接摘要">
-            <p class="c-script-editor-shell__handoff-eyebrow">Handoff Summary</p>
+          <aside class="c-script-editor-shell__handoff" aria-label="校验与导出摘要">
+            <p class="c-script-editor-shell__handoff-eyebrow">校验与导出摘要</p>
             <div class="c-script-editor-shell__handoff-grid">
               <article class="c-script-editor-shell__handoff-card">
                 <strong>阻塞数</strong>
@@ -119,7 +119,7 @@ export function renderScriptEditorWorkspaceView(
             <p class="c-script-editor-shell__handoff-message">
               ${
                 model.handoffSummary.firstMessage == null
-                  ? "当前 shell 已能稳定承接后续 workflow queue 的保存、校验和导出入口。"
+                  ? "当前工作台没有新的导出阻塞，可继续从左侧对象树进入下一步创作。"
                   : escapeHtml(model.handoffSummary.firstMessage)
               }
             </p>

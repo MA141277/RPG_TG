@@ -2,10 +2,13 @@ import { parseScenarioPack } from "../scenario/scenario-pack-loader";
 import { parseScriptEditorProject } from "./editor-project-loader";
 import {
   SCRIPT_EDITOR_PROJECT_KIND,
+  type ScriptEditorEventRecord,
+  type ScriptEditorEventTriggerTiming,
   type ScriptEditorProjectDefinition,
   type ScriptEditorStoryPackRecord,
   type ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
+import type { EventDefinition } from "../../domain/event";
 
 export type ScriptEditorCompatibilityImportDiagnostic = {
   code:
@@ -280,7 +283,7 @@ export function importScenarioPackToScriptEditorProject(
     people: pack.characters ?? [],
     cities: pack.cities ?? [],
     buildings: pack.houses ?? [],
-    events: pack.events ?? [],
+    events: mapImportedEvents(pack.events ?? []),
     quests: pack.tasks ?? [],
     dialogues: [],
     minigames: [],
@@ -331,6 +334,95 @@ function createStoryPackRecord(
       ? {}
       : { compatibilityImport: compatibilityImportResidue }),
   };
+}
+
+function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[] {
+  return events.map((eventDefinition) => {
+    const importedEvent = eventDefinition as EventDefinition & {
+      title?: string;
+      description?: string;
+      triggerTiming?: ScriptEditorEventTriggerTiming;
+      repeatable?: boolean;
+    };
+    const triggerScope = eventDefinition.trigger?.scope;
+    const importedConditions = Array.isArray(eventDefinition.conditions)
+      ? eventDefinition.conditions
+      : [];
+
+    return {
+      id: eventDefinition.id,
+      title: normalizeImportedEventTitle(eventDefinition),
+      description: buildImportedEventDescription(importedEvent),
+      triggerTiming:
+        importedEvent.triggerTiming ?? mapImportedEventTriggerTiming(eventDefinition.trigger?.timing),
+      repeatable:
+        importedEvent.repeatable === true || eventDefinition.occurrence === "repeatable",
+      conditionGroups: [],
+      destination: {
+        family: "event",
+        targetId: eventDefinition.nextEventId ?? "",
+      },
+      relations: {
+        storyNodeId: "",
+        personIds: (eventDefinition.participants ?? []).map((participant) => participant.characterId),
+        cityIds: triggerScope?.cityId != null ? [triggerScope.cityId] : [],
+        buildingIds: triggerScope?.houseId != null ? [triggerScope.houseId] : [],
+      },
+      previewSummary: {
+        previewNotes:
+          typeof eventDefinition.entrySceneId === "string" && eventDefinition.entrySceneId.length > 0
+            ? `Imported runtime entry scene: ${eventDefinition.entrySceneId}`
+            : "",
+        validationNotes:
+          importedConditions.length > 0
+            ? `Original runtime event carries ${importedConditions.length} condition nodes that still require bounded translation.`
+            : "",
+      },
+    };
+  });
+}
+
+function normalizeImportedEventTitle(eventDefinition: EventDefinition): string {
+  const importedTitle = (eventDefinition as EventDefinition & { title?: string }).title;
+  const fallbackTitle = typeof importedTitle === "string" ? importedTitle : "";
+  const runtimeName = typeof eventDefinition.name === "string" ? eventDefinition.name : "";
+  const candidate: string = runtimeName.trim().length > 0 ? runtimeName : fallbackTitle;
+  return candidate.trim().length > 0 ? candidate.trim() : eventDefinition.id;
+}
+
+function buildImportedEventDescription(
+  eventDefinition: EventDefinition & { description?: string }
+): string {
+  if (typeof eventDefinition.description === "string" && eventDefinition.description.length > 0) {
+    return eventDefinition.description;
+  }
+
+  const summaryParts = [
+    `Imported from runtime event ${eventDefinition.id}.`,
+  ];
+  if (typeof eventDefinition.chapterId === "string" && eventDefinition.chapterId.length > 0) {
+    summaryParts.push(`Chapter ${eventDefinition.chapterId}.`);
+  }
+  if (typeof eventDefinition.entrySceneId === "string" && eventDefinition.entrySceneId.length > 0) {
+    summaryParts.push(`Entry scene ${eventDefinition.entrySceneId}.`);
+  }
+  if (typeof eventDefinition.nextEventId === "string" && eventDefinition.nextEventId.length > 0) {
+    summaryParts.push(`Next event ${eventDefinition.nextEventId}.`);
+  }
+  return summaryParts.join(" ");
+}
+
+function mapImportedEventTriggerTiming(
+  timing?: EventDefinition["trigger"]["timing"]
+): ScriptEditorEventTriggerTiming {
+  switch (timing) {
+    case "city-enter":
+      return "city-enter";
+    case "house-enter":
+      return "building-enter";
+    default:
+      return "manual";
+  }
 }
 
 function mapTextEntries(
