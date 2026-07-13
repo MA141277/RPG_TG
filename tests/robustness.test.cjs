@@ -2718,12 +2718,97 @@ test(
     project.dialogues = [{ id: "dialogue.unsupported" }];
     project.minigames = [{ id: "minigame.unsupported" }];
     project.storyNodes = [{ id: "story-node.unsupported" }];
-    project.conditionGroups = [{ id: "condition.unsupported" }];
-    project.effectBundles = [{ id: "effect.unsupported" }];
 
     assert.throws(
       () => exportScriptEditorProjectToScenarioPackFiles(project),
-      /dialogues|minigames|storyNodes|conditionGroups|effectBundles/i
+      /dialogues|minigames|storyNodes/i
+    );
+  }
+);
+
+test(
+  "script editor runtime export compiles bounded shared task condition and effect references",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.quests = [
+      {
+        id: "quest.shared-rule",
+        title: "Shared Rule Quest",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+        startConditionGroupId: "condition.task-start",
+        completionConditionGroupId: "condition.task-complete",
+        onCompleteEffectBundleId: "effect.task-complete",
+      },
+    ];
+    project.conditionGroups = [
+      {
+        id: "condition.task-start",
+        operator: "all",
+        conditions: [{ type: "flag", key: "quest.start.ready", expected: true }],
+      },
+      {
+        id: "condition.task-complete",
+        operator: "all",
+        conditions: [{ type: "signal", signalType: "scene.reported" }],
+      },
+      {
+        id: "condition.unused",
+        operator: "all",
+        conditions: [{ type: "elapsed-time", since: "startedAt", atLeastDays: 3 }],
+      },
+    ];
+    project.effectBundles = [
+      {
+        id: "effect.task-complete",
+        effects: [{ type: "setFlag", key: "quest.shared.done", value: true }],
+      },
+    ];
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedTasks = JSON.parse(serializedFiles["tasks.json"]);
+
+    assert.deepEqual(exportedTasks[0]?.startConditions, [
+      { type: "flag", flag: "quest.start.ready", value: true },
+    ]);
+    assert.deepEqual(exportedTasks[0]?.completionConditions, [
+      { type: "signal", signalType: "scene.reported" },
+    ]);
+    assert.deepEqual(exportedTasks[0]?.onCompleteEffects, [
+      { type: "setFlag", key: "quest.shared.done", value: true },
+    ]);
+  }
+);
+
+test(
+  "script editor runtime export fails closed on unsupported shared-rule lowering",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.quests = [
+      {
+        id: "quest.shared-rule",
+        title: "Shared Rule Quest",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+        completionConditionGroupId: "condition.unsupported",
+      },
+    ];
+    project.conditionGroups = [
+      {
+        id: "condition.unsupported",
+        operator: "any",
+        conditions: [{ type: "signal", signalType: "scene.reported" }],
+      },
+    ];
+    project.effectBundles = [];
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /shared-rule|condition group|operator|task/i
     );
   }
 );
@@ -2889,7 +2974,21 @@ test("script editor workspace shell surfaces export blockers and compatibility r
     createScriptEditorWorkspaceShellViewModel,
   } = require("../.test-dist/application/script-editor/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
-  project.conditionGroups = [{ id: "condition.unsupported", operator: "all" }];
+  project.quests = [
+    {
+      id: "quest.shared-rule",
+      title: "Shared Rule Quest",
+      objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+      completionConditionGroupId: "condition.unsupported",
+    },
+  ];
+  project.conditionGroups = [
+    {
+      id: "condition.unsupported",
+      operator: "not",
+      conditions: [{ type: "signal", signalType: "scene.reported" }],
+    },
+  ];
   project.storyPack.compatibilityImport = {
     unresolvedFamilies: {
       scenes: [{ id: "scene.unsupported.opening" }],
@@ -2904,8 +3003,16 @@ test("script editor workspace shell surfaces export blockers and compatibility r
     true
   );
   assert.equal(workspace.handoffSummary.blockedCount > 0, true);
-  assert.equal(workspace.objectTreeGroups[2]?.nodes.some((node) => node.tone === "warning"), true);
-  assert.match(workspace.inspector.cards[1]?.body ?? "", /fail closed|阻塞/i);
+  assert.equal(
+    workspace.objectTreeGroups.some((group) =>
+      group.nodes.some((node) => node.tone === "warning")
+    ),
+    true
+  );
+  assert.match(
+    workspace.inspector.cards[1]?.body ?? "",
+    /unresolved|fail closed|阻塞/i
+  );
 });
 
 test(

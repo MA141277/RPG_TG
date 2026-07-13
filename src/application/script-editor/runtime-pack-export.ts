@@ -2,6 +2,10 @@ import { parseScenarioPack } from "../scenario/scenario-pack-loader";
 import {
   parseScriptEditorProject,
 } from "./editor-project-loader";
+import {
+  compileScriptEditorProjectTasks,
+  type ScriptEditorSharedRuleDiagnostic,
+} from "./shared-rule-compiler";
 import type {
   ScriptEditorProjectDefinition,
   ScriptEditorStoryPackRecord,
@@ -15,7 +19,9 @@ export type ScriptEditorRuntimeExportDiagnostic = {
     | "missing-field"
     | "invalid-field"
     | "duplicate-id"
-    | "runtime-pack-contract";
+    | "runtime-pack-contract"
+    | "missing-reference"
+    | "unsupported-lowering";
   fieldPath: string;
   message: string;
 };
@@ -64,10 +70,6 @@ const DEFERRED_FAMILY_MESSAGES = {
     "minigames export is deferred in this bounded slice; activity/playable assembly belongs to a later export step.",
   storyNodes:
     "storyNodes export is deferred in this bounded slice; scene-flow assembly belongs to a later export step.",
-  conditionGroups:
-    "conditionGroups must fail closed until the shared condition compile path exists.",
-  effectBundles:
-    "effectBundles must fail closed until the shared effect compile path exists.",
 } as const;
 
 export function validateScriptEditorProjectForRuntimeExport(
@@ -93,8 +95,16 @@ export function validateScriptEditorProjectForRuntimeExport(
 
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
   const exportedTextEntries = mapTextEntries(project.textEntries, diagnostics);
+  const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
+  const exportedTasks = compileScriptEditorProjectTasks(project, sharedRuleDiagnostics);
+  appendSharedRuleDiagnostics(sharedRuleDiagnostics, diagnostics);
 
-  if (diagnostics.length > 0 || scenarioProfile == null || exportedTextEntries == null) {
+  if (
+    diagnostics.length > 0 ||
+    scenarioProfile == null ||
+    exportedTextEntries == null ||
+    exportedTasks == null
+  ) {
     return diagnostics;
   }
 
@@ -112,7 +122,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       houses: project.buildings,
       events: project.events,
       scenes: [],
-      tasks: project.quests,
+      tasks: exportedTasks,
       textEntries: exportedTextEntries,
     });
   } catch (error) {
@@ -140,7 +150,8 @@ export function exportScriptEditorProjectToScenarioPackFiles(
 
   const scenarioProfile = extractScenarioProfile(project.storyPack, []);
   const exportedTextEntries = mapTextEntries(project.textEntries, []);
-  if (scenarioProfile == null || exportedTextEntries == null) {
+  const exportedTasks = compileScriptEditorProjectTasks(project, []);
+  if (scenarioProfile == null || exportedTextEntries == null || exportedTasks == null) {
     throw new Error(
       "Script editor runtime export validation unexpectedly failed after diagnostics passed."
     );
@@ -177,7 +188,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.scenes)]: stringifyJson([]),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.tasks)]: stringifyJson(
-      project.quests
+      exportedTasks
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.textEntries)]: stringifyJson(
       exportedTextEntries
@@ -321,6 +332,19 @@ function pickOptionalPackMetadata(
       ? { tags: [...storyPack["tags"]] as string[] }
       : {}),
   };
+}
+
+function appendSharedRuleDiagnostics(
+  sourceDiagnostics: ScriptEditorSharedRuleDiagnostic[],
+  targetDiagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  targetDiagnostics.push(
+    ...sourceDiagnostics.map((diagnostic) => ({
+      code: diagnostic.code,
+      fieldPath: diagnostic.fieldPath,
+      message: diagnostic.message,
+    }))
+  );
 }
 
 function readObject(

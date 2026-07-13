@@ -23,6 +23,19 @@
 
 ## 2026-07-13 Shared Condition Effect Queue Admission
 
+## 2026-07-13 Shared Condition Effect Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/shared-rule-compiler.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/shared-rule-compiler.ts)，落地首个 bounded shared-rule compiler：对 `conditionGroups / effectBundles` 建索引、做共享 authoring 校验，并把支持的 task-host 条件/效果 lowering 到当前 `TaskDefinition` 契约。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让 script-editor runtime export/validation 不再对整个 `conditionGroups / effectBundles` 家族一刀切 fail closed，而是复用 shared-rule compiler 输出 `tasks.json`，同时对缺引用或 unsupported lowering 保持显式阻塞。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增共享 task 条件/效果编译成功与 unsupported lowering fail-closed 回归覆盖，并收紧 workspace shell 阻塞 surfacing 断言以匹配当前真实阻塞来源。
+- 更新 [docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，把 `queue.shared-condition-effect-authoring-integration` 从 active 收口为 done，并把 live version 入口切到无 active queue 的 version-closeout readiness。
+
+### Impact
+- 当前 implementation version 已拥有首个真正落地的 shared-rule authoring path：`conditionGroups / effectBundles` 不再只是 schema-placeholder，而是可以在 bounded task slice 上通过一个复用 compile/export seam 进入当前 runtime-compatible pack。
+- 当前实现没有把 shared-rule 话题扩张成 broad host coverage；未覆盖的 host lowering 仍显式 fail closed，因此不会偷偷长出新的 feature-local rule dialect。
+- `queue.shared-condition-effect-authoring-integration` 已变为关闭历史证据；当前 implementation version 没有 active queue，接下来只剩 version closeout truth 与一次显式人工确认。
+
 ### Changed
 - 新增 [docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md)，把 `queue.shared-condition-effect-authoring-integration` 的 queue goal、task ledger、首条 bounded implementation slice、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
 - 更新 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将当前 implementation version 从 `promotion-review` 切换回 `active-execution`，并把 `queue.shared-condition-effect-authoring-integration` 设为单一 active queue。
