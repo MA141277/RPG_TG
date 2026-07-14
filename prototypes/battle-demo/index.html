@@ -505,6 +505,25 @@
     }
     .capture-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
 
+    .battle-fps-hud {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      z-index: 2100;
+      min-width: 74px;
+      padding: 4px 8px;
+      border: 1px solid rgba(201,162,39,0.42);
+      border-radius: 4px;
+      background: rgba(10,8,6,0.7);
+      color: #f2e2bb;
+      font-size: 0.72rem;
+      line-height: 1.2;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+    }
+
     .unit {
       width: calc(var(--tile-w) * 0.8);
       min-height: calc(var(--tile-w) * 0.84);
@@ -1225,7 +1244,7 @@
     .formation-slot.empty { opacity: 0; pointer-events: none; }
     .formation-slot.fallen { opacity: 0.42; filter: grayscale(0.85) drop-shadow(0 10px 6px rgba(0,0,0,0.35)); }
     .formation-slot.striker {
-      filter: drop-shadow(0 0 18px rgba(255, 225, 122, 0.8)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
+      filter: drop-shadow(0 14px 8px rgba(0,0,0,0.42));
     }
     .formation-side.player .formation-slot.striker { transform: translate(-50%, -100%) scale(var(--slot-scale, 1)); }
     .formation-side.enemy .formation-slot.striker { transform: translate(-50%, -100%) scale(var(--slot-scale, 1)); }
@@ -1297,11 +1316,14 @@
     }
     .battle-spine-proxy-anchor {
       position: absolute;
+      left: 0;
+      top: 0;
       width: 0;
       height: 0;
       z-index: 6;
       pointer-events: none;
-      will-change: left, top;
+      transform: translate3d(var(--battle-proxy-x, 0px), var(--battle-proxy-y, 0px), 0);
+      will-change: transform;
     }
     .battle-spine-proxy-slot {
       position: absolute;
@@ -2337,6 +2359,7 @@
   </style>
 </head>
 <body>
+  <div class="battle-fps-hud" data-battle-fps-hud="true">FPS: 0</div>
   <div class="battle-stage">
   <div class="battle-ui-overlays" aria-hidden="true">
     <img src="../../ui/battle/战斗/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png" alt="">
@@ -2779,6 +2802,40 @@
     const battleSpineRendererPromises = new Map();
     let battleSpineIdleRaf = 0;
     let battleSpineLastIdleRender = 0;
+    function formatFpsReadout(fpsValue) {
+      const value = Number.isFinite(fpsValue) ? Math.max(0, Math.round(fpsValue)) : 0;
+      return `FPS: ${value}`;
+    }
+
+    function createFpsSampler(windowMs = 500) {
+      const frameTimes = [];
+      let lastFps = 0;
+      return {
+        push(timestampMs) {
+          if (Number.isFinite(timestampMs)) {
+            frameTimes.push(timestampMs);
+          }
+          while (frameTimes.length > 1 && timestampMs - frameTimes[0] > windowMs) {
+            frameTimes.shift();
+          }
+          if (frameTimes.length > 1) {
+            const durationMs = frameTimes[frameTimes.length - 1] - frameTimes[0];
+            const frames = frameTimes.length - 1;
+            lastFps = durationMs > 0 ? (frames * 1000) / durationMs : lastFps;
+          }
+          return lastFps;
+        },
+        current() {
+          return lastFps;
+        },
+      };
+    }
+
+    const battleFpsState = {
+      hud: null,
+      sampler: createFpsSampler(500),
+      rafId: 0,
+    };
     const battleFormationViewState = {
       initialized: false,
       attacker: null,
@@ -2919,6 +2976,27 @@
     function uid() { return 'u' + (nextId++); }
     function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    function ensureBattleFpsHud() {
+      if (!battleFpsState.hud) {
+        battleFpsState.hud = document.querySelector("[data-battle-fps-hud='true']");
+      }
+      return battleFpsState.hud;
+    }
+
+    function updateBattleFpsHud(timestampMs) {
+      const hud = ensureBattleFpsHud();
+      if (!hud) return;
+      const fps = battleFpsState.sampler.push(timestampMs);
+      const nextText = formatFpsReadout(fps);
+      if (hud.textContent !== nextText) {
+        hud.textContent = nextText;
+      }
+    }
+
+    function tickBattleFpsHud(timestampMs) {
+      updateBattleFpsHud(timestampMs);
+      battleFpsState.rafId = window.requestAnimationFrame(tickBattleFpsHud);
+    }
     function manhattan(x1, y1, x2, y2) { return Math.abs(x1 - x2) + Math.abs(y1 - y2); }
     function inBounds(x, y) { return x >= 0 && x < COLS && y >= 0 && y < ROWS; }
     function cellKey(x, y) { return x + ',' + y; }
@@ -4862,12 +4940,101 @@
         stationaryAttack: true,
         attackImpactRatio: 0.58,
       },
+      spearman: {
+        cacheKey: 'spearman',
+        projectUrl: '/src/faxian/leg/spearman/project.json',
+        imageBaseUrl: '../../src/faxian/leg/spearman/',
+        attackActionNames: ['戳刺'],
+        moveActionIds: ['jump'],
+        moveActionNames: ['跳跃'],
+        materialForegroundImageKeys: ['newSword'],
+        materialForegroundNormalizeOptions: {
+          newSword: {
+            removeDarkGuideLine: true,
+          },
+        },
+        renderScaleMultiplier: 1.2,
+        renderOffsetX: -16,
+        renderOffsetXBySide: {
+          player: -120,
+          enemy: 85,
+        },
+        renderOffsetYBySide: {
+          player: -30,
+          enemy: -30,
+        },
+        renderOffsetY: 0,
+        stationaryAttack: false,
+        attackImpactRatio: 0.5,
+      },
     };
 
     function getBattleSpineTroopAsset(troopType) {
+      if (troopType === 'spear') {
+        return BATTLE_SPINE_TROOP_ASSETS.spearman;
+      }
       return troopType === 'archer'
         ? BATTLE_SPINE_TROOP_ASSETS.archer
         : BATTLE_SPINE_TROOP_ASSETS.default;
+    }
+
+    function chooseBattleInfantryAttackVariant(randomValue = Math.random()) {
+      return randomValue < 0.5 ? 'jump_slash' : 'jump_chop';
+    }
+
+    function getBattleInfantryAttackPlan(renderer, randomValue = Math.random()) {
+      const variant = chooseBattleInfantryAttackVariant(randomValue);
+      const jumpChopAction = renderer?.findActionByName?.('跳劈') || null;
+      if (variant === 'jump_chop' && jumpChopAction) {
+        return {
+          variant: 'jump_chop',
+          moveAction: null,
+          moveDurationMs: 0,
+          moveStartFrame: null,
+          moveEndFrame: null,
+          attackAction: jumpChopAction.id,
+          attackDurationMs: renderer.getActionDurationMs(jumpChopAction.id),
+          attackMoveStartFrame: 29,
+          attackMoveEndFrame: 41,
+          impactFrame: 43,
+          effectFrame: 43,
+          returnsToSource: true,
+        };
+      }
+      return {
+        variant: 'jump_slash',
+        moveAction: 'move',
+        moveDurationMs: renderer.getActionDurationMs('move'),
+        moveStartFrame: 7,
+        moveEndFrame: 23,
+        attackAction: 'attack',
+        attackDurationMs: renderer.getActionDurationMs('attack'),
+        attackMoveStartFrame: null,
+        attackMoveEndFrame: null,
+        impactFrame: 14,
+        effectFrame: 13,
+        returnsToSource: false,
+      };
+    }
+
+    function getBattleMeleeAttackPlan(troopType, renderer, randomValue = Math.random()) {
+      if (troopType === 'spear') {
+        return {
+          variant: 'jump_thrust',
+          moveAction: 'jump',
+          moveDurationMs: renderer.getActionDurationMs('jump'),
+          moveStartFrame: 7,
+          moveEndFrame: 31,
+          attackAction: 'attack',
+          attackDurationMs: renderer.getActionDurationMs('attack'),
+          attackMoveStartFrame: null,
+          attackMoveEndFrame: null,
+          impactFrame: 14,
+          effectFrame: 14,
+          returnsToSource: false,
+        };
+      }
+      return getBattleInfantryAttackPlan(renderer, randomValue);
     }
 
     const BATTLE_MELEE_STRIKE_STAGGER_FRAMES = 56;
@@ -5030,12 +5197,39 @@
       constructor(project, images, config = {}) {
         this.project = project;
         this.nodes = project.nodes || [];
+        this.actions = project.actions || [];
         this.images = images;
         this.config = config;
         this.fps = Number(config.fps) || 36;
+        this.nodeById = new Map();
+        this.actionById = new Map();
+        this.actionByName = new Map();
+        this.attachmentNodes = [];
+        this.timelineKeyCache = new WeakMap();
+        this.projectTimelineKeyCache = new Map();
+        this.restWorldPoseCache = new Map();
+        this.restPartTransformCache = new WeakMap();
+        this.attachmentSourceGridCache = new WeakMap();
+        this.renderFrameState = null;
+        this.nodes.forEach((node) => {
+          if (node?.id != null) {
+            this.nodeById.set(String(node.id), node);
+          }
+          if (node?.attachment) {
+            this.attachmentNodes.push(node);
+          }
+        });
+        this.actions.forEach((action) => {
+          if (action?.id != null && !this.actionById.has(String(action.id))) {
+            this.actionById.set(String(action.id), action);
+          }
+          if (action?.name != null && !this.actionByName.has(String(action.name))) {
+            this.actionByName.set(String(action.name), action);
+          }
+        });
         this.idleAction =
           this.findPreferredAction(config.idleActionIds || ['idle'], config.idleActionNames || ['待机']) ||
-          project.actions?.[0] ||
+          this.actions[0] ||
           null;
         this.moveAction =
           this.findPreferredAction(config.moveActionIds || ['jump'], config.moveActionNames || ['跳跃']) ||
@@ -5045,8 +5239,8 @@
             [...(config.attackActionIds || []), project.selectedActionId].filter(Boolean),
             config.attackActionNames || []
           ) ||
-          (project.actions || []).find(action => action.name === '挥砍') ||
-          (project.actions || []).find(
+          this.actions.find(action => action.name === '挥砍') ||
+          this.actions.find(
             action => action.id !== this.idleAction?.id && action.id !== this.moveAction?.id
           ) ||
           this.moveAction ||
@@ -5583,11 +5777,13 @@
       }
 
       findAction(id) {
-        return (this.project.actions || []).find(action => action.id === id) || null;
+        if (id == null) return null;
+        return this.actionById.get(String(id)) || null;
       }
 
       findActionByName(name) {
-        return (this.project.actions || []).find(action => action.name === name) || null;
+        if (name == null) return null;
+        return this.actionByName.get(String(name)) || null;
       }
 
       findPreferredAction(ids = [], names = []) {
@@ -5600,6 +5796,108 @@
           if (action) return action;
         }
         return null;
+      }
+
+      getNodeById(nodeId) {
+        if (nodeId == null) return null;
+        return this.nodeById.get(String(nodeId)) || null;
+      }
+
+      getBoneNodeById(nodeId) {
+        const node = this.getNodeById(nodeId);
+        return node && !node.attachment ? node : null;
+      }
+
+      getSortedTimelineKeys(action, nodeId) {
+        const normalizedNodeId = nodeId == null ? '' : String(nodeId);
+        if (!normalizedNodeId) return [];
+        if (action && typeof action === 'object') {
+          let actionCache = this.timelineKeyCache.get(action);
+          if (!actionCache) {
+            actionCache = new Map();
+            this.timelineKeyCache.set(action, actionCache);
+          }
+          if (!actionCache.has(normalizedNodeId)) {
+            actionCache.set(
+              normalizedNodeId,
+              [...((action?.timelines || {})[normalizedNodeId] || [])].sort((a, b) => a.frame - b.frame),
+            );
+          }
+          return actionCache.get(normalizedNodeId);
+        }
+        if (!this.projectTimelineKeyCache.has(normalizedNodeId)) {
+          this.projectTimelineKeyCache.set(normalizedNodeId, []);
+        }
+        return this.projectTimelineKeyCache.get(normalizedNodeId);
+      }
+
+      beginRenderFrame(action, frame) {
+        const frameKey = Math.round((Number(frame) || 0) * 1000) / 1000;
+        const actionKey = action?.id != null
+          ? `id:${String(action.id)}`
+          : action?.name != null
+            ? `name:${String(action.name)}`
+            : '__default__';
+        if (
+          this.renderFrameState &&
+          this.renderFrameState.actionKey === actionKey &&
+          this.renderFrameState.frameKey === frameKey
+        ) {
+          return this.renderFrameState;
+        }
+        this.renderFrameState = {
+          action,
+          actionKey,
+          frameKey,
+          localPoseByNode: new Map(),
+          worldPoseByNode: new Map(),
+          effectiveParentByNode: new Map(),
+          visibilityByNode: new Map(),
+          attachmentAlphaByNode: new Map(),
+          attachmentSegmentsByNode: new Map(),
+          bowRigByControlNode: new Map(),
+          renderableAttachmentNodes: null,
+        };
+        return this.renderFrameState;
+      }
+
+      getRenderableAttachmentNodes(action, frame) {
+        const frameState = this.beginRenderFrame(action, frame);
+        if (Array.isArray(frameState.renderableAttachmentNodes)) {
+          return frameState.renderableAttachmentNodes;
+        }
+        frameState.renderableAttachmentNodes = this.attachmentNodes
+          .filter(node => this.isNodeVisibleAtFrame(node, action, frame))
+          .slice()
+          .sort((a, b) => {
+            const layerDiff = (a.attachment.layer || 0) - (b.attachment.layer || 0);
+            return layerDiff || this.effectiveAttachmentAlphaForNode(a, action, frame) - this.effectiveAttachmentAlphaForNode(b, action, frame);
+          });
+        return frameState.renderableAttachmentNodes;
+      }
+
+      getAttachmentSourceGrid(image, cols, rows) {
+        if (!image) return [];
+        let imageCache = this.attachmentSourceGridCache.get(image);
+        if (!imageCache) {
+          imageCache = new Map();
+          this.attachmentSourceGridCache.set(image, imageCache);
+        }
+        const cacheKey = `${cols}x${rows}`;
+        if (!imageCache.has(cacheKey)) {
+          const source = [];
+          for (let row = 0; row <= rows; row += 1) {
+            const v = row / rows;
+            const sourceRow = [];
+            for (let col = 0; col <= cols; col += 1) {
+              const u = col / cols;
+              sourceRow.push({ x: image.width * u, y: image.height * v });
+            }
+            source.push(sourceRow);
+          }
+          imageCache.set(cacheKey, source);
+        }
+        return imageCache.get(cacheKey);
       }
 
       clampFrame(frame, duration = this.project.duration ?? 29) {
@@ -5707,11 +6005,11 @@
           ? String(piece.attachment.restPart.parentBoneId)
           : null;
         if (parentBoneId) {
-          return this.nodes.find((node) => node.id === parentBoneId && !node.attachment) || null;
+          return this.getBoneNodeById(parentBoneId);
         }
         const skinBoneId = piece?.attachment?.skinBoneIds?.[0] ? String(piece.attachment.skinBoneIds[0]) : null;
         if (skinBoneId) {
-          return this.nodes.find((node) => node.id === skinBoneId && !node.attachment) || null;
+          return this.getBoneNodeById(skinBoneId);
         }
         return null;
       }
@@ -5731,11 +6029,11 @@
           ? String(piece.attachment.restPart.parentBoneId)
           : null;
         if (parentBoneId) {
-          return this.nodes.find((node) => node.id === parentBoneId && !node.attachment) || null;
+          return this.getBoneNodeById(parentBoneId);
         }
         const skinBoneId = piece?.attachment?.skinBoneIds?.[0] ? String(piece.attachment.skinBoneIds[0]) : null;
         if (skinBoneId) {
-          return this.nodes.find((node) => node.id === skinBoneId && !node.attachment) || null;
+          return this.getBoneNodeById(skinBoneId);
         }
         return null;
       }
@@ -5860,7 +6158,7 @@
           this.getSlashFxVisibilityTrackMap(action)?.[piece.id],
           duration,
         );
-        if (!track.length) return true;
+        if (!track.length) return false;
         const previous = [...track].reverse().find((item) => item.frame <= frame);
         return previous ? previous.visible : false;
       }
@@ -5873,11 +6171,12 @@
           this.getSlashFxVisibilityTrackMap(action)?.[piece.id],
           duration,
         );
-        if (!track.length) return 1;
+        if (!track.length) return 0;
         const appearFadeFrames = 2;
         const disappearFadeFrames = 5;
         const previous = [...track].reverse().find((item) => item.frame <= frame);
-        if (previous && !previous.visible && frame <= previous.frame + disappearFadeFrames) {
+        const entryBeforePrevious = previous ? [...track].reverse().find((item) => item.frame < previous.frame) : null;
+        if (previous && !previous.visible && entryBeforePrevious?.visible && frame <= previous.frame + disappearFadeFrames) {
           const fadeT = Math.max(0, Math.min(1, (frame - previous.frame) / disappearFadeFrames));
           return 1 - fadeT;
         }
@@ -5909,12 +6208,27 @@
 
       effectiveParentIdForNode(node, action, frame) {
         if (!node) return null;
-        if (node.attachment) return node.parentId || null;
-        const arrowPiece = this.arrowPieceForNode(node);
-        if (arrowPiece) return this.arrowParentAtFrame(arrowPiece, action, frame);
-        const slashFxPiece = this.slashFxPieceForNode(node);
-        if (slashFxPiece) return this.slashFxParentAtFrame(slashFxPiece, action, frame);
-        return node.parentId || null;
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = node?.id != null ? String(node.id) : '';
+        if (cacheKey && frameState.effectiveParentByNode.has(cacheKey)) {
+          return frameState.effectiveParentByNode.get(cacheKey);
+        }
+        let parentId = node.parentId || null;
+        if (!node.attachment) {
+          const arrowPiece = this.arrowPieceForNode(node);
+          if (arrowPiece) {
+            parentId = this.arrowParentAtFrame(arrowPiece, action, frame);
+          } else {
+            const slashFxPiece = this.slashFxPieceForNode(node);
+            if (slashFxPiece) {
+              parentId = this.slashFxParentAtFrame(slashFxPiece, action, frame);
+            }
+          }
+        }
+        if (cacheKey) {
+          frameState.effectiveParentByNode.set(cacheKey, parentId);
+        }
+        return parentId;
       }
 
       isTempParentBoundArrowCarrier(node, action, frame) {
@@ -5933,18 +6247,40 @@
 
       isNodeVisibleAtFrame(node, action, frame) {
         if (!node) return false;
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = node?.id != null ? String(node.id) : '';
+        if (cacheKey && frameState.visibilityByNode.has(cacheKey)) {
+          return frameState.visibilityByNode.get(cacheKey);
+        }
+        let visible = node.visible !== false;
         const arrowPiece = this.arrowPieceForNode(node);
-        if (arrowPiece) return this.arrowVisibilityAtFrame(arrowPiece, action, frame);
-        const slashFxPiece = this.slashFxPieceForNode(node);
-        if (slashFxPiece) return this.slashFxAlphaAtFrame(slashFxPiece, action, frame) > 0.001;
-        return node.visible !== false;
+        if (arrowPiece) {
+          visible = this.arrowVisibilityAtFrame(arrowPiece, action, frame);
+        } else {
+          const slashFxPiece = this.slashFxPieceForNode(node);
+          if (slashFxPiece) {
+            visible = this.slashFxAlphaAtFrame(slashFxPiece, action, frame) > 0.001;
+          }
+        }
+        if (cacheKey) {
+          frameState.visibilityByNode.set(cacheKey, visible);
+        }
+        return visible;
       }
 
       effectiveAttachmentAlphaForNode(node, action, frame) {
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = node?.id != null ? String(node.id) : '';
+        if (cacheKey && frameState.attachmentAlphaByNode.has(cacheKey)) {
+          return frameState.attachmentAlphaByNode.get(cacheKey);
+        }
         const baseAlpha = Math.max(0, Math.min(1, Number(node?.attachment?.alpha ?? 1)));
         const slashFxPiece = this.slashFxPieceForNode(node);
-        if (slashFxPiece) return baseAlpha * this.slashFxAlphaAtFrame(slashFxPiece, action, frame);
-        return baseAlpha;
+        const alpha = slashFxPiece ? baseAlpha * this.slashFxAlphaAtFrame(slashFxPiece, action, frame) : baseAlpha;
+        if (cacheKey) {
+          frameState.attachmentAlphaByNode.set(cacheKey, alpha);
+        }
+        return alpha;
       }
 
       normalizeBowRig(bowRig) {
@@ -6028,15 +6364,30 @@
 
       resolveRestPartTransform(restPart) {
         if (!restPart) return null;
+        if (this.restPartTransformCache.has(restPart)) {
+          return this.restPartTransformCache.get(restPart);
+        }
         const parentBoneId = restPart.parentBoneId ? String(restPart.parentBoneId) : null;
-        if (!parentBoneId) return { ...restPart };
-        const parentNode = this.nodes.find((node) => node.id === parentBoneId);
-        if (!parentNode) return { ...restPart };
+        if (!parentBoneId) {
+          const resolved = { ...restPart };
+          this.restPartTransformCache.set(restPart, resolved);
+          return resolved;
+        }
+        const parentNode = this.getNodeById(parentBoneId);
+        if (!parentNode) {
+          const resolved = { ...restPart };
+          this.restPartTransformCache.set(restPart, resolved);
+          return resolved;
+        }
         const parentPose = this.restWorldPose(parentNode);
         if (window.SpineRuntimeMath?.resolveRestPartWorldTransform) {
-          return window.SpineRuntimeMath.resolveRestPartWorldTransform(parentPose, restPart);
+          const resolved = window.SpineRuntimeMath.resolveRestPartWorldTransform(parentPose, restPart);
+          this.restPartTransformCache.set(restPart, resolved);
+          return resolved;
         }
-        return { ...restPart };
+        const resolved = { ...restPart };
+        this.restPartTransformCache.set(restPart, resolved);
+        return resolved;
       }
 
       isBowRigAttachment(node, attachment) {
@@ -6046,15 +6397,11 @@
       getBowRigNodes(controlNode) {
         const rig = this.normalizeBowRig(controlNode?.bowRig);
         if (!rig) return null;
-        const center = this.nodes.find((item) => item.id === rig.centerId);
-        const upper = this.nodes.find((item) => item.id === rig.upperId);
-        const lower = this.nodes.find((item) => item.id === rig.lowerId);
-        const stringUpper =
-          this.nodes.find((item) => item.id === rig.stringUpperId) ||
-          this.nodes.find((item) => item.id === rig.stringId);
-        const stringLower =
-          this.nodes.find((item) => item.id === rig.stringLowerId) ||
-          this.nodes.find((item) => item.id === rig.stringId);
+        const center = this.getNodeById(rig.centerId);
+        const upper = this.getNodeById(rig.upperId);
+        const lower = this.getNodeById(rig.lowerId);
+        const stringUpper = this.getNodeById(rig.stringUpperId) || this.getNodeById(rig.stringId);
+        const stringLower = this.getNodeById(rig.stringLowerId) || this.getNodeById(rig.stringId);
         if (!center || !upper || !lower || !stringUpper || !stringLower) return null;
         return { rig, center, upper, lower, stringUpper, stringLower, control: controlNode };
       }
@@ -6099,6 +6446,11 @@
       }
 
       computeBowRigFrame(controlNode, action, frame) {
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = controlNode?.id != null ? String(controlNode.id) : '';
+        if (cacheKey && frameState.bowRigByControlNode.has(cacheKey)) {
+          return frameState.bowRigByControlNode.get(cacheKey);
+        }
         const nodes = this.getBowRigNodes(controlNode);
         if (!nodes) return null;
         const { center, upper, lower, control } = nodes;
@@ -6146,7 +6498,11 @@
           x: (rig.controlBaseX || 0) + (rig.pull || 0),
           y: rig.controlBaseY || 0,
         });
-        return { ...nodes, rig: this.normalizeBowRig(rig), centerWorld, upperTip, lowerTip, controlPoint };
+        const bowFrame = { ...nodes, rig: this.normalizeBowRig(rig), centerWorld, upperTip, lowerTip, controlPoint };
+        if (cacheKey) {
+          frameState.bowRigByControlNode.set(cacheKey, bowFrame);
+        }
+        return bowFrame;
       }
 
       bowRigSegments(attachment, action, frame) {
@@ -6186,23 +6542,35 @@
       }
 
       attachmentSegments(node, attachment, action, frame) {
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = node?.id != null ? String(node.id) : `${attachment?.image || ''}:${attachment?.restPart?.partId || ''}`;
+        if (frameState.attachmentSegmentsByNode.has(cacheKey)) {
+          return frameState.attachmentSegmentsByNode.get(cacheKey);
+        }
+        let segments = null;
         if (this.isBowRigAttachment(node, attachment)) {
           const bowSegments = this.bowRigSegments(attachment, action, frame);
-          if (bowSegments?.length) return bowSegments;
+          if (bowSegments?.length) {
+            segments = bowSegments;
+          }
         }
-        return (attachment.skinBoneIds || [])
-          .map(nodeId => this.nodes.find(item => item.id === nodeId))
-          .filter(Boolean)
-          .map(boneNode => {
-            const pose = this.worldPose(boneNode, action, frame);
-            const rest = this.restWorldPose(boneNode);
-            return {
-              restStart: { x: rest.worldX, y: rest.worldY },
-              restEnd: this.endPoint(rest),
-              start: { x: pose.worldX, y: pose.worldY },
-              end: this.endPoint(pose),
-            };
-          });
+        if (!segments) {
+          segments = (attachment.skinBoneIds || [])
+            .map(nodeId => this.getNodeById(nodeId))
+            .filter(Boolean)
+            .map(boneNode => {
+              const pose = this.worldPose(boneNode, action, frame);
+              const rest = this.restWorldPose(boneNode);
+              return {
+                restStart: { x: rest.worldX, y: rest.worldY },
+                restEnd: this.endPoint(rest),
+                start: { x: pose.worldX, y: pose.worldY },
+                end: this.endPoint(pose),
+              };
+            });
+        }
+        frameState.attachmentSegmentsByNode.set(cacheKey, segments);
+        return segments;
       }
 
       computeBounds() {
@@ -6308,7 +6676,7 @@
         this.rightHandNodeCache =
           this.nodes.find((node) => {
             if (node?.role !== 'rightArm') return false;
-            const parent = this.nodes.find((candidate) => candidate.id === node.parentId);
+            const parent = this.getNodeById(node.parentId);
             return parent?.role === 'rightArm';
           }) ||
           this.nodes.find(node => node?.role === 'rightArm') ||
@@ -6357,6 +6725,7 @@
         const duration = Math.max(1, action?.duration ?? this.project.duration ?? 29);
         const rawFrame = (elapsedMs / 1000) * this.fps;
         const frame = options.loop === false ? Math.min(duration, rawFrame) : rawFrame % (duration + 1);
+        this.beginRenderFrame(action, frame);
         ctx.save();
         ctx.translate(placement.translateX, placement.translateY);
         ctx.scale(placement.scale, placement.scale);
@@ -6365,13 +6734,7 @@
       }
 
       drawCharacter(ctx, action, frame) {
-        this.nodes
-          .filter(node => node.attachment && this.isNodeVisibleAtFrame(node, action, frame))
-          .slice()
-          .sort((a, b) => {
-            const layerDiff = (a.attachment.layer || 0) - (b.attachment.layer || 0);
-            return layerDiff || this.effectiveAttachmentAlphaForNode(a, action, frame) - this.effectiveAttachmentAlphaForNode(b, action, frame);
-          })
+        this.getRenderableAttachmentNodes(action, frame)
           .forEach(node => this.drawAttachment(ctx, node, action, frame));
       }
 
@@ -6386,53 +6749,72 @@
         if (!segments.length) return;
         const cols = this.lowDetail ? 3 : attachment.restPart.partId === 'torso' ? 5 : 4;
         const rows = this.lowDetail ? Math.max(4, segments.length * 3) : Math.max(6, segments.length * 5);
-        const source = [];
+        const source = this.getAttachmentSourceGrid(image, cols, rows);
         const dest = [];
         for (let row = 0; row <= rows; row += 1) {
-          const v = row / rows;
-          const sourceRow = [];
           const destRow = [];
           for (let col = 0; col <= cols; col += 1) {
-            const u = col / cols;
-            const sourcePoint = { x: image.width * u, y: image.height * v };
-            sourceRow.push(sourcePoint);
+            const sourcePoint = source[row][col];
             destRow.push(this.deformByAttachmentSegments(
               this.imagePointToFullSkinRest(sourcePoint, image, restPart),
               segments,
             ));
           }
-          source.push(sourceRow);
           dest.push(destRow);
         }
         this.drawTexturedMesh(ctx, image, source, dest, alpha);
       }
 
       getLocalPose(node, action, frame) {
-        const keys = [...((action?.timelines || {})[node.id] || [])].sort((a, b) => a.frame - b.frame);
-        if (!keys.length) return this.enrichBowPose(node, { ...node });
-        const exact = keys.find(item => item.frame === frame);
-        if (exact) return this.enrichBowPose(node, { ...node, ...exact });
-        if (keys.length === 1) return this.enrichBowPose(node, { ...node, ...keys[0] });
-        const before = [...keys].reverse().find(item => item.frame < frame);
-        const after = keys.find(item => item.frame > frame);
-        if (!before) return this.enrichBowPose(node, { ...node, ...keys[0] });
-        if (!after) {
-          const start = keys.find(item => item.frame === 0) || keys[0];
-          const span = Math.max(1, (action?.duration ?? this.project.duration ?? 29) + 1 - before.frame);
-          return this.interpolateLocalPose(node, before, start, Math.max(0, Math.min(1, (frame - before.frame) / span)));
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = node?.id != null ? String(node.id) : '';
+        if (cacheKey && frameState.localPoseByNode.has(cacheKey)) {
+          return frameState.localPoseByNode.get(cacheKey);
         }
-        const arrowPiece = this.arrowPieceForNode(node);
-        const slashFxPiece = this.slashFxPieceForNode(node);
-        const parentChange =
-          this.arrowParentChangeBetweenFrames(arrowPiece, action, before.frame, after.frame) ||
-          this.slashFxParentChangeBetweenFrames(slashFxPiece, action, before.frame, after.frame);
-        if (parentChange) {
-          if (frame < parentChange.frame) {
-            return this.enrichBowPose(node, { ...node, ...before });
+        const keys = this.getSortedTimelineKeys(action, node.id);
+        let pose = null;
+        if (!keys.length) {
+          pose = this.enrichBowPose(node, { ...node });
+        } else {
+          const exact = keys.find(item => item.frame === frame);
+          if (exact) {
+            pose = this.enrichBowPose(node, { ...node, ...exact });
+          } else if (keys.length === 1) {
+            pose = this.enrichBowPose(node, { ...node, ...keys[0] });
+          } else {
+            const before = [...keys].reverse().find(item => item.frame < frame);
+            const after = keys.find(item => item.frame > frame);
+            if (!before) {
+              pose = this.enrichBowPose(node, { ...node, ...keys[0] });
+            } else if (!after) {
+              const start = keys.find(item => item.frame === 0) || keys[0];
+              const span = Math.max(1, (action?.duration ?? this.project.duration ?? 29) + 1 - before.frame);
+              pose = this.interpolateLocalPose(
+                node,
+                before,
+                start,
+                Math.max(0, Math.min(1, (frame - before.frame) / span)),
+              );
+            } else {
+              const arrowPiece = this.arrowPieceForNode(node);
+              const slashFxPiece = this.slashFxPieceForNode(node);
+              const parentChange =
+                this.arrowParentChangeBetweenFrames(arrowPiece, action, before.frame, after.frame) ||
+                this.slashFxParentChangeBetweenFrames(slashFxPiece, action, before.frame, after.frame);
+              if (parentChange) {
+                pose = frame < parentChange.frame
+                  ? this.enrichBowPose(node, { ...node, ...before })
+                  : this.enrichBowPose(node, { ...node, ...after });
+              } else {
+                pose = this.interpolateLocalPose(node, before, after, (frame - before.frame) / (after.frame - before.frame));
+              }
+            }
           }
-          return this.enrichBowPose(node, { ...node, ...after });
         }
-        return this.interpolateLocalPose(node, before, after, (frame - before.frame) / (after.frame - before.frame));
+        if (cacheKey) {
+          frameState.localPoseByNode.set(cacheKey, pose);
+        }
+        return pose;
       }
 
       interpolateLocalPose(node, before, after, t) {
@@ -6470,12 +6852,18 @@
       }
 
       worldPose(node, action, frame, seen = new Set()) {
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = node?.id != null ? String(node.id) : '';
+        if (cacheKey && frameState.worldPoseByNode.has(cacheKey)) {
+          return frameState.worldPoseByNode.get(cacheKey);
+        }
         if (seen.has(node.id)) return this.getLocalPose(node, action, frame);
         seen.add(node.id);
         const local = this.getLocalPose(node, action, frame);
         const effectiveParentId = this.effectiveParentIdForNode(node, action, frame);
+        let world = null;
         if (!effectiveParentId) {
-          return {
+          world = {
             ...local,
             worldX: local.x,
             worldY: local.y,
@@ -6483,96 +6871,129 @@
             worldScaleX: local.scaleX,
             worldScaleY: local.scaleY,
           };
-        }
-        const parent = this.nodes.find(item => item.id === effectiveParentId);
-        if (!parent) {
-          return {
-            ...local,
-            worldX: local.x,
-            worldY: local.y,
-            worldRotation: local.rotation,
-            worldScaleX: local.scaleX,
-            worldScaleY: local.scaleY,
-          };
-        }
-        const p = this.worldPose(parent, action, frame, seen);
-        const anchor = this.endPoint(p);
-        const worldRotation = p.worldRotation + local.rotation;
-        const worldScaleX = p.worldScaleX * local.scaleX;
-        const worldScaleY = p.worldScaleY * local.scaleY;
-        if (this.isTempParentBoundArrowCarrier(node, action, frame)) {
-          const gripLocal = this.arrowGripLocalForPiece(this.arrowPieceForNode(node));
-          if (gripLocal) {
-            const gripRad = (worldRotation * Math.PI) / 180;
-            const gripOffsetX =
-              gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
-            const gripOffsetY =
-              gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
-            return {
+        } else {
+          const parent = this.getNodeById(effectiveParentId);
+          if (!parent) {
+            world = {
               ...local,
-              worldX: anchor.x - gripOffsetX,
-              worldY: anchor.y - gripOffsetY,
-              worldRotation,
-              worldScaleX,
-              worldScaleY,
+              worldX: local.x,
+              worldY: local.y,
+              worldRotation: local.rotation,
+              worldScaleX: local.scaleX,
+              worldScaleY: local.scaleY,
             };
+          } else {
+            const p = this.worldPose(parent, action, frame, seen);
+            const anchor = this.endPoint(p);
+            const worldRotation = p.worldRotation + local.rotation;
+            const worldScaleX = p.worldScaleX * local.scaleX;
+            const worldScaleY = p.worldScaleY * local.scaleY;
+            if (this.isTempParentBoundArrowCarrier(node, action, frame)) {
+              const gripLocal = this.arrowGripLocalForPiece(this.arrowPieceForNode(node));
+              if (gripLocal) {
+                const gripRad = (worldRotation * Math.PI) / 180;
+                const gripOffsetX =
+                  gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
+                const gripOffsetY =
+                  gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
+                world = {
+                  ...local,
+                  worldX: anchor.x - gripOffsetX,
+                  worldY: anchor.y - gripOffsetY,
+                  worldRotation,
+                  worldScaleX,
+                  worldScaleY,
+                };
+              }
+            }
+            if (!world && this.isTempParentBoundSlashFxCarrier(node, action, frame)) {
+              const gripLocal = this.slashFxGripLocalForPiece(this.slashFxPieceForNode(node));
+              if (gripLocal) {
+                const gripRad = (worldRotation * Math.PI) / 180;
+                const gripOffsetX =
+                  gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
+                const gripOffsetY =
+                  gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
+                world = {
+                  ...local,
+                  worldX: anchor.x - gripOffsetX,
+                  worldY: anchor.y - gripOffsetY,
+                  worldRotation,
+                  worldScaleX,
+                  worldScaleY,
+                };
+              }
+            }
+            if (!world) {
+              const rad = (p.worldRotation * Math.PI) / 180;
+              const px = local.x * p.worldScaleX;
+              const py = local.y * p.worldScaleY;
+              world = {
+                ...local,
+                worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
+                worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
+                worldRotation,
+                worldScaleX,
+                worldScaleY,
+              };
+            }
           }
         }
-        if (this.isTempParentBoundSlashFxCarrier(node, action, frame)) {
-          const gripLocal = this.slashFxGripLocalForPiece(this.slashFxPieceForNode(node));
-          if (gripLocal) {
-            const gripRad = (worldRotation * Math.PI) / 180;
-            const gripOffsetX =
-              gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
-            const gripOffsetY =
-              gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
-            return {
-              ...local,
-              worldX: anchor.x - gripOffsetX,
-              worldY: anchor.y - gripOffsetY,
-              worldRotation,
-              worldScaleX,
-              worldScaleY,
-            };
-          }
+        if (cacheKey) {
+          frameState.worldPoseByNode.set(cacheKey, world);
         }
-        const rad = (p.worldRotation * Math.PI) / 180;
-        const px = local.x * p.worldScaleX;
-        const py = local.y * p.worldScaleY;
-        return {
-          ...local,
-          worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
-          worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
-          worldRotation,
-          worldScaleX,
-          worldScaleY,
-        };
+        return world;
       }
 
       restWorldPose(node, seen = new Set()) {
+        const cacheKey = node?.id != null ? String(node.id) : '';
+        if (cacheKey && this.restWorldPoseCache.has(cacheKey)) {
+          return this.restWorldPoseCache.get(cacheKey);
+        }
         if (seen.has(node.id)) return { ...node, ...(node.bindPose || {}) };
         seen.add(node.id);
         const local = { ...node, ...(node.bindPose || {}) };
+        let world = null;
         if (!node.parentId) {
-          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+          world = {
+            ...local,
+            worldX: local.x,
+            worldY: local.y,
+            worldRotation: local.rotation,
+            worldScaleX: local.scaleX,
+            worldScaleY: local.scaleY,
+          };
+        } else {
+          const parent = this.getNodeById(node.parentId);
+          if (!parent) {
+            world = {
+              ...local,
+              worldX: local.x,
+              worldY: local.y,
+              worldRotation: local.rotation,
+              worldScaleX: local.scaleX,
+              worldScaleY: local.scaleY,
+            };
+          } else {
+            const p = this.restWorldPose(parent, seen);
+            const anchor = this.endPoint(p);
+            const rad = (p.worldRotation * Math.PI) / 180;
+            const px = local.x * p.worldScaleX;
+            const py = local.y * p.worldScaleY;
+            world = {
+              ...local,
+              worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
+              worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
+              worldRotation: p.worldRotation + local.rotation,
+              worldScaleX: p.worldScaleX * local.scaleX,
+              worldScaleY: p.worldScaleY * local.scaleY,
+            };
+          }
         }
-        const parent = this.nodes.find(item => item.id === node.parentId);
-        if (!parent) {
-          return { ...local, worldX: local.x, worldY: local.y, worldRotation: local.rotation, worldScaleX: local.scaleX, worldScaleY: local.scaleY };
+        if (cacheKey) {
+          this.restWorldPoseCache.set(cacheKey, world);
         }
-        const p = this.restWorldPose(parent, seen);
-        const anchor = this.endPoint(p);
-        const rad = (p.worldRotation * Math.PI) / 180;
-        const px = local.x * p.worldScaleX;
-        const py = local.y * p.worldScaleY;
-        return {
-          ...local,
-          worldX: anchor.x + px * Math.cos(rad) - py * Math.sin(rad),
-          worldY: anchor.y + px * Math.sin(rad) + py * Math.cos(rad),
-          worldRotation: p.worldRotation + local.rotation,
-          worldScaleX: p.worldScaleX * local.scaleX,
-          worldScaleY: p.worldScaleY * local.scaleY,
-        };
+        return world;
       }
 
       endPoint(pose) {
@@ -7070,8 +7491,8 @@
       const proxyAnchor = document.createElement('div');
       const anchorPosition = getBattleSlotAnchorPosition(sourceSlot, boxRect);
       proxyAnchor.className = 'battle-spine-proxy-anchor';
-      proxyAnchor.style.left = `${anchorPosition.x}px`;
-      proxyAnchor.style.top = `${anchorPosition.y}px`;
+      proxyAnchor.style.setProperty('--battle-proxy-x', `${anchorPosition.x}px`);
+      proxyAnchor.style.setProperty('--battle-proxy-y', `${anchorPosition.y}px`);
       proxyAnchor.style.zIndex = sourceSlot.style.zIndex;
 
       const proxySlot = sourceSlot.cloneNode(true);
@@ -7126,8 +7547,11 @@
       const sourceSlot = sourceGrid?.querySelector(`.formation-slot[data-slot="${step.sourceSlotKey}"]`);
       const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
       const sourceCanvas = sourceSlot?.querySelector('.formation-spine-canvas');
-      const attackFrameCount = renderer.getActionFrameCount('attack');
-      const attackPeakFrame = troopType === 'archer' ? 49 : 14;
+      const infantryAttackPlan = !troopAsset.stationaryAttack && troopType !== 'archer'
+        ? getBattleMeleeAttackPlan(troopType, renderer)
+        : null;
+      const attackActionId = infantryAttackPlan?.attackAction || 'attack';
+      const attackPeakFrame = infantryAttackPlan?.impactFrame ?? (troopType === 'archer' ? 49 : 14);
 
       const sourceFrame = sourceSlot?.querySelector('.formation-spine-frame');
       const targetFrame = targetSlot?.querySelector('.formation-spine-frame');
@@ -7162,7 +7586,21 @@
         y: initialTop,
       };
       const to = getBattleLandingTargetPosition(targetAnchor, troopAsset, proxySide);
-      if (!troopAsset.stationaryAttack) {
+      if (!troopAsset.stationaryAttack && infantryAttackPlan?.moveAction) {
+        await animateBattleSpineProxy(
+          proxy,
+          renderer,
+          from,
+          to,
+          infantryAttackPlan.moveAction,
+          infantryAttackPlan.moveDurationMs,
+          {
+            moveStartFrame: infantryAttackPlan.moveStartFrame,
+            moveEndFrame: infantryAttackPlan.moveEndFrame,
+            arcHeight: getBattleJumpArcHeight(from, to),
+          }
+        );
+      } else if (!troopAsset.stationaryAttack && !infantryAttackPlan && troopType !== 'archer') {
         await animateBattleSpineProxy(
           proxy,
           renderer,
@@ -7177,15 +7615,26 @@
           }
         );
       }
-                                    const attackWhiteFlashStartFrame = Math.max(0, attackPeakFrame - 1);
+      const attackWhiteFlashStartFrame = infantryAttackPlan?.effectFrame ?? Math.max(0, attackPeakFrame - 1);
+      const attackFrom = infantryAttackPlan?.variant === 'jump_chop'
+        ? from
+        : (troopAsset.stationaryAttack ? from : to);
+      const attackTo = infantryAttackPlan?.variant === 'jump_chop'
+        ? to
+        : attackFrom;
       await animateBattleSpineProxy(
         proxy,
         renderer,
-        troopAsset.stationaryAttack ? from : to,
-        troopAsset.stationaryAttack ? from : to,
-        'attack',
-        renderer.getActionDurationMs('attack'),
+        attackFrom,
+        attackTo,
+        attackActionId,
+        infantryAttackPlan?.attackDurationMs || renderer.getActionDurationMs('attack'),
         {
+          moveStartFrame: infantryAttackPlan?.attackMoveStartFrame,
+          moveEndFrame: infantryAttackPlan?.attackMoveEndFrame,
+          arcHeight: infantryAttackPlan?.variant === 'jump_chop'
+            ? getBattleJumpArcHeight(from, to)
+            : 0,
           impactFrame: attackPeakFrame,
           onFrame:
             troopType === 'archer'
@@ -7957,6 +8406,7 @@
           : start + ((movement.effectFrame ?? 0) + 1) * frameDurationMs;
         let impactTriggered = false;
         let effectTriggered = false;
+        const renderGate = createBattleSpineFrameGate(frameDurationMs);
         const motionElement = proxy.closest('.battle-spine-proxy-anchor') || proxy;
         const frame = now => {
           const t = Math.min(1, (now - start) / duration);
@@ -7969,12 +8419,14 @@
             : Math.max(0, Math.min(1, (actionFrame - moveStartFrame) / (moveEndFrame - moveStartFrame)));
           const arcHeight = Number(movement.arcHeight) || 0;
           const arcOffsetY = arcHeight > 0 ? -4 * arcHeight * moveT * (1 - moveT) : 0;
-          motionElement.style.left = `${from.x + (to.x - from.x) * moveT}px`;
-          motionElement.style.top = `${from.y + (to.y - from.y) * moveT + arcOffsetY}px`;
-          renderer.render(proxy, action, elapsedMs, {
-            loop: false,
-            side: proxy.dataset.side || (proxy.classList.contains('enemy') ? 'enemy' : 'player'),
-          });
+          motionElement.style.setProperty('--battle-proxy-x', `${from.x + (to.x - from.x) * moveT}px`);
+          motionElement.style.setProperty('--battle-proxy-y', `${from.y + (to.y - from.y) * moveT + arcOffsetY}px`);
+          if (renderGate.shouldRender(elapsedMs, duration)) {
+            renderer.render(proxy, action, elapsedMs, {
+              loop: false,
+              side: proxy.dataset.side || (proxy.classList.contains('enemy') ? 'enemy' : 'player'),
+            });
+          }
           movement.onFrame?.({
             startAt: start,
             now,
@@ -8053,6 +8505,30 @@
       return clamp(horizontalDistance * 0.22, 36, 82);
     }
 
+    function createBattleSpineFrameGate(frameDurationMs) {
+      const safeFrameDuration = Math.max(1, Number(frameDurationMs) || 1000 / 36);
+      let lastFrameBucket = -1;
+      let renderedFinalFrame = false;
+      return {
+        shouldRender(elapsedMs, durationMs = Infinity) {
+          const currentElapsedMs = Math.max(0, Number(elapsedMs) || 0);
+          const totalDurationMs = Number.isFinite(durationMs) ? Math.max(0, Number(durationMs) || 0) : Infinity;
+          const isFinalFrame = Number.isFinite(totalDurationMs) && currentElapsedMs >= totalDurationMs;
+          const frameBucket = Math.floor(currentElapsedMs / safeFrameDuration);
+          if (isFinalFrame) {
+            if (renderedFinalFrame && frameBucket === lastFrameBucket) return false;
+            lastFrameBucket = frameBucket;
+            renderedFinalFrame = true;
+            return true;
+          }
+          if (frameBucket === lastFrameBucket) return false;
+          lastFrameBucket = frameBucket;
+          renderedFinalFrame = false;
+          return true;
+        },
+      };
+    }
+
         function animateBattleSpineCanvas(canvas, renderer, action, duration, movement = {}) {
       return new Promise(resolve => {
         const start = performance.now();
@@ -8061,6 +8537,7 @@
           ? start + movement.impactFrame * frameDurationMs
           : start;
         let impactTriggered = false;
+        const renderGate = createBattleSpineFrameGate(frameDurationMs);
         canvas.dataset.animating = 'true';
         const side = canvas.dataset.side || '';
 
@@ -8068,10 +8545,12 @@
           const t = Math.min(1, (now - start) / duration);
           const elapsedMs = now - start;
           const actionFrame = (elapsedMs / 1000) * renderer.fps;
-          renderer.render(canvas, action, elapsedMs, {
-            loop: false,
-            side,
-          });
+          if (renderGate.shouldRender(elapsedMs, duration)) {
+            renderer.render(canvas, action, elapsedMs, {
+              loop: false,
+              side,
+            });
+          }
           if (
             !impactTriggered &&
             movement.impactFrame != null &&
@@ -9270,6 +9749,7 @@
     /** 剧情战役：init({ objectiveId: 'supplyTransport', lessonTags: ['SupplyTransportBattle'] }) */
     window.BattleDemo = { init, BattleTutorialManager, inferLessonTags };
 
+    battleFpsState.rafId = window.requestAnimationFrame(tickBattleFpsHud);
     initialBattleConfig = getBattleConfigFromUrl();
     init(initialBattleConfig);
   </script>

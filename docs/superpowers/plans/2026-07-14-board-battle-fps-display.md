@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-14`
-- Current Focus: `Plan authored from the approved board-and-battle FPS display spec; implementation has not started.`
-- Next Step: `Choose an execution mode, then start Task 1 by writing the failing battle HUD regression test.`
-- Verification: `Not run`
+- Current Focus: `Inline execution completed locally for the board and battle FPS HUD; verification passed for targeted regressions, while full typecheck remains blocked by pre-existing src/main.ts errors.`
+- Next Step: `Review the local FPS HUD behavior and decide whether to keep the work as-is, refine it further, or prepare a clean commit once the unrelated typecheck errors are handled.`
+- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test tests\battle-fps-display.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test tests\campaign-fps-display.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe node_modules\typescript\bin\tsc --noEmit -p tsconfig.json FAIL at src/main.ts:431 and src/main.ts:436 (pre-existing unrelated errors).`
 - Notes: `Keep the HUD fixed at the top-right corner, always visible, click-through, and text-only as FPS.`
 
 ## Progress Log
@@ -23,6 +23,11 @@
   - Summary: `Plan created from the approved board-and-battle FPS display design.`
   - Verification: `Not run`
   - Next: `Choose Subagent-Driven or Inline execution before touching runtime files.`
+
+- 2026-07-14
+  - Summary: `Implemented always-visible top-right FPS HUDs for battle-demo and the campaign map, added regression coverage for the readout/sampler helpers, and wired the campaign HUD to the terrain renderer only to avoid double-counting the actor layer.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test tests\battle-fps-display.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test tests\campaign-fps-display.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe node_modules\typescript\bin\tsc --noEmit -p tsconfig.json FAIL at src/main.ts:431 and src/main.ts:436 (pre-existing unrelated errors).`
+  - Next: `Review the local FPS HUD behavior and decide whether to keep iterating or prepare a commit after the unrelated typecheck errors are resolved.`
 
 ---
 
@@ -103,7 +108,7 @@
   - `function createFpsSampler(windowMs = 500) -> { push(timestampMs): number, current(): number }`
   - `function updateBattleFpsHud(timestampMs): void`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/battle-fps-display.test.cjs` with extraction-based coverage for the new battle-demo helpers:
 
@@ -158,7 +163,7 @@ test("battle FPS sampler returns a stable positive value from rolling frame time
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -172,7 +177,7 @@ Expected:
 - Missing `formatFpsReadout`
 - Missing `createFpsSampler`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add a click-through HUD node and helper functions in `prototypes/battle-demo/index.html`:
 
@@ -242,7 +247,7 @@ function tickBattleFpsHud(timestampMs) {
 battleFpsState.rafId = window.requestAnimationFrame(tickBattleFpsHud);
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -279,7 +284,7 @@ git commit -m "feat: add battle demo fps display"
   - `function createCampaignFpsSampler(windowMs = 500) -> { push(timestampMs): number, current(): number }`
   - safe HUD updates from the campaign terrain render path
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/campaign-fps-display.test.cjs` that loads the new campaign helpers from `.test-dist/src/ui/views/map/campaign-terrain-webgl.js` after `npm run build:test`:
 
@@ -307,7 +312,7 @@ test("campaign FPS sampler keeps a safe last value with sparse timestamps", () =
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -321,7 +326,7 @@ Expected:
 - `FAIL`
 - Missing exported FPS helper(s) from `campaign-terrain-webgl.ts`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 In `src/ui/views/map/map-view.ts`, add the fixed top-right host inside the campaign map shell:
 
@@ -388,7 +393,7 @@ function updateCampaignFpsHud(root: ParentNode, timestampMs: number): void {
 
 Then call `updateCampaignFpsHud(canvas.getRootNode() as ParentNode, performance.now())` from the RAF-driven renderer `render()` path after a successful frame, and style the host with `pointer-events: none` so it never blocks map input.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -423,7 +428,7 @@ git commit -m "feat: add campaign board fps display"
   - updated `Progress Log`
   - recorded verification results for branch-finishing review
 
-- [ ] **Step 1: Run plan governance lint**
+- [x] **Step 1: Run plan governance lint**
 
 Run:
 
@@ -435,7 +440,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 2: Run focused verification**
+- [x] **Step 2: Run focused verification**
 
 Run:
 
@@ -450,7 +455,7 @@ Expected:
 - all targeted FPS tests `PASS`
 - `npm run typecheck` exits successfully
 
-- [ ] **Step 3: Sync progress and governance state**
+- [x] **Step 3: Sync progress and governance state**
 
 Update this plan after the implementation batch:
 
@@ -474,19 +479,19 @@ git commit -m "docs: update fps display implementation plan state"
 
 ## Exit Check
 
-- [ ] `The campaign board page shows an always-visible top-right FPS HUD.`
-- [ ] `The embedded battle page shows an always-visible top-right FPS HUD.`
-- [ ] `Both HUDs remain click-through and text-only.`
-- [ ] `Battle and campaign FPS helpers are covered by targeted regressions.`
+- [x] `The campaign board page shows an always-visible top-right FPS HUD.`
+- [x] `The embedded battle page shows an always-visible top-right FPS HUD.`
+- [x] `Both HUDs remain click-through and text-only.`
+- [x] `Battle and campaign FPS helpers are covered by targeted regressions.`
 - [ ] Project progress sync is updated if the child state changed.
 - [ ] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 

@@ -505,6 +505,7 @@ function renderCampaignMap(model: MapViewModel): string {
           })}
         </div>
         <div class="c-campaign-map__vignette" aria-hidden="true"></div>
+        <div class="c-campaign-map__fps-hud" data-campaign-fps-hud="true">FPS: 0</div>
         <div class="c-campaign-map-debug" aria-label="Campaign map debug controls">
           <div class="c-campaign-map-debug__readout">
             <span>Scale <strong data-campaign-map-scale>1.00x</strong></span>

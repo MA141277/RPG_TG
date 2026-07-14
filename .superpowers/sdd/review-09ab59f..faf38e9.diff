@@ -1,0 +1,153 @@
+﻿# Review package: 09ab59f..faf38e9
+
+## Commits
+faf38e9 feat: group spine editor controls by unit
+
+## Files changed
+ tests/spine-unit-context.test.cjs     | 11 +++++++++++
+ tools/spine-node-timeline-editor.html | 16 ++++++++++------
+ 2 files changed, 21 insertions(+), 6 deletions(-)
+
+## Diff
+diff --git a/tests/spine-unit-context.test.cjs b/tests/spine-unit-context.test.cjs
+index bc74858..8a7d1bf 100644
+--- a/tests/spine-unit-context.test.cjs
++++ b/tests/spine-unit-context.test.cjs
+@@ -39,10 +39,21 @@ test("Spine editor binds the unit buttons to switchSpineUnitContext", () => {
+     source,
+     /el\.unitArcherBtn\.addEventListener\("click", \(\) => switchSpineUnitContext\("archer"\)\)/,
+   );
+ });
+ 
+ test("Spine editor gates swordsman and archer feature groups by unit context", () => {
+   assert.match(source, /id="swordsmanFeatureGroup"/);
+   assert.match(source, /id="archerFeatureGroup"/);
+   assert.match(source, /function renderSpineUnitFeatureGroups\(\)/);
+ });
++
++test("Spine editor keeps shared controls outside dedicated unit groups", () => {
++  assert.doesNotMatch(source, /id="copyKeyframeBtn"[\s\S]*id="swordsmanFeatureGroup"/);
++  assert.doesNotMatch(source, /id="copyKeyframeBtn"[\s\S]*id="archerFeatureGroup"/);
++});
++
++test("Spine editor renders unit-specific group visibility from currentUnitType", () => {
++  assert.match(source, /function renderSpineUnitFeatureGroups\(\) \{/);
++  assert.match(source, /el\.swordsmanFeatureGroup\.hidden = state\.currentUnitType !== "swordsman";/);
++  assert.match(source, /el\.archerFeatureGroup\.hidden = state\.currentUnitType !== "archer";/);
++});
+diff --git a/tools/spine-node-timeline-editor.html b/tools/spine-node-timeline-editor.html
+index d169d8f..7d9495b 100644
+--- a/tools/spine-node-timeline-editor.html
++++ b/tools/spine-node-timeline-editor.html
+@@ -583,22 +583,20 @@
+           <div>
+             <h1>Spine 节点时间轴编辑器</h1>
+             <span>骨骼节点 · 关键帧 · 插值播放 · JSON 工程导入导出</span>
+           </div>
+         </div>
+         <div id="unitContextToolbar" class="toolbar unit-toolbar">
+           <button id="unitSwordsmanBtn" class="mode-button active" type="button">剑士</button>
+           <button id="unitArcherBtn" class="mode-button" type="button">弓兵</button>
+         </div>
+         <div class="toolbar">
+-          <div id="swordsmanFeatureGroup" class="toolbar-group" hidden></div>
+-          <div id="archerFeatureGroup" class="toolbar-group" hidden></div>
+           <button id="newProjectBtn" type="button">新建</button>
+           <button id="importBtn" type="button">导入 JSON</button>
+           <button id="exportBtn" type="button">导出 JSON</button>
+           <button id="sampleBtn" type="button">示例</button>
+           <button id="walkSampleBtn" type="button">侧面行走</button>
+           <button id="newVersionSampleBtn" type="button">新版</button>
+           <button id="idleAnimationBtn" type="button">待机动画</button>
+           <button id="replaceMaterialBtn" type="button">素材替换</button>
+           <button id="bindingModeBtn" class="mode-button" type="button">绑定管理</button>
+           <button id="slashSampleBtn" type="button" hidden>侧身劈砍</button>
+@@ -841,53 +839,57 @@
+             </div>
+             <div class="button-row">
+               <button id="keyframeBtn" class="primary" type="button">记录关键帧</button>
+               <button id="deleteNodeBtn" class="danger" type="button">删除节点</button>
+             </div>
+             <div class="button-row three">
+               <button id="keySourcePrevBtn" class="mode-button" type="button">上一关键帧</button>
+               <button id="keySourceNextBtn" class="mode-button" type="button">下一关键帧</button>
+               <button id="keySourceStartBtn" class="mode-button" type="button">起始帧</button>
+             </div>
++            <div id="archerFeatureGroup" hidden>
+             <div id="arrowVisibilityRow" class="button-row" hidden>
+               <button id="arrowShowBtn" type="button">箭矢出现</button>
+               <button id="arrowHideBtn" type="button">箭矢消失</button>
+             </div>
+             <div id="arrowParentRow" class="form-grid" hidden>
+               <div class="field full">
+                 <label for="arrowParentSelect">箭矢临时父节点</label>
+                 <select id="arrowParentSelect"></select>
+               </div>
+               <div class="field full">
+                 <div class="button-row">
+                   <button id="arrowBindParentBtn" type="button">绑定箭矢父节点</button>
+                   <button id="arrowUnbindParentBtn" type="button">解绑箭矢父节点</button>
+                 </div>
+               </div>
+             </div>
++            </div>
++            <div id="swordsmanFeatureGroup" hidden>
+             <div id="slashFxVisibilityRow" class="button-row" hidden>
+               <button id="slashFxShowBtn" type="button">刀光出现</button>
+               <button id="slashFxHideBtn" type="button">刀光消失</button>
+               <button id="slashFxActionVisibilityBtn" type="button">本动作隐藏刀光</button>
+             </div>
+             <div id="slashFxParentRow" class="form-grid" hidden>
+               <div class="field full">
+                 <label for="slashFxParentSelect">刀光临时父节点</label>
+                 <select id="slashFxParentSelect"></select>
+               </div>
+               <div class="field full">
+                 <div class="button-row">
+                   <button id="slashFxBindParentBtn" type="button">绑定刀光父节点</button>
+                   <button id="slashFxUnbindParentBtn" type="button">解绑刀光父节点</button>
+                 </div>
+               </div>
+             </div>
++            </div>
+           </section>
+           <section id="bindingPanel" class="panel-section bind-only">
+             <div class="panel-title">绑定管理</div>
+             <div class="bind-note">
+               这里编辑独立绑定姿势，不写入时间轴关键帧。拖拽骨骼、修改长度和位置都会保存到节点 bindPose。
+             </div>
+             <div class="field">
+               <label for="weaponImageSelect">武器贴图</label>
+               <select id="weaponImageSelect">
+                 <option value="newSword">新版 sword.png</option>
+@@ -3573,24 +3575,26 @@
+       function getSpineUnitConfig(unitType) {
+         return SPINE_UNIT_CONFIGS[unitType] || SPINE_UNIT_CONFIGS.swordsman;
+       }
+ 
+       function renderSpineUnitContextControls() {
+         el.unitSwordsmanBtn?.classList.toggle("active", state.currentUnitType === "swordsman");
+         el.unitArcherBtn?.classList.toggle("active", state.currentUnitType === "archer");
+       }
+ 
+       function renderSpineUnitFeatureGroups() {
+-        const config = getSpineUnitConfig(state.currentUnitType);
+-        const activeGroups = new Set(config.featureGroups || []);
+-        el.swordsmanFeatureGroup.hidden = !activeGroups.has("swordsman");
+-        el.archerFeatureGroup.hidden = !activeGroups.has("archer");
++        if (el.swordsmanFeatureGroup) {
++          el.swordsmanFeatureGroup.hidden = state.currentUnitType !== "swordsman";
++        }
++        if (el.archerFeatureGroup) {
++          el.archerFeatureGroup.hidden = state.currentUnitType !== "archer";
++        }
+       }
+ 
+       function renderAll() {
+         resetRuntimeCaches();
+         if (!drag || drag.type === "key" || !drag.hasMoved) {
+           poseOverrides.clear();
+         }
+         syncAllBowRigs();
+         syncCurrentActionFromTimeline();
+         renderSpineUnitContextControls();

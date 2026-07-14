@@ -1,0 +1,7 @@
+﻿Global constraints:
+- Only modify `tests/spine-unit-context.test.cjs` and `tools/spine-node-timeline-editor.html` in this task.
+- Implement Task 3 only: wrap existing dedicated controls and render their visibility from `state.currentUnitType`.
+- Do not remove or relocate shared controls like copy/paste keyframe, playback, import/export, or general node properties into unit-specific groups.
+- `renderSpineUnitFeatureGroups()` must drive `swordsmanFeatureGroup` and `archerFeatureGroup` visibility from `state.currentUnitType`.
+- Keep Task 2 selector behavior intact unless a minimal supporting adjustment is necessary.
+- Do not revert unrelated existing edits in the working tree.

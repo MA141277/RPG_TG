@@ -189,11 +189,78 @@ export type CampaignTerrainUvPoint = {
   v: number;
 };
 
+type CampaignFpsSampler = {
+  push: (timestampMs: number) => number;
+  current: () => number;
+};
+
 let currentCamera: CampaignTerrainCamera = {
   scale: 1,
   offsetX: 0,
   offsetY: 0,
 };
+
+const campaignFpsState = {
+  sampler: createCampaignFpsSampler(500),
+  lastText: "FPS: 0",
+};
+
+export function formatCampaignFpsReadout(
+  fpsValue: number | null | undefined
+): string {
+  const numericValue =
+    typeof fpsValue === "number" && Number.isFinite(fpsValue) ? fpsValue : 0;
+  const value = Math.max(0, Math.round(numericValue));
+  return `FPS: ${value}`;
+}
+
+export function createCampaignFpsSampler(windowMs = 500): CampaignFpsSampler {
+  const frameTimes: number[] = [];
+  let lastFps = 0;
+  return {
+    push(timestampMs: number) {
+      frameTimes.push(timestampMs);
+      while (frameTimes.length > 1) {
+        const firstTimestamp = frameTimes[0];
+        if (firstTimestamp == null || timestampMs - firstTimestamp <= windowMs) {
+          break;
+        }
+        frameTimes.shift();
+      }
+      if (frameTimes.length > 1) {
+        const firstTimestamp = frameTimes[0];
+        const lastTimestamp = frameTimes[frameTimes.length - 1];
+        if (firstTimestamp != null && lastTimestamp != null) {
+          const durationMs = lastTimestamp - firstTimestamp;
+          lastFps =
+            durationMs > 0 ? ((frameTimes.length - 1) * 1000) / durationMs : lastFps;
+        }
+      }
+      return lastFps;
+    },
+    current() {
+      return lastFps;
+    },
+  };
+}
+
+export function ensureCampaignFpsHud(root: ParentNode): HTMLElement | null {
+  return root.querySelector<HTMLElement>("[data-campaign-fps-hud='true']");
+}
+
+function updateCampaignFpsHud(root: ParentNode, timestampMs: number): void {
+  const hud = ensureCampaignFpsHud(root);
+  if (hud == null) {
+    return;
+  }
+
+  const fps = campaignFpsState.sampler.push(timestampMs);
+  const nextText = formatCampaignFpsReadout(fps);
+  if (nextText !== campaignFpsState.lastText) {
+    hud.textContent = nextText;
+    campaignFpsState.lastText = nextText;
+  }
+}
 
 export function requestCampaignTerrainRender(reason: "static" | "dynamic" = "dynamic"): void {
   for (const renderer of activeRenderers.values()) {
@@ -471,7 +538,7 @@ async function initCampaignTerrainWebGl(
   let lastCityDepthMeshSignature = "";
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
-  const render = () => {
+  const render = (timestampMs = performance.now()) => {
     if (isDisposed) {
       return;
     }
@@ -674,6 +741,10 @@ async function initCampaignTerrainWebGl(
     if (renderTerrain && projectedPointsNeedSync) {
       syncProjectedPoints(projectionInput);
       projectedPointsNeedSync = false;
+    }
+
+    if (renderTerrain) {
+      updateCampaignFpsHud(input.canvas.getRootNode() as ParentNode, timestampMs);
     }
   };
 

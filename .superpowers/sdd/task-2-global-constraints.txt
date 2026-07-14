@@ -1,0 +1,8 @@
+﻿Global constraints:
+- Only modify `tests/spine-unit-context.test.cjs` and `tools/spine-node-timeline-editor.html` in this task.
+- Implement Task 2 only: add the top-level swordsman/archer selector UI, current-unit state wiring, and button bindings to `switchSpineUnitContext(...)`.
+- Do not implement Task 3's dedicated group wrappers or broader regrouping beyond what the Task 2 brief requires.
+- The selector must expose `unitContextToolbar`, `unitSwordsmanBtn`, and `unitArcherBtn`.
+- The runtime state must include `currentUnitType: "swordsman"`.
+- The unit buttons must bind to `switchSpineUnitContext("swordsman")` and `switchSpineUnitContext("archer")`.
+- Do not revert unrelated existing edits in the working tree.
