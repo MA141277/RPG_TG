@@ -19,11 +19,11 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-14`
-- Current Focus: `Plan authored from the approved full-screen battle overlay performance spec; implementation has not started.`
-- Next Step: `Choose an execution mode, then start Task 1 with the new overlay regression harness.`
-- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs PASS`
+- Current Focus: `Inline execution completed locally for the full-screen battle overlay optimization; waiting for branch closeout choice.`
+- Next Step: `Choose how to finish the development branch after reviewing the passing battle overlay regressions.`
+- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\battle-overlay-performance.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\battle-swordsman-attack-variants.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\battle-spine-bounds.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\battle-landing-offset.test.cjs PASS`
 - Notes: `This plan intentionally excludes any scheduler-level throttling or repeated-frame suppression beyond duplicate DOM commits for identical overlay state.`
 
 ## Progress Log
@@ -32,6 +32,11 @@
   - Summary: `Created the implementation plan for the approved battle overlay performance optimization work.`
   - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs PASS`
   - Next: `Choose Subagent-Driven or Inline execution before touching battle overlay code.`
+
+- 2026-07-14
+  - Summary: `Implemented overlay render-state assembly, slot-level incremental commits, and overlay-level duplicate commit suppression for the full-screen battle presentation without changing battle rules or timing.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\battle-overlay-performance.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\battle-swordsman-attack-variants.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\battle-spine-bounds.test.cjs PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\battle-landing-offset.test.cjs PASS`
+  - Next: `Choose the branch finishing option after reviewing the local battle overlay optimization results.`
 
 ---
 
@@ -118,7 +123,7 @@
   - `function buildBattleFormationSideState(snapshotBefore, snapshotAfter, active = {})`
   - A dedicated regression file that can evaluate overlay state creation without DOM bootstrapping the whole prototype.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/battle-overlay-performance.test.cjs` with state-assembly expectations:
 
@@ -156,7 +161,7 @@ test("battle overlay side state computes slot loss and hp ratio without touching
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -170,7 +175,7 @@ Expected:
 - Missing `buildBattleOverlayRenderState`
 - Missing `buildBattleFormationSideState`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add the new state-assembly helpers above `renderBattleAnimationState()`:
 
@@ -205,7 +210,7 @@ function buildBattleOverlayRenderState(report, attackerSnapshot, defenderSnapsho
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -217,7 +222,7 @@ Expected:
 
 - `PASS` for the state-assembly tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/battle-overlay-performance.test.cjs prototypes/battle-demo/index.html
@@ -240,7 +245,7 @@ git commit -m "test: add battle overlay performance regressions"
   - `commitBattleFormationView(view, sideState): void`
   - `view.lastCommittedSlots: Map<string, object>`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Extend `tests/battle-overlay-performance.test.cjs` with incremental-commit expectations:
 
@@ -272,7 +277,7 @@ test("battle overlay view still commits changed loss text and hp width on later 
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -286,7 +291,7 @@ Expected:
 - Missing `commitBattleFormationView`
 - Repeated writes still observed for identical slot state
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Refactor `updateBattleFormationView()` into state commit helpers:
 
@@ -322,7 +327,7 @@ function commitBattleFormationView(view, sideState) {
 
 Then update `renderBattleAnimationState()` to call `buildBattleOverlayRenderState()` and `commitBattleFormationView()` instead of recomputing every slot inline.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -334,7 +339,7 @@ Expected:
 
 - `PASS` for the incremental slot-commit tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/battle-overlay-performance.test.cjs prototypes/battle-demo/index.html
@@ -357,7 +362,7 @@ git commit -m "perf: reuse battle overlay slot commits"
   - `shouldSkipBattleOverlayCommit(nextState): boolean`
   - Updated plan execution state and verification log
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add overlay-level duplicate-commit coverage:
 
@@ -389,7 +394,7 @@ test("battle overlay changed morale still updates attacker and defender bars", (
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -403,7 +408,7 @@ Expected:
 - Missing overlay-level duplicate-commit guard
 - Repeated morale-bar writes still observed
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add cached summary refs and an overlay commit guard:
 
@@ -431,7 +436,7 @@ function renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, 
 
 Initialize `battleFormationViewState.attackerMoraleBar` / `defenderMoraleBar` once when the overlay view is first ensured.
 
-- [ ] **Step 4: Run verification and sync plan state**
+- [x] **Step 4: Run verification and sync plan state**
 
 Run:
 
@@ -448,7 +453,7 @@ Expected:
 
 Then update this plan's `Execution State`, append a `Progress Log` entry with the verification command results, and set the next resume point.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/superpowers/plans/2026-07-14-battle-overlay-performance.md tests/battle-overlay-performance.test.cjs prototypes/battle-demo/index.html
@@ -457,18 +462,18 @@ git commit -m "perf: dedupe battle overlay render commits"
 
 ## Exit Check
 
-- [ ] `Full-screen battle overlay reuses its stable structure during playback.`
-- [ ] `Slot-level updates are incremental instead of unconditional full-slot rewrites.`
-- [ ] `Redundant identical overlay commits are suppressed without changing visible battle behavior.`
+- [x] `Full-screen battle overlay reuses its stable structure during playback.`
+- [x] `Slot-level updates are incremental instead of unconditional full-slot rewrites.`
+- [x] `Redundant identical overlay commits are suppressed without changing visible battle behavior.`
 - [ ] Project progress sync is updated if the child state changed.
 - [ ] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 

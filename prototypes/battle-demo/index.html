@@ -2783,6 +2783,9 @@
       initialized: false,
       attacker: null,
       defender: null,
+      attackerMoraleBar: null,
+      defenderMoraleBar: null,
+      lastCommittedRenderState: null,
     };
     const CART_MAX_HP = 80;
     const CART_MOVE_PER_TURN = 1;
@@ -6832,6 +6835,8 @@
       }
       battleFormationViewState.attacker = initializeBattleFormationGrid('battle-attacker-grid', true);
       battleFormationViewState.defender = initializeBattleFormationGrid('battle-defender-grid', false);
+      battleFormationViewState.attackerMoraleBar = document.getElementById('battle-attacker-morale');
+      battleFormationViewState.defenderMoraleBar = document.getElementById('battle-defender-morale');
       battleFormationViewState.initialized = true;
     }
 
@@ -6868,46 +6873,169 @@
       return keys;
     }
 
-    function updateBattleFormationView(view, snapshotBefore, snapshotAfter, active = {}) {
-      if (!view?.root) {
-        return;
-      }
-      const beforeBySlot = new Map(snapshotBefore.formationMembers.map(member => [member.slotKey, member]));
-      const afterBySlot = new Map(snapshotAfter.formationMembers.map(member => [member.slotKey, member]));
-      const activeSourceSlots = normalizeBattleActiveSlotKeys(active, snapshotAfter.side || snapshotBefore.side || '', 'source');
-      const activeTargetSlots = normalizeBattleActiveSlotKeys(active, snapshotAfter.side || snapshotBefore.side || '', 'target');
+    function buildBattleFormationSideState(snapshotBefore, snapshotAfter, active = {}) {
+      const beforeBySlot = new Map((snapshotBefore?.formationMembers || []).map(member => [member.slotKey, member]));
+      const afterBySlot = new Map((snapshotAfter?.formationMembers || []).map(member => [member.slotKey, member]));
+      const side = snapshotAfter?.side || snapshotBefore?.side || '';
+      const activeSourceSlots = normalizeBattleActiveSlotKeys(active, side, 'source');
+      const activeTargetSlots = normalizeBattleActiveSlotKeys(active, side, 'target');
+      const slots = new Map();
 
       for (const slotKey of FORMATION_SLOT_KEYS) {
-        const entry = view.slots.get(slotKey);
-        if (!entry) continue;
-
-        const before = beforeBySlot.get(slotKey);
-        const after = afterBySlot.get(slotKey);
+        const before = beforeBySlot.get(slotKey) || null;
+        const after = afterBySlot.get(slotKey) || null;
         const current = after || before || null;
         const loss = before && after ? before.soldiers - after.soldiers : 0;
         const hpRatio =
           current && current.maxSoldiers > 0
-            ? clamp((after ? after.soldiers : 0) / current.maxSoldiers, 0, 1) * 100
+            ? clamp(((after ? after.soldiers : 0) / current.maxSoldiers) * 100, 0, 100)
             : 0;
 
-        entry.slot.classList.toggle('empty', current == null);
-        entry.slot.classList.toggle('fallen', Boolean(after && after.soldiers <= 0));
-        entry.slot.classList.toggle('striker', activeSourceSlots.has(slotKey));
-        entry.slot.classList.toggle('targeted', activeTargetSlots.has(slotKey));
-        entry.slot.dataset.troopType = current?.troopType || '';
-        entry.canvas.dataset.action = 'idle';
-        entry.canvas.dataset.troopType = current?.troopType || '';
-        entry.canvas.dataset.side = snapshotAfter.side || snapshotBefore.side || '';
-        configureBattleSpineCanvasMetrics(entry.canvas);
-
-        entry.memberName.textContent =
-          current == null
-            ? ''
-            : TROOP_TYPES[current.troopType]?.label || current.troopType || '';
-        entry.memberHpFill.style.width = `${hpRatio}%`;
-        entry.memberLoss.hidden = !(loss > 0);
-        entry.memberLoss.textContent = loss > 0 ? `-${loss}` : '';
+        slots.set(slotKey, {
+          before,
+          after,
+          current,
+          loss,
+          hpRatio,
+          isSource: activeSourceSlots.has(slotKey),
+          isTarget: activeTargetSlots.has(slotKey),
+        });
       }
+
+      return {
+        side,
+        morale: snapshotAfter?.morale ?? snapshotBefore?.morale ?? 0,
+        slots,
+        activeSourceSlots,
+        activeTargetSlots,
+      };
+    }
+
+    function buildBattleOverlayRenderState(report, attackerSnapshot, defenderSnapshot, active = {}) {
+      const leftKey = report.attackerBefore.side === 'player' ? 'attacker' : 'defender';
+      const rightKey = leftKey === 'attacker' ? 'defender' : 'attacker';
+      const beforeByKey = {
+        attacker: report.attackerBefore,
+        defender: report.defenderBefore,
+      };
+      const snapshotByKey = {
+        attacker: attackerSnapshot,
+        defender: defenderSnapshot,
+      };
+
+      return {
+        left: buildBattleFormationSideState(beforeByKey[leftKey], snapshotByKey[leftKey], active),
+        right: buildBattleFormationSideState(beforeByKey[rightKey], snapshotByKey[rightKey], active),
+      };
+    }
+
+    function commitBattleFormationSlot(entry, slotState, side) {
+      if (!entry || !slotState) return;
+      const nextState = {
+        isEmpty: slotState.current == null,
+        isFallen: Boolean(slotState.after && slotState.after.soldiers <= 0),
+        isSource: Boolean(slotState.isSource),
+        isTarget: Boolean(slotState.isTarget),
+        troopType: slotState.current?.troopType || '',
+        action: 'idle',
+        side: side || '',
+        memberName:
+          slotState.current == null
+            ? ''
+            : TROOP_TYPES[slotState.current.troopType]?.label || slotState.current.troopType || '',
+        hpWidth: `${slotState.hpRatio}%`,
+        lossHidden: !(slotState.loss > 0),
+        lossText: slotState.loss > 0 ? `-${slotState.loss}` : '',
+      };
+      const previous = entry.__battleLastCommittedState;
+      if (
+        previous &&
+        previous.isEmpty === nextState.isEmpty &&
+        previous.isFallen === nextState.isFallen &&
+        previous.isSource === nextState.isSource &&
+        previous.isTarget === nextState.isTarget &&
+        previous.troopType === nextState.troopType &&
+        previous.action === nextState.action &&
+        previous.side === nextState.side &&
+        previous.memberName === nextState.memberName &&
+        previous.hpWidth === nextState.hpWidth &&
+        previous.lossHidden === nextState.lossHidden &&
+        previous.lossText === nextState.lossText
+      ) {
+        return;
+      }
+
+      entry.slot.classList.toggle('empty', nextState.isEmpty);
+      entry.slot.classList.toggle('fallen', nextState.isFallen);
+      entry.slot.classList.toggle('striker', nextState.isSource);
+      entry.slot.classList.toggle('targeted', nextState.isTarget);
+      entry.slot.dataset.troopType = nextState.troopType;
+      entry.canvas.dataset.action = nextState.action;
+      entry.canvas.dataset.troopType = nextState.troopType;
+      entry.canvas.dataset.side = nextState.side;
+      configureBattleSpineCanvasMetrics(entry.canvas);
+      entry.memberName.textContent = nextState.memberName;
+      entry.memberHpFill.style.width = nextState.hpWidth;
+      entry.memberLoss.hidden = nextState.lossHidden;
+      entry.memberLoss.textContent = nextState.lossText;
+      entry.__battleLastCommittedState = nextState;
+    }
+
+    function commitBattleFormationView(view, sideState) {
+      if (!view?.slots || !sideState?.slots) return;
+      for (const slotKey of FORMATION_SLOT_KEYS) {
+        const entry = view.slots.get(slotKey);
+        if (!entry) continue;
+        commitBattleFormationSlot(entry, sideState.slots.get(slotKey), sideState.side);
+      }
+    }
+
+    function updateBattleFormationView(view, snapshotBefore, snapshotAfter, active = {}) {
+      if (!view?.root) {
+        return;
+      }
+      commitBattleFormationView(
+        view,
+        buildBattleFormationSideState(snapshotBefore, snapshotAfter, active),
+      );
+    }
+
+    function shouldSkipBattleOverlayCommit(nextState) {
+      const previous = battleFormationViewState.lastCommittedRenderState;
+      if (!previous || !nextState) return false;
+      const buildSideKey = (sideState) => {
+        const parts = [`${sideState?.side || ''}`, `${sideState?.morale ?? 0}`];
+        const slotEntries = sideState?.slots instanceof Map ? [...sideState.slots.entries()] : [];
+        slotEntries.forEach(([slotKey, slotState]) => {
+          parts.push([
+            slotKey,
+            slotState?.current?.troopType || '',
+            slotState?.after?.soldiers ?? '',
+            slotState?.current?.maxSoldiers ?? '',
+            slotState?.loss ?? 0,
+            slotState?.isSource ? '1' : '0',
+            slotState?.isTarget ? '1' : '0',
+          ].join(':'));
+        });
+        return parts.join('|');
+      };
+      return (
+        buildSideKey(previous.left) === buildSideKey(nextState.left) &&
+        buildSideKey(previous.right) === buildSideKey(nextState.right)
+      );
+    }
+
+    function commitBattleOverlayRenderState(renderState) {
+      if (!renderState || shouldSkipBattleOverlayCommit(renderState)) return;
+      commitBattleFormationView(battleFormationViewState.attacker, renderState.left);
+      commitBattleFormationView(battleFormationViewState.defender, renderState.right);
+      if (battleFormationViewState.attackerMoraleBar) {
+        battleFormationViewState.attackerMoraleBar.style.width = `${clamp(renderState.left?.morale ?? 0, 0, 100)}%`;
+      }
+      if (battleFormationViewState.defenderMoraleBar) {
+        battleFormationViewState.defenderMoraleBar.style.width = `${clamp(renderState.right?.morale ?? 0, 0, 100)}%`;
+      }
+      battleFormationViewState.lastCommittedRenderState = renderState;
     }
 
     function getBattleVisualGridId(report, timelineSide) {
@@ -8161,40 +8289,9 @@
 
     function renderBattleAnimationState(report, attackerSnapshot, defenderSnapshot, active = {}) {
       ensureBattleFormationViews();
-      const leftKey = report.attackerBefore.side === 'player' ? 'attacker' : 'defender';
-      const rightKey = leftKey === 'attacker' ? 'defender' : 'attacker';
-      const beforeByKey = {
-        attacker: report.attackerBefore,
-        defender: report.defenderBefore,
-      };
-      const snapshotByKey = {
-        attacker: attackerSnapshot,
-        defender: defenderSnapshot,
-      };
-      const getActiveState = key => ({
-        sourceSide: active?.sourceSide,
-        sourceSlotKey: active?.sourceSlotKey,
-        sourceSlotKeys: active?.sourceSlotKeys,
-        sources: active?.sources,
-        targetSide: active?.targetSide,
-        targetSlotKey: active?.targetSlotKey,
-        targetSlotKeys: active?.targetSlotKeys,
-        targets: active?.targets,
-      });
-      updateBattleFormationView(
-        battleFormationViewState.attacker,
-        beforeByKey[leftKey],
-        snapshotByKey[leftKey],
-        getActiveState(leftKey)
+      commitBattleOverlayRenderState(
+        buildBattleOverlayRenderState(report, attackerSnapshot, defenderSnapshot, active),
       );
-      updateBattleFormationView(
-        battleFormationViewState.defender,
-        beforeByKey[rightKey],
-        snapshotByKey[rightKey],
-        getActiveState(rightKey)
-      );
-      document.getElementById('battle-attacker-morale').style.width = `${clamp(snapshotByKey[leftKey].morale, 0, 100)}%`;
-      document.getElementById('battle-defender-morale').style.width = `${clamp(snapshotByKey[rightKey].morale, 0, 100)}%`;
     }
 
     function buildBattleBatchActiveState(steps = []) {
