@@ -27,6 +27,7 @@ import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { assertExists } from "../shared/assert";
 import { renderSharedDialog } from "./components/dialog/shared-dialog";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
+import type { CharacterManager } from "../application/character/character-manager";
 import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
@@ -59,6 +60,7 @@ export type AppRenderInput = {
   cityNameById: Record<string, string>;
   houseNameById: Record<string, string>;
   characterNameById: Record<string, string>;
+  characterManager: CharacterManager;
   textEntriesById?: Record<string, string>;
   cityPortraits: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
@@ -452,7 +454,7 @@ function renderStage(
 
     const houseViewModel = createHouseViewModel(
       stage.activeHouse,
-      input.appState.characterDefinitions,
+      input.characterManager,
       stage.cityNpcSummaries
     );
 

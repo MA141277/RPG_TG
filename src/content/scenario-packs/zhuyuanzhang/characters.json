@@ -1,6 +1,8 @@
 [
   {
     "id": "char.player",
+    "personType": "角色",
+    "role": "playable",
     "name": "朱元璋",
     "birthYear": 1535,
     "deathYear": null,
@@ -206,6 +208,8 @@
   },
   {
     "id": "char.kulan_xu_da",
+    "personType": "角色",
+    "role": "playable",
     "name": "徐达",
     "birthYear": 1531,
     "deathYear": null,
@@ -258,6 +262,8 @@
   },
   {
     "id": "char.kulan_tang_he",
+    "personType": "角色",
+    "role": "playable",
     "name": "汤和",
     "birthYear": 1530,
     "deathYear": null,
@@ -310,6 +316,8 @@
   },
   {
     "id": "char.kulan_chang_yuchun",
+    "personType": "角色",
+    "role": "playable",
     "name": "常遇春",
     "birthYear": 1534,
     "deathYear": null,

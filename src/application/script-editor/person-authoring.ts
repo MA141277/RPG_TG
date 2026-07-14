@@ -18,8 +18,6 @@ const SCRIPT_EDITOR_PERSON_ATTRIBUTE_EXCLUDED_ROOT_KEYS = new Set([
   "name",
   "personType",
   "role",
-  "title",
-  "occupation",
   "biography",
   "cityId",
   "houseId",
@@ -40,6 +38,8 @@ const SCRIPT_EDITOR_PERSON_FIXED_ATTRIBUTE_KEYS = new Set([
 ]);
 
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_LABELS: Record<string, string> = {
+  title: "正式身份",
+  occupation: "职业/定位",
   age: "年龄",
   birthYear: "出生年",
   deathYear: "去世年",

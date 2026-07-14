@@ -9,6 +9,7 @@
   },
   "include": [
     "src/core/**/*.ts",
+    "src/application/character/**/*.ts",
     "src/application/activity/**/*.ts",
     "src/application/city-entries/**/*.ts",
     "src/application/city-menu/**/*.ts",

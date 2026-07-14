@@ -241,12 +241,6 @@ if (uiOverlayElement == null) {
 
 const appRoot = appElement;
 const defaultPlayerCharacterId = "char.player";
-const selectableCharacterIds = [
-  "char.player",
-  "char.kulan_xu_da",
-  "char.kulan_tang_he",
-  "char.kulan_chang_yuchun",
-] as const;
 const entryShellBootstrapState = await createEntryShellBootstrapState();
 const {
   baseGameContentPack,
@@ -330,18 +324,24 @@ function setActiveContentContext(
   nextContentContext: ActiveGameContentContext
 ): void {
   activeContentContext = nextContentContext;
+  mainUiFlow?.setCharacters(getSelectableCharactersFromContentContext(nextContentContext));
 }
 
-const selectableCharacters = selectableCharacterIds.map((characterId) => {
-  const characterDefinition = activeContentContext.gameContent.characters.find(
-    (candidateCharacter) => candidateCharacter.id === characterId
-  );
-  assertExists(
-    characterDefinition,
-    `Selectable character not found for id "${characterId}".`
-  );
-  return characterDefinition;
-});
+function getSelectableCharactersFromContentContext(
+  currentContentContext: ActiveGameContentContext
+): CharacterDefinition[] {
+  const selectableCharacters = currentContentContext.characterManager.playableCharacters;
+  if (selectableCharacters.length > 0) {
+    return selectableCharacters;
+  }
+
+  const fallbackCharacter =
+    currentContentContext.characterManager.getCharacterById(defaultPlayerCharacterId) ??
+    currentContentContext.gameContent.characters[0] ??
+    null;
+  assertExists(fallbackCharacter, "Selectable character data is missing from active content.");
+  return [fallbackCharacter];
+}
 
 let currentPlayerCharacterId = defaultPlayerCharacterId;
 
@@ -602,7 +602,7 @@ const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
-  characters: selectableCharacters,
+  characters: getSelectableCharactersFromContentContext(activeContentContext),
   scenarioPacks: entryShellBootstrapState.scenarioPacks,
   onStartGame: startMainGameWithLoading,
   onContinueGame: startContinueGameWithLoading,

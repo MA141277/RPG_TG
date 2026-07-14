@@ -9,8 +9,15 @@ const {
   pickCityNpcActivityLocation,
 } = require("../.test-dist/application/city-npcs/refresh-city-npc-pools.js");
 const {
+  createCharacterManager,
+  selectHouseNpcCharacters,
+} = require("../.test-dist/application/character/character-manager.js");
+const {
   selectCityNpcSummariesForHouse,
 } = require("../.test-dist/application/city-npcs/select-city-npcs-for-house.js");
+const {
+  createActiveGameContent,
+} = require("../.test-dist/application/content/active-game-content.js");
 const {
   prototypeCards,
   createPrototypeCharactersForStoryStage,
@@ -131,9 +138,6 @@ const { startEvent } = require("../.test-dist/application/events/event-runner.js
 const {
   runSceneUntilPause,
 } = require("../.test-dist/application/scene/scene-runner.js");
-const {
-  createActiveGameContent,
-} = require("../.test-dist/application/content/active-game-content.js");
 const {
   loadDefaultRuntimeContent,
 } = require("../.test-dist/application/content/default-runtime-content.js");
@@ -3254,7 +3258,11 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   assert.match(mainUiSource, /filterScriptEditorRecords\("people", records\)/);
   assert.match(
     mainUiSource,
-    /renderScriptEditorPersonTabPanel\(person\)\}\s*\$\{this\.renderScriptEditorPersonSummaryAttributes\(person\)\}/
+    /renderScriptEditorPersonTabPanel\(person\)\}/
+  );
+  assert.match(
+    mainUiSource,
+    /data-script-editor-person-field="biography"[\s\S]*?renderScriptEditorPersonSummaryAttributes\(person\)/
   );
   assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs/);
   assert.match(scriptEditorCssSource, /c-script-editor-shell__inspector-header/);
@@ -3273,7 +3281,10 @@ test("script editor person authoring queue renders current json-backed person at
   );
 
   assert.match(mainUiSource, /renderScriptEditorPersonSummaryAttributes\(person\)/);
-  assert.match(mainUiSource, /已有属性/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /<p class="c-script-editor-editor-card__eyebrow">已有属性<\/p>/
+  );
   assert.match(mainUiSource, /自定义属性/);
   assert.match(mainUiSource, /data-script-editor-person-attribute-field="label"/);
   assert.match(mainUiSource, /data-script-editor-person-attribute-field="value"/);
@@ -3283,7 +3294,7 @@ test("script editor person authoring queue renders current json-backed person at
   assert.match(mainUiSource, /c-script-editor-person-summary__remove/);
   assert.match(mainUiSource, /aria-label="删除属性"/);
   assert.match(mainUiSource, /data-script-editor-action="add-person-attribute"/);
-  assert.match(mainUiSource, /SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE\s*=\s*18/);
+  assert.match(mainUiSource, /SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE\s*=\s*10/);
   assert.match(mainUiSource, /data-script-editor-action="person-attribute-page-prev"/);
   assert.match(mainUiSource, /data-script-editor-action="person-attribute-page-next"/);
   assert.match(mainUiSource, /person\.extendedAttributes \?\? \[\]/);
@@ -3294,7 +3305,63 @@ test("script editor person authoring queue renders current json-backed person at
   assert.match(scriptEditorCssSource, /c-script-editor-person-summary/);
   assert.match(scriptEditorCssSource, /c-script-editor-person-summary__item/);
   assert.match(scriptEditorCssSource, /c-script-editor-person-summary__remove/);
-  assert.match(scriptEditorCssSource, /grid-template-columns:\s*repeat\(6,/);
+  assert.match(scriptEditorCssSource, /grid-template-columns:\s*repeat\(5,/);
+  assert.doesNotMatch(scriptEditorCssSource, /overflow-x:\s*auto;/);
+});
+
+test("script editor people search preserves IME composition until composition end", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /addEventListener\("compositionend", this\.handleCompositionEnd\)/);
+  assert.match(mainUiSource, /removeEventListener\("compositionend", this\.handleCompositionEnd\)/);
+  assert.match(
+    mainUiSource,
+    /onInput\(event\)\s*\{[\s\S]*?target\.matches\("\[data-script-editor-record-search-family\]"\)[\s\S]*?event\.isComposing === true[\s\S]*?return;/
+  );
+  assert.match(
+    mainUiSource,
+    /onCompositionEnd\(event\)\s*\{[\s\S]*?target\.matches\("\[data-script-editor-record-search-family\]"\)[\s\S]*?this\.setScriptEditorRecordSearchValue\(family, target\.value\);/
+  );
+});
+
+test("script editor text entry authoring hides ids from creators and clamps list summaries to two lines", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+  const textEntryEditorSource =
+    mainUiSource.match(
+      /renderScriptEditorTextEntryEditor\(records, selectedRecord\)\s*\{[\s\S]*?\n  \}\n\n  getScriptEditorRecordListPage/
+    )?.[0] ?? "";
+
+  assert.match(mainUiSource, /family === "textEntries"[\s\S]*?renderScriptEditorTextEntryEditor\(records, selectedRecord\)/);
+  assert.match(textEntryEditorSource, /data-script-editor-action="apply-text-entry-text"/);
+  assert.match(textEntryEditorSource, /data-script-editor-text-entry-text/);
+  assert.match(textEntryEditorSource, /placeholder="请输入文本内容"/);
+  assert.match(textEntryEditorSource, /c-script-editor-record-list__item--text-entry/);
+  assert.match(textEntryEditorSource, /c-script-editor-record-list__title--clamp-2/);
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /data-script-editor-record-json/
+  );
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /<span>\$\{escapeHtml\(record\.id\)\}<\/span>/
+  );
+  assert.match(mainUiSource, /applyScriptEditorTextEntryText\(\)/);
+  assert.match(
+    mainUiSource,
+    /upsertScriptEditorWorkflowRecord\(this\.scriptEditorProject, "textEntries", nextRecord\)/
+  );
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list__title--clamp-2/);
+  assert.match(scriptEditorCssSource, /-webkit-line-clamp:\s*2/);
 });
 
 test("script editor person authoring queue removes the advanced system details foldout from the profile form", () => {
@@ -3649,6 +3716,193 @@ test("script editor person authoring helper delete only removes the targeted nes
     military: 2,
     ashigaru: 2,
   });
+});
+
+test("character manager derives playable roles and house npc rosters from character data", () => {
+  const createCharacter = (overrides) => ({
+    id: "char.test",
+    name: "测试人物",
+    birthYear: 1350,
+    deathYear: null,
+    age: 20,
+    cityId: "city.test",
+    houseId: undefined,
+    portraitId: "portrait.test",
+    stats: {
+      leadership: 10,
+      martial: 10,
+      intelligence: 10,
+      politics: 10,
+      charm: 10,
+      fame: 10,
+      gold: 10,
+    },
+    stamina: 100,
+    availableFunctions: [],
+    ...overrides,
+  });
+  const characters = [
+    createCharacter({
+      id: "char.player",
+      personType: "角色",
+      role: "playable",
+      houseId: "home.player",
+    }),
+    createCharacter({
+      id: "char.keep_npc",
+      name: "守备",
+      houseId: "house.keep",
+    }),
+    createCharacter({
+      id: "char.fallback_npc",
+      name: "账房",
+    }),
+  ];
+  const keepHouseDefinition = {
+    id: "house.keep",
+    cityId: "city.test",
+    name: "军府",
+    type: "residence",
+    characterIds: ["char.fallback_npc"],
+    defaultCharacterId: null,
+    backAction: { label: "返回", targetView: "city" },
+  };
+
+  const manager = createCharacterManager(characters);
+
+  assert.deepEqual(
+    manager.playableCharacters.map((character) => character.id),
+    ["char.player"]
+  );
+  assert.deepEqual(
+    manager.npcCharacters.map((character) => character.id),
+    ["char.keep_npc", "char.fallback_npc"]
+  );
+  assert.deepEqual(
+    manager.getHouseNpcCharacters(keepHouseDefinition).map((character) => character.id),
+    ["char.keep_npc"]
+  );
+  assert.equal(manager.getDefaultHouseNpcCharacterId(keepHouseDefinition), "char.keep_npc");
+});
+
+test("house npc helpers fall back to explicit characterIds when npc house ownership is absent", () => {
+  const createCharacter = (overrides) => ({
+    id: "char.test",
+    name: "测试人物",
+    birthYear: 1350,
+    deathYear: null,
+    age: 20,
+    cityId: "city.test",
+    portraitId: "portrait.test",
+    stats: {
+      leadership: 10,
+      martial: 10,
+      intelligence: 10,
+      politics: 10,
+      charm: 10,
+      fame: 10,
+      gold: 10,
+    },
+    stamina: 100,
+    availableFunctions: [],
+    ...overrides,
+  });
+  const characters = [
+    createCharacter({
+      id: "char.player",
+      personType: "角色",
+      role: "playable",
+      houseId: "house.market",
+    }),
+    createCharacter({
+      id: "char.market_npc",
+      name: "掌柜",
+    }),
+  ];
+  const houseDefinition = {
+    id: "house.market",
+    cityId: "city.test",
+    name: "商铺",
+    type: "merchant",
+    characterIds: ["char.market_npc"],
+    defaultCharacterId: "char.market_npc",
+    backAction: { label: "返回", targetView: "city" },
+  };
+
+  const manager = createCharacterManager(characters);
+  const houseNpcCharacters = selectHouseNpcCharacters(characters, houseDefinition);
+
+  assert.deepEqual(
+    houseNpcCharacters.map((character) => character.id),
+    ["char.market_npc"]
+  );
+  assert.equal(manager.getDefaultHouseNpcCharacterId(houseDefinition), "char.market_npc");
+});
+
+test("active game content builds a character manager from loaded characters", () => {
+  const content = createActiveGameContent({
+    schemaVersion: 1,
+    id: "pack.test",
+    title: "测试包",
+    characters: [
+      {
+        id: "char.player",
+        name: "主角",
+        personType: "角色",
+        role: "playable",
+        birthYear: 1350,
+        deathYear: null,
+        age: 20,
+        cityId: "city.test",
+        portraitId: "portrait.test",
+        stats: {
+          leadership: 10,
+          martial: 10,
+          intelligence: 10,
+          politics: 10,
+          charm: 10,
+          fame: 10,
+          gold: 10,
+        },
+        stamina: 100,
+        availableFunctions: [],
+      },
+      {
+        id: "char.npc",
+        name: "NPC",
+        birthYear: 1350,
+        deathYear: null,
+        age: 20,
+        cityId: "city.test",
+        houseId: "house.test",
+        portraitId: "portrait.test",
+        stats: {
+          leadership: 10,
+          martial: 10,
+          intelligence: 10,
+          politics: 10,
+          charm: 10,
+          fame: 10,
+          gold: 10,
+        },
+        stamina: 100,
+        availableFunctions: [],
+      },
+    ],
+  });
+
+  assert.equal(
+    content.characterManager.getPlayableCharacterById("char.player")?.id,
+    "char.player"
+  );
+  assert.equal(content.characterManager.getNpcCharacterById("char.npc")?.id, "char.npc");
+});
+
+test("main ui selectable characters are derived from the content character manager", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../src/main.ts"), "utf8");
+
+  assert.doesNotMatch(source, /const selectableCharacterIds = \[/);
+  assert.match(source, /characterManager\.playableCharacters/);
 });
 
 test("script editor person attribute pagination keeps the current page stable after deleting one card", () => {

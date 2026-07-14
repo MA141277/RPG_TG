@@ -22,6 +22,10 @@ import {
   mergeHouseModuleDefaults,
   type HouseModuleDefaults,
 } from "./house-module-defaults";
+import {
+  createCharacterManager,
+  type CharacterManager,
+} from "../character/character-manager";
 
 type Identified = { id: string };
 
@@ -39,6 +43,7 @@ export type ActiveGameContent = {
   houseDefinitionById: Record<string, HouseDefinition>;
   cityEntries: CityEntryDefinition[];
   characters: CharacterDefinition[];
+  characterManager: CharacterManager;
   characterDefinitionById: Record<string, CharacterDefinition>;
   characterNameById: Record<string, string>;
   eventDefinitions: EventDefinition[];
@@ -82,6 +87,7 @@ export type ActiveGameContentContext = {
   cityNameById: Record<string, string>;
   houseNameById: Record<string, string>;
   characterNameById: Record<string, string>;
+  characterManager: CharacterManager;
   taskDefinitionsById: Record<string, TaskDefinition>;
   storyContent: {
     eventDefinitionsById: Record<string, EventDefinition>;
@@ -115,6 +121,7 @@ export function createActiveGameContent(
   const houseAccessRefusalRules = resolvedPack.houseAccessRefusalRules ?? [];
   const historicalCharacters = resolvedPack.historicalCharacters ?? [];
   const historicalCityRosters = resolvedPack.historicalCityRosters ?? [];
+  const characterManager = createCharacterManager(characters);
 
   return {
     packId: resolvedPack.id,
@@ -142,6 +149,7 @@ export function createActiveGameContent(
     ),
     cityEntries,
     characters,
+    characterManager,
     characterDefinitionById: Object.fromEntries(
       characters.map((characterDefinition) => [characterDefinition.id, characterDefinition])
     ),
@@ -213,6 +221,7 @@ export function createActiveGameContentContext(
     cityNameById: createCityNameById(gameContent.cities),
     houseNameById: createHouseNameById(gameContent.houses),
     characterNameById: gameContent.characterNameById,
+    characterManager: gameContent.characterManager,
     taskDefinitionsById: gameContent.taskDefinitionsById,
     storyContent: {
       eventDefinitionsById: gameContent.eventDefinitionsById,

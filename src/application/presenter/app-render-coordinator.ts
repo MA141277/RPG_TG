@@ -110,6 +110,7 @@ export function createAppRenderCoordinator(
       cityNameById: activeContentContext.cityNameById,
       houseNameById: activeContentContext.houseNameById,
       characterNameById: activeContentContext.characterNameById,
+      characterManager: activeContentContext.characterManager,
       textEntriesById: activeContentContext.textEntriesById,
       cityPortraits: activeContentContext.cityPortraits,
       citySceneMappingsByCityId,

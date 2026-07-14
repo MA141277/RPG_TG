@@ -261,7 +261,7 @@ const characterSelectLayoutBindings = [
 ];
 
 const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
-const SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE = 18;
+const SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE = 10;
 
 export class MainUiFlow {
   constructor(options) {
@@ -290,6 +290,9 @@ export class MainUiFlow {
     };
     this.handleInput = (event) => {
       this.onInput(event);
+    };
+    this.handleCompositionEnd = (event) => {
+      this.onCompositionEnd(event);
     };
     this.inkParticleSystem = null;
     this.pendingSelectedInkBurstCharacterId = null;
@@ -333,6 +336,7 @@ export class MainUiFlow {
     this.overlayRoot.addEventListener("focusin", this.handleFocus);
     this.overlayRoot.addEventListener("change", this.handleChange);
     this.overlayRoot.addEventListener("input", this.handleInput);
+    this.overlayRoot.addEventListener("compositionend", this.handleCompositionEnd);
     this.render();
   }
 
@@ -342,6 +346,7 @@ export class MainUiFlow {
     this.overlayRoot.removeEventListener("focusin", this.handleFocus);
     this.overlayRoot.removeEventListener("change", this.handleChange);
     this.overlayRoot.removeEventListener("input", this.handleInput);
+    this.overlayRoot.removeEventListener("compositionend", this.handleCompositionEnd);
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
@@ -360,6 +365,21 @@ export class MainUiFlow {
 
   showCharacterSelect() {
     this.setScreen("character-select");
+  }
+
+  setCharacters(characters) {
+    this.characters = [...characters];
+    if (this.characters.some((character) => character.id === this.selectedCharacterId)) {
+      if (this.currentScreen === "character-select") {
+        this.render();
+      }
+      return;
+    }
+
+    this.selectedCharacterId = this.characters[0]?.id ?? null;
+    if (this.currentScreen === "character-select") {
+      this.render();
+    }
   }
 
   showScriptEditorLanding() {
@@ -764,6 +784,10 @@ export class MainUiFlow {
       return this.renderScriptEditorMinigameEditor(records, selectedRecord);
     }
 
+    if (family === "textEntries") {
+      return this.renderScriptEditorTextEntryEditor(records, selectedRecord);
+    }
+
     return `
       <div class="c-script-editor-editor-card">
         <header class="c-script-editor-editor-card__header">
@@ -831,6 +855,71 @@ export class MainUiFlow {
               data-script-editor-record-json
               spellcheck="false"
             >${escapeHtml(selectedRecordJson)}</textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderScriptEditorTextEntryEditor(records, selectedRecord) {
+    const selectedText = typeof selectedRecord?.text === "string" ? selectedRecord.text : "";
+
+    return `
+      <div class="c-script-editor-editor-card">
+        <header class="c-script-editor-editor-card__header">
+          <div>
+            <h2 class="c-script-editor-editor-card__title">文本</h2>
+          </div>
+          <div class="c-script-editor-editor-card__actions">
+            <button
+              type="button"
+              class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+              data-script-editor-action="apply-text-entry-text"
+              ${selectedRecord == null ? "disabled" : ""}
+            >
+              应用文本
+            </button>
+          </div>
+        </header>
+
+        <div class="c-script-editor-record-layout">
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "textEntries",
+            records,
+            ariaLabel: "文本列表",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${selectedRecord == null ? "disabled" : ""}
+                >
+                  删除
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => `
+              <button
+                type="button"
+                class="c-script-editor-record-list__item c-script-editor-record-list__item--text-entry ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                data-script-editor-record-id="${escapeHtml(record.id)}"
+                title="${escapeHtml(this.getScriptEditorRecordLabel(record))}"
+              >
+                <strong class="c-script-editor-record-list__title c-script-editor-record-list__title--clamp-2">${escapeHtml(this.getScriptEditorRecordLabel(record))}</strong>
+              </button>
+            `,
+          })}
+          <div class="c-script-editor-record-editor">
+            <textarea
+              class="c-script-editor-record-editor__textarea"
+              data-script-editor-text-entry-text
+              spellcheck="false"
+              placeholder="请输入文本内容"
+            >${escapeHtml(selectedText)}</textarea>
           </div>
         </div>
       </div>
@@ -1097,7 +1186,6 @@ export class MainUiFlow {
                     ${this.renderScriptEditorPersonTabList()}
                   </template>
                   ${this.renderScriptEditorPersonTabPanel(person)}
-                  ${this.renderScriptEditorPersonSummaryAttributes(person)}
                 `
             }
           </div>
@@ -1145,7 +1233,6 @@ export class MainUiFlow {
       <section class="c-script-editor-person-summary" aria-label="已有属性">
         <header class="c-script-editor-person-summary__header">
           <div>
-            <p class="c-script-editor-editor-card__eyebrow">已有属性</p>
             <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-person-attribute">
@@ -1529,6 +1616,7 @@ export class MainUiFlow {
           </label>
         </div>
       </section>
+      ${this.renderScriptEditorPersonSummaryAttributes(person)}
     `;
   }
 
@@ -3887,6 +3975,23 @@ export class MainUiFlow {
     }
 
     if (target.matches("[data-script-editor-record-search-family]")) {
+      if (event.isComposing === true) {
+        return;
+      }
+      const family = target.dataset.scriptEditorRecordSearchFamily;
+      if (family != null) {
+        this.setScriptEditorRecordSearchValue(family, target.value);
+      }
+    }
+  }
+
+  onCompositionEnd(event) {
+    const target = event.target;
+    if (!(target instanceof globalThis.HTMLInputElement)) {
+      return;
+    }
+
+    if (target.matches("[data-script-editor-record-search-family]")) {
       const family = target.dataset.scriptEditorRecordSearchFamily;
       if (family != null) {
         this.setScriptEditorRecordSearchValue(family, target.value);
@@ -4263,6 +4368,11 @@ export class MainUiFlow {
 
     if (action === "apply-record-json") {
       this.applyScriptEditorRecordJson();
+      return;
+    }
+
+    if (action === "apply-text-entry-text") {
+      this.applyScriptEditorTextEntryText();
       return;
     }
 
@@ -4934,6 +5044,49 @@ export class MainUiFlow {
       });
     }
 
+    this.render();
+  }
+
+  applyScriptEditorTextEntryText() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "textEntries" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    const textarea = this.overlayRoot.querySelector("[data-script-editor-text-entry-text]");
+    if (!(textarea instanceof globalThis.HTMLTextAreaElement)) {
+      return;
+    }
+
+    const text = textarea.value;
+    const recordId = this.scriptEditorSelection.entityId;
+    const nextRecord = {
+      ...(this.scriptEditorProject.textEntries.find((record) => record.id === recordId) ?? {
+        id: recordId,
+      }),
+      id: recordId,
+      text,
+    };
+
+    this.commitScriptEditorProject(
+      upsertScriptEditorWorkflowRecord(this.scriptEditorProject, "textEntries", nextRecord)
+    );
+    const nextRecords = listScriptEditorWorkflowFamilyRecords(
+      this.scriptEditorProject,
+      "textEntries"
+    );
+    this.scriptEditorSelection = {
+      family: "textEntries",
+      entityId: recordId,
+    };
+    this.syncScriptEditorRecordListPageToRecord("textEntries", recordId, nextRecords);
+    this.recordScriptEditorNotice({
+      tone: "success",
+      message: `已应用文本修改：${recordId}。`,
+    });
     this.render();
   }
 

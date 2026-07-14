@@ -675,6 +675,15 @@
   font-size: 14px;
 }
 
+.c-script-editor-person-panel .c-script-editor-form-field:has(
+  [data-script-editor-person-field="title"]
+),
+.c-script-editor-person-panel .c-script-editor-form-field:has(
+  [data-script-editor-person-field="occupation"]
+) {
+  display: none;
+}
+
 .c-script-editor-form-field__input,
 .c-script-editor-record-editor__textarea {
   width: 100%;
@@ -757,6 +766,20 @@
   cursor: pointer;
 }
 
+.c-script-editor-record-list__title {
+  min-width: 0;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.c-script-editor-record-list__title--clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
 .c-script-editor-record-list__item.is-selected {
   border-color: rgba(176, 132, 76, 0.38);
   background: linear-gradient(180deg, rgba(240, 213, 168, 0.82), rgba(232, 202, 153, 0.62));
@@ -772,6 +795,10 @@
 
 .c-script-editor-record-list__item--narrative {
   gap: 8px;
+}
+
+.c-script-editor-record-list__item--text-entry {
+  align-items: start;
 }
 
 .c-script-editor-record-list__item span {
@@ -873,19 +900,17 @@
 
 .c-script-editor-person-summary__list {
   display: grid;
-  grid-template-columns: repeat(6, 160px);
-  grid-auto-rows: minmax(0, 1fr);
-  justify-content: start;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 4px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
 }
 
 .c-script-editor-person-summary__item {
   position: relative;
   display: grid;
   gap: 12px;
-  padding: 20px 16px 16px;
+  min-height: 120px;
+  padding: 18px 14px 14px;
   border: 1px solid rgba(145, 111, 72, 0.12);
   border-radius: 16px;
   background: rgba(255, 252, 247, 0.92);
@@ -893,8 +918,8 @@
 
 .c-script-editor-person-summary__remove {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 6px;
+  right: 6px;
   width: 26px;
   height: 26px;
   display: inline-flex;

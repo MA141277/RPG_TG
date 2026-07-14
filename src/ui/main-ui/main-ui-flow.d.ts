@@ -28,4 +28,5 @@ export class MainUiFlow {
   render(): void;
   showMainMenu(): void;
   hide(): void;
+  setCharacters(characters: CharacterDefinition[]): void;
 }

@@ -46,6 +46,10 @@ import {
 } from "../../../domain/zhu-yuanzhang-story";
 import { assertExists } from "../../../shared/assert";
 import {
+  selectHouseNpcCharacterIds,
+  selectHouseNpcCharacters,
+} from "../../character/character-manager";
+import {
   ensurePlayerGrainInventory,
   mutatePlayerGrainDou,
   readPlayerGrainDou,
@@ -2799,10 +2803,11 @@ function handleAction(
     input.characterDefinitions,
     input.playerCharacterId
   );
-  const seniorMonkCharacter = input.characterDefinitions.find(
-    (characterDefinition) =>
-      characterDefinition.id !== abbotCharacter.id &&
-      input.houseDefinition.characterIds.includes(characterDefinition.id)
+  const seniorMonkCharacter = selectHouseNpcCharacters(
+    input.characterDefinitions,
+    input.houseDefinition
+  ).find(
+    (characterDefinition) => characterDefinition.id !== abbotCharacter.id
   );
   assertExists(
     seniorMonkCharacter,
@@ -4047,15 +4052,19 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
         : templeTaskDefinitions.find(
             (taskDefinition) => taskDefinition.id === sessionState.selectedTaskId
           ) ?? null;
+    const houseNpcCharacterIds = selectHouseNpcCharacterIds(
+      input.characterDefinitions,
+      input.houseDefinition
+    );
     const meetingParticipantIds = getTempleMeetingParticipantIds(
-      input.houseDefinition.characterIds,
+      houseNpcCharacterIds,
       input.playerCharacterId,
       abbotCharacter.id
     );
     const standbyCharacterIds =
       sessionState.mode === "meeting"
         ? meetingParticipantIds
-        : input.houseDefinition.characterIds;
+        : houseNpcCharacterIds;
 
     return {
       moduleId: "temple-house",

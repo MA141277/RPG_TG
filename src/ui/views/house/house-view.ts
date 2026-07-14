@@ -1,4 +1,4 @@
-import type { CharacterDefinition } from "../../../domain/character";
+import type { CharacterManager } from "../../../application/character/character-manager";
 import type { HouseDefinition } from "../../../domain/house";
 
 export type HouseViewModel = {
@@ -14,13 +14,11 @@ export type HouseViewModel = {
 
 export function createHouseViewModel(
   houseDefinition: HouseDefinition,
-  characterDefinitions: CharacterDefinition[],
+  characterManager: CharacterManager,
   cityNpcSummaries: HouseViewModel["characterSummaries"] = []
 ): HouseViewModel {
-  const fixedCharacterSummaries = characterDefinitions
-    .filter((characterDefinition) =>
-      houseDefinition.characterIds.includes(characterDefinition.id)
-    )
+  const fixedCharacterSummaries = characterManager
+    .getHouseNpcCharacters(houseDefinition)
     .map((characterDefinition) => ({
       id: characterDefinition.id,
       name: characterDefinition.name,
@@ -31,7 +29,9 @@ export function createHouseViewModel(
 
   return {
     title: houseDefinition.name,
-    defaultCharacterId: houseDefinition.defaultCharacterId,
+    defaultCharacterId:
+      characterManager.getDefaultHouseNpcCharacterId(houseDefinition) ??
+      houseDefinition.defaultCharacterId,
     characterSummaries: [...fixedCharacterSummaries, ...cityNpcSummaries],
     backButtonLabel: houseDefinition.backAction.label,
   };
