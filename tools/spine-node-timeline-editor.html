@@ -1013,6 +1013,15 @@
           enabled: true,
           featureGroups: ["swordsman"],
         },
+        cavalry: {
+          label: "楠戝叺",
+          projectUrl: "/src/faxian/leg/cavalry/project.json",
+          imageBaseUrl: "/src/faxian/leg/cavalry/",
+          materialForegroundImageKeys: [],
+          materialForegroundNormalizeOptions: {},
+          enabled: true,
+          featureGroups: [],
+        },
         archer: {
           label: "弓兵",
           projectUrl: "/src/faxian/leg/archer/project.json",
@@ -1027,6 +1036,10 @@
           featureGroups: ["archer"],
         },
       };
+      SPINE_UNIT_CONFIGS.swordsman.label = "\u5251\u58eb";
+      SPINE_UNIT_CONFIGS.spearman.label = "\u67aa\u5175";
+      SPINE_UNIT_CONFIGS.cavalry.label = "\u9a91\u5175";
+      SPINE_UNIT_CONFIGS.archer.label = "\u5f13\u5175";
       const state = {
         name: "默认",
         fps: 36,
@@ -2272,6 +2285,15 @@
         return null;
       }
 
+      function findNearestAttachmentAncestor(node) {
+        let current = node || null;
+        while (current) {
+          if (current.attachment) return current;
+          current = current.parentId ? state.nodes.find((item) => item.id === current.parentId) || null : null;
+        }
+        return null;
+      }
+
       function clearSpearmanFistRig() {
         const removedIds = new Set();
         state.nodes = state.nodes.filter((node) => {
@@ -2308,6 +2330,386 @@
         };
       }
 
+      function estimateMaterialToWorldTransform(matches) {
+        const samples = (matches || [])
+          .map((match) => {
+            const piece = state.nodes.find((node) => node.attachment?.image === match?.slot?.imageKey);
+            if (!piece || !match?.component) return null;
+            const center = pieceCenter(piece);
+            return {
+              sourceX: Number(match.component.cx),
+              sourceY: Number(match.component.cy),
+              worldX: Number(center.x),
+              worldY: Number(center.y),
+            };
+          })
+          .filter(
+            (sample) =>
+              sample &&
+              Number.isFinite(sample.sourceX) &&
+              Number.isFinite(sample.sourceY) &&
+              Number.isFinite(sample.worldX) &&
+              Number.isFinite(sample.worldY),
+          );
+        if (samples.length < 2) return null;
+
+        const fitAxis = (sourceKey, targetKey) => {
+          const count = samples.length;
+          let sumSource = 0;
+          let sumTarget = 0;
+          let sumSourceTarget = 0;
+          let sumSourceSquared = 0;
+          samples.forEach((sample) => {
+            const source = sample[sourceKey];
+            const target = sample[targetKey];
+            sumSource += source;
+            sumTarget += target;
+            sumSourceTarget += source * target;
+            sumSourceSquared += source * source;
+          });
+          const denominator = count * sumSourceSquared - sumSource * sumSource;
+          if (Math.abs(denominator) < 0.00001) return null;
+          const scale = (count * sumSourceTarget - sumSource * sumTarget) / denominator;
+          const offset = (sumTarget - scale * sumSource) / count;
+          return { scale, offset };
+        };
+
+        const xAxis = fitAxis("sourceX", "worldX");
+        const yAxis = fitAxis("sourceY", "worldY");
+        if (!xAxis || !yAxis) return null;
+        const transform = (sourceX, sourceY) => ({
+          x: xAxis.scale * sourceX + xAxis.offset,
+          y: yAxis.scale * sourceY + yAxis.offset,
+        });
+        transform.scaleX = xAxis.scale;
+        transform.scaleY = yAxis.scale;
+        return transform;
+      }
+
+      function identifyCavalryFarLegIndices(horseLegs) {
+        if (!Array.isArray(horseLegs) || horseLegs.length !== 4) return [];
+        const far = [];
+        const rearPair = horseLegs.slice(0, 2);
+        const frontPair = horseLegs.slice(2, 4);
+        if (rearPair.length === 2) {
+          far.push(rearPair[0].width <= rearPair[1].width ? 0 : 1);
+        }
+        if (frontPair.length === 2) {
+          far.push(frontPair[0].width <= frontPair[1].width ? 2 : 3);
+        }
+        return far;
+      }
+
+      function classifyCavalryComponents(inputImageData, components) {
+        if (!inputImageData || !Array.isArray(components) || components.length < 8) {
+          throw new Error("骑兵素材识别失败：组件数量不足");
+        }
+        const horseBody = components.reduce((best, component) => (!best || component.minY < best.minY ? component : best), null);
+        const remaining = components.filter((component) => component !== horseBody);
+        const lowerHalf = remaining.filter((component) => component.cy > inputImageData.height * 0.45);
+        const soldierWeapon =
+          lowerHalf
+            .filter(
+              (component) =>
+                component.cx > inputImageData.width * 0.72 &&
+                component.height / Math.max(1, component.width) > 3,
+            )
+            .sort((a, b) => b.maxX - a.maxX || b.height - a.height)[0] || null;
+        if (!soldierWeapon) throw new Error("骑兵素材识别失败：未找到武器组件");
+
+        const soldierTorso =
+          lowerHalf
+            .filter((component) => component !== soldierWeapon)
+            .sort((a, b) => b.pixels - a.pixels)[0] || null;
+        if (!soldierTorso) throw new Error("骑兵素材识别失败：未找到士兵躯壳组件");
+
+        const soldierRightLeg =
+          lowerHalf
+            .filter(
+              (component) =>
+                component !== soldierWeapon &&
+                component !== soldierTorso &&
+                component.cx < soldierTorso.cx &&
+                component.minY > soldierTorso.cy,
+            )
+            .sort((a, b) => b.maxY - a.maxY || b.pixels - a.pixels)[0] || null;
+        if (!soldierRightLeg) throw new Error("骑兵素材识别失败：未找到士兵右腿组件");
+
+        const soldierRightArm =
+          remaining
+            .filter(
+              (component) =>
+                component !== soldierWeapon &&
+                component !== soldierTorso &&
+                component !== soldierRightLeg &&
+                component.cx < soldierTorso.cx &&
+                component.cy > horseBody.maxY &&
+                component.cy < soldierTorso.cy,
+            )
+            .sort((a, b) => b.pixels - a.pixels)[0] || null;
+        if (!soldierRightArm) throw new Error("骑兵素材识别失败：未找到士兵右臂组件");
+
+        const horseLegs = remaining
+          .filter(
+            (component) =>
+              component !== soldierWeapon &&
+              component !== soldierTorso &&
+              component !== soldierRightLeg &&
+              component !== soldierRightArm,
+          )
+          .sort((a, b) => a.cx - b.cx);
+        if (horseLegs.length !== 4) {
+          throw new Error(`骑兵素材识别失败：马腿组件数量异常（${horseLegs.length}）`);
+        }
+
+        return {
+          horseBody,
+          horseLegs,
+          horseFarLegIndices: identifyCavalryFarLegIndices(horseLegs),
+          soldierTorso,
+          soldierRightArm,
+          soldierRightLeg,
+          soldierWeapon,
+        };
+      }
+
+      function createCavalryImageToWorldTransform(imageWidth, imageHeight) {
+        const maxWidth = 760;
+        const maxHeight = 620;
+        const scale = Math.min(maxWidth / Math.max(1, imageWidth), maxHeight / Math.max(1, imageHeight));
+        const offsetX = 420 - (imageWidth * scale) / 2;
+        const offsetY = 24;
+        return {
+          scale,
+          offsetX,
+          offsetY,
+          toWorld(x, y) {
+            return {
+              x: offsetX + x * scale,
+              y: offsetY + y * scale,
+            };
+          },
+        };
+      }
+
+      function componentPoint(component, nx, ny) {
+        return {
+          x: component.minX + component.width * nx,
+          y: component.minY + component.height * ny,
+        };
+      }
+
+      function buildCavalryProjectFromMaterial(inputImageData, fileName = "cavalry.png") {
+        const padding = materialReplacementOptions.padding;
+        const components = detectMaterialComponents(inputImageData, 500);
+        const parts = classifyCavalryComponents(inputImageData, components);
+        const transform = createCavalryImageToWorldTransform(inputImageData.width, inputImageData.height);
+        const nodes = [];
+        const timelines = {};
+        const customImages = {};
+        const imageMeta = new Map();
+        const worldInfo = new Map();
+        let nodeCounter = 0;
+
+        const nextId = (prefix) => `${prefix}-${String(nodeCounter += 1).padStart(3, "0")}`;
+        const componentTopLeftWorld = (component) =>
+          transform.toWorld(Math.max(0, component.minX - padding), Math.max(0, component.minY - padding));
+
+        const addTimeline = (id) => {
+          timelines[id] = [];
+        };
+
+        const registerComponentImage = (name, component) => {
+          const imageData = extractMaterialPiece(inputImageData, component, padding);
+          const imageId = `${customImagePrefix}cavalry-${name}-${nextId("img")}`;
+          customImages[imageId] = {
+            name: `${fileName.replace(/\.[^.]+$/, "")}-${name}.png`,
+            src: imageDataToDataUrl(imageData),
+          };
+          imageMeta.set(imageId, { width: imageData.width, height: imageData.height });
+          return imageId;
+        };
+
+        const addBone = (name, parentId, startSource, endSource, color, role) => {
+          const id = nextId("bone");
+          const startWorld = transform.toWorld(startSource.x, startSource.y);
+          const endWorld = transform.toWorld(endSource.x, endSource.y);
+          const worldRotation = (Math.atan2(endWorld.y - startWorld.y, endWorld.x - startWorld.x) * 180) / Math.PI;
+          let localX = startWorld.x;
+          let localY = startWorld.y;
+          let rotation = worldRotation;
+          if (parentId) {
+            const parent = worldInfo.get(parentId);
+            const anchor = parent.end;
+            const dx = startWorld.x - anchor.x;
+            const dy = startWorld.y - anchor.y;
+            const rad = (-parent.rotation * Math.PI) / 180;
+            localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+            localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+            rotation = worldRotation - parent.rotation;
+          }
+          const length = Math.max(4, Math.hypot(endWorld.x - startWorld.x, endWorld.y - startWorld.y));
+          const node = {
+            id,
+            name,
+            parentId,
+            x: localX,
+            y: localY,
+            rotation,
+            length,
+            scaleX: 1,
+            scaleY: 1,
+            color,
+            visible: true,
+            role,
+            bindPose: {
+              x: localX,
+              y: localY,
+              rotation,
+              length,
+              scaleX: 1,
+              scaleY: 1,
+            },
+            attachment: null,
+          };
+          nodes.push(node);
+          addTimeline(id);
+          worldInfo.set(id, {
+            start: startWorld,
+            end: endWorld,
+            rotation: worldRotation,
+          });
+          return node;
+        };
+
+        const addPiece = (name, role, imageId, component, layer, skinBoneIds) => {
+          const id = nextId("piece");
+          const image = imageMeta.get(imageId);
+          const topLeft = componentTopLeftWorld(component);
+          const node = {
+            id,
+            name,
+            parentId: null,
+            x: topLeft.x,
+            y: topLeft.y,
+            rotation: 0,
+            length: 4,
+            scaleX: 1,
+            scaleY: 1,
+            color: "#8bd17c",
+            visible: true,
+            role,
+            bindPose: {
+              x: topLeft.x,
+              y: topLeft.y,
+              rotation: 0,
+              length: 4,
+              scaleX: 1,
+              scaleY: 1,
+            },
+            attachment: normalizeAttachment({
+              image: imageId,
+              width: image.width,
+              alpha: 1,
+              layer,
+              fullSkin: true,
+              skinBoneIds,
+              restPart: {
+                partId: id,
+                x: topLeft.x,
+                y: topLeft.y,
+                scale: transform.scale,
+                rotation: 0,
+                parentBoneId: null,
+                anchorX: 0,
+                anchorY: 0,
+              },
+            }),
+          };
+          nodes.push(node);
+          addTimeline(id);
+          return node;
+        };
+
+        const horseBodyImageId = registerComponentImage("horse-body", parts.horseBody);
+        const horseLegImageIds = parts.horseLegs.map((component, index) => registerComponentImage(`horse-leg-${index + 1}`, component));
+        const soldierTorsoImageId = registerComponentImage("soldier-torso", parts.soldierTorso);
+        const soldierRightArmImageId = registerComponentImage("soldier-right-arm", parts.soldierRightArm);
+        const soldierRightLegImageId = registerComponentImage("soldier-right-leg", parts.soldierRightLeg);
+        const soldierWeaponImageId = registerComponentImage("soldier-weapon", parts.soldierWeapon);
+
+        const horseBody1 = addBone("马身 1", null, componentPoint(parts.horseBody, 0.18, 0.62), componentPoint(parts.horseBody, 0.38, 0.60), "#8b6a45", "cavalry-horse-body");
+        const horseBody2 = addBone("马身 2", horseBody1.id, componentPoint(parts.horseBody, 0.38, 0.60), componentPoint(parts.horseBody, 0.58, 0.58), "#8b6a45", "cavalry-horse-body");
+        const horseBody3 = addBone("马身 3", horseBody2.id, componentPoint(parts.horseBody, 0.58, 0.58), componentPoint(parts.horseBody, 0.72, 0.50), "#8b6a45", "cavalry-horse-body");
+        const horseNeck1 = addBone("马脖子 1", horseBody3.id, componentPoint(parts.horseBody, 0.72, 0.50), componentPoint(parts.horseBody, 0.82, 0.38), "#8b6a45", "cavalry-horse-neck");
+        const horseNeck2 = addBone("马脖子 2", horseNeck1.id, componentPoint(parts.horseBody, 0.82, 0.38), componentPoint(parts.horseBody, 0.90, 0.26), "#8b6a45", "cavalry-horse-neck");
+        const horseHead1 = addBone("马头 1", horseNeck2.id, componentPoint(parts.horseBody, 0.90, 0.26), componentPoint(parts.horseBody, 0.97, 0.18), "#8b6a45", "cavalry-horse-head");
+
+        const horseBodyBones = [horseBody1, horseBody2, horseBody3, horseNeck1, horseNeck2, horseHead1];
+        addPiece("马身", "cavalry-horse-piece", horseBodyImageId, parts.horseBody, 30, horseBodyBones.map((bone) => bone.id));
+
+        const horseLegRoots = [horseBody1.id, horseBody1.id, horseBody3.id, horseBody3.id];
+        const horseLegPieces = parts.horseLegs.map((component, index) => {
+          const bend = index < 2 ? -1 : 1;
+          const upper = addBone(`马腿 ${index + 1}-大腿`, horseLegRoots[index], componentPoint(component, 0.5, 0.04), componentPoint(component, 0.5 + bend * 0.08, 0.42), "#7c6040", "cavalry-horse-leg");
+          const lower = addBone(`马腿 ${index + 1}-小腿`, upper.id, componentPoint(component, 0.5 + bend * 0.08, 0.42), componentPoint(component, 0.5 + bend * 0.04, 0.78), "#7c6040", "cavalry-horse-leg");
+          const hoof = addBone(`马腿 ${index + 1}-马蹄`, lower.id, componentPoint(component, 0.5 + bend * 0.04, 0.78), componentPoint(component, 0.5, 0.98), "#7c6040", "cavalry-horse-hoof");
+          const layer = parts.horseFarLegIndices.includes(index) ? 20 : 40;
+          return addPiece(`马腿 ${index + 1}`, "cavalry-horse-leg-piece", horseLegImageIds[index], component, layer, [
+            upper.id,
+            lower.id,
+            hoof.id,
+          ]);
+        });
+
+        const soldierSpine1 = addBone("士兵脊椎 1", horseBody2.id, componentPoint(parts.soldierTorso, 0.46, 0.77), componentPoint(parts.soldierTorso, 0.47, 0.59), "#556e8a", "cavalry-soldier-spine");
+        const soldierSpine2 = addBone("士兵脊椎 2", soldierSpine1.id, componentPoint(parts.soldierTorso, 0.47, 0.59), componentPoint(parts.soldierTorso, 0.49, 0.42), "#556e8a", "cavalry-soldier-spine");
+        const soldierSpine3 = addBone("士兵脊椎 3", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.49, 0.42), componentPoint(parts.soldierTorso, 0.52, 0.24), "#556e8a", "cavalry-soldier-spine");
+        const soldierSpine4 = addBone("士兵脊椎 4", soldierSpine3.id, componentPoint(parts.soldierTorso, 0.52, 0.24), componentPoint(parts.soldierTorso, 0.54, 0.06), "#556e8a", "cavalry-soldier-spine");
+        const soldierRightShoulder = addBone("士兵右肩", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.36, 0.25), componentPoint(parts.soldierTorso, 0.22, 0.23), "#556e8a", "cavalry-soldier-shoulder");
+        const soldierLeftShoulder = addBone("士兵左肩", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.62, 0.25), componentPoint(parts.soldierTorso, 0.76, 0.23), "#556e8a", "cavalry-soldier-shoulder");
+
+        addPiece("士兵躯壳", "cavalry-soldier-torso-piece", soldierTorsoImageId, parts.soldierTorso, 80, [
+          soldierSpine1.id,
+          soldierSpine2.id,
+          soldierSpine3.id,
+          soldierSpine4.id,
+          soldierRightShoulder.id,
+          soldierLeftShoulder.id,
+        ]);
+
+        const soldierRightArm1 = addBone("士兵右臂 1", soldierRightShoulder.id, componentPoint(parts.soldierRightArm, 0.82, 0.08), componentPoint(parts.soldierRightArm, 0.58, 0.48), "#556e8a", "cavalry-soldier-right-arm");
+        const soldierRightArm2 = addBone("士兵右臂 2", soldierRightArm1.id, componentPoint(parts.soldierRightArm, 0.58, 0.48), componentPoint(parts.soldierRightArm, 0.49, 0.96), "#556e8a", "cavalry-soldier-right-arm");
+        addPiece("士兵右臂", "cavalry-soldier-right-arm-piece", soldierRightArmImageId, parts.soldierRightArm, 90, [
+          soldierRightArm1.id,
+          soldierRightArm2.id,
+        ]);
+
+        const soldierRightLeg1 = addBone("士兵右腿 1", soldierSpine1.id, componentPoint(parts.soldierRightLeg, 0.82, 0.12), componentPoint(parts.soldierRightLeg, 0.56, 0.47), "#556e8a", "cavalry-soldier-right-leg");
+        const soldierRightLeg2 = addBone("士兵右腿 2", soldierRightLeg1.id, componentPoint(parts.soldierRightLeg, 0.56, 0.47), componentPoint(parts.soldierRightLeg, 0.46, 0.82), "#556e8a", "cavalry-soldier-right-leg");
+        const soldierRightLeg3 = addBone("士兵右腿 3", soldierRightLeg2.id, componentPoint(parts.soldierRightLeg, 0.46, 0.82), componentPoint(parts.soldierRightLeg, 0.75, 0.96), "#556e8a", "cavalry-soldier-right-foot");
+        addPiece("士兵右腿", "cavalry-soldier-right-leg-piece", soldierRightLegImageId, parts.soldierRightLeg, 70, [
+          soldierRightLeg1.id,
+          soldierRightLeg2.id,
+          soldierRightLeg3.id,
+        ]);
+
+        addPiece("士兵武器", "cavalry-soldier-weapon-piece", soldierWeaponImageId, parts.soldierWeapon, 95, [
+          soldierRightArm2.id,
+        ]);
+
+        return {
+          name: "骑兵",
+          fps: 36,
+          duration: 95,
+          selectedActionId: null,
+          nodes,
+          timelines,
+          actions: [],
+          customImages,
+        };
+      }
+
       async function installSpearmanFistRigFromMaterial(inputImageData, inputComponents, matches) {
         if (state.currentUnitType !== "spearman") return false;
         const fistCandidateComponents = detectMaterialComponents(
@@ -2317,30 +2719,41 @@
         const fistComponent = detectSpearmanFistComponent(inputImageData, fistCandidateComponents, matches);
         clearSpearmanFistRig();
         if (!fistComponent) return false;
-        const torsoMatch = matches.find((match) => match?.slot?.id === "torso");
         const torsoSixNode = findSpearmanTorsoSixNode();
-        const torsoAttachmentNode = torsoSixNode ? findAttachmentAncestorByImage(torsoSixNode, "newTorso") : null;
-        const torsoRestPart =
-          torsoAttachmentNode?.attachment?.fullSkin && torsoAttachmentNode.attachment.restPart
-            ? resolveRestPartTransform(torsoAttachmentNode.attachment.restPart, false) ||
-              torsoAttachmentNode.attachment.restPart
+        const attachmentOwnerNode = torsoSixNode ? findNearestAttachmentAncestor(torsoSixNode) : null;
+        const attachmentOwnerMatch = matches.find(
+          (match) => match?.slot?.imageKey && match.slot.imageKey === attachmentOwnerNode?.attachment?.image,
+        );
+        const attachmentOwnerRestPart =
+          attachmentOwnerNode?.attachment?.fullSkin && attachmentOwnerNode.attachment.restPart
+            ? resolveRestPartTransform(attachmentOwnerNode.attachment.restPart, false) ||
+              attachmentOwnerNode.attachment.restPart
             : null;
-        if (!torsoMatch || !torsoSixNode || !torsoAttachmentNode || !torsoRestPart) return false;
-
-        const torsoPixel = projectSourcePointIntoNormalizedSlot(
-          torsoMatch.component,
-          torsoMatch.slot,
-          fistComponent.cx,
-          fistComponent.cy,
-        );
-        if (!torsoPixel) return false;
-
-        const fistCenterWorld = imagePixelToRestWorld(
-          torsoRestPart,
-          { width: torsoMatch.slot.targetWidth, height: torsoMatch.slot.targetHeight },
-          torsoPixel.x,
-          torsoPixel.y,
-        );
+        const ownerPixel = attachmentOwnerMatch
+          ? projectSourcePointIntoNormalizedSlot(
+              attachmentOwnerMatch.component,
+              attachmentOwnerMatch.slot,
+              fistComponent.cx,
+              fistComponent.cy,
+            )
+          : null;
+        const materialToWorld = estimateMaterialToWorldTransform(matches);
+        if (!torsoSixNode) return false;
+        const fistCenterWorld =
+          attachmentOwnerMatch && attachmentOwnerRestPart && ownerPixel
+            ? imagePixelToRestWorld(
+                attachmentOwnerRestPart,
+                {
+                  width: attachmentOwnerMatch.slot.targetWidth,
+                  height: attachmentOwnerMatch.slot.targetHeight,
+                },
+                ownerPixel.x,
+                ownerPixel.y,
+              )
+            : materialToWorld
+              ? materialToWorld(fistComponent.cx, fistComponent.cy)
+              : null;
+        if (!fistCenterWorld) return false;
         const torsoPose = worldPose(torsoSixNode);
         const fistEndWorld = { x: fistCenterWorld.x + 16, y: fistCenterWorld.y };
         const fistImageData = extractMaterialPiece(inputImageData, fistComponent, materialReplacementOptions.padding);
@@ -2369,13 +2782,15 @@
           length: fistBone.length,
         };
 
-        const torsoScale = Math.max(0.001, torsoRestPart.scale || 1);
-        const widthScale = torsoMatch.slot.targetWidth / Math.max(1, fistImageData.width);
-        const heightScale = torsoMatch.slot.targetHeight / Math.max(1, fistImageData.height);
+        const fistWorldScale =
+          (Math.abs(materialToWorld.scaleX || 0) + Math.abs(materialToWorld.scaleY || 0)) / 2 || 1;
         const fistRestPart = {
           x: 0,
           y: 0,
-          scale: torsoScale * Math.min(widthScale, heightScale),
+          scale:
+            attachmentOwnerRestPart?.scale && attachmentOwnerMatch
+              ? Math.max(0.001, attachmentOwnerRestPart.scale)
+              : Math.max(0.001, fistWorldScale),
           rotation: 0,
           anchorX: 0.5,
           anchorY: 0.5,
@@ -2385,7 +2800,8 @@
           "拳头",
           spearmanFistCustomImageId,
           fistRestPart,
-          (torsoAttachmentNode.attachment?.layer || 0) + 1,
+          (attachmentOwnerNode?.attachment?.layer ??
+            Math.max(...state.nodes.map((node) => node.attachment?.layer || 0), 0)) + 1,
           [fistBone.id],
         );
         fistPiece.role = spearmanFistPieceRole;
@@ -2402,6 +2818,15 @@
         el.replaceMaterialBtn.disabled = true;
         toast("正在识别素材图...");
         try {
+          if (state.currentUnitType === "cavalry") {
+            const inputImage = await loadFileImage(file);
+            const inputImageData = imageToImageData(inputImage);
+            const project = buildCavalryProjectFromMaterial(inputImageData, file.name);
+            applyProjectData(project, { unitType: "cavalry" });
+            drawStage();
+            toast("已从骑兵拆分图自动创建全新骨架");
+            return;
+          }
           const [referenceImage, inputImage] = await Promise.all([
             loadImage(materialReferencePath),
             loadFileImage(file),
@@ -4290,6 +4715,12 @@
         return Boolean(node?.lockedTransform);
       }
 
+      function isPieceTransformLocked(node) {
+        if (!node?.attachment) return isTransformLockedNode(node);
+        if (node.role === spearmanFistPieceRole) return false;
+        return Boolean(node?.lockedTransform);
+      }
+
       function isArrowPieceNode(node) {
         return Boolean(node?.attachment && node.role === "arrow-piece");
       }
@@ -4697,6 +5128,7 @@
 
       function participatesInGenericJointSolver(node, frame = state.currentFrame) {
         if (isBowRigNode(node)) return false;
+        if (node?.lockedTransform) return false;
         return !isTempParentBoundArrowCarrier(node, frame) && !isTempParentBoundSlashFxCarrier(node, frame);
       }
 
@@ -4757,7 +5189,7 @@
       function setPieceTransformPatch(patch, shouldRender = true) {
         const piece = selectedPieceNode();
         if (!piece?.attachment) return;
-        if (isTransformLockedNode(piece)) return;
+        if (isPieceTransformLocked(piece)) return;
         if (piece.attachment.fullSkin) {
           piece.attachment.restPart = setResolvedRestPartTransform(
             piece.attachment.restPart || {
@@ -4931,7 +5363,9 @@
       function renderAttachmentProperties(node) {
         const context = attachmentEditContext(node);
         const attachment = selectedAttachmentView(node);
-        const transformLocked = isTransformLockedNode(context.owner);
+        const transformLocked = context.owner?.attachment
+          ? isPieceTransformLocked(context.owner)
+          : isTransformLockedNode(context.owner);
         const scarfInputs = [
           el.attachmentScarfEnabledInput,
           el.attachmentScarfSplitInput,
@@ -5059,7 +5493,7 @@
           : "newSword";
         const piece = selectedPieceNode();
         const transform = piece ? pieceTransform(piece) : null;
-        const pieceLocked = isTransformLockedNode(piece);
+        const pieceLocked = isPieceTransformLocked(piece);
         renderSpineUnitBindingControls();
         if (el.createBowRigBtn) {
           el.createBowRigBtn.disabled = state.currentUnitType !== "archer" || !piece?.attachment?.image;
@@ -10163,19 +10597,17 @@
           const node = state.nodes.find((item) => item.id === drag.nodeId);
           if (!node) return;
           if (
-            isTransformLockedNode(node) &&
-            [
-              "origin",
-              "bone",
-              "end",
-              "piece",
-              "piece-scale",
-              "piece-rotate",
-              "stretch-origin",
-              "stretch-end",
-              "arrow-piece-bone",
-              "slash-fx-piece-bone",
-            ].includes(drag.type)
+            ((["piece", "piece-scale", "piece-rotate"].includes(drag.type) && isPieceTransformLocked(node)) ||
+              ([
+                "origin",
+                "bone",
+                "end",
+                "stretch-origin",
+                "stretch-end",
+                "arrow-piece-bone",
+                "slash-fx-piece-bone",
+              ].includes(drag.type) &&
+                isTransformLockedNode(node)))
           ) {
             renderDragFrame();
             return;

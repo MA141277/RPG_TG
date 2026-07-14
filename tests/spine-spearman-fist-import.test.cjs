@@ -92,3 +92,101 @@ test("spearman fist rig nodes persist the transform lock through project reload"
   assert.match(source, /fistPiece\.lockedTransform = true/);
   assert.match(source, /function isTransformLockedNode\(node\)/);
 });
+
+test("spearman fist placement can be solved from matched material centers even when torso 6 is not under the torso attachment chain", () => {
+  const project = JSON.parse(fs.readFileSync("src/faxian/leg/spearman/project.json", "utf8"));
+  const torso6 = (project.nodes || []).find((node) => node.name === "躯干 6");
+  assert.ok(torso6, "expected spearman project to contain 躯干 6");
+
+  let current = torso6;
+  let hasTorsoAttachmentAncestor = false;
+  while (current) {
+    if (current.attachment?.image === "newTorso") {
+      hasTorsoAttachmentAncestor = true;
+      break;
+    }
+    current = current.parentId ? (project.nodes || []).find((node) => node.id === current.parentId) : null;
+  }
+  assert.equal(hasTorsoAttachmentAncestor, false);
+
+  const source = loadEditorSource();
+  const body = extractFunctionBody(source, "function estimateMaterialToWorldTransform(matches)");
+  const estimateMaterialToWorldTransform = new Function(
+    "state",
+    "pieceCenter",
+    `return function estimateMaterialToWorldTransform(matches) {${body}};`,
+  )(
+    {
+      nodes: [
+        { attachment: { image: "newHead" } },
+        { attachment: { image: "newTorso" } },
+        { attachment: { image: "newLeftArm" } },
+      ],
+    },
+    (piece) => {
+      if (piece.attachment.image === "newHead") return { x: 50, y: 20 };
+      if (piece.attachment.image === "newTorso") return { x: 100, y: 80 };
+      if (piece.attachment.image === "newLeftArm") return { x: 160, y: 120 };
+      return { x: 0, y: 0 };
+    },
+  );
+
+  const transform = estimateMaterialToWorldTransform([
+    { slot: { imageKey: "newHead" }, component: { cx: 10, cy: 10 } },
+    { slot: { imageKey: "newTorso" }, component: { cx: 20, cy: 40 } },
+    { slot: { imageKey: "newLeftArm" }, component: { cx: 32, cy: 60 } },
+  ]);
+
+  assert.equal(typeof transform, "function");
+  assert.deepEqual(transform(26, 50), { x: 130, y: 100 });
+});
+
+test("spearman fist lookup resolves the nearest attached ancestor for torso 6, which is the left-arm owner in the current project", () => {
+  const project = JSON.parse(fs.readFileSync("src/faxian/leg/spearman/project.json", "utf8"));
+  const source = loadEditorSource();
+  const body = extractFunctionBody(source, "function findNearestAttachmentAncestor(node)");
+  const findNearestAttachmentAncestor = new Function(
+    "state",
+    `return function findNearestAttachmentAncestor(node) {${body}};`,
+  )({ nodes: project.nodes });
+
+  const torso6 = project.nodes.find((node) => node.name === "躯干 6");
+  const owner = findNearestAttachmentAncestor(torso6);
+
+  assert.ok(owner);
+  assert.equal(owner.attachment.image, "newLeftArm");
+});
+
+test("locked helper bones do not participate in the generic joint solver", () => {
+  const source = loadEditorSource();
+  const body = extractFunctionBody(source, "function participatesInGenericJointSolver(node, frame = state.currentFrame)");
+  const participatesInGenericJointSolver = new Function(
+    "state",
+    "isBowRigNode",
+    "isTempParentBoundArrowCarrier",
+    "isTempParentBoundSlashFxCarrier",
+    `return function participatesInGenericJointSolver(node, frame = state.currentFrame) {${body}};`,
+  )(
+    { currentFrame: 0 },
+    () => false,
+    () => false,
+    () => false,
+  );
+
+  assert.equal(participatesInGenericJointSolver({ lockedTransform: true }), false);
+  assert.equal(participatesInGenericJointSolver({ lockedTransform: false }), true);
+});
+
+test("spearman fist piece stays editable in binding mode even though its helper bone remains locked", () => {
+  const source = loadEditorSource();
+  const body = extractFunctionBody(source, "function isPieceTransformLocked(node)");
+  const isPieceTransformLocked = new Function(
+    "isTransformLockedNode",
+    "spearmanFistPieceRole",
+    `return function isPieceTransformLocked(node) {${body}};`,
+  )((node) => Boolean(node?.lockedTransform), "spearman-fist-piece");
+
+  assert.equal(isPieceTransformLocked({ role: "spearman-fist-piece", lockedTransform: true, attachment: {} }), false);
+  assert.equal(isPieceTransformLocked({ role: "piece", lockedTransform: true, attachment: {} }), true);
+  assert.equal(isPieceTransformLocked({ role: "piece", lockedTransform: false, attachment: {} }), false);
+});

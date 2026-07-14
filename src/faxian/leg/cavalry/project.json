@@ -1,0 +1,34 @@
+{
+  "name": "\u9a91\u5175",
+  "fps": 36,
+  "duration": 95,
+  "nodes": [
+    {
+      "id": "cavalry-root",
+      "name": "\u9a91\u5175\u6839",
+      "parentId": null,
+      "x": 420,
+      "y": 330,
+      "rotation": 0,
+      "length": 4,
+      "scaleX": 1,
+      "scaleY": 1,
+      "color": "#8bd17c",
+      "visible": true,
+      "role": "cavalry-root",
+      "bindPose": {
+        "x": 420,
+        "y": 330,
+        "rotation": 0,
+        "length": 4,
+        "scaleX": 1,
+        "scaleY": 1
+      },
+      "attachment": null
+    }
+  ],
+  "timelines": {
+    "cavalry-root": []
+  },
+  "actions": []
+}
