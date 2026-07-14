@@ -36,12 +36,13 @@
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the live successor runtime-pack-unification version and currently has no active queue, so resume must continue from version-level promotion review.`
-- `The latest governance action closes queue.script-editor-fixed-pack-consumer-deprivileging as historical evidence and returns control to target.script-editor-runtime-pack-unification for downstream compatibility-boundary admission review.`
+- `The latest governance action closes queue.script-editor-compatibility-boundary-retirement as historical evidence and returns control to target.script-editor-runtime-pack-unification for version-level review.`
 
 ### Historical References
 
 - `docs/change-log.md` stores the human-readable cross-session history.`
 - `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md` stores the current runtime-pack-unification version's admission history, candidate record, and promotion ledger.
+- `docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md` stores the closed compatibility-boundary-retirement queue truth.
 - `docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md` stores the closed fixed-pack-consumer-deprivileging queue truth.
 - `docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md` stores the closed base-pack-inheritance-governance queue truth.
 - `docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md` stores the closed runtime-pack-export-unification queue truth.

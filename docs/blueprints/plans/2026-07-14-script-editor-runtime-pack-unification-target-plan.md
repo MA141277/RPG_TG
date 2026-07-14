@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-fixed-pack-consumer-deprivileging`
+- closure_review_subject: `queue.script-editor-compatibility-boundary-retirement`
 - closure_review_status: `routed`
-- residue_candidate_id: `item.script-editor-compatibility-boundary-retirement`
-- residue_candidate_family: `cross-family`
-- routing_basis: `queue.script-editor-fixed-pack-consumer-deprivileging closed after writing the covered consumer route contract and classifying default-pack facade residue; fresh evidence still shows compatibility residue participates in daily authoring/export truth, so the next lawful queue to inspect is compatibility-boundary retirement.`
-- next_lawful_queue_recommendation: `queue.script-editor-compatibility-boundary-retirement`
+- residue_candidate_id: `none`
+- residue_candidate_family: `none`
+- routing_basis: `queue.script-editor-compatibility-boundary-retirement closed after writing the migration-only compatibility retirement contract; the recorded candidate portfolio has no remaining unadmitted contract-governance queue, but the version remains open because implementation and final acceptance requirements have not been explicitly closed.`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -61,7 +61,7 @@
 | `queue.script-editor-runtime-pack-export-unification` | `done` | `only if fresh repository evidence later proves still-blocking same-family export-contract residue after the written startup-consumable export contract map` | `Closed on 2026-07-14 after the queue wrote the formal startup-consumable export contract map and routed remaining residue to downstream queue families.` |
 | `queue.script-editor-base-pack-inheritance-governance` | `done` | `only if fresh repository evidence later proves still-blocking same-family inheritance-governance residue after the written family overlay contract map` | `Closed on 2026-07-14 after the queue wrote explicit family overlay rules, inheritance sources, and fail-closed obligations for mandatory and explicitly inheritable runtime families.` |
 | `queue.script-editor-fixed-pack-consumer-deprivileging` | `done` | `only if fresh repository evidence later proves still-blocking same-family consumer-routing residue after the written active-content-only route contract` | `Closed on 2026-07-14 after the queue wrote the covered consumer route contract and classified retained builtin baselines as out of scope unless they bypass active scenario-pack content resolution.` |
-| `queue.script-editor-compatibility-boundary-retirement` | `candidate` | `only after the formal runtime-pack export path exists and fresh evidence still shows compatibility residue participating in daily authoring/export truth` | `Must remain later than export unification because compatibility cannot retire until the replacement runtime-pack path is already formal and live.` |
+| `queue.script-editor-compatibility-boundary-retirement` | `done` | `only if fresh repository evidence later proves still-blocking same-family compatibility-boundary contract residue after the written migration-only retirement contract` | `Closed on 2026-07-14 after the queue wrote the migration-only compatibility boundary for import, authoring storage, UI diagnostics, export validation, and version closeout.` |
 
 ### Candidate Classification Record
 
@@ -73,7 +73,7 @@
 | `item.script-editor-runtime-pack-export-unification` | `queue-candidate` | `queue.script-editor-runtime-pack-export-unification` | `admitted + queue closed` | `The export path was still a bounded partial seam; this queue has now written the startup-consumable export contract map and closed as historical evidence.` |
 | `item.script-editor-base-pack-inheritance-governance` | `queue-candidate` | `queue.script-editor-base-pack-inheritance-governance` | `admitted + queue closed` | `basePackId was present in import/export metadata flow without family-level inheritance semantics; this queue has now written the formal overlay and fail-closed contract map.` |
 | `item.script-editor-fixed-pack-consumer-deprivileging` | `queue-candidate` | `queue.script-editor-fixed-pack-consumer-deprivileging` | `admitted + queue closed` | `src/content/pack-content-access.ts still directly imports builtin zhuyuanzhang pack files and default-pack facade consumers still bypass active scenario-pack resolution; this queue has now written the active-content-only route contract.` |
-| `item.script-editor-compatibility-boundary-retirement` | `queue-candidate` | `queue.script-editor-compatibility-boundary-retirement` | `candidate-recorded` | `The script-editor shell and workspace still surface compatibility residue as live authoring/export truth, so compatibility has not yet been reduced to migration-only duty.` |
+| `item.script-editor-compatibility-boundary-retirement` | `queue-candidate` | `queue.script-editor-compatibility-boundary-retirement` | `admitted + queue closed` | `The script-editor shell and workspace still surfaced compatibility residue as live authoring/export truth; this queue has now written the migration-only compatibility retirement contract.` |
 
 ### Candidate Scope Notes
 
@@ -130,6 +130,19 @@
 - `task.script-editor-fixed-pack-consumer-deprivileging.boundary-baseline-reconcile completed on 2026-07-14 after fresh evidence confirmed src/content/pack-content-access.ts still directly imports zhuyuanzhang scenario-pack JSON and downstream consumers still consume default-pack facades instead of active scenario-pack resolution.`
 - `task.script-editor-fixed-pack-consumer-deprivileging.consumer-route-contract-map completed on 2026-07-14 after the queue wrote the covered consumer route map and classified default-pack facades, house-module active content helpers, and startup/UI baselines as routed or out of scope unless they bypass active scenario-pack content resolution.`
 - `task.script-editor-fixed-pack-consumer-deprivileging.queue-closeout-and-handoff completed on 2026-07-14 after the queue verified its bounded consumer-deprivileging slice, closed same-family residue, and returned control to version-level promotion review.`
+
+### Compatibility Boundary Retirement Admission Record
+
+- `queue.script-editor-compatibility-boundary-retirement was reviewed on 2026-07-14 and admitted as the next active same-version queue.`
+- `Fresh repository evidence shows src/application/script-editor/workspace-shell.ts and src/ui/main-ui/main-ui-flow.js still surface compatibility residue counts as daily authoring risk and creator-facing status.`
+- `src/application/script-editor/runtime-pack-export.ts still fails closed on storyPack.compatibilityImport.unresolvedFamilies, while src/application/script-editor/runtime-pack-import.ts still preserves unresolved families as compatibility residue.`
+- `The closed export, inheritance, and consumer route queues now provide the necessary contract baseline, so compatibility-boundary retirement is the smallest lawful next cut.`
+
+### Compatibility Boundary Retirement Progress
+
+- `task.script-editor-compatibility-boundary-retirement.boundary-baseline-reconcile completed on 2026-07-14 after fresh evidence confirmed workspace shell and main UI still surface compatibility residue counts as daily authoring risk, and runtime export still fails closed on storyPack.compatibilityImport.unresolvedFamilies.`
+- `task.script-editor-compatibility-boundary-retirement.retirement-contract-map completed on 2026-07-14 after the queue wrote the migration-only compatibility boundary for import, authoring storage, UI diagnostics, export validation, and version closeout.`
+- `task.script-editor-compatibility-boundary-retirement.queue-closeout-and-handoff completed on 2026-07-14 after the queue verified its bounded compatibility-retirement slice, closed same-family contract residue, and returned control to version-level promotion review.`
 
 ### Current Queue Activation
 

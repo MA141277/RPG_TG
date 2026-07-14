@@ -232,6 +232,46 @@
 - 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做 compatibility-boundary retirement admission review，而不是继续在已关闭的 fixed-pack-consumer queue 内扩张。
 - 剩余 residue 被分类为 cross-family：compatibility-boundary retirement 仍按后续候选队列推进。
 
+## 2026-07-14 Script Editor Compatibility Boundary Retirement Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md)，将 `queue.script-editor-compatibility-boundary-retirement` 写成当前 live queue truth，并把范围收敛在把 `compatibilityImport.unresolvedFamilies` 从日常 authoring/export truth 退回 migration-only evidence。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 live entry 从 version-level promotion-review 切回 active-execution，并记录当前 active task。
+- 记录 fresh evidence：`workspace-shell.ts` 与 `main-ui-flow.js` 仍把兼容残留计数作为日常风险/状态展示，`runtime-pack-export.ts` 仍对 `storyPack.compatibilityImport.unresolvedFamilies` fail closed，`runtime-pack-import.ts` 仍保存 unresolved families 作为 compatibility residue。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 fixed-pack consumer deprivileging 转到 compatibility-boundary retirement。
+- 后续动作必须先确认兼容残留边界并写 migration-only retirement contract，不能把 compatibility residue 当成最终 runtime-pack truth。
+
+## 2026-07-14 Script Editor Compatibility Boundary Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md)，将 `task.script-editor-compatibility-boundary-retirement.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-compatibility-boundary-retirement.retirement-contract-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 baseline 证据：workspace shell 与 main UI 仍把兼容残留计数作为日常 authoring risk，runtime export 仍对 `storyPack.compatibilityImport.unresolvedFamilies` fail closed。
+
+### Impact
+- 当前 compatibility-boundary queue 已完成 baseline reconcile；下一步只能写 migration-only compatibility retirement contract map，不能移除历史 import support 或重开已关闭的 export/inheritance/consumer contract。
+
+## 2026-07-14 Script Editor Compatibility Boundary Retirement Contract Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md)，新增 Compatibility Retirement Contract Map，明确 runtime import、authoring model、workspace shell、main UI flow、runtime export、version closeout 的 migration-only compatibility boundary。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 retirement contract map 完成，并把当前 active task 推进到 `task.script-editor-compatibility-boundary-retirement.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有正式 compatibility retirement 契约图；后续实现不得再把 `compatibilityImport.unresolvedFamilies` 当成最终 runtime-pack truth 或正常 authoring/export success state。
+- 历史 import support 仍保留为 migration evidence，不在当前 queue 内顺手删除。
+
+## 2026-07-14 Script Editor Compatibility Boundary Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md)，将 `queue.script-editor-compatibility-boundary-retirement` 从 active 收口为 `done`，记录 bounded compatibility-retirement slice 已完成并 verified。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、[docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并记录当前候选组合已无剩余 unadmitted contract-governance queue。
+
+### Impact
+- 当前 Blueprint 已无 active queue；runtime-pack-unification version 仍保持 open，因为实现落地与最终 acceptance 尚未显式关闭。
+- 后续若继续推进，必须在 version-level promotion review 中基于 fresh evidence 创建实现/acceptance 队列，不能继续追加已关闭 contract-governance queue。
+
 ## 2026-07-14 Script Editor Person Runtime Attribute Editing Alignment
 
 ### Changed
