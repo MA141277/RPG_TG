@@ -1691,9 +1691,10 @@
   --kulan-info-button: url("../../ui/yuansu/1_007_info_button_1.0.png");
   --kulan-function-button: url("../../ui/yuansu/1_008_function_button_1.0.png");
   --kulan-large-button: url("../../ui/yuansu/1_031_large_gold_button_1.0.png");
-  --kulan-menu-button: url("../../ui/yuansu/按钮/generated/city-menu-button-280x74.png");
-  --kulan-return-button: url("../../ui/yuansu/按钮/generated/city-return-button-176x74.png");
+  --kulan-menu-button: url("../../ui/yuansu/按钮/generated/20260714-141153-city-menu-seamless.png");
+  --kulan-return-button: url("../../ui/yuansu/按钮/20260714-141203.png");
   --kulan-nameplate: url("../../ui/yuansu/1_010_red_nameplate_1.0.png");
+
   position: relative;
   height: 100%;
   min-height: 100%;
@@ -1747,13 +1748,20 @@
   right: 0;
   bottom: 0;
   z-index: 4;
-  min-height: 74px;
-  min-width: 176px;
-  border: 0;
+  box-sizing: border-box;
+  min-height: 50px;
+  min-width: 148px;
+  padding: 0 16px;
+  border: 18px solid transparent;
+  border-image-source: var(--kulan-return-button);
+  border-image-slice: 92 116 fill;
+  border-image-width: 18px 22px;
+  border-image-repeat: stretch;
   color: #f7e5b7;
   font-family: var(--font-title);
-  font-size: 1.45rem;
-  background: center / contain no-repeat var(--kulan-return-button);
+  font-size: 1.12rem;
+  line-height: 1;
+  background: transparent;
   cursor: pointer;
   transition:
     transform var(--duration-fast) ease,
@@ -1934,11 +1942,20 @@
 }
 
 .c-city-directory__close {
-  padding: 10px 16px;
-  color: #f7edd1;
-  border: 1px solid rgb(92 51 25 / 86%);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #b34930, #7e2417);
+  box-sizing: border-box;
+  min-width: 132px;
+  min-height: 46px;
+  padding: 0 16px;
+  color: #f7e5b7;
+  border: 16px solid transparent;
+  border-image-source: var(--kulan-return-button);
+  border-image-slice: 92 116 fill;
+  border-image-width: 16px 20px;
+  border-image-repeat: stretch;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  background: transparent;
 }
 
 .c-city-directory__list {
@@ -2682,11 +2699,11 @@
   .c-kulan-city__leave-action {
     right: 0;
     bottom: 0;
-    min-width: 148px;
+    min-width: 136px;
   }
 
   .c-kulan-city__house-deck {
-    right: 158px;
+    right: 146px;
     padding: 0;
   }
 
@@ -3512,21 +3529,28 @@
   left: 50%;
   z-index: 4;
   display: grid;
-  gap: 14px;
-  width: min(280px, calc(100% - 48px));
+  gap: 10px;
+  width: min(236px, calc(100% - 48px));
   transform: translate(-50%, -50%);
 }
 
 .c-city-menu__button {
-  min-height: 74px;
+  box-sizing: border-box;
+  min-height: 58px;
   width: 100%;
-  padding: 0 24px;
-  color: #4b2815;
-  border: 0;
+  padding: 0 16px;
+  color: #f7e5b7;
+  border: 18px solid transparent;
+  border-image-source: var(--kulan-menu-button);
+  border-image-slice: 64 64 fill;
+  border-image-width: 18px;
+  border-image-repeat: stretch;
   font-family: var(--font-title);
-  font-size: 1.5rem;
-  letter-spacing: 0.08em;
-  background: center / contain no-repeat var(--kulan-menu-button);
+  font-size: 1.2rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  background: transparent;
+  text-shadow: 0 1px 2px rgb(55 28 10 / 74%);
   cursor: pointer;
   transition:
     transform var(--duration-fast) ease,
@@ -3690,11 +3714,20 @@
 }
 
 .c-city-directory__close {
-  padding: 10px 16px;
-  color: #f7edd1;
-  border: 1px solid rgb(92 51 25 / 86%);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #b34930, #7e2417);
+  box-sizing: border-box;
+  min-width: 132px;
+  min-height: 46px;
+  padding: 0 16px;
+  color: #f7e5b7;
+  border: 16px solid transparent;
+  border-image-source: var(--kulan-return-button);
+  border-image-slice: 92 116 fill;
+  border-image-width: 16px 20px;
+  border-image-repeat: stretch;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  background: transparent;
 }
 
 .c-city-directory__list {
@@ -3918,11 +3951,20 @@
 }
 
 .c-city-locations-view__close {
-  padding: 10px 16px;
-  color: #f7edd1;
-  border: 1px solid rgb(92 51 25 / 86%);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #b34930, #7e2417);
+  box-sizing: border-box;
+  min-width: 132px;
+  min-height: 46px;
+  padding: 0 16px;
+  color: #f7e5b7;
+  border: 16px solid transparent;
+  border-image-source: var(--kulan-return-button);
+  border-image-slice: 92 116 fill;
+  border-image-width: 16px 20px;
+  border-image-repeat: stretch;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  background: transparent;
 }
 
 .c-city-locations-view__return-action {
@@ -3930,13 +3972,20 @@
   right: 28px;
   bottom: 24px;
   z-index: 2;
-  min-height: 74px;
-  min-width: 176px;
-  border: 0;
+  box-sizing: border-box;
+  min-height: 50px;
+  min-width: 148px;
+  padding: 0 16px;
+  border: 18px solid transparent;
+  border-image-source: var(--kulan-return-button);
+  border-image-slice: 92 116 fill;
+  border-image-width: 18px 22px;
+  border-image-repeat: stretch;
   color: #f7e5b7;
   font-family: var(--font-title);
-  font-size: 1.45rem;
-  background: center / contain no-repeat var(--kulan-return-button);
+  font-size: 1.12rem;
+  line-height: 1;
+  background: transparent;
   cursor: pointer;
   transition:
     transform var(--duration-fast) ease,

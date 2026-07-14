@@ -676,7 +676,20 @@
   right: var(--space-4);
   bottom: var(--space-4);
   z-index: 10;
+  box-sizing: border-box;
+  min-width: 154px;
+  min-height: 52px;
   margin: 0;
+  padding: 0 18px;
+  color: #f7e5b7;
+  font-size: 1.12rem;
+  line-height: 1;
+  border: 18px solid transparent;
+  border-image-source: url("../../ui/yuansu/按钮/20260714-141203.png");
+  border-image-slice: 92 116 fill;
+  border-image-width: 18px 22px;
+  border-image-repeat: stretch;
+  background: transparent;
   pointer-events: auto;
 }
 
@@ -1155,7 +1168,7 @@
   border-style: solid;
   border-color: transparent;
   border-width: 64px 22px 26px;
-  border-image-source: url("../../ui/yuansu/评定/20260709-205114_popup-slice.png");
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205114_popup-slice-seamless.png");
   border-image-slice: 64 22 26 22 fill;
   border-image-width: 64px 22px 26px 22px;
   border-image-repeat: stretch;
@@ -1209,7 +1222,7 @@
   border-style: solid;
   border-color: transparent;
   border-width: 10px 18px;
-  border-image-source: url("../../ui/yuansu/评定/20260709-205119_item-slice.png");
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205119_item-slice-seamless.png");
   border-image-slice: 10 18 fill;
   border-image-width: 10px 18px;
   border-image-repeat: stretch;
@@ -1242,7 +1255,7 @@
   border-style: solid;
   border-color: transparent;
   border-width: 10px 18px;
-  border-image-source: url("../../ui/yuansu/评定/20260709-205123_button-clean.png");
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-seamless.png");
   border-image-slice: 10 18 fill;
   border-image-width: 10px 18px;
   border-image-repeat: stretch;
@@ -1297,7 +1310,7 @@
   min-height: 46px;
   margin: 0;
   border: 10px solid transparent;
-  border-image-source: url("../../ui/yuansu/评定/20260709-205119_item-slice.png");
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205119_item-slice-seamless.png");
   border-image-slice: 10 18 fill;
   border-image-width: 10px 18px;
   border-image-repeat: stretch;
@@ -1368,8 +1381,8 @@
 
 .c-house-temple-task-confirm .c-grain-shop-modal__actions .c-grain-shop-button--paper {
   border-width: 12px 24px;
-  border-image-source: url("../../ui/yuansu/评定/下载 (2).png");
-  border-image-slice: 22 54 fill;
+  border-image-source: url("../../ui/yuansu/评定/generated/temple-yellow-button-seamless.png");
+  border-image-slice: 12 24 fill;
   border-image-width: 12px 24px;
   border-image-repeat: stretch;
   padding: 0 6px;
@@ -1379,8 +1392,8 @@
 
 .c-house-temple-utility-popup .c-grain-shop-modal__actions .c-grain-shop-button--paper {
   border-width: 12px 24px;
-  border-image-source: url("../../ui/yuansu/评定/下载 (2).png");
-  border-image-slice: 22 54 fill;
+  border-image-source: url("../../ui/yuansu/评定/generated/temple-yellow-button-seamless.png");
+  border-image-slice: 12 24 fill;
   border-image-width: 12px 24px;
   border-image-repeat: stretch;
   color: #5b351d;
@@ -1389,7 +1402,7 @@
 
 .c-house-temple-task-confirm .c-grain-shop-modal__actions .c-grain-shop-button--gold {
   border-width: 10px 18px;
-  border-image-source: url("../../ui/yuansu/评定/20260709-205123_button-clean.png");
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-seamless.png");
   border-image-slice: 10 18 fill;
   border-image-width: 10px 18px;
   border-image-repeat: stretch;
@@ -1398,7 +1411,7 @@
 
 .c-house-temple-utility-popup .c-grain-shop-modal__actions .c-grain-shop-button--gold {
   border-width: 10px 18px;
-  border-image-source: url("../../ui/yuansu/评定/20260709-205123_button-clean.png");
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-seamless.png");
   border-image-slice: 10 18 fill;
   border-image-width: 10px 18px;
   border-image-repeat: stretch;
