@@ -344,7 +344,7 @@ function resolveImportedScenarioPackAssetUrl(
   indexedFiles: Record<string, ScenarioPackImportFileEntry>,
   assetUrlCache: Record<string, string>
 ): string {
-  if (/^(https?:|file:|blob:|\/)/.test(value)) {
+  if (/^(https?:|file:|blob:|data:|\/)/.test(value)) {
     return value;
   }
 

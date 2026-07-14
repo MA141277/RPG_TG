@@ -1,4 +1,5 @@
 import type {
+  ScriptEditorActivityRecord,
   ScriptEditorDialogueRecord,
   ScriptEditorEntityRecord,
   ScriptEditorEventRecord,
@@ -132,13 +133,14 @@ export type ScriptEditorWorkspaceExportTarget = {
   body: string;
 };
 
-const FAMILY_LABELS: Record<ScriptEditorProjectFileKey, string> = {
+const FAMILY_LABELS: Record<string, string> = {
   storyPack: "项目",
   people: "人物",
   cities: "城市",
   buildings: "建筑",
   events: "事件",
   quests: "任务",
+  activities: "活动",
   dialogues: "对话",
   minigames: "玩法",
   storyNodes: "剧情节点",
@@ -162,6 +164,7 @@ const TREE_GROUPS: Array<{
       "buildings",
       "events",
       "quests",
+      "activities",
     ],
   },
   {
@@ -182,6 +185,7 @@ const TREE_GROUPS: Array<{
 ];
 
 const DEFERRED_SHELL_FAMILIES = new Set<ScriptEditorProjectFileKey>([
+  "activities",
   "dialogues",
   "storyNodes",
   "conditionGroups",
@@ -336,13 +340,17 @@ function createTreeNode(
     id: `node.${family}`,
     family,
     entityId: selection.family === family ? selection.entityId : null,
-    label: FAMILY_LABELS[family],
+    label: getFamilyLabel(family),
     description:
       previewRecord == null ? "当前家族还没有对象。" : describeRecord(previewRecord),
     itemCount: count,
     isSelected: selection.family === family,
     tone: hasAttention ? "warning" : "neutral",
   };
+}
+
+function getFamilyLabel(family: ScriptEditorProjectFileKey): string {
+  return FAMILY_LABELS[family] ?? family;
 }
 
 function createInspector(
@@ -1350,6 +1358,16 @@ function createExportTargets(
           blockedStatus
         ),
       ];
+    case "activities":
+      return [
+        buildTarget(
+          "export.activities",
+          "活动落点",
+          "activities.json",
+          "活动、house 任务与 QTE 配置直接进入正式 activities.json 分表。",
+          blockedStatus
+        ),
+      ];
     case "dialogues":
       return [
         buildTarget(
@@ -1442,7 +1460,7 @@ function getFamilyRecords(
 function getFamilyRecords(
   project: ScriptEditorProjectDefinition,
   family: ScriptEditorProjectFileKey
-): ScriptEditorEntityRecord[] | ScriptEditorTextEntryRecord[] {
+): ScriptEditorEntityRecord[] | ScriptEditorTextEntryRecord[] | ScriptEditorActivityRecord[] {
   switch (family) {
     case "storyPack":
       return [];
@@ -1456,6 +1474,8 @@ function getFamilyRecords(
       return project.events;
     case "quests":
       return project.quests;
+    case "activities":
+      return project.activities;
     case "dialogues":
       return project.dialogues;
     case "minigames":
@@ -1468,6 +1488,8 @@ function getFamilyRecords(
       return project.conditionGroups;
     case "effectBundles":
       return project.effectBundles;
+    default:
+      return [];
   }
 }
 

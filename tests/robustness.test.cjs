@@ -466,11 +466,24 @@ function createSampleScriptEditorProjectDefinition() {
       title: "Test Story Pack",
       description: "Authoring-side project root.",
     },
+    maps: [{ id: "map.test.script-editor", name: "Test Map" }],
     people: [{ id: "person.hero", name: "Hero", role: "playable" }],
     cities: [{ id: "city.start", name: "Starting City" }],
     buildings: [{ id: "building.home", cityId: "city.start", name: "Home" }],
+    cityEntries: [],
     events: [{ id: "event.opening", title: "Opening Event" }],
+    scenes: [],
     quests: [{ id: "quest.first", title: "First Quest" }],
+    activities: [{ id: "activity.opening", label: "Opening Activity", handlerId: "generic.qte" }],
+    cards: [],
+    valuables: [],
+    cityNpcPools: [],
+    houseAccessRefusalRules: [],
+    houseModuleDefaults: {},
+    cityPortraits: {},
+    historicalCharacters: [],
+    historicalCityRosters: [],
+    historicalCharacterIdByCharacterId: {},
     dialogues: [{ id: "dialogue.opening", title: "Opening Dialogue" }],
     minigames: [{ id: "minigame.demo", title: "Demo Minigame" }],
     storyNodes: [{ id: "story-node.opening", title: "Opening Node" }],
@@ -501,6 +514,7 @@ function createExportableScriptEditorProjectDefinition() {
       },
     },
     dialogues: [],
+    activities: [],
     minigames: [],
     storyNodes: [],
     conditionGroups: [],
@@ -523,6 +537,56 @@ function createImportedFilesFromSerializedJsonRecord(fileMap, folderName) {
   });
 }
 
+function collectFilePaths(root) {
+  const result = [];
+  for (const name of fs.readdirSync(root)) {
+    const full = path.join(root, name);
+    const stat = fs.statSync(full);
+    if (stat.isDirectory()) {
+      result.push(...collectFilePaths(full));
+    } else {
+      result.push(full);
+    }
+  }
+  return result;
+}
+
+function createScenarioPackFilesFromDirectory(root, folderName) {
+  return collectFilePaths(root).map((filePath) => {
+    const relativePath = path.relative(root, filePath).replaceAll("\\", "/");
+    const file = new File([fs.readFileSync(filePath)], path.basename(filePath), {
+      type: filePath.endsWith(".json") ? "application/json" : "application/octet-stream",
+    });
+
+    Object.defineProperty(file, "webkitRelativePath", {
+      configurable: true,
+      value: `${folderName}/${relativePath}`,
+    });
+
+    return file;
+  });
+}
+
+function normalizeMapAssetUrlsForComparison(maps) {
+  return maps?.map((mapDefinition) => ({
+    ...mapDefinition,
+    ...(mapDefinition.primaryImageUrl == null
+      ? {}
+      : { primaryImageUrl: "<runtime-asset-url>" }),
+    ...(mapDefinition.regionOverlayImageUrl == null
+      ? {}
+      : { regionOverlayImageUrl: "<runtime-asset-url>" }),
+    ...(mapDefinition.layers == null
+      ? {}
+      : {
+          layers: mapDefinition.layers.map((layerDefinition) => ({
+            ...layerDefinition,
+            imageUrl: "<runtime-asset-url>",
+          })),
+        }),
+  }));
+}
+
 function writeScriptEditorProjectFixture(outputRoot) {
   const fixture = createSampleScriptEditorProjectDefinition();
   const projectRoot = path.join(outputRoot, "script-editor-project");
@@ -537,11 +601,24 @@ function writeScriptEditorProjectFixture(outputRoot) {
       description: fixture.description,
       files: {
         storyPack: "./story-pack.json",
+        maps: "./maps.json",
         people: "./people.json",
         cities: "./cities.json",
         buildings: "./buildings.json",
+        cityEntries: "./city-entries.json",
         events: "./events.json",
+        scenes: "./scenes.json",
         quests: "./quests.json",
+        activities: "./activities.json",
+        cards: "./cards.json",
+        valuables: "./valuables.json",
+        cityNpcPools: "./city-npc-pools.json",
+        houseAccessRefusalRules: "./house-access-refusal-rules.json",
+        houseModuleDefaults: "./house-module-defaults.json",
+        cityPortraits: "./city-portraits.json",
+        historicalCharacters: "./historical-characters.json",
+        historicalCityRosters: "./historical-city-rosters.json",
+        historicalCharacterIdByCharacterId: "./historical-character-id-map.json",
         dialogues: "./dialogues.json",
         minigames: "./minigames.json",
         storyNodes: "./story-nodes.json",
@@ -551,11 +628,24 @@ function writeScriptEditorProjectFixture(outputRoot) {
       },
     },
     "story-pack.json": fixture.storyPack,
+    "maps.json": fixture.maps,
     "people.json": fixture.people,
     "cities.json": fixture.cities,
     "buildings.json": fixture.buildings,
+    "city-entries.json": fixture.cityEntries,
     "events.json": fixture.events,
+    "scenes.json": fixture.scenes,
     "quests.json": fixture.quests,
+    "activities.json": fixture.activities,
+    "cards.json": fixture.cards,
+    "valuables.json": fixture.valuables,
+    "city-npc-pools.json": fixture.cityNpcPools,
+    "house-access-refusal-rules.json": fixture.houseAccessRefusalRules,
+    "house-module-defaults.json": fixture.houseModuleDefaults,
+    "city-portraits.json": fixture.cityPortraits,
+    "historical-characters.json": fixture.historicalCharacters,
+    "historical-city-rosters.json": fixture.historicalCityRosters,
+    "historical-character-id-map.json": fixture.historicalCharacterIdByCharacterId,
     "dialogues.json": fixture.dialogues,
     "minigames.json": fixture.minigames,
     "story-nodes.json": fixture.storyNodes,
@@ -2757,6 +2847,147 @@ test(
 );
 
 test(
+  "script editor activities family round-trips through runtime pack import and export",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+    const project = {
+      ...createExportableScriptEditorProjectDefinition(),
+      activities: [
+        {
+          id: "activity.test.script-editor",
+          label: "Test Activity",
+          handlerId: "generic.qte",
+          fallbackHandlerId: "generic.qte",
+          houseModuleId: "temple-house",
+          taskId: "task.test.script-editor",
+          missionId: "mission.test.script-editor",
+          titleTextId: "text.activity.title",
+          briefingTextId: "text.activity.briefing",
+          orderLineTextIds: ["text.activity.order.001"],
+          keepMinTier: "runner",
+          timeAdvanceCost: 1,
+          qte: {
+            totalRounds: 3,
+            requiredSuccesses: 2,
+          },
+          outcome: {
+            completedFlagKey: "flag.activity.test.completed",
+            gradeVariableKey: "var.activity.test.grade",
+            scoreVariableKey: "var.activity.test.score",
+            effects: [
+              {
+                type: "change-variable",
+                key: "var.story.activity.test.progress",
+                delta: 1,
+              },
+            ],
+          },
+          tags: ["scenario", "task"],
+        },
+      ],
+    };
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+
+    assert.equal(manifest.files.activities, "./activities.json");
+    assert.ok(serializedFiles["activities.json"], "activities.json should be exported");
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-scenario-pack"
+      )
+    );
+
+    assert.equal(importedProject.activities?.length, 1);
+    assert.equal(importedProject.activities?.[0]?.id, "activity.test.script-editor");
+    assert.equal(importedProject.activities?.[0]?.handlerId, "generic.qte");
+    assert.equal(importedProject.activities?.[0]?.qte?.requiredSuccesses, 2);
+  }
+);
+
+test(
+  "script editor preserves imported Zhu Yuanzhang runtime families through export",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+
+    const sourceFiles = createScenarioPackFilesFromDirectory(
+      path.join(__dirname, "../src/content/scenario-packs/zhuyuanzhang"),
+      "zhuyuanzhang"
+    );
+    const sourcePack = await loadScenarioPackFromFiles(sourceFiles);
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+
+    assert.equal(
+      importedProject.storyPack.compatibilityImport?.unresolvedFamilies,
+      undefined
+    );
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-zhuyuanzhang"
+      )
+    );
+
+    assert.equal(manifest.files.scenes, "./scenes.json");
+    assert.equal(manifest.files.maps, "./maps.json");
+    assert.equal(manifest.files.cards, "./cards.json");
+    assert.equal(manifest.files.valuables, "./valuables.json");
+    assert.equal(manifest.files.cityEntries, "./city-entries.json");
+    assert.equal(manifest.files.cityNpcPools, "./city-npc-pools.json");
+    assert.equal(manifest.files.houseAccessRefusalRules, "./house-access-refusal-rules.json");
+    assert.equal(manifest.files.houseModuleDefaults, "./house-module-defaults.json");
+    assert.equal(manifest.files.historicalCharacters, "./historical-characters.json");
+    assert.equal(manifest.files.historicalCityRosters, "./historical-city-rosters.json");
+    assert.equal(manifest.files.cityPortraits, "./city-portraits.json");
+    assert.equal(
+      manifest.files.historicalCharacterIdByCharacterId,
+      "./historical-character-id-map.json"
+    );
+
+    assert.deepEqual(exportedPack.scenes, sourcePack.scenes);
+    assert.deepEqual(
+      normalizeMapAssetUrlsForComparison(exportedPack.maps),
+      normalizeMapAssetUrlsForComparison(sourcePack.maps)
+    );
+    assert.deepEqual(exportedPack.cards, sourcePack.cards);
+    assert.deepEqual(exportedPack.valuables, sourcePack.valuables);
+    assert.deepEqual(exportedPack.cityEntries, sourcePack.cityEntries);
+    assert.deepEqual(exportedPack.cityNpcPools, sourcePack.cityNpcPools);
+    assert.deepEqual(
+      exportedPack.houseAccessRefusalRules,
+      sourcePack.houseAccessRefusalRules
+    );
+    assert.deepEqual(exportedPack.houseModuleDefaults, sourcePack.houseModuleDefaults);
+    assert.deepEqual(exportedPack.historicalCharacters, sourcePack.historicalCharacters);
+    assert.deepEqual(exportedPack.historicalCityRosters, sourcePack.historicalCityRosters);
+    assert.deepEqual(exportedPack.cityPortraits, sourcePack.cityPortraits);
+    assert.deepEqual(
+      exportedPack.historicalCharacterIdByCharacterId,
+      sourcePack.historicalCharacterIdByCharacterId
+    );
+  }
+);
+
+test(
   "script editor runtime export fails closed on deferred authoring families",
   () => {
     const {
@@ -2922,7 +3153,7 @@ test(
 );
 
 test(
-  "script editor compatibility import preserves unresolved runtime-only families as explicit residue",
+  "script editor compatibility import preserves unsupported ui reserve families as explicit residue",
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
@@ -2938,10 +3169,10 @@ test(
     const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
     const manifest = JSON.parse(serializedFiles["pack.json"]);
 
-    manifest.files.activities = "./activities.json";
+    manifest.files.uiScreenSchemas = "./ui-screen-schemas.json";
     serializedFiles["pack.json"] = `${JSON.stringify(manifest, null, 2)}\n`;
-    serializedFiles["scenes.json"] = `${JSON.stringify(
-      [{ id: "scene.unsupported.opening", name: "Unsupported Scene" }],
+    serializedFiles["ui-screen-schemas.json"] = `${JSON.stringify(
+      [{ id: "ui.unsupported.screen", title: "Unsupported Screen" }],
       null,
       2
     )}\n`;
@@ -2960,7 +3191,7 @@ test(
 
     assert.deepEqual(
       diagnostics.map((diagnostic) => diagnostic.fieldPath),
-      ["pack.scenes", "pack.activities"]
+      ["pack.uiScreenSchemas"]
     );
     assert.equal(
       diagnostics.every((diagnostic) => diagnostic.code === "unsupported-family"),
@@ -2975,18 +3206,20 @@ test(
     assert.deepEqual(importedProject.minigames, []);
     assert.deepEqual(importedProject.storyNodes, []);
     assert.deepEqual(
-      importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.scenes,
-      [{ id: "scene.unsupported.opening", name: "Unsupported Scene" }]
+      importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.uiScreenSchemas,
+      [{ id: "ui.unsupported.screen", title: "Unsupported Screen" }]
     );
-    assert.deepEqual(
+    assert.equal(importedProject.activities[0]?.id, "activity.unsupported.demo");
+    assert.equal(importedProject.activities[0]?.label, "Unsupported Activity");
+    assert.equal(
       importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.activities,
-      [{ id: "activity.unsupported.demo", label: "Unsupported Activity" }]
+      undefined
     );
     assert.deepEqual(
       importedProject.storyPack.compatibilityImport?.diagnostics?.map(
         (diagnostic) => diagnostic.fieldPath
       ),
-      ["pack.scenes", "pack.activities"]
+      ["pack.uiScreenSchemas"]
     );
   }
 );
@@ -4289,10 +4522,10 @@ test(
     const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
     const manifest = JSON.parse(serializedFiles["pack.json"]);
 
-    manifest.files.scenes = "./scenes.json";
+    manifest.files.uiScreenSchemas = "./ui-screen-schemas.json";
     serializedFiles["pack.json"] = `${JSON.stringify(manifest, null, 2)}\n`;
-    serializedFiles["scenes.json"] = `${JSON.stringify(
-      [{ id: "scene.unsupported.opening", name: "Unsupported Scene" }],
+    serializedFiles["ui-screen-schemas.json"] = `${JSON.stringify(
+      [{ id: "ui.unsupported.screen", title: "Unsupported Screen" }],
       null,
       2
     )}\n`;
@@ -4306,7 +4539,7 @@ test(
 
     assert.throws(
       () => exportScriptEditorProjectToScenarioPackFiles(importedProject),
-      /compatibilityImport|pack\.scenes|unresolved/i
+      /compatibilityImport|uiScreenSchemas|unresolved/i
     );
   }
 );

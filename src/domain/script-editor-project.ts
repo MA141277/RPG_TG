@@ -3,11 +3,24 @@ export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
 
 export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "storyPack",
+  "maps",
   "people",
   "cities",
   "buildings",
+  "cityEntries",
   "events",
+  "scenes",
   "quests",
+  "activities",
+  "cards",
+  "valuables",
+  "cityNpcPools",
+  "houseAccessRefusalRules",
+  "houseModuleDefaults",
+  "cityPortraits",
+  "historicalCharacters",
+  "historicalCityRosters",
+  "historicalCharacterIdByCharacterId",
   "dialogues",
   "minigames",
   "storyNodes",
@@ -24,11 +37,24 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   string
 > = {
   storyPack: "./story-pack.json",
+  maps: "./maps.json",
   people: "./people.json",
   cities: "./cities.json",
   buildings: "./buildings.json",
+  cityEntries: "./city-entries.json",
   events: "./events.json",
+  scenes: "./scenes.json",
   quests: "./quests.json",
+  activities: "./activities.json",
+  cards: "./cards.json",
+  valuables: "./valuables.json",
+  cityNpcPools: "./city-npc-pools.json",
+  houseAccessRefusalRules: "./house-access-refusal-rules.json",
+  houseModuleDefaults: "./house-module-defaults.json",
+  cityPortraits: "./city-portraits.json",
+  historicalCharacters: "./historical-characters.json",
+  historicalCityRosters: "./historical-city-rosters.json",
+  historicalCharacterIdByCharacterId: "./historical-character-id-map.json",
   dialogues: "./dialogues.json",
   minigames: "./minigames.json",
   storyNodes: "./story-nodes.json",
@@ -41,6 +67,8 @@ export type ScriptEditorEntityRecord = {
   id: string;
   [key: string]: unknown;
 };
+
+export type ScriptEditorRuntimeRecord = Record<string, unknown>;
 
 export type ScriptEditorKeyValueEntry = {
   key: string;
@@ -268,6 +296,11 @@ export type ScriptEditorMinigameRecord = ScriptEditorEntityRecord & {
   notes?: string;
 };
 
+export type ScriptEditorActivityRecord = ScriptEditorEntityRecord & {
+  label: string;
+  handlerId: string;
+};
+
 export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   title: string;
   description?: string;
@@ -306,11 +339,24 @@ export type ScriptEditorProjectDefinition = {
   title: string;
   description?: string;
   storyPack: ScriptEditorStoryPackRecord;
+  maps: ScriptEditorEntityRecord[];
   people: ScriptEditorPersonRecord[];
   cities: ScriptEditorCityRecord[];
   buildings: ScriptEditorBuildingRecord[];
+  cityEntries: ScriptEditorEntityRecord[];
   events: ScriptEditorEventRecord[];
+  scenes: ScriptEditorEntityRecord[];
   quests: ScriptEditorEntityRecord[];
+  activities: ScriptEditorActivityRecord[];
+  cards: ScriptEditorEntityRecord[];
+  valuables: ScriptEditorEntityRecord[];
+  cityNpcPools: ScriptEditorRuntimeRecord[];
+  houseAccessRefusalRules: ScriptEditorEntityRecord[];
+  houseModuleDefaults: Record<string, unknown>;
+  cityPortraits: Record<string, string>;
+  historicalCharacters: ScriptEditorEntityRecord[];
+  historicalCityRosters: ScriptEditorRuntimeRecord[];
+  historicalCharacterIdByCharacterId: Record<string, string>;
   dialogues: ScriptEditorDialogueRecord[];
   minigames: ScriptEditorMinigameRecord[];
   storyNodes: ScriptEditorStoryNodeRecord[];

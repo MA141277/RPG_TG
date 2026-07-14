@@ -3,9 +3,11 @@ import { parseScriptEditorProject } from "./editor-project-loader";
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
   SCRIPT_EDITOR_PROJECT_KIND,
+  type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
   type ScriptEditorProjectDefinition,
+  type ScriptEditorRuntimeRecord,
   type ScriptEditorStoryPackRecord,
   type ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
@@ -74,112 +76,6 @@ type RuntimePackManifest = {
 const RUNTIME_PACK_MANIFEST_FILE = "pack.json";
 
 const UNSUPPORTED_RUNTIME_FAMILY_MESSAGES = [
-  {
-    familyKey: "scenes",
-    fieldPath: "pack.scenes",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.scenes) && pack.scenes.length > 0,
-    message:
-      "scenes cannot be imported in this bounded slice; dialogue/story-node compatibility remains a later queue.",
-  },
-  {
-    familyKey: "maps",
-    fieldPath: "pack.maps",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.maps) && pack.maps.length > 0,
-    message:
-      "maps cannot be imported in this bounded slice; runtime-only map asset payloads must stay on a later compatibility queue.",
-  },
-  {
-    familyKey: "cityEntries",
-    fieldPath: "pack.cityEntries",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.cityEntries) && pack.cityEntries.length > 0,
-    message:
-      "cityEntries cannot be imported in this bounded slice; city-entry compatibility remains a later queue.",
-  },
-  {
-    familyKey: "activities",
-    fieldPath: "pack.activities",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.activities) && pack.activities.length > 0,
-    message:
-      "activities cannot be imported in this bounded slice; minigame/activity compatibility remains a later queue.",
-  },
-  {
-    familyKey: "cards",
-    fieldPath: "pack.cards",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.cards) && pack.cards.length > 0,
-    message:
-      "cards cannot be imported in this bounded slice; card compatibility remains a later queue.",
-  },
-  {
-    familyKey: "valuables",
-    fieldPath: "pack.valuables",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.valuables) && pack.valuables.length > 0,
-    message:
-      "valuables cannot be imported in this bounded slice; valuable-item compatibility remains a later queue.",
-  },
-  {
-    familyKey: "cityNpcPools",
-    fieldPath: "pack.cityNpcPools",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.cityNpcPools) && pack.cityNpcPools.length > 0,
-    message:
-      "cityNpcPools cannot be imported in this bounded slice; NPC-pool compatibility remains a later queue.",
-  },
-  {
-    familyKey: "houseAccessRefusalRules",
-    fieldPath: "pack.houseAccessRefusalRules",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.houseAccessRefusalRules) &&
-      pack.houseAccessRefusalRules.length > 0,
-    message:
-      "houseAccessRefusalRules cannot be imported in this bounded slice; house access-rule compatibility remains a later queue.",
-  },
-  {
-    familyKey: "houseModuleDefaults",
-    fieldPath: "pack.houseModuleDefaults",
-    hasValue: (pack: Record<string, unknown>) =>
-      hasObjectEntries(pack.houseModuleDefaults),
-    message:
-      "houseModuleDefaults cannot be imported in this bounded slice; house-module default compatibility remains a later queue.",
-  },
-  {
-    familyKey: "historicalCharacters",
-    fieldPath: "pack.historicalCharacters",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.historicalCharacters) &&
-      pack.historicalCharacters.length > 0,
-    message:
-      "historicalCharacters cannot be imported in this bounded slice; historical roster compatibility remains a later queue.",
-  },
-  {
-    familyKey: "historicalCityRosters",
-    fieldPath: "pack.historicalCityRosters",
-    hasValue: (pack: Record<string, unknown>) =>
-      Array.isArray(pack.historicalCityRosters) &&
-      pack.historicalCityRosters.length > 0,
-    message:
-      "historicalCityRosters cannot be imported in this bounded slice; historical roster compatibility remains a later queue.",
-  },
-  {
-    familyKey: "cityPortraits",
-    fieldPath: "pack.cityPortraits",
-    hasValue: (pack: Record<string, unknown>) => hasObjectEntries(pack.cityPortraits),
-    message:
-      "cityPortraits cannot be imported in this bounded slice; portrait compatibility remains a later queue.",
-  },
-  {
-    familyKey: "historicalCharacterIdByCharacterId",
-    fieldPath: "pack.historicalCharacterIdByCharacterId",
-    hasValue: (pack: Record<string, unknown>) =>
-      hasObjectEntries(pack.historicalCharacterIdByCharacterId),
-    message:
-      "historicalCharacterIdByCharacterId cannot be imported in this bounded slice; historical mapping compatibility remains a later queue.",
-  },
   {
     familyKey: "uiScreenSchemas",
     fieldPath: "pack.uiScreenSchemas",
@@ -286,11 +182,26 @@ export function importScenarioPackToScriptEditorProject(
       rawPack,
       collectCompatibilityImportResidue(rawPack, diagnostics)
     ),
+    maps: readEntityArrayFamily(rawPack, "maps"),
     people: pack.characters ?? [],
     cities: pack.cities ?? [],
     buildings: pack.houses ?? [],
+    cityEntries: pack.cityEntries ?? [],
     events: mapImportedEvents(pack.events ?? []),
+    scenes: pack.scenes ?? [],
     quests: pack.tasks ?? [],
+    activities: pack.activities ?? [],
+    cards: pack.cards ?? [],
+    valuables: pack.valuables ?? [],
+    cityNpcPools: readArrayFamily(rawPack, "cityNpcPools"),
+    houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
+    houseModuleDefaults: cloneObjectRecord(pack.houseModuleDefaults),
+    cityPortraits: cloneStringRecord(pack.cityPortraits),
+    historicalCharacters: pack.historicalCharacters ?? [],
+    historicalCityRosters: readArrayFamily(rawPack, "historicalCityRosters"),
+    historicalCharacterIdByCharacterId: cloneStringRecord(
+      pack.historicalCharacterIdByCharacterId
+    ),
     dialogues: [],
     minigames: [],
     storyNodes: [],
@@ -440,6 +351,23 @@ function mapTextEntries(
   }));
 }
 
+function readArrayFamily(
+  rawPack: Record<string, unknown>,
+  familyKey: string
+): ScriptEditorRuntimeRecord[] {
+  const value = rawPack[familyKey];
+  return Array.isArray(value)
+    ? (cloneJsonCompatibleValue(value) as ScriptEditorRuntimeRecord[])
+    : [];
+}
+
+function readEntityArrayFamily(
+  rawPack: Record<string, unknown>,
+  familyKey: string
+): ScriptEditorEntityRecord[] {
+  return readArrayFamily(rawPack, familyKey) as ScriptEditorEntityRecord[];
+}
+
 async function hydrateScenarioPackManifestFromFiles(
   manifest: RuntimePackManifest,
   manifestFilePath: string,
@@ -459,7 +387,12 @@ async function hydrateScenarioPackManifestFromFiles(
       return [key, JSON.parse(await importedFile.file.text())] as const;
     })
   );
-
+  const hydratedFields = Object.fromEntries(resolvedEntries);
+  const resolvedMaps = await resolveImportedScenarioPackMapAssetDataUrls(
+    hydratedFields.maps,
+    manifestDirectoryPath,
+    indexedFiles
+  );
   return {
     schemaVersion: manifest.schemaVersion,
     id: manifest.id,
@@ -469,8 +402,119 @@ async function hydrateScenarioPackManifestFromFiles(
     ...(manifest.author == null ? {} : { author: manifest.author }),
     ...(manifest.version == null ? {} : { version: manifest.version }),
     ...(manifest.tags == null ? {} : { tags: [...manifest.tags] }),
-    ...Object.fromEntries(resolvedEntries),
+    ...hydratedFields,
+    ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
   };
+}
+
+async function resolveImportedScenarioPackMapAssetDataUrls(
+  maps: unknown,
+  manifestDirectoryPath: string,
+  indexedFiles: Record<string, RuntimePackImportFileEntry>
+): Promise<unknown> {
+  if (!Array.isArray(maps)) {
+    return maps;
+  }
+
+  const assetUrlCache: Record<string, string> = {};
+  return Promise.all(
+    maps.map(async (mapDefinition) => {
+      if (mapDefinition == null || typeof mapDefinition !== "object" || Array.isArray(mapDefinition)) {
+        return mapDefinition;
+      }
+
+      const rawMap = mapDefinition as Record<string, unknown>;
+      return {
+        ...rawMap,
+        ...(typeof rawMap.primaryImageUrl === "string"
+          ? {
+              primaryImageUrl: await resolveImportedScenarioPackAssetDataUrl(
+                rawMap.primaryImageUrl,
+                manifestDirectoryPath,
+                indexedFiles,
+                assetUrlCache
+              ),
+            }
+          : {}),
+        ...(typeof rawMap.regionOverlayImageUrl === "string"
+          ? {
+              regionOverlayImageUrl: await resolveImportedScenarioPackAssetDataUrl(
+                rawMap.regionOverlayImageUrl,
+                manifestDirectoryPath,
+                indexedFiles,
+                assetUrlCache
+              ),
+            }
+          : {}),
+        ...(Array.isArray(rawMap.layers)
+          ? {
+              layers: await Promise.all(
+                rawMap.layers.map(async (layerDefinition) => {
+                  if (
+                    layerDefinition == null ||
+                    typeof layerDefinition !== "object" ||
+                    Array.isArray(layerDefinition)
+                  ) {
+                    return layerDefinition;
+                  }
+                  const rawLayer = layerDefinition as Record<string, unknown>;
+                  return {
+                    ...rawLayer,
+                    ...(typeof rawLayer.imageUrl === "string"
+                      ? {
+                          imageUrl: await resolveImportedScenarioPackAssetDataUrl(
+                            rawLayer.imageUrl,
+                            manifestDirectoryPath,
+                            indexedFiles,
+                            assetUrlCache
+                          ),
+                        }
+                      : {}),
+                  };
+                })
+              ),
+            }
+          : {}),
+      };
+    })
+  );
+}
+
+async function resolveImportedScenarioPackAssetDataUrl(
+  value: string,
+  manifestDirectoryPath: string,
+  indexedFiles: Record<string, RuntimePackImportFileEntry>,
+  assetUrlCache: Record<string, string>
+): Promise<string> {
+  if (/^(https?:|file:|blob:|data:|\/)/.test(value)) {
+    return value;
+  }
+
+  const importedFile = resolveScenarioPackImportedFileEntry(
+    indexedFiles,
+    manifestDirectoryPath,
+    value
+  );
+  const cachedAssetUrl = assetUrlCache[importedFile.relativePath];
+  if (cachedAssetUrl != null) {
+    return cachedAssetUrl;
+  }
+
+  const nextAssetUrl = `data:${importedFile.file.type || "application/octet-stream"};base64,${arrayBufferToBase64(
+    await importedFile.file.arrayBuffer()
+  )}`;
+  assetUrlCache[importedFile.relativePath] = nextAssetUrl;
+  return nextAssetUrl;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 8192;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
 }
 
 function indexScenarioPackImportFiles(
@@ -600,6 +644,20 @@ function hasObjectEntries(value: unknown): boolean {
   return value != null && typeof value === "object" && !Array.isArray(value)
     ? Object.keys(value).length > 0
     : false;
+}
+
+function cloneObjectRecord(
+  value: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  return value == null
+    ? {}
+    : (cloneJsonCompatibleValue(value) as Record<string, unknown>);
+}
+
+function cloneStringRecord(
+  value: Record<string, string> | undefined
+): Record<string, string> {
+  return value == null ? {} : { ...value };
 }
 
 function collectCompatibilityImportResidue(

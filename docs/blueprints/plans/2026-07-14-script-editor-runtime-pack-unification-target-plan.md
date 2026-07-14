@@ -9,9 +9,9 @@
 - active_queue: `none`
 - decision_state: `promotion-review`
 - next_decision: `same-version-admission-or-version-closeout`
-- next_action: `write-admission-review`
-- resume_gate: `version-review`
-- promotion_review_result: `admit`
+- next_action: `classify-fresh-work`
+- resume_gate: `version-plan-review`
+- promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-compatibility-boundary-retirement`
+- closure_review_subject: `queue.script-editor-non-activities-runtime-family-export-convergence`
 - closure_review_status: `routed`
-- residue_candidate_id: `none`
-- residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-compatibility-boundary-retirement closed after writing the migration-only compatibility retirement contract; the recorded candidate portfolio has no remaining unadmitted contract-governance queue, but the version remains open because implementation and final acceptance requirements have not been explicitly closed.`
-- next_lawful_queue_recommendation: `none`
+- residue_candidate_id: `item.script-editor-narrative-authoring-export-convergence`
+- residue_candidate_family: `cross-family`
+- routing_basis: `queue.script-editor-non-activities-runtime-family-export-convergence closed after making cards, cityEntries, cityNpcPools, cityPortraits, historicalCharacterIdByCharacterId, historicalCharacters, historicalCityRosters, houseAccessRefusalRules, houseModuleDefaults, maps, scenes, and valuables first-class script-editor project/runtime families and proving the real Zhu Yuanzhang import/export path no longer depends on unresolved compatibility residue for those families. The remaining recorded blocker is the separate editor-authored dialogues/storyNodes lowering issue for newly-created minimal scenarios.`
+- next_lawful_queue_recommendation: `queue.script-editor-narrative-authoring-export-convergence`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -36,6 +36,9 @@
   - `queue.script-editor-base-pack-inheritance-governance`
   - `queue.script-editor-fixed-pack-consumer-deprivileging`
   - `queue.script-editor-compatibility-boundary-retirement`
+  - `queue.script-editor-activities-authoring-export-convergence`
+  - `queue.script-editor-non-activities-runtime-family-export-convergence`
+  - `queue.script-editor-narrative-authoring-export-convergence`
 
 ## Human Context
 
@@ -62,6 +65,8 @@
 | `queue.script-editor-base-pack-inheritance-governance` | `done` | `only if fresh repository evidence later proves still-blocking same-family inheritance-governance residue after the written family overlay contract map` | `Closed on 2026-07-14 after the queue wrote explicit family overlay rules, inheritance sources, and fail-closed obligations for mandatory and explicitly inheritable runtime families.` |
 | `queue.script-editor-fixed-pack-consumer-deprivileging` | `done` | `only if fresh repository evidence later proves still-blocking same-family consumer-routing residue after the written active-content-only route contract` | `Closed on 2026-07-14 after the queue wrote the covered consumer route contract and classified retained builtin baselines as out of scope unless they bypass active scenario-pack content resolution.` |
 | `queue.script-editor-compatibility-boundary-retirement` | `done` | `only if fresh repository evidence later proves still-blocking same-family compatibility-boundary contract residue after the written migration-only retirement contract` | `Closed on 2026-07-14 after the queue wrote the migration-only compatibility boundary for import, authoring storage, UI diagnostics, export validation, and version closeout.` |
+| `queue.script-editor-activities-authoring-export-convergence` | `done` | `only if fresh repository evidence later proves still-blocking same-family activities import/export residue after the written activities convergence slice` | `Closed on 2026-07-14 after activities became a first-class script-editor project family, imported pack.activities stopped entering compatibilityImport.unresolvedFamilies, workspace/export emitted activities.json, and real Zhu Yuanzhang diagnostics no longer reported Unresolved imported runtime family "activities".` |
+| `queue.script-editor-non-activities-runtime-family-export-convergence` | `done` | `only if fresh repository evidence later proves still-blocking same-family residue after the 12-family first-class project/runtime ownership slice` | `Closed on 2026-07-14 after the 12 non-activities runtime families became first-class script-editor project/runtime families and real Zhu Yuanzhang import -> export -> startup-loader verification passed without unresolved compatibility residue for those families.` |
 
 ### Candidate Classification Record
 
@@ -74,6 +79,9 @@
 | `item.script-editor-base-pack-inheritance-governance` | `queue-candidate` | `queue.script-editor-base-pack-inheritance-governance` | `admitted + queue closed` | `basePackId was present in import/export metadata flow without family-level inheritance semantics; this queue has now written the formal overlay and fail-closed contract map.` |
 | `item.script-editor-fixed-pack-consumer-deprivileging` | `queue-candidate` | `queue.script-editor-fixed-pack-consumer-deprivileging` | `admitted + queue closed` | `src/content/pack-content-access.ts still directly imports builtin zhuyuanzhang pack files and default-pack facade consumers still bypass active scenario-pack resolution; this queue has now written the active-content-only route contract.` |
 | `item.script-editor-compatibility-boundary-retirement` | `queue-candidate` | `queue.script-editor-compatibility-boundary-retirement` | `admitted + queue closed` | `The script-editor shell and workspace still surfaced compatibility residue as live authoring/export truth; this queue has now written the migration-only compatibility retirement contract.` |
+| `item.script-editor-activities-authoring-export-convergence` | `queue-candidate` | `queue.script-editor-activities-authoring-export-convergence` | `admitted + queue closed` | `The final runtime-pack-unification contract declared activities mandatory, while import preserved pack.activities under compatibilityImport.unresolvedFamilies.activities and export failed closed on that residue. The queue has now landed first-class activities authoring/runtime ownership, import, workspace exposure, validation, and activities.json export.` |
+| `item.script-editor-non-activities-runtime-family-export-blockers` | `queue-candidate` | `queue.script-editor-non-activities-runtime-family-export-convergence` | `admitted + queue closed` | `After activities convergence, real Zhu Yuanzhang import/export diagnostics still failed closed on 12 unresolved runtime families. The admitted queue has now made those families first-class project/runtime fields, emitted canonical split files, and verified Zhu Yuanzhang import/export/startup-load succeeds without unresolved residue for the named families.` |
+| `item.script-editor-narrative-authoring-export-convergence` | `queue-candidate` | `queue.script-editor-narrative-authoring-export-convergence` | `candidate-recorded; needs promotion review` | `Creating the simplest script-editor scenario still seeds dialogues and storyNodes, but runtime export fails closed with dialogues/storyNodes deferred-export diagnostics because scenes/text-entries assembly is not implemented for editor-authored narrative data.` |
 
 ### Candidate Scope Notes
 
@@ -81,6 +89,86 @@
 - `queue.script-editor-runtime-family-contract-alignment is now closed historical evidence because every later convergence queue can consume one explicit answer for mandatory runtime families, inheritable families, unsupported/transitional families, and fail-closed obligations.`
 - `No later queue may create a new long-lived authoring-only family, a new export-only shadow dialect, or a new builtin fallback rule as a convenience patch while this version is open.`
 - `The successor version owns architecture convergence, not unrelated gameplay redesign, generic runtime cleanup, or repository-wide visual polish.`
+
+### Activities Authoring Export Convergence Candidate Requirement
+
+- Candidate ID: `item.script-editor-activities-authoring-export-convergence`
+- Proposed Queue: `queue.script-editor-activities-authoring-export-convergence`
+- Classification: `queue-candidate`
+- Governance Classification: `shared playable contract change + house-hosted playable integration`
+- Governing References:
+  - `.codex/skills/playable-governance/SKILL.md`
+  - `.codex/skills/playable-governance/references/playable-governance-core.md`
+  - `.codex/skills/playable-governance/references/playable-impact-matrix.md`
+  - `docs/special-house-interface.md`
+- Requirement Summary:
+  - `Make activities a first-class script-editor authoring/runtime family rather than compatibilityImport residue.`
+  - `Import pack.activities into a typed script-editor activities authoring model, not compatibilityImport.unresolvedFamilies.activities.`
+  - `Expose activities as a stable workbench family for activity/task/playable bindings, covering activity-qte and generic.qte launch metadata, houseModuleId, taskId, missionId, text references, QTE tuning, stamina/time costs, outcome variables, flags, effects, and tags.`
+  - `Export project.activities back to runtime activities.json and pack.json activities manifest references in the same scenario-pack artifact consumed by startup.`
+  - `Validate handlerId, fallbackHandlerId, houseModuleId, keepMinTier, QTE tuning, outcome/effects shape, and text-entry references so the current script editor can export the imported Zhu Yuanzhang activities pack without the unresolved runtime family error.`
+- Acceptance Target:
+  - `The current script-editor import/export path can round-trip the existing Zhu Yuanzhang activities family and complete runtime-pack export without reporting Unresolved imported runtime family "activities".`
+  - `No playable-specific business branch is added to src/main.ts.`
+  - `No house module privately owns playable lifecycle; house modules remain host/integration owners only.`
+  - `No new top-level playable family, owner kind, or return policy is introduced unless a later admitted queue explicitly expands shared contracts.`
+  - `No temporary compatibility-clearing patch is treated as sufficient closeout.`
+- Non-Goals:
+  - `Do not solve unrelated unsupported families in the same queue unless admission review explicitly widens the queue.`
+  - `Do not redesign QTE gameplay rules beyond what is necessary to preserve and export existing activity definitions.`
+  - `Do not replace basePackId inheritance, fixed-pack consumer routing, or historical migration compatibility contracts already closed by earlier queues.`
+
+### Non-Activities Runtime Family Export Convergence Candidate Requirement
+
+- Candidate ID: `item.script-editor-non-activities-runtime-family-export-blockers`
+- Proposed Queue: `queue.script-editor-non-activities-runtime-family-export-convergence`
+- Classification: `queue-candidate`
+- Requirement Summary:
+  - `Resolve the remaining non-activities runtime family blockers reported by the real Zhu Yuanzhang script-editor import/export diagnostic.`
+  - `Bring cards, cityEntries, cityNpcPools, cityPortraits, historicalCharacterIdByCharacterId, historicalCharacters, historicalCityRosters, houseAccessRefusalRules, houseModuleDefaults, maps, scenes, and valuables out of compatibilityImport.unresolvedFamilies through formal import, project ownership, validation, export, or explicitly governed preservation semantics.`
+  - `Make the imported Zhu Yuanzhang project export a runtime-pack artifact that the startup scenario-pack loader can consume without unresolved runtime-family diagnostics.`
+  - `Preserve the closed activities result: activities must remain a first-class project family and must not regress to compatibility residue.`
+- Acceptance Target:
+  - `Real Zhu Yuanzhang import -> script-editor export -> loadScenarioPackFromFiles succeeds without unsupported-family diagnostics for the 12 named runtime families.`
+  - `The emitted runtime pack preserves startup-required scenario-pack truth for the named families rather than silently dropping them.`
+  - `No private export-only dialect, builtin fallback shortcut, or long-lived compatibility residue is introduced as final behavior.`
+- Non-Goals:
+  - `Do not reopen the closed activities convergence queue unless fresh evidence proves same-family activities regression.`
+  - `Do not close the whole runtime-pack-unification version merely because this candidate is recorded; admission and execution remain separate Blueprint steps.`
+  - `Do not mix unrelated PRD UI polish, asset pipeline work, or gameplay redesign into this candidate.`
+
+### Narrative Authoring Export Convergence Candidate Requirement
+
+- Candidate ID: `item.script-editor-narrative-authoring-export-convergence`
+- Proposed Queue: `queue.script-editor-narrative-authoring-export-convergence`
+- Classification: `queue-candidate`
+- Requirement Summary:
+  - `Make the simplest newly-created script-editor scenario export successfully instead of failing with: dialogues export is deferred in this bounded slice; scenes/text-entries assembly belongs to a later export step.`
+  - `Implement formal lowering from editor-owned dialogues into runtime scenes and textEntries, preserving authored dialogue ids, titles, lines, choices, speaker references, and follow-up links where the current model provides them.`
+  - `Implement formal lowering from editor-owned storyNodes into scene-flow/runtime narrative structures where required by the simplest workflow, rather than silently dropping seeded storyNodes.`
+  - `Keep export fail-closed for narrative shapes that cannot yet be lowered, but replace the blanket deferred-export blocker for the minimal supported authoring path.`
+- Acceptance Target:
+  - `A default/minimal script-editor project created through createDefaultScriptEditorProjectDefinition exports without dialogues/storyNodes deferred-export diagnostics.`
+  - `The exported runtime pack includes startup-loadable scenes and textEntries assembled from the minimal editor narrative data.`
+  - `loadScenarioPackFromFiles can load the exported minimal scenario pack.`
+  - `Existing activities export behavior remains first-class and does not regress.`
+- Non-Goals:
+  - `Do not solve the separate 12 runtime family compatibility blockers in this narrative-authoring queue unless admission review explicitly merges scope.`
+  - `Do not claim full Zhu Yuanzhang round-trip support from this queue alone; this queue is about editor-authored minimal narrative export.`
+  - `Do not introduce private export-only narrative dialects or silently omit dialogues/storyNodes to make export appear successful.`
+
+### Non-Activities Runtime Family Export Convergence Admission Record
+
+- `queue.script-editor-non-activities-runtime-family-export-convergence was reviewed on 2026-07-14 and admitted as the next active same-version queue.`
+- `Fresh verification shows the real Zhu Yuanzhang import/export path no longer reports activities residue, but still fails closed on 12 unresolved runtime families: cards, cityEntries, cityNpcPools, cityPortraits, historicalCharacterIdByCharacterId, historicalCharacters, historicalCityRosters, houseAccessRefusalRules, houseModuleDefaults, maps, scenes, and valuables.`
+- `The separate narrative authoring export candidate remains recorded but is not selected first because dialogue/storyNode lowering depends on stable runtime scene/text-entry carrier boundaries that this queue should clarify.`
+
+### Non-Activities Runtime Family Export Convergence Progress
+
+- `task.script-editor-non-activities-runtime-family-export-convergence.boundary-baseline-reconcile completed on 2026-07-14 after fresh repository evidence confirmed the 12 named blockers were valid runtime pack families accepted by the startup loader and should be resolved by first-class project/runtime ownership rather than compatibility preservation.`
+- `task.script-editor-non-activities-runtime-family-export-convergence.family-disposition-map completed on 2026-07-14 after cards, cityEntries, cityNpcPools, cityPortraits, historicalCharacterIdByCharacterId, historicalCharacters, historicalCityRosters, houseAccessRefusalRules, houseModuleDefaults, maps, scenes, and valuables were mapped to direct script-editor project/runtime fields and exported through canonical split files.`
+- `task.script-editor-non-activities-runtime-family-export-convergence.queue-closeout-and-handoff completed on 2026-07-14 after build:test and the targeted robustness test proved real Zhu Yuanzhang import -> script-editor export -> loadScenarioPackFromFiles succeeds without unresolved compatibility residue for the 12 named runtime families.`
+- `The remaining recorded same-version candidate is queue.script-editor-narrative-authoring-export-convergence, which owns lowering editor-authored dialogues/storyNodes for newly-created minimal scenarios.`
 
 ### Admission Review Record
 
@@ -144,9 +232,25 @@
 - `task.script-editor-compatibility-boundary-retirement.retirement-contract-map completed on 2026-07-14 after the queue wrote the migration-only compatibility boundary for import, authoring storage, UI diagnostics, export validation, and version closeout.`
 - `task.script-editor-compatibility-boundary-retirement.queue-closeout-and-handoff completed on 2026-07-14 after the queue verified its bounded compatibility-retirement slice, closed same-family contract residue, and returned control to version-level promotion review.`
 
+### Activities Authoring Export Convergence Admission Record
+
+- `queue.script-editor-activities-authoring-export-convergence was reviewed on 2026-07-14 and admitted as the next active same-version queue.`
+- `Fresh user-facing evidence shows the script-editor export fails with Unresolved imported runtime family "activities" because pack.activities is preserved as compatibilityImport.unresolvedFamilies.activities by runtime-pack import and runtime-pack export fails closed on unresolved compatibility residue.`
+- `The active version spec already declares activities as a mandatory runtime family, and the closed export, inheritance, fixed-consumer, and compatibility-boundary queues provide the contract baseline that forbids solving this by silent omission or compatibility-clearing workaround.`
+- `The admitted queue is bounded to activities import, typed authoring storage, workbench exposure, validation, and activities.json export; it must not widen into unrelated unsupported families or playable lifecycle redesign.`
+
+### Activities Authoring Export Convergence Progress
+
+- `task.script-editor-activities-authoring-export-convergence.boundary-baseline-reconcile completed on 2026-07-14 after repository evidence confirmed activities was the reported mandatory-family blocker and froze the queue boundary against unrelated runtime families or playable lifecycle redesign.`
+- `task.script-editor-activities-authoring-export-convergence.activity-authoring-model-and-import completed on 2026-07-14 after ScriptEditorProjectDefinition gained activities, project loading/defaults carried the canonical family, and runtime import mapped pack.activities into project.activities instead of compatibilityImport.unresolvedFamilies.activities.`
+- `task.script-editor-activities-authoring-export-convergence.workspace-validation-and-export completed on 2026-07-14 after workspace shell exposed activities and runtime export emitted pack.json activities plus activities.json with activity validation.`
+- `task.script-editor-activities-authoring-export-convergence.queue-closeout-and-handoff completed on 2026-07-14 after typecheck, full tests, blueprint lint, and real Zhu Yuanzhang import/export diagnostics proved activities no longer remains unresolved compatibility residue; the 12 remaining blockers were classified as cross-family residue for version review.`
+
 ### Current Queue Activation
 
 - `none`
+- Active task:
+  - `none`
 
 ### Version Boundary Record
 

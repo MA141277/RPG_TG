@@ -5,6 +5,28 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-14 Script Editor Non-Activities Runtime Family Export
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)、[src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 `cards`、`cityEntries`、`cityNpcPools`、`cityPortraits`、`historicalCharacterIdByCharacterId`、`historicalCharacters`、`historicalCityRosters`、`houseAccessRefusalRules`、`houseModuleDefaults`、`maps`、`scenes`、`valuables` 提升为脚本编辑器正式项目/运行时家族，并让导入导出走 canonical split files。
+- 导入场景包目录时，地图资产引用会被收进项目内的 `data:` URL，导出的剧本包可由 `loadScenarioPackFromFiles` 直接加载，不再依赖原导入目录的 asset 文件。
+- 更新 [docs/blueprints/queues/script-editor-non-activities-runtime-family-export-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-non-activities-runtime-family-export-convergence-queue.md)、[docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 和 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将该队列收口为 `done` 并把版本计划回收到 promotion review。
+
+### Impact
+- 真实 Zhu Yuanzhang 剧本包现在可以走 `import -> script-editor project -> export -> loadScenarioPackFromFiles`，且这 12 个 runtime family 不再进入 `compatibilityImport.unresolvedFamilies`。
+- 新建最简单剧本的 `dialogues/storyNodes` lowering 仍属于已记录的 `queue.script-editor-narrative-authoring-export-convergence` 候选，不在本次队列内解决。
+
+## 2026-07-14 Script Editor Activities Runtime Export
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)、[src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 `activities` 提升为脚本编辑器的一等项目/运行时家族，并让导入、导出、工作区和回归测试都走正式的 `activities.json` 流程。
+- 更新 [docs/blueprints/queues/script-editor-activities-authoring-export-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-activities-authoring-export-convergence-queue.md) 与 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 activities 收口为已完成的队列，并把版本计划回收到 promotion-review。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，移除 activities 队列的 active entry，改回版本计划入口。
+
+### Impact
+- 导入的 Zhu Yuanzhang 剧本包不再报 `Unresolved imported runtime family "activities"`。
+- 当前导出仍会被其他跨家族未解析运行时家族阻断：`cards`、`cityEntries`、`cityNpcPools`、`cityPortraits`、`historicalCharacterIdByCharacterId`、`historicalCharacters`、`historicalCityRosters`、`houseAccessRefusalRules`、`houseModuleDefaults`、`maps`、`scenes`、`valuables`。
+
 ## 2026-07-10 Script Editor Freeze Scope Clarification
 
 ## 2026-07-13 Script Editor Implementation Version Opening

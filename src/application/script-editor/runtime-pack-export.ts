@@ -28,13 +28,25 @@ export type ScriptEditorRuntimeExportDiagnostic = {
 
 type RuntimePackManifestFiles = {
   scenarioProfile: string;
+  maps: string;
   characters: string;
   cities: string;
   houses: string;
+  cityEntries: string;
   events: string;
   scenes: string;
+  activities: string;
   tasks: string;
   textEntries: string;
+  cards: string;
+  valuables: string;
+  cityNpcPools: string;
+  houseAccessRefusalRules: string;
+  houseModuleDefaults: string;
+  cityPortraits: string;
+  historicalCharacters: string;
+  historicalCityRosters: string;
+  historicalCharacterIdByCharacterId: string;
 };
 
 type RuntimePackManifest = {
@@ -54,13 +66,25 @@ const RUNTIME_PACK_MANIFEST_FILE = "pack.json";
 
 const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   scenarioProfile: "./scenario-profile.json",
+  maps: "./maps.json",
   characters: "./characters.json",
   cities: "./cities.json",
   houses: "./houses.json",
+  cityEntries: "./city-entries.json",
   events: "./events.json",
   scenes: "./scenes.json",
+  activities: "./activities.json",
   tasks: "./tasks.json",
   textEntries: "./text-entries.json",
+  cards: "./cards.json",
+  valuables: "./valuables.json",
+  cityNpcPools: "./city-npc-pools.json",
+  houseAccessRefusalRules: "./house-access-refusal-rules.json",
+  houseModuleDefaults: "./house-module-defaults.json",
+  cityPortraits: "./city-portraits.json",
+  historicalCharacters: "./historical-characters.json",
+  historicalCityRosters: "./historical-city-rosters.json",
+  historicalCharacterIdByCharacterId: "./historical-character-id-map.json",
 };
 
 const DEFERRED_FAMILY_MESSAGES = {
@@ -93,6 +117,8 @@ export function validateScriptEditorProjectForRuntimeExport(
 
   appendCompatibilityImportResidueDiagnostics(project.storyPack, diagnostics);
 
+  appendActivityDiagnostics(project.activities, diagnostics);
+
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
   const exportedTextEntries = mapTextEntries(project.textEntries, diagnostics);
   const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
@@ -117,13 +143,25 @@ export function validateScriptEditorProjectForRuntimeExport(
         ? {}
         : { description: project.storyPack.description }),
       scenarioProfile,
+      maps: project.maps,
       characters: project.people,
       cities: project.cities,
       houses: project.buildings,
+      cityEntries: project.cityEntries,
       events: project.events,
-      scenes: [],
+      scenes: project.scenes,
+      activities: project.activities,
       tasks: exportedTasks,
       textEntries: exportedTextEntries,
+      cards: project.cards,
+      valuables: project.valuables,
+      cityNpcPools: project.cityNpcPools,
+      houseAccessRefusalRules: project.houseAccessRefusalRules,
+      houseModuleDefaults: project.houseModuleDefaults,
+      cityPortraits: project.cityPortraits,
+      historicalCharacters: project.historicalCharacters,
+      historicalCityRosters: project.historicalCityRosters,
+      historicalCharacterIdByCharacterId: project.historicalCharacterIdByCharacterId,
     });
   } catch (error) {
     diagnostics.push({
@@ -174,6 +212,9 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.scenarioProfile)]: stringifyJson(
       scenarioProfile
     ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.maps)]: stringifyJson(
+      project.maps
+    ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.characters)]: stringifyJson(
       project.people
     ),
@@ -183,15 +224,50 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houses)]: stringifyJson(
       project.buildings
     ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityEntries)]: stringifyJson(
+      project.cityEntries
+    ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.events)]: stringifyJson(
       project.events
     ),
-    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.scenes)]: stringifyJson([]),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.scenes)]: stringifyJson(
+      project.scenes
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.activities)]: stringifyJson(
+      project.activities
+    ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.tasks)]: stringifyJson(
       exportedTasks
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.textEntries)]: stringifyJson(
       exportedTextEntries
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cards)]: stringifyJson(
+      project.cards
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.valuables)]: stringifyJson(
+      project.valuables
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityNpcPools)]: stringifyJson(
+      project.cityNpcPools
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houseAccessRefusalRules)]: stringifyJson(
+      project.houseAccessRefusalRules
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houseModuleDefaults)]: stringifyJson(
+      project.houseModuleDefaults
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityPortraits)]: stringifyJson(
+      project.cityPortraits
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.historicalCharacters)]: stringifyJson(
+      project.historicalCharacters
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.historicalCityRosters)]: stringifyJson(
+      project.historicalCityRosters
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.historicalCharacterIdByCharacterId)]: stringifyJson(
+      project.historicalCharacterIdByCharacterId
     ),
   };
 }
@@ -345,6 +421,62 @@ function appendSharedRuleDiagnostics(
       message: diagnostic.message,
     }))
   );
+}
+
+function appendActivityDiagnostics(
+  activities: ScriptEditorProjectDefinition["activities"],
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  for (const [index, activity] of activities.entries()) {
+    if (!hasRequiredString(activity, "id")) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `project.activities[${index}].id`,
+        message: "Activity export requires a non-empty id.",
+      });
+    }
+
+    if (!hasRequiredString(activity, "label")) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `project.activities[${index}].label`,
+        message: "Activity export requires a non-empty label.",
+      });
+    }
+
+    if (!hasRequiredString(activity, "handlerId")) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `project.activities[${index}].handlerId`,
+        message: "Activity export requires a non-empty handlerId.",
+      });
+    }
+
+    if (activity.orderLineTextIds != null) {
+      if (!Array.isArray(activity.orderLineTextIds)) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `project.activities[${index}].orderLineTextIds`,
+          message: "Activity orderLineTextIds must be an array of text ids.",
+        });
+      } else if (
+        activity.orderLineTextIds.some((value) => typeof value !== "string" || value.length === 0)
+      ) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `project.activities[${index}].orderLineTextIds`,
+          message: "Activity orderLineTextIds must contain only non-empty text ids.",
+        });
+      }
+    }
+  }
+}
+
+function hasRequiredString(
+  value: Record<string, unknown>,
+  key: string
+): boolean {
+  return typeof value[key] === "string" && (value[key] as string).length > 0;
 }
 
 function readObject(

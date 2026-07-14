@@ -69,11 +69,36 @@ export function parseScriptEditorProject(
   assertString(value.id, "script editor project id");
   assertString(value.title, "script editor project title");
   assertStoryPackRecord(value.storyPack);
+  assertEntityRecordArray(value.maps, "script editor project maps");
   assertEntityRecordArray(value.people, "script editor project people");
   assertEntityRecordArray(value.cities, "script editor project cities");
   assertEntityRecordArray(value.buildings, "script editor project buildings");
+  assertEntityRecordArray(value.cityEntries, "script editor project cityEntries");
   assertEntityRecordArray(value.events, "script editor project events");
+  assertEntityRecordArray(value.scenes, "script editor project scenes");
   assertEntityRecordArray(value.quests, "script editor project quests");
+  assertEntityRecordArray(value.activities, "script editor project activities");
+  assertEntityRecordArray(value.cards, "script editor project cards");
+  assertEntityRecordArray(value.valuables, "script editor project valuables");
+  assertObjectRecordArray(value.cityNpcPools, "script editor project cityNpcPools");
+  assertEntityRecordArray(
+    value.houseAccessRefusalRules,
+    "script editor project houseAccessRefusalRules"
+  );
+  assertObject(value.houseModuleDefaults, "script editor project houseModuleDefaults");
+  assertStringRecord(value.cityPortraits, "script editor project cityPortraits");
+  assertEntityRecordArray(
+    value.historicalCharacters,
+    "script editor project historicalCharacters"
+  );
+  assertObjectRecordArray(
+    value.historicalCityRosters,
+    "script editor project historicalCityRosters"
+  );
+  assertStringRecord(
+    value.historicalCharacterIdByCharacterId,
+    "script editor project historicalCharacterIdByCharacterId"
+  );
   assertEntityRecordArray(value.dialogues, "script editor project dialogues");
   assertEntityRecordArray(value.minigames, "script editor project minigames");
   assertEntityRecordArray(value.storyNodes, "script editor project storyNodes");
@@ -219,6 +244,16 @@ function assertEntityRecordArray(
   });
 }
 
+function assertObjectRecordArray(
+  value: unknown,
+  label: string
+): asserts value is Record<string, unknown>[] {
+  assertArray(value, label);
+  value.forEach((entry, index) => {
+    assertObject(entry, `${label}[${index}]`);
+  });
+}
+
 function assertStoryPackRecord(
   value: unknown
 ): asserts value is ScriptEditorStoryPackRecord {
@@ -239,6 +274,18 @@ function assertObject(
 function assertArray(value: unknown, label: string): asserts value is unknown[] {
   if (!Array.isArray(value)) {
     throw new Error(`${label} must be an array.`);
+  }
+}
+
+function assertStringRecord(
+  value: unknown,
+  label: string
+): asserts value is Record<string, string> {
+  assertObject(value, label);
+  for (const [key, entryValue] of Object.entries(value)) {
+    if (typeof entryValue !== "string") {
+      throw new Error(`${label}.${key} must be a string.`);
+    }
   }
 }
 

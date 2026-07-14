@@ -85,6 +85,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         },
       },
     },
+    maps: [],
     people: [
       {
         id: "person.hero",
@@ -118,6 +119,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         name: "Home",
       },
     ],
+    cityEntries: [],
     events: [
       {
         ...createDefaultScriptEditorEventRecord(0),
@@ -129,7 +131,18 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         },
       },
     ],
+    scenes: [],
     quests: [],
+    activities: [],
+    cards: [],
+    valuables: [],
+    cityNpcPools: [],
+    houseAccessRefusalRules: [],
+    houseModuleDefaults: {},
+    cityPortraits: {},
+    historicalCharacters: [],
+    historicalCityRosters: [],
+    historicalCharacterIdByCharacterId: {},
     dialogues: [
       {
         ...createDefaultScriptEditorDialogueRecord(0),
