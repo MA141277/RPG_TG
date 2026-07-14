@@ -112,6 +112,11 @@ function getMimeType(filePath: string): string {
 export default defineConfig({
   base: "./",
   appType: "mpa",
+  server: {
+    watch: {
+      ignored: ["**/.codex-temp/**"],
+    },
+  },
   plugins: [
     createScenarioPackPublishPlugin(),
     {

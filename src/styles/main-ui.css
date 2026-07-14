@@ -231,7 +231,7 @@
   overflow: hidden;
   background:
     linear-gradient(90deg, rgb(33 25 22 / 78%), rgb(33 25 22 / 36%)),
-    url("../../ui/yuansu/浜虹墿閫夋嫨ui/backgroung.png") center center / cover no-repeat;
+    url("../../ui/yuansu/人物选择ui/backgroung.png") center center / cover no-repeat;
   transform: translate(-50%, -50%) scale(var(--game-scale, 1));
   transform-origin: center;
 }

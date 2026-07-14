@@ -18499,6 +18499,24 @@ test("phase 3 scenario-pack validator keeps legacy builtin manifests on the acce
   assert.match(result.stdout, /Scenario pack validation passed/i);
 });
 
+test("dev browser validation resources avoid mojibake paths and watcher profile crashes", () => {
+  const mainUiCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "main-ui.css"),
+    "utf8"
+  );
+  const viteConfigSource = fs.readFileSync(
+    path.join(process.cwd(), "vite.config.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainUiCssSource, /浜虹墿閫夋嫨ui|娴滆櫣澧块柅澶嬪/);
+  assert.match(mainUiCssSource, /ui\/yuansu\/人物选择ui\/backgroung\.png/);
+  assert.ok(
+    fs.existsSync(path.join(process.cwd(), "ui", "yuansu", "人物选择ui", "backgroung.png"))
+  );
+  assert.match(viteConfigSource, /server:\s*\{[\s\S]*watch:\s*\{[\s\S]*ignored:[\s\S]*\.codex-temp/);
+});
+
 test("layout editor live surface retirement removes editor mount from app-render", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/ui/app-render.ts"),
