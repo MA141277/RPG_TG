@@ -350,6 +350,7 @@ function extractScenarioProfile(
   );
 
   return {
+    ...cloneScenarioProfileRuntimeFields(scenarioProfile),
     id,
     title:
       typeof scenarioProfile.title === "string" && scenarioProfile.title.length > 0
@@ -364,6 +365,107 @@ function extractScenarioProfile(
       view: view as ScenarioProfileDefinition["initialLocation"]["view"],
     },
   };
+}
+
+function cloneScenarioProfileRuntimeFields(
+  scenarioProfile: Record<string, unknown>
+): Partial<ScenarioProfileDefinition> {
+  return cloneJsonCompatibleValue({
+    ...(isCalendarDate(scenarioProfile.initialCalendar)
+      ? { initialCalendar: scenarioProfile.initialCalendar }
+      : {}),
+    ...(isCoordinate(scenarioProfile.initialPlayerCoordinate)
+      ? { initialPlayerCoordinate: scenarioProfile.initialPlayerCoordinate }
+      : {}),
+    ...(isInitialUi(scenarioProfile.initialUi)
+      ? { initialUi: scenarioProfile.initialUi }
+      : {}),
+    ...(isInitialRuntime(scenarioProfile.initialRuntime)
+      ? { initialRuntime: scenarioProfile.initialRuntime }
+      : {}),
+    ...(typeof scenarioProfile.entryEventId === "string" && scenarioProfile.entryEventId.length > 0
+      ? { entryEventId: scenarioProfile.entryEventId }
+      : {}),
+    ...(typeof scenarioProfile.openingFlowId === "string" && scenarioProfile.openingFlowId.length > 0
+      ? { openingFlowId: scenarioProfile.openingFlowId }
+      : {}),
+    ...(Array.isArray(scenarioProfile.tags) && scenarioProfile.tags.every((tag) => typeof tag === "string")
+      ? { tags: scenarioProfile.tags }
+      : {}),
+  }) as Partial<ScenarioProfileDefinition>;
+}
+
+function isCalendarDate(value: unknown): value is ScenarioProfileDefinition["initialCalendar"] {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    typeof (value as Record<string, unknown>).year === "number" &&
+    typeof (value as Record<string, unknown>).month === "number" &&
+    typeof (value as Record<string, unknown>).day === "number"
+  );
+}
+
+function isCoordinate(
+  value: unknown
+): value is NonNullable<ScenarioProfileDefinition["initialPlayerCoordinate"]> {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    typeof (value as Record<string, unknown>).x === "number" &&
+    typeof (value as Record<string, unknown>).y === "number"
+  );
+}
+
+function isInitialUi(value: unknown): value is ScenarioProfileDefinition["initialUi"] {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return (
+    (record.reviewDateText == null || typeof record.reviewDateText === "string") &&
+    (record.mainHouseMissionText == null || typeof record.mainHouseMissionText === "string")
+  );
+}
+
+function isInitialRuntime(
+  value: unknown
+): value is ScenarioProfileDefinition["initialRuntime"] {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return (
+    (record.flags == null || isBooleanRecord(record.flags)) &&
+    (record.variables == null || isRuntimeVariableRecord(record.variables))
+  );
+}
+
+function isBooleanRecord(value: unknown): value is Record<string, boolean> {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.values(value as Record<string, unknown>).every(
+      (entry) => typeof entry === "boolean"
+    )
+  );
+}
+
+function isRuntimeVariableRecord(
+  value: unknown
+): value is Record<string, string | number> {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.values(value as Record<string, unknown>).every(
+      (entry) => typeof entry === "string" || typeof entry === "number"
+    )
+  );
 }
 
 function mapTextEntries(
@@ -768,6 +870,10 @@ function formatDiagnostics(
 
 function stripRelativePrefix(value: string): string {
   return value.startsWith("./") ? value.slice(2) : value;
+}
+
+function cloneJsonCompatibleValue(value: unknown): unknown {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
 }
 
 function stringifyJson(value: unknown): string {

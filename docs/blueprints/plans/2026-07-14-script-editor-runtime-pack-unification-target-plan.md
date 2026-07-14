@@ -22,11 +22,11 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-narrative-authoring-export-convergence`
+- closure_review_subject: `queue.script-editor-scenario-profile-startup-export-convergence`
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-narrative-authoring-export-convergence closed after lowering the minimal editor-authored dialogues/storyNodes path into startup-loadable scenes and textEntries while preserving fail-closed behavior for richer narrative shapes.`
+- routing_basis: `queue.script-editor-scenario-profile-startup-export-convergence closed after preserving declared scenarioProfile startup/runtime fields and proving the Zhu Yuanzhang editor export can bootstrap its opening event through JSON-import startup.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
@@ -39,6 +39,7 @@
   - `queue.script-editor-activities-authoring-export-convergence`
   - `queue.script-editor-non-activities-runtime-family-export-convergence`
   - `queue.script-editor-narrative-authoring-export-convergence`
+  - `queue.script-editor-scenario-profile-startup-export-convergence`
 
 ## Human Context
 
@@ -82,6 +83,7 @@
 | `item.script-editor-activities-authoring-export-convergence` | `queue-candidate` | `queue.script-editor-activities-authoring-export-convergence` | `admitted + queue closed` | `The final runtime-pack-unification contract declared activities mandatory, while import preserved pack.activities under compatibilityImport.unresolvedFamilies.activities and export failed closed on that residue. The queue has now landed first-class activities authoring/runtime ownership, import, workspace exposure, validation, and activities.json export.` |
 | `item.script-editor-non-activities-runtime-family-export-blockers` | `queue-candidate` | `queue.script-editor-non-activities-runtime-family-export-convergence` | `admitted + queue closed` | `After activities convergence, real Zhu Yuanzhang import/export diagnostics still failed closed on 12 unresolved runtime families. The admitted queue has now made those families first-class project/runtime fields, emitted canonical split files, and verified Zhu Yuanzhang import/export/startup-load succeeds without unresolved residue for the named families.` |
 | `item.script-editor-narrative-authoring-export-convergence` | `queue-candidate` | `queue.script-editor-narrative-authoring-export-convergence` | `admitted + queue closed` | `Creating the simplest script-editor scenario still seeds dialogues and storyNodes, but runtime export now lowers the minimal authored path into startup-loadable scenes and textEntries while keeping richer narrative shapes fail-closed. The queue has been closed as historical evidence.` |
+| `item.script-editor-scenario-profile-startup-export-gap` | `queue-candidate` | `queue.script-editor-scenario-profile-startup-export-convergence` | `admitted + queue closed` | `Fresh user evidence showed a script-editor-exported Zhu Yuanzhang runtime pack could be parsed by loadScenarioPackFromFiles but could not run normally after main JSON import because scenarioProfile.entryEventId was dropped during export while the opening event and scene remained present. The admitted queue preserved scenarioProfile startup/runtime fields and verified JSON-import startup bootstraps the opening event.` |
 
 ### Candidate Scope Notes
 
@@ -161,6 +163,18 @@
 
 - `queue.script-editor-narrative-authoring-export-convergence was completed on 2026-07-14 after the queue lowered the minimal editor-authored narrative path into startup-loadable scenes and textEntries, updated the default minimal workflow seed, and verified the exported pack loads successfully.`
 - `The queue keeps richer narrative shapes fail-closed so later narrative work can widen the lowering map without reopening the closed 12-family runtime export queue.`
+
+### Scenario Profile Startup Export Convergence Admission Record
+
+- `queue.script-editor-scenario-profile-startup-export-convergence was reviewed on 2026-07-14 and admitted as the next active same-version queue.`
+- `Fresh user evidence from C:/Users/Administrator/Desktop/test shows the exported Zhu Yuanzhang pack contains maps, cities, houses, events, and scenes required for opening startup, and loadScenarioPackFromFiles can parse it, but scenario-profile.json is missing entryEventId.`
+- `The root-cause boundary is export-side scenarioProfile field narrowing in src/application/script-editor/runtime-pack-export.ts: import preserves pack.scenarioProfile, but export reconstructs a smaller object and drops declared startup/runtime profile fields.`
+- `The admitted queue is bounded to preserving and validating scenarioProfile startup fields through script-editor export and proving JSON-import startup can bootstrap the opening event. It must not solve this by startup event guessing or compatibility fallback.`
+
+### Scenario Profile Startup Export Convergence Progress
+
+- `task.script-editor-scenario-profile-startup-export-convergence.profile-runtime-field-preservation completed on 2026-07-14 after RED evidence reproduced the missing entryEventId in exported scenario-profile.json, runtime-pack-export preserved declared scenarioProfile runtime startup fields, and the Zhu Yuanzhang JSON-import startup regression bootstrapped event.story.zhu_yuanzhang.ordination.`
+- `task.script-editor-scenario-profile-startup-export-convergence.queue-closeout-and-handoff completed on 2026-07-14 after npm run typecheck, npm run lint:blueprints, and npm run test passed, and queue truth returned to version-level promotion review.`
 
 ### Non-Activities Runtime Family Export Convergence Admission Record
 

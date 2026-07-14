@@ -5,6 +5,16 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-14 Script Editor Scenario Profile Startup Export
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让脚本编辑器导出 `scenario-profile.json` 时保留已声明的 runtime startup 字段，包括 `entryEventId`、`initialCalendar`、`initialPlayerCoordinate`、`initialUi`、`initialRuntime`、`openingFlowId` 和 `tags`。
+- 新增 [docs/blueprints/queues/script-editor-scenario-profile-startup-export-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-scenario-profile-startup-export-convergence-queue.md)，并同步 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 scenarioProfile startup export convergence 队列收口为 `done`。
+
+### Impact
+- 从真实 Zhu Yuanzhang 剧本包导入到脚本编辑器后再导出的剧本包，现在通过主菜单 JSON 导入时会保留 `entryEventId`，启动协调器能进入 `event.story.zhu_yuanzhang.ordination` 开场事件。
+- 该修复不通过启动器猜测开场事件，也不新增兼容回退；启动所需 truth 由导出的 scenarioProfile 正式携带。
+
 ## 2026-07-14 Script Editor Minimal Narrative Export
 
 ### Changed

@@ -3025,6 +3025,148 @@ test(
 );
 
 test(
+  "script editor exported scenario profile startup fields let JSON-imported packs boot the opening event",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const {
+      runStartupSessionCoordinator,
+    } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+    const sourceFiles = createScenarioPackFilesFromDirectory(
+      path.join(__dirname, "../src/content/scenario-packs/zhuyuanzhang"),
+      "zhuyuanzhang"
+    );
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+
+    assert.equal(
+      importedProject.storyPack.scenarioProfile.entryEventId,
+      "event.story.zhu_yuanzhang.ordination"
+    );
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+    const exportedProfile = JSON.parse(serializedFiles["scenario-profile.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-zhuyuanzhang"
+      )
+    );
+    const baseState = createBaseState();
+    const activationResult = {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [exportedPack],
+      },
+    };
+    const bootstraps = [];
+
+    assert.equal(exportedProfile.entryEventId, "event.story.zhu_yuanzhang.ordination");
+    assert.equal(exportedPack.scenarioProfile.entryEventId, "event.story.zhu_yuanzhang.ordination");
+
+    const result = await runStartupSessionCoordinator(
+      {
+        type: "scenario-files",
+        files: createImportedFilesFromSerializedJsonRecord(
+          serializedFiles,
+          "exported-zhuyuanzhang"
+        ),
+      },
+      {
+        activateBuiltinDefaultMod: async () => activationResult,
+        restoreModFromSave: async () => null,
+        activateScenarioPackMod: async () => activationResult,
+        createPrototypeAppState: () => ({
+          gameState: baseState,
+          characterDefinitions: prototypeCharacters,
+          playerCoordinate: { x: 0, y: 0 },
+          campaignActorState: { facingDegrees: 0, isMoving: false },
+          campaignTravelState: null,
+          modalState: null,
+          locationDialogueState: null,
+          beggingMiniGameState: null,
+          cityMenuState: null,
+          cityDirectoryState: null,
+          autoAdvanceState: null,
+          uiLayouts: {},
+          layoutEditor: {},
+        }),
+        createHaozhouReturnEncounterAppState: (appState) => appState,
+        createScenarioPackAppState: () => ({
+          gameState: {
+            ...baseState,
+            scene: {
+              ...baseState.scene,
+              activeEventId: null,
+              activeSceneId: null,
+              cursor: 0,
+              status: "idle",
+            },
+          },
+          characterDefinitions: prototypeCharacters,
+          playerCoordinate: { x: 0, y: 0 },
+          campaignActorState: { facingDegrees: 0, isMoving: false },
+          campaignTravelState: null,
+          modalState: null,
+          locationDialogueState: null,
+          beggingMiniGameState: null,
+          cityMenuState: null,
+          cityDirectoryState: null,
+          autoAdvanceState: null,
+          uiLayouts: {},
+          layoutEditor: {},
+        }),
+        createStartupContentContext: () => ({
+          packId: exportedPack.id,
+          storyContent: {
+            eventDefinitionsById: Object.fromEntries(
+              exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+            ),
+            sceneDefinitionsById: Object.fromEntries(
+              exportedPack.scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+            ),
+            activityDefinitionsById: {},
+            textEntriesById: exportedPack.textEntries ?? {},
+          },
+        }),
+        bootstrapStartupStoryAppState: ({ appState, bootstrap }) => {
+          bootstraps.push(bootstrap);
+          return {
+            ...appState,
+            gameState: {
+              ...appState.gameState,
+              scene: {
+                ...appState.gameState.scene,
+                activeEventId: bootstrap?.eventId ?? null,
+                activeSceneId:
+                  bootstrap == null ? null : "scene.story.zhu_yuanzhang.ordination",
+                cursor: bootstrap?.sceneCursor ?? 0,
+                status: bootstrap?.sceneStatus ?? "playing",
+              },
+            },
+          };
+        },
+      }
+    );
+
+    assert.equal(result.ok, true);
+    const startupAppState = result.session.createAppState();
+    assert.equal(bootstraps[0]?.eventId, "event.story.zhu_yuanzhang.ordination");
+    assert.equal(
+      startupAppState.gameState.scene.activeEventId,
+      "event.story.zhu_yuanzhang.ordination"
+    );
+  }
+);
+
+test(
   "script editor runtime export fails closed on deferred authoring families",
   () => {
     const {
