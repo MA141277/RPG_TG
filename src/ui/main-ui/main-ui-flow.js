@@ -1638,7 +1638,17 @@ export class MainUiFlow {
             .map(
               (entry, index) => `
                 <div class="c-script-editor-person-attributes__item">
-                  <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry)}" placeholder="${family === "dialogueIds" ? "dialogue.id" : "event.id"}" data-script-editor-person-relation-family="${family}" data-script-editor-person-relation-index="${index}" />
+                  ${
+                    family === "dialogueIds"
+                      ? this.renderScriptEditorPersonRelationSelect({
+                          family,
+                          index,
+                          value: entry,
+                          emptyLabel: "未选择对话",
+                          options: this.createScriptEditorDialogueReferenceOptions(),
+                        })
+                      : `<input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry)}" placeholder="event.id" data-script-editor-person-relation-family="${family}" data-script-editor-person-relation-index="${index}" />`
+                  }
                   <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="${removeAction}" data-script-editor-person-relation-index="${index}">
                     删除
                   </button>
@@ -1648,6 +1658,42 @@ export class MainUiFlow {
             .join("")}
         </div>
       </section>
+    `;
+  }
+
+  renderScriptEditorPersonRelationSelect({
+    family,
+    index,
+    value,
+    emptyLabel,
+    options,
+  }) {
+    const currentValue = value ?? "";
+    const hasCurrentOption =
+      currentValue.length === 0 || options.some((option) => option.value === currentValue);
+
+    return `
+      <select
+        class="c-script-editor-form-field__input"
+        data-script-editor-person-relation-family="${escapeHtml(family)}"
+        data-script-editor-person-relation-index="${index}"
+      >
+        <option value="" ${currentValue.length === 0 ? "selected" : ""}>${escapeHtml(emptyLabel)}</option>
+        ${
+          hasCurrentOption
+            ? ""
+            : `<option value="${escapeHtml(currentValue)}" selected>${escapeHtml(currentValue)}（未收录）</option>`
+        }
+        ${options
+          .map(
+            (option) => `
+              <option value="${escapeHtml(option.value)}" ${currentValue === option.value ? "selected" : ""}>
+                ${escapeHtml(option.label)}
+              </option>
+            `
+          )
+          .join("")}
+      </select>
     `;
   }
 
@@ -2378,19 +2424,43 @@ export class MainUiFlow {
                       </label>
                       <label class="c-script-editor-form-field">
                         <span>说话人物 ID</span>
-                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.speakerPersonId)}" data-script-editor-dialogue-node-field="speakerPersonId" data-script-editor-dialogue-node-index="${index}" />
+                        ${this.renderScriptEditorDialogueNodeReferenceSelect({
+                          field: "speakerPersonId",
+                          index,
+                          value: node.speakerPersonId,
+                          emptyLabel: "未选择人物",
+                          options: this.createScriptEditorPersonReferenceOptions(),
+                        })}
                       </label>
                       <label class="c-script-editor-form-field">
                         <span>文本 textId</span>
-                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.textId)}" data-script-editor-dialogue-node-field="textId" data-script-editor-dialogue-node-index="${index}" />
+                        ${this.renderScriptEditorDialogueNodeReferenceSelect({
+                          field: "textId",
+                          index,
+                          value: node.textId,
+                          emptyLabel: "未选择文本",
+                          options: this.createScriptEditorTextEntryReferenceOptions(),
+                        })}
                       </label>
                       <label class="c-script-editor-form-field">
                         <span>下一节点 ID</span>
-                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.nextNodeId)}" data-script-editor-dialogue-node-field="nextNodeId" data-script-editor-dialogue-node-index="${index}" />
+                        ${this.renderScriptEditorDialogueNodeReferenceSelect({
+                          field: "nextNodeId",
+                          index,
+                          value: node.nextNodeId,
+                          emptyLabel: "无下一节点",
+                          options: this.createScriptEditorDialogueNodeReferenceOptions(dialogue),
+                        })}
                       </label>
                       <label class="c-script-editor-form-field">
                         <span>选择支目标 ID</span>
-                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.choiceTargetNodeId)}" data-script-editor-dialogue-node-field="choiceTargetNodeId" data-script-editor-dialogue-node-index="${index}" />
+                        ${this.renderScriptEditorDialogueNodeReferenceSelect({
+                          field: "choiceTargetNodeId",
+                          index,
+                          value: node.choiceTargetNodeId,
+                          emptyLabel: "无选择支目标",
+                          options: this.createScriptEditorDialogueNodeReferenceOptions(dialogue),
+                        })}
                       </label>
                     </div>
                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-dialogue-node" data-script-editor-dialogue-node-index="${index}">
@@ -2483,6 +2553,73 @@ export class MainUiFlow {
         ${this.renderScriptEditorStringRelationPanel("参与人物", "dialogue-participants", dialogue.participantPersonIds ?? [])}
       </section>
     `;
+  }
+
+  renderScriptEditorDialogueNodeReferenceSelect({
+    field,
+    index,
+    value,
+    emptyLabel,
+    options,
+  }) {
+    const currentValue = value ?? "";
+    const hasCurrentOption =
+      currentValue.length === 0 || options.some((option) => option.value === currentValue);
+
+    return `
+      <select
+        class="c-script-editor-form-field__input"
+        data-script-editor-dialogue-node-field="${escapeHtml(field)}"
+        data-script-editor-dialogue-node-index="${index}"
+      >
+        <option value="" ${currentValue.length === 0 ? "selected" : ""}>${escapeHtml(emptyLabel)}</option>
+        ${
+          hasCurrentOption
+            ? ""
+            : `<option value="${escapeHtml(currentValue)}" selected>${escapeHtml(currentValue)}（未收录）</option>`
+        }
+        ${options
+          .map(
+            (option) => `
+              <option value="${escapeHtml(option.value)}" ${currentValue === option.value ? "selected" : ""}>
+                ${escapeHtml(option.label)}
+              </option>
+            `
+          )
+          .join("")}
+      </select>
+    `;
+  }
+
+  createScriptEditorPersonReferenceOptions() {
+    return (this.scriptEditorProject?.people ?? []).map((person) => ({
+      value: person.id,
+      label: `${person.name ?? person.title ?? person.id} (${person.id})`,
+    }));
+  }
+
+  createScriptEditorTextEntryReferenceOptions() {
+    return (this.scriptEditorProject?.textEntries ?? []).map((entry) => ({
+      value: entry.id,
+      label:
+        typeof entry.text === "string" && entry.text.length > 0
+          ? `${entry.id} · ${entry.text.slice(0, 32)}`
+          : entry.id,
+    }));
+  }
+
+  createScriptEditorDialogueReferenceOptions() {
+    return (this.scriptEditorProject?.dialogues ?? []).map((dialogue) => ({
+      value: dialogue.id,
+      label: `${dialogue.title ?? dialogue.name ?? dialogue.id} (${dialogue.id})`,
+    }));
+  }
+
+  createScriptEditorDialogueNodeReferenceOptions(dialogue) {
+    return (dialogue.nodes ?? []).map((node) => ({
+      value: node.id,
+      label: `${node.id} (${node.nodeType})`,
+    }));
   }
 
   renderScriptEditorEventTabPanel(eventRecord) {

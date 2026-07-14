@@ -3254,6 +3254,9 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   assert.match(workspaceViewSource, /hideHeaderText/);
   assert.match(mainUiSource, /"add-person-dialogue-link"/);
   assert.match(mainUiSource, /"add-person-event-link"/);
+  assert.match(mainUiSource, /renderScriptEditorPersonRelationSelect/);
+  assert.match(mainUiSource, /createScriptEditorDialogueReferenceOptions/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\?\.dialogues/);
   assert.match(mainUiSource, /data-script-editor-record-search-family="people"/);
   assert.match(mainUiSource, /filterScriptEditorRecords\("people", records\)/);
   assert.match(
@@ -3336,10 +3339,17 @@ test("script editor text entry authoring hides ids from creators and clamps list
     path.join(process.cwd(), "src/styles/script-editor.css"),
     "utf8"
   );
+  const textEntryEditorStart = mainUiSource.indexOf(
+    "  renderScriptEditorTextEntryEditor(records, selectedRecord)"
+  );
+  const textEntryEditorEnd = mainUiSource.indexOf(
+    "getScriptEditorRecordListPage",
+    textEntryEditorStart
+  );
   const textEntryEditorSource =
-    mainUiSource.match(
-      /renderScriptEditorTextEntryEditor\(records, selectedRecord\)\s*\{[\s\S]*?\n  \}\n\n  getScriptEditorRecordListPage/
-    )?.[0] ?? "";
+    textEntryEditorStart >= 0 && textEntryEditorEnd > textEntryEditorStart
+      ? mainUiSource.slice(textEntryEditorStart, textEntryEditorEnd)
+      : "";
 
   assert.match(mainUiSource, /family === "textEntries"[\s\S]*?renderScriptEditorTextEntryEditor\(records, selectedRecord\)/);
   assert.match(textEntryEditorSource, /data-script-editor-action="apply-text-entry-text"/);
@@ -4036,6 +4046,14 @@ test(
     assert.match(source, /data-script-editor-action="select-event-tab"/);
     assert.match(source, /"add-dialogue-node"/);
     assert.match(source, /"add-dialogue-follow-up"/);
+    assert.doesNotMatch(
+      source,
+      /<input[^>]+data-script-editor-dialogue-node-field="(?:speakerPersonId|textId|nextNodeId|choiceTargetNodeId)"/
+    );
+    assert.match(source, /renderScriptEditorDialogueNodeReferenceSelect/);
+    assert.match(source, /this\.scriptEditorProject\.people/);
+    assert.match(source, /this\.scriptEditorProject\.textEntries/);
+    assert.match(source, /dialogue\.nodes/);
     assert.match(source, /"add-event-condition-group"/);
     assert.match(source, /"add-event-related-buildings"/);
     assert.match(cssSource, /\.c-script-editor-narrative-editor/);
