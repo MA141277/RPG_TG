@@ -345,12 +345,12 @@ float sampleShorelineChainWave(float chainMileage, float chainLength, float chai
   float angle = progress * 6.2831853;
   vec2 periodicDomain = vec2(cos(angle), sin(angle));
   float seed = chainSeed * 0.037;
-  float broadCycles = max(1.0, floor(safeLength * uShorelineWaveFrequency * 0.075 + 0.5));
-  float mediumCycles = max(broadCycles + 1.0, floor(safeLength * uShorelineWaveFrequency * 0.18 + 0.5));
-  float warp = shorelineFbm(periodicDomain * 1.22 + vec2(seed * 7.1, -seed * 4.3)) - 0.5;
+  float broadCycles = max(2.0, floor(safeLength * uShorelineWaveFrequency * 0.115 + 0.5));
+  float mediumCycles = max(broadCycles + 2.0, floor(safeLength * uShorelineWaveFrequency * 0.310 + 0.5));
+  float warp = shorelineFbm(periodicDomain * 2.10 + vec2(seed * 7.1, -seed * 4.3)) - 0.5;
   float broad = sin((progress * broadCycles + seed + warp * 0.20) * 6.2831853);
   float medium = sin((progress * mediumCycles - seed * 0.73 + warp * 0.15) * 6.2831853);
-  float erosion = shorelineFbm(periodicDomain * 3.20 + vec2(seed * 17.0, seed * 29.0)) - 0.5;
+  float erosion = shorelineFbm(periodicDomain * 6.10 + vec2(seed * 17.0, seed * 29.0)) - 0.5;
 
   return broad * uShorelineWaveStrength * 0.82 +
     medium * uShorelineWaveStrength * 0.24 +
@@ -412,8 +412,8 @@ vec2 getLocalShorelineBoundaryData(
   float waterSideDistance = dot(point - closest, shoreNormal);
   float overEndpoint = max(abs(alongEdge - 0.5) - 0.5, 0.0);
   float erosion = shorelineFbm(vec2(
-    chainMileage * uShorelineErosionFrequency * 0.17 + chainSeed * 0.31,
-    waterSideDistance * 2.10 + chainSeed * 0.47
+    chainMileage * uShorelineErosionFrequency * 0.34 + chainSeed * 0.31,
+    waterSideDistance * 3.20 + chainSeed * 0.47
   )) - 0.5;
   float signedBoundaryDistance =
     waterSideDistance +
@@ -539,6 +539,83 @@ float getShorelineNearShoreTint(
     0.0,
     1.0
   );
+}
+
+vec3 selectVisualLandCellData(vec3 current, vec2 candidateCell, float candidateScore) {
+  float useCandidate = step(current.z + 0.0001, candidateScore);
+
+  return mix(current, vec3(candidateCell, candidateScore), useCandidate);
+}
+
+vec3 getVisualLandCellData(
+  vec2 point,
+  vec2 cell,
+  float water,
+  float hexScale,
+  float mapAspect
+) {
+  vec3 visualLandCell = vec3(cell, 1.0 - water);
+  vec2 neighborCell = cell + vec2(1.0, 0.0);
+  float neighborLand = 1.0 - getSemanticWaterAmountAtCell(neighborCell, hexScale, mapAspect);
+  visualLandCell = selectVisualLandCellData(
+    visualLandCell,
+    neighborCell,
+    neighborLand *
+      water *
+      (1.0 - getLocalShorelineBoundaryData(point, cell, vec2(1.0, 0.0), 0.0, hexScale, mapAspect, water).x)
+  );
+
+  neighborCell = cell + vec2(-1.0, 0.0);
+  neighborLand = 1.0 - getSemanticWaterAmountAtCell(neighborCell, hexScale, mapAspect);
+  visualLandCell = selectVisualLandCellData(
+    visualLandCell,
+    neighborCell,
+    neighborLand *
+      water *
+      (1.0 - getLocalShorelineBoundaryData(point, cell, vec2(-1.0, 0.0), 1.0, hexScale, mapAspect, water).x)
+  );
+
+  neighborCell = cell + vec2(0.0, 1.0);
+  neighborLand = 1.0 - getSemanticWaterAmountAtCell(neighborCell, hexScale, mapAspect);
+  visualLandCell = selectVisualLandCellData(
+    visualLandCell,
+    neighborCell,
+    neighborLand *
+      water *
+      (1.0 - getLocalShorelineBoundaryData(point, cell, vec2(0.0, 1.0), 2.0, hexScale, mapAspect, water).x)
+  );
+
+  neighborCell = cell + vec2(0.0, -1.0);
+  neighborLand = 1.0 - getSemanticWaterAmountAtCell(neighborCell, hexScale, mapAspect);
+  visualLandCell = selectVisualLandCellData(
+    visualLandCell,
+    neighborCell,
+    neighborLand *
+      water *
+      (1.0 - getLocalShorelineBoundaryData(point, cell, vec2(0.0, -1.0), 3.0, hexScale, mapAspect, water).x)
+  );
+
+  neighborCell = cell + vec2(1.0, -1.0);
+  neighborLand = 1.0 - getSemanticWaterAmountAtCell(neighborCell, hexScale, mapAspect);
+  visualLandCell = selectVisualLandCellData(
+    visualLandCell,
+    neighborCell,
+    neighborLand *
+      water *
+      (1.0 - getLocalShorelineBoundaryData(point, cell, vec2(1.0, -1.0), 4.0, hexScale, mapAspect, water).x)
+  );
+
+  neighborCell = cell + vec2(-1.0, 1.0);
+  neighborLand = 1.0 - getSemanticWaterAmountAtCell(neighborCell, hexScale, mapAspect);
+  visualLandCell = selectVisualLandCellData(
+    visualLandCell,
+    neighborCell,
+    neighborLand *
+      water *
+      (1.0 - getLocalShorelineBoundaryData(point, cell, vec2(-1.0, 1.0), 5.0, hexScale, mapAspect, water).x)
+  );
+
+  return visualLandCell;
 }
 
 float sampleBeachEdgeErosionNoise(
@@ -875,8 +952,6 @@ void main() {
   vec2 hexPoint = vec2((vUv.x - 0.5) * mapAspect, vUv.y - 0.5) * hexScale;
   vec2 hexCell = pixelToRoundedHex(hexPoint);
   vec2 hexUv = getHexCellUv(hexCell, hexScale, mapAspect);
-  vec2 atlasUv = getHexAtlasUv(hexPoint, hexCell);
-  vec4 base = texture2D(uTexture, atlasUv);
   vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
   float water = getSemanticWaterAmountAtUv(hexUv);
   vec3 terrainColor = getHexTerrainColor(material, water);
@@ -896,6 +971,13 @@ void main() {
     hexScale,
     mapAspect
   );
+  vec3 visualLandCellData = getVisualLandCellData(hexPoint, hexCell, water, hexScale, mapAspect);
+  vec2 visualLandCell = visualLandCellData.xy;
+  vec2 visualLandUv = getHexCellUv(visualLandCell, hexScale, mapAspect);
+  vec2 visualLandAtlasUv = getHexAtlasUv(hexPoint, visualLandCell);
+  vec4 base = texture2D(uTexture, visualLandAtlasUv);
+  vec3 landMaterial = texture2D(uMaterialTexture, clamp(visualLandUv, 0.0, 1.0)).rgb;
+  float visualLandWater = getSemanticWaterAmountAtCell(visualLandCell, hexScale, mapAspect);
   vec2 nearSeaBoundaryFlow = vec2(uTimeSeconds * 0.026, -uTimeSeconds * 0.010);
   float nearSeaBoundaryNoise = sampleNearSeaBoundaryNoise(vUv, nearSeaBoundaryFlow);
   float nearSeaBoundaryEdgeShift = (nearSeaBoundaryNoise - 0.5) * 2.10;
@@ -928,7 +1010,7 @@ void main() {
     steepShadow * uTerrainSteepShadowStrength;
   float waterReliefShade = 1.0 + (reliefShade - 1.0) * uTerrainWaterShadowStrength;
   float terrainReliefShade = clamp(mix(reliefShade, waterReliefShade, boundaryWater), 0.48, 1.34);
-  float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
+  float materialLuma = dot(landMaterial, vec3(0.2126, 0.7152, 0.0722));
   vec3 grassTexture = boostLandTextureColor(sampleGrassMaterial(vUv));
   float grassTextureLuma = dot(grassTexture, vec3(0.2126, 0.7152, 0.0722));
   grassTexture = clamp(
@@ -946,17 +1028,17 @@ void main() {
   vec2 beachAmounts = getLandBeachAmounts(
     vUv,
     hexPoint,
-    hexCell,
-    water,
+    visualLandCell,
+    visualLandWater,
     hexScale,
     mapAspect
   ) * uBeachBlendStrength;
   float beachAmount = beachAmounts.x;
   float beachConnectorAmount = beachAmounts.y;
   float beachErosionAmount = max(beachAmount, beachConnectorAmount * 0.88);
-  float beachGrain = sampleBeachGrain(hexPoint * 1.12, hexCell);
-  float beachDust = sampleBeachDust(hexPoint * 1.35, hexCell);
-  float beachShapeNoise = sampleBeachErosionNoise(vUv * 0.73 + hash(hexCell) * 0.031);
+  float beachGrain = sampleBeachGrain(hexPoint * 1.12, visualLandCell);
+  float beachDust = sampleBeachDust(hexPoint * 1.35, visualLandCell);
+  float beachShapeNoise = sampleBeachErosionNoise(vUv * 0.73 + hash(visualLandCell) * 0.031);
   float beachThresholdShift = (beachShapeNoise - 0.5) * 0.11;
   float sandBodyMask = smoothstep(
     0.18 + beachThresholdShift,

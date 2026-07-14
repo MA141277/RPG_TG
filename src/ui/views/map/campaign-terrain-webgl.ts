@@ -196,9 +196,9 @@ const DEFAULT_TERRAIN_BEACH_TUNING: CampaignTerrainBeachTuning = {
   shorelineVisualWaterStrength: 0.76,
   shorelineEdgeWidth: 0.38,
   shorelineWaveStrength: 0.30,
-  shorelineWaveFrequency: 1.65,
+  shorelineWaveFrequency: 4.8,
   shorelineErosionStrength: 0.055,
-  shorelineErosionFrequency: 9,
+  shorelineErosionFrequency: 22,
   shorelineCornerRoundness: 0.86,
 };
 const SMOOTH_TERRAIN_KERNEL = [

@@ -8,6 +8,8 @@
 - 大地图 terrain renderer 新增 `uMaterialSemanticTexture`：`campaign-terrain-webgl.ts` 从 `map_ground_types` 生成一次 Hex cell land/water 语义模型，并以“一格 Hex 一个 texel”的 NEAREST 语义纹理传入 shader；通行网格、点击检查、岸线链提取和 terrain shader 的水陆判断都消费同一份 Hex 语义模型。
 - 大地图岸线形变改为从当前 Hex 通行语义提取陆水相邻边，并在 CPU 侧组装连续 shoreline chain 元数据；renderer 只把每条边的链上里程、链长度和稳定 seed 传给 terrain shader，不再按单条边各自 hash 出独立岸线。
 - Terrain shader 的岸线层改为先把像素投影到当前 Hex 共享边，再沿 shoreline chain 的连续里程采样波浪和侵蚀噪声，让相邻边共享同一条连续波形；输出结果改为水陆分界 mask，直接决定当前像素走水侧还是陆侧材质。
+- 岸线默认调参提高 `shorelineWaveFrequency` 与 `shorelineErosionFrequency`，并提高 chain 里程到波峰数量的换算密度；该调整只增加单位岸线长度内的起伏频率，不增加岸线整体内外推幅度。
+- Terrain shader 新增视觉陆地来源 cell 选择：当岸线扰动把陆地推出原本 Hex 边界进入相邻水 Hex 时，推出区域的陆地材质、沙滩权重、砂粒随机种子和 atlas 细节改为继承相邻来源陆地 Hex，避免新增陆地区域与原陆地颜色脱节。
 
 ### Impact
 - 岸线 chain 的来源是 `map_ground_types` 派生出的 Hex 陆水相邻关系，不是原图像素 mask，也不是独立贴图语义；shader 也必须先把当前像素归入 rounded Hex cell，再读取同一份 Hex 语义纹理判断水陆。

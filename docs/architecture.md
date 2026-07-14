@@ -167,7 +167,7 @@ Campaign 地图的水体视觉来自可选 `map_water_noise` 图层。该图层�
 
 Campaign 地图的陆地表面材质可以通过 `map_grass_texture`、`map_sand_texture` 等纯表现图层传给 terrain shader。此类图层只能影响地表颜色、纹理和海岸过渡表现；陆地/水体语义、寻路、点击、探索和云洞仍必须以 `map_ground_types` 与 runtime 状态为准。
 
-Campaign 地图的岸线边界表现必须从当前 Hex 地图的陆水相邻关系派生。岸线可以在 terrain shader 中用连续 chain 里程噪声扰动水陆交界 mask，并由该 mask 直接决定当前像素走水侧还是陆侧材质；不得把原图像素 mask 当作岸线来源，不得在岸线上叠加额外假水内容，也不得替代或重写 `map_water_noise`、近水区、深浅水等水体内部 shader 职责。
+Campaign 地图的岸线边界表现必须从当前 Hex 地图的陆水相邻关系派生。岸线可以在 terrain shader 中用连续 chain 里程噪声扰动水陆交界 mask，并由该 mask 直接决定当前像素走水侧还是陆侧材质；当扰动把陆地视觉区域推出原本 Hex 边界时，推出区域的陆地材质、沙滩权重和 atlas 细节必须继承相邻来源陆地 Hex，而不是继续读取当前水 Hex 的材质语境；不得把原图像素 mask 当作岸线来源，不得在岸线上叠加额外假水内容，也不得替代或重写 `map_water_noise`、近水区、深浅水等水体内部 shader 职责。
 
 Campaign 地图 camera 的缩放、平移和由缩放派生的俯角都属于 terrain renderer 的表现层参数。`main.ts` 只能同步当前视口调试状态和动画化 camera 输入；gameplay 网格、路径、探索、点击判定和地图数据结构不得依赖当前俯角。
 
