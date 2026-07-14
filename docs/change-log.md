@@ -42,6 +42,16 @@
 - Blueprint 当前不再停在 successor version 的空 version-review 状态；当前 live entry 已经收敛到 `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile`。
 - 后续 script-editor runtime-pack 统一工作必须先冻结最终 family contract，再继续 authoring convergence、export unification、base-pack inheritance、fixed-pack deprivileging、compatibility retirement 这些后续 queue。
 
+## 2026-07-14 Script Editor Runtime Family Contract Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md)，将 `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze`。
+- 记录 baseline evidence：`activities` 仍作为 compatibility residue 保留、`compatibilityImport.unresolvedFamilies` 仍在 export 阶段 fail closed、`basePackId` 仍主要是 metadata passthrough、`src/content/pack-content-access.ts` 仍存在固定 builtin scenario-pack 直接导入，因此下一步仍应写 explicit runtime-family contract，而不是跳入 export implementation 或 consumer deprivileging。
+
+### Impact
+- 当前 runtime-family-contract queue 已正式越过 baseline reconcile，接下来只能在 bounded contract-writing 范围内冻结 mandatory / inheritable / unsupported family truth 和 fail-closed obligations。
+- 后续 authoring convergence、runtime-pack export unification、base-pack inheritance governance、fixed-pack consumer deprivileging、compatibility retirement 仍保持候选队列，不得在当前任务内顺手实现。
+
 ## 2026-07-14 Script Editor Person Runtime Attribute Editing Alignment
 
 ### Changed

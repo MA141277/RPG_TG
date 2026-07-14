@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile`
-- next_task: `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile`
+- active_task: `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze`
+- next_task: `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -23,7 +23,7 @@
 - next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `none`
-- sync_summary: `No repository sync batch is recorded for this newly admitted runtime-family-contract queue yet.`
+- sync_summary: `No repository sync batch is recorded yet for the boundary-baseline task promotion; sync must run after this terminal task after-state is committed and pushed.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -53,9 +53,9 @@
 
 - queue_goal: `Turn the current bounded import/export residue, basePackId passthrough, and builtin content privilege into one explicit family contract that names mandatory runtime families, inheritable families, unsupported families, and fail-closed obligations before later convergence queues proceed.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `The queue is newly admitted and starts with baseline reconcile: confirm that final runtime-family contract freeze is the smallest lawful first cut on current repository evidence and freeze the first bounded contract-writing slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Baseline reconcile is complete: current repository evidence still supports freezing mandatory-vs-inheritable runtime-family truth before authoring convergence, export unification, base-pack inheritance, consumer deprivileging, or compatibility retirement proceeds. The active task now writes the explicit runtime-family contract and downstream routing boundaries.`
 - task_briefs:
   - `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile: confirm that runtime-family contract freeze is the next smallest lawful successor cut and freeze the first bounded contract slice from current repository evidence.`
   - `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze: write the explicit mandatory-vs-inheritable runtime-family contract, unsupported-family rules, and fail-closed boundary for later convergence queues.`
@@ -105,8 +105,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` | `active` | `Confirm the admitted runtime-family-contract queue boundary and freeze the first lawful contract task slice from current repository truth.` | `none` | `Active on 2026-07-14 because the successor version has just been promoted and current repository evidence still needs one explicit family contract before later convergence queues can proceed safely.` |
-| `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` | `pending` | `Write the explicit runtime-family contract for mandatory families, inheritable families, unsupported families, and fail-closed obligations.` | `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` | `Pending until baseline reconcile confirms the first bounded contract-writing slice and its must-consume evidence set.` |
+| `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` | `completed` | `Confirm the admitted runtime-family-contract queue boundary and freeze the first lawful contract task slice from current repository truth.` | `none` | `Completed on 2026-07-14 after fresh evidence confirmed that activities remain import compatibility residue, compatibilityImport.unresolvedFamilies still blocks export, basePackId remains passthrough metadata rather than family-level inheritance truth, and pack-content-access.ts still keeps fixed builtin scenario-pack imports. The smallest lawful next slice remains explicit runtime-family contract freeze rather than export implementation, inheritance implementation, consumer deprivileging, or compatibility retirement.` |
+| `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` | `active` | `Write the explicit runtime-family contract for mandatory families, inheritable families, unsupported families, and fail-closed obligations.` | `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` | `Active after baseline reconcile confirmed the must-consume evidence set and froze the bounded contract-writing slice.` |
 | `task.script-editor-runtime-family-contract-alignment.queue-closeout-and-handoff` | `pending` | `Verify the queue, route any remaining runtime-family residue, and return control to version review with explicit closeout truth.` | `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` | `Pending until the bounded runtime-family contract lands and queue-local residue can be classified.` |
 
 ### Task Definitions
@@ -116,7 +116,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md`
@@ -159,7 +159,8 @@
 - task_brief:
   - `Confirm the admitted runtime-family boundary and freeze the first contract-writing slice before the final family matrix is written.`
 - task_outcome_summary:
-  - `Active while the successor version baseline is being reconciled against current import/export residue, basePackId passthrough, and builtin content privilege so the queue can freeze one explicit runtime-family contract without widening into implementation-heavy downstream work.`
+  - `Completed after fresh evidence confirmed that the admitted runtime-family boundary remains the smallest lawful first cut: activities are still preserved as compatibility residue, compatibilityImport.unresolvedFamilies still fails closed at export, basePackId is still passthrough metadata rather than explicit inheritance truth, and fixed builtin content imports still exist outside active scenario-pack resolution.`
+  - `The next active slice is contract writing only; export implementation, consumer deprivileging, authoring convergence, and compatibility retirement remain routed to later queue families.`
 - Purpose:
   - `Prevent the newly admitted queue from drifting into export unification or consumer rewiring before the first bounded contract slice is explicitly frozen.`
 - Failure mode:
@@ -170,7 +171,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md`
@@ -211,7 +212,7 @@
 - task_brief:
   - `Write the explicit runtime-family contract and downstream routing boundaries.`
 - task_outcome_summary:
-  - `Pending until baseline reconcile freezes the first lawful contract slice and confirms the evidence set that the final mandatory-vs-inheritable family matrix must consume.`
+  - `Active after baseline reconcile froze the first lawful contract slice and confirmed the evidence set that the final mandatory-vs-inheritable family matrix must consume.`
 
 #### `task.script-editor-runtime-family-contract-alignment.queue-closeout-and-handoff`
 
