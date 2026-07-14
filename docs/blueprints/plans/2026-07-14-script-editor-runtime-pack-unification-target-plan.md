@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-base-pack-inheritance-governance`
+- closure_review_subject: `queue.script-editor-fixed-pack-consumer-deprivileging`
 - closure_review_status: `routed`
-- residue_candidate_id: `item.script-editor-fixed-pack-consumer-deprivileging`
+- residue_candidate_id: `item.script-editor-compatibility-boundary-retirement`
 - residue_candidate_family: `cross-family`
-- routing_basis: `queue.script-editor-base-pack-inheritance-governance closed after writing the explicit family-level overlay contract and fail-closed inheritance obligations; fresh evidence still shows fixed builtin scenario-pack imports remain in shared content access, so the next lawful queue to inspect is fixed-pack consumer deprivileging.`
-- next_lawful_queue_recommendation: `queue.script-editor-fixed-pack-consumer-deprivileging`
+- routing_basis: `queue.script-editor-fixed-pack-consumer-deprivileging closed after writing the covered consumer route contract and classifying default-pack facade residue; fresh evidence still shows compatibility residue participates in daily authoring/export truth, so the next lawful queue to inspect is compatibility-boundary retirement.`
+- next_lawful_queue_recommendation: `queue.script-editor-compatibility-boundary-retirement`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -60,7 +60,7 @@
 | `queue.script-editor-runtime-family-authoring-convergence` | `done` | `only if fresh repository evidence later proves still-blocking same-family authoring-convergence residue after the written retirement map` | `Closed on 2026-07-14 after the queue wrote the authoring parallel-structure retirement map and routed remaining residue to downstream queue families.` |
 | `queue.script-editor-runtime-pack-export-unification` | `done` | `only if fresh repository evidence later proves still-blocking same-family export-contract residue after the written startup-consumable export contract map` | `Closed on 2026-07-14 after the queue wrote the formal startup-consumable export contract map and routed remaining residue to downstream queue families.` |
 | `queue.script-editor-base-pack-inheritance-governance` | `done` | `only if fresh repository evidence later proves still-blocking same-family inheritance-governance residue after the written family overlay contract map` | `Closed on 2026-07-14 after the queue wrote explicit family overlay rules, inheritance sources, and fail-closed obligations for mandatory and explicitly inheritable runtime families.` |
-| `queue.script-editor-fixed-pack-consumer-deprivileging` | `candidate` | `when fresh repository evidence still proves that runtime or application consumers bypass active content resolution through fixed builtin pack imports or equivalent privileged access` | `Current direct imports in src/content/pack-content-access.ts keep this queue candidate live, but it remains downstream to the family-contract freeze because deprivileging should consume the final contract rather than pre-guess it.` |
+| `queue.script-editor-fixed-pack-consumer-deprivileging` | `done` | `only if fresh repository evidence later proves still-blocking same-family consumer-routing residue after the written active-content-only route contract` | `Closed on 2026-07-14 after the queue wrote the covered consumer route contract and classified retained builtin baselines as out of scope unless they bypass active scenario-pack content resolution.` |
 | `queue.script-editor-compatibility-boundary-retirement` | `candidate` | `only after the formal runtime-pack export path exists and fresh evidence still shows compatibility residue participating in daily authoring/export truth` | `Must remain later than export unification because compatibility cannot retire until the replacement runtime-pack path is already formal and live.` |
 
 ### Candidate Classification Record
@@ -72,7 +72,7 @@
 | `item.script-editor-runtime-family-authoring-convergence` | `queue-candidate` | `queue.script-editor-runtime-family-authoring-convergence` | `admitted + queue closed` | `Editor-owned authoring structures preserved bounded authoring-only residue; this queue has now written the retirement map and closed as historical evidence.` |
 | `item.script-editor-runtime-pack-export-unification` | `queue-candidate` | `queue.script-editor-runtime-pack-export-unification` | `admitted + queue closed` | `The export path was still a bounded partial seam; this queue has now written the startup-consumable export contract map and closed as historical evidence.` |
 | `item.script-editor-base-pack-inheritance-governance` | `queue-candidate` | `queue.script-editor-base-pack-inheritance-governance` | `admitted + queue closed` | `basePackId was present in import/export metadata flow without family-level inheritance semantics; this queue has now written the formal overlay and fail-closed contract map.` |
-| `item.script-editor-fixed-pack-consumer-deprivileging` | `queue-candidate` | `queue.script-editor-fixed-pack-consumer-deprivileging` | `candidate-recorded` | `src/content/pack-content-access.ts still directly imports builtin zhuyuanzhang pack files, so active-content-only resolution is not yet the sole lawful consumer path.` |
+| `item.script-editor-fixed-pack-consumer-deprivileging` | `queue-candidate` | `queue.script-editor-fixed-pack-consumer-deprivileging` | `admitted + queue closed` | `src/content/pack-content-access.ts still directly imports builtin zhuyuanzhang pack files and default-pack facade consumers still bypass active scenario-pack resolution; this queue has now written the active-content-only route contract.` |
 | `item.script-editor-compatibility-boundary-retirement` | `queue-candidate` | `queue.script-editor-compatibility-boundary-retirement` | `candidate-recorded` | `The script-editor shell and workspace still surface compatibility residue as live authoring/export truth, so compatibility has not yet been reduced to migration-only duty.` |
 
 ### Candidate Scope Notes
@@ -117,6 +117,19 @@
 - `task.script-editor-base-pack-inheritance-governance.boundary-baseline-reconcile completed on 2026-07-14 after fresh evidence confirmed basePackId remains metadata passthrough in runtime-pack import/export while the frozen family/export contracts require explicit family-level inheritance or fail-closed behavior.`
 - `task.script-editor-base-pack-inheritance-governance.family-overlay-contract-map completed on 2026-07-14 after the queue wrote explicit family-level overlay rules, inheritance sources, and fail-closed obligations for mandatory and explicitly inheritable runtime families.`
 - `task.script-editor-base-pack-inheritance-governance.queue-closeout-and-handoff completed on 2026-07-14 after the queue verified its bounded inheritance-governance slice, closed same-family residue, and returned control to version-level promotion review.`
+
+### Fixed Pack Consumer Deprivileging Admission Record
+
+- `queue.script-editor-fixed-pack-consumer-deprivileging was reviewed on 2026-07-14 and admitted as the next active same-version queue.`
+- `Fresh repository evidence shows src/content/pack-content-access.ts still directly imports zhuyuanzhang activities, events, scenes, text entries, home-house content, and keep-house content JSON.`
+- `Downstream consumers such as src/application/house-modules/temple-house/temple-house-active-content.ts, src/content/houses/home-house-content.ts, and src/content/houses/keep-house-content.ts still consume default-pack facades instead of active scenario-pack content resolution.`
+- `The closed base-pack inheritance queue already forbids treating hard-imported builtin files as inheritance fallback, so fixed-pack consumer deprivileging was the smallest lawful next cut.`
+
+### Fixed Pack Consumer Deprivileging Progress
+
+- `task.script-editor-fixed-pack-consumer-deprivileging.boundary-baseline-reconcile completed on 2026-07-14 after fresh evidence confirmed src/content/pack-content-access.ts still directly imports zhuyuanzhang scenario-pack JSON and downstream consumers still consume default-pack facades instead of active scenario-pack resolution.`
+- `task.script-editor-fixed-pack-consumer-deprivileging.consumer-route-contract-map completed on 2026-07-14 after the queue wrote the covered consumer route map and classified default-pack facades, house-module active content helpers, and startup/UI baselines as routed or out of scope unless they bypass active scenario-pack content resolution.`
+- `task.script-editor-fixed-pack-consumer-deprivileging.queue-closeout-and-handoff completed on 2026-07-14 after the queue verified its bounded consumer-deprivileging slice, closed same-family residue, and returned control to version-level promotion review.`
 
 ### Current Queue Activation
 

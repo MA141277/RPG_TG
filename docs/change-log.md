@@ -192,6 +192,46 @@
 - 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做 fixed-pack consumer deprivileging admission review，而不是继续在已关闭的 inheritance queue 内扩张。
 - 剩余 residue 被分类为 cross-family：fixed-pack consumer deprivileging 与 compatibility retirement 仍按后续候选队列推进。
 
+## 2026-07-14 Script Editor Fixed Pack Consumer Deprivileging Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md)，将 `queue.script-editor-fixed-pack-consumer-deprivileging` 写成当前 live queue truth，并把范围收敛在 covered consumers 从 fixed zhuyuanzhang/default-pack imports 转向 active scenario-pack content resolution。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 live entry 从 version-level promotion-review 切回 active-execution，并记录当前 active task。
+- 记录 fresh evidence：`src/content/pack-content-access.ts` 仍直接导入 `zhuyuanzhang` 的 activities/events/scenes/text entries/home-house/keep-house JSON，`temple-house-active-content.ts`、`home-house-content.ts`、`keep-house-content.ts` 仍通过 default-pack facade 消费这些内容。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 base-pack inheritance governance 转到 fixed-pack consumer deprivileging。
+- 后续动作必须先确认 covered consumer 边界并写 active-content-only route contract，不能把 hard-imported builtin JSON 当成正式 runtime-pack 继承或消费路径。
+
+## 2026-07-14 Script Editor Fixed Pack Consumer Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md)，将 `task.script-editor-fixed-pack-consumer-deprivileging.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-fixed-pack-consumer-deprivileging.consumer-route-contract-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 baseline 证据：`src/content/pack-content-access.ts` 仍直接导入 `zhuyuanzhang` 的 activities/events/scenes/text entries/home-house/keep-house JSON，`temple-house-active-content.ts`、`home-house-content.ts`、`keep-house-content.ts` 仍通过 default-pack facade 消费这些内容。
+
+### Impact
+- 当前 fixed-pack-consumer queue 已完成 baseline reconcile；下一步只能写 active-content-only consumer route contract map，不能提前扩张到 compatibility retirement 或 broad startup policy。
+
+## 2026-07-14 Script Editor Fixed Pack Consumer Route Contract Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md)，新增 Consumer Route Contract Map，明确 `src/content/pack-content-access.ts`、`src/application/content/default-pack-content.ts`、`temple-house-active-content.ts`、`home-house-content.ts`、`keep-house-content.ts` 的 active-content-only 路由义务和可保留基线。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 consumer route contract map 完成，并把当前 active task 推进到 `task.script-editor-fixed-pack-consumer-deprivileging.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有正式 covered consumer route 契约图；后续实现不得再把 fixed zhuyuanzhang JSON imports 或 default-pack facade 作为 covered runtime truth。
+- compatibility retirement 仍明确属于后续队列，不在当前 queue 内顺手实现。
+
+## 2026-07-14 Script Editor Fixed Pack Consumer Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md)，将 `queue.script-editor-fixed-pack-consumer-deprivileging` 从 active 收口为 `done`，记录 bounded consumer-deprivileging slice 已完成并 verified。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-compatibility-boundary-retirement`。
+
+### Impact
+- 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做 compatibility-boundary retirement admission review，而不是继续在已关闭的 fixed-pack-consumer queue 内扩张。
+- 剩余 residue 被分类为 cross-family：compatibility-boundary retirement 仍按后续候选队列推进。
+
 ## 2026-07-14 Script Editor Person Runtime Attribute Editing Alignment
 
 ### Changed
