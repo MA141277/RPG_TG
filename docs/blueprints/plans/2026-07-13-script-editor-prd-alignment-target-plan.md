@@ -4,31 +4,31 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-prd-alignment`
-- version_status: `open`
-- active_phase: `phase.implementation`
-- active_queue: `queue.script-editor-prd-workbench-ui-visual-alignment`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
+- version_status: `done`
+- active_phase: `phase.version-closeout`
+- active_queue: `none`
+- decision_state: `idle-open`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `closed-version-record`
 - promotion_review_result: `admit`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
 - review_basis: `none`
 - admission_status: `none`
-- intake_status: `candidate-recorded`
-- intake_item_id: `item.script-editor-prd-workbench-ui-visual`
-- intake_summary: `Record the creator-first workbench UI redesign as a same-version candidate: separate project selection from editing, switch to left-rail object navigation plus central property editing, hide system-facing fields by default, and converge the workbench onto the approved warm-paper visual direction after upstream authoring surfaces are complete.`
-- intake_result: `queued-as-candidate`
-- intake_feedback_mode: `fixed-receipt`
-- closure_review_subject: `queue.script-editor-prd-preview-validation-export-alignment`
-- closure_review_status: `routed`
-- residue_candidate_id: `item.script-editor-prd-workbench-ui-visual`
-- residue_candidate_family: `same-family`
-- routing_basis: `The bounded preview/validation/export slice is now closed historical evidence, and the next remaining same-family PRD residue is cross-surface creator-workbench UI convergence rather than further preview/export continuation.`
-- next_lawful_queue_recommendation: `queue.script-editor-prd-workbench-ui-visual-alignment`
-- auto_admission_ready: `true`
+- intake_status: `none`
+- intake_item_id: `none`
+- intake_summary: `none`
+- intake_result: `none`
+- intake_feedback_mode: `none`
+- closure_review_subject: `none`
+- closure_review_status: `none`
+- residue_candidate_id: `none`
+- residue_candidate_family: `none`
+- routing_basis: `none`
+- next_lawful_queue_recommendation: `none`
+- auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.script-editor-prd-workspace-and-navigation-alignment`
@@ -47,14 +47,20 @@
 - Scope approval:
   - `The operator explicitly requested creation of a new successor version whose goal is to implement the requirements in docs/script-editor-prd.md.`
 - Admission basis:
-  - `The closed target.script-editor-implementation version already landed the bounded persistence, export, compatibility import, shared-rule task/export, shell scaffold, and first user-visible workflow baseline, but docs/script-editor-prd.md still names a broader creator-facing product surface that has not yet been admitted as same-version continuation.`
-  - `PRD section 4 states that the workbench itself is the first priority and formalizes a top-bar + left-navigation + center-editor layout with project overview as the default landing surface, so workspace and navigation alignment is the smallest lawful first candidate under the new version.`
+  - `The closed target.script-editor-implementation version already landed the bounded persistence, export, compatibility import, shared-rule task/export, shell scaffold, and first user-visible workflow baseline, but docs/script-editor-prd.md still named a broader creator-facing product surface that needed same-version continuation.`
+  - `PRD section 4 states that the workbench itself is the first priority and formalizes a top-bar + left-navigation + center-editor layout with project overview as the default landing surface, so workspace and navigation alignment was the smallest lawful first candidate under the new version.`
 - Admission conclusion:
-  - `queue.script-editor-prd-workspace-and-navigation-alignment, queue.script-editor-prd-project-selection-and-workspace-layout-alignment, queue.script-editor-prd-person-authoring-alignment, queue.script-editor-prd-city-building-and-menu-alignment, queue.script-editor-prd-dialogue-event-story-alignment, queue.script-editor-prd-minigame-binding-alignment, and queue.script-editor-prd-preview-validation-export-alignment are now all closed historical evidence, so the version returns to promotion review with queue.script-editor-prd-workbench-ui-visual-alignment recorded as the next lawful same-family candidate before any final PRD closeout decision.`
+  - `queue.script-editor-prd-workspace-and-navigation-alignment, queue.script-editor-prd-project-selection-and-workspace-layout-alignment, queue.script-editor-prd-person-authoring-alignment, queue.script-editor-prd-city-building-and-menu-alignment, queue.script-editor-prd-dialogue-event-story-alignment, queue.script-editor-prd-minigame-binding-alignment, queue.script-editor-prd-preview-validation-export-alignment, and queue.script-editor-prd-workbench-ui-visual-alignment are now all closed historical evidence, so no lawful same-version queue remains inside target.script-editor-prd-alignment.`
 - Current handoff:
-  - `queue.script-editor-prd-workbench-ui-visual-alignment is now the active queue.`
-  - `Execution is currently anchored on task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation.`
-  - `This queue must consume the closed implementation baseline plus the now-closed workbench/project-selection/person-authoring/city-building/dialogue-event-story/minigame-binding/preview-validation-export output rather than reopen them by convenience.`
+  - `No active queue remains on the current PRD-alignment version; all eight bounded PRD queues are now closed historical evidence.`
+  - `The current lawful step is version closeout, and the operator explicitly requested that Blueprint close this version if no candidate queue remained.`
+  - `Any further script-editor work must now start from a successor version rather than reopening a closed same-version PRD queue by convenience.`
+
+### Version Closeout Record
+
+- `Closeout judgement: closeout-ready acceptance evidence now exists because the script-editor workbench exposes the PRD-aligned creator shell, project-first flow, dedicated person/city/building/dialogue/event/story/minigame authoring surfaces, preview/validation/export handoff, and final creator-facing workbench visual convergence with no active queue remaining inside the admitted version boundary.`
+- `Closeout confirmation: explicit human confirmation to close target.script-editor-prd-alignment was received on 2026-07-14 through the operator instruction to close the current version if no lawful candidate queue remained, and current governance review confirms that no same-version queue remains.`
+- `Future routing: no additional same-version queue may be admitted after this closeout; later script-editor work now routes to target.script-editor-runtime-pack-unification as the explicit successor version.`
 
 ### Queue Promotion Ledger
 
@@ -67,7 +73,7 @@
 | `queue.script-editor-prd-dialogue-event-story-alignment` | `done` | `only if fresh repository evidence later disproves the landed story/dialogue/event slice or proves a new still-open same-family residue inside that bounded surface` | `Closed on 2026-07-13 after the repository gained dedicated story/dialogue/event authoring surfaces, structured event blocks, and bounded linkage/preview-summary authoring.` |
 | `queue.script-editor-prd-minigame-binding-alignment` | `done` | `only if fresh repository evidence later disproves the landed minigame-binding slice or proves a new still-open same-family residue inside that bounded surface` | `Closed on 2026-07-13 after the repository gained a dedicated configuration-first minigame binding surface, bounded launch/settlement authoring, builtin playable/integration defaults, and reverse-reference visibility without widening into shared runtime contract changes.` |
 | `queue.script-editor-prd-preview-validation-export-alignment` | `done` | `only if fresh repository evidence later disproves the landed preview/validation/export slice or proves a new still-open same-family residue inside that bounded surface` | `Closed on 2026-07-13 after the repository gained one on-demand preview/validation/export auxiliary surface, linked issue routing, and bounded export landing summaries without widening into shared runtime redesign.` |
-| `queue.script-editor-prd-workbench-ui-visual-alignment` | `active` | `only if fresh repository evidence later disproves the bounded creator-first shell convergence slice or proves a smaller still-open same-family residue after this queue closes` | `Owns the final creator-facing workbench UI convergence: independent project-selection page, left-rail object navigation plus central property editor, creator-visible field filtering, warm-paper visual system, and cross-surface layout consistency while consuming rather than reopening the already closed structural queues.` |
+| `queue.script-editor-prd-workbench-ui-visual-alignment` | `done` | `only if fresh repository evidence later disproves the landed creator-first shell convergence slice or proves a new still-open same-family residue inside the bounded PRD workbench-visual surface after closeout` | `Closed on 2026-07-14 after the repository gained the final creator-facing workbench visual convergence slice: independent project-selection page, left-rail object navigation plus central property editor, creator-visible field filtering, corrected embedded editor layout, stable scrolling and pagination behavior, warm-paper visual consistency, and no remaining same-version continuation inside the admitted PRD-alignment boundary.` |
 
 ### Candidate Classification Record
 
@@ -81,8 +87,8 @@
 | `item.script-editor-prd-dialogue-event-story` | `queue-candidate` | `queue.script-editor-prd-dialogue-event-story-alignment` | `admitted + queue closed` | `PRD sections 7, 8, and 9 formalize story ownership, dialogue/event editor capabilities, structured condition editing, preview, and validation duties, and that bounded slice is now landed as closed historical evidence.` |
 | `item.script-editor-prd-minigame-binding` | `queue-candidate` | `queue.script-editor-prd-minigame-binding-alignment` | `admitted + queue closed` | `PRD section 10 requires minigame binding as a formal configuration surface on top of existing playable capabilities rather than ad hoc launch wiring, and that bounded slice is now landed as closed historical evidence.` |
 | `item.script-editor-prd-preview-validation-export` | `queue-candidate` | `queue.script-editor-prd-preview-validation-export-alignment` | `admitted + queue closed` | `PRD sections 11 and 12 required built-in structure/performance preview plus validation/export alignment on top of the earlier bounded export baseline, and that bounded slice is now landed as closed historical evidence.` |
-| `item.script-editor-prd-workbench-ui-visual` | `queue-candidate` | `queue.script-editor-prd-workbench-ui-visual-alignment` | `admitted + queue active` | `The approved UI redesign artifacts and creator-flow requirements define one same-version visual convergence cut on top of the already landed structural work: keep project selection outside the workspace, move object-type navigation to a fixed left rail, center editing around creator-facing property configuration, hide system fields by default, and align the editor to the warm-paper visual system after upstream feature surfaces stabilize.` |
-| `item.script-editor-workspace-scroll-accessibility` | `current-target-item` | `queue.script-editor-prd-workbench-ui-visual-alignment` | `absorbed by active queue` | `The reported issue that the script-editor workspace shows no scrollbar and hides lower content is a creator-workbench accessibility and layout-convergence defect inside the already active visual queue, so Blueprint must absorb it into the active queue rather than open a parallel candidate while single-active-queue mode remains in force.` |
+| `item.script-editor-prd-workbench-ui-visual` | `queue-candidate` | `queue.script-editor-prd-workbench-ui-visual-alignment` | `admitted + queue closed` | `The approved UI redesign artifacts and creator-flow requirements defined one same-version visual convergence cut on top of the already landed structural work, and that bounded slice is now closed historical evidence after the creator-first shell, field filtering, pagination, labeling, and layout fixes landed with verification.` |
+| `item.script-editor-workspace-scroll-accessibility` | `current-target-item` | `queue.script-editor-prd-workbench-ui-visual-alignment` | `absorbed by admitted queue + landed` | `The reported workspace-scroll accessibility defect was absorbed into the active visual queue and closed there as part of the final creator-workbench layout convergence batch instead of opening a parallel same-version candidate.` |
 
 ### Candidate Scope Notes
 
@@ -93,10 +99,10 @@
 - `queue.script-editor-prd-dialogue-event-story-alignment` is now closed historical evidence after the bounded PRD sections 7 through 9 slice landed with verification; later queues must consume its dedicated story/dialogue/event authoring baseline rather than reopen it by convenience.`
 - `queue.script-editor-prd-minigame-binding-alignment` is now closed historical evidence after the bounded PRD section 10 slice landed with verification; later queues must consume its dedicated binding baseline rather than reopen it by convenience.`
 - `queue.script-editor-prd-preview-validation-export-alignment` is now closed historical evidence after the bounded PRD sections 11 and 12 slice landed with verification; later queues must consume its unified auxiliary surface, linked issue routing, and export landing summary baseline rather than reopening preview/export scaffolding by convenience.`
+- `queue.script-editor-prd-workbench-ui-visual-alignment` is now closed historical evidence after the final creator-facing shell, field-filtering, and workbench-layout convergence landed with verification; no same-version queue remains after its closeout.`
 - `Later queues must consume rather than re-own the already closed persistence/export/import/shared-rule/shell/minimal-workflow seams from target.script-editor-implementation.`
 - `Preview, validation, and export handoff should not be front-loaded ahead of upstream workspace and authoring-surface gaps unless fresh repository evidence proves that ordering wrong.`
 - `Minigame binding remains configuration-first PRD work; it must not silently expand into new playable-mechanic implementation inside this version.`
-- `queue.script-editor-prd-workbench-ui-visual-alignment` is intentionally recorded as a later same-version candidate rather than absorbed into the now-closed preview/validation/export queue because it is cross-surface creator-workbench convergence work that should consume the full authoring baseline plus the approved UI design docs instead of reopening already closed structural queues or restyling incomplete surfaces piecemeal.`
 
 ### Version Boundary Record
 
@@ -126,37 +132,13 @@
 ### Operator Intake Contract
 
 - Allowed operator intake:
-  - `新需求`
-  - `参考治理规范`
+  - `鏂伴渶姹俙
+  - `鍙傝€冩不鐞嗚鑼僠
 - Internal-only Blueprint work:
   - `read project-progress -> blueprint -> version plan -> active queue -> active task`
   - `attempt active-queue absorption`
   - `classify and route the intake`
   - `record candidate truth or admission truth without asking the operator to fill internal fields`
-- Default operator output:
-
-```text
-处理结果：
-- 加入状态：成功 / 失败 / 成功，已加入
-- 加入类型：执行队列 / 候选队列 / 未加入
-- 加入队列：`具体队列ID` / `none`
-
-原因说明：
-- 用 2~4 句话说明为什么进入该队列，或者为什么没有成功加入。
-- 如果没有进入执行队列，要明确说明是因为当前已有 active queue，还是因为它当前只满足候选条件。
-
-当前执行情况：
-- 当前执行队列：`具体 queue ID`
-- 当前任务：`具体 task ID`
-- 当前队列目标：一句话说明
-
-下一步：
-- 说明 Blueprint 接下来会如何处理
-- 人工操作：当前不需要 / 当前需要确认 xxx
-```
-
-- Default visibility rule:
-  - `默认不向人工暴露真值链细节、候选全集、Why Not The Others、Human Involvement Boundary、admission 内部字段或排序全过程，除非人工明确要求展开内部分析。`
 
 ### Version Lifecycle Rules
 
@@ -187,3 +169,5 @@
 - `2026-07-13: queue.script-editor-prd-preview-validation-export-alignment then closes after the bounded preview/validation/export slice lands with verification, so target.script-editor-prd-alignment returns to version-level promotion review with queue.script-editor-prd-workbench-ui-visual-alignment recorded as the next lawful same-family candidate.`
 - `2026-07-13: queue.script-editor-prd-workbench-ui-visual-alignment is then admitted as the next active PRD alignment queue after repository inspection reconfirms that the remaining lawful residue is creator-first shell convergence, warm-paper visual alignment, and first-screen field-visibility cleanup rather than any new structural authoring scope.`
 - `2026-07-13: a fresh intake reporting that the script-editor workspace shows no scrollbar and clips lower content is classified as item.script-editor-workspace-scroll-accessibility and absorbed into queue.script-editor-prd-workbench-ui-visual-alignment instead of opening a new candidate, because the defect falls inside the active queue's creator-workbench layout and accessibility boundary while single-active-queue mode remains in force.`
+- `2026-07-14: queue.script-editor-prd-workbench-ui-visual-alignment then closes after the final creator-facing workbench convergence batch lands with verification, including layout recovery, creator-visible label filtering, custom-attribute editing cleanup, stable pagination/deletion behavior, and first-screen id hiding across the remaining editor surfaces.`
+- `2026-07-14: explicit human closeout confirmation then closes target.script-editor-prd-alignment, so the version becomes done historical evidence and hands successor authority to target.script-editor-runtime-pack-unification.`

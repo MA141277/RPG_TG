@@ -61,6 +61,30 @@ function writeFile(repoRoot, relativePath, content) {
   writeFixtureFile(repoRoot, relativePath, content);
 }
 
+function readLiveVersionPlan() {
+  const blueprint = fs.readFileSync(
+    path.join(projectRoot, "docs", "blueprints", "blueprint.md"),
+    "utf8"
+  );
+  const activeVersionMatch = blueprint.match(
+    /^- active_version: `([^`]+)`$/m
+  );
+  const activeVersionPlanMatch = blueprint.match(
+    /^- active_version_plan: `([^`]+)`$/m
+  );
+
+  assert.ok(activeVersionMatch, "blueprint must expose active_version");
+  assert.ok(activeVersionPlanMatch, "blueprint must expose active_version_plan");
+
+  return {
+    activeVersion: activeVersionMatch[1],
+    targetPlan: fs.readFileSync(
+      path.join(projectRoot, ...activeVersionPlanMatch[1].split("/")),
+      "utf8"
+    ),
+  };
+}
+
 async function loadBlueprintLintModule() {
   return import(
     pathToFileURL(path.join(projectRoot, "tools", "lint-blueprints.mjs")).href
@@ -1160,16 +1184,7 @@ test("workflow spec documents minimal intake input and fixed operator receipt la
 });
 
 test("live version plan exposes the fixed operator intake contract", () => {
-  const targetPlan = fs.readFileSync(
-    path.join(
-      projectRoot,
-      "docs",
-      "blueprints",
-      "plans",
-      "2026-07-06-project-complete-modularization-target-plan.md"
-    ),
-    "utf8"
-  );
+  const { targetPlan } = readLiveVersionPlan();
 
   assert.match(targetPlan, /^### Operator Intake Contract$/m);
   assert.match(targetPlan, /\u5904\u7406\u7ed3\u679c\uff1a/u);
@@ -1196,19 +1211,13 @@ test("workflow spec exposes the version-first resume chain and state model", () 
 });
 
 test("live version plan exposes version-first control fields and lifecycle wording", () => {
-  const targetPlan = fs.readFileSync(
-    path.join(
-      projectRoot,
-      "docs",
-      "blueprints",
-      "plans",
-      "2026-07-13-script-editor-prd-alignment-target-plan.md"
-    ),
-    "utf8"
-  );
+  const { activeVersion, targetPlan } = readLiveVersionPlan();
 
   assert.match(targetPlan, /^- document_role: `version-governor`$/m);
-  assert.match(targetPlan, /^- version_id: `target\.script-editor-prd-alignment`$/m);
+  assert.match(
+    targetPlan,
+    new RegExp(`^- version_id: \`${activeVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\`$`, "m")
+  );
   assert.match(targetPlan, /^- version_status: `open`$/m);
   assert.match(targetPlan, /^- active_queue: `[^`]+`$/m);
   assert.match(

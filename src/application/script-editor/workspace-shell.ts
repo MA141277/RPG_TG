@@ -162,8 +162,12 @@ const TREE_GROUPS: Array<{
       "buildings",
       "events",
       "quests",
-      "textEntries",
     ],
+  },
+  {
+    id: "library",
+    label: "资料库",
+    families: ["textEntries"],
   },
   {
     id: "narrative",

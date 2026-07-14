@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-13`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation`
-- next_task: `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation`
-- closeout_status: `open`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `unknown`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The bounded creator-first workbench visual-convergence slice is now landed and verified: the repository now exposes the warm-paper authoring desk direction, creator-facing field filtering, corrected embedded editor layout, stable scroll reachability, fixed-card custom-attribute pagination, and the remaining first-screen label cleanup required by the admitted queue. No additional same-family continuation remains inside this admitted PRD-alignment queue surface, so the predecessor version may close instead of routing to another same-version queue.`
+- residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `complete-active-queue`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync batch is recorded for this newly admitted visual-convergence queue yet.`
+- next_effect: `return-to-version-review`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit 570bf9a5 on mod-first-dev was pushed successfully to origin/mod-first-dev after the closed workbench-ui-visual queue truth was written and synchronized.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -53,9 +53,9 @@
 
 - queue_goal: `Turn the now-complete structural script-editor baseline into the approved creator-first workbench shell: project list stays outside, the workspace becomes a warm-paper authoring desk, first-screen lists and summaries prefer creator-visible copy over raw IDs, and save/validate/export actions converge into one stable top utility bar.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Boundary review is complete and implementation is active: the next bounded slice is the visible workbench shell convergence and creator-visible summary filtering.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the bounded creator-first workbench visual-convergence slice is complete, and the predecessor PRD-alignment version now advances to version closeout instead of another same-family queue.`
 - task_briefs:
   - `task.script-editor-prd-workbench-ui-visual-alignment.boundary-baseline-reconcile: confirm that final creator-first visual convergence is the next smallest same-family PRD gap after the closed preview/validation/export queue.`
   - `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation: land the bounded shell/visual convergence, top utility-bar cleanup, and creator-visible summary filtering without reopening closed structural queues.`
@@ -110,8 +110,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-prd-workbench-ui-visual-alignment.boundary-baseline-reconcile` | `completed` | `Confirm that creator-first workbench visual convergence remains the next smallest same-family PRD gap.` | `none` | `Completed on 2026-07-13 after repository inspection reconfirmed that the structural queues are all closed, but the workspace still presents a darker scaffold-like shell, still keeps extra non-authoring entry actions near the editor surface, and still exposes more raw ID-centric summaries than the approved creator-first design allows.` |
-| `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation` | `in_progress` | `Land the bounded warm-paper shell convergence, top utility-bar cleanup, and creator-visible summary filtering.` | `task.script-editor-prd-workbench-ui-visual-alignment.boundary-baseline-reconcile` | `In progress on 2026-07-13 while converging the workspace shell toward the approved design-system direction without reopening closed structural authoring scope; the current landed slice now also hides first-screen system-facing ID fields behind one shared advanced-details pattern across project overview, people, locations, story nodes, dialogues, events, and minigame bindings, restores vertical scrolling by making the script-editor screen own its own overflow inside the fixed main-ui shell, and moves the active editor panel back into the central workspace column instead of appending it below the shell.` |
-| `task.script-editor-prd-workbench-ui-visual-alignment.queue-closeout-and-handoff` | `pending` | `Verify the queue-local visual slice, classify remaining residue, and hand control back to version review.` | `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation` | `Pending until the bounded visual convergence slice and regression verification both pass.` |
+| `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation` | `completed` | `Land the bounded warm-paper shell convergence, top utility-bar cleanup, and creator-visible summary filtering.` | `task.script-editor-prd-workbench-ui-visual-alignment.boundary-baseline-reconcile` | `Completed on 2026-07-14 after the visual convergence slice landed with verification, including creator-first toolbar and header cleanup, embedded central editor recovery, pagination and stability fixes for secondary lists and person custom attributes, creator-facing attribute labeling, removal of redundant explanatory labels, and bounded text-list cleanup that hides creator-invisible ids on first screen.` |
+| `task.script-editor-prd-workbench-ui-visual-alignment.queue-closeout-and-handoff` | `completed` | `Verify the queue-local visual slice, classify remaining residue, and hand control back to version review.` | `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation` | `Completed on 2026-07-14 after verification passed, queue truth was synchronized, and version-level routing concluded that no lawful same-version candidate queue remained inside target.script-editor-prd-alignment.` |
 
 ### Task Definitions
 
@@ -162,7 +162,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation`
-- state: `in_progress`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/workspace-shell.ts`
@@ -197,7 +197,7 @@
 - task_brief:
   - `Implement the bounded creator-first workbench shell convergence and first-screen field-visibility cleanup.`
 - task_outcome_summary:
-  - `In progress while converging the workbench shell toward the approved creator-first visual direction and reducing first-screen raw ID exposure without reopening closed structural queues.`
+  - `Completed after the workbench shell converged toward the approved creator-first visual direction and reduced first-screen raw ID exposure without reopening closed structural queues.`
   - `The current bounded implementation batch has already moved the obvious system-facing identifier fields on project overview, people, locations, story nodes, dialogues, events, and minigame bindings behind one shared advanced-details disclosure instead of keeping them exposed on first screen.`
   - `The active scope now also explicitly owns the workspace-scroll accessibility defect: the current fixed-viewport shell clips lower editor content instead of allowing the creator workspace to reach all visible sections.`
   - `The current implementation batch restores script-editor vertical reachability by making .c-main-ui-screen--script-editor-flow scroll vertically inside the fixed shell, rather than relying on the globally locked page/body scroll path.`
@@ -216,7 +216,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-prd-workbench-ui-visual-alignment.queue-closeout-and-handoff`
-- state: `pending`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -246,4 +246,4 @@
 - task_brief:
   - `Close the queue only after visual convergence verification and routing truth are synchronized.`
 - task_outcome_summary:
-  - `Pending until the active visual convergence slice and its governance synchronization are both complete.`
+  - `Completed after queue-local truth synchronized the verified visual-convergence slice, recorded that no same-family continuation remains inside this admitted queue surface, and returned control to version-level closeout review.`

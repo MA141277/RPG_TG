@@ -9,6 +9,39 @@
 
 ## 2026-07-13 Script Editor Implementation Version Opening
 
+## 2026-07-14 Script Editor PRD Alignment Version Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，将 `queue.script-editor-prd-workbench-ui-visual-alignment` 从 active 收口为 `done`，记录其 creator-first workbench visual convergence 已完成、无剩余 same-version residue，且仓库同步批次已由提交 `570bf9a5` 推送到 `origin/mod-first-dev`。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)，把 `target.script-editor-prd-alignment` 从 `open` 正式切换为 `done`，补齐 version closeout judgement、显式人工关闭确认、未来路由，以及最后一个 visual queue 的关闭历史真值。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，移除旧 PRD alignment active queue 入口，把该 version 改写为关闭历史证据。
+
+### Impact
+- `target.script-editor-prd-alignment` 已正式关闭；在当前 Blueprint 下不再允许继续提升任何 same-version PRD 对齐 queue。
+- 当前 script-editor 的 PRD 对齐成果现在完整沉淀为历史基线，后续工作必须从 successor version 推进，而不是回到已关闭的 PRD alignment version 内继续补丁式扩张。
+
+## 2026-07-14 Script Editor Runtime Pack Unification Version Opening
+
+### Changed
+- 新增 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 `target.script-editor-runtime-pack-unification` 正式写成新的 live version plan，并记录 6 条候选 queue、首个 lawful recommendation `queue.script-editor-runtime-family-contract-alignment`，以及当前仓内仍存在的 admission basis：`compatibilityImport` 残留、`activities` 仍走 bounded compatibility path、`basePackId` 仍未形成显式继承契约、`src/content/pack-content-access.ts` 仍保留默认包直接导入。
+- 更新 [docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md)，把它从“successor-candidate draft”改写为已于 `2026-07-14` 通过 Blueprint 指针提升的 live successor version truth。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 live 入口切换到 `target.script-editor-runtime-pack-unification`，并明确当前没有 active queue、下一步应从新 version plan 发起 admission review。
+
+### Impact
+- Blueprint 当前 live version 已从“PRD 对齐”切换为“runtime pack 最终统一”；resume 链现在应从 `project-progress -> blueprint -> 2026-07-14 runtime-pack-unification version plan` 继续，而不是回到旧 queue。
+- 后续 script-editor 工作的合法起点不再是 UI/PRD 细节补丁，而是 scenario-pack family contract、runtime-pack export、basePackId 继承、fixed-pack consumer deprivileging、compatibility retirement 这些收口型架构队列。
+
+## 2026-07-14 Script Editor Runtime Family Contract Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md)，将 `queue.script-editor-runtime-family-contract-alignment` 写成当前 live queue truth，并把边界明确收敛在“mandatory runtime families / inheritable families / unsupported families / fail-closed obligations”的最终契约冻结，不允许顺手扩张到 export 实现、consumer rewiring 或 authoring 结构收口。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 `target.script-editor-runtime-pack-unification` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+- 同步 version plan 的 Queue Promotion Ledger、Candidate Classification Record、候选恢复说明与历史提升记录，使首个 queue 明确呈现为 `active` / `admitted + queue active`，并将“无 active queue”限定为 admission 前的历史启动状态。
+
+### Impact
+- Blueprint 当前不再停在 successor version 的空 version-review 状态；当前 live entry 已经收敛到 `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile`。
+- 后续 script-editor runtime-pack 统一工作必须先冻结最终 family contract，再继续 authoring convergence、export unification、base-pack inheritance、fixed-pack deprivileging、compatibility retirement 这些后续 queue。
+
 ## 2026-07-14 Script Editor Person Runtime Attribute Editing Alignment
 
 ### Changed
