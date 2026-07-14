@@ -7,11 +7,14 @@ import {
   type ScriptEditorSharedRuleDiagnostic,
 } from "./shared-rule-compiler";
 import type {
+  ScriptEditorDialogueRecord,
   ScriptEditorProjectDefinition,
+  ScriptEditorStoryNodeRecord,
   ScriptEditorStoryPackRecord,
   ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
 import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
+import type { ActionNode, SceneDefinition } from "../../domain/action";
 
 export type ScriptEditorRuntimeExportDiagnostic = {
   code:
@@ -88,12 +91,8 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
 };
 
 const DEFERRED_FAMILY_MESSAGES = {
-  dialogues:
-    "dialogues export is deferred in this bounded slice; scenes/text-entries assembly belongs to a later export step.",
   minigames:
     "minigames export is deferred in this bounded slice; activity/playable assembly belongs to a later export step.",
-  storyNodes:
-    "storyNodes export is deferred in this bounded slice; scene-flow assembly belongs to a later export step.",
 } as const;
 
 export function validateScriptEditorProjectForRuntimeExport(
@@ -121,6 +120,7 @@ export function validateScriptEditorProjectForRuntimeExport(
 
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
   const exportedTextEntries = mapTextEntries(project.textEntries, diagnostics);
+  const exportedScenes = lowerMinimalNarrativeScenes(project, diagnostics);
   const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
   const exportedTasks = compileScriptEditorProjectTasks(project, sharedRuleDiagnostics);
   appendSharedRuleDiagnostics(sharedRuleDiagnostics, diagnostics);
@@ -129,6 +129,7 @@ export function validateScriptEditorProjectForRuntimeExport(
     diagnostics.length > 0 ||
     scenarioProfile == null ||
     exportedTextEntries == null ||
+    exportedScenes == null ||
     exportedTasks == null
   ) {
     return diagnostics;
@@ -149,7 +150,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       houses: project.buildings,
       cityEntries: project.cityEntries,
       events: project.events,
-      scenes: project.scenes,
+      scenes: exportedScenes,
       activities: project.activities,
       tasks: exportedTasks,
       textEntries: exportedTextEntries,
@@ -188,8 +189,14 @@ export function exportScriptEditorProjectToScenarioPackFiles(
 
   const scenarioProfile = extractScenarioProfile(project.storyPack, []);
   const exportedTextEntries = mapTextEntries(project.textEntries, []);
+  const exportedScenes = lowerMinimalNarrativeScenes(project, []);
   const exportedTasks = compileScriptEditorProjectTasks(project, []);
-  if (scenarioProfile == null || exportedTextEntries == null || exportedTasks == null) {
+  if (
+    scenarioProfile == null ||
+    exportedTextEntries == null ||
+    exportedScenes == null ||
+    exportedTasks == null
+  ) {
     throw new Error(
       "Script editor runtime export validation unexpectedly failed after diagnostics passed."
     );
@@ -231,7 +238,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
       project.events
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.scenes)]: stringifyJson(
-      project.scenes
+      exportedScenes
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.activities)]: stringifyJson(
       project.activities
@@ -388,6 +395,184 @@ function mapTextEntries(
   }
 
   return diagnostics.length === 0 ? exportedTextEntries : null;
+}
+
+function lowerMinimalNarrativeScenes(
+  project: ScriptEditorProjectDefinition,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): SceneDefinition[] | null {
+  const storyNodeIds = new Set(project.storyNodes.map((storyNode) => storyNode.id));
+  const textEntryIds = new Set(project.textEntries.map((entry) => entry.id));
+  const loweredScenes: SceneDefinition[] = [];
+  const sceneIds = new Set<string>();
+
+  for (const [index, scene] of project.scenes.entries()) {
+    if (typeof scene.id !== "string" || scene.id.length === 0) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `project.scenes[${index}].id`,
+        message: "Runtime scene export requires every imported scene to provide a non-empty id.",
+      });
+      continue;
+    }
+    if (sceneIds.has(scene.id)) {
+      diagnostics.push({
+        code: "duplicate-id",
+        fieldPath: `project.scenes[${index}].id`,
+        message: `Duplicate scene id "${scene.id}" cannot be exported.`,
+      });
+      continue;
+    }
+    sceneIds.add(scene.id);
+    loweredScenes.push(scene as unknown as SceneDefinition);
+  }
+
+  for (const [index, storyNode] of project.storyNodes.entries()) {
+    appendUnsupportedStoryNodeDiagnostics(storyNode, index, diagnostics);
+  }
+
+  for (const [dialogueIndex, dialogue] of project.dialogues.entries()) {
+    const scene = lowerDialogueToScene(
+      dialogue,
+      dialogueIndex,
+      storyNodeIds,
+      textEntryIds,
+      diagnostics
+    );
+    if (scene == null) {
+      continue;
+    }
+    if (sceneIds.has(scene.id)) {
+      diagnostics.push({
+        code: "duplicate-id",
+        fieldPath: `project.dialogues[${dialogueIndex}].id`,
+        message: `Dialogue "${dialogue.id}" lowers to duplicate scene id "${scene.id}".`,
+      });
+      continue;
+    }
+    sceneIds.add(scene.id);
+    loweredScenes.push(scene);
+  }
+
+  return diagnostics.length === 0 ? loweredScenes : null;
+}
+
+function appendUnsupportedStoryNodeDiagnostics(
+  storyNode: ScriptEditorStoryNodeRecord,
+  index: number,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  const relatedDialogueIds = storyNode.relatedDialogueIds ?? [];
+  const relatedEventIds = storyNode.relatedEventIds ?? [];
+  const relatedPersonIds = storyNode.relatedPersonIds ?? [];
+  if (relatedDialogueIds.length > 0 || relatedEventIds.length > 0 || relatedPersonIds.length > 0) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `project.storyNodes[${index}]`,
+      message:
+        "Story node relation lowering is not supported in this minimal narrative export slice.",
+    });
+  }
+}
+
+function lowerDialogueToScene(
+  dialogue: ScriptEditorDialogueRecord,
+  dialogueIndex: number,
+  storyNodeIds: Set<string>,
+  textEntryIds: Set<string>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): SceneDefinition | null {
+  if (dialogue.storyNodeId != null && dialogue.storyNodeId.length > 0 && !storyNodeIds.has(dialogue.storyNodeId)) {
+    diagnostics.push({
+      code: "missing-reference",
+      fieldPath: `project.dialogues[${dialogueIndex}].storyNodeId`,
+      message: `Dialogue "${dialogue.id}" references missing story node "${dialogue.storyNodeId}".`,
+    });
+    return null;
+  }
+
+  const actions: ActionNode[] = [];
+  const nodes = dialogue.nodes ?? [];
+  for (const [nodeIndex, node] of nodes.entries()) {
+    if (node.nodeType === "choice") {
+      diagnostics.push({
+        code: "unsupported-lowering",
+        fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}]`,
+        message:
+          "Choice dialogue nodes require a later branching narrative lowering step before runtime export.",
+      });
+      continue;
+    }
+    if (typeof node.textId !== "string" || node.textId.length === 0) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].textId`,
+        message: "Dialogue node export requires a non-empty textId.",
+      });
+      continue;
+    }
+    if (!textEntryIds.has(node.textId)) {
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].textId`,
+        message: `Dialogue node references missing text entry "${node.textId}".`,
+      });
+      continue;
+    }
+
+    if (node.nodeType === "narration") {
+      actions.push({ type: "narration", textId: node.textId });
+      continue;
+    }
+
+    actions.push({
+      type: "dialogue",
+      characterId: node.speakerPersonId || "person.hero",
+      side: "center",
+      textId: node.textId,
+    });
+  }
+
+  if (actions.length === 0) {
+    const fallbackTextId = `text.${dialogue.id.replace(/^dialogue\./, "")}`;
+    if (!textEntryIds.has(fallbackTextId)) {
+      diagnostics.push({
+        code: "unsupported-lowering",
+        fieldPath: `project.dialogues[${dialogueIndex}].nodes`,
+        message:
+          `Dialogue "${dialogue.id}" has no lowerable nodes and no matching fallback text entry "${fallbackTextId}".`,
+      });
+      return null;
+    }
+    actions.push({
+      type: "dialogue",
+      characterId: firstParticipantOrHero(dialogue),
+      side: "center",
+      textId: fallbackTextId,
+    });
+  }
+
+  if ((dialogue.followUps ?? []).length > 0) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `project.dialogues[${dialogueIndex}].followUps`,
+      message:
+        "Dialogue follow-up lowering is not supported in this minimal narrative export slice.",
+    });
+  }
+
+  return {
+    id: `scene.${dialogue.id}`,
+    name: dialogue.title || dialogue.id,
+    actions,
+  };
+}
+
+function firstParticipantOrHero(dialogue: ScriptEditorDialogueRecord): string {
+  const firstParticipant = dialogue.participantPersonIds?.find(
+    (participantId) => participantId.length > 0
+  );
+  return firstParticipant ?? "person.hero";
 }
 
 function pickOptionalPackMetadata(

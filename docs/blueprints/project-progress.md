@@ -35,13 +35,14 @@
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the live successor runtime-pack-unification version and currently has no active queue after closing the non-activities runtime-family export convergence queue.`
-- `The latest governance action closed queue.script-editor-non-activities-runtime-family-export-convergence after the real Zhu Yuanzhang runtime family carriers were made first-class project/runtime families; the version plan is now the resume point for promotion review, with the narrative authoring export candidate still recorded.`
+- `The pointed version is now the live successor runtime-pack-unification version and currently has no active queue after closing the narrative authoring export convergence queue.`
+- `The latest governance action closed queue.script-editor-narrative-authoring-export-convergence after the minimal narrative lowering path landed and was verified.`
 
 ### Historical References
 
 - `docs/change-log.md` stores the human-readable cross-session history.`
 - `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md` stores the current runtime-pack-unification version's admission history, candidate record, promotion ledger, and current active queue admission truth.
+- `docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md` stores the active narrative authoring export convergence queue truth.
 - `docs/blueprints/queues/script-editor-non-activities-runtime-family-export-convergence-queue.md` stores the closed non-activities runtime-family export convergence queue truth.
 - `docs/blueprints/queues/script-editor-activities-authoring-export-convergence-queue.md` stores the closed activities authoring/export convergence queue truth.
 - `docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md` stores the closed compatibility-boundary-retirement queue truth.

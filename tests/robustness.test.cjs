@@ -2847,6 +2847,43 @@ test(
 );
 
 test(
+  "script editor runtime export lowers the minimal authored narrative into startup-loadable scenes",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const project = createDefaultScriptEditorProjectDefinition({
+      idBase: "minimal-narrative",
+      title: "Minimal Narrative",
+    });
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedScenes = JSON.parse(serializedFiles["scenes.json"]);
+    const exportedTextEntries = JSON.parse(serializedFiles["text-entries.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "minimal-narrative-pack"
+      )
+    );
+
+    assert.equal(exportedScenes[0]?.id, "scene.dialogue.opening");
+    assert.equal(exportedScenes[0]?.name, "Opening Dialogue");
+    assert.equal(exportedScenes[0]?.actions?.[0]?.type, "dialogue");
+    assert.equal(exportedScenes[0]?.actions?.[0]?.textId, "text.opening");
+    assert.equal(exportedTextEntries["text.opening"], "Opening line.");
+    assert.equal(exportedPack.scenes?.[0]?.id, "scene.dialogue.opening");
+    assert.equal(exportedPack.textEntries?.["text.opening"], "Opening line.");
+  }
+);
+
+test(
   "script editor activities family round-trips through runtime pack import and export",
   async () => {
     const {
@@ -3694,7 +3731,7 @@ test("script editor visual alignment queue separates sidebar secondary list and 
 });
 
 test(
-  "script editor minimal workflow seeds bounded visible families and surfaces deferred export diagnostics",
+  "script editor minimal workflow seeds bounded visible families without narrative export blockers",
   () => {
     const {
       createDefaultScriptEditorProjectDefinition,
@@ -3720,10 +3757,7 @@ test(
       group.nodes.map((node) => node.family)
     );
 
-    assert.deepEqual(
-      diagnostics.map((diagnostic) => diagnostic.fieldPath),
-      ["project.dialogues", "project.storyNodes"]
-    );
+    assert.deepEqual(diagnostics, []);
     assert.equal(visibleFamilies.includes("storyPack"), true);
     assert.equal(visibleFamilies.includes("people"), true);
     assert.equal(visibleFamilies.includes("cities"), true);

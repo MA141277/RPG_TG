@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-non-activities-runtime-family-export-convergence`
+- closure_review_subject: `queue.script-editor-narrative-authoring-export-convergence`
 - closure_review_status: `routed`
-- residue_candidate_id: `item.script-editor-narrative-authoring-export-convergence`
-- residue_candidate_family: `cross-family`
-- routing_basis: `queue.script-editor-non-activities-runtime-family-export-convergence closed after making cards, cityEntries, cityNpcPools, cityPortraits, historicalCharacterIdByCharacterId, historicalCharacters, historicalCityRosters, houseAccessRefusalRules, houseModuleDefaults, maps, scenes, and valuables first-class script-editor project/runtime families and proving the real Zhu Yuanzhang import/export path no longer depends on unresolved compatibility residue for those families. The remaining recorded blocker is the separate editor-authored dialogues/storyNodes lowering issue for newly-created minimal scenarios.`
-- next_lawful_queue_recommendation: `queue.script-editor-narrative-authoring-export-convergence`
+- residue_candidate_id: `none`
+- residue_candidate_family: `none`
+- routing_basis: `queue.script-editor-narrative-authoring-export-convergence closed after lowering the minimal editor-authored dialogues/storyNodes path into startup-loadable scenes and textEntries while preserving fail-closed behavior for richer narrative shapes.`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -81,7 +81,7 @@
 | `item.script-editor-compatibility-boundary-retirement` | `queue-candidate` | `queue.script-editor-compatibility-boundary-retirement` | `admitted + queue closed` | `The script-editor shell and workspace still surfaced compatibility residue as live authoring/export truth; this queue has now written the migration-only compatibility retirement contract.` |
 | `item.script-editor-activities-authoring-export-convergence` | `queue-candidate` | `queue.script-editor-activities-authoring-export-convergence` | `admitted + queue closed` | `The final runtime-pack-unification contract declared activities mandatory, while import preserved pack.activities under compatibilityImport.unresolvedFamilies.activities and export failed closed on that residue. The queue has now landed first-class activities authoring/runtime ownership, import, workspace exposure, validation, and activities.json export.` |
 | `item.script-editor-non-activities-runtime-family-export-blockers` | `queue-candidate` | `queue.script-editor-non-activities-runtime-family-export-convergence` | `admitted + queue closed` | `After activities convergence, real Zhu Yuanzhang import/export diagnostics still failed closed on 12 unresolved runtime families. The admitted queue has now made those families first-class project/runtime fields, emitted canonical split files, and verified Zhu Yuanzhang import/export/startup-load succeeds without unresolved residue for the named families.` |
-| `item.script-editor-narrative-authoring-export-convergence` | `queue-candidate` | `queue.script-editor-narrative-authoring-export-convergence` | `candidate-recorded; needs promotion review` | `Creating the simplest script-editor scenario still seeds dialogues and storyNodes, but runtime export fails closed with dialogues/storyNodes deferred-export diagnostics because scenes/text-entries assembly is not implemented for editor-authored narrative data.` |
+| `item.script-editor-narrative-authoring-export-convergence` | `queue-candidate` | `queue.script-editor-narrative-authoring-export-convergence` | `admitted + queue closed` | `Creating the simplest script-editor scenario still seeds dialogues and storyNodes, but runtime export now lowers the minimal authored path into startup-loadable scenes and textEntries while keeping richer narrative shapes fail-closed. The queue has been closed as historical evidence.` |
 
 ### Candidate Scope Notes
 
@@ -156,6 +156,11 @@
   - `Do not solve the separate 12 runtime family compatibility blockers in this narrative-authoring queue unless admission review explicitly merges scope.`
   - `Do not claim full Zhu Yuanzhang round-trip support from this queue alone; this queue is about editor-authored minimal narrative export.`
   - `Do not introduce private export-only narrative dialects or silently omit dialogues/storyNodes to make export appear successful.`
+
+### Narrative Authoring Export Convergence Closeout Record
+
+- `queue.script-editor-narrative-authoring-export-convergence was completed on 2026-07-14 after the queue lowered the minimal editor-authored narrative path into startup-loadable scenes and textEntries, updated the default minimal workflow seed, and verified the exported pack loads successfully.`
+- `The queue keeps richer narrative shapes fail-closed so later narrative work can widen the lowering map without reopening the closed 12-family runtime export queue.`
 
 ### Non-Activities Runtime Family Export Convergence Admission Record
 

@@ -149,6 +149,17 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         id: "dialogue.opening",
         title: "Opening Dialogue",
         storyNodeId: "story-node.opening",
+        participantPersonIds: ["person.hero"],
+        nodes: [
+          {
+            id: "dialogue-node.opening.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
       },
     ],
     minigames: [],

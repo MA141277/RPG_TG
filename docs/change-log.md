@@ -5,6 +5,16 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-14 Script Editor Minimal Narrative Export
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把最简剧本编辑器项目中的 `dialogues/storyNodes` 从 blanket deferred export 提升为正式最小 lowering：可导出的 dialogue 节点会生成 runtime `SceneDefinition` actions，并继续使用正式 `text-entries.json`。
+- 新增 [docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md)，并同步 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 narrative authoring export convergence 队列收口为 `done`。
+
+### Impact
+- 新建最简单剧本现在可以导出为 startup-loadable 剧本包，并可通过 `loadScenarioPackFromFiles` 加载。
+- 更复杂的 narrative 形状，如 choice 节点、follow-up lowering、story-node relation lowering，仍保持 fail-closed，等待后续更宽的 narrative compiler 队列处理。
+
 ## 2026-07-14 Script Editor Non-Activities Runtime Family Export
 
 ### Changed
