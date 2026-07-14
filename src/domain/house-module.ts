@@ -3,6 +3,11 @@ import type { ActivityDefinition } from "./activity";
 import type {
   ActivityFortuneBoardCell,
   ActivityFortuneBoardTripletReward,
+  ActivityPachinkoBoardBall,
+  ActivityPachinkoBoardEventLogEntry,
+  ActivityPachinkoBoardPin,
+  ActivityPachinkoBoardRewardQueueItem,
+  ActivityPachinkoBoardWheelState,
 } from "./activity-session";
 import type { GameState } from "./game-state";
 import type { HouseDefinition } from "./house";
@@ -166,6 +171,13 @@ export type HouseOverlayViewModel =
       type: "confirm";
       title: string;
       paragraphs: string[];
+      workDescriptionLines?: string[];
+      relatedAbilityLines?: string[];
+      costLines?: string[];
+      bestScore?: number;
+      quickCompleteScore?: number;
+      quickCompleteActionId?: string;
+      quickCompleteLabel?: string;
       confirmActionId: string;
       confirmLabel: string;
       cancelActionId: string;
@@ -480,6 +492,34 @@ export type HouseOverlayViewModel =
       playActionId: string;
       decreaseWagerActionId: string;
       increaseWagerActionId: string;
+    }
+  | {
+      type: "pachinko-board";
+      title: string;
+      taskLabel: string;
+      boardWidth: number;
+      boardHeight: number;
+      remainingBalls: number;
+      totalBalls: number;
+      phase: string;
+      activeBall: ActivityPachinkoBoardBall | null;
+      activeBalls: ActivityPachinkoBoardBall[];
+      pins: ActivityPachinkoBoardPin[];
+      movingGatePins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin];
+      gatePassCount: number;
+      eventCharge: number;
+      eventLog: ActivityPachinkoBoardEventLogEntry[];
+      score: number;
+      lastSlotIndex: number | null;
+      slotValues: Array<number | "wheel">;
+      rewardQueue: ActivityPachinkoBoardRewardQueueItem[];
+      wheelState: ActivityPachinkoBoardWheelState;
+      flipperAngle: number;
+      movingGateX: number;
+      layoutRefreshElapsedMs: number;
+      layoutRefreshPeriodMs: number;
+      layoutVersion: number;
+      playActionId: string;
     }
   | {
       type: "qte-bar";

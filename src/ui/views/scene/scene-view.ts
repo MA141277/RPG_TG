@@ -140,7 +140,186 @@ function getFortuneBoardKindLabel(kind: string): string {
   }
 }
 
+function formatPachinkoSlotValue(value: number | "wheel"): string {
+  return value === "wheel" ? "转盘" : String(value);
+}
+
+function renderPachinkoWheel(
+  wheelState: Extract<ActiveActivitySession, { type: "pachinko-board" }>["wheelState"],
+  boardWidth: number,
+  boardHeight: number
+): string {
+  const wheelLeft = 350;
+  const wheelTop = 280;
+  const wheelSize = 210;
+  const segmentAngle = 360 / Math.max(1, wheelState.segments.length);
+  return `
+    <div
+      class="c-pachinko-wheel ${wheelState.phase === "idle" ? "is-idle" : "is-active"} is-${wheelState.phase}"
+      style="--wheel-left:${(wheelLeft / boardWidth) * 100}%; --wheel-top:${(wheelTop / boardHeight) * 100}%; --wheel-size:${(wheelSize / boardWidth) * 100}%; --wheel-rotation:${wheelState.rotationDegrees}deg;"
+      aria-hidden="true"
+    >
+      <span class="c-pachinko-wheel__pointer"></span>
+      <span class="c-pachinko-wheel__disc">
+        ${wheelState.segments
+          .map(
+            (segment, index) => `
+              <span
+                class="c-pachinko-wheel__segment ${wheelState.selectedIndex === index ? "is-selected" : ""}"
+                style="--segment-angle:${index * segmentAngle + segmentAngle / 2}deg;"
+              >
+                <span class="c-pachinko-wheel__label">${segment.label}</span>
+              </span>
+            `
+          )
+          .join("")}
+      </span>
+    </div>
+  `;
+}
+
+function renderPachinkoBoard(input: {
+  title: string;
+  taskLabel: string;
+  boardWidth: number;
+  boardHeight: number;
+  remainingBalls: number;
+  totalBalls: number;
+  phase: string;
+  activeBall: Extract<ActiveActivitySession, { type: "pachinko-board" }>["activeBall"];
+  activeBalls: Extract<ActiveActivitySession, { type: "pachinko-board" }>["activeBalls"];
+  pins: Extract<ActiveActivitySession, { type: "pachinko-board" }>["pins"];
+  movingGatePins: Extract<
+    ActiveActivitySession,
+    { type: "pachinko-board" }
+  >["movingGatePins"];
+  gatePassCount: number;
+  eventCharge: number;
+  eventLog: Extract<ActiveActivitySession, { type: "pachinko-board" }>["eventLog"];
+  score: number;
+  lastSlotIndex: number | null;
+  slotValues: Array<number | "wheel">;
+  rewardQueue: Extract<ActiveActivitySession, { type: "pachinko-board" }>["rewardQueue"];
+  wheelState: Extract<ActiveActivitySession, { type: "pachinko-board" }>["wheelState"];
+  flipperAngle: number;
+  playButtonAttributes: string;
+}): string {
+  const pinDiameterPercent =
+    input.pins.length === 0
+      ? 2.571
+      : ((input.pins[0]?.radius ?? 9) * 2 * 100) / input.boardWidth;
+  const boardStyle = `--pachinko-width:${input.boardWidth}; --pachinko-height:${input.boardHeight}; --pachinko-flipper-angle:${input.flipperAngle}deg; --pachinko-pin-diameter:${pinDiameterPercent}%;`;
+  const latestEvent = input.eventLog[input.eventLog.length - 1] ?? null;
+  const wheel = renderPachinkoWheel(
+    input.wheelState,
+    input.boardWidth,
+    input.boardHeight
+  );
+  const movingGateLabelX =
+    (input.movingGatePins[0].x + input.movingGatePins[1].x) / 2;
+  const movingGateLabelY =
+    (input.movingGatePins[0].y + input.movingGatePins[1].y) / 2;
+  const renderBalls =
+    input.activeBalls.length > 0
+      ? input.activeBalls
+      : input.activeBall == null
+        ? []
+        : [input.activeBall];
+  const playButtonLabel =
+    input.phase === "settling"
+      ? "确认结果"
+      : input.phase === "dropping"
+        ? "弹珠中"
+        : "游玩";
+  return `
+    <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal c-pachinko-board" role="dialog" aria-modal="true">
+      <div class="c-temple-house-qte__header">
+        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${input.title}</h3>
+        <p class="c-temple-house-qte__task">${input.taskLabel}</p>
+        <p class="c-temple-house-qte__meta">剩余 ${input.remainingBalls} / ${input.totalBalls} 枚 · 分数 ${input.score} · 穿门 ${input.gatePassCount} 次</p>
+      </div>
+      <div class="c-pachinko-board__field" style="${boardStyle}" data-pachinko-phase="${input.phase}">
+        <div class="c-pachinko-board__launcher" aria-hidden="true">
+          <span class="c-pachinko-board__flipper c-pachinko-board__flipper--left"></span>
+          <span class="c-pachinko-board__flipper c-pachinko-board__flipper--right"></span>
+        </div>
+        ${wheel}
+        ${input.pins
+          .map(
+            (pin) => `
+              <span
+                class="c-pachinko-board__pin"
+                style="--pin-left:${(pin.x / input.boardWidth) * 100}%; --pin-top:${(pin.y / input.boardHeight) * 100}%; --pin-size:${(pin.radius / input.boardWidth) * 200}%;"
+                aria-hidden="true"
+              ></span>
+            `
+          )
+          .join("")}
+        ${input.movingGatePins
+          .map(
+            (pin) => `
+              <span
+                class="c-pachinko-board__pin c-pachinko-board__pin--moving"
+                style="--pin-left:${(pin.x / input.boardWidth) * 100}%; --pin-top:${(pin.y / input.boardHeight) * 100}%; --pin-size:${(pin.radius / input.boardWidth) * 200}%;"
+                aria-hidden="true"
+              ></span>
+            `
+          )
+          .join("")}
+        <span
+          class="c-pachinko-board__gate-label"
+          style="--gate-label-left:${(movingGateLabelX / input.boardWidth) * 100}%; --gate-label-top:${(movingGateLabelY / input.boardHeight) * 100}%;"
+          aria-hidden="true"
+        >+1球</span>
+        ${renderBalls
+          .map(
+            (ball) => `
+              <span
+                class="c-pachinko-board__ball"
+                style="--ball-left:${(ball.x / input.boardWidth) * 100}%; --ball-top:${(ball.y / input.boardHeight) * 100}%; --ball-size:${(ball.radius / input.boardWidth) * 200}%;"
+                aria-hidden="true"
+              ></span>
+            `
+          )
+          .join("")}
+        <div class="c-pachinko-board__slots" aria-hidden="true">
+          ${input.slotValues
+            .map(
+              (value, index) => `
+                <span class="c-pachinko-board__slot ${input.lastSlotIndex === index ? "is-last" : ""}">
+                  ${formatPachinkoSlotValue(value)}
+                </span>
+              `
+            )
+            .join("")}
+        </div>
+      </div>
+      <div class="c-pachinko-board__summary">
+        <span>转盘队列 ${input.rewardQueue.length}</span>
+        <span>最近奖励 ${latestEvent?.label ?? "未触发"}</span>
+        <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 转盘</span>
+      </div>
+      <div class="c-grain-shop-modal__actions c-fortune-board__actions">
+        <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" ${input.playButtonAttributes} ${input.phase === "dropping" ? "disabled" : ""}>
+          ${playButtonLabel}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 function renderActivityOverlay(activitySession: ActiveActivitySession): string {
+  if (activitySession?.type === "pachinko-board") {
+    return `
+      <div class="c-grain-shop-overlay" data-activity-overlay="pachinko-board">
+        ${renderPachinkoBoard({
+          ...activitySession,
+          playButtonAttributes: 'data-activity-action="play-board"',
+        })}
+      </div>
+    `;
+  }
+
   if (activitySession?.type === "fortune-board") {
     return `
       <div class="c-grain-shop-overlay" data-activity-overlay="fortune-board">

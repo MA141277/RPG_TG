@@ -2,6 +2,23 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-13 Generic Activity Pachinko Board
+
+### Added
+- 新增 `pachinko-board` activity session contract，作为 `activity-qte` playable 的新默认小游戏：长方形 2D 弹珠盘、同步顶部双摆臂、固定 6/7 交错弹柱、移动双柱积分门、底部 7 分栏和 5 枚默认小球。
+- `HouseOverlayViewModel` 增加 `pachinko-board` 结构化 overlay，寺庙 house-hosted activity work 可直接渲染 shared playable session，不需要恢复 house-local QTE timer。
+- `activity-confirm` overlay 增加工作描述、相关能力、消耗、历史最高分和快速完成 action 字段；寺庙工作按 `activityId` 记录 `var.activity.<activityId>.best_score`，第二次可用历史最高分 90% 快速完成。
+
+### Changed
+- `generic.qte` / `activity-qte` 默认启动路径从旧 `fortune-board` 棋盘切换为 `pachinko-board`；旧 `fortune-board` session、渲染和兼容 action seam 保留。
+- 寺庙帮忙类工作继续通过 `playable.activity-qte.house.temple` 启动 shared playable runtime，但验收流程现在显示并结算新的弹珠玩法。
+- `pachinko-board` 支持多颗 active ball、去除前两行固定弹柱，并由 runtime tick 每 20 秒刷新底部随机槽位；最终球落定后保留确认状态，不在同一 tick 内退出棋盘。
+- `pachinko-board` 移动槽穿过奖励改为立即 `+1球`，底部 `+1` 槽改为转盘槽；转盘通过 typed `rewardQueue` / `wheelState` 串行处理加分、加球、扣分和奇遇结果，UI 只负责渲染转盘动画与闪烁结果。
+
+### Impact
+- 默认活动 fallback 与寺庙工作共用同一套弹珠机制；得分仍通过统一 activity result 写回，并由寺庙模块按原有贡献、体力和时间规则结算。
+- 同一玩法的不同工作入口会分别保存最高分，例如抄经和扫地互不覆盖，快速完成不降低历史最高分。
+
 ## 2026-07-09 Three.js Renderer Boundary
 
 ### Added

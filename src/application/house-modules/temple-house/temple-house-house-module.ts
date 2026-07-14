@@ -3,11 +3,15 @@
   defaultPackTextEntries,
 } from "../../content/pack-content-access";
 import type { ActivityDefinition } from "../../../domain/activity";
-import type { ActivityFortuneBoardSession } from "../../../domain/activity-session";
+import type {
+  ActivityFortuneBoardSession,
+  ActivityPachinkoBoardSession,
+} from "../../../domain/activity-session";
 import {
   FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS,
   FORTUNE_BOARD_MAX_ANIMATION_TICK_MS,
   FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
+  PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
 } from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
@@ -91,6 +95,7 @@ import { createInitialTempleHouseSessionState } from "./temple-house-session-sta
 const DONATION_AMOUNT = 50;
 const ASSIGN_TEMPLE_TASK_ACTION_PREFIX = "assign-temple-task:";
 const CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX = "confirm-start-temple-task:";
+const QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX = "quick-complete-temple-task:";
 const TEMPLE_WORK_PLAY_ACTION_ID = "temple-work-board-play";
 const TEMPLE_WORK_WAGER_MINUS_ACTION_ID = "temple-work-board-wager-minus";
 const TEMPLE_WORK_WAGER_PLUS_ACTION_ID = "temple-work-board-wager-plus";
@@ -428,6 +433,31 @@ function findTempleTaskActivityDefinition(
   return activityDefinition as TempleTaskActivityDefinition;
 }
 
+function findActiveTempleWorkTaskId(
+  gameState: GameState,
+  activityDefinitionsById?: Record<string, ActivityDefinition>
+): string | null {
+  const activitySession = gameState.runtime.activitySession;
+  if (
+    activitySession?.type !== "fortune-board" &&
+    activitySession?.type !== "pachinko-board"
+  ) {
+    return null;
+  }
+
+  const activityDefinition =
+    Object.values(activityDefinitionsById ?? {}).find(
+      (candidateActivity) =>
+        candidateActivity.id === activitySession.activityId &&
+        isTempleTaskActivityDefinition(candidateActivity)
+    ) ??
+    defaultTempleTaskActivityDefinitions.find(
+      (candidateActivity) => candidateActivity.id === activitySession.activityId
+    );
+
+  return activityDefinition?.taskId ?? null;
+}
+
 function createTempleWorkPlayableActivityDefinitionsById(
   activityDefinition: TempleTaskActivityDefinition,
   activityDefinitionsById?: Record<string, ActivityDefinition>
@@ -708,17 +738,101 @@ function createAlertOverlay(
 function createActivityConfirmOverlay(
   title: string,
   paragraphs: string[],
-  confirmActionId: string
+  confirmActionId: string,
+  details?: Partial<
+    Pick<
+      HouseActivityConfirmOverlayState,
+      | "workDescriptionLines"
+      | "relatedAbilityLines"
+      | "costLines"
+      | "bestScore"
+      | "quickCompleteScore"
+      | "quickCompleteActionId"
+      | "quickCompleteLabel"
+    >
+  >
 ): HouseActivityConfirmOverlayState {
   return {
     type: "activity-confirm",
     title,
     paragraphs,
+    ...(details?.workDescriptionLines == null
+      ? {}
+      : { workDescriptionLines: details.workDescriptionLines }),
+    ...(details?.relatedAbilityLines == null
+      ? {}
+      : { relatedAbilityLines: details.relatedAbilityLines }),
+    ...(details?.costLines == null ? {} : { costLines: details.costLines }),
+    ...(details?.bestScore == null ? {} : { bestScore: details.bestScore }),
+    ...(details?.quickCompleteScore == null
+      ? {}
+      : { quickCompleteScore: details.quickCompleteScore }),
+    ...(details?.quickCompleteActionId == null
+      ? {}
+      : { quickCompleteActionId: details.quickCompleteActionId }),
+    ...(details?.quickCompleteLabel == null
+      ? {}
+      : { quickCompleteLabel: details.quickCompleteLabel }),
     confirmActionId,
     confirmLabel: "现在开始",
     cancelActionId: CANCEL_ACTIVITY_CONFIRM_ACTION_ID,
     cancelLabel: "稍后再领",
     tone: "info",
+  };
+}
+
+function getActivityBestScoreVariableKey(activityId: string): string {
+  return `var.activity.${activityId}.best_score`;
+}
+
+function readActivityBestScore(
+  gameState: GameState,
+  activityId: string
+): number | null {
+  const value = gameState.runtime.variables[getActivityBestScoreVariableKey(activityId)];
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? Math.floor(value)
+    : null;
+}
+
+function createTempleWorkConfirmDetails(
+  gameState: GameState,
+  taskDefinition: TempleHouseTaskDefinition,
+  taskActivityDefinition: TempleTaskActivityDefinition,
+  durationDays: number
+): Partial<
+  Pick<
+    HouseActivityConfirmOverlayState,
+    | "workDescriptionLines"
+    | "relatedAbilityLines"
+    | "costLines"
+    | "bestScore"
+    | "quickCompleteScore"
+    | "quickCompleteActionId"
+    | "quickCompleteLabel"
+  >
+> {
+  const bestScore = readActivityBestScore(gameState, taskActivityDefinition.id);
+  const quickCompleteScore =
+    bestScore == null ? null : Math.floor(bestScore * 0.9);
+  return {
+    workDescriptionLines: [
+      taskDefinition.briefing,
+      ...taskDefinition.orderLines,
+    ],
+    relatedAbilityLines: ["相关能力：待接入"],
+    costLines: [
+      `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+      `时间 +${durationDays}天`,
+    ],
+    ...(bestScore == null ? {} : { bestScore }),
+    ...(quickCompleteScore == null ? {} : { quickCompleteScore }),
+    ...(quickCompleteScore == null
+      ? {}
+      : {
+          quickCompleteActionId: `${QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
+          quickCompleteLabel: `以 ${quickCompleteScore} 分快速完成`,
+        }),
   };
 }
 
@@ -1326,6 +1440,12 @@ function parseTempleTaskActionId(actionId: string): string | null {
 function parseConfirmTempleTaskActionId(actionId: string): string | null {
   return actionId.startsWith(CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX)
     ? actionId.slice(CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX.length)
+    : null;
+}
+
+function parseQuickCompleteTempleTaskActionId(actionId: string): string | null {
+  return actionId.startsWith(QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX)
+    ? actionId.slice(QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX.length)
     : null;
 }
 
@@ -2512,7 +2632,7 @@ function startTempleWorkMinigame(
       {
         type: "start-interval",
         intervalId: TEMPLE_WORK_INTERVAL_ID,
-        everyMs: FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS,
+        everyMs: PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
         request: {
           type: "tick",
           tickId: TEMPLE_WORK_INTERVAL_ID,
@@ -2534,6 +2654,16 @@ function finalizeTempleWorkScore(
     input.activityDefinitionsById,
     input.textEntriesById
   );
+  const taskActivityDefinition = findTempleTaskActivityDefinition(
+    taskId,
+    input.activityDefinitionsById
+  );
+  const bestScoreKey = getActivityBestScoreVariableKey(taskActivityDefinition.id);
+  const existingBestScore = readActivityBestScore(
+    input.gameState,
+    taskActivityDefinition.id
+  );
+  const nextBestScore = Math.max(existingBestScore ?? 0, score);
   const resolution = resolveTempleWorkContribution(score);
   const currentContribution = getTempleContribution(input.gameState);
   const nextContribution = currentContribution + score;
@@ -2543,6 +2673,7 @@ function finalizeTempleWorkScore(
   const nextVariables = {
     ...input.gameState.runtime.variables,
     [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: nextContribution,
+    [bestScoreKey]: nextBestScore,
     ...(unlockBegging
       ? {
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
@@ -2782,7 +2913,9 @@ function handleField(
       return createTransitionResult(input, { gameState: nextState });
     }
 
-    const activeTaskId = sessionState.selectedTaskId;
+    const activeTaskId =
+      sessionState.selectedTaskId ??
+      findActiveTempleWorkTaskId(input.gameState, input.activityDefinitionsById);
     if (activeTaskId == null) {
       return createTransitionResult(input, { gameState: nextState });
     }
@@ -2871,7 +3004,9 @@ function handleAction(
     input.request.actionId === TEMPLE_WORK_WAGER_MINUS_ACTION_ID ||
     input.request.actionId === TEMPLE_WORK_WAGER_PLUS_ACTION_ID
   ) {
-    const activeTaskId = sessionState.selectedTaskId;
+    const activeTaskId =
+      sessionState.selectedTaskId ??
+      findActiveTempleWorkTaskId(input.gameState, input.activityDefinitionsById);
     if (activeTaskId == null) {
       return createTransitionResult(input, { gameState: nextState });
     }
@@ -3572,6 +3707,10 @@ function handleAction(
           taskDefinition.title
         );
       }
+      const taskActivityDefinition = findTempleTaskActivityDefinition(
+        taskDefinition.id,
+        input.activityDefinitionsById
+      );
       return withSessionState(
         {
           gameState: nextState,
@@ -3581,12 +3720,14 @@ function handleAction(
         {
           overlay: createActivityConfirmOverlay(
             taskDefinition.title,
-            [
-              taskDefinition.briefing,
-              ...taskDefinition.orderLines,
-              formatHouseActivityCostLine(durationDays),
-            ],
-            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`
+            [],
+            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
+            createTempleWorkConfirmDetails(
+              nextState,
+              taskDefinition,
+              taskActivityDefinition,
+              durationDays
+            )
           ),
         }
       );
@@ -3623,6 +3764,10 @@ function handleAction(
           taskDefinition.title
         );
       }
+      const taskActivityDefinition = findTempleTaskActivityDefinition(
+        taskDefinition.id,
+        input.activityDefinitionsById
+      );
       return withSessionState(
         {
           gameState: nextState,
@@ -3632,12 +3777,14 @@ function handleAction(
         {
           overlay: createActivityConfirmOverlay(
             taskDefinition.title,
-            [
-              taskDefinition.briefing,
-              ...taskDefinition.orderLines,
-              formatHouseActivityCostLine(durationDays),
-            ],
-            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`
+            [],
+            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
+            createTempleWorkConfirmDetails(
+              nextState,
+              taskDefinition,
+              taskActivityDefinition,
+              durationDays
+            )
           ),
         }
       );
@@ -3700,6 +3847,84 @@ function handleAction(
     }
   }
 
+  const quickCompleteTaskId = parseQuickCompleteTempleTaskActionId(
+    input.request.actionId
+  );
+  if (quickCompleteTaskId != null) {
+    const taskDefinition = findTempleTaskDefinition(
+      quickCompleteTaskId,
+      input.activityDefinitionsById,
+      input.textEntriesById
+    );
+    const taskActivityDefinition = findTempleTaskActivityDefinition(
+      quickCompleteTaskId,
+      input.activityDefinitionsById
+    );
+    const bestScore = readActivityBestScore(nextState, taskActivityDefinition.id);
+    if (bestScore == null) {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "尚无可用成绩",
+            ["先完整完成一次这项差事，才能按历史最高分快速完成。"],
+            "warning"
+          ),
+        }
+      );
+    }
+
+    const durationDays = getHouseWorkDurationDays();
+    if (!canAffordActivityCost(playerCharacter)) {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createLowStaminaOverlay(taskDefinition.title),
+        }
+      );
+    }
+
+    const remainingDays = shouldRouteTempleActivityToCouncil(
+      nextState,
+      durationDays
+    );
+    if (remainingDays != null) {
+      return createTempleInsufficientTimeResult(
+        {
+          ...input,
+          gameState: nextState,
+        },
+        sessionState,
+        remainingDays,
+        durationDays,
+        taskDefinition.title
+      );
+    }
+
+    return finalizeTempleWorkScore(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      {
+        ...sessionState,
+        selectedTaskId: quickCompleteTaskId,
+        dailyActionPanel: "work",
+        overlay: null,
+      },
+      quickCompleteTaskId,
+      Math.floor(bestScore * 0.9)
+    );
+  }
+
   return createTransitionResult(input, {
     gameState: nextState,
   });
@@ -3716,9 +3941,21 @@ function handleTick(
   if (
     input.request.tickId === TEMPLE_WORK_INTERVAL_ID &&
     input.gameState.runtime.playableSession?.playableId === "activity-qte" &&
-    input.gameState.runtime.activitySession?.type === "fortune-board"
+    (input.gameState.runtime.activitySession?.type === "fortune-board" ||
+      input.gameState.runtime.activitySession?.type === "pachinko-board")
   ) {
-    const activeTaskId = sessionState.selectedTaskId;
+    if (
+      input.gameState.runtime.activitySession.type === "pachinko-board" &&
+      input.gameState.runtime.activitySession.phase === "settling"
+    ) {
+      return createTransitionResult(input, {
+        sideEffects: [{ type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID }],
+      });
+    }
+
+    const activeTaskId =
+      sessionState.selectedTaskId ??
+      findActiveTempleWorkTaskId(input.gameState, input.activityDefinitionsById);
     if (activeTaskId == null) {
       return createTransitionResult(input, {
         sideEffects: [{ type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID }],
@@ -3754,6 +3991,24 @@ function isTempleFortuneBoardSession(
   );
 }
 
+function isTemplePachinkoBoardSession(
+  gameState: GameState,
+  houseId: string
+): gameState is GameState & {
+  runtime: GameState["runtime"] & {
+    activitySession: ActivityPachinkoBoardSession;
+  };
+} {
+  return (
+    gameState.runtime.playableSession?.playableId === "activity-qte" &&
+    gameState.runtime.playableSession.integrationId ===
+      TEMPLE_ACTIVITY_QTE_INTEGRATION_ID &&
+    gameState.runtime.playableSession.ownerContext.ownerKind === "house" &&
+    gameState.runtime.playableSession.ownerContext.ownerId === houseId &&
+    gameState.runtime.activitySession?.type === "pachinko-board"
+  );
+}
+
 function selectFortuneBoardOverlayViewModel(
   session: ActivityFortuneBoardSession
 ): HouseOverlayViewModel {
@@ -3786,6 +4041,39 @@ function selectFortuneBoardOverlayViewModel(
   };
 }
 
+function selectPachinkoBoardOverlayViewModel(
+  session: ActivityPachinkoBoardSession
+): HouseOverlayViewModel {
+  return {
+    type: "pachinko-board",
+    title: session.title,
+    taskLabel: session.taskLabel,
+    boardWidth: session.boardWidth,
+    boardHeight: session.boardHeight,
+    remainingBalls: session.remainingBalls,
+    totalBalls: session.totalBalls,
+    phase: session.phase,
+    activeBall: session.activeBall,
+    activeBalls: session.activeBalls,
+    pins: session.pins,
+    movingGatePins: session.movingGatePins,
+    gatePassCount: session.gatePassCount,
+    eventCharge: session.eventCharge,
+    eventLog: session.eventLog,
+    score: session.score,
+    lastSlotIndex: session.lastSlotIndex,
+    slotValues: session.slotValues,
+    rewardQueue: session.rewardQueue,
+    wheelState: session.wheelState,
+    flipperAngle: session.flipperAngle,
+    movingGateX: session.movingGateX,
+    layoutRefreshElapsedMs: session.layoutRefreshElapsedMs,
+    layoutRefreshPeriodMs: session.layoutRefreshPeriodMs,
+    layoutVersion: session.layoutVersion,
+    playActionId: TEMPLE_WORK_PLAY_ACTION_ID,
+  };
+}
+
 function clampTempleFortuneBoardTickMs(tickMs: number): number {
   if (!Number.isFinite(tickMs)) {
     return FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS;
@@ -3800,8 +4088,13 @@ function clampTempleFortuneBoardTickMs(tickMs: number): number {
 function selectOverlayViewModel(
   overlay: TempleHouseOverlayState,
   activeFortuneBoardSession: ActivityFortuneBoardSession | null,
+  activePachinkoBoardSession: ActivityPachinkoBoardSession | null,
   textEntriesById?: Record<string, string>
 ): HouseOverlayViewModel | null {
+  if (activePachinkoBoardSession != null) {
+    return selectPachinkoBoardOverlayViewModel(activePachinkoBoardSession);
+  }
+
   if (activeFortuneBoardSession != null) {
     return selectFortuneBoardOverlayViewModel(activeFortuneBoardSession);
   }
@@ -3826,6 +4119,23 @@ function selectOverlayViewModel(
       type: "confirm",
       title: overlay.title,
       paragraphs: overlay.paragraphs,
+      ...(overlay.workDescriptionLines == null
+        ? {}
+        : { workDescriptionLines: overlay.workDescriptionLines }),
+      ...(overlay.relatedAbilityLines == null
+        ? {}
+        : { relatedAbilityLines: overlay.relatedAbilityLines }),
+      ...(overlay.costLines == null ? {} : { costLines: overlay.costLines }),
+      ...(overlay.bestScore == null ? {} : { bestScore: overlay.bestScore }),
+      ...(overlay.quickCompleteScore == null
+        ? {}
+        : { quickCompleteScore: overlay.quickCompleteScore }),
+      ...(overlay.quickCompleteActionId == null
+        ? {}
+        : { quickCompleteActionId: overlay.quickCompleteActionId }),
+      ...(overlay.quickCompleteLabel == null
+        ? {}
+        : { quickCompleteLabel: overlay.quickCompleteLabel }),
       confirmActionId: overlay.confirmActionId,
       confirmLabel: overlay.confirmLabel,
       cancelActionId: overlay.cancelActionId,
@@ -4034,6 +4344,14 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
     )
       ? nextState.runtime.activitySession
       : null;
+    const activePachinkoBoardSession = isTemplePachinkoBoardSession(
+      nextState,
+      input.houseDefinition.id
+    )
+      ? nextState.runtime.activitySession
+      : null;
+    const hasActiveTempleWorkPlayable =
+      activeFortuneBoardSession != null || activePachinkoBoardSession != null;
     const donationTotal = readNumericVariable(
       nextState,
       TEMPLE_HOUSE_VARIABLE_KEYS.donationTotal,
@@ -4083,13 +4401,13 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
     const shouldShowDailyActions =
       sessionState.mode === "daily" &&
       sessionState.overlay == null &&
-      activeFortuneBoardSession == null &&
+      !hasActiveTempleWorkPlayable &&
       sessionState.dialoguePhase === "open";
     const shouldShowMeetingTasks =
       sessionState.mode === "meeting" &&
       sessionState.meetingStage === "assign-duty" &&
       sessionState.overlay == null &&
-      activeFortuneBoardSession == null;
+      !hasActiveTempleWorkPlayable;
     const selectedTask =
       sessionState.selectedTaskId == null
         ? null
@@ -4314,6 +4632,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       overlay: selectOverlayViewModel(
         sessionState.overlay,
         activeFortuneBoardSession,
+        activePachinkoBoardSession,
         input.textEntriesById
       ),
       leaveAction: {

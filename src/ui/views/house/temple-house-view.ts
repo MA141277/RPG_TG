@@ -19,6 +19,39 @@ import {
 function renderConfirmOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
 ): string {
+  const workDescription =
+    overlay.workDescriptionLines == null
+      ? ""
+      : `
+        <div class="c-grain-shop-modal__body">
+          ${overlay.workDescriptionLines.map((line) => `<p>${line}</p>`).join("")}
+        </div>
+      `;
+  const relatedAbilities =
+    overlay.relatedAbilityLines == null
+      ? ""
+      : `
+        <div class="c-grain-shop-modal__body">
+          ${overlay.relatedAbilityLines.map((line) => `<p>${line}</p>`).join("")}
+        </div>
+      `;
+  const costs =
+    overlay.costLines == null
+      ? ""
+      : `
+        <div class="c-grain-shop-modal__body">
+          ${overlay.costLines.map((line) => `<p>${line}</p>`).join("")}
+        </div>
+      `;
+  const bestScoreSummary =
+    overlay.bestScore == null || overlay.quickCompleteScore == null
+      ? ""
+      : `
+        <div class="c-grain-shop-modal__body">
+          <p>历史最高分 ${overlay.bestScore}</p>
+          <p>快速完成按 90% 计为 ${overlay.quickCompleteScore}</p>
+        </div>
+      `;
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="confirm">
       <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
@@ -26,10 +59,23 @@ function renderConfirmOverlay(
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
         </div>
+        ${workDescription}
+        ${relatedAbilities}
+        ${costs}
+        ${bestScoreSummary}
         <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
           <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
             ${overlay.cancelLabel}
           </button>
+          ${
+            overlay.quickCompleteActionId == null
+              ? ""
+              : `
+                <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.quickCompleteActionId}">
+                  ${overlay.quickCompleteLabel ?? "快速完成"}
+                </button>
+              `
+          }
           <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
             ${overlay.confirmLabel}
           </button>
@@ -159,6 +205,153 @@ function renderFortuneBoardOverlay(
   `;
 }
 
+function formatPachinkoSlotValue(value: number | "wheel"): string {
+  return value === "wheel" ? "转盘" : String(value);
+}
+
+function renderPachinkoWheel(
+  wheelState: Extract<HouseOverlayViewModel, { type: "pachinko-board" }>["wheelState"],
+  boardWidth: number,
+  boardHeight: number
+): string {
+  const wheelLeft = 350;
+  const wheelTop = 280;
+  const wheelSize = 210;
+  const segmentAngle = 360 / Math.max(1, wheelState.segments.length);
+  return `
+    <div
+      class="c-pachinko-wheel ${wheelState.phase === "idle" ? "is-idle" : "is-active"} is-${wheelState.phase}"
+      style="--wheel-left:${(wheelLeft / boardWidth) * 100}%; --wheel-top:${(wheelTop / boardHeight) * 100}%; --wheel-size:${(wheelSize / boardWidth) * 100}%; --wheel-rotation:${wheelState.rotationDegrees}deg;"
+      aria-hidden="true"
+    >
+      <span class="c-pachinko-wheel__pointer"></span>
+      <span class="c-pachinko-wheel__disc">
+        ${wheelState.segments
+          .map(
+            (segment, index) => `
+              <span
+                class="c-pachinko-wheel__segment ${wheelState.selectedIndex === index ? "is-selected" : ""}"
+                style="--segment-angle:${index * segmentAngle + segmentAngle / 2}deg;"
+              >
+                <span class="c-pachinko-wheel__label">${segment.label}</span>
+              </span>
+            `
+          )
+          .join("")}
+      </span>
+    </div>
+  `;
+}
+
+function renderPachinkoBoardOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "pachinko-board" }>
+): string {
+  const latestEvent = overlay.eventLog[overlay.eventLog.length - 1] ?? null;
+  const pinDiameterPercent =
+    overlay.pins.length === 0
+      ? 2.571
+      : ((overlay.pins[0]?.radius ?? 9) * 2 * 100) / overlay.boardWidth;
+  const boardStyle = `--pachinko-width:${overlay.boardWidth}; --pachinko-height:${overlay.boardHeight}; --pachinko-flipper-angle:${overlay.flipperAngle}deg; --pachinko-pin-diameter:${pinDiameterPercent}%;`;
+  const wheel = renderPachinkoWheel(
+    overlay.wheelState,
+    overlay.boardWidth,
+    overlay.boardHeight
+  );
+  const movingGateLabelX =
+    (overlay.movingGatePins[0].x + overlay.movingGatePins[1].x) / 2;
+  const movingGateLabelY =
+    (overlay.movingGatePins[0].y + overlay.movingGatePins[1].y) / 2;
+  const renderBalls =
+    overlay.activeBalls.length > 0
+      ? overlay.activeBalls
+      : overlay.activeBall == null
+        ? []
+        : [overlay.activeBall];
+  const playButtonLabel =
+    overlay.phase === "settling"
+      ? "确认结果"
+      : overlay.phase === "dropping"
+        ? "弹珠中"
+        : "游玩";
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="pachinko-board">
+      <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal c-pachinko-board" role="dialog" aria-modal="true">
+        <div class="c-temple-house-qte__header">
+          <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
+          <p class="c-temple-house-qte__task">${overlay.taskLabel}</p>
+          <p class="c-temple-house-qte__meta">剩余 ${overlay.remainingBalls} / ${overlay.totalBalls} 枚 · 分数 ${overlay.score} · 穿门 ${overlay.gatePassCount} 次</p>
+        </div>
+        <div class="c-pachinko-board__field" style="${boardStyle}" data-pachinko-phase="${overlay.phase}">
+          <div class="c-pachinko-board__launcher" aria-hidden="true">
+            <span class="c-pachinko-board__flipper c-pachinko-board__flipper--left"></span>
+            <span class="c-pachinko-board__flipper c-pachinko-board__flipper--right"></span>
+          </div>
+          ${wheel}
+          ${overlay.pins
+            .map(
+              (pin) => `
+                <span
+                  class="c-pachinko-board__pin"
+                  style="--pin-left:${(pin.x / overlay.boardWidth) * 100}%; --pin-top:${(pin.y / overlay.boardHeight) * 100}%; --pin-size:${(pin.radius / overlay.boardWidth) * 200}%;"
+                  aria-hidden="true"
+                ></span>
+              `
+            )
+            .join("")}
+          ${overlay.movingGatePins
+            .map(
+              (pin) => `
+                <span
+                  class="c-pachinko-board__pin c-pachinko-board__pin--moving"
+                  style="--pin-left:${(pin.x / overlay.boardWidth) * 100}%; --pin-top:${(pin.y / overlay.boardHeight) * 100}%; --pin-size:${(pin.radius / overlay.boardWidth) * 200}%;"
+                  aria-hidden="true"
+                ></span>
+              `
+            )
+            .join("")}
+          <span
+            class="c-pachinko-board__gate-label"
+            style="--gate-label-left:${(movingGateLabelX / overlay.boardWidth) * 100}%; --gate-label-top:${(movingGateLabelY / overlay.boardHeight) * 100}%;"
+            aria-hidden="true"
+          >+1球</span>
+          ${renderBalls
+            .map(
+              (ball) => `
+                <span
+                  class="c-pachinko-board__ball"
+                  style="--ball-left:${(ball.x / overlay.boardWidth) * 100}%; --ball-top:${(ball.y / overlay.boardHeight) * 100}%; --ball-size:${(ball.radius / overlay.boardWidth) * 200}%;"
+                  aria-hidden="true"
+                ></span>
+              `
+            )
+            .join("")}
+          <div class="c-pachinko-board__slots" aria-hidden="true">
+            ${overlay.slotValues
+              .map(
+                (value, index) => `
+                  <span class="c-pachinko-board__slot ${overlay.lastSlotIndex === index ? "is-last" : ""}">
+                    ${formatPachinkoSlotValue(value)}
+                  </span>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+        <div class="c-pachinko-board__summary">
+          <span>转盘队列 ${overlay.rewardQueue.length}</span>
+          <span>最近奖励 ${latestEvent?.label ?? "未触发"}</span>
+          <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 转盘</span>
+        </div>
+        <div class="c-grain-shop-modal__actions c-fortune-board__actions">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.playActionId}" ${overlay.phase === "dropping" ? "disabled" : ""}>
+            ${playButtonLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderResultOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "result" }>
 ): string {
@@ -237,6 +430,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
 
   if (overlay.type === "fortune-board") {
     return renderFortuneBoardOverlay(overlay);
+  }
+
+  if (overlay.type === "pachinko-board") {
+    return renderPachinkoBoardOverlay(overlay);
   }
 
   if (overlay.type === "rest-days") {

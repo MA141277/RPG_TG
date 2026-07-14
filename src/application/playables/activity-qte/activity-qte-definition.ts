@@ -10,9 +10,9 @@ import {
   advanceActivityQteMarker,
   chooseActivityQteCommand,
   createActivityQteSession,
-  playActivityFortuneBoard,
+  playActivityQte,
   stopActivityQte,
-  tickActivityFortuneBoard,
+  tickActivityQte,
 } from "../../activity/activity-qte-runtime";
 
 type ActivityQtePlayableResult = {
@@ -73,7 +73,7 @@ export function tickActivityQtePlayable(input: {
 }): ActivityQtePlayableResult {
   return toActivityQtePlayableResult({
     state: input.state,
-    completion: tickActivityFortuneBoard(
+    completion: tickActivityQte(
       input.state.core,
       input.activityDefinition,
       input.characterDefinitions
@@ -88,7 +88,7 @@ export function playActivityQtePlayable(input: {
 }): ActivityQtePlayableResult {
   return toActivityQtePlayableResult({
     state: input.state,
-    completion: playActivityFortuneBoard(
+    completion: playActivityQte(
       input.state.core,
       input.activityDefinition,
       input.characterDefinitions

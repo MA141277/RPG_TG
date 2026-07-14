@@ -472,7 +472,8 @@ export function runPlayableRuntime(input: {
     const activityId =
       session?.type === "qte-bar" ||
       session?.type === "work-sequence" ||
-      session?.type === "fortune-board"
+      session?.type === "fortune-board" ||
+      session?.type === "pachinko-board"
         ? session.activityId
         : null;
     const activityDefinition =

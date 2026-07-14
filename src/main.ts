@@ -171,6 +171,7 @@ import {
   FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS,
   FORTUNE_BOARD_MAX_ANIMATION_TICK_MS,
   FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
+  PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
 } from "./domain/activity-session";
 import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
@@ -1561,6 +1562,10 @@ function syncRenderedFortuneBoardOverlay(): boolean {
 
 function getActivityQteLoopIntervalMs(): number {
   const session = appState.gameState.runtime.activitySession;
+  if (session?.type === "pachinko-board") {
+    return session.animationTickMs;
+  }
+
   return session?.type === "fortune-board"
     ? session.animationTickMs
     : ACTIVITY_QTE_INTERVAL_MS;
@@ -1570,6 +1575,7 @@ function syncActivityQteLoop(): void {
   const session = appState.gameState.runtime.activitySession;
   if (
     session?.type !== "qte-bar" &&
+    !(session?.type === "pachinko-board" && session.phase !== "settling") &&
     !(session?.type === "fortune-board" && session.phase !== "ready")
   ) {
     stopActivityQteLoop();
@@ -1592,6 +1598,7 @@ function syncActivityQteLoop(): void {
     const activeSession = appState.gameState.runtime.activitySession;
     if (
       activeSession?.type !== "qte-bar" &&
+      !(activeSession?.type === "pachinko-board" && activeSession.phase !== "settling") &&
       !(activeSession?.type === "fortune-board" && activeSession.phase !== "ready")
     ) {
       stopActivityQteLoop();
@@ -1626,7 +1633,8 @@ function stopCurrentActivityQte(): void {
   if (
     session?.type !== "qte-bar" &&
     session?.type !== "work-sequence" &&
-    session?.type !== "fortune-board"
+    session?.type !== "fortune-board" &&
+    session?.type !== "pachinko-board"
   ) {
     return;
   }
@@ -1674,7 +1682,7 @@ function stopCurrentActivityQte(): void {
 
 function dispatchCurrentActivityQteAction(action: string): void {
   const session = appState.gameState.runtime.activitySession;
-  if (session?.type !== "fortune-board") {
+  if (session?.type !== "fortune-board" && session?.type !== "pachinko-board") {
     return;
   }
 
@@ -1700,11 +1708,14 @@ function dispatchCurrentActivityQteAction(action: string): void {
 
 function dispatchCurrentActivityQteSpeed(tickMs: number): void {
   const session = appState.gameState.runtime.activitySession;
-  if (session?.type !== "fortune-board") {
+  if (session?.type !== "fortune-board" && session?.type !== "pachinko-board") {
     return;
   }
 
-  const nextTickMs = clampFortuneBoardAnimationTickMs(tickMs);
+  const nextTickMs =
+    session.type === "pachinko-board"
+      ? Math.max(16, Math.min(100, Math.round(tickMs)))
+      : clampFortuneBoardAnimationTickMs(tickMs);
   appState = commitRuntimeRequest({
     state: appState,
     request: createInteractiveActionRequest("interactive.activity-qte.speed", {
@@ -3410,6 +3421,24 @@ appElement.addEventListener("change", (event) => {
 
 appElement.addEventListener("keydown", (event) => {
   const targetElement = event.target;
+  if (
+    event.code === "Space" &&
+    !(targetElement instanceof HTMLInputElement) &&
+    !(targetElement instanceof HTMLTextAreaElement)
+  ) {
+    const session = appState.gameState.runtime.activitySession;
+    if (session?.type === "pachinko-board" && session.phase !== "dropping") {
+      const playButton = appRoot.querySelector<HTMLButtonElement>(
+        "[data-activity-overlay='pachinko-board'] [data-activity-action='play-board'], [data-house-overlay='pachinko-board'] [data-house-action='temple-work-board-play']"
+      );
+      if (playButton != null && !playButton.disabled) {
+        event.preventDefault();
+        playButton.click();
+        return;
+      }
+    }
+  }
+
   if (
     event.key === "Enter" &&
     targetElement instanceof HTMLInputElement &&

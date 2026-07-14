@@ -156,8 +156,11 @@ const {
 const {
   adjustActivityFortuneBoardWager,
   chooseActivityQteCommand,
+  createActivityQteSession,
   playActivityFortuneBoard,
+  playActivityPachinkoBoard,
   tickActivityFortuneBoard,
+  tickActivityPachinkoBoard,
 } = require("../.test-dist/application/activity/activity-qte-runtime.js");
 const {
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
@@ -508,7 +511,7 @@ test("scene start-activity action executes registered fallback activity", () => 
   });
 
   assert.equal(result.currentAction?.type, "narration");
-  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession?.type, "pachinko-board");
   assert.equal(result.state.runtime.activitySession.activityId, "activity.test.special");
   assert.equal(result.state.runtime.variables["var.test.activity.points"], undefined);
 
@@ -516,44 +519,24 @@ test("scene start-activity action executes registered fallback activity", () => 
     state: result.state,
     characterDefinitions: prototypeCharacters,
   };
-  for (let round = 0; round < 10; round += 1) {
+  for (let round = 0; round < 30; round += 1) {
     if (settledBoard.state.runtime.activitySession?.type === "result") {
       break;
     }
-    while (
-      settledBoard.state.runtime.activitySession.type === "fortune-board" &&
-      settledBoard.state.runtime.activitySession.wager <
-        Math.min(5, settledBoard.state.runtime.activitySession.remainingPieces)
-    ) {
-      settledBoard = {
-        state: adjustActivityFortuneBoardWager(settledBoard.state, 1),
-        characterDefinitions: settledBoard.characterDefinitions,
-      };
-    }
-    settledBoard = playActivityFortuneBoard(
+    settledBoard = playActivityPachinkoBoard(
       settledBoard.state,
       activityDefinition,
       settledBoard.characterDefinitions
     );
-    settledBoard = tickActivityFortuneBoard(
-      settledBoard.state,
-      activityDefinition,
-      settledBoard.characterDefinitions
-    );
-    settledBoard = playActivityFortuneBoard(
-      settledBoard.state,
-      activityDefinition,
-      settledBoard.characterDefinitions
-    );
-    for (let tick = 0; tick < 100; tick += 1) {
-      settledBoard = tickActivityFortuneBoard(
+    for (let tick = 0; tick < 3000; tick += 1) {
+      settledBoard = tickActivityPachinkoBoard(
         settledBoard.state,
         activityDefinition,
         settledBoard.characterDefinitions
       );
       if (
         settledBoard.state.runtime.activitySession?.type === "result" ||
-        (settledBoard.state.runtime.activitySession?.type === "fortune-board" &&
+        (settledBoard.state.runtime.activitySession?.type === "pachinko-board" &&
           settledBoard.state.runtime.activitySession.phase === "ready")
       ) {
         break;
@@ -571,6 +554,576 @@ test("scene start-activity action executes registered fallback activity", () => 
   assert.equal(settledBoard.state.runtime.variables["var.test.activity.points"], 5);
   assert.equal(settledBoard.state.runtime.variables["var.activity.last_handler"], "generic.qte");
   assert.ok(settledBoard.state.runtime.activitySession.score >= 5);
+});
+
+test("pachinko board keeps final settled ball visible before confirming result", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.final-settle",
+    label: "Final settle",
+    outcome: {},
+  };
+  const session = createActivityQteSession(activityDefinition, "generic.qte");
+  const result = tickActivityPachinkoBoard(
+    {
+      runtime: {
+        activitySession: {
+          ...session,
+          phase: "dropping",
+          remainingBalls: 0,
+          activeBall: {
+            x: session.boardWidth / 2,
+            y: session.boardHeight - 6,
+            previousX: session.boardWidth / 2,
+            previousY: session.boardHeight - 18,
+            vx: 0,
+            vy: 5,
+            radius: 17,
+          },
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    activityDefinition,
+    []
+  );
+
+  assert.equal(result.state.runtime.activitySession?.type, "pachinko-board");
+  assert.equal(result.state.runtime.activitySession.phase, "settling");
+  assert.equal(result.state.runtime.activitySession.activeBall, null);
+  assert.notEqual(result.state.runtime.activitySession.lastSlotIndex, null);
+
+  const confirmed = playActivityPachinkoBoard(result.state, activityDefinition, []);
+  assert.equal(confirmed.state.runtime.activitySession?.type, "result");
+  assert.equal(
+    confirmed.state.runtime.flags["flag.activity.test.pachinko.final-settle.completed"],
+    true
+  );
+});
+
+test("pachinko removes first two fixed pin rows from the board", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.rows",
+    label: "Rows",
+    outcome: {},
+  };
+  const session = createActivityQteSession(activityDefinition, "generic.qte");
+
+  assert.equal(session.type, "pachinko-board");
+  assert.equal(session.pins.some((pin) => pin.y === 420), false);
+  assert.equal(session.pins.some((pin) => pin.y === 505), false);
+  assert.equal(session.pins.some((pin) => pin.y === 590), true);
+});
+
+test("pachinko can run multiple active balls from repeated releases", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.multiball",
+    label: "Multi",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: createActivityQteSession(activityDefinition, "generic.qte"),
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+
+  result = playActivityPachinkoBoard(result.state, activityDefinition, []);
+  result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  result = playActivityPachinkoBoard(result.state, activityDefinition, []);
+  const session = result.state.runtime.activitySession;
+
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.phase, "dropping");
+  assert.equal(session.remainingBalls, 3);
+  assert.equal(session.activeBalls.length, 2);
+});
+
+test("pachinko refreshes lower random elements after twenty seconds of ticks", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.refresh",
+    label: "Refresh",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: createActivityQteSession(activityDefinition, "generic.qte"),
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+  const startSession = result.state.runtime.activitySession;
+  const before = startSession.slotValues.join(",");
+  const ticks = Math.ceil(20000 / startSession.animationTickMs);
+
+  for (let index = 0; index < ticks; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+
+  const session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.layoutVersion, 1);
+  assert.notEqual(session.slotValues.join(","), before);
+});
+
+test("pachinko release does not reshuffle lower rewards before timed refresh", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.release-keeps-slots",
+    label: "Release keeps slots",
+    outcome: {},
+  };
+  const state = {
+    runtime: {
+      activitySession: {
+        ...createActivityQteSession(activityDefinition, "generic.qte"),
+        slotValues: [5, 3, 3, 2, 2, 2, "wheel"],
+      },
+      flags: {},
+      variables: {},
+    },
+  };
+
+  const result = playActivityPachinkoBoard(state, activityDefinition, []);
+  const session = result.state.runtime.activitySession;
+
+  assert.equal(session?.type, "pachinko-board");
+  assert.deepEqual(session.slotValues, [5, 3, 3, 2, 2, 2, "wheel"]);
+});
+
+test("pachinko wheel reward flow keeps active balls falling", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.concurrent-wheel",
+    label: "Concurrent wheel",
+    outcome: {},
+  };
+  const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
+  const state = {
+    runtime: {
+      activitySession: {
+        ...baseSession,
+        phase: "rewarding",
+        remainingBalls: 0,
+        activeBall: {
+          x: baseSession.boardWidth / 2,
+          y: 180,
+          previousX: baseSession.boardWidth / 2,
+          previousY: 170,
+          vx: 0,
+          vy: 4,
+          radius: 17,
+        },
+        activeBalls: [
+          {
+            x: baseSession.boardWidth / 2,
+            y: 180,
+            previousX: baseSession.boardWidth / 2,
+            previousY: 170,
+            vx: 0,
+            vy: 4,
+            radius: 17,
+          },
+        ],
+        wheelState: {
+          ...baseSession.wheelState,
+          phase: "spinning",
+          selectedIndex: 0,
+          selectedReward: baseSession.wheelState.segments[0],
+        },
+      },
+      flags: {},
+      variables: {},
+    },
+  };
+
+  const result = tickActivityPachinkoBoard(state, activityDefinition, []);
+  const session = result.state.runtime.activitySession;
+
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "spinning");
+  assert.equal(session.activeBalls.length, 1);
+  assert.equal(session.activeBalls[0].y > 180, true);
+});
+
+test("pachinko moving gate grants one extra ball immediately", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.gate-extra-ball",
+    label: "Gate extra ball",
+    outcome: {},
+  };
+  const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
+  const result = tickActivityPachinkoBoard(
+    {
+      runtime: {
+        activitySession: {
+          ...baseSession,
+          phase: "dropping",
+          remainingBalls: 0,
+          activeBall: {
+            x: baseSession.boardWidth / 2,
+            y: 660,
+            previousX: baseSession.boardWidth / 2,
+            previousY: 650,
+            vx: 0,
+            vy: 18,
+            radius: 17,
+          },
+          activeBalls: [
+            {
+              x: baseSession.boardWidth / 2,
+              y: 660,
+              previousX: baseSession.boardWidth / 2,
+              previousY: 650,
+              vx: 0,
+              vy: 18,
+              radius: 17,
+            },
+          ],
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    activityDefinition,
+    []
+  );
+
+  const session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.gatePassCount, 1);
+  assert.equal(session.remainingBalls, 1);
+  assert.equal(session.eventCharge, 0);
+});
+
+test("pachinko bottom wheel slot queues a wheel instead of adding a ball", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.wheel-slot",
+    label: "Wheel slot",
+    outcome: {},
+  };
+  const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
+  const slotIndex = baseSession.slotValues.findIndex((value) => value === "wheel");
+  assert.notEqual(slotIndex, -1);
+  const slotWidth = baseSession.boardWidth / baseSession.slotValues.length;
+  const ballX = slotWidth * slotIndex + slotWidth / 2;
+  const result = tickActivityPachinkoBoard(
+    {
+      runtime: {
+        activitySession: {
+          ...baseSession,
+          phase: "dropping",
+          remainingBalls: 0,
+          activeBall: {
+            x: ballX,
+            y: baseSession.boardHeight - 6,
+            previousX: ballX,
+            previousY: baseSession.boardHeight - 18,
+            vx: 0,
+            vy: 5,
+            radius: 17,
+          },
+          activeBalls: [],
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    activityDefinition,
+    []
+  );
+
+  const session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.remainingBalls, 0);
+  assert.equal(session.score, 0);
+  assert.equal(session.rewardQueue.length, 0);
+  assert.equal(session.wheelState.phase, "spinning");
+  assert.notEqual(session.wheelState.selectedReward, null);
+});
+
+test("pachinko queued wheels resolve one at a time and apply rewards after flashing", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.wheel-queue",
+    label: "Wheel queue",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: {
+          ...createActivityQteSession(activityDefinition, "generic.qte"),
+          phase: "rewarding",
+          remainingBalls: 0,
+          rewardQueue: [{ type: "wheel" }, { type: "wheel" }],
+          wheelState: {
+            phase: "idle",
+            elapsedMs: 0,
+            rotationDegrees: 0,
+            targetRotationDegrees: 0,
+            selectedIndex: null,
+            selectedReward: null,
+            flashCount: 0,
+            segments: [
+              { id: "score-2", label: "+2分", kind: "score", amount: 2, weight: 30 },
+              { id: "ball-1", label: "+1球", kind: "extra-ball", amount: 1, weight: 20 },
+            ],
+          },
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+
+  result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+
+  let session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.rewardQueue.length, 1);
+  assert.equal(session.wheelState.phase, "spinning");
+  assert.equal(session.score + session.remainingBalls, 0);
+
+  for (let index = 0; index < 500; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+    const maybeSession = result.state.runtime.activitySession;
+    if (
+      maybeSession?.type === "pachinko-board" &&
+      maybeSession.rewardQueue.length === 0 &&
+      maybeSession.wheelState.phase === "settled" &&
+      maybeSession.phase === "settling"
+    ) {
+      break;
+    }
+  }
+
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.rewardQueue.length, 0);
+  assert.equal(session.wheelState.phase, "settled");
+  assert.equal(session.phase, "settling");
+  assert.notEqual(session.wheelState.selectedReward, null);
+  assert.equal(session.score + session.remainingBalls > 1, true);
+});
+
+test("pachinko queued wheels realign selected segment on every spin", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.wheel-realign",
+    label: "Wheel realign",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: {
+          ...createActivityQteSession(activityDefinition, "generic.qte"),
+          phase: "rewarding",
+          remainingBalls: 0,
+          animationTickMs: 100,
+          rewardQueue: [{ type: "wheel" }, { type: "wheel" }, { type: "wheel" }],
+          wheelState: {
+            phase: "idle",
+            elapsedMs: 0,
+            rotationDegrees: 0,
+            targetRotationDegrees: 0,
+            selectedIndex: null,
+            selectedReward: null,
+            flashCount: 0,
+            segments: [
+              { id: "score-2", label: "+2分", kind: "score", amount: 2, weight: 30 },
+              { id: "ball-1", label: "+1球", kind: "extra-ball", amount: 1, weight: 20 },
+              { id: "ball-2", label: "+2球", kind: "extra-ball", amount: 2, weight: 15 },
+              { id: "score-5", label: "+5分", kind: "score", amount: 5, weight: 15 },
+              { id: "score-minus-2", label: "-2分", kind: "score", amount: -2, weight: 10 },
+              { id: "encounter", label: "奇遇", kind: "encounter", amount: 0, weight: 10 },
+            ],
+          },
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+  const normalizedDegrees = (value) => ((value % 360) + 360) % 360;
+  const expectedTargetDegrees = (session) => {
+    const segmentAngle = 360 / session.wheelState.segments.length;
+    const selectedCenterDegrees =
+      segmentAngle * session.wheelState.selectedIndex + segmentAngle / 2;
+    return normalizedDegrees(360 - selectedCenterDegrees);
+  };
+  const observedStarts = [];
+
+  for (let guard = 0; guard < 240 && observedStarts.length < 3; guard += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+    const session = result.state.runtime.activitySession;
+    assert.equal(session?.type, "pachinko-board");
+    if (
+      session.wheelState.phase === "spinning" &&
+      session.wheelState.elapsedMs === 0
+    ) {
+      observedStarts.push({
+        selectedIndex: session.wheelState.selectedIndex,
+        targetRotationDegrees: session.wheelState.targetRotationDegrees,
+        expectedRotationDegrees: expectedTargetDegrees(session),
+      });
+    }
+  }
+
+  assert.equal(observedStarts.length, 3);
+  observedStarts.forEach((start) => {
+    assert.equal(
+      normalizedDegrees(start.targetRotationDegrees),
+      start.expectedRotationDegrees
+    );
+  });
+});
+
+test("pachinko wheel labels stay inside reward wedges and moving gate shows extra ball text", () => {
+  const houseViewSource = fs.readFileSync(
+    "src/ui/views/house/temple-house-view.ts",
+    "utf8"
+  );
+  const sceneViewSource = fs.readFileSync("src/ui/views/scene/scene-view.ts", "utf8");
+  const pachinkoCss = fs.readFileSync("src/styles/temple-house.css", "utf8");
+
+  assert.equal(houseViewSource.includes("c-pachinko-board__gate-label"), true);
+  assert.equal(sceneViewSource.includes("c-pachinko-board__gate-label"), true);
+  assert.equal(houseViewSource.includes("+1球"), true);
+  assert.equal(sceneViewSource.includes("+1球"), true);
+  assert.equal(houseViewSource.includes("c-pachinko-wheel__segment"), true);
+  assert.equal(sceneViewSource.includes("c-pachinko-wheel__segment"), true);
+  assert.equal(houseViewSource.includes("is-${wheelState.phase}"), true);
+  assert.equal(sceneViewSource.includes("is-${wheelState.phase}"), true);
+  assert.equal(pachinkoCss.includes(".c-pachinko-wheel__segment::before"), true);
+  assert.equal(pachinkoCss.includes("clip-path: polygon(50% 50%, 25% 6.7%, 75% 6.7%)"), true);
+  assert.equal(
+    pachinkoCss
+      .split(/\r?\n/)
+      .some((line) => line.trim() === "clip-path: polygon(50% 50%, 25% 6.7%, 75% 6.7%);"),
+    true
+  );
+  assert.equal(pachinkoCss.includes("translateY(-82%)"), false);
+  assert.equal(pachinkoCss.includes("top: 22%;"), true);
+  assert.equal(pachinkoCss.includes("rotate(30deg)"), true);
+  assert.equal(pachinkoCss.includes("rotate(90deg)"), false);
+  assert.equal(
+    pachinkoCss.includes(
+      ".c-pachinko-wheel.is-flashing .c-pachinko-wheel__segment.is-selected"
+    ),
+    true
+  );
+  assert.equal(
+    pachinkoCss.includes(
+      ".c-pachinko-wheel.is-holding .c-pachinko-wheel__segment.is-selected"
+    ),
+    true
+  );
+  assert.equal(
+    pachinkoCss.includes(
+      ".c-pachinko-wheel.is-settled .c-pachinko-wheel__segment.is-selected"
+    ),
+    true
+  );
+  assert.equal(
+    pachinkoCss.includes(".c-pachinko-wheel__label.is-selected"),
+    false
+  );
+  assert.equal(
+    pachinkoCss
+      .split(/\r?\n/)
+      .some((line) => line.trim() === ".c-pachinko-wheel__segment.is-selected {"),
+    false
+  );
+  assert.equal(pachinkoCss.includes("background: #ffd35a"), false);
+});
+
+test("pachinko wheel flashes every point three seconds and holds before next queued wheel", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.wheel-hold",
+    label: "Wheel hold",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: {
+          ...createActivityQteSession(activityDefinition, "generic.qte"),
+          phase: "rewarding",
+          remainingBalls: 0,
+          animationTickMs: 100,
+          rewardQueue: [{ type: "wheel" }, { type: "wheel" }],
+          wheelState: {
+            phase: "idle",
+            elapsedMs: 0,
+            rotationDegrees: 0,
+            targetRotationDegrees: 0,
+            selectedIndex: null,
+            selectedReward: null,
+            flashCount: 0,
+            segments: [
+              { id: "score-2", label: "+2分", kind: "score", amount: 2, weight: 100 },
+            ],
+          },
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+
+  result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  for (let guard = 0; guard < 80; guard += 1) {
+    const session = result.state.runtime.activitySession;
+    assert.equal(session?.type, "pachinko-board");
+    if (session.wheelState.phase === "flashing") {
+      break;
+    }
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+
+  let session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "flashing");
+
+  for (let index = 0; index < 9; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "flashing");
+  assert.equal(session.score, 0);
+
+  for (let index = 0; index < 3; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "holding");
+  assert.equal(session.score, 2);
+  assert.equal(session.wheelState.selectedReward?.label, "+2分");
+  assert.equal(session.rewardQueue.length, 1);
+
+  for (let index = 0; index < 4; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "holding");
+  assert.equal(session.rewardQueue.length, 1);
+
+  result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "spinning");
+  assert.equal(session.rewardQueue.length, 0);
 });
 
 test("fortune board refunds wager pieces that cannot fit in the selected column", () => {
@@ -8430,6 +8983,125 @@ test("temple work is blocked when stamina is below activity cost", () => {
   assert.equal(result.sideEffects, undefined);
 });
 
+test("temple work confirmation shows work sections and quick complete from best score", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const activityId = "activity.zhu_yuanzhang.temple.copy_scripture";
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...withCouncilInDays(createMonkStageState(), 30),
+      runtime: {
+        ...withCouncilInDays(createMonkStageState(), 30).runtime,
+        flags: {
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
+        variables: {
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.variables,
+          [`var.activity.${activityId}.best_score`]: 20,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  const result = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      dialoguePhase: "open",
+      dailyActionPanel: "work",
+    },
+    request: { type: "action", actionId: "assign-temple-task:copy-scripture" },
+  });
+
+  assert.equal(result.sessionState?.overlay?.type, "activity-confirm");
+  assert.equal(result.sessionState.overlay.bestScore, 20);
+  assert.equal(result.sessionState.overlay.quickCompleteScore, 18);
+  assert.equal(result.sessionState.overlay.quickCompleteActionId, "quick-complete-temple-task:copy-scripture");
+  assert.deepEqual(result.sessionState.overlay.paragraphs, []);
+  assert.deepEqual(result.sessionState.overlay.relatedAbilityLines, [
+    "相关能力：待接入",
+  ]);
+  assert.ok(
+    result.sessionState.overlay.costLines.includes(
+      `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`
+    )
+  );
+});
+
+test("temple work quick complete uses ninety percent and preserves separate best scores", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const copyActivityId = "activity.zhu_yuanzhang.temple.copy_scripture";
+  const sweepActivityId = "activity.zhu_yuanzhang.temple.sweep_courtyard";
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...withCouncilInDays(createMonkStageState(), 30),
+      runtime: {
+        ...withCouncilInDays(createMonkStageState(), 30).runtime,
+        flags: {
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
+        variables: {
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.variables,
+          [`var.activity.${copyActivityId}.best_score`]: 20,
+          [`var.activity.${sweepActivityId}.best_score`]: 9,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  const result = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      dialoguePhase: "open",
+      dailyActionPanel: "work",
+    },
+    request: {
+      type: "action",
+      actionId: "quick-complete-temple-task:copy-scripture",
+    },
+  });
+
+  assert.equal(
+    result.gameState.runtime.variables[
+      ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution
+    ],
+    18
+  );
+  assert.equal(
+    result.gameState.runtime.variables[`var.activity.${copyActivityId}.best_score`],
+    20
+  );
+  assert.equal(
+    result.gameState.runtime.variables[`var.activity.${sweepActivityId}.best_score`],
+    9
+  );
+});
+
 test("temple begging settlement is blocked when stamina is below activity cost", () => {
   const baseState = createMonkStageState();
   const lowStaminaMonkCharacters = withPlayerStamina(
@@ -8515,7 +9187,7 @@ test("temple work reaching contribution threshold starts shared map auto advance
           ...withCouncilInDays(createMonkStageState(), 30).runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
           [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 25,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 29,
         },
       },
     },
@@ -8568,31 +9240,14 @@ test("temple work reaching contribution threshold starts shared map auto advance
   );
   assert.equal(
     confirmedWorkResult.gameState.runtime.activitySession?.type,
-    "fortune-board"
+    "pachinko-board"
   );
 
   let qteResult = confirmedWorkResult;
-  for (let round = 0; round < 10; round += 1) {
+  for (let round = 0; round < 30; round += 1) {
     if (qteResult.sessionState?.overlay?.type === "result") {
       break;
     }
-    while (
-      qteResult.gameState.runtime.activitySession.type === "fortune-board" &&
-      qteResult.gameState.runtime.activitySession.wager <
-        Math.min(5, qteResult.gameState.runtime.activitySession.remainingPieces)
-    ) {
-      qteResult = templeHouseHouseModule.dispatch({
-        gameState: qteResult.gameState,
-        characterDefinitions: qteResult.characterDefinitions,
-        houseDefinition: templeHouse,
-        playerCharacterId,
-        sessionState: qteResult.sessionState,
-        request: {
-          type: "action",
-          actionId: "temple-work-board-wager-plus",
-        },
-      });
-    }
     qteResult = templeHouseHouseModule.dispatch({
       gameState: qteResult.gameState,
       characterDefinitions: qteResult.characterDefinitions,
@@ -8601,23 +9256,7 @@ test("temple work reaching contribution threshold starts shared map auto advance
       sessionState: qteResult.sessionState,
       request: { type: "action", actionId: "temple-work-board-play" },
     });
-    qteResult = templeHouseHouseModule.dispatch({
-      gameState: qteResult.gameState,
-      characterDefinitions: qteResult.characterDefinitions,
-      houseDefinition: templeHouse,
-      playerCharacterId,
-      sessionState: qteResult.sessionState,
-      request: { type: "tick", tickId: "temple-house-work-qte" },
-    });
-    qteResult = templeHouseHouseModule.dispatch({
-      gameState: qteResult.gameState,
-      characterDefinitions: qteResult.characterDefinitions,
-      houseDefinition: templeHouse,
-      playerCharacterId,
-      sessionState: qteResult.sessionState,
-      request: { type: "action", actionId: "temple-work-board-play" },
-    });
-    for (let tick = 0; tick < 100; tick += 1) {
+    for (let tick = 0; tick < 3000; tick += 1) {
       qteResult = templeHouseHouseModule.dispatch({
         gameState: qteResult.gameState,
         characterDefinitions: qteResult.characterDefinitions,
@@ -8628,7 +9267,7 @@ test("temple work reaching contribution threshold starts shared map auto advance
       });
       if (
         qteResult.sessionState?.overlay?.type === "result" ||
-        (qteResult.gameState.runtime.activitySession?.type === "fortune-board" &&
+        (qteResult.gameState.runtime.activitySession?.type === "pachinko-board" &&
           qteResult.gameState.runtime.activitySession.phase === "ready")
       ) {
         break;

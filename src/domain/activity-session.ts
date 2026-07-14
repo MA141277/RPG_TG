@@ -3,6 +3,7 @@ import type { ActivityId } from "./activity";
 export const FORTUNE_BOARD_MIN_ANIMATION_TICK_MS = 250;
 export const FORTUNE_BOARD_MAX_ANIMATION_TICK_MS = 1000;
 export const FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS = 500;
+export const PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS = 33;
 
 export type ActivityWorkSequenceCommand = {
   id: string;
@@ -132,8 +133,111 @@ export type ActivityResultSession = {
   rewardLines: string[];
 };
 
+export type ActivityPachinkoBoardPhase =
+  | "ready"
+  | "dropping"
+  | "rewarding"
+  | "settling";
+
+export type ActivityPachinkoBoardEventKind =
+  | "great"
+  | "good"
+  | "plain"
+  | "minor-bad"
+  | "timing";
+
+export type ActivityPachinkoBoardPin = {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  moving?: boolean;
+};
+
+export type ActivityPachinkoBoardBall = {
+  x: number;
+  y: number;
+  previousX: number;
+  previousY: number;
+  vx: number;
+  vy: number;
+  radius: number;
+};
+
+export type ActivityPachinkoBoardEventLogEntry = {
+  roll: number;
+  kind: ActivityPachinkoBoardEventKind;
+  label: string;
+};
+
+export type ActivityPachinkoBoardWheelRewardKind =
+  | "score"
+  | "extra-ball"
+  | "encounter";
+
+export type ActivityPachinkoBoardWheelRewardSegment = {
+  id: string;
+  label: string;
+  kind: ActivityPachinkoBoardWheelRewardKind;
+  amount: number;
+  weight: number;
+};
+
+export type ActivityPachinkoBoardRewardQueueItem = {
+  type: "wheel";
+};
+
+export type ActivityPachinkoBoardWheelState = {
+  phase: "idle" | "spinning" | "slowing" | "flashing" | "holding" | "settled";
+  elapsedMs: number;
+  rotationDegrees: number;
+  targetRotationDegrees: number;
+  selectedIndex: number | null;
+  selectedReward: ActivityPachinkoBoardWheelRewardSegment | null;
+  flashCount: number;
+  segments: ActivityPachinkoBoardWheelRewardSegment[];
+};
+
+export type ActivityPachinkoBoardSession = {
+  type: "pachinko-board";
+  activityId: ActivityId;
+  handlerId: string;
+  title: string;
+  taskLabel: string;
+  boardWidth: number;
+  boardHeight: number;
+  phase: ActivityPachinkoBoardPhase;
+  remainingBalls: number;
+  totalBalls: number;
+  activeBall: ActivityPachinkoBoardBall | null;
+  activeBalls: ActivityPachinkoBoardBall[];
+  pins: ActivityPachinkoBoardPin[];
+  movingGatePins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin];
+  gatePassCount: number;
+  eventCharge: number;
+  eventLog: ActivityPachinkoBoardEventLogEntry[];
+  score: number;
+  lastSlotIndex: number | null;
+  slotValues: Array<number | "wheel">;
+  rewardQueue: ActivityPachinkoBoardRewardQueueItem[];
+  wheelState: ActivityPachinkoBoardWheelState;
+  flipperAngle: number;
+  flipperDirection: 1 | -1;
+  movingGateX: number;
+  movingGateDirection: 1 | -1;
+  animationTickMs: number;
+  layoutRefreshElapsedMs: number;
+  layoutRefreshPeriodMs: number;
+  layoutVersion: number;
+  timeAdvanceCost: number;
+  completedFlagKey?: string;
+  gradeVariableKey?: string;
+  scoreVariableKey?: string;
+};
+
 export type ActiveActivitySession =
   | ActivityFortuneBoardSession
+  | ActivityPachinkoBoardSession
   | ActivityWorkSequenceSession
   | ActivityQteSession
   | ActivityResultSession
