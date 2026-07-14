@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-14`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze`
-- next_task: `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `unknown`
-- residue_family: `none`
-- residue_routing_status: `none`
+- closure_basis: `The bounded runtime-family-contract slice is complete: docs/scenario-pack-unified-format.md and the active runtime-pack-unification version spec now define mandatory runtime families, explicitly inheritable runtime families, unsupported/transitional families, and fail-closed obligations. Remaining work belongs to downstream authoring convergence, export unification, base-pack inheritance implementation, fixed-pack consumer deprivileging, and compatibility retirement queues rather than additional same-family contract-definition work inside this queue.`
+- residue_remaining: `yes`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `none`
-- sync_summary: `No repository sync batch is recorded yet for the boundary-baseline task promotion; sync must run after this terminal task after-state is committed and pushed.`
+- sync_summary: `No repository sync batch is recorded yet for the completed runtime-family-contract queue closeout; sync must run after this terminal queue after-state is committed and pushed.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -53,9 +53,9 @@
 
 - queue_goal: `Turn the current bounded import/export residue, basePackId passthrough, and builtin content privilege into one explicit family contract that names mandatory runtime families, inheritable families, unsupported families, and fail-closed obligations before later convergence queues proceed.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Baseline reconcile is complete: current repository evidence still supports freezing mandatory-vs-inheritable runtime-family truth before authoring convergence, export unification, base-pack inheritance, consumer deprivileging, or compatibility retirement proceeds. The active task now writes the explicit runtime-family contract and downstream routing boundaries.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the bounded runtime-family-contract queue is closed and returns control to version review. Remaining residue is cross-family and must be routed through downstream runtime-pack-unification candidate queues.`
 - task_briefs:
   - `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile: confirm that runtime-family contract freeze is the next smallest lawful successor cut and freeze the first bounded contract slice from current repository evidence.`
   - `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze: write the explicit mandatory-vs-inheritable runtime-family contract, unsupported-family rules, and fail-closed boundary for later convergence queues.`
@@ -106,8 +106,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` | `completed` | `Confirm the admitted runtime-family-contract queue boundary and freeze the first lawful contract task slice from current repository truth.` | `none` | `Completed on 2026-07-14 after fresh evidence confirmed that activities remain import compatibility residue, compatibilityImport.unresolvedFamilies still blocks export, basePackId remains passthrough metadata rather than family-level inheritance truth, and pack-content-access.ts still keeps fixed builtin scenario-pack imports. The smallest lawful next slice remains explicit runtime-family contract freeze rather than export implementation, inheritance implementation, consumer deprivileging, or compatibility retirement.` |
-| `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` | `active` | `Write the explicit runtime-family contract for mandatory families, inheritable families, unsupported families, and fail-closed obligations.` | `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` | `Active after baseline reconcile confirmed the must-consume evidence set and froze the bounded contract-writing slice.` |
-| `task.script-editor-runtime-family-contract-alignment.queue-closeout-and-handoff` | `pending` | `Verify the queue, route any remaining runtime-family residue, and return control to version review with explicit closeout truth.` | `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` | `Pending until the bounded runtime-family contract lands and queue-local residue can be classified.` |
+| `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` | `completed` | `Write the explicit runtime-family contract for mandatory families, inheritable families, unsupported families, and fail-closed obligations.` | `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` | `Completed on 2026-07-14 after docs/scenario-pack-unified-format.md and the active version spec recorded mandatory runtime families, explicitly inheritable families, unsupported/transitional families, and fail-closed obligations for later queues to consume.` |
+| `task.script-editor-runtime-family-contract-alignment.queue-closeout-and-handoff` | `completed` | `Verify the queue, route any remaining runtime-family residue, and return control to version review with explicit closeout truth.` | `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` | `Completed on 2026-07-14 after Blueprint lint, plan lint, and typecheck passed; queue-local residue was classified as cross-family and returned to version review for downstream queue admission rather than same-family auto-continuation.` |
 
 ### Task Definitions
 
@@ -171,7 +171,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md`
@@ -212,14 +212,15 @@
 - task_brief:
   - `Write the explicit runtime-family contract and downstream routing boundaries.`
 - task_outcome_summary:
-  - `Active after baseline reconcile froze the first lawful contract slice and confirmed the evidence set that the final mandatory-vs-inheritable family matrix must consume.`
+  - `Completed after the shared scenario-pack format contract and active version spec recorded mandatory runtime families, explicitly inheritable families, unsupported/transitional families, and fail-closed obligations.`
+  - `Later queues must consume this contract for authoring convergence, export unification, base-pack inheritance, consumer deprivileging, and compatibility retirement instead of inventing queue-local fallback semantics.`
 
 #### `task.script-editor-runtime-family-contract-alignment.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-runtime-family-contract-alignment.queue-closeout-and-handoff`
-- state: `pending`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -250,4 +251,4 @@
 - task_brief:
   - `Close the queue only after runtime-family contract verification and version-level routing truth are synchronized.`
 - task_outcome_summary:
-  - `Pending until the bounded runtime-family contract lands, queue-local residue is classified, and successor-version routing truth is synchronized.`
+  - `Completed after queue-local truth verified the bounded runtime-family contract, classified remaining residue as cross-family, and returned control to version review for downstream runtime-pack-unification queue routing.`

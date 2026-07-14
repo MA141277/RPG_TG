@@ -52,6 +52,27 @@
 - 当前 runtime-family-contract queue 已正式越过 baseline reconcile，接下来只能在 bounded contract-writing 范围内冻结 mandatory / inheritable / unsupported family truth 和 fail-closed obligations。
 - 后续 authoring convergence、runtime-pack export unification、base-pack inheritance governance、fixed-pack consumer deprivileging、compatibility retirement 仍保持候选队列，不得在当前任务内顺手实现。
 
+## 2026-07-14 Script Editor Runtime Family Contract Freeze
+
+### Changed
+- 更新 [docs/scenario-pack-unified-format.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/scenario-pack-unified-format.md)，新增 Runtime Family Contract，明确 mandatory runtime families、explicitly inheritable runtime families、unsupported/transitional families 与 fail-closed obligations。
+- 更新 [docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md)，把 unsupported/transitional families 与 fail-closed obligations 写入 active version spec，供后续 authoring/export/inheritance/consumer/compatibility 队列消费。
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md)，将 `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` 标记为 completed，并把 active task 推进到 `queue-closeout-and-handoff`。
+
+### Impact
+- 当前队列已经落下最终 family contract 文档真值；后续实现队列不得再用 silent empty arrays、hidden builtin defaults、compatibilityImport 或 private lowering dialect 绕开该契约。
+- 剩余工作转入 queue closeout/handoff：验证契约、分类仍存在的 residue，并把后续候选路由交回 version review。
+
+## 2026-07-14 Script Editor Runtime Family Contract Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md)，将 `queue.script-editor-runtime-family-contract-alignment` 从 active 收口为 `done`，记录 bounded contract-definition slice 已验证并关闭。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-runtime-family-authoring-convergence`。
+
+### Impact
+- 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做下一条 downstream queue admission review，而不是继续在已关闭的 runtime-family-contract queue 内扩张。
+- 剩余 residue 被分类为 cross-family：authoring convergence、export unification、base-pack inheritance、fixed-pack consumer deprivileging、compatibility retirement 仍按候选队列顺序推进。
+
 ## 2026-07-14 Script Editor Person Runtime Attribute Editing Alignment
 
 ### Changed

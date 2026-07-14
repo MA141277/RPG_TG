@@ -5,12 +5,12 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-runtime-pack-unification`
 - version_status: `open`
-- active_phase: `phase.implementation`
-- active_queue: `queue.script-editor-runtime-family-contract-alignment`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `write-admission-review`
+- resume_gate: `version-review`
 - promotion_review_result: `admit`
 - review_subject_id: `none`
 - review_subject_classification: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `none`
-- closure_review_status: `none`
-- residue_candidate_id: `none`
-- residue_candidate_family: `none`
-- routing_basis: `none`
-- next_lawful_queue_recommendation: `none`
+- closure_review_subject: `queue.script-editor-runtime-family-contract-alignment`
+- closure_review_status: `routed`
+- residue_candidate_id: `item.script-editor-runtime-family-authoring-convergence`
+- residue_candidate_family: `cross-family`
+- routing_basis: `queue.script-editor-runtime-family-contract-alignment closed after freezing the runtime-family contract; remaining work now belongs to downstream family convergence, export unification, inheritance, consumer deprivileging, and compatibility retirement queues rather than additional same-family contract definition.`
+- next_lawful_queue_recommendation: `queue.script-editor-runtime-family-authoring-convergence`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -57,8 +57,8 @@
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.script-editor-runtime-family-contract-alignment` | `active` | `already admitted after fresh repository evidence confirmed that mandatory, inheritable, unsupported, and fail-closed runtime-family truth must be frozen before deeper convergence or export unification continues` | `This is the first active queue because the successor spec makes all later convergence depend on one written family contract rather than continuing bounded import/export patches.` |
-| `queue.script-editor-runtime-family-authoring-convergence` | `candidate` | `only after queue.script-editor-runtime-family-contract-alignment closes with formal family ownership truth` | `May not be admitted early because authoring-structure convergence depends on the family contract it must converge toward.` |
+| `queue.script-editor-runtime-family-contract-alignment` | `done` | `only if fresh repository evidence later disproves the frozen mandatory/inheritable/unsupported/fail-closed family contract or proves still-blocking same-family contract residue` | `Closed on 2026-07-14 after docs/scenario-pack-unified-format.md and the active version spec froze the family contract for downstream queues.` |
+| `queue.script-editor-runtime-family-authoring-convergence` | `candidate` | `now eligible for admission review if fresh evidence confirms that editor-facing data ownership still depends on long-lived authoring-only parallel structures after the family contract freeze` | `This is the next lawful recommendation because authoring-structure convergence depends on the family contract that is now frozen, and it precedes export unification so export does not encode an obsolete authoring shadow dialect.` |
 | `queue.script-editor-runtime-pack-export-unification` | `candidate` | `only after queue.script-editor-runtime-family-contract-alignment closes and fresh evidence still shows that export emits a bounded project artifact instead of the final startup-consumable scenario-pack artifact` | `Owns export-path unification, not the upstream family-contract freeze.` |
 | `queue.script-editor-base-pack-inheritance-governance` | `candidate` | `only after queue.script-editor-runtime-family-contract-alignment closes and fresh evidence still shows implicit or inconsistent inheritance behavior` | `Must formalize basePackId semantics after the mandatory-vs-inheritable contract is explicit.` |
 | `queue.script-editor-fixed-pack-consumer-deprivileging` | `candidate` | `when fresh repository evidence still proves that runtime or application consumers bypass active content resolution through fixed builtin pack imports or equivalent privileged access` | `Current direct imports in src/content/pack-content-access.ts keep this queue candidate live, but it remains downstream to the family-contract freeze because deprivileging should consume the final contract rather than pre-guess it.` |
@@ -69,7 +69,7 @@
 | Item ID | Classification | Proposed Queue | Disposition | Basis |
 | --- | --- | --- | --- | --- |
 | `item.script-editor-runtime-pack-unification-version-open` | `current-target-item` | `none` | `version opened; first queue subsequently admitted` | `The operator explicitly requested that the successor draft become the next active Blueprint version once the PRD alignment version proved queue-complete and closeable; the version then completed admission review for its first bounded queue.` |
-| `item.script-editor-runtime-family-contract-alignment` | `queue-candidate` | `queue.script-editor-runtime-family-contract-alignment` | `admitted + queue active` | `Mandatory-vs-inheritable runtime family truth remains unresolved across runtime startup, editor import, editor export, and compatibility residue handling, so this candidate passed admission review and now owns the first active execution slice.` |
+| `item.script-editor-runtime-family-contract-alignment` | `queue-candidate` | `queue.script-editor-runtime-family-contract-alignment` | `admitted + queue closed` | `Mandatory-vs-inheritable runtime family truth was unresolved across runtime startup, editor import, editor export, and compatibility residue handling; this queue has now frozen the contract and closed as historical evidence.` |
 | `item.script-editor-runtime-family-authoring-convergence` | `queue-candidate` | `queue.script-editor-runtime-family-authoring-convergence` | `candidate-recorded` | `Editor-owned authoring structures still preserve bounded authoring-only residue, but lawful convergence depends on the final family contract first.` |
 | `item.script-editor-runtime-pack-export-unification` | `queue-candidate` | `queue.script-editor-runtime-pack-export-unification` | `candidate-recorded` | `The current export path still fails closed on compatibility residue and remains a bounded runtime-compatible seam rather than the single formal startup-consumable runtime-pack artifact.` |
 | `item.script-editor-base-pack-inheritance-governance` | `queue-candidate` | `queue.script-editor-base-pack-inheritance-governance` | `candidate-recorded` | `basePackId is present in current import/export metadata flow, but family-level inheritance semantics are not yet formalized as contract truth.` |
@@ -79,7 +79,7 @@
 ### Candidate Scope Notes
 
 - `This version consumes the closed contract-freeze, implementation, and PRD-alignment versions as historical baseline evidence; it must not reopen their queue surfaces by convenience.`
-- `queue.script-editor-runtime-family-contract-alignment is the first lawful queue because every later convergence queue depends on one explicit answer for mandatory runtime families, inheritable families, and fail-closed unsupported families.`
+- `queue.script-editor-runtime-family-contract-alignment is now closed historical evidence because every later convergence queue can consume one explicit answer for mandatory runtime families, inheritable families, unsupported/transitional families, and fail-closed obligations.`
 - `No later queue may create a new long-lived authoring-only family, a new export-only shadow dialect, or a new builtin fallback rule as a convenience patch while this version is open.`
 - `The successor version owns architecture convergence, not unrelated gameplay redesign, generic runtime cleanup, or repository-wide visual polish.`
 

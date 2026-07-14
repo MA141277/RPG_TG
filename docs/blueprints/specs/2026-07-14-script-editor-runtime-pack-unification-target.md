@@ -86,6 +86,29 @@ Rules:
 - `If a family is neither exported locally nor resolved from the declared base pack, export must fail closed rather than emit a seemingly valid but runtime-incomplete pack.`
 - `Inheritance semantics must be written per family as contract truth rather than inferred from whichever builtin pack currently happens to exist.`
 
+#### Unsupported Or Transitional Families
+
+- `uiScreenSchemas`
+- `uiLayouts`
+- `uiSkins`
+- `uiAssetCatalogs`
+- `editor-only shadow families that duplicate formal runtime families`
+- `export-only private lowering dialects`
+
+Rules:
+
+- `These families may remain migration evidence or future-version candidates, but they are not part of the final startup-consumable scenario-pack runtime surface for this version.`
+- `They must not be emitted as silent empty placeholders in a pack that claims to satisfy runtime export.`
+- `They must not become the normal landing zone for new runtime data while this version is open.`
+
+#### Fail-Closed Obligations
+
+- `Any mandatory family missing after local content and explicit base-pack inheritance resolution must fail closed.`
+- `Any explicitly inheritable family that is referenced but unresolved from local content or the declared base pack must fail closed.`
+- `compatibilityImport.unresolvedFamilies may preserve historical import evidence, but daily export must fail closed while it remains necessary to produce runtime truth.`
+- `Fixed builtin pack imports are not a lawful substitute for active scenario-pack resolution once a consumer is covered by this version's final contract.`
+- `Export must not succeed by writing empty arrays, hidden defaults, or private shadow dialects for unresolved runtime truth.`
+
 ### Transitional Authoring Structures To Retire
 
 - `script-editor project export treated as a runtime-pack surrogate`
