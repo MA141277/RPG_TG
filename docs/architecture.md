@@ -161,11 +161,13 @@ GlobalUI
 
 大地图移动必须由 `src/application/navigation/travel-to-coordinate.ts` 生成路径。UI 点击层只提供目标坐标，主运行时按路径分段播放；不要在视图层或 `main.ts` 临时改回起点到终点的直线插值。
 
-Campaign 地图的水域/陆地通行性来自当前地图的地形材质资产。`campaign-terrain-webgl.ts` 按 terrain shader 同源的 `map_ground_types` 水域材质语义生成 passable hex 网格，`map_heights` 只负责连续视觉高度场、地形投影和地图对象贴地高度；navigation 层只消费这份通行网格做寻路，不要在 gameplay 代码里手写某张地图的水格坐标或用据点白名单修补通行性。
+Campaign 地图的水域/陆地语义来自当前地图的地形材质资产，但入口只能有一个：`campaign-terrain-webgl.ts` 从 `map_ground_types` 生成 Hex cell land/water 语义模型，并由这份模型生成 passable hex 网格、点击通行检查、岸线边界链和 terrain shader 的 `uMaterialSemanticTexture`。`uMaterialSemanticTexture` 是一格 Hex 一个 texel 的语义纹理，shader 必须先把像素归入 rounded Hex cell 再读取它；`map_heights` 只负责连续视觉高度场、地形投影和地图对象贴地高度；原始 `map_ground_types` 贴图可以继续给 shader 做地貌颜色参考，并维持浅水区、深水变化和水面内部噪声等旧视觉采样路径，但不得作为最终“当前像素属于水侧还是陆侧”的判定入口。近岸区属于贴当前岸线的窄水侧 tint，应跟随 Hex semantic 派生出的当前水陆边界；浅水区属于更宽的水体内部层，继续保留旧距陆效果和旧水体噪声，但其最终水侧 coverage 必须使用当前岸线的 `boundaryWater`，不得再用旧 `map_ground_types` 采样结果裁掉当前已经属于水侧的像素。navigation 层只消费这份通行网格做寻路，不要在 gameplay 代码里手写某张地图的水格坐标或用据点白名单修补通行性。
 
 Campaign 地图的水体视觉来自可选 `map_water_noise` 图层。该图层是纯表现资产：`map-view.ts` 只把它作为 terrain canvas 的 `data-map-water-texture-url` 传给 WebGL renderer；水体表现不得改变点击、投影、通行性或 navigation 路径模型。
 
 Campaign 地图的陆地表面材质可以通过 `map_grass_texture`、`map_sand_texture` 等纯表现图层传给 terrain shader。此类图层只能影响地表颜色、纹理和海岸过渡表现；陆地/水体语义、寻路、点击、探索和云洞仍必须以 `map_ground_types` 与 runtime 状态为准。
+
+Campaign 地图的岸线边界表现必须从当前 Hex 地图的陆水相邻关系派生。岸线可以在 terrain shader 中用连续 chain 里程噪声扰动水陆交界 mask，并由该 mask 直接决定当前像素走水侧还是陆侧材质；不得把原图像素 mask 当作岸线来源，不得在岸线上叠加额外假水内容，也不得替代或重写 `map_water_noise`、近水区、深浅水等水体内部 shader 职责。
 
 Campaign 地图 camera 的缩放、平移和由缩放派生的俯角都属于 terrain renderer 的表现层参数。`main.ts` 只能同步当前视口调试状态和动画化 camera 输入；gameplay 网格、路径、探索、点击判定和地图数据结构不得依赖当前俯角。
 

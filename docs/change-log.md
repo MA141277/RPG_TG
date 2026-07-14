@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-14 Campaign Shoreline Chain Sampling
+
+### Changed
+- 大地图 terrain renderer 新增 `uMaterialSemanticTexture`：`campaign-terrain-webgl.ts` 从 `map_ground_types` 生成一次 Hex cell land/water 语义模型，并以“一格 Hex 一个 texel”的 NEAREST 语义纹理传入 shader；通行网格、点击检查、岸线链提取和 terrain shader 的水陆判断都消费同一份 Hex 语义模型。
+- 大地图岸线形变改为从当前 Hex 通行语义提取陆水相邻边，并在 CPU 侧组装连续 shoreline chain 元数据；renderer 只把每条边的链上里程、链长度和稳定 seed 传给 terrain shader，不再按单条边各自 hash 出独立岸线。
+- Terrain shader 的岸线层改为先把像素投影到当前 Hex 共享边，再沿 shoreline chain 的连续里程采样波浪和侵蚀噪声，让相邻边共享同一条连续波形；输出结果改为水陆分界 mask，直接决定当前像素走水侧还是陆侧材质。
+
+### Impact
+- 岸线 chain 的来源是 `map_ground_types` 派生出的 Hex 陆水相邻关系，不是原图像素 mask，也不是独立贴图语义；shader 也必须先把当前像素归入 rounded Hex cell，再读取同一份 Hex 语义纹理判断水陆。
+- 原始 `uMaterialTexture` 仍可用于 terrain shader 的地貌颜色参考，并保留浅水区、深水变化和水面内部噪声等旧视觉采样路径；但最终“当前像素属于水侧还是陆侧”的判定不得再读它，避免 WebGL LINEAR 过滤在水陆边界插值出与 CPU 通行网格不一致的结果。
+- 水体 shader 保持层次分工：近岸区是贴当前岸线的窄水侧 tint，跟随 Hex semantic 派生出的当前水陆边界；浅水区是更宽的水体内部层，继续保留旧的 `uMaterialTexture` 距陆采样和 `map_water_noise` 动态效果，但浅水区最终水侧 coverage 改为读取当前岸线的 `boundaryWater`，避免旧 `map_ground_types` 采样把当前已经属于水侧的像素裁掉。岸线不再作为额外假水覆盖层绘制，也不改通行、寻路、点击或探索。
+
 ## 2026-07-13 Campaign Shoreline Visual Erosion
 
 ### Added
