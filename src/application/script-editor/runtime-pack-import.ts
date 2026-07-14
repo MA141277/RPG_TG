@@ -247,6 +247,9 @@ function createStoryPackRecord(
     rawPack.tags.every((tag) => typeof tag === "string")
       ? { tags: [...rawPack.tags] as string[] }
       : {}),
+    ...(Array.isArray(rawPack.events)
+      ? { runtimeEvents: cloneJsonCompatibleValue(rawPack.events) }
+      : {}),
     ...(compatibilityImportResidue == null
       ? {}
       : { compatibilityImport: compatibilityImportResidue }),

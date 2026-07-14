@@ -1513,10 +1513,13 @@ function runScenarioPackStartupRequestWithLoading(
   return shellBootLifecycleCoordinator.startScenarioPackRequest({
     request,
     handleError: (error) => {
+      console.error("JSON scenario startup failed", error);
+      setGameVisibility(false);
+      mainUiFlow.showMainMenu();
       window.alert(
         error instanceof Error
-        ? `JSON 寮€灞€璇诲彇澶辫触锛?{error.message}`
-        : "JSON 寮€灞€璇诲彇澶辫触銆?"
+        ? `JSON 开局读取失败：${error.message}`
+        : "JSON 开局读取失败。"
       );
     },
   });

@@ -517,6 +517,7 @@ function createExportableScriptEditorProjectDefinition() {
     activities: [],
     minigames: [],
     storyNodes: [],
+    events: [],
     conditionGroups: [],
     effectBundles: [],
   };
@@ -3056,6 +3057,7 @@ test(
     );
 
     assert.equal(manifest.files.scenes, "./scenes.json");
+    assert.equal(manifest.files.events, "./events.json");
     assert.equal(manifest.files.maps, "./maps.json");
     assert.equal(manifest.files.cards, "./cards.json");
     assert.equal(manifest.files.valuables, "./valuables.json");
@@ -3072,6 +3074,16 @@ test(
     );
 
     assert.deepEqual(exportedPack.scenes, sourcePack.scenes);
+    assert.deepEqual(exportedPack.events, sourcePack.events);
+    assert.equal(
+      exportedPack.events.every(
+        (eventDefinition) =>
+          eventDefinition.trigger != null &&
+          typeof eventDefinition.trigger.timing === "string" &&
+          typeof eventDefinition.entrySceneId === "string"
+      ),
+      true
+    );
     assert.deepEqual(
       normalizeMapAssetUrlsForComparison(exportedPack.maps),
       normalizeMapAssetUrlsForComparison(sourcePack.maps)
@@ -3296,6 +3308,19 @@ test(
   }
 );
 
+test("script editor runtime export fails closed on editor event authoring records", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [{ id: "event.unsupported", title: "Unsupported Event" }];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /supports only editor events whose destination targets a dialogue/i
+  );
+});
+
 test(
   "script editor runtime export compiles bounded shared task condition and effect references",
   () => {
@@ -3431,7 +3456,7 @@ test(
     assert.equal(importedProject.people[0]?.id, "person.hero");
     assert.equal(importedProject.cities[0]?.id, "city.start");
     assert.equal(importedProject.buildings[0]?.id, "building.home");
-    assert.equal(importedProject.events[0]?.id, "event.opening");
+    assert.deepEqual(importedProject.events, []);
     assert.equal(importedProject.quests[0]?.id, "quest.first");
     assert.deepEqual(importedProject.dialogues, []);
     assert.deepEqual(importedProject.minigames, []);
@@ -3637,10 +3662,16 @@ test("script editor preview queue exposes a unified auxiliary panel with linked 
     createScriptEditorWorkspaceShellViewModel,
   } = require("../.test-dist/application/script-editor/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
-  project.events[0].destination = {
-    family: "dialogue",
-    targetId: "dialogue.missing.branch",
-  };
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: {
+        family: "dialogue",
+        targetId: "dialogue.missing.branch",
+      },
+    },
+  ];
   project.people[0].dialogueIds = ["dialogue.missing.branch"];
 
   const workspace = createScriptEditorWorkspaceShellViewModel({

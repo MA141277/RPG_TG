@@ -8,6 +8,7 @@ import {
 } from "./shared-rule-compiler";
 import type {
   ScriptEditorDialogueRecord,
+  ScriptEditorEventRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorStoryNodeRecord,
   ScriptEditorStoryPackRecord,
@@ -15,6 +16,7 @@ import type {
 } from "../../domain/script-editor-project";
 import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
 import type { ActionNode, SceneDefinition } from "../../domain/action";
+import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 
 export type ScriptEditorRuntimeExportDiagnostic = {
   code:
@@ -121,6 +123,11 @@ export function validateScriptEditorProjectForRuntimeExport(
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
   const exportedTextEntries = mapTextEntries(project.textEntries, diagnostics);
   const exportedScenes = lowerMinimalNarrativeScenes(project, diagnostics);
+  const exportedEvents = extractRuntimeEvents(
+    project,
+    exportedScenes ?? [],
+    diagnostics
+  );
   const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
   const exportedTasks = compileScriptEditorProjectTasks(project, sharedRuleDiagnostics);
   appendSharedRuleDiagnostics(sharedRuleDiagnostics, diagnostics);
@@ -130,6 +137,7 @@ export function validateScriptEditorProjectForRuntimeExport(
     scenarioProfile == null ||
     exportedTextEntries == null ||
     exportedScenes == null ||
+    exportedEvents == null ||
     exportedTasks == null
   ) {
     return diagnostics;
@@ -149,7 +157,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       cities: project.cities,
       houses: project.buildings,
       cityEntries: project.cityEntries,
-      events: project.events,
+      events: exportedEvents,
       scenes: exportedScenes,
       activities: project.activities,
       tasks: exportedTasks,
@@ -190,11 +198,13 @@ export function exportScriptEditorProjectToScenarioPackFiles(
   const scenarioProfile = extractScenarioProfile(project.storyPack, []);
   const exportedTextEntries = mapTextEntries(project.textEntries, []);
   const exportedScenes = lowerMinimalNarrativeScenes(project, []);
+  const exportedEvents = extractRuntimeEvents(project, exportedScenes ?? [], []);
   const exportedTasks = compileScriptEditorProjectTasks(project, []);
   if (
     scenarioProfile == null ||
     exportedTextEntries == null ||
     exportedScenes == null ||
+    exportedEvents == null ||
     exportedTasks == null
   ) {
     throw new Error(
@@ -235,7 +245,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
       project.cityEntries
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.events)]: stringifyJson(
-      project.events
+      exportedEvents
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.scenes)]: stringifyJson(
       exportedScenes
@@ -393,6 +403,237 @@ function cloneScenarioProfileRuntimeFields(
       ? { tags: scenarioProfile.tags }
       : {}),
   }) as Partial<ScenarioProfileDefinition>;
+}
+
+function extractRuntimeEvents(
+  project: ScriptEditorProjectDefinition,
+  exportedScenes: SceneDefinition[],
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): EventDefinition[] | null {
+  const runtimeEvents = project.storyPack.runtimeEvents;
+  if (runtimeEvents == null) {
+    return lowerEditorEventsToRuntimeEvents(project, exportedScenes, diagnostics);
+  }
+
+  if (!Array.isArray(runtimeEvents)) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: "project.storyPack.runtimeEvents",
+      message: "storyPack.runtimeEvents must be an array when present.",
+    });
+    return null;
+  }
+
+  const invalidIndex = runtimeEvents.findIndex(
+    (eventDefinition) => !isRuntimeEventDefinition(eventDefinition)
+  );
+  if (invalidIndex >= 0) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `project.storyPack.runtimeEvents[${invalidIndex}]`,
+      message:
+        "storyPack.runtimeEvents entries must keep the runtime EventDefinition shape.",
+    });
+    return null;
+  }
+
+  return cloneJsonCompatibleValue(runtimeEvents) as EventDefinition[];
+}
+
+function lowerEditorEventsToRuntimeEvents(
+  project: ScriptEditorProjectDefinition,
+  exportedScenes: SceneDefinition[],
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): EventDefinition[] | null {
+  const scenarioProfile = project.storyPack.scenarioProfile;
+  const chapterId =
+    scenarioProfile != null &&
+    typeof scenarioProfile === "object" &&
+    !Array.isArray(scenarioProfile)
+      ? (scenarioProfile as Record<string, unknown>).chapterId
+      : undefined;
+  if (typeof chapterId !== "string" || chapterId.length === 0) {
+    diagnostics.push({
+      code: "missing-field",
+      fieldPath: "project.storyPack.scenarioProfile.chapterId",
+      message: "Event export requires storyPack.scenarioProfile.chapterId.",
+    });
+    return null;
+  }
+
+  const sceneIds = new Set(exportedScenes.map((scene) => scene.id));
+  const exportedEvents: EventDefinition[] = [];
+  const eventIds = new Set<string>();
+  for (const [index, eventRecord] of project.events.entries()) {
+    const exportedEvent = lowerEditorEventToRuntimeEvent(
+      eventRecord,
+      index,
+      chapterId,
+      sceneIds,
+      diagnostics
+    );
+    if (exportedEvent == null) {
+      continue;
+    }
+    if (eventIds.has(exportedEvent.id)) {
+      diagnostics.push({
+        code: "duplicate-id",
+        fieldPath: `project.events[${index}].id`,
+        message: `Duplicate event id "${exportedEvent.id}" cannot be exported.`,
+      });
+      continue;
+    }
+    eventIds.add(exportedEvent.id);
+    exportedEvents.push(exportedEvent);
+  }
+
+  return diagnostics.length === 0 ? exportedEvents : null;
+}
+
+function lowerEditorEventToRuntimeEvent(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  chapterId: string,
+  sceneIds: Set<string>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): EventDefinition | null {
+  if (typeof eventRecord.id !== "string" || eventRecord.id.length === 0) {
+    diagnostics.push({
+      code: "missing-field",
+      fieldPath: `project.events[${eventIndex}].id`,
+      message: "Event export requires a non-empty id.",
+    });
+    return null;
+  }
+
+  const destination = eventRecord.destination;
+  if (
+    destination == null ||
+    destination.family !== "dialogue" ||
+    typeof destination.targetId !== "string" ||
+    destination.targetId.length === 0
+  ) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `project.events[${eventIndex}].destination`,
+      message:
+        "Event export currently supports only editor events whose destination targets a dialogue.",
+    });
+    return null;
+  }
+
+  const entrySceneId = `scene.${destination.targetId}`;
+  if (!sceneIds.has(entrySceneId)) {
+    diagnostics.push({
+      code: "missing-reference",
+      fieldPath: `project.events[${eventIndex}].destination.targetId`,
+      message:
+        `Event "${eventRecord.id}" targets dialogue "${destination.targetId}", but lowered scene "${entrySceneId}" is missing.`,
+    });
+    return null;
+  }
+
+  if (
+    (eventRecord.conditionGroups ?? []).some(
+      (conditionGroup) =>
+        conditionGroup.items.some((item) => item.conditionType.length > 0)
+    )
+  ) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `project.events[${eventIndex}].conditionGroups`,
+      message:
+        "Event condition group lowering is not supported in this minimal narrative export slice.",
+    });
+    return null;
+  }
+
+  const triggerTiming = lowerEventTriggerTiming(
+    eventRecord,
+    eventIndex,
+    diagnostics
+  );
+  if (triggerTiming == null) {
+    return null;
+  }
+
+  return {
+    id: eventRecord.id,
+    chapterId,
+    name: eventRecord.title || eventRecord.id,
+    occurrence: eventRecord.repeatable === true ? "repeatable" : "once",
+    trigger: {
+      timing: triggerTiming,
+      ...lowerEventTriggerScope(eventRecord, triggerTiming),
+    },
+    conditions: [],
+    entrySceneId,
+  };
+}
+
+function lowerEventTriggerTiming(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): EventTriggerTiming | null {
+  switch (eventRecord.triggerTiming ?? "manual") {
+    case "manual":
+      return "manual";
+    case "city-enter":
+      return "city-enter";
+    case "building-enter":
+      return "house-enter";
+    default:
+      diagnostics.push({
+        code: "unsupported-lowering",
+        fieldPath: `project.events[${eventIndex}].triggerTiming`,
+        message:
+          `Event trigger "${eventRecord.triggerTiming}" requires a later runtime trigger lowering step.`,
+      });
+      return null;
+  }
+}
+
+function lowerEventTriggerScope(
+  eventRecord: ScriptEditorEventRecord,
+  timing: EventTriggerTiming
+): Pick<EventDefinition["trigger"], "scope"> {
+  if (timing === "city-enter") {
+    const cityId = eventRecord.relations?.cityIds?.find((id) => id.length > 0);
+    return cityId == null ? {} : { scope: { cityId } };
+  }
+
+  if (timing === "house-enter") {
+    const houseId = eventRecord.relations?.buildingIds?.find((id) => id.length > 0);
+    return houseId == null ? {} : { scope: { houseId } };
+  }
+
+  return {};
+}
+
+function isRuntimeEventDefinition(value: unknown): value is EventDefinition {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const eventDefinition = value as Record<string, unknown>;
+  const trigger = eventDefinition.trigger;
+  return (
+    typeof eventDefinition.id === "string" &&
+    typeof eventDefinition.chapterId === "string" &&
+    typeof eventDefinition.name === "string" &&
+    typeof eventDefinition.entrySceneId === "string" &&
+    (eventDefinition.occurrence === "once" ||
+      eventDefinition.occurrence === "repeatable" ||
+      eventDefinition.occurrence === "once-per-chapter") &&
+    Array.isArray(eventDefinition.conditions) &&
+    (eventDefinition.participants == null ||
+      Array.isArray(eventDefinition.participants)) &&
+    trigger != null &&
+    typeof trigger === "object" &&
+    !Array.isArray(trigger) &&
+    typeof (trigger as Record<string, unknown>).timing === "string"
+  );
 }
 
 function isCalendarDate(value: unknown): value is ScenarioProfileDefinition["initialCalendar"] {
