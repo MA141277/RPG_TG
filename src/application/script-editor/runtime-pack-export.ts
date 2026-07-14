@@ -393,6 +393,9 @@ function cloneScenarioProfileRuntimeFields(
     ...(isInitialRuntime(scenarioProfile.initialRuntime)
       ? { initialRuntime: scenarioProfile.initialRuntime }
       : {}),
+    ...(isLaunchPolicy(scenarioProfile.launchPolicy)
+      ? { launchPolicy: scenarioProfile.launchPolicy }
+      : {}),
     ...(typeof scenarioProfile.entryEventId === "string" && scenarioProfile.entryEventId.length > 0
       ? { entryEventId: scenarioProfile.entryEventId }
       : {}),
@@ -682,6 +685,26 @@ function isInitialRuntime(
   return (
     (record.flags == null || isBooleanRecord(record.flags)) &&
     (record.variables == null || isRuntimeVariableRecord(record.variables))
+  );
+}
+
+function isLaunchPolicy(
+  value: unknown
+): value is NonNullable<ScenarioProfileDefinition["launchPolicy"]> {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return (
+    (record.characterSelection == null ||
+      record.characterSelection === "shell" ||
+      record.characterSelection === "fixed") &&
+    (record.initialView == null ||
+      (typeof record.initialView === "string" && record.initialView.length > 0)) &&
+    (record.entryEventTiming == null ||
+      record.entryEventTiming === "immediate" ||
+      record.entryEventTiming === "after-map-entry")
   );
 }
 

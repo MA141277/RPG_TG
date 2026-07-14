@@ -80,6 +80,10 @@ import {
   type StartupScenario,
   type StartupSessionBootstrap,
 } from "./application/startup/startup-session-coordinator";
+import {
+  loadScenarioPackFromFiles,
+  loadScenarioPackFromUrl,
+} from "./application/scenario/scenario-pack-loader";
 import { createShellBootLifecycleCoordinator } from "./application/startup/shell-boot-lifecycle-coordinator";
 import { createStartupSessionApplyCoordinator } from "./application/startup/startup-session-apply-coordinator";
 import {
@@ -1467,6 +1471,12 @@ const startupSessionCoordinatorDeps = {
   bootstrapStartupStoryAppState,
 };
 
+type PendingScenarioStartupRequest =
+  | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
+  | { type: "scenario-files"; files: File[] };
+
+let pendingScenarioStartupRequest: PendingScenarioStartupRequest | null = null;
+
 function unwrapStartupSession(
   result: Awaited<ReturnType<typeof runStartupSessionCoordinator>>
 ): StartupSessionBootstrap {
@@ -1499,6 +1509,16 @@ function startMainGameWithLoading(
   selectedCharacter: CharacterDefinition,
   startupScenario: StartupScenario = "default"
 ): void {
+  if (pendingScenarioStartupRequest != null) {
+    const request = pendingScenarioStartupRequest;
+    pendingScenarioStartupRequest = null;
+    void runScenarioPackStartupRequestWithLoading({
+      ...request,
+      selectedCharacter,
+    });
+    return;
+  }
+
   void shellBootLifecycleCoordinator.startBuiltin({
     selectedCharacter,
     startupScenario,
@@ -1507,8 +1527,22 @@ function startMainGameWithLoading(
 
 function runScenarioPackStartupRequestWithLoading(
   request:
-    | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
-    | { type: "scenario-files"; files: File[] }
+    | {
+        type: "scenario-summary";
+        scenarioPack: ScenarioPackSummary;
+        selectedCharacter?: CharacterDefinition;
+      }
+    | {
+        type: "scenario-files";
+        files: File[];
+        selectedCharacter?: CharacterDefinition;
+      }
+    | {
+        type: "scenario-pack";
+        scenarioPack: ScenarioPackDefinition;
+        source: ModSourceDescriptor;
+        selectedCharacter?: CharacterDefinition;
+      }
 ): Promise<void> {
   return shellBootLifecycleCoordinator.startScenarioPackRequest({
     request,
@@ -1529,9 +1563,30 @@ async function startScenarioPackWithLoading(
   scenarioPack: ScenarioPackSummary
 ): Promise<void> {
   try {
+    const loadedScenarioPack = await loadScenarioPackFromUrl(scenarioPack.url);
+    if (await prepareScenarioPackCharacterSelection(
+      loadedScenarioPack,
+      {
+        kind: "url",
+        name: scenarioPack.title,
+        url: scenarioPack.url,
+      },
+      {
+        type: "scenario-summary",
+        scenarioPack,
+      }
+    )) {
+      return;
+    }
+
     return runScenarioPackStartupRequestWithLoading({
-      type: "scenario-summary",
-      scenarioPack,
+      type: "scenario-pack",
+      scenarioPack: loadedScenarioPack,
+      source: {
+        kind: "url",
+        name: scenarioPack.title,
+        url: scenarioPack.url,
+      },
     });
   } catch (error) {
     window.alert(
@@ -1551,9 +1606,30 @@ async function startScenarioPackFilesWithLoading(
     "scenario-pack";
 
   try {
+    const loadedScenarioPack = await loadScenarioPackFromFiles(files);
+    if (await prepareScenarioPackCharacterSelection(
+      loadedScenarioPack,
+      {
+        kind: "file",
+        name: importLabel,
+        filePath: importLabel,
+      },
+      {
+        type: "scenario-files",
+        files,
+      }
+    )) {
+      return;
+    }
+
     return runScenarioPackStartupRequestWithLoading({
-      type: "scenario-files",
-      files,
+      type: "scenario-pack",
+      scenarioPack: loadedScenarioPack,
+      source: {
+        kind: "file",
+        name: importLabel,
+        filePath: importLabel,
+      },
     });
   } catch (error) {
     window.alert(
@@ -1562,6 +1638,33 @@ async function startScenarioPackFilesWithLoading(
         : `JSON 开局读取失败（${importLabel}）。`
     );
   }
+}
+
+async function prepareScenarioPackCharacterSelection(
+  scenarioPack: ScenarioPackDefinition,
+  source: ModSourceDescriptor,
+  pendingRequest: PendingScenarioStartupRequest
+): Promise<boolean> {
+  if (scenarioPack.scenarioProfile.launchPolicy?.characterSelection !== "shell") {
+    return false;
+  }
+
+  const activationResult = await entryShellBootstrapState.activateScenarioPackMod(
+    scenarioPack,
+    source,
+    `startup:shell-select:${source.kind}:${scenarioPack.id}`
+  );
+  if (!activationResult.ok) {
+    throw new Error(activationResult.failure.message);
+  }
+
+  setActiveContentContext(
+    entryShellBootstrapState.createStartupContentContext(activationResult)
+  );
+  pendingScenarioStartupRequest = pendingRequest;
+  setGameVisibility(false);
+  mainUiFlow.showCharacterSelect();
+  return true;
 }
 
 function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {
@@ -1577,7 +1680,8 @@ function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {
 }
 
 function createScenarioPackAppState(
-  scenarioPack: ScenarioPackDefinition
+  scenarioPack: ScenarioPackDefinition,
+  playerCharacterId: string = scenarioPack.scenarioProfile.playerCharacterId
 ): AppState {
   const profile = scenarioPack.scenarioProfile;
   const scenarioMapDefinition =
@@ -1604,12 +1708,12 @@ function createScenarioPackAppState(
         currentMapId: profile.initialLocation.mapId,
         currentCityId: profile.initialLocation.cityId,
         currentHouseId: profile.initialLocation.houseId,
-        playerCharacterId: profile.playerCharacterId,
+        playerCharacterId,
         chapterId: profile.chapterId,
         year: calendar.year,
         month: calendar.month,
         day: calendar.day,
-        pinnedCharacterId: profile.playerCharacterId,
+        pinnedCharacterId: playerCharacterId,
         reviewDateText: profile.initialUi?.reviewDateText ?? "JSON 开局",
         mainHouseMissionText:
           profile.initialUi?.mainHouseMissionText ?? scenarioPack.title,
@@ -1634,7 +1738,8 @@ function createScenarioPackAppState(
               )?.id ?? null,
           },
         },
-        currentView: profile.initialLocation.view,
+        currentView:
+          profile.launchPolicy?.initialView ?? profile.initialLocation.view,
       }),
       activeContentContext.cityNpcPools
     ),

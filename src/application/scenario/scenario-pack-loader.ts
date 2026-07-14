@@ -82,6 +82,23 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     throw new Error("scenario initialLocation.houseId must be string or null.");
   }
   assertString(value.scenarioProfile.initialLocation.view, "scenario initialLocation.view");
+  if (value.scenarioProfile.launchPolicy != null) {
+    assertObject(value.scenarioProfile.launchPolicy, "scenario launchPolicy");
+    assertOptionalEnum(
+      value.scenarioProfile.launchPolicy.characterSelection,
+      "scenario launchPolicy.characterSelection",
+      ["shell", "fixed"]
+    );
+    assertOptionalString(
+      value.scenarioProfile.launchPolicy.initialView,
+      "scenario launchPolicy.initialView"
+    );
+    assertOptionalEnum(
+      value.scenarioProfile.launchPolicy.entryEventTiming,
+      "scenario launchPolicy.entryEventTiming",
+      ["immediate", "after-map-entry"]
+    );
+  }
   assertArray(value.characters, "scenario characters");
   if (value.cities != null) {
     assertArray(value.cities, "scenario cities");
@@ -523,5 +540,24 @@ function assertArray(value: unknown, label: string): asserts value is unknown[] 
 function assertString(value: unknown, label: string): asserts value is string {
   if (typeof value !== "string" || value.length === 0) {
     throw new Error(`${label} must be a non-empty string.`);
+  }
+}
+
+function assertOptionalString(
+  value: unknown,
+  label: string
+): asserts value is string | undefined {
+  if (value != null && (typeof value !== "string" || value.length === 0)) {
+    throw new Error(`${label} must be a non-empty string when present.`);
+  }
+}
+
+function assertOptionalEnum<T extends string>(
+  value: unknown,
+  label: string,
+  allowedValues: readonly T[]
+): asserts value is T | undefined {
+  if (value != null && !allowedValues.includes(value as T)) {
+    throw new Error(`${label} must be one of: ${allowedValues.join(", ")}.`);
   }
 }

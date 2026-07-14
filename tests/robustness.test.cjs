@@ -2140,6 +2140,25 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   });
 });
 
+test("zhuyuanzhang launch policy starts from the campaign map instead of the prototype grid", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const scenarioProfile = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "scenario-profile.json"), "utf8")
+  );
+  const maps = JSON.parse(fs.readFileSync(path.join(packRoot, "maps.json"), "utf8"));
+  const initialMap = maps.find(
+    (mapDefinition) => mapDefinition.id === scenarioProfile.initialLocation.mapId
+  );
+
+  assert.equal(scenarioProfile.initialLocation.mapId, "map.yuanmo_campaign");
+  assert.equal(scenarioProfile.launchPolicy.initialView, "map");
+  assert.equal(initialMap?.mode, "campaign");
+  assert.match(initialMap?.primaryImageUrl, /^\.\/assets\/maps\/HD\.png$/);
+});
+
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   const {
     loadContentPackFromManifestText,
@@ -3149,7 +3168,7 @@ test(
 );
 
 test(
-  "script editor exported scenario profile startup fields let JSON-imported packs boot the opening event",
+  "script editor exported scenario profile startup fields boot entry events without deferred launch policy",
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
@@ -3174,6 +3193,7 @@ test(
       importedProject.storyPack.scenarioProfile.entryEventId,
       "event.story.zhu_yuanzhang.ordination"
     );
+    delete importedProject.storyPack.scenarioProfile.launchPolicy;
 
     const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
     const exportedProfile = JSON.parse(serializedFiles["scenario-profile.json"]);
@@ -3193,6 +3213,7 @@ test(
     const bootstraps = [];
 
     assert.equal(exportedProfile.entryEventId, "event.story.zhu_yuanzhang.ordination");
+    assert.equal(exportedProfile.launchPolicy, undefined);
     assert.equal(exportedPack.scenarioProfile.entryEventId, "event.story.zhu_yuanzhang.ordination");
 
     const result = await runStartupSessionCoordinator(
@@ -3287,6 +3308,267 @@ test(
       startupAppState.gameState.scene.activeEventId,
       "event.story.zhu_yuanzhang.ordination"
     );
+  }
+);
+
+test(
+  "script editor preserves scenario launch policy and defers entry events until map entry",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const {
+      runStartupSessionCoordinator,
+    } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+    const sourceFiles = createScenarioPackFilesFromDirectory(
+      path.join(__dirname, "../src/content/scenario-packs/zhuyuanzhang"),
+      "zhuyuanzhang"
+    );
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+    const exportedProfile = JSON.parse(serializedFiles["scenario-profile.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-zhuyuanzhang-launch-policy"
+      )
+    );
+    const baseState = createBaseState();
+    const bootstraps = [];
+    const activationResult = {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [exportedPack],
+      },
+    };
+
+    assert.deepEqual(exportedProfile.launchPolicy, {
+      characterSelection: "shell",
+      initialView: "map",
+      entryEventTiming: "after-map-entry",
+    });
+    assert.deepEqual(exportedPack.scenarioProfile.launchPolicy, exportedProfile.launchPolicy);
+
+    const result = await runStartupSessionCoordinator(
+      {
+        type: "scenario-files",
+        files: createImportedFilesFromSerializedJsonRecord(
+          serializedFiles,
+          "exported-zhuyuanzhang-launch-policy"
+        ),
+      },
+      {
+        activateBuiltinDefaultMod: async () => activationResult,
+        restoreModFromSave: async () => null,
+        activateScenarioPackMod: async () => activationResult,
+        createPrototypeAppState: () => ({
+          gameState: baseState,
+          characterDefinitions: prototypeCharacters,
+          playerCoordinate: { x: 0, y: 0 },
+          campaignActorState: { facingDegrees: 0, isMoving: false },
+          campaignTravelState: null,
+          modalState: null,
+          locationDialogueState: null,
+          beggingMiniGameState: null,
+          cityMenuState: null,
+          cityDirectoryState: null,
+          autoAdvanceState: null,
+          uiLayouts: {},
+          layoutEditor: {},
+        }),
+        createHaozhouReturnEncounterAppState: (appState) => appState,
+        createScenarioPackAppState: () => ({
+          gameState: {
+            ...baseState,
+            ui: {
+              ...baseState.ui,
+              currentView: exportedPack.scenarioProfile.launchPolicy.initialView,
+            },
+            scene: {
+              ...baseState.scene,
+              activeEventId: null,
+              activeSceneId: null,
+              cursor: 0,
+              status: "idle",
+            },
+          },
+          characterDefinitions: prototypeCharacters,
+          playerCoordinate: { x: 0, y: 0 },
+          campaignActorState: { facingDegrees: 0, isMoving: false },
+          campaignTravelState: null,
+          modalState: null,
+          locationDialogueState: null,
+          beggingMiniGameState: null,
+          cityMenuState: null,
+          cityDirectoryState: null,
+          autoAdvanceState: null,
+          uiLayouts: {},
+          layoutEditor: {},
+        }),
+        createStartupContentContext: () => ({
+          packId: exportedPack.id,
+          storyContent: {
+            eventDefinitionsById: Object.fromEntries(
+              exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+            ),
+            sceneDefinitionsById: Object.fromEntries(
+              exportedPack.scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+            ),
+            activityDefinitionsById: {},
+            textEntriesById: exportedPack.textEntries ?? {},
+          },
+        }),
+        bootstrapStartupStoryAppState: ({ appState, bootstrap }) => {
+          bootstraps.push(bootstrap);
+          return {
+            ...appState,
+            gameState: {
+              ...appState.gameState,
+              scene: {
+                ...appState.gameState.scene,
+                activeEventId: bootstrap?.eventId ?? null,
+                activeSceneId:
+                  bootstrap == null ? null : "scene.story.zhu_yuanzhang.ordination",
+                cursor: bootstrap?.sceneCursor ?? 0,
+                status: bootstrap?.sceneStatus ?? "playing",
+              },
+            },
+          };
+        },
+      }
+    );
+
+    assert.equal(result.ok, true);
+    const startupAppState = result.session.createAppState();
+    assert.deepEqual(bootstraps, [null]);
+    assert.equal(startupAppState.gameState.ui.currentView, "map");
+    assert.equal(startupAppState.gameState.scene.activeEventId, null);
+  }
+);
+
+test(
+  "scenario launch policy shell selection starts JSON packs with the selected character",
+  async () => {
+    const {
+      runStartupSessionCoordinator,
+    } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+    const selectedCharacter = {
+      ...prototypeCharacters[0],
+      id: "char.selected.shell",
+      name: "Selected Shell Character",
+    };
+    const scenarioPack = {
+      id: "scenario.test.shell-selection",
+      schemaVersion: 1,
+      title: "Shell Selection Scenario",
+      scenarioProfile: {
+        id: "scenario.test.shell-selection",
+        playerCharacterId: "char.profile.default",
+        chapterId: "chapter.prototype",
+        launchPolicy: {
+          characterSelection: "shell",
+          initialView: "map",
+          entryEventTiming: "after-map-entry",
+        },
+        initialLocation: {
+          mapId: prototypeMap.id,
+          cityId: "city.kulan",
+          houseId: null,
+          view: "house",
+        },
+        entryEventId: "event.test.shell-selection",
+      },
+      characters: [selectedCharacter],
+      events: [],
+      scenes: [],
+    };
+    const activationResult = {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [scenarioPack],
+      },
+    };
+    const createdAppStates = [];
+
+    const result = await runStartupSessionCoordinator(
+      {
+        type: "scenario-pack",
+        scenarioPack,
+        selectedCharacter,
+        source: {
+          kind: "file",
+          name: "shell-selection",
+          filePath: "shell-selection/pack.json",
+        },
+      },
+      {
+        activateBuiltinDefaultMod: async () => activationResult,
+        restoreModFromSave: async () => null,
+        activateScenarioPackMod: async () => activationResult,
+        createPrototypeAppState: () => {
+          throw new Error("builtin path should not run");
+        },
+        createHaozhouReturnEncounterAppState: (appState) => appState,
+        createScenarioPackAppState: (pack, playerCharacterId) => {
+          createdAppStates.push({ pack, playerCharacterId });
+          return {
+            gameState: {
+              ...createBaseState(),
+              player: {
+                ...createBaseState().player,
+                characterId: playerCharacterId,
+              },
+              ui: {
+                ...createBaseState().ui,
+                currentView: pack.scenarioProfile.launchPolicy.initialView,
+              },
+              scene: {
+                ...createBaseState().scene,
+                activeEventId: null,
+              },
+            },
+            characterDefinitions: [selectedCharacter],
+            playerCoordinate: { x: 0, y: 0 },
+            campaignActorState: { facingDegrees: 0, isMoving: false },
+            campaignTravelState: null,
+            modalState: null,
+            locationDialogueState: null,
+            beggingMiniGameState: null,
+            cityMenuState: null,
+            cityDirectoryState: null,
+            autoAdvanceState: null,
+            uiLayouts: {},
+            layoutEditor: {},
+          };
+        },
+        createStartupContentContext: () => ({
+          packId: scenarioPack.id,
+          storyContent: {
+            eventDefinitionsById: {},
+            sceneDefinitionsById: {},
+            activityDefinitionsById: {},
+            textEntriesById: {},
+          },
+        }),
+        bootstrapStartupStoryAppState: ({ appState }) => appState,
+      }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.session.playerCharacterId, selectedCharacter.id);
+    const startupAppState = result.session.createAppState();
+    assert.equal(createdAppStates[0]?.playerCharacterId, selectedCharacter.id);
+    assert.equal(startupAppState.gameState.player.characterId, selectedCharacter.id);
+    assert.equal(startupAppState.gameState.ui.currentView, "map");
+    assert.equal(startupAppState.gameState.scene.activeEventId, null);
   }
 );
 
@@ -14583,10 +14865,8 @@ test("child 23 main startup extraction delegates startup-family orchestration to
     source,
     /const activationResult = await restoreModFromSave\(saveData\);/
   );
-  assert.doesNotMatch(
-    source,
-    /const loadedScenarioPack = await loadScenarioPackFromUrl\(scenarioPack\.url\);/
-  );
+  assert.match(source, /prepareScenarioPackCharacterSelection/);
+  assert.match(source, /shellBootLifecycleCoordinator\.startScenarioPackRequest/);
 });
 
 test("child 23 scenario-pack startup defers app-state bootstrap until after active content sync", () => {
@@ -14621,7 +14901,7 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
   );
   assert.match(
     coordinatorSource,
-    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(scenarioPack\)/
+    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(scenarioPack,\s*playerCharacterId\)/
   );
   assert.match(
     mainSource,

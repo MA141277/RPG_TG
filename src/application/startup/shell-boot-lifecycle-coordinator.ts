@@ -1,5 +1,9 @@
 import type { CharacterDefinition } from "../../domain/character";
-import type { ScenarioPackSummary } from "../../domain/scenario-pack";
+import type {
+  ScenarioPackDefinition,
+  ScenarioPackSummary,
+} from "../../domain/scenario-pack";
+import type { ModSourceDescriptor } from "../../core/contracts/mod-runtime";
 import type {
   StartupSaveData,
   StartupScenario,
@@ -106,8 +110,22 @@ export function createShellBootLifecycleCoordinator(
 
     startScenarioPackRequest(input: {
       request:
-        | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
-        | { type: "scenario-files"; files: File[] };
+        | {
+            type: "scenario-summary";
+            scenarioPack: ScenarioPackSummary;
+            selectedCharacter?: CharacterDefinition;
+          }
+        | {
+            type: "scenario-files";
+            files: File[];
+            selectedCharacter?: CharacterDefinition;
+          }
+        | {
+            type: "scenario-pack";
+            scenarioPack: ScenarioPackDefinition;
+            source: ModSourceDescriptor;
+            selectedCharacter?: CharacterDefinition;
+          };
       handleError?: (error: unknown) => void;
     }): Promise<void> {
       return runBootRequest({

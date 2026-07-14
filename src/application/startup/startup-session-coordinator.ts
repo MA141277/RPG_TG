@@ -42,10 +42,18 @@ export type StartupSessionRequest =
   | {
       type: "scenario-summary";
       scenarioPack: ScenarioPackSummary;
+      selectedCharacter?: CharacterDefinition;
     }
   | {
       type: "scenario-files";
       files: File[];
+      selectedCharacter?: CharacterDefinition;
+    }
+  | {
+      type: "scenario-pack";
+      scenarioPack: ScenarioPackDefinition;
+      source: ModSourceDescriptor;
+      selectedCharacter?: CharacterDefinition;
     };
 
 export type StartupSessionBootstrap = {
@@ -77,7 +85,10 @@ export type StartupSessionCoordinatorDeps = {
   ): Promise<ModActivationResult>;
   createPrototypeAppState(playerCharacterId: string): AppState;
   createHaozhouReturnEncounterAppState(appState: AppState): AppState;
-  createScenarioPackAppState(scenarioPack: ScenarioPackDefinition): AppState;
+  createScenarioPackAppState(
+    scenarioPack: ScenarioPackDefinition,
+    playerCharacterId?: string
+  ): AppState;
   createStartupContentContext(
     activationResult: ModActivationResult
   ): ActiveGameContentContext;
@@ -120,9 +131,24 @@ export async function runStartupSessionCoordinator(
           deps
         );
       case "scenario-summary":
-        return createScenarioSummaryStartupSession(request.scenarioPack, deps);
+        return createScenarioSummaryStartupSession(
+          request.scenarioPack,
+          deps,
+          request.selectedCharacter
+        );
       case "scenario-files":
-        return createScenarioFilesStartupSession(request.files, deps);
+        return createScenarioFilesStartupSession(
+          request.files,
+          deps,
+          request.selectedCharacter
+        );
+      case "scenario-pack":
+        return createLoadedScenarioPackStartupSession(
+          request.scenarioPack,
+          request.source,
+          deps,
+          request.selectedCharacter
+        );
       default:
         return assertNeverRequest(request);
     }
@@ -176,15 +202,20 @@ async function createRestoreStartupSession(
 
   const activatedContentSource = readActivatedContentSource(activationResult);
   if (isScenarioPackSource(activatedContentSource)) {
+    const playerCharacterId =
+      saveData?.selectedCharacterId ??
+      activatedContentSource.scenarioProfile.playerCharacterId ??
+      selectedCharacter.id;
     return createStartupSessionResult({
       activationResult,
       contentContext: deps.createStartupContentContext(activationResult),
-      playerCharacterId:
-        saveData?.selectedCharacterId ??
-        activatedContentSource.scenarioProfile.playerCharacterId ??
-        selectedCharacter.id,
+      playerCharacterId,
       createAppState: createStartupAppStateBuilder(
-        () => deps.createScenarioPackAppState(activatedContentSource),
+        () =>
+          deps.createScenarioPackAppState(
+            activatedContentSource,
+            playerCharacterId
+          ),
         readScenarioStartupStoryBootstrap(activatedContentSource),
         deps
       ),
@@ -210,7 +241,8 @@ async function createRestoreStartupSession(
 
 async function createScenarioSummaryStartupSession(
   scenarioPack: ScenarioPackSummary,
-  deps: StartupSessionCoordinatorDeps
+  deps: StartupSessionCoordinatorDeps,
+  selectedCharacter?: CharacterDefinition
 ): Promise<StartupSessionResult> {
   const loadedScenarioPack = await loadScenarioPackFromUrl(scenarioPack.url);
   return createLoadedScenarioPackStartupSession(
@@ -220,13 +252,15 @@ async function createScenarioSummaryStartupSession(
       name: scenarioPack.title,
       url: scenarioPack.url,
     },
-    deps
+    deps,
+    selectedCharacter
   );
 }
 
 async function createScenarioFilesStartupSession(
   files: File[],
-  deps: StartupSessionCoordinatorDeps
+  deps: StartupSessionCoordinatorDeps,
+  selectedCharacter?: CharacterDefinition
 ): Promise<StartupSessionResult> {
   const importLabel =
     files.find((file) => file.name === "pack.json")?.name ??
@@ -240,26 +274,30 @@ async function createScenarioFilesStartupSession(
       name: importLabel,
       filePath: importLabel,
     },
-    deps
+    deps,
+    selectedCharacter
   );
 }
 
 async function createLoadedScenarioPackStartupSession(
   scenarioPack: ScenarioPackDefinition,
   source: ModSourceDescriptor,
-  deps: StartupSessionCoordinatorDeps
+  deps: StartupSessionCoordinatorDeps,
+  selectedCharacter?: CharacterDefinition
 ): Promise<StartupSessionResult> {
   const activationResult = await deps.activateScenarioPackMod(
     scenarioPack,
     source,
     `startup:${source.kind}:${scenarioPack.id}`
   );
+  const playerCharacterId =
+    selectedCharacter?.id ?? scenarioPack.scenarioProfile.playerCharacterId;
   return createStartupSessionResult({
     activationResult,
     contentContext: deps.createStartupContentContext(activationResult),
-    playerCharacterId: scenarioPack.scenarioProfile.playerCharacterId,
+    playerCharacterId,
     createAppState: createStartupAppStateBuilder(
-      () => deps.createScenarioPackAppState(scenarioPack),
+      () => deps.createScenarioPackAppState(scenarioPack, playerCharacterId),
       readScenarioStartupStoryBootstrap(scenarioPack),
       deps
     ),
@@ -295,6 +333,13 @@ function readBuiltinStartupStoryBootstrap(
 function readScenarioStartupStoryBootstrap(
   scenarioPack: ScenarioPackDefinition
 ): StartupStoryBootstrap | null {
+  if (
+    scenarioPack.scenarioProfile.launchPolicy?.entryEventTiming ===
+    "after-map-entry"
+  ) {
+    return null;
+  }
+
   const entryEventId = scenarioPack.scenarioProfile.entryEventId;
   return entryEventId == null
     ? null

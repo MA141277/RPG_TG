@@ -10,6 +10,12 @@ export type ScenarioRuntimeBootstrap = {
   variables?: Record<string, string | number>;
 };
 
+export type ScenarioLaunchPolicy = {
+  characterSelection?: "shell" | "fixed";
+  initialView?: ViewName;
+  entryEventTiming?: "immediate" | "after-map-entry";
+};
+
 export type ScenarioProfileDefinition = {
   id: string;
   title: string;
@@ -31,6 +37,7 @@ export type ScenarioProfileDefinition = {
     mainHouseMissionText?: string;
   };
   initialRuntime?: ScenarioRuntimeBootstrap;
+  launchPolicy?: ScenarioLaunchPolicy;
   entryEventId?: EventId;
   openingFlowId?: string;
   tags?: string[];
