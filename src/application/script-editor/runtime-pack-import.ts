@@ -486,7 +486,11 @@ async function resolveImportedScenarioPackAssetDataUrl(
   indexedFiles: Record<string, RuntimePackImportFileEntry>,
   assetUrlCache: Record<string, string>
 ): Promise<string> {
-  if (/^(https?:|file:|blob:|data:|\/)/.test(value)) {
+  if (value.startsWith("data:")) {
+    return normalizeImageDataUrlMime(value);
+  }
+
+  if (/^(https?:|file:|blob:|\/)/.test(value)) {
     return value;
   }
 
@@ -500,11 +504,101 @@ async function resolveImportedScenarioPackAssetDataUrl(
     return cachedAssetUrl;
   }
 
-  const nextAssetUrl = `data:${importedFile.file.type || "application/octet-stream"};base64,${arrayBufferToBase64(
-    await importedFile.file.arrayBuffer()
-  )}`;
+  const assetBuffer = await importedFile.file.arrayBuffer();
+  const nextAssetUrl = `data:${resolveImportedAssetMimeType(
+    importedFile,
+    assetBuffer
+  )};base64,${arrayBufferToBase64(assetBuffer)}`;
   assetUrlCache[importedFile.relativePath] = nextAssetUrl;
   return nextAssetUrl;
+}
+
+function resolveImportedAssetMimeType(
+  importedFile: RuntimePackImportFileEntry,
+  buffer: ArrayBuffer
+): string {
+  if (importedFile.file.type.startsWith("image/")) {
+    return importedFile.file.type;
+  }
+
+  const mimeTypeByExtension: Record<string, string> = {
+    ".apng": "image/apng",
+    ".avif": "image/avif",
+    ".gif": "image/gif",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+  };
+  const lowerPath = importedFile.relativePath.toLowerCase();
+  const matchedExtension = Object.keys(mimeTypeByExtension).find((extension) =>
+    lowerPath.endsWith(extension)
+  );
+  if (matchedExtension != null) {
+    return mimeTypeByExtension[matchedExtension] as string;
+  }
+
+  return detectImageMimeType(buffer) ?? (importedFile.file.type || "application/octet-stream");
+}
+
+function normalizeImageDataUrlMime(value: string): string {
+  const match = /^data:([^;,]+);base64,([A-Za-z0-9+/=]+)/.exec(value);
+  if (match == null || match[1] !== "application/octet-stream") {
+    return value;
+  }
+
+  const detectedMimeType = detectBase64ImageMimeType(match[2] ?? "");
+  return detectedMimeType == null
+    ? value
+    : value.replace("data:application/octet-stream;base64,", `data:${detectedMimeType};base64,`);
+}
+
+function detectBase64ImageMimeType(base64Value: string): string | null {
+  if (base64Value.startsWith("iVBORw0KGgo")) {
+    return "image/png";
+  }
+  if (base64Value.startsWith("/9j/")) {
+    return "image/jpeg";
+  }
+  if (base64Value.startsWith("R0lGOD")) {
+    return "image/gif";
+  }
+  if (base64Value.startsWith("UklGR")) {
+    return "image/webp";
+  }
+  return null;
+}
+
+function detectImageMimeType(buffer: ArrayBuffer): string | null {
+  const bytes = new Uint8Array(buffer);
+  if (
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    return "image/png";
+  }
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
+    return "image/gif";
+  }
+  if (
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+  return null;
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {

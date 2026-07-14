@@ -344,7 +344,11 @@ function resolveImportedScenarioPackAssetUrl(
   indexedFiles: Record<string, ScenarioPackImportFileEntry>,
   assetUrlCache: Record<string, string>
 ): string {
-  if (/^(https?:|file:|blob:|data:|\/)/.test(value)) {
+  if (value.startsWith("data:")) {
+    return normalizeImageDataUrlMime(value);
+  }
+
+  if (/^(https?:|file:|blob:|\/)/.test(value)) {
     return value;
   }
 
@@ -358,9 +362,72 @@ function resolveImportedScenarioPackAssetUrl(
     return cachedAssetUrl;
   }
 
-  const nextAssetUrl = URL.createObjectURL(importedFile.file);
+  const nextAssetUrl = URL.createObjectURL(createImportedAssetBlob(importedFile));
   assetUrlCache[importedFile.relativePath] = nextAssetUrl;
   return nextAssetUrl;
+}
+
+function createImportedAssetBlob(importedFile: ScenarioPackImportFileEntry): Blob {
+  const mimeType = resolveImportedAssetMimeType(importedFile);
+  if (mimeType === importedFile.file.type) {
+    return importedFile.file;
+  }
+
+  return new Blob([importedFile.file], { type: mimeType });
+}
+
+function resolveImportedAssetMimeType(
+  importedFile: ScenarioPackImportFileEntry
+): string {
+  if (importedFile.file.type.startsWith("image/")) {
+    return importedFile.file.type;
+  }
+
+  const mimeTypeByExtension: Record<string, string> = {
+    ".apng": "image/apng",
+    ".avif": "image/avif",
+    ".gif": "image/gif",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+  };
+  const lowerPath = importedFile.relativePath.toLowerCase();
+  const matchedExtension = Object.keys(mimeTypeByExtension).find((extension) =>
+    lowerPath.endsWith(extension)
+  );
+  return matchedExtension == null
+    ? importedFile.file.type || "application/octet-stream"
+    : (mimeTypeByExtension[matchedExtension] as string);
+}
+
+function normalizeImageDataUrlMime(value: string): string {
+  const match = /^data:([^;,]+);base64,([A-Za-z0-9+/=]+)/.exec(value);
+  if (match == null || match[1] !== "application/octet-stream") {
+    return value;
+  }
+
+  const detectedMimeType = detectBase64ImageMimeType(match[2] ?? "");
+  return detectedMimeType == null
+    ? value
+    : value.replace("data:application/octet-stream;base64,", `data:${detectedMimeType};base64,`);
+}
+
+function detectBase64ImageMimeType(base64Value: string): string | null {
+  if (base64Value.startsWith("iVBORw0KGgo")) {
+    return "image/png";
+  }
+  if (base64Value.startsWith("/9j/")) {
+    return "image/jpeg";
+  }
+  if (base64Value.startsWith("R0lGOD")) {
+    return "image/gif";
+  }
+  if (base64Value.startsWith("UklGR")) {
+    return "image/webp";
+  }
+  return null;
 }
 
 function resolveScenarioPackImportedFileEntry(

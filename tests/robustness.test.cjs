@@ -2716,6 +2716,77 @@ test(
 );
 
 test(
+  "scenario pack loader normalizes legacy octet-stream data image map assets",
+  async () => {
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const legacyPngDataUrl =
+      "data:application/octet-stream;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    const importedFiles = createImportedFilesFromSerializedJsonRecord(
+      {
+        "pack.json": JSON.stringify({
+          schemaVersion: 1,
+          kind: "scenario-pack",
+          id: "scenario-pack.test.legacy-map-data-url",
+          title: "Legacy Map Data Url",
+          files: {
+            scenarioProfile: "./scenario-profile.json",
+            maps: "./maps.json",
+            characters: "./characters.json",
+            events: "./events.json",
+            scenes: "./scenes.json",
+          },
+        }),
+        "scenario-profile.json": JSON.stringify({
+          id: "scenario.test.legacy-map-data-url",
+          title: "Legacy Map Data Url",
+          playerCharacterId: "char.test",
+          chapterId: "chapter.test",
+          initialLocation: {
+            mapId: "map.test",
+            cityId: "city.test",
+            houseId: null,
+            view: "scene",
+          },
+        }),
+        "maps.json": JSON.stringify([
+          {
+            id: "map.test",
+            name: "Map Test",
+            backgroundId: "bg.map.test",
+            nodes: [],
+            primaryImageUrl: legacyPngDataUrl,
+            regionOverlayImageUrl: legacyPngDataUrl,
+            layers: [
+              {
+                id: "map.test.layer",
+                label: "Layer",
+                width: 1,
+                height: 1,
+                description: "legacy png",
+                imageUrl: legacyPngDataUrl,
+              },
+            ],
+          },
+        ]),
+        "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+        "events.json": JSON.stringify([]),
+        "scenes.json": JSON.stringify([]),
+      },
+      "legacy-map-pack"
+    );
+
+    const pack = await loadScenarioPackFromFiles(importedFiles);
+    const [mapDefinition] = pack.maps;
+
+    assert.match(mapDefinition.primaryImageUrl, /^data:image\/png;base64,/);
+    assert.match(mapDefinition.regionOverlayImageUrl, /^data:image\/png;base64,/);
+    assert.match(mapDefinition.layers[0].imageUrl, /^data:image\/png;base64,/);
+  }
+);
+
+test(
   "script editor project loader can hydrate a manifest-driven imported project directory",
   async () => {
     const {
@@ -3021,6 +3092,47 @@ test(
       exportedPack.historicalCharacterIdByCharacterId,
       sourcePack.historicalCharacterIdByCharacterId
     );
+  }
+);
+
+test(
+  "script editor preserves imported map asset image MIME types through export",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+    const packRoot = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang"
+    );
+    const sourceFiles = createScenarioPackFilesFromDirectory(
+      packRoot,
+      "zhuyuanzhang"
+    );
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+    const exportedMaps = JSON.parse(serializedFiles["maps.json"]);
+    const campaignMap = exportedMaps.find(
+      (mapDefinition) => mapDefinition.id === "map.yuanmo_campaign"
+    );
+
+    assert.ok(campaignMap, "Expected exported Zhu Yuanzhang campaign map.");
+    assert.match(campaignMap.primaryImageUrl, /^data:image\/png;base64,/);
+    assert.match(campaignMap.regionOverlayImageUrl, /^data:image\/png;base64,/);
+    assert.equal(
+      campaignMap.layers.every((layerDefinition) =>
+        layerDefinition.imageUrl.startsWith("data:image/png;base64,")
+      ),
+      true
+    );
+    assert.equal(JSON.stringify(exportedMaps).includes("application/octet-stream"), false);
   }
 );
 
